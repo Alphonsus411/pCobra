@@ -1,5 +1,5 @@
 import pytest
-from src.core.parser import Parser, NodoAsignacion, NodoHolobit, NodoCondicional, NodoOperacionBinaria
+from src.core.parser import Parser, NodoAsignacion, NodoHolobit, NodoCondicional
 from src.core.lexer import Lexer
 
 
@@ -13,7 +13,7 @@ def test_parser_asignacion_variable():
 
     # Inicializar el lexer para obtener los tokens
     lexer = Lexer(codigo)
-    tokens = lexer.analizar_tokens()  # Cambiar 'tokenizar' por 'analizar_tokens'
+    tokens = lexer.analizar_token()  # Cambiar 'tokenizar' por 'analizar_token'
 
     # Inicializar el parser con los tokens
     parser = Parser(tokens)
@@ -23,13 +23,14 @@ def test_parser_asignacion_variable():
         arbol = parser.parsear()
         assert arbol is not None, "El árbol sintáctico es None, el parser falló."
 
-        # Verificar que el primer nodo de la lista es de tipo 'ASIGNACION'
+        # Verificar que el primer nodo de la lista es de tipo 'NodoAsignacion'
         primer_nodo = arbol[0]  # Accedemos al primer nodo de la lista
         assert isinstance(primer_nodo,
                           NodoAsignacion), f"Se esperaba NodoAsignacion, pero se encontró {type(primer_nodo).__name__}"
 
         # Validar que la variable asignada es 'x'
         assert primer_nodo.variable == 'x', f"Se esperaba 'x', pero se encontró {primer_nodo.variable}"
+
         # Validar que la expresión es un holobit con los valores correctos
         assert isinstance(primer_nodo.expresion, NodoHolobit), "Se esperaba un NodoHolobit en la expresión"
         assert [nodo.valor for nodo in primer_nodo.expresion.valores] == [0.8, -0.5,
@@ -55,7 +56,7 @@ def test_parser_condicional_si_sino():
 
     # Inicializamos el lexer
     lexer = Lexer(codigo)
-    tokens = lexer.analizar_tokens()  # Cambiar 'tokenizar' por 'analizar_tokens'
+    tokens = lexer.analizar_token()  # Cambiar 'tokenizar' por 'analizar_token'
 
     # Inicializamos el parser con los tokens
     parser = Parser(tokens)
@@ -65,9 +66,9 @@ def test_parser_condicional_si_sino():
         arbol = parser.parsear()
         assert arbol is not None, "El árbol sintáctico es None, el parser falló."
 
-        # Verificar que el nodo raíz es de tipo condicional
+        # Verificar que el nodo raíz es de tipo 'NodoCondicional'
         assert isinstance(arbol[0],
-                          NodoCondicional), f"Se esperaba 'CONDICIONAL', pero se encontró {type(arbol[0]).__name__}"
+                          NodoCondicional), f"Se esperaba 'NodoCondicional', pero se encontró {type(arbol[0]).__name__}"
 
     except RecursionError:
         pytest.fail("El parser ha entrado en una recursión infinita.")

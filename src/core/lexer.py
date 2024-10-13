@@ -50,12 +50,6 @@ class Lexer:
         self.posicion = 0
         self.tokens = []
 
-    def token_actual(self):
-        return self.tokens[self.posicion]
-
-    def avanzar(self):
-        self.posicion += 1
-
     def analizar_token(self):
         especificacion_tokens = [
             (TipoToken.VAR, r'\bvar\b'),
@@ -69,15 +63,15 @@ class Lexer:
             (TipoToken.PROYECTAR, r'\bproyectar\b'),
             (TipoToken.TRANSFORMAR, r'\btransformar\b'),
             (TipoToken.GRAFICAR, r'\bgraficar\b'),
-            (TipoToken.FLOTANTE, r'-?\d+\.\d+'),  # Flotantes, positivos y negativos
-            (TipoToken.ENTERO, r'-?\d+'),  # Enteros, positivos y negativos
+            (TipoToken.FLOTANTE, r'\d+\.\d+'),  # Flotantes sin el signo negativo
+            (TipoToken.ENTERO, r'\d+'),  # Enteros sin el signo negativo
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),  # Cadenas entre comillas simples o dobles
             (TipoToken.BOOLEANO, r'\b(verdadero|falso)\b'),
             (TipoToken.IDENTIFICADOR, r'[A-Za-z_][A-Za-z0-9_]*'),
             (TipoToken.ASIGNAR, r'='),
             (TipoToken.DOSPUNTOS, r':'),  # Usamos ':' como símbolo de dos puntos
             (TipoToken.SUMA, r'\+'),
-            (TipoToken.RESTA, r'-'),
+            (TipoToken.RESTA, r'-'),  # El signo menos se trata por separado
             (TipoToken.MULT, r'\*'),
             (TipoToken.DIV, r'/'),
             (TipoToken.MAYORQUE, r'>'),  # Asegurarse que MAYORQUE esté después de DOSPUNTOS
