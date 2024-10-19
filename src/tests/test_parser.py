@@ -49,14 +49,15 @@ def test_parser_condicional_si_sino():
     codigo = '''
     var x = 10
     si x > 5 :
-        proyectar(x, '2D')
+        proyectar(x, "2D")
     sino :
         graficar(x)
     '''
 
     # Inicializamos el lexer
     lexer = Lexer(codigo)
-    tokens = lexer.analizar_token()  # Cambiar 'tokenizar' por 'analizar_token'
+    tokens = lexer.analizar_token()
+    print(f"Tokens generados: {tokens}")  # Imprimir los tokens generados
 
     # Inicializamos el parser con los tokens
     parser = Parser(tokens)
@@ -65,10 +66,10 @@ def test_parser_condicional_si_sino():
     try:
         arbol = parser.parsear()
         assert arbol is not None, "El árbol sintáctico es None, el parser falló."
-
         # Verificar que el nodo raíz es de tipo 'NodoCondicional'
-        assert isinstance(arbol[0],
-                          NodoCondicional), f"Se esperaba 'NodoCondicional', pero se encontró {type(arbol[0]).__name__}"
+        assert isinstance(arbol[0], NodoCondicional), f"Se esperaba 'NodoCondicional', pero se encontró {type(arbol[0]).__name__}"
 
     except RecursionError:
         pytest.fail("El parser ha entrado en una recursión infinita.")
+    except Exception as e:
+        pytest.fail(f"Error en el parser: {e}")

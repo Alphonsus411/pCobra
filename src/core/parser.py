@@ -90,10 +90,13 @@ class Parser:
         self.tokens = tokens
         self.posicion = 0
 
+    # Implementación del método token_actual() en el Parser
     def token_actual(self):
         if self.posicion < len(self.tokens):
-            return self.tokens[self.posicion]
-        return None
+            token = self.tokens[self.posicion]
+            print(f"Token actual: {token}")  # Para depuración
+            return token
+        raise Exception("No hay más tokens")
 
     def avanzar(self):
         self.posicion += 1
@@ -119,29 +122,35 @@ class Parser:
 
     def declaracion(self):
         token = self.token_actual()
+        print(f"Token en declaracion: {token}")  # Mensaje de depuración
 
-        if token.tipo == TipoToken.VAR:
-            return self.declaracion_variable()
-        elif token.tipo == TipoToken.HOLOBIT:
-            return self.declaracion_holobit()
-        elif token.tipo == TipoToken.SI:
-            return self.declaracion_condicional()
-        elif token.tipo == TipoToken.MIENTRAS:
-            return self.declaracion_mientras()
-        elif token.tipo == TipoToken.FUNC:
-            return self.declaracion_funcion()
-        elif token.tipo == TipoToken.IDENTIFICADOR:
-            # Manejo de asignaciones o llamadas a funciones
-            if self.tokens[self.posicion + 1].tipo == TipoToken.ASIGNAR:
-                return self.declaracion_asignacion()
-            elif self.tokens[self.posicion + 1].tipo == TipoToken.LPAREN:
-                return self.llamada_funcion()
+        try:
+            if token.tipo == TipoToken.VAR:
+                return self.declaracion_variable()
+            elif token.tipo == TipoToken.HOLOBIT:
+                return self.declaracion_holobit()
+            elif token.tipo == TipoToken.SI:
+                return self.declaracion_condicional()
+            elif token.tipo == TipoToken.MIENTRAS:
+                return self.declaracion_mientras()
+            elif token.tipo == TipoToken.FUNC:
+                return self.declaracion_funcion()
+            elif token.tipo == TipoToken.IDENTIFICADOR:
+                print(f"Identificador encontrado: {token.valor}")  # Depuración
+                if self.tokens[self.posicion + 1].tipo == TipoToken.LPAREN:
+                    # Si hay un paréntesis después del identificador, manejamos como llamada a función
+                    return self.llamada_funcion()
+                elif self.tokens[self.posicion + 1].tipo == TipoToken.ASIGNAR:
+                    return self.declaracion_asignacion()
+                else:
+                    valor = self.token_actual().valor
+                    self.avanzar()
+                    return NodoValor(valor)
             else:
-                valor = self.token_actual().valor
-                self.avanzar()
-                return NodoValor(valor)
-        else:
-            raise SyntaxError(f"Token inesperado {token.tipo}")
+                raise SyntaxError(f"Token inesperado {token.tipo}")
+        except Exception as e:
+            print(f"Error en la declaración: {e}")
+            raise  # Relanzar la excepción si es necesario
 
     def declaracion_variable(self):
         self.comer(TipoToken.VAR)
@@ -167,20 +176,19 @@ class Parser:
         return NodoHolobit(valores)
 
     def declaracion_condicional(self):
-        self.comer(TipoToken.SI)  # Consume 'si'
-        condicion = self.expresion()  # Procesa la condición
+        # Debe haber un token 'si'
+        self.comer(TipoToken.SI)
+        condicion = self.expresion()  # Aquí deberías tener la condición
+        self.comer(TipoToken.DOSPUNTOS)  # Consumir el ':' después de la condición
+        bloque_si = self.bloque()  # Procesar el bloque 'si'
 
-        self.comer(TipoToken.DOSPUNTOS)  # Consume ':'
-        bloque_si = self.bloque()  # Procesa el bloque si
-
-        # Aquí puedes manejar el 'sino'
         bloque_sino = None
         if self.token_actual().tipo == TipoToken.SINO:
-            self.comer(TipoToken.SINO)  # Consume 'sino'
-            self.comer(TipoToken.DOSPUNTOS)  # Consume ':'
-            bloque_sino = self.bloque()  # Procesa el bloque sino
+            self.avanzar()  # Mover al token 'sino'
+            self.comer(TipoToken.DOSPUNTOS)  # Consumir el ':'
+            bloque_sino = self.bloque()  # Procesar el bloque 'sino'
 
-        return NodoCondicional(condicion, bloque_si, bloque_sino)  # Retorna el nodo condicional
+        return NodoCondicional(condicion, bloque_si, bloque_sino)
 
     def declaracion_mientras(self):
         self.comer(TipoToken.MIENTRAS)
@@ -201,26 +209,38 @@ class Parser:
 
         return NodoFuncion(nombre, parametros, cuerpo)
 
+    # Función dentro del Parser para manejar la llamada a funciones
     def llamada_funcion(self):
-        nombre = self.token_actual().valor  # Obtener el nombre de la función
-        self.comer(TipoToken.IDENTIFICADOR)  # Consumir el nombre de la función
-        self.comer(TipoToken.LPAREN)  # Consumir '('
+        identificador = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)  # Mover al identificador de la función
+        self.comer(TipoToken.LPAREN)  # Asegúrate de que hay un paréntesis de apertura
 
         argumentos = []
-        if self.token_actual().tipo != TipoToken.RPAREN:
-            argumentos.append(self.expresion())  # Procesar los argumentos de la función
-            while self.token_actual().tipo == TipoToken.COMA:
-                self.comer(TipoToken.COMA)
-                argumentos.append(self.expresion())
 
-        self.comer(TipoToken.RPAREN)  # Consumir ')'
-        return NodoLlamadaFuncion(nombre, argumentos)
+        # Procesar los argumentos dentro del paréntesis
+        while self.token_actual().tipo != TipoToken.RPAREN:
+            if self.token_actual().tipo in [TipoToken.ENTERO, TipoToken.FLOTANTE, TipoToken.CADENA,
+                                            TipoToken.IDENTIFICADOR]:
+                argumentos.append(self.expresion())  # Procesa el argumento
+            else:
+                raise SyntaxError(f"Tipo de argumento inesperado: {self.token_actual().tipo}")
+
+            # Manejo de coma entre argumentos
+            if self.token_actual().tipo == TipoToken.COMA:
+                self.comer(TipoToken.COMA)
+
+        self.comer(TipoToken.RPAREN)  # Mover al token ')'
+        return NodoLlamadaFuncion(identificador, argumentos)  # Crea el nodo de llamada a función
 
     # Manejo de bloques de instrucciones
     def bloque(self):
         nodos = []
-        while self.token_actual().tipo not in [TipoToken.EOF, TipoToken.SINO]:
-            nodos.append(self.declaracion())
+        while self.token_actual().tipo != TipoToken.EOF:
+            try:
+                nodos.append(self.declaracion())
+            except SyntaxError as e:
+                print(f"Error de sintaxis en el bloque: {e}")
+                break  # Puedes decidir si quieres detener la ejecución o continuar
         return nodos
 
     # Manejo de expresiones

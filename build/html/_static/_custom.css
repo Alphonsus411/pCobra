@@ -1,0 +1,31 @@
+/* Cambiar el color de los encabezados */
+h1, h2, h3 {
+    color: #044f67; /* Color azul característico de Django */
+}
+
+/* Cambiar el color del fondo del menú superior */
+.wy-nav-top {
+    background-color: #044f67; /* Azul oscuro para el header */
+}
+
+/* Cambiar el color de los enlaces en la barra lateral */
+.wy-menu-vertical a {
+    color: #005b9e; /* Azul similar al de Django */
+}
+
+/* Cambiar el color de los enlaces al pasar el ratón */
+.wy-menu-vertical a:hover {
+    color: #44a1f2;
+}
+
+/* Cambiar el color de fondo del cuerpo */
+body {
+    background-color: #f9f9f9; /* Gris claro para el fondo */
+}
+
+/* Estilo de los botones */
+.rst-content .btn {
+    background-color: #005b9e;
+    color: white;
+    border-radius: 4px;
+}
