@@ -1,92 +1,129 @@
-## Cobra
+# Proyecto Cobra
 
-Cobra es un lenguaje de programación experimental completamente en español, diseñado para ser versátil y adecuado para tareas de alto, medio y bajo nivel. Su objetivo es proporcionar un entorno amigable para la simulación, visualización y manipulación de datos complejos, como los holobits, así como para la programación estándar en entornos modernos.
+Cobra es un lenguaje de programación diseñado en español, con un enfoque en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer y un parser robusto, que permite la interpretación y ejecución de un subconjunto del lenguaje definido.
 
-## Características principales:
+## Tabla de Contenidos
 
-- **Sintaxis en español**: Todas las palabras clave y estructuras del lenguaje están en español, para facilitar su uso por hablantes nativos.
-- **Gestión de memoria automática**: Cobra incorpora un sistema de manejo de memoria basado en algoritmos genéticos que optimiza el uso de los recursos durante la ejecución.
-- **Soporte para holobits**: Un tipo de dato multidimensional que permite trabajar con datos de alta complejidad.
-- **Transpiler a Python y JavaScript**: Los programas escritos en Cobra pueden ser transpilados a Python o JavaScript, lo que permite su ejecución en una variedad de plataformas.
+- [Descripción del Proyecto](#descripción-del-proyecto)
+- [Instalación](#instalación)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Características Principales](#características-principales)
+- [Uso](#uso)
+- [Pruebas](#pruebas)
+- [Contribuciones](#contribuciones)
+- [Licencia](#licencia)
 
-## Ejemplo básico:
+## Descripción del Proyecto
 
-````cobra
-var x = holobit([0.8, -0.5, 1.2])
+Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible para aquellos que no están familiarizados con el inglés. A través de su lexer y parser, Cobra puede analizar y ejecutar código, manejando variables, funciones y estructuras de control, lo que permite una amplia gama de aplicaciones.
 
-# Proyección en 2D
-var proyeccion = proyectar(x, '2D')
-imprimir(proyeccion)
+## Instalación
 
-# Rotar 45 grados
-var rotado = transformar(x, 'rotar', 45)
-imprimir(rotado)
+Para instalar el proyecto, sigue estos pasos:
 
-# Graficar el holobit
-graficar(x)
+1. Clona el repositorio en tu máquina local:
+
+   ```bash
+   git clone https://github.com/tu_usuario/Cobra.git
+   ````
+   
+2. Accede al directorio del proyecto:
+
+````bash
+cd Cobra
 ````
 
-## Sintaxis actual de Cobra
+3. Crea un entorno virtual y actívalo:
 
-### 1. Declaración de variables:
-
-- Utilizamos ```var``` para declarar una variable:
-
-````cobra
-var nombre = "Cobra"
-var numero = 10
-````
-### 2. Funciones:
-- Se define una función con la palabra clave ```func``` y se utiliza ```:``` para marcar el cuerpo de la función:
-
-````cobra
-func sumar(a, b) :
-    return a + b
+````bash
+python -m venv .venv
+source .venv/bin/activate  # Para Unix
+.\.venv\Scripts\activate  # Para Windows
 ````
 
-### 3. Función relativa (rel):
+4. Instala las dependencias necesarias:
 
-- Una función que se puede usar en contextos temporales específicos:
-
-````cobra
-rel calculo_temporal(x) :
-    return x * 2
+````bash
+pip install -r requirements.txt
 ````
 
-### 4. Condicionales:
+# Estructura del Proyecto
 
-- Se usan ```si``` y ```sino``` para manejar condiciones:
+El proyecto se organiza en las siguientes carpetas y módulos:
+
+- `core/`: Contiene la lógica principal del lexer y parser.
+- `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
+- `src/`: Carpeta principal donde se implementa la lógica del lenguaje Cobra.
+- `README.md`: Documentación del proyecto.
+- `requirements.txt`: Archivo que lista las dependencias del proyecto.
+
+# Características Principales
+
+- **Lexer y Parser**: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
+- **Manejo de Declaraciones**: Soporte para declaraciones de variables, holobits, funciones y estructuras de control como condicionales y bucles.
+- **Manejo de Errores**: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
+- **Visualización**: Salida detallada de tokens y errores de sintaxis para facilitar el desarrollo y la depuración.
+- **Soporte para Llamadas a Funciones**: Implementación de un sistema para manejar argumentos en llamadas a funciones.
+
+# Uso
+
+Para ejecutar pruebas unitarias, utiliza pytest:
+
+````bash
+pytest src/tests
+````
+
+# Ejemplo de Uso
+
+Puedes probar el lexer y parser con un código como el siguiente:
 
 ````cobra
-si x > 10 :
-    imprimir("x es mayor que 10")
+codigo = '''
+var x = 10
+si x > 5 :
+    proyectar(x, "2D")
 sino :
-    imprimir("x es menor o igual a 10")
+    graficar(x)
+'''
+
+# Inicializamos el lexer
+lexer = Lexer(codigo)
+tokens = lexer.analizar_token()
+
+# Inicializamos el parser
+parser = Parser(tokens)
+
+# Ejecutar el parser
+arbol = parser.parsear()
+print(arbol)
 ````
 
-### 5. Bucles:
+# Pruebas
 
-- Cobra soporta bucles ```mientras``` y ```para```:
+Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Puedes añadir más pruebas para cubrir nuevos casos de uso y asegurar la estabilidad del código.
 
-````cobra
-mientras x < 5 :
-    imprimir(x)
-    x += 1
-
-para var i en rango(5) :
-    imprimir(i)
+````bash
+pytest src/tests
 ````
 
-## Avances hasta el momento
+# Contribuciones
 
-- **Lexer y Parser funcionales**: El sistema léxico y sintáctico está completamente implementado y es capaz de procesar asignaciones de variables, funciones, condicionales, bucles y operaciones de holobits.
-- **Holobits**: Tipo de dato especial para trabajar con información multidimensional, con soporte para operaciones como proyecciones, transformaciones y visualización.
-- **Gestión de memoria automatizada**: Cobra incluye un sistema de manejo de memoria optimizado que se ajusta automáticamente utilizando algoritmos genéticos.
-- **Transpilación a otros lenguajes**: Se ha implementado un transpilador que convierte el código Cobra a Python y JavaScript.
-- **Pruebas unitarias**: Se han creado pruebas para validar el correcto funcionamiento del lexer y el parser.
+Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 
-## Próximos pasos
-- Expandir las funcionalidades para holobits.
-- Mejorar el sistema de simulación y visualización.
-- Implementar nuevas optimizaciones para un mejor rendimiento en simulaciones complejas.
+- Haz un fork del proyecto.
+- Crea una nueva rama (`git checkout -b feature/nueva-caracteristica`).
+- Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
+- Envía un pull request.
 
+# Licencia
+
+Este proyecto está bajo la Licencia MIT. Para más detalles, consulta el archivo LICENSE.
+
+
+### Notas
+
+- **Descripciones Detalladas**: Se han agregado secciones que explican de manera más completa qué hace el proyecto y cómo usarlo.
+- **Ejemplos de Código**: Se ha incluido un ejemplo práctico que ilustra cómo usar el lexer y el parser.
+- **Contribuciones**: Se ha dejado claro cómo otros pueden contribuir al proyecto.
+
+Si deseas agregar o modificar algo, házmelo saber.

@@ -33,6 +33,7 @@ class TipoToken:
     LBRACKET = 'LBRACKET'
     RBRACKET = 'RBRACKET'
     EOF = 'EOF'
+    FIN = 'FIN'
 
 
 class Token:

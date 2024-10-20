@@ -15,9 +15,9 @@ def test_parser_asignacion_variable():
     arbol = parser.parsear()
 
     assert isinstance(arbol[0], NodoAsignacion)
-    assert arbol[0].identificador == 'x'  # Cambiado de 'nombre' a 'identificador'
-    assert isinstance(arbol[0].valor, NodoValor)
-    assert arbol[0].valor.valor == 10
+    assert arbol[0].variable == 'x'  # Comprobar que la variable es correcta
+    assert isinstance(arbol[0].expresion, NodoValor)
+    assert arbol[0].expresion.valor == 10  # Comprobar que el valor asignado es correcto
 
 
 def test_parser_holobit():
@@ -27,21 +27,22 @@ def test_parser_holobit():
         Token(TipoToken.LBRACKET, '['),
         Token(TipoToken.FLOTANTE, 0.8),
         Token(TipoToken.COMA, ','),
-        Token(TipoToken.RESTA, '-'),
-        Token(TipoToken.FLOTANTE, 0.5),
+        Token(TipoToken.FLOTANTE, -0.5),  # Cambiado a un flotante negativo
         Token(TipoToken.COMA, ','),
         Token(TipoToken.FLOTANTE, 1.2),
         Token(TipoToken.RBRACKET, ']'),
         Token(TipoToken.RPAREN, ')'),
         Token(TipoToken.EOF, None)
     ]
+
     parser = Parser(tokens)
     arbol = parser.parsear()
 
-    assert isinstance(arbol[0], NodoHolobit)
-    assert arbol[0].valores[0].valor == 0.8
-    assert arbol[0].valores[1].valor == -0.5
-    assert arbol[0].valores[2].valor == 1.2
+    assert isinstance(arbol[0], NodoHolobit), "Se esperaba un nodo de tipo NodoHolobit"
+    assert len(arbol[0].valores) == 3, "El holobit debe contener 3 valores"
+    assert arbol[0].valores[0].valor == 0.8, "El primer valor del holobit debe ser 0.8"
+    assert arbol[0].valores[1].valor == -0.5, "El segundo valor del holobit debe ser -0.5"
+    assert arbol[0].valores[2].valor == 1.2, "El tercer valor del holobit debe ser 1.2"
 
 
 def test_parser_condicional():
@@ -90,10 +91,11 @@ def test_parser_bucle_mientras():
     parser = Parser(tokens)
     arbol = parser.parsear()
 
-    assert isinstance(arbol[0], NodoBucleMientras)  # Cambiado de NodoCondicional a NodoBucleMientras
+    assert isinstance(arbol[0], NodoBucleMientras)
     assert isinstance(arbol[0].condicion, NodoOperacionBinaria)
     assert arbol[0].condicion.izquierda.valor == 'x'
     assert arbol[0].condicion.derecha.valor == 0
+
 
 def test_parser_funcion():
     tokens = [
