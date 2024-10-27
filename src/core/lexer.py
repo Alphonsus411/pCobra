@@ -1,4 +1,5 @@
 import re
+import logging
 
 
 class TipoToken:
@@ -18,22 +19,19 @@ class TipoToken:
     CADENA = 'CADENA'
     BOOLEANO = 'BOOLEANO'
     IDENTIFICADOR = 'IDENTIFICADOR'
+    ASIGNAR = 'ASIGNAR'
+    DOSPUNTOS = 'DOSPUNTOS'
     SUMA = 'SUMA'
     RESTA = 'RESTA'
     MULT = 'MULT'
     DIV = 'DIV'
-    ASIGNAR = 'ASIGNAR'
-    DOSPUNTOS = 'DOSPUNTOS'
     MAYORQUE = 'MAYORQUE'
     LPAREN = 'LPAREN'
     RPAREN = 'RPAREN'
-    LLLAVE = 'LLAVE'
-    RLLAVE = 'RLLAVE'
-    COMA = 'COMA'
     LBRACKET = 'LBRACKET'
     RBRACKET = 'RBRACKET'
+    COMA = 'COMA'
     EOF = 'EOF'
-    FIN = 'FIN'
 
 
 class Token:
@@ -51,7 +49,7 @@ class Lexer:
         self.posicion = 0
         self.tokens = []
 
-    def analizar_token(self):
+    def tokenizar(self):
         especificacion_tokens = [
             (TipoToken.VAR, r'\bvar\b'),
             (TipoToken.FUNC, r'\bfunc\b'),
@@ -64,22 +62,21 @@ class Lexer:
             (TipoToken.PROYECTAR, r'\bproyectar\b'),
             (TipoToken.TRANSFORMAR, r'\btransformar\b'),
             (TipoToken.GRAFICAR, r'\bgraficar\b'),
-            (TipoToken.FLOTANTE, r'\d+\.\d+'),  # Flotantes sin el signo negativo
-            (TipoToken.ENTERO, r'\d+'),  # Enteros sin el signo negativo
-            (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),  # Cadenas entre comillas simples o dobles
+            (TipoToken.FLOTANTE, r'\d+\.\d+'),
+            (TipoToken.ENTERO, r'\d+'),
+            (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
             (TipoToken.BOOLEANO, r'\b(verdadero|falso)\b'),
             (TipoToken.IDENTIFICADOR, r'[A-Za-z_][A-Za-z0-9_]*'),
-            (TipoToken.ASIGNAR, r'='),
-            (TipoToken.DOSPUNTOS, r':'),  # Usamos ':' como símbolo de dos puntos
+            (TipoToken.ASIGNAR, r'='),  # Asignación
             (TipoToken.SUMA, r'\+'),
-            (TipoToken.RESTA, r'-'),  # El signo menos se trata por separado
+            (TipoToken.RESTA, r'-'),
             (TipoToken.MULT, r'\*'),
             (TipoToken.DIV, r'/'),
-            (TipoToken.MAYORQUE, r'>'),  # Asegurarse que MAYORQUE esté después de DOSPUNTOS
+            (TipoToken.MAYORQUE, r'>'),
             (TipoToken.LPAREN, r'\('),
             (TipoToken.RPAREN, r'\)'),
-            (TipoToken.LBRACKET, r'\['),  # Corchetes de apertura
-            (TipoToken.RBRACKET, r'\]'),  # Corchetes de cierre
+            (TipoToken.LBRACKET, r'\['),
+            (TipoToken.RBRACKET, r'\]'),
             (TipoToken.COMA, r','),
             (None, r'\s+'),  # Ignorar espacios en blanco
         ]
@@ -96,15 +93,16 @@ class Lexer:
                             valor = float(valor)
                         elif tipo == TipoToken.ENTERO:
                             valor = int(valor)
-                        print(f"Token encontrado: {valor} en posición {self.posicion}")
                         self.tokens.append(Token(tipo, valor))
                     self.posicion += len(coincidencia.group(0))
                     matched = True
                     break
 
             if not matched:
-                print(
-                    f"Error: Token no reconocido en posición {self.posicion}: {self.codigo_fuente[self.posicion:self.posicion + 10]}")
+                error_token = self.codigo_fuente[self.posicion:self.posicion + 10]
+                print(f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'")
+                print(f"Código fuente actual: '{self.codigo_fuente}'")  # Muestra el código fuente completo
+                print(f"Posición actual: {self.posicion}")
                 raise SyntaxError(f"Token no reconocido en posición {self.posicion}")
 
         self.tokens.append(Token(TipoToken.EOF, None))  # Añadir token EOF al final

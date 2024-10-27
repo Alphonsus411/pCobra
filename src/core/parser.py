@@ -1,3 +1,5 @@
+import logging
+
 from src.core.lexer import TipoToken
 
 
@@ -17,7 +19,7 @@ class NodoAST:
 class NodoAsignacion:
     def __init__(self, variable, expresion):
         self.variable = variable  # Nombre de la variable
-        self.expresion = expresion  # Expresión asignada
+        self.expresion = expresion  # Expresión asignada, que puede ser un NodoValor, Token, etc.
 
 
 class NodoHolobit(NodoAST):
@@ -47,7 +49,6 @@ class NodoBucleMientras(NodoAST):
 
     def __repr__(self):
         return f"NodoBucleMientras"
-
 
 
 class NodoFuncion(NodoAST):
@@ -98,7 +99,7 @@ class Parser:
     def token_actual(self):
         if self.posicion < len(self.tokens):
             token = self.tokens[self.posicion]
-            print(f"Token actual: {token}")  # Para depuración
+            logging.debug(f"Token actual: {token}")  # Para depuración
             return token
         raise Exception("No hay más tokens")
 
@@ -135,7 +136,7 @@ class Parser:
 
     def declaracion(self):
         token = self.token_actual()
-        print(f"Token en declaracion: {token}")  # Mensaje de depuración
+        logging.debug(f"Token en declaracion: {token}")  # Mensaje de depuración
 
         try:
             if token.tipo == TipoToken.VAR:
@@ -149,7 +150,7 @@ class Parser:
             elif token.tipo == TipoToken.FUNC:
                 return self.declaracion_funcion()  # Manejo de funciones
             elif token.tipo == TipoToken.IDENTIFICADOR:
-                print(f"Identificador encontrado: {token.valor}")  # Depuración
+                logging.debug(f"Identificador encontrado: {token.valor}")  # Depuración
                 siguiente_token = self.token_siguiente()  # Obtener el siguiente token de manera segura
 
                 if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
@@ -162,7 +163,7 @@ class Parser:
             else:
                 raise SyntaxError(f"Token inesperado: {token.tipo}")
         except Exception as e:
-            print(f"Error en la declaración: {e}")
+            logging.debug(f"Error en la declaración: {e}")
             raise  # Relanzar la excepción si es necesario
 
     def declaracion_mientras(self):
@@ -268,7 +269,7 @@ class Parser:
             try:
                 nodos.append(self.declaracion())
             except SyntaxError as e:
-                print(f"Error de sintaxis en el bloque: {e}")
+                logging.debug(f"Error de sintaxis en el bloque: {e}")
                 break  # Puedes decidir si quieres detener la ejecución o continuar
         return nodos
 
