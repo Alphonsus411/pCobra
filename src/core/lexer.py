@@ -2,6 +2,15 @@ import re
 
 
 class TipoToken:
+    CLASE = 'CLASE'
+    DICCIONARIO = 'DICCIONARIO'
+    LISTA = 'LISTA'
+    RBRACE = 'RBRACE'
+    DEF = 'DEF'
+    CLASS = 'CLASS'
+    IN = 'IN'
+    LBRACE = 'LBRACE'
+    FOR = 'FOR'
     DOSPUNTOS = 'DOS PUNTOS'
     VAR = 'VAR'
     FUNC = 'FUNC'

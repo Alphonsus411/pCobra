@@ -1,3 +1,4 @@
+# Asegúrate de que los imports y la configuración estén correctos
 import logging
 from src.core.lexer import TipoToken
 
@@ -39,7 +40,42 @@ class NodoBucleMientras(NodoAST):
         self.cuerpo = cuerpo
 
 
+class NodoFor(NodoAST):
+    def __init__(self, variable, iterable, cuerpo):
+        super().__init__()
+        self.variable = variable
+        self.iterable = iterable
+        self.cuerpo = cuerpo
+
+
+class NodoLista(NodoAST):
+    def __init__(self, elementos):
+        super().__init__()
+        self.elementos = elementos
+
+
+class NodoDiccionario(NodoAST):
+    def __init__(self, elementos):
+        super().__init__()
+        self.elementos = elementos  # Definición correcta del atributo elementos
+
+
 class NodoFuncion(NodoAST):
+    def __init__(self, nombre, parametros, cuerpo):
+        super().__init__()
+        self.nombre = nombre
+        self.parametros = parametros
+        self.cuerpo = cuerpo
+
+
+class NodoClase(NodoAST):
+    def __init__(self, nombre, metodos):
+        super().__init__()
+        self.nombre = nombre
+        self.metodos = metodos
+
+
+class NodoMetodo(NodoAST):
     def __init__(self, nombre, parametros, cuerpo):
         super().__init__()
         self.nombre = nombre
@@ -66,9 +102,6 @@ class NodoLlamadaFuncion(NodoAST):
         super().__init__()
         self.nombre = nombre
         self.argumentos = argumentos
-
-    def aceptar(self, visitante):
-        return visitante.visitar_llamada_funcion(self)
 
 
 class Parser:
@@ -228,27 +261,18 @@ class Parser:
             else:
                 raise SyntaxError(f"Se esperaba un número después del signo '-', pero se encontró {numero.tipo}")
         elif token.tipo in [TipoToken.ENTERO, TipoToken.FLOTANTE]:
-            valor = token.valor
             self.avanzar()
-            return NodoValor(valor)
-        elif token.tipo == TipoToken.CADENA:
-            valor = token.valor
-            self.avanzar()
-            return NodoValor(valor)
+            return NodoValor(token.valor)
         elif token.tipo == TipoToken.IDENTIFICADOR:
-            valor = token.valor
-            self.avanzar()
-            return NodoValor(valor)
-        elif token.tipo == TipoToken.HOLOBIT:
-            return self.declaracion_holobit()
+            return self.llamada_funcion()
         else:
-            raise SyntaxError(f"Token inesperado {token.tipo}. El token LBRACKET solo se permite en holobits.")
+            raise SyntaxError(f"Token inesperado: {token.tipo}")
 
     def lista_parametros(self):
         parametros = []
-        while self.token_actual().tipo != TipoToken.RPAREN:
+        while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
             parametros.append(self.token_actual().valor)
-            self.avanzar()
+            self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo == TipoToken.COMA:
                 self.comer(TipoToken.COMA)
         return parametros

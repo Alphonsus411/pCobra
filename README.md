@@ -1,21 +1,22 @@
 # Proyecto Cobra
 
-Cobra es un lenguaje de programación diseñado en español, con un enfoque en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer y un parser robusto, que permite la interpretación y ejecución de un subconjunto del lenguaje definido.
+Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python y JavaScript, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
 ## Tabla de Contenidos
 
-- [Descripción del Proyecto](#descripción-del-proyecto)
-- [Instalación](#instalación)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Características Principales](#características-principales)
-- [Uso](#uso)
-- [Pruebas](#pruebas)
-- [Contribuciones](#contribuciones)
-- [Licencia](#licencia)
+- Descripción del Proyecto
+- Instalación
+- Estructura del Proyecto
+- Características Principales
+- Uso
+- Ejemplo de Uso
+- Pruebas
+- Contribuciones
+- Licencia
 
 ## Descripción del Proyecto
 
-Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible para aquellos que no están familiarizados con el inglés. A través de su lexer y parser, Cobra puede analizar y ejecutar código, manejando variables, funciones y estructuras de control, lo que permite una amplia gama de aplicaciones.
+Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible. A través de su lexer, parser y transpiladores, Cobra puede analizar, ejecutar y convertir código a otros lenguajes, brindando soporte para variables, funciones, estructuras de control y estructuras de datos como listas, diccionarios y clases.
 
 ## Instalación
 
@@ -59,11 +60,12 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 
 # Características Principales
 
-- **Lexer y Parser**: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
-- **Manejo de Declaraciones**: Soporte para declaraciones de variables, holobits, funciones y estructuras de control como condicionales y bucles.
-- **Manejo de Errores**: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
-- **Visualización**: Salida detallada de tokens y errores de sintaxis para facilitar el desarrollo y la depuración.
-- **Soporte para Llamadas a Funciones**: Implementación de un sistema para manejar argumentos en llamadas a funciones.
+- Lexer y Parser: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
+- Transpiladores a Python y JavaScript: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
+- Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
+- Manejo de Errores: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
+- Visualización y Depuración: Salida detallada de tokens, AST y errores de sintaxis para un desarrollo más sencillo.
+- Ejemplos de Código y Documentación: Ejemplos prácticos que ilustran el uso del lexer, parser y transpiladores.
 
 # Uso
 
@@ -93,9 +95,14 @@ tokens = lexer.analizar_token()
 # Inicializamos el parser
 parser = Parser(tokens)
 
-# Ejecutar el parser
+# Ejecutar el parser para obtener el AST
 arbol = parser.parsear()
 print(arbol)
+
+# Transpilación a Python
+transpiler = TranspiladorPython()
+codigo_python = transpiler.transpilar(arbol)
+print(codigo_python)
 ````
 
 # Pruebas
@@ -122,8 +129,7 @@ Este proyecto está bajo la Licencia MIT. Para más detalles, consulta el archiv
 
 ### Notas
 
-- **Descripciones Detalladas**: Se han agregado secciones que explican de manera más completa qué hace el proyecto y cómo usarlo.
-- **Ejemplos de Código**: Se ha incluido un ejemplo práctico que ilustra cómo usar el lexer y el parser.
-- **Contribuciones**: Se ha dejado claro cómo otros pueden contribuir al proyecto.
+- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación y la compatibilidad con Python y JavaScript.
+- **Ejemplos de Código y Nuevas Estructuras**: Incluye ejemplos con el uso de estructuras avanzadas como clases y diccionarios en el lenguaje Cobra.
 
 Si deseas agregar o modificar algo, házmelo saber.

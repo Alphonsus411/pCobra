@@ -1,13 +1,20 @@
-from src.core.parser import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, \
-    NodoHolobit
+from src.core.parser import (
+    NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
+    NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
+    NodoClase, NodoMetodo, NodoValor
+)
 
 
 class TranspiladorPython:
     def __init__(self):
         self.codigo = ""
+        self.nivel_indentacion = 0
 
-    def transpilar(self, ast):
-        for nodo in ast:
+    def obtener_indentacion(self):
+        return "    " * self.nivel_indentacion
+
+    def transpilar(self, nodos):
+        for nodo in nodos:
             self.transpilar_nodo(nodo)
         return self.codigo
 
@@ -24,39 +31,92 @@ class TranspiladorPython:
             self.transpilar_llamada_funcion(nodo)
         elif isinstance(nodo, NodoHolobit):
             self.transpilar_holobit(nodo)
+        elif isinstance(nodo, NodoFor):
+            self.transpilar_for(nodo)
+        elif isinstance(nodo, NodoLista):
+            self.transpilar_lista(nodo)
+        elif isinstance(nodo, NodoDiccionario):
+            self.transpilar_diccionario(nodo)
+        elif isinstance(nodo, NodoClase):
+            self.transpilar_clase(nodo)
+        elif isinstance(nodo, NodoMetodo):
+            self.transpilar_metodo(nodo)
+        elif isinstance(nodo, NodoValor):
+            self.codigo += self.obtener_valor(nodo)
+        else:
+            raise TypeError(f"Tipo de nodo no soportado: {type(nodo).__name__}")
 
-    # En to_python.py
+    def obtener_valor(self, nodo):
+        return str(nodo.valor) if isinstance(nodo, NodoValor) else str(nodo)
+
     def transpilar_asignacion(self, nodo):
-        self.codigo += f"{nodo.nombre} = {nodo.valor}\n"
+        self.codigo += f"{self.obtener_indentacion()}{nodo.variable} = {self.obtener_valor(nodo.expresion)}\n"
 
     def transpilar_condicional(self, nodo):
-        self.codigo += f"if {nodo.condicion}:\n"
+        self.codigo += f"{self.obtener_indentacion()}if {nodo.condicion}:\n"
+        self.nivel_indentacion += 1
         for instruccion in nodo.bloque_si:
-            self.codigo += "    "
             self.transpilar_nodo(instruccion)
+        self.nivel_indentacion -= 1
         if nodo.bloque_sino:
-            self.codigo += "else:\n"
+            self.codigo += f"{self.obtener_indentacion()}else:\n"
+            self.nivel_indentacion += 1
             for instruccion in nodo.bloque_sino:
-                self.codigo += "    "
                 self.transpilar_nodo(instruccion)
+            self.nivel_indentacion -= 1
 
     def transpilar_mientras(self, nodo):
-        self.codigo += f"while {nodo.condicion}:\n"
+        self.codigo += f"{self.obtener_indentacion()}while {nodo.condicion}:\n"
+        self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
-            self.codigo += "    "
             self.transpilar_nodo(instruccion)
+        self.nivel_indentacion -= 1
+
+    def transpilar_for(self, nodo):
+        self.codigo += f"{self.obtener_indentacion()}for {nodo.variable} in {nodo.iterable}:\n"
+        self.nivel_indentacion += 1
+        for instruccion in nodo.cuerpo:
+            self.transpilar_nodo(instruccion)
+        self.nivel_indentacion -= 1
 
     def transpilar_funcion(self, nodo):
-        self.codigo += f"def {nodo.nombre}({', '.join(nodo.parametros)}):\n"
+        parametros = ", ".join(nodo.parametros)
+        self.codigo += f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
+        self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
-            self.codigo += "    "
             self.transpilar_nodo(instruccion)
+        self.nivel_indentacion -= 1
 
     def transpilar_llamada_funcion(self, nodo):
-        self.codigo += f"{nodo.nombre}({', '.join(nodo.argumentos)})"
+        argumentos = ", ".join(nodo.argumentos)
+        self.codigo += f"{nodo.nombre}({argumentos})\n"
 
-    # En to_python.py
     def transpilar_holobit(self, nodo):
-        self.codigo += f"holobit({nodo.nombre})\n"
+        valores = ", ".join(self.obtener_valor(valor) for valor in nodo.valores)
+        self.codigo += f"holobit([{valores}])\n"
 
+    def transpilar_lista(self, nodo):
+        elementos = ", ".join(self.obtener_valor(elemento) for elemento in nodo.elementos)
+        self.codigo += f"[{elementos}]\n"
 
+    def transpilar_diccionario(self, nodo):
+        # Corrección: `elementos` es una lista de pares clave-valor
+        elementos = ", ".join(
+            f"{self.obtener_valor(clave)}: {self.obtener_valor(valor)}" for clave, valor in nodo.elementos
+        )
+        self.codigo += f"{{{elementos}}}\n"
+
+    def transpilar_clase(self, nodo):
+        self.codigo += f"{self.obtener_indentacion()}class {nodo.nombre}:\n"
+        self.nivel_indentacion += 1
+        for metodo in nodo.metodos:
+            self.transpilar_metodo(metodo)
+        self.nivel_indentacion -= 1
+
+    def transpilar_metodo(self, nodo):
+        parametros = ", ".join(nodo.parametros)
+        self.codigo += f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
+        self.nivel_indentacion += 1
+        for instruccion in nodo.cuerpo:
+            self.transpilar_nodo(instruccion)
+        self.nivel_indentacion -= 1
