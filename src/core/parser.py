@@ -1,5 +1,5 @@
-# Asegúrate de que los imports y la configuración estén correctos
 import logging
+import json
 from src.core.lexer import TipoToken
 
 
@@ -57,7 +57,7 @@ class NodoLista(NodoAST):
 class NodoDiccionario(NodoAST):
     def __init__(self, elementos):
         super().__init__()
-        self.elementos = elementos  # Definición correcta del atributo elementos
+        self.elementos = elementos
 
 
 class NodoFuncion(NodoAST):
@@ -108,6 +108,7 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.posicion = 0
+        self.indentacion_actual = 0
 
     def token_actual(self):
         if self.posicion < len(self.tokens):
@@ -133,16 +134,6 @@ class Parser:
         while self.token_actual().tipo != TipoToken.EOF:
             nodos.append(self.declaracion())
         return nodos
-
-    def declaracion_asignacion(self):
-        token_actual = self.token_actual()
-        if token_actual.tipo == TipoToken.VAR:
-            self.comer(TipoToken.VAR)
-        identificador = self.token_actual()
-        self.comer(TipoToken.IDENTIFICADOR)
-        self.comer(TipoToken.ASIGNAR)
-        valor = self.expresion()
-        return NodoAsignacion(identificador, valor)
 
     def declaracion(self):
         token = self.token_actual()
@@ -172,13 +163,19 @@ class Parser:
             logging.debug(f"Error en la declaración: {e}")
             raise
 
+    def declaracion_asignacion(self):
+        self.comer(TipoToken.VAR)
+        identificador = self.token_actual()
+        self.comer(TipoToken.IDENTIFICADOR)
+        self.comer(TipoToken.ASIGNAR)
+        valor = self.expresion()
+        return NodoAsignacion(identificador, valor)
+
     def declaracion_mientras(self):
         self.comer(TipoToken.MIENTRAS)
         condicion = self.expresion()
         self.comer(TipoToken.DOSPUNTOS)
-        cuerpo = []
-        while self.token_actual().tipo != TipoToken.EOF and self.token_actual().tipo != TipoToken.FIN:
-            cuerpo.append(self.declaracion())
+        cuerpo = self.bloque()
         return NodoBucleMientras(condicion, cuerpo)
 
     def declaracion_holobit(self):
@@ -200,12 +197,12 @@ class Parser:
         condicion = self.expresion()
         self.comer(TipoToken.DOSPUNTOS)
         bloque_si = self.bloque()
+        bloque_sino = None
         if self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
             self.comer(TipoToken.DOSPUNTOS)
             bloque_sino = self.bloque()
-            return NodoCondicional(condicion, bloque_si, bloque_sino)
-        return NodoCondicional(condicion, bloque_si)
+        return NodoCondicional(condicion, bloque_si, bloque_sino)
 
     def declaracion_funcion(self):
         self.comer(TipoToken.FUNC)
@@ -232,7 +229,7 @@ class Parser:
 
     def bloque(self):
         nodos = []
-        while self.token_actual().tipo != TipoToken.EOF:
+        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
             try:
                 nodos.append(self.declaracion())
             except SyntaxError as e:
@@ -251,28 +248,28 @@ class Parser:
 
     def termino(self):
         token = self.token_actual()
-        if token.tipo == TipoToken.RESTA:
-            self.comer(TipoToken.RESTA)
-            numero = self.token_actual()
-            if numero.tipo in [TipoToken.ENTERO, TipoToken.FLOTANTE]:
-                valor = -numero.valor
-                self.avanzar()
-                return NodoValor(valor)
-            else:
-                raise SyntaxError(f"Se esperaba un número después del signo '-', pero se encontró {numero.tipo}")
-        elif token.tipo in [TipoToken.ENTERO, TipoToken.FLOTANTE]:
+        if token.tipo in [TipoToken.ENTERO, TipoToken.FLOTANTE]:
             self.avanzar()
             return NodoValor(token.valor)
         elif token.tipo == TipoToken.IDENTIFICADOR:
-            return self.llamada_funcion()
+            return NodoValor(token.valor)
         else:
-            raise SyntaxError(f"Token inesperado: {token.tipo}")
+            raise SyntaxError(f"Token inesperado en término: {token.tipo}")
 
     def lista_parametros(self):
         parametros = []
         while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
-            parametros.append(self.token_actual().valor)
+            nombre_parametro = self.token_actual().valor
+            if nombre_parametro in ["si", "mientras", "func", "fin"]:
+                raise SyntaxError(f"El nombre del parámetro '{nombre_parametro}' es reservado.")
+            if nombre_parametro in parametros:
+                raise SyntaxError(f"El parámetro '{nombre_parametro}' ya está definido.")
+            parametros.append(nombre_parametro)
             self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo == TipoToken.COMA:
                 self.comer(TipoToken.COMA)
         return parametros
+
+    def ast_to_json(self, nodo):
+        """Exporta el AST a un formato JSON para depuración o visualización."""
+        return json.dumps(nodo, default=lambda o: o.__dict__, indent=4)

@@ -75,8 +75,9 @@ class Lexer:
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
             (TipoToken.BOOLEANO, r'\b(verdadero|falso)\b'),
+            (TipoToken.DOSPUNTOS, r':'),
             (TipoToken.IDENTIFICADOR, r'[A-Za-z_][A-Za-z0-9_]*'),
-            (TipoToken.ASIGNAR, r'='),  # Asignación
+            (TipoToken.ASIGNAR, r'='),
             (TipoToken.SUMA, r'\+'),
             (TipoToken.RESTA, r'-'),
             (TipoToken.MULT, r'\*'),
@@ -119,8 +120,8 @@ class Lexer:
                 try:
                     error_token = self.codigo_fuente[self.posicion:self.posicion + 10]
                     print(f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'")
-                    error_tokens.append(error_token)  # Almacena el token no reconocido
-                    self.posicion += 1  # Avanza para evitar quedarse en el mismo carácter
+                    error_tokens.append(error_token)
+                    self.posicion += 1
                 except Exception as e:
                     print(f"Excepción al procesar el token en posición {self.posicion}: {e}")
 
@@ -135,6 +136,6 @@ class Lexer:
             prev_pos = self.posicion
 
         if error_tokens:
-            print(f"Tokens no reconocidos encontrados: {error_tokens}")
+            raise ValueError(f"Tokens no reconocidos encontrados: {error_tokens}")
 
         return self.tokens
