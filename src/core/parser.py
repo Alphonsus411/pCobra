@@ -2,6 +2,8 @@ import logging
 import json
 from src.core.lexer import TipoToken
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 # Definición de nodos AST
 class NodoAST:
@@ -104,6 +106,16 @@ class NodoLlamadaFuncion(NodoAST):
         self.argumentos = argumentos
 
 
+class NodoRetorno(NodoAST):
+    def __init__(self, expresion):
+        super().__init__()
+        self.expresion = expresion
+
+    def __repr__(self):
+        return f"NodoRetorno(expresion={self.expresion})"
+
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -136,6 +148,7 @@ class Parser:
         return nodos
 
     def declaracion(self):
+        """Procesa una declaración, ya sea una asignación, condición, bucle, función o expresión."""
         token = self.token_actual()
         try:
             if token.tipo == TipoToken.VAR:
@@ -148,15 +161,15 @@ class Parser:
                 return self.declaracion_mientras()
             elif token.tipo == TipoToken.FUNC:
                 return self.declaracion_funcion()
-            elif token.tipo == TipoToken.IDENTIFICADOR:
+            elif token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE]:
+                # Procesa expresiones directamente si el token es un identificador o literal
                 siguiente_token = self.token_siguiente()
                 if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
                     return self.llamada_funcion()
                 elif siguiente_token and siguiente_token.tipo == TipoToken.ASIGNAR:
                     return self.declaracion_asignacion()
                 else:
-                    self.avanzar()
-                    return NodoValor(token.valor)
+                    return self.expresion()  # Procesa como una expresión
             else:
                 raise SyntaxError(f"Token inesperado: {token.tipo}")
         except Exception as e:
@@ -174,8 +187,11 @@ class Parser:
     def declaracion_mientras(self):
         self.comer(TipoToken.MIENTRAS)
         condicion = self.expresion()
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de la condición del bucle 'mientras'")
         self.comer(TipoToken.DOSPUNTOS)
         cuerpo = self.bloque()
+        self.comer(TipoToken.FIN)  # Consumir el fin del bucle
         return NodoBucleMientras(condicion, cuerpo)
 
     def declaracion_holobit(self):
@@ -195,24 +211,63 @@ class Parser:
     def declaracion_condicional(self):
         self.comer(TipoToken.SI)
         condicion = self.expresion()
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de la condición del 'si'")
         self.comer(TipoToken.DOSPUNTOS)
         bloque_si = self.bloque()
         bloque_sino = None
         if self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
+            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                raise SyntaxError("Se esperaba ':' después del 'sino'")
             self.comer(TipoToken.DOSPUNTOS)
             bloque_sino = self.bloque()
+        self.comer(TipoToken.FIN)  # Consumir el fin del condicional
         return NodoCondicional(condicion, bloque_si, bloque_sino)
 
     def declaracion_funcion(self):
+        """Parsea una declaración de función con su cuerpo."""
         self.comer(TipoToken.FUNC)
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
+
         self.comer(TipoToken.LPAREN)
         parametros = self.lista_parametros()
         self.comer(TipoToken.RPAREN)
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de la declaración de la función")
         self.comer(TipoToken.DOSPUNTOS)
-        cuerpo = self.bloque()
+
+        cuerpo = []
+        max_iteraciones = 1000  # Limite razonable de iteraciones
+        iteraciones = 0
+
+        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+            iteraciones += 1
+            if iteraciones > max_iteraciones:
+                raise RuntimeError("Bucle infinito detectado en declaracion_funcion")
+            try:
+                logging.debug(f"Token actual: {self.token_actual()}")
+                if self.token_actual().tipo == TipoToken.RETORNO:
+                    self.comer(TipoToken.RETORNO)
+                    expresion = self.expresion()
+                    cuerpo.append(NodoRetorno(expresion))
+                else:
+                    cuerpo.append(self.declaracion())
+                logging.debug(f"Cuerpo actual: {cuerpo}")
+            except SyntaxError as e:
+                logging.debug(f"Error en el cuerpo de la función: {e}")
+                self.avanzar()  # Evita quedarse en un token problemático
+
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise SyntaxError(
+                f"Se esperaba 'fin' para cerrar la función '{nombre}', pero se encontró {self.token_actual().tipo}"
+            )
+        self.comer(TipoToken.FIN)
+
+        logging.debug(f"Funcion '{nombre}' parseada con cuerpo: {cuerpo}")
+
         return NodoFuncion(nombre, parametros, cuerpo)
 
     def llamada_funcion(self):

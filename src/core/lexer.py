@@ -39,6 +39,7 @@ class TipoToken:
     LBRACKET = 'LBRACKET'
     RBRACKET = 'RBRACKET'
     COMA = 'COMA'
+    RETORNO = 'RETORNO'
     FIN = 'FIN'
     EOF = 'EOF'
 
@@ -88,6 +89,7 @@ class Lexer:
             (TipoToken.LBRACKET, r'\['),
             (TipoToken.RBRACKET, r'\]'),
             (TipoToken.COMA, r','),
+            (TipoToken.RETORNO, r'\bretorno\b'),  # Reconocer 'retorno'
             (None, r'\s+'),  # Ignorar espacios en blanco
         ]
 
