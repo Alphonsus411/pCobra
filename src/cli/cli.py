@@ -7,11 +7,12 @@ from src.core.transpiler.to_js import TranspiladorJavaScript
 from src.core.transpiler.to_python import TranspiladorPython
 import os
 
-# Configura logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')  # Muestra solo mensajes importantes
+# Configuración de logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def ejecutar_cobra_interactivamente():
+    """Ejecuta Cobra en modo interactivo."""
     print("Bienvenido a la interfaz interactiva de Cobra. Escribe 'salir' o 'salir()' para salir.")
     print("Comandos especiales: 'tokens' y 'ast' para inspección avanzada.")
     interpretador = InterpretadorCobra()
@@ -19,30 +20,34 @@ def ejecutar_cobra_interactivamente():
     while True:
         try:
             linea = input("cobra> ").strip()
-            if linea in ["salir", "salir()"]:  # Permitir ambas variantes
+            if linea in ["salir", "salir()"]:  # Permitir ambas variantes para salir
                 print("Saliendo de la interfaz interactiva.")
-                break  # Salir del bucle
+                break
             elif linea == "tokens":
-                print("Mostrando tokens de la última línea procesada:")
                 tokens = Lexer(linea).tokenizar()
+                print("Tokens generados:")
                 for token in tokens:
                     print(token)
                 continue
             elif linea == "ast":
-                print("Mostrando AST de la última línea procesada:")
                 tokens = Lexer(linea).tokenizar()
                 ast = Parser(tokens).parsear()
+                print("AST generado:")
                 print(ast)
                 continue
-            elif linea:
+            elif linea:  # Procesar una entrada normal
                 tokens = Lexer(linea).tokenizar()
+                logging.debug(f"Tokens generados: {tokens}")
                 ast = Parser(tokens).parsear()
-                interpretador.ejecutar_ast(ast)  # Ejecuta el AST con el intérprete
+                logging.debug(f"AST generado: {ast}")
+                interpretador.ejecutar_ast(ast)
         except Exception as e:
+            logging.error(f"Error procesando la entrada: {e}")
             print(f"Error procesando la entrada: {e}")
 
 
 def transpilar_archivo(archivo, transpilador):
+    """Transpila un archivo Cobra a Python o JavaScript."""
     if not os.path.exists(archivo):
         print(f"Error: El archivo '{archivo}' no existe.")
         return
@@ -61,13 +66,15 @@ def transpilar_archivo(archivo, transpilador):
                 raise ValueError("Transpilador no soportado.")
 
             resultado = transpilador.transpilar(ast)
-            print(f"Código {transpilador}:")
+            print(f"Código generado ({transpilador.__class__.__name__}):")
             print(resultado)
         except Exception as e:
+            logging.error(f"Error durante la transpilación: {e}")
             print(f"Error durante la transpilación: {e}")
 
 
 def inspeccionar_archivo(archivo, modo):
+    """Inspecciona un archivo Cobra generando tokens o un AST."""
     if not os.path.exists(archivo):
         print(f"Error: El archivo '{archivo}' no existe.")
         return
@@ -85,10 +92,12 @@ def inspeccionar_archivo(archivo, modo):
                 print("AST generado:")
                 print(ast)
         except Exception as e:
+            logging.error(f"Error durante la inspección: {e}")
             print(f"Error durante la inspección: {e}")
 
 
 def main():
+    """Punto de entrada principal de la CLI."""
     parser = argparse.ArgumentParser(description="CLI para Cobra")
     parser.add_argument("archivo", nargs="?", help="Archivo con código Cobra para ejecutar o transpilar")
     parser.add_argument("--transpilador", choices=["python", "js"],

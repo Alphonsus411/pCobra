@@ -1,3 +1,4 @@
+import logging
 import re
 
 
@@ -42,6 +43,7 @@ class TipoToken:
     RETORNO = 'RETORNO'
     FIN = 'FIN'
     EOF = 'EOF'
+    IMPRIMIR = 'IMPRIMIR'  # Añadido soporte para 'imprimir'
 
 
 class Token:
@@ -72,6 +74,7 @@ class Lexer:
             (TipoToken.PROYECTAR, r'\bproyectar\b'),
             (TipoToken.TRANSFORMAR, r'\btransformar\b'),
             (TipoToken.GRAFICAR, r'\bgraficar\b'),
+            (TipoToken.IMPRIMIR, r'\bimprimir\b'),  # Reconoce 'imprimir'
             (TipoToken.FLOTANTE, r'\d+\.\d+'),
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
@@ -89,7 +92,7 @@ class Lexer:
             (TipoToken.LBRACKET, r'\['),
             (TipoToken.RBRACKET, r'\]'),
             (TipoToken.COMA, r','),
-            (TipoToken.RETORNO, r'\bretorno\b'),  # Reconocer 'retorno'
+            (TipoToken.RETORNO, r'\bretorno\b'),
             (None, r'\s+'),  # Ignorar espacios en blanco
         ]
 
@@ -105,7 +108,7 @@ class Lexer:
                 if coincidencia:
                     if tipo:
                         valor = coincidencia.group(0)
-                        print(f"Token identificado: {tipo}, valor: '{valor}', posición: {self.posicion}")
+                        logging.debug(f"Token identificado: {tipo}, valor: '{valor}', posición: {self.posicion}")
 
                         if tipo == TipoToken.FLOTANTE:
                             valor = float(valor)
@@ -119,18 +122,15 @@ class Lexer:
 
             if not matched:
                 # Si no coincide con ningún patrón, capturamos el error
-                try:
-                    error_token = self.codigo_fuente[self.posicion:self.posicion + 10]
-                    print(f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'")
-                    error_tokens.append(error_token)
-                    self.posicion += 1
-                except Exception as e:
-                    print(f"Excepción al procesar el token en posición {self.posicion}: {e}")
+                error_token = self.codigo_fuente[self.posicion:self.posicion + 10]
+                logging.error(f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'")
+                error_tokens.append(error_token)
+                self.posicion += 1
 
             if self.posicion == prev_pos:
                 same_pos_count += 1
                 if same_pos_count > 5:
-                    print(f"Bucle infinito detectado en posición {self.posicion}.")
+                    logging.error(f"Bucle infinito detectado en posición {self.posicion}.")
                     raise RuntimeError("Bucle infinito detectado en el lexer.")
             else:
                 same_pos_count = 0

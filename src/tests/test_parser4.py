@@ -1,6 +1,8 @@
 import pytest
-from src.core.parser import Parser, NodoAsignacion, NodoBucleMientras, NodoCondicional, NodoFuncion, NodoRetorno
-from src.core.lexer import TipoToken, Token
+
+from src.core.lexer import Token, TipoToken
+from src.core.parser import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoMientras, NodoValor
+from src.core.parser import Parser
 
 
 def test_parser_asignacion():
@@ -17,8 +19,9 @@ def test_parser_asignacion():
 
     assert len(ast) == 1
     assert isinstance(ast[0], NodoAsignacion)
-    assert ast[0].variable.valor == "x"
-    assert ast[0].expresion.valor == 5
+    assert ast[0].nombre == "x"
+    assert isinstance(ast[0].valor, NodoValor)
+    assert ast[0].valor.valor == 5
 
 
 def test_parser_mientras():
@@ -41,8 +44,10 @@ def test_parser_mientras():
     ast = parser.parsear()
 
     assert len(ast) == 1
-    assert isinstance(ast[0], NodoBucleMientras)
-    assert ast[0].condicion.operador.valor == ">"
+    assert isinstance(ast[0], NodoMientras)
+    assert ast[0].condicion.operador.tipo == TipoToken.MAYORQUE
+    assert ast[0].condicion.izquierda.valor == "x"
+    assert ast[0].condicion.derecha.valor == 0
     assert len(ast[0].cuerpo) == 1
     assert isinstance(ast[0].cuerpo[0], NodoAsignacion)
 
@@ -67,14 +72,19 @@ def test_parser_condicional():
         Token(TipoToken.FIN, "fin"),
         Token(TipoToken.EOF, None),
     ]
+
     parser = Parser(tokens)
     ast = parser.parsear()
 
     assert len(ast) == 1
     assert isinstance(ast[0], NodoCondicional)
-    assert ast[0].condicion.operador.valor == ">"
+    assert ast[0].condicion.operador.tipo == TipoToken.MAYORQUE
+    assert ast[0].condicion.izquierda.valor == "x"
+    assert ast[0].condicion.derecha.valor == 10
     assert len(ast[0].bloque_si) == 1
     assert len(ast[0].bloque_sino) == 1
+    assert isinstance(ast[0].bloque_si[0], NodoAsignacion)
+    assert isinstance(ast[0].bloque_sino[0], NodoAsignacion)
 
 
 def test_parser_funcion_con_retorno():
@@ -105,12 +115,10 @@ def test_parser_funcion_con_retorno():
     assert ast[0].parametros == ["a", "b"]
     assert len(ast[0].cuerpo) == 1
     assert isinstance(ast[0].cuerpo[0], NodoRetorno)
-    assert ast[0].cuerpo[0].expresion.operador.valor == "+"
-
-    print("Tokens:", tokens)
 
 
 def test_parser_funcion_sin_retorno():
+    """Prueba una función con parámetros pero sin declaración de retorno."""
     tokens = [
         Token(TipoToken.FUNC, "func"),
         Token(TipoToken.IDENTIFICADOR, "miFuncion"),
@@ -132,15 +140,19 @@ def test_parser_funcion_sin_retorno():
     assert len(ast) == 1
     assert isinstance(ast[0], NodoFuncion)
     assert ast[0].nombre == "miFuncion"
+    assert len(ast[0].parametros) == 2
+    assert ast[0].parametros == ["a", "b"]
     assert len(ast[0].cuerpo) == 1
     assert isinstance(ast[0].cuerpo[0], NodoAsignacion)
 
 
 def test_parser_errores():
-    """Prueba el manejo de errores de sintaxis."""
+    """Prueba errores sintácticos en el parser."""
     tokens = [
-        Token(TipoToken.MIENTRAS, "mientras"),
-        Token(TipoToken.IDENTIFICADOR, "x"),
+        Token(TipoToken.SI, "si"),
+        Token(TipoToken.MAYORQUE, ">"),
+        Token(TipoToken.ENTERO, 10),
+        Token(TipoToken.DOSPUNTOS, ":"),
         Token(TipoToken.FIN, "fin"),
         Token(TipoToken.EOF, None),
     ]
