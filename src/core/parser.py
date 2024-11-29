@@ -360,24 +360,25 @@ class Parser:
         self.comer(TipoToken.DOSPUNTOS)
 
         cuerpo = []
-        max_iteraciones = 1000  # Límite para evitar bucles infinitos
-        iteraciones = 0
+        if self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+            max_iteraciones = 1000  # Límite para evitar bucles infinitos
+            iteraciones = 0
 
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            iteraciones += 1
-            if iteraciones > max_iteraciones:
-                raise RuntimeError("Bucle infinito detectado en declaracion_funcion")
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+                iteraciones += 1
+                if iteraciones > max_iteraciones:
+                    raise RuntimeError("Bucle infinito detectado en declaracion_funcion")
 
-            try:
-                if self.token_actual().tipo == TipoToken.RETORNO:
-                    self.comer(TipoToken.RETORNO)
-                    expresion = self.expresion()
-                    cuerpo.append(NodoRetorno(expresion))
-                else:
-                    cuerpo.append(self.declaracion())
-            except SyntaxError as e:
-                logging.error(f"Error en el cuerpo de la función '{nombre}': {e}")
-                self.avanzar()
+                try:
+                    if self.token_actual().tipo == TipoToken.RETORNO:
+                        self.comer(TipoToken.RETORNO)
+                        expresion = self.expresion()
+                        cuerpo.append(NodoRetorno(expresion))
+                    else:
+                        cuerpo.append(self.declaracion())
+                except SyntaxError as e:
+                    logging.error(f"Error en el cuerpo de la función '{nombre}': {e}")
+                    self.avanzar()
 
         if self.token_actual().tipo != TipoToken.FIN:
             raise SyntaxError(f"Se esperaba 'fin' para cerrar la función '{nombre}'")
@@ -385,36 +386,6 @@ class Parser:
 
         logging.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
         return NodoFuncion(nombre, parametros, cuerpo)
-
-    def declaracion_imprimir(self):
-        """Parsea una instrucción de impresión."""
-        self.comer(TipoToken.IMPRIMIR)
-        self.comer(TipoToken.LPAREN)
-        expresion = self.expresion()
-        self.comer(TipoToken.RPAREN)
-        return NodoImprimir(expresion)
-
-    def llamada_funcion(self):
-        nombre_funcion = self.token_actual().valor
-        self.comer(TipoToken.IDENTIFICADOR)
-        self.comer(TipoToken.LPAREN)
-        argumentos = []
-        while self.token_actual().tipo != TipoToken.RPAREN:
-            argumentos.append(self.expresion())
-            if self.token_actual().tipo == TipoToken.COMA:
-                self.comer(TipoToken.COMA)
-        self.comer(TipoToken.RPAREN)
-        return NodoLlamadaFuncion(nombre_funcion, argumentos)
-
-    def bloque(self):
-        nodos = []
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            try:
-                nodos.append(self.declaracion())
-            except SyntaxError as e:
-                logging.debug(f"Error de sintaxis en el bloque: {e}")
-                break
-        return nodos
 
     def expresion(self):
         izquierda = self.termino()

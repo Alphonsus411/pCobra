@@ -160,3 +160,25 @@ def test_parser_errores():
 
     with pytest.raises(SyntaxError):
         parser.parsear()
+
+def test_parser_definir_funcion():
+    tokens = [
+        Token(TipoToken.IDENTIFICADOR, "definir"),
+        Token(TipoToken.IDENTIFICADOR, "suma"),
+        Token(TipoToken.LPAREN, "("),
+        Token(TipoToken.IDENTIFICADOR, "a"),
+        Token(TipoToken.COMA, ","),
+        Token(TipoToken.IDENTIFICADOR, "b"),
+        Token(TipoToken.RPAREN, ")"),
+        Token(TipoToken.DOSPUNTOS, ":"),
+        Token(TipoToken.IDENTIFICADOR, "retorno"),
+        Token(TipoToken.IDENTIFICADOR, "a"),
+        Token(TipoToken.SUMA, "+"),
+        Token(TipoToken.IDENTIFICADOR, "b"),
+        Token(TipoToken.FIN, "fin"),
+        Token(TipoToken.EOF, None),
+    ]
+
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    assert isinstance(ast[0], NodoFuncion)

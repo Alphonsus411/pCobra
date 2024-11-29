@@ -8,7 +8,7 @@ from src.core.transpiler.to_python import TranspiladorPython
 import os
 
 # Configuración de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def ejecutar_cobra_interactivamente():
@@ -41,8 +41,14 @@ def ejecutar_cobra_interactivamente():
                 ast = Parser(tokens).parsear()
                 logging.debug(f"AST generado: {ast}")
                 interpretador.ejecutar_ast(ast)
+        except SyntaxError as se:
+            logging.error(f"Error de sintaxis: {se}")
+            print(f"Error procesando la entrada: {se}")
+        except RuntimeError as re:
+            logging.error(f"Error crítico: {re}")
+            print(f"Error crítico: {re}")
         except Exception as e:
-            logging.error(f"Error procesando la entrada: {e}")
+            logging.error(f"Error general procesando la entrada: {e}")
             print(f"Error procesando la entrada: {e}")
 
 
@@ -68,8 +74,11 @@ def transpilar_archivo(archivo, transpilador):
             resultado = transpilador.transpilar(ast)
             print(f"Código generado ({transpilador.__class__.__name__}):")
             print(resultado)
+        except SyntaxError as se:
+            logging.error(f"Error de sintaxis durante la transpilación: {se}")
+            print(f"Error durante la transpilación: {se}")
         except Exception as e:
-            logging.error(f"Error durante la transpilación: {e}")
+            logging.error(f"Error general durante la transpilación: {e}")
             print(f"Error durante la transpilación: {e}")
 
 
@@ -91,8 +100,11 @@ def inspeccionar_archivo(archivo, modo):
                 ast = Parser(tokens).parsear()
                 print("AST generado:")
                 print(ast)
+        except SyntaxError as se:
+            logging.error(f"Error de sintaxis durante la inspección: {se}")
+            print(f"Error durante la inspección: {se}")
         except Exception as e:
-            logging.error(f"Error durante la inspección: {e}")
+            logging.error(f"Error general durante la inspección: {e}")
             print(f"Error durante la inspección: {e}")
 
 
