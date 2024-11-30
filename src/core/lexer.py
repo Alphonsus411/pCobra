@@ -3,6 +3,8 @@ import re
 
 
 class TipoToken:
+    DIVIDIR = 'DIVIDIR'
+    MULTIPLICAR = 'MULTIPLICAR'
     CLASE = 'CLASE'
     DICCIONARIO = 'DICCIONARIO'
     LISTA = 'LISTA'
@@ -71,6 +73,7 @@ class Lexer:
             (TipoToken.SINO, r'\bsino\b'),
             (TipoToken.MIENTRAS, r'\bmientras\b'),
             (TipoToken.PARA, r'\bpara\b'),
+            (TipoToken.IN, r'\bin\b'),  # Define el token 'in'
             (TipoToken.HOLOBIT, r'\bholobit\b'),
             (TipoToken.PROYECTAR, r'\bproyectar\b'),
             (TipoToken.TRANSFORMAR, r'\btransformar\b'),

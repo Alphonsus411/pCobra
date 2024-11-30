@@ -161,6 +161,7 @@ def test_parser_errores():
     with pytest.raises(SyntaxError):
         parser.parsear()
 
+
 def test_parser_definir_funcion():
     tokens = [
         Token(TipoToken.IDENTIFICADOR, "definir"),
