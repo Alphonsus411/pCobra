@@ -1,4 +1,7 @@
 import pytest
+from io import StringIO
+from unittest.mock import patch
+
 from src.core.interpreter import InterpretadorCobra
 from src.core.lexer import Token, TipoToken
 from src.core.parser import NodoAsignacion, NodoValor, NodoLlamadaFuncion
