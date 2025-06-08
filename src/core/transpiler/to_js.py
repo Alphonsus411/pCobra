@@ -19,7 +19,7 @@ class TranspiladorJavaScript:
         return "\n".join(self.codigo)
 
     def transpilar_nodo(self, nodo):
-        """Identifica el tipo de nodo y llama al método de transpilación correspondiente."""
+        """Identifica el nodo y llama a su método."""
         nodo_tipo = type(nodo).__name__
 
         if nodo_tipo == "NodoAsignacion":
@@ -61,7 +61,7 @@ class TranspiladorJavaScript:
         self.agregar_linea(f"{prefijo}{nombre} = {valor};")
 
     def transpilar_condicional(self, nodo):
-        """Transpila un condicional 'if-else' en JavaScript, admitiendo condiciones compuestas."""
+        """Transpila un 'if-else' con condiciones compuestas."""
         cuerpo_si = getattr(nodo, "cuerpo_si", getattr(nodo, "bloque_si", []))
         cuerpo_sino = getattr(nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", []))
         if self.usa_indentacion is None:
@@ -164,7 +164,7 @@ class TranspiladorJavaScript:
         self.agregar_linea(f"{{{pares}}}")
 
     def transpilar_elemento(self, elemento):
-        """Transpila un elemento, verificando si es una lista, diccionario o nodo de otro tipo."""
+        """Transpila un elemento o estructura."""
         if isinstance(elemento, NodoLista):
             transpiled_element = []
             self.codigo, original_codigo = transpiled_element, self.codigo

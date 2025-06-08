@@ -50,7 +50,10 @@ class TranspiladorPython:
         return str(nodo.valor) if isinstance(nodo, NodoValor) else str(nodo)
 
     def transpilar_asignacion(self, nodo):
-        self.codigo += f"{self.obtener_indentacion()}{nodo.variable} = {self.obtener_valor(nodo.expresion)}\n"
+        self.codigo += (
+            f"{self.obtener_indentacion()}{nodo.variable} = "
+            f"{self.obtener_valor(nodo.expresion)}\n"
+        )
 
     def transpilar_condicional(self, nodo):
         self.codigo += f"{self.obtener_indentacion()}if {nodo.condicion}:\n"
@@ -73,7 +76,10 @@ class TranspiladorPython:
         self.nivel_indentacion -= 1
 
     def transpilar_for(self, nodo):
-        self.codigo += f"{self.obtener_indentacion()}for {nodo.variable} in {nodo.iterable}:\n"
+        self.codigo += (
+            f"{self.obtener_indentacion()}for {nodo.variable} in "
+            f"{nodo.iterable}:\n"
+        )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
             self.transpilar_nodo(instruccion)
@@ -96,13 +102,16 @@ class TranspiladorPython:
         self.codigo += f"holobit([{valores}])\n"
 
     def transpilar_lista(self, nodo):
-        elementos = ", ".join(self.obtener_valor(elemento) for elemento in nodo.elementos)
+        elementos = ", ".join(
+            self.obtener_valor(elemento) for elemento in nodo.elementos
+        )
         self.codigo += f"[{elementos}]\n"
 
     def transpilar_diccionario(self, nodo):
         # Corrección: `elementos` es una lista de pares clave-valor
         elementos = ", ".join(
-            f"{self.obtener_valor(clave)}: {self.obtener_valor(valor)}" for clave, valor in nodo.elementos
+            f"{self.obtener_valor(clave)}: {self.obtener_valor(valor)}"
+            for clave, valor in nodo.elementos
         )
         self.codigo += f"{{{elementos}}}\n"
 

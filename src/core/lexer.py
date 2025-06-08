@@ -112,7 +112,10 @@ class Lexer:
                 if coincidencia:
                     if tipo:
                         valor = coincidencia.group(0)
-                        logging.debug(f"Token identificado: {tipo}, valor: '{valor}', posición: {self.posicion}")
+                        logging.debug(
+                            f"Token identificado: {tipo}, valor: '{valor}', "
+                            f"posición: {self.posicion}"
+                        )
 
                         if tipo == TipoToken.FLOTANTE:
                             valor = float(valor)
@@ -127,14 +130,19 @@ class Lexer:
             if not matched:
                 # Si no coincide con ningún patrón, capturamos el error
                 error_token = self.codigo_fuente[self.posicion:self.posicion + 10]
-                logging.error(f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'")
+                logging.error(
+                    f"Error: Token no reconocido en posición {self.posicion}: "
+                    f"'{error_token}'"
+                )
                 error_tokens.append(error_token)
                 self.posicion += 1
 
             if self.posicion == prev_pos:
                 same_pos_count += 1
                 if same_pos_count > 5:
-                    logging.error(f"Bucle infinito detectado en posición {self.posicion}.")
+                    logging.error(
+                        f"Bucle infinito detectado en posición {self.posicion}."
+                    )
                     raise RuntimeError("Bucle infinito detectado en el lexer.")
             else:
                 same_pos_count = 0

@@ -4,7 +4,8 @@ import random
 class EstrategiaMemoria:
     def __init__(self, tam_bloque, frecuencia_recoleccion):
         self.tam_bloque = tam_bloque  # Tamaño de los bloques de memoria
-        self.frecuencia_recoleccion = frecuencia_recoleccion  # Frecuencia de la recolección de basura
+        # Frecuencia de la recolección de basura
+        self.frecuencia_recoleccion = frecuencia_recoleccion
         self.memoria = [None] * 1024  # Simulamos un espacio de memoria con 1024 bloques
 
     def asignar(self, tam):
@@ -35,16 +36,20 @@ class EstrategiaMemoria:
         """
         if random.random() < self.frecuencia_recoleccion:
             # Compactar memoria eliminando bloques vacíos
-            self.memoria = [block for block in self.memoria if block is not None] + [None] * self.memoria.count(None)
+            self.memoria = [block for block in self.memoria if block is not None]
+            self.memoria += [None] * self.memoria.count(None)
 
 
 class GestorMemoriaGenetico:
+    """Evoluciona estrategias de memoria mediante algoritmos genéticos."""
     def __init__(self, poblacion_tam=10):
         """
         Inicializa el gestor de memoria con una población de estrategias de memoria.
         :param poblacion_tam: Tamaño de la población inicial de estrategias.
         """
-        self.poblacion = [self.crear_estrategia_aleatoria() for _ in range(poblacion_tam)]
+        self.poblacion = [
+            self.crear_estrategia_aleatoria() for _ in range(poblacion_tam)
+        ]
         self.generacion = 0
 
     def crear_estrategia_aleatoria(self):
@@ -52,12 +57,15 @@ class GestorMemoriaGenetico:
         Crea una estrategia de manejo de memoria con parámetros aleatorios.
         """
         tam_bloque = random.randint(1, 128)  # Tamaño del bloque de memoria
-        frecuencia_recoleccion = random.uniform(0.0, 1.0)  # Probabilidad de recolección de basura
+        frecuencia_recoleccion = random.uniform(
+            0.0,
+            1.0,
+        )  # Probabilidad de recolección de basura
         return EstrategiaMemoria(tam_bloque, frecuencia_recoleccion)
 
     def evaluar(self, estrategia):
-        """
-        Evalúa la estrategia de memoria simulando un conjunto de operaciones de asignación y liberación de memoria.
+        """Evalúa la estrategia realizando asignaciones y liberaciones.
+
         :param estrategia: La estrategia de memoria a evaluar.
         :return: Total de memoria asignada correctamente.
         """
@@ -76,9 +84,13 @@ class GestorMemoriaGenetico:
         """
         Selecciona las mejores estrategias basadas en su desempeño.
         """
-        fitness = [(self.evaluar(estrategia), estrategia) for estrategia in self.poblacion]
-        fitness.sort(reverse=True, key=lambda x: x[0])  # Ordena por fitness en orden descendente
-        self.poblacion = [estrategia for _, estrategia in fitness[:len(fitness) // 2]]  # Selecciona la mitad superior
+        fitness = [
+            (self.evaluar(estrategia), estrategia) for estrategia in self.poblacion
+        ]
+        fitness.sort(reverse=True, key=lambda x: x[0])  # Ordena por fitness descendente
+        self.poblacion = [
+            estrategia for _, estrategia in fitness[: len(fitness) // 2]
+        ]  # Selecciona la mitad superior
 
     def cruzar(self):
         """
@@ -88,8 +100,12 @@ class GestorMemoriaGenetico:
         for _ in range(len(self.poblacion)):
             padre1, padre2 = random.sample(self.poblacion, 2)
             nuevo_tam_bloque = random.choice([padre1.tam_bloque, padre2.tam_bloque])
-            nueva_frecuencia_recoleccion = random.choice([padre1.frecuencia_recoleccion, padre2.frecuencia_recoleccion])
-            nuevos_individuos.append(EstrategiaMemoria(nuevo_tam_bloque, nueva_frecuencia_recoleccion))
+            nueva_frecuencia_recoleccion = random.choice(
+                [padre1.frecuencia_recoleccion, padre2.frecuencia_recoleccion]
+            )
+            nuevos_individuos.append(
+                EstrategiaMemoria(nuevo_tam_bloque, nueva_frecuencia_recoleccion)
+            )
         self.poblacion += nuevos_individuos
 
     def mutar(self):
@@ -110,4 +126,7 @@ class GestorMemoriaGenetico:
         self.cruzar()
         self.mutar()
         self.generacion += 1
-        print(f"Generación {self.generacion}: {len(self.poblacion)} estrategias de memoria activas")
+        print(
+            f"Generación {self.generacion}: {len(self.poblacion)} "
+            "estrategias de memoria activas"
+        )

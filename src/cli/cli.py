@@ -8,12 +8,18 @@ from src.core.transpiler.to_python import TranspiladorPython
 import os
 
 # Configuración de logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 
 def ejecutar_cobra_interactivamente():
     """Ejecuta Cobra en modo interactivo."""
-    print("Bienvenido a la interfaz interactiva de Cobra. Escribe 'salir' o 'salir()' para salir.")
+    print(
+        "Bienvenido a la interfaz interactiva de Cobra. Escribe 'salir' "
+        "o 'salir()' para salir."
+    )
     print("Comandos especiales: 'tokens' y 'ast' para inspección avanzada.")
     interpretador = InterpretadorCobra()
 
@@ -111,7 +117,11 @@ def inspeccionar_archivo(archivo, modo):
 def main():
     """Punto de entrada principal de la CLI."""
     parser = argparse.ArgumentParser(description="CLI para Cobra")
-    parser.add_argument("archivo", nargs="?", help="Archivo con código Cobra para ejecutar o transpilar")
+    parser.add_argument(
+        "archivo",
+        nargs="?",
+        help="Archivo con código Cobra para ejecutar o transpilar",
+    )
     parser.add_argument("--transpilador", choices=["python", "js"],
                         help="Opcional: Transpila el archivo a Python o JavaScript.")
     parser.add_argument("--inspeccionar", choices=["tokens", "ast"],
