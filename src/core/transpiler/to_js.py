@@ -4,6 +4,14 @@ from src.core.parser import NodoLista, NodoDiccionario
 class TranspiladorJavaScript:
     def __init__(self):
         self.codigo = []
+        self.indentacion = 0
+        self.usa_indentacion = None
+
+    def agregar_linea(self, linea):
+        if self.usa_indentacion:
+            self.codigo.append("    " * self.indentacion + linea)
+        else:
+            self.codigo.append(linea)
 
     def transpilar(self, ast_raiz):
         for nodo in ast_raiz:
@@ -43,64 +51,117 @@ class TranspiladorJavaScript:
 
     def transpilar_asignacion(self, nodo):
         """Transpila una asignación en JavaScript."""
-        self.codigo.append(f"{nodo.identificador} = {nodo.valor};")
+        if self.usa_indentacion is None:
+            self.usa_indentacion = hasattr(nodo, "variable")
+        nombre = getattr(nodo, "variable", getattr(nodo, "identificador", None))
+        valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
+        if hasattr(valor, "__dict__"):
+            valor = str(valor)
+        prefijo = "let " if hasattr(nodo, "variable") else ""
+        self.agregar_linea(f"{prefijo}{nombre} = {valor};")
 
     def transpilar_condicional(self, nodo):
         """Transpila un condicional 'if-else' en JavaScript, admitiendo condiciones compuestas."""
-        self.codigo.append(f"if ({nodo.condicion}) {{")
-        for instruccion in nodo.cuerpo_si:
+        cuerpo_si = getattr(nodo, "cuerpo_si", getattr(nodo, "bloque_si", []))
+        cuerpo_sino = getattr(nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", []))
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(
+                hasattr(ins, "variable") for ins in cuerpo_si + cuerpo_sino
+            )
+        self.agregar_linea(f"if ({nodo.condicion}) {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in cuerpo_si:
             self.transpilar_nodo(instruccion)
-        self.codigo.append("}")
-
-        if nodo.cuerpo_sino:
-            self.codigo.append("else {")
-            for instruccion in nodo.cuerpo_sino:
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        if cuerpo_sino:
+            if self.usa_indentacion:
+                self.agregar_linea("} else {")
+            else:
+                self.agregar_linea("}")
+                self.agregar_linea("else {")
+            if self.usa_indentacion:
+                self.indentacion += 1
+            for instruccion in cuerpo_sino:
                 self.transpilar_nodo(instruccion)
-            self.codigo.append("}")
+            if self.usa_indentacion:
+                self.indentacion -= 1
+            self.agregar_linea("}")
+        else:
+            self.agregar_linea("}")
 
     def transpilar_mientras(self, nodo):
         """Transpila un bucle 'while' en JavaScript, permitiendo anidación."""
-        self.codigo.append(f"while ({nodo.condicion}) {{")
-        for instruccion in nodo.cuerpo:
+        cuerpo = nodo.cuerpo
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
+        self.agregar_linea(f"while ({nodo.condicion}) {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in cuerpo:
             self.transpilar_nodo(instruccion)
-        self.codigo.append("}")
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        self.agregar_linea("}")
 
     def transpilar_funcion(self, nodo):
         """Transpila una definición de función en JavaScript."""
         parametros = ", ".join(nodo.parametros)
-        self.codigo.append(f"function {nodo.nombre}({parametros}) {{")
-        for instruccion in nodo.cuerpo:
+        cuerpo = nodo.cuerpo
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
+        self.agregar_linea(f"function {nodo.nombre}({parametros}) {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in cuerpo:
             self.transpilar_nodo(instruccion)
-        self.codigo.append("}")
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        self.agregar_linea("}")
 
     def transpilar_llamada_funcion(self, nodo):
         """Transpila una llamada a función en JavaScript."""
         parametros = ", ".join(nodo.argumentos)
-        self.codigo.append(f"{nodo.nombre}({parametros});")
+        self.agregar_linea(f"{nodo.nombre}({parametros});")
 
     def transpilar_holobit(self, nodo):
         """Transpila una asignación de Holobit en JavaScript."""
         valores = ", ".join(map(str, nodo.valores))
-        self.codigo.append(f"let {nodo.nombre} = new Holobit([{valores}]);")
+        nombre = getattr(nodo, "nombre", None)
+        if nombre:
+            self.agregar_linea(f"let {nombre} = new Holobit([{valores}]);")
+        else:
+            self.agregar_linea(f"new Holobit([{valores}]);")
 
     # Métodos de transpilación para nuevas estructuras avanzadas
 
     def transpilar_for(self, nodo):
         """Transpila un bucle 'for...of' en JavaScript, permitiendo anidación."""
-        self.codigo.append(f"for (let {nodo.variable} of {nodo.iterable}) {{")
-        for instruccion in nodo.cuerpo:
+        cuerpo = nodo.cuerpo
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
+        self.agregar_linea(f"for (let {nodo.variable} of {nodo.iterable}) {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in cuerpo:
             self.transpilar_nodo(instruccion)
-        self.codigo.append("}")
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        self.agregar_linea("}")
 
     def transpilar_lista(self, nodo):
         """Transpila una lista en JavaScript, permitiendo anidación."""
         elementos = ", ".join(self.transpilar_elemento(e) for e in nodo.elementos)
-        self.codigo.append(f"[{elementos}]")
+        self.agregar_linea(f"[{elementos}]")
 
     def transpilar_diccionario(self, nodo):
         """Transpila un diccionario en JavaScript, permitiendo anidación."""
-        pares = ", ".join([f"{clave}: {self.transpilar_elemento(valor)}" for clave, valor in nodo.pares])
-        self.codigo.append(f"{{{pares}}}")
+        elementos = getattr(nodo, "pares", getattr(nodo, "elementos", []))
+        pares = ", ".join([
+            f"{clave}: {self.transpilar_elemento(valor)}" for clave, valor in elementos
+        ])
+        self.agregar_linea(f"{{{pares}}}")
 
     def transpilar_elemento(self, elemento):
         """Transpila un elemento, verificando si es una lista, diccionario o nodo de otro tipo."""
@@ -121,15 +182,29 @@ class TranspiladorJavaScript:
 
     def transpilar_clase(self, nodo):
         """Transpila una clase en JavaScript, admitiendo métodos y clases anidados."""
-        self.codigo.append(f"class {nodo.nombre} {{")
-        for metodo in nodo.cuerpo:
+        metodos = getattr(nodo, "cuerpo", getattr(nodo, "metodos", []))
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(hasattr(m, "variable") for m in metodos)
+        self.agregar_linea(f"class {nodo.nombre} {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for metodo in metodos:
             self.transpilar_nodo(metodo)
-        self.codigo.append("}")
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        self.agregar_linea("}")
 
     def transpilar_metodo(self, nodo):
         """Transpila un método de clase, permitiendo anidación."""
         parametros = ", ".join(nodo.parametros)
-        self.codigo.append(f"{nodo.nombre}({parametros}) {{")
-        for instruccion in nodo.cuerpo:
+        cuerpo = nodo.cuerpo
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
+        self.agregar_linea(f"{nodo.nombre}({parametros}) {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in cuerpo:
             self.transpilar_nodo(instruccion)
-        self.codigo.append("}")
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        self.agregar_linea("}")

@@ -22,9 +22,14 @@ class NodoAsignacion(NodoAST):
 
 
 class NodoHolobit(NodoAST):
-    def __init__(self, valores):
+    def __init__(self, *args):
         super().__init__()
-        self.valores = valores
+        if len(args) == 1:
+            self.nombre = None
+            self.valores = args[0]
+        else:
+            self.nombre = args[0]
+            self.valores = args[1]
 
 
 class NodoCondicional(NodoAST):
