@@ -152,4 +152,11 @@ class Lexer:
         if error_tokens:
             raise ValueError(f"Tokens no reconocidos encontrados: {error_tokens}")
 
+        # Añade un token EOF al final para indicar el fin del código fuente
+        self.tokens.append(Token(TipoToken.EOF, None))
+
         return self.tokens
+
+    def analizar_token(self):
+        """Mantiene compatibilidad con versiones previas."""
+        return self.tokenizar()
