@@ -24,8 +24,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'cobra = core.main:main',  # Asumiendo que el archivo main.py está en src/core
-            'cobra=src.cli:main',
+            'cobra=src.cli.cli:main',
         ],
     },
 
