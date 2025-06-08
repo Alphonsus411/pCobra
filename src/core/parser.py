@@ -334,29 +334,6 @@ class Parser:
         self.comer(TipoToken.RPAREN)  # Consumir ')'
         return NodoLlamadaFuncion(nombre_funcion, argumentos)
 
-    def termino(self):
-        """Parsea un término (literal, identificador, o expresión entre paréntesis)."""
-        token = self.token_actual()
-        if token.tipo in [TipoToken.ENTERO, TipoToken.CADENA, TipoToken.FLOTANTE, TipoToken.IDENTIFICADOR]:
-            self.avanzar()
-            return NodoValor(token.valor)
-        elif token.tipo == TipoToken.LPAREN:
-            self.comer(TipoToken.LPAREN)
-            nodo = self.expresion()
-            self.comer(TipoToken.RPAREN)
-            return nodo
-        else:
-            raise SyntaxError(f"Token inesperado en término: {token.tipo}")
-
-    def expresion(self):
-        """Parsea una expresión."""
-        izquierda = self.termino()
-        while self.token_actual().tipo in [TipoToken.SUMA, TipoToken.RESTA, TipoToken.MULTIPLICAR, TipoToken.DIVIDIR]:
-            operador = self.token_actual()
-            self.avanzar()
-            derecha = self.termino()
-            izquierda = NodoOperacionBinaria(izquierda, operador, derecha)
-        return izquierda
 
     def declaracion_asignacion(self):
         if self.token_actual().tipo == TipoToken.VAR:
