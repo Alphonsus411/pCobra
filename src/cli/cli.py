@@ -117,7 +117,7 @@ def main():
     parser.add_argument("--inspeccionar", choices=["tokens", "ast"],
                         help="Opcional: Inspecciona los tokens o AST de un archivo.")
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     if args.archivo and args.transpilador:
         transpilar_archivo(args.archivo, args.transpilador)
