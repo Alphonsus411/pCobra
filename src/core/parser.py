@@ -185,7 +185,10 @@ class NodoPara:
         self.cuerpo = cuerpo
 
     def __repr__(self):
-        return f"NodoPara(variable={self.variable}, iterable={self.iterable}, cuerpo={self.cuerpo})"
+        return (
+            f"NodoPara(variable={self.variable}, "
+            f"iterable={self.iterable}, cuerpo={self.cuerpo})"
+        )
 
 
 class NodoImprimir(NodoAST):
@@ -225,7 +228,9 @@ class Parser:
         if self.token_actual().tipo == tipo:
             self.avanzar()
         else:
-            raise SyntaxError(f"Se esperaba {tipo}, pero se encontró {self.token_actual().tipo}")
+            raise SyntaxError(
+                f"Se esperaba {tipo}, pero se encontró {self.token_actual().tipo}"
+            )
 
     def parsear(self):
         nodos = []
@@ -234,7 +239,7 @@ class Parser:
         return nodos
 
     def declaracion(self):
-        """Procesa una declaración, ya sea una asignación, condición, bucle, función, imprimir o expresión."""
+        """Procesa una instrucción o expresión."""
         token = self.token_actual()
         try:
             if token.tipo == TipoToken.VAR:
@@ -253,10 +258,14 @@ class Parser:
                 return self.declaracion_imprimir()
             elif token.tipo == TipoToken.PARA:
                 return self.declaracion_para()
-            elif token.tipo == TipoToken.RETORNO:  # Soporte para declaraciones de retorno
+            elif token.tipo == TipoToken.RETORNO:  # Declaraciones de retorno
                 self.comer(TipoToken.RETORNO)
                 return NodoRetorno(self.expresion())
-            elif token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE]:
+            elif token.tipo in [
+                TipoToken.IDENTIFICADOR,
+                TipoToken.ENTERO,
+                TipoToken.FLOTANTE,
+            ]:
                 siguiente_token = self.token_siguiente()
                 if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
                     return self.llamada_funcion()  # Procesa como una llamada a función
@@ -302,7 +311,9 @@ class Parser:
         iteraciones = 0
 
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            logging.debug(f"Procesando token dentro del bucle 'para': {self.token_actual()}")
+            logging.debug(
+                f"Procesando token dentro del bucle 'para': {self.token_actual()}"
+            )
             iteraciones += 1
             if iteraciones > max_iteraciones:
                 raise RuntimeError("Bucle infinito detectado en 'para'")
@@ -318,7 +329,10 @@ class Parser:
             raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'para'")
         self.comer(TipoToken.FIN)
 
-        logging.debug(f"Bucle 'para' parseado correctamente: variable={variable}, iterable={iterable}, cuerpo={cuerpo}")
+        logging.debug(
+            f"Bucle 'para' parseado correctamente: variable={variable}, "
+            f"iterable={iterable}, cuerpo={cuerpo}"
+        )
         return NodoPara(variable, iterable, cuerpo)
 
     def llamada_funcion(self):
@@ -328,10 +342,12 @@ class Parser:
         self.comer(TipoToken.LPAREN)  # Consumir '('
 
         argumentos = []
-        if self.token_actual().tipo != TipoToken.RPAREN:  # Si no es un paréntesis de cierre, hay argumentos
+        # Si no es un paréntesis de cierre, hay argumentos
+        if self.token_actual().tipo != TipoToken.RPAREN:
             while True:
                 argumentos.append(self.expresion())  # Parsear cada argumento
-                if self.token_actual().tipo == TipoToken.COMA:  # Si hay una coma, continuar con más argumentos
+                # Si hay una coma, continuar con más argumentos
+                if self.token_actual().tipo == TipoToken.COMA:
                     self.comer(TipoToken.COMA)
                 else:
                     break
@@ -357,7 +373,9 @@ class Parser:
 
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de la condición del bucle 'mientras'")
+            raise SyntaxError(
+                "Se esperaba ':' después de la condición del bucle 'mientras'"
+            )
         self.comer(TipoToken.DOSPUNTOS)
 
         cuerpo = []
@@ -401,7 +419,11 @@ class Parser:
         self.comer(TipoToken.DOSPUNTOS)
 
         bloque_si = []
-        while self.token_actual().tipo not in [TipoToken.SINO, TipoToken.FIN, TipoToken.EOF]:
+        while self.token_actual().tipo not in [
+            TipoToken.SINO,
+            TipoToken.FIN,
+            TipoToken.EOF,
+        ]:
             try:
                 bloque_si.append(self.declaracion())
             except SyntaxError as e:
@@ -494,7 +516,11 @@ class Parser:
 
     def expresion(self):
         izquierda = self.termino()
-        while self.token_actual().tipo in [TipoToken.SUMA, TipoToken.RESTA, TipoToken.MAYORQUE]:
+        while self.token_actual().tipo in [
+            TipoToken.SUMA,
+            TipoToken.RESTA,
+            TipoToken.MAYORQUE,
+        ]:
             operador = self.token_actual()
             self.avanzar()
             derecha = self.termino()
@@ -527,9 +553,13 @@ class Parser:
         while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
             nombre_parametro = self.token_actual().valor
             if nombre_parametro in ["si", "mientras", "func", "fin"]:
-                raise SyntaxError(f"El nombre del parámetro '{nombre_parametro}' es reservado.")
+                raise SyntaxError(
+                    f"El nombre del parámetro '{nombre_parametro}' es reservado."
+                )
             if nombre_parametro in parametros:
-                raise SyntaxError(f"El parámetro '{nombre_parametro}' ya está definido.")
+                raise SyntaxError(
+                    f"El parámetro '{nombre_parametro}' ya está definido."
+                )
             parametros.append(nombre_parametro)
             self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo == TipoToken.COMA:

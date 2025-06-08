@@ -1,8 +1,17 @@
 from src.core.lexer import Token, TipoToken
-from src.core.parser import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoValor
+from src.core.parser import (
+    NodoAsignacion,
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoHolobit,
+    NodoValor,
+)
 
 
 class InterpretadorCobra:
+    """Interpreta y ejecuta nodos del lenguaje Cobra."""
     def __init__(self):
         self.variables = {}  # Diccionario para almacenar variables y sus valores
 
@@ -39,16 +48,26 @@ class InterpretadorCobra:
     def evaluar_expresion(self, expresion):
         if isinstance(expresion, NodoValor):
             return expresion.valor  # Obtiene el valor directo si es un NodoValor
-        elif isinstance(expresion, Token) and expresion.tipo in {TipoToken.ENTERO, TipoToken.FLOTANTE, TipoToken.CADENA, TipoToken.BOOLEANO}:
+        elif isinstance(expresion, Token) and expresion.tipo in {
+            TipoToken.ENTERO,
+            TipoToken.FLOTANTE,
+            TipoToken.CADENA,
+            TipoToken.BOOLEANO,
+        }:
             return expresion.valor  # Si es un token de tipo literal, devuelve su valor
         elif isinstance(expresion, NodoAsignacion):
-            self.ejecutar_asignacion(expresion)  # Resuelve asignaciones anidadas, si existieran
+            # Resuelve asignaciones anidadas, si existieran
+            self.ejecutar_asignacion(expresion)
         else:
             raise ValueError(f"Expresión no soportada: {expresion}")
 
     def ejecutar_condicional(self, nodo):
-        # Ejecuta el bloque de código dentro del condicional si la condición es verdadera
-        if eval(nodo.condicion, {}, self.variables):  # eval simplificado para condiciones básicas
+        """Ejecuta un bloque condicional."""
+        if eval(
+            nodo.condicion,
+            {},
+            self.variables,
+        ):  # eval simplificado para condiciones básicas
             for instruccion in nodo.cuerpo_si:
                 self.ejecutar_nodo(instruccion)
         elif nodo.cuerpo_sino:
@@ -74,11 +93,20 @@ class InterpretadorCobra:
                         print(valor.strip('"'))  # Imprime cadenas sin comillas
                     else:
                         print(valor)  # Imprime enteros, flotantes directamente
-                elif isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
-                    valor = self.variables.get(arg.valor, f"Variable '{arg.valor}' no definida")
+                elif (
+                    isinstance(arg, Token)
+                    and arg.tipo == TipoToken.IDENTIFICADOR
+                ):
+                    valor = self.variables.get(
+                        arg.valor,
+                        f"Variable '{arg.valor}' no definida",
+                    )
                     print(valor)
                 else:
-                    print(f"Error: tipo de argumento no soportado para 'imprimir': {arg}")
+                    print(
+                        "Error: tipo de argumento no soportado para 'imprimir': "
+                        f"{arg}"
+                    )
         else:
             print(f"Función '{nodo.nombre}' no implementada")
 

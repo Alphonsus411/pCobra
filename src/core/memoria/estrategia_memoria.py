@@ -2,14 +2,17 @@ import random
 
 
 class EstrategiaMemoria:
+    """Simula la gestión de memoria para programas Cobra."""
     def __init__(self, tam_bloque, frecuencia_recoleccion):
-        """
-        Inicializa una estrategia de manejo de memoria.
+        """Inicializa la estrategia de manejo de memoria.
+
         :param tam_bloque: Tamaño del bloque de memoria que se asigna.
-        :param frecuencia_recoleccion: Frecuencia de recolección de basura (entre 0.0 y 1.0).
+        :param frecuencia_recoleccion: Frecuencia de recolección de basura
+            (entre 0.0 y 1.0).
         """
         self.tam_bloque = tam_bloque  # Tamaño de los bloques de memoria
-        self.frecuencia_recoleccion = frecuencia_recoleccion  # Frecuencia de la recolección de basura
+        # Frecuencia de la recolección de basura
+        self.frecuencia_recoleccion = frecuencia_recoleccion
         self.memoria = [None] * 1024  # Simulamos un espacio de memoria con 1024 bloques
 
     def asignar(self, tam):
@@ -22,7 +25,8 @@ class EstrategiaMemoria:
             # Verifica si todos los bloques en el rango son None
             if all(block is None for block in self.memoria[i:i + tam]):
                 # Asignar el bloque
-                self.memoria[i:i + tam] = [True] * tam  # Se marca como True (bloque asignado)
+                # Se marca como True (bloque asignado)
+                self.memoria[i:i + tam] = [True] * tam
                 return i  # Retorna el índice donde se asignó
         return -1  # Si no hay espacio suficiente para asignar
 
@@ -40,7 +44,8 @@ class EstrategiaMemoria:
         """
         if random.random() < self.frecuencia_recoleccion:
             # Compactar memoria eliminando bloques vacíos
-            self.memoria = [block for block in self.memoria if block is not None] + [None] * self.memoria.count(None)
+            self.memoria = [block for block in self.memoria if block is not None]
+            self.memoria += [None] * self.memoria.count(None)
 
     def mostrar_estado(self):
         """
