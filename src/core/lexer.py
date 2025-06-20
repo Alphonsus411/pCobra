@@ -72,6 +72,14 @@ class Lexer:
         self.tokens = []
 
     def tokenizar(self):
+        # Elimina comentarios de una línea y bloques de comentarios
+        codigo_sin_bloques = re.sub(r'/\*.*?\*/', '', self.codigo_fuente, flags=re.DOTALL)
+        codigo_sin_doble = re.sub(r'//.*?$', '', codigo_sin_bloques, flags=re.MULTILINE)
+        codigo_limpio = re.sub(r'#.*?$', '', codigo_sin_doble, flags=re.MULTILINE)
+
+        self.codigo_fuente = codigo_limpio
+        self.posicion = 0
+
         especificacion_tokens = [
             (TipoToken.VAR, r'\bvar\b'),
             (TipoToken.FUNC, r'\bfunc\b'),

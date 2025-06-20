@@ -53,3 +53,26 @@ def test_lexer_transformacion_holobit():
         (TipoToken.EOF, None),
     ]
 
+
+def test_lexer_con_comentarios():
+    codigo = """
+    # Comentario inicial
+    var x = 10 // asignar valor
+    imprimir(x) /* comentario de bloque */
+    """
+
+    lexer = Lexer(codigo)
+    tokens = lexer.analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.VAR, 'var'),
+        (TipoToken.IDENTIFICADOR, 'x'),
+        (TipoToken.ASIGNAR, '='),
+        (TipoToken.ENTERO, 10),
+        (TipoToken.IMPRIMIR, 'imprimir'),
+        (TipoToken.LPAREN, '('),
+        (TipoToken.IDENTIFICADOR, 'x'),
+        (TipoToken.RPAREN, ')'),
+        (TipoToken.EOF, None),
+    ]
+
