@@ -32,6 +32,8 @@ class TranspiladorJavaScript:
             self.transpilar_funcion(nodo)
         elif nodo_tipo == "NodoLlamadaFuncion":
             self.transpilar_llamada_funcion(nodo)
+        elif nodo_tipo == "NodoImprimir":
+            self.transpilar_imprimir(nodo)
         elif nodo_tipo == "NodoHolobit":
             self.transpilar_holobit(nodo)
         elif nodo_tipo == "NodoFor":
@@ -124,6 +126,12 @@ class TranspiladorJavaScript:
         """Transpila una llamada a función en JavaScript."""
         parametros = ", ".join(nodo.argumentos)
         self.agregar_linea(f"{nodo.nombre}({parametros});")
+
+    def transpilar_imprimir(self, nodo):
+        valor = getattr(nodo.expresion, "valor", nodo.expresion)
+        if isinstance(valor, NodoLista) or isinstance(valor, NodoDiccionario):
+            valor = self.transpilar_elemento(nodo.expresion)
+        self.agregar_linea(f"console.log({valor});")
 
     def transpilar_holobit(self, nodo):
         """Transpila una asignación de Holobit en JavaScript."""

@@ -71,6 +71,8 @@ class TranspiladorPython:
             self.transpilar_funcion(nodo)
         elif hasattr(nodo, "nombre") and hasattr(nodo, "argumentos"):
             self.transpilar_llamada_funcion(nodo)
+        elif type(nodo).__name__ == "NodoImprimir":
+            self.transpilar_imprimir(nodo)
         elif hasattr(nodo, "valores") or (
             hasattr(nodo, "nombre")
             and not any(
@@ -180,6 +182,10 @@ class TranspiladorPython:
     def transpilar_llamada_funcion(self, nodo):
         argumentos = ", ".join(nodo.argumentos)
         self.codigo += f"{nodo.nombre}({argumentos})\n"
+
+    def transpilar_imprimir(self, nodo):
+        valor = self.obtener_valor(getattr(nodo, "expresion", nodo))
+        self.codigo += f"{self.obtener_indentacion()}print({valor})\n"
 
     def transpilar_holobit(self, nodo):
         valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
