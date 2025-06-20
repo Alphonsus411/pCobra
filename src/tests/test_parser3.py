@@ -60,6 +60,7 @@ def test_condicional():
         (TipoToken.IDENTIFICADOR, "hacer_algo"),
         (TipoToken.LPAREN, "("),
         (TipoToken.RPAREN, ")"),
+        (TipoToken.FIN, "fin"),
         (TipoToken.EOF, None)
     )
     parser = Parser(tokens)
@@ -82,6 +83,7 @@ def test_bucle_mientras():
         (TipoToken.IDENTIFICADOR, "hacer_algo"),
         (TipoToken.LPAREN, "("),
         (TipoToken.RPAREN, ")"),
+        (TipoToken.FIN, "fin"),
         (TipoToken.EOF, None)
     )
     parser = Parser(tokens)
@@ -107,6 +109,7 @@ def test_funcion():
         (TipoToken.IDENTIFICADOR, "hacer_algo"),
         (TipoToken.LPAREN, "("),
         (TipoToken.RPAREN, ")"),
+        (TipoToken.FIN, "fin"),
         (TipoToken.EOF, None)
     )
     parser = Parser(tokens)

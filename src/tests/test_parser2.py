@@ -64,6 +64,7 @@ def test_parser_condicional():
         Token(TipoToken.LPAREN, '('),
         Token(TipoToken.IDENTIFICADOR, 'x'),
         Token(TipoToken.RPAREN, ')'),
+        Token(TipoToken.FIN, 'fin'),
         Token(TipoToken.EOF, None)
     ]
     parser = Parser(tokens)
@@ -86,6 +87,7 @@ def test_parser_bucle_mientras():
         Token(TipoToken.IDENTIFICADOR, 'x'),
         Token(TipoToken.RESTA, '-'),
         Token(TipoToken.ENTERO, 1),
+        Token(TipoToken.FIN, 'fin'),
         Token(TipoToken.EOF, None)
     ]
     parser = Parser(tokens)
@@ -113,6 +115,7 @@ def test_parser_funcion():
         Token(TipoToken.COMA, ','),
         Token(TipoToken.CADENA, "'2D'"),
         Token(TipoToken.RPAREN, ')'),
+        Token(TipoToken.FIN, 'fin'),
         Token(TipoToken.EOF, None)
     ]
     parser = Parser(tokens)
