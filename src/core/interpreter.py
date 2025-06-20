@@ -5,7 +5,13 @@ from src.core.parser import (
     NodoBucleMientras,
     NodoFuncion,
     NodoLlamadaFuncion,
+    NodoLlamadaMetodo,
     NodoHolobit,
+    NodoClase,
+    NodoMetodo,
+    NodoInstancia,
+    NodoAtributo,
+    NodoIdentificador,
     NodoValor,
     NodoImprimir,
     NodoRetorno,
@@ -52,10 +58,16 @@ class InterpretadorCobra:
             return self.ejecutar_condicional(nodo)
         elif isinstance(nodo, NodoBucleMientras):
             return self.ejecutar_mientras(nodo)
+        elif isinstance(nodo, NodoClase):
+            self.ejecutar_clase(nodo)
+        elif isinstance(nodo, NodoInstancia):
+            return self.ejecutar_instancia(nodo)
         elif isinstance(nodo, NodoFuncion):
             self.ejecutar_funcion(nodo)
         elif isinstance(nodo, NodoLlamadaFuncion):
             return self.ejecutar_llamada_funcion(nodo)
+        elif isinstance(nodo, NodoLlamadaMetodo):
+            return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
             valor = self.evaluar_expresion(nodo.expresion)
             if isinstance(valor, str):
@@ -81,13 +93,17 @@ class InterpretadorCobra:
             raise ValueError(f"Nodo no soportado: {type(nodo)}")
 
     def ejecutar_asignacion(self, nodo):
-        # Resuelve el valor de la expresión en el nodo
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
-        # Resuelve el valor de la expresión en el nodo
         valor = self.evaluar_expresion(valor_nodo)
-        # Almacena el valor en el diccionario de variables
-        self.variables[nombre] = valor
+        if isinstance(nombre, NodoAtributo):
+            objeto = self.evaluar_expresion(nombre.objeto)
+            if objeto is None:
+                raise ValueError("Objeto no definido para asignación de atributo")
+            atributos = objeto.setdefault("__atributos__", {})
+            atributos[nombre.nombre] = valor
+        else:
+            self.variables[nombre] = valor
 
     def evaluar_expresion(self, expresion):
         if isinstance(expresion, NodoValor):
@@ -102,6 +118,16 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoAsignacion):
             # Resuelve asignaciones anidadas, si existieran
             self.ejecutar_asignacion(expresion)
+        elif isinstance(expresion, NodoIdentificador):
+            return self.obtener_variable(expresion.nombre)
+        elif isinstance(expresion, NodoInstancia):
+            return self.ejecutar_instancia(expresion)
+        elif isinstance(expresion, NodoAtributo):
+            objeto = self.evaluar_expresion(expresion.objeto)
+            if objeto is None:
+                raise ValueError("Objeto no definido al acceder al atributo")
+            atributos = objeto.get("__atributos__", {})
+            return atributos.get(expresion.nombre)
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
@@ -141,6 +167,10 @@ class InterpretadorCobra:
                 return not bool(valor)
             else:
                 raise ValueError(f"Operador unario no soportado: {tipo}")
+        elif isinstance(expresion, NodoLlamadaMetodo):
+            return self.ejecutar_llamada_metodo(expresion)
+        elif isinstance(expresion, NodoLlamadaFuncion):
+            return self.ejecutar_llamada_funcion(expresion)
         else:
             raise ValueError(f"Expresión no soportada: {expresion}")
 
@@ -204,6 +234,37 @@ class InterpretadorCobra:
             return resultado
         else:
             print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
+
+    def ejecutar_clase(self, nodo):
+        self.variables[nodo.nombre] = nodo
+
+    def ejecutar_instancia(self, nodo):
+        clase = self.obtener_variable(nodo.nombre_clase)
+        if not isinstance(clase, NodoClase):
+            raise ValueError(f"Clase '{nodo.nombre_clase}' no definida")
+        return {"__clase__": clase, "__atributos__": {}}
+
+    def ejecutar_llamada_metodo(self, nodo):
+        objeto = self.evaluar_expresion(nodo.objeto)
+        if not isinstance(objeto, dict) or "__clase__" not in objeto:
+            raise ValueError("Objeto inv\u00e1lido en llamada a m\u00e9todo")
+        clase = objeto["__clase__"]
+        metodo = next((m for m in clase.metodos if m.nombre == nodo.nombre_metodo), None)
+        if metodo is None:
+            raise ValueError(f"M\u00e9todo '{nodo.nombre_metodo}' no encontrado")
+
+        contexto = {"self": objeto}
+        self.contextos.append(contexto)
+        for nombre_param, arg in zip(metodo.parametros[1:], nodo.argumentos):
+            self.variables[nombre_param] = self.evaluar_expresion(arg)
+
+        resultado = None
+        for instruccion in metodo.cuerpo:
+            resultado = self.ejecutar_nodo(instruccion)
+            if resultado is not None:
+                break
+        self.contextos.pop()
+        return resultado
 
     def ejecutar_holobit(self, nodo):
         print(f"Simulando holobit: {nodo.nombre}")
