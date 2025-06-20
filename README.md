@@ -124,7 +124,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 
 # Licencia
 
-Este proyecto está bajo la Licencia MIT. Para más detalles, consulta el archivo LICENSE.
+Este proyecto está bajo la [Licencia MIT](LICENSE).
 
 
 ### Notas

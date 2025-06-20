@@ -9,6 +9,7 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/Alphonsus411/pCobra',  # Reemplaza con tu URL de GitHub
+    license='MIT',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
