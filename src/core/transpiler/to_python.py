@@ -1,7 +1,7 @@
 from src.core.parser import (
     NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
     NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
-    NodoClase, NodoMetodo, NodoValor
+    NodoClase, NodoMetodo, NodoValor, NodoRetorno
 )
 
 
@@ -73,6 +73,8 @@ class TranspiladorPython:
             self.transpilar_llamada_funcion(nodo)
         elif type(nodo).__name__ == "NodoImprimir":
             self.transpilar_imprimir(nodo)
+        elif isinstance(nodo, NodoRetorno) or type(nodo).__name__ == "NodoRetorno":
+            self.transpilar_retorno(nodo)
         elif hasattr(nodo, "valores") or (
             hasattr(nodo, "nombre")
             and not any(
@@ -186,6 +188,10 @@ class TranspiladorPython:
     def transpilar_imprimir(self, nodo):
         valor = self.obtener_valor(getattr(nodo, "expresion", nodo))
         self.codigo += f"{self.obtener_indentacion()}print({valor})\n"
+
+    def transpilar_retorno(self, nodo):
+        valor = self.obtener_valor(getattr(nodo, "expresion", nodo.expresion))
+        self.codigo += f"{self.obtener_indentacion()}return {valor}\n"
 
     def transpilar_holobit(self, nodo):
         valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)

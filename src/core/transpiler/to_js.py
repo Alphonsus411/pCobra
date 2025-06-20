@@ -46,6 +46,8 @@ class TranspiladorJavaScript:
             self.transpilar_clase(nodo)
         elif nodo_tipo == "NodoMetodo":
             self.transpilar_metodo(nodo)
+        elif nodo_tipo == "NodoRetorno":
+            self.transpilar_retorno(nodo)
         else:
             raise TypeError(f"Tipo de nodo no soportado: {nodo_tipo}")
 
@@ -132,6 +134,12 @@ class TranspiladorJavaScript:
         if isinstance(valor, NodoLista) or isinstance(valor, NodoDiccionario):
             valor = self.transpilar_elemento(nodo.expresion)
         self.agregar_linea(f"console.log({valor});")
+
+    def transpilar_retorno(self, nodo):
+        valor = getattr(nodo.expresion, "valor", nodo.expresion)
+        if isinstance(valor, NodoLista) or isinstance(valor, NodoDiccionario):
+            valor = self.transpilar_elemento(nodo.expresion)
+        self.agregar_linea(f"return {valor};")
 
     def transpilar_holobit(self, nodo):
         """Transpila una asignación de Holobit en JavaScript."""
