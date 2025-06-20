@@ -25,13 +25,13 @@ Para instalar el proyecto, sigue estos pasos:
 1. Clona el repositorio en tu máquina local:
 
    ```bash
-   git clone https://github.com/tu_usuario/Cobra.git
+   git clone https://github.com/Alphonsus411/pCobra.git
    ````
    
 2. Accede al directorio del proyecto:
 
 ````bash
-cd Cobra
+cd pCobra
 ````
 
 3. Crea un entorno virtual y actívalo:
@@ -104,6 +104,17 @@ transpiler = TranspiladorPython()
 codigo_python = transpiler.transpilar(arbol)
 print(codigo_python)
 ````
+
+
+## Uso desde la CLI
+
+Una vez instalado el paquete, puedes ejecutar archivos Cobra con:
+
+```bash
+cobra ejemplo.cobra
+```
+
+Si no se especifica un archivo se abrirá el modo interactivo.
 
 # Pruebas
 
