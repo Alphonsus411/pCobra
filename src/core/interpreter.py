@@ -9,6 +9,8 @@ from src.core.parser import (
     NodoValor,
     NodoImprimir,
     NodoRetorno,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
 )
 
 
@@ -81,29 +83,64 @@ class InterpretadorCobra:
             self.ejecutar_asignacion(expresion)
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
+        elif isinstance(expresion, NodoOperacionBinaria):
+            izquierda = self.evaluar_expresion(expresion.izquierda)
+            derecha = self.evaluar_expresion(expresion.derecha)
+            tipo = expresion.operador.tipo
+            if tipo == TipoToken.SUMA:
+                return izquierda + derecha
+            elif tipo == TipoToken.RESTA:
+                return izquierda - derecha
+            elif tipo == TipoToken.MULT:
+                return izquierda * derecha
+            elif tipo == TipoToken.DIV:
+                return izquierda / derecha
+            elif tipo == TipoToken.MOD:
+                return izquierda % derecha
+            elif tipo == TipoToken.MAYORQUE:
+                return izquierda > derecha
+            elif tipo == TipoToken.MAYORIGUAL:
+                return izquierda >= derecha
+            elif tipo == TipoToken.MENORIGUAL:
+                return izquierda <= derecha
+            elif tipo == TipoToken.IGUAL:
+                return izquierda == derecha
+            elif tipo == TipoToken.DIFERENTE:
+                return izquierda != derecha
+            elif tipo == TipoToken.AND:
+                return bool(izquierda) and bool(derecha)
+            elif tipo == TipoToken.OR:
+                return bool(izquierda) or bool(derecha)
+            else:
+                raise ValueError(f"Operador no soportado: {tipo}")
+        elif isinstance(expresion, NodoOperacionUnaria):
+            valor = self.evaluar_expresion(expresion.operando)
+            tipo = expresion.operador.tipo
+            if tipo == TipoToken.NOT:
+                return not bool(valor)
+            else:
+                raise ValueError(f"Operador unario no soportado: {tipo}")
         else:
             raise ValueError(f"Expresión no soportada: {expresion}")
 
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
-        if eval(
-            nodo.condicion,
-            {},
-            self.variables,
-        ):  # eval simplificado para condiciones básicas
-            for instruccion in nodo.cuerpo_si:
+        bloque_si = getattr(nodo, "cuerpo_si", getattr(nodo, "bloque_si", []))
+        bloque_sino = getattr(nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", []))
+        if self.evaluar_expresion(nodo.condicion):
+            for instruccion in bloque_si:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
-        elif nodo.cuerpo_sino:
-            for instruccion in nodo.cuerpo_sino:
+        elif bloque_sino:
+            for instruccion in bloque_sino:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
 
     def ejecutar_mientras(self, nodo):
         # Ejecuta el bucle mientras la condición sea verdadera
-        while eval(nodo.condicion, {}, self.variables):
+        while self.evaluar_expresion(nodo.condicion):
             for instruccion in nodo.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
@@ -116,26 +153,14 @@ class InterpretadorCobra:
     def ejecutar_llamada_funcion(self, nodo):
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
-                if isinstance(arg, NodoValor):
-                    valor = arg.valor
-                    if isinstance(valor, str):
-                        print(valor.strip('"'))  # Imprime cadenas sin comillas
-                    else:
-                        print(valor)  # Imprime enteros, flotantes directamente
-                elif (
-                    isinstance(arg, Token)
-                    and arg.tipo == TipoToken.IDENTIFICADOR
-                ):
+                if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
                     valor = self.variables.get(
                         arg.valor,
                         f"Variable '{arg.valor}' no definida",
                     )
-                    print(valor)
                 else:
-                    print(
-                        "Error: tipo de argumento no soportado para 'imprimir': "
-                        f"{arg}"
-                    )
+                    valor = self.evaluar_expresion(arg)
+                print(valor)
         elif nodo.nombre in self.variables and isinstance(self.variables[nodo.nombre], NodoFuncion):
             funcion = self.variables[nodo.nombre]
             if len(funcion.parametros) != len(nodo.argumentos):

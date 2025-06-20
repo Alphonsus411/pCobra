@@ -1,4 +1,12 @@
-from src.core.parser import NodoLista, NodoDiccionario
+from src.core.parser import (
+    NodoLista,
+    NodoDiccionario,
+    NodoValor,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
+    NodoIdentificador,
+)
+from src.core.lexer import TipoToken
 
 
 class TranspiladorJavaScript:
@@ -12,6 +20,31 @@ class TranspiladorJavaScript:
             self.codigo.append("    " * self.indentacion + linea)
         else:
             self.codigo.append(linea)
+
+    def obtener_valor(self, nodo):
+        if isinstance(nodo, NodoValor):
+            return str(nodo.valor)
+        elif isinstance(nodo, NodoIdentificador):
+            return nodo.nombre
+        elif isinstance(nodo, NodoOperacionBinaria):
+            izq = self.obtener_valor(nodo.izquierda)
+            der = self.obtener_valor(nodo.derecha)
+            return f"{izq} {nodo.operador.valor} {der}"
+        elif isinstance(nodo, NodoOperacionUnaria):
+            val = self.obtener_valor(nodo.operando)
+            return f"!{val}" if nodo.operador.tipo == TipoToken.NOT else f"{nodo.operador.valor}{val}"
+        elif isinstance(nodo, NodoLista) or isinstance(nodo, NodoDiccionario):
+            temp = []
+            original = self.codigo
+            self.codigo = temp
+            if isinstance(nodo, NodoLista):
+                self.transpilar_lista(nodo)
+            else:
+                self.transpilar_diccionario(nodo)
+            self.codigo = original
+            return ''.join(temp)
+        else:
+            return str(nodo)
 
     def transpilar(self, ast_raiz):
         for nodo in ast_raiz:
@@ -48,6 +81,8 @@ class TranspiladorJavaScript:
             self.transpilar_metodo(nodo)
         elif nodo_tipo == "NodoRetorno":
             self.transpilar_retorno(nodo)
+        elif nodo_tipo in ("NodoOperacionBinaria", "NodoOperacionUnaria"):
+            self.agregar_linea(self.obtener_valor(nodo))
         else:
             raise TypeError(f"Tipo de nodo no soportado: {nodo_tipo}")
 
@@ -59,8 +94,7 @@ class TranspiladorJavaScript:
             self.usa_indentacion = hasattr(nodo, "variable") or hasattr(nodo, "identificador")
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
-        if hasattr(valor, "__dict__"):
-            valor = str(valor)
+        valor = self.obtener_valor(valor)
         prefijo = "let " if hasattr(nodo, "variable") else ""
         self.agregar_linea(f"{prefijo}{nombre} = {valor};")
 
@@ -72,7 +106,8 @@ class TranspiladorJavaScript:
             self.usa_indentacion = any(
                 hasattr(ins, "variable") for ins in cuerpo_si + cuerpo_sino
             )
-        self.agregar_linea(f"if ({nodo.condicion}) {{")
+        condicion = self.obtener_valor(nodo.condicion)
+        self.agregar_linea(f"if ({condicion}) {{")
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo_si:
@@ -100,7 +135,8 @@ class TranspiladorJavaScript:
         cuerpo = nodo.cuerpo
         if self.usa_indentacion is None:
             self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
-        self.agregar_linea(f"while ({nodo.condicion}) {{")
+        condicion = self.obtener_valor(nodo.condicion)
+        self.agregar_linea(f"while ({condicion}) {{")
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo:
@@ -126,19 +162,15 @@ class TranspiladorJavaScript:
 
     def transpilar_llamada_funcion(self, nodo):
         """Transpila una llamada a función en JavaScript."""
-        parametros = ", ".join(nodo.argumentos)
+        parametros = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
         self.agregar_linea(f"{nodo.nombre}({parametros});")
 
     def transpilar_imprimir(self, nodo):
-        valor = getattr(nodo.expresion, "valor", nodo.expresion)
-        if isinstance(valor, NodoLista) or isinstance(valor, NodoDiccionario):
-            valor = self.transpilar_elemento(nodo.expresion)
+        valor = self.obtener_valor(nodo.expresion)
         self.agregar_linea(f"console.log({valor});")
 
     def transpilar_retorno(self, nodo):
-        valor = getattr(nodo.expresion, "valor", nodo.expresion)
-        if isinstance(valor, NodoLista) or isinstance(valor, NodoDiccionario):
-            valor = self.transpilar_elemento(nodo.expresion)
+        valor = self.obtener_valor(nodo.expresion)
         self.agregar_linea(f"return {valor};")
 
     def transpilar_holobit(self, nodo):
@@ -157,7 +189,8 @@ class TranspiladorJavaScript:
         cuerpo = nodo.cuerpo
         if self.usa_indentacion is None:
             self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
-        self.agregar_linea(f"for (let {nodo.variable} of {nodo.iterable}) {{")
+        iterable = self.obtener_valor(nodo.iterable)
+        self.agregar_linea(f"for (let {nodo.variable} of {iterable}) {{")
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo:

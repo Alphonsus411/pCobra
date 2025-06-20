@@ -112,6 +112,21 @@ class NodoOperacionBinaria(NodoAST):
         self.operador = operador
         self.derecha = derecha
 
+    def __repr__(self):
+        return (
+            f"({self.izquierda} {self.operador.valor} {self.derecha})"
+        )
+
+
+class NodoOperacionUnaria(NodoAST):
+    def __init__(self, operador, operando):
+        super().__init__()
+        self.operador = operador
+        self.operando = operando
+
+    def __repr__(self):
+        return f"({self.operador.valor}{self.operando})"
+
 
 class NodoValor(NodoAST):
     def __init__(self, valor):
@@ -543,17 +558,74 @@ class Parser:
         return NodoImprimir(expresion)
 
     def expresion(self):
-        izquierda = self.termino()
+        return self.exp_or()
+
+    def exp_or(self):
+        nodo = self.exp_and()
+        while self.token_actual().tipo == TipoToken.OR:
+            operador = self.token_actual()
+            self.avanzar()
+            derecho = self.exp_and()
+            nodo = NodoOperacionBinaria(nodo, operador, derecho)
+        return nodo
+
+    def exp_and(self):
+        nodo = self.exp_equality()
+        while self.token_actual().tipo == TipoToken.AND:
+            operador = self.token_actual()
+            self.avanzar()
+            derecho = self.exp_equality()
+            nodo = NodoOperacionBinaria(nodo, operador, derecho)
+        return nodo
+
+    def exp_equality(self):
+        nodo = self.exp_comparison()
+        while self.token_actual().tipo in [TipoToken.IGUAL, TipoToken.DIFERENTE]:
+            operador = self.token_actual()
+            self.avanzar()
+            derecho = self.exp_comparison()
+            nodo = NodoOperacionBinaria(nodo, operador, derecho)
+        return nodo
+
+    def exp_comparison(self):
+        nodo = self.exp_addition()
         while self.token_actual().tipo in [
-            TipoToken.SUMA,
-            TipoToken.RESTA,
             TipoToken.MAYORQUE,
+            TipoToken.MAYORIGUAL,
+            TipoToken.MENORIGUAL,
         ]:
             operador = self.token_actual()
             self.avanzar()
-            derecha = self.termino()
-            izquierda = NodoOperacionBinaria(izquierda, operador, derecha)
-        return izquierda
+            derecho = self.exp_addition()
+            nodo = NodoOperacionBinaria(nodo, operador, derecho)
+        return nodo
+
+    def exp_addition(self):
+        nodo = self.exp_multiplication()
+        while self.token_actual().tipo in [TipoToken.SUMA, TipoToken.RESTA]:
+            operador = self.token_actual()
+            self.avanzar()
+            derecho = self.exp_multiplication()
+            nodo = NodoOperacionBinaria(nodo, operador, derecho)
+        return nodo
+
+    def exp_multiplication(self):
+        nodo = self.exp_unario()
+        while self.token_actual().tipo in [TipoToken.MULT, TipoToken.DIV, TipoToken.MOD]:
+            operador = self.token_actual()
+            self.avanzar()
+            derecho = self.exp_unario()
+            nodo = NodoOperacionBinaria(nodo, operador, derecho)
+        return nodo
+
+    def exp_unario(self):
+        if self.token_actual().tipo == TipoToken.NOT:
+            operador = self.token_actual()
+            self.avanzar()
+            operando = self.exp_unario()
+            return NodoOperacionUnaria(operador, operando)
+        else:
+            return self.termino()
 
     def termino(self):
         """Procesa términos como literales, identificadores y llamados a funciones."""
