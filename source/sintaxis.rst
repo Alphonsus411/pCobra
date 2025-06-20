@@ -49,6 +49,39 @@ Los holobits permiten trabajar con datos multidimensionales:
 var h = holobit([0.8, -0.5, 1.2])
 imprimir(h)
 
+**7. Importación de módulos**
+
+Puedes dividir tu código en varios archivos y cargarlos con ``import``:
+
+.. code-block:: cobra
+
+   import 'utilidades.cobra'
+   imprimir(variable_definida_en_utilidades)
+
+**8. Manejo de excepciones**
+
+Para capturar errores se utiliza la estructura ``try`` / ``catch``. Puedes
+lanzar excepciones con ``throw``:
+
+.. code-block:: cobra
+
+   try:
+       throw "problema"
+   catch e:
+       imprimir(e)
+
+**9. Concurrencia con hilos**
+
+Es posible ejecutar funciones de forma concurrente:
+
+.. code-block:: cobra
+
+   func trabajo():
+       imprimir('hola')
+   fin
+
+   hilo trabajo()
+
 **Transpilación a Python y JavaScript**
 
 - `imprimir` se transpila a `print` en Python y a `console.log` en JavaScript.

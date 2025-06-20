@@ -3,15 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Cobra: Documentacion del Lenguaje de Programacion
-===============================================
+Cobra: Documentación del Lenguaje de Programación
+================================================
 
-Cobra es un lenguaje de programacion experimental completamente en espanol, disenado para ser versatil y adecuado para tareas de alto, medio y bajo nivel. Su objetivo es proporcionar un entorno amigable para la simulacion, visualizacion y manipulacion de datos complejos, como los holobits, asi como para la programacion estandar en entornos modernos.
-
-Cobra: Documentacion del Lenguaje de Programacion
-===============================================
-
-Cobra es un lenguaje de programacion experimental completamente en espanol, disenado para ser versatil y adecuado para tareas de alto, medio y bajo nivel. Su objetivo es proporcionar un entorno amigable para la simulacion, visualizacion y manipulacion de datos complejos, como los holobits, asi como para la programacion estandar en entornos modernos.
+Cobra es un lenguaje de programación experimental completamente en español. Su objetivo es proporcionar un entorno amigable para la simulación, visualización y manipulación de datos complejos, como los holobits, además de facilitar la programación estándar en entornos modernos.
 
 .. toctree::
    :maxdepth: 2
@@ -22,6 +17,8 @@ Cobra es un lenguaje de programacion experimental completamente en espanol, dise
    avances
    proximos_pasos
    modulos_nativos
+   ejemplos
+   referencia
 
 Introducción
 --------------------

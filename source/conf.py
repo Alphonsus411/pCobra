@@ -8,7 +8,6 @@
 
 import os
 import sys
-import os
 
 # Obtener la ruta absoluta del archivo actual
 # ruta_archivo = os.path.abspath(__file__)
@@ -19,7 +18,8 @@ import os
 # print(f"La ruta del archivo es: {ruta_archivo}")
 # print(f"La ruta del directorio del proyecto es: {ruta_directorio}")
 
-sys.path.insert(0, 'C:\\Users\\user\\Documents\\pCobra\\source')
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, ROOT_DIR)
 
 
 project = 'Proyecto Cobra'
@@ -39,12 +39,12 @@ extensions = [
               ]
 
 # Habilitar la generación automática de autosummary
-autosummary_generate = True
+autosummary_generate = False
 
 templates_path = ['_templates']
 exclude_patterns = []
 
-language = 'Python'
+language = 'es'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
