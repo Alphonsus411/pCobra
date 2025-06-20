@@ -41,9 +41,12 @@ class InterpretadorCobra:
 
     def ejecutar_asignacion(self, nodo):
         # Resuelve el valor de la expresión en el nodo
-        valor = self.evaluar_expresion(nodo.expresion)
+        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
+        # Resuelve el valor de la expresión en el nodo
+        valor = self.evaluar_expresion(valor_nodo)
         # Almacena el valor en el diccionario de variables
-        self.variables[nodo.variable] = valor
+        self.variables[nombre] = valor
 
     def evaluar_expresion(self, expresion):
         if isinstance(expresion, NodoValor):

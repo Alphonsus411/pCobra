@@ -52,9 +52,11 @@ class TranspiladorPython:
         return str(nodo.valor) if isinstance(nodo, NodoValor) else str(nodo)
 
     def transpilar_asignacion(self, nodo):
+        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         self.codigo += (
-            f"{self.obtener_indentacion()}{nodo.variable} = "
-            f"{self.obtener_valor(nodo.expresion)}\n"
+            f"{self.obtener_indentacion()}{nombre} = "
+            f"{self.obtener_valor(valor)}\n"
         )
 
     def transpilar_condicional(self, nodo):
