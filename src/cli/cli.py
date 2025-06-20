@@ -124,6 +124,15 @@ def formatear_codigo(archivo):
         print("Herramienta de formateo no encontrada. Asegúrate de tener 'black' instalado.")
 
 
+def generar_documentacion():
+    """Genera la documentación HTML usando Sphinx."""
+    raiz = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+    fuente = os.path.join(raiz, "source")
+    destino = os.path.join(raiz, "build", "html")
+    subprocess.run(["sphinx-build", "-b", "html", fuente, destino], check=True)
+    print(f"Documentación generada en {destino}")
+
+
 def ejecutar_archivo(archivo, depurar=False, formatear=False):
     """Ejecuta un script Cobra desde un archivo."""
     if not os.path.exists(archivo):
@@ -199,6 +208,9 @@ def main(argv=None):
     rem = mod_sub.add_parser("remover", help="Elimina un módulo")
     rem.add_argument("nombre")
 
+    # Subcomando docs
+    subparsers.add_parser("docs", help="Genera la documentación del proyecto")
+
     if argv is None:
         if "PYTEST_CURRENT_TEST" in os.environ:
             argv = []
@@ -220,6 +232,8 @@ def main(argv=None):
             remover_modulo(args.nombre)
         else:
             print("Acción de módulos no reconocida")
+    elif args.comando == "docs":
+        generar_documentacion()
     else:
         ejecutar_cobra_interactivamente()
 
