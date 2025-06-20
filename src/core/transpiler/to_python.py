@@ -1,8 +1,10 @@
 from src.core.parser import (
     NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
     NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
-    NodoClase, NodoMetodo, NodoValor, NodoRetorno
+    NodoClase, NodoMetodo, NodoValor, NodoRetorno,
+    NodoOperacionBinaria, NodoOperacionUnaria, NodoIdentificador
 )
+from src.core.lexer import TipoToken
 
 
 class TranspiladorPython:
@@ -121,6 +123,8 @@ class TranspiladorPython:
             and hasattr(nodo, "cuerpo")
         ):
             self.transpilar_metodo(nodo)
+        elif isinstance(nodo, (NodoOperacionBinaria, NodoOperacionUnaria)):
+            self.codigo += self.obtener_valor(nodo)
         elif hasattr(nodo, "valor"):
             self.codigo += self.obtener_valor(nodo)
         else:
@@ -129,7 +133,31 @@ class TranspiladorPython:
             )
 
     def obtener_valor(self, nodo):
-        return str(getattr(nodo, "valor", nodo))
+        from src.core.parser import (
+            NodoOperacionBinaria,
+            NodoOperacionUnaria,
+            NodoIdentificador,
+        )
+
+        if isinstance(nodo, NodoValor):
+            return str(nodo.valor)
+        elif isinstance(nodo, NodoIdentificador):
+            return nodo.nombre
+        elif isinstance(nodo, NodoOperacionBinaria):
+            izq = self.obtener_valor(nodo.izquierda)
+            der = self.obtener_valor(nodo.derecha)
+            op_map = {TipoToken.AND: "and", TipoToken.OR: "or"}
+            op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
+            return f"{izq} {op} {der}"
+        elif isinstance(nodo, NodoOperacionUnaria):
+            val = self.obtener_valor(nodo.operando)
+            if nodo.operador.tipo == TipoToken.NOT:
+                op = "not"
+            else:
+                op = nodo.operador.valor
+            return f"{op} {val}" if op == "not" else f"{op}{val}"
+        else:
+            return str(getattr(nodo, "valor", nodo))
 
     def transpilar_asignacion(self, nodo):
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
@@ -142,7 +170,8 @@ class TranspiladorPython:
     def transpilar_condicional(self, nodo):
         bloque_si = getattr(nodo, "bloque_si", getattr(nodo, "cuerpo_si", []))
         bloque_sino = getattr(nodo, "bloque_sino", getattr(nodo, "cuerpo_sino", []))
-        self.codigo += f"{self.obtener_indentacion()}if {nodo.condicion}:\n"
+        condicion = self.obtener_valor(nodo.condicion)
+        self.codigo += f"{self.obtener_indentacion()}if {condicion}:\n"
         self.nivel_indentacion += 1
         for instruccion in bloque_si:
             self.transpilar_nodo(instruccion)
@@ -155,16 +184,18 @@ class TranspiladorPython:
             self.nivel_indentacion -= 1
 
     def transpilar_mientras(self, nodo):
-        self.codigo += f"{self.obtener_indentacion()}while {nodo.condicion}:\n"
+        condicion = self.obtener_valor(nodo.condicion)
+        self.codigo += f"{self.obtener_indentacion()}while {condicion}:\n"
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
             self.transpilar_nodo(instruccion)
         self.nivel_indentacion -= 1
 
     def transpilar_for(self, nodo):
+        iterable = self.obtener_valor(nodo.iterable)
         self.codigo += (
             f"{self.obtener_indentacion()}for {nodo.variable} in "
-            f"{nodo.iterable}:\n"
+            f"{iterable}:\n"
         )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
@@ -182,7 +213,7 @@ class TranspiladorPython:
         self.nivel_indentacion -= 1
 
     def transpilar_llamada_funcion(self, nodo):
-        argumentos = ", ".join(nodo.argumentos)
+        argumentos = ", ".join(self.obtener_valor(arg) for arg in nodo.argumentos)
         self.codigo += f"{nodo.nombre}({argumentos})\n"
 
     def transpilar_imprimir(self, nodo):

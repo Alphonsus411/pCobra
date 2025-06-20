@@ -37,6 +37,14 @@ class TipoToken:
     MULT = 'MULT'
     DIV = 'DIV'
     MAYORQUE = 'MAYORQUE'
+    MAYORIGUAL = 'MAYORIGUAL'
+    MENORIGUAL = 'MENORIGUAL'
+    IGUAL = 'IGUAL'
+    DIFERENTE = 'DIFERENTE'
+    AND = 'AND'
+    OR = 'OR'
+    NOT = 'NOT'
+    MOD = 'MOD'
     LPAREN = 'LPAREN'
     RPAREN = 'RPAREN'
     LBRACKET = 'LBRACKET'
@@ -86,6 +94,14 @@ class Lexer:
             (TipoToken.DOSPUNTOS, r':'),
             (TipoToken.FIN, r'\bfin\b'),
             (TipoToken.IDENTIFICADOR, r'[A-Za-z_][A-Za-z0-9_]*'),
+            (TipoToken.MAYORIGUAL, r'>='),
+            (TipoToken.MENORIGUAL, r'<='),
+            (TipoToken.IGUAL, r'=='),
+            (TipoToken.DIFERENTE, r'!='),
+            (TipoToken.AND, r'&&'),
+            (TipoToken.OR, r'\|\|'),
+            (TipoToken.NOT, r'!'),
+            (TipoToken.MOD, r'%'),
             (TipoToken.ASIGNAR, r'='),
             (TipoToken.SUMA, r'\+'),
             (TipoToken.RESTA, r'-'),
