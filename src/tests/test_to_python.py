@@ -43,7 +43,7 @@ def test_transpilador_llamada_funcion():
 
 
 def test_transpilador_holobit():
-    ast = [NodoHolobit("miHolobit")]
+    ast = [NodoHolobit("miHolobit", [0.8, -0.5, 1.2])]
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
     expected = "miHolobit = holobit([0.8, -0.5, 1.2])"

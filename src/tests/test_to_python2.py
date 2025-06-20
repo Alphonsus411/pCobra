@@ -35,8 +35,9 @@ class NodoLlamadaFuncion:
 
 
 class NodoHolobit:
-    def __init__(self, nombre):
+    def __init__(self, nombre, valores=None):
         self.nombre = nombre
+        self.valores = valores or []
 
 
 # Pruebas para el transpilador a Python
@@ -80,7 +81,7 @@ def test_transpilar_llamada_funcion():
 
 
 def test_transpilar_holobit():
-    nodo = NodoHolobit("miHolobit")
+    nodo = NodoHolobit("miHolobit", [1, 2, 3])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    assert result == "holobit(miHolobit)\n", "Error en la transpilación de Holobit"
+    assert result == "miHolobit = holobit([1, 2, 3])\n", "Error en la transpilación de Holobit"

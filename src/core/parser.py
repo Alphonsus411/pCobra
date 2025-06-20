@@ -36,14 +36,15 @@ class NodoAsignacion(NodoAST):
 
 
 class NodoHolobit(NodoAST):
-    def __init__(self, *args):
+    def __init__(self, nombre=None, valores=None):
         super().__init__()
-        if len(args) == 1:
+        # Permitir inicializaciones flexibles manteniendo compatibilidad
+        if valores is None and isinstance(nombre, list):
             self.nombre = None
-            self.valores = args[0]
+            self.valores = nombre
         else:
-            self.nombre = args[0]
-            self.valores = args[1]
+            self.nombre = nombre
+            self.valores = valores if valores is not None else []
 
 
 class NodoCondicional(NodoAST):
@@ -384,6 +385,9 @@ class Parser:
             self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR)
         valor = self.expresion()
+        # Si la expresión es un holobit, completar su nombre con la variable
+        if isinstance(valor, NodoHolobit) and valor.nombre is None:
+            valor.nombre = variable_token.valor
         # El identificador se pasa como cadena de texto
         return NodoAsignacion(variable_token.valor, valor)
 
@@ -427,7 +431,7 @@ class Parser:
                 self.comer(TipoToken.COMA)
         self.comer(TipoToken.RBRACKET)
         self.comer(TipoToken.RPAREN)
-        return NodoHolobit(valores)
+        return NodoHolobit(valores=valores)
 
     def declaracion_condicional(self):
         """Parsea un bloque condicional."""
