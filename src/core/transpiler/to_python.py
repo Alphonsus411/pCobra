@@ -182,23 +182,11 @@ class TranspiladorPython:
         self.codigo += f"{nodo.nombre}({argumentos})\n"
 
     def transpilar_holobit(self, nodo):
-        if hasattr(nodo, "nombre") and nodo.nombre is not None:
-            if hasattr(nodo, "valores"):
-                valores = ", ".join(
-                    self.obtener_valor(valor) for valor in nodo.valores
-                )
-                self.codigo += f"{nodo.nombre} = holobit([{valores}])\n"
-            else:
-                self.codigo += f"holobit({nodo.nombre})\n"
+        valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
+        if nodo.nombre:
+            self.codigo += f"{nodo.nombre} = holobit([{valores}])\n"
         else:
-            valores = getattr(nodo, "valores", None)
-            if isinstance(valores, str):
-                self.codigo += f"{valores} = holobit([0.8, -0.5, 1.2])\n"
-            else:
-                valores_str = ", ".join(
-                    self.obtener_valor(valor) for valor in (valores or [])
-                )
-                self.codigo += f"holobit([{valores_str}])\n"
+            self.codigo += f"holobit([{valores}])\n"
 
     def transpilar_lista(self, nodo):
         elementos = ", ".join(

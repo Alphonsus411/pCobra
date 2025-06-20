@@ -75,6 +75,8 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoAsignacion):
             # Resuelve asignaciones anidadas, si existieran
             self.ejecutar_asignacion(expresion)
+        elif isinstance(expresion, NodoHolobit):
+            return self.ejecutar_holobit(expresion)
         else:
             raise ValueError(f"Expresión no soportada: {expresion}")
 
@@ -129,3 +131,10 @@ class InterpretadorCobra:
 
     def ejecutar_holobit(self, nodo):
         print(f"Simulando holobit: {nodo.nombre}")
+        valores = []
+        for v in nodo.valores:
+            if isinstance(v, NodoValor):
+                valores.append(v.valor)
+            else:
+                valores.append(v)
+        return valores
