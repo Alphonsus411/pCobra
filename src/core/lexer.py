@@ -22,6 +22,7 @@ class TipoToken:
     SINO = 'SINO'
     MIENTRAS = 'MIENTRAS'
     PARA = 'PARA'
+    IMPORT = 'IMPORT'
     HOLOBIT = 'HOLOBIT'
     PROYECTAR = 'PROYECTAR'
     TRANSFORMAR = 'TRANSFORMAR'
@@ -92,6 +93,7 @@ class Lexer:
             (TipoToken.SINO, r'\bsino\b'),
             (TipoToken.MIENTRAS, r'\bmientras\b'),
             (TipoToken.PARA, r'\bpara\b'),
+            (TipoToken.IMPORT, r'\bimport\b'),
             (TipoToken.IN, r'\bin\b'),  # Define el token 'in'
             (TipoToken.HOLOBIT, r'\bholobit\b'),
             (TipoToken.PROYECTAR, r'\bproyectar\b'),

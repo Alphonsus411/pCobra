@@ -1,4 +1,4 @@
-from src.core.lexer import Token, TipoToken
+from src.core.lexer import Token, TipoToken, Lexer
 from src.core.parser import (
     NodoAsignacion,
     NodoCondicional,
@@ -19,6 +19,8 @@ from src.core.parser import (
     NodoOperacionUnaria,
     NodoTryCatch,
     NodoThrow,
+    NodoImport,
+    Parser,
 )
 
 
@@ -91,6 +93,8 @@ class InterpretadorCobra:
                         print(f"Variable '{valor}' no definida")
             else:
                 print(valor)
+        elif isinstance(nodo, NodoImport):
+            return self.ejecutar_import(nodo)
         elif isinstance(nodo, NodoTryCatch):
             return self.ejecutar_try_catch(nodo)
         elif isinstance(nodo, NodoThrow):
@@ -291,6 +295,22 @@ class InterpretadorCobra:
                 break
         self.contextos.pop()
         return resultado
+
+    def ejecutar_import(self, nodo):
+        """Carga y ejecuta un módulo especificado en la declaración import."""
+        try:
+            with open(nodo.ruta, "r", encoding="utf-8") as f:
+                codigo = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
+
+        lexer = Lexer(codigo)
+        tokens = lexer.analizar_token()
+        ast = Parser(tokens).parsear()
+        for subnodo in ast:
+            resultado = self.ejecutar_nodo(subnodo)
+            if resultado is not None:
+                return resultado
 
     def ejecutar_holobit(self, nodo):
         print(f"Simulando holobit: {nodo.nombre}")

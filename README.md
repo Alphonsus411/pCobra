@@ -126,6 +126,20 @@ para var i en rango(2) :
 
 Al transpilar a Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. El tipo `holobit` se transfiere a la llamada `holobit([...])` en Python o `new Holobit([...])` en JavaScript.
 
+## Ejemplo de carga de módulos
+
+Puedes dividir el código en varios archivos y cargarlos con `import`:
+
+````cobra
+# modulo.cobra
+var saludo = 'Hola desde módulo'
+
+# programa.cobra
+import 'modulo.cobra'
+imprimir(saludo)
+````
+
+Al ejecutar `programa.cobra`, se procesará primero `modulo.cobra` y luego se imprimirá `Hola desde módulo`.
 
 ## Uso desde la CLI
 
