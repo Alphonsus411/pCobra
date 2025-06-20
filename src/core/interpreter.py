@@ -23,6 +23,8 @@ from src.core.parser import (
     Parser,
 )
 
+from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
+
 
 class ExcepcionCobra(Exception):
     def __init__(self, valor):
@@ -36,6 +38,12 @@ class InterpretadorCobra:
     def __init__(self):
         # Pila de contextos para mantener variables locales en cada llamada
         self.contextos = [{}]
+        # Mapa paralelo para gestionar bloques de memoria por contexto
+        self.mem_contextos = [{}]
+        # Gestor genético de estrategias de memoria
+        self.gestor_memoria = GestorMemoriaGenetico()
+        self.estrategia = self.gestor_memoria.poblacion[0]
+        self.op_memoria = 0
 
     @property
     def variables(self):
@@ -53,6 +61,25 @@ class InterpretadorCobra:
             if nombre in contexto:
                 return contexto[nombre]
         return None
+
+    # -- Gestión de memoria -------------------------------------------------
+    def solicitar_memoria(self, tam):
+        """Solicita un bloque a la estrategia actual."""
+        index = self.estrategia.asignar(tam)
+        if index == -1:
+            self.gestor_memoria.evolucionar(verbose=False)
+            self.estrategia = self.gestor_memoria.poblacion[0]
+            index = self.estrategia.asignar(tam)
+        self.op_memoria += 1
+        if self.op_memoria >= 1000:
+            self.gestor_memoria.evolucionar(verbose=False)
+            self.estrategia = self.gestor_memoria.poblacion[0]
+            self.op_memoria = 0
+        return index
+
+    def liberar_memoria(self, index, tam):
+        """Libera un bloque de memoria."""
+        self.estrategia.liberar(index, tam)
 
     def ejecutar_ast(self, ast):
         for nodo in ast:
@@ -119,6 +146,13 @@ class InterpretadorCobra:
             atributos = objeto.setdefault("__atributos__", {})
             atributos[nombre.nombre] = valor
         else:
+            # Si la variable ya tiene memoria reservada, se libera
+            mem_ctx = self.mem_contextos[-1]
+            if nombre in mem_ctx:
+                idx, tam = mem_ctx.pop(nombre)
+                self.liberar_memoria(idx, tam)
+            indice = self.solicitar_memoria(1)
+            mem_ctx[nombre] = (indice, 1)
             self.variables[nombre] = valor
 
     def evaluar_expresion(self, expresion):
@@ -249,6 +283,7 @@ class InterpretadorCobra:
 
             # Crea un nuevo contexto para la llamada
             self.contextos.append({})
+            self.mem_contextos.append({})
 
             for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
                 self.variables[nombre_param] = self.evaluar_expresion(arg)
@@ -259,7 +294,10 @@ class InterpretadorCobra:
                 if resultado is not None:
                     break
 
-            # Elimina el contexto al finalizar la función
+            # Elimina el contexto al finalizar la función y libera su memoria
+            memoria_local = self.mem_contextos.pop()
+            for idx, tam in memoria_local.values():
+                self.liberar_memoria(idx, tam)
             self.contextos.pop()
             return resultado
         else:
@@ -285,6 +323,7 @@ class InterpretadorCobra:
 
         contexto = {"self": objeto}
         self.contextos.append(contexto)
+        self.mem_contextos.append({})
         for nombre_param, arg in zip(metodo.parametros[1:], nodo.argumentos):
             self.variables[nombre_param] = self.evaluar_expresion(arg)
 
@@ -293,6 +332,9 @@ class InterpretadorCobra:
             resultado = self.ejecutar_nodo(instruccion)
             if resultado is not None:
                 break
+        memoria_local = self.mem_contextos.pop()
+        for idx, tam in memoria_local.values():
+            self.liberar_memoria(idx, tam)
         self.contextos.pop()
         return resultado
 
