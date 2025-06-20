@@ -16,7 +16,13 @@ from src.core.lexer import TipoToken, Lexer
 
 class TranspiladorJavaScript:
     def __init__(self):
-        self.codigo = []
+        # Incluir importaciones de modulos nativos
+        self.codigo = [
+            "import * as io from './nativos/io.js';",
+            "import * as net from './nativos/io.js';",
+            "import * as matematicas from './nativos/matematicas.js';",
+            "import { Pila, Cola } from './nativos/estructuras.js';",
+        ]
         self.indentacion = 0
         self.usa_indentacion = None
 

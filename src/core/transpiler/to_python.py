@@ -21,7 +21,8 @@ from src.core.lexer import TipoToken, Lexer
 
 class TranspiladorPython:
     def __init__(self):
-        self.codigo = ""
+        # Incluir los modulos nativos al inicio del codigo generado
+        self.codigo = "from src.core.nativos import *\n"
         self.nivel_indentacion = 0
 
     def obtener_indentacion(self):

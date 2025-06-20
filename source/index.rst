@@ -21,6 +21,7 @@ Cobra es un lenguaje de programacion experimental completamente en espanol, dise
    sintaxis
    avances
    proximos_pasos
+   modulos_nativos
 
 Introducción
 --------------------
