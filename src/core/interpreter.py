@@ -7,6 +7,7 @@ from src.core.parser import (
     NodoLlamadaFuncion,
     NodoHolobit,
     NodoValor,
+    NodoImprimir,
 )
 
 
@@ -32,6 +33,19 @@ class InterpretadorCobra:
             self.ejecutar_funcion(nodo)
         elif isinstance(nodo, NodoLlamadaFuncion):
             return self.ejecutar_llamada_funcion(nodo)
+        elif isinstance(nodo, NodoImprimir):
+            valor = self.evaluar_expresion(nodo.expresion)
+            if isinstance(valor, str):
+                if (valor.startswith("\"") and valor.endswith("\"")) or (
+                    valor.startswith("'") and valor.endswith("'")
+                ):
+                    print(valor.strip('"').strip("'"))
+                elif valor in self.variables:
+                    print(self.variables[valor])
+                else:
+                    print(f"Variable '{valor}' no definida")
+            else:
+                print(valor)
         elif isinstance(nodo, NodoHolobit):
             return self.ejecutar_holobit(nodo)
         elif isinstance(nodo, NodoValor):
