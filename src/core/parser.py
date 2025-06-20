@@ -17,8 +17,14 @@ class NodoAST:
 class NodoAsignacion(NodoAST):
     def __init__(self, variable, expresion):
         super().__init__()
-        self.variable = variable
+        if isinstance(variable, Token):
+            self.variable = variable.valor
+        else:
+            self.variable = variable
         self.expresion = expresion
+        # Compatibilidad con pruebas antiguas
+        self.nombre = self.variable
+        self.valor = expresion
 
 
 class NodoHolobit(NodoAST):
@@ -116,6 +122,7 @@ class NodoIdentificador:
         :param nombre: Nombre del identificador (cadena de texto).
         """
         self.nombre = nombre
+        self.valor = nombre
 
     def __repr__(self):
         return f'NodoIdentificador({self.nombre})'
@@ -172,14 +179,14 @@ class NodoMientras:
 class NodoPara:
     """Nodo AST para representar bucles 'para'."""
 
-    def __init__(self, rango, variable, iterable, cuerpo):
-        """
+    def __init__(self, variable, iterable, cuerpo):
+        """Inicializa el nodo para el bucle 'para'.
+
         Args:
             variable (str): Nombre de la variable de iteración.
             iterable (Nodo): Expresión o rango que se iterará.
             cuerpo (list): Lista de declaraciones en el cuerpo del bucle.
         """
-        self.rango = rango
         self.variable = variable
         self.iterable = iterable
         self.cuerpo = cuerpo
@@ -256,6 +263,10 @@ class Parser:
                 return self.declaracion_funcion()
             elif token.tipo == TipoToken.IMPRIMIR:  # Soporte para `imprimir`
                 return self.declaracion_imprimir()
+            elif token.tipo == TipoToken.IDENTIFICADOR and token.valor == "definir":
+                # Tratar 'definir' como alias de 'func'
+                self.token_actual().tipo = TipoToken.FUNC
+                return self.declaracion_funcion()
             elif token.tipo == TipoToken.PARA:
                 return self.declaracion_para()
             elif token.tipo == TipoToken.RETORNO:  # Declaraciones de retorno
@@ -297,6 +308,19 @@ class Parser:
         # Procesa el rango o iterable
         try:
             iterable = self.expresion()
+
+            # Normaliza el iterable a un NodoValor con su representación en texto
+            if isinstance(iterable, NodoLlamadaFuncion):
+                args = []
+                for arg in iterable.argumentos:
+                    if isinstance(arg, NodoValor):
+                        args.append(str(arg.valor))
+                    elif isinstance(arg, NodoIdentificador):
+                        args.append(arg.nombre)
+                    else:
+                        args.append(str(arg))
+                iterable_texto = f"{iterable.nombre}({', '.join(args)})"
+                iterable = NodoValor(iterable_texto)
         except SyntaxError as e:
             raise SyntaxError(f"Error al procesar el iterable en 'para': {e}")
 
@@ -357,13 +381,22 @@ class Parser:
 
 
     def declaracion_asignacion(self):
+        variable_token = None
         if self.token_actual().tipo == TipoToken.VAR:
+            variable_token = self.token_actual()
             self.comer(TipoToken.VAR)  # Consume el token 'var' si está presente
-        identificador = self.token_actual()
-        self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
+                variable_token = self.token_actual()
+                self.comer(TipoToken.IDENTIFICADOR)
+        else:
+            variable_token = self.token_actual()
+            self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR)
         valor = self.expresion()
-        return NodoAsignacion(identificador, valor)
+        nombre_variable = (
+            variable_token.valor if isinstance(variable_token, Token) else variable_token
+        )
+        return NodoAsignacion(nombre_variable, valor)
 
     def declaracion_mientras(self):
         """Parsea un bucle mientras."""
@@ -391,7 +424,7 @@ class Parser:
         self.comer(TipoToken.FIN)
 
         logging.debug(f"Cuerpo del bucle mientras: {cuerpo}")
-        return NodoBucleMientras(condicion, cuerpo)
+        return NodoMientras(condicion, cuerpo)
 
     def declaracion_holobit(self):
         self.comer(TipoToken.HOLOBIT)
@@ -506,6 +539,8 @@ class Parser:
 
         # Procesa el contenido que será impreso (podría ser una expresión)
         expresion = self.expresion()
+        if isinstance(expresion, NodoIdentificador):
+            expresion = NodoValor(expresion.nombre)
 
         # Consume ')'
         if self.token_actual().tipo != TipoToken.RPAREN:
