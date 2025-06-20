@@ -44,7 +44,9 @@ class TranspiladorPython:
         elif isinstance(nodo, NodoValor):
             self.codigo += self.obtener_valor(nodo)
         else:
-            raise TypeError(f"Tipo de nodo no soportado: {type(nodo).__name__}")
+            raise TypeError(
+                f"Tipo de nodo no soportado: {type(nodo).__name__}"
+            )
 
     def obtener_valor(self, nodo):
         return str(nodo.valor) if isinstance(nodo, NodoValor) else str(nodo)
@@ -87,7 +89,9 @@ class TranspiladorPython:
 
     def transpilar_funcion(self, nodo):
         parametros = ", ".join(nodo.parametros)
-        self.codigo += f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
+        self.codigo += (
+            f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
+        )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
             self.transpilar_nodo(instruccion)
@@ -98,7 +102,9 @@ class TranspiladorPython:
         self.codigo += f"{nodo.nombre}({argumentos})\n"
 
     def transpilar_holobit(self, nodo):
-        valores = ", ".join(self.obtener_valor(valor) for valor in nodo.valores)
+        valores = ", ".join(
+            self.obtener_valor(valor) for valor in nodo.valores
+        )
         self.codigo += f"holobit([{valores}])\n"
 
     def transpilar_lista(self, nodo):
@@ -124,7 +130,9 @@ class TranspiladorPython:
 
     def transpilar_metodo(self, nodo):
         parametros = ", ".join(nodo.parametros)
-        self.codigo += f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
+        self.codigo += (
+            f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
+        )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
             self.transpilar_nodo(instruccion)
