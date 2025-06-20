@@ -167,23 +167,6 @@ class NodoRetorno(NodoAST):
         return f"NodoRetorno(expresion={self.expresion})"
 
 
-class NodoMientras:
-    """Representa un nodo de bucle 'mientras' en el AST."""
-
-    def __init__(self, condicion, cuerpo):
-        """
-        Inicializa el nodo de bucle mientras.
-
-        :param condicion: Nodo que representa la condición del bucle.
-        :param cuerpo: Lista de nodos que representan el cuerpo del bucle.
-        """
-        self.condicion = condicion
-        self.cuerpo = cuerpo
-
-    def __repr__(self):
-        return f"NodoMientras(condicion={self.condicion}, cuerpo={self.cuerpo})"
-
-
 class NodoPara:
     """Nodo AST para representar bucles 'para'."""
 
@@ -430,7 +413,7 @@ class Parser:
         self.comer(TipoToken.FIN)
 
         logging.debug(f"Cuerpo del bucle mientras: {cuerpo}")
-        return NodoMientras(condicion, cuerpo)
+        return NodoBucleMientras(condicion, cuerpo)
 
     def declaracion_holobit(self):
         self.comer(TipoToken.HOLOBIT)

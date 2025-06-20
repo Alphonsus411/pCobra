@@ -1,7 +1,14 @@
 import pytest
 
 from src.core.lexer import Token, TipoToken
-from src.core.parser import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoMientras, NodoValor
+from src.core.parser import (
+    NodoAsignacion,
+    NodoCondicional,
+    NodoFuncion,
+    NodoRetorno,
+    NodoBucleMientras,
+    NodoValor,
+)
 from src.core.parser import Parser
 
 
@@ -44,7 +51,7 @@ def test_parser_mientras():
     ast = parser.parsear()
 
     assert len(ast) == 1
-    assert isinstance(ast[0], NodoMientras)
+    assert isinstance(ast[0], NodoBucleMientras)
     assert ast[0].condicion.operador.tipo == TipoToken.MAYORQUE
     assert ast[0].condicion.izquierda.valor == "x"
     assert ast[0].condicion.derecha.valor == 0
