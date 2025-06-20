@@ -580,6 +580,9 @@ class Parser:
                 return self.llamada_funcion()
             self.comer(TipoToken.IDENTIFICADOR)
             return NodoIdentificador(token.valor)
+        elif token.tipo == TipoToken.HOLOBIT:
+            # Permitir el uso de 'holobit' dentro de expresiones
+            return self.declaracion_holobit()
         else:
             raise SyntaxError(f"Token inesperado en término: {token.tipo}")
 
