@@ -26,6 +26,9 @@ class TipoToken:
     PROYECTAR = 'PROYECTAR'
     TRANSFORMAR = 'TRANSFORMAR'
     GRAFICAR = 'GRAFICAR'
+    TRY = 'TRY'
+    CATCH = 'CATCH'
+    THROW = 'THROW'
     ENTERO = 'ENTERO'
     FLOTANTE = 'FLOTANTE'
     CADENA = 'CADENA'
@@ -94,6 +97,9 @@ class Lexer:
             (TipoToken.PROYECTAR, r'\bproyectar\b'),
             (TipoToken.TRANSFORMAR, r'\btransformar\b'),
             (TipoToken.GRAFICAR, r'\bgraficar\b'),
+            (TipoToken.TRY, r'\btry\b'),
+            (TipoToken.CATCH, r'\bcatch\b'),
+            (TipoToken.THROW, r'\bthrow\b'),
             (TipoToken.IMPRIMIR, r'\bimprimir\b'),  # Reconoce 'imprimir'
             (TipoToken.FLOTANTE, r'\d+\.\d+'),
             (TipoToken.ENTERO, r'\d+'),

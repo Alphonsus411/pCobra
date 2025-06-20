@@ -93,6 +93,10 @@ class TranspiladorJavaScript:
             self.transpilar_llamada_metodo(nodo)
         elif nodo_tipo == "NodoRetorno":
             self.transpilar_retorno(nodo)
+        elif nodo_tipo == "NodoTryCatch":
+            self.transpilar_try_catch(nodo)
+        elif nodo_tipo == "NodoThrow":
+            self.transpilar_throw(nodo)
         elif nodo_tipo in ("NodoOperacionBinaria", "NodoOperacionUnaria"):
             self.agregar_linea(self.obtener_valor(nodo))
         else:
@@ -279,3 +283,32 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion -= 1
         self.agregar_linea("}")
+
+    def transpilar_try_catch(self, nodo):
+        self.agregar_linea("try {")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in nodo.bloque_try:
+            self.transpilar_nodo(instruccion)
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        if nodo.bloque_catch:
+            catch_var = nodo.nombre_excepcion or ""
+            if self.usa_indentacion:
+                self.agregar_linea(f"}} catch ({catch_var}) {{")
+            else:
+                self.agregar_linea("}")
+                self.agregar_linea(f"catch ({catch_var}) {{")
+            if self.usa_indentacion:
+                self.indentacion += 1
+            for instruccion in nodo.bloque_catch:
+                self.transpilar_nodo(instruccion)
+            if self.usa_indentacion:
+                self.indentacion -= 1
+            self.agregar_linea("}")
+        else:
+            self.agregar_linea("}")
+
+    def transpilar_throw(self, nodo):
+        valor = self.obtener_valor(nodo.expresion)
+        self.agregar_linea(f"throw {valor};")
