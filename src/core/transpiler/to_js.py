@@ -8,8 +8,10 @@ from src.core.parser import (
     NodoAtributo,
     NodoInstancia,
     NodoLlamadaMetodo,
+    NodoImport,
+    Parser,
 )
-from src.core.lexer import TipoToken
+from src.core.lexer import TipoToken, Lexer
 
 
 class TranspiladorJavaScript:
@@ -97,6 +99,8 @@ class TranspiladorJavaScript:
             self.transpilar_try_catch(nodo)
         elif nodo_tipo == "NodoThrow":
             self.transpilar_throw(nodo)
+        elif nodo_tipo == "NodoImport":
+            self.transpilar_import(nodo)
         elif nodo_tipo in ("NodoOperacionBinaria", "NodoOperacionUnaria"):
             self.agregar_linea(self.obtener_valor(nodo))
         else:
@@ -312,3 +316,17 @@ class TranspiladorJavaScript:
     def transpilar_throw(self, nodo):
         valor = self.obtener_valor(nodo.expresion)
         self.agregar_linea(f"throw {valor};")
+
+    def transpilar_import(self, nodo):
+        """Carga y transpila el módulo indicado."""
+        try:
+            with open(nodo.ruta, "r", encoding="utf-8") as f:
+                codigo = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
+
+        lexer = Lexer(codigo)
+        tokens = lexer.analizar_token()
+        ast = Parser(tokens).parsear()
+        for subnodo in ast:
+            self.transpilar_nodo(subnodo)

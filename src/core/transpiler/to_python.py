@@ -13,8 +13,10 @@ from src.core.parser import (
     NodoAtributo,
     NodoTryCatch,
     NodoThrow,
+    NodoImport,
+    Parser,
 )
-from src.core.lexer import TipoToken
+from src.core.lexer import TipoToken, Lexer
 
 
 class TranspiladorPython:
@@ -87,6 +89,8 @@ class TranspiladorPython:
             self.codigo += f"{self.obtener_valor(nodo)}\n"
         elif isinstance(nodo, NodoLlamadaMetodo):
             self.transpilar_llamada_metodo(nodo)
+        elif isinstance(nodo, NodoImport):
+            self.transpilar_import(nodo)
         elif type(nodo).__name__ == "NodoImprimir":
             self.transpilar_imprimir(nodo)
         elif isinstance(nodo, NodoRetorno) or type(nodo).__name__ == "NodoRetorno":
@@ -313,3 +317,17 @@ class TranspiladorPython:
     def transpilar_throw(self, nodo):
         valor = self.obtener_valor(nodo.expresion)
         self.codigo += f"{self.obtener_indentacion()}raise Exception({valor})\n"
+
+    def transpilar_import(self, nodo):
+        """Transpila una declaración de importación cargando y procesando el módulo."""
+        try:
+            with open(nodo.ruta, "r", encoding="utf-8") as f:
+                codigo = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
+
+        lexer = Lexer(codigo)
+        tokens = lexer.analizar_token()
+        ast = Parser(tokens).parsear()
+        for subnodo in ast:
+            self.transpilar_nodo(subnodo)

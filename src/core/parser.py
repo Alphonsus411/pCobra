@@ -226,6 +226,14 @@ class NodoTryCatch(NodoAST):
         self.bloque_catch = bloque_catch or []
 
 
+class NodoImport(NodoAST):
+    """Nodo para representar una instrucción de importación."""
+
+    def __init__(self, ruta):
+        super().__init__()
+        self.ruta = ruta
+
+
 class NodoPara:
     """Nodo AST para representar bucles 'para'."""
 
@@ -311,6 +319,8 @@ class Parser:
                 return self.declaracion_mientras()
             elif token.tipo == TipoToken.FUNC:
                 return self.declaracion_funcion()
+            elif token.tipo == TipoToken.IMPORT:
+                return self.declaracion_import()
             elif token.tipo == TipoToken.IMPRIMIR:  # Soporte para `imprimir`
                 return self.declaracion_imprimir()
             elif token.tipo == TipoToken.TRY:
@@ -604,6 +614,15 @@ class Parser:
         self.comer(TipoToken.RPAREN)
 
         return NodoImprimir(expresion)
+
+    def declaracion_import(self):
+        """Parsea una declaración de importación de módulo."""
+        self.comer(TipoToken.IMPORT)
+        if self.token_actual().tipo != TipoToken.CADENA:
+            raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
+        ruta = self.token_actual().valor
+        self.comer(TipoToken.CADENA)
+        return NodoImport(ruta)
 
     def declaracion_try_catch(self):
         self.comer(TipoToken.TRY)
