@@ -1,11 +1,19 @@
 import argparse
 import logging
+import os
+import shutil
+import subprocess
+import sys
+
 from src.core.interpreter import InterpretadorCobra
 from src.core.lexer import Lexer
 from src.core.parser import Parser
 from src.core.transpiler.to_js import TranspiladorJavaScript
 from src.core.transpiler.to_python import TranspiladorPython
-import os
+
+# Ruta donde se almacenan los módulos instalados
+MODULES_PATH = os.path.join(os.path.dirname(__file__), "modules")
+os.makedirs(MODULES_PATH, exist_ok=True)
 
 # Configuración de logging
 logging.basicConfig(
@@ -16,18 +24,12 @@ logging.basicConfig(
 
 def ejecutar_cobra_interactivamente():
     """Ejecuta Cobra en modo interactivo."""
-    print(
-        "Bienvenido a la interfaz interactiva de Cobra. Escribe 'salir' "
-        "o 'salir()' para salir."
-    )
-    print("Comandos especiales: 'tokens' y 'ast' para inspección avanzada.")
     interpretador = InterpretadorCobra()
 
     while True:
         try:
             linea = input("cobra> ").strip()
             if linea in ["salir", "salir()"]:  # Permitir ambas variantes para salir
-                print("Saliendo de la interfaz interactiva.")
                 break
             elif linea == "tokens":
                 tokens = Lexer(linea).tokenizar()
@@ -114,29 +116,112 @@ def inspeccionar_archivo(archivo, modo):
             print(f"Error durante la inspección: {e}")
 
 
-def main():
-    """Punto de entrada principal de la CLI."""
-    parser = argparse.ArgumentParser(description="CLI para Cobra")
-    parser.add_argument(
-        "archivo",
-        nargs="?",
-        help="Archivo con código Cobra para ejecutar o transpilar",
-    )
-    parser.add_argument("--transpilador", choices=["python", "js"],
-                        help="Opcional: Transpila el archivo a Python o JavaScript.")
-    parser.add_argument("--inspeccionar", choices=["tokens", "ast"],
-                        help="Opcional: Inspecciona los tokens o AST de un archivo.")
+def formatear_codigo(archivo):
+    """Formatea un archivo Cobra usando black si está disponible."""
+    try:
+        subprocess.run(["black", archivo], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except FileNotFoundError:
+        print("Herramienta de formateo no encontrada. Asegúrate de tener 'black' instalado.")
 
-    args, _ = parser.parse_known_args()
 
-    if args.archivo and args.transpilador:
-        transpilar_archivo(args.archivo, args.transpilador)
-    elif args.archivo and args.inspeccionar:
-        inspeccionar_archivo(args.archivo, args.inspeccionar)
-    elif not args.archivo:
-        ejecutar_cobra_interactivamente()
+def ejecutar_archivo(archivo, depurar=False, formatear=False):
+    """Ejecuta un script Cobra desde un archivo."""
+    if not os.path.exists(archivo):
+        print(f"El archivo '{archivo}' no existe")
+        return
+    if formatear:
+        formatear_codigo(archivo)
+    if depurar:
+        logging.getLogger().setLevel(logging.DEBUG)
     else:
-        print("Opción inválida. Usa '--help' para más información.")
+        logging.getLogger().setLevel(logging.ERROR)
+
+    with open(archivo, "r") as f:
+        codigo = f.read()
+    tokens = Lexer(codigo).tokenizar()
+    ast = Parser(tokens).parsear()
+    InterpretadorCobra().ejecutar_ast(ast)
+
+
+def listar_modulos():
+    """Lista los módulos instalados."""
+    mods = [f for f in os.listdir(MODULES_PATH) if f.endswith(".cobra")]
+    if not mods:
+        print("No hay módulos instalados")
+    else:
+        for m in mods:
+            print(m)
+
+
+def instalar_modulo(ruta):
+    """Instala un módulo copiándolo a MODULES_PATH."""
+    if not os.path.exists(ruta):
+        print(f"No se encontró el módulo {ruta}")
+        return
+    destino = os.path.join(MODULES_PATH, os.path.basename(ruta))
+    shutil.copy(ruta, destino)
+    print(f"Módulo instalado en {destino}")
+
+
+def remover_modulo(nombre):
+    """Elimina un módulo instalado."""
+    archivo = os.path.join(MODULES_PATH, nombre)
+    if os.path.exists(archivo):
+        os.remove(archivo)
+        print(f"Módulo {nombre} eliminado")
+    else:
+        print(f"El módulo {nombre} no existe")
+
+
+def main(argv=None):
+    """Punto de entrada principal de la CLI."""
+    parser = argparse.ArgumentParser(prog="cobra", description="CLI para Cobra")
+    parser.add_argument("--formatear", action="store_true", help="Formatea el archivo antes de procesarlo")
+    parser.add_argument("--depurar", action="store_true", help="Muestra mensajes de depuración")
+
+    subparsers = parser.add_subparsers(dest="comando")
+
+    # Subcomando compilar
+    comp = subparsers.add_parser("compilar", help="Transpila un archivo")
+    comp.add_argument("archivo")
+    comp.add_argument("--tipo", choices=["python", "js"], default="python")
+
+    # Subcomando ejecutar
+    run = subparsers.add_parser("ejecutar", help="Ejecuta un script Cobra")
+    run.add_argument("archivo")
+
+    # Subcomando modulos
+    mods = subparsers.add_parser("modulos", help="Gestiona módulos instalados")
+    mod_sub = mods.add_subparsers(dest="accion")
+    mod_sub.add_parser("listar", help="Lista módulos")
+    inst = mod_sub.add_parser("instalar", help="Instala un módulo")
+    inst.add_argument("ruta")
+    rem = mod_sub.add_parser("remover", help="Elimina un módulo")
+    rem.add_argument("nombre")
+
+    if argv is None:
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            argv = []
+        else:
+            argv = sys.argv[1:]
+
+    args, _ = parser.parse_known_args(argv)
+
+    if args.comando == "compilar":
+        transpilar_archivo(args.archivo, args.tipo)
+    elif args.comando == "ejecutar":
+        ejecutar_archivo(args.archivo, depurar=args.depurar, formatear=args.formatear)
+    elif args.comando == "modulos":
+        if args.accion == "listar":
+            listar_modulos()
+        elif args.accion == "instalar":
+            instalar_modulo(args.ruta)
+        elif args.accion == "remover":
+            remover_modulo(args.nombre)
+        else:
+            print("Acción de módulos no reconocida")
+    else:
+        ejecutar_cobra_interactivamente()
 
 
 if __name__ == "__main__":

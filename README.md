@@ -48,6 +48,12 @@ source .venv/bin/activate  # Para Unix
 pip install -r requirements.txt
 ````
 
+5. Instala el paquete de forma editable para usar la CLI:
+
+````bash
+pip install -e .
+````
+
 # Estructura del Proyecto
 
 El proyecto se organiza en las siguientes carpetas y módulos:
@@ -159,13 +165,23 @@ Al transpilarlas, se generan llamadas `asyncio.create_task` en Python y `Promise
 
 ## Uso desde la CLI
 
-Una vez instalado el paquete, puedes ejecutar archivos Cobra con:
+Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 
 ```bash
-cobra ejemplo.cobra
+# Compilar un archivo a Python o JavaScript
+cobra compilar programa.cobra --tipo python
+
+# Ejecutar directamente un script Cobra
+cobra ejecutar programa.cobra --depurar --formatear
+
+# Gestionar módulos instalados
+cobra modulos listar
+cobra modulos instalar ruta/al/modulo.cobra
+cobra modulos remover modulo.cobra
 ```
 
-Si no se especifica un archivo se abrirá el modo interactivo.
+Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` pa
+ra más detalles.
 
 # Pruebas
 
