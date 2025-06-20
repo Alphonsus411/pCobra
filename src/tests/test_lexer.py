@@ -6,15 +6,23 @@ def test_lexer_asignacion_variable():
     lexer = Lexer(codigo)
     tokens = lexer.analizar_token()
 
-    assert tokens[0].tipo == TipoToken.VAR
-    assert tokens[1].tipo == TipoToken.IDENTIFICADOR
-    assert tokens[1].valor == 'x'
-    assert tokens[2].tipo == TipoToken.ASIGNAR
-    assert tokens[3].tipo == TipoToken.HOLOBIT
-    assert tokens[4].tipo == TipoToken.LPAREN
-    assert tokens[5].tipo == TipoToken.LBRACKET  # Corchete de apertura
-    assert tokens[6].tipo == TipoToken.FLOTANTE
-    assert tokens[6].valor == 0.8  # Cambiado de '0.8' a 0.8 (número)
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.VAR, 'var'),
+        (TipoToken.IDENTIFICADOR, 'x'),
+        (TipoToken.ASIGNAR, '='),
+        (TipoToken.HOLOBIT, 'holobit'),
+        (TipoToken.LPAREN, '('),
+        (TipoToken.LBRACKET, '['),
+        (TipoToken.FLOTANTE, 0.8),
+        (TipoToken.COMA, ','),
+        (TipoToken.RESTA, '-'),
+        (TipoToken.FLOTANTE, 0.5),
+        (TipoToken.COMA, ','),
+        (TipoToken.FLOTANTE, 1.2),
+        (TipoToken.RBRACKET, ']'),
+        (TipoToken.RPAREN, ')'),
+        (TipoToken.EOF, None),
+    ]
 
 
 def test_lexer_transformacion_holobit():
@@ -23,10 +31,25 @@ def test_lexer_transformacion_holobit():
     lexer = Lexer(codigo)
     tokens = lexer.analizar_token()
 
-    assert tokens[0].tipo == TipoToken.TRANSFORMAR
-    assert tokens[1].tipo == TipoToken.LPAREN
-    assert tokens[2].tipo == TipoToken.HOLOBIT
-    assert tokens[3].tipo == TipoToken.LPAREN
-    assert tokens[4].tipo == TipoToken.LBRACKET  # Corchete de apertura
-    assert tokens[5].tipo == TipoToken.FLOTANTE
-    assert tokens[5].valor == 1.0  # Cambiado de '1.0' a 1.0 (número)
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.TRANSFORMAR, 'transformar'),
+        (TipoToken.LPAREN, '('),
+        (TipoToken.HOLOBIT, 'holobit'),
+        (TipoToken.LPAREN, '('),
+        (TipoToken.LBRACKET, '['),
+        (TipoToken.FLOTANTE, 1.0),
+        (TipoToken.COMA, ','),
+        (TipoToken.FLOTANTE, 2.0),
+        (TipoToken.COMA, ','),
+        (TipoToken.RESTA, '-'),
+        (TipoToken.FLOTANTE, 0.5),
+        (TipoToken.RBRACKET, ']'),
+        (TipoToken.RPAREN, ')'),
+        (TipoToken.COMA, ','),
+        (TipoToken.CADENA, '"rotar"'),
+        (TipoToken.COMA, ','),
+        (TipoToken.ENTERO, 45),
+        (TipoToken.RPAREN, ')'),
+        (TipoToken.EOF, None),
+    ]
+
