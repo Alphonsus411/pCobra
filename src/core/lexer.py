@@ -58,6 +58,7 @@ class TipoToken:
     FIN = 'FIN'
     EOF = 'EOF'
     IMPRIMIR = 'IMPRIMIR'  # Añadido soporte para 'imprimir'
+    HILO = 'HILO'
 
 
 class Token:
@@ -94,6 +95,7 @@ class Lexer:
             (TipoToken.MIENTRAS, r'\bmientras\b'),
             (TipoToken.PARA, r'\bpara\b'),
             (TipoToken.IMPORT, r'\bimport\b'),
+            (TipoToken.HILO, r'\bhilo\b'),
             (TipoToken.IN, r'\bin\b'),  # Define el token 'in'
             (TipoToken.HOLOBIT, r'\bholobit\b'),
             (TipoToken.PROYECTAR, r'\bproyectar\b'),

@@ -11,6 +11,7 @@ from src.core.parser import (
     NodoInstancia,
     NodoLlamadaMetodo,
     NodoAtributo,
+    NodoHilo,
     NodoTryCatch,
     NodoThrow,
     NodoImport,
@@ -23,6 +24,7 @@ class TranspiladorPython:
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = "from src.core.nativos import *\n"
+        self.usa_asyncio = False
         self.nivel_indentacion = 0
 
     def obtener_indentacion(self):
@@ -43,10 +45,16 @@ class TranspiladorPython:
                     all(str(a).isdigit() for a in n.argumentos) for n in nodos
                 )
                 if not solo_numeros:
-                    return self.codigo.rstrip("\n")
-                return self.codigo
-            return self.codigo.rstrip("\n")
-        return self.codigo
+                    codigo = self.codigo.rstrip("\n")
+                else:
+                    codigo = self.codigo
+            else:
+                codigo = self.codigo.rstrip("\n")
+        else:
+            codigo = self.codigo
+        if self.usa_asyncio:
+            codigo = "import asyncio\n" + codigo
+        return codigo
 
     def _contiene_nodo_valor(self, nodo):
         if hasattr(nodo, "valor") and len(getattr(nodo, "__dict__", {})) == 1:
@@ -94,6 +102,8 @@ class TranspiladorPython:
             self.transpilar_import(nodo)
         elif type(nodo).__name__ == "NodoImprimir":
             self.transpilar_imprimir(nodo)
+        elif isinstance(nodo, NodoHilo):
+            self.transpilar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno) or type(nodo).__name__ == "NodoRetorno":
             self.transpilar_retorno(nodo)
         elif isinstance(nodo, NodoTryCatch):
@@ -332,3 +342,8 @@ class TranspiladorPython:
         ast = Parser(tokens).parsear()
         for subnodo in ast:
             self.transpilar_nodo(subnodo)
+
+    def transpilar_hilo(self, nodo):
+        self.usa_asyncio = True
+        args = ", ".join(self.obtener_valor(a) for a in nodo.llamada.argumentos)
+        self.codigo += f"{self.obtener_indentacion()}asyncio.create_task({nodo.llamada.nombre}({args}))\n"

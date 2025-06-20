@@ -8,6 +8,7 @@ from src.core.parser import (
     NodoAtributo,
     NodoInstancia,
     NodoLlamadaMetodo,
+    NodoHilo,
     NodoImport,
     Parser,
 )
@@ -81,6 +82,8 @@ class TranspiladorJavaScript:
             self.transpilar_funcion(nodo)
         elif nodo_tipo == "NodoLlamadaFuncion":
             self.transpilar_llamada_funcion(nodo)
+        elif nodo_tipo == "NodoHilo":
+            self.transpilar_hilo(nodo)
         elif nodo_tipo == "NodoImprimir":
             self.transpilar_imprimir(nodo)
         elif nodo_tipo == "NodoHolobit":
@@ -195,6 +198,10 @@ class TranspiladorJavaScript:
         """Transpila una llamada a función en JavaScript."""
         parametros = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
         self.agregar_linea(f"{nodo.nombre}({parametros});")
+
+    def transpilar_hilo(self, nodo):
+        args = ", ".join(self.obtener_valor(a) for a in nodo.llamada.argumentos)
+        self.agregar_linea(f"Promise.resolve().then(() => {nodo.llamada.nombre}({args}));")
 
     def transpilar_llamada_metodo(self, nodo):
         args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)

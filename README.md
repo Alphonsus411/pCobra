@@ -142,6 +142,21 @@ imprimir(saludo)
 
 Al ejecutar `programa.cobra`, se procesará primero `modulo.cobra` y luego se imprimirá `Hola desde módulo`.
 
+## Ejemplo de concurrencia
+
+Es posible lanzar funciones en hilos con la palabra clave `hilo`:
+
+````cobra
+func tarea():
+    imprimir('trabajo')
+fin
+
+hilo tarea()
+imprimir('principal')
+````
+
+Al transpilarlas, se generan llamadas `asyncio.create_task` en Python y `Promise.resolve().then` en JavaScript.
+
 ## Uso desde la CLI
 
 Una vez instalado el paquete, puedes ejecutar archivos Cobra con:
