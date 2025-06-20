@@ -52,6 +52,7 @@ def test_parser_condicional_si_sino():
         proyectar(x, "2D")
     sino :
         graficar(x)
+    fin
     '''
 
     # Inicializamos el lexer
