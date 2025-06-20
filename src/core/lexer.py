@@ -84,6 +84,7 @@ class Lexer:
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
             (TipoToken.BOOLEANO, r'\b(verdadero|falso)\b'),
             (TipoToken.DOSPUNTOS, r':'),
+            (TipoToken.FIN, r'\bfin\b'),
             (TipoToken.IDENTIFICADOR, r'[A-Za-z_][A-Za-z0-9_]*'),
             (TipoToken.ASIGNAR, r'='),
             (TipoToken.SUMA, r'\+'),
@@ -121,6 +122,8 @@ class Lexer:
                             valor = float(valor)
                         elif tipo == TipoToken.ENTERO:
                             valor = int(valor)
+                        elif tipo == TipoToken.CADENA:
+                            valor = valor[1:-1]
                         self.tokens.append(Token(tipo, valor))
 
                     self.posicion += len(coincidencia.group(0))
