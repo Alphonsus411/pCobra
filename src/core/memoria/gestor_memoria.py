@@ -81,15 +81,14 @@ class GestorMemoriaGenetico:
             if random.random() < 0.1:
                 estrategia.frecuencia_recoleccion = random.uniform(0.0, 1.0)
 
-    def evolucionar(self):
-        """
-        Realiza una generación completa: selección, cruce y mutación.
-        """
+    def evolucionar(self, verbose=True):
+        """Realiza una generación completa: selección, cruce y mutación."""
         self.seleccionar()
         self.cruzar()
         self.mutar()
         self.generacion += 1
-        print(
-            f"Generación {self.generacion}: {len(self.poblacion)} "
-            "estrategias de memoria activas"
-        )
+        if verbose:
+            print(
+                f"Generación {self.generacion}: {len(self.poblacion)} "
+                "estrategias de memoria activas"
+            )
