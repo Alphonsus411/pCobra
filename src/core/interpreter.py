@@ -17,7 +17,15 @@ from src.core.parser import (
     NodoRetorno,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
+    NodoTryCatch,
+    NodoThrow,
 )
+
+
+class ExcepcionCobra(Exception):
+    def __init__(self, valor):
+        super().__init__(valor)
+        self.valor = valor
 
 
 class InterpretadorCobra:
@@ -83,6 +91,10 @@ class InterpretadorCobra:
                         print(f"Variable '{valor}' no definida")
             else:
                 print(valor)
+        elif isinstance(nodo, NodoTryCatch):
+            return self.ejecutar_try_catch(nodo)
+        elif isinstance(nodo, NodoThrow):
+            raise ExcepcionCobra(self.evaluar_expresion(nodo.expresion))
         elif isinstance(nodo, NodoHolobit):
             return self.ejecutar_holobit(nodo)
         elif isinstance(nodo, NodoRetorno):
@@ -193,6 +205,20 @@ class InterpretadorCobra:
         # Ejecuta el bucle mientras la condición sea verdadera
         while self.evaluar_expresion(nodo.condicion):
             for instruccion in nodo.cuerpo:
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    return resultado
+
+    def ejecutar_try_catch(self, nodo):
+        try:
+            for instruccion in nodo.bloque_try:
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    return resultado
+        except ExcepcionCobra as exc:
+            if nodo.nombre_excepcion:
+                self.variables[nodo.nombre_excepcion] = exc.valor
+            for instruccion in nodo.bloque_catch:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado

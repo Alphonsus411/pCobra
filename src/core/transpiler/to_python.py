@@ -1,9 +1,18 @@
 from src.core.parser import (
     NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
     NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
-    NodoClase, NodoMetodo, NodoValor, NodoRetorno,
-    NodoOperacionBinaria, NodoOperacionUnaria, NodoIdentificador,
-    NodoInstancia, NodoLlamadaMetodo, NodoAtributo
+    NodoClase,
+    NodoMetodo,
+    NodoValor,
+    NodoRetorno,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
+    NodoIdentificador,
+    NodoInstancia,
+    NodoLlamadaMetodo,
+    NodoAtributo,
+    NodoTryCatch,
+    NodoThrow,
 )
 from src.core.lexer import TipoToken
 
@@ -82,6 +91,10 @@ class TranspiladorPython:
             self.transpilar_imprimir(nodo)
         elif isinstance(nodo, NodoRetorno) or type(nodo).__name__ == "NodoRetorno":
             self.transpilar_retorno(nodo)
+        elif isinstance(nodo, NodoTryCatch):
+            self.transpilar_try_catch(nodo)
+        elif isinstance(nodo, NodoThrow):
+            self.transpilar_throw(nodo)
         elif hasattr(nodo, "valores") or (
             hasattr(nodo, "nombre")
             and not any(
@@ -282,3 +295,21 @@ class TranspiladorPython:
         for instruccion in nodo.cuerpo:
             self.transpilar_nodo(instruccion)
         self.nivel_indentacion -= 1
+
+    def transpilar_try_catch(self, nodo):
+        self.codigo += f"{self.obtener_indentacion()}try:\n"
+        self.nivel_indentacion += 1
+        for instruccion in nodo.bloque_try:
+            self.transpilar_nodo(instruccion)
+        self.nivel_indentacion -= 1
+        if nodo.bloque_catch:
+            nombre = f" as {nodo.nombre_excepcion}" if nodo.nombre_excepcion else ""
+            self.codigo += f"{self.obtener_indentacion()}except Exception{nombre}:\n"
+            self.nivel_indentacion += 1
+            for instruccion in nodo.bloque_catch:
+                self.transpilar_nodo(instruccion)
+            self.nivel_indentacion -= 1
+
+    def transpilar_throw(self, nodo):
+        valor = self.obtener_valor(nodo.expresion)
+        self.codigo += f"{self.obtener_indentacion()}raise Exception({valor})\n"

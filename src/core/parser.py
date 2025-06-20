@@ -209,6 +209,23 @@ class NodoRetorno(NodoAST):
         return f"NodoRetorno(expresion={self.expresion})"
 
 
+class NodoThrow(NodoAST):
+    def __init__(self, expresion):
+        super().__init__()
+        self.expresion = expresion
+
+    def __repr__(self):
+        return f"NodoThrow(expresion={self.expresion})"
+
+
+class NodoTryCatch(NodoAST):
+    def __init__(self, bloque_try, nombre_excepcion=None, bloque_catch=None):
+        super().__init__()
+        self.bloque_try = bloque_try
+        self.nombre_excepcion = nombre_excepcion
+        self.bloque_catch = bloque_catch or []
+
+
 class NodoPara:
     """Nodo AST para representar bucles 'para'."""
 
@@ -296,6 +313,11 @@ class Parser:
                 return self.declaracion_funcion()
             elif token.tipo == TipoToken.IMPRIMIR:  # Soporte para `imprimir`
                 return self.declaracion_imprimir()
+            elif token.tipo == TipoToken.TRY:
+                return self.declaracion_try_catch()
+            elif token.tipo == TipoToken.THROW:
+                self.comer(TipoToken.THROW)
+                return NodoThrow(self.expresion())
             elif token.tipo == TipoToken.IDENTIFICADOR and token.valor == "definir":
                 # Tratar 'definir' como alias de 'func'
                 self.token_actual().tipo = TipoToken.FUNC
@@ -582,6 +604,35 @@ class Parser:
         self.comer(TipoToken.RPAREN)
 
         return NodoImprimir(expresion)
+
+    def declaracion_try_catch(self):
+        self.comer(TipoToken.TRY)
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de 'try'")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        bloque_try = []
+        while self.token_actual().tipo not in [TipoToken.CATCH, TipoToken.FIN, TipoToken.EOF]:
+            bloque_try.append(self.declaracion())
+
+        nombre_exc = None
+        bloque_catch = []
+        if self.token_actual().tipo == TipoToken.CATCH:
+            self.comer(TipoToken.CATCH)
+            if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
+                nombre_exc = self.token_actual().valor
+                self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                raise SyntaxError("Se esperaba ':' después de 'catch'")
+            self.comer(TipoToken.DOSPUNTOS)
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+                bloque_catch.append(self.declaracion())
+
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise SyntaxError("Se esperaba 'fin' para cerrar el bloque try/catch")
+        self.comer(TipoToken.FIN)
+
+        return NodoTryCatch(bloque_try, nombre_exc, bloque_catch)
 
     def expresion(self):
         return self.exp_or()
