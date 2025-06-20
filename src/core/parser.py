@@ -200,6 +200,17 @@ class NodoLlamadaFuncion:
         return f"NodoLlamadaFuncion(nombre={self.nombre}, argumentos={self.argumentos})"
 
 
+class NodoHilo(NodoAST):
+    """Representa la creación de un hilo o corrutina."""
+
+    def __init__(self, llamada):
+        super().__init__()
+        self.llamada = llamada
+
+    def __repr__(self):
+        return f"NodoHilo(llamada={self.llamada})"
+
+
 class NodoRetorno(NodoAST):
     def __init__(self, expresion):
         super().__init__()
@@ -323,6 +334,8 @@ class Parser:
                 return self.declaracion_import()
             elif token.tipo == TipoToken.IMPRIMIR:  # Soporte para `imprimir`
                 return self.declaracion_imprimir()
+            elif token.tipo == TipoToken.HILO:
+                return self.declaracion_hilo()
             elif token.tipo == TipoToken.TRY:
                 return self.declaracion_try_catch()
             elif token.tipo == TipoToken.THROW:
@@ -623,6 +636,26 @@ class Parser:
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoImport(ruta)
+
+    def declaracion_hilo(self):
+        """Parsea la creación de un hilo que ejecuta una función."""
+        self.comer(TipoToken.HILO)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba el nombre de una función después de 'hilo'")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        self.comer(TipoToken.LPAREN)
+        argumentos = []
+        if self.token_actual().tipo != TipoToken.RPAREN:
+            while True:
+                argumentos.append(self.expresion())
+                if self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                else:
+                    break
+        self.comer(TipoToken.RPAREN)
+        llamada = NodoLlamadaFuncion(nombre, argumentos)
+        return NodoHilo(llamada)
 
     def declaracion_try_catch(self):
         self.comer(TipoToken.TRY)

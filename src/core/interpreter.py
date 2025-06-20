@@ -7,6 +7,7 @@ from src.core.parser import (
     NodoLlamadaFuncion,
     NodoLlamadaMetodo,
     NodoHolobit,
+    NodoHilo,
     NodoClase,
     NodoMetodo,
     NodoInstancia,
@@ -128,6 +129,8 @@ class InterpretadorCobra:
             raise ExcepcionCobra(self.evaluar_expresion(nodo.expresion))
         elif isinstance(nodo, NodoHolobit):
             return self.ejecutar_holobit(nodo)
+        elif isinstance(nodo, NodoHilo):
+            return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
             return self.evaluar_expresion(nodo.expresion)
         elif isinstance(nodo, NodoValor):
@@ -363,3 +366,14 @@ class InterpretadorCobra:
             else:
                 valores.append(v)
         return valores
+
+    def ejecutar_hilo(self, nodo):
+        """Ejecuta una función en un hilo separado."""
+        import threading
+
+        def destino():
+            self.ejecutar_llamada_funcion(nodo.llamada)
+
+        hilo = threading.Thread(target=destino)
+        hilo.start()
+        return hilo
