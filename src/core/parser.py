@@ -18,12 +18,20 @@ class NodoAsignacion(NodoAST):
     def __init__(self, variable, expresion):
         super().__init__()
         if isinstance(variable, Token):
-            self.variable = variable.valor
+            nombre = variable.valor
         else:
-            self.variable = variable
+            nombre = variable
+
+        # Nombre del identificador como cadena de texto
+        self.identificador = str(nombre)
+
+        # Mantener compatibilidad con versiones previas
+        self.variable = self.identificador
+
         self.expresion = expresion
+
         # Compatibilidad con pruebas antiguas
-        self.nombre = self.variable
+        self.nombre = self.identificador
         self.valor = expresion
 
 
@@ -393,10 +401,8 @@ class Parser:
             self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR)
         valor = self.expresion()
-        nombre_variable = (
-            variable_token.valor if isinstance(variable_token, Token) else variable_token
-        )
-        return NodoAsignacion(nombre_variable, valor)
+        # El identificador se pasa como cadena de texto
+        return NodoAsignacion(variable_token.valor, valor)
 
     def declaracion_mientras(self):
         """Parsea un bucle mientras."""

@@ -52,8 +52,8 @@ class TranspiladorJavaScript:
     def transpilar_asignacion(self, nodo):
         """Transpila una asignación en JavaScript."""
         if self.usa_indentacion is None:
-            self.usa_indentacion = hasattr(nodo, "variable")
-        nombre = getattr(nodo, "variable", getattr(nodo, "identificador", None))
+            self.usa_indentacion = hasattr(nodo, "variable") or hasattr(nodo, "identificador")
+        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         if hasattr(valor, "__dict__"):
             valor = str(valor)
