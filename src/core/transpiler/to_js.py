@@ -5,6 +5,9 @@ from src.core.parser import (
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoIdentificador,
+    NodoAtributo,
+    NodoInstancia,
+    NodoLlamadaMetodo,
 )
 from src.core.lexer import TipoToken
 
@@ -24,6 +27,11 @@ class TranspiladorJavaScript:
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
             return str(nodo.valor)
+        elif isinstance(nodo, NodoAtributo):
+            return f"{self.obtener_valor(nodo.objeto)}.{nodo.nombre}"
+        elif isinstance(nodo, NodoInstancia):
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"new {nodo.nombre_clase}({args})"
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
         elif isinstance(nodo, NodoOperacionBinaria):
@@ -79,6 +87,10 @@ class TranspiladorJavaScript:
             self.transpilar_clase(nodo)
         elif nodo_tipo == "NodoMetodo":
             self.transpilar_metodo(nodo)
+        elif nodo_tipo == "NodoInstancia":
+            self.agregar_linea(self.obtener_valor(nodo) + ";")
+        elif nodo_tipo == "NodoLlamadaMetodo":
+            self.transpilar_llamada_metodo(nodo)
         elif nodo_tipo == "NodoRetorno":
             self.transpilar_retorno(nodo)
         elif nodo_tipo in ("NodoOperacionBinaria", "NodoOperacionUnaria"):
@@ -92,10 +104,15 @@ class TranspiladorJavaScript:
         """Transpila una asignación en JavaScript."""
         if self.usa_indentacion is None:
             self.usa_indentacion = hasattr(nodo, "variable") or hasattr(nodo, "identificador")
-        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        nombre_raw = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        if isinstance(nombre_raw, NodoAtributo):
+            nombre = self.obtener_valor(nombre_raw)
+            prefijo = ""
+        else:
+            nombre = nombre_raw
+            prefijo = "let " if hasattr(nodo, "variable") else ""
         valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         valor = self.obtener_valor(valor)
-        prefijo = "let " if hasattr(nodo, "variable") else ""
         self.agregar_linea(f"{prefijo}{nombre} = {valor};")
 
     def transpilar_condicional(self, nodo):
@@ -164,6 +181,11 @@ class TranspiladorJavaScript:
         """Transpila una llamada a función en JavaScript."""
         parametros = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
         self.agregar_linea(f"{nodo.nombre}({parametros});")
+
+    def transpilar_llamada_metodo(self, nodo):
+        args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+        obj = self.obtener_valor(nodo.objeto)
+        self.agregar_linea(f"{obj}.{nodo.nombre_metodo}({args});")
 
     def transpilar_imprimir(self, nodo):
         valor = self.obtener_valor(nodo.expresion)

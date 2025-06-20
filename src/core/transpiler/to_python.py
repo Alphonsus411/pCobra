@@ -2,7 +2,8 @@ from src.core.parser import (
     NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
     NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
     NodoClase, NodoMetodo, NodoValor, NodoRetorno,
-    NodoOperacionBinaria, NodoOperacionUnaria, NodoIdentificador
+    NodoOperacionBinaria, NodoOperacionUnaria, NodoIdentificador,
+    NodoInstancia, NodoLlamadaMetodo, NodoAtributo
 )
 from src.core.lexer import TipoToken
 
@@ -73,6 +74,10 @@ class TranspiladorPython:
             self.transpilar_funcion(nodo)
         elif hasattr(nodo, "nombre") and hasattr(nodo, "argumentos"):
             self.transpilar_llamada_funcion(nodo)
+        elif isinstance(nodo, NodoInstancia):
+            self.codigo += f"{self.obtener_valor(nodo)}\n"
+        elif isinstance(nodo, NodoLlamadaMetodo):
+            self.transpilar_llamada_metodo(nodo)
         elif type(nodo).__name__ == "NodoImprimir":
             self.transpilar_imprimir(nodo)
         elif isinstance(nodo, NodoRetorno) or type(nodo).__name__ == "NodoRetorno":
@@ -141,6 +146,12 @@ class TranspiladorPython:
 
         if isinstance(nodo, NodoValor):
             return str(nodo.valor)
+        elif isinstance(nodo, NodoAtributo):
+            obj = self.obtener_valor(nodo.objeto)
+            return f"{obj}.{nodo.nombre}"
+        elif isinstance(nodo, NodoInstancia):
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"{nodo.nombre_clase}({args})"
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
         elif isinstance(nodo, NodoOperacionBinaria):
@@ -160,7 +171,11 @@ class TranspiladorPython:
             return str(getattr(nodo, "valor", nodo))
 
     def transpilar_asignacion(self, nodo):
-        nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        nombre_raw = getattr(nodo, "identificador", getattr(nodo, "variable", None))
+        if isinstance(nombre_raw, NodoAtributo):
+            nombre = self.obtener_valor(nombre_raw)
+        else:
+            nombre = nombre_raw
         valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         self.codigo += (
             f"{self.obtener_indentacion()}{nombre} = "
@@ -215,6 +230,11 @@ class TranspiladorPython:
     def transpilar_llamada_funcion(self, nodo):
         argumentos = ", ".join(self.obtener_valor(arg) for arg in nodo.argumentos)
         self.codigo += f"{nodo.nombre}({argumentos})\n"
+
+    def transpilar_llamada_metodo(self, nodo):
+        args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+        objeto = self.obtener_valor(nodo.objeto)
+        self.codigo += f"{objeto}.{nodo.nombre_metodo}({args})\n"
 
     def transpilar_imprimir(self, nodo):
         valor = self.obtener_valor(getattr(nodo, "expresion", nodo))

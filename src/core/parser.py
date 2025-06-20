@@ -19,14 +19,12 @@ class NodoAsignacion(NodoAST):
         super().__init__()
         if isinstance(variable, Token):
             nombre = variable.valor
+            self.identificador = str(nombre)
+            self.variable = self.identificador
         else:
             nombre = variable
-
-        # Nombre del identificador como cadena de texto
-        self.identificador = str(nombre)
-
-        # Mantener compatibilidad con versiones previas
-        self.variable = self.identificador
+            self.identificador = nombre
+            self.variable = nombre
 
         self.expresion = expresion
 
@@ -103,6 +101,34 @@ class NodoMetodo(NodoAST):
         self.nombre = nombre
         self.parametros = parametros
         self.cuerpo = cuerpo
+
+
+class NodoInstancia(NodoAST):
+    """Representa la creación de una instancia de una clase."""
+
+    def __init__(self, nombre_clase, argumentos=None):
+        super().__init__()
+        self.nombre_clase = nombre_clase
+        self.argumentos = argumentos or []
+
+
+class NodoAtributo(NodoAST):
+    """Acceso o referencia a un atributo de un objeto."""
+
+    def __init__(self, objeto, nombre):
+        super().__init__()
+        self.objeto = objeto
+        self.nombre = nombre
+
+
+class NodoLlamadaMetodo(NodoAST):
+    """Representa la llamada a un método de un objeto."""
+
+    def __init__(self, objeto, nombre_metodo, argumentos=None):
+        super().__init__()
+        self.objeto = objeto
+        self.nombre_metodo = nombre_metodo
+        self.argumentos = argumentos or []
 
 
 class NodoOperacionBinaria(NodoAST):
