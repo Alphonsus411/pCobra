@@ -4,7 +4,12 @@ from unittest.mock import patch
 
 from src.core.interpreter import InterpretadorCobra
 from src.core.lexer import Token, TipoToken
-from src.core.parser import NodoAsignacion, NodoValor, NodoLlamadaFuncion
+from src.core.parser import (
+    NodoAsignacion,
+    NodoValor,
+    NodoLlamadaFuncion,
+    NodoFuncion,
+)
 
 
 def test_interpretador_asignacion_y_llamada_funcion():
@@ -46,3 +51,37 @@ def test_interpretador_variable_no_definida():
 
     # Verifica que la salida sea la esperada para variable no definida
     assert output == "Variable 'y' no definida"
+
+
+def test_aislamiento_de_contexto_en_funciones():
+    """Verifica que las variables locales no contaminen el contexto global."""
+    inter = InterpretadorCobra()
+
+    funcion = NodoFuncion(
+        "crear_local",
+        [],
+        [NodoAsignacion("z", NodoValor(100))],
+    )
+
+    inter.ejecutar_funcion(funcion)
+    inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("crear_local", []))
+
+    assert "z" not in inter.variables
+
+
+def test_preservacion_de_variables_globales():
+    """Verifica que las variables globales no se modifiquen dentro de una función."""
+    inter = InterpretadorCobra()
+
+    inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(5)))
+
+    funcion = NodoFuncion(
+        "modificar",
+        [],
+        [NodoAsignacion("a", NodoValor(1))],
+    )
+
+    inter.ejecutar_funcion(funcion)
+    inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("modificar", []))
+
+    assert inter.variables["a"] == 5
