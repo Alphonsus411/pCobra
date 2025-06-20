@@ -20,3 +20,12 @@ imprimir(rotado)
 
 # Graficar el holobit
 graficar(x)
+
+# Bucles de ejemplo
+var contador = 0
+mientras contador < 2 :
+    imprimir(contador)
+    contador += 1
+
+para var i en rango(2) :
+    imprimir(i)
