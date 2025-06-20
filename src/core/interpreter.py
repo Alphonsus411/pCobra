@@ -16,8 +16,27 @@ from src.core.parser import (
 
 class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
+
     def __init__(self):
-        self.variables = {}  # Diccionario para almacenar variables y sus valores
+        # Pila de contextos para mantener variables locales en cada llamada
+        self.contextos = [{}]
+
+    @property
+    def variables(self):
+        """Devuelve el contexto actual de variables."""
+        return self.contextos[-1]
+
+    @variables.setter
+    def variables(self, valor):
+        """Permite reemplazar el contexto actual."""
+        self.contextos[-1] = valor
+
+    def obtener_variable(self, nombre):
+        """Busca una variable en la pila de contextos."""
+        for contexto in reversed(self.contextos):
+            if nombre in contexto:
+                return contexto[nombre]
+        return None
 
     def ejecutar_ast(self, ast):
         for nodo in ast:
@@ -44,10 +63,12 @@ class InterpretadorCobra:
                     valor.startswith("'") and valor.endswith("'")
                 ):
                     print(valor.strip('"').strip("'"))
-                elif valor in self.variables:
-                    print(self.variables[valor])
                 else:
-                    print(f"Variable '{valor}' no definida")
+                    obtenido = self.obtener_variable(valor)
+                    if obtenido is not None:
+                        print(obtenido)
+                    else:
+                        print(f"Variable '{valor}' no definida")
             else:
                 print(valor)
         elif isinstance(nodo, NodoHolobit):
@@ -154,10 +175,9 @@ class InterpretadorCobra:
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
-                    valor = self.variables.get(
-                        arg.valor,
-                        f"Variable '{arg.valor}' no definida",
-                    )
+                    valor = self.obtener_variable(arg.valor)
+                    if valor is None:
+                        valor = f"Variable '{arg.valor}' no definida"
                 else:
                     valor = self.evaluar_expresion(arg)
                 print(valor)
@@ -166,15 +186,21 @@ class InterpretadorCobra:
             if len(funcion.parametros) != len(nodo.argumentos):
                 print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
                 return None
-            contexto_anterior = self.variables.copy()
+
+            # Crea un nuevo contexto para la llamada
+            self.contextos.append({})
+
             for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
                 self.variables[nombre_param] = self.evaluar_expresion(arg)
+
             resultado = None
             for instruccion in funcion.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     break
-            self.variables = contexto_anterior
+
+            # Elimina el contexto al finalizar la función
+            self.contextos.pop()
             return resultado
         else:
             print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
