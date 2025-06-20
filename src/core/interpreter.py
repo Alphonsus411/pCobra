@@ -8,6 +8,7 @@ from src.core.parser import (
     NodoHolobit,
     NodoValor,
     NodoImprimir,
+    NodoRetorno,
 )
 
 
@@ -17,10 +18,11 @@ class InterpretadorCobra:
         self.variables = {}  # Diccionario para almacenar variables y sus valores
 
     def ejecutar_ast(self, ast):
-        resultado = None
         for nodo in ast:
             resultado = self.ejecutar_nodo(nodo)
-        return resultado
+            if resultado is not None:
+                return resultado
+        return None
 
     def ejecutar_nodo(self, nodo):
         if isinstance(nodo, NodoAsignacion):
@@ -48,6 +50,8 @@ class InterpretadorCobra:
                 print(valor)
         elif isinstance(nodo, NodoHolobit):
             return self.ejecutar_holobit(nodo)
+        elif isinstance(nodo, NodoRetorno):
+            return self.evaluar_expresion(nodo.expresion)
         elif isinstance(nodo, NodoValor):
             return nodo.valor  # Retorna el valor directo de NodoValor
         else:
@@ -88,16 +92,22 @@ class InterpretadorCobra:
             self.variables,
         ):  # eval simplificado para condiciones básicas
             for instruccion in nodo.cuerpo_si:
-                self.ejecutar_nodo(instruccion)
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    return resultado
         elif nodo.cuerpo_sino:
             for instruccion in nodo.cuerpo_sino:
-                self.ejecutar_nodo(instruccion)
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    return resultado
 
     def ejecutar_mientras(self, nodo):
         # Ejecuta el bucle mientras la condición sea verdadera
         while eval(nodo.condicion, {}, self.variables):
             for instruccion in nodo.cuerpo:
-                self.ejecutar_nodo(instruccion)
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    return resultado
 
     def ejecutar_funcion(self, nodo):
         # Almacena las funciones definidas por el usuario en el diccionario `variables`
@@ -126,8 +136,23 @@ class InterpretadorCobra:
                         "Error: tipo de argumento no soportado para 'imprimir': "
                         f"{arg}"
                     )
+        elif nodo.nombre in self.variables and isinstance(self.variables[nodo.nombre], NodoFuncion):
+            funcion = self.variables[nodo.nombre]
+            if len(funcion.parametros) != len(nodo.argumentos):
+                print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
+                return None
+            contexto_anterior = self.variables.copy()
+            for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
+                self.variables[nombre_param] = self.evaluar_expresion(arg)
+            resultado = None
+            for instruccion in funcion.cuerpo:
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    break
+            self.variables = contexto_anterior
+            return resultado
         else:
-            print(f"Función '{nodo.nombre}' no implementada")
+            print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
 
     def ejecutar_holobit(self, nodo):
         print(f"Simulando holobit: {nodo.nombre}")
