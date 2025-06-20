@@ -105,6 +105,27 @@ codigo_python = transpiler.transpilar(arbol)
 print(codigo_python)
 ````
 
+## Ejemplo de imprimir, holobits y bucles
+
+A continuación se muestra un fragmento que utiliza `imprimir`, holobits y bucles:
+
+````cobra
+codigo = '''
+var h = holobit([0.8, -0.5, 1.2])
+imprimir(h)
+
+var contador = 0
+mientras contador < 3 :
+    imprimir(contador)
+    contador += 1
+
+para var i en rango(2) :
+    imprimir(i)
+'''
+````
+
+Al transpilar a Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. El tipo `holobit` se transfiere a la llamada `holobit([...])` en Python o `new Holobit([...])` en JavaScript.
+
 
 ## Uso desde la CLI
 

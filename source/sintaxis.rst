@@ -42,3 +42,16 @@ mientras x < 5 :
 para var i en rango(5) :
     imprimir(i)
 
+**6. Holobits**
+
+Los holobits permiten trabajar con datos multidimensionales:
+
+var h = holobit([0.8, -0.5, 1.2])
+imprimir(h)
+
+**Transpilación a Python y JavaScript**
+
+- `imprimir` se transpila a `print` en Python y a `console.log` en JavaScript.
+- Los bucles `mientras` y `para` se convierten en `while` y `for` respectivamente.
+- La construcción `holobit` se traduce a `holobit([...])` en Python o `new Holobit([...])` en JavaScript.
+
