@@ -58,9 +58,9 @@ pip install -e .
 
 El proyecto se organiza en las siguientes carpetas y módulos:
 
-- `core/`: Contiene la lógica principal del lexer y parser.
+- `backend/src/`: Contiene la lógica Python del proyecto.
+- `frontend/docs/` y `frontend/build/`: Carpetas donde se genera y aloja la documentación.
 - `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
-- `src/`: Carpeta principal donde se implementa la lógica del lenguaje Cobra.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo que lista las dependencias del proyecto.
 
