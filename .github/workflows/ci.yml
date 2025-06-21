@@ -20,9 +20,9 @@ jobs:
       - name: Run tests
         run: pytest -q
       - name: Build docs
-        run: sphinx-build -b html source build/html
+        run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Upload docs
         uses: actions/upload-artifact@v3
         with:
           name: documentation
-          path: build/html
+          path: frontend/build/html

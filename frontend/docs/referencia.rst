@@ -33,4 +33,4 @@ El comando ``cobra`` cuenta con varias subopciones:
    cobra modulos listar
    cobra docs
 
-El subcomando ``docs`` genera la documentación del proyecto en ``build/html``.
+El subcomando ``docs`` genera la documentación del proyecto en ``frontend/build/html``.
