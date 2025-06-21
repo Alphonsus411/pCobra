@@ -1,4 +1,5 @@
-from src.core.lexer import Lexer, TipoToken
+import pytest
+from src.core.lexer import Lexer, TipoToken, LexerError
 
 
 def test_lexer_asignacion_variable():
@@ -24,6 +25,9 @@ def test_lexer_asignacion_variable():
         (TipoToken.EOF, None),
     ]
 
+    assert tokens[0].linea == 1 and tokens[0].columna == 1
+    assert tokens[2].columna == 7
+
 
 def test_lexer_transformacion_holobit():
     codigo = 'transformar(holobit([1.0, 2.0, -0.5]), "rotar", 45)'
@@ -46,7 +50,7 @@ def test_lexer_transformacion_holobit():
         (TipoToken.RBRACKET, ']'),
         (TipoToken.RPAREN, ')'),
         (TipoToken.COMA, ','),
-        (TipoToken.CADENA, '"rotar"'),
+        (TipoToken.CADENA, 'rotar'),
         (TipoToken.COMA, ','),
         (TipoToken.ENTERO, 45),
         (TipoToken.RPAREN, ')'),
@@ -75,4 +79,14 @@ def test_lexer_con_comentarios():
         (TipoToken.RPAREN, ')'),
         (TipoToken.EOF, None),
     ]
+
+
+def test_lexer_error_posicion():
+    codigo = "var x = $"
+    lexer = Lexer(codigo)
+    with pytest.raises(LexerError) as exc:
+        lexer.tokenizar()
+    err = exc.value
+    assert err.linea == 1
+    assert err.columna == 9
 

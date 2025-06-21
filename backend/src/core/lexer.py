@@ -2,6 +2,15 @@ import logging
 import re
 
 
+class LexerError(Exception):
+    """Excepción lanzada cuando el lexer encuentra un token inválido."""
+
+    def __init__(self, mensaje: str, linea: int, columna: int) -> None:
+        super().__init__(mensaje)
+        self.linea = linea
+        self.columna = columna
+
+
 class TipoToken:
     DIVIDIR = 'DIVIDIR'
     MULTIPLICAR = 'MULTIPLICAR'
@@ -62,12 +71,15 @@ class TipoToken:
 
 
 class Token:
-    def __init__(self, tipo, valor):
+    def __init__(self, tipo, valor, linea: int | None = None, columna: int | None = None):
         self.tipo = tipo
         self.valor = valor
+        self.linea = linea
+        self.columna = columna
 
     def __repr__(self):
-        return f'Token({self.tipo}: {self.valor})'
+        pos = f" @ {self.linea}:{self.columna}" if self.linea is not None else ""
+        return f'Token({self.tipo}: {self.valor}{pos})'
 
 
 class Lexer:
@@ -137,7 +149,8 @@ class Lexer:
 
         prev_pos = -1
         same_pos_count = 0
-        error_tokens = []
+        linea = 1
+        columna = 1
 
         while self.posicion < len(self.codigo_fuente):
             matched = False
@@ -145,8 +158,9 @@ class Lexer:
                 regex = re.compile(patron, re.UNICODE)
                 coincidencia = regex.match(self.codigo_fuente[self.posicion:])
                 if coincidencia:
+                    valor_original = coincidencia.group(0)
                     if tipo:
-                        valor = coincidencia.group(0)
+                        valor = valor_original
                         logging.debug(
                             f"Token identificado: {tipo}, valor: '{valor}', "
                             f"posición: {self.posicion}"
@@ -158,21 +172,25 @@ class Lexer:
                             valor = int(valor)
                         elif tipo == TipoToken.CADENA:
                             valor = valor[1:-1]
-                        self.tokens.append(Token(tipo, valor))
+                        self.tokens.append(Token(tipo, valor, linea, columna))
 
-                    self.posicion += len(coincidencia.group(0))
+                    # Actualizar posición
+                    self.posicion += len(valor_original)
+                    for ch in valor_original:
+                        if ch == "\n":
+                            linea += 1
+                            columna = 1
+                        else:
+                            columna += 1
                     matched = True
                     break
 
             if not matched:
-                # Si no coincide con ningún patrón, capturamos el error
-                error_token = self.codigo_fuente[self.posicion:self.posicion + 10]
+                error_token = self.codigo_fuente[self.posicion]
                 logging.error(
-                    f"Error: Token no reconocido en posición {self.posicion}: "
-                    f"'{error_token}'"
+                    f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'"
                 )
-                error_tokens.append(error_token)
-                self.posicion += 1
+                raise LexerError(f"Token no reconocido: '{error_token}'", linea, columna)
 
             if self.posicion == prev_pos:
                 same_pos_count += 1
@@ -186,11 +204,8 @@ class Lexer:
 
             prev_pos = self.posicion
 
-        if error_tokens:
-            raise ValueError(f"Tokens no reconocidos encontrados: {error_tokens}")
-
         # Añade un token EOF al final para indicar el fin del código fuente
-        self.tokens.append(Token(TipoToken.EOF, None))
+        self.tokens.append(Token(TipoToken.EOF, None, linea, columna))
 
         return self.tokens
 
