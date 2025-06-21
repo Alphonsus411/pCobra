@@ -127,8 +127,8 @@ def formatear_codigo(archivo):
 def generar_documentacion():
     """Genera la documentación HTML usando Sphinx."""
     raiz = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-    fuente = os.path.join(raiz, "source")
-    destino = os.path.join(raiz, "build", "html")
+    fuente = os.path.join(raiz, "frontend", "docs")
+    destino = os.path.join(raiz, "frontend", "build", "html")
     subprocess.run(["sphinx-build", "-b", "html", fuente, destino], check=True)
     print(f"Documentación generada en {destino}")
 

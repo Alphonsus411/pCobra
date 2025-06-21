@@ -79,7 +79,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
-pytest src/tests
+pytest backend/src/tests
 ````
 
 # Ejemplo de Uso
@@ -188,7 +188,7 @@ ra más detalles.
 Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Puedes añadir más pruebas para cubrir nuevos casos de uso y asegurar la estabilidad del código.
 
 ````bash
-pytest src/tests
+pytest backend/src/tests
 ````
 
 # Contribuciones
