@@ -34,6 +34,8 @@ def test_import_transpiler(tmp_path):
     ast = Parser(tokens).parsear()
 
     py_code = TranspiladorPython().transpilar(ast)
-    expected = "valor = 3\nprint(valor)\n"
+    expected = (
+        "from src.core.nativos import *\nvalor = 3\nprint(valor)\n"
+    )
     assert py_code == expected
 
