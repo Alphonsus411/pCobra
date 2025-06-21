@@ -185,6 +185,14 @@ cobra modulos remover modulo.cobra
 
 Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` para más detalles.
 
+### Diseño extensible de la CLI
+
+La CLI está organizada en clases dentro de `backend/src/cli/commands`. Cada subcomando
+hereda de `BaseCommand` y define su nombre, los argumentos que acepta y la acción
+a ejecutar. En `src/cli/cli.py` se instancian automáticamente y se registran en
+`argparse`, por lo que para añadir un nuevo comando solo es necesario crear un
+archivo con la nueva clase y llamar a `register_subparser` y `run`.
+
 ## Modo seguro (--seguro)
 
 Tanto el intérprete como la CLI aceptan la opción `--seguro`, que ejecuta el código bajo restricciones adicionales. Al activarla se valida el AST y se prohíben primitivas como `leer_archivo`, `escribir_archivo`, `obtener_url` y `hilo`. Asimismo, las instrucciones `import` solo están permitidas para módulos instalados o incluidos en `IMPORT_WHITELIST`. Si el programa intenta utilizar estas funciones o importar otros archivos se lanzará `PrimitivaPeligrosaError`.
