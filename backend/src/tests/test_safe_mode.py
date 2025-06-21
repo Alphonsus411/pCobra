@@ -6,7 +6,7 @@ from src.core.lexer import Lexer
 from src.core.parser import Parser
 from src.core.interpreter import InterpretadorCobra
 from src.core.ast_nodes import NodoLlamadaFuncion, NodoValor
-from src.core.semantic_validator import PrimitivaPeligrosaError
+from src.core.semantic_validators import PrimitivaPeligrosaError
 
 
 def generar_ast(codigo: str):

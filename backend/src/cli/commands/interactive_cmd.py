@@ -4,7 +4,7 @@ from .base import BaseCommand
 from src.core.interpreter import InterpretadorCobra
 from src.core.lexer import Lexer
 from src.core.parser import Parser
-from src.core.semantic_validator import PrimitivaPeligrosaError, ValidadorSemantico
+from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 
 
 class InteractiveCommand(BaseCommand):
@@ -20,7 +20,7 @@ class InteractiveCommand(BaseCommand):
     def run(self, args):
         seguro = getattr(args, "seguro", False)
         interpretador = InterpretadorCobra(safe_mode=seguro)
-        validador = ValidadorSemantico()
+        validador = construir_cadena()
 
         while True:
             try:

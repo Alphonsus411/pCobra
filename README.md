@@ -196,6 +196,9 @@ archivo con la nueva clase y llamar a `register_subparser` y `run`.
 ## Modo seguro (--seguro)
 
 Tanto el intérprete como la CLI aceptan la opción `--seguro`, que ejecuta el código bajo restricciones adicionales. Al activarla se valida el AST y se prohíben primitivas como `leer_archivo`, `escribir_archivo`, `obtener_url` y `hilo`. Asimismo, las instrucciones `import` solo están permitidas para módulos instalados o incluidos en `IMPORT_WHITELIST`. Si el programa intenta utilizar estas funciones o importar otros archivos se lanzará `PrimitivaPeligrosaError`.
+La validación se realiza mediante una cadena de validadores configurada por la
+función `construir_cadena`, lo que facilita añadir nuevas comprobaciones en el
+futuro.
 
 # Pruebas
 

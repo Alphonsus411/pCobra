@@ -5,7 +5,7 @@ from .base import BaseCommand
 from src.core.interpreter import InterpretadorCobra
 from src.core.lexer import Lexer
 from src.core.parser import Parser
-from src.core.semantic_validator import PrimitivaPeligrosaError, ValidadorSemantico
+from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 
 
 class ExecuteCommand(BaseCommand):
@@ -40,7 +40,7 @@ class ExecuteCommand(BaseCommand):
         tokens = Lexer(codigo).tokenizar()
         ast = Parser(tokens).parsear()
         try:
-            validador = ValidadorSemantico()
+            validador = construir_cadena()
             for nodo in ast:
                 nodo.aceptar(validador)
         except PrimitivaPeligrosaError as pe:

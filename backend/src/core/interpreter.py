@@ -26,8 +26,8 @@ from src.core.ast_nodes import (
 )
 from src.core.parser import Parser
 from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
-from src.core.semantic_validator import (
-    ValidadorSemantico,
+from src.core.semantic_validators import (
+    construir_cadena,
     PrimitivaPeligrosaError,
 )
 
@@ -53,11 +53,12 @@ class InterpretadorCobra:
         Parameters
         ----------
         safe_mode: bool, optional
-            Si se activa, valida cada nodo con :class:`ValidadorSemantico` y
-            restringe primitivas como ``import`` o ``hilo``.
+            Si se activa, valida cada nodo utilizando la cadena devuelta por
+            :func:`construir_cadena` y restringe primitivas como ``import`` o
+            ``hilo``.
         """
         self.safe_mode = safe_mode
-        self._validador = ValidadorSemantico() if safe_mode else None
+        self._validador = construir_cadena() if safe_mode else None
         # Pila de contextos para mantener variables locales en cada llamada
         self.contextos = [{}]
         # Mapa paralelo para gestionar bloques de memoria por contexto
@@ -372,8 +373,6 @@ class InterpretadorCobra:
 
     def ejecutar_import(self, nodo):
         """Carga y ejecuta un módulo especificado en la declaración import."""
-        if self.safe_mode:
-            raise PrimitivaPeligrosaError("Uso de primitiva peligrosa: 'import'")
         ruta = os.path.abspath(nodo.ruta)
         if not ruta.startswith(MODULES_PATH) and ruta not in IMPORT_WHITELIST:
             raise PrimitivaPeligrosaError(
@@ -407,9 +406,6 @@ class InterpretadorCobra:
 
     def ejecutar_hilo(self, nodo):
         """Ejecuta una función en un hilo separado."""
-        if self.safe_mode:
-            raise PrimitivaPeligrosaError("Uso de primitiva peligrosa: 'hilo'")
-
         import threading
 
         def destino():

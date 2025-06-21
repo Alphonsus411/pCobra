@@ -1,45 +1,13 @@
 # coding: utf-8
-"""Validador semántico para prevenir el uso de primitivas peligrosas."""
+"""Módulo de compatibilidad para el antiguo validador semántico."""
 
-from src.core.visitor import NodeVisitor
-from src.core.ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
+from src.core.semantic_validators import (
+    PrimitivaPeligrosaError,
+    ValidadorPrimitivaPeligrosa,
+    construir_cadena,
+)
 
+# Mantener nombre histórico
+ValidadorSemantico = ValidadorPrimitivaPeligrosa
 
-class PrimitivaPeligrosaError(Exception):
-    """Se lanza cuando se intenta utilizar una primitiva peligrosa."""
-    pass
-
-
-class ValidadorSemantico(NodeVisitor):
-    """Recorre el AST y valida que no se usen primitivas peligrosas."""
-
-    PRIMITIVAS_PELIGROSAS = {"leer_archivo", "escribir_archivo", "obtener_url", "hilo"}
-
-    def generic_visit(self, node):
-        for atributo in getattr(node, "__dict__", {}).values():
-            if isinstance(atributo, list):
-                for elem in atributo:
-                    if hasattr(elem, "aceptar"):
-                        elem.aceptar(self)
-            elif hasattr(atributo, "aceptar"):
-                atributo.aceptar(self)
-
-    def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        if nodo.nombre in self.PRIMITIVAS_PELIGROSAS:
-            raise PrimitivaPeligrosaError(f"Uso de primitiva peligrosa: '{nodo.nombre}'")
-        self.generic_visit(nodo)
-
-    def visit_hilo(self, nodo: NodoHilo):
-        if nodo.llamada.nombre in self.PRIMITIVAS_PELIGROSAS:
-            raise PrimitivaPeligrosaError(f"Uso de primitiva peligrosa: '{nodo.llamada.nombre}'")
-        nodo.llamada.aceptar(self)
-
-    def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
-        if nodo.nombre_metodo in self.PRIMITIVAS_PELIGROSAS:
-            raise PrimitivaPeligrosaError(
-                f"Uso de primitiva peligrosa: '{nodo.nombre_metodo}'"
-            )
-        self.generic_visit(nodo)
-
-
-__all__ = ["PrimitivaPeligrosaError", "ValidadorSemantico"]
+__all__ = ["PrimitivaPeligrosaError", "ValidadorSemantico", "construir_cadena"]
