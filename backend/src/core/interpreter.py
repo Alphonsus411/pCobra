@@ -48,6 +48,14 @@ class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
     def __init__(self, safe_mode: bool = False):
+        """Crea un nuevo interpretador.
+
+        Parameters
+        ----------
+        safe_mode: bool, optional
+            Si se activa, valida cada nodo con :class:`ValidadorSemantico` y
+            restringe primitivas como ``import`` o ``hilo``.
+        """
         self.safe_mode = safe_mode
         self._validador = ValidadorSemantico() if safe_mode else None
         # Pila de contextos para mantener variables locales en cada llamada
@@ -95,18 +103,22 @@ class InterpretadorCobra:
         """Libera un bloque de memoria."""
         self.estrategia.liberar(index, tam)
 
+    # -- Utilidades ---------------------------------------------------------
+    def _validar(self, nodo):
+        """Valida un nodo si el modo seguro está activo."""
+        if self.safe_mode:
+            nodo.aceptar(self._validador)
+
     def ejecutar_ast(self, ast):
         for nodo in ast:
-            if self.safe_mode:
-                nodo.aceptar(self._validador)
+            self._validar(nodo)
             resultado = self.ejecutar_nodo(nodo)
             if resultado is not None:
                 return resultado
         return None
 
     def ejecutar_nodo(self, nodo):
-        if self.safe_mode:
-            nodo.aceptar(self._validador)
+        self._validar(nodo)
         if isinstance(nodo, NodoAsignacion):
             self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):
@@ -378,6 +390,7 @@ class InterpretadorCobra:
         tokens = lexer.analizar_token()
         ast = Parser(tokens).parsear()
         for subnodo in ast:
+            self._validar(subnodo)
             resultado = self.ejecutar_nodo(subnodo)
             if resultado is not None:
                 return resultado
