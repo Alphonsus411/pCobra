@@ -9,12 +9,16 @@ var nombre = "Cobra"
 var numero = 10
 var año = 1  # Identificadores Unicode permitidos
 
+Los nombres de variables no pueden ser palabras reservadas como ``si`` o ``mientras``. Usarlas como identificador generará un ``SyntaxError``.
+
 **2. Funciones**
 
 Las funciones se declaran con `func` y el cuerpo se delimita con `:`  :
 
 func sumar(a, b) :
     return a + b
+
+Al igual que con las variables, el nombre de la función no puede coincidir con palabras reservadas.
 
 **3. Funciones relativas (rel)**
 
