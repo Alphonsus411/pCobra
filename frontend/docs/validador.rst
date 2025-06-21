@@ -1,10 +1,10 @@
 Validador semantico
 ===================
 
-El validador semantico recorre el arbol de sintaxis abstracta (AST) para detectar llamadas
-que utilizan primitivas consideradas peligrosas. Su finalidad es prevenir que programas
-Cobra ejecuten acciones que puedan comprometer al sistema o realicen operaciones
-no deseadas durante la fase de analisis.
+El sistema de validación semántica se compone de varios validadores encadenados que
+recorren el árbol de sintaxis abstracta (AST). Cada validador puede realizar una
+comprobación y delegar en el siguiente. De esta forma es sencillo añadir nuevas
+reglas de seguridad sin modificar el resto del código.
 
 Primitivas peligrosas
 ---------------------
@@ -17,6 +17,24 @@ Las primitivas actualmente marcadas como peligrosas son:
 
 Si se detecta el uso de alguna de estas primitivas, se lanza la excepcion
 ``PrimitivaPeligrosaError`` antes de que el codigo sea interpretado o transpilado.
+
+Cadena de validadores
+---------------------
+La función ``construir_cadena`` genera la configuración por defecto uniendo
+``ValidadorPrimitivaPeligrosa`` y ``ValidadorImportSeguro``. Es posible añadir
+otros validadores pasando una lista a esta función.
+
+.. code-block:: python
+
+   from src.core.semantic_validators import construir_cadena, ValidadorBase
+
+   class MiValidador(ValidadorBase):
+       def visit_mi_nodo(self, nodo):
+           # lógica personalizada
+           self.generic_visit(nodo)
+           self.delegar(nodo)
+
+   cadena = construir_cadena([MiValidador()])
 
 Ejemplo de deteccion
 --------------------
