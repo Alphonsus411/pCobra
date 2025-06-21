@@ -4,6 +4,7 @@ from src.core.parser import Parser
 from src.core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
 from src.core.transpiler.to_python import TranspiladorPython
 from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.core.interpreter import InterpretadorCobra
 
 
 def test_lexer_nuevos_operadores():
@@ -85,5 +86,11 @@ def test_transpiladores_operaciones():
     expr = parser.parsear()[0]
     py_code = TranspiladorPython().transpilar([expr])
     js_code = TranspiladorJavaScript().transpilar([expr])
-    assert py_code == "1 + 2 * 3 == 7 and not 0"
-    assert js_code == "1 + 2 * 3 == 7 && !0"
+    assert py_code == "from src.core.nativos import *\n1 + 2 * 3 == 7 and not 0"
+    assert js_code == (
+        "import * as io from './nativos/io.js';\n"
+        "import * as net from './nativos/io.js';\n"
+        "import * as matematicas from './nativos/matematicas.js';\n"
+        "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        "1 + 2 * 3 == 7 && !0"
+    )
