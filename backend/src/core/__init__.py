@@ -1,4 +1,5 @@
 from .ast_nodes import *
+from .visitor import NodeVisitor
 
 __all__ = [
     'NodoAST',
@@ -27,4 +28,5 @@ __all__ = [
     'NodoImport',
     'NodoPara',
     'NodoImprimir',
+    'NodeVisitor',
 ]
