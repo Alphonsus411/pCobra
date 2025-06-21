@@ -1,4 +1,4 @@
-from src.core.parser import (
+from src.core.ast_nodes import (
     NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
     NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
     NodoClase,
@@ -15,8 +15,9 @@ from src.core.parser import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
-    Parser,
+    NodoImprimir
 )
+from src.core.parser import Parser
 from src.core.lexer import TipoToken, Lexer
 
 

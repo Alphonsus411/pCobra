@@ -2,7 +2,8 @@ from io import StringIO
 from unittest.mock import patch
 
 from src.core.lexer import Token, TipoToken
-from src.core.parser import Parser, NodoHilo, NodoLlamadaFuncion, NodoValor, NodoAsignacion, NodoFuncion
+from src.core.parser import Parser
+from src.core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoAsignacion, NodoFuncion
 from src.core.interpreter import InterpretadorCobra
 from src.core.transpiler.to_python import TranspiladorPython
 from src.core.transpiler.to_js import TranspiladorJavaScript

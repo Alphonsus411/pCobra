@@ -1,8 +1,7 @@
 import pytest
 from src.core.lexer import Lexer
 from src.core.parser import Parser
-from src.core.parser import NodoPara, NodoImprimir, NodoFuncion
-
+from src.core.ast_nodes import NodoPara, NodoImprimir, NodoFuncion
 
 def test_declaracion_para():
     """Prueba una declaración de bucle 'para'."""

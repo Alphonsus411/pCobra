@@ -1,6 +1,5 @@
 import pytest
-from src.core.parser import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, \
-    NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor
+from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor
 from src.core.transpiler.to_python import TranspiladorPython
 
 

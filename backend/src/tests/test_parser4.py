@@ -1,14 +1,8 @@
 import pytest
 
 from src.core.lexer import Token, TipoToken
-from src.core.parser import (
-    NodoAsignacion,
-    NodoCondicional,
-    NodoFuncion,
-    NodoRetorno,
-    NodoBucleMientras,
-    NodoValor,
-)
+from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoBucleMientras, NodoValor
+from src.core.parser import Parser
 from src.core.parser import Parser
 
 

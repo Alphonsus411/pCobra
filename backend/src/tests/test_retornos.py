@@ -1,10 +1,10 @@
 import pytest
 from src.core.interpreter import InterpretadorCobra
-from src.core.parser import NodoFuncion, NodoRetorno, NodoValor, NodoLlamadaFuncion
-from src.core.transpiler.to_python import TranspiladorPython
+from src.core.ast_nodes import NodoFuncion, NodoRetorno, NodoValor, NodoLlamadaFuncion
 from src.core.transpiler.to_js import TranspiladorJavaScript
 
 
+from src.core.transpiler.to_python import TranspiladorPython
 def test_interpreter_funcion_con_retorno():
     inter = InterpretadorCobra()
     func = NodoFuncion("dame_cinco", [], [NodoRetorno(NodoValor(5))])

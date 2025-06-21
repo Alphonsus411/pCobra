@@ -1,7 +1,6 @@
 import pytest
 from src.core.transpiler.to_js import TranspiladorJavaScript
-from src.core.parser import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, \
-    NodoHolobit
+from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit
 
 
 def test_transpilador_asignacion():
