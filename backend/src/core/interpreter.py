@@ -1,3 +1,5 @@
+import os
+
 from src.core.lexer import Token, TipoToken, Lexer
 from src.core.ast_nodes import (
     NodoAsignacion,
@@ -28,6 +30,12 @@ from src.core.semantic_validator import (
     ValidadorSemantico,
     PrimitivaPeligrosaError,
 )
+
+# Ruta de los módulos instalados junto con una lista blanca opcional.
+MODULES_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "cli", "modules")
+)
+IMPORT_WHITELIST = set()
 
 
 class ExcepcionCobra(Exception):
@@ -354,8 +362,14 @@ class InterpretadorCobra:
         """Carga y ejecuta un módulo especificado en la declaración import."""
         if self.safe_mode:
             raise PrimitivaPeligrosaError("Uso de primitiva peligrosa: 'import'")
+        ruta = os.path.abspath(nodo.ruta)
+        if not ruta.startswith(MODULES_PATH) and ruta not in IMPORT_WHITELIST:
+            raise PrimitivaPeligrosaError(
+                f"Importación de módulo no permitida: {nodo.ruta}"
+            )
+
         try:
-            with open(nodo.ruta, "r", encoding="utf-8") as f:
+            with open(ruta, "r", encoding="utf-8") as f:
                 codigo = f.read()
         except FileNotFoundError:
             raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")

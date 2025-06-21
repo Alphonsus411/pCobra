@@ -4,7 +4,11 @@ from unittest.mock import patch
 
 from src.core.lexer import Lexer
 from src.core.parser import Parser
-from src.core.interpreter import InterpretadorCobra
+from src.core.interpreter import (
+    InterpretadorCobra,
+    MODULES_PATH,
+    IMPORT_WHITELIST,
+)
 from src.core.transpiler.to_python import TranspiladorPython
 
 
@@ -13,6 +17,8 @@ def test_import_interpreter(tmp_path):
     mod = tmp_path / "mod.cobra"
     mod.write_text("var dato = 5")
 
+    IMPORT_WHITELIST.add(str(mod))
+
     codigo = f"import '{mod}'\nimprimir(dato)"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
@@ -20,6 +26,8 @@ def test_import_interpreter(tmp_path):
 
     with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
         interp.ejecutar_ast(ast)
+
+    IMPORT_WHITELIST.remove(str(mod))
 
     assert mock_stdout.getvalue().strip() == "5"
 
