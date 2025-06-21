@@ -14,6 +14,20 @@ class Parser:
         self.tokens = tokens
         self.posicion = 0
         self.indentacion_actual = 0
+        # Mapeo de tokens a funciones de construcción del AST
+        self._factories = {
+            TipoToken.VAR: self.declaracion_asignacion,
+            TipoToken.HOLOBIT: self.declaracion_holobit,
+            TipoToken.SI: self.declaracion_condicional,
+            TipoToken.PARA: self.declaracion_para,
+            TipoToken.MIENTRAS: self.declaracion_mientras,
+            TipoToken.FUNC: self.declaracion_funcion,
+            TipoToken.IMPORT: self.declaracion_import,
+            TipoToken.IMPRIMIR: self.declaracion_imprimir,
+            TipoToken.HILO: self.declaracion_hilo,
+            TipoToken.TRY: self.declaracion_try_catch,
+            TipoToken.THROW: self.declaracion_throw,
+        }
 
     def token_actual(self):
         if self.posicion < len(self.tokens):
@@ -49,52 +63,32 @@ class Parser:
         """Procesa una instrucción o expresión."""
         token = self.token_actual()
         try:
-            if token.tipo == TipoToken.VAR:
-                return self.declaracion_asignacion()
-            elif token.tipo == TipoToken.HOLOBIT:
-                return self.declaracion_holobit()
-            elif token.tipo == TipoToken.SI:
-                return self.declaracion_condicional()
-            elif token.tipo == TipoToken.PARA:
-                return self.declaracion_para()
-            elif token.tipo == TipoToken.MIENTRAS:
-                return self.declaracion_mientras()
-            elif token.tipo == TipoToken.FUNC:
-                return self.declaracion_funcion()
-            elif token.tipo == TipoToken.IMPORT:
-                return self.declaracion_import()
-            elif token.tipo == TipoToken.IMPRIMIR:  # Soporte para `imprimir`
-                return self.declaracion_imprimir()
-            elif token.tipo == TipoToken.HILO:
-                return self.declaracion_hilo()
-            elif token.tipo == TipoToken.TRY:
-                return self.declaracion_try_catch()
-            elif token.tipo == TipoToken.THROW:
-                self.comer(TipoToken.THROW)
-                return NodoThrow(self.expresion())
-            elif token.tipo == TipoToken.IDENTIFICADOR and token.valor == "definir":
-                # Tratar 'definir' como alias de 'func'
+            # Alias 'definir' para declarar funciones
+            if token.tipo == TipoToken.IDENTIFICADOR and token.valor == "definir":
                 self.token_actual().tipo = TipoToken.FUNC
-                return self.declaracion_funcion()
-            elif token.tipo == TipoToken.PARA:
-                return self.declaracion_para()
-            elif token.tipo == TipoToken.RETORNO:  # Declaraciones de retorno
+                token = self.token_actual()
+
+            # Manejo especial para declaraciones de retorno
+            if token.tipo == TipoToken.RETORNO:
                 self.comer(TipoToken.RETORNO)
                 return NodoRetorno(self.expresion())
-            elif token.tipo in [
-                TipoToken.IDENTIFICADOR,
-                TipoToken.ENTERO,
-                TipoToken.FLOTANTE,
-            ]:
-                siguiente_token = self.token_siguiente()
-                if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
-                    return self.llamada_funcion()  # Procesa como una llamada a función
-                elif siguiente_token and siguiente_token.tipo == TipoToken.ASIGNAR:
+
+            # Busca una función de construcción asociada al tipo de token
+            handler = self._factories.get(token.tipo)
+            if handler:
+                return handler()
+
+            # Posibles expresiones o asignaciones/invocaciones
+            if token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE]:
+                siguiente = self.token_siguiente()
+                if siguiente and siguiente.tipo == TipoToken.LPAREN:
+                    return self.llamada_funcion()
+                elif siguiente and siguiente.tipo == TipoToken.ASIGNAR:
                     return self.declaracion_asignacion()
-                else:
-                    return self.expresion()  # Procesa como una expresión
-            else:
-                raise SyntaxError(f"Token inesperado: {token.tipo}")
+                return self.expresion()
+
+            raise SyntaxError(f"Token inesperado: {token.tipo}")
+
         except Exception as e:
             logging.error(f"Error en la declaración: {e}")
             raise
@@ -416,6 +410,11 @@ class Parser:
         self.comer(TipoToken.FIN)
 
         return NodoTryCatch(bloque_try, nombre_exc, bloque_catch)
+
+    def declaracion_throw(self):
+        """Parsea una declaración 'throw'."""
+        self.comer(TipoToken.THROW)
+        return NodoThrow(self.expresion())
 
     def expresion(self):
         return self.exp_or()
