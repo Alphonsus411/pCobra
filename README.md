@@ -182,8 +182,12 @@ cobra modulos instalar ruta/al/modulo.cobra
 cobra modulos remover modulo.cobra
 ```
 
-Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` pa
-ra más detalles.
+
+Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` para más detalles.
+
+## Modo seguro (--seguro)
+
+Tanto el intérprete como la CLI aceptan la opción `--seguro`, que ejecuta el código bajo restricciones adicionales. Al activarla se valida el AST y se prohíben primitivas como `leer_archivo`, `escribir_archivo`, `obtener_url` y `hilo`. Asimismo, las instrucciones `import` solo están permitidas para módulos instalados o incluidos en `IMPORT_WHITELIST`. Si el programa intenta utilizar estas funciones o importar otros archivos se lanzará `PrimitivaPeligrosaError`.
 
 # Pruebas
 

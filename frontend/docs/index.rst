@@ -21,6 +21,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    ejemplos
    referencia
    validador
+   modo_seguro
 
 Introducción
 --------------------

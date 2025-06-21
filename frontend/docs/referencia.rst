@@ -33,4 +33,7 @@ El comando ``cobra`` cuenta con varias subopciones:
    cobra modulos listar
    cobra docs
 
+La opción ``--seguro`` puede añadirse a ``ejecutar`` o al modo interactivo para
+bloquear primitivas peligrosas e importaciones no permitidas.
+
 El subcomando ``docs`` genera la documentación del proyecto en ``frontend/build/html``.
