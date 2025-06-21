@@ -19,6 +19,11 @@ Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilit
 El recorrido de estos nodos puede realizarse mediante la clase ``NodeVisitor``
 ubicada en ``src.core.visitor``, que despacha automáticamente al método
 ``visit_<Clase>`` correspondiente.
+Para mantener el código modular, la lógica específica de cada nodo del AST se
+almacena en paquetes independientes. Los transpiladores a Python y JavaScript
+importan estas funciones desde ``src.core.transpiler.python_nodes`` y
+``src.core.transpiler.js_nodes`` respectivamente, delegando la operación de
+``visit_<nodo>`` a dichas funciones.
 
 Módulos nativos
 ---------------
