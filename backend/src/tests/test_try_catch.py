@@ -3,16 +3,8 @@ from io import StringIO
 from unittest.mock import patch
 
 from src.core.lexer import Token, TipoToken
-from src.core.parser import (
-    Parser,
-    NodoTryCatch,
-    NodoThrow,
-    NodoImprimir,
-    NodoIdentificador,
-    NodoValor,
-)
-from src.core.interpreter import InterpretadorCobra
-from src.core.transpiler.to_python import TranspiladorPython
+from src.core.parser import Parser
+from src.core.ast_nodes import NodoTryCatch, NodoThrow, NodoImprimir, NodoIdentificador, NodoValor
 from src.core.transpiler.to_js import TranspiladorJavaScript
 
 

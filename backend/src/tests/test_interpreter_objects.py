@@ -1,5 +1,5 @@
 from src.core.interpreter import InterpretadorCobra
-from src.core.parser import (
+from src.core.ast_nodes import (
     NodoClase,
     NodoMetodo,
     NodoInstancia,
@@ -10,6 +10,7 @@ from src.core.parser import (
     NodoValor,
     NodoRetorno,
 )
+
 
 
 def test_creacion_instancia_y_metodo():

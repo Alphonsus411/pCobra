@@ -4,15 +4,9 @@ from unittest.mock import patch
 
 from src.core.interpreter import InterpretadorCobra
 from src.core.lexer import Token, TipoToken
-from src.core.parser import (
-    NodoAsignacion,
-    NodoValor,
-    NodoLlamadaFuncion,
-    NodoFuncion,
-)
-
-
+from src.core.ast_nodes import NodoAsignacion, NodoValor, NodoLlamadaFuncion, NodoFuncion
 def test_interpretador_asignacion_y_llamada_funcion():
+
     # Crea una instancia del intérprete
     interpretador = InterpretadorCobra()
 

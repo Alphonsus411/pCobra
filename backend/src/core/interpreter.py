@@ -1,5 +1,5 @@
 from src.core.lexer import Token, TipoToken, Lexer
-from src.core.parser import (
+from src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -21,9 +21,8 @@ from src.core.parser import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
-    Parser,
 )
-
+from src.core.parser import Parser
 from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
 
 

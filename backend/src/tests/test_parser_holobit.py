@@ -1,5 +1,6 @@
 from src.core.lexer import Token, TipoToken
-from src.core.parser import Parser, NodoHolobit
+from src.core.parser import Parser
+from src.core.ast_nodes import NodoHolobit
 
 
 def test_parser_holobit():

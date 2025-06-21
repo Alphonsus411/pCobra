@@ -15,6 +15,7 @@ Contiene el corazón del lenguaje: lexer, parser, intérprete y
 transpiladores a Python y JavaScript. Estos elementos trabajan en
 conjunto para analizar el código fuente y transformarlo en otras
 representaciones o ejecutarlo de forma directa.
+Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilitar su reutilización.
 
 Módulos nativos
 ---------------

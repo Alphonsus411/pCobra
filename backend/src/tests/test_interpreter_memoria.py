@@ -1,7 +1,6 @@
 import pytest
 from src.core.interpreter import InterpretadorCobra
-from src.core.parser import NodoAsignacion, NodoValor, NodoFuncion, NodoLlamadaFuncion
-
+from src.core.ast_nodes import NodoAsignacion, NodoValor, NodoFuncion, NodoLlamadaFuncion
 
 def test_asignaciones_intensivas_libera_memoria():
     inter = InterpretadorCobra()

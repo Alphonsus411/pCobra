@@ -1,5 +1,6 @@
 import pytest
-from src.core.parser import Parser, NodoAsignacion, NodoHolobit, NodoCondicional
+from src.core.parser import Parser
+from src.core.ast_nodes import NodoAsignacion, NodoHolobit, NodoCondicional
 from src.core.lexer import Lexer
 
 

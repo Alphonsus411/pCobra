@@ -1,7 +1,7 @@
 import pytest
 from src.core.lexer import Lexer, Token, TipoToken
-from src.core.parser import Parser, NodoOperacionBinaria, NodoOperacionUnaria
-from src.core.interpreter import InterpretadorCobra
+from src.core.parser import Parser
+from src.core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
 from src.core.transpiler.to_python import TranspiladorPython
 from src.core.transpiler.to_js import TranspiladorJavaScript
 

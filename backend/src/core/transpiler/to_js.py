@@ -1,4 +1,4 @@
-from src.core.parser import (
+from src.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -10,8 +10,9 @@ from src.core.parser import (
     NodoLlamadaMetodo,
     NodoHilo,
     NodoImport,
-    Parser,
+    NodoImprimir
 )
+from src.core.parser import Parser
 from src.core.lexer import TipoToken, Lexer
 
 
