@@ -7,6 +7,7 @@ Para declarar variables en Cobra, usamos `var`:
 
 var nombre = "Cobra"
 var numero = 10
+var año = 1  # Identificadores Unicode permitidos
 
 **2. Funciones**
 
