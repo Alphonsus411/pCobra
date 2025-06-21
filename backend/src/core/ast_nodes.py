@@ -8,7 +8,8 @@ class NodoAST:
     """Clase base para todos los nodos del AST."""
 
     def aceptar(self, visitante):
-        raise NotImplementedError("Este método debe ser implementado por subclases.")
+        """Acepta un visitante y delega la operación a éste."""
+        return visitante.visit(self)
 
 
 @dataclass

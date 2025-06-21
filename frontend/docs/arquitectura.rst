@@ -16,6 +16,9 @@ transpiladores a Python y JavaScript. Estos elementos trabajan en
 conjunto para analizar el código fuente y transformarlo en otras
 representaciones o ejecutarlo de forma directa.
 Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilitar su reutilización.
+El recorrido de estos nodos puede realizarse mediante la clase ``NodeVisitor``
+ubicada en ``src.core.visitor``, que despacha automáticamente al método
+``visit_<Clase>`` correspondiente.
 
 Módulos nativos
 ---------------
