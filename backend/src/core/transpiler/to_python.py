@@ -19,9 +19,10 @@ from src.core.ast_nodes import (
 )
 from src.core.parser import Parser
 from src.core.lexer import TipoToken, Lexer
+from src.core.visitor import NodeVisitor
 
 
-class TranspiladorPython:
+class TranspiladorPython(NodeVisitor):
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = "from src.core.nativos import *\n"
@@ -33,7 +34,7 @@ class TranspiladorPython:
 
     def transpilar(self, nodos):
         for nodo in nodos:
-            self.transpilar_nodo(nodo)
+            nodo.aceptar(self)
         if nodos and all(
             n.__class__.__module__.startswith("src.core.parser") for n in nodos
         ) and not any(self._contiene_nodo_valor(n) for n in nodos):
@@ -74,97 +75,6 @@ class TranspiladorPython:
         return False
 
 
-    def transpilar_nodo(self, nodo):
-        if (
-            (hasattr(nodo, "identificador") or hasattr(nodo, "variable"))
-            and (hasattr(nodo, "expresion") or hasattr(nodo, "valor"))
-        ):
-            self.transpilar_asignacion(nodo)
-        elif hasattr(nodo, "condicion") and (
-            hasattr(nodo, "bloque_si") or hasattr(nodo, "cuerpo_si")
-        ):
-            self.transpilar_condicional(nodo)
-        elif hasattr(nodo, "condicion") and hasattr(nodo, "cuerpo"):
-            self.transpilar_mientras(nodo)
-        elif (
-            hasattr(nodo, "nombre")
-            and hasattr(nodo, "parametros")
-            and hasattr(nodo, "cuerpo")
-            and not hasattr(nodo, "metodos")
-        ):
-            self.transpilar_funcion(nodo)
-        elif hasattr(nodo, "nombre") and hasattr(nodo, "argumentos"):
-            self.transpilar_llamada_funcion(nodo)
-        elif isinstance(nodo, NodoInstancia):
-            self.codigo += f"{self.obtener_valor(nodo)}\n"
-        elif isinstance(nodo, NodoLlamadaMetodo):
-            self.transpilar_llamada_metodo(nodo)
-        elif isinstance(nodo, NodoImport):
-            self.transpilar_import(nodo)
-        elif type(nodo).__name__ == "NodoImprimir":
-            self.transpilar_imprimir(nodo)
-        elif isinstance(nodo, NodoHilo):
-            self.transpilar_hilo(nodo)
-        elif isinstance(nodo, NodoRetorno) or type(nodo).__name__ == "NodoRetorno":
-            self.transpilar_retorno(nodo)
-        elif isinstance(nodo, NodoTryCatch):
-            self.transpilar_try_catch(nodo)
-        elif isinstance(nodo, NodoThrow):
-            self.transpilar_throw(nodo)
-        elif hasattr(nodo, "valores") or (
-            hasattr(nodo, "nombre")
-            and not any(
-                hasattr(nodo, attr)
-                for attr in ["argumentos", "parametros", "cuerpo", "metodos"]
-            )
-        ):
-            self.transpilar_holobit(nodo)
-        elif (
-            hasattr(nodo, "variable")
-            and hasattr(nodo, "iterable")
-            and hasattr(nodo, "cuerpo")
-        ):
-            self.transpilar_for(nodo)
-        elif hasattr(nodo, "pares"):
-            self.transpilar_diccionario(nodo)
-        elif hasattr(nodo, "elementos"):
-            # Distinguir lista de diccionario por la forma de los elementos
-            elementos = getattr(nodo, "elementos", [])
-            if all(
-                isinstance(elem, (tuple, list)) and len(elem) == 2
-                for elem in elementos
-            ):
-                self.transpilar_diccionario(nodo)
-            else:
-                self.transpilar_lista(nodo)
-        elif hasattr(nodo, "metodos") or (
-            hasattr(nodo, "cuerpo")
-            and not any(
-                hasattr(nodo, attr)
-                for attr in [
-                    "parametros",
-                    "condicion",
-                    "iterable",
-                    "expresion",
-                    "valor",
-                ]
-            )
-        ):
-            self.transpilar_clase(nodo)
-        elif (
-            hasattr(nodo, "nombre")
-            and hasattr(nodo, "parametros")
-            and hasattr(nodo, "cuerpo")
-        ):
-            self.transpilar_metodo(nodo)
-        elif isinstance(nodo, (NodoOperacionBinaria, NodoOperacionUnaria)):
-            self.codigo += self.obtener_valor(nodo)
-        elif hasattr(nodo, "valor"):
-            self.codigo += self.obtener_valor(nodo)
-        else:
-            raise TypeError(
-                f"Tipo de nodo no soportado: {type(nodo).__name__}"
-            )
 
     def obtener_valor(self, nodo):
         from src.core.parser import (
@@ -199,7 +109,7 @@ class TranspiladorPython:
         else:
             return str(getattr(nodo, "valor", nodo))
 
-    def transpilar_asignacion(self, nodo):
+    def visit_asignacion(self, nodo):
         nombre_raw = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         if isinstance(nombre_raw, NodoAtributo):
             nombre = self.obtener_valor(nombre_raw)
@@ -211,31 +121,31 @@ class TranspiladorPython:
             f"{self.obtener_valor(valor)}\n"
         )
 
-    def transpilar_condicional(self, nodo):
+    def visit_condicional(self, nodo):
         bloque_si = getattr(nodo, "bloque_si", getattr(nodo, "cuerpo_si", []))
         bloque_sino = getattr(nodo, "bloque_sino", getattr(nodo, "cuerpo_sino", []))
         condicion = self.obtener_valor(nodo.condicion)
         self.codigo += f"{self.obtener_indentacion()}if {condicion}:\n"
         self.nivel_indentacion += 1
         for instruccion in bloque_si:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         self.nivel_indentacion -= 1
         if bloque_sino:
             self.codigo += f"{self.obtener_indentacion()}else:\n"
             self.nivel_indentacion += 1
             for instruccion in bloque_sino:
-                self.transpilar_nodo(instruccion)
+                instruccion.aceptar(self)
             self.nivel_indentacion -= 1
 
-    def transpilar_mientras(self, nodo):
+    def visit_bucle_mientras(self, nodo):
         condicion = self.obtener_valor(nodo.condicion)
         self.codigo += f"{self.obtener_indentacion()}while {condicion}:\n"
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         self.nivel_indentacion -= 1
 
-    def transpilar_for(self, nodo):
+    def visit_for(self, nodo):
         iterable = self.obtener_valor(nodo.iterable)
         self.codigo += (
             f"{self.obtener_indentacion()}for {nodo.variable} in "
@@ -243,50 +153,50 @@ class TranspiladorPython:
         )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         self.nivel_indentacion -= 1
 
-    def transpilar_funcion(self, nodo):
+    def visit_funcion(self, nodo):
         parametros = ", ".join(nodo.parametros)
         self.codigo += (
             f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
         )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         self.nivel_indentacion -= 1
 
-    def transpilar_llamada_funcion(self, nodo):
+    def visit_llamada_funcion(self, nodo):
         argumentos = ", ".join(self.obtener_valor(arg) for arg in nodo.argumentos)
         self.codigo += f"{nodo.nombre}({argumentos})\n"
 
-    def transpilar_llamada_metodo(self, nodo):
+    def visit_llamada_metodo(self, nodo):
         args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
         objeto = self.obtener_valor(nodo.objeto)
         self.codigo += f"{objeto}.{nodo.nombre_metodo}({args})\n"
 
-    def transpilar_imprimir(self, nodo):
+    def visit_imprimir(self, nodo):
         valor = self.obtener_valor(getattr(nodo, "expresion", nodo))
         self.codigo += f"{self.obtener_indentacion()}print({valor})\n"
 
-    def transpilar_retorno(self, nodo):
+    def visit_retorno(self, nodo):
         valor = self.obtener_valor(getattr(nodo, "expresion", nodo.expresion))
         self.codigo += f"{self.obtener_indentacion()}return {valor}\n"
 
-    def transpilar_holobit(self, nodo):
+    def visit_holobit(self, nodo):
         valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
         if nodo.nombre:
             self.codigo += f"{nodo.nombre} = holobit([{valores}])\n"
         else:
             self.codigo += f"holobit([{valores}])\n"
 
-    def transpilar_lista(self, nodo):
+    def visit_lista(self, nodo):
         elementos = ", ".join(
             self.obtener_valor(elemento) for elemento in nodo.elementos
         )
         self.codigo += f"[{elementos}]\n"
 
-    def transpilar_diccionario(self, nodo):
+    def visit_diccionario(self, nodo):
         elementos_or_pares = getattr(nodo, "elementos", getattr(nodo, "pares", []))
         elementos = ", ".join(
             f"{self.obtener_valor(clave)}: {self.obtener_valor(valor)}"
@@ -294,43 +204,43 @@ class TranspiladorPython:
         )
         self.codigo += f"{{{elementos}}}\n"
 
-    def transpilar_clase(self, nodo):
+    def visit_clase(self, nodo):
         metodos = getattr(nodo, "metodos", getattr(nodo, "cuerpo", []))
         self.codigo += f"{self.obtener_indentacion()}class {nodo.nombre}:\n"
         self.nivel_indentacion += 1
         for metodo in metodos:
-            self.transpilar_metodo(metodo)
+            metodo.aceptar(self)
         self.nivel_indentacion -= 1
 
-    def transpilar_metodo(self, nodo):
+    def visit_metodo(self, nodo):
         parametros = ", ".join(nodo.parametros)
         self.codigo += (
             f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
         )
         self.nivel_indentacion += 1
         for instruccion in nodo.cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         self.nivel_indentacion -= 1
 
-    def transpilar_try_catch(self, nodo):
+    def visit_try_catch(self, nodo):
         self.codigo += f"{self.obtener_indentacion()}try:\n"
         self.nivel_indentacion += 1
         for instruccion in nodo.bloque_try:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         self.nivel_indentacion -= 1
         if nodo.bloque_catch:
             nombre = f" as {nodo.nombre_excepcion}" if nodo.nombre_excepcion else ""
             self.codigo += f"{self.obtener_indentacion()}except Exception{nombre}:\n"
             self.nivel_indentacion += 1
             for instruccion in nodo.bloque_catch:
-                self.transpilar_nodo(instruccion)
+                instruccion.aceptar(self)
             self.nivel_indentacion -= 1
 
-    def transpilar_throw(self, nodo):
+    def visit_throw(self, nodo):
         valor = self.obtener_valor(nodo.expresion)
         self.codigo += f"{self.obtener_indentacion()}raise Exception({valor})\n"
 
-    def transpilar_import(self, nodo):
+    def visit_import(self, nodo):
         """Transpila una declaración de importación cargando y procesando el módulo."""
         try:
             with open(nodo.ruta, "r", encoding="utf-8") as f:
@@ -342,9 +252,37 @@ class TranspiladorPython:
         tokens = lexer.analizar_token()
         ast = Parser(tokens).parsear()
         for subnodo in ast:
-            self.transpilar_nodo(subnodo)
+            subnodo.aceptar(self)
 
-    def transpilar_hilo(self, nodo):
+    def visit_hilo(self, nodo):
         self.usa_asyncio = True
         args = ", ".join(self.obtener_valor(a) for a in nodo.llamada.argumentos)
         self.codigo += f"{self.obtener_indentacion()}asyncio.create_task({nodo.llamada.nombre}({args}))\n"
+
+    def visit_instancia(self, nodo):
+        self.codigo += f"{self.obtener_valor(nodo)}\n"
+
+    def visit_atributo(self, nodo):
+        self.codigo += f"{self.obtener_valor(nodo)}\n"
+
+    def visit_operacion_binaria(self, nodo):
+        self.codigo += self.obtener_valor(nodo)
+
+    def visit_operacion_unaria(self, nodo):
+        self.codigo += self.obtener_valor(nodo)
+
+    def visit_valor(self, nodo):
+        self.codigo += self.obtener_valor(nodo)
+
+    def visit_identificador(self, nodo):
+        self.codigo += self.obtener_valor(nodo)
+
+    def visit_para(self, nodo):
+        iterable = self.obtener_valor(nodo.iterable)
+        self.codigo += (
+            f"{self.obtener_indentacion()}for {nodo.variable} in {iterable}:\n"
+        )
+        self.nivel_indentacion += 1
+        for instruccion in nodo.cuerpo:
+            instruccion.aceptar(self)
+        self.nivel_indentacion -= 1
