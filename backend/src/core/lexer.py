@@ -111,7 +111,7 @@ class Lexer:
             (TipoToken.BOOLEANO, r'\b(verdadero|falso)\b'),
             (TipoToken.DOSPUNTOS, r':'),
             (TipoToken.FIN, r'\bfin\b'),
-            (TipoToken.IDENTIFICADOR, r'[A-Za-z_][A-Za-z0-9_]*'),
+            (TipoToken.IDENTIFICADOR, r'[^\W\d_][\w]*'),
             (TipoToken.MAYORIGUAL, r'>='),
             (TipoToken.MENORIGUAL, r'<='),
             (TipoToken.IGUAL, r'=='),
@@ -142,7 +142,7 @@ class Lexer:
         while self.posicion < len(self.codigo_fuente):
             matched = False
             for tipo, patron in especificacion_tokens:
-                regex = re.compile(patron)
+                regex = re.compile(patron, re.UNICODE)
                 coincidencia = regex.match(self.codigo_fuente[self.posicion:])
                 if coincidencia:
                     if tipo:
