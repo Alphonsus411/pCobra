@@ -2,7 +2,57 @@ import logging
 import json
 from src.core.lexer import TipoToken, Token
 
-from src.core.ast_nodes import (NodoAsignacion, NodoHolobit, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHilo, NodoClase, NodoMetodo, NodoInstancia, NodoAtributo, NodoLlamadaMetodo, NodoOperacionBinaria, NodoOperacionUnaria, NodoValor, NodoIdentificador, NodoImprimir, NodoRetorno, NodoPara, NodoTryCatch, NodoThrow, NodoImport, NodoLista, NodoDiccionario, NodoFor)
+from src.core.ast_nodes import (
+    NodoAsignacion,
+    NodoHolobit,
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoHilo,
+    NodoClase,
+    NodoMetodo,
+    NodoInstancia,
+    NodoAtributo,
+    NodoLlamadaMetodo,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
+    NodoValor,
+    NodoIdentificador,
+    NodoImprimir,
+    NodoRetorno,
+    NodoPara,
+    NodoTryCatch,
+    NodoThrow,
+    NodoImport,
+    NodoLista,
+    NodoDiccionario,
+    NodoFor,
+)
+
+# Palabras reservadas que no pueden usarse como identificadores
+PALABRAS_RESERVADAS = {
+    "var",
+    "func",
+    "rel",
+    "si",
+    "sino",
+    "mientras",
+    "para",
+    "import",
+    "try",
+    "catch",
+    "throw",
+    "hilo",
+    "retorno",
+    "fin",
+    "in",
+    "holobit",
+    "imprimir",
+    "proyectar",
+    "transformar",
+    "graficar",
+}
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -186,14 +236,19 @@ class Parser:
     def declaracion_asignacion(self):
         variable_token = None
         if self.token_actual().tipo == TipoToken.VAR:
-            variable_token = self.token_actual()
             self.comer(TipoToken.VAR)  # Consume el token 'var' si está presente
-            if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
-                variable_token = self.token_actual()
-                self.comer(TipoToken.IDENTIFICADOR)
-        else:
-            variable_token = self.token_actual()
-            self.comer(TipoToken.IDENTIFICADOR)
+        
+        variable_token = self.token_actual()
+        # Comprobación de palabras reservadas antes de validar el tipo
+        if variable_token.valor in PALABRAS_RESERVADAS:
+            raise SyntaxError(
+                f"El identificador '{variable_token.valor}' es una palabra reservada"
+            )
+
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba un identificador en la asignación")
+
+        self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR)
         valor = self.expresion()
         # Si la expresión es un holobit, completar su nombre con la variable
@@ -292,9 +347,14 @@ class Parser:
         self.comer(TipoToken.FUNC)
 
         # Captura el nombre de la función
-        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+        nombre_token = self.token_actual()
+        if nombre_token.valor in PALABRAS_RESERVADAS:
+            raise SyntaxError(
+                f"El nombre de función '{nombre_token.valor}' es una palabra reservada"
+            )
+        if nombre_token.tipo != TipoToken.IDENTIFICADOR:
             raise SyntaxError("Se esperaba un nombre para la función después de 'func'")
-        nombre = self.token_actual().valor
+        nombre = nombre_token.valor
         self.comer(TipoToken.IDENTIFICADOR)
 
         # Captura los parámetros
