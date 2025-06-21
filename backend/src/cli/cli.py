@@ -10,6 +10,10 @@ from src.core.lexer import Lexer
 from src.core.parser import Parser
 from src.core.transpiler.to_js import TranspiladorJavaScript
 from src.core.transpiler.to_python import TranspiladorPython
+from src.core.semantic_validator import (
+    PrimitivaPeligrosaError,
+    ValidadorSemantico,
+)
 
 # Ruta donde se almacenan los módulos instalados
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "modules")
@@ -25,6 +29,7 @@ logging.basicConfig(
 def ejecutar_cobra_interactivamente():
     """Ejecuta Cobra en modo interactivo."""
     interpretador = InterpretadorCobra()
+    validador = ValidadorSemantico()
 
     while True:
         try:
@@ -40,6 +45,13 @@ def ejecutar_cobra_interactivamente():
             elif linea == "ast":
                 tokens = Lexer(linea).tokenizar()
                 ast = Parser(tokens).parsear()
+                try:
+                    for nodo in ast:
+                        nodo.aceptar(validador)
+                except PrimitivaPeligrosaError as pe:
+                    logging.error(f"Primitiva peligrosa: {pe}")
+                    print(f"Error: {pe}")
+                    continue
                 print("AST generado:")
                 print(ast)
                 continue
@@ -48,6 +60,13 @@ def ejecutar_cobra_interactivamente():
                 logging.debug(f"Tokens generados: {tokens}")
                 ast = Parser(tokens).parsear()
                 logging.debug(f"AST generado: {ast}")
+                try:
+                    for nodo in ast:
+                        nodo.aceptar(validador)
+                except PrimitivaPeligrosaError as pe:
+                    logging.error(f"Primitiva peligrosa: {pe}")
+                    print(f"Error: {pe}")
+                    continue
                 interpretador.ejecutar_ast(ast)
         except SyntaxError as se:
             logging.error(f"Error de sintaxis: {se}")
@@ -72,6 +91,10 @@ def transpilar_archivo(archivo, transpilador):
             tokens = Lexer(codigo).tokenizar()
             ast = Parser(tokens).parsear()
 
+            validador = ValidadorSemantico()
+            for nodo in ast:
+                nodo.aceptar(validador)
+
             if transpilador == "python":
                 transpilador = TranspiladorPython()
             elif transpilador == "js":
@@ -82,6 +105,9 @@ def transpilar_archivo(archivo, transpilador):
             resultado = transpilador.transpilar(ast)
             print(f"Código generado ({transpilador.__class__.__name__}):")
             print(resultado)
+        except PrimitivaPeligrosaError as pe:
+            logging.error(f"Primitiva peligrosa: {pe}")
+            print(f"Error: {pe}")
         except SyntaxError as se:
             logging.error(f"Error de sintaxis durante la transpilación: {se}")
             print(f"Error durante la transpilación: {se}")
@@ -152,6 +178,14 @@ def ejecutar_archivo(archivo, depurar=False, formatear=False):
         codigo = f.read()
     tokens = Lexer(codigo).tokenizar()
     ast = Parser(tokens).parsear()
+    try:
+        validador = ValidadorSemantico()
+        for nodo in ast:
+            nodo.aceptar(validador)
+    except PrimitivaPeligrosaError as pe:
+        logging.error(f"Primitiva peligrosa: {pe}")
+        print(f"Error: {pe}")
+        return
     InterpretadorCobra().ejecutar_ast(ast)
 
 
