@@ -38,7 +38,13 @@ optimizar el rendimiento y evitar fugas de memoria.
            AST -> Transpiladores;
        }
        CLI -> Lexer;
-       Interprete -> Memoria;
-       Interprete -> ModulosNativos;
-       Transpiladores -> {Python JS};
+   Interprete -> Memoria;
+   Interprete -> ModulosNativos;
+   Transpiladores -> {Python JS};
    }
+
+Reporte de errores léxicos
+--------------------------
+El lexer genera tokens mientras mantiene un conteo de línea y columna.
+Si encuentra un símbolo no reconocido detiene el proceso y lanza
+``LexerError`` indicando la posición exacta del problema.
