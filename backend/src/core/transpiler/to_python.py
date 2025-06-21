@@ -21,6 +21,32 @@ from src.core.parser import Parser
 from src.core.lexer import TipoToken, Lexer
 from src.core.visitor import NodeVisitor
 
+from .python_nodes.asignacion import visit_asignacion as _visit_asignacion
+from .python_nodes.condicional import visit_condicional as _visit_condicional
+from .python_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from .python_nodes.for_ import visit_for as _visit_for
+from .python_nodes.funcion import visit_funcion as _visit_funcion
+from .python_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from .python_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
+from .python_nodes.imprimir import visit_imprimir as _visit_imprimir
+from .python_nodes.retorno import visit_retorno as _visit_retorno
+from .python_nodes.holobit import visit_holobit as _visit_holobit
+from .python_nodes.lista import visit_lista as _visit_lista
+from .python_nodes.diccionario import visit_diccionario as _visit_diccionario
+from .python_nodes.clase import visit_clase as _visit_clase
+from .python_nodes.metodo import visit_metodo as _visit_metodo
+from .python_nodes.try_catch import visit_try_catch as _visit_try_catch
+from .python_nodes.throw import visit_throw as _visit_throw
+from .python_nodes.importar import visit_import as _visit_import
+from .python_nodes.hilo import visit_hilo as _visit_hilo
+from .python_nodes.instancia import visit_instancia as _visit_instancia
+from .python_nodes.atributo import visit_atributo as _visit_atributo
+from .python_nodes.operacion_binaria import visit_operacion_binaria as _visit_operacion_binaria
+from .python_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
+from .python_nodes.valor import visit_valor as _visit_valor
+from .python_nodes.identificador import visit_identificador as _visit_identificador
+from .python_nodes.para import visit_para as _visit_para
+
 
 class TranspiladorPython(NodeVisitor):
     def __init__(self):
@@ -109,180 +135,31 @@ class TranspiladorPython(NodeVisitor):
         else:
             return str(getattr(nodo, "valor", nodo))
 
-    def visit_asignacion(self, nodo):
-        nombre_raw = getattr(nodo, "identificador", getattr(nodo, "variable", None))
-        if isinstance(nombre_raw, NodoAtributo):
-            nombre = self.obtener_valor(nombre_raw)
-        else:
-            nombre = nombre_raw
-        valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
-        self.codigo += (
-            f"{self.obtener_indentacion()}{nombre} = "
-            f"{self.obtener_valor(valor)}\n"
-        )
 
-    def visit_condicional(self, nodo):
-        bloque_si = getattr(nodo, "bloque_si", getattr(nodo, "cuerpo_si", []))
-        bloque_sino = getattr(nodo, "bloque_sino", getattr(nodo, "cuerpo_sino", []))
-        condicion = self.obtener_valor(nodo.condicion)
-        self.codigo += f"{self.obtener_indentacion()}if {condicion}:\n"
-        self.nivel_indentacion += 1
-        for instruccion in bloque_si:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
-        if bloque_sino:
-            self.codigo += f"{self.obtener_indentacion()}else:\n"
-            self.nivel_indentacion += 1
-            for instruccion in bloque_sino:
-                instruccion.aceptar(self)
-            self.nivel_indentacion -= 1
+# Asignar los visitantes externos a la clase
+TranspiladorPython.visit_asignacion = _visit_asignacion
+TranspiladorPython.visit_condicional = _visit_condicional
+TranspiladorPython.visit_bucle_mientras = _visit_bucle_mientras
+TranspiladorPython.visit_for = _visit_for
+TranspiladorPython.visit_funcion = _visit_funcion
+TranspiladorPython.visit_llamada_funcion = _visit_llamada_funcion
+TranspiladorPython.visit_llamada_metodo = _visit_llamada_metodo
+TranspiladorPython.visit_imprimir = _visit_imprimir
+TranspiladorPython.visit_retorno = _visit_retorno
+TranspiladorPython.visit_holobit = _visit_holobit
+TranspiladorPython.visit_lista = _visit_lista
+TranspiladorPython.visit_diccionario = _visit_diccionario
+TranspiladorPython.visit_clase = _visit_clase
+TranspiladorPython.visit_metodo = _visit_metodo
+TranspiladorPython.visit_try_catch = _visit_try_catch
+TranspiladorPython.visit_throw = _visit_throw
+TranspiladorPython.visit_import = _visit_import
+TranspiladorPython.visit_hilo = _visit_hilo
+TranspiladorPython.visit_instancia = _visit_instancia
+TranspiladorPython.visit_atributo = _visit_atributo
+TranspiladorPython.visit_operacion_binaria = _visit_operacion_binaria
+TranspiladorPython.visit_operacion_unaria = _visit_operacion_unaria
+TranspiladorPython.visit_valor = _visit_valor
+TranspiladorPython.visit_identificador = _visit_identificador
+TranspiladorPython.visit_para = _visit_para
 
-    def visit_bucle_mientras(self, nodo):
-        condicion = self.obtener_valor(nodo.condicion)
-        self.codigo += f"{self.obtener_indentacion()}while {condicion}:\n"
-        self.nivel_indentacion += 1
-        for instruccion in nodo.cuerpo:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
-
-    def visit_for(self, nodo):
-        iterable = self.obtener_valor(nodo.iterable)
-        self.codigo += (
-            f"{self.obtener_indentacion()}for {nodo.variable} in "
-            f"{iterable}:\n"
-        )
-        self.nivel_indentacion += 1
-        for instruccion in nodo.cuerpo:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
-
-    def visit_funcion(self, nodo):
-        parametros = ", ".join(nodo.parametros)
-        self.codigo += (
-            f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
-        )
-        self.nivel_indentacion += 1
-        for instruccion in nodo.cuerpo:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
-
-    def visit_llamada_funcion(self, nodo):
-        argumentos = ", ".join(self.obtener_valor(arg) for arg in nodo.argumentos)
-        self.codigo += f"{nodo.nombre}({argumentos})\n"
-
-    def visit_llamada_metodo(self, nodo):
-        args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
-        objeto = self.obtener_valor(nodo.objeto)
-        self.codigo += f"{objeto}.{nodo.nombre_metodo}({args})\n"
-
-    def visit_imprimir(self, nodo):
-        valor = self.obtener_valor(getattr(nodo, "expresion", nodo))
-        self.codigo += f"{self.obtener_indentacion()}print({valor})\n"
-
-    def visit_retorno(self, nodo):
-        valor = self.obtener_valor(getattr(nodo, "expresion", nodo.expresion))
-        self.codigo += f"{self.obtener_indentacion()}return {valor}\n"
-
-    def visit_holobit(self, nodo):
-        valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
-        if nodo.nombre:
-            self.codigo += f"{nodo.nombre} = holobit([{valores}])\n"
-        else:
-            self.codigo += f"holobit([{valores}])\n"
-
-    def visit_lista(self, nodo):
-        elementos = ", ".join(
-            self.obtener_valor(elemento) for elemento in nodo.elementos
-        )
-        self.codigo += f"[{elementos}]\n"
-
-    def visit_diccionario(self, nodo):
-        elementos_or_pares = getattr(nodo, "elementos", getattr(nodo, "pares", []))
-        elementos = ", ".join(
-            f"{self.obtener_valor(clave)}: {self.obtener_valor(valor)}"
-            for clave, valor in elementos_or_pares
-        )
-        self.codigo += f"{{{elementos}}}\n"
-
-    def visit_clase(self, nodo):
-        metodos = getattr(nodo, "metodos", getattr(nodo, "cuerpo", []))
-        self.codigo += f"{self.obtener_indentacion()}class {nodo.nombre}:\n"
-        self.nivel_indentacion += 1
-        for metodo in metodos:
-            metodo.aceptar(self)
-        self.nivel_indentacion -= 1
-
-    def visit_metodo(self, nodo):
-        parametros = ", ".join(nodo.parametros)
-        self.codigo += (
-            f"{self.obtener_indentacion()}def {nodo.nombre}({parametros}):\n"
-        )
-        self.nivel_indentacion += 1
-        for instruccion in nodo.cuerpo:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
-
-    def visit_try_catch(self, nodo):
-        self.codigo += f"{self.obtener_indentacion()}try:\n"
-        self.nivel_indentacion += 1
-        for instruccion in nodo.bloque_try:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
-        if nodo.bloque_catch:
-            nombre = f" as {nodo.nombre_excepcion}" if nodo.nombre_excepcion else ""
-            self.codigo += f"{self.obtener_indentacion()}except Exception{nombre}:\n"
-            self.nivel_indentacion += 1
-            for instruccion in nodo.bloque_catch:
-                instruccion.aceptar(self)
-            self.nivel_indentacion -= 1
-
-    def visit_throw(self, nodo):
-        valor = self.obtener_valor(nodo.expresion)
-        self.codigo += f"{self.obtener_indentacion()}raise Exception({valor})\n"
-
-    def visit_import(self, nodo):
-        """Transpila una declaración de importación cargando y procesando el módulo."""
-        try:
-            with open(nodo.ruta, "r", encoding="utf-8") as f:
-                codigo = f.read()
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
-
-        lexer = Lexer(codigo)
-        tokens = lexer.analizar_token()
-        ast = Parser(tokens).parsear()
-        for subnodo in ast:
-            subnodo.aceptar(self)
-
-    def visit_hilo(self, nodo):
-        self.usa_asyncio = True
-        args = ", ".join(self.obtener_valor(a) for a in nodo.llamada.argumentos)
-        self.codigo += f"{self.obtener_indentacion()}asyncio.create_task({nodo.llamada.nombre}({args}))\n"
-
-    def visit_instancia(self, nodo):
-        self.codigo += f"{self.obtener_valor(nodo)}\n"
-
-    def visit_atributo(self, nodo):
-        self.codigo += f"{self.obtener_valor(nodo)}\n"
-
-    def visit_operacion_binaria(self, nodo):
-        self.codigo += self.obtener_valor(nodo)
-
-    def visit_operacion_unaria(self, nodo):
-        self.codigo += self.obtener_valor(nodo)
-
-    def visit_valor(self, nodo):
-        self.codigo += self.obtener_valor(nodo)
-
-    def visit_identificador(self, nodo):
-        self.codigo += self.obtener_valor(nodo)
-
-    def visit_para(self, nodo):
-        iterable = self.obtener_valor(nodo.iterable)
-        self.codigo += (
-            f"{self.obtener_indentacion()}for {nodo.variable} in {iterable}:\n"
-        )
-        self.nivel_indentacion += 1
-        for instruccion in nodo.cuerpo:
-            instruccion.aceptar(self)
-        self.nivel_indentacion -= 1
