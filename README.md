@@ -59,7 +59,7 @@ pip install -e .
 El proyecto se organiza en las siguientes carpetas y módulos:
 
 - `backend/src/`: Contiene la lógica Python del proyecto.
-- `frontend/docs/` y `frontend/build/`: Carpetas donde se genera y aloja la documentación.
+- `frontend/docs/` y `frontend/build/`: Carpetas donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje.
 - `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo que lista las dependencias del proyecto.
