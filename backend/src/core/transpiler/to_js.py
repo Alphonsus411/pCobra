@@ -14,9 +14,10 @@ from src.core.ast_nodes import (
 )
 from src.core.parser import Parser
 from src.core.lexer import TipoToken, Lexer
+from src.core.visitor import NodeVisitor
 
 
-class TranspiladorJavaScript:
+class TranspiladorJavaScript(NodeVisitor):
     def __init__(self):
         # Incluir importaciones de modulos nativos
         self.codigo = [
@@ -56,9 +57,9 @@ class TranspiladorJavaScript:
             original = self.codigo
             self.codigo = temp
             if isinstance(nodo, NodoLista):
-                self.transpilar_lista(nodo)
+                self.visit_lista(nodo)
             else:
-                self.transpilar_diccionario(nodo)
+                self.visit_diccionario(nodo)
             self.codigo = original
             return ''.join(temp)
         else:
@@ -66,59 +67,12 @@ class TranspiladorJavaScript:
 
     def transpilar(self, ast_raiz):
         for nodo in ast_raiz:
-            self.transpilar_nodo(nodo)
+            nodo.aceptar(self)
         return "\n".join(self.codigo)
-
-    def transpilar_nodo(self, nodo):
-        """Identifica el nodo y llama a su método."""
-        nodo_tipo = type(nodo).__name__
-
-        if nodo_tipo == "NodoAsignacion":
-            self.transpilar_asignacion(nodo)
-        elif nodo_tipo == "NodoCondicional":
-            self.transpilar_condicional(nodo)
-        elif nodo_tipo == "NodoBucleMientras":
-            self.transpilar_mientras(nodo)
-        elif nodo_tipo == "NodoFuncion":
-            self.transpilar_funcion(nodo)
-        elif nodo_tipo == "NodoLlamadaFuncion":
-            self.transpilar_llamada_funcion(nodo)
-        elif nodo_tipo == "NodoHilo":
-            self.transpilar_hilo(nodo)
-        elif nodo_tipo == "NodoImprimir":
-            self.transpilar_imprimir(nodo)
-        elif nodo_tipo == "NodoHolobit":
-            self.transpilar_holobit(nodo)
-        elif nodo_tipo == "NodoFor":
-            self.transpilar_for(nodo)
-        elif nodo_tipo == "NodoLista":
-            self.transpilar_lista(nodo)
-        elif nodo_tipo == "NodoDiccionario":
-            self.transpilar_diccionario(nodo)
-        elif nodo_tipo == "NodoClase":
-            self.transpilar_clase(nodo)
-        elif nodo_tipo == "NodoMetodo":
-            self.transpilar_metodo(nodo)
-        elif nodo_tipo == "NodoInstancia":
-            self.agregar_linea(self.obtener_valor(nodo) + ";")
-        elif nodo_tipo == "NodoLlamadaMetodo":
-            self.transpilar_llamada_metodo(nodo)
-        elif nodo_tipo == "NodoRetorno":
-            self.transpilar_retorno(nodo)
-        elif nodo_tipo == "NodoTryCatch":
-            self.transpilar_try_catch(nodo)
-        elif nodo_tipo == "NodoThrow":
-            self.transpilar_throw(nodo)
-        elif nodo_tipo == "NodoImport":
-            self.transpilar_import(nodo)
-        elif nodo_tipo in ("NodoOperacionBinaria", "NodoOperacionUnaria"):
-            self.agregar_linea(self.obtener_valor(nodo))
-        else:
-            raise TypeError(f"Tipo de nodo no soportado: {nodo_tipo}")
 
     # Métodos de transpilación para tipos de nodos básicos
 
-    def transpilar_asignacion(self, nodo):
+    def visit_asignacion(self, nodo):
         """Transpila una asignación en JavaScript."""
         if self.usa_indentacion is None:
             self.usa_indentacion = hasattr(nodo, "variable") or hasattr(nodo, "identificador")
@@ -133,7 +87,7 @@ class TranspiladorJavaScript:
         valor = self.obtener_valor(valor)
         self.agregar_linea(f"{prefijo}{nombre} = {valor};")
 
-    def transpilar_condicional(self, nodo):
+    def visit_condicional(self, nodo):
         """Transpila un 'if-else' con condiciones compuestas."""
         cuerpo_si = getattr(nodo, "cuerpo_si", getattr(nodo, "bloque_si", []))
         cuerpo_sino = getattr(nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", []))
@@ -146,7 +100,7 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo_si:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         if cuerpo_sino:
@@ -158,14 +112,14 @@ class TranspiladorJavaScript:
             if self.usa_indentacion:
                 self.indentacion += 1
             for instruccion in cuerpo_sino:
-                self.transpilar_nodo(instruccion)
+                instruccion.aceptar(self)
             if self.usa_indentacion:
                 self.indentacion -= 1
             self.agregar_linea("}")
         else:
             self.agregar_linea("}")
 
-    def transpilar_mientras(self, nodo):
+    def visit_bucle_mientras(self, nodo):
         """Transpila un bucle 'while' en JavaScript, permitiendo anidación."""
         cuerpo = nodo.cuerpo
         if self.usa_indentacion is None:
@@ -175,12 +129,12 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         self.agregar_linea("}")
 
-    def transpilar_funcion(self, nodo):
+    def visit_funcion(self, nodo):
         """Transpila una definición de función en JavaScript."""
         parametros = ", ".join(nodo.parametros)
         cuerpo = nodo.cuerpo
@@ -190,34 +144,34 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         self.agregar_linea("}")
 
-    def transpilar_llamada_funcion(self, nodo):
+    def visit_llamada_funcion(self, nodo):
         """Transpila una llamada a función en JavaScript."""
         parametros = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
         self.agregar_linea(f"{nodo.nombre}({parametros});")
 
-    def transpilar_hilo(self, nodo):
+    def visit_hilo(self, nodo):
         args = ", ".join(self.obtener_valor(a) for a in nodo.llamada.argumentos)
         self.agregar_linea(f"Promise.resolve().then(() => {nodo.llamada.nombre}({args}));")
 
-    def transpilar_llamada_metodo(self, nodo):
+    def visit_llamada_metodo(self, nodo):
         args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
         obj = self.obtener_valor(nodo.objeto)
         self.agregar_linea(f"{obj}.{nodo.nombre_metodo}({args});")
 
-    def transpilar_imprimir(self, nodo):
+    def visit_imprimir(self, nodo):
         valor = self.obtener_valor(nodo.expresion)
         self.agregar_linea(f"console.log({valor});")
 
-    def transpilar_retorno(self, nodo):
+    def visit_retorno(self, nodo):
         valor = self.obtener_valor(nodo.expresion)
         self.agregar_linea(f"return {valor};")
 
-    def transpilar_holobit(self, nodo):
+    def visit_holobit(self, nodo):
         """Transpila una asignación de Holobit en JavaScript."""
         valores = ", ".join(map(str, nodo.valores))
         nombre = getattr(nodo, "nombre", None)
@@ -228,7 +182,7 @@ class TranspiladorJavaScript:
 
     # Métodos de transpilación para nuevas estructuras avanzadas
 
-    def transpilar_for(self, nodo):
+    def visit_for(self, nodo):
         """Transpila un bucle 'for...of' en JavaScript, permitiendo anidación."""
         cuerpo = nodo.cuerpo
         if self.usa_indentacion is None:
@@ -238,42 +192,42 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         self.agregar_linea("}")
 
-    def transpilar_lista(self, nodo):
+    def visit_lista(self, nodo):
         """Transpila una lista en JavaScript, permitiendo anidación."""
-        elementos = ", ".join(self.transpilar_elemento(e) for e in nodo.elementos)
+        elementos = ", ".join(self.visit_elemento(e) for e in nodo.elementos)
         self.agregar_linea(f"[{elementos}]")
 
-    def transpilar_diccionario(self, nodo):
+    def visit_diccionario(self, nodo):
         """Transpila un diccionario en JavaScript, permitiendo anidación."""
         elementos = getattr(nodo, "pares", getattr(nodo, "elementos", []))
         pares = ", ".join([
-            f"{clave}: {self.transpilar_elemento(valor)}" for clave, valor in elementos
+            f"{clave}: {self.visit_elemento(valor)}" for clave, valor in elementos
         ])
         self.agregar_linea(f"{{{pares}}}")
 
-    def transpilar_elemento(self, elemento):
+    def visit_elemento(self, elemento):
         """Transpila un elemento o estructura."""
         if isinstance(elemento, NodoLista):
             transpiled_element = []
             self.codigo, original_codigo = transpiled_element, self.codigo
-            self.transpilar_lista(elemento)
+            self.visit_lista(elemento)
             self.codigo = original_codigo
             return ''.join(transpiled_element)
         elif isinstance(elemento, NodoDiccionario):
             transpiled_element = []
             self.codigo, original_codigo = transpiled_element, self.codigo
-            self.transpilar_diccionario(elemento)
+            self.visit_diccionario(elemento)
             self.codigo = original_codigo
             return ''.join(transpiled_element)
         else:
             return str(elemento)
 
-    def transpilar_clase(self, nodo):
+    def visit_clase(self, nodo):
         """Transpila una clase en JavaScript, admitiendo métodos y clases anidados."""
         metodos = getattr(nodo, "cuerpo", getattr(nodo, "metodos", []))
         if self.usa_indentacion is None:
@@ -282,12 +236,12 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion += 1
         for metodo in metodos:
-            self.transpilar_nodo(metodo)
+            metodo.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         self.agregar_linea("}")
 
-    def transpilar_metodo(self, nodo):
+    def visit_metodo(self, nodo):
         """Transpila un método de clase, permitiendo anidación."""
         parametros = ", ".join(nodo.parametros)
         cuerpo = nodo.cuerpo
@@ -297,17 +251,17 @@ class TranspiladorJavaScript:
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in cuerpo:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         self.agregar_linea("}")
 
-    def transpilar_try_catch(self, nodo):
+    def visit_try_catch(self, nodo):
         self.agregar_linea("try {")
         if self.usa_indentacion:
             self.indentacion += 1
         for instruccion in nodo.bloque_try:
-            self.transpilar_nodo(instruccion)
+            instruccion.aceptar(self)
         if self.usa_indentacion:
             self.indentacion -= 1
         if nodo.bloque_catch:
@@ -320,18 +274,18 @@ class TranspiladorJavaScript:
             if self.usa_indentacion:
                 self.indentacion += 1
             for instruccion in nodo.bloque_catch:
-                self.transpilar_nodo(instruccion)
+                instruccion.aceptar(self)
             if self.usa_indentacion:
                 self.indentacion -= 1
             self.agregar_linea("}")
         else:
             self.agregar_linea("}")
 
-    def transpilar_throw(self, nodo):
+    def visit_throw(self, nodo):
         valor = self.obtener_valor(nodo.expresion)
         self.agregar_linea(f"throw {valor};")
 
-    def transpilar_import(self, nodo):
+    def visit_import(self, nodo):
         """Carga y transpila el módulo indicado."""
         try:
             with open(nodo.ruta, "r", encoding="utf-8") as f:
@@ -343,4 +297,36 @@ class TranspiladorJavaScript:
         tokens = lexer.analizar_token()
         ast = Parser(tokens).parsear()
         for subnodo in ast:
-            self.transpilar_nodo(subnodo)
+            subnodo.aceptar(self)
+
+    def visit_instancia(self, nodo):
+        self.agregar_linea(f"{self.obtener_valor(nodo)};")
+
+    def visit_atributo(self, nodo):
+        self.agregar_linea(self.obtener_valor(nodo))
+
+    def visit_operacion_binaria(self, nodo):
+        self.agregar_linea(self.obtener_valor(nodo))
+
+    def visit_operacion_unaria(self, nodo):
+        self.agregar_linea(self.obtener_valor(nodo))
+
+    def visit_valor(self, nodo):
+        self.agregar_linea(self.obtener_valor(nodo))
+
+    def visit_identificador(self, nodo):
+        self.agregar_linea(self.obtener_valor(nodo))
+
+    def visit_para(self, nodo):
+        cuerpo = nodo.cuerpo
+        if self.usa_indentacion is None:
+            self.usa_indentacion = any(hasattr(ins, "variable") for ins in cuerpo)
+        iterable = self.obtener_valor(nodo.iterable)
+        self.agregar_linea(f"for (let {nodo.variable} of {iterable}) {{")
+        if self.usa_indentacion:
+            self.indentacion += 1
+        for instruccion in cuerpo:
+            instruccion.aceptar(self)
+        if self.usa_indentacion:
+            self.indentacion -= 1
+        self.agregar_linea("}")
