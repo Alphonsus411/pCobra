@@ -26,9 +26,9 @@ logging.basicConfig(
 )
 
 
-def ejecutar_cobra_interactivamente():
+def ejecutar_cobra_interactivamente(seguro: bool = False):
     """Ejecuta Cobra en modo interactivo."""
-    interpretador = InterpretadorCobra()
+    interpretador = InterpretadorCobra(safe_mode=seguro)
     validador = ValidadorSemantico()
 
     while True:
@@ -162,7 +162,7 @@ def generar_documentacion():
     print(f"Documentación generada en {destino}")
 
 
-def ejecutar_archivo(archivo, depurar=False, formatear=False):
+def ejecutar_archivo(archivo, depurar: bool = False, formatear: bool = False, seguro: bool = False):
     """Ejecuta un script Cobra desde un archivo."""
     if not os.path.exists(archivo):
         print(f"El archivo '{archivo}' no existe")
@@ -186,7 +186,7 @@ def ejecutar_archivo(archivo, depurar=False, formatear=False):
         logging.error(f"Primitiva peligrosa: {pe}")
         print(f"Error: {pe}")
         return
-    InterpretadorCobra().ejecutar_ast(ast)
+    InterpretadorCobra(safe_mode=seguro).ejecutar_ast(ast)
 
 
 def listar_modulos():
@@ -224,6 +224,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog="cobra", description="CLI para Cobra")
     parser.add_argument("--formatear", action="store_true", help="Formatea el archivo antes de procesarlo")
     parser.add_argument("--depurar", action="store_true", help="Muestra mensajes de depuración")
+    parser.add_argument("--seguro", action="store_true", help="Ejecuta en modo seguro")
 
     subparsers = parser.add_subparsers(dest="comando")
 
@@ -259,7 +260,12 @@ def main(argv=None):
     if args.comando == "compilar":
         transpilar_archivo(args.archivo, args.tipo)
     elif args.comando == "ejecutar":
-        ejecutar_archivo(args.archivo, depurar=args.depurar, formatear=args.formatear)
+        ejecutar_archivo(
+            args.archivo,
+            depurar=args.depurar,
+            formatear=args.formatear,
+            seguro=args.seguro,
+        )
     elif args.comando == "modulos":
         if args.accion == "listar":
             listar_modulos()
@@ -272,7 +278,7 @@ def main(argv=None):
     elif args.comando == "docs":
         generar_documentacion()
     else:
-        ejecutar_cobra_interactivamente()
+        ejecutar_cobra_interactivamente(seguro=args.seguro)
 
 
 if __name__ == "__main__":

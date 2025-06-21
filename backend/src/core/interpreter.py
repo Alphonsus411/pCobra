@@ -35,7 +35,8 @@ class ExcepcionCobra(Exception):
 class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
-    def __init__(self):
+    def __init__(self, safe_mode: bool = False):
+        self.safe_mode = safe_mode
         # Pila de contextos para mantener variables locales en cada llamada
         self.contextos = [{}]
         # Mapa paralelo para gestionar bloques de memoria por contexto
