@@ -24,6 +24,10 @@ from src.core.ast_nodes import (
 )
 from src.core.parser import Parser
 from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
+from src.core.semantic_validator import (
+    ValidadorSemantico,
+    PrimitivaPeligrosaError,
+)
 
 
 class ExcepcionCobra(Exception):
@@ -37,6 +41,7 @@ class InterpretadorCobra:
 
     def __init__(self, safe_mode: bool = False):
         self.safe_mode = safe_mode
+        self._validador = ValidadorSemantico() if safe_mode else None
         # Pila de contextos para mantener variables locales en cada llamada
         self.contextos = [{}]
         # Mapa paralelo para gestionar bloques de memoria por contexto
@@ -84,12 +89,16 @@ class InterpretadorCobra:
 
     def ejecutar_ast(self, ast):
         for nodo in ast:
+            if self.safe_mode:
+                nodo.aceptar(self._validador)
             resultado = self.ejecutar_nodo(nodo)
             if resultado is not None:
                 return resultado
         return None
 
     def ejecutar_nodo(self, nodo):
+        if self.safe_mode:
+            nodo.aceptar(self._validador)
         if isinstance(nodo, NodoAsignacion):
             self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):
@@ -343,6 +352,8 @@ class InterpretadorCobra:
 
     def ejecutar_import(self, nodo):
         """Carga y ejecuta un módulo especificado en la declaración import."""
+        if self.safe_mode:
+            raise PrimitivaPeligrosaError("Uso de primitiva peligrosa: 'import'")
         try:
             with open(nodo.ruta, "r", encoding="utf-8") as f:
                 codigo = f.read()
@@ -369,6 +380,9 @@ class InterpretadorCobra:
 
     def ejecutar_hilo(self, nodo):
         """Ejecuta una función en un hilo separado."""
+        if self.safe_mode:
+            raise PrimitivaPeligrosaError("Uso de primitiva peligrosa: 'hilo'")
+
         import threading
 
         def destino():
