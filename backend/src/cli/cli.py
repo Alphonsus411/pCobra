@@ -9,12 +9,15 @@ from .commands.execute_cmd import ExecuteCommand
 from .commands.interactive_cmd import InteractiveCommand
 from .commands.modules_cmd import ModulesCommand
 
-# Configuración de logging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+# La configuración de logging solo debe activarse cuando la CLI se ejecuta
+# directamente para evitar modificar la configuración global al importar este
+# módulo desde las pruebas u otros paquetes.
 
 
 def main(argv=None):
     """Punto de entrada principal de la CLI."""
+    logging.basicConfig(level=logging.DEBUG,
+                        format="%(asctime)s - %(levelname)s - %(message)s")
     parser = argparse.ArgumentParser(prog="cobra", description="CLI para Cobra")
     parser.add_argument("--formatear", action="store_true", help="Formatea el archivo antes de procesarlo")
     parser.add_argument("--depurar", action="store_true", help="Muestra mensajes de depuración")
