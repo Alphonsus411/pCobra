@@ -1,3 +1,5 @@
+"""Ejemplos de transformaciones aplicables a un ``Holobit``."""
+
 from .holobit import Holobit
 
 

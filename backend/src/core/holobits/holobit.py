@@ -1,3 +1,6 @@
+"""Tipos de datos y operaciones para manipular holobits."""
+
+
 class Holobit:
     """Representa un conjunto de valores numericos para operaciones 3D/2D."""
 

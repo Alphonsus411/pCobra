@@ -1,3 +1,5 @@
+"""Operaciones para proyectar holobits en diferentes modos."""
+
 from .holobit import Holobit
 
 

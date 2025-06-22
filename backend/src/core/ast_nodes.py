@@ -1,3 +1,5 @@
+"""Definiciones de los nodos del árbol de sintaxis abstracta de Cobra."""
+
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
@@ -16,6 +18,8 @@ class NodoAST:
 class NodoAsignacion(NodoAST):
     variable: Any
     expresion: Any
+
+    """Representa la asignación de una expresión a una variable."""
 
     def __post_init__(self):
         if isinstance(self.variable, Token):
@@ -36,6 +40,8 @@ class NodoHolobit(NodoAST):
     nombre: Optional[str] = None
     valores: Optional[List[Any]] = None
 
+    """Define un holobit, una colección de valores numéricos."""
+
     def __post_init__(self):
         if self.valores is None and isinstance(self.nombre, list):
             self.valores = self.nombre
@@ -50,11 +56,15 @@ class NodoCondicional(NodoAST):
     bloque_si: List[Any]
     bloque_sino: List[Any] = field(default_factory=list)
 
+    """Bloque ``si`` opcionalmente acompañado de un bloque ``sino``."""
+
 
 @dataclass
 class NodoBucleMientras(NodoAST):
     condicion: Any
     cuerpo: List[Any]
+
+    """Representa un bucle ``mientras`` con su condición y cuerpo."""
 
 
 @dataclass
@@ -63,15 +73,21 @@ class NodoFor(NodoAST):
     iterable: Any
     cuerpo: List[Any]
 
+    """Estructura de control ``para`` que itera sobre un iterable."""
+
 
 @dataclass
 class NodoLista(NodoAST):
     elementos: List[Any]
 
+    """Literal de lista de expresiones."""
+
 
 @dataclass
 class NodoDiccionario(NodoAST):
     elementos: Any
+
+    """Literal de diccionario ``clave: valor``."""
 
 
 @dataclass
@@ -80,11 +96,15 @@ class NodoFuncion(NodoAST):
     parametros: List[str]
     cuerpo: List[Any]
 
+    """Declaración de una función definida por el usuario."""
+
 
 @dataclass
 class NodoClase(NodoAST):
     nombre: str
     metodos: List[Any]
+
+    """Definición de una clase y sus métodos."""
 
 
 @dataclass
@@ -93,17 +113,23 @@ class NodoMetodo(NodoAST):
     parametros: List[str]
     cuerpo: List[Any]
 
+    """Método perteneciente a una clase."""
+
 
 @dataclass
 class NodoInstancia(NodoAST):
     nombre_clase: str
     argumentos: List[Any] = field(default_factory=list)
 
+    """Instanciación de una clase."""
+
 
 @dataclass
 class NodoAtributo(NodoAST):
     objeto: Any
     nombre: str
+
+    """Acceso a un atributo de un objeto."""
 
 
 @dataclass
@@ -112,12 +138,16 @@ class NodoLlamadaMetodo(NodoAST):
     nombre_metodo: str
     argumentos: List[Any] = field(default_factory=list)
 
+    """Invocación de un método de un objeto."""
+
 
 @dataclass
 class NodoOperacionBinaria(NodoAST):
     izquierda: Any
     operador: Token
     derecha: Any
+
+    """Operación que combina dos expresiones mediante un operador."""
 
     def __repr__(self):
         return f"({self.izquierda} {self.operador.valor} {self.derecha})"
@@ -128,6 +158,8 @@ class NodoOperacionUnaria(NodoAST):
     operador: Token
     operando: Any
 
+    """Operación aplicada a un único operando."""
+
     def __repr__(self):
         return f"({self.operador.valor}{self.operando})"
 
@@ -136,10 +168,14 @@ class NodoOperacionUnaria(NodoAST):
 class NodoValor(NodoAST):
     valor: Any
 
+    """Representa un valor literal ya evaluado."""
+
 
 @dataclass
 class NodoIdentificador(NodoAST):
     nombre: str
+
+    """Uso de una variable o identificador."""
 
     def __post_init__(self):
         self.valor = self.nombre
@@ -158,6 +194,8 @@ class NodoLlamadaFuncion(NodoAST):
     nombre: str
     argumentos: List[Any]
 
+    """Invocación de una función existente."""
+
     def __repr__(self):
         return f"NodoLlamadaFuncion(nombre={self.nombre}, argumentos={self.argumentos})"
 
@@ -165,6 +203,8 @@ class NodoLlamadaFuncion(NodoAST):
 @dataclass
 class NodoHilo(NodoAST):
     llamada: NodoLlamadaFuncion
+
+    """Ejecución de una llamada en un hilo separado."""
 
     def __repr__(self):
         return f"NodoHilo(llamada={self.llamada})"
@@ -174,6 +214,8 @@ class NodoHilo(NodoAST):
 class NodoRetorno(NodoAST):
     expresion: Any
 
+    """Valor devuelto por una función."""
+
     def __repr__(self):
         return f"NodoRetorno(expresion={self.expresion})"
 
@@ -181,6 +223,8 @@ class NodoRetorno(NodoAST):
 @dataclass
 class NodoThrow(NodoAST):
     expresion: Any
+
+    """Lanza una excepción durante la ejecución."""
 
     def __repr__(self):
         return f"NodoThrow(expresion={self.expresion})"
@@ -192,10 +236,14 @@ class NodoTryCatch(NodoAST):
     nombre_excepcion: Optional[str] = None
     bloque_catch: List[Any] = field(default_factory=list)
 
+    """Bloque ``try`` con manejo opcional de excepciones."""
+
 
 @dataclass
 class NodoImport(NodoAST):
     ruta: str
+
+    """Importación de un módulo externo."""
 
 
 @dataclass
@@ -203,6 +251,8 @@ class NodoPara(NodoAST):
     variable: Any
     iterable: Any
     cuerpo: List[Any]
+
+    """Bucle ``para`` que itera sobre un iterable."""
 
     def __repr__(self):
         return (
@@ -213,6 +263,8 @@ class NodoPara(NodoAST):
 @dataclass
 class NodoImprimir(NodoAST):
     expresion: Any
+
+    """Impresión de una expresión en la salida estándar."""
 
     def __repr__(self):
         return f"NodoImprimir(expresion={self.expresion})"

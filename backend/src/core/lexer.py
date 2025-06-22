@@ -1,3 +1,5 @@
+"""Analizador léxico para el lenguaje Cobra."""
+
 import logging
 import re
 
@@ -83,6 +85,8 @@ class Token:
 
 
 class Lexer:
+    """Convierte código fuente en una secuencia de tokens."""
+
     def __init__(self, codigo_fuente):
         self.codigo_fuente = codigo_fuente
         self.posicion = 0

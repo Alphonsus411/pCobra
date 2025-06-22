@@ -1,3 +1,5 @@
+"""Estrategias de asignación y liberación de bloques de memoria."""
+
 import random
 
 

@@ -1,3 +1,5 @@
+"""Funciones de manipulación básica de objetos ``Holobit``."""
+
 from .holobit import Holobit
 from .graficar import graficar
 from .proyection import proyectar
