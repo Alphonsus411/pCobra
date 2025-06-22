@@ -7,6 +7,7 @@ from .commands.compile_cmd import CompileCommand
 from .commands.docs_cmd import DocsCommand
 from .commands.execute_cmd import ExecuteCommand
 from .commands.interactive_cmd import InteractiveCommand
+from .commands.jupyter_cmd import JupyterCommand
 from .plugin_loader import descubrir_plugins
 from .commands.modules_cmd import ModulesCommand
 from .commands.dependencias_cmd import DependenciasCommand
@@ -35,6 +36,7 @@ def main(argv=None):
         DependenciasCommand(),
         DocsCommand(),
         EmpaquetarCommand(),
+        JupyterCommand(),
         InteractiveCommand(),
     ]
     comandos.extend(descubrir_plugins())
