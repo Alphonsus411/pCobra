@@ -11,6 +11,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Uso
 - Ejemplo de Uso
 - Pruebas
+- Generar documentación
 - Contribuciones
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
@@ -213,6 +214,20 @@ Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecu
 ````bash
 pytest backend/src/tests
 ````
+
+## Generar documentación
+
+Puedes compilar la documentación de dos maneras:
+
+1. **Con la CLI de Cobra**. Ejecuta `cobra docs`. Este subcomando
+   invoca `sphinx-apidoc` para generar automáticamente la API y luego
+   usa Sphinx para crear el HTML en `frontend/build/html`.
+
+2. **Con Make**. Desde la raíz del proyecto, ejecuta `make html` para
+   compilar los archivos ubicados en `frontend/docs`.
+
+A partir de esta versión, la API se genera de forma automática antes de
+cada compilación para mantener la documentación actualizada.
 
 # Contribuciones
 
