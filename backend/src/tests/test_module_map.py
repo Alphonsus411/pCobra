@@ -15,7 +15,7 @@ def test_transpilador_mapeo_python(tmp_path, monkeypatch):
     py_out.write_text("x = 1\n")
 
     mapping = {str(mod): {"python": str(py_out)}}
-    mapfile = tmp_path / "map.yaml"
+    mapfile = tmp_path / "cobra.mod"
     mapfile.write_text(yaml.safe_dump(mapping))
 
     monkeypatch.setenv("COBRA_MODULE_MAP", str(mapfile))
@@ -37,7 +37,7 @@ def test_transpilador_mapeo_js(tmp_path, monkeypatch):
     js_out.write_text("let x = 2;\n")
 
     mapping = {str(mod): {"js": str(js_out)}}
-    mapfile = tmp_path / "map.yaml"
+    mapfile = tmp_path / "cobra.mod"
     mapfile.write_text(yaml.safe_dump(mapping))
 
     monkeypatch.setenv("COBRA_MODULE_MAP", str(mapfile))

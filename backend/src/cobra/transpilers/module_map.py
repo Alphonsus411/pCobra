@@ -4,7 +4,7 @@ import yaml
 MODULE_MAP_PATH = os.environ.get(
     'COBRA_MODULE_MAP',
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'module_map.yaml')
+        os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cobra.mod')
     ),
 )
 
