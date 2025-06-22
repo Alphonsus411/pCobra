@@ -1,4 +1,4 @@
-from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 # Definición de clases de nodo simuladas con los atributos necesarios para las pruebas

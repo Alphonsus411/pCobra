@@ -3,7 +3,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from src.core.interpreter import InterpretadorCobra
-from src.core.lexer import Token, TipoToken
+from src.cobra.lexico.lexer import Token, TipoToken
 from src.core.ast_nodes import NodoAsignacion, NodoValor, NodoLlamadaFuncion, NodoFuncion
 def test_interpretador_asignacion_y_llamada_funcion():
 

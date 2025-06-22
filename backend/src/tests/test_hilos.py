@@ -3,12 +3,12 @@ from unittest.mock import patch
 import asyncio
 import subprocess
 
-from src.core.lexer import Token, TipoToken
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Token, TipoToken
+from src.cobra.parser.parser import Parser
 from src.core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoImprimir, NodoIdentificador, NodoAsignacion, NodoFuncion
 from src.core.interpreter import InterpretadorCobra
-from src.core.transpiler.to_python import TranspiladorPython
-from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 def test_parser_hilo():

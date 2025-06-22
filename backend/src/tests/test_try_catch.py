@@ -2,10 +2,10 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.core.lexer import Token, TipoToken
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Token, TipoToken
+from src.cobra.parser.parser import Parser
 from src.core.ast_nodes import NodoTryCatch, NodoThrow, NodoImprimir, NodoIdentificador, NodoValor
-from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 def generar_tokens(*args):

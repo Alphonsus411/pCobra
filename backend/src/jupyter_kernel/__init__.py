@@ -2,8 +2,8 @@ import sys
 import io
 import contextlib
 from ipykernel.kernelbase import Kernel
-from src.core.lexer import Lexer
-from src.core.parser import Parser, PALABRAS_RESERVADAS
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser, PALABRAS_RESERVADAS
 from src.core.interpreter import InterpretadorCobra
 
 

@@ -2,7 +2,7 @@
 
 import logging
 import json
-from src.core.lexer import TipoToken, Token
+from src.cobra.lexico.lexer import TipoToken, Token
 
 from src.core.ast_nodes import (
     NodoAsignacion,

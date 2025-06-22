@@ -2,7 +2,7 @@
 
 import os
 
-from src.core.lexer import Token, TipoToken, Lexer
+from src.cobra.lexico.lexer import Token, TipoToken, Lexer
 from src.core.optimizations import optimize_constants, remove_dead_code
 from src.core.ast_nodes import (
     NodoAsignacion,
@@ -26,7 +26,7 @@ from src.core.ast_nodes import (
     NodoThrow,
     NodoImport,
 )
-from src.core.parser import Parser
+from src.cobra.parser.parser import Parser
 from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
 from src.core.semantic_validators import (
     construir_cadena,
