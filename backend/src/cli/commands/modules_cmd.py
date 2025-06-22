@@ -25,13 +25,14 @@ class ModulesCommand(BaseCommand):
     def run(self, args):
         accion = args.accion
         if accion == "listar":
-            self._listar_modulos()
+            return self._listar_modulos()
         elif accion == "instalar":
-            self._instalar_modulo(args.ruta)
+            return self._instalar_modulo(args.ruta)
         elif accion == "remover":
-            self._remover_modulo(args.nombre)
+            return self._remover_modulo(args.nombre)
         else:
             print("Acción de módulos no reconocida")
+            return 1
 
     @staticmethod
     def _listar_modulos():
@@ -41,15 +42,17 @@ class ModulesCommand(BaseCommand):
         else:
             for m in mods:
                 print(m)
+        return 0
 
     @staticmethod
     def _instalar_modulo(ruta):
         if not os.path.exists(ruta):
             print(f"No se encontró el módulo {ruta}")
-            return
+            return 1
         destino = os.path.join(MODULES_PATH, os.path.basename(ruta))
         shutil.copy(ruta, destino)
         print(f"Módulo instalado en {destino}")
+        return 0
 
     @staticmethod
     def _remover_modulo(nombre):
@@ -57,5 +60,7 @@ class ModulesCommand(BaseCommand):
         if os.path.exists(archivo):
             os.remove(archivo)
             print(f"Módulo {nombre} eliminado")
+            return 0
         else:
             print(f"El módulo {nombre} no existe")
+            return 1

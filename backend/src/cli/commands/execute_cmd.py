@@ -27,7 +27,7 @@ class ExecuteCommand(BaseCommand):
 
         if not os.path.exists(archivo):
             print(f"El archivo '{archivo}' no existe")
-            return
+            return 1
         if formatear:
             self._formatear_codigo(archivo)
         if depurar:
@@ -46,8 +46,14 @@ class ExecuteCommand(BaseCommand):
         except PrimitivaPeligrosaError as pe:
             logging.error(f"Primitiva peligrosa: {pe}")
             print(f"Error: {pe}")
-            return
-        InterpretadorCobra(safe_mode=seguro).ejecutar_ast(ast)
+            return 1
+        try:
+            InterpretadorCobra(safe_mode=seguro).ejecutar_ast(ast)
+            return 0
+        except Exception as e:
+            logging.error(f"Error ejecutando el script: {e}")
+            print(f"Error ejecutando el script: {e}")
+            return 1
 
     @staticmethod
     def _formatear_codigo(archivo):

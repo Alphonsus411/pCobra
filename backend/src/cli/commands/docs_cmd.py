@@ -22,6 +22,11 @@ class DocsCommand(BaseCommand):
         api = os.path.join(source, "api")
         codigo = os.path.join(raiz, "backend", "src")
 
-        subprocess.run(["sphinx-apidoc", "-o", api, codigo], check=True)
-        subprocess.run(["sphinx-build", "-b", "html", source, build], check=True)
-        print(f"Documentación generada en {build}")
+        try:
+            subprocess.run(["sphinx-apidoc", "-o", api, codigo], check=True)
+            subprocess.run(["sphinx-build", "-b", "html", source, build], check=True)
+            print(f"Documentación generada en {build}")
+            return 0
+        except subprocess.CalledProcessError as e:
+            print(f"Error generando la documentación: {e}")
+            return 1
