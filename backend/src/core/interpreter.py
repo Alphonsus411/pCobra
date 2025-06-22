@@ -3,6 +3,7 @@
 import os
 
 from src.core.lexer import Token, TipoToken, Lexer
+from src.core.optimizations import optimize_constants, remove_dead_code
 from src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
@@ -112,6 +113,7 @@ class InterpretadorCobra:
             nodo.aceptar(self._validador)
 
     def ejecutar_ast(self, ast):
+        ast = remove_dead_code(optimize_constants(ast))
         for nodo in ast:
             self._validar(nodo)
             resultado = self.ejecutar_nodo(nodo)

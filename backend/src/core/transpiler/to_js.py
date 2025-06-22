@@ -12,6 +12,7 @@ from src.core.ast_nodes import (
 )
 from src.core.lexer import TipoToken
 from src.core.visitor import NodeVisitor
+from src.core.optimizations import optimize_constants, remove_dead_code
 
 from .js_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .js_nodes.condicional import visit_condicional as _visit_condicional
@@ -90,6 +91,7 @@ class TranspiladorJavaScript(NodeVisitor):
             return str(nodo)
 
     def transpilar(self, ast_raiz):
+        ast_raiz = remove_dead_code(optimize_constants(ast_raiz))
         for nodo in ast_raiz:
             nodo.aceptar(self)
         return "\n".join(self.codigo)

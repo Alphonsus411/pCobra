@@ -1,0 +1,71 @@
+"""Eliminacion simple de codigo muerto para Cobra."""
+
+from __future__ import annotations
+
+from typing import Any, List
+
+from ..ast_nodes import (
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoMetodo,
+    NodoRetorno,
+    NodoThrow,
+    NodoValor,
+)
+from ..visitor import NodeVisitor
+
+
+class _DeadCodeRemover(NodeVisitor):
+    def visit_condicional(self, nodo: NodoCondicional):
+        nodo.condicion = self.visit(nodo.condicion)
+        nodo.bloque_si = self._limpiar_bloque([self.visit(n) for n in nodo.bloque_si])
+        nodo.bloque_sino = self._limpiar_bloque([self.visit(n) for n in nodo.bloque_sino])
+        if isinstance(nodo.condicion, NodoValor):
+            return nodo.bloque_si if nodo.condicion.valor else nodo.bloque_sino
+        return nodo
+
+    def visit_bucle_mientras(self, nodo: NodoBucleMientras):
+        nodo.condicion = self.visit(nodo.condicion)
+        nodo.cuerpo = self._limpiar_bloque([self.visit(n) for n in nodo.cuerpo])
+        if isinstance(nodo.condicion, NodoValor) and nodo.condicion.valor is False:
+            return []
+        return nodo
+
+    def visit_funcion(self, nodo: NodoFuncion):
+        nodo.cuerpo = self._limpiar_bloque([self.visit(n) for n in nodo.cuerpo])
+        return nodo
+
+    def visit_metodo(self, nodo: NodoMetodo):
+        nodo.cuerpo = self._limpiar_bloque([self.visit(n) for n in nodo.cuerpo])
+        return nodo
+
+    def generic_visit(self, nodo: Any):
+        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+            if isinstance(value, list):
+                setattr(nodo, attr, [self.visit(v) for v in value])
+            elif hasattr(value, "aceptar"):
+                setattr(nodo, attr, self.visit(value))
+        return nodo
+
+    # Helpers --------------------------------------------------------------
+    def _limpiar_bloque(self, nodos: List[Any]):
+        limpios = []
+        for n in nodos:
+            limpios.append(n)
+            if isinstance(n, (NodoRetorno, NodoThrow)):
+                break
+        return limpios
+
+
+def remove_dead_code(ast: List[Any]):
+    """Elimina codigo que nunca se ejecutara del AST."""
+    remover = _DeadCodeRemover()
+    resultado = []
+    for nodo in ast:
+        res = remover.visit(nodo)
+        if isinstance(res, list):
+            resultado.extend(res)
+        else:
+            resultado.append(res)
+    return resultado
