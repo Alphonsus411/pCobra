@@ -1,0 +1,11 @@
+name: Label PRs by branch
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v4
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

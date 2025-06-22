@@ -288,6 +288,8 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 
 - Haz un fork del proyecto.
 - Crea una nueva rama (`git checkout -b feature/nueva-caracteristica`).
+- Las ramas que comiencen con `feature/`, `bugfix/` o `doc/` recibirán etiquetas
+  automáticas al abrir un pull request.
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
 - Envía un pull request.
 
