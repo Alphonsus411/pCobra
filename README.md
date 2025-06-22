@@ -226,6 +226,10 @@ Puedes compilar la documentación de dos maneras:
 2. **Con Make**. Desde la raíz del proyecto, ejecuta `make html` para
    compilar los archivos ubicados en `frontend/docs`.
 
+3. **Con pdoc**. Para generar documentación de la API con [pdoc](https://pdoc.dev),
+   ejecuta `python scripts/generar_pdoc.py`. El resultado se guardará en
+   `frontend/build/pdoc`.
+
 A partir de esta versión, la API se genera de forma automática antes de
 cada compilación para mantener la documentación actualizada.
 
