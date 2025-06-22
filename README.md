@@ -182,7 +182,11 @@ cobra ejecutar programa.cobra --depurar --formatear
 cobra modulos listar
 cobra modulos instalar ruta/al/modulo.cobra
 cobra modulos remover modulo.cobra
+# Generar documentación HTML y API
+cobra docs
 ```
+
+El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
 
 
 Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` para más detalles.
