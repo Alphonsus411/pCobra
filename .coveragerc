@@ -1,0 +1,7 @@
+[run]
+source = backend/src
+branch = True
+
+[report]
+omit =
+    */tests/*
