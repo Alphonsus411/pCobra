@@ -13,6 +13,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Ejemplo de Uso
 - Pruebas
 - Generar documentación
+- Hitos y Roadmap
 - Contribuciones
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
@@ -262,6 +263,24 @@ Puedes compilar la documentación de dos maneras:
 
 A partir de esta versión, la API se genera de forma automática antes de
 cada compilación para mantener la documentación actualizada.
+## Hitos y Roadmap
+
+El proyecto avanza en versiones incrementales. A continuacion se listan las tareas previstas para las proximas entregas.
+
+### v0.4
+
+- Consolidar la gestion de dependencias en la CLI.
+- Permitir la creacion de ejecutables para distribucion.
+- Optimizar la validacion del modo seguro.
+- Ampliar la documentacion con ejemplos avanzados.
+
+### v0.5
+
+- Incorporar un sistema de plugins para extender la CLI.
+- Integrar soporte para ejecucion en Jupyter.
+- Implementar optimizaciones del AST para mayor rendimiento.
+- Anadir pruebas de concurrencia para mejorar la estabilidad.
+
 
 # Contribuciones
 
