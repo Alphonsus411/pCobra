@@ -16,9 +16,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install sphinx sphinx-rtd-theme
+          pip install sphinx sphinx-rtd-theme pytest-cov codecov
       - name: Run tests
-        run: pytest -q
+        run: pytest --cov=backend/src --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
       - name: Build docs
         run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Upload docs
