@@ -3,6 +3,8 @@
 # Dependencias para pruebas
 pytest==7.4.0
 pytest-timeout==2.4.0
+pytest-cov==6.2.1
+codecov==2.1.13
 
 # Dependencias para la implementación del parser y lexer
 antlr4-python3-runtime==4.9.3  # Si estás usando ANTLR
