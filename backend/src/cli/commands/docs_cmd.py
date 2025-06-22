@@ -19,5 +19,9 @@ class DocsCommand(BaseCommand):
         )
         source = os.path.join(raiz, "frontend", "docs")
         build = os.path.join(raiz, "frontend", "build", "html")
+        api = os.path.join(source, "api")
+        codigo = os.path.join(raiz, "backend", "src")
+
+        subprocess.run(["sphinx-apidoc", "-o", api, codigo], check=True)
         subprocess.run(["sphinx-build", "-b", "html", source, build], check=True)
         print(f"Documentación generada en {build}")
