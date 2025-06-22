@@ -1,7 +1,7 @@
 import pytest
-from src.core.parser import Parser
+from src.cobra.parser.parser import Parser
 from src.core.ast_nodes import NodoAsignacion, NodoHolobit, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoValor
-from src.core.lexer import TipoToken, Token
+from src.cobra.lexico.lexer import TipoToken, Token
 
 
 def generar_tokens(*args):

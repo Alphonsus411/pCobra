@@ -1,4 +1,4 @@
-from src.core.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 # Clases de nodo simuladas para pruebas

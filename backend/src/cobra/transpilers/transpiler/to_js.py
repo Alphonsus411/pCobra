@@ -10,7 +10,7 @@ from src.core.ast_nodes import (
     NodoAtributo,
     NodoInstancia,
 )
-from src.core.lexer import TipoToken
+from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
 

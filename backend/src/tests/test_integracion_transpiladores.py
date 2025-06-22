@@ -1,8 +1,8 @@
 import pytest
-from src.core.lexer import Lexer
-from src.core.parser import Parser
-from src.core.transpiler.to_python import TranspiladorPython
-from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 def test_integracion_python():

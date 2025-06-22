@@ -2,11 +2,11 @@ import logging
 import os
 from .base import BaseCommand
 
-from src.core.lexer import Lexer
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
 from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from src.core.transpiler.to_js import TranspiladorJavaScript
-from src.core.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 class CompileCommand(BaseCommand):

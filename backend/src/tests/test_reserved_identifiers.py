@@ -1,6 +1,6 @@
 import pytest
-from src.core.lexer import Lexer
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
 
 
 def test_variable_nombre_reservado():

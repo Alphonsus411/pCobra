@@ -10,7 +10,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/Alphonsus411/pCobra',  # Reemplaza con tu URL de GitHub
     license='MIT',
-    packages=find_packages(where='backend/src'),
+    packages=find_packages(where='backend/src', include=['*']),
     package_dir={'': 'backend/src'},
     install_requires=[
         'pytest>=7.0',  # Requerimientos según requirements.txt

@@ -2,14 +2,14 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.core.lexer import Lexer
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
 from src.core.interpreter import (
     InterpretadorCobra,
     MODULES_PATH,
     IMPORT_WHITELIST,
 )
-from src.core.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 @pytest.mark.timeout(5)
