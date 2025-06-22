@@ -68,3 +68,4 @@ class InteractiveCommand(BaseCommand):
             except Exception as e:
                 logging.error(f"Error general procesando la entrada: {e}")
                 print(f"Error procesando la entrada: {e}")
+        return 0

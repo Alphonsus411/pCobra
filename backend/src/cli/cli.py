@@ -48,8 +48,9 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
     command = getattr(args, "cmd", command_map["interactive"])
-    command.run(args)
+    resultado = command.run(args)
+    return 0 if resultado is None else resultado
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

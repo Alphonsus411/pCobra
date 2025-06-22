@@ -26,7 +26,7 @@ class CompileCommand(BaseCommand):
         transpilador = args.tipo
         if not os.path.exists(archivo):
             print(f"Error: El archivo '{archivo}' no existe.")
-            return
+            return 1
 
         with open(archivo, "r") as f:
             codigo = f.read()
@@ -48,12 +48,16 @@ class CompileCommand(BaseCommand):
                 resultado = transp.transpilar(ast)
                 print(f"Código generado ({transp.__class__.__name__}):")
                 print(resultado)
+                return 0
             except PrimitivaPeligrosaError as pe:
                 logging.error(f"Primitiva peligrosa: {pe}")
                 print(f"Error: {pe}")
+                return 1
             except SyntaxError as se:
                 logging.error(f"Error de sintaxis durante la transpilación: {se}")
                 print(f"Error durante la transpilación: {se}")
+                return 1
             except Exception as e:
                 logging.error(f"Error general durante la transpilación: {e}")
                 print(f"Error durante la transpilación: {e}")
+                return 1
