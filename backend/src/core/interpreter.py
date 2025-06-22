@@ -13,7 +13,6 @@ from src.core.ast_nodes import (
     NodoHolobit,
     NodoHilo,
     NodoClase,
-    NodoMetodo,
     NodoInstancia,
     NodoAtributo,
     NodoIdentificador,
@@ -314,7 +313,10 @@ class InterpretadorCobra:
                 else:
                     valor = self.evaluar_expresion(arg)
                 print(valor)
-        elif nodo.nombre in self.variables and isinstance(self.variables[nodo.nombre], NodoFuncion):
+        elif (
+            nodo.nombre in self.variables
+            and isinstance(self.variables[nodo.nombre], NodoFuncion)
+        ):
             funcion = self.variables[nodo.nombre]
             if len(funcion.parametros) != len(nodo.argumentos):
                 print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
@@ -359,7 +361,9 @@ class InterpretadorCobra:
         if not isinstance(objeto, dict) or "__clase__" not in objeto:
             raise ValueError("Objeto inv\u00e1lido en llamada a m\u00e9todo")
         clase = objeto["__clase__"]
-        metodo = next((m for m in clase.metodos if m.nombre == nodo.nombre_metodo), None)
+        metodo = next(
+            (m for m in clase.metodos if m.nombre == nodo.nombre_metodo), None
+        )
         if metodo is None:
             raise ValueError(f"M\u00e9todo '{nodo.nombre_metodo}' no encontrado")
 

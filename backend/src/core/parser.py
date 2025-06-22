@@ -12,11 +12,6 @@ from src.core.ast_nodes import (
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoHilo,
-    NodoClase,
-    NodoMetodo,
-    NodoInstancia,
-    NodoAtributo,
-    NodoLlamadaMetodo,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoValor,
@@ -27,9 +22,6 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
-    NodoLista,
-    NodoDiccionario,
-    NodoFor,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores

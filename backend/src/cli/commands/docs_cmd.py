@@ -9,7 +9,9 @@ class DocsCommand(BaseCommand):
     name = "docs"
 
     def register_subparser(self, subparsers):
-        parser = subparsers.add_parser(self.name, help="Genera la documentación del proyecto")
+        parser = subparsers.add_parser(
+            self.name, help="Genera la documentación del proyecto"
+        )
         parser.set_defaults(cmd=self)
         return parser
 
