@@ -167,7 +167,7 @@ registrado en el entorno bajo el mismo nombre para su uso posterior.
 
 ## Archivo de mapeo de módulos
 
-Los transpiladores consultan `module_map.yaml` para resolver las importaciones.
+Los transpiladores consultan `cobra.mod` para resolver las importaciones.
 Este archivo sigue un esquema YAML sencillo donde cada clave es la ruta del
 módulo Cobra y sus valores indican las rutas de los archivos generados.
 
@@ -181,7 +181,7 @@ modulo.cobra:
 
 Si una entrada no se encuentra, el transpilador cargará directamente el archivo
 indicada en la instrucción `import`. Para añadir o modificar rutas basta con
-editar `module_map.yaml` y volver a ejecutar las pruebas.
+editar `cobra.mod` y volver a ejecutar las pruebas.
 
 ## Ejemplo de concurrencia
 
