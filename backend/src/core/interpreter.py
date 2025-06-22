@@ -25,6 +25,7 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
+    NodoUsar,
 )
 from src.cobra.parser.parser import Parser
 from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
@@ -156,6 +157,8 @@ class InterpretadorCobra:
                 print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
+        elif isinstance(nodo, NodoUsar):
+            return self.ejecutar_usar(nodo)
         elif isinstance(nodo, NodoTryCatch):
             return self.ejecutar_try_catch(nodo)
         elif isinstance(nodo, NodoThrow):
@@ -408,6 +411,16 @@ class InterpretadorCobra:
             resultado = self.ejecutar_nodo(subnodo)
             if resultado is not None:
                 return resultado
+
+    def ejecutar_usar(self, nodo):
+        """Importa un módulo de Python instalándolo si es necesario."""
+        from src.cobra.usar_loader import obtener_modulo
+
+        try:
+            modulo = obtener_modulo(nodo.modulo)
+            self.variables[nodo.modulo] = modulo
+        except Exception as exc:
+            print(f"Error al usar el módulo '{nodo.modulo}': {exc}")
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""

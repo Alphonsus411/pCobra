@@ -75,6 +75,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - Transpiladores a Python y JavaScript: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
 - Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
 - Módulos nativos con funciones de E/S, utilidades matemáticas y estructuras de datos para usar directamente desde Cobra.
+- Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
 - Manejo de Errores: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
 - Visualización y Depuración: Salida detallada de tokens, AST y errores de sintaxis para un desarrollo más sencillo.
 - Ejemplos de Código y Documentación: Ejemplos prácticos que ilustran el uso del lexer, parser y transpiladores.
@@ -156,6 +157,13 @@ imprimir(saludo)
 ````
 
 Al ejecutar `programa.cobra`, se procesará primero `modulo.cobra` y luego se imprimirá `Hola desde módulo`.
+
+## Instrucción `usar` para dependencias dinámicas
+
+La sentencia `usar "paquete"` intenta importar un módulo de Python. Si el
+paquete no está disponible, Cobra ejecutará `pip install paquete` para
+instalarlo y luego lo cargará en tiempo de ejecución. El módulo queda
+registrado en el entorno bajo el mismo nombre para su uso posterior.
 
 ## Archivo de mapeo de módulos
 
