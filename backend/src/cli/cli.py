@@ -8,6 +8,7 @@ from .commands.docs_cmd import DocsCommand
 from .commands.execute_cmd import ExecuteCommand
 from .commands.interactive_cmd import InteractiveCommand
 from .commands.modules_cmd import ModulesCommand
+from .commands.dependencias_cmd import DependenciasCommand
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
 # directamente para evitar modificar la configuración global al importar este
@@ -29,6 +30,7 @@ def main(argv=None):
         CompileCommand(),
         ExecuteCommand(),
         ModulesCommand(),
+        DependenciasCommand(),
         DocsCommand(),
         InteractiveCommand(),
     ]
