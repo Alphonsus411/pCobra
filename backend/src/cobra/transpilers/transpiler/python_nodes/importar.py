@@ -1,8 +1,9 @@
-from src.core.lexer import Lexer
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
+
 
 def visit_import(self, nodo):
-    """Carga y transpila el módulo indicado."""
+    """Transpila una declaración de importación cargando y procesando el módulo."""
     try:
         with open(nodo.ruta, "r", encoding="utf-8") as f:
             codigo = f.read()

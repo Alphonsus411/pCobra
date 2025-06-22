@@ -8,7 +8,7 @@ from src.core.ast_nodes import (
     NodoRetorno,
     NodoCondicional,
 )
-from src.core.lexer import Token, TipoToken
+from src.cobra.lexico.lexer import Token, TipoToken
 from src.core.optimizations import optimize_constants, remove_dead_code
 
 

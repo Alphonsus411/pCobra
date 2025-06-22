@@ -16,7 +16,7 @@ from ..ast_nodes import (
     NodoMetodo,
     NodoRetorno,
 )
-from ..lexer import TipoToken, Token
+from src.cobra.lexico.lexer import TipoToken, Token
 
 
 class _ConstantFolder(NodeVisitor):

@@ -1,6 +1,6 @@
 import pytest
-from src.core.lexer import Lexer
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
 from src.core.ast_nodes import NodoPara, NodoImprimir, NodoFuncion
 
 def test_declaracion_para():

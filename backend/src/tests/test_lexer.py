@@ -1,5 +1,5 @@
 import pytest
-from src.core.lexer import Lexer, TipoToken, LexerError
+from src.cobra.lexico.lexer import Lexer, TipoToken, LexerError
 
 
 def test_lexer_asignacion_variable():

@@ -1,4 +1,4 @@
-from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 # Definición de nodos para las pruebas

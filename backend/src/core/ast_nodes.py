@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from .lexer import Token
+from src.cobra.lexico.lexer import Token
 
 @dataclass
 class NodoAST:

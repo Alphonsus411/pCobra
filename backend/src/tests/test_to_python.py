@@ -1,5 +1,5 @@
 from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit
-from src.core.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 def test_transpilador_asignacion():

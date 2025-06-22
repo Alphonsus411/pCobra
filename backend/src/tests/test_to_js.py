@@ -1,5 +1,5 @@
 import pytest
-from src.core.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit
 
 

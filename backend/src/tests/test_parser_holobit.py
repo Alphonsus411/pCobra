@@ -1,5 +1,5 @@
-from src.core.lexer import Token, TipoToken
-from src.core.parser import Parser
+from src.cobra.lexico.lexer import Token, TipoToken
+from src.cobra.parser.parser import Parser
 from src.core.ast_nodes import NodoHolobit
 
 

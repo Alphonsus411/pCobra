@@ -1,4 +1,4 @@
-from src.core.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.core.ast_nodes import NodoInstancia, NodoLlamadaMetodo, NodoIdentificador, NodoValor
 
 

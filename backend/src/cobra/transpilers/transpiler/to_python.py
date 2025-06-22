@@ -19,8 +19,8 @@ from src.core.ast_nodes import (
     NodoImport,
     NodoImprimir
 )
-from src.core.parser import Parser
-from src.core.lexer import TipoToken, Lexer
+from src.cobra.parser.parser import Parser
+from src.cobra.lexico.lexer import TipoToken, Lexer
 from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
 
@@ -66,7 +66,7 @@ class TranspiladorPython(NodeVisitor):
         for nodo in nodos:
             nodo.aceptar(self)
         if nodos and all(
-            n.__class__.__module__.startswith("src.core.parser") for n in nodos
+            n.__class__.__module__.startswith("src.cobra.parser.parser") for n in nodos
         ) and not any(self._contiene_nodo_valor(n) for n in nodos):
             solo_llamadas = all(
                 hasattr(n, "argumentos") and not hasattr(n, "parametros")
@@ -107,7 +107,7 @@ class TranspiladorPython(NodeVisitor):
 
 
     def obtener_valor(self, nodo):
-        from src.core.parser import (
+        from src.cobra.parser.parser import (
             NodoOperacionBinaria,
             NodoOperacionUnaria,
             NodoIdentificador,
