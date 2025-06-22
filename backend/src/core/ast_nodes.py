@@ -247,6 +247,13 @@ class NodoImport(NodoAST):
 
 
 @dataclass
+class NodoUsar(NodoAST):
+    modulo: str
+
+    """Instrucción para usar un módulo especificado."""
+
+
+@dataclass
 class NodoPara(NodoAST):
     variable: Any
     iterable: Any
@@ -295,6 +302,7 @@ __all__ = [
     'NodoThrow',
     'NodoTryCatch',
     'NodoImport',
+    'NodoUsar',
     'NodoPara',
     'NodoImprimir',
 ]

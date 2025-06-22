@@ -22,6 +22,7 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
+    NodoUsar,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -46,6 +47,7 @@ PALABRAS_RESERVADAS = {
     "proyectar",
     "transformar",
     "graficar",
+    "usar",
 }
 
 
@@ -69,6 +71,7 @@ class Parser:
             TipoToken.MIENTRAS: self.declaracion_mientras,
             TipoToken.FUNC: self.declaracion_funcion,
             TipoToken.IMPORT: self.declaracion_import,
+            TipoToken.USAR: self.declaracion_usar,
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
@@ -417,6 +420,15 @@ class Parser:
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoImport(ruta)
+
+    def declaracion_usar(self):
+        """Parsea una declaración 'usar' para importar módulos."""
+        self.comer(TipoToken.USAR)
+        if self.token_actual().tipo != TipoToken.CADENA:
+            raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
+        ruta = self.token_actual().valor
+        self.comer(TipoToken.CADENA)
+        return NodoUsar(ruta)
 
     def declaracion_hilo(self):
         """Parsea la creación de un hilo que ejecuta una función."""
