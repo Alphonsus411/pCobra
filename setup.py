@@ -23,6 +23,9 @@ setup(
         'DEAP>=1.3.1',
         # Agrega más requisitos según sea necesario
     ],
+    tests_require=[
+        'pytest-cov',
+    ],
     entry_points={
         'console_scripts': [
             'cobra=src.cli.cli:main',
