@@ -1,4 +1,5 @@
 # Proyecto Cobra
+[![codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/main/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
 
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python y JavaScript, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
@@ -86,6 +87,7 @@ Para ejecutar pruebas unitarias, utiliza pytest:
 ````bash
 pytest backend/src/tests
 ````
+
 
 # Ejemplo de Uso
 
@@ -213,6 +215,12 @@ Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecu
 
 ````bash
 pytest backend/src/tests
+````
+
+Para obtener un reporte de cobertura en la terminal ejecuta:
+
+````bash
+pytest --cov=backend/src --cov-report=term-missing
 ````
 
 ## Generar documentación
