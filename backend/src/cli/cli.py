@@ -7,6 +7,7 @@ from .commands.compile_cmd import CompileCommand
 from .commands.docs_cmd import DocsCommand
 from .commands.execute_cmd import ExecuteCommand
 from .commands.interactive_cmd import InteractiveCommand
+from .plugin_loader import descubrir_plugins
 from .commands.modules_cmd import ModulesCommand
 from .commands.dependencias_cmd import DependenciasCommand
 from .commands.empaquetar_cmd import EmpaquetarCommand
@@ -36,6 +37,7 @@ def main(argv=None):
         EmpaquetarCommand(),
         InteractiveCommand(),
     ]
+    comandos.extend(descubrir_plugins())
 
     command_map = {}
     for cmd in comandos:
