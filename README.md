@@ -157,6 +157,24 @@ imprimir(saludo)
 
 Al ejecutar `programa.cobra`, se procesará primero `modulo.cobra` y luego se imprimirá `Hola desde módulo`.
 
+## Archivo de mapeo de módulos
+
+Los transpiladores consultan `module_map.yaml` para resolver las importaciones.
+Este archivo sigue un esquema YAML sencillo donde cada clave es la ruta del
+módulo Cobra y sus valores indican las rutas de los archivos generados.
+
+Ejemplo de formato:
+
+```yaml
+modulo.cobra:
+  python: modulo.py
+  js: modulo.js
+```
+
+Si una entrada no se encuentra, el transpilador cargará directamente el archivo
+indicada en la instrucción `import`. Para añadir o modificar rutas basta con
+editar `module_map.yaml` y volver a ejecutar las pruebas.
+
 ## Ejemplo de concurrencia
 
 Es posible lanzar funciones en hilos con la palabra clave `hilo`:
