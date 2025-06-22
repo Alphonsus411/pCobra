@@ -78,6 +78,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - Manejo de Errores: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
 - Visualización y Depuración: Salida detallada de tokens, AST y errores de sintaxis para un desarrollo más sencillo.
 - Ejemplos de Código y Documentación: Ejemplos prácticos que ilustran el uso del lexer, parser y transpiladores.
+- Ejemplos Avanzados: Revisa `frontend/docs/ejemplos_avanzados.rst` para conocer casos con clases, hilos y manejo de errores.
 - Identificadores en Unicode: Puedes nombrar variables y funciones utilizando
   caracteres como `á`, `ñ` o `Ω` para una mayor flexibilidad.
 
