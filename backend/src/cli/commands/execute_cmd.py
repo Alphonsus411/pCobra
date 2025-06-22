@@ -66,5 +66,6 @@ class ExecuteCommand(BaseCommand):
             ], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except FileNotFoundError:
             print(
-                "Herramienta de formateo no encontrada. Asegúrate de tener 'black' instalado."
+                "Herramienta de formateo no encontrada. "
+                "Asegúrate de tener 'black' instalado."
             )

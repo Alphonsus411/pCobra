@@ -9,13 +9,8 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoAtributo,
     NodoInstancia,
-    NodoLlamadaMetodo,
-    NodoHilo,
-    NodoImport,
-    NodoImprimir
 )
-from src.core.parser import Parser
-from src.core.lexer import TipoToken, Lexer
+from src.core.lexer import TipoToken
 from src.core.visitor import NodeVisitor
 
 from .js_nodes.asignacion import visit_asignacion as _visit_asignacion
