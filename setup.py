@@ -30,6 +30,9 @@ setup(
         'console_scripts': [
             'cobra=src.cli.cli:main',
         ],
+        'cobra.plugins': [
+            # Se registrarán plugins externos aquí
+        ],
     },
 
     classifiers=[

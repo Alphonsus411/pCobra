@@ -296,6 +296,23 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
 - Envía un pull request.
 
+## Desarrollo de plugins
+
+La CLI puede ampliarse mediante plugins externos. Para crear uno, define una
+clase que herede de `PluginCommand` e incluye una entrada en el grupo
+`cobra.plugins` de tu `setup.py`:
+
+```python
+entry_points={
+    'cobra.plugins': [
+        'saludo = mi_paquete.mi_modulo:SaludoCommand',
+    ],
+}
+```
+
+Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamente
+el nuevo comando.
+
 # Licencia
 
 Este proyecto está bajo la [Licencia MIT](LICENSE).
