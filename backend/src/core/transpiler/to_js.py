@@ -1,3 +1,5 @@
+"""Transpilador que genera código JavaScript a partir de Cobra."""
+
 from src.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,

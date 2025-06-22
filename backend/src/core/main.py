@@ -1,4 +1,8 @@
+"""Punto de entrada mínimo para ejecutar un saludo de prueba."""
+
+
 def main():
+    """Imprime un mensaje de bienvenida."""
     print("¡Hola desde Cobra!")
 
 

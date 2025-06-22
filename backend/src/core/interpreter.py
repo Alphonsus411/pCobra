@@ -1,3 +1,5 @@
+"""Implementación del intérprete del lenguaje Cobra."""
+
 import os
 
 from src.core.lexer import Token, TipoToken, Lexer
@@ -169,6 +171,7 @@ class InterpretadorCobra:
             raise ValueError(f"Nodo no soportado: {type(nodo)}")
 
     def ejecutar_asignacion(self, nodo):
+        """Evalúa una asignación de variable o atributo."""
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         valor = self.evaluar_expresion(valor_nodo)
@@ -189,6 +192,7 @@ class InterpretadorCobra:
             self.variables[nombre] = valor
 
     def evaluar_expresion(self, expresion):
+        """Resuelve el valor de una expresión de forma recursiva."""
         if isinstance(expresion, NodoValor):
             return expresion.valor  # Obtiene el valor directo si es un NodoValor
         elif isinstance(expresion, Token) and expresion.tipo in {
@@ -273,7 +277,7 @@ class InterpretadorCobra:
                     return resultado
 
     def ejecutar_mientras(self, nodo):
-        # Ejecuta el bucle mientras la condición sea verdadera
+        """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
         while self.evaluar_expresion(nodo.condicion):
             for instruccion in nodo.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
@@ -281,6 +285,7 @@ class InterpretadorCobra:
                     return resultado
 
     def ejecutar_try_catch(self, nodo):
+        """Ejecuta un bloque ``try`` con manejo de excepciones Cobra."""
         try:
             for instruccion in nodo.bloque_try:
                 resultado = self.ejecutar_nodo(instruccion)
@@ -295,10 +300,11 @@ class InterpretadorCobra:
                     return resultado
 
     def ejecutar_funcion(self, nodo):
-        # Almacena las funciones definidas por el usuario en el diccionario `variables`
+        """Registra una función definida por el usuario."""
         self.variables[nodo.nombre] = nodo
 
     def ejecutar_llamada_funcion(self, nodo):
+        """Ejecuta la invocación de una función, interna o del usuario."""
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
@@ -337,15 +343,18 @@ class InterpretadorCobra:
             print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
 
     def ejecutar_clase(self, nodo):
+        """Registra una clase definida por el usuario."""
         self.variables[nodo.nombre] = nodo
 
     def ejecutar_instancia(self, nodo):
+        """Crea una instancia de la clase indicada."""
         clase = self.obtener_variable(nodo.nombre_clase)
         if not isinstance(clase, NodoClase):
             raise ValueError(f"Clase '{nodo.nombre_clase}' no definida")
         return {"__clase__": clase, "__atributos__": {}}
 
     def ejecutar_llamada_metodo(self, nodo):
+        """Invoca un método de un objeto instanciado."""
         objeto = self.evaluar_expresion(nodo.objeto)
         if not isinstance(objeto, dict) or "__clase__" not in objeto:
             raise ValueError("Objeto inv\u00e1lido en llamada a m\u00e9todo")
@@ -395,6 +404,7 @@ class InterpretadorCobra:
                 return resultado
 
     def ejecutar_holobit(self, nodo):
+        """Simula la ejecución de un holobit y devuelve sus valores."""
         print(f"Simulando holobit: {nodo.nombre}")
         valores = []
         for v in nodo.valores:

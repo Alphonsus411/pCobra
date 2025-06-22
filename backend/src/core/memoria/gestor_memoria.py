@@ -1,3 +1,5 @@
+"""Gestor que aplica un algoritmo genético para optimizar la memoria."""
+
 import random
 
 from .estrategia_memoria import EstrategiaMemoria

@@ -1,3 +1,5 @@
+"""Cadena de validadores semánticos para el modo seguro de Cobra."""
+
 from .primitiva_peligrosa import PrimitivaPeligrosaError, ValidadorPrimitivaPeligrosa
 from .import_seguro import ValidadorImportSeguro
 

@@ -1,3 +1,5 @@
+"""Parser del lenguaje Cobra que genera un AST a partir de tokens."""
+
 import logging
 import json
 from src.core.lexer import TipoToken, Token
@@ -60,6 +62,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Parser:
+    """Convierte una lista de tokens en nodos del AST."""
+
     def __init__(self, tokens):
         self.tokens = tokens
         self.posicion = 0

@@ -1,3 +1,5 @@
+"""Funciones de ejemplo para graficar objetos ``Holobit``."""
+
 from .holobit import Holobit
 
 

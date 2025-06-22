@@ -1,3 +1,5 @@
+"""Visitante base que implementa el patrón *visitor* para el AST."""
+
 import re
 
 
