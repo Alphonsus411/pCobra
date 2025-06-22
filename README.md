@@ -217,6 +217,28 @@ Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecu
 pytest backend/src/tests
 ````
 
+Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
+subcomandos devuelven `0` al finalizar correctamente y un valor distinto en caso
+de error.
+
+### Ejemplos de subcomandos
+
+````bash
+cobra compilar programa.cobra --tipo=python
+echo $?  # 0 al compilar sin problemas
+
+cobra ejecutar inexistente.cobra
+# El archivo 'inexistente.cobra' no existe
+echo $?  # 1
+````
+
+### Errores comunes
+
+- `El archivo '<archivo>' no existe`: la ruta es incorrecta o el archivo no está disponible.
+- `El módulo <nombre> no existe`: se intenta eliminar un módulo no instalado.
+- `Primitiva peligrosa: <nombre>`: se usó una función restringida en modo seguro.
+- `Acción de módulos no reconocida`: el subcomando indicado es inválido.
+
 Para obtener un reporte de cobertura en la terminal ejecuta:
 
 ````bash
