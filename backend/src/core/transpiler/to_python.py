@@ -22,6 +22,7 @@ from src.core.ast_nodes import (
 from src.core.parser import Parser
 from src.core.lexer import TipoToken, Lexer
 from src.core.visitor import NodeVisitor
+from src.core.optimizations import optimize_constants, remove_dead_code
 
 from .python_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .python_nodes.condicional import visit_condicional as _visit_condicional
@@ -61,6 +62,7 @@ class TranspiladorPython(NodeVisitor):
         return "    " * self.nivel_indentacion
 
     def transpilar(self, nodos):
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)
         if nodos and all(

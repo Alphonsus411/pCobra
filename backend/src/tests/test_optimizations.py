@@ -1,0 +1,48 @@
+import pytest
+from src.core.ast_nodes import (
+    NodoAsignacion,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
+    NodoValor,
+    NodoFuncion,
+    NodoRetorno,
+    NodoCondicional,
+)
+from src.core.lexer import Token, TipoToken
+from src.core.optimizations import optimize_constants, remove_dead_code
+
+
+def test_optimize_constants_binaria():
+    ast = [
+        NodoAsignacion(
+            "x",
+            NodoOperacionBinaria(NodoValor(2), Token(TipoToken.SUMA, "+"), NodoValor(3)),
+        )
+    ]
+    optimizado = optimize_constants(ast)
+    assert isinstance(optimizado[0].expresion, NodoValor)
+    assert optimizado[0].expresion.valor == 5
+
+
+def test_remove_dead_code_en_funcion():
+    ast = [
+        NodoFuncion(
+            "f",
+            [],
+            [NodoRetorno(NodoValor(1)), NodoAsignacion("x", NodoValor(2))],
+        )
+    ]
+    optimizado = remove_dead_code(ast)
+    cuerpo = optimizado[0].cuerpo
+    assert len(cuerpo) == 1
+    assert isinstance(cuerpo[0], NodoRetorno)
+
+
+def test_remove_condicional_constante():
+    ast = [
+        NodoCondicional(NodoValor(False), [NodoAsignacion("x", NodoValor(1))], [NodoAsignacion("x", NodoValor(2))])
+    ]
+    optimizado = remove_dead_code(ast)
+    assert len(optimizado) == 1
+    assert isinstance(optimizado[0], NodoAsignacion)
+    assert optimizado[0].valor.valor == 2
