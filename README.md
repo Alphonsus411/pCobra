@@ -188,6 +188,8 @@ cobra modulos instalar ruta/al/modulo.cobra
 cobra modulos remover modulo.cobra
 # Generar documentación HTML y API
 cobra docs
+# Crear un ejecutable independiente
+cobra empaquetar --output dist
 ```
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
