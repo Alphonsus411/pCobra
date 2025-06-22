@@ -21,6 +21,7 @@ setup(
         'tensorflow>=2.6.0',
         'dask>=2021.09.0',
         'DEAP>=1.3.1',
+        'ipykernel>=6.0.0',
         # Agrega más requisitos según sea necesario
     ],
     tests_require=[
