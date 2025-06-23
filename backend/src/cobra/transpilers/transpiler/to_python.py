@@ -41,6 +41,7 @@ from .python_nodes.metodo import visit_metodo as _visit_metodo
 from .python_nodes.try_catch import visit_try_catch as _visit_try_catch
 from .python_nodes.throw import visit_throw as _visit_throw
 from .python_nodes.importar import visit_import as _visit_import
+from .python_nodes.usar import visit_usar as _visit_usar
 from .python_nodes.hilo import visit_hilo as _visit_hilo
 from .python_nodes.instancia import visit_instancia as _visit_instancia
 from .python_nodes.atributo import visit_atributo as _visit_atributo
@@ -158,6 +159,7 @@ TranspiladorPython.visit_metodo = _visit_metodo
 TranspiladorPython.visit_try_catch = _visit_try_catch
 TranspiladorPython.visit_throw = _visit_throw
 TranspiladorPython.visit_import = _visit_import
+TranspiladorPython.visit_usar = _visit_usar
 TranspiladorPython.visit_hilo = _visit_hilo
 TranspiladorPython.visit_instancia = _visit_instancia
 TranspiladorPython.visit_atributo = _visit_atributo
