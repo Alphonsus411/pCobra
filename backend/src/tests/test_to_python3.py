@@ -1,161 +1,133 @@
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.core.ast_nodes import (
+    NodoAsignacion,
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoHolobit,
+    NodoFor,
+    NodoLista,
+    NodoDiccionario,
+    NodoClase,
+    NodoMetodo,
+    NodoValor,
+)
 
-
-# Clases de nodo simuladas para pruebas
-class NodoAsignacion:
-    def __init__(self, identificador, valor):
-        self.identificador = identificador
-        self.valor = valor
-
-
-class NodoCondicional:
-    def __init__(self, condicion, cuerpo_si, cuerpo_sino=None):
-        self.condicion = condicion
-        self.cuerpo_si = cuerpo_si
-        self.cuerpo_sino = cuerpo_sino or []
-
-
-class NodoBucleMientras:
-    def __init__(self, condicion, cuerpo):
-        self.condicion = condicion
-        self.cuerpo = cuerpo
-
-
-class NodoFuncion:
-    def __init__(self, nombre, parametros, cuerpo):
-        self.nombre = nombre
-        self.parametros = parametros
-        self.cuerpo = cuerpo
-
-
-class NodoLlamadaFuncion:
-    def __init__(self, nombre, argumentos):
-        self.nombre = nombre
-        self.argumentos = argumentos
-
-
-class NodoHolobit:
-    def __init__(self, nombre, valores=None):
-        self.nombre = nombre
-        self.valores = valores or []
-
-
-# Nuevos nodos avanzados para pruebas
-class NodoFor:
-    def __init__(self, variable, iterable, cuerpo):
-        self.variable = variable
-        self.iterable = iterable
-        self.cuerpo = cuerpo
-
-
-class NodoLista:
-    def __init__(self, elementos):
-        self.elementos = elementos
-
-
-class NodoDiccionario:
-    def __init__(self, pares):
-        self.pares = pares
-
-
-class NodoClase:
-    def __init__(self, nombre, cuerpo):
-        self.nombre = nombre
-        self.cuerpo = cuerpo
-
-
-class NodoMetodo:
-    def __init__(self, nombre, parametros, cuerpo):
-        self.nombre = nombre
-        self.parametros = parametros
-        self.cuerpo = cuerpo
-
-
-# Pruebas para el transpilador a Python
 
 def test_transpilar_asignacion():
-    nodo = NodoAsignacion("variable", "10")
+    nodo = NodoAsignacion("variable", NodoValor("10"))
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    assert result == "variable = 10\n", "Error en la transpilación de asignación"
+    esperado = "from src.core.nativos import *\nvariable = 10\n"
+    assert result == esperado, "Error en la transpilaci\u00f3n de asignaci\u00f3n"
 
 
 def test_transpilar_condicional():
-    nodo = NodoCondicional("x > 5", [NodoAsignacion("y", "10")], [NodoAsignacion("y", "0")])
+    nodo = NodoCondicional(
+        "x > 5",
+        [NodoAsignacion("y", NodoValor("10"))],
+        [NodoAsignacion("y", NodoValor("0"))],
+    )
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
-    assert result == expected, "Error en la transpilación de condicional"
+    expected = (
+        "from src.core.nativos import *\n"
+        "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de condicional"
 
 
 def test_transpilar_mientras():
-    nodo = NodoBucleMientras("i < 10", [NodoAsignacion("i", "i + 1")])
+    nodo = NodoBucleMientras("i < 10", [NodoAsignacion("i", NodoValor("i + 1"))])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "while i < 10:\n    i = i + 1\n"
-    assert result == expected, "Error en la transpilación de bucle mientras"
+    expected = (
+        "from src.core.nativos import *\nwhile i < 10:\n    i = i + 1\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de bucle mientras"
 
 
 def test_transpilar_funcion():
-    nodo = NodoFuncion("sumar", ["a", "b"], [NodoAsignacion("resultado", "a + b")])
+    nodo = NodoFuncion(
+        "sumar",
+        ["a", "b"],
+        [NodoAsignacion("resultado", NodoValor("a + b"))],
+    )
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "def sumar(a, b):\n    resultado = a + b\n"
-    assert result == expected, "Error en la transpilación de función"
+    expected = (
+        "from src.core.nativos import *\n"
+        "def sumar(a, b):\n    resultado = a + b\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de funci\u00f3n"
 
 
 def test_transpilar_llamada_funcion():
     nodo = NodoLlamadaFuncion("sumar", ["5", "3"])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    assert result == "sumar(5, 3)\n", "Error en la transpilación de llamada a función"
+    esperado = "from src.core.nativos import *\nsumar(5, 3)\n"
+    assert result == esperado, "Error en la transpilaci\u00f3n de llamada a funci\u00f3n"
 
 
 def test_transpilar_holobit():
     nodo = NodoHolobit("miHolobit", [1, 2, 3])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    assert result == "miHolobit = holobit([1, 2, 3])\n", "Error en la transpilación de Holobit"
+    esperado = "from src.core.nativos import *\nmiHolobit = holobit([1, 2, 3])\n"
+    assert result == esperado, "Error en la transpilaci\u00f3n de Holobit"
 
-
-# Pruebas para nuevas estructuras avanzadas
 
 def test_transpilar_for():
-    nodo = NodoFor("i", "lista", [NodoAsignacion("suma", "suma + i")])
+    nodo = NodoFor("i", "lista", [NodoAsignacion("suma", NodoValor("suma + i"))])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "for i in lista:\n    suma = suma + i\n"
-    assert result == expected, "Error en la transpilación de bucle for"
+    expected = (
+        "from src.core.nativos import *\nfor i in lista:\n    suma = suma + i\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de bucle for"
 
 
 def test_transpilar_lista():
-    nodo = NodoLista(["1", "2", "3"])
+    nodo = NodoLista([NodoValor("1"), NodoValor("2"), NodoValor("3")])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "[1, 2, 3]\n"
-    assert result == expected, "Error en la transpilación de lista"
+    expected = "from src.core.nativos import *\n[1, 2, 3]\n"
+    assert result == expected, "Error en la transpilaci\u00f3n de lista"
 
 
 def test_transpilar_diccionario():
-    nodo = NodoDiccionario([("clave1", "valor1"), ("clave2", "valor2")])
+    nodo = NodoDiccionario([
+        (NodoValor("clave1"), NodoValor("valor1")),
+        (NodoValor("clave2"), NodoValor("valor2"))
+    ])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "{clave1: valor1, clave2: valor2}\n"
-    assert result == expected, "Error en la transpilación de diccionario"
+    expected = (
+        "from src.core.nativos import *\n{clave1: valor1, clave2: valor2}\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de diccionario"
 
 
 def test_transpilar_clase():
-    metodo = NodoMetodo("miMetodo", ["param"], [NodoAsignacion("x", "param + 1")])
+    metodo = NodoMetodo("miMetodo", ["param"], [NodoAsignacion("x", NodoValor("param + 1"))])
     nodo = NodoClase("MiClase", [metodo])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "class MiClase:\n    def miMetodo(param):\n        x = param + 1\n"
-    assert result == expected, "Error en la transpilación de clase"
+    expected = (
+        "from src.core.nativos import *\n"
+        "class MiClase:\n    def miMetodo(param):\n        x = param + 1\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de clase"
 
 
 def test_transpilar_metodo():
-    nodo = NodoMetodo("miMetodo", ["a", "b"], [NodoAsignacion("resultado", "a + b")])
+    nodo = NodoMetodo("miMetodo", ["a", "b"], [NodoAsignacion("resultado", NodoValor("a + b"))])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "def miMetodo(a, b):\n    resultado = a + b\n"
-    assert result == expected, "Error en la transpilación de método"
+    expected = (
+        "from src.core.nativos import *\n"
+        "def miMetodo(a, b):\n    resultado = a + b\n"
+    )
+    assert result == expected, "Error en la transpilaci\u00f3n de m\u00e9todo"
