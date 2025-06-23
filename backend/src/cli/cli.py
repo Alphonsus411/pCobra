@@ -8,6 +8,7 @@ from .commands.docs_cmd import DocsCommand
 from .commands.execute_cmd import ExecuteCommand
 from .commands.interactive_cmd import InteractiveCommand
 from .commands.jupyter_cmd import JupyterCommand
+from .commands.agix_cmd import AgixCommand
 from .plugin_loader import descubrir_plugins
 from .commands.modules_cmd import ModulesCommand
 from .commands.dependencias_cmd import DependenciasCommand
@@ -38,6 +39,7 @@ def main(argv=None):
         DocsCommand(),
         EmpaquetarCommand(),
         CrearCommand(),
+        AgixCommand(),
         JupyterCommand(),
         InteractiveCommand(),
     ]
