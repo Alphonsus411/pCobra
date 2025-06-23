@@ -53,6 +53,12 @@ source .venv/bin/activate  # Para Unix
 pip install -r requirements.txt
 ````
 
+   Esto instalará los paquetes mínimos para ejecutar Cobra:
+
+   - `pytest` y complementos para las pruebas automatizadas.
+   - `ipykernel` para el kernel de Jupyter.
+   - `PyYAML` utilizado al leer `cobra.mod`.
+
 5. Instala el paquete de forma editable para usar la CLI:
 
 ````bash
