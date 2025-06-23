@@ -34,11 +34,11 @@ mientras x < 3 :
 
 ## 4. Trabajar con módulos
 
-- Usa `import` para cargar archivos `.cobra` o módulos nativos.
+- Usa `import` para cargar archivos `.co` o módulos nativos.
 - Los módulos nativos ofrecen funciones de E/S y estructuras de datos.
 
 ```cobra
-import 'modulo.cobra'
+import 'modulo.co'
 imprimir(saludo)
 ```
 
@@ -57,13 +57,13 @@ imprimir('principal')
 
 ## 6. Transpilación y ejecución
 
-- Compila a Python o JavaScript con `cobra compilar archivo.cobra --tipo python`.
-- Ejecuta directamente con `cobra ejecutar archivo.cobra`.
+- Compila a Python o JavaScript con `cobra compilar archivo.co --tipo python`.
+- Ejecuta directamente con `cobra ejecutar archivo.co`.
 
 ### Ejemplo de transpilación a Python
 
 ```bash
-cobra compilar ejemplo.cobra --tipo python
+cobra compilar ejemplo.co --tipo python
 ```
 
 Si prefieres usar las clases del proyecto, llama al módulo
@@ -91,7 +91,7 @@ print(TranspiladorPython().transpilar(arbol))
 - Añade `--seguro` para evitar operaciones peligrosas como `leer_archivo` o `hilo`.
 
 ```bash
-cobra ejecutar programa.cobra --seguro
+cobra ejecutar programa.co --seguro
 ```
 
 ## 8. Próximos pasos

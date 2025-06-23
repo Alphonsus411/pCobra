@@ -16,14 +16,14 @@ def _run_sys_exit(args):
 
 @pytest.mark.timeout(5)
 def test_exit_code_compile_missing(tmp_path):
-    archivo = tmp_path / "no.cobra"
+    archivo = tmp_path / "no.co"
     code = _run_sys_exit(["compilar", str(archivo)])
     assert code != 0
 
 
 @pytest.mark.timeout(5)
 def test_exit_code_execute_missing(tmp_path):
-    archivo = tmp_path / "no.cobra"
+    archivo = tmp_path / "no.co"
     code = _run_sys_exit(["ejecutar", str(archivo)])
     assert code != 0
 
@@ -31,5 +31,5 @@ def test_exit_code_execute_missing(tmp_path):
 @pytest.mark.timeout(5)
 def test_exit_code_module_remove_missing(tmp_path, monkeypatch):
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(tmp_path))
-    code = _run_sys_exit(["modulos", "remover", "algo.cobra"])
+    code = _run_sys_exit(["modulos", "remover", "algo.co"])
     assert code != 0

@@ -9,7 +9,7 @@ from src.cobra.transpilers import module_map
 
 
 def test_transpilador_mapeo_python(tmp_path, monkeypatch):
-    mod = tmp_path / "m.cobra"
+    mod = tmp_path / "m.co"
     mod.write_text("var x = 1")
     py_out = tmp_path / "m.py"
     py_out.write_text("x = 1\n")
@@ -31,7 +31,7 @@ def test_transpilador_mapeo_python(tmp_path, monkeypatch):
 
 
 def test_transpilador_mapeo_js(tmp_path, monkeypatch):
-    mod = tmp_path / "m.cobra"
+    mod = tmp_path / "m.co"
     mod.write_text("var x = 2")
     js_out = tmp_path / "m.js"
     js_out.write_text("let x = 2;\n")

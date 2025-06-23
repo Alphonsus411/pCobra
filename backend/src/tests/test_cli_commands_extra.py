@@ -32,7 +32,7 @@ from src.cli.commands import modules_cmd
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
-    archivo = tmp_path / "c.cobra"
+    archivo = tmp_path / "c.co"
     archivo.write_text("var x = 5")
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(archivo), f"--tipo={tipo}"])
@@ -42,7 +42,7 @@ def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
 
 @pytest.mark.timeout(5)
 def test_cli_compilar_archivo_inexistente(tmp_path):
-    archivo = tmp_path / "no.cobra"
+    archivo = tmp_path / "no.co"
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(archivo)])
     assert f"Error: El archivo '{archivo}' no existe." == out.getvalue().strip()
@@ -50,7 +50,7 @@ def test_cli_compilar_archivo_inexistente(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_cli_ejecutar_imprime(tmp_path):
-    archivo = tmp_path / "p.cobra"
+    archivo = tmp_path / "p.co"
     archivo.write_text("var x = 3\nimprimir(x)")
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["ejecutar", str(archivo)])
@@ -59,7 +59,7 @@ def test_cli_ejecutar_imprime(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_cli_ejecutar_flag_seguro(tmp_path):
-    archivo = tmp_path / "p.cobra"
+    archivo = tmp_path / "p.co"
     archivo.write_text("imprimir(1)")
     with patch("src.cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
         main(["--seguro", "ejecutar", str(archivo)])
@@ -73,7 +73,7 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
 
-    modulo = tmp_path / "m.cobra"
+    modulo = tmp_path / "m.co"
     modulo.write_text("var d = 1")
 
     with patch("sys.stdout", new_callable=StringIO) as out:
@@ -98,3 +98,20 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])
     assert out.getvalue().strip() == "No hay módulos instalados"
+
+@pytest.mark.timeout(5)
+def test_cli_crear_archivo(tmp_path):
+    ruta = tmp_path / "nuevo"
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        main(["crear", "archivo", str(ruta)])
+    assert (tmp_path / "nuevo.co").exists()
+    assert out.getvalue().strip() == f"Archivo creado: {ruta}.co"
+
+
+@pytest.mark.timeout(5)
+def test_cli_crear_proyecto(tmp_path):
+    ruta = tmp_path / "proj"
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        main(["crear", "proyecto", str(ruta)])
+    assert (ruta / "main.co").exists()
+    assert "Proyecto Cobra creado" in out.getvalue()

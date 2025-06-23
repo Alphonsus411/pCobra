@@ -12,6 +12,7 @@ from .plugin_loader import descubrir_plugins
 from .commands.modules_cmd import ModulesCommand
 from .commands.dependencias_cmd import DependenciasCommand
 from .commands.empaquetar_cmd import EmpaquetarCommand
+from .commands.crear_cmd import CrearCommand
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
 # directamente para evitar modificar la configuración global al importar este
@@ -36,6 +37,7 @@ def main(argv=None):
         DependenciasCommand(),
         DocsCommand(),
         EmpaquetarCommand(),
+        CrearCommand(),
         JupyterCommand(),
         InteractiveCommand(),
     ]

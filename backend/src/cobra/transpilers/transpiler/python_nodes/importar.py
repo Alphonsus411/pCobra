@@ -14,7 +14,7 @@ def visit_import(self, nodo):
     except FileNotFoundError:
         raise FileNotFoundError(f"Módulo no encontrado: {ruta}")
 
-    if ruta.endswith(".cobra"):
+    if ruta.endswith(".co"):
         lexer = Lexer(codigo)
         tokens = lexer.analizar_token()
         ast = Parser(tokens).parsear()

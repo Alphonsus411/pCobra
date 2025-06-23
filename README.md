@@ -154,15 +154,15 @@ Al transpilar a Python, `imprimir` se convierte en `print`, `mientras` en `while
 Puedes dividir el código en varios archivos y cargarlos con `import`:
 
 ````cobra
-# modulo.cobra
+# modulo.co
 var saludo = 'Hola desde módulo'
 
-# programa.cobra
-import 'modulo.cobra'
+# programa.co
+import 'modulo.co'
 imprimir(saludo)
 ````
 
-Al ejecutar `programa.cobra`, se procesará primero `modulo.cobra` y luego se imprimirá `Hola desde módulo`.
+Al ejecutar `programa.co`, se procesará primero `modulo.co` y luego se imprimirá `Hola desde módulo`.
 
 ## Instrucción `usar` para dependencias dinámicas
 
@@ -180,7 +180,7 @@ módulo Cobra y sus valores indican las rutas de los archivos generados.
 Ejemplo de formato:
 
 ```yaml
-modulo.cobra:
+modulo.co:
   python: modulo.py
   js: modulo.js
 ```
@@ -233,15 +233,15 @@ Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 
 ```bash
 # Compilar un archivo a Python o JavaScript
-cobra compilar programa.cobra --tipo python
+cobra compilar programa.co --tipo python
 
 # Ejecutar directamente un script Cobra
-cobra ejecutar programa.cobra --depurar --formatear
+cobra ejecutar programa.co --depurar --formatear
 
 # Gestionar módulos instalados
 cobra modulos listar
-cobra modulos instalar ruta/al/modulo.cobra
-cobra modulos remover modulo.cobra
+cobra modulos instalar ruta/al/modulo.co
+cobra modulos remover modulo.co
 # Generar documentación HTML y API
 cobra docs
 # Crear un ejecutable independiente
@@ -283,11 +283,11 @@ de error.
 ### Ejemplos de subcomandos
 
 ````bash
-cobra compilar programa.cobra --tipo=python
+cobra compilar programa.co --tipo=python
 echo $?  # 0 al compilar sin problemas
 
-cobra ejecutar inexistente.cobra
-# El archivo 'inexistente.cobra' no existe
+cobra ejecutar inexistente.co
+# El archivo 'inexistente.co' no existe
 echo $?  # 1
 ````
 

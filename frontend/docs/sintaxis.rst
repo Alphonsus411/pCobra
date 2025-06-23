@@ -60,7 +60,7 @@ Puedes dividir tu código en varios archivos y cargarlos con ``import``:
 
 .. code-block:: cobra
 
-   import 'utilidades.cobra'
+   import 'utilidades.co'
    imprimir(variable_definida_en_utilidades)
 
 **8. Manejo de excepciones**
