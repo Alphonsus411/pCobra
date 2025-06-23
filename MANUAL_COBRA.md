@@ -60,6 +60,32 @@ imprimir('principal')
 - Compila a Python o JavaScript con `cobra compilar archivo.cobra --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.cobra`.
 
+### Ejemplo de transpilación a Python
+
+```bash
+cobra compilar ejemplo.cobra --tipo python
+```
+
+Si prefieres usar las clases del proyecto, llama al módulo
+[`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler)
+de la siguiente forma:
+
+```python
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.parser.parser import Parser
+
+codigo = "imprimir('hola')"
+parser = Parser(codigo)
+arbol = parser.parsear()
+print(TranspiladorPython().transpilar(arbol))
+```
+
+### Características aún no soportadas
+
+- Decoradores y generadores de Python.
+- Herencia múltiple en clases.
+- Macros o metaprogramación avanzada.
+
 ## 7. Modo seguro
 
 - Añade `--seguro` para evitar operaciones peligrosas como `leer_archivo` o `hilo`.

@@ -186,8 +186,31 @@ modulo.cobra:
 ```
 
 Si una entrada no se encuentra, el transpilador cargará directamente el archivo
-indicada en la instrucción `import`. Para añadir o modificar rutas basta con
+indicado en la instrucción `import`. Para añadir o modificar rutas basta con
 editar `cobra.mod` y volver a ejecutar las pruebas.
+
+## Invocar el transpilador
+
+La carpeta [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler)
+contiene la implementación de los transpiladores a Python y JavaScript. Una vez
+instaladas las dependencias, puedes llamar al transpilador desde tu propio
+script de la siguiente manera:
+
+```python
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.parser.parser import Parser
+
+codigo = "imprimir('hola')"
+parser = Parser(codigo)
+arbol = parser.parsear()
+transpiler = TranspiladorPython()
+resultado = transpiler.transpilar(arbol)
+print(resultado)
+```
+
+Requiere tener instalado el paquete en modo editable y todas las dependencias
+de `requirements.txt`. Si necesitas generar archivos a partir de módulos Cobra,
+consulta el mapeo definido en `cobra.mod`.
 
 ## Ejemplo de concurrencia
 
