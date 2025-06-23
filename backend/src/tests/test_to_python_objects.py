@@ -6,11 +6,13 @@ def test_transpilar_instancia():
     nodo = NodoInstancia("Clase")
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    assert result == "Clase()\n"
+    esperado = "from src.core.nativos import *\nClase()\n"
+    assert result == esperado
 
 
 def test_transpilar_llamada_metodo():
     nodo = NodoLlamadaMetodo(NodoIdentificador("obj"), "metodo", [NodoValor(1)])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    assert result == "obj.metodo(1)\n"
+    esperado = "from src.core.nativos import *\nobj.metodo(1)\n"
+    assert result == esperado
