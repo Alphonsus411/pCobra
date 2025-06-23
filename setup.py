@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='Cobra',
-    version='0.1',
+    name='cobra-lenguaje',
+    version='0.9',
     author='Adolfo González Hernández',
     author_email='adolfogonzal@gmail.com',
     description='Un lenguaje de programación en español para simulaciones y más.',
@@ -22,6 +22,8 @@ setup(
         'dask>=2021.09.0',
         'DEAP>=1.3.1',
         'ipykernel>=6.0.0',
+        'agix==0.8.3',
+        'holobit-sdk',
         # Agrega más requisitos según sea necesario
     ],
     tests_require=[
@@ -29,7 +31,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'cobra=src.cli.cli:main',
+            'cobra=cli.cli:main',
         ],
         'cobra.plugins': [
             # Se registrarán plugins externos aquí
