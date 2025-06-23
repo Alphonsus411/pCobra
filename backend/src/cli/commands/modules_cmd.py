@@ -36,7 +36,7 @@ class ModulesCommand(BaseCommand):
 
     @staticmethod
     def _listar_modulos():
-        mods = [f for f in os.listdir(MODULES_PATH) if f.endswith(".cobra")]
+        mods = [f for f in os.listdir(MODULES_PATH) if f.endswith(".co")]
         if not mods:
             print("No hay módulos instalados")
         else:

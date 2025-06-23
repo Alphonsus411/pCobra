@@ -21,7 +21,7 @@ class CobraKernel(Kernel):
     language_info = {
         "name": "cobra",
         "mimetype": "text/plain",
-        "file_extension": ".cobra",
+        "file_extension": ".co",
     }
     banner = "Cobra kernel"
 

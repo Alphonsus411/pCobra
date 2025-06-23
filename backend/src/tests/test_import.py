@@ -14,7 +14,7 @@ from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 @pytest.mark.timeout(5)
 def test_import_interpreter(tmp_path):
-    mod = tmp_path / "mod.cobra"
+    mod = tmp_path / "mod.co"
     mod.write_text("var dato = 5")
 
     IMPORT_WHITELIST.add(str(mod))
@@ -34,7 +34,7 @@ def test_import_interpreter(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_import_transpiler(tmp_path):
-    mod = tmp_path / "m.cobra"
+    mod = tmp_path / "m.co"
     mod.write_text("var valor = 3")
 
     codigo = f"import '{mod}'\nimprimir(valor)"

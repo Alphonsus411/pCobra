@@ -16,4 +16,4 @@ Ejemplo de uso
 
 .. code-block:: bash
 
-   cobra ejecutar programa.cobra --seguro
+   cobra ejecutar programa.co --seguro

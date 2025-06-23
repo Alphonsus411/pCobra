@@ -33,7 +33,7 @@ def test_codigo_seguro_no_lanza_error():
 
 
 def test_import_no_permitido():
-    codigo = "import 'malicioso.cobra'"
+    codigo = "import 'malicioso.co'"
     ast = generar_ast(codigo)
     validador = construir_cadena()
 

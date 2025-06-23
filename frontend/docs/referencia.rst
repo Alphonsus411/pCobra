@@ -28,8 +28,8 @@ El comando ``cobra`` cuenta con varias subopciones:
 
 .. code-block:: bash
 
-   cobra compilar archivo.cobra --tipo python
-   cobra ejecutar archivo.cobra --depurar
+   cobra compilar archivo.co --tipo python
+   cobra ejecutar archivo.co --depurar
    cobra modulos listar
    cobra docs
    cobra empaquetar --output dist
