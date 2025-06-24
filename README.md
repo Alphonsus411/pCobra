@@ -68,6 +68,16 @@ pip install -r requirements.txt
 pip install -e .
 ````
 
+## Construir la imagen Docker
+
+Puedes crear la imagen utilizando el script `docker/scripts/build.sh`:
+
+````bash
+./docker/scripts/build.sh
+````
+
+Esto generará una imagen llamada `cobra` en tu sistema Docker.
+
 # Estructura del Proyecto
 
 El proyecto se organiza en las siguientes carpetas y módulos:
