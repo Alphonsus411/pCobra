@@ -12,7 +12,7 @@ compilar a otros lenguajes y gestionar módulos instalados.
 Core
 ----
 Contiene el corazón del lenguaje: lexer, parser, intérprete y
-transpiladores a Python, JavaScript y ensamblador. Estos elementos trabajan en
+transpiladores a Python, JavaScript, ensamblador y Rust. Estos elementos trabajan en
 conjunto para analizar el código fuente y transformarlo en otras
 representaciones o ejecutarlo de forma directa.
 Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilitar su reutilización.
@@ -20,9 +20,9 @@ El recorrido de estos nodos puede realizarse mediante la clase ``NodeVisitor``
 ubicada en ``src.core.visitor``, que despacha automáticamente al método
 ``visit_<Clase>`` correspondiente.
 Para mantener el código modular, la lógica específica de cada nodo del AST se
-almacena en paquetes independientes. Los transpiladores a Python, JavaScript y ensamblador
+almacena en paquetes independientes. Los transpiladores a Python, JavaScript, ensamblador y Rust
 importan estas funciones desde ``src.core.transpiler.python_nodes`` y
-``src.core.transpiler.js_nodes`` (o ``asm_nodes``) respectivamente, delegando la operación de
+``src.core.transpiler.js_nodes`` (o ``asm_nodes`` o ``rust_nodes``) respectivamente, delegando la operación de
 ``visit_<nodo>`` a dichas funciones.
 
 Módulos nativos

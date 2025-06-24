@@ -1,0 +1,80 @@
+"""Transpilador que genera código Rust a partir de Cobra."""
+
+from src.core.ast_nodes import (
+    NodoLista,
+    NodoDiccionario,
+    NodoValor,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
+    NodoIdentificador,
+    NodoAtributo,
+    NodoInstancia,
+)
+from src.cobra.lexico.lexer import TipoToken
+from src.core.visitor import NodeVisitor
+from src.core.optimizations import optimize_constants, remove_dead_code
+
+from .rust_nodes.asignacion import visit_asignacion as _visit_asignacion
+from .rust_nodes.condicional import visit_condicional as _visit_condicional
+from .rust_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from .rust_nodes.funcion import visit_funcion as _visit_funcion
+from .rust_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from .rust_nodes.holobit import visit_holobit as _visit_holobit
+
+
+class TranspiladorRust(NodeVisitor):
+    """Transpila el AST de Cobra a código Rust sencillo."""
+
+    def __init__(self):
+        self.codigo = []
+        self.indent = 0
+
+    def agregar_linea(self, linea: str) -> None:
+        self.codigo.append("    " * self.indent + linea)
+
+    def obtener_valor(self, nodo):
+        if isinstance(nodo, NodoValor):
+            return str(nodo.valor)
+        elif isinstance(nodo, NodoAtributo):
+            obj = self.obtener_valor(nodo.objeto)
+            return f"{obj}.{nodo.nombre}"
+        elif isinstance(nodo, NodoInstancia):
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"{nodo.nombre_clase}::new({args})"
+        elif isinstance(nodo, NodoIdentificador):
+            return nodo.nombre
+        elif isinstance(nodo, NodoOperacionBinaria):
+            izq = self.obtener_valor(nodo.izquierda)
+            der = self.obtener_valor(nodo.derecha)
+            op_map = {TipoToken.AND: "&&", TipoToken.OR: "||"}
+            op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
+            return f"{izq} {op} {der}"
+        elif isinstance(nodo, NodoOperacionUnaria):
+            val = self.obtener_valor(nodo.operando)
+            op = "!" if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
+            return f"{op}{val}" if op != "!" else f"!{val}"
+        elif isinstance(nodo, NodoLista):
+            elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+            return f"vec![{elems}]"
+        elif isinstance(nodo, NodoDiccionario):
+            pares = ", ".join(
+                f"({self.obtener_valor(k)}, {self.obtener_valor(v)})" for k, v in nodo.elementos
+            )
+            return f"std::collections::HashMap::from([{pares}])"
+        else:
+            return str(getattr(nodo, "valor", nodo))
+
+    def transpilar(self, nodos):
+        nodos = remove_dead_code(optimize_constants(nodos))
+        for nodo in nodos:
+            nodo.aceptar(self)
+        return "\n".join(self.codigo)
+
+
+# Asignar los visitantes externos a la clase
+TranspiladorRust.visit_asignacion = _visit_asignacion
+TranspiladorRust.visit_condicional = _visit_condicional
+TranspiladorRust.visit_bucle_mientras = _visit_bucle_mientras
+TranspiladorRust.visit_funcion = _visit_funcion
+TranspiladorRust.visit_llamada_funcion = _visit_llamada_funcion
+TranspiladorRust.visit_holobit = _visit_holobit

@@ -29,6 +29,13 @@ from src.cli.commands import modules_cmd
                 "let x = 5;",
             ],
         ),
+        (
+            "rust",
+            [
+                "Código generado (TranspiladorRust):",
+                "let x = 5;",
+            ],
+        ),
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
