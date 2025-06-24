@@ -1,6 +1,9 @@
 """Módulo que analiza código Cobra usando agix y genera sugerencias."""
 
-from agix.reasoning.basic import Reasoner
+try:
+    from agix.reasoning.basic import Reasoner
+except ImportError:  # pragma: no cover - depende de agix instalado
+    Reasoner = None
 from typing import List
 
 from src.cobra.lexico.lexer import Lexer
@@ -14,6 +17,10 @@ def generar_sugerencias(codigo: str) -> List[str]:
     :class:`agix.reasoning.basic.Reasoner` para elegir la mejor sugerencia
     de un conjunto predefinido.
     """
+    if Reasoner is None:
+        print("Instala el paquete agix")
+        raise SystemExit(1)
+
     # Validar el código utilizando las herramientas de Cobra
     tokens = Lexer(codigo).tokenizar()
     Parser(tokens).parsear()
