@@ -20,7 +20,7 @@ class InteractiveCommand(BaseCommand):
     def run(self, args):
         seguro = getattr(args, "seguro", False)
         interpretador = InterpretadorCobra(safe_mode=seguro)
-        validador = construir_cadena()
+        validador = construir_cadena() if seguro else None
 
         while True:
             try:
@@ -38,7 +38,8 @@ class InteractiveCommand(BaseCommand):
                     ast = Parser(tokens).parsear()
                     try:
                         for nodo in ast:
-                            nodo.aceptar(validador)
+                            if validador is not None:
+                                nodo.aceptar(validador)
                     except PrimitivaPeligrosaError as pe:
                         logging.error(f"Primitiva peligrosa: {pe}")
                         print(f"Error: {pe}")
@@ -53,7 +54,8 @@ class InteractiveCommand(BaseCommand):
                     logging.debug(f"AST generado: {ast}")
                     try:
                         for nodo in ast:
-                            nodo.aceptar(validador)
+                            if validador is not None:
+                                nodo.aceptar(validador)
                     except PrimitivaPeligrosaError as pe:
                         logging.error(f"Primitiva peligrosa: {pe}")
                         print(f"Error: {pe}")
