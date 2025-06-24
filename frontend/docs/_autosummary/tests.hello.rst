@@ -1,6 +1,6 @@
-tests.hello
+﻿tests.hello
 ===========
 
-.. automodule:: tests.hello
+.. currentmodule:: tests
 
-   
+.. autodata:: hello

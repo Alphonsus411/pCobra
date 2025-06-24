@@ -1,12 +1,6 @@
-tests.tree\_cmp
+﻿tests.tree\_cmp
 ===============
 
-.. automodule:: tests.tree_cmp
+.. currentmodule:: tests
 
-   
-   .. rubric:: Functions
-
-   .. autosummary::
-   
-      main
-   
+.. autodata:: tree_cmp

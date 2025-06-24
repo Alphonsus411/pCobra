@@ -1,12 +1,6 @@
-tests.make\_all\_bytes
+﻿tests.make\_all\_bytes
 ======================
 
-.. automodule:: tests.make_all_bytes
+.. currentmodule:: tests
 
-   
-   .. rubric:: Functions
-
-   .. autosummary::
-   
-      main
-   
+.. autodata:: make_all_bytes
