@@ -22,6 +22,12 @@ class JupyterCommand(BaseCommand):
                 "--KernelManager.default_kernel_name=cobra",
             ], check=True)
             return 0
+        except FileNotFoundError:
+            print(
+                "No se encontró el ejecutable 'jupyter'. "
+                "Instala Jupyter para utilizar esta función."
+            )
+            return 1
         except subprocess.CalledProcessError as e:
             print(f"Error lanzando Jupyter: {e}")
             return 1
