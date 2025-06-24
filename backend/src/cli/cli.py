@@ -8,6 +8,7 @@ from .commands.docs_cmd import DocsCommand
 from .commands.execute_cmd import ExecuteCommand
 from .commands.interactive_cmd import InteractiveCommand
 from .commands.jupyter_cmd import JupyterCommand
+from .commands.flet_cmd import FletCommand
 from .commands.agix_cmd import AgixCommand
 from .plugin_loader import descubrir_plugins
 from .commands.modules_cmd import ModulesCommand
@@ -41,6 +42,7 @@ def main(argv=None):
         CrearCommand(),
         AgixCommand(),
         JupyterCommand(),
+        FletCommand(),
         InteractiveCommand(),
     ]
     comandos.extend(descubrir_plugins())
