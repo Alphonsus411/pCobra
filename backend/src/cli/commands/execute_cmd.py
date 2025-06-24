@@ -39,14 +39,15 @@ class ExecuteCommand(BaseCommand):
             codigo = f.read()
         tokens = Lexer(codigo).tokenizar()
         ast = Parser(tokens).parsear()
-        try:
-            validador = construir_cadena()
-            for nodo in ast:
-                nodo.aceptar(validador)
-        except PrimitivaPeligrosaError as pe:
-            logging.error(f"Primitiva peligrosa: {pe}")
-            print(f"Error: {pe}")
-            return 1
+        if seguro:
+            try:
+                validador = construir_cadena()
+                for nodo in ast:
+                    nodo.aceptar(validador)
+            except PrimitivaPeligrosaError as pe:
+                logging.error(f"Primitiva peligrosa: {pe}")
+                print(f"Error: {pe}")
+                return 1
         try:
             InterpretadorCobra(safe_mode=seguro).ejecutar_ast(ast)
             return 0
