@@ -33,7 +33,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
 Introducción
 --------------------
 
-Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Ademas, ofrece soporte para transpilar a Python, JavaScript y ensamblador, permitiendo su ejecucion en multiples plataformas.
+Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Ademas, ofrece soporte para transpilar a Python, JavaScript, ensamblador y Rust, permitiendo su ejecucion en multiples plataformas.
 
 
 

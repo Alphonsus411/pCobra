@@ -8,6 +8,7 @@ from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cade
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 
 
 class CompileCommand(BaseCommand):
@@ -20,7 +21,7 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo")
         parser.add_argument(
             "--tipo",
-            choices=["python", "js", "asm"],
+            choices=["python", "js", "asm", "rust"],
             default="python",
             help="Tipo de código generado",
         )
@@ -50,6 +51,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorJavaScript()
                 elif transpilador == "asm":
                     transp = TranspiladorASM()
+                elif transpilador == "rust":
+                    transp = TranspiladorRust()
                 else:
                     raise ValueError("Transpilador no soportado.")
 
