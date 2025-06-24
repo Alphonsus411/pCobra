@@ -7,6 +7,7 @@ from src.cobra.parser.parser import Parser
 from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 
 
 class CompileCommand(BaseCommand):
@@ -17,7 +18,12 @@ class CompileCommand(BaseCommand):
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help="Transpila un archivo")
         parser.add_argument("archivo")
-        parser.add_argument("--tipo", choices=["python", "js"], default="python")
+        parser.add_argument(
+            "--tipo",
+            choices=["python", "js", "asm"],
+            default="python",
+            help="Tipo de código generado",
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -42,6 +48,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorPython()
                 elif transpilador == "js":
                     transp = TranspiladorJavaScript()
+                elif transpilador == "asm":
+                    transp = TranspiladorASM()
                 else:
                     raise ValueError("Transpilador no soportado.")
 

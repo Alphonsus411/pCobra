@@ -29,6 +29,7 @@ El comando ``cobra`` cuenta con varias subopciones:
 .. code-block:: bash
 
    cobra compilar archivo.co --tipo python
+   cobra compilar archivo.co --tipo asm
    cobra ejecutar archivo.co --depurar
    cobra modulos listar
    cobra docs

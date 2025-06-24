@@ -29,6 +29,14 @@ src.core.transpiler.to\_python module
    :undoc-members:
    :show-inheritance:
 
+src.core.transpiler.to\_asm module
+----------------------------------
+
+.. automodule:: src.core.transpiler.to_asm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
