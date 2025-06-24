@@ -87,9 +87,9 @@ Es posible ejecutar funciones de forma concurrente:
 
    hilo trabajo()
 
-**Transpilación a Python y JavaScript**
+**Transpilación a Python, JavaScript y ensamblador**
 
-- `imprimir` se transpila a `print` en Python y a `console.log` en JavaScript.
-- Los bucles `mientras` y `para` se convierten en `while` y `for` respectivamente.
+- `imprimir` se transpila a `print` en Python, `console.log` en JavaScript y `PRINT` en ensamblador.
+- Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en ensamblador generan instrucciones `WHILE` y `FOR`.
 - La construcción `holobit` se traduce a `holobit([...])` en Python o `new Holobit([...])` en JavaScript.
 

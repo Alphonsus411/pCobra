@@ -11,4 +11,4 @@ Eliminación de código muerto
 ----------------------------
 ``remove_dead_code`` elimina instrucciones que nunca se ejecutarán. Por ejemplo, todo lo que aparezca después de ``return`` dentro de una función se descarta y, si un condicional tiene una condición constante, solo se conserva la rama correspondiente.
 
-Estas optimizaciones se aplican automáticamente antes de ejecutar el intérprete y en los transpiladores a Python y JavaScript.
+Estas optimizaciones se aplican automáticamente antes de ejecutar el intérprete y en los transpiladores a Python, JavaScript y ensamblador.
