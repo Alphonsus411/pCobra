@@ -59,7 +59,7 @@ imprimir('principal')
 
 ## 6. Transpilación y ejecución
 
-- Compila a Python o JavaScript con `cobra compilar archivo.co --tipo python`.
+- Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
 
 ### Ejemplo de transpilación a Python

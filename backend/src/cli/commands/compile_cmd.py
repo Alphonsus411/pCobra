@@ -9,6 +9,7 @@ from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 
 
 class CompileCommand(BaseCommand):
@@ -21,7 +22,7 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo")
         parser.add_argument(
             "--tipo",
-            choices=["python", "js", "asm", "rust"],
+            choices=["python", "js", "asm", "rust", "cpp"],
             default="python",
             help="Tipo de código generado",
         )
@@ -53,6 +54,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorASM()
                 elif transpilador == "rust":
                     transp = TranspiladorRust()
+                elif transpilador == "cpp":
+                    transp = TranspiladorCPP()
                 else:
                     raise ValueError("Transpilador no soportado.")
 
