@@ -15,6 +15,19 @@ def test_asignacion_y_liberacion():
                estrategia.memoria[index:index + 10]), "Error: La memoria no se liberó correctamente"
 
 
+def test_asignacion_espacio_justo_al_final():
+    estrategia = EstrategiaMemoria(10, 0.0)
+    tam = 5
+
+    # Ocupamos toda la memoria excepto los últimos 'tam' bloques
+    estrategia.memoria[:-tam] = [True] * (len(estrategia.memoria) - tam)
+
+    # Intentar asignar un bloque que encaja exactamente al final
+    index = estrategia.asignar(tam)
+
+    assert index == len(estrategia.memoria) - tam
+
+
 def test_gestor_memoria_genetico():
     gestor = GestorMemoriaGenetico(poblacion_tam=10)
 

@@ -23,7 +23,7 @@ class EstrategiaMemoria:
         :param tam: Tamaño del bloque a asignar.
         :return: Índice del bloque asignado o -1 si no se pudo asignar.
         """
-        for i in range(len(self.memoria) - tam):
+        for i in range(len(self.memoria) - tam + 1):
             # Verifica si todos los bloques en el rango son None
             if all(block is None for block in self.memoria[i:i + tam]):
                 # Asignar el bloque
