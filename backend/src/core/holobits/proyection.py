@@ -1,10 +1,18 @@
-"""Operaciones para proyectar holobits en diferentes modos."""
+"""Operaciones para proyectar holobits usando ``holobit-sdk``."""
 
 from .holobit import Holobit
+from holobit_sdk.visualization.projector import proyectar_holograma
+from holobit_sdk.core.quark import Quark
+from holobit_sdk.core.holobit import Holobit as SDKHolobit
+
+from .graficar import _to_sdk_holobit
 
 
 def proyectar(hb: Holobit, modo: str):
-    """Funcion placeholder para proyectar un Holobit."""
+    """Proyecta un ``Holobit`` mediante ``holobit-sdk``."""
     if not isinstance(hb, Holobit):
         raise TypeError("proyectar espera una instancia de Holobit")
-    return f"Proyectando {hb} en {modo}"
+    sdk_hb = _to_sdk_holobit(hb)
+    # El SDK no distingue modos actualmente; se grafica el resultado
+    proyectar_holograma(sdk_hb)
+    return None

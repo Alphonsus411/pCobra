@@ -149,6 +149,19 @@ para var i en rango(2) :
 
 Al transpilar a Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. El tipo `holobit` se transfiere a la llamada `holobit([...])` en Python o `new Holobit([...])` en JavaScript.
 
+## Integración con holobit-sdk
+
+El proyecto instala automáticamente la librería `holobit-sdk`, utilizada para visualizar y manipular holobits. Las funciones `graficar`, `proyectar` y `transformar` de `src.core.holobits` delegan en esta API.
+
+```python
+from src.core.holobits import Holobit, graficar, proyectar, transformar
+
+h = Holobit([0.8, -0.5, 1.2, 0.0, 0.0, 0.0])
+proyectar(h, "2D")
+graficar(h)
+transformar(h, "rotar", "z", 90)
+```
+
 ## Ejemplo de carga de módulos
 
 Puedes dividir el código en varios archivos y cargarlos con `import`:
