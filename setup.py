@@ -12,6 +12,7 @@ setup(
     license='MIT',
     packages=find_packages(where='backend/src', include=['*']),
     package_dir={'': 'backend/src'},
+    include_package_data=True,
     install_requires=[
         'pytest>=7.0',  # Requerimientos según requirements.txt
         'numpy>=1.22.0',
