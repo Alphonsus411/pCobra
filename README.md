@@ -272,9 +272,12 @@ cobra modulos remover modulo.co
 cobra docs
 # Crear un ejecutable independiente
 cobra empaquetar --output dist
+# Iniciar la interfaz gráfica (requiere Flet)
+cobra gui
 ```
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
+El subcomando `gui` abre la interfaz gráfica y requiere tener instalado Flet.
 
 
 Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` para más detalles.
