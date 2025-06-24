@@ -1,5 +1,6 @@
 from pathlib import Path
 from unittest.mock import patch, call
+from io import StringIO
 from src.cli.cli import main
 
 
@@ -26,4 +27,11 @@ def test_cli_docs_invokes_sphinx():
                 str(build),
             ], check=True),
         ])
+
+
+def test_cli_docs_sin_sphinx():
+    with patch("subprocess.run", side_effect=FileNotFoundError), \
+            patch("sys.stdout", new_callable=StringIO) as out:
+        main(["docs"])
+    assert "Sphinx no está instalado" in out.getvalue()
 
