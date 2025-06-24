@@ -332,7 +332,10 @@ class InterpretadorCobra:
             self.mem_contextos.append({})
 
             for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
-                self.variables[nombre_param] = self.evaluar_expresion(arg)
+                valor = self.evaluar_expresion(arg)
+                indice = self.solicitar_memoria(1)
+                self.mem_contextos[-1][nombre_param] = (indice, 1)
+                self.variables[nombre_param] = valor
 
             resultado = None
             for instruccion in funcion.cuerpo:
