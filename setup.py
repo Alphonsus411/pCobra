@@ -31,7 +31,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'cobra=cli.cli:main',
+            'cobra=src.cli.cli:main',
         ],
         'cobra.plugins': [
             # Se registrarán plugins externos aquí
