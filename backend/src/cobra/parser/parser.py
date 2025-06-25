@@ -18,11 +18,13 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoImprimir,
     NodoRetorno,
+    NodoYield,
     NodoPara,
     NodoTryCatch,
     NodoThrow,
     NodoImport,
     NodoUsar,
+    NodoDecorador,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -62,6 +64,7 @@ class Parser:
         self.tokens = tokens
         self.posicion = 0
         self.indentacion_actual = 0
+        self.decoradores_pendientes = []
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -76,6 +79,7 @@ class Parser:
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
+            TipoToken.DECORADOR: self.declaracion_decorador,
         }
 
     def token_actual(self):
@@ -105,7 +109,9 @@ class Parser:
     def parsear(self):
         nodos = []
         while self.token_actual().tipo != TipoToken.EOF:
-            nodos.append(self.declaracion())
+            nodo = self.declaracion()
+            if nodo is not None:
+                nodos.append(nodo)
         return nodos
 
     def declaracion(self):
@@ -381,6 +387,10 @@ class Parser:
                     self.comer(TipoToken.RETORNO)
                     expresion = self.expresion()
                     cuerpo.append(NodoRetorno(expresion))
+                elif self.token_actual().tipo == TipoToken.YIELD:
+                    self.comer(TipoToken.YIELD)
+                    expresion = self.expresion()
+                    cuerpo.append(NodoYield(expresion))
                 else:
                     cuerpo.append(self.declaracion())
             except SyntaxError as e:
@@ -393,7 +403,9 @@ class Parser:
         self.comer(TipoToken.FIN)
 
         logging.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
-        return NodoFuncion(nombre, parametros, cuerpo)
+        decoradores = self.decoradores_pendientes
+        self.decoradores_pendientes = []
+        return NodoFuncion(nombre, parametros, cuerpo, decoradores)
 
     def declaracion_imprimir(self):
         """Parsea una declaración de impresión."""
@@ -449,6 +461,13 @@ class Parser:
         self.comer(TipoToken.RPAREN)
         llamada = NodoLlamadaFuncion(nombre, argumentos)
         return NodoHilo(llamada)
+
+    def declaracion_decorador(self):
+        """Procesa una línea de decorador antes de una función."""
+        self.comer(TipoToken.DECORADOR)
+        expr = self.expresion()
+        self.decoradores_pendientes.append(NodoDecorador(expr))
+        return None
 
     def declaracion_try_catch(self):
         self.comer(TipoToken.TRY)
