@@ -24,6 +24,8 @@ from .cpp_nodes.holobit import visit_holobit as _visit_holobit
 from .cpp_nodes.clase import visit_clase as _visit_clase
 from .cpp_nodes.metodo import visit_metodo as _visit_metodo
 from .cpp_nodes.yield_ import visit_yield as _visit_yield
+from .cpp_nodes.romper import visit_romper as _visit_romper
+from .cpp_nodes.continuar import visit_continuar as _visit_continuar
 
 
 class TranspiladorCPP(NodeVisitor):
@@ -86,3 +88,5 @@ TranspiladorCPP.visit_holobit = _visit_holobit
 TranspiladorCPP.visit_clase = _visit_clase
 TranspiladorCPP.visit_metodo = _visit_metodo
 TranspiladorCPP.visit_yield = _visit_yield
+TranspiladorCPP.visit_romper = _visit_romper
+TranspiladorCPP.visit_continuar = _visit_continuar

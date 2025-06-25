@@ -24,6 +24,8 @@ from .rust_nodes.holobit import visit_holobit as _visit_holobit
 from .rust_nodes.clase import visit_clase as _visit_clase
 from .rust_nodes.metodo import visit_metodo as _visit_metodo
 from .rust_nodes.yield_ import visit_yield as _visit_yield
+from .rust_nodes.romper import visit_romper as _visit_romper
+from .rust_nodes.continuar import visit_continuar as _visit_continuar
 
 
 class TranspiladorRust(NodeVisitor):
@@ -86,3 +88,5 @@ TranspiladorRust.visit_holobit = _visit_holobit
 TranspiladorRust.visit_clase = _visit_clase
 TranspiladorRust.visit_metodo = _visit_metodo
 TranspiladorRust.visit_yield = _visit_yield
+TranspiladorRust.visit_romper = _visit_romper
+TranspiladorRust.visit_continuar = _visit_continuar

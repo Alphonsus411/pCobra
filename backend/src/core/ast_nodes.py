@@ -240,6 +240,22 @@ class NodoYield(NodoAST):
 
 
 @dataclass
+class NodoRomper(NodoAST):
+    """Sentencia para romper un bucle."""
+
+    def __repr__(self):
+        return "NodoRomper()"
+
+
+@dataclass
+class NodoContinuar(NodoAST):
+    """Sentencia para continuar con la siguiente iteración de un bucle."""
+
+    def __repr__(self):
+        return "NodoContinuar()"
+
+
+@dataclass
 class NodoThrow(NodoAST):
     expresion: Any
 
@@ -331,6 +347,8 @@ __all__ = [
     'NodoHilo',
     'NodoRetorno',
     'NodoYield',
+    'NodoRomper',
+    'NodoContinuar',
     'NodoThrow',
     'NodoTryCatch',
     'NodoImport',

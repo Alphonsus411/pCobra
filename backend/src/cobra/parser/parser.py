@@ -24,6 +24,8 @@ from src.core.ast_nodes import (
     NodoDecorador,
     NodoTryCatch,
     NodoThrow,
+    NodoRomper,
+    NodoContinuar,
     NodoImport,
     NodoUsar,
     NodoMacro,
@@ -56,6 +58,8 @@ PALABRAS_RESERVADAS = {
     "clase",
     "decorador",
     "yield",
+    "romper",
+    "continuar",
 }
 
 
@@ -85,6 +89,8 @@ class Parser:
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
             TipoToken.YIELD: self.declaracion_yield,
+            TipoToken.ROMPER: self.declaracion_romper,
+            TipoToken.CONTINUAR: self.declaracion_continuar,
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
         }
@@ -516,6 +522,16 @@ class Parser:
         """Parsea una expresión 'yield' dentro de una función generadora."""
         self.comer(TipoToken.YIELD)
         return NodoYield(self.expresion())
+
+    def declaracion_romper(self):
+        """Parsea la sentencia 'romper' para salir de un bucle."""
+        self.comer(TipoToken.ROMPER)
+        return NodoRomper()
+
+    def declaracion_continuar(self):
+        """Parsea la sentencia 'continuar' para la siguiente iteración."""
+        self.comer(TipoToken.CONTINUAR)
+        return NodoContinuar()
 
     def declaracion_macro(self):
         """Parsea la definición de una macro simple."""

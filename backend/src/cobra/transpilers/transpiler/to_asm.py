@@ -60,6 +60,8 @@ from .asm_nodes.operacion_unaria import visit_operacion_unaria as _visit_operaci
 from .asm_nodes.valor import visit_valor as _visit_valor
 from .asm_nodes.identificador import visit_identificador as _visit_identificador
 from .asm_nodes.usar import visit_usar as _visit_usar
+from .asm_nodes.romper import visit_romper as _visit_romper
+from .asm_nodes.continuar import visit_continuar as _visit_continuar
 
 
 class TranspiladorASM(NodeVisitor):
@@ -139,3 +141,5 @@ TranspiladorASM.visit_operacion_unaria = _visit_operacion_unaria
 TranspiladorASM.visit_valor = _visit_valor
 TranspiladorASM.visit_identificador = _visit_identificador
 TranspiladorASM.visit_usar = _visit_usar
+TranspiladorASM.visit_romper = _visit_romper
+TranspiladorASM.visit_continuar = _visit_continuar

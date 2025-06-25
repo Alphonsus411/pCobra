@@ -74,6 +74,8 @@ class TipoToken:
     HILO = 'HILO'
     DECORADOR = 'DECORADOR'
     YIELD = 'YIELD'
+    ROMPER = 'ROMPER'
+    CONTINUAR = 'CONTINUAR'
 
 
 class Token:
@@ -130,6 +132,8 @@ class Lexer:
             (TipoToken.THROW, r'\bthrow\b'),
             (TipoToken.IMPRIMIR, r'\bimprimir\b'),  # Reconoce 'imprimir'
             (TipoToken.YIELD, r'\byield\b'),
+            (TipoToken.ROMPER, r'\bromper\b'),
+            (TipoToken.CONTINUAR, r'\bcontinuar\b'),
             (TipoToken.FLOTANTE, r'\d+\.\d+'),
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
