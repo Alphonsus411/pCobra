@@ -43,6 +43,8 @@ from .js_nodes.identificador import visit_identificador as _visit_identificador
 from .js_nodes.para import visit_para as _visit_para
 from .js_nodes.decorador import visit_decorador as _visit_decorador
 from .js_nodes.yield_ import visit_yield as _visit_yield
+from .js_nodes.romper import visit_romper as _visit_romper
+from .js_nodes.continuar import visit_continuar as _visit_continuar
 
 
 class TranspiladorJavaScript(NodeVisitor):
@@ -140,6 +142,8 @@ TranspiladorJavaScript.visit_identificador = _visit_identificador
 TranspiladorJavaScript.visit_para = _visit_para
 TranspiladorJavaScript.visit_decorador = _visit_decorador
 TranspiladorJavaScript.visit_yield = _visit_yield
+TranspiladorJavaScript.visit_romper = _visit_romper
+TranspiladorJavaScript.visit_continuar = _visit_continuar
 
     # Métodos de transpilación para tipos de nodos básicos
 

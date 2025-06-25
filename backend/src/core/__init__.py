@@ -34,6 +34,8 @@ __all__ = [
     'NodoTryCatch',
     'NodoImport',
     'NodoUsar',
+    'NodoRomper',
+    'NodoContinuar',
     'NodoPara',
     'NodoImprimir',
     'NodeVisitor',
