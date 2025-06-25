@@ -35,6 +35,20 @@ Hilos
    hilo contar()
    hilo contar()
 
+Funciones asíncronas
+--------------------
+.. code-block:: cobra
+
+   asincronico func saludo():
+       imprimir("hola")
+   fin
+
+   asincronico func principal():
+       esperar saludo()
+   fin
+
+   esperar principal()
+
 Manejo de errores
 -----------------
 .. code-block:: cobra

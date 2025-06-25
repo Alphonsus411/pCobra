@@ -72,8 +72,10 @@ class TipoToken:
     EOF = 'EOF'
     IMPRIMIR = 'IMPRIMIR'  # Añadido soporte para 'imprimir'
     HILO = 'HILO'
+    ASINCRONICO = 'ASINCRONICO'
     DECORADOR = 'DECORADOR'
     YIELD = 'YIELD'
+    ESPERAR = 'ESPERAR'
     ROMPER = 'ROMPER'
     CONTINUAR = 'CONTINUAR'
     PASAR = 'PASAR'
@@ -130,6 +132,7 @@ class Lexer:
             (TipoToken.USAR, r'\busar\b'),
             (TipoToken.MACRO, r'\bmacro\b'),
             (TipoToken.HILO, r'\bhilo\b'),
+            (TipoToken.ASINCRONICO, r'\basincronico\b'),
             (TipoToken.CLASE, r'\bclase\b'),
             (TipoToken.CLASS, r'\bclass\b'),
             (TipoToken.IN, r'\bin\b'),  # Define el token 'in'
@@ -142,6 +145,7 @@ class Lexer:
             (TipoToken.THROW, r'\bthrow\b'),
             (TipoToken.IMPRIMIR, r'\bimprimir\b'),  # Reconoce 'imprimir'
             (TipoToken.YIELD, r'\byield\b'),
+            (TipoToken.ESPERAR, r'\besperar\b'),
             (TipoToken.ROMPER, r'\bromper\b'),
             (TipoToken.CONTINUAR, r'\bcontinuar\b'),
             (TipoToken.PASAR, r'\bpasar\b'),

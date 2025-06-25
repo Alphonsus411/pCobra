@@ -103,6 +103,7 @@ class NodoFuncion(NodoAST):
     parametros: List[str]
     cuerpo: List[Any]
     decoradores: List[Any] = field(default_factory=list)
+    asincronica: bool = False
 
     """Declaración de una función definida por el usuario."""
 
@@ -121,6 +122,7 @@ class NodoMetodo(NodoAST):
     nombre: str
     parametros: List[str]
     cuerpo: List[Any]
+    asincronica: bool = False
 
     """Método perteneciente a una clase."""
 
@@ -237,6 +239,16 @@ class NodoYield(NodoAST):
 
     def __repr__(self):
         return f"NodoYield(expresion={self.expresion})"
+
+
+@dataclass
+class NodoEsperar(NodoAST):
+    expresion: Any
+
+    """Expresión await utilizada en funciones asíncronas."""
+
+    def __repr__(self):
+        return f"NodoEsperar(expresion={self.expresion})"
 
 
 @dataclass
@@ -397,6 +409,7 @@ __all__ = [
     'NodoHilo',
     'NodoRetorno',
     'NodoYield',
+    'NodoEsperar',
     'NodoRomper',
     'NodoContinuar',
     'NodoPasar',
