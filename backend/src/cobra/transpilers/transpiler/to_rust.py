@@ -13,6 +13,7 @@ from src.core.ast_nodes import (
 from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
+from src.cobra.macro import expandir_macros
 
 from .rust_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .rust_nodes.condicional import visit_condicional as _visit_condicional
@@ -65,6 +66,7 @@ class TranspiladorRust(NodeVisitor):
             return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
+        nodos = expandir_macros(nodos)
         nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)

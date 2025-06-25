@@ -54,7 +54,15 @@ import 'modulo.co'
 imprimir(saludo)
 ```
 
-## 5. Concurrencia
+## 5. Macros
+
+Permiten reutilizar fragmentos de código mediante la directiva `macro`.
+
+```cobra
+macro saluda { imprimir(1) }
+saluda()
+```
+## 6. Concurrencia
 
 - Ejecuta funciones en paralelo con la palabra clave `hilo`.
 
@@ -67,7 +75,7 @@ hilo tarea()
 imprimir('principal')
 ```
 
-## 6. Transpilación y ejecución
+## 7. Transpilación y ejecución
 
 - Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
@@ -95,9 +103,8 @@ print(TranspiladorPython().transpilar(arbol))
 ### Características aún no soportadas
 
 Herencia múltiple en clases.
-Macros o metaprogramación avanzada.
 
-## 7. Modo seguro
+## 8. Modo seguro
 
 - Añade `--seguro` para evitar operaciones peligrosas como `leer_archivo` o `hilo`.
 
@@ -105,6 +112,6 @@ Macros o metaprogramación avanzada.
 cobra ejecutar programa.co --seguro
 ```
 
-## 8. Próximos pasos
+## 9. Próximos pasos
 
 Revisa la documentación en `frontend/docs` para profundizar en la arquitectura, validadores y más ejemplos.

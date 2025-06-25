@@ -23,6 +23,7 @@ from backend.src.core.ast_nodes import (
     NodoThrow,
     NodoImport,
     NodoUsar,
+    NodoMacro,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -48,6 +49,7 @@ PALABRAS_RESERVADAS = {
     "transformar",
     "graficar",
     "usar",
+    "macro",
 }
 
 
@@ -76,6 +78,7 @@ class Parser:
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
+            TipoToken.MACRO: self.declaracion_macro,
         }
 
     def token_actual(self):
@@ -483,6 +486,31 @@ class Parser:
         """Parsea una declaración 'throw'."""
         self.comer(TipoToken.THROW)
         return NodoThrow(self.expresion())
+
+    def declaracion_macro(self):
+        """Parsea la definición de una macro simple."""
+        self.comer(TipoToken.MACRO)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba un nombre de macro")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        self.comer(TipoToken.LBRACE)
+        cuerpo_tokens = []
+        profundidad = 1
+        while profundidad > 0 and self.token_actual().tipo != TipoToken.EOF:
+            token = self.token_actual()
+            if token.tipo == TipoToken.LBRACE:
+                profundidad += 1
+            elif token.tipo == TipoToken.RBRACE:
+                profundidad -= 1
+                if profundidad == 0:
+                    break
+            cuerpo_tokens.append(token)
+            self.avanzar()
+        self.comer(TipoToken.RBRACE)
+        cuerpo_parser = Parser(cuerpo_tokens + [Token(TipoToken.EOF, None)])
+        cuerpo = cuerpo_parser.parsear()
+        return NodoMacro(nombre, cuerpo)
 
     def expresion(self):
         return self.exp_or()
