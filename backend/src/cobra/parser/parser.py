@@ -21,6 +21,7 @@ from src.core.ast_nodes import (
     NodoImprimir,
     NodoRetorno,
     NodoPara,
+    NodoDecorador,
     NodoTryCatch,
     NodoThrow,
     NodoImport,
@@ -53,6 +54,7 @@ PALABRAS_RESERVADAS = {
     "usar",
     "macro",
     "clase",
+    "decorador",
 }
 
 
@@ -123,6 +125,17 @@ class Parser:
             if token.tipo == TipoToken.IDENTIFICADOR and token.valor == "definir":
                 self.token_actual().tipo = TipoToken.FUNC
                 token = self.token_actual()
+
+            # Decoradores antes de funciones
+            if token.tipo == TipoToken.DECORADOR:
+                decoradores = []
+                while self.token_actual().tipo == TipoToken.DECORADOR:
+                    decoradores.append(self.declaracion_decorador())
+                if self.token_actual().tipo != TipoToken.FUNC:
+                    raise SyntaxError("Un decorador debe preceder a una función")
+                funcion = self.declaracion_funcion()
+                funcion.decoradores = decoradores + funcion.decoradores
+                return funcion
 
             # Manejo especial para declaraciones de retorno
             if token.tipo == TipoToken.RETORNO:
@@ -436,6 +449,12 @@ class Parser:
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoUsar(ruta)
+
+    def declaracion_decorador(self):
+        """Parsea una línea de decorador previa a una función."""
+        self.comer(TipoToken.DECORADOR)
+        expresion = self.expresion()
+        return NodoDecorador(expresion)
 
     def declaracion_hilo(self):
         """Parsea la creación de un hilo que ejecuta una función."""

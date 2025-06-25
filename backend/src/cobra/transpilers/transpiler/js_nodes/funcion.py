@@ -12,3 +12,6 @@ def visit_funcion(self, nodo):
     if self.usa_indentacion:
         self.indentacion -= 1
     self.agregar_linea("}")
+    for decorador in reversed(getattr(nodo, "decoradores", [])):
+        expr = self.obtener_valor(decorador.expresion)
+        self.agregar_linea(f"{nodo.nombre} = {expr}({nodo.nombre});")

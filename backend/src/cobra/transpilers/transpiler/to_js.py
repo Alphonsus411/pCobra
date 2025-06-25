@@ -41,6 +41,7 @@ from .js_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacio
 from .js_nodes.valor import visit_valor as _visit_valor
 from .js_nodes.identificador import visit_identificador as _visit_identificador
 from .js_nodes.para import visit_para as _visit_para
+from .js_nodes.decorador import visit_decorador as _visit_decorador
 
 
 class TranspiladorJavaScript(NodeVisitor):
@@ -136,6 +137,7 @@ TranspiladorJavaScript.visit_operacion_unaria = _visit_operacion_unaria
 TranspiladorJavaScript.visit_valor = _visit_valor
 TranspiladorJavaScript.visit_identificador = _visit_identificador
 TranspiladorJavaScript.visit_para = _visit_para
+TranspiladorJavaScript.visit_decorador = _visit_decorador
 
     # Métodos de transpilación para tipos de nodos básicos
 
