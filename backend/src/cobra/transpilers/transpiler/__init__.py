@@ -2,4 +2,5 @@
 
 # Exportar transpiladores básicos
 from .to_ruby import TranspiladorRuby
+from .to_php import TranspiladorPHP
 
