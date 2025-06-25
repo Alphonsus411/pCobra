@@ -71,6 +71,8 @@ class TipoToken:
     EOF = 'EOF'
     IMPRIMIR = 'IMPRIMIR'  # Añadido soporte para 'imprimir'
     HILO = 'HILO'
+    DECORADOR = 'DECORADOR'
+    YIELD = 'YIELD'
 
 
 class Token:
@@ -123,6 +125,7 @@ class Lexer:
             (TipoToken.CATCH, r'\bcatch\b'),
             (TipoToken.THROW, r'\bthrow\b'),
             (TipoToken.IMPRIMIR, r'\bimprimir\b'),  # Reconoce 'imprimir'
+            (TipoToken.YIELD, r'\byield\b'),
             (TipoToken.FLOTANTE, r'\d+\.\d+'),
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
@@ -150,6 +153,7 @@ class Lexer:
             (TipoToken.RBRACKET, r'\]'),
             (TipoToken.COMA, r','),
             (TipoToken.RETORNO, r'\bretorno\b'),
+            (TipoToken.DECORADOR, r'@'),
             (None, r'\s+'),  # Ignorar espacios en blanco
         ]
 
