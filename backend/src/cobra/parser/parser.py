@@ -55,6 +55,7 @@ PALABRAS_RESERVADAS = {
     "macro",
     "clase",
     "decorador",
+    "yield",
 }
 
 
@@ -83,6 +84,7 @@ class Parser:
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
+            TipoToken.YIELD: self.declaracion_yield,
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
         }
@@ -509,6 +511,11 @@ class Parser:
         """Parsea una declaración 'throw'."""
         self.comer(TipoToken.THROW)
         return NodoThrow(self.expresion())
+
+    def declaracion_yield(self):
+        """Parsea una expresión 'yield' dentro de una función generadora."""
+        self.comer(TipoToken.YIELD)
+        return NodoYield(self.expresion())
 
     def declaracion_macro(self):
         """Parsea la definición de una macro simple."""

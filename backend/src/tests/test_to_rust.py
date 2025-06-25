@@ -73,3 +73,11 @@ def test_transpilador_clase():
         "}"
     )
     assert resultado == esperado
+
+
+def test_transpilador_yield():
+    ast = [NodoFuncion("generador", [], [NodoYield(NodoValor(1))])]
+    t = TranspiladorRust()
+    resultado = t.transpilar(ast)
+    esperado = "fn generador() {\n    yield 1;\n}"
+    assert resultado == esperado

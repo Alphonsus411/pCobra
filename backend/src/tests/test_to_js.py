@@ -48,3 +48,11 @@ def test_transpilador_holobit():
     resultado = transpilador.transpilar(ast)
     expected = "let miHolobit = new Holobit([0.8, -0.5, 1.2]);"
     assert resultado == expected
+
+
+def test_transpilador_yield():
+    ast = [NodoFuncion("generador", [], [NodoYield(NodoValor(1))])]
+    t = TranspiladorJavaScript()
+    resultado = t.transpilar(ast)
+    esperado = "function generador() {\n    yield 1;\n}"
+    assert resultado == esperado

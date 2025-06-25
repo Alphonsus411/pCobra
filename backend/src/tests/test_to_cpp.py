@@ -72,3 +72,11 @@ def test_transpilador_clase():
         "};"
     )
     assert resultado == esperado
+
+
+def test_transpilador_yield():
+    ast = [NodoFuncion("generador", [], [NodoYield(NodoValor(1))])]
+    t = TranspiladorCPP()
+    resultado = t.transpilar(ast)
+    esperado = "void generador() {\n    co_yield 1;\n}"
+    assert resultado == esperado

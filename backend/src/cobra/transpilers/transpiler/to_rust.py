@@ -23,6 +23,7 @@ from .rust_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_
 from .rust_nodes.holobit import visit_holobit as _visit_holobit
 from .rust_nodes.clase import visit_clase as _visit_clase
 from .rust_nodes.metodo import visit_metodo as _visit_metodo
+from .rust_nodes.yield_ import visit_yield as _visit_yield
 
 
 class TranspiladorRust(NodeVisitor):
@@ -84,3 +85,4 @@ TranspiladorRust.visit_llamada_funcion = _visit_llamada_funcion
 TranspiladorRust.visit_holobit = _visit_holobit
 TranspiladorRust.visit_clase = _visit_clase
 TranspiladorRust.visit_metodo = _visit_metodo
+TranspiladorRust.visit_yield = _visit_yield

@@ -20,6 +20,7 @@ from src.core.ast_nodes import (
     NodoValor,
     NodoImprimir,
     NodoRetorno,
+    NodoYield,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoTryCatch,
@@ -112,6 +113,18 @@ class InterpretadorCobra:
         """Valida un nodo si el modo seguro está activo."""
         if self.safe_mode:
             nodo.aceptar(self._validador)
+
+    def _contiene_yield(self, nodo):
+        if isinstance(nodo, NodoYield):
+            return True
+        for valor in getattr(nodo, '__dict__', {}).values():
+            if isinstance(valor, list):
+                for elem in valor:
+                    if hasattr(elem, '__dict__') and self._contiene_yield(elem):
+                        return True
+            elif hasattr(valor, '__dict__') and self._contiene_yield(valor):
+                return True
+        return False
 
     def ejecutar_ast(self, ast):
         ast = remove_dead_code(optimize_constants(ast))
@@ -327,28 +340,47 @@ class InterpretadorCobra:
                 print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
                 return None
 
-            # Crea un nuevo contexto para la llamada
-            self.contextos.append({})
-            self.mem_contextos.append({})
+            contiene_yield = any(self._contiene_yield(instr) for instr in funcion.cuerpo)
 
-            for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
-                valor = self.evaluar_expresion(arg)
-                indice = self.solicitar_memoria(1)
-                self.mem_contextos[-1][nombre_param] = (indice, 1)
-                self.variables[nombre_param] = valor
+            def preparar_contexto():
+                self.contextos.append({})
+                self.mem_contextos.append({})
+                for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
+                    valor = self.evaluar_expresion(arg)
+                    indice = self.solicitar_memoria(1)
+                    self.mem_contextos[-1][nombre_param] = (indice, 1)
+                    self.variables[nombre_param] = valor
 
-            resultado = None
-            for instruccion in funcion.cuerpo:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    break
+            def limpiar_contexto():
+                memoria_local = self.mem_contextos.pop()
+                for idx, tam in memoria_local.values():
+                    self.liberar_memoria(idx, tam)
+                self.contextos.pop()
 
-            # Elimina el contexto al finalizar la función y libera su memoria
-            memoria_local = self.mem_contextos.pop()
-            for idx, tam in memoria_local.values():
-                self.liberar_memoria(idx, tam)
-            self.contextos.pop()
-            return resultado
+            if contiene_yield:
+                def generador():
+                    preparar_contexto()
+                    try:
+                        for instr in funcion.cuerpo:
+                            if isinstance(instr, NodoYield):
+                                yield self.evaluar_expresion(instr.expresion)
+                            else:
+                                resultado = self.ejecutar_nodo(instr)
+                                if resultado is not None:
+                                    return
+                    finally:
+                        limpiar_contexto()
+
+                return generador()
+            else:
+                preparar_contexto()
+                resultado = None
+                for instruccion in funcion.cuerpo:
+                    resultado = self.ejecutar_nodo(instruccion)
+                    if resultado is not None:
+                        break
+                limpiar_contexto()
+                return resultado
         else:
             print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
 
