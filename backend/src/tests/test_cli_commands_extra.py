@@ -43,6 +43,27 @@ from src.cli.commands import modules_cmd
                 "auto x = 5;",
             ],
         ),
+        (
+            "go",
+            [
+                "Código generado (TranspiladorGo):",
+                "x := 5",
+            ],
+        ),
+        (
+            "r",
+            [
+                "Código generado (TranspiladorR):",
+                "x <- 5",
+            ],
+        ),
+        (
+            "julia",
+            [
+                "Código generado (TranspiladorJulia):",
+                "x = 5",
+            ],
+        ),
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
