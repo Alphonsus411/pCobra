@@ -2,14 +2,16 @@
 
 import logging
 import json
-from backend.src.cobra.lexico.lexer import TipoToken, Token
+from src.cobra.lexico.lexer import TipoToken, Token
 
-from backend.src.core.ast_nodes import (
+from src.core.ast_nodes import (
     NodoAsignacion,
     NodoHolobit,
     NodoCondicional,
     NodoBucleMientras,
     NodoFuncion,
+    NodoClase,
+    NodoMetodo,
     NodoLlamadaFuncion,
     NodoHilo,
     NodoOperacionBinaria,
@@ -50,6 +52,7 @@ PALABRAS_RESERVADAS = {
     "graficar",
     "usar",
     "macro",
+    "clase",
 }
 
 
@@ -79,6 +82,7 @@ class Parser:
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
             TipoToken.MACRO: self.declaracion_macro,
+            TipoToken.CLASE: self.declaracion_clase,
         }
 
     def token_actual(self):
@@ -511,6 +515,77 @@ class Parser:
         cuerpo_parser = Parser(cuerpo_tokens + [Token(TipoToken.EOF, None)])
         cuerpo = cuerpo_parser.parsear()
         return NodoMacro(nombre, cuerpo)
+
+    def declaracion_metodo(self):
+        """Parsea la declaración de un método dentro de una clase."""
+        self.comer(TipoToken.FUNC)
+
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba un nombre de método")
+        nombre = self.token_actual().valor
+        if nombre in PALABRAS_RESERVADAS:
+            raise SyntaxError(
+                f"El nombre del método '{nombre}' es una palabra reservada"
+            )
+        self.comer(TipoToken.IDENTIFICADOR)
+
+        self.comer(TipoToken.LPAREN)
+        parametros = self.lista_parametros()
+        self.comer(TipoToken.RPAREN)
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de la cabecera del método")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        cuerpo = []
+        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+            cuerpo.append(self.declaracion())
+
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise SyntaxError("Se esperaba 'fin' para cerrar el método")
+        self.comer(TipoToken.FIN)
+
+        return NodoMetodo(nombre, parametros, cuerpo)
+
+    def declaracion_clase(self):
+        """Parsea la declaración de una clase."""
+        self.comer(TipoToken.CLASE)
+
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba un nombre de clase")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+
+        bases = []
+        if self.token_actual().tipo == TipoToken.LPAREN:
+            self.comer(TipoToken.LPAREN)
+            while self.token_actual().tipo != TipoToken.RPAREN:
+                if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                    raise SyntaxError("Se esperaba un nombre de clase base")
+                bases.append(self.token_actual().valor)
+                self.comer(TipoToken.IDENTIFICADOR)
+                if self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                else:
+                    break
+            self.comer(TipoToken.RPAREN)
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después del encabezado de la clase")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        metodos = []
+        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+            if self.token_actual().tipo == TipoToken.FUNC:
+                metodos.append(self.declaracion_metodo())
+            else:
+                metodos.append(self.declaracion())
+
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise SyntaxError("Se esperaba 'fin' para cerrar la clase")
+        self.comer(TipoToken.FIN)
+
+        return NodoClase(nombre, metodos, bases)
 
     def expresion(self):
         return self.exp_or()

@@ -21,6 +21,8 @@ from .rust_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mien
 from .rust_nodes.funcion import visit_funcion as _visit_funcion
 from .rust_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
 from .rust_nodes.holobit import visit_holobit as _visit_holobit
+from .rust_nodes.clase import visit_clase as _visit_clase
+from .rust_nodes.metodo import visit_metodo as _visit_metodo
 
 
 class TranspiladorRust(NodeVisitor):
@@ -80,3 +82,5 @@ TranspiladorRust.visit_bucle_mientras = _visit_bucle_mientras
 TranspiladorRust.visit_funcion = _visit_funcion
 TranspiladorRust.visit_llamada_funcion = _visit_llamada_funcion
 TranspiladorRust.visit_holobit = _visit_holobit
+TranspiladorRust.visit_clase = _visit_clase
+TranspiladorRust.visit_metodo = _visit_metodo
