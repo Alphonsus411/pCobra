@@ -13,6 +13,7 @@ from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from src.cobra.transpilers.transpiler.to_go import TranspiladorGo
 from src.cobra.transpilers.transpiler.to_r import TranspiladorR
 from src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
+from src.cobra.transpilers.transpiler.to_java import TranspiladorJava
 
 
 class CompileCommand(BaseCommand):
@@ -25,7 +26,7 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo")
         parser.add_argument(
             "--tipo",
-            choices=["python", "js", "asm", "rust", "cpp", "go", "r", "julia"],
+            choices=["python", "js", "asm", "rust", "cpp", "go", "r", "julia", "java"],
             default="python",
             help="Tipo de código generado",
         )
@@ -59,6 +60,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorRust()
                 elif transpilador == "cpp":
                     transp = TranspiladorCPP()
+                elif transpilador == "java":
+                    transp = TranspiladorJava()
                 elif transpilador == "go":
                     transp = TranspiladorGo()
                 elif transpilador == "r":
