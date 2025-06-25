@@ -20,7 +20,11 @@ from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 
 
 class CompileCommand(BaseCommand):
-    """Transpila un archivo Cobra."""
+    """Transpila un archivo Cobra a distintos lenguajes.
+
+    Soporta Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia,
+    Java y ahora también COBOL, Fortran y Pascal.
+    """
 
     name = "compilar"
 
@@ -29,7 +33,20 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo")
         parser.add_argument(
             "--tipo",
-            choices=["python", "js", "asm", "rust", "cpp", "go", "r", "julia", "java", "cobol", "fortran", "pascal"],
+            choices=[
+                "python",
+                "js",
+                "asm",
+                "rust",
+                "cpp",
+                "go",
+                "r",
+                "julia",
+                "java",
+                "cobol",
+                "fortran",
+                "pascal",
+            ],
             default="python",
             help="Tipo de código generado",
         )

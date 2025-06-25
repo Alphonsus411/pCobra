@@ -237,6 +237,18 @@ resultado = transpiler.transpilar(arbol)
 print(resultado)
 ```
 
+Para otros lenguajes puedes invocar los nuevos transpiladores así:
+
+```python
+from cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
+from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
+from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+
+codigo_cobol = TranspiladorCOBOL().transpilar(arbol)
+codigo_fortran = TranspiladorFortran().transpilar(arbol)
+codigo_pascal = TranspiladorPascal().transpilar(arbol)
+```
+
 Requiere tener instalado el paquete en modo editable y todas las dependencias
 de `requirements.txt`. Si necesitas generar archivos a partir de módulos Cobra,
 consulta el mapeo definido en `cobra.mod`.
@@ -323,6 +335,8 @@ cobra compilar programa.co --tipo=r
 cobra compilar programa.co --tipo=julia
 cobra compilar programa.co --tipo=java
 cobra compilar programa.co --tipo=cobol
+cobra compilar programa.co --tipo=fortran
+cobra compilar programa.co --tipo=pascal
 echo $?  # 0 al compilar sin problemas
 
 cobra ejecutar inexistente.co
