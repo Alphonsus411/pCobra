@@ -142,3 +142,11 @@ Se añadieron nuevas construcciones al lenguaje:
 - `finalmente` dentro de `try` para ejecutar código final.
 - Importaciones `desde` ... `como` para alias de módulos.
 - Nueva estructura `switch` con múltiples `case`.
+
+## 11. Uso de Qualia
+
+Qualia registra cada ejecución y genera sugerencias para mejorar tu código.
+El estado se guarda en `qualia_state.json`. Puedes obtener las sugerencias
+ejecutando `sugerencias` en el modo interactivo o escribiendo `%sugerencias`
+en el kernel de Jupyter.
+

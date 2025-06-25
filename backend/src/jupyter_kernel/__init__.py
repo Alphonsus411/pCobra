@@ -5,6 +5,7 @@ from ipykernel.kernelbase import Kernel
 from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser, PALABRAS_RESERVADAS
 from src.core.interpreter import InterpretadorCobra
+from src.core.qualia_bridge import get_suggestions
 
 
 def install(user=True):
@@ -30,6 +31,12 @@ class CobraKernel(Kernel):
         self.interpreter = InterpretadorCobra()
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
+        if code.strip() == "%sugerencias":
+            texto = "\n".join(get_suggestions())
+            if not silent:
+                self.send_response(self.iopub_socket, "stream", {"name": "stdout", "text": texto})
+            return {"status": "ok", "execution_count": self.execution_count, "payload": [], "user_expressions": {}}
+
         stdout = io.StringIO()
         try:
             with contextlib.redirect_stdout(stdout):

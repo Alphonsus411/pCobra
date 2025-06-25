@@ -2,6 +2,7 @@ import logging
 from .base import BaseCommand
 
 from src.core.interpreter import InterpretadorCobra
+from src.core.qualia_bridge import get_suggestions
 from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser
 from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
@@ -32,6 +33,10 @@ class InteractiveCommand(BaseCommand):
                     print("Tokens generados:")
                     for token in tokens:
                         print(token)
+                    continue
+                elif linea == "sugerencias":
+                    for s in get_suggestions():
+                        print(s)
                     continue
                 elif linea == "ast":
                     tokens = Lexer(linea).tokenizar()

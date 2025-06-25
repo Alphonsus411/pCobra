@@ -34,6 +34,7 @@ from src.core.semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
+from src.core.qualia_bridge import register_execution
 
 # Ruta de los módulos instalados junto con una lista blanca opcional.
 MODULES_PATH = os.path.abspath(
@@ -128,6 +129,7 @@ class InterpretadorCobra:
 
     def ejecutar_ast(self, ast):
         ast = remove_dead_code(optimize_constants(ast))
+        register_execution(str(ast))
         for nodo in ast:
             self._validar(nodo)
             resultado = self.ejecutar_nodo(nodo)
