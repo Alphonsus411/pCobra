@@ -91,10 +91,18 @@ class NodoDiccionario(NodoAST):
 
 
 @dataclass
+class NodoDecorador(NodoAST):
+    expresion: Any
+
+    """Representa una línea de decorador previa a una función."""
+
+
+@dataclass
 class NodoFuncion(NodoAST):
     nombre: str
     parametros: List[str]
     cuerpo: List[Any]
+    decoradores: List[Any] = field(default_factory=list)
 
     """Declaración de una función definida por el usuario."""
 
@@ -222,6 +230,16 @@ class NodoRetorno(NodoAST):
 
 
 @dataclass
+class NodoYield(NodoAST):
+    expresion: Any
+
+    """Expresión yield dentro de una función generadora."""
+
+    def __repr__(self):
+        return f"NodoYield(expresion={self.expresion})"
+
+
+@dataclass
 class NodoThrow(NodoAST):
     expresion: Any
 
@@ -287,6 +305,7 @@ __all__ = [
     'NodoFor',
     'NodoLista',
     'NodoDiccionario',
+    'NodoDecorador',
     'NodoFuncion',
     'NodoClase',
     'NodoMetodo',
@@ -300,6 +319,7 @@ __all__ = [
     'NodoLlamadaFuncion',
     'NodoHilo',
     'NodoRetorno',
+    'NodoYield',
     'NodoThrow',
     'NodoTryCatch',
     'NodoImport',

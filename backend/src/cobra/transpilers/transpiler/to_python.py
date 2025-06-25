@@ -50,6 +50,8 @@ from .python_nodes.operacion_unaria import visit_operacion_unaria as _visit_oper
 from .python_nodes.valor import visit_valor as _visit_valor
 from .python_nodes.identificador import visit_identificador as _visit_identificador
 from .python_nodes.para import visit_para as _visit_para
+from .python_nodes.decorador import visit_decorador as _visit_decorador
+from .python_nodes.yield_ import visit_yield as _visit_yield
 
 
 class TranspiladorPython(NodeVisitor):
@@ -168,4 +170,6 @@ TranspiladorPython.visit_operacion_unaria = _visit_operacion_unaria
 TranspiladorPython.visit_valor = _visit_valor
 TranspiladorPython.visit_identificador = _visit_identificador
 TranspiladorPython.visit_para = _visit_para
+TranspiladorPython.visit_decorador = _visit_decorador
+TranspiladorPython.visit_yield = _visit_yield
 
