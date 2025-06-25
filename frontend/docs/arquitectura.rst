@@ -12,7 +12,7 @@ compilar a otros lenguajes y gestionar módulos instalados.
 Core
 ----
 Contiene el corazón del lenguaje: lexer, parser, intérprete y
-transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby y PHP. Estos elementos trabajan en
+transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX. Estos elementos trabajan en
 conjunto para analizar el código fuente y transformarlo en otras
 representaciones o ejecutarlo de forma directa.
 Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilitar su reutilización.
@@ -20,7 +20,7 @@ El recorrido de estos nodos puede realizarse mediante la clase ``NodeVisitor``
 ubicada en ``src.core.visitor``, que despacha automáticamente al método
 ``visit_<Clase>`` correspondiente.
 Para mantener el código modular, la lógica específica de cada nodo del AST se
-almacena en paquetes independientes. Los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby y PHP
+almacena en paquetes independientes. Los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX
 importan estas funciones desde ``src.core.transpiler.python_nodes`` y
 ``src.core.transpiler.js_nodes`` (o ``asm_nodes`` o ``rust_nodes``) respectivamente, delegando la operación de
 ``visit_<nodo>`` a dichas funciones.
@@ -49,7 +49,7 @@ optimizar el rendimiento y evitar fugas de memoria.
        CLI -> Lexer;
    Interprete -> Memoria;
    Interprete -> ModulosNativos;
-   Transpiladores -> {Python JS Asm Rust Cpp Go R Julia Java COBOL Fortran Pascal Ruby PHP};
+   Transpiladores -> {Python JS Asm Rust Cpp Go R Julia Java COBOL Fortran Pascal Ruby PHP Matlab LaTeX};
    }
 
 Reporte de errores léxicos

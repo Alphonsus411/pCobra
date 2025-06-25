@@ -98,9 +98,9 @@ Puedes anteponer `@` a una función para modificar su comportamiento con un deco
        imprimir('hola')
    fin
 
-**Transpilación a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby y PHP**
+**Transpilación a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX**
 
-- `imprimir` se transpila a `print` en Python, `console.log` en JavaScript, `PRINT` en ensamblador, `println!` en Rust, `std::cout` en C++, `fmt.Println` en Go, `print` en R, `println` en Julia, `System.out.println` en Java, `DISPLAY` en COBOL, `print *` en Fortran, `writeln` en Pascal, `puts` en Ruby y `echo` en PHP.
+- `imprimir` se transpila a `print` en Python, `console.log` en JavaScript, `PRINT` en ensamblador, `println!` en Rust, `std::cout` en C++, `fmt.Println` en Go, `print` en R, `println` en Julia, `System.out.println` en Java, `DISPLAY` en COBOL, `print *` en Fortran, `writeln` en Pascal, `puts` en Ruby, `echo` en PHP, `disp` en Matlab y `\texttt{}` en LaTeX.
 - Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en ensamblador generan instrucciones `WHILE` y `FOR`.
 - La construcción `holobit` se traduce a `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust y `holobit({...})` en C++, mientras que en Ruby utiliza `Holobit.new([...])` y en PHP `new Holobit([...])`.
 
