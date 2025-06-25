@@ -78,6 +78,20 @@ from src.cli.commands import modules_cmd
                 "x = 5",
             ],
         ),
+        (
+            "ruby",
+            [
+                "Código generado (TranspiladorRuby):",
+                "x = 5",
+            ],
+        ),
+        (
+            "php",
+            [
+                "Código generado (TranspiladorPHP):",
+                "$x = 5;",
+            ],
+        ),
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
