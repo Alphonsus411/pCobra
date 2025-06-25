@@ -2,7 +2,7 @@ from .base import BaseCommand
 
 
 class FletCommand(BaseCommand):
-    """Inicia la interfaz gráfica utilizando Flet."""
+    """Inicia el entorno IDLE basado en Flet."""
 
     name = "gui"
 
@@ -16,7 +16,7 @@ class FletCommand(BaseCommand):
     def run(self, args):
         try:
             import flet
-            from src.gui.app import main
+            from src.gui.idle import main
         except ModuleNotFoundError:
             print("Flet no está instalado. Ejecuta 'pip install flet'.")
             return 1
