@@ -264,6 +264,40 @@ class NodoPasar(NodoAST):
 
 
 @dataclass
+class NodoAssert(NodoAST):
+    condicion: Any
+    mensaje: Any | None = None
+
+
+@dataclass
+class NodoDel(NodoAST):
+    objetivo: Any
+
+
+@dataclass
+class NodoGlobal(NodoAST):
+    nombres: List[str]
+
+
+@dataclass
+class NodoNoLocal(NodoAST):
+    nombres: List[str]
+
+
+@dataclass
+class NodoLambda(NodoAST):
+    parametros: List[str]
+    cuerpo: Any
+
+
+@dataclass
+class NodoWith(NodoAST):
+    contexto: Any
+    alias: str | None
+    cuerpo: List[Any]
+
+
+@dataclass
 class NodoThrow(NodoAST):
     expresion: Any
 
@@ -278,6 +312,7 @@ class NodoTryCatch(NodoAST):
     bloque_try: List[Any]
     nombre_excepcion: Optional[str] = None
     bloque_catch: List[Any] = field(default_factory=list)
+    bloque_finally: List[Any] = field(default_factory=list)
 
     """Bloque ``try`` con manejo opcional de excepciones."""
 
@@ -294,6 +329,13 @@ class NodoUsar(NodoAST):
     modulo: str
 
     """Instrucción para usar un módulo especificado."""
+
+
+@dataclass
+class NodoImportDesde(NodoAST):
+    modulo: str
+    nombre: str
+    alias: str | None = None
 
 
 @dataclass
@@ -358,8 +400,15 @@ __all__ = [
     'NodoRomper',
     'NodoContinuar',
     'NodoPasar',
+    'NodoAssert',
+    'NodoDel',
+    'NodoGlobal',
+    'NodoNoLocal',
+    'NodoLambda',
+    'NodoWith',
     'NodoThrow',
     'NodoTryCatch',
+    'NodoImportDesde',
     'NodoImport',
     'NodoUsar',
     'NodoPara',

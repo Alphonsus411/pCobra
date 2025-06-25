@@ -77,6 +77,15 @@ class TipoToken:
     ROMPER = 'ROMPER'
     CONTINUAR = 'CONTINUAR'
     PASAR = 'PASAR'
+    AFIRMAR = 'AFIRMAR'
+    ELIMINAR = 'ELIMINAR'
+    GLOBAL = 'GLOBAL'
+    NOLOCAL = 'NOLOCAL'
+    LAMBDA = 'LAMBDA'
+    CON = 'CON'
+    FINALMENTE = 'FINALMENTE'
+    DESDE = 'DESDE'
+    COMO = 'COMO'
 
 
 class Token:
@@ -136,6 +145,15 @@ class Lexer:
             (TipoToken.ROMPER, r'\bromper\b'),
             (TipoToken.CONTINUAR, r'\bcontinuar\b'),
             (TipoToken.PASAR, r'\bpasar\b'),
+            (TipoToken.AFIRMAR, r'\bafirmar\b'),
+            (TipoToken.ELIMINAR, r'\beliminar\b'),
+            (TipoToken.GLOBAL, r'\bglobal\b'),
+            (TipoToken.NOLOCAL, r'\bnolocal\b'),
+            (TipoToken.LAMBDA, r'\blambda\b'),
+            (TipoToken.CON, r'\bcon\b'),
+            (TipoToken.FINALMENTE, r'\bfinalmente\b'),
+            (TipoToken.DESDE, r'\bdesde\b'),
+            (TipoToken.COMO, r'\bcomo\b'),
             (TipoToken.FLOTANTE, r'\d+\.\d+'),
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),

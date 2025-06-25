@@ -17,7 +17,14 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
-    NodoImprimir
+    NodoImprimir,
+    NodoAssert,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
+    NodoLambda,
+    NodoWith,
+    NodoImportDesde
 )
 from src.cobra.parser.parser import Parser
 from src.cobra.lexico.lexer import TipoToken, Lexer
@@ -56,6 +63,36 @@ from .python_nodes.yield_ import visit_yield as _visit_yield
 from .python_nodes.romper import visit_romper as _visit_romper
 from .python_nodes.continuar import visit_continuar as _visit_continuar
 from .python_nodes.pasar import visit_pasar as _visit_pasar
+
+def visit_assert(self, nodo):
+    expr = self.obtener_valor(nodo.condicion)
+    msg = f", {self.obtener_valor(nodo.mensaje)}" if nodo.mensaje else ""
+    self.codigo += f"{self.obtener_indentacion()}assert {expr}{msg}\n"
+
+def visit_del(self, nodo):
+    objetivo = self.obtener_valor(nodo.objetivo)
+    self.codigo += f"{self.obtener_indentacion()}del {objetivo}\n"
+
+def visit_global(self, nodo):
+    nombres = ", ".join(nodo.nombres)
+    self.codigo += f"{self.obtener_indentacion()}global {nombres}\n"
+
+def visit_nolocal(self, nodo):
+    nombres = ", ".join(nodo.nombres)
+    self.codigo += f"{self.obtener_indentacion()}nonlocal {nombres}\n"
+
+def visit_with(self, nodo):
+    ctx = self.obtener_valor(nodo.contexto)
+    alias = f" as {nodo.alias}" if nodo.alias else ""
+    self.codigo += f"{self.obtener_indentacion()}with {ctx}{alias}:\n"
+    self.nivel_indentacion += 1
+    for inst in nodo.cuerpo:
+        inst.aceptar(self)
+    self.nivel_indentacion -= 1
+
+def visit_import_desde(self, nodo):
+    alias = f" as {nodo.alias}" if nodo.alias else ""
+    self.codigo += f"from {nodo.modulo} import {nodo.nombre}{alias}\n"
 
 
 class TranspiladorPython(NodeVisitor):
@@ -144,6 +181,10 @@ class TranspiladorPython(NodeVisitor):
             else:
                 op = nodo.operador.valor
             return f"{op} {val}" if op == "not" else f"{op}{val}"
+        elif isinstance(nodo, NodoLambda):
+            params = ", ".join(nodo.parametros)
+            cuerpo = self.obtener_valor(nodo.cuerpo)
+            return f"lambda {params}: {cuerpo}"
         else:
             return str(getattr(nodo, "valor", nodo))
 
@@ -180,4 +221,10 @@ TranspiladorPython.visit_yield = _visit_yield
 TranspiladorPython.visit_romper = _visit_romper
 TranspiladorPython.visit_continuar = _visit_continuar
 TranspiladorPython.visit_pasar = _visit_pasar
+TranspiladorPython.visit_assert = visit_assert
+TranspiladorPython.visit_del = visit_del
+TranspiladorPython.visit_global = visit_global
+TranspiladorPython.visit_nolocal = visit_nolocal
+TranspiladorPython.visit_with = visit_with
+TranspiladorPython.visit_import_desde = visit_import_desde
 

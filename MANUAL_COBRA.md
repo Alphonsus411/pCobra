@@ -115,3 +115,15 @@ cobra ejecutar programa.co --seguro
 ## 9. Próximos pasos
 
 Revisa la documentación en `frontend/docs` para profundizar en la arquitectura, validadores y más ejemplos.
+
+## 10. Novedades
+
+Se añadieron nuevas construcciones al lenguaje:
+
+- `afirmar` para realizar comprobaciones.
+- `eliminar` para borrar variables.
+- `global` y `nolocal` para declarar alcance de nombres.
+- `lambda` para funciones anónimas.
+- `con` para manejar contextos con bloque `fin`.
+- `finalmente` dentro de `try` para ejecutar código final.
+- Importaciones `desde` ... `como` para alias de módulos.
