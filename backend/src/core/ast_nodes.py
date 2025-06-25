@@ -296,6 +296,17 @@ class NodoImprimir(NodoAST):
         return f"NodoImprimir(expresion={self.expresion})"
 
 
+@dataclass
+class NodoMacro(NodoAST):
+    nombre: str
+    cuerpo: List[Any]
+
+    """Representa una macro que almacena un conjunto de nodos a expandir."""
+
+    def __repr__(self):
+        return f"NodoMacro(nombre={self.nombre}, cuerpo={self.cuerpo})"
+
+
 __all__ = [
     'NodoAST',
     'NodoAsignacion',
@@ -326,4 +337,5 @@ __all__ = [
     'NodoUsar',
     'NodoPara',
     'NodoImprimir',
+    'NodoMacro',
 ]

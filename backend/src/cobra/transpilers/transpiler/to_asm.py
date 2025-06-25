@@ -32,6 +32,7 @@ from src.cobra.lexico.lexer import TipoToken, Lexer
 from src.cobra.parser.parser import Parser
 from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
+from src.cobra.macro import expandir_macros
 
 from .asm_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .asm_nodes.condicional import visit_condicional as _visit_condicional
@@ -104,6 +105,7 @@ class TranspiladorASM(NodeVisitor):
             return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
+        nodos = expandir_macros(nodos)
         nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)

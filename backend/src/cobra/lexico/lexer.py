@@ -35,6 +35,7 @@ class TipoToken:
     PARA = 'PARA'
     IMPORT = 'IMPORT'
     USAR = 'USAR'
+    MACRO = 'MACRO'
     HOLOBIT = 'HOLOBIT'
     PROYECTAR = 'PROYECTAR'
     TRANSFORMAR = 'TRANSFORMAR'
@@ -115,6 +116,7 @@ class Lexer:
             (TipoToken.PARA, r'\bpara\b'),
             (TipoToken.IMPORT, r'\bimport\b'),
             (TipoToken.USAR, r'\busar\b'),
+            (TipoToken.MACRO, r'\bmacro\b'),
             (TipoToken.HILO, r'\bhilo\b'),
             (TipoToken.CLASE, r'\bclase\b'),
             (TipoToken.CLASS, r'\bclass\b'),
@@ -151,6 +153,8 @@ class Lexer:
             (TipoToken.MAYORQUE, r'>'),
             (TipoToken.LPAREN, r'\('),
             (TipoToken.RPAREN, r'\)'),
+            (TipoToken.LBRACE, r'\{'),
+            (TipoToken.RBRACE, r'\}'),
             (TipoToken.LBRACKET, r'\['),
             (TipoToken.RBRACKET, r'\]'),
             (TipoToken.COMA, r','),
