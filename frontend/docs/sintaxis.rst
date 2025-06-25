@@ -87,6 +87,17 @@ Es posible ejecutar funciones de forma concurrente:
 
    hilo trabajo()
 
+**10. Decoradores de funciones**
+
+Puedes anteponer `@` a una función para modificar su comportamiento con un decorador:
+
+.. code-block:: cobra
+
+   @temporizador
+   func saluda():
+       imprimir('hola')
+   fin
+
 **Transpilación a Python, JavaScript, ensamblador y Rust**
 
 - `imprimir` se transpila a `print` en Python, `console.log` en JavaScript, `PRINT` en ensamblador y `println!` en Rust.
