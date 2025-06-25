@@ -10,7 +10,15 @@ def visit_clase(self, nodo):
     if self.usa_indentacion:
         self.indentacion += 1
     for metodo in metodos:
-        metodo.aceptar(self)
+        if hasattr(metodo, 'aceptar'):
+            metodo.aceptar(self)
+        else:
+            nombre = metodo.__class__.__name__
+            if nombre.startswith('Nodo'):
+                nombre = nombre[4:]
+            visit = getattr(self, f"visit_{nombre.lower()}", None)
+            if visit:
+                visit(metodo)
     if self.usa_indentacion:
         self.indentacion -= 1
     self.agregar_linea("}")

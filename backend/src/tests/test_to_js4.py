@@ -159,7 +159,17 @@ def test_transpilar_clase_multibase():
     nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
     transpiler = TranspiladorJavaScript()
     result = transpiler.transpilar([nodo])
-    expected = "class Hija extends Base1 /* bases: Base1, Base2 */{\nm(p) {\nx = p;\n}\n}"
+    expected = (
+        "import * as io from './nativos/io.js';\n"
+        "import * as net from './nativos/io.js';\n"
+        "import * as matematicas from './nativos/matematicas.js';\n"
+        "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        "class Hija extends Base1 { /* bases: Base1, Base2 */\n"
+        "m(p) {\n"
+        "x = p;\n"
+        "}\n"
+        "}"
+    )
     assert result == expected, "Error en herencia múltiple"
 
 
