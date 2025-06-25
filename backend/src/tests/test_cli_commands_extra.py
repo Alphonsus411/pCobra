@@ -64,6 +64,13 @@ from src.cli.commands import modules_cmd
                 "x = 5",
             ],
         ),
+        (
+            "java",
+            [
+                "Código generado (TranspiladorJava):",
+                "var x = 5;",
+            ],
+        ),
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
