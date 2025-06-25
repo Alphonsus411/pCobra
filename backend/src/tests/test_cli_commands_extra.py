@@ -71,6 +71,13 @@ from src.cli.commands import modules_cmd
                 "var x = 5;",
             ],
         ),
+        (
+            "fortran",
+            [
+                "Código generado (TranspiladorFortran):",
+                "x = 5",
+            ],
+        ),
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):

@@ -1,7 +1,17 @@
 """Funciones de rendimiento basadas en smooth-criminal."""
 
 from typing import Callable, Any
-from smooth_criminal.core import auto_boost, profile_it
+try:
+    from smooth_criminal.core import auto_boost, profile_it
+except Exception:  # pragma: no cover - fallback when library is missing
+    def auto_boost(*, workers=4, fallback=None):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    def profile_it(func, *, args=None, kwargs=None, repeat=1, parallel=False):
+        return {}
 
 
 def optimizar(
