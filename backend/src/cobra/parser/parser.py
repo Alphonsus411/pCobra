@@ -18,13 +18,11 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoImprimir,
     NodoRetorno,
-    NodoYield,
     NodoPara,
     NodoTryCatch,
     NodoThrow,
     NodoImport,
     NodoUsar,
-    NodoDecorador,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -64,7 +62,6 @@ class Parser:
         self.tokens = tokens
         self.posicion = 0
         self.indentacion_actual = 0
-        self.decoradores_pendientes = []
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -73,15 +70,12 @@ class Parser:
             TipoToken.PARA: self.declaracion_para,
             TipoToken.MIENTRAS: self.declaracion_mientras,
             TipoToken.FUNC: self.declaracion_funcion,
-            TipoToken.CLASE: self.declaracion_clase,
-            TipoToken.CLASS: self.declaracion_clase,
             TipoToken.IMPORT: self.declaracion_import,
             TipoToken.USAR: self.declaracion_usar,
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
-            TipoToken.DECORADOR: self.declaracion_decorador,
         }
 
     def token_actual(self):
@@ -111,9 +105,7 @@ class Parser:
     def parsear(self):
         nodos = []
         while self.token_actual().tipo != TipoToken.EOF:
-            nodo = self.declaracion()
-            if nodo is not None:
-                nodos.append(nodo)
+            nodos.append(self.declaracion())
         return nodos
 
     def declaracion(self):
@@ -389,10 +381,6 @@ class Parser:
                     self.comer(TipoToken.RETORNO)
                     expresion = self.expresion()
                     cuerpo.append(NodoRetorno(expresion))
-                elif self.token_actual().tipo == TipoToken.YIELD:
-                    self.comer(TipoToken.YIELD)
-                    expresion = self.expresion()
-                    cuerpo.append(NodoYield(expresion))
                 else:
                     cuerpo.append(self.declaracion())
             except SyntaxError as e:
@@ -405,69 +393,7 @@ class Parser:
         self.comer(TipoToken.FIN)
 
         logging.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
-        decoradores = self.decoradores_pendientes
-        self.decoradores_pendientes = []
-        return NodoFuncion(nombre, parametros, cuerpo, decoradores)
-
-    def declaracion_clase(self):
-        """Parsea una declaración de clase con herencia múltiple."""
-        self.comer(self.token_actual().tipo)  # CLASE o CLASS
-
-        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un nombre para la clase")
-        nombre = self.token_actual().valor
-        self.comer(TipoToken.IDENTIFICADOR)
-
-        bases = []
-        if self.token_actual().tipo == TipoToken.LPAREN:
-            self.comer(TipoToken.LPAREN)
-            while self.token_actual().tipo != TipoToken.RPAREN:
-                if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                    raise SyntaxError("Se esperaba un nombre de clase base")
-                bases.append(self.token_actual().valor)
-                self.comer(TipoToken.IDENTIFICADOR)
-                if self.token_actual().tipo == TipoToken.COMA:
-                    self.comer(TipoToken.COMA)
-                else:
-                    break
-            self.comer(TipoToken.RPAREN)
-
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de la declaración de la clase")
-        self.comer(TipoToken.DOSPUNTOS)
-
-        metodos = []
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            if self.token_actual().tipo == TipoToken.FUNC:
-                metodo = self.declaracion_metodo()
-                metodos.append(metodo)
-            else:
-                self.declaracion()  # ignorar otras declaraciones
-
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar la clase")
-        self.comer(TipoToken.FIN)
-
-        return NodoClase(nombre, metodos, bases)
-
-    def declaracion_metodo(self):
-        """Parsea un método dentro de una clase."""
-        self.comer(TipoToken.FUNC)
-        nombre = self.token_actual().valor
-        self.comer(TipoToken.IDENTIFICADOR)
-        self.comer(TipoToken.LPAREN)
-        parametros = self.lista_parametros()
-        self.comer(TipoToken.RPAREN)
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después del encabezado del método")
-        self.comer(TipoToken.DOSPUNTOS)
-        cuerpo = []
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            cuerpo.append(self.declaracion())
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el método")
-        self.comer(TipoToken.FIN)
-        return NodoMetodo(nombre, parametros, cuerpo)
+        return NodoFuncion(nombre, parametros, cuerpo)
 
     def declaracion_imprimir(self):
         """Parsea una declaración de impresión."""
@@ -523,13 +449,6 @@ class Parser:
         self.comer(TipoToken.RPAREN)
         llamada = NodoLlamadaFuncion(nombre, argumentos)
         return NodoHilo(llamada)
-
-    def declaracion_decorador(self):
-        """Procesa una línea de decorador antes de una función."""
-        self.comer(TipoToken.DECORADOR)
-        expr = self.expresion()
-        self.decoradores_pendientes.append(NodoDecorador(expr))
-        return None
 
     def declaracion_try_catch(self):
         self.comer(TipoToken.TRY)

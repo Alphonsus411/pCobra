@@ -15,11 +15,21 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 
 - Declara variables con `var`.
 - Define funciones con `func nombre(parametros) :` y finaliza con `fin` si la función es multilinea.
+- Puedes anteponer líneas con `@decorador` para aplicar decoradores a la función.
 - Utiliza `imprimir` para mostrar datos en pantalla.
 
 ```cobra
 var mensaje = 'Hola Mundo'
 imprimir(mensaje)
+```
+
+Ejemplo con decoradores y `yield`:
+
+```cobra
+@mi_decorador
+func generador():
+    yield 1
+fin
 ```
 
 ## 3. Control de flujo
@@ -84,9 +94,8 @@ print(TranspiladorPython().transpilar(arbol))
 
 ### Características aún no soportadas
 
-- Decoradores y generadores de Python.
-- Herencia múltiple en clases.
-- Macros o metaprogramación avanzada.
+Herencia múltiple en clases.
+Macros o metaprogramación avanzada.
 
 ## 7. Modo seguro
 
