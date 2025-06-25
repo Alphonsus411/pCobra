@@ -26,6 +26,7 @@ from .rust_nodes.metodo import visit_metodo as _visit_metodo
 from .rust_nodes.yield_ import visit_yield as _visit_yield
 from .rust_nodes.romper import visit_romper as _visit_romper
 from .rust_nodes.continuar import visit_continuar as _visit_continuar
+from .rust_nodes.pasar import visit_pasar as _visit_pasar
 
 
 class TranspiladorRust(NodeVisitor):
@@ -90,3 +91,4 @@ TranspiladorRust.visit_metodo = _visit_metodo
 TranspiladorRust.visit_yield = _visit_yield
 TranspiladorRust.visit_romper = _visit_romper
 TranspiladorRust.visit_continuar = _visit_continuar
+TranspiladorRust.visit_pasar = _visit_pasar

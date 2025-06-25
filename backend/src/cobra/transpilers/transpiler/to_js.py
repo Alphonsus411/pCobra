@@ -45,6 +45,7 @@ from .js_nodes.decorador import visit_decorador as _visit_decorador
 from .js_nodes.yield_ import visit_yield as _visit_yield
 from .js_nodes.romper import visit_romper as _visit_romper
 from .js_nodes.continuar import visit_continuar as _visit_continuar
+from .js_nodes.pasar import visit_pasar as _visit_pasar
 
 
 class TranspiladorJavaScript(NodeVisitor):
@@ -144,6 +145,7 @@ TranspiladorJavaScript.visit_decorador = _visit_decorador
 TranspiladorJavaScript.visit_yield = _visit_yield
 TranspiladorJavaScript.visit_romper = _visit_romper
 TranspiladorJavaScript.visit_continuar = _visit_continuar
+TranspiladorJavaScript.visit_pasar = _visit_pasar
 
     # Métodos de transpilación para tipos de nodos básicos
 

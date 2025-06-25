@@ -1,0 +1,40 @@
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
+from src.core.ast_nodes import NodoBucleMientras, NodoPasar
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+
+
+def test_parser_pasar():
+    codigo = """
+    mientras x > 0:
+        pasar
+    fin
+    """
+    tokens = Lexer(codigo).tokenizar()
+    ast = Parser(tokens).parsear()
+    assert isinstance(ast[0], NodoBucleMientras)
+    assert isinstance(ast[0].cuerpo[0], NodoPasar)
+
+
+def test_transpilar_pasar_python():
+    nodo = NodoPasar()
+    t = TranspiladorPython()
+    resultado = t.transpilar([nodo])
+    esperado = "from src.core.nativos import *\npass\n"
+    assert resultado == esperado
+
+
+def test_transpilar_pasar_js():
+    nodo = NodoPasar()
+    t = TranspiladorJavaScript()
+    resultado = t.transpilar([nodo])
+    esperado = (
+        "import * as io from './nativos/io.js';\n"
+        "import * as net from './nativos/io.js';\n"
+        "import * as matematicas from './nativos/matematicas.js';\n"
+        "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        ";"
+    )
+    assert resultado == esperado
+

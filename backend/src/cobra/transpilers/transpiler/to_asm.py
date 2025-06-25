@@ -62,6 +62,7 @@ from .asm_nodes.identificador import visit_identificador as _visit_identificador
 from .asm_nodes.usar import visit_usar as _visit_usar
 from .asm_nodes.romper import visit_romper as _visit_romper
 from .asm_nodes.continuar import visit_continuar as _visit_continuar
+from .asm_nodes.pasar import visit_pasar as _visit_pasar
 
 
 class TranspiladorASM(NodeVisitor):
@@ -143,3 +144,4 @@ TranspiladorASM.visit_identificador = _visit_identificador
 TranspiladorASM.visit_usar = _visit_usar
 TranspiladorASM.visit_romper = _visit_romper
 TranspiladorASM.visit_continuar = _visit_continuar
+TranspiladorASM.visit_pasar = _visit_pasar

@@ -26,6 +26,7 @@ from src.core.ast_nodes import (
     NodoThrow,
     NodoRomper,
     NodoContinuar,
+    NodoPasar,
     NodoImport,
     NodoUsar,
     NodoMacro,
@@ -60,6 +61,7 @@ PALABRAS_RESERVADAS = {
     "yield",
     "romper",
     "continuar",
+    "pasar",
 }
 
 
@@ -91,6 +93,7 @@ class Parser:
             TipoToken.YIELD: self.declaracion_yield,
             TipoToken.ROMPER: self.declaracion_romper,
             TipoToken.CONTINUAR: self.declaracion_continuar,
+            TipoToken.PASAR: self.declaracion_pasar,
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
         }
@@ -532,6 +535,11 @@ class Parser:
         """Parsea la sentencia 'continuar' para la siguiente iteración."""
         self.comer(TipoToken.CONTINUAR)
         return NodoContinuar()
+
+    def declaracion_pasar(self):
+        """Parsea la sentencia 'pasar' que no realiza ninguna acción."""
+        self.comer(TipoToken.PASAR)
+        return NodoPasar()
 
     def declaracion_macro(self):
         """Parsea la definición de una macro simple."""

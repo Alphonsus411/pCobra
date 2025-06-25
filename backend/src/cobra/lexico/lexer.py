@@ -76,6 +76,7 @@ class TipoToken:
     YIELD = 'YIELD'
     ROMPER = 'ROMPER'
     CONTINUAR = 'CONTINUAR'
+    PASAR = 'PASAR'
 
 
 class Token:
@@ -134,6 +135,7 @@ class Lexer:
             (TipoToken.YIELD, r'\byield\b'),
             (TipoToken.ROMPER, r'\bromper\b'),
             (TipoToken.CONTINUAR, r'\bcontinuar\b'),
+            (TipoToken.PASAR, r'\bpasar\b'),
             (TipoToken.FLOTANTE, r'\d+\.\d+'),
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
