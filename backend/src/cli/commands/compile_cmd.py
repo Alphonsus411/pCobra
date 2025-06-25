@@ -24,8 +24,8 @@ from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
 
-    Soporta Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia,
-    Java y ahora también COBOL, Fortran y Pascal.
+    Soporta Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Ruby,
+    PHP, Java y ahora también COBOL, Fortran y Pascal.
     """
 
     name = "compilar"
