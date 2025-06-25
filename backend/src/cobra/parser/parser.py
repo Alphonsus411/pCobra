@@ -38,6 +38,8 @@ from src.core.ast_nodes import (
     NodoWith,
     NodoImportDesde,
     NodoEsperar,
+    NodoSwitch,
+    NodoCase,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -81,6 +83,10 @@ PALABRAS_RESERVADAS = {
     "finalmente",
     "desde",
     "como",
+    "switch",
+    "case",
+    "segun",
+    "caso",
 }
 
 
@@ -122,6 +128,7 @@ class Parser:
             TipoToken.CON: self.declaracion_con,
             TipoToken.DESDE: self.declaracion_desde,
             TipoToken.ESPERAR: self.declaracion_esperar,
+            TipoToken.SWITCH: self.declaracion_switch,
         }
 
     def token_actual(self):
@@ -367,6 +374,41 @@ class Parser:
         self.comer(TipoToken.RBRACKET)
         self.comer(TipoToken.RPAREN)
         return NodoHolobit(valores=valores)
+
+    def declaracion_switch(self):
+        """Parsea una estructura switch/case."""
+        self.comer(TipoToken.SWITCH)
+        expresion = self.expresion()
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de 'switch'")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        casos = []
+        while self.token_actual().tipo == TipoToken.CASE:
+            self.comer(TipoToken.CASE)
+            valor = self.expresion()
+            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                raise SyntaxError("Se esperaba ':' después de 'case'")
+            self.comer(TipoToken.DOSPUNTOS)
+            cuerpo = []
+            while self.token_actual().tipo not in [TipoToken.CASE, TipoToken.SINO, TipoToken.FIN, TipoToken.EOF]:
+                cuerpo.append(self.declaracion())
+            casos.append(NodoCase(valor, cuerpo))
+
+        bloque_defecto = []
+        if self.token_actual().tipo == TipoToken.SINO:
+            self.comer(TipoToken.SINO)
+            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                raise SyntaxError("Se esperaba ':' después de 'sino'")
+            self.comer(TipoToken.DOSPUNTOS)
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+                bloque_defecto.append(self.declaracion())
+
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise SyntaxError("Se esperaba 'fin' para cerrar el switch")
+        self.comer(TipoToken.FIN)
+
+        return NodoSwitch(expresion, casos, bloque_defecto)
 
     def declaracion_condicional(self):
         """Parsea un bloque condicional."""

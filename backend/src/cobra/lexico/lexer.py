@@ -88,6 +88,8 @@ class TipoToken:
     FINALMENTE = 'FINALMENTE'
     DESDE = 'DESDE'
     COMO = 'COMO'
+    SWITCH = 'SWITCH'
+    CASE = 'CASE'
 
 
 class Token:
@@ -133,6 +135,8 @@ class Lexer:
             (TipoToken.MACRO, r'\bmacro\b'),
             (TipoToken.HILO, r'\bhilo\b'),
             (TipoToken.ASINCRONICO, r'\basincronico\b'),
+            (TipoToken.SWITCH, r'\b(switch|segun)\b'),
+            (TipoToken.CASE, r'\b(case|caso)\b'),
             (TipoToken.CLASE, r'\bclase\b'),
             (TipoToken.CLASS, r'\bclass\b'),
             (TipoToken.IN, r'\bin\b'),  # Define el token 'in'

@@ -7,6 +7,7 @@ from src.core.ast_nodes import (
     NodoHolobit,
     NodoValor,
 )
+from src.core.ast_nodes import NodoSwitch, NodoCase, NodoAsignacion
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
@@ -80,5 +81,31 @@ def test_transpilador_holobit():
     resultado = transpilador.transpilar(ast)
     esperado = (
         "from src.core.nativos import *\nmiHolobit = holobit([0.8, -0.5, 1.2])\n"
+    )
+    assert resultado == esperado
+
+
+def test_transpilador_switch():
+    ast = [
+        NodoSwitch(
+            "x",
+            [
+                NodoCase(NodoValor(1), [NodoAsignacion("y", NodoValor(1))]),
+                NodoCase(NodoValor(2), [NodoAsignacion("y", NodoValor(2))]),
+            ],
+            [NodoAsignacion("y", NodoValor(0))],
+        )
+    ]
+    t = TranspiladorPython()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "from src.core.nativos import *\n"
+        "match x:\n"
+        "    case 1:\n"
+        "        y = 1\n"
+        "    case 2:\n"
+        "        y = 2\n"
+        "    case _:\n"
+        "        y = 0\n"
     )
     assert resultado == esperado

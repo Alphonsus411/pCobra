@@ -36,12 +36,26 @@ fin
 
 - Condicionales con `si`, `sino` y `fin` opcional.
 - Bucles `mientras` y `para`.
+- Selección múltiple con `switch` y `case`.
 
 ```cobra
 var x = 0
 mientras x < 3 :
     imprimir(x)
     x += 1
+```
+
+Ejemplo de `switch`:
+
+```cobra
+switch opcion:
+    case 1:
+        imprimir('uno')
+    case 2:
+        imprimir('dos')
+    sino:
+        imprimir('otro')
+fin
 ```
 
 ## 4. Trabajar con módulos
@@ -127,3 +141,4 @@ Se añadieron nuevas construcciones al lenguaje:
 - `con` para manejar contextos con bloque `fin`.
 - `finalmente` dentro de `try` para ejecutar código final.
 - Importaciones `desde` ... `como` para alias de módulos.
+- Nueva estructura `switch` con múltiples `case`.

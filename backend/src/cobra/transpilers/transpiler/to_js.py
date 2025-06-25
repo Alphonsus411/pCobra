@@ -56,6 +56,7 @@ from .js_nodes.esperar import visit_esperar as _visit_esperar
 from .js_nodes.romper import visit_romper as _visit_romper
 from .js_nodes.continuar import visit_continuar as _visit_continuar
 from .js_nodes.pasar import visit_pasar as _visit_pasar
+from .js_nodes.switch import visit_switch as _visit_switch
 
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
@@ -196,6 +197,7 @@ TranspiladorJavaScript.visit_romper = _visit_romper
 TranspiladorJavaScript.visit_continuar = _visit_continuar
 TranspiladorJavaScript.visit_pasar = _visit_pasar
 TranspiladorJavaScript.visit_esperar = _visit_esperar
+TranspiladorJavaScript.visit_switch = _visit_switch
 TranspiladorJavaScript.visit_assert = visit_assert
 TranspiladorJavaScript.visit_del = visit_del
 TranspiladorJavaScript.visit_global = visit_global

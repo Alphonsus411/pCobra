@@ -385,6 +385,19 @@ class NodoMacro(NodoAST):
         return f"NodoMacro(nombre={self.nombre}, cuerpo={self.cuerpo})"
 
 
+@dataclass
+class NodoCase(NodoAST):
+    valor: Any
+    cuerpo: List[Any]
+
+
+@dataclass
+class NodoSwitch(NodoAST):
+    expresion: Any
+    casos: List[NodoCase]
+    por_defecto: List[Any] = field(default_factory=list)
+
+
 __all__ = [
     'NodoAST',
     'NodoAsignacion',
@@ -427,4 +440,6 @@ __all__ = [
     'NodoPara',
     'NodoImprimir',
     'NodoMacro',
+    'NodoCase',
+    'NodoSwitch',
 ]
