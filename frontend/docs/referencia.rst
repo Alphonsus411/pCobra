@@ -13,6 +13,7 @@ Palabras clave
 - ``import``: carga otros archivos Cobra.
 - ``try`` / ``catch`` / ``throw``: manejo de excepciones.
 - ``hilo``: ejecuta una función en un hilo concurrente.
+- ``asincronico`` / ``esperar``: define funciones asíncronas y espera su resultado.
 
 Funciones integradas
 --------------------

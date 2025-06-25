@@ -37,6 +37,7 @@ from src.core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoEsperar,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -74,6 +75,8 @@ PALABRAS_RESERVADAS = {
     "global",
     "nolocal",
     "lambda",
+    "asincronico",
+    "esperar",
     "con",
     "finalmente",
     "desde",
@@ -118,6 +121,7 @@ class Parser:
             TipoToken.NOLOCAL: self.declaracion_nolocal,
             TipoToken.CON: self.declaracion_con,
             TipoToken.DESDE: self.declaracion_desde,
+            TipoToken.ESPERAR: self.declaracion_esperar,
         }
 
     def token_actual(self):
@@ -164,11 +168,24 @@ class Parser:
                 decoradores = []
                 while self.token_actual().tipo == TipoToken.DECORADOR:
                     decoradores.append(self.declaracion_decorador())
+                asincronica = False
+                if self.token_actual().tipo == TipoToken.ASINCRONICO:
+                    self.comer(TipoToken.ASINCRONICO)
+                    asincronica = True
                 if self.token_actual().tipo != TipoToken.FUNC:
                     raise SyntaxError("Un decorador debe preceder a una función")
-                funcion = self.declaracion_funcion()
+                funcion = self.declaracion_funcion(asincronica)
                 funcion.decoradores = decoradores + funcion.decoradores
                 return funcion
+
+            if token.tipo == TipoToken.ASINCRONICO:
+                self.comer(TipoToken.ASINCRONICO)
+                if self.token_actual().tipo == TipoToken.FUNC:
+                    return self.declaracion_funcion(True)
+                raise SyntaxError("Se esperaba 'func' después de 'asincronico'")
+
+            if token.tipo == TipoToken.ESPERAR:
+                return self.declaracion_esperar()
 
             # Manejo especial para declaraciones de retorno
             if token.tipo == TipoToken.RETORNO:
@@ -394,7 +411,7 @@ class Parser:
         logging.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
         return NodoCondicional(condicion, bloque_si, bloque_sino)
 
-    def declaracion_funcion(self):
+    def declaracion_funcion(self, asincronica: bool = False):
         """Parsea una declaración de función."""
         self.comer(TipoToken.FUNC)
 
@@ -446,7 +463,7 @@ class Parser:
         self.comer(TipoToken.FIN)
 
         logging.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
-        return NodoFuncion(nombre, parametros, cuerpo)
+        return NodoFuncion(nombre, parametros, cuerpo, asincronica=asincronica)
 
     def declaracion_imprimir(self):
         """Parsea una declaración de impresión."""
@@ -556,6 +573,11 @@ class Parser:
         """Parsea una expresión 'yield' dentro de una función generadora."""
         self.comer(TipoToken.YIELD)
         return NodoYield(self.expresion())
+
+    def declaracion_esperar(self):
+        """Parsea una expresión 'esperar' para await."""
+        self.comer(TipoToken.ESPERAR)
+        return NodoEsperar(self.expresion())
 
     def declaracion_romper(self):
         """Parsea la sentencia 'romper' para salir de un bucle."""
@@ -678,8 +700,11 @@ class Parser:
         cuerpo = cuerpo_parser.parsear()
         return NodoMacro(nombre, cuerpo)
 
-    def declaracion_metodo(self):
+    def declaracion_metodo(self, asincronica: bool = False):
         """Parsea la declaración de un método dentro de una clase."""
+        if self.token_actual().tipo == TipoToken.ASINCRONICO:
+            self.comer(TipoToken.ASINCRONICO)
+            asincronica = True
         self.comer(TipoToken.FUNC)
 
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
@@ -707,7 +732,7 @@ class Parser:
             raise SyntaxError("Se esperaba 'fin' para cerrar el método")
         self.comer(TipoToken.FIN)
 
-        return NodoMetodo(nombre, parametros, cuerpo)
+        return NodoMetodo(nombre, parametros, cuerpo, asincronica=asincronica)
 
     def declaracion_clase(self):
         """Parsea la declaración de una clase."""
@@ -738,7 +763,7 @@ class Parser:
 
         metodos = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            if self.token_actual().tipo == TipoToken.FUNC:
+            if self.token_actual().tipo in [TipoToken.FUNC, TipoToken.ASINCRONICO]:
                 metodos.append(self.declaracion_metodo())
             else:
                 metodos.append(self.declaracion())
@@ -816,6 +841,9 @@ class Parser:
             self.avanzar()
             operando = self.exp_unario()
             return NodoOperacionUnaria(operador, operando)
+        elif self.token_actual().tipo == TipoToken.ESPERAR:
+            self.comer(TipoToken.ESPERAR)
+            return NodoEsperar(self.exp_unario())
         else:
             return self.termino()
 

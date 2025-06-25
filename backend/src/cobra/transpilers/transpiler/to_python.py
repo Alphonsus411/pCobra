@@ -12,6 +12,7 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoInstancia,
     NodoLlamadaMetodo,
+    NodoLlamadaFuncion,
     NodoAtributo,
     NodoHilo,
     NodoTryCatch,
@@ -60,6 +61,7 @@ from .python_nodes.identificador import visit_identificador as _visit_identifica
 from .python_nodes.para import visit_para as _visit_para
 from .python_nodes.decorador import visit_decorador as _visit_decorador
 from .python_nodes.yield_ import visit_yield as _visit_yield
+from .python_nodes.esperar import visit_esperar as _visit_esperar
 from .python_nodes.romper import visit_romper as _visit_romper
 from .python_nodes.continuar import visit_continuar as _visit_continuar
 from .python_nodes.pasar import visit_pasar as _visit_pasar
@@ -168,6 +170,9 @@ class TranspiladorPython(NodeVisitor):
             return f"{nodo.nombre_clase}({args})"
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
+        elif isinstance(nodo, NodoLlamadaFuncion):
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"{nodo.nombre}({args})"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
@@ -181,6 +186,9 @@ class TranspiladorPython(NodeVisitor):
             else:
                 op = nodo.operador.valor
             return f"{op} {val}" if op == "not" else f"{op}{val}"
+        elif isinstance(nodo, NodoEsperar):
+            val = self.obtener_valor(nodo.expresion)
+            return f"await {val}"
         elif isinstance(nodo, NodoLambda):
             params = ", ".join(nodo.parametros)
             cuerpo = self.obtener_valor(nodo.cuerpo)
@@ -221,6 +229,7 @@ TranspiladorPython.visit_yield = _visit_yield
 TranspiladorPython.visit_romper = _visit_romper
 TranspiladorPython.visit_continuar = _visit_continuar
 TranspiladorPython.visit_pasar = _visit_pasar
+TranspiladorPython.visit_esperar = _visit_esperar
 TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del
 TranspiladorPython.visit_global = visit_global
