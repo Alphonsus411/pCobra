@@ -55,6 +55,7 @@ from .python_nodes.decorador import visit_decorador as _visit_decorador
 from .python_nodes.yield_ import visit_yield as _visit_yield
 from .python_nodes.romper import visit_romper as _visit_romper
 from .python_nodes.continuar import visit_continuar as _visit_continuar
+from .python_nodes.pasar import visit_pasar as _visit_pasar
 
 
 class TranspiladorPython(NodeVisitor):
@@ -178,4 +179,5 @@ TranspiladorPython.visit_decorador = _visit_decorador
 TranspiladorPython.visit_yield = _visit_yield
 TranspiladorPython.visit_romper = _visit_romper
 TranspiladorPython.visit_continuar = _visit_continuar
+TranspiladorPython.visit_pasar = _visit_pasar
 

@@ -26,6 +26,7 @@ from .cpp_nodes.metodo import visit_metodo as _visit_metodo
 from .cpp_nodes.yield_ import visit_yield as _visit_yield
 from .cpp_nodes.romper import visit_romper as _visit_romper
 from .cpp_nodes.continuar import visit_continuar as _visit_continuar
+from .cpp_nodes.pasar import visit_pasar as _visit_pasar
 
 
 class TranspiladorCPP(NodeVisitor):
@@ -90,3 +91,4 @@ TranspiladorCPP.visit_metodo = _visit_metodo
 TranspiladorCPP.visit_yield = _visit_yield
 TranspiladorCPP.visit_romper = _visit_romper
 TranspiladorCPP.visit_continuar = _visit_continuar
+TranspiladorCPP.visit_pasar = _visit_pasar

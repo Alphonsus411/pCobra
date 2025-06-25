@@ -256,6 +256,14 @@ class NodoContinuar(NodoAST):
 
 
 @dataclass
+class NodoPasar(NodoAST):
+    """Sentencia vacía que no realiza ninguna acción."""
+
+    def __repr__(self):
+        return "NodoPasar()"
+
+
+@dataclass
 class NodoThrow(NodoAST):
     expresion: Any
 
@@ -349,6 +357,7 @@ __all__ = [
     'NodoYield',
     'NodoRomper',
     'NodoContinuar',
+    'NodoPasar',
     'NodoThrow',
     'NodoTryCatch',
     'NodoImport',

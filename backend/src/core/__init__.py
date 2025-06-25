@@ -36,6 +36,7 @@ __all__ = [
     'NodoUsar',
     'NodoRomper',
     'NodoContinuar',
+    'NodoPasar',
     'NodoPara',
     'NodoImprimir',
     'NodeVisitor',
