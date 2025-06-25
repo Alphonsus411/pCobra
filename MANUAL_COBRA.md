@@ -82,10 +82,21 @@ arbol = parser.parsear()
 print(TranspiladorPython().transpilar(arbol))
 ```
 
+### Herencia múltiple en clases
+
+Puedes declarar varias bases separadas por comas después del nombre de la clase:
+
+```cobra
+clase Hija(Base1, Base2):
+    func saludo():
+        imprimir('hola')
+    fin
+fin
+```
+
 ### Características aún no soportadas
 
 - Decoradores y generadores de Python.
-- Herencia múltiple en clases.
 - Macros o metaprogramación avanzada.
 
 ## 7. Modo seguro

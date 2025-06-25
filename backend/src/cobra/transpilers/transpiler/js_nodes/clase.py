@@ -3,7 +3,10 @@ def visit_clase(self, nodo):
     metodos = getattr(nodo, "cuerpo", getattr(nodo, "metodos", []))
     if self.usa_indentacion is None:
         self.usa_indentacion = any(hasattr(m, "variable") for m in metodos)
-    self.agregar_linea(f"class {nodo.nombre} {{")
+    bases = getattr(nodo, 'bases', [])
+    base = f" extends {bases[0]}" if bases else ""
+    extra = f" /* bases: {', '.join(bases)} */" if len(bases) > 1 else ""
+    self.agregar_linea(f"class {nodo.nombre}{base} {{{extra}")
     if self.usa_indentacion:
         self.indentacion += 1
     for metodo in metodos:

@@ -1,5 +1,5 @@
 import pytest
-from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor
+from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor, NodoRetorno
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
@@ -95,6 +95,18 @@ def test_transpilar_clase():
         "class MiClase:\n    def mi_metodo(param):\n        x = param + 1\n"
     )
     assert result == expected, "Error en la transpilación de clase"
+
+
+def test_transpilar_clase_multibase():
+    metodo = NodoMetodo("m", ["self"], [NodoRetorno(NodoValor(1))])
+    nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
+    transpiler = TranspiladorPython()
+    result = transpiler.transpilar([nodo])
+    expected = (
+        "from src.core.nativos import *\n"
+        "class Hija(Base1, Base2):\n    def m(self):\n        return 1\n"
+    )
+    assert result == expected, "Error en herencia múltiple"
 
 
 def test_transpilar_metodo():

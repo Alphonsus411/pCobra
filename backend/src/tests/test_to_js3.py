@@ -59,9 +59,10 @@ class NodoDiccionario:
 
 
 class NodoClase:
-    def __init__(self, nombre, cuerpo):
+    def __init__(self, nombre, cuerpo, bases=None):
         self.nombre = nombre
         self.cuerpo = cuerpo
+        self.bases = bases or []
 
 
 class NodoMetodo:
@@ -151,6 +152,15 @@ def test_transpilar_clase():
     result = transpiler.transpilar([nodo])
     expected = "class MiClase {\nmiMetodo(param) {\nx = param + 1;\n}\n}"
     assert result == expected, "Error en la transpilación de clase"
+
+
+def test_transpilar_clase_multibase():
+    metodo = NodoMetodo("m", ["p"], [NodoAsignacion("x", "p")])
+    nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
+    transpiler = TranspiladorJavaScript()
+    result = transpiler.transpilar([nodo])
+    expected = "class Hija extends Base1 /* bases: Base1, Base2 */{\nm(p) {\nx = p;\n}\n}"
+    assert result == expected, "Error en herencia múltiple"
 
 
 def test_transpilar_metodo():
