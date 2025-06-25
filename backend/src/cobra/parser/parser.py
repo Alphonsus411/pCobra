@@ -30,6 +30,13 @@ from src.core.ast_nodes import (
     NodoImport,
     NodoUsar,
     NodoMacro,
+    NodoAssert,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
+    NodoLambda,
+    NodoWith,
+    NodoImportDesde,
 )
 
 # Palabras reservadas que no pueden usarse como identificadores
@@ -62,6 +69,15 @@ PALABRAS_RESERVADAS = {
     "romper",
     "continuar",
     "pasar",
+    "afirmar",
+    "eliminar",
+    "global",
+    "nolocal",
+    "lambda",
+    "con",
+    "finalmente",
+    "desde",
+    "como",
 }
 
 
@@ -96,6 +112,12 @@ class Parser:
             TipoToken.PASAR: self.declaracion_pasar,
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
+            TipoToken.AFIRMAR: self.declaracion_afirmar,
+            TipoToken.ELIMINAR: self.declaracion_eliminar,
+            TipoToken.GLOBAL: self.declaracion_global,
+            TipoToken.NOLOCAL: self.declaracion_nolocal,
+            TipoToken.CON: self.declaracion_con,
+            TipoToken.DESDE: self.declaracion_desde,
         }
 
     def token_actual(self):
@@ -159,7 +181,7 @@ class Parser:
                 return handler()
 
             # Posibles expresiones o asignaciones/invocaciones
-            if token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE]:
+            if token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE, TipoToken.LAMBDA]:
                 siguiente = self.token_siguiente()
                 if siguiente and siguiente.tipo == TipoToken.LPAREN:
                     return self.llamada_funcion()
@@ -507,14 +529,23 @@ class Parser:
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
                 raise SyntaxError("Se esperaba ':' después de 'catch'")
             self.comer(TipoToken.DOSPUNTOS)
-            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF, TipoToken.FINALMENTE]:
                 bloque_catch.append(self.declaracion())
+
+        bloque_finally = []
+        if self.token_actual().tipo == TipoToken.FINALMENTE:
+            self.comer(TipoToken.FINALMENTE)
+            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                raise SyntaxError("Se esperaba ':' después de 'finalmente'")
+            self.comer(TipoToken.DOSPUNTOS)
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+                bloque_finally.append(self.declaracion())
 
         if self.token_actual().tipo != TipoToken.FIN:
             raise SyntaxError("Se esperaba 'fin' para cerrar el bloque try/catch")
         self.comer(TipoToken.FIN)
 
-        return NodoTryCatch(bloque_try, nombre_exc, bloque_catch)
+        return NodoTryCatch(bloque_try, nombre_exc, bloque_catch, bloque_finally)
 
     def declaracion_throw(self):
         """Parsea una declaración 'throw'."""
@@ -540,6 +571,87 @@ class Parser:
         """Parsea la sentencia 'pasar' que no realiza ninguna acción."""
         self.comer(TipoToken.PASAR)
         return NodoPasar()
+
+    def declaracion_afirmar(self):
+        self.comer(TipoToken.AFIRMAR)
+        condicion = self.expresion()
+        mensaje = None
+        if self.token_actual().tipo == TipoToken.COMA:
+            self.comer(TipoToken.COMA)
+            mensaje = self.expresion()
+        return NodoAssert(condicion, mensaje)
+
+    def declaracion_eliminar(self):
+        self.comer(TipoToken.ELIMINAR)
+        objetivo = self.expresion()
+        return NodoDel(objetivo)
+
+    def declaracion_global(self):
+        self.comer(TipoToken.GLOBAL)
+        nombres = []
+        while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
+            nombres.append(self.token_actual().valor)
+            self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo == TipoToken.COMA:
+                self.comer(TipoToken.COMA)
+            else:
+                break
+        return NodoGlobal(nombres)
+
+    def declaracion_nolocal(self):
+        self.comer(TipoToken.NOLOCAL)
+        nombres = []
+        while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
+            nombres.append(self.token_actual().valor)
+            self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo == TipoToken.COMA:
+                self.comer(TipoToken.COMA)
+            else:
+                break
+        return NodoNoLocal(nombres)
+
+    def declaracion_con(self):
+        self.comer(TipoToken.CON)
+        contexto = self.expresion()
+        alias = None
+        if self.token_actual().tipo == TipoToken.COMO:
+            self.comer(TipoToken.COMO)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise SyntaxError("Se esperaba un identificador luego de 'como'")
+            alias = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise SyntaxError("Se esperaba ':' después de 'con'")
+        self.comer(TipoToken.DOSPUNTOS)
+        cuerpo = []
+        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+            cuerpo.append(self.declaracion())
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise SyntaxError("Se esperaba 'fin' para cerrar el bloque 'con'")
+        self.comer(TipoToken.FIN)
+        return NodoWith(contexto, alias, cuerpo)
+
+    def declaracion_desde(self):
+        self.comer(TipoToken.DESDE)
+        if self.token_actual().tipo != TipoToken.CADENA:
+            raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
+        modulo = self.token_actual().valor
+        self.comer(TipoToken.CADENA)
+        if self.token_actual().tipo != TipoToken.IMPORT:
+            raise SyntaxError("Se esperaba 'import' después de 'desde'")
+        self.comer(TipoToken.IMPORT)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba un nombre a importar")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        alias = None
+        if self.token_actual().tipo == TipoToken.COMO:
+            self.comer(TipoToken.COMO)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise SyntaxError("Se esperaba un alias después de 'como'")
+            alias = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
+        return NodoImportDesde(modulo, nombre, alias)
 
     def declaracion_macro(self):
         """Parsea la definición de una macro simple."""
@@ -719,6 +831,21 @@ class Parser:
         elif token.tipo == TipoToken.CADENA:
             self.comer(TipoToken.CADENA)
             return NodoValor(token.valor)
+        elif token.tipo == TipoToken.LAMBDA:
+            self.comer(TipoToken.LAMBDA)
+            parametros = []
+            while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
+                parametros.append(self.token_actual().valor)
+                self.comer(TipoToken.IDENTIFICADOR)
+                if self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                else:
+                    break
+            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                raise SyntaxError("Se esperaba ':' en la expresión lambda")
+            self.comer(TipoToken.DOSPUNTOS)
+            cuerpo = self.expresion()
+            return NodoLambda(parametros, cuerpo)
         elif token.tipo == TipoToken.IDENTIFICADOR:
             siguiente_token = self.token_siguiente()
             if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:

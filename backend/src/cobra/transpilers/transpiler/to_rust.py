@@ -9,6 +9,13 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoAtributo,
     NodoInstancia,
+    NodoAssert,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
+    NodoLambda,
+    NodoWith,
+    NodoImportDesde,
 )
 from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
@@ -27,6 +34,32 @@ from .rust_nodes.yield_ import visit_yield as _visit_yield
 from .rust_nodes.romper import visit_romper as _visit_romper
 from .rust_nodes.continuar import visit_continuar as _visit_continuar
 from .rust_nodes.pasar import visit_pasar as _visit_pasar
+
+def visit_assert(self, nodo):
+    cond = self.obtener_valor(nodo.condicion)
+    self.agregar_linea(f"assert!({cond});")
+
+def visit_del(self, nodo):
+    nombre = self.obtener_valor(nodo.objetivo)
+    self.agregar_linea(f"// del {nombre}")
+
+def visit_global(self, nodo):
+    pass
+
+def visit_nolocal(self, nodo):
+    pass
+
+def visit_with(self, nodo):
+    self.agregar_linea("{")
+    self.indent += 1
+    for inst in nodo.cuerpo:
+        inst.aceptar(self)
+    self.indent -= 1
+    self.agregar_linea("}")
+
+def visit_import_desde(self, nodo):
+    alias = f" as {nodo.alias}" if nodo.alias else ""
+    self.agregar_linea(f"use {nodo.modulo}::{nodo.nombre}{alias};")
 
 
 class TranspiladorRust(NodeVisitor):
@@ -60,6 +93,10 @@ class TranspiladorRust(NodeVisitor):
             val = self.obtener_valor(nodo.operando)
             op = "!" if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
             return f"{op}{val}" if op != "!" else f"!{val}"
+        elif isinstance(nodo, NodoLambda):
+            params = ", ".join(f"{p}: impl std::any::Any" for p in nodo.parametros)
+            cuerpo = self.obtener_valor(nodo.cuerpo)
+            return f"|{', '.join(nodo.parametros)}| {{ {cuerpo} }}"
         elif isinstance(nodo, NodoLista):
             elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
             return f"vec![{elems}]"
@@ -92,3 +129,9 @@ TranspiladorRust.visit_yield = _visit_yield
 TranspiladorRust.visit_romper = _visit_romper
 TranspiladorRust.visit_continuar = _visit_continuar
 TranspiladorRust.visit_pasar = _visit_pasar
+TranspiladorRust.visit_assert = visit_assert
+TranspiladorRust.visit_del = visit_del
+TranspiladorRust.visit_global = visit_global
+TranspiladorRust.visit_nolocal = visit_nolocal
+TranspiladorRust.visit_with = visit_with
+TranspiladorRust.visit_import_desde = visit_import_desde

@@ -9,6 +9,13 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoAtributo,
     NodoInstancia,
+    NodoAssert,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
+    NodoLambda,
+    NodoWith,
+    NodoImportDesde,
 )
 from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
@@ -47,6 +54,35 @@ from .js_nodes.romper import visit_romper as _visit_romper
 from .js_nodes.continuar import visit_continuar as _visit_continuar
 from .js_nodes.pasar import visit_pasar as _visit_pasar
 
+def visit_assert(self, nodo):
+    cond = self.obtener_valor(nodo.condicion)
+    self.agregar_linea(f"console.assert({cond});")
+
+def visit_del(self, nodo):
+    nombre = self.obtener_valor(nodo.objetivo)
+    self.agregar_linea(f"delete {nombre};")
+
+def visit_global(self, nodo):
+    pass
+
+def visit_nolocal(self, nodo):
+    pass
+
+def visit_with(self, nodo):
+    ctx = self.obtener_valor(nodo.contexto)
+    self.agregar_linea(f"{{ /* with {ctx} */")
+    if self.usa_indentacion:
+        self.indentacion += 1
+    for inst in nodo.cuerpo:
+        inst.aceptar(self)
+    if self.usa_indentacion:
+        self.indentacion -= 1
+    self.agregar_linea("}")
+
+def visit_import_desde(self, nodo):
+    alias = f" as {nodo.alias}" if nodo.alias else ""
+    self.agregar_linea(f"import {{ {nodo.nombre}{alias} }} from '{nodo.modulo}';")
+
 
 class TranspiladorJavaScript(NodeVisitor):
     def __init__(self):
@@ -83,6 +119,10 @@ class TranspiladorJavaScript(NodeVisitor):
         elif isinstance(nodo, NodoOperacionUnaria):
             val = self.obtener_valor(nodo.operando)
             return f"!{val}" if nodo.operador.tipo == TipoToken.NOT else f"{nodo.operador.valor}{val}"
+        elif isinstance(nodo, NodoLambda):
+            params = ", ".join(nodo.parametros)
+            cuerpo = self.obtener_valor(nodo.cuerpo)
+            return f"({params}) => {cuerpo}"
         elif isinstance(nodo, NodoLista) or isinstance(nodo, NodoDiccionario):
             temp = []
             original = self.codigo
@@ -146,6 +186,12 @@ TranspiladorJavaScript.visit_yield = _visit_yield
 TranspiladorJavaScript.visit_romper = _visit_romper
 TranspiladorJavaScript.visit_continuar = _visit_continuar
 TranspiladorJavaScript.visit_pasar = _visit_pasar
+TranspiladorJavaScript.visit_assert = visit_assert
+TranspiladorJavaScript.visit_del = visit_del
+TranspiladorJavaScript.visit_global = visit_global
+TranspiladorJavaScript.visit_nolocal = visit_nolocal
+TranspiladorJavaScript.visit_with = visit_with
+TranspiladorJavaScript.visit_import_desde = visit_import_desde
 
     # Métodos de transpilación para tipos de nodos básicos
 

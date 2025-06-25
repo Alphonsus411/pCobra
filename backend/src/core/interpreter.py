@@ -176,6 +176,31 @@ class InterpretadorCobra:
             return self.ejecutar_try_catch(nodo)
         elif isinstance(nodo, NodoThrow):
             raise ExcepcionCobra(self.evaluar_expresion(nodo.expresion))
+        elif isinstance(nodo, NodoAssert):
+            condicion = self.evaluar_expresion(nodo.condicion)
+            if not condicion:
+                mensaje = self.evaluar_expresion(nodo.mensaje) if nodo.mensaje else "Assertion failed"
+                raise AssertionError(mensaje)
+        elif isinstance(nodo, NodoDel):
+            nombre = self.evaluar_expresion(nodo.objetivo)
+            if nombre in self.variables:
+                del self.variables[nombre]
+        elif isinstance(nodo, NodoGlobal):
+            pass  # sin efecto en este intérprete simplificado
+        elif isinstance(nodo, NodoNoLocal):
+            pass
+        elif isinstance(nodo, NodoWith):
+            self.evaluar_expresion(nodo.contexto)
+            self.contextos.append({})
+            try:
+                for instr in nodo.cuerpo:
+                    resultado = self.ejecutar_nodo(instr)
+                    if resultado is not None:
+                        return resultado
+            finally:
+                self.contextos.pop()
+        elif isinstance(nodo, NodoImportDesde):
+            return self.ejecutar_import(NodoImport(nodo.modulo))
         elif isinstance(nodo, NodoHolobit):
             return self.ejecutar_holobit(nodo)
         elif isinstance(nodo, NodoHilo):
@@ -312,6 +337,11 @@ class InterpretadorCobra:
             if nodo.nombre_excepcion:
                 self.variables[nodo.nombre_excepcion] = exc.valor
             for instruccion in nodo.bloque_catch:
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    return resultado
+        finally:
+            for instruccion in nodo.bloque_finally:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
