@@ -4,7 +4,7 @@
 
 Versión 1.0
 
-Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java y COBOL, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
+Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL y Fortran, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
 ## Tabla de Contenidos
 
@@ -91,7 +91,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 # Características Principales
 
 - Lexer y Parser: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
-- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java y COBOL: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
+- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL y Fortran: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
 - Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
 - Módulos nativos con funciones de E/S, utilidades matemáticas y estructuras de datos para usar directamente desde Cobra.
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
@@ -163,7 +163,7 @@ para var i en rango(2) :
 '''
 ````
 
-Al transpilar a Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println`, en R se usa `print` y en Julia `println`; en Java se usa `System.out.println` y en COBOL `DISPLAY`.
+Al transpilar a Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println`, en R se usa `print` y en Julia `println`; en Java se usa `System.out.println`, en COBOL `DISPLAY` y en Fortran `print *`.
 
 ## Integración con holobit-sdk
 
@@ -221,7 +221,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 ## Invocar el transpilador
 
 La carpeta [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler)
-contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java y COBOL. Una vez
+contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL y Fortran. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
 
@@ -261,7 +261,7 @@ Al transpilarlas, se generan llamadas `asyncio.create_task` en Python y `Promise
 Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 
 ```bash
-# Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java o COBOL
+# Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL o Fortran
 cobra compilar programa.co --tipo python
 
 # Ejecutar directamente un script Cobra
@@ -414,7 +414,7 @@ Este proyecto está bajo la [Licencia MIT](LICENSE).
 
 ### Notas
 
-- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación y la compatibilidad con Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java y COBOL.
+- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación y la compatibilidad con Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL y Fortran.
 - **Ejemplos de Código y Nuevas Estructuras**: Incluye ejemplos con el uso de estructuras avanzadas como clases y diccionarios en el lenguaje Cobra.
 
 Si deseas agregar o modificar algo, házmelo saber.

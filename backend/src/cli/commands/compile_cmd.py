@@ -15,6 +15,7 @@ from src.cobra.transpilers.transpiler.to_r import TranspiladorR
 from src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
 from src.cobra.transpilers.transpiler.to_java import TranspiladorJava
 from src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
+from src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 
 
 class CompileCommand(BaseCommand):
@@ -27,7 +28,7 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo")
         parser.add_argument(
             "--tipo",
-            choices=["python", "js", "asm", "rust", "cpp", "go", "r", "julia", "java", "cobol"],
+            choices=["python", "js", "asm", "rust", "cpp", "go", "r", "julia", "java", "cobol", "fortran"],
             default="python",
             help="Tipo de código generado",
         )
@@ -71,6 +72,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorJulia()
                 elif transpilador == "cobol":
                     transp = TranspiladorCOBOL()
+                elif transpilador == "fortran":
+                    transp = TranspiladorFortran()
                 else:
                     raise ValueError("Transpilador no soportado.")
 
