@@ -92,6 +92,20 @@ from src.cli.commands import modules_cmd
                 "$x = 5;",
             ],
         ),
+        (
+            "matlab",
+            [
+                "Código generado (TranspiladorMatlab):",
+                "x = 5;",
+            ],
+        ),
+        (
+            "latex",
+            [
+                "Código generado (TranspiladorLatex):",
+                "x = 5",
+            ],
+        ),
     ],
 )
 def test_cli_compilar_generates_output(tmp_path, tipo, esperado):

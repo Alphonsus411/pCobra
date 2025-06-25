@@ -19,13 +19,15 @@ from src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
 from src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
 
 
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
 
     Soporta Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Ruby,
-    PHP, Java y ahora también COBOL, Fortran y Pascal.
+    PHP, Java y ahora también COBOL, Fortran, Pascal, Matlab y LaTeX.
     """
 
     name = "compilar"
@@ -50,6 +52,8 @@ class CompileCommand(BaseCommand):
                 "fortran",
                 "pascal",
                 "php",
+                "matlab",
+                "latex",
             ],
             default="python",
             help="Tipo de código generado",
@@ -102,6 +106,10 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorPascal()
                 elif transpilador == "php":
                     transp = TranspiladorPHP()
+                elif transpilador == "matlab":
+                    transp = TranspiladorMatlab()
+                elif transpilador == "latex":
+                    transp = TranspiladorLatex()
                 else:
                     raise ValueError("Transpilador no soportado.")
 
