@@ -21,6 +21,8 @@ from .cpp_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mient
 from .cpp_nodes.funcion import visit_funcion as _visit_funcion
 from .cpp_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
 from .cpp_nodes.holobit import visit_holobit as _visit_holobit
+from .cpp_nodes.clase import visit_clase as _visit_clase
+from .cpp_nodes.metodo import visit_metodo as _visit_metodo
 
 
 class TranspiladorCPP(NodeVisitor):
@@ -80,3 +82,5 @@ TranspiladorCPP.visit_bucle_mientras = _visit_bucle_mientras
 TranspiladorCPP.visit_funcion = _visit_funcion
 TranspiladorCPP.visit_llamada_funcion = _visit_llamada_funcion
 TranspiladorCPP.visit_holobit = _visit_holobit
+TranspiladorCPP.visit_clase = _visit_clase
+TranspiladorCPP.visit_metodo = _visit_metodo

@@ -58,3 +58,17 @@ def test_transpilador_holobit():
     t = TranspiladorCPP()
     resultado = t.transpilar(ast)
     assert resultado == "auto miHolobit = holobit({ 0.8, -0.5, 1.2 });"
+
+def test_transpilador_clase():
+    metodo = NodoMetodo("saludar", ["self"], [NodoAsignacion("x", 1)])
+    ast = [NodoClase("Persona", [metodo])]
+    t = TranspiladorCPP()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "class Persona {\n"
+        "    auto saludar(auto self) {\n"
+        "        auto x = 1;\n"
+        "    }\n"
+        "};"
+    )
+    assert resultado == esperado

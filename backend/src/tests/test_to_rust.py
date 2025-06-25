@@ -58,3 +58,18 @@ def test_transpilador_holobit():
     t = TranspiladorRust()
     resultado = t.transpilar(ast)
     assert resultado == "let miHolobit = holobit(vec![0.8, -0.5, 1.2]);"
+
+def test_transpilador_clase():
+    metodo = NodoMetodo("saludar", ["self"], [NodoAsignacion("x", 1)])
+    ast = [NodoClase("Persona", [metodo])]
+    t = TranspiladorRust()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "struct Persona {}\n\n"
+        "impl Persona {\n"
+        "    fn saludar(self) {\n"
+        "        let x = 1;\n"
+        "    }\n"
+        "}"
+    )
+    assert resultado == esperado
