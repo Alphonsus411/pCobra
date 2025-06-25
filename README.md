@@ -243,10 +243,12 @@ Para otros lenguajes puedes invocar los nuevos transpiladores así:
 from cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
 from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 
 codigo_cobol = TranspiladorCOBOL().transpilar(arbol)
 codigo_fortran = TranspiladorFortran().transpilar(arbol)
 codigo_pascal = TranspiladorPascal().transpilar(arbol)
+codigo_ruby = TranspiladorRuby().transpilar(arbol)
 ```
 
 Requiere tener instalado el paquete en modo editable y todas las dependencias
@@ -331,6 +333,7 @@ cobra compilar programa.co --tipo=python
 cobra compilar programa.co --tipo=asm
 cobra compilar programa.co --tipo=cpp
 cobra compilar programa.co --tipo=go
+cobra compilar programa.co --tipo=ruby
 cobra compilar programa.co --tipo=r
 cobra compilar programa.co --tipo=julia
 cobra compilar programa.co --tipo=java

@@ -13,6 +13,7 @@ from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from src.cobra.transpilers.transpiler.to_go import TranspiladorGo
 from src.cobra.transpilers.transpiler.to_r import TranspiladorR
 from src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
+from src.cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 from src.cobra.transpilers.transpiler.to_java import TranspiladorJava
 from src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
 from src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
@@ -40,6 +41,7 @@ class CompileCommand(BaseCommand):
                 "rust",
                 "cpp",
                 "go",
+                "ruby",
                 "r",
                 "julia",
                 "java",
@@ -84,6 +86,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorJava()
                 elif transpilador == "go":
                     transp = TranspiladorGo()
+                elif transpilador == "ruby":
+                    transp = TranspiladorRuby()
                 elif transpilador == "r":
                     transp = TranspiladorR()
                 elif transpilador == "julia":
