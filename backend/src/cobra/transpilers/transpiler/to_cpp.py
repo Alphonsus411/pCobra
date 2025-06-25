@@ -34,6 +34,7 @@ from .cpp_nodes.yield_ import visit_yield as _visit_yield
 from .cpp_nodes.romper import visit_romper as _visit_romper
 from .cpp_nodes.continuar import visit_continuar as _visit_continuar
 from .cpp_nodes.pasar import visit_pasar as _visit_pasar
+from .cpp_nodes.switch import visit_switch as _visit_switch
 
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
@@ -135,3 +136,4 @@ TranspiladorCPP.visit_global = visit_global
 TranspiladorCPP.visit_nolocal = visit_nolocal
 TranspiladorCPP.visit_with = visit_with
 TranspiladorCPP.visit_import_desde = visit_import_desde
+TranspiladorCPP.visit_switch = _visit_switch

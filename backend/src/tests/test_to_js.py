@@ -1,6 +1,7 @@
 import pytest
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit
+from src.core.ast_nodes import NodoSwitch, NodoCase, NodoAsignacion, NodoValor
 
 
 def test_transpilador_asignacion():
@@ -55,4 +56,33 @@ def test_transpilador_yield():
     t = TranspiladorJavaScript()
     resultado = t.transpilar(ast)
     esperado = "function generador() {\n    yield 1;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_switch():
+    ast = [
+        NodoSwitch(
+            "x",
+            [
+                NodoCase(NodoValor(1), [NodoAsignacion("y", NodoValor(1))]),
+                NodoCase(NodoValor(2), [NodoAsignacion("y", NodoValor(2))]),
+            ],
+            [NodoAsignacion("y", NodoValor(0))],
+        )
+    ]
+    t = TranspiladorJavaScript()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "switch (x) {\n"
+        "    case 1:\n"
+        "        let y = 1;\n"
+        "        break;\n"
+        "    case 2:\n"
+        "        let y = 2;\n"
+        "        break;\n"
+        "    default:\n"
+        "        let y = 0;\n"
+        "        break;\n"
+        "}"
+    )
     assert resultado == esperado

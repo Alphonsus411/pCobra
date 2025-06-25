@@ -65,6 +65,7 @@ from .python_nodes.esperar import visit_esperar as _visit_esperar
 from .python_nodes.romper import visit_romper as _visit_romper
 from .python_nodes.continuar import visit_continuar as _visit_continuar
 from .python_nodes.pasar import visit_pasar as _visit_pasar
+from .python_nodes.switch import visit_switch as _visit_switch
 
 def visit_assert(self, nodo):
     expr = self.obtener_valor(nodo.condicion)
@@ -230,6 +231,7 @@ TranspiladorPython.visit_romper = _visit_romper
 TranspiladorPython.visit_continuar = _visit_continuar
 TranspiladorPython.visit_pasar = _visit_pasar
 TranspiladorPython.visit_esperar = _visit_esperar
+TranspiladorPython.visit_switch = _visit_switch
 TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del
 TranspiladorPython.visit_global = visit_global

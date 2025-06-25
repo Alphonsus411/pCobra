@@ -6,6 +6,13 @@ from src.core.ast_nodes import (
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoHolobit,
+    NodoSwitch,
+    NodoCase,
+    NodoAsignacion,
+    NodoMetodo,
+    NodoClase,
+    NodoYield,
+    NodoValor,
 )
 
 
@@ -79,4 +86,33 @@ def test_transpilador_yield():
     t = TranspiladorCPP()
     resultado = t.transpilar(ast)
     esperado = "void generador() {\n    co_yield 1;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_switch():
+    ast = [
+        NodoSwitch(
+            "x",
+            [
+                NodoCase(NodoValor(1), [NodoAsignacion("y", NodoValor(1))]),
+                NodoCase(NodoValor(2), [NodoAsignacion("y", NodoValor(2))]),
+            ],
+            [NodoAsignacion("y", NodoValor(0))],
+        )
+    ]
+    t = TranspiladorCPP()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "switch (x) {\n"
+        "    case 1:\n"
+        "        auto y = 1;\n"
+        "        break;\n"
+        "    case 2:\n"
+        "        auto y = 2;\n"
+        "        break;\n"
+        "    default:\n"
+        "        auto y = 0;\n"
+        "        break;\n"
+        "}"
+    )
     assert resultado == esperado
