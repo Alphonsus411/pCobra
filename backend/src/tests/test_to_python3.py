@@ -12,6 +12,7 @@ from src.core.ast_nodes import (
     NodoClase,
     NodoMetodo,
     NodoValor,
+    NodoRetorno,
 )
 
 
@@ -120,6 +121,18 @@ def test_transpilar_clase():
         "class MiClase:\n    def miMetodo(param):\n        x = param + 1\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de clase"
+
+
+def test_transpilar_clase_multibase():
+    metodo = NodoMetodo("m", ["self"], [NodoRetorno(NodoValor(1))])
+    nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
+    transpiler = TranspiladorPython()
+    result = transpiler.transpilar([nodo])
+    expected = (
+        "from src.core.nativos import *\n"
+        "class Hija(Base1, Base2):\n    def m(self):\n        return 1\n"
+    )
+    assert result == expected, "Error en herencia múltiple"
 
 
 def test_transpilar_metodo():

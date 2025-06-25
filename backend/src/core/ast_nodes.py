@@ -111,6 +111,7 @@ class NodoFuncion(NodoAST):
 class NodoClase(NodoAST):
     nombre: str
     metodos: List[Any]
+    bases: List[str] = field(default_factory=list)
 
     """Definición de una clase y sus métodos."""
 

@@ -21,7 +21,16 @@ from src.cobra.lexico.lexer import TipoToken, Token
 
 class _ConstantFolder(NodeVisitor):
     def visit_asignacion(self, nodo: NodoAsignacion):
-        nodo.expresion = self.visit(nodo.expresion)
+        """Visita una asignación y actualiza su expresión.
+
+        Las pruebas antiguas usan nodos de asignación simplificados que
+        almacenan la expresión en el atributo ``valor`` en lugar de
+        ``expresion``.  Para mantener compatibilidad comprobamos ambos
+        nombres de atributo.
+        """
+
+        attr = 'expresion' if hasattr(nodo, 'expresion') else 'valor'
+        setattr(nodo, attr, self.visit(getattr(nodo, attr)))
         return nodo
 
     def visit_operacion_binaria(self, nodo: NodoOperacionBinaria):

@@ -93,7 +93,17 @@ class TranspiladorJavaScript(NodeVisitor):
     def transpilar(self, ast_raiz):
         ast_raiz = remove_dead_code(optimize_constants(ast_raiz))
         for nodo in ast_raiz:
-            nodo.aceptar(self)
+            if hasattr(nodo, 'aceptar'):
+                nodo.aceptar(self)
+            else:
+                nombre = nodo.__class__.__name__
+                if nombre.startswith('Nodo'):
+                    nombre = nombre[4:]
+                metodo = getattr(self, f"visit_{nombre.lower()}", None)
+                if metodo:
+                    metodo(nodo)
+                else:
+                    raise AttributeError(f"Nodo sin método aceptar: {nodo}")
         return "\n".join(self.codigo)
 
 

@@ -116,6 +116,8 @@ class Lexer:
             (TipoToken.IMPORT, r'\bimport\b'),
             (TipoToken.USAR, r'\busar\b'),
             (TipoToken.HILO, r'\bhilo\b'),
+            (TipoToken.CLASE, r'\bclase\b'),
+            (TipoToken.CLASS, r'\bclass\b'),
             (TipoToken.IN, r'\bin\b'),  # Define el token 'in'
             (TipoToken.HOLOBIT, r'\bholobit\b'),
             (TipoToken.PROYECTAR, r'\bproyectar\b'),

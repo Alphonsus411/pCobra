@@ -1,6 +1,6 @@
 # Herramienta avanzada para generar el AST del lenguaje Cobra
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from backend.src.cobra.lexico.lexer import Lexer
+from backend.src.cobra.parser.parser import Parser
 import argparse
 import json
 
