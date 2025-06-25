@@ -18,6 +18,7 @@ from src.cobra.transpilers.transpiler.to_java import TranspiladorJava
 from src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
 from src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
 
 
 class CompileCommand(BaseCommand):
@@ -48,6 +49,7 @@ class CompileCommand(BaseCommand):
                 "cobol",
                 "fortran",
                 "pascal",
+                "php",
             ],
             default="python",
             help="Tipo de código generado",
@@ -98,6 +100,8 @@ class CompileCommand(BaseCommand):
                     transp = TranspiladorFortran()
                 elif transpilador == "pascal":
                     transp = TranspiladorPascal()
+                elif transpilador == "php":
+                    transp = TranspiladorPHP()
                 else:
                     raise ValueError("Transpilador no soportado.")
 
