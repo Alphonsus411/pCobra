@@ -97,6 +97,9 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
 - Manejo de Errores: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
 - Visualización y Depuración: Salida detallada de tokens, AST y errores de sintaxis para un desarrollo más sencillo.
+- Decoradores de rendimiento: la biblioteca ``smooth-criminal`` ofrece
+  funciones como ``optimizar`` y ``perfilar`` para mejorar y medir la
+  ejecución de código Python desde Cobra.
 - Ejemplos de Código y Documentación: Ejemplos prácticos que ilustran el uso del lexer, parser y transpiladores.
 - Ejemplos Avanzados: Revisa `frontend/docs/ejemplos_avanzados.rst` para conocer casos con clases, hilos y manejo de errores.
 - Identificadores en Unicode: Puedes nombrar variables y funciones utilizando

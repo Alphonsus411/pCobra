@@ -25,6 +25,7 @@ setup(
         'ipykernel>=6.0.0',
         'agix==0.8.3',
         'holobit-sdk',
+        'smooth-criminal',
         # Agrega más requisitos según sea necesario
     ],
     tests_require=[
