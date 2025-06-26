@@ -1,6 +1,7 @@
 import logging
 import os
 from .base import BaseCommand
+from src.core.sandbox import ejecutar_en_sandbox
 
 from src.core.interpreter import InterpretadorCobra
 from src.cobra.lexico.lexer import Lexer
@@ -16,6 +17,11 @@ class ExecuteCommand(BaseCommand):
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help="Ejecuta un script Cobra")
         parser.add_argument("archivo")
+        parser.add_argument(
+            "--sandbox",
+            action="store_true",
+            help="Ejecuta el código en una sandbox",
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -25,6 +31,7 @@ class ExecuteCommand(BaseCommand):
         formatear = getattr(args, "formatear", False)
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
+        sandbox = getattr(args, "sandbox", False)
 
         if not os.path.exists(archivo):
             print(f"El archivo '{archivo}' no existe")
@@ -38,6 +45,16 @@ class ExecuteCommand(BaseCommand):
 
         with open(archivo, "r") as f:
             codigo = f.read()
+
+        if sandbox:
+            try:
+                ejecutar_en_sandbox(codigo)
+                return 0
+            except Exception as e:
+                logging.error(f"Error ejecutando en sandbox: {e}")
+                print(f"Error ejecutando en sandbox: {e}")
+                return 1
+
         tokens = Lexer(codigo).tokenizar()
         ast = Parser(tokens).parsear()
         if seguro:

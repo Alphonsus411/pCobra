@@ -1,5 +1,6 @@
 import logging
 from .base import BaseCommand
+from src.core.sandbox import ejecutar_en_sandbox
 
 from src.core.interpreter import InterpretadorCobra
 from src.core.qualia_bridge import get_suggestions
@@ -15,12 +16,18 @@ class InteractiveCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help="Inicia el modo interactivo")
+        parser.add_argument(
+            "--sandbox",
+            action="store_true",
+            help="Ejecuta cada línea dentro de una sandbox",
+        )
         parser.set_defaults(cmd=self)
         return parser
 
     def run(self, args):
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
+        sandbox = getattr(args, "sandbox", False)
         interpretador = InterpretadorCobra(
             safe_mode=seguro, extra_validators=extra_validators
         )
@@ -64,6 +71,16 @@ class InteractiveCommand(BaseCommand):
                     print(ast)
                     continue
                 elif linea:
+                    if sandbox:
+                        try:
+                            salida = ejecutar_en_sandbox(linea)
+                            if salida:
+                                print(salida)
+                        except Exception as e:
+                            logging.error(f"Error en sandbox: {e}")
+                            print(f"Error en sandbox: {e}")
+                        continue
+
                     tokens = Lexer(linea).tokenizar()
                     logging.debug(f"Tokens generados: {tokens}")
                     ast = Parser(tokens).parsear()
