@@ -1,6 +1,6 @@
 # Manual del Lenguaje Cobra
 
-Versión 1.3
+Versión 1.4
 
 Este manual presenta en español los conceptos básicos para programar en Cobra. Se organiza en tareas que puedes seguir paso a paso.
 
@@ -10,6 +10,14 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 2. Crea y activa un entorno virtual.
 3. Instala las dependencias con `pip install -r requirements.txt`.
 4. Instala la herramienta de forma editable con `pip install -e .`.
+
+### Instalación con pipx
+
+Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herramienta que permite ejecutar aplicaciones de Python aisladas y requiere Python 3.6 o superior.
+
+```bash
+pipx install cobra-lenguaje
+```
 
 ## 2. Estructura básica de un programa
 
