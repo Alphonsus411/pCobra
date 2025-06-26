@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='cobra-lenguaje',
-    version='1.3',
+    version='1.4',
     author='Adolfo González Hernández',
     author_email='adolfogonzal@gmail.com',
     description='Un lenguaje de programación en español para simulaciones y más.',
@@ -13,6 +13,11 @@ setup(
     packages=find_packages(where='backend/src', include=['*']),
     package_dir={'': 'backend/src'},
     include_package_data=True,
+    keywords=['cobra', 'lenguaje', 'cli'],
+    project_urls={
+        'Documentation': 'https://github.com/Alphonsus411/pCobra#readme',
+        'Source': 'https://github.com/Alphonsus411/pCobra',
+    },
     install_requires=[
         'pytest>=7.0',  # Requerimientos según requirements.txt
         'numpy>=1.22.0',
@@ -42,8 +47,10 @@ setup(
 
     classifiers=[
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.11',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Natural Language :: Spanish',
     ],
     python_requires='>=3.6',
 )
