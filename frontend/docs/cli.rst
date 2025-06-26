@@ -136,3 +136,13 @@ Ejemplo:
 .. code-block:: bash
 
    cobra gui
+
+Subcomando ``plugins``
+---------------------
+Muestra los plugins instalados y sus versiones registrados mediante ``entry_points``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra plugins
