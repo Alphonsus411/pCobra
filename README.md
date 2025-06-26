@@ -379,6 +379,19 @@ Para obtener un reporte de cobertura en la terminal ejecuta:
 pytest --cov=backend/src --cov-report=term-missing --cov-fail-under=80
 ````
 
+## Caché del AST
+
+Cobra guarda los árboles de sintaxis en la carpeta `cache` situada en la
+raíz del proyecto. Cada archivo se nombra con el SHA256 del código y tiene
+extensión `.ast`. Puedes cambiar la ubicación definiendo la variable de
+entorno `COBRA_AST_CACHE` antes de ejecutar la compilación.
+
+Para limpiar la caché elimina los archivos de dicho directorio:
+
+```bash
+rm cache/*.ast
+```
+
 ## Generar documentación
 
 Para obtener la documentación HTML puedes usar `cobra docs` o
