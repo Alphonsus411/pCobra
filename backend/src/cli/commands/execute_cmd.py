@@ -3,7 +3,8 @@ import os
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from src.core.sandbox import ejecutar_en_sandbox
+from src.core.sandbox import ejecutar_en_sandbox, validar_dependencias
+from src.cobra.transpilers import module_map
 
 from src.core.interpreter import InterpretadorCobra
 from src.cobra.lexico.lexer import Lexer
@@ -37,6 +38,12 @@ class ExecuteCommand(BaseCommand):
 
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
+            return 1
+
+        try:
+            validar_dependencias("python", module_map.get_toml_map())
+        except (ValueError, FileNotFoundError) as dep_err:
+            mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
         if formatear:
             self._formatear_codigo(archivo)
