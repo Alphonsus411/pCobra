@@ -528,7 +528,7 @@ class HolaCommand(PluginCommand):
 ```
 ## Historial de Cambios
 
-- Versión 1.3: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
+- Versión 1.4: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
 
 # Licencia
 
