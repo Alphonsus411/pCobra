@@ -410,6 +410,14 @@ El proyecto avanza en versiones incrementales. A continuacion se listan las tare
 - Implementar optimizaciones del AST para mayor rendimiento.
 - Anadir pruebas de concurrencia para mejorar la estabilidad.
 
+### v1.2
+
+- Cache de AST con checksum
+- Transpilación multi-lenguaje en paralelo
+- Ejemplos de benchmarking y configuración segura
+- Interfaz base para plugins
+- Registro y versionado de plugins
+
 
 # Contribuciones
 
@@ -440,7 +448,7 @@ Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamen
 el nuevo comando.
 ## Historial de Cambios
 
-- Versión 1.2: actualización de documentación y archivos de configuración.
+- Versión 1.2: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.2 del roadmap.
 
 # Licencia
 
