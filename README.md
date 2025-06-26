@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/main/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
 
 
-Versión 1.3
+Versión 1.4
 
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
@@ -67,6 +67,14 @@ pip install -r requirements.txt
 ````bash
 pip install -e .
 ````
+
+### Instalación con pipx
+
+[pipx](https://pypa.github.io/pipx/) es una herramienta para instalar y ejecutar aplicaciones de Python de forma aislada y requiere Python 3.6 o superior. Para instalar Cobra con pipx ejecuta:
+
+```bash
+pipx install cobra-lenguaje
+```
 
 ## Construir la imagen Docker
 
