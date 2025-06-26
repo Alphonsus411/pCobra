@@ -2,6 +2,7 @@ import logging
 import os
 import multiprocessing
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 
 from src.core.ast_cache import obtener_ast
@@ -53,7 +54,7 @@ class CompileCommand(BaseCommand):
     name = "compilar"
 
     def register_subparser(self, subparsers):
-        parser = subparsers.add_parser(self.name, help="Transpila un archivo")
+        parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
         parser.add_argument("archivo")
         parser.add_argument(
             "--tipo",
@@ -76,11 +77,11 @@ class CompileCommand(BaseCommand):
                 "latex",
             ],
             default="python",
-            help="Tipo de código generado",
+            help=_("Tipo de código generado"),
         )
         parser.add_argument(
             "--tipos",
-            help="Lista de lenguajes separados por comas",
+            help=_("Lista de lenguajes separados por comas"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -108,21 +109,27 @@ class CompileCommand(BaseCommand):
                 lenguajes = [t.strip() for t in args.tipos.split(',') if t.strip()]
                 for l in lenguajes:
                     if l not in TRANSPILERS:
-                        raise ValueError("Transpilador no soportado.")
+                        raise ValueError(_("Transpilador no soportado."))
                 with multiprocessing.Pool(processes=len(lenguajes)) as pool:
                     resultados = pool.map(self._ejecutar_transpilador, [(l, ast) for l in lenguajes])
                 for lang, nombre, resultado in resultados:
-                    mostrar_info(f"Código generado ({nombre}) para {lang}:")
+                    mostrar_info(
+                        _("Código generado ({nombre}) para {lang}:").format(
+                            nombre=nombre, lang=lang
+                        )
+                    )
                     print(resultado)
                 return 0
             else:
                 transpilador = args.tipo
                 if transpilador not in TRANSPILERS:
-                    raise ValueError("Transpilador no soportado.")
+                    raise ValueError(_("Transpilador no soportado."))
                 transp = TRANSPILERS[transpilador]()
                 resultado = transp.transpilar(ast)
                 mostrar_info(
-                    f"Código generado ({transp.__class__.__name__}):"
+                    _("Código generado ({name}):").format(
+                        name=transp.__class__.__name__
+                    )
                 )
                 print(resultado)
                 return 0

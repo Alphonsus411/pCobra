@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 
 
@@ -12,12 +13,12 @@ class EmpaquetarCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(
-            self.name, help="Crea un ejecutable para la CLI usando PyInstaller"
+            self.name, help=_("Crea un ejecutable para la CLI usando PyInstaller")
         )
         parser.add_argument(
             "--output",
             default="dist",
-            help="Directorio donde colocar el ejecutable generado",
+            help=_("Directorio donde colocar el ejecutable generado"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -41,13 +42,19 @@ class EmpaquetarCommand(BaseCommand):
                 ],
                 check=True,
             )
-            mostrar_info(f"Ejecutable generado en {os.path.join(output, 'cobra')}")
+            mostrar_info(
+                _("Ejecutable generado en {path}").format(
+                    path=os.path.join(output, 'cobra')
+                )
+            )
             return 0
         except FileNotFoundError:
             mostrar_error(
-                "PyInstaller no está instalado. Ejecuta 'pip install pyinstaller'."
+                _(
+                    "PyInstaller no está instalado. Ejecuta 'pip install pyinstaller'."
+                )
             )
             return 1
         except subprocess.CalledProcessError as e:
-            mostrar_error(f"Error empaquetando la CLI: {e}")
+            mostrar_error(_("Error empaquetando la CLI: {err}").format(err=e))
             return 1

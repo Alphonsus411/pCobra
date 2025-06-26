@@ -1,6 +1,7 @@
 import logging
 import os
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 from src.core.sandbox import ejecutar_en_sandbox
 
@@ -16,12 +17,12 @@ class ExecuteCommand(BaseCommand):
     name = "ejecutar"
 
     def register_subparser(self, subparsers):
-        parser = subparsers.add_parser(self.name, help="Ejecuta un script Cobra")
+        parser = subparsers.add_parser(self.name, help=_("Ejecuta un script Cobra"))
         parser.add_argument("archivo")
         parser.add_argument(
             "--sandbox",
             action="store_true",
-            help="Ejecuta el código en una sandbox",
+            help=_("Ejecuta el código en una sandbox"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -93,6 +94,7 @@ class ExecuteCommand(BaseCommand):
             ], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except FileNotFoundError:
             mostrar_error(
-                "Herramienta de formateo no encontrada. "
-                "Asegúrate de tener 'black' instalado."
+                _(
+                    "Herramienta de formateo no encontrada. Asegúrate de tener 'black' instalado."
+                )
             )

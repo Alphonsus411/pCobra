@@ -1,6 +1,7 @@
 import os
 import subprocess
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 
 
@@ -11,7 +12,7 @@ class DocsCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(
-            self.name, help="Genera la documentación del proyecto"
+            self.name, help=_("Genera la documentación del proyecto")
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -28,11 +29,15 @@ class DocsCommand(BaseCommand):
         try:
             subprocess.run(["sphinx-apidoc", "-o", api, codigo], check=True)
             subprocess.run(["sphinx-build", "-b", "html", source, build], check=True)
-            mostrar_info(f"Documentación generada en {build}")
+            mostrar_info(
+                _("Documentación generada en {path}").format(path=build)
+            )
             return 0
         except FileNotFoundError:
-            mostrar_error("Sphinx no está instalado. Ejecuta 'pip install sphinx'.")
+            mostrar_error(_("Sphinx no está instalado. Ejecuta 'pip install sphinx'."))
             return 1
         except subprocess.CalledProcessError as e:
-            mostrar_error(f"Error generando la documentación: {e}")
+            mostrar_error(
+                _("Error generando la documentación: {err}").format(err=e)
+            )
             return 1

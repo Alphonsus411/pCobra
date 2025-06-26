@@ -1,5 +1,6 @@
 import logging
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 from src.core.sandbox import ejecutar_en_sandbox
 
@@ -16,11 +17,11 @@ class InteractiveCommand(BaseCommand):
     name = "interactive"
 
     def register_subparser(self, subparsers):
-        parser = subparsers.add_parser(self.name, help="Inicia el modo interactivo")
+        parser = subparsers.add_parser(self.name, help=_("Inicia el modo interactivo"))
         parser.add_argument(
             "--sandbox",
             action="store_true",
-            help="Ejecuta cada línea dentro de una sandbox",
+            help=_("Ejecuta cada línea dentro de una sandbox"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -49,7 +50,7 @@ class InteractiveCommand(BaseCommand):
                     break
                 elif linea == "tokens":
                     tokens = Lexer(linea).tokenizar()
-                    mostrar_info("Tokens generados:")
+                    mostrar_info(_("Tokens generados:"))
                     for token in tokens:
                         mostrar_info(str(token))
                     continue
@@ -66,9 +67,9 @@ class InteractiveCommand(BaseCommand):
                                 nodo.aceptar(validador)
                     except PrimitivaPeligrosaError as pe:
                         logging.error(f"Primitiva peligrosa: {pe}")
-                        print(f"Error: {pe}")
+                        mostrar_error(str(pe))
                         continue
-                    mostrar_info("AST generado:")
+                    mostrar_info(_("AST generado:"))
                     mostrar_info(str(ast))
                     continue
                 elif linea:

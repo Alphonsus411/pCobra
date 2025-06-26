@@ -394,6 +394,20 @@ echo $?  # 1
 - `Primitiva peligrosa: <nombre>`: se usó una función restringida en modo seguro.
 - `Acción de módulos no reconocida`: el subcomando indicado es inválido.
 
+## Selección de idioma
+
+La CLI utiliza `gettext` para mostrar los mensajes en distintos idiomas.
+Puedes definir el idioma estableciendo la variable de entorno `COBRA_LANG`
+o pasando el argumento `--lang` al ejecutar `cobra`.
+
+```bash
+COBRA_LANG=en cobra --help
+cobra --lang en compilar archivo.co
+```
+
+Si deseas añadir otro idioma, crea una carpeta `frontend/docs/locale/<cod>/LC_MESSAGES`
+con los archivos `.po` de traducción y envía un pull request.
+
 Para obtener un reporte de cobertura en la terminal ejecuta:
 
 ````bash
