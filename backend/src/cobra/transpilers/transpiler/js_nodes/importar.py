@@ -1,11 +1,10 @@
 from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser
-from ...module_map import get_map
+from ...module_map import get_mapped_path
 
 def visit_import(self, nodo):
     """Carga y transpila el módulo indicado usando el mapeo."""
-    mapa = get_map()
-    ruta = mapa.get(nodo.ruta, {}).get("js", nodo.ruta)
+    ruta = get_mapped_path(nodo.ruta, "js")
 
     try:
         with open(ruta, "r", encoding="utf-8") as f:
