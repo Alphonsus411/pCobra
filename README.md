@@ -371,14 +371,16 @@ pytest --cov=backend/src --cov-report=term-missing --cov-fail-under=80
 
 ## Generar documentación
 
+Para obtener la documentación HTML puedes usar `cobra docs` o
+`make html` desde la raíz del proyecto. El subcomando `docs` ejecuta
+`sphinx-apidoc` y luego compila el HTML en `frontend/build/html`.
+
 Puedes compilar la documentación de dos maneras:
 
-1. **Con la CLI de Cobra**. Ejecuta `cobra docs`. Este subcomando
-   invoca `sphinx-apidoc` para generar automáticamente la API y luego
-   usa Sphinx para crear el HTML en `frontend/build/html`.
+1. **Con la CLI de Cobra**. Ejecuta `cobra docs`.
 
-2. **Con Make**. Desde la raíz del proyecto, ejecuta `make html` para
-   compilar los archivos ubicados en `frontend/docs`.
+2. **Con Make**. Ejecuta `make html` para compilar los archivos ubicados en
+   `frontend/docs`.
 
 3. **Con pdoc**. Para generar documentación de la API con [pdoc](https://pdoc.dev),
    ejecuta `python scripts/generar_pdoc.py`. El resultado se guardará en
