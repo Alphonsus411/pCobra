@@ -21,7 +21,8 @@ jobs:
           pip install -r requirements.txt
           pip install sphinx sphinx-rtd-theme pytest-cov codecov
       - name: Run tests
-        run: pytest --cov=backend/src --cov-report=xml
+        run: pytest --cov=backend/src --cov-report=xml \
+          --cov-report=term-missing --cov-fail-under=80
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
