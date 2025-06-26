@@ -118,6 +118,17 @@ def test_cli_compilar_generates_output(tmp_path, tipo, esperado):
 
 
 @pytest.mark.timeout(5)
+def test_cli_compilar_varios_tipos(tmp_path):
+    archivo = tmp_path / "c.co"
+    archivo.write_text("var x = 5")
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        main(["compilar", str(archivo), "--tipos=python,js"])
+    output = out.getvalue().strip().splitlines()
+    assert output[0].startswith("Código generado (TranspiladorPython) para python:")
+    assert any(line.startswith("Código generado (TranspiladorJavaScript) para js:") for line in output)
+
+
+@pytest.mark.timeout(5)
 def test_cli_compilar_archivo_inexistente(tmp_path):
     archivo = tmp_path / "no.co"
     with patch("sys.stdout", new_callable=StringIO) as out:

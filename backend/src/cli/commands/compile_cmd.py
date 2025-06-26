@@ -1,5 +1,6 @@
 import logging
 import os
+import multiprocessing
 from .base import BaseCommand
 
 from src.core.ast_cache import obtener_ast
@@ -20,6 +21,25 @@ from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
 from src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
 from src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+
+TRANSPILERS = {
+    "python": TranspiladorPython,
+    "js": TranspiladorJavaScript,
+    "asm": TranspiladorASM,
+    "rust": TranspiladorRust,
+    "cpp": TranspiladorCPP,
+    "go": TranspiladorGo,
+    "ruby": TranspiladorRuby,
+    "r": TranspiladorR,
+    "julia": TranspiladorJulia,
+    "java": TranspiladorJava,
+    "cobol": TranspiladorCOBOL,
+    "fortran": TranspiladorFortran,
+    "pascal": TranspiladorPascal,
+    "php": TranspiladorPHP,
+    "matlab": TranspiladorMatlab,
+    "latex": TranspiladorLatex,
+}
 
 
 class CompileCommand(BaseCommand):
@@ -57,73 +77,61 @@ class CompileCommand(BaseCommand):
             default="python",
             help="Tipo de código generado",
         )
+        parser.add_argument(
+            "--tipos",
+            help="Lista de lenguajes separados por comas",
+        )
         parser.set_defaults(cmd=self)
         return parser
 
+    def _ejecutar_transpilador(self, parametros):
+        lang, ast = parametros
+        transp = TRANSPILERS[lang]()
+        return lang, transp.__class__.__name__, transp.transpilar(ast)
+
     def run(self, args):
         archivo = args.archivo
-        transpilador = args.tipo
         if not os.path.exists(archivo):
             print(f"Error: El archivo '{archivo}' no existe.")
             return 1
 
         with open(archivo, "r") as f:
             codigo = f.read()
-            try:
-                ast = obtener_ast(codigo)
+        try:
+            ast = obtener_ast(codigo)
+            validador = construir_cadena()
+            for nodo in ast:
+                nodo.aceptar(validador)
 
-                validador = construir_cadena()
-                for nodo in ast:
-                    nodo.aceptar(validador)
-
-                if transpilador == "python":
-                    transp = TranspiladorPython()
-                elif transpilador == "js":
-                    transp = TranspiladorJavaScript()
-                elif transpilador == "asm":
-                    transp = TranspiladorASM()
-                elif transpilador == "rust":
-                    transp = TranspiladorRust()
-                elif transpilador == "cpp":
-                    transp = TranspiladorCPP()
-                elif transpilador == "java":
-                    transp = TranspiladorJava()
-                elif transpilador == "go":
-                    transp = TranspiladorGo()
-                elif transpilador == "ruby":
-                    transp = TranspiladorRuby()
-                elif transpilador == "r":
-                    transp = TranspiladorR()
-                elif transpilador == "julia":
-                    transp = TranspiladorJulia()
-                elif transpilador == "cobol":
-                    transp = TranspiladorCOBOL()
-                elif transpilador == "fortran":
-                    transp = TranspiladorFortran()
-                elif transpilador == "pascal":
-                    transp = TranspiladorPascal()
-                elif transpilador == "php":
-                    transp = TranspiladorPHP()
-                elif transpilador == "matlab":
-                    transp = TranspiladorMatlab()
-                elif transpilador == "latex":
-                    transp = TranspiladorLatex()
-                else:
+            if getattr(args, "tipos", None):
+                lenguajes = [t.strip() for t in args.tipos.split(',') if t.strip()]
+                for l in lenguajes:
+                    if l not in TRANSPILERS:
+                        raise ValueError("Transpilador no soportado.")
+                with multiprocessing.Pool(processes=len(lenguajes)) as pool:
+                    resultados = pool.map(self._ejecutar_transpilador, [(l, ast) for l in lenguajes])
+                for lang, nombre, resultado in resultados:
+                    print(f"Código generado ({nombre}) para {lang}:")
+                    print(resultado)
+                return 0
+            else:
+                transpilador = args.tipo
+                if transpilador not in TRANSPILERS:
                     raise ValueError("Transpilador no soportado.")
-
+                transp = TRANSPILERS[transpilador]()
                 resultado = transp.transpilar(ast)
                 print(f"Código generado ({transp.__class__.__name__}):")
                 print(resultado)
                 return 0
-            except PrimitivaPeligrosaError as pe:
-                logging.error(f"Primitiva peligrosa: {pe}")
-                print(f"Error: {pe}")
-                return 1
-            except SyntaxError as se:
-                logging.error(f"Error de sintaxis durante la transpilación: {se}")
-                print(f"Error durante la transpilación: {se}")
-                return 1
-            except Exception as e:
-                logging.error(f"Error general durante la transpilación: {e}")
-                print(f"Error durante la transpilación: {e}")
-                return 1
+        except PrimitivaPeligrosaError as pe:
+            logging.error(f"Primitiva peligrosa: {pe}")
+            print(f"Error: {pe}")
+            return 1
+        except SyntaxError as se:
+            logging.error(f"Error de sintaxis durante la transpilación: {se}")
+            print(f"Error durante la transpilación: {se}")
+            return 1
+        except Exception as e:
+            logging.error(f"Error general durante la transpilación: {e}")
+            print(f"Error durante la transpilación: {e}")
+            return 1
