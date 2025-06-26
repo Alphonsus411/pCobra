@@ -465,6 +465,24 @@ entry_points={
 
 Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamente
 el nuevo comando.
+
+### Ejemplo de plugin
+
+```python
+from src.cli.plugin_loader import PluginCommand
+
+
+class HolaCommand(PluginCommand):
+    name = "hola"
+    version = "1.0"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Muestra un saludo")
+        parser.set_defaults(cmd=self)
+
+    def run(self, args):
+        print("¡Hola desde un plugin!")
+```
 ## Historial de Cambios
 
 - Versión 1.2: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.2 del roadmap.
