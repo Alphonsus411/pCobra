@@ -57,3 +57,10 @@ Reporte de errores léxicos
 El lexer genera tokens mientras mantiene un conteo de línea y columna.
 Si encuentra un símbolo no reconocido detiene el proceso y lanza
 ``LexerError`` indicando la posición exacta del problema.
+
+Diagrama de clases principal
+----------------------------
+
+.. graphviz:: uml/class_diagram.gv
+   :caption: Estructura basica del nucleo
+
