@@ -331,6 +331,14 @@ La validación se realiza mediante una cadena de validadores configurada por la
 función `construir_cadena`, lo que facilita añadir nuevas comprobaciones en el
 futuro.
 
+## Ejecución en sandbox (--sandbox)
+
+Algunos comandos permiten ejecutar código Python dentro de una "sandbox" gracias
+a la biblioteca `RestrictedPython`. Esto limita las operaciones disponibles y
+evita acciones potencialmente peligrosas como leer archivos o importar módulos
+externos. Para activar esta opción utiliza `--sandbox` en los subcomandos
+`ejecutar` e `interactive`.
+
 # Pruebas
 
 Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Puedes añadir más pruebas para cubrir nuevos casos de uso y asegurar la estabilidad del código.
