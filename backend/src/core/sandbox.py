@@ -1,7 +1,11 @@
 """Ejecución de código Python en un entorno restringido."""
 
-from RestrictedPython import compile_restricted
-from RestrictedPython import safe_builtins
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
+from RestrictedPython import compile_restricted, safe_builtins
 from RestrictedPython.Eval import default_guarded_getitem
 from RestrictedPython.Guards import (
     guarded_iter_unpack_sequence,
@@ -28,3 +32,53 @@ def ejecutar_en_sandbox(codigo: str) -> str:
 
     exec(byte_code, env, env)
     return env["_print"]()
+
+
+def ejecutar_en_sandbox_js(codigo: str) -> str:
+    """Ejecuta código JavaScript de forma aislada usando Node."""
+    script = f"""
+const vm = require('vm');
+let output = '';
+const console = {{ log: (msg) => {{ output += String(msg) + '\n'; }} }};
+vm.runInNewContext(`{codigo}`, {{ console }});
+process.stdout.write(output);
+"""
+    proc = subprocess.run([
+        "node",
+        "-e",
+        script,
+    ], capture_output=True, text=True, check=True)
+    return proc.stdout
+
+
+def compilar_en_sandbox_cpp(codigo: str) -> str:
+    """Compila y ejecuta código C++ de forma segura."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src = Path(tmpdir) / "main.cpp"
+        src.write_text(codigo)
+        exe = Path(tmpdir) / "a.out"
+        subprocess.run([
+            "g++",
+            "-std=c++17",
+            str(src),
+            "-o",
+            str(exe),
+        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.run([str(exe)], capture_output=True, text=True, check=True)
+        return proc.stdout
+
+
+def validar_dependencias(backend: str, mod_info: dict) -> None:
+    """Verifica que las rutas de *mod_info* para *backend* existan y sean seguras."""
+    if not mod_info:
+        return
+    base = os.getcwd()
+    for mod, data in mod_info.items():
+        ruta = data.get(backend)
+        if not ruta:
+            continue
+        abs_path = os.path.abspath(ruta)
+        if not abs_path.startswith(base):
+            raise ValueError(f"Ruta no permitida: {ruta}")
+        if not os.path.exists(abs_path):
+            raise FileNotFoundError(f"Dependencia no encontrada: {ruta}")

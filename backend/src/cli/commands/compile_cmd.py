@@ -4,6 +4,8 @@ import multiprocessing
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
+from src.cobra.transpilers import module_map
+from src.core.sandbox import validar_dependencias
 
 from src.core.ast_cache import obtener_ast
 from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
@@ -95,6 +97,18 @@ class CompileCommand(BaseCommand):
         archivo = args.archivo
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
+            return 1
+
+        mod_info = module_map.get_toml_map()
+        try:
+            if getattr(args, "tipos", None):
+                langs = [t.strip() for t in args.tipos.split(',') if t.strip()]
+                for lang in langs:
+                    validar_dependencias(lang, mod_info)
+            else:
+                validar_dependencias(args.tipo, mod_info)
+        except (ValueError, FileNotFoundError) as dep_err:
+            mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
 
         with open(archivo, "r") as f:

@@ -2,7 +2,8 @@ import logging
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from src.core.sandbox import ejecutar_en_sandbox
+from src.core.sandbox import ejecutar_en_sandbox, validar_dependencias
+from src.cobra.transpilers import module_map
 
 from src.core.interpreter import InterpretadorCobra
 from src.core.qualia_bridge import get_suggestions
@@ -30,6 +31,12 @@ class InteractiveCommand(BaseCommand):
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
         sandbox = getattr(args, "sandbox", False)
+
+        try:
+            validar_dependencias("python", module_map.get_toml_map())
+        except (ValueError, FileNotFoundError) as dep_err:
+            mostrar_error(f"Error de dependencias: {dep_err}")
+            return 1
         interpretador = InterpretadorCobra(
             safe_mode=seguro, extra_validators=extra_validators
         )
