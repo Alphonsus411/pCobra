@@ -29,3 +29,18 @@ Se puede ampliar la cadena de validación pasando la opción
 .. code-block:: bash
 
    cobra ejecutar programa.co --seguro --validadores-extra mis_validadores.py
+
+Configuraciones avanzadas
+-------------------------
+
+Las listas ``IMPORT_WHITELIST`` y ``USAR_WHITELIST`` determinan qué módulos y
+paquetes pueden cargarse cuando el modo seguro está activo. Puedes editarlas en
+``backend/src/cobra/import_loader.py`` y ``backend/src/cobra/usar_loader.py``
+respectivamente para afinar las restricciones.
+
+También es posible definir validadores adicionales creando un módulo con la
+variable ``VALIDADORES_EXTRA`` y pasándolo mediante la opción
+``--validadores-extra``.
+
+Para evaluar el impacto de estas comprobaciones en el rendimiento revisa
+:doc:`benchmarking`.
