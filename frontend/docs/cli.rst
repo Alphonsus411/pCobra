@@ -1,8 +1,138 @@
-Arquitectura de la CLI
-======================
+CLI de Cobra
+===========
 
-La herramienta ``cobra`` permite ejecutar programas y transpilar el codigo a otros lenguajes. Internamente sigue el flujo que se muestra a continuacion:
+La herramienta ``cobra`` se maneja mediante subcomandos que facilitan
+la ejecución y transpilación de programas. A continuación se resumen
+las opciones más importantes y un ejemplo de uso para cada una.
 
-.. graphviz:: uml/flow_diagram.gv
-   :caption: Flujo de la CLI
+Subcomando ``compilar``
+----------------------
+Transpila un archivo Cobra a otro lenguaje.
 
+Opciones principales:
+
+- ``archivo``: ruta del script ``.co``.
+- ``--tipo``: lenguaje de salida (``python``, ``js``, ``asm``, ``rust``,
+  ``cpp``, ``go``, ``ruby``, ``r``, ``julia``, ``java``, ``cobol``,
+  ``fortran``, ``pascal``, ``php``, ``matlab``, ``latex``).
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra compilar hola.co --tipo python
+
+Subcomando ``ejecutar``
+----------------------
+Ejecuta directamente un script Cobra.
+
+Opciones principales:
+
+- ``archivo``: ruta del código ``.co``.
+- ``--formatear``: aplica ``black`` antes de procesar el archivo.
+- ``--depurar``: muestra información de depuración.
+- ``--seguro``: activa el :doc:`modo seguro <modo_seguro>`.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra ejecutar programa.co --seguro --depurar
+
+Subcomando ``interactive``
+-------------------------
+Abre el intérprete interactivo. Es el modo por defecto si no se
+especifica un subcomando.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra
+
+Subcomando ``modulos``
+---------------------
+Gestiona módulos instalados.
+
+Acciones disponibles:
+
+- ``listar`` muestra los módulos instalados.
+- ``instalar <ruta>`` copia un archivo ``.co`` al directorio de módulos.
+- ``remover <nombre>`` elimina un módulo instalado.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra modulos instalar extra/modulo.co
+
+Subcomando ``dependencias``
+--------------------------
+Permite listar o instalar las dependencias definidas en
+``requirements.txt``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra dependencias instalar
+
+Subcomando ``docs``
+-------------------
+Genera la documentación HTML del proyecto.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra docs
+
+Subcomando ``empaquetar``
+------------------------
+Crea un ejecutable independiente usando ``PyInstaller``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra empaquetar --output dist
+
+Subcomando ``crear``
+-------------------
+Genera archivos o proyectos básicos.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra crear proyecto mi_app
+
+Subcomando ``agix``
+------------------
+Analiza un archivo y sugiere mejoras utilizando ``agix``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra agix ejemplo.co
+
+Subcomando ``jupyter``
+---------------------
+Instala el kernel Cobra y abre ``Jupyter Notebook``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra jupyter
+
+Subcomando ``gui``
+-----------------
+Inicia la interfaz gráfica basada en ``Flet``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra gui
