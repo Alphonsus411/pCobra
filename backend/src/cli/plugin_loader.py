@@ -3,6 +3,7 @@ from importlib.metadata import entry_points
 
 from .commands.base import BaseCommand
 from .plugin_interface import PluginInterface
+from .plugin_registry import registrar_plugin
 
 
 class PluginCommand(BaseCommand, PluginInterface):
@@ -25,7 +26,9 @@ def descubrir_plugins():
                     f"El plugin {ep.name} no implementa PluginInterface"
                 )
                 continue
-            plugins.append(plugin_cls())
+            instancia = plugin_cls()
+            registrar_plugin(instancia.name, getattr(instancia, "version", "0"))
+            plugins.append(instancia)
         except Exception as exc:
             logging.error(f"Error cargando plugin {ep.name}: {exc}")
     return plugins

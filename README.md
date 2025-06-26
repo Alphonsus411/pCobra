@@ -466,6 +466,13 @@ entry_points={
 Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamente
 el nuevo comando.
 
+Cada plugin se registra junto con su número de versión en un registro interno.
+Puedes ver la lista de plugins disponibles ejecutando:
+
+```bash
+cobra plugins
+```
+
 ### Ejemplo de plugin
 
 ```python
