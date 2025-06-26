@@ -1,6 +1,7 @@
 import subprocess
 import sys
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error
 
 
@@ -10,7 +11,7 @@ class JupyterCommand(BaseCommand):
     name = "jupyter"
 
     def register_subparser(self, subparsers):
-        parser = subparsers.add_parser(self.name, help="Inicia Jupyter Notebook")
+        parser = subparsers.add_parser(self.name, help=_("Inicia Jupyter Notebook"))
         parser.set_defaults(cmd=self)
         return parser
 
@@ -25,10 +26,11 @@ class JupyterCommand(BaseCommand):
             return 0
         except FileNotFoundError:
             mostrar_error(
-                "No se encontró el ejecutable 'jupyter'. "
-                "Instala Jupyter para utilizar esta función."
+                _(
+                    "No se encontró el ejecutable 'jupyter'. Instala Jupyter para utilizar esta función."
+                )
             )
             return 1
         except subprocess.CalledProcessError as e:
-            mostrar_error(f"Error lanzando Jupyter: {e}")
+            mostrar_error(_("Error lanzando Jupyter: {err}").format(err=e))
             return 1

@@ -1,5 +1,6 @@
 import os
 from .base import BaseCommand
+from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 
 from src.ia.analizador_agix import generar_sugerencias
@@ -12,7 +13,7 @@ class AgixCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(
-            self.name, help="Analiza un archivo Cobra y sugiere mejoras"
+            self.name, help=_("Analiza un archivo Cobra y sugiere mejoras")
         )
         parser.add_argument("archivo")
         parser.set_defaults(cmd=self)
