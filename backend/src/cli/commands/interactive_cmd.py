@@ -1,5 +1,6 @@
 import logging
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 from src.core.sandbox import ejecutar_en_sandbox
 
 from src.core.interpreter import InterpretadorCobra
@@ -48,13 +49,13 @@ class InteractiveCommand(BaseCommand):
                     break
                 elif linea == "tokens":
                     tokens = Lexer(linea).tokenizar()
-                    print("Tokens generados:")
+                    mostrar_info("Tokens generados:")
                     for token in tokens:
-                        print(token)
+                        mostrar_info(str(token))
                     continue
                 elif linea == "sugerencias":
                     for s in get_suggestions():
-                        print(s)
+                        mostrar_info(str(s))
                     continue
                 elif linea == "ast":
                     tokens = Lexer(linea).tokenizar()
@@ -67,18 +68,18 @@ class InteractiveCommand(BaseCommand):
                         logging.error(f"Primitiva peligrosa: {pe}")
                         print(f"Error: {pe}")
                         continue
-                    print("AST generado:")
-                    print(ast)
+                    mostrar_info("AST generado:")
+                    mostrar_info(str(ast))
                     continue
                 elif linea:
                     if sandbox:
                         try:
                             salida = ejecutar_en_sandbox(linea)
                             if salida:
-                                print(salida)
+                                mostrar_info(str(salida))
                         except Exception as e:
                             logging.error(f"Error en sandbox: {e}")
-                            print(f"Error en sandbox: {e}")
+                            mostrar_error(f"Error en sandbox: {e}")
                         continue
 
                     tokens = Lexer(linea).tokenizar()
@@ -91,16 +92,16 @@ class InteractiveCommand(BaseCommand):
                                 nodo.aceptar(validador)
                     except PrimitivaPeligrosaError as pe:
                         logging.error(f"Primitiva peligrosa: {pe}")
-                        print(f"Error: {pe}")
+                        mostrar_error(str(pe))
                         continue
                     interpretador.ejecutar_ast(ast)
             except SyntaxError as se:
                 logging.error(f"Error de sintaxis: {se}")
-                print(f"Error procesando la entrada: {se}")
+                mostrar_error(f"Error procesando la entrada: {se}")
             except RuntimeError as re:
                 logging.error(f"Error crítico: {re}")
-                print(f"Error crítico: {re}")
+                mostrar_error(f"Error crítico: {re}")
             except Exception as e:
                 logging.error(f"Error general procesando la entrada: {e}")
-                print(f"Error procesando la entrada: {e}")
+                mostrar_error(f"Error procesando la entrada: {e}")
         return 0

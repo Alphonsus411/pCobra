@@ -295,6 +295,11 @@ Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 # Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab o LaTeX
 cobra compilar programa.co --tipo python
 
+# Ejemplo de mensaje de error al compilar un archivo inexistente
+cobra compilar noexiste.co
+# Salida:
+# Error: El archivo 'noexiste.co' no existe
+
 # Ejecutar directamente un script Cobra
 cobra ejecutar programa.co --depurar --formatear
 

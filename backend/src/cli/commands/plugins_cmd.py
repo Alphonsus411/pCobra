@@ -1,5 +1,6 @@
 from .base import BaseCommand
 from ..plugin_registry import obtener_registro
+from ..utils.messages import mostrar_info
 
 
 class PluginsCommand(BaseCommand):
@@ -15,9 +16,9 @@ class PluginsCommand(BaseCommand):
     def run(self, args):
         registro = obtener_registro()
         if not registro:
-            print("No hay plugins instalados")
+            mostrar_info("No hay plugins instalados")
         else:
             for nombre, version in registro.items():
-                print(f"{nombre} {version}")
+                mostrar_info(f"{nombre} {version}")
         return 0
 

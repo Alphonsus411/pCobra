@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 
 class EmpaquetarCommand(BaseCommand):
@@ -40,13 +41,13 @@ class EmpaquetarCommand(BaseCommand):
                 ],
                 check=True,
             )
-            print(f"Ejecutable generado en {os.path.join(output, 'cobra')}")
+            mostrar_info(f"Ejecutable generado en {os.path.join(output, 'cobra')}")
             return 0
         except FileNotFoundError:
-            print(
+            mostrar_error(
                 "PyInstaller no está instalado. Ejecuta 'pip install pyinstaller'."
             )
             return 1
         except subprocess.CalledProcessError as e:
-            print(f"Error empaquetando la CLI: {e}")
+            mostrar_error(f"Error empaquetando la CLI: {e}")
             return 1

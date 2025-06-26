@@ -1,6 +1,7 @@
 import os
 import subprocess
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 
 class DocsCommand(BaseCommand):
@@ -27,11 +28,11 @@ class DocsCommand(BaseCommand):
         try:
             subprocess.run(["sphinx-apidoc", "-o", api, codigo], check=True)
             subprocess.run(["sphinx-build", "-b", "html", source, build], check=True)
-            print(f"Documentación generada en {build}")
+            mostrar_info(f"Documentación generada en {build}")
             return 0
         except FileNotFoundError:
-            print("Sphinx no está instalado. Ejecuta 'pip install sphinx'.")
+            mostrar_error("Sphinx no está instalado. Ejecuta 'pip install sphinx'.")
             return 1
         except subprocess.CalledProcessError as e:
-            print(f"Error generando la documentación: {e}")
+            mostrar_error(f"Error generando la documentación: {e}")
             return 1

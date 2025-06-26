@@ -1,4 +1,5 @@
 from .base import BaseCommand
+from ..utils.messages import mostrar_error
 
 
 class FletCommand(BaseCommand):
@@ -18,7 +19,7 @@ class FletCommand(BaseCommand):
             import flet
             from src.gui.idle import main
         except ModuleNotFoundError:
-            print("Flet no está instalado. Ejecuta 'pip install flet'.")
+            mostrar_error("Flet no está instalado. Ejecuta 'pip install flet'.")
             return 1
         flet.app(target=main)
         return 0

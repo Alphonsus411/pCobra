@@ -1,6 +1,7 @@
 import os
 import subprocess
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 
 class DependenciasCommand(BaseCommand):
@@ -25,7 +26,7 @@ class DependenciasCommand(BaseCommand):
         elif accion == "instalar":
             return self._instalar_dependencias()
         else:
-            print("Acci\u00f3n de dependencias no reconocida")
+            mostrar_error("Acci\u00f3n de dependencias no reconocida")
             return 1
 
     @staticmethod
@@ -38,15 +39,15 @@ class DependenciasCommand(BaseCommand):
     def _listar_dependencias(cls):
         archivo = cls._ruta_requirements()
         if not os.path.exists(archivo):
-            print("No se encontr\u00f3 requirements.txt")
+            mostrar_error("No se encontr\u00f3 requirements.txt")
             return 1
         with open(archivo, "r") as f:
             deps = [l.strip() for l in f if l.strip() and not l.startswith("#")]
         if not deps:
-            print("No hay dependencias listadas")
+            mostrar_info("No hay dependencias listadas")
         else:
             for dep in deps:
-                print(dep)
+                mostrar_info(dep)
         return 0
 
     @classmethod
@@ -54,8 +55,8 @@ class DependenciasCommand(BaseCommand):
         archivo = cls._ruta_requirements()
         try:
             subprocess.run(["pip", "install", "-r", archivo], check=True)
-            print("Dependencias instaladas")
+            mostrar_info("Dependencias instaladas")
             return 0
         except subprocess.CalledProcessError as e:
-            print(f"Error instalando dependencias: {e}")
+            mostrar_error(f"Error instalando dependencias: {e}")
             return 1
