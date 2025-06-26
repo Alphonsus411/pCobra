@@ -20,6 +20,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install sphinx sphinx-rtd-theme pytest-cov codecov
+      - name: Run linters
+        run: |
+          flake8 backend/src
+          mypy backend/src
       - name: Run tests
         run: pytest --cov=backend/src --cov-report=xml \
           --cov-report=term-missing --cov-fail-under=80

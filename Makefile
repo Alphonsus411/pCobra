@@ -20,5 +20,9 @@ help:
         @$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 coverage:
-	pytest backend/src/tests --cov=backend/src 
-	  --cov-report=term-missing --cov-fail-under=80
+        pytest backend/src/tests --cov=backend/src
+          --cov-report=term-missing --cov-fail-under=80
+
+lint:
+	flake8 backend/src
+	mypy backend/src
