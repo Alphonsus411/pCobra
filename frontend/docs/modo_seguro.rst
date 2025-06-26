@@ -6,7 +6,9 @@ opción ``--seguro``. Al activarse se construye una cadena de validadores que
 analiza el AST y bloquea primitivas peligrosas como ``leer_archivo``,
 ``escribir_archivo``, ``obtener_url`` y ``hilo``. También se valida la
 instrucción ``import`` para permitir únicamente los módulos instalados o los
-especificados en ``IMPORT_WHITELIST``.
+especificados en ``IMPORT_WHITELIST``. La instrucción ``usar`` está limitada a
+los paquetes listados en ``USAR_WHITELIST`` ubicado en
+``backend/src/cobra/usar_loader.py``.
 
 Si se intenta utilizar alguna de estas operaciones se lanzará
 ``PrimitivaPeligrosaError`` antes de ejecutar el código.
