@@ -1,0 +1,4 @@
+digraph flow {
+    rankdir=LR;
+    Lexer -> Parser -> AST -> Transpilers;
+}

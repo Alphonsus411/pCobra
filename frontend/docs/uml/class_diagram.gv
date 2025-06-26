@@ -1,0 +1,13 @@
+digraph classes {
+    node [shape=record, fontname="Helvetica"];
+    Lexer [label="{Lexer|+tokenize()}"];
+    Parser [label="{Parser|+parse()}"];
+    AST [label="{AST|+Node classes}"];
+    Interpreter [label="{Interpreter|+execute()}"];
+    Transpilers [label="{Transpilers|+to_python()|+to_js()|...}"];
+
+    Lexer -> Parser;
+    Parser -> AST;
+    AST -> Interpreter;
+    AST -> Transpilers;
+}
