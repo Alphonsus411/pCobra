@@ -2,6 +2,7 @@ import logging
 import os
 import multiprocessing
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 from src.core.ast_cache import obtener_ast
 from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
@@ -92,7 +93,7 @@ class CompileCommand(BaseCommand):
     def run(self, args):
         archivo = args.archivo
         if not os.path.exists(archivo):
-            print(f"Error: El archivo '{archivo}' no existe.")
+            mostrar_error(f"El archivo '{archivo}' no existe")
             return 1
 
         with open(archivo, "r") as f:
@@ -111,7 +112,7 @@ class CompileCommand(BaseCommand):
                 with multiprocessing.Pool(processes=len(lenguajes)) as pool:
                     resultados = pool.map(self._ejecutar_transpilador, [(l, ast) for l in lenguajes])
                 for lang, nombre, resultado in resultados:
-                    print(f"Código generado ({nombre}) para {lang}:")
+                    mostrar_info(f"Código generado ({nombre}) para {lang}:")
                     print(resultado)
                 return 0
             else:
@@ -120,18 +121,20 @@ class CompileCommand(BaseCommand):
                     raise ValueError("Transpilador no soportado.")
                 transp = TRANSPILERS[transpilador]()
                 resultado = transp.transpilar(ast)
-                print(f"Código generado ({transp.__class__.__name__}):")
+                mostrar_info(
+                    f"Código generado ({transp.__class__.__name__}):"
+                )
                 print(resultado)
                 return 0
         except PrimitivaPeligrosaError as pe:
             logging.error(f"Primitiva peligrosa: {pe}")
-            print(f"Error: {pe}")
+            mostrar_error(str(pe))
             return 1
         except SyntaxError as se:
             logging.error(f"Error de sintaxis durante la transpilación: {se}")
-            print(f"Error durante la transpilación: {se}")
+            mostrar_error(f"Error durante la transpilación: {se}")
             return 1
         except Exception as e:
             logging.error(f"Error general durante la transpilación: {e}")
-            print(f"Error durante la transpilación: {e}")
+            mostrar_error(f"Error durante la transpilación: {e}")
             return 1

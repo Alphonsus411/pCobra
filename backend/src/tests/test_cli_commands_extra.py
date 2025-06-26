@@ -133,7 +133,8 @@ def test_cli_compilar_archivo_inexistente(tmp_path):
     archivo = tmp_path / "no.co"
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(archivo)])
-    assert f"Error: El archivo '{archivo}' no existe." == out.getvalue().strip()
+    salida = out.getvalue().strip()
+    assert f"El archivo '{archivo}' no existe" in salida
 
 
 @pytest.mark.timeout(5)
@@ -180,26 +181,26 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])
-    assert out.getvalue().strip() == "No hay módulos instalados"
+    assert "No hay módulos instalados" in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "instalar", str(modulo)])
     destino = mods_dir / modulo.name
     assert destino.exists()
-    assert f"Módulo instalado en {destino}" == out.getvalue().strip()
+    assert f"Módulo instalado en {destino}" in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])
-    assert out.getvalue().strip() == modulo.name
+    assert modulo.name in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "remover", modulo.name])
     assert not destino.exists()
-    assert f"Módulo {modulo.name} eliminado" == out.getvalue().strip()
+    assert f"Módulo {modulo.name} eliminado" in out.getvalue().strip()
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])
-    assert out.getvalue().strip() == "No hay módulos instalados"
+    assert "No hay módulos instalados" in out.getvalue().strip()
 
 @pytest.mark.timeout(5)
 def test_cli_crear_archivo(tmp_path):
@@ -207,7 +208,7 @@ def test_cli_crear_archivo(tmp_path):
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["crear", "archivo", str(ruta)])
     assert (tmp_path / "nuevo.co").exists()
-    assert out.getvalue().strip() == f"Archivo creado: {ruta}.co"
+    assert f"Archivo creado: {ruta}.co" in out.getvalue().strip()
 
 
 @pytest.mark.timeout(5)

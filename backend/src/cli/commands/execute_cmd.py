@@ -1,6 +1,7 @@
 import logging
 import os
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 from src.core.sandbox import ejecutar_en_sandbox
 
 from src.core.interpreter import InterpretadorCobra
@@ -34,7 +35,7 @@ class ExecuteCommand(BaseCommand):
         sandbox = getattr(args, "sandbox", False)
 
         if not os.path.exists(archivo):
-            print(f"El archivo '{archivo}' no existe")
+            mostrar_error(f"El archivo '{archivo}' no existe")
             return 1
         if formatear:
             self._formatear_codigo(archivo)
@@ -52,7 +53,7 @@ class ExecuteCommand(BaseCommand):
                 return 0
             except Exception as e:
                 logging.error(f"Error ejecutando en sandbox: {e}")
-                print(f"Error ejecutando en sandbox: {e}")
+                mostrar_error(f"Error ejecutando en sandbox: {e}")
                 return 1
 
         tokens = Lexer(codigo).tokenizar()
@@ -68,7 +69,7 @@ class ExecuteCommand(BaseCommand):
                     nodo.aceptar(validador)
             except PrimitivaPeligrosaError as pe:
                 logging.error(f"Primitiva peligrosa: {pe}")
-                print(f"Error: {pe}")
+                mostrar_error(str(pe))
                 return 1
         try:
             InterpretadorCobra(
@@ -78,7 +79,7 @@ class ExecuteCommand(BaseCommand):
             return 0
         except Exception as e:
             logging.error(f"Error ejecutando el script: {e}")
-            print(f"Error ejecutando el script: {e}")
+            mostrar_error(f"Error ejecutando el script: {e}")
             return 1
 
     @staticmethod
@@ -91,7 +92,7 @@ class ExecuteCommand(BaseCommand):
                 archivo,
             ], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except FileNotFoundError:
-            print(
+            mostrar_error(
                 "Herramienta de formateo no encontrada. "
                 "Asegúrate de tener 'black' instalado."
             )

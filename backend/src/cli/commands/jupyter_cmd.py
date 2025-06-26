@@ -1,6 +1,7 @@
 import subprocess
 import sys
 from .base import BaseCommand
+from ..utils.messages import mostrar_error
 
 
 class JupyterCommand(BaseCommand):
@@ -23,11 +24,11 @@ class JupyterCommand(BaseCommand):
             ], check=True)
             return 0
         except FileNotFoundError:
-            print(
+            mostrar_error(
                 "No se encontró el ejecutable 'jupyter'. "
                 "Instala Jupyter para utilizar esta función."
             )
             return 1
         except subprocess.CalledProcessError as e:
-            print(f"Error lanzando Jupyter: {e}")
+            mostrar_error(f"Error lanzando Jupyter: {e}")
             return 1

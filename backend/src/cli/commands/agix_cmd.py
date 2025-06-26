@@ -1,5 +1,6 @@
 import os
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 from src.ia.analizador_agix import generar_sugerencias
 
@@ -20,11 +21,11 @@ class AgixCommand(BaseCommand):
     def run(self, args):
         archivo = args.archivo
         if not os.path.exists(archivo):
-            print(f"El archivo '{archivo}' no existe")
+            mostrar_error(f"El archivo '{archivo}' no existe")
             return 1
         with open(archivo, "r") as f:
             codigo = f.read()
         sugerencias = generar_sugerencias(codigo)
         for s in sugerencias:
-            print(s)
+            mostrar_info(str(s))
         return 0

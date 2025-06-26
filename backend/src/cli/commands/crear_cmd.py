@@ -1,5 +1,6 @@
 import os
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 
 class CrearCommand(BaseCommand):
@@ -28,7 +29,7 @@ class CrearCommand(BaseCommand):
         elif accion == "proyecto":
             return self._crear_proyecto(args.ruta)
         else:
-            print("Acción no reconocida")
+            mostrar_error("Acción no reconocida")
             return 1
 
     @staticmethod
@@ -38,13 +39,13 @@ class CrearCommand(BaseCommand):
         os.makedirs(os.path.dirname(ruta) or ".", exist_ok=True)
         with open(ruta, "w", encoding="utf-8"):
             pass
-        print(f"Archivo creado: {ruta}")
+        mostrar_info(f"Archivo creado: {ruta}")
         return 0
 
     @staticmethod
     def _crear_carpeta(ruta):
         os.makedirs(ruta, exist_ok=True)
-        print(f"Carpeta creada: {ruta}")
+        mostrar_info(f"Carpeta creada: {ruta}")
         return 0
 
     @staticmethod
@@ -53,5 +54,5 @@ class CrearCommand(BaseCommand):
         main = os.path.join(ruta, "main.co")
         with open(main, "w", encoding="utf-8"):
             pass
-        print(f"Proyecto Cobra creado en {ruta}")
+        mostrar_info(f"Proyecto Cobra creado en {ruta}")
         return 0

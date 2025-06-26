@@ -1,6 +1,7 @@
 import os
 import shutil
 from .base import BaseCommand
+from ..utils.messages import mostrar_error, mostrar_info
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
@@ -31,27 +32,27 @@ class ModulesCommand(BaseCommand):
         elif accion == "remover":
             return self._remover_modulo(args.nombre)
         else:
-            print("Acción de módulos no reconocida")
+            mostrar_error("Acción de módulos no reconocida")
             return 1
 
     @staticmethod
     def _listar_modulos():
         mods = [f for f in os.listdir(MODULES_PATH) if f.endswith(".co")]
         if not mods:
-            print("No hay módulos instalados")
+            mostrar_info("No hay módulos instalados")
         else:
             for m in mods:
-                print(m)
+                mostrar_info(m)
         return 0
 
     @staticmethod
     def _instalar_modulo(ruta):
         if not os.path.exists(ruta):
-            print(f"No se encontró el módulo {ruta}")
+            mostrar_error(f"No se encontró el módulo {ruta}")
             return 1
         destino = os.path.join(MODULES_PATH, os.path.basename(ruta))
         shutil.copy(ruta, destino)
-        print(f"Módulo instalado en {destino}")
+        mostrar_info(f"Módulo instalado en {destino}")
         return 0
 
     @staticmethod
@@ -59,8 +60,8 @@ class ModulesCommand(BaseCommand):
         archivo = os.path.join(MODULES_PATH, nombre)
         if os.path.exists(archivo):
             os.remove(archivo)
-            print(f"Módulo {nombre} eliminado")
+            mostrar_info(f"Módulo {nombre} eliminado")
             return 0
         else:
-            print(f"El módulo {nombre} no existe")
+            mostrar_error(f"El módulo {nombre} no existe")
             return 1
