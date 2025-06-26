@@ -2,8 +2,7 @@ import logging
 import os
 from .base import BaseCommand
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from src.core.ast_cache import obtener_ast
 from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -71,8 +70,7 @@ class CompileCommand(BaseCommand):
         with open(archivo, "r") as f:
             codigo = f.read()
             try:
-                tokens = Lexer(codigo).tokenizar()
-                ast = Parser(tokens).parsear()
+                ast = obtener_ast(codigo)
 
                 validador = construir_cadena()
                 for nodo in ast:
