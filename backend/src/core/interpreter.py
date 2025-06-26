@@ -52,7 +52,17 @@ class ExcepcionCobra(Exception):
 class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
-    def __init__(self, safe_mode: bool = False):
+    @staticmethod
+    def _cargar_validadores(ruta):
+        """Carga una lista de validadores desde un archivo Python."""
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("cobra_extra_validators", ruta)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return getattr(mod, "VALIDADORES_EXTRA", [])
+
+    def __init__(self, safe_mode: bool = False, extra_validators=None):
         """Crea un nuevo interpretador.
 
         Parameters
@@ -61,9 +71,16 @@ class InterpretadorCobra:
             Si se activa, valida cada nodo utilizando la cadena devuelta por
             :func:`construir_cadena` y restringe primitivas como ``import`` o
             ``hilo``.
+        extra_validators: list | str, optional
+            Lista de instancias adicionales o ruta a un módulo que defina
+            ``VALIDADORES_EXTRA``.
         """
+        extra = extra_validators
+        if isinstance(extra, str):
+            extra = self._cargar_validadores(extra)
+
         self.safe_mode = safe_mode
-        self._validador = construir_cadena() if safe_mode else None
+        self._validador = construir_cadena(extra) if safe_mode else None
         # Pila de contextos para mantener variables locales en cada llamada
         self.contextos = [{}]
         # Mapa paralelo para gestionar bloques de memoria por contexto

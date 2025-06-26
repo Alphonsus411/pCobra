@@ -24,6 +24,7 @@ class ExecuteCommand(BaseCommand):
         depurar = getattr(args, "depurar", False)
         formatear = getattr(args, "formatear", False)
         seguro = getattr(args, "seguro", False)
+        extra_validators = getattr(args, "validadores_extra", None)
 
         if not os.path.exists(archivo):
             print(f"El archivo '{archivo}' no existe")
@@ -41,7 +42,11 @@ class ExecuteCommand(BaseCommand):
         ast = Parser(tokens).parsear()
         if seguro:
             try:
-                validador = construir_cadena()
+                validador = construir_cadena(
+                    InterpretadorCobra._cargar_validadores(extra_validators)
+                    if isinstance(extra_validators, str)
+                    else extra_validators
+                )
                 for nodo in ast:
                     nodo.aceptar(validador)
             except PrimitivaPeligrosaError as pe:
@@ -49,7 +54,10 @@ class ExecuteCommand(BaseCommand):
                 print(f"Error: {pe}")
                 return 1
         try:
-            InterpretadorCobra(safe_mode=seguro).ejecutar_ast(ast)
+            InterpretadorCobra(
+                safe_mode=seguro,
+                extra_validators=extra_validators,
+            ).ejecutar_ast(ast)
             return 0
         except Exception as e:
             logging.error(f"Error ejecutando el script: {e}")

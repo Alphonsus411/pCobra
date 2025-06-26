@@ -145,6 +145,20 @@ def test_cli_ejecutar_flag_seguro(tmp_path):
 
 
 @pytest.mark.timeout(5)
+def test_cli_validadores_extra(tmp_path):
+    archivo = tmp_path / "p.co"
+    archivo.write_text("imprimir(1)")
+    ruta = tmp_path / "vals.py"
+    ruta.write_text("VALIDADORES_EXTRA = []\n")
+    with patch("src.cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
+        main(["--seguro", f"--validadores-extra={ruta}", "ejecutar", str(archivo)])
+        mock_interp.assert_called_once_with(
+            safe_mode=True, extra_validators=str(ruta)
+        )
+        mock_interp.return_value.ejecutar_ast.assert_called_once()
+
+
+@pytest.mark.timeout(5)
 def test_cli_modulos_comandos(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
