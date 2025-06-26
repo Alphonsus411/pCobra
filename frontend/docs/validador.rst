@@ -36,6 +36,30 @@ otros validadores pasando una lista a esta función.
 
    cadena = construir_cadena([MiValidador()])
 
+Registro automático de validadores
+---------------------------------
+Los validadores también pueden cargarse de forma automática desde un módulo
+externo mediante la opción ``--validadores-extra`` de la CLI. El módulo debe
+definir una lista ``VALIDADORES_EXTRA`` con las instancias a añadir.
+
+.. code-block:: python
+
+   # archivo validadores.py
+   from src.core.semantic_validators.base import ValidadorBase
+
+   class Demo(ValidadorBase):
+       def visit_valor(self, nodo):
+           self.generic_visit(nodo)
+           self.delegar(nodo)
+
+   VALIDADORES_EXTRA = [Demo()]
+
+Posteriormente se indica la ruta al ejecutar Cobra:
+
+.. code-block:: bash
+
+   cobra ejecutar prog.co --seguro --validadores-extra validadores.py
+
 Ejemplo de deteccion
 --------------------
 

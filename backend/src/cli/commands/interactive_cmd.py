@@ -20,8 +20,19 @@ class InteractiveCommand(BaseCommand):
 
     def run(self, args):
         seguro = getattr(args, "seguro", False)
-        interpretador = InterpretadorCobra(safe_mode=seguro)
-        validador = construir_cadena() if seguro else None
+        extra_validators = getattr(args, "validadores_extra", None)
+        interpretador = InterpretadorCobra(
+            safe_mode=seguro, extra_validators=extra_validators
+        )
+        validador = (
+            construir_cadena(
+                InterpretadorCobra._cargar_validadores(extra_validators)
+                if isinstance(extra_validators, str)
+                else extra_validators
+            )
+            if seguro
+            else None
+        )
 
         while True:
             try:

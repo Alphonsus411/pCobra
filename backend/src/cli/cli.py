@@ -29,6 +29,10 @@ def main(argv=None):
     parser.add_argument("--formatear", action="store_true", help="Formatea el archivo antes de procesarlo")
     parser.add_argument("--depurar", action="store_true", help="Muestra mensajes de depuración")
     parser.add_argument("--seguro", action="store_true", help="Ejecuta en modo seguro")
+    parser.add_argument(
+        "--validadores-extra",
+        help="Ruta a módulo con validadores personalizados",
+    )
 
     subparsers = parser.add_subparsers(dest="comando")
 

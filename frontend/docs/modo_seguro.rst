@@ -19,3 +19,13 @@ Ejemplo de uso
 .. code-block:: bash
 
    cobra ejecutar programa.co --seguro
+
+Validadores personalizados
+-------------------------
+Se puede ampliar la cadena de validación pasando la opción
+``--validadores-extra`` con la ruta a un módulo que defina la lista
+``VALIDADORES_EXTRA``. Cada elemento debe ser una instancia de un validador.
+
+.. code-block:: bash
+
+   cobra ejecutar programa.co --seguro --validadores-extra mis_validadores.py
