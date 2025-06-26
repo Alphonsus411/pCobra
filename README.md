@@ -110,7 +110,8 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
-pytest backend/src/tests
+pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+  --cov-fail-under=80
 ````
 
 
@@ -325,7 +326,8 @@ futuro.
 Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Puedes añadir más pruebas para cubrir nuevos casos de uso y asegurar la estabilidad del código.
 
 ````bash
-pytest backend/src/tests
+pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+  --cov-fail-under=80
 ````
 
 Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
@@ -364,7 +366,7 @@ echo $?  # 1
 Para obtener un reporte de cobertura en la terminal ejecuta:
 
 ````bash
-pytest --cov=backend/src --cov-report=term-missing
+pytest --cov=backend/src --cov-report=term-missing --cov-fail-under=80
 ````
 
 ## Generar documentación
