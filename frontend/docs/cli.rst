@@ -146,3 +146,13 @@ Ejemplo:
 .. code-block:: bash
 
    cobra plugins
+
+Subcomando ``init``
+------------------
+Inicializa un proyecto básico.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra init mi_app
