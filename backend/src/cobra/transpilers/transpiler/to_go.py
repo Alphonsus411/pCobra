@@ -13,7 +13,7 @@ from src.core.ast_nodes import (
 )
 from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code
+from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from src.cobra.macro import expandir_macros
 
 
@@ -85,7 +85,7 @@ class TranspiladorGo(NodeVisitor):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(optimize_constants(nodos))
+        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
             if metodo:

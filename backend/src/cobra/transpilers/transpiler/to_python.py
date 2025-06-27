@@ -31,7 +31,7 @@ from src.core.ast_nodes import (
 from src.cobra.parser.parser import Parser
 from src.cobra.lexico.lexer import TipoToken, Lexer
 from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code
+from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from src.cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
 
@@ -112,7 +112,7 @@ class TranspiladorPython(NodeVisitor):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(optimize_constants(nodos))
+        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             nodo.aceptar(self)
         if nodos and all(
