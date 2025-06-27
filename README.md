@@ -334,6 +334,8 @@ cobra paquete instalar demo.cobra
 cobra docs
 # Crear un ejecutable independiente
 cobra empaquetar --output dist
+# Perfilar un programa y guardar los resultados
+cobra profile programa.co --output salida.prof
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
