@@ -12,6 +12,7 @@ from src.core.ast_nodes import (
     NodoMetodo,
     NodoClase,
     NodoImprimir,
+    NodoPasar,
 )
 from src.core.ast_nodes import NodoSwitch, NodoCase
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -169,5 +170,23 @@ def test_transpilador_clase_compleja():
         "class Hija(Base1, Base2):\n"
         "    async def run(self):\n"
         "        await tarea()\n"
+    )
+    assert codigo == esperado
+
+def test_decoradores_en_clase_y_metodo():
+    decor = NodoDecorador(NodoIdentificador("dec"))
+    metodo = NodoMetodo("run", ["self"], [NodoPasar()], asincronica=True)
+    metodo.decoradores = [decor]
+    clase = NodoClase("C", [metodo])
+    clase.decoradores = [decor]
+    codigo = TranspiladorPython().transpilar([clase])
+    esperado = (
+        "import asyncio\n"
+        "from src.core.nativos import *\n"
+        "@dec\n"
+        "class C:\n"
+        "    @dec\n"
+        "    async def run(self):\n"
+        "        pass\n"
     )
     assert codigo == esperado

@@ -9,6 +9,8 @@ from src.core.ast_nodes import (
     NodoIdentificador,
     NodoAtributo,
     NodoInstancia,
+    NodoThrow,
+    NodoTryCatch,
     NodoAssert,
     NodoDel,
     NodoGlobal,
@@ -37,6 +39,8 @@ from .rust_nodes.romper import visit_romper as _visit_romper
 from .rust_nodes.continuar import visit_continuar as _visit_continuar
 from .rust_nodes.pasar import visit_pasar as _visit_pasar
 from .rust_nodes.switch import visit_switch as _visit_switch
+from .rust_nodes.try_catch import visit_try_catch as _visit_try_catch
+from .rust_nodes.throw import visit_throw as _visit_throw
 
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
@@ -140,3 +144,5 @@ TranspiladorRust.visit_nolocal = visit_nolocal
 TranspiladorRust.visit_with = visit_with
 TranspiladorRust.visit_import_desde = visit_import_desde
 TranspiladorRust.visit_switch = _visit_switch
+TranspiladorRust.visit_try_catch = _visit_try_catch
+TranspiladorRust.visit_throw = _visit_throw
