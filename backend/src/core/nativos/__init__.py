@@ -8,6 +8,11 @@ from ..ctypes_bridge import (
     obtener_funcion,
     cargar_funcion,
 )
+from ..pybind_bridge import (
+    compilar_extension,
+    cargar_extension,
+    compilar_y_cargar,
+)
 
 __all__ = [
     "leer_archivo",
@@ -21,4 +26,7 @@ __all__ = [
     "cargar_biblioteca",
     "obtener_funcion",
     "cargar_funcion",
+    "compilar_extension",
+    "cargar_extension",
+    "compilar_y_cargar",
 ]
