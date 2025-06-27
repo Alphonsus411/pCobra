@@ -60,3 +60,6 @@ A continuación se muestra cómo crear un plugin sencillo utilizando
 Con estos pasos se crea un plugin funcional que se integra de forma automática
 con el sistema de comandos de Cobra.
 
+Para una descripción completa de la interfaz disponible consulta
+:doc:`plugin_sdk`.
+

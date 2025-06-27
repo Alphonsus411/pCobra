@@ -24,6 +24,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    modulos_nativos
    plugins
    plugin_dev
+   plugin_sdk
    rfc_plugins
    ejemplos
    ejemplos_avanzados
