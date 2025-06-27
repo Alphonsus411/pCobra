@@ -7,9 +7,17 @@ from src.core.ast_nodes import (
     NodoFuncion,
     NodoRetorno,
     NodoCondicional,
+    NodoLlamadaFuncion,
+    NodoIdentificador,
+    NodoBucleMientras,
+    NodoRomper,
 )
 from src.cobra.lexico.lexer import Token, TipoToken
-from src.core.optimizations import optimize_constants, remove_dead_code
+from src.core.optimizations import (
+    optimize_constants,
+    remove_dead_code,
+    inline_functions,
+)
 
 
 def test_optimize_constants_binaria():
@@ -46,3 +54,49 @@ def test_remove_condicional_constante():
     assert len(optimizado) == 1
     assert isinstance(optimizado[0], NodoAsignacion)
     assert optimizado[0].valor.valor == 2
+
+
+def test_inline_functions_simple():
+    ast = [
+        NodoFuncion("uno", [], [NodoRetorno(NodoValor(1))]),
+        NodoAsignacion("x", NodoLlamadaFuncion("uno", [])),
+    ]
+    optimizado = inline_functions(ast)
+    assert len(optimizado) == 1
+    asign = optimizado[0]
+    assert isinstance(asign.expresion, NodoValor)
+    assert asign.expresion.valor == 1
+
+
+def test_remove_dead_code_condicional_completo():
+    ast = [
+        NodoFuncion(
+            "f",
+            [],
+            [
+                NodoCondicional(
+                    NodoIdentificador("cond"),
+                    [NodoRetorno(NodoValor(1))],
+                    [NodoRetorno(NodoValor(2))],
+                ),
+                NodoAsignacion("x", NodoValor(3)),
+            ],
+        )
+    ]
+    optimizado = remove_dead_code(ast)
+    cuerpo = optimizado[0].cuerpo
+    assert len(cuerpo) == 1
+    assert isinstance(cuerpo[0], NodoCondicional)
+
+
+def test_remove_dead_code_en_bucle():
+    ast = [
+        NodoBucleMientras(
+            NodoValor(True),
+            [NodoRomper(), NodoAsignacion("x", NodoValor(1))],
+        )
+    ]
+    optimizado = remove_dead_code(ast)
+    cuerpo = optimizado[0].cuerpo
+    assert len(cuerpo) == 1
+    assert isinstance(cuerpo[0], NodoRomper)

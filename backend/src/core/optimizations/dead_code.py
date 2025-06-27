@@ -11,6 +11,8 @@ from ..ast_nodes import (
     NodoMetodo,
     NodoRetorno,
     NodoThrow,
+    NodoRomper,
+    NodoContinuar,
     NodoValor,
 )
 from ..visitor import NodeVisitor
@@ -49,11 +51,21 @@ class _DeadCodeRemover(NodeVisitor):
         return nodo
 
     # Helpers --------------------------------------------------------------
+    def _es_salida(self, nodo: Any) -> bool:
+        if isinstance(nodo, (NodoRetorno, NodoThrow, NodoRomper, NodoContinuar)):
+            return True
+        if isinstance(nodo, NodoCondicional):
+            if nodo.bloque_si and nodo.bloque_sino:
+                return self._es_salida(nodo.bloque_si[-1]) and self._es_salida(
+                    nodo.bloque_sino[-1]
+                )
+        return False
+
     def _limpiar_bloque(self, nodos: List[Any]):
         limpios = []
         for n in nodos:
             limpios.append(n)
-            if isinstance(n, (NodoRetorno, NodoThrow)):
+            if self._es_salida(n):
                 break
         return limpios
 

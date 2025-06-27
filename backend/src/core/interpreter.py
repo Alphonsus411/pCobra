@@ -3,7 +3,7 @@
 import os
 
 from src.cobra.lexico.lexer import Token, TipoToken, Lexer
-from src.core.optimizations import optimize_constants, remove_dead_code
+from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
@@ -145,7 +145,7 @@ class InterpretadorCobra:
         return False
 
     def ejecutar_ast(self, ast):
-        ast = remove_dead_code(optimize_constants(ast))
+        ast = remove_dead_code(inline_functions(optimize_constants(ast)))
         register_execution(str(ast))
         for nodo in ast:
             self._validar(nodo)
