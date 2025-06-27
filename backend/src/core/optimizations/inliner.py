@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any, List, Tuple
+import copy
 
-from ..ast_nodes import NodoFuncion, NodoRetorno, NodoLlamadaFuncion
+from ..ast_nodes import (
+    NodoFuncion,
+    NodoRetorno,
+    NodoLlamadaFuncion,
+    NodoIdentificador,
+)
 from ..visitor import NodeVisitor
 
 
@@ -12,23 +18,22 @@ class _FunctionInliner(NodeVisitor):
     """Recolecta funciones simples y reemplaza sus llamadas."""
 
     def __init__(self):
-        self.funciones: dict[str, Any] = {}
+        self.funciones: dict[str, Tuple[List[str], Any]] = {}
 
     def visit_funcion(self, nodo: NodoFuncion):
-        # Solo se consideran funciones sin parámetros y con un único return
-        if (
-            len(nodo.parametros) == 0
-            and len(nodo.cuerpo) == 1
-            and isinstance(nodo.cuerpo[0], NodoRetorno)
-        ):
-            self.funciones[nodo.nombre] = self.visit(nodo.cuerpo[0].expresion)
-            return None  # se elimina la definición
+        if len(nodo.cuerpo) == 1 and isinstance(nodo.cuerpo[0], NodoRetorno):
+            expresion = self.visit(nodo.cuerpo[0].expresion)
+            self.funciones[nodo.nombre] = (nodo.parametros, expresion)
+            return None
         nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
         return nodo
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        if nodo.nombre in self.funciones and not nodo.argumentos:
-            return self.funciones[nodo.nombre]
+        if nodo.nombre in self.funciones:
+            params, expr = self.funciones[nodo.nombre]
+            if len(params) == len(nodo.argumentos):
+                reemplazos = dict(zip(params, nodo.argumentos))
+                return self._reemplazar(copy.deepcopy(expr), reemplazos)
         return nodo
 
     def generic_visit(self, nodo: Any):
@@ -46,6 +51,16 @@ class _FunctionInliner(NodeVisitor):
                 setattr(nodo, attr, nuevos)
             elif hasattr(value, "aceptar"):
                 setattr(nodo, attr, self.visit(value))
+        return nodo
+
+    def _reemplazar(self, nodo: Any, reemplazos: dict[str, Any]):
+        if isinstance(nodo, NodoIdentificador) and nodo.nombre in reemplazos:
+            return reemplazos[nodo.nombre]
+        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+            if isinstance(value, list):
+                setattr(nodo, attr, [self._reemplazar(v, reemplazos) for v in value])
+            elif hasattr(value, "__dict__"):
+                setattr(nodo, attr, self._reemplazar(value, reemplazos))
         return nodo
 
 
