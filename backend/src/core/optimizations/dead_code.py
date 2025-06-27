@@ -30,8 +30,14 @@ class _DeadCodeRemover(NodeVisitor):
     def visit_bucle_mientras(self, nodo: NodoBucleMientras):
         nodo.condicion = self.visit(nodo.condicion)
         nodo.cuerpo = self._limpiar_bloque([self.visit(n) for n in nodo.cuerpo])
-        if isinstance(nodo.condicion, NodoValor) and nodo.condicion.valor is False:
-            return []
+        if isinstance(nodo.condicion, NodoValor):
+            if nodo.condicion.valor is False:
+                return []
+            if nodo.condicion.valor is True and nodo.cuerpo and self._es_salida(nodo.cuerpo[-1]):
+                cuerpo = nodo.cuerpo
+                if isinstance(cuerpo[-1], (NodoRomper, NodoContinuar)):
+                    cuerpo = cuerpo[:-1]
+                return cuerpo
         return nodo
 
     def visit_funcion(self, nodo: NodoFuncion):

@@ -97,6 +97,28 @@ def test_remove_dead_code_en_bucle():
         )
     ]
     optimizado = remove_dead_code(ast)
-    cuerpo = optimizado[0].cuerpo
-    assert len(cuerpo) == 1
-    assert isinstance(cuerpo[0], NodoRomper)
+    assert optimizado == []
+
+
+def test_remove_dead_code_bucle_true_break_final():
+    ast = [
+        NodoBucleMientras(
+            NodoValor(True),
+            [NodoAsignacion("x", NodoValor(1)), NodoRomper()],
+        )
+    ]
+    optimizado = remove_dead_code(ast)
+    assert len(optimizado) == 1
+    assert isinstance(optimizado[0], NodoAsignacion)
+
+
+def test_inline_functions_con_parametro():
+    ast = [
+        NodoFuncion("dup", ["a"], [NodoRetorno(NodoIdentificador("a"))]),
+        NodoAsignacion("x", NodoLlamadaFuncion("dup", [NodoValor(3)])),
+    ]
+    optimizado = inline_functions(ast)
+    assert len(optimizado) == 1
+    asign = optimizado[0]
+    assert isinstance(asign.expresion, NodoValor)
+    assert asign.expresion.valor == 3
