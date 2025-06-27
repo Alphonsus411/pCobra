@@ -10,7 +10,7 @@ from src.core.ast_nodes import (
     NodoAtributo,
 )
 from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code
+from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from src.cobra.macro import expandir_macros
 
 from .latex_nodes.asignacion import visit_asignacion as _visit_asignacion
@@ -49,7 +49,7 @@ class TranspiladorLatex(NodeVisitor):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(optimize_constants(nodos))
+        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)

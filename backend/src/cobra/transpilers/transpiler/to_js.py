@@ -23,7 +23,7 @@ from src.core.ast_nodes import (
 )
 from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code
+from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from src.cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
 from ..module_map import get_mapped_path
@@ -149,7 +149,7 @@ class TranspiladorJavaScript(NodeVisitor):
 
     def transpilar(self, ast_raiz):
         ast_raiz = expandir_macros(ast_raiz)
-        ast_raiz = remove_dead_code(optimize_constants(ast_raiz))
+        ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
         for nodo in ast_raiz:
             if hasattr(nodo, 'aceptar'):
                 nodo.aceptar(self)
