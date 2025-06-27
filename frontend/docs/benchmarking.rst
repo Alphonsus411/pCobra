@@ -52,3 +52,27 @@ Además de ``smooth-criminal`` puedes emplear la biblioteca estándar
 
 Para más información sobre configuraciones seguras consulta
 :doc:`modo_seguro`.
+
+Resultados recientes
+--------------------
+
+Los siguientes datos se obtuvieron ejecutando ``scripts/benchmarks/run_benchmarks.py``.
+
+.. list-table:: Tiempos y memoria aproximados
+   :header-rows: 1
+
+   * - Backend
+     - Tiempo (s)
+     - Memoria (KB)
+   * - python
+     - 0.6792
+     - 0
+   * - js
+     - 0.071
+     - 0
+   * - go
+     - 0.0149
+     - 0
+   * - ruby
+     - 0.1054
+     - 0

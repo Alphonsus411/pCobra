@@ -28,7 +28,10 @@ lint:
 	mypy backend/src
 
 typecheck:
-	mypy backend/src
-	@if command -v pyright >/dev/null 2>&1; then \
-	pyright backend/src; \
+		mypy backend/src
+		@if command -v pyright >/dev/null 2>&1; then \
+		pyright backend/src; \
 	fi
+
+benchmarks:
+		python scripts/benchmarks/run_benchmarks.py > bench_results.json
