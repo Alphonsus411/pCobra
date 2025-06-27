@@ -47,3 +47,18 @@ el código fuente:
 Las funciones ``compilar_extension`` y ``cargar_extension`` están
 disponibles si se requiere mayor control sobre el proceso.
 
+Compilación de bibliotecas Rust
+--------------------------------
+El módulo ``rust_bridge`` permite compilar crates Rust utilizando
+``cbindgen`` y ``cargo`` para generar bibliotecas compatibles con
+``ctypes``. Basta con indicar la ruta del crate y el nombre de la
+función a exponer:
+
+.. code-block:: python
+
+   from cobra.core.nativos import compilar_y_cargar_crate
+
+   # Suponiendo un crate en ``./mi_crate`` con la función `triple`
+   triple = compilar_y_cargar_crate("mi_crate", "triple")
+   print(triple(3))
+

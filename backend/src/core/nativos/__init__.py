@@ -13,6 +13,11 @@ from ..pybind_bridge import (
     cargar_extension,
     compilar_y_cargar,
 )
+from ..rust_bridge import (
+    compilar_crate,
+    cargar_crate,
+    compilar_y_cargar_crate,
+)
 
 __all__ = [
     "leer_archivo",
@@ -29,4 +34,7 @@ __all__ = [
     "compilar_extension",
     "cargar_extension",
     "compilar_y_cargar",
+    "compilar_crate",
+    "cargar_crate",
+    "compilar_y_cargar_crate",
 ]

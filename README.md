@@ -62,6 +62,8 @@ pip install -r requirements.txt
    - `pytest` y complementos para las pruebas automatizadas.
    - `ipykernel` para el kernel de Jupyter.
    - `PyYAML` utilizado al leer `cobra.mod`.
+   - `cbindgen` para generar encabezados de crates Rust
+     (instalable con `cargo install cbindgen`).
 
 5. Instala el paquete de forma editable para usar la CLI:
 
