@@ -1,6 +1,7 @@
 import pytest
 from io import StringIO
 from unittest.mock import patch
+import yaml
 
 from src.cli.cli import main
 from src.cli.commands import modules_cmd
@@ -175,6 +176,12 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
+    lock_file = tmp_path / "cobra.lock"
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(lock_file))
+    mod_file = tmp_path / "cobra.mod"
+    mod_mapping = {"m.co": {"version": "0.1.0"}}
+    mod_file.write_text(yaml.safe_dump(mod_mapping))
+    monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
 
     modulo = tmp_path / "m.co"
     modulo.write_text("var d = 1")
@@ -188,6 +195,8 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     destino = mods_dir / modulo.name
     assert destino.exists()
     assert f"Módulo instalado en {destino}" in out.getvalue().strip()
+    data = yaml.safe_load(lock_file.read_text())
+    assert data[modulo.name]["version"] == "0.1.0"
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])

@@ -232,6 +232,7 @@ Ejemplo de formato:
 
 ```yaml
 modulo.co:
+  version: "1.0.0"
   python: modulo.py
   js: modulo.js
 ```
