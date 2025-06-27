@@ -1,21 +1,44 @@
 import pytest
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit
-from src.core.ast_nodes import NodoSwitch, NodoCase, NodoAsignacion, NodoValor
+from src.core.ast_nodes import (
+    NodoAsignacion,
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoHolobit,
+    NodoYield,
+    NodoEsperar,
+    NodoValor,
+    NodoSwitch,
+    NodoCase,
+    NodoImportDesde,
+    NodoExport,
+)
+
+IMPORTS = (
+    "import * as io from './nativos/io.js';\n"
+    "import * as net from './nativos/io.js';\n"
+    "import * as matematicas from './nativos/matematicas.js';\n"
+    "import { Pila, Cola } from './nativos/estructuras.js';\n"
+)
 
 
 def test_transpilador_asignacion():
     ast = [NodoAsignacion("x", 10)]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.transpilar(ast)
-    assert resultado == "let x = 10;"
+    assert resultado == IMPORTS + "let x = 10;"
 
 
 def test_transpilador_condicional():
     ast = [NodoCondicional("x > 5", [NodoAsignacion("y", 2)], [NodoAsignacion("y", 3)])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.transpilar(ast)
-    expected = "if (x > 5) {\n    let y = 2;\n} else {\n    let y = 3;\n}"
+    expected = (
+        IMPORTS
+        + "if (x > 5) {\n    let y = 2;\n} else {\n    let y = 3;\n}"
+    )
     assert resultado == expected
 
 
@@ -23,7 +46,7 @@ def test_transpilador_mientras():
     ast = [NodoBucleMientras("x > 0", [NodoAsignacion("x", "x - 1")])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.transpilar(ast)
-    expected = "while (x > 0) {\n    let x = x - 1;\n}"
+    expected = IMPORTS + "while (x > 0) {\n    let x = x - 1;\n}"
     assert resultado == expected
 
 
@@ -31,7 +54,7 @@ def test_transpilador_funcion():
     ast = [NodoFuncion("miFuncion", ["a", "b"], [NodoAsignacion("x", "a + b")])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.transpilar(ast)
-    expected = "function miFuncion(a, b) {\n    let x = a + b;\n}"
+    expected = IMPORTS + "function miFuncion(a, b) {\n    let x = a + b;\n}"
     assert resultado == expected
 
 
@@ -39,7 +62,7 @@ def test_transpilador_llamada_funcion():
     ast = [NodoLlamadaFuncion("miFuncion", ["a", "b"])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.transpilar(ast)
-    expected = "miFuncion(a, b);"
+    expected = IMPORTS + "miFuncion(a, b);"
     assert resultado == expected
 
 
@@ -47,7 +70,7 @@ def test_transpilador_holobit():
     ast = [NodoHolobit("miHolobit", [0.8, -0.5, 1.2])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.transpilar(ast)
-    expected = "let miHolobit = new Holobit([0.8, -0.5, 1.2]);"
+    expected = IMPORTS + "let miHolobit = new Holobit([0.8, -0.5, 1.2]);"
     assert resultado == expected
 
 
@@ -55,7 +78,7 @@ def test_transpilador_yield():
     ast = [NodoFuncion("generador", [], [NodoYield(NodoValor(1))])]
     t = TranspiladorJavaScript()
     resultado = t.transpilar(ast)
-    esperado = "function generador() {\n    yield 1;\n}"
+    esperado = IMPORTS + "function generador() {\nyield 1;\n}"
     assert resultado == esperado
 
 
@@ -73,7 +96,8 @@ def test_transpilador_switch():
     t = TranspiladorJavaScript()
     resultado = t.transpilar(ast)
     esperado = (
-        "switch (x) {\n"
+        IMPORTS
+        + "switch (x) {\n"
         "    case 1:\n"
         "        let y = 1;\n"
         "        break;\n"
@@ -84,5 +108,41 @@ def test_transpilador_switch():
         "        let y = 0;\n"
         "        break;\n"
         "}"
+    )
+    assert resultado == esperado
+
+
+def test_async_function_and_await():
+    ast = [
+        NodoFuncion(
+            "principal",
+            [],
+            [NodoEsperar(NodoLlamadaFuncion("saluda", []))],
+            asincronica=True,
+        )
+    ]
+    t = TranspiladorJavaScript()
+    resultado = t.transpilar(ast)
+    esperado = IMPORTS + (
+        "async function principal() {\n"
+        "await saluda();\n"
+        "}"
+    )
+    assert resultado == esperado
+
+
+def test_export_import():
+    ast = [
+        NodoImportDesde("./mod.js", "saluda"),
+        NodoFuncion("saluda", [], []),
+        NodoExport("saluda"),
+    ]
+    t = TranspiladorJavaScript()
+    resultado = t.transpilar(ast)
+    esperado = IMPORTS + (
+        "import { saluda } from './mod.js';\n"
+        "function saluda() {\n"
+        "}\n"
+        "export { saluda };"
     )
     assert resultado == esperado
