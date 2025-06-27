@@ -1,5 +1,11 @@
 # Historial de Cambios
 
+## v2.1 - 2025-07-15
+- Actualización del paquete a la versión 2.1.
+- Nuevos comandos `init` y `package`.
+- Incorporación del puente ctypes y del helper de importación de transpiladores.
+- Documentación y kernel actualizados.
+
 ## v2.0 - 2025-07-01
 - Actualización de la versión del paquete a 2.0.
 - Documentación y archivos de configuración actualizados a la versión 2.0.
