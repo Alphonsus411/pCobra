@@ -1,12 +1,17 @@
 import os
 import shutil
+import yaml
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 from ..cobrahub_client import publicar_modulo, descargar_modulo
+from ...cobra.transpilers.module_map import MODULE_MAP_PATH
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
+LOCK_FILE = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "cobra.lock")
+)
 
 
 class ModulesCommand(BaseCommand):
@@ -41,10 +46,34 @@ class ModulesCommand(BaseCommand):
             return 0 if publicar_modulo(args.ruta) else 1
         elif accion == "buscar":
             destino = os.path.join(MODULES_PATH, args.nombre)
-            return 0 if descargar_modulo(args.nombre, destino) else 1
+            ok = descargar_modulo(args.nombre, destino)
+            if ok:
+                ModulesCommand._actualizar_lock(args.nombre, None)
+            return 0 if ok else 1
         else:
             mostrar_error(_("Acción de módulos no reconocida"))
             return 1
+
+    @staticmethod
+    def _obtener_version(ruta: str):
+        if os.path.exists(MODULE_MAP_PATH):
+            with open(MODULE_MAP_PATH, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            for mod_path, info in data.items():
+                if os.path.basename(mod_path) == os.path.basename(ruta):
+                    return info.get("version")
+        return None
+
+    @staticmethod
+    def _actualizar_lock(nombre: str, version: str | None):
+        if os.path.exists(LOCK_FILE):
+            with open(LOCK_FILE, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+        else:
+            data = {}
+        data[nombre] = {"version": version} if version else {}
+        with open(LOCK_FILE, "w", encoding="utf-8") as f:
+            yaml.safe_dump(data, f)
 
     @staticmethod
     def _listar_modulos():
@@ -64,6 +93,8 @@ class ModulesCommand(BaseCommand):
         destino = os.path.join(MODULES_PATH, os.path.basename(ruta))
         shutil.copy(ruta, destino)
         mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
+        version = ModulesCommand._obtener_version(ruta)
+        ModulesCommand._actualizar_lock(os.path.basename(ruta), version)
         return 0
 
     @staticmethod

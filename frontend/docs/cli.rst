@@ -57,8 +57,18 @@ Gestiona módulos instalados.
 Acciones disponibles:
 
 - ``listar`` muestra los módulos instalados.
+
 - ``instalar <ruta>`` copia un archivo ``.co`` al directorio de módulos.
 - ``remover <nombre>`` elimina un módulo instalado.
+
+Al instalar un módulo se actualiza ``cobra.lock`` con la versión declarada
+en ``cobra.mod``. Este archivo admite un campo ``version`` por entrada:
+
+.. code-block:: yaml
+
+   modulo.co:
+     version: "1.0.0"
+     python: modulo.py
 
 Ejemplo:
 
