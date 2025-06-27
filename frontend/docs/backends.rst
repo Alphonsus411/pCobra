@@ -13,3 +13,35 @@ Para obtener el código en formato WAT basta ejecutar:
 
 El resultado puede compilarse posteriormente con herramientas como
 ``wat2wasm`` para obtener un módulo ejecutable.
+
+Ejemplo de generación de código Rust::
+
+   cobra compilar programa.co --backend rust
+
+produce:
+
+.. code-block:: rust
+
+   struct Persona {}
+
+   impl Persona {
+       fn saludar(self) {
+           let x = 1;
+       }
+   }
+
+Además un bloque ``switch`` de Cobra se traduce utilizando ``match``::
+
+.. code-block:: rust
+
+   match x {
+       1 => {
+           let y = 1;
+       },
+       2 => {
+           let y = 2;
+       },
+       _ => {
+           let y = 0;
+       },
+   }
