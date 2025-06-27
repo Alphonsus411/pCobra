@@ -1,0 +1,22 @@
+{
+    "name": "cobra-vscode-extension",
+    "displayName": "Cobra Support",
+    "description": "Extensión básica para editar archivos Cobra",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "activationEvents": [
+        "onLanguage:cobra"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "cobra",
+                "extensions": [".co"],
+                "aliases": ["Cobra"]
+            }
+        ]
+    }
+}
