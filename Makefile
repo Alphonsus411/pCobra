@@ -26,6 +26,7 @@ coverage:
 lint:
 	flake8 backend/src
 	mypy backend/src
+	bandit -r backend/src
 
 typecheck:
 		mypy backend/src

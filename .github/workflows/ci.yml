@@ -24,6 +24,7 @@ jobs:
         run: |
           flake8 backend/src
           mypy backend/src
+          bandit -r backend/src
       - name: Run type checks
         run: make typecheck
       - name: Run tests
