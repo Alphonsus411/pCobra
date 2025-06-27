@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 
 class PluginInterface(ABC):
-    """Interfaz base que define el comportamiento de un plugin de la CLI."""
+    """Interfaz base que define el comportamiento de un plugin de la CLI.
+
+    Los plugins deben declarar nombre, versión, autor y una breve
+    descripción para que la CLI pueda mostrarlos correctamente.
+    """
 
     #: Nombre del plugin o subcomando
     name: str = ""

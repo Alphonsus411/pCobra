@@ -1,11 +1,11 @@
 Desarrollo de plugins
 =====================
 
-Un plugin permite añadir nuevos subcomandos a la CLI de Cobra mediante
-paquetes externos. Cada plugin se implementa como una clase que hereda de
-``PluginCommand``. La clase define metadatos que se mostrarán en el
-subcomando ``plugins``: ``name`` y ``version`` además de ``author`` y
-``description``.
+Un plugin permite ampliar la CLI de Cobra con nuevos subcomandos
+distribuidos como paquetes externos. Cada plugin se implementa como una
+clase que hereda de ``PluginCommand``. Esta clase define varios
+metadatos (``name``, ``version``, ``author`` y ``description``) que se
+mostrarán al ejecutar ``cobra plugins``.
 
 Estructura básica
 -----------------
@@ -64,16 +64,19 @@ Carga dinámica segura
 
 Durante el arranque Cobra importa cada plugin a partir de la cadena
 ``"modulo:Clase"`` definida en el ``entry_point``. La función
-``cargar_plugin_seguro`` valida que la clase implementa ``PluginInterface``
-antes de instanciarla, registrando el nombre y la versión en el sistema.
+``cargar_plugin_seguro`` valida que la clase implementa
+``PluginInterface`` y que define todos los metadatos requeridos. Solo en
+ese caso se instancia el plugin y se registra su nombre y versión en el
+sistema.
 
 Uso
 ---
 
-Instala el paquete en modo editable y ejecuta el comando:
+Instala el paquete en modo editable y ejecuta los siguientes comandos
+para verificar que Cobra detecta tu plugin:
 
 .. code-block:: bash
 
    pip install -e .
-   cobra plugins
-   cobra hola
+   cobra plugins   # muestra los metadatos registrados
+   cobra hola      # ejecuta el nuevo subcomando
