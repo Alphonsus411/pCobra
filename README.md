@@ -342,6 +342,8 @@ hereda de `BaseCommand` y define su nombre, los argumentos que acepta y la acci�
 a ejecutar. En `src/cli/cli.py` se instancian automáticamente y se registran en
 `argparse`, por lo que para añadir un nuevo comando solo es necesario crear un
 archivo con la nueva clase y llamar a `register_subparser` y `run`.
+Para un tutorial completo de creación de plugins revisa
+[`frontend/docs/plugins.rst`](frontend/docs/plugins.rst).
 
 ## Modo seguro (--seguro)
 
