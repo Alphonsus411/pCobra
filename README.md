@@ -489,6 +489,8 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   automáticas al abrir un pull request.
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
 - Ejecuta `make lint` para verificar el código con *flake8* y *mypy*.
+- Ejecuta `make typecheck` para la verificación estática con *mypy* (y
+  opcionalmente *pyright* si está instalado).
 - Envía un pull request.
 
 ## Desarrollo de plugins
