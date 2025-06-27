@@ -6,6 +6,12 @@ from src.core.ast_nodes import (
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoHolobit,
+    NodoClase,
+    NodoMetodo,
+    NodoYield,
+    NodoValor,
+    NodoSwitch,
+    NodoCase,
 )
 
 
@@ -80,4 +86,33 @@ def test_transpilador_yield():
     t = TranspiladorRust()
     resultado = t.transpilar(ast)
     esperado = "fn generador() {\n    yield 1;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_switch():
+    ast = [
+        NodoSwitch(
+            "x",
+            [
+                NodoCase(NodoValor(1), [NodoAsignacion("y", NodoValor(1))]),
+                NodoCase(NodoValor(2), [NodoAsignacion("y", NodoValor(2))]),
+            ],
+            [NodoAsignacion("y", NodoValor(0))],
+        )
+    ]
+    t = TranspiladorRust()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "match x {\n"
+        "    1 => {\n"
+        "        let y = 1;\n"
+        "    },\n"
+        "    2 => {\n"
+        "        let y = 2;\n"
+        "    },\n"
+        "    _ => {\n"
+        "        let y = 0;\n"
+        "    },\n"
+        "}"
+    )
     assert resultado == esperado
