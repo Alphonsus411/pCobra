@@ -158,6 +158,16 @@ Ejemplo:
 
    cobra plugins
 
+Subcomando ``contenedor``
+------------------------
+Construye la imagen Docker del proyecto.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra contenedor --tag cobra
+
 Subcomando ``init``
 ------------------
 Inicializa un proyecto básico.

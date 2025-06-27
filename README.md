@@ -79,13 +79,13 @@ pipx install cobra-lenguaje
 
 ## Construir la imagen Docker
 
-Puedes crear la imagen utilizando el script `docker/scripts/build.sh`:
+Puedes crear la imagen utilizando el script `docker/scripts/build.sh` o el subcomando de la CLI:
 
 ````bash
-./docker/scripts/build.sh
+cobra contenedor --tag cobra
 ````
 
-Esto generará una imagen llamada `cobra` en tu sistema Docker.
+Esto ejecutará internamente ``docker build`` y generará una imagen llamada `cobra` en tu sistema Docker.
 
 # Estructura del Proyecto
 

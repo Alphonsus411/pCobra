@@ -20,6 +20,7 @@ from .commands.empaquetar_cmd import EmpaquetarCommand
 from .commands.package_cmd import PaqueteCommand
 from .commands.crear_cmd import CrearCommand
 from .commands.init_cmd import InitCommand
+from .commands.container_cmd import ContainerCommand
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
 # directamente para evitar modificar la configuración global al importar este
@@ -56,6 +57,7 @@ def main(argv=None):
         AgixCommand(),
         JupyterCommand(),
         FletCommand(),
+        ContainerCommand(),
         PluginsCommand(),
         InteractiveCommand(),
     ]
