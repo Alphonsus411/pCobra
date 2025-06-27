@@ -1,4 +1,4 @@
-# Minimal makefile for Sphinx documentation
+	# Minimal makefile for Sphinx documentation
 #
 
 # You can set these variables from the command line, and also
@@ -17,12 +17,18 @@ help:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-        @$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 coverage:
-        pytest backend/src/tests --cov=backend/src
-          --cov-report=term-missing --cov-fail-under=80
+	pytest backend/src/tests --cov=backend/src
+	--cov-report=term-missing --cov-fail-under=80
 
 lint:
 	flake8 backend/src
 	mypy backend/src
+
+typecheck:
+	mypy backend/src
+	@if command -v pyright >/dev/null 2>&1; then \
+	pyright backend/src; \
+	fi
