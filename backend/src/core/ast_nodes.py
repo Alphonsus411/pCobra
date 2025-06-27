@@ -351,6 +351,16 @@ class NodoImportDesde(NodoAST):
 
 
 @dataclass
+class NodoExport(NodoAST):
+    nombre: str
+
+    """Indica que un identificador debe exportarse en el módulo generado."""
+
+    def __repr__(self):
+        return f"NodoExport(nombre={self.nombre})"
+
+
+@dataclass
 class NodoPara(NodoAST):
     variable: Any
     iterable: Any
@@ -435,6 +445,7 @@ __all__ = [
     'NodoThrow',
     'NodoTryCatch',
     'NodoImportDesde',
+    'NodoExport',
     'NodoImport',
     'NodoUsar',
     'NodoPara',

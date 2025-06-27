@@ -17,6 +17,8 @@ from src.core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoImport,
+    NodoExport,
     NodoEsperar,
 )
 from src.cobra.lexico.lexer import TipoToken
@@ -24,6 +26,7 @@ from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
 from src.cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
+from ..module_map import get_mapped_path
 
 from .js_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .js_nodes.condicional import visit_condicional as _visit_condicional
@@ -58,6 +61,7 @@ from .js_nodes.romper import visit_romper as _visit_romper
 from .js_nodes.continuar import visit_continuar as _visit_continuar
 from .js_nodes.pasar import visit_pasar as _visit_pasar
 from .js_nodes.switch import visit_switch as _visit_switch
+from .js_nodes.exportar import visit_export as _visit_export
 
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
@@ -86,7 +90,8 @@ def visit_with(self, nodo):
 
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
-    self.agregar_linea(f"import {{ {nodo.nombre}{alias} }} from '{nodo.modulo}';")
+    modulo = get_mapped_path(nodo.modulo, "js")
+    self.agregar_linea(f"import {{ {nodo.nombre}{alias} }} from '{modulo}';")
 
 
 class TranspiladorJavaScript(NodeVisitor):
@@ -194,6 +199,7 @@ TranspiladorJavaScript.visit_continuar = _visit_continuar
 TranspiladorJavaScript.visit_pasar = _visit_pasar
 TranspiladorJavaScript.visit_esperar = _visit_esperar
 TranspiladorJavaScript.visit_switch = _visit_switch
+TranspiladorJavaScript.visit_export = _visit_export
 TranspiladorJavaScript.visit_assert = visit_assert
 TranspiladorJavaScript.visit_del = visit_del
 TranspiladorJavaScript.visit_global = visit_global
