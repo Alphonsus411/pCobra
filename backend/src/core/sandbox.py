@@ -68,6 +68,42 @@ def compilar_en_sandbox_cpp(codigo: str) -> str:
         return proc.stdout
 
 
+def ejecutar_en_contenedor(codigo: str, backend: str) -> str:
+    """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
+
+    Los backends soportados son ``python``, ``js``, ``cpp`` y ``rust``. Cada
+    backend utiliza una imagen específica que debe estar construida
+    previamente.
+    """
+
+    imagenes = {
+        "python": "cobra-python-sandbox",
+        "js": "cobra-js-sandbox",
+        "cpp": "cobra-cpp-sandbox",
+        "rust": "cobra-rust-sandbox",
+    }
+
+    if backend not in imagenes:
+        raise ValueError(f"Backend no soportado: {backend}")
+
+    try:
+        proc = subprocess.run(
+            ["docker", "run", "--rm", "-i", imagenes[backend]],
+            input=codigo,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+    except FileNotFoundError as e:
+        raise RuntimeError(
+            "Docker no está instalado o no se encuentra en PATH"
+        ) from e
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(e.stderr.strip()) from e
+
+    return proc.stdout
+
+
 def validar_dependencias(backend: str, mod_info: dict) -> None:
     """Verifica que las rutas de *mod_info* para *backend* existan y sean seguras."""
     if not mod_info:
