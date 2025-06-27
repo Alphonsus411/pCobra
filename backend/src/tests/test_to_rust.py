@@ -10,6 +10,9 @@ from src.core.ast_nodes import (
     NodoMetodo,
     NodoYield,
     NodoValor,
+    NodoTryCatch,
+    NodoThrow,
+    NodoIdentificador,
     NodoSwitch,
     NodoCase,
 )
@@ -114,5 +117,28 @@ def test_transpilador_switch():
         "        let y = 0;\n"
         "    },\n"
         "}"
+    )
+    assert resultado == esperado
+
+def test_try_catch_result():
+    nodo = NodoTryCatch(
+        [NodoThrow(NodoValor("1"))],
+        "e",
+        [NodoAsignacion("y", NodoIdentificador("e"))],
+    )
+    t = TranspiladorRust()
+    resultado = t.transpilar([nodo])
+    esperado = (
+        "let resultado: Result<(), Box<dyn std::error::Error>> = (|| {\n"
+        "    return Err(1.into());\n"
+        "    Ok(())\n"
+        "})();\n"
+        "match resultado {\n"
+        "    Ok(_) => (),\n"
+        "    Err(e) => {\n"
+        "        let e = e;\n"
+        "        let y = e;\n"
+        "    },\n"
+        "};"
     )
     assert resultado == esperado

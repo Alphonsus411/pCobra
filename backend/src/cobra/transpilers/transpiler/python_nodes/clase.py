@@ -1,4 +1,6 @@
 def visit_clase(self, nodo):
+    for decorador in getattr(nodo, "decoradores", []):
+        decorador.aceptar(self)
     metodos = getattr(nodo, "metodos", getattr(nodo, "cuerpo", []))
     bases = f"({', '.join(nodo.bases)})" if getattr(nodo, 'bases', []) else ""
     self.codigo += f"{self.obtener_indentacion()}class {nodo.nombre}{bases}:\n"

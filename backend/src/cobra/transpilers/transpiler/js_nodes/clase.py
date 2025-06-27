@@ -22,3 +22,12 @@ def visit_clase(self, nodo):
     if self.usa_indentacion:
         self.indentacion -= 1
     self.agregar_linea("}")
+    for metodo in metodos:
+        for decorador in reversed(getattr(metodo, "decoradores", [])):
+            expr = self.obtener_valor(decorador.expresion)
+            self.agregar_linea(
+                f"{nodo.nombre}.prototype.{metodo.nombre} = {expr}({nodo.nombre}.prototype.{metodo.nombre});"
+            )
+    for decorador in reversed(getattr(nodo, "decoradores", [])):
+        expr = self.obtener_valor(decorador.expresion)
+        self.agregar_linea(f"{nodo.nombre} = {expr}({nodo.nombre});")

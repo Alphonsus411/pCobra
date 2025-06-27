@@ -10,6 +10,11 @@ from src.core.ast_nodes import (
     NodoYield,
     NodoEsperar,
     NodoValor,
+    NodoDecorador,
+    NodoIdentificador,
+    NodoMetodo,
+    NodoClase,
+    NodoPasar,
     NodoSwitch,
     NodoCase,
     NodoImportDesde,
@@ -144,5 +149,24 @@ def test_export_import():
         "function saluda() {\n"
         "}\n"
         "export { saluda };"
+    )
+    assert resultado == esperado
+
+def test_decoradores_en_clase_y_metodo_js():
+    decor = NodoDecorador(NodoIdentificador("dec"))
+    metodo = NodoMetodo("run", ["a"], [NodoPasar()], asincronica=True)
+    metodo.decoradores = [decor]
+    clase = NodoClase("C", [metodo])
+    clase.decoradores = [decor]
+    t = TranspiladorJavaScript()
+    resultado = t.transpilar([clase])
+    esperado = IMPORTS + (
+        "class C {\n"
+        "async run(a) {\n"
+        ";\n"
+        "}\n"
+        "}\n"
+        "C.prototype.run = dec(C.prototype.run);\n"
+        "C = dec(C);"
     )
     assert resultado == esperado
