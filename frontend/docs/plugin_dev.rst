@@ -3,7 +3,9 @@ Desarrollo de plugins
 
 Un plugin permite añadir nuevos subcomandos a la CLI de Cobra mediante
 paquetes externos. Cada plugin se implementa como una clase que hereda de
-``PluginCommand``.
+``PluginCommand``. La clase define metadatos que se mostrarán en el
+subcomando ``plugins``: ``name`` y ``version`` además de ``author`` y
+``description``.
 
 Estructura básica
 -----------------
@@ -26,6 +28,8 @@ En ``hola.py`` se define la clase del comando:
    class HolaCommand(PluginCommand):
        name = "hola"
        version = "1.0"
+       author = "Tu Nombre"
+       description = "Muestra un saludo"
 
        def register_subparser(self, subparsers):
            parser = subparsers.add_parser(self.name, help="Muestra un saludo")
@@ -54,6 +58,14 @@ Para que Cobra descubra el plugin se declara un ``entry_point`` en
            ],
        },
    )
+
+Carga dinámica segura
+---------------------
+
+Durante el arranque Cobra importa cada plugin a partir de la cadena
+``"modulo:Clase"`` definida en el ``entry_point``. La función
+``cargar_plugin_seguro`` valida que la clase implementa ``PluginInterface``
+antes de instanciarla, registrando el nombre y la versión en el sistema.
 
 Uso
 ---

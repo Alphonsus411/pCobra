@@ -5,6 +5,8 @@ class SaludoCommand(PluginCommand):
 
     name = "saludo"
     version = "1.0"
+    author = "Equipo Cobra"
+    description = "Comando de saludo de ejemplo"
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help="Muestra un saludo")
