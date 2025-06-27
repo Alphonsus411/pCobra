@@ -29,6 +29,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    modo_seguro
    empaquetar
    paquetes
+   cobrahub
    primeros_pasos
    como_contribuir
    qualia

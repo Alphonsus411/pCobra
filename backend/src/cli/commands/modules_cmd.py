@@ -3,6 +3,7 @@ import shutil
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
+from ..cobrahub_client import publicar_modulo, descargar_modulo
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
@@ -21,6 +22,10 @@ class ModulesCommand(BaseCommand):
         inst.add_argument("ruta")
         rem = mod_sub.add_parser("remover", help=_("Elimina un módulo"))
         rem.add_argument("nombre")
+        pub = mod_sub.add_parser("publicar", help=_("Publica un módulo en CobraHub"))
+        pub.add_argument("ruta")
+        bus = mod_sub.add_parser("buscar", help=_("Descarga un módulo desde CobraHub"))
+        bus.add_argument("nombre")
         parser.set_defaults(cmd=self)
         return parser
 
@@ -32,6 +37,11 @@ class ModulesCommand(BaseCommand):
             return self._instalar_modulo(args.ruta)
         elif accion == "remover":
             return self._remover_modulo(args.nombre)
+        elif accion == "publicar":
+            return 0 if publicar_modulo(args.ruta) else 1
+        elif accion == "buscar":
+            destino = os.path.join(MODULES_PATH, args.nombre)
+            return 0 if descargar_modulo(args.nombre, destino) else 1
         else:
             mostrar_error(_("Acción de módulos no reconocida"))
             return 1

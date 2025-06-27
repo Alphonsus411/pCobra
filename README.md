@@ -16,6 +16,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Ejemplo de Uso
 - Pruebas
 - Generar documentación
+- [CobraHub](frontend/docs/cobrahub.rst)
 - Hitos y Roadmap
 - Contribuciones
 - Licencia
