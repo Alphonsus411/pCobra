@@ -23,6 +23,7 @@ from .commands.crear_cmd import CrearCommand
 from .commands.init_cmd import InitCommand
 from .commands.container_cmd import ContainerCommand
 from .commands.benchmarks_cmd import BenchmarksCommand
+from .commands.benchmarks2_cmd import BenchmarksV2Command
 from .commands.profile_cmd import ProfileCommand
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
@@ -62,6 +63,7 @@ def main(argv=None):
         FletCommand(),
         ContainerCommand(),
         BenchmarksCommand(),
+        BenchmarksV2Command(),
         ProfileCommand(),
         PluginsCommand(),
         InteractiveCommand(),
