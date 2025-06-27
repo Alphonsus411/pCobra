@@ -19,6 +19,8 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - [CobraHub](frontend/docs/cobrahub.rst)
 - Hitos y Roadmap
 - Contribuciones
+- [Guía de Contribución](CONTRIBUTING.md)
+- [Proponer extensiones](frontend/docs/rfc_plugins.rst)
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
 
@@ -502,6 +504,9 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Crea una nueva rama (`git checkout -b feature/nueva-caracteristica`).
 - Las ramas que comiencen con `feature/`, `bugfix/` o `doc/` recibirán etiquetas
   automáticas al abrir un pull request.
+- Sigue las convenciones de estilo indicadas en `CONTRIBUTING.md` 
+  (formateo con `black`, longitud máxima de línea 88 y uso de `flake8`, `mypy`
+  y `bandit`).
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
 - Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*.
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
@@ -510,6 +515,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
   issues y preparar pull requests.
+- Para proponer nuevas extensiones consulta [frontend/docs/rfc_plugins.rst](frontend/docs/rfc_plugins.rst).
 
 ## Desarrollo de plugins
 

@@ -9,12 +9,19 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 3. **Información útil**: indica la versión de Cobra, sistema operativo y pasos detallados para reproducir el problema. Incluye el comportamiento esperado y lo que realmente ocurre.
 4. **Etiquetas recomendadas**: usa `bug` para reportes de errores, `enhancement` para mejoras y `question` para dudas. Si se trata de documentación, utiliza `documentation`.
 
+## Convenciones de Estilo
+
+- El codigo debe formatearse con `black` y respetar 88 caracteres por linea.
+- Ejecuta `make lint` para comprobar `flake8`, `mypy` y `bandit`.
+- Usa `make typecheck` para la verificacion de tipos.
+
 ## Pull Requests
 
-1. **Fork y rama**: haz un fork y crea una rama a partir de `main` con el prefijo adecuado (`feature/`, `bugfix/` o `doc/`). Esto permite que las acciones de GitHub etiqueten tu PR automáticamente.
+1. **Fork y rama**: haz un fork y crea una rama a partir de `main` con el prefijo adecuado (`feature/`, `bugfix/` o `doc/`) y una breve descripcion. Esto permite que las acciones de GitHub etiqueten tu PR automáticamente.
 2. **Sincroniza con `main`**: antes de abrir el PR, actualiza tu rama para incorporar los últimos cambios.
 3. **Pruebas y estilo**: ejecuta `make lint` y `make typecheck` para asegurarte de que el código pasa las verificaciones. Añade o ajusta pruebas cuando sea necesario.
 4. **Descripción**: indica el propósito del cambio y referencia issues relacionados usando `#numero`.
-5. **Revisión**: una vez abierto el PR, espera la revisión de los mantenedores y realiza los cambios solicitados.
+5. **Etiquetas de PR**: añade `enhancement`, `bug`, `documentation` u otra etiqueta que describa el cambio.
+6. **Revisión**: una vez abierto el PR, espera la revisión de los mantenedores y realiza los cambios solicitados.
 
 ¡Agradecemos todas las contribuciones!
