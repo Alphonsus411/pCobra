@@ -25,13 +25,15 @@ from src.core.ast_nodes import (
     NodoNoLocal,
     NodoLambda,
     NodoWith,
-    NodoImportDesde
+    NodoImportDesde,
+    NodoEsperar
 )
 from src.cobra.parser.parser import Parser
 from src.cobra.lexico.lexer import TipoToken, Lexer
 from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
 from src.cobra.macro import expandir_macros
+from ..import_helper import get_standard_imports
 
 from .python_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .python_nodes.condicional import visit_condicional as _visit_condicional
@@ -101,7 +103,7 @@ def visit_import_desde(self, nodo):
 class TranspiladorPython(NodeVisitor):
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
-        self.codigo = "from src.core.nativos import *\n"
+        self.codigo = get_standard_imports("python")
         self.usa_asyncio = False
         self.nivel_indentacion = 0
 

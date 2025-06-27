@@ -30,6 +30,14 @@ Módulos nativos
 Bibliotecas básicas que amplían la funcionalidad de Cobra con
 operaciones de E/S, utilidades matemáticas y estructuras de datos.
 
+Helper de importaciones
+-----------------------
+El módulo ``src.cobra.transpilers.import_helper`` centraliza la gestión de
+las importaciones. Ofrece una función para obtener las importaciones estándar
+de cada lenguaje y otra que carga archivos según el ``module_map``
+configurado. Los transpiladores utilizan este helper tanto al inicializar su
+código como al resolver los ``import`` presentes en los programas.
+
 Sistema de memoria
 ------------------
 Gestiona de forma automática los recursos durante la ejecución para

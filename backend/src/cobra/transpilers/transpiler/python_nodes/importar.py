@@ -1,17 +1,11 @@
 from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser
-from ...module_map import get_mapped_path
+from ...import_helper import load_mapped_module
 
 
 def visit_import(self, nodo):
     """Transpila una declaración de importación consultando el mapeo."""
-    ruta = get_mapped_path(nodo.ruta, "python")
-
-    try:
-        with open(ruta, "r", encoding="utf-8") as f:
-            codigo = f.read()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Módulo no encontrado: {ruta}")
+    codigo, ruta = load_mapped_module(nodo.ruta, "python")
 
     if ruta.endswith(".co"):
         lexer = Lexer(codigo)
