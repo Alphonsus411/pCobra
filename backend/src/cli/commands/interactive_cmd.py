@@ -2,7 +2,11 @@ import logging
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from src.core.sandbox import ejecutar_en_sandbox, validar_dependencias
+from src.core.sandbox import (
+    ejecutar_en_sandbox,
+    ejecutar_en_contenedor,
+    validar_dependencias,
+)
 from src.cobra.transpilers import module_map
 
 from src.core.interpreter import InterpretadorCobra
@@ -24,6 +28,11 @@ class InteractiveCommand(BaseCommand):
             action="store_true",
             help=_("Ejecuta cada línea dentro de una sandbox"),
         )
+        parser.add_argument(
+            "--sandbox-docker",
+            choices=["python", "js", "cpp", "rust"],
+            help=_("Ejecuta cada línea en un contenedor Docker"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -31,6 +40,7 @@ class InteractiveCommand(BaseCommand):
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
         sandbox = getattr(args, "sandbox", False)
+        sandbox_docker = getattr(args, "sandbox_docker", None)
 
         try:
             validar_dependencias("python", module_map.get_toml_map())
@@ -88,6 +98,15 @@ class InteractiveCommand(BaseCommand):
                         except Exception as e:
                             logging.error(f"Error en sandbox: {e}")
                             mostrar_error(f"Error en sandbox: {e}")
+                        continue
+                    if sandbox_docker:
+                        try:
+                            salida = ejecutar_en_contenedor(linea, sandbox_docker)
+                            if salida:
+                                mostrar_info(str(salida))
+                        except Exception as e:
+                            logging.error(f"Error en contenedor Docker: {e}")
+                            mostrar_error(f"Error en contenedor Docker: {e}")
                         continue
 
                     tokens = Lexer(linea).tokenizar()
