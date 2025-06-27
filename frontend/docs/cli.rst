@@ -97,6 +97,17 @@ Ejemplo:
 
    cobra empaquetar --output dist
 
+Subcomando ``paquete``
+----------------------
+Permite crear e instalar paquetes Cobra.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra paquete crear src demo.cobra
+   cobra paquete instalar demo.cobra
+
 Subcomando ``crear``
 -------------------
 Genera archivos o proyectos básicos.

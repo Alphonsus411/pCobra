@@ -17,6 +17,7 @@ from .commands.plugins_cmd import PluginsCommand
 from .commands.modules_cmd import ModulesCommand
 from .commands.dependencias_cmd import DependenciasCommand
 from .commands.empaquetar_cmd import EmpaquetarCommand
+from .commands.package_cmd import PaqueteCommand
 from .commands.crear_cmd import CrearCommand
 from .commands.init_cmd import InitCommand
 
@@ -49,6 +50,7 @@ def main(argv=None):
         DependenciasCommand(),
         DocsCommand(),
         EmpaquetarCommand(),
+        PaqueteCommand(),
         CrearCommand(),
         InitCommand(),
         AgixCommand(),

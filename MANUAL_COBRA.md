@@ -76,7 +76,13 @@ import 'modulo.co'
 imprimir(saludo)
 ```
 
-## 5. Macros
+## 5. Paquetes Cobra
+
+- Agrupa varios módulos en un archivo con manifest ``cobra.pkg``.
+- Crea un paquete con ``cobra paquete crear carpeta paquete.cobra``.
+- Instálalo posteriormente con ``cobra paquete instalar paquete.cobra``.
+
+## 6. Macros
 
 Permiten reutilizar fragmentos de código mediante la directiva `macro`.
 
@@ -84,7 +90,7 @@ Permiten reutilizar fragmentos de código mediante la directiva `macro`.
 macro saluda { imprimir(1) }
 saluda()
 ```
-## 6. Concurrencia
+## 7. Concurrencia
 
 - Ejecuta funciones en paralelo con la palabra clave `hilo`.
 
@@ -97,7 +103,7 @@ hilo tarea()
 imprimir('principal')
 ```
 
-## 7. Transpilación y ejecución
+## 8. Transpilación y ejecución
 
 - Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
@@ -126,7 +132,7 @@ print(TranspiladorPython().transpilar(arbol))
 
 Herencia múltiple en clases.
 
-## 8. Modo seguro
+## 9. Modo seguro
 
 - Añade `--seguro` para evitar operaciones peligrosas como `leer_archivo` o `hilo`.
 
@@ -134,11 +140,11 @@ Herencia múltiple en clases.
 cobra ejecutar programa.co --seguro
 ```
 
-## 9. Próximos pasos
+## 10. Próximos pasos
 
 Revisa la documentación en `frontend/docs` para profundizar en la arquitectura, validadores y más ejemplos.
 
-## 10. Novedades
+## 11. Novedades
 
 Se añadieron nuevas construcciones al lenguaje:
 
@@ -151,14 +157,14 @@ Se añadieron nuevas construcciones al lenguaje:
 - Importaciones `desde` ... `como` para alias de módulos.
 - Nueva estructura `switch` con múltiples `case`.
 
-## 11. Uso de Qualia
+## 12. Uso de Qualia
 
 Qualia registra cada ejecución y genera sugerencias para mejorar tu código.
 El estado se guarda en `qualia_state.json`. Puedes obtener las sugerencias
 ejecutando `sugerencias` en el modo interactivo o escribiendo `%sugerencias`
 en el kernel de Jupyter.
 
-## 12. Bibliotecas compartidas con ctypes
+## 13. Bibliotecas compartidas con ctypes
 
 Puedes cargar funciones escritas en C mediante ``cargar_funcion``. Solo
 compila una biblioteca compartida y proporciona la ruta y el nombre de la
