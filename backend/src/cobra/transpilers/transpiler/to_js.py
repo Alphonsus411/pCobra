@@ -23,6 +23,7 @@ from src.cobra.lexico.lexer import TipoToken
 from src.core.visitor import NodeVisitor
 from src.core.optimizations import optimize_constants, remove_dead_code
 from src.cobra.macro import expandir_macros
+from ..import_helper import get_standard_imports
 
 from .js_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .js_nodes.condicional import visit_condicional as _visit_condicional
@@ -91,12 +92,7 @@ def visit_import_desde(self, nodo):
 class TranspiladorJavaScript(NodeVisitor):
     def __init__(self):
         # Incluir importaciones de modulos nativos
-        self.codigo = [
-            "import * as io from './nativos/io.js';",
-            "import * as net from './nativos/io.js';",
-            "import * as matematicas from './nativos/matematicas.js';",
-            "import { Pila, Cola } from './nativos/estructuras.js';",
-        ]
+        self.codigo = get_standard_imports("js")
         self.indentacion = 0
         self.usa_indentacion = None
 
