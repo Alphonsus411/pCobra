@@ -201,3 +201,15 @@ Ejemplo:
 .. code-block:: bash
 
    cobra benchmarks --output resultados.json
+
+Subcomando ``profile``
+----------------------
+Ejecuta un archivo Cobra bajo ``cProfile``. Muestra en pantalla las
+estadísticas básicas o las guarda en un archivo ``.prof`` mediante
+``--output``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra profile programa.co --output perfil.prof
