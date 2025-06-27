@@ -25,6 +25,10 @@ def test_cli_modulos_buscar(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
+    mod_file = tmp_path / "cobra.mod"
+    mod_file.write_text("lock: {}\n")
+    monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
     with patch("src.cli.cobrahub_client.requests.get") as mock_get, \
             patch("sys.stdout", new_callable=StringIO) as out:
         response = MagicMock()
