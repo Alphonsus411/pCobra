@@ -180,3 +180,19 @@ var triple = cargar_funcion('libtriple.so', 'triple')
 imprimir(triple(3))
 ```
 
+## 14. Perfilado de programas
+
+Para analizar el rendimiento de un script utiliza `cobra profile`. Puedes guardar
+el resultado en un archivo `.prof` y abrirlo con herramientas como `snakeviz`:
+
+```bash
+cobra profile ejemplo.co --output ejemplo.prof --ui snakeviz
+```
+
+Si no indicas `--ui`, se mostrará un resumen en la consola. Instala `snakeviz`
+con:
+
+```bash
+pip install snakeviz
+```
+
