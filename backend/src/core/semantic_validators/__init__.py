@@ -5,6 +5,8 @@ from .primitiva_peligrosa import (
     ValidadorPrimitivaPeligrosa,
 )
 from .import_seguro import ValidadorImportSeguro
+from .fs_access import ValidadorSistemaArchivos
+from .reflexion_segura import ValidadorProhibirReflexion
 
 # Instancia por defecto reutilizable de la cadena de validación
 _CADENA_DEFECTO = None
@@ -23,6 +25,8 @@ def construir_cadena(extra_validators=None):
 
     primero = ValidadorPrimitivaPeligrosa()
     actual = primero.set_siguiente(ValidadorImportSeguro())
+    actual = actual.set_siguiente(ValidadorSistemaArchivos())
+    actual = actual.set_siguiente(ValidadorProhibirReflexion())
 
     if extra_validators:
         for val in extra_validators:
@@ -37,5 +41,7 @@ __all__ = [
     "PrimitivaPeligrosaError",
     "ValidadorPrimitivaPeligrosa",
     "ValidadorImportSeguro",
+    "ValidadorSistemaArchivos",
+    "ValidadorProhibirReflexion",
     "construir_cadena",
 ]
