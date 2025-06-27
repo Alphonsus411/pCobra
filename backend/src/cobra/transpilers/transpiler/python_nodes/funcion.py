@@ -2,7 +2,10 @@ def visit_funcion(self, nodo):
     for decorador in getattr(nodo, "decoradores", []):
         decorador.aceptar(self)
     parametros = ", ".join(nodo.parametros)
-    prefijo = "async def" if getattr(nodo, "asincronica", False) else "def"
+    asincrona = getattr(nodo, "asincronica", False)
+    prefijo = "async def" if asincrona else "def"
+    if asincrona:
+        self.usa_asyncio = True
     self.codigo += (
         f"{self.obtener_indentacion()}{prefijo} {nodo.nombre}({parametros}):\n"
     )

@@ -6,8 +6,14 @@ from src.core.ast_nodes import (
     NodoLlamadaFuncion,
     NodoHolobit,
     NodoValor,
+    NodoDecorador,
+    NodoIdentificador,
+    NodoEsperar,
+    NodoMetodo,
+    NodoClase,
+    NodoImprimir,
 )
-from src.core.ast_nodes import NodoSwitch, NodoCase, NodoAsignacion
+from src.core.ast_nodes import NodoSwitch, NodoCase
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
@@ -109,3 +115,59 @@ def test_transpilador_switch():
         "        y = 0\n"
     )
     assert resultado == esperado
+
+
+def test_transpilador_decoradores_anidados():
+    decor1 = NodoDecorador(NodoIdentificador("d1"))
+    decor2 = NodoDecorador(NodoIdentificador("d2"))
+    func = NodoFuncion(
+        "saluda",
+        [],
+        [NodoImprimir(NodoValor("'hola'"))],
+        [decor1, decor2],
+    )
+    codigo = TranspiladorPython().transpilar([func])
+    esperado = (
+        "from src.core.nativos import *\n"
+        "@d1\n"
+        "@d2\n"
+        "def saluda():\n    print('hola')\n"
+    )
+    assert codigo == esperado
+
+
+def test_transpilador_corutina_await():
+    f1 = NodoFuncion("saluda", [], [NodoImprimir(NodoValor(1))], asincronica=True)
+    f2 = NodoFuncion(
+        "principal",
+        [],
+        [NodoEsperar(NodoLlamadaFuncion("saluda", []))],
+        asincronica=True,
+    )
+    codigo = TranspiladorPython().transpilar([f1, f2])
+    esperado = (
+        "import asyncio\n"
+        "from src.core.nativos import *\n"
+        "async def saluda():\n    print(1)\n"
+        "async def principal():\n    await saluda()\n"
+    )
+    assert codigo == esperado
+
+
+def test_transpilador_clase_compleja():
+    metodo = NodoMetodo(
+        "run",
+        ["self"],
+        [NodoEsperar(NodoLlamadaFuncion("tarea", []))],
+        asincronica=True,
+    )
+    clase = NodoClase("Hija", [metodo], ["Base1", "Base2"])
+    codigo = TranspiladorPython().transpilar([clase])
+    esperado = (
+        "import asyncio\n"
+        "from src.core.nativos import *\n"
+        "class Hija(Base1, Base2):\n"
+        "    async def run(self):\n"
+        "        await tarea()\n"
+    )
+    assert codigo == esperado
