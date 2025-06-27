@@ -20,3 +20,30 @@ Se añade el archivo ``pcobra.toml`` para definir el mapeo de módulos en format
    python = "modulo.py"
    js = "modulo.js"
 
+Compilación de extensiones C++ con PyBind11
+------------------------------------------
+El nuevo módulo ``pybind_bridge`` permite compilar código C++ usando
+``pybind11`` y cargarlo como extensión de Python. El flujo habitual
+consiste en llamar a ``compilar_y_cargar`` con el nombre del módulo y
+el código fuente:
+
+.. code-block:: python
+
+   from cobra.core.nativos import compilar_y_cargar
+
+   cpp = """
+   #include <pybind11/pybind11.h>
+
+   int duplicar(int x) { return x * 2; }
+
+   PYBIND11_MODULE(mi_mod, m) {
+       m.def("duplicar", &duplicar);
+   }
+   """
+
+   mod = compilar_y_cargar("mi_mod", cpp)
+   print(mod.duplicar(5))
+
+Las funciones ``compilar_extension`` y ``cargar_extension`` están
+disponibles si se requiere mayor control sobre el proceso.
+

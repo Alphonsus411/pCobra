@@ -17,3 +17,4 @@ smooth-criminal
 RestrictedPython==8.0
 flake8==7.3.0
 mypy==1.16.1
+pybind11==2.13.6
