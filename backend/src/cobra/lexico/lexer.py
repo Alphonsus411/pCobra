@@ -13,6 +13,18 @@ class LexerError(Exception):
         self.columna = columna
 
 
+class InvalidTokenError(LexerError):
+    """Excepción para símbolos no reconocidos."""
+
+    pass
+
+
+class UnclosedStringError(LexerError):
+    """Excepción para cadenas sin cerrar."""
+
+    pass
+
+
 class TipoToken:
     DIVIDIR = 'DIVIDIR'
     MULTIPLICAR = 'MULTIPLICAR'
@@ -238,7 +250,13 @@ class Lexer:
                 logging.error(
                     f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'"
                 )
-                raise LexerError(f"Token no reconocido: '{error_token}'", linea, columna)
+                if error_token in {"'", '"'}:
+                    mensaje = f"Cadena sin cerrar en linea {linea}, columna {columna}"
+                    raise UnclosedStringError(mensaje, linea, columna)
+                mensaje = (
+                    f"Token no reconocido: '{error_token}' en linea {linea}, columna {columna}"
+                )
+                raise InvalidTokenError(mensaje, linea, columna)
 
             if self.posicion == prev_pos:
                 same_pos_count += 1
