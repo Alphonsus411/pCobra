@@ -1,5 +1,10 @@
 # Historial de Cambios
 
+## v4.0 - 2025-06-27
+- Paquete actualizado a la versión 4.0.
+- Documentación y kernel reflejan la nueva versión.
+- Prueba de plugins ajustada a "dummy 4.0".
+
 ## v3.0 - 2025-06-27
 - Paquete actualizado a la versión 3.0.
 - Documentación y kernel reflejan la nueva versión.
