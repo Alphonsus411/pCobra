@@ -131,6 +131,14 @@ pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
   --cov-fail-under=80
 ````
 
+También puedes ejecutar suites específicas ubicadas en `backend/src/tests`:
+
+````bash
+python -m tests.suite_cli           # Solo pruebas de la CLI
+python -m tests.suite_core          # Pruebas de lexer, parser e intérprete
+python -m tests.suite_transpiladores  # Pruebas de los transpiladores
+````
+
 
 # Ejemplo de Uso
 
