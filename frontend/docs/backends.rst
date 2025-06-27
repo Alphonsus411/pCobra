@@ -12,7 +12,11 @@ Para obtener el código en formato WAT basta ejecutar:
    cobra compilar programa.co --backend wasm
 
 El resultado puede compilarse posteriormente con herramientas como
-``wat2wasm`` para obtener un módulo ejecutable.
+   ``wat2wasm`` para obtener un módulo ejecutable.
+
+También se dispone de un backend sencillo para generar código C::
+
+   cobra compilar programa.co --backend c
 
 Ejemplo de generación de código Rust::
 
