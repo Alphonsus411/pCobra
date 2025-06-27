@@ -30,16 +30,38 @@ def cargar_plugin_seguro(ruta: str):
     """Carga de forma segura un plugin a partir de ``modulo:Clase``."""
     try:
         module_name, class_name = ruta.split(":", 1)
-        module = import_module(module_name)
-        plugin_cls = getattr(module, class_name)
-        if not issubclass(plugin_cls, PluginInterface):
-            logging.warning(
-                f"El plugin {ruta} no implementa PluginInterface"
-            )
-            return None
-        instancia = plugin_cls()
-        registrar_plugin(instancia.name, getattr(instancia, "version", "0"))
-        return instancia
-    except Exception as exc:
-        logging.error(f"Error cargando plugin {ruta}: {exc}")
+    except ValueError:
+        logging.error(f"Ruta de plugin inválida: {ruta}")
         return None
+
+    try:
+        module = import_module(module_name)
+    except Exception as exc:
+        logging.error(f"Error importando módulo {module_name}: {exc}")
+        return None
+
+    try:
+        plugin_cls = getattr(module, class_name)
+    except AttributeError:
+        logging.error(f"No se encontró la clase {class_name} en {module_name}")
+        return None
+
+    if not issubclass(plugin_cls, PluginInterface):
+        logging.warning(
+            f"El plugin {ruta} no implementa PluginInterface"
+        )
+        return None
+
+    try:
+        instancia = plugin_cls()
+    except Exception as exc:
+        logging.error(f"Error instanciando plugin {ruta}: {exc}")
+        return None
+
+    if not getattr(instancia, "name", ""):
+        logging.warning(f"Plugin {ruta} no define atributo name")
+        return None
+
+    version = getattr(instancia, "version", "0")
+    registrar_plugin(instancia.name, version)
+    return instancia
