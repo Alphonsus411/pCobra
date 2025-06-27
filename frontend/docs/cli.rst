@@ -61,14 +61,16 @@ Acciones disponibles:
 - ``instalar <ruta>`` copia un archivo ``.co`` al directorio de módulos.
 - ``remover <nombre>`` elimina un módulo instalado.
 
-Al instalar un módulo se actualiza ``cobra.lock`` con la versión declarada
-en ``cobra.mod``. Este archivo admite un campo ``version`` por entrada:
+Al instalar un módulo se valida la versión indicada en ``cobra.mod`` y se
+actualiza ``cobra.lock``. Este fichero almacena el nombre de cada módulo
+y su versión semver bajo la clave ``modules``.
+
+El formato del archivo es:
 
 .. code-block:: yaml
 
-   modulo.co:
-     version: "1.0.0"
-     python: modulo.py
+   modules:
+     modulo.co: "1.0.0"
 
 Ejemplo:
 
