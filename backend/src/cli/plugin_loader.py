@@ -1,4 +1,5 @@
 import logging
+from importlib import import_module
 from importlib.metadata import entry_points
 
 from .commands.base import BaseCommand
@@ -19,16 +20,26 @@ def descubrir_plugins():
         eps = entry_points().get("cobra.plugins", [])
 
     for ep in eps:
-        try:
-            plugin_cls = ep.load()
-            if not issubclass(plugin_cls, PluginInterface):
-                logging.warning(
-                    f"El plugin {ep.name} no implementa PluginInterface"
-                )
-                continue
-            instancia = plugin_cls()
-            registrar_plugin(instancia.name, getattr(instancia, "version", "0"))
+        instancia = cargar_plugin_seguro(ep.value)
+        if instancia is not None:
             plugins.append(instancia)
-        except Exception as exc:
-            logging.error(f"Error cargando plugin {ep.name}: {exc}")
     return plugins
+
+
+def cargar_plugin_seguro(ruta: str):
+    """Carga de forma segura un plugin a partir de ``modulo:Clase``."""
+    try:
+        module_name, class_name = ruta.split(":", 1)
+        module = import_module(module_name)
+        plugin_cls = getattr(module, class_name)
+        if not issubclass(plugin_cls, PluginInterface):
+            logging.warning(
+                f"El plugin {ruta} no implementa PluginInterface"
+            )
+            return None
+        instancia = plugin_cls()
+        registrar_plugin(instancia.name, getattr(instancia, "version", "0"))
+        return instancia
+    except Exception as exc:
+        logging.error(f"Error cargando plugin {ruta}: {exc}")
+        return None

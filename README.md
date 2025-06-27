@@ -542,6 +542,8 @@ from src.cli.plugin_loader import PluginCommand
 class HolaCommand(PluginCommand):
     name = "hola"
     version = "1.0"
+    author = "Tu Nombre"
+    description = "Dice hola desde un plugin"
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help="Muestra un saludo")
