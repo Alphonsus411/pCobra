@@ -14,7 +14,7 @@ Opciones principales:
 - ``archivo``: ruta del script ``.co``.
 - ``--tipo``: lenguaje de salida (``python``, ``js``, ``asm``, ``rust``,
   ``cpp``, ``go``, ``ruby``, ``r``, ``julia``, ``java``, ``cobol``,
-  ``fortran``, ``pascal``, ``php``, ``matlab``, ``latex``).
+  ``fortran``, ``pascal``, ``php``, ``matlab``, ``latex``, ``wasm``).
 
 Ejemplo:
 
