@@ -3,7 +3,8 @@ import logging
 import os
 import sys
 
-from .i18n import _, setup_gettext
+from .i18n import _, setup_gettext, format_traceback
+from .utils import messages
 
 from .commands.compile_cmd import CompileCommand
 from .commands.docs_cmd import DocsCommand
@@ -79,7 +80,13 @@ def main(argv=None):
     args = parser.parse_args(argv)
     setup_gettext(args.lang)
     command = getattr(args, "cmd", command_map["interactive"])
-    resultado = command.run(args)
+    try:
+        resultado = command.run(args)
+    except Exception as exc:  # pragma: no cover - trazas manejadas
+        logging.exception("Unhandled exception")
+        messages.mostrar_error("Ocurri\u00f3 un error inesperado")
+        print(format_traceback(exc, args.lang))
+        return 1
     return 0 if resultado is None else resultado
 
 
