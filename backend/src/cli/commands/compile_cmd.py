@@ -25,6 +25,7 @@ from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
 from src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
 from src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from src.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
 TRANSPILERS = {
     "python": TranspiladorPython,
@@ -43,6 +44,7 @@ TRANSPILERS = {
     "php": TranspiladorPHP,
     "matlab": TranspiladorMatlab,
     "latex": TranspiladorLatex,
+    "wasm": TranspiladorWasm,
 }
 
 
@@ -50,7 +52,7 @@ class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
 
     Soporta Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Ruby,
-    PHP, Java y ahora también COBOL, Fortran, Pascal, Matlab y LaTeX.
+    PHP, Java y ahora también COBOL, Fortran, Pascal, Matlab, LaTeX y WebAssembly.
     """
 
     name = "compilar"
@@ -77,9 +79,33 @@ class CompileCommand(BaseCommand):
                 "php",
                 "matlab",
                 "latex",
+                "wasm",
             ],
             default="python",
             help=_("Tipo de código generado"),
+        )
+        parser.add_argument(
+            "--backend",
+            choices=[
+                "python",
+                "js",
+                "asm",
+                "rust",
+                "cpp",
+                "go",
+                "ruby",
+                "r",
+                "julia",
+                "java",
+                "cobol",
+                "fortran",
+                "pascal",
+                "php",
+                "matlab",
+                "latex",
+                "wasm",
+            ],
+            help=_("Alias de --tipo"),
         )
         parser.add_argument(
             "--tipos",
@@ -95,6 +121,8 @@ class CompileCommand(BaseCommand):
 
     def run(self, args):
         archivo = args.archivo
+        if getattr(args, "backend", None):
+            args.tipo = args.backend
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
             return 1
