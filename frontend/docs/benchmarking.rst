@@ -56,7 +56,8 @@ Para más información sobre configuraciones seguras consulta
 Resultados recientes
 --------------------
 
-Los siguientes datos se obtuvieron ejecutando ``scripts/benchmarks/run_benchmarks.py``.
+Los benchmarks pueden ejecutarse con ``cobra benchmarks``. El siguiente
+resumen se obtuvo con ``scripts/benchmarks/run_benchmarks.py``.
 
 .. list-table:: Tiempos y memoria aproximados
    :header-rows: 1

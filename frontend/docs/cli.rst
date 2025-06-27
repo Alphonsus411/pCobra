@@ -189,3 +189,15 @@ Ejemplo:
 .. code-block:: bash
 
    cobra init mi_app
+
+Subcomando ``benchmarks``
+-----------------------
+Compara el rendimiento de los distintos backends y muestra un resumen
+en formato JSON. Opcionalmente puede guardarse en un archivo mediante
+``--output``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra benchmarks --output resultados.json
