@@ -1,5 +1,10 @@
 # Historial de Cambios
 
+## v2.3 - 2025-06-27
+- Paquete actualizado a la versión 2.3.
+- Documentación y kernel reflejan la nueva versión.
+- Prueba de plugins ajustada a "dummy 2.3".
+
 ## v2.2 - 2025-06-27
 - Paquete actualizado a la versión 2.2.
 - Documentación y kernel reflejan la nueva versión.
