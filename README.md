@@ -506,6 +506,8 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   opcionalmente *pyright* si está instalado).
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.
+- Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
+  issues y preparar pull requests.
 
 ## Desarrollo de plugins
 
