@@ -11,3 +11,52 @@ plugins están disponibles se proporciona el subcomando ``plugins``::
 
    cobra plugins
 
+Guía paso a paso
+----------------
+
+A continuación se muestra cómo crear un plugin sencillo utilizando
+``PluginCommand``.
+
+1. **Crea un módulo Python** donde se implementará el plugin. Por ejemplo,
+   ``mi_paquete/mi_plugin.py``.
+2. **Importa** ``PluginCommand`` e implementa una clase que herede de ella:
+
+   .. code-block:: python
+
+      from src.cli.plugin_loader import PluginCommand
+
+
+      class SaludoCommand(PluginCommand):
+          name = "saludo"
+          version = "1.0"
+
+          def register_subparser(self, subparsers):
+              parser = subparsers.add_parser(self.name, help="Muestra un saludo")
+              parser.set_defaults(cmd=self)
+
+          def run(self, args):
+              print("¡Hola desde un plugin!")
+
+3. **Declara el entry point** en tu ``setup.py`` para que Cobra lo descubra:
+
+   .. code-block:: python
+
+      entry_points={
+          'cobra.plugins': [
+              'saludo = mi_paquete.mi_plugin:SaludoCommand',
+          ],
+      }
+
+4. **Instala el paquete** en modo editable con ``pip install -e .`` para que
+   el comando quede disponible.
+5. **Comprueba la instalación** ejecutando ``cobra plugins``. Deberías ver el
+   nombre y la versión registrados.
+6. **Utiliza tu plugin** directamente desde la CLI:
+
+   .. code-block:: bash
+
+      cobra saludo
+
+Con estos pasos se crea un plugin funcional que se integra de forma automática
+con el sistema de comandos de Cobra.
+
