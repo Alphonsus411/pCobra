@@ -14,6 +14,8 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 - El codigo debe formatearse con `black` y respetar 88 caracteres por linea.
 - Ejecuta `make lint` para comprobar `flake8`, `mypy` y `bandit`.
 - Usa `make typecheck` para la verificacion de tipos.
+- Para analisis estatico con `pyright`, instala el paquete y ejecuta
+  `pyright backend/src` (o `make typecheck`).
 
 ## Pull Requests
 

@@ -18,6 +18,7 @@ RestrictedPython==8.0
 flake8==7.3.0
 mypy==1.16.1
 bandit==1.8.5
+pyright
 pybind11==2.13.6
 python-lsp-server==1.11.0
 packaging==24.0
