@@ -4,6 +4,7 @@ import yaml
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
+from ..utils.semver import es_version_valida, es_nueva_version
 from ..cobrahub_client import publicar_modulo, descargar_modulo
 from ...cobra.transpilers.module_map import MODULE_MAP_PATH
 
@@ -65,13 +66,24 @@ class ModulesCommand(BaseCommand):
         return None
 
     @staticmethod
-    def _actualizar_lock(nombre: str, version: str | None):
+    def _cargar_lock() -> dict:
         if os.path.exists(LOCK_FILE):
             with open(LOCK_FILE, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
         else:
             data = {}
-        data[nombre] = {"version": version} if version else {}
+        data.setdefault("modules", {})
+        return data
+
+    @staticmethod
+    def _obtener_version_lock(nombre: str) -> str | None:
+        data = ModulesCommand._cargar_lock()
+        return data.get("modules", {}).get(nombre)
+
+    @staticmethod
+    def _actualizar_lock(nombre: str, version: str | None):
+        data = ModulesCommand._cargar_lock()
+        data["modules"][nombre] = version
         with open(LOCK_FILE, "w", encoding="utf-8") as f:
             yaml.safe_dump(data, f)
 
@@ -94,7 +106,17 @@ class ModulesCommand(BaseCommand):
         shutil.copy(ruta, destino)
         mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
         version = ModulesCommand._obtener_version(ruta)
-        ModulesCommand._actualizar_lock(os.path.basename(ruta), version)
+        if version and not es_version_valida(version):
+            mostrar_error(_("Versión de módulo inválida"))
+            return 1
+        nombre = os.path.basename(ruta)
+        actual = ModulesCommand._obtener_version_lock(nombre)
+        if actual and version and not es_nueva_version(version, actual):
+            mostrar_error(
+                _("La nueva versión {v} no supera a {a}").format(v=version, a=actual)
+            )
+            return 1
+        ModulesCommand._actualizar_lock(nombre, version)
         return 0
 
     @staticmethod
@@ -103,6 +125,11 @@ class ModulesCommand(BaseCommand):
         if os.path.exists(archivo):
             os.remove(archivo)
             mostrar_info(_("Módulo {name} eliminado").format(name=nombre))
+            data = ModulesCommand._cargar_lock()
+            if nombre in data.get("modules", {}):
+                del data["modules"][nombre]
+                with open(LOCK_FILE, "w", encoding="utf-8") as f:
+                    yaml.safe_dump(data, f)
             return 0
         else:
             mostrar_error(_("El módulo {name} no existe").format(name=nombre))
