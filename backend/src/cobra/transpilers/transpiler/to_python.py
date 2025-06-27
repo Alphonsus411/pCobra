@@ -190,6 +190,7 @@ class TranspiladorPython(NodeVisitor):
                 op = nodo.operador.valor
             return f"{op} {val}" if op == "not" else f"{op}{val}"
         elif isinstance(nodo, NodoEsperar):
+            self.usa_asyncio = True
             val = self.obtener_valor(nodo.expresion)
             return f"await {val}"
         elif isinstance(nodo, NodoLambda):
