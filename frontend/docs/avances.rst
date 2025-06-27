@@ -7,10 +7,10 @@ Avances del lenguaje Cobra
 - **Gestión de memoria automatizada**: Cobra incluye un sistema de manejo de memoria optimizado que se ajusta automáticamente utilizando algoritmos genéticos.
 - **Transpilacion a otros lenguajes**: Se ha implementado un transpilador que convierte el codigo Cobra a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX.
 - **Pruebas unitarias**: Se han creado pruebas para validar el correcto funcionamiento del lexer y el parser.
-- **Versión 2.1**: Actualización de la documentación y configuración del proyecto.
-- **Versión 2.1**: Se incorpora ``pcobra.toml`` para definir el mapeo de módulos.
+- **Versión 2.2**: Actualización de la documentación y configuración del proyecto.
+- **Versión 2.2**: Se incorpora ``pcobra.toml`` para definir el mapeo de módulos.
 
-Versión 2.1
+Versión 2.2
 -----------
 Se añade el archivo ``pcobra.toml`` para definir el mapeo de módulos en formato TOML. Su estructura es la siguiente:
 

@@ -16,9 +16,9 @@ def install(user=True):
 
 class CobraKernel(Kernel):
     implementation = "Cobra"
-    implementation_version = "2.1"
+    implementation_version = "2.2"
     language = "cobra"
-    language_version = "2.1"
+    language_version = "2.2"
     language_info = {
         "name": "cobra",
         "mimetype": "text/plain",
