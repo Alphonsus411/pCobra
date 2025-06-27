@@ -158,3 +158,14 @@ El estado se guarda en `qualia_state.json`. Puedes obtener las sugerencias
 ejecutando `sugerencias` en el modo interactivo o escribiendo `%sugerencias`
 en el kernel de Jupyter.
 
+## 12. Bibliotecas compartidas con ctypes
+
+Puedes cargar funciones escritas en C mediante ``cargar_funcion``. Solo
+compila una biblioteca compartida y proporciona la ruta y el nombre de la
+función:
+
+```cobra
+var triple = cargar_funcion('libtriple.so', 'triple')
+imprimir(triple(3))
+```
+

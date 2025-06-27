@@ -66,3 +66,10 @@ Manejo de errores
    catch e:
        imprimir("Error:" + e)
    fin
+
+Bibliotecas C con ctypes
+------------------------
+.. code-block:: cobra
+
+   var triple = cargar_funcion('libtriple.so', 'triple')
+   imprimir(triple(5))
