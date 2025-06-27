@@ -315,6 +315,9 @@ cobra ejecutar programa.co --depurar --formatear
 cobra modulos listar
 cobra modulos instalar ruta/al/modulo.co
 cobra modulos remover modulo.co
+# Crear e instalar paquetes Cobra
+cobra paquete crear src demo.cobra
+cobra paquete instalar demo.cobra
 # Generar documentación HTML y API
 cobra docs
 # Crear un ejecutable independiente
