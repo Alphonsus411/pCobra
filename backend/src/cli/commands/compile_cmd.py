@@ -14,6 +14,7 @@ from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from src.cobra.transpilers.transpiler.to_c import TranspiladorC
 from src.cobra.transpilers.transpiler.to_go import TranspiladorGo
 from src.cobra.transpilers.transpiler.to_r import TranspiladorR
 from src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
@@ -33,6 +34,7 @@ TRANSPILERS = {
     "asm": TranspiladorASM,
     "rust": TranspiladorRust,
     "cpp": TranspiladorCPP,
+    "c": TranspiladorC,
     "go": TranspiladorGo,
     "ruby": TranspiladorRuby,
     "r": TranspiladorR,
@@ -51,7 +53,7 @@ TRANSPILERS = {
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
 
-    Soporta Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Ruby,
+    Soporta Python, JavaScript, ensamblador, Rust, C++, C, Go, R, Julia, Ruby,
     PHP, Java y ahora también COBOL, Fortran, Pascal, Matlab, LaTeX y WebAssembly.
     """
 
@@ -68,6 +70,7 @@ class CompileCommand(BaseCommand):
                 "asm",
                 "rust",
                 "cpp",
+                "c",
                 "go",
                 "ruby",
                 "r",
@@ -92,6 +95,7 @@ class CompileCommand(BaseCommand):
                 "asm",
                 "rust",
                 "cpp",
+                "c",
                 "go",
                 "ruby",
                 "r",
