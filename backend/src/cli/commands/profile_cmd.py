@@ -6,6 +6,8 @@ import io
 import logging
 import os
 import pstats
+import subprocess
+import tempfile
 
 from .base import BaseCommand
 from .execute_cmd import ExecuteCommand
@@ -32,12 +34,17 @@ class ProfileCommand(BaseCommand):
             "-o",
             help=_("Archivo .prof para guardar los resultados"),
         )
+        parser.add_argument(
+            "--ui",
+            help=_("Herramienta de visualización del perfil (por ejemplo, snakeviz)"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
     def run(self, args):
         archivo = args.archivo
         output = getattr(args, "output", None)
+        ui = getattr(args, "ui", None)
         depurar = getattr(args, "depurar", False)
         formatear = getattr(args, "formatear", False)
         seguro = getattr(args, "seguro", False)
@@ -85,16 +92,33 @@ class ProfileCommand(BaseCommand):
                 safe_mode=seguro, extra_validators=extra_validators
             ).ejecutar_ast(ast)
             profiler.disable()
-            if output:
-                profiler.dump_stats(output)
-                mostrar_info(
-                    _("Resultados de perfil guardados en {file}").format(file=output)
-                )
+            stats_file = output
+            if ui:
+                if not stats_file:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".prof", delete=False)
+                    stats_file = tmp.name
+                profiler.dump_stats(stats_file)
+                try:
+                    subprocess.run([ui, stats_file], check=False)
+                except FileNotFoundError:
+                    msg = _(
+                        "Herramienta {tool} no encontrada. "
+                        "Instálala con 'pip install {tool}'"
+                    ).format(tool=ui)
+                    mostrar_error(msg)
+                    return 1
             else:
-                s = io.StringIO()
-                stats = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
-                stats.print_stats(10)
-                print(s.getvalue())
+                if stats_file:
+                    profiler.dump_stats(stats_file)
+                    msg = _("Resultados de perfil guardados en {file}").format(
+                        file=stats_file
+                    )
+                    mostrar_info(msg)
+                else:
+                    s = io.StringIO()
+                    stats = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
+                    stats.print_stats(10)
+                    print(s.getvalue())
             return 0
         except Exception as e:
             logging.error(f"Error ejecutando el script: {e}")
