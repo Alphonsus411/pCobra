@@ -499,9 +499,10 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Las ramas que comiencen con `feature/`, `bugfix/` o `doc/` recibirán etiquetas
   automáticas al abrir un pull request.
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
-- Ejecuta `make lint` para verificar el código con *flake8* y *mypy*.
+- Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*.
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
+- El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.
 
 ## Desarrollo de plugins
