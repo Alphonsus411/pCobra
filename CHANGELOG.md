@@ -5,12 +5,6 @@
 - Documentación y kernel reflejan la nueva versión.
 - Prueba de plugins ajustada a "dummy 3.0".
 
-
-## v3.0 - 2025-06-27
-- Paquete actualizado a la versión 3.0.
-- Documentación y kernel reflejan la nueva versión.
-- Prueba de plugins ajustada a "dummy 3.0".
-
 ## v2.2 - 2025-06-27
 - Paquete actualizado a la versión 2.2.
 - Documentación y kernel reflejan la nueva versión.
