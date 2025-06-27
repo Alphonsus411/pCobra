@@ -10,9 +10,8 @@ from ...cobra.transpilers.module_map import MODULE_MAP_PATH
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
-LOCK_FILE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "cobra.lock")
-)
+LOCK_FILE = MODULE_MAP_PATH
+LOCK_KEY = "lock"
 
 
 class ModulesCommand(BaseCommand):
@@ -61,6 +60,8 @@ class ModulesCommand(BaseCommand):
             with open(MODULE_MAP_PATH, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             for mod_path, info in data.items():
+                if mod_path == LOCK_KEY:
+                    continue
                 if os.path.basename(mod_path) == os.path.basename(ruta):
                     return info.get("version")
         return None
@@ -72,18 +73,18 @@ class ModulesCommand(BaseCommand):
                 data = yaml.safe_load(f) or {}
         else:
             data = {}
-        data.setdefault("modules", {})
+        data.setdefault(LOCK_KEY, {})
         return data
 
     @staticmethod
     def _obtener_version_lock(nombre: str) -> str | None:
         data = ModulesCommand._cargar_lock()
-        return data.get("modules", {}).get(nombre)
+        return data.get(LOCK_KEY, {}).get(nombre)
 
     @staticmethod
     def _actualizar_lock(nombre: str, version: str | None):
         data = ModulesCommand._cargar_lock()
-        data["modules"][nombre] = version
+        data[LOCK_KEY][nombre] = version
         with open(LOCK_FILE, "w", encoding="utf-8") as f:
             yaml.safe_dump(data, f)
 
@@ -126,8 +127,8 @@ class ModulesCommand(BaseCommand):
             os.remove(archivo)
             mostrar_info(_("Módulo {name} eliminado").format(name=nombre))
             data = ModulesCommand._cargar_lock()
-            if nombre in data.get("modules", {}):
-                del data["modules"][nombre]
+            if nombre in data.get(LOCK_KEY, {}):
+                del data[LOCK_KEY][nombre]
                 with open(LOCK_FILE, "w", encoding="utf-8") as f:
                     yaml.safe_dump(data, f)
             return 0

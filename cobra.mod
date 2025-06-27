@@ -7,4 +7,4 @@
 #     python: modulo.py
 #     js: modulo.js
 # Actualmente no existen módulos transpilados a registrar.
-{}
+lock: {}

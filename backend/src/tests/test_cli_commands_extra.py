@@ -176,12 +176,11 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
-    lock_file = tmp_path / "cobra.lock"
-    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(lock_file))
     mod_file = tmp_path / "cobra.mod"
-    mod_mapping = {"m.co": {"version": "0.1.0"}}
+    mod_mapping = {"m.co": {"version": "0.1.0"}, "lock": {}}
     mod_file.write_text(yaml.safe_dump(mod_mapping))
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
 
     modulo = tmp_path / "m.co"
     modulo.write_text("var d = 1")
@@ -195,8 +194,8 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     destino = mods_dir / modulo.name
     assert destino.exists()
     assert f"Módulo instalado en {destino}" in out.getvalue().strip()
-    data = yaml.safe_load(lock_file.read_text())
-    assert data["modules"][modulo.name] == "0.1.0"
+    data = yaml.safe_load(mod_file.read_text())
+    assert data["lock"][modulo.name] == "0.1.0"
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])
@@ -206,6 +205,8 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
         main(["modulos", "remover", modulo.name])
     assert not destino.exists()
     assert f"Módulo {modulo.name} eliminado" in out.getvalue().strip()
+    data = yaml.safe_load(mod_file.read_text())
+    assert modulo.name not in data["lock"]
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "listar"])
@@ -217,12 +218,11 @@ def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
-    lock_file = tmp_path / "cobra.lock"
-    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(lock_file))
     mod_file = tmp_path / "cobra.mod"
-    mod_mapping = {"bad.co": {"version": "abc"}}
+    mod_mapping = {"bad.co": {"version": "abc"}, "lock": {}}
     mod_file.write_text(yaml.safe_dump(mod_mapping))
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
     modulo = tmp_path / "bad.co"
     modulo.write_text("var d = 1")
     with patch("sys.stdout", new_callable=StringIO) as out:
