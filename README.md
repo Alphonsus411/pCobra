@@ -463,6 +463,8 @@ Puedes compilar la documentación de dos maneras:
 
 A partir de esta versión, la API se genera de forma automática antes de
 cada compilación para mantener la documentación actualizada.
+Para aprender a desarrollar plugins revisa
+[`frontend/docs/plugin_dev.rst`](frontend/docs/plugin_dev.rst).
 ## Hitos y Roadmap
 
 El proyecto avanza en versiones incrementales. A continuacion se listan las tareas previstas para las proximas entregas.
