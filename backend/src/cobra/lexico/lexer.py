@@ -36,7 +36,7 @@ class TipoToken:
     IN = 'IN'
     LBRACE = 'LBRACE'
     FOR = 'FOR'
-    DOSPUNTOS = 'DOS PUNTOS'
+    DOSPUNTOS = 'DOSPUNTOS'
     VAR = 'VAR'
     FUNC = 'FUNC'
     REL = 'REL'
