@@ -1,4 +1,4 @@
-from src.cli.plugin_loader import PluginCommand
+from backend.src.cli.plugin_loader import PluginCommand
 
 class SaludoCommand(PluginCommand):
     """Comando de ejemplo que imprime un saludo."""

@@ -1,6 +1,6 @@
 """Transpilador que genera código ensamblador simple desde Cobra."""
 
-from src.core.ast_nodes import (
+from backend.src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -28,11 +28,11 @@ from src.core.ast_nodes import (
     NodoPara,
     NodoUsar,
 )
-from src.cobra.lexico.lexer import TipoToken, Lexer
-from src.cobra.parser.parser import Parser
-from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from src.cobra.macro import expandir_macros
+from backend.src.cobra.lexico.lexer import TipoToken, Lexer
+from backend.src.cobra.parser.parser import Parser
+from backend.src.core.visitor import NodeVisitor
+from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from backend.src.cobra.macro import expandir_macros
 
 from .asm_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .asm_nodes.condicional import visit_condicional as _visit_condicional

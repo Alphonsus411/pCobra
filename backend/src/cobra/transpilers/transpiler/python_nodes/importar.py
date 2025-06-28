@@ -1,5 +1,5 @@
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from backend.src.cobra.lexico.lexer import Lexer
+from backend.src.cobra.parser.parser import Parser
 from ...import_helper import load_mapped_module
 
 

@@ -1,6 +1,6 @@
 """Transpilador básico de Cobra a C."""
 
-from src.core.ast_nodes import (
+from backend.src.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -10,10 +10,10 @@ from src.core.ast_nodes import (
     NodoAtributo,
     NodoInstancia,
 )
-from src.cobra.lexico.lexer import TipoToken
-from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from src.cobra.macro import expandir_macros
+from backend.src.cobra.lexico.lexer import TipoToken
+from backend.src.core.visitor import NodeVisitor
+from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from backend.src.cobra.macro import expandir_macros
 
 
 def visit_asignacion(self, nodo):

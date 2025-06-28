@@ -4,29 +4,29 @@ import multiprocessing
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from src.cobra.transpilers import module_map
-from src.core.sandbox import validar_dependencias
+from backend.src.cobra.transpilers import module_map
+from backend.src.core.sandbox import validar_dependencias
 
-from src.core.ast_cache import obtener_ast
-from src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from src.cobra.transpilers.transpiler.to_c import TranspiladorC
-from src.cobra.transpilers.transpiler.to_go import TranspiladorGo
-from src.cobra.transpilers.transpiler.to_r import TranspiladorR
-from src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
-from src.cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
-from src.cobra.transpilers.transpiler.to_java import TranspiladorJava
-from src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
-from src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
-from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
-from src.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from backend.src.core.ast_cache import obtener_ast
+from backend.src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from backend.src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from backend.src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from backend.src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from backend.src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from backend.src.cobra.transpilers.transpiler.to_c import TranspiladorC
+from backend.src.cobra.transpilers.transpiler.to_go import TranspiladorGo
+from backend.src.cobra.transpilers.transpiler.to_r import TranspiladorR
+from backend.src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
+from backend.src.cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
+from backend.src.cobra.transpilers.transpiler.to_java import TranspiladorJava
+from backend.src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
+from backend.src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
+from backend.src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+from backend.src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from backend.src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from backend.src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from backend.src.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
 TRANSPILERS = {
     "python": TranspiladorPython,

@@ -1,6 +1,6 @@
 """Transpilador que convierte código Cobra en código Python."""
 
-from src.core.ast_nodes import (
+from backend.src.core.ast_nodes import (
     NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
     NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
     NodoClase,
@@ -28,11 +28,11 @@ from src.core.ast_nodes import (
     NodoImportDesde,
     NodoEsperar
 )
-from src.cobra.parser.parser import Parser
-from src.cobra.lexico.lexer import TipoToken, Lexer
-from src.core.visitor import NodeVisitor
-from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from src.cobra.macro import expandir_macros
+from backend.src.cobra.parser.parser import Parser
+from backend.src.cobra.lexico.lexer import TipoToken, Lexer
+from backend.src.core.visitor import NodeVisitor
+from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from backend.src.cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
 
 from .python_nodes.asignacion import visit_asignacion as _visit_asignacion
@@ -157,7 +157,7 @@ class TranspiladorPython(NodeVisitor):
 
 
     def obtener_valor(self, nodo):
-        from src.cobra.parser.parser import (
+        from backend.src.cobra.parser.parser import (
             NodoOperacionBinaria,
             NodoOperacionUnaria,
             NodoIdentificador,

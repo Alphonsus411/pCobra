@@ -1,7 +1,8 @@
 """Módulo para iniciar un servidor LSP mínimo."""
 
 import sys
-from pylsp import lsp, start_io_lang_server
+from pylsp import lsp
+from pylsp.python_lsp import start_io_lang_server
 
 
 def main() -> None:

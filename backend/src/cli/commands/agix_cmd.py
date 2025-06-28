@@ -3,7 +3,7 @@ from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 
-from src.ia.analizador_agix import generar_sugerencias
+from backend.src.ia.analizador_agix import generar_sugerencias
 
 
 class AgixCommand(BaseCommand):

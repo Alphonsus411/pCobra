@@ -2,9 +2,9 @@
 
 import os
 
-from src.cobra.lexico.lexer import Token, TipoToken, Lexer
-from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from src.core.ast_nodes import (
+from backend.src.cobra.lexico.lexer import Token, TipoToken, Lexer
+from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from backend.src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -26,15 +26,15 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
-    NodoUsar,
+    NodoUsar, NodoAssert, NodoDel, NodoGlobal, NodoNoLocal, NodoWith, NodoImportDesde,
 )
-from src.cobra.parser.parser import Parser
-from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
-from src.core.semantic_validators import (
+from backend.src.cobra.parser.parser import Parser
+from backend.src.core.memoria.gestor_memoria import GestorMemoriaGenetico
+from backend.src.core.semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from src.core.qualia_bridge import register_execution
+from backend.src.core.qualia_bridge import register_execution
 
 # Ruta de los módulos instalados junto con una lista blanca opcional.
 MODULES_PATH = os.path.abspath(
@@ -498,7 +498,7 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from src.cobra.usar_loader import obtener_modulo
+        from backend.src.cobra.usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)

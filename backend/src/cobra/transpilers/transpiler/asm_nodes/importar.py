@@ -1,5 +1,5 @@
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from backend.src.cobra.lexico.lexer import Lexer
+from backend.src.cobra.parser.parser import Parser
 
 
 def visit_import(self, nodo):

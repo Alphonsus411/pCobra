@@ -1,4 +1,4 @@
-from src.cobra.usar_loader import obtener_modulo
+from backend.src.cobra.usar_loader import obtener_modulo
 
 
 def visit_usar(self, nodo):

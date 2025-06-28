@@ -2,8 +2,8 @@ import os
 import hashlib
 import pickle
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from backend.src.cobra.lexico.lexer import Lexer
+from backend.src.cobra.parser.parser import Parser
 
 # Directorio donde se almacenará el cache de AST. Puede modificarse con la
 # variable de entorno `COBRA_AST_CACHE`.

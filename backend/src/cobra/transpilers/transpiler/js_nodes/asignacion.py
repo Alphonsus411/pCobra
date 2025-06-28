@@ -1,4 +1,4 @@
-from src.core.ast_nodes import NodoAtributo
+from backend.src.core.ast_nodes import NodoAtributo
 
 def visit_asignacion(self, nodo):
     """Transpila una asignación en JavaScript."""

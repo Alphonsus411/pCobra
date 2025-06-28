@@ -2,9 +2,9 @@
 
 import logging
 import json
-from src.cobra.lexico.lexer import TipoToken, Token
+from backend.src.cobra.lexico.lexer import TipoToken, Token
 
-from src.core.ast_nodes import (
+from backend.src.core.ast_nodes import (
     NodoAsignacion,
     NodoHolobit,
     NodoCondicional,
@@ -41,6 +41,8 @@ from src.core.ast_nodes import (
     NodoSwitch,
     NodoCase,
 )
+
+from backend.src.core import NodoYield
 
 # Palabras reservadas que no pueden usarse como identificadores
 PALABRAS_RESERVADAS = {
