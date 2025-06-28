@@ -23,6 +23,7 @@ jobs:
           pip install pyright
       - name: Run linters
         run: |
+          black --check backend/src
           flake8 backend/src
           mypy backend/src
           bandit -r backend/src
