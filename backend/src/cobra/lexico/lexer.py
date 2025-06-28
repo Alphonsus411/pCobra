@@ -2,6 +2,7 @@
 
 import logging
 import re
+from enum import Enum
 
 
 class LexerError(Exception):
@@ -25,7 +26,7 @@ class UnclosedStringError(LexerError):
     pass
 
 
-class TipoToken:
+class TipoToken(Enum):
     DIVIDIR = 'DIVIDIR'
     MULTIPLICAR = 'MULTIPLICAR'
     CLASE = 'CLASE'
