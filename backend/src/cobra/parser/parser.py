@@ -38,6 +38,7 @@ from backend.src.core.ast_nodes import (
     NodoWith,
     NodoImportDesde,
     NodoEsperar,
+    NodoOption,
     NodoSwitch,
     NodoCase,
 )
@@ -926,11 +927,21 @@ class Parser:
             cuerpo = self.expresion()
             return NodoLambda(parametros, cuerpo)
         elif token.tipo == TipoToken.IDENTIFICADOR:
-            siguiente_token = self.token_siguiente()
-            if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
-                return self.llamada_funcion()
-            self.comer(TipoToken.IDENTIFICADOR)
-            return NodoIdentificador(token.valor)
+            if token.valor == "Some":
+                self.comer(TipoToken.IDENTIFICADOR)
+                self.comer(TipoToken.LPAREN)
+                valor = self.expresion()
+                self.comer(TipoToken.RPAREN)
+                return NodoOption(valor)
+            elif token.valor == "None":
+                self.comer(TipoToken.IDENTIFICADOR)
+                return NodoOption(None)
+            else:
+                siguiente_token = self.token_siguiente()
+                if siguiente_token and siguiente_token.tipo == TipoToken.LPAREN:
+                    return self.llamada_funcion()
+                self.comer(TipoToken.IDENTIFICADOR)
+                return NodoIdentificador(token.valor)
         elif token.tipo == TipoToken.HOLOBIT:
             # Permitir el uso de 'holobit' dentro de expresiones
             return self.declaracion_holobit()

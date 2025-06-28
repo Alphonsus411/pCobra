@@ -252,6 +252,18 @@ class NodoEsperar(NodoAST):
 
 
 @dataclass
+class NodoOption(NodoAST):
+    valor: Any | None = None
+
+    """Representa un valor opcional, equivalente a ``Some`` o ``None``."""
+
+    def __repr__(self):
+        return (
+            "NodoOption(None)" if self.valor is None else f"NodoOption({self.valor})"
+        )
+
+
+@dataclass
 class NodoRomper(NodoAST):
     """Sentencia para romper un bucle."""
 
@@ -433,6 +445,7 @@ __all__ = [
     'NodoRetorno',
     'NodoYield',
     'NodoEsperar',
+    'NodoOption',
     'NodoRomper',
     'NodoContinuar',
     'NodoPasar',
