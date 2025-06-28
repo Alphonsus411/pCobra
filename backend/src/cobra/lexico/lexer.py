@@ -65,6 +65,7 @@ class TipoToken:
     MULT = 'MULT'
     DIV = 'DIV'
     MAYORQUE = 'MAYORQUE'
+    MENORQUE = 'MENORQUE'
     MAYORIGUAL = 'MAYORIGUAL'
     MENORIGUAL = 'MENORIGUAL'
     IGUAL = 'IGUAL'
@@ -192,6 +193,7 @@ class Lexer:
             (TipoToken.MULT, r'\*'),
             (TipoToken.DIV, r'/'),
             (TipoToken.MAYORQUE, r'>'),
+            (TipoToken.MENORQUE, r'<'),
             (TipoToken.LPAREN, r'\('),
             (TipoToken.RPAREN, r'\)'),
             (TipoToken.LBRACE, r'\{'),

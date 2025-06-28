@@ -853,6 +853,7 @@ class Parser:
         while self.token_actual().tipo in [
             TipoToken.MAYORQUE,
             TipoToken.MAYORIGUAL,
+            TipoToken.MENORQUE,
             TipoToken.MENORIGUAL,
         ]:
             operador = self.token_actual()

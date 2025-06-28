@@ -95,6 +95,8 @@ class _ConstantFolder(NodeVisitor):
             return izq % der
         if token.tipo == TipoToken.MAYORQUE:
             return izq > der
+        if token.tipo == TipoToken.MENORQUE:
+            return izq < der
         if token.tipo == TipoToken.MAYORIGUAL:
             return izq >= der
         if token.tipo == TipoToken.MENORIGUAL:
