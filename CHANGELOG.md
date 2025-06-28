@@ -1,3 +1,8 @@
+## v4.4 - 2025-06-29 - actualizacion de version
+- Paquete actualizado a la versión 4.4.
+- Documentación y kernel reflejan la nueva versión.
+- Prueba de plugins ajustada a "dummy 4.4".
+
 ## v4.3 - 2025-06-28 - actualizacion de version
 - Paquete actualizado a la versión 4.3.
 - Documentación y kernel reflejan la nueva versión.
