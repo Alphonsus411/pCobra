@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='cobra-lenguaje',
-    version='4.3',
+    version='4.4',
     author='Adolfo González Hernández',
     author_email='adolfogonzal@gmail.com',
     description='Un lenguaje de programación en español para simulaciones y más.',
