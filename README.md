@@ -425,6 +425,8 @@ cobra docs
 cobra empaquetar --output dist
 # Perfilar un programa y guardar los resultados
 cobra profile programa.co --output salida.prof
+# O mostrar el perfil directamente en pantalla
+cobra profile programa.co
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
