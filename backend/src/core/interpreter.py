@@ -2,8 +2,8 @@
 
 import os
 
-from backend.src.cobra.lexico.lexer import Token, TipoToken, Lexer
-from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from src.cobra.lexico.lexer import Token, TipoToken, Lexer
+from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from src.core.type_utils import (
     verificar_sumables,
     verificar_numeros,
@@ -11,7 +11,7 @@ from src.core.type_utils import (
     verificar_booleanos,
     verificar_booleano,
 )
-from backend.src.core.ast_nodes import (
+from src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -35,13 +35,14 @@ from backend.src.core.ast_nodes import (
     NodoImport,
     NodoUsar, NodoAssert, NodoDel, NodoGlobal, NodoNoLocal, NodoWith, NodoImportDesde,
 )
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.memoria.gestor_memoria import GestorMemoriaGenetico
-from backend.src.core.semantic_validators import (
+from src.cobra.parser.parser import Parser
+from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
+from src.core.semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from backend.src.core.qualia_bridge import register_execution
+from src.cobra.semantico import AnalizadorSemantico
+from src.core.qualia_bridge import register_execution
 
 # Ruta de los módulos instalados junto con una lista blanca opcional.
 MODULES_PATH = os.path.abspath(
@@ -154,6 +155,7 @@ class InterpretadorCobra:
     def ejecutar_ast(self, ast):
         ast = remove_dead_code(inline_functions(optimize_constants(ast)))
         register_execution(str(ast))
+        AnalizadorSemantico().analizar(ast)
         for nodo in ast:
             self._validar(nodo)
             resultado = self.ejecutar_nodo(nodo)
@@ -519,7 +521,7 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from backend.src.cobra.usar_loader import obtener_modulo
+        from src.cobra.usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)
