@@ -33,7 +33,6 @@ class TipoToken:
     LISTA = 'LISTA'
     RBRACE = 'RBRACE'
     DEF = 'DEF'
-    CLASS = 'CLASS'
     IN = 'IN'
     LBRACE = 'LBRACE'
     FOR = 'FOR'
@@ -150,7 +149,6 @@ class Lexer:
             (TipoToken.SWITCH, r'\b(switch|segun)\b'),
             (TipoToken.CASE, r'\b(case|caso)\b'),
             (TipoToken.CLASE, r'\bclase\b'),
-            (TipoToken.CLASS, r'\bclass\b'),
             (TipoToken.IN, r'\bin\b'),  # Define el token 'in'
             (TipoToken.HOLOBIT, r'\bholobit\b'),
             (TipoToken.PROYECTAR, r'\bproyectar\b'),
