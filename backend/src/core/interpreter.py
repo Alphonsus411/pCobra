@@ -4,6 +4,13 @@ import os
 
 from backend.src.cobra.lexico.lexer import Token, TipoToken, Lexer
 from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from src.core.type_utils import (
+    verificar_sumables,
+    verificar_numeros,
+    verificar_comparables,
+    verificar_booleanos,
+    verificar_booleano,
+)
 from backend.src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
@@ -283,38 +290,50 @@ class InterpretadorCobra:
             derecha = self.evaluar_expresion(expresion.derecha)
             tipo = expresion.operador.tipo
             if tipo == TipoToken.SUMA:
+                verificar_sumables(izquierda, derecha)
                 return izquierda + derecha
             elif tipo == TipoToken.RESTA:
+                verificar_numeros(izquierda, derecha, '-')
                 return izquierda - derecha
             elif tipo == TipoToken.MULT:
+                verificar_numeros(izquierda, derecha, '*')
                 return izquierda * derecha
             elif tipo == TipoToken.DIV:
+                verificar_numeros(izquierda, derecha, '/')
                 return izquierda / derecha
             elif tipo == TipoToken.MOD:
+                verificar_numeros(izquierda, derecha, '%')
                 return izquierda % derecha
             elif tipo == TipoToken.MAYORQUE:
+                verificar_comparables(izquierda, derecha, '>')
                 return izquierda > derecha
             elif tipo == TipoToken.MENORQUE:
+                verificar_comparables(izquierda, derecha, '<')
                 return izquierda < derecha
             elif tipo == TipoToken.MAYORIGUAL:
+                verificar_comparables(izquierda, derecha, '>=')
                 return izquierda >= derecha
             elif tipo == TipoToken.MENORIGUAL:
+                verificar_comparables(izquierda, derecha, '<=')
                 return izquierda <= derecha
             elif tipo == TipoToken.IGUAL:
                 return izquierda == derecha
             elif tipo == TipoToken.DIFERENTE:
                 return izquierda != derecha
             elif tipo == TipoToken.AND:
-                return bool(izquierda) and bool(derecha)
+                verificar_booleanos(izquierda, derecha, '&&')
+                return izquierda and derecha
             elif tipo == TipoToken.OR:
-                return bool(izquierda) or bool(derecha)
+                verificar_booleanos(izquierda, derecha, '||')
+                return izquierda or derecha
             else:
                 raise ValueError(f"Operador no soportado: {tipo}")
         elif isinstance(expresion, NodoOperacionUnaria):
             valor = self.evaluar_expresion(expresion.operando)
             tipo = expresion.operador.tipo
             if tipo == TipoToken.NOT:
-                return not bool(valor)
+                verificar_booleano(valor, '!')
+                return not valor
             else:
                 raise ValueError(f"Operador unario no soportado: {tipo}")
         elif isinstance(expresion, NodoLlamadaMetodo):
