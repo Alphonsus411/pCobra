@@ -22,3 +22,46 @@ def test_lexer_asignacion_variable():
         (TipoToken.RPAREN, ')'),
         (TipoToken.EOF, None)
     ]
+
+
+def test_keyword_clase_recognized():
+    codigo = "clase Persona:"
+    lexer = Lexer(codigo)
+    tokens = lexer.analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.CLASE, "clase"),
+        (TipoToken.IDENTIFICADOR, "Persona"),
+        (TipoToken.DOSPUNTOS, ":"),
+        (TipoToken.EOF, None),
+    ]
+
+
+def test_lexer_func_and_definir_tokens():
+    """Verifica que 'func' y 'definir' generan el mismo token FUNC"""
+    codigo = "func definir"
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.FUNC, "func"),
+        (TipoToken.FUNC, "definir"),
+        (TipoToken.EOF, None),
+    ]
+
+
+def test_lexer_comentarios_ignorados():
+    codigo = """
+    # inicio
+    func prueba() // comentario al final de linea
+    /* bloque
+       de comentario */
+    """
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.FUNC, "func"),
+        (TipoToken.IDENTIFICADOR, "prueba"),
+        (TipoToken.LPAREN, "("),
+        (TipoToken.RPAREN, ")"),
+        (TipoToken.EOF, None),
+    ]
