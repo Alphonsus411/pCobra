@@ -1,6 +1,6 @@
 # Manual del Lenguaje Cobra
 
-Versión 4.4
+Versión 4.5
 
 Este manual presenta en español los conceptos básicos para programar en Cobra. Se organiza en tareas que puedes seguir paso a paso.
 
