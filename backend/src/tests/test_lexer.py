@@ -116,3 +116,15 @@ def test_class_not_keyword_anymore():
         (TipoToken.EOF, None),
     ]
 
+
+def test_lexer_func_and_definir_tokens():
+    """Verifica que 'func' y 'definir' generan el mismo token FUNC"""
+    codigo = "func definir"
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.FUNC, "func"),
+        (TipoToken.FUNC, "definir"),
+        (TipoToken.EOF, None),
+    ]
+
