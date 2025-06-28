@@ -13,6 +13,7 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoIdentificador,
+    NodoOption,
     NodoSwitch,
     NodoCase,
 )
@@ -142,3 +143,46 @@ def test_try_catch_result():
         "};"
     )
     assert resultado == esperado
+
+
+def test_option_some_none():
+    ast = [
+        NodoAsignacion("a", NodoOption(NodoValor(5))),
+        NodoAsignacion("b", NodoOption(None)),
+    ]
+    t = TranspiladorRust()
+    resultado = t.transpilar(ast)
+    esperado = "let a = Some(5);\nlet b = None;"
+    assert resultado == esperado
+
+
+def test_option_match():
+    ast = [
+        NodoAsignacion("opt", NodoOption(NodoValor(1))),
+        NodoSwitch(
+            NodoIdentificador("opt"),
+            [
+                NodoCase(
+                    NodoOption(NodoIdentificador("v")),
+                    [NodoAsignacion("y", NodoIdentificador("v"))],
+                ),
+                NodoCase(NodoOption(None), [NodoAsignacion("y", NodoValor(0))]),
+            ],
+            [],
+        ),
+    ]
+    t = TranspiladorRust()
+    resultado = t.transpilar(ast)
+    esperado = (
+        "let opt = Some(1);\n"
+        "match opt {\n"
+        "    Some(v) => {\n"
+        "        let y = v;\n"
+        "    },\n"
+        "    None => {\n"
+        "        let y = 0;\n"
+        "    },\n"
+        "}"
+    )
+    assert resultado == esperado
+

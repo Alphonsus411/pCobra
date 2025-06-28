@@ -1,6 +1,6 @@
 """Transpilador que genera código Rust a partir de Cobra."""
 
-from backend.src.core.ast_nodes import (
+from src.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -18,6 +18,7 @@ from backend.src.core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoOption,
     NodoSwitch,
     NodoCase,
 )
@@ -41,6 +42,7 @@ from .rust_nodes.pasar import visit_pasar as _visit_pasar
 from .rust_nodes.switch import visit_switch as _visit_switch
 from .rust_nodes.try_catch import visit_try_catch as _visit_try_catch
 from .rust_nodes.throw import visit_throw as _visit_throw
+from .rust_nodes.option import visit_option as _visit_option
 
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
@@ -105,6 +107,10 @@ class TranspiladorRust(NodeVisitor):
                 params = ", ".join(f"{p}: impl std::any::Any" for p in nodo.parametros)
                 cuerpo = self.obtener_valor(nodo.cuerpo)
                 return f"|{', '.join(nodo.parametros)}| {{ {cuerpo} }}"
+            case NodoOption():
+                if nodo.valor is None:
+                    return "None"
+                return f"Some({self.obtener_valor(nodo.valor)})"
             case NodoLista():
                 elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
                 return f"vec![{elems}]"
@@ -146,3 +152,4 @@ TranspiladorRust.visit_import_desde = visit_import_desde
 TranspiladorRust.visit_switch = _visit_switch
 TranspiladorRust.visit_try_catch = _visit_try_catch
 TranspiladorRust.visit_throw = _visit_throw
+TranspiladorRust.visit_option = _visit_option
