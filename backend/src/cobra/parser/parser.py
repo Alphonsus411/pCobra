@@ -371,8 +371,14 @@ class Parser:
         while self.token_actual().tipo != TipoToken.RBRACKET:
             if self.token_actual().tipo in [TipoToken.FLOTANTE, TipoToken.ENTERO]:
                 valores.append(self.expresion())
-            if self.token_actual().tipo == TipoToken.COMA:
+            elif self.token_actual().tipo == TipoToken.COMA:
                 self.comer(TipoToken.COMA)
+            else:
+                token_invalido = self.token_actual()
+                self.avanzar()
+                raise SyntaxError(
+                    f"Token inesperado en declaracion_holobit: {token_invalido.tipo}"
+                )
         self.comer(TipoToken.RBRACKET)
         self.comer(TipoToken.RPAREN)
         return NodoHolobit(valores=valores)
