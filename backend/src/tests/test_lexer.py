@@ -90,3 +90,29 @@ def test_lexer_error_posicion():
     assert err.linea == 1
     assert err.columna == 9
 
+
+def test_keyword_clase_recognized():
+    codigo = "clase Persona:"
+    lexer = Lexer(codigo)
+    tokens = lexer.analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.CLASE, "clase"),
+        (TipoToken.IDENTIFICADOR, "Persona"),
+        (TipoToken.DOSPUNTOS, ":"),
+        (TipoToken.EOF, None),
+    ]
+
+
+def test_class_not_keyword_anymore():
+    codigo = "class Persona:"
+    lexer = Lexer(codigo)
+    tokens = lexer.analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.IDENTIFICADOR, "class"),
+        (TipoToken.IDENTIFICADOR, "Persona"),
+        (TipoToken.DOSPUNTOS, ":"),
+        (TipoToken.EOF, None),
+    ]
+
