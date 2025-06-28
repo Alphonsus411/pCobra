@@ -213,3 +213,9 @@ Ejemplo:
 .. code-block:: bash
 
    cobra profile programa.co --output perfil.prof
+
+Si se omite ``--output`` las estadísticas se muestran por consola:
+
+.. code-block:: bash
+
+   cobra profile programa.co
