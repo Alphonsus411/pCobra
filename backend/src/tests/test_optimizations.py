@@ -122,3 +122,43 @@ def test_inline_functions_con_parametro():
     asign = optimizado[0]
     assert isinstance(asign.expresion, NodoValor)
     assert asign.expresion.valor == 3
+
+
+def test_inline_functions_no_side_effects():
+    ast = [
+        NodoFuncion(
+            "impure",
+            [],
+            [NodoAsignacion("x", NodoValor(1)), NodoRetorno(NodoValor(1))],
+        ),
+        NodoFuncion("f", [], [NodoRetorno(NodoLlamadaFuncion("impure", []))]),
+        NodoAsignacion("y", NodoLlamadaFuncion("f", [])),
+    ]
+    optimizado = inline_functions(ast)
+    assert len(optimizado) == 3
+    assert isinstance(optimizado[0], NodoFuncion)
+    assert isinstance(optimizado[1], NodoFuncion)
+
+
+def test_inline_functions_nested_pure():
+    ast = [
+        NodoFuncion("inner", [], [NodoRetorno(NodoValor(5))]),
+        NodoFuncion("outer", [], [NodoRetorno(NodoLlamadaFuncion("inner", []))]),
+        NodoAsignacion("x", NodoLlamadaFuncion("outer", [])),
+    ]
+    optimizado = inline_functions(ast)
+    assert len(optimizado) == 1
+    asign = optimizado[0]
+    assert isinstance(asign.expresion, NodoValor)
+    assert asign.expresion.valor == 5
+
+
+def test_inline_functions_remove_definition():
+    ast = [
+        NodoFuncion("uno", [], [NodoRetorno(NodoValor(1))]),
+        NodoAsignacion("a", NodoLlamadaFuncion("uno", [])),
+        NodoAsignacion("b", NodoLlamadaFuncion("uno", [])),
+    ]
+    optimizado = inline_functions(ast)
+    assert len(optimizado) == 2
+    assert all(not isinstance(n, NodoFuncion) for n in optimizado)

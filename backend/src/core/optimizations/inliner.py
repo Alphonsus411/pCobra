@@ -9,6 +9,16 @@ from ..ast_nodes import (
     NodoFuncion,
     NodoRetorno,
     NodoLlamadaFuncion,
+    NodoLlamadaMetodo,
+    NodoAsignacion,
+    NodoImprimir,
+    NodoHilo,
+    NodoThrow,
+    NodoYield,
+    NodoEsperar,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
     NodoIdentificador,
 )
 from ..visitor import NodeVisitor
@@ -20,11 +30,40 @@ class _FunctionInliner(NodeVisitor):
     def __init__(self):
         self.funciones: dict[str, Tuple[List[str], Any]] = {}
 
+    def _tiene_efectos_secundarios(self, nodo: Any) -> bool:
+        """Determina si ``nodo`` produce efectos secundarios."""
+        if isinstance(
+            nodo,
+            (
+                NodoAsignacion,
+                NodoLlamadaFuncion,
+                NodoLlamadaMetodo,
+                NodoImprimir,
+                NodoHilo,
+                NodoThrow,
+                NodoYield,
+                NodoEsperar,
+                NodoDel,
+                NodoGlobal,
+                NodoNoLocal,
+            ),
+        ):
+            return True
+        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+            if isinstance(value, list):
+                if any(self._tiene_efectos_secundarios(v) for v in value):
+                    return True
+            elif hasattr(value, "__dict__"):
+                if self._tiene_efectos_secundarios(value):
+                    return True
+        return False
+
     def visit_funcion(self, nodo: NodoFuncion):
         if len(nodo.cuerpo) == 1 and isinstance(nodo.cuerpo[0], NodoRetorno):
             expresion = self.visit(nodo.cuerpo[0].expresion)
-            self.funciones[nodo.nombre] = (nodo.parametros, expresion)
-            return None
+            if not self._tiene_efectos_secundarios(expresion):
+                self.funciones[nodo.nombre] = (nodo.parametros, expresion)
+                return None
         nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
         return nodo
 
