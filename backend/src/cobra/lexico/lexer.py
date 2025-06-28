@@ -134,7 +134,6 @@ class Lexer:
 
         especificacion_tokens = [
             (TipoToken.VAR, r'\bvar\b'),
-            (TipoToken.FUNC, r'\bfunc\b'),
             (TipoToken.FUNC, r'\b(func|definir)\b'),
             (TipoToken.REL, r'\brel\b'),
             (TipoToken.SI, r'\bsi\b'),
