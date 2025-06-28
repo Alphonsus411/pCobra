@@ -294,6 +294,8 @@ class InterpretadorCobra:
                 return izquierda % derecha
             elif tipo == TipoToken.MAYORQUE:
                 return izquierda > derecha
+            elif tipo == TipoToken.MENORQUE:
+                return izquierda < derecha
             elif tipo == TipoToken.MAYORIGUAL:
                 return izquierda >= derecha
             elif tipo == TipoToken.MENORIGUAL:

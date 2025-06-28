@@ -1,7 +1,7 @@
 import pytest
 from src.cobra.lexico.lexer import Lexer, Token, TipoToken
 from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
+from backend.src.core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.core.interpreter import InterpretadorCobra
@@ -21,6 +21,18 @@ def test_lexer_nuevos_operadores():
         TipoToken.MENORIGUAL, TipoToken.ENTERO,
         TipoToken.MOD, TipoToken.ENTERO,
     ]
+
+
+def test_menorque_operador():
+    lexer = Lexer("1 < 2")
+    tokens = lexer.tokenizar()
+    tipos = [t.tipo for t in tokens[:-1]]
+    assert tipos == [TipoToken.ENTERO, TipoToken.MENORQUE, TipoToken.ENTERO]
+
+    parser = Parser(tokens)
+    ast = parser.parsear()[0]
+    assert isinstance(ast, NodoOperacionBinaria)
+    assert ast.operador.tipo == TipoToken.MENORQUE
 
 
 def test_parser_precedencia_operadores():
