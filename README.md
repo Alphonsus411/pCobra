@@ -1,5 +1,5 @@
 # Proyecto Cobra
-[![codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/main/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
+[![Coverage](https://img.shields.io/badge/coverage-71%25-brightgreen)](https://codecov.io/gh/Alphonsus411/pCobra)
 
 
 Versión 4.5
