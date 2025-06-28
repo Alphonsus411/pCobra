@@ -13,6 +13,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Estructura del Proyecto
 - Características Principales
 - Uso
+- Tokens y reglas léxicas
 - Ejemplo de Uso
 - Pruebas
 - Generar documentación
@@ -141,6 +142,92 @@ python -m tests.suite_core          # Pruebas de lexer, parser e intérprete
 python -m tests.suite_transpiladores  # Pruebas de los transpiladores
 ````
 
+## Tokens y reglas léxicas
+
+El analizador léxico convierte el código en tokens de acuerdo con las
+expresiones regulares definidas en `lexer.py`. En la siguiente tabla se
+describen todos los tokens disponibles:
+
+| Token | Descripción |
+|-------|-------------|
+| DIVIDIR | Palabra clave o instrucción "dividir" |
+| MULTIPLICAR | Palabra clave o instrucción "multiplicar" |
+| CLASE | Palabra clave "clase" |
+| DICCIONARIO | Palabra clave "diccionario" |
+| LISTA | Palabra clave "lista" |
+| RBRACE | Símbolo "}" |
+| DEF | Palabra clave "def" |
+| IN | Palabra clave "in" |
+| LBRACE | Símbolo "{" |
+| FOR | Palabra clave "for" |
+| DOSPUNTOS | Símbolo ":" |
+| VAR | Palabra clave "var" |
+| FUNC | Palabra clave "func" o "definir" |
+| REL | Palabra clave "rel" |
+| SI | Palabra clave "si" |
+| SINO | Palabra clave "sino" |
+| MIENTRAS | Palabra clave "mientras" |
+| PARA | Palabra clave "para" |
+| IMPORT | Palabra clave "import" |
+| USAR | Palabra clave "usar" |
+| MACRO | Palabra clave "macro" |
+| HOLOBIT | Palabra clave "holobit" |
+| PROYECTAR | Palabra clave "proyectar" |
+| TRANSFORMAR | Palabra clave "transformar" |
+| GRAFICAR | Palabra clave "graficar" |
+| TRY | Palabra clave "try" |
+| CATCH | Palabra clave "catch" |
+| THROW | Palabra clave "throw" |
+| ENTERO | Número entero |
+| FLOTANTE | Número con punto decimal |
+| CADENA | Cadena de caracteres |
+| BOOLEANO | Literal booleano |
+| IDENTIFICADOR | Nombre de variable o función |
+| ASIGNAR | Símbolo "=" |
+| SUMA | Operador "+" |
+| RESTA | Operador "-" |
+| MULT | Operador "*" |
+| DIV | Operador "/" |
+| MAYORQUE | Operador ">" |
+| MENORQUE | Operador "<" |
+| MAYORIGUAL | Operador ">=" |
+| MENORIGUAL | Operador "<=" |
+| IGUAL | Operador "==" |
+| DIFERENTE | Operador "!=" |
+| AND | Operador lógico "&&" |
+| OR | Operador lógico "||" |
+| NOT | Operador "!" |
+| MOD | Operador "%" |
+| LPAREN | Símbolo "(" |
+| RPAREN | Símbolo ")" |
+| LBRACKET | Símbolo "[" |
+| RBRACKET | Símbolo "]" |
+| COMA | Símbolo "," |
+| RETORNO | Palabra clave "retorno" |
+| FIN | Palabra clave "fin" |
+| EOF | Fin de archivo |
+| IMPRIMIR | Palabra clave "imprimir" |
+| HILO | Palabra clave "hilo" |
+| ASINCRONICO | Palabra clave "asincronico" |
+| DECORADOR | Símbolo "@" |
+| YIELD | Palabra clave "yield" |
+| ESPERAR | Palabra clave "esperar" |
+| ROMPER | Palabra clave "romper" |
+| CONTINUAR | Palabra clave "continuar" |
+| PASAR | Palabra clave "pasar" |
+| AFIRMAR | Palabra clave "afirmar" |
+| ELIMINAR | Palabra clave "eliminar" |
+| GLOBAL | Palabra clave "global" |
+| NOLOCAL | Palabra clave "nolocal" |
+| LAMBDA | Palabra clave "lambda" |
+| CON | Palabra clave "con" |
+| FINALMENTE | Palabra clave "finalmente" |
+| DESDE | Palabra clave "desde" |
+| COMO | Palabra clave "como" |
+| SWITCH | Palabra clave "switch" o "segun" |
+| CASE | Palabra clave "case" o "caso" |
+
+Las expresiones regulares se agrupan en `especificacion_tokens` y se procesan en orden para encontrar coincidencias. Las palabras clave usan patrones como `\bvar\b` o `\bfunc\b`, los números emplean `\d+` o `\d+\.\d+` y las cadenas se detectan con `"[^\"]*"` o `'[^']*'`. Los identificadores permiten caracteres Unicode mediante `[^\W\d_][\w]*`. Operadores y símbolos utilizan patrones directos como `==`, `&&` o `\(`. Antes del análisis se eliminan los comentarios de línea y de bloque con `re.sub`.
 
 # Ejemplo de Uso
 
