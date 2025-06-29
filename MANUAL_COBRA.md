@@ -24,6 +24,12 @@ Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herra
 pipx install cobra-lenguaje
 ```
 
+También puedes instalar Cobra directamente desde PyPI con
+
+```bash
+pip install cobra-lenguaje
+```
+
 ## 2. Estructura básica de un programa
 
 - Declara variables con `var`.

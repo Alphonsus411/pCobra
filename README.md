@@ -82,6 +82,13 @@ pip install -e .
 pipx install cobra-lenguaje
 ```
 
+Si prefieres instalar Cobra directamente desde PyPI sin usar
+`pipx`, ejecuta:
+
+```bash
+pip install cobra-lenguaje
+```
+
 ## Construir la imagen Docker
 
 Puedes crear la imagen utilizando el script `docker/scripts/build.sh` o el subcomando de la CLI:
