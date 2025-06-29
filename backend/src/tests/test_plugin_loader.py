@@ -1,7 +1,7 @@
 import importlib.metadata
 from unittest.mock import patch
 
-from src.cli.plugin_loader import descubrir_plugins, PluginCommand
+from src.cli.plugin import descubrir_plugins, PluginCommand
 from src.cli.plugin_registry import obtener_registro, limpiar_registro
 
 class DummyPlugin(PluginCommand):
@@ -18,7 +18,7 @@ def test_descubrir_plugins_carga_plugins():
         value="src.tests.test_plugin_loader:DummyPlugin",
         group="cobra.plugins",
     )
-    with patch("src.cli.plugin_loader.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
         plugins = descubrir_plugins()
     assert len(plugins) == 1

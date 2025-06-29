@@ -13,7 +13,7 @@ from .commands.interactive_cmd import InteractiveCommand
 from .commands.jupyter_cmd import JupyterCommand
 from .commands.flet_cmd import FletCommand
 from .commands.agix_cmd import AgixCommand
-from .plugin_loader import descubrir_plugins
+from .plugin import descubrir_plugins
 from .commands.plugins_cmd import PluginsCommand
 from .commands.modules_cmd import ModulesCommand
 from .commands.dependencias_cmd import DependenciasCommand
