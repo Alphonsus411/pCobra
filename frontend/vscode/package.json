@@ -7,10 +7,17 @@
         "vscode": "^1.80.0"
     },
     "activationEvents": [
+        "onCommand:cobra.startLSP",
         "onLanguage:cobra"
     ],
     "main": "./extension.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "cobra.startLSP",
+                "title": "Iniciar Cobra LSP"
+            }
+        ],
         "languages": [
             {
                 "id": "cobra",
@@ -18,5 +25,9 @@
                 "aliases": ["Cobra"]
             }
         ]
+    }
+    ,
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1"
     }
 }
