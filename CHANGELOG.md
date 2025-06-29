@@ -1,3 +1,8 @@
+## v5.2 - 2025-07-05 - actualizacion de version
+- Paquete actualizado a la versión 5.2.
+- Documentación y kernel reflejan la nueva versión.
+- Prueba de plugins ajustada a "dummy 5.2".
+
 ## v5.1 - 2025-07-04 - actualizacion de version
 - Paquete actualizado a la versión 5.1.
 - Documentación y kernel reflejan la nueva versión.
