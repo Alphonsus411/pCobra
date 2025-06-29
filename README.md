@@ -621,9 +621,10 @@ pyright --project pyrightconfig.json
 
 ## Desarrollo de plugins
 
-La CLI puede ampliarse mediante plugins externos. Para crear uno, define una
-clase que herede de `PluginCommand` e incluye una entrada en el grupo
-`cobra.plugins` de tu `setup.py`:
+La CLI puede ampliarse mediante plugins externos. Desde esta versión todo el SDK
+de plugins se encuentra en ``src.cli.plugin``. Para crear uno, define una clase
+que herede de ``PluginCommand`` e incluye una entrada en el grupo
+``cobra.plugins`` de tu ``setup.py``:
 
 ```python
 entry_points={
@@ -646,7 +647,7 @@ cobra plugins
 ### Ejemplo de plugin
 
 ```python
-from src.cli.plugin_loader import PluginCommand
+from src.cli.plugin import PluginCommand
 
 
 class HolaCommand(PluginCommand):
