@@ -1,0 +1,31 @@
+{
+    "funcion": {
+        "prefix": "func",
+        "body": [
+            "func ${1:nombre}(${2:parametros}):",
+            "    ${0}",
+            "fin"
+        ],
+        "description": "Definición de función"
+    },
+    "condicional si/sino": {
+        "prefix": "si",
+        "body": [
+            "si ${1:condicion}:",
+            "    ${2}",
+            "sino:",
+            "    ${0}",
+            "fin"
+        ],
+        "description": "Bloque condicional si/sino"
+    },
+    "bucle para": {
+        "prefix": "para",
+        "body": [
+            "para ${1:item} en ${2:iterable}:",
+            "    ${0}",
+            "fin"
+        ],
+        "description": "Bucle para"
+    }
+}
