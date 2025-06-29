@@ -64,3 +64,16 @@ con el sistema de comandos de Cobra.
 Para una descripción completa de la interfaz disponible consulta
 :doc:`plugin_sdk`.
 
+Ejemplo: convertir Markdown a Cobra
+-----------------------------------
+
+Dentro de ``examples/plugins`` se incluye el plugin ``md2cobra`` que extrae
+los bloques de código iniciados con `````cobra```` de un archivo Markdown y los
+guarda en un script ``.co``. Para instalarlo y utilizarlo ejecuta::
+
+   pip install -e examples/plugins
+
+Una vez instalado, el subcomando queda disponible::
+
+   cobra md2cobra --input notas.md --output resultado.co
+
