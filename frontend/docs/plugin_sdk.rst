@@ -2,9 +2,9 @@ API de PluginInterface
 ======================
 
 La clase ``PluginInterface`` define la interfaz mínima que deben implementar los
-plugins externos de la CLI. Cada plugin expone metadatos de identificación y dos
-métodos esenciales para registrar el subcomando y ejecutar la lógica
-correspondiente.
+plugins externos de la CLI. Todas las utilidades del SDK se encuentran ahora en
+``src.cli.plugin``. Cada plugin expone metadatos de identificación y dos métodos
+esenciales para registrar el subcomando y ejecutar la lógica correspondiente.
 
 Atributos
 ---------
@@ -33,7 +33,7 @@ Ejemplo de implementación
 
 .. code-block:: python
 
-   from src.cli.plugin_loader import PluginCommand
+   from src.cli.plugin import PluginCommand
 
 
    class HolaCommand(PluginCommand):
@@ -65,12 +65,12 @@ Para que Cobra cargue el plugin se declara un ``entry_point`` en ``setup.py``:
 Gestión de versiones
 --------------------
 
-Al instanciarse, cada plugin registra su nombre y versión en
-``plugin_registry``. Puedes consultarlo con:
+Al instanciarse, cada plugin registra su nombre y versión en el
+``plugin_registry`` del módulo ``src.cli.plugin``. Puedes consultarlo con:
 
 .. code-block:: python
 
-   from src.cli.plugin_registry import obtener_registro
+   from src.cli.plugin import obtener_registro
 
    print(obtener_registro())  # {'hola': '1.0'}
 

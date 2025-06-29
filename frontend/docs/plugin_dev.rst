@@ -2,10 +2,11 @@ Desarrollo de plugins
 =====================
 
 Un plugin permite ampliar la CLI de Cobra con nuevos subcomandos
-distribuidos como paquetes externos. Cada plugin se implementa como una
-clase que hereda de ``PluginCommand``. Esta clase define varios
-metadatos (``name``, ``version``, ``author`` y ``description``) que se
-mostrarán al ejecutar ``cobra plugins``.
+distribuidos como paquetes externos. Todas las utilidades del SDK se
+encuentran en ``src.cli.plugin``. Cada plugin se implementa como una
+clase que hereda de ``PluginCommand``. Esta clase define varios metadatos
+(``name``, ``version``, ``author`` y ``description``) que se mostrarán al
+ejecutar ``cobra plugins``.
 
 Estructura básica
 -----------------
@@ -22,7 +23,7 @@ En ``hola.py`` se define la clase del comando:
 
 .. code-block:: python
 
-   from src.cli.plugin_loader import PluginCommand
+   from src.cli.plugin import PluginCommand
 
 
    class HolaCommand(PluginCommand):
