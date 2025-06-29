@@ -7,6 +7,7 @@ from ..utils.messages import mostrar_error, mostrar_info
 from ..utils.semver import es_version_valida, es_nueva_version
 from ..cobrahub_client import publicar_modulo, descargar_modulo
 from ...cobra.transpilers.module_map import MODULE_MAP_PATH
+from ...cobra.semantico import mod_validator
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
@@ -90,6 +91,11 @@ class ModulesCommand(BaseCommand):
 
     @staticmethod
     def _listar_modulos():
+        try:
+            mod_validator.validar_mod(MODULE_MAP_PATH)
+        except ValueError as e:
+            mostrar_error(str(e))
+            return 1
         mods = [f for f in os.listdir(MODULES_PATH) if f.endswith(".co")]
         if not mods:
             mostrar_info(_("No hay módulos instalados"))
@@ -100,6 +106,11 @@ class ModulesCommand(BaseCommand):
 
     @staticmethod
     def _instalar_modulo(ruta):
+        try:
+            mod_validator.validar_mod(MODULE_MAP_PATH)
+        except ValueError as e:
+            mostrar_error(str(e))
+            return 1
         if not os.path.exists(ruta):
             mostrar_error(_("No se encontró el módulo {path}").format(path=ruta))
             return 1
