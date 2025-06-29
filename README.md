@@ -99,6 +99,14 @@ cobra contenedor --tag cobra
 
 Esto ejecutará internamente ``docker build`` y generará una imagen llamada `cobra` en tu sistema Docker.
 
+## Descarga de binarios
+
+Para cada lanzamiento se generan ejecutables para Linux, Windows y macOS mediante
+GitHub Actions. Puedes encontrarlos en la pestaña
+[Releases](https://github.com/Alphonsus411/pCobra/releases) del repositorio.
+Solo descarga el archivo correspondiente a tu sistema operativo desde la versión
+más reciente y ejecútalo directamente.
+
 # Estructura del Proyecto
 
 El proyecto se organiza en las siguientes carpetas y módulos:

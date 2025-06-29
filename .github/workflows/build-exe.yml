@@ -1,0 +1,31 @@
+name: Build Executables
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pyinstaller
+      - name: Build executable
+        run: cobra empaquetar --output dist
+      - name: Upload executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: cobra-${{ matrix.os }}
+          path: dist/*
