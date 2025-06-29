@@ -1,0 +1,11 @@
+{
+  "include": ["backend/src"],
+  "exclude": [
+    "frontend/build",
+    "frontend/docs",
+    "venv",
+    "backend/src/tests"
+  ],
+  "pythonVersion": "3.11",
+  "reportMissingImports": false
+}

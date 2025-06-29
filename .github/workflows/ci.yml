@@ -27,7 +27,7 @@ jobs:
           flake8 backend/src
           mypy backend/src
           bandit -r backend/src
-          pyright backend/src
+          pyright --project pyrightconfig.json
       - name: Run type checks
         run: make typecheck
       - name: Run tests

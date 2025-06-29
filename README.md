@@ -608,6 +608,17 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   issues y preparar pull requests.
 - Para proponer nuevas extensiones consulta [frontend/docs/rfc_plugins.rst](frontend/docs/rfc_plugins.rst).
 
+## Desarrollo
+
+Para verificar el tipado de forma local ejecuta:
+
+```bash
+mypy backend/src
+pyright --project pyrightconfig.json
+```
+
+`mypy` utiliza la configuración de `mypy.ini` y `pyright` toma las rutas de `pyrightconfig.json`.
+
 ## Desarrollo de plugins
 
 La CLI puede ampliarse mediante plugins externos. Para crear uno, define una
