@@ -2,7 +2,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-71%25-brightgreen)](https://codecov.io/gh/Alphonsus411/pCobra)
 
 
-Versión 5.1
+Versión 5.2
 
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
@@ -664,7 +664,7 @@ class HolaCommand(PluginCommand):
 ```
 ## Historial de Cambios
 
-- Versión 5.1: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
+- Versión 5.2: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
 
 # Licencia
 
