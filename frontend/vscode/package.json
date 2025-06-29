@@ -24,6 +24,12 @@
                 "extensions": [".co"],
                 "aliases": ["Cobra"]
             }
+        ],
+        "snippets": [
+            {
+                "language": "cobra",
+                "path": "./snippets/cobra.json"
+            }
         ]
     }
     ,
