@@ -8,7 +8,7 @@ from src.cli.plugin import PluginCommand
 
 class DummyPlugin(PluginCommand):
     name = "dummy"
-    version = "5.2"
+    version = "5.4"
 
     def register_subparser(self, subparsers):
         pass
@@ -38,7 +38,7 @@ def test_cli_plugins_muestra_registro():
     with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         with patch("sys.stdout", new_callable=StringIO) as out:
             main(["plugins"])
-    assert "dummy 5.2" in out.getvalue().strip()
+    assert "dummy 5.4" in out.getvalue().strip()
 
 
 def test_cli_plugin_ejemplo_hola():
