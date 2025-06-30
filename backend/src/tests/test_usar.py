@@ -1,5 +1,9 @@
 from types import ModuleType
 from unittest.mock import patch
+import sys
+
+# Evitar dependencias externas durante la importación de los módulos de pruebas
+sys.modules.setdefault('yaml', ModuleType('yaml'))
 
 import pytest
 
@@ -20,6 +24,13 @@ def test_obtener_modulo_instala_si_no_existe():
     assert mod is mock_mod
 
 
+def test_obtener_modulo_desde_corelibs_sin_pip():
+    with patch.object(usar_loader.subprocess, 'run') as mock_run:
+        mod = usar_loader.obtener_modulo('texto')
+    mock_run.assert_not_called()
+    assert mod.mayusculas('hola') == 'HOLA'
+
+
 def test_obtener_modulo_rechaza_paquete_fuera_de_lista():
     usar_loader.USAR_WHITELIST.clear()
     usar_loader.USAR_WHITELIST.add('ok')
@@ -31,7 +42,11 @@ def test_obtener_modulo_rechaza_paquete_fuera_de_lista():
 @pytest.mark.timeout(5)
 def test_interpreter_usar_registra_modulo(monkeypatch):
     mod = ModuleType('math')
-    monkeypatch.setattr(usar_loader, 'obtener_modulo', lambda name: mod)
+    def fake(name):
+        return mod
+    monkeypatch.setattr(usar_loader, 'obtener_modulo', fake)
+    import sys
+    sys.modules['src.cobra.usar_loader'] = usar_loader
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar('math'))
     assert interp.variables['math'] is mod
