@@ -9,6 +9,9 @@ from src.core.ast_nodes import (
     NodoUsar,
 )
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_transpilar_try_catch_throw():
@@ -19,7 +22,7 @@ def test_transpilar_try_catch_throw():
     )
     codigo = TranspiladorPython().transpilar([nodo])
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
     )
     assert codigo == esperado
@@ -30,7 +33,7 @@ def test_transpilar_import(tmp_path):
     mod.write_text("var dato = 5")
     nodo = NodoImport(str(mod))
     codigo = TranspiladorPython().transpilar([nodo])
-    esperado = "from src.core.nativos import *\ndato = 5\n"
+    esperado = IMPORTS + "dato = 5\n"
     assert codigo == esperado
 
 
@@ -38,7 +41,7 @@ def test_transpilar_usar():
     nodo = NodoUsar("math")
     codigo = TranspiladorPython().transpilar([nodo])
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "from src.cobra.usar_loader import obtener_modulo\n"
         "math = obtener_modulo('math')\n"
     )

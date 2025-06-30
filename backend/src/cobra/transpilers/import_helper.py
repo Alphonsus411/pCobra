@@ -8,12 +8,20 @@ from .module_map import get_mapped_path
 
 # Mapeo de importaciones estándar por lenguaje
 STANDARD_IMPORTS = {
-    "python": "from src.core.nativos import *\n",
+    "python": "from src.core.nativos import *\nfrom corelibs import *\n",
     "js": [
         "import * as io from './nativos/io.js';",
-        "import * as net from './nativos/io.js';",
+        "import * as net from './nativos/red.js';",
         "import * as matematicas from './nativos/matematicas.js';",
         "import { Pila, Cola } from './nativos/estructuras.js';",
+        "import * as archivo from './nativos/archivo.js';",
+        "import * as coleccion from './nativos/coleccion.js';",
+        "import * as numero from './nativos/numero.js';",
+        "import * as red from './nativos/red.js';",
+        "import * as seguridad from './nativos/seguridad.js';",
+        "import * as sistema from './nativos/sistema.js';",
+        "import * as texto from './nativos/texto.js';",
+        "import * as tiempo from './nativos/tiempo.js';",
     ],
 }
 

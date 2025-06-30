@@ -1,13 +1,16 @@
 import pytest
 from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor, NodoRetorno
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_transpilar_asignacion():
     nodo = NodoAsignacion("variable", NodoValor("10"))
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "from src.core.nativos import *\nvariable = 10\n"
+    expected = IMPORTS + "variable = 10\n"
     assert result == expected, "Error en la transpilación de asignación"
 
 
@@ -16,7 +19,7 @@ def test_transpilar_condicional():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
     )
     assert result == expected, "Error en la transpilación de condicional"
@@ -26,7 +29,7 @@ def test_transpilar_mientras():
     nodo = NodoBucleMientras("i < 10", [NodoAsignacion("i", NodoValor("i + 1"))])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "from src.core.nativos import *\nwhile i < 10:\n    i = i + 1\n"
+    expected = IMPORTS + "while i < 10:\n    i = i + 1\n"
     assert result == expected, "Error en la transpilación de bucle mientras"
 
 
@@ -35,7 +38,7 @@ def test_transpilar_funcion():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "def sumar(a, b):\n    resultado = a + b\n"
     )
     assert result == expected, "Error en la transpilación de función"
@@ -45,7 +48,7 @@ def test_transpilar_llamada_funcion():
     nodo = NodoLlamadaFuncion("sumar", ["5", "3"])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "from src.core.nativos import *\nsumar(5, 3)\n"
+    expected = IMPORTS + "sumar(5, 3)\n"
     assert result == expected, "Error en la transpilación de llamada a función"
 
 
@@ -53,7 +56,7 @@ def test_transpilar_holobit():
     nodo = NodoHolobit([NodoValor(1), NodoValor(2), NodoValor(3)])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "from src.core.nativos import *\nholobit([1, 2, 3])\n"
+    expected = IMPORTS + "holobit([1, 2, 3])\n"
     assert result == expected, "Error en la transpilación de holobit"
 
 
@@ -62,7 +65,7 @@ def test_transpilar_for():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\nfor i in lista:\n    suma = suma + i\n"
+        IMPORTS + "for i in lista:\n    suma = suma + i\n"
     )
     assert result == expected, "Error en la transpilación de bucle for"
 
@@ -71,7 +74,7 @@ def test_transpilar_lista():
     nodo = NodoLista([NodoValor("1"), NodoValor("2"), NodoValor("3")])
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
-    expected = "from src.core.nativos import *\n[1, 2, 3]\n"
+    expected = IMPORTS + "[1, 2, 3]\n"
     assert result == expected, "Error en la transpilación de lista"
 
 
@@ -80,7 +83,7 @@ def test_transpilar_diccionario():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\n{clave1: valor1, clave2: valor2}\n"
+        IMPORTS + "{clave1: valor1, clave2: valor2}\n"
     )
     assert result == expected, "Error en la transpilación de diccionario"
 
@@ -91,7 +94,7 @@ def test_transpilar_clase():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "class MiClase:\n    def mi_metodo(param):\n        x = param + 1\n"
     )
     assert result == expected, "Error en la transpilación de clase"
@@ -103,7 +106,7 @@ def test_transpilar_clase_multibase():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "class Hija(Base1, Base2):\n    def m(self):\n        return 1\n"
     )
     assert result == expected, "Error en herencia múltiple"
@@ -114,7 +117,7 @@ def test_transpilar_metodo():
     transpiler = TranspiladorPython()
     result = transpiler.transpilar([nodo])
     expected = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "def mi_metodo(a, b):\n    resultado = a + b\n"
     )
     assert result == expected, "Error en la transpilación de método"
