@@ -10,7 +10,17 @@ class PrimitivaPeligrosaError(Exception):
 class ValidadorPrimitivaPeligrosa(ValidadorBase):
     """Validador que detecta llamadas a primitivas peligrosas."""
 
-    PRIMITIVAS_PELIGROSAS = {"leer_archivo", "escribir_archivo", "obtener_url", "hilo"}
+    PRIMITIVAS_PELIGROSAS = {
+        "leer_archivo",
+        "escribir_archivo",
+        "obtener_url",
+        "hilo",
+        "leer",
+        "escribir",
+        "existe",
+        "eliminar",
+        "enviar_post",
+    }
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
         if nodo.nombre in self.PRIMITIVAS_PELIGROSAS:
