@@ -1,0 +1,19 @@
+import types
+from datetime import datetime
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT))
+
+from src.cobra import usar_loader
+import standard_library.fecha as fecha
+
+
+def test_obtener_modulo_standard_library(monkeypatch):
+    mod = usar_loader.obtener_modulo("fecha")
+    assert isinstance(mod, types.ModuleType)
+    assert hasattr(mod, "formatear")
+    assert mod.formatear(datetime(2020, 1, 1)) == fecha.formatear(datetime(2020, 1, 1))
+
