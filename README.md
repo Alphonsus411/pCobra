@@ -196,9 +196,9 @@ describen todos los tokens disponibles:
 | PROYECTAR | Palabra clave "proyectar" |
 | TRANSFORMAR | Palabra clave "transformar" |
 | GRAFICAR | Palabra clave "graficar" |
-| TRY | Palabra clave "try" |
-| CATCH | Palabra clave "catch" |
-| THROW | Palabra clave "throw" |
+| TRY | Palabra clave "try" o "intentar" |
+| CATCH | Palabra clave "catch" o "capturar" |
+| THROW | Palabra clave "throw" o "lanzar" |
 | ENTERO | Número entero |
 | FLOTANTE | Número con punto decimal |
 | CADENA | Cadena de caracteres |

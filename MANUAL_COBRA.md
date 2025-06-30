@@ -165,6 +165,7 @@ Se añadieron nuevas construcciones al lenguaje:
 - `lambda` para funciones anónimas.
 - `con` para manejar contextos con bloque `fin`.
 - `finalmente` dentro de `try` para ejecutar código final.
+- Palabras en español `intentar`, `capturar` y `lanzar` como alias de `try`, `catch` y `throw`.
 - Importaciones `desde` ... `como` para alias de módulos.
 - Nueva estructura `switch` con múltiples `case`.
 
