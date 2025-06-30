@@ -2,9 +2,9 @@
 
 import logging
 import json
-from backend.src.cobra.lexico.lexer import TipoToken, Token
+from src.cobra.lexico.lexer import TipoToken, Token
 
-from backend.src.core.ast_nodes import (
+from src.core.ast_nodes import (
     NodoAsignacion,
     NodoHolobit,
     NodoCondicional,
@@ -110,6 +110,7 @@ class Parser:
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
+            TipoToken.VARIABLE: self.declaracion_asignacion,
             TipoToken.HOLOBIT: self.declaracion_holobit,
             TipoToken.SI: self.declaracion_condicional,
             TipoToken.PARA: self.declaracion_para,
@@ -319,8 +320,10 @@ class Parser:
 
     def declaracion_asignacion(self):
         variable_token = None
-        if self.token_actual().tipo == TipoToken.VAR:
-            self.comer(TipoToken.VAR)  # Consume el token 'var' si está presente
+        inferencia = False
+        if self.token_actual().tipo in (TipoToken.VAR, TipoToken.VARIABLE):
+            inferencia = self.token_actual().tipo == TipoToken.VARIABLE
+            self.comer(self.token_actual().tipo)
         
         variable_token = self.token_actual()
         # Comprobación de palabras reservadas antes de validar el tipo
@@ -333,13 +336,13 @@ class Parser:
             raise SyntaxError("Se esperaba un identificador en la asignación")
 
         self.comer(TipoToken.IDENTIFICADOR)
-        self.comer(TipoToken.ASIGNAR)
+        self.comer(TipoToken.ASIGNAR_INFERENCIA if inferencia else TipoToken.ASIGNAR)
         valor = self.expresion()
         # Si la expresión es un holobit, completar su nombre con la variable
         if isinstance(valor, NodoHolobit) and valor.nombre is None:
             valor.nombre = variable_token.valor
         # El identificador se pasa como cadena de texto
-        return NodoAsignacion(variable_token.valor, valor)
+        return NodoAsignacion(variable_token.valor, valor, inferencia)
 
     def declaracion_mientras(self):
         """Parsea un bucle mientras."""

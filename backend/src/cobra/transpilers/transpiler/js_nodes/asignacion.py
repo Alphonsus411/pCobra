@@ -10,7 +10,10 @@ def visit_asignacion(self, nodo):
         prefijo = ""
     else:
         nombre = nombre_raw
-        prefijo = "let " if hasattr(nodo, "variable") else ""
+        if hasattr(nodo, "variable") and not getattr(nodo, "inferencia", False):
+            prefijo = "let "
+        else:
+            prefijo = ""
     valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
     valor = self.obtener_valor(valor)
     self.agregar_linea(f"{prefijo}{nombre} = {valor};")

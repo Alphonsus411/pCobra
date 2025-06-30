@@ -252,14 +252,18 @@ class InterpretadorCobra:
             atributos = objeto.setdefault("__atributos__", {})
             atributos[nombre.nombre] = valor
         else:
-            # Si la variable ya tiene memoria reservada, se libera
-            mem_ctx = self.mem_contextos[-1]
-            if nombre in mem_ctx:
-                idx, tam = mem_ctx.pop(nombre)
-                self.liberar_memoria(idx, tam)
-            indice = self.solicitar_memoria(1)
-            mem_ctx[nombre] = (indice, 1)
-            self.variables[nombre] = valor
+            if getattr(nodo, "inferencia", False):
+                # Registro simple sin tipo explícito
+                self.variables[nombre] = valor
+            else:
+                # Si la variable ya tiene memoria reservada, se libera
+                mem_ctx = self.mem_contextos[-1]
+                if nombre in mem_ctx:
+                    idx, tam = mem_ctx.pop(nombre)
+                    self.liberar_memoria(idx, tam)
+                indice = self.solicitar_memoria(1)
+                mem_ctx[nombre] = (indice, 1)
+                self.variables[nombre] = valor
 
     def evaluar_expresion(self, expresion):
         """Resuelve el valor de una expresión de forma recursiva."""
