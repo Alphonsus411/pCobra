@@ -2,7 +2,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-71%25-brightgreen)](https://codecov.io/gh/Alphonsus411/pCobra)
 
 
-Versión 5.6
+Versión 5.6.0
 
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
@@ -586,29 +586,7 @@ Para conocer en detalle la interfaz disponible consulta
 [`frontend/docs/plugin_sdk.rst`](frontend/docs/plugin_sdk.rst).
 ## Hitos y Roadmap
 
-El proyecto avanza en versiones incrementales. A continuacion se listan las tareas previstas para las proximas entregas.
-
-### v0.4
-
-- Consolidar la gestion de dependencias en la CLI.
-- Permitir la creacion de ejecutables para distribucion.
-- Optimizar la validacion del modo seguro.
-- Ampliar la documentacion con ejemplos avanzados.
-
-### v0.5
-
-- Incorporar un sistema de plugins para extender la CLI.
-- Integrar soporte para ejecucion en Jupyter.
-- Implementar optimizaciones del AST para mayor rendimiento.
-- Anadir pruebas de concurrencia para mejorar la estabilidad.
-
-### v1.3
-
-- Cache de AST con checksum
-- Transpilación multi-lenguaje en paralelo
-- Ejemplos de benchmarking y configuración segura
-- Interfaz base para plugins
-- Registro y versionado de plugins
+El proyecto avanza en versiones incrementales. Puedes consultar las tareas planeadas en [ROADMAP.md](ROADMAP.md).
 
 
 # Contribuciones
@@ -687,9 +665,13 @@ class HolaCommand(PluginCommand):
     def run(self, args):
         print("¡Hola desde un plugin!")
 ```
+## Versionado Semántico
+
+Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numeros se interpretan como Mayor.Menor.Parche. Cada incremento de version refleja cambios compatibles o rupturas segun esta norma.
+
 ## Historial de Cambios
 
- - Versión 5.6: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
+ - Versión 5.6.0: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
 
 # Licencia
 
