@@ -106,6 +106,8 @@ class TipoToken(Enum):
     COMO = 'COMO'
     SWITCH = 'SWITCH'
     CASE = 'CASE'
+    VARIABLE = 'VARIABLE'
+    ASIGNAR_INFERENCIA = 'ASIGNAR_INFERENCIA'
 
 
 class Token:
@@ -139,6 +141,7 @@ class Lexer:
 
         especificacion_tokens = [
             (TipoToken.VAR, r'\bvar\b'),
+            (TipoToken.VARIABLE, r'\bvariable\b'),
             (TipoToken.FUNC, r'\b(func|definir)\b'),
             (TipoToken.REL, r'\brel\b'),
             (TipoToken.SI, r'\bsi\b'),
@@ -183,6 +186,7 @@ class Lexer:
             (TipoToken.ENTERO, r'\d+'),
             (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
             (TipoToken.BOOLEANO, r'\b(verdadero|falso)\b'),
+            (TipoToken.ASIGNAR_INFERENCIA, r':='),
             (TipoToken.DOSPUNTOS, r':'),
             (TipoToken.FIN, r'\bfin\b'),
             (TipoToken.IDENTIFICADOR, r'[^\W\d_][\w]*'),

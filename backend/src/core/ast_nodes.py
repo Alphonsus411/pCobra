@@ -18,6 +18,7 @@ class NodoAST:
 class NodoAsignacion(NodoAST):
     variable: Any
     expresion: Any
+    inferencia: bool = False
 
     """Representa la asignación de una expresión a una variable."""
 
