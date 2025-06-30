@@ -40,6 +40,8 @@ class TipoToken(Enum):
     DOSPUNTOS = 'DOSPUNTOS'
     VAR = 'VAR'
     FUNC = 'FUNC'
+    METODO = 'METODO'
+    ATRIBUTO = 'ATRIBUTO'
     REL = 'REL'
     SI = 'SI'
     SINO = 'SINO'
@@ -143,6 +145,8 @@ class Lexer:
             (TipoToken.VAR, r'\bvar\b'),
             (TipoToken.VARIABLE, r'\bvariable\b'),
             (TipoToken.FUNC, r'\b(func|definir)\b'),
+            (TipoToken.METODO, r'\bmetodo\b'),
+            (TipoToken.ATRIBUTO, r'\batributo\b'),
             (TipoToken.REL, r'\brel\b'),
             (TipoToken.SI, r'\bsi\b'),
             (TipoToken.SINO, r'\bsino\b'),

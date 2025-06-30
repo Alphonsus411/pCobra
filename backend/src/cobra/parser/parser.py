@@ -12,6 +12,7 @@ from src.core.ast_nodes import (
     NodoFuncion,
     NodoClase,
     NodoMetodo,
+    NodoAtributo,
     NodoLlamadaFuncion,
     NodoHilo,
     NodoOperacionBinaria,
@@ -70,6 +71,8 @@ PALABRAS_RESERVADAS = {
     "usar",
     "macro",
     "clase",
+    "metodo",
+    "atributo",
     "decorador",
     "yield",
     "romper",
@@ -214,6 +217,13 @@ class Parser:
                 return handler()
 
             # Posibles expresiones o asignaciones/invocaciones
+            if token.tipo == TipoToken.ATRIBUTO:
+                atrib = self.exp_atributo()
+                if self.token_actual().tipo == TipoToken.ASIGNAR:
+                    self.comer(TipoToken.ASIGNAR)
+                    valor = self.expresion()
+                    return NodoAsignacion(atrib, valor)
+                return atrib
             if token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE, TipoToken.LAMBDA]:
                 siguiente = self.token_siguiente()
                 if siguiente and siguiente.tipo == TipoToken.LPAREN:
@@ -325,24 +335,25 @@ class Parser:
             inferencia = self.token_actual().tipo == TipoToken.VARIABLE
             self.comer(self.token_actual().tipo)
         
-        variable_token = self.token_actual()
-        # Comprobación de palabras reservadas antes de validar el tipo
-        if variable_token.valor in PALABRAS_RESERVADAS:
-            raise SyntaxError(
-                f"El identificador '{variable_token.valor}' es una palabra reservada"
-            )
-
-        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un identificador en la asignación")
-
-        self.comer(TipoToken.IDENTIFICADOR)
+        if self.token_actual().tipo == TipoToken.ATRIBUTO:
+            variable_token = self.exp_atributo()
+        else:
+            variable_token = self.token_actual()
+            if variable_token.valor in PALABRAS_RESERVADAS:
+                raise SyntaxError(
+                    f"El identificador '{variable_token.valor}' es una palabra reservada"
+                )
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise SyntaxError("Se esperaba un identificador en la asignación")
+            self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR_INFERENCIA if inferencia else TipoToken.ASIGNAR)
         valor = self.expresion()
-        # Si la expresión es un holobit, completar su nombre con la variable
-        if isinstance(valor, NodoHolobit) and valor.nombre is None:
+        if isinstance(valor, NodoHolobit) and valor.nombre is None and not isinstance(variable_token, NodoAtributo):
             valor.nombre = variable_token.valor
-        # El identificador se pasa como cadena de texto
-        return NodoAsignacion(variable_token.valor, valor, inferencia)
+        nombre_asignacion = (
+            variable_token if isinstance(variable_token, NodoAtributo) else variable_token.valor
+        )
+        return NodoAsignacion(nombre_asignacion, valor, inferencia)
 
     def declaracion_mientras(self):
         """Parsea un bucle mientras."""
@@ -770,7 +781,10 @@ class Parser:
         if self.token_actual().tipo == TipoToken.ASINCRONICO:
             self.comer(TipoToken.ASINCRONICO)
             asincronica = True
-        self.comer(TipoToken.FUNC)
+        if self.token_actual().tipo == TipoToken.METODO:
+            self.comer(TipoToken.METODO)
+        else:
+            self.comer(TipoToken.FUNC)
 
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
             raise SyntaxError("Se esperaba un nombre de método")
@@ -828,7 +842,7 @@ class Parser:
 
         metodos = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            if self.token_actual().tipo in [TipoToken.FUNC, TipoToken.ASINCRONICO]:
+            if self.token_actual().tipo in [TipoToken.FUNC, TipoToken.METODO, TipoToken.ASINCRONICO]:
                 metodos.append(self.declaracion_metodo())
             else:
                 metodos.append(self.declaracion())
@@ -940,6 +954,8 @@ class Parser:
             self.comer(TipoToken.DOSPUNTOS)
             cuerpo = self.expresion()
             return NodoLambda(parametros, cuerpo)
+        elif token.tipo == TipoToken.ATRIBUTO:
+            return self.exp_atributo()
         elif token.tipo == TipoToken.IDENTIFICADOR:
             if token.valor == "Some":
                 self.comer(TipoToken.IDENTIFICADOR)
@@ -961,6 +977,19 @@ class Parser:
             return self.declaracion_holobit()
         else:
             raise SyntaxError(f"Token inesperado en término: {token.tipo}")
+
+    def exp_atributo(self):
+        """Parsea la expresión 'atributo objeto nombre'."""
+        self.comer(TipoToken.ATRIBUTO)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba el objeto del atributo")
+        objeto = NodoIdentificador(self.token_actual().valor)
+        self.comer(TipoToken.IDENTIFICADOR)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba el nombre del atributo")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        return NodoAtributo(objeto, nombre)
 
     def lista_parametros(self):
         parametros = []
