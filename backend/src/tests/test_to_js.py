@@ -1,5 +1,6 @@
 import pytest
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
 from src.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
@@ -21,12 +22,7 @@ from src.core.ast_nodes import (
     NodoExport,
 )
 
-IMPORTS = (
-    "import * as io from './nativos/io.js';\n"
-    "import * as net from './nativos/io.js';\n"
-    "import * as matematicas from './nativos/matematicas.js';\n"
-    "import { Pila, Cola } from './nativos/estructuras.js';\n"
-)
+IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("js"))
 
 
 def test_transpilador_asignacion():
@@ -169,4 +165,10 @@ def test_decoradores_en_clase_y_metodo_js():
         "C.prototype.run = dec(C.prototype.run);\n"
         "C = dec(C);"
     )
+    assert resultado == esperado
+
+
+def test_imports_js_por_defecto():
+    resultado = TranspiladorJavaScript().transpilar([])
+    esperado = "\n".join(get_standard_imports("js"))
     assert resultado == esperado

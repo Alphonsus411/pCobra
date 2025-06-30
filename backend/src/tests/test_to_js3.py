@@ -1,4 +1,5 @@
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
 
 
 # Definición de nodos para las pruebas
@@ -159,12 +160,10 @@ def test_transpilar_clase_multibase():
     nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
     transpiler = TranspiladorJavaScript()
     result = transpiler.transpilar([nodo])
+    imports = "".join(f"{line}\n" for line in get_standard_imports("js"))
     expected = (
-        "import * as io from './nativos/io.js';\n"
-        "import * as net from './nativos/io.js';\n"
-        "import * as matematicas from './nativos/matematicas.js';\n"
-        "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        "class Hija extends Base1 { /* bases: Base1, Base2 */\n"
+        imports
+        + "class Hija extends Base1 { /* bases: Base1, Base2 */\n"
         "m(p) {\n"
         "x = p;\n"
         "}\n"

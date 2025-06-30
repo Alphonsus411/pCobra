@@ -22,7 +22,7 @@ def test_transpilador_asignacion():
     ast = [NodoAsignacion("x", NodoValor(10))]
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
-    esperado = "from src.core.nativos import *\nx = 10\n"
+    esperado = IMPORTS + "x = 10\n"
     assert resultado == esperado
 
 
@@ -37,7 +37,7 @@ def test_transpilador_condicional():
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "if x > 5:\n    y = 2\nelse:\n    y = 3\n"
     )
     assert resultado == esperado
@@ -52,7 +52,7 @@ def test_transpilador_mientras():
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
     esperado = (
-        "from src.core.nativos import *\nwhile x > 0:\n    x = x - 1\n"
+        IMPORTS + "while x > 0:\n    x = x - 1\n"
     )
     assert resultado == esperado
 
@@ -68,7 +68,7 @@ def test_transpilador_funcion():
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "def miFuncion(a, b):\n    x = a + b\n"
     )
     assert resultado == esperado
@@ -78,7 +78,7 @@ def test_transpilador_llamada_funcion():
     ast = [NodoLlamadaFuncion("miFuncion", ["a", "b"])]
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
-    esperado = "from src.core.nativos import *\nmiFuncion(a, b)\n"
+    esperado = IMPORTS + "miFuncion(a, b)\n"
     assert resultado == esperado
 
 
@@ -87,7 +87,7 @@ def test_transpilador_holobit():
     transpilador = TranspiladorPython()
     resultado = transpilador.transpilar(ast)
     esperado = (
-        "from src.core.nativos import *\nmiHolobit = holobit([0.8, -0.5, 1.2])\n"
+        IMPORTS + "miHolobit = holobit([0.8, -0.5, 1.2])\n"
     )
     assert resultado == esperado
 
@@ -106,7 +106,7 @@ def test_transpilador_switch():
     t = TranspiladorPython()
     resultado = t.transpilar(ast)
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "match x:\n"
         "    case 1:\n"
         "        y = 1\n"
@@ -129,7 +129,7 @@ def test_transpilador_decoradores_anidados():
     )
     codigo = TranspiladorPython().transpilar([func])
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "@d1\n"
         "@d2\n"
         "def saluda():\n    print('hola')\n"
@@ -148,7 +148,7 @@ def test_transpilador_corutina_await():
     codigo = TranspiladorPython().transpilar([f1, f2])
     esperado = (
         "import asyncio\n"
-        "from src.core.nativos import *\n"
+        IMPORTS
         "async def saluda():\n    print(1)\n"
         "async def principal():\n    await saluda()\n"
     )
@@ -166,7 +166,7 @@ def test_transpilador_clase_compleja():
     codigo = TranspiladorPython().transpilar([clase])
     esperado = (
         "import asyncio\n"
-        "from src.core.nativos import *\n"
+        IMPORTS
         "class Hija(Base1, Base2):\n"
         "    async def run(self):\n"
         "        await tarea()\n"
@@ -182,7 +182,7 @@ def test_decoradores_en_clase_y_metodo():
     codigo = TranspiladorPython().transpilar([clase])
     esperado = (
         "import asyncio\n"
-        "from src.core.nativos import *\n"
+        IMPORTS
         "@dec\n"
         "class C:\n"
         "    @dec\n"
@@ -190,3 +190,8 @@ def test_decoradores_en_clase_y_metodo():
         "        pass\n"
     )
     assert codigo == esperado
+
+
+def test_imports_python_por_defecto():
+    codigo = TranspiladorPython().transpilar([])
+    assert codigo == IMPORTS
