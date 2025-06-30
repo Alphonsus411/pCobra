@@ -12,3 +12,4 @@ __pycache__/
 htmlcov/
 coverage.xml
 cache/
+docs/cheatsheet.pdf

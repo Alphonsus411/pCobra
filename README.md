@@ -24,6 +24,9 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - [Proponer extensiones](frontend/docs/rfc_plugins.rst)
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
+- [Guía básica](docs/guia_basica.md)
+- [Especificación técnica](docs/especificacion_tecnica.md)
+- [Cheatsheet](docs/cheatsheet.tex) – compílalo a PDF con LaTeX
 
 ## Ejemplos
 
