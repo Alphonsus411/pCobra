@@ -17,6 +17,21 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 - Para analisis estatico con `pyright`, instala el paquete y ejecuta
   `pyright backend/src` (o `make typecheck`).
 
+## Ejecutar Pruebas
+
+Las pruebas unitarias se ubican en `tests/unit` y las de integración en
+`tests/integration`. Para ejecutarlas todas utiliza:
+
+```bash
+pytest
+```
+
+Para generar un reporte de cobertura:
+
+```bash
+pytest --cov=backend/src
+```
+
 ## Pull Requests
 
 1. **Fork y rama**: haz un fork y crea una rama a partir de `main` con el prefijo adecuado (`feature/`, `bugfix/` o `doc/`) y una breve descripcion. Esto permite que las acciones de GitHub etiqueten tu PR automáticamente.
