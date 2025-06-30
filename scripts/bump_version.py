@@ -6,7 +6,7 @@ from pathlib import Path
 SETUP_PATH = Path('setup.py')
 CHANGELOG_PATH = Path('CHANGELOG.md')
 
-VERSION_RE = re.compile(r"version='(\d+\.\d+)'")
+VERSION_RE = re.compile(r"version='(\d+\.\d+\.\d+)'")
 
 
 def read_version():
@@ -19,6 +19,8 @@ def read_version():
 
 def bump(version: str) -> str:
     parts = version.split('.')
+    if len(parts) < 3:
+        parts.append('0')
     parts[-1] = str(int(parts[-1]) + 1)
     return '.'.join(parts)
 
