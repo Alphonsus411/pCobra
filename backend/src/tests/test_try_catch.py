@@ -2,10 +2,18 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.cobra.lexico.lexer import Token, TipoToken
+from backend.src.cobra.lexico.lexer import Token, TipoToken, Lexer
 from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import NodoTryCatch, NodoThrow, NodoImprimir, NodoIdentificador, NodoValor
+from backend.src.core.ast_nodes import (
+    NodoTryCatch,
+    NodoThrow,
+    NodoImprimir,
+    NodoIdentificador,
+    NodoValor,
+)
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from backend.src.core.interpreter import InterpretadorCobra
 
 
 def generar_tokens(*args):
@@ -71,3 +79,47 @@ def test_transpiler_js_try_catch():
     codigo = tr.transpilar([nodo])
     esperado = "try {\nthrow 1;\n}\ncatch (e) {\nconsole.log(e);\n}"
     assert codigo == esperado
+
+
+def test_parser_intentar_lanzar_capturar():
+    codigo = """
+    intentar:
+        lanzar 'err'
+    capturar e:
+        imprimir(e)
+    fin
+    """
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    nodo = ast[0]
+    assert isinstance(nodo, NodoTryCatch)
+    assert isinstance(nodo.bloque_try[0], NodoThrow)
+    assert isinstance(nodo.bloque_catch[0], NodoImprimir)
+
+
+def test_interpreter_intentar_lanzar_capturar():
+    codigo = """
+    intentar:
+        lanzar mensaje
+    capturar e:
+        imprimir(e)
+    fin
+    """
+    interp = InterpretadorCobra()
+    interp.variables["mensaje"] = "hola"
+    ast = Parser(Lexer(codigo).analizar_token()).parsear()[0]
+
+    from src.core.ast_nodes import (
+        NodoTryCatch as STry,
+        NodoThrow as SThrow,
+        NodoImprimir as SImprimir,
+        NodoIdentificador as SId,
+        NodoValor as SVal,
+    )
+
+    nodo = STry(
+        [SThrow(SId("mensaje"))],
+        "e",
+        [SImprimir(SId("e"))],
+    )
+    interp.ejecutar_nodo(nodo)
+    assert interp.variables["e"] == "hola"

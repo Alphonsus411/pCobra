@@ -55,6 +55,9 @@ class TipoToken(Enum):
     TRY = 'TRY'
     CATCH = 'CATCH'
     THROW = 'THROW'
+    INTENTAR = 'INTENTAR'
+    CAPTURAR = 'CAPTURAR'
+    LANZAR = 'LANZAR'
     ENTERO = 'ENTERO'
     FLOTANTE = 'FLOTANTE'
     CADENA = 'CADENA'
@@ -158,6 +161,9 @@ class Lexer:
             (TipoToken.TRY, r'\btry\b'),
             (TipoToken.CATCH, r'\bcatch\b'),
             (TipoToken.THROW, r'\bthrow\b'),
+            (TipoToken.INTENTAR, r'\bintentar\b'),
+            (TipoToken.CAPTURAR, r'\bcapturar\b'),
+            (TipoToken.LANZAR, r'\blanzar\b'),
             (TipoToken.IMPRIMIR, r'\bimprimir\b'),  # Reconoce 'imprimir'
             (TipoToken.YIELD, r'\byield\b'),
             (TipoToken.ESPERAR, r'\besperar\b'),

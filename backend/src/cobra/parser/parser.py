@@ -90,6 +90,9 @@ PALABRAS_RESERVADAS = {
     "case",
     "segun",
     "caso",
+    "intentar",
+    "capturar",
+    "lanzar",
 }
 
 
@@ -117,7 +120,9 @@ class Parser:
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
+            TipoToken.INTENTAR: self.declaracion_try_catch,
             TipoToken.THROW: self.declaracion_throw,
+            TipoToken.LANZAR: self.declaracion_throw,
             TipoToken.YIELD: self.declaracion_yield,
             TipoToken.ROMPER: self.declaracion_romper,
             TipoToken.CONTINUAR: self.declaracion_continuar,
@@ -578,24 +583,27 @@ class Parser:
         return NodoHilo(llamada)
 
     def declaracion_try_catch(self):
-        self.comer(TipoToken.TRY)
+        if self.token_actual().tipo in (TipoToken.TRY, TipoToken.INTENTAR):
+            self.avanzar()
+        else:
+            raise SyntaxError("Se esperaba 'try' o 'intentar'")
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
             raise SyntaxError("Se esperaba ':' después de 'try'")
         self.comer(TipoToken.DOSPUNTOS)
 
         bloque_try = []
-        while self.token_actual().tipo not in [TipoToken.CATCH, TipoToken.FIN, TipoToken.EOF]:
+        while self.token_actual().tipo not in [TipoToken.CATCH, TipoToken.CAPTURAR, TipoToken.FIN, TipoToken.EOF]:
             bloque_try.append(self.declaracion())
 
         nombre_exc = None
         bloque_catch = []
-        if self.token_actual().tipo == TipoToken.CATCH:
-            self.comer(TipoToken.CATCH)
+        if self.token_actual().tipo in (TipoToken.CATCH, TipoToken.CAPTURAR):
+            self.avanzar()
             if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
                 nombre_exc = self.token_actual().valor
                 self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' después de 'catch'")
+                raise SyntaxError("Se esperaba ':' después de 'catch/capturar'")
             self.comer(TipoToken.DOSPUNTOS)
             while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF, TipoToken.FINALMENTE]:
                 bloque_catch.append(self.declaracion())
@@ -617,7 +625,10 @@ class Parser:
 
     def declaracion_throw(self):
         """Parsea una declaración 'throw'."""
-        self.comer(TipoToken.THROW)
+        if self.token_actual().tipo in (TipoToken.THROW, TipoToken.LANZAR):
+            self.avanzar()
+        else:
+            raise SyntaxError("Se esperaba 'throw' o 'lanzar'")
         return NodoThrow(self.expresion())
 
     def declaracion_yield(self):
