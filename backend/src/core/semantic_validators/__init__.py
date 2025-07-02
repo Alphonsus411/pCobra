@@ -4,9 +4,11 @@ from .primitiva_peligrosa import (
     PrimitivaPeligrosaError,
     ValidadorPrimitivaPeligrosa,
 )
+from .auditoria import ValidadorAuditoria
 from .import_seguro import ValidadorImportSeguro
 from .fs_access import ValidadorSistemaArchivos
 from .reflexion_segura import ValidadorProhibirReflexion
+from src.core.cobra_config import auditoria_activa
 
 # Instancia por defecto reutilizable de la cadena de validación
 _CADENA_DEFECTO = None
@@ -23,8 +25,13 @@ def construir_cadena(extra_validators=None):
     if extra_validators is None and _CADENA_DEFECTO is not None:
         return _CADENA_DEFECTO
 
-    primero = ValidadorPrimitivaPeligrosa()
-    actual = primero.set_siguiente(ValidadorImportSeguro())
+    if auditoria_activa():
+        primero = ValidadorAuditoria()
+        actual = primero.set_siguiente(ValidadorPrimitivaPeligrosa())
+    else:
+        primero = ValidadorPrimitivaPeligrosa()
+        actual = primero
+    actual = actual.set_siguiente(ValidadorImportSeguro())
     actual = actual.set_siguiente(ValidadorSistemaArchivos())
     actual = actual.set_siguiente(ValidadorProhibirReflexion())
 
@@ -40,6 +47,7 @@ def construir_cadena(extra_validators=None):
 __all__ = [
     "PrimitivaPeligrosaError",
     "ValidadorPrimitivaPeligrosa",
+    "ValidadorAuditoria",
     "ValidadorImportSeguro",
     "ValidadorSistemaArchivos",
     "ValidadorProhibirReflexion",
