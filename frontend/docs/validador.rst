@@ -14,6 +14,15 @@ Las primitivas actualmente marcadas como peligrosas son:
 - ``escribir_archivo``
 - ``obtener_url``
 - ``hilo``
+- ``leer``
+- ``escribir``
+- ``existe``
+- ``eliminar``
+- ``enviar_post``
+
+Reflexión e introspección
+-------------------------
+Además de las primitivas anteriores, la cadena incluye el ``ValidadorProhibirReflexion``. Este validador bloquea llamadas a ``eval``, ``exec``, ``getattr``, ``setattr`` y ``hasattr``, así como el acceso a ``globals()`` , ``locals()`` o ``vars()`` y a atributos como ``__dict__`` o ``__class__``.
 
 Si se detecta el uso de alguna de estas primitivas, se lanza la excepcion
 ``PrimitivaPeligrosaError`` antes de que el codigo sea interpretado o transpilado.

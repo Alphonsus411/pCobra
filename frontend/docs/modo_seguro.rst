@@ -4,9 +4,12 @@ Modo seguro
 La herramienta ``cobra`` permite ejecutar programas en modo seguro mediante la
 opción ``--seguro``. Al activarse se construye una cadena de validadores que
 analiza el AST y bloquea primitivas peligrosas como ``leer_archivo``,
-``escribir_archivo``, ``obtener_url`` y ``hilo``. A partir de esta versión
-también se restringen las funciones de archivo ``leer``, ``escribir``,
-``existe`` y ``eliminar``, además de ``enviar_post`` para operaciones de red.
+``escribir_archivo``, ``obtener_url`` y ``hilo``.
+A partir de esta versión también se restringen las funciones ``leer``,
+``escribir``, ``existe`` y ``eliminar``, además de ``enviar_post`` para
+operaciones de red.
+El validador ``ValidadorProhibirReflexion`` impide utilizar ``eval``, ``exec`` y
+otras funciones de reflexión o acceder a atributos internos como ``__dict__``.
 También se valida la
 instrucción ``import`` para permitir únicamente los módulos instalados o los
 especificados en ``IMPORT_WHITELIST``. La instrucción ``usar`` está limitada a
