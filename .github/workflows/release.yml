@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -23,13 +25,15 @@ jobs:
         run: |
           VERSION=$(python scripts/bump_version.py)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Commit version bump
         run: |
           git config user.name 'github-actions'
           git config user.email 'github-actions@github.com'
           git commit -am "Bump version to ${VERSION}"
           git tag -a v${VERSION} -m "v${VERSION}"
-          git push --follow-tags
+          git push origin HEAD
+          git push origin --tags
 
   build-and-publish:
     if: startsWith(github.ref, 'refs/tags/')
@@ -39,6 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
