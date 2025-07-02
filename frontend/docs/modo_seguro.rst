@@ -16,6 +16,15 @@ especificados en ``IMPORT_WHITELIST``. La instrucción ``usar`` está limitada a
 los paquetes listados en ``USAR_WHITELIST`` ubicado en
 ``backend/src/cobra/usar_loader.py``.
 
+La cadena comienza con ``ValidadorAuditoria`` que registra mediante
+``logging.warning`` cada primitiva utilizada. Esta auditoría puede
+habilitarse o deshabilitarse editando ``cobra.toml``:
+
+.. code-block:: toml
+
+   [auditoria]
+   activa = true
+
 Si se intenta utilizar alguna de estas operaciones se lanzará
 ``PrimitivaPeligrosaError`` antes de ejecutar el código.
 
