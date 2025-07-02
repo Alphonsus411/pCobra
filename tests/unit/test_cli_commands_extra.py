@@ -177,7 +177,9 @@ def test_cli_modulos_comandos(tmp_path, monkeypatch):
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
     mod_file = tmp_path / "cobra.mod"
-    mod_mapping = {"m.co": {"version": "0.1.0"}, "lock": {}}
+    py_out = tmp_path / "m.py"
+    py_out.write_text("d = 1\n")
+    mod_mapping = {"m.co": {"version": "0.1.0", "python": str(py_out)}, "lock": {}}
     mod_file.write_text(yaml.safe_dump(mod_mapping))
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
@@ -219,7 +221,9 @@ def test_cli_modulo_version_invalida(tmp_path, monkeypatch):
     mods_dir.mkdir()
     monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
     mod_file = tmp_path / "cobra.mod"
-    mod_mapping = {"bad.co": {"version": "abc"}, "lock": {}}
+    bad_py = tmp_path / "bad.py"
+    bad_py.write_text("d = 1\n")
+    mod_mapping = {"bad.co": {"version": "abc", "python": str(bad_py)}, "lock": {}}
     mod_file.write_text(yaml.safe_dump(mod_mapping))
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))

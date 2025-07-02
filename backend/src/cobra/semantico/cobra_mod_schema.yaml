@@ -1,0 +1,21 @@
+type: object
+patternProperties:
+  ".*\\.co$":
+    type: object
+    required:
+      - version
+    properties:
+      version:
+        type: string
+        pattern: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:[-+].*)?$'
+      python:
+        type: string
+      js:
+        type: string
+    anyOf:
+      - required: [python]
+      - required: [js]
+properties:
+  lock:
+    type: object
+additionalProperties: false

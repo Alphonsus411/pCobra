@@ -15,9 +15,14 @@ import os
 import tomllib
 import yaml
 from typing import Dict, Any
+from jsonschema import validate, ValidationError
 
 from src.cli.utils.semver import es_version_valida
 from src.cobra.transpilers import module_map
+
+SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
+with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+    SCHEMA = yaml.safe_load(f)
 
 
 def cargar_mod(path: str | None = None) -> Dict[str, Any]:
@@ -43,6 +48,11 @@ def validar_mod(path: str | None = None) -> None:
     Lanza ``ValueError`` si se detecta algún problema.
     """
     datos = cargar_mod(path)
+    try:
+        validate(instance=datos, schema=SCHEMA)
+    except ValidationError as e:
+        raise ValueError(f"Archivo cobra.mod inválido: {e.message}") from None
+
     errores: list[str] = []
 
     archivos_py: set[str] = set()
