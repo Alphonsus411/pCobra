@@ -77,4 +77,5 @@ def validar_mod(path: str | None = None) -> None:
                     errores.append(f"Archivo duplicado: {ruta}")
                 registro.add(ruta)
     if errores:
-        raise ValueError("; ".join(errores))
+        mensaje = "; ".join(errores)
+        raise ValueError(f"Archivo cobra.mod inválido: {mensaje}")

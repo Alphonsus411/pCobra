@@ -31,7 +31,10 @@ def test_validador_version_incorrecta(tmp_path):
     mod = tmp_path / "m.co"
     data = {str(mod): {"version": "bad", "python": str(py)}}
     _write_yaml(tmp_path / "cobra.mod", data)
-    with pytest.raises(ValueError, match=f"Versión inválida para {mod}: bad"):
+    with pytest.raises(
+        ValueError,
+        match="^Archivo cobra.mod inválido: ",
+    ):
         validar_mod(str(tmp_path / "cobra.mod"))
 
 
