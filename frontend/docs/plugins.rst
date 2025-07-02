@@ -77,3 +77,34 @@ Una vez instalado, el subcomando queda disponible::
 
    cobra md2cobra --input notas.md --output resultado.co
 
+Ejemplo completo
+----------------
+``SaludoCommand`` está disponible en
+``examples/plugins/saludo_plugin.py``. Para instalarlo en modo editable
+ejecuta:
+
+.. code-block:: bash
+
+   cd examples/plugins
+   pip install -e .
+
+Comprueba que queda registrado con:
+
+.. code-block:: bash
+
+   cobra plugins
+
+.. code-block:: text
+
+   saludo 1.0 - Comando de saludo de ejemplo
+
+Finalmente, prueba el comando:
+
+.. code-block:: bash
+
+   cobra saludo
+
+.. code-block:: text
+
+   ¡Hola desde el plugin de ejemplo!
+
