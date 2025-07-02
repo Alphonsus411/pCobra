@@ -495,6 +495,12 @@ pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
   --cov-fail-under=80
 ````
 
+Algunas pruebas generan código en distintos lenguajes (por ejemplo C++, JavaScript o Go) y verifican que la sintaxis sea correcta. Para que estas pruebas se ejecuten con éxito es necesario contar con los compiladores o intérpretes correspondientes instalados en el sistema, como Node, gcc/g++, Go, etc. Puedes ejecutar todo el conjunto con:
+
+```bash
+pytest
+```
+
 Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
 subcomandos devuelven `0` al finalizar correctamente y un valor distinto en caso
 de error.
