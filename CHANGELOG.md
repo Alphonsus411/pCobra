@@ -1,3 +1,6 @@
+## v5.6.1 - 2025-07-02
+- Cambios pendientes.
+
 ## v5.6 - 2025-06-29 - actualizacion de version
 - Paquete actualizado a la versión 5.6.
 - Documentación y kernel reflejan la nueva versión.
