@@ -16,13 +16,22 @@ def test_validador_archivo_faltante(tmp_path):
         validar_mod(str(tmp_path / "cobra.mod"))
 
 
+def test_validador_campos_faltantes(tmp_path):
+    """Debe fallar si falta la clave python y js en una entrada."""
+    mod = tmp_path / "x.co"
+    data = {str(mod): {"version": "0.1.0"}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+    with pytest.raises(ValueError):
+        validar_mod(str(tmp_path / "cobra.mod"))
+
+
 def test_validador_version_incorrecta(tmp_path):
     py = tmp_path / "m.py"
     py.write_text("x = 1")
     mod = tmp_path / "m.co"
     data = {str(mod): {"version": "bad", "python": str(py)}}
     _write_yaml(tmp_path / "cobra.mod", data)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=f"Versión inválida para {mod}: bad"):
         validar_mod(str(tmp_path / "cobra.mod"))
 
 
