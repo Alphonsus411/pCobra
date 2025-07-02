@@ -63,8 +63,22 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body_path: CHANGELOG.md
+      - name: Verificar etiqueta de publicación
+        run: |
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "La referencia ${GITHUB_REF} es válida"
+          else
+            echo "Referencia de tag no válida: ${GITHUB_REF}" >&2
+            exit 1
+          fi
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload --skip-existing dist/*
+      - name: Verificar instalación desde PyPI
+        run: |
+          python -m venv env
+          source env/bin/activate
+          pip install cobra-lenguaje
+          cobra --version
