@@ -154,6 +154,7 @@ cobra ejecutar programa.co --seguro
 ## 10. Próximos pasos
 
 Revisa la documentación en `frontend/docs` para profundizar en la arquitectura, validadores y más ejemplos.
+También puedes consultar ejemplos prácticos en la carpeta `casos_reales/` ubicada en la raíz del repositorio.
 
 ## 11. Novedades
 
