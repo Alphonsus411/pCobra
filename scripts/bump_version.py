@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import re
+import sys
 import tomllib
 from datetime import date
 from pathlib import Path
@@ -90,8 +91,9 @@ def update_changelog(new_version: str):
 
 
 def main():
+    part = sys.argv[1] if len(sys.argv) > 1 else "patch"
     current = read_version()
-    new = bump(current)
+    new = bump(current, part)
     update_files(current, new)
     update_changelog(new)
     print(new)
