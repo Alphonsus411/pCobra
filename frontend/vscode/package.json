@@ -2,7 +2,12 @@
     "name": "cobra-vscode-extension",
     "displayName": "Cobra Support",
     "description": "Extensión básica para editar archivos Cobra",
-    "version": "0.0.1",
+    "version": "1.0.0",
+    "author": "Adolfo González Hernández",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Alphonsus411/pCobra"
+    },
     "engines": {
         "vscode": "^1.80.0"
     },

@@ -34,6 +34,9 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 ## Ejemplos
 
 Proyectos de demostracion disponibles en [cobra-ejemplos](https://github.com/tuusuario/cobra-ejemplos).
+Este repositorio incluye ejemplos básicos en la carpeta `examples/`, por
+ejemplo `examples/funciones_principales.co` que muestra condicionales, bucles y
+definición de funciones en Cobra.
 
 ## Notebooks de ejemplo
 
