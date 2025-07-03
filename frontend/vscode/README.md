@@ -68,3 +68,21 @@ Sigue estos pasos para comprobar que el servidor LSP ofrece sugerencias de Cobra
 2. Crea o abre un archivo con la extensión `.co`.
 3. Al escribir prefijos como `func`, `si` o `cabeza` deberás ver en VS Code las
    sugerencias proporcionadas por el servidor.
+
+## Empaquetar y publicar
+
+Instala `vsce` una vez de forma global y genera el archivo `.vsix` con:
+
+```bash
+npm install -g vsce
+vsce package
+```
+
+Esto creará un paquete instalable localmente. Para publicarlo en el Marketplace
+asegúrate de actualizar `package.json` (autor, repositorio y versión) y ejecuta:
+
+```bash
+vsce publish
+```
+
+Debes iniciar sesión previamente con `vsce login <publisher>`.

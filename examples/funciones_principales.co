@@ -1,0 +1,11 @@
+func saludar(nombre):
+    imprimir "Hola, " + nombre
+fin
+
+para numero en rango(3):
+    si numero % 2 == 0:
+        imprimir numero, "es par"
+    sino:
+        imprimir numero, "es impar"
+    fin
+fin
