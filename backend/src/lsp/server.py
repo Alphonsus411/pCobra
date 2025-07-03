@@ -1,13 +1,24 @@
-"""Módulo para iniciar un servidor LSP mínimo."""
+"""Módulo para iniciar un servidor LSP con soporte para Cobra."""
+
+from __future__ import annotations
 
 import sys
-from pylsp import lsp
-from pylsp.python_lsp import start_io_lang_server
+from pylsp.python_lsp import PythonLSPServer, start_io_lang_server
+
+from . import cobra_plugin
+
+
+class CobraLSPServer(PythonLSPServer):
+    """Servidor LSP que registra el plugin de completado de Cobra."""
+
+    def __init__(self, rx, tx, check_parent_process=False):
+        super().__init__(rx, tx, check_parent_process)
+        self.config.plugin_manager.register(cobra_plugin, name="cobra")
 
 
 def main() -> None:
-    """Arranca el servidor de lenguaje utilizando la implementación por defecto"""
-    start_io_lang_server(lsp, sys.stdin.buffer, sys.stdout.buffer)
+    """Arranca el servidor de lenguaje con el plugin registrado."""
+    start_io_lang_server(sys.stdin.buffer, sys.stdout.buffer, False, CobraLSPServer)
 
 
 if __name__ == "__main__":
