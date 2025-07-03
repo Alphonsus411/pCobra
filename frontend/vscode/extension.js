@@ -2,6 +2,9 @@ const vscode = require('vscode');
 const cp = require('child_process');
 const { LanguageClient } = require('vscode-languageclient/node');
 
+// Ruta al módulo del servidor LSP. Modifica aquí si cambia el nombre.
+const SERVER_MODULE = 'lsp.server';
+
 let client;
 
 function activate(context) {
@@ -14,7 +17,7 @@ function activate(context) {
         }
 
         const serverOptions = () => {
-            const process = cp.spawn('python', ['-m', 'lsp.server']);
+            const process = cp.spawn('python', ['-m', SERVER_MODULE]);
             return { process };
         };
 

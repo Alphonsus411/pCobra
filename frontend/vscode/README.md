@@ -59,3 +59,12 @@ Con la extensión activa puedes ejecutar rápidamente el archivo abierto con `Ct
 La extensión incluye una gramática TextMate (`syntaxes/cobra.tmLanguage.json`) que define palabras clave, cadenas, números y comentarios de Cobra. Existe además un archivo `language-configuration.json` con las reglas de comentarios y parejas de llaves.
 
 Para ajustar los colores, puedes editar tu `settings.json` y usar `editor.tokenColorCustomizations` con reglas `textMateRules` que apliquen al scope `source.cobra`.
+
+## Pruebas manuales
+
+Sigue estos pasos para comprobar que el servidor LSP ofrece sugerencias de Cobra:
+
+1. Inicia la extensión con `F5` y ejecuta el comando **Iniciar Cobra LSP**.
+2. Crea o abre un archivo con la extensión `.co`.
+3. Al escribir prefijos como `func`, `si` o `cabeza` deberás ver en VS Code las
+   sugerencias proporcionadas por el servidor.
