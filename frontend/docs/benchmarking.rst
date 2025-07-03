@@ -57,7 +57,13 @@ Resultados recientes
 --------------------
 
 Los benchmarks pueden ejecutarse con ``cobra benchmarks``. El siguiente
-resumen se obtuvo con ``scripts/benchmarks/run_benchmarks.py``.
+resumen se obtuvo con ``scripts/benchmarks/compare_backends.py``.
+
+También puedes ejecutar el script manualmente:
+
+.. code-block:: bash
+
+   python scripts/benchmarks/compare_backends.py --output salida.json
 
 .. list-table:: Tiempos y memoria aproximados
    :header-rows: 1
@@ -65,15 +71,15 @@ resumen se obtuvo con ``scripts/benchmarks/run_benchmarks.py``.
    * - Backend
      - Tiempo (s)
      - Memoria (KB)
+   * - cobra
+     - 0.68
+     - 0
    * - python
-     - 0.6792
+     - 0.68
      - 0
    * - js
-     - 0.071
+     - 0.07
      - 0
-   * - go
-     - 0.0149
-     - 0
-   * - ruby
-     - 0.1054
+   * - rust
+     - 0.04
      - 0
