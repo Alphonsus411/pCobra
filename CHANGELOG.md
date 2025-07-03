@@ -1,3 +1,6 @@
+## v6.0.0 - 2025-07-03
+- Cambios pendientes.
+
 ## v5.6.3 - 2025-07-02
 - Cambios pendientes.
 
