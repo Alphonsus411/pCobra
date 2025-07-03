@@ -7,7 +7,7 @@ from src.cli.cli import main
 
 def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
     with patch("subprocess.run") as mock_run:
-        main(["empaquetar", f"--output={tmp_path}"])
+        main(["empaquetar", f"--output={tmp_path}", "--name", "pcobra"])
         raiz = Path(__file__).resolve().parents[3]
         cli_path = raiz / "backend" / "src" / "cli" / "cli.py"
         mock_run.assert_called_once_with(
@@ -15,7 +15,7 @@ def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
                 "pyinstaller",
                 "--onefile",
                 "-n",
-                "cobra",
+                "pcobra",
                 str(cli_path),
                 "--distpath",
                 str(tmp_path),
@@ -27,5 +27,5 @@ def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
 def test_cli_empaquetar_sin_pyinstaller(tmp_path):
     with patch("subprocess.run", side_effect=FileNotFoundError), \
             patch("sys.stdout", new_callable=StringIO) as out:
-        main(["empaquetar", f"--output={tmp_path}"])
+        main(["empaquetar", f"--output={tmp_path}", "--name", "pcobra"])
     assert "PyInstaller no está instalado" in out.getvalue()
