@@ -6,6 +6,7 @@ __pycache__/
 *.egg-info/
 /dist/
 *.log
+frontend/vscode/node_modules/
 
 # Coverage reports
 .coverage

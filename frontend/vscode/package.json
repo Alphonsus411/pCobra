@@ -22,7 +22,15 @@
             {
                 "id": "cobra",
                 "extensions": [".co"],
-                "aliases": ["Cobra"]
+                "aliases": ["Cobra"],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "cobra",
+                "scopeName": "source.cobra",
+                "path": "./syntaxes/cobra.tmLanguage.json"
             }
         ],
         "snippets": [

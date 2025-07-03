@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vscode/master/extensions/theme-defaults/syntaxes/textmate.tmLanguage.schema.json",
+  "name": "Cobra",
+  "scopeName": "source.cobra",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#keywords" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#brackets" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.cobra", "match": "//.*$" },
+        { "name": "comment.line.number-sign.cobra", "match": "#.*$" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.cobra",
+          "match": "\\b(var|variable|func|definir|metodo|atributo|rel|si|sino|mientras|para|import|usar|macro|hilo|asincronico|switch|segun|case|caso|clase|in|holobit|proyectar|transformar|graficar|try|catch|throw|intentar|capturar|lanzar|imprimir|yield|esperar|romper|continuar|pasar|afirmar|eliminar|global|nolocal|lambda|con|finalmente|desde|como|retorno|fin)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        { "name": "string.quoted.double.cobra", "begin": "\"", "end": "\"" },
+        { "name": "string.quoted.single.cobra", "begin": "'", "end": "'" }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.cobra", "match": "\\b\\d+\\.\\d+\\b" },
+        { "name": "constant.numeric.cobra", "match": "\\b\\d+\\b" },
+        { "name": "constant.language.boolean.cobra", "match": "\\b(verdadero|falso)\\b" }
+      ]
+    },
+    "brackets": {
+      "patterns": [
+        { "name": "punctuation.section.braces.begin.cobra", "match": "\\{" },
+        { "name": "punctuation.section.braces.end.cobra", "match": "\\}" },
+        { "name": "punctuation.section.parens.begin.cobra", "match": "\\(" },
+        { "name": "punctuation.section.parens.end.cobra", "match": "\\)" },
+        { "name": "punctuation.section.brackets.begin.cobra", "match": "\\[" },
+        { "name": "punctuation.section.brackets.end.cobra", "match": "\\]" }
+      ]
+    }
+  }
+}

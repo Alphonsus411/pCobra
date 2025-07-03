@@ -48,3 +48,9 @@ fin
 ```
 
 Al escribir los prefijos anteriores y pulsar `Tab`, VS Code mostrará las plantillas correspondientes.
+
+## Gramática de resaltado
+
+La extensión incluye una gramática TextMate (`syntaxes/cobra.tmLanguage.json`) que define palabras clave, cadenas, números y comentarios de Cobra. Existe además un archivo `language-configuration.json` con las reglas de comentarios y parejas de llaves.
+
+Para ajustar los colores, puedes editar tu `settings.json` y usar `editor.tokenColorCustomizations` con reglas `textMateRules` que apliquen al scope `source.cobra`.
