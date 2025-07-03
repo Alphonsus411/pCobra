@@ -29,7 +29,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Cheatsheet](docs/cheatsheet.tex) – compílalo a PDF con LaTeX
 - [Casos de uso reales](docs/casos_reales.md)
-- Notebooks de ejemplo
+- Notebooks de ejemplo y casos reales
 - [Historial de cambios](CHANGELOG.md)
 
 ## Ejemplos
@@ -38,11 +38,11 @@ Proyectos de demostracion disponibles en [cobra-ejemplos](https://github.com/tuu
 Este repositorio incluye ejemplos básicos en la carpeta `examples/`, por
 ejemplo `examples/funciones_principales.co` que muestra condicionales, bucles y
 definición de funciones en Cobra.
+Para ejemplos interactivos revisa los cuadernos en `notebooks/casos_reales/`.
 
 ## Notebooks de ejemplo
 
-En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb` con un
-ejemplo básico de uso de Cobra. Para abrirlo ejecuta:
+En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb` con un ejemplo básico de uso de Cobra. Además, los cuadernos de `notebooks/casos_reales/` muestran cómo ejecutar los ejemplos avanzados. Para abrirlo ejecuta:
 
 ```bash
 cobra jupyter

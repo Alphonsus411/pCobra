@@ -3,6 +3,7 @@
 Esta sección muestra ejemplos prácticos de cómo emplear la CLI de Cobra en distintos contextos.
 
 Los scripts completos de estos ejemplos se encuentran en la carpeta `casos_reales/` del repositorio.
+Se incluyen cuadernos interactivos en `notebooks/casos_reales/` que muestran paso a paso la compilación y ejecución de cada ejemplo.
 ## Bioinformática
 Un pequeño programa puede leer un archivo FASTA y contar el porcentaje de GC:
 
@@ -17,6 +18,8 @@ Ejecuta el script con:
 ```bash
 cobra ejecutar bioinfo.co
 ```
+También puedes ejecutar el cuaderno `notebooks/casos_reales/bioinformatica.ipynb` para verlo paso a paso.
+
 
 Dependencia recomendada: `biopython`.
 
@@ -35,6 +38,8 @@ Para ejecutar:
 ```bash
 cobra ejecutar ia.co
 ```
+También puedes ejecutar el cuaderno `notebooks/casos_reales/inteligencia_artificial.ipynb` para una versión interactiva.
+
 
 Necesitarás `scikit-learn` y opcionalmente `analizador_agix`.
 
@@ -53,5 +58,7 @@ Ejecuta el programa así:
 ```bash
 cobra ejecutar analisis.co
 ```
+Puedes revisar el cuaderno interactivo `notebooks/casos_reales/analisis_datos.ipynb` para seguirlo paso a paso.
+
 
 Instala las dependencias `pandas` y `matplotlib` antes de correrlo.
