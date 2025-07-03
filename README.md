@@ -169,6 +169,24 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - Identificadores en Unicode: Puedes nombrar variables y funciones utilizando
   caracteres como `á`, `ñ` o `Ω` para una mayor flexibilidad.
 
+## Rendimiento
+
+Los benchmarks más recientes se ejecutaron con
+`scripts/benchmarks/compare_backends.py` para comparar varios backends. El
+tiempo aproximado fue de **0.68&nbsp;s** para Cobra y Python,
+**0.07&nbsp;s** para JavaScript y **0.04&nbsp;s** para Rust, sin consumo
+significativo de memoria.
+
+Ejecuta el script con:
+
+```bash
+python scripts/benchmarks/compare_backends.py --output bench_results.json
+```
+
+El archivo [bench_results.json](bench_results.json) se guarda en el directorio
+actual y puede analizarse con el cuaderno
+[notebooks/benchmarks_resultados.ipynb](notebooks/benchmarks_resultados.ipynb).
+
 # Uso
 
 Para conocer las opciones avanzadas del modo seguro revisa
