@@ -1,5 +1,7 @@
 ## v6.0.0 - 2025-07-03
-- Cambios pendientes.
+- Actualización mayor del lenguaje Cobra y de las herramientas de desarrollo.
+- Documentación reorganizada con nuevos ejemplos.
+- Integración de procesos de lanzamiento automatizados a través de GitHub Actions.
 
 ## v5.6.3 - 2025-07-02
 - Cambios pendientes.
