@@ -29,7 +29,13 @@ pytest
 Para generar un reporte de cobertura:
 
 ```bash
-pytest --cov=backend/src
+pytest --cov
+```
+
+Además de las pruebas, ejecuta las verificaciones de estilo con:
+
+```bash
+make lint
 ```
 
 ## Pull Requests
@@ -42,3 +48,7 @@ pytest --cov=backend/src
 6. **Revisión**: una vez abierto el PR, espera la revisión de los mantenedores y realiza los cambios solicitados.
 
 ¡Agradecemos todas las contribuciones!
+
+## Contacto
+
+Si tienes dudas o necesitas ayuda, únete a nuestro canal comunitario en [Discord](https://discord.gg/placeholder).
