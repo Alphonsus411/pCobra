@@ -23,6 +23,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Contribuciones
 - [Guía de Contribución](CONTRIBUTING.md)
 - [Proponer extensiones](frontend/docs/rfc_plugins.rst)
+- [Comunidad](docs/comunidad.md)
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
 - [Guía básica](docs/guia_basica.md)
@@ -658,6 +659,10 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
   issues y preparar pull requests.
 - Para proponer nuevas extensiones consulta [frontend/docs/rfc_plugins.rst](frontend/docs/rfc_plugins.rst).
+
+## Comunidad
+
+Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo. Puedes unirte mediante este enlace permanente: [Enlace de invitación](https://discord.gg/placeholder).
 
 ## Desarrollo
 
