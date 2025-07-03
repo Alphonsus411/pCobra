@@ -14,6 +14,7 @@ npm install
 1. Abre VS Code y carga este directorio como espacio de trabajo.
 2. Pulsa `F5` para iniciar un "Extension Development Host".
 3. En la nueva ventana, ejecuta el comando **Iniciar Cobra LSP** desde la paleta (`Ctrl+Shift+P`).
+4. Para ejecutar el archivo Cobra actualmente abierto, presiona `Ctrl+R` o ejecuta el comando **Ejecutar archivo Cobra**.
 
 El servidor de lenguaje se ejecutará mediante `python -m lsp.server` y proporcionará autocompletado y errores en vivo para archivos Cobra.
 
@@ -48,6 +49,10 @@ fin
 ```
 
 Al escribir los prefijos anteriores y pulsar `Tab`, VS Code mostrará las plantillas correspondientes.
+
+## Ejecutar scripts Cobra
+
+Con la extensión activa puedes ejecutar rápidamente el archivo abierto con `Ctrl+R`. Esto lanzará `cobra ejecutar <archivo>` y mostrará la salida en el panel **Cobra**.
 
 ## Gramática de resaltado
 

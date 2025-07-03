@@ -16,6 +16,10 @@
             {
                 "command": "cobra.startLSP",
                 "title": "Iniciar Cobra LSP"
+            },
+            {
+                "command": "cobra.runFile",
+                "title": "Ejecutar archivo Cobra"
             }
         ],
         "languages": [
@@ -38,7 +42,12 @@
                 "language": "cobra",
                 "path": "./snippets/cobra.json"
             }
-        ]
+        ],
+        "keybindings": [{
+            "command": "cobra.runFile",
+            "key": "ctrl+r",
+            "when": "editorTextFocus && editorLangId == cobra"
+        }]
     }
     ,
     "dependencies": {

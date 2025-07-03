@@ -27,6 +27,28 @@ function activate(context) {
     });
 
     context.subscriptions.push(disposable);
+
+    const runFileDisposable = vscode.commands.registerCommand('cobra.runFile', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No hay un editor activo.');
+            return;
+        }
+
+        const filePath = editor.document.fileName;
+
+        const output = vscode.window.createOutputChannel('Cobra');
+        output.clear();
+        output.show(true);
+
+        const proc = cp.spawn('cobra', ['ejecutar', filePath]);
+
+        proc.stdout.on('data', data => output.append(data.toString()));
+        proc.stderr.on('data', data => output.append(data.toString()));
+        proc.on('error', err => output.append(`Error: ${err.message}\n`));
+    });
+
+    context.subscriptions.push(runFileDisposable);
 }
 
 function deactivate() {
