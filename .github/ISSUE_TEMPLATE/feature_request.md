@@ -21,3 +21,5 @@ Explica otras soluciones o características que hayas pensado.
 **Contexto adicional**
 
 Agrega cualquier información adicional.
+
+Si tienes dudas, coméntalas en nuestro [canal de comunidad](https://discord.gg/placeholder).

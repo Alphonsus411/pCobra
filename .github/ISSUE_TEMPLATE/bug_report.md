@@ -20,3 +20,5 @@ Una descripción clara de lo que esperabas que sucediera.
 
 **Contexto adicional**
 Agrega cualquier otro contexto o capturas de pantalla sobre el problema.
+
+Si tienes dudas, coméntalas en nuestro [canal de comunidad](https://discord.gg/placeholder).
