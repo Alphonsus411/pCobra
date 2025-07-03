@@ -664,6 +664,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 
 Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo. Puedes unirte mediante este enlace permanente: [Enlace de invitación](https://discord.gg/placeholder).
 
+También contamos con un canal de **Telegram** y una cuenta de **Twitter** donde difundimos eventos y actualizaciones. Consulta el [evento_hackathon](docs/evento_hackathon.md) para conocer la próxima actividad.
 ## Desarrollo
 
 Para verificar el tipado de forma local ejecuta:
