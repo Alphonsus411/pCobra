@@ -20,6 +20,11 @@ class EmpaquetarCommand(BaseCommand):
             default="dist",
             help=_("Directorio donde colocar el ejecutable generado"),
         )
+        parser.add_argument(
+            "--name",
+            default="cobra",
+            help=_("Nombre del ejecutable resultante"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -29,13 +34,14 @@ class EmpaquetarCommand(BaseCommand):
         )
         cli_path = os.path.join(raiz, "backend", "src", "cli", "cli.py")
         output = args.output
+        nombre = args.name
         try:
             subprocess.run(
                 [
                     "pyinstaller",
                     "--onefile",
                     "-n",
-                    "cobra",
+                    nombre,
                     cli_path,
                     "--distpath",
                     output,
@@ -44,7 +50,7 @@ class EmpaquetarCommand(BaseCommand):
             )
             mostrar_info(
                 _("Ejecutable generado en {path}").format(
-                    path=os.path.join(output, 'cobra')
+                    path=os.path.join(output, nombre)
                 )
             )
             return 0

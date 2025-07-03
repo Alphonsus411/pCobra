@@ -127,6 +127,14 @@ GitHub Actions. Puedes encontrarlos en la pestaña
 Solo descarga el archivo correspondiente a tu sistema operativo desde la versión
 más reciente y ejecútalo directamente.
 
+Si prefieres generar el ejecutable manualmente ejecuta desde la raíz del
+repositorio:
+
+```bash
+cobra empaquetar --output dist
+```
+El nombre del binario puede ajustarse con la opción `--name`.
+
 # Estructura del Proyecto
 
 El proyecto se organiza en las siguientes carpetas y módulos:

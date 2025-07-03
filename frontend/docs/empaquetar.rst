@@ -10,6 +10,12 @@ Para generar el ejecutable ejecuta:
 
    cobra empaquetar --output dist
 
+El nombre del ejecutable puede cambiarse con ``--name``. Por ejemplo:
+
+.. code-block:: bash
+
+   cobra empaquetar --name pcobra --output dist
+
 Esto creará un archivo ``cobra`` (o ``cobra.exe`` en Windows) en el directorio
 ``dist``. Se necesita tener ``pyinstaller`` instalado previamente. Puedes
 instalarlo con ``pip install pyinstaller``.
