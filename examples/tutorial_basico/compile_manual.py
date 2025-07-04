@@ -16,5 +16,5 @@ for nodo in ast:
         if isinstance(val, str) and not (val.startswith("'") or val.startswith('"')):
             nodo.expresion.valor = repr(val)
 
-resultado = TranspiladorPython().transpilar(ast)
+resultado = TranspiladorPython().generate_code(ast)
 print(resultado)

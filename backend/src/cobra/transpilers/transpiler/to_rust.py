@@ -24,6 +24,7 @@ from src.core.ast_nodes import (
 )
 from backend.src.cobra.lexico.lexer import TipoToken
 from backend.src.core.visitor import NodeVisitor
+from ..base import BaseTranspiler
 from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from backend.src.cobra.macro import expandir_macros
 
@@ -71,12 +72,16 @@ def visit_import_desde(self, nodo):
     self.agregar_linea(f"use {nodo.modulo}::{nodo.nombre}{alias};")
 
 
-class TranspiladorRust(NodeVisitor):
+class TranspiladorRust(BaseTranspiler):
     """Transpila el AST de Cobra a código Rust sencillo."""
 
     def __init__(self):
         self.codigo = []
         self.indent = 0
+
+    def generate_code(self, ast):
+        self.codigo = self.transpilar(ast)
+        return self.codigo
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)

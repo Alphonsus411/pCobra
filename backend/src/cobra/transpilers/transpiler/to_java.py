@@ -13,6 +13,7 @@ from backend.src.core.ast_nodes import (
 )
 from backend.src.cobra.lexico.lexer import TipoToken
 from backend.src.core.visitor import NodeVisitor
+from ..base import BaseTranspiler
 from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from backend.src.cobra.macro import expandir_macros
 
@@ -51,10 +52,14 @@ java_nodes = {
 }
 
 
-class TranspiladorJava(NodeVisitor):
+class TranspiladorJava(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+
+    def generate_code(self, ast):
+        self.codigo = self.transpilar(ast)
+        return self.codigo
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)
