@@ -8,6 +8,9 @@ CLI
 ---
 La interfaz de línea de comandos permite ejecutar programas Cobra,
 compilar a otros lenguajes y gestionar módulos instalados.
+Para ampliar estas funciones se emplea un sistema de plugins. Cada
+plugin hereda de ``PluginCommand`` y se registra siguiendo el patrón
+Command (ver :ref:`patron_command`).
 
 Core
 ----
