@@ -9,3 +9,13 @@ Para generar la imagen ejecuta:
    cobra contenedor --tag cobra
 
 Esto ejecuta internamente ``docker build`` y produce una imagen lista para usar.
+
+Ejecutar programas en contenedores
+----------------------------------
+
+Tras construir las imágenes es posible lanzar un script directamente en un
+contenedor temporal usando ``--contenedor``:
+
+.. code-block:: bash
+
+   cobra ejecutar hola.cob --contenedor=python
