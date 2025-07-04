@@ -74,9 +74,12 @@ def test_red_funcs(monkeypatch):
     mock_resp.read.return_value = b'ok'
     mock_cm = MagicMock()
     mock_cm.__enter__.return_value = mock_resp
-    with patch('backend.corelibs.red.urllib.request.urlopen', return_value=mock_cm):
+    with patch('backend.corelibs.red.urllib.request.urlopen', return_value=mock_cm) as mock_urlopen:
         assert core.obtener_url('http://x') == 'ok'
         assert core.enviar_post('http://x', {'a': 1}) == 'ok'
+        mock_urlopen.assert_any_call('http://x', timeout=5)
+        mock_urlopen.assert_any_call('http://x', b'a=1', timeout=5)
+        assert mock_urlopen.call_count == 2
 
 
 def test_sistema_funcs(tmp_path, monkeypatch):
