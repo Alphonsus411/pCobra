@@ -1,6 +1,7 @@
 import logging
 import os
 import multiprocessing
+from importlib import import_module
 from importlib.metadata import entry_points
 from .base import BaseCommand
 from ..i18n import _
@@ -53,17 +54,21 @@ TRANSPILERS = {
     "wasm": TranspiladorWasm,
 }
 
-# Cargar transpiladores externos registrados via entry_points
+# Detectar transpiladores externos registrados via entry points
 try:
     eps = entry_points(group="cobra.transpilers")
-except TypeError:  # Compatibilidad con Python <3.10
+except TypeError:  # Compatibilidad con versiones antiguas
     eps = entry_points().get("cobra.transpilers", [])
 
 for ep in eps:
     try:
-        TRANSPILERS[ep.name] = ep.load()
-    except Exception as exc:  # pragma: no cover - errores en carga
-        logging.error(f"Error cargando transpilador {ep.value}: {exc}")
+        module_name, class_name = ep.value.split(":", 1)
+        cls = getattr(import_module(module_name), class_name)
+        TRANSPILERS[ep.name] = cls
+    except Exception as exc:  # pylint: disable=broad-except
+        logging.error("Error cargando transpilador %s: %s", ep.name, exc)
+
+LANG_CHOICES = sorted(TRANSPILERS.keys())
 
 
 class CompileCommand(BaseCommand):
@@ -78,16 +83,15 @@ class CompileCommand(BaseCommand):
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
         parser.add_argument("archivo")
-        opciones = list(TRANSPILERS)
         parser.add_argument(
             "--tipo",
-            choices=opciones,
+            choices=LANG_CHOICES,
             default="python",
             help=_("Tipo de código generado"),
         )
         parser.add_argument(
             "--backend",
-            choices=opciones,
+            choices=LANG_CHOICES,
             help=_("Alias de --tipo"),
         )
         parser.add_argument(
