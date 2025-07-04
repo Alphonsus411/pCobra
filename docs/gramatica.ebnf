@@ -1,0 +1,54 @@
+?start: statement*
+
+?statement: asignacion
+          | funcion
+          | clase
+          | bucle_mientras
+          | bucle_para
+          | condicional
+          | importacion
+          | usar
+          | macro
+          | impresion
+          | retorno
+          | hilo
+          | llamada
+          | switch
+          | try_catch
+          | expr
+
+asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
+funcion: "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
+clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
+bucle_mientras: "mientras" expr ":" cuerpo "fin"
+bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
+condicional: "si" expr ":" cuerpo ("sino" ":" cuerpo)? "fin"
+importacion: "import" CADENA
+usar: "usar" CADENA
+macro: "macro" IDENTIFICADOR "{" statement* "}"
+impresion: "imprimir" "(" argumentos? ")"
+retorno: "retorno" expr
+hilo: "hilo" llamada
+switch: "switch" expr ":" case+ "fin"
+case: ("case" expr ":" cuerpo)+
+try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
+llamada: IDENTIFICADOR "(" argumentos? ")"
+cuerpo: statement*
+parametros: IDENTIFICADOR ("," IDENTIFICADOR)*
+argumentos: expr ("," expr)*
+?expr: valor (operador valor)*
+?valor: CADENA
+      | ENTERO
+      | FLOTANTE
+      | IDENTIFICADOR
+      | llamada
+      | holobit
+holobit: "holobit" "(" "[" [expr ("," expr)*] "]" ")"
+operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"
+
+CADENA: /"[^"\n]*"|'[^'\n]*'/
+ENTERO: /[0-9]+/
+FLOTANTE: /[0-9]+\.[0-9]+/
+IDENTIFICADOR: /[^\W\d_][\w]*/
+
+%ignore /\s+/
