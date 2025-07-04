@@ -6,7 +6,7 @@ En este ejemplo se procesa un archivo CSV con `pandas` para calcular el promedio
 
 1. Transpila el código Cobra a Python:
    ```bash
-   cobra compilar estadisticas.cob --tipo python > estadisticas.py
+   cobra compilar estadisticas.co --tipo python > estadisticas.py
    ```
 2. Ejecuta el script Python:
    ```bash

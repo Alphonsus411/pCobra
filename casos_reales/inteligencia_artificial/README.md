@@ -6,7 +6,7 @@ Este directorio demuestra cómo cargar un modelo de `scikit-learn` y realizar un
 
 1. Compila el script Cobra a Python:
    ```bash
-   cobra compilar modelo_ia.cob --tipo python > modelo_ia.py
+   cobra compilar modelo_ia.co --tipo python > modelo_ia.py
    ```
 2. Ejecuta el script generado:
    ```bash

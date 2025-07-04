@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 
 def test_execute_en_contenedor(tmp_path, monkeypatch):
-    script = tmp_path / "prog.cob"
+    script = tmp_path / "prog.co"
     script.write_text("imprimir('hola')")
 
     import backend.src.cobra.transpilers.module_map as module_map

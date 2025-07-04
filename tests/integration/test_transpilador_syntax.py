@@ -48,8 +48,8 @@ import pytest
 @pytest.mark.parametrize("lang", ["python", "js", "ruby"])
 def test_transpilador_syntax(tmp_path, lang, monkeypatch):
     # Preparar archivo de entrada
-    archivo = tmp_path / "prog.cob"
-    archivo.write_text(Path("tests/data/ejemplo.cob").read_text())
+    archivo = tmp_path / "prog.co"
+    archivo.write_text(Path("tests/data/ejemplo.co").read_text())
 
     # Parchear dependencias y lexer
     monkeypatch.setattr(module_map_src, "get_toml_map", lambda: {})
