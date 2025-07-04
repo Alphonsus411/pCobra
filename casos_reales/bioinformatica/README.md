@@ -6,7 +6,7 @@ Este ejemplo calcula el porcentaje de GC de una secuencia almacenada en `secuenc
 
 1. Compila el código Cobra a Python:
    ```bash
-   cobra compilar ejemplo_gc.cob --tipo python > ejemplo_gc.py
+   cobra compilar ejemplo_gc.co --tipo python > ejemplo_gc.py
    ```
 2. Ejecuta el script resultante:
    ```bash

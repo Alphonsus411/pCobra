@@ -18,4 +18,4 @@ contenedor temporal usando ``--contenedor``:
 
 .. code-block:: bash
 
-   cobra ejecutar hola.cob --contenedor=python
+   cobra ejecutar hola.co --contenedor=python
