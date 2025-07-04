@@ -38,7 +38,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
-    'sphinx.ext.graphviz'
+    'sphinx.ext.graphviz',
+    'sphinxcontrib.plantuml'
               ]
 
 # Evita errores si los paquetes no están instalados
@@ -62,3 +63,7 @@ gettext_compact = False
 html_static_path = ['_static']
 html_theme = 'sphinx_rtd_theme'
 html_css_files = ['custom.css']
+
+# Configuración de PlantUML
+plantuml = 'plantuml'
+plantuml_output_format = 'png'

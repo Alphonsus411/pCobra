@@ -1,0 +1,21 @@
+@startuml
+Lexer --> Parser
+Parser --> AST
+AST --> Transpiladores
+Transpiladores --> Python
+Transpiladores --> JS
+Transpiladores --> ASM
+Transpiladores --> Rust
+Transpiladores --> "C++"
+Transpiladores --> Go
+Transpiladores --> R
+Transpiladores --> Julia
+Transpiladores --> Java
+Transpiladores --> COBOL
+Transpiladores --> Fortran
+Transpiladores --> Pascal
+Transpiladores --> Ruby
+Transpiladores --> PHP
+Transpiladores --> Matlab
+Transpiladores --> LaTeX
+@enduml
