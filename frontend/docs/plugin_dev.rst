@@ -5,8 +5,18 @@ Un plugin permite ampliar la CLI de Cobra con nuevos subcomandos
 distribuidos como paquetes externos. Todas las utilidades del SDK se
 encuentran en ``src.cli.plugin``. Cada plugin se implementa como una
 clase que hereda de ``PluginCommand``. Esta clase define varios metadatos
+
 (``name``, ``version``, ``author`` y ``description``) que se mostrarán al
 ejecutar ``cobra plugins``.
+
+.. _patron_command:
+
+Patrón Command
+--------------
+
+``PluginCommand`` aplica el patrón *Command* para encapsular la lógica de cada
+subcomando. Cuando la clase derivada registra su ``register_subparser`` la
+acción queda disponible en la CLI y se ejecuta al invocar ``run``.
 
 Estructura básica
 -----------------
