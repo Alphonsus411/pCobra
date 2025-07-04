@@ -1,10 +1,11 @@
+import backend  # garantiza rutas para submódulos
 import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.interpreter import InterpretadorCobra
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
+from src.core.interpreter import InterpretadorCobra
 from src.core.ast_nodes import NodoLlamadaFuncion, NodoValor
 from src.core.semantic_validators import PrimitivaPeligrosaError
 
@@ -23,6 +24,8 @@ def generar_ast(codigo: str):
         "escribir('x.txt', 'hola')",
         "existe('x.txt')",
         "enviar_post('u', 'd')",
+        "ejecutar('ls')",
+        "listar_dir('.')",
     ],
 )
 def test_primitivas_rechazadas_en_modo_seguro(codigo):
