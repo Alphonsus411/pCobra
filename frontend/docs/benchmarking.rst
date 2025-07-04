@@ -83,3 +83,22 @@ También puedes ejecutar el script manualmente:
    * - rust
      - 0.04
      - 0
+
+Pruebas de mutación
+-------------------
+
+Para evaluar la efectividad de las pruebas se incluye un script que ejecuta
+`MutPy` sobre el código fuente. Primero instala la dependencia opcional:
+
+.. code-block:: bash
+
+   pip install .[mutation]
+
+Luego lanza el análisis:
+
+.. code-block:: bash
+
+   python scripts/run_mutation.py
+
+Se recomienda alcanzar un porcentaje de detección de mutantes de al
+menos 70 %.

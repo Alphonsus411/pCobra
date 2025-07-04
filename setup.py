@@ -33,6 +33,9 @@ setup(
         'smooth-criminal',
         # Agrega más requisitos según sea necesario
     ],
+    extras_require={
+        'mutation': ['mutpy>=0.6.1'],
+    },
     tests_require=[
         'pytest-cov',
     ],
