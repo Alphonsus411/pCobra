@@ -1,6 +1,7 @@
 import logging
 import os
 import multiprocessing
+from importlib.metadata import entry_points
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
@@ -8,7 +9,10 @@ from backend.src.cobra.transpilers import module_map
 from backend.src.core.sandbox import validar_dependencias
 
 from backend.src.core.ast_cache import obtener_ast
-from backend.src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from backend.src.core.semantic_validators import (
+    PrimitivaPeligrosaError,
+    construir_cadena,
+)
 from backend.src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from backend.src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
@@ -49,6 +53,18 @@ TRANSPILERS = {
     "wasm": TranspiladorWasm,
 }
 
+# Cargar transpiladores externos registrados via entry_points
+try:
+    eps = entry_points(group="cobra.transpilers")
+except TypeError:  # Compatibilidad con Python <3.10
+    eps = entry_points().get("cobra.transpilers", [])
+
+for ep in eps:
+    try:
+        TRANSPILERS[ep.name] = ep.load()
+    except Exception as exc:  # pragma: no cover - errores en carga
+        logging.error(f"Error cargando transpilador {ep.value}: {exc}")
+
 
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
@@ -62,53 +78,16 @@ class CompileCommand(BaseCommand):
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
         parser.add_argument("archivo")
+        opciones = list(TRANSPILERS)
         parser.add_argument(
             "--tipo",
-            choices=[
-                "python",
-                "js",
-                "asm",
-                "rust",
-                "cpp",
-                "c",
-                "go",
-                "ruby",
-                "r",
-                "julia",
-                "java",
-                "cobol",
-                "fortran",
-                "pascal",
-                "php",
-                "matlab",
-                "latex",
-                "wasm",
-            ],
+            choices=opciones,
             default="python",
             help=_("Tipo de código generado"),
         )
         parser.add_argument(
             "--backend",
-            choices=[
-                "python",
-                "js",
-                "asm",
-                "rust",
-                "cpp",
-                "c",
-                "go",
-                "ruby",
-                "r",
-                "julia",
-                "java",
-                "cobol",
-                "fortran",
-                "pascal",
-                "php",
-                "matlab",
-                "latex",
-                "wasm",
-            ],
+            choices=opciones,
             help=_("Alias de --tipo"),
         )
         parser.add_argument(
@@ -134,7 +113,7 @@ class CompileCommand(BaseCommand):
         mod_info = module_map.get_toml_map()
         try:
             if getattr(args, "tipos", None):
-                langs = [t.strip() for t in args.tipos.split(',') if t.strip()]
+                langs = [t.strip() for t in args.tipos.split(",") if t.strip()]
                 for lang in langs:
                     validar_dependencias(lang, mod_info)
             else:
@@ -152,12 +131,14 @@ class CompileCommand(BaseCommand):
                 nodo.aceptar(validador)
 
             if getattr(args, "tipos", None):
-                lenguajes = [t.strip() for t in args.tipos.split(',') if t.strip()]
+                lenguajes = [t.strip() for t in args.tipos.split(",") if t.strip()]
                 for l in lenguajes:
                     if l not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
                 with multiprocessing.Pool(processes=len(lenguajes)) as pool:
-                    resultados = pool.map(self._ejecutar_transpilador, [(l, ast) for l in lenguajes])
+                    resultados = pool.map(
+                        self._ejecutar_transpilador, [(l, ast) for l in lenguajes]
+                    )
                 for lang, nombre, resultado in resultados:
                     mostrar_info(
                         _("Código generado ({nombre}) para {lang}:").format(
