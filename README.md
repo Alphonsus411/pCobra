@@ -95,6 +95,7 @@ pip install -r requirements.txt
    - `PyYAML` utilizado al leer `cobra.mod`.
    - `cbindgen` para generar encabezados de crates Rust
      (instalable con `cargo install cbindgen`).
+   - `tomli` necesario para Python anterior a la versión 3.11.
 
 5. Instala el paquete de forma editable para usar la CLI:
 
