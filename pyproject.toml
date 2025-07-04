@@ -46,3 +46,6 @@ cobra = "src.cli.cli:main"
 
 [project.entry-points."cobra.plugins"]
 # Se registrarán plugins externos aquí
+
+[project.entry-points."cobra.transpilers"]
+# Se registrarán transpiladores externos aquí
