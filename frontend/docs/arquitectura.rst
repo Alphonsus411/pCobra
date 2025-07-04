@@ -77,3 +77,9 @@ Diagrama de clases principal
 .. graphviz:: uml/class_diagram.gv
    :caption: Estructura basica del nucleo
 
+Diagrama de flujo general
+------------------------
+
+.. uml:: uml/arquitectura_general.puml
+   :caption: Flujo del compilador y transpiladores
+
