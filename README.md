@@ -503,6 +503,8 @@ cobra profile programa.co
 cobra gui
 ```
 
+Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
+
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
 El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 

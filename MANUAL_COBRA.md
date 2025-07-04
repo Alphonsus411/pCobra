@@ -92,6 +92,7 @@ imprimir(saludo)
 - Agrupa varios módulos en un archivo con manifest ``cobra.pkg``.
 - Crea un paquete con ``cobra paquete crear carpeta paquete.cobra``.
 - Instálalo posteriormente con ``cobra paquete instalar paquete.cobra``.
+- Los archivos ``.cobra`` corresponden a paquetes completos, mientras que los scripts usan la extensión ``.co``.
 
 ## 6. Macros
 
