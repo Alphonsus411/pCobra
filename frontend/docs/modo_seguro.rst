@@ -76,3 +76,5 @@ Si el árbol de sintaxis supera ``limite_nodos`` el intérprete aborta. Los otro
 parámetros establecen el máximo de memoria en megabytes y el tiempo de CPU en
 segundos usando ``limitar_memoria_mb`` y ``limitar_cpu_segundos`` de
 ``src.core.resource_limits``.
+Esta verificación del número de nodos también se aplica al cargar módulos con
+``import``.
