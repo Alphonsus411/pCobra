@@ -10,6 +10,7 @@ from backend.src.core.ast_nodes import (
     NodoAtributo,
 )
 from backend.src.core.visitor import NodeVisitor
+from ..base import BaseTranspiler
 from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from backend.src.cobra.macro import expandir_macros
 
@@ -26,10 +27,14 @@ latex_nodes = {
 }
 
 
-class TranspiladorLatex(NodeVisitor):
+class TranspiladorLatex(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+
+    def generate_code(self, ast):
+        self.codigo = self.transpilar(ast)
+        return self.codigo
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)

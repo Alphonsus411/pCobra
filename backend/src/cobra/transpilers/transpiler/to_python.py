@@ -31,6 +31,7 @@ from backend.src.core.ast_nodes import (
 from backend.src.cobra.parser.parser import Parser
 from backend.src.cobra.lexico.lexer import TipoToken, Lexer
 from backend.src.core.visitor import NodeVisitor
+from ..base import BaseTranspiler
 from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from backend.src.cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
@@ -100,12 +101,16 @@ def visit_import_desde(self, nodo):
     self.codigo += f"from {nodo.modulo} import {nodo.nombre}{alias}\n"
 
 
-class TranspiladorPython(NodeVisitor):
+class TranspiladorPython(BaseTranspiler):
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = get_standard_imports("python")
         self.usa_asyncio = False
         self.nivel_indentacion = 0
+
+    def generate_code(self, ast):
+        self.codigo = self.transpilar(ast)
+        return self.codigo
 
     def obtener_indentacion(self):
         return "    " * self.nivel_indentacion
@@ -241,4 +246,3 @@ TranspiladorPython.visit_global = visit_global
 TranspiladorPython.visit_nolocal = visit_nolocal
 TranspiladorPython.visit_with = visit_with
 TranspiladorPython.visit_import_desde = visit_import_desde
-

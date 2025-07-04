@@ -23,6 +23,7 @@ from backend.src.core.ast_nodes import (
 )
 from backend.src.cobra.lexico.lexer import TipoToken
 from backend.src.core.visitor import NodeVisitor
+from ..base import BaseTranspiler
 from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from backend.src.cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
@@ -94,12 +95,16 @@ def visit_import_desde(self, nodo):
     self.agregar_linea(f"import {{ {nodo.nombre}{alias} }} from '{modulo}';")
 
 
-class TranspiladorJavaScript(NodeVisitor):
+class TranspiladorJavaScript(BaseTranspiler):
     def __init__(self):
         # Incluir importaciones de modulos nativos
         self.codigo = get_standard_imports("js")
         self.indentacion = 0
         self.usa_indentacion = None
+
+    def generate_code(self, ast):
+        self.codigo = self.transpilar(ast)
+        return self.codigo
 
     def agregar_linea(self, linea):
         if self.usa_indentacion:
@@ -208,4 +213,3 @@ TranspiladorJavaScript.visit_with = visit_with
 TranspiladorJavaScript.visit_import_desde = visit_import_desde
 
     # Métodos de transpilación para tipos de nodos básicos
-
