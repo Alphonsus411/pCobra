@@ -1,2 +1,7 @@
 [auditoria]
 activa = true
+
+[seguridad]
+limite_nodos = 1000
+limite_memoria_mb = 128
+limite_cpu_segundos = 10

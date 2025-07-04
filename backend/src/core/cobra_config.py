@@ -29,3 +29,20 @@ def auditoria_activa(config: dict | None = None) -> bool:
     """Devuelve si la auditor\u00eda debe activarse seg\u00fan la configuraci\u00f3n."""
     cfg = config or cargar_configuracion()
     return cfg.get("auditoria", {}).get("activa", False)
+
+def limite_nodos(config: dict | None = None) -> int:
+    """Devuelve el máximo número de nodos permitido al interpretar."""
+    cfg = config or cargar_configuracion()
+    return int(cfg.get("seguridad", {}).get("limite_nodos", 1000))
+
+
+def limite_memoria_mb(config: dict | None = None) -> int | None:
+    """Cantidad máxima de memoria (en MB) o ``None`` si no se define."""
+    cfg = config or cargar_configuracion()
+    return cfg.get("seguridad", {}).get("limite_memoria_mb")
+
+
+def limite_cpu_segundos(config: dict | None = None) -> int | None:
+    """Tiempo máximo de CPU en segundos o ``None``."""
+    cfg = config or cargar_configuracion()
+    return cfg.get("seguridad", {}).get("limite_cpu_segundos")

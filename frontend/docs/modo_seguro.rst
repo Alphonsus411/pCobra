@@ -59,3 +59,20 @@ variable ``VALIDADORES_EXTRA`` y pasándolo mediante la opción
 
 Para evaluar el impacto de estas comprobaciones en el rendimiento revisa
 :doc:`benchmarking`.
+
+Limitaciones de recursos
+-----------------------
+El modo seguro puede aplicar límites al interpretar un programa. Estos valores se
+definen en ``cobra.toml`` dentro de la sección ``[seguridad]``.
+
+.. code-block:: toml
+
+   [seguridad]
+   limite_nodos = 1000
+   limite_memoria_mb = 128
+   limite_cpu_segundos = 10
+
+Si el árbol de sintaxis supera ``limite_nodos`` el intérprete aborta. Los otros
+parámetros establecen el máximo de memoria en megabytes y el tiempo de CPU en
+segundos usando ``limitar_memoria_mb`` y ``limitar_cpu_segundos`` de
+``src.core.resource_limits``.

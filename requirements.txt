@@ -25,3 +25,4 @@ python-lsp-server==1.11.0
 packaging==24.0
 snakeviz==2.2.2
 lark==1.1.9
+psutil==7.0.0

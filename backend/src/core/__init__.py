@@ -8,6 +8,7 @@ Esto simplifica el uso de la biblioteca desde otros módulos.
 from .ast_nodes import *
 from .visitor import NodeVisitor
 from .performance import optimizar, perfilar
+from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 __all__ = [
     "NodoAST",
@@ -50,4 +51,6 @@ __all__ = [
     "NodeVisitor",
     "optimizar",
     "perfilar",
+    "limitar_memoria_mb",
+    "limitar_cpu_segundos",
 ]
