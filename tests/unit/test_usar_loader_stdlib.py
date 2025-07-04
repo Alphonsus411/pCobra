@@ -12,7 +12,9 @@ import standard_library.fecha as fecha
 
 
 def test_obtener_modulo_standard_library(monkeypatch):
+    usar_loader.USAR_WHITELIST.add("fecha")
     mod = usar_loader.obtener_modulo("fecha")
+    usar_loader.USAR_WHITELIST.remove("fecha")
     assert isinstance(mod, types.ModuleType)
     assert hasattr(mod, "formatear")
     assert mod.formatear(datetime(2020, 1, 1)) == fecha.formatear(datetime(2020, 1, 1))

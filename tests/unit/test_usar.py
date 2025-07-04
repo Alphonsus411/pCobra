@@ -3,7 +3,9 @@ from unittest.mock import patch
 import sys
 
 # Evitar dependencias externas durante la importación de los módulos de pruebas
-sys.modules.setdefault('yaml', ModuleType('yaml'))
+fake_yaml = ModuleType('yaml')
+fake_yaml.safe_load = lambda *_args, **_kwargs: {}
+sys.modules.setdefault('yaml', fake_yaml)
 
 import pytest
 
@@ -25,8 +27,10 @@ def test_obtener_modulo_instala_si_no_existe():
 
 
 def test_obtener_modulo_desde_corelibs_sin_pip():
+    usar_loader.USAR_WHITELIST.add('texto')
     with patch.object(usar_loader.subprocess, 'run') as mock_run:
         mod = usar_loader.obtener_modulo('texto')
+    usar_loader.USAR_WHITELIST.remove('texto')
     mock_run.assert_not_called()
     assert mod.mayusculas('hola') == 'HOLA'
 

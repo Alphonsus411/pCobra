@@ -14,7 +14,9 @@ También se valida la
 instrucción ``import`` para permitir únicamente los módulos instalados o los
 especificados en ``IMPORT_WHITELIST``. La instrucción ``usar`` está limitada a
 los paquetes listados en ``USAR_WHITELIST`` ubicado en
-``backend/src/cobra/usar_loader.py``.
+``backend/src/cobra/usar_loader.py``. Si esta lista se encuentra vacía, la
+función ``obtener_modulo`` provocará un ``PermissionError`` y no se podrán
+instalar dependencias nuevas.
 
 La cadena comienza con ``ValidadorAuditoria`` que registra mediante
 ``logging.warning`` cada primitiva utilizada. Esta auditoría puede
@@ -51,7 +53,9 @@ Configuraciones avanzadas
 Las listas ``IMPORT_WHITELIST`` y ``USAR_WHITELIST`` determinan qué módulos y
 paquetes pueden cargarse cuando el modo seguro está activo. Puedes editarlas en
 ``backend/src/cobra/import_loader.py`` y ``backend/src/cobra/usar_loader.py``
-respectivamente para afinar las restricciones.
+respectivamente para afinar las restricciones. Recuerda que si
+``USAR_WHITELIST`` está vacía no se permitirá la instalación de paquetes
+adicionales.
 
 También es posible definir validadores adicionales creando un módulo con la
 variable ``VALIDADORES_EXTRA`` y pasándolo mediante la opción
