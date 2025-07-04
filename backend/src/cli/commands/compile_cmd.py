@@ -33,6 +33,11 @@ from backend.src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatla
 from backend.src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
 from backend.src.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
+# Mapa que asocia el nombre de cada lenguaje con la clase de su
+# transpilador. Sirve como una fábrica sencilla: a partir de una clave
+# se puede instanciar el transpilador adecuado. Este diccionario se
+# amplía dinámicamente con los transpiladores registrados mediante
+# ``entry_points`` en el grupo ``cobra.transpilers``.
 TRANSPILERS = {
     "python": TranspiladorPython,
     "js": TranspiladorJavaScript,
