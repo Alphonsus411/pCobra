@@ -387,7 +387,9 @@ registrado en el entorno bajo el mismo nombre para su uso posterior.
 Para restringir qué dependencias pueden instalarse se emplea la variable
 `USAR_WHITELIST` definida en `backend/src/cobra/usar_loader.py`. Basta con
 añadir o quitar nombres de paquetes en dicho conjunto para modificar la lista
-autorizada.
+autorizada. Si la lista se deja vacía la función `obtener_modulo` lanzará
+`PermissionError`, por lo que es necesario poblarla antes de permitir
+instalaciones dinámicas.
 
 ## Archivo de mapeo de módulos
 

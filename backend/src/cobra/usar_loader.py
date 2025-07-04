@@ -12,7 +12,11 @@ def obtener_modulo(nombre: str):
     """Importa y devuelve un módulo. Si no está instalado intenta
     instalarlo usando pip y lo importa nuevamente.
     """
-    if USAR_WHITELIST and nombre not in USAR_WHITELIST:
+    if not USAR_WHITELIST:
+        raise PermissionError(
+            "USAR_WHITELIST vacía: es necesario listar los paquetes permitidos"
+        )
+    if nombre not in USAR_WHITELIST:
         raise PermissionError(f"Paquete '{nombre}' no permitido")
 
     try:
