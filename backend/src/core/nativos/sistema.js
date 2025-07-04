@@ -7,7 +7,12 @@ export function obtener_os() {
 }
 
 export function ejecutar(cmd) {
-    return child_process.execSync(cmd, { encoding: 'utf-8' });
+    const args = cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+    const program = args.shift();
+    const proc = child_process.spawnSync(program, args, { encoding: 'utf-8' });
+    if (proc.error) throw proc.error;
+    if (proc.status !== 0) throw new Error(proc.stderr);
+    return proc.stdout;
 }
 
 export function obtener_env(nombre) {

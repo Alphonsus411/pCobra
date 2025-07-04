@@ -2,6 +2,7 @@
 
 import os
 import platform
+import shlex
 import subprocess
 
 
@@ -12,9 +13,9 @@ def obtener_os() -> str:
 
 def ejecutar(comando: str) -> str:
     """Ejecuta un comando y devuelve su salida."""
+    args = shlex.split(comando)
     resultado = subprocess.run(
-        comando,
-        shell=True,
+        args,
         check=True,
         text=True,
         stdout=subprocess.PIPE,
