@@ -91,7 +91,7 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
 
 
 def test_cross_backend_output(tmp_path):
-    ejemplos = list(Path("tests/data").glob("*.cob"))
+    ejemplos = list(Path("tests/data").glob("*.co"))
     assert ejemplos, "No hay archivos de ejemplo"
 
     for archivo in ejemplos:
