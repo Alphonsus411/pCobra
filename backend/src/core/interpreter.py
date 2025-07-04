@@ -554,6 +554,10 @@ class InterpretadorCobra:
         lexer = Lexer(codigo)
         tokens = lexer.analizar_token()
         ast = Parser(tokens).parsear()
+        total = self._contar_nodos(ast)
+        max_nodos = limite_nodos()
+        if total > max_nodos:
+            raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
         for subnodo in ast:
             self._validar(subnodo)
             resultado = self.ejecutar_nodo(subnodo)
