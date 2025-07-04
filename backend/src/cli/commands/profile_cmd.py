@@ -66,7 +66,7 @@ class ProfileCommand(BaseCommand):
         else:
             logging.getLogger().setLevel(logging.ERROR)
 
-        with open(archivo, "r") as f:
+        with open(archivo, "r", encoding="utf-8") as f:
             codigo = f.read()
 
         tokens = Lexer(codigo).tokenizar()

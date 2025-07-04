@@ -143,7 +143,7 @@ class CompileCommand(BaseCommand):
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
 
-        with open(archivo, "r") as f:
+        with open(archivo, "r", encoding="utf-8") as f:
             codigo = f.read()
         try:
             ast = obtener_ast(codigo)
