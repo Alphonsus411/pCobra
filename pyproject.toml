@@ -26,6 +26,7 @@ dependencies = [
     "agix==0.8.3",
     "holobit-sdk",
     "smooth-criminal",
+    "tomli",
 ]
 
 [project.urls]
