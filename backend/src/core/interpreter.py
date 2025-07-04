@@ -43,6 +43,15 @@ from src.core.semantic_validators import (
 )
 from src.cobra.semantico import AnalizadorSemantico
 from src.core.qualia_bridge import register_execution
+from src.core.cobra_config import (
+    limite_nodos,
+    limite_memoria_mb,
+    limite_cpu_segundos,
+)
+from src.core.resource_limits import (
+    limitar_memoria_mb as _lim_mem,
+    limitar_cpu_segundos as _lim_cpu,
+)
 
 # Ruta de los módulos instalados junto con una lista blanca opcional.
 MODULES_PATH = os.path.abspath(
@@ -152,7 +161,35 @@ class InterpretadorCobra:
                 return True
         return False
 
+    @staticmethod
+    def _contar_nodos(ast):
+        total = 0
+        pila = list(ast)
+        while pila:
+            nodo = pila.pop()
+            total += 1
+            for val in getattr(nodo, '__dict__', {}).values():
+                if isinstance(val, list):
+                    for elem in val:
+                        if hasattr(elem, '__dict__'):
+                            pila.append(elem)
+                elif hasattr(val, '__dict__'):
+                    pila.append(val)
+        return total
+
     def ejecutar_ast(self, ast):
+        total = self._contar_nodos(ast)
+        max_nodos = limite_nodos()
+        if total > max_nodos:
+            raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
+
+        mem = limite_memoria_mb()
+        if mem:
+            _lim_mem(mem)
+        cpu = limite_cpu_segundos()
+        if cpu:
+            _lim_cpu(cpu)
+
         ast = remove_dead_code(inline_functions(optimize_constants(ast)))
         register_execution(str(ast))
         AnalizadorSemantico().analizar(ast)
