@@ -1,11 +1,8 @@
-from src.core.ast_nodes import NodoAtributo
+from ...semantica import datos_asignacion
 
 def visit_asignacion(self, nodo):
-    nombre_raw = getattr(nodo, "identificador", getattr(nodo, "variable", None))
-    valor = getattr(nodo, "expresion", getattr(nodo, "valor", None))
-    if isinstance(nombre_raw, NodoAtributo):
-        nombre = self.obtener_valor(nombre_raw)
-        self.agregar_linea(f"{nombre} = {self.obtener_valor(valor)};")
+    nombre, valor, es_attr = datos_asignacion(self, nodo)
+    if es_attr:
+        self.agregar_linea(f"{nombre} = {valor};")
     else:
-        nombre = nombre_raw
-        self.agregar_linea(f"let {nombre} = {self.obtener_valor(valor)};")
+        self.agregar_linea(f"let {nombre} = {valor};")
