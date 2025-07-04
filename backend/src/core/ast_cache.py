@@ -1,9 +1,29 @@
 import os
 import hashlib
 import pickle
+import sys
 
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
+from src.cobra.lexico.lexer import Lexer
+from src.cobra.parser.parser import Parser
+
+
+class SafeUnpickler(pickle.Unpickler):
+    """Deserializador seguro que limita los módulos y clases permitidos."""
+
+    # Módulos de los que se permitirá cargar clases
+    ALLOWED_MODULES = {
+        "src.core.ast_nodes",
+        "src.cobra.lexico.lexer",
+        "builtins",
+    }
+
+    def find_class(self, module: str, name: str):
+        if module not in self.ALLOWED_MODULES:
+            raise pickle.UnpicklingError(
+                f"Importación no permitida: {module}.{name}"
+            )
+        __import__(module)
+        return getattr(sys.modules[module], name)
 
 # Directorio donde se almacenará el cache de AST. Puede modificarse con la
 # variable de entorno `COBRA_AST_CACHE`.
@@ -26,12 +46,16 @@ def obtener_ast(codigo: str):
 
     if os.path.exists(ruta):
         with open(ruta, "rb") as f:
-            return pickle.load(f)
+            # Cargamos únicamente archivos generados por Cobra mediante
+            # un unpickler que restringe los módulos permitidos.
+            return SafeUnpickler(f).load()
 
     tokens = Lexer(codigo).tokenizar()
     ast = Parser(tokens).parsear()
 
     with open(ruta, "wb") as f:
+        # Guardamos usando ``pickle.dump``. Solo se cargarán archivos
+        # generados por esta herramienta mediante ``SafeUnpickler``.
         pickle.dump(ast, f)
 
     return ast
