@@ -4,6 +4,7 @@ import hashlib
 import uuid
 
 
+# MD5 es inseguro para hashing criptográfico y se incluye sólo por compatibilidad
 def hash_md5(texto: str) -> str:
     """Devuelve el hash MD5 de *texto*."""
     return hashlib.md5(texto.encode("utf-8")).hexdigest()
