@@ -10,7 +10,10 @@ from backend.src.cobra.transpilers import module_map
 from backend.src.core.sandbox import validar_dependencias
 
 from backend.src.core.ast_cache import obtener_ast
-from backend.src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from backend.src.core.semantic_validators import (
+    PrimitivaPeligrosaError,
+    construir_cadena,
+)
 from backend.src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from backend.src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
@@ -114,7 +117,7 @@ class CompileCommand(BaseCommand):
         mod_info = module_map.get_toml_map()
         try:
             if getattr(args, "tipos", None):
-                langs = [t.strip() for t in args.tipos.split(',') if t.strip()]
+                langs = [t.strip() for t in args.tipos.split(",") if t.strip()]
                 for lang in langs:
                     validar_dependencias(lang, mod_info)
             else:
@@ -132,12 +135,14 @@ class CompileCommand(BaseCommand):
                 nodo.aceptar(validador)
 
             if getattr(args, "tipos", None):
-                lenguajes = [t.strip() for t in args.tipos.split(',') if t.strip()]
+                lenguajes = [t.strip() for t in args.tipos.split(",") if t.strip()]
                 for l in lenguajes:
                     if l not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
                 with multiprocessing.Pool(processes=len(lenguajes)) as pool:
-                    resultados = pool.map(self._ejecutar_transpilador, [(l, ast) for l in lenguajes])
+                    resultados = pool.map(
+                        self._ejecutar_transpilador, [(l, ast) for l in lenguajes]
+                    )
                 for lang, nombre, resultado in resultados:
                     mostrar_info(
                         _("Código generado ({nombre}) para {lang}:").format(
