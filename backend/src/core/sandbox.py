@@ -35,20 +35,35 @@ def ejecutar_en_sandbox(codigo: str) -> str:
 
 
 def ejecutar_en_sandbox_js(codigo: str) -> str:
-    """Ejecuta código JavaScript de forma aislada usando Node."""
-    script = f"""
+    """Ejecuta código JavaScript de forma aislada usando Node.
+
+    El código se serializa para evitar inyección de comandos cuando se pasa a
+    la opción ``-e`` de Node.
+    """
+    import json
+    import os
+
+    codigo_serializado = json.dumps(codigo)
+    script = r"""
 const vm = require('vm');
 let output = '';
-const console = {{ log: (msg) => {{ output += String(msg) + '\n'; }} }};
-vm.runInNewContext(`{codigo}`, {{ console }});
+const console = { log: (msg) => { output += String(msg) + '\n'; } };
+const codigo = CODE;
+vm.runInNewContext(codigo, { console });
 process.stdout.write(output);
-"""
-    proc = subprocess.run([
-        "node",
-        "-e",
-        script,
-    ], capture_output=True, text=True, check=True)
-    return proc.stdout
+""".replace("CODE", codigo_serializado)
+
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as tmp:
+        tmp.write(script)
+        tmp_path = tmp.name
+
+    try:
+        proc = subprocess.run(
+            ["node", tmp_path], capture_output=True, text=True, check=True
+        )
+        return proc.stdout
+    finally:
+        os.unlink(tmp_path)
 
 
 def compilar_en_sandbox_cpp(codigo: str) -> str:
