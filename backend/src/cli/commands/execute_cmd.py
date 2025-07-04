@@ -3,7 +3,11 @@ import os
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from backend.src.core.sandbox import ejecutar_en_sandbox, validar_dependencias
+from backend.src.core.sandbox import (
+    ejecutar_en_sandbox,
+    ejecutar_en_contenedor,
+    validar_dependencias,
+)
 from backend.src.cobra.transpilers import module_map
 
 from backend.src.core.interpreter import InterpretadorCobra
@@ -25,6 +29,11 @@ class ExecuteCommand(BaseCommand):
             action="store_true",
             help=_("Ejecuta el código en una sandbox"),
         )
+        parser.add_argument(
+            "--contenedor",
+            choices=["python", "js", "cpp", "rust"],
+            help=_("Ejecuta el código en un contenedor Docker"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -35,6 +44,7 @@ class ExecuteCommand(BaseCommand):
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
         sandbox = getattr(args, "sandbox", False)
+        contenedor = getattr(args, "contenedor", None)
 
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
@@ -62,6 +72,17 @@ class ExecuteCommand(BaseCommand):
             except Exception as e:
                 logging.error(f"Error ejecutando en sandbox: {e}")
                 mostrar_error(f"Error ejecutando en sandbox: {e}")
+                return 1
+
+        if contenedor:
+            try:
+                salida = ejecutar_en_contenedor(codigo, contenedor)
+                if salida:
+                    mostrar_info(str(salida))
+                return 0
+            except Exception as e:
+                logging.error(f"Error ejecutando en contenedor Docker: {e}")
+                mostrar_error(f"Error ejecutando en contenedor Docker: {e}")
                 return 1
 
         tokens = Lexer(codigo).tokenizar()
