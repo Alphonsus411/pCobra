@@ -20,6 +20,8 @@ class ValidadorPrimitivaPeligrosa(ValidadorBase):
         "existe",
         "eliminar",
         "enviar_post",
+        "ejecutar",
+        "listar_dir",
     }
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
