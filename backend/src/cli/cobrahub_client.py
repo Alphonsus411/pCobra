@@ -7,8 +7,18 @@ from .utils.messages import mostrar_info, mostrar_error
 COBRAHUB_URL = os.environ.get("COBRAHUB_URL", "https://cobrahub.example.com/api")
 
 
+def _validar_url() -> bool:
+    """Verifica que la URL de CobraHub sea segura."""
+    if not COBRAHUB_URL.startswith("https://"):
+        mostrar_error(_("COBRAHUB_URL debe empezar con https://"))
+        return False
+    return True
+
+
 def publicar_modulo(ruta: str) -> bool:
     """Publica un archivo .co en CobraHub."""
+    if not _validar_url():
+        return False
     if not os.path.exists(ruta):
         mostrar_error(_("No se encontró el módulo {path}").format(path=ruta))
         return False
@@ -29,6 +39,8 @@ def publicar_modulo(ruta: str) -> bool:
 
 def descargar_modulo(nombre: str, destino: str) -> bool:
     """Descarga un módulo de CobraHub y lo guarda en destino."""
+    if not _validar_url():
+        return False
     try:
         response = requests.get(
             f"{COBRAHUB_URL}/modulos/{nombre}",
