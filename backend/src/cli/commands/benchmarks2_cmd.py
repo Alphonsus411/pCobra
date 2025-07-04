@@ -6,7 +6,16 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-import resource
+try:
+    import resource
+except ImportError:  # pragma: no cover - Windows
+    resource = None  # type: ignore
+    try:  # fallback for memory measurement
+        import psutil  # type: ignore
+    except Exception:  # pragma: no cover - psutil not installed
+        psutil = None  # type: ignore
+else:
+    psutil = None  # type: ignore
 
 from .base import BaseCommand
 from ..i18n import _
@@ -23,13 +32,35 @@ imprimir(x)
 
 def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve (tiempo_en_segundos, memoria_en_kb)."""
-    start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-    start_time = time.perf_counter()
-    subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    elapsed = time.perf_counter() - start_time
-    end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-    mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
-    return elapsed, mem_kb
+    if resource is not None:
+        start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        start_time = time.perf_counter()
+        subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        elapsed = time.perf_counter() - start_time
+        end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
+        return elapsed, mem_kb
+    else:  # pragma: no cover - resource not available
+        if psutil is not None:
+            start_time = time.perf_counter()
+            proc = psutil.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)  # type: ignore
+            max_mem = 0
+            while proc.poll() is None:
+                try:
+                    mem = proc.memory_info().rss  # type: ignore
+                    max_mem = max(max_mem, mem)
+                except Exception:  # pragma: no cover - process ended
+                    break
+                time.sleep(0.05)
+            proc.wait()
+            elapsed = time.perf_counter() - start_time
+            mem_kb = max_mem // 1024
+            return elapsed, mem_kb
+        else:
+            start_time = time.perf_counter()
+            subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            elapsed = time.perf_counter() - start_time
+            return elapsed, 0
 
 
 class BenchmarksV2Command(BaseCommand):

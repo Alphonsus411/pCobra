@@ -27,6 +27,26 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
         assert isinstance(d["memory_kb"], int)
 
 
+@pytest.mark.timeout(20)
+def test_benchmarks2_without_resource(tmp_path, monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
+    import src.cli.commands.benchmarks2_cmd as b2
+    monkeypatch.setattr(b2, "resource", None)
+
+    def fake_run(self, args):
+        elapsed, mem = b2.run_and_measure([sys.executable, "-c", "print('ok')"])
+        data = json.dumps([{"modo": "cobra", "time": elapsed, "memory_kb": mem}], indent=2)
+        Path(args.output).write_text(data)
+        return 0
+
+    monkeypatch.setattr(b2.BenchmarksV2Command, "run", fake_run)
+    salida = tmp_path / "res.json"
+    main(["benchmarks2", "--output", str(salida)])
+    data = json.loads(salida.read_text())
+    assert data[0]["modo"] == "cobra"
+    assert isinstance(data[0]["memory_kb"], int)
+
+
 @pytest.mark.timeout(60)
 def test_benchmarks_generates_data_for_all_backends(tmp_path, monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
