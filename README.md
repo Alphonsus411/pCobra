@@ -26,6 +26,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - [Comunidad](docs/comunidad.md)
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
+- [Manual de Cobra en formato reStructuredText](docs/MANUAL_COBRA.rst)
 - [Guía básica](docs/guia_basica.md)
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Cheatsheet](docs/cheatsheet.tex) – compílalo a PDF con LaTeX
@@ -55,7 +56,7 @@ Luego selecciona el archivo desde la interfaz web de Jupyter.
 ## Descripción del Proyecto
 
 Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible. A través de su lexer, parser y transpiladores, Cobra puede analizar, ejecutar y convertir código a otros lenguajes, brindando soporte para variables, funciones, estructuras de control y estructuras de datos como listas, diccionarios y clases.
-Para un tutorial paso a paso consulta [Manual de Cobra](MANUAL_COBRA.md).
+Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
 
 ## Instalación
 
