@@ -19,4 +19,3 @@ Utiliza el siguiente enlace permanente para acceder al servidor: [Invitación a 
 - Las convocatorias se anuncian en nuestro nuevo canal de **Telegram**.
 - También publicamos novedades en la cuenta oficial de **Twitter**.
 
-Para más información sobre el próximo hackathon consulta [evento_hackathon.md](evento_hackathon.md).
