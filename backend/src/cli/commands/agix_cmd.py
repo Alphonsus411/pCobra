@@ -24,7 +24,7 @@ class AgixCommand(BaseCommand):
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
             return 1
-        with open(archivo, "r") as f:
+        with open(archivo, "r", encoding="utf-8") as f:
             codigo = f.read()
         sugerencias = generar_sugerencias(codigo)
         for s in sugerencias:

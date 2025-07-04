@@ -42,7 +42,7 @@ class DependenciasCommand(BaseCommand):
         if not os.path.exists(archivo):
             mostrar_error(_("No se encontró requirements.txt"))
             return 1
-        with open(archivo, "r") as f:
+        with open(archivo, "r", encoding="utf-8") as f:
             deps = [l.strip() for l in f if l.strip() and not l.startswith("#")]
         if not deps:
             mostrar_info(_("No hay dependencias listadas"))
