@@ -32,6 +32,9 @@ dependencies = [
 Documentation = "https://github.com/Alphonsus411/pCobra#readme"
 Source = "https://github.com/Alphonsus411/pCobra"
 
+[project.optional-dependencies]
+mutation = ["mutpy>=0.6.1"]
+
 [tool.setuptools]
 package-dir = {"" = "backend/src"}
 
