@@ -104,3 +104,16 @@ Puedes anteponer `@` a una función para modificar su comportamiento con un deco
 - Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en ensamblador generan instrucciones `WHILE` y `FOR`.
 - La construcción `holobit` se traduce a `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust y `holobit({...})` en C++, mientras que en Ruby utiliza `Holobit.new([...])` y en PHP `new Holobit([...])`.
 
+Activar el parser de Lark
+-------------------------
+
+Si deseas utilizar el parser alternativo implementado con ``Lark`` establece la variable
+de entorno ``COBRA_PARSER`` a ``lark`` antes de ejecutar Cobra:
+
+.. code-block:: bash
+
+   export COBRA_PARSER=lark
+   cobra ejecutar programa.co
+
+Si no defines esta variable se seguirá empleando el parser tradicional.
+

@@ -44,7 +44,7 @@ from src.core.ast_nodes import (
     NodoCase,
 )
 
-from backend.src.core import NodoYield
+from src.core import NodoYield
 
 # Palabras reservadas que no pueden usarse como identificadores
 PALABRAS_RESERVADAS = {
@@ -103,7 +103,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 
-class Parser:
+class ClassicParser:
     """Convierte una lista de tokens en nodos del AST."""
 
     def __init__(self, tokens):
@@ -772,7 +772,7 @@ class Parser:
             cuerpo_tokens.append(token)
             self.avanzar()
         self.comer(TipoToken.RBRACE)
-        cuerpo_parser = Parser(cuerpo_tokens + [Token(TipoToken.EOF, None)])
+        cuerpo_parser = ClassicParser(cuerpo_tokens + [Token(TipoToken.EOF, None)])
         cuerpo = cuerpo_parser.parsear()
         return NodoMacro(nombre, cuerpo)
 
@@ -1012,3 +1012,13 @@ class Parser:
     def ast_to_json(self, nodo):
         """Exporta el AST a un formato JSON para depuración o visualización."""
         return json.dumps(nodo, default=lambda o: o.__dict__, indent=4)
+
+
+# Permitir seleccionar un parser alternativo basado en Lark mediante la variable
+# de entorno ``COBRA_PARSER``. Si su valor es ``"lark"`` se cargará
+# ``LarkParser`` en lugar del parser clásico.
+import os
+if os.getenv("COBRA_PARSER") == "lark":
+    from .lark_parser import LarkParser as Parser
+else:
+    Parser = ClassicParser
