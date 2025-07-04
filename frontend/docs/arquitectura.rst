@@ -68,6 +68,10 @@ Interacción de los módulos
 El flujo típico comienza con el ``Lexer`` que lee el código fuente y produce tokens. Estos tokens son consumidos por el ``Parser`` para construir el AST. A partir de este árbol el ``Intérprete`` ejecuta cada nodo o, alternativamente, los transpiladores lo recorren para generar código en otros lenguajes. Cuando se activa el modo seguro se aplica una cadena de validadores (ver :doc:`modo_seguro`) antes de ejecutar o transpilar, bloqueando operaciones peligrosas.
 
 
+Patrones de diseño
+------------------
+Cobra implementa diversos patrones para mantener su arquitectura flexible. El AST se recorre con el patrón *Visitor*, los transpiladores se obtienen desde la fábrica ``TRANSPILERS`` y los plugins de la CLI siguen el patrón *Command*. Consulta :doc:`design_patterns` para conocer los detalles.
+
 Reporte de errores léxicos
 --------------------------
 El lexer genera tokens mientras mantiene un conteo de línea y columna.

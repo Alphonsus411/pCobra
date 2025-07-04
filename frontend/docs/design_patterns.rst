@@ -87,3 +87,14 @@ asignan dinámicamente las funciones ``visit_<nodo>``:
 
 Otros lenguajes como C++ realizan asignaciones equivalentes de forma
 explícita para mantener separada la lógica de cada nodo.
+
+Patr\u00f3n Command
+-----------------
+Los subcomandos que ampl\u00edan la CLI se implementan siguiendo el patr\u00f3n
+*Command*. Cada plugin define una clase derivada de ``PluginCommand`` que
+registra sus argumentos en ``register_subparser`` y ejecuta la l\u00f3gica en
+``run``. Durante el arranque, Cobra localiza estas clases a trav\u00e9s de los
+``entry_points`` del grupo ``cobra.plugins`` y las instancia de manera
+segura. As\u00ed se a\u00f1aden nuevas funcionalidades sin acoplar el n\u00facleo a
+c\u00f3digo espec\u00edfico de cada plugin.
+
