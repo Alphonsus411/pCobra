@@ -102,3 +102,21 @@ Luego lanza el análisis:
 
 Se recomienda alcanzar un porcentaje de detección de mutantes de al
 menos 70 %.
+
+Benchmark de transpiladores
+---------------------------
+
+Para medir la velocidad de cada transpilador puedes ejecutar ``cobra
+benchtranspilers``. Este comando genera programas pequeños, medianos y
+grandes y calcula el tiempo que tarda cada transpilador en producir el
+código de salida.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra benchtranspilers --output transpilers.json
+
+El archivo resultante es una lista de objetos con las claves
+``size`` (tamaño del programa), ``lang`` (lenguaje de salida) y
+``time`` (segundos de ejecución).

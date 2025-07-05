@@ -202,6 +202,18 @@ Ejemplo:
 
    cobra benchmarks --output resultados.json
 
+Subcomando ``benchtranspilers``
+------------------------------
+Mide la velocidad de los distintos transpiladores generando programas de
+tamaño pequeño, mediano y grande. Los tiempos se muestran en formato
+JSON y opcionalmente pueden guardarse con ``--output``.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra benchtranspilers --output transpilers.json
+
 Subcomando ``profile``
 ----------------------
 Ejecuta un archivo Cobra bajo ``cProfile``. Muestra en pantalla las
