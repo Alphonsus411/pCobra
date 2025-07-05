@@ -20,9 +20,11 @@ jobs:
           pip install sphinx sphinx-rtd-theme
       - name: Build docs
         run: sphinx-build -b html frontend/docs frontend/build/html
+      - name: Build root docs
+        run: sphinx-build -b html docs docs/_build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: frontend/build/html
+          publish_dir: docs/_build
           publish_branch: gh-pages
