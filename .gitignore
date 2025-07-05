@@ -10,6 +10,7 @@ frontend/vscode/node_modules/
 
 # Build directory for Sphinx documentation
 docs/_build/
+docs/*.png
 
 # Coverage reports
 .coverage
