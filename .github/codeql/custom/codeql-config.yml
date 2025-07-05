@@ -1,0 +1,6 @@
+name: "Custom CodeQL config"
+paths:
+  - backend
+  - frontend
+queries:
+  - uses: custom/*.ql
