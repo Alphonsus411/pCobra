@@ -672,6 +672,18 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   issues y preparar pull requests.
 - Para proponer nuevas extensiones consulta [frontend/docs/rfc_plugins.rst](frontend/docs/rfc_plugins.rst).
 
+## Dependabot y seguridad
+
+Este repositorio cuenta con [Dependabot](.github/dependabot.yml) para mantener
+actualizadas las dependencias de Python y las acciones de GitHub. Cada semana se
+crean PR automáticos contra la rama `master` con las versiones más recientes.
+
+Además, en el flujo de CI se incluye un paso de **safety check** que revisa la
+lista de paquetes instalados en busca de vulnerabilidades conocidas. Si se
+detecta alguna, la acción devolverá un reporte detallado y el trabajo fallará.
+Consulta el log del paso "Seguridad de dependencias" para ver los paquetes
+afectados y las recomendaciones de actualización.
+
 ## Comunidad
 
 Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo. Puedes unirte mediante este enlace permanente: [Enlace de invitación](https://discord.gg/placeholder).
