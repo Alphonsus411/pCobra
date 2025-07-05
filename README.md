@@ -18,6 +18,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Ejemplo de Uso
 - Pruebas
 - Generar documentación
+- Análisis con CodeQL
 - [CobraHub](frontend/docs/cobrahub.rst)
 - Hitos y Roadmap
 - Contribuciones
@@ -646,6 +647,35 @@ Para aprender a desarrollar plugins revisa
 [`frontend/docs/plugin_dev.rst`](frontend/docs/plugin_dev.rst).
 Para conocer en detalle la interfaz disponible consulta
 [`frontend/docs/plugin_sdk.rst`](frontend/docs/plugin_sdk.rst).
+
+## Análisis con CodeQL
+
+Este proyecto cuenta con un workflow de GitHub Actions definido en
+`.github/workflows/codeql.yml`. Dicho flujo se ejecuta en cada *push* y
+*pull request*, inicializando CodeQL para el lenguaje Python y aplicando
+reglas personalizadas ubicadas en `.github/codeql/custom/`.
+
+Las reglas proporcionan comprobaciones adicionales sobre el AST y los
+transpiladores:
+
+- **ast-no-type-validation.ql** verifica que las clases de nodos cuyo
+  nombre empieza por `Nodo` incluyan validaciones de tipo en
+  `__post_init__`.
+- **missing-codegen-exception.ql** detecta métodos `generate_code` sin
+  manejo de excepciones.
+
+Para ejecutar el análisis de CodeQL de forma local puedes usar la CLI:
+
+```bash
+curl -L -o codeql.zip \
+  https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+unzip codeql.zip
+./codeql/codeql database create db-python --language=python --source-root=.
+./codeql/codeql database analyze db-python \
+  .github/codeql/custom/codeql-config.yml
+```
+
+Esto te permitirá validar los cambios antes de subirlos al repositorio.
 ## Hitos y Roadmap
 
 El proyecto avanza en versiones incrementales. Puedes consultar las tareas planeadas en [ROADMAP.md](ROADMAP.md).
