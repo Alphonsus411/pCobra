@@ -29,6 +29,10 @@ jobs:
           pip install -e .
           pip install sphinx sphinx-rtd-theme pytest-cov codecov
           pip install pyright
+      - name: Seguridad de dependencias
+        run: |
+          pip install safety
+          safety check --full-report
       - name: Run linters
         run: |
           black --check backend/src
