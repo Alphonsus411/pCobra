@@ -78,3 +78,18 @@ def test_transpilar_with():
     codigo = TranspiladorPython().generate_code([nodo])
     esperado = IMPORTS + "with recurso as r:\n    pass\n"
     assert codigo == esperado
+
+
+def test_parser_del_sin_expresion():
+    with pytest.raises(SyntaxError):
+        Parser(Lexer("eliminar").analizar_token()).parsear()
+
+
+def test_parser_global_sin_identificadores():
+    with pytest.raises(SyntaxError):
+        Parser(Lexer("global").analizar_token()).parsear()
+
+
+def test_parser_con_sin_fin():
+    with pytest.raises(SyntaxError):
+        Parser(Lexer("con x:").analizar_token()).parsear()

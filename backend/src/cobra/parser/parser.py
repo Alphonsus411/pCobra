@@ -686,6 +686,8 @@ class ClassicParser:
 
     def declaracion_global(self):
         self.comer(TipoToken.GLOBAL)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise SyntaxError("Se esperaba al menos un identificador después de 'global'")
         nombres = []
         while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
             nombres.append(self.token_actual().valor)
