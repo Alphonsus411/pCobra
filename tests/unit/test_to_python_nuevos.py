@@ -6,7 +6,7 @@ from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 def test_transpilar_afirmar():
     nodo = NodoAssert(NodoValor("True"))
-    codigo = TranspiladorPython().transpilar([nodo])
+    codigo = TranspiladorPython().generate_code([nodo])
     assert "assert True" in codigo
 
 

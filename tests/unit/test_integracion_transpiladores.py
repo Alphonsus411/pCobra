@@ -9,7 +9,7 @@ def test_integracion_python():
     codigo = "var x = 10"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
-    resultado = TranspiladorPython().transpilar(ast)
+    resultado = TranspiladorPython().generate_code(ast)
     esperado = "from src.core.nativos import *\nx = 10\n"
     assert resultado == esperado
 
@@ -18,7 +18,7 @@ def test_integracion_js():
     codigo = "var x = 10\nimprimir(x)"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
-    resultado = TranspiladorJavaScript().transpilar(ast)
+    resultado = TranspiladorJavaScript().generate_code(ast)
     esperado = (
         "import * as io from './nativos/io.js';\n"
         "import * as net from './nativos/io.js';\n"
@@ -34,7 +34,7 @@ def test_integracion_condicional_python():
     codigo = "var x = 10\nsi x > 5 :\n    imprimir(x)\nfin"
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
-    resultado = TranspiladorPython().transpilar(ast)
+    resultado = TranspiladorPython().generate_code(ast)
     esperado = (
         "from src.core.nativos import *\n"
         "x = 10\n"

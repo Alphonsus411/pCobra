@@ -8,7 +8,7 @@ def test_macro_python():
     codigo = "macro saludo { imprimir(1) } saludo()"
     tokens = Lexer(codigo).tokenizar()
     ast = Parser(tokens).parsear()
-    resultado = TranspiladorPython().transpilar(ast)
+    resultado = TranspiladorPython().generate_code(ast)
     assert resultado == "from src.core.nativos import *\nprint(1)\n"
 
 
@@ -16,5 +16,5 @@ def test_macro_cpp():
     codigo = "macro inc { var x = 10 } inc()"
     tokens = Lexer(codigo).tokenizar()
     ast = Parser(tokens).parsear()
-    resultado = TranspiladorCPP().transpilar(ast)
+    resultado = TranspiladorCPP().generate_code(ast)
     assert resultado == "auto x = 10;"

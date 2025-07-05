@@ -96,8 +96,8 @@ def test_transpiladores_operaciones():
     ]
     parser = Parser(tokens)
     expr = parser.parsear()[0]
-    py_code = TranspiladorPython().transpilar([expr])
-    js_code = TranspiladorJavaScript().transpilar([expr])
+    py_code = TranspiladorPython().generate_code([expr])
+    js_code = TranspiladorJavaScript().generate_code([expr])
     assert py_code == "from src.core.nativos import *\nTrue"
     assert js_code == (
         "import * as io from './nativos/io.js';\n"

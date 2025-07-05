@@ -18,9 +18,9 @@ def test_transpiladores_retorno():
     func = NodoFuncion("valor", [], [nodo_ret])
 
     py = TranspiladorPython()
-    codigo_py = py.transpilar([func])
+    codigo_py = py.generate_code([func])
     assert "return 7" in codigo_py
 
     js = TranspiladorJavaScript()
-    codigo_js = js.transpilar([func])
+    codigo_js = js.generate_code([func])
     assert "return 7;" in codigo_js

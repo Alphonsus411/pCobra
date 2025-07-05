@@ -41,7 +41,7 @@ def test_import_transpiler(tmp_path):
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
 
-    py_code = TranspiladorPython().transpilar(ast)
+    py_code = TranspiladorPython().generate_code(ast)
     expected = (
         "from src.core.nativos import *\nvalor = 3\nprint(valor)\n"
     )

@@ -25,7 +25,7 @@ def test_transpilador_mapeo_python(tmp_path, monkeypatch):
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
 
-    resultado = TranspiladorPython().transpilar(ast)
+    resultado = TranspiladorPython().generate_code(ast)
     esperado = f"from src.core.nativos import *\n{py_out.read_text()}print(x)\n"
     assert resultado == esperado
 
@@ -47,7 +47,7 @@ def test_transpilador_mapeo_js(tmp_path, monkeypatch):
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
 
-    resultado = TranspiladorJavaScript().transpilar(ast)
+    resultado = TranspiladorJavaScript().generate_code(ast)
     esperado = (
         "import * as io from './nativos/io.js';\n"
         "import * as net from './nativos/io.js';\n"

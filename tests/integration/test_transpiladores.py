@@ -5,5 +5,5 @@ from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPytho
 
 def test_transpilador_python_generacion():
     ast = [NodoImprimir(NodoValor("'hola'"))]
-    codigo = TranspiladorPython().transpilar(ast)
+    codigo = TranspiladorPython().generate_code(ast)
     assert "print('hola')" in codigo

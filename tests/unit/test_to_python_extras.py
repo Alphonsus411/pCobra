@@ -20,7 +20,7 @@ def test_transpilar_try_catch_throw():
         "e",
         [NodoImprimir(NodoIdentificador("e"))],
     )
-    codigo = TranspiladorPython().transpilar([nodo])
+    codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
         IMPORTS
         "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
@@ -32,14 +32,14 @@ def test_transpilar_import(tmp_path):
     mod = tmp_path / "mod.co"
     mod.write_text("var dato = 5")
     nodo = NodoImport(str(mod))
-    codigo = TranspiladorPython().transpilar([nodo])
+    codigo = TranspiladorPython().generate_code([nodo])
     esperado = IMPORTS + "dato = 5\n"
     assert codigo == esperado
 
 
 def test_transpilar_usar():
     nodo = NodoUsar("math")
-    codigo = TranspiladorPython().transpilar([nodo])
+    codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
         IMPORTS
         "from src.cobra.usar_loader import obtener_modulo\n"

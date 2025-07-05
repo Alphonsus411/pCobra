@@ -20,7 +20,7 @@ def test_parser_pasar():
 def test_transpilar_pasar_python():
     nodo = NodoPasar()
     t = TranspiladorPython()
-    resultado = t.transpilar([nodo])
+    resultado = t.generate_code([nodo])
     esperado = "from src.core.nativos import *\npass\n"
     assert resultado == esperado
 
@@ -28,7 +28,7 @@ def test_transpilar_pasar_python():
 def test_transpilar_pasar_js():
     nodo = NodoPasar()
     t = TranspiladorJavaScript()
-    resultado = t.transpilar([nodo])
+    resultado = t.generate_code([nodo])
     esperado = (
         "import * as io from './nativos/io.js';\n"
         "import * as net from './nativos/io.js';\n"

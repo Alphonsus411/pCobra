@@ -21,7 +21,7 @@ from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 def test_transpilador_asignacion():
     ast = [NodoAsignacion("x", NodoValor(10))]
     transpilador = TranspiladorPython()
-    resultado = transpilador.transpilar(ast)
+    resultado = transpilador.generate_code(ast)
     esperado = IMPORTS + "x = 10\n"
     assert resultado == esperado
 
@@ -35,7 +35,7 @@ def test_transpilador_condicional():
         )
     ]
     transpilador = TranspiladorPython()
-    resultado = transpilador.transpilar(ast)
+    resultado = transpilador.generate_code(ast)
     esperado = (
         IMPORTS
         "if x > 5:\n    y = 2\nelse:\n    y = 3\n"
@@ -50,7 +50,7 @@ def test_transpilador_mientras():
         )
     ]
     transpilador = TranspiladorPython()
-    resultado = transpilador.transpilar(ast)
+    resultado = transpilador.generate_code(ast)
     esperado = (
         IMPORTS + "while x > 0:\n    x = x - 1\n"
     )
@@ -66,7 +66,7 @@ def test_transpilador_funcion():
         )
     ]
     transpilador = TranspiladorPython()
-    resultado = transpilador.transpilar(ast)
+    resultado = transpilador.generate_code(ast)
     esperado = (
         IMPORTS
         "def miFuncion(a, b):\n    x = a + b\n"
@@ -77,7 +77,7 @@ def test_transpilador_funcion():
 def test_transpilador_llamada_funcion():
     ast = [NodoLlamadaFuncion("miFuncion", ["a", "b"])]
     transpilador = TranspiladorPython()
-    resultado = transpilador.transpilar(ast)
+    resultado = transpilador.generate_code(ast)
     esperado = IMPORTS + "miFuncion(a, b)\n"
     assert resultado == esperado
 
@@ -85,7 +85,7 @@ def test_transpilador_llamada_funcion():
 def test_transpilador_holobit():
     ast = [NodoHolobit("miHolobit", [0.8, -0.5, 1.2])]
     transpilador = TranspiladorPython()
-    resultado = transpilador.transpilar(ast)
+    resultado = transpilador.generate_code(ast)
     esperado = (
         IMPORTS + "miHolobit = holobit([0.8, -0.5, 1.2])\n"
     )
@@ -104,7 +104,7 @@ def test_transpilador_switch():
         )
     ]
     t = TranspiladorPython()
-    resultado = t.transpilar(ast)
+    resultado = t.generate_code(ast)
     esperado = (
         IMPORTS
         "match x:\n"
@@ -127,7 +127,7 @@ def test_transpilador_decoradores_anidados():
         [NodoImprimir(NodoValor("'hola'"))],
         [decor1, decor2],
     )
-    codigo = TranspiladorPython().transpilar([func])
+    codigo = TranspiladorPython().generate_code([func])
     esperado = (
         IMPORTS
         "@d1\n"
@@ -145,7 +145,7 @@ def test_transpilador_corutina_await():
         [NodoEsperar(NodoLlamadaFuncion("saluda", []))],
         asincronica=True,
     )
-    codigo = TranspiladorPython().transpilar([f1, f2])
+    codigo = TranspiladorPython().generate_code([f1, f2])
     esperado = (
         "import asyncio\n"
         IMPORTS
@@ -163,7 +163,7 @@ def test_transpilador_clase_compleja():
         asincronica=True,
     )
     clase = NodoClase("Hija", [metodo], ["Base1", "Base2"])
-    codigo = TranspiladorPython().transpilar([clase])
+    codigo = TranspiladorPython().generate_code([clase])
     esperado = (
         "import asyncio\n"
         IMPORTS
@@ -179,7 +179,7 @@ def test_decoradores_en_clase_y_metodo():
     metodo.decoradores = [decor]
     clase = NodoClase("C", [metodo])
     clase.decoradores = [decor]
-    codigo = TranspiladorPython().transpilar([clase])
+    codigo = TranspiladorPython().generate_code([clase])
     esperado = (
         "import asyncio\n"
         IMPORTS
@@ -193,5 +193,5 @@ def test_decoradores_en_clase_y_metodo():
 
 
 def test_imports_python_por_defecto():
-    codigo = TranspiladorPython().transpilar([])
+    codigo = TranspiladorPython().generate_code([])
     assert codigo == IMPORTS

@@ -41,7 +41,7 @@ def test_transpiler_python_async_exec():
         NodoFuncion('saluda', [], [NodoImprimir(NodoValor('1'))], asincronica=True),
         NodoFuncion('principal', [], [NodoEsperar(NodoLlamadaFuncion('saluda', []))], asincronica=True),
     ]
-    code = TranspiladorPython().transpilar(ast)
+    code = TranspiladorPython().generate_code(ast)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     patcher = patch('sys.stdout', new=StringIO())
@@ -59,7 +59,7 @@ def test_transpiler_js_async_exec(tmp_path):
         NodoFuncion('saluda', [], [NodoImprimir(NodoValor(1))], asincronica=True),
         NodoFuncion('principal', [], [NodoEsperar(NodoLlamadaFuncion('saluda', []))], asincronica=True),
     ]
-    code = TranspiladorJavaScript().transpilar(ast)
+    code = TranspiladorJavaScript().generate_code(ast)
     code = "\n".join(l for l in code.splitlines() if not l.startswith('import'))
     code += "\nprincipal();"
     archivo = tmp_path / 'async.js'
