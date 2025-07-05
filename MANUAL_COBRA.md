@@ -137,7 +137,7 @@ from cobra.parser.parser import Parser
 codigo = "imprimir('hola')"
 parser = Parser(codigo)
 arbol = parser.parsear()
-print(TranspiladorPython().transpilar(arbol))
+print(TranspiladorPython().generate_code(arbol))
 ```
 
 ### Características aún no soportadas

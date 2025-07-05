@@ -65,7 +65,7 @@ optimizar el rendimiento y evitar fugas de memoria.
  
 Interacción de los módulos
 -------------------------
-El flujo típico comienza con el ``Lexer`` que lee el código fuente y produce tokens. Estos tokens son consumidos por el ``Parser`` para construir el AST. A partir de este árbol el ``Intérprete`` ejecuta cada nodo o, alternativamente, los transpiladores lo recorren para generar código en otros lenguajes. Cuando se activa el modo seguro se aplica una cadena de validadores (ver :doc:`modo_seguro`) antes de ejecutar o transpilar, bloqueando operaciones peligrosas.
+El flujo típico comienza con el ``Lexer`` que lee el código fuente y produce tokens. Estos tokens son consumidos por el ``Parser`` para construir el AST. A partir de este árbol el ``Intérprete`` ejecuta cada nodo o, alternativamente, los transpiladores lo recorren para generar código en otros lenguajes. Cuando se activa el modo seguro se aplica una cadena de validadores (ver :doc:`modo_seguro`) antes de ejecutar o generar código, bloqueando operaciones peligrosas.
 
 
 Patrones de diseño
