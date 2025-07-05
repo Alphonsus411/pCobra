@@ -43,6 +43,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    instalacion_pypi
    primeros_pasos
    como_contribuir
+   ../../docs/contribucion
    entorno_desarrollo
    qualia
    jupyter
