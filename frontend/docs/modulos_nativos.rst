@@ -113,6 +113,6 @@ Tiempo
 
    dormir(1)
 
-Estas funciones se importan automaticamente al transpilar tanto a Python
-como a JavaScript, por lo que pueden utilizarse directamente en el
+Estas funciones se importan automaticamente al generar código para Python
+y JavaScript, por lo que pueden utilizarse directamente en el
 codigo Cobra.

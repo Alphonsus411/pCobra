@@ -67,12 +67,12 @@ agregan al diccionario al iniciar el comando.
        TRANSPILERS[ep.name] = cls
 
 Cuando se solicita un lenguaje, se instancia la clase correspondiente y se
-llama a ``transpilar`` sobre el AST:
+llama a ``generate_code`` sobre el AST:
 
 .. code-block:: python
 
    transp = TRANSPILERS[lang]()
-   codigo = transp.transpilar(ast)
+   codigo = transp.generate_code(ast)
 
 Cada transpilador hereda de ``NodeVisitor`` e inyecta las funciones de
 visita desde módulos específicos. Por ejemplo, en el backend de Go se

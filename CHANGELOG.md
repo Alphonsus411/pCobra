@@ -2,6 +2,7 @@
 - Actualización mayor del lenguaje Cobra y de las herramientas de desarrollo.
 - Documentación reorganizada con nuevos ejemplos.
 - Integración de procesos de lanzamiento automatizados a través de GitHub Actions.
+- Los transpiladores exponen el método `generate_code` y permiten guardar el resultado con `save_file`.
 
 ## v5.6.3 - 2025-07-02
 - Cambios pendientes.
