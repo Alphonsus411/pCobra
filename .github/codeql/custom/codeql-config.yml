@@ -4,3 +4,4 @@ paths:
   - frontend
 queries:
   - uses: custom/*.ql
+  - uses: custom/missing-codegen-exception.ql
