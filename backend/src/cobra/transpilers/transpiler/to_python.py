@@ -244,5 +244,6 @@ TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del
 TranspiladorPython.visit_global = visit_global
 TranspiladorPython.visit_nolocal = visit_nolocal
+TranspiladorPython.visit_no_local = visit_nolocal
 TranspiladorPython.visit_with = visit_with
 TranspiladorPython.visit_import_desde = visit_import_desde
