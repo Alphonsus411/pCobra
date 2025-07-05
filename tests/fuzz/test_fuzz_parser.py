@@ -39,7 +39,7 @@ def programas(draw):
 def test_fuzz_parser(programa: str):
     tokens = Lexer(programa).analizar_token()
     ast = Parser(tokens).parsear()
-    codigo_py = TranspiladorPython().transpilar(ast)
+    codigo_py = TranspiladorPython().generate_code(ast)
     # Eliminar importaciones globales que RestrictedPython no permite
     codigo_py = "\n".join(
         linea for linea in codigo_py.splitlines() if not linea.startswith("from ")

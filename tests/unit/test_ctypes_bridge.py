@@ -41,7 +41,7 @@ def test_ctypes_bridge_executes_function(tmp_path):
         ),
         NodoImprimir(NodoLlamadaFuncion("triple", [NodoValor(4)])),
     ]
-    code = TranspiladorPython().transpilar(ast)
+    code = TranspiladorPython().generate_code(ast)
     with patch("sys.stdout", new_callable=StringIO) as out:
         exec(code, {})
     assert out.getvalue().strip() == "12"

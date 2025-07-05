@@ -12,12 +12,12 @@ def _ast_inline():
 
 
 def test_inline_python_transpiler():
-    codigo = TranspiladorPython().transpilar(_ast_inline())
+    codigo = TranspiladorPython().generate_code(_ast_inline())
     assert codigo == "from src.core.nativos import *\nx = 1\n"
 
 
 def test_inline_js_transpiler():
-    codigo = TranspiladorJavaScript().transpilar(_ast_inline())
+    codigo = TranspiladorJavaScript().generate_code(_ast_inline())
     esperado = (
         "import * as io from './nativos/io.js';\n"
         "import * as net from './nativos/io.js';\n"

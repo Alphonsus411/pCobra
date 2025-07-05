@@ -16,7 +16,7 @@ from src.core.ast_nodes import (
 def test_transpilar_asignacion():
     nodo = NodoAsignacion("variable", NodoValor("10"))
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "variable = 10\n"
     assert result == esperado, "Error en la transpilaci\u00f3n de asignaci\u00f3n"
 
@@ -28,7 +28,7 @@ def test_transpilar_condicional():
         [NodoAsignacion("y", NodoValor("0"))],
     )
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
@@ -39,7 +39,7 @@ def test_transpilar_condicional():
 def test_transpilar_mientras():
     nodo = NodoBucleMientras("i < 10", [NodoAsignacion("i", NodoValor("i + 1"))])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS + "while i < 10:\n    i = i + 1\n"
     )
@@ -49,7 +49,7 @@ def test_transpilar_mientras():
 def test_transpilar_funcion():
     nodo = NodoFuncion("sumar", ["a", "b"], [NodoAsignacion("resultado", NodoValor("a + b"))])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "def sumar(a, b):\n    resultado = a + b\n"
@@ -60,7 +60,7 @@ def test_transpilar_funcion():
 def test_transpilar_llamada_funcion():
     nodo = NodoLlamadaFuncion("sumar", ["5", "3"])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "sumar(5, 3)\n"
     assert result == esperado, "Error en la transpilaci\u00f3n de llamada a funci\u00f3n"
 
@@ -68,6 +68,6 @@ def test_transpilar_llamada_funcion():
 def test_transpilar_holobit():
     nodo = NodoHolobit("miHolobit", [1, 2, 3])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "miHolobit = holobit([1, 2, 3])\n"
     assert result == esperado, "Error en la transpilaci\u00f3n de Holobit"

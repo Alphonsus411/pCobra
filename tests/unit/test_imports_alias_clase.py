@@ -30,7 +30,7 @@ def crear_ast():
 
 def test_transpilador_python_imports_alias_clase():
     ast = crear_ast()
-    resultado = TranspiladorPython().transpilar(ast)
+    resultado = TranspiladorPython().generate_code(ast)
     esperado = (
         "import asyncio\n"
         "from src.core.nativos import *\n"
@@ -55,7 +55,7 @@ IMPORTS = (
 
 def test_transpilador_js_imports_alias_clase():
     ast = crear_ast()
-    resultado = TranspiladorJavaScript().transpilar(ast)
+    resultado = TranspiladorJavaScript().generate_code(ast)
     esperado = IMPORTS + (
         "import { decorador as dec } from 'package.module';\n"
         "import { Base as B } from 'package2.module2';\n"

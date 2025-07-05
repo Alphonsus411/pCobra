@@ -32,7 +32,7 @@ def test_parser_romper_continuar():
 def test_transpilar_romper_python():
     nodo = NodoBucleMientras("i < 3", [NodoRomper()])
     t = TranspiladorPython()
-    resultado = t.transpilar([nodo])
+    resultado = t.generate_code([nodo])
     esperado = "from src.core.nativos import *\nwhile i < 3:\n    break\n"
     assert resultado == esperado
 
@@ -40,7 +40,7 @@ def test_transpilar_romper_python():
 def test_transpilar_continuar_js():
     nodo = NodoPara("x", NodoValor("datos"), [NodoContinuar()])
     t = TranspiladorJavaScript()
-    resultado = t.transpilar([nodo])
+    resultado = t.generate_code([nodo])
     esperado = (
         "import * as io from './nativos/io.js';\n"
         "import * as net from './nativos/io.js';\n"

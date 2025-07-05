@@ -36,13 +36,13 @@ def test_interpreter_hilo():
 
 def test_transpiler_python_hilo():
     ast = [NodoHilo(NodoLlamadaFuncion('tarea', []))]
-    code = TranspiladorPython().transpilar(ast)
+    code = TranspiladorPython().generate_code(ast)
     assert 'asyncio.create_task(tarea())' in code
 
 
 def test_transpiler_js_hilo():
     ast = [NodoHilo(NodoLlamadaFuncion('tarea', []))]
-    code = TranspiladorJavaScript().transpilar(ast)
+    code = TranspiladorJavaScript().generate_code(ast)
     assert 'Promise.resolve().then(() => tarea());' in code
 
 
@@ -84,7 +84,7 @@ def test_transpiled_python_hilos_exec():
         NodoHilo(NodoLlamadaFuncion('tarea', [NodoValor(1)])),
         NodoHilo(NodoLlamadaFuncion('tarea', [NodoValor(2)])),
     ]
-    code = TranspiladorPython().transpilar(ast)
+    code = TranspiladorPython().generate_code(ast)
     code = code.replace('def tarea(', 'async def tarea(')
     code = code.replace('asyncio.create_task', 'loop.create_task')
     loop = asyncio.new_event_loop()
@@ -105,7 +105,7 @@ def test_transpiled_js_hilos_exec(tmp_path):
         NodoHilo(NodoLlamadaFuncion('tarea', [])),
         NodoHilo(NodoLlamadaFuncion('tarea', [])),
     ]
-    code = TranspiladorJavaScript().transpilar(ast)
+    code = TranspiladorJavaScript().generate_code(ast)
     code = "\n".join(l for l in code.splitlines() if not l.startswith('import'))
     archivo = tmp_path / 'script.js'
     archivo.write_text(code)

@@ -64,7 +64,7 @@ def test_transpiler_python_try_catch():
         [NodoImprimir(NodoIdentificador("e"))],
     )
     tr = TranspiladorPython()
-    codigo = tr.transpilar([nodo])
+    codigo = tr.generate_code([nodo])
     esperado = "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
     assert codigo == esperado
 
@@ -76,7 +76,7 @@ def test_transpiler_js_try_catch():
         [NodoImprimir(NodoIdentificador("e"))],
     )
     tr = TranspiladorJavaScript()
-    codigo = tr.transpilar([nodo])
+    codigo = tr.generate_code([nodo])
     esperado = "try {\nthrow 1;\n}\ncatch (e) {\nconsole.log(e);\n}"
     assert codigo == esperado
 

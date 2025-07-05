@@ -102,7 +102,7 @@ def test_cross_backend_output(tmp_path):
         diferencias = {}
         for lang in TRANSPILERS:
             try:
-                codigo = TRANSPILERS[lang]().transpilar(ast)
+                codigo = TRANSPILERS[lang]().generate_code(ast)
             except NotImplementedError as e:
                 diferencias[lang] = f"Error: {e}"
                 continue

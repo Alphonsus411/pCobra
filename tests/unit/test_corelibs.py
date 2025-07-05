@@ -102,8 +102,8 @@ def test_transpile_texto():
         NodoLlamadaFuncion('invertir', [NodoValor("'abc'")]),
         NodoLlamadaFuncion('concatenar', [NodoValor("'a'"), NodoValor("'b'")]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "mayusculas('hola')\n"
@@ -129,8 +129,8 @@ def test_transpile_numero():
         NodoLlamadaFuncion('factorial', [NodoValor(3)]),
         NodoLlamadaFuncion('promedio', [NodoValor('[1,2]')]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "es_par(2)\n"
@@ -156,8 +156,8 @@ def test_transpile_archivo():
         NodoLlamadaFuncion('existe', [NodoValor("'f.txt'")]),
         NodoLlamadaFuncion('eliminar', [NodoValor("'f.txt'")]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "leer('f.txt')\n"
@@ -182,8 +182,8 @@ def test_transpile_tiempo():
         NodoLlamadaFuncion('formatear', [NodoValor('fecha'), NodoValor("'%Y'")]),
         NodoLlamadaFuncion('dormir', [NodoValor(1)]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "ahora()\n"
@@ -207,8 +207,8 @@ def test_transpile_coleccion():
         NodoLlamadaFuncion('minimo', [NodoValor('[1,2]')]),
         NodoLlamadaFuncion('sin_duplicados', [NodoValor('[1,1]')]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "ordenar([3,1])\n"
@@ -233,8 +233,8 @@ def test_transpile_seguridad():
         NodoLlamadaFuncion('hash_sha256', [NodoValor("'a'")]),
         NodoLlamadaFuncion('generar_uuid', []),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "hash_md5('a')\n"
@@ -256,8 +256,8 @@ def test_transpile_red():
         NodoLlamadaFuncion('obtener_url', [NodoValor("'http://x'")]),
         NodoLlamadaFuncion('enviar_post', [NodoValor("'http://x'"), NodoValor('{"a":1}')]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "obtener_url('http://x')\n"
@@ -279,8 +279,8 @@ def test_transpile_sistema():
         NodoLlamadaFuncion('obtener_env', [NodoValor("'PATH'")]),
         NodoLlamadaFuncion('listar_dir', [NodoValor("'.'")]),
     ]
-    py = TranspiladorPython().transpilar(ast)
-    js = TranspiladorJavaScript().transpilar(ast)
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
         + "obtener_os()\n"

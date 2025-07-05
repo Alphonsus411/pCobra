@@ -7,9 +7,9 @@ from src.core.ast_nodes import NodoAsignacion, NodoBucleMientras, NodoValor
 def test_asignacion_compartida():
     ast = [NodoAsignacion("x", NodoValor(1))]
     resultados = [
-        TranspiladorPython().transpilar(ast),
-        TranspiladorJavaScript().transpilar(ast),
-        TranspiladorC().transpilar(ast),
+        TranspiladorPython().generate_code(ast),
+        TranspiladorJavaScript().generate_code(ast),
+        TranspiladorC().generate_code(ast),
     ]
     for codigo in resultados:
         assert "x" in codigo
@@ -19,9 +19,9 @@ def test_asignacion_compartida():
 def test_bucle_mientras_compartido():
     ast = [NodoBucleMientras("x > 0", [NodoAsignacion("x", NodoValor("x - 1"))])]
     resultados = [
-        TranspiladorPython().transpilar(ast),
-        TranspiladorJavaScript().transpilar(ast),
-        TranspiladorC().transpilar(ast),
+        TranspiladorPython().generate_code(ast),
+        TranspiladorJavaScript().generate_code(ast),
+        TranspiladorC().generate_code(ast),
     ]
     for codigo in resultados:
         assert "x" in codigo

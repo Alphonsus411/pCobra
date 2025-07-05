@@ -12,7 +12,7 @@ from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 def test_transpilar_funcion_con_decorador():
     decorador = NodoDecorador(NodoIdentificador("decor"))
     func = NodoFuncion("saluda", [], [NodoImprimir(NodoValor("'hola'"))], [decorador])
-    codigo = TranspiladorPython().transpilar([func])
+    codigo = TranspiladorPython().generate_code([func])
     esperado = (
         "from src.core.nativos import *\n"
         "@decor\n"
@@ -23,7 +23,7 @@ def test_transpilar_funcion_con_decorador():
 
 def test_transpilar_funcion_con_yield():
     func = NodoFuncion("generador", [], [NodoYield(NodoValor(1))])
-    codigo = TranspiladorPython().transpilar([func])
+    codigo = TranspiladorPython().generate_code([func])
     esperado = (
         "from src.core.nativos import *\n"
         "def generador():\n    yield 1\n"

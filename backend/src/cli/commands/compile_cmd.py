@@ -109,7 +109,7 @@ class CompileCommand(BaseCommand):
     def _ejecutar_transpilador(self, parametros):
         lang, ast = parametros
         transp = TRANSPILERS[lang]()
-        return lang, transp.__class__.__name__, transp.transpilar(ast)
+        return lang, transp.__class__.__name__, transp.generate_code(ast)
 
     def run(self, args):
         archivo = args.archivo
@@ -161,7 +161,7 @@ class CompileCommand(BaseCommand):
                 if transpilador not in TRANSPILERS:
                     raise ValueError(_("Transpilador no soportado."))
                 transp = TRANSPILERS[transpilador]()
-                resultado = transp.transpilar(ast)
+                resultado = transp.generate_code(ast)
                 mostrar_info(
                     _("Código generado ({name}):").format(
                         name=transp.__class__.__name__

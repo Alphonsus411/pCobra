@@ -8,7 +8,7 @@ from src.core.ast_nodes import NodoInstancia, NodoLlamadaMetodo, NodoIdentificad
 def test_transpilar_instancia():
     nodo = NodoInstancia("Clase")
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "Clase()\n"
     assert result == esperado
 
@@ -16,6 +16,6 @@ def test_transpilar_instancia():
 def test_transpilar_llamada_metodo():
     nodo = NodoLlamadaMetodo(NodoIdentificador("obj"), "metodo", [NodoValor(1)])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "obj.metodo(1)\n"
     assert result == esperado

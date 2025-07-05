@@ -46,14 +46,14 @@ class NodoHolobit:
 def test_transpilar_asignacion():
     nodo = NodoAsignacion("variable", "10")
     transpiler = TranspiladorJavaScript()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     assert result == "variable = 10;", "Error en la transpilación de asignación"
 
 
 def test_transpilar_condicional():
     nodo = NodoCondicional("x > 5", [NodoAsignacion("y", "10")], [NodoAsignacion("y", "0")])
     transpiler = TranspiladorJavaScript()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = "if (x > 5) {\ny = 10;\n}\nelse {\ny = 0;\n}"
     assert result == expected, "Error en la transpilación de condicional"
 
@@ -61,7 +61,7 @@ def test_transpilar_condicional():
 def test_transpilar_mientras():
     nodo = NodoBucleMientras("i < 10", [NodoAsignacion("i", "i + 1")])
     transpiler = TranspiladorJavaScript()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = "while (i < 10) {\ni = i + 1;\n}"
     assert result == expected, "Error en la transpilación de bucle mientras"
 
@@ -69,7 +69,7 @@ def test_transpilar_mientras():
 def test_transpilar_funcion():
     nodo = NodoFuncion("sumar", ["a", "b"], [NodoAsignacion("resultado", "a + b")])
     transpiler = TranspiladorJavaScript()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = "function sumar(a, b) {\nresultado = a + b;\n}"
     assert result == expected, "Error en la transpilación de función"
 
@@ -77,12 +77,12 @@ def test_transpilar_funcion():
 def test_transpilar_llamada_funcion():
     nodo = NodoLlamadaFuncion("sumar", ["5", "3"])
     transpiler = TranspiladorJavaScript()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     assert result == "sumar(5, 3);", "Error en la transpilación de llamada a función"
 
 
 def test_transpilar_holobit():
     nodo = NodoHolobit("miHolobit", [1, 2, 3])
     transpiler = TranspiladorJavaScript()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     assert result == "let miHolobit = new Holobit([1, 2, 3]);", "Error en la transpilación de Holobit"

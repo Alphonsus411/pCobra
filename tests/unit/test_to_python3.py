@@ -22,7 +22,7 @@ from src.core.ast_nodes import (
 def test_transpilar_asignacion():
     nodo = NodoAsignacion("variable", NodoValor("10"))
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "variable = 10\n"
     assert result == esperado, "Error en la transpilaci\u00f3n de asignaci\u00f3n"
 
@@ -34,7 +34,7 @@ def test_transpilar_condicional():
         [NodoAsignacion("y", NodoValor("0"))],
     )
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
@@ -45,7 +45,7 @@ def test_transpilar_condicional():
 def test_transpilar_mientras():
     nodo = NodoBucleMientras("i < 10", [NodoAsignacion("i", NodoValor("i + 1"))])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS + "while i < 10:\n    i = i + 1\n"
     )
@@ -59,7 +59,7 @@ def test_transpilar_funcion():
         [NodoAsignacion("resultado", NodoValor("a + b"))],
     )
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "def sumar(a, b):\n    resultado = a + b\n"
@@ -70,7 +70,7 @@ def test_transpilar_funcion():
 def test_transpilar_llamada_funcion():
     nodo = NodoLlamadaFuncion("sumar", ["5", "3"])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "sumar(5, 3)\n"
     assert result == esperado, "Error en la transpilaci\u00f3n de llamada a funci\u00f3n"
 
@@ -78,7 +78,7 @@ def test_transpilar_llamada_funcion():
 def test_transpilar_holobit():
     nodo = NodoHolobit("miHolobit", [1, 2, 3])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     esperado = IMPORTS + "miHolobit = holobit([1, 2, 3])\n"
     assert result == esperado, "Error en la transpilaci\u00f3n de Holobit"
 
@@ -86,7 +86,7 @@ def test_transpilar_holobit():
 def test_transpilar_for():
     nodo = NodoFor("i", "lista", [NodoAsignacion("suma", NodoValor("suma + i"))])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS + "for i in lista:\n    suma = suma + i\n"
     )
@@ -96,7 +96,7 @@ def test_transpilar_for():
 def test_transpilar_lista():
     nodo = NodoLista([NodoValor("1"), NodoValor("2"), NodoValor("3")])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = IMPORTS + "[1, 2, 3]\n"
     assert result == expected, "Error en la transpilaci\u00f3n de lista"
 
@@ -107,7 +107,7 @@ def test_transpilar_diccionario():
         (NodoValor("clave2"), NodoValor("valor2"))
     ])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS + "{clave1: valor1, clave2: valor2}\n"
     )
@@ -118,7 +118,7 @@ def test_transpilar_clase():
     metodo = NodoMetodo("miMetodo", ["param"], [NodoAsignacion("x", NodoValor("param + 1"))])
     nodo = NodoClase("MiClase", [metodo])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "class MiClase:\n    def miMetodo(param):\n        x = param + 1\n"
@@ -130,7 +130,7 @@ def test_transpilar_clase_multibase():
     metodo = NodoMetodo("m", ["self"], [NodoRetorno(NodoValor(1))])
     nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "class Hija(Base1, Base2):\n    def m(self):\n        return 1\n"
@@ -141,7 +141,7 @@ def test_transpilar_clase_multibase():
 def test_transpilar_metodo():
     nodo = NodoMetodo("miMetodo", ["a", "b"], [NodoAsignacion("resultado", NodoValor("a + b"))])
     transpiler = TranspiladorPython()
-    result = transpiler.transpilar([nodo])
+    result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
         "def miMetodo(a, b):\n    resultado = a + b\n"

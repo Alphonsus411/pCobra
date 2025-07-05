@@ -15,11 +15,11 @@ def test_operacion_binaria_matlab():
         Token(TipoToken.SUMA, "+"),
         NodoIdentificador("b"),
     )
-    codigo = TranspiladorMatlab().transpilar([NodoAsignacion("x", expr)])
+    codigo = TranspiladorMatlab().generate_code([NodoAsignacion("x", expr)])
     assert codigo == "x = a + b;"
 
 
 def test_operacion_unaria_rust():
     expr = NodoOperacionUnaria(Token(TipoToken.NOT, "!"), NodoIdentificador("cond"))
-    codigo = TranspiladorRust().transpilar([NodoAsignacion("y", expr)])
+    codigo = TranspiladorRust().generate_code([NodoAsignacion("y", expr)])
     assert codigo == "let y = !cond;"
