@@ -202,7 +202,7 @@ Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
 pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
-  --cov-fail-under=80
+  --cov-fail-under=85
 ````
 
 También puedes ejecutar suites específicas ubicadas en `backend/src/tests`:
@@ -549,7 +549,7 @@ Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecu
 
 ````bash
 pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
-  --cov-fail-under=80
+  --cov-fail-under=85
 ````
 
 Algunas pruebas generan código en distintos lenguajes (por ejemplo C++, JavaScript o Go) y verifican que la sintaxis sea correcta. Para que estas pruebas se ejecuten con éxito es necesario contar con los compiladores o intérpretes correspondientes instalados en el sistema, como Node, gcc/g++, Go, etc. Puedes ejecutar todo el conjunto con:
@@ -608,7 +608,7 @@ con los archivos `.po` de traducción y envía un pull request.
 Para obtener un reporte de cobertura en la terminal ejecuta:
 
 ````bash
-pytest --cov=backend/src --cov-report=term-missing --cov-fail-under=80
+pytest --cov=backend/src --cov-report=term-missing --cov-fail-under=85
 ````
 
 ## Caché del AST

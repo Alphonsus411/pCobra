@@ -21,7 +21,7 @@ help:
 
 coverage:
 	pytest backend/src/tests --cov=backend/src
-	--cov-report=term-missing --cov-fail-under=80
+	--cov-report=term-missing --cov-fail-under=85
 
 lint:
 	flake8 backend/src
