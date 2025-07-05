@@ -37,6 +37,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    paquetes
    cobrahub
    cobra_lock
+   cache
    instalacion_pypi
    primeros_pasos
    como_contribuir
