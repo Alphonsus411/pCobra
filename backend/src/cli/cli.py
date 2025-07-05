@@ -24,6 +24,7 @@ from .commands.init_cmd import InitCommand
 from .commands.container_cmd import ContainerCommand
 from .commands.benchmarks_cmd import BenchmarksCommand
 from .commands.benchmarks2_cmd import BenchmarksV2Command
+from .commands.bench_transpilers_cmd import BenchTranspilersCommand
 from .commands.profile_cmd import ProfileCommand
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
@@ -64,6 +65,7 @@ def main(argv=None):
         ContainerCommand(),
         BenchmarksCommand(),
         BenchmarksV2Command(),
+        BenchTranspilersCommand(),
         ProfileCommand(),
         PluginsCommand(),
         InteractiveCommand(),
