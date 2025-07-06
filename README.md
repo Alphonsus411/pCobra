@@ -43,6 +43,16 @@ ejemplo `examples/funciones_principales.co` que muestra condicionales, bucles y
 definición de funciones en Cobra.
 Para ejemplos interactivos revisa los cuadernos en `notebooks/casos_reales/`.
 
+### Ejemplos avanzados
+
+En [examples/avanzados/](examples/avanzados/) se incluyen programas que profundizan
+en Cobra con ejercicios de control de flujo, funciones recursivas e interacción
+de clases. Cada tema cuenta con su propia carpeta:
+
+- [examples/avanzados/control_flujo/](examples/avanzados/control_flujo/)
+- [examples/avanzados/funciones/](examples/avanzados/funciones/)
+- [examples/avanzados/clases/](examples/avanzados/clases/)
+
 ## Notebooks de ejemplo
 
 En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb` con un ejemplo básico de uso de Cobra. Además, los cuadernos de `notebooks/casos_reales/` muestran cómo ejecutar los ejemplos avanzados. Para abrirlo ejecuta:
