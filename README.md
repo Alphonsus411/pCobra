@@ -68,6 +68,7 @@ Luego selecciona el archivo desde la interfaz web de Jupyter.
 
 Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible. A través de su lexer, parser y transpiladores, Cobra puede analizar, ejecutar y convertir código a otros lenguajes, brindando soporte para variables, funciones, estructuras de control y estructuras de datos como listas, diccionarios y clases.
 Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
+La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](SPEC_COBRA.md).
 
 ## Instalación
 
