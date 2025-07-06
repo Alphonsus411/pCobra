@@ -108,3 +108,17 @@ Finalmente, prueba el comando:
 
    ¡Hola desde el plugin de ejemplo!
 
+Ejemplo: mostrar la hora actual
+-------------------------------
+``HoraCommand`` se encuentra en ``examples/plugins/hora_plugin.py`` y muestra
+la hora actual. Tras instalar los ejemplos de plugins con ``pip install -e``
+podrás ejecutar:
+
+.. code-block:: bash
+
+   cobra hora
+
+.. code-block:: text
+
+   Hora actual: 12:34:56
+
