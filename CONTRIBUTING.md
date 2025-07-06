@@ -16,6 +16,8 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 - Usa `make typecheck` para la verificacion de tipos.
 - Para analisis estatico con `pyright`, instala el paquete y ejecuta
   `pyright backend/src` (o `make typecheck`).
+- Cualquier cambio en el lenguaje debe seguir lo descrito en
+  [SPEC_COBRA.md](SPEC_COBRA.md).
 
 ## Ejecutar Pruebas
 
