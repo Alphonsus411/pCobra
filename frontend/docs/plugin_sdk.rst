@@ -76,3 +76,18 @@ Al instanciarse, cada plugin registra su nombre y versión en el
 
 Si actualizas el paquete con una nueva versión, el registro se actualiza de
 forma automática cuando Cobra vuelve a cargar el plugin.
+
+Registro y versionado de plugins
+--------------------------------
+
+Puedes inspeccionar los plugins cargados y sus versiones mediante el
+registro interno. Importa la función ``obtener_registro`` y
+muestra su contenido:
+
+.. code-block:: python
+
+   from src.cli.plugin import obtener_registro
+
+   for nombre, version in obtener_registro().items():
+       print(nombre, version)
+
