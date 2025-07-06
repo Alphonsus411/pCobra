@@ -1,5 +1,7 @@
 import os
 import subprocess
+import tempfile
+import tomllib
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
@@ -36,14 +38,49 @@ class DependenciasCommand(BaseCommand):
             os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "requirements.txt")
         )
 
+    @staticmethod
+    def _ruta_pyproject():
+        return os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "pyproject.toml")
+        )
+
+    @classmethod
+    def _leer_requirements(cls):
+        archivo = cls._ruta_requirements()
+        deps: list[str] = []
+        if os.path.exists(archivo):
+            with open(archivo, "r", encoding="utf-8") as f:
+                deps = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+        return deps
+
+    @classmethod
+    def _leer_pyproject(cls):
+        archivo = cls._ruta_pyproject()
+        deps: list[str] = []
+        if os.path.exists(archivo):
+            with open(archivo, "rb") as f:
+                data = tomllib.load(f)
+            project = data.get("project", {})
+            deps.extend(project.get("dependencies", []))
+            for extra in project.get("optional-dependencies", {}).values():
+                deps.extend(extra)
+        return deps
+
+    @classmethod
+    def _obtener_dependencias(cls):
+        deps = cls._leer_requirements() + cls._leer_pyproject()
+        # Eliminar duplicados preservando orden
+        vista = set()
+        unicos = []
+        for d in deps:
+            if d not in vista:
+                vista.add(d)
+                unicos.append(d)
+        return unicos
+
     @classmethod
     def _listar_dependencias(cls):
-        archivo = cls._ruta_requirements()
-        if not os.path.exists(archivo):
-            mostrar_error(_("No se encontró requirements.txt"))
-            return 1
-        with open(archivo, "r", encoding="utf-8") as f:
-            deps = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+        deps = cls._obtener_dependencias()
         if not deps:
             mostrar_info(_("No hay dependencias listadas"))
         else:
@@ -53,9 +90,16 @@ class DependenciasCommand(BaseCommand):
 
     @classmethod
     def _instalar_dependencias(cls):
-        archivo = cls._ruta_requirements()
+        deps = cls._obtener_dependencias()
+        if not deps:
+            mostrar_info(_("No hay dependencias listadas"))
+            return 0
+        with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+            for dep in deps:
+                tmp.write(dep + "\n")
+            tmp_path = tmp.name
         try:
-            subprocess.run(["pip", "install", "-r", archivo], check=True)
+            subprocess.run(["pip", "install", "-r", tmp_path], check=True)
             mostrar_info(_("Dependencias instaladas"))
             return 0
         except subprocess.CalledProcessError as e:
@@ -63,3 +107,5 @@ class DependenciasCommand(BaseCommand):
                 _("Error instalando dependencias: {err}").format(err=e)
             )
             return 1
+        finally:
+            os.unlink(tmp_path)
