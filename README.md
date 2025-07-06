@@ -120,6 +120,13 @@ pip install -r requirements.txt
 pip install -e .
 ````
 
+6. Ejecuta un programa de prueba para verificar la instalación:
+
+````bash
+echo "imprimir('Hola Cobra')" > hola.co
+cobra ejecutar hola.co
+````
+
 ### Instalación con pipx
 
 [pipx](https://pypa.github.io/pipx/) es una herramienta para instalar y ejecutar aplicaciones de Python de forma aislada y requiere Python 3.6 o superior. Para instalar Cobra con pipx ejecuta:
