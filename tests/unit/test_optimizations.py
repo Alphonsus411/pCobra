@@ -17,6 +17,7 @@ from src.core.optimizations import (
     optimize_constants,
     remove_dead_code,
     inline_functions,
+    eliminate_common_subexpressions,
 )
 
 
@@ -162,3 +163,47 @@ def test_inline_functions_remove_definition():
     optimizado = inline_functions(ast)
     assert len(optimizado) == 2
     assert all(not isinstance(n, NodoFuncion) for n in optimizado)
+
+
+def test_eliminate_common_subexpressions_global():
+    suma = NodoOperacionBinaria(
+        NodoIdentificador("a"),
+        Token(TipoToken.SUMA, "+"),
+        NodoIdentificador("b"),
+    )
+    ast = [
+        NodoAsignacion("x", suma),
+        NodoAsignacion("y", NodoOperacionBinaria(NodoIdentificador("a"), Token(TipoToken.SUMA, "+"), NodoIdentificador("b"))),
+    ]
+    optimizado = eliminate_common_subexpressions(ast)
+    assert len(optimizado) == 3
+    temp = optimizado[0]
+    assert temp.identificador == "_cse0"
+    assert isinstance(optimizado[1].expresion, NodoIdentificador)
+    assert optimizado[1].expresion.nombre == "_cse0"
+    assert isinstance(optimizado[2].expresion, NodoIdentificador)
+    assert optimizado[2].expresion.nombre == "_cse0"
+
+
+def test_eliminate_common_subexpressions_in_function():
+    suma = NodoOperacionBinaria(
+        NodoIdentificador("a"),
+        Token(TipoToken.SUMA, "+"),
+        NodoIdentificador("b"),
+    )
+    func = NodoFuncion(
+        "f",
+        [],
+        [
+            NodoAsignacion("x", suma),
+            NodoAsignacion("y", NodoOperacionBinaria(NodoIdentificador("a"), Token(TipoToken.SUMA, "+"), NodoIdentificador("b"))),
+            NodoRetorno(NodoValor(0)),
+        ],
+    )
+    optimizado = eliminate_common_subexpressions([func])
+    cuerpo = optimizado[0].cuerpo
+    assert cuerpo[0].identificador == "_cse0"
+    assert isinstance(cuerpo[1].expresion, NodoIdentificador)
+    assert cuerpo[1].expresion.nombre == "_cse0"
+    assert isinstance(cuerpo[2].expresion, NodoIdentificador)
+    assert cuerpo[2].expresion.nombre == "_cse0"

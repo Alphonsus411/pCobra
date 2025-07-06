@@ -3,7 +3,12 @@
 import os
 
 from src.cobra.lexico.lexer import Token, TipoToken, Lexer
-from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from src.core.optimizations import (
+    optimize_constants,
+    remove_dead_code,
+    inline_functions,
+    eliminate_common_subexpressions,
+)
 from src.core.type_utils import (
     verificar_sumables,
     verificar_numeros,
@@ -195,7 +200,11 @@ class InterpretadorCobra:
         if cpu:
             _lim_cpu(cpu)
 
-        ast = remove_dead_code(inline_functions(optimize_constants(ast)))
+        ast = remove_dead_code(
+            inline_functions(
+                eliminate_common_subexpressions(optimize_constants(ast))
+            )
+        )
         register_execution(str(ast))
         AnalizadorSemantico().analizar(ast)
         for nodo in ast:
