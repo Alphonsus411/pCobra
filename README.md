@@ -3,7 +3,7 @@
 [![Versión estable](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 
 
-Versión 6.0.0
+Versión 7.0.0
 
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
@@ -791,7 +791,7 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 ## Historial de Cambios
 
- - Versión 6.0.0: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
+- Versión 7.0.0: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
 
 # Licencia
 
