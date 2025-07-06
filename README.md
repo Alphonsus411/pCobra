@@ -774,6 +774,22 @@ entry_points={
 Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamente
 el nuevo comando.
 
+### Instalación de plugins
+
+Para utilizar un plugin publicado solo necesitas instalar su paquete de
+distribución. Por ejemplo:
+
+```bash
+pip install mi-plugin-cobra
+```
+
+Si estás desarrollando un plugin local puedes hacerlo en modo editable desde su
+directorio:
+
+```bash
+pip install -e ./mi_plugin
+```
+
 Cada plugin se registra junto con su número de versión en un registro interno.
 Puedes ver la lista de plugins disponibles ejecutando:
 
