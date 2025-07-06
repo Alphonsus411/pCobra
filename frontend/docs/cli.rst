@@ -81,7 +81,7 @@ Ejemplo:
 Subcomando ``dependencias``
 --------------------------
 Permite listar o instalar las dependencias definidas en
-``requirements.txt``.
+``requirements.txt`` y en ``pyproject.toml``.
 
 Ejemplo:
 

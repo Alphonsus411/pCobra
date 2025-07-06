@@ -100,6 +100,11 @@ source .venv/bin/activate  # Para Unix
 pip install -r requirements.txt
 ````
 
+   Además del archivo ``requirements.txt`` la CLI consultará
+   ``pyproject.toml`` para incluir las dependencias definidas en
+   las secciones ``project.dependencies`` y
+   ``project.optional-dependencies``.
+
    Esto instalará los paquetes mínimos para ejecutar Cobra:
 
    - `pytest` y complementos para las pruebas automatizadas.
@@ -165,6 +170,8 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo que lista las dependencias del proyecto.
+- `pyproject.toml`: También define dependencias en las secciones
+  ``project.dependencies`` y ``project.optional-dependencies``.
 
 # Características Principales
 
