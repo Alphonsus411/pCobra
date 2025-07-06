@@ -1,0 +1,11 @@
+import "utilidades.co"
+
+func factorial(n):
+    si n <= 1:
+        retorno 1
+    sino:
+        retorno n * factorial(n - 1)
+    fin
+fin
+
+imprimir factorial(5)

@@ -1,0 +1,3 @@
+func es_par(n):
+    retorno n % 2 == 0
+fin
