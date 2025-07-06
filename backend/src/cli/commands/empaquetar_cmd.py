@@ -25,6 +25,17 @@ class EmpaquetarCommand(BaseCommand):
             default="cobra",
             help=_("Nombre del ejecutable resultante"),
         )
+        parser.add_argument(
+            "--spec",
+            help=_("Ruta al archivo .spec a utilizar"),
+        )
+        parser.add_argument(
+            "--add-data",
+            action="append",
+            default=[],
+            metavar="RUTA;DEST",
+            help=_("Datos adicionales a incluir en formato 'src;dest'"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -35,19 +46,18 @@ class EmpaquetarCommand(BaseCommand):
         cli_path = os.path.join(raiz, "backend", "src", "cli", "cli.py")
         output = args.output
         nombre = args.name
+        spec = getattr(args, "spec", None)
+        datos = getattr(args, "add_data", [])
         try:
-            subprocess.run(
-                [
-                    "pyinstaller",
-                    "--onefile",
-                    "-n",
-                    nombre,
-                    cli_path,
-                    "--distpath",
-                    output,
-                ],
-                check=True,
-            )
+            cmd = ["pyinstaller"]
+            if spec:
+                cmd.append(spec)
+            else:
+                cmd.extend(["--onefile", "-n", nombre, cli_path])
+            for d in datos:
+                cmd.extend(["--add-data", d])
+            cmd.extend(["--distpath", output])
+            subprocess.run(cmd, check=True)
             mostrar_info(
                 _("Ejecutable generado en {path}").format(
                     path=os.path.join(output, nombre)
