@@ -7,7 +7,8 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 1. **Busca duplicados**: antes de abrir un issue verifica si alguien más ya ha reportado el mismo problema o solicitado la misma característica.
 2. **Título claro**: usa un título descriptivo. Si es un error, añade un prefijo `[Bug]`.
 3. **Información útil**: indica la versión de Cobra, sistema operativo y pasos detallados para reproducir el problema. Incluye el comportamiento esperado y lo que realmente ocurre.
-4. **Etiquetas recomendadas**: usa `bug` para reportes de errores, `enhancement` para mejoras y `question` para dudas. Si se trata de documentación, utiliza `documentation`.
+4. **Etiquetas recomendadas**: usa `bug` para reportes de errores, `enhancement` para mejoras y `question` para dudas. Las peticiones de mejora de la documentación deben llevar la etiqueta `documentation`.
+5. **Plantilla de documentación**: si abres un issue relacionado con la documentación, selecciona la plantilla **Documentación**.
 
 ## Convenciones de Estilo
 
