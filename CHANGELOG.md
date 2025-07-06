@@ -1,3 +1,7 @@
+## v7.2.0 - 2025-07-06
+- Incremento de versión menor a 7.2.0.
+- Documentación y pruebas actualizadas.
+
 ## v7.1.0 - 2025-07-05
 - Se actualiza la versión del proyecto y del kernel de Jupyter.
 - Documentación actualizada con nuevas referencias de versión.
