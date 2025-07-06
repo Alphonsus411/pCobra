@@ -59,7 +59,7 @@ def main() -> None:
     args = parser.parse_args()
 
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "backend" / "src")
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "backend")
     env["PCOBRA_TOML"] = str(Path(tempfile.mkstemp(suffix=".toml")[1]))
 
     results = []
