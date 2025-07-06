@@ -12,17 +12,24 @@ class JupyterCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         parser = subparsers.add_parser(self.name, help=_("Inicia Jupyter Notebook"))
+        parser.add_argument(
+            "--notebook",
+            help=_("Ruta del cuaderno a abrir"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
     def run(self, args):
         try:
             subprocess.run([sys.executable, "-m", "cobra.jupyter_kernel", "install"], check=True)
-            subprocess.run([
+            cmd = [
                 "jupyter",
                 "notebook",
                 "--KernelManager.default_kernel_name=cobra",
-            ], check=True)
+            ]
+            if args.notebook:
+                cmd.append(args.notebook)
+            subprocess.run(cmd, check=True)
             return 0
         except FileNotFoundError:
             mostrar_error(

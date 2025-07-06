@@ -144,11 +144,13 @@ Subcomando ``jupyter``
 ---------------------
 Instala el kernel Cobra y abre ``Jupyter Notebook``.
 
+Opcionalmente se puede indicar un cuaderno concreto con ``--notebook``.
+
 Ejemplo:
 
 .. code-block:: bash
 
-   cobra jupyter
+   cobra jupyter --notebook ruta/al/cuaderno.ipynb
 
 Subcomando ``gui``
 -----------------

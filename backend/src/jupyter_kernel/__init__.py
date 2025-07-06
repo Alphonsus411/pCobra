@@ -1,6 +1,7 @@
 import sys
 import io
 import contextlib
+from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
 from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser, PALABRAS_RESERVADAS
@@ -8,17 +9,28 @@ from src.core.interpreter import InterpretadorCobra
 from src.core.qualia_bridge import get_suggestions
 
 
+def _get_version() -> str:
+    """Obtiene la versión instalada del paquete."""
+    try:
+        return version("cobra-lenguaje")
+    except PackageNotFoundError:
+        return "0.0.0"
+
+
+__version__ = _get_version()
+
+
 def install(user=True):
     """Instala el kernel de Cobra para Jupyter."""
-    from ipykernel.kernelspec import install as ipy_install
-    return ipy_install(user=user, kernel_name="cobra", display_name="Cobra")
+    from jupyter_client.kernelspec import install as jupyter_install
+    return jupyter_install(user=user, kernel_name="cobra", display_name="Cobra")
 
 
 class CobraKernel(Kernel):
     implementation = "Cobra"
-    implementation_version = "7.0.0"
+    implementation_version = __version__
     language = "cobra"
-    language_version = "7.0.0"
+    language_version = __version__
     language_info = {
         "name": "cobra",
         "mimetype": "text/plain",
