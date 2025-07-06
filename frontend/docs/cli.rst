@@ -15,12 +15,19 @@ Opciones principales:
 - ``--tipo``: lenguaje de salida (``python``, ``js``, ``asm``, ``rust``,
   ``cpp``, ``go``, ``ruby``, ``r``, ``julia``, ``java``, ``cobol``,
   ``fortran``, ``pascal``, ``php``, ``matlab``, ``latex``, ``wasm``).
+- ``--tipos``: lista de lenguajes separados por comas para transpilación paralela.
 
 Ejemplo:
 
 .. code-block:: bash
 
    cobra compilar hola.co --tipo python
+
+Otro ejemplo generando varios lenguajes a la vez:
+
+.. code-block:: bash
+
+   cobra compilar hola.co --tipos=python,js,c
 
 Subcomando ``ejecutar``
 ----------------------
