@@ -1,10 +1,10 @@
 Modo seguro
 ===========
 
-La herramienta ``cobra`` permite ejecutar programas en modo seguro mediante la
-opción ``--seguro``. Al activarse se construye una cadena de validadores que
-analiza el AST y bloquea primitivas peligrosas como ``leer_archivo``,
-``escribir_archivo``, ``obtener_url`` y ``hilo``.
+A partir de Cobra 7.2 la herramienta ``cobra`` permite ejecutar programas en
+modo seguro mediante la opción ``--seguro``. Al activarse se construye una
+cadena de validadores que analiza el AST y bloquea primitivas peligrosas como
+``leer_archivo``, ``escribir_archivo``, ``obtener_url`` y ``hilo``.
 A partir de esta versión también se restringen las funciones ``leer``,
 ``escribir``, ``existe`` y ``eliminar``, además de ``enviar_post`` para
 operaciones de red.
@@ -35,7 +35,7 @@ Ejemplo de uso
 
 .. code-block:: bash
 
-   cobra ejecutar programa.co --seguro
+   cobra ejecutar hola.co --seguro
 
 Validadores personalizados
 -------------------------

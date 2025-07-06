@@ -2,9 +2,10 @@ Benchmarking y medición de rendimiento
 ======================================
 
 Esta guía explica cómo obtener métricas de ejecución en programas Cobra.
-El módulo ``src.core.performance`` se basa en la librería ``smooth-criminal``
-y expone los ayudantes ``optimizar`` y ``perfilar`` para decorar funciones o
-medir su comportamiento.
+Desde la versión 7.2 se incluye una pequeña suite de benchmarking basada en el
+módulo ``src.core.performance`` y la librería ``smooth-criminal``. Dicho módulo
+expone los ayudantes ``optimizar`` y ``perfilar`` para decorar funciones o medir
+su comportamiento.
 
 Uso de ``perfilar``
 -------------------
@@ -19,7 +20,7 @@ de tiempo:
     def sumar(a, b):
         return a + b
 
-    datos = perfilar(sumar, args=(1, 2), repeticiones=10)
+    datos = perfilar(sumar, args=(1, 2))
     print(datos)
 
 Optimización con ``optimizar``
@@ -32,7 +33,7 @@ Si deseas aplicar automáticamente optimizaciones de ``smooth-criminal`` usa
 
     from src.core.performance import optimizar
 
-    @optimizar(workers=2)
+    @optimizar()
     def proceso():
         # código intensivo en CPU
         pass
@@ -59,6 +60,8 @@ Resultados recientes
 Los benchmarks pueden ejecutarse con ``cobra benchmarks``. El siguiente
 resumen se obtuvo con ``scripts/benchmarks/compare_backends.py``.
 
+Las cifras que se muestran a continuación corresponden a Cobra 7.2.
+
 También puedes ejecutar el script manualmente:
 
 .. code-block:: bash
@@ -72,16 +75,13 @@ También puedes ejecutar el script manualmente:
      - Tiempo (s)
      - Memoria (KB)
    * - cobra
-     - 0.68
-     - 0
+     - 1.08
+     - 65256
    * - python
-     - 0.68
+     - 0.11
      - 0
    * - js
      - 0.07
-     - 0
-   * - rust
-     - 0.04
      - 0
 
 Pruebas de mutación
