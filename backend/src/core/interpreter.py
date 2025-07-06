@@ -98,6 +98,8 @@ class InterpretadorCobra:
 
         self.safe_mode = safe_mode
         self._validador = construir_cadena(extra) if safe_mode else None
+        # Conjunto para evitar validar el mismo nodo varias veces
+        self._validados = set()
         # Pila de contextos para mantener variables locales en cada llamada
         self.contextos = [{}]
         # Mapa paralelo para gestionar bloques de memoria por contexto
@@ -146,8 +148,9 @@ class InterpretadorCobra:
     # -- Utilidades ---------------------------------------------------------
     def _validar(self, nodo):
         """Valida un nodo si el modo seguro está activo."""
-        if self.safe_mode:
+        if self.safe_mode and id(nodo) not in self._validados:
             nodo.aceptar(self._validador)
+            self._validados.add(id(nodo))
 
     def _contiene_yield(self, nodo):
         if isinstance(nodo, NodoYield):
@@ -178,6 +181,8 @@ class InterpretadorCobra:
         return total
 
     def ejecutar_ast(self, ast):
+        # Reinicia el conjunto de nodos validados al comenzar una ejecución
+        self._validados.clear()
         total = self._contar_nodos(ast)
         max_nodos = limite_nodos()
         if total > max_nodos:
@@ -539,6 +544,8 @@ class InterpretadorCobra:
 
     def ejecutar_import(self, nodo):
         """Carga y ejecuta un módulo especificado en la declaración import."""
+        # Cada módulo inicia su propia validación
+        self._validados.clear()
         ruta = os.path.abspath(nodo.ruta)
         if not ruta.startswith(MODULES_PATH) and ruta not in IMPORT_WHITELIST:
             raise PrimitivaPeligrosaError(
