@@ -23,7 +23,7 @@ jobs:
           pip install -e .
           pip install pyinstaller
       - name: Build executable
-        run: cobra empaquetar --output dist
+        run: cobra empaquetar --output dist --add-data all-bytes.dat:all-bytes.dat
       - name: Upload executable
         uses: actions/upload-artifact@v3
         with:

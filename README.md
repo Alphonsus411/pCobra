@@ -154,12 +154,20 @@ Solo descarga el archivo correspondiente a tu sistema operativo desde la versió
 más reciente y ejecútalo directamente.
 
 Si prefieres generar el ejecutable manualmente ejecuta desde la raíz del
-repositorio:
+repositorio en tu sistema (Windows, macOS o Linux):
 
 ```bash
+pip install pyinstaller
 cobra empaquetar --output dist
 ```
-El nombre del binario puede ajustarse con la opción `--name`.
+El nombre del binario puede ajustarse con la opción `--name`. También puedes
+usar un archivo `.spec` propio o agregar datos adicionales mediante
+``--spec`` y ``--add-data``:
+
+```bash
+cobra empaquetar --spec build/cobra.spec \
+  --add-data "all-bytes.dat;all-bytes.dat" --output dist
+```
 
 # Estructura del Proyecto
 
