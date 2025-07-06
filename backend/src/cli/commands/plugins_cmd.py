@@ -1,6 +1,6 @@
 from .base import BaseCommand
 from ..i18n import _
-from ..plugin_registry import obtener_registro
+from ..plugin_registry import obtener_registro_detallado
 from ..utils.messages import mostrar_info
 
 
@@ -15,11 +15,16 @@ class PluginsCommand(BaseCommand):
         return parser
 
     def run(self, args):
-        registro = obtener_registro()
+        registro = obtener_registro_detallado()
         if not registro:
             mostrar_info(_("No hay plugins instalados"))
         else:
-            for nombre, version in registro.items():
-                mostrar_info(f"{nombre} {version}")
+            for nombre, datos in registro.items():
+                version = datos.get("version", "")
+                descripcion = datos.get("description", "")
+                if descripcion:
+                    mostrar_info(f"{nombre} {version} - {descripcion}")
+                else:
+                    mostrar_info(f"{nombre} {version}")
         return 0
 

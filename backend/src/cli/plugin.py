@@ -96,7 +96,8 @@ def cargar_plugin_seguro(ruta: str):
         return None
 
     version = getattr(instancia, "version", "0")
-    registrar_plugin(instancia.name, version)
+    description = getattr(instancia, "description", "")
+    registrar_plugin(instancia.name, version, description)
     return instancia
 
 
@@ -107,4 +108,5 @@ __all__ = [
     "cargar_plugin_seguro",
     "registrar_plugin",
     "obtener_registro",
+    "obtener_registro_detallado",
 ]

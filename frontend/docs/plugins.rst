@@ -12,6 +12,10 @@ plugins están disponibles se proporciona el subcomando ``plugins``::
 
    cobra plugins
 
+.. code-block:: text
+
+   saludo 1.0 - Comando de saludo de ejemplo
+
 Guía paso a paso
 ----------------
 
