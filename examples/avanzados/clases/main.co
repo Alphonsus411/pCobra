@@ -1,0 +1,7 @@
+import "estudiante.co"
+
+est1 = Estudiante("Ana", "Ingeniería")
+est2 = Estudiante("Luis", "Matemáticas")
+
+est1.presentar()
+est2.presentar()
