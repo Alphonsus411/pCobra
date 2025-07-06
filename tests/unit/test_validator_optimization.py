@@ -38,3 +38,23 @@ def test_construir_cadena_sin_reutilizar(monkeypatch):
         construir_cadena()
 
     assert contador == 2
+
+
+def test_valida_cada_nodo_una_sola_vez(monkeypatch):
+    from src.core.interpreter import InterpretadorCobra
+    from src.core.ast_nodes import NodoAsignacion, NodoValor
+
+    interp = InterpretadorCobra(safe_mode=True)
+    nodo = NodoAsignacion("x", NodoValor(1))
+
+    contador = 0
+
+    class DummyValidator:
+        def visit(self, _):
+            nonlocal contador
+            contador += 1
+
+    interp._validador = DummyValidator()
+    interp.ejecutar_ast([nodo])
+
+    assert contador == 1

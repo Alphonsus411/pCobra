@@ -61,6 +61,10 @@ También es posible definir validadores adicionales creando un módulo con la
 variable ``VALIDADORES_EXTRA`` y pasándolo mediante la opción
 ``--validadores-extra``.
 
+Los nodos ya comprobados se almacenan en un conjunto para evitar validaciones
+repetidas, lo que mejora el rendimiento cuando un mismo nodo se ejecuta varias
+veces.
+
 Para evaluar el impacto de estas comprobaciones en el rendimiento revisa
 :doc:`benchmarking`.
 
