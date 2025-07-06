@@ -58,9 +58,9 @@ de clases. Cada tema cuenta con su propia carpeta:
 En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb` con un ejemplo básico de uso de Cobra. Además, los cuadernos de `notebooks/casos_reales/` muestran cómo ejecutar los ejemplos avanzados. Para abrirlo ejecuta:
 
 ```bash
-cobra jupyter
+cobra jupyter --notebook notebooks/ejemplo_basico.ipynb
 ```
-Luego selecciona el archivo desde la interfaz web de Jupyter.
+Si omites el argumento ``--notebook`` se abrirá Jupyter Notebook de manera convencional y podrás escoger el archivo desde la interfaz web.
  
 
 
