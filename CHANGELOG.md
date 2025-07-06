@@ -1,3 +1,7 @@
+## v7.0.0 - 2025-07-04
+- Se incrementa la versión principal del proyecto.
+- Documentación y pruebas adaptadas a la nueva versión.
+
 ## v6.0.0 - 2025-07-03
 - Actualización mayor del lenguaje Cobra y de las herramientas de desarrollo.
 - Documentación reorganizada con nuevos ejemplos.
