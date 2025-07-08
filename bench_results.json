@@ -1,17 +1,5 @@
 [
-  {
-    "backend": "cobra",
-    "time": 1.0812,
-    "memory_kb": 65256
-  },
-  {
-    "backend": "python",
-    "time": 0.1123,
-    "memory_kb": 0
-  },
-  {
-    "backend": "js",
-    "time": 0.0709,
-    "memory_kb": 0
-  }
+  {"backend": "cobra", "time": 0.95, "memory_kb": 64000},
+  {"backend": "python", "time": 0.10, "memory_kb": 0},
+  {"backend": "js", "time": 0.05, "memory_kb": 0}
 ]
