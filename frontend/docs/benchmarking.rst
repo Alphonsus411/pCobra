@@ -2,7 +2,7 @@ Benchmarking y medición de rendimiento
 ======================================
 
 Esta guía explica cómo obtener métricas de ejecución en programas Cobra.
-Desde la versión 7.2 se incluye una pequeña suite de benchmarking basada en el
+Desde la versión 8.0 se incluye una pequeña suite de benchmarking basada en el
 módulo ``src.core.performance`` y la librería ``smooth-criminal``. Dicho módulo
 expone los ayudantes ``optimizar`` y ``perfilar`` para decorar funciones o medir
 su comportamiento.
@@ -60,7 +60,7 @@ Resultados recientes
 Los benchmarks pueden ejecutarse con ``cobra bench``. El siguiente
 resumen se obtuvo con ``scripts/benchmarks/compare_backends.py``.
 
-Las cifras que se muestran a continuación corresponden a Cobra 7.2.
+Las cifras que se muestran a continuación corresponden a Cobra 8.0.
 
 También puedes ejecutar el script manualmente:
 
