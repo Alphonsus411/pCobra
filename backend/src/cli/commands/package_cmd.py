@@ -46,9 +46,10 @@ class PaqueteCommand(BaseCommand):
         if not mods:
             mostrar_error(_("No se encontraron modulos"))
             return 1
+        mod_list = ", ".join(f'"{m}"' for m in mods)
         contenido = (
             f"[paquete]\nnombre = \"{nombre}\"\nversion = \"{version}\"\n\n"
-            f"[modulos]\narchivos = [{', '.join(f'\"{m}\"' for m in mods)}]\n"
+            f"[modulos]\narchivos = [{mod_list}]\n"
         )
         with zipfile.ZipFile(pkg, "w") as zf:
             for m in mods:
