@@ -1,4 +1,5 @@
 from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from backend.src.cobra.lexico.lexer import TipoToken, Token
 from src.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
@@ -6,6 +7,9 @@ from src.core.ast_nodes import (
     NodoImprimir,
     NodoValor,
     NodoIdentificador,
+    NodoAtributo,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
 )
 
 
@@ -36,4 +40,31 @@ def test_transpilador_imprimir_php():
     t = TranspiladorPHP()
     resultado = t.generate_code(ast)
     assert resultado == "echo $x;"
+
+
+def test_php_atributo_y_operaciones():
+    ast = [
+        NodoAsignacion(
+            NodoAtributo(NodoIdentificador("obj"), "campo"),
+            NodoValor(5),
+        ),
+        NodoAsignacion(
+            "a",
+            NodoOperacionBinaria(
+                NodoValor(1), Token(TipoToken.SUMA, "+"), NodoValor(2)
+            ),
+        ),
+        NodoAsignacion(
+            "b",
+            NodoOperacionUnaria(Token(TipoToken.NOT, "!"), NodoIdentificador("c")),
+        ),
+    ]
+    t = TranspiladorPHP()
+    resultado = t.generate_code(ast)
+    esperado = (
+        "$obj->campo = 5;\n"
+        "$a = 1 + 2;\n"
+        "$b = !$c;"
+    )
+    assert resultado == esperado
 

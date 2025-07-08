@@ -13,6 +13,12 @@ from src.core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoIdentificador,
+    NodoLista,
+    NodoDiccionario,
+    NodoAssert,
+    NodoDel,
+    NodoWith,
+    NodoImportDesde,
     NodoOption,
     NodoSwitch,
     NodoCase,
@@ -183,6 +189,43 @@ def test_option_match():
         "        let y = 0;\n"
         "    },\n"
         "}"
+    )
+    assert resultado == esperado
+
+
+def test_transpilador_assert_del_with_import():
+    ast = [
+        NodoAssert(NodoValor(True)),
+        NodoDel(NodoIdentificador("x")),
+        NodoWith(None, None, [NodoAsignacion("y", NodoValor(1))]),
+        NodoImportDesde("mod", "func"),
+    ]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    esperado = (
+        "assert!(True);\n"
+        "// del x\n"
+        "{\n"
+        "    let y = 1;\n"
+        "}\n"
+        "use mod::func;"
+    )
+    assert resultado == esperado
+
+
+def test_obtener_valor_listas_diccionarios():
+    ast = [
+        NodoAsignacion("a", NodoLista([NodoValor(1), NodoValor(2)])),
+        NodoAsignacion(
+            "b",
+            NodoDiccionario([(NodoValor("x"), NodoValor(1))]),
+        ),
+    ]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    esperado = (
+        "let a = vec![1, 2];\n"
+        "let b = std::collections::HashMap::from([(x, 1)]);"
     )
     assert resultado == esperado
 

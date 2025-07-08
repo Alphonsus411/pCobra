@@ -1,5 +1,16 @@
+from backend.src.cobra.lexico.lexer import TipoToken, Token
 from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from src.core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
+from src.core.ast_nodes import (
+    NodoAsignacion,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoImprimir,
+    NodoValor,
+    NodoIdentificador,
+    NodoAtributo,
+    NodoOperacionBinaria,
+    NodoOperacionUnaria,
+)
 
 
 def test_transpilador_asignacion_pascal():
@@ -29,3 +40,30 @@ def test_transpilador_imprimir_pascal():
     t = TranspiladorPascal()
     resultado = t.generate_code(ast)
     assert resultado == "writeln(x);"
+
+
+def test_pascal_atributo_y_operaciones():
+    ast = [
+        NodoAsignacion(
+            NodoAtributo(NodoIdentificador("obj"), "campo"),
+            NodoValor(5),
+        ),
+        NodoAsignacion(
+            "a",
+            NodoOperacionBinaria(
+                NodoValor(1), Token(TipoToken.SUMA, "+"), NodoValor(2)
+            ),
+        ),
+        NodoAsignacion(
+            "b",
+            NodoOperacionUnaria(Token(TipoToken.NOT, "not"), NodoIdentificador("c")),
+        ),
+    ]
+    t = TranspiladorPascal()
+    resultado = t.generate_code(ast)
+    esperado = (
+        "obj.campo := 5;\n"
+        "a := 1 + 2;\n"
+        "b := not c;"
+    )
+    assert resultado == esperado
