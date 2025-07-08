@@ -13,10 +13,11 @@ npm install
 
 1. Abre VS Code y carga este directorio como espacio de trabajo.
 2. Pulsa `F5` para iniciar un "Extension Development Host".
-3. En la nueva ventana, ejecuta el comando **Iniciar Cobra LSP** desde la paleta (`Ctrl+Shift+P`).
+3. La extensión iniciará automáticamente el servidor LSP. Si lo prefieres puedes usar el comando **Iniciar Cobra LSP**.
 4. Para ejecutar el archivo Cobra actualmente abierto, presiona `Ctrl+R` o ejecuta el comando **Ejecutar archivo Cobra**.
+5. Formatea el documento con `Ctrl+Alt+F` o mediante `Shift+Alt+F`.
 
-El servidor de lenguaje se ejecutará mediante `python -m lsp.server` y proporcionará autocompletado y errores en vivo para archivos Cobra.
+El servidor de lenguaje (`python -m lsp.server`) ofrece autocompletado, detección de errores de sintaxis y formateo para archivos Cobra.
 
 ## Snippets incluidos
 
@@ -64,7 +65,7 @@ Para ajustar los colores, puedes editar tu `settings.json` y usar `editor.tokenC
 
 Sigue estos pasos para comprobar que el servidor LSP ofrece sugerencias de Cobra:
 
-1. Inicia la extensión con `F5` y ejecuta el comando **Iniciar Cobra LSP**.
+1. Inicia la extensión con `F5`. El servidor LSP se iniciará automáticamente.
 2. Crea o abre un archivo con la extensión `.co`.
 3. Al escribir prefijos como `func`, `si` o `cabeza` deberás ver en VS Code las
    sugerencias proporcionadas por el servidor.
