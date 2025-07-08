@@ -160,6 +160,9 @@ GitHub Actions. Puedes encontrarlos en la pestaña
 Solo descarga el archivo correspondiente a tu sistema operativo desde la versión
 más reciente y ejecútalo directamente.
 
+Crear un tag `vX.Y.Z` en GitHub desencadena la publicación automática del
+paquete en PyPI y la actualización de la imagen Docker.
+
 Si prefieres generar el ejecutable manualmente ejecuta desde la raíz del
 repositorio en tu sistema (Windows, macOS o Linux):
 
