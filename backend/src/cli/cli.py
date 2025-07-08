@@ -25,6 +25,7 @@ from .commands.container_cmd import ContainerCommand
 from .commands.benchmarks_cmd import BenchmarksCommand
 from .commands.benchmarks2_cmd import BenchmarksV2Command
 from .commands.bench_transpilers_cmd import BenchTranspilersCommand
+from .commands.bench_cmd import BenchCommand
 from .commands.profile_cmd import ProfileCommand
 from .commands.cache_cmd import CacheCommand
 
@@ -64,6 +65,7 @@ def main(argv=None):
         JupyterCommand(),
         FletCommand(),
         ContainerCommand(),
+        BenchCommand(),
         BenchmarksCommand(),
         BenchmarksV2Command(),
         BenchTranspilersCommand(),

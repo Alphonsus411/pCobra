@@ -1,0 +1,10 @@
+clase Persona:
+    metodo __init__(self, nombre):
+        atributo self nombre = nombre
+    metodo saludar(self):
+        imprimir concatenar('Hola ', atributo self nombre)
+    fin
+fin
+
+p = Persona('Cobra')
+p.saludar()

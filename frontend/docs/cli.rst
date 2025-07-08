@@ -221,6 +221,18 @@ Ejemplo:
 
    cobra benchmarks --output resultados.json
 
+Subcomando ``bench``
+--------------------
+Ejecuta la suite de benchmarks integrada. Con ``--profile`` guarda los
+resultados en ``bench_results.json`` y genera un archivo ``bench_results.prof``
+para análisis detallado.
+
+Ejemplo:
+
+.. code-block:: bash
+
+   cobra bench --profile
+
 Subcomando ``benchtranspilers``
 ------------------------------
 Mide la velocidad de los distintos transpiladores generando programas de

@@ -57,7 +57,7 @@ Para más información sobre configuraciones seguras consulta
 Resultados recientes
 --------------------
 
-Los benchmarks pueden ejecutarse con ``cobra benchmarks``. El siguiente
+Los benchmarks pueden ejecutarse con ``cobra bench``. El siguiente
 resumen se obtuvo con ``scripts/benchmarks/compare_backends.py``.
 
 Las cifras que se muestran a continuación corresponden a Cobra 7.2.
@@ -75,13 +75,13 @@ También puedes ejecutar el script manualmente:
      - Tiempo (s)
      - Memoria (KB)
    * - cobra
-     - 1.08
-     - 65256
+     - 0.95
+     - 64000
    * - python
-     - 0.11
+     - 0.10
      - 0
    * - js
-     - 0.07
+     - 0.05
      - 0
 
 Pruebas de mutación
