@@ -173,11 +173,21 @@ Subcomando ``plugins``
 ---------------------
 Muestra los plugins instalados y sus versiones registrados mediante ``entry_points``.
 
+Acciones disponibles:
+
+- ``buscar <texto>`` filtra por nombre o descripción.
+
 Ejemplo:
 
 .. code-block:: bash
 
    cobra plugins
+
+Otro ejemplo filtrando la lista:
+
+.. code-block:: bash
+
+   cobra plugins buscar saludo
 
 Subcomando ``contenedor``
 ------------------------
