@@ -25,6 +25,10 @@
             {
                 "command": "cobra.runFile",
                 "title": "Ejecutar archivo Cobra"
+            },
+            {
+                "command": "cobra.formatDocument",
+                "title": "Formatear documento Cobra"
             }
         ],
         "languages": [
@@ -51,6 +55,10 @@
         "keybindings": [{
             "command": "cobra.runFile",
             "key": "ctrl+r",
+            "when": "editorTextFocus && editorLangId == cobra"
+        }, {
+            "command": "cobra.formatDocument",
+            "key": "ctrl+alt+f",
             "when": "editorTextFocus && editorLangId == cobra"
         }]
     }

@@ -7,28 +7,31 @@ const SERVER_MODULE = 'lsp.server';
 
 let client;
 
+function startClient(context) {
+    if (client) {
+        return;
+    }
+
+    const serverOptions = () => {
+        const process = cp.spawn('python', ['-m', SERVER_MODULE]);
+        return { process };
+    };
+
+    const clientOptions = {
+        documentSelector: [{ scheme: 'file', language: 'cobra' }],
+    };
+
+    client = new LanguageClient('cobra-lsp', 'Cobra LSP', serverOptions, clientOptions);
+    context.subscriptions.push(client.start());
+}
+
 function activate(context) {
     console.log('Extensión Cobra activada');
+    startClient(context);
 
     const disposable = vscode.commands.registerCommand('cobra.startLSP', () => {
-        if (client) {
-            vscode.window.showInformationMessage('El servidor ya está en ejecución.');
-            return;
-        }
-
-        const serverOptions = () => {
-            const process = cp.spawn('python', ['-m', SERVER_MODULE]);
-            return { process };
-        };
-
-        const clientOptions = {
-            documentSelector: [{ scheme: 'file', language: 'cobra' }],
-        };
-
-        client = new LanguageClient('cobra-lsp', 'Cobra LSP', serverOptions, clientOptions);
-        context.subscriptions.push(client.start());
+        startClient(context);
     });
-
     context.subscriptions.push(disposable);
 
     const runFileDisposable = vscode.commands.registerCommand('cobra.runFile', () => {
@@ -52,6 +55,12 @@ function activate(context) {
     });
 
     context.subscriptions.push(runFileDisposable);
+
+    const formatDisposable = vscode.commands.registerCommand('cobra.formatDocument', () => {
+        vscode.commands.executeCommand('editor.action.formatDocument');
+    });
+
+    context.subscriptions.push(formatDisposable);
 }
 
 function deactivate() {
