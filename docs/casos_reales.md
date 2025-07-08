@@ -62,3 +62,37 @@ Puedes revisar el cuaderno interactivo `notebooks/casos_reales/analisis_datos.ip
 
 
 Instala las dependencias `pandas` y `matplotlib` antes de correrlo.
+
+## Aplicación web
+Un servicio mínimo con Flask puede generarse y ejecutarse con Cobra:
+
+```cobra
+usar flask
+app = Flask(__name__)
+@app.ruta('/')
+def hola():
+    regresar 'Hola desde Cobra'
+```
+
+Compila y lanza el servidor con:
+
+```bash
+cobra compilar app_web.co --a python -o build/app_web.py
+python build/app_web.py
+```
+
+## Videojuego básico
+Un pequeño juego usando Pygame:
+
+```cobra
+usar pygame
+pantalla = pygame.nueva_pantalla(640, 480)
+# ... lógica del juego ...
+```
+
+Para ejecutarlo:
+
+```bash
+cobra compilar juego.co --a python
+python juego.py
+```

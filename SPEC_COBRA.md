@@ -3,6 +3,8 @@
 ## Introducción
 Cobra es un lenguaje de programación en español. Está orientado a la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. El proyecto incluye un lexer, un parser y transpiladores a múltiples lenguajes como Python, JavaScript, C++, Go o Rust.
 
+Para visualizar de manera esquemática el proceso completo de compilación y la estructura general del AST, consulta los diagramas de `docs/flujo_compilacion.md` y `docs/diagrama_ast.md`.
+
 ## Gramática EBNF
 ```ebnf
 ?start: statement*
