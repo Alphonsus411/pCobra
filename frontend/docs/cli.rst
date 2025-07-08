@@ -5,6 +5,9 @@ La herramienta ``cobra`` se maneja mediante subcomandos que facilitan
 la ejecución y transpilación de programas. A continuación se resumen
 las opciones más importantes y un ejemplo de uso para cada una.
 
+Al iniciarse, la CLI muestra una cabecera con el logo de Cobra. Si se
+prefiere desactivar los colores puede usarse la opción ``--no-color``.
+
 Subcomando ``compilar``
 ----------------------
 Transpila un archivo Cobra a otro lenguaje.

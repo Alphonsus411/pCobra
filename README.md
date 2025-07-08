@@ -546,6 +546,24 @@ cobra profile programa.co
 cobra gui
 ```
 
+Al iniciar la CLI se muestra una cabecera con el logo de Cobra:
+
+```bash
+$ cobra --help
+  ____        _               ____ _     ___
+ / ___|___   | |__   ___ _ __/ ___| |   |_ _|
+| |   / _ \  | '_ \ / _ \ '__| |   | |    | |
+| |__| (_) | | |_) |  __/ |  | |___| |___ | |
+ \____\___/  |_.__/ \___|_|   \____|_____|___|
+usage: cobra [-h] [--formatear] ...
+```
+
+Si deseas desactivar los colores usa `--no-color`:
+
+```bash
+cobra --no-color ejecutar programa.co
+```
+
 Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.

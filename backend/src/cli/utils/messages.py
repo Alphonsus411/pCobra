@@ -7,17 +7,47 @@ GREEN = "\033[92m"
 YELLOW = "\033[93m"
 RESET = "\033[0m"
 
+# Flag global para habilitar o desactivar los colores.
+USE_COLOR = True
+
+# Logo ASCII mostrado al iniciar la CLI.
+COBRA_LOGO = r"""
+  ____        _               ____ _     ___ 
+ / ___|___   | |__   ___ _ __/ ___| |   |_ _|
+| |   / _ \  | '_ \ / _ \ '__| |   | |    | | 
+| |__| (_) | | |_) |  __/ |  | |___| |___ | | 
+ \____\___/  |_.__/ \___|_|   \____|_____|___|
+"""
+
+
+def disable_colors(disable: bool = True) -> None:
+    """Activa o desactiva la salida de colores."""
+    global USE_COLOR
+    USE_COLOR = not disable
+
+
+def mostrar_logo() -> None:
+    """Muestra el logo de Cobra en verde."""
+    color = GREEN if USE_COLOR else ""
+    reset = RESET if USE_COLOR else ""
+    print(f"{color}{COBRA_LOGO}{reset}")
+
 
 def _mostrar(msg: str, nivel: str = "info") -> None:
     """Imprime el mensaje con color y registra el log correspondiente."""
     texto = _(msg)
-    color = GREEN if nivel == "info" else YELLOW if nivel == "warning" else RED
+    if USE_COLOR:
+        color = GREEN if nivel == "info" else YELLOW if nivel == "warning" else RED
+        reset = RESET
+    else:
+        color = ""
+        reset = ""
     prefijos = {
         "warning": _("Advertencia"),
         "error": _("Error"),
     }
     prefijo = f"{prefijos[nivel]}: " if nivel in prefijos else ""
-    print(f"{color}{prefijo}{texto}{RESET}")
+    print(f"{color}{prefijo}{texto}{reset}")
     getattr(logging, nivel)(texto)
 
 
