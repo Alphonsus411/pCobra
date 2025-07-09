@@ -1,0 +1,3 @@
+0 es par
+1 es impar
+2 es par
