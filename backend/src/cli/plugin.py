@@ -11,7 +11,11 @@ from importlib import import_module
 from importlib.metadata import entry_points
 
 from .commands.base import BaseCommand
-from .plugin_registry import registrar_plugin, obtener_registro
+from .plugin_registry import (
+    registrar_plugin,
+    obtener_registro,
+    obtener_registro_detallado,
+)
 
 
 class PluginInterface(ABC):
