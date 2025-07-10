@@ -237,7 +237,7 @@ están disponibles en `frontend/docs/benchmarking.rst`.
 Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
-pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
   --cov-fail-under=85
 ````
 
@@ -599,17 +599,17 @@ externos. Para activar esta opción utiliza `--sandbox` en los subcomandos
 
 # Pruebas
 
-Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Puedes añadir más pruebas para cubrir nuevos casos de uso y asegurar la estabilidad del código.
+Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
 
 ````bash
-pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
   --cov-fail-under=85
 ````
 
 Algunas pruebas generan código en distintos lenguajes (por ejemplo C++, JavaScript o Go) y verifican que la sintaxis sea correcta. Para que estas pruebas se ejecuten con éxito es necesario contar con los compiladores o intérpretes correspondientes instalados en el sistema, como Node, gcc/g++, Go, etc. Puedes ejecutar todo el conjunto con:
 
 ```bash
-pytest
+PYTHONPATH=$PWD pytest
 ```
 
 Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
