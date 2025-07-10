@@ -23,16 +23,17 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 ## Ejecutar Pruebas
 
 Las pruebas unitarias se ubican en `tests/unit` y las de integración en
-`tests/integration`. Para ejecutarlas todas utiliza:
+`tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD` o instala
+el paquete en modo editable (`pip install -e .`). Para ejecutarlas todas utiliza:
 
 ```bash
-pytest
+PYTHONPATH=$PWD pytest
 ```
 
 Para generar un reporte de cobertura:
 
 ```bash
-pytest --cov
+PYTHONPATH=$PWD pytest --cov
 ```
 
 Además de las pruebas, ejecuta las verificaciones de estilo con:
