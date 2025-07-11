@@ -717,6 +717,7 @@ transpiladores:
   `__post_init__`.
 - **missing-codegen-exception.ql** detecta métodos `generate_code` sin
   manejo de excepciones.
+- **unsafe-eval-exec.ql** avisa cuando se usa `eval` o `exec` fuera del sandbox.
 
 Para ejecutar el análisis de CodeQL de forma local puedes usar la CLI:
 
@@ -767,6 +768,9 @@ lista de paquetes instalados en busca de vulnerabilidades conocidas. Si se
 detecta alguna, la acción devolverá un reporte detallado y el trabajo fallará.
 Consulta el log del paso "Seguridad de dependencias" para ver los paquetes
 afectados y las recomendaciones de actualización.
+
+El repositorio también ejecuta CodeQL con reglas personalizadas para detectar
+patrones de código riesgosos, como el uso de `eval` o `exec` fuera del sandbox.
 
 ## Comunidad
 
