@@ -28,7 +28,7 @@ jobs:
           pip install -e .
       - name: Run tests
         run: |
-          pytest --cov=backend/src --cov-report=xml --cov-fail-under=85
+          pytest --cov=backend/src --cov-report=xml --cov-fail-under=95
       - uses: actions/upload-artifact@v3
         with:
           name: coverage-report
