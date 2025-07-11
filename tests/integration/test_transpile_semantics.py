@@ -92,7 +92,20 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
     pytest.skip(f"ejecuci\u00f3n no soportada para {lang}")
 
 
-@pytest.mark.parametrize("lang", ["python", "rust", "go"])
+# Lenguajes con soporte de ejecución en los tests
+RUNNABLE_LANGS = [
+    "python",
+    "js",
+    "ruby",
+    "c",
+    "cpp",
+    "go",
+    "rust",
+    "java",
+]
+
+
+@pytest.mark.parametrize("lang", RUNNABLE_LANGS)
 def test_transpile_semantics(tmp_path, lang):
     src = Path("tests/data/ejemplo.co")
     esperado = obtener_salida_interprete(src)
