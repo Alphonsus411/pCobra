@@ -5,3 +5,4 @@ paths:
 queries:
   - uses: custom/*.ql
   - uses: custom/missing-codegen-exception.ql
+  - uses: custom/unsafe-eval-exec.ql
