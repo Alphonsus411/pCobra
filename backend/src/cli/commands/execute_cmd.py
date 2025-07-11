@@ -11,7 +11,7 @@ from backend.src.core.sandbox import (
 from backend.src.cobra.transpilers import module_map
 
 from backend.src.core.interpreter import InterpretadorCobra
-from backend.src.cobra.lexico.lexer import Lexer
+from src.cobra.lexico.lexer import Lexer
 from backend.src.cobra.parser.parser import Parser
 from backend.src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 
