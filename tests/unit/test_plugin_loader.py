@@ -3,8 +3,13 @@ from unittest.mock import patch
 
 from pathlib import Path
 import sys
+import types
 
-from src.cli.plugin import descubrir_plugins, PluginCommand
+from src.cli.plugin import (
+    descubrir_plugins,
+    PluginCommand,
+    cargar_plugin_seguro,
+)
 from src.cli.plugin_registry import obtener_registro, limpiar_registro
 
 # Añadimos la carpeta de plugins de ejemplo al path para poder importar
@@ -61,6 +66,39 @@ def test_plugin_ruta_invalida():
         limpiar_registro()
         plugins = descubrir_plugins()
     assert plugins == []
+    assert obtener_registro() == {}
+
+
+def test_cargar_plugin_seguro_modulo_inexistente():
+    """Un módulo inexistente no debe registrarse."""
+    ep_value = "no.existe:Nope"
+    with patch("src.cli.plugin.import_module", side_effect=ModuleNotFoundError):
+        limpiar_registro()
+        plugin = cargar_plugin_seguro(ep_value)
+    assert plugin is None
+    assert obtener_registro() == {}
+
+
+def test_cargar_plugin_seguro_instanciacion_falla():
+    """Si la clase del plugin lanza excepción al crearse, no se registra."""
+
+    class BoomPlugin(PluginCommand):
+        name = "boom"
+
+        def __init__(self):
+            raise RuntimeError("boom")
+
+        def register_subparser(self, subparsers):
+            pass
+
+        def run(self, args):
+            pass
+
+    module = types.SimpleNamespace(BoomPlugin=BoomPlugin)
+    with patch("src.cli.plugin.import_module", return_value=module):
+        limpiar_registro()
+        plugin = cargar_plugin_seguro("fake.mod:BoomPlugin")
+    assert plugin is None
     assert obtener_registro() == {}
 
 
