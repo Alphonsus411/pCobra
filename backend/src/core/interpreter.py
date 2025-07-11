@@ -173,8 +173,12 @@ class InterpretadorCobra:
     def _contar_nodos(ast):
         total = 0
         pila = list(ast)
+        visitados = set()
         while pila:
             nodo = pila.pop()
+            if id(nodo) in visitados:
+                continue
+            visitados.add(id(nodo))
             total += 1
             for val in getattr(nodo, '__dict__', {}).values():
                 if isinstance(val, list):

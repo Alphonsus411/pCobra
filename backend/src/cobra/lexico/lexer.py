@@ -208,6 +208,7 @@ class Lexer:
             (TipoToken.ASIGNAR_INFERENCIA, r':='),
             (TipoToken.DOSPUNTOS, r':'),
             (TipoToken.FIN, r'\bfin\b'),
+            (TipoToken.RETORNO, r'\bretorno\b'),
             (TipoToken.IDENTIFICADOR, r'[^\W\d_][\w]*'),
             (TipoToken.MAYORIGUAL, r'>='),
             (TipoToken.MENORIGUAL, r'<='),
