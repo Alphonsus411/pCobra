@@ -784,6 +784,20 @@ pyright --project pyrightconfig.json
 
 `mypy` utiliza la configuración de `mypy.ini` y `pyright` toma las rutas de `pyrightconfig.json`.
 
+Para ejecutar los linters puedes usar el comando de Make:
+
+```bash
+make lint
+```
+
+Esto ejecutará `flake8` y `mypy` sobre `backend/src`. Si prefieres lanzarlos de manera
+individual utiliza:
+
+```bash
+flake8 backend/src
+mypy backend/src
+```
+
 ## Desarrollo de plugins
 
 La CLI puede ampliarse mediante plugins externos. Desde esta versión todo el SDK
