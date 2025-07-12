@@ -56,10 +56,11 @@ process.stdout.write(output);
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as tmp:
         tmp.write(script)
         tmp_path = tmp.name
+    base_dir = Path(__file__).resolve().parent
 
     try:
         proc = subprocess.run(
-            ["node", tmp_path], capture_output=True, text=True, check=True
+            ["node", tmp_path], capture_output=True, text=True, check=True, cwd=base_dir
         )
         return proc.stdout
     finally:
