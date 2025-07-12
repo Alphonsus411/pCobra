@@ -137,3 +137,72 @@ func principal():
     imprimir "Listo"
 fin
 ```
+
+## 21. Funciones asincrónicas
+```cobra
+asincronico func saluda():
+    imprimir 1
+fin
+
+asincronico func principal():
+    esperar saluda()
+fin
+
+esperar principal()
+```
+
+## 22. Decoradores
+```cobra
+@mi_decorador
+func saluda():
+    imprimir "Hola"
+fin
+```
+
+## 23. Manejo de excepciones
+```cobra
+intentar:
+    abrir("noexiste.txt")
+capturar e:
+    imprimir "Error:" + e
+fin
+```
+
+## 24. Suma de matrices
+```cobra
+func sumar_matriz():
+    var a11 = 1
+    var a12 = 2
+    var a21 = 3
+    var a22 = 4
+
+    var b11 = 5
+    var b12 = 6
+    var b21 = 7
+    var b22 = 8
+
+    imprimir a11 + b11
+    imprimir a12 + b12
+    imprimir a21 + b21
+    imprimir a22 + b22
+fin
+
+sumar_matriz()
+```
+
+## 25. Factorial recursivo
+```cobra
+func factorial(n):
+    si n <= 1:
+        retorno 1
+    sino:
+        retorno n * factorial(n - 1)
+    fin
+fin
+
+imprimir factorial(5)
+```
+
+## 26. Comando verify
+El subcomando `cobra verificar` (`cobra verify`) comprueba que un programa
+genere la misma salida en distintos lenguajes.
