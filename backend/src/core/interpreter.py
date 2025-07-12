@@ -33,6 +33,7 @@ from src.core.ast_nodes import (
     NodoImprimir,
     NodoRetorno,
     NodoYield,
+    NodoEsperar,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoTryCatch,
@@ -160,6 +161,8 @@ class InterpretadorCobra:
     def _contiene_yield(self, nodo):
         if isinstance(nodo, NodoYield):
             return True
+        if isinstance(nodo, Token):
+            return False
         for valor in getattr(nodo, '__dict__', {}).values():
             if isinstance(valor, list):
                 for elem in valor:
@@ -290,6 +293,8 @@ class InterpretadorCobra:
             return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
             return self.evaluar_expresion(nodo.expresion)
+        elif isinstance(nodo, NodoEsperar):
+            return self.evaluar_expresion(nodo.expresion)
         elif isinstance(nodo, NodoValor):
             return nodo.valor  # Retorna el valor directo de NodoValor
         else:
@@ -397,6 +402,8 @@ class InterpretadorCobra:
                 return not valor
             else:
                 raise ValueError(f"Operador unario no soportado: {tipo}")
+        elif isinstance(expresion, NodoEsperar):
+            return self.evaluar_expresion(expresion.expresion)
         elif isinstance(expresion, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(expresion)
         elif isinstance(expresion, NodoLlamadaFuncion):
@@ -462,11 +469,12 @@ class InterpretadorCobra:
                 else:
                     valor = self.evaluar_expresion(arg)
                 print(valor)
-        elif (
-            nodo.nombre in self.variables
-            and isinstance(self.variables[nodo.nombre], NodoFuncion)
-        ):
-            funcion = self.variables[nodo.nombre]
+        else:
+            funcion = self.obtener_variable(nodo.nombre)
+            if not isinstance(funcion, NodoFuncion):
+                print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
+                return None
+
             if len(funcion.parametros) != len(nodo.argumentos):
                 print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
                 return None
@@ -512,8 +520,6 @@ class InterpretadorCobra:
                         break
                 limpiar_contexto()
                 return resultado
-        else:
-            print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
 
     def ejecutar_clase(self, nodo):
         """Registra una clase definida por el usuario."""

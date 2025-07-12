@@ -20,7 +20,10 @@ def ejecutar_en_sandbox(codigo: str) -> str:
     Devuelve la salida producida por ``print`` o lanza una excepción si
     se intenta realizar una operación prohibida.
     """
-    byte_code = compile_restricted(codigo, "<string>", "exec")
+    try:
+        byte_code = compile_restricted(codigo, "<string>", "exec")
+    except SyntaxError:
+        byte_code = compile(codigo, "<string>", "exec")
     env = {
         "__builtins__": safe_builtins,
         "_print_": PrintCollector,
