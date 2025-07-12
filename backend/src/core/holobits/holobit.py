@@ -1,5 +1,7 @@
 """Tipos de datos y operaciones para manipular holobits."""
 
+import json
+
 
 class Holobit:
     """Representa un conjunto de valores numericos para operaciones 3D/2D."""
@@ -17,3 +19,7 @@ class Holobit:
 
     def __getitem__(self, index):
         return self.valores[index]
+
+    def to_json(self):
+        """Convierte los valores del Holobit a una cadena JSON."""
+        return json.dumps(self.valores)
