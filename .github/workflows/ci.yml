@@ -51,3 +51,5 @@ jobs:
           files: coverage.xml
       - name: Build docs
         run: sphinx-build -b html frontend/docs frontend/build/html
+      - name: Check doc links
+        run: sphinx-build -b linkcheck frontend/docs frontend/build/linkcheck
