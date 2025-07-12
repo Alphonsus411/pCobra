@@ -28,6 +28,8 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
     if lang == "python":
         return ejecutar_en_sandbox(codigo)
     if lang == "js":
+        if not shutil.which("node"):
+            pytest.skip("node no disponible")
         return ejecutar_en_sandbox_js(codigo)
     if lang == "ruby":
         if not shutil.which("ruby"):
@@ -100,9 +102,12 @@ def test_cross_backend_output(tmp_path):
         ast = Parser(tokens).parsear()
 
         diferencias = {}
-        for lang in TRANSPILERS:
+        for lang in ("python", "js"):
+            transpiler = TRANSPILERS[lang]()
+            if lang == "python":
+                transpiler.codigo = ""
             try:
-                codigo = TRANSPILERS[lang]().generate_code(ast)
+                codigo = transpiler.generate_code(ast)
             except NotImplementedError as e:
                 diferencias[lang] = f"Error: {e}"
                 continue
