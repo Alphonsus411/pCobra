@@ -76,14 +76,94 @@ en paralelo se utiliza ``hilo``.
    macro saluda { imprimir("hola") }
    hilo saluda()
 
+Funciones asincrónicas
+----------------------
+
+Para definir corrutinas se emplea la palabra clave ``asincronico`` y se espera
+su resultado con ``esperar``.
+
+.. code-block:: cobra
+
+   asincronico func saluda():
+       imprimir(1)
+   fin
+
+   asincronico func principal():
+       esperar saluda()
+   fin
+
+   esperar principal()
+
+Decoradores
+-----------
+
+Se declaran anteponiendo ``@`` al nombre de la función que se desea modificar.
+
+.. code-block:: cobra
+
+   @log
+   func hola():
+       imprimir("hola")
+   fin
+
+Manejo de excepciones
+---------------------
+
+Las excepciones pueden atraparse con ``try``/``catch`` o sus alias
+``intentar``/``capturar``.
+
+.. code-block:: cobra
+
+   intentar:
+       abrir("no_existe.txt")
+   capturar e:
+       imprimir("Error:" + e)
+   fin
+
+Ejemplos adicionales
+--------------------
+
+Suma de matrices::
+
+   func sumar_matriz():
+       var a11 = 1
+       var a12 = 2
+       var a21 = 3
+       var a22 = 4
+
+       var b11 = 5
+       var b12 = 6
+       var b21 = 7
+       var b22 = 8
+
+       imprimir(a11 + b11)
+       imprimir(a12 + b12)
+       imprimir(a21 + b21)
+       imprimir(a22 + b22)
+   fin
+
+   sumar_matriz()
+
+Factorial recursivo::
+
+   func factorial(n):
+       si n <= 1:
+           retorno 1
+       sino:
+           retorno n * factorial(n - 1)
+       fin
+   fin
+
+   imprimir(factorial(5))
+
 Transpilación y ejecución
 -------------------------
 
 El comando ``cobra compilar`` genera código para múltiples lenguajes. También
 puede ejecutarse un archivo directamente con ``cobra ejecutar``.
-El subcomando ``cobra verificar`` permite comparar la salida de un programa
-transpilado a distintos lenguajes (actualmente Python y JavaScript) y avisa si
-alguna difiere.
+El subcomando ``cobra verificar`` (``cobra verify`` en la versión en inglés)
+permite comparar la salida de un programa transpilado a distintos lenguajes
+(actualmente Python y JavaScript) y avisa si alguna difiere.
 
 Limitaciones de los backends
 ----------------------------
