@@ -24,7 +24,7 @@ pybind11==2.13.6
 python-lsp-server==1.11.0
 packaging==24.0
 snakeviz==2.2.2
-lark==1.1.9
+lark==1.2.2
 psutil==7.0.0
 tomli>=2.0
 sphinxcontrib-plantuml==0.30
