@@ -1,0 +1,9 @@
+asincronico func saluda():
+    imprimir(1)
+fin
+
+asincronico func principal():
+    esperar saluda()
+fin
+
+esperar principal()

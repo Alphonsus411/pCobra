@@ -139,6 +139,7 @@ class ClassicParser:
             TipoToken.NOLOCAL: self.declaracion_nolocal,
             TipoToken.CON: self.declaracion_con,
             TipoToken.DESDE: self.declaracion_desde,
+            TipoToken.ASINCRONICO: self.declaracion_asincronico,
             TipoToken.ESPERAR: self.declaracion_esperar,
             TipoToken.SWITCH: self.declaracion_switch,
         }
@@ -198,10 +199,7 @@ class ClassicParser:
                 return funcion
 
             if token.tipo == TipoToken.ASINCRONICO:
-                self.comer(TipoToken.ASINCRONICO)
-                if self.token_actual().tipo == TipoToken.FUNC:
-                    return self.declaracion_funcion(True)
-                raise SyntaxError("Se esperaba 'func' después de 'asincronico'")
+                return self.declaracion_asincronico()
 
             if token.tipo == TipoToken.ESPERAR:
                 return self.declaracion_esperar()
@@ -649,6 +647,13 @@ class ClassicParser:
         """Parsea una expresión 'yield' dentro de una función generadora."""
         self.comer(TipoToken.YIELD)
         return NodoYield(self.expresion())
+
+    def declaracion_asincronico(self):
+        """Parsea una declaración comenzada con 'asincronico'."""
+        self.comer(TipoToken.ASINCRONICO)
+        if self.token_actual().tipo == TipoToken.FUNC:
+            return self.declaracion_funcion(True)
+        raise SyntaxError("Se esperaba 'func' después de 'asincronico'")
 
     def declaracion_esperar(self):
         """Parsea una expresión 'esperar' para await."""
