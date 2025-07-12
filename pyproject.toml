@@ -35,6 +35,10 @@ Source = "https://github.com/Alphonsus411/pCobra"
 
 [project.optional-dependencies]
 mutation = ["mutpy>=0.6.1"]
+notebooks = [
+    "papermill>=2.6.0",
+    "nbconvert>=7.16.6",
+]
 
 [tool.setuptools]
 package-dir = {"" = "backend/src"}
