@@ -2,6 +2,7 @@ import sys
 import shutil
 from io import StringIO
 from pathlib import Path
+import subprocess
 from unittest.mock import patch
 
 import pytest
@@ -25,3 +26,21 @@ def test_docs_generation():
     assert ret == 0
     assert (build_dir / "index.html").is_file()
     assert "Documentación generada" in out.getvalue()
+
+    linkcheck_dir = Path("frontend/build/linkcheck")
+    if linkcheck_dir.exists():
+        shutil.rmtree(linkcheck_dir)
+    result = subprocess.run(
+        ["sphinx-build", "-b", "linkcheck", "frontend/docs", str(linkcheck_dir)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "broken" not in result.stdout
+
+    manual = build_dir / "MANUAL_COBRA.html"
+    especificacion = build_dir / "especificacion_tecnica.html"
+    assert manual.is_file() or especificacion.is_file()
+
+    index_content = (build_dir / "index.html").read_text(encoding="utf-8")
+    assert "toctree-wrapper" in index_content or "class=\"toc\"" in index_content
