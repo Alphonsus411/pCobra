@@ -28,6 +28,7 @@ from .commands.bench_transpilers_cmd import BenchTranspilersCommand
 from .commands.bench_cmd import BenchCommand
 from .commands.profile_cmd import ProfileCommand
 from .commands.cache_cmd import CacheCommand
+from .commands.verify_cmd import VerifyCommand
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
 # directamente para evitar modificar la configuración global al importar este
@@ -72,6 +73,7 @@ def main(argv=None):
         BenchTranspilersCommand(),
         ProfileCommand(),
         CacheCommand(),
+        VerifyCommand(),
         PluginsCommand(),
         InteractiveCommand(),
     ]

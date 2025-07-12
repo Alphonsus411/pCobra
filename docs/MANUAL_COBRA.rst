@@ -81,6 +81,9 @@ Transpilación y ejecución
 
 El comando ``cobra compilar`` genera código para múltiples lenguajes. También
 puede ejecutarse un archivo directamente con ``cobra ejecutar``.
+El subcomando ``cobra verificar`` permite comparar la salida de un programa
+transpilado a distintos lenguajes (actualmente Python y JavaScript) y avisa si
+alguna difiere.
 
 Limitaciones de los backends
 ----------------------------

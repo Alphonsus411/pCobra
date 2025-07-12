@@ -542,6 +542,8 @@ cobra empaquetar --output dist
 cobra profile programa.co --output salida.prof
 # O mostrar el perfil directamente en pantalla
 cobra profile programa.co
+# Verificar la salida en Python y JavaScript
+cobra verificar ejemplo.co --lenguajes=python,js
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
