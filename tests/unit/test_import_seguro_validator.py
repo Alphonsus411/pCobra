@@ -1,8 +1,8 @@
 import pytest
 from types import SimpleNamespace
-from src.core.semantic_validators.import_seguro import ValidadorImportSeguro
-from src.core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
-from src.core.ast_nodes import NodoImport
+from core.semantic_validators.import_seguro import ValidadorImportSeguro
+from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
+from core.ast_nodes import NodoImport
 
 
 def test_import_seguro_fuera_de_ruta(tmp_path, monkeypatch):

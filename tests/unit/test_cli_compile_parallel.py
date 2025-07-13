@@ -3,7 +3,7 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.cli.cli import main
+from cli.cli import main
 
 
 def _fake_transpile(self, ast):
@@ -16,8 +16,8 @@ def _fake_transpile(self, ast):
 def test_cli_compilar_varios_tipos_en_paralelo(tmp_path):
     archivo = tmp_path / "c.co"
     archivo.write_text("var x = 5")
-    with patch("src.cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar", _fake_transpile), \
-         patch("src.cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar", _fake_transpile), \
+    with patch("cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar", _fake_transpile), \
+         patch("cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar", _fake_transpile), \
          patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(archivo), "--tipos=python,js"])
     lineas = out.getvalue().strip().splitlines()

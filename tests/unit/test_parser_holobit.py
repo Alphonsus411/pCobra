@@ -1,6 +1,6 @@
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.cobra.parser.parser import Parser
-from backend.src.core.ast_nodes import NodoHolobit
+from cobra.lexico.lexer import Token, TipoToken
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoHolobit
 import pytest
 
 

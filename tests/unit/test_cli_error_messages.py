@@ -2,7 +2,7 @@ from io import StringIO
 from unittest.mock import patch
 import pytest
 
-from src.cli.cli import main
+from cli.cli import main
 
 
 @pytest.mark.timeout(5)

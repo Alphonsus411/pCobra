@@ -1,6 +1,6 @@
-from src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from backend.src.cobra.lexico.lexer import TipoToken, Token
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from cobra.lexico.lexer import TipoToken, Token
+from core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoLlamadaFuncion,

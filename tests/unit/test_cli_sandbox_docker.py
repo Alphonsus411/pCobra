@@ -2,8 +2,8 @@ from io import StringIO
 from unittest.mock import patch
 import subprocess
 
-from src.cli.cli import main
-from src.cobra.transpilers import module_map
+from cli.cli import main
+from cobra.transpilers import module_map
 
 
 def test_cli_sandbox_docker_invoca_docker(monkeypatch):

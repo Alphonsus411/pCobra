@@ -2,14 +2,16 @@ from pathlib import Path
 import sys
 
 # Asegura que los módulos del proyecto sean importables
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT))
 
 from hypothesis import given, strategies as st
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.core.sandbox import ejecutar_en_sandbox
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.sandbox import ejecutar_en_sandbox
 
 
 # Estrategias para construir identificadores y valores simples

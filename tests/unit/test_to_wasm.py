@@ -1,12 +1,12 @@
-from src.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoOperacionBinaria,
     NodoIdentificador,
     NodoValor,
 )
-from src.cobra.lexico.lexer import Token, TipoToken
+from cobra.lexico.lexer import Token, TipoToken
 
 
 def test_transpilador_asignacion_wasm():

@@ -20,7 +20,7 @@ def test_cli_cache_limpiar(monkeypatch, tmp_path):
             sys.path.insert(0, str(path))
     import backend  # ensure path hooks are set
 
-    from src.cli.commands.cache_cmd import CacheCommand
+    from cli.commands.cache_cmd import CacheCommand
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         CacheCommand().run(argparse.Namespace())

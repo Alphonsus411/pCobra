@@ -2,16 +2,16 @@ from io import StringIO
 from unittest.mock import patch, MagicMock
 import pytest
 
-from src.cli.cli import main
-from src.cli.commands import modules_cmd
-from src.cli import cobrahub_client
+from cli.cli import main
+from cli.commands import modules_cmd
+from cli import cobrahub_client
 
 
 @pytest.mark.timeout(5)
 def test_cli_modulos_publicar(tmp_path):
     archivo = tmp_path / "m.co"
     archivo.write_text("var x = 1")
-    with patch("src.cli.cobrahub_client.requests.post") as mock_post, \
+    with patch("cli.cobrahub_client.requests.post") as mock_post, \
             patch("sys.stdout", new_callable=StringIO) as out:
         mock_resp = MagicMock()
         mock_resp.raise_for_status.return_value = None
@@ -30,7 +30,7 @@ def test_cli_modulos_buscar(tmp_path, monkeypatch):
     mod_file.write_text("lock: {}\n")
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
     monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
-    with patch("src.cli.cobrahub_client.requests.get") as mock_get, \
+    with patch("cli.cobrahub_client.requests.get") as mock_get, \
             patch("sys.stdout", new_callable=StringIO) as out:
         response = MagicMock()
         response.raise_for_status.return_value = None
@@ -49,8 +49,8 @@ def test_publicar_modulo_url_insegura(tmp_path, monkeypatch):
     mod = tmp_path / "m.co"
     mod.write_text("var x = 1")
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "http://inseguro/api")
-    with patch("src.cli.cobrahub_client.mostrar_error") as err, \
-            patch("src.cli.cobrahub_client.requests.post") as mock_post:
+    with patch("cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.post") as mock_post:
         ok = cobrahub_client.publicar_modulo(str(mod))
     assert not ok
     err.assert_called_once()
@@ -62,8 +62,8 @@ def test_publicar_modulo_url_insegura(tmp_path, monkeypatch):
 def test_descargar_modulo_url_insegura(tmp_path, monkeypatch):
     destino = tmp_path / "out.co"
     monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "http://inseguro/api")
-    with patch("src.cli.cobrahub_client.mostrar_error") as err, \
-            patch("src.cli.cobrahub_client.requests.get") as mock_get:
+    with patch("cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.get") as mock_get:
         ok = cobrahub_client.descargar_modulo("m.co", str(destino))
     assert not ok
     err.assert_called_once()

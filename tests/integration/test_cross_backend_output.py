@@ -1,17 +1,19 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "backend" / "src"))
 from io import StringIO
 from unittest.mock import patch
 import subprocess
 import shutil
 
 import backend
-from backend.src.core.interpreter import InterpretadorCobra
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from backend.src.cli.commands.compile_cmd import TRANSPILERS
-from backend.src.core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from core.interpreter import InterpretadorCobra
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from cli.commands.compile_cmd import TRANSPILERS
+from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 import pytest
 
 

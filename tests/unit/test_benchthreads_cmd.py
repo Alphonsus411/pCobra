@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-from src.cli.cli import main
-from src.cli.commands import benchthreads_cmd
+from cli.cli import main
+from cli.commands import benchthreads_cmd
 import pytest
 
 @pytest.mark.timeout(10)

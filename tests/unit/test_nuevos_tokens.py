@@ -1,5 +1,5 @@
 import pytest
-from src.cobra.lexico.lexer import Lexer, TipoToken
+from cobra.lexico.lexer import Lexer, TipoToken
 
 
 def test_lexer_palabras_nuevas():

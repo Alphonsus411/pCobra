@@ -2,9 +2,9 @@ import subprocess
 import shutil
 import pytest
 
-from src.core.ast_nodes import NodoAsignacion, NodoValor
-from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from src.cobra.transpilers.transpiler.to_go import TranspiladorGo
+from core.ast_nodes import NodoAsignacion, NodoValor
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from cobra.transpilers.transpiler.to_go import TranspiladorGo
 
 
 def test_transpile_and_compile_rust_go(tmp_path):

@@ -1,6 +1,6 @@
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.ast_nodes import NodoAsignacion, NodoValor
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoAsignacion, NodoValor
 
 
 def test_parser_generates_ast_for_assignment():

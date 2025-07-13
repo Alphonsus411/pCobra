@@ -1,6 +1,6 @@
-from backend.src.cobra.lexico.lexer import TipoToken, Token
-from src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from src.core.ast_nodes import (
+from cobra.lexico.lexer import TipoToken, Token
+from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+from core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoLlamadaFuncion,

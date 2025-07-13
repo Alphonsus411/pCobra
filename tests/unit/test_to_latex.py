@@ -1,5 +1,5 @@
-from src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
-from src.core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
+from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
 
 
 def test_transpilador_asignacion_latex():

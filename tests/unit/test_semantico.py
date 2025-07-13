@@ -1,7 +1,7 @@
 import pytest
 
-from src.cobra.semantico import AnalizadorSemantico
-from src.core.ast_nodes import (
+from cobra.semantico import AnalizadorSemantico
+from core.ast_nodes import (
     NodoIdentificador,
     NodoAsignacion,
     NodoValor,

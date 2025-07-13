@@ -1,10 +1,10 @@
 import pytest
 
-from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.base import BaseTranspiler
-from src.core.ast_nodes import NodoAST, NodoGlobal
+from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.base import BaseTranspiler
+from core.ast_nodes import NodoAST, NodoGlobal
 
 
 class NodoInvalido(NodoAST):

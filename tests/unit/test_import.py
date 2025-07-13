@@ -2,15 +2,15 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.core.interpreter import (
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.interpreter import (
     InterpretadorCobra,
     MODULES_PATH,
     IMPORT_WHITELIST,
 )
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.import_helper import get_standard_imports
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 

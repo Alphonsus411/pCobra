@@ -1,9 +1,9 @@
 import pytest
 
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoBucleMientras, NodoValor
-from src.cobra.parser.parser import Parser
-from src.cobra.parser.parser import Parser
+from cobra.lexico.lexer import Token, TipoToken
+from core.ast_nodes import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoBucleMientras, NodoValor
+from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser
 
 
 def test_parser_asignacion():

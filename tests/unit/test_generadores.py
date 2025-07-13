@@ -1,6 +1,6 @@
-from src.core.ast_nodes import NodoFuncion, NodoYield, NodoValor
-from src.core.ast_nodes import NodoLlamadaFuncion
-from src.core.interpreter import InterpretadorCobra
+from core.ast_nodes import NodoFuncion, NodoYield, NodoValor
+from core.ast_nodes import NodoLlamadaFuncion
+from core.interpreter import InterpretadorCobra
 
 
 def test_interpretador_generador_simple():

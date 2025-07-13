@@ -1,4 +1,4 @@
-from backend.src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoImportDesde,
     NodoDecorador,
     NodoClase,
@@ -7,9 +7,9 @@ from backend.src.core.ast_nodes import (
     NodoLlamadaFuncion,
     NodoIdentificador,
 )
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.import_helper import get_standard_imports
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS_PY = get_standard_imports("python")
 

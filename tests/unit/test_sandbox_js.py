@@ -4,9 +4,11 @@ import sys
 from pathlib import Path
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "backend" / "src"))
 
-from src.core.sandbox import ejecutar_en_sandbox_js
+from core.sandbox import ejecutar_en_sandbox_js
 
 
 @pytest.mark.timeout(5)

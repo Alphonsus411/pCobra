@@ -2,9 +2,9 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.core.interpreter import InterpretadorCobra
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.core.ast_nodes import NodoAsignacion, NodoValor, NodoLlamadaFuncion, NodoFuncion
+from core.interpreter import InterpretadorCobra
+from cobra.lexico.lexer import Token, TipoToken
+from core.ast_nodes import NodoAsignacion, NodoValor, NodoLlamadaFuncion, NodoFuncion
 def test_interpretador_asignacion_y_llamada_funcion():
 
     # Crea una instancia del intérprete

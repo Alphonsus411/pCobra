@@ -8,7 +8,7 @@ import pytest
 def test_cli_agix_sin_agix(tmp_path):
     archivo = tmp_path / "ejemplo.co"
     archivo.write_text("var x = 5")
-    for mod in ["src.cli.cli", "src.cli.commands.agix_cmd", "src.ia.analizador_agix"]:
+    for mod in ["cli.cli", "cli.commands.agix_cmd", "ia.analizador_agix"]:
         sys.modules.pop(mod, None)
     real_import = __import__
 
@@ -18,7 +18,7 @@ def test_cli_agix_sin_agix(tmp_path):
         return real_import(name, globals, locals, fromlist, level)
 
     with patch("builtins.__import__", side_effect=fake_import):
-        from src.cli.cli import main
+        from cli.cli import main
         with patch("sys.stdout", new_callable=StringIO) as out:
             with pytest.raises(SystemExit):
                 main(["agix", str(archivo)])

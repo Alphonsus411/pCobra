@@ -2,8 +2,8 @@ import importlib
 import sys
 import hashlib
 import pytest
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
 
 
 def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
@@ -12,7 +12,7 @@ def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
 
     if 'src.core.ast_cache' in sys.modules:
         importlib.reload(sys.modules['src.core.ast_cache'])
-    from src.core.ast_cache import obtener_tokens
+    from core.ast_cache import obtener_tokens
 
     llamadas = {"count": 0}
 
@@ -37,7 +37,7 @@ def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
 
     if 'src.core.ast_cache' in sys.modules:
         importlib.reload(sys.modules['src.core.ast_cache'])
-    from src.core.ast_cache import obtener_ast
+    from core.ast_cache import obtener_ast
 
     token_calls = {"count": 0}
     parse_calls = {"count": 0}
@@ -73,7 +73,7 @@ def test_cache_fragmentos(monkeypatch, tmp_path):
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
 
-    from src.core.ast_cache import obtener_tokens_fragmento
+    from core.ast_cache import obtener_tokens_fragmento
 
     llamadas = {"count": 0}
 

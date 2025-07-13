@@ -1,6 +1,6 @@
 import pytest
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
 
 
 def parsear_codigo(codigo: str):

@@ -1,5 +1,5 @@
-from src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,

@@ -1,7 +1,7 @@
 import pytest
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.ast_nodes import NodoCondicional
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoCondicional
 
 
 def test_parser_condicional_si_en_sino():

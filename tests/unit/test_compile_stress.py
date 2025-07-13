@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from backend.src.cli.commands.compile_cmd import CompileCommand
+from cli.commands.compile_cmd import CompileCommand
 
 
 def _fake_transpile(self, ast):
@@ -25,19 +25,19 @@ def test_compile_command_parallel_outputs_unique(tmp_path):
         tipos='python,js,c,cpp',
     )
     with patch(
-        'backend.src.cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar',
+        'cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar',
         _fake_transpile,
     ), patch(
-        'backend.src.cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar',
+        'cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar',
         _fake_transpile,
     ), patch(
-        'backend.src.cobra.transpilers.transpiler.to_c.TranspiladorC.transpilar',
+        'cobra.transpilers.transpiler.to_c.TranspiladorC.transpilar',
         _fake_transpile,
     ), patch(
-        'backend.src.cobra.transpilers.transpiler.to_cpp.TranspiladorCPP.transpilar',
+        'cobra.transpilers.transpiler.to_cpp.TranspiladorCPP.transpilar',
         _fake_transpile,
     ), patch(
-        'backend.src.cobra.transpilers.module_map.get_toml_map',
+        'cobra.transpilers.module_map.get_toml_map',
         lambda: {},
     ), patch('sys.stdout', new_callable=StringIO) as out:
         CompileCommand().run(args)

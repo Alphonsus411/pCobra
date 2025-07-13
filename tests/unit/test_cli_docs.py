@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest.mock import patch, call
 from io import StringIO
-from src.cli.cli import main
+from cli.cli import main
 
 
 def test_cli_docs_invokes_sphinx():

@@ -1,7 +1,7 @@
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoAssert, NodoDel, NodoGlobal, NodoNoLocal, NodoLambda, NodoValor, NodoWith, NodoPasar
 )
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 def test_transpilar_afirmar():

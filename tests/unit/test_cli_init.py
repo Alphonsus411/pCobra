@@ -1,7 +1,7 @@
 from io import StringIO
 from unittest.mock import patch
 
-from src.cli.cli import main
+from cli.cli import main
 
 
 def test_cli_init_creates_project(tmp_path):

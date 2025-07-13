@@ -6,13 +6,13 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend" / "src"))
 sys.path.insert(0, str(ROOT))
-import src.core.visitor as _vis
+import core.visitor as _vis
 sys.modules.setdefault("backend.src.core.visitor", _vis)
 sys.modules.setdefault("backend.src.core", sys.modules.get("core"))
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import (
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import (
     NodoDel,
     NodoGlobal,
     NodoNoLocal,
@@ -20,8 +20,8 @@ from src.core.ast_nodes import (
     NodoPasar,
     NodoIdentificador,
 )
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.import_helper import get_standard_imports
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 

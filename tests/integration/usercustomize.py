@@ -8,7 +8,7 @@ if os.environ.get("PEXPECT_TESTING"):
         return CompletedProcess(cmd, 0)
     subprocess.run = fake_run
     try:
-        import backend.src.core.sandbox as sandbox
+        import core.sandbox as sandbox
 
         def fake_sandbox(code: str) -> None:
             print("hola")

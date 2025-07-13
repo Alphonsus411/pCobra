@@ -5,17 +5,19 @@ from pathlib import Path
 import sys
 import types
 
-from src.cli.plugin import (
+from cli.plugin import (
     descubrir_plugins,
     PluginCommand,
     cargar_plugin_seguro,
 )
-from src.cli.plugin_registry import obtener_registro, limpiar_registro
+from cli.plugin_registry import obtener_registro, limpiar_registro
 
 # Añadimos la carpeta de plugins de ejemplo al path para poder importar
 # el plugin md2cobra durante las pruebas.
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN_DIR = ROOT / "examples" / "plugins"
+sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PLUGIN_DIR))
 sys.modules.setdefault("src.tests.test_plugin_loader", sys.modules[__name__])
 
@@ -33,7 +35,7 @@ def test_descubrir_plugins_carga_plugins():
         value="src.tests.test_plugin_loader:DummyPlugin",
         group="cobra.plugins",
     )
-    with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
         plugins = descubrir_plugins()
     assert len(plugins) == 1
@@ -48,7 +50,7 @@ def test_descubrir_plugins_md2cobra():
         value="md2cobra_plugin:MarkdownToCobraCommand",
         group="cobra.plugins",
     )
-    with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
         plugins = descubrir_plugins()
     assert any(p.__class__.__name__ == "MarkdownToCobraCommand" for p in plugins)
@@ -62,7 +64,7 @@ def test_plugin_ruta_invalida():
         value="invalido",
         group="cobra.plugins",
     )
-    with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
         plugins = descubrir_plugins()
     assert plugins == []
@@ -72,7 +74,7 @@ def test_plugin_ruta_invalida():
 def test_cargar_plugin_seguro_modulo_inexistente():
     """Un módulo inexistente no debe registrarse."""
     ep_value = "no.existe:Nope"
-    with patch("src.cli.plugin.import_module", side_effect=ModuleNotFoundError):
+    with patch("cli.plugin.import_module", side_effect=ModuleNotFoundError):
         limpiar_registro()
         plugin = cargar_plugin_seguro(ep_value)
     assert plugin is None
@@ -95,7 +97,7 @@ def test_cargar_plugin_seguro_instanciacion_falla():
             pass
 
     module = types.SimpleNamespace(BoomPlugin=BoomPlugin)
-    with patch("src.cli.plugin.import_module", return_value=module):
+    with patch("cli.plugin.import_module", return_value=module):
         limpiar_registro()
         plugin = cargar_plugin_seguro("fake.mod:BoomPlugin")
     assert plugin is None
@@ -112,10 +114,10 @@ def test_plugin_sin_atributo_name():
 
     ep = importlib.metadata.EntryPoint(
         name="noname",
-        value="src.tests.test_plugin_loader:SinNombrePlugin",
+        value="tests.test_plugin_loader:SinNombrePlugin",
         group="cobra.plugins",
     )
-    with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
         plugins = descubrir_plugins()
     assert plugins == []

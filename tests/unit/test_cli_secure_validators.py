@@ -14,7 +14,7 @@ def _run_cli(args):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)
     proc = subprocess.run(
-        [sys.executable, "-m", "src.cli.cli", *args],
+        [sys.executable, "-m", "cli.cli", *args],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env=env,

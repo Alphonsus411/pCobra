@@ -1,5 +1,5 @@
-from src.core.memoria.estrategia_memoria import EstrategiaMemoria
-from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
+from core.memoria.estrategia_memoria import EstrategiaMemoria
+from core.memoria.gestor_memoria import GestorMemoriaGenetico
 
 
 def test_asignacion_y_liberacion_intensiva():

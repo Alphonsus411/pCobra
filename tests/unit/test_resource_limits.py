@@ -1,5 +1,5 @@
 import resource
-from src.core.resource_limits import limitar_memoria_mb, limitar_cpu_segundos
+from core.resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 
 def test_limitar_memoria():

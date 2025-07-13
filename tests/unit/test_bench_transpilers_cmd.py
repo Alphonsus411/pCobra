@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cli.cli import main
+from cli.cli import main
 
 
 class DummyTranspiler:
@@ -14,7 +14,7 @@ class DummyTranspiler:
 
 @pytest.mark.timeout(10)
 def test_bench_transpilers_generates_results(tmp_path, monkeypatch):
-    import src.cli.commands.bench_transpilers_cmd as bt
+    import cli.commands.bench_transpilers_cmd as bt
 
     monkeypatch.setattr(bt, "TRANSPILERS", {"dummy": DummyTranspiler})
     monkeypatch.setattr(bt, "timeit", lambda func, number=1: 0.01)
@@ -32,7 +32,7 @@ def test_bench_transpilers_generates_results(tmp_path, monkeypatch):
 
 @pytest.mark.timeout(10)
 def test_bench_transpilers_profile_creates_file(tmp_path, monkeypatch):
-    import src.cli.commands.bench_transpilers_cmd as bt
+    import cli.commands.bench_transpilers_cmd as bt
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(bt, "TRANSPILERS", {"dummy": DummyTranspiler})

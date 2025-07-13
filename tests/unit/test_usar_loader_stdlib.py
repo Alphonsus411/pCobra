@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend" / "src"))
 sys.path.insert(0, str(ROOT))
 
-from src.cobra import usar_loader
+from cobra import usar_loader
 import standard_library.fecha as fecha
 
 

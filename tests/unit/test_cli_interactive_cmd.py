@@ -20,7 +20,7 @@ pc_mod.PrintCollector = list
 sys.modules.setdefault("RestrictedPython.PrintCollector", pc_mod)
 sys.modules.setdefault("yaml", ModuleType("yaml"))
 
-from src.cli.commands.interactive_cmd import InteractiveCommand
+from cli.commands.interactive_cmd import InteractiveCommand
 
 
 def _args():
@@ -30,8 +30,8 @@ def _args():
 def test_interactive_exit():
     cmd = InteractiveCommand()
     with patch('builtins.input', side_effect=['salir']), \
-         patch('src.cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
-         patch('src.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
     assert ret == 0
     mock_interp.assert_called_once_with(safe_mode=False, extra_validators=None)
@@ -40,8 +40,8 @@ def test_interactive_exit():
 def test_interactive_tokens():
     cmd = InteractiveCommand()
     with patch('builtins.input', side_effect=['tokens', 'salir']), \
-         patch('src.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('src.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     mock_info.assert_any_call('Tokens generados:')
 
@@ -49,7 +49,7 @@ def test_interactive_tokens():
 def test_interactive_ast():
     cmd = InteractiveCommand()
     with patch('builtins.input', side_effect=['ast', 'salir']), \
-         patch('src.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('src.cli.commands.interactive_cmd.validar_dependencias'):
+         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     mock_info.assert_any_call('AST generado:')

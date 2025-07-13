@@ -1,6 +1,6 @@
 import backend
-from backend.src.core.ast_nodes import NodoImprimir, NodoValor
-from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.ast_nodes import NodoImprimir, NodoValor
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 def test_transpilador_python_generacion():
