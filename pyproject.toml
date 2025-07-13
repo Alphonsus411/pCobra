@@ -42,6 +42,7 @@ notebooks = [
 
 [tool.setuptools]
 package-dir = {"" = "backend/src"}
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["backend/src"]
