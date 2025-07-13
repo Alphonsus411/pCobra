@@ -67,3 +67,23 @@ def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
     assert token_calls["count"] == 1
     assert parse_calls["count"] == 2
     assert (cache_dir / f"{checksum}.tok").exists()
+
+
+def test_cache_fragmentos(monkeypatch, tmp_path):
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
+
+    from src.core.ast_cache import obtener_tokens_fragmento
+
+    llamadas = {"count": 0}
+
+    def fake_tokenizar(self, *a, **k):
+        llamadas["count"] += 1
+        return []
+
+    monkeypatch.setattr(Lexer, "_tokenizar_base", fake_tokenizar)
+
+    codigo = "imprimir(1)\n"
+    obtener_tokens_fragmento(codigo)
+    obtener_tokens_fragmento(codigo)
+    assert llamadas["count"] == 1

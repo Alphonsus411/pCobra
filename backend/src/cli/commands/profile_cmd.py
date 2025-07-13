@@ -38,6 +38,11 @@ class ProfileCommand(BaseCommand):
             "--ui",
             help=_("Herramienta de visualización del perfil (por ejemplo, snakeviz)"),
         )
+        parser.add_argument(
+            "--analysis",
+            action="store_true",
+            help=_("Perfila las fases de análisis (lexer y parser)"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -49,6 +54,7 @@ class ProfileCommand(BaseCommand):
         formatear = getattr(args, "formatear", False)
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
+        analysis = getattr(args, "analysis", False)
 
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
@@ -69,8 +75,8 @@ class ProfileCommand(BaseCommand):
         with open(archivo, "r", encoding="utf-8") as f:
             codigo = f.read()
 
-        tokens = Lexer(codigo).tokenizar()
-        ast = Parser(tokens).parsear()
+        tokens = Lexer(codigo).tokenizar(profile=analysis)
+        ast = Parser(tokens).parsear(profile=analysis)
         if seguro:
             try:
                 validador = construir_cadena(
