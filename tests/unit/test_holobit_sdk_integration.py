@@ -1,5 +1,5 @@
 import pytest
-from src.core.holobits import Holobit, graficar, proyectar, transformar
+from core.holobits import Holobit, graficar, proyectar, transformar
 
 
 def test_graficar_usa_sdk(monkeypatch):

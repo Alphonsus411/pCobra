@@ -1,7 +1,7 @@
 import pytest
 
-from src.core.visitor import NodeVisitor
-from src.core.ast_nodes import NodoAST
+from core.visitor import NodeVisitor
+from core.ast_nodes import NodoAST
 
 class MiNodo(NodoAST):
     pass

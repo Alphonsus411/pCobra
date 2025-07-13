@@ -1,6 +1,6 @@
-from src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
-from backend.src.cobra.lexico.lexer import TipoToken, Token
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
+from cobra.lexico.lexer import TipoToken, Token
+from core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoLlamadaFuncion,

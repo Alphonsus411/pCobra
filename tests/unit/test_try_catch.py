@@ -2,18 +2,18 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from backend.src.cobra.lexico.lexer import Token, TipoToken, Lexer
-from src.cobra.parser.parser import Parser
-from backend.src.core.ast_nodes import (
+from cobra.lexico.lexer import Token, TipoToken, Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImprimir,
     NodoIdentificador,
     NodoValor,
 )
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from backend.src.core.interpreter import InterpretadorCobra
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.interpreter import InterpretadorCobra
 
 
 def generar_tokens(*args):
@@ -108,7 +108,7 @@ def test_interpreter_intentar_lanzar_capturar():
     interp.variables["mensaje"] = "hola"
     ast = Parser(Lexer(codigo).analizar_token()).parsear()[0]
 
-    from src.core.ast_nodes import (
+    from core.ast_nodes import (
         NodoTryCatch as STry,
         NodoThrow as SThrow,
         NodoImprimir as SImprimir,

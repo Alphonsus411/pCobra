@@ -4,11 +4,13 @@ from pathlib import Path
 from unittest.mock import patch
 import sys
 
-from src.cli.cli import main
+from cli.cli import main
 
 # Añadimos la carpeta de plugins de ejemplo al path para importar el plugin
 ROOT = Path(__file__).resolve().parents[3]
 PLUGIN_DIR = ROOT / "examples" / "plugins"
+sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PLUGIN_DIR))
 
 
@@ -33,7 +35,7 @@ var y = 2
         value="md2cobra_plugin:MarkdownToCobraCommand",
         group="cobra.plugins",
     )
-    with patch("src.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         main(["md2cobra", "--input", str(md), "--output", str(salida)])
 
     assert salida.exists()

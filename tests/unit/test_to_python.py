@@ -1,4 +1,4 @@
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -14,8 +14,8 @@ from src.core.ast_nodes import (
     NodoImprimir,
     NodoPasar,
 )
-from src.core.ast_nodes import NodoSwitch, NodoCase
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.ast_nodes import NodoSwitch, NodoCase
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
 
 
 def test_transpilador_asignacion():

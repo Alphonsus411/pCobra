@@ -1,10 +1,12 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 import pytest
-from backend.src.cobra.lexico.lexer import (
+from cobra.lexico.lexer import (
     Lexer,
     TipoToken,
     InvalidTokenError,

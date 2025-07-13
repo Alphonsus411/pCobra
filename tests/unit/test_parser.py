@@ -1,7 +1,7 @@
 import pytest
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import NodoAsignacion, NodoHolobit, NodoCondicional
-from src.cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoAsignacion, NodoHolobit, NodoCondicional
+from cobra.lexico.lexer import Lexer
 
 
 @pytest.mark.timeout(5)  # Timeout de 5 segundos para evitar bucles infinitos

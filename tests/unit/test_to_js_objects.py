@@ -1,5 +1,5 @@
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.core.ast_nodes import NodoInstancia, NodoLlamadaMetodo, NodoIdentificador, NodoValor
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from core.ast_nodes import NodoInstancia, NodoLlamadaMetodo, NodoIdentificador, NodoValor
 
 
 def test_transpilar_instancia():

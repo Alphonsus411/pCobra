@@ -9,9 +9,9 @@ sys.modules.setdefault('yaml', fake_yaml)
 
 import pytest
 
-from src.core.interpreter import InterpretadorCobra
-from src.core.ast_nodes import NodoUsar
-from src.cobra import usar_loader
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import NodoUsar
+from cobra import usar_loader
 
 
 def test_obtener_modulo_instala_si_no_existe():

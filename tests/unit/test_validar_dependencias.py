@@ -2,8 +2,8 @@ from io import StringIO
 from unittest.mock import patch
 import pytest
 
-from src.cli.cli import main
-from src.cobra.transpilers import module_map
+from cli.cli import main
+from cobra.transpilers import module_map
 
 
 @pytest.mark.timeout(5)

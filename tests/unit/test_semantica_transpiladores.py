@@ -1,7 +1,7 @@
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.transpiler.to_c import TranspiladorC
-from src.core.ast_nodes import NodoAsignacion, NodoBucleMientras, NodoValor
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_c import TranspiladorC
+from core.ast_nodes import NodoAsignacion, NodoBucleMientras, NodoValor
 
 
 def test_asignacion_compartida():

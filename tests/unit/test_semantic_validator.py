@@ -1,7 +1,7 @@
 import pytest
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.core.semantic_validators import (
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )

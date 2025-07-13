@@ -1,7 +1,7 @@
 import pytest
-from src.core.interpreter import InterpretadorCobra
-from src.core.ast_nodes import NodoImprimir, NodoValor
-from src.core.cobra_config import _cache
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import NodoImprimir, NodoValor
+from core.cobra_config import _cache
 
 
 def test_limite_nodos(monkeypatch, tmp_path):

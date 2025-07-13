@@ -1,7 +1,7 @@
 import pytest
-from src.cobra.lexico.lexer import Lexer, Token, TipoToken
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import (
+from cobra.lexico.lexer import Lexer, Token, TipoToken
+from cobra.parser.parser import Parser
+from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoFuncion,

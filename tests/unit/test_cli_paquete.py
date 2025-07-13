@@ -3,8 +3,8 @@ import zipfile
 import tomllib
 from unittest.mock import patch
 
-from src.cli.cli import main
-from src.cli.commands import modules_cmd, package_cmd
+from cli.cli import main
+from cli.commands import modules_cmd, package_cmd
 
 
 def test_paquete_crear_instalar(tmp_path, monkeypatch):

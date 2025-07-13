@@ -3,8 +3,8 @@ from io import StringIO
 from unittest.mock import patch
 import yaml
 
-from src.cli.cli import main
-from src.cli.commands import modules_cmd
+from cli.cli import main
+from cli.commands import modules_cmd
 
 
 @pytest.mark.timeout(5)
@@ -151,7 +151,7 @@ def test_cli_ejecutar_imprime(tmp_path):
 def test_cli_ejecutar_flag_seguro(tmp_path):
     archivo = tmp_path / "p.co"
     archivo.write_text("imprimir(1)")
-    with patch("src.cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
+    with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
         main(["--seguro", "ejecutar", str(archivo)])
         mock_interp.assert_called_once_with(safe_mode=True)
         mock_interp.return_value.ejecutar_ast.assert_called_once()
@@ -163,7 +163,7 @@ def test_cli_validadores_extra(tmp_path):
     archivo.write_text("imprimir(1)")
     ruta = tmp_path / "vals.py"
     ruta.write_text("VALIDADORES_EXTRA = []\n")
-    with patch("src.cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
+    with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
         main(["--seguro", f"--validadores-extra={ruta}", "ejecutar", str(archivo)])
         mock_interp.assert_called_once_with(
             safe_mode=True, extra_validators=str(ruta)

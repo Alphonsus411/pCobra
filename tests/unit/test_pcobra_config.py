@@ -19,7 +19,7 @@ def test_cargar_configuracion_python_js(tmp_path, monkeypatch):
 
     monkeypatch.setenv('PCOBRA_CONFIG', str(cfg_file))
     _reload_module()
-    from src.core.pcobra_config import cargar_configuracion
+    from core.pcobra_config import cargar_configuracion
 
     data = cargar_configuracion()
     ruta = str(mod)
@@ -32,7 +32,7 @@ def test_cargar_configuracion_cache(tmp_path, monkeypatch):
     cfg_file.write_text("")
     monkeypatch.setenv('PCOBRA_CONFIG', str(cfg_file))
     _reload_module()
-    from src.core.pcobra_config import cargar_configuracion, _cache
+    from core.pcobra_config import cargar_configuracion, _cache
 
     cargar_configuracion()
     before = dict(_cache)

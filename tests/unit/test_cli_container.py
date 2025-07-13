@@ -2,7 +2,7 @@ from pathlib import Path
 from io import StringIO
 from unittest.mock import patch, call
 
-from src.cli.cli import main
+from cli.cli import main
 
 
 def test_cli_contenedor_invoca_docker():

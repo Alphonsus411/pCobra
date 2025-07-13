@@ -1,5 +1,5 @@
-from src.core.interpreter import InterpretadorCobra
-from src.core.ast_nodes import NodoAsignacion, NodoValor
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import NodoAsignacion, NodoValor
 
 
 def test_interpreter_variable_inferencia():

@@ -1,12 +1,12 @@
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.core.ast_nodes import (
+from cobra.lexico.lexer import Token, TipoToken
+from core.ast_nodes import (
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoIdentificador,
 )
-from src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
 
 
 def test_operacion_binaria_matlab():

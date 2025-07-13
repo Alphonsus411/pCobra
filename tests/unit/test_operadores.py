@@ -1,13 +1,13 @@
 import pytest
-from src.cobra.lexico.lexer import Lexer, Token, TipoToken
-from src.cobra.parser.parser import Parser
-from backend.src.core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.import_helper import get_standard_imports
+from cobra.lexico.lexer import Lexer, Token, TipoToken
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
-from src.core.interpreter import InterpretadorCobra
+from core.interpreter import InterpretadorCobra
 
 
 def test_lexer_nuevos_operadores():

@@ -1,6 +1,6 @@
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import NodoClase, NodoMetodo
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoClase, NodoMetodo
 
 
 def test_parser_declaracion_clase():

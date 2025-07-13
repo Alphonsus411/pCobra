@@ -1,9 +1,9 @@
 import logging
 import backend  # garantiza rutas para submódulos
 import pytest
-from src.core.interpreter import InterpretadorCobra
-from src.core.ast_nodes import NodoLlamadaFuncion, NodoValor
-from src.core.semantic_validators import PrimitivaPeligrosaError
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import NodoLlamadaFuncion, NodoValor
+from core.semantic_validators import PrimitivaPeligrosaError
 
 
 def test_auditoria_registra_primitiva(caplog):

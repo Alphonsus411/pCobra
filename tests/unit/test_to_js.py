@@ -1,7 +1,7 @@
 import pytest
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.import_helper import get_standard_imports
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.import_helper import get_standard_imports
+from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,

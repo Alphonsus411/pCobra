@@ -1,5 +1,5 @@
 import pytest
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -12,8 +12,8 @@ from src.core.ast_nodes import (
     NodoBucleMientras,
     NodoRomper,
 )
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.core.optimizations import (
+from cobra.lexico.lexer import Token, TipoToken
+from core.optimizations import (
     optimize_constants,
     remove_dead_code,
     inline_functions,

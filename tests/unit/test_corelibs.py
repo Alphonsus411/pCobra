@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, patch
 sys.modules.setdefault('yaml', ModuleType('yaml'))
 
 import backend.corelibs as core
-from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from backend.src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from backend.src.cobra.transpilers.import_helper import get_standard_imports
-from backend.src.core.ast_nodes import NodoLlamadaFuncion, NodoValor
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.import_helper import get_standard_imports
+from core.ast_nodes import NodoLlamadaFuncion, NodoValor
 
 IMPORTS_PY = get_standard_imports("python")
 IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("js"))

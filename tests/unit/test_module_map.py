@@ -1,12 +1,12 @@
 import yaml
 from unittest.mock import patch
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers import module_map
-from src.cobra.transpilers.import_helper import get_standard_imports
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers import module_map
+from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 

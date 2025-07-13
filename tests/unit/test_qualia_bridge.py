@@ -1,7 +1,7 @@
 import importlib
 import json
 import os
-from src.core import qualia_bridge
+from core import qualia_bridge
 
 
 def test_qualia_state_persistence(tmp_path, monkeypatch):

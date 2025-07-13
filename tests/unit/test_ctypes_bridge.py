@@ -4,8 +4,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.ast_nodes import (
     NodoAsignacion,
     NodoValor,
     NodoLlamadaFuncion,

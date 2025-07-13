@@ -1,7 +1,7 @@
 import yaml
 import pytest
 
-from src.cobra.semantico.mod_validator import validar_mod
+from cobra.semantico.mod_validator import validar_mod
 
 
 def _write_yaml(path, data):

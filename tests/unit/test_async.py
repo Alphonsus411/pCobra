@@ -3,17 +3,17 @@ from unittest.mock import patch
 import asyncio
 import subprocess
 
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import (
+from cobra.lexico.lexer import Token, TipoToken
+from cobra.parser.parser import Parser
+from core.ast_nodes import (
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoImprimir,
     NodoValor,
     NodoEsperar,
 )
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
 
 def test_parser_funcion_asincronica():

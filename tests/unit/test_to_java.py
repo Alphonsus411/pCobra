@@ -1,5 +1,5 @@
-from src.cobra.transpilers.transpiler.to_java import TranspiladorJava
-from src.core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
+from cobra.transpilers.transpiler.to_java import TranspiladorJava
+from core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
 
 
 def test_transpilador_asignacion_java():

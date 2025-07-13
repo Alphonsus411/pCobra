@@ -1,7 +1,7 @@
 import pytest
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import NodoAsignacion, NodoValor
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoAsignacion, NodoValor
 
 
 def test_parser_variable_inferencia():

@@ -1,7 +1,7 @@
 import pytest
-from src.core.interpreter import InterpretadorCobra
-from src.core.semantic_validators.base import ValidadorBase
-from src.core.ast_nodes import NodoValor
+from core.interpreter import InterpretadorCobra
+from core.semantic_validators.base import ValidadorBase
+from core.ast_nodes import NodoValor
 
 class DummyError(Exception):
     pass

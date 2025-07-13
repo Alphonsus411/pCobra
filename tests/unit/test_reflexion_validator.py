@@ -1,7 +1,7 @@
 import pytest
-from src.core.semantic_validators.reflexion_segura import ValidadorProhibirReflexion
-from src.core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
-from src.core.ast_nodes import NodoLlamadaFuncion, NodoAtributo, NodoIdentificador
+from core.semantic_validators.reflexion_segura import ValidadorProhibirReflexion
+from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
+from core.ast_nodes import NodoLlamadaFuncion, NodoAtributo, NodoIdentificador
 
 
 def test_reflexion_funcion_prohibida():

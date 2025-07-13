@@ -21,7 +21,7 @@ def _spawn(args, extra_env=None):
     if extra_env:
         env.update(extra_env)
     return pexpect.spawn(
-        f"{sys.executable} -m src.cli.cli {args}", env=env, encoding="utf-8"
+        f"{sys.executable} -m cli.cli {args}", env=env, encoding="utf-8"
     )
 
 

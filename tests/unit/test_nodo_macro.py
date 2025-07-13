@@ -1,4 +1,4 @@
-from src.core.ast_nodes import NodoMacro
+from core.ast_nodes import NodoMacro
 
 
 def test_nodo_macro_repr():

@@ -1,7 +1,7 @@
 import importlib
 from unittest.mock import patch
 
-from src.core.semantic_validators import construir_cadena, ValidadorPrimitivaPeligrosa
+from core.semantic_validators import construir_cadena, ValidadorPrimitivaPeligrosa
 
 
 def test_construir_cadena_reutiliza_instancias():
@@ -31,7 +31,7 @@ def test_construir_cadena_sin_reutilizar(monkeypatch):
         original_init(self)
 
     with patch.object(ValidadorPrimitivaPeligrosa, "__init__", cuenta_init):
-        import src.core.semantic_validators as sv
+        import core.semantic_validators as sv
         monkeypatch.setattr(sv, "_CADENA_DEFECTO", None)
         construir_cadena()
         monkeypatch.setattr(sv, "_CADENA_DEFECTO", None)
@@ -41,8 +41,8 @@ def test_construir_cadena_sin_reutilizar(monkeypatch):
 
 
 def test_valida_cada_nodo_una_sola_vez(monkeypatch):
-    from src.core.interpreter import InterpretadorCobra
-    from src.core.ast_nodes import NodoAsignacion, NodoValor
+    from core.interpreter import InterpretadorCobra
+    from core.ast_nodes import NodoAsignacion, NodoValor
 
     interp = InterpretadorCobra(safe_mode=True)
     nodo = NodoAsignacion("x", NodoValor(1))

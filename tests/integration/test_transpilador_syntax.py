@@ -4,14 +4,16 @@ from pathlib import Path
 from io import StringIO
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 import backend
-from src.cli.cli import main
-import backend.src.core.ast_cache as ast_cache
-from src.cobra.lexico.lexer import Lexer as SrcLexer
-import src.cobra.transpilers.module_map as module_map_src
-import backend.src.cobra.transpilers.module_map as module_map_backend
+from cli.cli import main
+import core.ast_cache as ast_cache
+from cobra.lexico.lexer import Lexer as SrcLexer
+import cobra.transpilers.module_map as module_map_src
+import cobra.transpilers.module_map as module_map_backend
 
 # Map languages to file extensions
 LANG_EXT = {

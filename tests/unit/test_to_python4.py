@@ -1,7 +1,7 @@
 import pytest
-from src.core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor, NodoRetorno
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.cobra.transpilers.import_helper import get_standard_imports
+from core.ast_nodes import NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion, NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario, NodoClase, NodoMetodo, NodoValor, NodoRetorno
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 

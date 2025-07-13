@@ -1,5 +1,5 @@
-from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from src.cobra.transpilers.import_helper import get_standard_imports
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.import_helper import get_standard_imports
 
 
 # Nodos simulados para pruebas

@@ -1,5 +1,5 @@
-from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from src.core.ast_nodes import (
+from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,

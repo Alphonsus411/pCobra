@@ -1,10 +1,10 @@
 from io import StringIO
-from src.cli.cli import main
-from src.cobra.transpilers import module_map
-import backend.src.cobra.transpilers.module_map as backend_map
-import src.core.ast_nodes as src_nodes
-import backend.src.core.ast_nodes as backend_nodes
-import src.core.interpreter as interpreter_mod
+from cli.cli import main
+from cobra.transpilers import module_map
+import cobra.transpilers.module_map as backend_map
+import core.ast_nodes as src_nodes
+import core.ast_nodes as backend_nodes
+import core.interpreter as interpreter_mod
 
 
 def test_cli_profile_creates_file(tmp_path, monkeypatch):

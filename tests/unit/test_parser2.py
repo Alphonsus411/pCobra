@@ -1,6 +1,6 @@
-from src.cobra.lexico.lexer import Token, TipoToken
-from src.cobra.parser.parser import Parser
-from src.core.ast_nodes import NodoCondicional, NodoOperacionBinaria, NodoFuncion, NodoLlamadaFuncion, NodoValor, NodoHolobit, NodoAsignacion, NodoBucleMientras
+from cobra.lexico.lexer import Token, TipoToken
+from cobra.parser.parser import Parser
+from core.ast_nodes import NodoCondicional, NodoOperacionBinaria, NodoFuncion, NodoLlamadaFuncion, NodoValor, NodoHolobit, NodoAsignacion, NodoBucleMientras
 
 
 def test_parser_asignacion_variable():

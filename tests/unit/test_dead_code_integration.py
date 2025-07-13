@@ -1,5 +1,5 @@
-from src.core.interpreter import InterpretadorCobra
-from src.core.ast_nodes import (
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import (
     NodoFuncion,
     NodoRetorno,
     NodoAsignacion,

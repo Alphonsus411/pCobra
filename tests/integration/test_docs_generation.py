@@ -7,9 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "backend" / "src"))
 import backend  # noqa: F401
-from src.cli.cli import main
+from cli.cli import main
 
 
 def test_docs_generation():

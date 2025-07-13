@@ -1,7 +1,7 @@
 import py_compile
-from src.core.ast_nodes import NodoImprimir, NodoValor
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.core.sandbox import ejecutar_en_sandbox
+from core.ast_nodes import NodoImprimir, NodoValor
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.sandbox import ejecutar_en_sandbox
 
 
 def test_transpile_python_and_execute(tmp_path):

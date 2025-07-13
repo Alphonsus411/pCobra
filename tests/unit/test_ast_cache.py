@@ -1,6 +1,6 @@
 import os
 import pytest
-from src.cobra.parser.parser import Parser
+from cobra.parser.parser import Parser
 
 
 def test_obtener_ast_reutiliza(monkeypatch, tmp_path):
@@ -11,7 +11,7 @@ def test_obtener_ast_reutiliza(monkeypatch, tmp_path):
     import importlib, sys
     if 'src.core.ast_cache' in sys.modules:
         importlib.reload(sys.modules['src.core.ast_cache'])
-    from src.core.ast_cache import obtener_ast
+    from core.ast_cache import obtener_ast
 
     llamadas = {"count": 0}
 
@@ -40,7 +40,7 @@ def test_limpiar_cache(monkeypatch, tmp_path):
     import importlib, sys
     if 'src.core.ast_cache' in sys.modules:
         importlib.reload(sys.modules['src.core.ast_cache'])
-    from src.core.ast_cache import obtener_ast, limpiar_cache
+    from core.ast_cache import obtener_ast, limpiar_cache
 
     obtener_ast(codigo)
     assert list(cache_dir.glob("*.ast"))

@@ -3,11 +3,11 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.core.interpreter import InterpretadorCobra
-from src.core.ast_nodes import NodoLlamadaFuncion, NodoValor
-from src.core.semantic_validators import PrimitivaPeligrosaError
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.interpreter import InterpretadorCobra
+from core.ast_nodes import NodoLlamadaFuncion, NodoValor
+from core.semantic_validators import PrimitivaPeligrosaError
 
 
 def generar_ast(codigo: str):
