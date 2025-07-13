@@ -1,5 +1,8 @@
 ## v9.0.0 - 2025-07-13
 - Cambios pendientes.
+- Mejoras de empaquetado que simplifican la distribución.
+- Integración de notebooks de ejemplo en el paquete.
+- Otros ajustes menores.
 
 ## v8.0.0 - 2025-07-07
 - Incremento de versión principal a 8.0.0.
