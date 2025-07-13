@@ -240,7 +240,9 @@ Subcomando ``benchtranspilers``
 ------------------------------
 Mide la velocidad de los distintos transpiladores generando programas de
 tamaño pequeño, mediano y grande. Los tiempos se muestran en formato
-JSON y opcionalmente pueden guardarse con ``--output``.
+JSON y opcionalmente pueden guardarse con ``--output``. Con ``--profile``
+se ejecuta ``cProfile`` durante la generación y se guarda un archivo
+``bench_transpilers.prof`` para su análisis.
 
 Ejemplo:
 
