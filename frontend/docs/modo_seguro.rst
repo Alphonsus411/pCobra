@@ -1,7 +1,7 @@
 Modo seguro
 ===========
 
-A partir de Cobra 8.0 la herramienta ``cobra`` permite ejecutar programas en
+A partir de Cobra 9.0 la herramienta ``cobra`` permite ejecutar programas en
 modo seguro mediante la opción ``--seguro``. Al activarse se construye una
 cadena de validadores que analiza el AST y bloquea primitivas peligrosas como
 ``leer_archivo``, ``escribir_archivo``, ``obtener_url`` y ``hilo``.
