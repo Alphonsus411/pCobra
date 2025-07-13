@@ -3,8 +3,9 @@ import hashlib
 import pickle
 import sys
 
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
+# Las importaciones de ``Lexer`` y ``Parser`` se realizan de forma
+# perezosa dentro de las funciones para evitar dependencias circulares
+# cuando estos módulos utilizan a su vez la caché incremental.
 
 
 class SafeUnpickler(pickle.Unpickler):
@@ -54,6 +55,7 @@ def obtener_tokens(codigo: str):
         with open(ruta, "rb") as f:
             return SafeUnpickler(f).load()
 
+    from src.cobra.lexico.lexer import Lexer
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
         pickle.dump(tokens, f)
@@ -73,6 +75,7 @@ def obtener_ast(codigo: str):
             return SafeUnpickler(f).load()
 
     tokens = obtener_tokens(codigo)
+    from src.cobra.parser.parser import Parser
     ast = Parser(tokens).parsear()
 
     with open(ruta, "wb") as f:
@@ -83,10 +86,54 @@ def obtener_ast(codigo: str):
     return ast
 
 
+# -- Almacenamiento por secciones -------------------------------------------
+
+def _ruta_fragmento(codigo: str, ext: str) -> str:
+    """Devuelve la ruta del archivo de caché para un fragmento."""
+    checksum = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    frag_dir = os.path.join(CACHE_DIR, "fragmentos")
+    os.makedirs(frag_dir, exist_ok=True)
+    return os.path.join(frag_dir, f"{checksum}.{ext}")
+
+
+def obtener_tokens_fragmento(codigo: str):
+    """Devuelve los tokens de un fragmento, reutilizando la caché si existe."""
+    ruta = _ruta_fragmento(codigo, "tok")
+    if os.path.exists(ruta):
+        with open(ruta, "rb") as f:
+            return SafeUnpickler(f).load()
+
+    from src.cobra.lexico.lexer import Lexer
+    tokens = Lexer(codigo).tokenizar()
+    with open(ruta, "wb") as f:
+        pickle.dump(tokens, f)
+    return tokens
+
+
+def obtener_ast_fragmento(codigo: str):
+    """Obtiene el AST de un fragmento reutilizando la caché si existe."""
+    ruta = _ruta_fragmento(codigo, "ast")
+    if os.path.exists(ruta):
+        with open(ruta, "rb") as f:
+            return SafeUnpickler(f).load()
+
+    tokens = obtener_tokens_fragmento(codigo)
+    from src.cobra.parser.parser import Parser
+    ast = Parser(tokens).parsear()
+    with open(ruta, "wb") as f:
+        pickle.dump(ast, f)
+    return ast
+
+
 def limpiar_cache():
     """Elimina todos los archivos de cache generados."""
     if not os.path.isdir(CACHE_DIR):
         return
     for nombre in os.listdir(CACHE_DIR):
-        if nombre.endswith(".ast") or nombre.endswith(".tok"):
-            os.remove(os.path.join(CACHE_DIR, nombre))
+        ruta = os.path.join(CACHE_DIR, nombre)
+        if os.path.isfile(ruta) and (nombre.endswith(".ast") or nombre.endswith(".tok")):
+            os.remove(ruta)
+        elif os.path.isdir(ruta) and nombre == "fragmentos":
+            for archivo in os.listdir(ruta):
+                os.remove(os.path.join(ruta, archivo))
+            os.rmdir(ruta)

@@ -168,11 +168,37 @@ class ClassicParser:
                 f"Se esperaba {tipo}, pero se encontró {self.token_actual().tipo}"
             )
 
-    def parsear(self):
+    def _parsear_base(self):
         nodos = []
         while self.token_actual().tipo != TipoToken.EOF:
             nodos.append(self.declaracion())
         return nodos
+
+    def parsear(self, *, incremental: bool = False, profile: bool = False):
+        """Parsea tokens con soporte de caché incremental y perfilado."""
+        if incremental:
+            from src.core.ast_cache import obtener_ast_fragmento
+            codigo = "\n".join(
+                token.valor if token.valor is not None else ""
+                for token in self.tokens
+                if token.tipo != TipoToken.EOF
+            )
+            return obtener_ast_fragmento(codigo)
+
+        if profile:
+            import cProfile
+            import pstats
+            import io
+            pr = cProfile.Profile()
+            pr.enable()
+            resultado = self._parsear_base()
+            pr.disable()
+            s = io.StringIO()
+            pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats(5)
+            print("Parser profile:\n" + s.getvalue())
+            return resultado
+
+        return self._parsear_base()
 
     def declaracion(self):
         """Procesa una instrucción o expresión."""

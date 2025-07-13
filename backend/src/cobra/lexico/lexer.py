@@ -132,7 +132,7 @@ class Lexer:
         self.posicion = 0
         self.tokens = []
 
-    def tokenizar(self):
+    def _tokenizar_base(self):
         # Elimina comentarios de una línea y bloques de comentarios
         codigo_sin_bloques = re.sub(
             r'/\*.*?\*/',
@@ -304,6 +304,32 @@ class Lexer:
         self.tokens.append(Token(TipoToken.EOF, None, linea, columna))
 
         return self.tokens
+
+    def tokenizar(self, *, incremental: bool = False, profile: bool = False):
+        """Convierte el código en tokens con soporte opcional de caché
+        incremental y perfilado."""
+        if incremental:
+            from src.core.ast_cache import obtener_tokens_fragmento
+            self.tokens = []
+            for linea in self.codigo_fuente.splitlines(keepends=True):
+                self.tokens.extend(obtener_tokens_fragmento(linea)[:-1])
+            self.tokens.append(Token(TipoToken.EOF, None))
+            return self.tokens
+
+        if profile:
+            import cProfile
+            import pstats
+            import io
+            pr = cProfile.Profile()
+            pr.enable()
+            resultado = self._tokenizar_base()
+            pr.disable()
+            s = io.StringIO()
+            pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats(5)
+            print("Lexer profile:\n" + s.getvalue())
+            return resultado
+
+        return self._tokenizar_base()
 
     def analizar_token(self):
         """Mantiene compatibilidad con versiones previas."""
