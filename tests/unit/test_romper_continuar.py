@@ -10,6 +10,9 @@ from src.core.ast_nodes import (
 )
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_parser_romper_continuar():
@@ -33,7 +36,7 @@ def test_transpilar_romper_python():
     nodo = NodoBucleMientras("i < 3", [NodoRomper()])
     t = TranspiladorPython()
     resultado = t.generate_code([nodo])
-    esperado = "from src.core.nativos import *\nwhile i < 3:\n    break\n"
+    esperado = IMPORTS + "while i < 3:\n    break\n"
     assert resultado == esperado
 
 

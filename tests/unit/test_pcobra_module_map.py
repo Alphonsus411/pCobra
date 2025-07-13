@@ -5,6 +5,9 @@ from src.cobra.parser.parser import Parser
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from src.cobra.transpilers import module_map
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def _write_toml(path, data):
@@ -34,7 +37,7 @@ def test_pcobra_mapeo_python(tmp_path, monkeypatch):
     ast = Parser(tokens).parsear()
 
     resultado = TranspiladorPython().generate_code(ast)
-    esperado = f"from src.core.nativos import *\n{py_out.read_text()}print(x)\n"
+    esperado = IMPORTS + f"{py_out.read_text()}print(x)\n"
     assert resultado == esperado
 
 

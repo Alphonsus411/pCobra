@@ -4,6 +4,9 @@ from src.cobra.parser.parser import Parser
 from backend.src.core.ast_nodes import NodoOperacionBinaria, NodoOperacionUnaria
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 from src.core.interpreter import InterpretadorCobra
 
 
@@ -98,7 +101,7 @@ def test_transpiladores_operaciones():
     expr = parser.parsear()[0]
     py_code = TranspiladorPython().generate_code([expr])
     js_code = TranspiladorJavaScript().generate_code([expr])
-    assert py_code == "from src.core.nativos import *\nTrue"
+    assert py_code == IMPORTS + "True"
     assert js_code == (
         "import * as io from './nativos/io.js';\n"
         "import * as net from './nativos/io.js';\n"

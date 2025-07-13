@@ -19,7 +19,7 @@ def test_interpreter_extra_validators_list():
 def test_interpreter_extra_validators_file(tmp_path):
     mod = tmp_path / 'vals.py'
     mod.write_text(
-        'from src.core.semantic_validators.base import ValidadorBase\n'
+        'from core.semantic_validators.base import ValidadorBase\n'
         'class V(ValidadorBase):\n'
         '    def visit_valor(self, nodo):\n'
         '        raise Exception("file")\n'

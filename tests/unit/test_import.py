@@ -10,6 +10,9 @@ from src.core.interpreter import (
     IMPORT_WHITELIST,
 )
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 @pytest.mark.timeout(5)
@@ -42,8 +45,6 @@ def test_import_transpiler(tmp_path):
     ast = Parser(tokens).parsear()
 
     py_code = TranspiladorPython().generate_code(ast)
-    expected = (
-        "from src.core.nativos import *\nvalor = 3\nprint(valor)\n"
-    )
+    expected = IMPORTS + "valor = 3\nprint(valor)\n"
     assert py_code == expected
 

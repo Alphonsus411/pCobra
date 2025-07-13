@@ -3,6 +3,9 @@ from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_integracion_python():
@@ -10,7 +13,7 @@ def test_integracion_python():
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     resultado = TranspiladorPython().generate_code(ast)
-    esperado = "from src.core.nativos import *\nx = 10\n"
+    esperado = IMPORTS + "x = 10\n"
     assert resultado == esperado
 
 
@@ -36,7 +39,7 @@ def test_integracion_condicional_python():
     ast = Parser(tokens).parsear()
     resultado = TranspiladorPython().generate_code(ast)
     esperado = (
-        "from src.core.nativos import *\n"
+        IMPORTS
         "x = 10\n"
         "if x > 5:\n"
         "    print(x)\n"

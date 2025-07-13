@@ -9,6 +9,9 @@ from backend.src.core.ast_nodes import (
 )
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS_PY = get_standard_imports("python")
 
 
 def crear_ast():
@@ -33,8 +36,8 @@ def test_transpilador_python_imports_alias_clase():
     resultado = TranspiladorPython().generate_code(ast)
     esperado = (
         "import asyncio\n"
-        "from src.core.nativos import *\n"
-        "from package.module import decorador as dec\n"
+        + IMPORTS_PY
+        + "from package.module import decorador as dec\n"
         "from package2.module2 import Base as B\n"
         "@dec\n"
         "class C(B):\n"

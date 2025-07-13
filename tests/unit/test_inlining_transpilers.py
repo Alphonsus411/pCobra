@@ -2,6 +2,9 @@ import pytest
 from src.core.ast_nodes import NodoFuncion, NodoRetorno, NodoValor, NodoAsignacion, NodoLlamadaFuncion
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def _ast_inline():
@@ -13,7 +16,7 @@ def _ast_inline():
 
 def test_inline_python_transpiler():
     codigo = TranspiladorPython().generate_code(_ast_inline())
-    assert codigo == "from src.core.nativos import *\nx = 1\n"
+    assert codigo == IMPORTS + "x = 1\n"
 
 
 def test_inline_js_transpiler():
