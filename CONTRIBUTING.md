@@ -55,4 +55,4 @@ make lint
 
 ## Contacto
 
-Si tienes dudas o necesitas ayuda, únete a nuestro canal comunitario en [Discord](https://discord.gg/placeholder).
+Si tienes dudas o necesitas ayuda, únete a nuestro canal comunitario en Discord (enlace disponible próximamente).

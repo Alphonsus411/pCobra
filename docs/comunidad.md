@@ -13,7 +13,7 @@ Este proyecto cuenta con un servidor en Discord donde los usuarios pueden comuni
 4. No hagas spam ni promociones no autorizadas.
 
 ## Cómo unirse
-Utiliza el siguiente enlace permanente para acceder al servidor: [Invitación a Discord](https://discord.gg/placeholder).
+El enlace para acceder al servidor se actualizará próximamente.
 
 ## Difusión de eventos
 - Las convocatorias se anuncian en nuestro nuevo canal de **Telegram**.
