@@ -228,6 +228,15 @@ El archivo [bench_results.json](bench_results.json) se guarda en el directorio
 actual y puede analizarse con el cuaderno
 [notebooks/benchmarks_resultados.ipynb](notebooks/benchmarks_resultados.ipynb).
 
+Para comparar el rendimiento de los hilos ejecuta `cobra benchthreads`:
+
+```bash
+cobra benchthreads --output threads.json
+```
+
+El resultado contiene tres entradas (secuencial, cli_hilos y kernel_hilos) con
+los tiempos y uso de CPU.
+
 # Uso
 
 Para conocer las opciones avanzadas del modo seguro revisa

@@ -121,3 +121,16 @@ Ejemplo:
 El archivo resultante es una lista de objetos con las claves
 ``size`` (tamaño del programa), ``lang`` (lenguaje de salida) y
 ``time`` (segundos de ejecución).
+
+Benchmark de hilos
+------------------
+
+El comando ``cobra benchthreads`` ejecuta un programa con y sin hilos
+usando tanto la CLI como el kernel de Jupyter. La salida es un JSON con
+los tiempos totales, uso de CPU y operaciones de E/S.
+
+.. code-block:: bash
+
+   cobra benchthreads --output threads.json
+
+
