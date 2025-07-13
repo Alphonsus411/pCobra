@@ -1,6 +1,6 @@
 macros = {}
 
-from src.core.ast_nodes import NodoMacro, NodoLlamadaFuncion
+from core.ast_nodes import NodoMacro, NodoLlamadaFuncion
 
 def registrar_macro(nodo: NodoMacro):
     """Registra una macro a partir de su nodo."""

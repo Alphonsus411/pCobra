@@ -1,6 +1,6 @@
 """Transpilador simple de Cobra a LaTeX."""
 
-from backend.src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -9,10 +9,10 @@ from backend.src.core.ast_nodes import (
     NodoImprimir,
     NodoAtributo,
 )
-from backend.src.core.visitor import NodeVisitor
+from core.visitor import NodeVisitor
 from ..base import BaseTranspiler
-from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from backend.src.cobra.macro import expandir_macros
+from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from cobra.macro import expandir_macros
 
 from .latex_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .latex_nodes.funcion import visit_funcion as _visit_funcion

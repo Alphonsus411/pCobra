@@ -55,7 +55,7 @@ def obtener_tokens(codigo: str):
         with open(ruta, "rb") as f:
             return SafeUnpickler(f).load()
 
-    from src.cobra.lexico.lexer import Lexer
+    from cobra.lexico.lexer import Lexer
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
         pickle.dump(tokens, f)
@@ -75,7 +75,7 @@ def obtener_ast(codigo: str):
             return SafeUnpickler(f).load()
 
     tokens = obtener_tokens(codigo)
-    from src.cobra.parser.parser import Parser
+    from cobra.parser.parser import Parser
     ast = Parser(tokens).parsear()
 
     with open(ruta, "wb") as f:
@@ -103,7 +103,7 @@ def obtener_tokens_fragmento(codigo: str):
         with open(ruta, "rb") as f:
             return SafeUnpickler(f).load()
 
-    from src.cobra.lexico.lexer import Lexer
+    from cobra.lexico.lexer import Lexer
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
         pickle.dump(tokens, f)
@@ -118,7 +118,7 @@ def obtener_ast_fragmento(codigo: str):
             return SafeUnpickler(f).load()
 
     tokens = obtener_tokens_fragmento(codigo)
-    from src.cobra.parser.parser import Parser
+    from cobra.parser.parser import Parser
     ast = Parser(tokens).parsear()
     with open(ruta, "wb") as f:
         pickle.dump(ast, f)

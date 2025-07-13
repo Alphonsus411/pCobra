@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List
 
 from lark import Lark
-from src.cobra.lexico.lexer import Token, TipoToken
+from cobra.lexico.lexer import Token, TipoToken
 
 
 class LarkParser:

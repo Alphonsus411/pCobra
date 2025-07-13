@@ -1,6 +1,6 @@
 """Transpilador que genera código Rust a partir de Cobra."""
 
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -22,11 +22,11 @@ from src.core.ast_nodes import (
     NodoSwitch,
     NodoCase,
 )
-from backend.src.cobra.lexico.lexer import TipoToken
-from backend.src.core.visitor import NodeVisitor
+from cobra.lexico.lexer import TipoToken
+from core.visitor import NodeVisitor
 from ..base import BaseTranspiler
-from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from backend.src.cobra.macro import expandir_macros
+from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from cobra.macro import expandir_macros
 
 from .rust_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .rust_nodes.condicional import visit_condicional as _visit_condicional

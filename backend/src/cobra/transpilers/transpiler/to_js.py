@@ -1,6 +1,6 @@
 """Transpilador que genera código JavaScript a partir de Cobra."""
 
-from backend.src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -21,11 +21,11 @@ from backend.src.core.ast_nodes import (
     NodoExport,
     NodoEsperar,
 )
-from backend.src.cobra.lexico.lexer import TipoToken
-from backend.src.core.visitor import NodeVisitor
+from cobra.lexico.lexer import TipoToken
+from core.visitor import NodeVisitor
 from ..base import BaseTranspiler
-from backend.src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from backend.src.cobra.macro import expandir_macros
+from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from cobra.macro import expandir_macros
 from ..import_helper import get_standard_imports
 from ..module_map import get_mapped_path
 

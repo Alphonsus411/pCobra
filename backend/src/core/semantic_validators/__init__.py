@@ -8,7 +8,7 @@ from .auditoria import ValidadorAuditoria
 from .import_seguro import ValidadorImportSeguro
 from .fs_access import ValidadorSistemaArchivos
 from .reflexion_segura import ValidadorProhibirReflexion
-from src.core.cobra_config import auditoria_activa
+from core.cobra_config import auditoria_activa
 
 # Instancia por defecto reutilizable de la cadena de validación
 _CADENA_DEFECTO = None

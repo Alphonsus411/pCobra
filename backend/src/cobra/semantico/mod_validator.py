@@ -17,8 +17,8 @@ import yaml
 from typing import Dict, Any
 from jsonschema import validate, ValidationError
 
-from src.cli.utils.semver import es_version_valida
-from src.cobra.transpilers import module_map
+from cli.utils.semver import es_version_valida
+from cobra.transpilers import module_map
 
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
 with open(SCHEMA_PATH, "r", encoding="utf-8") as f:

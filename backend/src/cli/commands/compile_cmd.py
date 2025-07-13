@@ -6,32 +6,32 @@ from importlib.metadata import entry_points
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from backend.src.cobra.transpilers import module_map
-from backend.src.core.sandbox import validar_dependencias
+from cobra.transpilers import module_map
+from core.sandbox import validar_dependencias
 
-from backend.src.core.ast_cache import obtener_ast
-from backend.src.core.semantic_validators import (
+from core.ast_cache import obtener_ast
+from core.semantic_validators import (
     PrimitivaPeligrosaError,
     construir_cadena,
 )
-from backend.src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from backend.src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from backend.src.cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from backend.src.cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from backend.src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from backend.src.cobra.transpilers.transpiler.to_c import TranspiladorC
-from backend.src.cobra.transpilers.transpiler.to_go import TranspiladorGo
-from backend.src.cobra.transpilers.transpiler.to_r import TranspiladorR
-from backend.src.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
-from backend.src.cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
-from backend.src.cobra.transpilers.transpiler.to_java import TranspiladorJava
-from backend.src.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
-from backend.src.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
-from backend.src.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from backend.src.cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from backend.src.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from backend.src.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
-from backend.src.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from cobra.transpilers.transpiler.to_c import TranspiladorC
+from cobra.transpilers.transpiler.to_go import TranspiladorGo
+from cobra.transpilers.transpiler.to_r import TranspiladorR
+from cobra.transpilers.transpiler.to_julia import TranspiladorJulia
+from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
+from cobra.transpilers.transpiler.to_java import TranspiladorJava
+from cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
+from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
+from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+from cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
 # Mapa que asocia el nombre de cada lenguaje con la clase de su
 # transpilador. Sirve como una fábrica sencilla: a partir de una clave

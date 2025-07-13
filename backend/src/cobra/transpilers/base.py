@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from backend.src.core.visitor import NodeVisitor
+from core.visitor import NodeVisitor
 
 
 class BaseTranspiler(NodeVisitor, ABC):

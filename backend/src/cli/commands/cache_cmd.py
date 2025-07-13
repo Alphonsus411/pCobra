@@ -2,7 +2,7 @@ import os
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_info
-from backend.src.core.ast_cache import limpiar_cache
+from core.ast_cache import limpiar_cache
 
 
 class CacheCommand(BaseCommand):

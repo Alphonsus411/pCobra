@@ -13,12 +13,12 @@ from .base import BaseCommand
 from .execute_cmd import ExecuteCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from backend.src.cobra.transpilers import module_map
-from backend.src.core.sandbox import validar_dependencias
-from backend.src.core.interpreter import InterpretadorCobra
-from src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from cobra.transpilers import module_map
+from core.sandbox import validar_dependencias
+from core.interpreter import InterpretadorCobra
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 
 
 class ProfileCommand(BaseCommand):

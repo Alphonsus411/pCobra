@@ -1,7 +1,7 @@
 import logging
 
 from .base import ValidadorBase
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoLlamadaFuncion,
     NodoLlamadaMetodo,
     NodoHilo,

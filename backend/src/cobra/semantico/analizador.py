@@ -1,7 +1,7 @@
 from typing import List
 
-from backend.src.core.visitor import NodeVisitor
-from backend.src.core.ast_nodes import (
+from core.visitor import NodeVisitor
+from core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoClase,

@@ -1,4 +1,4 @@
-from src.core.visitor import NodeVisitor
+from core.visitor import NodeVisitor
 
 class ValidadorBase(NodeVisitor):
     """Validador base para componer una cadena de validadores."""

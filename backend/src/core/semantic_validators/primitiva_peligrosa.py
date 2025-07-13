@@ -1,5 +1,5 @@
 from .base import ValidadorBase
-from src.core.ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
+from core.ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
 
 
 class PrimitivaPeligrosaError(Exception):

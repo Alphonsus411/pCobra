@@ -10,10 +10,10 @@ from pathlib import Path
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from backend.src.jupyter_kernel import CobraKernel
-from backend.src.core.interpreter import InterpretadorCobra
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
+from jupyter_kernel import CobraKernel
+from core.interpreter import InterpretadorCobra
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
 
 
 SEQUENTIAL_CODE = """
