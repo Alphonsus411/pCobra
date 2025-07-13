@@ -1,3 +1,6 @@
+## v9.0.0 - 2025-07-13
+- Cambios pendientes.
+
 ## v8.0.0 - 2025-07-07
 - Incremento de versión principal a 8.0.0.
 - Documentación y pruebas actualizadas.

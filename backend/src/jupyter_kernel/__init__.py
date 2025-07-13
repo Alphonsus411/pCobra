@@ -14,7 +14,7 @@ def _get_version() -> str:
     try:
         return version("cobra-lenguaje")
     except PackageNotFoundError:
-        return "8.0.0"
+        return "9.0.0"
 
 
 __version__ = _get_version()
