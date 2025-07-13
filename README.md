@@ -872,6 +872,19 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 - Versión 9.0.0: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
 
+## Publicar una nueva versión
+
+Al crear y subir una etiqueta `vX.Y.Z` se ejecuta el workflow [`release.yml`](.github/workflows/release.yml), que construye el paquete, los ejecutables y la imagen Docker.
+
+El workflow [`Deploy Docs`](.github/workflows/pages.yml) generará la documentación cuando haya un push en `main` o al etiquetar una nueva versión.
+
+```bash
+git tag v9.0.0
+git push origin v9.0.0
+```
+
+Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuración de GitHub Actions](.github/workflows).
+
 # Licencia
 
 Este proyecto está bajo la [Licencia MIT](LICENSE).
