@@ -109,7 +109,8 @@ Benchmark de transpiladores
 Para medir la velocidad de cada transpilador puedes ejecutar ``cobra
 benchtranspilers``. Este comando genera programas pequeños, medianos y
 grandes y calcula el tiempo que tarda cada transpilador en producir el
-código de salida.
+código de salida. Con la opción ``--profile`` se registra un informe
+detallado en ``bench_transpilers.prof``.
 
 Ejemplo:
 

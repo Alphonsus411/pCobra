@@ -1,4 +1,5 @@
 import json
+import cProfile
 from pathlib import Path
 from timeit import timeit
 
@@ -26,6 +27,11 @@ class BenchTranspilersCommand(BaseCommand):
             "-o",
             help=_("Archivo donde guardar el JSON con resultados"),
         )
+        parser.add_argument(
+            "--profile",
+            action="store_true",
+            help=_("Activa cProfile durante la generación de código"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -47,12 +53,22 @@ class BenchTranspilersCommand(BaseCommand):
         results = []
         programs = {s: self._ensure_program(s) for s in ["small", "medium", "large"]}
 
+        profiler = cProfile.Profile() if getattr(args, "profile", False) else None
+
+        if profiler:
+            profiler.enable()
+
         for size, code in programs.items():
             ast = obtener_ast(code)
             for lang, cls in TRANSPILERS.items():
                 transpiler = cls()
                 elapsed = timeit(lambda: transpiler.generate_code(ast), number=1)
                 results.append({"size": size, "lang": lang, "time": elapsed})
+
+        if profiler:
+            profiler.disable()
+            profiler.dump_stats("bench_transpilers.prof")
+            mostrar_info(_("Resultados de perfil guardados en bench_transpilers.prof"))
 
         data = json.dumps(results, indent=2)
         if args.output:

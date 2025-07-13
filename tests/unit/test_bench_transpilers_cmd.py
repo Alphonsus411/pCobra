@@ -28,3 +28,18 @@ def test_bench_transpilers_generates_results(tmp_path, monkeypatch):
     for d in data:
         assert d["lang"] == "dummy"
         assert d["time"] == 0.01
+
+
+@pytest.mark.timeout(10)
+def test_bench_transpilers_profile_creates_file(tmp_path, monkeypatch):
+    import src.cli.commands.bench_transpilers_cmd as bt
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(bt, "TRANSPILERS", {"dummy": DummyTranspiler})
+    monkeypatch.setattr(bt, "timeit", lambda func, number=1: 0.01)
+    monkeypatch.setattr(bt, "PROGRAM_DIR", tmp_path)
+
+    salida = tmp_path / "out.json"
+    main(["benchtranspilers", "--output", str(salida), "--profile"])
+
+    assert Path("bench_transpilers.prof").exists()
