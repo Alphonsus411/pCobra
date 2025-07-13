@@ -309,7 +309,7 @@ class Lexer:
         """Convierte el código en tokens con soporte opcional de caché
         incremental y perfilado."""
         if incremental:
-            from src.core.ast_cache import obtener_tokens_fragmento
+            from core.ast_cache import obtener_tokens_fragmento
             self.tokens = []
             for linea in self.codigo_fuente.splitlines(keepends=True):
                 self.tokens.extend(obtener_tokens_fragmento(linea)[:-1])

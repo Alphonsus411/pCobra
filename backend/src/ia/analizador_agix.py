@@ -6,8 +6,8 @@ except ImportError:  # pragma: no cover - depende de agix instalado
     Reasoner = None
 from typing import List
 
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
 
 
 def generar_sugerencias(codigo: str) -> List[str]:

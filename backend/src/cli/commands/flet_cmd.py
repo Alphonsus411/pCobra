@@ -18,7 +18,7 @@ class FletCommand(BaseCommand):
     def run(self, args):
         try:
             import flet
-            from src.gui.idle import main
+            from gui.idle import main
         except ModuleNotFoundError:
             mostrar_error(_("Flet no está instalado. Ejecuta 'pip install flet'."))
             return 1

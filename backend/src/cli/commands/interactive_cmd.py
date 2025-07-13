@@ -2,18 +2,18 @@ import logging
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
-from backend.src.core.sandbox import (
+from core.sandbox import (
     ejecutar_en_sandbox,
     ejecutar_en_contenedor,
     validar_dependencias,
 )
-from backend.src.cobra.transpilers import module_map
+from cobra.transpilers import module_map
 
-from backend.src.core.interpreter import InterpretadorCobra
-from backend.src.core.qualia_bridge import get_suggestions
-from src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from core.interpreter import InterpretadorCobra
+from core.qualia_bridge import get_suggestions
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 
 
 class InteractiveCommand(BaseCommand):

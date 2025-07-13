@@ -3,10 +3,10 @@ import io
 import contextlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser, PALABRAS_RESERVADAS
-from src.core.interpreter import InterpretadorCobra
-from src.core.qualia_bridge import get_suggestions
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser, PALABRAS_RESERVADAS
+from core.interpreter import InterpretadorCobra
+from core.qualia_bridge import get_suggestions
 
 
 def _get_version() -> str:

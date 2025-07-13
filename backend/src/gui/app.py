@@ -2,9 +2,9 @@ import io
 import sys
 import flet as ft
 
-from backend.src.cobra.lexico.lexer import Lexer
-from backend.src.cobra.parser.parser import Parser
-from backend.src.core.interpreter import InterpretadorCobra
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.interpreter import InterpretadorCobra
 
 
 def _ejecutar_codigo(codigo: str) -> str:

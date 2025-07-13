@@ -1,4 +1,4 @@
-from backend.src.core.ast_nodes import NodoExport
+from core.ast_nodes import NodoExport
 
 
 def visit_export(self, nodo: NodoExport):

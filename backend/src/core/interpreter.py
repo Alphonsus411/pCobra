@@ -2,21 +2,21 @@
 
 import os
 
-from src.cobra.lexico.lexer import Token, TipoToken, Lexer
-from src.core.optimizations import (
+from cobra.lexico.lexer import Token, TipoToken, Lexer
+from core.optimizations import (
     optimize_constants,
     remove_dead_code,
     inline_functions,
     eliminate_common_subexpressions,
 )
-from src.core.type_utils import (
+from core.type_utils import (
     verificar_sumables,
     verificar_numeros,
     verificar_comparables,
     verificar_booleanos,
     verificar_booleano,
 )
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -41,20 +41,20 @@ from src.core.ast_nodes import (
     NodoImport,
     NodoUsar, NodoAssert, NodoDel, NodoGlobal, NodoNoLocal, NodoWith, NodoImportDesde,
 )
-from src.cobra.parser.parser import Parser
-from src.core.memoria.gestor_memoria import GestorMemoriaGenetico
-from src.core.semantic_validators import (
+from cobra.parser.parser import Parser
+from core.memoria.gestor_memoria import GestorMemoriaGenetico
+from core.semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from src.cobra.semantico import AnalizadorSemantico
-from src.core.qualia_bridge import register_execution
-from src.core.cobra_config import (
+from cobra.semantico import AnalizadorSemantico
+from core.qualia_bridge import register_execution
+from core.cobra_config import (
     limite_nodos,
     limite_memoria_mb,
     limite_cpu_segundos,
 )
-from src.core.resource_limits import (
+from core.resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
 )
@@ -592,7 +592,7 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from src.cobra.usar_loader import obtener_modulo
+        from cobra.usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)

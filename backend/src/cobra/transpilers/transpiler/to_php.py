@@ -1,6 +1,6 @@
 """Transpilador simple de Cobra a PHP."""
 
-from backend.src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -11,11 +11,11 @@ from backend.src.core.ast_nodes import (
     NodoOperacionUnaria,
     NodoAtributo,
 )
-from backend.src.cobra.lexico.lexer import TipoToken
-from src.core.visitor import NodeVisitor
+from cobra.lexico.lexer import TipoToken
+from core.visitor import NodeVisitor
 from ..base import BaseTranspiler
-from src.core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from src.cobra.macro import expandir_macros
+from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from cobra.macro import expandir_macros
 
 
 def visit_asignacion(self, nodo: NodoAsignacion):

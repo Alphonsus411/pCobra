@@ -2,9 +2,9 @@
 
 import logging
 import json
-from src.cobra.lexico.lexer import TipoToken, Token
+from cobra.lexico.lexer import TipoToken, Token
 
-from src.core.ast_nodes import (
+from core.ast_nodes import (
     NodoAsignacion,
     NodoHolobit,
     NodoCondicional,
@@ -44,7 +44,7 @@ from src.core.ast_nodes import (
     NodoCase,
 )
 
-from src.core import NodoYield
+from core import NodoYield
 
 # Palabras reservadas que no pueden usarse como identificadores
 PALABRAS_RESERVADAS = {
@@ -177,7 +177,7 @@ class ClassicParser:
     def parsear(self, *, incremental: bool = False, profile: bool = False):
         """Parsea tokens con soporte de caché incremental y perfilado."""
         if incremental:
-            from src.core.ast_cache import obtener_ast_fragmento
+            from core.ast_cache import obtener_ast_fragmento
             codigo = "\n".join(
                 token.valor if token.valor is not None else ""
                 for token in self.tokens

@@ -7,7 +7,7 @@ from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 from .compile_cmd import TRANSPILERS
-from backend.src.core.ast_cache import obtener_ast
+from core.ast_cache import obtener_ast
 
 
 PROGRAM_DIR = Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"

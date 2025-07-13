@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 from pylsp import hookimpl, lsp
 from standard_library import __all__ as STD_FUNCS
-from src.cobra.lexico.lexer import Lexer, LexerError
-from src.cobra.parser.parser import Parser
-from src.cli.commands.execute_cmd import ExecuteCommand
+from cobra.lexico.lexer import Lexer, LexerError
+from cobra.parser.parser import Parser
+from cli.commands.execute_cmd import ExecuteCommand
 
 # Palabras reservadas más comunes de Cobra
 KEYWORDS = [

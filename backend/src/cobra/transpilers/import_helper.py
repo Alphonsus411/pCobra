@@ -9,7 +9,7 @@ from .module_map import get_mapped_path
 # Mapeo de importaciones estándar por lenguaje
 STANDARD_IMPORTS = {
     "python": (
-        "from src.core.nativos import *\n" "from corelibs import *\n" "from standard_library import *\n"
+        "from core.nativos import *\n" "from corelibs import *\n" "from standard_library import *\n"
     ),
     "js": [
         "import * as io from './nativos/io.js';",

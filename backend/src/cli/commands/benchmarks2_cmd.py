@@ -137,7 +137,7 @@ class BenchmarksV2Command(BaseCommand):
             # Ejecución en sandbox
             runner = Path(tmpdir) / "run_sandbox.py"
             runner.write_text(
-                "from src.core.sandbox import ejecutar_en_sandbox\n"
+                "from core.sandbox import ejecutar_en_sandbox\n"
                 "import pathlib, sys\n"
                 "codigo = pathlib.Path(sys.argv[1]).read_text()\n"
                 "ejecutar_en_sandbox(codigo)\n"
