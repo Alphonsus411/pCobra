@@ -776,7 +776,7 @@ patrones de código riesgosos, como el uso de `eval` o `exec` fuera del sandbox.
 
 ## Comunidad
 
-Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo. Puedes unirte mediante este enlace permanente: [Enlace de invitación](https://discord.gg/placeholder).
+Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo. **El enlace de invitación se actualizará próximamente.**
 También contamos con un canal de **Telegram** y una cuenta de **Twitter** donde difundimos eventos y actualizaciones.
 
 ## Desarrollo
