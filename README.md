@@ -401,7 +401,7 @@ Al generar código para Python, `imprimir` se convierte en `print`, `mientras` e
 El proyecto instala automáticamente la librería `holobit-sdk`, utilizada para visualizar y manipular holobits. Las funciones `graficar`, `proyectar` y `transformar` de `src.core.holobits` delegan en esta API.
 
 ```python
-from src.core.holobits import Holobit, graficar, proyectar, transformar
+from core.holobits import Holobit, graficar, proyectar, transformar
 
 h = Holobit([0.8, -0.5, 1.2, 0.0, 0.0, 0.0])
 proyectar(h, "2D")
@@ -857,7 +857,7 @@ cobra plugins
 ### Ejemplo de plugin
 
 ```python
-from src.cli.plugin import PluginCommand
+from cli.plugin import PluginCommand
 
 
 class HolaCommand(PluginCommand):

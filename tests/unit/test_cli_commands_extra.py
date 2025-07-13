@@ -15,7 +15,7 @@ from src.cli.commands import modules_cmd
             "python",
             [
                 "Código generado (TranspiladorPython):",
-                "from src.core.nativos import *",
+                "from core.nativos import *",
                 "x = 5",
             ],
         ),

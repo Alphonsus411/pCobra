@@ -1,5 +1,5 @@
 from datetime import datetime
-from src.cli.plugin import PluginCommand
+from cli.plugin import PluginCommand
 
 class HoraCommand(PluginCommand):
     """Muestra la hora actual por pantalla."""

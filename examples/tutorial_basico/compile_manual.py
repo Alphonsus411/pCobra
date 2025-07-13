@@ -1,9 +1,9 @@
 import sys
 import backend
-from src.cobra.lexico.lexer import Lexer
-from src.cobra.parser.parser import Parser
-from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from src.core.ast_nodes import NodoValor, NodoImprimir
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from core.ast_nodes import NodoValor, NodoImprimir
 
 codigo = open('examples/tutorial_basico/hola_mundo.co').read()
 lex = Lexer(codigo)

@@ -15,7 +15,7 @@ de tiempo:
 
 .. code-block:: python
 
-    from src.core.performance import perfilar
+    from core.performance import perfilar
 
     def sumar(a, b):
         return a + b
@@ -31,7 +31,7 @@ Si deseas aplicar automáticamente optimizaciones de ``smooth-criminal`` usa
 
 .. code-block:: python
 
-    from src.core.performance import optimizar
+    from core.performance import optimizar
 
     @optimizar()
     def proceso():

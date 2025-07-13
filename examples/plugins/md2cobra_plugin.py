@@ -1,6 +1,6 @@
 from pathlib import Path
 import re
-from src.cli.plugin import PluginCommand
+from cli.plugin import PluginCommand
 
 
 class MarkdownToCobraCommand(PluginCommand):

@@ -33,7 +33,7 @@ Ejemplo de implementación
 
 .. code-block:: python
 
-   from src.cli.plugin import PluginCommand
+   from cli.plugin import PluginCommand
 
 
    class HolaCommand(PluginCommand):
@@ -70,7 +70,7 @@ Al instanciarse, cada plugin registra su nombre y versión en el
 
 .. code-block:: python
 
-   from src.cli.plugin import obtener_registro
+   from cli.plugin import obtener_registro
 
    print(obtener_registro())  # {'hola': '1.0'}
 
@@ -86,7 +86,7 @@ muestra su contenido:
 
 .. code-block:: python
 
-   from src.cli.plugin import obtener_registro
+   from cli.plugin import obtener_registro
 
    for nombre, version in obtener_registro().items():
        print(nombre, version)

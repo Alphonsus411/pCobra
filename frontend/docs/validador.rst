@@ -35,7 +35,7 @@ otros validadores pasando una lista a esta función.
 
 .. code-block:: python
 
-   from src.core.semantic_validators import construir_cadena, ValidadorBase
+   from core.semantic_validators import construir_cadena, ValidadorBase
 
    class MiValidador(ValidadorBase):
        def visit_mi_nodo(self, nodo):
@@ -54,7 +54,7 @@ definir una lista ``VALIDADORES_EXTRA`` con las instancias a añadir.
 .. code-block:: python
 
    # archivo validadores.py
-   from src.core.semantic_validators.base import ValidadorBase
+   from core.semantic_validators.base import ValidadorBase
 
    class Demo(ValidadorBase):
        def visit_valor(self, nodo):

@@ -2,6 +2,9 @@ from src.cobra.lexico.lexer import Lexer
 from src.cobra.parser.parser import Parser
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_macro_python():
@@ -9,7 +12,7 @@ def test_macro_python():
     tokens = Lexer(codigo).tokenizar()
     ast = Parser(tokens).parsear()
     resultado = TranspiladorPython().generate_code(ast)
-    assert resultado == "from src.core.nativos import *\nprint(1)\n"
+    assert resultado == IMPORTS + "print(1)\n"
 
 
 def test_macro_cpp():

@@ -3,6 +3,9 @@ from src.cobra.parser.parser import Parser
 from src.core.ast_nodes import NodoBucleMientras, NodoPasar
 from src.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from src.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from src.cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_parser_pasar():
@@ -21,7 +24,7 @@ def test_transpilar_pasar_python():
     nodo = NodoPasar()
     t = TranspiladorPython()
     resultado = t.generate_code([nodo])
-    esperado = "from src.core.nativos import *\npass\n"
+    esperado = IMPORTS + "pass\n"
     assert resultado == esperado
 
 

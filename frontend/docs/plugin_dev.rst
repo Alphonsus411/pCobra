@@ -33,7 +33,7 @@ En ``hola.py`` se define la clase del comando:
 
 .. code-block:: python
 
-   from src.cli.plugin import PluginCommand
+   from cli.plugin import PluginCommand
 
 
    class HolaCommand(PluginCommand):

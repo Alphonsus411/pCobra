@@ -28,7 +28,7 @@ A continuación se muestra cómo crear un plugin sencillo utilizando
 
      .. code-block:: python
 
-        from src.cli.plugin import PluginCommand
+        from cli.plugin import PluginCommand
 
 
       class SaludoCommand(PluginCommand):
