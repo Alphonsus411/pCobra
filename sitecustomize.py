@@ -1,3 +1,12 @@
+"""Habilita la resolución del paquete ``src`` durante el desarrollo.
+
+Python carga este módulo automáticamente al iniciar si se encuentra en
+``sys.path``. Al ejecutarse, importa ``backend.src`` y registra sus
+submódulos en ``sys.modules`` bajo el nombre ``src``. Esto permite que
+los imports del estilo ``from src.modulo import ...`` funcionen sin
+haber instalado previamente el paquete.
+"""
+
 import importlib
 import sys
 

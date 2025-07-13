@@ -1,3 +1,15 @@
+"""Inicializa el paquete ``backend`` para desarrollo.
+
+Este archivo se ejecuta al importar ``backend`` directamente desde el
+repositorio. Su principal objetivo es exponer los módulos ubicados en
+``backend/src`` bajo el alias ``src`` para mantener compatibilidad con
+código legado y ejemplos que aún realizan ``import src.*``.
+
+Se añade ``backend/src`` al ``sys.path`` y se propagan algunos
+submódulos a ``sys.modules`` para que puedan ser localizados mediante
+``import src...`` sin necesidad de instalar el paquete.
+"""
+
 import importlib
 import sys
 from pathlib import Path
