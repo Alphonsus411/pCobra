@@ -1,3 +1,5 @@
+"""Kernel de Jupyter que permite ejecutar código Cobra en notebooks."""
+
 import sys
 import io
 import contextlib

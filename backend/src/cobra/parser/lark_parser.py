@@ -1,3 +1,5 @@
+"""Parser alternativo basado en Lark para cargar la gramática EBNF."""
+
 from __future__ import annotations
 
 from pathlib import Path

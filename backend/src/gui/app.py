@@ -1,3 +1,5 @@
+"""Aplicación gráfica básica usando Flet para ejecutar código Cobra."""
+
 import io
 import sys
 import flet as ft
