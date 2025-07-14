@@ -765,7 +765,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   (formateo con `black`, longitud máxima de línea 88 y uso de `flake8`, `mypy`
   y `bandit`).
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
-- Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*.
+- Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*. `bandit` analizará los directorios `src` y `backend/src`.
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
@@ -811,8 +811,8 @@ Para ejecutar los linters puedes usar el comando de Make:
 make lint
 ```
 
-Esto ejecutará `flake8` y `mypy` sobre `backend/src`. Si prefieres lanzarlos de manera
-individual utiliza:
+Esto ejecutará `flake8` y `mypy` sobre `backend/src`, y `bandit` revisará los directorios `src` y `backend/src`. Si prefieres lanzar las herramientas de
+manera individual utiliza:
 
 ```bash
 flake8 backend/src

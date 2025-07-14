@@ -30,6 +30,7 @@ jobs:
         run: |
           flake8 backend/src
           mypy backend/src
+          bandit -r src backend/src
       - name: Run tests
         run: |
           pytest --cov=backend/src --cov-report=xml --cov-fail-under=95
