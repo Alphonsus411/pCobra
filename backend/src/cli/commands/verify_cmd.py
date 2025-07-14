@@ -19,6 +19,7 @@ class VerifyCommand(BaseCommand):
     name = "verificar"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name,
             help=_("Comprueba la salida en varios lenguajes"),
@@ -34,6 +35,7 @@ class VerifyCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         archivo = args.archivo
         lenguajes = [l.strip() for l in args.lenguajes.split(",") if l.strip()]
         if not os.path.exists(archivo):

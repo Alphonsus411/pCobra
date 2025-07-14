@@ -11,6 +11,7 @@ class CacheCommand(BaseCommand):
     name = "cache"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Elimina los archivos del cach\u00e9 de AST")
         )
@@ -18,6 +19,7 @@ class CacheCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         limpiar_cache()
         mostrar_info(_("Cach\u00e9 limpiada"))
         return 0

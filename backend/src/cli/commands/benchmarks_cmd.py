@@ -69,6 +69,7 @@ class BenchmarksCommand(BaseCommand):
     name = "benchmarks"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks"))
         parser.add_argument(
             "--output",
@@ -79,6 +80,7 @@ class BenchmarksCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
         env["PCOBRA_TOML"] = str(Path(tempfile.mkstemp(suffix=".toml")[1]))

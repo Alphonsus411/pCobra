@@ -19,6 +19,7 @@ class BenchTranspilersCommand(BaseCommand):
     name = "benchtranspilers"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Eval\u00faa la velocidad de los transpiladores")
         )
@@ -50,6 +51,7 @@ class BenchTranspilersCommand(BaseCommand):
         return file.read_text()
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         results = []
         programs = {s: self._ensure_program(s) for s in ["small", "medium", "large"]}
 

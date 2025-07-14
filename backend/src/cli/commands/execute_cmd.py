@@ -22,6 +22,7 @@ class ExecuteCommand(BaseCommand):
     name = "ejecutar"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Ejecuta un script Cobra"))
         parser.add_argument("archivo")
         parser.add_argument(
@@ -38,6 +39,7 @@ class ExecuteCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         archivo = args.archivo
         depurar = getattr(args, "depurar", False)
         formatear = getattr(args, "formatear", False)

@@ -13,6 +13,7 @@ class DependenciasCommand(BaseCommand):
     name = "dependencias"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Gestiona las dependencias del proyecto")
         )
@@ -23,6 +24,7 @@ class DependenciasCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         accion = args.accion
         if accion == "listar":
             return self._listar_dependencias()

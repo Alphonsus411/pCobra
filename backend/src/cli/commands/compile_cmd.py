@@ -86,6 +86,7 @@ class CompileCommand(BaseCommand):
     name = "compilar"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
         parser.add_argument("archivo")
         parser.add_argument(
@@ -112,6 +113,7 @@ class CompileCommand(BaseCommand):
         return lang, transp.__class__.__name__, transp.generate_code(ast)
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         archivo = args.archivo
         if getattr(args, "backend", None):
             args.tipo = args.backend

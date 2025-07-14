@@ -10,6 +10,7 @@ class CrearCommand(BaseCommand):
     name = "crear"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Crea archivos o proyectos"))
         sub = parser.add_subparsers(dest="accion")
         arch = sub.add_parser("archivo", help=_("Crea un archivo .co"))
@@ -22,6 +23,7 @@ class CrearCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         accion = args.accion
         if accion == "archivo":
             return self._crear_archivo(args.ruta)

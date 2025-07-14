@@ -56,6 +56,7 @@ class BenchCommand(BaseCommand):
     name = "bench"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks"))
         parser.add_argument("--profile", action="store_true", help=_("Activa el modo de profiling"))
         parser.set_defaults(cmd=self)
@@ -110,6 +111,7 @@ class BenchCommand(BaseCommand):
         return results
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         if args.profile:
             profiler = cProfile.Profile()
             profiler.enable()

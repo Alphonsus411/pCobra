@@ -9,6 +9,7 @@ class FletCommand(BaseCommand):
     name = "gui"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Inicia la interfaz gráfica")
         )
@@ -16,6 +17,7 @@ class FletCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         try:
             import flet
             from gui.idle import main
