@@ -10,6 +10,7 @@ class PluginsCommand(BaseCommand):
     name = "plugins"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Lista plugins instalados"))
         sub = parser.add_subparsers(dest="accion")
         bus = sub.add_parser(
@@ -20,6 +21,7 @@ class PluginsCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         registro = obtener_registro_detallado()
         if not registro:
             mostrar_info(_("No hay plugins instalados"))

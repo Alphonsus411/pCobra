@@ -27,6 +27,7 @@ class ProfileCommand(BaseCommand):
     name = "profile"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Perfila un programa"))
         parser.add_argument("archivo")
         parser.add_argument(
@@ -47,6 +48,7 @@ class ProfileCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         archivo = args.archivo
         output = getattr(args, "output", None)
         ui = getattr(args, "ui", None)

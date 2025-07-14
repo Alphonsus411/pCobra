@@ -22,6 +22,7 @@ class InteractiveCommand(BaseCommand):
     name = "interactive"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Inicia el modo interactivo"))
         parser.add_argument(
             "--sandbox",
@@ -37,6 +38,7 @@ class InteractiveCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         seguro = getattr(args, "seguro", False)
         extra_validators = getattr(args, "validadores_extra", None)
         sandbox = getattr(args, "sandbox", False)

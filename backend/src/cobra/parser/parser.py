@@ -145,12 +145,26 @@ class ClassicParser:
         }
 
     def token_actual(self):
+        """Devuelve el token actualmente en procesamiento.
+
+        Returns
+        -------
+        Token
+            El token en la posición actual o ``EOF`` si se alcanzó el final.
+        """
         if self.posicion < len(self.tokens):
             return self.tokens[self.posicion]
         # Retorna un token EOF si ya no hay más tokens
         return Token(TipoToken.EOF, None)
 
     def token_siguiente(self):
+        """Obtiene el token siguiente sin avanzar el cursor.
+
+        Returns
+        -------
+        Token | None
+            El token en la siguiente posición o ``None`` si no existe.
+        """
         if self.posicion + 1 < len(self.tokens):
             return self.tokens[self.posicion + 1]
         return None
@@ -161,6 +175,13 @@ class ClassicParser:
             self.posicion += 1
 
     def comer(self, tipo):
+        """Consume un token del tipo indicado o lanza ``SyntaxError``.
+
+        Parameters
+        ----------
+        tipo : TipoToken
+            Tipo de token que se espera consumir.
+        """
         if self.token_actual().tipo == tipo:
             self.avanzar()
         else:
@@ -353,6 +374,13 @@ class ClassicParser:
 
 
     def declaracion_asignacion(self):
+        """Procesa una asignación de variable opcionalmente inferida.
+
+        Returns
+        -------
+        NodoAsignacion
+            Nodo del AST que representa la asignación realizada.
+        """
         variable_token = None
         inferencia = False
         if self.token_actual().tipo in (TipoToken.VAR, TipoToken.VARIABLE):
@@ -408,6 +436,13 @@ class ClassicParser:
         return NodoBucleMientras(condicion, cuerpo)
 
     def declaracion_holobit(self):
+        """Parsea la creación de un objeto ``holobit``.
+
+        Returns
+        -------
+        NodoHolobit
+            Instancia que contiene los valores proporcionados.
+        """
         self.comer(TipoToken.HOLOBIT)
         self.comer(TipoToken.LPAREN)
         valores = []
@@ -621,6 +656,13 @@ class ClassicParser:
         return NodoHilo(llamada)
 
     def declaracion_try_catch(self):
+        """Parsea un bloque ``try/catch`` con soporte opcional de ``finally``.
+
+        Returns
+        -------
+        NodoTryCatch
+            Nodo que representa la estructura de manejo de excepciones.
+        """
         if self.token_actual().tipo in (TipoToken.TRY, TipoToken.INTENTAR):
             self.avanzar()
         else:
@@ -702,6 +744,7 @@ class ClassicParser:
         return NodoPasar()
 
     def declaracion_afirmar(self):
+        """Parsea una sentencia ``afirmar`` (assert)."""
         self.comer(TipoToken.AFIRMAR)
         condicion = self.expresion()
         mensaje = None
@@ -711,11 +754,13 @@ class ClassicParser:
         return NodoAssert(condicion, mensaje)
 
     def declaracion_eliminar(self):
+        """Procesa la instrucción ``eliminar`` (del)."""
         self.comer(TipoToken.ELIMINAR)
         objetivo = self.expresion()
         return NodoDel(objetivo)
 
     def declaracion_global(self):
+        """Registra nombres como variables globales."""
         self.comer(TipoToken.GLOBAL)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
             raise SyntaxError("Se esperaba al menos un identificador después de 'global'")
@@ -730,6 +775,7 @@ class ClassicParser:
         return NodoGlobal(nombres)
 
     def declaracion_nolocal(self):
+        """Marca variables como no locales dentro de un cierre."""
         self.comer(TipoToken.NOLOCAL)
         nombres = []
         while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
@@ -742,6 +788,7 @@ class ClassicParser:
         return NodoNoLocal(nombres)
 
     def declaracion_con(self):
+        """Parsea el contexto ``con`` similar a ``with`` en Python."""
         self.comer(TipoToken.CON)
         contexto = self.expresion()
         alias = None
@@ -763,6 +810,7 @@ class ClassicParser:
         return NodoWith(contexto, alias, cuerpo)
 
     def declaracion_desde(self):
+        """Importa un símbolo específico desde un módulo."""
         self.comer(TipoToken.DESDE)
         if self.token_actual().tipo != TipoToken.CADENA:
             raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
@@ -887,9 +935,11 @@ class ClassicParser:
         return NodoClase(nombre, metodos, bases)
 
     def expresion(self):
+        """Entrada principal para evaluar expresiones."""
         return self.exp_or()
 
     def exp_or(self):
+        """Evalúa expresiones unidas por el operador ``or``."""
         nodo = self.exp_and()
         while self.token_actual().tipo == TipoToken.OR:
             operador = self.token_actual()
@@ -899,6 +949,7 @@ class ClassicParser:
         return nodo
 
     def exp_and(self):
+        """Evalúa expresiones unidas por el operador ``and``."""
         nodo = self.exp_equality()
         while self.token_actual().tipo == TipoToken.AND:
             operador = self.token_actual()
@@ -908,6 +959,7 @@ class ClassicParser:
         return nodo
 
     def exp_equality(self):
+        """Procesa comparaciones de igualdad y desigualdad."""
         nodo = self.exp_comparison()
         while self.token_actual().tipo in [TipoToken.IGUAL, TipoToken.DIFERENTE]:
             operador = self.token_actual()
@@ -917,6 +969,7 @@ class ClassicParser:
         return nodo
 
     def exp_comparison(self):
+        """Evalúa operadores relacionales (<, <=, >, >=)."""
         nodo = self.exp_addition()
         while self.token_actual().tipo in [
             TipoToken.MAYORQUE,
@@ -931,6 +984,7 @@ class ClassicParser:
         return nodo
 
     def exp_addition(self):
+        """Resuelve sumas y restas en la expresión."""
         nodo = self.exp_multiplication()
         while self.token_actual().tipo in [TipoToken.SUMA, TipoToken.RESTA]:
             operador = self.token_actual()
@@ -940,6 +994,7 @@ class ClassicParser:
         return nodo
 
     def exp_multiplication(self):
+        """Maneja multiplicación, división y módulo."""
         nodo = self.exp_unario()
         while self.token_actual().tipo in [TipoToken.MULT, TipoToken.DIV, TipoToken.MOD]:
             operador = self.token_actual()
@@ -949,6 +1004,7 @@ class ClassicParser:
         return nodo
 
     def exp_unario(self):
+        """Procesa operaciones unarias y espera."""
         if self.token_actual().tipo == TipoToken.NOT:
             operador = self.token_actual()
             self.avanzar()
@@ -1025,6 +1081,7 @@ class ClassicParser:
         return NodoAtributo(objeto, nombre)
 
     def lista_parametros(self):
+        """Devuelve la lista de parámetros de una función o lambda."""
         parametros = []
         while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
             nombre_parametro = self.token_actual().valor

@@ -12,6 +12,7 @@ class PaqueteCommand(BaseCommand):
     name = "paquete"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Gestiona paquetes Cobra"))
         sub = parser.add_subparsers(dest="accion")
 
@@ -28,6 +29,7 @@ class PaqueteCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         accion = args.accion
         if accion == "crear":
             return self._crear(args.fuente, args.paquete, args.nombre, args.version)

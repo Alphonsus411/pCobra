@@ -20,6 +20,7 @@ _cache = None
 _toml_cache = None
 
 def get_map():
+    """Carga el mapa YAML de módulos soportados."""
     global _cache
     if _cache is None:
         if os.path.exists(MODULE_MAP_PATH):
@@ -32,6 +33,7 @@ def get_map():
 
 
 def get_toml_map():
+    """Devuelve la configuración del archivo ``pcobra.toml``."""
     global _toml_cache
     if _toml_cache is None:
         if os.path.exists(PCOBRA_TOML_PATH):

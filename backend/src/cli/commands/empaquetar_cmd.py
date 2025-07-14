@@ -12,6 +12,7 @@ class EmpaquetarCommand(BaseCommand):
     name = "empaquetar"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Crea un ejecutable para la CLI usando PyInstaller")
         )
@@ -40,6 +41,7 @@ class EmpaquetarCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         raiz = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
         )

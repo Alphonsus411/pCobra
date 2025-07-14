@@ -11,6 +11,7 @@ class JupyterCommand(BaseCommand):
     name = "jupyter"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Inicia Jupyter Notebook"))
         parser.add_argument(
             "--notebook",
@@ -20,6 +21,7 @@ class JupyterCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         try:
             subprocess.run([sys.executable, "-m", "cobra.jupyter_kernel", "install"], check=True)
             cmd = [

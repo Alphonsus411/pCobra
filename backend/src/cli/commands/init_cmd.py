@@ -11,6 +11,7 @@ class InitCommand(BaseCommand):
     name = "init"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Inicializa un proyecto Cobra")
         )
@@ -19,6 +20,7 @@ class InitCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         ruta = args.ruta
         os.makedirs(ruta, exist_ok=True)
         main = os.path.join(ruta, "main.co")

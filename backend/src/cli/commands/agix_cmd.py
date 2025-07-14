@@ -12,6 +12,7 @@ class AgixCommand(BaseCommand):
     name = "agix"
 
     def register_subparser(self, subparsers):
+        """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Analiza un archivo Cobra y sugiere mejoras")
         )
@@ -20,6 +21,7 @@ class AgixCommand(BaseCommand):
         return parser
 
     def run(self, args):
+        """Ejecuta la lógica del comando."""
         archivo = args.archivo
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
