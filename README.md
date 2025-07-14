@@ -621,6 +621,14 @@ Algunas pruebas generan código en distintos lenguajes (por ejemplo C++, JavaScr
 PYTHONPATH=$PWD pytest
 ```
 
+En la integración continua se emplea:
+
+```bash
+pytest --cov=backend/src tests/
+```
+
+El reporte se guarda como `coverage.xml` y se utiliza en el CI.
+
 Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
 subcomandos devuelven `0` al finalizar correctamente y un valor distinto en caso
 de error.
