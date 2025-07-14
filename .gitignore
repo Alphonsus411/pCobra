@@ -19,3 +19,5 @@ coverage.xml
 cache/
 docs/cheatsheet.pdf
 \.hypothesis/
+bench_results.json
+all-bytes.dat
