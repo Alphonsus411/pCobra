@@ -28,6 +28,10 @@ lint:
 	mypy backend/src
 	bandit -r src backend/src
 
+format:
+	isort backend/src src
+	black backend/src src
+
 typecheck:
 		mypy backend/src
 		@if command -v pyright >/dev/null 2>&1; then \

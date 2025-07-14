@@ -23,3 +23,5 @@ snakeviz==2.2.2
 lark==1.1.9
 psutil==7.0.0
 sphinxcontrib-plantuml==0.30
+black==25.1.0
+isort==6.0.1

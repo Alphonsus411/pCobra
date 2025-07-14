@@ -54,3 +54,12 @@ pcobra = "src.main:main"
 
 [project.entry-points."cobra.transpilers"]
 # Se registrarán transpiladores externos aquí
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["backend", "src"]
