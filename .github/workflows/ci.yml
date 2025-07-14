@@ -33,6 +33,10 @@ jobs:
         run: |
           pip install safety
           safety check --full-report
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
         run: |
           isort --check backend/src src

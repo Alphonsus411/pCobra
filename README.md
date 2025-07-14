@@ -768,6 +768,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*. `bandit` analizará los directorios `src` y `backend/src`.
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
+- Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
@@ -785,6 +786,8 @@ lista de paquetes instalados en busca de vulnerabilidades conocidas. Si se
 detecta alguna, la acción devolverá un reporte detallado y el trabajo fallará.
 Consulta el log del paso "Seguridad de dependencias" para ver los paquetes
 afectados y las recomendaciones de actualización.
+De igual forma, se ejecuta *gitleaks* para asegurarse de que no existan
+credenciales accidentales en el repositorio.
 
 El repositorio también ejecuta CodeQL con reglas personalizadas para detectar
 patrones de código riesgosos, como el uso de `eval` o `exec` fuera del sandbox.
@@ -809,7 +812,9 @@ Para ejecutar los linters puedes usar el comando de Make:
 
 ```bash
 make lint
+make secrets
 ```
+El segundo comando ejecuta *gitleaks* para detectar posibles secretos en el repositorio.
 
 Esto ejecutará `flake8` y `mypy` sobre `backend/src`, y `bandit` revisará los directorios `src` y `backend/src`. Si prefieres lanzar las herramientas de
 manera individual utiliza:
