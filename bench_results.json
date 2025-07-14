@@ -1,5 +1,0 @@
-[
-  {"backend": "cobra", "time": 0.95, "memory_kb": 64000},
-  {"backend": "python", "time": 0.10, "memory_kb": 0},
-  {"backend": "js", "time": 0.05, "memory_kb": 0}
-]
