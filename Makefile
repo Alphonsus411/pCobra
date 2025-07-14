@@ -39,4 +39,7 @@ typecheck:
 	fi
 
 benchmarks:
-		python scripts/benchmarks/run_benchmarks.py > bench_results.json
+                python scripts/benchmarks/run_benchmarks.py > bench_results.json
+
+secrets:
+	gitleaks detect --source . --redact
