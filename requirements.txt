@@ -8,7 +8,7 @@ codecov==2.1.13
 
 # Ejecución de la CLI y kernel de Jupyter
 PyYAML==6.0.1
-jsonschema==4.22.0
+jsonschema==4.24.0
 flet
 requests
 RestrictedPython==8.0
