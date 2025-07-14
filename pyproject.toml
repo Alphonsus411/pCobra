@@ -47,6 +47,7 @@ where = ["backend/src"]
 
 [project.scripts]
 cobra = "src.cli.cli:main"
+pcobra = "src.main:main"
 
 [project.entry-points."cobra.plugins"]
 # Se registrarán plugins externos aquí

@@ -5,3 +5,4 @@ include CHANGELOG.md
 include MANUAL_COBRA.md
 recursive-include notebooks *
 recursive-include frontend/docs *
+include pcobra.toml
