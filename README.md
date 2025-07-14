@@ -94,27 +94,17 @@ source .venv/bin/activate  # Para Unix
 .\.venv\Scripts\activate  # Para Windows
 ````
 
-4. Instala las dependencias necesarias:
+4. Instala las dependencias de desarrollo:
 
 ````bash
 pip install -r requirements.txt
 ````
 
-   Además del archivo ``requirements.txt`` la CLI consultará
-   ``pyproject.toml`` para incluir las dependencias definidas en
-   las secciones ``project.dependencies`` y
-   ``project.optional-dependencies``.
+   Estas dependencias son únicamente para el entorno de desarrollo.
+   Las dependencias de ejecución se instalarán al instalar el paquete.
 
-   Esto instalará los paquetes mínimos para ejecutar Cobra:
-
-   - `pytest` y complementos para las pruebas automatizadas.
-   - `ipykernel` para el kernel de Jupyter.
-   - `PyYAML` utilizado al leer `cobra.mod`.
-   - `cbindgen` para generar encabezados de crates Rust
-     (instalable con `cargo install cbindgen`).
-   - `tomli` necesario para Python anterior a la versión 3.11.
-
-5. Instala el paquete de forma editable para usar la CLI:
+5. Instala el paquete de forma editable para usar la CLI y obtener las
+   dependencias declaradas en ``pyproject.toml``:
 
 ````bash
 pip install -e .
