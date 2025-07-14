@@ -8,6 +8,7 @@ COPY . /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends cargo && \
     cargo install cbindgen && \
-    pip install -r requirements.txt
+    pip install -r requirements.txt && \
+    pip install -e .
 
 CMD ["pytest"]
