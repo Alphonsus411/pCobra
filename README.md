@@ -110,7 +110,15 @@ pip install -r requirements.txt
 pip install -e .
 ````
 
-6. Ejecuta un programa de prueba para verificar la instalación:
+6. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
+   de ser necesario:
+
+````bash
+cp .env.example .env
+# Edita .env con tu editor favorito
+````
+
+7. Ejecuta un programa de prueba para verificar la instalación:
 
 ````bash
 echo "imprimir('Hola Cobra')" > hola.co
