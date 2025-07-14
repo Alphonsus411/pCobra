@@ -1,3 +1,5 @@
+"""Entorno interactivo para ejecutar código Cobra y explorar tokens y AST."""
+
 import io
 import sys
 import flet as ft

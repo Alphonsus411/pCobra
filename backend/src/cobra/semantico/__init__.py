@@ -1,3 +1,5 @@
+"""Utilidades para el análisis semántico y la validación de módulos Cobra."""
+
 from .tabla import Simbolo, Ambito
 from .analizador import AnalizadorSemantico
 from .mod_validator import validar_mod

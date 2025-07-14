@@ -1,3 +1,5 @@
+"""Estructuras de la tabla de símbolos y manejo jerárquico de ámbitos."""
+
 from dataclasses import dataclass
 from typing import Dict, Optional
 

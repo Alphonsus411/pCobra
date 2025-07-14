@@ -1,3 +1,5 @@
+"""Analizador semántico que construye la tabla de símbolos y verifica errores."""
+
 from typing import List
 
 from core.visitor import NodeVisitor
