@@ -5,13 +5,11 @@ import tomllib
 from datetime import date
 from pathlib import Path
 
-SETUP_PATH = Path("setup.py")
 PYPROJECT_PATH = Path("pyproject.toml")
 CHANGELOG_PATH = Path("CHANGELOG.md")
 
 # Archivos en los que se actualizará la versión
 FILES_TO_UPDATE = [
-    SETUP_PATH,
     PYPROJECT_PATH,
     Path("README.md"),
     Path("MANUAL_COBRA.md"),
@@ -20,7 +18,6 @@ FILES_TO_UPDATE = [
     Path("tests/unit/test_cli_plugins_cmd.py"),
 ]
 
-VERSION_RE = re.compile(r"version=['\"](\d+\.\d+\.\d+)['\"]")
 
 
 def read_version() -> str:
@@ -31,11 +28,7 @@ def read_version() -> str:
         if "version" in project:
             return str(project["version"])
 
-    content = SETUP_PATH.read_text()
-    match = VERSION_RE.search(content)
-    if not match:
-        raise ValueError("Versión no encontrada")
-    return match.group(1)
+    raise ValueError("Versión no encontrada en pyproject.toml")
 
 
 def bump(version: str, part: str = "patch") -> str:
