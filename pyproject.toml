@@ -37,6 +37,7 @@ notebooks = [
     "papermill>=2.6.0",
     "nbconvert>=7.16.6",
 ]
+dev = ["python-dotenv"]
 
 [tool.setuptools]
 package-dir = {"" = "backend/src"}

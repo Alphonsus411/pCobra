@@ -111,7 +111,8 @@ pip install -e .
 ````
 
 6. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
-   de ser necesario:
+   de ser necesario. Estas variables se cargarán automáticamente al iniciar
+   Cobra gracias a ``python-dotenv``:
 
 ````bash
 cp .env.example .env
