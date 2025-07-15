@@ -24,26 +24,28 @@ imprimir(x)
 """
 
 BACKENDS = {
-    "python": {
-        "ext": "py",
-        "run": ["python", "{file}"]
-    },
-    "js": {
-        "ext": "js",
-        "run": ["node", "{file}"]
-    },
+    "python": {"ext": "py", "run": ["python", "{file}"]},
+    "js": {"ext": "js", "run": ["node", "{file}"]},
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
-        "run": ["{tmp}/prog_rs"]
-    }
+        "run": ["{tmp}/prog_rs"],
+    },
 }
 
 
-def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
+def run_and_measure(
+    cmd: list[str], env: dict[str, str] | None = None
+) -> tuple[float, int]:
     start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
     start_time = time.perf_counter()
-    subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    subprocess.run(
+        cmd,
+        env=env,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )  # nosec B603
     elapsed = time.perf_counter() - start_time
     end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
     mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
@@ -58,7 +60,9 @@ class BenchCommand(BaseCommand):
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks"))
-        parser.add_argument("--profile", action="store_true", help=_("Activa el modo de profiling"))
+        parser.add_argument(
+            "--profile", action="store_true", help=_("Activa el modo de profiling")
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -74,7 +78,9 @@ class BenchCommand(BaseCommand):
 
             cobra_cmd = [sys.executable, "-m", "src.cli.cli", "ejecutar", str(co_file)]
             elapsed, mem = run_and_measure(cobra_cmd, env)
-            results.append({"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem})
+            results.append(
+                {"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
+            )
 
             for backend, cfg in BACKENDS.items():
                 run_cmd = cfg["run"]
@@ -89,25 +95,35 @@ class BenchCommand(BaseCommand):
                     backend,
                 ]
                 try:
-                    out = subprocess.check_output(transp_cmd, env=env, text=True)
+                    out = subprocess.check_output(
+                        transp_cmd, env=env, text=True
+                    )  # nosec B603
                 except subprocess.CalledProcessError:
-                    continue
+                    continue  # nosec B112
                 out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-                lines = [l for l in out.splitlines() if not l.startswith("DEBUG:") and not l.startswith("INFO:")]
+                lines = [
+                    line
+                    for line in out.splitlines()
+                    if not line.startswith("DEBUG:") and not line.startswith("INFO:")
+                ]
                 if lines and lines[0].startswith("Código generado"):
                     lines = lines[1:]
                 src_file.write_text("\n".join(lines))
                 if "compile" in cfg:
-                    compile_cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]]
+                    compile_cmd = [
+                        arg.format(file=src_file, tmp=tmpdir) for arg in cfg["compile"]
+                    ]
                     try:
-                        subprocess.check_call(compile_cmd)
+                        subprocess.check_call(compile_cmd)  # nosec B603
                     except Exception:
-                        continue
+                        continue  # nosec B112
                 cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
                 if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
                     continue
                 elapsed, mem = run_and_measure(cmd, env)
-                results.append({"backend": backend, "time": round(elapsed, 4), "memory_kb": mem})
+                results.append(
+                    {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
+                )
         return results
 
     def run(self, args):

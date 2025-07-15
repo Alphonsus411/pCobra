@@ -19,19 +19,29 @@ class ContainerCommand(BaseCommand):
 
     def run(self, args):
         """Ejecuta la lógica del comando."""
-        raiz = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+        raiz = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
+        )
         try:
-            subprocess.run([
-                "docker",
-                "build",
-                "-t",
-                args.tag,
-                raiz,
-            ], check=True)
+            subprocess.run(
+                [
+                    "docker",
+                    "build",
+                    "-t",
+                    args.tag,
+                    raiz,
+                ],
+                check=True,
+            )
             mostrar_info(_("Imagen Docker creada"))
             return 0
         except FileNotFoundError:
-            mostrar_error(_("Docker no está instalado. Ejecuta 'apt install docker' u otra configuración."))
+            mostrar_error(
+                _(
+                    "Docker no está instalado. Ejecuta 'apt install docker' "
+                    "u otra configuración."
+                )
+            )
             return 1
         except subprocess.CalledProcessError as e:
             mostrar_error(_("Error construyendo la imagen Docker: {err}").format(err=e))

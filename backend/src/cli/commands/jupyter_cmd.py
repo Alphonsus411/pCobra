@@ -23,7 +23,9 @@ class JupyterCommand(BaseCommand):
     def run(self, args):
         """Ejecuta la lógica del comando."""
         try:
-            subprocess.run([sys.executable, "-m", "cobra.jupyter_kernel", "install"], check=True)
+            subprocess.run(
+                [sys.executable, "-m", "cobra.jupyter_kernel", "install"], check=True
+            )
             cmd = [
                 "jupyter",
                 "notebook",
@@ -36,7 +38,8 @@ class JupyterCommand(BaseCommand):
         except FileNotFoundError:
             mostrar_error(
                 _(
-                    "No se encontró el ejecutable 'jupyter'. Instala Jupyter para utilizar esta función."
+                    "No se encontró el ejecutable 'jupyter'. Instala Jupyter "
+                    "para utilizar esta función."
                 )
             )
             return 1

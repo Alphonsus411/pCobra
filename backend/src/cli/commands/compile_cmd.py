@@ -143,12 +143,12 @@ class CompileCommand(BaseCommand):
 
             if getattr(args, "tipos", None):
                 lenguajes = [t.strip() for t in args.tipos.split(",") if t.strip()]
-                for l in lenguajes:
-                    if l not in TRANSPILERS:
+                for lang in lenguajes:
+                    if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
                 with multiprocessing.Pool(processes=len(lenguajes)) as pool:
                     resultados = pool.map(
-                        self._ejecutar_transpilador, [(l, ast) for l in lenguajes]
+                        self._ejecutar_transpilador, [(lang, ast) for lang in lenguajes]
                     )
                 for lang, nombre, resultado in resultados:
                     mostrar_info(

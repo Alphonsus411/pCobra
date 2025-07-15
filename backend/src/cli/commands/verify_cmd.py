@@ -37,7 +37,7 @@ class VerifyCommand(BaseCommand):
     def run(self, args):
         """Ejecuta la lógica del comando."""
         archivo = args.archivo
-        lenguajes = [l.strip() for l in args.lenguajes.split(",") if l.strip()]
+        lenguajes = [lang.strip() for lang in args.lenguajes.split(",") if lang.strip()]
         if not os.path.exists(archivo):
             mostrar_error(f"El archivo '{archivo}' no existe")
             return 1
