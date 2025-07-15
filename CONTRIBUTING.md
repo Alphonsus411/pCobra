@@ -21,20 +21,38 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
   [SPEC_COBRA.md](SPEC_COBRA.md).
 
+## PYTHONPATH y PyCharm
+
+Para que las importaciones `from src...` funcionen durante el desarrollo,
+define el directorio `backend/src` en la variable `PYTHONPATH` o instala el
+paquete en modo editable con `pip install -e .`:
+
+```bash
+export PYTHONPATH=$PWD/backend/src
+```
+
+En PyCharm marca `backend/src` como *Sources Root* para que resuelva las rutas
+correctamente. Un ejemplo rápido de ejecución sería:
+
+```bash
+PYTHONPATH=$PWD/backend/src python -c "from src.core.main import main; main()"
+```
+
 ## Ejecutar Pruebas
 
 Las pruebas unitarias se ubican en `tests/unit` y las de integración en
-`tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD` o instala
-el paquete en modo editable (`pip install -e .`). Para ejecutarlas todas utiliza:
+`tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/backend/src`
+o instala el paquete en modo editable (`pip install -e .`). Para ejecutarlas
+todas utiliza:
 
 ```bash
-PYTHONPATH=$PWD pytest
+PYTHONPATH=$PWD/backend/src pytest
 ```
 
 Para generar un reporte de cobertura:
 
 ```bash
-PYTHONPATH=$PWD pytest --cov
+PYTHONPATH=$PWD/backend/src pytest --cov
 ```
 
 Además de las pruebas, ejecuta las verificaciones de estilo con:

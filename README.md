@@ -126,6 +126,27 @@ echo "imprimir('Hola Cobra')" > hola.co
 cobra ejecutar hola.co
 ````
 
+### PYTHONPATH y PyCharm
+
+Para que las importaciones `from src...` funcionen desde la consola y PyCharm,
+agrega el directorio `backend/src` al `PYTHONPATH` o instala el paquete en modo
+editable con `pip install -e .`:
+
+```bash
+export PYTHONPATH=$PWD/backend/src
+# o bien
+pip install -e .
+```
+
+En PyCharm marca la carpeta `backend/src` como *Sources Root* para que las
+importaciones se resuelvan correctamente.
+
+Puedes verificar la configuración ejecutando en la consola:
+
+```bash
+PYTHONPATH=$PWD/backend/src python -c "from src.core.main import main; main()"
+```
+
 ### Instalación con pipx
 
 [pipx](https://pypa.github.io/pipx/) es una herramienta para instalar y ejecutar aplicaciones de Python de forma aislada y requiere Python 3.6 o superior. Para instalar Cobra con pipx ejecuta:
