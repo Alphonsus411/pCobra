@@ -238,6 +238,15 @@ los tiempos y uso de CPU.
 
 # Uso
 
+Para ejecutar el proyecto directamente desde el repositorio se incluye el
+script `run.sh`. Este cargará las variables definidas en `.env` si dicho archivo
+existe y luego llamará a `python -m src.main` pasando todos los argumentos
+recibidos. Úsalo de la siguiente forma:
+
+```bash
+./run.sh [opciones]
+```
+
 Para conocer las opciones avanzadas del modo seguro revisa
 `frontend/docs/modo_seguro.rst`. Los ejemplos de medición de rendimiento
 están disponibles en `frontend/docs/benchmarking.rst`.
