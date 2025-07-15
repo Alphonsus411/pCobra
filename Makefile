@@ -27,10 +27,12 @@ lint:
 	flake8 backend/src
 	mypy backend/src
 	bandit -r src backend/src
+	flake8 src/ tests/
 
 format:
 	isort backend/src src
 	black backend/src src
+	black src/ tests/
 
 typecheck:
 		mypy backend/src
@@ -39,7 +41,13 @@ typecheck:
 	fi
 
 benchmarks:
-                python scripts/benchmarks/run_benchmarks.py > bench_results.json
+	python scripts/benchmarks/run_benchmarks.py > bench_results.json
 
 secrets:
 	gitleaks detect --source . --redact
+
+install:
+	pip install -e .[dev]
+
+test:
+	pytest --cov=src tests/
