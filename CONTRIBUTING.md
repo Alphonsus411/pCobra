@@ -54,6 +54,20 @@ make lint
 
 ¡Agradecemos todas las contribuciones!
 
+## Mensajes de Commit
+
+Seguimos la convención [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/), que define un formato estructurado para los mensajes. Cada commit debe comenzar con un **tipo**, un alcance opcional y una breve descripción en presente.
+
+Ejemplos de mensajes válidos:
+
+- `feat: agrega soporte para módulos personalizables`
+- `fix(ci): corrige la ruta de despliegue`
+- `docs: actualiza guía de instalación`
+
+Consulta la [documentación oficial de Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/) para más detalles.
+
+Recuerda ejecutar `make lint` antes de enviar tu pull request.
+
 ## Contacto
 
 Si tienes dudas o necesitas ayuda, únete a nuestro canal comunitario en Discord (enlace disponible próximamente).
