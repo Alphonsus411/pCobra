@@ -54,7 +54,9 @@ const console = { log: (msg) => { output += String(msg) + '\n'; } };
 const codigo = CODE;
 vm.runInNewContext(codigo, { console });
 process.stdout.write(output);
-""".replace("CODE", codigo_serializado)
+""".replace(
+        "CODE", codigo_serializado
+    )
 
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as tmp:
         tmp.write(script)
@@ -63,8 +65,12 @@ process.stdout.write(output);
 
     try:
         proc = subprocess.run(
-            ["node", tmp_path], capture_output=True, text=True, check=True, cwd=base_dir
-        )
+            ["node", tmp_path],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=base_dir,
+        )  # nosec B603
         return proc.stdout
     finally:
         os.unlink(tmp_path)
@@ -76,14 +82,21 @@ def compilar_en_sandbox_cpp(codigo: str) -> str:
         src = Path(tmpdir) / "main.cpp"
         src.write_text(codigo)
         exe = Path(tmpdir) / "a.out"
-        subprocess.run([
-            "g++",
-            "-std=c++17",
-            str(src),
-            "-o",
-            str(exe),
-        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True, check=True)
+        subprocess.run(
+            [
+                "g++",
+                "-std=c++17",
+                str(src),
+                "-o",
+                str(exe),
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )  # nosec B603
+        proc = subprocess.run(
+            [str(exe)], capture_output=True, text=True, check=True
+        )  # nosec B603
         return proc.stdout
 
 
@@ -112,11 +125,9 @@ def ejecutar_en_contenedor(codigo: str, backend: str) -> str:
             text=True,
             capture_output=True,
             check=True,
-        )
+        )  # nosec B607 B603
     except FileNotFoundError as e:
-        raise RuntimeError(
-            "Docker no está instalado o no se encuentra en PATH"
-        ) from e
+        raise RuntimeError("Docker no está instalado o no se encuentra en PATH") from e
     except subprocess.CalledProcessError as e:
         raise RuntimeError(e.stderr.strip()) from e
 

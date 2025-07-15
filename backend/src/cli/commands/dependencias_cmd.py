@@ -37,7 +37,9 @@ class DependenciasCommand(BaseCommand):
     @staticmethod
     def _ruta_requirements():
         return os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "requirements.txt")
+            os.path.join(
+                os.path.dirname(__file__), "..", "..", "..", "..", "requirements.txt"
+            )
         )
 
     @staticmethod
@@ -52,7 +54,11 @@ class DependenciasCommand(BaseCommand):
         deps: list[str] = []
         if os.path.exists(archivo):
             with open(archivo, "r", encoding="utf-8") as f:
-                deps = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+                deps = [
+                    line.strip()
+                    for line in f
+                    if line.strip() and not line.startswith("#")
+                ]
         return deps
 
     @classmethod
@@ -105,9 +111,7 @@ class DependenciasCommand(BaseCommand):
             mostrar_info(_("Dependencias instaladas"))
             return 0
         except subprocess.CalledProcessError as e:
-            mostrar_error(
-                _("Error instalando dependencias: {err}").format(err=e)
-            )
+            mostrar_error(_("Error instalando dependencias: {err}").format(err=e))
             return 1
         finally:
             os.unlink(tmp_path)

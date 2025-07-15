@@ -1,4 +1,3 @@
-import os
 from .base import BaseCommand
 from ..i18n import _
 from ..utils.messages import mostrar_info

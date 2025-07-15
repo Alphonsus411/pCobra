@@ -6,6 +6,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+
 try:
     import resource
 except ImportError:  # pragma: no cover - Windows
@@ -30,12 +31,20 @@ imprimir(x)
 """
 
 
-def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
+def run_and_measure(
+    cmd: list[str], env: dict[str, str] | None = None
+) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve (tiempo_en_segundos, memoria_en_kb)."""
     if resource is not None:
         start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
         start_time = time.perf_counter()
-        subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )  # nosec B603
         elapsed = time.perf_counter() - start_time
         end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
         mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
@@ -43,7 +52,12 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
     else:  # pragma: no cover - resource not available
         if psutil is not None:
             start_time = time.perf_counter()
-            proc = psutil.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)  # type: ignore
+            proc = psutil.Popen(
+                cmd,
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+            )  # type: ignore
             max_mem = 0
             while proc.poll() is None:
                 try:
@@ -58,7 +72,13 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
             return elapsed, mem_kb
         else:
             start_time = time.perf_counter()
-            subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            subprocess.run(
+                cmd,
+                env=env,
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+            )  # nosec B603
             elapsed = time.perf_counter() - start_time
             return elapsed, 0
 
@@ -94,7 +114,9 @@ class BenchmarksV2Command(BaseCommand):
             # Modo nativo Cobra
             cmd = [sys.executable, "-m", "src.cli.cli", "ejecutar", str(co_file)]
             elapsed, mem = run_and_measure(cmd, env)
-            results.append({"modo": "cobra", "time": round(elapsed, 4), "memory_kb": mem})
+            results.append(
+                {"modo": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
+            )
 
             # Transpilado a Python
             py_file = Path(tmpdir) / "program.py"
@@ -107,14 +129,20 @@ class BenchmarksV2Command(BaseCommand):
                 "--tipo",
                 "python",
             ]
-            out = subprocess.check_output(transp_cmd, env=env, text=True)
+            out = subprocess.check_output(transp_cmd, env=env, text=True)  # nosec B603
             out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [l for l in out.splitlines() if not l.startswith("DEBUG:") and not l.startswith("INFO:")]
+            lines = [
+                line
+                for line in out.splitlines()
+                if not line.startswith("DEBUG:") and not line.startswith("INFO:")
+            ]
             if lines and lines[0].startswith("Código generado"):
                 lines = lines[1:]
             py_file.write_text("\n".join(lines))
             elapsed, mem = run_and_measure(["python", str(py_file)], env)
-            results.append({"modo": "python", "time": round(elapsed, 4), "memory_kb": mem})
+            results.append(
+                {"modo": "python", "time": round(elapsed, 4), "memory_kb": mem}
+            )
 
             # Transpilado a JavaScript
             js_file = Path(tmpdir) / "program.js"
@@ -127,9 +155,13 @@ class BenchmarksV2Command(BaseCommand):
                 "--tipo",
                 "js",
             ]
-            out = subprocess.check_output(transp_cmd, env=env, text=True)
+            out = subprocess.check_output(transp_cmd, env=env, text=True)  # nosec B603
             out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [l for l in out.splitlines() if not l.startswith("DEBUG:") and not l.startswith("INFO:")]
+            lines = [
+                line
+                for line in out.splitlines()
+                if not line.startswith("DEBUG:") and not line.startswith("INFO:")
+            ]
             if lines and lines[0].startswith("Código generado"):
                 lines = lines[1:]
             js_file.write_text("\n".join(lines))
@@ -144,16 +176,24 @@ class BenchmarksV2Command(BaseCommand):
                 "codigo = pathlib.Path(sys.argv[1]).read_text()\n"
                 "ejecutar_en_sandbox(codigo)\n"
             )
-            elapsed, mem = run_and_measure([sys.executable, str(runner), str(py_file)], env)
-            results.append({"modo": "sandbox", "time": round(elapsed, 4), "memory_kb": mem})
+            elapsed, mem = run_and_measure(
+                [sys.executable, str(runner), str(py_file)], env
+            )
+            results.append(
+                {"modo": "sandbox", "time": round(elapsed, 4), "memory_kb": mem}
+            )
 
         data = json.dumps(results, indent=2)
         if args.output:
             try:
                 Path(args.output).write_text(data)
-                mostrar_info(_("Resultados guardados en {file}").format(file=args.output))
+                mostrar_info(
+                    _("Resultados guardados en {file}").format(file=args.output)
+                )
             except Exception as err:
-                mostrar_error(_("No se pudo escribir el archivo: {err}").format(err=err))
+                mostrar_error(
+                    _("No se pudo escribir el archivo: {err}").format(err=err)
+                )
                 return 1
         else:
             print(data)

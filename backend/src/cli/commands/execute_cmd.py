@@ -118,13 +118,19 @@ class ExecuteCommand(BaseCommand):
         try:
             import subprocess
 
-            subprocess.run([
-                "black",
-                archivo,
-            ], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(
+                [
+                    "black",
+                    archivo,
+                ],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
         except FileNotFoundError:
             mostrar_error(
                 _(
-                    "Herramienta de formateo no encontrada. Asegúrate de tener 'black' instalado."
+                    "Herramienta de formateo no encontrada. Asegúrate de "
+                    "tener 'black' instalado."
                 )
             )
