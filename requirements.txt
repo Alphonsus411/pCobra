@@ -7,7 +7,7 @@ pytest-cov==6.2.1
 codecov==2.1.13
 
 # Ejecución de la CLI y kernel de Jupyter
-PyYAML==6.0.1
+PyYAML==6.0.2
 jsonschema==4.24.0
 flet
 requests
