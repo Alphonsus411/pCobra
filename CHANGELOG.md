@@ -1,3 +1,8 @@
+## v9.1.0 - 2025-07-20
+- Incremento de versión menor a 9.1.0.
+- Actualización de documentación y ejemplos.
+- Ajustes en el empaquetado y generación de binarios.
+
 ## v9.0.0 - 2025-07-13
 - Cambios pendientes.
 - Mejoras de empaquetado que simplifican la distribución.

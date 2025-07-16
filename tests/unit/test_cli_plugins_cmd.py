@@ -10,7 +10,7 @@ from cli.plugin_registry import limpiar_registro
 
 class DummyPlugin(PluginCommand):
     name = "dummy"
-    version = "9.0.0"
+    version = "9.1.0"
 
     def register_subparser(self, subparsers):
         pass
@@ -43,7 +43,7 @@ def test_cli_plugins_muestra_registro():
     with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         with patch("sys.stdout", new_callable=StringIO) as out:
             main(["plugins"])
-    assert "dummy 9.0.0" in out.getvalue().strip()
+    assert "dummy 9.1.0" in out.getvalue().strip()
 
 
 def test_cli_plugin_ejemplo_hola():

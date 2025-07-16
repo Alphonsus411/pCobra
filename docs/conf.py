@@ -18,7 +18,7 @@ sys.path.insert(0, ROOT_DIR)
 project = 'Proyecto Cobra'
 copyright = '2024, Adolfo González Hernández'
 author = 'Adolfo González Hernández'
-release = '9.0.0'
+release = '9.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
