@@ -6,8 +6,8 @@ from ..i18n import _
 from ..utils.messages import mostrar_error, mostrar_info
 from ..utils.semver import es_version_valida, es_nueva_version
 from ..cobrahub_client import publicar_modulo, descargar_modulo
-from ...cobra.transpilers.module_map import MODULE_MAP_PATH
-from ...cobra.semantico import mod_validator
+from cobra.transpilers.module_map import MODULE_MAP_PATH
+from cobra.semantico import mod_validator
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
