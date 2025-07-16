@@ -1,12 +1,36 @@
 Instalación desde PyPI
 ======================
 
-Además de utilizar ``pipx``, puedes instalar Cobra directamente desde
-`PyPI <https://pypi.org/project/cobra-lenguaje/>`_. Simplemente ejecuta:
+Sigue los pasos siguientes para instalar ``cobra-lenguaje`` en un
+entorno nuevo y ejecutar un ejemplo básico.
 
-.. code-block:: bash
+1. **Crea y activa un entorno virtual**:
 
-   pip install cobra-lenguaje
+   .. code-block:: bash
 
-Esta alternativa te permitirá usar la CLI ``cobra`` en cualquier
-entorno donde tengas ``pip`` disponible.
+      python -m venv .venv
+      source .venv/bin/activate  # En Windows usa .\.venv\Scripts\activate
+
+2. **Instala el paquete desde PyPI**:
+
+   .. code-block:: bash
+
+      pip install cobra-lenguaje
+
+3. **Verifica que la instalación funciona** ejecutando la CLI:
+
+   .. code-block:: bash
+
+      cobra --version
+
+4. **Ejecuta un programa de prueba** para comprobar el funcionamiento de
+   ``cobra``:
+
+   .. code-block:: bash
+
+      echo "imprimir('Hola Cobra')" > hola.co
+      cobra ejecutar hola.co
+
+5. **Confirma por escrito** que todo el procedimiento anterior se llevó a
+   cabo sin problemas.
+
