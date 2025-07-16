@@ -5,7 +5,9 @@
 
 Versión 9.1.0
 
+[English version available here](README_en.md)
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Matlab y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
+
 
 ## Tabla de Contenidos
 
