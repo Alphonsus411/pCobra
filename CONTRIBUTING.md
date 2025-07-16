@@ -60,6 +60,20 @@ Además de las pruebas, ejecuta las verificaciones de estilo con:
 ```bash
 make lint
 ```
+## Revisar logs de GitHub Actions
+
+Cuando una tarea falla en CI dirígete a la pestaña *Actions* del repositorio y abre el flujo asociado a tu commit. Cada trabajo muestra los pasos ejecutados y permite desplegar los registros completos. Utiliza la barra de búsqueda para filtrar por palabras clave como `pytest` o `lint`. Desde **View raw logs** puedes descargar el archivo para analizarlo con mayor detalle.
+
+Para reproducir los errores comunes ejecuta localmente:
+
+```bash
+pytest -vv
+make lint
+make typecheck
+make secrets     # analiza con gitleaks
+safety check --full-report
+```
+
 
 ## Pull Requests
 
