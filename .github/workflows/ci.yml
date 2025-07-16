@@ -23,12 +23,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc g++ golang-go ruby-full
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -e .
-          pip install sphinx sphinx-rtd-theme pytest-cov codecov
-          pip install pyright
+        uses: ./.github/actions/install
+        with:
+          extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Seguridad de dependencias
         run: |
           pip install safety
@@ -38,13 +35,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
-        run: |
-          isort --check backend/src src
-          black --check backend/src src
-          flake8 backend/src
-          mypy backend/src
-          bandit -r src backend/src
-          pyright --project pyrightconfig.json
+        run: make lint
       - name: Run type checks
         run: make typecheck
       - name: Run tests
