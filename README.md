@@ -86,6 +86,14 @@ Para instalar el proyecto, sigue estos pasos:
 cd pCobra
 ````
 
+Si prefieres automatizar el proceso, ejecuta:
+
+```bash
+./install.sh            # instala desde PyPI
+./install.sh --dev      # instala en modo editable
+```
+
+
 3. Crea un entorno virtual y actívalo:
 
 ````bash
