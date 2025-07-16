@@ -22,3 +22,5 @@ docs/cheatsheet.pdf
 bench_results.json
 all-bytes.dat
 venv/
+frontend/docs/galeria/*.png
+frontend/docs/galeria/*.gif
