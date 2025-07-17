@@ -10,6 +10,14 @@ Gracias por tu interés en mejorar Cobra. A continuación se describen las pauta
 4. **Etiquetas recomendadas**: usa `bug` para reportes de errores, `enhancement` para mejoras y `question` para dudas. Las peticiones de mejora de la documentación deben llevar la etiqueta `documentation`.
 5. **Plantilla de documentación**: si abres un issue relacionado con la documentación, selecciona la plantilla **Documentación**.
 
+## Clasificación de Issues por nivel
+
+Para agilizar la organización del proyecto, categoriza cada tarea utilizando las etiquetas de dificultad:
+
+- `facil` para cambios menores o de documentación.
+- `medio` para implementaciones de complejidad moderada.
+- `avanzado` cuando el issue implique refactorizaciones importantes o trabajo extenso.
+
 ## Convenciones de Estilo
 
 - El codigo debe formatearse con `black` y respetar 88 caracteres por linea.
