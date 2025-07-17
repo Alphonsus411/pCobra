@@ -13,9 +13,12 @@ Este proyecto cuenta con un servidor en Discord donde los usuarios pueden comuni
 4. No hagas spam ni promociones no autorizadas.
 
 ## Cómo unirse
-El enlace para acceder al servidor se actualizará próximamente.
+Únete a nuestro servidor en [Discord](https://discord.gg/pcobra) para participar en la comunidad y resolver dudas.
 
 ## Difusión de eventos
 - Las convocatorias se anuncian en nuestro nuevo canal de **Telegram**.
 - También publicamos novedades en la cuenta oficial de **Twitter**.
+
+## Difusión
+En esta sección se listarán los enlaces a hilos de Reddit, Dev.to y GitHub Discussions relacionados con el proyecto.
 
