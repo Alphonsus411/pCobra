@@ -35,4 +35,22 @@ Puedes probarlos en línea con este badge de Binder:
 
 .. raw:: html
 
-   <a href="https://mybinder.org/v2/gh/tuusuario/pCobra/HEAD?filepath=notebooks/ejemplo_basico.ipynb"><img src="https://mybinder.org/badge_logo.svg" alt="Binder"></a>
+    <a href="https://mybinder.org/v2/gh/tuusuario/pCobra/HEAD?filepath=notebooks/ejemplo_basico.ipynb"><img src="https://mybinder.org/badge_logo.svg" alt="Binder"></a>
+
+Modo Python
+-----------
+
+Si estableces la variable de entorno ``COBRA_JUPYTER_PYTHON`` el kernel transpilará
+las celdas a Python mediante ``cobra.transpilers.transpiler.to_python`` y ejecutará
+el resultado en un subproceso ``python``. La salida estándar y los errores se
+mostrarán en la celda correspondiente.
+
+Para activarlo:
+
+.. code-block:: bash
+
+   export COBRA_JUPYTER_PYTHON=1
+   cobra jupyter
+
+Este modo es útil para depurar la traducción a Python o comparar el comportamiento
+del intérprete con el backend de Python.

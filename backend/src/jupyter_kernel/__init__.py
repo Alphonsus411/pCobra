@@ -2,6 +2,8 @@
 
 import sys
 import io
+import os
+import subprocess
 import contextlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
@@ -25,6 +27,7 @@ __version__ = _get_version()
 def install(user=True):
     """Instala el kernel de Cobra para Jupyter."""
     from jupyter_client.kernelspec import install as jupyter_install
+
     return jupyter_install(user=user, kernel_name="cobra", display_name="Cobra")
 
 
@@ -43,34 +46,83 @@ class CobraKernel(Kernel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.interpreter = InterpretadorCobra()
+        self.use_python = os.getenv("COBRA_JUPYTER_PYTHON", "").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
 
-    def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
+    def do_execute(
+        self, code, silent, store_history=True, user_expressions=None, allow_stdin=False
+    ):
         if code.strip() == "%sugerencias":
             texto = "\n".join(get_suggestions())
             if not silent:
-                self.send_response(self.iopub_socket, "stream", {"name": "stdout", "text": texto})
-            return {"status": "ok", "execution_count": self.execution_count, "payload": [], "user_expressions": {}}
+                self.send_response(
+                    self.iopub_socket, "stream", {"name": "stdout", "text": texto}
+                )
+            return {
+                "status": "ok",
+                "execution_count": self.execution_count,
+                "payload": [],
+                "user_expressions": {},
+            }
 
         stdout = io.StringIO()
         try:
             with contextlib.redirect_stdout(stdout):
                 tokens = Lexer(code).tokenizar()
                 ast = Parser(tokens).parsear()
-                result = self.interpreter.ejecutar_ast(ast)
-            output = stdout.getvalue()
+                if self.use_python:
+                    from cobra.transpilers.transpiler.to_python import (
+                        TranspiladorPython,
+                    )
+
+                    py_code = TranspiladorPython().generate_code(ast)
+                    proc = subprocess.run(
+                        [sys.executable, "-"],
+                        input=py_code,
+                        capture_output=True,
+                        text=True,
+                    )
+                    output = proc.stdout
+                    error = proc.stderr
+                    result = None
+                else:
+                    result = self.interpreter.ejecutar_ast(ast)
+                    output = stdout.getvalue()
+                    error = ""
+
             if not silent:
                 if output:
-                    self.send_response(self.iopub_socket, "stream", {"name": "stdout", "text": output})
-                if result is not None and not output:
-                    self.send_response(self.iopub_socket, "execute_result", {
-                        "execution_count": self.execution_count,
-                        "data": {"text/plain": str(result)},
-                        "metadata": {},
-                    })
-            return {"status": "ok", "execution_count": self.execution_count, "payload": [], "user_expressions": {}}
+                    self.send_response(
+                        self.iopub_socket, "stream", {"name": "stdout", "text": output}
+                    )
+                if error:
+                    self.send_response(
+                        self.iopub_socket, "stream", {"name": "stderr", "text": error}
+                    )
+                if result is not None and not output and not error:
+                    self.send_response(
+                        self.iopub_socket,
+                        "execute_result",
+                        {
+                            "execution_count": self.execution_count,
+                            "data": {"text/plain": str(result)},
+                            "metadata": {},
+                        },
+                    )
+            return {
+                "status": "ok",
+                "execution_count": self.execution_count,
+                "payload": [],
+                "user_expressions": {},
+            }
         except Exception as e:
             if not silent:
-                self.send_response(self.iopub_socket, "stream", {"name": "stderr", "text": f"{e}\n"})
+                self.send_response(
+                    self.iopub_socket, "stream", {"name": "stderr", "text": f"{e}\n"}
+                )
             return {
                 "status": "error",
                 "execution_count": self.execution_count,
@@ -82,7 +134,11 @@ class CobraKernel(Kernel):
     def do_complete(self, code, cursor_pos):
         prefix = code[:cursor_pos].split()[-1]
         matches = [w for w in PALABRAS_RESERVADAS if w.startswith(prefix)]
-        matches += [n for n in self.interpreter.variables.keys() if isinstance(n, str) and n.startswith(prefix)]
+        matches += [
+            n
+            for n in self.interpreter.variables.keys()
+            if isinstance(n, str) and n.startswith(prefix)
+        ]
         start = cursor_pos - len(prefix)
         return {
             "matches": matches,
