@@ -26,6 +26,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Contribuciones
 - [Guía de Contribución](CONTRIBUTING.md)
 - [Proponer extensiones](frontend/docs/rfc_plugins.rst)
+- Extensión para VS Code
 - [Comunidad](docs/comunidad.md)
 - Licencia
 - [Manual de Cobra](MANUAL_COBRA.md)
@@ -926,6 +927,10 @@ class HolaCommand(PluginCommand):
     def run(self, args):
         print("¡Hola desde un plugin!")
 ```
+## Extensión para VS Code
+
+La extensión para Visual Studio Code se encuentra en [`frontend/vscode`](frontend/vscode). Instala las dependencias con `npm install`. Desde VS Code puedes pulsar `F5` para probarla o ejecutar `vsce package` para generar el paquete `.vsix`. Consulta [frontend/vscode/README.md](frontend/vscode/README.md) para más detalles.
+
 ## Versionado Semántico
 
 Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numeros se interpretan como Mayor.Menor.Parche. Cada incremento de version refleja cambios compatibles o rupturas segun esta norma.
