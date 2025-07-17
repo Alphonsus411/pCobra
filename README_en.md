@@ -23,6 +23,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - Contributions
 - [Contribution Guide](CONTRIBUTING.md)
 - [Propose extensions](frontend/docs/rfc_plugins.rst)
+- VS Code extension
 - [Community](docs/comunidad.md)
 - License
 - [Cobra Manual](MANUAL_COBRA.md)
@@ -447,6 +448,10 @@ There are also instructions for running linters (`make lint`), type checking (`m
 ## Contributions and community
 
 Contributions are welcome! Check [CONTRIBUTING.md](CONTRIBUTING.md) for style conventions and pull request guidelines. Join our community via Discord, Telegram or Twitter to get involved.
+## VS Code extension
+
+The extension is located in [`frontend/vscode`](frontend/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [frontend/vscode/README.md](frontend/vscode/README.md) for more information.
+
 
 ## License
 
