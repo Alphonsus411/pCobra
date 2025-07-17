@@ -32,6 +32,50 @@ KEYWORDS = [
 BUILTINS = list(STD_FUNCS) + ["imprimir"]
 
 
+def lint_lines(lines: list[str]):
+    """Devuelve diagnósticos básicos de estilo."""
+    diagnostics: list[dict] = []
+    for idx, line in enumerate(lines):
+        if line.rstrip() != line:
+            diagnostics.append(
+                {
+                    "source": "cobra-lint",
+                    "range": {
+                        "start": {"line": idx, "character": len(line.rstrip())},
+                        "end": {"line": idx, "character": len(line)},
+                    },
+                    "message": "Espacios en blanco al final de la línea",
+                    "severity": lsp.DiagnosticSeverity.Warning,
+                }
+            )
+        if "\t" in line:
+            col = line.index("\t")
+            diagnostics.append(
+                {
+                    "source": "cobra-lint",
+                    "range": {
+                        "start": {"line": idx, "character": col},
+                        "end": {"line": idx, "character": col + 1},
+                    },
+                    "message": "Usa espacios en lugar de tabulaciones",
+                    "severity": lsp.DiagnosticSeverity.Warning,
+                }
+            )
+        if len(line) > 79:
+            diagnostics.append(
+                {
+                    "source": "cobra-lint",
+                    "range": {
+                        "start": {"line": idx, "character": 79},
+                        "end": {"line": idx, "character": len(line)},
+                    },
+                    "message": "Línea supera los 79 caracteres",
+                    "severity": lsp.DiagnosticSeverity.Warning,
+                }
+            )
+    return diagnostics
+
+
 @hookimpl
 def pylsp_settings():
     """Activa el plugin por defecto."""
@@ -105,6 +149,8 @@ def pylsp_diagnostics(config, workspace, document, **_args):
                 "severity": lsp.DiagnosticSeverity.Error,
             }
         )
+
+    diagnostics.extend(lint_lines(document.lines))
     return diagnostics
 
 
