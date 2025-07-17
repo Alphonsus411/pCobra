@@ -1,69 +1,85 @@
 {
-    "name": "cobra-vscode-extension",
-    "displayName": "Cobra Support",
-    "description": "Extensión básica para editar archivos Cobra",
-    "version": "1.0.0",
-    "author": "Adolfo González Hernández",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/Alphonsus411/pCobra"
-    },
-    "engines": {
-        "vscode": "^1.80.0"
-    },
-    "activationEvents": [
-        "onCommand:cobra.startLSP",
-        "onLanguage:cobra"
+  "name": "cobra-vscode-extension",
+  "displayName": "Cobra Support",
+  "description": "Extensión básica para editar archivos Cobra",
+  "version": "1.0.0",
+  "author": "Adolfo González Hernández",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alphonsus411/pCobra"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "onCommand:cobra.startLSP",
+    "onCommand:cobra.lintFile",
+    "onLanguage:cobra"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cobra.startLSP",
+        "title": "Iniciar Cobra LSP"
+      },
+      {
+        "command": "cobra.runFile",
+        "title": "Ejecutar archivo Cobra"
+      },
+      {
+        "command": "cobra.formatDocument",
+        "title": "Formatear documento Cobra"
+      },
+      {
+        "command": "cobra.lintFile",
+        "title": "Lint archivo Cobra"
+      }
     ],
-    "main": "./extension.js",
-    "contributes": {
-        "commands": [
-            {
-                "command": "cobra.startLSP",
-                "title": "Iniciar Cobra LSP"
-            },
-            {
-                "command": "cobra.runFile",
-                "title": "Ejecutar archivo Cobra"
-            },
-            {
-                "command": "cobra.formatDocument",
-                "title": "Formatear documento Cobra"
-            }
+    "languages": [
+      {
+        "id": "cobra",
+        "extensions": [
+          ".co"
         ],
-        "languages": [
-            {
-                "id": "cobra",
-                "extensions": [".co"],
-                "aliases": ["Cobra"],
-                "configuration": "./language-configuration.json"
-            }
+        "aliases": [
+          "Cobra"
         ],
-        "grammars": [
-            {
-                "language": "cobra",
-                "scopeName": "source.cobra",
-                "path": "./syntaxes/cobra.tmLanguage.json"
-            }
-        ],
-        "snippets": [
-            {
-                "language": "cobra",
-                "path": "./snippets/cobra.json"
-            }
-        ],
-        "keybindings": [{
-            "command": "cobra.runFile",
-            "key": "ctrl+r",
-            "when": "editorTextFocus && editorLangId == cobra"
-        }, {
-            "command": "cobra.formatDocument",
-            "key": "ctrl+alt+f",
-            "when": "editorTextFocus && editorLangId == cobra"
-        }]
-    }
-    ,
-    "dependencies": {
-        "vscode-languageclient": "^9.0.1"
-    }
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cobra",
+        "scopeName": "source.cobra",
+        "path": "./syntaxes/cobra.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "cobra",
+        "path": "./snippets/cobra.json"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "cobra.runFile",
+        "key": "ctrl+r",
+        "when": "editorTextFocus && editorLangId == cobra"
+      },
+      {
+        "command": "cobra.formatDocument",
+        "key": "ctrl+alt+f",
+        "when": "editorTextFocus && editorLangId == cobra"
+      },
+      {
+        "command": "cobra.lintFile",
+        "key": "ctrl+l",
+        "when": "editorTextFocus && editorLangId == cobra"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
 }

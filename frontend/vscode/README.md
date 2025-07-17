@@ -16,8 +16,10 @@ npm install
 3. La extensión iniciará automáticamente el servidor LSP. Si lo prefieres puedes usar el comando **Iniciar Cobra LSP**.
 4. Para ejecutar el archivo Cobra actualmente abierto, presiona `Ctrl+R` o ejecuta el comando **Ejecutar archivo Cobra**.
 5. Formatea el documento con `Ctrl+Alt+F` o mediante `Shift+Alt+F`.
+6. Ejecuta el lint con `Ctrl+L` o desde el comando **Lint archivo Cobra**.
 
 El servidor de lenguaje (`python -m lsp.server`) ofrece autocompletado, detección de errores de sintaxis y formateo para archivos Cobra.
+Los avisos de estilo reportados por el lint aparecerán en el panel de problemas de VS Code.
 
 ## Snippets incluidos
 
@@ -27,7 +29,7 @@ La extensión registra fragmentos de código (snippets) para acelerar la escritu
 
 ```cobra
 func nombre(parametros):
-    
+
 fin
 ```
 
@@ -35,9 +37,9 @@ fin
 
 ```cobra
 si condicion:
-    
+
 sino:
-    
+
 fin
 ```
 
@@ -45,7 +47,7 @@ fin
 
 ```cobra
 para item en iterable:
-    
+
 fin
 ```
 
