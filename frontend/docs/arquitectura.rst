@@ -28,6 +28,8 @@ importan estas funciones desde ``src.core.transpiler.python_nodes`` y
 ``src.core.transpiler.js_nodes`` (o ``asm_nodes`` o ``rust_nodes``) respectivamente, delegando la operación de
 ``visit_<nodo>`` a dichas funciones.
 
+Para una visión esquemática de la interacción entre lexer, parser y transpiladores consulta :doc:`../../docs/arquitectura_parser_transpiladores`.
+
 Módulos nativos
 ---------------
 Bibliotecas básicas que amplían la funcionalidad de Cobra con
