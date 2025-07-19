@@ -22,8 +22,16 @@ def obtener_modulo(nombre: str):
     try:
         return importlib.import_module(nombre)
     except ModuleNotFoundError:
-        # Verificar si el módulo existe dentro de ``backend/corelibs``
-        corelibs = Path(__file__).resolve().parents[2] / "corelibs"
+        # Verificar si el módulo existe dentro de ``corelibs``
+        base = Path(__file__).resolve()
+        corelibs = None
+        for parent in base.parents:
+            candidate = parent / "corelibs"
+            if candidate.exists():
+                corelibs = candidate
+                break
+        if corelibs is None:
+            corelibs = Path()
         mod_path = corelibs / f"{nombre}.py"
         pkg_path = corelibs / nombre / "__init__.py"
         if mod_path.exists() or pkg_path.exists():
@@ -35,7 +43,14 @@ def obtener_modulo(nombre: str):
             return modulo
 
         # Buscar también en ``standard_library``
-        stdlib = Path(__file__).resolve().parents[2].parent / "standard_library"
+        stdlib = None
+        for parent in base.parents:
+            candidate = parent / "standard_library"
+            if candidate.exists():
+                stdlib = candidate
+                break
+        if stdlib is None:
+            stdlib = Path()
         mod_path = stdlib / f"{nombre}.py"
         pkg_path = stdlib / nombre / "__init__.py"
         if mod_path.exists() or pkg_path.exists():
