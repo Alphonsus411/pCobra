@@ -15,7 +15,8 @@ def escribir_archivo(ruta, datos):
 
 def obtener_url(url):
     """Devuelve el contenido de una URL como texto."""
-    if not (url.startswith("http://") or url.startswith("https://")):
+    url_baja = url.lower()
+    if not (url_baja.startswith("http://") or url_baja.startswith("https://")):
         raise ValueError("Esquema de URL no soportado")
     with urllib.request.urlopen(url) as resp:
         return resp.read().decode("utf-8")

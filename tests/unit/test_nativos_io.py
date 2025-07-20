@@ -27,3 +27,10 @@ def test_obtener_url_rechaza_esquema_no_http():
         with pytest.raises(ValueError):
             io.obtener_url('ftp://ejemplo.com')
         mock_urlopen.assert_not_called()
+
+
+def test_obtener_url_rechaza_otro_esquema():
+    with patch('urllib.request.urlopen') as mock_urlopen:
+        with pytest.raises(ValueError):
+            io.obtener_url('file:///tmp/archivo.txt')
+        mock_urlopen.assert_not_called()
