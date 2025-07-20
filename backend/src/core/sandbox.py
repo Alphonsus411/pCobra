@@ -17,11 +17,12 @@ from RestrictedPython.PrintCollector import PrintCollector
 def ejecutar_en_sandbox(codigo: str) -> str:
     """Ejecuta una cadena de código Python de forma segura.
 
-    Devuelve la salida producida por ``print`` o lanza una excepción si
-    se intenta realizar una operación prohibida. El código se compila
-    usando :func:`compile_restricted` y posteriormente se ejecuta con
-    ``exec``. Mantener el diccionario ``env`` tan reducido como sea
-    posible ayuda a minimizar la superficie de ataque.
+    Devuelve la salida producida por ``print`` o lanza ``SyntaxError`` si
+    la compilación segura falla. El código se compila con
+    :func:`compile_restricted` y, de tener éxito, se ejecuta usando
+    ``exec``.  Este paso implica riesgo, por lo que **no** se intenta
+    recompilar con ``compile``. Mantén el diccionario ``env`` lo más
+    reducido posible para minimizar la superficie de ataque.
     """
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
@@ -30,7 +31,6 @@ def ejecutar_en_sandbox(codigo: str) -> str:
 
     env = {
         "__builtins__": safe_builtins,
-        "__name__": "sandbox",
         "_print_": PrintCollector,
         "_getattr_": getattr,
         "_getitem_": default_guarded_getitem,
