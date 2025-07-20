@@ -20,11 +20,10 @@ class SafeUnpickler(pickle.Unpickler):
 
     def find_class(self, module: str, name: str):
         if module not in self.ALLOWED_MODULES:
-            raise pickle.UnpicklingError(
-                f"Importación no permitida: {module}.{name}"
-            )
+            raise pickle.UnpicklingError(f"Importación no permitida: {module}.{name}")
         __import__(module)
         return getattr(sys.modules[module], name)
+
 
 # Directorio donde se almacenará el cache de AST. Puede modificarse con la
 # variable de entorno `COBRA_AST_CACHE`.
@@ -56,6 +55,7 @@ def obtener_tokens(codigo: str):
             return SafeUnpickler(f).load()
 
     from cobra.lexico.lexer import Lexer
+
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
         pickle.dump(tokens, f)
@@ -76,6 +76,7 @@ def obtener_ast(codigo: str):
 
     tokens = obtener_tokens(codigo)
     from cobra.parser.parser import Parser
+
     ast = Parser(tokens).parsear()
 
     with open(ruta, "wb") as f:
@@ -87,6 +88,7 @@ def obtener_ast(codigo: str):
 
 
 # -- Almacenamiento por secciones -------------------------------------------
+
 
 def _ruta_fragmento(codigo: str, ext: str) -> str:
     """Devuelve la ruta del archivo de caché para un fragmento."""
@@ -104,6 +106,7 @@ def obtener_tokens_fragmento(codigo: str):
             return SafeUnpickler(f).load()
 
     from cobra.lexico.lexer import Lexer
+
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
         pickle.dump(tokens, f)
@@ -119,6 +122,7 @@ def obtener_ast_fragmento(codigo: str):
 
     tokens = obtener_tokens_fragmento(codigo)
     from cobra.parser.parser import Parser
+
     ast = Parser(tokens).parsear()
     with open(ruta, "wb") as f:
         pickle.dump(ast, f)
@@ -131,7 +135,9 @@ def limpiar_cache():
         return
     for nombre in os.listdir(CACHE_DIR):
         ruta = os.path.join(CACHE_DIR, nombre)
-        if os.path.isfile(ruta) and (nombre.endswith(".ast") or nombre.endswith(".tok")):
+        if os.path.isfile(ruta) and (
+            nombre.endswith(".ast") or nombre.endswith(".tok")
+        ):
             os.remove(ruta)
         elif os.path.isdir(ruta) and nombre == "fragmentos":
             for archivo in os.listdir(ruta):

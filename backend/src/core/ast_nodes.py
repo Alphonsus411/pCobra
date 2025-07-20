@@ -5,6 +5,7 @@ from typing import Any, List, Optional
 
 from cobra.lexico.lexer import Token
 
+
 @dataclass
 class NodoAST:
     """Clase base para todos los nodos del AST."""
@@ -259,9 +260,7 @@ class NodoOption(NodoAST):
     """Representa un valor opcional, equivalente a ``Some`` o ``None``."""
 
     def __repr__(self):
-        return (
-            "NodoOption(None)" if self.valor is None else f"NodoOption({self.valor})"
-        )
+        return "NodoOption(None)" if self.valor is None else f"NodoOption({self.valor})"
 
 
 @dataclass
@@ -383,7 +382,10 @@ class NodoPara(NodoAST):
 
     def __repr__(self):
         return (
-            f"NodoPara(variable={self.variable}, iterable={self.iterable}, cuerpo={self.cuerpo})"
+            "NodoPara("
+            f"variable={self.variable}, "
+            f"iterable={self.iterable}, "
+            f"cuerpo={self.cuerpo})"
         )
 
 
@@ -422,49 +424,49 @@ class NodoSwitch(NodoAST):
 
 
 __all__ = [
-    'NodoAST',
-    'NodoAsignacion',
-    'NodoHolobit',
-    'NodoCondicional',
-    'NodoBucleMientras',
-    'NodoFor',
-    'NodoLista',
-    'NodoDiccionario',
-    'NodoDecorador',
-    'NodoFuncion',
-    'NodoClase',
-    'NodoMetodo',
-    'NodoInstancia',
-    'NodoAtributo',
-    'NodoLlamadaMetodo',
-    'NodoOperacionBinaria',
-    'NodoOperacionUnaria',
-    'NodoValor',
-    'NodoIdentificador',
-    'NodoLlamadaFuncion',
-    'NodoHilo',
-    'NodoRetorno',
-    'NodoYield',
-    'NodoEsperar',
-    'NodoOption',
-    'NodoRomper',
-    'NodoContinuar',
-    'NodoPasar',
-    'NodoAssert',
-    'NodoDel',
-    'NodoGlobal',
-    'NodoNoLocal',
-    'NodoLambda',
-    'NodoWith',
-    'NodoThrow',
-    'NodoTryCatch',
-    'NodoImportDesde',
-    'NodoExport',
-    'NodoImport',
-    'NodoUsar',
-    'NodoPara',
-    'NodoImprimir',
-    'NodoMacro',
-    'NodoCase',
-    'NodoSwitch',
+    "NodoAST",
+    "NodoAsignacion",
+    "NodoHolobit",
+    "NodoCondicional",
+    "NodoBucleMientras",
+    "NodoFor",
+    "NodoLista",
+    "NodoDiccionario",
+    "NodoDecorador",
+    "NodoFuncion",
+    "NodoClase",
+    "NodoMetodo",
+    "NodoInstancia",
+    "NodoAtributo",
+    "NodoLlamadaMetodo",
+    "NodoOperacionBinaria",
+    "NodoOperacionUnaria",
+    "NodoValor",
+    "NodoIdentificador",
+    "NodoLlamadaFuncion",
+    "NodoHilo",
+    "NodoRetorno",
+    "NodoYield",
+    "NodoEsperar",
+    "NodoOption",
+    "NodoRomper",
+    "NodoContinuar",
+    "NodoPasar",
+    "NodoAssert",
+    "NodoDel",
+    "NodoGlobal",
+    "NodoNoLocal",
+    "NodoLambda",
+    "NodoWith",
+    "NodoThrow",
+    "NodoTryCatch",
+    "NodoImportDesde",
+    "NodoExport",
+    "NodoImport",
+    "NodoUsar",
+    "NodoPara",
+    "NodoImprimir",
+    "NodoMacro",
+    "NodoCase",
+    "NodoSwitch",
 ]

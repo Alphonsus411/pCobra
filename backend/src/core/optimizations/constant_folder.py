@@ -29,16 +29,20 @@ class _ConstantFolder(NodeVisitor):
         nombres de atributo.
         """
 
-        attr = 'expresion' if hasattr(nodo, 'expresion') else 'valor'
+        attr = "expresion" if hasattr(nodo, "expresion") else "valor"
         setattr(nodo, attr, self.visit(getattr(nodo, attr)))
         return nodo
 
     def visit_operacion_binaria(self, nodo: NodoOperacionBinaria):
         nodo.izquierda = self.visit(nodo.izquierda)
         nodo.derecha = self.visit(nodo.derecha)
-        if isinstance(nodo.izquierda, NodoValor) and isinstance(nodo.derecha, NodoValor):
+        if isinstance(nodo.izquierda, NodoValor) and isinstance(
+            nodo.derecha, NodoValor
+        ):
             try:
-                resultado = self._evaluar(nodo.izquierda.valor, nodo.operador, nodo.derecha.valor)
+                resultado = self._evaluar(
+                    nodo.izquierda.valor, nodo.operador, nodo.derecha.valor
+                )
                 return NodoValor(resultado)
             except Exception:
                 return nodo

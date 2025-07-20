@@ -22,7 +22,9 @@ class _DeadCodeRemover(NodeVisitor):
     def visit_condicional(self, nodo: NodoCondicional):
         nodo.condicion = self.visit(nodo.condicion)
         nodo.bloque_si = self._limpiar_bloque([self.visit(n) for n in nodo.bloque_si])
-        nodo.bloque_sino = self._limpiar_bloque([self.visit(n) for n in nodo.bloque_sino])
+        nodo.bloque_sino = self._limpiar_bloque(
+            [self.visit(n) for n in nodo.bloque_sino]
+        )
         if isinstance(nodo.condicion, NodoValor):
             return nodo.bloque_si if nodo.condicion.valor else nodo.bloque_sino
         return nodo
@@ -33,7 +35,11 @@ class _DeadCodeRemover(NodeVisitor):
         if isinstance(nodo.condicion, NodoValor):
             if nodo.condicion.valor is False:
                 return []
-            if nodo.condicion.valor is True and nodo.cuerpo and self._es_salida(nodo.cuerpo[-1]):
+            if (
+                nodo.condicion.valor is True
+                and nodo.cuerpo
+                and self._es_salida(nodo.cuerpo[-1])
+            ):
                 cuerpo = nodo.cuerpo
                 if isinstance(cuerpo[-1], (NodoRomper, NodoContinuar)):
                     cuerpo = cuerpo[:-1]

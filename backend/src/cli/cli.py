@@ -39,14 +39,29 @@ from .commands.verify_cmd import VerifyCommand
 def main(argv=None):
     """Punto de entrada principal de la CLI."""
     setup_gettext()
-    logging.basicConfig(level=logging.DEBUG,
-                        format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     parser = argparse.ArgumentParser(prog="cobra", description=_("CLI para Cobra"))
-    parser.add_argument("--formatear", action="store_true", help=_("Formatea el archivo antes de procesarlo"))
-    parser.add_argument("--depurar", action="store_true", help=_("Muestra mensajes de depuración"))
-    parser.add_argument("--seguro", action="store_true", help=_("Ejecuta en modo seguro"))
-    parser.add_argument("--lang", default=os.environ.get("COBRA_LANG", "es"), help=_("Código de idioma para la interfaz"))
-    parser.add_argument("--no-color", action="store_true", help=_("Desactiva colores en la salida"))
+    parser.add_argument(
+        "--formatear",
+        action="store_true",
+        help=_("Formatea el archivo antes de procesarlo"),
+    )
+    parser.add_argument(
+        "--depurar", action="store_true", help=_("Muestra mensajes de depuración")
+    )
+    parser.add_argument(
+        "--seguro", action="store_true", help=_("Ejecuta en modo seguro")
+    )
+    parser.add_argument(
+        "--lang",
+        default=os.environ.get("COBRA_LANG", "es"),
+        help=_("Código de idioma para la interfaz"),
+    )
+    parser.add_argument(
+        "--no-color", action="store_true", help=_("Desactiva colores en la salida")
+    )
     parser.add_argument(
         "--validadores-extra",
         help="Ruta a módulo con validadores personalizados",

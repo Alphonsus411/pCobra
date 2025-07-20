@@ -36,6 +36,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
         run: make lint
+      - name: Run flake8
+        run: flake8 backend/src src
       - name: Run type checks
         run: make typecheck
       - name: Run tests

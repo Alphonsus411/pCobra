@@ -45,4 +45,3 @@ class PluginsCommand(BaseCommand):
             else:
                 mostrar_info(f"{nombre} {version}")
         return 0
-

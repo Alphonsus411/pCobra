@@ -85,7 +85,9 @@ class _CommonSubexprEliminator(NodeVisitor):
         nodo.derecha = self.visit(nodo.derecha)
         key = _expr_key(nodo)
         if self.counts.get(key, 0) > 1:
-            return self._replace(key, NodoOperacionBinaria(nodo.izquierda, nodo.operador, nodo.derecha))
+            return self._replace(
+                key, NodoOperacionBinaria(nodo.izquierda, nodo.operador, nodo.derecha)
+            )
         return nodo
 
     def visit_operacion_unaria(self, nodo: NodoOperacionUnaria):
@@ -118,7 +120,11 @@ class _CommonSubexprEliminator(NodeVisitor):
     def generic_visit(self, nodo: Any):
         for attr, value in list(getattr(nodo, "__dict__", {}).items()):
             if isinstance(value, list):
-                setattr(nodo, attr, [self.visit(v) if hasattr(v, "aceptar") else v for v in value])
+                setattr(
+                    nodo,
+                    attr,
+                    [self.visit(v) if hasattr(v, "aceptar") else v for v in value],
+                )
             elif hasattr(value, "aceptar"):
                 setattr(nodo, attr, self.visit(value))
         return nodo

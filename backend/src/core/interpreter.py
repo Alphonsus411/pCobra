@@ -39,7 +39,13 @@ from core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
-    NodoUsar, NodoAssert, NodoDel, NodoGlobal, NodoNoLocal, NodoWith, NodoImportDesde,
+    NodoUsar,
+    NodoAssert,
+    NodoDel,
+    NodoGlobal,
+    NodoNoLocal,
+    NodoWith,
+    NodoImportDesde,
 )
 from cobra.parser.parser import Parser
 from core.memoria.gestor_memoria import GestorMemoriaGenetico
@@ -163,12 +169,12 @@ class InterpretadorCobra:
             return True
         if isinstance(nodo, Token):
             return False
-        for valor in getattr(nodo, '__dict__', {}).values():
+        for valor in getattr(nodo, "__dict__", {}).values():
             if isinstance(valor, list):
                 for elem in valor:
-                    if hasattr(elem, '__dict__') and self._contiene_yield(elem):
+                    if hasattr(elem, "__dict__") and self._contiene_yield(elem):
                         return True
-            elif hasattr(valor, '__dict__') and self._contiene_yield(valor):
+            elif hasattr(valor, "__dict__") and self._contiene_yield(valor):
                 return True
         return False
 
@@ -183,12 +189,12 @@ class InterpretadorCobra:
                 continue
             visitados.add(id(nodo))
             total += 1
-            for val in getattr(nodo, '__dict__', {}).values():
+            for val in getattr(nodo, "__dict__", {}).values():
                 if isinstance(val, list):
                     for elem in val:
-                        if hasattr(elem, '__dict__'):
+                        if hasattr(elem, "__dict__"):
                             pila.append(elem)
-                elif hasattr(val, '__dict__'):
+                elif hasattr(val, "__dict__"):
                     pila.append(val)
         return total
 
@@ -208,9 +214,7 @@ class InterpretadorCobra:
             _lim_cpu(cpu)
 
         ast = remove_dead_code(
-            inline_functions(
-                eliminate_common_subexpressions(optimize_constants(ast))
-            )
+            inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
         )
         register_execution(str(ast))
         AnalizadorSemantico().analizar(ast)
@@ -242,7 +246,7 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoImprimir):
             valor = self.evaluar_expresion(nodo.expresion)
             if isinstance(valor, str):
-                if (valor.startswith("\"") and valor.endswith("\"")) or (
+                if (valor.startswith('"') and valor.endswith('"')) or (
                     valor.startswith("'") and valor.endswith("'")
                 ):
                     print(valor.strip('"').strip("'"))
@@ -265,7 +269,11 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoAssert):
             condicion = self.evaluar_expresion(nodo.condicion)
             if not condicion:
-                mensaje = self.evaluar_expresion(nodo.mensaje) if nodo.mensaje else "Assertion failed"
+                mensaje = (
+                    self.evaluar_expresion(nodo.mensaje)
+                    if nodo.mensaje
+                    else "Assertion failed"
+                )
                 raise AssertionError(mensaje)
         elif isinstance(nodo, NodoDel):
             nombre = self.evaluar_expresion(nodo.objetivo)
@@ -359,38 +367,38 @@ class InterpretadorCobra:
                 verificar_sumables(izquierda, derecha)
                 return izquierda + derecha
             elif tipo == TipoToken.RESTA:
-                verificar_numeros(izquierda, derecha, '-')
+                verificar_numeros(izquierda, derecha, "-")
                 return izquierda - derecha
             elif tipo == TipoToken.MULT:
-                verificar_numeros(izquierda, derecha, '*')
+                verificar_numeros(izquierda, derecha, "*")
                 return izquierda * derecha
             elif tipo == TipoToken.DIV:
-                verificar_numeros(izquierda, derecha, '/')
+                verificar_numeros(izquierda, derecha, "/")
                 return izquierda / derecha
             elif tipo == TipoToken.MOD:
-                verificar_numeros(izquierda, derecha, '%')
+                verificar_numeros(izquierda, derecha, "%")
                 return izquierda % derecha
             elif tipo == TipoToken.MAYORQUE:
-                verificar_comparables(izquierda, derecha, '>')
+                verificar_comparables(izquierda, derecha, ">")
                 return izquierda > derecha
             elif tipo == TipoToken.MENORQUE:
-                verificar_comparables(izquierda, derecha, '<')
+                verificar_comparables(izquierda, derecha, "<")
                 return izquierda < derecha
             elif tipo == TipoToken.MAYORIGUAL:
-                verificar_comparables(izquierda, derecha, '>=')
+                verificar_comparables(izquierda, derecha, ">=")
                 return izquierda >= derecha
             elif tipo == TipoToken.MENORIGUAL:
-                verificar_comparables(izquierda, derecha, '<=')
+                verificar_comparables(izquierda, derecha, "<=")
                 return izquierda <= derecha
             elif tipo == TipoToken.IGUAL:
                 return izquierda == derecha
             elif tipo == TipoToken.DIFERENTE:
                 return izquierda != derecha
             elif tipo == TipoToken.AND:
-                verificar_booleanos(izquierda, derecha, '&&')
+                verificar_booleanos(izquierda, derecha, "&&")
                 return izquierda and derecha
             elif tipo == TipoToken.OR:
-                verificar_booleanos(izquierda, derecha, '||')
+                verificar_booleanos(izquierda, derecha, "||")
                 return izquierda or derecha
             else:
                 raise ValueError(f"Operador no soportado: {tipo}")
@@ -398,7 +406,7 @@ class InterpretadorCobra:
             valor = self.evaluar_expresion(expresion.operando)
             tipo = expresion.operador.tipo
             if tipo == TipoToken.NOT:
-                verificar_booleano(valor, '!')
+                verificar_booleano(valor, "!")
                 return not valor
             else:
                 raise ValueError(f"Operador unario no soportado: {tipo}")
@@ -479,7 +487,9 @@ class InterpretadorCobra:
                 print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
                 return None
 
-            contiene_yield = any(self._contiene_yield(instr) for instr in funcion.cuerpo)
+            contiene_yield = any(
+                self._contiene_yield(instr) for instr in funcion.cuerpo
+            )
 
             def preparar_contexto():
                 self.contextos.append({})
@@ -497,6 +507,7 @@ class InterpretadorCobra:
                 self.contextos.pop()
 
             if contiene_yield:
+
                 def generador():
                     preparar_contexto()
                     try:

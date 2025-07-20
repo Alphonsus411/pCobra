@@ -280,12 +280,18 @@ class Lexer:
             if not matched:
                 error_token = self.codigo_fuente[self.posicion]
                 logging.error(
-                    f"Error: Token no reconocido en posición {self.posicion}: '{error_token}'"
+                    (
+                        "Error: Token no reconocido en posición "
+                        f"{self.posicion}: '{error_token}'"
+                    )
                 )
                 if error_token in {"'", '"'}:
                     mensaje = f"Cadena sin cerrar en linea {linea}, columna {columna}"
                     raise UnclosedStringError(mensaje, linea, columna)
-                mensaje = f"Token no reconocido: '{error_token}' en linea {linea}, columna {columna}"
+                mensaje = (
+                    "Token no reconocido: "
+                    f"'{error_token}' en linea {linea}, columna {columna}"
+                )
                 raise InvalidTokenError(mensaje, linea, columna)
 
             if self.posicion == prev_pos:

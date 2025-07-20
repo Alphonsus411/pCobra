@@ -56,8 +56,12 @@ from .asm_nodes.throw import visit_throw as _visit_throw
 from .asm_nodes.importar import visit_import as _visit_import
 from .asm_nodes.instancia import visit_instancia as _visit_instancia
 from .asm_nodes.atributo import visit_atributo as _visit_atributo
-from .asm_nodes.operacion_binaria import visit_operacion_binaria as _visit_operacion_binaria
-from .asm_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
+from .asm_nodes.operacion_binaria import (
+    visit_operacion_binaria as _visit_operacion_binaria,
+)
+from .asm_nodes.operacion_unaria import (
+    visit_operacion_unaria as _visit_operacion_unaria,
+)
 from .asm_nodes.valor import visit_valor as _visit_valor
 from .asm_nodes.identificador import visit_identificador as _visit_identificador
 from .asm_nodes.usar import visit_usar as _visit_usar
@@ -106,7 +110,8 @@ class TranspiladorASM(BaseTranspiler):
             return f"[{elems}]"
         elif isinstance(nodo, NodoDiccionario):
             pares = ", ".join(
-                f"{self.obtener_valor(k)}:{self.obtener_valor(v)}" for k, v in nodo.elementos
+                f"{self.obtener_valor(k)}:{self.obtener_valor(v)}"
+                for k, v in nodo.elementos
             )
             return f"{{{pares}}}"
         else:

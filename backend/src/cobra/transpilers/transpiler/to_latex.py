@@ -59,7 +59,9 @@ class TranspiladorLatex(BaseTranspiler):
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
-                metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
+                metodo = getattr(
+                    self, f"visit_{nodo.__class__.__name__[4:].lower()}", None
+                )
                 if metodo:
                     metodo(nodo)
         return "\n".join(self.codigo)

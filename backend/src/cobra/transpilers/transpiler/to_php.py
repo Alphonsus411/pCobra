@@ -83,13 +83,13 @@ class TranspiladorPHP(BaseTranspiler):
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
-            op_map = {TipoToken.AND: '&&', TipoToken.OR: '||'}
+            op_map = {TipoToken.AND: "&&", TipoToken.OR: "||"}
             op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
             return f"{izq} {op} {der}"
         elif isinstance(nodo, NodoOperacionUnaria):
             val = self.obtener_valor(nodo.operando)
-            op = '!' if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
-            return f"{op}{val}" if op != '!' else f"!{val}"
+            op = "!" if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
+            return f"{op}{val}" if op != "!" else f"!{val}"
         else:
             return str(getattr(nodo, "valor", nodo))
 
@@ -100,7 +100,9 @@ class TranspiladorPHP(BaseTranspiler):
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
-                metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
+                metodo = getattr(
+                    self, f"visit_{nodo.__class__.__name__[4:].lower()}", None
+                )
                 if metodo:
                     metodo(nodo)
         return "\n".join(self.codigo)

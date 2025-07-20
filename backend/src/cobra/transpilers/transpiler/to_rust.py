@@ -45,19 +45,24 @@ from .rust_nodes.try_catch import visit_try_catch as _visit_try_catch
 from .rust_nodes.throw import visit_throw as _visit_throw
 from .rust_nodes.option import visit_option as _visit_option
 
+
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
     self.agregar_linea(f"assert!({cond});")
+
 
 def visit_del(self, nodo):
     nombre = self.obtener_valor(nodo.objetivo)
     self.agregar_linea(f"// del {nombre}")
 
+
 def visit_global(self, nodo):
     pass
 
+
 def visit_nolocal(self, nodo):
     pass
+
 
 def visit_with(self, nodo):
     self.agregar_linea("{")
@@ -66,6 +71,7 @@ def visit_with(self, nodo):
         inst.aceptar(self)
     self.indent -= 1
     self.agregar_linea("}")
+
 
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
@@ -121,7 +127,8 @@ class TranspiladorRust(BaseTranspiler):
                 return f"vec![{elems}]"
             case NodoDiccionario():
                 pares = ", ".join(
-                    f"({self.obtener_valor(k)}, {self.obtener_valor(v)})" for k, v in nodo.elementos
+                    f"({self.obtener_valor(k)}, {self.obtener_valor(v)})"
+                    for k, v in nodo.elementos
                 )
                 return f"std::collections::HashMap::from([{pares}])"
             case _:

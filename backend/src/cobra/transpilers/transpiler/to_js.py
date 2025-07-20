@@ -50,7 +50,9 @@ from .js_nodes.throw import visit_throw as _visit_throw
 from .js_nodes.importar import visit_import as _visit_import
 from .js_nodes.instancia import visit_instancia as _visit_instancia
 from .js_nodes.atributo import visit_atributo as _visit_atributo
-from .js_nodes.operacion_binaria import visit_operacion_binaria as _visit_operacion_binaria
+from .js_nodes.operacion_binaria import (
+    visit_operacion_binaria as _visit_operacion_binaria,
+)
 from .js_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
 from .js_nodes.valor import visit_valor as _visit_valor
 from .js_nodes.identificador import visit_identificador as _visit_identificador
@@ -64,19 +66,24 @@ from .js_nodes.pasar import visit_pasar as _visit_pasar
 from .js_nodes.switch import visit_switch as _visit_switch
 from .js_nodes.exportar import visit_export as _visit_export
 
+
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
     self.agregar_linea(f"console.assert({cond});")
+
 
 def visit_del(self, nodo):
     nombre = self.obtener_valor(nodo.objetivo)
     self.agregar_linea(f"delete {nombre};")
 
+
 def visit_global(self, nodo):
     pass
 
+
 def visit_nolocal(self, nodo):
     pass
+
 
 def visit_with(self, nodo):
     ctx = self.obtener_valor(nodo.contexto)
@@ -88,6 +95,7 @@ def visit_with(self, nodo):
     if self.usa_indentacion:
         self.indentacion -= 1
     self.agregar_linea("}")
+
 
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
@@ -131,7 +139,11 @@ class TranspiladorJavaScript(BaseTranspiler):
             return f"{izq} {nodo.operador.valor} {der}"
         elif isinstance(nodo, NodoOperacionUnaria):
             val = self.obtener_valor(nodo.operando)
-            return f"!{val}" if nodo.operador.tipo == TipoToken.NOT else f"{nodo.operador.valor}{val}"
+            return (
+                f"!{val}"
+                if nodo.operador.tipo == TipoToken.NOT
+                else f"{nodo.operador.valor}{val}"
+            )
         elif isinstance(nodo, NodoEsperar):
             val = self.obtener_valor(nodo.expresion)
             return f"await {val}"
@@ -148,7 +160,7 @@ class TranspiladorJavaScript(BaseTranspiler):
             else:
                 self.visit_diccionario(nodo)
             self.codigo = original
-            return ''.join(temp)
+            return "".join(temp)
         else:
             return str(nodo)
 
@@ -156,11 +168,11 @@ class TranspiladorJavaScript(BaseTranspiler):
         ast_raiz = expandir_macros(ast_raiz)
         ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
         for nodo in ast_raiz:
-            if hasattr(nodo, 'aceptar'):
+            if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
                 nombre = nodo.__class__.__name__
-                if nombre.startswith('Nodo'):
+                if nombre.startswith("Nodo"):
                     nombre = nombre[4:]
                 metodo = getattr(self, f"visit_{nombre.lower()}", None)
                 if metodo:
@@ -212,4 +224,4 @@ TranspiladorJavaScript.visit_nolocal = visit_nolocal
 TranspiladorJavaScript.visit_with = visit_with
 TranspiladorJavaScript.visit_import_desde = visit_import_desde
 
-    # Métodos de transpilación para tipos de nodos básicos
+# Métodos de transpilación para tipos de nodos básicos
