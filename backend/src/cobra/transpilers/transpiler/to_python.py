@@ -1,8 +1,15 @@
 """Transpilador que convierte código Cobra en código Python."""
 
 from core.ast_nodes import (
-    NodoAsignacion, NodoCondicional, NodoBucleMientras, NodoFuncion,
-    NodoLlamadaFuncion, NodoHolobit, NodoFor, NodoLista, NodoDiccionario,
+    NodoAsignacion,
+    NodoCondicional,
+    NodoBucleMientras,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoHolobit,
+    NodoFor,
+    NodoLista,
+    NodoDiccionario,
     NodoClase,
     NodoMetodo,
     NodoValor,
@@ -26,7 +33,7 @@ from core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
-    NodoEsperar
+    NodoEsperar,
 )
 from cobra.parser.parser import Parser
 from cobra.lexico.lexer import TipoToken, Lexer
@@ -41,7 +48,9 @@ from .python_nodes.condicional import visit_condicional as _visit_condicional
 from .python_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
 from .python_nodes.for_ import visit_for as _visit_for
 from .python_nodes.funcion import visit_funcion as _visit_funcion
-from .python_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from .python_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
 from .python_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
 from .python_nodes.imprimir import visit_imprimir as _visit_imprimir
 from .python_nodes.retorno import visit_retorno as _visit_retorno
@@ -57,8 +66,12 @@ from .python_nodes.usar import visit_usar as _visit_usar
 from .python_nodes.hilo import visit_hilo as _visit_hilo
 from .python_nodes.instancia import visit_instancia as _visit_instancia
 from .python_nodes.atributo import visit_atributo as _visit_atributo
-from .python_nodes.operacion_binaria import visit_operacion_binaria as _visit_operacion_binaria
-from .python_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
+from .python_nodes.operacion_binaria import (
+    visit_operacion_binaria as _visit_operacion_binaria,
+)
+from .python_nodes.operacion_unaria import (
+    visit_operacion_unaria as _visit_operacion_unaria,
+)
 from .python_nodes.valor import visit_valor as _visit_valor
 from .python_nodes.identificador import visit_identificador as _visit_identificador
 from .python_nodes.para import visit_para as _visit_para
@@ -70,22 +83,27 @@ from .python_nodes.continuar import visit_continuar as _visit_continuar
 from .python_nodes.pasar import visit_pasar as _visit_pasar
 from .python_nodes.switch import visit_switch as _visit_switch
 
+
 def visit_assert(self, nodo):
     expr = self.obtener_valor(nodo.condicion)
     msg = f", {self.obtener_valor(nodo.mensaje)}" if nodo.mensaje else ""
     self.codigo += f"{self.obtener_indentacion()}assert {expr}{msg}\n"
 
+
 def visit_del(self, nodo):
     objetivo = self.obtener_valor(nodo.objetivo)
     self.codigo += f"{self.obtener_indentacion()}del {objetivo}\n"
+
 
 def visit_global(self, nodo):
     nombres = ", ".join(nodo.nombres)
     self.codigo += f"{self.obtener_indentacion()}global {nombres}\n"
 
+
 def visit_nolocal(self, nodo):
     nombres = ", ".join(nodo.nombres)
     self.codigo += f"{self.obtener_indentacion()}nonlocal {nombres}\n"
+
 
 def visit_with(self, nodo):
     ctx = self.obtener_valor(nodo.contexto)
@@ -95,6 +113,7 @@ def visit_with(self, nodo):
     for inst in nodo.cuerpo:
         inst.aceptar(self)
     self.nivel_indentacion -= 1
+
 
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
@@ -120,12 +139,16 @@ class TranspiladorPython(BaseTranspiler):
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             nodo.aceptar(self)
-        if nodos and all(
-            n.__class__.__module__.startswith("src.cobra.parser.parser") for n in nodos
-        ) and not any(self._contiene_nodo_valor(n) for n in nodos):
-            solo_llamadas = all(
-                hasattr(n, "argumentos") and not hasattr(n, "parametros")
+        if (
+            nodos
+            and all(
+                n.__class__.__module__.startswith("src.cobra.parser.parser")
                 for n in nodos
+            )
+            and not any(self._contiene_nodo_valor(n) for n in nodos)
+        ):
+            solo_llamadas = all(
+                hasattr(n, "argumentos") and not hasattr(n, "parametros") for n in nodos
             )
             if solo_llamadas:
                 solo_numeros = all(
@@ -151,15 +174,15 @@ class TranspiladorPython(BaseTranspiler):
                 for elem in atributo:
                     if isinstance(elem, (list, tuple)):
                         for sub in elem:
-                            if hasattr(sub, "__dict__") and self._contiene_nodo_valor(sub):
+                            if hasattr(sub, "__dict__") and self._contiene_nodo_valor(
+                                sub
+                            ):
                                 return True
                     elif hasattr(elem, "__dict__") and self._contiene_nodo_valor(elem):
                         return True
             elif hasattr(atributo, "__dict__") and self._contiene_nodo_valor(atributo):
                 return True
         return False
-
-
 
     def obtener_valor(self, nodo):
         from cobra.parser.parser import (

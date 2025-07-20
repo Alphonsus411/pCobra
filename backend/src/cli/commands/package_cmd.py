@@ -50,7 +50,7 @@ class PaqueteCommand(BaseCommand):
             return 1
         mod_list = ", ".join(f'"{m}"' for m in mods)
         contenido = (
-            f"[paquete]\nnombre = \"{nombre}\"\nversion = \"{version}\"\n\n"
+            f'[paquete]\nnombre = "{nombre}"\nversion = "{version}"\n\n'
             f"[modulos]\narchivos = [{mod_list}]\n"
         )
         with zipfile.ZipFile(pkg, "w") as zf:
@@ -69,7 +69,9 @@ class PaqueteCommand(BaseCommand):
         with zipfile.ZipFile(pkg) as zf:
             for name in zf.namelist():
                 if name.endswith(".co"):
-                    dest = os.path.join(modules_cmd.MODULES_PATH, os.path.basename(name))
+                    dest = os.path.join(
+                        modules_cmd.MODULES_PATH, os.path.basename(name)
+                    )
                     with zf.open(name) as src, open(dest, "wb") as out:
                         out.write(src.read())
         mostrar_info(

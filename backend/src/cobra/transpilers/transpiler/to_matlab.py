@@ -19,7 +19,9 @@ from cobra.macro import expandir_macros
 
 from .matlab_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .matlab_nodes.funcion import visit_funcion as _visit_funcion
-from .matlab_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from .matlab_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
 from .matlab_nodes.imprimir import visit_imprimir as _visit_imprimir
 
 matlab_nodes = {
@@ -72,7 +74,9 @@ class TranspiladorMatlab(BaseTranspiler):
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
-                metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
+                metodo = getattr(
+                    self, f"visit_{nodo.__class__.__name__[4:].lower()}", None
+                )
                 if metodo:
                     metodo(nodo)
         return "\n".join(self.codigo)

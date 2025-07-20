@@ -102,7 +102,6 @@ PALABRAS_RESERVADAS = {
 logging.basicConfig(level=logging.DEBUG)
 
 
-
 class ClassicParser:
     """Convierte una lista de tokens en nodos del AST."""
 
@@ -199,6 +198,7 @@ class ClassicParser:
         """Parsea tokens con soporte de caché incremental y perfilado."""
         if incremental:
             from core.ast_cache import obtener_ast_fragmento
+
             codigo = "\n".join(
                 token.valor if token.valor is not None else ""
                 for token in self.tokens
@@ -210,6 +210,7 @@ class ClassicParser:
             import cProfile
             import pstats
             import io
+
             pr = cProfile.Profile()
             pr.enable()
             resultado = self._parsear_base()
@@ -269,7 +270,12 @@ class ClassicParser:
                     valor = self.expresion()
                     return NodoAsignacion(atrib, valor)
                 return atrib
-            if token.tipo in [TipoToken.IDENTIFICADOR, TipoToken.ENTERO, TipoToken.FLOTANTE, TipoToken.LAMBDA]:
+            if token.tipo in [
+                TipoToken.IDENTIFICADOR,
+                TipoToken.ENTERO,
+                TipoToken.FLOTANTE,
+                TipoToken.LAMBDA,
+            ]:
                 siguiente = self.token_siguiente()
                 if siguiente and siguiente.tipo == TipoToken.LPAREN:
                     return self.llamada_funcion()
@@ -372,7 +378,6 @@ class ClassicParser:
         self.comer(TipoToken.RPAREN)  # Consumir ')'
         return NodoLlamadaFuncion(nombre_funcion, argumentos)
 
-
     def declaracion_asignacion(self):
         """Procesa una asignación de variable opcionalmente inferida.
 
@@ -386,24 +391,33 @@ class ClassicParser:
         if self.token_actual().tipo in (TipoToken.VAR, TipoToken.VARIABLE):
             inferencia = self.token_actual().tipo == TipoToken.VARIABLE
             self.comer(self.token_actual().tipo)
-        
+
         if self.token_actual().tipo == TipoToken.ATRIBUTO:
             variable_token = self.exp_atributo()
         else:
             variable_token = self.token_actual()
             if variable_token.valor in PALABRAS_RESERVADAS:
                 raise SyntaxError(
-                    f"El identificador '{variable_token.valor}' es una palabra reservada"
+                    (
+                        "El identificador "
+                        f"'{variable_token.valor}' es una palabra reservada"
+                    )
                 )
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
                 raise SyntaxError("Se esperaba un identificador en la asignación")
             self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR_INFERENCIA if inferencia else TipoToken.ASIGNAR)
         valor = self.expresion()
-        if isinstance(valor, NodoHolobit) and valor.nombre is None and not isinstance(variable_token, NodoAtributo):
+        if (
+            isinstance(valor, NodoHolobit)
+            and valor.nombre is None
+            and not isinstance(variable_token, NodoAtributo)
+        ):
             valor.nombre = variable_token.valor
         nombre_asignacion = (
-            variable_token if isinstance(variable_token, NodoAtributo) else variable_token.valor
+            variable_token
+            if isinstance(variable_token, NodoAtributo)
+            else variable_token.valor
         )
         return NodoAsignacion(nombre_asignacion, valor, inferencia)
 
@@ -478,7 +492,12 @@ class ClassicParser:
                 raise SyntaxError("Se esperaba ':' después de 'case'")
             self.comer(TipoToken.DOSPUNTOS)
             cuerpo = []
-            while self.token_actual().tipo not in [TipoToken.CASE, TipoToken.SINO, TipoToken.FIN, TipoToken.EOF]:
+            while self.token_actual().tipo not in [
+                TipoToken.CASE,
+                TipoToken.SINO,
+                TipoToken.FIN,
+                TipoToken.EOF,
+            ]:
                 cuerpo.append(self.declaracion())
             casos.append(NodoCase(valor, cuerpo))
 
@@ -672,7 +691,12 @@ class ClassicParser:
         self.comer(TipoToken.DOSPUNTOS)
 
         bloque_try = []
-        while self.token_actual().tipo not in [TipoToken.CATCH, TipoToken.CAPTURAR, TipoToken.FIN, TipoToken.EOF]:
+        while self.token_actual().tipo not in [
+            TipoToken.CATCH,
+            TipoToken.CAPTURAR,
+            TipoToken.FIN,
+            TipoToken.EOF,
+        ]:
             bloque_try.append(self.declaracion())
 
         nombre_exc = None
@@ -685,7 +709,11 @@ class ClassicParser:
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
                 raise SyntaxError("Se esperaba ':' después de 'catch/capturar'")
             self.comer(TipoToken.DOSPUNTOS)
-            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF, TipoToken.FINALMENTE]:
+            while self.token_actual().tipo not in [
+                TipoToken.FIN,
+                TipoToken.EOF,
+                TipoToken.FINALMENTE,
+            ]:
                 bloque_catch.append(self.declaracion())
 
         bloque_finally = []
@@ -763,7 +791,9 @@ class ClassicParser:
         """Registra nombres como variables globales."""
         self.comer(TipoToken.GLOBAL)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba al menos un identificador después de 'global'")
+            raise SyntaxError(
+                "Se esperaba al menos un identificador después de 'global'"
+            )
         nombres = []
         while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
             nombres.append(self.token_actual().valor)
@@ -923,7 +953,11 @@ class ClassicParser:
 
         metodos = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            if self.token_actual().tipo in [TipoToken.FUNC, TipoToken.METODO, TipoToken.ASINCRONICO]:
+            if self.token_actual().tipo in [
+                TipoToken.FUNC,
+                TipoToken.METODO,
+                TipoToken.ASINCRONICO,
+            ]:
                 metodos.append(self.declaracion_metodo())
             else:
                 metodos.append(self.declaracion())
@@ -996,7 +1030,11 @@ class ClassicParser:
     def exp_multiplication(self):
         """Maneja multiplicación, división y módulo."""
         nodo = self.exp_unario()
-        while self.token_actual().tipo in [TipoToken.MULT, TipoToken.DIV, TipoToken.MOD]:
+        while self.token_actual().tipo in [
+            TipoToken.MULT,
+            TipoToken.DIV,
+            TipoToken.MOD,
+        ]:
             operador = self.token_actual()
             self.avanzar()
             derecho = self.exp_unario()
@@ -1108,6 +1146,7 @@ class ClassicParser:
 # de entorno ``COBRA_PARSER``. Si su valor es ``"lark"`` se cargará
 # ``LarkParser`` en lugar del parser clásico.
 import os
+
 if os.getenv("COBRA_PARSER") == "lark":
     from .lark_parser import LarkParser as Parser
 else:

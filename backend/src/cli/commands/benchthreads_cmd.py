@@ -79,7 +79,9 @@ class BenchThreadsCommand(BaseCommand):
             tmp.write(code)
             tmp.flush()
             cmd = [sys.executable, "-m", "src.cli.cli", "ejecutar", tmp.name]
-            subprocess.run(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
         os.unlink(tmp.name)
 
     def _run_kernel(self, code: str) -> None:
@@ -101,23 +103,47 @@ class BenchThreadsCommand(BaseCommand):
         results = []
 
         elapsed, cpu, io = _measure(self._run_sequential)
-        results.append({"modo": "secuencial", "time": round(elapsed, 4), "cpu": round(cpu, 4), "io": io})
+        results.append(
+            {
+                "modo": "secuencial",
+                "time": round(elapsed, 4),
+                "cpu": round(cpu, 4),
+                "io": io,
+            }
+        )
 
         elapsed, cpu, io = _measure(lambda: self._run_cli(THREAD_CODE, env))
-        results.append({"modo": "cli_hilos", "time": round(elapsed, 4), "cpu": round(cpu, 4), "io": io})
+        results.append(
+            {
+                "modo": "cli_hilos",
+                "time": round(elapsed, 4),
+                "cpu": round(cpu, 4),
+                "io": io,
+            }
+        )
 
         elapsed, cpu, io = _measure(lambda: self._run_kernel(THREAD_CODE))
-        results.append({"modo": "kernel_hilos", "time": round(elapsed, 4), "cpu": round(cpu, 4), "io": io})
+        results.append(
+            {
+                "modo": "kernel_hilos",
+                "time": round(elapsed, 4),
+                "cpu": round(cpu, 4),
+                "io": io,
+            }
+        )
 
         data = json.dumps(results, indent=2)
         if args.output:
             try:
                 Path(args.output).write_text(data)
-                mostrar_info(_("Resultados guardados en {file}").format(file=args.output))
+                mostrar_info(
+                    _("Resultados guardados en {file}").format(file=args.output)
+                )
             except Exception as err:
-                mostrar_error(_("No se pudo escribir el archivo: {err}").format(err=err))
+                mostrar_error(
+                    _("No se pudo escribir el archivo: {err}").format(err=err)
+                )
                 return 1
         else:
             print(data)
         return 0
-

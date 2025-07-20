@@ -122,7 +122,8 @@ class TranspiladorC(BaseTranspiler):
             return f"{{{elems}}}"
         elif isinstance(nodo, NodoDiccionario):
             pares = ", ".join(
-                f"{{{self.obtener_valor(k)}, {self.obtener_valor(v)}}}" for k, v in nodo.elementos
+                f"{{{self.obtener_valor(k)}, {self.obtener_valor(v)}}}"
+                for k, v in nodo.elementos
             )
             return f"{{{pares}}}"
         else:
@@ -135,7 +136,9 @@ class TranspiladorC(BaseTranspiler):
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
-                metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
+                metodo = getattr(
+                    self, f"visit_{nodo.__class__.__name__[4:].lower()}", None
+                )
                 if metodo:
                     metodo(nodo)
         return "\n".join(self.codigo)

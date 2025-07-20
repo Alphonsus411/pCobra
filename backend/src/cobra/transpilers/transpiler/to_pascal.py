@@ -19,7 +19,9 @@ from cobra.macro import expandir_macros
 
 from .pascal_nodes.asignacion import visit_asignacion as _visit_asignacion
 from .pascal_nodes.funcion import visit_funcion as _visit_funcion
-from .pascal_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from .pascal_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
 from .pascal_nodes.imprimir import visit_imprimir as _visit_imprimir
 
 pascal_nodes = {
@@ -55,7 +57,7 @@ class TranspiladorPascal(BaseTranspiler):
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
-            op_map = {TipoToken.AND: 'and', TipoToken.OR: 'or'}
+            op_map = {TipoToken.AND: "and", TipoToken.OR: "or"}
             op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
             return f"{izq} {op} {der}"
         elif isinstance(nodo, NodoOperacionUnaria):
@@ -73,7 +75,9 @@ class TranspiladorPascal(BaseTranspiler):
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
-                metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
+                metodo = getattr(
+                    self, f"visit_{nodo.__class__.__name__[4:].lower()}", None
+                )
                 if metodo:
                     metodo(nodo)
         return "\n".join(self.codigo)

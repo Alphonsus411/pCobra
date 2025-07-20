@@ -9,4 +9,3 @@ try:
 except Exception:
     # Permitir que el paquete se importe incluso si ipykernel no está disponible
     pass
-

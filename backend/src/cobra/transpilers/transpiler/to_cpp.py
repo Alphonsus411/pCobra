@@ -37,19 +37,24 @@ from .cpp_nodes.continuar import visit_continuar as _visit_continuar
 from .cpp_nodes.pasar import visit_pasar as _visit_pasar
 from .cpp_nodes.switch import visit_switch as _visit_switch
 
+
 def visit_assert(self, nodo):
     cond = self.obtener_valor(nodo.condicion)
     self.agregar_linea(f"assert({cond});")
+
 
 def visit_del(self, nodo):
     nombre = self.obtener_valor(nodo.objetivo)
     self.agregar_linea(f"/* del {nombre} */")
 
+
 def visit_global(self, nodo):
     pass
 
+
 def visit_nolocal(self, nodo):
     pass
+
 
 def visit_with(self, nodo):
     self.agregar_linea("{")
@@ -58,6 +63,7 @@ def visit_with(self, nodo):
         inst.aceptar(self)
     self.indent -= 1
     self.agregar_linea("}")
+
 
 def visit_import_desde(self, nodo):
     alias = f" {nodo.alias}" if nodo.alias else ""
@@ -108,7 +114,8 @@ class TranspiladorCPP(BaseTranspiler):
             return f"std::vector{{{elems}}}"
         elif isinstance(nodo, NodoDiccionario):
             pares = ", ".join(
-                f"{{{self.obtener_valor(k)}, {self.obtener_valor(v)}}}" for k, v in nodo.elementos
+                f"{{{self.obtener_valor(k)}, {self.obtener_valor(v)}}}"
+                for k, v in nodo.elementos
             )
             return f"std::map{{{pares}}}"
         else:

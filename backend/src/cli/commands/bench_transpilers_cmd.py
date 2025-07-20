@@ -10,7 +10,9 @@ from .compile_cmd import TRANSPILERS
 from core.ast_cache import obtener_ast
 
 
-PROGRAM_DIR = Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"
+PROGRAM_DIR = (
+    Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"
+)
 
 
 class BenchTranspilersCommand(BaseCommand):
@@ -76,9 +78,13 @@ class BenchTranspilersCommand(BaseCommand):
         if args.output:
             try:
                 Path(args.output).write_text(data)
-                mostrar_info(_("Resultados guardados en {file}").format(file=args.output))
+                mostrar_info(
+                    _("Resultados guardados en {file}").format(file=args.output)
+                )
             except Exception as err:  # pragma: no cover - error inesperado de E/S
-                mostrar_error(_("No se pudo escribir el archivo: {err}").format(err=err))
+                mostrar_error(
+                    _("No se pudo escribir el archivo: {err}").format(err=err)
+                )
                 return 1
         else:
             print(data)
