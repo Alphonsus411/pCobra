@@ -19,3 +19,10 @@ def test_operacion_bloqueada_import():
     codigo = "import os\nos.listdir('.')"
     with pytest.raises(Exception):
         ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_error_sintaxis():
+    """Si compile_restricted falla se debe propagar SyntaxError."""
+    with pytest.raises(SyntaxError):
+        ejecutar_en_sandbox("for")

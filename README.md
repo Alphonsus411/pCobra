@@ -649,6 +649,11 @@ evita acciones potencialmente peligrosas como leer archivos o importar módulos
 externos. Para activar esta opción utiliza `--sandbox` en los subcomandos
 `ejecutar` e `interactive`.
 
+El código se compila con `compile_restricted` y luego se ejecuta mediante
+`exec`. Si la compilación falla se propaga la excepción sin intentar una
+compilación normal. Mantén el entorno de ejecución lo más pequeño posible
+para reducir riesgos.
+
 # Pruebas
 
 Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
