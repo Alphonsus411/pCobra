@@ -650,9 +650,10 @@ externos. Para activar esta opción utiliza `--sandbox` en los subcomandos
 `ejecutar` e `interactive`.
 
 El código se compila con `compile_restricted` y luego se ejecuta mediante
-`exec`. Si la compilación falla se propaga la excepción sin intentar una
-compilación normal. Mantén el entorno de ejecución lo más pequeño posible
-para reducir riesgos.
+`exec`. **No** se recurre a `compile()` cuando la compilación segura falla,
+sino que se propaga la excepción. El uso de `exec` sigue siendo peligroso,
+por lo que se recomienda mantener el entorno de ejecución lo más pequeño
+posible para reducir riesgos.
 
 # Pruebas
 
