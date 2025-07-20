@@ -18,14 +18,19 @@ def ejecutar_en_sandbox(codigo: str) -> str:
     """Ejecuta una cadena de código Python de forma segura.
 
     Devuelve la salida producida por ``print`` o lanza una excepción si
-    se intenta realizar una operación prohibida.
+    se intenta realizar una operación prohibida. El código se compila
+    usando :func:`compile_restricted` y posteriormente se ejecuta con
+    ``exec``. Mantener el diccionario ``env`` tan reducido como sea
+    posible ayuda a minimizar la superficie de ataque.
     """
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
-    except SyntaxError:
-        byte_code = compile(codigo, "<string>", "exec")
+    except SyntaxError as se:  # pragma: no cover - comportamiento simple
+        raise SyntaxError(f"compile_restricted falló: {se}") from se
+
     env = {
         "__builtins__": safe_builtins,
+        "__name__": "sandbox",
         "_print_": PrintCollector,
         "_getattr_": getattr,
         "_getitem_": default_guarded_getitem,
