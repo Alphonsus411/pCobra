@@ -28,6 +28,11 @@ dependencies = [
     "jsonschema>=4.24.0",
     "python-dotenv",
     "pexpect",
+    "requests",
+    "flet",
+    "packaging",
+    "pybind11>=2.13.6",
+    "RestrictedPython>=8.0",
 ]
 
 [project.urls]

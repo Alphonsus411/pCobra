@@ -92,13 +92,13 @@ source .venv/bin/activate  # Unix
 .\.venv\Scripts\activate  # Windows
 ```
 
-4. Install the development dependencies:
+4. Install the development dependencies (pytest, `python-dotenv`, `tomli`, `hypothesis`, etc.):
 
 ```bash
 pip install -r requirements.txt
 ```
 
-   These dependencies are only for the development environment. Runtime dependencies are installed when installing the package.
+   These libraries are needed for running the tests and other development tasks. Runtime dependencies are installed when installing the package.
 
 5. Install the package in editable mode to use the CLI and obtain the dependencies declared in ``pyproject.toml``:
 
