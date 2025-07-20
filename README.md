@@ -106,13 +106,14 @@ source .venv/bin/activate  # Para Unix
 .\.venv\Scripts\activate  # Para Windows
 ````
 
-4. Instala las dependencias de desarrollo:
+4. Instala las dependencias de desarrollo (pytest, `python-dotenv`, `tomli`,
+   `hypothesis`, etc.):
 
 ````bash
 pip install -r requirements.txt
 ````
 
-   Estas dependencias son únicamente para el entorno de desarrollo.
+   Estas bibliotecas permiten ejecutar las pruebas y otras tareas de desarrollo.
    Las dependencias de ejecución se instalarán al instalar el paquete.
 
 5. Instala el paquete de forma editable para usar la CLI y obtener las
