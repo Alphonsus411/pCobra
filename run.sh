@@ -1,7 +1,6 @@
 #!/bin/bash
-# Cargar variables de entorno desde .env si existe evitando el uso de xargs.
-# El uso de 'set -a' exporta todas las variables definidas en el archivo.
-# Ejemplo de uso:
+# Cargar variables de entorno desde .env con python-dotenv, evitando xargs.
+# "python -m dotenv" expone un comando "run" que ejecuta otro programa con las
+# variables definidas en el archivo. Ejemplo de uso:
 #   ./run.sh --help
-[ -f .env ] && set -a && source .env && set +a
-python -m src.main "$@"
+python -m dotenv -f .env run -- python -m src.main "$@"
