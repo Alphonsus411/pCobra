@@ -2,16 +2,16 @@
 
 from typing import List
 
-from core.visitor import NodeVisitor
 from core.ast_nodes import (
     NodoAsignacion,
-    NodoFuncion,
     NodoClase,
-    NodoMetodo,
+    NodoFuncion,
     NodoIdentificador,
+    NodoMetodo,
 )
+from core.visitor import NodeVisitor
 
-from .tabla import Ambito
+from src.cobra.semantico.tabla import Ambito
 
 
 class AnalizadorSemantico(NodeVisitor):
