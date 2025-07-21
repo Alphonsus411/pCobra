@@ -37,7 +37,7 @@ jobs:
       - name: Run tests
         run: |
           pytest --cov=backend/src --cov-report=xml --cov-fail-under=95
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
