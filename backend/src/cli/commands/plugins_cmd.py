@@ -1,7 +1,7 @@
-from .base import BaseCommand
-from ..i18n import _
-from ..plugin_registry import obtener_registro_detallado
-from ..utils.messages import mostrar_info
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.plugin_registry import obtener_registro_detallado
+from src.cli.utils.messages import mostrar_info
 
 
 class PluginsCommand(BaseCommand):
@@ -33,8 +33,7 @@ class PluginsCommand(BaseCommand):
             registro = {
                 n: d
                 for n, d in registro.items()
-                if texto in n.lower()
-                or texto in d.get("description", "").lower()
+                if texto in n.lower() or texto in d.get("description", "").lower()
             }
 
         for nombre, datos in registro.items():

@@ -1,7 +1,8 @@
 import os
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error, mostrar_info
+
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 
 class CrearCommand(BaseCommand):

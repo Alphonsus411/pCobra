@@ -1,14 +1,14 @@
-import json
 import cProfile
+import json
 from pathlib import Path
 from timeit import timeit
 
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error, mostrar_info
-from .compile_cmd import TRANSPILERS
 from core.ast_cache import obtener_ast
 
+from src.cli.commands.base import BaseCommand
+from src.cli.commands.compile_cmd import TRANSPILERS
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 PROGRAM_DIR = (
     Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"

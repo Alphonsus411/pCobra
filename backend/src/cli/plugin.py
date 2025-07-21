@@ -10,11 +10,11 @@ from abc import ABC, abstractmethod
 from importlib import import_module
 from importlib.metadata import entry_points
 
-from .commands.base import BaseCommand
-from .plugin_registry import (
-    registrar_plugin,
+from src.cli.commands.base import BaseCommand
+from src.cli.plugin_registry import (
     obtener_registro,
     obtener_registro_detallado,
+    registrar_plugin,
 )
 
 
@@ -84,9 +84,7 @@ def cargar_plugin_seguro(ruta: str):
         return None
 
     if not issubclass(plugin_cls, PluginInterface):
-        logging.warning(
-            f"El plugin {ruta} no implementa PluginInterface"
-        )
+        logging.warning(f"El plugin {ruta} no implementa PluginInterface")
         return None
 
     try:

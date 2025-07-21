@@ -1,8 +1,8 @@
 import os
 
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_info
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_info
 
 
 class InitCommand(BaseCommand):
@@ -27,7 +27,5 @@ class InitCommand(BaseCommand):
         if not os.path.exists(main):
             with open(main, "w", encoding="utf-8"):
                 pass
-        mostrar_info(
-            _("Proyecto Cobra inicializado en {path}").format(path=ruta)
-        )
+        mostrar_info(_("Proyecto Cobra inicializado en {path}").format(path=ruta))
         return 0

@@ -1,20 +1,20 @@
 import json
 import os
+import resource
 import subprocess
 import sys
 import tempfile
 import time
-import resource
 from pathlib import Path
 
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error, mostrar_info
-from jupyter_kernel import CobraKernel
-from core.interpreter import InterpretadorCobra
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
+from core.interpreter import InterpretadorCobra
+from jupyter_kernel import CobraKernel
 
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 SEQUENTIAL_CODE = """
 funcion tarea(n):
