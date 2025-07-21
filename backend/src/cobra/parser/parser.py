@@ -1148,6 +1148,8 @@ class ClassicParser:
 import os
 
 if os.getenv("COBRA_PARSER") == "lark":
-    from .lark_parser import LarkParser as Parser
+    from src.cobra.parser.lark_parser import LarkParser
+
+    Parser = LarkParser
 else:
     Parser = ClassicParser
