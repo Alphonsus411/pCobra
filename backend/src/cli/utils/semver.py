@@ -1,4 +1,4 @@
-from packaging.version import Version, InvalidVersion
+from packaging.version import InvalidVersion, Version
 
 
 def es_version_valida(version: str) -> bool:

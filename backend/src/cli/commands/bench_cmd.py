@@ -1,19 +1,18 @@
+import cProfile
 import json
 import os
 import re
+import resource
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
-import cProfile
 from pathlib import Path
 
-import resource
-
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_info
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_info
 
 CODE = """
 var x = 0

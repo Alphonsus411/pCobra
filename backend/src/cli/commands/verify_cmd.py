@@ -1,16 +1,17 @@
-import os
 import logging
+import os
 from io import StringIO
 from unittest.mock import patch
 
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error, mostrar_info
 from cli.commands.compile_cmd import TRANSPILERS
-from core.interpreter import InterpretadorCobra
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
+from core.interpreter import InterpretadorCobra
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
+
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 
 class VerifyCommand(BaseCommand):

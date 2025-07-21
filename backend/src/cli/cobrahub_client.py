@@ -1,8 +1,9 @@
 import os
+
 import requests
 
-from .i18n import _
-from .utils.messages import mostrar_info, mostrar_error
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 COBRAHUB_URL = os.environ.get("COBRAHUB_URL", "https://cobrahub.example.com/api")
 

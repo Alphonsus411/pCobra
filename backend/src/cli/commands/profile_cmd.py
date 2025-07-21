@@ -9,16 +9,17 @@ import pstats
 import subprocess
 import tempfile
 
-from .base import BaseCommand
-from .execute_cmd import ExecuteCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error, mostrar_info
-from cobra.transpilers import module_map
-from core.sandbox import validar_dependencias
-from core.interpreter import InterpretadorCobra
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
+from cobra.transpilers import module_map
+from core.interpreter import InterpretadorCobra
+from core.sandbox import validar_dependencias
 from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+
+from src.cli.commands.base import BaseCommand
+from src.cli.commands.execute_cmd import ExecuteCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 
 class ProfileCommand(BaseCommand):

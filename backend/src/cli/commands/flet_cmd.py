@@ -1,6 +1,6 @@
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error
 
 
 class FletCommand(BaseCommand):
@@ -10,9 +10,7 @@ class FletCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        parser = subparsers.add_parser(
-            self.name, help=_("Inicia la interfaz gráfica")
-        )
+        parser = subparsers.add_parser(self.name, help=_("Inicia la interfaz gráfica"))
         parser.set_defaults(cmd=self)
         return parser
 

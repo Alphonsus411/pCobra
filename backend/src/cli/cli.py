@@ -3,33 +3,32 @@ import logging
 import os
 import sys
 
-from .i18n import _, setup_gettext, format_traceback
-from .utils import messages
-
-from .commands.compile_cmd import CompileCommand
-from .commands.docs_cmd import DocsCommand
-from .commands.execute_cmd import ExecuteCommand
-from .commands.interactive_cmd import InteractiveCommand
-from .commands.jupyter_cmd import JupyterCommand
-from .commands.flet_cmd import FletCommand
-from .commands.agix_cmd import AgixCommand
-from .plugin import descubrir_plugins
-from .commands.plugins_cmd import PluginsCommand
-from .commands.modules_cmd import ModulesCommand
-from .commands.dependencias_cmd import DependenciasCommand
-from .commands.empaquetar_cmd import EmpaquetarCommand
-from .commands.package_cmd import PaqueteCommand
-from .commands.crear_cmd import CrearCommand
-from .commands.init_cmd import InitCommand
-from .commands.container_cmd import ContainerCommand
-from .commands.benchmarks_cmd import BenchmarksCommand
-from .commands.benchmarks2_cmd import BenchmarksV2Command
-from .commands.bench_transpilers_cmd import BenchTranspilersCommand
-from .commands.benchthreads_cmd import BenchThreadsCommand
-from .commands.bench_cmd import BenchCommand
-from .commands.profile_cmd import ProfileCommand
-from .commands.cache_cmd import CacheCommand
-from .commands.verify_cmd import VerifyCommand
+from src.cli.commands.agix_cmd import AgixCommand
+from src.cli.commands.bench_cmd import BenchCommand
+from src.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
+from src.cli.commands.benchmarks2_cmd import BenchmarksV2Command
+from src.cli.commands.benchmarks_cmd import BenchmarksCommand
+from src.cli.commands.benchthreads_cmd import BenchThreadsCommand
+from src.cli.commands.cache_cmd import CacheCommand
+from src.cli.commands.compile_cmd import CompileCommand
+from src.cli.commands.container_cmd import ContainerCommand
+from src.cli.commands.crear_cmd import CrearCommand
+from src.cli.commands.dependencias_cmd import DependenciasCommand
+from src.cli.commands.docs_cmd import DocsCommand
+from src.cli.commands.empaquetar_cmd import EmpaquetarCommand
+from src.cli.commands.execute_cmd import ExecuteCommand
+from src.cli.commands.flet_cmd import FletCommand
+from src.cli.commands.init_cmd import InitCommand
+from src.cli.commands.interactive_cmd import InteractiveCommand
+from src.cli.commands.jupyter_cmd import JupyterCommand
+from src.cli.commands.modules_cmd import ModulesCommand
+from src.cli.commands.package_cmd import PaqueteCommand
+from src.cli.commands.plugins_cmd import PluginsCommand
+from src.cli.commands.profile_cmd import ProfileCommand
+from src.cli.commands.verify_cmd import VerifyCommand
+from src.cli.i18n import _, format_traceback, setup_gettext
+from src.cli.plugin import descubrir_plugins
+from src.cli.utils import messages
 
 # La configuración de logging solo debe activarse cuando la CLI se ejecuta
 # directamente para evitar modificar la configuración global al importar este

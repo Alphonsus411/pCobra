@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-from .base import BaseCommand
-from ..i18n import _
-from ..utils.messages import mostrar_error, mostrar_info
+from src.cli.commands.base import BaseCommand
+from src.cli.i18n import _
+from src.cli.utils.messages import mostrar_error, mostrar_info
 
 
 class EmpaquetarCommand(BaseCommand):
@@ -68,9 +68,7 @@ class EmpaquetarCommand(BaseCommand):
             return 0
         except FileNotFoundError:
             mostrar_error(
-                _(
-                    "PyInstaller no está instalado. Ejecuta 'pip install pyinstaller'."
-                )
+                _("PyInstaller no está instalado. Ejecuta 'pip install pyinstaller'.")
             )
             return 1
         except subprocess.CalledProcessError as e:

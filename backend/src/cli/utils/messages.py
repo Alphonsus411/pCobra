@@ -1,6 +1,6 @@
 import logging
 
-from ..i18n import _
+from src.cli.i18n import _
 
 RED = "\033[91m"
 GREEN = "\033[92m"
