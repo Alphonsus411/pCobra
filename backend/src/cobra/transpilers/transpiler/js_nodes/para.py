@@ -1,4 +1,4 @@
-from ...semantica import procesar_bloque
+from src.cobra.transpilers.semantica import procesar_bloque
 
 def visit_para(self, nodo):
     cuerpo = nodo.cuerpo

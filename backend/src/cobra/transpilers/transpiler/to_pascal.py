@@ -13,16 +13,16 @@ from core.ast_nodes import (
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
-from ..base import BaseTranspiler
+from src.cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
-from .pascal_nodes.asignacion import visit_asignacion as _visit_asignacion
-from .pascal_nodes.funcion import visit_funcion as _visit_funcion
-from .pascal_nodes.llamada_funcion import (
+from src.cobra.transpilers.transpiler.pascal_nodes.asignacion import visit_asignacion as _visit_asignacion
+from src.cobra.transpilers.transpiler.pascal_nodes.funcion import visit_funcion as _visit_funcion
+from src.cobra.transpilers.transpiler.pascal_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from .pascal_nodes.imprimir import visit_imprimir as _visit_imprimir
+from src.cobra.transpilers.transpiler.pascal_nodes.imprimir import visit_imprimir as _visit_imprimir
 
 pascal_nodes = {
     "asignacion": _visit_asignacion,
