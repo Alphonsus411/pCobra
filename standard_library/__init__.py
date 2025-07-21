@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from .archivo import leer, escribir, adjuntar, existe
-from .fecha import hoy, formatear, sumar_dias
-from .lista import cabeza, cola, longitud, combinar
-from .logica import conjuncion, disyuncion, negacion
-from .util import es_nulo, es_vacio, repetir
+from standard_library.archivo import leer, escribir, adjuntar, existe
+from standard_library.fecha import hoy, formatear, sumar_dias
+from standard_library.lista import cabeza, cola, longitud, combinar
+from standard_library.logica import conjuncion, disyuncion, negacion
+from standard_library.util import es_nulo, es_vacio, repetir
 
 __all__ = [
     "leer",
@@ -27,4 +27,3 @@ __all__ = [
     "es_vacio",
     "repetir",
 ]
-
