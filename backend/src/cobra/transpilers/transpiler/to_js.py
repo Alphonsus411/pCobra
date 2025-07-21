@@ -23,48 +23,48 @@ from core.ast_nodes import (
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
-from ..base import BaseTranspiler
+from src.cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
-from ..import_helper import get_standard_imports
-from ..module_map import get_mapped_path
+from src.cobra.transpilers.import_helper import get_standard_imports
+from src.cobra.transpilers.module_map import get_mapped_path
 
-from .js_nodes.asignacion import visit_asignacion as _visit_asignacion
-from .js_nodes.condicional import visit_condicional as _visit_condicional
-from .js_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from .js_nodes.funcion import visit_funcion as _visit_funcion
-from .js_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from .js_nodes.hilo import visit_hilo as _visit_hilo
-from .js_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
-from .js_nodes.imprimir import visit_imprimir as _visit_imprimir
-from .js_nodes.retorno import visit_retorno as _visit_retorno
-from .js_nodes.holobit import visit_holobit as _visit_holobit
-from .js_nodes.for_ import visit_for as _visit_for
-from .js_nodes.lista import visit_lista as _visit_lista
-from .js_nodes.diccionario import visit_diccionario as _visit_diccionario
-from .js_nodes.elemento import visit_elemento as _visit_elemento
-from .js_nodes.clase import visit_clase as _visit_clase
-from .js_nodes.metodo import visit_metodo as _visit_metodo
-from .js_nodes.try_catch import visit_try_catch as _visit_try_catch
-from .js_nodes.throw import visit_throw as _visit_throw
-from .js_nodes.importar import visit_import as _visit_import
-from .js_nodes.instancia import visit_instancia as _visit_instancia
-from .js_nodes.atributo import visit_atributo as _visit_atributo
-from .js_nodes.operacion_binaria import (
+from src.cobra.transpilers.transpiler.js_nodes.asignacion import visit_asignacion as _visit_asignacion
+from src.cobra.transpilers.transpiler.js_nodes.condicional import visit_condicional as _visit_condicional
+from src.cobra.transpilers.transpiler.js_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from src.cobra.transpilers.transpiler.js_nodes.funcion import visit_funcion as _visit_funcion
+from src.cobra.transpilers.transpiler.js_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from src.cobra.transpilers.transpiler.js_nodes.hilo import visit_hilo as _visit_hilo
+from src.cobra.transpilers.transpiler.js_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
+from src.cobra.transpilers.transpiler.js_nodes.imprimir import visit_imprimir as _visit_imprimir
+from src.cobra.transpilers.transpiler.js_nodes.retorno import visit_retorno as _visit_retorno
+from src.cobra.transpilers.transpiler.js_nodes.holobit import visit_holobit as _visit_holobit
+from src.cobra.transpilers.transpiler.js_nodes.for_ import visit_for as _visit_for
+from src.cobra.transpilers.transpiler.js_nodes.lista import visit_lista as _visit_lista
+from src.cobra.transpilers.transpiler.js_nodes.diccionario import visit_diccionario as _visit_diccionario
+from src.cobra.transpilers.transpiler.js_nodes.elemento import visit_elemento as _visit_elemento
+from src.cobra.transpilers.transpiler.js_nodes.clase import visit_clase as _visit_clase
+from src.cobra.transpilers.transpiler.js_nodes.metodo import visit_metodo as _visit_metodo
+from src.cobra.transpilers.transpiler.js_nodes.try_catch import visit_try_catch as _visit_try_catch
+from src.cobra.transpilers.transpiler.js_nodes.throw import visit_throw as _visit_throw
+from src.cobra.transpilers.transpiler.js_nodes.importar import visit_import as _visit_import
+from src.cobra.transpilers.transpiler.js_nodes.instancia import visit_instancia as _visit_instancia
+from src.cobra.transpilers.transpiler.js_nodes.atributo import visit_atributo as _visit_atributo
+from src.cobra.transpilers.transpiler.js_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
-from .js_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
-from .js_nodes.valor import visit_valor as _visit_valor
-from .js_nodes.identificador import visit_identificador as _visit_identificador
-from .js_nodes.para import visit_para as _visit_para
-from .js_nodes.decorador import visit_decorador as _visit_decorador
-from .js_nodes.yield_ import visit_yield as _visit_yield
-from .js_nodes.esperar import visit_esperar as _visit_esperar
-from .js_nodes.romper import visit_romper as _visit_romper
-from .js_nodes.continuar import visit_continuar as _visit_continuar
-from .js_nodes.pasar import visit_pasar as _visit_pasar
-from .js_nodes.switch import visit_switch as _visit_switch
-from .js_nodes.exportar import visit_export as _visit_export
+from src.cobra.transpilers.transpiler.js_nodes.operacion_unaria import visit_operacion_unaria as _visit_operacion_unaria
+from src.cobra.transpilers.transpiler.js_nodes.valor import visit_valor as _visit_valor
+from src.cobra.transpilers.transpiler.js_nodes.identificador import visit_identificador as _visit_identificador
+from src.cobra.transpilers.transpiler.js_nodes.para import visit_para as _visit_para
+from src.cobra.transpilers.transpiler.js_nodes.decorador import visit_decorador as _visit_decorador
+from src.cobra.transpilers.transpiler.js_nodes.yield_ import visit_yield as _visit_yield
+from src.cobra.transpilers.transpiler.js_nodes.esperar import visit_esperar as _visit_esperar
+from src.cobra.transpilers.transpiler.js_nodes.romper import visit_romper as _visit_romper
+from src.cobra.transpilers.transpiler.js_nodes.continuar import visit_continuar as _visit_continuar
+from src.cobra.transpilers.transpiler.js_nodes.pasar import visit_pasar as _visit_pasar
+from src.cobra.transpilers.transpiler.js_nodes.switch import visit_switch as _visit_switch
+from src.cobra.transpilers.transpiler.js_nodes.exportar import visit_export as _visit_export
 
 
 def visit_assert(self, nodo):

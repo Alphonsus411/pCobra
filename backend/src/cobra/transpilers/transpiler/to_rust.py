@@ -24,26 +24,26 @@ from core.ast_nodes import (
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
-from ..base import BaseTranspiler
+from src.cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
-from .rust_nodes.asignacion import visit_asignacion as _visit_asignacion
-from .rust_nodes.condicional import visit_condicional as _visit_condicional
-from .rust_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from .rust_nodes.funcion import visit_funcion as _visit_funcion
-from .rust_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from .rust_nodes.holobit import visit_holobit as _visit_holobit
-from .rust_nodes.clase import visit_clase as _visit_clase
-from .rust_nodes.metodo import visit_metodo as _visit_metodo
-from .rust_nodes.yield_ import visit_yield as _visit_yield
-from .rust_nodes.romper import visit_romper as _visit_romper
-from .rust_nodes.continuar import visit_continuar as _visit_continuar
-from .rust_nodes.pasar import visit_pasar as _visit_pasar
-from .rust_nodes.switch import visit_switch as _visit_switch
-from .rust_nodes.try_catch import visit_try_catch as _visit_try_catch
-from .rust_nodes.throw import visit_throw as _visit_throw
-from .rust_nodes.option import visit_option as _visit_option
+from src.cobra.transpilers.transpiler.rust_nodes.asignacion import visit_asignacion as _visit_asignacion
+from src.cobra.transpilers.transpiler.rust_nodes.condicional import visit_condicional as _visit_condicional
+from src.cobra.transpilers.transpiler.rust_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from src.cobra.transpilers.transpiler.rust_nodes.funcion import visit_funcion as _visit_funcion
+from src.cobra.transpilers.transpiler.rust_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from src.cobra.transpilers.transpiler.rust_nodes.holobit import visit_holobit as _visit_holobit
+from src.cobra.transpilers.transpiler.rust_nodes.clase import visit_clase as _visit_clase
+from src.cobra.transpilers.transpiler.rust_nodes.metodo import visit_metodo as _visit_metodo
+from src.cobra.transpilers.transpiler.rust_nodes.yield_ import visit_yield as _visit_yield
+from src.cobra.transpilers.transpiler.rust_nodes.romper import visit_romper as _visit_romper
+from src.cobra.transpilers.transpiler.rust_nodes.continuar import visit_continuar as _visit_continuar
+from src.cobra.transpilers.transpiler.rust_nodes.pasar import visit_pasar as _visit_pasar
+from src.cobra.transpilers.transpiler.rust_nodes.switch import visit_switch as _visit_switch
+from src.cobra.transpilers.transpiler.rust_nodes.try_catch import visit_try_catch as _visit_try_catch
+from src.cobra.transpilers.transpiler.rust_nodes.throw import visit_throw as _visit_throw
+from src.cobra.transpilers.transpiler.rust_nodes.option import visit_option as _visit_option
 
 
 def visit_assert(self, nodo):

@@ -31,43 +31,43 @@ from core.ast_nodes import (
 from cobra.lexico.lexer import TipoToken, Lexer
 from cobra.parser.parser import Parser
 from core.visitor import NodeVisitor
-from ..base import BaseTranspiler
+from src.cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
-from .asm_nodes.asignacion import visit_asignacion as _visit_asignacion
-from .asm_nodes.condicional import visit_condicional as _visit_condicional
-from .asm_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from .asm_nodes.funcion import visit_funcion as _visit_funcion
-from .asm_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from .asm_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
-from .asm_nodes.hilo import visit_hilo as _visit_hilo
-from .asm_nodes.imprimir import visit_imprimir as _visit_imprimir
-from .asm_nodes.retorno import visit_retorno as _visit_retorno
-from .asm_nodes.holobit import visit_holobit as _visit_holobit
-from .asm_nodes.for_ import visit_for as _visit_for
-from .asm_nodes.para import visit_para as _visit_para
-from .asm_nodes.lista import visit_lista as _visit_lista
-from .asm_nodes.diccionario import visit_diccionario as _visit_diccionario
-from .asm_nodes.clase import visit_clase as _visit_clase
-from .asm_nodes.metodo import visit_metodo as _visit_metodo
-from .asm_nodes.try_catch import visit_try_catch as _visit_try_catch
-from .asm_nodes.throw import visit_throw as _visit_throw
-from .asm_nodes.importar import visit_import as _visit_import
-from .asm_nodes.instancia import visit_instancia as _visit_instancia
-from .asm_nodes.atributo import visit_atributo as _visit_atributo
-from .asm_nodes.operacion_binaria import (
+from src.cobra.transpilers.transpiler.asm_nodes.asignacion import visit_asignacion as _visit_asignacion
+from src.cobra.transpilers.transpiler.asm_nodes.condicional import visit_condicional as _visit_condicional
+from src.cobra.transpilers.transpiler.asm_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from src.cobra.transpilers.transpiler.asm_nodes.funcion import visit_funcion as _visit_funcion
+from src.cobra.transpilers.transpiler.asm_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from src.cobra.transpilers.transpiler.asm_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
+from src.cobra.transpilers.transpiler.asm_nodes.hilo import visit_hilo as _visit_hilo
+from src.cobra.transpilers.transpiler.asm_nodes.imprimir import visit_imprimir as _visit_imprimir
+from src.cobra.transpilers.transpiler.asm_nodes.retorno import visit_retorno as _visit_retorno
+from src.cobra.transpilers.transpiler.asm_nodes.holobit import visit_holobit as _visit_holobit
+from src.cobra.transpilers.transpiler.asm_nodes.for_ import visit_for as _visit_for
+from src.cobra.transpilers.transpiler.asm_nodes.para import visit_para as _visit_para
+from src.cobra.transpilers.transpiler.asm_nodes.lista import visit_lista as _visit_lista
+from src.cobra.transpilers.transpiler.asm_nodes.diccionario import visit_diccionario as _visit_diccionario
+from src.cobra.transpilers.transpiler.asm_nodes.clase import visit_clase as _visit_clase
+from src.cobra.transpilers.transpiler.asm_nodes.metodo import visit_metodo as _visit_metodo
+from src.cobra.transpilers.transpiler.asm_nodes.try_catch import visit_try_catch as _visit_try_catch
+from src.cobra.transpilers.transpiler.asm_nodes.throw import visit_throw as _visit_throw
+from src.cobra.transpilers.transpiler.asm_nodes.importar import visit_import as _visit_import
+from src.cobra.transpilers.transpiler.asm_nodes.instancia import visit_instancia as _visit_instancia
+from src.cobra.transpilers.transpiler.asm_nodes.atributo import visit_atributo as _visit_atributo
+from src.cobra.transpilers.transpiler.asm_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
-from .asm_nodes.operacion_unaria import (
+from src.cobra.transpilers.transpiler.asm_nodes.operacion_unaria import (
     visit_operacion_unaria as _visit_operacion_unaria,
 )
-from .asm_nodes.valor import visit_valor as _visit_valor
-from .asm_nodes.identificador import visit_identificador as _visit_identificador
-from .asm_nodes.usar import visit_usar as _visit_usar
-from .asm_nodes.romper import visit_romper as _visit_romper
-from .asm_nodes.continuar import visit_continuar as _visit_continuar
-from .asm_nodes.pasar import visit_pasar as _visit_pasar
+from src.cobra.transpilers.transpiler.asm_nodes.valor import visit_valor as _visit_valor
+from src.cobra.transpilers.transpiler.asm_nodes.identificador import visit_identificador as _visit_identificador
+from src.cobra.transpilers.transpiler.asm_nodes.usar import visit_usar as _visit_usar
+from src.cobra.transpilers.transpiler.asm_nodes.romper import visit_romper as _visit_romper
+from src.cobra.transpilers.transpiler.asm_nodes.continuar import visit_continuar as _visit_continuar
+from src.cobra.transpilers.transpiler.asm_nodes.pasar import visit_pasar as _visit_pasar
 
 
 class TranspiladorASM(BaseTranspiler):
