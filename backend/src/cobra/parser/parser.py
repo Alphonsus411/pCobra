@@ -2,6 +2,7 @@
 
 import logging
 import json
+import os
 from cobra.lexico.lexer import TipoToken, Token
 
 from core.ast_nodes import (
@@ -45,6 +46,7 @@ from core.ast_nodes import (
 )
 
 from core import NodoYield
+
 
 # Palabras reservadas que no pueden usarse como identificadores
 PALABRAS_RESERVADAS = {
@@ -1145,7 +1147,6 @@ class ClassicParser:
 # Permitir seleccionar un parser alternativo basado en Lark mediante la variable
 # de entorno ``COBRA_PARSER``. Si su valor es ``"lark"`` se cargará
 # ``LarkParser`` en lugar del parser clásico.
-import os
 
 if os.getenv("COBRA_PARSER") == "lark":
     from src.cobra.parser.lark_parser import LarkParser
