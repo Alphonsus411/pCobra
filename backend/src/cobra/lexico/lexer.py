@@ -248,7 +248,7 @@ class Lexer:
             matched = False
             for tipo, patron in especificacion_tokens:
                 regex = re.compile(patron, re.UNICODE)
-                coincidencia = regex.match(self.codigo_fuente[self.posicion :])
+                coincidencia = regex.match(self.codigo_fuente[self.posicion:])
                 if coincidencia:
                     valor_original = coincidencia.group(0)
                     if tipo:
