@@ -48,8 +48,8 @@ class _ExprCounter(NodeVisitor):
         self.counts[key] = self.counts.get(key, 0) + 1
         self.visit(nodo.operando)
 
-    def generic_visit(self, nodo: Any):
-        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+    def generic_visit(self, node: Any):
+        for attr, value in list(getattr(node, "__dict__", {}).items()):
             if isinstance(value, list):
                 for v in value:
                     if hasattr(v, "aceptar"):
@@ -117,17 +117,17 @@ class _CommonSubexprEliminator(NodeVisitor):
             nodo.cuerpo = assigns + nodo.cuerpo
         return nodo
 
-    def generic_visit(self, nodo: Any):
-        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+    def generic_visit(self, node: Any):
+        for attr, value in list(getattr(node, "__dict__", {}).items()):
             if isinstance(value, list):
                 setattr(
-                    nodo,
+                    node,
                     attr,
                     [self.visit(v) if hasattr(v, "aceptar") else v for v in value],
                 )
             elif hasattr(value, "aceptar"):
-                setattr(nodo, attr, self.visit(value))
-        return nodo
+                setattr(node, attr, self.visit(value))
+        return node
 
 
 def eliminate_common_subexpressions(ast: List[Any]):

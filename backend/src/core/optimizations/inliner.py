@@ -75,8 +75,8 @@ class _FunctionInliner(NodeVisitor):
                 return self._reemplazar(copy.deepcopy(expr), reemplazos)
         return nodo
 
-    def generic_visit(self, nodo: Any):
-        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+    def generic_visit(self, node: Any):
+        for attr, value in list(getattr(node, "__dict__", {}).items()):
             if isinstance(value, list):
                 nuevos = []
                 for v in value:
@@ -87,20 +87,20 @@ class _FunctionInliner(NodeVisitor):
                         nuevos.extend(res)
                     else:
                         nuevos.append(res)
-                setattr(nodo, attr, nuevos)
+                setattr(node, attr, nuevos)
             elif hasattr(value, "aceptar"):
-                setattr(nodo, attr, self.visit(value))
-        return nodo
+                setattr(node, attr, self.visit(value))
+        return node
 
-    def _reemplazar(self, nodo: Any, reemplazos: dict[str, Any]):
-        if isinstance(nodo, NodoIdentificador) and nodo.nombre in reemplazos:
-            return reemplazos[nodo.nombre]
-        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+    def _reemplazar(self, node: Any, reemplazos: dict[str, Any]):
+        if isinstance(node, NodoIdentificador) and node.nombre in reemplazos:
+            return reemplazos[node.nombre]
+        for attr, value in list(getattr(node, "__dict__", {}).items()):
             if isinstance(value, list):
-                setattr(nodo, attr, [self._reemplazar(v, reemplazos) for v in value])
+                setattr(node, attr, [self._reemplazar(v, reemplazos) for v in value])
             elif hasattr(value, "__dict__"):
-                setattr(nodo, attr, self._reemplazar(value, reemplazos))
-        return nodo
+                setattr(node, attr, self._reemplazar(value, reemplazos))
+        return node
 
 
 def inline_functions(ast: List[Any]):

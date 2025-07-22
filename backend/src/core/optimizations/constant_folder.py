@@ -77,13 +77,13 @@ class _ConstantFolder(NodeVisitor):
         nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
         return nodo
 
-    def generic_visit(self, nodo: Any):
-        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+    def generic_visit(self, node: Any):
+        for attr, value in list(getattr(node, "__dict__", {}).items()):
             if isinstance(value, list):
-                setattr(nodo, attr, [self.visit(v) for v in value])
+                setattr(node, attr, [self.visit(v) for v in value])
             elif hasattr(value, "aceptar"):
-                setattr(nodo, attr, self.visit(value))
-        return nodo
+                setattr(node, attr, self.visit(value))
+        return node
 
     # Helpers --------------------------------------------------------------
     def _evaluar(self, izq: Any, token: Token, der: Any):
