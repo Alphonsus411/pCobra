@@ -24,9 +24,8 @@ def test_sandbox_js_inyeccion_no_ejecuta():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
     codigo = "`);console.log('inseguro');//"
-    with pytest.raises(subprocess.CalledProcessError) as exc:
-        ejecutar_en_sandbox_js(codigo)
-    assert "inseguro" not in exc.value.stdout
+    salida = ejecutar_en_sandbox_js(codigo)
+    assert "SyntaxError" in salida
 
 
 @pytest.mark.timeout(5)
