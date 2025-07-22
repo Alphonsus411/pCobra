@@ -42,11 +42,13 @@ def ejecutar_en_sandbox(codigo: str) -> str:
     return env["_print"]()
 
 
-def ejecutar_en_sandbox_js(codigo: str) -> str:
+def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
     """Ejecuta código JavaScript de forma aislada usando Node.
 
     El código se serializa para evitar inyección de comandos cuando se pasa a
     la opción ``-e`` de Node.
+    
+    ``timeout`` especifica el tiempo límite en segundos para la ejecución.
     """
     import json
     import os
@@ -75,8 +77,11 @@ process.stdout.write(output);
             text=True,
             check=True,
             cwd=base_dir,
+            timeout=timeout,
         )  # nosec B603
         return proc.stdout
+    except subprocess.TimeoutExpired:
+        return "Error: tiempo de ejecuci\u00f3n agotado"
     finally:
         os.unlink(tmp_path)
 
