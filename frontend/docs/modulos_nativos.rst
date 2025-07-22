@@ -72,7 +72,8 @@ Red
 Seguridad
 ---------
 - ``hash_md5(texto)`` devuelve el hash MD5 de ``texto``.
-  .. warning:: MD5 es un algoritmo obsoleto para hashing seguro; se recomienda usar ``hash_sha256``.
+  .. warning:: Esta función está en desuso y no debe emplearse para seguridad.
+     MD5 es un algoritmo obsoleto; se recomienda usar ``hash_sha256``.
 - ``hash_sha256(texto)`` devuelve el hash SHA-256.
 - ``generar_uuid()`` crea un identificador unico.
 
