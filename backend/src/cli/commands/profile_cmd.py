@@ -6,6 +6,7 @@ import io
 import logging
 import os
 import pstats
+import shutil
 import subprocess
 import tempfile
 
@@ -103,6 +104,13 @@ class ProfileCommand(BaseCommand):
             profiler.disable()
             stats_file = output
             if ui:
+                if shutil.which(ui) is None:
+                    msg = _(
+                        "Herramienta {tool} no encontrada. "
+                        "Instálala con 'pip install {tool}'"
+                    ).format(tool=ui)
+                    mostrar_error(msg)
+                    return 1
                 if not stats_file:
                     tmp = tempfile.NamedTemporaryFile(suffix=".prof", delete=False)
                     stats_file = tmp.name
