@@ -47,6 +47,8 @@ def cargar_extension(ruta: str) -> ModuleType:
         nombre = os.path.splitext(os.path.basename(path))[0]
         loader = importlib.machinery.ExtensionFileLoader(nombre, path)
         spec = importlib.util.spec_from_loader(loader.name, loader)
+        if spec is None:
+            raise ImportError(f"No se pudo obtener un spec para {path}")
         module = importlib.util.module_from_spec(spec)
         loader.exec_module(module)
         _cache[path] = module
