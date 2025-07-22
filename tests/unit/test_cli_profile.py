@@ -62,3 +62,23 @@ def test_cli_profile_analysis_flag(tmp_path, monkeypatch):
             main(["profile", str(archivo), "--analysis"])
         data = buf.getvalue()
     assert "Lexer profile" in data and "Parser profile" in data
+
+
+def test_cli_profile_invalid_ui(tmp_path, monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
+    monkeypatch.setattr(backend_map, "get_toml_map", lambda: {})
+    monkeypatch.setattr(module_map, "_toml_cache", {}, raising=False)
+    monkeypatch.setattr(backend_map, "_toml_cache", {}, raising=False)
+    for name in dir(backend_nodes):
+        if name.startswith("Nodo"):
+            obj = getattr(backend_nodes, name)
+            monkeypatch.setattr(src_nodes, name, obj, raising=False)
+            monkeypatch.setattr(interpreter_mod, name, obj, raising=False)
+    archivo = tmp_path / "prog4.co"
+    archivo.write_text("imprimir(4)")
+    with StringIO() as buf:
+        from unittest.mock import patch
+        with patch("sys.stdout", buf):
+            main(["profile", str(archivo), "--ui", "fake_tool"])
+        data = buf.getvalue()
+    assert "fake_tool" in data and "no encontrada" in data
