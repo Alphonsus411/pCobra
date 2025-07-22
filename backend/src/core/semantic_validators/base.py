@@ -15,12 +15,12 @@ class ValidadorBase(NodeVisitor):
         if self.siguiente is not None:
             nodo.aceptar(self.siguiente)
 
-    def generic_visit(self, nodo):
-        for atributo in getattr(nodo, "__dict__", {}).values():
+    def generic_visit(self, node):
+        for atributo in getattr(node, "__dict__", {}).values():
             if isinstance(atributo, list):
                 for elem in atributo:
                     if hasattr(elem, "aceptar"):
                         elem.aceptar(self)
             elif hasattr(atributo, "aceptar"):
                 atributo.aceptar(self)
-        self.delegar(nodo)
+        self.delegar(node)

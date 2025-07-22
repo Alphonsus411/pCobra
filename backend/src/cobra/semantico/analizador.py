@@ -77,8 +77,8 @@ class AnalizadorSemantico(NodeVisitor):
             metodo.aceptar(self)
         self._salir_ambito()
 
-    def generic_visit(self, nodo):
-        for valor in getattr(nodo, "__dict__", {}).values():
+    def generic_visit(self, node):
+        for valor in getattr(node, "__dict__", {}).values():
             if isinstance(valor, list):
                 for elem in valor:
                     if hasattr(elem, "aceptar"):
