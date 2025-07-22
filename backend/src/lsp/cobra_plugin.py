@@ -116,6 +116,7 @@ def pylsp_diagnostics(config, workspace, document, **_args):
     """Valida el documento y reporta errores de sintaxis."""
     codigo = document.source
     diagnostics = []
+    parser: Parser | None = None
     try:
         tokens = Lexer(codigo).tokenizar()
         parser = Parser(tokens)
@@ -135,7 +136,7 @@ def pylsp_diagnostics(config, workspace, document, **_args):
             }
         )
     except SyntaxError as exc:
-        token = parser.token_actual() if "parser" in locals() else None
+        token = parser.token_actual() if parser is not None else None
         line = getattr(token, "linea", 1) - 1 if token else 0
         col = getattr(token, "columna", 1) - 1 if token else 0
         diagnostics.append(
