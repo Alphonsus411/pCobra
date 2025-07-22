@@ -80,6 +80,8 @@ process.stdout.write(output);
             timeout=timeout,
         )  # nosec B603
         return proc.stdout
+    except subprocess.CalledProcessError as exc:
+        return exc.stderr or f"Error: {exc}"
     except subprocess.TimeoutExpired:
         return "Error: tiempo de ejecuci\u00f3n agotado"
     finally:
@@ -92,22 +94,27 @@ def compilar_en_sandbox_cpp(codigo: str) -> str:
         src = Path(tmpdir) / "main.cpp"
         src.write_text(codigo)
         exe = Path(tmpdir) / "a.out"
-        subprocess.run(
-            [
-                "g++",
-                "-std=c++17",
-                str(src),
-                "-o",
-                str(exe),
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )  # nosec B603
-        proc = subprocess.run(
-            [str(exe)], capture_output=True, text=True, check=True
-        )  # nosec B603
-        return proc.stdout
+        try:
+            subprocess.run(
+                [
+                    "g++",
+                    "-std=c++17",
+                    str(src),
+                    "-o",
+                    str(exe),
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )  # nosec B603
+            proc = subprocess.run(
+                [str(exe)], capture_output=True, text=True, check=True
+            )  # nosec B603
+            return proc.stdout
+        except subprocess.CalledProcessError as exc:
+            if exc.stderr:
+                return exc.stderr.decode() if isinstance(exc.stderr, bytes) else exc.stderr
+            return str(exc)
 
 
 def ejecutar_en_contenedor(codigo: str, backend: str) -> str:
