@@ -18,5 +18,5 @@ def obtener_url(url):
     url_baja = url.lower()
     if not (url_baja.startswith("http://") or url_baja.startswith("https://")):
         raise ValueError("Esquema de URL no soportado")
-    with urllib.request.urlopen(url) as resp:
+    with urllib.request.urlopen(url, timeout=5) as resp:
         return resp.read().decode("utf-8")
