@@ -63,7 +63,7 @@ def obtener_modulo(nombre: str):
 
         print(f"Paquete '{nombre}' no encontrado. Instalando...")
         try:
-            subprocess.run(["pip", "install", nombre], check=True)
+            subprocess.run([sys.executable, "-m", "pip", "install", nombre], check=True)
         except subprocess.CalledProcessError as exc:
             raise RuntimeError(f"Fallo al instalar '{nombre}': {exc}") from exc
         try:

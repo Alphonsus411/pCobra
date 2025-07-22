@@ -22,7 +22,7 @@ def test_obtener_modulo_instala_si_no_existe():
         mock_run.return_value.returncode = 0
         mod = usar_loader.obtener_modulo('demo')
     usar_loader.USAR_WHITELIST.remove('demo')
-    mock_run.assert_called_once_with(['pip', 'install', 'demo'], check=True)
+    mock_run.assert_called_once_with([sys.executable, '-m', 'pip', 'install', 'demo'], check=True)
     assert mod is mock_mod
 
 
