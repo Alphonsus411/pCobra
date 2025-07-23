@@ -4,7 +4,7 @@
 
 Version 9.1.0
 
-Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX, allowing greater versatility when running and deploying Cobra code.
+Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX, allowing greater versatility when running and deploying Cobra code.
 
 ## Table of Contents
 
@@ -194,7 +194,7 @@ The project is organized into the following folders and modules:
 # Main Features
 
 - Lexer and Parser: Implementation of a lexer to tokenize the source code and a parser to build an abstract syntax tree (AST).
-- Transpilers to Python, JavaScript, assembly, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX: Cobra can convert code to these languages, facilitating integration with external applications.
+- Transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX: Cobra can convert code to these languages, facilitating integration with external applications.
 - Support for advanced structures: declaration of variables, functions, classes, lists and dictionaries, as well as loops and conditionals.
 - Native modules with I/O functions, math utilities and data structures ready to use from Cobra.
 - Runtime package installation via the `usar` instruction.
@@ -372,7 +372,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -394,6 +394,10 @@ from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 from cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
+from cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
+from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
+from cobra.transpilers.transpiler.to_swift import TranspiladorSwift
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
 from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
 from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
@@ -403,6 +407,10 @@ codigo_fortran = TranspiladorFortran().generate_code(arbol)
 codigo_pascal = TranspiladorPascal().generate_code(arbol)
 codigo_ruby = TranspiladorRuby().generate_code(arbol)
 codigo_php = TranspiladorPHP().generate_code(arbol)
+codigo_perl = TranspiladorPerl().generate_code(arbol)
+codigo_visualbasic = TranspiladorVisualBasic().generate_code(arbol)
+codigo_kotlin = TranspiladorKotlin().generate_code(arbol)
+codigo_swift = TranspiladorSwift().generate_code(arbol)
 codigo_matlab = TranspiladorMatlab().generate_code(arbol)
 codigo_mojo = TranspiladorMojo().generate_code(arbol)
 codigo_latex = TranspiladorLatex().generate_code(arbol)

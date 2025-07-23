@@ -65,6 +65,8 @@ Transpiladores --> ASM
 Transpiladores --> Rust
 Transpiladores --> "C++"
 Transpiladores --> Go
+Transpiladores --> Kotlin
+Transpiladores --> Swift
 Transpiladores --> R
 Transpiladores --> Julia
 Transpiladores --> Java

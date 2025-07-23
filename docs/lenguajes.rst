@@ -27,6 +27,10 @@ detalles consulta :doc:`../frontend/docs/backends` y la sección
      - Experimental
    * - Go
      - Parcial
+   * - Kotlin
+     - Parcial
+   * - Swift
+     - Parcial
    * - R
      - Parcial
    * - Julia
