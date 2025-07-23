@@ -28,6 +28,7 @@ STANDARD_IMPORTS = {
         "import * as tiempo from './nativos/tiempo.js';",
     ],
     "swift": [],
+    "perl": [],
 }
 
 

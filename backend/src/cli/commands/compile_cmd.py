@@ -19,6 +19,7 @@ from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.transpiler.to_r import TranspiladorR
 from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
@@ -59,6 +60,7 @@ TRANSPILERS = {
     "fortran": TranspiladorFortran,
     "pascal": TranspiladorPascal,
     "php": TranspiladorPHP,
+    "perl": TranspiladorPerl,
     "matlab": TranspiladorMatlab,
     "latex": TranspiladorLatex,
     "wasm": TranspiladorWasm,
