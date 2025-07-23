@@ -6,7 +6,7 @@
 Versión 9.1.0
 
 [English version available here](README_en.md)
-Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
+Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
 
 
 ## Tabla de Contenidos
@@ -227,7 +227,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 # Características Principales
 
 - Lexer y Parser: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
-- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab y LaTeX: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
+- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
 - Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
 - Módulos nativos con funciones de E/S, utilidades matemáticas y estructuras de datos para usar directamente desde Cobra.
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
@@ -436,7 +436,7 @@ para var i en rango(2) :
 '''
 ````
 
-Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println`, en Kotlin `println`, en Swift `print`, en R se usa `print` y en Julia `println`; en Java se usa `System.out.println`, en COBOL `DISPLAY`, en Fortran `print *` y en Pascal `writeln`, en VisualBasic `Console.WriteLine`, en Ruby `puts`, en PHP `echo`, en Matlab `disp` y en LaTeX `\texttt{}`.
+Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println`, en Kotlin `println`, en Swift `print`, en R se usa `print` y en Julia `println`; en Java se usa `System.out.println`, en COBOL `DISPLAY`, en Fortran `print *` y en Pascal `writeln`, en VisualBasic `Console.WriteLine`, en Ruby `puts`, en PHP `echo`, en Matlab `disp`, en Mojo `print` y en LaTeX `\texttt{}`.
 
 ## Integración con holobit-sdk
 
@@ -501,7 +501,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 ## Invocar el transpilador
 
 La carpeta [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler)
-contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab y LaTeX. Una vez
+contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
 
@@ -526,6 +526,7 @@ from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 from cobra.transpilers.transpiler.to_php import TranspiladorPHP
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
 from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
 
 codigo_cobol = TranspiladorCOBOL().generate_code(arbol)
@@ -534,6 +535,7 @@ codigo_pascal = TranspiladorPascal().generate_code(arbol)
 codigo_ruby = TranspiladorRuby().generate_code(arbol)
 codigo_php = TranspiladorPHP().generate_code(arbol)
 codigo_matlab = TranspiladorMatlab().generate_code(arbol)
+codigo_mojo = TranspiladorMojo().generate_code(arbol)
 codigo_latex = TranspiladorLatex().generate_code(arbol)
 ```
 
@@ -567,7 +569,7 @@ Al generar código para estas funciones, se crean llamadas `asyncio.create_task`
 Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 
 ```bash
-# Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab o LaTeX
+# Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo o LaTeX
 cobra compilar programa.co --tipo python
 
 # Ejemplo de mensaje de error al compilar un archivo inexistente

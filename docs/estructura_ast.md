@@ -76,6 +76,7 @@ Transpiladores --> Ruby
 Transpiladores --> PHP
 Transpiladores --> Perl
 Transpiladores --> Matlab
+Transpiladores --> Mojo
 Transpiladores --> LaTeX
 @enduml
 ```

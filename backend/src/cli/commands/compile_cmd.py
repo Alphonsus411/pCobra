@@ -17,6 +17,7 @@ from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_julia import TranspiladorJulia
 from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from cobra.transpilers.transpiler.to_php import TranspiladorPHP
 from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
@@ -64,6 +65,7 @@ TRANSPILERS = {
     "perl": TranspiladorPerl,
     "visualbasic": TranspiladorVisualBasic,
     "matlab": TranspiladorMatlab,
+    "mojo": TranspiladorMojo,
     "latex": TranspiladorLatex,
     "wasm": TranspiladorWasm,
 }
@@ -90,7 +92,7 @@ class CompileCommand(BaseCommand):
 
     Soporta Python, JavaScript, ensamblador, Rust, C++, C, Go, Kotlin, Swift,
     R, Julia, Ruby, PHP, Java y ahora también COBOL, Fortran, Pascal,
-    VisualBasic, Matlab, LaTeX y WebAssembly.
+    VisualBasic, Matlab, Mojo, LaTeX y WebAssembly.
     """
 
     name = "compilar"
