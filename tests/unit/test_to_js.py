@@ -18,6 +18,8 @@ from core.ast_nodes import (
     NodoPasar,
     NodoSwitch,
     NodoCase,
+    NodoGlobal,
+    NodoNoLocal,
     NodoImportDesde,
     NodoExport,
 )
@@ -172,3 +174,17 @@ def test_imports_js_por_defecto():
     resultado = TranspiladorJavaScript().generate_code([])
     esperado = "\n".join(get_standard_imports("js"))
     assert resultado == esperado
+
+
+def test_transpilador_global_js():
+    ast = [NodoGlobal(["a", "b"])]
+    t = TranspiladorJavaScript()
+    resultado = t.generate_code(ast)
+    assert resultado == IMPORTS + "// global a, b"
+
+
+def test_transpilador_nolocal_js():
+    ast = [NodoNoLocal(["x"])]
+    t = TranspiladorJavaScript()
+    resultado = t.generate_code(ast)
+    assert resultado == IMPORTS + "// nonlocal x"
