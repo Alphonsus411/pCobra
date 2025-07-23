@@ -73,6 +73,7 @@ Transpiladores --> Fortran
 Transpiladores --> Pascal
 Transpiladores --> Ruby
 Transpiladores --> PHP
+Transpiladores --> Perl
 Transpiladores --> Matlab
 Transpiladores --> LaTeX
 @enduml

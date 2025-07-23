@@ -43,6 +43,8 @@ detalles consulta :doc:`../frontend/docs/backends` y la sección
      - Parcial
    * - PHP
      - Parcial
+   * - Perl
+     - Parcial
    * - Matlab
      - Parcial
    * - LaTeX
