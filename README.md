@@ -580,6 +580,9 @@ Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 # Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo o LaTeX
 cobra compilar programa.co --tipo python
 
+# Transpilar inverso de Python a JavaScript
+cobra transpilar-inverso script.py --origen=python --destino=js
+
 # Ejemplo de mensaje de error al compilar un archivo inexistente
 cobra compilar noexiste.co
 # Salida:
