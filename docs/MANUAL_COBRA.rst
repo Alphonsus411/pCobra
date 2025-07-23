@@ -166,6 +166,10 @@ puede ejecutarse un archivo directamente con ``cobra ejecutar``.
 El subcomando ``cobra verificar`` (``cobra verify`` en la versión en inglés)
 permite comparar la salida de un programa transpilado a distintos lenguajes
 (actualmente Python y JavaScript) y avisa si alguna difiere.
+Adicionalmente puedes convertir código escrito en otros lenguajes a Cobra y
+volver a transpilarlos con ``cobra transpilar-inverso``::
+
+   cobra transpilar-inverso ejemplo.py --origen=python --destino=js
 
 Limitaciones de los backends
 ----------------------------
