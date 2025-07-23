@@ -49,5 +49,7 @@ detalles consulta :doc:`../frontend/docs/backends` y la sección
      - Parcial
    * - Matlab
      - Parcial
+   * - Mojo
+     - Parcial
    * - LaTeX
      - Parcial
