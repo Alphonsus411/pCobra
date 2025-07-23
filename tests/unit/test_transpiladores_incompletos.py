@@ -19,7 +19,7 @@ class NodoDesconocido(NodoAST):
 def test_transpiladores_cpp_rust_global_vacio():
     ast = [NodoGlobal(["x"])]
     assert TranspiladorCPP().generate_code(ast) == "// global x"
-    assert TranspiladorRust().generate_code(ast) == ""
+    assert TranspiladorRust().generate_code(ast) == "// global x"
 
 
 def test_transpilador_js_nodo_invalido_attribute_error():
