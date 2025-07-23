@@ -12,6 +12,7 @@ from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from cobra.transpilers.transpiler.to_go import TranspiladorGo
 from cobra.transpilers.transpiler.to_java import TranspiladorJava
+from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_julia import TranspiladorJulia
 from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
@@ -47,6 +48,7 @@ TRANSPILERS = {
     "cpp": TranspiladorCPP,
     "c": TranspiladorC,
     "go": TranspiladorGo,
+    "kotlin": TranspiladorKotlin,
     "ruby": TranspiladorRuby,
     "r": TranspiladorR,
     "julia": TranspiladorJulia,
