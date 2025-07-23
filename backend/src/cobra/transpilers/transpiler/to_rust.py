@@ -57,11 +57,19 @@ def visit_del(self, nodo):
 
 
 def visit_global(self, nodo):
-    pass
+    """Marca variables globales en Rust."""
+    nombres = ", ".join(nodo.nombres)
+    # En Rust no existe un equivalente directo a "global" de Python,
+    # por lo que se añade un comentario indicando su presencia.
+    self.agregar_linea(f"// global {nombres}")
 
 
 def visit_nolocal(self, nodo):
-    pass
+    """Marca variables no locales en Rust."""
+    nombres = ", ".join(nodo.nombres)
+    # Rust carece de un concepto equivalente a "nonlocal".
+    # Se inserta un comentario para mantener la información de ámbito.
+    self.agregar_linea(f"// nonlocal {nombres}")
 
 
 def visit_with(self, nodo):
@@ -159,6 +167,7 @@ TranspiladorRust.visit_assert = visit_assert
 TranspiladorRust.visit_del = visit_del
 TranspiladorRust.visit_global = visit_global
 TranspiladorRust.visit_nolocal = visit_nolocal
+TranspiladorRust.visit_no_local = visit_nolocal
 TranspiladorRust.visit_with = visit_with
 TranspiladorRust.visit_import_desde = visit_import_desde
 TranspiladorRust.visit_switch = _visit_switch

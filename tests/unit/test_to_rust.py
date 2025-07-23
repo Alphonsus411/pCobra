@@ -22,6 +22,8 @@ from core.ast_nodes import (
     NodoOption,
     NodoSwitch,
     NodoCase,
+    NodoGlobal,
+    NodoNoLocal,
 )
 
 
@@ -228,4 +230,18 @@ def test_obtener_valor_listas_diccionarios():
         "let b = std::collections::HashMap::from([(x, 1)]);"
     )
     assert resultado == esperado
+
+
+def test_transpilador_global_rust():
+    ast = [NodoGlobal(["a", "b"])]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    assert resultado == "// global a, b"
+
+
+def test_transpilador_nolocal_rust():
+    ast = [NodoNoLocal(["x"])]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    assert resultado == "// nonlocal x"
 
