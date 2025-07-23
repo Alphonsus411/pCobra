@@ -78,11 +78,13 @@ def visit_del(self, nodo):
 
 
 def visit_global(self, nodo):
-    pass
+    nombres = ", ".join(nodo.nombres)
+    self.agregar_linea(f"// global {nombres}")
 
 
 def visit_nolocal(self, nodo):
-    pass
+    nombres = ", ".join(nodo.nombres)
+    self.agregar_linea(f"// nonlocal {nombres}")
 
 
 def visit_with(self, nodo):
@@ -221,6 +223,7 @@ TranspiladorJavaScript.visit_assert = visit_assert
 TranspiladorJavaScript.visit_del = visit_del
 TranspiladorJavaScript.visit_global = visit_global
 TranspiladorJavaScript.visit_nolocal = visit_nolocal
+TranspiladorJavaScript.visit_no_local = visit_nolocal
 TranspiladorJavaScript.visit_with = visit_with
 TranspiladorJavaScript.visit_import_desde = visit_import_desde
 
