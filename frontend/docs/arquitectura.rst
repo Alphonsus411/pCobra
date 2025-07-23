@@ -15,7 +15,7 @@ Command (ver :ref:`patron_command`).
 Core
 ----
 Contiene el corazón del lenguaje: lexer, parser, intérprete y
-transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, Matlab y LaTeX. Estos elementos trabajan en
+transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX. Estos elementos trabajan en
 conjunto para analizar el código fuente y transformarlo en otras
 representaciones o ejecutarlo de forma directa.
 Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilitar su reutilización.
@@ -62,7 +62,7 @@ optimizar el rendimiento y evitar fugas de memoria.
        CLI -> Lexer;
    Interprete -> Memoria;
    Interprete -> ModulosNativos;
-   Transpiladores -> {Python JS Asm Rust Cpp Go R Julia Java COBOL Fortran Pascal Ruby PHP Matlab LaTeX};
+   Transpiladores -> {Python JS Asm Rust Cpp Go Kotlin Swift R Julia Java COBOL Fortran Pascal Ruby PHP Perl VisualBasic Matlab Mojo LaTeX};
    }
  
 Interacción de los módulos

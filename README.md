@@ -525,6 +525,10 @@ from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 from cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
+from cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
+from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
+from cobra.transpilers.transpiler.to_swift import TranspiladorSwift
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
 from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
 from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
@@ -534,6 +538,10 @@ codigo_fortran = TranspiladorFortran().generate_code(arbol)
 codigo_pascal = TranspiladorPascal().generate_code(arbol)
 codigo_ruby = TranspiladorRuby().generate_code(arbol)
 codigo_php = TranspiladorPHP().generate_code(arbol)
+codigo_perl = TranspiladorPerl().generate_code(arbol)
+codigo_visualbasic = TranspiladorVisualBasic().generate_code(arbol)
+codigo_kotlin = TranspiladorKotlin().generate_code(arbol)
+codigo_swift = TranspiladorSwift().generate_code(arbol)
 codigo_matlab = TranspiladorMatlab().generate_code(arbol)
 codigo_mojo = TranspiladorMojo().generate_code(arbol)
 codigo_latex = TranspiladorLatex().generate_code(arbol)
@@ -968,7 +976,7 @@ Este proyecto está bajo la [Licencia MIT](LICENSE).
 
 ### Notas
 
-- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación y la compatibilidad con Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, VisualBasic y PHP.
+- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación y la compatibilidad con Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX.
 - **Ejemplos de Código y Nuevas Estructuras**: Incluye ejemplos con el uso de estructuras avanzadas como clases y diccionarios en el lenguaje Cobra.
 
 Si deseas agregar o modificar algo, házmelo saber.

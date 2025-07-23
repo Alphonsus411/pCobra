@@ -8,14 +8,19 @@ Transpiladores --> ASM
 Transpiladores --> Rust
 Transpiladores --> "C++"
 Transpiladores --> Go
+Transpiladores --> Kotlin
+Transpiladores --> Swift
 Transpiladores --> R
 Transpiladores --> Julia
 Transpiladores --> Java
 Transpiladores --> COBOL
 Transpiladores --> Fortran
 Transpiladores --> Pascal
+Transpiladores --> Perl
+Transpiladores --> VisualBasic
 Transpiladores --> Ruby
 Transpiladores --> PHP
+Transpiladores --> Mojo
 Transpiladores --> Matlab
 Transpiladores --> LaTeX
 @enduml
