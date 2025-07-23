@@ -24,6 +24,7 @@ from cobra.transpilers.transpiler.to_r import TranspiladorR
 from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 from cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from cobra.transpilers.transpiler.to_swift import TranspiladorSwift
 from core.ast_cache import obtener_ast
 from core.sandbox import validar_dependencias
 from core.semantic_validators import (
@@ -49,6 +50,7 @@ TRANSPILERS = {
     "c": TranspiladorC,
     "go": TranspiladorGo,
     "kotlin": TranspiladorKotlin,
+    "swift": TranspiladorSwift,
     "ruby": TranspiladorRuby,
     "r": TranspiladorR,
     "julia": TranspiladorJulia,
@@ -82,8 +84,9 @@ LANG_CHOICES = sorted(TRANSPILERS.keys())
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
 
-    Soporta Python, JavaScript, ensamblador, Rust, C++, C, Go, R, Julia, Ruby,
-    PHP, Java y ahora también COBOL, Fortran, Pascal, Matlab, LaTeX y WebAssembly.
+    Soporta Python, JavaScript, ensamblador, Rust, C++, C, Go, Kotlin, Swift,
+    R, Julia, Ruby, PHP, Java y ahora también COBOL, Fortran, Pascal,
+    Matlab, LaTeX y WebAssembly.
     """
 
     name = "compilar"

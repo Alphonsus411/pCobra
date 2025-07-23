@@ -27,6 +27,7 @@ STANDARD_IMPORTS = {
         "import * as texto from './nativos/texto.js';",
         "import * as tiempo from './nativos/tiempo.js';",
     ],
+    "swift": [],
 }
 
 
