@@ -1,6 +1,30 @@
 import os
 
-from cobra.transpilers.reverse import ReverseFromPython
+from cobra.transpilers.reverse import (
+    ReverseFromPython,
+    ReverseFromC,
+    ReverseFromCPP,
+    ReverseFromJS,
+    ReverseFromJava,
+    ReverseFromGo,
+    ReverseFromJulia,
+    ReverseFromPHP,
+    ReverseFromPerl,
+    ReverseFromR,
+    ReverseFromRuby,
+    ReverseFromRust,
+    ReverseFromSwift,
+    ReverseFromKotlin,
+    ReverseFromFortran,
+    ReverseFromASM,
+    ReverseFromCOBOL,
+    ReverseFromLatex,
+    ReverseFromMatlab,
+    ReverseFromMojo,
+    ReverseFromPascal,
+    ReverseFromVisualBasic,
+    ReverseFromWasm,
+)
 from src.cli.commands.base import BaseCommand
 from src.cli.commands.compile_cmd import TRANSPILERS, LANG_CHOICES
 from src.cli.i18n import _
@@ -8,6 +32,28 @@ from src.cli.utils.messages import mostrar_error, mostrar_info
 
 REVERSE_TRANSPILERS = {
     "python": ReverseFromPython,
+    "c": ReverseFromC,
+    "cpp": ReverseFromCPP,
+    "js": ReverseFromJS,
+    "java": ReverseFromJava,
+    "go": ReverseFromGo,
+    "julia": ReverseFromJulia,
+    "php": ReverseFromPHP,
+    "perl": ReverseFromPerl,
+    "r": ReverseFromR,
+    "ruby": ReverseFromRuby,
+    "rust": ReverseFromRust,
+    "swift": ReverseFromSwift,
+    "kotlin": ReverseFromKotlin,
+    "fortran": ReverseFromFortran,
+    "asm": ReverseFromASM,
+    "cobol": ReverseFromCOBOL,
+    "latex": ReverseFromLatex,
+    "matlab": ReverseFromMatlab,
+    "mojo": ReverseFromMojo,
+    "pascal": ReverseFromPascal,
+    "visualbasic": ReverseFromVisualBasic,
+    "wasm": ReverseFromWasm,
 }
 
 ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
