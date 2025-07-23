@@ -71,6 +71,7 @@ Transpiladores --> Java
 Transpiladores --> COBOL
 Transpiladores --> Fortran
 Transpiladores --> Pascal
+Transpiladores --> VisualBasic
 Transpiladores --> Ruby
 Transpiladores --> PHP
 Transpiladores --> Perl

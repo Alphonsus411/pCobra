@@ -29,6 +29,7 @@ STANDARD_IMPORTS = {
     ],
     "swift": [],
     "perl": [],
+    "visualbasic": [],
 }
 
 

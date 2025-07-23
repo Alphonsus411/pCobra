@@ -39,6 +39,8 @@ detalles consulta :doc:`../frontend/docs/backends` y la sección
      - Parcial
    * - Pascal
      - Parcial
+   * - VisualBasic
+     - Parcial
    * - Ruby
      - Parcial
    * - PHP
