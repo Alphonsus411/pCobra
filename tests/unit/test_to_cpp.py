@@ -13,6 +13,8 @@ from core.ast_nodes import (
     NodoClase,
     NodoYield,
     NodoValor,
+    NodoGlobal,
+    NodoNoLocal,
 )
 
 
@@ -116,3 +118,17 @@ def test_transpilador_switch():
         "}"
     )
     assert resultado == esperado
+
+
+def test_transpilador_global():
+    ast = [NodoGlobal(["a", "b"])]
+    t = TranspiladorCPP()
+    resultado = t.generate_code(ast)
+    assert resultado == "// global a, b"
+
+
+def test_transpilador_nolocal():
+    ast = [NodoNoLocal(["x"])]
+    t = TranspiladorCPP()
+    resultado = t.generate_code(ast)
+    assert resultado == "// nonlocal x"
