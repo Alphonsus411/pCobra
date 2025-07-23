@@ -57,6 +57,13 @@ class ReverseFromPython(BaseReverseTranspiler):
         self.ast = [self.visit(stmt) for stmt in tree.body]
         return self.ast
 
+    # Ajustar el dispatch para nodos de ``ast`` escritos en CamelCase
+    def visit(self, node):  # type: ignore[override]
+        metodo = getattr(self, f"visit_{node.__class__.__name__}", None)
+        if metodo is None:
+            return self.generic_visit(node)
+        return metodo(node)
+
     # Utilizamos los métodos visit_ heredados de NodeVisitor
     def generic_visit(self, node):
         raise NotImplementedError(f"Nodo de Python no soportado: {node.__class__.__name__}")
