@@ -25,15 +25,32 @@ class QualiaSpirit:
         self.history.append(code)
 
     def suggestions(self) -> List[str]:
-        """Devuelve una lista de sugerencias basadas en el historial."""
+        """Devuelve una lista de sugerencias basadas en el historial y el conocimiento."""
         joined = "\n".join(self.history)
         sugerencias: List[str] = []
+
         if "imprimir" not in joined:
             sugerencias.append("Agrega \"imprimir\" para depurar.")
-        if any("var " in linea for linea in self.history):
+
+        if any(len(nombre) <= 2 for nombre in self.knowledge.variable_names):
             sugerencias.append("Usa nombres descriptivos para variables.")
+
+        if self.knowledge.node_counts.get("NodoAsignacion", 0) >= 5:
+            sugerencias.append(
+                "Considera agrupar asignaciones repetidas en funciones."
+            )
+
+        if (
+            self.knowledge.modules_used.get("pandas", 0) >= 1
+            and self.knowledge.modules_used.get("matplotlib", 0) == 0
+        ):
+            sugerencias.append(
+                "Si usas pandas, podr\u00edas utilizar matplotlib para graficar."
+            )
+
         if not sugerencias:
             sugerencias.append("\u00a1Sigue as\u00ed!")
+
         return sugerencias
 
 
