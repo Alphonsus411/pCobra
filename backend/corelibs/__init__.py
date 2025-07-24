@@ -1,13 +1,13 @@
 """Colección de utilidades estándar para Cobra."""
 
-from corelibs.texto import mayusculas, minusculas, invertir, concatenar
-from corelibs.numero import es_par, es_primo, factorial, promedio
-from corelibs.archivo import leer, escribir, existe, eliminar
-from corelibs.tiempo import ahora, formatear, dormir
-from corelibs.coleccion import ordenar, maximo, minimo, sin_duplicados
-from corelibs.seguridad import hash_md5, hash_sha256, generar_uuid
-from corelibs.red import obtener_url, enviar_post
-from corelibs.sistema import obtener_os, ejecutar, obtener_env, listar_dir
+from .texto import mayusculas, minusculas, invertir, concatenar
+from .numero import es_par, es_primo, factorial, promedio
+from .archivo import leer, escribir, existe, eliminar
+from .tiempo import ahora, formatear, dormir
+from .coleccion import ordenar, maximo, minimo, sin_duplicados
+from .seguridad import hash_md5, hash_sha256, generar_uuid
+from .red import obtener_url, enviar_post
+from .sistema import obtener_os, ejecutar, obtener_env, listar_dir
 
 __all__ = [
     "mayusculas",
