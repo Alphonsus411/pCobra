@@ -25,6 +25,7 @@ from src.cli.commands.modules_cmd import ModulesCommand
 from src.cli.commands.package_cmd import PaqueteCommand
 from src.cli.commands.plugins_cmd import PluginsCommand
 from src.cli.commands.profile_cmd import ProfileCommand
+from src.cli.commands.qualia_cmd import QualiaCommand
 from src.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from src.cli.commands.verify_cmd import VerifyCommand
 from src.cli.i18n import _, format_traceback, setup_gettext
@@ -89,6 +90,7 @@ def main(argv=None):
         BenchTranspilersCommand(),
         BenchThreadsCommand(),
         ProfileCommand(),
+        QualiaCommand(),
         CacheCommand(),
         TranspilarInversoCommand(),
         VerifyCommand(),
