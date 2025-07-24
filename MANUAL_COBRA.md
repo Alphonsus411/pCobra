@@ -174,9 +174,25 @@ Se añadieron nuevas construcciones al lenguaje:
 ## 12. Uso de Qualia
 
 Qualia registra cada ejecución y genera sugerencias para mejorar tu código.
-El estado se guarda en `qualia_state.json`. Puedes obtener las sugerencias
-ejecutando `sugerencias` en el modo interactivo o escribiendo `%sugerencias`
-en el kernel de Jupyter.
+El estado se guarda en `qualia_state.json` para conservar la información entre
+sesiones.
+
+Cada vez que ejecutes o transpilas un programa se actualiza la base de
+conocimiento. Puedes consultarla con:
+
+```bash
+cobra qualia mostrar
+```
+
+Si deseas empezar de cero ejecuta:
+
+```bash
+cobra qualia reiniciar
+```
+
+En el modo interactivo escribe `sugerencias` para obtener las recomendaciones
+actuales o bien `%sugerencias` en Jupyter. Las propuestas se vuelven más
+detalladas a medida que Qualia aprende de tu código.
 
 ## 13. Bibliotecas compartidas con ctypes
 
