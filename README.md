@@ -18,6 +18,8 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Uso
 - Tokens y reglas léxicas
 - Ejemplo de Uso
+- Conversión desde otros lenguajes
+- Guía rápida de la CLI
 - Pruebas
 - Generar documentación
 - Análisis con CodeQL
@@ -572,6 +574,24 @@ imprimir('principal')
 
 Al generar código para estas funciones, se crean llamadas `asyncio.create_task` en Python y `Promise.resolve().then` en JavaScript.
 
+## Guía rápida de la CLI
+
+La herramienta `cobra` se invoca con `cobra [subcomando] [archivo] [opciones]`.
+Para obtener ayuda puedes ejecutar:
+
+```bash
+cobra --help
+```
+
+Un uso común es compilar un programa y luego ejecutar el resultado:
+
+```bash
+cobra compilar ejemplo.co --tipo=python > ejemplo.py
+python ejemplo.py
+```
+
+Si no proporcionas un subcomando se abrirá el modo interactivo.
+
 ## Uso desde la CLI
 
 Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
@@ -637,6 +657,18 @@ El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 
 
 Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` para más detalles.
+
+## Conversión desde otros lenguajes a Cobra
+
+Puedes usar `cobra transpilar-inverso` para leer un archivo en otro lenguaje,
+convertirlo al AST de Cobra y luego generarlo en cualquier backend soportado.
+
+```bash
+cobra transpilar-inverso script.py --origen=python --destino=cobra
+```
+
+El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales.
+Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
 ### Diseño extensible de la CLI
 

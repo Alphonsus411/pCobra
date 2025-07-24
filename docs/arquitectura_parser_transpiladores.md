@@ -39,3 +39,24 @@ Transpiladores --> Rust
 ```
 
 Para detalles sobre la estructura de nodos consulta [docs/estructura_ast.md](estructura_ast.md).
+
+## Flujo de transpilación inversa
+
+Cobra también permite convertir código escrito en otros lenguajes al AST de Cobra
+para luego transpilarlo nuevamente. Este proceso se ejecuta así:
+
+1. Un `ReverseTranspiler` lee el archivo origen y lo analiza con `tree-sitter` u
+   otras bibliotecas específicas.
+2. Se genera un AST con los nodos propios de Cobra.
+3. Dicho AST se entrega a cualquier transpilador convencional para producir
+   código en el lenguaje destino.
+
+El comando `cobra transpilar-inverso` automatiza estos pasos.
+
+```bash
+cobra transpilar-inverso ejemplo.py --origen=python --destino=js
+```
+
+La conversión inversa puede ser parcial y ciertas construcciones avanzadas del
+lenguaje de origen podrían no trasladarse exactamente. Se recomienda revisar el
+resultado antes de usarlo en producción.
