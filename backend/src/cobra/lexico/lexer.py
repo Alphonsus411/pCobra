@@ -238,6 +238,12 @@ class Lexer:
             (None, r"\s+"),  # Ignorar espacios en blanco
         ]
 
+        # Compilar las expresiones regulares una sola vez
+        especificacion_tokens = [
+            (tipo, re.compile(patron, re.UNICODE))
+            for tipo, patron in especificacion_tokens
+        ]
+
         prev_pos = -1
         same_pos_count = 0
         linea = 1
@@ -245,8 +251,7 @@ class Lexer:
 
         while self.posicion < len(self.codigo_fuente):
             matched = False
-            for tipo, patron in especificacion_tokens:
-                regex = re.compile(patron, re.UNICODE)
+            for tipo, regex in especificacion_tokens:
                 coincidencia = regex.match(self.codigo_fuente[self.posicion:])
                 if coincidencia:
                     valor_original = coincidencia.group(0)
