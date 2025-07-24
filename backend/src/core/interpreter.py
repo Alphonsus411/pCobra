@@ -216,7 +216,7 @@ class InterpretadorCobra:
         ast = remove_dead_code(
             inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
         )
-        register_execution(str(ast))
+        register_execution(ast)
         AnalizadorSemantico().analizar(ast)
         for nodo in ast:
             self._validar(nodo)

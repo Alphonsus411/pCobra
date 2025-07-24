@@ -22,3 +22,13 @@ def test_qualia_generates_suggestions(tmp_path, monkeypatch):
     sugs = qb.get_suggestions()
     assert any("imprimir" in s for s in sugs)
 
+
+def test_knowledge_persistence(tmp_path, monkeypatch):
+    state = tmp_path / "state.json"
+    monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
+    qb = importlib.reload(qualia_bridge)
+    qb.register_execution("imprimir(1)")
+    data = json.loads(state.read_text())
+    assert "knowledge" in data
+    assert data["knowledge"]["node_counts"].get("NodoImprimir")
+

@@ -1,6 +1,10 @@
 import json
 import os
-from typing import List
+from typing import List, Union
+
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
+from core.qualia_knowledge import QualiaKnowledge
 
 
 STATE_FILE = os.environ.get(
@@ -14,6 +18,7 @@ class QualiaSpirit:
 
     def __init__(self) -> None:
         self.history: List[str] = []
+        self.knowledge = QualiaKnowledge()
 
     def register(self, code: str) -> None:
         """Guarda el ``code`` ejecutado en la historia."""
@@ -39,6 +44,7 @@ def load_state() -> QualiaSpirit:
             data = json.load(fh)
         spirit = QualiaSpirit()
         spirit.history = data.get("history", [])
+        spirit.knowledge = QualiaKnowledge.from_dict(data.get("knowledge", {}))
         return spirit
     return QualiaSpirit()
 
@@ -46,15 +52,32 @@ def load_state() -> QualiaSpirit:
 def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en ``STATE_FILE``."""
     with open(STATE_FILE, "w", encoding="utf-8") as fh:
-        json.dump({"history": spirit.history}, fh, ensure_ascii=False, indent=2)
+        json.dump(
+            {
+                "history": spirit.history,
+                "knowledge": spirit.knowledge.as_dict(),
+            },
+            fh,
+            ensure_ascii=False,
+            indent=2,
+        )
 
 
 QUALIA = load_state()
 
 
-def register_execution(code: str) -> None:
-    """Registra una ejecuci\u00f3n y persiste el estado."""
+def register_execution(execution: Union[str, list]) -> None:
+    """Registra una ejecución y persiste el estado actualizando el conocimiento."""
+    if isinstance(execution, str):
+        tokens = Lexer(execution).analizar_token()
+        ast = Parser(tokens).parsear()
+        code = execution
+    else:
+        ast = execution
+        code = str(execution)
+
     QUALIA.register(code)
+    QUALIA.knowledge.update_from_ast(ast)
     save_state(QUALIA)
 
 
