@@ -234,7 +234,6 @@ class Lexer:
             (TipoToken.LBRACKET, r"\["),
             (TipoToken.RBRACKET, r"\]"),
             (TipoToken.COMA, r","),
-            (TipoToken.RETORNO, r"\bretorno\b"),
             (TipoToken.DECORADOR, r"@"),
             (None, r"\s+"),  # Ignorar espacios en blanco
         ]
