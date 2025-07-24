@@ -103,7 +103,9 @@ class BenchmarksV2Command(BaseCommand):
         """Ejecuta la lógica del comando."""
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[3])
-        env["PCOBRA_TOML"] = str(Path(tempfile.mkstemp(suffix=".toml")[1]))
+        fd, tmp_path = tempfile.mkstemp(suffix=".toml")
+        os.close(fd)
+        env["PCOBRA_TOML"] = str(Path(tmp_path))
         env.pop("PYTEST_CURRENT_TEST", None)
 
         results = []
