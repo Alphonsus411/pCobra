@@ -29,14 +29,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
         run: |
-          isort --check backend/src src
-          black --check backend/src src
-          flake8 backend/src
-          mypy backend/src
-          bandit -r src backend/src
+          isort --check src
+          black --check src
+          flake8 src
+          mypy src
+          bandit -r src
       - name: Run tests
         run: |
-          pytest --cov=backend/src --cov-report=xml --cov-fail-under=95
+          pytest --cov=src --cov-report=xml --cov-fail-under=95
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report

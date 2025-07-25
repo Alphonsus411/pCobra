@@ -13,7 +13,7 @@ FILES_TO_UPDATE = [
     PYPROJECT_PATH,
     Path("README.md"),
     Path("MANUAL_COBRA.md"),
-    Path("backend/src/jupyter_kernel/__init__.py"),
+    Path("src/jupyter_kernel/__init__.py"),
     Path("frontend/docs/avances.rst"),
     Path("tests/unit/test_cli_plugins_cmd.py"),
 ]

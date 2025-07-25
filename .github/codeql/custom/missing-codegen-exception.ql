@@ -8,7 +8,7 @@ from Method m, File f
 where
   m.getName() = "generate_code" and
   m.getFile() = f and
-  f.getRelativePath().regexp("^backend/src/cobra/transpilers/transpiler/") and
+  f.getRelativePath().regexp("^src/cobra/transpilers/transpiler/") and
   not exists(TryStmt t |
     t.getEnclosingCallable() = m
   )

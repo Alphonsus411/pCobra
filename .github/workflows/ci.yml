@@ -37,11 +37,11 @@ jobs:
       - name: Run linters
         run: make lint
       - name: Run flake8
-        run: flake8 backend/src src
+        run: flake8 src
       - name: Run type checks
         run: make typecheck
       - name: Run tests
-        run: pytest --cov=backend/src --cov-report=xml \
+        run: pytest --cov=src --cov-report=xml \
           --cov-report=term-missing --cov-fail-under=95
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

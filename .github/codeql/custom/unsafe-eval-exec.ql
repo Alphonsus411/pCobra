@@ -10,6 +10,6 @@ where
     c.getTarget().hasQualifiedName("builtins", "exec")
   ) and
   f = c.getFile() and
-  f.getRelativePath().regexp("^backend/src/") and
-  not f.getRelativePath().regexp("^backend/src/core/sandbox.py$")
+  f.getRelativePath().regexp("^src/") and
+  not f.getRelativePath().regexp("^src/core/sandbox.py$")
 select c, "Uso potencialmente inseguro de eval/exec"

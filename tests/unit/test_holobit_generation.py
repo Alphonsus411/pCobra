@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-holobit_path = ROOT / "backend/src/core/holobits/holobit.py"
+holobit_path = ROOT / "src/core/holobits/holobit.py"
 spec = importlib.util.spec_from_file_location("holobit", holobit_path)
 holobit_module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = holobit_module

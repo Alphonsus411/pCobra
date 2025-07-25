@@ -8,7 +8,7 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     subprocess.run([
         'pdoc',
-        'backend/src',
+        'src',
         '--output-dir', str(OUTPUT_DIR)
     ], check=True)
 

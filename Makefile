@@ -20,24 +20,24 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 coverage:
-	pytest backend/src/tests --cov=backend/src
-	--cov-report=term-missing --cov-fail-under=95
+        pytest tests --cov=src \
+        --cov-report=term-missing --cov-fail-under=95
 
 lint:
-	flake8 backend/src
-	mypy backend/src
-	bandit -r src backend/src
-	flake8 src/ tests/
+        flake8 src
+        mypy src
+        bandit -r src
+        flake8 src/ tests/
 
 format:
-	isort backend/src src
-	black backend/src src
-	black src/ tests/
+        isort src
+        black src
+        black src/ tests/
 
 typecheck:
-		mypy backend/src
-		@if command -v pyright >/dev/null 2>&1; then \
-		pyright backend/src; \
+                mypy src
+                @if command -v pyright >/dev/null 2>&1; then \
+                pyright src; \
 	fi
 
 benchmarks:
