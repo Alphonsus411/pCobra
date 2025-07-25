@@ -22,6 +22,8 @@ Funciones integradas
 - ``proyectar(h, modo)``: proyecta un holobit en ``modo`` (por ejemplo ``'2D'``).
 - ``transformar(h, accion, valor)``: aplica una transformación sobre un holobit.
 - ``graficar(h)``: visualiza el holobit en pantalla.
+- ``escalar(h, factor)``: multiplica las coordenadas por ``factor``.
+- ``mover(h, x, y, z)``: traslada el holobit en el espacio.
 
 Uso de la CLI
 -------------
