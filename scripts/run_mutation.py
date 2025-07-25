@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ejecuta pruebas de mutación con MutPy sobre backend/src."""
+"""Ejecuta pruebas de mutación con MutPy sobre ``src``."""
 from __future__ import annotations
 
 import importlib
@@ -24,8 +24,8 @@ def main() -> None:
     _ensure_py312_compat()
     repo = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(repo))
-    sys.path.insert(0, str(repo / "backend" / "src"))
-    os.environ["PYTHONPATH"] = f"{repo}:{repo / 'backend' / 'src'}"
+    sys.path.insert(0, str(repo / "src"))
+    os.environ["PYTHONPATH"] = str(repo / 'src')
 
     args = [
         "--target",
@@ -37,7 +37,7 @@ def main() -> None:
         "--percentage",
         "5",
         "--path",
-        str(repo / "backend" / "src"),
+        str(repo / "src"),
     ]
     sys.argv = ["mut.py"] + args
     import mutpy.commandline as commandline
