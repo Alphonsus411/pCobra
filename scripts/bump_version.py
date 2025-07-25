@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import re
 import sys
-import tomllib
+try:
+    import tomllib  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 from datetime import date
 from pathlib import Path
 

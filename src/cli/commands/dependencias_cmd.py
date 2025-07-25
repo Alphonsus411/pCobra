@@ -1,7 +1,10 @@
 import os
 import subprocess
 import tempfile
-import tomllib
+try:
+    import tomllib  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 
 from src.cli.commands.base import BaseCommand
 from src.cli.i18n import _
