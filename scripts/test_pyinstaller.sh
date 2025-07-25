@@ -15,6 +15,6 @@ else
 fi
 pip install pyinstaller
 
-pyinstaller --distpath "$OUTPUT_DIR" --onefile src/main_init.py
+pyinstaller --distpath "$OUTPUT_DIR" --onefile src/cli/cli.py
 
 echo "Binario generado en $OUTPUT_DIR"
