@@ -199,7 +199,14 @@ pip install pyinstaller
 Generate the binary with:
 
 ```bash
-pyinstaller --onefile -m src.main -n cobra
+pyinstaller --onefile src/main_init.py -n cobra
+```
+
+You can also execute the new ``cobra-init`` script which loads the same
+entry point automatically.
+
+```bash
+cobra-init
 ```
 
 The executable will be placed inside the `dist/` directory.
