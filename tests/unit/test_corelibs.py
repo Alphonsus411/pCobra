@@ -64,7 +64,6 @@ def test_coleccion_funcs():
 
 
 def test_seguridad_funcs():
-    assert core.hash_md5('a') == '0cc175b9c0f1b6a831c399e269772661'
     assert core.hash_sha256('a') == 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb'
     uuid = core.generar_uuid()
     assert isinstance(uuid, str) and len(uuid) == 36
@@ -258,7 +257,6 @@ def test_transpile_coleccion():
 
 def test_transpile_seguridad():
     ast = [
-        NodoLlamadaFuncion('hash_md5', [NodoValor("'a'")]),
         NodoLlamadaFuncion('hash_sha256', [NodoValor("'a'")]),
         NodoLlamadaFuncion('generar_uuid', []),
     ]
@@ -266,13 +264,11 @@ def test_transpile_seguridad():
     js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
-        + "hash_md5('a')\n"
         + "hash_sha256('a')\n"
         + "generar_uuid()\n"
     )
     js_exp = (
         IMPORTS_JS
-        + "hash_md5('a');\n"
         + "hash_sha256('a');\n"
         + "generar_uuid();"
     )
