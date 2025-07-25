@@ -127,7 +127,7 @@ cobra compilar ejemplo.co --tipo python
 ```
 
 Si prefieres usar las clases del proyecto, llama al módulo
-[`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler)
+[`src/cobra/transpilers/transpiler`](src/cobra/transpilers/transpiler)
 de la siguiente forma:
 
 ```python

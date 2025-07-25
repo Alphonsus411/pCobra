@@ -25,42 +25,42 @@ Para agilizar la organización del proyecto, categoriza cada tarea utilizando la
 - Ejecuta `make secrets` para buscar credenciales expuestas con *gitleaks*.
 - Usa `make typecheck` para la verificacion de tipos.
 - Para analisis estatico con `pyright`, instala el paquete y ejecuta
-  `pyright backend/src` (o `make typecheck`).
+  `pyright src` (o `make typecheck`).
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
   [SPEC_COBRA.md](SPEC_COBRA.md).
 
 ## PYTHONPATH y PyCharm
 
 Para que las importaciones `from src...` funcionen durante el desarrollo,
-define el directorio `backend/src` en la variable `PYTHONPATH` o instala el
+define el directorio `src` en la variable `PYTHONPATH` o instala el
 paquete en modo editable con `pip install -e .`:
 
 ```bash
-export PYTHONPATH=$PWD/backend/src
+export PYTHONPATH=$PWD/src
 ```
 
-En PyCharm marca `backend/src` como *Sources Root* para que resuelva las rutas
+En PyCharm marca `src` como *Sources Root* para que resuelva las rutas
 correctamente. Un ejemplo rápido de ejecución sería:
 
 ```bash
-PYTHONPATH=$PWD/backend/src python -c "from src.core.main import main; main()"
+PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 ```
 
 ## Ejecutar Pruebas
 
 Las pruebas unitarias se ubican en `tests/unit` y las de integración en
-`tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/backend/src`
+`tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/src`
 o instala el paquete en modo editable (`pip install -e .`). Para ejecutarlas
 todas utiliza:
 
 ```bash
-PYTHONPATH=$PWD/backend/src pytest
+PYTHONPATH=$PWD/src pytest
 ```
 
 Para generar un reporte de cobertura:
 
 ```bash
-PYTHONPATH=$PWD/backend/src pytest --cov
+PYTHONPATH=$PWD/src pytest --cov
 ```
 
 Además de las pruebas, ejecuta las verificaciones de estilo con:

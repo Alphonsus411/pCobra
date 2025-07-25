@@ -122,19 +122,19 @@ cobra ejecutar hola.co
 
 ### PYTHONPATH and PyCharm
 
-For the imports `from src...` to work from the console and PyCharm, add the directory `backend/src` to `PYTHONPATH` or install the package in editable mode with `pip install -e .`:
+For the imports `from src...` to work from the console and PyCharm, add the directory `src` to `PYTHONPATH` or install the package in editable mode with `pip install -e .`:
 
 ```bash
-export PYTHONPATH=$PWD/backend/src
+export PYTHONPATH=$PWD/src
 # or
 pip install -e .
 ```
 
-In PyCharm mark the folder `backend/src` as *Sources Root* so that the imports resolve correctly.
+In PyCharm mark the folder `src` as *Sources Root* so that the imports resolve correctly.
 You can verify the configuration by running in the console:
 
 ```bash
-PYTHONPATH=$PWD/backend/src python -c "from src.core.main import main; main()"
+PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 ```
 
 ### Installation with pipx
@@ -180,11 +180,35 @@ cobra empaquetar --spec build/cobra.spec \
   --add-data "all-bytes.dat;all-bytes.dat" --output dist
 ```
 
+## Build an executable with PyInstaller
+
+If you want to compile Cobra manually follow these steps:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows use .\\.venv\\Scripts\\activate
+```
+
+Install the published package and PyInstaller:
+
+```bash
+pip install cobra-lenguaje
+pip install pyinstaller
+```
+
+Generate the binary with:
+
+```bash
+pyinstaller --onefile -m src.main -n cobra
+```
+
+The executable will be placed inside the `dist/` directory.
+
 # Project Structure
 
 The project is organized into the following folders and modules:
 
-- `backend/src/`: Contains the Python logic of the project.
+- `src/`: Contains the Python logic of the project.
 - `frontend/docs/` and `frontend/build/`: Folders where the documentation is generated and stored. The file `frontend/docs/arquitectura.rst` describes the internal structure of the language.
 - `tests/`: Unit tests to ensure correct behaviour of the code.
 - `README.md`: Project documentation.
@@ -239,11 +263,11 @@ For advanced options of safe mode see `frontend/docs/modo_seguro.rst`. Performan
 To run unit tests use pytest:
 
 ```bash
-PYTHONPATH=$PWD pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
   --cov-fail-under=95
 ```
 
-You can also run specific suites located in `backend/src/tests`:
+You can also run specific suites located in `src/tests`:
 
 ```bash
 python -m tests.suite_cli           # CLI tests only
@@ -353,7 +377,7 @@ When running `programa.co`, `modulo.co` is processed first and then `Hola desde 
 
 ## `usar` statement for dynamic dependencies
 
-The statement `usar "paquete"` tries to import a Python module. If the package is not available, Cobra will run `pip install paquete` to install it and then load it at runtime. The module is registered in the environment under the same name for later use. To restrict which dependencies can be installed use the variable `USAR_WHITELIST` defined in `backend/src/cobra/usar_loader.py`.
+The statement `usar "paquete"` tries to import a Python module. If the package is not available, Cobra will run `pip install paquete` to install it and then load it at runtime. The module is registered in the environment under the same name for later use. To restrict which dependencies can be installed use the variable `USAR_WHITELIST` defined in `src/cobra/usar_loader.py`.
 
 ## Module mapping file
 
@@ -372,7 +396,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/cobra/transpilers/transpiler`](src/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo and LaTeX. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython

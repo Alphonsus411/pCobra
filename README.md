@@ -144,22 +144,22 @@ cobra ejecutar hola.co
 ### PYTHONPATH y PyCharm
 
 Para que las importaciones `from src...` funcionen desde la consola y PyCharm,
-agrega el directorio `backend/src` al `PYTHONPATH` o instala el paquete en modo
+agrega el directorio `src` al `PYTHONPATH` o instala el paquete en modo
 editable con `pip install -e .`:
 
 ```bash
-export PYTHONPATH=$PWD/backend/src
+export PYTHONPATH=$PWD/src
 # o bien
 pip install -e .
 ```
 
-En PyCharm marca la carpeta `backend/src` como *Sources Root* para que las
+En PyCharm marca la carpeta `src` como *Sources Root* para que las
 importaciones se resuelvan correctamente.
 
 Puedes verificar la configuración ejecutando en la consola:
 
 ```bash
-PYTHONPATH=$PWD/backend/src python -c "from src.core.main import main; main()"
+PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 ```
 
 ### Instalación con pipx
@@ -214,11 +214,35 @@ cobra empaquetar --spec build/cobra.spec \
   --add-data "all-bytes.dat;all-bytes.dat" --output dist
 ```
 
+## Crear un ejecutable con PyInstaller
+
+Para compilar Cobra de forma independiente primero crea y activa un entorno virtual:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # En Windows usa .\\.venv\\Scripts\\activate
+```
+
+Instala la distribución publicada y PyInstaller:
+
+```bash
+pip install cobra-lenguaje
+pip install pyinstaller
+```
+
+Luego genera el binario con:
+
+```bash
+pyinstaller --onefile -m src.main -n cobra
+```
+
+El ejecutable aparecerá en el directorio `dist/`.
+
 # Estructura del Proyecto
 
 El proyecto se organiza en las siguientes carpetas y módulos:
 
-- `backend/src/`: Contiene la lógica Python del proyecto.
+- `src/`: Contiene la lógica Python del proyecto.
 - `frontend/docs/` y `frontend/build/`: Carpetas donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
 - `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
@@ -290,11 +314,11 @@ están disponibles en `frontend/docs/benchmarking.rst`.
 Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
-PYTHONPATH=$PWD pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
-También puedes ejecutar suites específicas ubicadas en `backend/src/tests`:
+También puedes ejecutar suites específicas ubicadas en `src/tests`:
 
 ````bash
 python -m tests.suite_cli           # Solo pruebas de la CLI
@@ -475,7 +499,7 @@ paquete no está disponible, Cobra ejecutará `pip install paquete` para
 instalarlo y luego lo cargará en tiempo de ejecución. El módulo queda
 registrado en el entorno bajo el mismo nombre para su uso posterior.
 Para restringir qué dependencias pueden instalarse se emplea la variable
-`USAR_WHITELIST` definida en `backend/src/cobra/usar_loader.py`. Basta con
+`USAR_WHITELIST` definida en `src/cobra/usar_loader.py`. Basta con
 añadir o quitar nombres de paquetes en dicho conjunto para modificar la lista
 autorizada. Si la lista se deja vacía la función `obtener_modulo` lanzará
 `PermissionError`, por lo que es necesario poblarla antes de permitir
@@ -502,7 +526,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 
 ## Invocar el transpilador
 
-La carpeta [`backend/src/cobra/transpilers/transpiler`](backend/src/cobra/transpilers/transpiler)
+La carpeta [`src/cobra/transpilers/transpiler`](src/cobra/transpilers/transpiler)
 contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
@@ -672,7 +696,7 @@ Actualmente la cobertura varía según el lenguaje y puede que ciertas construcc
 
 ### Diseño extensible de la CLI
 
-La CLI está organizada en clases dentro de `backend/src/cli/commands`. Cada subcomando
+La CLI está organizada en clases dentro de `src/cli/commands`. Cada subcomando
 hereda de `BaseCommand` y define su nombre, los argumentos que acepta y la acción
 a ejecutar. En `src/cli/cli.py` se instancian automáticamente y se registran en
 `argparse`, por lo que para añadir un nuevo comando solo es necesario crear un
@@ -706,7 +730,7 @@ posible para reducir riesgos.
 Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
 
 ````bash
-PYTHONPATH=$PWD pytest backend/src/tests --cov=backend/src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
@@ -719,7 +743,7 @@ PYTHONPATH=$PWD pytest
 En la integración continua se emplea:
 
 ```bash
-pytest --cov=backend/src tests/
+pytest --cov=src tests/
 ```
 
 El reporte se guarda como `coverage.xml` y se utiliza en el CI.
@@ -774,7 +798,7 @@ con los archivos `.po` de traducción y envía un pull request.
 Para obtener un reporte de cobertura en la terminal ejecuta:
 
 ````bash
-pytest --cov=backend/src --cov-report=term-missing --cov-fail-under=95
+pytest --cov=src --cov-report=term-missing --cov-fail-under=95
 ````
 
 ## Caché del AST
@@ -860,7 +884,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   (formateo con `black`, longitud máxima de línea 88 y uso de `flake8`, `mypy`
   y `bandit`).
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
-- Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*. `bandit` analizará los directorios `src` y `backend/src`.
+- Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*. `bandit` analizará el directorio `src`.
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
@@ -897,7 +921,7 @@ También contamos con un canal de **Telegram** y una cuenta de **Twitter** donde
 Para verificar el tipado de forma local ejecuta:
 
 ```bash
-mypy backend/src
+mypy src
 pyright --project pyrightconfig.json
 ```
 
@@ -911,12 +935,12 @@ make secrets
 ```
 El segundo comando ejecuta *gitleaks* para detectar posibles secretos en el repositorio.
 
-Esto ejecutará `flake8` y `mypy` sobre `backend/src`, y `bandit` revisará los directorios `src` y `backend/src`. Si prefieres lanzar las herramientas de
+Esto ejecutará `flake8` y `mypy` sobre `src`, y `bandit` revisará el directorio `src`. Si prefieres lanzar las herramientas de
 manera individual utiliza:
 
 ```bash
-flake8 backend/src
-mypy backend/src
+flake8 src
+mypy src
 ```
 
 ## Desarrollo de plugins
