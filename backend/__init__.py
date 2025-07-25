@@ -21,7 +21,14 @@ if str(path) not in sys.path:
 src_mod = importlib.import_module('src')
 sys.modules[__name__ + '.src'] = src_mod
 # Propagar submódulos principales
-for sub in ['cli', 'cobra', 'core', 'ia', 'jupyter_kernel', 'tests']:
-    name = __name__ + '.src.' + sub
-    if 'src.' + sub in sys.modules:
-        sys.modules[name] = sys.modules['src.' + sub]
+for sub in ['cli', 'cobra', 'core', 'corelibs', 'ia', 'jupyter_kernel', 'tests']:
+    full = f'src.{sub}'
+    if full in sys.modules:
+        mod = sys.modules[full]
+    else:
+        try:
+            mod = importlib.import_module(full)
+        except ModuleNotFoundError:
+            continue
+    sys.modules[f'{__name__}.{sub}'] = mod
+    sys.modules[f'{__name__}.src.{sub}'] = mod
