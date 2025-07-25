@@ -53,11 +53,11 @@ dev = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "backend/src", "corelibs" = "backend/corelibs", "standard_library" = "standard_library"}
+package-dir = {"" = "src"}
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["backend/src", "backend/corelibs", "standard_library"]
+where = ["src"]
 
 [project.scripts]
 cobra = "src.cli.cli:main"
