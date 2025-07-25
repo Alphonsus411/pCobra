@@ -4,6 +4,6 @@ branch = True
 
 [report]
 omit =
-    */tests/*
+    */src/tests/*
     venv/*
     frontend/docs/*

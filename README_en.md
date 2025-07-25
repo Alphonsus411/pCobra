@@ -217,7 +217,7 @@ The project is organized into the following folders and modules:
 
 - `src/`: Contains the Python logic of the project.
 - `frontend/docs/` and `frontend/build/`: Folders where the documentation is generated and stored. The file `frontend/docs/arquitectura.rst` describes the internal structure of the language.
-- `tests/`: Unit tests to ensure correct behaviour of the code.
+- `src/tests/`: Unit tests to ensure correct behaviour of the code.
 - `README.md`: Project documentation.
 - `requirements.txt`: Lists the project dependencies.
 - `pyproject.toml`: Also defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections.
@@ -478,7 +478,7 @@ The CLI also includes a safe mode (`--seguro`), a sandbox option (`--sandbox`), 
 
 ## Tests and development
 
-Tests are located in the `tests/` folder and use pytest. You can run all tests with:
+Tests are located in the `src/tests/` folder and use pytest. You can run all tests with:
 
 ```bash
 PYTHONPATH=$PWD pytest
