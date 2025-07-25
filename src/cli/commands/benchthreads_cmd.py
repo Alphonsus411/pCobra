@@ -1,6 +1,15 @@
 import json
 import os
-import resource
+try:
+    import resource
+except ImportError:  # pragma: no cover - Windows
+    resource = None  # type: ignore
+    try:
+        import psutil  # type: ignore
+    except Exception:
+        psutil = None  # type: ignore
+else:
+    psutil = None  # type: ignore
 import subprocess
 import sys
 import tempfile
@@ -42,18 +51,43 @@ hilo tarea(50000)
 
 
 def _measure(func):
-    start_usage = resource.getrusage(resource.RUSAGE_SELF)
-    start = time.perf_counter()
-    func()
-    elapsed = time.perf_counter() - start
-    end_usage = resource.getrusage(resource.RUSAGE_SELF)
-    cpu = (end_usage.ru_utime + end_usage.ru_stime) - (
-        start_usage.ru_utime + start_usage.ru_stime
-    )
-    io = (end_usage.ru_inblock + end_usage.ru_oublock) - (
-        start_usage.ru_inblock + start_usage.ru_oublock
-    )
-    return elapsed, cpu, io
+    if resource is not None:
+        start_usage = resource.getrusage(resource.RUSAGE_SELF)
+        start = time.perf_counter()
+        func()
+        elapsed = time.perf_counter() - start
+        end_usage = resource.getrusage(resource.RUSAGE_SELF)
+        cpu = (end_usage.ru_utime + end_usage.ru_stime) - (
+            start_usage.ru_utime + start_usage.ru_stime
+        )
+        io = (end_usage.ru_inblock + end_usage.ru_oublock) - (
+            start_usage.ru_inblock + start_usage.ru_oublock
+        )
+        return elapsed, cpu, io
+    else:  # pragma: no cover - resource not available
+        if psutil is not None:
+            proc = psutil.Process()
+            cpu_start = proc.cpu_times().user + proc.cpu_times().system
+            try:
+                io_start = proc.io_counters().read_count + proc.io_counters().write_count
+            except Exception:
+                io_start = 0
+            start = time.perf_counter()
+            func()
+            elapsed = time.perf_counter() - start
+            cpu_end = proc.cpu_times().user + proc.cpu_times().system
+            try:
+                io_end = proc.io_counters().read_count + proc.io_counters().write_count
+            except Exception:
+                io_end = io_start
+            cpu = cpu_end - cpu_start
+            io = io_end - io_start
+            return elapsed, cpu, io
+        else:
+            start = time.perf_counter()
+            func()
+            elapsed = time.perf_counter() - start
+            return elapsed, 0.0, 0
 
 
 class BenchThreadsCommand(BaseCommand):
