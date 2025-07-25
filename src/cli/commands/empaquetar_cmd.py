@@ -45,7 +45,7 @@ class EmpaquetarCommand(BaseCommand):
         raiz = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
         )
-        cli_path = os.path.join(raiz, "backend", "src", "cli", "cli.py")
+        cli_path = os.path.join(raiz, "src", "main_init.py")
         output = args.output
         nombre = args.name
         spec = getattr(args, "spec", None)
