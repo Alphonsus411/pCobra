@@ -476,15 +476,17 @@ Al generar código para Python, `imprimir` se convierte en `print`, `mientras` e
 
 ## Integración con holobit-sdk
 
-El proyecto instala automáticamente la librería `holobit-sdk`, utilizada para visualizar y manipular holobits. Las funciones `graficar`, `proyectar` y `transformar` de `src.core.holobits` delegan en esta API.
+El proyecto instala automáticamente la librería `holobit-sdk`, utilizada para visualizar y manipular holobits. Las funciones `graficar`, `proyectar`, `transformar`, `escalar` y `mover` de `src.core.holobits` delegan en esta API.
 
 ```python
-from core.holobits import Holobit, graficar, proyectar, transformar
+from core.holobits import Holobit, graficar, proyectar, transformar, escalar, mover
 
 h = Holobit([0.8, -0.5, 1.2, 0.0, 0.0, 0.0])
 proyectar(h, "2D")
 graficar(h)
 transformar(h, "rotar", "z", 90)
+escalar(h, 2.0)
+mover(h, 1.0, 0.0, -1.0)
 ```
 
 ## Ejemplo de carga de módulos

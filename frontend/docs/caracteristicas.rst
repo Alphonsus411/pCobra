@@ -19,6 +19,10 @@ imprimir(proyeccion)
 var rotado = transformar(x, 'rotar', 45)
 imprimir(rotado)
 
+# Escalar y trasladar
+escalar(x, 2)
+mover(x, 1, 0, -1)
+
 # Graficar el holobit
 graficar(x)
 
