@@ -1,7 +1,7 @@
 # Caché incremental de tokens y AST
 
 Se ha incorporado un sistema de almacenamiento por fragmentos en
-`backend/src/core/ast_cache.py`. Cada línea del código puede guardarse
+`src/core/ast_cache.py`. Cada línea del código puede guardarse
 por separado mediante un *checksum*, permitiendo reutilizar los
 fragmentos que no cambian entre ejecuciones.
 

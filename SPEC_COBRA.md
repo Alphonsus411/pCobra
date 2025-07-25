@@ -65,7 +65,7 @@ IDENTIFICADOR: /[^\W\d_][\w]*/
 Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza `var` para crear variables, `funcion` agrupa parámetros y un cuerpo, y `try_catch` permite atrapar errores con `try` o `intentar` y `catch` o `capturar`.
 
 ## Tokens y palabras reservadas
-El lexer de `backend/src/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
+El lexer de `src/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `metodo`, `atributo`, `rel`
 - `si`, `sino`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
 - `switch`, `case`, `clase`, `in`, `holobit`, `proyectar`, `transformar`, `graficar`
