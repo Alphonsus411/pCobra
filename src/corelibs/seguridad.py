@@ -18,7 +18,7 @@ def hash_md5(texto: str) -> str:
         DeprecationWarning,
         stacklevel=2,
     )
-    return hashlib.md5(texto.encode("utf-8")).hexdigest()
+    return hashlib.md5(texto.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 def hash_sha256(texto: str) -> str:
