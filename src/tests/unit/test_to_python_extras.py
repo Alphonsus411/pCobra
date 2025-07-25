@@ -23,7 +23,7 @@ def test_transpilar_try_catch_throw():
     codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
         IMPORTS
-        "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
+        + "try:\n    raise Exception(1)\nexcept Exception as e:\n    print(e)\n"
     )
     assert codigo == esperado
 
@@ -42,7 +42,7 @@ def test_transpilar_usar():
     codigo = TranspiladorPython().generate_code([nodo])
     esperado = (
         IMPORTS
-        "from cobra.usar_loader import obtener_modulo\n"
-        "math = obtener_modulo('math')\n"
+        + "from cobra.usar_loader import obtener_modulo\n"
+        + "math = obtener_modulo('math')\n"
     )
     assert codigo == esperado

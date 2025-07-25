@@ -38,12 +38,12 @@ def test_transpilador_python_imports_alias_clase():
         "import asyncio\n"
         + IMPORTS_PY
         + "from package.module import decorador as dec\n"
-        "from package2.module2 import Base as B\n"
-        "@dec\n"
-        "class C(B):\n"
-        "    @dec\n"
-        "    async def run(self):\n"
-        "        await accion()\n"
+        + "from package2.module2 import Base as B\n"
+        + "@dec\n"
+        + "class C(B):\n"
+        + "    @dec\n"
+        + "    async def run(self):\n"
+        + "        await accion()\n"
     )
     assert resultado == esperado
 
@@ -61,13 +61,13 @@ def test_transpilador_js_imports_alias_clase():
     resultado = TranspiladorJavaScript().generate_code(ast)
     esperado = IMPORTS + (
         "import { decorador as dec } from 'package.module';\n"
-        "import { Base as B } from 'package2.module2';\n"
-        "class C extends B {\n"
-        "async run(self) {\n"
-        "await accion();\n"
-        "}\n"
-        "}\n"
-        "C.prototype.run = dec(C.prototype.run);\n"
-        "C = dec(C);"
+        + "import { Base as B } from 'package2.module2';\n"
+        + "class C extends B {\n"
+        + "async run(self) {\n"
+        + "await accion();\n"
+        + "}\n"
+        + "}\n"
+        + "C.prototype.run = dec(C.prototype.run);\n"
+        + "C = dec(C);"
     )
     assert resultado == esperado

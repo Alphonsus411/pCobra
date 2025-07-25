@@ -63,7 +63,7 @@ def test_fortran_atributo_y_operaciones():
     resultado = t.generate_code(ast)
     esperado = (
         "obj%campo = 5\n"
-        "a = 1 + 2\n"
-        "b = .NOT. c"
+        + "a = 1 + 2\n"
+        + "b = .NOT. c"
     )
     assert resultado == esperado

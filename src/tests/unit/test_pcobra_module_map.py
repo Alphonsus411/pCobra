@@ -64,11 +64,11 @@ def test_pcobra_mapeo_js(tmp_path, monkeypatch):
     resultado = TranspiladorJavaScript().generate_code(ast)
     esperado = (
         "import * as io from './nativos/io.js';\n"
-        "import * as net from './nativos/io.js';\n"
-        "import * as matematicas from './nativos/matematicas.js';\n"
-        "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        "let x = 2;\n"
-        "console.log(x);"
+        + "import * as net from './nativos/io.js';\n"
+        + "import * as matematicas from './nativos/matematicas.js';\n"
+        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        + "let x = 2;\n"
+        + "console.log(x);"
     )
     assert resultado == esperado
 

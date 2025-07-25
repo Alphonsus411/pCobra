@@ -63,8 +63,8 @@ def test_php_atributo_y_operaciones():
     resultado = t.generate_code(ast)
     esperado = (
         "$obj->campo = 5;\n"
-        "$a = 1 + 2;\n"
-        "$b = !$c;"
+        + "$a = 1 + 2;\n"
+        + "$b = !$c;"
     )
     assert resultado == esperado
 

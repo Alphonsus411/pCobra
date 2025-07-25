@@ -63,7 +63,7 @@ def test_pascal_atributo_y_operaciones():
     resultado = t.generate_code(ast)
     esperado = (
         "obj.campo := 5;\n"
-        "a := 1 + 2;\n"
-        "b := not c;"
+        + "a := 1 + 2;\n"
+        + "b := not c;"
     )
     assert resultado == esperado

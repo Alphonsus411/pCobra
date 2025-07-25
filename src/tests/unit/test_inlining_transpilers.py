@@ -23,9 +23,9 @@ def test_inline_js_transpiler():
     codigo = TranspiladorJavaScript().generate_code(_ast_inline())
     esperado = (
         "import * as io from './nativos/io.js';\n"
-        "import * as net from './nativos/io.js';\n"
-        "import * as matematicas from './nativos/matematicas.js';\n"
-        "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        "let x = 1;"
+        + "import * as net from './nativos/io.js';\n"
+        + "import * as matematicas from './nativos/matematicas.js';\n"
+        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        + "let x = 1;"
     )
     assert codigo == esperado

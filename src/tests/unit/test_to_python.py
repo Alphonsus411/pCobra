@@ -38,7 +38,7 @@ def test_transpilador_condicional():
     resultado = transpilador.generate_code(ast)
     esperado = (
         IMPORTS
-        "if x > 5:\n    y = 2\nelse:\n    y = 3\n"
+        + "if x > 5:\n    y = 2\nelse:\n    y = 3\n"
     )
     assert resultado == esperado
 
@@ -69,7 +69,7 @@ def test_transpilador_funcion():
     resultado = transpilador.generate_code(ast)
     esperado = (
         IMPORTS
-        "def miFuncion(a, b):\n    x = a + b\n"
+        + "def miFuncion(a, b):\n    x = a + b\n"
     )
     assert resultado == esperado
 
@@ -107,13 +107,13 @@ def test_transpilador_switch():
     resultado = t.generate_code(ast)
     esperado = (
         IMPORTS
-        "match x:\n"
-        "    case 1:\n"
-        "        y = 1\n"
-        "    case 2:\n"
-        "        y = 2\n"
-        "    case _:\n"
-        "        y = 0\n"
+        + "match x:\n"
+        + "    case 1:\n"
+        + "        y = 1\n"
+        + "    case 2:\n"
+        + "        y = 2\n"
+        + "    case _:\n"
+        + "        y = 0\n"
     )
     assert resultado == esperado
 
@@ -130,9 +130,9 @@ def test_transpilador_decoradores_anidados():
     codigo = TranspiladorPython().generate_code([func])
     esperado = (
         IMPORTS
-        "@d1\n"
-        "@d2\n"
-        "def saluda():\n    print('hola')\n"
+        + "@d1\n"
+        + "@d2\n"
+        + "def saluda():\n    print('hola')\n"
     )
     assert codigo == esperado
 
@@ -148,9 +148,9 @@ def test_transpilador_corutina_await():
     codigo = TranspiladorPython().generate_code([f1, f2])
     esperado = (
         "import asyncio\n"
-        IMPORTS
-        "async def saluda():\n    print(1)\n"
-        "async def principal():\n    await saluda()\n"
+        + IMPORTS
+        + "async def saluda():\n    print(1)\n"
+        + "async def principal():\n    await saluda()\n"
     )
     assert codigo == esperado
 
@@ -166,10 +166,10 @@ def test_transpilador_clase_compleja():
     codigo = TranspiladorPython().generate_code([clase])
     esperado = (
         "import asyncio\n"
-        IMPORTS
-        "class Hija(Base1, Base2):\n"
-        "    async def run(self):\n"
-        "        await tarea()\n"
+        + IMPORTS
+        + "class Hija(Base1, Base2):\n"
+        + "    async def run(self):\n"
+        + "        await tarea()\n"
     )
     assert codigo == esperado
 
@@ -182,12 +182,12 @@ def test_decoradores_en_clase_y_metodo():
     codigo = TranspiladorPython().generate_code([clase])
     esperado = (
         "import asyncio\n"
-        IMPORTS
-        "@dec\n"
-        "class C:\n"
-        "    @dec\n"
-        "    async def run(self):\n"
-        "        pass\n"
+        + IMPORTS
+        + "@dec\n"
+        + "class C:\n"
+        + "    @dec\n"
+        + "    async def run(self):\n"
+        + "        pass\n"
     )
     assert codigo == esperado
 

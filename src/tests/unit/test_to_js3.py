@@ -164,10 +164,10 @@ def test_transpilar_clase_multibase():
     expected = (
         imports
         + "class Hija extends Base1 { /* bases: Base1, Base2 */\n"
-        "m(p) {\n"
-        "x = p;\n"
-        "}\n"
-        "}"
+        + "m(p) {\n"
+        + "x = p;\n"
+        + "}\n"
+        + "}"
     )
     assert result == expected, "Error en herencia múltiple"
 
