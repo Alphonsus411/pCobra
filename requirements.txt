@@ -29,7 +29,8 @@ python-dotenv
 tomli
 pexpect
 hypothesis
-holobit-sdk
+holobit-sdk==1.0.8
+smooth-criminal==0.4.0
 ipykernel
 tree-sitter==0.25.0
 tree-sitter-languages==1.10.2
