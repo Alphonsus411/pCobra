@@ -50,6 +50,11 @@ dev = [
     "python-dotenv",
     "python-lsp-server",
     "hypothesis",
+    "ipykernel>=6.29.5",
+    "tree-sitter-languages>=1.10.2",
+    "pytest",
+    "pytest-cov",
+    "pytest-timeout",
 ]
 
 [tool.setuptools]
