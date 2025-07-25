@@ -738,6 +738,7 @@ posible para reducir riesgos.
 # Pruebas
 
 Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
+También puedes instalar las dependencias de desarrollo con `pip install .[dev]` para contar con todas las herramientas necesarias.
 
 ````bash
 PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
