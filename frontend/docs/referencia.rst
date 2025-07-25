@@ -24,6 +24,8 @@ Funciones integradas
 - ``graficar(h)``: visualiza el holobit en pantalla.
 - ``escalar(h, factor)``: multiplica las coordenadas por ``factor``.
 - ``mover(h, x, y, z)``: traslada el holobit en el espacio.
+  Estas funciones están disponibles en ``holobit-sdk`` desde la versión ``1.0.8``;
+  en versiones anteriores Cobra realiza el cálculo de forma interna.
 
 Uso de la CLI
 -------------
