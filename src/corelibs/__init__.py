@@ -5,7 +5,7 @@ from .numero import es_par, es_primo, factorial, promedio
 from .archivo import leer, escribir, existe, eliminar
 from .tiempo import ahora, formatear, dormir
 from .coleccion import ordenar, maximo, minimo, sin_duplicados
-from .seguridad import hash_md5, hash_sha256, generar_uuid
+from .seguridad import hash_sha256, generar_uuid
 from .red import obtener_url, enviar_post
 from .sistema import obtener_os, ejecutar, obtener_env, listar_dir
 
@@ -29,7 +29,6 @@ __all__ = [
     "maximo",
     "minimo",
     "sin_duplicados",
-    "hash_md5",
     "hash_sha256",
     "generar_uuid",
     "obtener_url",
