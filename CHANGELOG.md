@@ -1,3 +1,7 @@
+## v10.0.0 - 2025-08-15
+- Incremento de versión principal a 10.0.0.
+- Actualización de documentación y ejemplos.
+
 ## v9.1.0 - 2025-07-20
 - Incremento de versión menor a 9.1.0.
 - Actualización de documentación y ejemplos.
