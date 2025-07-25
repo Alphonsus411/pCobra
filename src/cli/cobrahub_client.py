@@ -39,7 +39,18 @@ def publicar_modulo(ruta: str) -> bool:
 
 
 def descargar_modulo(nombre: str, destino: str) -> bool:
-    """Descarga un módulo de CobraHub y lo guarda en destino."""
+    """Descarga un módulo de CobraHub y lo guarda en ``destino``.
+
+    ``destino`` debe ser una ruta relativa dentro del directorio actual.
+    Las rutas absolutas o que contengan ``..`` serán rechazadas.
+    """
+    if os.path.isabs(destino) or ".." in os.path.normpath(destino).split(os.sep):
+        mostrar_error(_("Ruta de destino inválida"))
+        return False
+    destino_abs = os.path.abspath(destino)
+    if not destino_abs.startswith(os.path.abspath(os.getcwd()) + os.sep):
+        mostrar_error(_("Ruta de destino inválida"))
+        return False
     if not _validar_url():
         return False
     try:
@@ -48,9 +59,9 @@ def descargar_modulo(nombre: str, destino: str) -> bool:
             timeout=5,
         )
         response.raise_for_status()
-        with open(destino, "wb") as f:
+        with open(destino_abs, "wb") as f:
             f.write(response.content)
-        mostrar_info(_("Módulo descargado en {dest}").format(dest=destino))
+        mostrar_info(_("Módulo descargado en {dest}").format(dest=destino_abs))
         return True
     except requests.RequestException as exc:
         mostrar_error(_("Error descargando módulo: {err}").format(err=exc))
