@@ -3,6 +3,7 @@ import sys
 import os
 from datetime import datetime
 from unittest.mock import MagicMock, patch
+import pytest
 
 sys.modules.setdefault('yaml', ModuleType('yaml'))
 
@@ -80,6 +81,34 @@ def test_red_funcs(monkeypatch):
         mock_urlopen.assert_any_call('http://x', timeout=5)
         mock_urlopen.assert_any_call('http://x', b'a=1', timeout=5)
         assert mock_urlopen.call_count == 2
+
+
+def test_red_obtener_url_rechaza_esquema_no_http():
+    with patch('backend.corelibs.red.urllib.request.urlopen') as mock_urlopen:
+        with pytest.raises(ValueError):
+            core.obtener_url('ftp://ejemplo.com')
+        mock_urlopen.assert_not_called()
+
+
+def test_red_obtener_url_rechaza_otro_esquema():
+    with patch('backend.corelibs.red.urllib.request.urlopen') as mock_urlopen:
+        with pytest.raises(ValueError):
+            core.obtener_url('file:///tmp/archivo.txt')
+        mock_urlopen.assert_not_called()
+
+
+def test_red_enviar_post_rechaza_esquema_no_http():
+    with patch('backend.corelibs.red.urllib.request.urlopen') as mock_urlopen:
+        with pytest.raises(ValueError):
+            core.enviar_post('ftp://ejemplo.com', {'a': 1})
+        mock_urlopen.assert_not_called()
+
+
+def test_red_enviar_post_rechaza_otro_esquema():
+    with patch('backend.corelibs.red.urllib.request.urlopen') as mock_urlopen:
+        with pytest.raises(ValueError):
+            core.enviar_post('file:///tmp/archivo.txt', {'a': 1})
+        mock_urlopen.assert_not_called()
 
 
 def test_sistema_funcs(tmp_path, monkeypatch):
