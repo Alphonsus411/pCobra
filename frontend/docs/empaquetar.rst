@@ -3,8 +3,8 @@ Empaquetar la CLI
 
 Este proyecto puede distribuirse como un ejecutable independiente usando
 `PyInstaller <https://pyinstaller.org>`_. Internamente PyInstaller se
-ejecutar\u00e1 sobre ``src/main_init.py``. De forma manual podr\u00edas ejecutar
-``pyinstaller --onefile src/main_init.py -n cobra``.
+ejecutar\u00e1 sobre ``src/cli/cli.py``. De forma manual podr\u00edas ejecutar
+``pyinstaller --onefile src/cli/cli.py -n cobra``.
 
 Para generar el ejecutable ejecuta:
 
