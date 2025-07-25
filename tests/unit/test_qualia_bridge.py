@@ -1,11 +1,13 @@
 import importlib
 import json
 import os
+import pytest
 from core import qualia_bridge
 
 
 def test_qualia_state_persistence(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
     qb = importlib.reload(qualia_bridge)
     qb.register_execution("var x = 1")
@@ -15,7 +17,8 @@ def test_qualia_state_persistence(tmp_path, monkeypatch):
 
 
 def test_qualia_generates_suggestions(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
     qb = importlib.reload(qualia_bridge)
     qb.register_execution("var x = 1")
@@ -24,7 +27,8 @@ def test_qualia_generates_suggestions(tmp_path, monkeypatch):
 
 
 def test_knowledge_persistence(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
     qb = importlib.reload(qualia_bridge)
     qb.register_execution("imprimir(1)")
@@ -34,7 +38,8 @@ def test_knowledge_persistence(tmp_path, monkeypatch):
 
 
 def test_sugerir_funciones_por_asignaciones(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
     qb = importlib.reload(qualia_bridge)
     for i in range(5):
@@ -45,10 +50,26 @@ def test_sugerir_funciones_por_asignaciones(tmp_path, monkeypatch):
 
 
 def test_sugerencia_pandas_matplotlib(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
     qb = importlib.reload(qualia_bridge)
     qb.register_execution('usar "pandas"')
     sugs = qb.get_suggestions()
     assert any("matplotlib" in s for s in sugs)
+
+
+def test_qualia_rejects_outside_home(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("QUALIA_STATE_PATH", "/etc/passwd")
+    with pytest.raises(ValueError):
+        importlib.reload(qualia_bridge)
+
+
+def test_qualia_rejects_traversal(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    evil = tmp_path / ".." / "mal.json"
+    monkeypatch.setenv("QUALIA_STATE_PATH", str(evil))
+    with pytest.raises(ValueError):
+        importlib.reload(qualia_bridge)
 
