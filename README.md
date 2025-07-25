@@ -476,7 +476,7 @@ Al generar código para Python, `imprimir` se convierte en `print`, `mientras` e
 
 ## Integración con holobit-sdk
 
-El proyecto instala automáticamente la librería `holobit-sdk`, utilizada para visualizar y manipular holobits. Las funciones `graficar`, `proyectar`, `transformar`, `escalar` y `mover` de `src.core.holobits` delegan en esta API.
+El proyecto instala automáticamente la librería `holobit-sdk`, utilizada para visualizar y manipular holobits. Las funciones `graficar`, `proyectar`, `transformar`, `escalar` y `mover` de `src.core.holobits` delegan en esta API. Desde la versión ``1.0.8`` del SDK se incluyen las operaciones ``escalar`` y ``mover``; en versiones anteriores Cobra calcula estos efectos manualmente.
 
 ```python
 from core.holobits import Holobit, graficar, proyectar, transformar, escalar, mover

@@ -22,6 +22,8 @@ imprimir(rotado)
 # Escalar y trasladar
 escalar(x, 2)
 mover(x, 1, 0, -1)
+# ``escalar`` y ``mover`` requieren ``holobit-sdk`` >= 1.0.8; si no está
+# disponible se calcula internamente.
 
 # Graficar el holobit
 graficar(x)
