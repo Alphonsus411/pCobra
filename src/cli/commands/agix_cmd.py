@@ -18,6 +18,18 @@ class AgixCommand(BaseCommand):
             self.name, help=_("Analiza un archivo Cobra y sugiere mejoras")
         )
         parser.add_argument("archivo")
+        parser.add_argument(
+            "--peso-precision",
+            type=float,
+            default=None,
+            help=_("Factor de ponderaci\u00f3n para la precisi\u00f3n"),
+        )
+        parser.add_argument(
+            "--peso-interpretabilidad",
+            type=float,
+            default=None,
+            help=_("Factor para la interpretabilidad"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -29,7 +41,11 @@ class AgixCommand(BaseCommand):
             return 1
         with open(archivo, "r", encoding="utf-8") as f:
             codigo = f.read()
-        sugerencias = generar_sugerencias(codigo)
+        sugerencias = generar_sugerencias(
+            codigo,
+            peso_precision=args.peso_precision,
+            peso_interpretabilidad=args.peso_interpretabilidad,
+        )
         for s in sugerencias:
             mostrar_info(str(s))
         return 0

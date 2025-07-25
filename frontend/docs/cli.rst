@@ -142,7 +142,9 @@ Ejemplo:
 
 Subcomando ``agix``
 ------------------
-Analiza un archivo y sugiere mejoras utilizando ``agix``.
+Analiza un archivo y sugiere mejoras utilizando ``agix``.  A partir de la
+versión ``1.0.0`` la selección de la mejor recomendación se realiza con la
+clase ``Reasoner`` de ``agix.reasoning.basic``.
 
 Ejemplo:
 
