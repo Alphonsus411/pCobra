@@ -7,7 +7,7 @@ Esto simplifica el uso de la biblioteca desde otros módulos.
 
 from .ast_nodes import *
 from .visitor import NodeVisitor
-from .performance import optimizar, perfilar
+from .performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
 from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 __all__ = [
@@ -51,6 +51,8 @@ __all__ = [
     "NodeVisitor",
     "optimizar",
     "perfilar",
+    "smart_perfilar",
+    "optimizar_bucle",
     "limitar_memoria_mb",
     "limitar_cpu_segundos",
 ]
