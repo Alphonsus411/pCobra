@@ -15,7 +15,7 @@ FILES_TO_UPDATE = [
     Path("MANUAL_COBRA.md"),
     Path("src/jupyter_kernel/__init__.py"),
     Path("frontend/docs/avances.rst"),
-    Path("tests/unit/test_cli_plugins_cmd.py"),
+    Path("src/tests/unit/test_cli_plugins_cmd.py"),
 ]
 
 

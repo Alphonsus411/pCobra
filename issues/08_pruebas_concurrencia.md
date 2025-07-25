@@ -12,7 +12,7 @@ El intérprete ofrece soporte básico para hilos pero carece de pruebas que vali
 
 **Describe la solución que te gustaría**
 
-Crear un conjunto de pruebas en `tests/unit` que ejecuten tareas paralelas y verifiquen la integridad de los datos y la ausencia de bloqueos.
+Crear un conjunto de pruebas en `src/tests/unit` que ejecuten tareas paralelas y verifiquen la integridad de los datos y la ausencia de bloqueos.
 
 **Alternativas consideradas**
 
@@ -20,4 +20,4 @@ Limitar el uso de concurrencia a ejemplos simples sin cubrir casos de carrera.
 
 **Contexto adicional**
 
-Revisar `tests/unit/test_hilos.py` como punto de partida y extenderlo con casos más complejos.
+Revisar `src/tests/unit/test_hilos.py` como punto de partida y extenderlo con casos más complejos.

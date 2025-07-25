@@ -20,19 +20,19 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 coverage:
-        pytest tests --cov=src \
+pytest src/tests --cov=src \
         --cov-report=term-missing --cov-fail-under=95
 
 lint:
         flake8 src
         mypy src
         bandit -r src
-        flake8 src/ tests/
+flake8 src/ src/tests/
 
 format:
         isort src
         black src
-        black src/ tests/
+black src/ src/tests/
 
 typecheck:
                 mypy src
@@ -50,4 +50,4 @@ install:
 	pip install -e .[dev]
 
 test:
-	pytest --cov=src tests/
+pytest --cov=src src/tests/

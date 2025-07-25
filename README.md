@@ -255,7 +255,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 
 - `src/`: Contiene la lógica Python del proyecto.
 - `frontend/docs/` y `frontend/build/`: Carpetas donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
-- `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
+- `src/tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo que lista las dependencias del proyecto.
 - `pyproject.toml`: También define dependencias en las secciones
@@ -740,7 +740,7 @@ posible para reducir riesgos.
 
 # Pruebas
 
-Las pruebas están ubicadas en la carpeta tests/ y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
+Las pruebas están ubicadas en la carpeta `src/tests/` y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
 También puedes instalar las dependencias de desarrollo con `pip install .[dev]` para contar con todas las herramientas necesarias.
 
 ````bash
@@ -757,7 +757,7 @@ PYTHONPATH=$PWD pytest
 En la integración continua se emplea:
 
 ```bash
-pytest --cov=src tests/
+pytest --cov=src src/tests/
 ```
 
 El reporte se guarda como `coverage.xml` y se utiliza en el CI.
