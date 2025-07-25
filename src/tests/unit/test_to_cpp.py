@@ -75,10 +75,10 @@ def test_transpilador_clase():
     resultado = t.generate_code(ast)
     esperado = (
         "class Persona {\n"
-        "    auto saludar(auto self) {\n"
-        "        auto x = 1;\n"
-        "    }\n"
-        "};"
+        + "    auto saludar(auto self) {\n"
+        + "        auto x = 1;\n"
+        + "    }\n"
+        + "};"
     )
     assert resultado == esperado
 
@@ -106,16 +106,16 @@ def test_transpilador_switch():
     resultado = t.generate_code(ast)
     esperado = (
         "switch (x) {\n"
-        "    case 1:\n"
-        "        auto y = 1;\n"
-        "        break;\n"
-        "    case 2:\n"
-        "        auto y = 2;\n"
-        "        break;\n"
-        "    default:\n"
-        "        auto y = 0;\n"
-        "        break;\n"
-        "}"
+        + "    case 1:\n"
+        + "        auto y = 1;\n"
+        + "        break;\n"
+        + "    case 2:\n"
+        + "        auto y = 2;\n"
+        + "        break;\n"
+        + "    default:\n"
+        + "        auto y = 0;\n"
+        + "        break;\n"
+        + "}"
     )
     assert resultado == esperado
 

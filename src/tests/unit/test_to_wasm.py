@@ -27,6 +27,6 @@ def test_transpilador_funcion_wasm():
     resultado = t.generate_code(ast)
     esperado = (
         "(func $sumar (param $a i32) (param $b i32)\n"
-        "    (local.set $x (i32.add (local.get $a) (local.get $b)))\n)"
+        + "    (local.set $x (i32.add (local.get $a) (local.get $b)))\n)"
     )
     assert resultado == esperado

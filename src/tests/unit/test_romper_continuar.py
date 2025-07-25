@@ -46,9 +46,9 @@ def test_transpilar_continuar_js():
     resultado = t.generate_code([nodo])
     esperado = (
         "import * as io from './nativos/io.js';\n"
-        "import * as net from './nativos/io.js';\n"
-        "import * as matematicas from './nativos/matematicas.js';\n"
-        "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        "for (let x of datos) {\ncontinue;\n}"
+        + "import * as net from './nativos/io.js';\n"
+        + "import * as matematicas from './nativos/matematicas.js';\n"
+        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        + "for (let x of datos) {\ncontinue;\n}"
     )
     assert resultado == esperado

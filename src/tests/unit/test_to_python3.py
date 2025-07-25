@@ -37,7 +37,7 @@ def test_transpilar_condicional():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
+        + "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de condicional"
 
@@ -62,7 +62,7 @@ def test_transpilar_funcion():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "def sumar(a, b):\n    resultado = a + b\n"
+        + "def sumar(a, b):\n    resultado = a + b\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de funci\u00f3n"
 
@@ -121,7 +121,7 @@ def test_transpilar_clase():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "class MiClase:\n    def miMetodo(param):\n        x = param + 1\n"
+        + "class MiClase:\n    def miMetodo(param):\n        x = param + 1\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de clase"
 
@@ -133,7 +133,7 @@ def test_transpilar_clase_multibase():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "class Hija(Base1, Base2):\n    def m(self):\n        return 1\n"
+        + "class Hija(Base1, Base2):\n    def m(self):\n        return 1\n"
     )
     assert result == expected, "Error en herencia múltiple"
 
@@ -144,6 +144,6 @@ def test_transpilar_metodo():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "def miMetodo(a, b):\n    resultado = a + b\n"
+        + "def miMetodo(a, b):\n    resultado = a + b\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de m\u00e9todo"

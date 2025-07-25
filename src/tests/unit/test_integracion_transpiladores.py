@@ -24,11 +24,11 @@ def test_integracion_js():
     resultado = TranspiladorJavaScript().generate_code(ast)
     esperado = (
         "import * as io from './nativos/io.js';\n"
-        "import * as net from './nativos/io.js';\n"
-        "import * as matematicas from './nativos/matematicas.js';\n"
-        "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        "let x = 10;\n"
-        "console.log(x);"
+        + "import * as net from './nativos/io.js';\n"
+        + "import * as matematicas from './nativos/matematicas.js';\n"
+        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
+        + "let x = 10;\n"
+        + "console.log(x);"
     )
     assert resultado == esperado
 
@@ -40,8 +40,8 @@ def test_integracion_condicional_python():
     resultado = TranspiladorPython().generate_code(ast)
     esperado = (
         IMPORTS
-        "x = 10\n"
-        "if x > 5:\n"
-        "    print(x)\n"
+        + "x = 10\n"
+        + "if x > 5:\n"
+        + "    print(x)\n"
     )
     assert resultado == esperado

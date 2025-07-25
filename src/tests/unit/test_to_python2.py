@@ -31,7 +31,7 @@ def test_transpilar_condicional():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
+        + "if x > 5:\n    y = 10\nelse:\n    y = 0\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de condicional"
 
@@ -52,7 +52,7 @@ def test_transpilar_funcion():
     result = transpiler.generate_code([nodo])
     expected = (
         IMPORTS
-        "def sumar(a, b):\n    resultado = a + b\n"
+        + "def sumar(a, b):\n    resultado = a + b\n"
     )
     assert result == expected, "Error en la transpilaci\u00f3n de funci\u00f3n"
 

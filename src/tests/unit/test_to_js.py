@@ -101,16 +101,16 @@ def test_transpilador_switch():
     esperado = (
         IMPORTS
         + "switch (x) {\n"
-        "    case 1:\n"
-        "        let y = 1;\n"
-        "        break;\n"
-        "    case 2:\n"
-        "        let y = 2;\n"
-        "        break;\n"
-        "    default:\n"
-        "        let y = 0;\n"
-        "        break;\n"
-        "}"
+        + "    case 1:\n"
+        + "        let y = 1;\n"
+        + "        break;\n"
+        + "    case 2:\n"
+        + "        let y = 2;\n"
+        + "        break;\n"
+        + "    default:\n"
+        + "        let y = 0;\n"
+        + "        break;\n"
+        + "}"
     )
     assert resultado == esperado
 
@@ -128,8 +128,8 @@ def test_async_function_and_await():
     resultado = t.generate_code(ast)
     esperado = IMPORTS + (
         "async function principal() {\n"
-        "await saluda();\n"
-        "}"
+        + "await saluda();\n"
+        + "}"
     )
     assert resultado == esperado
 
@@ -144,9 +144,9 @@ def test_export_import():
     resultado = t.generate_code(ast)
     esperado = IMPORTS + (
         "import { saluda } from './mod.js';\n"
-        "function saluda() {\n"
-        "}\n"
-        "export { saluda };"
+        + "function saluda() {\n"
+        + "}\n"
+        + "export { saluda };"
     )
     assert resultado == esperado
 
@@ -160,12 +160,12 @@ def test_decoradores_en_clase_y_metodo_js():
     resultado = t.generate_code([clase])
     esperado = IMPORTS + (
         "class C {\n"
-        "async run(a) {\n"
-        ";\n"
-        "}\n"
-        "}\n"
-        "C.prototype.run = dec(C.prototype.run);\n"
-        "C = dec(C);"
+        + "async run(a) {\n"
+        + ";\n"
+        + "}\n"
+        + "}\n"
+        + "C.prototype.run = dec(C.prototype.run);\n"
+        + "C = dec(C);"
     )
     assert resultado == esperado
 

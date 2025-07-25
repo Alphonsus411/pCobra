@@ -84,11 +84,11 @@ def test_transpilador_clase():
     resultado = t.generate_code(ast)
     esperado = (
         "struct Persona {}\n\n"
-        "impl Persona {\n"
-        "    fn saludar(self) {\n"
-        "        let x = 1;\n"
-        "    }\n"
-        "}"
+        + "impl Persona {\n"
+        + "    fn saludar(self) {\n"
+        + "        let x = 1;\n"
+        + "    }\n"
+        + "}"
     )
     assert resultado == esperado
 
@@ -116,16 +116,16 @@ def test_transpilador_switch():
     resultado = t.generate_code(ast)
     esperado = (
         "match x {\n"
-        "    1 => {\n"
-        "        let y = 1;\n"
-        "    },\n"
-        "    2 => {\n"
-        "        let y = 2;\n"
-        "    },\n"
-        "    _ => {\n"
-        "        let y = 0;\n"
-        "    },\n"
-        "}"
+        + "    1 => {\n"
+        + "        let y = 1;\n"
+        + "    },\n"
+        + "    2 => {\n"
+        + "        let y = 2;\n"
+        + "    },\n"
+        + "    _ => {\n"
+        + "        let y = 0;\n"
+        + "    },\n"
+        + "}"
     )
     assert resultado == esperado
 
@@ -139,16 +139,16 @@ def test_try_catch_result():
     resultado = t.generate_code([nodo])
     esperado = (
         "let resultado: Result<(), Box<dyn std::error::Error>> = (|| {\n"
-        "    return Err(1.into());\n"
-        "    Ok(())\n"
-        "})();\n"
-        "match resultado {\n"
-        "    Ok(_) => (),\n"
-        "    Err(e) => {\n"
-        "        let e = e;\n"
-        "        let y = e;\n"
-        "    },\n"
-        "};"
+        + "    return Err(1.into());\n"
+        + "    Ok(())\n"
+        + "})();\n"
+        + "match resultado {\n"
+        + "    Ok(_) => (),\n"
+        + "    Err(e) => {\n"
+        + "        let e = e;\n"
+        + "        let y = e;\n"
+        + "    },\n"
+        + "};"
     )
     assert resultado == esperado
 
@@ -183,14 +183,14 @@ def test_option_match():
     resultado = t.generate_code(ast)
     esperado = (
         "let opt = Some(1);\n"
-        "match opt {\n"
-        "    Some(v) => {\n"
-        "        let y = v;\n"
-        "    },\n"
-        "    None => {\n"
-        "        let y = 0;\n"
-        "    },\n"
-        "}"
+        + "match opt {\n"
+        + "    Some(v) => {\n"
+        + "        let y = v;\n"
+        + "    },\n"
+        + "    None => {\n"
+        + "        let y = 0;\n"
+        + "    },\n"
+        + "}"
     )
     assert resultado == esperado
 
@@ -206,11 +206,11 @@ def test_transpilador_assert_del_with_import():
     resultado = t.generate_code(ast)
     esperado = (
         "assert!(True);\n"
-        "// del x\n"
-        "{\n"
-        "    let y = 1;\n"
-        "}\n"
-        "use mod::func;"
+        + "// del x\n"
+        + "{\n"
+        + "    let y = 1;\n"
+        + "}\n"
+        + "use mod::func;"
     )
     assert resultado == esperado
 
@@ -227,7 +227,7 @@ def test_obtener_valor_listas_diccionarios():
     resultado = t.generate_code(ast)
     esperado = (
         "let a = vec![1, 2];\n"
-        "let b = std::collections::HashMap::from([(x, 1)]);"
+        + "let b = std::collections::HashMap::from([(x, 1)]);"
     )
     assert resultado == esperado
 
