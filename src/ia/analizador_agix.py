@@ -10,7 +10,11 @@ from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
 
 
-def generar_sugerencias(codigo: str) -> List[str]:
+def generar_sugerencias(
+    codigo: str,
+    peso_precision: float | None = None,
+    peso_interpretabilidad: float | None = None,
+) -> List[str]:
     """Genera sugerencias para el ``codigo`` proporcionado.
 
     El análisis valida el código con el lexer y parser de Cobra y luego usa
@@ -44,6 +48,13 @@ def generar_sugerencias(codigo: str) -> List[str]:
             "accuracy": 0.5,
             "interpretability": 1.0,
         })
+
+    if peso_precision is not None:
+        for ev in evaluaciones:
+            ev["accuracy"] *= peso_precision
+    if peso_interpretabilidad is not None:
+        for ev in evaluaciones:
+            ev["interpretability"] *= peso_interpretabilidad
 
     razonador = Reasoner()
     mejor = razonador.select_best_model(evaluaciones)
