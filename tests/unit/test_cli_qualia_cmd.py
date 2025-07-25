@@ -11,8 +11,10 @@ def _capture_json(output: str) -> dict:
 
 
 def test_cli_qualia_mostrar(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
+    state.parent.mkdir(parents=True, exist_ok=True)
     from core import qualia_bridge
     qb = importlib.reload(qualia_bridge)
     qb.register_execution("imprimir(1)")
@@ -24,10 +26,12 @@ def test_cli_qualia_mostrar(tmp_path, monkeypatch):
 
 
 def test_cli_qualia_reiniciar(tmp_path, monkeypatch):
-    state = tmp_path / "state.json"
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
     from core import qualia_bridge
     importlib.reload(qualia_bridge)
+    state.parent.mkdir(parents=True, exist_ok=True)
     state.write_text("{}")
     from cli.cli import main
     with patch("sys.stdout", new_callable=StringIO) as out:

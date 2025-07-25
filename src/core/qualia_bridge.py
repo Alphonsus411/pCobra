@@ -7,10 +7,24 @@ from cobra.parser.parser import Parser
 from core.qualia_knowledge import QualiaKnowledge
 
 
-STATE_FILE = os.environ.get(
-    "QUALIA_STATE_PATH",
-    os.path.join(os.path.dirname(__file__), "qualia_state.json"),
+DEFAULT_STATE_FILE = os.path.join(
+    os.path.expanduser("~"), ".cobra", "qualia_state.json"
 )
+
+
+def _resolve_state_file() -> str:
+    """Devuelve la ruta de estado validada y normalizada."""
+    raw_path = os.environ.get("QUALIA_STATE_PATH", DEFAULT_STATE_FILE)
+    path = os.path.abspath(raw_path)
+    base = os.path.abspath(os.path.join(os.path.expanduser("~"), ".cobra"))
+
+    if os.path.commonpath([path, base]) != base:
+        raise ValueError("QUALIA_STATE_PATH debe ubicarse dentro de ~/.cobra")
+
+    return path
+
+
+STATE_FILE = _resolve_state_file()
 
 
 class QualiaSpirit:
@@ -68,6 +82,7 @@ def load_state() -> QualiaSpirit:
 
 def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en ``STATE_FILE``."""
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     with open(STATE_FILE, "w", encoding="utf-8") as fh:
         json.dump(
             {
