@@ -1,6 +1,9 @@
 import os
 import yaml
-import tomllib
+try:
+    import tomllib  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 
 MODULE_MAP_PATH = os.environ.get(
     'COBRA_MODULE_MAP',

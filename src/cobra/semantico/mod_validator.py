@@ -12,7 +12,10 @@ comprobaciones incluyen:
 from __future__ import annotations
 
 import os
-import tomllib
+try:
+    import tomllib  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 import yaml
 from typing import Dict, Any
 from jsonschema import validate, ValidationError

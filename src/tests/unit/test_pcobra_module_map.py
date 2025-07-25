@@ -1,4 +1,7 @@
-import tomllib
+try:
+    import tomllib  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser

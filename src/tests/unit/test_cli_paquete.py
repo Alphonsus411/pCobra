@@ -1,6 +1,9 @@
 from io import StringIO
 import zipfile
-import tomllib
+try:
+    import tomllib  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 from unittest.mock import patch
 
 from cli.cli import main
