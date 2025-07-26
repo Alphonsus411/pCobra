@@ -18,7 +18,17 @@ sys.modules.setdefault("RestrictedPython.Guards", guards_mod)
 pc_mod = ModuleType("PrintCollector")
 pc_mod.PrintCollector = list
 sys.modules.setdefault("RestrictedPython.PrintCollector", pc_mod)
-sys.modules.setdefault("yaml", ModuleType("yaml"))
+yaml_mod = ModuleType("yaml")
+yaml_mod.safe_load = lambda *a, **k: {}
+sys.modules.setdefault("yaml", yaml_mod)
+tsl_mod = ModuleType("tree_sitter_languages")
+tsl_mod.get_parser = lambda *a, **k: None
+sys.modules.setdefault("tree_sitter_languages", tsl_mod)
+
+import cli
+import cli.commands
+sys.modules.setdefault("src.cli", cli)
+sys.modules.setdefault("src.cli.commands", cli.commands)
 
 from cli.commands.interactive_cmd import InteractiveCommand
 
@@ -53,3 +63,27 @@ def test_interactive_ast():
          patch('cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     mock_info.assert_any_call('AST generado:')
+
+
+def test_interactive_keyboard_interrupt():
+    cmd = InteractiveCommand()
+    with patch('builtins.input', side_effect=KeyboardInterrupt), \
+         patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
+         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
+        ret = cmd.run(_args())
+    assert ret == 0
+    mock_interp.assert_called_once_with(safe_mode=False, extra_validators=None)
+    mock_info.assert_any_call('Saliendo...')
+
+
+def test_interactive_eof_error():
+    cmd = InteractiveCommand()
+    with patch('builtins.input', side_effect=EOFError), \
+         patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
+         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
+        ret = cmd.run(_args())
+    assert ret == 0
+    mock_interp.assert_called_once_with(safe_mode=False, extra_validators=None)
+    mock_info.assert_any_call('Saliendo...')
