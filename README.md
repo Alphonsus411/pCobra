@@ -931,7 +931,7 @@ patrones de código riesgosos, como el uso de `eval` o `exec` fuera del sandbox.
 
 ## Comunidad
 
-Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo. **El enlace de invitación se actualizará próximamente.**
+Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo en [https://discord.gg/pcobra](https://discord.gg/pcobra).
 También contamos con un canal de **Telegram** y una cuenta de **Twitter** donde difundimos eventos y actualizaciones.
 
 ## Desarrollo
