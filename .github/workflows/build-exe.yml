@@ -1,4 +1,6 @@
 name: Build Executables
+permissions:
+  contents: read
 
 on:
   release:
