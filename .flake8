@@ -1,5 +1,16 @@
 [flake8]
 max-line-length = 88
-exclude = venv
+exclude =
+    .venv,
+    venv,
+    __pycache__,
+    build,
+    dist,
+    .git,
+    frontend/docs,
+    frontend/build,
+    src/tests,
+    notebooks
 
-ignore = F403,F405
+# F403: 'from module import *' used; F405: name may be undefined from import *
+ignore = F403, F405

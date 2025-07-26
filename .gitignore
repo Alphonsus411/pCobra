@@ -1,26 +1,60 @@
-/venv/
+# ============= ENTORNOS VIRTUALES =============
+.venv/
+venv/
+VENV/
+ENV/
+env/
+env.bak/
+
+# ============= ARCHIVOS PYTHON =============
 __pycache__/
-*.pyc
-/frontend/build/
-.idea/
-*.egg-info/
-/dist/
+*.py[cod]
+*.so
+*.pyd
+
+# ============= LOGS Y ARCHIVOS TEMPORALES =============
 *.log
-frontend/vscode/node_modules/
+*.bak
+*.swp
+.cache/
+.cache/*
 
-# Build directory for Sphinx documentation
-docs/_build/
-docs/*.png
-
-# Coverage reports
+# ============= COVERAGE Y TESTS =============
 .coverage
 htmlcov/
 coverage.xml
-cache/
-docs/cheatsheet.pdf
-\.hypothesis/
+.pytest_cache/
+.hypothesis/
 bench_results.json
-all-bytes.dat
-venv/
+
+# ============= ENTORNOS IDE =============
+.idea/
+.vscode/
+*.code-workspace
+
+# ============= DIST Y BUILD =============
+*.egg-info/
+dist/
+build/
+
+# ============= FRONTEND =============
+frontend/vscode/node_modules/
+frontend/build/
 frontend/docs/galeria/*.png
 frontend/docs/galeria/*.gif
+
+# ============= DOCUMENTACIÓN SPHINX =============
+docs/_build/
+docs/cheatsheet.pdf
+docs/*.png  # Solo si estás generando imágenes temporales allí
+
+# ============= ARCHIVOS BINARIOS O PERSONALIZADOS =============
+all-bytes.dat
+*.dll
+*.exe
+*.bin
+*.dat
+
+# ============= CONFIG INTERNOS (opcional) =============
+*.toml.local
+*.env.local

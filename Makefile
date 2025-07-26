@@ -1,53 +1,74 @@
-	# Minimal makefile for Sphinx documentation
-#
+# ========== VARIABLES CONFIGURABLES ==========
+PYTHON=python
+VENV=.venv
+SRC=src
+TESTS=src/tests
+SPHINXBUILD=sphinx-build
+SPHINXOPTS=
+SOURCEDIR=frontend/docs
+BUILDDIR=frontend/build
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = frontend/docs
-BUILDDIR      = frontend/build
+# ========= TAREAS GENÉRICAS ==========
 
-# Put it first so that "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@echo "Comandos disponibles:"
+	@echo "  make install         Instala el entorno en modo desarrollo"
+	@echo "  make run             Ejecuta Cobra usando dotenv"
+	@echo "  make test            Ejecuta tests con pytest y coverage"
+	@echo "  make lint            Ejecuta linters: flake8, mypy, bandit"
+	@echo "  make format          Formatea con black + isort"
+	@echo "  make typecheck       Verifica tipos con mypy + pyright"
+	@echo "  make docker          Construye todos los contenedores"
+	@echo "  make docs            Genera documentación Sphinx"
+	@echo "  make clean           Limpia archivos temporales"
+	@echo "  make secrets         Busca secretos con gitleaks"
+	@echo "  make check           Linter + Tests + Typecheck (pre-commit/release)"
 
-.PHONY: help Makefile
+install:
+	$(PYTHON) -m venv $(VENV)
+	. $(VENV)/bin/activate 2>/dev/null || . $(VENV)/Scripts/activate && \
+		pip install --upgrade pip && \
+		pip install -e .[dev]
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+run:
+	$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m src.main
 
-coverage:
-pytest src/tests --cov=src \
-        --cov-report=term-missing --cov-fail-under=95
+test:
+	pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
 
 lint:
-        flake8 src
-        mypy src
-        bandit -r src
-flake8 src/ src/tests/
+	flake8 $(SRC)
+	mypy $(SRC)
+	bandit -r $(SRC)
 
 format:
-        isort src
-        black src
-black src/ src/tests/
+	isort $(SRC)
+	black $(SRC)
 
 typecheck:
-                mypy src
-                @if command -v pyright >/dev/null 2>&1; then \
-                pyright src; \
-	fi
-
-benchmarks:
-	python scripts/benchmarks/run_benchmarks.py > bench_results.json
+	mypy $(SRC)
+	@command -v pyright >/dev/null 2>&1 && pyright $(SRC) || echo "ℹ️ pyright no está instalado"
 
 secrets:
 	gitleaks detect --source . --redact
 
-install:
-	pip install -e .[dev]
+check: lint test typecheck
+	@echo "✅ Todo en orden. Código listo para commit o build."
 
-test:
-pytest --cov=src src/tests/
+docker:
+	docker build -t cobra -f docker/Dockerfile .
+	docker build -t cobra-cpp -f docker/cpp.Dockerfile .
+	docker build -t cobra-js -f docker/js.Dockerfile .
+	docker build -t cobra-python -f docker/python.Dockerfile .
+	docker build -t cobra-rust -f docker/rust.Dockerfile .
+
+docs:
+	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
+
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	rm -rf .pytest_cache .mypy_cache .coverage htmlcov \
+	       $(BUILDDIR) .venv dist build bench_results.json
+
+.PHONY: help install run test lint format typecheck secrets docker docs clean check

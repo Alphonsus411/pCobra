@@ -1,9 +1,18 @@
 from dotenv import load_dotenv
 
-# Carga las variables de entorno antes de importar otros módulos
+# Carga variables de entorno desde un archivo .env si existe
 load_dotenv()
 
-from src.core.main import main
+from src.cli.cli import main as cli_main
+
+
+def main(argv=None):
+    """Entrada principal que delega en la CLI."""
+    return cli_main(argv)
+
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    sys.exit(main())
+

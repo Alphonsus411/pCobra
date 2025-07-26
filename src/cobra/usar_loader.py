@@ -4,8 +4,45 @@ import subprocess
 from pathlib import Path
 import sys
 
-# Lista blanca de paquetes que se pueden instalar con ``usar``.
+# Intentamos cargar configuración dinámica desde pcobra.toml
+try:
+    import tomli
+except ImportError:
+    tomli = None  # Tomli no es necesario en Python ≥ 3.11
+
 USAR_WHITELIST: set[str] = set()
+
+
+def cargar_lista_blanca():
+    """Carga la lista blanca de paquetes permitidos desde pcobra.toml si existe"""
+    global USAR_WHITELIST
+
+    # Por defecto incluye paquetes clave del proyecto
+    USAR_WHITELIST = {
+        "numpy",
+        "pandas",
+        "requests",
+        "matplotlib",
+        "holobit-sdk",
+        "smooth-criminal",
+        "agix",
+    }
+
+    # Cargar desde configuración si se encuentra
+    config_path = Path(__file__).resolve().parent.parent.parent / "pcobra.toml"
+    if config_path.exists() and tomli:
+        try:
+            with open(config_path, "rb") as f:
+                config = tomli.load(f)
+            permitidos = config.get("usar", {}).get("permitidos", [])
+            if isinstance(permitidos, list):
+                USAR_WHITELIST.update(permitidos)
+        except Exception as e:
+            print(f"Advertencia: no se pudo leer pcobra.toml: {e}")
+
+
+# Ejecutar al importar
+cargar_lista_blanca()
 
 
 def obtener_modulo(nombre: str):
@@ -14,58 +51,52 @@ def obtener_modulo(nombre: str):
     """
     if not USAR_WHITELIST:
         raise PermissionError(
-            "USAR_WHITELIST vacía: es necesario listar los paquetes permitidos"
+            "La lista blanca de paquetes está vacía. No se puede usar 'usar'."
         )
     if nombre not in USAR_WHITELIST:
-        raise PermissionError(f"Paquete '{nombre}' no permitido")
+        raise PermissionError(f"Paquete '{nombre}' no está permitido.")
 
     try:
         return importlib.import_module(nombre)
     except ModuleNotFoundError:
-        # Verificar si el módulo existe dentro de ``corelibs``
+        # Buscar primero en corelibs
         base = Path(__file__).resolve()
-        corelibs = None
         for parent in base.parents:
-            candidate = parent / "corelibs"
-            if candidate.exists():
-                corelibs = candidate
+            corelibs = parent / "corelibs"
+            if corelibs.exists():
+                mod_path = corelibs / f"{nombre}.py"
+                pkg_path = corelibs / nombre / "__init__.py"
+                if mod_path.exists() or pkg_path.exists():
+                    ruta = mod_path if mod_path.exists() else pkg_path
+                    spec = importlib.util.spec_from_file_location(nombre, ruta)
+                    modulo = importlib.util.module_from_spec(spec)
+                    sys.modules[nombre] = modulo
+                    spec.loader.exec_module(modulo)
+                    return modulo
                 break
-        if corelibs is None:
-            corelibs = Path()
-        mod_path = corelibs / f"{nombre}.py"
-        pkg_path = corelibs / nombre / "__init__.py"
-        if mod_path.exists() or pkg_path.exists():
-            ruta = mod_path if mod_path.exists() else pkg_path
-            spec = importlib.util.spec_from_file_location(nombre, ruta)
-            modulo = importlib.util.module_from_spec(spec)
-            sys.modules[nombre] = modulo
-            spec.loader.exec_module(modulo)
-            return modulo
 
-        # Buscar también en ``standard_library``
-        stdlib = None
+        # Buscar también en standard_library
         for parent in base.parents:
-            candidate = parent / "standard_library"
-            if candidate.exists():
-                stdlib = candidate
+            stdlib = parent / "standard_library"
+            if stdlib.exists():
+                mod_path = stdlib / f"{nombre}.py"
+                pkg_path = stdlib / nombre / "__init__.py"
+                if mod_path.exists() or pkg_path.exists():
+                    ruta = mod_path if mod_path.exists() else pkg_path
+                    spec = importlib.util.spec_from_file_location(nombre, ruta)
+                    modulo = importlib.util.module_from_spec(spec)
+                    sys.modules[nombre] = modulo
+                    spec.loader.exec_module(modulo)
+                    return modulo
                 break
-        if stdlib is None:
-            stdlib = Path()
-        mod_path = stdlib / f"{nombre}.py"
-        pkg_path = stdlib / nombre / "__init__.py"
-        if mod_path.exists() or pkg_path.exists():
-            ruta = mod_path if mod_path.exists() else pkg_path
-            spec = importlib.util.spec_from_file_location(nombre, ruta)
-            modulo = importlib.util.module_from_spec(spec)
-            sys.modules[nombre] = modulo
-            spec.loader.exec_module(modulo)
-            return modulo
 
-        print(f"Paquete '{nombre}' no encontrado. Instalando...")
+        # Si no se encontró, intentar instalar con pip
+        print(f"Paquete '{nombre}' no encontrado. Instalando con pip...")
         try:
             subprocess.run([sys.executable, "-m", "pip", "install", nombre], check=True)
         except subprocess.CalledProcessError as exc:
             raise RuntimeError(f"Fallo al instalar '{nombre}': {exc}") from exc
+
         try:
             return importlib.import_module(nombre)
         except ModuleNotFoundError as exc:

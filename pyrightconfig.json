@@ -4,8 +4,16 @@
     "frontend/build",
     "frontend/docs",
     "venv",
+    ".venv",
+    "dist",
+    "build",
     "src/tests"
   ],
+  "ignore": [],
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
   "pythonVersion": "3.11",
-  "reportMissingImports": false
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "strict": false
 }

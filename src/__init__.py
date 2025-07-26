@@ -3,11 +3,13 @@
 import importlib
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-for pkg in ["cli", "cobra", "core", "ia", "jupyter_kernel", "tests", "gui", "lsp"]:
+_submodules = ["cli", "cobra", "core", "ia", "jupyter_kernel", "gui", "lsp"]
+
+for pkg in _submodules:
     try:
         module = importlib.import_module(f".{pkg}", __name__)
         globals()[pkg] = module
     except Exception as e:  # nosec B110
-        logging.warning("No se pudo importar %s: %s", pkg, e)
+        logger.warning("No se pudo importar %s: %s", pkg, e)

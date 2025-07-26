@@ -1,3 +1,14 @@
 #!/bin/sh
+set -e
+
+echo "🦀 Recibiendo código Rust desde stdin..."
 cat > main.rs
-rustc main.rs -O -o main && ./main
+
+echo "🔧 Compilando con rustc..."
+rustc main.rs -O -o main
+
+echo "🚀 Ejecutando..."
+./main
+
+echo "🧹 Limpiando archivos temporales..."
+rm -f main main.rs

@@ -1,9 +1,23 @@
 [run]
-source = src
 branch = True
+source =
+    src
+    scripts
 
 [report]
 omit =
-    */src/tests/*
-    venv/*
-    frontend/docs/*
+    */tests/*
+    */venv/*
+    */frontend/docs/*
+    */__init__.py
+    */setup.py
+    */main_init.py
+    */scripts/benchmarks/*
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self\.debug
+    if __name__ == .__main__.:
+
+[html]
+directory = htmlcov

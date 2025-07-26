@@ -1,7 +1,20 @@
+###########################################
+# ⚙️ Configuración de ejecución de Cobra
+###########################################
+
 [auditoria]
+# Activa o desactiva la auditoría del entorno de ejecución.
 activa = true
 
 [seguridad]
+# Número máximo de nodos en el AST permitidos (protección contra ataques de complejidad)
 limite_nodos = 1000
+
+# Límite de uso de memoria RAM por script (en MB)
 limite_memoria_mb = 128
+
+# Tiempo máximo de CPU por script (en segundos)
 limite_cpu_segundos = 10
+
+# Módulos bloqueados explícitamente (por seguridad)
+modulos_prohibidos = ["os", "sys", "socket"]

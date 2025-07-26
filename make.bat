@@ -1,30 +1,32 @@
 @ECHO OFF
+SETLOCAL ENABLEEXTENSIONS
 
+REM Entrar al directorio del script
 pushd %~dp0
 
-REM Command file for Sphinx documentation
-
-if "%SPHINXBUILD%" == "" (
-	set SPHINXBUILD=sphinx-build
+REM Configurar comando Sphinx
+IF "%SPHINXBUILD%"=="" (
+    SET SPHINXBUILD=sphinx-build
 )
-set SOURCEDIR=frontend/docs
-set BUILDDIR=frontend/build
+SET SOURCEDIR=frontend/docs
+SET BUILDDIR=frontend/build
 
-%SPHINXBUILD% >NUL 2>NUL
-if errorlevel 9009 (
-	echo.
-	echo.The 'sphinx-build' command was not found. Make sure you have Sphinx
-	echo.installed, then set the SPHINXBUILD environment variable to point
-	echo.to the full path of the 'sphinx-build' executable. Alternatively you
-	echo.may add the Sphinx directory to PATH.
-	echo.
-	echo.If you don't have Sphinx installed, grab it from
-	echo.https://www.sphinx-doc.org/
-	exit /b 1
+REM Verificar que Sphinx esté disponible
+where %SPHINXBUILD% >nul 2>&1
+IF ERRORLEVEL 1 (
+    echo ❌ No se encontró 'sphinx-build'.
+    echo 🔧 Instálalo con: pip install sphinx
+    echo O define la variable SPHINXBUILD si lo tienes en otro sitio.
+    echo Más info: https://www.sphinx-doc.org/
+    exit /b 1
 )
 
-if "%1" == "" goto help
+REM Mostrar ayuda si no hay argumentos
+IF "%1"=="" (
+    goto help
+)
 
+REM Ejecutar comando Sphinx
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 goto end
 
@@ -33,3 +35,4 @@ goto end
 
 :end
 popd
+ENDLOCAL

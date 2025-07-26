@@ -1,1 +1,7 @@
-modules: {}
+# Archivo de bloqueo de módulos para Cobra
+# Generado automáticamente. No modificar manualmente.
+
+[modules]
+# Ejemplo:
+# numpy = "1.24.0"
+
