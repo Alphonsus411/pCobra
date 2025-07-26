@@ -118,6 +118,9 @@ class ModulesCommand(BaseCommand):
         if not os.path.exists(ruta):
             mostrar_error(_("No se encontró el módulo {path}").format(path=ruta))
             return 1
+        if os.path.islink(ruta) or not os.path.isfile(ruta) or os.path.splitext(ruta)[1] != ".co":
+            mostrar_error(_("Ruta de módulo inválida"))
+            return 1
         destino = os.path.join(MODULES_PATH, os.path.basename(ruta))
         shutil.copy(ruta, destino)
         mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
