@@ -6,6 +6,10 @@ on:
   pull_request:
     paths: ['**.py', 'src/tests/**', '.github/workflows/test.yml']
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
