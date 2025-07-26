@@ -33,3 +33,19 @@ def test_literal_extremo():
     assert tokens[0].tipo == TipoToken.ENTERO
     assert tokens[0].valor == 999999999999999999
     assert tokens[-1].tipo == TipoToken.EOF
+
+
+def test_cadena_con_escape():
+    codigo = r"'hola\\nmundo'"
+    tokens = Lexer(codigo).analizar_token()
+    assert tokens[0].tipo == TipoToken.CADENA
+    assert tokens[0].valor == "hola\\nmundo"
+    assert tokens[-1].tipo == TipoToken.EOF
+
+
+def test_cadena_con_comillas_escapadas():
+    codigo = '"dijo \\"hola\\""'
+    tokens = Lexer(codigo).analizar_token()
+    assert tokens[0].tipo == TipoToken.CADENA
+    assert tokens[0].valor == 'dijo \\"hola\\"'
+    assert tokens[-1].tipo == TipoToken.EOF
