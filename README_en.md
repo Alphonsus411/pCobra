@@ -33,6 +33,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - [Technical specification](docs/especificacion_tecnica.md)
 - [Cheatsheet](docs/cheatsheet.tex) – compile it to PDF with LaTeX
 - [Real use cases](docs/casos_reales.md)
+- [Node sandbox limitations](docs/limitaciones_node_sandbox.md)
 - Example notebooks and real cases
 - [Changelog](CHANGELOG.md)
 
