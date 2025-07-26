@@ -77,45 +77,61 @@ def test_seguridad_funcs():
 
 def test_red_funcs(monkeypatch):
     mock_resp = MagicMock()
-    mock_resp.read.return_value = b"ok"
-    mock_cm = MagicMock()
-    mock_cm.__enter__.return_value = mock_resp
+    mock_resp.text = "ok"
+    mock_resp.raise_for_status.return_value = None
     with patch(
-        "backend.corelibs.red.urllib.request.urlopen", return_value=mock_cm
-    ) as mock_urlopen:
+        "backend.corelibs.red.requests.get", return_value=mock_resp
+    ) as mock_get, patch(
+        "backend.corelibs.red.requests.post", return_value=mock_resp
+    ) as mock_post:
         assert core.obtener_url("http://x") == "ok"
         assert core.enviar_post("http://x", {"a": 1}) == "ok"
-        mock_urlopen.assert_any_call("http://x", timeout=5)
-        mock_urlopen.assert_any_call("http://x", b"a=1", timeout=5)
-        assert mock_urlopen.call_count == 2
+        mock_get.assert_called_once_with("http://x", timeout=5)
+        mock_post.assert_called_once_with("http://x", data={"a": 1}, timeout=5)
 
 
 def test_red_obtener_url_rechaza_esquema_no_http():
-    with patch("backend.corelibs.red.urllib.request.urlopen") as mock_urlopen:
+    with patch("backend.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("ftp://ejemplo.com")
-        mock_urlopen.assert_not_called()
+        mock_get.assert_not_called()
 
 
 def test_red_obtener_url_rechaza_otro_esquema():
-    with patch("backend.corelibs.red.urllib.request.urlopen") as mock_urlopen:
+    with patch("backend.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("file:///tmp/archivo.txt")
-        mock_urlopen.assert_not_called()
+        mock_get.assert_not_called()
 
 
 def test_red_enviar_post_rechaza_esquema_no_http():
-    with patch("backend.corelibs.red.urllib.request.urlopen") as mock_urlopen:
+    with patch("backend.corelibs.red.requests.post") as mock_post:
         with pytest.raises(ValueError):
             core.enviar_post("ftp://ejemplo.com", {"a": 1})
-        mock_urlopen.assert_not_called()
+        mock_post.assert_not_called()
 
 
 def test_red_enviar_post_rechaza_otro_esquema():
-    with patch("backend.corelibs.red.urllib.request.urlopen") as mock_urlopen:
+    with patch("backend.corelibs.red.requests.post") as mock_post:
         with pytest.raises(ValueError):
             core.enviar_post("file:///tmp/archivo.txt", {"a": 1})
-        mock_urlopen.assert_not_called()
+        mock_post.assert_not_called()
+
+
+def test_red_host_whitelist_permite(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    mock_resp = MagicMock(text="ok")
+    mock_resp.raise_for_status.return_value = None
+    with patch("backend.corelibs.red.requests.get", return_value=mock_resp):
+        assert core.obtener_url("http://example.com") == "ok"
+
+
+def test_red_host_whitelist_rechaza(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    with patch("backend.corelibs.red.requests.get") as mock_get:
+        with pytest.raises(ValueError):
+            core.obtener_url("http://otro.com")
+        mock_get.assert_not_called()
 
 
 def test_sistema_funcs(tmp_path, monkeypatch):
