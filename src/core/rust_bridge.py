@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Iterable, Any
@@ -18,6 +19,16 @@ def compilar_crate(ruta: str, release: bool = True) -> str:
     compilar\u00e1 en modo debug.
     """
     path = Path(ruta).resolve()
+
+    if shutil.which("cbindgen") is None:
+        raise RuntimeError(
+            "La herramienta 'cbindgen' no est\xc3\xa1 instalada o no se encuentra en PATH"
+        )
+
+    if shutil.which("cargo") is None:
+        raise RuntimeError(
+            "La herramienta 'cargo' no est\xc3\xa1 instalada o no se encuentra en PATH"
+        )
 
     subprocess.run([
         "cbindgen",
