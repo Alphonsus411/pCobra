@@ -96,7 +96,7 @@ source .venv/bin/activate  # Unix
 4. Install the development dependencies (pytest, `python-dotenv`, `tomli`, `hypothesis`, etc.):
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
    These libraries are needed for running the tests and other development tasks. Runtime dependencies are installed when installing the package.
@@ -106,6 +106,8 @@ pip install -r requirements.txt
 ```bash
 pip install -e .
 ```
+
+Optionally, you may run ``pip install -e .[dev]`` to include the development extras.
 
 6. Copy ``.env.example`` to ``.env`` and customize the paths or keys if necessary. These variables will be loaded automatically thanks to ``python-dotenv``:
 

@@ -25,8 +25,10 @@ Instalación
 
 .. code-block:: bash
 
-   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
    pip install -e .
+
+   # También puedes usar ``pip install -e .[dev]`` para instalar los extras de desarrollo
 
 Uso básico
 ----------

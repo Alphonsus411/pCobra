@@ -11,7 +11,9 @@ Instalación de dependencias
 
    .. code-block:: bash
 
-      pip install -r requirements.txt
+      pip install -r requirements-dev.txt
+
+   También puedes ejecutar ``pip install -e .[dev]`` para instalar los extras de desarrollo junto con Cobra.
 
 2. Para utilizar el servidor LSP ejecuta:
 
