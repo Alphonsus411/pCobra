@@ -8,10 +8,10 @@ Avances del lenguaje Cobra
 - **Transpilacion a otros lenguajes**: Se ha implementado un transpilador que convierte el codigo Cobra a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX.
 - **Pruebas unitarias**: Se han creado pruebas para validar el correcto funcionamiento del lexer y el parser.
 
- - **Versión 10.0.0**: Actualización de la documentación y configuración del proyecto.
- - **Versión 10.0.0**: Se incorpora ``pcobra.toml`` para definir el mapeo de módulos.
+ - **Versión 10.0.6**: Actualización de la documentación y configuración del proyecto.
+ - **Versión 10.0.6**: Se incorpora ``pcobra.toml`` para definir el mapeo de módulos.
 
-Versión 10.0.0
+Versión 10.0.6
 -----------
 Se añade el archivo ``pcobra.toml`` para definir el mapeo de módulos en formato TOML. Su estructura es la siguiente:
 

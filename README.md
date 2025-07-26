@@ -3,7 +3,7 @@
 [![Versión estable](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 
 
-Versión 10.0.0
+Versión 10.0.6
 
 [English version available here](README_en.md)
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo y LaTeX, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
@@ -1028,7 +1028,7 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 ## Historial de Cambios
 
-- Versión 10.0.0: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
+- Versión 10.0.6: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
 
 ## Publicar una nueva versión
 
@@ -1037,8 +1037,8 @@ Al crear y subir una etiqueta `vX.Y.Z` se ejecuta el workflow [`release.yml`](.g
 El workflow [`Deploy Docs`](.github/workflows/pages.yml) generará la documentación cuando haya un push en `main` o al etiquetar una nueva versión.
 
 ```bash
-git tag v10.0.0
-git push origin v10.0.0
+git tag v10.0.6
+git push origin v10.0.6
 ```
 
 Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuración de GitHub Actions](.github/workflows).
