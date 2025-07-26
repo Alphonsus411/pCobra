@@ -205,7 +205,10 @@ class Lexer:
             (TipoToken.COMO, r"\bcomo\b"),
             (TipoToken.FLOTANTE, r"\d+\.\d+"),
             (TipoToken.ENTERO, r"\d+"),
-            (TipoToken.CADENA, r"'[^']*'|\"[^\"]*\""),
+            (
+                TipoToken.CADENA,
+                r"'(?:\\.|[^'])*'|\"(?:\\.|[^\"])*\"",
+            ),
             (TipoToken.BOOLEANO, r"\b(verdadero|falso)\b"),
             (TipoToken.ASIGNAR_INFERENCIA, r":="),
             (TipoToken.DOSPUNTOS, r":"),
