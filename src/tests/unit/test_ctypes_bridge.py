@@ -2,6 +2,9 @@ import subprocess
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+from types import ModuleType
+import sys
+import importlib
 
 import pytest
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -11,6 +14,17 @@ from core.ast_nodes import (
     NodoLlamadaFuncion,
     NodoImprimir,
 )
+
+# Fakes para evitar dependencias de pybind11 al importar core.nativos
+fake_pybind11 = ModuleType('pybind11')
+fake_helpers = ModuleType('pybind11.setup_helpers')
+fake_helpers.Pybind11Extension = object
+fake_helpers.build_ext = object
+sys.modules.setdefault('pybind11', fake_pybind11)
+sys.modules.setdefault('pybind11.setup_helpers', fake_helpers)
+fake_setuptools = ModuleType('setuptools')
+fake_setuptools.Distribution = object
+sys.modules.setdefault('setuptools', fake_setuptools)
 
 
 def _compilar_lib(dir_: Path) -> Path:
@@ -29,7 +43,10 @@ def _compilar_lib(dir_: Path) -> Path:
 
 
 @pytest.mark.timeout(5)
-def test_ctypes_bridge_executes_function(tmp_path):
+def test_ctypes_bridge_executes_function(tmp_path, monkeypatch):
+    monkeypatch.setenv("COBRA_ALLOWED_LIB_PATHS", str(tmp_path))
+    import core.ctypes_bridge as bridge
+    importlib.reload(bridge)
     lib = _compilar_lib(tmp_path)
     ast = [
         NodoAsignacion(
@@ -45,3 +62,25 @@ def test_ctypes_bridge_executes_function(tmp_path):
     with patch("sys.stdout", new_callable=StringIO) as out:
         exec(code, {})
     assert out.getvalue().strip() == "12"
+
+
+def test_ctypes_bridge_invalid_path(tmp_path, monkeypatch):
+    allowed = tmp_path / "allowed"
+    allowed.mkdir()
+    monkeypatch.setenv("COBRA_ALLOWED_LIB_PATHS", str(allowed))
+    import core.ctypes_bridge as bridge
+    importlib.reload(bridge)
+    invalid = tmp_path / "other" / "lib.so"
+    with pytest.raises(ValueError):
+        bridge.cargar_biblioteca(str(invalid))
+
+
+def test_ctypes_bridge_invalid_parent(tmp_path, monkeypatch):
+    allowed = tmp_path / "allowed"
+    allowed.mkdir()
+    monkeypatch.setenv("COBRA_ALLOWED_LIB_PATHS", str(allowed))
+    import core.ctypes_bridge as bridge
+    importlib.reload(bridge)
+    outside = allowed.parent / "lib.so"
+    with pytest.raises(ValueError):
+        bridge.cargar_biblioteca(str(outside))
