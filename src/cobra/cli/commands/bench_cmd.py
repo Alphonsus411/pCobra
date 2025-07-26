@@ -19,9 +19,9 @@ import tempfile
 import time
 from pathlib import Path
 
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_info
+from src.cobra.cli.commands.base import BaseCommand
+from src.cobra.cli.i18n import _
+from src.cobra.cli.utils.messages import mostrar_info
 
 CODE = """
 var x = 0
