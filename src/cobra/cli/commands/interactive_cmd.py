@@ -125,6 +125,9 @@ class InteractiveCommand(BaseCommand):
                         mostrar_error(str(pe))
                         continue
                     interpretador.ejecutar_ast(ast)
+            except (KeyboardInterrupt, EOFError):
+                mostrar_info("Saliendo...")
+                break
             except SyntaxError as se:
                 logging.error(f"Error de sintaxis: {se}")
                 mostrar_error(f"Error procesando la entrada: {se}")
