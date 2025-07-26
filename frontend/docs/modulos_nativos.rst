@@ -64,6 +64,8 @@ Red
 ---
 - ``obtener_url(url)`` recupera el contenido de una URL.
 - ``enviar_post(url, datos)`` envia datos por ``POST``.
+  Los destinos se validan opcionalmente con la lista de hosts definida en
+  la variable de entorno ``COBRA_HOST_WHITELIST``.
 
 .. code-block:: cobra
 
