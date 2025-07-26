@@ -18,13 +18,15 @@ fake_setuptools = ModuleType('setuptools')
 fake_setuptools.Distribution = object
 sys.modules.setdefault('setuptools', fake_setuptools)
 
-from src.core.pybind_bridge import cargar_extension
 
-
-def test_cargar_extension_loader_invalido(tmp_path):
+def test_cargar_extension_loader_invalido(tmp_path, monkeypatch):
     ruta = tmp_path / "x.so"
     ruta.touch()
+    monkeypatch.setenv("COBRA_ALLOWED_EXT_PATHS", str(tmp_path))
+    import importlib
+    import src.core.pybind_bridge as bridge
+    importlib.reload(bridge)
     with patch("importlib.util.spec_from_loader", return_value=None):
         with pytest.raises(ImportError, match="No se pudo obtener un spec"):
-            cargar_extension(str(ruta))
+            bridge.cargar_extension(str(ruta))
 

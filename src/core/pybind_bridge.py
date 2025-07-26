@@ -15,6 +15,27 @@ from setuptools import Distribution
 
 _cache: Dict[str, ModuleType] = {}
 
+# Prefijos permitidos para cargar extensiones
+_ALLOWED_PREFIXES: list[str] = [
+    os.path.abspath(p)
+    for p in os.environ.get(
+        "COBRA_ALLOWED_EXT_PATHS", "/usr/lib:/usr/local/lib"
+    ).split(os.pathsep)
+    if p
+]
+
+
+def _es_ruta_permitida(ruta: str) -> bool:
+    path = os.path.abspath(ruta)
+    for pref in _ALLOWED_PREFIXES:
+        pref = os.path.abspath(pref)
+        try:
+            if os.path.commonpath([pref, path]) == pref:
+                return True
+        except ValueError:
+            continue
+    return False
+
 
 def compilar_extension(nombre: str, codigo: str, directorio: str | None = None,
                        extra_cflags: Optional[Iterable[str]] = None) -> str:
@@ -43,6 +64,8 @@ def compilar_extension(nombre: str, codigo: str, directorio: str | None = None,
 def cargar_extension(ruta: str) -> ModuleType:
     """Carga la extensi\u00f3n ubicada en ``ruta`` y la almacena en cach\u00e9."""
     path = os.path.abspath(ruta)
+    if not _es_ruta_permitida(path):
+        raise ValueError(f"Ruta no permitida: {ruta}")
     if path not in _cache:
         nombre = os.path.splitext(os.path.basename(path))[0]
         loader = importlib.machinery.ExtensionFileLoader(nombre, path)
