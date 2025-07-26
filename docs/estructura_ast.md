@@ -80,5 +80,7 @@ Transpiladores --> Perl
 Transpiladores --> Matlab
 Transpiladores --> Mojo
 Transpiladores --> LaTeX
+Transpiladores --> C
+Transpiladores --> WebAssembly
 @enduml
 ```
