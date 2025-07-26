@@ -15,8 +15,11 @@ Preparación del entorno
 
 1. Clona el repositorio y entra en ``pCobra``.
 2. Crea y activa un entorno virtual.
-3. Instala las dependencias con ``pip install -r requirements.txt``.
+3. Instala las dependencias con ``pip install -r requirements-dev.txt``.
 4. Instala Cobra en modo editable con ``pip install -e .``.
+
+   También puedes ejecutar ``pip install -e .[dev]`` para incluir los extras de
+   desarrollo.
 
 Sintaxis básica
 ---------------

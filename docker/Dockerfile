@@ -25,8 +25,8 @@ RUN apt-get update && \
 
 # Instalar dependencias de Python
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt && \
-    pip install -e .
+    pip install -r requirements-dev.txt && \
+    pip install -e .  # pip install -e .[dev] también es válido para extras de desarrollo
 
 # Comando por defecto: ejecutar los tests
 CMD ["pytest"]

@@ -113,7 +113,7 @@ source .venv/bin/activate  # Para Unix
    `hypothesis`, etc.):
 
 ````bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ````
 
    Estas bibliotecas permiten ejecutar las pruebas y otras tareas de desarrollo.
@@ -125,6 +125,9 @@ pip install -r requirements.txt
 ````bash
 pip install -e .
 ````
+
+   Opcionalmente puedes ejecutar ``pip install -e .[dev]`` para instalar los
+   extras de desarrollo.
 
 6. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
    de ser necesario. Estas variables se cargarán automáticamente al iniciar

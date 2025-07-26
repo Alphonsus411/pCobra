@@ -8,13 +8,15 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 
 1. Clona el repositorio y entra en el directorio `pCobra`.
 2. Crea y activa un entorno virtual.
-3. Instala las dependencias con `pip install -r requirements.txt`.
+3. Instala las dependencias con `pip install -r requirements-dev.txt`.
    Aseg\u00farate tambi\u00e9n de tener disponible la herramienta `cbindgen`:
 
    ```bash
    cargo install cbindgen
    ```
 4. Instala la herramienta de forma editable con `pip install -e .`.
+
+   Puedes usar ``pip install -e .[dev]`` para incluir los extras de desarrollo.
 
 ### Instalación con pipx
 
