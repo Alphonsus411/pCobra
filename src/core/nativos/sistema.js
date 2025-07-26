@@ -1,15 +1,21 @@
-import os from 'os';
-import fs from 'fs';
-import child_process from 'child_process';
+import os
+
+import 'child_process'
+import 'fs'
+import 'os'
+import child_process
+import fs
 
 export function obtener_os() {
     return os.platform();
 }
 
-export function ejecutar(cmd) {
-    const args = cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
-    const program = args.shift();
-    const proc = child_process.spawnSync(program, args, { encoding: 'utf-8' });
+export function ejecutar(args, permitidos = null) {
+    if (permitidos && args.length && !permitidos.includes(args[0])) {
+        throw new Error(`Comando no permitido: ${args[0]}`);
+    }
+    const [program, ...rest] = args;
+    const proc = child_process.spawnSync(program, rest, { encoding: 'utf-8' });
     if (proc.error) throw proc.error;
     if (proc.status !== 0) throw new Error(proc.stderr);
     return proc.stdout;
