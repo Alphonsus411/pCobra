@@ -54,16 +54,15 @@ def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
     import os
 
     codigo_serializado = json.dumps(codigo)
-    script = r"""
+    script = f"""
 const vm = require('vm');
 let output = '';
-const console = { log: (msg) => { output += String(msg) + '\n'; } };
-const codigo = CODE;
-vm.runInNewContext(codigo, { console });
+const console = {{ log: (msg) => {{ output += String(msg) + '\\n'; }} }};
+const context = vm.createContext({{ console }});
+const script = new vm.Script({codigo_serializado});
+script.runInContext(context, {{ timeout: {timeout * 1000} }});
 process.stdout.write(output);
-""".replace(
-        "CODE", codigo_serializado
-    )
+"""
 
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as tmp:
         tmp.write(script)
@@ -72,7 +71,7 @@ process.stdout.write(output);
 
     try:
         proc = subprocess.run(
-            ["node", tmp_path],
+            ["node", "--no-experimental-fetch", tmp_path],
             capture_output=True,
             text=True,
             check=True,
