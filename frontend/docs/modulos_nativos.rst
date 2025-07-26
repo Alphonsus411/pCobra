@@ -81,8 +81,9 @@ Seguridad
 Sistema
 -------
 - ``obtener_os()`` retorna el sistema operativo.
-- ``ejecutar(cmd)`` ejecuta un comando en la consola. La cadena se divide
-  en argumentos como en ``shlex.split`` y se ejecuta sin pasar por un shell.
+- ``ejecutar(args)`` ejecuta un comando en la consola a partir de una lista
+  de argumentos sin pasar por un shell. Puede validarse con una lista blanca
+  de comandos permitidos.
 - ``obtener_env(nombre)`` lee variables de entorno.
 - ``listar_dir(ruta)`` lista los archivos de un directorio.
 
