@@ -93,6 +93,7 @@ def save_state(spirit: QualiaSpirit) -> None:
             ensure_ascii=False,
             indent=2,
         )
+    os.chmod(STATE_FILE, 0o600)
 
 
 QUALIA = load_state()

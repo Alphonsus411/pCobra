@@ -73,3 +73,15 @@ def test_qualia_rejects_traversal(tmp_path, monkeypatch):
     with pytest.raises(ValueError):
         importlib.reload(qualia_bridge)
 
+
+def test_state_file_permissions(tmp_path, monkeypatch):
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
+    qb = importlib.reload(qualia_bridge)
+    qb.register_execution("var x = 1")
+    if os.name == "posix":
+        assert state.exists()
+        mode = state.stat().st_mode & 0o777
+        assert mode == 0o600
+
