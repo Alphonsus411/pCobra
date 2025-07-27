@@ -131,7 +131,7 @@ class BenchThreadsCommand(BaseCommand):
     def run(self, args):
         """Ejecuta la lógica del comando."""
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[4])
         fd, tmp_path = tempfile.mkstemp(suffix=".toml")
         os.close(fd)
         env["PCOBRA_TOML"] = str(Path(tmp_path))
