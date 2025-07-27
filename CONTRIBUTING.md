@@ -49,8 +49,9 @@ PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 ## Ejecutar Pruebas
 
 Las pruebas unitarias se ubican en `src/tests/unit` y las de integración en
-`src/tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/src`
-o instala el paquete en modo editable (`pip install -e .`). Para ejecutarlas
+`src/tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/src`,
+instala el paquete en modo editable (`pip install -e .`) y ejecuta
+`./scripts/install_dev.sh` para instalar las dependencias. Para ejecutarlas
 todas utiliza:
 
 ```bash

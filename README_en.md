@@ -93,13 +93,13 @@ source .venv/bin/activate  # Unix
 .\.venv\Scripts\activate  # Windows
 ```
 
-4. Install the development dependencies (pytest, `python-dotenv`, `tomli`, `hypothesis`, etc.):
+4. Install the project dependencies using the provided script:
 
 ```bash
-pip install -r requirements-dev.txt
+./scripts/install_dev.sh
 ```
 
-   These libraries are needed for running the tests and other development tasks. Runtime dependencies are installed when installing the package.
+   This will install both runtime and development requirements needed for running the tests.
 
 5. Install the package in editable mode to use the CLI and obtain the dependencies declared in ``pyproject.toml``:
 
@@ -481,7 +481,7 @@ The CLI also includes a safe mode (`--seguro`), a sandbox option (`--sandbox`), 
 
 ## Tests and development
 
-Tests are located in the `src/tests/` folder and use pytest. You can run all tests with:
+Tests are located in the `src/tests/` folder and use pytest. First install the dependencies with `./scripts/install_dev.sh` and then run all tests with:
 
 ```bash
 PYTHONPATH=$PWD pytest
