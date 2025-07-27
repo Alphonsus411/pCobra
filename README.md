@@ -948,6 +948,8 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
+- Para lanzar todas las validaciones en un solo paso ejecuta `python check.py`.
+  Este script corre *flake8*, *mypy*, *bandit*, *pytest* y *pyright*.
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
