@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import os
 import subprocess
 from pathlib import Path
 import sys
@@ -11,6 +12,9 @@ except ImportError:
     tomli = None  # Tomli no es necesario en Python ≥ 3.11
 
 USAR_WHITELIST: set[str] = set()
+
+# Nombre de la variable de entorno que habilita la instalación automática
+USAR_INSTALL_ENV = "COBRA_USAR_INSTALL"
 
 
 def cargar_lista_blanca():
@@ -46,8 +50,11 @@ cargar_lista_blanca()
 
 
 def obtener_modulo(nombre: str):
-    """Importa y devuelve un módulo. Si no está instalado intenta
-    instalarlo usando pip y lo importa nuevamente.
+    """Importa y devuelve un módulo.
+
+    Si el paquete no está instalado se intentará ejecutar ``pip install``
+    siempre que la variable de entorno ``COBRA_USAR_INSTALL`` esté definida.
+    De lo contrario se lanza :class:`RuntimeError`.
     """
     if not USAR_WHITELIST:
         raise PermissionError(
@@ -90,7 +97,13 @@ def obtener_modulo(nombre: str):
                     return modulo
                 break
 
-        # Si no se encontró, intentar instalar con pip
+        # Si no se encontró, verificar si la instalación está permitida
+        if not os.environ.get(USAR_INSTALL_ENV):
+            raise RuntimeError(
+                "Instalación automática no permitida. "
+                f"Define {USAR_INSTALL_ENV}=1 para habilitarla."
+            )
+
         print(f"Paquete '{nombre}' no encontrado. Instalando con pip...")
         try:
             subprocess.run([sys.executable, "-m", "pip", "install", nombre], check=True)

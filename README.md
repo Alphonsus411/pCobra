@@ -522,6 +522,11 @@ autorizada. Si la lista se deja vacía la función `obtener_modulo` lanzará
 `PermissionError`, por lo que es necesario poblarla antes de permitir
 instalaciones dinámicas.
 
+Para habilitar la instalación automática define la variable de entorno
+`COBRA_USAR_INSTALL=1`. Cuando esta variable no esté establecida,
+`obtener_modulo()` rechazará instalar dependencias y lanzará un
+`RuntimeError` si el paquete no se encuentra.
+
 ## Archivo de mapeo de módulos
 
 Los transpiladores consultan `cobra.mod` para resolver las importaciones.
