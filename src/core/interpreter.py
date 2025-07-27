@@ -629,6 +629,8 @@ class InterpretadorCobra:
         def destino():
             self.ejecutar_llamada_funcion(nodo.llamada)
 
-        hilo = threading.Thread(target=destino)
+        # El hilo se marca como daemon para evitar que bloquee el cierre del
+        # intérprete si queda en ejecución al finalizar el programa.
+        hilo = threading.Thread(target=destino, daemon=True)
         hilo.start()
         return hilo
