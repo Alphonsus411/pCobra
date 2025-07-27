@@ -714,6 +714,9 @@ Si deseas desactivar los colores usa `--no-color`:
 cobra --no-color ejecutar programa.co
 ```
 
+Para mostrar mensajes de depuración añade la opción `--debug`. Por defecto el
+nivel de registro es `INFO`.
+
 Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
