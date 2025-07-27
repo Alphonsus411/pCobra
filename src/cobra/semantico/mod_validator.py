@@ -12,6 +12,9 @@ comprobaciones incluyen:
 from __future__ import annotations
 
 import os
+
+from cobra.cli.utils.semver import es_version_valida
+
 try:
     import tomllib  # Python >= 3.11
 except ModuleNotFoundError:  # pragma: no cover
@@ -20,7 +23,7 @@ import yaml
 from typing import Dict, Any
 from jsonschema import validate, ValidationError
 
-from cli.utils.semver import es_version_valida
+
 from cobra.transpilers import module_map
 
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")

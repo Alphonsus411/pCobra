@@ -1,9 +1,10 @@
 import argparse
 import logging
 import sys
+from enum import Enum
 from os import environ
-from typing import List, Dict, Optional
 from pathlib import Path
+from typing import List, Dict, Optional, Type
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.commands.bench_cmd import BenchCommand
@@ -35,41 +36,51 @@ from cobra.cli.plugin import descubrir_plugins
 from cobra.cli.utils import messages
 
 
-class ConfigConstants:
+class LogLevel(Enum):
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+
+
+class AppConfig:
     DEFAULT_LANGUAGE = "es"
     DEFAULT_COMMAND = "interactive"
     LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
     PROGRAM_NAME = "cobra"
+    BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = [
+        # Las clases de comandos importadas anteriormente
+        CompileCommand, ExecuteCommand, ModulesCommand,
+        DependenciasCommand, DocsCommand, EmpaquetarCommand,
+        PaqueteCommand, CrearCommand, InitCommand,
+        JupyterCommand, FletCommand, ContainerCommand,
+        BenchCommand, BenchmarksCommand, BenchmarksV2Command,
+        BenchTranspilersCommand, BenchThreadsCommand,
+        ProfileCommand, QualiaCommand, CacheCommand,
+        TranspilarInversoCommand, VerifyCommand,
+        PluginsCommand, InteractiveCommand
+    ]
 
 
 class CommandRegistry:
     def __init__(self):
         self.commands: Dict[str, BaseCommand] = {}
 
+    def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
+        return command_class()
+
     def register_base_commands(self, subparsers) -> Dict[str, BaseCommand]:
-        base_commands = [
-            CompileCommand(), ExecuteCommand(), ModulesCommand(),
-            DependenciasCommand(), DocsCommand(), EmpaquetarCommand(),
-            PaqueteCommand(), CrearCommand(), InitCommand(),
-            JupyterCommand(), FletCommand(), ContainerCommand(),
-            BenchCommand(), BenchmarksCommand(), BenchmarksV2Command(),
-            BenchTranspilersCommand(), BenchThreadsCommand(),
-            ProfileCommand(), QualiaCommand(), CacheCommand(),
-            TranspilarInversoCommand(), VerifyCommand(),
-            PluginsCommand(), InteractiveCommand()
-        ]
+        base_commands = [self.create_command(cmd_class) for cmd_class in AppConfig.BASE_COMMAND_CLASSES]
         plugin_commands = descubrir_plugins()
         all_commands = base_commands + plugin_commands
-
         self.commands = {cmd.name: cmd for cmd in all_commands}
 
         for command in all_commands:
             command.register_subparser(subparsers)
-
         return self.commands
 
     def get_default_command(self) -> BaseCommand:
-        return self.commands[ConfigConstants.DEFAULT_COMMAND]
+        return self.commands[AppConfig.DEFAULT_COMMAND]
 
 
 class CliApplication:
@@ -79,16 +90,16 @@ class CliApplication:
 
     def initialize(self) -> None:
         setup_gettext()
-        self._configure_logging()
-        self.parser = self._create_parser()
+        self._setup_logging()
+        self.parser = self._build_argument_parser()
 
-    def _configure_logging(self) -> None:
+    def _setup_logging(self) -> None:
         logging.basicConfig(
-            level=logging.DEBUG,
-            format=ConfigConstants.LOG_FORMAT
+            level=LogLevel.DEBUG.value,
+            format=AppConfig.LOG_FORMAT
         )
 
-    def _add_cli_arguments(self, parser: argparse.ArgumentParser) -> None:
+    def _configure_cli_options(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--format", action="store_true",
                             help=_("Format file before processing"))
         parser.add_argument("--debug", action="store_true",
@@ -96,32 +107,31 @@ class CliApplication:
         parser.add_argument("--safe", action="store_true",
                             help=_("Run in safe mode"))
         parser.add_argument("--lang",
-                            default=environ.get("COBRA_LANG", ConfigConstants.DEFAULT_LANGUAGE),
+                            default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
                             help=_("Interface language code"))
         parser.add_argument("--no-color", action="store_true",
                             help=_("Disable colored output"))
         parser.add_argument("--extra-validators",
                             help=_("Path to custom validators module"),
-                            type=Path,  # Validar que sea una ruta
-                            )
+                            type=Path)
 
-    def _create_parser(self) -> argparse.ArgumentParser:
+    def _build_argument_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
-            prog=ConfigConstants.PROGRAM_NAME,
+            prog=AppConfig.PROGRAM_NAME,
             description=_("CLI for Cobra")
         )
-        self._add_cli_arguments(parser)
+        self._configure_cli_options(parser)
         return parser
 
-    def _process_arguments(self, argv: List[str]) -> argparse.Namespace:
+    def _parse_arguments(self, argv: List[str]) -> argparse.Namespace:
         if not self.parser:
             raise RuntimeError("Parser not initialized")
         subparsers = self.parser.add_subparsers(dest="command")
         self.command_registry.register_base_commands(subparsers)
         self.parser.set_defaults(cmd=self.command_registry.get_default_command())
-        return self.parser.parse_args(argv)  # Falta este retorno
+        return self.parser.parse_args(argv)
 
-    def _handle_error(self, exc: Exception, language: str) -> int:
+    def _handle_execution_error(self, exc: Exception, language: str) -> int:
         logging.exception("Unhandled error")
         messages.mostrar_error("An unexpected error occurred")
         print(format_traceback(exc, language))
@@ -133,14 +143,14 @@ class CliApplication:
             result = command.run(args)
             return 0 if result is None else result
         except Exception as exc:
-            return self._handle_error(exc, args.lang)
+            return self._handle_execution_error(exc, args.lang)
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         self.initialize()
         if argv is None:
             argv = [] if "PYTEST_CURRENT_TEST" in environ else sys.argv[1:]
 
-        args = self._process_arguments(argv)
+        args = self._parse_arguments(argv)
         setup_gettext(args.lang)
         messages.disable_colors(args.no_color)
         messages.mostrar_logo()

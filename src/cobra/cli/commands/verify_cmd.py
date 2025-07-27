@@ -3,7 +3,7 @@ import os
 from io import StringIO
 from unittest.mock import patch
 
-from cli.commands.compile_cmd import TRANSPILERS
+from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
 from core.interpreter import InterpretadorCobra
