@@ -341,6 +341,22 @@ python -m tests.suite_core          # Pruebas de lexer, parser e intérprete
 python -m tests.suite_transpiladores  # Pruebas de los transpiladores
 ````
 
+## Uso directo desde el repositorio
+
+El archivo `sitecustomize.py` se carga automáticamente cuando Python se
+ejecuta desde la raíz del proyecto. Este módulo añade la carpeta `src` a
+`sys.path`, permitiendo importar paquetes como `src.modulo` sin instalar
+el paquete ni modificar `PYTHONPATH`.
+
+Para probar Cobra de esta forma realiza lo siguiente:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # En Unix
+.\.venv\Scripts\activate  # En Windows
+make run                   # o bien: python -m src.main
+```
+
 ## Tokens y reglas léxicas
 
 El analizador léxico convierte el código en tokens de acuerdo con las
