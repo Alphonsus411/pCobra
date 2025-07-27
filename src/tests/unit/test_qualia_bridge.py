@@ -74,6 +74,25 @@ def test_qualia_rejects_traversal(tmp_path, monkeypatch):
         importlib.reload(qualia_bridge)
 
 
+def test_qualia_rejects_symlink(tmp_path, monkeypatch):
+    """El path no debe ser un enlace simbólico que apunte fuera de ~/.cobra."""
+    home = tmp_path
+    cobra_dir = home / ".cobra"
+    cobra_dir.mkdir()
+
+    target = home / "outside.json"
+    target.write_text("{}")
+
+    link = cobra_dir / "state.json"
+    link.symlink_to(target)
+
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("QUALIA_STATE_PATH", str(link))
+
+    with pytest.raises(ValueError):
+        importlib.reload(qualia_bridge)
+
+
 def test_state_file_permissions(tmp_path, monkeypatch):
     state = tmp_path / ".cobra" / "state.json"
     monkeypatch.setenv("HOME", str(tmp_path))
