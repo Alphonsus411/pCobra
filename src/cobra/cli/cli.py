@@ -95,7 +95,7 @@ class CliApplication:
 
     def _setup_logging(self) -> None:
         logging.basicConfig(
-            level=LogLevel.DEBUG.value,
+            level=LogLevel.INFO.value,
             format=AppConfig.LOG_FORMAT
         )
 
@@ -151,6 +151,8 @@ class CliApplication:
             argv = [] if "PYTEST_CURRENT_TEST" in environ else sys.argv[1:]
 
         args = self._parse_arguments(argv)
+        if args.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
         setup_gettext(args.lang)
         messages.disable_colors(args.no_color)
         messages.mostrar_logo()
