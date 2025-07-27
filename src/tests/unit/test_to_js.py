@@ -85,6 +85,22 @@ def test_transpilador_yield():
     assert resultado == esperado
 
 
+def test_transpilador_decoradores_funcion_js():
+    d1 = NodoDecorador(NodoIdentificador("d1"))
+    d2 = NodoDecorador(NodoIdentificador("d2"))
+    func = NodoFuncion("saluda", [], [NodoPasar()], [d1, d2])
+    t = TranspiladorJavaScript()
+    resultado = t.generate_code([func])
+    esperado = IMPORTS + (
+        "function saluda() {\n"
+        + ";\n"
+        + "}\n"
+        + "saluda = d2(saluda);\n"
+        + "saluda = d1(saluda);"
+    )
+    assert resultado == esperado
+
+
 def test_transpilador_switch():
     ast = [
         NodoSwitch(
