@@ -4,11 +4,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - para entornos sin tomllib
     import tomli
 
-COBRA_CONFIG_PATH = os.environ.get(
-    "COBRA_CONFIG",
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..", "cobra.toml")
-    ),
+DEFAULT_CONFIG_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "cobra.toml")
 )
 
 _cache = {}
@@ -16,7 +13,7 @@ _cache = {}
 
 def cargar_configuracion(ruta: str | None = None) -> dict:
     """Carga la configuraci\u00f3n general en formato TOML."""
-    path = ruta or COBRA_CONFIG_PATH
+    path = ruta or os.environ.get("COBRA_CONFIG", DEFAULT_CONFIG_PATH)
 
     if path not in _cache:
         if os.path.exists(path):
