@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 
 import requests
 
@@ -13,6 +14,13 @@ def _validar_url() -> bool:
     if not COBRAHUB_URL.startswith("https://"):
         mostrar_error(_("COBRAHUB_URL debe empezar con https://"))
         return False
+    allowed = os.environ.get("COBRA_HOST_WHITELIST")
+    if allowed:
+        hosts = {h.strip() for h in allowed.split(',') if h.strip()}
+        host = urllib.parse.urlparse(COBRAHUB_URL).hostname
+        if host not in hosts:
+            mostrar_error(_("Host de COBRAHUB_URL no permitido"))
+            return False
     return True
 
 
