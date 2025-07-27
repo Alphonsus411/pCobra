@@ -24,9 +24,9 @@ def test_js_timeout_invalido():
 
 
 @pytest.mark.timeout(5)
-def test_compilar_cpp_sin_compilador():
-    with patch("subprocess.run", side_effect=FileNotFoundError):
-        with pytest.raises(FileNotFoundError):
+def test_compilar_cpp_sin_contenedor():
+    with patch("core.sandbox.ejecutar_en_contenedor", side_effect=RuntimeError("docker")):
+        with pytest.raises(RuntimeError, match="Contenedor.*C\+\+"):
             compilar_en_sandbox_cpp("int main() { return 0; }")
 
 

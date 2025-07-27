@@ -88,32 +88,15 @@ process.stdout.write(output);
 
 
 def compilar_en_sandbox_cpp(codigo: str) -> str:
-    """Compila y ejecuta código C++ de forma segura."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        src = Path(tmpdir) / "main.cpp"
-        src.write_text(codigo)
-        exe = Path(tmpdir) / "a.out"
-        try:
-            subprocess.run(
-                [
-                    "g++",
-                    "-std=c++17",
-                    str(src),
-                    "-o",
-                    str(exe),
-                ],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )  # nosec B603
-            proc = subprocess.run(
-                [str(exe)], capture_output=True, text=True, check=True
-            )  # nosec B603
-            return proc.stdout
-        except subprocess.CalledProcessError as exc:
-            if exc.stderr:
-                return exc.stderr.decode() if isinstance(exc.stderr, bytes) else exc.stderr
-            return str(exc)
+    """Compila y ejecuta código C++ de forma segura utilizando Docker.
+
+    Si el contenedor ``cobra-cpp-sandbox`` no está disponible o Docker no está
+    instalado se lanza ``RuntimeError`` con un mensaje descriptivo.
+    """
+    try:
+        return ejecutar_en_contenedor(codigo, "cpp")
+    except RuntimeError as exc:
+        raise RuntimeError(f"Contenedor de C++ no disponible: {exc}") from exc
 
 
 def ejecutar_en_contenedor(codigo: str, backend: str) -> str:
