@@ -122,6 +122,11 @@ class ModulesCommand(BaseCommand):
             mostrar_error(_("Ruta de módulo inválida"))
             return 1
         destino = os.path.join(MODULES_PATH, os.path.basename(ruta))
+        if os.path.exists(destino) and os.path.islink(destino):
+            mostrar_error(
+                _("El destino {dest} es un enlace simbólico").format(dest=destino)
+            )
+            return 1
         shutil.copy(ruta, destino)
         mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
         version = ModulesCommand._obtener_version(ruta)
