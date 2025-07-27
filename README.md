@@ -779,6 +779,16 @@ dependencias listadas en `requirements-dev.txt`, las cuales están incluidas en
 el extra `dev` de `pyproject.toml`. Sin estas bibliotecas las pruebas fallarán
 debido a módulos no encontrados.
 
+Si prefieres ejecutar las pruebas directamente desde el repositorio sin
+instalar el paquete, utiliza el script `scripts/test.sh`:
+
+```bash
+./scripts/test.sh
+```
+
+Este comando exporta `PYTHONPATH=$PWD` e invoca `pytest` con los argumentos
+definidos en `pytest.ini`.
+
 ````bash
 PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
   --cov-fail-under=95
