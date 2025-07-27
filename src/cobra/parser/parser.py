@@ -622,8 +622,6 @@ class ClassicParser:
 
         # Procesa el contenido que será impreso (podría ser una expresión)
         expresion = self.expresion()
-        if isinstance(expresion, NodoIdentificador):
-            expresion = NodoValor(expresion.nombre)
 
         # Consume ')'
         if self.token_actual().tipo != TipoToken.RPAREN:
