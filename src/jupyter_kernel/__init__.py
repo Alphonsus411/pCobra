@@ -87,6 +87,10 @@ class CobraKernel(Kernel):
                     )
                     output = proc.stdout
                     error = proc.stderr
+                    if proc.returncode != 0 and not error:
+                        error = (
+                            f"Error al ejecutar código Python (código de retorno {proc.returncode})"
+                        )
                     result = None
                 else:
                     result = self.interpreter.ejecutar_ast(ast)
