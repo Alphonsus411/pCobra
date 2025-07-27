@@ -89,7 +89,7 @@ def load_state() -> QualiaSpirit:
 
 def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en ``STATE_FILE``."""
-    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    os.makedirs(os.path.dirname(STATE_FILE), mode=0o700, exist_ok=True)
     with open(STATE_FILE, "w", encoding="utf-8") as fh:
         json.dump(
             {

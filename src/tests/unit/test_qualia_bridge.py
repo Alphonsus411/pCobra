@@ -104,3 +104,21 @@ def test_state_file_permissions(tmp_path, monkeypatch):
         mode = state.stat().st_mode & 0o777
         assert mode == 0o600
 
+
+def test_state_dir_permissions(tmp_path, monkeypatch):
+    state = tmp_path / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
+    qb = importlib.reload(qualia_bridge)
+    qb.register_execution("var x = 1")
+    dir_path = state.parent
+    # Elimina el directorio para probar la creación con permisos
+    for child in dir_path.glob("*"):
+        if child.is_file() or child.is_symlink():
+            child.unlink()
+    dir_path.rmdir()
+    qb.save_state(qb.QUALIA)
+    if os.name == "posix":
+        mode = dir_path.stat().st_mode & 0o777
+        assert mode == 0o700
+
