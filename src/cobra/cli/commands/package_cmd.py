@@ -73,6 +73,11 @@ class PaqueteCommand(BaseCommand):
                     dest = os.path.join(
                         modules_cmd.MODULES_PATH, os.path.basename(name)
                     )
+                    if os.path.exists(dest) and os.path.islink(dest):
+                        mostrar_error(
+                            _("El destino {dest} es un enlace simbólico").format(dest=dest)
+                        )
+                        return 1
                     with zf.open(name) as src, open(dest, "wb") as out:
                         out.write(src.read())
         mostrar_info(
