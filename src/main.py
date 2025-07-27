@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 # Carga variables de entorno desde un archivo .env si existe
 load_dotenv()
 
-from src.cli.cli import main as cli_main
+from cobra.cli.cli import main as cli_main
 
 
 def main(argv=None):
