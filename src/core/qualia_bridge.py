@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import List, Union
 
 from cobra.lexico.lexer import Lexer
@@ -15,8 +16,14 @@ DEFAULT_STATE_FILE = os.path.join(
 def _resolve_state_file() -> str:
     """Devuelve la ruta de estado validada y normalizada."""
     raw_path = os.environ.get("QUALIA_STATE_PATH", DEFAULT_STATE_FILE)
-    path = os.path.abspath(raw_path)
-    base = os.path.abspath(os.path.join(os.path.expanduser("~"), ".cobra"))
+    abspath = os.path.abspath(raw_path)
+
+    # Rechazar explícitamente rutas que sean enlaces simbólicos
+    if os.path.islink(abspath) or Path(abspath).is_symlink():
+        raise ValueError("QUALIA_STATE_PATH no debe ser un enlace simbólico")
+
+    path = os.path.realpath(abspath)
+    base = os.path.realpath(os.path.join(os.path.expanduser("~"), ".cobra"))
 
     if os.path.commonpath([path, base]) != base:
         raise ValueError("QUALIA_STATE_PATH debe ubicarse dentro de ~/.cobra")
