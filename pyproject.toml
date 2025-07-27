@@ -65,9 +65,8 @@ include-package-data = true
 where = ["src"]
 
 [project.scripts]
-cobra = "src.cli.cli:main"
+cobra = "cobra.cli.cli:main"
 pcobra = "src.main:main"
-cobra-init = "src.main_init:main"
 
 [project.entry-points."cobra.plugins"]
 # Se registrarán plugins externos aquí
