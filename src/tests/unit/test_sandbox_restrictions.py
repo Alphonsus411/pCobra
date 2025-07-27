@@ -1,5 +1,5 @@
 import pytest
-from src.core.sandbox import ejecutar_en_sandbox
+from core.sandbox import ejecutar_en_sandbox
 
 
 @pytest.mark.timeout(5)

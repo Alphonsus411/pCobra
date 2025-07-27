@@ -23,7 +23,7 @@ AST_COMPLETO = base_ast + EXTRA_NODOS
 
 def test_imports_y_reflexion_en_modo_seguro(tmp_path, monkeypatch):
     import sys
-    mod = sys.modules['src.core.interpreter']
+    mod = sys.modules['core.interpreter']
     monkeypatch.setattr(mod, 'MODULES_PATH', str(tmp_path))
     monkeypatch.setattr(mod, 'IMPORT_WHITELIST', {
         str(tmp_path / 'os'),
@@ -42,7 +42,7 @@ def test_imports_y_reflexion_en_modo_seguro(tmp_path, monkeypatch):
 
 def test_imports_y_reflexion_fuera_modo_seguro(tmp_path, monkeypatch):
     import sys
-    mod = sys.modules['src.core.interpreter']
+    mod = sys.modules['core.interpreter']
     monkeypatch.setattr(mod, 'MODULES_PATH', str(tmp_path))
     monkeypatch.setattr(mod, 'IMPORT_WHITELIST', {
         str(tmp_path / 'os'),

@@ -9,8 +9,8 @@ def test_obtener_ast_reutiliza(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
 
     import importlib, sys
-    if 'src.core.ast_cache' in sys.modules:
-        importlib.reload(sys.modules['src.core.ast_cache'])
+    if 'core.ast_cache' in sys.modules:
+        importlib.reload(sys.modules['core.ast_cache'])
     from core.ast_cache import obtener_ast
 
     llamadas = {"count": 0}
@@ -38,8 +38,8 @@ def test_limpiar_cache(monkeypatch, tmp_path):
     codigo = "var y = 2"
 
     import importlib, sys
-    if 'src.core.ast_cache' in sys.modules:
-        importlib.reload(sys.modules['src.core.ast_cache'])
+    if 'core.ast_cache' in sys.modules:
+        importlib.reload(sys.modules['core.ast_cache'])
     from core.ast_cache import obtener_ast, limpiar_cache
 
     obtener_ast(codigo)

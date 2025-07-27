@@ -10,8 +10,8 @@ def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
 
-    if 'src.core.ast_cache' in sys.modules:
-        importlib.reload(sys.modules['src.core.ast_cache'])
+    if 'core.ast_cache' in sys.modules:
+        importlib.reload(sys.modules['core.ast_cache'])
     from core.ast_cache import obtener_tokens
 
     llamadas = {"count": 0}
@@ -35,8 +35,8 @@ def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
 
-    if 'src.core.ast_cache' in sys.modules:
-        importlib.reload(sys.modules['src.core.ast_cache'])
+    if 'core.ast_cache' in sys.modules:
+        importlib.reload(sys.modules['core.ast_cache'])
     from core.ast_cache import obtener_ast
 
     token_calls = {"count": 0}
