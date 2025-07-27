@@ -13,7 +13,7 @@ EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.co"))
 
 def _run_cli(args, toml_path):
     env = os.environ.copy()
-    pythonpath = [str(ROOT), str(ROOT / "backend" / "src")]
+    pythonpath = [str(ROOT)]
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)

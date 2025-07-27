@@ -9,7 +9,7 @@ def test_cli_empaquetar_invoca_pyinstaller(tmp_path):
     with patch("subprocess.run") as mock_run:
         main(["empaquetar", f"--output={tmp_path}", "--name", "pcobra"])
         raiz = Path(__file__).resolve().parents[3]
-        cli_path = raiz / "backend" / "src" / "cli" / "cli.py"
+        cli_path = raiz / "src" / "cli" / "cli.py"
         mock_run.assert_called_once_with(
             [
                 "pyinstaller",
@@ -56,7 +56,7 @@ def test_cli_empaquetar_con_datos(tmp_path):
             "spam;eggs",
         ])
         raiz = Path(__file__).resolve().parents[3]
-        cli_path = raiz / "backend" / "src" / "cli" / "cli.py"
+        cli_path = raiz / "src" / "cli" / "cli.py"
         mock_run.assert_called_once_with(
             [
                 "pyinstaller",

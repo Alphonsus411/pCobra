@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 sys.path.insert(0, str(ROOT))
 import core.visitor as _vis
 sys.modules.setdefault("backend.src.core.visitor", _vis)

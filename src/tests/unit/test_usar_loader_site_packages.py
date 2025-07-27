@@ -18,11 +18,11 @@ def test_obtener_modulo_en_site_packages(tmp_path, monkeypatch):
 
     # Copiar archivos necesarios
     (cobra_dir / "__init__.py").write_text("")
-    usar_loader_src = ROOT / "backend" / "src" / "cobra" / "usar_loader.py"
+    usar_loader_src = ROOT / "src" / "cobra" / "usar_loader.py"
     (cobra_dir / "usar_loader.py").write_text(usar_loader_src.read_text())
 
     (corelibs_dir / "__init__.py").write_text("")
-    texto_src = ROOT / "backend" / "corelibs" / "texto.py"
+    texto_src = ROOT / "src" / "corelibs" / "texto.py"
     (corelibs_dir / "texto.py").write_text(texto_src.read_text())
 
     (stdlib_dir / "__init__.py").write_text("")

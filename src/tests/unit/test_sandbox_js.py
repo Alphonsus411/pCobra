@@ -6,7 +6,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 from core.sandbox import ejecutar_en_sandbox_js
 

@@ -6,7 +6,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 fake_pybind11 = ModuleType('pybind11')
 fake_helpers = ModuleType('pybind11.setup_helpers')
