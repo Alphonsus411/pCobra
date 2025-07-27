@@ -25,7 +25,11 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
     cuando esté disponible o lanzando un ``RuntimeError`` con
     información detallada.
     """
-    if permitidos is not None and comando and comando[0] not in permitidos:
+    if (
+        permitidos is not None
+        and comando
+        and os.path.basename(comando[0]) not in permitidos
+    ):
         raise ValueError(f"Comando no permitido: {comando[0]}")
     args = comando
     try:

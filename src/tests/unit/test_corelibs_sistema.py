@@ -26,3 +26,10 @@ def test_ejecutar_error(monkeypatch):
     monkeypatch.setattr(core.sistema.subprocess, "run", raise_err2)
     with pytest.raises(RuntimeError):
         core.ejecutar(["bad"])
+
+
+def test_ejecutar_permitido_con_ruta(monkeypatch):
+    proc = MagicMock()
+    proc.stdout = "ok"
+    monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
+    assert core.ejecutar(["/bin/echo", "ok"], permitidos=["echo"]) == "ok"
