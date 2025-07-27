@@ -112,9 +112,9 @@ class BenchmarksCommand(BaseCommand):
         """Ejecuta la lógica del comando."""
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[4])
-        fd, tmp_path = tempfile.mkstemp(suffix=".toml")
-        os.close(fd)
-        env["PCOBRA_TOML"] = str(Path(tmp_path))
+        tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
+        tmp_file.close()
+        env["PCOBRA_TOML"] = str(Path(tmp_file.name))
 
         results = []
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -176,4 +176,5 @@ class BenchmarksCommand(BaseCommand):
                 return 1
         else:
             print(data)
+        os.unlink(tmp_file.name)
         return 0

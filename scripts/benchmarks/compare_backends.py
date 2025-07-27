@@ -60,9 +60,9 @@ def main() -> None:
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "backend")
-    fd, tmp_path = tempfile.mkstemp(suffix=".toml")
-    os.close(fd)
-    env["PCOBRA_TOML"] = str(Path(tmp_path))
+    tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
+    tmp_file.close()
+    env["PCOBRA_TOML"] = str(Path(tmp_file.name))
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -119,6 +119,7 @@ def main() -> None:
         Path(args.output).write_text(data)
     else:
         print(data)
+    os.unlink(tmp_file.name)
 
 
 if __name__ == "__main__":
