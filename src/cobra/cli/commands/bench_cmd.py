@@ -110,9 +110,9 @@ class BenchCommand(BaseCommand):
     def _run_benchmarks(self) -> list[dict[str, object]]:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[4])
-        fd, tmp_path = tempfile.mkstemp(suffix=".toml")
-        os.close(fd)
-        env["PCOBRA_TOML"] = str(Path(tmp_path))
+        tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
+        tmp_file.close()
+        env["PCOBRA_TOML"] = str(Path(tmp_file.name))
 
         results = []
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -167,6 +167,7 @@ class BenchCommand(BaseCommand):
                 results.append(
                     {"backend": backend, "time": round(elapsed, 4), "memory_kb": mem}
                 )
+        os.unlink(tmp_file.name)
         return results
 
     def run(self, args):

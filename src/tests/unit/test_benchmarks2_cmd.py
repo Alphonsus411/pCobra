@@ -12,11 +12,22 @@ import shutil
 from cli.cli import main
 from cobra.transpilers import module_map
 from cli.commands import benchmarks_cmd
+import cli.commands.benchmarks2_cmd as b2
+
+orig_ntf = tempfile.NamedTemporaryFile
 
 
 @pytest.mark.timeout(20)
 def test_benchmarks2_generates_json(tmp_path, monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
+    monkeypatch.setattr(b2, "run_and_measure", lambda *a, **k: (0.1, 1))
+    monkeypatch.setattr(b2.subprocess, "check_output", lambda *a, **k: "")
+    created = []
+    def fake_tmp(*args, **kwargs):
+        tmp = orig_ntf(*args, **kwargs)
+        created.append(Path(tmp.name))
+        return tmp
+    monkeypatch.setattr(b2.tempfile, "NamedTemporaryFile", fake_tmp)
     salida = tmp_path / "res.json"
     main(["benchmarks2", "--output", str(salida)])
     data = json.loads(salida.read_text())
@@ -25,6 +36,8 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
     for d in data:
         assert isinstance(d["time"], float)
         assert isinstance(d["memory_kb"], int)
+    for p in created:
+        assert not p.exists()
 
 
 @pytest.mark.timeout(20)
