@@ -117,6 +117,7 @@ pip install -r requirements-dev.txt
 ````
 
    Estas bibliotecas permiten ejecutar las pruebas y otras tareas de desarrollo.
+   Las mismas dependencias se incluyen en el extra `dev` definido en `pyproject.toml`.
    Las dependencias de ejecución se instalarán al instalar el paquete.
 
 5. Instala el paquete de forma editable para usar la CLI y obtener las
@@ -765,8 +766,18 @@ posible para reducir riesgos.
 
 # Pruebas
 
-Las pruebas están ubicadas en la carpeta `src/tests/` y utilizan pytest para la ejecución. Antes de correrlas añade el proyecto al `PYTHONPATH` o instala el paquete en modo editable (`pip install -e .`). Así pytest podrá encontrar los módulos correctamente.
-También puedes instalar las dependencias de desarrollo con `pip install .[dev]` para contar con todas las herramientas necesarias.
+Las pruebas están ubicadas en la carpeta `src/tests/` y utilizan pytest para la
+ejecución. **Antes de correr cualquier prueba instala el paquete en modo
+editable junto con las dependencias de desarrollo:**
+
+```bash
+pip install -e .[dev]
+```
+
+Esta instrucción añade el proyecto al `PYTHONPATH` e instala todas las
+dependencias listadas en `requirements-dev.txt`, las cuales están incluidas en
+el extra `dev` de `pyproject.toml`. Sin estas bibliotecas las pruebas fallarán
+debido a módulos no encontrados.
 
 ````bash
 PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
