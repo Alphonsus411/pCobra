@@ -32,7 +32,6 @@ from cobra.cli.commands.verify_cmd import VerifyCommand
 from cobra.cli.i18n import _, format_traceback, setup_gettext
 from cobra.cli.plugin import descubrir_plugins
 from cobra.cli.utils import messages
-from cobra.cli.commands import *
 
 
 class ConfigConstants:
