@@ -1,9 +1,9 @@
 import json
 import os
 
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error, mostrar_info
 from core import qualia_bridge
 
 

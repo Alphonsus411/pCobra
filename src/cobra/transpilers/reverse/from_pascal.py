@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Transpilador inverso desde Pascal a Cobra (no soportado)."""
 
-from src.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from cobra.transpilers.reverse.base import BaseReverseTranspiler
 
 
 class ReverseFromPascal(BaseReverseTranspiler):

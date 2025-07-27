@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List, Tuple, Union
 
-from src.cobra.transpilers.module_map import get_mapped_path
+from cobra.transpilers.module_map import get_mapped_path
 
 # Mapeo de importaciones estándar por lenguaje
 STANDARD_IMPORTS = {

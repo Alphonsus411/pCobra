@@ -10,8 +10,8 @@ from abc import ABC, abstractmethod
 from importlib import import_module
 from importlib.metadata import entry_points
 
-from src.cli.commands.base import BaseCommand
-from src.cli.plugin_registry import (
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.plugin_registry import (
     obtener_registro,
     obtener_registro_detallado,
     registrar_plugin,

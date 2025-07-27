@@ -25,10 +25,10 @@ from cobra.transpilers.reverse import (
     ReverseFromVisualBasic,
     ReverseFromWasm,
 )
-from src.cli.commands.base import BaseCommand
-from src.cli.commands.compile_cmd import TRANSPILERS, LANG_CHOICES
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.commands.compile_cmd import TRANSPILERS, LANG_CHOICES
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 REVERSE_TRANSPILERS = {
     "python": ReverseFromPython,

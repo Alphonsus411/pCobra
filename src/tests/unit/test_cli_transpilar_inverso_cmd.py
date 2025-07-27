@@ -22,8 +22,6 @@ def test_transpilar_inverso_ok(tmp_path):
     args = ["--no-color", "transpilar-inverso", str(archivo), "--origen=python", "--destino=python"]
     with patch("cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS", {"python": FakeReverse}), \
          patch("cli.commands.transpilar_inverso_cmd.TRANSPILERS", {"python": FakeTranspiler}), \
-         patch("src.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS", {"python": FakeReverse}), \
-         patch("src.cli.commands.transpilar_inverso_cmd.TRANSPILERS", {"python": FakeTranspiler}), \
          patch("sys.stdout", new_callable=StringIO) as out:
         main(args)
     lineas = [l for l in out.getvalue().splitlines() if "Código transpilado" in l]

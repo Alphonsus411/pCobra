@@ -12,7 +12,7 @@ from core.ast_nodes import (
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
-from src.cobra.transpilers.base import BaseTranspiler
+from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 

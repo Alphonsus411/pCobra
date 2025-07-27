@@ -23,7 +23,7 @@ from core.ast_nodes import (
     NodoContinuar,
 )
 from cobra.lexico.lexer import Token, TipoToken
-from src.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from cobra.transpilers.reverse.base import BaseReverseTranspiler
 
 
 _OP_BINARIA = {

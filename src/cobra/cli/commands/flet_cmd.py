@@ -1,6 +1,6 @@
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error
 
 
 class FletCommand(BaseCommand):

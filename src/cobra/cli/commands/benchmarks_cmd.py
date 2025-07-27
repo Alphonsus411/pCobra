@@ -18,9 +18,9 @@ import tempfile
 import time
 from pathlib import Path
 
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 CODE = """
 var x = 0
@@ -126,7 +126,7 @@ class BenchmarksCommand(BaseCommand):
                 transp_cmd = [
                     sys.executable,
                     "-m",
-                    "src.cli.cli",
+                    "cobra.cli.cli",
                     "compilar",
                     str(co_file),
                     "--tipo",

@@ -19,23 +19,23 @@ from core.ast_nodes import (
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
-from src.cobra.transpilers.base import BaseTranspiler
+from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
-from src.cobra.transpilers.transpiler.cpp_nodes.asignacion import visit_asignacion as _visit_asignacion
-from src.cobra.transpilers.transpiler.cpp_nodes.condicional import visit_condicional as _visit_condicional
-from src.cobra.transpilers.transpiler.cpp_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from src.cobra.transpilers.transpiler.cpp_nodes.funcion import visit_funcion as _visit_funcion
-from src.cobra.transpilers.transpiler.cpp_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from src.cobra.transpilers.transpiler.cpp_nodes.holobit import visit_holobit as _visit_holobit
-from src.cobra.transpilers.transpiler.cpp_nodes.clase import visit_clase as _visit_clase
-from src.cobra.transpilers.transpiler.cpp_nodes.metodo import visit_metodo as _visit_metodo
-from src.cobra.transpilers.transpiler.cpp_nodes.yield_ import visit_yield as _visit_yield
-from src.cobra.transpilers.transpiler.cpp_nodes.romper import visit_romper as _visit_romper
-from src.cobra.transpilers.transpiler.cpp_nodes.continuar import visit_continuar as _visit_continuar
-from src.cobra.transpilers.transpiler.cpp_nodes.pasar import visit_pasar as _visit_pasar
-from src.cobra.transpilers.transpiler.cpp_nodes.switch import visit_switch as _visit_switch
+from cobra.transpilers.transpiler.cpp_nodes.asignacion import visit_asignacion as _visit_asignacion
+from cobra.transpilers.transpiler.cpp_nodes.condicional import visit_condicional as _visit_condicional
+from cobra.transpilers.transpiler.cpp_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from cobra.transpilers.transpiler.cpp_nodes.funcion import visit_funcion as _visit_funcion
+from cobra.transpilers.transpiler.cpp_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from cobra.transpilers.transpiler.cpp_nodes.holobit import visit_holobit as _visit_holobit
+from cobra.transpilers.transpiler.cpp_nodes.clase import visit_clase as _visit_clase
+from cobra.transpilers.transpiler.cpp_nodes.metodo import visit_metodo as _visit_metodo
+from cobra.transpilers.transpiler.cpp_nodes.yield_ import visit_yield as _visit_yield
+from cobra.transpilers.transpiler.cpp_nodes.romper import visit_romper as _visit_romper
+from cobra.transpilers.transpiler.cpp_nodes.continuar import visit_continuar as _visit_continuar
+from cobra.transpilers.transpiler.cpp_nodes.pasar import visit_pasar as _visit_pasar
+from cobra.transpilers.transpiler.cpp_nodes.switch import visit_switch as _visit_switch
 
 
 def visit_assert(self, nodo):

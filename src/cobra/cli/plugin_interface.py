@@ -1,9 +1,9 @@
 """M\xf3dulo interno deprecado.
 
 Este archivo se mantiene por compatibilidad pero las clases y funciones
-relacionadas con plugins se encuentran ahora en ``src.cli.plugin``.
+relacionadas con plugins se encuentran ahora en ``cobra.cli.plugin``.
 """
 
-from src.cli.plugin import PluginInterface
+from cobra.cli.plugin import PluginInterface
 
 __all__ = ["PluginInterface"]

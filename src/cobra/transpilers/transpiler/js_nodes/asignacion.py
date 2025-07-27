@@ -1,4 +1,4 @@
-from src.cobra.transpilers.semantica import datos_asignacion
+from cobra.transpilers.semantica import datos_asignacion
 
 
 def visit_asignacion(self, nodo):

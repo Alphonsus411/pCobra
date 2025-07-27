@@ -19,9 +19,9 @@ import tempfile
 import time
 from pathlib import Path
 
-from src.cobra.cli.commands.base import BaseCommand
-from src.cobra.cli.i18n import _
-from src.cobra.cli.utils.messages import mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_info
 
 CODE = """
 var x = 0
@@ -119,7 +119,7 @@ class BenchCommand(BaseCommand):
             co_file = Path(tmpdir) / "program.co"
             co_file.write_text(CODE)
 
-            cobra_cmd = [sys.executable, "-m", "src.cli.cli", "ejecutar", str(co_file)]
+            cobra_cmd = [sys.executable, "-m", "cobra.cli.cli", "ejecutar", str(co_file)]
             elapsed, mem = run_and_measure(cobra_cmd, env)
             results.append(
                 {"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
@@ -131,7 +131,7 @@ class BenchCommand(BaseCommand):
                 transp_cmd = [
                     sys.executable,
                     "-m",
-                    "src.cli.cli",
+                    "cobra.cli.cli",
                     "compilar",
                     str(co_file),
                     "--tipo",

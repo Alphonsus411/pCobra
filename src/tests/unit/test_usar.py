@@ -50,7 +50,7 @@ def test_interpreter_usar_registra_modulo(monkeypatch):
         return mod
     monkeypatch.setattr(usar_loader, 'obtener_modulo', fake)
     import sys
-    sys.modules['src.cobra.usar_loader'] = usar_loader
+    sys.modules['cobra.usar_loader'] = usar_loader
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar('math'))
     assert interp.variables['math'] is mod

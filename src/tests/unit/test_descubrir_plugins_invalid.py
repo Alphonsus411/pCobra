@@ -9,9 +9,6 @@ import cobra.cli.plugin_registry as cobra_reg
 sys.modules.setdefault("cli", cobra_cli)
 sys.modules.setdefault("cli.commands", cobra_cmds)
 sys.modules.setdefault("cli.plugin_registry", cobra_reg)
-sys.modules.setdefault("src.cli", cobra_cli)
-sys.modules.setdefault("src.cli.commands", cobra_cmds)
-sys.modules.setdefault("src.cli.plugin_registry", cobra_reg)
 
 from cli.plugin import descubrir_plugins
 from cli.plugin_registry import obtener_registro, limpiar_registro
