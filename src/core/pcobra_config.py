@@ -1,5 +1,8 @@
 import os
-import tomli
+try:
+    import tomllib as tomli  # Python >= 3.11
+except ModuleNotFoundError:  # pragma: no cover - para entornos sin tomllib
+    import tomli
 
 PCOBRA_CONFIG_PATH = os.environ.get(
     "PCOBRA_CONFIG",
