@@ -51,7 +51,13 @@ def descargar_modulo(nombre: str, destino: str) -> bool:
         mostrar_error(_("Ruta de destino inválida"))
         return False
     destino_abs = os.path.abspath(destino)
-    if not destino_abs.startswith(os.path.abspath(os.getcwd()) + os.sep):
+    cwd = os.path.abspath(os.getcwd()) + os.sep
+    if not destino_abs.startswith(cwd):
+        mostrar_error(_("Ruta de destino inválida"))
+        return False
+    # Evitar escribir en enlaces simbólicos o fuera del directorio actual
+    real_destino = os.path.realpath(destino_abs)
+    if os.path.islink(destino_abs) or not real_destino.startswith(cwd):
         mostrar_error(_("Ruta de destino inválida"))
         return False
     if not _validar_url():

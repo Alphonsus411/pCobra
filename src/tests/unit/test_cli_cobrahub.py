@@ -151,3 +151,18 @@ def test_descargar_modulo_permission_error(tmp_path, monkeypatch):
     assert not ok
     err.assert_called_once()
     mock_get.assert_called_once()
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_symlink(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    destino_real = tmp_path / "real.co"
+    destino_real.write_text("")
+    enlace = tmp_path / "link.co"
+    enlace.symlink_to(destino_real)
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.get") as mock_get:
+        ok = cobrahub_client.descargar_modulo("m.co", str(enlace))
+    assert not ok
+    err.assert_called_once()
+    mock_get.assert_not_called()
