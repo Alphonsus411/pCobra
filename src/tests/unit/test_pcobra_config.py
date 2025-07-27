@@ -3,9 +3,9 @@ import sys
 
 
 def _reload_module():
-    if 'src.core.pcobra_config' in sys.modules:
-        importlib.reload(sys.modules['src.core.pcobra_config'])
-    return sys.modules.get('src.core.pcobra_config')
+    if 'core.pcobra_config' in sys.modules:
+        importlib.reload(sys.modules['core.pcobra_config'])
+    return sys.modules.get('core.pcobra_config')
 
 
 def test_cargar_configuracion_python_js(tmp_path, monkeypatch):

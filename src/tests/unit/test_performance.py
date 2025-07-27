@@ -5,7 +5,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from src.core.performance import smart_perfilar, optimizar_bucle
+from core.performance import smart_perfilar, optimizar_bucle
 
 
 def _dummy(x=0):
@@ -13,7 +13,7 @@ def _dummy(x=0):
 
 
 def test_smart_perfilar_invoca_smart_profile():
-    with patch("src.core.performance.smart_profile", create=True, return_value={"mean": 1}) as sp:
+    with patch("core.performance.smart_profile", create=True, return_value={"mean": 1}) as sp:
         result = smart_perfilar(_dummy, args=(1,))
     sp.assert_called_once()
     assert result == {"mean": 1}
@@ -27,7 +27,7 @@ def test_optimizar_bucle_decorator():
             return wrapper
         return decorator
 
-    with patch("src.core.performance.optimize_loop", create=True, side_effect=fake_optimize_loop) as op:
+    with patch("core.performance.optimize_loop", create=True, side_effect=fake_optimize_loop) as op:
         @optimizar_bucle(loops=2)
         def foo():
             return "ok"

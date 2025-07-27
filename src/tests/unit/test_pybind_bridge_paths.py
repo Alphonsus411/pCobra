@@ -22,7 +22,7 @@ def test_cargar_extension_invalid_path(tmp_path, monkeypatch):
     allowed = tmp_path / "allowed"
     allowed.mkdir()
     monkeypatch.setenv("COBRA_ALLOWED_EXT_PATHS", str(allowed))
-    import src.core.pybind_bridge as bridge
+    import core.pybind_bridge as bridge
     importlib.reload(bridge)
     invalid = tmp_path / "other" / "x.so"
     invalid.parent.mkdir()
@@ -35,7 +35,7 @@ def test_cargar_extension_invalid_parent(tmp_path, monkeypatch):
     allowed = tmp_path / "allowed"
     allowed.mkdir()
     monkeypatch.setenv("COBRA_ALLOWED_EXT_PATHS", str(allowed))
-    import src.core.pybind_bridge as bridge
+    import core.pybind_bridge as bridge
     importlib.reload(bridge)
     outside = allowed.parent / "x.so"
     outside.touch()

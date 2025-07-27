@@ -23,7 +23,7 @@ def test_cargar_extension_loader_invalido(tmp_path, monkeypatch):
     ruta.touch()
     monkeypatch.setenv("COBRA_ALLOWED_EXT_PATHS", str(tmp_path))
     import importlib
-    import src.core.pybind_bridge as bridge
+    import core.pybind_bridge as bridge
     importlib.reload(bridge)
     with patch("importlib.util.spec_from_loader", return_value=None):
         with pytest.raises(ImportError, match="No se pudo obtener un spec"):

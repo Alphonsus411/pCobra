@@ -7,7 +7,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-# Evita dependencias externas requeridas al importar src.core.nativos
+# Evita dependencias externas requeridas al importar core.nativos
 fake_pybind11 = ModuleType('pybind11')
 fake_helpers = ModuleType('pybind11.setup_helpers')
 fake_helpers.Pybind11Extension = object
@@ -18,7 +18,7 @@ fake_setuptools = ModuleType('setuptools')
 fake_setuptools.Distribution = object
 sys.modules.setdefault('setuptools', fake_setuptools)
 
-import src.core.nativos.io as io
+import core.nativos.io as io
 
 
 def test_obtener_url_rechaza_esquema_no_http():
