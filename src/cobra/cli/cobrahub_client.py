@@ -33,6 +33,9 @@ def publicar_modulo(ruta: str) -> bool:
         response.raise_for_status()
         mostrar_info(_("Módulo publicado correctamente"))
         return True
+    except (PermissionError, OSError) as exc:
+        mostrar_error(_("Error abriendo módulo: {err}").format(err=exc))
+        return False
     except requests.RequestException as exc:
         mostrar_error(_("Error publicando módulo: {err}").format(err=exc))
         return False
@@ -59,8 +62,12 @@ def descargar_modulo(nombre: str, destino: str) -> bool:
             timeout=5,
         )
         response.raise_for_status()
-        with open(destino_abs, "wb") as f:
-            f.write(response.content)
+        try:
+            with open(destino_abs, "wb") as f:
+                f.write(response.content)
+        except (PermissionError, OSError) as exc:
+            mostrar_error(_("Error guardando módulo: {err}").format(err=exc))
+            return False
         mostrar_info(_("Módulo descargado en {dest}").format(dest=destino_abs))
         return True
     except requests.RequestException as exc:
