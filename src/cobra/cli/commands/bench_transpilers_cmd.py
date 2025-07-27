@@ -1,18 +1,33 @@
 import cProfile
+import contextlib
 import json
 from pathlib import Path
 from timeit import timeit
-
-from core.ast_cache import obtener_ast
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from core.ast_cache import obtener_ast
 
 PROGRAM_DIR = (
     Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"
 )
+
+# Constantes configurables
+MEDIUM_SIZE = 100
+LARGE_SIZE = 1000
+
+@contextlib.contextmanager
+def profile_context(profiler):
+    """Context manager para el profiler."""
+    if profiler:
+        profiler.enable()
+    try:
+        yield
+    finally:
+        if profiler:
+            profiler.disable()
 
 
 class BenchTranspilersCommand(BaseCommand):
@@ -39,18 +54,31 @@ class BenchTranspilersCommand(BaseCommand):
         return parser
 
     def _ensure_program(self, size: str) -> str:
-        """Devuelve el contenido del programa *size*, gener\u00e1ndolo si no existe."""
+        """Devuelve el contenido del programa del tamaño especificado.
+        
+        Args:
+            size: Tamaño del programa ('small', 'medium', 'large')
+        
+        Returns:
+            str: Código del programa
+            
+        Raises:
+            ValueError: Si el tamaño no es válido
+        """
+        if size not in ['small', 'medium', 'large']:
+            raise ValueError(_('Tamaño de programa no válido'))
+        
         file = PROGRAM_DIR / f"{size}.co"
         if not file.exists():
             PROGRAM_DIR.mkdir(parents=True, exist_ok=True)
             if size == "small":
                 code = "imprimir('hola')\n"
             elif size == "medium":
-                code = "\n".join(f"imprimir({i})" for i in range(100)) + "\n"
+                code = "\n".join(f"imprimir({i})" for i in range(MEDIUM_SIZE)) + "\n"
             else:  # large
-                code = "\n".join(f"imprimir({i})" for i in range(1000)) + "\n"
-            file.write_text(code)
-        return file.read_text()
+                code = "\n".join(f"imprimir({i})" for i in range(LARGE_SIZE)) + "\n"
+            file.write_text(code, encoding='utf-8')
+        return file.read_text(encoding='utf-8')
 
     def run(self, args):
         """Ejecuta la lógica del comando."""

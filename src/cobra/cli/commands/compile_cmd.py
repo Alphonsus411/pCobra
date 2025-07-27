@@ -119,7 +119,7 @@ class CompileCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
-    def _ejecutar_transpilador(self, parametros):
+    def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
         lang, ast = parametros
         transp = TRANSPILERS[lang]()
         return lang, transp.__class__.__name__, transp.generate_code(ast)
@@ -129,8 +129,11 @@ class CompileCommand(BaseCommand):
         archivo = args.archivo
         if getattr(args, "backend", None):
             args.tipo = args.backend
-        if not os.path.exists(archivo):
-            mostrar_error(f"El archivo '{archivo}' no existe")
+        if not os.path.isfile(archivo):
+            mostrar_error(f"'{archivo}' no es un archivo válido")
+            return 1
+        if not os.access(archivo, os.R_OK):
+            mostrar_error(f"No hay permisos de lectura para '{archivo}'")
             return 1
 
         mod_info = module_map.get_toml_map()
@@ -145,8 +148,12 @@ class CompileCommand(BaseCommand):
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
 
-        with open(archivo, "r", encoding="utf-8") as f:
-            codigo = f.read()
+        try:
+            with open(archivo, "r", encoding="utf-8") as f:
+                codigo = f.read()
+        except UnicodeDecodeError as ude:
+            mostrar_error(f"Error de codificación en archivo: {ude}")
+            return 1
         try:
             ast = obtener_ast(codigo)
             validador = construir_cadena()
@@ -158,7 +165,9 @@ class CompileCommand(BaseCommand):
                 for lang in lenguajes:
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
-                with multiprocessing.Pool(processes=len(lenguajes)) as pool:
+                # Agregar límite de procesos
+                MAX_PROCESSES = 4
+                with multiprocessing.Pool(processes=min(len(lenguajes), MAX_PROCESSES)) as pool:
                     resultados = pool.map(
                         self._ejecutar_transpilador, [(lang, ast) for lang in lenguajes]
                     )

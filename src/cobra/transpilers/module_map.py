@@ -1,6 +1,12 @@
 import os
 import yaml
-import tomllib
+
+from typing import Dict, Any
+import logging
+
+from coverage.tomlconfig import tomllib
+
+logger = logging.getLogger(__name__)
 
 MODULE_MAP_PATH = os.environ.get(
     'COBRA_MODULE_MAP',
@@ -19,16 +25,20 @@ PCOBRA_TOML_PATH = os.environ.get(
 _cache = None
 _toml_cache = None
 
-def get_map():
+def get_map() -> Dict[str, Any]:
     """Carga el mapa YAML de módulos soportados."""
     global _cache
     if _cache is None:
-        if os.path.exists(MODULE_MAP_PATH):
-            with open(MODULE_MAP_PATH, 'r', encoding='utf-8') as f:
-                data = yaml.safe_load(f) or {}
-        else:
-            data = {}
-        _cache = data
+        try:
+            if os.path.exists(MODULE_MAP_PATH):
+                with open(MODULE_MAP_PATH, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f) or {}
+            else:
+                data = {}
+            _cache = data
+        except (yaml.YAMLError, OSError) as e:
+            logger.error(f"Error al cargar el archivo de mapeo: {e}")
+            return {}
     return _cache
 
 

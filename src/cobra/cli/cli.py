@@ -3,6 +3,7 @@ import logging
 import sys
 from os import environ
 from typing import List, Dict, Optional
+from pathlib import Path
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.commands.bench_cmd import BenchCommand
@@ -100,7 +101,9 @@ class CliApplication:
         parser.add_argument("--no-color", action="store_true",
                             help=_("Disable colored output"))
         parser.add_argument("--extra-validators",
-                            help=_("Path to custom validators module"))
+                            help=_("Path to custom validators module"),
+                            type=Path,  # Validar que sea una ruta
+                            )
 
     def _create_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
@@ -113,12 +116,10 @@ class CliApplication:
     def _process_arguments(self, argv: List[str]) -> argparse.Namespace:
         if not self.parser:
             raise RuntimeError("Parser not initialized")
-
         subparsers = self.parser.add_subparsers(dest="command")
         self.command_registry.register_base_commands(subparsers)
         self.parser.set_defaults(cmd=self.command_registry.get_default_command())
-
-        return self.parser.parse_args(argv)
+        return self.parser.parse_args(argv)  # Falta este retorno
 
     def _handle_error(self, exc: Exception, language: str) -> int:
         logging.exception("Unhandled error")
