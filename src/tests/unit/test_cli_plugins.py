@@ -10,7 +10,6 @@ from cli.plugin_registry import limpiar_registro
 # Añadimos la carpeta de plugins de ejemplo al path para poder importar el plugin
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN_DIR = ROOT / "examples" / "plugins"
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PLUGIN_DIR))
 

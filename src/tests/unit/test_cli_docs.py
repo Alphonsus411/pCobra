@@ -11,7 +11,7 @@ def test_cli_docs_invokes_sphinx():
         source = raiz / "frontend" / "docs"
         build = raiz / "frontend" / "build" / "html"
         api = raiz / "frontend" / "docs" / "api"
-        codigo = raiz / "backend" / "src"
+        codigo = raiz / "src"
         mock_run.assert_has_calls([
             call([
                 "sphinx-apidoc",

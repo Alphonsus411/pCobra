@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _run_cli(args):
     env = os.environ.copy()
-    pythonpath = [str(ROOT), str(ROOT / "backend" / "src")]
+    pythonpath = [str(ROOT)]
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)

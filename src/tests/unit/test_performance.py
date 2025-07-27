@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 from src.core.performance import smart_perfilar, optimizar_bucle
 

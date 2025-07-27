@@ -6,7 +6,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / 'backend' / 'src'))
 
 # Evita dependencias externas requeridas al importar src.core.nativos
 fake_pybind11 = ModuleType('pybind11')

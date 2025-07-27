@@ -16,7 +16,6 @@ from cli.plugin_registry import obtener_registro, limpiar_registro
 # el plugin md2cobra durante las pruebas.
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN_DIR = ROOT / "examples" / "plugins"
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PLUGIN_DIR))
 sys.modules.setdefault("src.tests.test_plugin_loader", sys.modules[__name__])
