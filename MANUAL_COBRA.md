@@ -42,6 +42,7 @@ pip install cobra-lenguaje
 ```cobra
 var mensaje = 'Hola Mundo'
 imprimir(mensaje)
+imprimir(valor_inexistente)  # Variable no definida
 ```
 
 Ejemplo con decoradores y `yield`:

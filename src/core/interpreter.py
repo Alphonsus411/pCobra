@@ -245,17 +245,8 @@ class InterpretadorCobra:
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
             valor = self.evaluar_expresion(nodo.expresion)
-            if isinstance(valor, str):
-                if (valor.startswith('"') and valor.endswith('"')) or (
-                    valor.startswith("'") and valor.endswith("'")
-                ):
-                    print(valor.strip('"').strip("'"))
-                else:
-                    obtenido = self.obtener_variable(valor)
-                    if obtenido is not None:
-                        print(obtenido)
-                    else:
-                        print(f"Variable '{valor}' no definida")
+            if valor is None and isinstance(nodo.expresion, NodoIdentificador):
+                print(f"Variable '{nodo.expresion.nombre}' no definida")
             else:
                 print(valor)
         elif isinstance(nodo, NodoImport):

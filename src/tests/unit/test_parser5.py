@@ -1,7 +1,7 @@
 import pytest
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
-from core.ast_nodes import NodoPara, NodoImprimir, NodoFuncion
+from core.ast_nodes import NodoPara, NodoImprimir, NodoFuncion, NodoIdentificador
 
 def test_declaracion_para():
     """Prueba una declaración de bucle 'para'."""
@@ -21,7 +21,8 @@ def test_declaracion_para():
     assert nodo_para.iterable.valor == "range(0, 10)"  # O ajusta según cómo se represente el iterable
     assert len(nodo_para.cuerpo) == 1
     assert isinstance(nodo_para.cuerpo[0], NodoImprimir)
-    assert nodo_para.cuerpo[0].expresion.valor == "i"
+    assert isinstance(nodo_para.cuerpo[0].expresion, NodoIdentificador)
+    assert nodo_para.cuerpo[0].expresion.nombre == "i"
 
 
 def test_declaracion_imprimir():
@@ -66,4 +67,5 @@ def test_funcion_y_para():
 
     nodo_imprimir = nodo_para.cuerpo[0]
     assert isinstance(nodo_imprimir, NodoImprimir)
-    assert nodo_imprimir.expresion.valor == "i"
+    assert isinstance(nodo_imprimir.expresion, NodoIdentificador)
+    assert nodo_imprimir.expresion.nombre == "i"

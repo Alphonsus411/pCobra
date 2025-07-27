@@ -4,7 +4,14 @@ from unittest.mock import patch
 
 from core.interpreter import InterpretadorCobra
 from cobra.lexico.lexer import Token, TipoToken
-from core.ast_nodes import NodoAsignacion, NodoValor, NodoLlamadaFuncion, NodoFuncion
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoValor,
+    NodoLlamadaFuncion,
+    NodoFuncion,
+    NodoImprimir,
+    NodoIdentificador,
+)
 def test_interpretador_asignacion_y_llamada_funcion():
 
     # Crea una instancia del intérprete
@@ -79,3 +86,28 @@ def test_preservacion_de_variables_globales():
     inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("modificar", []))
 
     assert inter.variables["a"] == 5
+
+
+def test_imprimir_cadena_literal():
+    inter = InterpretadorCobra()
+    nodo = NodoImprimir(NodoValor("Hola"))
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        inter.ejecutar_nodo(nodo)
+    assert out.getvalue().strip() == "Hola"
+
+
+def test_imprimir_identificador_existente():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(3)))
+    nodo = NodoImprimir(NodoIdentificador("x"))
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        inter.ejecutar_nodo(nodo)
+    assert out.getvalue().strip() == "3"
+
+
+def test_imprimir_identificador_no_definido():
+    inter = InterpretadorCobra()
+    nodo = NodoImprimir(NodoIdentificador("y"))
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        inter.ejecutar_nodo(nodo)
+    assert out.getvalue().strip() == "Variable 'y' no definida"
