@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from tree_sitter_languages import get_parser
 
-from src.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from cobra.transpilers.reverse.base import BaseReverseTranspiler
 from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,

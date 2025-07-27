@@ -14,7 +14,7 @@ class SafeUnpickler(pickle.Unpickler):
     # Módulos de los que se permitirá cargar clases
     ALLOWED_MODULES = {
         "src.core.ast_nodes",
-        "src.cobra.lexico.lexer",
+        "cobra.lexico.lexer",
         "builtins",
     }
 

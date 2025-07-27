@@ -10,14 +10,14 @@ from core.ast_nodes import (
     NodoAtributo,
 )
 from core.visitor import NodeVisitor
-from src.cobra.transpilers.base import BaseTranspiler
+from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
-from src.cobra.transpilers.transpiler.latex_nodes.asignacion import visit_asignacion as _visit_asignacion
-from src.cobra.transpilers.transpiler.latex_nodes.funcion import visit_funcion as _visit_funcion
-from src.cobra.transpilers.transpiler.latex_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from src.cobra.transpilers.transpiler.latex_nodes.imprimir import visit_imprimir as _visit_imprimir
+from cobra.transpilers.transpiler.latex_nodes.asignacion import visit_asignacion as _visit_asignacion
+from cobra.transpilers.transpiler.latex_nodes.funcion import visit_funcion as _visit_funcion
+from cobra.transpilers.transpiler.latex_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from cobra.transpilers.transpiler.latex_nodes.imprimir import visit_imprimir as _visit_imprimir
 
 latex_nodes = {
     "asignacion": _visit_asignacion,

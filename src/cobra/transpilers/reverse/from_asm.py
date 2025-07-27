@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Transpilador inverso desde ensamblador a Cobra (no soportado)."""
 
-from src.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from cobra.transpilers.reverse.base import BaseReverseTranspiler
 
 
 class ReverseFromASM(BaseReverseTranspiler):

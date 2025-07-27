@@ -21,9 +21,9 @@ from cobra.parser.parser import Parser
 from core.interpreter import InterpretadorCobra
 from jupyter_kernel import CobraKernel
 
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 SEQUENTIAL_CODE = """
 funcion tarea(n):
@@ -112,7 +112,7 @@ class BenchThreadsCommand(BaseCommand):
         with tempfile.NamedTemporaryFile("w", suffix=".co", delete=False) as tmp:
             tmp.write(code)
             tmp.flush()
-            cmd = [sys.executable, "-m", "src.cli.cli", "ejecutar", tmp.name]
+            cmd = [sys.executable, "-m", "cobra.cli.cli", "ejecutar", tmp.name]
             subprocess.run(
                 cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )

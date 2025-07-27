@@ -11,7 +11,7 @@ from core.ast_nodes import (
 )
 from core.visitor import NodeVisitor
 
-from src.cobra.semantico.tabla import Ambito
+from cobra.semantico.tabla import Ambito
 
 
 class AnalizadorSemantico(NodeVisitor):

@@ -1,7 +1,7 @@
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.plugin_registry import obtener_registro_detallado
-from src.cli.utils.messages import mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.plugin_registry import obtener_registro_detallado
+from cobra.cli.utils.messages import mostrar_info
 
 
 class PluginsCommand(BaseCommand):

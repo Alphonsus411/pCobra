@@ -27,8 +27,6 @@ sys.modules.setdefault("tree_sitter_languages", tsl_mod)
 
 import cli
 import cli.commands
-sys.modules.setdefault("src.cli", cli)
-sys.modules.setdefault("src.cli.commands", cli.commands)
 
 from cli.commands.interactive_cmd import InteractiveCommand
 

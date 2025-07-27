@@ -1,6 +1,6 @@
 import logging
 
-from src.cli.i18n import _
+from cobra.cli.i18n import _
 
 RED = "\033[91m"
 GREEN = "\033[92m"

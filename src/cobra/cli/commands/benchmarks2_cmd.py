@@ -18,9 +18,9 @@ except ImportError:  # pragma: no cover - Windows
 else:
     psutil = None  # type: ignore
 
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 CODE = """
 var x = 0
@@ -114,7 +114,7 @@ class BenchmarksV2Command(BaseCommand):
             co_file.write_text(CODE)
 
             # Modo nativo Cobra
-            cmd = [sys.executable, "-m", "src.cli.cli", "ejecutar", str(co_file)]
+            cmd = [sys.executable, "-m", "cobra.cli.cli", "ejecutar", str(co_file)]
             elapsed, mem = run_and_measure(cmd, env)
             results.append(
                 {"modo": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
@@ -125,7 +125,7 @@ class BenchmarksV2Command(BaseCommand):
             transp_cmd = [
                 sys.executable,
                 "-m",
-                "src.cli.cli",
+                "cobra.cli.cli",
                 "compilar",
                 str(co_file),
                 "--tipo",
@@ -151,7 +151,7 @@ class BenchmarksV2Command(BaseCommand):
             transp_cmd = [
                 sys.executable,
                 "-m",
-                "src.cli.cli",
+                "cobra.cli.cli",
                 "compilar",
                 str(co_file),
                 "--tipo",

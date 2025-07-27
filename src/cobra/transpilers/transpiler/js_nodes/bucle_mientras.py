@@ -1,4 +1,4 @@
-from src.cobra.transpilers.semantica import procesar_bloque
+from cobra.transpilers.semantica import procesar_bloque
 
 def visit_bucle_mientras(self, nodo):
     """Transpila un bucle 'while' en JavaScript, permitiendo anidación."""

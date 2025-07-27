@@ -5,11 +5,11 @@ import yaml
 from cobra.semantico import mod_validator
 from cobra.transpilers.module_map import MODULE_MAP_PATH
 
-from src.cli.cobrahub_client import descargar_modulo, publicar_modulo
-from src.cli.commands.base import BaseCommand
-from src.cli.i18n import _
-from src.cli.utils.messages import mostrar_error, mostrar_info
-from src.cli.utils.semver import es_nueva_version, es_version_valida
+from cobra.cli.cobrahub_client import descargar_modulo, publicar_modulo
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.semver import es_nueva_version, es_version_valida
 
 MODULES_PATH = os.path.join(os.path.dirname(__file__), "..", "modules")
 os.makedirs(MODULES_PATH, exist_ok=True)
