@@ -166,3 +166,33 @@ def test_descargar_modulo_symlink(tmp_path, monkeypatch):
     assert not ok
     err.assert_called_once()
     mock_get.assert_not_called()
+
+
+@pytest.mark.timeout(5)
+def test_publicar_modulo_host_no_permitido(tmp_path, monkeypatch):
+    archivo = tmp_path / "m.co"
+    archivo.write_text("var x = 1")
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
+    monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://otro.com/api")
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.post") as mock_post:
+        ok = cobrahub_client.publicar_modulo(str(archivo))
+    assert not ok
+    err.assert_called_once()
+    assert "Host" in err.call_args[0][0]
+    mock_post.assert_not_called()
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_host_no_permitido(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    destino = "out.co"
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
+    monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://otro.com/api")
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.get") as mock_get:
+        ok = cobrahub_client.descargar_modulo("m.co", destino)
+    assert not ok
+    err.assert_called_once()
+    assert "Host" in err.call_args[0][0]
+    mock_get.assert_not_called()
