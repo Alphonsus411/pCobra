@@ -30,6 +30,7 @@ def test_interpreter_hilo():
     interp.ejecutar_funcion(funcion)
     with patch('sys.stdout', new_callable=StringIO) as out:
         hilo = interp.ejecutar_hilo(NodoHilo(NodoLlamadaFuncion('marca', [])))
+        assert hilo.daemon
         hilo.join()
         assert out.getvalue().strip() == 'ok'
 
