@@ -191,6 +191,10 @@ class NodoIdentificador(NodoAST):
     """Uso de una variable o identificador."""
 
     def __post_init__(self):
+        if isinstance(self.nombre, Token):
+            self.nombre = self.nombre.valor
+        elif isinstance(self.nombre, NodoIdentificador):
+            self.nombre = self.nombre.nombre
         self.valor = self.nombre
 
     def __repr__(self):
