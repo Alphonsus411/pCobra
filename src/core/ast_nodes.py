@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from cobra.lexico.lexer import Token
+from cobra.lexico.lexer import Token, TipoToken
 
 
 @dataclass
@@ -201,9 +201,26 @@ class NodoIdentificador(NodoAST):
         return f"NodoIdentificador({self.nombre})"
 
     def evaluar(self, contexto):
-        if self.nombre in contexto:
-            return contexto[self.nombre]
-        raise NameError(f"Identificador no definido: '{self.nombre}'")
+        if self.nombre not in contexto:
+            raise NameError(f"Identificador no definido: '{self.nombre}'")
+
+        valor = contexto[self.nombre]
+
+        while isinstance(valor, NodoIdentificador):
+            if valor.nombre not in contexto:
+                raise NameError(f"Identificador no definido: '{valor.nombre}'")
+            valor = contexto[valor.nombre]
+
+        if isinstance(valor, NodoValor):
+            return valor.valor
+        if isinstance(valor, Token) and valor.tipo in {
+            TipoToken.ENTERO,
+            TipoToken.FLOTANTE,
+            TipoToken.CADENA,
+            TipoToken.BOOLEANO,
+        }:
+            return valor.valor
+        return valor
 
 
 @dataclass

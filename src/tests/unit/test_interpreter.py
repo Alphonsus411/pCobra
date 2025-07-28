@@ -130,3 +130,30 @@ def test_asignacion_y_operacion_aritmetica():
     resultado = inter.ejecutar_nodo(NodoAsignacion("suma", suma_expr))
     assert resultado == 5
     assert inter.variables["suma"] == 5
+
+
+def test_resolver_variables_con_nodos():
+    """Las variables almacenadas como nodos se resuelven a primitivos."""
+    inter = InterpretadorCobra()
+
+    inter.variables["x"] = NodoValor(4)
+    inter.variables["y"] = NodoIdentificador("x")
+
+    valor = inter.evaluar_expresion(NodoIdentificador("y"))
+    assert valor == 4
+
+
+def test_operacion_con_valores_nodo():
+    """Operaciones aritméticas funcionan aunque las variables guarden nodos."""
+    inter = InterpretadorCobra()
+
+    inter.variables["x"] = NodoValor(2)
+    inter.variables["y"] = NodoValor(3)
+
+    expr = NodoOperacionBinaria(
+        NodoIdentificador("x"),
+        Token(TipoToken.SUMA, "+"),
+        NodoIdentificador("y"),
+    )
+
+    assert inter.evaluar_expresion(expr) == 5
