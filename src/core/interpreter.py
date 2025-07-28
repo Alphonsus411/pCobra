@@ -46,6 +46,7 @@ from core.ast_nodes import (
     NodoNoLocal,
     NodoWith,
     NodoImportDesde,
+    NodoAST,
 )
 from cobra.parser.parser import Parser
 from core.memoria.gestor_memoria import GestorMemoriaGenetico
@@ -137,7 +138,27 @@ class InterpretadorCobra:
         """Busca una variable en la pila de contextos."""
         for contexto in reversed(self.contextos):
             if nombre in contexto:
-                return contexto[nombre]
+                valor = contexto[nombre]
+                # Resuelve nodos simples a valores primitivos
+                while isinstance(
+                    valor,
+                    (
+                        NodoValor,
+                        NodoIdentificador,
+                        NodoAsignacion,
+                        NodoInstancia,
+                        NodoAtributo,
+                        NodoOperacionBinaria,
+                        NodoOperacionUnaria,
+                        NodoEsperar,
+                        NodoLlamadaFuncion,
+                        NodoLlamadaMetodo,
+                        NodoHolobit,
+                        Token,
+                    ),
+                ):
+                    valor = self.evaluar_expresion(valor)
+                return valor
         return None
 
     # -- Gestión de memoria -------------------------------------------------

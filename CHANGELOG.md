@@ -1,6 +1,10 @@
 ## v10.0.6 - 2025-07-26
 - Actualización de documentación y archivos de configuración.
 
+## v10.0.7 - 2025-07-27
+- Corregido un desbordamiento de pila al resolver variables que almacenaban
+  nodos en operaciones como ``x + y``.
+
 ## v10.0.0 - 2025-08-15
 - Incremento de versión principal a 10.0.0.
 - Actualización de documentación y ejemplos.
