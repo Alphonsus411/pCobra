@@ -11,6 +11,7 @@ from core.ast_nodes import (
     NodoFuncion,
     NodoImprimir,
     NodoIdentificador,
+    NodoOperacionBinaria,
 )
 def test_interpretador_asignacion_y_llamada_funcion():
 
@@ -111,3 +112,21 @@ def test_imprimir_identificador_no_definido():
     with patch("sys.stdout", new_callable=StringIO) as out:
         inter.ejecutar_nodo(nodo)
     assert out.getvalue().strip() == "Variable 'y' no definida"
+
+
+def test_asignacion_y_operacion_aritmetica():
+    """Asignar variables y realizar una suma sin recursión infinita."""
+    inter = InterpretadorCobra()
+
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(2)))
+    inter.ejecutar_nodo(NodoAsignacion("y", NodoValor(3)))
+
+    suma_expr = NodoOperacionBinaria(
+        NodoIdentificador("x"),
+        Token(TipoToken.SUMA, "+"),
+        NodoIdentificador("y"),
+    )
+
+    resultado = inter.ejecutar_nodo(NodoAsignacion("suma", suma_expr))
+    assert resultado == 5
+    assert inter.variables["suma"] == 5

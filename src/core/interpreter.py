@@ -230,7 +230,7 @@ class InterpretadorCobra:
     def ejecutar_nodo(self, nodo):
         self._validar(nodo)
         if isinstance(nodo, NodoAsignacion):
-            self.ejecutar_asignacion(nodo)
+            return self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):
             return self.ejecutar_condicional(nodo)
         elif isinstance(nodo, NodoBucleMientras):
@@ -305,6 +305,9 @@ class InterpretadorCobra:
         """Evalúa una asignación de variable o atributo."""
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
+        # Evita llamadas recursivas directas con el mismo nodo
+        if valor_nodo is nodo:
+            raise ValueError("Asignación no puede evaluarse a sí misma")
         valor = self.evaluar_expresion(valor_nodo)
         if isinstance(nombre, NodoAtributo):
             objeto = self.evaluar_expresion(nombre.objeto)
@@ -325,6 +328,7 @@ class InterpretadorCobra:
                 indice = self.solicitar_memoria(1)
                 mem_ctx[nombre] = (indice, 1)
                 self.variables[nombre] = valor
+        return valor
 
     def evaluar_expresion(self, expresion):
         """Resuelve el valor de una expresión de forma recursiva."""
@@ -338,8 +342,8 @@ class InterpretadorCobra:
         }:
             return expresion.valor  # Si es un token de tipo literal, devuelve su valor
         elif isinstance(expresion, NodoAsignacion):
-            # Resuelve asignaciones anidadas, si existieran
-            self.ejecutar_asignacion(expresion)
+            # Resuelve asignaciones anidadas y devuelve su valor
+            return self.ejecutar_asignacion(expresion)
         elif isinstance(expresion, NodoIdentificador):
             return self.obtener_variable(expresion.nombre)
         elif isinstance(expresion, NodoInstancia):
