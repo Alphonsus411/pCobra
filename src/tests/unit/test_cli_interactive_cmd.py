@@ -1,5 +1,6 @@
 from types import SimpleNamespace, ModuleType
 from unittest.mock import patch
+from io import StringIO
 import sys
 
 # Crear un módulo falso para evitar que la importación de sandbox
@@ -24,6 +25,10 @@ sys.modules.setdefault("yaml", yaml_mod)
 tsl_mod = ModuleType("tree_sitter_languages")
 tsl_mod.get_parser = lambda *a, **k: None
 sys.modules.setdefault("tree_sitter_languages", tsl_mod)
+jsonschema_mod = ModuleType("jsonschema")
+jsonschema_mod.validate = lambda *a, **k: None
+jsonschema_mod.ValidationError = Exception
+sys.modules.setdefault("jsonschema", jsonschema_mod)
 
 import cli
 import cli.commands
@@ -36,13 +41,13 @@ def _args():
 
 
 def test_interactive_exit():
-    cmd = InteractiveCommand()
-    with patch('builtins.input', side_effect=['salir']), \
-         patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
-         patch('cli.commands.interactive_cmd.validar_dependencias'):
-        ret = cmd.run(_args())
+    with patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp:
+        cmd = InteractiveCommand()
+        with patch('builtins.input', side_effect=['salir']), \
+             patch('cli.commands.interactive_cmd.validar_dependencias'):
+            ret = cmd.run(_args())
     assert ret == 0
-    mock_interp.assert_called_once_with(safe_mode=False, extra_validators=None)
+    mock_interp.assert_called_once_with()
 
 
 def test_interactive_tokens():
@@ -64,24 +69,35 @@ def test_interactive_ast():
 
 
 def test_interactive_keyboard_interrupt():
-    cmd = InteractiveCommand()
-    with patch('builtins.input', side_effect=KeyboardInterrupt), \
-         patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
-         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('cli.commands.interactive_cmd.validar_dependencias'):
-        ret = cmd.run(_args())
+    with patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp:
+        cmd = InteractiveCommand()
+        with patch('builtins.input', side_effect=KeyboardInterrupt), \
+             patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+             patch('cli.commands.interactive_cmd.validar_dependencias'):
+            ret = cmd.run(_args())
     assert ret == 0
-    mock_interp.assert_called_once_with(safe_mode=False, extra_validators=None)
+    mock_interp.assert_called_once_with()
     mock_info.assert_any_call('Saliendo...')
 
 
 def test_interactive_eof_error():
-    cmd = InteractiveCommand()
-    with patch('builtins.input', side_effect=EOFError), \
-         patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp, \
-         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-         patch('cli.commands.interactive_cmd.validar_dependencias'):
-        ret = cmd.run(_args())
+    with patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp:
+        cmd = InteractiveCommand()
+        with patch('builtins.input', side_effect=EOFError), \
+             patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+             patch('cli.commands.interactive_cmd.validar_dependencias'):
+            ret = cmd.run(_args())
     assert ret == 0
-    mock_interp.assert_called_once_with(safe_mode=False, extra_validators=None)
+    mock_interp.assert_called_once_with()
     mock_info.assert_any_call('Saliendo...')
+
+
+def test_interactive_session_persistence():
+    inputs = ['x = 5', 'imprimir(x)', 'salir']
+    with patch('cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('builtins.input', side_effect=inputs), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+        cmd = InteractiveCommand()
+        cmd.run(_args())
+    salida = mock_stdout.getvalue().strip().split('\n')
+    assert salida[-1] == '5'

@@ -22,6 +22,11 @@ class InteractiveCommand(BaseCommand):
 
     name = "interactive"
 
+    def __init__(self) -> None:
+        super().__init__()
+        # Intérprete reutilizable para mantener estado entre comandos
+        self.interpretador = InterpretadorCobra()
+
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Inicia el modo interactivo"))
@@ -50,9 +55,6 @@ class InteractiveCommand(BaseCommand):
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
-        interpretador = InterpretadorCobra(
-            safe_mode=seguro, extra_validators=extra_validators
-        )
         validador = (
             construir_cadena(
                 InterpretadorCobra._cargar_validadores(extra_validators)
@@ -124,7 +126,7 @@ class InteractiveCommand(BaseCommand):
                         logging.error(f"Primitiva peligrosa: {pe}")
                         mostrar_error(str(pe))
                         continue
-                    interpretador.ejecutar_ast(ast)
+                    self.interpretador.ejecutar_ast(ast)
             except (KeyboardInterrupt, EOFError):
                 mostrar_info("Saliendo...")
                 break

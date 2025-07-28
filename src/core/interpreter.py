@@ -110,6 +110,8 @@ class InterpretadorCobra:
 
         self.safe_mode = safe_mode
         self._validador = construir_cadena(extra) if safe_mode else None
+        # Analizador semántico persistente para mantener contexto entre ejecuciones
+        self.analizador = AnalizadorSemantico()
         # Conjunto para evitar validar el mismo nodo varias veces
         self._validados = set()
         # Pila de contextos para mantener variables locales en cada llamada
@@ -217,7 +219,7 @@ class InterpretadorCobra:
             inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
         )
         register_execution(ast)
-        AnalizadorSemantico().analizar(ast)
+        self.analizador.analizar(ast)
         for nodo in ast:
             self._validar(nodo)
             resultado = self.ejecutar_nodo(nodo)
