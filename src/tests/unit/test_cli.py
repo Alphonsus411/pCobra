@@ -9,7 +9,8 @@ def test_cli_interactive():
     expected_outputs = ["10"]
 
     with patch("builtins.input", side_effect=inputs), \
-            patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout, \
+            patch("cobra.cli.cli.messages.mostrar_logo"):
         from cli.cli import main
         main()
 
@@ -23,7 +24,8 @@ def test_cli_transpilador():
     expected_outputs = ["20"]
 
     with patch("builtins.input", side_effect=inputs), \
-            patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            patch("sys.stdout", new_callable=StringIO) as mock_stdout, \
+            patch("cobra.cli.cli.messages.mostrar_logo"):
         from cli.cli import main
         main()
 

@@ -1,5 +1,5 @@
 from types import SimpleNamespace, ModuleType
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from io import StringIO
 import sys
 
@@ -34,6 +34,7 @@ import cli
 import cli.commands
 
 from cli.commands.interactive_cmd import InteractiveCommand
+from core.interpreter import InterpretadorCobra
 
 
 def _args():
@@ -41,17 +42,16 @@ def _args():
 
 
 def test_interactive_exit():
-    with patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp:
-        cmd = InteractiveCommand()
-        with patch('builtins.input', side_effect=['salir']), \
-             patch('cli.commands.interactive_cmd.validar_dependencias'):
-            ret = cmd.run(_args())
+    interp = MagicMock()
+    cmd = InteractiveCommand(interp)
+    with patch('builtins.input', side_effect=['salir']), \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
+        ret = cmd.run(_args())
     assert ret == 0
-    mock_interp.assert_called_once_with()
 
 
 def test_interactive_tokens():
-    cmd = InteractiveCommand()
+    cmd = InteractiveCommand(MagicMock())
     with patch('builtins.input', side_effect=['tokens', 'salir']), \
          patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
          patch('cli.commands.interactive_cmd.validar_dependencias'):
@@ -60,7 +60,7 @@ def test_interactive_tokens():
 
 
 def test_interactive_ast():
-    cmd = InteractiveCommand()
+    cmd = InteractiveCommand(MagicMock())
     with patch('builtins.input', side_effect=['ast', 'salir']), \
          patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
          patch('cli.commands.interactive_cmd.validar_dependencias'):
@@ -69,26 +69,24 @@ def test_interactive_ast():
 
 
 def test_interactive_keyboard_interrupt():
-    with patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp:
-        cmd = InteractiveCommand()
-        with patch('builtins.input', side_effect=KeyboardInterrupt), \
-             patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-             patch('cli.commands.interactive_cmd.validar_dependencias'):
-            ret = cmd.run(_args())
+    interp = MagicMock()
+    cmd = InteractiveCommand(interp)
+    with patch('builtins.input', side_effect=KeyboardInterrupt), \
+         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
+        ret = cmd.run(_args())
     assert ret == 0
-    mock_interp.assert_called_once_with()
     mock_info.assert_any_call('Saliendo...')
 
 
 def test_interactive_eof_error():
-    with patch('cli.commands.interactive_cmd.InterpretadorCobra') as mock_interp:
-        cmd = InteractiveCommand()
-        with patch('builtins.input', side_effect=EOFError), \
-             patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
-             patch('cli.commands.interactive_cmd.validar_dependencias'):
-            ret = cmd.run(_args())
+    interp = MagicMock()
+    cmd = InteractiveCommand(interp)
+    with patch('builtins.input', side_effect=EOFError), \
+         patch('cli.commands.interactive_cmd.mostrar_info') as mock_info, \
+         patch('cli.commands.interactive_cmd.validar_dependencias'):
+        ret = cmd.run(_args())
     assert ret == 0
-    mock_interp.assert_called_once_with()
     mock_info.assert_any_call('Saliendo...')
 
 
@@ -97,7 +95,7 @@ def test_interactive_session_persistence():
     with patch('cli.commands.interactive_cmd.validar_dependencias'), \
          patch('builtins.input', side_effect=inputs), \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-        cmd = InteractiveCommand()
+        cmd = InteractiveCommand(InterpretadorCobra())
         cmd.run(_args())
     salida = mock_stdout.getvalue().strip().split('\n')
     assert salida[-1] == '5'
