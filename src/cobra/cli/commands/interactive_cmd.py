@@ -22,10 +22,10 @@ class InteractiveCommand(BaseCommand):
 
     name = "interactive"
 
-    def __init__(self) -> None:
+    def __init__(self, interpretador: InterpretadorCobra) -> None:
         super().__init__()
         # Intérprete reutilizable para mantener estado entre comandos
-        self.interpretador = InterpretadorCobra()
+        self.interpretador = interpretador
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""

@@ -23,6 +23,7 @@ from cobra.cli.commands.execute_cmd import ExecuteCommand
 from cobra.cli.commands.flet_cmd import FletCommand
 from cobra.cli.commands.init_cmd import InitCommand
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
+from core.interpreter import InterpretadorCobra
 from cobra.cli.commands.jupyter_cmd import JupyterCommand
 from cobra.cli.commands.modules_cmd import ModulesCommand
 from cobra.cli.commands.package_cmd import PaqueteCommand
@@ -63,10 +64,13 @@ class AppConfig:
 
 
 class CommandRegistry:
-    def __init__(self):
+    def __init__(self, interpreter: Optional[InterpretadorCobra] = None):
         self.commands: Dict[str, BaseCommand] = {}
+        self.interpreter = interpreter
 
     def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
+        if command_class is InteractiveCommand:
+            return command_class(self.interpreter)
         return command_class()
 
     def register_base_commands(self, subparsers) -> Dict[str, BaseCommand]:
@@ -86,11 +90,14 @@ class CommandRegistry:
 class CliApplication:
     def __init__(self) -> None:
         self.parser: Optional[argparse.ArgumentParser] = None
-        self.command_registry = CommandRegistry()
+        self.interpreter: Optional[InterpretadorCobra] = None
+        self.command_registry: Optional[CommandRegistry] = None
 
     def initialize(self) -> None:
         setup_gettext()
         self._setup_logging()
+        self.interpreter = InterpretadorCobra()
+        self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
 
     def _setup_logging(self) -> None:
