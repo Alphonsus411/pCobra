@@ -40,6 +40,22 @@ def test_declaracion_imprimir():
     assert nodo_imprimir.expresion.valor == "Hola, Cobra!"
 
 
+def test_declaracion_imprimir_sin_parentesis():
+    """Prueba la impresión sin paréntesis."""
+    codigo = """
+    imprimir x
+    """
+    tokens = Lexer(codigo).tokenizar()
+    parser = Parser(tokens)
+    ast = parser.parsear()
+
+    assert len(ast) == 1
+    nodo_imprimir = ast[0]
+    assert isinstance(nodo_imprimir, NodoImprimir)
+    assert isinstance(nodo_imprimir.expresion, NodoIdentificador)
+    assert nodo_imprimir.expresion.nombre == "x"
+
+
 def test_funcion_y_para():
     """Prueba una función que incluye un bucle 'para'."""
     codigo = """
