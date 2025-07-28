@@ -86,6 +86,34 @@ for ep in eps:
 
 LANG_CHOICES = sorted(TRANSPILERS.keys())
 
+MAX_PROCESSES = 4
+
+# Añadir constantes de configuración
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+PROCESS_TIMEOUT = 300  # 5 minutos
+MAX_LANGUAGES = 10
+
+# Mejorar la validación de archivo
+def validate_file(filepath: str) -> bool:
+    if not os.path.isfile(filepath):
+        raise ValueError(f"'{filepath}' no es un archivo válido")
+    if not os.access(filepath, os.R_OK):
+        raise ValueError(f"No hay permisos de lectura para '{filepath}'")
+    if os.path.getsize(filepath) > MAX_FILE_SIZE:
+        raise ValueError(f"El archivo excede el tamaño máximo permitido")
+    return True
+
+# Mejorar el manejo del pool
+def run_transpiler_pool(languages: list, ast, self=None) -> list:
+    if len(languages) > MAX_LANGUAGES:
+        raise ValueError(_("Demasiados lenguajes especificados"))
+    with multiprocessing.Pool(processes=min(len(languages), MAX_PROCESSES)) as pool:
+        return pool.map_async(
+            self._ejecutar_transpilador, 
+            [(lang, ast) for lang in languages],
+            timeout=PROCESS_TIMEOUT
+        ).get(timeout=PROCESS_TIMEOUT)
+
 
 class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes.
@@ -148,12 +176,9 @@ class CompileCommand(BaseCommand):
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
 
-        try:
-            with open(archivo, "r", encoding="utf-8") as f:
-                codigo = f.read()
-        except UnicodeDecodeError as ude:
-            mostrar_error(f"Error de codificación en archivo: {ude}")
-            return 1
+        
+        with open(archivo, "r", encoding="utf-8") as f:
+            codigo = f.read()
         try:
             ast = obtener_ast(codigo)
             validador = construir_cadena()
@@ -166,7 +191,7 @@ class CompileCommand(BaseCommand):
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
                 # Agregar límite de procesos
-                MAX_PROCESSES = 4
+                
                 with multiprocessing.Pool(processes=min(len(lenguajes), MAX_PROCESSES)) as pool:
                     resultados = pool.map(
                         self._ejecutar_transpilador, [(lang, ast) for lang in lenguajes]
@@ -202,5 +227,3 @@ class CompileCommand(BaseCommand):
             return 1
         except Exception as e:
             logging.error(f"Error general durante la transpilación: {e}")
-            mostrar_error(f"Error durante la transpilación: {e}")
-            return 1

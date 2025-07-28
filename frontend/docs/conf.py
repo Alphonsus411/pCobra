@@ -1,37 +1,28 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
 import os
 import sys
+from datetime import datetime
 
-# Obtener la ruta absoluta del archivo actual
-# ruta_archivo = os.path.abspath(__file__)
-
-# Obtener la ruta del directorio donde se encuentra el archivo
-# ruta_directorio = os.path.dirname(ruta_archivo)
-
-# print(f"La ruta del archivo es: {ruta_archivo}")
-# print(f"La ruta del directorio del proyecto es: {ruta_directorio}")
-
+# Validación de directorios base
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BACKEND_SRC = os.path.join(ROOT_DIR, 'backend', 'src')
-sys.path.insert(0, BACKEND_SRC)
-sys.path.insert(0, ROOT_DIR)
 
+if not os.path.exists(BACKEND_SRC):
+    raise FileNotFoundError(f"El directorio backend no existe: {BACKEND_SRC}")
 
+if not os.path.exists(ROOT_DIR):
+    raise FileNotFoundError(f"El directorio raíz no existe: {ROOT_DIR}")
+
+sys.path.append(BACKEND_SRC)  # Usar append en lugar de insert
+sys.path.append(ROOT_DIR)
+
+# Información del proyecto
 project = 'Proyecto Cobra'
-copyright = '2024, Adolfo González Hernández'
+copyright = f'{datetime.now().year}, Adolfo González Hernández'
 author = 'Adolfo González Hernández'
 release = '2.0'
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
+# Configuración general
+source_encoding = 'utf-8'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -40,30 +31,35 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.graphviz',
     'sphinxcontrib.plantuml'
-              ]
+]
 
-# Evita errores si los paquetes no están instalados
+# Verificar existencia de PlantUML
+import shutil
+if not shutil.which('plantuml'):
+    raise RuntimeError('PlantUML no está instalado en el sistema')
+
+# Verificar directorios estáticos
+static_dir = os.path.join(os.path.dirname(__file__), '_static')
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir)
+
+css_file = os.path.join(static_dir, 'custom.css')
+if not os.path.exists(css_file):
+    print(f"Advertencia: El archivo {css_file} no existe")
+
+# Resto de la configuración
 autodoc_mock_imports = ['src', 'tests']
-
-# Habilitar la generación automática de autosummary
 autosummary_generate = True
-
 templates_path = ['_templates']
 exclude_patterns = []
-
 language = 'es'
 
-# Configuración de catálogos gettext
 locale_dirs = ['locale/']
 gettext_compact = False
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_static_path = ['_static']
 html_theme = 'sphinx_rtd_theme'
 html_css_files = ['custom.css']
 
-# Configuración de PlantUML
 plantuml = 'plantuml'
 plantuml_output_format = 'png'

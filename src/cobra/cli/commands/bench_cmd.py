@@ -22,6 +22,7 @@ from pathlib import Path
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_info
+from re import compile, search  # (o las funciones específicas que necesites)
 
 CODE = """
 var x = 0

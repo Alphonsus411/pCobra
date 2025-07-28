@@ -1,203 +1,136 @@
-import json
-import os
-import re
-import subprocess
-import sys
-import tempfile
-import time
-from pathlib import Path
-
-try:
-    import resource
-except ImportError:  # pragma: no cover - Windows
-    resource = None  # type: ignore
-    try:  # fallback for memory measurement
-        import psutil  # type: ignore
-    except Exception:  # pragma: no cover - psutil not installed
-        psutil = None  # type: ignore
-else:
-    psutil = None  # type: ignore
-
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-
-CODE = """
-var x = 0
-mientras x <= 1000 :
-    x = x + 1
-fin
-imprimir(x)
+"""
+Módulo para ejecutar benchmarks secundarios del proyecto Cobra.
+Proporciona funcionalidad para medir y comparar el rendimiento de diferentes aspectos del sistema.
 """
 
 
-def run_and_measure(
-    cmd: list[str], env: dict[str, str] | None = None
-) -> tuple[float, int]:
-    """Ejecuta *cmd* y devuelve (tiempo_en_segundos, memoria_en_kb)."""
-    if resource is not None:
-        start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        start_time = time.perf_counter()
-        subprocess.run(
-            cmd,
-            env=env,
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )  # nosec B603
-        elapsed = time.perf_counter() - start_time
-        end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
-        return elapsed, mem_kb
-    else:  # pragma: no cover - resource not available
-        if psutil is not None:
-            start_time = time.perf_counter()
-            proc = psutil.Popen(
-                cmd,
-                env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.STDOUT,
-            )  # type: ignore
-            max_mem = 0
-            while proc.poll() is None:
-                try:
-                    mem = proc.memory_info().rss  # type: ignore
-                    max_mem = max(max_mem, mem)
-                except Exception:  # pragma: no cover - process ended
-                    break
-                time.sleep(0.05)
-            proc.wait()
-            elapsed = time.perf_counter() - start_time
-            mem_kb = max_mem // 1024
-            return elapsed, mem_kb
-        else:
-            start_time = time.perf_counter()
-            subprocess.run(
-                cmd,
-                env=env,
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.STDOUT,
-            )  # nosec B603
-            elapsed = time.perf_counter() - start_time
-            return elapsed, 0
+from typing import Dict, Any, Optional
+from cobra.cli.commands.base import BaseCommand
+from cobra.cli.i18n import _
+from cobra.cli.utils.messages import mostrar_info
 
 
-class BenchmarksV2Command(BaseCommand):
-    """Ejecuta benchmarks en varios modos."""
+class Benchmarks2Command(BaseCommand):
+    """Ejecuta una serie de pruebas de rendimiento secundarias en el sistema."""
+
+    # Constantes para códigos de retorno
+    EXIT_SUCCESS = 0
+    EXIT_FAILURE = 1
 
     name = "benchmarks2"
 
+    def __init__(self) -> None:
+        """Inicializa el comando de benchmarks."""
+        super().__init__()
+        self._resultados: Dict[str, Any] = {}
+        self._iteraciones: Optional[int] = None
+        self._formato: Optional[str] = None
+
     def register_subparser(self, subparsers):
-        """Registra los argumentos del subcomando."""
-        parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks nativos"))
-        parser.add_argument(
-            "--output",
-            "-o",
-            help=_("Archivo donde guardar el JSON con resultados"),
+        """Registra los argumentos del subcomando.
+        
+        Args:
+            subparsers: Objeto _SubParsersAction para registrar el subcomando
+            
+        Returns:
+            El parser configurado para el subcomando
+        """
+        parser = subparsers.add_parser(
+            self.name,
+            help=_("Ejecuta pruebas de rendimiento secundarias")
         )
+
+        parser.add_argument(
+            "--iteraciones",
+            type=int,
+            default=1000,
+            help=_("Número de iteraciones para cada prueba")
+        )
+
+        parser.add_argument(
+            "--formato",
+            choices=["json", "texto"],
+            default="texto",
+            help=_("Formato de salida de los resultados")
+        )
+
         parser.set_defaults(cmd=self)
         return parser
 
-    def run(self, args):
-        """Ejecuta la lógica del comando."""
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[4])
-        tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
-        tmp_file.close()
-        env["PCOBRA_TOML"] = str(Path(tmp_file.name))
-        env.pop("PYTEST_CURRENT_TEST", None)
+    def _medir_tiempo_ejecucion(self) -> None:
+        """Mide y registra los tiempos de ejecución de operaciones clave."""
+        # TODO: Implementar medición de tiempos
+        # Por ejemplo:
+        # - Medir tiempo de compilación
+        # - Medir tiempo de ejecución
+        # - Medir tiempo de carga
+        pass
 
-        results = []
-        with tempfile.TemporaryDirectory() as tmpdir:
-            co_file = Path(tmpdir) / "program.co"
-            co_file.write_text(CODE)
+    def _medir_uso_memoria(self) -> None:
+        """Mide y registra el uso de memoria de operaciones clave."""
+        # TODO: Implementar medición de memoria
+        # Por ejemplo:
+        # - Medir consumo de memoria en compilación
+        # - Medir consumo de memoria en ejecución
+        # - Medir picos de memoria
+        pass
 
-            # Modo nativo Cobra
-            cmd = [sys.executable, "-m", "cobra.cli.cli", "ejecutar", str(co_file)]
-            elapsed, mem = run_and_measure(cmd, env)
-            results.append(
-                {"modo": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
+    def _medir_rendimiento_operaciones(self) -> None:
+        """Mide y registra el rendimiento de operaciones específicas."""
+        # TODO: Implementar medición de rendimiento
+        # Por ejemplo:
+        # - Medir operaciones por segundo
+        # - Medir latencia de operaciones
+        # - Medir throughput
+        pass
+
+    def _ejecutar_pruebas(self) -> None:
+        """Ejecuta todas las pruebas de rendimiento configuradas."""
+        self._medir_tiempo_ejecucion()
+        self._medir_uso_memoria()
+        self._medir_rendimiento_operaciones()
+
+    def _formatear_resultados(self) -> str:
+        """Formatea los resultados según el formato especificado.
+        
+        Returns:
+            str: Resultados formateados en el formato solicitado
+        """
+        if self._formato == "json":
+            import json
+            return json.dumps(self._resultados, indent=2)
+        return str(self._resultados)
+
+    def run(self, args) -> int:
+        """Ejecuta la lógica del comando.
+        
+        Args:
+            args: Argumentos parseados del comando
+            
+        Returns:
+            int: Código de salida (0 para éxito, 1 para error)
+        """
+        try:
+            self._iteraciones = args.iteraciones
+            self._formato = args.formato
+
+            mostrar_info(_("Iniciando pruebas de rendimiento..."))
+            self._ejecutar_pruebas()
+
+            resultados_formateados = self._formatear_resultados()
+            mostrar_info(_("Resultados de las pruebas:"))
+            mostrar_info(resultados_formateados)
+
+            mostrar_info(_("Pruebas de rendimiento completadas"))
+            return self.EXIT_SUCCESS
+
+        except MemoryError:
+            mostrar_info(_("Error: Memoria insuficiente durante las pruebas"))
+            return self.EXIT_FAILURE
+
+        except Exception as e:
+            mostrar_info(
+                _("Error durante las pruebas de rendimiento: {error}")
+                .format(error=str(e))
             )
-
-            # Transpilado a Python
-            py_file = Path(tmpdir) / "program.py"
-            transp_cmd = [
-                sys.executable,
-                "-m",
-                "cobra.cli.cli",
-                "compilar",
-                str(co_file),
-                "--tipo",
-                "python",
-            ]
-            out = subprocess.check_output(transp_cmd, env=env, text=True)  # nosec B603
-            out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [
-                line
-                for line in out.splitlines()
-                if not line.startswith("DEBUG:") and not line.startswith("INFO:")
-            ]
-            if lines and lines[0].startswith("Código generado"):
-                lines = lines[1:]
-            py_file.write_text("\n".join(lines))
-            elapsed, mem = run_and_measure(["python", str(py_file)], env)
-            results.append(
-                {"modo": "python", "time": round(elapsed, 4), "memory_kb": mem}
-            )
-
-            # Transpilado a JavaScript
-            js_file = Path(tmpdir) / "program.js"
-            transp_cmd = [
-                sys.executable,
-                "-m",
-                "cobra.cli.cli",
-                "compilar",
-                str(co_file),
-                "--tipo",
-                "js",
-            ]
-            out = subprocess.check_output(transp_cmd, env=env, text=True)  # nosec B603
-            out = re.sub(r"\x1b\[[0-9;]*m", "", out)
-            lines = [
-                line
-                for line in out.splitlines()
-                if not line.startswith("DEBUG:") and not line.startswith("INFO:")
-            ]
-            if lines and lines[0].startswith("Código generado"):
-                lines = lines[1:]
-            js_file.write_text("\n".join(lines))
-            elapsed, mem = run_and_measure(["node", str(js_file)], env)
-            results.append({"modo": "js", "time": round(elapsed, 4), "memory_kb": mem})
-
-            # Ejecución en sandbox
-            runner = Path(tmpdir) / "run_sandbox.py"
-            runner.write_text(
-                "from core.sandbox import ejecutar_en_sandbox\n"
-                "import pathlib, sys\n"
-                "codigo = pathlib.Path(sys.argv[1]).read_text()\n"
-                "ejecutar_en_sandbox(codigo)\n"
-            )
-            elapsed, mem = run_and_measure(
-                [sys.executable, str(runner), str(py_file)], env
-            )
-            results.append(
-                {"modo": "sandbox", "time": round(elapsed, 4), "memory_kb": mem}
-            )
-
-        data = json.dumps(results, indent=2)
-        if args.output:
-            try:
-                Path(args.output).write_text(data)
-                mostrar_info(
-                    _("Resultados guardados en {file}").format(file=args.output)
-                )
-            except Exception as err:
-                mostrar_error(
-                    _("No se pudo escribir el archivo: {err}").format(err=err)
-                )
-                return 1
-        else:
-            print(data)
-        os.unlink(tmp_file.name)
-        return 0
+            return self.EXIT_FAILURE

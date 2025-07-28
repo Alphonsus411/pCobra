@@ -29,6 +29,19 @@ def profile_context(profiler):
         if profiler:
             profiler.disable()
 
+def perfil_funcion():
+    """Función auxiliar para perfilado de código."""
+    import cProfile
+    
+    def decorador(func):
+        def wrapper(*args, **kwargs):
+            profiler = cProfile.Profile()
+            resultado = profiler.runcall(func, *args, **kwargs)
+            profiler.print_stats()
+            return resultado
+        return wrapper
+    return decorador
+
 
 class BenchTranspilersCommand(BaseCommand):
     """Mide el rendimiento de los transpiladores."""

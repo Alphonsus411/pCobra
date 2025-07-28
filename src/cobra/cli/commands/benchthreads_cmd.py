@@ -1,4 +1,8 @@
-import json
+# Importar solo lo necesario
+from json import dumps, loads  # Si solo necesitas estas funciones
+
+# O si necesitas el módulo completo
+import json  # Para serialización/deserialización de datos
 import os
 try:
     import resource

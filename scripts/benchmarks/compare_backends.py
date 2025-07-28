@@ -50,7 +50,11 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compara distintos backends")
+    try:
+        parser = argparse.ArgumentParser(description="Compara distintos backends")
+    except ImportError:
+        print("Error: No se pudo importar el módulo argparse")
+        sys.exit(1)
     parser.add_argument(
         "--output",
         "-o",

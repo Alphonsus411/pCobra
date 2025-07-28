@@ -1,4 +1,6 @@
 import os
+from typing import Any, Optional
+from argparse import _SubParsersAction
 
 from cobra.transpilers.reverse import (
     ReverseFromPython,
@@ -60,46 +62,110 @@ ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
 
 
 class TranspilarInversoCommand(BaseCommand):
-    """Convierte código desde otro lenguaje a Cobra y luego a otro lenguaje."""
+    """Convierte código desde otro lenguaje a Cobra y luego a otro lenguaje.
+    
+    Esta clase implementa un comando que permite transpilar código desde un lenguaje
+    de origen a un lenguaje de destino, pasando por una representación intermedia
+    en el AST de Cobra.
+    """
 
-    name = "transpilar-inverso"
+    name: str = "transpilar-inverso"
 
-    def register_subparser(self, subparsers):
+    def register_subparser(self, subparsers: _SubParsersAction) -> Any:
+        """Registra los argumentos del subcomando en el parser.
+        
+        Args:
+            subparsers: Objeto para registrar subcomandos
+            
+        Returns:
+            Parser configurado para el subcomando
+        """
         parser = subparsers.add_parser(
             self.name, help=_("Transpila desde un lenguaje origen a otro destino")
         )
-        parser.add_argument("archivo")
+        parser.add_argument(
+            "archivo",
+            help=_("Ruta al archivo fuente a transpilar")
+        )
         parser.add_argument(
             "--origen",
             choices=ORIGIN_CHOICES,
-            default="python",
-            help=_("Lenguaje de origen"),
+            help=_("Lenguaje de origen del código fuente"),
+            required=True
         )
         parser.add_argument(
             "--destino",
             choices=LANG_CHOICES,
-            default="python",
-            help=_("Lenguaje de destino"),
+            help=_("Lenguaje de destino para la transpilación"),
+            required=True
         )
         parser.set_defaults(cmd=self)
         return parser
 
-    def run(self, args):
-        archivo = args.archivo
+    def _validar_archivo(self, archivo: str) -> Optional[str]:
+        """Valida que el archivo exista y sea legible.
+        
+        Args:
+            archivo: Ruta al archivo a validar
+            
+        Returns:
+            Mensaje de error si hay problemas, None si todo está bien
+        """
         if not os.path.exists(archivo):
-            mostrar_error(f"El archivo '{archivo}' no existe")
+            return f"El archivo '{archivo}' no existe"
+        if not os.path.isfile(archivo):
+            return f"'{archivo}' no es un archivo regular"
+        if not os.access(archivo, os.R_OK):
+            return f"No hay permisos de lectura para '{archivo}'"
+        return None
+
+    def run(self, args: Any) -> int:
+        """Ejecuta la transpilación del código.
+        
+        Args:
+            args: Argumentos parseados del comando
+            
+        Returns:
+            0 si la ejecución fue exitosa, otro valor en caso de error
+        """
+        # Validar archivo
+        if error := self._validar_archivo(args.archivo):
+            mostrar_error(error)
             return 1
 
+        # Validar transpiladores
         reverse_cls = REVERSE_TRANSPILERS.get(args.origen)
-        transp_cls = TRANSPILERS.get(args.destino)
-        if reverse_cls is None or transp_cls is None:
-            mostrar_error("Transpilador no soportado")
+        if reverse_cls is None:
+            mostrar_error(f"Transpilador de origen '{args.origen}' no soportado")
             return 1
 
+        transp_cls = TRANSPILERS.get(args.destino)
+        if transp_cls is None:
+            mostrar_error(f"Transpilador de destino '{args.destino}' no soportado")
+            return 1
+
+        # Leer y validar contenido del archivo
         try:
-            ast = reverse_cls().load_file(archivo)
-        except Exception as exc:  # pylint: disable=broad-except
-            mostrar_error(f"Error al convertir {args.origen}: {exc}")
+            with open(args.archivo, 'r', encoding='utf-8') as f:
+                contenido = f.read()
+                if not contenido.strip():
+                    mostrar_error(f"El archivo '{args.archivo}' está vacío")
+                    return 1
+        except UnicodeDecodeError:
+            mostrar_error(f"Error de codificación al leer '{args.archivo}'")
+            return 1
+        except OSError as exc:
+            mostrar_error(f"Error al leer el archivo: {exc}")
+            return 1
+
+        # Transpilar código
+        try:
+            ast = reverse_cls().load_file(args.archivo)
+        except NotImplementedError:
+            mostrar_error(f"El transpilador de {args.origen} no está implementado completamente")
+            return 1
+        except Exception as exc:
+            mostrar_error(f"Error al convertir desde {args.origen}: {exc}")
             return 1
 
         try:
@@ -109,6 +175,6 @@ class TranspilarInversoCommand(BaseCommand):
             )
             print(codigo)
             return 0
-        except Exception as exc:  # pylint: disable=broad-except
-            mostrar_error(f"Error generando código: {exc}")
+        except Exception as exc:
+            mostrar_error(f"Error generando código {args.destino}: {exc}")
             return 1
