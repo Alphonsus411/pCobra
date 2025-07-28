@@ -4,6 +4,7 @@ import logging
 import json
 import os
 from cobra.lexico.lexer import TipoToken, Token
+from .utils import PALABRAS_RESERVADAS, sugerir_palabra_clave
 
 from core.ast_nodes import (
     NodoAsignacion,
@@ -48,57 +49,6 @@ from core.ast_nodes import (
 from core import NodoYield
 
 
-# Palabras reservadas que no pueden usarse como identificadores
-PALABRAS_RESERVADAS = {
-    "var",
-    "func",
-    "rel",
-    "si",
-    "sino",
-    "mientras",
-    "para",
-    "import",
-    "try",
-    "catch",
-    "throw",
-    "hilo",
-    "retorno",
-    "fin",
-    "in",
-    "holobit",
-    "imprimir",
-    "proyectar",
-    "transformar",
-    "graficar",
-    "usar",
-    "macro",
-    "clase",
-    "metodo",
-    "atributo",
-    "decorador",
-    "yield",
-    "romper",
-    "continuar",
-    "pasar",
-    "afirmar",
-    "eliminar",
-    "global",
-    "nolocal",
-    "lambda",
-    "asincronico",
-    "esperar",
-    "con",
-    "finalmente",
-    "desde",
-    "como",
-    "switch",
-    "case",
-    "segun",
-    "caso",
-    "intentar",
-    "capturar",
-    "lanzar",
-}
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -263,6 +213,13 @@ class ClassicParser:
             handler = self._factories.get(token.tipo)
             if handler:
                 return handler()
+
+            if token.tipo == TipoToken.IDENTIFICADOR:
+                sugerencia = sugerir_palabra_clave(token.valor)
+                if sugerencia:
+                    raise SyntaxError(
+                        f"Token inesperado. ¿Quiso decir '{sugerencia}'?"
+                    )
 
             # Posibles expresiones o asignaciones/invocaciones
             if token.tipo == TipoToken.ATRIBUTO:
