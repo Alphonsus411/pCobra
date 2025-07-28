@@ -8,7 +8,8 @@ import contextlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
 from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser, PALABRAS_RESERVADAS
+from cobra.parser.parser import Parser
+from cobra.parser.utils import PALABRAS_RESERVADAS
 from core.interpreter import InterpretadorCobra
 from core.qualia_bridge import get_suggestions
 

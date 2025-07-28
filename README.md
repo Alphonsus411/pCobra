@@ -656,6 +656,16 @@ python ejemplo.py
 
 Si no proporcionas un subcomando se abrirá el modo interactivo.
 
+### Uso interactivo
+
+Al ejecutar `cobra` sin argumentos aparecerá un REPL. Si escribes una palabra
+clave con un error tipográfico se mostrará una sugerencia automática. Ejemplo:
+
+```bash
+cobra> imprmir 1
+SyntaxError: Token inesperado. ¿Quiso decir 'imprimir'?
+```
+
 ## Uso desde la CLI
 
 Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
