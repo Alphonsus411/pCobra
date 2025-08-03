@@ -61,6 +61,7 @@ class ClassicParser:
         self.tokens = tokens
         self.posicion = 0
         self.indentacion_actual = 0
+        self.errores: list[str] = []
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -94,6 +95,10 @@ class ClassicParser:
             TipoToken.ESPERAR: self.declaracion_esperar,
             TipoToken.SWITCH: self.declaracion_switch,
         }
+
+    def reportar_error(self, mensaje: str) -> None:
+        """Registra un mensaje de error para reportarlo al final."""
+        self.errores.append(mensaje)
 
     def token_actual(self):
         """Devuelve el token actualmente en procesamiento.
@@ -170,9 +175,12 @@ class ClassicParser:
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats(5)
             print("Parser profile:\n" + s.getvalue())
-            return resultado
+        else:
+            resultado = self._parsear_base()
 
-        return self._parsear_base()
+        if self.errores:
+            raise SyntaxError("\n".join(self.errores))
+        return resultado
 
     def declaracion(self):
         """Procesa una instrucción o expresión."""
@@ -254,14 +262,17 @@ class ClassicParser:
 
         # Captura la variable de iteración
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un identificador después de 'para'")
-        variable = self.token_actual().valor
-        self.comer(TipoToken.IDENTIFICADOR)
+            self.reportar_error("Se esperaba un identificador después de 'para'")
+            variable = "<error>"
+        else:
+            variable = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
 
         # Consume la palabra clave 'in'
         if self.token_actual().tipo != TipoToken.IN:
-            raise SyntaxError("Se esperaba 'in' después del identificador en 'para'")
-        self.comer(TipoToken.IN)
+            self.reportar_error("Se esperaba 'in' después del identificador en 'para'")
+        else:
+            self.comer(TipoToken.IN)
 
         # Procesa el rango o iterable
         try:
@@ -280,22 +291,26 @@ class ClassicParser:
                 iterable_texto = f"{iterable.nombre}({', '.join(args)})"
                 iterable = NodoValor(iterable_texto)
         except SyntaxError as e:
-            raise SyntaxError(f"Error al procesar el iterable en 'para': {e}")
+            self.reportar_error(f"Error al procesar el iterable en 'para': {e}")
+            iterable = NodoValor(None)
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
 
         # Verifica y consume el ':'
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después del iterable en 'para'")
-        self.comer(TipoToken.DOSPUNTOS)
+            self.reportar_error("Se esperaba ':' después del iterable en 'para'")
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
+        else:
+            self.comer(TipoToken.DOSPUNTOS)
 
         # Parsea el cuerpo del bucle
         cuerpo = []
 
         while True:
             token = self.token_actual()
-            if token.tipo == TipoToken.FIN:
+            if token.tipo in (TipoToken.FIN, TipoToken.EOF):
                 break
-            if token.tipo == TipoToken.EOF:
-                raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'para'")
 
             logger.debug(
                 f"Procesando token dentro del bucle 'para': {self.token_actual()}"
@@ -306,15 +321,24 @@ class ClassicParser:
                 cuerpo.append(self.declaracion())
             except SyntaxError as e:
                 logger.error(f"Error en el cuerpo del bucle 'para': {e}")
-                self.avanzar()  # Avanzar para evitar bloqueo
+                self.reportar_error(f"Error en el cuerpo del bucle 'para': {e}")
+                if self.token_actual().tipo != TipoToken.EOF:
+                    self.avanzar()  # Avanzar para evitar bloqueo
 
             if self.posicion == posicion_inicial:
-                raise RuntimeError(
+                self.reportar_error(
                     "La declaración dentro del bucle 'para' no consumió tokens"
                 )
+                if self.token_actual().tipo != TipoToken.EOF:
+                    self.avanzar()
 
         logger.debug(f"Token actual antes de 'fin': {self.token_actual()}")
-        self.comer(TipoToken.FIN)
+        if self.token_actual().tipo == TipoToken.FIN:
+            self.comer(TipoToken.FIN)
+        else:
+            self.reportar_error("Se esperaba 'fin' para cerrar el bucle 'para'")
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
 
         logger.debug(
             f"Bucle 'para' parseado correctamente: variable={variable}, "
@@ -352,14 +376,21 @@ class ClassicParser:
         """
         variable_token = None
         inferencia = False
+        nombre_embedido = None
         if self.token_actual().tipo in (TipoToken.VAR, TipoToken.VARIABLE):
             inferencia = self.token_actual().tipo == TipoToken.VARIABLE
+            # Permite 'var x = 1' y un caso compacto donde el nombre está en el token
+            siguiente = self.token_siguiente()
+            if siguiente and siguiente.tipo == TipoToken.ASIGNAR:
+                nombre_embedido = self.token_actual().valor
             self.comer(self.token_actual().tipo)
 
         if self.token_actual().tipo == TipoToken.ATRIBUTO:
             variable_token = self.exp_atributo()
         else:
             variable_token = self.token_actual()
+            if nombre_embedido is not None and self.token_actual().tipo == TipoToken.ASIGNAR:
+                variable_token = Token(TipoToken.IDENTIFICADOR, nombre_embedido)
             if variable_token.valor in PALABRAS_RESERVADAS:
                 raise SyntaxError(
                     (
@@ -367,9 +398,10 @@ class ClassicParser:
                         f"'{variable_token.valor}' es una palabra reservada"
                     )
                 )
-            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            if variable_token.tipo != TipoToken.IDENTIFICADOR:
                 raise SyntaxError("Se esperaba un identificador en la asignación")
-            self.comer(TipoToken.IDENTIFICADOR)
+            if nombre_embedido is None:
+                self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR_INFERENCIA if inferencia else TipoToken.ASIGNAR)
         valor = self.expresion()
         if (
@@ -393,10 +425,13 @@ class ClassicParser:
 
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError(
-                "Se esperaba ':' después de la condición del bucle 'mientras'"
+            self.reportar_error(
+                "Se esperaba ':' después de la condición del bucle 'mientras'",
             )
-        self.comer(TipoToken.DOSPUNTOS)
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
+        else:
+            self.comer(TipoToken.DOSPUNTOS)
 
         cuerpo = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
@@ -404,11 +439,18 @@ class ClassicParser:
                 cuerpo.append(self.declaracion())
             except SyntaxError as e:
                 logger.error(f"Error en el cuerpo del bucle 'mientras': {e}")
-                self.avanzar()  # Avanza para evitar bloqueo
+                self.reportar_error(f"Error en el cuerpo del bucle 'mientras': {e}")
+                if self.token_actual().tipo != TipoToken.EOF:
+                    self.avanzar()  # Avanza para evitar bloqueo
 
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'mientras'")
-        self.comer(TipoToken.FIN)
+            self.reportar_error(
+                "Se esperaba 'fin' para cerrar el bucle 'mientras'",
+            )
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
+        else:
+            self.comer(TipoToken.FIN)
 
         logger.debug(f"Cuerpo del bucle mientras: {cuerpo}")
         return NodoBucleMientras(condicion, cuerpo)
@@ -488,8 +530,11 @@ class ClassicParser:
 
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de la condición del 'si'")
-        self.comer(TipoToken.DOSPUNTOS)
+            self.reportar_error("Se esperaba ':' después de la condición del 'si'")
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
+        else:
+            self.comer(TipoToken.DOSPUNTOS)
 
         bloque_si = []
         while self.token_actual().tipo not in [
@@ -501,24 +546,34 @@ class ClassicParser:
                 bloque_si.append(self.declaracion())
             except SyntaxError as e:
                 logger.error(f"Error en el bloque 'si': {e}")
-                self.avanzar()  # Evitar bloqueo en caso de error
+                self.reportar_error(f"Error en el bloque 'si': {e}")
+                if self.token_actual().tipo != TipoToken.EOF:
+                    self.avanzar()  # Evitar bloqueo en caso de error
 
         bloque_sino = []
         if self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' después del 'sino'")
-            self.comer(TipoToken.DOSPUNTOS)
+                self.reportar_error("Se esperaba ':' después del 'sino'")
+                if self.token_actual().tipo != TipoToken.EOF:
+                    self.avanzar()
+            else:
+                self.comer(TipoToken.DOSPUNTOS)
             while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
                 try:
                     bloque_sino.append(self.declaracion())
                 except SyntaxError as e:
                     logger.error(f"Error en el bloque 'sino': {e}")
-                    self.avanzar()
+                    self.reportar_error(f"Error en el bloque 'sino': {e}")
+                    if self.token_actual().tipo != TipoToken.EOF:
+                        self.avanzar()
 
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el bloque condicional")
-        self.comer(TipoToken.FIN)
+            self.reportar_error("Se esperaba 'fin' para cerrar el bloque condicional")
+            if self.token_actual().tipo != TipoToken.EOF:
+                self.avanzar()
+        else:
+            self.comer(TipoToken.FIN)
 
         logger.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
         return NodoCondicional(condicion, bloque_si, bloque_sino)
