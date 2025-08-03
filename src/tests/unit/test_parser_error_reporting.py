@@ -1,6 +1,6 @@
 import pytest
 from cobra.lexico.lexer import Token, TipoToken
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 
 
 def test_error_en_declaracion_para():
@@ -13,7 +13,7 @@ def test_error_en_declaracion_para():
         Token(TipoToken.EOF, None),
     ]
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError) as excinfo:
+    with pytest.raises(ParserError) as excinfo:
         parser.parsear()
     mensaje = str(excinfo.value)
     assert "Se esperaba ':' después del iterable en 'para'" in mensaje
@@ -34,7 +34,7 @@ def test_error_en_declaracion_condicional():
         Token(TipoToken.EOF, None),
     ]
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError) as excinfo:
+    with pytest.raises(ParserError) as excinfo:
         parser.parsear()
     mensaje = str(excinfo.value)
     assert "Se esperaba ':' después de la condición del 'si'" in mensaje
@@ -51,7 +51,7 @@ def test_error_en_declaracion_mientras():
         Token(TipoToken.EOF, None),
     ]
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError) as excinfo:
+    with pytest.raises(ParserError) as excinfo:
         parser.parsear()
     mensaje = str(excinfo.value)
     assert "Se esperaba 'fin' para cerrar el bucle 'mientras'" in mensaje

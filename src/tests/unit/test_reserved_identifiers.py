@@ -1,13 +1,13 @@
 import pytest
 from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 
 
 def test_variable_nombre_reservado():
     codigo = "var si = 1"
     tokens = Lexer(codigo).analizar_token()
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError, match="palabra reservada"):
+    with pytest.raises(ParserError, match="palabra reservada"):
         parser.parsear()
 
 
@@ -18,7 +18,7 @@ def test_funcion_nombre_reservado():
     """
     tokens = Lexer(codigo).analizar_token()
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError, match="palabra reservada"):
+    with pytest.raises(ParserError, match="palabra reservada"):
         parser.parsear()
 
 
@@ -29,5 +29,5 @@ def test_parametro_nombre_reservado():
     """
     tokens = Lexer(codigo).analizar_token()
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError, match="palabra reservada"):
+    with pytest.raises(ParserError, match="palabra reservada"):
         parser.parsear()

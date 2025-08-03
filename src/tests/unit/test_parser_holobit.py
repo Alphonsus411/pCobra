@@ -1,5 +1,5 @@
 from cobra.lexico.lexer import Token, TipoToken
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 from core.ast_nodes import NodoHolobit
 import pytest
 
@@ -43,6 +43,6 @@ def test_parser_holobit_invalido():
     ]
 
     parser = Parser(tokens)
-    with pytest.raises(SyntaxError):
+    with pytest.raises(ParserError):
         parser.parsear()
 

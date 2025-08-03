@@ -10,7 +10,7 @@ sys.modules.setdefault("backend.src.core.visitor", _vis)
 sys.modules.setdefault("backend.src.core", sys.modules.get("core"))
 
 from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 from core.ast_nodes import (
     NodoDel,
     NodoGlobal,
@@ -80,15 +80,15 @@ def test_transpilar_with():
 
 
 def test_parser_del_sin_expresion():
-    with pytest.raises(SyntaxError):
+    with pytest.raises(ParserError):
         Parser(Lexer("eliminar").analizar_token()).parsear()
 
 
 def test_parser_global_sin_identificadores():
-    with pytest.raises(SyntaxError):
+    with pytest.raises(ParserError):
         Parser(Lexer("global").analizar_token()).parsear()
 
 
 def test_parser_con_sin_fin():
-    with pytest.raises(SyntaxError):
+    with pytest.raises(ParserError):
         Parser(Lexer("con x:").analizar_token()).parsear()

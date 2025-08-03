@@ -6,7 +6,7 @@ from typing import Optional, Any, NoReturn
 from argparse import _SubParsersAction, ArgumentParser
 
 from cobra.lexico.lexer import Lexer, LexerError
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 from cobra.transpilers import module_map
 from core.interpreter import InterpretadorCobra
 from core.qualia_bridge import get_suggestions
@@ -19,13 +19,6 @@ from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
-
-
-class ParserError(Exception):
-    """Excepción lanzada cuando ocurre un error durante el parsing."""
-    pass
-
-
 class InteractiveCommand(BaseCommand):
     """Modo interactivo del lenguaje Cobra.
     

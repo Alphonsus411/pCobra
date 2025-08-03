@@ -37,6 +37,7 @@ from core.semantic_validators import (
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.parser.parser import ParserError
 
 # Constantes de configuración
 MAX_PROCESSES = 4
@@ -210,7 +211,7 @@ class CompileCommand(BaseCommand):
             logging.error("Primitiva peligrosa: %s", pe)
             mostrar_error(str(pe))
             return 1
-        except SyntaxError as se:
+        except ParserError as se:
             logging.error("Error de sintaxis durante la transpilación: %s", se)
             mostrar_error(f"Error durante la transpilación: {se}")
             return 1

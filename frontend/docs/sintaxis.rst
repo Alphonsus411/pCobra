@@ -9,7 +9,7 @@ var nombre = "Cobra"
 var numero = 10
 var año = 1  # Identificadores Unicode permitidos
 
-Los nombres de variables no pueden ser palabras reservadas como ``si`` o ``mientras``. Usarlas como identificador generará un ``SyntaxError``.
+Los nombres de variables no pueden ser palabras reservadas como ``si`` o ``mientras``. Usarlas como identificador generará un ``ParserError``.
 
 **2. Funciones**
 

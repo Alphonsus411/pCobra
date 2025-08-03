@@ -131,7 +131,7 @@ class ClassicParser:
             self.posicion += 1
 
     def comer(self, tipo):
-        """Consume un token del tipo indicado o lanza ``SyntaxError``.
+        """Consume un token del tipo indicado o lanza ``ParserError``.
 
         Parameters
         ----------
@@ -141,7 +141,7 @@ class ClassicParser:
         if self.token_actual().tipo == tipo:
             self.avanzar()
         else:
-            raise SyntaxError(
+            raise ParserError(
                 f"Se esperaba {tipo}, pero se encontró {self.token_actual().tipo}"
             )
 
@@ -179,7 +179,7 @@ class ClassicParser:
             resultado = self._parsear_base()
 
         if self.errores:
-            raise SyntaxError("\n".join(self.errores))
+            raise ParserError("\n".join(self.errores))
         return resultado
 
     def declaracion(self):
@@ -201,7 +201,7 @@ class ClassicParser:
                     self.comer(TipoToken.ASINCRONICO)
                     asincronica = True
                 if self.token_actual().tipo != TipoToken.FUNC:
-                    raise SyntaxError("Un decorador debe preceder a una función")
+                    raise ParserError("Un decorador debe preceder a una función")
                 funcion = self.declaracion_funcion(asincronica)
                 funcion.decoradores = decoradores + funcion.decoradores
                 return funcion
@@ -225,7 +225,7 @@ class ClassicParser:
             if token.tipo == TipoToken.IDENTIFICADOR:
                 sugerencia = sugerir_palabra_clave(token.valor)
                 if sugerencia:
-                    raise SyntaxError(
+                    raise ParserError(
                         f"Token inesperado. ¿Quiso decir '{sugerencia}'?"
                     )
 
@@ -250,7 +250,7 @@ class ClassicParser:
                     return self.declaracion_asignacion()
                 return self.expresion()
 
-            raise SyntaxError(f"Token inesperado: {token.tipo}")
+            raise ParserError(f"Token inesperado: {token.tipo}")
 
         except Exception as e:
             logger.error(f"Error en la declaración: {e}")
@@ -290,7 +290,7 @@ class ClassicParser:
                         args.append(str(arg))
                 iterable_texto = f"{iterable.nombre}({', '.join(args)})"
                 iterable = NodoValor(iterable_texto)
-        except SyntaxError as e:
+        except ParserError as e:
             self.reportar_error(f"Error al procesar el iterable en 'para': {e}")
             iterable = NodoValor(None)
             if self.token_actual().tipo != TipoToken.EOF:
@@ -319,7 +319,7 @@ class ClassicParser:
             posicion_inicial = self.posicion
             try:
                 cuerpo.append(self.declaracion())
-            except SyntaxError as e:
+            except ParserError as e:
                 logger.error(f"Error en el cuerpo del bucle 'para': {e}")
                 self.reportar_error(f"Error en el cuerpo del bucle 'para': {e}")
                 if self.token_actual().tipo != TipoToken.EOF:
@@ -392,14 +392,14 @@ class ClassicParser:
             if nombre_embedido is not None and self.token_actual().tipo == TipoToken.ASIGNAR:
                 variable_token = Token(TipoToken.IDENTIFICADOR, nombre_embedido)
             if variable_token.valor in PALABRAS_RESERVADAS:
-                raise SyntaxError(
+                raise ParserError(
                     (
                         "El identificador "
                         f"'{variable_token.valor}' es una palabra reservada"
                     )
                 )
             if variable_token.tipo != TipoToken.IDENTIFICADOR:
-                raise SyntaxError("Se esperaba un identificador en la asignación")
+                raise ParserError("Se esperaba un identificador en la asignación")
             if nombre_embedido is None:
                 self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.ASIGNAR_INFERENCIA if inferencia else TipoToken.ASIGNAR)
@@ -437,7 +437,7 @@ class ClassicParser:
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
             try:
                 cuerpo.append(self.declaracion())
-            except SyntaxError as e:
+            except ParserError as e:
                 logger.error(f"Error en el cuerpo del bucle 'mientras': {e}")
                 self.reportar_error(f"Error en el cuerpo del bucle 'mientras': {e}")
                 if self.token_actual().tipo != TipoToken.EOF:
@@ -475,7 +475,7 @@ class ClassicParser:
             else:
                 token_invalido = self.token_actual()
                 self.avanzar()
-                raise SyntaxError(
+                raise ParserError(
                     f"Token inesperado en declaracion_holobit: {token_invalido.tipo}"
                 )
         self.comer(TipoToken.RBRACKET)
@@ -487,7 +487,7 @@ class ClassicParser:
         self.comer(TipoToken.SWITCH)
         expresion = self.expresion()
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de 'switch'")
+            raise ParserError("Se esperaba ':' después de 'switch'")
         self.comer(TipoToken.DOSPUNTOS)
 
         casos = []
@@ -495,7 +495,7 @@ class ClassicParser:
             self.comer(TipoToken.CASE)
             valor = self.expresion()
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' después de 'case'")
+                raise ParserError("Se esperaba ':' después de 'case'")
             self.comer(TipoToken.DOSPUNTOS)
             cuerpo = []
             while self.token_actual().tipo not in [
@@ -511,13 +511,13 @@ class ClassicParser:
         if self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' después de 'sino'")
+                raise ParserError("Se esperaba ':' después de 'sino'")
             self.comer(TipoToken.DOSPUNTOS)
             while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
                 bloque_defecto.append(self.declaracion())
 
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el switch")
+            raise ParserError("Se esperaba 'fin' para cerrar el switch")
         self.comer(TipoToken.FIN)
 
         return NodoSwitch(expresion, casos, bloque_defecto)
@@ -544,7 +544,7 @@ class ClassicParser:
         ]:
             try:
                 bloque_si.append(self.declaracion())
-            except SyntaxError as e:
+            except ParserError as e:
                 logger.error(f"Error en el bloque 'si': {e}")
                 self.reportar_error(f"Error en el bloque 'si': {e}")
                 if self.token_actual().tipo != TipoToken.EOF:
@@ -562,7 +562,7 @@ class ClassicParser:
             while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
                 try:
                     bloque_sino.append(self.declaracion())
-                except SyntaxError as e:
+                except ParserError as e:
                     logger.error(f"Error en el bloque 'sino': {e}")
                     self.reportar_error(f"Error en el bloque 'sino': {e}")
                     if self.token_actual().tipo != TipoToken.EOF:
@@ -585,11 +585,11 @@ class ClassicParser:
         # Captura el nombre de la función
         nombre_token = self.token_actual()
         if nombre_token.valor in PALABRAS_RESERVADAS:
-            raise SyntaxError(
+            raise ParserError(
                 f"El nombre de función '{nombre_token.valor}' es una palabra reservada"
             )
         if nombre_token.tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un nombre para la función después de 'func'")
+            raise ParserError("Se esperaba un nombre para la función después de 'func'")
         nombre = nombre_token.valor
         self.comer(TipoToken.IDENTIFICADOR)
 
@@ -600,7 +600,7 @@ class ClassicParser:
 
         # Verifica y consume ':'
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de la declaración de la función")
+            raise ParserError("Se esperaba ':' después de la declaración de la función")
         self.comer(TipoToken.DOSPUNTOS)
 
         # Parsea el cuerpo de la función
@@ -620,13 +620,13 @@ class ClassicParser:
                     cuerpo.append(NodoRetorno(expresion))
                 else:
                     cuerpo.append(self.declaracion())
-            except SyntaxError as e:
+            except ParserError as e:
                 logger.error(f"Error en el cuerpo de la función '{nombre}': {e}")
                 self.avanzar()
 
         # Verifica y consume 'fin'
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError(f"Se esperaba 'fin' para cerrar la función '{nombre}'")
+            raise ParserError(f"Se esperaba 'fin' para cerrar la función '{nombre}'")
         self.comer(TipoToken.FIN)
 
         logger.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
@@ -641,7 +641,7 @@ class ClassicParser:
             self.comer(TipoToken.LPAREN)
             expresion = self.expresion()
             if self.token_actual().tipo != TipoToken.RPAREN:
-                raise SyntaxError(
+                raise ParserError(
                     "Se esperaba ')' al final de la instrucción 'imprimir'"
                 )
             self.comer(TipoToken.RPAREN)
@@ -655,7 +655,7 @@ class ClassicParser:
         """Parsea una declaración de importación de módulo."""
         self.comer(TipoToken.IMPORT)
         if self.token_actual().tipo != TipoToken.CADENA:
-            raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
+            raise ParserError("Se esperaba una ruta de módulo entre comillas")
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoImport(ruta)
@@ -664,7 +664,7 @@ class ClassicParser:
         """Parsea una declaración 'usar' para importar módulos."""
         self.comer(TipoToken.USAR)
         if self.token_actual().tipo != TipoToken.CADENA:
-            raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
+            raise ParserError("Se esperaba una ruta de módulo entre comillas")
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoUsar(ruta)
@@ -679,7 +679,7 @@ class ClassicParser:
         """Parsea la creación de un hilo que ejecuta una función."""
         self.comer(TipoToken.HILO)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba el nombre de una función después de 'hilo'")
+            raise ParserError("Se esperaba el nombre de una función después de 'hilo'")
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.LPAREN)
@@ -706,9 +706,9 @@ class ClassicParser:
         if self.token_actual().tipo in (TipoToken.TRY, TipoToken.INTENTAR):
             self.avanzar()
         else:
-            raise SyntaxError("Se esperaba 'try' o 'intentar'")
+            raise ParserError("Se esperaba 'try' o 'intentar'")
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de 'try'")
+            raise ParserError("Se esperaba ':' después de 'try'")
         self.comer(TipoToken.DOSPUNTOS)
 
         bloque_try = []
@@ -728,7 +728,7 @@ class ClassicParser:
                 nombre_exc = self.token_actual().valor
                 self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' después de 'catch/capturar'")
+                raise ParserError("Se esperaba ':' después de 'catch/capturar'")
             self.comer(TipoToken.DOSPUNTOS)
             while self.token_actual().tipo not in [
                 TipoToken.FIN,
@@ -741,13 +741,13 @@ class ClassicParser:
         if self.token_actual().tipo == TipoToken.FINALMENTE:
             self.comer(TipoToken.FINALMENTE)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' después de 'finalmente'")
+                raise ParserError("Se esperaba ':' después de 'finalmente'")
             self.comer(TipoToken.DOSPUNTOS)
             while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
                 bloque_finally.append(self.declaracion())
 
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el bloque try/catch")
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque try/catch")
         self.comer(TipoToken.FIN)
 
         return NodoTryCatch(bloque_try, nombre_exc, bloque_catch, bloque_finally)
@@ -757,7 +757,7 @@ class ClassicParser:
         if self.token_actual().tipo in (TipoToken.THROW, TipoToken.LANZAR):
             self.avanzar()
         else:
-            raise SyntaxError("Se esperaba 'throw' o 'lanzar'")
+            raise ParserError("Se esperaba 'throw' o 'lanzar'")
         return NodoThrow(self.expresion())
 
     def declaracion_yield(self):
@@ -770,7 +770,7 @@ class ClassicParser:
         self.comer(TipoToken.ASINCRONICO)
         if self.token_actual().tipo == TipoToken.FUNC:
             return self.declaracion_funcion(True)
-        raise SyntaxError("Se esperaba 'func' después de 'asincronico'")
+        raise ParserError("Se esperaba 'func' después de 'asincronico'")
 
     def declaracion_esperar(self):
         """Parsea una expresión 'esperar' para await."""
@@ -812,7 +812,7 @@ class ClassicParser:
         """Registra nombres como variables globales."""
         self.comer(TipoToken.GLOBAL)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError(
+            raise ParserError(
                 "Se esperaba al menos un identificador después de 'global'"
             )
         nombres = []
@@ -846,17 +846,17 @@ class ClassicParser:
         if self.token_actual().tipo == TipoToken.COMO:
             self.comer(TipoToken.COMO)
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise SyntaxError("Se esperaba un identificador luego de 'como'")
+                raise ParserError("Se esperaba un identificador luego de 'como'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de 'con'")
+            raise ParserError("Se esperaba ':' después de 'con'")
         self.comer(TipoToken.DOSPUNTOS)
         cuerpo = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
             cuerpo.append(self.declaracion())
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el bloque 'con'")
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque 'con'")
         self.comer(TipoToken.FIN)
         return NodoWith(contexto, alias, cuerpo)
 
@@ -864,21 +864,21 @@ class ClassicParser:
         """Importa un símbolo específico desde un módulo."""
         self.comer(TipoToken.DESDE)
         if self.token_actual().tipo != TipoToken.CADENA:
-            raise SyntaxError("Se esperaba una ruta de módulo entre comillas")
+            raise ParserError("Se esperaba una ruta de módulo entre comillas")
         modulo = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         if self.token_actual().tipo != TipoToken.IMPORT:
-            raise SyntaxError("Se esperaba 'import' después de 'desde'")
+            raise ParserError("Se esperaba 'import' después de 'desde'")
         self.comer(TipoToken.IMPORT)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un nombre a importar")
+            raise ParserError("Se esperaba un nombre a importar")
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         alias = None
         if self.token_actual().tipo == TipoToken.COMO:
             self.comer(TipoToken.COMO)
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise SyntaxError("Se esperaba un alias después de 'como'")
+                raise ParserError("Se esperaba un alias después de 'como'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
         return NodoImportDesde(modulo, nombre, alias)
@@ -887,7 +887,7 @@ class ClassicParser:
         """Parsea la definición de una macro simple."""
         self.comer(TipoToken.MACRO)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un nombre de macro")
+            raise ParserError("Se esperaba un nombre de macro")
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         self.comer(TipoToken.LBRACE)
@@ -919,10 +919,10 @@ class ClassicParser:
             self.comer(TipoToken.FUNC)
 
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un nombre de método")
+            raise ParserError("Se esperaba un nombre de método")
         nombre = self.token_actual().valor
         if nombre in PALABRAS_RESERVADAS:
-            raise SyntaxError(
+            raise ParserError(
                 f"El nombre del método '{nombre}' es una palabra reservada"
             )
         self.comer(TipoToken.IDENTIFICADOR)
@@ -932,7 +932,7 @@ class ClassicParser:
         self.comer(TipoToken.RPAREN)
 
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después de la cabecera del método")
+            raise ParserError("Se esperaba ':' después de la cabecera del método")
         self.comer(TipoToken.DOSPUNTOS)
 
         cuerpo = []
@@ -940,7 +940,7 @@ class ClassicParser:
             cuerpo.append(self.declaracion())
 
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el método")
+            raise ParserError("Se esperaba 'fin' para cerrar el método")
         self.comer(TipoToken.FIN)
 
         return NodoMetodo(nombre, parametros, cuerpo, asincronica=asincronica)
@@ -950,7 +950,7 @@ class ClassicParser:
         self.comer(TipoToken.CLASE)
 
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba un nombre de clase")
+            raise ParserError("Se esperaba un nombre de clase")
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
 
@@ -959,7 +959,7 @@ class ClassicParser:
             self.comer(TipoToken.LPAREN)
             while self.token_actual().tipo != TipoToken.RPAREN:
                 if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                    raise SyntaxError("Se esperaba un nombre de clase base")
+                    raise ParserError("Se esperaba un nombre de clase base")
                 bases.append(self.token_actual().valor)
                 self.comer(TipoToken.IDENTIFICADOR)
                 if self.token_actual().tipo == TipoToken.COMA:
@@ -969,7 +969,7 @@ class ClassicParser:
             self.comer(TipoToken.RPAREN)
 
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise SyntaxError("Se esperaba ':' después del encabezado de la clase")
+            raise ParserError("Se esperaba ':' después del encabezado de la clase")
         self.comer(TipoToken.DOSPUNTOS)
 
         metodos = []
@@ -984,7 +984,7 @@ class ClassicParser:
                 metodos.append(self.declaracion())
 
         if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar la clase")
+            raise ParserError("Se esperaba 'fin' para cerrar la clase")
         self.comer(TipoToken.FIN)
 
         return NodoClase(nombre, metodos, bases)
@@ -1098,7 +1098,7 @@ class ClassicParser:
                 else:
                     break
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise SyntaxError("Se esperaba ':' en la expresión lambda")
+                raise ParserError("Se esperaba ':' en la expresión lambda")
             self.comer(TipoToken.DOSPUNTOS)
             cuerpo = self.expresion()
             return NodoLambda(parametros, cuerpo)
@@ -1124,17 +1124,17 @@ class ClassicParser:
             # Permitir el uso de 'holobit' dentro de expresiones
             return self.declaracion_holobit()
         else:
-            raise SyntaxError(f"Token inesperado en término: {token.tipo}")
+            raise ParserError(f"Token inesperado en término: {token.tipo}")
 
     def exp_atributo(self):
         """Parsea la expresión 'atributo objeto nombre'."""
         self.comer(TipoToken.ATRIBUTO)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba el objeto del atributo")
+            raise ParserError("Se esperaba el objeto del atributo")
         objeto = NodoIdentificador(self.token_actual().valor)
         self.comer(TipoToken.IDENTIFICADOR)
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-            raise SyntaxError("Se esperaba el nombre del atributo")
+            raise ParserError("Se esperaba el nombre del atributo")
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         return NodoAtributo(objeto, nombre)
@@ -1148,11 +1148,11 @@ class ClassicParser:
         ):
             nombre_parametro = self.token_actual().valor
             if nombre_parametro in PALABRAS_RESERVADAS:
-                raise SyntaxError(
+                raise ParserError(
                     f"El nombre del parámetro '{nombre_parametro}' es una palabra reservada"
                 )
             if nombre_parametro in parametros:
-                raise SyntaxError(
+                raise ParserError(
                     f"El parámetro '{nombre_parametro}' ya está definido."
                 )
             parametros.append(nombre_parametro)
@@ -1178,5 +1178,7 @@ else:
     Parser = ClassicParser
 
 
-class ParserError:
+class ParserError(Exception):
+    """Error personalizado lanzado por el parser de Cobra."""
+
     pass
