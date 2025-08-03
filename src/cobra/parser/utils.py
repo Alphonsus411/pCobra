@@ -1,7 +1,11 @@
 from difflib import get_close_matches
+from typing import Union, Literal
+
+# Umbral de similitud para las coincidencias
+UMBRAL_COINCIDENCIA = 0.8
 
 # Lista de palabras reservadas del lenguaje que no pueden usarse como identificadores
-PALABRAS_RESERVADAS = {
+PALABRAS_RESERVADAS = frozenset({
     "var",
     "func",
     "rel",
@@ -50,11 +54,39 @@ PALABRAS_RESERVADAS = {
     "intentar",
     "capturar",
     "lanzar",
-}
+})
 
 
-def sugerir_palabra_clave(palabra: str) -> str | None:
-    """Devuelve la palabra clave más parecida si existe una coincidencia."""
-    coincidencias = get_close_matches(palabra, PALABRAS_RESERVADAS, n=1, cutoff=0.8)
-    return coincidencias[0] if coincidencias else None
+def sugerir_palabra_clave(palabra: str) -> Union[str, Literal[None]]:
+    """Devuelve la palabra clave más parecida si existe una coincidencia.
 
+    Args:
+        palabra: La palabra para la cual se busca una coincidencia entre las palabras reservadas.
+            Debe ser una cadena no vacía.
+
+    Returns:
+        str: La palabra reservada más similar si se encuentra una coincidencia con
+            similitud mayor a UMBRAL_COINCIDENCIA.
+        None: Si no se encuentra ninguna coincidencia o si la entrada es inválida.
+
+    Examples:
+        >>> sugerir_palabra_clave("imprim")
+        'imprimir'
+        >>> sugerir_palabra_clave("whil")
+        'mientras'
+        >>> sugerir_palabra_clave("")
+        None
+    """
+    if not palabra or not isinstance(palabra, str):
+        return None
+
+    try:
+        coincidencias = get_close_matches(
+            palabra,
+            PALABRAS_RESERVADAS,
+            n=1,
+            cutoff=UMBRAL_COINCIDENCIA
+        )
+        return coincidencias[0] if coincidencias else None
+    except (IndexError, TypeError):
+        return None
