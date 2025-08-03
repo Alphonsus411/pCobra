@@ -6,7 +6,7 @@ import re
 from pylsp import hookimpl, lsp
 from standard_library import __all__ as STD_FUNCS
 from cobra.lexico.lexer import Lexer, LexerError
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 from cli.commands.execute_cmd import ExecuteCommand
 
 # Palabras reservadas más comunes de Cobra
@@ -135,7 +135,7 @@ def pylsp_diagnostics(config, workspace, document, **_args):
                 "severity": lsp.DiagnosticSeverity.Error,
             }
         )
-    except SyntaxError as exc:
+    except ParserError as exc:
         token = parser.token_actual() if parser is not None else None
         line = getattr(token, "linea", 1) - 1 if token else 0
         col = getattr(token, "columna", 1) - 1 if token else 0

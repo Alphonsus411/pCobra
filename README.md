@@ -663,7 +663,7 @@ clave con un error tipográfico se mostrará una sugerencia automática. Ejemplo
 
 ```bash
 cobra> imprmir 1
-SyntaxError: Token inesperado. ¿Quiso decir 'imprimir'?
+ParserError: Token inesperado. ¿Quiso decir 'imprimir'?
 ```
 
 ## Uso desde la CLI

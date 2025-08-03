@@ -1,6 +1,6 @@
 import pytest
 from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 from core.ast_nodes import NodoFuncion, NodoAsignacion
 
 
@@ -35,5 +35,5 @@ def test_error_lista_no_soportada():
     tokens = Lexer(codigo).analizar_token()
     parser = Parser(tokens)
 
-    with pytest.raises(SyntaxError, match="LBRACKET"):
+    with pytest.raises(ParserError, match="LBRACKET"):
         parser.parsear()

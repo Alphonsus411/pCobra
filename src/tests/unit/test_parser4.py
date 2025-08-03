@@ -2,8 +2,7 @@ import pytest
 
 from cobra.lexico.lexer import Token, TipoToken
 from core.ast_nodes import NodoAsignacion, NodoCondicional, NodoFuncion, NodoRetorno, NodoBucleMientras, NodoValor
-from cobra.parser.parser import Parser
-from cobra.parser.parser import Parser
+from cobra.parser.parser import Parser, ParserError
 
 
 def test_parser_asignacion():
@@ -159,7 +158,7 @@ def test_parser_errores():
     ]
     parser = Parser(tokens)
 
-    with pytest.raises(SyntaxError):
+    with pytest.raises(ParserError):
         parser.parsear()
 
 
