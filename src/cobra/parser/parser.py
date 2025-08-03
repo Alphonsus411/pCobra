@@ -1087,11 +1087,14 @@ class ClassicParser:
     def lista_parametros(self):
         """Devuelve la lista de parámetros de una función o lambda."""
         parametros = []
-        while self.token_actual().tipo == TipoToken.IDENTIFICADOR:
+        while (
+            self.token_actual().tipo == TipoToken.IDENTIFICADOR
+            or self.token_actual().valor in PALABRAS_RESERVADAS
+        ):
             nombre_parametro = self.token_actual().valor
-            if nombre_parametro in ["si", "mientras", "func", "fin"]:
+            if nombre_parametro in PALABRAS_RESERVADAS:
                 raise SyntaxError(
-                    f"El nombre del parámetro '{nombre_parametro}' es reservado."
+                    f"El nombre del parámetro '{nombre_parametro}' es una palabra reservada"
                 )
             if nombre_parametro in parametros:
                 raise SyntaxError(
