@@ -2,6 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional
+import json
 from lark import Lark, ParseError
 from cobra.lexico.lexer import Token, TipoToken
 
@@ -43,11 +44,11 @@ class LarkParser:
         parts = []
         for t in self.tokens:
             if t.tipo == TipoToken.CADENA:
-                parts.append(f'"{t.valor}"')
+                parts.append(json.dumps(t.valor))
             elif t.tipo == TipoToken.EOF:
                 continue
             else:
-                parts.append(str(t.valor))
+                parts.append(repr(t.valor))
         return " ".join(parts)
 
     def parsear(self) -> Optional[object]:
