@@ -1,9 +1,11 @@
+import concurrent.futures
 import logging
 import os
 from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
+from argparse import _SubParsersAction, ArgumentParser
 
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.lexico.lexer import Lexer
@@ -14,14 +16,23 @@ from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
+# Constantes
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+VALID_EXTENSIONS = {'.cobra', '.cbr'}
 
 class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
     SUPPORTED_LANGUAGES = {"python", "js"}
+    
+    def __init__(self) -> None:
+        """Inicializa el comando y el intérprete."""
+        super().__init__()
+        self._interprete = InterpretadorCobra()
+        self._logger = logging.getLogger(__name__)
 
-    def register_subparser(self, subparsers):
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
@@ -65,6 +76,26 @@ class VerifyCommand(BaseCommand):
                 _("Lenguajes no soportados: {}").format(", ".join(unsupported))
             )
 
+    def _validate_file(self, file_path: str) -> None:
+        """Valida el archivo de entrada.
+        
+        Args:
+            file_path: Ruta al archivo
+            
+        Raises:
+            ValueError: Si el archivo no es válido
+        """
+        path = Path(file_path)
+        if not path.suffix in VALID_EXTENSIONS:
+            raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(
+                ", ".join(VALID_EXTENSIONS)
+            ))
+        
+        if path.stat().st_size > MAX_FILE_SIZE:
+            raise ValueError(_("El archivo es demasiado grande (máximo {} MB)").format(
+                MAX_FILE_SIZE // (1024 * 1024)
+            ))
+
     def _read_source_file(self, file_path: str) -> str:
         """Lee el contenido del archivo fuente.
         
@@ -75,10 +106,12 @@ class VerifyCommand(BaseCommand):
             Contenido del archivo
             
         Raises:
+            ValueError: Si el archivo no es válido
             FileNotFoundError: Si el archivo no existe
             PermissionError: Si no hay permisos para leer el archivo
-            UnicodeDecodeError: Si hay error al decodificar el archivo
         """
+        self._validate_file(file_path)
+        
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
@@ -88,14 +121,16 @@ class VerifyCommand(BaseCommand):
             raise PermissionError(
                 _("No hay permisos para leer el archivo '{}'").format(file_path)
             )
-        except UnicodeDecodeError:
-            raise UnicodeDecodeError(
-                _("Error al decodificar el archivo '{}'").format(file_path)
-            )
+        except UnicodeDecodeError as e:
+            self._logger.error("Error decodificando archivo: %s", str(e))
+            raise ValueError(_("Error al decodificar el archivo '{}'").format(file_path))
 
     def _compile_and_execute(
-        self, ast, lang: str, transpiler
-    ) -> tuple[Optional[str], Optional[str]]:
+        self, 
+        ast: Any, 
+        lang: str, 
+        transpiler: Any
+    ) -> Tuple[Optional[str], Optional[str]]:
         """Compila y ejecuta el código en el lenguaje especificado.
         
         Args:
@@ -107,22 +142,50 @@ class VerifyCommand(BaseCommand):
             Tupla con (salida, error)
         """
         try:
+            if lang not in TRANSPILERS:
+                return None, _("Transpilador no encontrado para {}").format(lang)
+                
             codigo_gen = transpiler.generate_code(ast)
-        except Exception as e:
-            logging.error("Error generando código para %s: %s", lang, str(e))
-            return None, f"Error al generar código: {str(e)}"
-
-        try:
+            
             if lang == "python":
                 salida = ejecutar_en_sandbox(codigo_gen)
             else:
                 salida = ejecutar_en_sandbox_js(codigo_gen)
-            return salida, None
+                
+            # Normalizar terminaciones de línea
+            return salida.replace('\r\n', '\n'), None
+            
         except Exception as e:
-            logging.error("Error ejecutando código para %s: %s", lang, str(e))
-            return None, f"Error al ejecutar: {str(e)}"
+            self._logger.error("Error en %s: %s", lang, str(e))
+            return None, str(e)
 
-    def run(self, args) -> int:
+    def _verify_language(
+        self, 
+        lang: str, 
+        ast: Any, 
+        esperado: str
+    ) -> Tuple[str, Optional[str]]:
+        """Verifica un lenguaje específico.
+        
+        Args:
+            lang: Lenguaje a verificar
+            ast: AST del código
+            esperado: Salida esperada
+            
+        Returns:
+            Tupla con (lenguaje, error si existe)
+        """
+        transpiler = TRANSPILERS[lang]()
+        salida, error = self._compile_and_execute(ast, lang, transpiler)
+        
+        if error:
+            return lang, error
+        elif salida != esperado:
+            return lang, salida
+            
+        return lang, None
+
+    def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
         
         Args:
@@ -132,6 +195,9 @@ class VerifyCommand(BaseCommand):
             0 si la verificación es exitosa, 1 en caso de error
         """
         try:
+            if not args.archivo or not args.lenguajes:
+                raise ValueError(_("Se requieren archivo y lenguajes"))
+                
             lenguajes = [lang.strip() for lang in args.lenguajes.split(",") if lang.strip()]
             self._validate_languages(lenguajes)
             
@@ -143,19 +209,21 @@ class VerifyCommand(BaseCommand):
             
             # Obtener salida esperada
             with patch("sys.stdout", new_callable=StringIO) as out:
-                InterpretadorCobra().ejecutar_ast(ast)
-            esperado = out.getvalue()
+                self._interprete.ejecutar_ast(ast)
+            esperado = out.getvalue().replace('\r\n', '\n')
 
-            # Verificar cada lenguaje
+            # Verificar lenguajes en paralelo
             diferencias: Dict[str, str] = {}
-            for lang in lenguajes:
-                transpiler = TRANSPILERS[lang]()
-                salida, error = self._compile_and_execute(ast, lang, transpiler)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futuros = {
+                    executor.submit(self._verify_language, lang, ast, esperado): lang 
+                    for lang in lenguajes
+                }
                 
-                if error:
-                    diferencias[lang] = error
-                elif salida != esperado:
-                    diferencias[lang] = salida
+                for futuro in concurrent.futures.as_completed(futuros):
+                    lang, error = futuro.result()
+                    if error:
+                        diferencias[lang] = error
 
             if diferencias:
                 mostrar_error(_("Se encontraron diferencias:"))
@@ -166,10 +234,10 @@ class VerifyCommand(BaseCommand):
             mostrar_info(_("Todas las salidas coinciden"))
             return 0
             
-        except (ValueError, FileNotFoundError, PermissionError, UnicodeDecodeError) as e:
+        except (ValueError, FileNotFoundError, PermissionError) as e:
             mostrar_error(str(e))
             return 1
         except Exception as e:
-            logging.exception("Error inesperado")
+            self._logger.exception("Error inesperado")
             mostrar_error(f"Error inesperado: {str(e)}")
             return 1

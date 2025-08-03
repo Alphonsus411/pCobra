@@ -9,8 +9,9 @@ import pstats
 import shutil
 import subprocess
 import tempfile
-from typing import Any, Optional, List
-from argparse import _SubParsersAction
+from argparse import ArgumentParser, _SubParsersAction
+from pathlib import Path
+from typing import Optional
 
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
@@ -28,15 +29,16 @@ class ProfileCommand(BaseCommand):
     """Ejecuta un script Cobra con cProfile."""
 
     name: str = "profile"
+    logger = logging.getLogger(__name__)
 
     def _limpiar_archivo_temporal(self, archivo: str) -> None:
         """Limpia un archivo temporal si existe."""
         try:
-            os.unlink(archivo)
-        except OSError:
-            pass
+            Path(archivo).unlink(missing_ok=True)
+        except OSError as e:
+            self.logger.warning(f"Error al eliminar archivo temporal {archivo}: {e}")
 
-    def _obtener_argumento(self, args: Any, nombre: str, default: Any = None) -> Any:
+    def _obtener_argumento(self, args: ArgumentParser, nombre: str, default: Optional[any] = None) -> any:
         """Obtiene un argumento del namespace de argumentos con valor por defecto."""
         return getattr(args, nombre, default)
 
@@ -49,7 +51,7 @@ class ProfileCommand(BaseCommand):
         mostrar_error(msg)
         return 1
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> Any:
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Perfila un programa"))
         parser.add_argument("archivo")
@@ -70,7 +72,16 @@ class ProfileCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
-    def run(self, args: Any) -> int:
+    def _validar_directorio_salida(self, ruta: str) -> bool:
+        """Valida que el directorio de salida exista y tenga permisos de escritura."""
+        dir_salida = Path(ruta).parent
+        try:
+            dir_salida.mkdir(parents=True, exist_ok=True)
+            return os.access(dir_salida, os.W_OK)
+        except OSError:
+            return False
+
+    def run(self, args: ArgumentParser) -> int:
         """Ejecuta la lógica del comando."""
         archivo: str = args.archivo
         output: Optional[str] = self._obtener_argumento(args, "output")
@@ -81,8 +92,12 @@ class ProfileCommand(BaseCommand):
         extra_validators: Optional[str] = self._obtener_argumento(args, "validadores_extra")
         analysis: bool = self._obtener_argumento(args, "analysis", False)
 
-        if not os.path.exists(archivo):
+        if not Path(archivo).exists():
             mostrar_error(f"El archivo '{archivo}' no existe")
+            return 1
+
+        if output and not self._validar_directorio_salida(output):
+            mostrar_error(f"No se puede escribir en el directorio de salida para '{output}'")
             return 1
 
         try:
@@ -94,7 +109,7 @@ class ProfileCommand(BaseCommand):
         if formatear:
             ExecuteCommand._formatear_codigo(archivo)  # type: ignore[attr-defined]
 
-        logging.getLogger().setLevel(logging.DEBUG if depurar else logging.ERROR)
+        self.logger.setLevel(logging.DEBUG if depurar else logging.ERROR)
 
         try:
             with open(archivo, "r", encoding="utf-8") as f:
@@ -120,7 +135,7 @@ class ProfileCommand(BaseCommand):
                 for nodo in ast:
                     nodo.aceptar(validador)
             except PrimitivaPeligrosaError as pe:
-                logging.error(f"Primitiva peligrosa: {pe}")
+                self.logger.error(f"Primitiva peligrosa: {pe}")
                 mostrar_error(str(pe))
                 return 1
 
@@ -140,14 +155,17 @@ class ProfileCommand(BaseCommand):
                     return self._mostrar_error_herramienta_no_encontrada(ui)
                 
                 if not stats_file:
-                    tmp = tempfile.NamedTemporaryFile(suffix=".prof", delete=False)
-                    tmp_file = tmp.name
-                    stats_file = tmp_file
+                    with tempfile.NamedTemporaryFile(mode="w", suffix=".prof", delete=False) as tmp:
+                        tmp_file = tmp.name
+                        stats_file = tmp_file
                 
                 profiler.dump_stats(stats_file)
                 try:
                     subprocess.run([ui, stats_file], check=True)
-                except (subprocess.SubprocessError, FileNotFoundError):
+                except subprocess.CalledProcessError as e:
+                    mostrar_error(f"Error ejecutando {ui}: {e}")
+                    return 1
+                except FileNotFoundError:
                     return self._mostrar_error_herramienta_no_encontrada(ui)
             else:
                 if stats_file:
@@ -164,11 +182,11 @@ class ProfileCommand(BaseCommand):
             return 0
             
         except (RuntimeError, ValueError, TypeError) as e:
-            logging.error(f"Error de ejecución: {e}")
+            self.logger.error(f"Error de ejecución: {e}")
             mostrar_error(f"Error de ejecución: {e}")
             return 1
         except Exception as e:
-            logging.critical(f"Error inesperado: {e}")
+            self.logger.critical(f"Error inesperado: {e}", exc_info=True)
             mostrar_error(_("Ha ocurrido un error inesperado"))
             return 1
         finally:

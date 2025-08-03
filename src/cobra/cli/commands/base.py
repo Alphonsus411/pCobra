@@ -43,3 +43,7 @@ class BaseCommand:
             NotImplementedError: Si la subclase no implementa este método
         """
         raise NotImplementedError
+
+
+class CommandError:
+    pass

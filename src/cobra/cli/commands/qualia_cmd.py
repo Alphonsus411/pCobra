@@ -1,7 +1,7 @@
 import json
-import os
-from argparse import _SubParsersAction
-from typing import Any
+from argparse import ArgumentParser, _SubParsersAction  # TODO: Reemplazar _SubParsersAction
+from pathlib import Path
+from typing import Any, Union
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
@@ -18,14 +18,14 @@ class QualiaCommand(BaseCommand):
     ACCION_MOSTRAR = "mostrar"
     ACCION_REINICIAR = "reiniciar"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> Any:
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar los subcomandos
             
         Returns:
-            Any: El parser configurado para el subcomando
+            ArgumentParser: El parser configurado para el subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Administra el estado de Qualia")
@@ -49,6 +49,8 @@ class QualiaCommand(BaseCommand):
             AttributeError: Si hay problemas al acceder a los datos de Qualia
             json.JSONDecodeError: Si hay error al convertir los datos a JSON
             PermissionError: Si hay problemas de permisos al eliminar archivos
+            IOError: Si hay otros errores de E/S al manipular archivos
+            Exception: Para otros errores inesperados
         """
         accion = args.accion
         if not accion:
@@ -62,10 +64,10 @@ class QualiaCommand(BaseCommand):
                 return 0
 
             if accion == self.ACCION_REINICIAR:
-                state = qualia_bridge.STATE_FILE
-                if os.path.exists(state):
+                state = Path(qualia_bridge.STATE_FILE)
+                if state.exists():
                     try:
-                        os.remove(state)
+                        state.unlink()
                         mostrar_info(_("Estado de Qualia eliminado"))
                     except PermissionError:
                         mostrar_error(_("No hay permisos para eliminar el archivo de estado"))
@@ -78,8 +80,17 @@ class QualiaCommand(BaseCommand):
             return 1
 
         except (AttributeError, json.JSONDecodeError) as e:
-            mostrar_error(_("Error al procesar datos de Qualia: {0}").format(str(e)))
+            mostrar_error(_("Error al procesar datos de Qualia: {error}").format(
+                error=str(e)
+            ))
+            return 1
+        except (PermissionError, IOError) as e:
+            mostrar_error(_("Error de acceso a archivo: {error}").format(
+                error=str(e)
+            ))
             return 1
         except Exception as e:
-            mostrar_error(_("Error inesperado: {0}").format(str(e)))
+            mostrar_error(_("Error inesperado: {error}").format(
+                error=str(e)
+            ))
             return 1
