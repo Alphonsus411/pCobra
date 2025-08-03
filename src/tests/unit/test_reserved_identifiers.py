@@ -20,3 +20,14 @@ def test_funcion_nombre_reservado():
     parser = Parser(tokens)
     with pytest.raises(SyntaxError, match="palabra reservada"):
         parser.parsear()
+
+
+def test_parametro_nombre_reservado():
+    codigo = """
+    func foo(para):
+        fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    parser = Parser(tokens)
+    with pytest.raises(SyntaxError, match="palabra reservada"):
+        parser.parsear()
