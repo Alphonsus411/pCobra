@@ -289,26 +289,31 @@ class ClassicParser:
 
         # Parsea el cuerpo del bucle
         cuerpo = []
-        max_iteraciones = 1000
-        iteraciones = 0
 
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+        while True:
+            token = self.token_actual()
+            if token.tipo == TipoToken.FIN:
+                break
+            if token.tipo == TipoToken.EOF:
+                raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'para'")
+
             logger.debug(
                 f"Procesando token dentro del bucle 'para': {self.token_actual()}"
             )
-            iteraciones += 1
-            if iteraciones > max_iteraciones:
-                raise RuntimeError("Bucle infinito detectado en 'para'")
 
+            posicion_inicial = self.posicion
             try:
                 cuerpo.append(self.declaracion())
             except SyntaxError as e:
                 logger.error(f"Error en el cuerpo del bucle 'para': {e}")
                 self.avanzar()  # Avanzar para evitar bloqueo
 
+            if self.posicion == posicion_inicial:
+                raise RuntimeError(
+                    "La declaración dentro del bucle 'para' no consumió tokens"
+                )
+
         logger.debug(f"Token actual antes de 'fin': {self.token_actual()}")
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'para'")
         self.comer(TipoToken.FIN)
 
         logger.debug(
