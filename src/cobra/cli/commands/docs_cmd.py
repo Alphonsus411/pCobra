@@ -1,8 +1,7 @@
-import sys
 from pathlib import Path
 import subprocess
-from typing import Any
-
+from typing import Any, Optional
+from argparse import _SubParsersAction, ArgumentParser
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -11,46 +10,64 @@ class DocsCommand(BaseCommand):
     """Genera la documentación HTML del proyecto."""
     name = "docs"
     
-    def register_subparser(self, subparsers: Any) -> Any:
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Genera la documentación del proyecto")
         )
         parser.set_defaults(cmd=self)
         return parser
-        
+
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando."""
         try:
-            # Verificar que sphinx esté instalado
             import sphinx
         except ImportError:
-            mostrar_error(_("Sphinx no está instalado. Ejecuta 'pip install sphinx'."))
+            mostrar_error(_("Sphinx no está instalado. Ejecuta 'pip install sphinx sphinx-rtd-theme'."))
             return 1
-            
-        # Usar pathlib para manejo de rutas
+
         raiz = Path(__file__).resolve().parents[3]
         source = raiz / "frontend" / "docs"
         build = raiz / "frontend" / "build" / "html"
         api = source / "api"
         codigo = raiz / "backend" / "src"
 
-        # Validar existencia de directorios
-        if not codigo.exists():
-            mostrar_error(_("No se encuentra el directorio de código fuente"))
+        # Validar todos los directorios necesarios
+        if not self._validar_directorios(source, codigo):
             return 1
-            
-        # Crear directorio de build si no existe
-        build.parent.mkdir(parents=True, exist_ok=True)
-            
+
+        # Crear directorios si no existen
+        for dir in (build.parent, api):
+            try:
+                dir.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                mostrar_error(_("Error al crear directorio {dir}: {err}").format(dir=dir, err=e))
+                return 1
+
         try:
-            subprocess.run(["sphinx-apidoc", "-o", str(api), str(codigo)], 
-                         check=True, capture_output=True, text=True)
-            subprocess.run(["sphinx-build", "-b", "html", str(source), str(build)],
-                         check=True, capture_output=True, text=True)
+            self._ejecutar_sphinx(api, codigo, source, build)
             mostrar_info(_("Documentación generada en {path}").format(path=build))
             return 0
-            
-        except (subprocess.CalledProcessError, OSError) as e:
+        except Exception as e:
             mostrar_error(_("Error generando la documentación: {err}").format(err=e))
             return 1
+
+    def _validar_directorios(self, source: Path, codigo: Path) -> bool:
+        """Valida la existencia de directorios requeridos."""
+        if not source.exists():
+            mostrar_error(_("No se encuentra el directorio de documentación"))
+            return False
+        if not codigo.exists():
+            mostrar_error(_("No se encuentra el directorio de código fuente"))
+            return False
+        return True
+
+    def _ejecutar_sphinx(self, api: Path, codigo: Path, source: Path, build: Path) -> None:
+        """Ejecuta los comandos de Sphinx."""
+        for cmd in [
+            ["sphinx-apidoc", "-o", str(api), str(codigo)],
+            ["sphinx-build", "-b", "html", str(source), str(build)]
+        ]:
+            resultado = subprocess.run(cmd, capture_output=True, text=True)
+            if resultado.returncode != 0:
+                raise RuntimeError(f"Error ejecutando {cmd[0]}: {resultado.stderr}")

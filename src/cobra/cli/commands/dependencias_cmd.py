@@ -1,10 +1,13 @@
 import logging
 import os
+import shutil
 import subprocess
+import sys
 import tempfile
 import venv
+from argparse import _SubParsersAction, ArgumentParser
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Any
 
 try:
     import tomllib  # Python >= 3.11
@@ -22,15 +25,22 @@ class DependenciasCommand(BaseCommand):
     
     Este comando permite listar e instalar las dependencias definidas en 
     requirements.txt y pyproject.toml.
+    
+    Ejemplos:
+        cobra dependencias listar
+        cobra dependencias instalar
     """
 
     name = "dependencias"
 
-    def register_subparser(self, subparsers) -> None:
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
+            
+        Returns:
+            ArgumentParser: Parser configurado para este subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Gestiona las dependencias del proyecto")
@@ -41,7 +51,7 @@ class DependenciasCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
-    def run(self, args) -> int:
+    def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
         
         Args:
@@ -70,8 +80,14 @@ class DependenciasCommand(BaseCommand):
         
         Returns:
             Path: Ruta absoluta a la raíz del proyecto
+            
+        Raises:
+            RuntimeError: Si no se puede determinar la ruta del proyecto
         """
-        return Path(__file__).resolve().parents[4]
+        try:
+            return Path(__file__).resolve().parents[4]
+        except Exception as e:
+            raise RuntimeError("No se pudo determinar la ruta del proyecto") from e
 
     @classmethod
     def _ruta_requirements(cls) -> Path:
@@ -92,6 +108,18 @@ class DependenciasCommand(BaseCommand):
         return cls._get_project_root() / "pyproject.toml"
 
     @classmethod
+    def _validar_dependencia(cls, dep: str) -> bool:
+        """Valida el formato de una dependencia.
+        
+        Args:
+            dep: Dependencia a validar
+            
+        Returns:
+            bool: True si la dependencia es válida
+        """
+        return bool(dep and not dep.startswith(("#", "-")))
+
+    @classmethod
     def _leer_requirements(cls) -> List[str]:
         """Lee las dependencias del archivo requirements.txt.
         
@@ -109,11 +137,11 @@ class DependenciasCommand(BaseCommand):
                     deps = [
                         line.strip()
                         for line in f
-                        if line.strip() and not line.startswith("#")
+                        if cls._validar_dependencia(line.strip())
                     ]
             except IOError as e:
-                logger.error(f"Error leyendo requirements.txt: {e}")
-                raise
+                logger.exception("Error leyendo requirements.txt")
+                raise IOError(f"Error leyendo requirements.txt: {e}") from e
         return deps
 
     @classmethod
@@ -134,12 +162,13 @@ class DependenciasCommand(BaseCommand):
                 with open(ruta, "rb") as f:
                     data = tomllib.load(f)
                 project = data.get("project", {})
-                deps.extend(project.get("dependencies", []))
+                deps.extend(d for d in project.get("dependencies", []) if cls._validar_dependencia(d))
                 for extra in project.get("optional-dependencies", {}).values():
-                    deps.extend(extra)
+                    deps.extend(d for d in extra if cls._validar_dependencia(d))
             except (IOError, tomllib.TOMLDecodeError) as e:
-                logger.error(f"Error leyendo pyproject.toml: {e}")
+                logger.exception("Error leyendo pyproject.toml")
                 raise
+
         return deps
 
     @classmethod
@@ -148,9 +177,12 @@ class DependenciasCommand(BaseCommand):
         
         Returns:
             List[str]: Lista de dependencias únicas
+            
+        Raises:
+            Exception: Si hay error leyendo algún archivo de dependencias
         """
         deps = cls._leer_requirements() + cls._leer_pyproject()
-        return list(dict.fromkeys(deps))  # Preserva orden y elimina duplicados
+        return list(dict.fromkeys(deps))
 
     @classmethod
     def _crear_entorno_virtual(cls) -> Optional[str]:
@@ -158,13 +190,30 @@ class DependenciasCommand(BaseCommand):
         
         Returns:
             Optional[str]: Ruta al entorno virtual o None si falla
+            
+        Raises:
+            OSError: Si no hay suficiente espacio en disco
         """
         venv_path = cls._get_project_root() / ".venv"
+        
+        if venv_path.exists():
+            logger.info("Eliminando entorno virtual existente")
+            try:
+                shutil.rmtree(str(venv_path))
+            except OSError as e:
+                logger.error(f"Error eliminando entorno virtual: {e}")
+                return None
+
         try:
+            # Verificar espacio en disco (100MB mínimo)
+            free_space = shutil.disk_usage(str(venv_path.parent)).free
+            if free_space < 100 * 1024 * 1024:
+                raise OSError("Espacio insuficiente en disco")
+                
             venv.create(venv_path, with_pip=True)
             return str(venv_path)
-        except Exception as e:
-            logger.error(f"Error creando entorno virtual: {e}")
+        except OSError as e:
+            logger.exception("Error creando entorno virtual")
             return None
 
     @classmethod
@@ -172,7 +221,7 @@ class DependenciasCommand(BaseCommand):
         """Lista todas las dependencias encontradas.
         
         Returns:
-            int: 0 si la ejecución fue exitosa
+            int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
         try:
             deps = cls._obtener_dependencias()
@@ -183,6 +232,7 @@ class DependenciasCommand(BaseCommand):
                     mostrar_info(dep)
             return 0
         except Exception as e:
+            logger.exception("Error listando dependencias")
             mostrar_error(str(e))
             return 1
 
@@ -204,16 +254,20 @@ class DependenciasCommand(BaseCommand):
                 mostrar_error(_("No se pudo crear el entorno virtual"))
                 return 1
 
-            with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
                 for dep in deps:
                     tmp.write(f"{dep}\n")
                 tmp_path = tmp.name
 
             try:
-                pip_path = str(Path(venv_path) / "Scripts" / "pip.exe") \
-                    if os.name == "nt" else str(Path(venv_path) / "bin" / "pip")
-                
-                subprocess.run(
+                scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
+                pip_path = str(Path(venv_path) / scripts_dir / ("pip.exe" if sys.platform == "win32" else "pip"))
+
+                if not Path(pip_path).exists():
+                    mostrar_error(_("No se encontró pip en el entorno virtual"))
+                    return 1
+
+                result = subprocess.run(
                     [pip_path, "install", "-r", tmp_path],
                     check=True,
                     capture_output=True,
@@ -221,11 +275,17 @@ class DependenciasCommand(BaseCommand):
                 )
                 mostrar_info(_("Dependencias instaladas en el entorno virtual"))
                 return 0
+
             except subprocess.CalledProcessError as e:
+                logger.exception("Error en la instalación de dependencias")
                 mostrar_error(_("Error instalando dependencias: {err}").format(err=e.stderr))
                 return 1
             finally:
-                os.unlink(tmp_path)
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
         except Exception as e:
+            logger.exception("Error en el proceso de instalación")
             mostrar_error(str(e))
             return 1

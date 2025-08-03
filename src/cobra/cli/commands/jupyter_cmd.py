@@ -1,4 +1,4 @@
-import os
+import subprocess
 import subprocess
 import sys
 from argparse import _SubParsersAction
@@ -8,6 +8,7 @@ from typing import Any
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error
+
 
 class JupyterCommand(BaseCommand):
     """Lanza Jupyter Notebook con el kernel Cobra instalado."""

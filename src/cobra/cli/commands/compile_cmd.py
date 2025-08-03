@@ -34,16 +34,16 @@ from core.semantic_validators import (
     PrimitivaPeligrosaError,
     construir_cadena,
 )
-
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
-# Mapa que asocia el nombre de cada lenguaje con la clase de su
-# transpilador. Sirve como una fábrica sencilla: a partir de una clave
-# se puede instanciar el transpilador adecuado. Este diccionario se
-# amplía dinámicamente con los transpiladores registrados mediante
-# ``entry_points`` en el grupo ``cobra.transpilers``.
+# Constantes de configuración
+MAX_PROCESSES = 4
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+PROCESS_TIMEOUT = 300  # 5 minutos
+MAX_LANGUAGES = 10
+
 TRANSPILERS = {
     "python": TranspiladorPython,
     "js": TranspiladorJavaScript,
@@ -70,7 +70,7 @@ TRANSPILERS = {
     "wasm": TranspiladorWasm,
 }
 
-# Detectar transpiladores externos registrados via entry points
+# Cargar transpiladores externos
 try:
     eps = entry_points(group="cobra.transpilers")
 except TypeError:  # Compatibilidad con versiones antiguas
@@ -79,49 +79,39 @@ except TypeError:  # Compatibilidad con versiones antiguas
 for ep in eps:
     try:
         module_name, class_name = ep.value.split(":", 1)
+        if not all(c.isalnum() or c in "._" for c in module_name + class_name):
+            logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
+            continue
         cls = getattr(import_module(module_name), class_name)
         TRANSPILERS[ep.name] = cls
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
 LANG_CHOICES = sorted(TRANSPILERS.keys())
 
-MAX_PROCESSES = 4
-
-# Añadir constantes de configuración
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-PROCESS_TIMEOUT = 300  # 5 minutos
-MAX_LANGUAGES = 10
-
-# Mejorar la validación de archivo
 def validate_file(filepath: str) -> bool:
+    """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
     if not os.path.isfile(filepath):
         raise ValueError(f"'{filepath}' no es un archivo válido")
     if not os.access(filepath, os.R_OK):
         raise ValueError(f"No hay permisos de lectura para '{filepath}'")
     if os.path.getsize(filepath) > MAX_FILE_SIZE:
-        raise ValueError(f"El archivo excede el tamaño máximo permitido")
+        raise ValueError(f"El archivo excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)")
     return True
 
-# Mejorar el manejo del pool
-def run_transpiler_pool(languages: list, ast, self=None) -> list:
+def run_transpiler_pool(languages: list, ast, executor) -> list:
+    """Ejecuta los transpiladores en paralelo con límites de seguridad."""
     if len(languages) > MAX_LANGUAGES:
         raise ValueError(_("Demasiados lenguajes especificados"))
     with multiprocessing.Pool(processes=min(len(languages), MAX_PROCESSES)) as pool:
         return pool.map_async(
-            self._ejecutar_transpilador, 
+            executor,
             [(lang, ast) for lang in languages],
             timeout=PROCESS_TIMEOUT
         ).get(timeout=PROCESS_TIMEOUT)
 
-
 class CompileCommand(BaseCommand):
-    """Transpila un archivo Cobra a distintos lenguajes.
-
-    Soporta Python, JavaScript, ensamblador, Rust, C++, C, Go, Kotlin, Swift,
-    R, Julia, Ruby, PHP, Java y ahora también COBOL, Fortran, Pascal,
-    VisualBasic, Matlab, Mojo, LaTeX y WebAssembly.
-    """
+    """Transpila un archivo Cobra a distintos lenguajes."""
 
     name = "compilar"
 
@@ -148,6 +138,7 @@ class CompileCommand(BaseCommand):
         return parser
 
     def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
+        """Ejecuta un transpilador específico."""
         lang, ast = parametros
         transp = TRANSPILERS[lang]()
         return lang, transp.__class__.__name__, transp.generate_code(ast)
@@ -155,13 +146,11 @@ class CompileCommand(BaseCommand):
     def run(self, args):
         """Ejecuta la lógica del comando."""
         archivo = args.archivo
-        if getattr(args, "backend", None):
-            args.tipo = args.backend
-        if not os.path.isfile(archivo):
-            mostrar_error(f"'{archivo}' no es un archivo válido")
-            return 1
-        if not os.access(archivo, os.R_OK):
-            mostrar_error(f"No hay permisos de lectura para '{archivo}'")
+        
+        try:
+            validate_file(archivo)
+        except ValueError as e:
+            mostrar_error(str(e))
             return 1
 
         mod_info = module_map.get_toml_map()
@@ -176,10 +165,10 @@ class CompileCommand(BaseCommand):
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
 
-        
-        with open(archivo, "r", encoding="utf-8") as f:
-            codigo = f.read()
         try:
+            with open(archivo, "r", encoding="utf-8") as f:
+                codigo = f.read()
+
             ast = obtener_ast(codigo)
             validador = construir_cadena()
             for nodo in ast:
@@ -190,22 +179,21 @@ class CompileCommand(BaseCommand):
                 for lang in lenguajes:
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
-                # Agregar límite de procesos
                 
-                with multiprocessing.Pool(processes=min(len(lenguajes), MAX_PROCESSES)) as pool:
-                    resultados = pool.map(
-                        self._ejecutar_transpilador, [(lang, ast) for lang in lenguajes]
-                    )
-                for lang, nombre, resultado in resultados:
-                    mostrar_info(
-                        _("Código generado ({nombre}) para {lang}:").format(
-                            nombre=nombre, lang=lang
+                try:
+                    resultados = run_transpiler_pool(lenguajes, ast, self._ejecutar_transpilador)
+                    for lang, nombre, resultado in resultados:
+                        mostrar_info(
+                            _("Código generado ({nombre}) para {lang}:").format(
+                                nombre=nombre, lang=lang
+                            )
                         )
-                    )
-                    print(resultado)
-                return 0
+                        print(resultado)
+                except multiprocessing.TimeoutError:
+                    mostrar_error(_("Tiempo de ejecución excedido"))
+                    return 1
             else:
-                transpilador = args.tipo
+                transpilador = args.tipo if not getattr(args, "backend", None) else args.backend
                 if transpilador not in TRANSPILERS:
                     raise ValueError(_("Transpilador no soportado."))
                 transp = TRANSPILERS[transpilador]()
@@ -216,14 +204,17 @@ class CompileCommand(BaseCommand):
                     )
                 )
                 print(resultado)
-                return 0
+            return 0
+
         except PrimitivaPeligrosaError as pe:
-            logging.error(f"Primitiva peligrosa: {pe}")
+            logging.error("Primitiva peligrosa: %s", pe)
             mostrar_error(str(pe))
             return 1
         except SyntaxError as se:
-            logging.error(f"Error de sintaxis durante la transpilación: {se}")
+            logging.error("Error de sintaxis durante la transpilación: %s", se)
             mostrar_error(f"Error durante la transpilación: {se}")
             return 1
         except Exception as e:
-            logging.error(f"Error general durante la transpilación: {e}")
+            logging.error("Error general durante la transpilación: %s", e)
+            mostrar_error(str(e))
+            return 1

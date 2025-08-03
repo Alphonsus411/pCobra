@@ -1,6 +1,9 @@
 import logging
+import re
 import resource
-from typing import Optional
+import traceback
+from typing import Optional, Any, NoReturn
+from argparse import _SubParsersAction, ArgumentParser
 
 from cobra.lexico.lexer import Lexer, LexerError
 from cobra.parser.parser import Parser
@@ -18,7 +21,8 @@ from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 
-class ParserError:
+class ParserError(Exception):
+    """Excepción lanzada cuando ocurre un error durante el parsing."""
     pass
 
 
@@ -33,6 +37,7 @@ class InteractiveCommand(BaseCommand):
     name = "interactive"
     MAX_LINE_LENGTH = 10000
     MEMORY_LIMIT_MB = 1024
+    MAX_AST_DEPTH = 100
 
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
@@ -51,7 +56,7 @@ class InteractiveCommand(BaseCommand):
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
 
-    def register_subparser(self, subparsers):
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:
@@ -78,7 +83,8 @@ class InteractiveCommand(BaseCommand):
             "--memory-limit",
             type=int,
             default=self.MEMORY_LIMIT_MB,
-            help=_("Límite de memoria en MB")
+            help=_("Límite de memoria en MB"),
+            metavar="MB"
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -94,17 +100,25 @@ class InteractiveCommand(BaseCommand):
         """
         if not linea:
             return False
+        
         if len(linea) > self.MAX_LINE_LENGTH:
             mostrar_error(_("Línea demasiado larga"))
             return False
+
+        # Validar caracteres especiales
+        if re.search(r'[^\w\s\-\.\'\"]+', linea):
+            mostrar_error(_("La entrada contiene caracteres no permitidos"))
+            return False
+            
         return True
 
-    def procesar_ast(self, linea: str, validador: Optional[object] = None):
+    def procesar_ast(self, linea: str, validador: Optional[Any] = None, depth: int = 0):
         """Procesa una línea de código generando su AST.
 
         Args:
             linea: Código a procesar
             validador: Validador opcional para el AST
+            depth: Profundidad actual del AST
 
         Returns:
             AST generado
@@ -113,7 +127,11 @@ class InteractiveCommand(BaseCommand):
             LexerError: Error durante el análisis léxico
             ParserError: Error durante el parsing
             PrimitivaPeligrosaError: Si se detecta una primitiva peligrosa
+            RuntimeError: Si se excede la profundidad máxima permitida
         """
+        if depth > self.MAX_AST_DEPTH:
+            raise RuntimeError(_("Se excedió la profundidad máxima del AST"))
+
         tokens = Lexer(linea).tokenizar()
         logging.debug(f"Tokens generados: {tokens}")
         
@@ -126,7 +144,7 @@ class InteractiveCommand(BaseCommand):
         
         return ast
 
-    def run(self, args):
+    def run(self, args: Any) -> int:
         """Ejecuta el REPL de Cobra.
 
         Args:
@@ -136,12 +154,20 @@ class InteractiveCommand(BaseCommand):
             0 en caso de éxito, 1 en caso de error
         """
         try:
-            # Configurar límite de memoria
+            # Validar y configurar límite de memoria
             memory_limit = getattr(args, "memory_limit", self.MEMORY_LIMIT_MB)
-            resource.setrlimit(
-                resource.RLIMIT_AS,
-                (memory_limit * 1024 * 1024,) * 2
-            )
+            if memory_limit <= 0:
+                mostrar_error(_("El límite de memoria debe ser positivo"))
+                return 1
+
+            try:
+                resource.setrlimit(
+                    resource.RLIMIT_AS,
+                    (memory_limit * 1024 * 1024,) * 2
+                )
+            except OSError as e:
+                mostrar_error(f"Error al establecer límites de recursos: {e}")
+                return 1
 
             # Validar dependencias
             validar_dependencias("python", module_map.get_toml_map())
@@ -189,18 +215,18 @@ class InteractiveCommand(BaseCommand):
                         self.interpretador.ejecutar_ast(ast)
 
                 except (KeyboardInterrupt, EOFError):
-                    mostrar_info("Saliendo...")
+                    mostrar_info(_("Saliendo..."))
                     break
                 except (LexerError, ParserError) as err:
-                    self._log_error(f"Error de sintaxis", err)
+                    self._log_error(_("Error de sintaxis"), err)
                 except RuntimeError as err:
-                    self._log_error("Error crítico", err)
+                    self._log_error(_("Error crítico"), err)
                 except Exception as err:
-                    self._log_error("Error general", err)
+                    self._log_error(_("Error general"), err, include_traceback=True)
 
         return 0
 
-    def _procesar_comando_especial(self, linea: str, validador: Optional[object]) -> bool:
+    def _procesar_comando_especial(self, linea: str, validador: Optional[Any]) -> bool:
         """Procesa comandos especiales del REPL.
 
         Args:
@@ -228,7 +254,7 @@ class InteractiveCommand(BaseCommand):
                 mostrar_info(_("AST generado:"))
                 mostrar_info(str(ast))
             except PrimitivaPeligrosaError as err:
-                self._log_error("Primitiva peligrosa", err)
+                self._log_error(_("Primitiva peligrosa"), err)
             return True
 
         return False
@@ -244,7 +270,7 @@ class InteractiveCommand(BaseCommand):
             if salida:
                 mostrar_info(str(salida))
         except Exception as err:
-            self._log_error("Error en sandbox", err)
+            self._log_error(_("Error en sandbox"), err)
 
     def _ejecutar_en_docker(self, linea: str, backend: str) -> None:
         """Ejecuta código en un contenedor Docker.
@@ -258,24 +284,41 @@ class InteractiveCommand(BaseCommand):
             if salida:
                 mostrar_info(str(salida))
         except Exception as err:
-            self._log_error("Error en contenedor Docker", err)
+            self._log_error(_("Error en contenedor Docker"), err)
 
-    def _log_error(self, categoria: str, error: Exception) -> None:
+    def _log_error(self, categoria: str, error: Exception, include_traceback: bool = False) -> None:
         """Registra y muestra un error.
 
         Args:
             categoria: Categoría del error
             error: Excepción ocurrida
+            include_traceback: Si se debe incluir la traza completa del error
         """
         mensaje = f"{categoria}: {error}"
+        if include_traceback:
+            mensaje += f"\n{traceback.format_exc()}"
         logging.error(mensaje)
         mostrar_error(mensaje)
 
-    def __enter__(self):
-        """Inicializa recursos del REPL."""
-        logging.info("Iniciando REPL de Cobra")
+    def __enter__(self) -> 'InteractiveCommand':
+        """Inicializa recursos del REPL.
+
+        Returns:
+            Self para uso en context manager
+        """
+        logging.info(_("Iniciando REPL de Cobra"))
         return self
         
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Libera recursos del REPL."""
-        logging.info("Finalizando REPL de Cobra")
+    def __exit__(self, exc_type: Optional[type], 
+                 exc_val: Optional[Exception], 
+                 exc_tb: Optional[traceback.TracebackType]) -> None:
+        """Libera recursos del REPL.
+
+        Args:
+            exc_type: Tipo de la excepción si ocurrió alguna
+            exc_val: Valor de la excepción
+            exc_tb: Traceback de la excepción
+        """
+        if exc_type is not None:
+            logging.error(f"Error al finalizar REPL: {exc_val}")
+        logging.info(_("Finalizando REPL de Cobra"))

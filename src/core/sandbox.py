@@ -147,3 +147,7 @@ def validar_dependencias(backend: str, mod_info: dict) -> None:
             raise ValueError(f"Ruta no permitida: {ruta}")
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"Dependencia no encontrada: {ruta}")
+
+
+class SecurityError:
+    pass

@@ -1,6 +1,7 @@
 import os
+from pathlib import Path
+from argparse import ArgumentParser, _SubParsersAction  # TODO: Reemplazar _SubParsersAction
 from typing import Any
-from argparse import _SubParsersAction
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
@@ -11,14 +12,14 @@ class InitCommand(BaseCommand):
     
     name = "init"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> Any:
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            El parser configurado para este subcomando
+            ArgumentParser: El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Inicializa un proyecto Cobra")
@@ -36,23 +37,48 @@ class InitCommand(BaseCommand):
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
-        ruta = args.ruta
-        
         try:
+            ruta = Path(args.ruta)
+            ruta_abs = ruta.absolute()
+
+            # Validar longitud de ruta
+            if len(str(ruta_abs)) > 260:  # Límite Windows
+                mostrar_error(_("Error: Ruta demasiado larga"))
+                return 1
+
+            # Validar caracteres no permitidos
+            try:
+                ruta_abs.resolve()
+            except RuntimeError:
+                mostrar_error(_("Error: La ruta contiene caracteres no válidos"))
+                return 1
+
             # Crear directorio si no existe
-            os.makedirs(ruta, exist_ok=True)
+            ruta.mkdir(parents=True, exist_ok=True)
             
-            # Crear archivo main.co
-            main = os.path.join(ruta, "main.co")
-            if not os.path.exists(main):
-                with open(main, "w", encoding="utf-8") as f:
-                    f.write("")
+            # Crear archivo main.co con template básico
+            main = ruta / "main.co"
+            if not main.exists():
+                template = (
+                    "# Proyecto Cobra\n"
+                    "\n"
+                    "func main() {\n"
+                    "    # Tu código aquí\n"
+                    "}\n"
+                )
+                main.write_text(template, encoding="utf-8")
                     
             mostrar_info(_("Proyecto Cobra inicializado en {path}").format(path=ruta))
             return 0
             
         except PermissionError:
             mostrar_error(_("Error: No hay permisos para escribir en {path}").format(path=ruta))
+            return 1
+        except FileExistsError:
+            mostrar_error(_("Error: Ya existe un archivo con ese nombre"))
+            return 1
+        except NotADirectoryError:
+            mostrar_error(_("Error: La ruta padre debe ser un directorio"))
             return 1
         except OSError as e:
             mostrar_error(_("Error al crear el proyecto: {err}").format(err=str(e)))

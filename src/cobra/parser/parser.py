@@ -1113,3 +1113,7 @@ if os.getenv("COBRA_PARSER") == "lark":
     Parser = LarkParser
 else:
     Parser = ClassicParser
+
+
+class ParserError:
+    pass

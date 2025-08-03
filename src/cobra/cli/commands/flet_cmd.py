@@ -1,16 +1,17 @@
-from argparse import _SubParsersAction
-from typing import Any
-
+from argparse import ArgumentParser, _SubParsersAction  # TODO: Reemplazar _SubParsersAction
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error
 
 class FletCommand(BaseCommand):
     """Inicia el entorno IDLE basado en Flet."""
-    
     name = "gui"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> Any:
+    def __init__(self) -> None:
+        """Inicializa el comando."""
+        super().__init__()
+
+    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
@@ -41,9 +42,13 @@ class FletCommand(BaseCommand):
         except ModuleNotFoundError as e:
             mostrar_error(_("Error: {0}. Ejecuta 'pip install flet'.").format(str(e)))
             return 1
-        except Exception as e:
-            mostrar_error(_("Error inesperado: {0}").format(str(e)))
+        except ImportError as e:
+            mostrar_error(_("Error al importar módulos: {0}").format(str(e)))
             return 1
-            
-        flet.app(target=main)
-        return 0
+        
+        try:
+            flet.app(target=main)
+            return 0
+        except Exception as e:
+            mostrar_error(_("Error inesperado al ejecutar la aplicación: {0}").format(str(e)))
+            return 1
