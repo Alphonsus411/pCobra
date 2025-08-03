@@ -51,7 +51,7 @@ from core import NodoYield
 
 
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class ClassicParser:
@@ -245,7 +245,7 @@ class ClassicParser:
             raise SyntaxError(f"Token inesperado: {token.tipo}")
 
         except Exception as e:
-            logging.error(f"Error en la declaración: {e}")
+            logger.error(f"Error en la declaración: {e}")
             raise
 
     def declaracion_para(self):
@@ -293,7 +293,7 @@ class ClassicParser:
         iteraciones = 0
 
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            logging.debug(
+            logger.debug(
                 f"Procesando token dentro del bucle 'para': {self.token_actual()}"
             )
             iteraciones += 1
@@ -303,15 +303,15 @@ class ClassicParser:
             try:
                 cuerpo.append(self.declaracion())
             except SyntaxError as e:
-                logging.error(f"Error en el cuerpo del bucle 'para': {e}")
+                logger.error(f"Error en el cuerpo del bucle 'para': {e}")
                 self.avanzar()  # Avanzar para evitar bloqueo
 
-        logging.debug(f"Token actual antes de 'fin': {self.token_actual()}")
+        logger.debug(f"Token actual antes de 'fin': {self.token_actual()}")
         if self.token_actual().tipo != TipoToken.FIN:
             raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'para'")
         self.comer(TipoToken.FIN)
 
-        logging.debug(
+        logger.debug(
             f"Bucle 'para' parseado correctamente: variable={variable}, "
             f"iterable={iterable}, cuerpo={cuerpo}"
         )
@@ -384,7 +384,7 @@ class ClassicParser:
         """Parsea un bucle mientras."""
         self.comer(TipoToken.MIENTRAS)
         condicion = self.expresion()
-        logging.debug(f"Condición del bucle mientras: {condicion}")
+        logger.debug(f"Condición del bucle mientras: {condicion}")
 
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
@@ -398,14 +398,14 @@ class ClassicParser:
             try:
                 cuerpo.append(self.declaracion())
             except SyntaxError as e:
-                logging.error(f"Error en el cuerpo del bucle 'mientras': {e}")
+                logger.error(f"Error en el cuerpo del bucle 'mientras': {e}")
                 self.avanzar()  # Avanza para evitar bloqueo
 
         if self.token_actual().tipo != TipoToken.FIN:
             raise SyntaxError("Se esperaba 'fin' para cerrar el bucle 'mientras'")
         self.comer(TipoToken.FIN)
 
-        logging.debug(f"Cuerpo del bucle mientras: {cuerpo}")
+        logger.debug(f"Cuerpo del bucle mientras: {cuerpo}")
         return NodoBucleMientras(condicion, cuerpo)
 
     def declaracion_holobit(self):
@@ -479,7 +479,7 @@ class ClassicParser:
         """Parsea un bloque condicional."""
         self.comer(TipoToken.SI)
         condicion = self.expresion()
-        logging.debug(f"Condición del condicional: {condicion}")
+        logger.debug(f"Condición del condicional: {condicion}")
 
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
@@ -495,7 +495,7 @@ class ClassicParser:
             try:
                 bloque_si.append(self.declaracion())
             except SyntaxError as e:
-                logging.error(f"Error en el bloque 'si': {e}")
+                logger.error(f"Error en el bloque 'si': {e}")
                 self.avanzar()  # Evitar bloqueo en caso de error
 
         bloque_sino = []
@@ -508,14 +508,14 @@ class ClassicParser:
                 try:
                     bloque_sino.append(self.declaracion())
                 except SyntaxError as e:
-                    logging.error(f"Error en el bloque 'sino': {e}")
+                    logger.error(f"Error en el bloque 'sino': {e}")
                     self.avanzar()
 
         if self.token_actual().tipo != TipoToken.FIN:
             raise SyntaxError("Se esperaba 'fin' para cerrar el bloque condicional")
         self.comer(TipoToken.FIN)
 
-        logging.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
+        logger.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
         return NodoCondicional(condicion, bloque_si, bloque_sino)
 
     def declaracion_funcion(self, asincronica: bool = False):
@@ -561,7 +561,7 @@ class ClassicParser:
                 else:
                     cuerpo.append(self.declaracion())
             except SyntaxError as e:
-                logging.error(f"Error en el cuerpo de la función '{nombre}': {e}")
+                logger.error(f"Error en el cuerpo de la función '{nombre}': {e}")
                 self.avanzar()
 
         # Verifica y consume 'fin'
@@ -569,7 +569,7 @@ class ClassicParser:
             raise SyntaxError(f"Se esperaba 'fin' para cerrar la función '{nombre}'")
         self.comer(TipoToken.FIN)
 
-        logging.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
+        logger.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
         return NodoFuncion(nombre, parametros, cuerpo, asincronica=asincronica)
 
     def declaracion_imprimir(self):
