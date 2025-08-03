@@ -491,3 +491,19 @@ __all__ = [
     "NodoCase",
     "NodoSwitch",
 ]
+
+
+class NodoBloque:
+    pass
+
+
+class NodoDeclaracion:
+    pass
+
+
+class NodoModulo:
+    pass
+
+
+class NodoExpresion:
+    pass

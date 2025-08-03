@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Transpilador inverso desde Python a Cobra."""
+"""
+Transpilador inverso desde Python a Cobra.
+
+Este módulo implementa la conversión de código Python al AST de Cobra,
+permitiendo la traducción de programas Python al lenguaje Cobra.
+"""
 
 import ast
-from typing import Any, List
+from typing import Any, List, Optional, Union
 
 from core.ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoBucleMientras,
     NodoCondicional,
@@ -26,143 +32,216 @@ from cobra.lexico.lexer import Token, TipoToken
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
 
 
-_OP_BINARIA = {
-    ast.Add: Token(TipoToken.SUMA, "+"),
-    ast.Sub: Token(TipoToken.RESTA, "-"),
-    ast.Mult: Token(TipoToken.MULT, "*"),
-    ast.Div: Token(TipoToken.DIV, "/"),
-    ast.Mod: Token(TipoToken.MOD, "%"),
-    ast.Eq: Token(TipoToken.IGUAL, "=="),
-    ast.NotEq: Token(TipoToken.DIFERENTE, "!="),
-    ast.Lt: Token(TipoToken.MENORQUE, "<"),
-    ast.Gt: Token(TipoToken.MAYORQUE, ">"),
-    ast.LtE: Token(TipoToken.MENORIGUAL, "<="),
-    ast.GtE: Token(TipoToken.MAYORIGUAL, ">="),
-    ast.And: Token(TipoToken.AND, "and"),
-    ast.Or: Token(TipoToken.OR, "or"),
-}
-
-_OP_UNARIA = {
-    ast.UAdd: Token(TipoToken.SUMA, "+"),
-    ast.USub: Token(TipoToken.RESTA, "-"),
-    ast.Not: Token(TipoToken.NOT, "not"),
-}
-
-
 class ReverseFromPython(BaseReverseTranspiler):
     """Convierte código Python en nodos del AST de Cobra."""
 
-    def generate_ast(self, code: str):
-        tree = ast.parse(code)
-        self.ast = [self.visit(stmt) for stmt in tree.body]
-        return self.ast
+    # Constantes de clase para operadores
+    OPERADORES_BINARIOS = {
+        ast.Add: Token(TipoToken.SUMA, "+"),
+        ast.Sub: Token(TipoToken.RESTA, "-"),
+        ast.Mult: Token(TipoToken.MULT, "*"),
+        ast.Div: Token(TipoToken.DIV, "/"),
+        ast.Mod: Token(TipoToken.MOD, "%"),
+        ast.Eq: Token(TipoToken.IGUAL, "=="),
+        ast.NotEq: Token(TipoToken.DIFERENTE, "!="),
+        ast.Lt: Token(TipoToken.MENORQUE, "<"),
+        ast.Gt: Token(TipoToken.MAYORQUE, ">"),
+        ast.LtE: Token(TipoToken.MENORIGUAL, "<="),
+        ast.GtE: Token(TipoToken.MAYORIGUAL, ">="),
+        ast.And: Token(TipoToken.AND, "and"),
+        ast.Or: Token(TipoToken.OR, "or"),
+    }
 
-    # Ajustar el dispatch para nodos de ``ast`` escritos en CamelCase
-    def visit(self, node):  # type: ignore[override]
+    OPERADORES_UNARIOS = {
+        ast.UAdd: Token(TipoToken.SUMA, "+"),
+        ast.USub: Token(TipoToken.RESTA, "-"),
+        ast.Not: Token(TipoToken.NOT, "not"),
+    }
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ast: List[NodoAST] = []
+
+    def generate_ast(self, code: str) -> List[NodoAST]:
+        """
+        Genera el AST de Cobra a partir de código Python.
+
+        Args:
+            code: Código fuente Python a transpiliar.
+
+        Returns:
+            Lista de nodos AST de Cobra.
+
+        Raises:
+            SyntaxError: Si el código Python contiene errores de sintaxis.
+            NotImplementedError: Si se encuentra un nodo Python no soportado.
+        """
+        try:
+            tree = ast.parse(code)
+            self.ast = [self.visit(stmt) for stmt in tree.body]
+            return self.ast
+        except SyntaxError as e:
+            raise SyntaxError(f"Error de sintaxis en el código Python: {str(e)}") from e
+
+    def visit(self, node: ast.AST) -> NodoAST:
+        """
+        Visita un nodo del AST de Python y lo convierte a su equivalente en Cobra.
+
+        Args:
+            node: Nodo del AST de Python a visitar.
+
+        Returns:
+            Nodo equivalente del AST de Cobra.
+        """
         metodo = getattr(self, f"visit_{node.__class__.__name__}", None)
         if metodo is None:
             return self.generic_visit(node)
         return metodo(node)
 
-    # Utilizamos los métodos visit_ heredados de NodeVisitor
-    def generic_visit(self, node):
+    def generic_visit(self, node: ast.AST) -> NodoAST:
+        """Maneja nodos no soportados explícitamente."""
         raise NotImplementedError(f"Nodo de Python no soportado: {node.__class__.__name__}")
 
     # Nodos simples -----------------------------------------------------
-    def visit_Name(self, node: ast.Name):
+    def visit_Name(self, node: ast.Name) -> NodoIdentificador:
+        """Convierte un identificador."""
         return NodoIdentificador(node.id)
 
-    def visit_Constant(self, node: ast.Constant):
+    def visit_Constant(self, node: ast.Constant) -> NodoValor:
+        """Convierte un valor constante."""
         return NodoValor(node.value)
 
-    def visit_Pass(self, node: ast.Pass):
+    def visit_Pass(self, node: ast.Pass) -> NodoPasar:
+        """Convierte una sentencia pass."""
         return NodoPasar()
 
-    def visit_Break(self, node: ast.Break):
+    def visit_Break(self, node: ast.Break) -> NodoRomper:
+        """Convierte una sentencia break."""
         return NodoRomper()
 
-    def visit_Continue(self, node: ast.Continue):
+    def visit_Continue(self, node: ast.Continue) -> NodoContinuar:
+        """Convierte una sentencia continue."""
         return NodoContinuar()
 
     # Operaciones -------------------------------------------------------
-    def visit_BinOp(self, node: ast.BinOp):
-        op_token = _OP_BINARIA.get(type(node.op))
-        izquierda = self.visit(node.left)
-        derecha = self.visit(node.right)
+    def visit_BinOp(self, node: ast.BinOp) -> NodoOperacionBinaria:
+        """Convierte una operación binaria."""
+        op_token = self.OPERADORES_BINARIOS.get(type(node.op))
         if op_token is None:
             raise NotImplementedError(f"Operador binario no soportado: {type(node.op).__name__}")
-        return NodoOperacionBinaria(izquierda, op_token, derecha)
+        return NodoOperacionBinaria(
+            self.visit(node.left),
+            op_token,
+            self.visit(node.right)
+        )
 
-    def visit_UnaryOp(self, node: ast.UnaryOp):
-        op_token = _OP_UNARIA.get(type(node.op))
-        operando = self.visit(node.operand)
+    def visit_UnaryOp(self, node: ast.UnaryOp) -> NodoOperacionUnaria:
+        """Convierte una operación unaria."""
+        op_token = self.OPERADORES_UNARIOS.get(type(node.op))
         if op_token is None:
             raise NotImplementedError(f"Operador unario no soportado: {type(node.op).__name__}")
-        return NodoOperacionUnaria(op_token, operando)
+        return NodoOperacionUnaria(op_token, self.visit(node.operand))
 
-    def visit_Compare(self, node: ast.Compare):
-        izquierda = self.visit(node.left)
-        op = _OP_BINARIA.get(type(node.ops[0]))
-        derecha = self.visit(node.comparators[0])
+    def visit_Compare(self, node: ast.Compare) -> Union[NodoOperacionBinaria, NodoAST]:
+        """
+        Convierte una comparación.
+        
+        Nota: Para comparaciones encadenadas (a < b < c), solo se procesa la primera comparación.
+        TODO: Implementar soporte completo para comparaciones encadenadas.
+        """
+        if len(node.ops) > 1:
+            # Advertencia: comparación simplificada
+            pass
+        
+        op = self.OPERADORES_BINARIOS.get(type(node.ops[0]))
         if op is None:
             raise NotImplementedError(f"Operador de comparación no soportado: {type(node.ops[0]).__name__}")
-        return NodoOperacionBinaria(izquierda, op, derecha)
+        
+        return NodoOperacionBinaria(
+            self.visit(node.left),
+            op,
+            self.visit(node.comparators[0])
+        )
 
     # Expresiones -------------------------------------------------------
-    def visit_Call(self, node: ast.Call):
+    def visit_Call(self, node: ast.Call) -> Union[NodoLlamadaMetodo, NodoLlamadaFuncion]:
+        """Convierte una llamada a función o método."""
+        args = [self.visit(a) for a in node.args]
+        
         if isinstance(node.func, ast.Attribute):
-            obj = self.visit(node.func.value)
-            nombre = node.func.attr
-            args = [self.visit(a) for a in node.args]
-            return NodoLlamadaMetodo(obj, nombre, args)
-        else:
-            nombre = node.func.id if isinstance(node.func, ast.Name) else str(node.func)
-            args = [self.visit(a) for a in node.args]
-            return NodoLlamadaFuncion(nombre, args)
+            return NodoLlamadaMetodo(
+                self.visit(node.func.value),
+                node.func.attr,
+                args
+            )
+        
+        if isinstance(node.func, ast.Name):
+            return NodoLlamadaFuncion(node.func.id, args)
+        
+        raise NotImplementedError(f"Tipo de llamada no soportado: {type(node.func).__name__}")
 
-    def visit_Attribute(self, node: ast.Attribute):
-        obj = self.visit(node.value)
-        return NodoAtributo(obj, node.attr)
+    def visit_Attribute(self, node: ast.Attribute) -> NodoAtributo:
+        """Convierte un acceso a atributo."""
+        return NodoAtributo(self.visit(node.value), node.attr)
 
     # Sentencias -------------------------------------------------------
-    def visit_Assign(self, node: ast.Assign):
+    def visit_Assign(self, node: ast.Assign) -> NodoAsignacion:
+        """Convierte una asignación."""
         target = node.targets[0]
-        nombre = target.id if isinstance(target, ast.Name) else self.visit(target)
-        valor = self.visit(node.value)
-        return NodoAsignacion(nombre, valor)
+        if isinstance(target, ast.Name):
+            nombre = target.id
+        else:
+            nombre = self.visit(target)
+        return NodoAsignacion(nombre, self.visit(node.value))
 
-    def visit_Return(self, node: ast.Return):
+    def visit_Return(self, node: ast.Return) -> NodoRetorno:
+        """Convierte un return."""
         valor = self.visit(node.value) if node.value else NodoValor(None)
         return NodoRetorno(valor)
 
-    def visit_Expr(self, node: ast.Expr):
+    def visit_Expr(self, node: ast.Expr) -> NodoAST:
+        """Convierte una expresión."""
         return self.visit(node.value)
 
-    def visit_If(self, node: ast.If):
-        cond = self.visit(node.test)
-        bloque_si = [self.visit(n) for n in node.body]
-        bloque_sino = [self.visit(n) for n in node.orelse]
-        return NodoCondicional(cond, bloque_si, bloque_sino)
+    def visit_If(self, node: ast.If) -> NodoCondicional:
+        """Convierte un if-else."""
+        return NodoCondicional(
+            self.visit(node.test),
+            [self.visit(n) for n in node.body],
+            [self.visit(n) for n in node.orelse]
+        )
 
-    def visit_While(self, node: ast.While):
-        cond = self.visit(node.test)
-        cuerpo = [self.visit(n) for n in node.body]
-        return NodoBucleMientras(cond, cuerpo)
+    def visit_While(self, node: ast.While) -> NodoBucleMientras:
+        """Convierte un while."""
+        return NodoBucleMientras(
+            self.visit(node.test),
+            [self.visit(n) for n in node.body]
+        )
 
-    def visit_For(self, node: ast.For):
+    def visit_For(self, node: ast.For) -> NodoPara:
+        """Convierte un for."""
         var = node.target.id if isinstance(node.target, ast.Name) else self.visit(node.target)
-        iterable = self.visit(node.iter)
-        cuerpo = [self.visit(n) for n in node.body]
-        return NodoPara(var, iterable, cuerpo)
+        return NodoPara(
+            var,
+            self.visit(node.iter),
+            [self.visit(n) for n in node.body]
+        )
 
-    def visit_FunctionDef(self, node: ast.FunctionDef):
-        params = [arg.arg for arg in node.args.args]
-        cuerpo = [self.visit(n) for n in node.body]
-        decoradores = [self.visit(d) for d in node.decorator_list]
-        return NodoFuncion(node.name, params, cuerpo, decoradores=decoradores)
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> NodoFuncion:
+        """Convierte una definición de función."""
+        return NodoFuncion(
+            node.name,
+            [arg.arg for arg in node.args.args],
+            [self.visit(n) for n in node.body],
+            decoradores=[self.visit(d) for d in node.decorator_list]
+        )
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
-        params = [arg.arg for arg in node.args.args]
-        cuerpo = [self.visit(n) for n in node.body]
-        decoradores = [self.visit(d) for d in node.decorator_list]
-        return NodoFuncion(node.name, params, cuerpo, decoradores=decoradores, asincronica=True)
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> NodoFuncion:
+        """Convierte una definición de función asíncrona."""
+        return NodoFuncion(
+            node.name,
+            [arg.arg for arg in node.args.args],
+            [self.visit(n) for n in node.body],
+            decoradores=[self.visit(d) for d in node.decorator_list],
+            asincronica=True
+        )
