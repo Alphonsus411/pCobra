@@ -1,33 +1,48 @@
 # -*- coding: utf-8 -*-
-"""Transpilador inverso desde ensamblador a Cobra (no soportado)."""
-from typing import List, Any
+"""Transpilador inverso desde ensamblador a Cobra."""
+
+from __future__ import annotations
+
+import re
+from typing import Any, List
+
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
+from core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
+
+
+def _parse_expression(text: str) -> Any:
+    """Convierte operandos de ensamblador a nodos del AST."""
+    texto = text.strip()
+    try:
+        return NodoValor(int(texto))
+    except ValueError:
+        try:
+            return NodoValor(float(texto))
+        except ValueError:
+            return NodoIdentificador(texto)
+
 
 class ReverseFromASM(BaseReverseTranspiler):
-    """Transpilador inverso de ensamblador a Cobra.
-    
-    Esta implementación es un placeholder hasta que se defina una gramática
-    apropiada para el análisis de código ensamblador. La implementación
-    requiere:
-    - Definir una gramática para el dialecto de ensamblador soportado
-    - Implementar un parser para dicha gramática
-    - Mapear las instrucciones a nodos AST de Cobra
-    """
-    
-    def __init__(self) -> None:
-        super().__init__()
+    """Transpilador inverso de ensamblador a Cobra."""
+
+    MOV_RE = re.compile(r"^MOV\s+([A-Za-z0-9_]+),\s*([A-Za-z0-9_]+)$", re.IGNORECASE)
 
     def generate_ast(self, code: str) -> List[Any]:
-        """Genera el AST de Cobra desde código ensamblador.
-        
-        Args:
-            code: Código fuente en ensamblador
-            
-        Returns:
-            Lista de nodos AST de Cobra
-            
-        Raises:
-            NotImplementedError: La transpilación desde ensamblador no está 
-                               implementada por falta de una gramática definida
-        """
-        raise NotImplementedError("La transpilación desde ensamblador no está implementada por falta de una gramática definida")
+        """Genera nodos Cobra a partir de instrucciones `MOV`."""
+
+        ast: List[Any] = []
+        for raw in code.splitlines():
+            line = raw.strip()
+            if not line:
+                continue
+            match = self.MOV_RE.match(line)
+            if match:
+                destino, valor = match.groups()
+                ast.append(
+                    NodoAsignacion(
+                        NodoIdentificador(destino), _parse_expression(valor)
+                    )
+                )
+        self.ast = ast
+        return ast
+

@@ -57,3 +57,23 @@ detalles consulta :doc:`../frontend/docs/backends` y la sección
      - Parcial
    * - LaTeX
      - Parcial
+
+Transpiladores inversos
+-----------------------
+
+Los siguientes lenguajes pueden convertirse a Cobra:
+
+.. list-table:: Lenguajes de entrada
+   :header-rows: 1
+
+   * - Lenguaje
+     - Estado
+   * - VisualBasic
+     - Experimental
+   * - Mojo
+     - Experimental
+   * - Ensamblador
+     - Experimental
+   * - COBOL
+     - Experimental
+
