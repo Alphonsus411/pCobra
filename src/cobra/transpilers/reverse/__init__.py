@@ -1,75 +1,71 @@
-"""Componentes para convertir código de otros lenguajes a Cobra."""
+"""Componentes para convertir código de otros lenguajes a Cobra.
 
+El módulo realiza importaciones seguras de los distintos transpiladores. Si
+alguno no puede cargarse por dependencias faltantes, simplemente se ignora para
+no impedir el uso de los demás.
+"""
 from typing import List, Type
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
 from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
-# Transpiladores implementados con tree-sitter
-from cobra.transpilers.reverse.from_c import ReverseFromC
-from cobra.transpilers.reverse.from_cpp import ReverseFromCPP
-from cobra.transpilers.reverse.from_js import ReverseFromJS
-from cobra.transpilers.reverse.from_java import ReverseFromJava
-from cobra.transpilers.reverse.from_go import ReverseFromGo
-from cobra.transpilers.reverse.from_julia import ReverseFromJulia
-from cobra.transpilers.reverse.from_php import ReverseFromPHP
-from cobra.transpilers.reverse.from_perl import ReverseFromPerl
-from cobra.transpilers.reverse.from_r import ReverseFromR
-from cobra.transpilers.reverse.from_ruby import ReverseFromRuby
-from cobra.transpilers.reverse.from_rust import ReverseFromRust
-from cobra.transpilers.reverse.from_swift import ReverseFromSwift
-from cobra.transpilers.reverse.from_kotlin import ReverseFromKotlin
-from cobra.transpilers.reverse.from_fortran import ReverseFromFortran
+# Lista de módulos a intentar importar
+_MODULOS = [
+    "cobra.transpilers.reverse.from_c",
+    "cobra.transpilers.reverse.from_cpp",
+    "cobra.transpilers.reverse.from_js",
+    "cobra.transpilers.reverse.from_java",
+    "cobra.transpilers.reverse.from_go",
+    "cobra.transpilers.reverse.from_julia",
+    "cobra.transpilers.reverse.from_php",
+    "cobra.transpilers.reverse.from_perl",
+    "cobra.transpilers.reverse.from_r",
+    "cobra.transpilers.reverse.from_ruby",
+    "cobra.transpilers.reverse.from_rust",
+    "cobra.transpilers.reverse.from_swift",
+    "cobra.transpilers.reverse.from_kotlin",
+    "cobra.transpilers.reverse.from_fortran",
+    "cobra.transpilers.reverse.from_python",
+    "cobra.transpilers.reverse.from_asm",
+    "cobra.transpilers.reverse.from_cobol",
+    "cobra.transpilers.reverse.from_latex",
+    "cobra.transpilers.reverse.from_matlab",
+    "cobra.transpilers.reverse.from_mojo",
+    "cobra.transpilers.reverse.from_pascal",
+    "cobra.transpilers.reverse.from_visualbasic",
+    "cobra.transpilers.reverse.from_wasm",
+]
 
-# Transpiladores con implementación personalizada
-from cobra.transpilers.reverse.from_python import ReverseFromPython
+# Importaciones seguras -------------------------------------------------
+for mod_name in list(_MODULOS):
+    try:
+        module = __import__(mod_name, fromlist=["*"])
+        for attr in dir(module):
+            if attr.startswith("ReverseFrom"):
+                globals()[attr] = getattr(module, attr)
+    except Exception:
+        _MODULOS.remove(mod_name)
 
-# Transpiladores sin implementación completa
-from cobra.transpilers.reverse.from_asm import ReverseFromASM
-from cobra.transpilers.reverse.from_cobol import ReverseFromCOBOL
-from cobra.transpilers.reverse.from_latex import ReverseFromLatex
-from cobra.transpilers.reverse.from_matlab import ReverseFromMatlab
-from cobra.transpilers.reverse.from_mojo import ReverseFromMojo
-from cobra.transpilers.reverse.from_pascal import ReverseFromPascal
-from cobra.transpilers.reverse.from_visualbasic import ReverseFromVisualBasic
-from cobra.transpilers.reverse.from_wasm import ReverseFromWasm
-
-# Agrupar transpiladores por tipo de implementación
+# Clasificación de transpiladores disponibles ---------------------------
 TREE_SITTER_TRANSPILERS: List[Type[TreeSitterReverseTranspiler]] = [
-    ReverseFromC,
-    ReverseFromCPP,
-    ReverseFromJS,
-    ReverseFromJava,
-    ReverseFromGo,
-    ReverseFromJulia,
-    ReverseFromPHP, 
-    ReverseFromPerl,
-    ReverseFromR,
-    ReverseFromRuby,
-    ReverseFromRust,
-    ReverseFromSwift,
-    ReverseFromKotlin,
-    ReverseFromFortran
+    cls
+    for cls_name, cls in globals().items()
+    if cls_name.startswith("ReverseFrom") and issubclass(cls, TreeSitterReverseTranspiler)
 ]
 
 CUSTOM_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
-    ReverseFromPython
+    cls
+    for cls_name, cls in globals().items()
+    if cls_name.startswith("ReverseFrom") and issubclass(cls, BaseReverseTranspiler)
+    and cls not in TREE_SITTER_TRANSPILERS
 ]
 
 INCOMPLETE_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
-    ReverseFromASM,
-    ReverseFromCOBOL,
-    ReverseFromLatex,
-    ReverseFromMatlab,
-    ReverseFromMojo,
-    ReverseFromPascal,
-    ReverseFromVisualBasic,
-    ReverseFromWasm
+    cls
+    for cls in CUSTOM_TRANSPILERS
+    if cls.__name__ not in {"ReverseFromPython", "ReverseFromJS", "ReverseFromJava"}
 ]
 
-# Generar __all__ automáticamente
-__all__ = ["BaseReverseTranspiler"] + [
-    cls.__name__ 
-    for transpiler_list in [TREE_SITTER_TRANSPILERS, CUSTOM_TRANSPILERS, INCOMPLETE_TRANSPILERS]
-    for cls in transpiler_list
+__all__ = ["BaseReverseTranspiler", "TreeSitterReverseTranspiler"] + [
+    cls.__name__ for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS
 ]
