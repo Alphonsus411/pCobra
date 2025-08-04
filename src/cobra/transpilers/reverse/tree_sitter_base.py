@@ -5,7 +5,13 @@ from typing import Any, List, Optional, Union
 import logging
 from dataclasses import dataclass
 from tree_sitter import Node, Tree
-from tree_sitter_languages import get_parser, TreeSitterError
+from tree_sitter_languages import get_parser
+try:  # Compatibilidad con versiones antiguas
+    from tree_sitter_languages import TreeSitterLanguageError as TreeSitterError  # type: ignore
+except Exception:  # pragma: no cover - dependencia opcional
+    class TreeSitterError(Exception):
+        """Excepción genérica para errores de tree-sitter."""
+        pass
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
 from core.ast_nodes import (
@@ -55,7 +61,7 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
             raise ValueError("LANGUAGE debe definirse en la subclase")
         try:
             self.parser = get_parser(self.LANGUAGE)
-        except TreeSitterError as exc:
+        except Exception as exc:
             raise NotImplementedError(
                 f"No hay gramática tree-sitter para {self.LANGUAGE}"
             ) from exc

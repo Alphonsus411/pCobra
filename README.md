@@ -747,6 +747,15 @@ cobra transpilar-inverso script.py --origen=python --destino=cobra
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales.
 Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
+### Dependencias de tree-sitter
+
+Varios transpiladores inversos están basados en
+[tree-sitter](https://tree-sitter.github.io/tree-sitter/). Para que funcionen es
+necesario disponer de los paquetes `tree-sitter` y
+`tree-sitter-languages`, incluidos en `requirements.txt`. Asegúrate de que estas
+dependencias estén instaladas antes de transpilar código desde lenguajes como
+JavaScript o Java.
+
 ### Diseño extensible de la CLI
 
 La CLI está organizada en clases dentro de `src/cli/commands`. Cada subcomando
