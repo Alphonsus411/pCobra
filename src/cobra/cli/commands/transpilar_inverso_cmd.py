@@ -1,22 +1,15 @@
 import os
 import logging
+import inspect
 from typing import Optional, Dict, Type
 from argparse import _SubParsersAction, ArgumentParser, Namespace
 from contextlib import contextmanager
-from enum import Enum
 from chardet import detect
 from jsonschema import ValidationError
 
-from cobra.transpilers.reverse import (
-    ReverseFromPython, ReverseFromC, ReverseFromCPP, ReverseFromJS,
-    ReverseFromJava, ReverseFromGo, ReverseFromJulia, ReverseFromPHP,
-    ReverseFromPerl, ReverseFromR, ReverseFromRuby, ReverseFromRust,
-    ReverseFromSwift, ReverseFromKotlin, ReverseFromFortran, ReverseFromASM,
-    ReverseFromCOBOL, ReverseFromLatex, ReverseFromMatlab, ReverseFromMojo,
-    ReverseFromPascal, ReverseFromVisualBasic, ReverseFromWasm
-)
+import cobra.transpilers.reverse as reverse_module
 from cobra.cli.commands.base import BaseCommand, CommandError
-from cobra.cli.commands.compile_cmd import TRANSPILERS, LANG_CHOICES
+from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
@@ -41,60 +34,13 @@ class UnsupportedLanguageError(Exception):
 class TranspilationError(Exception):
     """Error lanzado cuando ocurre un problema durante la transpilación."""
     pass
-
-class SourceLanguage(str, Enum):
-    """Lenguajes de origen soportados para transpilación."""
-    PYTHON = "python"
-    C = "c"
-    CPP = "cpp"
-    JS = "js"
-    JAVA = "java"
-    GO = "go"
-    JULIA = "julia"
-    PHP = "php"
-    PERL = "perl"
-    R = "r"
-    RUBY = "ruby"
-    RUST = "rust"
-    SWIFT = "swift"
-    KOTLIN = "kotlin"
-    FORTRAN = "fortran"
-    ASM = "asm"
-    COBOL = "cobol"
-    LATEX = "latex"
-    MATLAB = "matlab"
-    MOJO = "mojo"
-    PASCAL = "pascal"
-    VISUALBASIC = "visualbasic"
-    WASM = "wasm"
-
-REVERSE_TRANSPILERS: Dict[SourceLanguage, Type] = {
-    SourceLanguage.PYTHON: ReverseFromPython,
-    SourceLanguage.C: ReverseFromC,
-    SourceLanguage.CPP: ReverseFromCPP,
-    SourceLanguage.JS: ReverseFromJS,
-    SourceLanguage.JAVA: ReverseFromJava,
-    SourceLanguage.GO: ReverseFromGo,
-    SourceLanguage.JULIA: ReverseFromJulia,
-    SourceLanguage.PHP: ReverseFromPHP,
-    SourceLanguage.PERL: ReverseFromPerl,
-    SourceLanguage.R: ReverseFromR,
-    SourceLanguage.RUBY: ReverseFromRuby,
-    SourceLanguage.RUST: ReverseFromRust,
-    SourceLanguage.SWIFT: ReverseFromSwift,
-    SourceLanguage.KOTLIN: ReverseFromKotlin,
-    SourceLanguage.FORTRAN: ReverseFromFortran,
-    SourceLanguage.ASM: ReverseFromASM,
-    SourceLanguage.COBOL: ReverseFromCOBOL,
-    SourceLanguage.LATEX: ReverseFromLatex,
-    SourceLanguage.MATLAB: ReverseFromMatlab,
-    SourceLanguage.MOJO: ReverseFromMojo,
-    SourceLanguage.PASCAL: ReverseFromPascal,
-    SourceLanguage.VISUALBASIC: ReverseFromVisualBasic,
-    SourceLanguage.WASM: ReverseFromWasm,
+REVERSE_TRANSPILERS: Dict[str, Type] = {
+    (getattr(cls, "LANGUAGE", name.replace("ReverseFrom", "")).lower()): cls
+    for name, cls in inspect.getmembers(reverse_module, inspect.isclass)
+    if name.startswith("ReverseFrom")
 }
 
-ORIGIN_CHOICES = sorted(lang.value for lang in SourceLanguage)
+ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
 
 @contextmanager
 def archivo_fuente(ruta: str, codificacion: str):
@@ -145,15 +91,16 @@ class TranspilarInversoCommand(BaseCommand):
         )
         parser.add_argument(
             "--origen",
-            choices=ORIGIN_CHOICES,
-            help=_("Lenguaje de origen del código fuente"),
+            help=_("Lenguaje de origen del código fuente ({})").format(
+                ", ".join(ORIGIN_CHOICES)
+            ),
             required=True,
-            type=SourceLanguage
         )
         parser.add_argument(
             "--destino",
-            choices=LANG_CHOICES,
-            help=_("Lenguaje de destino para la transpilación"),
+            help=_("Lenguaje de destino para la transpilación ({})").format(
+                ", ".join(sorted(TRANSPILERS.keys()))
+            ),
             required=True
         )
         parser.set_defaults(cmd=self)
@@ -213,9 +160,13 @@ class TranspilarInversoCommand(BaseCommand):
             UnsupportedLanguageError: Si algún transpilador no está disponible
         """
         if origen not in REVERSE_TRANSPILERS:
-            raise UnsupportedLanguageError(f"Transpilador de origen '{origen}' no disponible")
+            raise UnsupportedLanguageError(
+                f"No hay parser disponible para el lenguaje de origen '{origen}'"
+            )
         if destino not in TRANSPILERS:
-            raise UnsupportedLanguageError(f"Transpilador de destino '{destino}' no disponible")
+            raise UnsupportedLanguageError(
+                f"No hay transpilador disponible para el lenguaje de destino '{destino}'"
+            )
 
     def run(self, args: Namespace) -> int:
         """Ejecuta la transpilación del código.
@@ -230,21 +181,28 @@ class TranspilarInversoCommand(BaseCommand):
             CommandError: Si hay errores en la validación o transpilación
         """
         try:
+            origen = args.origen.lower()
+            destino = args.destino.lower()
+
             logger.debug(f"Iniciando validación del archivo {args.archivo}")
-            
+
             # Validar archivo
-            if error := self._validar_archivo(args.archivo, args.origen):
+            if error := self._validar_archivo(args.archivo, origen):
                 raise CommandError(error)
 
             # Verificar dependencias
-            self._verificar_dependencias(args.origen, args.destino)
+            self._verificar_dependencias(origen, destino)
 
             # Validar transpiladores
-            reverse_cls = REVERSE_TRANSPILERS.get(args.origen)
-            transp_cls = TRANSPILERS.get(args.destino)
-            
-            logger.debug(f"Usando transpilador {reverse_cls.__name__} para origen {args.origen}")
-            logger.debug(f"Usando transpilador {transp_cls.__name__} para destino {args.destino}")
+            reverse_cls = REVERSE_TRANSPILERS.get(origen)
+            transp_cls = TRANSPILERS.get(destino)
+
+            logger.debug(
+                f"Usando transpilador {reverse_cls.__name__} para origen {origen}"
+            )
+            logger.debug(
+                f"Usando transpilador {transp_cls.__name__} para destino {destino}"
+            )
 
             # Detectar codificación y leer archivo
             codificacion = self._detectar_codificacion(args.archivo)
@@ -256,11 +214,13 @@ class TranspilarInversoCommand(BaseCommand):
                     raise ValidationError(f"El archivo '{args.archivo}' está vacío")
 
             # Transpilar código
-            logger.info(f"Iniciando transpilación de {args.origen} a {args.destino}")
+            logger.info(f"Iniciando transpilación de {origen} a {destino}")
             ast = reverse_cls().load_file(args.archivo)
             codigo = transp_cls().generate_code(ast)
-            
-            mostrar_info(_("Código transpilado ({name}):").format(name=transp_cls.__name__))
+
+            mostrar_info(
+                _("Código transpilado ({name}):").format(name=transp_cls.__name__)
+            )
             print(codigo)
             return 0
 
@@ -272,9 +232,9 @@ class TranspilarInversoCommand(BaseCommand):
             logger.error(f"Error de E/S: {exc}", exc_info=True)
             mostrar_error(f"Error al leer el archivo: {exc}")
             return 1
-        except NotImplementedError:
-            logger.error(f"Transpilador no implementado: {args.origen}")
-            mostrar_error(f"El transpilador de {args.origen} no está implementado completamente")
+        except NotImplementedError as exc:
+            logger.error(f"Funcionalidad no implementada: {exc}", exc_info=True)
+            mostrar_error(str(exc))
             return 1
         except (CommandError, ValidationError, UnsupportedLanguageError) as exc:
             mostrar_error(str(exc))
