@@ -85,3 +85,64 @@ fin
 
 Cobra evalúa expresiones de izquierda a derecha. Los parámetros se pasan por valor. El ámbito de las variables es estático, determinado por la indentación.
 
+## Decoradores
+
+Los decoradores se indican con `@` y permiten modificar funciones antes de su ejecución.
+
+```cobra
+@medir_tiempo
+func tarea():
+    imprimir "hola"
+fin
+```
+
+## Funciones lambda
+
+Las lambdas son funciones anónimas de una sola expresión.
+
+```cobra
+doble = lambda x: x * 2
+```
+
+## Bloque `with`
+
+El bloque `with` gestiona contextos y cierra recursos automáticamente.
+
+```cobra
+with archivo("datos.txt") as f:
+    imprimir f.leer()
+fin
+```
+
+## Asincronía
+
+Las funciones pueden marcarse como `asincronico` y utilizar `esperar` para suspender su ejecución hasta que otra operación termine.
+
+```cobra
+asincronico func descargar():
+    datos = esperar solicitar()
+    retornar datos
+fin
+```
+
+## Option
+
+La construcción `option` declara valores opcionales que pueden o no contener un dato.
+
+```cobra
+option resultado = obtener()
+```
+
+## Switch ampliado
+
+`switch` admite múltiples valores por caso y un bloque `default` opcional.
+
+```cobra
+switch x:
+    case 1, 2:
+        imprimir "uno o dos"
+    default:
+        imprimir "otro"
+fin
+```
+

@@ -2,6 +2,7 @@
 
 ?statement: asignacion
           | funcion
+          | funcion_asincronica
           | clase
           | bucle_mientras
           | bucle_para
@@ -15,10 +16,14 @@
           | llamada
           | switch
           | try_catch
+          | with_stmt
+          | option
           | expr
 
 asignacion: ("var"|"variable")? IDENTIFICADOR "=" expr
-funcion: "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
+decorador: "@" IDENTIFICADOR
+funcion: decorador* "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
+funcion_asincronica: decorador* "asincronico" "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
@@ -29,9 +34,11 @@ macro: "macro" IDENTIFICADOR "{" statement* "}"
 impresion: "imprimir" "(" argumentos? ")"
 retorno: "retorno" expr
 hilo: "hilo" llamada
-switch: "switch" expr ":" case+ "fin"
-case: ("case" expr ":" cuerpo)+
+switch: "switch" expr ":" case+ ("default" ":" cuerpo)? "fin"
+case: "case" expr ("," expr)* ":" cuerpo
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
+with_stmt: "with" expr ("as" IDENTIFICADOR)? ":" cuerpo "fin"
+option: "option" IDENTIFICADOR "=" expr
 llamada: IDENTIFICADOR "(" argumentos? ")"
 cuerpo: statement*
 parametros: IDENTIFICADOR ("," IDENTIFICADOR)*
@@ -43,7 +50,10 @@ argumentos: expr ("," expr)*
       | IDENTIFICADOR
       | llamada
       | holobit
+      | lambda
+      | "esperar" valor
 holobit: "holobit" "(" "[" [expr ("," expr)*] "]" ")"
+lambda: "lambda" parametros? ":" expr
 operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"
 
 CADENA: /"[^"\n]*"|'[^'\n]*'/
