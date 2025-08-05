@@ -34,6 +34,8 @@ from core.ast_nodes import (
     NodoWith,
     NodoImportDesde,
     NodoEsperar,
+    NodoPattern,
+    NodoGuard,
 )
 from cobra.parser.parser import Parser
 from cobra.lexico.lexer import TipoToken, Lexer
@@ -225,6 +227,18 @@ class TranspiladorPython(BaseTranspiler):
             params = ", ".join(nodo.parametros)
             cuerpo = self.obtener_valor(nodo.cuerpo)
             return f"lambda {params}: {cuerpo}"
+        elif isinstance(nodo, NodoPattern):
+            if isinstance(nodo.valor, list):
+                elems = ", ".join(self.obtener_valor(p) for p in nodo.valor)
+                return f"({elems})"
+            elif nodo.valor == "_":
+                return "_"
+            else:
+                return self.obtener_valor(nodo.valor)
+        elif isinstance(nodo, NodoGuard):
+            patron = self.obtener_valor(nodo.patron)
+            guardia = self.obtener_valor(nodo.condicion)
+            return f"{patron} if {guardia}"
         else:
             return str(getattr(nodo, "valor", nodo))
 

@@ -435,6 +435,17 @@ class NodoMacro(NodoAST):
 
 
 @dataclass
+class NodoPattern(NodoAST):
+    valor: Any
+
+
+@dataclass
+class NodoGuard(NodoAST):
+    patron: NodoPattern
+    condicion: Any
+
+
+@dataclass
 class NodoCase(NodoAST):
     valor: Any
     cuerpo: List[Any]
@@ -491,6 +502,8 @@ __all__ = [
     "NodoPara",
     "NodoImprimir",
     "NodoMacro",
+    "NodoPattern",
+    "NodoGuard",
     "NodoCase",
     "NodoSwitch",
 ]

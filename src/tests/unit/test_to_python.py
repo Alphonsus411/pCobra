@@ -14,7 +14,7 @@ from core.ast_nodes import (
     NodoImprimir,
     NodoPasar,
 )
-from core.ast_nodes import NodoSwitch, NodoCase
+from core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.import_helper import get_standard_imports
 
@@ -156,6 +156,39 @@ def test_transpilador_corutina_await():
         + "async def principal():\n    await saluda()\n"
     )
     assert codigo == esperado
+
+
+def test_transpilador_switch_patron_guardia():
+    patron_interno = NodoPattern([
+        NodoPattern(NodoIdentificador("y")),
+        NodoPattern("_"),
+    ])
+    patron_principal = NodoPattern([
+        NodoPattern(NodoIdentificador("x")),
+        patron_interno,
+    ])
+    caso = NodoCase(
+        NodoGuard(patron_principal, NodoValor("x > y")),
+        [NodoAsignacion("z", NodoValor(1))],
+    )
+    ast = [
+        NodoSwitch(
+            "punto",
+            [caso],
+            [NodoAsignacion("z", NodoValor(0))],
+        )
+    ]
+    t = TranspiladorPython()
+    resultado = t.generate_code(ast)
+    esperado = (
+        IMPORTS
+        + "match punto:\n"
+        + "    case (x, (y, _)) if x > y:\n"
+        + "        z = 1\n"
+        + "    case _:\n"
+        + "        z = 0\n"
+    )
+    assert resultado == esperado
 
 
 def test_transpilador_clase_compleja():

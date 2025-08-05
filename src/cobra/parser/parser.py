@@ -42,6 +42,8 @@ from core.ast_nodes import (
     NodoImportDesde,
     NodoEsperar,
     NodoOption,
+    NodoPattern,
+    NodoGuard,
     NodoSwitch,
     NodoCase,
 )
@@ -482,6 +484,28 @@ class ClassicParser:
         self.comer(TipoToken.RPAREN)
         return NodoHolobit(valores=valores)
 
+    def patron(self):
+        """Parsea un patrón para estructuras de coincidencia."""
+        if self.token_actual().tipo == TipoToken.LPAREN:
+            self.comer(TipoToken.LPAREN)
+            elementos = []
+            if self.token_actual().tipo != TipoToken.RPAREN:
+                elementos.append(self.patron())
+                while self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                    elementos.append(self.patron())
+            self.comer(TipoToken.RPAREN)
+            return NodoPattern(elementos)
+        elif (
+            self.token_actual().tipo == TipoToken.IDENTIFICADOR
+            and self.token_actual().valor == "_"
+        ):
+            self.comer(TipoToken.IDENTIFICADOR)
+            return NodoPattern("_")
+        else:
+            expr = self.expresion()
+            return NodoPattern(expr)
+
     def declaracion_switch(self):
         """Parsea una estructura switch/case."""
         self.comer(TipoToken.SWITCH)
@@ -493,7 +517,11 @@ class ClassicParser:
         casos = []
         while self.token_actual().tipo == TipoToken.CASE:
             self.comer(TipoToken.CASE)
-            valor = self.expresion()
+            valor_patron = self.patron()
+            if self.token_actual().tipo == TipoToken.SI:
+                self.comer(TipoToken.SI)
+                guardia = self.expresion()
+                valor_patron = NodoGuard(valor_patron, guardia)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
                 raise ParserError("Se esperaba ':' después de 'case'")
             self.comer(TipoToken.DOSPUNTOS)
@@ -505,7 +533,7 @@ class ClassicParser:
                 TipoToken.EOF,
             ]:
                 cuerpo.append(self.declaracion())
-            casos.append(NodoCase(valor, cuerpo))
+            casos.append(NodoCase(valor_patron, cuerpo))
 
         bloque_defecto = []
         if self.token_actual().tipo == TipoToken.SINO:

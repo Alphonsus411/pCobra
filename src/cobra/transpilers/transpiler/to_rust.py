@@ -21,6 +21,8 @@ from core.ast_nodes import (
     NodoOption,
     NodoSwitch,
     NodoCase,
+    NodoPattern,
+    NodoGuard,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -139,6 +141,16 @@ class TranspiladorRust(BaseTranspiler):
                     for k, v in nodo.elementos
                 )
                 return f"std::collections::HashMap::from([{pares}])"
+            case NodoPattern():
+                if isinstance(nodo.valor, list):
+                    elems = ", ".join(self.obtener_valor(p) for p in nodo.valor)
+                    return f"({elems})"
+                else:
+                    return "_" if nodo.valor == "_" else self.obtener_valor(nodo.valor)
+            case NodoGuard():
+                patron = self.obtener_valor(nodo.patron)
+                guardia = self.obtener_valor(nodo.condicion)
+                return f"{patron} if {guardia}"
             case _:
                 return str(getattr(nodo, "valor", nodo))
 

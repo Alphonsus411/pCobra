@@ -34,8 +34,9 @@ macro: "macro" IDENTIFICADOR "{" statement* "}"
 impresion: "imprimir" "(" argumentos? ")"
 retorno: "retorno" expr
 hilo: "hilo" llamada
-switch: "switch" expr ":" case+ ("default" ":" cuerpo)? "fin"
-case: "case" expr ("," expr)* ":" cuerpo
+switch: "switch" expr ":" case+ ("sino" ":" cuerpo)? "fin"
+case: "case" patron ("si" expr)? ":" cuerpo
+patron: "_" | IDENTIFICADOR | valor | "(" patron ("," patron)* ")"
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
 with_stmt: "with" expr ("as" IDENTIFICADOR)? ":" cuerpo "fin"
 option: "option" IDENTIFICADOR "=" expr
@@ -59,6 +60,6 @@ operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"
 CADENA: /"[^"\n]*"|'[^'\n]*'/
 ENTERO: /[0-9]+/
 FLOTANTE: /[0-9]+\.[0-9]+/
-IDENTIFICADOR: /[^\W\d_][\w]*/
+IDENTIFICADOR: /[^\W\d][\w]*/
 
 %ignore /\s+/

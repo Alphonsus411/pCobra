@@ -1,0 +1,8 @@
+var punto = (1, (2, 3))
+
+switch punto:
+    case (x, (y, _)) si x > y:
+        imprimir(x)
+    sino:
+        imprimir(0)
+fin
