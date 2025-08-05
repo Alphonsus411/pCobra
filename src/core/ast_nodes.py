@@ -106,6 +106,7 @@ class NodoFuncion(NodoAST):
     cuerpo: List[Any]
     decoradores: List[Any] = field(default_factory=list)
     asincronica: bool = False
+    type_params: List[str] = field(default_factory=list)
 
     """Declaración de una función definida por el usuario."""
 
@@ -115,6 +116,7 @@ class NodoClase(NodoAST):
     nombre: str
     metodos: List[Any]
     bases: List[str] = field(default_factory=list)
+    type_params: List[str] = field(default_factory=list)
 
     """Definición de una clase y sus métodos."""
 
@@ -125,6 +127,7 @@ class NodoMetodo(NodoAST):
     parametros: List[str]
     cuerpo: List[Any]
     asincronica: bool = False
+    type_params: List[str] = field(default_factory=list)
 
     """Método perteneciente a una clase."""
 

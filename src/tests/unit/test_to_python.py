@@ -16,6 +16,9 @@ from core.ast_nodes import (
 )
 from core.ast_nodes import NodoSwitch, NodoCase
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.import_helper import get_standard_imports
+
+IMPORTS = get_standard_imports("python")
 
 
 def test_transpilador_asignacion():
@@ -195,3 +198,23 @@ def test_decoradores_en_clase_y_metodo():
 def test_imports_python_por_defecto():
     codigo = TranspiladorPython().generate_code([])
     assert codigo == IMPORTS
+
+
+def test_transpilador_funcion_generica():
+    func = NodoFuncion("identidad", ["x"], [NodoPasar()], type_params=["T"])
+    codigo = TranspiladorPython().generate_code([func])
+    esperado = IMPORTS + "def identidad[T](x):\n    pass\n"
+    assert codigo == esperado
+
+
+def test_transpilador_clase_generica():
+    metodo = NodoMetodo("identidad", ["self", "x"], [NodoPasar()])
+    clase = NodoClase("Caja", [metodo], type_params=["T"])
+    codigo = TranspiladorPython().generate_code([clase])
+    esperado = (
+        IMPORTS
+        + "class Caja[T]:\n"
+        + "    def identidad(self, x):\n"
+        + "        pass\n"
+    )
+    assert codigo == esperado

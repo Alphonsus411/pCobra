@@ -593,6 +593,9 @@ class ClassicParser:
         nombre = nombre_token.valor
         self.comer(TipoToken.IDENTIFICADOR)
 
+        # Parámetros de tipo genéricos opcionales
+        type_params = self.lista_parametros_tipo()
+
         # Captura los parámetros
         self.comer(TipoToken.LPAREN)
         parametros = self.lista_parametros()
@@ -630,7 +633,7 @@ class ClassicParser:
         self.comer(TipoToken.FIN)
 
         logger.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
-        return NodoFuncion(nombre, parametros, cuerpo, asincronica=asincronica)
+        return NodoFuncion(nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params)
 
     def declaracion_imprimir(self):
         """Parsea una declaración de impresión."""
@@ -927,6 +930,9 @@ class ClassicParser:
             )
         self.comer(TipoToken.IDENTIFICADOR)
 
+        # Parámetros de tipo genéricos opcionales para el método
+        type_params = self.lista_parametros_tipo()
+
         self.comer(TipoToken.LPAREN)
         parametros = self.lista_parametros()
         self.comer(TipoToken.RPAREN)
@@ -943,7 +949,7 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar el método")
         self.comer(TipoToken.FIN)
 
-        return NodoMetodo(nombre, parametros, cuerpo, asincronica=asincronica)
+        return NodoMetodo(nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params)
 
     def declaracion_clase(self):
         """Parsea la declaración de una clase."""
@@ -953,6 +959,9 @@ class ClassicParser:
             raise ParserError("Se esperaba un nombre de clase")
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
+
+        # Parámetros de tipo genéricos opcionales para la clase
+        type_params = self.lista_parametros_tipo()
 
         bases = []
         if self.token_actual().tipo == TipoToken.LPAREN:
@@ -987,7 +996,7 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar la clase")
         self.comer(TipoToken.FIN)
 
-        return NodoClase(nombre, metodos, bases)
+        return NodoClase(nombre, metodos, bases, type_params=type_params)
 
     def expresion(self):
         """Entrada principal para evaluar expresiones."""
@@ -1138,6 +1147,25 @@ class ClassicParser:
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         return NodoAtributo(objeto, nombre)
+
+    def lista_parametros_tipo(self):
+        """Parsea una lista de parámetros de tipo genéricos."""
+        params = []
+        if self.token_actual().tipo == TipoToken.MENORQUE:
+            self.comer(TipoToken.MENORQUE)
+            while self.token_actual().tipo != TipoToken.MAYORQUE:
+                if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                    raise ParserError("Se esperaba un nombre de parámetro de tipo")
+                params.append(self.token_actual().valor)
+                self.comer(TipoToken.IDENTIFICADOR)
+                if self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                else:
+                    break
+            if self.token_actual().tipo != TipoToken.MAYORQUE:
+                raise ParserError("Se esperaba '>' para cerrar los parámetros de tipo")
+            self.comer(TipoToken.MAYORQUE)
+        return params
 
     def lista_parametros(self):
         """Devuelve la lista de parámetros de una función o lambda."""

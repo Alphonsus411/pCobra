@@ -56,3 +56,8 @@ class MacroExpander:
         """Limpia el estado del expansor de macros."""
         self._macros.clear()
         self._expansion_depth = 0
+
+
+def expandir_macros(nodos: List[Any]) -> List[Any]:
+    """Función de conveniencia que expande macros en una lista de nodos."""
+    return MacroExpander().expandir_macros(nodos)
