@@ -245,3 +245,26 @@ def test_transpilador_nolocal_rust():
     resultado = t.generate_code(ast)
     assert resultado == "// nonlocal x"
 
+
+def test_transpilador_funcion_generica_rust():
+    ast = [NodoFuncion("identidad", ["x: T"], [], type_params=["T"])]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    assert resultado == "fn identidad<T>(x: T) {\n}"
+
+
+def test_transpilador_clase_generica_rust():
+    metodo = NodoMetodo("saludar", ["self"], [NodoAsignacion("x", 1)])
+    clase = NodoClase("Caja", [metodo], type_params=["T"])
+    t = TranspiladorRust()
+    resultado = t.generate_code([clase])
+    esperado = (
+        "struct Caja<T> {}\n\n"
+        + "impl<T> Caja<T> {\n"
+        + "    fn saludar(self) {\n"
+        + "        let x = 1;\n"
+        + "    }\n"
+        + "}"
+    )
+    assert resultado == esperado
+

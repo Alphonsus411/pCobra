@@ -67,6 +67,7 @@ class TipoToken(Enum):
     RESTA = "RESTA"
     MULT = "MULT"
     DIV = "DIV"
+    # Los tokens de comparación también se usan como delimitadores de tipos genéricos
     MAYORQUE = "MAYORQUE"
     MENORQUE = "MENORQUE"
     MAYORIGUAL = "MAYORIGUAL"
@@ -244,6 +245,7 @@ class Lexer:
             (TipoToken.RESTA, re.compile(r"-")),
             (TipoToken.MULT, re.compile(r"\*")),
             (TipoToken.DIV, re.compile(r"/")),
+            # Símbolos genéricos '<' y '>' también actúan como operadores de comparación
             (TipoToken.MAYORQUE, re.compile(r">")),
             (TipoToken.MENORQUE, re.compile(r"<")),
             (TipoToken.LPAREN, re.compile(r"\(")),
