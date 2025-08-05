@@ -19,7 +19,7 @@ from cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
 from cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
 from cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
 from cobra.cli.commands.cache_cmd import CacheCommand
-from cobra.cli.commands.compile_cmd import CompileCommand
+from cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from cobra.cli.commands.container_cmd import ContainerCommand
 from cobra.cli.commands.crear_cmd import CrearCommand
 from cobra.cli.commands.dependencias_cmd import DependenciasCommand
@@ -35,7 +35,7 @@ from cobra.cli.commands.package_cmd import PaqueteCommand
 from cobra.cli.commands.plugins_cmd import PluginsCommand
 from cobra.cli.commands.profile_cmd import ProfileCommand
 from cobra.cli.commands.qualia_cmd import QualiaCommand
-from cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
+from cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
 from cobra.cli.commands.verify_cmd import VerifyCommand
 from cobra.cli.i18n import _, format_traceback, setup_gettext
 from cobra.cli.plugin import descubrir_plugins
@@ -172,11 +172,14 @@ class CliApplication:
             
         subparsers = self.parser.add_subparsers(dest="command")
         self.command_registry.register_base_commands(subparsers)
-        
+
+        menu_parser = subparsers.add_parser("menu", help=_("Modo interactivo"))
+        menu_parser.set_defaults(cmd="menu")
+
         default_command = self.command_registry.get_default_command()
         if default_command:
             self.parser.set_defaults(cmd=default_command)
-        
+
         return self.parser.parse_args(argv)
 
     def _handle_execution_error(self, exc: Exception, language: str) -> int:
@@ -186,16 +189,50 @@ class CliApplication:
             messages.mostrar_error(_("File not found: {}").format(str(exc)))
         else:
             messages.mostrar_error(_("An unexpected error occurred"))
-        
+
         logging.exception("Error in execution")
         print(format_traceback(exc, language))
         return 1
+
+    def run_menu(self) -> int:
+        if not self.command_registry:
+            raise RuntimeError("Command registry not initialized")
+
+        print(_("Lenguajes destino disponibles:"))
+        print(", ".join(LANG_CHOICES))
+        print(_("Lenguajes de origen disponibles:"))
+        print(", ".join(ORIGIN_CHOICES))
+
+        if not input(_("¿Desea transpilar? (s/n): ")).strip().lower().startswith("s"):
+            return 0
+
+        if input(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): ")).strip().lower().startswith("s"):
+            archivo = input(_("Ruta al archivo Cobra: ")).strip()
+            destino = input(_("Lenguaje destino: ")).strip().lower()
+            args = argparse.Namespace(archivo=archivo, tipo=destino, backend=None, tipos=None)
+            compile_cmd = self.command_registry.commands.get("compilar")
+            if not compile_cmd:
+                messages.mostrar_error(_("Comando 'compilar' no disponible"))
+                return 1
+            return compile_cmd.run(args)
+        else:
+            archivo = input(_("Ruta al archivo origen: ")).strip()
+            origen = input(_("Lenguaje origen: ")).strip().lower()
+            destino = input(_("Lenguaje destino: ")).strip().lower()
+            inv_cmd = self.command_registry.commands.get("transpilar-inverso")
+            if not inv_cmd:
+                messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"))
+                return 1
+            args = argparse.Namespace(archivo=archivo, origen=origen, destino=destino)
+            return inv_cmd.run(args)
 
     def execute_command(self, args: argparse.Namespace) -> int:
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
             
         command = getattr(args, "cmd", self.command_registry.get_default_command())
+        if command == "menu":
+            return self.run_menu()
         if not command:
             messages.mostrar_error(_("Invalid command"))
             return 1
