@@ -7,7 +7,6 @@ Palabras clave
 --------------
 - ``var``: declara variables.
 - ``func``: define funciones.
-- ``rel``: crea funciones relativas a un contexto temporal.
 - ``si`` / ``sino``: condicionales.
 - ``mientras`` / ``para``: bucles de control.
 - ``import``: carga otros archivos Cobra.

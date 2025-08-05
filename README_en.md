@@ -304,7 +304,6 @@ The lexer converts code into tokens according to the regular expressions defined
 | DOSPUNTOS | Symbol ":" |
 | VAR | Keyword "var" |
 | FUNC | Keyword "func" or "definir" |
-| REL | Keyword "rel" |
 | SI | Keyword "si" |
 | SINO | Keyword "sino" |
 | MIENTRAS | Keyword "mientras" |

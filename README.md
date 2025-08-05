@@ -380,7 +380,6 @@ describen todos los tokens disponibles:
 | DOSPUNTOS | Símbolo ":" |
 | VAR | Palabra clave "var" |
 | FUNC | Palabra clave "func" o "definir" |
-| REL | Palabra clave "rel" |
 | SI | Palabra clave "si" |
 | SINO | Palabra clave "sino" |
 | MIENTRAS | Palabra clave "mientras" |

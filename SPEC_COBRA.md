@@ -66,7 +66,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 
 ## Tokens y palabras reservadas
 El lexer de `src/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
-- `var`, `variable`, `func`, `metodo`, `atributo`, `rel`
+- `var`, `variable`, `func`, `metodo`, `atributo`
 - `si`, `sino`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
 - `switch`, `case`, `clase`, `in`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
