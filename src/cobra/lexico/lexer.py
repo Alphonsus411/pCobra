@@ -40,7 +40,6 @@ class TipoToken(Enum):
     FUNC = "FUNC"
     METODO = "METODO"
     ATRIBUTO = "ATRIBUTO"
-    REL = "REL"
     SI = "SI"
     SINO = "SINO"
     MIENTRAS = "MIENTRAS"
@@ -185,7 +184,6 @@ class Lexer:
             (TipoToken.FUNC, re.compile(r"\b(func|definir)\b")),
             (TipoToken.METODO, re.compile(r"\bmetodo\b")),
             (TipoToken.ATRIBUTO, re.compile(r"\batributo\b")),
-            (TipoToken.REL, re.compile(r"\brel\b")),
             (TipoToken.SI, re.compile(r"\bsi\b")),
             (TipoToken.SINO, re.compile(r"\bsino\b")),
             (TipoToken.MIENTRAS, re.compile(r"\bmientras\b")),

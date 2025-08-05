@@ -8,7 +8,6 @@ UMBRAL_COINCIDENCIA = 0.8
 PALABRAS_RESERVADAS = frozenset({
     "var",
     "func",
-    "rel",
     "si",
     "sino",
     "mientras",

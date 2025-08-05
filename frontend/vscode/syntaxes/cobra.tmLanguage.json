@@ -20,7 +20,7 @@
       "patterns": [
         {
           "name": "keyword.control.cobra",
-          "match": "\\b(var|variable|func|definir|metodo|atributo|rel|si|sino|mientras|para|import|usar|macro|hilo|asincronico|switch|segun|case|caso|clase|in|holobit|proyectar|transformar|graficar|try|catch|throw|intentar|capturar|lanzar|imprimir|yield|esperar|romper|continuar|pasar|afirmar|eliminar|global|nolocal|lambda|con|finalmente|desde|como|retorno|fin)\\b"
+            "match": "\\b(var|variable|func|definir|metodo|atributo|si|sino|mientras|para|import|usar|macro|hilo|asincronico|switch|segun|case|caso|clase|in|holobit|proyectar|transformar|graficar|try|catch|throw|intentar|capturar|lanzar|imprimir|yield|esperar|romper|continuar|pasar|afirmar|eliminar|global|nolocal|lambda|con|finalmente|desde|como|retorno|fin)\\b"
         }
       ]
     },
