@@ -142,26 +142,31 @@ class ReverseFromPython(BaseReverseTranspiler):
             raise NotImplementedError(f"Operador unario no soportado: {type(node.op).__name__}")
         return NodoOperacionUnaria(op_token, self.visit(node.operand))
 
-    def visit_Compare(self, node: ast.Compare) -> Union[NodoOperacionBinaria, NodoAST]:
-        """
-        Convierte una comparación.
-        
-        Nota: Para comparaciones encadenadas (a < b < c), solo se procesa la primera comparación.
-        TODO: Implementar soporte completo para comparaciones encadenadas.
-        """
-        if len(node.ops) > 1:
-            # Advertencia: comparación simplificada
-            pass
-        
-        op = self.OPERADORES_BINARIOS.get(type(node.ops[0]))
-        if op is None:
-            raise NotImplementedError(f"Operador de comparación no soportado: {type(node.ops[0]).__name__}")
-        
-        return NodoOperacionBinaria(
-            self.visit(node.left),
-            op,
-            self.visit(node.comparators[0])
-        )
+    def visit_Compare(self, node: ast.Compare) -> NodoOperacionBinaria:
+        """Convierte una comparación, manejando comparaciones encadenadas."""
+
+        comparadores = [self.visit(node.left)] + [self.visit(c) for c in node.comparators]
+        ops: List[Token] = []
+        for op_node in node.ops:
+            token = self.OPERADORES_BINARIOS.get(type(op_node))
+            if token is None:
+                raise NotImplementedError(
+                    f"Operador de comparación no soportado: {type(op_node).__name__}"
+                )
+            ops.append(token)
+
+        resultado = NodoOperacionBinaria(comparadores[0], ops[0], comparadores[1])
+
+        if len(ops) == 1:
+            return resultado
+
+        and_token = self.OPERADORES_BINARIOS[ast.And]
+
+        for i in range(1, len(ops)):
+            comparacion = NodoOperacionBinaria(comparadores[i], ops[i], comparadores[i + 1])
+            resultado = NodoOperacionBinaria(resultado, and_token, comparacion)
+
+        return resultado
 
     # Expresiones -------------------------------------------------------
     def visit_Call(self, node: ast.Call) -> Union[NodoLlamadaMetodo, NodoLlamadaFuncion]:
