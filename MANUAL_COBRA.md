@@ -143,6 +143,28 @@ arbol = parser.parsear()
 print(TranspiladorPython().generate_code(arbol))
 ```
 
+### Guías rápidas de transpilación entre lenguajes
+
+Convierte programas entre distintos lenguajes usando la CLI:
+
+- **De Cobra a C**
+
+  ```bash
+  cobra compilar hola.co --tipo c
+  ```
+
+- **De Python a JavaScript**
+
+  ```bash
+  cobra transpilar-inverso ejemplo.py --origen=python --destino=js
+  ```
+
+- **De COBOL a Python**
+
+  ```bash
+  cobra transpilar-inverso reporte.cob --origen=cobol --destino=python
+  ```
+
 ### Características aún no soportadas
 
 Herencia múltiple en clases.

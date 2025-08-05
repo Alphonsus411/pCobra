@@ -60,6 +60,22 @@ Ejemplo:
 
    cobra
 
+Subcomando ``menu``
+-------------------
+Muestra un asistente en consola para guiar la transpilación entre lenguajes.
+
+Ejemplo:
+
+.. code-block:: text
+
+   $ cobra menu
+   Lenguajes destino disponibles: python, js, c...
+   Lenguajes de origen disponibles: python, js, c...
+   ¿Desea transpilar? (s/n): s
+   ¿Transpilar desde Cobra a otro lenguaje? (s/n): s
+   Ruta al archivo Cobra: hola.co
+   Lenguaje destino: python
+
 Subcomando ``modulos``
 ---------------------
 Gestiona módulos instalados.
@@ -173,6 +189,10 @@ Ejemplo:
 .. code-block:: bash
 
    cobra gui
+
+Al ejecutarlo se abre una ventana con un editor de texto y botones para
+ejecutar o limpiar el código. Es una forma rápida de probar programas
+sin usar la terminal.
 
 Subcomando ``plugins``
 ---------------------

@@ -68,12 +68,61 @@ Los siguientes lenguajes pueden convertirse a Cobra:
 
    * - Lenguaje
      - Estado
-   * - VisualBasic
-     - Experimental
-   * - Mojo
-     - Experimental
    * - Ensamblador
+     - Experimental
+   * - C
+     - Experimental
+   * - C++
      - Experimental
    * - COBOL
      - Experimental
+   * - Fortran
+     - Experimental
+   * - Go
+     - Experimental
+   * - Java
+     - Experimental
+   * - JavaScript
+     - Experimental
+   * - Julia
+     - Experimental
+   * - Kotlin
+     - Experimental
+   * - LaTeX
+     - Experimental
+   * - Matlab
+     - Experimental
+   * - Mojo
+     - Experimental
+   * - Pascal
+     - Experimental
+   * - Perl
+     - Experimental
+   * - PHP
+     - Experimental
+   * - Python
+     - Experimental
+   * - R
+     - Experimental
+   * - Ruby
+     - Experimental
+   * - Rust
+     - Experimental
+   * - Swift
+     - Experimental
+   * - VisualBasic
+     - Experimental
+   * - WebAssembly
+     - Experimental
+
+Instalación de gramáticas
+-------------------------
+
+Para habilitar estos transpiladores inversos es necesario instalar las gramáticas de `tree-sitter`:
+
+.. code-block:: bash
+
+   pip install tree-sitter-languages
+
+Este paquete incluye gramáticas para los lenguajes listados y puede instalarse junto con las dependencias del proyecto.
 

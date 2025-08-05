@@ -7,6 +7,8 @@ Avances del lenguaje Cobra
 - **Gestión de memoria automatizada**: Cobra incluye un sistema de manejo de memoria optimizado que se ajusta automáticamente utilizando algoritmos genéticos.
 - **Transpilacion a otros lenguajes**: Se ha implementado un transpilador que convierte el codigo Cobra a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly.
 - **Pruebas unitarias**: Se han creado pruebas para validar el correcto funcionamiento del lexer y el parser.
+- **Menú interactivo en la CLI**: ``cobra menu`` guía paso a paso la transpilación entre lenguajes.
+- **Aplicación Flet**: ``cobra gui`` abre una interfaz gráfica ligera para escribir y ejecutar programas.
 
  - **Versión 10.0.6**: Actualización de la documentación y configuración del proyecto.
  - **Versión 10.0.6**: Se incorpora ``pcobra.toml`` para definir el mapeo de módulos.
@@ -62,4 +64,26 @@ función a exponer:
    # Suponiendo un crate en ``./mi_crate`` con la función `triple`
    triple = compilar_y_cargar_crate("mi_crate", "triple")
    print(triple(3))
+
+Menú interactivo y aplicación Flet
+----------------------------------
+
+Ejemplo del asistente de consola:
+
+.. code-block:: text
+
+   $ cobra menu
+   Lenguajes destino disponibles: python, js, c...
+   Lenguajes de origen disponibles: python, js, c...
+   ¿Desea transpilar? (s/n): s
+   ¿Transpilar desde Cobra a otro lenguaje? (s/n): n
+   Ruta al archivo origen: ejemplo.py
+   Lenguaje origen: python
+   Lenguaje destino: js
+
+Para abrir la interfaz gráfica ejecuta:
+
+.. code-block:: bash
+
+   cobra gui
 
