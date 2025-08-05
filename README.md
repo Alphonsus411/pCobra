@@ -744,17 +744,19 @@ convertirlo al AST de Cobra y luego generarlo en cualquier backend soportado.
 cobra transpilar-inverso script.py --origen=python --destino=cobra
 ```
 
-El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales.
-Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
+El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-### Dependencias de tree-sitter
+Actualmente es posible convertir a Cobra código escrito en ensamblador, C, C++, COBOL, Fortran, Go, Java, JavaScript, Julia, Kotlin, LaTeX, Matlab, Mojo, Pascal, Perl, PHP, Python, R, Ruby, Rust, Swift, VisualBasic y WebAssembly.
 
-Varios transpiladores inversos están basados en
-[tree-sitter](https://tree-sitter.github.io/tree-sitter/). Para que funcionen es
-necesario disponer de los paquetes `tree-sitter` y
-`tree-sitter-languages`, incluidos en `requirements.txt`. Asegúrate de que estas
-dependencias estén instaladas antes de transpilar código desde lenguajes como
-JavaScript o Java.
+### Instalación de gramáticas
+
+Varios transpiladores inversos están basados en [tree-sitter](https://tree-sitter.github.io/tree-sitter/). Para que funcionen es necesario disponer de los paquetes `tree-sitter` y `tree-sitter-languages`. Instálalos con:
+
+```bash
+pip install tree-sitter-languages
+```
+
+Estas gramáticas también están listadas en `requirements.txt`, pero puedes instalarlas manualmente si deseas solo esta característica.
 
 ### Diseño extensible de la CLI
 
