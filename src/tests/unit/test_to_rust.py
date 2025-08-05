@@ -24,6 +24,8 @@ from core.ast_nodes import (
     NodoCase,
     NodoGlobal,
     NodoNoLocal,
+    NodoPattern,
+    NodoGuard,
 )
 
 
@@ -124,6 +126,40 @@ def test_transpilador_switch():
         + "    },\n"
         + "    _ => {\n"
         + "        let y = 0;\n"
+        + "    },\n"
+        + "}"
+    )
+    assert resultado == esperado
+
+def test_transpilador_switch_patron_guardia():
+    patron_interno = NodoPattern([
+        NodoPattern(NodoIdentificador("y")),
+        NodoPattern("_"),
+    ])
+    patron_principal = NodoPattern([
+        NodoPattern(NodoIdentificador("x")),
+        patron_interno,
+    ])
+    caso = NodoCase(
+        NodoGuard(patron_principal, NodoValor("x > y")),
+        [NodoAsignacion("z", NodoValor(1))],
+    )
+    ast = [
+        NodoSwitch(
+            "punto",
+            [caso],
+            [NodoAsignacion("z", NodoValor(0))],
+        )
+    ]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    esperado = (
+        "match punto {\n"
+        + "    (x, (y, _)) if x > y => {\n"
+        + "        let z = 1;\n"
+        + "    },\n"
+        + "    _ => {\n"
+        + "        let z = 0;\n"
         + "    },\n"
         + "}"
     )

@@ -231,7 +231,7 @@ class Lexer:
             (TipoToken.DOSPUNTOS, re.compile(r":")),
             (TipoToken.FIN, re.compile(r"\bfin\b")),
             (TipoToken.RETORNO, re.compile(r"\bretorno\b")),
-            (TipoToken.IDENTIFICADOR, re.compile(r"[^\W\d_][\w]*")),
+            (TipoToken.IDENTIFICADOR, re.compile(r"[^\W\d][\w]*")),
             (TipoToken.MAYORIGUAL, re.compile(r">=")),
             (TipoToken.MENORIGUAL, re.compile(r"<=")),
             (TipoToken.IGUAL, re.compile(r"==")),
