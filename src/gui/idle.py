@@ -7,6 +7,7 @@ import flet as ft
 from cobra.lexico.lexer import Lexer
 from cobra.parser.parser import Parser
 from core.interpreter import InterpretadorCobra
+from cobra.cli.commands.compile_cmd import TRANSPILERS
 
 
 def _ejecutar_codigo(codigo: str) -> str:
@@ -34,14 +35,28 @@ def _mostrar_ast(codigo: str) -> str:
     return str(ast)
 
 
+def _transpilar_codigo(codigo: str, lang: str) -> str:
+    """Transpila código Cobra al lenguaje especificado."""
+    tokens = Lexer(codigo).tokenizar()
+    ast = Parser(tokens).parsear()
+    transp = TRANSPILERS[lang]()
+    return transp.generate_code(ast)
+
+
 def main(page: ft.Page):
     """Función principal para el entorno IDLE."""
 
     entrada = ft.TextField(multiline=True, expand=True)
     salida = ft.Text(value="", selectable=True)
+    lenguajes = sorted(TRANSPILERS.keys())
+    selector = ft.Dropdown(options=[ft.dropdown.Option(lang) for lang in lenguajes])
+    activar = ft.Switch(label="Transpilar")
 
     def ejecutar_handler(e):
-        salida.value = _ejecutar_codigo(entrada.value)
+        if activar.value and selector.value in TRANSPILERS:
+            salida.value = _transpilar_codigo(entrada.value, selector.value)
+        else:
+            salida.value = _ejecutar_codigo(entrada.value)
         page.update()
 
     def tokens_handler(e):
@@ -54,6 +69,8 @@ def main(page: ft.Page):
 
     page.add(
         entrada,
+        selector,
+        activar,
         ft.ElevatedButton("Ejecutar", on_click=ejecutar_handler),
         ft.ElevatedButton("Tokens", on_click=tokens_handler),
         ft.ElevatedButton("AST", on_click=ast_handler),
