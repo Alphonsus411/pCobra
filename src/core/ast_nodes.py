@@ -414,6 +414,30 @@ class NodoPara(NodoAST):
 
 
 @dataclass
+class NodoProyectar(NodoAST):
+    holobit: Any
+    modo: Any
+
+    """Proyección de un ``holobit`` en un modo específico."""
+
+
+@dataclass
+class NodoTransformar(NodoAST):
+    holobit: Any
+    operacion: Any
+    parametros: List[Any] = field(default_factory=list)
+
+    """Transformación aplicada a un ``holobit``."""
+
+
+@dataclass
+class NodoGraficar(NodoAST):
+    holobit: Any
+
+    """Visualización de un ``holobit``."""
+
+
+@dataclass
 class NodoImprimir(NodoAST):
     expresion: Any
 
@@ -500,6 +524,9 @@ __all__ = [
     "NodoImport",
     "NodoUsar",
     "NodoPara",
+    "NodoProyectar",
+    "NodoTransformar",
+    "NodoGraficar",
     "NodoImprimir",
     "NodoMacro",
     "NodoPattern",

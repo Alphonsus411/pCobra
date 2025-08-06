@@ -17,6 +17,9 @@ from core.ast_nodes import (
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoLlamadaMetodo,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
     NodoRetorno,
     NodoValor,
     NodoIdentificador,
@@ -181,7 +184,20 @@ class ReverseFromPython(BaseReverseTranspiler):
             )
         
         if isinstance(node.func, ast.Name):
-            return NodoLlamadaFuncion(node.func.id, args)
+            nombre = node.func.id
+            if nombre == "proyectar":
+                hb = args[0] if args else NodoValor(None)
+                modo = args[1] if len(args) > 1 else NodoValor(None)
+                return NodoProyectar(hb, modo)
+            if nombre == "transformar":
+                hb = args[0] if args else NodoValor(None)
+                oper = args[1] if len(args) > 1 else NodoValor(None)
+                params = args[2:] if len(args) > 2 else []
+                return NodoTransformar(hb, oper, params)
+            if nombre == "graficar":
+                hb = args[0] if args else NodoValor(None)
+                return NodoGraficar(hb)
+            return NodoLlamadaFuncion(nombre, args)
         
         raise NotImplementedError(f"Tipo de llamada no soportado: {type(node.func).__name__}")
 

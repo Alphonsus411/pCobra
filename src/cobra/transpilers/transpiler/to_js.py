@@ -20,6 +20,9 @@ from core.ast_nodes import (
     NodoImport,
     NodoExport,
     NodoEsperar,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -50,6 +53,9 @@ from cobra.transpilers.transpiler.js_nodes.throw import visit_throw as _visit_th
 from cobra.transpilers.transpiler.js_nodes.importar import visit_import as _visit_import
 from cobra.transpilers.transpiler.js_nodes.instancia import visit_instancia as _visit_instancia
 from cobra.transpilers.transpiler.js_nodes.atributo import visit_atributo as _visit_atributo
+from cobra.transpilers.transpiler.js_nodes.proyectar import visit_proyectar as _visit_proyectar
+from cobra.transpilers.transpiler.js_nodes.transformar import visit_transformar as _visit_transformar
+from cobra.transpilers.transpiler.js_nodes.graficar import visit_graficar as _visit_graficar
 from cobra.transpilers.transpiler.js_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
@@ -206,6 +212,9 @@ TranspiladorJavaScript.visit_throw = _visit_throw
 TranspiladorJavaScript.visit_import = _visit_import
 TranspiladorJavaScript.visit_instancia = _visit_instancia
 TranspiladorJavaScript.visit_atributo = _visit_atributo
+TranspiladorJavaScript.visit_proyectar = _visit_proyectar
+TranspiladorJavaScript.visit_transformar = _visit_transformar
+TranspiladorJavaScript.visit_graficar = _visit_graficar
 TranspiladorJavaScript.visit_operacion_binaria = _visit_operacion_binaria
 TranspiladorJavaScript.visit_operacion_unaria = _visit_operacion_unaria
 TranspiladorJavaScript.visit_valor = _visit_valor
