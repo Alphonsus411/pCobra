@@ -153,6 +153,7 @@ class TranspiladorPython(BaseTranspiler):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = get_standard_imports("python")
         self.usa_asyncio = False
+        self.usa_typing = False
         self.nivel_indentacion = 0
 
     def generate_code(self, ast):
@@ -190,6 +191,8 @@ class TranspiladorPython(BaseTranspiler):
                 codigo = self.codigo.rstrip("\n")
         else:
             codigo = self.codigo
+        if self.usa_typing:
+            codigo = "from typing import TypeVar, Generic\n" + codigo
         if self.usa_asyncio:
             codigo = "import asyncio\n" + codigo
         return codigo

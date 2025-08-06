@@ -1,4 +1,7 @@
-"""Transpilador que genera código C++ a partir de Cobra."""
+"""Transpilador que genera código C++ a partir de Cobra.
+
+Los parámetros de tipo de Cobra se traducen a plantillas ``template`` propias
+de C++."""
 
 from core.ast_nodes import (
     NodoLista,
