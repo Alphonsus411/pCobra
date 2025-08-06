@@ -13,6 +13,7 @@ PALABRAS_RESERVADAS = frozenset({
     "mientras",
     "para",
     "import",
+    "export",
     "try",
     "catch",
     "throw",
@@ -84,7 +85,7 @@ def sugerir_palabra_clave(palabra: str) -> Union[str, Literal[None]]:
             palabra,
             PALABRAS_RESERVADAS,
             n=1,
-            cutoff=UMBRAL_COINCIDENCIA
+            cutoff=UMBRAL_COINCIDENCIA,
         )
         return coincidencias[0] if coincidencias else None
     except (IndexError, TypeError):

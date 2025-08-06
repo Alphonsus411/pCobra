@@ -26,6 +26,7 @@ from core.ast_nodes import (
     NodoNoLocal,
     NodoPattern,
     NodoGuard,
+    NodoExport,
 )
 
 
@@ -78,6 +79,14 @@ def test_transpilador_holobit():
     t = TranspiladorRust()
     resultado = t.generate_code(ast)
     assert resultado == "let miHolobit = holobit(vec![0.8, -0.5, 1.2]);"
+
+
+def test_transpilador_export():
+    ast = [NodoFuncion("saluda", [], []), NodoExport("saluda")]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    esperado = "fn saluda() {\n}\npub use saluda;"
+    assert resultado == esperado
 
 def test_transpilador_clase():
     metodo = NodoMetodo("saludar", ["self"], [NodoAsignacion("x", 1)])

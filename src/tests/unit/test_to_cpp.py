@@ -15,6 +15,7 @@ from core.ast_nodes import (
     NodoValor,
     NodoGlobal,
     NodoNoLocal,
+    NodoExport,
 )
 
 
@@ -88,6 +89,14 @@ def test_transpilador_yield():
     t = TranspiladorCPP()
     resultado = t.generate_code(ast)
     esperado = "void generador() {\n    co_yield 1;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_export():
+    ast = [NodoFuncion("saluda", [], []), NodoExport("saluda")]
+    t = TranspiladorCPP()
+    resultado = t.generate_code(ast)
+    esperado = "void saluda() {\n}\n// export saluda"
     assert resultado == esperado
 
 

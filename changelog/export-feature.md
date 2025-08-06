@@ -1,0 +1,3 @@
+- Se añade el token `export` y soporte de exportaciones en el parser.
+- Los transpiladores principales generan la instrucción equivalente para `NodoExport`.
+- Se actualiza la documentación y se agregan pruebas asociadas.

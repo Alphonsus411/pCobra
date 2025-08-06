@@ -20,6 +20,7 @@ from core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoExport,
     NodoOption,
     NodoSwitch,
     NodoCase,
@@ -48,6 +49,7 @@ from cobra.transpilers.transpiler.rust_nodes.switch import visit_switch as _visi
 from cobra.transpilers.transpiler.rust_nodes.try_catch import visit_try_catch as _visit_try_catch
 from cobra.transpilers.transpiler.rust_nodes.throw import visit_throw as _visit_throw
 from cobra.transpilers.transpiler.rust_nodes.option import visit_option as _visit_option
+from cobra.transpilers.transpiler.rust_nodes.exportar import visit_export as _visit_export
 
 
 def visit_assert(self, nodo):
@@ -188,3 +190,4 @@ TranspiladorRust.visit_switch = _visit_switch
 TranspiladorRust.visit_try_catch = _visit_try_catch
 TranspiladorRust.visit_throw = _visit_throw
 TranspiladorRust.visit_option = _visit_option
+TranspiladorRust.visit_export = _visit_export

@@ -29,6 +29,7 @@ from core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,
     NodoImport,
+    NodoExport,
     NodoImprimir,
     NodoProyectar,
     NodoTransformar,
@@ -94,6 +95,7 @@ from cobra.transpilers.transpiler.python_nodes.romper import visit_romper as _vi
 from cobra.transpilers.transpiler.python_nodes.continuar import visit_continuar as _visit_continuar
 from cobra.transpilers.transpiler.python_nodes.pasar import visit_pasar as _visit_pasar
 from cobra.transpilers.transpiler.python_nodes.switch import visit_switch as _visit_switch
+from cobra.transpilers.transpiler.python_nodes.exportar import visit_export as _visit_export
 
 
 def visit_assert(self, nodo):
@@ -165,6 +167,7 @@ class TranspiladorPython(BaseTranspiler):
         self.usa_asyncio = False
         self.usa_typing = False
         self.nivel_indentacion = 0
+        self.exportados: list[str] = []
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -178,6 +181,9 @@ class TranspiladorPython(BaseTranspiler):
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             nodo.aceptar(self)
+        if self.exportados:
+            exports = ", ".join(f"'{n}'" for n in self.exportados)
+            self.codigo += f"__all__ = [{exports}]\n"
         if (
             nodos
             and all(
@@ -350,6 +356,7 @@ TranspiladorPython.visit_continuar = _visit_continuar
 TranspiladorPython.visit_pasar = _visit_pasar
 TranspiladorPython.visit_esperar = _visit_esperar
 TranspiladorPython.visit_switch = _visit_switch
+TranspiladorPython.visit_export = _visit_export
 TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del
 TranspiladorPython.visit_global = visit_global

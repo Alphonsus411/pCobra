@@ -13,6 +13,7 @@ from core.ast_nodes import (
     NodoClase,
     NodoImprimir,
     NodoPasar,
+    NodoExport,
 )
 from core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -75,6 +76,20 @@ def test_transpilador_funcion():
     esperado = (
         IMPORTS
         + "def miFuncion(a, b):\n    x = a + b\n"
+    )
+    assert resultado == esperado
+
+
+def test_export():
+    ast = [
+        NodoFuncion("saluda", [], [NodoPasar()]),
+        NodoExport("saluda"),
+    ]
+    transpilador = TranspiladorPython()
+    resultado = transpilador.generate_code(ast)
+    esperado = (
+        IMPORTS
+        + "def saluda():\n    pass\n__all__ = ['saluda']\n"
     )
     assert resultado == esperado
 

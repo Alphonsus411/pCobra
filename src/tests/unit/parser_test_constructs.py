@@ -10,6 +10,7 @@ from core.ast_nodes import (
     NodoIdentificador,
     NodoTryCatch,
     NodoThrow,
+    NodoExport,
 )
 
 
@@ -47,6 +48,10 @@ def crear_ast_try_catch():
     ]
 
 
+def crear_ast_export():
+    return [NodoExport("saluda")]
+
+
 @pytest.mark.timeout(5)
 def test_parser_para():
     codigo = """para i in range(0,3):\n    imprimir(i)\nfin"""
@@ -71,3 +76,11 @@ def test_parser_intentar_capturar():
     tokens = Lexer(codigo).analizar_token()
     ast = Parser(tokens).parsear()
     assert repr(ast) == repr(crear_ast_try_catch())
+
+
+@pytest.mark.timeout(5)
+def test_parser_export():
+    codigo = "export saluda"
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    assert repr(ast) == repr(crear_ast_export())
