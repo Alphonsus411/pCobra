@@ -53,6 +53,8 @@ argumentos: expr ("," expr)*
       | holobit
       | lambda
       | "esperar" valor
+      | "Some" "(" expr ")"
+      | "None"
 holobit: "holobit" "(" "[" [expr ("," expr)*] "]" ")"
 lambda: "lambda" parametros? ":" expr
 operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"
