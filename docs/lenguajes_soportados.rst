@@ -111,7 +111,7 @@ Los siguientes lenguajes pueden convertirse a Cobra:
    * - Swift
      - Experimental
    * - VisualBasic
-     - Experimental
+     - Experimental (tree-sitter)
    * - WebAssembly
      - Experimental
 
