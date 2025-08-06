@@ -1,5 +1,5 @@
 def visit_clase(self, nodo):
-    """Transpila una clase en JavaScript, admitiendo métodos y clases anidados."""
+    """Transpila una clase en JavaScript aplicando sus decoradores."""
     metodos = getattr(nodo, "cuerpo", getattr(nodo, "metodos", []))
     if self.usa_indentacion is None:
         self.usa_indentacion = any(hasattr(m, "variable") for m in metodos)

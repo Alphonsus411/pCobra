@@ -23,6 +23,8 @@ from core.ast_nodes import (
     NodoImportDesde,
     NodoExport,
 )
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
 
 IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("js"))
 
@@ -181,6 +183,21 @@ def test_decoradores_en_clase_y_metodo_js():
         + "}\n"
         + "}\n"
         + "C.prototype.run = dec(C.prototype.run);\n"
+        + "C = dec(C);"
+    )
+    assert resultado == esperado
+
+
+def test_clase_con_decorador_desde_parser_js():
+    codigo = """@dec\nclase C:\n    pasar\nfin"""
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    t = TranspiladorJavaScript()
+    resultado = t.generate_code(ast)
+    esperado = IMPORTS + (
+        "class C {\n"
+        + ";\n"
+        + "}\n"
         + "C = dec(C);"
     )
     assert resultado == esperado

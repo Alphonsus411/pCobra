@@ -17,6 +17,8 @@ from core.ast_nodes import (
 from core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.import_helper import get_standard_imports
+from cobra.lexico.lexer import Lexer
+from cobra.parser.parser import Parser
 
 IMPORTS = get_standard_imports("python")
 
@@ -225,6 +227,15 @@ def test_decoradores_en_clase_y_metodo():
         + "    async def run(self):\n"
         + "        pass\n"
     )
+    assert codigo == esperado
+
+
+def test_clase_con_decorador_desde_parser():
+    codigo_fuente = """@dec\nclase C:\n    pasar\nfin"""
+    tokens = Lexer(codigo_fuente).analizar_token()
+    ast = Parser(tokens).parsear()
+    codigo = TranspiladorPython().generate_code(ast)
+    esperado = IMPORTS + "@dec\nclass C:\n    pass\n"
     assert codigo == esperado
 
 

@@ -204,20 +204,14 @@ class ClassicParser:
                 self.token_actual().tipo = TipoToken.FUNC
                 token = self.token_actual()
 
-            # Decoradores antes de funciones
+            # Decoradores antes de cualquier bloque o definición
             if token.tipo == TipoToken.DECORADOR:
                 decoradores = []
                 while self.token_actual().tipo == TipoToken.DECORADOR:
                     decoradores.append(self.declaracion_decorador())
-                asincronica = False
-                if self.token_actual().tipo == TipoToken.ASINCRONICO:
-                    self.comer(TipoToken.ASINCRONICO)
-                    asincronica = True
-                if self.token_actual().tipo != TipoToken.FUNC:
-                    raise ParserError("Un decorador debe preceder a una función")
-                funcion = self.declaracion_funcion(asincronica)
-                funcion.decoradores = decoradores + funcion.decoradores
-                return funcion
+                nodo = self.declaracion()
+                nodo.decoradores = decoradores + getattr(nodo, "decoradores", [])
+                return nodo
 
             if token.tipo == TipoToken.ASINCRONICO:
                 return self.declaracion_asincronico()
@@ -815,7 +809,7 @@ class ClassicParser:
         return NodoDiccionarioTipo(nombre, clave_tipo, valor_tipo, elementos)
 
     def declaracion_decorador(self):
-        """Parsea una línea de decorador previa a una función."""
+        """Parsea una línea de decorador previa a funciones o clases."""
         self.comer(TipoToken.DECORADOR)
         expresion = self.expresion()
         return NodoDecorador(expresion)
