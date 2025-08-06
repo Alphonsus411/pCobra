@@ -15,6 +15,7 @@ from core.ast_nodes import (
     NodoListaTipo,
     NodoDiccionarioTipo,
     NodoClase,
+    NodoEnum,
     NodoMetodo,
     NodoValor,
     NodoRetorno,
@@ -143,6 +144,9 @@ from cobra.transpilers.transpiler.python_nodes.switch import (
 )
 from cobra.transpilers.transpiler.python_nodes.option import (
     visit_option as _visit_option,
+)
+from cobra.transpilers.transpiler.python_nodes.enum import (
+    visit_enum as _visit_enum,
 )
 
 
@@ -402,6 +406,7 @@ TranspiladorPython.visit_pasar = _visit_pasar
 TranspiladorPython.visit_esperar = _visit_esperar
 TranspiladorPython.visit_switch = _visit_switch
 TranspiladorPython.visit_option = _visit_option
+TranspiladorPython.visit_enum = _visit_enum
 TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del
 TranspiladorPython.visit_global = visit_global

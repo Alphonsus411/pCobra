@@ -162,6 +162,14 @@ class NodoClase(NodoAST):
 
 
 @dataclass
+class NodoEnum(NodoAST):
+    nombre: str
+    miembros: List[str]
+
+    """Declaración de un ``enum`` con sus miembros."""
+
+
+@dataclass
 class NodoMetodo(NodoAST):
     nombre: str
     parametros: List[str]

@@ -32,6 +32,7 @@ from core.ast_nodes import (
     NodoGraficar,
     NodoOption,
     NodoPattern,
+    NodoEnum,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -82,6 +83,7 @@ from cobra.transpilers.transpiler.js_nodes.switch import visit_switch as _visit_
 from cobra.transpilers.transpiler.js_nodes.exportar import visit_export as _visit_export
 from cobra.transpilers.transpiler.js_nodes.option import visit_option as _visit_option
 from cobra.transpilers.transpiler.js_nodes.pattern import visit_pattern as _visit_pattern
+from cobra.transpilers.transpiler.js_nodes.enum import visit_enum as _visit_enum
 
 
 def visit_assert(self, nodo):
@@ -310,5 +312,6 @@ TranspiladorJavaScript.visit_lista_comprehension = visit_lista_comprehension
 TranspiladorJavaScript.visit_diccionario_comprehension = visit_diccionario_comprehension
 TranspiladorJavaScript.visit_option = _visit_option
 TranspiladorJavaScript.visit_pattern = _visit_pattern
+TranspiladorJavaScript.visit_enum = _visit_enum
 
 # Métodos de transpilación para tipos de nodos básicos

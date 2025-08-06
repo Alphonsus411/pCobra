@@ -14,6 +14,7 @@ from core.ast_nodes import (
     NodoBucleMientras,
     NodoFuncion,
     NodoClase,
+    NodoEnum,
     NodoMetodo,
     NodoAtributo,
     NodoLlamadaFuncion,
@@ -99,6 +100,7 @@ class ClassicParser:
             TipoToken.PASAR: self.declaracion_pasar,
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
+            TipoToken.ENUM: self.declaracion_enum,
             TipoToken.AFIRMAR: self.declaracion_afirmar,
             TipoToken.ELIMINAR: self.declaracion_eliminar,
             TipoToken.GLOBAL: self.declaracion_global,
@@ -1117,6 +1119,33 @@ class ClassicParser:
         return NodoMetodo(
             nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params
         )
+
+    def declaracion_enum(self):
+        """Parsea la declaración de un enum."""
+        self.comer(TipoToken.ENUM)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba un nombre de enum")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise ParserError("Se esperaba ':' después del nombre del enum")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        miembros: list[str] = []
+        while self.token_actual().tipo != TipoToken.FIN:
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise ParserError("Se esperaba un identificador de miembro")
+            miembros.append(self.token_actual().valor)
+            self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo == TipoToken.COMA:
+                self.comer(TipoToken.COMA)
+            elif self.token_actual().tipo == TipoToken.FIN:
+                break
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise ParserError("Se esperaba 'fin' para cerrar el enum")
+        self.comer(TipoToken.FIN)
+        return NodoEnum(nombre, miembros)
 
     def declaracion_clase(self):
         """Parsea la declaración de una clase."""

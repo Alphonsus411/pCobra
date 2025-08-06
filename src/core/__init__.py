@@ -23,6 +23,7 @@ __all__ = [
     "NodoDiccionarioComprehension",
     "NodoFuncion",
     "NodoClase",
+    "NodoEnum",
     "NodoMetodo",
     "NodoInstancia",
     "NodoAtributo",

@@ -57,6 +57,7 @@ PALABRAS_RESERVADAS = frozenset(
         "capturar",
         "lanzar",
         "option",
+        "enum",
     }
 )
 
