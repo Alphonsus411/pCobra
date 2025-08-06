@@ -30,3 +30,11 @@ def test_lexer_palabras_nuevas():
     assert TipoToken.INTENTAR in tipos
     assert TipoToken.CAPTURAR in tipos
     assert TipoToken.LANZAR in tipos
+
+
+def test_lexer_palabras_nuevas_en():
+    codigo = "with recurso as r: pasar fin"
+    tokens = Lexer(codigo).analizar_token()
+    tipos = [t.tipo for t in tokens if t.tipo != TipoToken.EOF]
+    assert TipoToken.WITH in tipos
+    assert TipoToken.AS in tipos

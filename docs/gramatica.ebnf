@@ -38,7 +38,7 @@ switch: "switch" expr ":" case+ ("sino" ":" cuerpo)? "fin"
 case: "case" patron ("si" expr)? ":" cuerpo
 patron: "_" | IDENTIFICADOR | valor | "(" patron ("," patron)* ")"
 try_catch: ("try"|"intentar") ":" cuerpo ("catch"|"capturar") IDENTIFICADOR ":" cuerpo "fin"
-with_stmt: "with" expr ("as" IDENTIFICADOR)? ":" cuerpo "fin"
+with_stmt: ("with"|"con") expr (("as"|"como") IDENTIFICADOR)? ":" cuerpo "fin"
 option: "option" IDENTIFICADOR "=" expr
 llamada: IDENTIFICADOR "(" argumentos? ")"
 cuerpo: statement*

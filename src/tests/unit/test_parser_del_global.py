@@ -54,6 +54,16 @@ def test_parser_with():
     assert len(ast[0].cuerpo) == 1 and isinstance(ast[0].cuerpo[0], NodoPasar)
 
 
+def test_parser_with_en():
+    code = "with recurso as r: pasar fin"
+    ast = Parser(Lexer(code).analizar_token()).parsear()
+    assert isinstance(ast[0], NodoWith)
+    assert isinstance(ast[0].contexto, NodoIdentificador)
+    assert ast[0].contexto.nombre == "recurso"
+    assert ast[0].alias == "r"
+    assert len(ast[0].cuerpo) == 1 and isinstance(ast[0].cuerpo[0], NodoPasar)
+
+
 def test_transpilar_del():
     nodo = NodoDel(NodoIdentificador("x"))
     codigo = TranspiladorPython().generate_code([nodo])
