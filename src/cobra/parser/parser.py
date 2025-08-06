@@ -104,6 +104,7 @@ class ClassicParser:
             TipoToken.GLOBAL: self.declaracion_global,
             TipoToken.NOLOCAL: self.declaracion_nolocal,
             TipoToken.CON: self.declaracion_con,
+            TipoToken.WITH: self.declaracion_con,
             TipoToken.DESDE: self.declaracion_desde,
             TipoToken.ASINCRONICO: self.declaracion_asincronico,
             TipoToken.ESPERAR: self.declaracion_esperar,
@@ -1003,18 +1004,21 @@ class ClassicParser:
         return NodoNoLocal(nombres)
 
     def declaracion_con(self):
-        """Parsea el contexto ``con`` similar a ``with`` en Python."""
-        self.comer(TipoToken.CON)
+        """Parsea el contexto ``con``/``with`` similar a ``with`` en Python."""
+        if self.token_actual().tipo in (TipoToken.CON, TipoToken.WITH):
+            self.avanzar()
+        else:
+            raise ParserError("Se esperaba 'con' o 'with'")
         contexto = self.expresion()
         alias = None
-        if self.token_actual().tipo == TipoToken.COMO:
-            self.comer(TipoToken.COMO)
+        if self.token_actual().tipo in (TipoToken.COMO, TipoToken.AS):
+            self.avanzar()
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise ParserError("Se esperaba un identificador luego de 'como'")
+                raise ParserError("Se esperaba un identificador luego de 'como' o 'as'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise ParserError("Se esperaba ':' después de 'con'")
+            raise ParserError("Se esperaba ':' después de 'con'/'with'")
         self.comer(TipoToken.DOSPUNTOS)
         cuerpo = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
@@ -1039,10 +1043,10 @@ class ClassicParser:
         nombre = self.token_actual().valor
         self.comer(TipoToken.IDENTIFICADOR)
         alias = None
-        if self.token_actual().tipo == TipoToken.COMO:
-            self.comer(TipoToken.COMO)
+        if self.token_actual().tipo in (TipoToken.COMO, TipoToken.AS):
+            self.avanzar()
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise ParserError("Se esperaba un alias después de 'como'")
+                raise ParserError("Se esperaba un alias después de 'como' o 'as'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
         return NodoImportDesde(modulo, nombre, alias)

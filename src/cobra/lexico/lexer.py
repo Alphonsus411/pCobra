@@ -111,9 +111,11 @@ class TipoToken(Enum):
     NOLOCAL = "NOLOCAL"
     LAMBDA = "LAMBDA"
     CON = "CON"
+    WITH = "WITH"
     FINALMENTE = "FINALMENTE"
     DESDE = "DESDE"
     COMO = "COMO"
+    AS = "AS"
     SWITCH = "SWITCH"
     CASE = "CASE"
     VARIABLE = "VARIABLE"
@@ -236,9 +238,11 @@ class Lexer:
             (TipoToken.NOLOCAL, re.compile(r"\bnolocal\b")),
             (TipoToken.LAMBDA, re.compile(r"\blambda\b")),
             (TipoToken.CON, re.compile(r"\bcon\b")),
+            (TipoToken.WITH, re.compile(r"\bwith\b")),
             (TipoToken.FINALMENTE, re.compile(r"\bfinalmente\b")),
             (TipoToken.DESDE, re.compile(r"\bdesde\b")),
             (TipoToken.COMO, re.compile(r"\bcomo\b")),
+            (TipoToken.AS, re.compile(r"\bas\b")),
             (TipoToken.FLOTANTE, re.compile(r"\d+\.\d+")),
             (TipoToken.ENTERO, re.compile(r"\d+")),
             (TipoToken.CADENA, re.compile(r"'(?:\\.|[^'])*'|\"(?:\\.|[^\"])*\"")),
