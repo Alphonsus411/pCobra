@@ -77,7 +77,7 @@ Los siguientes lenguajes pueden convertirse a Cobra:
    * - COBOL
      - Experimental
    * - Fortran
-     - Experimental
+     - Experimental (tree-sitter)
    * - Go
      - Experimental
    * - Java
