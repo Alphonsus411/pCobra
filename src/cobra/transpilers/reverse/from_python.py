@@ -30,6 +30,10 @@ from core.ast_nodes import (
     NodoPasar,
     NodoRomper,
     NodoContinuar,
+    NodoLista,
+    NodoDiccionario,
+    NodoListaTipo,
+    NodoDiccionarioTipo,
 )
 from cobra.lexico.lexer import Token, TipoToken
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
@@ -126,6 +130,18 @@ class ReverseFromPython(BaseReverseTranspiler):
         """Convierte una sentencia continue."""
         return NodoContinuar()
 
+    def visit_List(self, node: ast.List) -> NodoLista:
+        """Convierte una lista de Python."""
+        elementos = [self.visit(e) for e in node.elts]
+        return NodoLista(elementos)
+
+    def visit_Dict(self, node: ast.Dict) -> NodoDiccionario:
+        """Convierte un diccionario de Python."""
+        pares = [
+            (self.visit(k), self.visit(v)) for k, v in zip(node.keys, node.values)
+        ]
+        return NodoDiccionario(pares)
+
     # Operaciones -------------------------------------------------------
     def visit_BinOp(self, node: ast.BinOp) -> NodoOperacionBinaria:
         """Convierte una operación binaria."""
@@ -213,7 +229,12 @@ class ReverseFromPython(BaseReverseTranspiler):
             nombre = target.id
         else:
             nombre = self.visit(target)
-        return NodoAsignacion(nombre, self.visit(node.value))
+        valor = self.visit(node.value)
+        if isinstance(valor, NodoLista):
+            return NodoListaTipo(nombre, "Any", valor.elementos)
+        if isinstance(valor, NodoDiccionario):
+            return NodoDiccionarioTipo(nombre, "Any", "Any", valor.elementos)
+        return NodoAsignacion(nombre, valor)
 
     def visit_Return(self, node: ast.Return) -> NodoRetorno:
         """Convierte un return."""

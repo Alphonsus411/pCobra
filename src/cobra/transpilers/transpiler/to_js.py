@@ -3,6 +3,8 @@
 from core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
+    NodoListaTipo,
+    NodoDiccionarioTipo,
     NodoValor,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -111,6 +113,18 @@ def visit_import_desde(self, nodo):
     self.agregar_linea(f"import {{ {nodo.nombre}{alias} }} from '{modulo}';")
 
 
+def visit_lista_tipo(self, nodo):
+    elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+    self.agregar_linea(f"let {nodo.nombre} = [{elems}];")
+
+
+def visit_diccionario_tipo(self, nodo):
+    pares = ", ".join(
+        f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+    )
+    self.agregar_linea(f"let {nodo.nombre} = {{{pares}}};")
+
+
 class TranspiladorJavaScript(BaseTranspiler):
     def __init__(self):
         # Incluir importaciones de modulos nativos
@@ -169,6 +183,14 @@ class TranspiladorJavaScript(BaseTranspiler):
                 self.visit_diccionario(nodo)
             self.codigo = original
             return "".join(temp)
+        elif isinstance(nodo, NodoListaTipo):
+            elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+            return f"[{elems}]"
+        elif isinstance(nodo, NodoDiccionarioTipo):
+            pares = ", ".join(
+                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+            )
+            return f"{{{pares}}}"
         else:
             return str(nodo)
 
@@ -235,5 +257,7 @@ TranspiladorJavaScript.visit_nolocal = visit_nolocal
 TranspiladorJavaScript.visit_no_local = visit_nolocal
 TranspiladorJavaScript.visit_with = visit_with
 TranspiladorJavaScript.visit_import_desde = visit_import_desde
+TranspiladorJavaScript.visit_lista_tipo = visit_lista_tipo
+TranspiladorJavaScript.visit_diccionario_tipo = visit_diccionario_tipo
 
 # Métodos de transpilación para tipos de nodos básicos
