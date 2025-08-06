@@ -126,3 +126,5 @@ Para habilitar estos transpiladores inversos es necesario instalar las gramátic
 
 Este paquete incluye gramáticas para los lenguajes listados y puede instalarse junto con las dependencias del proyecto.
 
+Para conocer el alcance y las limitaciones del soporte de LaTeX consulte :doc:`soporte_latex`.
+
