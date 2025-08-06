@@ -6,6 +6,10 @@ def visit_clase(self, nodo):
     bases = getattr(nodo, "bases", [])
     base = f" extends {bases[0]}" if bases else ""
     extra = f" /* bases: {', '.join(bases)} */" if len(bases) > 1 else ""
+    if getattr(nodo, "type_params", []):
+        self.agregar_linea(
+            f"// Generics {', '.join(nodo.type_params)} no soportados en JavaScript"
+        )
     self.agregar_linea(f"class {nodo.nombre}{base} {{{extra}")
     if self.usa_indentacion:
         self.indentacion += 1

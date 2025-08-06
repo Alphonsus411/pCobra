@@ -236,7 +236,13 @@ def test_imports_python_por_defecto():
 def test_transpilador_funcion_generica():
     func = NodoFuncion("identidad", ["x"], [NodoPasar()], type_params=["T"])
     codigo = TranspiladorPython().generate_code([func])
-    esperado = IMPORTS + "def identidad[T](x):\n    pass\n"
+    esperado = (
+        "from typing import TypeVar, Generic\n"
+        + IMPORTS
+        + "T = TypeVar('T')\n"
+        + "def identidad(x):\n"
+        + "    pass\n"
+    )
     assert codigo == esperado
 
 
@@ -245,8 +251,10 @@ def test_transpilador_clase_generica():
     clase = NodoClase("Caja", [metodo], type_params=["T"])
     codigo = TranspiladorPython().generate_code([clase])
     esperado = (
-        IMPORTS
-        + "class Caja[T]:\n"
+        "from typing import TypeVar, Generic\n"
+        + IMPORTS
+        + "T = TypeVar('T')\n"
+        + "class Caja(Generic[T]):\n"
         + "    def identidad(self, x):\n"
         + "        pass\n"
     )

@@ -1,4 +1,7 @@
-"""Transpilador que genera código JavaScript a partir de Cobra."""
+"""Transpilador que genera código JavaScript a partir de Cobra.
+
+Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
+forma nativa, por lo que se recurre a tipos dinámicos."""
 
 from core.ast_nodes import (
     NodoLista,

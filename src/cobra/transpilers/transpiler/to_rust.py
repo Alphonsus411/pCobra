@@ -1,4 +1,6 @@
-"""Transpilador que genera código Rust a partir de Cobra."""
+"""Transpilador que genera código Rust a partir de Cobra.
+
+Los parámetros de tipo de Cobra se convierten en genéricos idiomáticos de Rust."""
 
 from core.ast_nodes import (
     NodoLista,
