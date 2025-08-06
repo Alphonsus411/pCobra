@@ -83,11 +83,16 @@ fin
 ## 4. Trabajar con módulos
 
 - Usa `import` para cargar archivos `.co` o módulos nativos.
+- Emplea `export` para exponer funciones o variables del módulo.
 - Los módulos nativos ofrecen funciones de E/S y estructuras de datos.
 
 ```cobra
 import 'modulo.co'
 imprimir(saludo)
+func saluda():
+    imprimir('hola')
+fin
+export saluda
 ```
 
 ## 5. Paquetes Cobra

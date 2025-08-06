@@ -16,6 +16,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
           | bucle_para
           | condicional
           | importacion
+          | exportacion
           | usar
           | macro
           | impresion
@@ -33,6 +34,7 @@ bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo ("sino" ":" cuerpo)? "fin"
 importacion: "import" CADENA
+exportacion: "export" IDENTIFICADOR
 usar: "usar" CADENA
 macro: "macro" IDENTIFICADOR "{" statement* "}"
 impresion: "imprimir" "(" argumentos? ")"
@@ -67,7 +69,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 ## Tokens y palabras reservadas
 El lexer de `src/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `metodo`, `atributo`
-- `si`, `sino`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
+- `si`, `sino`, `mientras`, `para`, `import`, `export`, `usar`, `macro`, `hilo`, `asincronico`
 - `switch`, `case`, `clase`, `in`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
 - `imprimir`, `yield`, `esperar`, `romper`, `continuar`, `pasar`, `afirmar`, `eliminar`,

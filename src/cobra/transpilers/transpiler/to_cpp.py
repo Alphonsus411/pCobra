@@ -21,6 +21,7 @@ from core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoExport,
     NodoOption,
     NodoPattern,
 )
@@ -45,6 +46,7 @@ from cobra.transpilers.transpiler.cpp_nodes.pasar import visit_pasar as _visit_p
 from cobra.transpilers.transpiler.cpp_nodes.switch import visit_switch as _visit_switch
 from cobra.transpilers.transpiler.cpp_nodes.option import visit_option as _visit_option
 from cobra.transpilers.transpiler.cpp_nodes.pattern import visit_pattern as _visit_pattern
+from cobra.transpilers.transpiler.cpp_nodes.exportar import visit_export as _visit_export
 
 
 def visit_assert(self, nodo):
@@ -198,3 +200,4 @@ TranspiladorCPP.visit_lista_tipo = visit_lista_tipo
 TranspiladorCPP.visit_diccionario_tipo = visit_diccionario_tipo
 TranspiladorCPP.visit_option = _visit_option
 TranspiladorCPP.visit_pattern = _visit_pattern
+TranspiladorCPP.visit_export = _visit_export

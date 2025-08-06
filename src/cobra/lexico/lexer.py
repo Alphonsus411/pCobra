@@ -45,6 +45,7 @@ class TipoToken(Enum):
     MIENTRAS = "MIENTRAS"
     PARA = "PARA"
     IMPORT = "IMPORT"
+    EXPORT = "EXPORT"
     USAR = "USAR"
     MACRO = "MACRO"
     HOLOBIT = "HOLOBIT"
@@ -190,6 +191,7 @@ class Lexer:
             (TipoToken.MIENTRAS, re.compile(r"\bmientras\b")),
             (TipoToken.PARA, re.compile(r"\bpara\b")),
             (TipoToken.IMPORT, re.compile(r"\bimport\b")),
+            (TipoToken.EXPORT, re.compile(r"\bexport\b")),
             (TipoToken.USAR, re.compile(r"\busar\b")),
             (TipoToken.MACRO, re.compile(r"\bmacro\b")),
             (TipoToken.HILO, re.compile(r"\bhilo\b")),

@@ -35,6 +35,7 @@ from core.ast_nodes import (
     NodoContinuar,
     NodoPasar,
     NodoImport,
+    NodoExport,
     NodoUsar,
     NodoMacro,
     NodoAssert,
@@ -87,6 +88,7 @@ class ClassicParser:
             TipoToken.MIENTRAS: self.declaracion_mientras,
             TipoToken.FUNC: self.declaracion_funcion,
             TipoToken.IMPORT: self.declaracion_import,
+            TipoToken.EXPORT: self.declaracion_export,
             TipoToken.USAR: self.declaracion_usar,
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
@@ -741,6 +743,15 @@ class ClassicParser:
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoImport(ruta)
+
+    def declaracion_export(self):
+        """Parsea una declaración de exportación de símbolo."""
+        self.comer(TipoToken.EXPORT)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba un nombre de símbolo a exportar")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        return NodoExport(nombre)
 
     def declaracion_usar(self):
         """Parsea una declaración 'usar' para importar módulos."""
