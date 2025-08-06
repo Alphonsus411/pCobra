@@ -3,6 +3,7 @@
 import logging
 import json
 import os
+from typing import Any
 from cobra.lexico.lexer import TipoToken, Token
 from .utils import PALABRAS_RESERVADAS, sugerir_palabra_clave
 
@@ -49,6 +50,8 @@ from core.ast_nodes import (
     NodoGuard,
     NodoSwitch,
     NodoCase,
+    NodoListaTipo,
+    NodoDiccionarioTipo,
 )
 
 from core import NodoYield
@@ -102,6 +105,8 @@ class ClassicParser:
             TipoToken.ASINCRONICO: self.declaracion_asincronico,
             TipoToken.ESPERAR: self.declaracion_esperar,
             TipoToken.SWITCH: self.declaracion_switch,
+            TipoToken.LISTA: self.declaracion_lista_tipo,
+            TipoToken.DICCIONARIO: self.declaracion_diccionario_tipo,
         }
 
     def reportar_error(self, mensaje: str) -> None:
@@ -747,6 +752,67 @@ class ClassicParser:
         ruta = self.token_actual().valor
         self.comer(TipoToken.CADENA)
         return NodoUsar(ruta)
+
+    def declaracion_lista_tipo(self):
+        """Parsea una declaración de lista tipada."""
+        self.comer(TipoToken.LISTA)
+        type_params = self.lista_parametros_tipo()
+        tipo = type_params[0] if type_params else "Any"
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba un nombre de variable para la lista")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        elementos = []
+        if self.token_actual().tipo == TipoToken.ASIGNAR:
+            self.comer(TipoToken.ASIGNAR)
+            if self.token_actual().tipo != TipoToken.LBRACKET:
+                raise ParserError("Se esperaba '[' para inicializar la lista")
+            self.comer(TipoToken.LBRACKET)
+            while self.token_actual().tipo != TipoToken.RBRACKET:
+                elementos.append(self.expresion())
+                if self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                else:
+                    break
+            if self.token_actual().tipo != TipoToken.RBRACKET:
+                raise ParserError("Se esperaba ']' al final de la lista")
+            self.comer(TipoToken.RBRACKET)
+        return NodoListaTipo(nombre, tipo, elementos)
+
+        
+    def declaracion_diccionario_tipo(self):
+        """Parsea una declaración de diccionario tipado."""
+        self.comer(TipoToken.DICCIONARIO)
+        type_params = self.lista_parametros_tipo()
+        if len(type_params) >= 2:
+            clave_tipo, valor_tipo = type_params[0], type_params[1]
+        else:
+            clave_tipo = valor_tipo = "Any"
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba un nombre de variable para el diccionario")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+        elementos: list[tuple[Any, Any]] = []
+        if self.token_actual().tipo == TipoToken.ASIGNAR:
+            self.comer(TipoToken.ASIGNAR)
+            if self.token_actual().tipo != TipoToken.LBRACE:
+                raise ParserError("Se esperaba '{' para inicializar el diccionario")
+            self.comer(TipoToken.LBRACE)
+            while self.token_actual().tipo != TipoToken.RBRACE:
+                clave = self.expresion()
+                if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                    raise ParserError("Se esperaba ':' entre clave y valor del diccionario")
+                self.comer(TipoToken.DOSPUNTOS)
+                valor = self.expresion()
+                elementos.append((clave, valor))
+                if self.token_actual().tipo == TipoToken.COMA:
+                    self.comer(TipoToken.COMA)
+                else:
+                    break
+            if self.token_actual().tipo != TipoToken.RBRACE:
+                raise ParserError("Se esperaba '}' al final del diccionario")
+            self.comer(TipoToken.RBRACE)
+        return NodoDiccionarioTipo(nombre, clave_tipo, valor_tipo, elementos)
 
     def declaracion_decorador(self):
         """Parsea una línea de decorador previa a una función."""

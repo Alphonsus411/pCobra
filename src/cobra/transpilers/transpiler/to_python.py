@@ -10,6 +10,8 @@ from core.ast_nodes import (
     NodoFor,
     NodoLista,
     NodoDiccionario,
+    NodoListaTipo,
+    NodoDiccionarioTipo,
     NodoClase,
     NodoMetodo,
     NodoValor,
@@ -126,6 +128,24 @@ def visit_with(self, nodo):
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
     self.codigo += f"from {nodo.modulo} import {nodo.nombre}{alias}\n"
+
+
+def visit_lista_tipo(self, nodo):
+    elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+    anot = f": list[{nodo.tipo}]" if nodo.tipo else ""
+    self.codigo += f"{self.obtener_indentacion()}{nodo.nombre}{anot} = [{elems}]\n"
+
+
+def visit_diccionario_tipo(self, nodo):
+    pares = ", ".join(
+        f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+    )
+    anot = (
+        f": dict[{nodo.tipo_clave}, {nodo.tipo_valor}]"
+        if nodo.tipo_clave or nodo.tipo_valor
+        else ""
+    )
+    self.codigo += f"{self.obtener_indentacion()}{nodo.nombre}{anot} = {{{pares}}}\n"
 
 
 class TranspiladorPython(BaseTranspiler):
@@ -245,6 +265,14 @@ class TranspiladorPython(BaseTranspiler):
             patron = self.obtener_valor(nodo.patron)
             guardia = self.obtener_valor(nodo.condicion)
             return f"{patron} if {guardia}"
+        elif isinstance(nodo, NodoListaTipo):
+            elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+            return f"[{elems}]"
+        elif isinstance(nodo, NodoDiccionarioTipo):
+            pares = ", ".join(
+                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+            )
+            return f"{{{pares}}}"
         else:
             return str(getattr(nodo, "valor", nodo))
 
@@ -293,3 +321,5 @@ TranspiladorPython.visit_nolocal = visit_nolocal
 TranspiladorPython.visit_no_local = visit_nolocal
 TranspiladorPython.visit_with = visit_with
 TranspiladorPython.visit_import_desde = visit_import_desde
+TranspiladorPython.visit_lista_tipo = visit_lista_tipo
+TranspiladorPython.visit_diccionario_tipo = visit_diccionario_tipo

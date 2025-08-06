@@ -3,6 +3,8 @@
 from core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
+    NodoListaTipo,
+    NodoDiccionarioTipo,
     NodoValor,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -72,6 +74,22 @@ def visit_import_desde(self, nodo):
     self.agregar_linea(f"// from {nodo.modulo} import {nodo.nombre}{alias}")
 
 
+def visit_lista_tipo(self, nodo):
+    elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+    self.agregar_linea(
+        f"std::vector<{nodo.tipo}> {nodo.nombre} = {{{elems}}};"
+    )
+
+
+def visit_diccionario_tipo(self, nodo):
+    pares = ", ".join(
+        f"{{{self.obtener_valor(k)}, {self.obtener_valor(v)}}}" for k, v in nodo.elementos
+    )
+    self.agregar_linea(
+        f"std::map<{nodo.tipo_clave}, {nodo.tipo_valor}> {nodo.nombre} = {{{pares}}};"
+    )
+
+
 class TranspiladorCPP(BaseTranspiler):
     """Transpila el AST de Cobra a código C++ sencillo."""
 
@@ -120,6 +138,14 @@ class TranspiladorCPP(BaseTranspiler):
                 for k, v in nodo.elementos
             )
             return f"std::map{{{pares}}}"
+        elif isinstance(nodo, NodoListaTipo):
+            elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+            return f"std::vector<{nodo.tipo}>{{{elems}}}"
+        elif isinstance(nodo, NodoDiccionarioTipo):
+            pares = ", ".join(
+                f"{{{self.obtener_valor(k)}, {self.obtener_valor(v)}}}" for k, v in nodo.elementos
+            )
+            return f"std::map<{nodo.tipo_clave}, {nodo.tipo_valor}>{{{pares}}}"
         else:
             return str(getattr(nodo, "valor", nodo))
 
@@ -152,3 +178,5 @@ TranspiladorCPP.visit_no_local = visit_nolocal
 TranspiladorCPP.visit_with = visit_with
 TranspiladorCPP.visit_import_desde = visit_import_desde
 TranspiladorCPP.visit_switch = _visit_switch
+TranspiladorCPP.visit_lista_tipo = visit_lista_tipo
+TranspiladorCPP.visit_diccionario_tipo = visit_diccionario_tipo

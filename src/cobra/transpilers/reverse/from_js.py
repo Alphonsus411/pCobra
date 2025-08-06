@@ -23,6 +23,11 @@ from core.ast_nodes import (
     NodoIdentificador,
     NodoRetorno,
     NodoValor,
+    NodoLista,
+    NodoDiccionario,
+    NodoListaTipo,
+    NodoDiccionarioTipo,
+    NodoAsignacion,
 )
 
 from .tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
@@ -130,6 +135,46 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
 
     # ------------------------------------------------------------------
     # Expresiones
+    def visit_array(self, node: Node) -> NodoLista:
+        elementos = [self.visit(c) for c in node.children if c.is_named]
+        return NodoLista(elementos)
+
+    def visit_object(self, node: Node) -> NodoDiccionario:
+        pares = []
+        for child in node.children:
+            if child.type == "pair":
+                key = self.visit(child.child_by_field_name("key"))
+                value = self.visit(child.child_by_field_name("value"))
+                pares.append((key, value))
+        return NodoDiccionario(pares)
+
+    def visit_variable_declaration(self, node: Node) -> NodoAsignacion:
+        declarator = next((c for c in node.children if c.type == "variable_declarator"), None)
+        if declarator is None:
+            return self.generic_visit(node)
+        name_n = declarator.child_by_field_name("name")
+        value_n = declarator.child_by_field_name("value")
+        nombre = TreeSitterNode(name_n).get_text() if name_n else ""
+        valor = self.visit(value_n) if value_n else NodoValor(None)
+        if isinstance(valor, NodoLista):
+            return NodoListaTipo(nombre, "Any", valor.elementos)
+        if isinstance(valor, NodoDiccionario):
+            return NodoDiccionarioTipo(nombre, "Any", "Any", valor.elementos)
+        return NodoAsignacion(nombre, valor)
+
+    def visit_assignment_expression(self, node: Node) -> NodoAsignacion:
+        left_n = node.child_by_field_name("left")
+        right_n = node.child_by_field_name("right")
+        left = self.visit(left_n)
+        right = self.visit(right_n) if right_n else NodoValor(None)
+        if isinstance(left, NodoIdentificador):
+            nombre = left.nombre
+            if isinstance(right, NodoLista):
+                return NodoListaTipo(nombre, "Any", right.elementos)
+            if isinstance(right, NodoDiccionario):
+                return NodoDiccionarioTipo(nombre, "Any", "Any", right.elementos)
+            return NodoAsignacion(nombre, right)
+        return NodoAsignacion(left, right)
     def visit_binary_expression(self, node: Node) -> NodoOperacionBinaria:
         """Convierte una expresión binaria."""
         izquierda = self.visit(node.children[0])

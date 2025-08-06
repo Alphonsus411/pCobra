@@ -93,6 +93,25 @@ class NodoDiccionario(NodoAST):
 
 
 @dataclass
+class NodoListaTipo(NodoAST):
+    nombre: str
+    tipo: str
+    elementos: List[Any] = field(default_factory=list)
+
+    """Declaración de una lista con tipo explícito."""
+
+
+@dataclass
+class NodoDiccionarioTipo(NodoAST):
+    nombre: str
+    tipo_clave: str
+    tipo_valor: str
+    elementos: List[tuple[Any, Any]] = field(default_factory=list)
+
+    """Declaración de un diccionario con tipos para clave y valor."""
+
+
+@dataclass
 class NodoDecorador(NodoAST):
     expresion: Any
 
@@ -491,6 +510,8 @@ __all__ = [
     "NodoFor",
     "NodoLista",
     "NodoDiccionario",
+    "NodoListaTipo",
+    "NodoDiccionarioTipo",
     "NodoDecorador",
     "NodoFuncion",
     "NodoClase",
