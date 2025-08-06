@@ -1,4 +1,5 @@
 def visit_clase(self, nodo):
+    """Genera la definición de una clase aplicando sus decoradores."""
     for decorador in getattr(nodo, "decoradores", []):
         decorador.aceptar(self)
     metodos = getattr(nodo, "metodos", getattr(nodo, "cuerpo", []))
