@@ -1,4 +1,5 @@
 """Analizador léxico para el lenguaje Cobra."""
+
 import logging
 import re
 from enum import Enum
@@ -8,23 +9,31 @@ from typing import Dict, List, Optional, Pattern, Tuple, Union, cast
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class LexerError(Exception):
     """Excepción base para errores del analizador léxico."""
+
     def __init__(self, mensaje: str, linea: int, columna: int) -> None:
         super().__init__(mensaje)
         self.linea = linea
         self.columna = columna
 
+
 class InvalidTokenError(LexerError):
     """Excepción para símbolos no reconocidos."""
+
     pass
+
 
 class UnclosedStringError(LexerError):
     """Excepción para cadenas sin cerrar."""
+
     pass
+
 
 class TipoToken(Enum):
     """Enumeración de todos los tipos de tokens soportados."""
+
     DIVIDIR = "DIVIDIR"
     MULTIPLICAR = "MULTIPLICAR"
     CLASE = "CLASE"
@@ -46,6 +55,7 @@ class TipoToken(Enum):
     PARA = "PARA"
     IMPORT = "IMPORT"
     USAR = "USAR"
+    OPTION = "OPTION"
     MACRO = "MACRO"
     HOLOBIT = "HOLOBIT"
     PROYECTAR = "PROYECTAR"
@@ -109,14 +119,16 @@ class TipoToken(Enum):
     VARIABLE = "VARIABLE"
     ASIGNAR_INFERENCIA = "ASIGNAR_INFERENCIA"
 
+
 class Token:
     """Representa un token del lenguaje con su tipo, valor y posición."""
+
     def __init__(
-        self, 
+        self,
         tipo: TipoToken,
         valor: Optional[Union[str, int, float]],
         linea: Optional[int] = None,
-        columna: Optional[int] = None
+        columna: Optional[int] = None,
     ) -> None:
         self.tipo = tipo
         self.valor = valor
@@ -130,14 +142,17 @@ class Token:
     def __eq__(self, otro: object) -> bool:
         if not isinstance(otro, Token):
             return NotImplemented
-        return (self.tipo == otro.tipo and 
-                self.valor == otro.valor and 
-                self.linea == otro.linea and 
-                self.columna == otro.columna)
+        return (
+            self.tipo == otro.tipo
+            and self.valor == otro.valor
+            and self.linea == otro.linea
+            and self.columna == otro.columna
+        )
 
 
 class EstadoLexer:
     """Mantiene el estado del lexer para permitir retroceso."""
+
     def __init__(self, posicion: int, linea: int, columna: int) -> None:
         self.posicion = posicion
         self.linea = linea
@@ -146,13 +161,13 @@ class EstadoLexer:
     def __repr__(self) -> str:
         return f"EstadoLexer(pos={self.posicion}, lin={self.linea}, col={self.columna})"
 
+
 class Lexer:
     """Analizador léxico para el lenguaje Cobra."""
 
     # Constantes para patrones de tokens
     PATRON_COMENTARIOS = re.compile(
-        r"/\*.*?\*/|//.*?$|#.*?$",
-        flags=re.DOTALL | re.MULTILINE | re.UNICODE
+        r"/\*.*?\*/|//.*?$|#.*?$", flags=re.DOTALL | re.MULTILINE | re.UNICODE
     )
 
     MAX_ITERACIONES = 1000000  # Límite de seguridad para bucles
@@ -168,7 +183,7 @@ class Lexer:
         """
         if not isinstance(codigo_fuente, str):
             raise TypeError("El código fuente debe ser una cadena de texto")
-        
+
         self.codigo_fuente = codigo_fuente
         self.posicion = 0
         self.linea = 1
@@ -191,6 +206,7 @@ class Lexer:
             (TipoToken.PARA, re.compile(r"\bpara\b")),
             (TipoToken.IMPORT, re.compile(r"\bimport\b")),
             (TipoToken.USAR, re.compile(r"\busar\b")),
+            (TipoToken.OPTION, re.compile(r"\boption\b")),
             (TipoToken.MACRO, re.compile(r"\bmacro\b")),
             (TipoToken.HILO, re.compile(r"\bhilo\b")),
             (TipoToken.ASINCRONICO, re.compile(r"\basincronico\b")),
@@ -256,7 +272,7 @@ class Lexer:
             (TipoToken.RBRACKET, re.compile(r"\]")),
             (TipoToken.COMA, re.compile(r",")),
             (TipoToken.DECORADOR, re.compile(r"@")),
-            (None, re.compile(r"\s+"))  # Ignorar espacios en blanco
+            (None, re.compile(r"\s+")),  # Ignorar espacios en blanco
         ]
 
     def _limpiar_comentarios(self) -> None:
@@ -279,9 +295,7 @@ class Lexer:
             return bytes(valor[1:-1], "utf-8").decode("unicode_escape")
         except UnicodeError as e:
             raise UnclosedStringError(
-                f"Cadena mal formada: {str(e)}",
-                self.linea,
-                self.columna
+                f"Cadena mal formada: {str(e)}", self.linea, self.columna
             )
 
     def _actualizar_posicion(self, texto: str) -> None:
@@ -298,11 +312,7 @@ class Lexer:
                 self.columna += 1
         self.posicion += len(texto)
 
-    def _procesar_valor(
-        self, 
-        tipo: TipoToken, 
-        valor: str
-    ) -> Union[str, int, float]:
+    def _procesar_valor(self, tipo: TipoToken, valor: str) -> Union[str, int, float]:
         """Procesa el valor del token según su tipo.
 
         Args:
@@ -334,13 +344,13 @@ class Lexer:
             raise UnclosedStringError(
                 f"Cadena sin cerrar en línea {self.linea}, columna {self.columna}",
                 self.linea,
-                self.columna
+                self.columna,
             )
         raise InvalidTokenError(
             f"Token no reconocido: '{error_token}' en línea {self.linea}, "
             f"columna {self.columna}",
             self.linea,
-            self.columna
+            self.columna,
         )
 
     def _tokenizar_base(self) -> List[Token]:
@@ -363,10 +373,10 @@ class Lexer:
         while self.posicion < len(self.codigo_fuente):
             if iteraciones > self.MAX_ITERACIONES:
                 raise RuntimeError("Se excedió el límite de iteraciones")
-            
+
             matched = False
             for tipo, regex in self.especificacion_tokens:
-                coincidencia = regex.match(self.codigo_fuente[self.posicion:])
+                coincidencia = regex.match(self.codigo_fuente[self.posicion :])
                 if coincidencia:
                     valor_original = coincidencia.group(0)
                     if tipo:
@@ -377,7 +387,7 @@ class Lexer:
                             "Token identificado: %s, valor: '%s', posición: %d",
                             tipo,
                             valor,
-                            self.posicion
+                            self.posicion,
                         )
                     self._actualizar_posicion(valor_original)
                     matched = True
@@ -385,7 +395,7 @@ class Lexer:
 
             if not matched:
                 self._manejar_error()
-            
+
             iteraciones += 1
 
         # Añade token EOF
@@ -393,10 +403,7 @@ class Lexer:
         return self.tokens
 
     def tokenizar(
-        self, 
-        *, 
-        incremental: bool = False, 
-        profile: bool = False
+        self, *, incremental: bool = False, profile: bool = False
     ) -> List[Token]:
         """Convierte el código en tokens.
 
@@ -427,6 +434,7 @@ class Lexer:
             Lista de tokens
         """
         from core.ast_cache import obtener_tokens_fragmento
+
         self.tokens = []
         for linea in self.codigo_fuente.splitlines(keepends=True):
             if linea in self._cache:
@@ -447,17 +455,17 @@ class Lexer:
         import cProfile
         import pstats
         import io
-        
+
         pr = cProfile.Profile()
         pr.enable()
         resultado = self._tokenizar_base()
         pr.disable()
-        
+
         s = io.StringIO()
         stats = pstats.Stats(pr, stream=s)
         stats.sort_stats("cumulative").print_stats(5)
         logger.info("Lexer profile:\n%s", s.getvalue())
-        
+
         return resultado
 
     def analizar_token(self) -> List[Token]:
@@ -563,4 +571,3 @@ class Lexer:
         self.columna = 1
         self.tokens = []
         self._cache.clear()
-

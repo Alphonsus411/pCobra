@@ -131,6 +131,7 @@ La construcción `option` declara valores opcionales que pueden o no contener un
 
 ```cobra
 option resultado = obtener()
+option sin_valor = None
 ```
 
 ## Switch ampliado

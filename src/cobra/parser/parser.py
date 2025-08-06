@@ -61,8 +61,6 @@ from core.ast_nodes import (
 from core import NodoYield
 
 
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -88,6 +86,7 @@ class ClassicParser:
             TipoToken.FUNC: self.declaracion_funcion,
             TipoToken.IMPORT: self.declaracion_import,
             TipoToken.USAR: self.declaracion_usar,
+            TipoToken.OPTION: self.declaracion_option,
             TipoToken.IMPRIMIR: self.declaracion_imprimir,
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
@@ -236,9 +235,7 @@ class ClassicParser:
             if token.tipo == TipoToken.IDENTIFICADOR:
                 sugerencia = sugerir_palabra_clave(token.valor)
                 if sugerencia:
-                    raise ParserError(
-                        f"Token inesperado. ¿Quiso decir '{sugerencia}'?"
-                    )
+                    raise ParserError(f"Token inesperado. ¿Quiso decir '{sugerencia}'?")
 
             # Posibles expresiones o asignaciones/invocaciones
             if token.tipo == TipoToken.ATRIBUTO:
@@ -400,7 +397,10 @@ class ClassicParser:
             variable_token = self.exp_atributo()
         else:
             variable_token = self.token_actual()
-            if nombre_embedido is not None and self.token_actual().tipo == TipoToken.ASIGNAR:
+            if (
+                nombre_embedido is not None
+                and self.token_actual().tipo == TipoToken.ASIGNAR
+            ):
                 variable_token = Token(TipoToken.IDENTIFICADOR, nombre_embedido)
             if variable_token.valor in PALABRAS_RESERVADAS:
                 raise ParserError(
@@ -670,7 +670,9 @@ class ClassicParser:
         self.comer(TipoToken.FIN)
 
         logger.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
-        return NodoFuncion(nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params)
+        return NodoFuncion(
+            nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params
+        )
 
     def declaracion_imprimir(self):
         """Parsea una declaración de impresión."""
@@ -751,6 +753,24 @@ class ClassicParser:
         self.comer(TipoToken.CADENA)
         return NodoUsar(ruta)
 
+    def declaracion_option(self):
+        """Parsea una declaración de valor opcional."""
+        self.comer(TipoToken.OPTION)
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            self.reportar_error("Se esperaba un identificador después de 'option'")
+            nombre = "<error>"
+        else:
+            nombre = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
+        if self.token_actual().tipo != TipoToken.ASIGNAR:
+            self.reportar_error("Se esperaba '=' en la declaración 'option'")
+        else:
+            self.comer(TipoToken.ASIGNAR)
+        valor = self.expresion()
+        if not isinstance(valor, NodoOption):
+            valor = NodoOption(valor)
+        return NodoAsignacion(nombre, valor)
+
     def declaracion_lista_tipo(self):
         """Parsea una declaración de lista tipada."""
         self.comer(TipoToken.LISTA)
@@ -777,7 +797,6 @@ class ClassicParser:
             self.comer(TipoToken.RBRACKET)
         return NodoListaTipo(nombre, tipo, elementos)
 
-        
     def declaracion_diccionario_tipo(self):
         """Parsea una declaración de diccionario tipado."""
         self.comer(TipoToken.DICCIONARIO)
@@ -799,7 +818,9 @@ class ClassicParser:
             while self.token_actual().tipo != TipoToken.RBRACE:
                 clave = self.expresion()
                 if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                    raise ParserError("Se esperaba ':' entre clave y valor del diccionario")
+                    raise ParserError(
+                        "Se esperaba ':' entre clave y valor del diccionario"
+                    )
                 self.comer(TipoToken.DOSPUNTOS)
                 valor = self.expresion()
                 elementos.append((clave, valor))
@@ -1089,7 +1110,9 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar el método")
         self.comer(TipoToken.FIN)
 
-        return NodoMetodo(nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params)
+        return NodoMetodo(
+            nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params
+        )
 
     def declaracion_clase(self):
         """Parsea la declaración de una clase."""
@@ -1289,7 +1312,9 @@ class ClassicParser:
         if self.token_actual().tipo == TipoToken.PARA:
             self.comer(TipoToken.PARA)
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise ParserError("Se esperaba un identificador en la comprensión de lista")
+                raise ParserError(
+                    "Se esperaba un identificador en la comprensión de lista"
+                )
             variable = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo != TipoToken.IN:
@@ -1330,7 +1355,9 @@ class ClassicParser:
         if self.token_actual().tipo == TipoToken.PARA:
             self.comer(TipoToken.PARA)
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
-                raise ParserError("Se esperaba un identificador en la comprensión de diccionario")
+                raise ParserError(
+                    "Se esperaba un identificador en la comprensión de diccionario"
+                )
             variable = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
             if self.token_actual().tipo != TipoToken.IN:
@@ -1342,9 +1369,13 @@ class ClassicParser:
                 self.comer(TipoToken.SI)
                 condicion = self.expresion()
             if self.token_actual().tipo != TipoToken.RBRACE:
-                raise ParserError("Se esperaba '}' al final de la comprensión de diccionario")
+                raise ParserError(
+                    "Se esperaba '}' al final de la comprensión de diccionario"
+                )
             self.comer(TipoToken.RBRACE)
-            return NodoDiccionarioComprehension(clave, valor, variable, iterable, condicion)
+            return NodoDiccionarioComprehension(
+                clave, valor, variable, iterable, condicion
+            )
         else:
             elementos = [(clave, valor)]
             while self.token_actual().tipo == TipoToken.COMA:
@@ -1353,7 +1384,9 @@ class ClassicParser:
                     break
                 clave = self.expresion()
                 if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                    raise ParserError("Se esperaba ':' entre clave y valor del diccionario")
+                    raise ParserError(
+                        "Se esperaba ':' entre clave y valor del diccionario"
+                    )
                 self.comer(TipoToken.DOSPUNTOS)
                 valor = self.expresion()
                 elementos.append((clave, valor))
