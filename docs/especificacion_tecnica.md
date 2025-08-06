@@ -63,10 +63,15 @@ fin
 
 ## Módulos
 
-Los archivos pueden importarse usando `importar`.
+Los archivos pueden importarse usando `importar` y exponer símbolos con `export`.
 
 ```cobra
 importar utilidades
+
+func saluda():
+    imprimir "hola"
+fin
+export saluda
 ```
 
 ## Manejo de errores
@@ -131,6 +136,7 @@ La construcción `option` declara valores opcionales que pueden o no contener un
 
 ```cobra
 option resultado = obtener()
+option sin_valor = None
 ```
 
 ## Switch ampliado

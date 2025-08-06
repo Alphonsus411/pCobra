@@ -42,6 +42,7 @@ from core.ast_nodes import (
     NodoWith,
     NodoImportDesde,
     NodoEsperar,
+    NodoOption,
     NodoPattern,
     NodoGuard,
 )
@@ -53,32 +54,66 @@ from core.optimizations import optimize_constants, remove_dead_code, inline_func
 from cobra.macro import expandir_macros
 from cobra.transpilers.import_helper import get_standard_imports
 
-from cobra.transpilers.transpiler.python_nodes.asignacion import visit_asignacion as _visit_asignacion
-from cobra.transpilers.transpiler.python_nodes.condicional import visit_condicional as _visit_condicional
-from cobra.transpilers.transpiler.python_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from cobra.transpilers.transpiler.python_nodes.asignacion import (
+    visit_asignacion as _visit_asignacion,
+)
+from cobra.transpilers.transpiler.python_nodes.condicional import (
+    visit_condicional as _visit_condicional,
+)
+from cobra.transpilers.transpiler.python_nodes.bucle_mientras import (
+    visit_bucle_mientras as _visit_bucle_mientras,
+)
 from cobra.transpilers.transpiler.python_nodes.for_ import visit_for as _visit_for
-from cobra.transpilers.transpiler.python_nodes.funcion import visit_funcion as _visit_funcion
+from cobra.transpilers.transpiler.python_nodes.funcion import (
+    visit_funcion as _visit_funcion,
+)
 from cobra.transpilers.transpiler.python_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from cobra.transpilers.transpiler.python_nodes.llamada_metodo import visit_llamada_metodo as _visit_llamada_metodo
-from cobra.transpilers.transpiler.python_nodes.imprimir import visit_imprimir as _visit_imprimir
-from cobra.transpilers.transpiler.python_nodes.retorno import visit_retorno as _visit_retorno
-from cobra.transpilers.transpiler.python_nodes.holobit import visit_holobit as _visit_holobit
+from cobra.transpilers.transpiler.python_nodes.llamada_metodo import (
+    visit_llamada_metodo as _visit_llamada_metodo,
+)
+from cobra.transpilers.transpiler.python_nodes.imprimir import (
+    visit_imprimir as _visit_imprimir,
+)
+from cobra.transpilers.transpiler.python_nodes.retorno import (
+    visit_retorno as _visit_retorno,
+)
+from cobra.transpilers.transpiler.python_nodes.holobit import (
+    visit_holobit as _visit_holobit,
+)
 from cobra.transpilers.transpiler.python_nodes.lista import visit_lista as _visit_lista
-from cobra.transpilers.transpiler.python_nodes.diccionario import visit_diccionario as _visit_diccionario
+from cobra.transpilers.transpiler.python_nodes.diccionario import (
+    visit_diccionario as _visit_diccionario,
+)
 from cobra.transpilers.transpiler.python_nodes.clase import visit_clase as _visit_clase
-from cobra.transpilers.transpiler.python_nodes.metodo import visit_metodo as _visit_metodo
-from cobra.transpilers.transpiler.python_nodes.try_catch import visit_try_catch as _visit_try_catch
+from cobra.transpilers.transpiler.python_nodes.metodo import (
+    visit_metodo as _visit_metodo,
+)
+from cobra.transpilers.transpiler.python_nodes.try_catch import (
+    visit_try_catch as _visit_try_catch,
+)
 from cobra.transpilers.transpiler.python_nodes.throw import visit_throw as _visit_throw
-from cobra.transpilers.transpiler.python_nodes.importar import visit_import as _visit_import
+from cobra.transpilers.transpiler.python_nodes.importar import (
+    visit_import as _visit_import,
+)
 from cobra.transpilers.transpiler.python_nodes.usar import visit_usar as _visit_usar
 from cobra.transpilers.transpiler.python_nodes.hilo import visit_hilo as _visit_hilo
-from cobra.transpilers.transpiler.python_nodes.instancia import visit_instancia as _visit_instancia
-from cobra.transpilers.transpiler.python_nodes.atributo import visit_atributo as _visit_atributo
-from cobra.transpilers.transpiler.python_nodes.proyectar import visit_proyectar as _visit_proyectar
-from cobra.transpilers.transpiler.python_nodes.transformar import visit_transformar as _visit_transformar
-from cobra.transpilers.transpiler.python_nodes.graficar import visit_graficar as _visit_graficar
+from cobra.transpilers.transpiler.python_nodes.instancia import (
+    visit_instancia as _visit_instancia,
+)
+from cobra.transpilers.transpiler.python_nodes.atributo import (
+    visit_atributo as _visit_atributo,
+)
+from cobra.transpilers.transpiler.python_nodes.proyectar import (
+    visit_proyectar as _visit_proyectar,
+)
+from cobra.transpilers.transpiler.python_nodes.transformar import (
+    visit_transformar as _visit_transformar,
+)
+from cobra.transpilers.transpiler.python_nodes.graficar import (
+    visit_graficar as _visit_graficar,
+)
 from cobra.transpilers.transpiler.python_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
@@ -86,16 +121,33 @@ from cobra.transpilers.transpiler.python_nodes.operacion_unaria import (
     visit_operacion_unaria as _visit_operacion_unaria,
 )
 from cobra.transpilers.transpiler.python_nodes.valor import visit_valor as _visit_valor
-from cobra.transpilers.transpiler.python_nodes.identificador import visit_identificador as _visit_identificador
+from cobra.transpilers.transpiler.python_nodes.identificador import (
+    visit_identificador as _visit_identificador,
+)
 from cobra.transpilers.transpiler.python_nodes.para import visit_para as _visit_para
-from cobra.transpilers.transpiler.python_nodes.decorador import visit_decorador as _visit_decorador
+from cobra.transpilers.transpiler.python_nodes.decorador import (
+    visit_decorador as _visit_decorador,
+)
 from cobra.transpilers.transpiler.python_nodes.yield_ import visit_yield as _visit_yield
-from cobra.transpilers.transpiler.python_nodes.esperar import visit_esperar as _visit_esperar
-from cobra.transpilers.transpiler.python_nodes.romper import visit_romper as _visit_romper
-from cobra.transpilers.transpiler.python_nodes.continuar import visit_continuar as _visit_continuar
+from cobra.transpilers.transpiler.python_nodes.esperar import (
+    visit_esperar as _visit_esperar,
+)
+from cobra.transpilers.transpiler.python_nodes.romper import (
+    visit_romper as _visit_romper,
+)
+from cobra.transpilers.transpiler.python_nodes.continuar import (
+    visit_continuar as _visit_continuar,
+)
 from cobra.transpilers.transpiler.python_nodes.pasar import visit_pasar as _visit_pasar
-from cobra.transpilers.transpiler.python_nodes.switch import visit_switch as _visit_switch
-from cobra.transpilers.transpiler.python_nodes.exportar import visit_export as _visit_export
+from cobra.transpilers.transpiler.python_nodes.switch import (
+    visit_switch as _visit_switch,
+)
+from cobra.transpilers.transpiler.python_nodes.option import (
+    visit_option as _visit_option,
+)
+from cobra.transpilers.transpiler.python_nodes.exportar import (
+    visit_export as _visit_export,
+)
 
 
 def visit_assert(self, nodo):
@@ -187,8 +239,7 @@ class TranspiladorPython(BaseTranspiler):
         if (
             nodos
             and all(
-            n.__class__.__module__.startswith("cobra.parser.parser")
-                for n in nodos
+                n.__class__.__module__.startswith("cobra.parser.parser") for n in nodos
             )
             and not any(self._contiene_nodo_valor(n) for n in nodos)
         ):
@@ -272,6 +323,10 @@ class TranspiladorPython(BaseTranspiler):
             params = ", ".join(nodo.parametros)
             cuerpo = self.obtener_valor(nodo.cuerpo)
             return f"lambda {params}: {cuerpo}"
+        elif isinstance(nodo, NodoOption):
+            if nodo.valor is None:
+                return "None"
+            return self.obtener_valor(nodo.valor)
         elif isinstance(nodo, NodoPattern):
             if isinstance(nodo.valor, list):
                 elems = ", ".join(self.obtener_valor(p) for p in nodo.valor)
@@ -289,7 +344,8 @@ class TranspiladorPython(BaseTranspiler):
             return f"[{elems}]"
         elif isinstance(nodo, NodoDiccionario):
             pares = ", ".join(
-                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}"
+                for k, v in nodo.elementos
             )
             return f"{{{pares}}}"
         elif isinstance(nodo, NodoListaTipo):
@@ -297,23 +353,20 @@ class TranspiladorPython(BaseTranspiler):
             return f"[{elems}]"
         elif isinstance(nodo, NodoDiccionarioTipo):
             pares = ", ".join(
-                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}"
+                for k, v in nodo.elementos
             )
             return f"{{{pares}}}"
         elif isinstance(nodo, NodoListaComprehension):
             expr = self.obtener_valor(nodo.expresion)
             it = self.obtener_valor(nodo.iterable)
-            cond = (
-                f" if {self.obtener_valor(nodo.condicion)}" if nodo.condicion else ""
-            )
+            cond = f" if {self.obtener_valor(nodo.condicion)}" if nodo.condicion else ""
             return f"[{expr} for {nodo.variable} in {it}{cond}]"
         elif isinstance(nodo, NodoDiccionarioComprehension):
             key = self.obtener_valor(nodo.clave)
             val = self.obtener_valor(nodo.valor)
             it = self.obtener_valor(nodo.iterable)
-            cond = (
-                f" if {self.obtener_valor(nodo.condicion)}" if nodo.condicion else ""
-            )
+            cond = f" if {self.obtener_valor(nodo.condicion)}" if nodo.condicion else ""
             return f"{{{key}: {val} for {nodo.variable} in {it}{cond}}}"
         else:
             return str(getattr(nodo, "valor", nodo))
@@ -356,6 +409,7 @@ TranspiladorPython.visit_continuar = _visit_continuar
 TranspiladorPython.visit_pasar = _visit_pasar
 TranspiladorPython.visit_esperar = _visit_esperar
 TranspiladorPython.visit_switch = _visit_switch
+TranspiladorPython.visit_option = _visit_option
 TranspiladorPython.visit_export = _visit_export
 TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del

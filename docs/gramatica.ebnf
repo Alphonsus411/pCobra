@@ -8,6 +8,7 @@
           | bucle_para
           | condicional
           | importacion
+          | exportacion
           | usar
           | macro
           | impresion
@@ -29,6 +30,7 @@ bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo ("sino" ":" cuerpo)? "fin"
 importacion: "import" CADENA
+exportacion: "export" IDENTIFICADOR
 usar: "usar" CADENA
 macro: "macro" IDENTIFICADOR "{" statement* "}"
 impresion: "imprimir" "(" argumentos? ")"
@@ -53,6 +55,8 @@ argumentos: expr ("," expr)*
       | holobit
       | lambda
       | "esperar" valor
+      | "Some" "(" expr ")"
+      | "None"
 holobit: "holobit" "(" "[" [expr ("," expr)*] "]" ")"
 lambda: "lambda" parametros? ":" expr
 operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"
