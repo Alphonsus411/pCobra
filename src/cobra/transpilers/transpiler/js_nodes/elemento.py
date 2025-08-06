@@ -15,4 +15,4 @@ def visit_elemento(self, elemento):
         self.codigo = original_codigo
         return ''.join(transpiled_element)
     else:
-        return str(elemento)
+        return self.obtener_valor(elemento)

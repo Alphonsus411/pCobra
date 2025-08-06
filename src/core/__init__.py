@@ -19,6 +19,8 @@ __all__ = [
     "NodoFor",
     "NodoLista",
     "NodoDiccionario",
+    "NodoListaComprehension",
+    "NodoDiccionarioComprehension",
     "NodoFuncion",
     "NodoClase",
     "NodoMetodo",

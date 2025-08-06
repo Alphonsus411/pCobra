@@ -93,6 +93,27 @@ class NodoDiccionario(NodoAST):
 
 
 @dataclass
+class NodoListaComprehension(NodoAST):
+    expresion: Any
+    variable: str
+    iterable: Any
+    condicion: Optional[Any] = None
+
+    """Comprensión de listas ``[expresion para x en iterable si condicion]``."""
+
+
+@dataclass
+class NodoDiccionarioComprehension(NodoAST):
+    clave: Any
+    valor: Any
+    variable: str
+    iterable: Any
+    condicion: Optional[Any] = None
+
+    """Comprensión de diccionarios ``{clave: valor para x en iterable si condicion}``."""
+
+
+@dataclass
 class NodoListaTipo(NodoAST):
     nombre: str
     tipo: str

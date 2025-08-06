@@ -8,6 +8,8 @@ from core.ast_nodes import (
     NodoDiccionario,
     NodoListaTipo,
     NodoDiccionarioTipo,
+    NodoListaComprehension,
+    NodoDiccionarioComprehension,
     NodoValor,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -132,6 +134,14 @@ def visit_diccionario_tipo(self, nodo):
     self.agregar_linea(f"let {nodo.nombre} = {{{pares}}};")
 
 
+def visit_lista_comprehension(self, nodo):
+    self.agregar_linea(self.obtener_valor(nodo))
+
+
+def visit_diccionario_comprehension(self, nodo):
+    self.agregar_linea(self.obtener_valor(nodo))
+
+
 class TranspiladorJavaScript(BaseTranspiler):
     def __init__(self):
         # Incluir importaciones de modulos nativos
@@ -189,6 +199,27 @@ class TranspiladorJavaScript(BaseTranspiler):
                 elems = ", ".join(self.obtener_valor(e) for e in nodo.valor)
                 return f"({elems})"
             return "_" if nodo.valor == "_" else self.obtener_valor(nodo.valor)
+        elif isinstance(nodo, NodoListaComprehension):
+            expr = self.obtener_valor(nodo.expresion)
+            it = self.obtener_valor(nodo.iterable)
+            cond = (
+                f".filter({nodo.variable} => {self.obtener_valor(nodo.condicion)})"
+                if nodo.condicion
+                else ""
+            )
+            return f"Array.from({it}){cond}.map({nodo.variable} => {expr})"
+        elif isinstance(nodo, NodoDiccionarioComprehension):
+            key = self.obtener_valor(nodo.clave)
+            val = self.obtener_valor(nodo.valor)
+            it = self.obtener_valor(nodo.iterable)
+            cond = (
+                f".filter({nodo.variable} => {self.obtener_valor(nodo.condicion)})"
+                if nodo.condicion
+                else ""
+            )
+            return (
+                f"Object.fromEntries(Array.from({it}){cond}.map({nodo.variable} => [ {key}, {val} ]))"
+            )
         elif isinstance(nodo, NodoLista) or isinstance(nodo, NodoDiccionario):
             temp = []
             original = self.codigo
@@ -275,6 +306,8 @@ TranspiladorJavaScript.visit_with = visit_with
 TranspiladorJavaScript.visit_import_desde = visit_import_desde
 TranspiladorJavaScript.visit_lista_tipo = visit_lista_tipo
 TranspiladorJavaScript.visit_diccionario_tipo = visit_diccionario_tipo
+TranspiladorJavaScript.visit_lista_comprehension = visit_lista_comprehension
+TranspiladorJavaScript.visit_diccionario_comprehension = visit_diccionario_comprehension
 TranspiladorJavaScript.visit_option = _visit_option
 TranspiladorJavaScript.visit_pattern = _visit_pattern
 

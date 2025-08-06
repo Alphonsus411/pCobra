@@ -10,6 +10,8 @@ from core.ast_nodes import (
     NodoFor,
     NodoLista,
     NodoDiccionario,
+    NodoListaComprehension,
+    NodoDiccionarioComprehension,
     NodoListaTipo,
     NodoDiccionarioTipo,
     NodoClase,
@@ -148,6 +150,14 @@ def visit_diccionario_tipo(self, nodo):
     self.codigo += f"{self.obtener_indentacion()}{nodo.nombre}{anot} = {{{pares}}}\n"
 
 
+def visit_lista_comprehension(self, nodo):
+    self.codigo += f"{self.obtener_valor(nodo)}\n"
+
+
+def visit_diccionario_comprehension(self, nodo):
+    self.codigo += f"{self.obtener_valor(nodo)}\n"
+
+
 class TranspiladorPython(BaseTranspiler):
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
@@ -268,6 +278,14 @@ class TranspiladorPython(BaseTranspiler):
             patron = self.obtener_valor(nodo.patron)
             guardia = self.obtener_valor(nodo.condicion)
             return f"{patron} if {guardia}"
+        elif isinstance(nodo, NodoLista):
+            elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+            return f"[{elems}]"
+        elif isinstance(nodo, NodoDiccionario):
+            pares = ", ".join(
+                f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
+            )
+            return f"{{{pares}}}"
         elif isinstance(nodo, NodoListaTipo):
             elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
             return f"[{elems}]"
@@ -276,6 +294,21 @@ class TranspiladorPython(BaseTranspiler):
                 f"{self.obtener_valor(k)}: {self.obtener_valor(v)}" for k, v in nodo.elementos
             )
             return f"{{{pares}}}"
+        elif isinstance(nodo, NodoListaComprehension):
+            expr = self.obtener_valor(nodo.expresion)
+            it = self.obtener_valor(nodo.iterable)
+            cond = (
+                f" if {self.obtener_valor(nodo.condicion)}" if nodo.condicion else ""
+            )
+            return f"[{expr} for {nodo.variable} in {it}{cond}]"
+        elif isinstance(nodo, NodoDiccionarioComprehension):
+            key = self.obtener_valor(nodo.clave)
+            val = self.obtener_valor(nodo.valor)
+            it = self.obtener_valor(nodo.iterable)
+            cond = (
+                f" if {self.obtener_valor(nodo.condicion)}" if nodo.condicion else ""
+            )
+            return f"{{{key}: {val} for {nodo.variable} in {it}{cond}}}"
         else:
             return str(getattr(nodo, "valor", nodo))
 
@@ -326,3 +359,5 @@ TranspiladorPython.visit_with = visit_with
 TranspiladorPython.visit_import_desde = visit_import_desde
 TranspiladorPython.visit_lista_tipo = visit_lista_tipo
 TranspiladorPython.visit_diccionario_tipo = visit_diccionario_tipo
+TranspiladorPython.visit_lista_comprehension = visit_lista_comprehension
+TranspiladorPython.visit_diccionario_comprehension = visit_diccionario_comprehension

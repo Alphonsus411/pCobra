@@ -34,6 +34,8 @@ from core.ast_nodes import (
     NodoDiccionario,
     NodoListaTipo,
     NodoDiccionarioTipo,
+    NodoListaComprehension,
+    NodoDiccionarioComprehension,
 )
 from cobra.lexico.lexer import Token, TipoToken
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
@@ -141,6 +143,33 @@ class ReverseFromPython(BaseReverseTranspiler):
             (self.visit(k), self.visit(v)) for k, v in zip(node.keys, node.values)
         ]
         return NodoDiccionario(pares)
+
+    def visit_ListComp(self, node: ast.ListComp) -> NodoListaComprehension:
+        """Convierte una comprensión de lista."""
+        if len(node.generators) != 1:
+            raise NotImplementedError("Solo se soporta una cláusula 'for'")
+        gen = node.generators[0]
+        if not isinstance(gen.target, ast.Name):
+            raise NotImplementedError("Variable de comprensión no soportada")
+        variable = gen.target.id
+        iterable = self.visit(gen.iter)
+        condicion = self.visit(gen.ifs[0]) if gen.ifs else None
+        expresion = self.visit(node.elt)
+        return NodoListaComprehension(expresion, variable, iterable, condicion)
+
+    def visit_DictComp(self, node: ast.DictComp) -> NodoDiccionarioComprehension:
+        """Convierte una comprensión de diccionario."""
+        if len(node.generators) != 1:
+            raise NotImplementedError("Solo se soporta una cláusula 'for'")
+        gen = node.generators[0]
+        if not isinstance(gen.target, ast.Name):
+            raise NotImplementedError("Variable de comprensión no soportada")
+        variable = gen.target.id
+        iterable = self.visit(gen.iter)
+        condicion = self.visit(gen.ifs[0]) if gen.ifs else None
+        clave = self.visit(node.key)
+        valor = self.visit(node.value)
+        return NodoDiccionarioComprehension(clave, valor, variable, iterable, condicion)
 
     # Operaciones -------------------------------------------------------
     def visit_BinOp(self, node: ast.BinOp) -> NodoOperacionBinaria:
