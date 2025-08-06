@@ -28,6 +28,8 @@ from core.ast_nodes import (
     NodoProyectar,
     NodoTransformar,
     NodoGraficar,
+    NodoOption,
+    NodoPattern,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -76,6 +78,8 @@ from cobra.transpilers.transpiler.js_nodes.continuar import visit_continuar as _
 from cobra.transpilers.transpiler.js_nodes.pasar import visit_pasar as _visit_pasar
 from cobra.transpilers.transpiler.js_nodes.switch import visit_switch as _visit_switch
 from cobra.transpilers.transpiler.js_nodes.exportar import visit_export as _visit_export
+from cobra.transpilers.transpiler.js_nodes.option import visit_option as _visit_option
+from cobra.transpilers.transpiler.js_nodes.pattern import visit_pattern as _visit_pattern
 
 
 def visit_assert(self, nodo):
@@ -176,6 +180,15 @@ class TranspiladorJavaScript(BaseTranspiler):
             params = ", ".join(nodo.parametros)
             cuerpo = self.obtener_valor(nodo.cuerpo)
             return f"({params}) => {cuerpo}"
+        elif isinstance(nodo, NodoOption):
+            if nodo.valor is None:
+                return "null"
+            return self.obtener_valor(nodo.valor)
+        elif isinstance(nodo, NodoPattern):
+            if isinstance(nodo.valor, list):
+                elems = ", ".join(self.obtener_valor(e) for e in nodo.valor)
+                return f"({elems})"
+            return "_" if nodo.valor == "_" else self.obtener_valor(nodo.valor)
         elif isinstance(nodo, NodoLista) or isinstance(nodo, NodoDiccionario):
             temp = []
             original = self.codigo
@@ -262,5 +275,7 @@ TranspiladorJavaScript.visit_with = visit_with
 TranspiladorJavaScript.visit_import_desde = visit_import_desde
 TranspiladorJavaScript.visit_lista_tipo = visit_lista_tipo
 TranspiladorJavaScript.visit_diccionario_tipo = visit_diccionario_tipo
+TranspiladorJavaScript.visit_option = _visit_option
+TranspiladorJavaScript.visit_pattern = _visit_pattern
 
 # Métodos de transpilación para tipos de nodos básicos

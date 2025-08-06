@@ -9,7 +9,7 @@ Ejemplos:
     >>> transpiler = ReverseFromJS()
     >>> ast = transpiler.generate_ast("function main() { return 0; }")
 """
-from typing import List
+from typing import Any, List
 
 from tree_sitter import Node
 
@@ -28,6 +28,10 @@ from core.ast_nodes import (
     NodoListaTipo,
     NodoDiccionarioTipo,
     NodoAsignacion,
+    NodoSwitch,
+    NodoCase,
+    NodoPattern,
+    NodoOption,
 )
 
 from .tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
@@ -133,6 +137,30 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         ] if body_n else []
         return NodoBucleMientras(cond, cuerpo)
 
+    def visit_switch_statement(self, node: Node) -> NodoSwitch:
+        """Convierte un switch de JavaScript."""
+        expr_n = node.child_by_field_name("value")
+        body_n = node.child_by_field_name("body")
+        expr = self.visit(expr_n) if expr_n else NodoValor(None)
+        casos: List[NodoCase] = []
+        por_defecto: List[Any] = []
+        if body_n:
+            for child in body_n.children:
+                if child.type == "switch_case":
+                    val_n = child.child_by_field_name("value")
+                    val = self.visit(val_n) if val_n else NodoValor(None)
+                    if not isinstance(val, NodoPattern):
+                        val = NodoPattern(val)
+                    cuerpo = [
+                        self.visit(c)
+                        for c in child.children
+                        if c.is_named and c is not val_n
+                    ]
+                    casos.append(NodoCase(val, cuerpo))
+                elif child.type == "switch_default":
+                    por_defecto = [self.visit(c) for c in child.children if c.is_named]
+        return NodoSwitch(expr, casos, por_defecto)
+
     # ------------------------------------------------------------------
     # Expresiones
     def visit_array(self, node: Node) -> NodoLista:
@@ -194,10 +222,16 @@ class ReverseFromJS(TreeSitterReverseTranspiler):
         return NodoRetorno(self.visit(expr) if expr else NodoValor(None))
 
     def visit_identifier(self, node: Node) -> NodoIdentificador:  # type: ignore[override]
+        text = TreeSitterNode(node).get_text()
+        if text == "undefined":
+            return NodoOption(None)
         return super().visit_identifier(node)
 
     def visit_number(self, node: Node) -> NodoValor:  # type: ignore[override]
         return super().visit_number(node)
+
+    def visit_null(self, node: Node) -> NodoOption:  # type: ignore[override]
+        return NodoOption(None)
 
     def visit_string(self, node: Node) -> NodoValor:  # type: ignore[override]
         return super().visit_string(node)

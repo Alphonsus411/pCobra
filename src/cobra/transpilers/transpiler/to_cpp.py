@@ -21,6 +21,8 @@ from core.ast_nodes import (
     NodoLambda,
     NodoWith,
     NodoImportDesde,
+    NodoOption,
+    NodoPattern,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -41,6 +43,8 @@ from cobra.transpilers.transpiler.cpp_nodes.romper import visit_romper as _visit
 from cobra.transpilers.transpiler.cpp_nodes.continuar import visit_continuar as _visit_continuar
 from cobra.transpilers.transpiler.cpp_nodes.pasar import visit_pasar as _visit_pasar
 from cobra.transpilers.transpiler.cpp_nodes.switch import visit_switch as _visit_switch
+from cobra.transpilers.transpiler.cpp_nodes.option import visit_option as _visit_option
+from cobra.transpilers.transpiler.cpp_nodes.pattern import visit_pattern as _visit_pattern
 
 
 def visit_assert(self, nodo):
@@ -132,6 +136,15 @@ class TranspiladorCPP(BaseTranspiler):
             params = ", ".join(nodo.parametros)
             cuerpo = self.obtener_valor(nodo.cuerpo)
             return f"[=]({params}){{ return {cuerpo}; }}"
+        elif isinstance(nodo, NodoOption):
+            if nodo.valor is None:
+                return "std::nullopt"
+            return self.obtener_valor(nodo.valor)
+        elif isinstance(nodo, NodoPattern):
+            if isinstance(nodo.valor, list):
+                elems = ", ".join(self.obtener_valor(e) for e in nodo.valor)
+                return f"({elems})"
+            return "_" if nodo.valor == "_" else self.obtener_valor(nodo.valor)
         elif isinstance(nodo, NodoLista):
             elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
             return f"std::vector{{{elems}}}"
@@ -183,3 +196,5 @@ TranspiladorCPP.visit_import_desde = visit_import_desde
 TranspiladorCPP.visit_switch = _visit_switch
 TranspiladorCPP.visit_lista_tipo = visit_lista_tipo
 TranspiladorCPP.visit_diccionario_tipo = visit_diccionario_tipo
+TranspiladorCPP.visit_option = _visit_option
+TranspiladorCPP.visit_pattern = _visit_pattern

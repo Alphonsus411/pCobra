@@ -82,3 +82,43 @@ class ReverseFromCPP(TreeSitterReverseTranspiler):
         bloque = core.ast_nodes.NodoBloque()
         bloque.sentencias = sentencias
         return bloque
+
+    def visit_simple_declaration(self, node: Any) -> core.ast_nodes.NodoAsignacion:
+        declarator = node.child_by_field_name("declarator")
+        valor_n = node.child_by_field_name("value")
+        nombre_n = declarator
+        if declarator and declarator.type == "init_declarator":
+            nombre_n = declarator.child_by_field_name("declarator")
+            valor_n = declarator.child_by_field_name("value")
+        nombre = TreeSitterNode(nombre_n).get_text() if nombre_n else ""
+        valor = self.visit(valor_n) if valor_n else core.ast_nodes.NodoValor(None)
+        return core.ast_nodes.NodoAsignacion(nombre, valor)
+
+    def visit_switch_statement(self, node: Any) -> core.ast_nodes.NodoSwitch:
+        cond_n = node.child_by_field_name("condition")
+        body_n = node.child_by_field_name("body")
+        expr = self.visit(cond_n) if cond_n else core.ast_nodes.NodoValor(None)
+        casos: List[core.ast_nodes.NodoCase] = []
+        por_defecto: List[Any] = []
+        if body_n:
+            for child in body_n.children:
+                if child.type == "case_statement":
+                    val_n = child.child_by_field_name("value")
+                    val = self.visit(val_n) if val_n else core.ast_nodes.NodoValor(None)
+                    if not isinstance(val, core.ast_nodes.NodoPattern):
+                        val = core.ast_nodes.NodoPattern(val)
+                    cuerpo = [
+                        self.visit(c)
+                        for c in child.children
+                        if c.is_named and c is not val_n
+                    ]
+                    casos.append(core.ast_nodes.NodoCase(val, cuerpo))
+                elif child.type == "default_statement":
+                    por_defecto = [self.visit(c) for c in child.children if c.is_named]
+        return core.ast_nodes.NodoSwitch(expr, casos, por_defecto)
+
+    def visit_identifier(self, node: Any) -> Any:  # type: ignore[override]
+        text = TreeSitterNode(node).get_text()
+        if text in {"nullptr", "NULL", "std::nullopt"}:
+            return core.ast_nodes.NodoOption(None)
+        return super().visit_identifier(node)
