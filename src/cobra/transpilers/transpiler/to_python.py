@@ -26,6 +26,9 @@ from core.ast_nodes import (
     NodoThrow,
     NodoImport,
     NodoImprimir,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
     NodoAssert,
     NodoDel,
     NodoGlobal,
@@ -68,6 +71,9 @@ from cobra.transpilers.transpiler.python_nodes.usar import visit_usar as _visit_
 from cobra.transpilers.transpiler.python_nodes.hilo import visit_hilo as _visit_hilo
 from cobra.transpilers.transpiler.python_nodes.instancia import visit_instancia as _visit_instancia
 from cobra.transpilers.transpiler.python_nodes.atributo import visit_atributo as _visit_atributo
+from cobra.transpilers.transpiler.python_nodes.proyectar import visit_proyectar as _visit_proyectar
+from cobra.transpilers.transpiler.python_nodes.transformar import visit_transformar as _visit_transformar
+from cobra.transpilers.transpiler.python_nodes.graficar import visit_graficar as _visit_graficar
 from cobra.transpilers.transpiler.python_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
@@ -265,6 +271,9 @@ TranspiladorPython.visit_usar = _visit_usar
 TranspiladorPython.visit_hilo = _visit_hilo
 TranspiladorPython.visit_instancia = _visit_instancia
 TranspiladorPython.visit_atributo = _visit_atributo
+TranspiladorPython.visit_proyectar = _visit_proyectar
+TranspiladorPython.visit_transformar = _visit_transformar
+TranspiladorPython.visit_graficar = _visit_graficar
 TranspiladorPython.visit_operacion_binaria = _visit_operacion_binaria
 TranspiladorPython.visit_operacion_unaria = _visit_operacion_unaria
 TranspiladorPython.visit_valor = _visit_valor

@@ -22,6 +22,9 @@ from core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoImprimir,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
     NodoRetorno,
     NodoPara,
     NodoDecorador,
@@ -69,6 +72,9 @@ class ClassicParser:
             TipoToken.VAR: self.declaracion_asignacion,
             TipoToken.VARIABLE: self.declaracion_asignacion,
             TipoToken.HOLOBIT: self.declaracion_holobit,
+            TipoToken.PROYECTAR: self.declaracion_proyectar,
+            TipoToken.TRANSFORMAR: self.declaracion_transformar,
+            TipoToken.GRAFICAR: self.declaracion_graficar,
             TipoToken.SI: self.declaracion_condicional,
             TipoToken.PARA: self.declaracion_para,
             TipoToken.MIENTRAS: self.declaracion_mientras,
@@ -681,6 +687,48 @@ class ClassicParser:
             expresion = self.expresion()
 
         return NodoImprimir(expresion)
+
+    def declaracion_proyectar(self):
+        """Parsea una declaración ``proyectar``."""
+        self.comer(TipoToken.PROYECTAR)
+        self.comer(TipoToken.LPAREN)
+        hb = self.expresion()
+        if self.token_actual().tipo != TipoToken.COMA:
+            raise ParserError("Se esperaba ',' después del holobit en 'proyectar'")
+        self.comer(TipoToken.COMA)
+        modo = self.expresion()
+        if self.token_actual().tipo != TipoToken.RPAREN:
+            raise ParserError("Se esperaba ')' al final de 'proyectar'")
+        self.comer(TipoToken.RPAREN)
+        return NodoProyectar(hb, modo)
+
+    def declaracion_transformar(self):
+        """Parsea una declaración ``transformar``."""
+        self.comer(TipoToken.TRANSFORMAR)
+        self.comer(TipoToken.LPAREN)
+        hb = self.expresion()
+        if self.token_actual().tipo != TipoToken.COMA:
+            raise ParserError("Se esperaba ',' después del holobit en 'transformar'")
+        self.comer(TipoToken.COMA)
+        operacion = self.expresion()
+        parametros = []
+        while self.token_actual().tipo == TipoToken.COMA:
+            self.comer(TipoToken.COMA)
+            parametros.append(self.expresion())
+        if self.token_actual().tipo != TipoToken.RPAREN:
+            raise ParserError("Se esperaba ')' al final de 'transformar'")
+        self.comer(TipoToken.RPAREN)
+        return NodoTransformar(hb, operacion, parametros)
+
+    def declaracion_graficar(self):
+        """Parsea una declaración ``graficar``."""
+        self.comer(TipoToken.GRAFICAR)
+        self.comer(TipoToken.LPAREN)
+        hb = self.expresion()
+        if self.token_actual().tipo != TipoToken.RPAREN:
+            raise ParserError("Se esperaba ')' al final de 'graficar'")
+        self.comer(TipoToken.RPAREN)
+        return NodoGraficar(hb)
 
     def declaracion_import(self):
         """Parsea una declaración de importación de módulo."""

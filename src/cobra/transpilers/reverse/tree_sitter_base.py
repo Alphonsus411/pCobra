@@ -19,6 +19,9 @@ from core.ast_nodes import (
     NodoCondicional,
     NodoFuncion,
     NodoLlamadaFuncion,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
     NodoRetorno,
     NodoIdentificador,
     NodoValor,
@@ -184,6 +187,19 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
                 for child in args.children
                 if child.is_named
             ]
+
+        if nombre_txt == "proyectar":
+            hb = argumentos[0] if argumentos else NodoValor(None)
+            modo = argumentos[1] if len(argumentos) > 1 else NodoValor(None)
+            return NodoProyectar(hb, modo)
+        if nombre_txt == "transformar":
+            hb = argumentos[0] if argumentos else NodoValor(None)
+            oper = argumentos[1] if len(argumentos) > 1 else NodoValor(None)
+            params = argumentos[2:] if len(argumentos) > 2 else []
+            return NodoTransformar(hb, oper, params)
+        if nombre_txt == "graficar":
+            hb = argumentos[0] if argumentos else NodoValor(None)
+            return NodoGraficar(hb)
 
         return NodoLlamadaFuncion(nombre_txt, argumentos)
 
