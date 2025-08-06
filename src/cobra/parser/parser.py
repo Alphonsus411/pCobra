@@ -50,8 +50,12 @@ from core.ast_nodes import (
     NodoGuard,
     NodoSwitch,
     NodoCase,
+    NodoLista,
+    NodoDiccionario,
     NodoListaTipo,
     NodoDiccionarioTipo,
+    NodoListaComprehension,
+    NodoDiccionarioComprehension,
 )
 
 from core import NodoYield
@@ -1268,8 +1272,95 @@ class ClassicParser:
         elif token.tipo == TipoToken.HOLOBIT:
             # Permitir el uso de 'holobit' dentro de expresiones
             return self.declaracion_holobit()
+        elif token.tipo == TipoToken.LBRACKET:
+            return self.lista_o_comprension()
+        elif token.tipo == TipoToken.LBRACE:
+            return self.diccionario_o_comprension()
         else:
             raise ParserError(f"Token inesperado en término: {token.tipo}")
+
+    def lista_o_comprension(self):
+        """Parsea literales de lista y comprensiones."""
+        self.comer(TipoToken.LBRACKET)
+        if self.token_actual().tipo == TipoToken.RBRACKET:
+            self.comer(TipoToken.RBRACKET)
+            return NodoLista([])
+        primera = self.expresion()
+        if self.token_actual().tipo == TipoToken.PARA:
+            self.comer(TipoToken.PARA)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise ParserError("Se esperaba un identificador en la comprensión de lista")
+            variable = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo != TipoToken.IN:
+                raise ParserError("Se esperaba 'en' en la comprensión de lista")
+            self.comer(TipoToken.IN)
+            iterable = self.expresion()
+            condicion = None
+            if self.token_actual().tipo == TipoToken.SI:
+                self.comer(TipoToken.SI)
+                condicion = self.expresion()
+            if self.token_actual().tipo != TipoToken.RBRACKET:
+                raise ParserError("Se esperaba ']' al final de la comprensión de lista")
+            self.comer(TipoToken.RBRACKET)
+            return NodoListaComprehension(primera, variable, iterable, condicion)
+        else:
+            elementos = [primera]
+            while self.token_actual().tipo == TipoToken.COMA:
+                self.comer(TipoToken.COMA)
+                if self.token_actual().tipo == TipoToken.RBRACKET:
+                    break
+                elementos.append(self.expresion())
+            if self.token_actual().tipo != TipoToken.RBRACKET:
+                raise ParserError("Se esperaba ']' al final de la lista")
+            self.comer(TipoToken.RBRACKET)
+            return NodoLista(elementos)
+
+    def diccionario_o_comprension(self):
+        """Parsea literales de diccionario y comprensiones."""
+        self.comer(TipoToken.LBRACE)
+        if self.token_actual().tipo == TipoToken.RBRACE:
+            self.comer(TipoToken.RBRACE)
+            return NodoDiccionario([])
+        clave = self.expresion()
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise ParserError("Se esperaba ':' entre clave y valor del diccionario")
+        self.comer(TipoToken.DOSPUNTOS)
+        valor = self.expresion()
+        if self.token_actual().tipo == TipoToken.PARA:
+            self.comer(TipoToken.PARA)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise ParserError("Se esperaba un identificador en la comprensión de diccionario")
+            variable = self.token_actual().valor
+            self.comer(TipoToken.IDENTIFICADOR)
+            if self.token_actual().tipo != TipoToken.IN:
+                raise ParserError("Se esperaba 'en' en la comprensión de diccionario")
+            self.comer(TipoToken.IN)
+            iterable = self.expresion()
+            condicion = None
+            if self.token_actual().tipo == TipoToken.SI:
+                self.comer(TipoToken.SI)
+                condicion = self.expresion()
+            if self.token_actual().tipo != TipoToken.RBRACE:
+                raise ParserError("Se esperaba '}' al final de la comprensión de diccionario")
+            self.comer(TipoToken.RBRACE)
+            return NodoDiccionarioComprehension(clave, valor, variable, iterable, condicion)
+        else:
+            elementos = [(clave, valor)]
+            while self.token_actual().tipo == TipoToken.COMA:
+                self.comer(TipoToken.COMA)
+                if self.token_actual().tipo == TipoToken.RBRACE:
+                    break
+                clave = self.expresion()
+                if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+                    raise ParserError("Se esperaba ':' entre clave y valor del diccionario")
+                self.comer(TipoToken.DOSPUNTOS)
+                valor = self.expresion()
+                elementos.append((clave, valor))
+            if self.token_actual().tipo != TipoToken.RBRACE:
+                raise ParserError("Se esperaba '}' al final del diccionario")
+            self.comer(TipoToken.RBRACE)
+            return NodoDiccionario(elementos)
 
     def exp_atributo(self):
         """Parsea la expresión 'atributo objeto nombre'."""
