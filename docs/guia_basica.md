@@ -206,3 +206,10 @@ imprimir factorial(5)
 ## 26. Comando verify
 El subcomando `cobra verificar` (`cobra verify`) comprueba que un programa
 genere la misma salida en distintos lenguajes.
+
+## 27. Enumeraciones
+```cobra
+enum Color:
+    ROJO, VERDE, AZUL
+fin
+```
