@@ -33,6 +33,7 @@ from core.ast_nodes import (
     NodoOption,
     NodoPattern,
     NodoEnum,
+    NodoInterface,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -84,6 +85,22 @@ from cobra.transpilers.transpiler.js_nodes.exportar import visit_export as _visi
 from cobra.transpilers.transpiler.js_nodes.option import visit_option as _visit_option
 from cobra.transpilers.transpiler.js_nodes.pattern import visit_pattern as _visit_pattern
 from cobra.transpilers.transpiler.js_nodes.enum import visit_enum as _visit_enum
+
+
+def visit_interface(self, nodo):
+    """Transpila una interfaz como una clase sin implementación."""
+    metodos = getattr(nodo, "metodos", [])
+    if self.usa_indentacion is None:
+        self.usa_indentacion = any(hasattr(m, "variable") for m in metodos)
+    self.agregar_linea(f"class {nodo.nombre} {{")
+    if self.usa_indentacion:
+        self.indentacion += 1
+    for metodo in metodos:
+        params = ", ".join(metodo.parametros)
+        self.agregar_linea(f"{metodo.nombre}({params}) {{}}")
+    if self.usa_indentacion:
+        self.indentacion -= 1
+    self.agregar_linea("}")
 
 
 def visit_assert(self, nodo):
@@ -313,5 +330,6 @@ TranspiladorJavaScript.visit_diccionario_comprehension = visit_diccionario_compr
 TranspiladorJavaScript.visit_option = _visit_option
 TranspiladorJavaScript.visit_pattern = _visit_pattern
 TranspiladorJavaScript.visit_enum = _visit_enum
+TranspiladorJavaScript.visit_interface = visit_interface
 
 # Métodos de transpilación para tipos de nodos básicos

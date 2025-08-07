@@ -16,6 +16,7 @@ from core.ast_nodes import (
     NodoDiccionarioTipo,
     NodoClase,
     NodoEnum,
+    NodoInterface,
     NodoMetodo,
     NodoValor,
     NodoRetorno,
@@ -148,6 +149,21 @@ from cobra.transpilers.transpiler.python_nodes.option import (
 from cobra.transpilers.transpiler.python_nodes.enum import (
     visit_enum as _visit_enum,
 )
+
+
+def visit_interface(self, nodo):
+    """Genera la definición de una interfaz como clase abstracta."""
+    self.codigo += f"{self.obtener_indentacion()}class {nodo.nombre}:\n"
+    self.nivel_indentacion += 1
+    if not nodo.metodos:
+        self.codigo += f"{self.obtener_indentacion()}pass\n"
+    for metodo in nodo.metodos:
+        params = ", ".join(metodo.parametros)
+        self.codigo += f"{self.obtener_indentacion()}def {metodo.nombre}({params}):\n"
+        self.nivel_indentacion += 1
+        self.codigo += f"{self.obtener_indentacion()}pass\n"
+        self.nivel_indentacion -= 1
+    self.nivel_indentacion -= 1
 
 
 def visit_assert(self, nodo):
@@ -407,6 +423,7 @@ TranspiladorPython.visit_esperar = _visit_esperar
 TranspiladorPython.visit_switch = _visit_switch
 TranspiladorPython.visit_option = _visit_option
 TranspiladorPython.visit_enum = _visit_enum
+TranspiladorPython.visit_interface = visit_interface
 TranspiladorPython.visit_assert = visit_assert
 TranspiladorPython.visit_del = visit_del
 TranspiladorPython.visit_global = visit_global

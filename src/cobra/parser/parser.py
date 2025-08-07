@@ -15,6 +15,8 @@ from core.ast_nodes import (
     NodoFuncion,
     NodoClase,
     NodoEnum,
+    NodoInterface,
+    NodoMetodoAbstracto,
     NodoMetodo,
     NodoAtributo,
     NodoLlamadaFuncion,
@@ -101,6 +103,7 @@ class ClassicParser:
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
             TipoToken.ENUM: self.declaracion_enum,
+            TipoToken.INTERFACE: self.declaracion_interface,
             TipoToken.AFIRMAR: self.declaracion_afirmar,
             TipoToken.ELIMINAR: self.declaracion_eliminar,
             TipoToken.GLOBAL: self.declaracion_global,
@@ -1146,6 +1149,42 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar el enum")
         self.comer(TipoToken.FIN)
         return NodoEnum(nombre, miembros)
+
+    def declaracion_interface(self):
+        """Parsea la declaración de una interfaz con métodos abstractos."""
+        self.comer(TipoToken.INTERFACE)
+
+        if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+            raise ParserError("Se esperaba un nombre de interfaz")
+        nombre = self.token_actual().valor
+        self.comer(TipoToken.IDENTIFICADOR)
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise ParserError("Se esperaba ':' después del nombre de la interfaz")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        metodos: list[NodoMetodoAbstracto] = []
+        while self.token_actual().tipo != TipoToken.FIN:
+            if self.token_actual().tipo != TipoToken.FUNC:
+                raise ParserError(
+                    "Se esperaba una declaración de método en la interfaz"
+                )
+            self.comer(TipoToken.FUNC)
+            if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
+                raise ParserError("Se esperaba un nombre de método")
+            nombre_met = self.token_actual().valor
+            if nombre_met in PALABRAS_RESERVADAS:
+                raise ParserError(
+                    f"El nombre del método '{nombre_met}' es una palabra reservada"
+                )
+            self.comer(TipoToken.IDENTIFICADOR)
+            self.comer(TipoToken.LPAREN)
+            params = self.lista_parametros()
+            self.comer(TipoToken.RPAREN)
+            metodos.append(NodoMetodoAbstracto(nombre_met, params))
+
+        self.comer(TipoToken.FIN)
+        return NodoInterface(nombre, metodos)
 
     def declaracion_clase(self):
         """Parsea la declaración de una clase."""
