@@ -150,6 +150,21 @@ class NodoFuncion(NodoAST):
 
     """Declaración de una función definida por el usuario."""
 
+@dataclass
+class NodoMetodoAbstracto(NodoAST):
+    nombre: str
+    parametros: List[str] = field(default_factory=list)
+
+    """Firma de un método sin implementación."""
+
+
+@dataclass
+class NodoInterface(NodoAST):
+    nombre: str
+    metodos: List[NodoMetodoAbstracto] = field(default_factory=list)
+
+    """Declaración de una interfaz con métodos abstractos."""
+
 
 @dataclass
 class NodoClase(NodoAST):

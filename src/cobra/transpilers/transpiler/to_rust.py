@@ -25,6 +25,7 @@ from core.ast_nodes import (
     NodoCase,
     NodoPattern,
     NodoGuard,
+    NodoInterface,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -88,6 +89,17 @@ def visit_with(self, nodo):
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
     self.agregar_linea(f"use {nodo.modulo}::{nodo.nombre}{alias};")
+
+
+def visit_interface(self, nodo):
+    """Transpila una interfaz a un trait de Rust."""
+    self.agregar_linea(f"trait {nodo.nombre} {{")
+    self.indent += 1
+    for metodo in getattr(nodo, "metodos", []):
+        params = ", ".join(f"{p}: &dyn std::any::Any" for p in metodo.parametros)
+        self.agregar_linea(f"fn {metodo.nombre}({params});")
+    self.indent -= 1
+    self.agregar_linea("}")
 
 
 class TranspiladorRust(BaseTranspiler):
@@ -173,6 +185,7 @@ TranspiladorRust.visit_llamada_funcion = _visit_llamada_funcion
 TranspiladorRust.visit_holobit = _visit_holobit
 TranspiladorRust.visit_clase = _visit_clase
 TranspiladorRust.visit_metodo = _visit_metodo
+TranspiladorRust.visit_interface = visit_interface
 TranspiladorRust.visit_yield = _visit_yield
 TranspiladorRust.visit_romper = _visit_romper
 TranspiladorRust.visit_continuar = _visit_continuar

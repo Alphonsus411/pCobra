@@ -23,6 +23,7 @@ from core.ast_nodes import (
     NodoImportDesde,
     NodoOption,
     NodoPattern,
+    NodoInterface,
 )
 from cobra.lexico.lexer import TipoToken
 from core.visitor import NodeVisitor
@@ -96,6 +97,18 @@ def visit_diccionario_tipo(self, nodo):
         f"std::map<{nodo.tipo_clave}, {nodo.tipo_valor}> {nodo.nombre} = {{{pares}}};"
     )
 
+
+
+
+def visit_interface(self, nodo):
+    """Transpila una interfaz a una struct con métodos virtuales puros."""
+    self.agregar_linea(f"struct {nodo.nombre} {{")
+    self.indent += 1
+    for metodo in getattr(nodo, "metodos", []):
+        params = ", ".join(f"auto {p}" for p in metodo.parametros)
+        self.agregar_linea(f"virtual void {metodo.nombre}({params}) = 0;")
+    self.indent -= 1
+    self.agregar_linea("};")
 
 class TranspiladorCPP(BaseTranspiler):
     """Transpila el AST de Cobra a código C++ sencillo."""
@@ -196,5 +209,6 @@ TranspiladorCPP.visit_import_desde = visit_import_desde
 TranspiladorCPP.visit_switch = _visit_switch
 TranspiladorCPP.visit_lista_tipo = visit_lista_tipo
 TranspiladorCPP.visit_diccionario_tipo = visit_diccionario_tipo
+TranspiladorCPP.visit_interface = visit_interface
 TranspiladorCPP.visit_option = _visit_option
 TranspiladorCPP.visit_pattern = _visit_pattern

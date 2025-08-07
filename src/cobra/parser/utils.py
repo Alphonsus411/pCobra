@@ -29,6 +29,7 @@ PALABRAS_RESERVADAS = frozenset(
         "usar",
         "macro",
         "clase",
+        "interface",
         "metodo",
         "atributo",
         "decorador",
