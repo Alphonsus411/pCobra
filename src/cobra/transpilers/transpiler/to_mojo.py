@@ -1,6 +1,6 @@
 """Transpilador simple de Cobra a Mojo."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,

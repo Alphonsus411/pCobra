@@ -1,6 +1,6 @@
 """Transpilador básico de Cobra a R."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,

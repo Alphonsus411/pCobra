@@ -1,6 +1,6 @@
 """Transpilador que convierte código Cobra en código Python."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,

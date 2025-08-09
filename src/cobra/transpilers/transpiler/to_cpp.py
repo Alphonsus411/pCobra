@@ -3,7 +3,7 @@
 Los parámetros de tipo de Cobra se traducen a plantillas ``template`` propias
 de C++."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoListaTipo,

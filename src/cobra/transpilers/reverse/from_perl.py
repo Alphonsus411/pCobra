@@ -2,7 +2,7 @@
 """Transpilador inverso desde Perl a Cobra usando tree-sitter."""
 from typing import Any, List
 
-from core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
+from cobra.core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
 from .tree_sitter_base import TreeSitterNode, TreeSitterReverseTranspiler
 
 class ReverseFromPerl(TreeSitterReverseTranspiler):

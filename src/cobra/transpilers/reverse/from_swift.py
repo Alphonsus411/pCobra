@@ -12,7 +12,7 @@ Ejemplos:
 import re
 from typing import Any, List
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoLlamadaFuncion,

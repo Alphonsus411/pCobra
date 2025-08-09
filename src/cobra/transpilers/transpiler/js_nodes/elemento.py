@@ -1,4 +1,4 @@
-from core.ast_nodes import NodoLista, NodoDiccionario
+from cobra.core.ast_nodes import NodoLista, NodoDiccionario
 def visit_elemento(self, elemento):
 
     """Transpila un elemento o estructura."""

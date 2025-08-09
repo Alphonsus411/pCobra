@@ -1,6 +1,6 @@
 """Transpilador que genera código COBOL a partir de Cobra."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,

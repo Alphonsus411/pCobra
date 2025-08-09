@@ -8,7 +8,7 @@ from typing import Any, List
 from lark import Lark, Transformer
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoFuncion,

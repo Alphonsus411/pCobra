@@ -7,7 +7,7 @@ import re
 from typing import Any, List
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
+from cobra.core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
 
 
 def _parse_expression(text: str) -> Any:

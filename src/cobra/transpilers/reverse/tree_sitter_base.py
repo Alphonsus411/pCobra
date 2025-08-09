@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover - dependencia opcional
         pass
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoFuncion,

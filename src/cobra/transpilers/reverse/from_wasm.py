@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any, List, Union
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from core.ast_nodes import NodoAsignacion, NodoFuncion, NodoIdentificador, NodoValor
+from cobra.core.ast_nodes import NodoAsignacion, NodoFuncion, NodoIdentificador, NodoValor
 
 try:
     from wabt import Wabt  # type: ignore

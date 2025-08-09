@@ -13,7 +13,7 @@ Nota:
     Requiere que el parser tree-sitter para Kotlin esté instalado y configurado.
 """
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoBloque,
     NodoDeclaracion,
     NodoExpresion,

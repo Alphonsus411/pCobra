@@ -1,4 +1,4 @@
-from core.ast_nodes import NodoAtributo
+from cobra.core.ast_nodes import NodoAtributo
 
 
 def datos_asignacion(transpilador, nodo):

@@ -1,6 +1,6 @@
 """Transpilador sencillo de Cobra a Fortran."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,

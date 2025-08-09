@@ -9,7 +9,7 @@ permitiendo la traducción de programas Python al lenguaje Cobra.
 import ast
 from typing import Any, List, Optional, Union
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
     NodoBucleMientras,

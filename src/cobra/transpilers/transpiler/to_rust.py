@@ -2,7 +2,7 @@
 
 Los parámetros de tipo de Cobra se convierten en genéricos idiomáticos de Rust."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
