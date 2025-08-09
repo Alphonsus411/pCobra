@@ -1,4 +1,4 @@
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoAsignacion,
     NodoOperacionBinaria,

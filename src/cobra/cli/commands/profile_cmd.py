@@ -13,8 +13,8 @@ from argparse import ArgumentParser, _SubParsersAction
 from pathlib import Path
 from typing import Optional
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from cobra.transpilers import module_map
 from core.interpreter import InterpretadorCobra
 from core.sandbox import validar_dependencias

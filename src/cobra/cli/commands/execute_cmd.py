@@ -7,8 +7,8 @@ from typing import Any
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from cobra.lexico.lexer import Lexer, LexerError
-from cobra.parser.parser import Parser, ParserError
+from cobra.core import Lexer, LexerError
+from cobra.core import Parser, ParserError
 from cobra.transpilers import module_map
 from core.interpreter import InterpretadorCobra
 from core.sandbox import (

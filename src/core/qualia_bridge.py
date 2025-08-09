@@ -3,8 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Union
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer, Parser
 from core.qualia_knowledge import QualiaKnowledge
 
 

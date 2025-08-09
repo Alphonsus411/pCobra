@@ -2,8 +2,8 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from cobra.lexico.lexer import Token, TipoToken, Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Token, TipoToken, Lexer
+from cobra.core import Parser
 from core.ast_nodes import (
     NodoTryCatch,
     NodoThrow,

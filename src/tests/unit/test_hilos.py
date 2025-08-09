@@ -3,8 +3,8 @@ from unittest.mock import patch
 import asyncio
 import subprocess
 
-from cobra.lexico.lexer import Token, TipoToken
-from cobra.parser.parser import Parser
+from cobra.core import Token, TipoToken
+from cobra.core import Parser
 from core.ast_nodes import NodoHilo, NodoLlamadaFuncion, NodoValor, NodoImprimir, NodoIdentificador, NodoAsignacion, NodoFuncion
 from core.interpreter import InterpretadorCobra
 from cobra.transpilers.transpiler.to_python import TranspiladorPython

@@ -1,6 +1,6 @@
 import os
 import pytest
-from cobra.parser.parser import Parser
+from cobra.core import Parser
 
 
 def test_obtener_ast_reutiliza(monkeypatch, tmp_path):

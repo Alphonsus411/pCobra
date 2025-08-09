@@ -12,7 +12,7 @@ from core.ast_nodes import (
     NodoBucleMientras,
     NodoRomper,
 )
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core import Token, TipoToken
 from core.optimizations import (
     optimize_constants,
     remove_dead_code,

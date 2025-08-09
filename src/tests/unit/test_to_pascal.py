@@ -1,4 +1,4 @@
-from cobra.lexico.lexer import TipoToken, Token
+from cobra.core import TipoToken, Token
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
 from core.ast_nodes import (
     NodoAsignacion,

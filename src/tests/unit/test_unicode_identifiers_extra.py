@@ -1,4 +1,4 @@
-from cobra.lexico.lexer import Lexer, TipoToken
+from cobra.core import Lexer, TipoToken
 
 
 def test_unicode_identifiers_extra():

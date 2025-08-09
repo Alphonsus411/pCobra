@@ -37,7 +37,7 @@ from core.ast_nodes import (
     NodoListaComprehension,
     NodoDiccionarioComprehension,
 )
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core import Token, TipoToken
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
 
 

@@ -2,8 +2,8 @@ import importlib
 import sys
 import hashlib
 import pytest
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 
 
 def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):

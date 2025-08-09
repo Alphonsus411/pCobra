@@ -8,8 +8,8 @@ from unittest.mock import patch
 from argparse import _SubParsersAction, ArgumentParser
 
 from cobra.cli.commands.compile_cmd import TRANSPILERS
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from core.interpreter import InterpretadorCobra
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from cobra.cli.commands.base import BaseCommand

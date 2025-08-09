@@ -409,7 +409,7 @@ The folder [`src/cobra/transpilers/transpiler`](src/cobra/transpilers/transpiler
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.parser.parser import Parser
+from cobra.core import Parser
 
 codigo = "imprimir('hola')"
 parser = Parser(codigo)

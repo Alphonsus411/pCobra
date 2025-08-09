@@ -4,8 +4,8 @@ import io
 import sys
 import flet as ft
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from core.interpreter import InterpretadorCobra
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 

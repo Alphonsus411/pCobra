@@ -25,7 +25,7 @@ from core.ast_nodes import (
     NodoPattern,
     NodoInterface,
 )
-from cobra.lexico.lexer import TipoToken
+from cobra.core import TipoToken
 from core.visitor import NodeVisitor
 from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions

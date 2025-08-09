@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 import pytest
-from cobra.lexico.lexer import (
+from cobra.core import (
     Lexer,
     TipoToken,
     InvalidTokenError,

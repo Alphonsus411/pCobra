@@ -1,5 +1,5 @@
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from cobra.transpilers.import_helper import load_mapped_module
 
 

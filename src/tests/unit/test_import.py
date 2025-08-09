@@ -2,8 +2,8 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from core.interpreter import (
     InterpretadorCobra,
     MODULES_PATH,

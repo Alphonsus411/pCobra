@@ -1,6 +1,6 @@
 import json
-from cobra.lexico.lexer import Token, TipoToken
-from cobra.parser.lark_parser import LarkParser
+from cobra.core import Token, TipoToken
+from cobra.core.lark_parser import LarkParser
 
 
 def test_tokens_to_source_cadenas_comillas_y_salto_linea():

@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "backend" / "src"))
 import backend
 from cli.cli import main
 import core.ast_cache as ast_cache
-from cobra.lexico.lexer import Lexer as SrcLexer
+from cobra.core import Lexer as SrcLexer
 import cobra.transpilers.module_map as module_map_src
 import cobra.transpilers.module_map as module_map_backend
 

@@ -9,8 +9,8 @@ import core.visitor as _vis
 sys.modules.setdefault("backend.src.core.visitor", _vis)
 sys.modules.setdefault("backend.src.core", sys.modules.get("core"))
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser, ParserError
+from cobra.core import Lexer
+from cobra.core import Parser, ParserError
 from core.ast_nodes import (
     NodoDel,
     NodoGlobal,

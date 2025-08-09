@@ -14,7 +14,7 @@ class SafeUnpickler(pickle.Unpickler):
     # Módulos de los que se permitirá cargar clases
     ALLOWED_MODULES = {
         "src.core.ast_nodes",
-        "cobra.lexico.lexer",
+        "cobra.core.lexer",
         "builtins",
     }
 
@@ -54,7 +54,7 @@ def obtener_tokens(codigo: str):
         with open(ruta, "rb") as f:
             return SafeUnpickler(f).load()
 
-    from cobra.lexico.lexer import Lexer
+    from cobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
@@ -75,7 +75,7 @@ def obtener_ast(codigo: str):
             return SafeUnpickler(f).load()
 
     tokens = obtener_tokens(codigo)
-    from cobra.parser.parser import Parser
+    from cobra.core import Parser
 
     ast = Parser(tokens).parsear()
 
@@ -105,7 +105,7 @@ def obtener_tokens_fragmento(codigo: str):
         with open(ruta, "rb") as f:
             return SafeUnpickler(f).load()
 
-    from cobra.lexico.lexer import Lexer
+    from cobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "wb") as f:
@@ -121,7 +121,7 @@ def obtener_ast_fragmento(codigo: str):
             return SafeUnpickler(f).load()
 
     tokens = obtener_tokens_fragmento(codigo)
-    from cobra.parser.parser import Parser
+    from cobra.core import Parser
 
     ast = Parser(tokens).parsear()
     with open(ruta, "wb") as f:

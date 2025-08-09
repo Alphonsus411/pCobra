@@ -13,7 +13,7 @@ from core.ast_nodes import (
     NodoLlamadaMetodo,
     NodoInstancia,
 )
-from cobra.lexico.lexer import TipoToken
+from cobra.core import TipoToken
 from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros

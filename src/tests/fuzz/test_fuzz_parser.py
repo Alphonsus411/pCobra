@@ -8,8 +8,8 @@ sys.path.insert(0, str(ROOT))
 
 from hypothesis import given, strategies as st
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from core.sandbox import ejecutar_en_sandbox
 

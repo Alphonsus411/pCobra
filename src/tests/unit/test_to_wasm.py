@@ -6,7 +6,7 @@ from core.ast_nodes import (
     NodoIdentificador,
     NodoValor,
 )
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core import Token, TipoToken
 
 
 def test_transpilador_asignacion_wasm():
