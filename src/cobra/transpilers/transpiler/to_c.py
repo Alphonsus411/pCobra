@@ -1,6 +1,6 @@
 """Transpilador básico de Cobra a C."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,

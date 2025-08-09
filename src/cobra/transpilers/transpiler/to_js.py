@@ -3,7 +3,7 @@
 Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
 forma nativa, por lo que se recurre a tipos dinámicos."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoListaTipo,

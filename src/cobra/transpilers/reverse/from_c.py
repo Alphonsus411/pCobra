@@ -24,7 +24,7 @@ Nota:
 
 from typing import Any, List, Optional
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoBloque,
     NodoDeclaracion,
     NodoExpresion,

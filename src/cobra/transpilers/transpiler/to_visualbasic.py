@@ -1,6 +1,6 @@
 """Transpilador simple de Cobra a Visual Basic."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,

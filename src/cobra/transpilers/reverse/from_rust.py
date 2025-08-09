@@ -11,7 +11,7 @@ Ejemplos:
 """
 from typing import Any, List
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoBloque,
     NodoFuncion,
     NodoIdentificador,

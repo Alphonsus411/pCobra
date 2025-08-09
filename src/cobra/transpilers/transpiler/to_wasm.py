@@ -1,6 +1,6 @@
 """Transpilador muy básico que genera código WebAssembly en formato WAT."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoOperacionBinaria,

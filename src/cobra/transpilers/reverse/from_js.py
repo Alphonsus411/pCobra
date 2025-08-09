@@ -14,7 +14,7 @@ from typing import Any, List
 from tree_sitter import Node
 
 from cobra.core import Token, TipoToken
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoClase,
     NodoFuncion,
     NodoMetodo,

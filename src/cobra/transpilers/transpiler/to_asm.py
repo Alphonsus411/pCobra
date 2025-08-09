@@ -1,6 +1,6 @@
 """Transpilador que genera código ensamblador simple desde Cobra."""
 
-from core.ast_nodes import (
+from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
