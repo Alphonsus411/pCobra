@@ -7,6 +7,7 @@ SPHINXBUILD=sphinx-build
 SPHINXOPTS=
 SOURCEDIR=frontend/docs
 BUILDDIR=frontend/build
+GRAMMAR_COV?=30
 
 # ========= TAREAS GENÉRICAS ==========
 
@@ -34,6 +35,7 @@ run:
 	$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m src.main
 
 test:
+	$(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)
 	pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
 
 lint:
