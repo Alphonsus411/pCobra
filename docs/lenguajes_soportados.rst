@@ -128,3 +128,17 @@ Este paquete incluye gramáticas para los lenguajes listados y puede instalarse 
 
 Para conocer el alcance y las limitaciones del soporte de LaTeX consulte :doc:`soporte_latex`.
 
+
+Comparativa de características
+------------------------------
+
+La cobertura de características por lenguaje se resume en la matriz de transpiladores:
+
+.. include:: matriz_transpiladores.md
+
+Diferencias identificadas
+-------------------------
+
+- Go y Java no soportan condicionales ni bucles. Se recomienda implementar estas
+  estructuras; véase el `issue #11 <../issues/11_soporte_condicionales_bucles_go_java.md>`_.
+

@@ -49,3 +49,16 @@ Además un bloque ``switch`` de Cobra se traduce utilizando ``match``::
            let y = 0;
        },
    }
+
+Matriz de características
+-------------------------
+
+Para un resumen completo de la cobertura por lenguaje, revisa la `matriz de transpiladores <../../docs/matriz_transpiladores.md>`_:
+
+.. include:: ../../docs/matriz_transpiladores.md
+
+Diferencias identificadas
+-------------------------
+
+- Go y Java no soportan condicionales ni bucles. Consulta el `issue #11 <../../issues/11_soporte_condicionales_bucles_go_java.md>`_ para seguimiento y contribuciones.
+
