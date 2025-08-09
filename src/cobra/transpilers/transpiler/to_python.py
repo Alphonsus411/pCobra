@@ -50,10 +50,10 @@ from cobra.core.ast_nodes import (
 from cobra.core import Parser
 from cobra.core import TipoToken, Lexer
 from core.visitor import NodeVisitor
-from cobra.transpilers.base import BaseTranspiler
+from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
-from cobra.transpilers.import_helper import get_standard_imports
+from cobra.transpilers.common.utils import get_standard_imports
 
 from cobra.transpilers.transpiler.python_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,

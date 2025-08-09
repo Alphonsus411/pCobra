@@ -12,7 +12,7 @@ from cobra.core.ast_nodes import (
     NodoAtributo,
 )
 from cobra.core import TipoToken
-from cobra.transpilers.base import BaseTranspiler
+from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 

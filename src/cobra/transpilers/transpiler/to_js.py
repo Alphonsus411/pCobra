@@ -37,10 +37,10 @@ from cobra.core.ast_nodes import (
 )
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
-from cobra.transpilers.base import BaseTranspiler
+from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
-from cobra.transpilers.import_helper import get_standard_imports
+from cobra.transpilers.common.utils import get_standard_imports
 from cobra.transpilers.module_map import get_mapped_path
 
 from cobra.transpilers.transpiler.js_nodes.asignacion import visit_asignacion as _visit_asignacion

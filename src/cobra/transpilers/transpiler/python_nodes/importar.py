@@ -1,6 +1,6 @@
 from cobra.core import Lexer
 from cobra.core import Parser
-from cobra.transpilers.import_helper import load_mapped_module
+from cobra.transpilers.common.utils import load_mapped_module
 
 
 def visit_import(self, nodo):
