@@ -10,46 +10,64 @@ from core.ast_nodes import (
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoAtributo,
+    NodoLlamadaMetodo,
+    NodoInstancia,
 )
 from cobra.lexico.lexer import TipoToken
-from core.visitor import NodeVisitor
 from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
-
-def visit_asignacion(self, nodo: NodoAsignacion):
-    nombre = getattr(nodo, "identificador", nodo.variable)
-    op = ":=" if hasattr(nodo, "variable") else "="
-    valor = self.obtener_valor(nodo.expresion)
-    self.agregar_linea(f"{nombre} {op} {valor}")
-
-
-def visit_funcion(self, nodo: NodoFuncion):
-    params = ", ".join(nodo.parametros)
-    self.agregar_linea(f"func {nodo.nombre}({params}) {{")
-    self.indent += 1
-    for inst in nodo.cuerpo:
-        inst.aceptar(self)
-    self.indent -= 1
-    self.agregar_linea("}")
-
-
-def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-    args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
-    self.agregar_linea(f"{nodo.nombre}({args})")
-
-
-def visit_imprimir(self, nodo: NodoImprimir):
-    valor = self.obtener_valor(nodo.expresion)
-    self.agregar_linea(f"fmt.Println({valor})")
-
+from cobra.transpilers.transpiler.go_nodes.asignacion import (
+    visit_asignacion as _visit_asignacion,
+)
+from cobra.transpilers.transpiler.go_nodes.funcion import (
+    visit_funcion as _visit_funcion,
+)
+from cobra.transpilers.transpiler.go_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
+from cobra.transpilers.transpiler.go_nodes.imprimir import (
+    visit_imprimir as _visit_imprimir,
+)
+from cobra.transpilers.transpiler.go_nodes.condicional import (
+    visit_condicional as _visit_condicional,
+)
+from cobra.transpilers.transpiler.go_nodes.bucle_mientras import (
+    visit_bucle_mientras as _visit_bucle_mientras,
+)
+from cobra.transpilers.transpiler.go_nodes.for_ import visit_for as _visit_for
+from cobra.transpilers.transpiler.go_nodes.clase import visit_clase as _visit_clase
+from cobra.transpilers.transpiler.go_nodes.metodo import visit_metodo as _visit_metodo
+from cobra.transpilers.transpiler.go_nodes.retorno import (
+    visit_retorno as _visit_retorno,
+)
+from cobra.transpilers.transpiler.go_nodes.romper import visit_romper as _visit_romper
+from cobra.transpilers.transpiler.go_nodes.continuar import (
+    visit_continuar as _visit_continuar,
+)
+from cobra.transpilers.transpiler.go_nodes.llamada_metodo import (
+    visit_llamada_metodo as _visit_llamada_metodo,
+)
+from cobra.transpilers.transpiler.go_nodes.instancia import (
+    visit_instancia as _visit_instancia,
+)
 
 go_nodes = {
-    "asignacion": visit_asignacion,
-    "funcion": visit_funcion,
-    "llamada_funcion": visit_llamada_funcion,
-    "imprimir": visit_imprimir,
+    "asignacion": _visit_asignacion,
+    "funcion": _visit_funcion,
+    "llamada_funcion": _visit_llamada_funcion,
+    "imprimir": _visit_imprimir,
+    "condicional": _visit_condicional,
+    "bucle_mientras": _visit_bucle_mientras,
+    "for": _visit_for,
+    "clase": _visit_clase,
+    "metodo": _visit_metodo,
+    "retorno": _visit_retorno,
+    "romper": _visit_romper,
+    "continuar": _visit_continuar,
+    "llamada_metodo": _visit_llamada_metodo,
+    "instancia": _visit_instancia,
 }
 
 
@@ -75,6 +93,13 @@ class TranspiladorGo(BaseTranspiler):
         elif isinstance(nodo, NodoLlamadaFuncion):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre}({args})"
+        elif isinstance(nodo, NodoLlamadaMetodo):
+            obj = self.obtener_valor(nodo.objeto)
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"{obj}.{nodo.nombre_metodo}({args})"
+        elif isinstance(nodo, NodoInstancia):
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"&{nodo.nombre_clase}{{{args}}}"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
@@ -101,3 +126,4 @@ class TranspiladorGo(BaseTranspiler):
 # Asignar visitantes
 for nombre, funcion in go_nodes.items():
     setattr(TranspiladorGo, f"visit_{nombre}", funcion)
+
