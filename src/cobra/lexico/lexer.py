@@ -255,7 +255,8 @@ class Lexer:
             (TipoToken.DOSPUNTOS, re.compile(r":")),
             (TipoToken.FIN, re.compile(r"\bfin\b")),
             (TipoToken.RETORNO, re.compile(r"\bretorno\b")),
-            (TipoToken.IDENTIFICADOR, re.compile(r"[^\W\d][\w]*")),
+            # Identificadores que aceptan caracteres Unicode
+            (TipoToken.IDENTIFICADOR, re.compile(r"[^\W\d][\w]*", re.UNICODE)),
             (TipoToken.MAYORIGUAL, re.compile(r">=")),
             (TipoToken.MENORIGUAL, re.compile(r"<=")),
             (TipoToken.IGUAL, re.compile(r"==")),
@@ -284,8 +285,47 @@ class Lexer:
         ]
 
     def _limpiar_comentarios(self) -> None:
-        """Elimina todos los tipos de comentarios del código fuente."""
-        self.codigo_fuente = self.PATRON_COMENTARIOS.sub("", self.codigo_fuente)
+        """Elimina todos los tipos de comentarios del código fuente.
+
+        Soporta comentarios de bloque anidados y líneas comentadas con
+        ``//`` o ``#``. Se procesa manualmente para poder manejar la
+        anidación correctamente, ya que una expresión regular simple no es
+        suficiente para este caso.
+        """
+        codigo = self.codigo_fuente
+        resultado: List[str] = []
+        i = 0
+        longitud = len(codigo)
+        nivel_bloque = 0
+
+        while i < longitud:
+            if nivel_bloque > 0:
+                if codigo.startswith("/*", i):
+                    nivel_bloque += 1
+                    i += 2
+                elif codigo.startswith("*/", i):
+                    nivel_bloque -= 1
+                    i += 2
+                else:
+                    i += 1
+                continue
+
+            if codigo.startswith("/*", i):
+                nivel_bloque = 1
+                i += 2
+            elif codigo.startswith("//", i):
+                i += 2
+                while i < longitud and codigo[i] not in "\n\r":
+                    i += 1
+            elif codigo[i] == "#":
+                i += 1
+                while i < longitud and codigo[i] not in "\n\r":
+                    i += 1
+            else:
+                resultado.append(codigo[i])
+                i += 1
+
+        self.codigo_fuente = "".join(resultado)
 
     def _procesar_cadena(self, valor: str) -> str:
         """Procesa una cadena, manejando caracteres de escape.
