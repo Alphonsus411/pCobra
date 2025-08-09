@@ -1,6 +1,6 @@
 import pytest
 from core.interpreter import InterpretadorCobra
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoOperacionBinaria,
     NodoOperacionUnaria,

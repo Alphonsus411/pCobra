@@ -20,8 +20,8 @@ except ImportError:  # pragma: no cover - Windows
 else:
     psutil = None  # type: ignore
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from core.interpreter import InterpretadorCobra
 from jupyter_kernel import CobraKernel
 from cobra.cli.commands.base import BaseCommand

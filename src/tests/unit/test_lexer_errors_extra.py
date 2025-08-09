@@ -1,5 +1,5 @@
 import pytest
-from cobra.lexico.lexer import (
+from cobra.core import (
     Lexer,
     LexerError,
     InvalidTokenError,

@@ -4,7 +4,7 @@ import logging
 import json
 import os
 from typing import Any
-from cobra.lexico.lexer import TipoToken, Token
+from cobra.core import TipoToken, Token
 from .utils import PALABRAS_RESERVADAS, sugerir_palabra_clave
 
 from core.ast_nodes import (
@@ -1531,7 +1531,7 @@ class ClassicParser:
 # ``LarkParser`` en lugar del parser clásico.
 
 if os.getenv("COBRA_PARSER") == "lark":
-    from cobra.parser.lark_parser import LarkParser
+    from .lark_parser import LarkParser
 
     Parser = LarkParser
 else:

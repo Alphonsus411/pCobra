@@ -5,8 +5,8 @@ import sys
 sys.modules.setdefault("backend.src.core.visitor", _vis)
 sys.modules.setdefault("backend.src.core", sys.modules.get("core"))
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from core.ast_nodes import NodoEnum
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript

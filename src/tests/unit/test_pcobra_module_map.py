@@ -3,8 +3,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers import module_map

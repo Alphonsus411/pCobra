@@ -1,7 +1,7 @@
 import dataclasses
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import ClassicParser
-from cobra.parser.lark_parser import LarkParser
+from cobra.core import Lexer
+from cobra.core.parser import ClassicParser
+from cobra.core.lark_parser import LarkParser
 from lark import Tree
 
 

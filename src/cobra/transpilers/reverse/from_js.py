@@ -13,7 +13,7 @@ from typing import Any, List
 
 from tree_sitter import Node
 
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoClase,
     NodoFuncion,

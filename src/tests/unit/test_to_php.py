@@ -1,5 +1,5 @@
 from cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from cobra.lexico.lexer import TipoToken, Token
+from cobra.core import TipoToken, Token
 from core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,

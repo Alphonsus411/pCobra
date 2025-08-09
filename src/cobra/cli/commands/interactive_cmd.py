@@ -5,8 +5,8 @@ import traceback
 from typing import Optional, Any, NoReturn
 from argparse import _SubParsersAction, ArgumentParser
 
-from cobra.lexico.lexer import Lexer, LexerError
-from cobra.parser.parser import Parser, ParserError
+from cobra.core import Lexer, LexerError
+from cobra.core import Parser, ParserError
 from cobra.transpilers import module_map
 from core.interpreter import InterpretadorCobra
 from core.qualia_bridge import get_suggestions

@@ -28,8 +28,8 @@ from core.ast_nodes import (
     NodoPara,
     NodoUsar,
 )
-from cobra.lexico.lexer import TipoToken, Lexer
-from cobra.parser.parser import Parser
+from cobra.core import TipoToken, Lexer
+from cobra.core import Parser
 from core.visitor import NodeVisitor
 from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions

@@ -23,8 +23,8 @@ from core.ast_nodes import (
     NodoImportDesde,
     NodoExport,
 )
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 
 IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("js"))
 

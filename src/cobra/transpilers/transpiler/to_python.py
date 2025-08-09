@@ -47,8 +47,8 @@ from core.ast_nodes import (
     NodoPattern,
     NodoGuard,
 )
-from cobra.parser.parser import Parser
-from cobra.lexico.lexer import TipoToken, Lexer
+from cobra.core import Parser
+from cobra.core import TipoToken, Lexer
 from core.visitor import NodeVisitor
 from cobra.transpilers.base import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
@@ -251,7 +251,7 @@ class TranspiladorPython(BaseTranspiler):
         if (
             nodos
             and all(
-                n.__class__.__module__.startswith("cobra.parser.parser") for n in nodos
+                n.__class__.__module__.startswith("cobra.core.parser") for n in nodos
             )
             and not any(self._contiene_nodo_valor(n) for n in nodos)
         ):
@@ -295,7 +295,7 @@ class TranspiladorPython(BaseTranspiler):
         return False
 
     def obtener_valor(self, nodo):
-        from cobra.parser.parser import (
+        from cobra.core import (
             NodoOperacionBinaria,
             NodoOperacionUnaria,
             NodoIdentificador,

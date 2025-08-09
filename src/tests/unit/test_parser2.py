@@ -1,5 +1,5 @@
-from cobra.lexico.lexer import Token, TipoToken
-from cobra.parser.parser import Parser
+from cobra.core import Token, TipoToken
+from cobra.core import Parser
 from core.ast_nodes import NodoCondicional, NodoOperacionBinaria, NodoFuncion, NodoLlamadaFuncion, NodoValor, NodoHolobit, NodoAsignacion, NodoBucleMientras
 
 

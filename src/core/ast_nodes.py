@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from cobra.lexico.lexer import Token, TipoToken
+from cobra.core.lexer import Token, TipoToken
 
 
 @dataclass

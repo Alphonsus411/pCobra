@@ -13,8 +13,8 @@ sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 import backend  # noqa: F401
 from core.interpreter import InterpretadorCobra
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from cli.commands.compile_cmd import TRANSPILERS
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 

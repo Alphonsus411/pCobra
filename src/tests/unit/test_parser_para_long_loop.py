@@ -1,5 +1,5 @@
-from cobra.lexico.lexer import Token, TipoToken
-from cobra.parser.parser import Parser
+from cobra.core import Token, TipoToken
+from cobra.core import Parser
 
 
 def test_parser_para_mas_de_mil_sentencias():

@@ -4,8 +4,8 @@ from unittest.mock import patch
 import pytest
 
 import backend  # garantiza rutas para submódulos
-from cobra.lexico.lexer import Lexer
-from cobra.parser.parser import Parser
+from cobra.core import Lexer
+from cobra.core import Parser
 from core.ast_nodes import NodoLlamadaFuncion, NodoValor
 from core.interpreter import InterpretadorCobra
 from core.semantic_validators import PrimitivaPeligrosaError

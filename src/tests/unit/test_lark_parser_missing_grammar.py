@@ -1,5 +1,5 @@
 import pytest
-from cobra.parser.lark_parser import LarkParser
+from cobra.core.lark_parser import LarkParser
 
 
 def test_missing_grammar_file(monkeypatch):
