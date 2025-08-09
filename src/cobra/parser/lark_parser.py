@@ -56,7 +56,7 @@ class LarkParser:
             elif t.tipo == TipoToken.EOF:
                 continue
             else:
-                parts.append(repr(t.valor))
+                parts.append(str(t.valor))
         return " ".join(parts)
 
     def parsear(self) -> Optional[object]:
