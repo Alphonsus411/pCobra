@@ -449,31 +449,30 @@ Las expresiones regulares se agrupan en `especificacion_tokens` y se procesan en
 
 Puedes probar el lexer y parser con un código como el siguiente:
 
-````cobra
-codigo = '''
+```python
+from cobra.core import Lexer, Parser
+from cobra.transpilers.transpiler.to_python import TranspiladorPython
+
+codigo = """
 var x = 10
 si x > 5 :
     proyectar(x, "2D")
 sino :
     graficar(x)
-'''
+"""
 
-# Inicializamos el lexer
 lexer = Lexer(codigo)
 tokens = lexer.analizar_token()
 
-# Inicializamos el parser
 parser = Parser(tokens)
 
-# Ejecutar el parser para obtener el AST
 arbol = parser.parsear()
 print(arbol)
 
-# Generación de código en Python
 transpiler = TranspiladorPython()
 codigo_python = transpiler.generate_code(arbol)
 print(codigo_python)
-````
+```
 
 ## Ejemplo de imprimir, holobits y bucles
 
