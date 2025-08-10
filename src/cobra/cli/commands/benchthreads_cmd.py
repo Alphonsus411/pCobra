@@ -27,9 +27,10 @@ from jupyter_kernel import CobraKernel
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from core.cobra_config import tiempo_max_transpilacion
 
 # Constantes de configuración
-PROCESS_TIMEOUT = 30  # segundos
+PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_RETRIES = 3
 
 # Mover códigos de prueba a archivos separados

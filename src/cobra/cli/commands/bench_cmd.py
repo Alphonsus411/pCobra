@@ -25,10 +25,11 @@ from pathlib import Path
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from core.cobra_config import tiempo_max_transpilacion
 
 # Constantes
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
-SUBPROCESS_TIMEOUT = 30  # segundos
+SUBPROCESS_TIMEOUT = tiempo_max_transpilacion()
 
 CODE = """
 var x = 0

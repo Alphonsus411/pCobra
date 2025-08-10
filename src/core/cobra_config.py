@@ -46,3 +46,11 @@ def limite_cpu_segundos(config: dict | None = None) -> int | None:
     """Tiempo máximo de CPU en segundos o ``None``."""
     cfg = config or cargar_configuracion()
     return cfg.get("seguridad", {}).get("limite_cpu_segundos")
+
+
+def tiempo_max_transpilacion(config: dict | None = None) -> float:
+    """Tiempo máximo permitido para la transpilación."""
+    cfg = config or cargar_configuracion()
+    return float(
+        cfg.get("rendimiento", {}).get("tiempo_max_transpilacion_seg", 1.0)
+    )
