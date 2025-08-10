@@ -37,7 +37,7 @@ jobs:
       - name: Run linters
         run: make lint
       - name: Run type checks
-        run: make typecheck
+        run: make typecheck  # Ejecuta mypy con la configuración del proyecto y pyright
       - name: Run tests
         run: pytest --cov=src --cov-report=xml \
           --cov-report=term-missing --cov-fail-under=95

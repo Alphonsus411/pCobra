@@ -40,7 +40,7 @@ test:
 
 lint:
 	ruff check $(SRC)
-	mypy $(SRC)
+	mypy $(SRC) --config-file=mypy.ini
 	bandit -r $(SRC)
 
 format:
@@ -48,7 +48,7 @@ format:
 	black $(SRC)
 
 typecheck:
-	mypy $(SRC)
+	mypy $(SRC) --config-file=mypy.ini
 	@command -v pyright >/dev/null 2>&1 && pyright $(SRC) || echo "ℹ️ pyright no está instalado"
 
 secrets:

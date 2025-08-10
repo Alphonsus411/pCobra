@@ -10,7 +10,7 @@ import shutil
 
 TOOLS = {
     "ruff": ["ruff", "check", "src"],
-    "mypy": ["mypy", "src"],
+    "mypy": ["mypy", "src", "--config-file=mypy.ini"],
     "bandit": ["bandit", "-r", "src"],
     "pytest": ["pytest", "--cov=src", "src/tests", "--cov-report=term-missing", "--cov-fail-under=90"],
     "pyright": ["pyright", "src"],
