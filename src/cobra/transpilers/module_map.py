@@ -46,12 +46,16 @@ def get_toml_map():
     """Devuelve la configuración del archivo ``pcobra.toml``."""
     global _toml_cache
     if _toml_cache is None:
-        if os.path.exists(PCOBRA_TOML_PATH):
-            with open(PCOBRA_TOML_PATH, 'rb') as f:
-                data = tomllib.load(f) or {}
-        else:
-            data = {}
-        _toml_cache = data
+        try:
+            if os.path.exists(PCOBRA_TOML_PATH):
+                with open(PCOBRA_TOML_PATH, 'rb') as f:
+                    data = tomllib.load(f) or {}
+            else:
+                data = {}
+            _toml_cache = data
+        except (tomllib.TOMLDecodeError, OSError) as e:
+            logger.error(f"Error al cargar pcobra.toml: {e}")
+            _toml_cache = {}
     return _toml_cache
 
 
