@@ -850,6 +850,21 @@ pytest --cov=src src/tests/
 
 El reporte se guarda como `coverage.xml` y se utiliza en el CI.
 
+### Pruebas de rendimiento
+
+El archivo `cobra.toml` incluye una sección `[rendimiento]` con el parámetro
+`tiempo_max_transpilacion_seg`, que define en segundos el tiempo máximo
+permitido para transpilar un archivo.
+
+Para ejecutar únicamente las pruebas de rendimiento utiliza:
+
+```bash
+pytest -m performance
+```
+
+Si tu entorno es más lento o más rápido, ajusta el valor de
+`tiempo_max_transpilacion_seg` en `cobra.toml` según tus necesidades.
+
 Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
 subcomandos devuelven `0` al finalizar correctamente y un valor distinto en caso
 de error.
