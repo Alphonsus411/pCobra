@@ -304,6 +304,16 @@ El archivo [bench_results.json](bench_results.json) se guarda en el directorio
 actual y puede analizarse con el cuaderno
 [notebooks/benchmarks_resultados.ipynb](notebooks/benchmarks_resultados.ipynb).
 
+Para ver la evolución entre versiones ejecuta:
+
+```bash
+python scripts/benchmarks/compare_releases.py --output benchmarks_compare.json
+```
+
+Los resultados históricos se publican como archivos `benchmarks.json` en la
+[sección de Releases](https://github.com/Alphonsus411/pCobra/releases), donde
+puedes consultar las métricas de cada versión.
+
 Para comparar el rendimiento de los hilos ejecuta `cobra benchthreads`:
 
 ```bash
