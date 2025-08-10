@@ -18,3 +18,7 @@ limite_cpu_segundos = 10
 
 # Módulos bloqueados explícitamente (por seguridad)
 modulos_prohibidos = ["os", "sys", "socket"]
+
+[rendimiento]
+# Tiempo máximo permitido para la transpilación de un archivo (en segundos)
+tiempo_max_transpilacion_seg = 300

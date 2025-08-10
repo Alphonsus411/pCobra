@@ -38,11 +38,12 @@ from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 from cobra.core import ParserError
+from core.cobra_config import tiempo_max_transpilacion
 
 # Constantes de configuración
 MAX_PROCESSES = 4
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-PROCESS_TIMEOUT = 300  # 5 minutos
+PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
 TRANSPILERS = {
