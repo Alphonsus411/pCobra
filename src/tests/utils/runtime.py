@@ -106,5 +106,26 @@ def run_code(lang: str, code: str) -> str:
         runner = _RUNNERS[lang]
     except KeyError as exc:  # pragma: no cover - caso simple
         raise ValueError(f"Lenguaje no soportado: {lang}") from exc
+
+    # Realiza una comprobación de sintaxis previa a la ejecución para los
+    # lenguajes interpretados más comunes. Esto permite detectar errores de
+    # forma explícita antes de invocar al *runner* correspondiente.
+    if lang in {"python", "js"}:
+        suffix = ".py" if lang == "python" else ".js"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            src = Path(tmpdir) / f"snippet{suffix}"
+            src.write_text(code)
+            cmd = (
+                ["python", "-m", "py_compile", str(src)]
+                if lang == "python"
+                else ["node", "--check", str(src)]
+            )
+            try:
+                subprocess.run(cmd, capture_output=True, text=True, check=True)
+            except subprocess.CalledProcessError as exc:
+                stderr = exc.stderr.strip()
+                stdout = exc.stdout.strip()
+                return f"Error de sintaxis: {stderr or stdout or exc}"
+
     return runner(code)
 
