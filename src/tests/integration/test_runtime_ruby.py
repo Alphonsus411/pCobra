@@ -17,9 +17,10 @@ from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby  # noqa: E402
 
 
 @pytest.mark.skipif(shutil.which("ruby") is None, reason="requiere Ruby")
-def test_runtime_ruby_imprimir():
-    """Transpila y ejecuta un snippet Cobra sencillo en Ruby."""
-    codigo_cobra = "x = 1\nimprimir(x)"
+@pytest.mark.parametrize("codigo_cobra_fixture", ["codigo_imprimir"])
+def test_runtime_ruby_ejecucion(request, codigo_cobra_fixture):
+    """Transpila y ejecuta snippets Cobra básicos en Ruby."""
+    codigo_cobra = request.getfixturevalue(codigo_cobra_fixture)
     lexer = Lexer(codigo_cobra)
     tokens = lexer.analizar_token()
     parser = Parser(tokens)
