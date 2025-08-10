@@ -84,6 +84,21 @@ También puedes ejecutar el script manualmente:
      - 0.05
      - 0
 
+Benchmarks en CI
+----------------
+
+En la integración continua los benchmarks se generan mediante el
+script ``scripts/benchmarks/run_benchmarks.py``. Cada ejecución guarda
+los resultados en ``benchmarks.json`` y el flujo de release publica este
+archivo como artefacto de la versión.
+
+El trabajo ``benchmarks`` de ``ci.yml`` ejecuta
+``scripts/benchmarks/compare_releases.py`` para volver a correr las
+pruebas y comparar los números actuales con los de la última release.
+La comparación se guarda en ``benchmarks_compare.json`` y se adjunta al
+job como artefacto junto con un resumen en la bitácora del flujo.
+
+
 Pruebas de mutación
 -------------------
 
