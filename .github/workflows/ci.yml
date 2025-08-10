@@ -49,3 +49,51 @@ jobs:
         run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Check doc links
         run: sphinx-build -b linkcheck frontend/docs frontend/build/linkcheck
+
+  benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ golang-go ruby-full
+      - name: Install dependencies
+        uses: ./.github/actions/install
+        with:
+          extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
+      - name: Compare benchmarks
+        run: python scripts/benchmarks/compare_releases.py --output benchmarks_compare.json
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks_compare
+          path: benchmarks_compare.json
+      - name: Publicar resumen
+        run: |
+          python - <<'PY'
+          import json, os
+
+          data = json.load(open('benchmarks_compare.json'))
+          lines = [
+              "### Resultados de benchmarks",
+              "",
+              "| Backend | Δ Tiempo (s) | Δ Memoria (kB) |",
+              "| --- | --- | --- |",
+          ]
+          for d in data:
+              dt = d["diff_time"]
+              dm = d["diff_memory_kb"]
+              dt_str = f"{dt:+.4f}" if dt is not None else "N/A"
+              dm_str = f"{dm:+d}" if dm is not None else "N/A"
+              lines.append(f"| {d['backend']} | {dt_str} | {dm_str} |")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write("\n".join(lines))
+          PY
