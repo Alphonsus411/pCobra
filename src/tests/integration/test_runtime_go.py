@@ -17,9 +17,12 @@ from cobra.transpilers.transpiler.to_go import TranspiladorGo  # noqa: E402
 
 
 @pytest.mark.skipif(shutil.which("go") is None, reason="requiere Go")
-def test_runtime_go_imprimir():
-    """Transpila y ejecuta un snippet Cobra sencillo en Go."""
-    codigo_cobra = "x = 1\nimprimir(x)"
+@pytest.mark.parametrize(
+    "codigo_cobra_fixture", ["codigo_imprimir", "codigo_bucle_simple"]
+)
+def test_runtime_go_ejecucion(request, codigo_cobra_fixture):
+    """Transpila y ejecuta snippets Cobra básicos en Go."""
+    codigo_cobra = request.getfixturevalue(codigo_cobra_fixture)
     lexer = Lexer(codigo_cobra)
     tokens = lexer.analizar_token()
     parser = Parser(tokens)
