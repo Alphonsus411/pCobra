@@ -21,7 +21,7 @@ Para agilizar la organización del proyecto, categoriza cada tarea utilizando la
 ## Convenciones de Estilo
 
 - El codigo debe formatearse con `black` y respetar 88 caracteres por linea.
-- Ejecuta `make lint` para comprobar `flake8`, `mypy` y `bandit`.
+- Ejecuta `make lint` para comprobar `ruff`, `mypy` y `bandit`.
 - Ejecuta `make secrets` para buscar credenciales expuestas con *gitleaks*.
 - Usa `make typecheck` para la verificacion de tipos.
 - Para analisis estatico con `pyright`, instala el paquete y ejecuta

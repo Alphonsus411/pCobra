@@ -16,7 +16,7 @@ help:
 	@echo "  make install         Instala el entorno en modo desarrollo"
 	@echo "  make run             Ejecuta Cobra usando dotenv"
 	@echo "  make test            Ejecuta tests con pytest y coverage"
-	@echo "  make lint            Ejecuta linters: flake8, mypy, bandit"
+	@echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
 	@echo "  make format          Formatea con black + isort"
 	@echo "  make typecheck       Verifica tipos con mypy + pyright"
 	@echo "  make docker          Construye todos los contenedores"
@@ -39,7 +39,7 @@ test:
 	pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
 
 lint:
-	flake8 $(SRC)
+	ruff check $(SRC)
 	mypy $(SRC)
 	bandit -r $(SRC)
 
