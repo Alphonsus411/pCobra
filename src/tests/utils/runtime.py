@@ -1,6 +1,10 @@
 """Utilidades para ejecutar código en distintos lenguajes durante los tests."""
 from __future__ import annotations
 
+import os
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import Callable, Dict
 
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
@@ -16,9 +20,65 @@ def _run_js(code: str) -> str:
     return ejecutar_en_sandbox_js(code)
 
 
+def _run_go(code: str) -> str:
+    """Compila y ejecuta código Go usando ``go run``."""
+    with tempfile.NamedTemporaryFile("w", suffix=".go", delete=False) as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
+    try:
+        proc = subprocess.run(
+            ["go", "run", tmp_path], capture_output=True, text=True, check=True
+        )
+        return proc.stdout
+    except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
+        return exc.stderr or f"Error: {exc}"
+    finally:
+        os.unlink(tmp_path)
+
+
+def _run_rust(code: str) -> str:
+    """Compila y ejecuta código Rust usando ``rustc``."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src = Path(tmpdir) / "main.rs"
+        src.write_text(code)
+        bin_path = Path(tmpdir) / "main"
+        try:
+            subprocess.run(
+                ["rustc", str(src), "-o", str(bin_path)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            proc = subprocess.run(
+                [str(bin_path)], capture_output=True, text=True, check=True
+            )
+            return proc.stdout
+        except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
+            return exc.stderr or f"Error: {exc}"
+
+
+def _run_ruby(code: str) -> str:
+    """Ejecuta código Ruby mediante el intérprete ``ruby``."""
+    with tempfile.NamedTemporaryFile("w", suffix=".rb", delete=False) as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
+    try:
+        proc = subprocess.run(
+            ["ruby", tmp_path], capture_output=True, text=True, check=True
+        )
+        return proc.stdout
+    except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
+        return exc.stderr or f"Error: {exc}"
+    finally:
+        os.unlink(tmp_path)
+
+
 _RUNNERS: Dict[str, Callable[[str], str]] = {
     "python": _run_python,
     "js": _run_js,
+    "go": _run_go,
+    "rust": _run_rust,
+    "ruby": _run_ruby,
 }
 
 
@@ -47,3 +107,4 @@ def run_code(lang: str, code: str) -> str:
     except KeyError as exc:  # pragma: no cover - caso simple
         raise ValueError(f"Lenguaje no soportado: {lang}") from exc
     return runner(code)
+
