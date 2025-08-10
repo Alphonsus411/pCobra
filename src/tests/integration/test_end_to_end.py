@@ -3,6 +3,8 @@ import shutil
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+import importlib
+import types
 
 import pytest
 
@@ -10,18 +12,20 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "backend" / "src"))
 
+if not hasattr(importlib, "ModuleType"):
+    importlib.ModuleType = types.ModuleType
+
 import backend  # noqa: F401
-from cli.cli import main
+from cobra.cli.cli import main
 from cobra.core import Lexer
 from cobra.core import Parser
 from core.interpreter import InterpretadorCobra
-from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 import cobra.transpilers.module_map as module_map
 
-RUNNERS = {"python": ejecutar_en_sandbox, "js": ejecutar_en_sandbox_js}
+from tests.utils.runtime import run_code
 
 
-@pytest.mark.parametrize("lang", RUNNERS.keys())
+@pytest.mark.parametrize("lang", ["python", "js"])
 def test_end_to_end(tmp_path, lang, monkeypatch):
     # Copiar archivo de ejemplo a ruta temporal
     src_file = Path("src/tests/data/ejemplo.co")
@@ -49,5 +53,5 @@ def test_end_to_end(tmp_path, lang, monkeypatch):
     if lang == "js" and not shutil.which("node"):
         pytest.skip("node no disponible")
 
-    salida = RUNNERS[lang](codigo_generado)
+    salida = run_code(lang, codigo_generado)
     assert salida == esperado

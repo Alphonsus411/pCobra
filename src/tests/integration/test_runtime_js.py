@@ -1,8 +1,10 @@
 import shutil
-import subprocess
+
 import pytest
 import cobra.core as cobra_core
 import core.ast_nodes as core_ast_nodes
+
+from tests.utils.runtime import run_code
 
 # Expone todos los nodos al paquete "cobra.core" y ajusta __all__
 node_names = [name for name in dir(core_ast_nodes) if name.startswith("Nodo")]
@@ -28,11 +30,6 @@ def test_runtime_js_imprimir():
     lineas = codigo_js.splitlines()[12:]
     codigo_js = "const hola = 'hola';\n" + "\n".join(lineas)
 
-    resultado = subprocess.run(
-        ["node", "-e", codigo_js],
-        text=True,
-        capture_output=True,
-        check=True,
-    )
+    salida = run_code("js", codigo_js)
 
-    assert "hola" in resultado.stdout
+    assert "hola" in salida

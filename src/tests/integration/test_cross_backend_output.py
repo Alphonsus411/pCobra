@@ -7,14 +7,20 @@ from io import StringIO
 from unittest.mock import patch
 import subprocess
 import shutil
+import importlib
+import types
+
+if not hasattr(importlib, "ModuleType"):
+    importlib.ModuleType = types.ModuleType
 
 import backend
 from core.interpreter import InterpretadorCobra
 from cobra.core import Lexer
 from cobra.core import Parser
-from cli.commands.compile_cmd import TRANSPILERS
-from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from cobra.cli.commands.compile_cmd import TRANSPILERS
 import pytest
+
+from tests.utils.runtime import run_code
 
 
 def obtener_salida_interprete(archivo: Path) -> str:
@@ -27,12 +33,10 @@ def obtener_salida_interprete(archivo: Path) -> str:
 
 
 def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
-    if lang == "python":
-        return ejecutar_en_sandbox(codigo)
-    if lang == "js":
-        if not shutil.which("node"):
+    if lang in {"python", "js"}:
+        if lang == "js" and not shutil.which("node"):
             pytest.skip("node no disponible")
-        return ejecutar_en_sandbox_js(codigo)
+        return run_code(lang, codigo)
     if lang == "ruby":
         if not shutil.which("ruby"):
             pytest.skip("ruby no disponible")
