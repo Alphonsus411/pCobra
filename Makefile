@@ -14,9 +14,10 @@ GRAMMAR_COV?=30
 help:
 	@echo "Comandos disponibles:"
 	@echo "  make install         Instala el entorno en modo desarrollo"
-	@echo "  make run             Ejecuta Cobra usando dotenv"
-	@echo "  make test            Ejecuta tests con pytest y coverage"
-	@echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
+        @echo "  make run             Ejecuta Cobra usando dotenv"
+        @echo "  make test            Ejecuta tests con pytest y coverage"
+        @echo "  make coverage        Ejecuta coverage y genera reporte HTML"
+        @echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
 	@echo "  make format          Formatea con black + isort"
 	@echo "  make typecheck       Verifica tipos con mypy + pyright"
 	@echo "  make docker          Construye todos los contenedores"
@@ -35,8 +36,12 @@ run:
 	$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m src.main
 
 test:
-	$(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)
-	pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
+        $(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)
+        pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
+
+coverage:
+        coverage run -m pytest
+        coverage html
 
 lint:
 	ruff check $(SRC)
@@ -73,4 +78,4 @@ clean:
 	rm -rf .pytest_cache .mypy_cache .coverage htmlcov \
 	       $(BUILDDIR) .venv dist build bench_results.json
 
-.PHONY: help install run test lint format typecheck secrets docker docs clean check
+.PHONY: help install run test coverage lint format typecheck secrets docker docs clean check
