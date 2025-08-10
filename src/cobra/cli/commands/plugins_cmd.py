@@ -1,9 +1,10 @@
-from argparse import ArgumentParser
 from typing import Dict, Optional
 from dataclasses import dataclass
+
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.plugin_registry import obtener_registro_detallado
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_info, mostrar_error
 
 
@@ -25,14 +26,14 @@ class PluginsCommand(BaseCommand):
     ARG_ACCION = "accion"
     ARG_TEXTO = "texto"
 
-    def register_subparser(self, subparsers) -> ArgumentParser:
+    def register_subparser(self, subparsers) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            ArgumentParser: El parser configurado para este subcomando
+            CustomArgumentParser: El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(self.name, help=_("Lista plugins instalados"))
         sub = parser.add_subparsers(dest=self.ARG_ACCION)

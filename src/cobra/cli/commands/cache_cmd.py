@@ -1,8 +1,10 @@
 from typing import Any
-from argparse import ArgumentParser, _SubParsersAction  # TODO: Usar API pública
+from argparse import _SubParsersAction  # TODO: Usar API pública
 from core.ast_cache import limpiar_cache
+
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_info, mostrar_error
 
 class CacheCommand(BaseCommand):
@@ -17,14 +19,14 @@ class CacheCommand(BaseCommand):
     
     name: str = "cache"
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar el subcomando
             
         Returns:
-            ArgumentParser: El parser configurado para el subcomando
+            CustomArgumentParser: El parser configurado para el subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Elimina los archivos de la caché de AST")

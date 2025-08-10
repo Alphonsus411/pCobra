@@ -5,7 +5,7 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
-from argparse import _SubParsersAction, ArgumentParser
+from argparse import _SubParsersAction
 
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.core import Lexer
@@ -14,6 +14,7 @@ from core.interpreter import InterpretadorCobra
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 # Constantes
@@ -32,7 +33,7 @@ class VerifyCommand(BaseCommand):
         self._interprete = InterpretadorCobra()
         self._logger = logging.getLogger(__name__)
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:

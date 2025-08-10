@@ -1,12 +1,13 @@
 import logging
 import zipfile
-from argparse import ArgumentParser, _SubParsersAction  # TODO: Evitar uso de API privada
+from argparse import _SubParsersAction, Namespace  # TODO: Evitar uso de API privada
 from pathlib import Path
 from typing import List
 
 from cobra.cli.commands import modules_cmd
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 # Constantes
@@ -18,14 +19,14 @@ class PaqueteCommand(BaseCommand):
     """Crea e instala paquetes Cobra."""
     name = "paquete"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            ArgumentParser: Parser configurado para este subcomando
+            CustomArgumentParser: Parser configurado para este subcomando
         """
         parser = subparsers.add_parser(self.name, help=_("Gestiona paquetes Cobra"))
         sub = parser.add_subparsers(dest="accion", required=True)
@@ -42,7 +43,7 @@ class PaqueteCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
-    def run(self, args: ArgumentParser) -> int:
+    def run(self, args: Namespace) -> int:
         """Ejecuta la lógica del comando.
         
         Args:

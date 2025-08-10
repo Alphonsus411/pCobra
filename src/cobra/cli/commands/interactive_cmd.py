@@ -3,7 +3,7 @@ import re
 import resource
 import traceback
 from typing import Optional, Any, NoReturn
-from argparse import _SubParsersAction, ArgumentParser
+from argparse import _SubParsersAction
 
 from cobra.core import Lexer, LexerError
 from cobra.core import Parser, ParserError
@@ -18,6 +18,7 @@ from core.sandbox import (
 from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 class InteractiveCommand(BaseCommand):
     """Modo interactivo del lenguaje Cobra.
@@ -49,7 +50,7 @@ class InteractiveCommand(BaseCommand):
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:

@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
-from argparse import ArgumentParser, _SubParsersAction  # TODO: Reemplazar _SubParsersAction
+from argparse import _SubParsersAction  # TODO: Reemplazar _SubParsersAction
 from typing import Any
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_info, mostrar_error
 
 class InitCommand(BaseCommand):
@@ -12,14 +13,14 @@ class InitCommand(BaseCommand):
     
     name = "init"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            ArgumentParser: El parser configurado para este subcomando
+            CustomArgumentParser: El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Inicializa un proyecto Cobra")

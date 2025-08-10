@@ -9,7 +9,7 @@ import pstats
 import shutil
 import subprocess
 import tempfile
-from argparse import ArgumentParser, _SubParsersAction
+from argparse import _SubParsersAction, Namespace
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +22,7 @@ from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.commands.execute_cmd import ExecuteCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 
@@ -38,7 +39,7 @@ class ProfileCommand(BaseCommand):
         except OSError as e:
             self.logger.warning(f"Error al eliminar archivo temporal {archivo}: {e}")
 
-    def _obtener_argumento(self, args: ArgumentParser, nombre: str, default: Optional[any] = None) -> any:
+    def _obtener_argumento(self, args: Namespace, nombre: str, default: Optional[any] = None) -> any:
         """Obtiene un argumento del namespace de argumentos con valor por defecto."""
         return getattr(args, nombre, default)
 
@@ -51,7 +52,7 @@ class ProfileCommand(BaseCommand):
         mostrar_error(msg)
         return 1
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Perfila un programa"))
         parser.add_argument("archivo")
@@ -81,7 +82,7 @@ class ProfileCommand(BaseCommand):
         except OSError:
             return False
 
-    def run(self, args: ArgumentParser) -> int:
+    def run(self, args: Namespace) -> int:
         """Ejecuta la lógica del comando."""
         archivo: str = args.archivo
         output: Optional[str] = self._obtener_argumento(args, "output")

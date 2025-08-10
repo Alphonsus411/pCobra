@@ -1,8 +1,9 @@
-from argparse import _SubParsersAction, ArgumentParser
+from argparse import _SubParsersAction
 from typing import Any
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error
 
 class BenchmarksCommand(BaseCommand):
@@ -10,14 +11,14 @@ class BenchmarksCommand(BaseCommand):
     
     name = "benchmarks"
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar el subcomando
             
         Returns:
-            ArgumentParser: El parser configurado para el subcomando
+            CustomArgumentParser: El parser configurado para el subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Ejecuta benchmarks")

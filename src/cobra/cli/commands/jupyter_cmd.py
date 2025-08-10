@@ -1,10 +1,12 @@
 import subprocess
 import sys
-from argparse import ArgumentParser, _SubParsersAction  # TODO: Evitar uso de _SubParsersAction
+from argparse import _SubParsersAction  # TODO: Evitar uso de _SubParsersAction
 from pathlib import Path
 from typing import Any
+
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error
 
 
@@ -12,14 +14,14 @@ class JupyterCommand(BaseCommand):
     """Lanza Jupyter Notebook con el kernel Cobra instalado."""
     name = "jupyter"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:
             subparsers: Objeto para registrar el subcomando
 
         Returns:
-            ArgumentParser: El parser configurado para este subcomando
+            CustomArgumentParser: El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(self.name, help=_("Inicia Jupyter Notebook"))
         parser.add_argument(

@@ -1,7 +1,7 @@
 import cProfile
 import contextlib
 import json
-from argparse import _SubParsersAction, ArgumentParser
+from argparse import _SubParsersAction
 from pathlib import Path
 from timeit import timeit
 from typing import Any, Dict, List
@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 from core.ast_cache import obtener_ast
 
@@ -40,14 +41,14 @@ class BenchTranspilersCommand(BaseCommand):
 
     name = "benchtranspilers"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            ArgumentParser: Parser configurado para este subcomando
+            CustomArgumentParser: Parser configurado para este subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Evalúa la velocidad de los transpiladores")
