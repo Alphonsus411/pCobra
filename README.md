@@ -678,6 +678,32 @@ ParserError: Token inesperado. ¿Quiso decir 'imprimir'?
 
 Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
 
+### Autocompletado
+
+La CLI soporta autocompletado de argumentos mediante
+[argcomplete](https://kislyuk.github.io/argcomplete/). Para habilitarlo en tu
+terminal ejecuta uno de los siguientes comandos según tu *shell*:
+
+- **bash**:
+
+  ```bash
+  eval "$(register-python-argcomplete cobra)"
+  ```
+
+- **zsh**:
+
+  ```bash
+  autoload -U bashcompinit
+  bashcompinit
+  eval "$(register-python-argcomplete cobra)"
+  ```
+
+- **fish**:
+
+  ```bash
+  register-python-argcomplete --shell fish cobra | source
+  ```
+
 ```bash
 # Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C o WebAssembly
 cobra compilar programa.co --tipo python

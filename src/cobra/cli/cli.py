@@ -8,6 +8,9 @@ from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
 from argparse import _SubParsersAction
 
+import argcomplete
+from argcomplete.completers import FilesCompleter, DirectoriesCompleter
+
 # Importaciones con TYPE_CHECKING para evitar dependencias circulares
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -158,6 +161,33 @@ class CliApplication:
                           help=_("Path to custom validators module"),
                           type=Path)
 
+    def _configure_autocomplete(self, parser: argparse.ArgumentParser) -> None:
+        """Configura autocompletado para argumentos comunes.
+
+        Recorre recursivamente todos los subparsers y asigna un completer
+        apropiado para argumentos que representan rutas de archivos o
+        directorios.
+        """
+        file_args = {
+            "archivo",
+            "ruta",
+            "path",
+            "fuente",
+            "pkg",
+            "notebook",
+            "extra_validators",
+        }
+        dir_args = {"directorio", "carpeta"}
+
+        for action in parser._actions:
+            if isinstance(action, argparse._SubParsersAction):
+                for sub in action.choices.values():
+                    self._configure_autocomplete(sub)
+            elif action.dest in file_args:
+                action.completer = FilesCompleter()
+            elif action.dest in dir_args:
+                action.completer = DirectoriesCompleter()
+
     def _build_argument_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog=AppConfig.PROGRAM_NAME,
@@ -179,6 +209,8 @@ class CliApplication:
         default_command = self.command_registry.get_default_command()
         if default_command:
             self.parser.set_defaults(cmd=default_command)
+        self._configure_autocomplete(self.parser)
+        argcomplete.autocomplete(self.parser)
 
         return self.parser.parse_args(argv)
 
