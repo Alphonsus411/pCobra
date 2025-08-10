@@ -27,6 +27,13 @@ jobs:
           python -m build
           twine check dist/*
           twine upload dist/*
+      - name: Run benchmarks
+        run: python scripts/benchmarks/run_benchmarks.py --output benchmarks.json
+      - name: Upload benchmarks
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks-${{ github.ref_name }}
+          path: benchmarks.json
       - name: Build and push Docker image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -69,4 +76,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/**/cobra*
+          files: |
+            dist/**/cobra*
+            dist/**/benchmarks.json
