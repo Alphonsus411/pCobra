@@ -963,16 +963,16 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Crea una nueva rama (`git checkout -b feature/nueva-caracteristica`).
 - Las ramas que comiencen con `feature/`, `bugfix/` o `doc/` recibirán etiquetas
   automáticas al abrir un pull request.
-- Sigue las convenciones de estilo indicadas en `CONTRIBUTING.md` 
-  (formateo con `black`, longitud máxima de línea 88 y uso de `flake8`, `mypy`
+- Sigue las convenciones de estilo indicadas en `CONTRIBUTING.md`
+  (formateo con `black`, longitud máxima de línea 88 y uso de `ruff`, `mypy`
   y `bandit`).
 - Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`).
-- Ejecuta `make lint` para verificar el código con *flake8*, *mypy* y *bandit*. `bandit` analizará el directorio `src`.
+- Ejecuta `make lint` para verificar el código con *ruff*, *mypy* y *bandit*. `bandit` analizará el directorio `src`.
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
 - Para lanzar todas las validaciones en un solo paso ejecuta `python check.py`.
-  Este script corre *flake8*, *mypy*, *bandit*, *pytest* y *pyright*.
+  Este script corre *ruff*, *mypy*, *bandit*, *pytest* y *pyright*.
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
@@ -1020,11 +1020,11 @@ make secrets
 ```
 El segundo comando ejecuta *gitleaks* para detectar posibles secretos en el repositorio.
 
-Esto ejecutará `flake8` y `mypy` sobre `src`, y `bandit` revisará el directorio `src`. Si prefieres lanzar las herramientas de
+Esto ejecutará `ruff` y `mypy` sobre `src`, y `bandit` revisará el directorio `src`. Si prefieres lanzar las herramientas de
 manera individual utiliza:
 
 ```bash
-flake8 src
+ruff check src
 mypy src
 ```
 

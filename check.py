@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script alternativo a 'make check' para validar el proyecto Cobra
-Verifica: flake8, mypy, bandit, pytest, pyright
+Verifica: ruff, mypy, bandit, pytest, pyright
 """
 
 import subprocess
@@ -9,7 +9,7 @@ import sys
 import shutil
 
 TOOLS = {
-    "flake8": ["flake8", "src"],
+    "ruff": ["ruff", "check", "src"],
     "mypy": ["mypy", "src"],
     "bandit": ["bandit", "-r", "src"],
     "pytest": ["pytest", "--cov=src", "src/tests", "--cov-report=term-missing", "--cov-fail-under=90"],

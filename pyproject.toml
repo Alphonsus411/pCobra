@@ -55,6 +55,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-timeout",
+    "ruff",
 ]
 
 [tool.setuptools]

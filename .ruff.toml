@@ -1,0 +1,12 @@
+line-length = 88
+target-version = "py311"
+exclude = [
+    "frontend/docs",
+    "frontend/build",
+    "src/tests",
+    "notebooks",
+]
+
+[lint]
+select = ["E", "F", "W"]
+ignore = ["F403", "F405"]
