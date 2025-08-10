@@ -1,10 +1,8 @@
 import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "backend" / "src"))
-from io import StringIO
-from unittest.mock import patch
 import subprocess
 import shutil
 import importlib
@@ -14,22 +12,22 @@ if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
 
 import backend
-from core.interpreter import InterpretadorCobra
+import core.ast_nodes as core_ast_nodes
+import cobra.core as cobra_core
+import cobra.core.ast_nodes as cobra_ast_nodes
+for nombre in dir(core_ast_nodes):
+    if nombre.startswith("Nodo"):
+        obj = getattr(core_ast_nodes, nombre)
+        if not hasattr(cobra_ast_nodes, nombre):
+            setattr(cobra_ast_nodes, nombre, obj)
+        if not hasattr(cobra_core, nombre):
+            setattr(cobra_core, nombre, obj)
 from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 import pytest
 
 from tests.utils.runtime import run_code
-
-
-def obtener_salida_interprete(archivo: Path) -> str:
-    codigo = archivo.read_text()
-    tokens = Lexer(codigo).analizar_token()
-    ast = Parser(tokens).parsear()
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        InterpretadorCobra().ejecutar_ast(ast)
-    return out.getvalue()
 
 
 def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
@@ -98,32 +96,30 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
     pytest.skip(f"ejecución no soportada para {lang}")
 
 
-def test_cross_backend_output(tmp_path):
-    ejemplos = list(Path("src/tests/data").glob("*.co"))
-    assert ejemplos, "No hay archivos de ejemplo"
+def test_cross_backend_output(tmp_path, transpiler_case):
+    archivo, esperados = transpiler_case
+    tokens = Lexer(archivo.read_text()).analizar_token()
+    ast = Parser(tokens).parsear()
 
-    for archivo in ejemplos:
-        esperado = obtener_salida_interprete(archivo)
-        tokens = Lexer(archivo.read_text()).analizar_token()
-        ast = Parser(tokens).parsear()
-
-        diferencias = {}
-        for lang in ("python", "js"):
-            transpiler = TRANSPILERS[lang]()
-            if lang == "python":
-                transpiler.codigo = ""
-            try:
-                codigo = transpiler.generate_code(ast)
-            except NotImplementedError as e:
-                diferencias[lang] = f"Error: {e}"
-                continue
-            try:
-                salida = ejecutar_codigo(lang, codigo, tmp_path)
-            except pytest.skip.Exception:
-                continue
-            except Exception as e:  # pylint: disable=broad-except
-                diferencias[lang] = f"Error: {e}"
-                continue
-            if salida != esperado:
-                diferencias[lang] = salida
-        assert not diferencias, f"Salidas distintas: {diferencias}"
+    diferencias = {}
+    for lang in TRANSPILERS:
+        if lang not in esperados:
+            continue
+        transpiler = TRANSPILERS[lang]()
+        if lang == "python":
+            transpiler.codigo = ""
+        try:
+            codigo = transpiler.generate_code(ast)
+        except NotImplementedError as e:
+            diferencias[lang] = f"Error: {e}"
+            continue
+        try:
+            salida = ejecutar_codigo(lang, codigo, tmp_path)
+        except pytest.skip.Exception:
+            continue
+        except Exception as e:  # pylint: disable=broad-except
+            diferencias[lang] = f"Error: {e}"
+            continue
+        if salida != esperados[lang]:
+            diferencias[lang] = salida
+    assert not diferencias, f"Salidas distintas: {diferencias}"
