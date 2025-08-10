@@ -827,7 +827,16 @@ PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
-Algunas pruebas generan código en distintos lenguajes (por ejemplo C++, JavaScript o Go) y verifican que la sintaxis sea correcta. Para que estas pruebas se ejecuten con éxito es necesario contar con los compiladores o intérpretes correspondientes instalados en el sistema, como Node, gcc/g++, Go, etc. Puedes ejecutar todo el conjunto con:
+ Algunas pruebas generan código en distintos lenguajes (por ejemplo C++, JavaScript o Go) y verifican que la sintaxis sea correcta. Para que estas pruebas se ejecuten con éxito es necesario contar con los compiladores o intérpretes correspondientes instalados en el sistema. En particular se requiere:
+
+- Node.js
+- gcc y g++
+- Go (`golang-go`)
+- Ruby (`ruby`)
+- Rust (`rustc`)
+- Java (`default-jdk`)
+
+Con estas herramientas disponibles puedes ejecutar todo el conjunto con:
 
 ```bash
 PYTHONPATH=$PWD pytest

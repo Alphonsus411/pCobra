@@ -21,7 +21,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go ruby-full
+          sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
@@ -39,8 +39,14 @@ jobs:
       - name: Run type checks
         run: make typecheck  # Ejecuta mypy con la configuración del proyecto y pyright
       - name: Run tests
-        run: pytest --cov=src --cov-report=xml \
-          --cov-report=term-missing --cov-fail-under=95
+        run: |
+          if [ -d tests ]; then
+            pytest tests src/tests --cov=src --cov-report=xml \
+              --cov-report=term-missing --cov-fail-under=95
+          else
+            pytest src/tests --cov=src --cov-report=xml \
+              --cov-report=term-missing --cov-fail-under=95
+          fi
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -63,7 +69,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go ruby-full
+          sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
