@@ -1,4 +1,4 @@
-"""Pruebas para el módulo ``gui.idle``."""
+"""Pruebas unitarias para la funcionalidad de ``gui.idle``."""
 
 import importlib
 import sys
