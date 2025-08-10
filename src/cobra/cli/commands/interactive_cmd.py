@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import resource
 import traceback
@@ -189,9 +190,11 @@ class InteractiveCommand(BaseCommand):
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
         sandbox_docker = getattr(args, "sandbox_docker", None)
+        history_path = os.path.expanduser("~/.cobra_history")
+        os.makedirs(os.path.dirname(history_path), exist_ok=True)
         session = PromptSession(
             lexer=PygmentsLexer(CobraLexer),
-            history=FileHistory('~/.cobra_history'),
+            history=FileHistory(history_path),
         )
 
         with self:  # Usar context manager para recursos

@@ -101,3 +101,17 @@ def test_interactive_session_persistence():
         cmd.run(_args())
     salida = mock_stdout.getvalue().strip().split('\n')
     assert salida[-1] == '5'
+
+
+def test_interactive_history_setup(tmp_path):
+    cmd = InteractiveCommand(MagicMock())
+    fake_path = tmp_path / '.cobra_history'
+    with patch('cobra.cli.commands.interactive_cmd.os.path.expanduser', return_value=str(fake_path)) as mock_expanduser, \
+         patch('cobra.cli.commands.interactive_cmd.os.makedirs') as mock_makedirs, \
+         patch('cobra.cli.commands.interactive_cmd.FileHistory') as mock_history, \
+         patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=['salir']), \
+         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+        cmd.run(_args())
+    mock_expanduser.assert_called_once_with('~/.cobra_history')
+    mock_makedirs.assert_called_once_with(str(tmp_path), exist_ok=True)
+    mock_history.assert_called_once_with(str(fake_path))
