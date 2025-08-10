@@ -44,7 +44,7 @@ def _args():
 def test_interactive_exit():
     interp = MagicMock()
     cmd = InteractiveCommand(interp)
-    with patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=['salir']), \
+    with patch('prompt_toolkit.PromptSession.prompt', side_effect=['salir']), \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
     assert ret == 0
@@ -52,7 +52,7 @@ def test_interactive_exit():
 
 def test_interactive_tokens():
     cmd = InteractiveCommand(MagicMock())
-    with patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=['tokens', 'salir']), \
+    with patch('prompt_toolkit.PromptSession.prompt', side_effect=['tokens', 'salir']), \
          patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
@@ -61,7 +61,7 @@ def test_interactive_tokens():
 
 def test_interactive_ast():
     cmd = InteractiveCommand(MagicMock())
-    with patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=['ast', 'salir']), \
+    with patch('prompt_toolkit.PromptSession.prompt', side_effect=['ast', 'salir']), \
          patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.procesar_ast', return_value='AST'):
@@ -72,7 +72,7 @@ def test_interactive_ast():
 def test_interactive_keyboard_interrupt():
     interp = MagicMock()
     cmd = InteractiveCommand(interp)
-    with patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=KeyboardInterrupt), \
+    with patch('prompt_toolkit.PromptSession.prompt', side_effect=KeyboardInterrupt), \
          patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
@@ -83,7 +83,7 @@ def test_interactive_keyboard_interrupt():
 def test_interactive_eof_error():
     interp = MagicMock()
     cmd = InteractiveCommand(interp)
-    with patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=EOFError), \
+    with patch('prompt_toolkit.PromptSession.prompt', side_effect=EOFError), \
          patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info, \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         ret = cmd.run(_args())
@@ -94,7 +94,7 @@ def test_interactive_eof_error():
 def test_interactive_session_persistence():
     inputs = ['x = 5', 'imprimir(x)', 'salir']
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
-         patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=inputs), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
          patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         cmd = InteractiveCommand(InterpretadorCobra())
@@ -109,9 +109,24 @@ def test_interactive_history_setup(tmp_path):
     with patch('cobra.cli.commands.interactive_cmd.os.path.expanduser', return_value=str(fake_path)) as mock_expanduser, \
          patch('cobra.cli.commands.interactive_cmd.os.makedirs') as mock_makedirs, \
          patch('cobra.cli.commands.interactive_cmd.FileHistory') as mock_history, \
-         patch('prompt_toolkit.shortcuts.prompt.PromptSession.prompt', side_effect=['salir']), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['salir']), \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     mock_expanduser.assert_called_once_with('~/.cobra_history')
     mock_makedirs.assert_called_once_with(str(tmp_path), exist_ok=True)
     mock_history.assert_called_once_with(str(fake_path))
+
+
+def test_interactive_history_append(tmp_path):
+    cmd = InteractiveCommand(MagicMock())
+    fake_path = tmp_path / '.cobra_history'
+
+    def fake_prompt(self, *args, **kwargs):
+        self.history.append_string('cmd')
+        return 'salir'
+
+    with patch('cobra.cli.commands.interactive_cmd.os.path.expanduser', return_value=str(fake_path)), \
+         patch('prompt_toolkit.PromptSession.prompt', new=fake_prompt), \
+         patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
+        cmd.run(_args())
+    assert fake_path.exists()
