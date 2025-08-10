@@ -2,6 +2,27 @@
 
 Este documento presenta un recorrido introductorio por el lenguaje Cobra con veinte ejemplos sencillos.
 
+## Ejecución y transpilación
+
+Para ejecutar un archivo Cobra desde la línea de comandos:
+
+```bash
+cobra archivo.co
+```
+
+También puedes transpilar el programa a otros lenguajes usando la opción `--to`:
+
+```bash
+cobra archivo.co --to python
+```
+
+Los ejemplos de **Hello World** generados para cada transpilador se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) y en las siguientes rutas específicas:
+
+- [Hello World en Python](../examples/hello_world/python)
+- [Hello World en JavaScript](../examples/hello_world/javascript)
+- [Hello World en C](../examples/hello_world/c)
+
+
 ## 1. Hola mundo
 ```cobra
 imprimir "Hola mundo"
