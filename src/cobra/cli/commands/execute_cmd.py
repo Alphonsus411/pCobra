@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from argcomplete.completers import FilesCompleter
+
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -31,7 +33,7 @@ class ExecuteCommand(BaseCommand):
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Ejecuta un script Cobra"))
-        parser.add_argument("archivo", help=_("Ruta al archivo a ejecutar"))
+        parser.add_argument("archivo", help=_("Ruta al archivo a ejecutar")).completer = FilesCompleter()
         parser.add_argument(
             "--sandbox",
             action="store_true",

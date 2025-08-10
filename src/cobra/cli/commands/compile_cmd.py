@@ -4,6 +4,8 @@ import os
 from importlib import import_module
 from importlib.metadata import entry_points
 
+from argcomplete.completers import FilesCompleter
+
 from cobra.transpilers import module_map
 from cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from cobra.transpilers.transpiler.to_c import TranspiladorC
@@ -120,7 +122,7 @@ class CompileCommand(BaseCommand):
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
-        parser.add_argument("archivo")
+        parser.add_argument("archivo").completer = FilesCompleter()
         parser.add_argument(
             "--tipo",
             choices=LANG_CHOICES,
