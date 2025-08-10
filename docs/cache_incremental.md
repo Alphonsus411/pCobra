@@ -12,6 +12,10 @@ Para activarlo desde código se puede invocar `Lexer.tokenizar(incremental=True)
 y `ClassicParser.parsear(incremental=True)`, que consultarán la caché de
 fragmentos antes de volver a analizar el texto.
 
+```python
+from cobra.core import Lexer, ClassicParser
+```
+
 Para perfilar estas fases desde la línea de comandos se puede ejecutar:
 
 ```bash
