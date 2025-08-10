@@ -13,6 +13,7 @@ from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.validators import validar_archivo_existente
 
 # Configuración del logging
 logger = logging.getLogger(__name__)
@@ -117,8 +118,6 @@ class TranspilarInversoCommand(BaseCommand):
         Returns:
             Optional[str]: Mensaje de error si hay problemas, None si todo está bien
         """
-        if not os.path.exists(archivo):
-            return f"El archivo '{archivo}' no existe"
         if not os.path.isfile(archivo):
             return f"'{archivo}' no es un archivo regular"
         if not os.access(archivo, os.R_OK):
@@ -187,6 +186,8 @@ class TranspilarInversoCommand(BaseCommand):
 
             logger.debug(f"Iniciando validación del archivo {args.archivo}")
 
+            validar_archivo_existente(args.archivo)
+
             # Validar archivo
             if error := self._validar_archivo(args.archivo, origen):
                 raise CommandError(error)
@@ -230,6 +231,8 @@ class TranspilarInversoCommand(BaseCommand):
             mostrar_error(f"Error de codificación al leer '{args.archivo}'")
             return 1
         except OSError as exc:
+            if isinstance(exc, FileNotFoundError):
+                raise
             logger.error(f"Error de E/S: {exc}", exc_info=True)
             mostrar_error(f"Error al leer el archivo: {exc}")
             return 1

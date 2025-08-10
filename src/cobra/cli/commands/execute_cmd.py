@@ -9,6 +9,7 @@ from argcomplete.completers import FilesCompleter
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.validators import validar_archivo_existente
 from cobra.core import Lexer, LexerError
 from cobra.core import Parser, ParserError
 from cobra.transpilers import module_map
@@ -56,9 +57,7 @@ class ExecuteCommand(BaseCommand):
         Raises:
             ValueError: Si el archivo no existe o excede el tamaño máximo
         """
-        ruta = Path(archivo)
-        if not ruta.exists():
-            raise FileNotFoundError(f"El archivo '{archivo}' no existe")
+        ruta = validar_archivo_existente(archivo)
         if ruta.stat().st_size > self.MAX_FILE_SIZE:
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.MAX_FILE_SIZE} bytes)")
 
@@ -86,7 +85,7 @@ class ExecuteCommand(BaseCommand):
         """
         try:
             self._validar_archivo(args.archivo)
-        except (FileNotFoundError, ValueError) as e:
+        except ValueError as e:
             mostrar_error(str(e))
             return 1
 

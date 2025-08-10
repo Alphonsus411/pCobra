@@ -8,6 +8,7 @@ from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error
+from cobra.cli.utils.validators import validar_archivo_existente
 
 
 class JupyterCommand(BaseCommand):
@@ -51,9 +52,8 @@ class JupyterCommand(BaseCommand):
             return 1
 
         # Validar ruta del notebook si se proporciona
-        if args.notebook and not args.notebook.exists():
-            mostrar_error(_("El archivo '{path}' no existe").format(path=args.notebook))
-            return 1
+        if args.notebook:
+            validar_archivo_existente(args.notebook)
 
         try:
             # Instalar el kernel de Cobra

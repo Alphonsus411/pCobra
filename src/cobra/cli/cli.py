@@ -220,7 +220,7 @@ class CliApplication:
         if isinstance(exc, ValueError):
             messages.mostrar_error(_("Value error: {}").format(str(exc)))
         elif isinstance(exc, FileNotFoundError):
-            messages.mostrar_error(_("File not found: {}").format(str(exc)))
+            messages.mostrar_error(str(exc))
         else:
             messages.mostrar_error(_("An unexpected error occurred"))
 
