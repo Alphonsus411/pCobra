@@ -3,10 +3,11 @@ import re
 import subprocess
 from pathlib import Path
 from typing import Any
-from argparse import ArgumentParser, _SubParsersAction
+from argparse import _SubParsersAction
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 def validar_tag(valor: str) -> str:
@@ -19,7 +20,7 @@ class ContainerCommand(BaseCommand):
     """Construye la imagen Docker del proyecto."""
     name = "contenedor"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Construye la imagen Docker"))
         parser.add_argument(

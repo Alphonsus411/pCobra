@@ -8,6 +8,8 @@ from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
 from argparse import _SubParsersAction
 
+from cobra.cli.utils.argument_parser import CustomArgumentParser
+
 import argcomplete
 from argcomplete.completers import FilesCompleter, DirectoriesCompleter
 
@@ -116,7 +118,7 @@ class CommandRegistry:
 
 class CliApplication:
     def __init__(self) -> None:
-        self.parser: Optional[argparse.ArgumentParser] = None
+        self.parser: Optional[CustomArgumentParser] = None
         self.interpreter: Optional[InterpretadorCobra] = None
         self.command_registry: Optional[CommandRegistry] = None
 
@@ -145,7 +147,7 @@ class CliApplication:
             format=AppConfig.LOG_FORMAT
         )
 
-    def _configure_cli_options(self, parser: argparse.ArgumentParser) -> None:
+    def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
         parser.add_argument("--format", action="store_true",
                           help=_("Format file before processing"))
         parser.add_argument("--debug", action="store_true",
@@ -161,7 +163,7 @@ class CliApplication:
                           help=_("Path to custom validators module"),
                           type=Path)
 
-    def _configure_autocomplete(self, parser: argparse.ArgumentParser) -> None:
+    def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
         """Configura autocompletado para argumentos comunes.
 
         Recorre recursivamente todos los subparsers y asigna un completer
@@ -188,8 +190,8 @@ class CliApplication:
             elif action.dest in dir_args:
                 action.completer = DirectoriesCompleter()
 
-    def _build_argument_parser(self) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser(
+    def _build_argument_parser(self) -> CustomArgumentParser:
+        parser = CustomArgumentParser(
             prog=AppConfig.PROGRAM_NAME,
             description=_("CLI for Cobra")
         )
@@ -200,7 +202,7 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
             
-        subparsers = self.parser.add_subparsers(dest="command")
+        subparsers = self.parser.add_subparsers(dest="command", parser_class=CustomArgumentParser)
         self.command_registry.register_base_commands(subparsers)
 
         menu_parser = subparsers.add_parser("menu", help=_("Modo interactivo"))

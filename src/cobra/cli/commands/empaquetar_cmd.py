@@ -3,25 +3,26 @@ import platform
 from pathlib import Path
 import subprocess
 import re
-from typing import List
-from argparse import ArgumentParser, _ArgumentGroup
+from typing import List, Any
+from argparse import _ArgumentGroup
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 class EmpaquetarCommand(BaseCommand):
     """Empaqueta la CLI en un ejecutable."""
     name = "empaquetar"
 
-    def register_subparser(self, subparsers: _ArgumentGroup) -> ArgumentParser:
+    def register_subparser(self, subparsers: _ArgumentGroup) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Grupo para registrar subcomandos
             
         Returns:
-            ArgumentParser: El parser configurado para este subcomando
+            CustomArgumentParser: El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Crea un ejecutable para la CLI usando PyInstaller")
@@ -92,7 +93,7 @@ class EmpaquetarCommand(BaseCommand):
         except ValueError:
             return False
 
-    def run(self, args: ArgumentParser) -> int:
+    def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
         
         Args:

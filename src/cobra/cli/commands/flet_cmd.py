@@ -1,6 +1,8 @@
-from argparse import ArgumentParser, _SubParsersAction  # TODO: Reemplazar _SubParsersAction
+from argparse import _SubParsersAction  # TODO: Reemplazar _SubParsersAction
+
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error
 
 class FletCommand(BaseCommand):
@@ -11,7 +13,7 @@ class FletCommand(BaseCommand):
         """Inicializa el comando."""
         super().__init__()
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:

@@ -2,7 +2,7 @@ import os
 import logging
 import inspect
 from typing import Optional, Dict, Type
-from argparse import _SubParsersAction, ArgumentParser, Namespace
+from argparse import _SubParsersAction, Namespace
 from contextlib import contextmanager
 from chardet import detect
 from jsonschema import ValidationError
@@ -11,6 +11,7 @@ import cobra.transpilers.reverse as reverse_module
 from cobra.cli.commands.base import BaseCommand, CommandError
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 # Configuración del logging
@@ -73,14 +74,14 @@ class TranspilarInversoCommand(BaseCommand):
 
     name: str = "transpilar-inverso"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando en el parser.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            ArgumentParser: Parser configurado para el subcomando
+            CustomArgumentParser: Parser configurado para el subcomando
         """
         parser = subparsers.add_parser(
             self.name, help=_("Transpila desde un lenguaje origen a otro destino")

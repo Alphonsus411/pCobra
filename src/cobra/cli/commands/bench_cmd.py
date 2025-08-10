@@ -19,11 +19,12 @@ import subprocess
 import sys
 import tempfile
 import time
-from argparse import ArgumentParser, _SubParsersAction
+from argparse import _SubParsersAction
 from pathlib import Path
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 from core.cobra_config import tiempo_max_transpilacion
 
@@ -118,7 +119,7 @@ class BenchCommand(BaseCommand):
 
     name = "bench"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:

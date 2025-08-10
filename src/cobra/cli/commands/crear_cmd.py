@@ -1,8 +1,10 @@
-from argparse import ArgumentParser, _SubParsersAction  # TODO: Reemplazar _SubParsersAction
+from argparse import _SubParsersAction  # TODO: Reemplazar _SubParsersAction
 from pathlib import Path
+from typing import Any
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 
@@ -11,14 +13,14 @@ class CrearCommand(BaseCommand):
     
     name = "crear"
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
             subparsers: Objeto para registrar subcomandos
             
         Returns:
-            ArgumentParser: Parser configurado
+            CustomArgumentParser: Parser configurado
             
         Note:
             Crea subcomandos para crear archivos, carpetas y proyectos
@@ -38,7 +40,7 @@ class CrearCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
-    def run(self, args: ArgumentParser) -> int:
+    def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
         
         Args:

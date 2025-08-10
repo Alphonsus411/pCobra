@@ -1,5 +1,7 @@
-from argparse import ArgumentParser, _SubParsersAction  # TODO: evitar uso de _SubParsersAction
+from argparse import _SubParsersAction  # TODO: evitar uso de _SubParsersAction
 from typing import Any
+
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 
 class BaseCommand:
     """Clase base para subcomandos de la CLI."""
@@ -16,14 +18,14 @@ class BaseCommand:
         if not self.name:
             raise ValueError("El nombre del comando no puede estar vacío")
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> ArgumentParser:
+    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
         """Registra los argumentos del subcomando en el parser.
         
         Args:
             subparsers: Objeto para registrar el subcomando
             
         Returns:
-            ArgumentParser: El parser configurado para el subcomando
+            CustomArgumentParser: El parser configurado para el subcomando
             
         Raises:
             NotImplementedError: Si la subclase no implementa este método
