@@ -63,21 +63,21 @@ fin
 
 ## Módulos
 
-Los archivos pueden importarse usando `importar`.
+Los archivos pueden importarse usando `import`.
 
 ```cobra
-importar utilidades
+import utilidades
 ```
 
 ## Manejo de errores
 
-El bloque `intentar` ... `excepto` captura excepciones.
+El bloque `intentar` ... `capturar` captura excepciones y puede incluir `finalmente`.
 
 ```cobra
 intentar:
     ejecutar_algo()
-excepto ErrorComoE:
-    imprimir e
+capturar e:
+    imprimir(e)
 fin
 ```
 
@@ -104,13 +104,13 @@ Las lambdas son funciones anónimas de una sola expresión.
 doble = lambda x: x * 2
 ```
 
-## Bloque `with`
+## Gestión de contextos
 
-El bloque `with` gestiona contextos y cierra recursos automáticamente.
+El bloque `con` gestiona contextos y cierra recursos automáticamente.
 
 ```cobra
-with archivo("datos.txt") as f:
-    imprimir f.leer()
+con archivo("datos.txt") como f:
+    imprimir(f.leer())
 fin
 ```
 
