@@ -69,7 +69,7 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Compare benchmarks
-        run: python scripts/benchmarks/compare_releases.py --output benchmarks_compare.json
+        run: python scripts/benchmarks/compare_releases.py --output benchmarks_compare.json --max-regression 10
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
