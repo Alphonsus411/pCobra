@@ -24,6 +24,7 @@ from cobra.cli.commands.execute_cmd import ExecuteCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.validators import validar_archivo_existente
 
 
 class ProfileCommand(BaseCommand):
@@ -93,9 +94,7 @@ class ProfileCommand(BaseCommand):
         extra_validators: Optional[str] = self._obtener_argumento(args, "validadores_extra")
         analysis: bool = self._obtener_argumento(args, "analysis", False)
 
-        if not Path(archivo).exists():
-            mostrar_error(f"El archivo '{archivo}' no existe")
-            return 1
+        validar_archivo_existente(archivo)
 
         if output and not self._validar_directorio_salida(output):
             mostrar_error(f"No se puede escribir en el directorio de salida para '{output}'")

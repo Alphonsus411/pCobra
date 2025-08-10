@@ -39,6 +39,7 @@ from core.semantic_validators import (
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.validators import validar_archivo_existente
 from cobra.core import ParserError
 from core.cobra_config import tiempo_max_transpilacion
 
@@ -95,11 +96,10 @@ LANG_CHOICES = sorted(TRANSPILERS.keys())
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
-    if not os.path.isfile(filepath):
-        raise ValueError(f"'{filepath}' no es un archivo válido")
-    if not os.access(filepath, os.R_OK):
+    path = validar_archivo_existente(filepath)
+    if not os.access(path, os.R_OK):
         raise ValueError(f"No hay permisos de lectura para '{filepath}'")
-    if os.path.getsize(filepath) > MAX_FILE_SIZE:
+    if os.path.getsize(path) > MAX_FILE_SIZE:
         raise ValueError(f"El archivo excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)")
     return True
 

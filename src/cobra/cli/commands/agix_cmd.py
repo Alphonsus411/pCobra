@@ -4,6 +4,7 @@ from typing import Any, Optional, NoReturn
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.validators import validar_archivo_existente
 from ia.analizador_agix import generar_sugerencias
 
 class AgixCommand(BaseCommand):
@@ -61,13 +62,7 @@ class AgixCommand(BaseCommand):
             mostrar_error(_("El peso de interpretabilidad debe ser positivo"))
             return 1
 
-        archivo = Path(args.archivo)
-
-        try:
-            self._validar_archivo(archivo)
-        except ValueError as e:
-            mostrar_error(str(e))
-            return 1
+        archivo = validar_archivo_existente(args.archivo)
 
         try:
             codigo = self._leer_archivo(archivo)
@@ -87,20 +82,6 @@ class AgixCommand(BaseCommand):
         except Exception as e:
             mostrar_error(_("Error al generar sugerencias: {error}").format(error=str(e)))
             return 1
-
-    def _validar_archivo(self, archivo: Path) -> None:
-        """Valida que el archivo exista y sea accesible.
-
-        Args:
-            archivo: Ruta al archivo a validar
-
-        Raises:
-            ValueError: Si el archivo no existe o no es accesible
-        """
-        if not archivo.exists():
-            raise ValueError(_("El archivo '{archivo}' no existe").format(archivo=archivo))
-        if not archivo.is_file():
-            raise ValueError(_("La ruta '{archivo}' no es un archivo").format(archivo=archivo))
 
     def _leer_archivo(self, archivo: Path) -> str:
         """Lee el contenido del archivo.

@@ -16,6 +16,7 @@ from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.validators import validar_archivo_existente
 
 # Constantes
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -111,13 +112,12 @@ class VerifyCommand(BaseCommand):
             FileNotFoundError: Si el archivo no existe
             PermissionError: Si no hay permisos para leer el archivo
         """
+        validar_archivo_existente(file_path)
         self._validate_file(file_path)
-        
+
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
-        except FileNotFoundError:
-            raise FileNotFoundError(_("El archivo '{}' no existe").format(file_path))
         except PermissionError:
             raise PermissionError(
                 _("No hay permisos para leer el archivo '{}'").format(file_path)
@@ -235,7 +235,7 @@ class VerifyCommand(BaseCommand):
             mostrar_info(_("Todas las salidas coinciden"))
             return 0
             
-        except (ValueError, FileNotFoundError, PermissionError) as e:
+        except (ValueError, PermissionError) as e:
             mostrar_error(str(e))
             return 1
         except Exception as e:
