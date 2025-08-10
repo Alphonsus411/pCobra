@@ -666,8 +666,22 @@ Si no proporcionas un subcomando se abrirá el modo interactivo.
 
 ### Uso interactivo
 
-Al ejecutar `cobra` sin argumentos aparecerá un REPL. Si escribes una palabra
-clave con un error tipográfico se mostrará una sugerencia automática. Ejemplo:
+Al ejecutar `cobra` sin argumentos, o explícitamente con `cobra interactive`,
+se inicia un REPL construido con
+[prompt_toolkit](https://python-prompt-toolkit.readthedocs.io/). Este REPL
+ofrece resaltado de sintaxis mediante Pygments y mantiene un historial
+persistente entre sesiones.
+
+El historial se guarda en el archivo `~/.cobra_history`. Para consultarlo o
+reiniciarlo puedes ejecutar:
+
+```bash
+cat ~/.cobra_history   # muestra el historial
+rm ~/.cobra_history    # borra el historial
+```
+
+Si escribes una palabra clave con un error tipográfico se mostrará una
+sugerencia automática. Ejemplo:
 
 ```bash
 cobra> imprmir 1
