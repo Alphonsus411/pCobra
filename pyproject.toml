@@ -33,6 +33,8 @@ dependencies = [
     "packaging",
     "pybind11>=2.13.6",
     "RestrictedPython>=8.0",
+    "prompt_toolkit",
+    "Pygments",
 ]
 
 [project.urls]
