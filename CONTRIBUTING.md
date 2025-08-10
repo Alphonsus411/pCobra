@@ -69,6 +69,39 @@ Además de las pruebas, ejecuta las verificaciones de estilo con:
 ```bash
 make lint
 ```
+## Pruebas de transpiladores
+
+Las pruebas de los transpiladores ejecutan el código generado en varios lenguajes.
+Para que funcionen es necesario tener instalados en el sistema los intérpretes o
+compiladores correspondientes y accesibles desde `PATH`:
+
+- Python 3
+- Node.js
+- Go
+- Rust (`rustc`)
+- Ruby
+
+Puedes ejecutar únicamente estas pruebas con:
+
+```bash
+PYTHONPATH=$PWD/src pytest src/tests/integration/test_runtime_*
+```
+
+Para correr todo el conjunto de pruebas, incluidas las anteriores:
+
+```bash
+PYTHONPATH=$PWD/src pytest
+```
+
+### Añadir soporte para nuevos lenguajes en `run_code`
+
+1. Crea una función `_run_<lenguaje>` en `src/tests/utils/runtime.py` que invoque
+   al intérprete o compilador externo y devuelva la salida estándar.
+2. Registra esa función en el diccionario `_RUNNERS` usando como clave el nombre
+   del lenguaje.
+3. Llama a `run_code("<lenguaje>", codigo)` en los tests para validar el
+   comportamiento.
+
 ## Revisar logs de GitHub Actions
 
 Cuando una tarea falla en CI dirígete a la pestaña *Actions* del repositorio y abre el flujo asociado a tu commit. Cada trabajo muestra los pasos ejecutados y permite desplegar los registros completos. Utiliza la barra de búsqueda para filtrar por palabras clave como `pytest` o `lint`. Desde **View raw logs** puedes descargar el archivo para analizarlo con mayor detalle.
