@@ -1,3 +1,4 @@
+import argparse
 import json
 import subprocess
 import sys
@@ -70,17 +71,59 @@ def comparar(actuales: list[dict], previos: list[dict]) -> list[dict]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Compara los benchmarks actuales con la última release"
+    )
+    root = Path(__file__).resolve().parents[2]
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=root / "benchmarks_compare.json",
+        help="Ruta del archivo de salida",
+    )
+    parser.add_argument(
+        "--max-regression",
+        type=float,
+        default=10.0,
+        help="Porcentaje máximo permitido de regresión en tiempo o memoria",
+    )
+    args = parser.parse_args()
+
     actuales = ejecutar_benchmarks()
     previos = descargar_benchmarks_release()
     resumen = comparar(actuales, previos)
-    out_path = Path(__file__).resolve().parents[2] / "benchmarks_compare.json"
-    out_path.write_text(json.dumps(resumen, indent=2))
+    args.output.write_text(json.dumps(resumen, indent=2))
+
+    exceeded = False
     for r in resumen:
         dt = r["diff_time"]
         dm = r["diff_memory_kb"]
         dt_str = f"{dt:+.4f}s" if dt is not None else "N/A"
         dm_str = f"{dm:+d}kB" if dm is not None else "N/A"
         print(f"{r['backend']}: tiempo {dt_str}, memoria {dm_str}")
+
+        prev_time = r["previous_time"]
+        prev_mem = r["previous_memory_kb"]
+        if (
+            dt is not None
+            and prev_time not in (None, 0)
+            and dt > 0
+            and (dt / prev_time) * 100 > args.max_regression
+        ):
+            exceeded = True
+        if (
+            dm is not None
+            and prev_mem not in (None, 0)
+            and dm > 0
+            and (dm / prev_mem) * 100 > args.max_regression
+        ):
+            exceeded = True
+
+    if exceeded:
+        print(
+            f"Regresión mayor al {args.max_regression}% detectada", file=sys.stderr
+        )
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
