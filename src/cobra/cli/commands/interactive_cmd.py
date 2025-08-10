@@ -4,6 +4,11 @@ import resource
 import traceback
 from typing import Optional, Any, NoReturn
 from argparse import _SubParsersAction
+from types import TracebackType
+
+from prompt_toolkit import PromptSession
+from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.history import FileHistory
 
 from cobra.core import Lexer, LexerError
 from cobra.core import Parser, ParserError
@@ -20,6 +25,7 @@ from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.repl.cobra_lexer import CobraLexer
 class InteractiveCommand(BaseCommand):
     """Modo interactivo del lenguaje Cobra.
     
@@ -183,12 +189,16 @@ class InteractiveCommand(BaseCommand):
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
         sandbox_docker = getattr(args, "sandbox_docker", None)
+        session = PromptSession(
+            lexer=PygmentsLexer(CobraLexer),
+            history=FileHistory('~/.cobra_history'),
+        )
 
         with self:  # Usar context manager para recursos
             while True:
                 try:
                     # Leer entrada
-                    linea = input("cobra> ").strip()
+                    linea = session.prompt("cobra> ").strip()
                     if not self.validar_entrada(linea):
                         continue
 
@@ -303,9 +313,9 @@ class InteractiveCommand(BaseCommand):
         logging.info(_("Iniciando REPL de Cobra"))
         return self
         
-    def __exit__(self, exc_type: Optional[type], 
-                 exc_val: Optional[Exception], 
-                 exc_tb: Optional[traceback.TracebackType]) -> None:
+    def __exit__(self, exc_type: Optional[type],
+                 exc_val: Optional[Exception],
+                 exc_tb: Optional[TracebackType]) -> None:
         """Libera recursos del REPL.
 
         Args:
