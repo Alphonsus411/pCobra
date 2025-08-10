@@ -3,13 +3,18 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, cast
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
 API_URL = "https://api.github.com/repos/Alphonsus411/pCobra/releases/latest"
+HISTORY_URL = (
+    "https://raw.githubusercontent.com/Alphonsus411/pCobra/benchmarks-history/"
+    "benchmarks/history/{version}.json"
+)
 
 
-def ejecutar_benchmarks() -> list[dict]:
+def ejecutar_benchmarks() -> list[dict[str, Any]]:
     """Ejecuta los benchmarks de la versión actual y devuelve la lista de resultados."""
     root = Path(__file__).resolve().parents[2]
     script = Path(__file__).resolve().parent / "run_benchmarks.py"
@@ -32,21 +37,32 @@ def ejecutar_benchmarks() -> list[dict]:
     finally:
         if cleanup and backend_src.exists():
             backend_src.unlink()
-    return json.loads(out)
+    return cast(list[dict[str, Any]], json.loads(out))
 
 
-def descargar_benchmarks_release() -> list[dict]:
-    """Descarga el archivo benchmarks.json de la última release."""
+def descargar_benchmarks(base: str | None = None) -> list[dict[str, Any]]:
+    """Descarga benchmarks desde history o desde la última release."""
+    if base:
+        url = HISTORY_URL.format(version=base)
+        try:
+            with urlopen(url) as resp:
+                return cast(list[dict[str, Any]], json.load(resp))
+        except HTTPError as err:
+            raise RuntimeError(
+                f"No se pudo obtener benchmarks de la versión {base}"
+            ) from err
     try:
         with urlopen(API_URL) as resp:
             release = json.load(resp)
     except HTTPError as err:
-        raise RuntimeError("No se pudo obtener la información de la última release") from err
+        raise RuntimeError(
+            "No se pudo obtener la información de la última release"
+        ) from err
     for asset in release.get("assets", []):
         if asset.get("name") == "benchmarks.json":
             url = asset.get("browser_download_url")
             with urlopen(url) as resp:
-                return json.load(resp)
+                return cast(list[dict[str, Any]], json.load(resp))
     raise RuntimeError("No se encontró benchmarks.json en la última release")
 
 
@@ -64,7 +80,9 @@ def comparar(actuales: list[dict], previos: list[dict]) -> list[dict]:
             "diff_time": (cur["time"] - prev["time"]) if cur and prev else None,
             "current_memory_kb": cur["memory_kb"] if cur else None,
             "previous_memory_kb": prev["memory_kb"] if prev else None,
-            "diff_memory_kb": (cur["memory_kb"] - prev["memory_kb"]) if cur and prev else None,
+            "diff_memory_kb": (
+                cur["memory_kb"] - prev["memory_kb"]
+            ) if cur and prev else None,
         }
         resumen.append(entry)
     return resumen
@@ -87,10 +105,15 @@ def main() -> None:
         default=10.0,
         help="Porcentaje máximo permitido de regresión en tiempo o memoria",
     )
+    parser.add_argument(
+        "--base",
+        type=str,
+        help="Versión base a comparar desde benchmarks-history",
+    )
     args = parser.parse_args()
 
     actuales = ejecutar_benchmarks()
-    previos = descargar_benchmarks_release()
+    previos = descargar_benchmarks(args.base)
     resumen = comparar(actuales, previos)
     args.output.write_text(json.dumps(resumen, indent=2))
 

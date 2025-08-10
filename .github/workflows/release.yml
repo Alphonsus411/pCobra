@@ -1,7 +1,7 @@
 name: Release
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   actions: write
 
@@ -34,6 +34,22 @@ jobs:
         with:
           name: benchmarks-${{ github.ref_name }}
           path: benchmarks.json
+      - name: Publicar benchmarks en rama history
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.email "github-actions@users.noreply.github.com"
+          git config --global user.name "github-actions"
+          git clone --depth 1 --branch benchmarks-history \
+            https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }} history || \
+            git clone --depth 1 https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }} history
+          cd history
+          git checkout benchmarks-history || git checkout -b benchmarks-history
+          mkdir -p benchmarks/history
+          cp ../benchmarks.json benchmarks/history/${{ github.ref_name }}.json
+          git add benchmarks/history/${{ github.ref_name }}.json
+          git commit -m "Add benchmarks for ${{ github.ref_name }}"
+          git push origin HEAD:benchmarks-history
       - name: Build and push Docker image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
