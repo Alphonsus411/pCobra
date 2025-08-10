@@ -1,11 +1,10 @@
-import os
 import shutil
-import subprocess
-from pathlib import Path
 
 import pytest
 import cobra.core as cobra_core
 import core.ast_nodes as core_ast_nodes
+
+from tests.utils.runtime import run_code
 
 # Expone todos los nodos al paquete "cobra.core" y ajusta __all__
 node_names = [name for name in dir(core_ast_nodes) if name.startswith("Nodo")]
@@ -31,20 +30,6 @@ def test_runtime_python_imprimir():
     lineas = codigo_python.splitlines()[3:]
     codigo_python = "hola = 'hola'\n" + "\n".join(lineas)
 
-    env = os.environ.copy()
-    root = Path(__file__).resolve().parents[3]
-    src = root / "src"
-    env["PYTHONPATH"] = os.pathsep.join(
-        [str(root), str(src), env.get("PYTHONPATH", "")]
-    )
+    salida = run_code("python", codigo_python)
 
-    resultado = subprocess.run(
-        ["python", "-"],
-        input=codigo_python,
-        text=True,
-        capture_output=True,
-        check=True,
-        env=env,
-    )
-
-    assert "hola" in resultado.stdout
+    assert "hola" in salida
