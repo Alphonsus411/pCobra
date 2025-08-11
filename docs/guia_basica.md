@@ -16,6 +16,13 @@ También puedes transpilar el programa a otros lenguajes usando la opción `--to
 cobra archivo.co --to python
 ```
 
+### Ejecución en Replit
+
+1. Abre [Replit](https://replit.com/) e importa este repositorio desde GitHub.
+2. Al cargarse el entorno, se instalarán las dependencias indicadas en `requirements.txt` gracias al archivo `replit.nix`.
+3. El archivo `.replit` ya define el comando de ejecución `python -m cobra examples/replit/main.cobra`.
+4. Presiona **Run** para ejecutar el ejemplo inicial ubicado en `examples/replit/main.cobra`.
+
 Los ejemplos de **Hello World** se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) con un subdirectorio por lenguaje. En esa misma carpeta hay un `README.md` que muestra cómo transpilar cada archivo `.co` a su lenguaje destino y contiene los resultados pre-generados. Algunos de ellos son:
 
 - [ASM](../examples/hello_world/asm)
