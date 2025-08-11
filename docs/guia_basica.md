@@ -16,7 +16,7 @@ También puedes transpilar el programa a otros lenguajes usando la opción `--to
 cobra archivo.co --to python
 ```
 
-Los ejemplos de **Hello World** se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) con un subdirectorio por lenguaje. Algunos de ellos son:
+Los ejemplos de **Hello World** se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) con un subdirectorio por lenguaje. En esa misma carpeta hay un `README.md` que muestra cómo transpilar cada archivo `.co` a su lenguaje destino y contiene los resultados pre-generados. Algunos de ellos son:
 
 - [ASM](../examples/hello_world/asm)
 - [C](../examples/hello_world/c)
