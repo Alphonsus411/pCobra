@@ -9,7 +9,7 @@ description = "Un lenguaje de programación en español para simulaciones y más
 authors = [ {name = "Adolfo González Hernández", email = "adolfogonzal@gmail.com"} ]
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 keywords = ["cobra", "lenguaje", "cli"]
 
 dependencies = [
