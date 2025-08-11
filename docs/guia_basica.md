@@ -23,6 +23,13 @@ cobra archivo.co --to python
 3. El archivo `.replit` ya define el comando de ejecución `python -m cobra examples/replit/main.cobra`.
 4. Presiona **Run** para ejecutar el ejemplo inicial ubicado en `examples/replit/main.cobra`.
 
+### Ejecución en Binder
+
+1. Haz clic en el badge de Binder del README o visita [este enlace](https://mybinder.org/v2/gh/Alphonsus411/pCobra/HEAD?labpath=notebooks/playground.ipynb).
+2. Espera a que se construya el entorno; puede tardar unos minutos.
+3. Cuando se abra JupyterLab, abre el cuaderno `notebooks/playground.ipynb` si no se abrió automáticamente.
+4. Ejecuta las celdas una a una para transpilar el programa de Cobra a Python y ver el resultado.
+
 Los ejemplos de **Hello World** se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) con un subdirectorio por lenguaje. En esa misma carpeta hay un `README.md` que muestra cómo transpilar cada archivo `.co` a su lenguaje destino y contiene los resultados pre-generados. Algunos de ellos son:
 
 - [ASM](../examples/hello_world/asm)
