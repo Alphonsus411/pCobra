@@ -1,0 +1,1 @@
+run = "python -m cobra examples/replit/main.cobra"
