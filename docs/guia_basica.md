@@ -16,6 +16,13 @@ También puedes transpilar el programa a otros lenguajes usando la opción `--to
 cobra archivo.co --to python
 ```
 
+### Ejecución en GitHub Codespaces
+
+1. En la página del repositorio en GitHub pulsa **Code** y luego la pestaña **Codespaces**.
+2. Selecciona **Create codespace on main** para lanzar un entorno basado en el contenedor de desarrollo.
+3. Durante el arranque se instalarán las dependencias de `requirements-dev.txt` y se configurará la CLI de Cobra.
+4. El archivo `examples/main.cobra` se abrirá automáticamente y se transpilará gracias a la tarea `Transpilar ejemplo`.
+
 ### Ejecución en Replit
 
 1. Abre [Replit](https://replit.com/) e importa este repositorio desde GitHub.
