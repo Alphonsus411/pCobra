@@ -7,7 +7,7 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 ## 1. Preparación del entorno
 
 1. Clona el repositorio y entra en el directorio `pCobra`.
-2. Crea y activa un entorno virtual.
+2. Crea y activa un entorno virtual de **Python 3.8 o superior**.
 3. Instala las dependencias con `pip install -r requirements-dev.txt`.
    Aseg\u00farate tambi\u00e9n de tener disponible la herramienta `cbindgen`:
 
@@ -20,7 +20,7 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 
 ### Instalación con pipx
 
-Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herramienta que permite ejecutar aplicaciones de Python aisladas y requiere Python 3.6 o superior.
+Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herramienta que permite ejecutar aplicaciones de Python aisladas y requiere Python 3.8 o superior.
 
 ```bash
 pipx install cobra-lenguaje
@@ -164,6 +164,34 @@ Convierte programas entre distintos lenguajes usando la CLI:
   ```bash
   cobra transpilar-inverso reporte.cob --origen=cobol --destino=python
   ```
+
+### Transpiladores disponibles
+
+La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "Hello World" para cada generador:
+
+- **ASM** – [hola.asm](examples/hello_world/asm/hola.asm)
+- **C** – [hola.c](examples/hello_world/c/hola.c)
+- **COBOL** – [hola.cob](examples/hello_world/cobol/hola.cob)
+- **C++** – [hola.cpp](examples/hello_world/cpp/hola.cpp)
+- **Fortran** – [hola.f90](examples/hello_world/fortran/hola.f90)
+- **Go** – [hola.go](examples/hello_world/go/hola.go)
+- **Java** – [Hola.java](examples/hello_world/java/Hola.java)
+- **JavaScript** – [hola.js](examples/hello_world/javascript/hola.js)
+- **Julia** – [hola.jl](examples/hello_world/julia/hola.jl)
+- **Kotlin** – [hola.kt](examples/hello_world/kotlin/hola.kt)
+- **LaTeX** – [hola.tex](examples/hello_world/latex/hola.tex)
+- **Matlab** – [hola.m](examples/hello_world/matlab/hola.m)
+- **Mojo** – [hola.mojo](examples/hello_world/mojo/hola.mojo)
+- **Pascal** – [hola.pas](examples/hello_world/pascal/hola.pas)
+- **Perl** – [hola.pl](examples/hello_world/perl/hola.pl)
+- **PHP** – [hola.php](examples/hello_world/php/hola.php)
+- **Python** – [hola.py](examples/hello_world/python/hola.py)
+- **R** – [hola.r](examples/hello_world/r/hola.r)
+- **Ruby** – [hola.rb](examples/hello_world/ruby/hola.rb)
+- **Rust** – [hola.rs](examples/hello_world/rust/hola.rs)
+- **Swift** – [hola.swift](examples/hello_world/swift/hola.swift)
+- **Visual Basic** – [Hola.vb](examples/hello_world/visualbasic/Hola.vb)
+- **WebAssembly** – [hola.wat](examples/hello_world/wasm/hola.wat)
 
 ### Características aún no soportadas
 

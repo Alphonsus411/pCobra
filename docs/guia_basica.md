@@ -16,16 +16,36 @@ También puedes transpilar el programa a otros lenguajes usando la opción `--to
 cobra archivo.co --to python
 ```
 
-Los ejemplos de **Hello World** generados para cada transpilador se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) y en las siguientes rutas específicas:
+Los ejemplos de **Hello World** se encuentran en la carpeta [`examples/hello_world`](../examples/hello_world) con un subdirectorio por lenguaje. Algunos de ellos son:
 
-- [Hello World en Python](../examples/hello_world/python)
-- [Hello World en JavaScript](../examples/hello_world/javascript)
-- [Hello World en C](../examples/hello_world/c)
+- [ASM](../examples/hello_world/asm)
+- [C](../examples/hello_world/c)
+- [COBOL](../examples/hello_world/cobol)
+- [C++](../examples/hello_world/cpp)
+- [Fortran](../examples/hello_world/fortran)
+- [Go](../examples/hello_world/go)
+- [Java](../examples/hello_world/java)
+- [JavaScript](../examples/hello_world/javascript)
+- [Julia](../examples/hello_world/julia)
+- [Kotlin](../examples/hello_world/kotlin)
+- [LaTeX](../examples/hello_world/latex)
+- [Matlab](../examples/hello_world/matlab)
+- [Mojo](../examples/hello_world/mojo)
+- [Pascal](../examples/hello_world/pascal)
+- [Perl](../examples/hello_world/perl)
+- [PHP](../examples/hello_world/php)
+- [Python](../examples/hello_world/python)
+- [R](../examples/hello_world/r)
+- [Ruby](../examples/hello_world/ruby)
+- [Rust](../examples/hello_world/rust)
+- [Swift](../examples/hello_world/swift)
+- [Visual Basic](../examples/hello_world/visualbasic)
+- [WebAssembly](../examples/hello_world/wasm)
 
 
 ## 1. Hola mundo
 ```cobra
-imprimir "Hola mundo"
+imprimir("Hola mundo")
 ```
 
 ## 2. Variables y operaciones
@@ -123,16 +143,16 @@ imprimir atributo p nombre
 
 ## 15. Importar módulos
 ```cobra
-importar fecha
-imprimir fecha.hoy()
+import fecha
+imprimir(fecha.hoy())
 ```
 
 ## 16. Manejo de errores
 ```cobra
 intentar:
     abrir("no_existe.txt")
-excepto ErrorComoE:
-    imprimir "fallo"
+capturar ErrorComoE:
+    imprimir("fallo")
 fin
 ```
 
