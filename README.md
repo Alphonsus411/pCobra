@@ -42,6 +42,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
 - [Limitaciones del sandbox de C++](docs/limitaciones_cpp_sandbox.md)
 - Notebooks de ejemplo y casos reales
+- Probar Cobra en línea
 - [Historial de cambios](CHANGELOG.md)
 
 ## Ejemplos
@@ -70,8 +71,16 @@ En la carpeta `notebooks/` se incluye el cuaderno `ejemplo_basico.ipynb` con un 
 cobra jupyter --notebook notebooks/ejemplo_basico.ipynb
 ```
 Si omites el argumento ``--notebook`` se abrirá Jupyter Notebook de manera convencional y podrás escoger el archivo desde la interfaz web.
- 
 
+
+
+## Probar Cobra en línea
+
+Puedes experimentar con Cobra directamente en tu navegador:
+
+- [Replit](https://replit.com/github/Alphonsus411/pCobra)
+- [Binder](https://mybinder.org/v2/gh/Alphonsus411/pCobra/HEAD?labpath=notebooks/playground.ipynb)
+- [GitHub Codespaces](https://codespaces.new/Alphonsus411/pCobra)
 
 ## Descripción del Proyecto
 

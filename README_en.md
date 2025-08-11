@@ -35,6 +35,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - [Real use cases](docs/casos_reales.md)
 - [Node sandbox limitations](docs/limitaciones_node_sandbox.md)
 - Example notebooks and real cases
+- Try Cobra online
 - [Changelog](CHANGELOG.md)
 
 ## Examples
@@ -57,6 +58,14 @@ The `notebooks/` folder includes `ejemplo_basico.ipynb` with a basic example of 
 cobra jupyter --notebook notebooks/ejemplo_basico.ipynb
 ```
 If you omit the ``--notebook`` argument, Jupyter Notebook opens normally and you can choose the file from the web interface.
+
+## Try Cobra online
+
+You can experiment with Cobra directly in your browser:
+
+- [Replit](https://replit.com/github/Alphonsus411/pCobra)
+- [Binder](https://mybinder.org/v2/gh/Alphonsus411/pCobra/HEAD?labpath=notebooks/playground.ipynb)
+- [GitHub Codespaces](https://codespaces.new/Alphonsus411/pCobra)
 
 ## Project Description
 
