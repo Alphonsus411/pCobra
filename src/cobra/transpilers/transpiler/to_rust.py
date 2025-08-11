@@ -117,56 +117,53 @@ class TranspiladorRust(BaseTranspiler):
         self.codigo.append("    " * self.indent + linea)
 
     def obtener_valor(self, nodo):
-        match nodo:
-            case NodoValor():
-                return str(nodo.valor)
-            case NodoAtributo():
-                obj = self.obtener_valor(nodo.objeto)
-                return f"{obj}.{nodo.nombre}"
-            case NodoInstancia():
-                args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
-                return f"{nodo.nombre_clase}::new({args})"
-            case NodoIdentificador():
-                return nodo.nombre
-            case NodoOperacionBinaria():
-                izq = self.obtener_valor(nodo.izquierda)
-                der = self.obtener_valor(nodo.derecha)
-                op_map = {TipoToken.AND: "&&", TipoToken.OR: "||"}
-                op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
-                return f"{izq} {op} {der}"
-            case NodoOperacionUnaria():
-                val = self.obtener_valor(nodo.operando)
-                op = "!" if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
-                return f"{op}{val}" if op != "!" else f"!{val}"
-            case NodoLambda():
-                params = ", ".join(f"{p}: impl std::any::Any" for p in nodo.parametros)
-                cuerpo = self.obtener_valor(nodo.cuerpo)
-                return f"|{', '.join(nodo.parametros)}| {{ {cuerpo} }}"
-            case NodoOption():
-                if nodo.valor is None:
-                    return "None"
-                return f"Some({self.obtener_valor(nodo.valor)})"
-            case NodoLista():
-                elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
-                return f"vec![{elems}]"
-            case NodoDiccionario():
-                pares = ", ".join(
-                    f"({self.obtener_valor(k)}, {self.obtener_valor(v)})"
-                    for k, v in nodo.elementos
-                )
-                return f"std::collections::HashMap::from([{pares}])"
-            case NodoPattern():
-                if isinstance(nodo.valor, list):
-                    elems = ", ".join(self.obtener_valor(p) for p in nodo.valor)
-                    return f"({elems})"
-                else:
-                    return "_" if nodo.valor == "_" else self.obtener_valor(nodo.valor)
-            case NodoGuard():
-                patron = self.obtener_valor(nodo.patron)
-                guardia = self.obtener_valor(nodo.condicion)
-                return f"{patron} if {guardia}"
-            case _:
-                return str(getattr(nodo, "valor", nodo))
+        if isinstance(nodo, NodoValor):
+            return str(nodo.valor)
+        if isinstance(nodo, NodoAtributo):
+            obj = self.obtener_valor(nodo.objeto)
+            return f"{obj}.{nodo.nombre}"
+        if isinstance(nodo, NodoInstancia):
+            args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
+            return f"{nodo.nombre_clase}::new({args})"
+        if isinstance(nodo, NodoIdentificador):
+            return nodo.nombre
+        if isinstance(nodo, NodoOperacionBinaria):
+            izq = self.obtener_valor(nodo.izquierda)
+            der = self.obtener_valor(nodo.derecha)
+            op_map = {TipoToken.AND: "&&", TipoToken.OR: "||"}
+            op = op_map.get(nodo.operador.tipo, nodo.operador.valor)
+            return f"{izq} {op} {der}"
+        if isinstance(nodo, NodoOperacionUnaria):
+            val = self.obtener_valor(nodo.operando)
+            op = "!" if nodo.operador.tipo == TipoToken.NOT else nodo.operador.valor
+            return f"{op}{val}" if op != "!" else f"!{val}"
+        if isinstance(nodo, NodoLambda):
+            params = ", ".join(f"{p}: impl std::any::Any" for p in nodo.parametros)
+            cuerpo = self.obtener_valor(nodo.cuerpo)
+            return f"|{', '.join(nodo.parametros)}| {{ {cuerpo} }}"
+        if isinstance(nodo, NodoOption):
+            if nodo.valor is None:
+                return "None"
+            return f"Some({self.obtener_valor(nodo.valor)})"
+        if isinstance(nodo, NodoLista):
+            elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
+            return f"vec![{elems}]"
+        if isinstance(nodo, NodoDiccionario):
+            pares = ", ".join(
+                f"({self.obtener_valor(k)}, {self.obtener_valor(v)})"
+                for k, v in nodo.elementos
+            )
+            return f"std::collections::HashMap::from([{pares}])"
+        if isinstance(nodo, NodoPattern):
+            if isinstance(nodo.valor, list):
+                elems = ", ".join(self.obtener_valor(p) for p in nodo.valor)
+                return f"({elems})"
+            return "_" if nodo.valor == "_" else self.obtener_valor(nodo.valor)
+        if isinstance(nodo, NodoGuard):
+            patron = self.obtener_valor(nodo.patron)
+            guardia = self.obtener_valor(nodo.condicion)
+            return f"{patron} if {guardia}"
+        return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
