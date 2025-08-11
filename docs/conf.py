@@ -43,7 +43,13 @@ extensions = [
     'sphinx.ext.graphviz',
     'sphinxcontrib.plantuml',
     'sphinx_rtd_theme',  # Añadido explícitamente como extensión
+    'myst_parser',
 ]
+
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # Mock imports más específicos para evitar conflictos
 autodoc_mock_imports = [
