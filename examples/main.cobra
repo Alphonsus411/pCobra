@@ -1,0 +1,5 @@
+func principal():
+    imprimir "Hola desde Codespaces"
+fin
+
+principal()
