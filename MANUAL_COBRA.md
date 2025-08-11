@@ -167,7 +167,7 @@ Convierte programas entre distintos lenguajes usando la CLI:
 
 ### Transpiladores disponibles
 
-La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "Hello World" para cada generador:
+La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados:
 
 - **ASM** – [hola.asm](examples/hello_world/asm/hola.asm)
 - **C** – [hola.c](examples/hello_world/c/hola.c)

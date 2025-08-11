@@ -2,6 +2,8 @@
 
 Este documento resume la sintaxis y la semántica básica del lenguaje Cobra.
 
+Para ver ejemplos completos de compilación y transpilación, consulta la carpeta [`examples/hello_world`](../examples/hello_world), donde encontrarás un `README.md` con instrucciones de uso y los códigos generados en diversos lenguajes.
+
 ## Estructura general
 
 Un programa Cobra está formado por sentencias separadas por saltos de línea e indentadas con espacios. El punto de entrada se define en la función `principal`.
