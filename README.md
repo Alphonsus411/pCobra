@@ -140,6 +140,12 @@ pip install -e .
 
    Opcionalmente puedes ejecutar ``pip install -e .[dev]`` para instalar los
    extras de desarrollo.
+   Para añadir capacidades específicas puedes instalar extras desde PyPI:
+
+   ```bash
+   pip install cobra-lenguaje[ml]        # dependencias de aprendizaje automático
+   pip install cobra-lenguaje[big-data]  # soporte para procesamiento distribuido
+   ```
 
 6. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
    de ser necesario. Estas variables se cargarán automáticamente al iniciar
