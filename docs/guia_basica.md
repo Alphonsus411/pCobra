@@ -2,6 +2,28 @@
 
 Este documento presenta un recorrido introductorio por el lenguaje Cobra con veinte ejemplos sencillos.
 
+## Descargas
+
+Puedes obtener binarios precompilados desde la sección de [Releases](https://github.com/Alphonsus411/pCobra/releases).
+
+| Versión | Plataforma | Enlace |
+| --- | --- | --- |
+| 10.0.6 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra-linux) |
+| 10.0.6 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra.exe) |
+| 10.0.6 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra-macos) |
+
+Para verificar la integridad del archivo descargado calcula su hash SHA256 y compáralo con el valor publicado:
+
+```bash
+sha256sum cobra-linux
+```
+
+En Windows ejecuta:
+
+```powershell
+CertUtil -hashfile cobra.exe SHA256
+```
+
 ## Ejecución y transpilación
 
 Para ejecutar un archivo Cobra desde la línea de comandos:
