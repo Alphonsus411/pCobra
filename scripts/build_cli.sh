@@ -6,6 +6,13 @@ cd "$REPO_ROOT"
 
 export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-0}"
 
+# Obtain version and current git commit to embed in the binary
+VERSION=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
+COMMIT=$(git rev-parse --short HEAD)
+export COBRA_CLI_VERSION="$VERSION"
+export COBRA_CLI_COMMIT="$COMMIT"
+echo "Construyendo Cobra CLI v$COBRA_CLI_VERSION (commit $COBRA_CLI_COMMIT)"
+
 pip install --no-cache-dir -r requirements.txt
 
 pyinstaller --onefile --clean --strip cobra-cli.spec
