@@ -1,32 +1,39 @@
-# Imagen base ligera con Python 3.9
-FROM python:3.9-slim
+# Stage de construcción: prepara entorno y compila el CLI
+FROM python:3.11-slim AS builder
 
 # Variables de entorno recomendadas
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Establecer directorio de trabajo
+# Directorio de trabajo dentro de la imagen
 WORKDIR /app
 
-# Copiar código fuente
-COPY . /app
-
-# Instalar dependencias del sistema (Rust para pybind11 y cbindgen)
+# Instalar dependencias de compilación necesarias
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        cargo \
         build-essential \
+        cargo \
         git \
         curl \
         libssl-dev \
-        && \
-    cargo install cbindgen && \
-    rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar dependencias de Python
+# Copiar el código fuente
+COPY . /app
+
+# Instalar el proyecto y PyInstaller
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements-dev.txt && \
-    pip install -e .  # pip install -e .[dev] también es válido para extras de desarrollo
+    pip install . && \
+    pip install pyinstaller
 
-# Comando por defecto: ejecutar los tests
-CMD ["pytest"]
+# Compilar el binario del CLI
+RUN pyinstaller cobra-cli.spec
+
+# Stage final minimalista que sólo incluye el binario
+FROM gcr.io/distroless/base-debian12
+
+# Copiar el artefacto generado desde el builder
+COPY --from=builder /app/dist/cobra-cli /usr/local/bin/cobra-cli
+
+# Punto de entrada que ejecuta el binario del CLI
+ENTRYPOINT ["/usr/local/bin/cobra-cli"]
