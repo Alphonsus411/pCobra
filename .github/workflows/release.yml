@@ -7,10 +7,11 @@ permissions:
 
 on:
   push:
-    tags: ['v*']
+    tags:
+      - 'v*'
 
 jobs:
-  build-package:
+  publish-artifacts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -27,29 +28,11 @@ jobs:
           python -m build
           twine check dist/*
           twine upload dist/*
-      - name: Run benchmarks
-        run: python scripts/benchmarks/run_benchmarks.py --output benchmarks.json
-      - name: Upload benchmarks
+      - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
-          name: benchmarks-${{ github.ref_name }}
-          path: benchmarks.json
-      - name: Publicar benchmarks en rama history
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.email "github-actions@users.noreply.github.com"
-          git config --global user.name "github-actions"
-          git clone --depth 1 --branch benchmarks-history \
-            https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }} history || \
-            git clone --depth 1 https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }} history
-          cd history
-          git checkout benchmarks-history || git checkout -b benchmarks-history
-          mkdir -p benchmarks/history
-          cp ../benchmarks.json benchmarks/history/${{ github.ref_name }}.json
-          git add benchmarks/history/${{ github.ref_name }}.json
-          git commit -m "Add benchmarks for ${{ github.ref_name }}"
-          git push origin HEAD:benchmarks-history
+          name: dist-${{ github.ref_name }}
+          path: dist/*
       - name: Build and push Docker image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -60,7 +43,7 @@ jobs:
           docker push "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}"
 
   build-executables:
-    needs: build-package
+    needs: publish-artifacts
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -94,4 +77,3 @@ jobs:
         with:
           files: |
             dist/**/cobra*
-            dist/**/benchmarks.json
