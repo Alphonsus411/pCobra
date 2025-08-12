@@ -1,20 +1,20 @@
-requests
-PyYAML>=6.0
-jsonschema>=4.24
-RestrictedPython>=8.0
-packaging
-pexpect
-python-dotenv
-psutil
-pybind11
-lark
-tree-sitter
-tree-sitter-languages
-flet
+requests==2.19.0
+PyYAML==6.0
+jsonschema==4.24
+RestrictedPython==8.0
+packaging==17.0
+pexpect==4.9.0
+python-dotenv==0.19.0
+psutil==7.0.0
+pybind11==2.6.0
+lark==1.2.2
+tree-sitter==0.25.1
+tree-sitter-languages==1.10.2
+flet==0.1.0
 holobit-sdk==1.0.8
 smooth-criminal==0.4.0
 
-argcomplete
+argcomplete==3.6.2
 
-prompt_toolkit
-Pygments
+prompt_toolkit==3.0.0
+Pygments==2.4.0

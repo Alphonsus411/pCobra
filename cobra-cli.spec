@@ -1,5 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+import shutil
 
+# Asegurar compilaciones deterministas
+os.environ["SOURCE_DATE_EPOCH"] = os.getenv("SOURCE_DATE_EPOCH", "0")
+# Limpiar directorios como si se pasara --clean
+for path in ("build", "dist"):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
 
 a = Analysis(
     ['src\\cobra\\cli\\cli.py'],
@@ -25,7 +33,7 @@ exe = EXE(
     name='cobra-cli',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
