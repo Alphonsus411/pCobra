@@ -14,6 +14,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 
 - Descripción del Proyecto
 - Instalación
+- Descargas
 - Estructura del Proyecto
 - Características Principales
 - Uso
@@ -269,6 +270,29 @@ guardará por defecto en `dist/`.
 
 ```bash
 scripts/test_pyinstaller.sh
+```
+
+
+## Descargas
+
+Los ejecutables precompilados para Cobra se publican en la sección de [Releases](https://github.com/Alphonsus411/pCobra/releases).
+
+| Versión | Plataforma | Enlace |
+| --- | --- | --- |
+| 10.0.6 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra-linux) |
+| 10.0.6 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra.exe) |
+| 10.0.6 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra-macos) |
+
+Para comprobar la integridad del archivo descargado calcula su hash SHA256 y compáralo con el publicado:
+
+```bash
+sha256sum cobra-linux
+```
+
+En Windows utiliza:
+
+```powershell
+CertUtil -hashfile cobra.exe SHA256
 ```
 
 # Estructura del Proyecto
