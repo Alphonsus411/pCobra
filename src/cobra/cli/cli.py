@@ -46,6 +46,10 @@ from cobra.cli.i18n import _, format_traceback, setup_gettext
 from cobra.cli.plugin import descubrir_plugins
 from cobra.cli.utils import messages, config
 
+# Metadata injected at build time
+CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
+CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
+
 
 class LogLevel(Enum):
     DEBUG = logging.DEBUG
@@ -148,6 +152,12 @@ class CliApplication:
         )
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
+        parser.add_argument(
+            "--version",
+            action="version",
+            version=f"%(prog)s {CLI_VERSION} (commit {CLI_COMMIT})",
+            help=_("Show version information and exit"),
+        )
         parser.add_argument("--format", action="store_true",
                           help=_("Format file before processing"))
         parser.add_argument("--debug", action="store_true",
