@@ -1250,6 +1250,8 @@ Al crear y subir una etiqueta `vX.Y.Z` se ejecuta el workflow [`release.yml`](.g
 
 El workflow [`Deploy Docs`](.github/workflows/pages.yml) generará la documentación cuando haya un push en `main` o al etiquetar una nueva versión.
 
+Consulta la [guía de lanzamiento](docs/release.md) para más detalles sobre el etiquetado, secretos y el flujo de la pipeline.
+
 ```bash
 git tag v10.0.6
 git push origin v10.0.6
