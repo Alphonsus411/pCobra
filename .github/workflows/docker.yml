@@ -1,0 +1,37 @@
+name: docker
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build Docker image
+        run: docker build --target final -t pcobra-cli .
+      - name: Smoke test
+        run: docker run --rm pcobra-cli --version
+      - name: Check image size
+        run: |
+          size=$(docker image inspect pcobra-cli --format '{{.Size}}')
+          echo "Image size: $size bytes"
+          max_size=$((50 * 1024 * 1024))
+          if [ "$size" -ge "$max_size" ]; then
+            echo "Image is too large" >&2
+            exit 1
+          fi
+      - name: Save image
+        run: docker save pcobra-cli -o pcobra-cli.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcobra-cli-image
+          path: pcobra-cli.tar
