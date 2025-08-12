@@ -77,3 +77,13 @@ jobs:
         with:
           files: |
             dist/**/cobra*
+      - name: Notify Slack
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
+          SLACK_MESSAGE: |
+            Release ${{ github.ref_name }} ${{ job.status }}
+            https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+
