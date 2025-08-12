@@ -200,15 +200,45 @@ Si prefieres instalar Cobra directamente desde PyPI sin usar
 pip install cobra-lenguaje
 ```
 
-## Construir la imagen Docker
+## Docker CLI
 
-Puedes crear la imagen utilizando el script `docker/scripts/build.sh` o el subcomando de la CLI:
+La CLI de Cobra puede ejecutarse de forma aislada mediante un contenedor
+Docker. A continuación se muestran los pasos más comunes.
 
-````bash
-cobra contenedor --tag cobra
-````
+### Construir la imagen localmente
 
-Esto ejecutará internamente ``docker build`` y generará una imagen llamada `cobra` en tu sistema Docker.
+Puedes generar la imagen con `docker build` o usando el subcomando
+`contenedor` de la propia CLI:
+
+```bash
+docker build -t pcobra-cli -f docker/Dockerfile .
+# o
+cobra contenedor --tag pcobra-cli
+```
+
+### Ejecutar comandos
+
+Una vez construida la imagen puedes lanzar el binario dentro del
+contenedor:
+
+```bash
+docker run --rm pcobra-cli --version
+docker run --rm -v "$(pwd)":/src pcobra-cli ejecutar /src/ejemplos/hola.cobra
+```
+
+### Imagen publicada por CI
+
+Cada etiqueta del repositorio dispara un workflow que construye y
+publica automáticamente la imagen en Docker Hub. Para obtener la versión
+más reciente ejecuta:
+
+```bash
+docker pull alphonsus411/cobra:latest
+```
+
+Gracias a un Dockerfile multietapa que compila el CLI y usa una imagen
+distroless como base, el tamaño final es muy reducido (menos de 50 MB) y
+se evitan dependencias innecesarias.
 
 ## Descarga de binarios
 
