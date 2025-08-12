@@ -86,4 +86,19 @@ jobs:
           SLACK_MESSAGE: |
             Release ${{ github.ref_name }} ${{ job.status }}
             https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+      - name: Send release email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server: ${{ secrets.SMTP_SERVER }}
+          port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Release ${{ github.ref_name }}"
+          to: "devs@example.com"
+          from: "Cobra CI <${{ secrets.SMTP_USERNAME }}>"
+          body: |
+            Se ha publicado la versión ${{ github.ref_name }}.
+            https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+        # Validar este flujo de correo en un entorno controlado antes de producción.
 
