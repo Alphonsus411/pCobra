@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, List
 
 from ..visitor import NodeVisitor
@@ -44,7 +45,8 @@ class _ConstantFolder(NodeVisitor):
                     nodo.izquierda.valor, nodo.operador, nodo.derecha.valor
                 )
                 return NodoValor(resultado)
-            except Exception:
+            except (TypeError, ZeroDivisionError, ValueError) as exc:
+                logging.debug("No se pudo plegar constante binaria: %s", exc)
                 return nodo
         return nodo
 
@@ -54,7 +56,8 @@ class _ConstantFolder(NodeVisitor):
             try:
                 resultado = self._evaluar_unaria(nodo.operador, nodo.operando.valor)
                 return NodoValor(resultado)
-            except Exception:
+            except (TypeError, ValueError) as exc:
+                logging.debug("No se pudo plegar constante unaria: %s", exc)
                 return nodo
         return nodo
 
