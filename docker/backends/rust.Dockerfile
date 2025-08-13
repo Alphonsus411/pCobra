@@ -7,15 +7,10 @@ ENV RUSTFLAGS="-C target-cpu=native"
 # Directorio de trabajo
 WORKDIR /work
 
-# Instalar herramientas necesarias para bindings y compilaciones nativas
+# Instalar herramientas mínimas para compilación con rustc
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
-        clang \
-        python3-dev \
-        libffi-dev \
-        pkg-config \
-        cbindgen \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar script de compilación
