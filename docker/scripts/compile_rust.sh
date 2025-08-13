@@ -5,7 +5,10 @@ echo "🦀 Recibiendo código Rust desde stdin..."
 cat > main.rs
 
 echo "🔧 Compilando con rustc..."
-rustc main.rs -O -o main
+# -C opt-level=3   : maximiza las optimizaciones
+# -C lto           : habilita Link Time Optimization
+# -C strip=symbols : remueve símbolos para reducir el tamaño final
+rustc -C opt-level=3 -C lto -C strip=symbols main.rs -o main
 
 echo "🚀 Ejecutando..."
 ./main
