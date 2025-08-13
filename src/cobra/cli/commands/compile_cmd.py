@@ -18,6 +18,7 @@ from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_julia import TranspiladorJulia
 from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from cobra.transpilers.transpiler.to_llvm import TranspiladorLLVM
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
 from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
 from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
@@ -72,6 +73,7 @@ TRANSPILERS = {
     "matlab": TranspiladorMatlab,
     "mojo": TranspiladorMojo,
     "latex": TranspiladorLatex,
+    "llvm": TranspiladorLLVM,
     "wasm": TranspiladorWasm,
 }
 
@@ -96,7 +98,10 @@ LANG_CHOICES = sorted(TRANSPILERS.keys())
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
-    path = validar_archivo_existente(filepath)
+    try:
+        path = validar_archivo_existente(filepath)
+    except FileNotFoundError:
+        raise ValueError(f"'{filepath}' no es un archivo válido")
     if not os.access(path, os.R_OK):
         raise ValueError(f"No hay permisos de lectura para '{filepath}'")
     if os.path.getsize(path) > MAX_FILE_SIZE:
