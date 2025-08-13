@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Plugin de completado para palabras clave y funciones estándar de Cobra."""
 
+import logging
 import re
 from pylsp import hookimpl, lsp
 from standard_library import __all__ as STD_FUNCS
@@ -163,8 +164,11 @@ def pylsp_format_document(config, workspace, document):
         ExecuteCommand._formatear_codigo(path)
         with open(path, "r", encoding="utf-8") as fh:
             formatted = fh.read()
-    except Exception:
-        formatted = document.source
+    except Exception as exc:
+        logging.exception("Error al formatear el documento %s", path)
+        raise RuntimeError(
+            f"No se pudo formatear el documento {path}: {exc}"
+        ) from exc
     return [
         {
             "range": {
