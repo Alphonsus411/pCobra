@@ -130,9 +130,14 @@ class BenchCommand(BaseCommand):
         """
         parser = subparsers.add_parser(self.name, help=_("Ejecuta benchmarks"))
         parser.add_argument(
-            "--profile", 
-            action="store_true", 
+            "--profile",
+            action="store_true",
             help=_("Activa el modo de profiling")
+        )
+        parser.add_argument(
+            "--binary",
+            action="store_true",
+            help=_("Compila a C, C++ y Rust y mide el binario"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -263,12 +268,15 @@ class BenchCommand(BaseCommand):
         Returns:
             0 si la ejecución fue exitosa, 1 en caso de error
         """
-        if not hasattr(args, 'profile'):
+        if not hasattr(args, 'profile') or not hasattr(args, 'binary'):
             mostrar_error(_("Argumentos inválidos"))
             return 1
 
         try:
-            if args.profile:
+            if args.binary:
+                script = Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "binary_bench.py"
+                subprocess.run([sys.executable, str(script)], check=True)
+            elif args.profile:
                 profiler = cProfile.Profile()
                 with profiler:
                     results = self._run_benchmarks()
