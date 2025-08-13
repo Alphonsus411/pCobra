@@ -1,5 +1,6 @@
 """Implementación del intérprete del lenguaje Cobra."""
 
+import logging
 import os
 
 from cobra.core import Token, TipoToken, Lexer
@@ -627,7 +628,8 @@ class InterpretadorCobra:
             modulo = obtener_modulo(nodo.modulo)
             self.variables[nodo.modulo] = modulo
         except Exception as exc:
-            print(f"Error al usar el módulo '{nodo.modulo}': {exc}")
+            logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
+            raise
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""
