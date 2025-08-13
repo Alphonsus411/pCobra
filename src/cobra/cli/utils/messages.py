@@ -4,7 +4,7 @@ Módulo para manejo de mensajes y logging con soporte de colores en la CLI de Co
 
 import logging
 from enum import Enum
-from typing import Final, Literal, Dict, Optional
+from typing import Dict, Final, Literal, Optional, Tuple, get_args
 from dataclasses import dataclass
 from contextlib import contextmanager
 
@@ -17,6 +17,7 @@ except ImportError:
 
 # Definición de tipos
 LogLevel = Literal["info", "warning", "error"]
+VALID_LOG_LEVELS: Tuple[LogLevel, ...] = get_args(LogLevel)
 
 class ColorCode(Enum):
     """Códigos ANSI para colores."""
@@ -77,16 +78,14 @@ def mostrar_logo() -> None:
 def _mostrar(msg: str, nivel: LogLevel = "info") -> None:
     """
     Imprime el mensaje con color y registra el log correspondiente.
-    
+
     Args:
         msg: Mensaje a mostrar
         nivel: Nivel del mensaje ('info', 'warning', 'error')
-    
-    Raises:
-        ValueError: Si el nivel no es válido
     """
-    if nivel not in ("info", "warning", "error"):
-        raise ValueError(f"Nivel de log inválido: {nivel}")
+    if nivel not in VALID_LOG_LEVELS:
+        logging.error(_("Nivel de log inválido: %s") % nivel)
+        return
 
     try:
         texto = _(msg)
@@ -113,10 +112,12 @@ def _mostrar(msg: str, nivel: LogLevel = "info") -> None:
         # Registrar en el log
         log_func = getattr(logging, nivel)
         log_func(texto)
+    except KeyError:
+        logging.error(_("Nivel de log inexistente: %s") % nivel)
     except AttributeError:
-        logging.error(f"Error al registrar mensaje con nivel: {nivel}")
-    except Exception as e:
-        logging.error(f"Error al mostrar mensaje: {str(e)}")
+        logging.error(_("Nivel de logging no soportado: %s") % nivel)
+    except (TypeError, ValueError) as e:
+        logging.error(_("Error al mostrar mensaje: %s") % e)
 
 def mostrar_info(msg: str) -> None:
     """
