@@ -99,12 +99,15 @@ def compilar_en_sandbox_cpp(codigo: str) -> str:
         raise RuntimeError(f"Contenedor de C++ no disponible: {exc}") from exc
 
 
-def ejecutar_en_contenedor(codigo: str, backend: str) -> str:
+def ejecutar_en_contenedor(
+    codigo: str, backend: str, timeout: int | None = 30
+) -> str:
     """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
 
     Los backends soportados son ``python``, ``js``, ``cpp`` y ``rust``. Cada
     backend utiliza una imagen específica que debe estar construida
-    previamente.
+    previamente. ``timeout`` define el límite de tiempo en segundos para la
+    ejecución del contenedor.
     """
 
     imagenes = {
@@ -124,11 +127,14 @@ def ejecutar_en_contenedor(codigo: str, backend: str) -> str:
             text=True,
             capture_output=True,
             check=True,
+            timeout=timeout,
         )  # nosec B607 B603
     except FileNotFoundError as e:
         raise RuntimeError("Docker no está instalado o no se encuentra en PATH") from e
     except subprocess.CalledProcessError as e:
         raise RuntimeError(e.stderr.strip()) from e
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError("Tiempo de ejecución agotado") from e
 
     return proc.stdout
 
