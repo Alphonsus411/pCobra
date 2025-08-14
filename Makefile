@@ -14,10 +14,10 @@ GRAMMAR_COV?=30
 help:
 	@echo "Comandos disponibles:"
 	@echo "  make install         Instala el entorno en modo desarrollo"
-        @echo "  make run             Ejecuta Cobra usando dotenv"
-        @echo "  make test            Ejecuta tests con pytest y coverage"
-        @echo "  make coverage        Ejecuta coverage y genera reporte HTML"
-        @echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
+	@echo "  make run             Ejecuta Cobra usando dotenv"
+	@echo "  make test            Ejecuta tests con pytest y coverage"
+	@echo "  make coverage        Ejecuta coverage y genera reporte HTML"
+	@echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
 	@echo "  make format          Formatea con black + isort"
 	@echo "  make typecheck       Verifica tipos con mypy + pyright"
 	@echo "  make docker          Construye todos los contenedores"
@@ -25,6 +25,7 @@ help:
 	@echo "  make clean           Limpia archivos temporales"
 	@echo "  make secrets         Busca secretos con gitleaks"
 	@echo "  make check           Linter + Tests + Typecheck (pre-commit/release)"
+	@echo "  make publicar-blog FILE=archivo.md  Publica una entrada en el blog"
 
 install:
 	$(PYTHON) -m venv $(VENV)
@@ -36,12 +37,12 @@ run:
 	$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m src.main
 
 test:
-        $(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)
-        pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
+	$(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)
+	pytest --cov=$(SRC) $(TESTS) --cov-report=term-missing --cov-fail-under=90
 
 coverage:
-        coverage run -m pytest
-        coverage html
+	coverage run -m pytest
+	coverage html
 
 lint:
 	ruff check $(SRC)
@@ -72,10 +73,12 @@ docker:
 docs:
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
 
+publicar-blog:
+	bash scripts/publicar_blog.sh $(FILE)
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	rm -rf .pytest_cache .mypy_cache .coverage htmlcov \
 	       $(BUILDDIR) .venv dist build bench_results.json
 
-.PHONY: help install run test coverage lint format typecheck secrets docker docs clean check
+.PHONY: help install run test coverage lint format typecheck secrets docker docs publicar-blog clean check
