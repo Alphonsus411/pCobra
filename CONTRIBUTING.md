@@ -18,6 +18,10 @@ Para agilizar la organización del proyecto, categoriza cada tarea utilizando la
 - `medio` para implementaciones de complejidad moderada.
 - `avanzado` cuando el issue implique refactorizaciones importantes o trabajo extenso.
 
+## Tareas para nuevos contribuidores
+
+Las tareas etiquetadas como `good first issue` están orientadas a la comunidad y se consideran de baja prioridad. Se seleccionan entre los issues marcados con `facil` o `low priority` en el directorio `issues/`. Los mantenedores revisan periódicamente esta lista para asegurarse de que sigan siendo sencillas de abordar y actualizan o retiran la etiqueta cuando sea necesario.
+
 ## Convenciones de Estilo
 
 - El codigo debe formatearse con `black` y respetar 88 caracteres por linea.
