@@ -12,6 +12,10 @@ Este directorio reúne distintos ejemplos de uso de Cobra y material relacionado
   ```bash
   cobra ejecutar examples/hello_world/cobra/hola.co
   ```
+- **[hola_mundo](hola_mundo/)**: ejemplo mínimo para transpilar a Python.
+  ```bash
+  cobra examples/hola_mundo/hola.co --to python
+  ```
 - **plugins/**: plugins de muestra instalables en modo editable. Para probarlos:
   ```bash
   cd examples/plugins
