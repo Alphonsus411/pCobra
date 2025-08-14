@@ -149,5 +149,5 @@ def validar_dependencias(backend: str, mod_info: dict) -> None:
             raise FileNotFoundError(f"Dependencia no encontrada: {ruta}")
 
 
-class SecurityError:
+class SecurityError(Exception):
     pass
