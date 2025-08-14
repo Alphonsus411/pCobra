@@ -22,3 +22,23 @@ Este proyecto cuenta con un servidor en Discord donde los usuarios pueden comuni
 ## Difusión
 En esta sección se listarán los enlaces a hilos de Reddit, Dev.to y GitHub Discussions relacionados con el proyecto.
 
+## Publicar entradas en el blog
+
+El proyecto incluye un script para subir contenido Markdown al blog oficial.
+
+### Variables de entorno
+- `BLOG_API_URL`: URL del endpoint al que se enviará el contenido.
+- `BLOG_API_TOKEN`: token de autenticación para el servicio.
+
+### Ejecución
+Define las variables anteriores y ejecuta:
+
+```bash
+scripts/publicar_blog.sh ruta/al/archivo.md
+```
+
+También puede ejecutarse mediante Make:
+
+```bash
+make publicar-blog FILE=ruta/al/archivo.md
+```
