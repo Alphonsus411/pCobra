@@ -2,7 +2,7 @@
 name: Mejora de documentación
 about: Sugiere cambios o correcciones en la documentación
 title: "[Doc] Añadir ejemplos avanzados"
-labels: [documentation, facil]
+labels: [documentation, facil, "good first issue"]
 assignees: ''
 ---
 

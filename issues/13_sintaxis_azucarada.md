@@ -2,7 +2,7 @@
 name: Solicitud de mejora
 about: Simplificar sintaxis mediante azúcar
 title: "[Diseño] Azúcar sintáctica para bloques y funciones"
-labels: [design, low priority]
+labels: [design, low priority, "good first issue"]
 assignees: ''
 ---
 

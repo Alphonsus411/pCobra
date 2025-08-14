@@ -2,7 +2,7 @@
 name: Solicitud de mejora
 about: Sugiere nuevos tipos para Cobra
 title: "[Diseño] Nuevos tipos para la biblioteca estándar"
-labels: [design, low priority]
+labels: [design, low priority, "good first issue"]
 assignees: ''
 ---
 
