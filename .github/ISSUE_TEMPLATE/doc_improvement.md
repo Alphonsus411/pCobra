@@ -12,7 +12,16 @@ Una explicación breve de la corrección o actualización necesaria.
 **Referencias**
 Enlaces o secciones de la documentación relacionadas con la mejora.
 
+**Versión**
+Indica la versión de Cobra a la que se refiere la documentación.
+
+**Entorno**
+Detalla el entorno en el que consultaste la documentación (sistema operativo, navegador, etc.).
+
+**Pasos de verificación**
+Describe cómo comprobar que la documentación es correcta después de aplicar la mejora.
+
 **Contexto adicional**
 Cualquier información que pueda ayudar a comprender la solicitud.
 
-Si tienes dudas, coméntalas en nuestro [canal de comunidad](https://discord.gg/placeholder).
+Si tienes dudas, coméntalas en nuestro [canal de comunidad](https://discord.gg/pcobra).
