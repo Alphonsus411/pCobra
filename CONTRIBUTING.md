@@ -132,6 +132,19 @@ safety check --full-report
 
 ¡Agradecemos todas las contribuciones!
 
+## Actualizar CHANGELOG
+
+Cada release debe incluir una entrada en `CHANGELOG.md` con el formato:
+
+```
+## vX.Y.Z - YYYY-MM-DD
+- Descripción breve de los cambios.
+```
+
+Asegúrate de reemplazar cualquier marcador provisional como `Cambios pendientes.`
+por una lista clara de mejoras o correcciones. Ejecuta `python scripts/check_changelog.py`
+para validar que la última versión esté documentada antes de fusionar la rama.
+
 ## Mensajes de Commit
 
 Seguimos la convención [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/), que define un formato estructurado para los mensajes. Cada commit debe comenzar con un **tipo**, un alcance opcional y una breve descripción en presente.
