@@ -137,13 +137,13 @@ def validar_dependencias(backend: str, mod_info: dict) -> None:
     """Verifica que las rutas de *mod_info* para *backend* existan y sean seguras."""
     if not mod_info:
         return
-    base = os.getcwd()
+    base = os.path.realpath(os.getcwd())
     for mod, data in mod_info.items():
         ruta = data.get(backend)
         if not ruta:
             continue
-        abs_path = os.path.abspath(ruta)
-        if not abs_path.startswith(base):
+        abs_path = os.path.realpath(ruta)
+        if os.path.commonpath([base, abs_path]) != base:
             raise ValueError(f"Ruta no permitida: {ruta}")
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"Dependencia no encontrada: {ruta}")
