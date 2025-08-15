@@ -5,7 +5,8 @@ Al importar :mod:`src.core` se exponen todas las clases que componen el
 Esto simplifica el uso de la biblioteca desde otros módulos.
 """
 
-from .ast_nodes import *
+from core.ast_nodes import *
+from .ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
 from .visitor import NodeVisitor
 from .performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
 from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
