@@ -8,6 +8,12 @@ from typing import Iterable
 
 # Variable de entorno que permite definir una lista blanca mínima
 WHITELIST_ENV = "COBRA_EJECUTAR_PERMITIDOS"
+# Lista capturada una sola vez al importar el módulo para evitar cambios en
+# tiempo de ejecución.
+_lista_env = os.getenv(WHITELIST_ENV)
+PERMITIDOS_FIJOS = (
+    tuple(_lista_env.split(os.pathsep)) if _lista_env else ()
+)
 
 
 def obtener_os() -> str:
@@ -22,9 +28,10 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
     directamente a ``subprocess.run`` sin crear un shell. ``permitidos``
     define una lista blanca de rutas absolutas de ejecutables
     autorizados; este parámetro es obligatorio. Si se invoca la función
-    sin una lista, se intentará obtener una mínima desde la variable de
-    entorno ``COBRA_EJECUTAR_PERMITIDOS`` separada por ``os.pathsep``.
-    Si no está definida, se lanza ``ValueError``.
+    sin una lista se utilizará la capturada desde
+    ``COBRA_EJECUTAR_PERMITIDOS`` al importar el módulo, siempre que no
+    esté vacía. Los cambios posteriores en la variable de entorno no
+    surten efecto.
 
     Si el comando finaliza con un código de error se captura la
     excepción ``subprocess.CalledProcessError`` devolviendo ``stderr``
@@ -32,9 +39,8 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
     información detallada.
     """
     if permitidos is None:
-        lista_env = os.getenv(WHITELIST_ENV)
-        if lista_env:
-            permitidos = lista_env.split(os.pathsep)
+        if PERMITIDOS_FIJOS:
+            permitidos = PERMITIDOS_FIJOS
         else:
             raise ValueError("Se requiere lista blanca de comandos permitidos")
 

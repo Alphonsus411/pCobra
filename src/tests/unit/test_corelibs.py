@@ -168,7 +168,8 @@ def test_sistema_funcs(tmp_path, monkeypatch):
     proc = MagicMock()
     proc.stdout = "hola\n"
     monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
-    assert core.ejecutar(["echo", "hola"]) == "hola\n"
+    permitido = core.sistema.os.path.realpath("/usr/bin/echo")
+    assert core.ejecutar(["echo", "hola"], permitidos=[permitido]) == "hola\n"
     os.environ["PRUEBA"] = "1"
     assert core.obtener_env("PRUEBA") == "1"
     d = tmp_path
