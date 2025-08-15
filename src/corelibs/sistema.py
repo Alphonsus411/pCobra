@@ -2,6 +2,7 @@
 
 import os
 import platform
+import shutil
 import subprocess
 from typing import Iterable
 
@@ -16,21 +17,25 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
 
     ``comando`` debe ser una lista de argumentos que se pasa
     directamente a ``subprocess.run`` sin crear un shell.
-    Opcionalmente ``permitidos`` define una lista blanca de programas
-    autorizados; si se especifica y el primer elemento de ``comando`` no
-    está presente se lanza ``ValueError``.
+    ``permitidos`` es opcional y define una lista blanca de rutas
+    absolutas de ejecutables autorizados; si se especifica y la ruta
+    real del programa no coincide exactamente con alguna de ellas se
+    lanza ``ValueError``.
 
     Si el comando finaliza con un código de error se captura la
     excepción ``subprocess.CalledProcessError`` devolviendo ``stderr``
     cuando esté disponible o lanzando un ``RuntimeError`` con
     información detallada.
     """
-    if (
-        permitidos is not None
-        and comando
-        and os.path.basename(comando[0]) not in permitidos
-    ):
-        raise ValueError(f"Comando no permitido: {comando[0]}")
+    if permitidos is not None and comando:
+        exe = comando[0]
+        exe_resuelto = shutil.which(exe) if not os.path.isabs(exe) else exe
+        if exe_resuelto is None:
+            raise ValueError(f"Comando no permitido: {exe}")
+        exe_real = os.path.realpath(exe_resuelto)
+        permitidos_reales = {os.path.realpath(p) for p in permitidos}
+        if exe_real not in permitidos_reales:
+            raise ValueError(f"Comando no permitido: {exe_real}")
     args = comando
     try:
         resultado = subprocess.run(
