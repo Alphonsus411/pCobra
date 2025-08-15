@@ -1,6 +1,7 @@
 import importlib
 import importlib.util
 import os
+import re
 import subprocess
 from pathlib import Path
 import sys
@@ -15,6 +16,26 @@ USAR_WHITELIST: set[str] = set()
 
 # Nombre de la variable de entorno que habilita la instalación automática
 USAR_INSTALL_ENV = "COBRA_USAR_INSTALL"
+
+# Regex de validación para los nombres de paquetes
+_VALID_NAME_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
+
+
+def _validar_nombre(nombre: str) -> str:
+    """Valida el nombre del paquete y devuelve una versión saneada.
+
+    Se rechazan nombres con guiones iniciales, barras u otros caracteres
+    sospechosos. Solo se permiten letras, dígitos, guiones y guiones bajos.
+    """
+
+    nombre = nombre.strip()
+    if not _VALID_NAME_RE.fullmatch(nombre):
+        raise ValueError(
+            f"Nombre de paquete '{nombre}' contiene caracteres no permitidos"
+        )
+    if nombre.startswith("-") or "/" in nombre or "\\" in nombre:
+        raise ValueError(f"Nombre de paquete '{nombre}' no es seguro")
+    return nombre
 
 
 def cargar_lista_blanca():
@@ -56,6 +77,7 @@ def obtener_modulo(nombre: str):
     siempre que la variable de entorno ``COBRA_USAR_INSTALL`` esté definida.
     De lo contrario se lanza :class:`RuntimeError`.
     """
+    nombre = _validar_nombre(nombre)
     if not USAR_WHITELIST:
         raise PermissionError(
             "La lista blanca de paquetes está vacía. No se puede usar 'usar'."
@@ -105,6 +127,11 @@ def obtener_modulo(nombre: str):
             )
 
         print(f"Paquete '{nombre}' no encontrado. Instalando con pip...")
+
+        nombre = _validar_nombre(nombre)
+        if nombre not in USAR_WHITELIST:
+            raise PermissionError(f"Paquete '{nombre}' no está permitido.")
+
         try:
             subprocess.run([sys.executable, "-m", "pip", "install", nombre], check=True)
         except subprocess.CalledProcessError as exc:
