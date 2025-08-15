@@ -15,5 +15,8 @@ for pkg in _submodules:
     try:
         module = importlib.import_module(f".{pkg}", __name__)
         globals()[pkg] = module
-    except Exception as e:  # nosec B110
+    except ImportError as e:
         logger.warning("No se pudo importar %s: %s", pkg, e)
+    except Exception as e:  # nosec B110
+        logger.error("Error al importar %s", pkg, exc_info=True)
+        raise
