@@ -51,5 +51,11 @@ def ejecutar_cli(argumentos: Optional[List[str]] = None) -> int:
         logger.error("Error en la ejecución del CLI: %s", str(e))
         return 1
 
-if __name__ == "__main__":
+
+def main() -> None:
+    """Punto de entrada principal para la ejecución del CLI."""
     sys.exit(ejecutar_cli())
+
+
+if __name__ == "__main__":
+    main()
