@@ -76,6 +76,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["src", "cobra*", "core*"]
 
 [project.scripts]
 cobra = "cobra.cli.cli:main"
