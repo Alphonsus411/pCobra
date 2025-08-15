@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from queue import Empty
 from pathlib import Path
+from packaging.version import Version
 
 from RestrictedPython import compile_restricted, safe_builtins
 from RestrictedPython.Eval import default_guarded_getitem
@@ -15,6 +16,9 @@ from RestrictedPython.Guards import (
     guarded_unpack_sequence,
 )
 from RestrictedPython.PrintCollector import PrintCollector
+
+
+MIN_VM2_VERSION = Version("3.9.19")
 
 
 def _worker(code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None) -> None:
@@ -83,10 +87,27 @@ def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
 
     Utiliza ``vm2`` para crear un entorno seguro que no expone objetos como
     ``process`` o ``require``. ``timeout`` especifica el tiempo límite en
-    segundos para la ejecución.
+    segundos para la ejecución. ``vm2`` debe mantenerse actualizado; se
+    comprueba que la versión instalada sea al menos ``3.9.19``.
     """
     import json
     import os
+
+    try:
+        version = subprocess.run(
+            ["node", "-e", "console.log(require('vm2/package.json').version)"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("vm2 no disponible") from exc
+
+    vm2_version = Version(version.stdout.strip())
+    if vm2_version < MIN_VM2_VERSION:
+        raise RuntimeError(
+            f"vm2 {vm2_version} es vulnerable; se requiere {MIN_VM2_VERSION} o superior"
+        )
 
     codigo_serializado = json.dumps(codigo)
     script = f"""
@@ -118,7 +139,12 @@ process.stdout.write(output);
 
     try:
         proc = subprocess.run(
-            ["node", "--no-experimental-fetch", tmp_path],
+            [
+                "node",
+                "--no-experimental-fetch",
+                "--max-old-space-size=128",
+                tmp_path,
+            ],
             capture_output=True,
             text=True,
             check=True,
