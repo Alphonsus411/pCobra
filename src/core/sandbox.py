@@ -154,9 +154,11 @@ def ejecutar_en_contenedor(
     previamente. ``timeout`` define el límite de tiempo en segundos para la
     ejecución del contenedor.
 
-    El contenedor se lanza sin acceso a la red (``--network=none``) y con
-    límites de recursos básicos mediante ``--pids-limit`` y ``--memory`` para
-    evitar abusos del sistema.
+    El contenedor se lanza sin acceso a la red (``--network=none``), como el
+    usuario ``nobody`` (``--user 65534:65534``), con el sistema de archivos en
+    modo solo lectura (``--read-only`` y ``--tmpfs /tmp``) y sin capacidades
+    adicionales (``--cap-drop=ALL``). Además, se aplican límites de recursos
+    mediante ``--pids-limit`` y ``--memory`` para evitar abusos del sistema.
     """
 
     imagenes = {
@@ -178,6 +180,10 @@ def ejecutar_en_contenedor(
                 "--network=none",
                 "--pids-limit=128",
                 "--memory=256m",
+                "--user", "65534:65534",
+                "--read-only",
+                "--tmpfs", "/tmp",
+                "--cap-drop=ALL",
                 "-i",
                 imagenes[backend],
             ],
