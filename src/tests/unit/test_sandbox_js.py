@@ -76,3 +76,17 @@ def test_sandbox_js_ignora_node_options(monkeypatch):
     assert salida.strip() == "hola"
     assert "pwned" not in salida
 
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_trunca_salida_grande():
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    codigo = "console.log('a'.repeat(20000))"
+    salida = ejecutar_en_sandbox_js(codigo)
+    assert len(salida.encode()) <= sandbox.MAX_JS_OUTPUT_BYTES + 100
+    assert "truncated" in salida
+
