@@ -1,9 +1,10 @@
 """Definiciones de los nodos del árbol de sintaxis abstracta de Cobra."""
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TYPE_CHECKING
 
-import cobra.core.lexer
+if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
+    from cobra.core.lexer import Token, TipoToken
 
 
 @dataclass
@@ -24,7 +25,9 @@ class NodoAsignacion(NodoAST):
     """Representa la asignación de una expresión a una variable."""
 
     def __post_init__(self):
-        if isinstance(self.variable, cobra.core.lexer.Token):
+        from cobra.core.lexer import Token
+
+        if isinstance(self.variable, Token):
             nombre = self.variable.valor
             self.identificador = str(nombre)
             self.variable = self.identificador
@@ -223,7 +226,7 @@ class NodoLlamadaMetodo(NodoAST):
 @dataclass
 class NodoOperacionBinaria(NodoAST):
     izquierda: Any
-    operador: cobra.core.lexer.Token
+    operador: 'Token'
     derecha: Any
 
     """Operación que combina dos expresiones mediante un operador."""
@@ -234,7 +237,7 @@ class NodoOperacionBinaria(NodoAST):
 
 @dataclass
 class NodoOperacionUnaria(NodoAST):
-    operador: cobra.core.lexer.Token
+    operador: 'Token'
     operando: Any
 
     """Operación aplicada a un único operando."""
@@ -257,7 +260,9 @@ class NodoIdentificador(NodoAST):
     """Uso de una variable o identificador."""
 
     def __post_init__(self):
-        if isinstance(self.nombre, cobra.core.lexer.Token):
+        from cobra.core.lexer import Token
+
+        if isinstance(self.nombre, Token):
             self.nombre = self.nombre.valor
         elif isinstance(self.nombre, NodoIdentificador):
             self.nombre = self.nombre.nombre
@@ -279,11 +284,14 @@ class NodoIdentificador(NodoAST):
 
         if isinstance(valor, NodoValor):
             return valor.valor
-        if isinstance(valor, cobra.core.lexer.Token) and valor.tipo in {
-            cobra.core.lexer.TipoToken.ENTERO,
-            cobra.core.lexer.TipoToken.FLOTANTE,
-            cobra.core.lexer.TipoToken.CADENA,
-            cobra.core.lexer.TipoToken.BOOLEANO,
+
+        from cobra.core.lexer import Token, TipoToken
+
+        if isinstance(valor, Token) and valor.tipo in {
+            TipoToken.ENTERO,
+            TipoToken.FLOTANTE,
+            TipoToken.CADENA,
+            TipoToken.BOOLEANO,
         }:
             return valor.valor
         return valor
@@ -558,7 +566,10 @@ __all__ = [
     "NodoDiccionarioTipo",
     "NodoDecorador",
     "NodoFuncion",
+    "NodoMetodoAbstracto",
+    "NodoInterface",
     "NodoClase",
+    "NodoEnum",
     "NodoMetodo",
     "NodoInstancia",
     "NodoAtributo",
