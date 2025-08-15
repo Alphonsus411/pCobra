@@ -119,6 +119,10 @@ def ejecutar_en_contenedor(
     backend utiliza una imagen específica que debe estar construida
     previamente. ``timeout`` define el límite de tiempo en segundos para la
     ejecución del contenedor.
+
+    El contenedor se lanza sin acceso a la red (``--network=none``) y con
+    límites de recursos básicos mediante ``--pids-limit`` y ``--memory`` para
+    evitar abusos del sistema.
     """
 
     imagenes = {
@@ -133,7 +137,16 @@ def ejecutar_en_contenedor(
 
     try:
         proc = subprocess.run(
-            ["docker", "run", "--rm", "-i", imagenes[backend]],
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--network=none",
+                "--pids-limit=128",
+                "--memory=256m",
+                "-i",
+                imagenes[backend],
+            ],
             input=codigo,
             text=True,
             capture_output=True,
