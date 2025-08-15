@@ -112,12 +112,38 @@ class InterpretadorCobra:
                     "Importaciones no permitidas en los validadores adicionales."
                 )
 
-        safe_builtins = dict(__builtins__)
-        safe_builtins.pop("__import__", None)
+        from RestrictedPython import compile_restricted
+        from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
+        from RestrictedPython.Guards import (
+            guarded_iter_unpack_sequence,
+            guarded_unpack_sequence,
+        )
+        from RestrictedPython.PrintCollector import PrintCollector
+
+        import builtins
+
+        safe_builtins = {
+            "len": builtins.len,
+            "range": builtins.range,
+            "__build_class__": builtins.__build_class__,
+            "Exception": builtins.Exception,
+            "object": builtins.object,
+        }
         from core.semantic_validators.base import ValidadorBase
 
-        namespace = {"__builtins__": safe_builtins, "ValidadorBase": ValidadorBase}
-        exec(compile(tree, ruta_abs, "exec"), namespace)
+        namespace = {
+            "__builtins__": safe_builtins,
+            "ValidadorBase": ValidadorBase,
+            "__name__": "validators",
+            "__metaclass__": builtins.type,
+            "_print_": PrintCollector,
+            "_getattr_": default_guarded_getattr,
+            "_getitem_": default_guarded_getitem,
+            "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
+            "_unpack_sequence_": guarded_unpack_sequence,
+        }
+        byte_code = compile_restricted(source, ruta_abs, "exec")
+        exec(byte_code, namespace)
         return namespace.get("VALIDADORES_EXTRA", [])
 
     def __init__(self, safe_mode: bool = False, extra_validators=None):
