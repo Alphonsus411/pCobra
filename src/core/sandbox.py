@@ -1,6 +1,8 @@
 """Ejecución de código Python en un entorno restringido."""
 
 import os
+import marshal
+import multiprocessing
 import subprocess
 import tempfile
 from pathlib import Path
@@ -14,32 +16,64 @@ from RestrictedPython.Guards import (
 from RestrictedPython.PrintCollector import PrintCollector
 
 
-def ejecutar_en_sandbox(codigo: str) -> str:
+def _worker(code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None) -> None:
+    """Ejecuta ``code_bytes`` en un proceso aislado y comunica el resultado."""
+    try:
+        if memoria_mb is not None and os.name != "nt":
+            import resource
+
+            limite = memoria_mb * 1024 * 1024
+            resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+
+        env = {
+            "__builtins__": safe_builtins,
+            "_print_": PrintCollector,
+            "_getattr_": getattr,
+            "_getitem_": default_guarded_getitem,
+            "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
+            "_unpack_sequence_": guarded_unpack_sequence,
+        }
+
+        byte_code = marshal.loads(code_bytes)
+        exec(byte_code, env, env)
+        queue.put(env["_print"]())
+    except BaseException as exc:  # pragma: no cover - propagación de errores
+        queue.put(exc)
+
+
+def ejecutar_en_sandbox(
+    codigo: str, timeout: int = 5, memoria_mb: int | None = None
+) -> str:
     """Ejecuta una cadena de código Python de forma segura.
 
-    Devuelve la salida producida por ``print`` o lanza ``SyntaxError`` si
-    la compilación segura falla. El código se compila con
-    :func:`compile_restricted` y, de tener éxito, se ejecuta usando
-    ``exec``.  Este paso implica riesgo, por lo que **no** se intenta
-    recompilar con ``compile``. Mantén el diccionario ``env`` lo más
-    reducido posible para minimizar la superficie de ataque.
+    El código se compila con :func:`compile_restricted` y se ejecuta en un
+    proceso hijo. ``timeout`` especifica el tiempo límite en segundos y
+    ``memoria_mb`` el máximo de memoria en megabytes. Se lanza ``TimeoutError``
+    o ``MemoryError`` si se exceden estos límites.
     """
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
     except SyntaxError as se:  # pragma: no cover - comportamiento simple
         raise SyntaxError(f"compile_restricted falló: {se}") from se
 
-    env = {
-        "__builtins__": safe_builtins,
-        "_print_": PrintCollector,
-        "_getattr_": getattr,
-        "_getitem_": default_guarded_getitem,
-        "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
-        "_unpack_sequence_": guarded_unpack_sequence,
-    }
+    code_bytes = marshal.dumps(byte_code)
+    queue: multiprocessing.Queue = multiprocessing.Queue()
+    proc = multiprocessing.Process(target=_worker, args=(code_bytes, queue, memoria_mb))
+    proc.start()
+    proc.join(timeout)
 
-    exec(byte_code, env, env)
-    return env["_print"]()
+    if proc.is_alive():
+        proc.terminate()
+        proc.join()
+        raise TimeoutError("Tiempo de ejecución agotado")
+
+    if queue.empty():  # pragma: no cover - no debería ocurrir
+        raise RuntimeError("Fallo desconocido en sandbox")
+
+    resultado = queue.get()
+    if isinstance(resultado, BaseException):
+        raise resultado
+    return resultado
 
 
 def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
