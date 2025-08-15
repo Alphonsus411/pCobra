@@ -1,5 +1,7 @@
 import logging
+import os
 import signal
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -64,15 +66,28 @@ class ExecuteCommand(BaseCommand):
     @contextmanager
     def _limitar_recursos(self):
         """Establece límites de recursos para la ejecución."""
-        def handler(signum, frame):
-            raise TimeoutError("La ejecución excedió el tiempo límite")
+        if os.name == "nt":
+            timer = threading.Timer(
+                self.EXECUTION_TIMEOUT,
+                lambda: (_ for _ in ()).throw(
+                    TimeoutError("La ejecución excedió el tiempo límite")
+                ),
+            )
+            timer.start()
+            try:
+                yield
+            finally:
+                timer.cancel()
+        else:
+            def handler(signum, frame):
+                raise TimeoutError("La ejecución excedió el tiempo límite")
 
-        signal.signal(signal.SIGALRM, handler)
-        signal.alarm(self.EXECUTION_TIMEOUT)
-        try:
-            yield
-        finally:
-            signal.alarm(0)
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(self.EXECUTION_TIMEOUT)
+            try:
+                yield
+            finally:
+                signal.alarm(0)
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
