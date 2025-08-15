@@ -1,13 +1,14 @@
 import subprocess
 import sys
 import types
+import pytest
 
 
-def fake_run(cmd, input=None, capture_output=True, text=True, timeout=None):
-    return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="")
+def timeout_run(cmd, input=None, capture_output=True, text=True, timeout=None):
+    raise subprocess.TimeoutExpired(cmd, timeout or 5)
 
-
-def test_kernel_reports_generic_error(monkeypatch):
+@pytest.mark.timeout(5)
+def test_kernel_reports_timeout(monkeypatch):
     monkeypatch.setenv("COBRA_JUPYTER_PYTHON", "1")
     outputs = []
 
@@ -31,7 +32,7 @@ def test_kernel_reports_generic_error(monkeypatch):
     transp_mod = types.ModuleType("cobra.transpilers.transpiler.to_python")
     class FakeTranspilador:
         def generate_code(self, ast):
-            return "print('hola')"
+            return "while True:\n    pass"
     transp_mod.TranspiladorPython = FakeTranspilador
     sys.modules.setdefault(
         "cobra.transpilers.transpiler.to_python", transp_mod
@@ -48,7 +49,7 @@ def test_kernel_reports_generic_error(monkeypatch):
         def send_response(self, stream, msg_or_type, content, **kwargs):
             outputs.append((msg_or_type, content))
 
-    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(subprocess, "run", timeout_run)
     setup_mod = types.ModuleType("pybind11.setup_helpers")
     setup_mod.Pybind11Extension = object
     setup_mod.build_ext = object
@@ -64,6 +65,6 @@ def test_kernel_reports_generic_error(monkeypatch):
     assert any(
         msg_type == "stream"
         and content.get("name") == "stderr"
-        and "código de retorno" in content.get("text", "")
+        and "tiempo límite" in content.get("text", "")
         for msg_type, content in outputs
     )
