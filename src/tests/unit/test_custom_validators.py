@@ -39,3 +39,25 @@ def test_interpreter_rejects_unwhitelisted_validators(tmp_path):
     with pytest.raises(ImportError):
         InterpretadorCobra(safe_mode=True, extra_validators=str(mod))
 
+
+def test_validator_open_blocked(tmp_path):
+    mod = tmp_path / "vals.py"
+    mod.write_text("open('archivo.txt', 'w')\nVALIDADORES_EXTRA = []\n")
+    IMPORT_WHITELIST.add(str(tmp_path))
+    try:
+        with pytest.raises(NameError):
+            InterpretadorCobra._cargar_validadores(str(mod))
+    finally:
+        IMPORT_WHITELIST.discard(str(tmp_path))
+
+
+def test_validator_import_blocked(tmp_path):
+    mod = tmp_path / "vals.py"
+    mod.write_text("__import__('os').system('echo hola')\nVALIDADORES_EXTRA = []\n")
+    IMPORT_WHITELIST.add(str(tmp_path))
+    try:
+        with pytest.raises(SyntaxError):
+            InterpretadorCobra._cargar_validadores(str(mod))
+    finally:
+        IMPORT_WHITELIST.discard(str(tmp_path))
+
