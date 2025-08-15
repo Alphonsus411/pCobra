@@ -7,20 +7,90 @@ import sys
 # perezosa dentro de las funciones para evitar dependencias circulares
 # cuando estos módulos utilizan a su vez la caché incremental.
 
+# TODO: considerar reemplazar ``pickle`` por un formato más seguro como
+# ``json`` o ``msgpack`` para el almacenamiento de la caché.
+
+
+AST_NODE_CLASS_NAMES = [
+    "NodoAST",
+    "NodoAsignacion",
+    "NodoHolobit",
+    "NodoCondicional",
+    "NodoBucleMientras",
+    "NodoFor",
+    "NodoLista",
+    "NodoDiccionario",
+    "NodoListaComprehension",
+    "NodoDiccionarioComprehension",
+    "NodoListaTipo",
+    "NodoDiccionarioTipo",
+    "NodoDecorador",
+    "NodoFuncion",
+    "NodoMetodoAbstracto",
+    "NodoInterface",
+    "NodoClase",
+    "NodoEnum",
+    "NodoMetodo",
+    "NodoInstancia",
+    "NodoAtributo",
+    "NodoLlamadaMetodo",
+    "NodoOperacionBinaria",
+    "NodoOperacionUnaria",
+    "NodoValor",
+    "NodoIdentificador",
+    "NodoLlamadaFuncion",
+    "NodoHilo",
+    "NodoRetorno",
+    "NodoYield",
+    "NodoEsperar",
+    "NodoOption",
+    "NodoRomper",
+    "NodoContinuar",
+    "NodoPasar",
+    "NodoAssert",
+    "NodoDel",
+    "NodoGlobal",
+    "NodoNoLocal",
+    "NodoLambda",
+    "NodoWith",
+    "NodoThrow",
+    "NodoTryCatch",
+    "NodoImport",
+    "NodoUsar",
+    "NodoImportDesde",
+    "NodoExport",
+    "NodoPara",
+    "NodoProyectar",
+    "NodoTransformar",
+    "NodoGraficar",
+    "NodoImprimir",
+    "NodoMacro",
+    "NodoPattern",
+    "NodoGuard",
+    "NodoCase",
+    "NodoSwitch",
+    "NodoBloque",
+    "NodoDeclaracion",
+    "NodoModulo",
+    "NodoExpresion",
+]
+
+TOKEN_CLASS_NAMES = ["Token", "TipoToken"]
+
 
 class SafeUnpickler(pickle.Unpickler):
     """Deserializador seguro que limita los módulos y clases permitidos."""
 
-    # Módulos de los que se permitirá cargar clases
-    ALLOWED_MODULES = {
-        "core.ast_nodes",
-        "cobra.core.ast_nodes",
-        "cobra.core.lexer",
-        "builtins",
+    ALLOWED_CLASSES = {
+        *((m, n) for m in ("core.ast_nodes", "cobra.core.ast_nodes") for n in AST_NODE_CLASS_NAMES),
+        *(("cobra.core.lexer", n) for n in TOKEN_CLASS_NAMES),
     }
 
+    # Módulos permitidos explícitamente
+    ALLOWED_MODULES = {module for module, _ in ALLOWED_CLASSES}
+
     def find_class(self, module: str, name: str):
-        if module not in self.ALLOWED_MODULES:
+        if (module, name) not in self.ALLOWED_CLASSES:
             raise pickle.UnpicklingError(f"Importación no permitida: {module}.{name}")
         __import__(module)
         return getattr(sys.modules[module], name)
