@@ -20,9 +20,9 @@ _ALLOWED_PREFIXES: list[str] = [
 
 
 def _es_ruta_permitida(ruta: str) -> bool:
-    path = os.path.abspath(ruta)
+    path = os.path.realpath(ruta)
     for pref in _ALLOWED_PREFIXES:
-        pref = os.path.abspath(pref)
+        pref = os.path.realpath(pref)
         try:
             if os.path.commonpath([pref, path]) == pref:
                 return True

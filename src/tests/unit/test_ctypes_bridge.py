@@ -7,13 +7,6 @@ import sys
 import importlib
 
 import pytest
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from core.ast_nodes import (
-    NodoAsignacion,
-    NodoValor,
-    NodoLlamadaFuncion,
-    NodoImprimir,
-)
 
 # Fakes para evitar dependencias de pybind11 al importar core.nativos
 fake_pybind11 = ModuleType('pybind11')
@@ -44,6 +37,13 @@ def _compilar_lib(dir_: Path) -> Path:
 
 @pytest.mark.timeout(5)
 def test_ctypes_bridge_executes_function(tmp_path, monkeypatch):
+    to_python = pytest.importorskip("cobra.transpilers.transpiler.to_python")
+    ast_nodes = pytest.importorskip("core.ast_nodes")
+    TranspiladorPython = to_python.TranspiladorPython
+    NodoAsignacion = ast_nodes.NodoAsignacion
+    NodoValor = ast_nodes.NodoValor
+    NodoLlamadaFuncion = ast_nodes.NodoLlamadaFuncion
+    NodoImprimir = ast_nodes.NodoImprimir
     monkeypatch.setenv("COBRA_ALLOWED_LIB_PATHS", str(tmp_path))
     import core.ctypes_bridge as bridge
     importlib.reload(bridge)
@@ -84,3 +84,18 @@ def test_ctypes_bridge_invalid_parent(tmp_path, monkeypatch):
     outside = allowed.parent / "lib.so"
     with pytest.raises(ValueError):
         bridge.cargar_biblioteca(str(outside))
+
+
+def test_ctypes_bridge_symlink_blocked(tmp_path, monkeypatch):
+    allowed = tmp_path / "allowed"
+    allowed.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    monkeypatch.setenv("COBRA_ALLOWED_LIB_PATHS", str(allowed))
+    import core.ctypes_bridge as bridge
+    importlib.reload(bridge)
+    lib = _compilar_lib(outside)
+    link = allowed / "libtriple.so"
+    link.symlink_to(lib)
+    with pytest.raises(ValueError):
+        bridge.cargar_biblioteca(str(link))
