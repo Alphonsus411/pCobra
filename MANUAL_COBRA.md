@@ -280,6 +280,8 @@ La biblioteca estándar expone `corelibs.sistema.ejecutar` para lanzar
 procesos del sistema. Por motivos de seguridad es **obligatorio**
 proporcionar una lista blanca de ejecutables permitidos mediante el
 parámetro ``permitidos`` o definiendo la variable de entorno
-``COBRA_EJECUTAR_PERMITIDOS`` separada por ``os.pathsep``. Invocar la
-función sin esta configuración producirá un ``ValueError``.
+``COBRA_EJECUTAR_PERMITIDOS`` separada por ``os.pathsep``. La lista se
+captura al importar el módulo, por lo que modificar la variable de
+entorno después no surte efecto. Invocar la función sin esta
+configuración producirá un ``ValueError``.
 

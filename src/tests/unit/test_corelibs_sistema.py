@@ -1,4 +1,5 @@
 import subprocess
+import importlib
 from unittest.mock import MagicMock
 
 import pytest
@@ -50,3 +51,18 @@ def test_ejecutar_sin_lista_blanca(monkeypatch):
     monkeypatch.delenv(core.sistema.WHITELIST_ENV, raising=False)
     with pytest.raises(ValueError):
         core.ejecutar(["echo", "ok"])
+
+
+def test_ejecutar_env_ignora_cambios(monkeypatch):
+    permitido = "/usr/bin/echo"
+    monkeypatch.setenv(core.sistema.WHITELIST_ENV, permitido)
+    importlib.reload(core.sistema)
+
+    monkeypatch.setenv(core.sistema.WHITELIST_ENV, "/usr/bin/false")
+    proc = MagicMock()
+    proc.stdout = "ok"
+    monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
+    monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
+    assert core.sistema.ejecutar(["echo", "ok"]) == "ok"
+    with pytest.raises(ValueError):
+        core.sistema.ejecutar(["false"])

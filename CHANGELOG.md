@@ -3,7 +3,8 @@
 - `corelibs.sistema.ejecutar` ahora exige una lista blanca de comandos
   mediante el parámetro `permitidos` o la variable de entorno
   `COBRA_EJECUTAR_PERMITIDOS`. Invocarlo sin esta configuración produce
-  `ValueError`.
+  `ValueError` y la lista de la variable de entorno se fija al importar
+  el módulo, evitando modificaciones en tiempo de ejecución.
 
 ## v10.0.8 - 2025-07-28
 - Actualización de dependencias a versiones estables recientes (numpy, scipy, requests, PyYAML, entre otras).
