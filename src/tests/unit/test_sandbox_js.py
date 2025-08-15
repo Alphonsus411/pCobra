@@ -1,13 +1,15 @@
+import importlib.util
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-
-from core.sandbox import ejecutar_en_sandbox_js
+sandbox_path = ROOT / "core" / "sandbox.py"
+spec = importlib.util.spec_from_file_location("sandbox", sandbox_path)
+sandbox = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sandbox)
+ejecutar_en_sandbox_js = sandbox.ejecutar_en_sandbox_js
 
 
 @pytest.mark.timeout(5)
@@ -34,3 +36,28 @@ def test_sandbox_js_timeout():
     codigo = "while(true){}"
     salida = ejecutar_en_sandbox_js(codigo, timeout=1)
     assert "agotado" in salida
+
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_sin_process():
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    salida = ejecutar_en_sandbox_js("process.exit(0)")
+    assert "process is not defined" in salida
+
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_sin_comandos_externos():
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    codigo = "require('child_process').exec('echo hola')"
+    salida = ejecutar_en_sandbox_js(codigo)
+    assert "Cannot find module" in salida

@@ -45,29 +45,40 @@ def ejecutar_en_sandbox(codigo: str) -> str:
 def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
     """Ejecuta código JavaScript de forma aislada usando Node.
 
-    El código se serializa para evitar inyección de comandos cuando se pasa a
-    la opción ``-e`` de Node.
-    
-    ``timeout`` especifica el tiempo límite en segundos para la ejecución.
+    Utiliza ``vm2`` para crear un entorno seguro que no expone objetos como
+    ``process`` o ``require``. ``timeout`` especifica el tiempo límite en
+    segundos para la ejecución.
     """
     import json
     import os
 
     codigo_serializado = json.dumps(codigo)
     script = f"""
-const vm = require('vm');
+const {{ NodeVM }} = require('vm2');
 let output = '';
-const console = {{ log: (msg) => {{ output += String(msg) + '\\n'; }} }};
-const context = vm.createContext({{ console }});
-const script = new vm.Script({codigo_serializado});
-script.runInContext(context, {{ timeout: {timeout * 1000} }});
+const vm = new NodeVM({{
+    console: 'redirect',
+    sandbox: {{ process: undefined }},
+    timeout: {timeout * 1000},
+    eval: false,
+    wasm: false,
+    require: false,
+    env: {{}},
+}});
+vm.on('console.log', (msg) => {{ output += String(msg) + '\\n'; }});
+vm.run('delete global.process;');
+try {{
+    vm.run({codigo_serializado});
+}} catch (err) {{
+    output += String(err);
+}}
 process.stdout.write(output);
 """
 
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as tmp:
+    base_dir = Path(__file__).resolve().parent
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, dir=base_dir) as tmp:
         tmp.write(script)
         tmp_path = tmp.name
-    base_dir = Path(__file__).resolve().parent
 
     try:
         proc = subprocess.run(
