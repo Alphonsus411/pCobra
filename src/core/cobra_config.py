@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 try:
     import tomllib as tomli  # Python >= 3.11
 except ModuleNotFoundError:  # pragma: no cover - para entornos sin tomllib
@@ -8,21 +9,15 @@ DEFAULT_CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "cobra.toml")
 )
 
-_cache = {}
-
-
+@lru_cache(maxsize=None)
 def cargar_configuracion(ruta: str | None = None) -> dict:
     """Carga la configuraci\u00f3n general en formato TOML."""
     path = ruta or os.environ.get("COBRA_CONFIG", DEFAULT_CONFIG_PATH)
 
-    if path not in _cache:
-        if os.path.exists(path):
-            with open(path, "rb") as f:
-                data = tomli.load(f)
-        else:
-            data = {}
-        _cache[path] = data
-    return _cache[path]
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return tomli.load(f)
+    return {}
 
 
 def auditoria_activa(config: dict | None = None) -> bool:
