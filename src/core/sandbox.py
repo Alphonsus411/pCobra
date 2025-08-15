@@ -93,12 +93,17 @@ def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
     import json
     import os
 
+    env = os.environ.copy()
+    env.pop("NODE_OPTIONS", None)
+    env.pop("NODE_PATH", None)
+
     try:
         version = subprocess.run(
             ["node", "-e", "console.log(require('vm2/package.json').version)"],
             capture_output=True,
             text=True,
             check=True,
+            env=env,
         )
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:
         raise RuntimeError("vm2 no disponible") from exc
@@ -150,6 +155,7 @@ process.stdout.write(output);
             check=True,
             cwd=base_dir,
             timeout=timeout,
+            env=env,
         )  # nosec B603
         return proc.stdout
     except subprocess.CalledProcessError as exc:
