@@ -5,6 +5,7 @@ import marshal
 import multiprocessing
 import subprocess
 import tempfile
+from queue import Empty
 from pathlib import Path
 
 from RestrictedPython import compile_restricted, safe_builtins
@@ -67,10 +68,11 @@ def ejecutar_en_sandbox(
         proc.join()
         raise TimeoutError("Tiempo de ejecución agotado")
 
-    if queue.empty():  # pragma: no cover - no debería ocurrir
+    try:
+        resultado = queue.get_nowait()
+    except Empty:  # pragma: no cover - no debería ocurrir
         raise RuntimeError("Fallo desconocido en sandbox")
 
-    resultado = queue.get()
     if isinstance(resultado, BaseException):
         raise resultado
     return resultado
