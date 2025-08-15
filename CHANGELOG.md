@@ -1,5 +1,9 @@
 ## v10.0.9 - 2025-07-29
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.
+- `corelibs.sistema.ejecutar` ahora exige una lista blanca de comandos
+  mediante el parámetro `permitidos` o la variable de entorno
+  `COBRA_EJECUTAR_PERMITIDOS`. Invocarlo sin esta configuración produce
+  `ValueError`.
 
 ## v10.0.8 - 2025-07-28
 - Actualización de dependencias a versiones estables recientes (numpy, scipy, requests, PyYAML, entre otras).

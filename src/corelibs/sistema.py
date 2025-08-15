@@ -6,6 +6,9 @@ import shutil
 import subprocess
 from typing import Iterable
 
+# Variable de entorno que permite definir una lista blanca mínima
+WHITELIST_ENV = "COBRA_EJECUTAR_PERMITIDOS"
+
 
 def obtener_os() -> str:
     """Retorna el nombre del sistema operativo."""
@@ -16,18 +19,26 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
     """Ejecuta un comando y devuelve su salida.
 
     ``comando`` debe ser una lista de argumentos que se pasa
-    directamente a ``subprocess.run`` sin crear un shell.
-    ``permitidos`` es opcional y define una lista blanca de rutas
-    absolutas de ejecutables autorizados; si se especifica y la ruta
-    real del programa no coincide exactamente con alguna de ellas se
-    lanza ``ValueError``.
+    directamente a ``subprocess.run`` sin crear un shell. ``permitidos``
+    define una lista blanca de rutas absolutas de ejecutables
+    autorizados; este parámetro es obligatorio. Si se invoca la función
+    sin una lista, se intentará obtener una mínima desde la variable de
+    entorno ``COBRA_EJECUTAR_PERMITIDOS`` separada por ``os.pathsep``.
+    Si no está definida, se lanza ``ValueError``.
 
     Si el comando finaliza con un código de error se captura la
     excepción ``subprocess.CalledProcessError`` devolviendo ``stderr``
     cuando esté disponible o lanzando un ``RuntimeError`` con
     información detallada.
     """
-    if permitidos is not None and comando:
+    if permitidos is None:
+        lista_env = os.getenv(WHITELIST_ENV)
+        if lista_env:
+            permitidos = lista_env.split(os.pathsep)
+        else:
+            raise ValueError("Se requiere lista blanca de comandos permitidos")
+
+    if comando:
         exe = comando[0]
         exe_resuelto = shutil.which(exe) if not os.path.isabs(exe) else exe
         if exe_resuelto is None:
