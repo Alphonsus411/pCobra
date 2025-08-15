@@ -13,7 +13,20 @@ def test_cli_sandbox_docker_invoca_docker(monkeypatch):
         mock_run.return_value = subprocess.CompletedProcess([], 0, stdout="4\n", stderr="")
         main(["interactive", "--sandbox-docker", "python"])
         mock_run.assert_called_once_with(
-            ["docker", "run", "--rm", "-i", "cobra-python-sandbox"],
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--network=none",
+                "--pids-limit=128",
+                "--memory=256m",
+                "--user", "65534:65534",
+                "--read-only",
+                "--tmpfs", "/tmp",
+                "--cap-drop=ALL",
+                "-i",
+                "cobra-python-sandbox",
+            ],
             input="print(2+2)", text=True, capture_output=True, check=True,
         )
 
