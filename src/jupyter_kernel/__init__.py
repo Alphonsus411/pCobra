@@ -80,19 +80,27 @@ class CobraKernel(Kernel):
                     )
 
                     py_code = TranspiladorPython().generate_code(ast)
-                    proc = subprocess.run(
-                        [sys.executable, "-"],
-                        input=py_code,
-                        capture_output=True,
-                        text=True,
-                    )
-                    output = proc.stdout
-                    error = proc.stderr
-                    if proc.returncode != 0 and not error:
-                        error = (
-                            f"Error al ejecutar código Python (código de retorno {proc.returncode})"
+                    try:
+                        proc = subprocess.run(
+                            [sys.executable, "-"],
+                            input=py_code,
+                            capture_output=True,
+                            text=True,
+                            timeout=5,
                         )
-                    result = None
+                        output = proc.stdout
+                        error = proc.stderr
+                        if proc.returncode != 0 and not error:
+                            error = (
+                                f"Error al ejecutar código Python (código de retorno {proc.returncode})"
+                            )
+                        result = None
+                    except subprocess.TimeoutExpired:
+                        output = ""
+                        error = (
+                            "Error: la ejecución de Python excedió el tiempo límite de 5 segundos"
+                        )
+                        result = None
                 else:
                     result = self.interpreter.ejecutar_ast(ast)
                     output = stdout.getvalue()
