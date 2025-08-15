@@ -1,5 +1,5 @@
 import pytest
-from core.interpreter import InterpretadorCobra
+from core.interpreter import InterpretadorCobra, IMPORT_WHITELIST
 from core.semantic_validators.base import ValidadorBase
 from core.ast_nodes import NodoValor
 
@@ -19,13 +19,23 @@ def test_interpreter_extra_validators_list():
 def test_interpreter_extra_validators_file(tmp_path):
     mod = tmp_path / 'vals.py'
     mod.write_text(
-        'from core.semantic_validators.base import ValidadorBase\n'
         'class V(ValidadorBase):\n'
         '    def visit_valor(self, nodo):\n'
         '        raise Exception("file")\n'
         'VALIDADORES_EXTRA = [V()]\n'
     )
-    interp = InterpretadorCobra(safe_mode=True, extra_validators=str(mod))
-    with pytest.raises(Exception):
-        interp.ejecutar_ast([NodoValor(2)])
+    IMPORT_WHITELIST.add(str(tmp_path))
+    try:
+        interp = InterpretadorCobra(safe_mode=True, extra_validators=str(mod))
+        with pytest.raises(Exception):
+            interp.ejecutar_ast([NodoValor(2)])
+    finally:
+        IMPORT_WHITELIST.discard(str(tmp_path))
+
+
+def test_interpreter_rejects_unwhitelisted_validators(tmp_path):
+    mod = tmp_path / 'vals.py'
+    mod.write_text('VALIDADORES_EXTRA = []')
+    with pytest.raises(ImportError):
+        InterpretadorCobra(safe_mode=True, extra_validators=str(mod))
 

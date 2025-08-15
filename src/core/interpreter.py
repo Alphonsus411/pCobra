@@ -86,12 +86,39 @@ class InterpretadorCobra:
     @staticmethod
     def _cargar_validadores(ruta):
         """Carga una lista de validadores desde un archivo Python."""
-        import importlib.util
+        import ast
 
-        spec = importlib.util.spec_from_file_location("cobra_extra_validators", ruta)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return getattr(mod, "VALIDADORES_EXTRA", [])
+        ruta_abs = os.path.abspath(ruta)
+        allowed_roots = [MODULES_PATH, *IMPORT_WHITELIST]
+        if not any(os.path.commonpath([ruta_abs, root]) == root for root in allowed_roots):
+            raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
+
+        try:
+            with open(ruta_abs, "r", encoding="utf-8") as f:
+                source = f.read()
+        except FileNotFoundError as e:
+            raise FileNotFoundError(
+                f"No se encontró el archivo de validadores: {ruta}"
+            ) from e
+
+        try:
+            tree = ast.parse(source, filename=ruta_abs)
+        except SyntaxError as e:
+            raise ImportError(f"Error de sintaxis en {ruta}: {e}") from e
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                raise ImportError(
+                    "Importaciones no permitidas en los validadores adicionales."
+                )
+
+        safe_builtins = dict(__builtins__)
+        safe_builtins.pop("__import__", None)
+        from core.semantic_validators.base import ValidadorBase
+
+        namespace = {"__builtins__": safe_builtins, "ValidadorBase": ValidadorBase}
+        exec(compile(tree, ruta_abs, "exec"), namespace)
+        return namespace.get("VALIDADORES_EXTRA", [])
 
     def __init__(self, safe_mode: bool = False, extra_validators=None):
         """Crea un nuevo interpretador.
