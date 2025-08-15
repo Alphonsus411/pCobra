@@ -61,3 +61,18 @@ def test_sandbox_js_sin_comandos_externos():
     codigo = "require('child_process').exec('echo hola')"
     salida = ejecutar_en_sandbox_js(codigo)
     assert "Cannot find module" in salida
+
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_ignora_node_options(monkeypatch):
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    monkeypatch.setenv("NODE_OPTIONS", "--eval \"process.stdout.write('pwned')\"")
+    salida = ejecutar_en_sandbox_js("console.log('hola')")
+    assert salida.strip() == "hola"
+    assert "pwned" not in salida
+
