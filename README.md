@@ -149,6 +149,25 @@ pip install -e .
    pip install cobra-lenguaje[big-data]  # soporte para procesamiento distribuido
    ```
 
+### Entorno virtual y verificación
+
+Activa un entorno virtual, registra los puntos de entrada de la CLI y comprueba
+que la instalación funciona correctamente:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Unix/macOS
+.\.venv\Scripts\activate   # Windows
+
+pip install -e .
+
+# (Opcional) ejecutar sin instalar el paquete
+export PYTHONPATH=src  # Unix/macOS
+set PYTHONPATH=src     # Windows PowerShell
+
+cobra --version  # debe mostrar la versión sin errores
+```
+
 6. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
    de ser necesario. Estas variables se cargarán automáticamente al iniciar
    Cobra gracias a ``python-dotenv``:
