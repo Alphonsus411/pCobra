@@ -16,6 +16,7 @@ from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 logger = logging.getLogger(__name__)
 
+
 class CobraHubClient:
     """Cliente para interactuar con CobraHub."""
 
@@ -25,7 +26,7 @@ class CobraHubClient:
     CONNECT_TIMEOUT = 5
     READ_TIMEOUT = 30
     MAX_RETRIES = 3
-    VALID_MODULE_NAME = re.compile(r'^[\w\-\.]+$')
+    VALID_MODULE_NAME = re.compile(r"^[\w\-\.]+$")
 
     def __init__(self):
         """Inicializa el cliente con configuración y sesión HTTP."""
@@ -66,7 +67,7 @@ class CobraHubClient:
 
             allowed = os.environ.get("COBRA_HOST_WHITELIST", "")
             if allowed:
-                hosts = {h.strip() for h in allowed.split(',') if h.strip()}
+                hosts = {h.strip() for h in allowed.split(",") if h.strip()}
                 if parsed.hostname not in hosts:
                     mostrar_error(_("Host de CobraHub no permitido"))
                     return False
@@ -115,8 +116,8 @@ class CobraHubClient:
         """Calcula el checksum SHA-256 de un archivo."""
         try:
             sha256 = hashlib.sha256()
-            with open(ruta, 'rb') as f:
-                for chunk in iter(lambda: f.read(self.CHUNK_SIZE), b''):
+            with open(ruta, "rb") as f:
+                for chunk in iter(lambda: f.read(self.CHUNK_SIZE), b""):
                     sha256.update(chunk)
             return sha256.hexdigest()
         except Exception as e:
@@ -153,13 +154,13 @@ class CobraHubClient:
         try:
             with open(ruta, "rb") as f:
                 headers = {"X-Content-Checksum": checksum}
-                response = self.session.post(
+                with self.session.post(
                     f"{self.base_url}/modulos",
                     files={"file": f},
                     headers=headers,
-                    timeout=(self.CONNECT_TIMEOUT, self.READ_TIMEOUT)
-                )
-                response.raise_for_status()
+                    timeout=(self.CONNECT_TIMEOUT, self.READ_TIMEOUT),
+                ) as response:
+                    response.raise_for_status()
 
             mostrar_info(_("Módulo publicado correctamente"))
             return True
@@ -178,32 +179,32 @@ class CobraHubClient:
             return False
 
         try:
-            response = self.session.get(
+            with self.session.get(
                 f"{self.base_url}/modulos/{urllib.parse.quote(nombre)}",
                 timeout=(self.CONNECT_TIMEOUT, self.READ_TIMEOUT),
-                stream=True
-            )
-            response.raise_for_status()
+                stream=True,
+            ) as response:
+                response.raise_for_status()
 
-            tamaño_total = 0
-            checksum_servidor = response.headers.get("X-Content-Checksum")
-            sha256 = hashlib.sha256()
+                tamaño_total = 0
+                checksum_servidor = response.headers.get("X-Content-Checksum")
+                sha256 = hashlib.sha256()
 
-            with open(destino_abs, "wb") as f:
-                for chunk in response.iter_content(chunk_size=self.CHUNK_SIZE):
-                    tamaño_total += len(chunk)
-                    if tamaño_total > self.MAX_FILE_SIZE:
-                        f.close()
-                        os.unlink(destino_abs)
-                        mostrar_error(_("Archivo descargado demasiado grande"))
-                        return False
-                    sha256.update(chunk)
-                    f.write(chunk)
+                with open(destino_abs, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=self.CHUNK_SIZE):
+                        tamaño_total += len(chunk)
+                        if tamaño_total > self.MAX_FILE_SIZE:
+                            f.close()
+                            os.unlink(destino_abs)
+                            mostrar_error(_("Archivo descargado demasiado grande"))
+                            return False
+                        sha256.update(chunk)
+                        f.write(chunk)
 
-            if checksum_servidor and sha256.hexdigest() != checksum_servidor:
-                os.unlink(destino_abs)
-                mostrar_error(_("Verificación de integridad fallida"))
-                return False
+                if checksum_servidor and sha256.hexdigest() != checksum_servidor:
+                    os.unlink(destino_abs)
+                    mostrar_error(_("Verificación de integridad fallida"))
+                    return False
 
             mostrar_info(_("Módulo descargado en {dest}").format(dest=destino_abs))
             return True
