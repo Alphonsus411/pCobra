@@ -45,7 +45,8 @@ class CobraHubClient:
         retry_strategy = Retry(
             total=self.MAX_RETRIES,
             backoff_factor=0.5,
-            status_forcelist=[500, 502, 503, 504]
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods=["GET"],
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("https://", adapter)
