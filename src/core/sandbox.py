@@ -20,6 +20,9 @@ from RestrictedPython.PrintCollector import PrintCollector
 
 MIN_VM2_VERSION = Version("3.9.19")
 
+# Límite máximo de salida permitida en la sandbox de JS (8 KB)
+MAX_JS_OUTPUT_BYTES = 8 * 1024
+
 
 def _worker(code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None) -> None:
     """Ejecuta ``code_bytes`` en un proceso aislado y comunica el resultado."""
@@ -143,25 +146,54 @@ process.stdout.write(output);
         tmp_path = tmp.name
 
     try:
-        proc = subprocess.run(
+        import select
+        import time
+
+        with subprocess.Popen(
             [
                 "node",
                 "--no-experimental-fetch",
                 "--max-old-space-size=128",
                 tmp_path,
             ],
-            capture_output=True,
-            text=True,
-            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=base_dir,
-            timeout=timeout,
             env=env,
-        )  # nosec B603
-        return proc.stdout
-    except subprocess.CalledProcessError as exc:
-        return exc.stderr or f"Error: {exc}"
-    except subprocess.TimeoutExpired:
-        return "Error: tiempo de ejecuci\u00f3n agotado"
+        ) as proc:  # nosec B603
+            salida = bytearray()
+            truncado = False
+            inicio = time.monotonic()
+            assert proc.stdout is not None  # para type checkers
+            while True:
+                restante = inicio + timeout - time.monotonic()
+                if restante <= 0:
+                    proc.kill()
+                    return "Error: tiempo de ejecuci\u00f3n agotado"
+                rlist, _, _ = select.select([proc.stdout], [], [], restante)
+                if not rlist:
+                    proc.kill()
+                    return "Error: tiempo de ejecuci\u00f3n agotado"
+                chunk = proc.stdout.read(1024)
+                if not chunk:
+                    if proc.poll() is not None:
+                        break
+                    continue
+                salida.extend(chunk)
+                if len(salida) > MAX_JS_OUTPUT_BYTES:
+                    truncado = True
+                    proc.kill()
+                    salida = salida[:MAX_JS_OUTPUT_BYTES]
+                    break
+
+            proc.wait()
+            stderr = proc.stderr.read().decode(errors="ignore") if proc.stderr else ""
+            if proc.returncode and not truncado:
+                return stderr or f"Error: {proc.returncode}"
+            resultado = salida.decode(errors="ignore")
+            if truncado:
+                resultado += "\n[output truncated]"
+            return resultado
     finally:
         os.unlink(tmp_path)
 
