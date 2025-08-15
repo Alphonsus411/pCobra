@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 def configurar_entorno() -> None:
     """
     Configura las variables de entorno desde el archivo .env si existe.
-    
+
     El archivo .env debe contener pares clave=valor para configurar
     variables de entorno necesarias para la aplicación.
-    
+
     Raises:
         FileNotFoundError: Si el archivo .env no existe
         PermissionError: Si no hay permisos para leer el archivo
@@ -31,16 +31,16 @@ def configurar_entorno() -> None:
 def ejecutar_cli(argumentos: Optional[List[str]] = None) -> int:
     """
     Función principal que delega la ejecución en la CLI.
-    
+
     Args:
         argumentos: Lista opcional de argumentos de línea de comandos.
                    Si es None, se utilizarán los argumentos del sistema.
-    
+
     Returns:
         int: Código de salida de la ejecución.
             0: Ejecución exitosa
             1: Error durante la ejecución
-    
+
     Raises:
         RuntimeError: Si ocurre un error durante la inicialización del CLI
     """
