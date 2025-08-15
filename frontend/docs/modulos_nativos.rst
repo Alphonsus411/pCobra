@@ -9,7 +9,7 @@ E/S de archivos y red
 ---------------------
 - ``leer_archivo(ruta)`` lee el contenido de un archivo de texto.
 - ``escribir_archivo(ruta, datos)`` guarda datos en un archivo.
-- ``obtener_url(url)`` devuelve el texto obtenido desde una URL.
+- ``obtener_url(url)`` devuelve el texto obtenido desde una URL ``https://``.
 
 Utilidades matematicas
 ----------------------
@@ -62,10 +62,12 @@ Operaciones numericas
 
 Red
 ---
-- ``obtener_url(url)`` recupera el contenido de una URL.
-- ``enviar_post(url, datos)`` envia datos por ``POST``.
+- ``obtener_url(url, permitir_redirecciones=False)`` recupera el contenido de una URL ``https://``.
+- ``enviar_post(url, datos, permitir_redirecciones=False)`` envia datos por ``POST`` a una URL ``https://``.
+  Las peticiones no siguen redirecciones a menos que se habilite ``permitir_redirecciones=True``.
   Los destinos se validan opcionalmente con la lista de hosts definida en
-  la variable de entorno ``COBRA_HOST_WHITELIST``.
+  la variable de entorno ``COBRA_HOST_WHITELIST``. Si se permiten redirecciones,
+  el host final tras la redirección también debe pertenecer a la lista blanca.
 
 .. code-block:: cobra
 

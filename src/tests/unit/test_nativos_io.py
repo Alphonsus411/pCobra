@@ -1,4 +1,5 @@
 import sys
+import sys
 from types import ModuleType
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -40,13 +41,23 @@ def test_obtener_url_host_whitelist(monkeypatch):
     mock_resp = MagicMock()
     mock_resp.text = "ok"
     mock_resp.raise_for_status.return_value = None
-    with patch('requests.get', return_value=mock_resp):
-        assert io.obtener_url('http://example.com') == 'ok'
+    with patch('requests.get', return_value=mock_resp) as mock_get:
+        assert io.obtener_url('https://example.com') == 'ok'
+        mock_get.assert_called_once_with('https://example.com', timeout=5, allow_redirects=False)
 
 
 def test_obtener_url_host_no_permitido(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch('requests.get') as mock_get:
         with pytest.raises(ValueError):
-            io.obtener_url('http://otro.com')
+            io.obtener_url('https://otro.com')
         mock_get.assert_not_called()
+
+
+def test_obtener_url_redireccion_fuera_whitelist(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    mock_resp = MagicMock(text="ok", url="https://otro.com")
+    mock_resp.raise_for_status.return_value = None
+    with patch('requests.get', return_value=mock_resp):
+        with pytest.raises(ValueError):
+            io.obtener_url('https://example.com', permitir_redirecciones=True)

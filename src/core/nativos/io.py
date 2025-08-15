@@ -16,17 +16,27 @@ def escribir_archivo(ruta, datos):
         f.write(datos)
 
 
-def obtener_url(url):
-    """Devuelve el contenido de una URL como texto."""
+def _validar_host(url: str, hosts: set[str]) -> None:
+    host = urllib.parse.urlparse(url).hostname
+    if host not in hosts:
+        raise ValueError("Host no permitido")
+
+
+def obtener_url(url, permitir_redirecciones: bool = False):
+    """Devuelve el contenido de una URL ``https://`` como texto.
+
+    Las redirecciones están deshabilitadas por defecto. Si se permiten,
+    se valida que el destino final continúe dentro de la lista blanca de hosts.
+    """
     url_baja = url.lower()
-    if not (url_baja.startswith("http://") or url_baja.startswith("https://")):
+    if not url_baja.startswith("https://"):
         raise ValueError("Esquema de URL no soportado")
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
-    if allowed:
-        hosts = {h.strip() for h in allowed.split(',') if h.strip()}
-        host = urllib.parse.urlparse(url).hostname
-        if host not in hosts:
-            raise ValueError("Host no permitido")
-    resp = requests.get(url, timeout=5)
+    hosts = {h.strip() for h in allowed.split(',') if h.strip()} if allowed else set()
+    if hosts:
+        _validar_host(url, hosts)
+    resp = requests.get(url, timeout=5, allow_redirects=permitir_redirecciones)
     resp.raise_for_status()
+    if permitir_redirecciones and hosts:
+        _validar_host(resp.url, hosts)
     return resp.text
