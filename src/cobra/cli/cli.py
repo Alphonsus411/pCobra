@@ -6,7 +6,7 @@ from os import environ
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
-from argparse import _SubParsersAction
+import argparse
 
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 
@@ -94,7 +94,7 @@ class CommandRegistry:
             logging.error(f"Error creating command {command_class.__name__}: {e}")
             raise
 
-    def register_base_commands(self, subparsers: _SubParsersAction) -> Dict[str, BaseCommand]:
+    def register_base_commands(self, subparsers: Any) -> Dict[str, BaseCommand]:
         base_commands = []
         for cmd_class in AppConfig.BASE_COMMAND_CLASSES:
             try:
@@ -192,8 +192,9 @@ class CliApplication:
         dir_args = {"directorio", "carpeta"}
 
         for action in parser._actions:
-            if isinstance(action, argparse._SubParsersAction):
-                for sub in action.choices.values():
+            choices = getattr(action, "choices", None)
+            if choices:
+                for sub in choices.values():
                     self._configure_autocomplete(sub)
             elif action.dest in file_args:
                 action.completer = FilesCompleter()

@@ -7,7 +7,7 @@ import time
 import psutil
 import json
 from typing import Dict, Any, Optional
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
@@ -36,7 +36,7 @@ class Benchmarks2Command(BaseCommand):
         self._formato: Optional[str] = None
         self._proceso = psutil.Process()
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:

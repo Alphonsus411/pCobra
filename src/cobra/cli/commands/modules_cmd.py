@@ -2,7 +2,7 @@ import os
 import shutil
 import logging
 from typing import Any, Dict, Optional
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 from pathlib import Path
 from filelock import FileLock
 import yaml
@@ -12,6 +12,7 @@ from cobra.transpilers.module_map import MODULE_MAP_PATH
 from cobra.cli.cobrahub_client import descargar_modulo, publicar_modulo
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
+from cobra.cli.utils.argument_parser import CustomArgumentParser
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
 from cobra.cli.utils.semver import es_nueva_version, es_version_valida
 
@@ -32,7 +33,7 @@ class ModulesCommand(BaseCommand):
 
     name = "modulos"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> _SubParsersAction:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:

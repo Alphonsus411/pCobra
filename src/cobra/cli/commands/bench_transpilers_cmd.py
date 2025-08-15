@@ -1,7 +1,7 @@
 import cProfile
 import contextlib
 import json
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 from pathlib import Path
 from timeit import timeit
 from typing import Any, Dict, List
@@ -41,7 +41,7 @@ class BenchTranspilersCommand(BaseCommand):
 
     name = "benchtranspilers"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:

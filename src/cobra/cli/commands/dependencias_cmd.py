@@ -5,7 +5,7 @@ import subprocess
 import sys
 import tempfile
 import venv
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import List, Optional, Any
 
@@ -34,7 +34,7 @@ class DependenciasCommand(BaseCommand):
 
     name = "dependencias"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:

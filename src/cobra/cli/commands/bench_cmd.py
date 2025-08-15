@@ -19,7 +19,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 from pathlib import Path
 
 from cobra.cli.commands.base import BaseCommand
@@ -119,7 +119,7 @@ class BenchCommand(BaseCommand):
 
     name = "bench"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:

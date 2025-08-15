@@ -9,9 +9,9 @@ import pstats
 import shutil
 import subprocess
 import tempfile
-from argparse import _SubParsersAction, Namespace
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from cobra.core import Lexer
 from cobra.core import Parser
@@ -53,7 +53,7 @@ class ProfileCommand(BaseCommand):
         mostrar_error(msg)
         return 1
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Perfila un programa"))
         parser.add_argument("archivo")

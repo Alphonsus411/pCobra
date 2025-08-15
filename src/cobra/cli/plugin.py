@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from importlib import import_module
 from importlib.metadata import entry_points
 from typing import List, Optional, Any
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.plugin_registry import (
@@ -41,7 +41,7 @@ class PluginInterface(ABC):
     description: str = DEFAULT_DESCRIPTION
 
     @abstractmethod
-    def register_subparser(self, subparsers: _SubParsersAction) -> None:
+    def register_subparser(self, subparsers: Any) -> None:
         """Registra los argumentos del subcomando en el parser.
         
         Args:
@@ -65,7 +65,7 @@ class PluginInterface(ABC):
 class PluginCommand(BaseCommand, PluginInterface):
     """Clase base para implementar comandos externos mediante plugins."""
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> None:
+    def register_subparser(self, subparsers: Any) -> None:
         """Implementación por defecto del registro de subparser."""
         super().register_subparser(subparsers)
 
