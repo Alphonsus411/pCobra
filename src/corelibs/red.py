@@ -22,12 +22,17 @@ def obtener_url(url: str, permitir_redirecciones: bool = False) -> str:
     if not url_baja.startswith("https://"):
         raise ValueError("Esquema de URL no soportado")
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
-    hosts = {h.strip() for h in allowed.split(',') if h.strip()} if allowed else set()
-    if hosts:
-        _validar_host(url, hosts)
+    if not allowed:
+        raise ValueError("COBRA_HOST_WHITELIST no establecido")
+    hosts = {h.strip() for h in allowed.split(',') if h.strip()}
+    if not hosts:
+        raise ValueError("COBRA_HOST_WHITELIST vacío")
+    _validar_host(url, hosts)
     resp = requests.get(url, timeout=5, allow_redirects=permitir_redirecciones)
     resp.raise_for_status()
-    if permitir_redirecciones and hosts:
+    if permitir_redirecciones:
+        if not resp.url.lower().startswith("https://"):
+            raise ValueError("Esquema de URL no soportado")
         _validar_host(resp.url, hosts)
     return resp.text
 
@@ -42,13 +47,18 @@ def enviar_post(url: str, datos: dict, permitir_redirecciones: bool = False) -> 
     if not url_baja.startswith("https://"):
         raise ValueError("Esquema de URL no soportado")
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
-    hosts = {h.strip() for h in allowed.split(',') if h.strip()} if allowed else set()
-    if hosts:
-        _validar_host(url, hosts)
+    if not allowed:
+        raise ValueError("COBRA_HOST_WHITELIST no establecido")
+    hosts = {h.strip() for h in allowed.split(',') if h.strip()}
+    if not hosts:
+        raise ValueError("COBRA_HOST_WHITELIST vacío")
+    _validar_host(url, hosts)
     resp = requests.post(
         url, data=datos, timeout=5, allow_redirects=permitir_redirecciones
     )
     resp.raise_for_status()
-    if permitir_redirecciones and hosts:
+    if permitir_redirecciones:
+        if not resp.url.lower().startswith("https://"):
+            raise ValueError("Esquema de URL no soportado")
         _validar_host(resp.url, hosts)
     return resp.text

@@ -15,6 +15,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Dict, Optional
+from types import ModuleType
 
 # Configuración del logging
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def validate_path(path: Path) -> bool:
         logger.error(f"Error validando path {path}: {e}")
         return False
 
-def import_module_safe(module_name: str) -> Optional[importlib.ModuleType]:
+def import_module_safe(module_name: str) -> Optional[ModuleType]:
     """
     Importa un módulo de forma segura manejando las excepciones.
     
