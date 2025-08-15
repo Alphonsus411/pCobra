@@ -76,6 +76,7 @@ def test_seguridad_funcs():
 
 
 def test_red_funcs(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "x")
     mock_resp = MagicMock()
     mock_resp.text = "ok"
     mock_resp.raise_for_status.return_value = None
