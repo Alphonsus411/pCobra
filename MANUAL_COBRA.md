@@ -274,3 +274,12 @@ con:
 pip install snakeviz
 ```
 
+## 15. Funciones del sistema
+
+La biblioteca estándar expone `corelibs.sistema.ejecutar` para lanzar
+procesos del sistema. Por motivos de seguridad es **obligatorio**
+proporcionar una lista blanca de ejecutables permitidos mediante el
+parámetro ``permitidos`` o definiendo la variable de entorno
+``COBRA_EJECUTAR_PERMITIDOS`` separada por ``os.pathsep``. Invocar la
+función sin esta configuración producirá un ``ValueError``.
+
