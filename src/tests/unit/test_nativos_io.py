@@ -61,3 +61,21 @@ def test_obtener_url_redireccion_fuera_whitelist(monkeypatch):
     with patch('requests.get', return_value=mock_resp):
         with pytest.raises(ValueError):
             io.obtener_url('https://example.com', permitir_redirecciones=True)
+
+
+@pytest.mark.parametrize("func", [io.leer_archivo, lambda p: io.escribir_archivo(p, "dato")])
+def test_io_restringe_rutas_absolutas(monkeypatch, tmp_path, func):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    archivo = tmp_path / "interno.txt"
+    archivo.write_text("contenido", encoding="utf-8")
+    with pytest.raises(ValueError):
+        func(str(archivo.resolve()))
+
+
+@pytest.mark.parametrize("func", [io.leer_archivo, lambda p: io.escribir_archivo(p, "dato")])
+def test_io_restringe_rutas_fuera_base(monkeypatch, tmp_path, func):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    externo = tmp_path.parent / "externo.txt"
+    externo.write_text("afuera", encoding="utf-8")
+    with pytest.raises(ValueError):
+        func("../externo.txt")

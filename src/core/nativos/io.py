@@ -1,18 +1,37 @@
 import os
 import urllib.parse
+from pathlib import Path
 
 import requests
 
 
+def _resolver_ruta(ruta: str) -> Path:
+    """Resuelve ``ruta`` dentro de un directorio permitido."""
+    base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
+    p = Path(ruta)
+    if p.is_absolute():
+        raise ValueError("Ruta absoluta no permitida")
+    if ".." in p.parts:
+        raise ValueError("La ruta no puede contener '..'")
+    destino = (base / p).resolve()
+    try:
+        destino.relative_to(base)
+    except ValueError as exc:
+        raise ValueError("Ruta fuera del directorio permitido") from exc
+    return destino
+
+
 def leer_archivo(ruta):
     """Devuelve el contenido de un archivo de texto."""
-    with open(ruta, "r", encoding="utf-8") as f:
+    ruta_segura = _resolver_ruta(ruta)
+    with open(ruta_segura, "r", encoding="utf-8") as f:
         return f.read()
 
 
 def escribir_archivo(ruta, datos):
     """Escribe datos en un archivo de texto."""
-    with open(ruta, "w", encoding="utf-8") as f:
+    ruta_segura = _resolver_ruta(ruta)
+    with open(ruta_segura, "w", encoding="utf-8") as f:
         f.write(datos)
 
 
