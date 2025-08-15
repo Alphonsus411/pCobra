@@ -30,10 +30,9 @@ def obtener_url(url: str, permitir_redirecciones: bool = False) -> str:
     _validar_host(url, hosts)
     resp = requests.get(url, timeout=5, allow_redirects=permitir_redirecciones)
     resp.raise_for_status()
-    if permitir_redirecciones:
-        if not resp.url.lower().startswith("https://"):
-            raise ValueError("Esquema de URL no soportado")
-        _validar_host(resp.url, hosts)
+    if permitir_redirecciones and not resp.url.lower().startswith("https://"):
+        raise ValueError("Esquema de URL no soportado")
+    _validar_host(resp.url, hosts)
     return resp.text
 
 
@@ -57,8 +56,7 @@ def enviar_post(url: str, datos: dict, permitir_redirecciones: bool = False) -> 
         url, data=datos, timeout=5, allow_redirects=permitir_redirecciones
     )
     resp.raise_for_status()
-    if permitir_redirecciones:
-        if not resp.url.lower().startswith("https://"):
-            raise ValueError("Esquema de URL no soportado")
-        _validar_host(resp.url, hosts)
+    if permitir_redirecciones and not resp.url.lower().startswith("https://"):
+        raise ValueError("Esquema de URL no soportado")
+    _validar_host(resp.url, hosts)
     return resp.text

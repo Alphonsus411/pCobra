@@ -44,18 +44,22 @@ def _validar_host(url: str, hosts: set[str]) -> None:
 def obtener_url(url, permitir_redirecciones: bool = False):
     """Devuelve el contenido de una URL ``https://`` como texto.
 
-    Las redirecciones están deshabilitadas por defecto. Si se permiten,
-    se valida que el destino final continúe dentro de la lista blanca de hosts.
+    Es obligatorio definir la variable de entorno ``COBRA_HOST_WHITELIST`` con
+    la lista de hosts permitidos separados por comas. Las redirecciones están
+    deshabilitadas por defecto. Si se permiten, se valida que el destino final
+    continúe dentro de la lista blanca de hosts.
     """
     url_baja = url.lower()
     if not url_baja.startswith("https://"):
         raise ValueError("Esquema de URL no soportado")
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
-    hosts = {h.strip() for h in allowed.split(',') if h.strip()} if allowed else set()
-    if hosts:
-        _validar_host(url, hosts)
+    if not allowed:
+        raise ValueError("COBRA_HOST_WHITELIST no establecido")
+    hosts = {h.strip() for h in allowed.split(',') if h.strip()}
+    if not hosts:
+        raise ValueError("COBRA_HOST_WHITELIST vacío")
+    _validar_host(url, hosts)
     resp = requests.get(url, timeout=5, allow_redirects=permitir_redirecciones)
     resp.raise_for_status()
-    if permitir_redirecciones and hosts:
-        _validar_host(resp.url, hosts)
+    _validar_host(resp.url, hosts)
     return resp.text

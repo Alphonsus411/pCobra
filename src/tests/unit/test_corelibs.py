@@ -77,8 +77,7 @@ def test_seguridad_funcs():
 
 def test_red_funcs(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "x")
-    mock_resp = MagicMock()
-    mock_resp.text = "ok"
+    mock_resp = MagicMock(text="ok", url="https://x")
     mock_resp.raise_for_status.return_value = None
     with patch(
         "backend.corelibs.red.requests.get", return_value=mock_resp
@@ -93,28 +92,32 @@ def test_red_funcs(monkeypatch):
         )
 
 
-def test_red_obtener_url_rechaza_esquema_no_http():
+def test_red_obtener_url_rechaza_esquema_no_http(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch("backend.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("ftp://ejemplo.com")
         mock_get.assert_not_called()
 
 
-def test_red_obtener_url_rechaza_otro_esquema():
+def test_red_obtener_url_rechaza_otro_esquema(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch("backend.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("file:///tmp/archivo.txt")
         mock_get.assert_not_called()
 
 
-def test_red_enviar_post_rechaza_esquema_no_http():
+def test_red_enviar_post_rechaza_esquema_no_http(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch("backend.corelibs.red.requests.post") as mock_post:
         with pytest.raises(ValueError):
             core.enviar_post("ftp://ejemplo.com", {"a": 1})
         mock_post.assert_not_called()
 
 
-def test_red_enviar_post_rechaza_otro_esquema():
+def test_red_enviar_post_rechaza_otro_esquema(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch("backend.corelibs.red.requests.post") as mock_post:
         with pytest.raises(ValueError):
             core.enviar_post("file:///tmp/archivo.txt", {"a": 1})
@@ -123,7 +126,7 @@ def test_red_enviar_post_rechaza_otro_esquema():
 
 def test_red_host_whitelist_permite(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    mock_resp = MagicMock(text="ok")
+    mock_resp = MagicMock(text="ok", url="https://example.com")
     mock_resp.raise_for_status.return_value = None
     with patch("backend.corelibs.red.requests.get", return_value=mock_resp) as mock_get:
         assert core.obtener_url("https://example.com") == "ok"
