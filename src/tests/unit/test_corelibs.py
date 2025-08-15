@@ -84,10 +84,12 @@ def test_red_funcs(monkeypatch):
     ) as mock_get, patch(
         "backend.corelibs.red.requests.post", return_value=mock_resp
     ) as mock_post:
-        assert core.obtener_url("http://x") == "ok"
-        assert core.enviar_post("http://x", {"a": 1}) == "ok"
-        mock_get.assert_called_once_with("http://x", timeout=5)
-        mock_post.assert_called_once_with("http://x", data={"a": 1}, timeout=5)
+        assert core.obtener_url("https://x") == "ok"
+        assert core.enviar_post("https://x", {"a": 1}) == "ok"
+        mock_get.assert_called_once_with("https://x", timeout=5, allow_redirects=False)
+        mock_post.assert_called_once_with(
+            "https://x", data={"a": 1}, timeout=5, allow_redirects=False
+        )
 
 
 def test_red_obtener_url_rechaza_esquema_no_http():
@@ -122,16 +124,39 @@ def test_red_host_whitelist_permite(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     mock_resp = MagicMock(text="ok")
     mock_resp.raise_for_status.return_value = None
-    with patch("backend.corelibs.red.requests.get", return_value=mock_resp):
-        assert core.obtener_url("http://example.com") == "ok"
+    with patch("backend.corelibs.red.requests.get", return_value=mock_resp) as mock_get:
+        assert core.obtener_url("https://example.com") == "ok"
+        mock_get.assert_called_once_with(
+            "https://example.com", timeout=5, allow_redirects=False
+        )
 
 
 def test_red_host_whitelist_rechaza(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch("backend.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
-            core.obtener_url("http://otro.com")
+            core.obtener_url("https://otro.com")
         mock_get.assert_not_called()
+
+
+def test_red_obtener_url_redireccion_fuera_whitelist(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    mock_resp = MagicMock(text="ok", url="https://otro.com")
+    mock_resp.raise_for_status.return_value = None
+    with patch("backend.corelibs.red.requests.get", return_value=mock_resp):
+        with pytest.raises(ValueError):
+            core.obtener_url("https://example.com", permitir_redirecciones=True)
+
+
+def test_red_enviar_post_redireccion_fuera_whitelist(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    mock_resp = MagicMock(text="ok", url="https://otro.com")
+    mock_resp.raise_for_status.return_value = None
+    with patch("backend.corelibs.red.requests.post", return_value=mock_resp):
+        with pytest.raises(ValueError):
+            core.enviar_post(
+                "https://example.com", {"a": 1}, permitir_redirecciones=True
+            )
 
 
 def test_sistema_funcs(tmp_path, monkeypatch):
@@ -284,22 +309,22 @@ def test_transpile_seguridad():
 
 def test_transpile_red():
     ast = [
-        NodoLlamadaFuncion("obtener_url", [NodoValor("'http://x'")]),
+        NodoLlamadaFuncion("obtener_url", [NodoValor("'https://x'")]),
         NodoLlamadaFuncion(
-            "enviar_post", [NodoValor("'http://x'"), NodoValor('{"a":1}')]
+            "enviar_post", [NodoValor("'https://x'"), NodoValor('{"a":1}')]
         ),
     ]
     py = TranspiladorPython().generate_code(ast)
     js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
-        + "obtener_url('http://x')\n"
-        + "enviar_post('http://x', {\"a\":1})\n"
+        + "obtener_url('https://x')\n"
+        + "enviar_post('https://x', {\"a\":1})\n"
     )
     js_exp = (
         IMPORTS_JS
-        + "obtener_url('http://x');\n"
-        + "enviar_post('http://x', {\"a\":1});"
+        + "obtener_url('https://x');\n"
+        + "enviar_post('https://x', {\"a\":1});"
     )
     assert py == py_exp
     assert js == js_exp
