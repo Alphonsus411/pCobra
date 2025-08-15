@@ -14,7 +14,6 @@ from .lexer import (
     InvalidTokenError,
     UnclosedStringError,
 )
-from .parser import Parser, ParserError
 
 __all__ = [
     "Lexer",
@@ -26,3 +25,17 @@ __all__ = [
     "Token",
     "TipoToken",
 ]
+
+
+def __getattr__(name: str):
+    """Importa dinámicamente el analizador cuando se solicita.
+
+    Esto mantiene una importación perezosa del módulo ``parser`` para
+    evitar dependencias circulares y tiempos de carga innecesarios.
+    """
+    if name in {"Parser", "ParserError"}:
+        from . import parser as _parser
+
+        globals().update({"Parser": _parser.Parser, "ParserError": _parser.ParserError})
+        return globals()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
