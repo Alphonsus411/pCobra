@@ -4,7 +4,7 @@ import re
 import resource
 import traceback
 from typing import Optional, Any, NoReturn
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 from types import TracebackType
 
 from prompt_toolkit import PromptSession
@@ -57,7 +57,7 @@ class InteractiveCommand(BaseCommand):
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
 
         Args:

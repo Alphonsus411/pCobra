@@ -1,5 +1,5 @@
 from typing import Any
-from argparse import _SubParsersAction  # TODO: Usar API pública
+from argparse import ArgumentParser
 from core.ast_cache import limpiar_cache
 
 from cobra.cli.commands.base import BaseCommand
@@ -19,7 +19,7 @@ class CacheCommand(BaseCommand):
     
     name: str = "cache"
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:

@@ -1,4 +1,4 @@
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 from typing import Any
 from cobra.cli.plugin import PluginCommand
 
@@ -9,7 +9,7 @@ class SaludoCommand(PluginCommand):
     author = "Equipo Cobra"
     description = "Comando de saludo de ejemplo"
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> None:
+    def register_subparser(self, subparsers: Any) -> None:
         parser = subparsers.add_parser(self.name, help="Muestra un saludo")
         parser.set_defaults(cmd=self)
         

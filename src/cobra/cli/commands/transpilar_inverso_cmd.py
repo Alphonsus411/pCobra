@@ -1,8 +1,8 @@
 import os
 import logging
 import inspect
-from typing import Optional, Dict, Type
-from argparse import _SubParsersAction, Namespace
+from typing import Optional, Dict, Type, Any
+from argparse import ArgumentParser, Namespace
 from contextlib import contextmanager
 from chardet import detect
 from jsonschema import ValidationError
@@ -75,7 +75,7 @@ class TranspilarInversoCommand(BaseCommand):
 
     name: str = "transpilar-inverso"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando en el parser.
         
         Args:

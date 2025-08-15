@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess
 from typing import Any, Optional
-from argparse import _SubParsersAction
+from argparse import ArgumentParser
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
@@ -12,7 +12,7 @@ class DocsCommand(BaseCommand):
     """Genera la documentación HTML del proyecto."""
     name = "docs"
     
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
             self.name, help=_("Genera la documentación del proyecto")

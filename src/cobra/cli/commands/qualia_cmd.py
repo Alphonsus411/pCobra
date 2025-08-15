@@ -1,5 +1,5 @@
 import json
-from argparse import _SubParsersAction  # TODO: Reemplazar _SubParsersAction
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, Union
 
@@ -19,7 +19,7 @@ class QualiaCommand(BaseCommand):
     ACCION_MOSTRAR = "mostrar"
     ACCION_REINICIAR = "reiniciar"
 
-    def register_subparser(self, subparsers: _SubParsersAction) -> CustomArgumentParser:
+    def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
         
         Args:
