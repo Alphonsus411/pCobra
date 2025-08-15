@@ -22,14 +22,16 @@ sys.modules.setdefault('setuptools', fake_setuptools)
 import core.nativos.io as io
 
 
-def test_obtener_url_rechaza_esquema_no_http():
+def test_obtener_url_rechaza_esquema_no_http(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch('requests.get') as mock_get:
         with pytest.raises(ValueError):
             io.obtener_url('ftp://ejemplo.com')
         mock_get.assert_not_called()
 
 
-def test_obtener_url_rechaza_otro_esquema():
+def test_obtener_url_rechaza_otro_esquema(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     with patch('requests.get') as mock_get:
         with pytest.raises(ValueError):
             io.obtener_url('file:///tmp/archivo.txt')
@@ -38,12 +40,36 @@ def test_obtener_url_rechaza_otro_esquema():
 
 def test_obtener_url_host_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    mock_resp = MagicMock()
-    mock_resp.text = "ok"
+    mock_resp = MagicMock(text="ok", url="https://example.com")
     mock_resp.raise_for_status.return_value = None
     with patch('requests.get', return_value=mock_resp) as mock_get:
         assert io.obtener_url('https://example.com') == 'ok'
         mock_get.assert_called_once_with('https://example.com', timeout=5, allow_redirects=False)
+
+
+def test_obtener_url_sin_whitelist(monkeypatch):
+    monkeypatch.delenv("COBRA_HOST_WHITELIST", raising=False)
+    with patch('requests.get') as mock_get:
+        with pytest.raises(ValueError):
+            io.obtener_url('https://example.com')
+        mock_get.assert_not_called()
+
+
+def test_obtener_url_whitelist_vacia(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "")
+    with patch('requests.get') as mock_get:
+        with pytest.raises(ValueError):
+            io.obtener_url('https://example.com')
+        mock_get.assert_not_called()
+
+
+def test_obtener_url_revalida_host_sin_redireccion(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    mock_resp = MagicMock(text="ok", url="https://otro.com")
+    mock_resp.raise_for_status.return_value = None
+    with patch('requests.get', return_value=mock_resp):
+        with pytest.raises(ValueError):
+            io.obtener_url('https://example.com')
 
 
 def test_obtener_url_host_no_permitido(monkeypatch):
