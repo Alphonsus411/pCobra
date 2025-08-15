@@ -10,7 +10,7 @@ from pathlib import Path
 from packaging.version import Version
 
 from RestrictedPython import compile_restricted, safe_builtins
-from RestrictedPython.Eval import default_guarded_getitem
+from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
 from RestrictedPython.Guards import (
     guarded_iter_unpack_sequence,
     guarded_unpack_sequence,
@@ -33,7 +33,7 @@ def _worker(code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | N
         env = {
             "__builtins__": safe_builtins,
             "_print_": PrintCollector,
-            "_getattr_": getattr,
+            "_getattr_": default_guarded_getattr,
             "_getitem_": default_guarded_getitem,
             "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
             "_unpack_sequence_": guarded_unpack_sequence,
