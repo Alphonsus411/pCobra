@@ -87,7 +87,9 @@ class CobraHubClient:
             ruta_abs = ruta.resolve()
             dir_trabajo = Path.cwd().resolve()
 
-            if not str(ruta_abs).startswith(str(dir_trabajo)):
+            try:
+                ruta_abs.relative_to(dir_trabajo)
+            except ValueError:
                 mostrar_error(_("Ruta fuera del directorio de trabajo"))
                 return None
 

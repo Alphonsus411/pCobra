@@ -106,6 +106,29 @@ def test_descargar_modulo_ruta_invalida_traversal(tmp_path, monkeypatch):
 
 
 @pytest.mark.timeout(5)
+def test_descargar_modulo_ruta_invalida_parent(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    destino = "../"
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.get") as mock_get:
+        ok = cobrahub_client.descargar_modulo("m.co", destino)
+    assert not ok
+    err.assert_called_once()
+    mock_get.assert_not_called()
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_ruta_invalida_tmp_espacios():
+    destino = "/tmp/proyecto falso"
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cli.cobrahub_client.requests.get") as mock_get:
+        ok = cobrahub_client.descargar_modulo("m.co", destino)
+    assert not ok
+    err.assert_called_once()
+    mock_get.assert_not_called()
+
+
+@pytest.mark.timeout(5)
 def test_descargar_modulo_ruta_valida(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     destino = "mods/m.co"
