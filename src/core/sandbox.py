@@ -247,7 +247,11 @@ def validar_dependencias(backend: str, mod_info: dict) -> None:
         if not ruta:
             continue
         abs_path = os.path.realpath(ruta)
-        if os.path.commonpath([base, abs_path]) != base:
+        try:
+            comun = os.path.commonpath([base, abs_path])
+        except ValueError:
+            raise ValueError(f"Ruta no permitida: {ruta}") from None
+        if comun != base:
             raise ValueError(f"Ruta no permitida: {ruta}")
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"Dependencia no encontrada: {ruta}")
