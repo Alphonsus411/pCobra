@@ -1,9 +1,7 @@
 import logging
 import os
 import signal
-import threading
-from contextlib import contextmanager
-from pathlib import Path
+from multiprocessing import Process, Queue
 from typing import Any
 
 from argcomplete.completers import FilesCompleter
@@ -63,21 +61,29 @@ class ExecuteCommand(BaseCommand):
         if ruta.stat().st_size > self.MAX_FILE_SIZE:
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.MAX_FILE_SIZE} bytes)")
 
-    @contextmanager
-    def _limitar_recursos(self):
-        """Establece límites de recursos para la ejecución."""
+    def _limitar_recursos(self, funcion):
+        """Ejecuta una función con límite de tiempo."""
         if os.name == "nt":
-            timer = threading.Timer(
-                self.EXECUTION_TIMEOUT,
-                lambda: (_ for _ in ()).throw(
-                    TimeoutError("La ejecución excedió el tiempo límite")
-                ),
-            )
-            timer.start()
-            try:
-                yield
-            finally:
-                timer.cancel()
+            queue: Queue[Any] = Queue()
+
+            def wrapper():
+                try:
+                    queue.put(funcion())
+                except Exception as e:  # pragma: no cover - error path
+                    queue.put(e)
+
+            proceso = Process(target=wrapper)
+            proceso.start()
+            proceso.join(self.EXECUTION_TIMEOUT)
+            if proceso.is_alive():
+                proceso.terminate()
+                proceso.join()
+                raise TimeoutError("La ejecución excedió el tiempo límite")
+
+            resultado = queue.get() if not queue.empty() else None
+            if isinstance(resultado, Exception):
+                raise resultado
+            return resultado
         else:
             def handler(signum, frame):
                 raise TimeoutError("La ejecución excedió el tiempo límite")
@@ -85,7 +91,7 @@ class ExecuteCommand(BaseCommand):
             signal.signal(signal.SIGALRM, handler)
             signal.alarm(self.EXECUTION_TIMEOUT)
             try:
-                yield
+                return funcion()
             finally:
                 signal.alarm(0)
 
@@ -133,12 +139,14 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(f"Error al leer el archivo: {e}")
             return 1
 
-        with self._limitar_recursos():
+        def ejecutar():
             if sandbox:
                 return self._ejecutar_en_sandbox(codigo)
             if contenedor:
                 return self._ejecutar_en_contenedor(codigo, contenedor)
             return self._ejecutar_normal(codigo, seguro, extra_validators)
+
+        return self._limitar_recursos(ejecutar)
 
     def _ejecutar_en_sandbox(self, codigo: str) -> int:
         """Ejecuta el código en un entorno sandbox."""
