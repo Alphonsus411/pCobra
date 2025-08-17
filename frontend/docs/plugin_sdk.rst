@@ -52,15 +52,17 @@ Ejemplo de implementación
 Registro a través de ``entry_points``
 ------------------------------------
 
-Para que Cobra cargue el plugin se declara un ``entry_point`` en ``setup.py``:
+Para que Cobra cargue el plugin se declara un ``entry point`` en
+``pyproject.toml`` y se define un ``build-system`` compatible con PEP 517::
 
-.. code-block:: python
+.. code-block:: toml
 
-   entry_points={
-       'cobra.plugins': [
-           'hola = mi_plugin.hola:HolaCommand',
-       ],
-   }
+   [build-system]
+   requires = ["setuptools>=61.0"]
+   build-backend = "setuptools.build_meta"
+
+   [project.entry-points."cobra.plugins"]
+   hola = "mi_plugin.hola:HolaCommand"
 
 Gestión de versiones
 --------------------
@@ -90,4 +92,7 @@ muestra su contenido:
 
    for nombre, version in obtener_registro().items():
        print(nombre, version)
+
+Para un recorrido paso a paso sobre cómo crear plugins consulta
+:doc:`plugin_dev`.
 

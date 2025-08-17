@@ -24,7 +24,7 @@ Estructura básica
 .. code-block:: text
 
    mi_plugin/
-       setup.py
+       pyproject.toml
        mi_plugin/
            __init__.py
            hola.py
@@ -49,26 +49,24 @@ En ``hola.py`` se define la clase del comando:
        def run(self, args):
            print("¡Hola desde un plugin!")
 
-Registro con ``entry_points``
+Registro con ``entry points``
 -----------------------------
 
-Para que Cobra descubra el plugin se declara un ``entry_point`` en
-``setup.py``:
+Para que Cobra descubra el plugin se declara un ``entry point`` en
+``pyproject.toml`` y se configura un ``build-system`` moderno:
 
-.. code-block:: python
+.. code-block:: toml
 
-   from setuptools import setup
+   [build-system]
+   requires = ["setuptools>=61.0"]
+   build-backend = "setuptools.build_meta"
 
-   setup(
-       name="mi-plugin",
-       version="1.0",
-       py_modules=["mi_plugin.hola"],
-       entry_points={
-           'cobra.plugins': [
-               'hola = mi_plugin.hola:HolaCommand',
-           ],
-       },
-   )
+   [project]
+   name = "mi-plugin"
+   version = "1.0"
+
+   [project.entry-points."cobra.plugins"]
+   hola = "mi_plugin.hola:HolaCommand"
 
 Carga dinámica segura
 ---------------------
@@ -91,3 +89,6 @@ para verificar que Cobra detecta tu plugin:
    pip install -e .
    cobra plugins   # muestra los metadatos registrados
    cobra hola      # ejecuta el nuevo subcomando
+
+Para conocer la descripción completa de la interfaz disponible consulta
+:doc:`plugin_sdk`.

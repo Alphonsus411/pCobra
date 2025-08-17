@@ -6,6 +6,9 @@ un "entry point" en el grupo ``cobra.plugins``. Durante el arranque la
 aplicación busca dichos entry points e instancia cada plugin. Todas las
 utilidades necesarias se importan desde ``src.cli.plugin``.
 
+Para un tutorial detallado sobre cómo desarrollar plugins consulta
+:doc:`plugin_dev`.
+
 Al cargarse, la información de nombre y versión se almacena en un registro
 interno accesible desde ``src.cli.plugin``. Para consultar qué
 plugins están disponibles se proporciona el subcomando ``plugins``::
@@ -42,15 +45,17 @@ A continuación se muestra cómo crear un plugin sencillo utilizando
           def run(self, args):
               print("¡Hola desde un plugin!")
 
-3. **Declara el entry point** en tu ``setup.py`` para que Cobra lo descubra:
+3. **Declara el entry point** en ``pyproject.toml`` y configura un sistema de
+   construcción moderno:
 
-   .. code-block:: python
+   .. code-block:: toml
 
-      entry_points={
-          'cobra.plugins': [
-              'saludo = mi_paquete.mi_plugin:SaludoCommand',
-          ],
-      }
+      [build-system]
+      requires = ["setuptools>=61.0"]
+      build-backend = "setuptools.build_meta"
+
+      [project.entry-points."cobra.plugins"]
+      saludo = "mi_paquete.mi_plugin:SaludoCommand"
 
 4. **Instala el paquete** en modo editable con ``pip install -e .`` para que
    el comando quede disponible.

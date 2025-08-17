@@ -1210,15 +1210,18 @@ mypy src
 
 La CLI puede ampliarse mediante plugins externos. Desde esta versión todo el SDK
 de plugins se encuentra en ``src.cli.plugin``. Para crear uno, define una clase
-que herede de ``PluginCommand`` e incluye una entrada en el grupo
-``cobra.plugins`` de tu ``setup.py``:
+que herede de ``PluginCommand`` y declara el ``entry point`` en la sección
+``[project.entry-points."cobra.plugins"]`` de tu ``pyproject.toml``. También es
+necesario configurar un ``[build-system]`` moderno, como el basado en
+``setuptools``:
 
-```python
-entry_points={
-    'cobra.plugins': [
-        'saludo = mi_paquete.mi_modulo:SaludoCommand',
-    ],
-}
+```toml
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.entry-points."cobra.plugins"]
+saludo = "mi_paquete.mi_modulo:SaludoCommand"
 ```
 
 Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamente
