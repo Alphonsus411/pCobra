@@ -8,7 +8,8 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 
 1. Clona el repositorio y entra en el directorio `pCobra`.
 2. Crea y activa un entorno virtual de **Python 3.9 o superior**.
-3. Instala las dependencias con `pip install -r requirements-dev.txt`.
+3. Instala las dependencias con `./scripts/install_dev.sh`.
+   Este script instala tanto las dependencias de ejecución como las de desarrollo.
    Aseg\u00farate tambi\u00e9n de tener disponible la herramienta `cbindgen`:
 
    ```bash
@@ -16,7 +17,6 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
    ```
 4. Instala la herramienta de forma editable con `pip install -e .`.
 
-   Puedes usar ``pip install -e .[dev]`` para incluir los extras de desarrollo.
 
 ### Instalación con pipx
 
@@ -267,12 +267,7 @@ el resultado en un archivo `.prof` y abrirlo con herramientas como `snakeviz`:
 cobra profile ejemplo.co --output ejemplo.prof --ui snakeviz
 ```
 
-Si no indicas `--ui`, se mostrará un resumen en la consola. Instala `snakeviz`
-con:
-
-```bash
-pip install snakeviz
-```
+Si no indicas `--ui`, se mostrará un resumen en la consola. `snakeviz` se instala junto con las dependencias de desarrollo.
 
 ## 15. Funciones del sistema
 
