@@ -1209,7 +1209,7 @@ mypy src
 ## Desarrollo de plugins
 
 La CLI puede ampliarse mediante plugins externos. Desde esta versión todo el SDK
-de plugins se encuentra en ``src.cli.plugin``. Para crear uno, define una clase
+de plugins se encuentra en ``src.cobra.cli.plugin``. Para crear uno, define una clase
 que herede de ``PluginCommand`` y declara el ``entry point`` en la sección
 ``[project.entry-points."cobra.plugins"]`` de tu ``pyproject.toml``. También es
 necesario configurar un ``[build-system]`` moderno, como el basado en
