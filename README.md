@@ -356,7 +356,7 @@ CertUtil -hashfile cobra.exe SHA256
 El proyecto se organiza en las siguientes carpetas y módulos:
 
 - `src/`: Contiene la lógica Python del proyecto.
-- `frontend/docs/` y `frontend/build/`: Carpetas donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
+- `frontend/docs/`: Carpeta donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
 - `src/tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo que lista las dependencias del proyecto.
@@ -1079,7 +1079,7 @@ rm cache/*.ast
 
 Para obtener la documentación HTML puedes usar `cobra docs` o
 `make html` desde la raíz del proyecto. El subcomando `docs` ejecuta
-`sphinx-apidoc` y luego compila el HTML en `frontend/build/html`.
+`sphinx-apidoc` y luego compila el HTML en la carpeta de salida configurada.
 
 Puedes compilar la documentación de dos maneras:
 
@@ -1090,7 +1090,7 @@ Puedes compilar la documentación de dos maneras:
 
 3. **Con pdoc**. Para generar documentación de la API con [pdoc](https://pdoc.dev),
    ejecuta `python scripts/generar_pdoc.py`. El resultado se guardará en
-   `frontend/build/pdoc`.
+   la carpeta de salida configurada para la API.
 
 A partir de esta versión, la API se genera de forma automática antes de
 cada compilación para mantener la documentación actualizada.
