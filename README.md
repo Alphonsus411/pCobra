@@ -4,7 +4,7 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Alphonsus411/pCobra/HEAD?labpath=notebooks/playground.ipynb)
 
 
-Versión 10.0.6
+Versión 10.0.9
 
 [English version available here](README_en.md)
 Cobra es un lenguaje de programación diseñado en español, enfocado en la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. Este proyecto incluye un lexer, parser y transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly, lo que permite una mayor versatilidad en la ejecución y despliegue del código escrito en Cobra.
@@ -329,9 +329,9 @@ Los ejecutables precompilados para Cobra se publican en la sección de [Releases
 
 | Versión | Plataforma | Enlace |
 | --- | --- | --- |
-| 10.0.6 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra-linux) |
-| 10.0.6 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra.exe) |
-| 10.0.6 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.6/cobra-macos) |
+| 10.0.9 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-linux) |
+| 10.0.9 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra.exe) |
+| 10.0.9 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-macos) |
 
 Para comprobar la integridad del archivo descargado calcula su hash SHA256 y compáralo con el publicado:
 
@@ -1270,7 +1270,7 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 ## Historial de Cambios
 
-- Versión 10.0.6: actualización de documentación y archivos de configuración. Ver tareas en la sección v1.3 del roadmap.
+- Versión 10.0.9: ajustes en `SafeUnpickler` y restricciones en `corelibs.sistema.ejecutar`.
 
 ## Publicar una nueva versión
 
@@ -1281,8 +1281,8 @@ El workflow [`Deploy Docs`](.github/workflows/pages.yml) generará la documentac
 Consulta la [guía de lanzamiento](docs/release.md) para más detalles sobre el etiquetado, secretos y el flujo de la pipeline.
 
 ```bash
-git tag v10.0.6
-git push origin v10.0.6
+git tag v10.0.9
+git push origin v10.0.9
 ```
 
 Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuración de GitHub Actions](.github/workflows).
