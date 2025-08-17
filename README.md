@@ -98,13 +98,19 @@ Para instalar el proyecto, sigue estos pasos:
 
    ```bash
    git clone https://github.com/Alphonsus411/pCobra.git
-   ````
+   ```
    
 2. Accede al directorio del proyecto:
 
-````bash
-cd pCobra
-````
+   ```bash
+   cd pCobra
+   ```
+
+3. Ejecuta el script de instalación de dependencias de desarrollo:
+
+   ```bash
+   ./scripts/install_dev.sh
+   ```
 
 Si prefieres automatizar el proceso, ejecuta:
 
@@ -114,7 +120,7 @@ Si prefieres automatizar el proceso, ejecuta:
 ```
 
 
-3. Crea un entorno virtual y actívalo:
+4. Crea un entorno virtual y actívalo:
 
 ````bash
 python -m venv .venv
@@ -122,7 +128,7 @@ source .venv/bin/activate  # Para Unix
 .\.venv\Scripts\activate  # Para Windows
 ````
 
-4. Instala las dependencias de desarrollo (pytest, `python-dotenv`, `tomli`,
+5. Instala las dependencias de desarrollo (pytest, `python-dotenv`, `tomli`,
    `hypothesis`, etc.):
 
 ````bash
@@ -133,7 +139,7 @@ pip install -r requirements-dev.txt
    Las mismas dependencias se incluyen en el extra `dev` definido en `pyproject.toml`.
    Las dependencias de ejecución se instalarán al instalar el paquete.
 
-5. Instala el paquete de forma editable para usar la CLI y obtener las
+6. Instala el paquete de forma editable para usar la CLI y obtener las
    dependencias declaradas en ``pyproject.toml``:
 
 ````bash
@@ -168,7 +174,7 @@ set PYTHONPATH=src     # Windows PowerShell
 cobra --version  # debe mostrar la versión sin errores
 ```
 
-6. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
+7. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
    de ser necesario. Estas variables se cargarán automáticamente al iniciar
    Cobra gracias a ``python-dotenv``:
 
@@ -177,7 +183,7 @@ cp .env.example .env
 # Edita .env con tu editor favorito
 ````
 
-7. Ejecuta un programa de prueba para verificar la instalación:
+8. Ejecuta un programa de prueba para verificar la instalación:
 
 ````bash
 echo "imprimir('Hola Cobra')" > hola.co
