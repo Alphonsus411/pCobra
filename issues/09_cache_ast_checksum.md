@@ -20,4 +20,4 @@ Usar herramientas externas de cacheo como ccache, aunque no están diseñadas pa
 
 **Contexto adicional**
 
-El hito está mencionado en `ROADMAP.md` dentro de la versión 1.3.
+El hito está mencionado en `docs/historico/ROADMAP_v0_v1.md` dentro de la versión 1.3.

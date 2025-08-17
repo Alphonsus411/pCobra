@@ -1,22 +1,16 @@
 # Roadmap
 
-Este documento describe las versiones planeadas y las tareas principales asociadas a cada una. Se sigue el esquema SemVer y los hitos se organizan por versión mayor y menor.
+Este documento detalla los hitos planificados para la serie 10.x del proyecto.
 
-## v0.4
-- Consolidar la gestión de dependencias en la CLI.
-- Permitir la creación de ejecutables para distribución.
-- Optimizar la validación del modo seguro.
-- Ampliar la documentación con ejemplos avanzados.
+## v10.1
+- Mejorar la integración con plugins mediante una API estable.
+- Optimizar el sistema de caché para compilaciones incrementales.
+- Añadir documentación sobre despliegue en entornos *serverless*.
 
-## v0.5
-- Incorporar un sistema de plugins para extender la CLI.
-- Integrar soporte para ejecución en Jupyter.
-- Implementar optimizaciones del AST para mayor rendimiento.
-- Añadir pruebas de concurrencia para mejorar la estabilidad.
+## v10.2
+- Extender la transpilación a nuevos lenguajes objetivo.
+- Incorporar análisis estático avanzado para detección temprana de errores.
+- Proveer un modo de ejecución distribuido.
 
-## v1.3
-- Cache de AST con checksum.
-- Transpilación multi-lenguaje en paralelo.
-- Ejemplos de benchmarking y configuración segura.
-- Interfaz base para plugins.
-- Registro y versionado de plugins.
+## Referencias históricas
+Las metas anteriores de las versiones 0.x y 1.3 se han movido a `docs/historico/ROADMAP_v0_v1.md` para consulta de legado.
