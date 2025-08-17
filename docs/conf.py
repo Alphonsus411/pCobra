@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT_DIR))
 project = 'Proyecto Cobra'
 copyright = f'{datetime.now().year}, Adolfo González Hernández'
 author = 'Adolfo González Hernández'
-release = '10.0.6'
+release = '10.0.9'
 
 # -- General configuration ---------------------------------------------------
 extensions = [

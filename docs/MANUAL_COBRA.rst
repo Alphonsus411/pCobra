@@ -1,7 +1,7 @@
 Manual de Cobra
 ===============
 
-Versión 10.0.6
+Versión 10.0.9
 
 Este documento resume la sintaxis y los elementos fundamentales del lenguaje
 Cobra. Incluye ejemplos de uso idiomático, limitaciones de los backends y
