@@ -30,7 +30,7 @@
 - Mejoras de empaquetado que simplifican la distribución.
 - Integración de notebooks de ejemplo en el paquete.
 - Otros ajustes menores.
-- Requisito mínimo de Python actualizado a la versión 3.8.
+- Requisito mínimo de Python actualizado a la versión 3.9.
 
 ## v8.0.0 - 2025-07-07
 - Incremento de versión principal a 8.0.0.

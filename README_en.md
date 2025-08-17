@@ -151,7 +151,7 @@ PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 
 ### Installation with pipx
 
-[pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.6 or higher. To install Cobra with pipx run:
+[pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.9 or higher. To install Cobra with pipx run:
 
 ```bash
 pipx install cobra-lenguaje
