@@ -65,4 +65,4 @@ Cobra fue creado con la idea de facilitar la programacion en español, optimizan
 Repositorio de Ejemplos
 ----------------------
 
-Los proyectos de demostracion se encuentran en `cobra-ejemplos <https://github.com/tuusuario/cobra-ejemplos>`_.
+Los proyectos de demostracion se encuentran en `cobra-ejemplos <https://github.com/Alphonsus411/pCobra/tree/master/examples>`_.
