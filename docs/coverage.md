@@ -4,8 +4,8 @@ Este informe recoge los resultados de `coverage run -m pytest` y `coverage repor
 
 ## Resumen
 
-- Cobertura total: 19 % (por debajo del objetivo del 85 %).
-- Durante la recolección de pruebas se produjeron 60 errores de importación, lo que limita la cobertura actual.
+- Cobertura total: 22 % (por debajo del objetivo del 85 %).
+- Durante la recolección de pruebas se produjeron 49 errores de importación, lo que limita la cobertura actual.
 
 ## Módulos con cobertura inferior al 85 %
 
@@ -13,14 +13,14 @@ A continuación se listan algunos de los módulos con menor cobertura detectados
 
 | Módulo | Cobertura |
 | --- | --- |
-| `src/cobra/cli/cli.py` | 14 % |
-| `src/cobra/cli/cobrahub_client.py` | 0 % |
-| `src/cobra/core/parser.py` | 5 % |
+| `src/cobra/cli/cli.py` | 13 % |
+| `src/cobra/cli/cobrahub_client.py` | 16 % |
+| `src/cobra/core/parser.py` | 9 % |
 | `src/cobra/transpilers/feature_inspector.py` | 0 % |
 | `src/cobra/transpilers/reverse/from_c.py` | 3 % |
 | `src/cobra/transpilers/transpiler/to_python.py` | 33 % |
-| `src/core/ast_nodes.py` | 82 % |
-| `src/core/interpreter.py` | 7 % |
+| `src/core/ast_nodes.py` | 81 % |
+| `src/core/interpreter.py` | 6 % |
 | `src/gui/app.py` | 0 % |
 
 Estos resultados indican que gran parte del código aún carece de cobertura de pruebas suficiente.
