@@ -1,5 +1,5 @@
 # Cobra Project
-[![Codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/master/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
+[![Codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/work/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
 [![Stable release](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 
 Version 10.0.9
@@ -40,7 +40,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 
 ## Examples
 
-Demo projects are available in [cobra-ejemplos](https://github.com/Alphonsus411/pCobra/tree/master/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.co` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `notebooks/casos_reales/`.
+Demo projects are available in [cobra-ejemplos](https://github.com/Alphonsus411/pCobra/tree/work/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.co` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `notebooks/casos_reales/`.
 
 ### Advanced examples
 
