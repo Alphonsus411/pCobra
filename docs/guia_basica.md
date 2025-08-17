@@ -41,7 +41,7 @@ cobra archivo.co --to python
 ### Ejecución en GitHub Codespaces
 
 1. En la página del repositorio en GitHub pulsa **Code** y luego la pestaña **Codespaces**.
-2. Selecciona **Create codespace on master** (o la rama por defecto del repositorio) para lanzar un entorno basado en el contenedor de desarrollo.
+2. Selecciona **Create codespace on work** (o la rama por defecto del repositorio) para lanzar un entorno basado en el contenedor de desarrollo.
 3. Durante el arranque se instalarán las dependencias de `requirements-dev.txt` y se configurará la CLI de Cobra.
 4. El archivo `examples/main.cobra` se abrirá automáticamente y se transpilará gracias a la tarea `Transpilar ejemplo`.
 

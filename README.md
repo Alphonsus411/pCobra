@@ -1,5 +1,5 @@
 # Proyecto Cobra
-[![Codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/master/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
+[![Codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/work/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra)
 [![Versión estable](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Alphonsus411/pCobra/HEAD?labpath=notebooks/playground.ipynb)
 
@@ -49,7 +49,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 
 ## Ejemplos
 
-Proyectos de demostracion disponibles en [cobra-ejemplos](https://github.com/Alphonsus411/pCobra/tree/master/examples).
+Proyectos de demostracion disponibles en [cobra-ejemplos](https://github.com/Alphonsus411/pCobra/tree/work/examples).
 Este repositorio incluye ejemplos básicos en la carpeta `examples/`, por
 ejemplo `examples/funciones_principales.co` que muestra condicionales, bucles y
 definición de funciones en Cobra.
@@ -1161,7 +1161,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 
 Este repositorio cuenta con [Dependabot](.github/dependabot.yml) para mantener
 actualizadas las dependencias de Python y las acciones de GitHub. Cada semana se
-crean PR automáticos contra la rama `master` con las versiones más recientes.
+crean PR automáticos contra la rama `work` con las versiones más recientes.
 
 Además, en el flujo de CI se incluye un paso de **safety check** que revisa la
 lista de paquetes instalados en busca de vulnerabilidades conocidas. Si se
