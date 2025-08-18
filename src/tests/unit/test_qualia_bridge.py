@@ -122,3 +122,19 @@ def test_state_dir_permissions(tmp_path, monkeypatch):
         mode = dir_path.stat().st_mode & 0o777
         assert mode == 0o700
 
+
+def test_symlink_created_after_resolve(tmp_path, monkeypatch):
+    home = tmp_path
+    state = home / ".cobra" / "state.json"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("QUALIA_STATE_PATH", str(state))
+    qb = importlib.reload(qualia_bridge)
+
+    state.parent.mkdir(parents=True, exist_ok=True)
+    target = home / "outside.json"
+    target.write_text("{}")
+    state.symlink_to(target)
+
+    with pytest.raises(OSError):
+        qb.save_state(qb.QUALIA)
+
