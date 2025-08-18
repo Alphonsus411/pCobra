@@ -89,7 +89,15 @@ def load_state() -> QualiaSpirit:
 def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en ``STATE_FILE``."""
     os.makedirs(os.path.dirname(STATE_FILE), mode=0o700, exist_ok=True)
-    with open(STATE_FILE, "w", encoding="utf-8") as fh:
+
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(STATE_FILE, flags, 0o600)
+    if os.path.islink(STATE_FILE) or Path(STATE_FILE).is_symlink():
+        os.close(fd)
+        raise ValueError("QUALIA_STATE_PATH se convirti\u00f3 en un enlace simb\u00f3lico")
+
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
         json.dump(
             {
                 "history": spirit.history,
@@ -99,7 +107,6 @@ def save_state(spirit: QualiaSpirit) -> None:
             ensure_ascii=False,
             indent=2,
         )
-    os.chmod(STATE_FILE, 0o600)
 
 
 QUALIA = load_state()
