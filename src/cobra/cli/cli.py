@@ -134,7 +134,7 @@ class CliApplication:
             self.cleanup()
 
     def cleanup(self) -> None:
-        if self.interpreter:
+        if self.interpreter and hasattr(self.interpreter, "cleanup"):
             self.interpreter.cleanup()
         logging.shutdown()
 
