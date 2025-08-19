@@ -12,15 +12,15 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
           cache-dependency-path: |
             requirements.txt
@@ -30,17 +30,20 @@ jobs:
           node-version: '20'
       - name: Install system packages (Linux)
         if: runner.os == 'Linux'
+        shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             gcc g++ golang-go ruby-full rustc default-jdk clang llvm
       - name: Install system packages (macOS)
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           brew update
           brew install gcc go ruby rust openjdk llvm
       - name: Install system packages (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           choco install -y mingw golang ruby rust jdk llvm
       - name: Install dependencies
@@ -48,6 +51,7 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Seguridad de dependencias
+        shell: bash
         run: |
           pip install safety
           safety check --full-report
@@ -57,21 +61,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
         if: runner.os != 'Windows'
+        shell: bash
         run: make lint
       - name: Run linters (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
-        run: make.bat lint
+        shell: pwsh
+        run: ./make.bat lint
       - name: Run type checks
         if: runner.os != 'Windows'
+        shell: bash
         run: make typecheck  # Ejecuta mypy y pyright
       - name: Run type checks (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
-        run: make.bat typecheck  # Ejecuta mypy y pyright
+        shell: pwsh
+        run: ./make.bat typecheck  # Ejecuta mypy y pyright
       - name: Validate changelog
+        shell: bash
         run: python scripts/check_changelog.py
       - name: Run tests
+        shell: bash
         run: |
           if [ -d tests ]; then
             pytest tests src/tests --cov=src --cov-report=xml \
@@ -81,6 +89,7 @@ jobs:
               --cov-report=term-missing --cov-fail-under=95
           fi
       - name: Run LLVM examples
+        shell: bash
         run: |
           PYTHONPATH=src python scripts/test_llvm_examples.py
       - name: Upload coverage to Codecov
@@ -88,14 +97,18 @@ jobs:
         with:
           files: coverage.xml
       - name: Build docs
+        shell: bash
         run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Check doc links
+        shell: bash
         run: sphinx-build -b linkcheck frontend/docs frontend/build/linkcheck
 
   benchmarks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -115,7 +128,10 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Compare benchmarks
-        run: python scripts/benchmarks/compare_releases.py --output benchmarks_compare.json --max-regression 10
+        run: |
+          python scripts/benchmarks/compare_releases.py \
+            --output benchmarks_compare.json \
+            --max-regression 10
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
