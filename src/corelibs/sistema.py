@@ -28,9 +28,9 @@ def ejecutar(
 ) -> str:
     """Ejecuta un comando y devuelve su salida.
 
-    ``comando`` debe ser una lista de argumentos que se pasa
-    directamente a ``subprocess.run`` sin crear un shell. ``permitidos``
-    define una lista blanca de rutas absolutas de ejecutables
+    ``comando`` debe ser una lista no vacía de argumentos que se pasa
+    directamente a ``subprocess.run`` sin crear un shell. Se lanza
+    ``ValueError`` si la lista está vacía. ``permitidos`` define una lista blanca de rutas absolutas de ejecutables
     autorizados; este parámetro es obligatorio. Si se invoca la función
     sin una lista se utilizará la capturada desde
     ``COBRA_EJECUTAR_PERMITIDOS`` al importar el módulo, siempre que no
@@ -47,6 +47,9 @@ def ejecutar(
     cuando esté disponible o lanzando un ``RuntimeError`` con
     información detallada.
     """
+    if not comando:
+        raise ValueError("Comando vacío")
+
     if permitidos is None:
         if PERMITIDOS_FIJOS:
             permitidos = PERMITIDOS_FIJOS

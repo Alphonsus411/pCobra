@@ -73,6 +73,11 @@ def test_ejecutar_env_ignora_cambios(monkeypatch):
         core.sistema.ejecutar(["false"], timeout=1)
 
 
+def test_ejecutar_comando_vacio():
+    with pytest.raises(ValueError, match="Comando vacío"):
+        core.ejecutar([], permitidos=[], timeout=1)
+
+
 def test_ejecutar_timeout_expira(monkeypatch):
     def raise_timeout(*a, **k):
         raise subprocess.TimeoutExpired(a[0], k.get("timeout"))
