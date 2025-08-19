@@ -27,9 +27,21 @@ jobs:
         with:
           extra: "pyinstaller"
       - name: Build executable
-        run: cobra empaquetar --output dist --add-data all-bytes.dat:all-bytes.dat
+        run: |
+          cobra empaquetar --output dist --add-data all-bytes.dat:all-bytes.dat
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
           name: cobra-${{ matrix.os }}
           path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**
