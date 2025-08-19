@@ -194,8 +194,9 @@ class Lexer:
 
         self.codigo_fuente = codigo_fuente
         # Índice dentro del código fuente durante la tokenización
+        # (se mantiene independiente del índice de tokens)
         self.posicion_codigo = 0
-        # Índice del token actual al consumir la lista de tokens
+        # Índice del token actual al consumir la lista de tokens generados
         self.indice_token = 0
         self.linea = 1
         self.columna = 1
@@ -411,6 +412,10 @@ class Lexer:
     def _tokenizar_base(self) -> List[Token]:
         """Implementación base del proceso de tokenización.
 
+        Utiliza ``self.posicion_codigo`` para recorrer el código fuente y
+        mantiene ``self.indice_token`` como puntero independiente al consumir
+        la lista de tokens generada.
+
         Returns:
             Lista de tokens encontrados
 
@@ -418,7 +423,7 @@ class Lexer:
             RuntimeError: Si se excede el límite de iteraciones
         """
         self._limpiar_comentarios()
-        self.posicion_codigo = 0
+        self.posicion_codigo = 0  # reinicia índice sobre el código fuente
         self.linea = 1
         self.columna = 1
         self.tokens = []
@@ -538,8 +543,12 @@ class Lexer:
     def guardar_estado(self) -> EstadoLexer:
         """Guarda el estado actual del lexer.
 
+        El estado guarda el ``indice_token`` junto con la línea y columna
+        actuales, permitiendo regresar a esta posición más adelante.
+
         Returns:
-            EstadoLexer con el índice de token actual
+            EstadoLexer con la información necesaria para restaurar
+            el estado del lexer
         """
         return EstadoLexer(self.indice_token, self.linea, self.columna)
 
