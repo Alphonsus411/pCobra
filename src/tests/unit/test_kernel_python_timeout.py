@@ -1,11 +1,12 @@
-import subprocess
 import sys
 import types
 import pytest
 
+import core.sandbox as sandbox
 
-def timeout_run(cmd, input=None, capture_output=True, text=True, timeout=None):
-    raise subprocess.TimeoutExpired(cmd, timeout or 5)
+
+def timeout_sandbox(code, timeout=5, memoria_mb=None):
+    raise TimeoutError
 
 @pytest.mark.timeout(5)
 def test_kernel_reports_timeout(monkeypatch):
@@ -38,6 +39,42 @@ def test_kernel_reports_timeout(monkeypatch):
         "cobra.transpilers.transpiler.to_python", transp_mod
     )
 
+    core_mod = types.ModuleType("cobra.core")
+    class DummyLexer:
+        def __init__(self, code):
+            pass
+        def tokenizar(self):
+            return []
+    class DummyParser:
+        def __init__(self, tokens):
+            pass
+        def parsear(self):
+            return []
+    core_mod.Lexer = DummyLexer
+    core_mod.Parser = DummyParser
+    core_mod.utils = types.SimpleNamespace(PALABRAS_RESERVADAS=[])
+    cobra_pkg = types.ModuleType("cobra")
+    cobra_pkg.core = core_mod
+    sys.modules["cobra"] = cobra_pkg
+    sys.modules["cobra.core"] = core_mod
+    sys.modules["cobra.core.utils"] = core_mod.utils
+
+    interp_mod = types.ModuleType("core.interpreter")
+    class FakeInterpreter:
+        def __init__(self):
+            self.variables = {}
+        def ejecutar_ast(self, ast):
+            return None
+    interp_mod.InterpretadorCobra = FakeInterpreter
+    qualia_mod = types.ModuleType("core.qualia_bridge")
+    qualia_mod.get_suggestions = lambda: []
+    core_pkg = types.ModuleType("core")
+    core_pkg.interpreter = interp_mod
+    core_pkg.qualia_bridge = qualia_mod
+    sys.modules["core"] = core_pkg
+    sys.modules["core.interpreter"] = interp_mod
+    sys.modules["core.qualia_bridge"] = qualia_mod
+
     from jupyter_kernel import CobraKernel
 
     class DummyKernel(CobraKernel):
@@ -49,7 +86,7 @@ def test_kernel_reports_timeout(monkeypatch):
         def send_response(self, stream, msg_or_type, content, **kwargs):
             outputs.append((msg_or_type, content))
 
-    monkeypatch.setattr(subprocess, "run", timeout_run)
+    monkeypatch.setattr(sandbox, "ejecutar_en_sandbox", timeout_sandbox)
     setup_mod = types.ModuleType("pybind11.setup_helpers")
     setup_mod.Pybind11Extension = object
     setup_mod.build_ext = object

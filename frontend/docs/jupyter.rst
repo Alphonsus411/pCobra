@@ -42,8 +42,13 @@ Modo Python
 
 Si estableces la variable de entorno ``COBRA_JUPYTER_PYTHON`` el kernel transpilará
 las celdas a Python mediante ``cobra.transpilers.transpiler.to_python`` y ejecutará
-el resultado en un subproceso ``python``. La salida estándar y los errores se
-mostrarán en la celda correspondiente.
+el resultado dentro de una *sandbox* con límites de tiempo y memoria. La salida
+estándar y los errores se mostrarán en la celda correspondiente.
+
+.. warning::
+
+   Ejecutar código Python puede ser inseguro. El kernel mostrará una advertencia
+   explícita cuando este modo esté activo.
 
 Para activarlo:
 
@@ -53,4 +58,4 @@ Para activarlo:
    cobra jupyter
 
 Este modo es útil para depurar la traducción a Python o comparar el comportamiento
-del intérprete con el backend de Python.
+del intérprete con el backend de Python, pero debe usarse con precaución.
