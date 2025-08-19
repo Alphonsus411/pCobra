@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Build Docker image
         run: docker build --target final -t pcobra-cli .
       - name: Smoke test
