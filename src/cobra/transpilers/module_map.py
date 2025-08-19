@@ -4,7 +4,10 @@ import yaml
 from typing import Dict, Any
 import logging
 
-from coverage.tomlconfig import tomllib
+try:
+    import tomllib  # Python ≥3.11
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 
 logger = logging.getLogger(__name__)
 
