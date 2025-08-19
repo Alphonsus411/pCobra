@@ -16,16 +16,15 @@ def configurar_entorno() -> None:
     variables de entorno necesarias para la aplicación.
 
     Raises:
-        FileNotFoundError: Si el archivo .env no existe
-        PermissionError: Si no hay permisos para leer el archivo
+        Exception: Si ocurre un error inesperado al cargar el archivo
     """
     try:
-        load_dotenv()
-    except (FileNotFoundError, PermissionError) as e:
-        logger.error("Error al cargar variables de entorno: %s", str(e))
-        raise
+        if not load_dotenv():
+            logger.warning("El archivo .env no se cargó")
     except Exception as e:
-        logger.critical("Error inesperado al cargar variables de entorno: %s", str(e))
+        logger.critical(
+            "Error inesperado al cargar variables de entorno: %s", str(e)
+        )
         raise
 
 def ejecutar_cli(argumentos: Optional[List[str]] = None) -> int:
