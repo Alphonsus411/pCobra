@@ -36,12 +36,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
+        shell: bash
         run: |
-          isort --check src
-          black --check src
-          flake8 src
-          mypy src
-          bandit -r src
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ./make.bat lint
+            ./make.bat typecheck
+          else
+            make lint
+            make typecheck
+          fi
       - name: Run tests
         run: |
           if [ -d tests ]; then
@@ -49,6 +52,10 @@ jobs:
           else
             pytest src/tests --cov=src --cov-report=xml --cov-fail-under=95
           fi
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
