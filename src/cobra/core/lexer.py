@@ -157,13 +157,17 @@ class Token:
 class EstadoLexer:
     """Mantiene el estado del lexer para permitir retroceso."""
 
-    def __init__(self, posicion: int, linea: int, columna: int) -> None:
-        self.posicion = posicion
+    def __init__(self, indice_token: int, linea: int, columna: int) -> None:
+        # Índice actual dentro de la lista de tokens
+        self.indice_token = indice_token
         self.linea = linea
         self.columna = columna
 
     def __repr__(self) -> str:
-        return f"EstadoLexer(pos={self.posicion}, lin={self.linea}, col={self.columna})"
+        return (
+            f"EstadoLexer(indice_token={self.indice_token}, "
+            f"lin={self.linea}, col={self.columna})"
+        )
 
 
 class Lexer:
@@ -189,7 +193,10 @@ class Lexer:
             raise TypeError("El código fuente debe ser una cadena de texto")
 
         self.codigo_fuente = codigo_fuente
-        self.posicion = 0
+        # Índice dentro del código fuente durante la tokenización
+        self.posicion_codigo = 0
+        # Índice del token actual al consumir la lista de tokens
+        self.indice_token = 0
         self.linea = 1
         self.columna = 1
         self.tokens: List[Token] = []
@@ -358,7 +365,7 @@ class Lexer:
                 self.columna = 1
             else:
                 self.columna += 1
-        self.posicion += len(texto)
+        self.posicion_codigo += len(texto)
 
     def _procesar_valor(self, tipo: TipoToken, valor: str) -> Union[str, int, float]:
         """Procesa el valor del token según su tipo.
@@ -387,7 +394,7 @@ class Lexer:
             UnclosedStringError: Para cadenas sin cerrar
             InvalidTokenError: Para otros tokens inválidos
         """
-        error_token = self.codigo_fuente[self.posicion]
+        error_token = self.codigo_fuente[self.posicion_codigo]
         if error_token in {"'", '"'}:
             raise UnclosedStringError(
                 f"Cadena sin cerrar en línea {self.linea}, columna {self.columna}",
@@ -411,20 +418,22 @@ class Lexer:
             RuntimeError: Si se excede el límite de iteraciones
         """
         self._limpiar_comentarios()
-        self.posicion = 0
+        self.posicion_codigo = 0
         self.linea = 1
         self.columna = 1
         self.tokens = []
 
         iteraciones = 0
 
-        while self.posicion < len(self.codigo_fuente):
+        while self.posicion_codigo < len(self.codigo_fuente):
             if iteraciones > self.MAX_ITERACIONES:
                 raise RuntimeError("Se excedió el límite de iteraciones")
 
             matched = False
             for tipo, regex in self.especificacion_tokens:
-                coincidencia = regex.match(self.codigo_fuente[self.posicion :])
+                coincidencia = regex.match(
+                    self.codigo_fuente[self.posicion_codigo :]
+                )
                 if coincidencia:
                     valor_original = coincidencia.group(0)
                     if tipo:
@@ -435,7 +444,7 @@ class Lexer:
                             "Token identificado: %s, valor: '%s', posición: %d",
                             tipo,
                             valor,
-                            self.posicion,
+                            self.posicion_codigo,
                         )
                     self._actualizar_posicion(valor_original)
                     matched = True
@@ -448,6 +457,8 @@ class Lexer:
 
         # Añade token EOF
         self.tokens.append(Token(TipoToken.EOF, None, self.linea, self.columna))
+        # Reinicia el índice de tokens para futuras lecturas
+        self.indice_token = 0
         return self.tokens
 
     def tokenizar(
@@ -528,9 +539,9 @@ class Lexer:
         """Guarda el estado actual del lexer.
 
         Returns:
-            EstadoLexer con la posición actual
+            EstadoLexer con el índice de token actual
         """
-        return EstadoLexer(self.posicion, self.linea, self.columna)
+        return EstadoLexer(self.indice_token, self.linea, self.columna)
 
     def restaurar_estado(self, estado: EstadoLexer) -> None:
         """Restaura el lexer a un estado anterior.
@@ -538,7 +549,7 @@ class Lexer:
         Args:
             estado: Estado previo a restaurar
         """
-        self.posicion = estado.posicion
+        self.indice_token = estado.indice_token
         self.linea = estado.linea
         self.columna = estado.columna
 
@@ -567,17 +578,17 @@ class Lexer:
         if not self.tokens:
             self._tokenizar_base()
 
-        if self.posicion >= len(self.tokens):
+        if self.indice_token >= len(self.tokens):
             return None
 
-        token = self.tokens[self.posicion]
-        self.posicion += 1
+        token = self.tokens[self.indice_token]
+        self.indice_token += 1
         return token
 
     def retroceder(self) -> None:
         """Retrocede una posición en los tokens."""
-        if self.posicion > 0:
-            self.posicion -= 1
+        if self.indice_token > 0:
+            self.indice_token -= 1
 
     def hay_mas_tokens(self) -> bool:
         """Verifica si quedan más tokens por procesar.
@@ -585,7 +596,7 @@ class Lexer:
         Returns:
             True si hay más tokens, False en caso contrario
         """
-        return self.posicion < len(self.tokens)
+        return self.indice_token < len(self.tokens)
 
     def obtener_contexto(self, num_lineas: int = 3) -> str:
         """Obtiene el contexto alrededor de la posición actual.
@@ -614,7 +625,8 @@ class Lexer:
 
     def reiniciar(self) -> None:
         """Reinicia el estado del lexer."""
-        self.posicion = 0
+        self.posicion_codigo = 0
+        self.indice_token = 0
         self.linea = 1
         self.columna = 1
         self.tokens = []
