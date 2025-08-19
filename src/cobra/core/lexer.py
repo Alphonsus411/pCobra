@@ -1,12 +1,15 @@
-"""Analizador léxico para el lenguaje Cobra."""
+"""Analizador léxico para el lenguaje Cobra.
+
+Este módulo no configura el sistema de *logging*. El consumidor debe
+configurar el *logging* externamente y, una vez hecho, los mensajes se
+enviarán a través del ``logger`` local.
+"""
 
 import logging
 import re
 from enum import Enum
 from typing import Dict, List, Optional, Pattern, Tuple, Union, cast
 
-# Configuración de logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
