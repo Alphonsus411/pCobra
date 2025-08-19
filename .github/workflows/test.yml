@@ -2,35 +2,50 @@ name: tests
 
 on:
   push:
-    paths: ['**.py', 'src/tests/**', '.github/workflows/test.yml']
+    paths:
+      - '**/*.py'
+      - 'src/tests/**'
+      - '.github/workflows/tests.yml'
   pull_request:
-    paths: ['**.py', 'src/tests/**', '.github/workflows/test.yml']
-
-permissions:
-  contents: read
-  security-events: write
+    paths:
+      - '**/*.py'
+      - 'src/tests/**'
+      - '.github/workflows/tests.yml'
 
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          check-latest: true
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          check-latest: true
+
       - name: Install system packages
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk
+
       - name: Install dependencies
         uses: ./.github/actions/install
+
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run linters
         run: |
           isort --check src
@@ -38,6 +53,7 @@ jobs:
           flake8 src
           mypy src
           bandit -r src
+
       - name: Run tests
         run: |
           if [ -d tests ]; then
@@ -45,7 +61,9 @@ jobs:
           else
             pytest src/tests --cov=src --cov-report=xml --cov-fail-under=95
           fi
+
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
+
