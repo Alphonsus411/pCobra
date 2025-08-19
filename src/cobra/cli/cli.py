@@ -6,17 +6,11 @@ from os import environ
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
-import argparse
 
 from cobra.cli.utils.argument_parser import CustomArgumentParser
 
 import argcomplete
 from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-
-# Importaciones con TYPE_CHECKING para evitar dependencias circulares
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from cobra.cli.commands.interactive_cmd import InteractiveCommand
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.commands.bench_cmd import BenchCommand
