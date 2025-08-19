@@ -40,11 +40,12 @@ def test_obtener_url_rechaza_otro_esquema(monkeypatch):
 
 def test_obtener_url_host_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    mock_resp = MagicMock(text="ok", url="https://example.com")
+    mock_resp = MagicMock(url="https://example.com", encoding="utf-8")
+    mock_resp.iter_content.return_value = [b"ok"]
     mock_resp.raise_for_status.return_value = None
     with patch('requests.get', return_value=mock_resp) as mock_get:
         assert io.obtener_url('https://example.com') == 'ok'
-        mock_get.assert_called_once_with('https://example.com', timeout=5, allow_redirects=False)
+        mock_get.assert_called_once_with('https://example.com', timeout=5, allow_redirects=False, stream=True)
 
 
 def test_obtener_url_sin_whitelist(monkeypatch):
@@ -87,6 +88,17 @@ def test_obtener_url_redireccion_fuera_whitelist(monkeypatch):
     with patch('requests.get', return_value=mock_resp):
         with pytest.raises(ValueError):
             io.obtener_url('https://example.com', permitir_redirecciones=True)
+
+
+def test_obtener_url_respuesta_muy_grande(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    grande = MagicMock(url="https://example.com", encoding="utf-8")
+    grande.iter_content.return_value = [b"a" * (1024 * 1024 + 1)]
+    grande.raise_for_status.return_value = None
+    with patch('requests.get', return_value=grande):
+        with pytest.raises(ValueError):
+            io.obtener_url('https://example.com')
+    grande.close.assert_called_once()
 
 
 @pytest.mark.parametrize("func", [io.leer_archivo, lambda p: io.escribir_archivo(p, "dato")])

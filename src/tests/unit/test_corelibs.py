@@ -77,18 +77,24 @@ def test_seguridad_funcs():
 
 def test_red_funcs(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "x")
-    mock_resp = MagicMock(text="ok", url="https://x")
-    mock_resp.raise_for_status.return_value = None
+    mock_resp_get = MagicMock(url="https://x", encoding="utf-8")
+    mock_resp_get.iter_content.return_value = [b"ok"]
+    mock_resp_get.raise_for_status.return_value = None
+    mock_resp_post = MagicMock(url="https://x", encoding="utf-8")
+    mock_resp_post.iter_content.return_value = [b"ok"]
+    mock_resp_post.raise_for_status.return_value = None
     with patch(
-        "backend.corelibs.red.requests.get", return_value=mock_resp
+        "backend.corelibs.red.requests.get", return_value=mock_resp_get
     ) as mock_get, patch(
-        "backend.corelibs.red.requests.post", return_value=mock_resp
+        "backend.corelibs.red.requests.post", return_value=mock_resp_post
     ) as mock_post:
         assert core.obtener_url("https://x") == "ok"
         assert core.enviar_post("https://x", {"a": 1}) == "ok"
-        mock_get.assert_called_once_with("https://x", timeout=5, allow_redirects=False)
+        mock_get.assert_called_once_with(
+            "https://x", timeout=5, allow_redirects=False, stream=True
+        )
         mock_post.assert_called_once_with(
-            "https://x", data={"a": 1}, timeout=5, allow_redirects=False
+            "https://x", data={"a": 1}, timeout=5, allow_redirects=False, stream=True
         )
 
 
@@ -126,12 +132,13 @@ def test_red_enviar_post_rechaza_otro_esquema(monkeypatch):
 
 def test_red_host_whitelist_permite(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    mock_resp = MagicMock(text="ok", url="https://example.com")
+    mock_resp = MagicMock(url="https://example.com", encoding="utf-8")
+    mock_resp.iter_content.return_value = [b"ok"]
     mock_resp.raise_for_status.return_value = None
     with patch("backend.corelibs.red.requests.get", return_value=mock_resp) as mock_get:
         assert core.obtener_url("https://example.com") == "ok"
         mock_get.assert_called_once_with(
-            "https://example.com", timeout=5, allow_redirects=False
+            "https://example.com", timeout=5, allow_redirects=False, stream=True
         )
 
 
@@ -161,6 +168,28 @@ def test_red_enviar_post_redireccion_fuera_whitelist(monkeypatch):
             core.enviar_post(
                 "https://example.com", {"a": 1}, permitir_redirecciones=True
             )
+
+
+def test_red_obtener_url_respuesta_muy_grande(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    grande = MagicMock(url="https://example.com", encoding="utf-8")
+    grande.iter_content.return_value = [b"a" * (1024 * 1024 + 1)]
+    grande.raise_for_status.return_value = None
+    with patch("backend.corelibs.red.requests.get", return_value=grande):
+        with pytest.raises(ValueError):
+            core.obtener_url("https://example.com")
+    grande.close.assert_called_once()
+
+
+def test_red_enviar_post_respuesta_muy_grande(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    grande = MagicMock(url="https://example.com", encoding="utf-8")
+    grande.iter_content.return_value = [b"a" * (1024 * 1024 + 1)]
+    grande.raise_for_status.return_value = None
+    with patch("backend.corelibs.red.requests.post", return_value=grande):
+        with pytest.raises(ValueError):
+            core.enviar_post("https://example.com", {"a": 1})
+    grande.close.assert_called_once()
 
 
 def test_sistema_funcs(tmp_path, monkeypatch):
