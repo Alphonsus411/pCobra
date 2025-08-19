@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -105,3 +106,43 @@ def test_sandbox_js_trunca_stderr_grande_no_bloquea():
     assert "truncated" in salida
     assert not salida.startswith("Error:")
 
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_elimina_archivo_inexistente(monkeypatch):
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+
+    original_popen = subprocess.Popen
+
+    def fake_popen(cmd, *args, **kwargs):
+        proc = original_popen(cmd, *args, **kwargs)
+        tmp_path = cmd[-1]
+
+        class Wrapped:
+            def __init__(self, proc, tmp_path):
+                self.proc = proc
+                self.tmp_path = tmp_path
+                self.stdout = proc.stdout
+
+            def __getattr__(self, name):
+                return getattr(self.proc, name)
+
+            def __enter__(self):
+                self.proc.__enter__()
+                self.stdout = self.proc.stdout
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                os.unlink(self.tmp_path)
+                return self.proc.__exit__(exc_type, exc, tb)
+
+        return Wrapped(proc, tmp_path)
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    salida = ejecutar_en_sandbox_js("console.log('hola')")
+    assert salida.strip() == "hola"

@@ -203,7 +203,10 @@ process.stdout.write(output);
                 resultado += "\n[output truncated]"
             return resultado
     finally:
-        os.unlink(tmp_path)
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
 
 
 def compilar_en_sandbox_cpp(codigo: str) -> str:
