@@ -1,7 +1,7 @@
 import importlib
 import os
-import pickle
 import sys
+import json
 
 import pytest
 
@@ -15,8 +15,8 @@ def _prepare_cache(monkeypatch, tmp_path):
 
 
 def _escribir_malicioso(ruta):
-    with open(ruta, "wb") as f:
-        f.write(pickle.dumps(eval))
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write("{malformed json]")
 
 
 def test_carga_ast_malicioso(monkeypatch, tmp_path):
@@ -28,7 +28,7 @@ def test_carga_ast_malicioso(monkeypatch, tmp_path):
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     _escribir_malicioso(ruta)
 
-    with pytest.raises(pickle.UnpicklingError):
+    with pytest.raises(json.JSONDecodeError):
         obtener_ast(codigo)
 
 
@@ -41,6 +41,6 @@ def test_carga_tokens_maliciosos(monkeypatch, tmp_path):
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
     _escribir_malicioso(ruta)
 
-    with pytest.raises(pickle.UnpicklingError):
+    with pytest.raises(json.JSONDecodeError):
         obtener_tokens(codigo)
 

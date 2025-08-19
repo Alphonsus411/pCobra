@@ -5,6 +5,8 @@
   `COBRA_EJECUTAR_PERMITIDOS`. Invocarlo sin esta configuración produce
   `ValueError` y la lista de la variable de entorno se fija al importar
   el módulo, evitando modificaciones en tiempo de ejecución.
+- Reemplazo del uso de `pickle` por serialización JSON segura en la caché
+  de AST y tokens.
 
 ## v10.0.8 - Pendiente de liberación
 - Nota: versión en desarrollo, sin cambios liberados.

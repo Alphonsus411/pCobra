@@ -1,14 +1,15 @@
 import os
 import hashlib
-import pickle
-import sys
+import json
+from dataclasses import is_dataclass, fields
+from enum import Enum
 
 # Las importaciones de ``Lexer`` y ``Parser`` se realizan de forma
 # perezosa dentro de las funciones para evitar dependencias circulares
 # cuando estos módulos utilizan a su vez la caché incremental.
 
-# TODO: considerar reemplazar ``pickle`` por un formato más seguro como
-# ``json`` o ``msgpack`` para el almacenamiento de la caché.
+# La caché se almacena en formato JSON para evitar la ejecución de código
+# arbitrario asociada al uso de ``pickle``.
 
 
 AST_NODE_CLASS_NAMES = [
@@ -75,25 +76,76 @@ AST_NODE_CLASS_NAMES = [
     "NodoExpresion",
 ]
 
-TOKEN_CLASS_NAMES = ["Token", "TipoToken"]
+
+# -- Serialización -----------------------------------------------------------
+
+_NODE_CLASSES = None
+_ENUM_CLASSES = None
 
 
-class SafeUnpickler(pickle.Unpickler):
-    """Deserializador seguro que limita los módulos y clases permitidos."""
+def _get_node_classes():
+    global _NODE_CLASSES
+    if _NODE_CLASSES is None:
+        from core import ast_nodes as _ast_nodes
+        _NODE_CLASSES = {name: getattr(_ast_nodes, name) for name in AST_NODE_CLASS_NAMES}
+    return _NODE_CLASSES
 
-    ALLOWED_CLASSES = {
-        *((m, n) for m in ("core.ast_nodes", "cobra.core.ast_nodes") for n in AST_NODE_CLASS_NAMES),
-        *(("cobra.core.lexer", n) for n in TOKEN_CLASS_NAMES),
-    }
 
-    # Módulos permitidos explícitamente
-    ALLOWED_MODULES = {module for module, _ in ALLOWED_CLASSES}
+def _get_enum_classes():
+    global _ENUM_CLASSES
+    if _ENUM_CLASSES is None:
+        from cobra.core.lexer import TipoToken
+        _ENUM_CLASSES = {"TipoToken": TipoToken}
+    return _ENUM_CLASSES
 
-    def find_class(self, module: str, name: str):
-        if (module, name) not in self.ALLOWED_CLASSES:
-            raise pickle.UnpicklingError(f"Importación no permitida: {module}.{name}")
-        __import__(module)
-        return getattr(sys.modules[module], name)
+
+def _serialize(obj):
+    from cobra.core.lexer import Token
+
+    if is_dataclass(obj):
+        data = {"__class__": obj.__class__.__name__}
+        for f in fields(obj):
+            data[f.name] = _serialize(getattr(obj, f.name))
+        return data
+    if isinstance(obj, Token):
+        return {
+            "__token__": True,
+            "tipo": obj.tipo.value,
+            "valor": obj.valor,
+            "linea": obj.linea,
+            "columna": obj.columna,
+        }
+    if isinstance(obj, Enum):
+        return {"__enum__": obj.__class__.__name__, "value": obj.value}
+    if isinstance(obj, list):
+        return [_serialize(i) for i in obj]
+    if isinstance(obj, dict):
+        return {k: _serialize(v) for k, v in obj.items()}
+    return obj
+
+
+def _deserialize(data):
+    from cobra.core.lexer import Token, TipoToken
+
+    if isinstance(data, list):
+        return [_deserialize(i) for i in data]
+    if isinstance(data, dict):
+        if data.get("__token__"):
+            return Token(
+                TipoToken(data["tipo"]),
+                data.get("valor"),
+                data.get("linea"),
+                data.get("columna"),
+            )
+        if "__enum__" in data:
+            enum_cls = _get_enum_classes()[data["__enum__"]]
+            return enum_cls(data["value"])
+        if "__class__" in data:
+            cls = _get_node_classes()[data["__class__"]]
+            kwargs = {k: _deserialize(v) for k, v in data.items() if k != "__class__"}
+            return cls(**kwargs)
+        return {k: _deserialize(v) for k, v in data.items()}
+    return data
 
 
 # Directorio donde se almacenará el cache de AST. Puede modificarse con la
@@ -122,14 +174,14 @@ def obtener_tokens(codigo: str):
     ruta = _ruta_tokens(codigo)
 
     if os.path.exists(ruta):
-        with open(ruta, "rb") as f:
-            return SafeUnpickler(f).load()
+        with open(ruta, "r", encoding="utf-8") as f:
+            return _deserialize(json.load(f))
 
     from cobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
-    with open(ruta, "wb") as f:
-        pickle.dump(tokens, f)
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(_serialize(tokens), f)
 
     return tokens
 
@@ -140,20 +192,16 @@ def obtener_ast(codigo: str):
     ruta = _ruta_cache(codigo)
 
     if os.path.exists(ruta):
-        with open(ruta, "rb") as f:
-            # Cargamos únicamente archivos generados por Cobra mediante
-            # un unpickler que restringe los módulos permitidos.
-            return SafeUnpickler(f).load()
+        with open(ruta, "r", encoding="utf-8") as f:
+            return _deserialize(json.load(f))
 
     tokens = obtener_tokens(codigo)
     from cobra.core import Parser
 
     ast = Parser(tokens).parsear()
 
-    with open(ruta, "wb") as f:
-        # Guardamos usando ``pickle.dump``. Solo se cargarán archivos
-        # generados por esta herramienta mediante ``SafeUnpickler``.
-        pickle.dump(ast, f)
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(_serialize(ast), f)
 
     return ast
 
@@ -173,14 +221,14 @@ def obtener_tokens_fragmento(codigo: str):
     """Devuelve los tokens de un fragmento, reutilizando la caché si existe."""
     ruta = _ruta_fragmento(codigo, "tok")
     if os.path.exists(ruta):
-        with open(ruta, "rb") as f:
-            return SafeUnpickler(f).load()
+        with open(ruta, "r", encoding="utf-8") as f:
+            return _deserialize(json.load(f))
 
     from cobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
-    with open(ruta, "wb") as f:
-        pickle.dump(tokens, f)
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(_serialize(tokens), f)
     return tokens
 
 
@@ -188,15 +236,15 @@ def obtener_ast_fragmento(codigo: str):
     """Obtiene el AST de un fragmento reutilizando la caché si existe."""
     ruta = _ruta_fragmento(codigo, "ast")
     if os.path.exists(ruta):
-        with open(ruta, "rb") as f:
-            return SafeUnpickler(f).load()
+        with open(ruta, "r", encoding="utf-8") as f:
+            return _deserialize(json.load(f))
 
     tokens = obtener_tokens_fragmento(codigo)
     from cobra.core import Parser
 
     ast = Parser(tokens).parsear()
-    with open(ruta, "wb") as f:
-        pickle.dump(ast, f)
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(_serialize(ast), f)
     return ast
 
 
