@@ -39,6 +39,7 @@ def ejecutar_cli(argumentos: Optional[List[str]] = None) -> int:
         int: Código de salida de la ejecución.
             0: Ejecución exitosa
             1: Error durante la ejecución
+            Otros: Código devuelto por SystemExit
 
     Raises:
         RuntimeError: Si ocurre un error durante la inicialización del CLI
@@ -46,6 +47,9 @@ def ejecutar_cli(argumentos: Optional[List[str]] = None) -> int:
     try:
         configurar_entorno()
         return cli_main(argumentos)
+    except SystemExit as e:
+        # Devuelve el código de salida de SystemExit sin registrar un error
+        return e.code if isinstance(e.code, int) else 0
     except Exception as e:
         logger.error("Error en la ejecución del CLI: %s", str(e))
         return 1
