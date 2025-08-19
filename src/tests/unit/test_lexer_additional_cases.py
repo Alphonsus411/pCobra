@@ -3,15 +3,22 @@ from cobra.core import (
     Lexer,
     TipoToken,
     InvalidTokenError,
-    UnclosedStringError,
 )
 
 
-def test_unclosed_comment_triggers_unclosed_string():
+def test_unclosed_comment_raises_invalid_token():
     codigo = "var x = 1 /* comentario ' sin cerrar"
     lexer = Lexer(codigo)
-    with pytest.raises(UnclosedStringError):
+    with pytest.raises(InvalidTokenError):
         lexer.tokenizar()
+
+
+def test_block_comment_without_closing():
+    codigo = "/*"
+    lexer = Lexer(codigo)
+    with pytest.raises(InvalidTokenError) as exc:
+        lexer.tokenizar()
+    assert "Comentario de bloque sin cerrar en línea 1, columna 3" in str(exc.value)
 
 
 def test_unclosed_comment_with_invalid_symbol():

@@ -13,7 +13,7 @@ def test_unclosed_string():
     with pytest.raises(LexerError) as exc:
         lexer.tokenizar()
     assert isinstance(exc.value, UnclosedStringError)
-    assert "Cadena sin cerrar en linea 1, columna 1" in str(exc.value)
+    assert "Cadena sin cerrar en línea 1, columna 1" in str(exc.value)
 
 
 def test_multiple_decimal_points():
@@ -29,4 +29,4 @@ def test_invalid_symbol():
     with pytest.raises(LexerError) as exc:
         lexer.tokenizar()
     assert isinstance(exc.value, InvalidTokenError)
-    assert "Token no reconocido: '€' en linea 1, columna 9" in str(exc.value)
+    assert "Token no reconocido: '€' en línea 1, columna 9" in str(exc.value)

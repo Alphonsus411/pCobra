@@ -305,35 +305,61 @@ class Lexer:
         i = 0
         longitud = len(codigo)
         nivel_bloque = 0
+        linea_actual = 1
+        columna_actual = 1
 
         while i < longitud:
             if nivel_bloque > 0:
                 if codigo.startswith("/*", i):
                     nivel_bloque += 1
                     i += 2
+                    columna_actual += 2
                 elif codigo.startswith("*/", i):
                     nivel_bloque -= 1
                     i += 2
+                    columna_actual += 2
                 else:
+                    if codigo[i] == "\n":
+                        linea_actual += 1
+                        columna_actual = 1
+                    else:
+                        columna_actual += 1
                     i += 1
                 continue
 
             if codigo.startswith("/*", i):
                 nivel_bloque = 1
                 i += 2
+                columna_actual += 2
             elif codigo.startswith("//", i):
                 i += 2
+                columna_actual += 2
                 while i < longitud and codigo[i] not in "\n\r":
                     i += 1
+                    columna_actual += 1
             elif codigo[i] == "#":
                 i += 1
+                columna_actual += 1
                 while i < longitud and codigo[i] not in "\n\r":
                     i += 1
+                    columna_actual += 1
             else:
+                if codigo[i] == "\n":
+                    linea_actual += 1
+                    columna_actual = 1
+                else:
+                    columna_actual += 1
                 resultado.append(codigo[i])
                 i += 1
 
         self.codigo_fuente = "".join(resultado)
+
+        if nivel_bloque > 0:
+            raise InvalidTokenError(
+                f"Comentario de bloque sin cerrar en línea {linea_actual}, columna {columna_actual}",
+                linea_actual,
+                columna_actual,
+            )
 
     def _procesar_cadena(self, valor: str) -> str:
         """Procesa una cadena, manejando caracteres de escape.

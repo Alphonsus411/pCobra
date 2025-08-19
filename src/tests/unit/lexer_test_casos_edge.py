@@ -46,5 +46,5 @@ def test_cadena_con_comillas_escapadas():
     codigo = '"dijo \\"hola\\""'
     tokens = Lexer(codigo).analizar_token()
     assert tokens[0].tipo == TipoToken.CADENA
-    assert tokens[0].valor == 'dijo \\"hola\\"'
+    assert tokens[0].valor == 'dijo "hola"'
     assert tokens[-1].tipo == TipoToken.EOF
