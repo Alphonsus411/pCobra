@@ -90,3 +90,18 @@ def test_sandbox_js_trunca_salida_grande():
     assert len(salida.encode()) <= sandbox.MAX_JS_OUTPUT_BYTES + 100
     assert "truncated" in salida
 
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_trunca_stderr_grande_no_bloquea():
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    codigo = "console.error('e'.repeat(20000))"
+    salida = ejecutar_en_sandbox_js(codigo)
+    assert len(salida.encode()) <= sandbox.MAX_JS_OUTPUT_BYTES + 100
+    assert "truncated" in salida
+    assert not salida.startswith("Error:")
+

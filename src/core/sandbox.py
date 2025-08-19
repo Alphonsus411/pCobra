@@ -157,7 +157,7 @@ process.stdout.write(output);
                 tmp_path,
             ],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             cwd=base_dir,
             env=env,
         ) as proc:  # nosec B603
@@ -187,10 +187,12 @@ process.stdout.write(output);
                     break
 
             proc.wait()
-            stderr = proc.stderr.read().decode(errors="ignore") if proc.stderr else ""
-            if proc.returncode and not truncado:
-                return stderr or f"Error: {proc.returncode}"
             resultado = salida.decode(errors="ignore")
+            if proc.returncode and not truncado:
+                resultado = resultado.strip()
+                if resultado:
+                    return f"Error: {resultado}"
+                return f"Error: {proc.returncode}"
             if truncado:
                 resultado += "\n[output truncated]"
             return resultado
