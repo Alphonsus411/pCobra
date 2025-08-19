@@ -3,7 +3,6 @@
 import sys
 import io
 import os
-import subprocess
 import contextlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
@@ -12,6 +11,7 @@ from cobra.core import Parser
 from cobra.core.utils import PALABRAS_RESERVADAS
 from core.interpreter import InterpretadorCobra
 from core.qualia_bridge import get_suggestions
+from core.sandbox import ejecutar_en_sandbox
 
 
 def _get_version() -> str:
@@ -52,6 +52,7 @@ class CobraKernel(Kernel):
             "true",
             "yes",
         }
+        self._warned_python = False
 
     def do_execute(
         self, code, silent, store_history=True, user_expressions=None, allow_stdin=False
@@ -80,26 +81,39 @@ class CobraKernel(Kernel):
                     )
 
                     py_code = TranspiladorPython().generate_code(ast)
-                    try:
-                        proc = subprocess.run(
-                            [sys.executable, "-"],
-                            input=py_code,
-                            capture_output=True,
-                            text=True,
-                            timeout=5,
+                    if not self._warned_python and not silent:
+                        self.send_response(
+                            self.iopub_socket,
+                            "stream",
+                            {
+                                "name": "stderr",
+                                "text": (
+                                    "Advertencia: se ejecutará código Python; esto puede ser inseguro.\n"
+                                ),
+                            },
                         )
-                        output = proc.stdout
-                        error = proc.stderr
-                        if proc.returncode != 0 and not error:
-                            error = (
-                                f"Error al ejecutar código Python (código de retorno {proc.returncode})"
-                            )
+                        self._warned_python = True
+                    try:
+                        output = ejecutar_en_sandbox(
+                            py_code, timeout=5, memoria_mb=64
+                        )
+                        error = ""
                         result = None
-                    except subprocess.TimeoutExpired:
+                    except TimeoutError:
                         output = ""
                         error = (
                             "Error: la ejecución de Python excedió el tiempo límite de 5 segundos"
                         )
+                        result = None
+                    except MemoryError:
+                        output = ""
+                        error = (
+                            "Error: la ejecución de Python excedió el límite de memoria"
+                        )
+                        result = None
+                    except Exception as exc:
+                        output = ""
+                        error = f"Error al ejecutar código Python: {exc}"
                         result = None
                 else:
                     result = self.interpreter.ejecutar_ast(ast)

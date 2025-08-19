@@ -40,7 +40,13 @@ probarlo ejecuta:
    export COBRA_JUPYTER_PYTHON=1
    cobra jupyter notebooks/ide_demo.ipynb
 
-El kernel transpilará cada celda a Python antes de ejecutarla.
+El kernel transpilará cada celda a Python y la ejecutará en una *sandbox* con
+límites de tiempo y memoria.
+
+.. warning::
+
+   Activar este modo implica ejecutar código Python, lo que puede ser inseguro.
+   El kernel mostrará una advertencia al iniciarse.
 
 Pruebas de integración
 ----------------------
