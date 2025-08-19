@@ -902,7 +902,7 @@ Actualmente es posible convertir a Cobra código escrito en ensamblador, C, C++,
 
 ### Instalación de gramáticas
 
-Varios transpiladores inversos están basados en [tree-sitter](https://tree-sitter.github.io/tree-sitter/). Para que funcionen es necesario disponer de los paquetes `tree-sitter` y `tree-sitter-languages`. Instálalos con:
+Varios transpiladores inversos están basados en [tree-sitter](https://tree-sitter.github.io/tree-sitter/). Cobra ya incluye la dependencia `tree-sitter`, por lo que solo necesitas instalar `tree-sitter-languages`:
 
 ```bash
 pip install tree-sitter-languages

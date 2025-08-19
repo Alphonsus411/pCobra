@@ -36,6 +36,7 @@ dependencies = [
     "flet==0.28.3",
     "packaging==25.0",
     "pybind11==3.0.0",
+    "tree-sitter==0.25.1",
     "RestrictedPython==8.0",
     "prompt_toolkit==3.0.51",
     "Pygments==2.19.2",
