@@ -9,7 +9,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,10 +28,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install system packages
+      - name: Install system packages (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk clang llvm
+          sudo apt-get install -y \
+            gcc g++ golang-go ruby-full rustc default-jdk clang llvm
+      - name: Install system packages (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install gcc go ruby rust openjdk llvm
+      - name: Install system packages (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install -y mingw golang ruby rust jdk llvm
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
@@ -39,9 +56,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
+        if: runner.os != 'Windows'
         run: make lint
+      - name: Run linters (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: make.bat lint
       - name: Run type checks
-        run: make typecheck  # Ejecuta mypy con la configuración del proyecto y pyright
+        if: runner.os != 'Windows'
+        run: make typecheck  # Ejecuta mypy y pyright
+      - name: Run type checks (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: make.bat typecheck  # Ejecuta mypy y pyright
       - name: Validate changelog
         run: python scripts/check_changelog.py
       - name: Run tests
