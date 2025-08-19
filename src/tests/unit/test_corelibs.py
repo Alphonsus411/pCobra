@@ -167,9 +167,17 @@ def test_sistema_funcs(tmp_path, monkeypatch):
     assert core.obtener_os() == os.uname().sysname
     proc = MagicMock()
     proc.stdout = "hola\n"
-    monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
+
+    def fake_run(*a, **k):
+        assert k["timeout"] == 1
+        return proc
+
+    monkeypatch.setattr(core.sistema.subprocess, "run", fake_run)
     permitido = core.sistema.os.path.realpath("/usr/bin/echo")
-    assert core.ejecutar(["echo", "hola"], permitidos=[permitido]) == "hola\n"
+    assert (
+        core.ejecutar(["echo", "hola"], permitidos=[permitido], timeout=1)
+        == "hola\n"
+    )
     os.environ["PRUEBA"] = "1"
     assert core.obtener_env("PRUEBA") == "1"
     d = tmp_path
