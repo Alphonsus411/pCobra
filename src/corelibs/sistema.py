@@ -21,7 +21,11 @@ def obtener_os() -> str:
     return platform.system()
 
 
-def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str:
+def ejecutar(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> str:
     """Ejecuta un comando y devuelve su salida.
 
     ``comando`` debe ser una lista de argumentos que se pasa
@@ -32,6 +36,11 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
     ``COBRA_EJECUTAR_PERMITIDOS`` al importar el módulo, siempre que no
     esté vacía. Los cambios posteriores en la variable de entorno no
     surten efecto.
+
+    ``timeout`` especifica el tiempo máximo de espera en segundos. Si se
+    excede este límite se captura ``subprocess.TimeoutExpired``
+    devolviendo ``stderr`` cuando esté disponible o lanzando un
+    ``RuntimeError`` descriptivo. Por defecto no hay límite.
 
     Si el comando finaliza con un código de error se captura la
     excepción ``subprocess.CalledProcessError`` devolviendo ``stderr``
@@ -61,8 +70,15 @@ def ejecutar(comando: list[str], permitidos: Iterable[str] | None = None) -> str
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            timeout=timeout,
         )
         return resultado.stdout
+    except subprocess.TimeoutExpired as exc:
+        if exc.stderr:
+            return exc.stderr
+        raise RuntimeError(
+            f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+        ) from exc
     except subprocess.CalledProcessError as exc:
         if exc.stderr:
             return exc.stderr

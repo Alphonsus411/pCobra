@@ -10,10 +10,15 @@ import backend.corelibs as core
 def test_ejecutar_exitoso(monkeypatch):
     proc = MagicMock()
     proc.stdout = "ok"
-    monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
+
+    def fake_run(*a, **k):
+        assert k["timeout"] == 1
+        return proc
+
+    monkeypatch.setattr(core.sistema.subprocess, "run", fake_run)
     monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
     permitido = core.sistema.os.path.realpath("/usr/bin/echo")
-    assert core.ejecutar(["echo", "ok"], permitidos=[permitido]) == "ok"
+    assert core.ejecutar(["echo", "ok"], permitidos=[permitido], timeout=1) == "ok"
 
 
 def test_ejecutar_error(monkeypatch):
@@ -23,7 +28,7 @@ def test_ejecutar_error(monkeypatch):
     monkeypatch.setattr(core.sistema.subprocess, "run", raise_err)
     monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
     permitido = core.sistema.os.path.realpath("/usr/bin/bad")
-    assert core.ejecutar(["bad"], permitidos=[permitido]) == "fallo"
+    assert core.ejecutar(["bad"], permitidos=[permitido], timeout=1) == "fallo"
 
     def raise_err2(*a, **k):
         raise subprocess.CalledProcessError(1, a[0])
@@ -32,7 +37,7 @@ def test_ejecutar_error(monkeypatch):
     monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
     permitido = core.sistema.os.path.realpath("/usr/bin/bad")
     with pytest.raises(RuntimeError):
-        core.ejecutar(["bad"], permitidos=[permitido])
+        core.ejecutar(["bad"], permitidos=[permitido], timeout=1)
 
 
 def test_ejecutar_permitido_con_ruta(monkeypatch):
@@ -40,7 +45,7 @@ def test_ejecutar_permitido_con_ruta(monkeypatch):
     proc.stdout = "ok"
     monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
     permitido = core.sistema.os.path.realpath("/bin/echo")
-    assert core.ejecutar(["/bin/echo", "ok"], permitidos=[permitido]) == "ok"
+    assert core.ejecutar(["/bin/echo", "ok"], permitidos=[permitido], timeout=1) == "ok"
 
 
 def test_ejecutar_sin_lista_blanca(monkeypatch):
@@ -50,7 +55,7 @@ def test_ejecutar_sin_lista_blanca(monkeypatch):
     monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
     monkeypatch.delenv(core.sistema.WHITELIST_ENV, raising=False)
     with pytest.raises(ValueError):
-        core.ejecutar(["echo", "ok"])
+        core.ejecutar(["echo", "ok"], timeout=1)
 
 
 def test_ejecutar_env_ignora_cambios(monkeypatch):
@@ -63,6 +68,17 @@ def test_ejecutar_env_ignora_cambios(monkeypatch):
     proc.stdout = "ok"
     monkeypatch.setattr(core.sistema.subprocess, "run", lambda *a, **k: proc)
     monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
-    assert core.sistema.ejecutar(["echo", "ok"]) == "ok"
+    assert core.sistema.ejecutar(["echo", "ok"], timeout=1) == "ok"
     with pytest.raises(ValueError):
-        core.sistema.ejecutar(["false"])
+        core.sistema.ejecutar(["false"], timeout=1)
+
+
+def test_ejecutar_timeout_expira(monkeypatch):
+    def raise_timeout(*a, **k):
+        raise subprocess.TimeoutExpired(a[0], k.get("timeout"))
+
+    monkeypatch.setattr(core.sistema.subprocess, "run", raise_timeout)
+    monkeypatch.setattr(core.sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
+    permitido = core.sistema.os.path.realpath("/usr/bin/echo")
+    with pytest.raises(RuntimeError, match="Tiempo de espera agotado"):
+        core.ejecutar(["echo", "ok"], permitidos=[permitido], timeout=1)
