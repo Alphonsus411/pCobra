@@ -38,6 +38,7 @@ pip install cobra-lenguaje
 - Define funciones con `func nombre(parametros) :` y finaliza con `fin` si la función es multilinea.
 - Puedes anteponer líneas con `@decorador` para aplicar decoradores a la función.
 - Utiliza `imprimir` para mostrar datos en pantalla.
+- El intérprete detecta y evita referencias circulares entre variables.
 
 ```cobra
 var mensaje = 'Hola Mundo'

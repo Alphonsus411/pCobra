@@ -188,32 +188,44 @@ class InterpretadorCobra:
         """Permite reemplazar el contexto actual."""
         self.contextos[-1] = valor
 
-    def obtener_variable(self, nombre):
-        """Busca una variable en la pila de contextos."""
-        for contexto in reversed(self.contextos):
-            if nombre in contexto:
-                valor = contexto[nombre]
-                # Resuelve nodos simples a valores primitivos
-                while isinstance(
-                    valor,
-                    (
-                        NodoValor,
-                        NodoIdentificador,
-                        NodoAsignacion,
-                        NodoInstancia,
-                        NodoAtributo,
-                        NodoOperacionBinaria,
-                        NodoOperacionUnaria,
-                        NodoEsperar,
-                        NodoLlamadaFuncion,
-                        NodoLlamadaMetodo,
-                        NodoHolobit,
-                        Token,
-                    ),
-                ):
-                    valor = self.evaluar_expresion(valor)
-                return valor
-        return None
+    def obtener_variable(self, nombre, visitados=None):
+        """Busca una variable en la pila de contextos.
+
+        Utiliza un conjunto de nombres visitados para detectar referencias
+        circulares y evitar bucles infinitos al resolver identificadores
+        encadenados.
+        """
+        visitados = visitados or set()
+        if nombre in visitados:
+            raise RuntimeError(f"Referencia circular detectada en '{nombre}'")
+        visitados.add(nombre)
+        try:
+            for contexto in reversed(self.contextos):
+                if nombre in contexto:
+                    valor = contexto[nombre]
+                    # Resuelve nodos simples a valores primitivos
+                    while isinstance(
+                        valor,
+                        (
+                            NodoValor,
+                            NodoIdentificador,
+                            NodoAsignacion,
+                            NodoInstancia,
+                            NodoAtributo,
+                            NodoOperacionBinaria,
+                            NodoOperacionUnaria,
+                            NodoEsperar,
+                            NodoLlamadaFuncion,
+                            NodoLlamadaMetodo,
+                            NodoHolobit,
+                            Token,
+                        ),
+                    ):
+                        valor = self.evaluar_expresion(valor, visitados)
+                    return valor
+            return None
+        finally:
+            visitados.remove(nombre)
 
     # -- Gestión de memoria -------------------------------------------------
     def solicitar_memoria(self, tam):
@@ -376,16 +388,16 @@ class InterpretadorCobra:
         else:
             raise ValueError(f"Nodo no soportado: {type(nodo)}")
 
-    def ejecutar_asignacion(self, nodo):
+    def ejecutar_asignacion(self, nodo, visitados=None):
         """Evalúa una asignación de variable o atributo."""
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         # Evita llamadas recursivas directas con el mismo nodo
         if valor_nodo is nodo:
             raise ValueError("Asignación no puede evaluarse a sí misma")
-        valor = self.evaluar_expresion(valor_nodo)
+        valor = self.evaluar_expresion(valor_nodo, visitados)
         if isinstance(nombre, NodoAtributo):
-            objeto = self.evaluar_expresion(nombre.objeto)
+            objeto = self.evaluar_expresion(nombre.objeto, visitados)
             if objeto is None:
                 raise ValueError("Objeto no definido para asignación de atributo")
             atributos = objeto.setdefault("__atributos__", {})
@@ -405,8 +417,13 @@ class InterpretadorCobra:
                 self.variables[nombre] = valor
         return valor
 
-    def evaluar_expresion(self, expresion):
-        """Resuelve el valor de una expresión de forma recursiva."""
+    def evaluar_expresion(self, expresion, visitados=None):
+        """Resuelve el valor de una expresión de forma recursiva.
+
+        El parámetro ``visitados`` se utiliza internamente para propagar el
+        seguimiento de variables visitadas y detectar referencias circulares
+        durante la evaluación.
+        """
         if isinstance(expresion, NodoValor):
             return expresion.valor  # Obtiene el valor directo si es un NodoValor
         elif isinstance(expresion, Token) and expresion.tipo in {
@@ -418,13 +435,13 @@ class InterpretadorCobra:
             return expresion.valor  # Si es un token de tipo literal, devuelve su valor
         elif isinstance(expresion, NodoAsignacion):
             # Resuelve asignaciones anidadas y devuelve su valor
-            return self.ejecutar_asignacion(expresion)
+            return self.ejecutar_asignacion(expresion, visitados)
         elif isinstance(expresion, NodoIdentificador):
-            return self.obtener_variable(expresion.nombre)
+            return self.obtener_variable(expresion.nombre, visitados)
         elif isinstance(expresion, NodoInstancia):
             return self.ejecutar_instancia(expresion)
         elif isinstance(expresion, NodoAtributo):
-            objeto = self.evaluar_expresion(expresion.objeto)
+            objeto = self.evaluar_expresion(expresion.objeto, visitados)
             if objeto is None:
                 raise ValueError("Objeto no definido al acceder al atributo")
             atributos = objeto.get("__atributos__", {})
@@ -432,8 +449,8 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
-            izquierda = self.evaluar_expresion(expresion.izquierda)
-            derecha = self.evaluar_expresion(expresion.derecha)
+            izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
+            derecha = self.evaluar_expresion(expresion.derecha, visitados)
             tipo = expresion.operador.tipo
             if tipo == TipoToken.SUMA:
                 verificar_sumables(izquierda, derecha)
@@ -475,7 +492,7 @@ class InterpretadorCobra:
             else:
                 raise ValueError(f"Operador no soportado: {tipo}")
         elif isinstance(expresion, NodoOperacionUnaria):
-            valor = self.evaluar_expresion(expresion.operando)
+            valor = self.evaluar_expresion(expresion.operando, visitados)
             tipo = expresion.operador.tipo
             if tipo == TipoToken.NOT:
                 verificar_booleano(valor, "!")
@@ -483,7 +500,7 @@ class InterpretadorCobra:
             else:
                 raise ValueError(f"Operador unario no soportado: {tipo}")
         elif isinstance(expresion, NodoEsperar):
-            return self.evaluar_expresion(expresion.expresion)
+            return self.evaluar_expresion(expresion.expresion, visitados)
         elif isinstance(expresion, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(expresion)
         elif isinstance(expresion, NodoLlamadaFuncion):
