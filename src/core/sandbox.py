@@ -85,20 +85,26 @@ def ejecutar_en_sandbox(
     return resultado
 
 
-def ejecutar_en_sandbox_js(codigo: str, timeout: int = 5) -> str:
+def ejecutar_en_sandbox_js(
+    codigo: str,
+    timeout: int = 5,
+    env_vars: dict[str, str] | None = None,
+) -> str:
     """Ejecuta código JavaScript de forma aislada usando Node.
 
     Utiliza ``vm2`` para crear un entorno seguro que no expone objetos como
     ``process`` o ``require``. ``timeout`` especifica el tiempo límite en
     segundos para la ejecución. ``vm2`` debe mantenerse actualizado; se
-    comprueba que la versión instalada sea al menos ``3.9.19``.
+    comprueba que la versión instalada sea al menos ``3.9.19``. La sandbox
+    se ejecuta con un entorno minimizado que sólo incluye ``PATH``; se pueden
+    añadir variables específicas mediante ``env_vars``.
     """
     import json
     import os
 
-    env = os.environ.copy()
-    env.pop("NODE_OPTIONS", None)
-    env.pop("NODE_PATH", None)
+    env = {"PATH": os.environ.get("PATH", "")}
+    if env_vars:
+        env.update(env_vars)
 
     try:
         version = subprocess.run(
