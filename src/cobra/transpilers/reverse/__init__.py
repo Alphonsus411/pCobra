@@ -7,7 +7,16 @@ no impedir el uso de los demás.
 from typing import List, Type
 
 from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+try:  # pragma: no cover - dependencia opcional
+    from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
+    class TreeSitterReverseTranspiler(BaseReverseTranspiler):  # type: ignore
+        """Stub cuando tree-sitter no está disponible."""
+
+        def __init__(self, *args, **kwargs) -> None:  # noqa: D401
+            raise ModuleNotFoundError(
+                "tree_sitter es necesario para los transpiladores inversos"
+            ) from exc
 
 # Lista de módulos a intentar importar
 _MODULOS = [
