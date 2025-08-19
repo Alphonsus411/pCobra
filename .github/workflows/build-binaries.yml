@@ -21,7 +21,7 @@ jobs:
           - os: ubuntu-latest
             shell: bash
           - os: windows-latest
-            shell: pwsh
+            shell: bash
           # mac: build both arm64 (Apple Silicon) and x86_64 (Intel)
           - os: macos-latest
             shell: bash
@@ -32,6 +32,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -65,10 +67,11 @@ jobs:
         env:
           PYINSTALLER_ARCH: ${{ matrix.mac_arch || '' }}
         run: |
-          # Your script can read $PYINSTALLER_ARCH on macOS to pass --target-arch
-          # e.g., pyinstaller --onefile yourapp.py ${PYINSTALLER_ARCH:+--target-arch $PYINSTALLER_ARCH}
-          chmod +x scripts/build_cli.sh 2>/dev/null || true
-          ./scripts/build_cli.sh
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            bash scripts/build_cli.sh
+          else
+            ./scripts/build_cli.sh
+          fi
 
       - name: List dist
         if: always()
