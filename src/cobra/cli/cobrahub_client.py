@@ -16,6 +16,9 @@ from cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 logger = logging.getLogger(__name__)
 
+# URL base de CobraHub, sobreescribible en pruebas.
+COBRAHUB_URL = os.environ.get("COBRAHUB_URL", "https://cobrahub.example.com/api")
+
 
 class CobraHubClient:
     """Cliente para interactuar con CobraHub."""
@@ -58,7 +61,7 @@ class CobraHubClient:
         try:
             parsed = urlparse(self.base_url)
             if not parsed.scheme == "https":
-                mostrar_error(_("COBRAHUB_URL debe usar HTTPS"))
+                mostrar_error(_("COBRAHUB_URL debe usar HTTPS (https://)"))
                 return False
 
             if not parsed.hostname:
@@ -218,4 +221,19 @@ class CobraHubClient:
                     pass
             return False
 
+
+# Funciones conveniencia para interacción sencilla con CobraHub.
+def publicar_modulo(ruta: str) -> bool:
+    """Publica un módulo en CobraHub."""
+    os.environ["COBRAHUB_URL"] = COBRAHUB_URL
+    return CobraHubClient().publicar_modulo(ruta)
+
+
+def descargar_modulo(nombre: str, destino: str) -> bool:
+    """Descarga un módulo desde CobraHub."""
+    os.environ["COBRAHUB_URL"] = COBRAHUB_URL
+    return CobraHubClient().descargar_modulo(nombre, destino)
+
+
+__all__ = ["CobraHubClient", "publicar_modulo", "descargar_modulo"]
 
