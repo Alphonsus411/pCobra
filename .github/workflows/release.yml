@@ -48,34 +48,12 @@ jobs:
           docker build -t "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}" .
           docker push "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}"
 
-  build-executables:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
-      - name: Install dependencies
-        uses: ./.github/actions/install
-        with:
-          extra: "pyinstaller"
-      - name: Build executable
-        run: cobra empaquetar --output dist --add-data all-bytes.dat:all-bytes.dat
-      - name: Upload executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: cobra-${{ matrix.os }}
-          path: dist/*
+  build-binaries:
+    uses: ./.github/workflows/build-binaries.yml
+    secrets: inherit
 
   release:
-    needs: [publish-artifacts, build-executables]
+    needs: [publish-artifacts, build-binaries]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
