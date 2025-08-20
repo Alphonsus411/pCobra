@@ -22,7 +22,7 @@ jobs:
           - os: ubuntu-latest
             shell: bash
           - os: windows-latest
-            shell: bash
+            shell: pwsh
           # mac: build both arm64 (Apple Silicon) and x86_64 (Intel)
           - os: macos-latest
             shell: bash
@@ -67,12 +67,7 @@ jobs:
         shell: ${{ matrix.shell }}
         env:
           PYINSTALLER_ARCH: ${{ matrix.mac_arch || '' }}
-        run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            bash scripts/build_cli.sh
-          else
-            ./scripts/build_cli.sh
-          fi
+        run: ${{ runner.os == 'Windows' && './scripts/build_cli.ps1' || './scripts/build_cli.sh' }}
 
       - name: List dist
         if: always()
