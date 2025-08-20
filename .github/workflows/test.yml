@@ -12,7 +12,10 @@ permissions:
 
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,10 +28,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install system packages
+      - name: Install system packages (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk
+      - name: Install system packages (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install -y --no-progress mingw golang ruby rust openjdk
       - name: Install dependencies
         uses: ./.github/actions/install
       - name: Scan for secrets
@@ -36,11 +45,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run linters
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           make lint
           make typecheck
+      - name: Run linters (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./make.bat lint
+          ./make.bat typecheck
       - name: Run tests
+        shell: bash
         run: |
           if [ -d tests ]; then
             pytest tests src/tests --cov=src --cov-report=xml \
