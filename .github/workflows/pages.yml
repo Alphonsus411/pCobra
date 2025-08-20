@@ -29,6 +29,8 @@ jobs:
         uses: ./.github/actions/install
         with:
           extra: "sphinx sphinx-rtd-theme"
+      - name: Install LaTeX packages
+        run: sudo apt-get update && sudo apt-get install -y texlive-latex-recommended texlive-latex-extra latexmk
       - name: Build docs
         run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Build root docs
@@ -39,6 +41,7 @@ jobs:
         run: make -C docs/_build/latex all-pdf
       - name: Copy PDF to build dir
         run: cp docs/_build/latex/proyectocobra.pdf docs/_build/
+      - uses: actions/configure-pages@v2
       - uses: actions/upload-pages-artifact@v2
         with:
           path: docs/_build
