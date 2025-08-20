@@ -29,6 +29,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
       - name: Install system packages (Linux)
         if: runner.os == 'Linux'
         shell: bash
@@ -121,6 +122,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
       - name: Install system packages
         run: |
           sudo apt-get update
