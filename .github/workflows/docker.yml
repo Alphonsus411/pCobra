@@ -32,6 +32,7 @@ jobs:
       - name: Login to Docker registry
         uses: docker/login-action@v3
         with:
+          registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push Docker image
@@ -45,6 +46,14 @@ jobs:
           push: true
       - name: Move Docker cache
         run: mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}
+          format: table
+          exit-code: 1
+          vuln-type: 'os,library'
+          ignore-unfixed: true
       - name: Smoke test
         run: docker run --rm $IMAGE_NAME --version
       - name: Check image size
@@ -56,14 +65,6 @@ jobs:
             echo "Image is too large" >&2
             exit 1
           fi
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.32.0
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}
-          format: table
-          exit-code: 1
-          vuln-type: 'os,library'
-          ignore-unfixed: true
       - name: Save image
         run: docker save $IMAGE_NAME -o pcobra-cli.tar
       - name: Upload artifact
