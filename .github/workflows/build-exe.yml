@@ -28,7 +28,7 @@ jobs:
           extra: "pyinstaller"
       - name: Build executable
         run: |
-          cobra empaquetar --output dist --add-data all-bytes.dat:all-bytes.dat
+          cobra empaquetar --output dist
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
