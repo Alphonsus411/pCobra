@@ -3,7 +3,7 @@ permissions:
   contents: write
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Permite ejecuciones manuales desde la UI de GitHub
   push:
     tags: ['v*.*.*']
 
