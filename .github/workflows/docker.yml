@@ -22,8 +22,19 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-docker-
       - name: Build Docker image
-        run: docker build --target final -t pcobra-cli .
+        run: |
+          docker build --target final \
+            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new \
+            -t pcobra-cli .
+      - name: Move Docker cache
+        run: mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Smoke test
         run: docker run --rm pcobra-cli --version
       - name: Check image size
