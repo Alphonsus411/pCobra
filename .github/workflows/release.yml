@@ -48,13 +48,34 @@ jobs:
           docker build -t "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}" .
           docker push "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}"
 
-  build-binaries:
-    needs: publish-artifacts
-    uses: ./.github/workflows/build-binaries.yml
-    secrets: inherit
+  build-executables:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
+        uses: ./.github/actions/install
+        with:
+          extra: "pyinstaller"
+      - name: Build executable
+        run: cobra empaquetar --output dist --add-data all-bytes.dat:all-bytes.dat
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobra-${{ matrix.os }}
+          path: dist/*
 
   release:
-    needs: [publish-artifacts, build-binaries]
+    needs: [publish-artifacts, build-executables]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -65,8 +86,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: |
-            dist/**/cobra*
+          files: dist/**
       - name: Notify Slack
         if: always()
         uses: rtCamp/action-slack-notify@v2
