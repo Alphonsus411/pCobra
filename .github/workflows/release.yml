@@ -48,12 +48,12 @@ jobs:
           docker build -t "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}" .
           docker push "$DOCKERHUB_USERNAME/cobra:${{ github.ref_name }}"
 
-  build-binaries:
+  build-executables:
     uses: ./.github/workflows/build-binaries.yml
     secrets: inherit
 
   release:
-    needs: [publish-artifacts, build-binaries]
+    needs: [publish-artifacts, build-executables]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
