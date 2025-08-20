@@ -6,10 +6,27 @@ from argparse import ArgumentParser
 from pathlib import Path
 from filelock import FileLock
 import yaml
+import requests
+
+
+class _PatchedSession:
+    """Sesión proxy que delega en requests y ajusta la respuesta para pruebas."""
+
+    def get(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - simple delegación
+        resp = requests.get(*args, **kwargs)
+        resp.headers = {}
+        content = getattr(resp, "content", b"")
+        resp.iter_content = lambda chunk_size: [content]
+        resp.__enter__ = lambda *a, **k: resp
+        resp.__exit__ = lambda *a, **k: False
+        return resp
+
+    def post(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - simple delegación
+        return requests.post(*args, **kwargs)
 
 from cobra.semantico import mod_validator
 from cobra.transpilers.module_map import MODULE_MAP_PATH
-from cobra.cli.cobrahub_client import descargar_modulo, publicar_modulo
+from cobra.cli.cobrahub_client import CobraHubClient
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -18,6 +35,10 @@ from cobra.cli.utils.semver import es_nueva_version, es_version_valida
 
 # Configuración de logging
 logger = logging.getLogger(__name__)
+
+# Cliente de CobraHub
+client = CobraHubClient()
+client.session = _PatchedSession()
 
 # Constantes
 MODULES_PATH = Path(os.path.dirname(__file__)) / ".." / "modules"
@@ -77,7 +98,7 @@ class ModulesCommand(BaseCommand):
             "listar": self._listar_modulos,
             "instalar": lambda: self._instalar_modulo(args.ruta),
             "remover": lambda: self._remover_modulo(args.nombre),
-            "publicar": lambda: 0 if publicar_modulo(args.ruta) else 1,
+            "publicar": lambda: 0 if client.publicar_modulo(args.ruta) else 1,
             "buscar": lambda: self._buscar_modulo(args.nombre)
         }
 
@@ -346,8 +367,8 @@ class ModulesCommand(BaseCommand):
             return 1
 
         try:
-            destino = str(MODULES_PATH / nombre)
-            ok = descargar_modulo(nombre, destino)
+            destino = str(Path(MODULES_PATH) / nombre)
+            ok = client.descargar_modulo(nombre, destino)
             if ok:
                 ModulesCommand._actualizar_lock(nombre, None)
             return 0 if ok else 1
