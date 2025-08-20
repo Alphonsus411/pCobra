@@ -46,7 +46,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install -y --no-progress mingw golang ruby rust temurin17 llvm
+          choco install -y --no-progress mingw golang ruby rust openjdk llvm
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
