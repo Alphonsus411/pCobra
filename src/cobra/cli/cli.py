@@ -54,7 +54,11 @@ class LogLevel(Enum):
 
 class AppConfig:
     # Cargar configuración desde archivo
-    config_data = config.load_config()
+    try:
+        config_data = config.load_config()
+    except Exception as e:  # pragma: no cover - handled by tests
+        logging.error(f"Failed to load configuration: {e}")
+        config_data: Dict[str, str] = {}
     DEFAULT_LANGUAGE = config_data.get("language", "es")
     DEFAULT_COMMAND = config_data.get("default_command", "interactive")
     LOG_FORMAT = config_data.get("log_format", "%(asctime)s - %(levelname)s - %(message)s")
