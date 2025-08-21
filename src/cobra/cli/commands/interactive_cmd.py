@@ -25,11 +25,17 @@ from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
 from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from cobra.cli.utils.messages import (
+    mostrar_advertencia,
+    mostrar_error,
+    mostrar_info,
+)
 from cobra.cli.repl.cobra_lexer import CobraLexer
+
+
 class InteractiveCommand(BaseCommand):
     """Modo interactivo del lenguaje Cobra.
-    
+
     Esta clase implementa un REPL (Read-Eval-Print Loop) para el lenguaje Cobra,
     permitiendo la ejecución interactiva de código con diferentes modos de
     ejecución (normal, sandbox, contenedor Docker).
@@ -53,8 +59,7 @@ class InteractiveCommand(BaseCommand):
     def _setup_logging(self) -> None:
         """Configura el sistema de logging."""
         logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
+            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
         )
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
@@ -62,30 +67,32 @@ class InteractiveCommand(BaseCommand):
 
         Args:
             subparsers: Objeto para registrar subcomandos
-        
+
         Returns:
             Parser configurado para el subcomando
         """
-        parser = subparsers.add_parser(
-            self.name,
-            help=_("Inicia el modo interactivo")
-        )
+        parser = subparsers.add_parser(self.name, help=_("Inicia el modo interactivo"))
         parser.add_argument(
             "--sandbox",
             action="store_true",
-            help=_("Ejecuta cada línea dentro de una sandbox")
+            help=_("Ejecuta cada línea dentro de una sandbox"),
         )
         parser.add_argument(
             "--sandbox-docker",
             choices=["python", "js", "cpp", "rust"],
-            help=_("Ejecuta cada línea en un contenedor Docker")
+            help=_("Ejecuta cada línea en un contenedor Docker"),
         )
         parser.add_argument(
             "--memory-limit",
             type=int,
             default=self.MEMORY_LIMIT_MB,
             help=_("Límite de memoria en MB"),
-            metavar="MB"
+            metavar="MB",
+        )
+        parser.add_argument(
+            "--ignore-memory-limit",
+            action="store_true",
+            help=_("Continúa aun si no se puede aplicar el límite de memoria"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -101,16 +108,16 @@ class InteractiveCommand(BaseCommand):
         """
         if not linea:
             return False
-        
+
         if len(linea) > self.MAX_LINE_LENGTH:
             mostrar_error(_("Línea demasiado larga"))
             return False
 
         # Validar caracteres especiales
-        if re.search(r'[^\w\s\-\.\'\"]+', linea):
+        if re.search(r"[^\w\s\-\.\'\"]+", linea):
             mostrar_error(_("La entrada contiene caracteres no permitidos"))
             return False
-            
+
         return True
 
     def procesar_ast(self, linea: str, validador: Optional[Any] = None, depth: int = 0):
@@ -135,14 +142,14 @@ class InteractiveCommand(BaseCommand):
 
         tokens = Lexer(linea).tokenizar()
         logging.debug(f"Tokens generados: {tokens}")
-        
+
         ast = Parser(tokens).parsear()
         logging.debug(f"AST generado: {ast}")
-        
+
         if validador:
             for nodo in ast:
                 nodo.aceptar(validador)
-        
+
         return ast
 
     def run(self, args: Any) -> int:
@@ -157,15 +164,29 @@ class InteractiveCommand(BaseCommand):
         try:
             # Validar y configurar límite de memoria
             memory_limit = getattr(args, "memory_limit", self.MEMORY_LIMIT_MB)
+            ignore_memory_limit = getattr(args, "ignore_memory_limit", False)
             if memory_limit <= 0:
                 mostrar_error(_("El límite de memoria debe ser positivo"))
                 return 1
 
             try:
                 limitar_memoria_mb(memory_limit)
+            except NotImplementedError as e:
+                mostrar_advertencia(
+                    _("No se pudo aplicar el límite de memoria: {err}").format(err=e)
+                )
             except RuntimeError as e:
-                mostrar_error(f"Error al establecer límite de memoria: {e}")
-                return 1
+                if ignore_memory_limit:
+                    mostrar_advertencia(
+                        _("No se pudo aplicar el límite de memoria: {err}").format(
+                            err=e
+                        )
+                    )
+                else:
+                    mostrar_error(
+                        _("Error al establecer límite de memoria: {err}").format(err=e)
+                    )
+                    return 1
 
             # Validar dependencias
             validar_dependencias("python", module_map.get_toml_map())
@@ -205,7 +226,7 @@ class InteractiveCommand(BaseCommand):
                     # Procesar comandos especiales
                     if linea in ["salir", "salir()"]:
                         break
-                    
+
                     if self._procesar_comando_especial(linea, validador):
                         continue
 
@@ -290,7 +311,9 @@ class InteractiveCommand(BaseCommand):
         except Exception as err:
             self._log_error(_("Error en contenedor Docker"), err)
 
-    def _log_error(self, categoria: str, error: Exception, include_traceback: bool = False) -> None:
+    def _log_error(
+        self, categoria: str, error: Exception, include_traceback: bool = False
+    ) -> None:
         """Registra y muestra un error.
 
         Args:
@@ -304,7 +327,7 @@ class InteractiveCommand(BaseCommand):
         logging.error(mensaje)
         mostrar_error(mensaje)
 
-    def __enter__(self) -> 'InteractiveCommand':
+    def __enter__(self) -> "InteractiveCommand":
         """Inicializa recursos del REPL.
 
         Returns:
@@ -312,10 +335,13 @@ class InteractiveCommand(BaseCommand):
         """
         logging.info(_("Iniciando REPL de Cobra"))
         return self
-        
-    def __exit__(self, exc_type: Optional[type],
-                 exc_val: Optional[Exception],
-                 exc_tb: Optional[TracebackType]) -> None:
+
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[Exception],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         """Libera recursos del REPL.
 
         Args:
