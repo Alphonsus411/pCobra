@@ -192,10 +192,12 @@ class CliApplication:
 
         for action in parser._actions:
             choices = getattr(action, "choices", None)
-            if choices:
-                for sub in choices.values():
-                    self._configure_autocomplete(sub)
-            elif action.dest in file_args:
+            if isinstance(choices, dict) or isinstance(action, argparse._SubParsersAction):
+                if isinstance(choices, dict):
+                    for sub in choices.values():
+                        self._configure_autocomplete(sub)
+                continue
+            if action.dest in file_args:
                 action.completer = FilesCompleter()
             elif action.dest in dir_args:
                 action.completer = DirectoriesCompleter()
