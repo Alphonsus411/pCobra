@@ -281,7 +281,8 @@ class CliApplication:
         if command == "menu":
             return self.run_menu()
         if not command:
-            messages.mostrar_error(_("Invalid command"))
+            self.parser.print_help()
+            messages.mostrar_error(_("Comando inválido. Use --help para ver opciones."))
             return 1
             
         try:
