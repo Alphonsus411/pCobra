@@ -114,6 +114,13 @@ class CommandRegistry:
                 logging.error(f"Failed to register subparser for {command.name}: {e}")
                 del self.commands[command.name]
 
+        if AppConfig.DEFAULT_COMMAND not in self.commands:
+            fallback = "interactive" if "interactive" in self.commands else next(iter(self.commands), None)
+            logging.warning(
+                "Default command '%s' not found. Falling back to '%s'", AppConfig.DEFAULT_COMMAND, fallback
+            )
+            AppConfig.DEFAULT_COMMAND = fallback
+
         return self.commands
 
     def get_default_command(self) -> Optional[BaseCommand]:
