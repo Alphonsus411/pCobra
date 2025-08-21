@@ -8,7 +8,17 @@ import tempfile
 import time
 from pathlib import Path
 
-import resource
+try:
+    import resource
+    psutil = None
+except ImportError:
+    resource = None
+    try:
+        import psutil  # manejar ResourceUsage con psutil
+    except ImportError:  # pragma: no cover - psutil no está disponible
+        psutil = None
+
+# Si no hay 'resource' ni 'psutil', la memoria se informará como -1
 
 # Código Cobra para las pruebas de rendimiento
 CODE = """
@@ -51,13 +61,54 @@ BACKENDS = {
 
 
 def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
-    """Ejecuta *cmd* y devuelve (tiempo_en_segundos, memoria_en_kb)."""
-    start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+    """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.
+
+    Si no se dispone de ``resource`` ni de ``psutil``, la memoria se reporta como
+    ``-1``.
+    """
+
     start_time = time.perf_counter()
-    subprocess.run(cmd, env=env, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    elapsed = time.perf_counter() - start_time
-    end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-    mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
+    if resource is not None:
+        start_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
+        elapsed = time.perf_counter() - start_time
+        end_usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+        mem_kb = max(0, end_usage.ru_maxrss - start_usage.ru_maxrss)
+    elif psutil is not None:
+        proc = subprocess.Popen(
+            cmd,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
+        ps_proc = psutil.Process(proc.pid)
+        peak = 0
+        while proc.poll() is None:
+            try:
+                rss = ps_proc.memory_info().rss
+            except psutil.Error:
+                break
+            peak = max(peak, rss)
+            time.sleep(0.01)
+        proc.wait()
+        elapsed = time.perf_counter() - start_time
+        mem_kb = peak // 1024
+    else:
+        subprocess.run(
+            cmd,
+            env=env,
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
+        elapsed = time.perf_counter() - start_time
+        mem_kb = -1
     return elapsed, mem_kb
 
 
