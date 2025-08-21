@@ -1,7 +1,8 @@
 import argparse
+import logging
 from unittest.mock import MagicMock, patch
 
-from cobra.cli.cli import CommandRegistry
+from cobra.cli.cli import AppConfig, CommandRegistry
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
 
 
@@ -23,3 +24,15 @@ def test_get_default_command_returns_interactive():
         registry.register_base_commands(subparsers)
     default_cmd = registry.get_default_command()
     assert isinstance(default_cmd, InteractiveCommand)
+
+
+def test_register_base_commands_uses_fallback_for_missing_default(monkeypatch, caplog):
+    registry = CommandRegistry(MagicMock())
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
+        monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'missing')
+        with caplog.at_level(logging.WARNING):
+            registry.register_base_commands(subparsers)
+    assert AppConfig.DEFAULT_COMMAND == 'interactive'
+    assert "Default command 'missing' not found" in caplog.text
