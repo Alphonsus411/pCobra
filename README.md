@@ -759,6 +759,8 @@ Para obtener ayuda puedes ejecutar:
 cobra --help
 ```
 
+Para personalizar el comportamiento de la herramienta consulta la [configuración de la CLI](docs/config_cli.md).
+
 Un uso común es compilar un programa y luego ejecutar el resultado:
 
 ```bash
