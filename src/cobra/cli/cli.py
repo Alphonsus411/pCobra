@@ -38,7 +38,8 @@ from cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, 
 from cobra.cli.commands.verify_cmd import VerifyCommand
 from cobra.cli.i18n import _, format_traceback, setup_gettext
 from cobra.cli.plugin import descubrir_plugins
-from cobra.cli.utils import messages, config
+from cobra.cli.utils import messages
+from cobra.cli.utils import config as config_module
 
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
@@ -55,7 +56,7 @@ class LogLevel(Enum):
 class AppConfig:
     # Cargar configuración desde archivo
     try:
-        config_data = config.load_config()
+        config_data = config_module.load_config()
     except Exception as e:  # pragma: no cover - handled by tests
         logging.error(f"Failed to load configuration: {e}")
         config_data: Dict[str, str] = {}
