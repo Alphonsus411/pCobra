@@ -312,6 +312,20 @@ python -m tests.suite_core          # Lexer, parser and interpreter tests
 python -m tests.suite_transpiladores  # Transpiler tests
 ```
 
+### Resource limits on Windows
+
+On Windows the operating system may ignore the requested memory and CPU
+limits. Cobra will warn when this happens, for example:
+
+```
+No se pudo establecer el límite de memoria en Windows; el ajuste se omitirá.
+No se pudo establecer el límite de CPU en Windows; el ajuste se omitirá.
+```
+
+To enforce these restrictions consider running Cobra inside a Linux
+container, such as Docker or WSL2, where resource limits are fully
+supported.
+
 ## Tokens and lexical rules
 
 The lexer converts code into tokens according to the regular expressions defined in `lexer.py`. The following table describes all available tokens:

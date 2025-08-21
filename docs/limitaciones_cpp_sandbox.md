@@ -13,3 +13,16 @@ seguridad:
 
 Si la imagen no está disponible o Docker no está instalado se rechaza la
 operación con un error indicando que el contenedor de C++ no puede usarse.
+
+## Limitaciones en Windows
+
+En Windows los límites de memoria y CPU del contenedor pueden no aplicarse.
+Cuando esto sucede se registran advertencias como:
+
+```
+No se pudo establecer el límite de memoria en Windows; el ajuste se omitirá.
+No se pudo establecer el límite de CPU en Windows; el ajuste se omitirá.
+```
+
+Para aplicar correctamente estas restricciones utiliza un entorno basado en
+Linux, como WSL2 o Docker Desktop con un contenedor Linux.
