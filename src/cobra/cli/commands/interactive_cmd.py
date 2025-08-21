@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import resource
 import traceback
 from typing import Optional, Any, NoReturn
 from argparse import ArgumentParser
@@ -15,6 +14,7 @@ from cobra.core import Lexer, LexerError
 from cobra.core import Parser, ParserError
 from cobra.transpilers import module_map
 from core.interpreter import InterpretadorCobra
+from core.resource_limits import limitar_memoria_mb
 from core.qualia_bridge import get_suggestions
 from core.sandbox import (
     ejecutar_en_contenedor,
@@ -162,12 +162,9 @@ class InteractiveCommand(BaseCommand):
                 return 1
 
             try:
-                resource.setrlimit(
-                    resource.RLIMIT_AS,
-                    (memory_limit * 1024 * 1024,) * 2
-                )
-            except OSError as e:
-                mostrar_error(f"Error al establecer límites de recursos: {e}")
+                limitar_memoria_mb(memory_limit)
+            except RuntimeError as e:
+                mostrar_error(f"Error al establecer límite de memoria: {e}")
                 return 1
 
             # Validar dependencias
