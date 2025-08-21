@@ -27,6 +27,7 @@ from cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
 from cobra.cli.commands.execute_cmd import ExecuteCommand
 from cobra.cli.commands.flet_cmd import FletCommand
 from cobra.cli.commands.init_cmd import InitCommand
+from cobra.cli.commands.interactive_cmd import InteractiveCommand
 from core.interpreter import InterpretadorCobra
 from cobra.cli.commands.jupyter_cmd import JupyterCommand
 from cobra.cli.commands.modules_cmd import ModulesCommand
@@ -65,7 +66,7 @@ class AppConfig:
     LOG_FORMAT = config_data.get("log_format", "%(asctime)s - %(levelname)s - %(message)s")
     PROGRAM_NAME = config_data.get("program_name", "cobra")
     BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = [
-        CompileCommand, ExecuteCommand, ModulesCommand,
+        InteractiveCommand, CompileCommand, ExecuteCommand, ModulesCommand,
         DependenciasCommand, DocsCommand, EmpaquetarCommand,
         PaqueteCommand, CrearCommand, InitCommand,
         JupyterCommand, FletCommand, ContainerCommand,
