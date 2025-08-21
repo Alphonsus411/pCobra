@@ -1,4 +1,7 @@
-import resource
+import pytest
+
+resource = pytest.importorskip("resource")
+
 from core.resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 
