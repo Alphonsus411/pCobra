@@ -1,4 +1,7 @@
-"""Utilidades para limitar memoria y tiempo de CPU."""
+"""Utilidades centralizadas para limitar memoria y tiempo de CPU.
+
+Todos los comandos deben emplear estas funciones en lugar de
+implementaciones manuales para gestionar los límites de recursos."""
 from __future__ import annotations
 
 import logging

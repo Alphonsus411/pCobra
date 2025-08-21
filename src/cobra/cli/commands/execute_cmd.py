@@ -1,7 +1,5 @@
 import logging
 import os
-import signal
-from multiprocessing import Process, Queue
 from typing import Any
 
 from argcomplete.completers import FilesCompleter
@@ -21,6 +19,7 @@ from core.sandbox import (
     validar_dependencias,
 )
 from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from core.resource_limits import limitar_cpu_segundos
 
 
 class ExecuteCommand(BaseCommand):
@@ -62,38 +61,12 @@ class ExecuteCommand(BaseCommand):
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.MAX_FILE_SIZE} bytes)")
 
     def _limitar_recursos(self, funcion):
-        """Ejecuta una función con límite de tiempo."""
-        if os.name == "nt":
-            queue: Queue[Any] = Queue()
-
-            def wrapper():
-                try:
-                    queue.put(funcion())
-                except Exception as e:  # pragma: no cover - error path
-                    queue.put(e)
-
-            proceso = Process(target=wrapper)
-            proceso.start()
-            proceso.join(self.EXECUTION_TIMEOUT)
-            if proceso.is_alive():
-                proceso.terminate()
-                proceso.join()
-                raise TimeoutError("La ejecución excedió el tiempo límite")
-
-            resultado = queue.get() if not queue.empty() else None
-            if isinstance(resultado, Exception):
-                raise resultado
-            return resultado
-        else:
-            def handler(signum, frame):
-                raise TimeoutError("La ejecución excedió el tiempo límite")
-
-            signal.signal(signal.SIGALRM, handler)
-            signal.alarm(self.EXECUTION_TIMEOUT)
-            try:
-                return funcion()
-            finally:
-                signal.alarm(0)
+        """Configura límites de CPU y ejecuta una función."""
+        try:
+            limitar_cpu_segundos(self.EXECUTION_TIMEOUT)
+        except RuntimeError as exc:
+            raise TimeoutError(f"No se pudo establecer el límite de CPU: {exc}") from exc
+        return funcion()
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
@@ -146,7 +119,11 @@ class ExecuteCommand(BaseCommand):
                 return self._ejecutar_en_contenedor(codigo, contenedor)
             return self._ejecutar_normal(codigo, seguro, extra_validators)
 
-        return self._limitar_recursos(ejecutar)
+        try:
+            return self._limitar_recursos(ejecutar)
+        except TimeoutError as e:
+            mostrar_error(str(e))
+            return 1
 
     def _ejecutar_en_sandbox(self, codigo: str) -> int:
         """Ejecuta el código en un entorno sandbox."""

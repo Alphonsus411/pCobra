@@ -3,6 +3,10 @@
 Al importar :mod:`src.core` se exponen todas las clases que componen el
 árbol de sintaxis abstracta junto con el visitante base ``NodeVisitor``.
 Esto simplifica el uso de la biblioteca desde otros módulos.
+
+Las funciones para limitar recursos ``limitar_memoria_mb`` y
+``limitar_cpu_segundos`` también se exponen aquí y deben usarse en lugar
+de implementaciones manuales.
 """
 
 from core.ast_nodes import *
