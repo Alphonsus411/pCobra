@@ -85,10 +85,12 @@ jobs:
         run: |
           if [ -d tests ]; then
             pytest tests src/tests --cov=src --cov-report=xml \
-              --cov-report=term-missing --cov-fail-under=95
+              --cov-report=term-missing --cov-fail-under=95 -m "not windows"
+            pytest tests src/tests -m windows
           else
             pytest src/tests --cov=src --cov-report=xml \
-              --cov-report=term-missing --cov-fail-under=95
+              --cov-report=term-missing --cov-fail-under=95 -m "not windows"
+            pytest src/tests -m windows
           fi
       - name: Run LLVM examples
         shell: bash
