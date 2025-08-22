@@ -281,3 +281,18 @@ captura al importar el módulo, por lo que modificar la variable de
 entorno después no surte efecto. Invocar la función sin esta
 configuración producirá un ``ValueError``.
 
+## 16. Limitaciones de recursos en Windows
+
+En sistemas Windows los límites de memoria y de CPU pueden no aplicarse
+correctamente. Si Cobra no logra establecer las restricciones solicitadas
+mostrará advertencias como:
+
+```
+No se pudo establecer el límite de memoria en Windows; el ajuste se omitirá.
+No se pudo establecer el límite de CPU en Windows; el ajuste se omitirá.
+```
+
+Para garantizar estos límites se recomienda ejecutar Cobra dentro de un
+contenedor como Docker o bajo WSL2, donde sí es posible aplicar las
+restricciones de recursos.
+

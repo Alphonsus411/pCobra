@@ -196,6 +196,19 @@ Recomendaciones de estilo
 * Prefiere expresiones claras antes que construcciones complejas y evita macros
   innecesarias.
 
+Limitaciones de recursos en Windows
+-----------------------------------
+
+En sistemas Windows, las funciones que intentan limitar la memoria o el tiempo
+de CPU pueden no aplicarse. Cobra mostrará advertencias como::
+
+   No se pudo establecer el límite de memoria en Windows; el ajuste se omitirá.
+   No se pudo establecer el límite de CPU en Windows; el ajuste se omitirá.
+
+Para asegurar estos límites, ejecuta Cobra dentro de un contenedor (por
+ejemplo, Docker o WSL2) donde las restricciones de recursos sí se pueden
+aplicar.
+
 Recursos adicionales
 --------------------
 
