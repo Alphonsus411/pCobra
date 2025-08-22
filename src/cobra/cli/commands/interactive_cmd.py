@@ -2,8 +2,7 @@ import logging
 import os
 import re
 import traceback
-from typing import Optional, Any, NoReturn
-from argparse import ArgumentParser
+from typing import Optional, Any
 from types import TracebackType
 
 from prompt_toolkit import PromptSession
@@ -141,10 +140,10 @@ class InteractiveCommand(BaseCommand):
             raise RuntimeError(_("Se excedió la profundidad máxima del AST"))
 
         tokens = Lexer(linea).tokenizar()
-        logging.debug(f"Tokens generados: {tokens}")
+        logging.debug(_("Tokens generados: {tokens}").format(tokens=tokens))
 
         ast = Parser(tokens).parsear()
-        logging.debug(f"AST generado: {ast}")
+        logging.debug(_("AST generado: {ast}").format(ast=ast))
 
         if validador:
             for nodo in ast:
@@ -191,7 +190,7 @@ class InteractiveCommand(BaseCommand):
             # Validar dependencias
             validar_dependencias("python", module_map.get_toml_map())
         except (ValueError, FileNotFoundError) as err:
-            mostrar_error(f"Error de inicialización: {err}")
+            mostrar_error(_("Error de inicialización: {err}").format(err=err))
             return 1
 
         # Configurar modo seguro y validadores
@@ -350,5 +349,7 @@ class InteractiveCommand(BaseCommand):
             exc_tb: Traceback de la excepción
         """
         if exc_type is not None:
-            logging.error(f"Error al finalizar REPL: {exc_val}")
+            logging.error(
+                _("Error al finalizar REPL: {exc_val}").format(exc_val=exc_val)
+            )
         logging.info(_("Finalizando REPL de Cobra"))
