@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from cobra.cli.i18n import _
 
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,11 @@ def limitar_memoria_mb(mb: int) -> None:
     bytes_ = mb * 1024 * 1024
     if IS_WINDOWS:
         if not _limitar_memoria_psutil(bytes_):
-            logger.warning(
-                "No se pudo establecer el límite de memoria en Windows; el ajuste se omitirá.",
+            logger.error(
+                _(
+                    "No se pudo establecer el límite de memoria en Windows; "
+                    "el ajuste se omitirá."
+                ),
             )
         return
     try:
@@ -27,7 +31,7 @@ def limitar_memoria_mb(mb: int) -> None:
     except ImportError as exc:
         # Falta 'resource', se intenta 'psutil'.
         logger.warning(
-            "El módulo 'resource' no está disponible; se intentará 'psutil'.",
+            _("El módulo 'resource' no está disponible; se intentará 'psutil'."),
             exc_info=exc,
         )
         _limitar_memoria_psutil(bytes_)
@@ -37,7 +41,10 @@ def limitar_memoria_mb(mb: int) -> None:
     except (OSError, ValueError) as exc:
         # Error de configuración en 'resource'.
         logger.warning(
-            "No se pudo configurar el límite de memoria con 'resource'; se intentará 'psutil'.",
+            _(
+                "No se pudo configurar el límite de memoria con 'resource'; "
+                "se intentará 'psutil'."
+            ),
             exc_info=exc,
         )
         _limitar_memoria_psutil(bytes_)
@@ -47,38 +54,49 @@ def _limitar_memoria_psutil(bytes_: int) -> bool:
     try:
         import psutil  # type: ignore
     except ImportError as exc:
-        mensaje = "El módulo 'psutil' no está disponible para limitar la memoria."
+        mensaje = _("El módulo 'psutil' no está disponible para limitar la memoria.")
         if IS_WINDOWS:
             logger.warning(mensaje, exc_info=exc)
             return False
         logger.error(mensaje, exc_info=exc)
-        raise RuntimeError("No se pudo establecer el límite de memoria en esta plataforma") from exc
+        raise RuntimeError(
+            _("No se pudo establecer el límite de memoria en esta plataforma")
+        ) from exc
     proc = psutil.Process()
     if not hasattr(proc, "rlimit"):
-        mensaje = "psutil.Process no soporta 'rlimit'; no se aplicará el límite de memoria."
+        mensaje = _(
+            "psutil.Process no soporta 'rlimit'; no se aplicará el límite de memoria."
+        )
         if IS_WINDOWS:
             logger.warning(mensaje)
             return False
         logger.error(mensaje)
-        raise RuntimeError("No se pudo establecer el límite de memoria en esta plataforma")
+        raise RuntimeError(
+            _("No se pudo establecer el límite de memoria en esta plataforma")
+        )
     try:
         proc.rlimit(psutil.RLIMIT_AS, (bytes_, bytes_))
         return True
     except (OSError, ValueError) as exc:
-        mensaje = "Error configurando el límite de memoria con 'psutil'."
+        mensaje = _("Error configurando el límite de memoria con 'psutil'.")
         if IS_WINDOWS:
             logger.warning(mensaje, exc_info=exc)
             return False
         logger.error(mensaje, exc_info=exc)
-        raise RuntimeError("No se pudo establecer el límite de memoria en esta plataforma") from exc
+        raise RuntimeError(
+            _("No se pudo establecer el límite de memoria en esta plataforma")
+        ) from exc
 
 
 def limitar_cpu_segundos(segundos: int) -> None:
     """Limita el tiempo de CPU en segundos para este proceso."""
     if IS_WINDOWS:
         if not _limitar_cpu_psutil(segundos):
-            logger.warning(
-                "No se pudo establecer el límite de CPU en Windows; el ajuste se omitirá."
+            logger.error(
+                _(
+                    "No se pudo establecer el límite de CPU en Windows; "
+                    "el ajuste se omitirá."
+                )
             )
         return
     try:
@@ -86,7 +104,7 @@ def limitar_cpu_segundos(segundos: int) -> None:
     except ImportError as exc:
         # Falta 'resource', se intenta 'psutil'.
         logger.warning(
-            "El módulo 'resource' no está disponible; se intentará 'psutil'.",
+            _("El módulo 'resource' no está disponible; se intentará 'psutil'."),
             exc_info=exc,
         )
         _limitar_cpu_psutil(segundos)
@@ -96,7 +114,10 @@ def limitar_cpu_segundos(segundos: int) -> None:
     except (OSError, ValueError) as exc:
         # Error de configuración en 'resource'.
         logger.warning(
-            "No se pudo configurar el límite de CPU con 'resource'; se intentará 'psutil'.",
+            _(
+                "No se pudo configurar el límite de CPU con 'resource'; "
+                "se intentará 'psutil'."
+            ),
             exc_info=exc,
         )
         _limitar_cpu_psutil(segundos)
@@ -106,27 +127,35 @@ def _limitar_cpu_psutil(segundos: int) -> bool:
     try:
         import psutil  # type: ignore
     except ImportError as exc:
-        mensaje = "El módulo 'psutil' no está disponible para limitar la CPU."
+        mensaje = _("El módulo 'psutil' no está disponible para limitar la CPU.")
         if IS_WINDOWS:
             logger.warning(mensaje, exc_info=exc)
             return False
         logger.error(mensaje, exc_info=exc)
-        raise RuntimeError("No se pudo establecer el límite de CPU en esta plataforma") from exc
+        raise RuntimeError(
+            _("No se pudo establecer el límite de CPU en esta plataforma")
+        ) from exc
     proc = psutil.Process()
     if not hasattr(proc, "rlimit"):
-        mensaje = "psutil.Process no soporta 'rlimit'; no se aplicará el límite de CPU."
+        mensaje = _(
+            "psutil.Process no soporta 'rlimit'; no se aplicará el límite de CPU."
+        )
         if IS_WINDOWS:
             logger.warning(mensaje)
             return False
         logger.error(mensaje)
-        raise RuntimeError("No se pudo establecer el límite de CPU en esta plataforma")
+        raise RuntimeError(
+            _("No se pudo establecer el límite de CPU en esta plataforma")
+        )
     try:
         proc.rlimit(psutil.RLIMIT_CPU, (segundos, segundos))
         return True
     except (OSError, ValueError) as exc:
-        mensaje = "Error configurando el límite de CPU con 'psutil'."
+        mensaje = _("Error configurando el límite de CPU con 'psutil'.")
         if IS_WINDOWS:
             logger.warning(mensaje, exc_info=exc)
             return False
         logger.error(mensaje, exc_info=exc)
-        raise RuntimeError("No se pudo establecer el límite de CPU en esta plataforma") from exc
+        raise RuntimeError(
+            _("No se pudo establecer el límite de CPU en esta plataforma")
+        ) from exc
