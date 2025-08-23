@@ -30,8 +30,9 @@ def ejecutar(
 
     ``comando`` debe ser una lista no vacía de argumentos que se pasa
     directamente a ``subprocess.run`` sin crear un shell. Se lanza
-    ``ValueError`` si la lista está vacía. ``permitidos`` define una lista blanca de rutas absolutas de ejecutables
-    autorizados; este parámetro es obligatorio. Si se invoca la función
+    ``ValueError`` si la lista está vacía. ``permitidos`` define una lista
+    blanca de rutas absolutas de ejecutables autorizados; este parámetro es
+    obligatorio. Si se invoca la función
     sin una lista se utilizará la capturada desde
     ``COBRA_EJECUTAR_PERMITIDOS`` al importar el módulo, siempre que no
     esté vacía. Los cambios posteriores en la variable de entorno no
@@ -46,6 +47,13 @@ def ejecutar(
     excepción ``subprocess.CalledProcessError`` devolviendo ``stderr``
     cuando esté disponible o lanzando un ``RuntimeError`` con
     información detallada.
+
+    Para mitigar ataques de tiempo de comprobación a tiempo de uso
+    (TOCTOU), se registra el ``inode`` del ejecutable antes de la
+    ejecución y se vuelve a comprobar después de llamar a
+    ``subprocess.run``. Si el ``inode`` difiere, se lanza un
+    ``RuntimeError`` indicando que el archivo fue modificado durante el
+    proceso.
     """
     if not comando:
         raise ValueError("Comando vacío")
@@ -65,6 +73,7 @@ def ejecutar(
         permitidos_reales = {os.path.realpath(p) for p in permitidos}
         if exe_real not in permitidos_reales:
             raise ValueError(f"Comando no permitido: {exe_real}")
+        inode = os.stat(exe_real).st_ino
     args = comando
     try:
         resultado = subprocess.run(
@@ -75,6 +84,9 @@ def ejecutar(
             stderr=subprocess.PIPE,
             timeout=timeout,
         )
+        inode_final = os.stat(exe_real).st_ino
+        if inode_final != inode:
+            raise RuntimeError("El ejecutable cambió durante la ejecución")
         return resultado.stdout
     except subprocess.TimeoutExpired as exc:
         if exc.stderr:
