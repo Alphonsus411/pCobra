@@ -93,6 +93,7 @@ jobs:
             pytest src/tests -m windows
           fi
       - name: Run LLVM examples
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           PYTHONPATH=src python scripts/test_llvm_examples.py
