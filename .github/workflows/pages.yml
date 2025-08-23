@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # Fijado a commit para seguridad de la cadena de suministro
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -43,8 +43,8 @@ jobs:
         run: make -C docs/_build/latex all-pdf
       - name: Copy PDF to build dir
         run: cp docs/_build/latex/proyectocobra.pdf docs/_build/
-      - uses: actions/configure-pages@v2
-      - uses: actions/upload-pages-artifact@v2
+      - uses: actions/configure-pages@c5a3e1159e0cbdf0845eb8811bd39e39fc3099c2 # v2
+      - uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c # v2
         with:
           path: docs/_build
-      - uses: actions/deploy-pages@v2
+      - uses: actions/deploy-pages@de14547edc9944350dc0481aa5b7afb08e75f254 # v2
