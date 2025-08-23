@@ -15,7 +15,7 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # Fijado a commit para seguridad de la cadena de suministro
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v5
@@ -111,7 +111,7 @@ jobs:
   benchmarks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # Fijado a commit para seguridad de la cadena de suministro
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v5
