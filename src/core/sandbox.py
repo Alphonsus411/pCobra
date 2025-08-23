@@ -24,7 +24,9 @@ MIN_VM2_VERSION = Version("3.9.19")
 MAX_JS_OUTPUT_BYTES = 8 * 1024
 
 
-def _worker(code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None) -> None:
+def _worker(
+    code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None
+) -> None:
     """Ejecuta ``code_bytes`` en un proceso aislado y comunica el resultado."""
     try:
         if memoria_mb is not None and os.name != "nt":
@@ -96,13 +98,17 @@ def ejecutar_en_sandbox_js(
     ``process`` o ``require``. ``timeout`` especifica el tiempo límite en
     segundos para la ejecución. ``vm2`` debe mantenerse actualizado; se
     comprueba que la versión instalada sea al menos ``3.9.19``. La sandbox
-    se ejecuta con un entorno minimizado que sólo incluye ``PATH``; se pueden
+    se ejecuta con un entorno minimizado cuyo ``PATH`` apunta únicamente a
+    ``/usr/bin`` o al directorio que contiene el ejecutable de Node; se pueden
     añadir variables específicas mediante ``env_vars``.
     """
     import json
     import os
+    import shutil
 
-    env = {"PATH": os.environ.get("PATH", "")}
+    node_dir = shutil.which("node")
+    env_path = os.path.dirname(node_dir) if node_dir else "/usr/bin"
+    env = {"PATH": env_path}
     if env_vars:
         env.update(env_vars)
 
@@ -147,7 +153,9 @@ process.stdout.write(output);
 """
 
     base_dir = Path(__file__).resolve().parent
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, dir=base_dir) as tmp:
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".js", delete=False, dir=base_dir
+    ) as tmp:
         tmp.write(script)
         tmp_path = tmp.name
 
