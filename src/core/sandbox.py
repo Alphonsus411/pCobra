@@ -235,7 +235,7 @@ def ejecutar_en_contenedor(
     usuario ``nobody`` (``--user 65534:65534``), con el sistema de archivos en
     modo solo lectura (``--read-only`` y ``--tmpfs /tmp``) y sin capacidades
     adicionales (``--cap-drop=ALL``). Además, se aplican límites de recursos
-    mediante ``--pids-limit`` y ``--memory`` para evitar abusos del sistema.
+    mediante ``--pids-limit``, ``--memory`` y ``--cpus`` para evitar abusos del sistema.
     """
 
     imagenes = {
@@ -257,6 +257,7 @@ def ejecutar_en_contenedor(
                 "--network=none",
                 "--pids-limit=128",
                 "--memory=256m",
+                "--cpus=1",
                 "--user", "65534:65534",
                 "--read-only",
                 "--tmpfs", "/tmp",
