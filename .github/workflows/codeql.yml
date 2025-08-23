@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # Fijado a commit para seguridad de la cadena de suministro
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -26,11 +26,11 @@ jobs:
             requirements.txt
             requirements-dev.txt
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@ad2a4837011b42f6947b78d6417e7c253b1c504b # v3
         with:
           languages: python
           config-file: ./.github/codeql/custom/codeql-config.yml
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@ad2a4837011b42f6947b78d6417e7c253b1c504b # v3
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@ad2a4837011b42f6947b78d6417e7c253b1c504b # v3
