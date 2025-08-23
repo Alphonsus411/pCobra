@@ -35,6 +35,8 @@ jobs:
         run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Build root docs
         run: sphinx-build -b html docs docs/_build
+      - name: Copy frontend docs to build dir
+        run: cp -r frontend/build/html docs/_build/frontend
       - name: Build LaTeX docs
         run: sphinx-build -b latex docs docs/_build/latex
       - name: Build PDF manual
