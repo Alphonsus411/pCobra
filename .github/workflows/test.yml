@@ -56,9 +56,10 @@ jobs:
           python -c "import flask, requests"
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        with:
+          config-path: gitleaks.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: gitleaks.toml
       - name: Run linters
         if: runner.os != 'Windows'
         shell: bash
