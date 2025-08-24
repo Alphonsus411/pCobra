@@ -40,6 +40,14 @@ jobs:
           choco install -y --no-progress mingw golang ruby rust openjdk
       - name: Install dependencies
         uses: ./.github/actions/install
+        with:
+          extra: "flask requests"
+      - name: Verify extra packages
+        shell: bash
+        run: |
+          python - <<'PY'
+          import flask, requests
+          PY
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
         env:
