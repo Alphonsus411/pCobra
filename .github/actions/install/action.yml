@@ -16,6 +16,6 @@ runs:
         pip install -e .
         # pip install -e .[dev] también es válido para extras de desarrollo
         if [ -n "${{ inputs.extra }}" ]; then
-          pip install ${{ inputs.extra }}
+          pip install "${{ inputs.extra }}"
         fi
 
