@@ -43,11 +43,17 @@ jobs:
         with:
           extra: "flask requests"
       - name: Verify extra packages
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           python - <<'PY'
           import flask, requests
           PY
+      - name: Verify extra packages (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -c "import flask, requests"
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
