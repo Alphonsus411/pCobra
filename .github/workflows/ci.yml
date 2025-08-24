@@ -53,6 +53,7 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Verify extra packages
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           python - <<'PY'
@@ -60,6 +61,11 @@ jobs:
           for pkg in ["sphinx", "pyright"]:
               importlib.import_module(pkg.replace('-', '_'))
           PY
+      - name: Verify extra packages (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -c "import importlib; [importlib.import_module(pkg.replace('-', '_')) for pkg in ['sphinx','pyright']]"
       - name: Seguridad de dependencias
         shell: bash
         run: |
@@ -144,6 +150,7 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
       - name: Verify extra packages
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           python - <<'PY'
@@ -151,6 +158,11 @@ jobs:
           for pkg in ["sphinx", "pyright"]:
               importlib.import_module(pkg.replace('-', '_'))
           PY
+      - name: Verify extra packages (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -c "import importlib; [importlib.import_module(pkg.replace('-', '_')) for pkg in ['sphinx','pyright']]"
       - name: Compare benchmarks
         run: |
           python scripts/benchmarks/compare_releases.py \
