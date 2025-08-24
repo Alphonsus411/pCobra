@@ -1,0 +1,9 @@
+title = "pCobra gitleaks config"
+
+[allowlist]
+  description = "Exclude docs and examples from secret scanning"
+  paths = [
+    "docs/",
+    "examples/"
+  ]
+
