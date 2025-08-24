@@ -79,6 +79,25 @@ def test_sandbox_js_ignora_node_options(monkeypatch):
 
 
 @pytest.mark.timeout(5)
+def test_sandbox_js_filtra_env_vars(monkeypatch):
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    env_vars = {
+        "NODE_OPTIONS": "--eval \"process.stdout.write('pwned')\"",
+        "PATH": "/tmp",
+        "SAFE": "1",
+        "MAL-ENV": "bad",
+    }
+    salida = ejecutar_en_sandbox_js("console.log('hola')", env_vars=env_vars)
+    assert salida.strip() == "hola"
+    assert "pwned" not in salida
+
+
+@pytest.mark.timeout(5)
 def test_sandbox_js_trunca_salida_grande():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
