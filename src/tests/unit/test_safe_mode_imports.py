@@ -35,7 +35,7 @@ def test_imports_y_reflexion_en_modo_seguro(tmp_path, monkeypatch):
     ruta_sys.write_text('')
     AST_COMPLETO[0].ruta = str(ruta_os)
     AST_COMPLETO[1].ruta = str(ruta_sys)
-    interp = InterpretadorCobra(safe_mode=True)
+    interp = InterpretadorCobra()
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(AST_COMPLETO)
 

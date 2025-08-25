@@ -41,13 +41,13 @@ Opciones principales:
 - ``archivo``: ruta del código ``.co``.
 - ``--formatear``: aplica ``black`` antes de procesar el archivo.
 - ``--depurar``: muestra información de depuración.
-- ``--seguro``: activa el :doc:`modo seguro <modo_seguro>`.
+- ``--no-seguro``: desactiva el :doc:`modo seguro <modo_seguro>`.
 
 Ejemplo:
 
 .. code-block:: bash
 
-   cobra ejecutar programa.co --seguro --depurar
+   cobra ejecutar programa.co --no-seguro --depurar
 
 Subcomando ``interactive``
 -------------------------

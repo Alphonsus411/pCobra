@@ -11,7 +11,7 @@ class DummyValidator(ValidadorBase):
         raise DummyError('validado')
 
 def test_interpreter_extra_validators_list():
-    interp = InterpretadorCobra(safe_mode=True, extra_validators=[DummyValidator()])
+    interp = InterpretadorCobra(extra_validators=[DummyValidator()])
     with pytest.raises(DummyError):
         interp.ejecutar_ast([NodoValor(1)])
 
@@ -26,7 +26,7 @@ def test_interpreter_extra_validators_file(tmp_path):
     )
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
-        interp = InterpretadorCobra(safe_mode=True, extra_validators=str(mod))
+        interp = InterpretadorCobra(extra_validators=str(mod))
         with pytest.raises(Exception):
             interp.ejecutar_ast([NodoValor(2)])
     finally:
@@ -37,7 +37,7 @@ def test_interpreter_rejects_unwhitelisted_validators(tmp_path):
     mod = tmp_path / 'vals.py'
     mod.write_text('VALIDADORES_EXTRA = []')
     with pytest.raises(ImportError):
-        InterpretadorCobra(safe_mode=True, extra_validators=str(mod))
+        InterpretadorCobra(extra_validators=str(mod))
 
 
 def test_validator_open_blocked(tmp_path):

@@ -44,7 +44,7 @@ def test_valida_cada_nodo_una_sola_vez(monkeypatch):
     from core.interpreter import InterpretadorCobra
     from core.ast_nodes import NodoAsignacion, NodoValor
 
-    interp = InterpretadorCobra(safe_mode=True)
+    interp = InterpretadorCobra()
     nodo = NodoAsignacion("x", NodoValor(1))
 
     contador = 0

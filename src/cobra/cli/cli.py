@@ -169,8 +169,14 @@ class CliApplication:
                           help=_("Format file before processing"))
         parser.add_argument("--debug", action="store_true",
                           help=_("Show debug messages"))
-        parser.add_argument("--safe", action="store_true",
-                          help=_("Run in safe mode"))
+        parser.add_argument(
+            "--no-safe",
+            "--no-seguro",
+            dest="seguro",
+            action="store_false",
+            help=_("Run without safe mode"),
+        )
+        parser.set_defaults(seguro=True)
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
                           help=_("Interface language code"))

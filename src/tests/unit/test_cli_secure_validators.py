@@ -35,5 +35,5 @@ def _run_cli(args):
 def test_cli_seguro_primitivas_prohibidas(tmp_path, contenido):
     archivo = tmp_path / "a.co"
     archivo.write_text(contenido)
-    code = _run_cli(["--seguro", "ejecutar", str(archivo)])
+    code = _run_cli(["ejecutar", str(archivo)])
     assert code != 0

@@ -85,7 +85,7 @@ class ExecuteCommand(BaseCommand):
 
         depurar = getattr(args, "depurar", False)
         formatear = getattr(args, "formatear", False)
-        seguro = getattr(args, "seguro", False)
+        seguro = getattr(args, "seguro", True)
         extra_validators = getattr(args, "validadores_extra", None)
         sandbox = getattr(args, "sandbox", False)
         contenedor = getattr(args, "contenedor", None)

@@ -63,11 +63,11 @@ definir una lista ``VALIDADORES_EXTRA`` con las instancias a añadir.
 
    VALIDADORES_EXTRA = [Demo()]
 
-Posteriormente se indica la ruta al ejecutar Cobra:
+Posteriormente se indica la ruta al ejecutar Cobra (el modo seguro está activo por defecto):
 
 .. code-block:: bash
 
-   cobra ejecutar prog.co --seguro --validadores-extra validadores.py
+   cobra ejecutar prog.co --validadores-extra validadores.py
 
 Ejemplo de deteccion
 --------------------

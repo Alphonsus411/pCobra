@@ -1,8 +1,8 @@
 Modo seguro
 ===========
 
-A partir de Cobra 9.0 la herramienta ``cobra`` permite ejecutar programas en
-modo seguro mediante la opción ``--seguro``. Al activarse se construye una
+A partir de Cobra 9.0 la herramienta ``cobra`` ejecuta los programas en
+modo seguro de forma predeterminada. Este modo construye una
 cadena de validadores que analiza el AST y bloquea primitivas peligrosas como
 ``leer_archivo``, ``escribir_archivo``, ``obtener_url`` y ``hilo``.
 A partir de esta versión también se restringen las funciones ``leer``,
@@ -28,14 +28,15 @@ habilitarse o deshabilitarse editando ``cobra.toml``:
    activa = true
 
 Si se intenta utilizar alguna de estas operaciones se lanzará
-``PrimitivaPeligrosaError`` antes de ejecutar el código.
+``PrimitivaPeligrosaError`` antes de ejecutar el código. Para desactivar
+estas restricciones puede utilizarse la opción ``--no-seguro``.
 
 Ejemplo de uso
 --------------
 
 .. code-block:: bash
 
-   cobra ejecutar hola.co --seguro
+   cobra ejecutar hola.co
 
 Validadores personalizados
 -------------------------
@@ -45,7 +46,7 @@ Se puede ampliar la cadena de validación pasando la opción
 
 .. code-block:: bash
 
-   cobra ejecutar programa.co --seguro --validadores-extra mis_validadores.py
+   cobra ejecutar programa.co --validadores-extra mis_validadores.py
 
 Configuraciones avanzadas
 -------------------------

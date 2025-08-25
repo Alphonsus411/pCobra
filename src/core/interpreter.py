@@ -146,15 +146,16 @@ class InterpretadorCobra:
         exec(byte_code, namespace)
         return namespace.get("VALIDADORES_EXTRA", [])
 
-    def __init__(self, safe_mode: bool = False, extra_validators=None):
+    def __init__(self, safe_mode: bool = True, extra_validators=None):
         """Crea un nuevo interpretador.
 
         Parameters
         ----------
         safe_mode: bool, optional
-            Si se activa, valida cada nodo utilizando la cadena devuelta por
-            :func:`construir_cadena` y restringe primitivas como ``import`` o
-            ``hilo``.
+            Indica si el intérprete debe ejecutarse en modo seguro. Está
+            activado por defecto y valida cada nodo utilizando la cadena
+            devuelta por :func:`construir_cadena`, restringiendo primitivas
+            como ``import`` o ``hilo``.
         extra_validators: list | str, optional
             Lista de instancias adicionales o ruta a un módulo que defina
             ``VALIDADORES_EXTRA``.
