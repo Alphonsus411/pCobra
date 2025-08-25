@@ -194,7 +194,7 @@ class InteractiveCommand(BaseCommand):
             return 1
 
         # Configurar modo seguro y validadores
-        seguro = getattr(args, "seguro", False)
+        seguro = getattr(args, "seguro", True)
         extra_validators = getattr(args, "validadores_extra", None)
         validador = None
         if seguro:

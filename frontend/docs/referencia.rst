@@ -41,8 +41,9 @@ El comando ``cobra`` cuenta con varias subopciones:
    cobra docs
    cobra empaquetar --output dist
 
-La opción ``--seguro`` puede añadirse a ``ejecutar`` o al modo interactivo para
-bloquear primitivas peligrosas e importaciones no permitidas.
+El modo seguro está habilitado por defecto. Si se desea permitir primitivas
+peligrosas e importaciones no permitidas, puede desactivarse con ``--no-seguro``
+en ``ejecutar`` o en el modo interactivo.
 
 El subcomando ``docs`` genera la documentación del proyecto en ``frontend/build/html``.
 ``empaquetar`` crea un ejecutable independiente usando PyInstaller.

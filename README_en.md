@@ -517,7 +517,7 @@ Generating code for these functions creates `asyncio.create_task` calls in Pytho
 
 Once the package is installed, the `cobra` tool offers several subcommands. The README in Spanish contains a complete list of commands and examples.
 
-The CLI also includes a safe mode (`--seguro`), a sandbox option (`--sandbox`), support for multiple languages via `--lang` and the ability to generate documentation, packages and executables. See the Spanish README for detailed examples.
+The CLI runs in safe mode by default. Use `--no-seguro` to disable it. A sandbox option (`--sandbox`), support for multiple languages via `--lang` and the ability to generate documentation, packages and executables are also available. See the Spanish README for detailed examples.
 
 ## Tests and development
 

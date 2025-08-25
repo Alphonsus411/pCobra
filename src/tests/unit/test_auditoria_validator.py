@@ -7,7 +7,7 @@ from core.semantic_validators import PrimitivaPeligrosaError
 
 
 def test_auditoria_registra_primitiva(caplog):
-    interp = InterpretadorCobra(safe_mode=True)
+    interp = InterpretadorCobra()
     nodo = NodoLlamadaFuncion("leer_archivo", [NodoValor("x")])
     with caplog.at_level(logging.WARNING):
         with pytest.raises(PrimitivaPeligrosaError):

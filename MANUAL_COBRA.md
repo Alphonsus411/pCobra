@@ -200,10 +200,11 @@ Herencia múltiple en clases.
 
 ## 9. Modo seguro
 
-- Añade `--seguro` para evitar operaciones peligrosas como `leer_archivo` o `hilo`.
+El modo seguro se encuentra activado por defecto y evita operaciones peligrosas
+como `leer_archivo` o `hilo`. Para desactivarlo:
 
 ```bash
-cobra ejecutar programa.co --seguro
+cobra ejecutar programa.co --no-seguro
 ```
 
 ## 10. Próximos pasos

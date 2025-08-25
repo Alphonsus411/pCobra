@@ -30,14 +30,14 @@ def generar_ast(codigo: str):
     ],
 )
 def test_primitivas_rechazadas_en_modo_seguro(codigo):
-    interp = InterpretadorCobra(safe_mode=True)
+    interp = InterpretadorCobra()
     ast = generar_ast(codigo)
     with pytest.raises(PrimitivaPeligrosaError):
         interp.ejecutar_ast(ast)
 
 
 def test_codigo_seguro_se_ejecuta_en_modo_seguro():
-    interp = InterpretadorCobra(safe_mode=True)
+    interp = InterpretadorCobra()
     nodo = NodoLlamadaFuncion("imprimir", [NodoValor("hola")])
     with patch("sys.stdout", new_callable=StringIO) as out:
         interp.ejecutar_llamada_funcion(nodo)
