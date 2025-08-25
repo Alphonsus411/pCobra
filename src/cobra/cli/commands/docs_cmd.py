@@ -70,6 +70,14 @@ class DocsCommand(BaseCommand):
             ["sphinx-apidoc", "-o", str(api), str(codigo)],
             ["sphinx-build", "-b", "html", str(source), str(build)]
         ]:
-            resultado = subprocess.run(cmd, capture_output=True, text=True)
-            if resultado.returncode != 0:
-                raise RuntimeError(f"Error ejecutando {cmd[0]}: {resultado.stderr}")
+            try:
+                subprocess.run(
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(
+                    f"Error ejecutando {cmd[0]}: {e.stderr}"
+                ) from e
