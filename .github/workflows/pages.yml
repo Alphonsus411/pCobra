@@ -30,7 +30,7 @@ jobs:
         with:
           extra: "sphinx sphinx-rtd-theme"
       - name: Install LaTeX packages
-        run: sudo apt-get update && sudo apt-get install -y texlive-latex-recommended texlive-latex-extra latexmk
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends texlive-latex-recommended texlive-latex-extra latexmk
       - name: Build docs
         run: sphinx-build -b html frontend/docs frontend/build/html
       - name: Build root docs
