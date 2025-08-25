@@ -73,6 +73,7 @@ jobs:
           ./make.bat lint
           ./make.bat typecheck
       - name: Run tests
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           if [ -d tests ]; then
@@ -82,6 +83,15 @@ jobs:
             pytest src/tests --cov=src --cov-report=xml \
               --cov-fail-under=95
           fi
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path tests) {
+            pytest tests src/tests --cov=src --cov-report=xml --cov-fail-under=95
+          } else {
+            pytest src/tests --cov=src --cov-report=xml --cov-fail-under=95
+          }
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5
         with:
