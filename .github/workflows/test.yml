@@ -2,9 +2,9 @@ name: tests
 
 on:
   push:
-    paths: ['**.py', 'src/tests/**', '.github/workflows/test.yml']
+    paths: ['**/*.py', 'src/tests/**', '.github/workflows/test.yml']
   pull_request:
-    paths: ['**.py', 'src/tests/**', '.github/workflows/test.yml']
+    paths: ['**/*.py', 'src/tests/**', '.github/workflows/test.yml']
 
 permissions:
   contents: read
