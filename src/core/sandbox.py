@@ -91,6 +91,7 @@ def ejecutar_en_sandbox_js(
     codigo: str,
     timeout: int = 5,
     env_vars: dict[str, str] | None = None,
+    memoria_mb: int | None = 128,
 ) -> str:
     """Ejecuta código JavaScript de forma aislada usando Node.
 
@@ -100,7 +101,9 @@ def ejecutar_en_sandbox_js(
     comprueba que la versión instalada sea al menos ``3.9.19``. La sandbox
     se ejecuta con un entorno minimizado cuyo ``PATH`` apunta únicamente a
     ``/usr/bin`` o al directorio que contiene el ejecutable de Node; se pueden
-    añadir variables específicas mediante ``env_vars``.
+    añadir variables específicas mediante ``env_vars``. ``memoria_mb`` limita
+    la memoria disponible para la ejecución de Node estableciendo
+    ``--max-old-space-size``.
     """
     import json
     import os
@@ -169,13 +172,12 @@ process.stdout.write(output);
         import select
         import time
 
+        args = ["node", "--no-experimental-fetch"]
+        if memoria_mb is not None:
+            args.append(f"--max-old-space-size={memoria_mb}")
+        args.append(tmp_path)
         with subprocess.Popen(
-            [
-                "node",
-                "--no-experimental-fetch",
-                "--max-old-space-size=128",
-                tmp_path,
-            ],
+            args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             cwd=base_dir,

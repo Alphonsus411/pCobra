@@ -127,6 +127,19 @@ def test_sandbox_js_trunca_stderr_grande_no_bloquea():
 
 
 @pytest.mark.timeout(5)
+def test_sandbox_js_limita_memoria():
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+    codigo = "const a=[]; while(true) a.push(new Array(1e6).fill('x'));"
+    salida = ejecutar_en_sandbox_js(codigo, memoria_mb=16)
+    assert "heap out of memory" in salida.lower()
+
+
+@pytest.mark.timeout(5)
 def test_sandbox_js_elimina_archivo_inexistente(monkeypatch):
     if not shutil.which("node"):
         pytest.skip("node no disponible")
