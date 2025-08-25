@@ -268,7 +268,7 @@ class DependenciasCommand(BaseCommand):
                     mostrar_error(_("No se encontró pip en el entorno virtual"))
                     return 1
 
-                result = subprocess.run(
+                subprocess.run(
                     [pip_path, "install", "-r", tmp_path],
                     check=True,
                     capture_output=True,
