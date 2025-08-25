@@ -66,7 +66,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           files: dist/**
       - name: Notify Slack
-        if: always()
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
         uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -75,7 +75,12 @@ jobs:
             Release ${{ github.ref_name }} ${{ job.status }}
             https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
       - name: Send release email
-        if: always()
+        if: |
+          always() &&
+          secrets.SMTP_SERVER != '' &&
+          secrets.SMTP_PORT != '' &&
+          secrets.SMTP_USERNAME != '' &&
+          secrets.SMTP_PASSWORD != ''
         uses: dawidd6/action-send-mail@4226df7daafa6fc901a43789c49bf7ab309066e7 # v3
         with:
           server: ${{ secrets.SMTP_SERVER }}
