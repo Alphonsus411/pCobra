@@ -18,14 +18,14 @@ def test_cli_docs_invokes_sphinx():
                 "-o",
                 str(api),
                 str(codigo),
-            ], check=True),
+            ], check=True, capture_output=True, text=True),
             call([
                 "sphinx-build",
                 "-b",
                 "html",
                 str(source),
                 str(build),
-            ], check=True),
+            ], check=True, capture_output=True, text=True),
         ])
 
 
@@ -34,4 +34,5 @@ def test_cli_docs_sin_sphinx():
             patch("sys.stdout", new_callable=StringIO) as out:
         main(["docs"])
     assert "Sphinx no está instalado" in out.getvalue()
+
 
