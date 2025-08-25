@@ -11,3 +11,11 @@ js = "modulo.js"
 # python = "ciencia/genetica.py"
 # js = "ciencia/genetica.js"
 
+# Configuración opcional para la directiva `usar`.
+# La lista `permitidos` acepta elementos en los formatos:
+#   "nombre"                      # solo nombre
+#   "nombre==version"             # nombre y versión exacta
+#   "nombre==version --hash=sha256:<hash>"  # con hash de integridad
+#[usar]
+#permitidos = []
+
