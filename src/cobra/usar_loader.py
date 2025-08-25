@@ -12,7 +12,7 @@ try:
 except ImportError:
     tomli = None  # Tomli no es necesario en Python ≥ 3.11
 
-USAR_WHITELIST: set[str] = set()
+USAR_WHITELIST: dict[str, str] = {}
 
 # Nombre de la variable de entorno que habilita la instalación automática
 USAR_INSTALL_ENV = "COBRA_USAR_INSTALL"
@@ -38,12 +38,25 @@ def _validar_nombre(nombre: str) -> str:
     return nombre
 
 
+def _parsear_entrada(entrada: str) -> tuple[str, str]:
+    """Devuelve el nombre base y la especificación completa de la entrada."""
+
+    entrada = entrada.strip()
+    if not entrada:
+        raise ValueError("Entrada vacía en lista blanca")
+    match = re.match(r"([A-Za-z0-9_\-]+)", entrada)
+    if not match:
+        raise ValueError(f"Entrada de paquete '{entrada}' inválida")
+    nombre_base = _validar_nombre(match.group(1))
+    return nombre_base, entrada
+
+
 def cargar_lista_blanca():
     """Carga la lista blanca de paquetes permitidos desde pcobra.toml si existe"""
     global USAR_WHITELIST
 
     # Por defecto incluye paquetes clave del proyecto
-    USAR_WHITELIST = {
+    default_pkgs = [
         "numpy",
         "pandas",
         "requests",
@@ -51,7 +64,12 @@ def cargar_lista_blanca():
         "holobit-sdk",
         "smooth-criminal",
         "agix",
-    }
+    ]
+
+    USAR_WHITELIST = {}
+    for item in default_pkgs:
+        nombre_base, spec = _parsear_entrada(item)
+        USAR_WHITELIST[nombre_base] = spec
 
     # Cargar desde configuración si se encuentra
     config_path = Path(__file__).resolve().parent.parent.parent / "pcobra.toml"
@@ -61,7 +79,9 @@ def cargar_lista_blanca():
                 config = tomli.load(f)
             permitidos = config.get("usar", {}).get("permitidos", [])
             if isinstance(permitidos, list):
-                USAR_WHITELIST.update(permitidos)
+                for item in permitidos:
+                    nombre_base, spec = _parsear_entrada(item)
+                    USAR_WHITELIST[nombre_base] = spec
         except Exception as e:
             print(f"Advertencia: no se pudo leer pcobra.toml: {e}")
 
@@ -84,6 +104,7 @@ def obtener_modulo(nombre: str):
         )
     if nombre not in USAR_WHITELIST:
         raise PermissionError(f"Paquete '{nombre}' no está permitido.")
+    spec = USAR_WHITELIST[nombre]
 
     try:
         return importlib.import_module(nombre)
@@ -97,10 +118,10 @@ def obtener_modulo(nombre: str):
                 pkg_path = corelibs / nombre / "__init__.py"
                 if mod_path.exists() or pkg_path.exists():
                     ruta = mod_path if mod_path.exists() else pkg_path
-                    spec = importlib.util.spec_from_file_location(nombre, ruta)
-                    modulo = importlib.util.module_from_spec(spec)
+                    mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
+                    modulo = importlib.util.module_from_spec(mod_spec)
                     sys.modules[nombre] = modulo
-                    spec.loader.exec_module(modulo)
+                    mod_spec.loader.exec_module(modulo)
                     return modulo
                 break
 
@@ -112,10 +133,10 @@ def obtener_modulo(nombre: str):
                 pkg_path = stdlib / nombre / "__init__.py"
                 if mod_path.exists() or pkg_path.exists():
                     ruta = mod_path if mod_path.exists() else pkg_path
-                    spec = importlib.util.spec_from_file_location(nombre, ruta)
-                    modulo = importlib.util.module_from_spec(spec)
+                    mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
+                    modulo = importlib.util.module_from_spec(mod_spec)
                     sys.modules[nombre] = modulo
-                    spec.loader.exec_module(modulo)
+                    mod_spec.loader.exec_module(modulo)
                     return modulo
                 break
 
@@ -126,16 +147,20 @@ def obtener_modulo(nombre: str):
                 f"Define {USAR_INSTALL_ENV}=1 para habilitarla."
             )
 
-        print(f"Paquete '{nombre}' no encontrado. Instalando con pip...")
-
-        nombre = _validar_nombre(nombre)
-        if nombre not in USAR_WHITELIST:
-            raise PermissionError(f"Paquete '{nombre}' no está permitido.")
+        print(f"Paquete '{spec}' no encontrado. Instalando con pip...")
 
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", nombre], check=True)
+            cmd = [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--require-hashes",
+            ] + spec.split()
+            subprocess.run(cmd, check=True)
+            print(f"Paquete instalado: {spec}")
         except subprocess.CalledProcessError as exc:
-            raise RuntimeError(f"Fallo al instalar '{nombre}': {exc}") from exc
+            raise RuntimeError(f"Fallo al instalar '{spec}': {exc}") from exc
 
         try:
             return importlib.import_module(nombre)
