@@ -47,4 +47,4 @@ jobs:
       - uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c # v2
         with:
           path: docs/_build
-      - uses: actions/deploy-pages@de14547edc9944350dc0481aa5b7afb08e75f254 # v2
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v2
