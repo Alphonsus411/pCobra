@@ -32,7 +32,7 @@ dependencies = [
     "jsonschema==4.25.0",
     "python-dotenv==1.1.1",
     "pexpect==4.9.0",
-    "requests==2.32.4",
+    "requests==2.32.5",
     "flet==0.28.3",
     "packaging==25.0",
     "pybind11==3.0.0",
