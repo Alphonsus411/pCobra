@@ -47,8 +47,10 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}
           push: true
       - name: Move Docker cache
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         run: mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Scan image for vulnerabilities
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # 0.32.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}
@@ -57,8 +59,10 @@ jobs:
           vuln-type: 'os,library'
           ignore-unfixed: true
       - name: Smoke test
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         run: docker run --rm $IMAGE_NAME --version
       - name: Check image size
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         run: |
           size=$(docker image inspect $IMAGE_NAME --format '{{.Size}}')
           echo "Image size: $size bytes"
@@ -68,8 +72,10 @@ jobs:
             exit 1
           fi
       - name: Save image
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         run: docker save $IMAGE_NAME -o pcobra-cli.tar
       - name: Upload artifact
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pcobra-cli-image
