@@ -11,11 +11,15 @@ from cobra.cli.utils.messages import mostrar_error, mostrar_info
 class DocsCommand(BaseCommand):
     """Genera la documentación HTML del proyecto."""
     name = "docs"
-    
+    SPHINX_TIMEOUT = 300  # segundos
+
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(
-            self.name, help=_("Genera la documentación del proyecto")
+            self.name,
+            help=_(
+                "Genera la documentación del proyecto (límite {t} s)"
+            ).format(t=self.SPHINX_TIMEOUT),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -76,8 +80,15 @@ class DocsCommand(BaseCommand):
                     check=True,
                     capture_output=True,
                     text=True,
+                    timeout=self.SPHINX_TIMEOUT,
                 )
             except subprocess.CalledProcessError as e:
                 raise RuntimeError(
                     f"Error ejecutando {cmd[0]}: {e.stderr}"
+                ) from e
+            except subprocess.TimeoutExpired as e:
+                raise RuntimeError(
+                    _( "El comando {cmd} excedió el tiempo límite de {t} s" ).format(
+                        cmd=cmd[0], t=self.SPHINX_TIMEOUT
+                    )
                 ) from e
