@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 import sys
 from types import ModuleType
 import pytest
+import requests
 
 dummy = ModuleType("tree_sitter_languages")
 dummy.get_parser = lambda *args, **kwargs: None
@@ -157,6 +158,26 @@ def test_publicar_modulo_permission_error(tmp_path):
     assert not ok
     err.assert_called_once()
     mock_post.assert_not_called()
+
+
+@pytest.mark.timeout(5)
+def test_publicar_modulo_duplicado(tmp_path):
+    archivo = tmp_path / "m.co"
+    archivo.write_text("var x = 1")
+    client = cobrahub_client.CobraHubClient()
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.__exit__.side_effect = lambda *args: response.close()
+    error_resp = MagicMock()
+    error_resp.status_code = 409
+    http_error = requests.exceptions.HTTPError(response=error_resp)
+    response.raise_for_status.side_effect = http_error
+    client.session.post = MagicMock(return_value=response)
+    with patch("cobra.cli.cobrahub_client.mostrar_info") as info:
+        ok = client.publicar_modulo(str(archivo))
+    assert ok
+    info.assert_called_once()
+    client.session.post.assert_called_once()
 
 
 @pytest.mark.timeout(5)

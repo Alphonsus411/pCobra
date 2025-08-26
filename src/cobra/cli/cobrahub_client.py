@@ -50,7 +50,7 @@ class CobraHubClient:
             total=self.MAX_RETRIES,
             backoff_factor=0.5,
             status_forcelist=[500, 502, 503, 504],
-            allowed_methods=["GET"],
+            allowed_methods=["GET", "POST"],
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("https://", adapter)
@@ -156,7 +156,10 @@ class CobraHubClient:
 
         try:
             with open(ruta, "rb") as f:
-                headers = {"X-Content-Checksum": checksum}
+                headers = {
+                    "X-Content-Checksum": checksum,
+                    "Idempotency-Key": checksum,
+                }
                 with self.session.post(
                     f"{self.base_url}/modulos",
                     files={"file": f},
@@ -167,6 +170,15 @@ class CobraHubClient:
 
             mostrar_info(_("Módulo publicado correctamente"))
             return True
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 409:
+                mostrar_info(_("Módulo ya existía en CobraHub"))
+                return True
+            logger.error(f"Error publicando módulo: {e}")
+            mostrar_error(
+                _("Error publicando módulo: {err}").format(err=str(e))
+            )
+            return False
         except Exception as e:
             logger.error(f"Error publicando módulo: {e}")
             mostrar_error(_("Error publicando módulo: {err}").format(err=str(e)))
