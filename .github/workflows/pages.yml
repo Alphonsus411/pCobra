@@ -44,7 +44,7 @@ jobs:
       - name: Copy PDF to build dir
         run: cp docs/_build/latex/proyectocobra.pdf docs/_build/
       - uses: actions/configure-pages@c5a3e1159e0cbdf0845eb8811bd39e39fc3099c2 # v2
-      - uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c # v2
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v2
         with:
           path: docs/_build
       - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v2
