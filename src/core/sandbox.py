@@ -114,12 +114,20 @@ def ejecutar_en_sandbox_js(
     env_path = os.path.dirname(node_dir) if node_dir else "/usr/bin"
     env = {"PATH": env_path}
     if env_vars:
-        claves_sensibles = {"PATH", "NODE_OPTIONS"}
+        claves_sensibles = {
+            "PATH",
+            "NODE_OPTIONS",
+            "LD_PRELOAD",
+            "LD_LIBRARY_PATH",
+        }
+        prefijos_sensibles = ("LD_",)
         allowed = set(string.ascii_letters + string.digits + "_")
         filtradas = {
             k: v
             for k, v in env_vars.items()
-            if all(c in allowed for c in k) and k not in claves_sensibles
+            if all(c in allowed for c in k)
+            and k not in claves_sensibles
+            and not any(k.startswith(pref) for pref in prefijos_sensibles)
         }
         env.update(filtradas)
 
