@@ -130,6 +130,39 @@ def test_sandbox_js_env_vars_permitidas(monkeypatch):
 
 
 @pytest.mark.timeout(5)
+def test_sandbox_js_filtra_ld_vars(monkeypatch):
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+
+    capturadas = {}
+    original_popen = subprocess.Popen
+
+    def fake_popen(cmd, *args, **kwargs):
+        capturadas.update(kwargs.get("env", {}))
+        return original_popen(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    env_vars = {
+        "LD_PRELOAD": "/malicioso.so",
+        "LD_LIBRARY_PATH": "/malicioso",
+        "LD_CUSTOM": "123",
+        "SAFE": "1",
+    }
+
+    salida = ejecutar_en_sandbox_js("console.log('hola')", env_vars=env_vars)
+    assert salida.strip() == "hola"
+    assert "LD_PRELOAD" not in capturadas
+    assert "LD_LIBRARY_PATH" not in capturadas
+    assert "LD_CUSTOM" not in capturadas
+    assert capturadas.get("SAFE") == "1"
+
+
+@pytest.mark.timeout(5)
 def test_sandbox_js_trunca_salida_grande():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
