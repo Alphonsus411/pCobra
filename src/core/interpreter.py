@@ -89,12 +89,15 @@ class InterpretadorCobra:
         import ast
 
         ruta_abs = os.path.abspath(ruta)
+        ruta_real = os.path.realpath(ruta_abs)
         allowed_roots = [MODULES_PATH, *IMPORT_WHITELIST]
         if not any(os.path.commonpath([ruta_abs, root]) == root for root in allowed_roots):
             raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
+        if not any(os.path.commonpath([ruta_real, root]) == root for root in allowed_roots):
+            raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
 
         try:
-            with open(ruta_abs, "r", encoding="utf-8") as f:
+            with open(ruta_real, "r", encoding="utf-8") as f:
                 source = f.read()
         except FileNotFoundError as e:
             raise FileNotFoundError(
@@ -102,7 +105,7 @@ class InterpretadorCobra:
             ) from e
 
         try:
-            tree = ast.parse(source, filename=ruta_abs)
+            tree = ast.parse(source, filename=ruta_real)
         except SyntaxError as e:
             raise ImportError(f"Error de sintaxis en {ruta}: {e}") from e
 

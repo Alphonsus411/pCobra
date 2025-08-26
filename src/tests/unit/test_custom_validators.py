@@ -61,3 +61,21 @@ def test_validator_import_blocked(tmp_path):
     finally:
         IMPORT_WHITELIST.discard(str(tmp_path))
 
+
+def test_validator_symlink_outside_blocked(tmp_path, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("outside")
+    mod = outside / "vals.py"
+    mod.write_text("VALIDADORES_EXTRA = []")
+
+    inside = tmp_path / "inside"
+    inside.mkdir()
+    link = inside / "vals_link.py"
+    link.symlink_to(mod)
+
+    IMPORT_WHITELIST.add(str(inside))
+    try:
+        with pytest.raises(ImportError):
+            InterpretadorCobra._cargar_validadores(str(link))
+    finally:
+        IMPORT_WHITELIST.discard(str(inside))
+
