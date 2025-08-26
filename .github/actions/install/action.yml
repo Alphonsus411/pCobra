@@ -16,8 +16,6 @@ runs:
         pip install -e .
         # pip install -e .[dev] también es válido para extras de desarrollo
         if [ -n "${{ inputs.extra }}" ]; then
-          while IFS=$'\n' read -r pkg; do
-            pip install "$pkg"
-          done <<< "${{ inputs.extra }}"
+          pip install ${{ inputs.extra }}
         fi
 
