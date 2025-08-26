@@ -61,7 +61,7 @@ notebooks = [
 dev = [
     "python-dotenv==1.1.1",
     "python-lsp-server==1.13.0",
-    "hypothesis==6.137.3",
+    "hypothesis==6.138.3",
     "ipykernel==6.29.5",
     "tree-sitter-languages==1.10.2",
     "pytest==8.4.1",
