@@ -67,12 +67,16 @@ jobs:
         run: |
           python -c "import importlib; [importlib.import_module(pkg.replace('-', '_')) for pkg in ['sphinx','pyright']]"
       - name: Seguridad de dependencias
+        if: secrets.SAFETY_API_KEY != ''
         shell: bash
         env:
           SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           pip install safety
           safety check --full-report --key $SAFETY_API_KEY
+      - name: Omitir seguridad de dependencias
+        if: secrets.SAFETY_API_KEY == ''
+        run: echo "SAFETY_API_KEY no presente. Omitiendo verificación de dependencias."
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         with:
