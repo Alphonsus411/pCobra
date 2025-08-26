@@ -5,6 +5,7 @@ import marshal
 import multiprocessing
 import subprocess
 import tempfile
+import string
 from queue import Empty
 from pathlib import Path
 from packaging.version import Version
@@ -114,10 +115,11 @@ def ejecutar_en_sandbox_js(
     env = {"PATH": env_path}
     if env_vars:
         claves_sensibles = {"PATH", "NODE_OPTIONS"}
+        allowed = set(string.ascii_letters + string.digits + "_")
         filtradas = {
             k: v
             for k, v in env_vars.items()
-            if k.isalnum() and k not in claves_sensibles
+            if all(c in allowed for c in k) and k not in claves_sensibles
         }
         env.update(filtradas)
 

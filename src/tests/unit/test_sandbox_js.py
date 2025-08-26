@@ -98,6 +98,38 @@ def test_sandbox_js_filtra_env_vars(monkeypatch):
 
 
 @pytest.mark.timeout(5)
+def test_sandbox_js_env_vars_permitidas(monkeypatch):
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+
+    capturadas = {}
+    original_popen = subprocess.Popen
+
+    def fake_popen(cmd, *args, **kwargs):
+        capturadas.update(kwargs.get("env", {}))
+        return original_popen(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    env_vars = {
+        "NODE_OPTIONS": "--eval \"process.stdout.write('pwned')\"",
+        "PATH": "/tmp",
+        "API_KEY": "secreta",
+    }
+
+    salida = ejecutar_en_sandbox_js("console.log('hola')", env_vars=env_vars)
+    assert salida.strip() == "hola"
+    assert "pwned" not in salida
+    assert capturadas.get("API_KEY") == "secreta"
+    assert capturadas.get("NODE_OPTIONS") is None
+    assert capturadas.get("PATH") != "/tmp"
+
+
+@pytest.mark.timeout(5)
 def test_sandbox_js_trunca_salida_grande():
     if not shutil.which("node"):
         pytest.skip("node no disponible")
