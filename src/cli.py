@@ -61,14 +61,21 @@ transpilar_parser.add_argument(
     help="Archivo donde guardar el código generado",
 )
 
-subparsers.add_parser("ayuda", help="Muestra esta ayuda y sale")
+def mostrar_ayuda(_: argparse.Namespace) -> int:
+    """Imprime la ayuda general del programa."""
+    cobra.print_help()
+    return 0
+
+
+ayuda_parser = subparsers.add_parser("ayuda", help="Muestra esta ayuda y sale")
+ayuda_parser.set_defaults(func=mostrar_ayuda)
 
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
     configurar_entorno()
     args = cobra.parse_args(argumentos)
-    if args.comando == "ayuda" or args.comando is None:
+    if args.comando is None:
         cobra.print_help()
         return 0
     if args.comando == "ejecutar":
@@ -91,6 +98,8 @@ def main(argumentos: Optional[List[str]] = None) -> int:
                 f.write(buffer.getvalue())
             return resultado
         return comando.run(compile_args)
+    if args.comando == "ayuda":
+        return args.func(args)
     cobra.print_help()
     return 1
 
