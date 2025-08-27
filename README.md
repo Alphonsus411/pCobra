@@ -878,8 +878,12 @@ Si deseas desactivar los colores usa `--no-color`:
 cobra --no-color ejecutar programa.co
 ```
 
-Para mostrar mensajes de depuración añade la opción `--debug`. Por defecto el
-nivel de registro es `INFO`.
+Para aumentar el nivel de detalle de los mensajes añade `-v` o `--verbose`.
+Por defecto el nivel de registro es `INFO`; con `-v` o más se cambia a `DEBUG`:
+
+```bash
+cobra -v ejecutar programa.co
+```
 
 Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
 
