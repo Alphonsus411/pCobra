@@ -10,10 +10,10 @@ de implementaciones manuales.
 """
 
 from core.ast_nodes import *
-from .ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
-from .visitor import NodeVisitor
-from .performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
-from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
+from core.ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
+from core.visitor import NodeVisitor
+from core.performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
+from core.resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 __all__ = [
     "NodoAST",
