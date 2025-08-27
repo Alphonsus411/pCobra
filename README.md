@@ -753,6 +753,11 @@ Al generar código para estas funciones, se crean llamadas `asyncio.create_task`
 ## Guía rápida de la CLI
 
 La herramienta `cobra` se invoca con `cobra [subcomando] [archivo] [opciones]`.
+Cuando un argumento posicional comienza con `-`, precede la lista de opciones con `--` para que se trate como un valor literal.
+
+```bash
+cobra ejecutar -- -archivo.co
+```
 Para obtener ayuda puedes ejecutar:
 
 ```bash
