@@ -1,9 +1,9 @@
 """Funciones de manipulación básica de objetos ``Holobit``."""
 
-from .holobit import Holobit
-from .graficar import graficar
-from .proyection import proyectar
-from .transformacion import transformar, escalar, mover
+from core.holobits.holobit import Holobit
+from core.holobits.graficar import graficar
+from core.holobits.proyection import proyectar
+from core.holobits.transformacion import transformar, escalar, mover
 
 __all__ = [
     "Holobit",

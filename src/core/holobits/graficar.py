@@ -1,6 +1,6 @@
 """Funciones para graficar objetos ``Holobit`` utilizando ``holobit-sdk``."""
 
-from .holobit import Holobit
+from core.holobits.holobit import Holobit
 from holobit_sdk.visualization.projector import proyectar_holograma
 from holobit_sdk.core.quark import Quark
 from holobit_sdk.core.holobit import Holobit as SDKHolobit
