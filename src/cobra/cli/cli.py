@@ -165,6 +165,8 @@ class CliApplication:
             version=f"%(prog)s {CLI_VERSION} (commit {CLI_COMMIT})",
             help=_("Show version information and exit"),
         )
+        parser.add_argument("--ayuda", action="help",
+                          help=_("Muestra esta ayuda y termina"))
         parser.add_argument("--format", action="store_true",
                           help=_("Format file before processing"))
         parser.add_argument("--debug", action="store_true",
