@@ -169,6 +169,8 @@ class CliApplication:
                           help=_("Format file before processing"))
         parser.add_argument("--debug", action="store_true",
                           help=_("Show debug messages"))
+        parser.add_argument("-v", "--verbose", action="count", default=0,
+                          help=_("Incrementa el nivel de detalle"))
         parser.add_argument(
             "--no-safe",
             "--no-seguro",
@@ -312,8 +314,8 @@ class CliApplication:
 
             try:
                 args = self._parse_arguments(argv)
-                if args.debug:
-                    logging.getLogger().setLevel(logging.DEBUG)
+                log_level = logging.DEBUG if args.verbose > 0 or args.debug else logging.INFO
+                logging.getLogger().setLevel(log_level)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
                 messages.mostrar_logo()
