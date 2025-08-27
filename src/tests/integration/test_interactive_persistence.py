@@ -15,7 +15,7 @@ def _spawn(args="interactive", extra_env=None):
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)
-    env["PCOBRA_TOML"] = str(PATCH_DIR / "empty.toml")
+    env["COBRA_TOML"] = str(PATCH_DIR / "empty.toml")
     env.pop("PYTEST_CURRENT_TEST", None)
     if extra_env:
         env.update(extra_env)

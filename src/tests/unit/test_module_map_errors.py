@@ -37,7 +37,7 @@ def test_get_map_corrupt_yaml_returns_empty_and_logs_error(tmp_path, monkeypatch
 
 def test_get_toml_map_missing_file_returns_empty_and_logs_error(monkeypatch, caplog):
     module_map._toml_cache = None
-    monkeypatch.setattr(module_map, "PCOBRA_TOML_PATH", "missing.toml")
+    monkeypatch.setattr(module_map, "COBRA_TOML_PATH", "missing.toml")
     monkeypatch.setattr(module_map.os.path, "exists", lambda path: True)
 
     def fake_open(*args, **kwargs):
@@ -49,20 +49,20 @@ def test_get_toml_map_missing_file_returns_empty_and_logs_error(monkeypatch, cap
         result = module_map.get_toml_map()
 
     assert result == {}
-    assert "Error al cargar pcobra.toml" in caplog.text
+    assert "Error al cargar cobra.toml" in caplog.text
 
 
 def test_get_toml_map_invalid_file_returns_empty_and_logs_error(tmp_path, monkeypatch, caplog):
     module_map._toml_cache = None
-    bad_toml = tmp_path / "pcobra.toml"
+    bad_toml = tmp_path / "cobra.toml"
     bad_toml.write_text("invalid = ]")
-    monkeypatch.setattr(module_map, "PCOBRA_TOML_PATH", str(bad_toml))
+    monkeypatch.setattr(module_map, "COBRA_TOML_PATH", str(bad_toml))
 
     with caplog.at_level(logging.ERROR):
         result = module_map.get_toml_map()
 
     assert result == {}
-    assert "Error al cargar pcobra.toml" in caplog.text
+    assert "Error al cargar cobra.toml" in caplog.text
 
 
 def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):

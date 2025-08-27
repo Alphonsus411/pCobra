@@ -22,17 +22,17 @@ def _write_toml(path, data):
     path.write_text(content)
 
 
-def test_pcobra_mapeo_python(tmp_path, monkeypatch):
+def test_cobra_mapeo_python(tmp_path, monkeypatch):
     mod = tmp_path / "m.co"
     mod.write_text("var x = 1")
     py_out = tmp_path / "m.py"
     py_out.write_text("x = 1\n")
 
     mapping = {str(mod): {"python": str(py_out)}}
-    toml_file = tmp_path / "pcobra.toml"
+    toml_file = tmp_path / "cobra.toml"
     _write_toml(toml_file, mapping)
 
-    monkeypatch.setenv("PCOBRA_TOML", str(toml_file))
+    monkeypatch.setenv("COBRA_TOML", str(toml_file))
     module_map._toml_cache = None
 
     codigo = f"import '{mod}'\nimprimir(x)"
@@ -44,17 +44,17 @@ def test_pcobra_mapeo_python(tmp_path, monkeypatch):
     assert resultado == esperado
 
 
-def test_pcobra_mapeo_js(tmp_path, monkeypatch):
+def test_cobra_mapeo_js(tmp_path, monkeypatch):
     mod = tmp_path / "m.co"
     mod.write_text("var x = 2")
     js_out = tmp_path / "m.js"
     js_out.write_text("let x = 2;\n")
 
     mapping = {str(mod): {"js": str(js_out)}}
-    toml_file = tmp_path / "pcobra.toml"
+    toml_file = tmp_path / "cobra.toml"
     _write_toml(toml_file, mapping)
 
-    monkeypatch.setenv("PCOBRA_TOML", str(toml_file))
+    monkeypatch.setenv("COBRA_TOML", str(toml_file))
     module_map._toml_cache = None
 
     codigo = f"import '{mod}'\nimprimir(x)"

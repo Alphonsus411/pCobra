@@ -237,9 +237,9 @@ Puedes generar la imagen con `docker build` o usando el subcomando
 `contenedor` de la propia CLI:
 
 ```bash
-docker build -t pcobra-cli -f docker/Dockerfile .
+docker build -t cobra-cli -f docker/Dockerfile .
 # o
-cobra contenedor --tag pcobra-cli
+cobra contenedor --tag cobra-cli
 ```
 
 ### Ejecutar comandos
@@ -248,8 +248,8 @@ Una vez construida la imagen puedes lanzar el binario dentro del
 contenedor:
 
 ```bash
-docker run --rm pcobra-cli --version
-docker run --rm -v "$(pwd)":/src pcobra-cli ejecutar /src/ejemplos/hola.cobra
+docker run --rm cobra-cli --version
+docker run --rm -v "$(pwd)":/src cobra-cli ejecutar /src/ejemplos/hola.cobra
 ```
 
 ### Imagen publicada por CI
@@ -1179,7 +1179,7 @@ patrones de código riesgosos, como el uso de `eval` o `exec` fuera del sandbox.
 
 ## Comunidad
 
-Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo en [https://discord.gg/pcobra](https://discord.gg/pcobra).
+Únete a nuestro servidor de Discord para recibir anuncios, resolver dudas y colaborar en el desarrollo en [https://discord.gg/cobra](https://discord.gg/cobra).
 También contamos con un canal de **Telegram** y una cuenta de **Twitter** donde difundimos eventos y actualizaciones.
 
 ## Desarrollo

@@ -15,9 +15,9 @@ def test_get_toml_map_without_coverage(monkeypatch, tmp_path):
     import cobra.transpilers.module_map as module_map
     importlib.reload(module_map)
 
-    toml_file = tmp_path / "pcobra.toml"
+    toml_file = tmp_path / "cobra.toml"
     toml_file.write_text("")
-    monkeypatch.setenv("PCOBRA_TOML", str(toml_file))
+    monkeypatch.setenv("COBRA_TOML", str(toml_file))
 
     module_map._toml_cache = None
     assert module_map.get_toml_map() == {}

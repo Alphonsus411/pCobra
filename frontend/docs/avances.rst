@@ -11,11 +11,11 @@ Avances del lenguaje Cobra
 - **Aplicación Flet**: ``cobra gui`` abre una interfaz gráfica ligera para escribir y ejecutar programas.
 
  - **Versión 10.0.6**: Actualización de la documentación y configuración del proyecto.
- - **Versión 10.0.6**: Se incorpora ``pcobra.toml`` para definir el mapeo de módulos.
+ - **Versión 10.0.6**: Se incorpora ``cobra.toml`` para definir el mapeo de módulos.
 
 Versión 10.0.6
 -----------
-Se añade el archivo ``pcobra.toml`` para definir el mapeo de módulos en formato TOML. Su estructura es la siguiente:
+Se añade el archivo ``cobra.toml`` para definir el mapeo de módulos en formato TOML. Su estructura es la siguiente:
 
 .. code-block:: toml
 

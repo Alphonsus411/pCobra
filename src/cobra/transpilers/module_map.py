@@ -18,10 +18,10 @@ MODULE_MAP_PATH = os.environ.get(
     ),
 )
 
-PCOBRA_TOML_PATH = os.environ.get(
-    'PCOBRA_TOML',
+COBRA_TOML_PATH = os.environ.get(
+    'COBRA_TOML',
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'pcobra.toml')
+        os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cobra.toml')
     ),
 )
 
@@ -46,18 +46,18 @@ def get_map() -> Dict[str, Any]:
 
 
 def get_toml_map():
-    """Devuelve la configuración del archivo ``pcobra.toml``."""
+    """Devuelve la configuración del archivo ``cobra.toml``."""
     global _toml_cache
     if _toml_cache is None:
         try:
-            if os.path.exists(PCOBRA_TOML_PATH):
-                with open(PCOBRA_TOML_PATH, 'rb') as f:
+            if os.path.exists(COBRA_TOML_PATH):
+                with open(COBRA_TOML_PATH, 'rb') as f:
                     data = tomllib.load(f) or {}
             else:
                 data = {}
             _toml_cache = data
         except (tomllib.TOMLDecodeError, OSError) as e:
-            logger.error(f"Error al cargar pcobra.toml: {e}")
+            logger.error(f"Error al cargar cobra.toml: {e}")
             _toml_cache = {}
     return _toml_cache
 

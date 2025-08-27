@@ -13,7 +13,7 @@ Este proyecto cuenta con un servidor en Discord donde los usuarios pueden comuni
 4. No hagas spam ni promociones no autorizadas.
 
 ## Cómo unirse
-Únete a nuestro servidor en [Discord](https://discord.gg/pcobra) para participar en la comunidad y resolver dudas.
+Únete a nuestro servidor en [Discord](https://discord.gg/cobra) para participar en la comunidad y resolver dudas.
 
 ## Difusión de eventos
 - Las convocatorias se anuncian en nuestro nuevo canal de **Telegram**.
