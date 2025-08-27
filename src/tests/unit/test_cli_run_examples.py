@@ -17,7 +17,7 @@ def _run_cli(args, toml_path):
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)
-    env["PCOBRA_TOML"] = str(toml_path)
+    env["COBRA_TOML"] = str(toml_path)
     proc = subprocess.run(
         [sys.executable, "-m", "cli.cli", *args],
         stdout=subprocess.PIPE,

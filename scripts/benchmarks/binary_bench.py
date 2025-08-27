@@ -111,7 +111,7 @@ def main() -> None:
     ])
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
-    env["PCOBRA_TOML"] = str(Path(tmp_file.name))
+    env["COBRA_TOML"] = str(Path(tmp_file.name))
 
     results: list[dict[str, int | float | str]] = []
     with tempfile.TemporaryDirectory() as tmpdir:

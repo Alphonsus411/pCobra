@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from cli.cli import main
 from cli.commands import benchthreads_cmd
@@ -19,7 +20,7 @@ def test_benchthreads_generates_json(tmp_path, monkeypatch):
         tmp = orig_ntf(suffix=".toml", delete=False)
         created.append(Path(tmp.name))
         tmp.close()
-        env["PCOBRA_TOML"] = tmp.name
+        env["COBRA_TOML"] = tmp.name
         Path(args.output).write_text(
             json.dumps(
                 [

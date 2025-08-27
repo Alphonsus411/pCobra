@@ -165,7 +165,7 @@ class BenchThreadsCommand(BaseCommand):
         try:
             with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as f:
                 tmp_file = Path(f.name)
-            env["PCOBRA_TOML"] = str(tmp_file)
+            env["COBRA_TOML"] = str(tmp_file)
 
             results: List[Dict[str, Union[str, float, int]]] = []
 

@@ -16,7 +16,7 @@ El nombre del ejecutable puede cambiarse con ``--name``. Por ejemplo:
 
 .. code-block:: bash
 
-   cobra empaquetar --name pcobra --output dist
+   cobra empaquetar --name cobra --output dist
 
 También puedes pasar un archivo ``.spec`` personalizado o incluir archivos
 adicionales en el paquete utilizando ``--spec`` y ``--add-data``:

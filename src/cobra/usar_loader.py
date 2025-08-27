@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 import sys
 
-# Intentamos cargar configuración dinámica desde pcobra.toml
+# Intentamos cargar configuración dinámica desde cobra.toml
 try:
     import tomli
 except ImportError:
@@ -52,7 +52,7 @@ def _parsear_entrada(entrada: str) -> tuple[str, str]:
 
 
 def cargar_lista_blanca():
-    """Carga la lista blanca de paquetes permitidos desde pcobra.toml si existe"""
+    """Carga la lista blanca de paquetes permitidos desde cobra.toml si existe"""
     global USAR_WHITELIST
 
     # Por defecto incluye paquetes clave del proyecto
@@ -72,7 +72,7 @@ def cargar_lista_blanca():
         USAR_WHITELIST[nombre_base] = spec
 
     # Cargar desde configuración si se encuentra
-    config_path = Path(__file__).resolve().parent.parent.parent / "pcobra.toml"
+    config_path = Path(__file__).resolve().parent.parent.parent / "cobra.toml"
     if config_path.exists() and tomli:
         try:
             with open(config_path, "rb") as f:
@@ -83,7 +83,7 @@ def cargar_lista_blanca():
                     nombre_base, spec = _parsear_entrada(item)
                     USAR_WHITELIST[nombre_base] = spec
         except Exception as e:
-            print(f"Advertencia: no se pudo leer pcobra.toml: {e}")
+            print(f"Advertencia: no se pudo leer cobra.toml: {e}")
 
 
 # Ejecutar al importar

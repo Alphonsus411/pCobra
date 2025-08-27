@@ -154,7 +154,7 @@ class BenchCommand(BaseCommand):
         results = []
         with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as tmp_file:
             tmp_path = Path(tmp_file.name)
-            env["PCOBRA_TOML"] = str(tmp_path)
+            env["COBRA_TOML"] = str(tmp_path)
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:

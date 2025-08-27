@@ -25,7 +25,7 @@ Las variables de entorno `COBRA_LANG`, `COBRA_DEFAULT_COMMAND`, `COBRA_LOG_FORMA
 language = "en"
 default_command = "compile"
 log_format = "%(levelname)s: %(message)s"
-program_name = "pcobra"
+program_name = "cobra"
 ```
 
 Otro ejemplo mínimo:

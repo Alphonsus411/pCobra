@@ -117,7 +117,7 @@ def main() -> None:
     env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "backend")
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
-    env["PCOBRA_TOML"] = str(Path(tmp_file.name))
+    env["COBRA_TOML"] = str(Path(tmp_file.name))
 
     results = []
     with tempfile.TemporaryDirectory() as tmpdir:
