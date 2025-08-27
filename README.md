@@ -757,6 +757,7 @@ Para obtener ayuda puedes ejecutar:
 
 ```bash
 cobra --help
+cobra --ayuda
 ```
 
 Para personalizar el comportamiento de la herramienta consulta la [configuración de la CLI](docs/config_cli.md).
@@ -871,6 +872,7 @@ $ cobra --help
  \____\___/  |_.__/ \___|_|   \____|_____|___|
 usage: cobra [-h] [--formatear] ...
 ```
+El mismo resultado se obtiene con `cobra --ayuda`.
 
 Si deseas desactivar los colores usa `--no-color`:
 
@@ -891,7 +893,7 @@ El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de l
 El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 
 
-Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` para más detalles.
+Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` o `cobra --ayuda` para más detalles.
 
 ## Conversión desde otros lenguajes a Cobra
 
@@ -1056,7 +1058,7 @@ Puedes definir el idioma estableciendo la variable de entorno `COBRA_LANG`
 o pasando el argumento `--lang` al ejecutar `cobra`.
 
 ```bash
-COBRA_LANG=en cobra --help
+COBRA_LANG=en cobra --ayuda
 cobra --lang en compilar archivo.co
 ```
 
