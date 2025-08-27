@@ -1,10 +1,12 @@
 import argparse
+import contextlib
+import io
 import logging
 import sys
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from cobra.cli.cli import main as cobra_cli_main
+from cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from cobra.cli.commands.execute_cmd import ExecuteCommand
 
 logger = logging.getLogger(__name__)
@@ -40,14 +42,32 @@ ejecutar_parser.add_argument(
     help="Ejecuta el código en un contenedor Docker",
 )
 
-subparsers.add_parser("transpilar", help="Transpila código Cobra")
+transpilar_parser = subparsers.add_parser(
+    "transpilar", help="Transpila código Cobra"
+)
+transpilar_parser.add_argument(
+    "archivo", help="Ruta al archivo a transpilar"
+)
+transpilar_parser.add_argument(
+    "--a", "--lenguaje",
+    dest="lenguaje",
+    choices=LANG_CHOICES,
+    default="python",
+    help="Lenguaje de salida",
+)
+transpilar_parser.add_argument(
+    "--o", "--salida",
+    dest="salida",
+    help="Archivo donde guardar el código generado",
+)
+
 subparsers.add_parser("ayuda", help="Muestra esta ayuda y sale")
 
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
     configurar_entorno()
-    args, extra = cobra.parse_known_args(argumentos)
+    args = cobra.parse_args(argumentos)
     if args.comando == "ayuda" or args.comando is None:
         cobra.print_help()
         return 0
@@ -59,7 +79,18 @@ def main(argumentos: Optional[List[str]] = None) -> int:
             logger.error("Error al ejecutar: %s", exc)
             return 1
     if args.comando == "transpilar":
-        return cobra_cli_main(["compile", *extra])
+        comando = CompileCommand()
+        compile_args = argparse.Namespace(
+            archivo=args.archivo, tipo=args.lenguaje, backend=None, tipos=None
+        )
+        if args.salida:
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                resultado = comando.run(compile_args)
+            with open(args.salida, "w", encoding="utf-8") as f:
+                f.write(buffer.getvalue())
+            return resultado
+        return comando.run(compile_args)
     cobra.print_help()
     return 1
 
