@@ -80,8 +80,7 @@ where = ["src"]
 include = ["src", "cobra*", "core*"]
 
 [project.scripts]
-cobra = "cobra.cli.cli:main"
-pcobra = "src.main:main"
+cobra = "cli:main"
 
 [project.entry-points."cobra.plugins"]
 # Se registrarán plugins externos aquí
