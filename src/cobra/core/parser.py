@@ -5,7 +5,7 @@ import json
 import os
 from typing import Any
 from cobra.core import TipoToken, Token
-from .utils import PALABRAS_RESERVADAS, sugerir_palabra_clave
+from cobra.core.utils import PALABRAS_RESERVADAS, sugerir_palabra_clave
 
 from core.ast_nodes import (
     NodoAsignacion,
