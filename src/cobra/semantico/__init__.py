@@ -11,8 +11,8 @@ Clases exportadas:
 Funciones exportadas:
     - validar_mod: Valida la estructura de un módulo Cobra
 """
-from .analizador import AnalizadorSemantico
-from .mod_validator import validar_mod
-from .tabla import Ambito, Simbolo
+from cobra.semantico.analizador import AnalizadorSemantico
+from cobra.semantico.mod_validator import validar_mod
+from cobra.semantico.tabla import Ambito, Simbolo
 
-__all__ = ["Simbolo", "Ambito", "AnalizadorSemantico", "validar_mod"]
+__all__ = ["Ambito", "AnalizadorSemantico", "Simbolo", "validar_mod"]
