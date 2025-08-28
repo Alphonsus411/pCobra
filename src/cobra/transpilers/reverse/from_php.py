@@ -12,7 +12,7 @@ Ejemplos:
 Nota:
     Requiere que el parser tree-sitter para PHP esté instalado y configurado.
 """
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 class ReverseFromPHP(TreeSitterReverseTranspiler):
     """Transpilador inverso de PHP a Cobra usando tree-sitter.

@@ -19,7 +19,7 @@ from cobra.core.ast_nodes import (
     NodoExpresion,
     NodoFuncion
 )
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromKotlin(TreeSitterReverseTranspiler):

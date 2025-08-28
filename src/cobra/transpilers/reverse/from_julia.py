@@ -13,7 +13,7 @@ Nota:
     Requiere que el parser tree-sitter para Julia esté instalado y configurado.
 """
 
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 class ReverseFromJulia(TreeSitterReverseTranspiler):
     """Transpilador inverso de Julia a Cobra usando tree-sitter.

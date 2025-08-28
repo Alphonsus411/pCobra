@@ -16,7 +16,7 @@ from cobra.core.ast_nodes import (
     NodoFuncion,
     NodoIdentificador,
 )
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromRust(TreeSitterReverseTranspiler):
