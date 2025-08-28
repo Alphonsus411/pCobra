@@ -6,7 +6,7 @@ AST se realiza de forma explícita en los módulos que lo necesitan para
 evitar dependencias circulares durante la inicialización del paquete.
 """
 
-from .lexer import (
+from cobra.core.lexer import (
     Lexer,
     Token,
     TipoToken,
