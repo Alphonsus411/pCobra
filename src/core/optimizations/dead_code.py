@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, List
 
-from ..ast_nodes import (
+from core.ast_nodes import (
     NodoCondicional,
     NodoBucleMientras,
     NodoFuncion,
@@ -15,7 +15,7 @@ from ..ast_nodes import (
     NodoContinuar,
     NodoValor,
 )
-from ..visitor import NodeVisitor
+from core.visitor import NodeVisitor
 
 
 class _DeadCodeRemover(NodeVisitor):
