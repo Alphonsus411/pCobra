@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Iterable, Any
 
-from .ctypes_bridge import cargar_biblioteca, obtener_funcion
+from core.ctypes_bridge import cargar_biblioteca, obtener_funcion
 
 
 def compilar_crate(ruta: str, release: bool = True, timeout: int = 300) -> str:
