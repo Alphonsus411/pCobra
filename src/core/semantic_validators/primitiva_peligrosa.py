@@ -1,4 +1,4 @@
-from .base import ValidadorBase
+from core.semantic_validators.base import ValidadorBase
 from core.ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
 
 

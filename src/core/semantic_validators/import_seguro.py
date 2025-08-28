@@ -1,7 +1,7 @@
 import os
-from .base import ValidadorBase
+from core.semantic_validators.base import ValidadorBase
 from core.ast_nodes import NodoImport
-from .primitiva_peligrosa import PrimitivaPeligrosaError
+from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
 
 
 class ValidadorImportSeguro(ValidadorBase):

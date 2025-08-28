@@ -1,6 +1,6 @@
-from .base import ValidadorBase
+from core.semantic_validators.base import ValidadorBase
 from core.ast_nodes import NodoLlamadaFuncion, NodoLlamadaMetodo
-from .primitiva_peligrosa import PrimitivaPeligrosaError
+from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
 
 
 class ValidadorSistemaArchivos(ValidadorBase):
