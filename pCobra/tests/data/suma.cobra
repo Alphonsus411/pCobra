@@ -1,0 +1,6 @@
+func sumar(a, b):
+    c = a + b
+    imprimir(c)
+fin
+
+sumar(2, 3)
