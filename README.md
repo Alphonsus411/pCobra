@@ -23,6 +23,7 @@ Cobra es un lenguaje de programación diseñado en español, enfocado en la crea
 - Conversión desde otros lenguajes
 - Guía rápida de la CLI
 - Pruebas
+- Ejemplos de prueba
 - Generar documentación
 - Análisis con CodeQL
 - [CobraHub](frontend/docs/cobrahub.rst)
@@ -1014,6 +1015,31 @@ pytest --cov=pCobra pCobra/tests/
 ```
 
 El reporte se guarda como `coverage.xml` y se utiliza en el CI.
+
+### Ejemplos de prueba
+
+En `pCobra/tests/data` se incluyen programas mínimos utilizados en las
+pruebas de entrada y salida de la CLI:
+
+- `hola.cobra`: imprime el saludo «Hola Cobra».
+- `suma.cobra`: define la función `sumar` y muestra la suma de dos
+  números.
+
+El archivo `tests/test_ejemplos_io.py` ejecuta estos ejemplos y compara
+la salida con los archivos `.out` correspondientes. Para probarlos
+manualmente:
+
+```bash
+cobra ejecutar pCobra/tests/data/hola.cobra
+cobra ejecutar pCobra/tests/data/suma.cobra
+```
+
+También puedes transpilar los ejemplos para ver el código Python generado:
+
+```bash
+cobra transpilar pCobra/tests/data/hola.cobra
+cobra transpilar pCobra/tests/data/suma.cobra
+```
 
 ### Pruebas de rendimiento
 
