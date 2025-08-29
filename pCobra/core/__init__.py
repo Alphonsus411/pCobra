@@ -1,6 +1,6 @@
 """Facilita el acceso a los nodos y utilidades principales del backend.
 
-Al importar :mod:`src.core` se exponen todas las clases que componen el
+Al importar :mod:`pCobra.core` se exponen todas las clases que componen el
 árbol de sintaxis abstracta junto con el visitante base ``NodeVisitor``.
 Esto simplifica el uso de la biblioteca desde otros módulos.
 
@@ -9,11 +9,11 @@ Las funciones para limitar recursos ``limitar_memoria_mb`` y
 de implementaciones manuales.
 """
 
-from core.ast_nodes import *
-from core.ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
-from core.visitor import NodeVisitor
-from core.performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
-from core.resource_limits import limitar_memoria_mb, limitar_cpu_segundos
+from .ast_nodes import *
+from .ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
+from .visitor import NodeVisitor
+from .performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
+from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 __all__ = [
     "NodoAST",

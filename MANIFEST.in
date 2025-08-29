@@ -11,15 +11,15 @@ include run.sh
 include clean.ps1
 include .env.example
 
-recursive-include src *.py
-recursive-include src *.toml
-recursive-include src *.yaml
-recursive-include src *.json
-recursive-include src *.ini
-recursive-include src *.cfg
-recursive-include src *.md
-recursive-include src *.txt
-recursive-include src *.html
+recursive-include pCobra *.py
+recursive-include pCobra *.toml
+recursive-include pCobra *.yaml
+recursive-include pCobra *.json
+recursive-include pCobra *.ini
+recursive-include pCobra *.cfg
+recursive-include pCobra *.md
+recursive-include pCobra *.txt
+recursive-include pCobra *.html
 
 recursive-include notebooks *
 recursive-include frontend/docs *
