@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pylsp.python_lsp import PythonLSPServer, start_io_lang_server
 
-from . import cobra_plugin
+from lsp import cobra_plugin
 
 
 class CobraLSPServer(PythonLSPServer):
