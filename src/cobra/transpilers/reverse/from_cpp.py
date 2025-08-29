@@ -4,7 +4,7 @@
 from typing import Any, List
 
 import cobra.core.ast_nodes
-from .tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
 
 
 class ReverseFromCPP(TreeSitterReverseTranspiler):

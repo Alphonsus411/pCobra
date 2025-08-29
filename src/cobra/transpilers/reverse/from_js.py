@@ -34,7 +34,7 @@ from cobra.core.ast_nodes import (
     NodoOption,
 )
 
-from .tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
 
 
 class ReverseFromJS(TreeSitterReverseTranspiler):

@@ -10,7 +10,7 @@ Ejemplos:
     >>> ast = transpiler.generate_ast("def hello; puts 'world'; end")
 """
 from typing import Any, List
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromRuby(TreeSitterReverseTranspiler):

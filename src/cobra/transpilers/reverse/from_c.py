@@ -34,7 +34,7 @@ from cobra.core.ast_nodes import (
     NodoTipo,
     NodoValor
 )
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromC(TreeSitterReverseTranspiler):

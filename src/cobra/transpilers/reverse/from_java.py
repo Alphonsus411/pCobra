@@ -16,7 +16,7 @@ from cobra.core.ast_nodes import (
     NodoCondicional,
 )
 
-from .tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
 
 
 class ReverseFromJava(TreeSitterReverseTranspiler):

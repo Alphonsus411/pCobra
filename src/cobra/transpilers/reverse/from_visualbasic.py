@@ -13,8 +13,8 @@ from cobra.core.ast_nodes import (
     NodoLlamadaFuncion,
     NodoValor,
 )
-from .tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
-from .base import BaseReverseTranspiler  # type: ignore
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from cobra.transpilers.reverse.base import BaseReverseTranspiler  # type: ignore
 
 
 def _parse_expression(texto: str) -> Any:

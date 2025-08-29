@@ -20,7 +20,7 @@ Nota:
     Requiere que el parser tree-sitter para Go esté instalado y configurado.
 """
 
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromGo(TreeSitterReverseTranspiler):

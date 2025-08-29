@@ -9,7 +9,7 @@ Ejemplos:
     >>> transpiler = ReverseFromR()
     >>> ast = transpiler.generate_ast("x <- 5")
 """
-from .tree_sitter_base import TreeSitterReverseTranspiler
+from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 class ReverseFromR(TreeSitterReverseTranspiler):
     """Transpilador inverso de R a Cobra usando tree-sitter.
