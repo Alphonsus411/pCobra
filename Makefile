@@ -1,8 +1,8 @@
 # ========== VARIABLES CONFIGURABLES ==========
 PYTHON=python
 VENV=.venv
-SRC=src
-TESTS=src/tests
+SRC=pCobra
+TESTS=pCobra/tests
 SPHINXBUILD=sphinx-build
 SPHINXOPTS=
 SOURCEDIR=frontend/docs
@@ -34,7 +34,7 @@ install:
 		pip install -e .[dev]
 
 run:
-	$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m src.main
+$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m pCobra
 
 test:
 	$(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)

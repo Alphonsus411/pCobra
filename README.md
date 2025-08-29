@@ -192,8 +192,8 @@ cobra ejecutar hola.co
 
 ### PYTHONPATH y PyCharm
 
-Para que las importaciones `from src...` funcionen desde la consola y PyCharm,
-agrega el directorio `src` al `PYTHONPATH` o instala el paquete en modo
+Para que las importaciones `from pCobra...` funcionen desde la consola y PyCharm,
+agrega el directorio `pCobra` al `PYTHONPATH` o instala el paquete en modo
 editable con `pip install -e .`:
 
 ```bash
@@ -208,7 +208,7 @@ importaciones se resuelvan correctamente.
 Puedes verificar la configuración ejecutando en la consola:
 
 ```bash
-PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
+PYTHONPATH=$PWD/pCobra python -c "from pCobra.core.main import main; main()"
 ```
 
 ### Instalación con pipx
@@ -312,7 +312,7 @@ pip install pyinstaller
 Luego genera el binario con:
 
 ```bash
-pyinstaller --onefile src/cli/cli.py -n cobra
+pyinstaller --onefile pCobra/cli/cli.py -n cobra
 ```
 
 El ejecutable aparecerá en el directorio `dist/`.
@@ -320,7 +320,7 @@ El ejecutable aparecerá en el directorio `dist/`.
 Para realizar una prueba rápida puedes ejecutar el script
 `scripts/test_pyinstaller.sh`. Este script crea un entorno virtual temporal,
 instala `cobra-lenguaje` desde el repositorio (o desde PyPI si se ejecuta fuera
-de él) y ejecuta PyInstaller sobre `src/cli/cli.py` o el script `cobra-init`.
+de él) y ejecuta PyInstaller sobre `pCobra/cli/cli.py` o el script `cobra-init`.
 El binario resultante se
 guardará por defecto en `dist/`.
 
@@ -355,9 +355,9 @@ CertUtil -hashfile cobra.exe SHA256
 
 El proyecto se organiza en las siguientes carpetas y módulos:
 
-- `src/`: Contiene la lógica Python del proyecto.
+- `pCobra/`: Contiene la lógica Python del proyecto.
 - `frontend/docs/`: Carpeta donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
-- `src/tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
+- `pCobra/tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo que lista las dependencias del proyecto.
 - `pyproject.toml`: También define dependencias en las secciones
@@ -431,11 +431,18 @@ Los resultados se guardan en `binary_bench.json`.
 
 Para ejecutar el proyecto directamente desde el repositorio se incluye el
 script `run.sh`. Este cargará las variables definidas en `.env` si dicho archivo
-existe y luego llamará a `python -m src.main` pasando todos los argumentos
+existe y luego llamará a `python -m pCobra` pasando todos los argumentos
 recibidos. Úsalo de la siguiente forma:
 
 ```bash
 ./run.sh [opciones]
+```
+
+También puedes ejecutar la interfaz de línea de comandos directamente desde la
+raíz del proyecto:
+
+```bash
+python -m pCobra
 ```
 
 Para conocer las opciones avanzadas del modo seguro revisa
@@ -445,11 +452,11 @@ están disponibles en `frontend/docs/benchmarking.rst`.
 Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
-PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest pCobra/tests --cov=pCobra --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
-También puedes ejecutar suites específicas ubicadas en `src/tests`:
+También puedes ejecutar suites específicas ubicadas en `pCobra/tests`:
 
 ````bash
 python -m tests.suite_cli           # Solo pruebas de la CLI
@@ -470,7 +477,7 @@ Para probar Cobra de esta forma realiza lo siguiente:
 python -m venv .venv
 source .venv/bin/activate  # En Unix
 .\.venv\Scripts\activate  # En Windows
-make run                   # o bien: python -m src.main
+make run                   # o bien: python -m pCobra
 ```
 
 ## Tokens y reglas léxicas
@@ -646,7 +653,7 @@ paquete no está disponible, Cobra ejecutará `pip install paquete` para
 instalarlo y luego lo cargará en tiempo de ejecución. El módulo queda
 registrado en el entorno bajo el mismo nombre para su uso posterior.
 Para restringir qué dependencias pueden instalarse se emplea la variable
-`USAR_WHITELIST` definida en `src/cobra/usar_loader.py`. Basta con
+`USAR_WHITELIST` definida en `pCobra/cobra/usar_loader.py`. Basta con
 añadir o quitar nombres de paquetes en dicho conjunto para modificar la lista
 autorizada. Si la lista se deja vacía la función `obtener_modulo` lanzará
 `PermissionError`, por lo que es necesario poblarla antes de permitir
@@ -678,7 +685,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 
 ## Invocar el transpilador
 
-La carpeta [`src/cobra/transpilers/transpiler`](src/cobra/transpilers/transpiler)
+La carpeta [`pCobra/cobra/transpilers/transpiler`](pCobra/cobra/transpilers/transpiler)
 contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
@@ -925,9 +932,9 @@ Estas gramáticas también están listadas en `requirements.txt`, pero puedes in
 
 ### Diseño extensible de la CLI
 
-La CLI está organizada en clases dentro de `src/cli/commands`. Cada subcomando
+La CLI está organizada en clases dentro de `pCobra/cli/commands`. Cada subcomando
 hereda de `BaseCommand` y define su nombre, los argumentos que acepta y la acción
-a ejecutar. En `src/cli/cli.py` se instancian automáticamente y se registran en
+a ejecutar. En `pCobra/cli/cli.py` se instancian automáticamente y se registran en
 `argparse`, por lo que para añadir un nuevo comando solo es necesario crear un
 archivo con la nueva clase y llamar a `register_subparser` y `run`.
 Para un tutorial completo de creación de plugins revisa
@@ -957,7 +964,7 @@ posible para reducir riesgos.
 
 # Pruebas
 
-Las pruebas están ubicadas en la carpeta `src/tests/` y utilizan pytest para la
+Las pruebas están ubicadas en la carpeta `pCobra/tests/` y utilizan pytest para la
 ejecución. **Antes de correr cualquier prueba instala el paquete en modo
 editable junto con las dependencias de desarrollo:**
 
@@ -981,7 +988,7 @@ Este comando exporta `PYTHONPATH=$PWD` e invoca `pytest` con los argumentos
 definidos en `pytest.ini`.
 
 ````bash
-PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest pCobra/tests --cov=pCobra --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
@@ -1003,7 +1010,7 @@ PYTHONPATH=$PWD pytest
 En la integración continua se emplea:
 
 ```bash
-pytest --cov=src src/tests/
+pytest --cov=pCobra pCobra/tests/
 ```
 
 El reporte se guarda como `coverage.xml` y se utiliza en el CI.
