@@ -369,3 +369,48 @@ Para garantizar estos límites se recomienda ejecutar Cobra dentro de un
 contenedor como Docker o bajo WSL2, donde sí es posible aplicar las
 restricciones de recursos.
 
+## 20. Alcance y utilidades
+
+El lenguaje ofrece palabras clave para controlar el alcance de las
+variables y utilidades comunes al escribir programas.
+
+- `global` permite modificar una variable definida en el módulo.
+- `nolocal` accede a variables de un contexto externo distinto al
+  global.
+- `afirmar` verifica condiciones y detiene la ejecución si no se cumple.
+- `eliminar` borra nombres o elementos de estructuras.
+
+```cobra
+var contador = 0
+
+func incrementar():
+    global contador
+    contador += 1
+fin
+
+func crear():
+    var total = 0
+
+    func sumar():
+        nolocal total
+        total += 1
+    fin
+
+    sumar()
+    afirmar(total > 0, 'Total debe ser positivo')
+fin
+
+var numeros = [1, 2, 3]
+eliminar numeros[1]
+eliminar contador
+```
+
+**Buenas prácticas**
+
+- Emplea `global` y `nolocal` con moderación para reducir efectos
+  secundarios y favorecer un diseño modular.
+- Usa `afirmar` para documentar invariantes del código; ayuda a detectar
+  errores temprano.
+- `eliminar` sirve para liberar recursos o mantener limpio el espacio de
+  nombres; evita su abuso para que el flujo del programa sea predecible.
+
