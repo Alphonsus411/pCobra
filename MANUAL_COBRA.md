@@ -143,7 +143,24 @@ hilo tarea()
 imprimir('principal')
 ```
 
-## 9. Transpilación y ejecución
+## 9. Funciones asincrónicas
+
+- Declara funciones asíncronas con `asincronico func`.
+- Usa `esperar` para aguardar su resultado.
+
+```cobra
+asincronico func tarea():
+    esperar 1
+    imprimir('listo')
+fin
+
+func principal():
+    esperar tarea()
+    imprimir('fin')
+fin
+```
+
+## 10. Transpilación y ejecución
 
 - Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
@@ -222,7 +239,7 @@ La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "H
 
 Herencia múltiple en clases.
 
-## 10. Modo seguro
+## 11. Modo seguro
 
 El modo seguro se encuentra activado por defecto y evita operaciones peligrosas
 como `leer_archivo` o `hilo`. Para desactivarlo:
@@ -231,12 +248,12 @@ como `leer_archivo` o `hilo`. Para desactivarlo:
 cobra ejecutar programa.co --no-seguro
 ```
 
-## 11. Próximos pasos
+## 12. Próximos pasos
 
 Revisa la documentación en `frontend/docs` para profundizar en la arquitectura, validadores y más ejemplos.
 También puedes consultar ejemplos prácticos en la carpeta `casos_reales/` ubicada en la raíz del repositorio.
 
-## 12. Novedades
+## 13. Novedades
 
 Se añadieron nuevas construcciones al lenguaje:
 
@@ -250,7 +267,7 @@ Se añadieron nuevas construcciones al lenguaje:
 - Importaciones `desde` ... `como` para alias de módulos.
 - Nueva estructura `switch` con múltiples `case`.
 
-## 13. Uso de Qualia
+## 14. Uso de Qualia
 
 Qualia registra cada ejecución y genera sugerencias para mejorar tu código.
 El estado se guarda en `qualia_state.json` para conservar la información entre
@@ -273,7 +290,7 @@ En el modo interactivo escribe `sugerencias` para obtener las recomendaciones
 actuales o bien `%sugerencias` en Jupyter. Las propuestas se vuelven más
 detalladas a medida que Qualia aprende de tu código.
 
-## 14. Bibliotecas compartidas con ctypes
+## 15. Bibliotecas compartidas con ctypes
 
 Puedes cargar funciones escritas en C mediante ``cargar_funcion``. Solo
 compila una biblioteca compartida y proporciona la ruta y el nombre de la
@@ -284,7 +301,7 @@ var triple = cargar_funcion('libtriple.so', 'triple')
 imprimir(triple(3))
 ```
 
-## 15. Perfilado de programas
+## 16. Perfilado de programas
 
 Para analizar el rendimiento de un script utiliza `cobra profile`. Puedes guardar
 el resultado en un archivo `.prof` y abrirlo con herramientas como `snakeviz`:
@@ -295,7 +312,7 @@ cobra profile ejemplo.co --output ejemplo.prof --ui snakeviz
 
 Si no indicas `--ui`, se mostrará un resumen en la consola. `snakeviz` se instala junto con las dependencias de desarrollo.
 
-## 16. Funciones del sistema
+## 17. Funciones del sistema
 
 La biblioteca estándar expone `corelibs.sistema.ejecutar` para lanzar
 procesos del sistema. Por motivos de seguridad es **obligatorio**
@@ -306,7 +323,7 @@ captura al importar el módulo, por lo que modificar la variable de
 entorno después no surte efecto. Invocar la función sin esta
 configuración producirá un ``ValueError``.
 
-## 17. Limitaciones de recursos en Windows
+## 18. Limitaciones de recursos en Windows
 
 En sistemas Windows los límites de memoria y de CPU pueden no aplicarse
 correctamente. Si Cobra no logra establecer las restricciones solicitadas
