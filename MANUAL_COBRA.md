@@ -105,7 +105,38 @@ switch opcion:
 fin
 ```
 
-## 5. Trabajar con módulos
+## 5. Manejo de errores
+
+- `try` agrupa código que puede fallar. Su alias en español es `intentar`.
+- `catch` intercepta las excepciones generadas; también puede escribirse `capturar`.
+- `throw` lanza una excepción y admite el alias `lanzar`.
+- `finally` ejecuta un bloque sin importar el resultado. Su equivalente en español es `finalmente`.
+
+`ExcepcionCobra` es la excepción genérica del intérprete. Al lanzarse, la ejecución se detiene y el error se propaga a través de las funciones llamadoras hasta que un bloque `catch`/`capturar` lo maneja. Si nadie lo controla, el programa termina mostrando el mensaje de error.
+
+Ejemplo sin alias:
+
+```cobra
+try:
+    throw ExcepcionCobra('falló')
+catch ExcepcionCobra:
+    imprimir('error controlado')
+finally:
+    imprimir('siempre se ejecuta')
+```
+
+Ejemplo con alias en español:
+
+```cobra
+intentar:
+    lanzar ExcepcionCobra('falló')
+capturar ExcepcionCobra:
+    imprimir('error controlado')
+finalmente:
+    imprimir('siempre se ejecuta')
+```
+
+## 6. Trabajar con módulos
 
 - Usa `import` para cargar archivos `.co` o módulos nativos.
 - Los módulos nativos ofrecen funciones de E/S y estructuras de datos.
@@ -115,14 +146,14 @@ import 'modulo.co'
 imprimir(saludo)
 ```
 
-## 6. Paquetes Cobra
+## 7. Paquetes Cobra
 
 - Agrupa varios módulos en un archivo con manifest ``cobra.pkg``.
 - Crea un paquete con ``cobra paquete crear carpeta paquete.cobra``.
 - Instálalo posteriormente con ``cobra paquete instalar paquete.cobra``.
 - Los archivos ``.cobra`` corresponden a paquetes completos, mientras que los scripts usan la extensión ``.co``.
 
-## 7. Macros
+## 8. Macros
 
 Permiten reutilizar fragmentos de código mediante la directiva `macro`.
 
@@ -130,7 +161,7 @@ Permiten reutilizar fragmentos de código mediante la directiva `macro`.
 macro saluda { imprimir(1) }
 saluda()
 ```
-## 8. Concurrencia
+## 9. Concurrencia
 
 - Ejecuta funciones en paralelo con la palabra clave `hilo`.
 
@@ -143,7 +174,7 @@ hilo tarea()
 imprimir('principal')
 ```
 
-## 9. Funciones asincrónicas
+## 10. Funciones asincrónicas
 
 - Declara funciones asíncronas con `asincronico func`.
 - Usa `esperar` para aguardar su resultado.
@@ -160,7 +191,7 @@ func principal():
 fin
 ```
 
-## 10. Transpilación y ejecución
+## 11. Transpilación y ejecución
 
 - Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
@@ -239,7 +270,7 @@ La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "H
 
 Herencia múltiple en clases.
 
-## 11. Modo seguro
+## 12. Modo seguro
 
 El modo seguro se encuentra activado por defecto y evita operaciones peligrosas
 como `leer_archivo` o `hilo`. Para desactivarlo:
@@ -248,12 +279,12 @@ como `leer_archivo` o `hilo`. Para desactivarlo:
 cobra ejecutar programa.co --no-seguro
 ```
 
-## 12. Próximos pasos
+## 13. Próximos pasos
 
 Revisa la documentación en `frontend/docs` para profundizar en la arquitectura, validadores y más ejemplos.
 También puedes consultar ejemplos prácticos en la carpeta `casos_reales/` ubicada en la raíz del repositorio.
 
-## 13. Novedades
+## 14. Novedades
 
 Se añadieron nuevas construcciones al lenguaje:
 
@@ -267,7 +298,7 @@ Se añadieron nuevas construcciones al lenguaje:
 - Importaciones `desde` ... `como` para alias de módulos.
 - Nueva estructura `switch` con múltiples `case`.
 
-## 14. Uso de Qualia
+## 15. Uso de Qualia
 
 Qualia registra cada ejecución y genera sugerencias para mejorar tu código.
 El estado se guarda en `qualia_state.json` para conservar la información entre
@@ -290,7 +321,7 @@ En el modo interactivo escribe `sugerencias` para obtener las recomendaciones
 actuales o bien `%sugerencias` en Jupyter. Las propuestas se vuelven más
 detalladas a medida que Qualia aprende de tu código.
 
-## 15. Bibliotecas compartidas con ctypes
+## 16. Bibliotecas compartidas con ctypes
 
 Puedes cargar funciones escritas en C mediante ``cargar_funcion``. Solo
 compila una biblioteca compartida y proporciona la ruta y el nombre de la
@@ -301,7 +332,7 @@ var triple = cargar_funcion('libtriple.so', 'triple')
 imprimir(triple(3))
 ```
 
-## 16. Perfilado de programas
+## 17. Perfilado de programas
 
 Para analizar el rendimiento de un script utiliza `cobra profile`. Puedes guardar
 el resultado en un archivo `.prof` y abrirlo con herramientas como `snakeviz`:
@@ -312,7 +343,7 @@ cobra profile ejemplo.co --output ejemplo.prof --ui snakeviz
 
 Si no indicas `--ui`, se mostrará un resumen en la consola. `snakeviz` se instala junto con las dependencias de desarrollo.
 
-## 17. Funciones del sistema
+## 18. Funciones del sistema
 
 La biblioteca estándar expone `corelibs.sistema.ejecutar` para lanzar
 procesos del sistema. Por motivos de seguridad es **obligatorio**
@@ -323,7 +354,7 @@ captura al importar el módulo, por lo que modificar la variable de
 entorno después no surte efecto. Invocar la función sin esta
 configuración producirá un ``ValueError``.
 
-## 18. Limitaciones de recursos en Windows
+## 19. Limitaciones de recursos en Windows
 
 En sistemas Windows los límites de memoria y de CPU pueden no aplicarse
 correctamente. Si Cobra no logra establecer las restricciones solicitadas
