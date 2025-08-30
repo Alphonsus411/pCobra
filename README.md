@@ -1114,6 +1114,34 @@ git push origin v10.0.9
 
 Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuración de GitHub Actions](.github/workflows).
 
+## Lenguajes soportados
+
+- Python
+- JavaScript
+- ensamblador
+- Rust
+- C++
+- Go
+- Kotlin
+- Swift
+- R
+- Julia
+- Java
+- COBOL
+- Fortran
+- Pascal
+- Ruby
+- PHP
+- Perl
+- Visual Basic
+- Matlab
+- Mojo
+- LaTeX
+- C
+- WebAssembly
+
+Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta [README_en.md](README_en.md) para más detalles.
+
 # Licencia
 
 Este proyecto está bajo la [Licencia MIT](LICENSE).
@@ -1121,7 +1149,7 @@ Este proyecto está bajo la [Licencia MIT](LICENSE).
 
 ### Notas
 
-- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación y la compatibilidad con Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly.
+- **Documentación y Ejemplos Actualizados**: El README ha sido actualizado para reflejar las capacidades de transpilación. Consulta la sección [Lenguajes soportados](#lenguajes-soportados) para ver la lista de lenguajes compatibles.
 - **Ejemplos de Código y Nuevas Estructuras**: Incluye ejemplos con el uso de estructuras avanzadas como clases y diccionarios en el lenguaje Cobra.
 
 Si deseas agregar o modificar algo, házmelo saber.
