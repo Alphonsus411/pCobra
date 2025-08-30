@@ -98,179 +98,19 @@ La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](SPEC_CO
 
 ## Instalación
 
-Para instalar el proyecto, sigue estos pasos:
-
-1. Clona el repositorio en tu máquina local:
-
-   ```bash
-   git clone https://github.com/Alphonsus411/pCobra.git
-   ```
-   
-2. Accede al directorio del proyecto:
-
-   ```bash
-   cd pCobra
-   ```
-
-3. Ejecuta el script de instalación de dependencias de desarrollo:
-
-   ```bash
-   ./scripts/install_dev.sh
-   ```
-
-Si prefieres automatizar el proceso, ejecuta:
-
 ```bash
-./install.sh            # instala desde PyPI
-./install.sh --dev      # instala en modo editable
-```
-
-
-4. Crea un entorno virtual y actívalo:
-
-````bash
-python -m venv .venv
-source .venv/bin/activate  # Para Unix
-.\.venv\Scripts\activate  # Para Windows
-````
-
-5. Instala las dependencias de desarrollo (pytest, `python-dotenv`, `tomli`,
-   `hypothesis`, etc.):
-
-````bash
-pip install -r requirements-dev.txt
-````
-
-   Estas bibliotecas permiten ejecutar las pruebas y otras tareas de desarrollo.
-   Las mismas dependencias se incluyen en el extra `dev` definido en `pyproject.toml`.
-   Las dependencias de ejecución se instalarán al instalar el paquete.
-
-6. Instala el paquete de forma editable para usar la CLI y obtener las
-   dependencias declaradas en ``pyproject.toml``:
-
-````bash
-pip install -e .
-````
-
-   Opcionalmente puedes ejecutar ``pip install -e .[dev]`` para instalar los
-   extras de desarrollo.
-   Para añadir capacidades específicas puedes instalar extras desde PyPI:
-
-   ```bash
-   pip install cobra-lenguaje[ml]        # dependencias de aprendizaje automático
-   pip install cobra-lenguaje[big-data]  # soporte para procesamiento distribuido
-   ```
-
-### Entorno virtual y verificación
-
-Activa un entorno virtual, registra los puntos de entrada de la CLI y comprueba
-que la instalación funciona correctamente:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Unix/macOS
-.\.venv\Scripts\activate   # Windows
-
-pip install -e .
-
-# (Opcional) ejecutar sin instalar el paquete
-export PYTHONPATH=src  # Unix/macOS
-set PYTHONPATH=src     # Windows PowerShell
-
-cobra --version  # debe mostrar la versión sin errores
-```
-
-7. Copia el archivo ``.env.example`` a ``.env`` y personaliza las rutas o claves
-   de ser necesario. Estas variables se cargarán automáticamente al iniciar
-   Cobra gracias a ``python-dotenv``:
-
-````bash
-cp .env.example .env
-# Edita .env con tu editor favorito
-````
-
-8. Ejecuta un programa de prueba para verificar la instalación:
-
-````bash
-echo "imprimir('Hola Cobra')" > hola.co
-cobra ejecutar hola.co
-````
-
-### PYTHONPATH y PyCharm
-
-Para que las importaciones `from pCobra...` funcionen desde la consola y PyCharm,
-agrega el directorio `pCobra` al `PYTHONPATH` o instala el paquete en modo
-editable con `pip install -e .`:
-
-```bash
-export PYTHONPATH=$PWD/src
-# o bien
-pip install -e .
-```
-
-En PyCharm marca la carpeta `src` como *Sources Root* para que las
-importaciones se resuelvan correctamente.
-
-Puedes verificar la configuración ejecutando en la consola:
-
-```bash
-PYTHONPATH=$PWD/pCobra python -c "from pCobra.core.main import main; main()"
+pip install pcobra
 ```
 
 ### Instalación con pipx
 
-[pipx](https://pypa.github.io/pipx/) es una herramienta para instalar y ejecutar aplicaciones de Python de forma aislada y requiere Python 3.9 o superior. Para instalar Cobra con pipx ejecuta:
-
 ```bash
-pipx install cobra-lenguaje
+pipx install pcobra
 ```
 
-Si prefieres instalar Cobra directamente desde PyPI sin usar
-`pipx`, ejecuta:
+### Instalación desde repositorio
 
-```bash
-pip install cobra-lenguaje
-```
-
-## Docker CLI
-
-La CLI de Cobra puede ejecutarse de forma aislada mediante un contenedor
-Docker. A continuación se muestran los pasos más comunes.
-
-### Construir la imagen localmente
-
-Puedes generar la imagen con `docker build` o usando el subcomando
-`contenedor` de la propia CLI:
-
-```bash
-docker build -t cobra-cli -f docker/Dockerfile .
-# o
-cobra contenedor --tag cobra-cli
-```
-
-### Ejecutar comandos
-
-Una vez construida la imagen puedes lanzar el binario dentro del
-contenedor:
-
-```bash
-docker run --rm cobra-cli --version
-docker run --rm -v "$(pwd)":/src cobra-cli ejecutar /src/ejemplos/hola.cobra
-```
-
-### Imagen publicada por CI
-
-Cada etiqueta del repositorio dispara un workflow que construye y
-publica automáticamente la imagen en Docker Hub. Para obtener la versión
-más reciente ejecuta:
-
-```bash
-docker pull alphonsus411/cobra:latest
-```
-
-Gracias a un Dockerfile multietapa que compila el CLI y usa una imagen
-distroless como base, el tamaño final es muy reducido (menos de 50 MB) y
-se evitan dependencias innecesarias.
+Consulta [docs/instalacion.md](docs/instalacion.md#instalacion-desde-repositorio) para instrucciones avanzadas (gramáticas, plugins, scripts y uso de Docker).
 
 ## Descarga de binarios
 
@@ -926,16 +766,6 @@ El proceso intenta mapear instrucciones básicas, pero características muy espe
 
 Actualmente es posible convertir a Cobra código escrito en ensamblador, C, C++, COBOL, Fortran, Go, Java, JavaScript, Julia, Kotlin, LaTeX, Matlab, Mojo, Pascal, Perl, PHP, Python, R, Ruby, Rust, Swift, VisualBasic y WebAssembly.
 
-### Instalación de gramáticas
-
-Varios transpiladores inversos están basados en [tree-sitter](https://tree-sitter.github.io/tree-sitter/). Cobra ya incluye la dependencia `tree-sitter`, por lo que solo necesitas instalar `tree-sitter-languages`:
-
-```bash
-pip install tree-sitter-languages
-```
-
-Estas gramáticas también están listadas en `requirements.txt`, pero puedes instalarlas manualmente si deseas solo esta característica.
-
 ### Diseño extensible de la CLI
 
 La CLI está organizada en clases dentro de `pCobra/cli/commands`. Cada subcomando
@@ -1278,29 +1108,6 @@ saludo = "mi_paquete.mi_modulo:SaludoCommand"
 
 Tras instalar el paquete con `pip install -e .`, Cobra detectará automáticamente
 el nuevo comando.
-
-### Instalación de plugins
-
-Para utilizar un plugin publicado solo necesitas instalar su paquete de
-distribución. Por ejemplo:
-
-```bash
-pip install mi-plugin-cobra
-```
-
-Si estás desarrollando un plugin local puedes hacerlo en modo editable desde su
-directorio:
-
-```bash
-pip install -e ./mi_plugin
-```
-
-Cada plugin se registra junto con su número de versión en un registro interno.
-Puedes ver la lista de plugins disponibles ejecutando:
-
-```bash
-cobra plugins
-```
 
 ### Ejemplo de plugin
 
