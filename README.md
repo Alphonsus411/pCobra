@@ -19,6 +19,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 
 - Descripción del Proyecto
 - Instalación
+- Cómo usar la CLI
 - Descargas
 - Estructura del Proyecto
 - Características Principales
@@ -26,7 +27,6 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Tokens y reglas léxicas
 - Ejemplo de Uso
 - Conversión desde otros lenguajes
-- Guía rápida de la CLI
 - Pruebas
 - Ejemplos de prueba
 - Generar documentación
@@ -111,6 +111,26 @@ pipx install pcobra
 ### Instalación desde repositorio
 
 Consulta [docs/instalacion.md](docs/instalacion.md#instalacion-desde-repositorio) para instrucciones avanzadas (gramáticas, plugins, scripts y uso de Docker).
+
+## Cómo usar la CLI
+
+Ejecuta un archivo de Cobra con:
+
+```bash
+cobra archivo.co
+```
+
+Para listar las opciones disponibles ejecuta:
+
+```bash
+cobra --help
+```
+
+El intérprete se ejecuta en modo seguro por defecto. Si deseas desactivarlo utiliza la opción `--no-seguro`:
+
+```bash
+cobra archivo.co --no-seguro
+```
 
 ## Descarga de binarios
 
@@ -603,56 +623,6 @@ imprimir('principal')
 
 Al generar código para estas funciones, se crean llamadas `asyncio.create_task` en Python y `Promise.resolve().then` en JavaScript.
 
-## Guía rápida de la CLI
-
-La herramienta `cobra` se invoca con `cobra [subcomando] [archivo] [opciones]`.
-Cuando un argumento posicional comienza con `-`, precede la lista de opciones con `--` para que se trate como un valor literal.
-
-```bash
-cobra ejecutar -- -archivo.co
-```
-Para obtener ayuda puedes ejecutar:
-
-```bash
-cobra --help
-cobra --ayuda
-```
-
-Para personalizar el comportamiento de la herramienta consulta la [configuración de la CLI](docs/config_cli.md).
-
-Un uso común es compilar un programa y luego ejecutar el resultado:
-
-```bash
-cobra compilar ejemplo.co --tipo=python > ejemplo.py
-python ejemplo.py
-```
-
-Si no proporcionas un subcomando se abrirá el modo interactivo.
-
-### Uso interactivo
-
-Al ejecutar `cobra` sin argumentos, o explícitamente con `cobra interactive`,
-se inicia un REPL construido con
-[prompt_toolkit](https://python-prompt-toolkit.readthedocs.io/). Este REPL
-ofrece resaltado de sintaxis mediante Pygments y mantiene un historial
-persistente entre sesiones.
-
-El historial se guarda en el archivo `~/.cobra_history`. Para consultarlo o
-reiniciarlo puedes ejecutar:
-
-```bash
-cat ~/.cobra_history   # muestra el historial
-rm ~/.cobra_history    # borra el historial
-```
-
-Si escribes una palabra clave con un error tipográfico se mostrará una
-sugerencia automática. Ejemplo:
-
-```bash
-cobra> imprmir 1
-ParserError: Token inesperado. ¿Quiso decir 'imprimir'?
-```
-
 ## Uso desde la CLI
 
 Una vez instalado el paquete, la herramienta `cobra` ofrece varios subcomandos:
@@ -695,8 +665,6 @@ cobra compilar noexiste.co
 # Salida:
 # Error: El archivo 'noexiste.co' no existe
 
-# Ejecutar directamente un script Cobra
-cobra ejecutar programa.co --depurar --formatear
 
 # Gestionar módulos instalados
 cobra modulos listar
@@ -719,19 +687,6 @@ cobra verificar ejemplo.co --lenguajes=python,js
 cobra gui
 ```
 
-Al iniciar la CLI se muestra una cabecera con el logo de Cobra:
-
-```bash
-$ cobra --help
-  ____        _               ____ _     ___
- / ___|___   | |__   ___ _ __/ ___| |   |_ _|
-| |   / _ \  | '_ \ / _ \ '__| |   | |    | |
-| |__| (_) | | |_) |  __/ |  | |___| |___ | |
- \____\___/  |_.__/ \___|_|   \____|_____|___|
-usage: cobra [-h] [--formatear] ...
-```
-El mismo resultado se obtiene con `cobra --ayuda`.
-
 Si deseas desactivar los colores usa `--no-color`:
 
 ```bash
@@ -749,9 +704,6 @@ Los archivos con extensión ``.cobra`` representan paquetes completos, mientras 
 
 El subcomando `docs` ejecuta `sphinx-apidoc` para generar la documentación de la API antes de compilar el HTML.
 El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
-
-
-Si no se pasa un subcomando se abrirá el modo interactivo. Usa `cobra --help` o `cobra --ayuda` para más detalles.
 
 ## Conversión desde otros lenguajes a Cobra
 
@@ -779,7 +731,6 @@ Para un tutorial completo de creación de plugins revisa
 ## Modo seguro
 
 El intérprete y la CLI ejecutan el código en modo seguro de forma predeterminada. Este modo valida el AST y prohíbe primitivas como `leer_archivo`, `escribir_archivo`, `obtener_url`, `hilo`, `leer`, `escribir`, `existe`, `eliminar` y `enviar_post`. El validador `ValidadorProhibirReflexion` también bloquea llamadas a `eval`, `exec` y otras funciones de reflexión, además de impedir el acceso a atributos internos. Asimismo, las instrucciones `import` solo están permitidas para módulos instalados o incluidos en `IMPORT_WHITELIST`. Si el programa intenta utilizar estas funciones o importar otros archivos se lanzará `PrimitivaPeligrosaError`.
-Si se desea desactivar esta protección, la CLI ofrece la opción `--no-seguro`.
 La validación se realiza mediante una cadena de validadores configurada por la
 función `construir_cadena`, lo que facilita añadir nuevas comprobaciones en el
 futuro.
