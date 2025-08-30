@@ -132,6 +132,14 @@ El intérprete se ejecuta en modo seguro por defecto. Si deseas desactivarlo uti
 cobra archivo.co --no-seguro
 ```
 
+### Ejemplo de transpilación
+
+```bash
+cobra transpila hola.co --dest python
+```
+
+Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [frontend/docs](frontend/docs).
+
 ## Descarga de binarios
 
 Para cada lanzamiento se generan ejecutables para Linux, Windows y macOS mediante
