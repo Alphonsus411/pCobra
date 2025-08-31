@@ -12,10 +12,10 @@ from cobra.core.ast_nodes import (
     NodoAtributo,
 )
 from cobra.core import TipoToken
-from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from core.optimizations import optimize_constants, remove_dead_code
 from cobra.macro import expandir_macros
+import re
 
 
 def visit_asignacion(self, nodo: NodoAsignacion):
@@ -44,11 +44,21 @@ def visit_imprimir(self, nodo: NodoImprimir):
     self.agregar_linea(f"print({valor})")
 
 
+def visit_retorno(self, nodo):
+    """Genera una instrucción de retorno en R."""
+    if getattr(nodo, "expresion", None) is not None:
+        valor = self.obtener_valor(nodo.expresion)
+        self.agregar_linea(f"return({valor})")
+    else:
+        self.agregar_linea("return()")
+
+
 r_nodes = {
     "asignacion": visit_asignacion,
     "funcion": visit_funcion,
     "llamada_funcion": visit_llamada_funcion,
     "imprimir": visit_imprimir,
+    "retorno": visit_retorno,
 }
 
 
@@ -89,9 +99,11 @@ class TranspiladorR(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
-            metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
+            nombre = nodo.__class__.__name__[4:]
+            snake = re.sub(r"(?<!^)(?=[A-Z])", "_", nombre).lower()
+            metodo = getattr(self, f"visit_{snake}", None)
             if metodo:
                 metodo(nodo)
         return "\n".join(self.codigo)
