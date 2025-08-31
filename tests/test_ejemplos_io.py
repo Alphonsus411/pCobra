@@ -5,16 +5,17 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.parametrize(
-    "nombre", [
-        "hola",  # ejemplo: imprime un saludo sencillo
-        "suma",  # ejemplo: calcula y muestra la suma de dos números
-        "async_await",  # ejemplo: ejecución asíncrona básica
-        "factorial_recursivo",  # ejemplo: calcula factorial recursivamente
-        "suma_matrices",  # ejemplo: suma elementos de dos matrices
-        "ejemplo",  # ejemplo: muestra un saludo simple
-    ],
-)
+def ejemplos_disponibles() -> list[str]:
+    """Busca programas ``.cobra`` con su archivo ``.out`` correspondiente."""
+    base = Path(__file__).resolve().parent.parent / "pCobra" / "tests" / "data"
+    return sorted(
+        archivo.stem
+        for archivo in base.glob("*.cobra")
+        if (base / f"{archivo.stem}.out").exists()
+    )
+
+
+@pytest.mark.parametrize("nombre", ejemplos_disponibles())
 def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
     """Ejecuta programas de ejemplo y compara la salida con su archivo .out."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
@@ -32,16 +33,7 @@ def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
     assert salida == esperado
 
 
-@pytest.mark.parametrize(
-    "nombre", [
-        "hola",  # debe generar una llamada a print en el código Python
-        "suma",  # comprueba que la transpilación incluya impresiones
-        "async_await",  # valida transpilación de async/await
-        "factorial_recursivo",  # confirma transpilación de recursividad
-        "suma_matrices",  # verifica transpilación con múltiples prints
-        "ejemplo",  # debe contener un print sencillo
-    ],
-)
+@pytest.mark.parametrize("nombre", ejemplos_disponibles())
 def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None:
     """Transpila ejemplos y valida que el código contenga fragmentos esperados."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
