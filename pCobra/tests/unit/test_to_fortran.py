@@ -10,6 +10,7 @@ from core.ast_nodes import (
     NodoAtributo,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
+    NodoRetorno,
 )
 
 
@@ -25,6 +26,26 @@ def test_transpilador_funcion_fortran():
     t = TranspiladorFortran()
     resultado = t.generate_code(ast)
     esperado = "subroutine miFuncion(a, b)\n    x = a + b\nend subroutine"
+    assert resultado == esperado
+
+
+def test_transpilador_program_main_fortran():
+    ast = [
+        NodoFuncion(
+            "main",
+            [],
+            [
+                NodoRetorno(
+                    NodoOperacionBinaria(
+                        NodoValor(2), Token(TipoToken.SUMA, "+"), NodoValor(2)
+                    )
+                )
+            ],
+        )
+    ]
+    t = TranspiladorFortran()
+    resultado = t.generate_code(ast)
+    esperado = "program main\n    print *, 2 + 2\nend program main"
     assert resultado == esperado
 
 
