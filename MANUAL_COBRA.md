@@ -414,3 +414,50 @@ eliminar contador
 - `eliminar` sirve para liberar recursos o mantener limpio el espacio de
   nombres; evita su abuso para que el flujo del programa sea predecible.
 
+## 21. Construcciones avanzadas
+
+### Lambda
+
+`lambda` define funciones an\u00f3nimas de una sola expresi\u00f3n. Se
+emplea para crear callbacks r\u00e1pidos o para pasar l\u00f3gica a
+funciones de orden superior como `map` o `filter`.
+
+```cobra
+var duplicar = lambda x: x * 2
+var datos = [1, 2, 3]
+var resultado = map(duplicar, datos)
+```
+
+Suelen combinarse con otras estructuras como `si` o `mientras` para
+realizar operaciones en l\u00ednea sin definir funciones completas.
+
+### Contextos con `con`/`with`
+
+`con` (o `with` en ingl\u00e9s) crea un contexto que garantiza liberar
+recursos al finalizar el bloque `fin`, incluso cuando ocurre una
+excepci\u00f3n.
+
+```cobra
+con abrir_archivo('datos.txt') como archivo:
+    archivo.escribir('hola')
+fin
+```
+
+Es habitual usarlo para manejar archivos, conexiones o bloqueos.
+Puede anidarse con `try`, `si` o bucles para un control m\u00e1s fino del
+flujo.
+
+### Option `nombre = valor`
+
+La construcci\u00f3n `option` declara valores opcionales que pueden o no
+contener un dato. La sintaxis b\u00e1sica es:
+
+```cobra
+option resultado = obtener()
+option sin_valor = None
+```
+
+Se usa para representar retornos que pueden estar ausentes. Puede
+combinarse con `si` o `switch` para comprobar su contenido y con `con`
+cuando la disponibilidad del recurso es condicional.
+
