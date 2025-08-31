@@ -14,13 +14,20 @@ from cobra.core.ast_nodes import (
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from core.optimizations import optimize_constants
 from cobra.macro import expandir_macros
 
 from cobra.transpilers.transpiler.cobol_nodes.asignacion import visit_asignacion as _visit_asignacion
 from cobra.transpilers.transpiler.cobol_nodes.funcion import visit_funcion as _visit_funcion
-from cobra.transpilers.transpiler.cobol_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from cobra.transpilers.transpiler.cobol_nodes.imprimir import visit_imprimir as _visit_imprimir
+from cobra.transpilers.transpiler.cobol_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
+from cobra.transpilers.transpiler.cobol_nodes.imprimir import (
+    visit_imprimir as _visit_imprimir,
+)
+from cobra.transpilers.transpiler.cobol_nodes.retorno import (
+    visit_retorno as _visit_retorno,
+)
 
 
 cobol_nodes = {
@@ -28,6 +35,7 @@ cobol_nodes = {
     "funcion": _visit_funcion,
     "llamada_funcion": _visit_llamada_funcion,
     "imprimir": _visit_imprimir,
+    "retorno": _visit_retorno,
 }
 
 
@@ -39,8 +47,10 @@ class TranspiladorCOBOL(BaseTranspiler):
         self.indent = 0
 
     def generate_code(self, ast):
-        self.codigo = self.transpilar(ast)
-        return self.codigo
+        self.codigo = []
+        self.indent = 0
+        self.transpilar(ast)
+        return "\n".join(self.codigo)
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)
@@ -71,11 +81,15 @@ class TranspiladorCOBOL(BaseTranspiler):
             return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
-        nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = optimize_constants(expandir_macros(nodos))
+        self.agregar_linea("IDENTIFICATION DIVISION.")
+        self.agregar_linea("PROGRAM-ID. MAIN.")
+        self.agregar_linea("PROCEDURE DIVISION.")
+        self.indent += 1
         for nodo in nodos:
             nodo.aceptar(self)
-        return "\n".join(self.codigo)
+        self.agregar_linea("STOP RUN.")
+        self.indent -= 1
 
 
 for nombre, funcion in cobol_nodes.items():
