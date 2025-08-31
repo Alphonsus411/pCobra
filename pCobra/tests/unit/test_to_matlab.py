@@ -1,5 +1,12 @@
 from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoImprimir,
+    NodoValor,
+    NodoRetorno,
+)
 
 
 def test_transpilador_asignacion_matlab():
@@ -29,3 +36,11 @@ def test_transpilador_imprimir_matlab():
     t = TranspiladorMatlab()
     resultado = t.generate_code(ast)
     assert resultado == "disp(x);"
+
+
+def test_transpilador_retorno_matlab():
+    ast = [NodoFuncion("main", [], [NodoRetorno(NodoValor(4))])]
+    t = TranspiladorMatlab()
+    resultado = t.generate_code(ast)
+    esperado = "function resultado = main()\n    resultado = 4;\nend"
+    assert resultado == esperado

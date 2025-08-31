@@ -23,12 +23,14 @@ from cobra.transpilers.transpiler.matlab_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
 from cobra.transpilers.transpiler.matlab_nodes.imprimir import visit_imprimir as _visit_imprimir
+from cobra.transpilers.transpiler.matlab_nodes.retorno import visit_retorno as _visit_retorno
 
 matlab_nodes = {
     "asignacion": _visit_asignacion,
     "funcion": _visit_funcion,
     "llamada_funcion": _visit_llamada_funcion,
     "imprimir": _visit_imprimir,
+    "retorno": _visit_retorno,
 }
 
 
@@ -69,7 +71,7 @@ class TranspiladorMatlab(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
