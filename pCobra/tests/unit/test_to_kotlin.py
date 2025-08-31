@@ -1,5 +1,12 @@
 from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
-from core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoImprimir,
+    NodoValor,
+    NodoRetorno,
+)
 
 
 def test_transpilador_asignacion_kotlin():
@@ -29,3 +36,11 @@ def test_transpilador_imprimir_kotlin():
     t = TranspiladorKotlin()
     resultado = t.generate_code(ast)
     assert resultado == "println(x)"
+
+
+def test_transpilador_main_retorno_kotlin():
+    ast = [NodoFuncion("main", [], [NodoRetorno(NodoValor(5))])]
+    t = TranspiladorKotlin()
+    resultado = t.generate_code(ast)
+    esperado = "fun main() {\n    println(5)\n}"
+    assert resultado == esperado
