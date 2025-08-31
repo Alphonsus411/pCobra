@@ -10,6 +10,7 @@ from cobra.core.ast_nodes import (
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoAtributo,
+    NodoRetorno,
 )
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
@@ -44,11 +45,17 @@ def visit_imprimir(self, nodo: NodoImprimir):
     self.agregar_linea(f"println({valor})")
 
 
+def visit_retorno(self, nodo: NodoRetorno):
+    valor = self.obtener_valor(nodo.expresion)
+    self.agregar_linea(f"return {valor}")
+
+
 julia_nodes = {
     "asignacion": visit_asignacion,
     "funcion": visit_funcion,
     "llamada_funcion": visit_llamada_funcion,
     "imprimir": visit_imprimir,
+    "retorno": visit_retorno,
 }
 
 
@@ -58,8 +65,9 @@ class TranspiladorJulia(BaseTranspiler):
         self.indent = 0
 
     def generate_code(self, ast):
-        self.codigo = self.transpilar(ast)
-        return self.codigo
+        self.codigo = []
+        self.transpilar(ast)
+        return "\n".join(self.codigo)
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)
@@ -89,12 +97,12 @@ class TranspiladorJulia(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        # Optimizaciones básicas sin eliminar funciones no utilizadas
+        nodos = optimize_constants(nodos)
         for nodo in nodos:
             metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
             if metodo:
                 metodo(nodo)
-        return "\n".join(self.codigo)
 
 
 for nombre, funcion in julia_nodes.items():
