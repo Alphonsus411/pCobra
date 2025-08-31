@@ -1,12 +1,11 @@
-from pCobra.cli import main as cli_main
+# Código generado (TranspiladorPython):
+from core.nativos import *
+from corelibs import *
+from standard_library import *
 
 
-def main() -> int:
-    """Envoltorio para la función principal de la CLI de Cobra."""
-    return cli_main()
+def principal():
+    print("Hola desde Codespaces")
 
 
-if __name__ == "__main__":
-    import sys
-
-    sys.exit(main())
+principal()

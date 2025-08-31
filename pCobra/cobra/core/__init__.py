@@ -15,6 +15,12 @@ from cobra.core.lexer import (
     UnclosedStringError,
 )
 
+# Reexportar todos los nodos del AST para facilitar el acceso a ellos.
+from . import ast_nodes as _ast_nodes
+
+# Agregar los nodos del AST al espacio de nombres del paquete.
+globals().update({name: getattr(_ast_nodes, name) for name in dir(_ast_nodes) if not name.startswith("_")})
+
 __all__ = [
     "Lexer",
     "Parser",
@@ -24,6 +30,7 @@ __all__ = [
     "UnclosedStringError",
     "Token",
     "TipoToken",
+    *_ast_nodes.__all__,
 ]
 
 
