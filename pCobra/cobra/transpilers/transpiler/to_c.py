@@ -9,11 +9,12 @@ from cobra.core.ast_nodes import (
     NodoIdentificador,
     NodoAtributo,
     NodoInstancia,
+    NodoRetorno,
 )
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from core.optimizations import optimize_constants, remove_dead_code
 from cobra.macro import expandir_macros
 
 
@@ -29,8 +30,10 @@ def visit_asignacion(self, nodo):
 
 
 def visit_funcion(self, nodo):
+    tiene_retorno = any(getattr(inst, "__class__", type(inst)).__name__ == "NodoRetorno" for inst in nodo.cuerpo)
+    tipo = "int" if tiene_retorno else "void"
     params = ", ".join(f"int {p}" for p in nodo.parametros)
-    self.agregar_linea(f"void {nodo.nombre}({params}) {{")
+    self.agregar_linea(f"{tipo} {nodo.nombre}({params}) {{")
     self.indent += 1
     for inst in nodo.cuerpo:
         inst.aceptar(self)
@@ -73,12 +76,20 @@ def visit_bucle_mientras(self, nodo):
     self.agregar_linea("}")
 
 
+def visit_retorno(self, nodo):
+    if getattr(nodo, "expresion", None) is not None:
+        self.agregar_linea(f"return {self.obtener_valor(nodo.expresion)};")
+    else:
+        self.agregar_linea("return;")
+
+
 c_nodes = {
     "asignacion": visit_asignacion,
     "funcion": visit_funcion,
     "llamada_funcion": visit_llamada_funcion,
     "condicional": visit_condicional,
     "bucle_mientras": visit_bucle_mientras,
+    "retorno": visit_retorno,
 }
 
 
@@ -131,7 +142,7 @@ class TranspiladorC(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)

@@ -5,6 +5,7 @@ from core.ast_nodes import (
     NodoBucleMientras,
     NodoFuncion,
     NodoLlamadaFuncion,
+    NodoRetorno,
 )
 
 
@@ -42,6 +43,14 @@ def test_transpilador_funcion_c():
     t = TranspiladorC()
     resultado = t.generate_code(ast)
     esperado = "void miFuncion(int a, int b) {\n    int x = a + b;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_retorno_c():
+    ast = [NodoFuncion("main", [], [NodoRetorno("2 + 2")])]
+    t = TranspiladorC()
+    resultado = t.generate_code(ast)
+    esperado = "int main() {\n    return 2 + 2;\n}"
     assert resultado == esperado
 
 
