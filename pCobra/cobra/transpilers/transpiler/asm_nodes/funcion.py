@@ -1,8 +1,12 @@
 def visit_funcion(self, nodo):
-    parametros = " ".join(nodo.parametros)
-    self.agregar_linea(f"FUNC {nodo.nombre} {parametros}")
-    self.indent += 1
+    previo = self.current
+    previa_indent = self.indent
+    cuerpo: list[str] = []
+    self.current = cuerpo
+    self.indent = 1
     for ins in nodo.cuerpo:
         ins.aceptar(self)
-    self.indent -= 1
-    self.agregar_linea("ENDFUNC")
+    self.current = previo
+    self.indent = previa_indent
+    cuerpo_code = "\n".join(cuerpo)
+    self.functions.append(f"{nodo.nombre}:\n{cuerpo_code}\n    ret")

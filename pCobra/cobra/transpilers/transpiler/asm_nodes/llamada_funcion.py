@@ -1,3 +1,3 @@
 def visit_llamada_funcion(self, nodo):
-    args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
-    self.agregar_linea(f"CALL {nodo.nombre} {args}")
+    # Por ahora se ignoran los argumentos y se realiza una llamada directa
+    self.agregar_linea(f"call {nodo.nombre}")
