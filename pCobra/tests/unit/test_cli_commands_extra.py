@@ -48,7 +48,11 @@ from cli.commands import modules_cmd
             "go",
             [
                 "Código generado (TranspiladorGo):",
-                "x := 5",
+                "package main",
+                "",
+                "func main() {",
+                "    x := 5",
+                "}",
             ],
         ),
         (
