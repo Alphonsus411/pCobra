@@ -27,16 +27,7 @@ def test_runtime_go_ejecucion(request, codigo_cobra_fixture):
     tokens = lexer.analizar_token()
     parser = Parser(tokens)
     ast = parser.parsear()
-    snippet_go = TranspiladorGo().generate_code(ast)
-
-    codigo_go = (
-        "package main\n"
-        "import \"fmt\"\n"
-        "func main() {\n"
-        f"{snippet_go}\n"
-        "}\n"
-    )
-
+    codigo_go = TranspiladorGo().generate_code(ast)
     salida = run_code("go", codigo_go)
 
     assert "1" in salida

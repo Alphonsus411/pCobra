@@ -40,6 +40,7 @@ dependencies = [
     "RestrictedPython==8.0",
     "prompt_toolkit==3.0.51",
     "Pygments==2.19.2",
+    "argcomplete==3.6.2",
 ]
 
 [project.urls]
@@ -72,11 +73,10 @@ dev = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "pCobra"}
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["pCobra"]
+where = ["."]
 include = ["pCobra*", "cobra*", "core*"]
 
 [project.scripts]

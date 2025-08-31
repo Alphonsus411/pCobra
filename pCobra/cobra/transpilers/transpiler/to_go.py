@@ -1,6 +1,8 @@
 """Transpilador sencillo de Cobra a Go."""
 
-from cobra.core.ast_nodes import (
+import re
+
+from core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -13,7 +15,7 @@ from cobra.core.ast_nodes import (
     NodoLlamadaMetodo,
     NodoInstancia,
 )
-from cobra.core import TipoToken
+from cobra.core.lexer import TipoToken
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
@@ -75,16 +77,61 @@ class TranspiladorGo(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+        self.imports: set[str] = set()
 
-    def generate_code(self, ast):
-        self.codigo = self.transpilar(ast)
-        return self.codigo
+    def agregar_import(self, nombre: str) -> None:
+        """Registra un paquete para importar."""
+        self.imports.add(nombre)
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)
 
+    def generate_code(self, ast):
+        self.codigo = []
+        self.imports = set()
+
+        nodos = expandir_macros(ast)
+
+        cuerpo_principal = []
+        tiene_principal = False
+        for nodo in nodos:
+            nombre = re.sub(r"(?<!^)(?=[A-Z])", "_", nodo.__class__.__name__[4:]).lower()
+            metodo = getattr(self, f"visit_{nombre}", None)
+            if not metodo:
+                continue
+            if isinstance(nodo, NodoFuncion):
+                metodo(nodo)
+                if getattr(nodo, "nombre", "") == "principal":
+                    tiene_principal = True
+            else:
+                cuerpo_principal.append((metodo, nodo))
+
+        if cuerpo_principal or tiene_principal:
+            self.agregar_linea("func main() {")
+            self.indent += 1
+            for metodo, nodo in cuerpo_principal:
+                metodo(nodo)
+            if not cuerpo_principal and tiene_principal:
+                self.agregar_linea("principal()")
+            self.indent -= 1
+            self.agregar_linea("}")
+
+        codigo = "\n".join(self.codigo)
+
+        encabezado = "package main\n"
+        if self.imports:
+            encabezado += "\nimport (\n"
+            for imp in sorted(self.imports):
+                encabezado += f'    "{imp}"\n'
+            encabezado += ")\n\n"
+        else:
+            encabezado += "\n"
+
+        return encabezado + codigo
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
+            if isinstance(nodo.valor, str):
+                return f'"{nodo.valor}"'
             return str(nodo.valor)
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
@@ -112,16 +159,6 @@ class TranspiladorGo(BaseTranspiler):
             return f"{op}{val}" if op != "!" else f"!{val}"
         else:
             return str(getattr(nodo, "valor", nodo))
-
-    def transpilar(self, nodos):
-        nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
-        for nodo in nodos:
-            metodo = getattr(self, f"visit_{nodo.__class__.__name__[4:].lower()}", None)
-            if metodo:
-                metodo(nodo)
-        return "\n".join(self.codigo)
-
 
 # Asignar visitantes
 for nombre, funcion in go_nodes.items():
