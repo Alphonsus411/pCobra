@@ -1,4 +1,4 @@
-"""Transpilador que genera código ensamblador simple desde Cobra."""
+"""Transpilador que genera código ensamblador compatible con NASM."""
 
 from cobra.core.ast_nodes import (
     NodoAsignacion,
@@ -28,9 +28,7 @@ from cobra.core.ast_nodes import (
     NodoPara,
     NodoUsar,
 )
-from cobra.core import TipoToken, Lexer
-from cobra.core import Parser
-from core.visitor import NodeVisitor
+from cobra.core import TipoToken
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
@@ -71,18 +69,43 @@ from cobra.transpilers.transpiler.asm_nodes.pasar import visit_pasar as _visit_p
 
 
 class TranspiladorASM(BaseTranspiler):
-    """Transpila el AST de Cobra a instrucciones de ensamblador simplificado."""
+    """Transpila el AST de Cobra a ensamblador NASM básico."""
 
     def __init__(self):
-        self.codigo = []
+        self.data: list[str] = []
+        self.main: list[str] = []
+        self.functions: list[str] = []
+        self.current = self.main
         self.indent = 0
+        self.string_count = 0
 
     def generate_code(self, ast):
-        self.codigo = self.transpilar(ast)
-        return self.codigo
+        self.__init__()
+        self.transpilar(ast)
+        codigo = ["section .data", *self.data, "", "section .text", "global _start", "_start:"]
+        codigo.extend(self.main)
+        codigo.extend(
+            [
+                "    mov rax, 60",  # syscall: exit
+                "    xor rdi, rdi",
+                "    syscall",
+                "",
+            ]
+        )
+        codigo.extend(self.functions)
+        return "\n".join(codigo)
 
     def agregar_linea(self, linea: str) -> None:
-        self.codigo.append("    " * self.indent + linea)
+        self.current.append("    " * self.indent + linea)
+
+    def nueva_cadena(self, texto: str) -> str:
+        """Guarda una cadena en la sección de datos y devuelve su etiqueta."""
+        etiqueta = f"msg{self.string_count}"
+        self.string_count += 1
+        escapado = texto.replace("\"", r"\"")
+        self.data.append(f'{etiqueta}: db "{escapado}", 10')
+        self.data.append(f"{etiqueta}_len: equ $ - {etiqueta}")
+        return etiqueta
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
@@ -122,7 +145,7 @@ class TranspiladorASM(BaseTranspiler):
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             nodo.aceptar(self)
-        return "\n".join(self.codigo)
+        return ""
 
 
 # Asignar los visitantes externos a la clase
