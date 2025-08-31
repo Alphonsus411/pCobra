@@ -85,7 +85,14 @@ class TranspiladorJava(BaseTranspiler):
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
-            return str(nodo.valor)
+            valor = nodo.valor
+            if isinstance(valor, str):
+                return f"\"{valor}\""
+            if isinstance(valor, bool):
+                return str(valor).lower()
+            if valor is None:
+                return "null"
+            return str(valor)
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
         elif isinstance(nodo, NodoAtributo):
@@ -116,7 +123,25 @@ class TranspiladorJava(BaseTranspiler):
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+
+        funciones = []
+        otros = []
+
         for nodo in nodos:
+            if nodo.__class__.__name__ == "NodoFuncion":
+                funciones.append(nodo)
+            else:
+                otros.append(nodo)
+
+        self.agregar_linea("public class Main {")
+        self.indent += 1
+
+        for f in funciones:
+            f.aceptar(self)
+
+        self.agregar_linea("public static void main(String[] args) {")
+        self.indent += 1
+        for nodo in otros:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
             else:
@@ -125,6 +150,11 @@ class TranspiladorJava(BaseTranspiler):
                 )
                 if metodo:
                     metodo(nodo)
+        self.indent -= 1
+        self.agregar_linea("}")
+
+        self.indent -= 1
+        self.agregar_linea("}")
         return "\n".join(self.codigo)
 
 
