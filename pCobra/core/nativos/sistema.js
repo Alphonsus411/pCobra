@@ -1,10 +1,6 @@
-import os
-
-import 'child_process'
-import 'fs'
-import 'os'
-import child_process
-import fs
+import os from 'os';
+import child_process from 'child_process';
+import fs from 'fs';
 
 export function obtener_os() {
     return os.platform();
