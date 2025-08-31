@@ -41,6 +41,7 @@ from cobra.transpilers.transpiler.rust_nodes.llamada_funcion import visit_llamad
 from cobra.transpilers.transpiler.rust_nodes.holobit import visit_holobit as _visit_holobit
 from cobra.transpilers.transpiler.rust_nodes.clase import visit_clase as _visit_clase
 from cobra.transpilers.transpiler.rust_nodes.metodo import visit_metodo as _visit_metodo
+from cobra.transpilers.transpiler.rust_nodes.retorno import visit_retorno as _visit_retorno
 from cobra.transpilers.transpiler.rust_nodes.yield_ import visit_yield as _visit_yield
 from cobra.transpilers.transpiler.rust_nodes.romper import visit_romper as _visit_romper
 from cobra.transpilers.transpiler.rust_nodes.continuar import visit_continuar as _visit_continuar
@@ -167,7 +168,7 @@ class TranspiladorRust(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = optimize_constants(nodos)
         for nodo in nodos:
             nodo.aceptar(self)
         return "\n".join(self.codigo)
@@ -182,6 +183,7 @@ TranspiladorRust.visit_llamada_funcion = _visit_llamada_funcion
 TranspiladorRust.visit_holobit = _visit_holobit
 TranspiladorRust.visit_clase = _visit_clase
 TranspiladorRust.visit_metodo = _visit_metodo
+TranspiladorRust.visit_retorno = _visit_retorno
 TranspiladorRust.visit_interface = visit_interface
 TranspiladorRust.visit_yield = _visit_yield
 TranspiladorRust.visit_romper = _visit_romper
