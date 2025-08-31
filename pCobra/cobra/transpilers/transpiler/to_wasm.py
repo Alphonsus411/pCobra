@@ -4,13 +4,14 @@ from cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoOperacionBinaria,
+    NodoRetorno,
     NodoValor,
     NodoIdentificador,
 )
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from core.optimizations import optimize_constants, remove_dead_code
 from cobra.macro import expandir_macros
 
 
@@ -62,9 +63,18 @@ class TranspiladorWasm(BaseTranspiler):
         self.indent -= 1
         self.agregar_linea(")")
 
+    def visit_retorno(self, nodo: NodoRetorno):
+        valor = self.obtener_valor(nodo.expresion) if nodo.expresion else ""
+        if valor:
+            self.agregar_linea(f"(return {valor})")
+        else:
+            self.agregar_linea("(return)")
+
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        # Evitamos el uso de ``inline_functions`` para no eliminar funciones
+        # sencillas (como ``main``) que no tengan llamadas directas.
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)
         return "\n".join(self.codigo)
