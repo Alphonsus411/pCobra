@@ -1,6 +1,6 @@
 """Transpilador sencillo de Cobra a Fortran."""
 
-from cobra.core.ast_nodes import (
+from core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -14,7 +14,7 @@ from cobra.core.ast_nodes import (
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from core.optimizations import remove_dead_code
 from cobra.macro import expandir_macros
 
 from cobra.transpilers.transpiler.fortran_nodes.asignacion import visit_asignacion as _visit_asignacion
@@ -23,12 +23,14 @@ from cobra.transpilers.transpiler.fortran_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
 from cobra.transpilers.transpiler.fortran_nodes.imprimir import visit_imprimir as _visit_imprimir
+from cobra.transpilers.transpiler.fortran_nodes.retorno import visit_retorno as _visit_retorno
 
 fortran_nodes = {
     "asignacion": _visit_asignacion,
     "funcion": _visit_funcion,
     "llamada_funcion": _visit_llamada_funcion,
     "imprimir": _visit_imprimir,
+    "retorno": _visit_retorno,
 }
 
 
@@ -36,6 +38,8 @@ class TranspiladorFortran(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+        self.current_result = None
+        self.in_main = False
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -69,7 +73,7 @@ class TranspiladorFortran(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = remove_dead_code(nodos)
         for nodo in nodos:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
