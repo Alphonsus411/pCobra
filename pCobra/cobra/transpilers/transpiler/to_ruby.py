@@ -10,11 +10,10 @@ from cobra.core.ast_nodes import (
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoAtributo,
+    NodoRetorno,
 )
 from cobra.core import TipoToken
-from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
 
@@ -44,11 +43,17 @@ def visit_imprimir(self, nodo: NodoImprimir):
     self.agregar_linea(f"puts {valor}")
 
 
+def visit_retorno(self, nodo: NodoRetorno):
+    valor = self.obtener_valor(nodo.expresion)
+    self.agregar_linea(f"return {valor}")
+
+
 ruby_nodes = {
     "asignacion": visit_asignacion,
     "funcion": visit_funcion,
     "llamada_funcion": visit_llamada_funcion,
     "imprimir": visit_imprimir,
+    "retorno": visit_retorno,
 }
 
 
@@ -89,7 +94,6 @@ class TranspiladorRuby(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:
             nombre = self._camel_to_snake(nodo.__class__.__name__)
             metodo = getattr(self, f"visit_{nombre}", None)

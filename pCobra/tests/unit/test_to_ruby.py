@@ -1,5 +1,12 @@
 from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
-from core.ast_nodes import NodoAsignacion, NodoFuncion, NodoLlamadaFuncion, NodoImprimir, NodoValor
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoFuncion,
+    NodoLlamadaFuncion,
+    NodoImprimir,
+    NodoValor,
+    NodoRetorno,
+)
 
 
 def test_transpilador_asignacion_ruby():
@@ -29,3 +36,10 @@ def test_transpilador_imprimir_ruby():
     t = TranspiladorRuby()
     resultado = t.generate_code(ast)
     assert resultado == "puts x"
+
+
+def test_transpilador_retorno_ruby():
+    ast = [NodoRetorno(NodoValor(5))]
+    t = TranspiladorRuby()
+    resultado = t.generate_code(ast)
+    assert resultado == "return 5"
