@@ -11,19 +11,23 @@ from cobra.core.ast_nodes import (
 )
 from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from core.optimizations import optimize_constants, remove_dead_code
 from cobra.macro import expandir_macros
 
 from cobra.transpilers.transpiler.latex_nodes.asignacion import visit_asignacion as _visit_asignacion
 from cobra.transpilers.transpiler.latex_nodes.funcion import visit_funcion as _visit_funcion
-from cobra.transpilers.transpiler.latex_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from cobra.transpilers.transpiler.latex_nodes.llamada_funcion import (
+    visit_llamada_funcion as _visit_llamada_funcion,
+)
 from cobra.transpilers.transpiler.latex_nodes.imprimir import visit_imprimir as _visit_imprimir
+from cobra.transpilers.transpiler.latex_nodes.retorno import visit_retorno as _visit_retorno
 
 latex_nodes = {
     "asignacion": _visit_asignacion,
     "funcion": _visit_funcion,
     "llamada_funcion": _visit_llamada_funcion,
     "imprimir": _visit_imprimir,
+    "retorno": _visit_retorno,
 }
 
 
@@ -33,8 +37,12 @@ class TranspiladorLatex(BaseTranspiler):
         self.indent = 0
 
     def generate_code(self, ast):
-        self.codigo = self.transpilar(ast)
-        return self.codigo
+        """Genera un documento LaTeX completo a partir del AST."""
+        self.codigo = []
+        cuerpo = self.transpilar(ast)
+        encabezado = "\\documentclass{article}\n\\begin{document}\n"
+        pie = "\n\\end{document}"
+        return encabezado + cuerpo + pie
 
     def agregar_linea(self, linea: str) -> None:
         self.codigo.append("    " * self.indent + linea)
@@ -54,7 +62,7 @@ class TranspiladorLatex(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
