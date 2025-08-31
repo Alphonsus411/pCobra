@@ -46,6 +46,9 @@ from cobra.transpilers.transpiler.cpp_nodes.pasar import visit_pasar as _visit_p
 from cobra.transpilers.transpiler.cpp_nodes.switch import visit_switch as _visit_switch
 from cobra.transpilers.transpiler.cpp_nodes.option import visit_option as _visit_option
 from cobra.transpilers.transpiler.cpp_nodes.pattern import visit_pattern as _visit_pattern
+from cobra.transpilers.transpiler.cpp_nodes.retorno import (
+    visit_retorno as _visit_retorno,
+)
 
 
 def visit_assert(self, nodo):
@@ -180,7 +183,7 @@ class TranspiladorCPP(BaseTranspiler):
 
     def transpilar(self, nodos):
         nodos = expandir_macros(nodos)
-        nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)
         return "\n".join(self.codigo)
@@ -212,3 +215,4 @@ TranspiladorCPP.visit_diccionario_tipo = visit_diccionario_tipo
 TranspiladorCPP.visit_interface = visit_interface
 TranspiladorCPP.visit_option = _visit_option
 TranspiladorCPP.visit_pattern = _visit_pattern
+TranspiladorCPP.visit_retorno = _visit_retorno
