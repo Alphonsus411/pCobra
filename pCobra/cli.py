@@ -8,6 +8,8 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from .cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from .cobra.cli.commands.execute_cmd import ExecuteCommand
+from .cobra.cli.utils import messages
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -91,11 +93,18 @@ def main(argumentos: Optional[List[str]] = None) -> int:
             archivo=args.archivo, tipo=args.lenguaje, backend=None, tipos=None
         )
         if args.salida:
+            messages.disable_colors()
             buffer = io.StringIO()
             with contextlib.redirect_stdout(buffer):
                 resultado = comando.run(compile_args)
+            output = buffer.getvalue()
+            output = re.sub(r"\x1b\[[0-9;]*m", "", output)
+            lineas = [l for l in output.splitlines() if not l.startswith("Código generado")]
+            output = "\n".join(lineas)
+            if output and not output.endswith("\n"):
+                output += "\n"
             with open(args.salida, "w", encoding="utf-8") as f:
-                f.write(buffer.getvalue())
+                f.write(output)
             return resultado
         return comando.run(compile_args)
     if args.comando == "ayuda":

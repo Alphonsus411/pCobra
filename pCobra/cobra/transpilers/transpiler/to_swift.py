@@ -15,6 +15,7 @@ from cobra.core import TipoToken
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
+import json
 
 
 def visit_asignacion(self, nodo: NodoAsignacion):
@@ -65,6 +66,8 @@ class TranspiladorSwift(BaseTranspiler):
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
+            if isinstance(nodo.valor, str):
+                return json.dumps(nodo.valor, ensure_ascii=False)
             return str(nodo.valor)
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
