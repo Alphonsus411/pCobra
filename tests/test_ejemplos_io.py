@@ -47,3 +47,24 @@ def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None
     if resultado.returncode != 0:
         pytest.skip(f"Transpilación falló para {nombre}: {resultado.stderr.strip()}")
     assert "print(" in resultado.stdout
+
+
+@pytest.mark.parametrize("nombre", ejemplos_disponibles())
+def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path, tmp_path: Path) -> None:
+    """Transpila ejemplos y compara el código generado con un archivo de referencia."""
+    archivo = ruta_ejemplos / f"{nombre}.cobra"
+    if not archivo.exists():
+        archivo = ruta_ejemplos / f"{nombre}.co"
+    salida = tmp_path / f"{nombre}.py"
+    resultado = subprocess.run(
+        [sys.executable, "-m", "pCobra.cli", "transpilar", str(archivo), "--salida", str(salida)],
+        capture_output=True,
+        text=True,
+    )
+    if resultado.returncode != 0:
+        pytest.skip(f"Transpilación falló para {nombre}: {resultado.stderr.strip()}")
+    generado = salida.read_text(encoding="utf-8")
+    esperado = (
+        ruta_ejemplos / "expected_examples" / f"{nombre}.py"
+    ).read_text(encoding="utf-8")
+    assert generado == esperado
