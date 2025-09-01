@@ -8,6 +8,14 @@ from types import TracebackType
 from prompt_toolkit import PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.output import DummyOutput
+
+try:
+    from prompt_toolkit.output.win32 import NoConsoleScreenBufferError
+except Exception:  # pragma: no cover - solo disponible en Windows
+    class NoConsoleScreenBufferError(Exception):
+        """Excepción usada cuando la consola no soporta buffer de pantalla."""
+        pass
 
 from cobra.core import Lexer, LexerError
 from cobra.core import Parser, ParserError
@@ -209,10 +217,22 @@ class InteractiveCommand(BaseCommand):
         sandbox_docker = getattr(args, "sandbox_docker", None)
         history_path = os.path.expanduser("~/.cobra_history")
         os.makedirs(os.path.dirname(history_path), exist_ok=True)
-        session = PromptSession(
-            lexer=PygmentsLexer(CobraLexer),
-            history=FileHistory(history_path),
-        )
+        try:
+            session = PromptSession(
+                lexer=PygmentsLexer(CobraLexer),
+                history=FileHistory(history_path),
+            )
+        except NoConsoleScreenBufferError:
+            mostrar_advertencia(
+                _(
+                    "Entorno sin consola compatible, usando salida simplificada."
+                )
+            )
+            session = PromptSession(
+                lexer=PygmentsLexer(CobraLexer),
+                history=FileHistory(history_path),
+                output=DummyOutput(),
+            )
 
         with self:  # Usar context manager para recursos
             while True:
