@@ -5,6 +5,10 @@ Se ha incorporado un sistema de almacenamiento por fragmentos en
 por separado mediante un *checksum*, permitiendo reutilizar los
 fragmentos que no cambian entre ejecuciones.
 
+Desde la versión 10.0.9, la caché de AST y tokens se almacena en
+formato JSON en lugar de `pickle`, lo que reduce la superficie de
+ataque al eliminar la deserialización insegura de datos.
+
 El directorio utilizado para la caché puede modificarse mediante la
 variable de entorno `COBRA_AST_CACHE`.
 
