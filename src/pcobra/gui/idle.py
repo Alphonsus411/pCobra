@@ -4,10 +4,9 @@ import io
 import sys
 import flet as ft
 
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.cobra.core import Lexer, Parser
 from core.interpreter import InterpretadorCobra
-from cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 
 
 def _ejecutar_codigo(codigo: str) -> str:

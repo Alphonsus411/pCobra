@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / "src" / "pcobra"))
-from cobra.core.lexer import Lexer
-from cobra.core.parser import ClassicParser, ParserError
-from core.ast_nodes import NodoAsignacion
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
+from pcobra.cobra.core.lexer import Lexer
+from pcobra.cobra.core.parser import ClassicParser, ParserError
+from pcobra.core.ast_nodes import NodoAsignacion
 
 
 

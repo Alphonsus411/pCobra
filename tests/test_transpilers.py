@@ -4,17 +4,17 @@ from pathlib import Path
 import pytest
 
 # Añadir la ruta del paquete principal
-sys.path.append(str(Path(__file__).resolve().parent.parent / "src" / "pcobra"))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from core.ast_nodes import (
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.core.ast_nodes import (
     NodoValor,
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoIdentificador,
 )
-import cobra.core as cobra_core
+import pcobra.cobra.core as cobra_core
 
 # Registrar nodos adicionales en el módulo ``cobra.core`` para evitar errores de importación
 cobra_core.NodoOperacionBinaria = NodoOperacionBinaria

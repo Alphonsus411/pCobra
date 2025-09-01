@@ -6,9 +6,8 @@ import os
 import contextlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
-from cobra.core import Lexer
-from cobra.core import Parser
-from cobra.core.utils import PALABRAS_RESERVADAS
+from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core.utils import PALABRAS_RESERVADAS
 from core.interpreter import InterpretadorCobra
 from core.qualia_bridge import get_suggestions
 from core.sandbox import ejecutar_en_sandbox
@@ -76,7 +75,7 @@ class CobraKernel(Kernel):
                 tokens = Lexer(code).tokenizar()
                 ast = Parser(tokens).parsear()
                 if self.use_python:
-                    from cobra.transpilers.transpiler.to_python import (
+                    from pcobra.cobra.transpilers.transpiler.to_python import (
                         TranspiladorPython,
                     )
 

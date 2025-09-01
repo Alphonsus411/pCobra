@@ -17,7 +17,7 @@ from core.ast_nodes import (
     NodoMetodo,
     NodoRetorno,
 )
-from cobra.core import TipoToken, Token
+from pcobra.cobra.core import TipoToken, Token
 
 
 class _ConstantFolder(NodeVisitor):
