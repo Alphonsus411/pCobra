@@ -55,7 +55,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 
 ## Ejemplos
 
-Proyectos de demostracion disponibles en [cobra-ejemplos](https://github.com/Alphonsus411/pCobra/tree/work/examples).
+Proyectos de demostración disponibles en el [repositorio de ejemplos](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples).
 Este repositorio incluye ejemplos básicos en la carpeta `examples/`, por
 ejemplo `examples/funciones_principales.co` que muestra condicionales, bucles y
 definición de funciones en Cobra.
