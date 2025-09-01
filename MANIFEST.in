@@ -4,6 +4,7 @@ include CHANGELOG.md
 include MANUAL_COBRA.md
 include cobra.mod
 include cobra.toml
+include pcobra.toml
 include pyproject.toml
 include Makefile
 include install.sh

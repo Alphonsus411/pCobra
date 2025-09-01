@@ -1,0 +1,13 @@
+# pcobra.toml
+# Mapeo de módulos Cobra transpilados a Python o JavaScript.
+# Este archivo se genera o mantiene manualmente tras usar comandos como `cobra transpilar`.
+
+[modulos."modulo.co"]
+python = "modulo.py"
+js = "modulo.js"
+
+# Puedes añadir más entradas como:
+# [modulos."ciencia/genetica.co"]
+# python = "ciencia/genetica.py"
+# js = "ciencia/genetica.js"
+
