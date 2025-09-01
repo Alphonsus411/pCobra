@@ -12,23 +12,23 @@ sys.modules.setdefault("cli.plugin_registry", cobra_reg)
 
 from cobra.cli.plugin import descubrir_plugins
 from cobra.cli.plugin_registry import obtener_registro, limpiar_registro
-from tests.fake_plugins import GoodPlugin, NotPlugin, BadInitPlugin
+from pcobra.tests.fake_plugins import GoodPlugin, NotPlugin, BadInitPlugin
 
 
 def test_descubrir_plugins_varios_invalidos(caplog):
     ep_good = importlib.metadata.EntryPoint(
         name="good",
-        value="tests.fake_plugins:GoodPlugin",
+        value="pcobra.tests.fake_plugins:GoodPlugin",
         group="cobra.plugins",
     )
     ep_bad = importlib.metadata.EntryPoint(
         name="bad",
-        value="tests.fake_plugins:NotPlugin",
+        value="pcobra.tests.fake_plugins:NotPlugin",
         group="cobra.plugins",
     )
     ep_crash = importlib.metadata.EntryPoint(
         name="crash",
-        value="tests.fake_plugins:BadInitPlugin",
+        value="pcobra.tests.fake_plugins:BadInitPlugin",
         group="cobra.plugins",
     )
     eps = importlib.metadata.EntryPoints((ep_good, ep_bad, ep_crash))
