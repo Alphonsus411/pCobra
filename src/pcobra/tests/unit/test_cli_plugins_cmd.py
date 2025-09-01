@@ -3,9 +3,9 @@ from unittest.mock import patch
 import importlib.metadata
 import sys
 
-from cli.cli import main
-from cli.plugin import PluginCommand
-from cli.plugin_registry import limpiar_registro
+from cobra.cli.cli import main
+from cobra.cli.plugin import PluginCommand
+from cobra.cli.plugin_registry import limpiar_registro
 
 
 class DummyPlugin(PluginCommand):

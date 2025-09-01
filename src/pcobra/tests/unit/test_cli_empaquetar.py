@@ -2,7 +2,7 @@ from pathlib import Path
 from io import StringIO
 from unittest.mock import patch
 
-from cli.cli import main
+from cobra.cli.cli import main
 
 
 def test_cli_empaquetar_invoca_pyinstaller(tmp_path):

@@ -4,13 +4,13 @@ Sistema de plugins
 La CLI de Cobra se puede extender instalando paquetes externos que expongan
 un "entry point" en el grupo ``cobra.plugins``. Durante el arranque la
 aplicación busca dichos entry points e instancia cada plugin. Todas las
-utilidades necesarias se importan desde ``src.cli.plugin``.
+utilidades necesarias se importan desde ``src.cobra.cli.plugin``.
 
 Para un tutorial detallado sobre cómo desarrollar plugins consulta
 :doc:`plugin_dev`.
 
 Al cargarse, la información de nombre y versión se almacena en un registro
-interno accesible desde ``src.cli.plugin``. Para consultar qué
+interno accesible desde ``src.cobra.cli.plugin``. Para consultar qué
 plugins están disponibles se proporciona el subcomando ``plugins``::
 
    cobra plugins
@@ -31,7 +31,7 @@ A continuación se muestra cómo crear un plugin sencillo utilizando
 
      .. code-block:: python
 
-        from cli.plugin import PluginCommand
+        from cobra.cli.plugin import PluginCommand
 
 
       class SaludoCommand(PluginCommand):

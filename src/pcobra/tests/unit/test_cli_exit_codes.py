@@ -3,8 +3,8 @@ from io import StringIO
 from unittest.mock import patch
 import pytest
 
-from cli.cli import main
-from cli.commands import modules_cmd
+from cobra.cli.cli import main
+from cobra.cli.commands import modules_cmd
 
 
 def _run_sys_exit(args):

@@ -2,7 +2,7 @@ import yaml
 from unittest.mock import patch
 import pytest
 
-from cli.commands import modules_cmd
+from cobra.cli.commands import modules_cmd
 
 
 @pytest.mark.timeout(5)

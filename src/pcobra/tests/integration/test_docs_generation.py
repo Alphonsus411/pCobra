@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "backend" / "src"))
 import backend  # noqa: F401
-from cli.cli import main
+from cobra.cli.cli import main
 
 
 def test_docs_generation():

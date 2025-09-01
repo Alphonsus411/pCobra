@@ -2,7 +2,7 @@ from io import StringIO
 from unittest.mock import patch
 import subprocess
 
-from cli.cli import main
+from cobra.cli.cli import main
 from cobra.transpilers import module_map
 
 

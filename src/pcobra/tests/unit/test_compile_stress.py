@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cli.commands.compile_cmd import CompileCommand
+from cobra.cli.commands.compile_cmd import CompileCommand
 
 
 def _fake_transpile(self, ast):

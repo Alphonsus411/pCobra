@@ -15,7 +15,7 @@ import backend  # noqa: F401
 from core.interpreter import InterpretadorCobra
 from cobra.core import Lexer
 from cobra.core import Parser
-from cli.commands.compile_cmd import TRANSPILERS
+from cobra.cli.commands.compile_cmd import TRANSPILERS
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 
 from tests.integration.test_transpile_semantics import (

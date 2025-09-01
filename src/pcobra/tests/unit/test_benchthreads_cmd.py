@@ -1,8 +1,8 @@
 import json
 import os
 from pathlib import Path
-from cli.cli import main
-from cli.commands import benchthreads_cmd
+from cobra.cli.cli import main
+from cobra.cli.commands import benchthreads_cmd
 import tempfile
 
 orig_ntf = tempfile.NamedTemporaryFile

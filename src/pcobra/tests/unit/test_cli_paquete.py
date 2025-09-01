@@ -6,8 +6,8 @@ except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 from unittest.mock import patch
 
-from cli.cli import main
-from cli.commands import modules_cmd, package_cmd
+from cobra.cli.cli import main
+from cobra.cli.commands import modules_cmd, package_cmd
 
 
 def test_paquete_crear_instalar(tmp_path, monkeypatch):

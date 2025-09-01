@@ -2,8 +2,8 @@ import argparse
 from io import StringIO
 from unittest.mock import patch
 
-from cli.cli import main
-from cli.utils import messages
+from cobra.cli.cli import main
+from cobra.cli.utils import messages
 
 
 class FakeReverse:

@@ -18,7 +18,7 @@ def test_cli_qualia_mostrar(tmp_path, monkeypatch):
     from core import qualia_bridge
     qb = importlib.reload(qualia_bridge)
     qb.register_execution("imprimir(1)")
-    from cli.cli import main
+    from cobra.cli.cli import main
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["qualia", "mostrar"])
     data = _capture_json(out.getvalue())
@@ -33,7 +33,7 @@ def test_cli_qualia_reiniciar(tmp_path, monkeypatch):
     importlib.reload(qualia_bridge)
     state.parent.mkdir(parents=True, exist_ok=True)
     state.write_text("{}")
-    from cli.cli import main
+    from cobra.cli.cli import main
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["qualia", "reiniciar"])
     assert not state.exists()

@@ -10,8 +10,8 @@ sys.modules.setdefault("cli", cobra_cli)
 sys.modules.setdefault("cli.commands", cobra_cmds)
 sys.modules.setdefault("cli.plugin_registry", cobra_reg)
 
-from cli.plugin import descubrir_plugins
-from cli.plugin_registry import obtener_registro, limpiar_registro
+from cobra.cli.plugin import descubrir_plugins
+from cobra.cli.plugin_registry import obtener_registro, limpiar_registro
 from tests.fake_plugins import GoodPlugin, NotPlugin, BadInitPlugin
 
 

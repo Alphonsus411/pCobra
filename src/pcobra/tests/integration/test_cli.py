@@ -2,8 +2,8 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 import backend  # ensure backend aliases are initialized
-from cli.cli import main
-from cli.commands import modules_cmd
+from cobra.cli.cli import main
+from cobra.cli.commands import modules_cmd
 
 
 def test_cli_help():

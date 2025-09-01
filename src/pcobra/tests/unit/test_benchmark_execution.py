@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from cli.commands import benchmarks_cmd
+from cobra.cli.commands import benchmarks_cmd
 
 
 @pytest.mark.timeout(5)

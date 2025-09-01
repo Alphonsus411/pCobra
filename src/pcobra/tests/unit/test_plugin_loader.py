@@ -5,12 +5,12 @@ from pathlib import Path
 import sys
 import types
 
-from cli.plugin import (
+from cobra.cli.plugin import (
     descubrir_plugins,
     PluginCommand,
     cargar_plugin_seguro,
 )
-from cli.plugin_registry import obtener_registro, limpiar_registro
+from cobra.cli.plugin_registry import obtener_registro, limpiar_registro
 
 # Añadimos la carpeta de plugins de ejemplo al path para poder importar
 # el plugin md2cobra durante las pruebas.
