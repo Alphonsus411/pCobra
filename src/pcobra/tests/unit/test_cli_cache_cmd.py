@@ -17,7 +17,7 @@ def test_cli_cache_limpiar(monkeypatch, tmp_path):
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
 
-    from cli.commands.cache_cmd import CacheCommand
+    from cobra.cli.commands.cache_cmd import CacheCommand
 
     with patch("sys.stdout", new_callable=StringIO) as out:
         CacheCommand().run(argparse.Namespace())

@@ -8,7 +8,7 @@ from pylsp import hookimpl, lsp
 from standard_library import __all__ as STD_FUNCS
 from cobra.core import Lexer, LexerError
 from cobra.core import Parser, ParserError
-from cli.commands.execute_cmd import ExecuteCommand
+from cobra.cli.commands.execute_cmd import ExecuteCommand
 
 # Palabras reservadas más comunes de Cobra
 KEYWORDS = [

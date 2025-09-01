@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from cli.cli import main
+from cobra.cli.cli import main
 
 
 def test_cli_gui_invokes_flet_app():

@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import patch
 import io
 import tempfile
-from cli.commands.dependencias_cmd import DependenciasCommand
+from cobra.cli.commands.dependencias_cmd import DependenciasCommand
 
 
 def test_cli_dependencias_instalar_invoca_pip(tmp_path):

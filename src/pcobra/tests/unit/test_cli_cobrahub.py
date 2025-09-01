@@ -9,8 +9,8 @@ dummy = ModuleType("tree_sitter_languages")
 dummy.get_parser = lambda *args, **kwargs: None
 sys.modules.setdefault("tree_sitter_languages", dummy)
 
-from cli.commands import modules_cmd  # noqa: E402
-from cli import cobrahub_client  # noqa: E402
+from cobra.cli.commands import modules_cmd  # noqa: E402
+from cobra.cli import cobrahub_client  # noqa: E402
 
 
 @pytest.mark.timeout(5)

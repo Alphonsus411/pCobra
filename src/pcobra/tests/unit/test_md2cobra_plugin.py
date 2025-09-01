@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 import sys
 
-from cli.cli import main
+from cobra.cli.cli import main
 
 # Añadimos la carpeta de plugins de ejemplo al path para importar el plugin
 ROOT = Path(__file__).resolve().parents[3]

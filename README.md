@@ -1071,7 +1071,7 @@ el nuevo comando.
 ### Ejemplo de plugin
 
 ```python
-from cli.plugin import PluginCommand
+from cobra.cli.plugin import PluginCommand
 
 
 class HolaCommand(PluginCommand):

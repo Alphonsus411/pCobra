@@ -1,4 +1,4 @@
-from cli.plugin import PluginCommand
+from cobra.cli.plugin import PluginCommand
 
 
 class GoodPlugin(PluginCommand):

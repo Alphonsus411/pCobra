@@ -125,7 +125,7 @@ Cobra puede extenderse con plugins escritos en Python que heredan de
 
 .. code-block:: python
 
-   from cli.plugin import PluginCommand
+   from cobra.cli.plugin import PluginCommand
 
    class SaludoCommand(PluginCommand):
        name = "saludo"

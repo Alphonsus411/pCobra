@@ -11,7 +11,7 @@ def test_cli_interactive():
     with patch("builtins.input", side_effect=inputs), \
             patch("sys.stdout", new_callable=StringIO) as mock_stdout, \
             patch("cobra.cli.cli.messages.mostrar_logo"):
-        from cli.cli import main
+        from cobra.cli.cli import main
         main()
 
     output = mock_stdout.getvalue().strip().split("\n")
@@ -26,7 +26,7 @@ def test_cli_transpilador():
     with patch("builtins.input", side_effect=inputs), \
             patch("sys.stdout", new_callable=StringIO) as mock_stdout, \
             patch("cobra.cli.cli.messages.mostrar_logo"):
-        from cli.cli import main
+        from cobra.cli.cli import main
         main()
 
     output = mock_stdout.getvalue().strip().split("\n")

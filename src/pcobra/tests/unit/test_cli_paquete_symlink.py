@@ -2,7 +2,7 @@ import zipfile
 from unittest.mock import patch
 import pytest
 
-from cli.commands import modules_cmd, package_cmd
+from cobra.cli.commands import modules_cmd, package_cmd
 
 
 @pytest.mark.timeout(5)

@@ -1,5 +1,5 @@
 from io import StringIO
-from cli.cli import main
+from cobra.cli.cli import main
 from cobra.transpilers import module_map
 import cobra.transpilers.module_map as backend_map
 import core.ast_nodes as src_nodes

@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 import shutil
 
-from cli.cli import main
+from cobra.cli.cli import main
 from cobra.transpilers import module_map
-from cli.commands import benchmarks_cmd
-import cli.commands.benchmarks2_cmd as b2
+from cobra.cli.commands import benchmarks_cmd
+import cobra.cli.commands.benchmarks2_cmd as b2
 
 orig_ntf = tempfile.NamedTemporaryFile
 
@@ -43,7 +43,7 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
 @pytest.mark.timeout(20)
 def test_benchmarks2_without_resource(tmp_path, monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
-    import cli.commands.benchmarks2_cmd as b2
+    import cobra.cli.commands.benchmarks2_cmd as b2
     monkeypatch.setattr(b2, "resource", None)
 
     def fake_run(self, args):

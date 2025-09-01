@@ -2,7 +2,7 @@ import io
 from unittest.mock import patch
 import pytest
 
-from cli.cli import main
+from cobra.cli.cli import main
 
 
 @pytest.mark.timeout(5)

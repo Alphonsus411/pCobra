@@ -3,7 +3,7 @@ import pytest
 from io import StringIO
 from unittest.mock import patch
 
-from cli.cli import main
+from cobra.cli.cli import main
 
 
 def _fake_transpile(self, ast):
