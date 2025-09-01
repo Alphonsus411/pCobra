@@ -7,7 +7,7 @@ import pytest
 
 def ejemplos_disponibles() -> list[str]:
     """Busca programas ``.cobra`` con su archivo ``.out`` correspondiente."""
-    base = Path(__file__).resolve().parent.parent / "pCobra" / "tests" / "data"
+    base = Path(__file__).resolve().parent.parent / "src" / "pcobra" / "tests" / "data"
     return sorted(
         archivo.stem
         for archivo in base.glob("*.cobra")
@@ -23,7 +23,7 @@ def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
         archivo = ruta_ejemplos / f"{nombre}.co"
     esperado = (ruta_ejemplos / f"{nombre}.out").read_text(encoding="utf-8").strip()
     resultado = subprocess.run(
-        [sys.executable, "-m", "pCobra.cli", "ejecutar", str(archivo)],
+        [sys.executable, "-m", "pcobra.cli", "ejecutar", str(archivo)],
         capture_output=True,
         text=True,
     )
@@ -40,7 +40,7 @@ def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
     resultado = subprocess.run(
-        [sys.executable, "-m", "pCobra.cli", "transpilar", str(archivo)],
+        [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo)],
         capture_output=True,
         text=True,
     )
@@ -57,7 +57,7 @@ def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path, tmp_p
         archivo = ruta_ejemplos / f"{nombre}.co"
     salida = tmp_path / f"{nombre}.py"
     resultado = subprocess.run(
-        [sys.executable, "-m", "pCobra.cli", "transpilar", str(archivo), "--salida", str(salida)],
+        [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo), "--salida", str(salida)],
         capture_output=True,
         text=True,
     )

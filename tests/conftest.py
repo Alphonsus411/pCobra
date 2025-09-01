@@ -13,8 +13,8 @@ def ruta_ejemplos() -> Path:
     local = base / "data"
     if local.exists():
         return local
-    # Si los ejemplos están en el paquete principal ``pCobra/tests/data``
-    return base.parent / "pCobra" / "tests" / "data"
+    # Si los ejemplos están en el paquete principal ``src/pcobra/tests/data``
+    return base.parent / "src" / "pcobra" / "tests" / "data"
 
 
 @pytest.fixture
