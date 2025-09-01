@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "pCobra"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src", "pcobra"))
 
 from cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,

@@ -4,7 +4,7 @@ import sys
 
 def test_cli_ayuda() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "pCobra.cli", "ayuda"],
+        [sys.executable, "-m", "pcobra.cli", "ayuda"],
         capture_output=True,
         text=True,
     )
@@ -15,7 +15,7 @@ def test_cli_ayuda() -> None:
 
 def test_cli_transpilar_help() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "pCobra.cli", "transpilar", "--help"],
+        [sys.executable, "-m", "pcobra.cli", "transpilar", "--help"],
         capture_output=True,
         text=True,
     )

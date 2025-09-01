@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / "pCobra"))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src" / "pcobra"))
 from cobra.core.lexer import Lexer
 from cobra.core.parser import ClassicParser, ParserError
 from core.ast_nodes import NodoAsignacion

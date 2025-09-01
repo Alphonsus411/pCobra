@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 # Añadir la ruta del paquete principal
-sys.path.append(str(Path(__file__).resolve().parent.parent / "pCobra"))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src" / "pcobra"))
 
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from core.ast_nodes import (

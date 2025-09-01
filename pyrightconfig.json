@@ -1,5 +1,5 @@
 {
-  "include": ["pCobra"],
+  "include": ["src/pcobra"],
   "exclude": [
     "frontend/build",
     "frontend/docs",
@@ -7,7 +7,7 @@
     ".venv",
     "dist",
     "build",
-    "pCobra/tests"
+    "src/pcobra/tests"
   ],
   "ignore": [],
   "reportMissingImports": false,
