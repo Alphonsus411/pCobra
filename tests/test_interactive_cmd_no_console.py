@@ -2,9 +2,9 @@ import argparse
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src", "pcobra"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from cobra.cli.commands.interactive_cmd import (
+from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
     NoConsoleScreenBufferError,
     DummyOutput,
@@ -21,10 +21,12 @@ def test_interactive_cmd_without_console(monkeypatch, capsys):
 
     # Evitar efectos secundarios
     monkeypatch.setattr(
-        "cobra.cli.commands.interactive_cmd.limitar_memoria_mb", lambda *a, **k: None
+        "pcobra.cobra.cli.commands.interactive_cmd.limitar_memoria_mb",
+        lambda *a, **k: None,
     )
     monkeypatch.setattr(
-        "cobra.cli.commands.interactive_cmd.validar_dependencias", lambda *a, **k: None
+        "pcobra.cobra.cli.commands.interactive_cmd.validar_dependencias",
+        lambda *a, **k: None,
     )
 
     class DummyPrompt:
@@ -41,7 +43,7 @@ def test_interactive_cmd_without_console(monkeypatch, capsys):
             raise EOFError
 
     monkeypatch.setattr(
-        "cobra.cli.commands.interactive_cmd.PromptSession", DummyPrompt
+        "pcobra.cobra.cli.commands.interactive_cmd.PromptSession", DummyPrompt
     )
 
     args = argparse.Namespace(

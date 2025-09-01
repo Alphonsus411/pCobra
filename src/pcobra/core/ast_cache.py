@@ -94,13 +94,13 @@ def _get_node_classes():
 def _get_enum_classes():
     global _ENUM_CLASSES
     if _ENUM_CLASSES is None:
-        from cobra.core.lexer import TipoToken
+        from pcobra.cobra.core.lexer import TipoToken
         _ENUM_CLASSES = {"TipoToken": TipoToken}
     return _ENUM_CLASSES
 
 
 def _serialize(obj):
-    from cobra.core.lexer import Token
+    from pcobra.cobra.core.lexer import Token
 
     if is_dataclass(obj):
         data = {"__class__": obj.__class__.__name__}
@@ -125,7 +125,7 @@ def _serialize(obj):
 
 
 def _deserialize(data):
-    from cobra.core.lexer import Token, TipoToken
+    from pcobra.cobra.core.lexer import Token, TipoToken
 
     if isinstance(data, list):
         return [_deserialize(i) for i in data]
@@ -177,7 +177,7 @@ def obtener_tokens(codigo: str):
         with open(ruta, "r", encoding="utf-8") as f:
             return _deserialize(json.load(f))
 
-    from cobra.core import Lexer
+    from pcobra.cobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "w", encoding="utf-8") as f:
@@ -196,7 +196,7 @@ def obtener_ast(codigo: str):
             return _deserialize(json.load(f))
 
     tokens = obtener_tokens(codigo)
-    from cobra.core import Parser
+    from pcobra.cobra.core import Parser
 
     ast = Parser(tokens).parsear()
 
@@ -224,7 +224,7 @@ def obtener_tokens_fragmento(codigo: str):
         with open(ruta, "r", encoding="utf-8") as f:
             return _deserialize(json.load(f))
 
-    from cobra.core import Lexer
+    from pcobra.cobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     with open(ruta, "w", encoding="utf-8") as f:
@@ -240,7 +240,7 @@ def obtener_ast_fragmento(codigo: str):
             return _deserialize(json.load(f))
 
     tokens = obtener_tokens_fragmento(codigo)
-    from cobra.core import Parser
+    from pcobra.cobra.core import Parser
 
     ast = Parser(tokens).parsear()
     with open(ruta, "w", encoding="utf-8") as f:

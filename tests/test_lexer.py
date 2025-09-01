@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / "src" / "pcobra"))
-from cobra.core.lexer import InvalidTokenError, Lexer, TipoToken
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
+from pcobra.cobra.core.lexer import InvalidTokenError, Lexer, TipoToken
 
 
 

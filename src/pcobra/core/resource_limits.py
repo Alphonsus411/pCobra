@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from cobra.cli.i18n import _
+from pcobra.cobra.cli.i18n import _
 
 
 logger = logging.getLogger(__name__)

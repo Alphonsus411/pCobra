@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
-    from cobra.core.lexer import Token, TipoToken
+    from pcobra.cobra.core.lexer import Token, TipoToken
 
 
 @dataclass
@@ -25,7 +25,7 @@ class NodoAsignacion(NodoAST):
     """Representa la asignación de una expresión a una variable."""
 
     def __post_init__(self):
-        from cobra.core.lexer import Token
+        from pcobra.cobra.core.lexer import Token
 
         if isinstance(self.variable, Token):
             nombre = self.variable.valor
@@ -260,7 +260,7 @@ class NodoIdentificador(NodoAST):
     """Uso de una variable o identificador."""
 
     def __post_init__(self):
-        from cobra.core.lexer import Token
+        from pcobra.cobra.core.lexer import Token
 
         if isinstance(self.nombre, Token):
             self.nombre = self.nombre.valor
@@ -285,7 +285,7 @@ class NodoIdentificador(NodoAST):
         if isinstance(valor, NodoValor):
             return valor.valor
 
-        from cobra.core.lexer import Token, TipoToken
+        from pcobra.cobra.core.lexer import Token, TipoToken
 
         if isinstance(valor, Token) and valor.tipo in {
             TipoToken.ENTERO,
