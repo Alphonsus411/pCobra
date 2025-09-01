@@ -233,9 +233,9 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - `frontend/docs/`: Carpeta donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
 - `pCobra/tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
-- `requirements.txt`: Archivo que lista las dependencias del proyecto.
-- `pyproject.toml`: También define dependencias en las secciones
-  ``project.dependencies`` y ``project.optional-dependencies``.
+- `requirements.txt`: Archivo en la raíz que lista las dependencias del proyecto.
+- `pyproject.toml`: Define dependencias en las secciones ``project.dependencies`` y ``project.optional-dependencies``. Estos
+  archivos en la raíz son la única fuente de dependencias.
 
 # Características Principales
 

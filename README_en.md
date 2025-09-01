@@ -249,8 +249,9 @@ The project is organized into the following folders and modules:
 - `frontend/docs/` and `frontend/build/`: Folders where the documentation is generated and stored. The file `frontend/docs/arquitectura.rst` describes the internal structure of the language.
 - `src/tests/`: Unit tests to ensure correct behaviour of the code.
 - `README.md`: Project documentation.
-- `requirements.txt`: Lists the project dependencies.
-- `pyproject.toml`: Also defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections.
+- `requirements.txt`: File in the repository root that lists the project dependencies.
+- `pyproject.toml`: Defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections. These
+  root-level files are the single source of dependencies.
 
 # Main Features
 
