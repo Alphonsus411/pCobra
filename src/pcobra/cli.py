@@ -5,11 +5,20 @@ import logging
 import sys
 from typing import List, Optional
 
+from . import cobra as cobra_pkg
+from . import core as core_pkg
+from . import compiler as compiler_pkg
+
+# Registrar alias de paquetes para compatibilidad con imports absolutos
+sys.modules.setdefault("cobra", cobra_pkg)
+sys.modules.setdefault("core", core_pkg)
+sys.modules.setdefault("compiler", compiler_pkg)
+
+import re
 from dotenv import load_dotenv
 from .cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from .cobra.cli.commands.execute_cmd import ExecuteCommand
 from .cobra.cli.utils import messages
-import re
 
 logger = logging.getLogger(__name__)
 
