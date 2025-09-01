@@ -7,7 +7,8 @@ import sys as _sys
 
 logger = logging.getLogger(__name__)
 
-_submodules = ["cli", "cobra", "core", "ia", "jupyter_kernel", "gui", "lsp", "compiler"]
+# Cargar primero los paquetes base para evitar errores de dependencias cruzadas
+_submodules = ["cobra", "core", "cli", "ia", "jupyter_kernel", "gui", "lsp", "compiler"]
 
 for pkg in _submodules:
     if importlib.util.find_spec(f".{pkg}", __name__) is None:
