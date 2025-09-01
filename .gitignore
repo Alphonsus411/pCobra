@@ -58,3 +58,6 @@ all-bytes.dat
 # ============= CONFIG INTERNOS (opcional) =============
 *.toml.local
 *.env.local
+
+# Ignore legacy cobra-lenguaje backup
+src/cobra-lenguaje/
