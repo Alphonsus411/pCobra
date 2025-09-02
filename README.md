@@ -917,15 +917,12 @@ pytest --cov=src --cov-report=term-missing --cov-fail-under=95
 
 ## Caché del AST
 
-Cobra guarda los árboles de sintaxis en la carpeta `cache` situada en la
-raíz del proyecto. Cada archivo se nombra con el SHA256 del código y tiene
-extensión `.ast`. Puedes cambiar la ubicación definiendo la variable de
-entorno `COBRA_AST_CACHE` antes de ejecutar la compilación.
+Cobra puede almacenar los árboles de sintaxis (AST) y los tokens en formato JSON dentro de la carpeta `cache` situada en la raíz del proyecto. La caché se activa al definir la variable de entorno `COBRA_AST_CACHE`, que también permite establecer una ubicación personalizada. Cada archivo se nombra con el SHA256 del código y utiliza extensiones `.ast` para los árboles y `.tok` para los tokens. Además, existe el subdirectorio `cache/fragmentos` para los fragmentos generados durante la compilación.
 
-Para limpiar la caché elimina los archivos de dicho directorio:
+Para limpiar la caché elimina los archivos y directorios generados:
 
 ```bash
-rm cache/*.ast
+rm cache/*.ast cache/*.tok && rm -r cache/fragmentos
 ```
 
 ## Generar documentación
