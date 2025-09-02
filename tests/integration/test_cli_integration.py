@@ -26,7 +26,7 @@ def _spawn(args, extra_env=None):
 
 
 def test_ejecutar_modo_normal():
-    child = _spawn("ejecutar src/tests/data/ejemplo.co")
+    child = _spawn("ejecutar tests/data/ejemplo.co")
     child.expect("hola")
     child.expect(pexpect.EOF)
     child.wait()
@@ -54,7 +54,7 @@ def test_docs_command():
 
 
 def test_ejecutar_sandbox():
-    child = _spawn("ejecutar src/tests/data/ejemplo.co --sandbox", {"PEXPECT_TESTING": "1"})
+    child = _spawn("ejecutar tests/data/ejemplo.co --sandbox", {"PEXPECT_TESTING": "1"})
     child.expect("hola")
     child.expect(pexpect.EOF)
     child.wait()

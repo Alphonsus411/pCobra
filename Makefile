@@ -2,7 +2,7 @@
 PYTHON=python
 VENV=.venv
 SRC=src/pcobra
-TESTS=src/pcobra/tests
+TESTS=tests
 SPHINXBUILD=sphinx-build
 SPHINXOPTS=
 SOURCEDIR=frontend/docs

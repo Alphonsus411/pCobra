@@ -38,7 +38,7 @@ RUNTIME_LANGS = {
 
 @pytest.mark.parametrize("lang", sorted(TRANSPILERS.keys()))
 def test_generate_and_syntax(tmp_path, lang):
-    src = Path("src/tests/data/ejemplo.co")
+    src = Path("tests/data/ejemplo.co")
     tokens = Lexer(src.read_text()).analizar_token()
     ast = Parser(tokens).parsear()
 
