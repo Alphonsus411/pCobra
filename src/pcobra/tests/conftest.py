@@ -3,14 +3,13 @@ from pathlib import Path
 
 import pytest
 
-# Añade el directorio ``src`` al ``PYTHONPATH`` para simplificar los imports en las pruebas
-ROOT = Path(__file__).resolve().parents[1]
-src_path = ROOT / "src"
+# Añade los directorios necesarios al ``PYTHONPATH`` para simplificar los imports
+SRC_ROOT = Path(__file__).resolve().parents[2]
+PCOBRA_PATH = SRC_ROOT / 'pcobra'
 
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-if src_path.exists() and str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
+for path in (SRC_ROOT, PCOBRA_PATH):
+    if path.exists() and str(path) not in sys.path:
+        sys.path.insert(0, str(path))
 
 # Carga opcionalmente el paquete ``backend`` para mantener compatibilidad
 try:  # nosec B001
