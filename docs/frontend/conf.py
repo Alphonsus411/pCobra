@@ -4,15 +4,15 @@ from datetime import datetime
 
 # Validación de directorios base
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-BACKEND_SRC = os.path.join(ROOT_DIR, 'backend', 'src')
+SRC_DIR = os.path.join(ROOT_DIR, 'src')
 
-if not os.path.exists(BACKEND_SRC):
-    raise FileNotFoundError(f"El directorio backend no existe: {BACKEND_SRC}")
+if not os.path.exists(SRC_DIR):
+    raise FileNotFoundError(f"El directorio src no existe: {SRC_DIR}")
 
 if not os.path.exists(ROOT_DIR):
     raise FileNotFoundError(f"El directorio raíz no existe: {ROOT_DIR}")
 
-sys.path.append(BACKEND_SRC)  # Usar append en lugar de insert
+sys.path.append(SRC_DIR)  # Usar append en lugar de insert
 sys.path.append(ROOT_DIR)
 
 # Información del proyecto
@@ -48,7 +48,7 @@ if not os.path.exists(css_file):
     print(f"Advertencia: El archivo {css_file} no existe")
 
 # Resto de la configuración
-autodoc_mock_imports = ['src', 'tests']
+autodoc_mock_imports = ['tests']
 autosummary_generate = True
 templates_path = ['_templates']
 exclude_patterns = []

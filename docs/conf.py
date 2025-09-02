@@ -16,15 +16,15 @@ def ensure_dir_exists(path):
 for directory in ['_static', '_templates', 'locale']:
     ensure_dir_exists(directory)
 
-# Setup paths so Sphinx can find the backend package
+# Setup paths so Sphinx can find the source packages
 ROOT_DIR = Path(__file__).parent.parent.absolute()
-BACKEND_SRC = ROOT_DIR / 'backend' / 'src'
+SRC_DIR = ROOT_DIR / 'src'
 
-# Verificar que el directorio backend/src existe
-if not BACKEND_SRC.exists():
-    raise FileNotFoundError(f"El directorio {BACKEND_SRC} no existe")
+# Verificar que el directorio src existe
+if not SRC_DIR.exists():
+    raise FileNotFoundError(f"El directorio {SRC_DIR} no existe")
 
-sys.path.insert(0, str(BACKEND_SRC))
+sys.path.insert(0, str(SRC_DIR))
 sys.path.insert(0, str(ROOT_DIR))
 
 # -- Project information -----------------------------------------------------
@@ -53,7 +53,6 @@ source_suffix = {
 
 # Mock imports más específicos para evitar conflictos
 autodoc_mock_imports = [
-    'backend.src',
     'backend.tests',
 ]
 

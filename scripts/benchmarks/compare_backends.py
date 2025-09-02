@@ -114,7 +114,7 @@ def main() -> None:
     args = parser.parse_args()
 
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "backend")
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
     env["COBRA_TOML"] = str(Path(tmp_file.name))

@@ -17,6 +17,6 @@ Este directorio contiene un ejemplo mínimo de un programa escrito en Cobra y su
    El script `compile_manual.py` usa los módulos de Cobra para convertir el archivo `hola_mundo.co` en Python.
 2. Ejecutar el script generado:
    ```bash
-   PYTHONPATH=..:../src:../backend python hola_mundo.py > hola_mundo.out
+   PYTHONPATH=..:../src python hola_mundo.py > hola_mundo.out
    ```
 3. Revisar `hola_mundo.out` para ver el texto `Hola, mundo!`.

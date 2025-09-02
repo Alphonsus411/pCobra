@@ -105,10 +105,7 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
 def main() -> None:
     env = os.environ.copy()
     repo_root = Path(__file__).resolve().parents[2]
-    env["PYTHONPATH"] = os.pathsep.join([
-        str(repo_root / "backend"),
-        str(repo_root / "src"),
-    ])
+    env["PYTHONPATH"] = str(repo_root / "src")
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
     env["COBRA_TOML"] = str(Path(tmp_file.name))
