@@ -115,7 +115,7 @@ RUNNABLE_LANGS = [
 
 @pytest.mark.parametrize("lang", RUNNABLE_LANGS)
 def test_transpile_semantics(tmp_path, lang):
-    src = Path("src/tests/data/ejemplo.co")
+    src = Path("tests/data/ejemplo.co")
     esperado = obtener_salida_interprete(src)
 
     tokens = Lexer(src.read_text()).analizar_token()

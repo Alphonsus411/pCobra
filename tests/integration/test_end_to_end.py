@@ -28,7 +28,7 @@ from tests.utils.runtime import run_code
 @pytest.mark.parametrize("lang", ["python", "js"])
 def test_end_to_end(tmp_path, lang, monkeypatch):
     # Copiar archivo de ejemplo a ruta temporal
-    src_file = Path("src/tests/data/ejemplo.co")
+    src_file = Path("tests/data/ejemplo.co")
     tmp_file = tmp_path / src_file.name
     tmp_file.write_text(src_file.read_text())
 

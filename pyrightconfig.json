@@ -7,7 +7,7 @@
     ".venv",
     "dist",
     "build",
-    "src/pcobra/tests"
+    "tests"
   ],
   "ignore": [],
   "reportMissingImports": false,
