@@ -4,6 +4,9 @@
 
 Version 10.0.9
 
+- `corelibs.sistema.ejecutar` now runs only whitelisted executables provided via the `permitidos` argument or the `COBRA_EJECUTAR_PERMITIDOS` environment variable.
+- Added an incremental JSON cache to speed up repeated compilations.
+
 Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly, allowing greater versatility when running and deploying Cobra code.
 
 ## Table of Contents
@@ -13,9 +16,11 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - Project Structure
 - Supported tools and scripts
 - Main Features
+- Incremental cache
 - Usage
 - Tokens and lexical rules
 - Usage Example
+- System command whitelist
 - Tests
 - Generate documentation
 - CodeQL analysis
@@ -74,7 +79,21 @@ Cobra is designed to make programming in Spanish easier, allowing developers to 
 
 ## Installation
 
-To install the project, follow these steps:
+Install the latest release from PyPI:
+
+```bash
+pip install pcobra
+```
+
+Or with `pipx` to keep it isolated:
+
+```bash
+pipx install pcobra
+```
+
+### From source
+
+To install the project from source, follow these steps:
 
 1. Clone the repository to your local machine:
 
@@ -299,6 +318,19 @@ cobra benchthreads --output threads.json
 ```
 
 The result contains three entries (sequential, cli_hilos and kernel_hilos) with the times and CPU usage.
+
+## Incremental cache
+
+Cobra stores tokens and ASTs in an incremental JSON cache to avoid
+reprocessing files that have not changed. The default location is the
+`cache/` directory or the path specified by the `COBRA_AST_CACHE`
+environment variable.
+
+Clear all cached files with:
+
+```bash
+cobra cache
+```
 
 # Usage
 
@@ -531,6 +563,19 @@ Generating code for these functions creates `asyncio.create_task` calls in Pytho
 Once the package is installed, the `cobra` tool offers several subcommands. The README in Spanish contains a complete list of commands and examples.
 
 The CLI runs in safe mode by default. Use `--no-seguro` to disable it. A sandbox option (`--sandbox`), support for multiple languages via `--lang` and the ability to generate documentation, packages and executables are also available. See the Spanish README for detailed examples.
+
+## System command whitelist
+
+`corelibs.sistema.ejecutar` runs external commands only when they appear in a
+whitelist. Provide the allowed executables through the required `permitidos`
+argument or define them once via the `COBRA_EJECUTAR_PERMITIDOS` environment
+variable (use the system path separator to list several paths). The environment
+variable is read at import time, so later changes have no effect.
+
+```python
+from pcobra.corelibs import sistema
+output = sistema.ejecutar(["/bin/ls"], permitidos=["/bin/ls"])
+```
 
 ## Tests and development
 
