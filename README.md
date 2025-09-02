@@ -179,7 +179,7 @@ source .venv/bin/activate  # En Windows usa .\\.venv\\Scripts\\activate
 Instala la distribución publicada y PyInstaller:
 
 ```bash
-pip install cobra-lenguaje
+pip install pcobra
 pip install pyinstaller
 ```
 
@@ -193,7 +193,7 @@ El ejecutable aparecerá en el directorio `dist/`.
 
 Para realizar una prueba rápida puedes ejecutar el script
 `scripts/test_pyinstaller.sh`. Este script crea un entorno virtual temporal,
-instala `cobra-lenguaje` desde el repositorio (o desde PyPI si se ejecuta fuera
+instala `pcobra` desde el repositorio (o desde PyPI si se ejecuta fuera
 de él) y ejecuta PyInstaller sobre `pCobra/cli/cli.py` o el script `cobra-init`.
 El binario resultante se
 guardará por defecto en `dist/`.

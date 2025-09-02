@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cobra-lenguaje"
+name = "pcobra"
 version = "10.0.9"
 description = "Un lenguaje de programación en español para simulaciones y más."
 authors = [ {name = "Adolfo González Hernández", email = "adolfogonzal@gmail.com"} ]

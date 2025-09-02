@@ -16,7 +16,7 @@ from core.sandbox import ejecutar_en_sandbox
 def _get_version() -> str:
     """Obtiene la versión instalada del paquete."""
     try:
-        return version("cobra-lenguaje")
+        return version("pcobra")
     except PackageNotFoundError:
         return "10.0.9"
 
