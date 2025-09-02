@@ -31,15 +31,15 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Ejemplos de prueba
 - Generar documentación
 - Análisis con CodeQL
-- [CobraHub](frontend/docs/cobrahub.rst)
+- [CobraHub](docs/frontend/cobrahub.rst)
 - Hitos y Roadmap
 - Contribuciones
 - [Guía de Contribución](CONTRIBUTING.md)
-- [Proponer extensiones](frontend/docs/rfc_plugins.rst)
+- [Proponer extensiones](docs/frontend/rfc_plugins.rst)
 - Extensión para VS Code
 - [Comunidad](docs/comunidad.md)
 - Licencia
-- [Manual de Cobra](MANUAL_COBRA.md)
+- [Manual de Cobra](docs/MANUAL_COBRA.md)
 - [Manual de Cobra en formato reStructuredText](docs/MANUAL_COBRA.rst)
 - [Manual de Cobra en PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Guía básica](docs/guia_basica.md)
@@ -94,7 +94,7 @@ Puedes experimentar con Cobra directamente en tu navegador:
 
 Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible. A través de su lexer, parser y transpiladores, Cobra puede analizar, ejecutar y convertir código a otros lenguajes, brindando soporte para variables, funciones, estructuras de control y estructuras de datos como listas, diccionarios y clases.
 Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
-La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](SPEC_COBRA.md).
+La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
 ## Instalación
 
@@ -138,7 +138,7 @@ cobra archivo.co --no-seguro
 cobra transpila hola.co --dest python
 ```
 
-Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [frontend/docs](frontend/docs).
+Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [docs/frontend](docs/frontend).
 
 ## Descarga de binarios
 
@@ -230,7 +230,7 @@ CertUtil -hashfile cobra.exe SHA256
 El proyecto se organiza en las siguientes carpetas y módulos:
 
 - `pCobra/`: Contiene la lógica Python del proyecto.
-- `frontend/docs/`: Carpeta donde se genera y aloja la documentación. El archivo `frontend/docs/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
+- `docs/frontend/`: Carpeta donde se genera y aloja la documentación. El archivo `docs/frontend/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
 - `pCobra/tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo en la raíz que lista las dependencias del proyecto.
@@ -250,9 +250,9 @@ El proyecto se organiza en las siguientes carpetas y módulos:
   funciones como ``optimizar`` y ``perfilar`` para mejorar y medir la
   ejecución de código Python desde Cobra.
 - Benchmarking: ejemplos completos de medición de rendimiento están
-  disponibles en `frontend/docs/benchmarking.rst`.
+  disponibles en `docs/frontend/benchmarking.rst`.
 - Ejemplos de Código y Documentación: Ejemplos prácticos que ilustran el uso del lexer, parser y transpiladores.
-- Ejemplos Avanzados: Revisa `frontend/docs/ejemplos_avanzados.rst` para conocer casos con clases, hilos y manejo de errores.
+- Ejemplos Avanzados: Revisa `docs/frontend/ejemplos_avanzados.rst` para conocer casos con clases, hilos y manejo de errores.
 - Identificadores en Unicode: Puedes nombrar variables y funciones utilizando
   caracteres como `á`, `ñ` o `Ω` para una mayor flexibilidad.
 
@@ -320,8 +320,8 @@ python -m pCobra
 ```
 
 Para conocer las opciones avanzadas del modo seguro revisa
-`frontend/docs/modo_seguro.rst`. Los ejemplos de medición de rendimiento
-están disponibles en `frontend/docs/benchmarking.rst`.
+`docs/frontend/modo_seguro.rst`. Los ejemplos de medición de rendimiento
+están disponibles en `docs/frontend/benchmarking.rst`.
 
 Para ejecutar pruebas unitarias, utiliza pytest:
 
@@ -734,7 +734,7 @@ a ejecutar. En `pCobra/cli/cli.py` se instancian automáticamente y se registran
 `argparse`, por lo que para añadir un nuevo comando solo es necesario crear un
 archivo con la nueva clase y llamar a `register_subparser` y `run`.
 Para un tutorial completo de creación de plugins revisa
-[`frontend/docs/plugins.rst`](frontend/docs/plugins.rst).
+[`docs/frontend/plugins.rst`](docs/frontend/plugins.rst).
 
 ## Modo seguro
 
@@ -894,7 +894,7 @@ COBRA_LANG=en cobra --ayuda
 cobra --lang en compilar archivo.co
 ```
 
-Si deseas añadir otro idioma, crea una carpeta `frontend/docs/locale/<cod>/LC_MESSAGES`
+Si deseas añadir otro idioma, crea una carpeta `docs/frontend/locale/<cod>/LC_MESSAGES`
 con los archivos `.po` de traducción y envía un pull request.
 
 Para obtener un reporte de cobertura en la terminal ejecuta:
@@ -927,7 +927,7 @@ Puedes compilar la documentación de dos maneras:
 1. **Con la CLI de Cobra**. Ejecuta `cobra docs`.
 
 2. **Con Make**. Ejecuta `make html` para compilar los archivos ubicados en
-   `frontend/docs`.
+   `docs/frontend`.
 
 3. **Con pdoc**. Para generar documentación de la API con [pdoc](https://pdoc.dev),
    ejecuta `python scripts/generar_pdoc.py`. El resultado se guardará en
@@ -936,9 +936,9 @@ Puedes compilar la documentación de dos maneras:
 A partir de esta versión, la API se genera de forma automática antes de
 cada compilación para mantener la documentación actualizada.
 Para aprender a desarrollar plugins revisa
-[`frontend/docs/plugin_dev.rst`](frontend/docs/plugin_dev.rst).
+[`docs/frontend/plugin_dev.rst`](docs/frontend/plugin_dev.rst).
 Para conocer en detalle la interfaz disponible consulta
-[`frontend/docs/plugin_sdk.rst`](frontend/docs/plugin_sdk.rst).
+[`docs/frontend/plugin_sdk.rst`](docs/frontend/plugin_sdk.rst).
 
 ## Análisis con CodeQL
 
@@ -971,7 +971,7 @@ unzip codeql.zip
 Esto te permitirá validar los cambios antes de subirlos al repositorio.
 ## Hitos y Roadmap
 
-El proyecto avanza en versiones incrementales. Puedes consultar las tareas planeadas en [ROADMAP.md](ROADMAP.md).
+El proyecto avanza en versiones incrementales. Puedes consultar las tareas planeadas en [ROADMAP.md](docs/ROADMAP.md).
 
 
 # Contribuciones
@@ -996,7 +996,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
   issues y preparar pull requests.
-- Para proponer nuevas extensiones consulta [frontend/docs/rfc_plugins.rst](frontend/docs/rfc_plugins.rst).
+- Para proponer nuevas extensiones consulta [docs/frontend/rfc_plugins.rst](docs/frontend/rfc_plugins.rst).
 
 ## Dependabot y seguridad
 

@@ -3,7 +3,7 @@ Estado de los lenguajes soportados
 
 En la actualidad Cobra puede generar código para múltiples lenguajes. A
 continuación se lista cada backend y su estado de soporte. Para más
-detalles consulta :doc:`../frontend/docs/backends` y la sección
+detalles consulta :doc:`frontend/backends` y la sección
 *Características Principales* del `README.md <../README.md>`_.
 
 .. list-table:: Estado de los backends

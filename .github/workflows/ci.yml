@@ -139,10 +139,10 @@ jobs:
           files: coverage.xml
       - name: Build docs
         shell: bash
-        run: sphinx-build -b html frontend/docs frontend/build/html
+        run: sphinx-build -b html docs/frontend docs/build/html
       - name: Check doc links
         shell: bash
-        run: sphinx-build -b linkcheck frontend/docs frontend/build/linkcheck
+        run: sphinx-build -b linkcheck docs/frontend docs/build/linkcheck
 
   benchmarks:
     runs-on: ubuntu-latest

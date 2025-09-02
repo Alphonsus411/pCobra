@@ -4,7 +4,7 @@ Este documento describe brevemente las clases base que conforman el árbol de si
 
 ## `NodoAST`
 
-Tal y como se explica en `frontend/docs/design_patterns.rst`, todas las clases de nodos heredan de `NodoAST`. Esta clase define el método `aceptar` que delega la operación en una instancia de `NodeVisitor`:
+Tal y como se explica en `frontend/design_patterns.rst`, todas las clases de nodos heredan de `NodoAST`. Esta clase define el método `aceptar` que delega la operación en una instancia de `NodeVisitor`:
 
 ```python
 @dataclass
@@ -20,7 +20,7 @@ Gracias a esta interfaz común, cualquier nodo puede ser procesado de forma unif
 
 ## `NodeVisitor`
 
-El recorrido de los nodos se realiza mediante la clase `NodeVisitor`, mencionada tanto en `frontend/docs/design_patterns.rst` como en `frontend/docs/arquitectura.rst`. Su método `visit` despacha automáticamente al método `visit_<nodo>` correspondiente según el tipo de cada objeto:
+El recorrido de los nodos se realiza mediante la clase `NodeVisitor`, mencionada tanto en `frontend/design_patterns.rst` como en `frontend/arquitectura.rst`. Su método `visit` despacha automáticamente al método `visit_<nodo>` correspondiente según el tipo de cada objeto:
 
 ```python
 class NodeVisitor:

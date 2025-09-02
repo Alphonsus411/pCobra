@@ -29,7 +29,7 @@ Dispones de varios cuadernos de ejemplo en la carpeta ``notebooks``:
 
 .. note::
 
-   Puedes añadir tus propias capturas de pantalla en ``frontend/docs/galeria``.
+   Puedes añadir tus propias capturas de pantalla en ``docs/frontend/galeria``.
 
 Puedes probarlos en línea con este badge de Binder:
 

@@ -18,15 +18,15 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - Tests
 - Generate documentation
 - CodeQL analysis
-- [CobraHub](frontend/docs/cobrahub.rst)
+- [CobraHub](docs/frontend/cobrahub.rst)
 - Milestones and Roadmap
 - Contributions
 - [Contribution Guide](CONTRIBUTING.md)
-- [Propose extensions](frontend/docs/rfc_plugins.rst)
+- [Propose extensions](docs/frontend/rfc_plugins.rst)
 - VS Code extension
 - [Community](docs/comunidad.md)
 - License
-- [Cobra Manual](MANUAL_COBRA.md)
+- [Cobra Manual](docs/MANUAL_COBRA.md)
 - [Cobra Manual in reStructuredText](docs/MANUAL_COBRA.rst)
 - [Cobra Manual in PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Basic guide](docs/guia_basica.md)
@@ -69,7 +69,7 @@ You can experiment with Cobra directly in your browser:
 
 ## Project Description
 
-Cobra is designed to make programming in Spanish easier, allowing developers to use a more accessible language. Through its lexer, parser and transpilers, Cobra can analyze, execute and convert code to other languages, providing support for variables, functions, control structures and data structures such as lists, dictionaries and classes. For a step-by-step tutorial check the [Cobra Manual](docs/MANUAL_COBRA.rst). The full language specification is available in [SPEC_COBRA.md](SPEC_COBRA.md).
+Cobra is designed to make programming in Spanish easier, allowing developers to use a more accessible language. Through its lexer, parser and transpilers, Cobra can analyze, execute and convert code to other languages, providing support for variables, functions, control structures and data structures such as lists, dictionaries and classes. For a step-by-step tutorial check the [Cobra Manual](docs/MANUAL_COBRA.rst). The full language specification is available in [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
 ## Installation
 
@@ -246,7 +246,7 @@ The executable will be placed inside the `dist/` directory.
 The project is organized into the following folders and modules:
 
 - `src/`: Contains the Python logic of the project.
-- `frontend/docs/` and `frontend/build/`: Folders where the documentation is generated and stored. The file `frontend/docs/arquitectura.rst` describes the internal structure of the language.
+- `docs/frontend/` and `docs/build/`: Folders where the documentation is generated and stored. The file `docs/frontend/arquitectura.rst` describes the internal structure of the language.
 - `src/tests/`: Unit tests to ensure correct behaviour of the code.
 - `README.md`: Project documentation.
 - `requirements.txt`: File in the repository root that lists the project dependencies.
@@ -263,9 +263,9 @@ The project is organized into the following folders and modules:
 - Error handling: the system captures and reports syntax errors, easing debugging.
 - Visualization and debugging: detailed output of tokens, AST and syntax errors for simpler development.
 - Performance decorators: the ``smooth-criminal`` library offers functions such as ``optimizar`` and ``perfilar`` to improve and measure Python code executed from Cobra.
-- Benchmarking: full performance measurement examples are available in `frontend/docs/benchmarking.rst`.
+- Benchmarking: full performance measurement examples are available in `docs/frontend/benchmarking.rst`.
 - Code and documentation examples: practical examples illustrating the lexer, parser and transpilers.
-- Advanced examples: see `frontend/docs/ejemplos_avanzados.rst` to learn about classes, threads and error handling.
+- Advanced examples: see `docs/frontend/ejemplos_avanzados.rst` to learn about classes, threads and error handling.
 - Unicode identifiers: you can name variables and functions using characters like `á`, `ñ` or `Ω` for greater flexibility.
 
 ## Performance
@@ -296,7 +296,7 @@ To run the project directly from the repository you can use the `run.sh` script.
 ./run.sh [options]
 ```
 
-For advanced options of safe mode see `frontend/docs/modo_seguro.rst`. Performance measurement examples are available in `frontend/docs/benchmarking.rst`.
+For advanced options of safe mode see `docs/frontend/modo_seguro.rst`. Performance measurement examples are available in `docs/frontend/benchmarking.rst`.
 
 To run unit tests use pytest:
 

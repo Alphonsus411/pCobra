@@ -34,11 +34,11 @@ jobs:
       - name: Install LaTeX packages
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends texlive-latex-recommended texlive-latex-extra latexmk
       - name: Build docs
-        run: sphinx-build -b html frontend/docs frontend/build/html
+        run: sphinx-build -b html docs/frontend docs/build/html
       - name: Build root docs
         run: sphinx-build -b html docs docs/_build
       - name: Copy frontend docs to build dir
-        run: cp -r frontend/build/html docs/_build/frontend
+        run: cp -r docs/build/html docs/_build/frontend
       - name: Build LaTeX docs
         run: sphinx-build -b latex docs docs/_build/latex
       - name: Build PDF manual
