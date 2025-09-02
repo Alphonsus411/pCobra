@@ -1,8 +1,8 @@
 {
   "include": ["src/pcobra"],
   "exclude": [
-    "frontend/build",
-    "frontend/docs",
+    "docs/build",
+    "docs/frontend",
     "venv",
     ".venv",
     "dist",

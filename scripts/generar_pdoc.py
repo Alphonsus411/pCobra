@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 # Configuración
-OUTPUT_DIR = Path('frontend/build/pdoc')
+OUTPUT_DIR = Path('docs/build/pdoc')
 SOURCE_DIR = Path('src')
 
 def check_pdoc_installed():

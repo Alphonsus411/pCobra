@@ -39,9 +39,9 @@ build/
 
 # ============= FRONTEND =============
 frontend/vscode/node_modules/
-frontend/build/
-frontend/docs/galeria/*.png
-frontend/docs/galeria/*.gif
+docs/build/
+docs/frontend/galeria/*.png
+docs/frontend/galeria/*.gif
 
 # ============= DOCUMENTACIÓN SPHINX =============
 docs/_build/

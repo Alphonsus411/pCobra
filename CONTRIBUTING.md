@@ -31,7 +31,7 @@ Las tareas etiquetadas como `good first issue` están orientadas a la comunidad 
 - Para analisis estatico con `pyright`, instala el paquete y ejecuta
   `pyright src` (o `make typecheck`).
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
-  [SPEC_COBRA.md](SPEC_COBRA.md).
+  [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
 ## PYTHONPATH y PyCharm
 

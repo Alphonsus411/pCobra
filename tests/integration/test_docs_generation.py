@@ -18,7 +18,7 @@ def test_docs_generation():
     if not shutil.which("sphinx-build") or not shutil.which("sphinx-apidoc"):
         pytest.skip("Sphinx no disponible")
 
-    build_dir = Path("frontend/build/html")
+    build_dir = Path("docs/build/html")
     if build_dir.exists():
         shutil.rmtree(build_dir)
 
@@ -29,11 +29,11 @@ def test_docs_generation():
     assert (build_dir / "index.html").is_file()
     assert "Documentación generada" in out.getvalue()
 
-    linkcheck_dir = Path("frontend/build/linkcheck")
+    linkcheck_dir = Path("docs/build/linkcheck")
     if linkcheck_dir.exists():
         shutil.rmtree(linkcheck_dir)
     result = subprocess.run(
-        ["sphinx-build", "-b", "linkcheck", "frontend/docs", str(linkcheck_dir)],
+        ["sphinx-build", "-b", "linkcheck", "docs/frontend", str(linkcheck_dir)],
         capture_output=True,
         text=True,
     )

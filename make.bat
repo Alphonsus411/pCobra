@@ -8,8 +8,8 @@ REM Configurar comando Sphinx
 IF "%SPHINXBUILD%"=="" (
     SET SPHINXBUILD=sphinx-build
 )
-SET SOURCEDIR=frontend/docs
-SET BUILDDIR=frontend/build
+SET SOURCEDIR=docs/frontend
+SET BUILDDIR=docs/build
 
 REM Verificar que Sphinx esté disponible
 where %SPHINXBUILD% >nul 2>&1

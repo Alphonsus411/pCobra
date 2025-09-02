@@ -15,9 +15,9 @@ CHANGELOG_PATH = Path("CHANGELOG.md")
 FILES_TO_UPDATE = [
     PYPROJECT_PATH,
     Path("README.md"),
-    Path("MANUAL_COBRA.md"),
+    Path("docs/MANUAL_COBRA.md"),
     Path("src/jupyter_kernel/__init__.py"),
-    Path("frontend/docs/avances.rst"),
+    Path("docs/frontend/avances.rst"),
     Path("src/tests/unit/test_cli_plugins_cmd.py"),
 ]
 

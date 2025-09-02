@@ -224,4 +224,4 @@ Recursos adicionales
 
 - :doc:`guia_basica <guia_basica>`
 - :doc:`especificacion_tecnica <especificacion_tecnica>`
-- :doc:`recursos_adicionales <../frontend/docs/recursos_adicionales>`
+- :doc:`recursos_adicionales <frontend/recursos_adicionales>`

@@ -149,4 +149,4 @@ fin
 El intérprete define la excepción `ExcepcionCobra`. Al ejecutar un `throw` se lanza esta excepción y el bloque `try_catch` captura el valor mediante `catch` o `capturar`. Si se produce un error inesperado, el intérprete genera mensajes utilizando excepciones de Python.
 
 ## Ejemplos mínimos
-Los ejemplos de `frontend/docs/sintaxis.rst` muestran el uso básico del lenguaje: declaraciones con `var`, funciones `func`, condicionales `si`/`sino`, bucles `mientras` y `para`, holobits, importaciones, manejo de excepciones con `try`/`catch`, hilos y decoradores con `@`.
+Los ejemplos de `frontend/sintaxis.rst` muestran el uso básico del lenguaje: declaraciones con `var`, funciones `func`, condicionales `si`/`sino`, bucles `mientras` y `para`, holobits, importaciones, manejo de excepciones con `try`/`catch`, hilos y decoradores con `@`.

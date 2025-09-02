@@ -5,8 +5,8 @@ SRC=src/pcobra
 TESTS=tests
 SPHINXBUILD=sphinx-build
 SPHINXOPTS=
-SOURCEDIR=frontend/docs
-BUILDDIR=frontend/build
+SOURCEDIR=docs/frontend
+BUILDDIR=docs/build
 GRAMMAR_COV?=30
 
 # ========= TAREAS GENÉRICAS ==========

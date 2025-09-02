@@ -20,4 +20,4 @@ Utilizar contenedores o entornos virtuales preconfigurados.
 
 **Contexto adicional**
 
-Revisar la documentación en `frontend/docs/empaquetar.rst` como punto de partida.
+Revisar la documentación en `docs/frontend/empaquetar.rst` como punto de partida.

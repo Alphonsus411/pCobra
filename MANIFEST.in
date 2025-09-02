@@ -1,7 +1,7 @@
 include LICENSE
 include README.md
 include CHANGELOG.md
-include MANUAL_COBRA.md
+include docs/MANUAL_COBRA.md
 include cobra.mod
 include cobra.toml
 include pcobra.toml
@@ -23,4 +23,4 @@ recursive-include src/pcobra *.txt
 recursive-include src/pcobra *.html
 
 recursive-include notebooks *
-recursive-include frontend/docs *
+recursive-include docs/frontend *
