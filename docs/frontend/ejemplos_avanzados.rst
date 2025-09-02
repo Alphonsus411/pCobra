@@ -80,16 +80,16 @@ Casos de Uso Reales
 ===================
 
 Los programas completos que muestran Cobra en escenarios reales se encuentran
-en el directorio ``casos_reales/`` de este repositorio. A continuación se
+en el directorio ``examples/casos_reales/`` de este repositorio. A continuación se
 resume cada ejemplo y se incluye el código principal para referencia.
 
 Bioinformática
 --------------
 
-En ``casos_reales/bioinformatica/`` se calcula el porcentaje de GC de una
+En ``examples/casos_reales/bioinformatica/`` se calcula el porcentaje de GC de una
 secuencia en formato FASTA. El script es el siguiente:
 
-.. literalinclude:: ../../casos_reales/bioinformatica/ejemplo_gc.co
+.. literalinclude:: ../../examples/casos_reales/bioinformatica/ejemplo_gc.co
    :language: cobra
 
 Revisa el archivo ``README.md`` de la carpeta para los pasos de compilación y
@@ -98,10 +98,10 @@ ejecución.
 Análisis de Datos
 -----------------
 
-``casos_reales/analisis_datos/`` contiene un programa que procesa un CSV con
+``examples/casos_reales/analisis_datos/`` contiene un programa que procesa un CSV con
 ``pandas`` para calcular el promedio de una columna:
 
-.. literalinclude:: ../../casos_reales/analisis_datos/estadisticas.co
+.. literalinclude:: ../../examples/casos_reales/analisis_datos/estadisticas.co
    :language: cobra
 
 El ``README.md`` explica cómo transpilar a Python y ejecutar el resultado.
@@ -109,10 +109,10 @@ El ``README.md`` explica cómo transpilar a Python y ejecutar el resultado.
 Inteligencia Artificial
 -----------------------
 
-En ``casos_reales/inteligencia_artificial/`` se muestra cómo cargar un modelo de
+En ``examples/casos_reales/inteligencia_artificial/`` se muestra cómo cargar un modelo de
 ``scikit-learn`` y realizar una predicción:
 
-.. literalinclude:: ../../casos_reales/inteligencia_artificial/modelo_ia.co
+.. literalinclude:: ../../examples/casos_reales/inteligencia_artificial/modelo_ia.co
    :language: cobra
 
 Consulta el ``README.md`` para conocer las dependencias y el proceso de ejecución.
