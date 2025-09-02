@@ -20,4 +20,4 @@ Proveer scripts de conversión a Python antes de ejecutar en Jupyter.
 
 **Contexto adicional**
 
-Consultar el submódulo `backend/src/jupyter_kernel` para ver la estructura inicial del kernel.
+Consultar el submódulo `src/backend/jupyter_kernel` para ver la estructura inicial del kernel.

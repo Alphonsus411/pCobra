@@ -1,13 +1,13 @@
 """Inicializa el paquete ``backend`` para desarrollo.
 
 Este archivo se ejecuta al importar ``backend`` directamente desde el
-repositorio. Su principal objetivo es exponer los módulos ubicados en
-``backend/src`` bajo el alias ``src`` para mantener compatibilidad con
-código legado y ejemplos que aún realizan ``import src.*``.
+repositorio. Su objetivo es exponer los módulos ubicados en ``src``
+bajo el alias ``backend.src`` para mantener compatibilidad con código
+legado y ejemplos que aún realizan ``import src.*``.
 
-Se añade ``backend/src`` al ``sys.path`` y se propagan algunos
-submódulos a ``sys.modules`` para que puedan ser localizados mediante
-``import src...`` sin necesidad de instalar el paquete.
+Se añade ``src`` al ``sys.path`` y se propagan algunos submódulos a
+``sys.modules`` para que puedan ser localizados mediante ``import
+src...`` sin necesidad de instalar el paquete.
 """
 
 import importlib
@@ -25,7 +25,7 @@ SUBMÓDULOS: Dict[str, bool] = {
     'cli': True,
     'cobra': True,
     'core': True,
-    'corelibs': True,
+    'corelibs': False,
     'ia': True,
     'jupyter_kernel': True,
     'tests': True
@@ -66,22 +66,22 @@ def import_module_safe(module_name: str) -> Optional[ModuleType]:
         logger.error(f"Error importando {module_name}: {e}")
         return None
 
-# Validar y configurar el path
-path = Path(__file__).resolve().parent / 'src'
+# Validar y configurar el path al directorio raíz ``src``
+path = Path(__file__).resolve().parent.parent
 if validate_path(path) and str(path) not in sys.path:
     sys.path.insert(0, str(path))
 
-# Importar módulo src principal
-src_mod = import_module_safe('src')
+# Importar módulo principal "pcobra" y exponerlo como ``backend.src``
+src_mod = import_module_safe('pcobra')
 if src_mod:
-    sys.modules[__name__ + '.src'] = src_mod
+    sys.modules[f'{__name__}.src'] = src_mod
 
     # Propagar submódulos habilitados
     for sub, enabled in SUBMÓDULOS.items():
         if not enabled:
             continue
             
-        full = f'src.{sub}'
+        full = f'pcobra.{sub}'
         
         # Verificar si el módulo ya está cargado
         if full in sys.modules:

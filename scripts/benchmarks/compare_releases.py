@@ -19,24 +19,11 @@ def ejecutar_benchmarks() -> list[dict[str, Any]]:
     root = Path(__file__).resolve().parents[2]
     script = Path(__file__).resolve().parent / "run_benchmarks.py"
 
-    backend_src = root / "backend" / "src"
-    src_dir = root / "src"
-    cleanup = False
-    if not backend_src.exists() and src_dir.exists():
-        try:
-            backend_src.symlink_to(src_dir, target_is_directory=True)
-            cleanup = True
-        except OSError:
-            pass
-
     try:
         cmd = [sys.executable, str(script)]
         out = subprocess.check_output(cmd, text=True, cwd=root)
     except subprocess.CalledProcessError as err:
         raise RuntimeError("Fallo al ejecutar run_benchmarks.py") from err
-    finally:
-        if cleanup and backend_src.exists():
-            backend_src.unlink()
     return cast(list[dict[str, Any]], json.loads(out))
 
 

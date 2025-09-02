@@ -20,4 +20,4 @@ Limitar el tamaño del código fuente o dividir el proyecto en módulos más peq
 
 **Contexto adicional**
 
-Revisar `backend/src/cobra/parser/optimizations.py` si existe, o crear un nuevo módulo para estas optimizaciones.
+Revisar `src/backend/cobra/parser/optimizations.py` si existe, o crear un nuevo módulo para estas optimizaciones.

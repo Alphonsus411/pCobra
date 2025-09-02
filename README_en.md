@@ -245,13 +245,14 @@ The executable will be placed inside the `dist/` directory.
 
 The project is organized into the following folders and modules:
 
-- `src/`: Contains the Python logic of the project.
+- `src/pcobra/`: Contains the Python logic of the project.
+- `src/backend/`: Helper package exposing aliases for development.
+- `src/frontend/`: Interface tools such as the VS Code extension.
 - `docs/frontend/` and `docs/build/`: Folders where the documentation is generated and stored. The file `docs/frontend/arquitectura.rst` describes the internal structure of the language.
-- `src/tests/`: Unit tests to ensure correct behaviour of the code.
+- `tests/`: Unit tests to ensure correct behaviour of the code.
 - `README.md`: Project documentation.
 - `requirements.txt`: File in the repository root that lists the project dependencies.
-- `pyproject.toml`: Defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections. These
-  root-level files are the single source of dependencies.
+- `pyproject.toml`: Defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections. These root-level files are the single source of dependencies.
 
 # Main Features
 
@@ -535,7 +536,7 @@ There are also instructions for running linters (`make lint`), type checking (`m
 Contributions are welcome! Check [CONTRIBUTING.md](CONTRIBUTING.md) for style conventions and pull request guidelines. Join our community via Discord, Telegram or Twitter to get involved.
 ## VS Code extension
 
-The extension is located in [`frontend/vscode`](frontend/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [frontend/vscode/README.md](frontend/vscode/README.md) for more information.
+The extension is located in [`src/frontend/vscode`](src/frontend/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [src/frontend/vscode/README.md](src/frontend/vscode/README.md) for more information.
 
 
 ## License
