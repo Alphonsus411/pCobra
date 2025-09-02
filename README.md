@@ -22,6 +22,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Cómo usar la CLI
 - Descargas
 - Estructura del Proyecto
+- Herramientas y scripts soportados
 - Características Principales
 - Uso
 - Tokens y reglas léxicas
@@ -237,6 +238,16 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 - `README.md`: Documentación del proyecto.
 - `requirements.txt`: Archivo en la raíz que lista las dependencias del proyecto.
 - `pyproject.toml`: Define dependencias en las secciones ``project.dependencies`` y ``project.optional-dependencies``. Estos archivos en la raíz son la única fuente de dependencias.
+
+# Herramientas y scripts soportados
+
+El proyecto soporta oficialmente:
+
+- `Makefile` para automatizar tareas como `make install`, `make test` y `make clean`.
+- `run.sh` para ejecutar Cobra con variables definidas en `.env`.
+- `install.sh` para preparar el entorno de desarrollo.
+- Scripts auxiliares en `scripts/`.
+- Configuraciones Docker en `docker/`.
 
 # Características Principales
 

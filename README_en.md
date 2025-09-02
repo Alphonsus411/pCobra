@@ -11,6 +11,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - Project Description
 - Installation
 - Project Structure
+- Supported tools and scripts
 - Main Features
 - Usage
 - Tokens and lexical rules
@@ -253,6 +254,16 @@ The project is organized into the following folders and modules:
 - `README.md`: Project documentation.
 - `requirements.txt`: File in the repository root that lists the project dependencies.
 - `pyproject.toml`: Defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections. These root-level files are the single source of dependencies.
+
+# Supported tools and scripts
+
+The project officially supports:
+
+- `Makefile` to automate common tasks such as `make install`, `make test` and `make clean`.
+- `run.sh` to run Cobra using variables defined in `.env`.
+- `install.sh` to set up the development environment.
+- Helper scripts in `scripts/`.
+- Docker configurations in `docker/`.
 
 # Main Features
 
