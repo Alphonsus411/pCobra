@@ -45,17 +45,17 @@ coverage:
 	coverage html
 
 lint:
-	ruff check $(SRC)
-	mypy $(SRC) --config-file=mypy.ini
-	bandit -r $(SRC)
+        ruff check $(SRC)
+        mypy $(SRC)
+        bandit -r $(SRC)
 
 format:
 	isort $(SRC)
 	black $(SRC)
 
 typecheck:
-	mypy $(SRC) --config-file=mypy.ini
-	@command -v pyright >/dev/null 2>&1 && pyright $(SRC) || echo "ℹ️ pyright no está instalado"
+        mypy $(SRC)
+        @command -v pyright >/dev/null 2>&1 && pyright || echo "ℹ️ pyright no está instalado"
 
 secrets:
 	gitleaks detect --source . --redact
