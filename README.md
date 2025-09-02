@@ -780,7 +780,7 @@ instalar el paquete, utiliza el script `scripts/test.sh`:
 ```
 
 Este comando exporta `PYTHONPATH=$PWD` e invoca `pytest` con los argumentos
-definidos en `pytest.ini`.
+definidos en `pyproject.toml`.
 
 ````bash
 PYTHONPATH=$PWD pytest pCobra/tests --cov=pCobra --cov-report=term-missing \
@@ -1026,10 +1026,10 @@ Para verificar el tipado de forma local ejecuta:
 
 ```bash
 mypy src
-pyright --project pyrightconfig.json
+pyright
 ```
 
-`mypy` utiliza la configuración de `mypy.ini` y `pyright` toma las rutas de `pyrightconfig.json`.
+Tanto `mypy` como `pyright` utilizan la configuración presente en `pyproject.toml`.
 
 Para ejecutar los linters puedes usar el comando de Make:
 

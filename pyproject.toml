@@ -97,3 +97,91 @@ target-version = ["py39", "py310", "py311"]
 profile = "black"
 line_length = 88
 known_first_party = ["backend", "pcobra"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = [
+    "docs/frontend",
+    "docs/build",
+    "src/tests",
+    "notebooks",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["F403", "F405"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+exclude = "^(docs/build/|docs/frontend/|venv/|.venv/|tests/|build/|dist/|examples/|notebooks/|casos_reales/)"
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_no_return = true
+warn_return_any = true
+strict_optional = true
+disallow_untyped_defs = true
+
+[tool.pyright]
+include = ["src/pcobra"]
+exclude = [
+    "docs/build",
+    "docs/frontend",
+    "venv",
+    ".venv",
+    "dist",
+    "build",
+    "tests",
+]
+ignore = []
+reportMissingImports = false
+reportMissingTypeStubs = false
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+
+[tool.pytest.ini_options]
+markers = [
+    "timeout: tiempo máximo de ejecución de una prueba",
+    "slow: pruebas lentas",
+    "integration: pruebas de integración",
+    "fuzz: pruebas de mutación/fuzzing",
+    "performance: pruebas de rendimiento",
+    "windows: pruebas específicas de Windows",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--capture=fd",
+    "--show-capture=all",
+    "--durations=10",
+    "--maxfail=5",
+    "--cov=pcobra",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=85",
+]
+norecursedirs = [
+    "dist",
+    "build",
+    ".venv",
+    "venv",
+    "docs/frontend",
+    "docs/build",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "venv/*",
+    "src/tests/*",
+]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
