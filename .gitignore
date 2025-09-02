@@ -61,3 +61,7 @@ all-bytes.dat
 
 # Ignore legacy cobra-lenguaje backup
 src/cobra-lenguaje/
+
+# ============= SCRIPTS WINDOWS =============
+clean.ps1
+make.bat
