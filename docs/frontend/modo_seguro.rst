@@ -14,7 +14,7 @@ También se valida la
 instrucción ``import`` para permitir únicamente los módulos instalados o los
 especificados en ``IMPORT_WHITELIST``. La instrucción ``usar`` está limitada a
 los paquetes listados en ``USAR_WHITELIST`` ubicado en
-``src/cobra/usar_loader.py``. Si esta lista se encuentra vacía, la
+``src/pcobra/cobra/usar_loader.py``. Si esta lista se encuentra vacía, la
 función ``obtener_modulo`` provocará un ``PermissionError`` y no se podrán
 instalar dependencias nuevas.
 
@@ -53,10 +53,33 @@ Configuraciones avanzadas
 
 Las listas ``IMPORT_WHITELIST`` y ``USAR_WHITELIST`` determinan qué módulos y
 paquetes pueden cargarse cuando el modo seguro está activo. Puedes editarlas en
-``src/cobra/import_loader.py`` y ``src/cobra/usar_loader.py``
+``src/pcobra/cobra/import_loader.py`` y ``src/pcobra/cobra/usar_loader.py``
 respectivamente para afinar las restricciones. Recuerda que si
 ``USAR_WHITELIST`` está vacía no se permitirá la instalación de paquetes
 adicionales.
+
+La función ``corelibs.sistema.ejecutar`` solo permite lanzar comandos del
+sistema que estén en una lista blanca. Debes pasar las rutas mediante el
+parámetro ``permitidos`` o definir la variable de entorno
+``COBRA_EJECUTAR_PERMITIDOS`` separando las rutas con el delimitador del
+``PATH`` del sistema. Si no se especifica ninguno de los dos mecanismos la
+función lanza ``ValueError``.
+
+Ejemplo para definir la lista de comandos permitidos y ejecutar ``ls``:
+
+.. code-block:: python
+
+   from pcobra.corelibs import sistema
+
+   permitidos = ["/bin/ls", "/usr/bin/echo"]
+   salida = sistema.ejecutar(["ls"], permitidos=permitidos)
+   print(salida)
+
+También puedes establecer la variable de entorno una sola vez:
+
+.. code-block:: bash
+
+   export COBRA_EJECUTAR_PERMITIDOS=/bin/ls:/usr/bin/echo
 
 También es posible definir validadores adicionales creando un módulo con la
 variable ``VALIDADORES_EXTRA`` y pasándolo mediante la opción

@@ -13,12 +13,12 @@ A continuación se listan algunos de los módulos con menor cobertura detectados
 
 | Módulo | Cobertura |
 | --- | --- |
-| `src/cobra/cli/cli.py` | 13 % |
-| `src/cobra/cli/cobrahub_client.py` | 16 % |
-| `src/cobra/core/parser.py` | 9 % |
-| `src/cobra/transpilers/feature_inspector.py` | 0 % |
-| `src/cobra/transpilers/reverse/from_c.py` | 3 % |
-| `src/cobra/transpilers/transpiler/to_python.py` | 33 % |
+| `src/pcobra/cobra/cli/cli.py` | 13 % |
+| `src/pcobra/cobra/cli/cobrahub_client.py` | 16 % |
+| `src/pcobra/cobra/core/parser.py` | 9 % |
+| `src/pcobra/cobra/transpilers/feature_inspector.py` | 0 % |
+| `src/pcobra/cobra/transpilers/reverse/from_c.py` | 3 % |
+| `src/pcobra/cobra/transpilers/transpiler/to_python.py` | 33 % |
 | `src/core/ast_nodes.py` | 81 % |
 | `src/core/interpreter.py` | 6 % |
 | `src/gui/app.py` | 0 % |

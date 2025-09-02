@@ -472,7 +472,7 @@ When running `programa.co`, `modulo.co` is processed first and then `Hola desde 
 
 ## `usar` statement for dynamic dependencies
 
-The statement `usar "paquete"` tries to import a Python module. If the package is not available, Cobra will run `pip install paquete` to install it and then load it at runtime. The module is registered in the environment under the same name for later use. To restrict which dependencies can be installed use the variable `USAR_WHITELIST` defined in `src/cobra/usar_loader.py`.
+The statement `usar "paquete"` tries to import a Python module. If the package is not available, Cobra will run `pip install paquete` to install it and then load it at runtime. The module is registered in the environment under the same name for later use. To restrict which dependencies can be installed use the variable `USAR_WHITELIST` defined in `src/pcobra/cobra/usar_loader.py`.
 
 ## Module mapping file
 
@@ -491,7 +491,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`src/cobra/transpilers/transpiler`](src/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
