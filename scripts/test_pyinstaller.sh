@@ -11,7 +11,7 @@ source "$TMP_ENV/venv/bin/activate"
 if [ -f pyproject.toml ]; then
     pip install .
 else
-    pip install cobra-lenguaje
+    pip install pcobra
 fi
 pip install pyinstaller
 

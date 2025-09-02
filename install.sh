@@ -48,8 +48,8 @@ if [ "$1" = "--dev" ]; then
     echo "📦 Instalando pCobra en modo editable (desarrollo)..."
     pip install -e .
 else
-    echo "📦 Instalando cobra-lenguaje desde PyPI..."
-    pip install cobra-lenguaje
+    echo "📦 Instalando pcobra desde PyPI..."
+    pip install pcobra
 fi
 
 echo "✅ Instalación finalizada. Usa 'source $ACTIVATE' para activarlo manualmente."

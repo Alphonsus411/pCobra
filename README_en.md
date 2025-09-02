@@ -154,13 +154,13 @@ PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 [pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.9 or higher. To install Cobra with pipx run:
 
 ```bash
-pipx install cobra-lenguaje
+pipx install pcobra
 ```
 
 If you prefer to install Cobra directly from PyPI without using `pipx`, run:
 
 ```bash
-pip install cobra-lenguaje
+pip install pcobra
 ```
 
 ## Build the Docker image
@@ -222,7 +222,7 @@ source .venv/bin/activate  # On Windows use .\\.venv\\Scripts\\activate
 Install the published package and PyInstaller:
 
 ```bash
-pip install cobra-lenguaje
+pip install pcobra
 pip install pyinstaller
 ```
 

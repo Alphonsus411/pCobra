@@ -1,7 +1,7 @@
 Instalación desde PyPI
 ======================
 
-Sigue los pasos siguientes para instalar ``cobra-lenguaje`` en un
+Sigue los pasos siguientes para instalar ``pcobra`` en un
 entorno nuevo y ejecutar un ejemplo básico.
 
 1. **Crea y activa un entorno virtual**:
@@ -15,7 +15,7 @@ entorno nuevo y ejecutar un ejemplo básico.
 
    .. code-block:: bash
 
-      pip install cobra-lenguaje
+      pip install pcobra
 
 3. **Verifica que la instalación funciona** ejecutando la CLI:
 

@@ -23,13 +23,13 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herramienta que permite ejecutar aplicaciones de Python aisladas y requiere Python 3.9 o superior.
 
 ```bash
-pipx install cobra-lenguaje
+pipx install pcobra
 ```
 
 También puedes instalar Cobra directamente desde PyPI con
 
 ```bash
-pip install cobra-lenguaje
+pip install pcobra
 ```
 
 ## 2. Estructura básica de un programa
