@@ -115,7 +115,7 @@ ignore = ["F403", "F405"]
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
-exclude = "^(docs/build/|docs/frontend/|venv/|.venv/|tests/|build/|dist/|examples/|notebooks/|casos_reales/)"
+exclude = "^(docs/build/|docs/frontend/|venv/|.venv/|tests/|build/|dist/|examples/|notebooks/)"
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_no_return = true

@@ -2,7 +2,7 @@
 
 Esta sección muestra ejemplos prácticos de cómo emplear la CLI de Cobra en distintos contextos.
 
-Los scripts completos de estos ejemplos se encuentran en la carpeta `casos_reales/` del repositorio.
+Los scripts completos de estos ejemplos se encuentran en la carpeta `examples/casos_reales/` del repositorio.
 Se incluyen cuadernos interactivos en `notebooks/casos_reales/` que muestran paso a paso la compilación y ejecución de cada ejemplo.
 ## Bioinformática
 Un pequeño programa puede leer un archivo FASTA y contar el porcentaje de GC:
