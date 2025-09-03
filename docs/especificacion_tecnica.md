@@ -51,6 +51,13 @@ clase Persona:
 fin
 ```
 
+Las clases pueden heredar de varias bases listándolas entre paréntesis. La búsqueda de métodos se realiza de izquierda a derecha.
+
+```cobra
+clase Mezcla(Base1, Base2):
+    fin
+```
+
 ## Control de flujo
 
 Cobra cuenta con condicionales `si`, `sino` y bucles `para` y `mientras`.
