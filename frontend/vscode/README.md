@@ -5,7 +5,7 @@ Este directorio contiene una plantilla mínima de extensión que habilita el res
 ## Instalación de dependencias
 
 ```bash
-cd src/frontend/vscode
+cd frontend/vscode
 npm install
 ```
 

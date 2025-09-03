@@ -24,7 +24,7 @@ Instalación de dependencias
 Directorio de la extensión de VS Code
 -------------------------------------
 
-Dentro de ``src/frontend/vscode`` encontrarás una plantilla mínima para la
+Dentro de ``frontend/vscode`` encontrarás una plantilla mínima para la
 extensión de Cobra. Puedes abrir dicho directorio en VS Code y modificarla
 según tus necesidades.
 

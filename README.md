@@ -232,7 +232,7 @@ El proyecto se organiza en las siguientes carpetas y módulos:
 
 - `src/pcobra/`: Contiene la lógica Python del proyecto.
 - `src/backend/`: Paquete auxiliar que expone alias para facilitar el desarrollo.
-- `src/frontend/`: Herramientas de interfaz como la extensión de VS Code.
+- `frontend/`: Herramientas de interfaz como la extensión de VS Code.
 - `docs/frontend/`: Carpeta donde se genera y aloja la documentación. El archivo `docs/frontend/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
 - `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
 - `README.md`: Documentación del proyecto.
@@ -1098,7 +1098,7 @@ class HolaCommand(PluginCommand):
 ```
 ## Extensión para VS Code
 
-La extensión para Visual Studio Code se encuentra en [`src/frontend/vscode`](src/frontend/vscode). Instala las dependencias con `npm install`. Desde VS Code puedes pulsar `F5` para probarla o ejecutar `vsce package` para generar el paquete `.vsix`. Consulta [src/frontend/vscode/README.md](src/frontend/vscode/README.md) para más detalles.
+La extensión para Visual Studio Code se encuentra en [`frontend/vscode`](frontend/vscode). Instala las dependencias con `npm install`. Desde VS Code puedes pulsar `F5` para probarla o ejecutar `vsce package` para generar el paquete `.vsix`. Consulta [frontend/vscode/README.md](frontend/vscode/README.md) para más detalles.
 
 ## Versionado Semántico
 
