@@ -8,6 +8,10 @@
 
 Versión 10.0.9
 
+- Ajustes en `SafeUnpickler` para admitir `core.ast_nodes` y `cobra.core.ast_nodes`.
+- `corelibs.sistema.ejecutar` ahora requiere una lista blanca mediante `permitidos` o `COBRA_EJECUTAR_PERMITIDOS`.
+- Caché incremental en formato JSON para AST y tokens.
+
 [English version available here](README_en.md)
 
 pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly, facilitando su despliegue en distintos entornos.
@@ -1105,7 +1109,7 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 ## Historial de Cambios
 
-- Versión 10.0.9: ajustes en `SafeUnpickler` y restricciones en `corelibs.sistema.ejecutar`.
+ - Versión 10.0.9: ajustes en `SafeUnpickler`, restricciones en `corelibs.sistema.ejecutar` y caché incremental en formato JSON para AST y tokens.
 
 ## Publicar una nueva versión
 
