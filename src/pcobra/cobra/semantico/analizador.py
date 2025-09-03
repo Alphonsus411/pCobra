@@ -1,5 +1,5 @@
 """Analizador semántico que construye la tabla de símbolos y verifica errores."""
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Set
 
 from core.ast_nodes import (
     NodoAsignacion,
@@ -19,6 +19,7 @@ class AnalizadorSemantico(NodeVisitor):
         """Inicializa el analizador con un ámbito global."""
         self.global_scope = Ambito()
         self.current_scope = self.global_scope
+        self.herencia: dict[str, List[str]] = {}
 
     def analizar(self, ast: List) -> None:
         """Analiza el AST completo visitando cada nodo.
@@ -96,6 +97,20 @@ class AnalizadorSemantico(NodeVisitor):
         finally:
             self._salir_ambito()
 
+    def _hay_camino(self, origen: str, destino: str, visitados: Optional[Set[str]] = None) -> bool:
+        """Verifica si existe un camino de herencia entre dos clases."""
+        if visitados is None:
+            visitados = set()
+        if origen == destino:
+            return True
+        if origen in visitados:
+            return False
+        visitados.add(origen)
+        for base in self.herencia.get(origen, []):
+            if self._hay_camino(base, destino, visitados):
+                return True
+        return False
+
     # Visitas ------------------------------------------------------------
     def visit_asignacion(self, nodo: NodoAsignacion) -> None:
         """Visita un nodo de asignación."""
@@ -136,8 +151,18 @@ class AnalizadorSemantico(NodeVisitor):
         self._validar_nombre(nodo.nombre)
         if self.current_scope.resolver_local(nodo.nombre):
             raise ValueError(f"Símbolo ya declarado: {nodo.nombre}")
-            
+
         self.current_scope.declarar(nodo.nombre, "clase")
+
+        for base in nodo.bases:
+            self._validar_nombre(base)
+            simbolo = self.current_scope.resolver(base)
+            if not simbolo or simbolo.tipo != "clase":
+                raise ValueError(f"Clase base no encontrada: {base}")
+            if base == nodo.nombre or self._hay_camino(base, nodo.nombre):
+                raise ValueError(f"Herencia circular detectada: {nodo.nombre} -> {base}")
+
+        self.herencia[nodo.nombre] = list(nodo.bases)
         self._con_nuevo_ambito()
         try:
             for metodo in nodo.metodos:
