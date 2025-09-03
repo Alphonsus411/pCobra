@@ -1098,7 +1098,7 @@ class HolaCommand(PluginCommand):
 ```
 ## Extensión para VS Code
 
-La extensión para Visual Studio Code se encuentra en [`frontend/vscode`](frontend/vscode). Instala las dependencias con `npm install`. Desde VS Code puedes pulsar `F5` para probarla o ejecutar `vsce package` para generar el paquete `.vsix`. Consulta [frontend/vscode/README.md](frontend/vscode/README.md) para más detalles.
+La extensión para Visual Studio Code se encuentra en [`extensions/vscode`](extensions/vscode). Instala las dependencias con `npm install`. Desde VS Code puedes pulsar `F5` para probarla o ejecutar `vsce package` para generar el paquete `.vsix`. Consulta [extensions/vscode/README.md](extensions/vscode/README.md) para más detalles.
 
 ## Versionado Semántico
 
