@@ -1,36 +1,47 @@
-Manejo de la cach\u00e9 del AST
-=============================
+Manejo de la caché de AST y tokens
+==================================
 
-La compilaci\u00f3n de archivos Cobra genera árboles de sintaxis abstracta
-(AST) que se guardan para acelerar futuras ejecuciones.
+La compilación de archivos Cobra genera árboles de sintaxis abstracta
+(AST) y tokens que se guardan en formato JSON para acelerar futuras
+ejecuciones.
 
 .. note::
-   La cach\u00e9 usa un **checksum** del c\u00f3digo (SHA256) para nombrar los
+   La caché usa un **checksum** del código (SHA256) para nombrar los
    archivos. Puedes modificar la ruta predeterminada con la variable de
    entorno ``COBRA_AST_CACHE``.
 
-Nombre de los archivos
-----------------------
+Nombre y extensiones de los archivos
+------------------------------------
 
-Cada archivo del directorio de cach\u00e9 recibe por nombre el SHA256
-calculado a partir del c\u00f3digo fuente original y se almacena con
-extensi\u00f3n ``.ast``.
+Cada archivo del directorio de caché recibe por nombre el SHA256
+calculado a partir del código fuente original. Los AST se almacenan
+como JSON con extensión ``.ast`` y los tokens con extensión ``.tok``.
+
+Fragmentos reutilizables
+------------------------
+
+Además de estos archivos, existe el subdirectorio ``cache/fragmentos``
+que guarda fragmentos intermedios que pueden reutilizarse entre
+compilaciones.
 
 Variable de entorno ``COBRA_AST_CACHE``
 ---------------------------------------
 
-Por defecto la cach\u00e9 se coloca en ``cache`` dentro de la ra\u00edz del
-proyecto. Puedes cambiar esta ubicaci\u00f3n definiendo la variable de
-entorno ``COBRA_AST_CACHE`` antes de ejecutar la compilaci\u00f3n.
+Por defecto la caché se coloca en ``cache`` dentro de la raíz del
+proyecto. Puedes cambiar esta ubicación definiendo la variable de
+entorno ``COBRA_AST_CACHE`` antes de ejecutar la compilación. Esta
+variable afecta tanto a los archivos ``.ast`` y ``.tok`` como al
+subdirectorio ``cache/fragmentos``.
 
-Limpiar la cach\u00e9
-------------------
+Limpiar la caché
+----------------
 
-Para eliminar todos los archivos ``.ast`` existe el subcomando:
+Para eliminar todos los archivos ``.ast`` y ``.tok`` junto con los
+fragmentos almacenados, existe el subcomando:
 
 .. code-block:: bash
 
    cobra cache
 
-que borra los ficheros generados e informa por pantalla que la cach\u00e9 ha
+que borra los ficheros generados e informa por pantalla que la caché ha
 sido limpiada.
