@@ -25,44 +25,44 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - Tests
 - Generate documentation
 - CodeQL analysis
-- [CobraHub](docs/frontend/cobrahub.rst)
+- [CobraHub](frontend/cobrahub.rst)
 - Milestones and Roadmap
 - Contributions
-- [Contribution Guide](CONTRIBUTING.md)
-- [Propose extensions](docs/frontend/rfc_plugins.rst)
+- [Contribution Guide](../CONTRIBUTING.md)
+- [Propose extensions](frontend/rfc_plugins.rst)
 - VS Code extension
-- [Community](docs/comunidad.md)
+- [Community](comunidad.md)
 - License
-- [Cobra Manual](docs/MANUAL_COBRA.md)
-- [Cobra Manual in reStructuredText](docs/MANUAL_COBRA.rst)
+- [Cobra Manual](MANUAL_COBRA.md)
+- [Cobra Manual in reStructuredText](MANUAL_COBRA.rst)
 - [Cobra Manual in PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
-- [Basic guide](docs/guia_basica.md)
-- [Technical specification](docs/especificacion_tecnica.md)
-- [Cheatsheet](docs/cheatsheet.tex) – compile it to PDF with LaTeX
-- [Real use cases](docs/casos_reales.md)
-- [Node sandbox limitations](docs/limitaciones_node_sandbox.md)
+- [Basic guide](guia_basica.md)
+- [Technical specification](especificacion_tecnica.md)
+- [Cheatsheet](cheatsheet.tex) – compile it to PDF with LaTeX
+- [Real use cases](casos_reales.md)
+- [Node sandbox limitations](limitaciones_node_sandbox.md)
 - Example notebooks and real cases
 - Try Cobra online
-- [Changelog](CHANGELOG.md)
+- [Changelog](../CHANGELOG.md)
 
 ## Examples
 
-Demo projects are available in the [example repository](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.co` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `notebooks/casos_reales/`.
+Demo projects are available in the [example repository](https://github.com/Alphonsus411/pCobra/tree/HEAD/examples). This repository includes basic examples in the `examples/` folder, for instance `examples/funciones_principales.co` which shows conditionals, loops and function definitions in Cobra. For interactive examples check the notebooks in `../notebooks/casos_reales/`.
 
 ### Advanced examples
 
-Inside [examples/avanzados/](examples/avanzados/) you can find programs that delve into Cobra with exercises of control flow, recursive functions and class interaction. Each topic has its own folder:
+Inside [examples/avanzados/](../examples/avanzados/) you can find programs that delve into Cobra with exercises of control flow, recursive functions and class interaction. Each topic has its own folder:
 
-- [examples/avanzados/control_flujo/](examples/avanzados/control_flujo/)
-- [examples/avanzados/funciones/](examples/avanzados/funciones/)
-- [examples/avanzados/clases/](examples/avanzados/clases/)
+- [examples/avanzados/control_flujo/](../examples/avanzados/control_flujo/)
+- [examples/avanzados/funciones/](../examples/avanzados/funciones/)
+- [examples/avanzados/clases/](../examples/avanzados/clases/)
 
 ## Example notebooks
 
-The `notebooks/` folder includes `ejemplo_basico.ipynb` with a basic example of using Cobra. The notebooks in `notebooks/casos_reales/` show how to run the advanced examples. To open it run:
+The `../notebooks/` folder includes `ejemplo_basico.ipynb` with a basic example of using Cobra. The notebooks in `../notebooks/casos_reales/` show how to run the advanced examples. To open it run:
 
 ```bash
-cobra jupyter --notebook notebooks/ejemplo_basico.ipynb
+cobra jupyter --notebook ../notebooks/ejemplo_basico.ipynb
 ```
 If you omit the ``--notebook`` argument, Jupyter Notebook opens normally and you can choose the file from the web interface.
 
@@ -76,7 +76,7 @@ You can experiment with Cobra directly in your browser:
 
 ## Project Description
 
-Cobra is designed to make programming in Spanish easier, allowing developers to use a more accessible language. Through its lexer, parser and transpilers, Cobra can analyze, execute and convert code to other languages, providing support for variables, functions, control structures and data structures such as lists, dictionaries and classes. For a step-by-step tutorial check the [Cobra Manual](docs/MANUAL_COBRA.rst). The full language specification is available in [SPEC_COBRA.md](docs/SPEC_COBRA.md).
+Cobra is designed to make programming in Spanish easier, allowing developers to use a more accessible language. Through its lexer, parser and transpilers, Cobra can analyze, execute and convert code to other languages, providing support for variables, functions, control structures and data structures such as lists, dictionaries and classes. For a step-by-step tutorial check the [Cobra Manual](MANUAL_COBRA.rst). The full language specification is available in [SPEC_COBRA.md](SPEC_COBRA.md).
 
 ## Installation
 
@@ -268,7 +268,7 @@ The project is organized into the following folders and modules:
 
 - `src/pcobra/`: Contains the Python logic of the project.
 - `frontend/`: Interface tools such as the VS Code extension.
-- `docs/frontend/` and `docs/build/`: Folders where the documentation is generated and stored. The file `docs/frontend/arquitectura.rst` describes the internal structure of the language.
+- `frontend/` and `build/`: Folders where the documentation is generated and stored. The file `frontend/arquitectura.rst` describes the internal structure of the language.
 - `tests/`: Unit tests to ensure correct behaviour of the code.
 - `README.md`: Project documentation.
 - `requirements.txt`: File in the repository root that lists the project dependencies.
@@ -294,9 +294,9 @@ The project officially supports:
 - Error handling: the system captures and reports syntax errors, easing debugging.
 - Visualization and debugging: detailed output of tokens, AST and syntax errors for simpler development.
 - Performance decorators: the ``smooth-criminal`` library offers functions such as ``optimizar`` and ``perfilar`` to improve and measure Python code executed from Cobra.
-- Benchmarking: full performance measurement examples are available in `docs/frontend/benchmarking.rst`.
+- Benchmarking: full performance measurement examples are available in `frontend/benchmarking.rst`.
 - Code and documentation examples: practical examples illustrating the lexer, parser and transpilers.
-- Advanced examples: see `docs/frontend/ejemplos_avanzados.rst` to learn about classes, threads and error handling.
+- Advanced examples: see `frontend/ejemplos_avanzados.rst` to learn about classes, threads and error handling.
 - Unicode identifiers: you can name variables and functions using characters like `á`, `ñ` or `Ω` for greater flexibility.
 
 ## Performance
@@ -309,7 +309,7 @@ Run the script with:
 python scripts/benchmarks/compare_backends.py --output bench_results.json
 ```
 
-The file [bench_results.json](bench_results.json) is saved in the current directory and can be analyzed with the notebook [notebooks/benchmarks_resultados.ipynb](notebooks/benchmarks_resultados.ipynb).
+The file [bench_results.json](../bench_results.json) is saved in the current directory and can be analyzed with the notebook [notebooks/benchmarks_resultados.ipynb](../notebooks/benchmarks_resultados.ipynb).
 
 To compare thread performance run `cobra benchthreads`:
 
@@ -340,7 +340,7 @@ To run the project directly from the repository you can use the `run.sh` script.
 ./run.sh [options]
 ```
 
-For advanced options of safe mode see `docs/frontend/modo_seguro.rst`. Performance measurement examples are available in `docs/frontend/benchmarking.rst`.
+For advanced options of safe mode see `frontend/modo_seguro.rst`. Performance measurement examples are available in `frontend/benchmarking.rst`.
 
 To run unit tests use pytest:
 
@@ -491,7 +491,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -589,12 +589,12 @@ There are also instructions for running linters (`make lint`), type checking (`m
 
 ## Contributions and community
 
-Contributions are welcome! Check [CONTRIBUTING.md](CONTRIBUTING.md) for style conventions and pull request guidelines. Join our community via Discord, Telegram or Twitter to get involved.
+Contributions are welcome! Check [CONTRIBUTING.md](../CONTRIBUTING.md) for style conventions and pull request guidelines. Join our community via Discord, Telegram or Twitter to get involved.
 ## VS Code extension
 
-The extension is located in [`extensions/vscode`](extensions/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [extensions/vscode/README.md](extensions/vscode/README.md) for more information.
+The extension is located in [`extensions/vscode`](../extensions/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [extensions/vscode/README.md](../extensions/vscode/README.md) for more information.
 
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
+This project is released under the [MIT License](../LICENSE).

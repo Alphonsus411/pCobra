@@ -12,7 +12,7 @@ Versión 10.0.9
 - `corelibs.sistema.ejecutar` ahora requiere una lista blanca mediante `permitidos` o `COBRA_EJECUTAR_PERMITIDOS`.
 - Caché incremental en formato JSON para AST y tokens.
 
-[English version available here](README_en.md)
+[English version available here](docs/README.en.md)
 
 pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly, facilitando su despliegue en distintos entornos.
 
@@ -1152,7 +1152,7 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 - C
 - WebAssembly
 
-Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta [README_en.md](README_en.md) para más detalles.
+Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
 
 # Licencia
 
