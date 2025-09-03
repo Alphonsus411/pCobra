@@ -38,7 +38,7 @@ dist/
 build/
 
 # ============= FRONTEND =============
-frontend/vscode/node_modules/
+frontend/vscode/node_modules/  # Dependencias de la extensión VS Code
 docs/build/
 docs/frontend/galeria/*.png
 docs/frontend/galeria/*.gif
