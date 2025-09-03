@@ -58,9 +58,12 @@ respectivamente para afinar las restricciones. Recuerda que si
 ``USAR_WHITELIST`` está vacía no se permitirá la instalación de paquetes
 adicionales.
 
-La función ``corelibs.sistema.ejecutar`` solo permite lanzar comandos del
-sistema que estén en una lista blanca. Debes pasar las rutas mediante el
-parámetro ``permitidos`` o definir la variable de entorno
+Lista blanca de comandos
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+La función ``corelibs.sistema.ejecutar`` exige que se indique qué comandos del
+sistema están permitidos. Esto puede hacerse mediante el argumento
+``permitidos`` o estableciendo la variable de entorno
 ``COBRA_EJECUTAR_PERMITIDOS`` separando las rutas con el delimitador del
 ``PATH`` del sistema. Si no se especifica ninguno de los dos mecanismos la
 función lanza ``ValueError``.
@@ -72,8 +75,7 @@ Ejemplo para definir la lista de comandos permitidos y ejecutar ``ls``:
    from pcobra.corelibs import sistema
 
    permitidos = ["/bin/ls", "/usr/bin/echo"]
-   salida = sistema.ejecutar(["ls"], permitidos=permitidos)
-   print(salida)
+   sistema.ejecutar(["ls"], permitidos=permitidos)
 
 También puedes establecer la variable de entorno una sola vez:
 
@@ -107,6 +109,6 @@ definen en ``cobra.toml`` dentro de la sección ``[seguridad]``.
 Si el árbol de sintaxis supera ``limite_nodos`` el intérprete aborta. Los otros
 parámetros establecen el máximo de memoria en megabytes y el tiempo de CPU en
 segundos usando ``limitar_memoria_mb`` y ``limitar_cpu_segundos`` de
-``src.core.resource_limits``.
+``src/pcobra/core/resource_limits``.
 Esta verificación del número de nodos también se aplica al cargar módulos con
 ``import``.
