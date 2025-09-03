@@ -51,6 +51,6 @@ límites de tiempo y memoria.
 Pruebas de integración
 ----------------------
 
-En ``src/tests/integration`` encontrarás ``test_kernel_transpiler.py``. Este
+En ``tests/integration`` encontrarás ``test_kernel_transpiler.py``. Este
 script ejecuta el kernel en modo transpiler y comprueba que la salida es la
 esperada.

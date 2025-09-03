@@ -345,11 +345,11 @@ For advanced options of safe mode see `docs/frontend/modo_seguro.rst`. Performan
 To run unit tests use pytest:
 
 ```bash
-PYTHONPATH=$PWD pytest src/tests --cov=src --cov-report=term-missing \
+PYTHONPATH=$PWD pytest tests --cov=src --cov-report=term-missing \
   --cov-fail-under=95
 ```
 
-You can also run specific suites located in `src/tests`:
+You can also run specific suites located in `tests`:
 
 ```bash
 python -m tests.suite_cli           # CLI tests only
@@ -579,7 +579,7 @@ output = sistema.ejecutar(["/bin/ls"], permitidos=["/bin/ls"])
 
 ## Tests and development
 
-Tests are located in the `src/tests/` folder and use pytest. First install the dependencies with `./scripts/install_dev.sh` and then run all tests with:
+Tests are located in the `tests/` folder and use pytest. First install the dependencies with `./scripts/install_dev.sh` and then run all tests with:
 
 ```bash
 PYTHONPATH=$PWD pytest

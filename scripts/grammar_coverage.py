@@ -2,7 +2,7 @@
 """Calculate grammar rule coverage for sample files.
 
 This script loads ``docs/gramatica.ebnf`` using ``lark.Lark`` and parses
-all ``.co`` files found in the ``examples/`` and ``src/tests/``
+all ``.co`` files found in the ``examples/`` and ``tests/``
 directories. It records which grammar rules are used when parsing and
 computes the percentage of rules that were exercised. If the coverage is
 below a configurable threshold the script exits with a non-zero status.
@@ -18,7 +18,7 @@ from lark import Lark, Tree, exceptions
 
 
 GRAMMAR_PATH = Path("docs/gramatica.ebnf")
-SAMPLE_DIRS = [Path("examples"), Path("src/tests")]
+SAMPLE_DIRS = [Path("examples"), Path("tests")]
 
 
 def collect_rule_names(lark_parser: Lark) -> Set[str]:

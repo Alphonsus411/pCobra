@@ -20,4 +20,4 @@ Aplicar un caché simple de resultados parciales.
 
 **Contexto adicional**
 
-Analizar las funciones en `src/backend/cobra/safe` y revisar las pruebas relacionadas en `src/tests/unit`.
+Analizar las funciones en `src/backend/cobra/safe` y revisar las pruebas relacionadas en `tests/unit`.
