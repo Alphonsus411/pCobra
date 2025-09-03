@@ -1,0 +1,10 @@
+[run]
+source = src
+omit =
+    venv/*
+    src/tests/*
+branch = True
+
+[report]
+fail_under = 85
+
