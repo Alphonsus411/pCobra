@@ -592,7 +592,7 @@ There are also instructions for running linters (`make lint`), type checking (`m
 Contributions are welcome! Check [CONTRIBUTING.md](CONTRIBUTING.md) for style conventions and pull request guidelines. Join our community via Discord, Telegram or Twitter to get involved.
 ## VS Code extension
 
-The extension is located in [`frontend/vscode`](frontend/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [frontend/vscode/README.md](frontend/vscode/README.md) for more information.
+The extension is located in [`extensions/vscode`](extensions/vscode). Install the dependencies with `npm install`. Press `F5` in VS Code to launch an Extension Development Host or run `vsce package` to create the `.vsix` file. See [extensions/vscode/README.md](extensions/vscode/README.md) for more information.
 
 
 ## License
