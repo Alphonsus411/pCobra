@@ -20,7 +20,7 @@ Para agilizar la organización del proyecto, categoriza cada tarea utilizando la
 
 ## Tareas para nuevos contribuidores
 
-Las tareas etiquetadas como `good first issue` están orientadas a la comunidad y se consideran de baja prioridad. Se seleccionan entre los issues marcados con `facil` o `low priority` en el directorio `issues/`. Los mantenedores revisan periódicamente esta lista para asegurarse de que sigan siendo sencillas de abordar y actualizan o retiran la etiqueta cuando sea necesario.
+Las tareas etiquetadas como `good first issue` están orientadas a la comunidad y se consideran de baja prioridad. Se seleccionan entre los issues marcados con `facil` o `low priority` en el directorio `docs/issues/`. Los mantenedores revisan periódicamente esta lista para asegurarse de que sigan siendo sencillas de abordar y actualizan o retiran la etiqueta cuando sea necesario.
 
 ## Convenciones de Estilo
 

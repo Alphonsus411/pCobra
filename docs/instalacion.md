@@ -9,7 +9,7 @@ git clone https://github.com/Alphonsus411/pCobra.git
 cd pCobra
 ./scripts/install_dev.sh      # dependencias de desarrollo
 # o
-./install.sh --dev            # instala en modo editable
+./scripts/install.sh --dev            # instala en modo editable
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
 ```
