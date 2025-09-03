@@ -104,7 +104,7 @@ target-version = "py311"
 exclude = [
     "docs/frontend",
     "docs/build",
-    "src/tests",
+    "tests",
     "notebooks",
 ]
 
@@ -179,7 +179,7 @@ norecursedirs = [
 source = ["src"]
 omit = [
     "venv/*",
-    "src/tests/*",
+    "tests/*",
 ]
 branch = true
 

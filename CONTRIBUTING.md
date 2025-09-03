@@ -52,8 +52,8 @@ PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 
 ## Ejecutar Pruebas
 
-Las pruebas unitarias se ubican en `src/tests/unit` y las de integración en
-`src/tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/src`,
+Las pruebas unitarias se ubican en `tests/unit` y las de integración en
+`tests/integration`. Antes de ejecutarlas, establece `PYTHONPATH=$PWD/src`,
 instala el paquete en modo editable (`pip install -e .`) y ejecuta
 `./scripts/install_dev.sh` para instalar las dependencias. Para ejecutarlas
 todas utiliza:
@@ -88,7 +88,7 @@ compiladores correspondientes y accesibles desde `PATH`:
 Puedes ejecutar únicamente estas pruebas con:
 
 ```bash
-PYTHONPATH=$PWD/src pytest src/tests/integration/test_runtime_*
+PYTHONPATH=$PWD/src pytest tests/integration/test_runtime_*
 ```
 
 Para correr todo el conjunto de pruebas, incluidas las anteriores:
@@ -99,7 +99,7 @@ PYTHONPATH=$PWD/src pytest
 
 ### Añadir soporte para nuevos lenguajes en `run_code`
 
-1. Crea una función `_run_<lenguaje>` en `src/tests/utils/runtime.py` que invoque
+1. Crea una función `_run_<lenguaje>` en `tests/utils/runtime.py` que invoque
    al intérprete o compilador externo y devuelva la salida estándar.
 2. Registra esa función en el diccionario `_RUNNERS` usando como clave el nombre
    del lenguaje.
