@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-import backend  # garantiza rutas para submódulos
+import pcobra  # garantiza rutas para submódulos
 from cobra.core import Lexer
 from cobra.core import Parser
 from core.ast_nodes import NodoLlamadaFuncion, NodoValor

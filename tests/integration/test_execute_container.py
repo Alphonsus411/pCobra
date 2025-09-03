@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
-import backend
+sys.path.insert(0, str(ROOT / "src"))
+import pcobra
 from cobra.cli.cli import main
 from io import StringIO
 from unittest.mock import patch

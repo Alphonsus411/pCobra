@@ -11,12 +11,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT / "src"))
 
 if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
 
-import backend  # noqa: F401
+import pcobra  # noqa: F401
 from core.interpreter import InterpretadorCobra
 from cobra.core import Lexer
 from cobra.core import Parser

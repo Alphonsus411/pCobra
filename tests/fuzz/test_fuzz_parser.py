@@ -3,7 +3,7 @@ import sys
 
 # Asegura que los módulos del proyecto sean importables
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
 from hypothesis import given, strategies as st

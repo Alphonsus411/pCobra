@@ -15,9 +15,9 @@ for path in (SRC_ROOT, PCOBRA_PATH):
     if path.exists() and str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-# Carga opcionalmente el paquete ``backend`` para mantener compatibilidad
+# Carga opcionalmente el paquete principal para mantener compatibilidad
 try:  # nosec B001
-    import backend  # noqa: F401
+    import pcobra  # noqa: F401
 except Exception:
     pass
 

@@ -1,4 +1,4 @@
-import backend
+import pcobra
 from core.ast_nodes import NodoImprimir, NodoValor
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 

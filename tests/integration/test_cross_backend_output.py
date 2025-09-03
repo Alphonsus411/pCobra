@@ -2,7 +2,6 @@ import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
 import subprocess
 import shutil
 import importlib
@@ -11,7 +10,7 @@ import types
 if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
 
-import backend
+import pcobra
 import core.ast_nodes as core_ast_nodes
 import cobra.core as cobra_core
 import cobra.core.ast_nodes as cobra_ast_nodes

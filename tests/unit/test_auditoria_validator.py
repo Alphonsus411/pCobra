@@ -1,5 +1,5 @@
 import logging
-import backend  # garantiza rutas para submódulos
+import pcobra  # garantiza rutas para submódulos
 import pytest
 from core.interpreter import InterpretadorCobra
 from core.ast_nodes import NodoLlamadaFuncion, NodoValor

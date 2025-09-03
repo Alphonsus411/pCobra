@@ -1,5 +1,5 @@
 import pytest
-import backend  # garantiza rutas para submódulos
+import pcobra  # garantiza rutas para submódulos
 from cobra.core import Lexer
 from cobra.core import Parser
 from core.interpreter import InterpretadorCobra

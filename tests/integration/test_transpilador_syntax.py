@@ -6,9 +6,9 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
+sys.path.insert(0, str(ROOT / "src"))
 
-import backend
+import pcobra
 from cobra.cli.cli import main
 import core.ast_cache as ast_cache
 from cobra.core import Lexer as SrcLexer

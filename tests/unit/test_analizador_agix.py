@@ -1,4 +1,4 @@
-import backend  # garantiza rutas para submódulos
+import pcobra  # garantiza rutas para submódulos
 from unittest.mock import MagicMock, patch
 
 from ia import analizador_agix
