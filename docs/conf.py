@@ -53,7 +53,7 @@ source_suffix = {
 
 # Mock imports más específicos para evitar conflictos
 autodoc_mock_imports = [
-    'backend.tests',
+    'pcobra.tests',
 ]
 
 # Habilitar la generación automática de autosummary

@@ -1,5 +1,7 @@
 import os
 import sys
+import os
+import sys
 import shutil
 from pathlib import Path
 
@@ -12,7 +14,7 @@ PATCH_DIR = Path(__file__).parent
 
 def _spawn(args, extra_env=None):
     env = os.environ.copy()
-    pythonpath = [str(ROOT), str(ROOT / "backend" / "src"), str(PATCH_DIR)]
+    pythonpath = [str(ROOT), str(ROOT / "src"), str(PATCH_DIR)]
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)

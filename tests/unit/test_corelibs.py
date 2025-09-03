@@ -8,7 +8,9 @@ import pytest
 
 sys.modules.setdefault("yaml", ModuleType("yaml"))
 
-import backend.corelibs as core
+import pcobra.corelibs as core
+import pcobra.corelibs.tiempo as core_tiempo
+import pcobra.corelibs.sistema as core_sistema
 from cobra.transpilers.import_helper import get_standard_imports
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -53,7 +55,7 @@ def test_tiempo_funcs(monkeypatch):
     def fake_sleep(seg):
         called["v"] = seg
 
-    monkeypatch.setattr(core.tiempo.time, "sleep", fake_sleep)
+    monkeypatch.setattr(core_tiempo.time, "sleep", fake_sleep)
     core.dormir(0.01)
     assert called["v"] == 0.01
 
@@ -84,9 +86,9 @@ def test_red_funcs(monkeypatch):
     mock_resp_post.iter_content.return_value = [b"ok"]
     mock_resp_post.raise_for_status.return_value = None
     with patch(
-        "backend.corelibs.red.requests.get", return_value=mock_resp_get
+        "pcobra.corelibs.red.requests.get", return_value=mock_resp_get
     ) as mock_get, patch(
-        "backend.corelibs.red.requests.post", return_value=mock_resp_post
+        "pcobra.corelibs.red.requests.post", return_value=mock_resp_post
     ) as mock_post:
         assert core.obtener_url("https://x") == "ok"
         assert core.enviar_post("https://x", {"a": 1}) == "ok"
@@ -100,7 +102,7 @@ def test_red_funcs(monkeypatch):
 
 def test_red_obtener_url_rechaza_esquema_no_http(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    with patch("backend.corelibs.red.requests.get") as mock_get:
+    with patch("pcobra.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("ftp://ejemplo.com")
         mock_get.assert_not_called()
@@ -108,7 +110,7 @@ def test_red_obtener_url_rechaza_esquema_no_http(monkeypatch):
 
 def test_red_obtener_url_rechaza_otro_esquema(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    with patch("backend.corelibs.red.requests.get") as mock_get:
+    with patch("pcobra.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("file:///tmp/archivo.txt")
         mock_get.assert_not_called()
@@ -116,7 +118,7 @@ def test_red_obtener_url_rechaza_otro_esquema(monkeypatch):
 
 def test_red_enviar_post_rechaza_esquema_no_http(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    with patch("backend.corelibs.red.requests.post") as mock_post:
+    with patch("pcobra.corelibs.red.requests.post") as mock_post:
         with pytest.raises(ValueError):
             core.enviar_post("ftp://ejemplo.com", {"a": 1})
         mock_post.assert_not_called()
@@ -124,7 +126,7 @@ def test_red_enviar_post_rechaza_esquema_no_http(monkeypatch):
 
 def test_red_enviar_post_rechaza_otro_esquema(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    with patch("backend.corelibs.red.requests.post") as mock_post:
+    with patch("pcobra.corelibs.red.requests.post") as mock_post:
         with pytest.raises(ValueError):
             core.enviar_post("file:///tmp/archivo.txt", {"a": 1})
         mock_post.assert_not_called()
@@ -135,7 +137,7 @@ def test_red_host_whitelist_permite(monkeypatch):
     mock_resp = MagicMock(url="https://example.com", encoding="utf-8")
     mock_resp.iter_content.return_value = [b"ok"]
     mock_resp.raise_for_status.return_value = None
-    with patch("backend.corelibs.red.requests.get", return_value=mock_resp) as mock_get:
+    with patch("pcobra.corelibs.red.requests.get", return_value=mock_resp) as mock_get:
         assert core.obtener_url("https://example.com") == "ok"
         mock_get.assert_called_once_with(
             "https://example.com", timeout=5, allow_redirects=False, stream=True
@@ -144,7 +146,7 @@ def test_red_host_whitelist_permite(monkeypatch):
 
 def test_red_host_whitelist_rechaza(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    with patch("backend.corelibs.red.requests.get") as mock_get:
+    with patch("pcobra.corelibs.red.requests.get") as mock_get:
         with pytest.raises(ValueError):
             core.obtener_url("https://otro.com")
         mock_get.assert_not_called()
@@ -154,7 +156,7 @@ def test_red_obtener_url_redireccion_fuera_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     mock_resp = MagicMock(text="ok", url="https://otro.com")
     mock_resp.raise_for_status.return_value = None
-    with patch("backend.corelibs.red.requests.get", return_value=mock_resp):
+    with patch("pcobra.corelibs.red.requests.get", return_value=mock_resp):
         with pytest.raises(ValueError):
             core.obtener_url("https://example.com", permitir_redirecciones=True)
 
@@ -163,7 +165,7 @@ def test_red_enviar_post_redireccion_fuera_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     mock_resp = MagicMock(text="ok", url="https://otro.com")
     mock_resp.raise_for_status.return_value = None
-    with patch("backend.corelibs.red.requests.post", return_value=mock_resp):
+    with patch("pcobra.corelibs.red.requests.post", return_value=mock_resp):
         with pytest.raises(ValueError):
             core.enviar_post(
                 "https://example.com", {"a": 1}, permitir_redirecciones=True
@@ -175,7 +177,7 @@ def test_red_obtener_url_respuesta_muy_grande(monkeypatch):
     grande = MagicMock(url="https://example.com", encoding="utf-8")
     grande.iter_content.return_value = [b"a" * (1024 * 1024 + 1)]
     grande.raise_for_status.return_value = None
-    with patch("backend.corelibs.red.requests.get", return_value=grande):
+    with patch("pcobra.corelibs.red.requests.get", return_value=grande):
         with pytest.raises(ValueError):
             core.obtener_url("https://example.com")
     grande.close.assert_called_once()
@@ -186,7 +188,7 @@ def test_red_enviar_post_respuesta_muy_grande(monkeypatch):
     grande = MagicMock(url="https://example.com", encoding="utf-8")
     grande.iter_content.return_value = [b"a" * (1024 * 1024 + 1)]
     grande.raise_for_status.return_value = None
-    with patch("backend.corelibs.red.requests.post", return_value=grande):
+    with patch("pcobra.corelibs.red.requests.post", return_value=grande):
         with pytest.raises(ValueError):
             core.enviar_post("https://example.com", {"a": 1})
     grande.close.assert_called_once()
@@ -201,8 +203,8 @@ def test_sistema_funcs(tmp_path, monkeypatch):
         assert k["timeout"] == 1
         return proc
 
-    monkeypatch.setattr(core.sistema.subprocess, "run", fake_run)
-    permitido = core.sistema.os.path.realpath("/usr/bin/echo")
+    monkeypatch.setattr(core_sistema.subprocess, "run", fake_run)
+    permitido = core_sistema.os.path.realpath("/usr/bin/echo")
     assert (
         core.ejecutar(["echo", "hola"], permitidos=[permitido], timeout=1)
         == "hola\n"

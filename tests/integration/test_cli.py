@@ -1,7 +1,7 @@
 import pytest
 from io import StringIO
 from unittest.mock import patch
-import backend  # ensure backend aliases are initialized
+import pcobra  # ensure package is initialized
 from cobra.cli.cli import main
 from cobra.cli.commands import modules_cmd
 

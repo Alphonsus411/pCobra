@@ -96,7 +96,7 @@ target-version = ["py39", "py310", "py311"]
 [tool.isort]
 profile = "black"
 line_length = 88
-known_first_party = ["backend", "pcobra"]
+known_first_party = ["pcobra"]
 
 [tool.ruff]
 line-length = 88

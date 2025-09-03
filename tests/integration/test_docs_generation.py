@@ -9,8 +9,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend" / "src"))
-import backend  # noqa: F401
+sys.path.insert(0, str(ROOT / "src"))
+import pcobra  # noqa: F401
 from cobra.cli.cli import main
 
 

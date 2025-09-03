@@ -2,8 +2,8 @@ import core.visitor as _vis
 import sys
 
 # Compatibilidad para pruebas
-sys.modules.setdefault("backend.src.core.visitor", _vis)
-sys.modules.setdefault("backend.src.core", sys.modules.get("core"))
+sys.modules.setdefault("pcobra.core.visitor", _vis)
+sys.modules.setdefault("pcobra.core", sys.modules.get("core"))
 
 from cobra.core import Lexer
 from cobra.core import Parser

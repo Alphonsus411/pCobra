@@ -266,7 +266,6 @@ The executable will be placed inside the `dist/` directory.
 The project is organized into the following folders and modules:
 
 - `src/pcobra/`: Contains the Python logic of the project.
-- `src/backend/`: Helper package exposing aliases for development.
 - `frontend/`: Interface tools such as the VS Code extension.
 - `docs/frontend/` and `docs/build/`: Folders where the documentation is generated and stored. The file `docs/frontend/arquitectura.rst` describes the internal structure of the language.
 - `tests/`: Unit tests to ensure correct behaviour of the code.
