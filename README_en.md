@@ -4,8 +4,9 @@
 
 Version 10.0.9
 
+- Tweaks in `SafeUnpickler` to support `core.ast_nodes` and `cobra.core.ast_nodes`.
 - `corelibs.sistema.ejecutar` now runs only whitelisted executables provided via the `permitidos` argument or the `COBRA_EJECUTAR_PERMITIDOS` environment variable.
-- Added an incremental JSON cache to speed up repeated compilations.
+- Added an incremental JSON cache for AST and tokens to speed up repeated compilations.
 
 Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly, allowing greater versatility when running and deploying Cobra code.
 
