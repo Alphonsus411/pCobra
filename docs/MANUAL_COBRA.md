@@ -74,10 +74,31 @@ juan.nombre = 'Juan'
 juan.saludar()
 ```
 
-**Limitaciones actuales**
+**Herencia múltiple**
 
-- No existe herencia múltiple.
-- La herencia es simple y no hay interfaces.
+Cobra permite que una clase herede de varias bases listándolas entre paréntesis.
+El intérprete resuelve los métodos de izquierda a derecha según el orden de las bases.
+
+```cobra
+clase Volador:
+    func volar():
+        imprimir('vuelo')
+    fin
+fin
+
+clase Nadador:
+    func nadar():
+        imprimir('nado')
+    fin
+fin
+
+clase Pato(Volador, Nadador):
+    fin
+
+var p = Pato()
+p.volar()
+p.nadar()
+```
 
 ## 4. Control de flujo
 
