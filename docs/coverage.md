@@ -19,9 +19,9 @@ A continuación se listan algunos de los módulos con menor cobertura detectados
 | `src/pcobra/cobra/transpilers/feature_inspector.py` | 0 % |
 | `src/pcobra/cobra/transpilers/reverse/from_c.py` | 3 % |
 | `src/pcobra/cobra/transpilers/transpiler/to_python.py` | 33 % |
-| `src/core/ast_nodes.py` | 81 % |
-| `src/core/interpreter.py` | 6 % |
-| `src/gui/app.py` | 0 % |
+| `src/pcobra/core/ast_nodes.py` | 81 % |
+| `src/pcobra/core/interpreter.py` | 6 % |
+| `src/pcobra/gui/app.py` | 0 % |
 
 Estos resultados indican que gran parte del código aún carece de cobertura de pruebas suficiente.
 
