@@ -60,5 +60,5 @@ Para un resumen completo de la cobertura por lenguaje, revisa la `matriz de tran
 Diferencias identificadas
 -------------------------
 
-- Go y Java no soportan condicionales ni bucles. Consulta el `issue #11 <../../issues/11_soporte_condicionales_bucles_go_java.md>`_ para seguimiento y contribuciones.
+- Go y Java no soportan condicionales ni bucles. Consulta el `issue #11 <../issues/11_soporte_condicionales_bucles_go_java.md>`_ para seguimiento y contribuciones.
 

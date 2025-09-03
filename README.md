@@ -232,23 +232,27 @@ CertUtil -hashfile cobra.exe SHA256
 
 # Estructura del Proyecto
 
-El proyecto se organiza en las siguientes carpetas y módulos:
+El proyecto se organiza en las siguientes carpetas:
 
-- `src/pcobra/`: Contiene la lógica Python del proyecto.
-- `frontend/`: Herramientas de interfaz como la extensión de VS Code.
-- `docs/frontend/`: Carpeta donde se genera y aloja la documentación. El archivo `docs/frontend/arquitectura.rst` describe la estructura interna del lenguaje. Consulta `docs/arquitectura_parser_transpiladores.md` para un resumen de la relación entre lexer, parser y transpiladores.
-- `tests/`: Incluye pruebas unitarias para asegurar el correcto funcionamiento del código.
-- `README.md`: Documentación del proyecto.
-- `requirements.txt`: Archivo en la raíz que lista las dependencias del proyecto.
-- `pyproject.toml`: Define dependencias en las secciones ``project.dependencies`` y ``project.optional-dependencies``. Estos archivos en la raíz son la única fuente de dependencias.
+- `src/pcobra/`: Código fuente del paquete.
+- `docs/`: Documentación del proyecto.
+- `tests/`: Pruebas automáticas.
+- `examples/`: Ejemplos de uso.
+- `extensions/`: Extensiones oficiales, como la de VS Code.
+- `scripts/`: Scripts de utilidad.
+- `notebooks/`: Cuadernos interactivos.
+- `docker/`: Archivos de configuración para contenedores.
+- `binder/`: Archivos para ejecutar el proyecto en Binder.
+
+Los archivos `requirements.txt` y `pyproject.toml` en la raíz definen las dependencias del proyecto.
 
 # Herramientas y scripts soportados
 
 El proyecto soporta oficialmente:
 
 - `Makefile` para automatizar tareas como `make install`, `make test` y `make clean`.
-- `run.sh` para ejecutar Cobra con variables definidas en `.env`.
-- `install.sh` para preparar el entorno de desarrollo.
+- `scripts/run.sh` para ejecutar Cobra con variables definidas en `.env`.
+- `scripts/install.sh` para preparar el entorno de desarrollo.
 - Scripts auxiliares en `scripts/`.
 - Configuraciones Docker en `docker/`.
 
@@ -319,19 +323,19 @@ Los resultados se guardan en `binary_bench.json`.
 # Uso
 
 Para ejecutar el proyecto directamente desde el repositorio se incluye el
-script `run.sh`. Este cargará las variables definidas en `.env` si dicho archivo
-existe y luego llamará a `python -m pCobra` pasando todos los argumentos
+script `scripts/run.sh`. Este cargará las variables definidas en `.env` si dicho archivo
+existe y luego llamará a `python -m pcobra` pasando todos los argumentos
 recibidos. Úsalo de la siguiente forma:
 
 ```bash
-./run.sh [opciones]
+./scripts/run.sh [opciones]
 ```
 
 También puedes ejecutar la interfaz de línea de comandos directamente desde la
 raíz del proyecto:
 
 ```bash
-python -m pCobra
+python -m pcobra
 ```
 
 Para conocer las opciones avanzadas del modo seguro revisa
@@ -366,7 +370,7 @@ Para probar Cobra de esta forma realiza lo siguiente:
 python -m venv .venv
 source .venv/bin/activate  # En Unix
 .\.venv\Scripts\activate  # En Windows
-make run                   # o bien: python -m pCobra
+make run                   # o bien: python -m pcobra
 ```
 
 ## Tokens y reglas léxicas
@@ -1002,7 +1006,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
-- Para lanzar todas las validaciones en un solo paso ejecuta `python check.py`.
+- Para lanzar todas las validaciones en un solo paso ejecuta `python scripts/check.py`.
   Este script corre *ruff*, *mypy*, *bandit*, *pytest* y *pyright*.
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.

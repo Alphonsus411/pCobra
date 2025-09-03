@@ -111,8 +111,8 @@ cd pCobra
 If you prefer to automate the process, run:
 
 ```bash
-./install.sh            # install from PyPI
-./install.sh --dev      # install in editable mode
+./scripts/install.sh            # install from PyPI
+./scripts/install.sh --dev      # install in editable mode
 ```
 
 3. Create a virtual environment and activate it:
@@ -264,23 +264,27 @@ The executable will be placed inside the `dist/` directory.
 
 # Project Structure
 
-The project is organized into the following folders and modules:
+The project is organized into the following folders:
 
-- `src/pcobra/`: Contains the Python logic of the project.
-- `frontend/`: Interface tools such as the VS Code extension.
-- `frontend/` and `build/`: Folders where the documentation is generated and stored. The file `frontend/arquitectura.rst` describes the internal structure of the language.
-- `tests/`: Unit tests to ensure correct behaviour of the code.
-- `README.md`: Project documentation.
-- `requirements.txt`: File in the repository root that lists the project dependencies.
-- `pyproject.toml`: Defines dependencies in the ``project.dependencies`` and ``project.optional-dependencies`` sections. These root-level files are the single source of dependencies.
+- `src/pcobra/`: Package source code.
+- `docs/`: Project documentation.
+- `tests/`: Automated tests.
+- `examples/`: Usage examples.
+- `extensions/`: Official extensions such as the VS Code plugin.
+- `scripts/`: Utility scripts.
+- `notebooks/`: Interactive notebooks.
+- `docker/`: Container configuration files.
+- `binder/`: Files to launch the project on Binder.
+
+The root-level `requirements.txt` and `pyproject.toml` files define the project dependencies.
 
 # Supported tools and scripts
 
 The project officially supports:
 
 - `Makefile` to automate common tasks such as `make install`, `make test` and `make clean`.
-- `run.sh` to run Cobra using variables defined in `.env`.
-- `install.sh` to set up the development environment.
+- `scripts/run.sh` to run Cobra using variables defined in `.env`.
+- `scripts/install.sh` to set up the development environment.
 - Helper scripts in `scripts/`.
 - Docker configurations in `docker/`.
 
@@ -334,10 +338,10 @@ cobra cache
 
 # Usage
 
-To run the project directly from the repository you can use the `run.sh` script. It loads the variables defined in `.env` if that file exists and then calls `python -m src.main` passing all received arguments. Use it as follows:
+To run the project directly from the repository you can use the `scripts/run.sh` script. It loads the variables defined in `.env` if that file exists and then calls `python -m pcobra` passing all received arguments. Use it as follows:
 
 ```bash
-./run.sh [options]
+./scripts/run.sh [options]
 ```
 
 For advanced options of safe mode see `frontend/modo_seguro.rst`. Performance measurement examples are available in `frontend/benchmarking.rst`.

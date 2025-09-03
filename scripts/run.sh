@@ -9,4 +9,4 @@ if ! python -m dotenv --version &> /dev/null; then
 fi
 
 # Ejecutar el programa con variables de entorno cargadas desde .env
-python -m dotenv -f .env run -- python -m src.main "$@"
+python -m dotenv -f .env run -- python -m pcobra "$@"

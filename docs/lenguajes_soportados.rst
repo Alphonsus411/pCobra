@@ -140,5 +140,5 @@ Diferencias identificadas
 -------------------------
 
 - Go y Java no soportan condicionales ni bucles. Se recomienda implementar estas
-  estructuras; véase el `issue #11 <../issues/11_soporte_condicionales_bucles_go_java.md>`_.
+  estructuras; véase el `issue #11 <issues/11_soporte_condicionales_bucles_go_java.md>`_.
 

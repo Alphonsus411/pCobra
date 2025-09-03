@@ -7,8 +7,8 @@ include cobra.toml
 include pcobra.toml
 include pyproject.toml
 include Makefile
-include install.sh
-include run.sh
+include scripts/install.sh
+include scripts/run.sh
 include .env.example
 
 recursive-include src/pcobra *.py
