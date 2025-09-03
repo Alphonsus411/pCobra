@@ -187,7 +187,7 @@ pip install pyinstaller
 Luego genera el binario con:
 
 ```bash
-pyinstaller --onefile pCobra/cli/cli.py -n cobra
+pyinstaller --onefile src/pcobra/cli/cli.py -n cobra
 ```
 
 El ejecutable aparecerá en el directorio `dist/`.
@@ -195,7 +195,7 @@ El ejecutable aparecerá en el directorio `dist/`.
 Para realizar una prueba rápida puedes ejecutar el script
 `scripts/test_pyinstaller.sh`. Este script crea un entorno virtual temporal,
 instala `pcobra` desde el repositorio (o desde PyPI si se ejecuta fuera
-de él) y ejecuta PyInstaller sobre `pCobra/cli/cli.py` o el script `cobra-init`.
+de él) y ejecuta PyInstaller sobre `src/pcobra/cli/cli.py` o el script `cobra-init`.
 El binario resultante se
 guardará por defecto en `dist/`.
 
@@ -337,11 +337,11 @@ están disponibles en `docs/frontend/benchmarking.rst`.
 Para ejecutar pruebas unitarias, utiliza pytest:
 
 ````bash
-PYTHONPATH=$PWD pytest pCobra/tests --cov=pCobra --cov-report=term-missing \
+PYTHONPATH=$PWD pytest tests --cov=pcobra --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
-También puedes ejecutar suites específicas ubicadas en `pCobra/tests`:
+También puedes ejecutar suites específicas ubicadas en `tests`:
 
 ````bash
 python -m tests.suite_cli           # Solo pruebas de la CLI
@@ -538,7 +538,7 @@ paquete no está disponible, Cobra ejecutará `pip install paquete` para
 instalarlo y luego lo cargará en tiempo de ejecución. El módulo queda
 registrado en el entorno bajo el mismo nombre para su uso posterior.
 Para restringir qué dependencias pueden instalarse se emplea la variable
-`USAR_WHITELIST` definida en `pCobra/cobra/usar_loader.py`. Basta con
+`USAR_WHITELIST` definida en `src/pcobra/cobra/usar_loader.py`. Basta con
 añadir o quitar nombres de paquetes en dicho conjunto para modificar la lista
 autorizada. Si la lista se deja vacía la función `obtener_modulo` lanzará
 `PermissionError`, por lo que es necesario poblarla antes de permitir
@@ -570,7 +570,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 
 ## Invocar el transpilador
 
-La carpeta [`pCobra/cobra/transpilers/transpiler`](pCobra/cobra/transpilers/transpiler)
+La carpeta [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler)
 contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
@@ -739,9 +739,9 @@ Actualmente es posible convertir a Cobra código escrito en ensamblador, C, C++,
 
 ### Diseño extensible de la CLI
 
-La CLI está organizada en clases dentro de `pCobra/cli/commands`. Cada subcomando
+La CLI está organizada en clases dentro de `src/pcobra/cli/commands`. Cada subcomando
 hereda de `BaseCommand` y define su nombre, los argumentos que acepta y la acción
-a ejecutar. En `pCobra/cli/cli.py` se instancian automáticamente y se registran en
+a ejecutar. En `src/pcobra/cli/cli.py` se instancian automáticamente y se registran en
 `argparse`, por lo que para añadir un nuevo comando solo es necesario crear un
 archivo con la nueva clase y llamar a `register_subparser` y `run`.
 Para un tutorial completo de creación de plugins revisa
@@ -770,7 +770,7 @@ posible para reducir riesgos.
 
 # Pruebas
 
-Las pruebas están ubicadas en la carpeta `pCobra/tests/` y utilizan pytest para la
+Las pruebas están ubicadas en la carpeta `tests/` y utilizan pytest para la
 ejecución. **Antes de correr cualquier prueba instala el paquete en modo
 editable junto con las dependencias de desarrollo:**
 
@@ -794,7 +794,7 @@ Este comando exporta `PYTHONPATH=$PWD` e invoca `pytest` con los argumentos
 definidos en `pyproject.toml`.
 
 ````bash
-PYTHONPATH=$PWD pytest pCobra/tests --cov=pCobra --cov-report=term-missing \
+PYTHONPATH=$PWD pytest tests --cov=pcobra --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
@@ -816,14 +816,14 @@ PYTHONPATH=$PWD pytest
 En la integración continua se emplea:
 
 ```bash
-pytest --cov=pCobra pCobra/tests/
+pytest --cov=pcobra tests/
 ```
 
 El reporte se guarda como `coverage.xml` y se utiliza en el CI.
 
 ### Ejemplos de prueba
 
-En `pCobra/tests/data` se incluyen programas mínimos utilizados en las
+En `tests/data` se incluyen programas mínimos utilizados en las
 pruebas de entrada y salida de la CLI:
 
 - `hola.cobra`: imprime el saludo «Hola Cobra».
@@ -835,15 +835,15 @@ la salida con los archivos `.out` correspondientes. Para probarlos
 manualmente:
 
 ```bash
-cobra ejecutar pCobra/tests/data/hola.cobra
-cobra ejecutar pCobra/tests/data/suma.cobra
+cobra ejecutar tests/data/hola.cobra
+cobra ejecutar tests/data/suma.cobra
 ```
 
 También puedes transpilar los ejemplos para ver el código Python generado:
 
 ```bash
-cobra transpilar pCobra/tests/data/hola.cobra
-cobra transpilar pCobra/tests/data/suma.cobra
+cobra transpilar tests/data/hola.cobra
+cobra transpilar tests/data/suma.cobra
 ```
 
 ### Pruebas de rendimiento
