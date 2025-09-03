@@ -9,7 +9,10 @@
   de AST y tokens.
 
 ## v10.0.8 - Pendiente de liberación
-- Nota: versión en desarrollo, sin cambios liberados.
+- Integración de la biblioteca **holobit** para la creación y manipulación de holobits.
+- Pruebas en `src/tests` que verifican la funcionalidad de holobit.
+- `src/tests/unit/test_holobit_generation.py` construye holobits de diferentes tamaños y valida la conversión a JSON.
+- `src/tests/unit/test_benchmark_execution.py` ejecuta los comandos de benchmark y comprueba que los tiempos se mantienen dentro de un rango razonable utilizando `time.perf_counter`.
 
 ## v10.0.7 - Pendiente de liberación
 - Nota: versión en desarrollo, sin cambios liberados.
