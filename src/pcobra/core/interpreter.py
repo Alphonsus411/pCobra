@@ -627,6 +627,13 @@ class InterpretadorCobra:
 
     def ejecutar_clase(self, nodo):
         """Registra una clase definida por el usuario."""
+        bases_resueltas = []
+        for base_nombre in nodo.bases:
+            base = self.obtener_variable(base_nombre)
+            if not isinstance(base, NodoClase):
+                raise ValueError(f"Clase base '{base_nombre}' no definida")
+            bases_resueltas.append(base)
+        nodo.bases_resueltas = bases_resueltas
         self.variables[nodo.nombre] = nodo
 
     def ejecutar_instancia(self, nodo):
@@ -634,7 +641,8 @@ class InterpretadorCobra:
         clase = self.obtener_variable(nodo.nombre_clase)
         if not isinstance(clase, NodoClase):
             raise ValueError(f"Clase '{nodo.nombre_clase}' no definida")
-        return {"__clase__": clase, "__atributos__": {}}
+        bases = getattr(clase, "bases_resueltas", [])
+        return {"__clase__": clase, "__bases__": bases, "__atributos__": {}}
 
     def ejecutar_llamada_metodo(self, nodo):
         """Invoca un método de un objeto instanciado."""
@@ -642,9 +650,21 @@ class InterpretadorCobra:
         if not isinstance(objeto, dict) or "__clase__" not in objeto:
             raise ValueError("Objeto inv\u00e1lido en llamada a m\u00e9todo")
         clase = objeto["__clase__"]
-        metodo = next(
-            (m for m in clase.metodos if m.nombre == nodo.nombre_metodo), None
-        )
+
+        def buscar_metodo(clase_actual):
+            metodo = next(
+                (m for m in clase_actual.metodos if m.nombre == nodo.nombre_metodo),
+                None,
+            )
+            if metodo is not None:
+                return metodo
+            for base in getattr(clase_actual, "bases_resueltas", []):
+                encontrado = buscar_metodo(base)
+                if encontrado is not None:
+                    return encontrado
+            return None
+
+        metodo = buscar_metodo(clase)
         if metodo is None:
             raise ValueError(f"M\u00e9todo '{nodo.nombre_metodo}' no encontrado")
 
