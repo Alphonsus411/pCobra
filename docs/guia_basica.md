@@ -168,12 +168,38 @@ clase Persona:
 fin
 ```
 
-## 12. Creación de objetos
+## 12. Herencia múltiple
+```cobra
+clase Volador:
+    metodo mover(self):
+        imprimir "vuelo"
+    fin
+fin
+
+clase Nadador:
+    metodo mover(self):
+        imprimir "nado"
+    fin
+fin
+
+clase Pato(Volador, Nadador):
+    metodo mover(self):
+        imprimir "camino"
+    fin
+fin
+
+p = Pato()
+p.mover()
+```
+
+El intérprete busca el método `mover` primero en `Pato`. Si no existe, recorre `Volador` y luego `Nadador` siguiendo el orden de las bases.
+
+## 13. Creación de objetos
 ```cobra
 p = Persona("Eva")
 ```
 
-## 13. Uso de `metodo`
+## 14. Uso de `metodo`
 ```cobra
 clase Animal:
     metodo sonido(self):
@@ -182,19 +208,19 @@ clase Animal:
 fin
 ```
 
-## 14. Uso de `atributo`
+## 15. Uso de `atributo`
 ```cobra
 p = Persona("Luis")
 imprimir atributo p nombre
 ```
 
-## 15. Importar módulos
+## 16. Importar módulos
 ```cobra
 import fecha
 imprimir(fecha.hoy())
 ```
 
-## 16. Manejo de errores
+## 17. Manejo de errores
 ```cobra
 intentar:
     abrir("no_existe.txt")
@@ -203,30 +229,30 @@ capturar ErrorComoE:
 fin
 ```
 
-## 17. Expresiones lógicas
+## 18. Expresiones lógicas
 ```cobra
 imprimir conjuncion(True, False)
 ```
 
-## 18. Comprensión de listas
+## 19. Comprensión de listas
 ```cobra
 cuadrados = [x * x para x en [1,2,3]]
 ```
 
-## 19. Uso de la API `util`
+## 20. Uso de la API `util`
 ```cobra
 from util importar es_vacio
 imprimir es_vacio([])
 ```
 
-## 20. Programa principal
+## 21. Programa principal
 ```cobra
 func principal():
     imprimir "Listo"
 fin
 ```
 
-## 21. Funciones asincrónicas
+## 22. Funciones asincrónicas
 ```cobra
 asincronico func saluda():
     imprimir 1
@@ -239,7 +265,7 @@ fin
 esperar principal()
 ```
 
-## 22. Decoradores
+## 23. Decoradores
 ```cobra
 @mi_decorador
 func saluda():
@@ -247,7 +273,7 @@ func saluda():
 fin
 ```
 
-## 23. Manejo de excepciones
+## 24. Manejo de excepciones
 ```cobra
 intentar:
     abrir("noexiste.txt")
@@ -256,7 +282,7 @@ capturar e:
 fin
 ```
 
-## 24. Suma de matrices
+## 25. Suma de matrices
 ```cobra
 func sumar_matriz():
     var a11 = 1
@@ -278,7 +304,7 @@ fin
 sumar_matriz()
 ```
 
-## 25. Factorial recursivo
+## 26. Factorial recursivo
 ```cobra
 func factorial(n):
     si n <= 1:
@@ -291,11 +317,11 @@ fin
 imprimir factorial(5)
 ```
 
-## 26. Comando verify
+## 27. Comando verify
 El subcomando `cobra verificar` (`cobra verify`) comprueba que un programa
 genere la misma salida en distintos lenguajes.
 
-## 27. Enumeraciones
+## 28. Enumeraciones
 ```cobra
 enum Color:
     ROJO, VERDE, AZUL
