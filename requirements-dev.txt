@@ -13,5 +13,5 @@ pyright
 python-lsp-server
 ipykernel
 sphinxcontrib-plantuml==0.30
-argcomplete
+argcomplete==3.6.2
 chardet==5.2.0
