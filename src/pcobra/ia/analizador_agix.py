@@ -1,9 +1,25 @@
 """Módulo que analiza código Cobra usando agix y genera sugerencias."""
 
+import sys
+import types
+
 try:
+    import agix
+
+    # El paquete ``agix`` está pensado para importarse como ``src.agix`` en
+    # algunos entornos. Registramos este alias para mantener compatibilidad
+    # sin modificar la librería original.
+    sys.modules.setdefault("src", types.ModuleType("src"))
+    sys.modules["src.agix"] = agix
+
+    from agix.emotion.emotion_simulator import PADState
+    # Alias similar para los módulos de simulación emocional.
+    sys.modules["src.agix.emotion.emotion_simulator"] = agix.emotion.emotion_simulator
+
     from agix.reasoning.basic import Reasoner
 except ImportError:  # pragma: no cover - depende de agix instalado
     Reasoner = None
+    PADState = None
 from typing import List
 
 from pcobra.cobra.core import Lexer, Parser
