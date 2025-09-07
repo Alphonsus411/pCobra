@@ -22,7 +22,10 @@ class AgixCommand(BaseCommand):
             El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(
-            self.name, help=_("Analiza un archivo Cobra y sugiere mejoras")
+            self.name,
+            help=_(
+                "Analiza un archivo Cobra, sugiere mejoras y permite modulación emocional"
+            ),
         )
         parser.add_argument(
             "archivo", 
@@ -42,6 +45,27 @@ class AgixCommand(BaseCommand):
             default=None,
             help=_("Factor para la interpretabilidad (debe ser positivo)"),
             metavar="PESO"
+        )
+        parser.add_argument(
+            "--placer",
+            type=float,
+            default=None,
+            help=_("Valor de placer para modular la emoción (-1 a 1)"),
+            metavar="VALOR",
+        )
+        parser.add_argument(
+            "--activacion",
+            type=float,
+            default=None,
+            help=_("Valor de activación para modular la emoción (-1 a 1)"),
+            metavar="VALOR",
+        )
+        parser.add_argument(
+            "--dominancia",
+            type=float,
+            default=None,
+            help=_("Valor de dominancia para modular la emoción (-1 a 1)"),
+            metavar="VALOR",
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -63,6 +87,20 @@ class AgixCommand(BaseCommand):
             mostrar_error(_("El peso de interpretabilidad debe ser positivo"))
             return 1
 
+        # Validar modulación emocional
+        for nombre, valor in (
+            ("placer", args.placer),
+            ("activación", args.activacion),
+            ("dominancia", args.dominancia),
+        ):
+            if valor is not None and not -1 <= valor <= 1:
+                mostrar_error(
+                    _("El valor de {campo} debe estar en el rango [-1, 1]").format(
+                        campo=nombre
+                    )
+                )
+                return 1
+
         archivo = validar_archivo_existente(args.archivo)
 
         try:
@@ -76,6 +114,9 @@ class AgixCommand(BaseCommand):
                 codigo,
                 peso_precision=args.peso_precision,
                 peso_interpretabilidad=args.peso_interpretabilidad,
+                placer=args.placer,
+                activacion=args.activacion,
+                dominancia=args.dominancia,
             )
             for sugerencia in sugerencias:
                 mostrar_info(str(sugerencia))
