@@ -43,6 +43,17 @@ También puedes ejecutar el cuaderno `notebooks/casos_reales/inteligencia_artifi
 
 Necesitarás `scikit-learn` y opcionalmente `analizador_agix`.
 
+El plugin `analizador_agix` soporta modulación emocional mediante los
+parámetros `placer`, `activacion` y `dominancia`, cada uno en el rango
+de `-1` a `1`.
+
+```cobra
+usar analizador_agix
+codigo = "imprimir \"hola\""
+sugerencias = analizador_agix.generar_sugerencias(codigo, placer=0.5, activacion=0.3, dominancia=-0.2)
+imprimir sugerencias[0]
+```
+
 ## Análisis de Datos
 Con `pandas` y `matplotlib` puedes procesar CSV y generar gráficos:
 

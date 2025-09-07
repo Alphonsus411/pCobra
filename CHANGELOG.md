@@ -7,6 +7,7 @@
   el módulo, evitando modificaciones en tiempo de ejecución.
 - Reemplazo del uso de `pickle` por serialización JSON segura en la caché
   de AST y tokens.
+- Actualización a Agix 1.4.0.
 
 ## v10.0.8 - Pendiente de liberación
 - Integración de la biblioteca **holobit** para la creación y manipulación de holobits.
