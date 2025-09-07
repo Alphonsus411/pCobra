@@ -29,12 +29,17 @@ def generar_sugerencias(
     codigo: str,
     peso_precision: float | None = None,
     peso_interpretabilidad: float | None = None,
+    placer: float | None = None,
+    activacion: float | None = None,
+    dominancia: float | None = None,
 ) -> List[str]:
     """Genera sugerencias para el ``codigo`` proporcionado.
 
     El análisis valida el código con el lexer y parser de Cobra y luego usa
     :class:`agix.reasoning.basic.Reasoner` para elegir la mejor sugerencia
-    de un conjunto predefinido.
+    de un conjunto predefinido. Los parámetros ``placer``, ``activacion`` y
+    ``dominancia`` permiten modular el razonador por emoción si se
+    proporcionan, usando valores en el rango ``[-1.0, 1.0]``.
     """
     if Reasoner is None:
         print("Instala el paquete agix")
@@ -71,6 +76,18 @@ def generar_sugerencias(
         for ev in evaluaciones:
             ev["interpretability"] *= peso_interpretabilidad
 
+    for nombre, valor in (
+        ("placer", placer),
+        ("activacion", activacion),
+        ("dominancia", dominancia),
+    ):
+        if valor is not None and not -1.0 <= valor <= 1.0:
+            raise ValueError(f"{nombre} debe estar en el rango [-1.0, 1.0]")
+
     razonador = Reasoner()
+    if all(v is not None for v in (placer, activacion, dominancia)):
+        pad = PADState(placer, activacion, dominancia)
+        razonador.modular_por_emocion(pad)
+
     mejor = razonador.select_best_model(evaluaciones)
     return [mejor["reason"]]
