@@ -162,11 +162,24 @@ Analiza un archivo y sugiere mejoras utilizando ``agix``.  A partir de la
 versión ``1.0.0`` la selección de la mejor recomendación se realiza con la
 clase ``Reasoner`` de ``agix.reasoning.basic``.
 
+Opcionalmente se pueden modular las recomendaciones emocionalmente
+mediante los siguientes flags, cuyos valores aceptan el rango ``-1`` a ``1``:
+
+* ``--placer``: regula el grado de placer percibido.
+* ``--activacion``: ajusta el nivel de activación.
+* ``--dominancia``: indica el control o dominancia.
+
 Ejemplo:
 
 .. code-block:: bash
 
    cobra agix ejemplo.co
+
+Ejemplo con modulación emocional:
+
+.. code-block:: bash
+
+   cobra agix ejemplo.co --placer 0.5 --activacion 0.2 --dominancia -0.1
 
 Subcomando ``jupyter``
 ---------------------

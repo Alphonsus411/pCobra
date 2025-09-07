@@ -11,6 +11,7 @@ Versión 10.0.9
 - Ajustes en `SafeUnpickler` para admitir `core.ast_nodes` y `cobra.core.ast_nodes`.
 - `corelibs.sistema.ejecutar` ahora requiere una lista blanca mediante `permitidos` o `COBRA_EJECUTAR_PERMITIDOS`.
 - Caché incremental en formato JSON para AST y tokens.
+- Actualización a Agix 1.4.0.
 
 [English version available here](docs/README.en.md)
 
@@ -1113,7 +1114,7 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 ## Historial de Cambios
 
- - Versión 10.0.9: ajustes en `SafeUnpickler`, restricciones en `corelibs.sistema.ejecutar` y caché incremental en formato JSON para AST y tokens.
+ - Versión 10.0.9: ajustes en `SafeUnpickler`, restricciones en `corelibs.sistema.ejecutar`, caché incremental en formato JSON para AST y tokens, y actualización a Agix 1.4.0.
 
 ## Publicar una nueva versión
 
