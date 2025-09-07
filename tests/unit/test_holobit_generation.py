@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-# ``ROOT`` apunta al directorio ``src`` dentro del repositorio. Construimos la
-# ruta al módulo ``holobit`` de forma relativa a este directorio para evitar
-# errores de carga por rutas inexistentes.
-holobit_path = ROOT / "core" / "holobits" / "holobit.py"
+# ``ROOT`` apunta al directorio raíz del repositorio. Construimos la ruta al
+# módulo ``holobit`` de forma relativa a este directorio para evitar errores de
+# carga por rutas inexistentes.
+holobit_path = ROOT / "src" / "pcobra" / "core" / "holobits" / "holobit.py"
 spec = importlib.util.spec_from_file_location("holobit", holobit_path)
 holobit_module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = holobit_module

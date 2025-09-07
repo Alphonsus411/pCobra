@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sandbox_path = ROOT / "core" / "sandbox.py"
+sandbox_path = ROOT / "src" / "pcobra" / "core" / "sandbox.py"
 spec = importlib.util.spec_from_file_location("sandbox", sandbox_path)
 sandbox = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sandbox)
