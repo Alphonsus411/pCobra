@@ -3,13 +3,13 @@
 from typing import Callable, Any
 try:
     from smooth_criminal.core import (
-        auto_boost,
+        bad,
         profile_it,
-        smart_profile,
-        optimize_loop,
+        bad_and_dangerous,
+        jam,
     )
 except Exception:  # pragma: no cover - fallback when library is missing
-    def auto_boost(*, workers=4, fallback=None):
+    def bad(*, workers=4, fallback=None):
         def decorator(func):
             return func
 
@@ -18,10 +18,14 @@ except Exception:  # pragma: no cover - fallback when library is missing
     def profile_it(func, *, args=None, kwargs=None, repeat=1, parallel=False):
         return {}
 
-    def smart_profile(func, *, args=None, kwargs=None, repeat=1, parallel=False):
-        return profile_it(func, args=args, kwargs=kwargs, repeat=repeat, parallel=parallel)
+    def bad_and_dangerous(
+        func, *, args=None, kwargs=None, repeat=1, parallel=False
+    ):
+        return profile_it(
+            func, args=args, kwargs=kwargs, repeat=repeat, parallel=parallel
+        )
 
-    def optimize_loop(*, loops=1, fallback=None):
+    def jam(*, loops=1, fallback=None):
         def decorator(func):
             return func
 
@@ -31,17 +35,17 @@ except Exception:  # pragma: no cover - fallback when library is missing
 def optimizar(
     func: Callable | None = None, *, workers: int = 4, fallback: Callable | None = None
 ) -> Callable:
-    """Devuelve una versión optimizada de ``func`` usando ``auto_boost``.
+    """Devuelve una versión optimizada de ``func`` usando ``bad``.
 
     Puede usarse como decorador o llamando ``optimizar(func)`` directamente.
     """
     if func is None:
 
         def decorator(f: Callable) -> Callable:
-            return auto_boost(workers=workers, fallback=fallback)(f)
+            return bad(workers=workers, fallback=fallback)(f)
 
         return decorator
-    return auto_boost(workers=workers, fallback=fallback)(func)
+    return bad(workers=workers, fallback=fallback)(func)
 
 
 def perfilar(
@@ -68,12 +72,17 @@ def smart_perfilar(
     repeticiones: int = 5,
     paralelo: bool = False
 ) -> dict[str, Any]:
-    """Versión inteligente de :func:`perfilar` usando ``smart_profile``."""
+    """Perfila ``func`` usando ``bad_and_dangerous`` o ``profile_it``."""
     args = args or ()
     kwargs = kwargs or {}
-    return smart_profile(
-        func, args=args, kwargs=kwargs, repeat=repeticiones, parallel=paralelo
-    )
+    try:
+        return bad_and_dangerous(
+            func, args=args, kwargs=kwargs, repeat=repeticiones, parallel=paralelo
+        )
+    except Exception:
+        return profile_it(
+            func, args=args, kwargs=kwargs, repeat=repeticiones, parallel=paralelo
+        )
 
 
 def optimizar_bucle(
@@ -82,11 +91,11 @@ def optimizar_bucle(
     loops: int = 1,
     fallback: Callable | None = None,
 ) -> Callable:
-    """Optimiza bucles dentro de ``func`` usando ``optimize_loop``."""
+    """Optimiza bucles dentro de ``func`` usando ``jam``."""
     if func is None:
 
         def decorator(f: Callable) -> Callable:
-            return optimize_loop(loops=loops, fallback=fallback)(f)
+            return jam(loops=loops, fallback=fallback)(f)
 
         return decorator
-    return optimize_loop(loops=loops, fallback=fallback)(func)
+    return jam(loops=loops, fallback=fallback)(func)

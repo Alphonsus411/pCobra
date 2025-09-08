@@ -3,7 +3,7 @@ Benchmarking y medición de rendimiento
 
 Esta guía explica cómo obtener métricas de ejecución en programas Cobra.
 Desde la versión 9.0 se incluye una pequeña suite de benchmarking basada en el
-módulo ``src.core.performance`` y la librería ``agix``. Dicho módulo
+módulo ``src.core.performance`` y la librería ``smooth-criminal``. Dicho módulo
 expone los ayudantes ``optimizar``, ``perfilar``, ``smart_perfilar`` y ``optimizar_bucle`` para decorar funciones o medir
 su comportamiento.
 
@@ -26,7 +26,7 @@ de tiempo:
 Optimización con ``optimizar``
 ------------------------------
 
-Si deseas aplicar automáticamente optimizaciones de ``agix`` usa
+Si deseas aplicar automáticamente optimizaciones de ``smooth-criminal`` usa
 ``optimizar`` como decorador:
 
 .. code-block:: python
@@ -41,7 +41,7 @@ Si deseas aplicar automáticamente optimizaciones de ``agix`` usa
 Otras herramientas
 ------------------
 
-Además de ``agix`` puedes emplear la biblioteca estándar
+Además de ``smooth-criminal`` puedes emplear la biblioteca estándar
 ``timeit`` para microbenchmarks rápidos:
 
 .. code-block:: python
