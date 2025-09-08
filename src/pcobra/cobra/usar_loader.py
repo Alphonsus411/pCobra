@@ -62,7 +62,6 @@ def cargar_lista_blanca():
         "requests",
         "matplotlib",
         "holobit-sdk",
-        "smooth-criminal",
         "agix",
     ]
 
