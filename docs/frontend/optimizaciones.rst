@@ -24,3 +24,26 @@ Estas optimizaciones se aplican automáticamente antes de ejecutar el intérpret
 Decoradores de rendimiento (``Smooth Criminal``)
 ------------------------------------------------
 Se incorporó la biblioteca ``smooth-criminal`` al núcleo para facilitar la optimización de funciones de usuario. Desde ``src.core`` se exponen los ayudantes ``optimizar`` y ``perfilar`` que utilizan dicha librería para aplicar decoradores como ``bad``, ``bad_and_dangerous`` o ``jam`` y obtener métricas de ejecución.
+
+Ejemplo de uso con herramientas nuevas
+--------------------------------------
+
+.. code-block:: python
+
+    from core.performance import perfilar, bad_and_dangerous, jam
+
+    def suma(x, y):
+        return x + y
+
+    # Métricas detalladas con ``bad_and_dangerous``
+    datos = bad_and_dangerous(suma, args=(1, 2), repeat=3)
+
+    # Decorador ``jam`` para optimizar bucles
+    @jam(loops=5)
+    def incrementa(x):
+        return x + 1
+
+    resultado = incrementa(10)
+
+    # Profiling sencillo mediante ``perfilar``
+    estadisticas = perfilar(suma, args=(2, 3), repeticiones=4)
