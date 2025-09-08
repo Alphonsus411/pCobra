@@ -23,4 +23,4 @@ Estas optimizaciones se aplican automáticamente antes de ejecutar el intérpret
 
 Decoradores de rendimiento (``Smooth Criminal``)
 ------------------------------------------------
-Se incorporó la biblioteca ``smooth-criminal`` al núcleo para facilitar la optimización de funciones de usuario. Desde ``src.core`` se exponen los ayudantes ``optimizar``, ``perfilar``, ``smart_perfilar`` y ``optimizar_bucle`` que utilizan dicha librería para aplicar decoradores como ``bad``, ``bad_and_dangerous`` o ``jam`` y obtener métricas de ejecución.
+Se incorporó la biblioteca ``smooth-criminal`` al núcleo para facilitar la optimización de funciones de usuario. Desde ``src.core`` se exponen los ayudantes ``optimizar`` y ``perfilar`` que utilizan dicha librería para aplicar decoradores como ``bad``, ``bad_and_dangerous`` o ``jam`` y obtener métricas de ejecución.
