@@ -297,7 +297,7 @@ The project officially supports:
 - Runtime package installation via the `usar` instruction.
 - Error handling: the system captures and reports syntax errors, easing debugging.
 - Visualization and debugging: detailed output of tokens, AST and syntax errors for simpler development.
-- Performance decorators: the ``agix`` library provides helpers like ``optimizar`` and ``perfilar`` to improve and measure Python code executed from Cobra.
+- Performance decorators: the ``smooth-criminal`` library provides helpers like ``optimizar`` and ``perfilar`` to improve and measure Python code executed from Cobra.
 - Benchmarking: full performance measurement examples are available in `frontend/benchmarking.rst`.
 - Code and documentation examples: practical examples illustrating the lexer, parser and transpilers.
 - Advanced examples: see `frontend/ejemplos_avanzados.rst` to learn about classes, threads and error handling.

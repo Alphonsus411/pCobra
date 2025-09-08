@@ -21,6 +21,6 @@ Eliminación de subexpresiones comunes
 
 Estas optimizaciones se aplican automáticamente antes de ejecutar el intérprete y en los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly.
 
-Decoradores de rendimiento (``agix``)
--------------------------------------
-Se incorporó la biblioteca ``agix`` al núcleo para facilitar la optimización de funciones de usuario. Desde ``src.core`` se exponen los ayudantes ``optimizar``, ``perfilar``, ``smart_perfilar`` y ``optimizar_bucle`` que utilizan dicha librería para aplicar decoradores como ``auto_boost`` y obtener métricas de ejecución.
+Decoradores de rendimiento (``Smooth Criminal``)
+------------------------------------------------
+Se incorporó la biblioteca ``smooth-criminal`` al núcleo para facilitar la optimización de funciones de usuario. Desde ``src.core`` se exponen los ayudantes ``optimizar``, ``perfilar``, ``smart_perfilar`` y ``optimizar_bucle`` que utilizan dicha librería para aplicar decoradores como ``bad``, ``bad_and_dangerous`` o ``jam`` y obtener métricas de ejecución.

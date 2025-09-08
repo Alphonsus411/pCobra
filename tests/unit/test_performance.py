@@ -17,8 +17,8 @@ def _dummy(x=0):
     return x + 1
 
 
-def test_optimizar_decorator_invoca_auto_boost():
-    def fake_auto_boost(*, workers=4, fallback=None):
+def test_optimizar_decorator_invoca_bad():
+    def fake_bad(*, workers=4, fallback=None):
         def decorator(func):
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
@@ -27,7 +27,7 @@ def test_optimizar_decorator_invoca_auto_boost():
 
         return decorator
 
-    with patch("core.performance.auto_boost", side_effect=fake_auto_boost) as ab:
+    with patch("core.performance.bad", side_effect=fake_bad) as ab:
         @optimizar(workers=2)
         def foo(x):
             return x + 1
@@ -36,8 +36,8 @@ def test_optimizar_decorator_invoca_auto_boost():
         ab.assert_called_once_with(workers=2, fallback=None)
 
 
-def test_optimizar_directo_invoca_auto_boost():
-    def fake_auto_boost(*, workers=4, fallback=None):
+def test_optimizar_directo_invoca_bad():
+    def fake_bad(*, workers=4, fallback=None):
         def decorator(func):
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
@@ -46,7 +46,7 @@ def test_optimizar_directo_invoca_auto_boost():
 
         return decorator
 
-    with patch("core.performance.auto_boost", side_effect=fake_auto_boost) as ab:
+    with patch("core.performance.bad", side_effect=fake_bad) as ab:
         def bar(x):
             return x + 2
 
@@ -66,22 +66,24 @@ def test_perfilar_invoca_profile_it():
     assert datos == {"mean": 1}
 
 
-def test_smart_perfilar_invoca_smart_profile():
-    with patch("core.performance.smart_profile", create=True, return_value={"mean": 1}) as sp:
+def test_smart_perfilar_invoca_bad_and_dangerous():
+    with patch(
+        "core.performance.bad_and_dangerous", create=True, return_value={"mean": 1}
+    ) as sp:
         result = smart_perfilar(_dummy, args=(1,))
     sp.assert_called_once()
     assert result == {"mean": 1}
 
 
 def test_optimizar_bucle_decorator():
-    def fake_optimize_loop(loops=1, fallback=None):
+    def fake_jam(loops=1, fallback=None):
         def decorator(func):
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
             return wrapper
         return decorator
 
-    with patch("core.performance.optimize_loop", create=True, side_effect=fake_optimize_loop) as op:
+    with patch("core.performance.jam", create=True, side_effect=fake_jam) as op:
         @optimizar_bucle(loops=2)
         def foo():
             return "ok"
