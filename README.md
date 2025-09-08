@@ -266,7 +266,7 @@ El proyecto soporta oficialmente:
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
 - Manejo de Errores: El sistema captura y reporta errores de sintaxis, facilitando la depuración.
 - Visualización y Depuración: Salida detallada de tokens, AST y errores de sintaxis para un desarrollo más sencillo.
-- Decoradores de rendimiento: la biblioteca ``smooth-criminal`` ofrece
+- Decoradores de rendimiento: la biblioteca ``agix`` ofrece
   funciones como ``optimizar`` y ``perfilar`` para mejorar y medir la
   ejecución de código Python desde Cobra.
 - Benchmarking: ejemplos completos de medición de rendimiento están
