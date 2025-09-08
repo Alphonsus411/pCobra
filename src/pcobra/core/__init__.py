@@ -12,7 +12,7 @@ de implementaciones manuales.
 from .ast_nodes import *
 from .ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
 from .visitor import NodeVisitor
-from .performance import optimizar, perfilar, smart_perfilar, optimizar_bucle
+from .performance import optimizar, perfilar
 from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
 
 __all__ = [
@@ -59,8 +59,6 @@ __all__ = [
     "NodeVisitor",
     "optimizar",
     "perfilar",
-    "smart_perfilar",
-    "optimizar_bucle",
     "limitar_memoria_mb",
     "limitar_cpu_segundos",
 ]
