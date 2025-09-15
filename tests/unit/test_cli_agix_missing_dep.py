@@ -4,7 +4,7 @@ from unittest.mock import patch
 from cobra.cli.commands.agix_cmd import AgixCommand
 
 
-def test_cli_agix_sin_agix(tmp_path):
+def test_cli_agix_sin_agix(tmp_path, capsys):
     archivo = tmp_path / "ejemplo.co"
     archivo.write_text("var x = 5")
     cmd = AgixCommand()
@@ -17,8 +17,7 @@ def test_cli_agix_sin_agix(tmp_path):
         dominancia=None,
     )
     with patch("ia.analizador_agix.Reasoner", None):
-        with patch("cobra.cli.commands.agix_cmd.mostrar_error") as err_mock:
-            exit_code = cmd.run(args)
-    err_mock.assert_called_once()
+        exit_code = cmd.run(args)
+    salida = capsys.readouterr().out
     assert exit_code == 1
-    assert "Instala el paquete agix" in err_mock.call_args[0][0]
+    assert "Instala el paquete agix" in salida
