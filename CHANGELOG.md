@@ -1,3 +1,7 @@
+## v10.0.10 - Pendiente de liberación
+- Actualización de la dependencia `agix` a la versión 1.6.0.
+- Mejora de rendimiento y compatibilidad derivada de esta actualización.
+
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.
 - `corelibs.sistema.ejecutar` ahora exige una lista blanca de comandos
