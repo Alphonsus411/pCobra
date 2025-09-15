@@ -1,6 +1,7 @@
 ## v10.0.10 - Pendiente de liberación
 - Actualización de la dependencia `agix` a la versión 1.6.0.
 - Mejora de rendimiento y compatibilidad derivada de esta actualización.
+- Actualización de `holobit-sdk` a la versión 1.0.9 y ajuste de `graficar`/`proyectar` al nuevo API.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.
