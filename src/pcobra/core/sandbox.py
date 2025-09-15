@@ -110,8 +110,8 @@ def ejecutar_en_sandbox_js(
     import os
     import shutil
 
-    node_dir = shutil.which("node")
-    env_path = os.path.dirname(node_dir) if node_dir else "/usr/bin"
+    node_path = shutil.which("node")
+    env_path = os.path.dirname(node_path) if node_path else "/usr/bin"
     env = {"PATH": env_path}
     if env_vars:
         claves_sensibles = {
@@ -133,13 +133,13 @@ def ejecutar_en_sandbox_js(
 
     try:
         version = subprocess.run(
-            ["node", "-e", "console.log(require('vm2/package.json').version)"],
+            [node_path, "-e", "console.log(require('vm2/package.json').version)"],
             capture_output=True,
             text=True,
             check=True,
             env=env,
         )
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+    except (TypeError, FileNotFoundError, subprocess.CalledProcessError) as exc:
         raise RuntimeError("vm2 no disponible") from exc
 
     vm2_version = Version(version.stdout.strip())
@@ -178,11 +178,13 @@ process.stdout.write(output);
         tmp.write(script)
         tmp_path = tmp.name
 
+    inode = os.stat(node_path).st_ino
+
     try:
         import select
         import time
 
-        args = ["node", "--no-experimental-fetch"]
+        args = [node_path, "--no-experimental-fetch"]
         if memoria_mb is not None:
             args.append(f"--max-old-space-size={memoria_mb}")
         args.append(tmp_path)
@@ -193,6 +195,9 @@ process.stdout.write(output);
             cwd=base_dir,
             env=env,
         ) as proc:  # nosec B603
+            if os.stat(node_path).st_ino != inode:
+                proc.kill()
+                raise SecurityError("El binario de Node ha cambiado")
             salida = bytearray()
             truncado = False
             inicio = time.monotonic()
