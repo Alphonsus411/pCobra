@@ -2,7 +2,7 @@
 
 from core.holobits.holobit import Holobit
 from core.holobits.graficar import graficar
-from core.holobits.proyection import proyectar
+from core.holobits.proyeccion import proyectar
 from core.holobits.transformacion import transformar, escalar, mover
 
 __all__ = [

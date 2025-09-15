@@ -20,10 +20,10 @@ src.core.holobits.holobit module
    :undoc-members:
    :show-inheritance:
 
-src.core.holobits.proyection module
+src.core.holobits.proyeccion module
 -----------------------------------
 
-.. automodule:: src.core.holobits.proyection
+.. automodule:: src.core.holobits.proyeccion
    :members:
    :undoc-members:
    :show-inheritance:
