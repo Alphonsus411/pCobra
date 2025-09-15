@@ -181,9 +181,6 @@ process.stdout.write(output);
     inode = os.stat(node_path).st_ino
 
     try:
-        import select
-        import time
-
         args = [node_path, "--no-experimental-fetch"]
         if memoria_mb is not None:
             args.append(f"--max-old-space-size={memoria_mb}")
@@ -200,28 +197,54 @@ process.stdout.write(output);
                 raise SecurityError("El binario de Node ha cambiado")
             salida = bytearray()
             truncado = False
-            inicio = time.monotonic()
             assert proc.stdout is not None  # para type checkers
-            while True:
-                restante = inicio + timeout - time.monotonic()
-                if restante <= 0:
+            if os.name == "nt":
+                import threading
+
+                def leer_salida() -> None:
+                    nonlocal salida, truncado
+                    for linea in iter(proc.stdout.readline, b""):
+                        if not linea:
+                            break
+                        salida.extend(linea)
+                        if len(salida) > MAX_JS_OUTPUT_BYTES:
+                            truncado = True
+                            proc.kill()
+                            salida = salida[:MAX_JS_OUTPUT_BYTES]
+                            break
+
+                lector = threading.Thread(target=leer_salida)
+                lector.start()
+                lector.join(timeout)
+                if lector.is_alive():
                     proc.kill()
+                    lector.join()
                     return "Error: tiempo de ejecuci\u00f3n agotado"
-                rlist, _, _ = select.select([proc.stdout], [], [], restante)
-                if not rlist:
-                    proc.kill()
-                    return "Error: tiempo de ejecuci\u00f3n agotado"
-                chunk = proc.stdout.read(1024)
-                if not chunk:
-                    if proc.poll() is not None:
+            else:
+                import select
+                import time
+
+                inicio = time.monotonic()
+                while True:
+                    restante = inicio + timeout - time.monotonic()
+                    if restante <= 0:
+                        proc.kill()
+                        return "Error: tiempo de ejecuci\u00f3n agotado"
+                    rlist, _, _ = select.select([proc.stdout], [], [], restante)
+                    if not rlist:
+                        proc.kill()
+                        return "Error: tiempo de ejecuci\u00f3n agotado"
+                    chunk = proc.stdout.read(1024)
+                    if not chunk:
+                        if proc.poll() is not None:
+                            break
+                        continue
+                    salida.extend(chunk)
+                    if len(salida) > MAX_JS_OUTPUT_BYTES:
+                        truncado = True
+                        proc.kill()
+                        salida = salida[:MAX_JS_OUTPUT_BYTES]
                         break
-                    continue
-                salida.extend(chunk)
-                if len(salida) > MAX_JS_OUTPUT_BYTES:
-                    truncado = True
-                    proc.kill()
-                    salida = salida[:MAX_JS_OUTPUT_BYTES]
-                    break
 
             proc.wait()
             resultado = salida.decode(errors="ignore")
