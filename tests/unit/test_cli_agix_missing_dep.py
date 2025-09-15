@@ -1,23 +1,24 @@
-from io import StringIO
+from argparse import Namespace
 from unittest.mock import patch
-import sys
 
-import pytest
 from cobra.cli.commands.agix_cmd import AgixCommand
 
 
 def test_cli_agix_sin_agix(tmp_path):
     archivo = tmp_path / "ejemplo.co"
     archivo.write_text("var x = 5")
-    from cobra.cli.cli import main
+    cmd = AgixCommand()
+    args = Namespace(
+        archivo=str(archivo),
+        peso_precision=None,
+        peso_interpretabilidad=None,
+        placer=None,
+        activacion=None,
+        dominancia=None,
+    )
     with patch("ia.analizador_agix.Reasoner", None):
-        with patch("cobra.cli.cli.setup_gettext", return_value=lambda s: s):
-            with patch(
-                "cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", new=[AgixCommand]
-            ):
-                with patch("sys.stdout", new_callable=StringIO) as out:
-                    try:
-                        main(["agix", str(archivo)])
-                    except SystemExit:
-                        pass
-                assert "Instala el paquete agix" in out.getvalue()
+        with patch("cobra.cli.commands.agix_cmd.mostrar_error") as err_mock:
+            exit_code = cmd.run(args)
+    err_mock.assert_called_once()
+    assert exit_code == 1
+    assert "Instala el paquete agix" in err_mock.call_args[0][0]
