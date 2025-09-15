@@ -14,6 +14,11 @@ def test_graficar_usa_sdk(monkeypatch):
     assert 'hb' in llamadas
 
 
+def test_graficar_rechaza_valor_incorrecto():
+    with pytest.raises(TypeError):
+        graficar(None)
+
+
 def test_proyectar_usa_sdk(monkeypatch):
     llamadas = {}
     def fake(hb):
@@ -24,6 +29,11 @@ def test_proyectar_usa_sdk(monkeypatch):
     h = Holobit([1, 2, 3, 4, 5, 6])
     proyectar(h, '2D')
     assert 'hb' in llamadas
+
+
+def test_proyectar_rechaza_valor_incorrecto():
+    with pytest.raises(TypeError):
+        proyectar(None, '2D')
 
 
 def test_transformar_usa_sdk(monkeypatch):
