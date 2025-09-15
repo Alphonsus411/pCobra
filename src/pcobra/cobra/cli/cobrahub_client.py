@@ -125,6 +125,7 @@ class CobraHubClient:
             return sha256.hexdigest()
         except Exception as e:
             logger.error(f"Error calculando checksum: {e}")
+            mostrar_error(_("Error calculando checksum: {err}").format(err=str(e)))
             return None
 
     def _verificar_tamaño_archivo(self, ruta: str) -> bool:
