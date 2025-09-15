@@ -158,22 +158,32 @@ Ejemplo:
 
 Subcomando ``agix``
 ------------------
-Analiza un archivo y sugiere mejoras utilizando ``agix``.  A partir de la
-versión ``1.0.0`` la selección de la mejor recomendación se realiza con la
-clase ``Reasoner`` de ``agix.reasoning.basic``.
+Analiza un archivo y sugiere mejoras utilizando ``agix``. El proyecto usa
+``agix`` en su versión ``1.6.0``, que permite ponderar la precisión e
+interpretabilidad de las recomendaciones y mapea internamente módulos bajo
+``src.agix`` para mantener compatibilidad. La selección de la mejor
+recomendación se realiza con la clase ``Reasoner`` de
+``agix.reasoning.basic``.
 
-Opcionalmente se pueden modular las recomendaciones emocionalmente
-mediante los siguientes flags, cuyos valores aceptan el rango ``-1`` a ``1``:
+Se pueden ajustar los resultados mediante:
+
+* ``--peso-precision``: factor de ponderación para la precisión (valor
+  positivo).
+* ``--peso-interpretabilidad``: factor para la interpretabilidad (valor
+  positivo).
+
+Además, es posible modular las recomendaciones emocionalmente con valores en
+el rango ``-1`` a ``1``:
 
 * ``--placer``: regula el grado de placer percibido.
 * ``--activacion``: ajusta el nivel de activación.
 * ``--dominancia``: indica el control o dominancia.
 
-Ejemplo:
+Ejemplo básico con ponderación:
 
 .. code-block:: bash
 
-   cobra agix ejemplo.co
+   cobra agix ejemplo.co --peso-precision 0.8 --peso-interpretabilidad 1.2
 
 Ejemplo con modulación emocional:
 
