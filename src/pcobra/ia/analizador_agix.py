@@ -55,8 +55,7 @@ def generar_sugerencias(
     proporcionan, usando valores en el rango ``[-1.0, 1.0]``.
     """
     if Reasoner is None:
-        print("Instala el paquete agix")
-        raise SystemExit(1)
+        raise ImportError("Instala el paquete agix")
 
     # Validar el código utilizando las herramientas de Cobra
     tokens = Lexer(codigo).tokenizar()
