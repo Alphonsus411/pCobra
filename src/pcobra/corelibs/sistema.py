@@ -32,7 +32,10 @@ def ejecutar(
     directamente a ``subprocess.run`` sin crear un shell. Se lanza
     ``ValueError`` si la lista está vacía. ``permitidos`` define una lista
     blanca de rutas absolutas de ejecutables autorizados; este parámetro es
-    obligatorio. Si se invoca la función
+    obligatorio. Las rutas suministradas deben estar normalizadas previamente
+    con ``os.path.normpath`` y ``os.path.normcase`` para asegurar
+    comparaciones coherentes en plataformas con distinta sensibilidad a las
+    mayúsculas. Si se invoca la función
     sin una lista se utilizará la capturada desde
     ``COBRA_EJECUTAR_PERMITIDOS`` al importar el módulo, siempre que no
     esté vacía. Los cambios posteriores en la variable de entorno no
@@ -70,8 +73,11 @@ def ejecutar(
         if exe_resuelto is None:
             raise ValueError(f"Comando no permitido: {exe}")
         exe_real = os.path.realpath(exe_resuelto)
-        permitidos_reales = {os.path.realpath(p) for p in permitidos}
-        if exe_real not in permitidos_reales:
+        exe_normalizado = os.path.normcase(os.path.normpath(exe_real))
+        permitidos_reales = {
+            os.path.normcase(os.path.normpath(os.path.realpath(p))) for p in permitidos
+        }
+        if exe_normalizado not in permitidos_reales:
             raise ValueError(f"Comando no permitido: {exe_real}")
         inode = os.stat(exe_real).st_ino
     args = comando
