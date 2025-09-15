@@ -24,6 +24,9 @@ MIN_VM2_VERSION = Version("3.9.19")
 # Límite máximo de salida permitida en la sandbox de JS (8 KB)
 MAX_JS_OUTPUT_BYTES = 8 * 1024
 
+# Límite máximo de salida permitida para la ejecución en contenedores (8 KB)
+MAX_CONTAINER_OUTPUT_BYTES = 8 * 1024
+
 
 def _worker(
     code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None
@@ -302,37 +305,112 @@ def ejecutar_en_contenedor(
     if backend not in imagenes:
         raise ValueError(f"Backend no soportado: {backend}")
 
+    args = [
+        "docker",
+        "run",
+        "--rm",
+        "--network=none",
+        "--pids-limit=128",
+        "--memory=256m",
+        "--cpus=1",
+        "--user",
+        "65534:65534",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--cap-drop=ALL",
+        "-i",
+        imagenes[backend],
+    ]
+
     try:
-        proc = subprocess.run(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "--network=none",
-                "--pids-limit=128",
-                "--memory=256m",
-                "--cpus=1",
-                "--user", "65534:65534",
-                "--read-only",
-                "--tmpfs", "/tmp",
-                "--cap-drop=ALL",
-                "-i",
-                imagenes[backend],
-            ],
-            input=codigo,
-            text=True,
-            capture_output=True,
-            check=True,
-            timeout=timeout,
-        )  # nosec B607 B603
+        with subprocess.Popen(  # nosec B607 B603
+            args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        ) as proc:
+            assert proc.stdin is not None
+            assert proc.stdout is not None
+
+            try:
+                proc.stdin.write(codigo.encode())
+            except BrokenPipeError:
+                pass
+            finally:
+                proc.stdin.close()
+
+            salida = bytearray()
+            truncado = False
+
+            if os.name == "nt":
+                import threading
+
+                def leer_salida() -> None:
+                    nonlocal salida, truncado
+                    for linea in iter(proc.stdout.readline, b""):
+                        if not linea:
+                            break
+                        salida.extend(linea)
+                        if len(salida) > MAX_CONTAINER_OUTPUT_BYTES:
+                            truncado = True
+                            proc.kill()
+                            salida = salida[:MAX_CONTAINER_OUTPUT_BYTES]
+                            break
+
+                lector = threading.Thread(target=leer_salida)
+                lector.start()
+                lector.join(timeout)
+                if timeout is not None and lector.is_alive():
+                    proc.kill()
+                    lector.join()
+                    proc.wait()
+                    raise RuntimeError("Tiempo de ejecución agotado")
+            else:
+                import select
+                import time
+
+                deadline: float | None = None
+                if timeout is not None:
+                    deadline = time.monotonic() + timeout
+
+                while True:
+                    restante: float | None = None
+                    if deadline is not None:
+                        restante = deadline - time.monotonic()
+                        if restante <= 0:
+                            proc.kill()
+                            proc.wait()
+                            raise RuntimeError("Tiempo de ejecución agotado")
+                    rlist, _, _ = select.select([proc.stdout], [], [], restante)
+                    if deadline is not None and not rlist:
+                        proc.kill()
+                        proc.wait()
+                        raise RuntimeError("Tiempo de ejecución agotado")
+                    if not rlist:
+                        continue
+                    chunk = proc.stdout.read(1024)
+                    if not chunk:
+                        if proc.poll() is not None:
+                            break
+                        continue
+                    salida.extend(chunk)
+                    if len(salida) > MAX_CONTAINER_OUTPUT_BYTES:
+                        truncado = True
+                        proc.kill()
+                        salida = salida[:MAX_CONTAINER_OUTPUT_BYTES]
+                        break
+
+            proc.wait()
+            resultado = salida.decode(errors="ignore")
+            if proc.returncode and not truncado:
+                mensaje = resultado.strip() or f"Error: {proc.returncode}"
+                raise RuntimeError(mensaje)
+            if truncado:
+                resultado += "\n[output truncated]"
+            return resultado
     except FileNotFoundError as e:
         raise RuntimeError("Docker no está instalado o no se encuentra en PATH") from e
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(e.stderr.strip()) from e
-    except subprocess.TimeoutExpired as e:
-        raise RuntimeError("Tiempo de ejecución agotado") from e
-
-    return proc.stdout
 
 
 def validar_dependencias(backend: str, mod_info: dict) -> None:

@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import shutil
 import subprocess
 from pathlib import Path
@@ -62,3 +63,60 @@ def test_js_detecta_reemplazo_binario(monkeypatch, tmp_path):
 
     with pytest.raises(sandbox.SecurityError):
         ejecutar_en_sandbox_js("console.log('hola')")
+
+
+def test_contenedor_trunca_salida(monkeypatch):
+    datos = b"A" * (sandbox.MAX_CONTAINER_OUTPUT_BYTES + 100)
+
+    class FakeStdout:
+        def __init__(self, data: bytes) -> None:
+            self._data = data
+            self._pos = 0
+
+        def readline(self) -> bytes:
+            if self._pos >= len(self._data):
+                return b""
+            chunk = self._data[self._pos :]
+            self._pos = len(self._data)
+            return chunk
+
+        def read(self, size: int = -1) -> bytes:
+            if self._pos >= len(self._data):
+                return b""
+            if size < 0:
+                size = len(self._data) - self._pos
+            chunk = self._data[self._pos : self._pos + size]
+            self._pos += len(chunk)
+            return chunk
+
+    class FakeProc:
+        def __init__(self, data: bytes) -> None:
+            self.stdout = FakeStdout(data)
+            self.stdin = io.BytesIO()
+            self.returncode: int | None = None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def kill(self) -> None:
+            self.returncode = -9
+
+        def wait(self) -> int:
+            if self.returncode is None:
+                self.returncode = 0
+            return self.returncode
+
+        def poll(self) -> int:
+            return self.returncode
+
+    monkeypatch.setattr(sandbox.subprocess, "Popen", lambda *a, **k: FakeProc(datos))
+    monkeypatch.setattr(sandbox.os, "name", "nt")
+
+    resultado = ejecutar_en_contenedor("print('hola')", "python")
+
+    assert resultado.endswith("\n[output truncated]")
+    cuerpo, _ = resultado.rsplit("\n", 1)
+    assert len(cuerpo.encode()) == sandbox.MAX_CONTAINER_OUTPUT_BYTES
