@@ -24,7 +24,7 @@ def test_proyectar_usa_sdk(monkeypatch):
     def fake(hb):
         llamadas['hb'] = hb
     import importlib
-    pmod = importlib.import_module('core.holobits.proyection')
+    pmod = importlib.import_module('core.holobits.proyeccion')
     monkeypatch.setattr(pmod, 'proyectar_holograma', fake)
     h = Holobit([1, 2, 3, 4, 5, 6])
     proyectar(h, '2D')
