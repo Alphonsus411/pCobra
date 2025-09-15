@@ -33,3 +33,14 @@ def test_generar_sugerencias_sin_agix():
     with patch.object(analizador_agix, "Reasoner", None):
         with pytest.raises(ImportError, match="Instala el paquete agix"):
             analizador_agix.generar_sugerencias("var x = 5")
+
+
+@pytest.mark.parametrize("param, valor", [
+    ("placer", 2.0),
+    ("activacion", -1.5),
+    ("dominancia", 1.2),
+])
+def test_generar_sugerencias_valores_fuera_de_rango(param, valor):
+    with patch.object(analizador_agix, "Reasoner", MagicMock()):
+        with pytest.raises(ValueError, match=rf"{param} debe estar en el rango"):
+            analizador_agix.generar_sugerencias("var x = 5", **{param: valor})
