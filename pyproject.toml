@@ -75,11 +75,11 @@ dev = [
 
 [tool.setuptools]
 include-package-data = true
-package-dir = {"" = "src/pcobra"}
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["src/pcobra"]
-include = ["*"]
+where = ["src"]
+include = ["pcobra"]
 
 [project.scripts]
 cobra = "pcobra.cli:main"

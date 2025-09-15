@@ -11,57 +11,79 @@ __pycache__/
 *.py[cod]
 *.so
 *.pyd
+*.pyo
 
-# ============= LOGS Y ARCHIVOS TEMPORALES =============
+# ============= ARCHIVOS BINARIOS O COMPILADOS ============
+*.dll
+*.exe
+*.bin
+*.dat
+*.pkl
+*.npy
+*.db
+*.zip
+*.tar.gz
+*.7z
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.pdf
+*.mp4
+*.mov
+
+# ============= ARCHIVOS LOCK (NO versionar en PRs) ============
+*.lock
 *.log
 *.bak
-*.swp
+
+# ============= CACHÉS, TEMPORALES Y COVERAGE =============
 .cache/
 .cache/*
-
-# ============= COVERAGE Y TESTS =============
+.pytest_cache/
+.hypothesis/
 .coverage
 htmlcov/
 coverage.xml
-.pytest_cache/
-.hypothesis/
 bench_results.json
 
-# ============= ENTORNOS IDE =============
+# ============= IDEs Y EDITORES =============
 .idea/
 .vscode/
 *.code-workspace
+*.sublime-project
+*.sublime-workspace
 
-# ============= DIST Y BUILD =============
+# ============= BUILD Y DISTROS =============
 *.egg-info/
 dist/
 build/
 
 # ============= FRONTEND =============
-extensions/vscode/node_modules/  # Dependencias de la extensión VS Code
+node_modules/
+extensions/vscode/node_modules/
 docs/build/
-docs/frontend/galeria/*.png
-docs/frontend/galeria/*.gif
+docs/frontend/galeria/
 
-# ============= DOCUMENTACIÓN SPHINX =============
+# ============= SPHINX Y DOCS =============
 docs/_build/
 docs/cheatsheet.pdf
-docs/*.png  # Solo si estás generando imágenes temporales allí
+docs/*.png
+docs/*.gif
 
-# ============= ARCHIVOS BINARIOS O PERSONALIZADOS =============
-all-bytes.dat
-*.dll
-*.exe
-*.bin
-*.dat
-
-# ============= CONFIG INTERNOS (opcional) =============
+# ============= CONFIGS LOCALES =============
 *.toml.local
 *.env.local
+.env
+.env.*
 
-# Ignore legacy cobra-lenguaje backup
-src/cobra-lenguaje/
-
-# ============= SCRIPTS WINDOWS =============
+# ============= SCRIPTS WINDOWS Y BACKUPS =============
 clean.ps1
 make.bat
+*.swp
+*~
+
+# ============= OTROS PERSONALIZADOS =============
+src/cobra-lenguaje/
+all-bytes.dat
