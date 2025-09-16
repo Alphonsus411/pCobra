@@ -120,6 +120,7 @@ def ejecutar_en_sandbox_js(
         claves_sensibles = {
             "PATH",
             "NODE_OPTIONS",
+            "NODE_PATH",
             "LD_PRELOAD",
             "LD_LIBRARY_PATH",
         }
