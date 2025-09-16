@@ -3,6 +3,7 @@
 import os
 import marshal
 import multiprocessing
+import shutil
 import subprocess
 import tempfile
 import string
@@ -111,7 +112,6 @@ def ejecutar_en_sandbox_js(
     """
     import json
     import os
-    import shutil
 
     node_path = shutil.which("node")
     env_path = os.path.dirname(node_path) if node_path else "/usr/bin"
@@ -306,8 +306,30 @@ def ejecutar_en_contenedor(
     if backend not in imagenes:
         raise ValueError(f"Backend no soportado: {backend}")
 
+    docker_path = shutil.which("docker")
+    if not docker_path:
+        raise RuntimeError(
+            "Docker no está disponible: no se encontró el ejecutable en PATH"
+        )
+
+    docker_path = os.path.realpath(docker_path)
+    if not os.path.exists(docker_path):
+        raise RuntimeError(
+            f"Docker no está disponible: el ejecutable '{docker_path}' no existe"
+        )
+
+    try:
+        docker_inode = os.stat(docker_path).st_ino
+    except OSError as exc:  # pragma: no cover - fallo inesperado de acceso
+        raise RuntimeError(
+            f"Docker no está disponible: no se pudo acceder a '{docker_path}'"
+        ) from exc
+
+    docker_dir = os.path.dirname(docker_path) or os.defpath
+    env = {"PATH": docker_dir}
+
     args = [
-        "docker",
+        docker_path,
         "run",
         "--rm",
         "--network=none",
@@ -330,7 +352,19 @@ def ejecutar_en_contenedor(
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            env=env,
         ) as proc:
+            try:
+                if os.stat(docker_path).st_ino != docker_inode:
+                    proc.kill()
+                    proc.wait()
+                    raise SecurityError("El binario de Docker ha cambiado")
+            except OSError as exc:  # pragma: no cover - condición de carrera
+                proc.kill()
+                proc.wait()
+                raise SecurityError(
+                    "No se pudo verificar la integridad del binario de Docker"
+                ) from exc
             assert proc.stdin is not None
             assert proc.stdout is not None
 
@@ -410,8 +444,10 @@ def ejecutar_en_contenedor(
             if truncado:
                 resultado += "\n[output truncated]"
             return resultado
-    except FileNotFoundError as e:
-        raise RuntimeError("Docker no está instalado o no se encuentra en PATH") from e
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            "Docker no está disponible: no se pudo invocar el ejecutable"
+        ) from exc
 
 
 def validar_dependencias(backend: str, mod_info: dict) -> None:

@@ -65,8 +65,13 @@ def test_js_detecta_reemplazo_binario(monkeypatch, tmp_path):
         ejecutar_en_sandbox_js("console.log('hola')")
 
 
-def test_contenedor_trunca_salida(monkeypatch):
+def test_contenedor_trunca_salida(monkeypatch, tmp_path):
     datos = b"A" * (sandbox.MAX_CONTAINER_OUTPUT_BYTES + 100)
+
+    fake_docker = tmp_path / "docker"
+    fake_docker.write_text("#!/bin/sh\nexit 0\n")
+    fake_docker.chmod(0o755)
+    monkeypatch.setattr(sandbox.shutil, "which", lambda *_: str(fake_docker))
 
     class FakeStdout:
         def __init__(self, data: bytes) -> None:
