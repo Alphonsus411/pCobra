@@ -70,8 +70,9 @@ class CobraHubClient:
 
             allowed = os.environ.get("COBRA_HOST_WHITELIST", "")
             if allowed:
-                hosts = {h.strip() for h in allowed.split(",") if h.strip()}
-                if parsed.hostname not in hosts:
+                hosts = {h.strip().lower() for h in allowed.split(",") if h.strip()}
+                hostname_normalizado = parsed.hostname.lower()
+                if hostname_normalizado not in hosts:
                     mostrar_error(_("Host de CobraHub no permitido"))
                     return False
 
@@ -214,17 +215,18 @@ class CobraHubClient:
 
                 base_host = urlparse(self.base_url).hostname
                 if base_host:
-                    allowed_hosts.add(base_host)
+                    allowed_hosts.add(base_host.lower())
 
                 allowed = os.environ.get("COBRA_HOST_WHITELIST", "")
                 if allowed:
                     allowed_hosts.update(
-                        host.strip()
+                        host.strip().lower()
                         for host in allowed.split(",")
                         if host.strip()
                     )
 
-                if parsed_final.hostname not in allowed_hosts:
+                final_host = parsed_final.hostname.lower() if parsed_final.hostname else None
+                if not final_host or final_host not in allowed_hosts:
                     response.close()
                     raise ValueError(
                         _("La descarga fue redirigida a un host no permitido")

@@ -282,6 +282,36 @@ def test_descargar_modulo_redireccion_host_no_autorizado(tmp_path, monkeypatch):
 
 
 @pytest.mark.timeout(5)
+def test_descargar_modulo_whitelist_insensible_mayusculas(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "mods").mkdir()
+    destino = "mods/m.co"
+
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "COBRAHUB.EXAMPLE.COM")
+    monkeypatch.setenv("COBRAHUB_URL", "https://Cobrahub.Example.com/api")
+
+    client = cobrahub_client.CobraHubClient()
+
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+    response.raise_for_status.return_value = None
+    response.iter_content.return_value = [b"datos"]
+    response.headers = {}
+    response.url = "https://COBRAHUB.EXAMPLE.COM/modulos/m.co"
+
+    client.session.get = MagicMock(return_value=response)
+
+    ok = client.descargar_modulo("m.co", destino)
+
+    assert ok
+    archivo = tmp_path / destino
+    assert archivo.exists()
+    assert archivo.read_bytes() == b"datos"
+    client.session.get.assert_called_once()
+
+
+@pytest.mark.timeout(5)
 def test_publicar_modulo_permission_error(tmp_path):
     archivo = tmp_path / "m.co"
     archivo.write_text("var x = 1")
