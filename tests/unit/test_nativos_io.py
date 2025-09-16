@@ -48,6 +48,16 @@ def test_obtener_url_host_whitelist(monkeypatch):
         mock_get.assert_called_once_with('https://example.com', timeout=5, allow_redirects=False, stream=True)
 
 
+def test_obtener_url_host_whitelist_insensible_mayusculas(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "Example.COM")
+    mock_resp = MagicMock(url="https://EXAMPLE.com", encoding="utf-8")
+    mock_resp.iter_content.return_value = [b"ok"]
+    mock_resp.raise_for_status.return_value = None
+    with patch('requests.get', return_value=mock_resp) as mock_get:
+        assert io.obtener_url('https://EXAMPLE.com') == 'ok'
+        mock_get.assert_called_once_with('https://EXAMPLE.com', timeout=5, allow_redirects=False, stream=True)
+
+
 def test_obtener_url_sin_whitelist(monkeypatch):
     monkeypatch.delenv("COBRA_HOST_WHITELIST", raising=False)
     with patch('requests.get') as mock_get:

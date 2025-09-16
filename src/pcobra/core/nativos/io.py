@@ -49,7 +49,8 @@ def escribir_archivo(ruta, datos):
 
 def _validar_host(url: str, hosts: set[str]) -> None:
     host = urllib.parse.urlparse(url).hostname
-    if host not in hosts:
+    host_normalizado = host.lower() if host else None
+    if not host_normalizado or host_normalizado not in hosts:
         raise ValueError("Host no permitido")
 
 
@@ -68,7 +69,7 @@ def obtener_url(url, permitir_redirecciones: bool = False):
     allowed = os.environ.get("COBRA_HOST_WHITELIST")
     if not allowed:
         raise ValueError("COBRA_HOST_WHITELIST no establecido")
-    hosts = {h.strip() for h in allowed.split(',') if h.strip()}
+    hosts = {h.strip().lower() for h in allowed.split(',') if h.strip()}
     if not hosts:
         raise ValueError("COBRA_HOST_WHITELIST vacío")
     _validar_host(url, hosts)
