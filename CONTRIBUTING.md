@@ -73,6 +73,11 @@ Además de las pruebas, ejecuta las verificaciones de estilo con:
 ```bash
 make lint
 ```
+
+Cada workflow en `.github/workflows` se valida automáticamente mediante el
+test `tests/test_workflows_yaml.py`. Si añades o modificas un workflow,
+ejecuta `pytest` para asegurarte de que el archivo es YAML válido antes de
+subir los cambios.
 ## Pruebas de transpiladores
 
 Las pruebas de los transpiladores ejecutan el código generado en varios lenguajes.
