@@ -186,7 +186,7 @@ class CobraHubClient:
             return False
 
     def descargar_modulo(self, nombre: str, destino: str) -> bool:
-        """Descarga un módulo de CobraHub y lo guarda en destino."""
+        """Descarga un módulo de CobraHub asegurando HTTPS y hosts autorizados."""
         if not self._validar_nombre_modulo(nombre):
             return False
 
@@ -201,6 +201,34 @@ class CobraHubClient:
                 stream=True,
             ) as response:
                 response.raise_for_status()
+
+                final_url = response.url or ""
+                if not final_url.lower().startswith("https://"):
+                    response.close()
+                    raise ValueError(
+                        _("La descarga fue redirigida a una URL insegura")
+                    )
+
+                parsed_final = urlparse(final_url)
+                allowed_hosts = set()
+
+                base_host = urlparse(self.base_url).hostname
+                if base_host:
+                    allowed_hosts.add(base_host)
+
+                allowed = os.environ.get("COBRA_HOST_WHITELIST", "")
+                if allowed:
+                    allowed_hosts.update(
+                        host.strip()
+                        for host in allowed.split(",")
+                        if host.strip()
+                    )
+
+                if parsed_final.hostname not in allowed_hosts:
+                    response.close()
+                    raise ValueError(
+                        _("La descarga fue redirigida a un host no permitido")
+                    )
 
                 tamaño_total = 0
                 checksum_servidor = response.headers.get("X-Content-Checksum")
@@ -243,7 +271,7 @@ def publicar_modulo(ruta: str) -> bool:
 
 
 def descargar_modulo(nombre: str, destino: str) -> bool:
-    """Descarga un módulo desde CobraHub."""
+    """Descarga un módulo desde CobraHub con redirecciones HTTPS y autorizadas."""
     os.environ["COBRAHUB_URL"] = COBRAHUB_URL
     return CobraHubClient().descargar_modulo(nombre, destino)
 
