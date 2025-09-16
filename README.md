@@ -787,6 +787,13 @@ editable junto con las dependencias de desarrollo:**
 pip install -e .[dev]
 ```
 
+Además, cada cambio en los workflows de GitHub Actions se valida con
+[`actionlint`](https://github.com/rhysd/actionlint) mediante el workflow
+[Validar workflows](.github/workflows/validate-workflows.yml). Este proceso se
+ejecuta automáticamente en los eventos `push` y `pull_request` cuando se
+modifican archivos dentro de `.github/workflows/`, evitando que se integren
+definiciones inválidas en la canalización de CI.
+
 Esta instrucción añade el proyecto al `PYTHONPATH` e instala todas las
 dependencias listadas en `requirements-dev.txt`, las cuales están incluidas en
 el extra `dev` de `pyproject.toml`. Sin estas bibliotecas las pruebas fallarán
