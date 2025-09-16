@@ -1,4 +1,6 @@
 name: Validar workflows
+permissions:
+  contents: read
 
 on:
   push:
