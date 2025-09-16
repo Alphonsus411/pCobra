@@ -119,6 +119,7 @@ def test_sandbox_js_env_vars_permitidas(monkeypatch):
         "NODE_OPTIONS": "--eval \"process.stdout.write('pwned')\"",
         "PATH": "/tmp",
         "API_KEY": "secreta",
+        "NODE_PATH": "/tmp/node_modules",
     }
 
     salida = ejecutar_en_sandbox_js("console.log('hola')", env_vars=env_vars)
@@ -126,6 +127,7 @@ def test_sandbox_js_env_vars_permitidas(monkeypatch):
     assert "pwned" not in salida
     assert capturadas.get("API_KEY") == "secreta"
     assert capturadas.get("NODE_OPTIONS") is None
+    assert capturadas.get("NODE_PATH") is None
     assert capturadas.get("PATH") != "/tmp"
 
 

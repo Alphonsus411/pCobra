@@ -8,7 +8,11 @@ mediante `vm2` en un contexto vacío donde únicamente se expone un objeto
 `console`. De esta forma no se tiene acceso a funciones internas de Node ni a
 módulos del sistema. Además, la ejecución se realiza con un entorno de
 variables reducido donde `PATH` apunta exclusivamente a `/usr/bin` o al
-directorio que contiene el ejecutable de Node.
+directorio que contiene el ejecutable de Node. Antes de ejecutar el código se
+limpia cualquier variable sensible proporcionada por el usuario, como
+`NODE_OPTIONS`, `NODE_PATH`, `PATH` personalizado o entradas que comiencen por
+`LD_`, para impedir que se carguen módulos maliciosos o se altere la resolución
+de dependencias.
 
 Es imprescindible mantener `vm2` actualizado; antes de cada ejecución se
 verifica que la versión instalada sea al menos `3.9.19` para mitigar
