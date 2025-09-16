@@ -54,6 +54,10 @@ STANDARD_IMPORTS = {
         "import * as texto from './nativos/texto.js';",
         "import * as tiempo from './nativos/tiempo.js';",
     ],
+    "hololang": [
+        "use holo.core::*;",
+        "use holo.bits::*;",
+    ],
     "swift": [],
     "perl": [],
     "visualbasic": [],
