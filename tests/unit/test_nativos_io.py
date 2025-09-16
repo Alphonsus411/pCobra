@@ -90,6 +90,15 @@ def test_obtener_url_redireccion_fuera_whitelist(monkeypatch):
             io.obtener_url('https://example.com', permitir_redirecciones=True)
 
 
+def test_obtener_url_redireccion_http(monkeypatch):
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
+    mock_resp = MagicMock(text="ok", url="http://example.com")
+    mock_resp.raise_for_status.return_value = None
+    with patch('requests.get', return_value=mock_resp):
+        with pytest.raises(ValueError):
+            io.obtener_url('https://example.com', permitir_redirecciones=True)
+
+
 def test_obtener_url_respuesta_muy_grande(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     grande = MagicMock(url="https://example.com", encoding="utf-8")
