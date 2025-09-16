@@ -16,6 +16,36 @@ pip install -e .[dev]
 
 Copia `.env.example` a `.env` y verifica la instalación con `cobra --version`.
 
+## Recrear el entorno con herramientas estándar
+
+Si prefieres evitar los scripts incluidos en el repositorio, estos pasos usan
+únicamente `python`, `venv` y `pip` para levantar un entorno desde cero:
+
+1. Crea un entorno virtual aislado:
+   ```bash
+   python -m venv .venv
+   ```
+2. Activa el entorno:
+   ```bash
+   source .venv/bin/activate      # Linux o macOS
+   .\\.venv\\Scripts\\activate  # Windows
+   ```
+3. Actualiza `pip` y `setuptools` para evitar incompatibilidades:
+   ```bash
+   python -m pip install --upgrade pip setuptools
+   ```
+4. Instala pCobra en modo editable junto con las dependencias básicas:
+   ```bash
+   pip install -e .
+   ```
+5. Añade las dependencias de desarrollo y pruebas cuando las necesites:
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+Con este flujo puedes recrear rápidamente un entorno limpio después de limpiar
+el árbol de trabajo o al migrar a una máquina nueva.
+
 ## Instalación de gramáticas
 
 Algunos transpiladores inversos utilizan [tree-sitter](https://tree-sitter.github.io/tree-sitter/).
