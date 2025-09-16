@@ -85,6 +85,7 @@ def test_cli_modulos_buscar(tmp_path, monkeypatch):
         response = MagicMock()
         response.raise_for_status.return_value = None
         response.content = b"data"
+        response.url = f"{cobrahub_client.COBRAHUB_URL}/modulos/remote.co"
         mock_get.return_value = response
         ret = modules_cmd.ModulesCommand().run(args)
     archivo = mods_dir / "remote.co"
@@ -178,6 +179,7 @@ def test_descargar_modulo_ruta_valida(tmp_path, monkeypatch):
         resp = MagicMock()
         resp.raise_for_status.return_value = None
         resp.content = b"x"
+        resp.url = f"{cobrahub_client.COBRAHUB_URL}/modulos/m.co"
         mock_get.return_value = resp
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert ok
@@ -209,6 +211,7 @@ def test_descargar_modulo_streaming_con_checksum(tmp_path, monkeypatch):
             self.closed = False
             self.headers = MagicMock()
             self.headers.get.return_value = checksum
+            self.url = f"{client.base_url}/modulos/m.co"
 
         def __enter__(self):
             return self
@@ -245,6 +248,37 @@ def test_descargar_modulo_streaming_con_checksum(tmp_path, monkeypatch):
     assert response.iter_calls == [client.CHUNK_SIZE]
     response.headers.get.assert_called_once_with("X-Content-Checksum")
     assert response.closed is True
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_redireccion_host_no_autorizado(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "mods").mkdir()
+    destino = "mods/m.co"
+
+    monkeypatch.setenv("COBRA_HOST_WHITELIST", "cobrahub.example.com")
+
+    client = cobrahub_client.CobraHubClient()
+
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+    response.raise_for_status.return_value = None
+    response.iter_content.return_value = [b"datos"]
+    response.headers = {}
+    response.url = "https://malicioso.example.com/modulos/m.co"
+    response.close = MagicMock()
+
+    client.session.get = MagicMock(return_value=response)
+
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err:
+        ok = client.descargar_modulo("m.co", destino)
+
+    assert not ok
+    err.assert_called_once()
+    response.close.assert_called_once()
+    client.session.get.assert_called_once()
+    assert not (tmp_path / destino).exists()
 
 
 @pytest.mark.timeout(5)
@@ -290,6 +324,7 @@ def test_descargar_modulo_permission_error(tmp_path, monkeypatch):
         resp = MagicMock()
         resp.raise_for_status.return_value = None
         resp.content = b"data"
+        resp.url = f"{cobrahub_client.COBRAHUB_URL}/modulos/m.co"
         mock_get.return_value = resp
         ok = cobrahub_client.descargar_modulo("m.co", destino)
     assert not ok
