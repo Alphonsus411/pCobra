@@ -59,7 +59,8 @@ def obtener_url(url, permitir_redirecciones: bool = False):
     Es obligatorio definir la variable de entorno ``COBRA_HOST_WHITELIST`` con
     la lista de hosts permitidos separados por comas. Las redirecciones están
     deshabilitadas por defecto. Si se permiten, se valida que el destino final
-    continúe dentro de la lista blanca de hosts.
+    continúe dentro de la lista blanca de hosts y que el esquema se mantenga en
+    ``https``.
     """
     url_baja = url.lower()
     if not url_baja.startswith("https://"):
@@ -76,6 +77,8 @@ def obtener_url(url, permitir_redirecciones: bool = False):
     )
     try:
         resp.raise_for_status()
+        if permitir_redirecciones and not resp.url.lower().startswith("https://"):
+            raise ValueError("Esquema de URL no soportado")
         _validar_host(resp.url, hosts)
         return _leer_respuesta(resp)
     finally:
