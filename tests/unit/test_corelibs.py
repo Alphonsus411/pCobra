@@ -8,6 +8,10 @@ import pytest
 
 sys.modules.setdefault("yaml", ModuleType("yaml"))
 
+import core.ast_nodes as core_ast_nodes
+
+sys.modules.setdefault("cobra.core.ast_nodes", core_ast_nodes)
+
 import pcobra.corelibs as core
 import pcobra.corelibs.tiempo as core_tiempo
 import pcobra.corelibs.sistema as core_sistema
@@ -36,13 +40,32 @@ def test_numero_funcs():
     assert core.promedio([1, 2, 3]) == 2.0
 
 
-def test_archivo_funcs(tmp_path):
-    ruta = tmp_path / "f.txt"
-    core.escribir(ruta, "data")
+def test_archivo_funcs(tmp_path, monkeypatch):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    nombre = "f.txt"
+    core.escribir(nombre, "data")
+    ruta = tmp_path / nombre
     assert core.existe(ruta)
-    assert core.leer(ruta) == "data"
+    assert core.leer(nombre) == "data"
     core.eliminar(ruta)
     assert not core.existe(ruta)
+
+
+@pytest.mark.parametrize(
+    "func",
+    [core.leer, lambda ruta: core.escribir(ruta, "dato")],
+)
+@pytest.mark.parametrize(
+    "ruta",
+    [
+        lambda base: str((base / "absoluta.txt").resolve()),
+        lambda _base: "../escape.txt",
+    ],
+)
+def test_archivo_rechaza_rutas_invalidas(monkeypatch, tmp_path, func, ruta):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    with pytest.raises(ValueError):
+        func(ruta(tmp_path))
 
 
 def test_tiempo_funcs(monkeypatch):
