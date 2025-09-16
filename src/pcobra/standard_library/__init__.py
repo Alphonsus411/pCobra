@@ -6,7 +6,7 @@ from standard_library.archivo import leer, escribir, adjuntar, existe
 from standard_library.fecha import hoy, formatear, sumar_dias
 from standard_library.lista import cabeza, cola, longitud, combinar
 from standard_library.logica import conjuncion, disyuncion, negacion
-from standard_library.util import es_nulo, es_vacio, repetir
+from standard_library.util import es_nulo, es_vacio, rel, repetir
 
 __all__ = [
     "leer",
@@ -25,5 +25,6 @@ __all__ = [
     "negacion",
     "es_nulo",
     "es_vacio",
+    "rel",
     "repetir",
 ]
