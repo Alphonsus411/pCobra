@@ -26,13 +26,15 @@ logger = logging.getLogger(__name__)
 def configurar_entorno() -> None:
     """Carga variables de entorno desde un archivo .env si está presente."""
     try:
-        if not load_dotenv():
-            logger.warning("El archivo .env no se cargó")
-    except Exception as exc:  # pragma: no cover - manejo básico de errores
-        logger.critical(
-            "Error inesperado al cargar variables de entorno: %s", str(exc)
-        )
+        cargado = load_dotenv()
+    except OSError as exc:
+        logger.error("No se pudo acceder al archivo .env: %s", exc)
+        return
+    except Exception as exc:  # pragma: no cover - registro y propagación
+        logger.exception("Error inesperado al cargar variables de entorno")
         raise
+    if not cargado:
+        logger.warning("El archivo .env no se cargó")
 
 
 cobra = argparse.ArgumentParser(prog="cobra")
