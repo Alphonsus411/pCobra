@@ -482,3 +482,27 @@ Se usa para representar retornos que pueden estar ausentes. Puede
 combinarse con `si` o `switch` para comprobar su contenido y con `con`
 cuando la disponibilidad del recurso es condicional.
 
+
+## 22. Manipulación de texto y Unicode
+
+El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `str` de Python y `String` de ECMAScript. Además de `mayusculas`, `minusculas`, `invertir` y `concatenar`, ahora dispones de:
+
+- `capitalizar` y `titulo` para aplicar estilos de texto comunes.
+- `quitar_espacios`, `dividir` y `unir` para recortar y recomponer cadenas de forma precisa, incluso con caracteres personalizados.
+- `reemplazar`, `empieza_con`, `termina_con` e `incluye` para búsquedas y sustituciones expresivas.
+- `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
+- `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
+
+En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.texto as texto
+
+imprimir(core.titulo("guía de cobra"))          # 'Guía De Cobra'
+imprimir(core.dividir("uno   dos\ttres"))       # ['uno', 'dos', 'tres']
+imprimir(texto.quitar_acentos("Canción"))       # 'Cancion'
+imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
+```
+
+Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.

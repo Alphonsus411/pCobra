@@ -7,6 +7,12 @@ from standard_library.fecha import hoy, formatear, sumar_dias
 from standard_library.lista import cabeza, cola, longitud, combinar
 from standard_library.logica import conjuncion, disyuncion, negacion
 from standard_library.util import es_nulo, es_vacio, rel, repetir
+from standard_library.texto import (
+    quitar_acentos,
+    normalizar_espacios,
+    es_palindromo,
+    es_anagrama,
+)
 
 __all__ = [
     "leer",
@@ -27,4 +33,8 @@ __all__ = [
     "es_vacio",
     "rel",
     "repetir",
+    "quitar_acentos",
+    "normalizar_espacios",
+    "es_palindromo",
+    "es_anagrama",
 ]

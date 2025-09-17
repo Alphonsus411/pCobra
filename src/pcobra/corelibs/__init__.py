@@ -1,6 +1,23 @@
 """Colección de utilidades estándar para Cobra."""
 
-from corelibs.texto import mayusculas, minusculas, invertir, concatenar
+from corelibs.texto import (
+    mayusculas,
+    minusculas,
+    capitalizar,
+    titulo,
+    invertir,
+    concatenar,
+    quitar_espacios,
+    dividir,
+    unir,
+    reemplazar,
+    empieza_con,
+    termina_con,
+    incluye,
+    rellenar_izquierda,
+    rellenar_derecha,
+    normalizar_unicode,
+)
 from corelibs.numero import es_par, es_primo, factorial, promedio
 from corelibs.archivo import leer, escribir, existe, eliminar
 from corelibs.tiempo import ahora, formatear, dormir
@@ -12,8 +29,20 @@ from corelibs.sistema import obtener_os, ejecutar, obtener_env, listar_dir
 __all__ = [
     "mayusculas",
     "minusculas",
+    "capitalizar",
+    "titulo",
     "invertir",
     "concatenar",
+    "quitar_espacios",
+    "dividir",
+    "unir",
+    "reemplazar",
+    "empieza_con",
+    "termina_con",
+    "incluye",
+    "rellenar_izquierda",
+    "rellenar_derecha",
+    "normalizar_unicode",
     "es_par",
     "es_primo",
     "factorial",
