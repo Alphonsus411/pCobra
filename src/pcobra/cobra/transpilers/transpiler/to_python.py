@@ -54,6 +54,7 @@ from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 from cobra.transpilers.common.utils import get_standard_imports
+from cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
 from cobra.transpilers.transpiler.python_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,
@@ -244,6 +245,7 @@ class TranspiladorPython(BaseTranspiler):
         return "    " * self.nivel_indentacion
 
     def transpilar(self, nodos):
+        nodos = ensure_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         for nodo in nodos:

@@ -42,6 +42,7 @@ from core.optimizations import optimize_constants, remove_dead_code, inline_func
 from cobra.macro import expandir_macros
 from cobra.transpilers.common.utils import get_standard_imports
 from cobra.transpilers.module_map import get_mapped_path
+from cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
 from cobra.transpilers.transpiler.js_nodes.asignacion import visit_asignacion as _visit_asignacion
 from cobra.transpilers.transpiler.js_nodes.condicional import visit_condicional as _visit_condicional
@@ -261,6 +262,7 @@ class TranspiladorJavaScript(BaseTranspiler):
             return str(nodo)
 
     def transpilar(self, ast_raiz):
+        ast_raiz = ensure_cobra_ast(ast_raiz)
         ast_raiz = expandir_macros(ast_raiz)
         ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
         for nodo in ast_raiz:
