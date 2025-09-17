@@ -7,6 +7,7 @@ import requests
 
 
 _MAX_RESP_SIZE = 1024 * 1024
+_MAX_REDIRECTS = 5
 
 
 def _leer_respuesta(resp: requests.Response) -> str:
@@ -29,7 +30,8 @@ def obtener_url(url: str, permitir_redirecciones: bool = False) -> str:
     """Devuelve el contenido de una URL ``https://`` como texto.
 
     Las redirecciones están deshabilitadas por defecto. Si se permiten,
-    se valida que el destino final continúe dentro de la lista blanca de hosts.
+    se siguen manualmente tras validar que cada salto permanezca en la lista
+    blanca de hosts autorizados.
     """
     url_baja = url.lower()
     if not url_baja.startswith("https://"):
@@ -40,25 +42,46 @@ def obtener_url(url: str, permitir_redirecciones: bool = False) -> str:
     hosts = {h.strip().lower() for h in allowed.split(',') if h.strip()}
     if not hosts:
         raise ValueError("COBRA_HOST_WHITELIST vacío")
-    _validar_host(url, hosts)
-    resp = requests.get(
-        url, timeout=5, allow_redirects=permitir_redirecciones, stream=True
-    )
-    try:
-        resp.raise_for_status()
-        if permitir_redirecciones and not resp.url.lower().startswith("https://"):
-            raise ValueError("Esquema de URL no soportado")
-        _validar_host(resp.url, hosts)
-        return _leer_respuesta(resp)
-    finally:
-        resp.close()
+    url_actual = url
+    redirecciones_restantes = _MAX_REDIRECTS
+    while True:
+        _validar_host(url_actual, hosts)
+        resp = requests.get(
+            url_actual, timeout=5, allow_redirects=False, stream=True
+        )
+        if permitir_redirecciones and 300 <= resp.status_code < 400:
+            if redirecciones_restantes == 0:
+                resp.close()
+                raise ValueError("Demasiadas redirecciones")
+            destino = resp.headers.get("Location")
+            if not destino:
+                resp.close()
+                raise ValueError("Redirección sin encabezado Location")
+            nueva_url = urllib.parse.urljoin(url_actual, destino)
+            if not nueva_url.lower().startswith("https://"):
+                resp.close()
+                raise ValueError("Esquema de URL no soportado")
+            _validar_host(nueva_url, hosts)
+            resp.close()
+            url_actual = nueva_url
+            redirecciones_restantes -= 1
+            continue
+        try:
+            resp.raise_for_status()
+            if not resp.url.lower().startswith("https://"):
+                raise ValueError("Esquema de URL no soportado")
+            _validar_host(resp.url, hosts)
+            return _leer_respuesta(resp)
+        finally:
+            resp.close()
 
 
 def enviar_post(url: str, datos: dict, permitir_redirecciones: bool = False) -> str:
     """Envía datos por ``POST`` a una URL ``https://`` y retorna la respuesta.
 
     Las redirecciones están deshabilitadas por defecto. Si se permiten,
-    se valida que el destino final continúe dentro de la lista blanca de hosts.
+    se siguen manualmente tras validar que cada salto permanezca en la lista
+    blanca de hosts autorizados.
     """
     url_baja = url.lower()
     if not url_baja.startswith("https://"):
@@ -69,19 +92,39 @@ def enviar_post(url: str, datos: dict, permitir_redirecciones: bool = False) -> 
     hosts = {h.strip().lower() for h in allowed.split(',') if h.strip()}
     if not hosts:
         raise ValueError("COBRA_HOST_WHITELIST vacío")
-    _validar_host(url, hosts)
-    resp = requests.post(
-        url,
-        data=datos,
-        timeout=5,
-        allow_redirects=permitir_redirecciones,
-        stream=True,
-    )
-    try:
-        resp.raise_for_status()
-        if permitir_redirecciones and not resp.url.lower().startswith("https://"):
-            raise ValueError("Esquema de URL no soportado")
-        _validar_host(resp.url, hosts)
-        return _leer_respuesta(resp)
-    finally:
-        resp.close()
+    url_actual = url
+    redirecciones_restantes = _MAX_REDIRECTS
+    while True:
+        _validar_host(url_actual, hosts)
+        resp = requests.post(
+            url_actual,
+            data=datos,
+            timeout=5,
+            allow_redirects=False,
+            stream=True,
+        )
+        if permitir_redirecciones and 300 <= resp.status_code < 400:
+            if redirecciones_restantes == 0:
+                resp.close()
+                raise ValueError("Demasiadas redirecciones")
+            destino = resp.headers.get("Location")
+            if not destino:
+                resp.close()
+                raise ValueError("Redirección sin encabezado Location")
+            nueva_url = urllib.parse.urljoin(url_actual, destino)
+            if not nueva_url.lower().startswith("https://"):
+                resp.close()
+                raise ValueError("Esquema de URL no soportado")
+            _validar_host(nueva_url, hosts)
+            resp.close()
+            url_actual = nueva_url
+            redirecciones_restantes -= 1
+            continue
+        try:
+            resp.raise_for_status()
+            if not resp.url.lower().startswith("https://"):
+                raise ValueError("Esquema de URL no soportado")
+            _validar_host(resp.url, hosts)
+            return _leer_respuesta(resp)
+        finally:
+            resp.close()
