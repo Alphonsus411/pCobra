@@ -65,7 +65,11 @@ sys.modules.setdefault(
 # Pre-importa ``cobra.core`` para estabilizar las dependencias internas.
 import cobra.core  # noqa: F401
 
-from cobra.cli.commands.compile_cmd import run_transpiler_pool, MAX_LANGUAGES
+from cobra.cli.commands.compile_cmd import (
+    run_transpiler_pool,
+    MAX_LANGUAGES,
+    PROCESS_TIMEOUT,
+)
 
 
 def dummy_executor(params):
@@ -78,6 +82,8 @@ def test_run_transpiler_pool_small_list(monkeypatch):
     """Verifica que se obtenga el retorno correcto para pocos lenguajes."""
 
     class DummyPool:
+        last_timeout = None
+
         def __init__(self, processes=None):
             pass
 
@@ -87,12 +93,13 @@ def test_run_transpiler_pool_small_list(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-        def map_async(self, func, iterable, timeout=None):
+        def map_async(self, func, iterable, chunksize=None):
             class R:
                 def __init__(self, data):
                     self._data = data
 
                 def get(self, timeout=None):
+                    DummyPool.last_timeout = timeout
                     return self._data
 
             return R([func(item) for item in iterable])
@@ -106,6 +113,43 @@ def test_run_transpiler_pool_small_list(monkeypatch):
     resultado = run_transpiler_pool(languages, ast, dummy_executor)
     esperado = [(lang, f"resultado_{lang}") for lang in languages]
     assert resultado == esperado
+    assert DummyPool.last_timeout == PROCESS_TIMEOUT
+
+
+def test_run_transpiler_pool_timeout(monkeypatch):
+    """Verifica que el timeout se aplique al obtener el resultado."""
+
+    class DummyPool:
+        last_timeout = None
+
+        def __init__(self, processes=None):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def map_async(self, func, iterable, chunksize=None):
+            class R:
+                def get(self, timeout=None):
+                    DummyPool.last_timeout = timeout
+                    raise multiprocessing.TimeoutError
+
+            return R()
+
+    import multiprocessing
+
+    monkeypatch.setattr(multiprocessing, "Pool", DummyPool)
+
+    languages = ["python"]
+    ast = None
+
+    with pytest.raises(multiprocessing.TimeoutError):
+        run_transpiler_pool(languages, ast, dummy_executor)
+
+    assert DummyPool.last_timeout == PROCESS_TIMEOUT
 
 
 def test_run_transpiler_pool_excesive_languages():
