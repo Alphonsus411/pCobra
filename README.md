@@ -769,7 +769,7 @@ Para un tutorial completo de creación de plugins revisa
 
 ## Modo seguro
 
-El intérprete y la CLI ejecutan el código en modo seguro de forma predeterminada. Este modo valida el AST y prohíbe primitivas como `leer_archivo`, `escribir_archivo`, `obtener_url`, `hilo`, `leer`, `escribir`, `existe`, `eliminar` y `enviar_post`. El validador `ValidadorProhibirReflexion` también bloquea llamadas a `eval`, `exec` y otras funciones de reflexión, además de impedir el acceso a atributos internos. Asimismo, las instrucciones `import` solo están permitidas para módulos instalados o incluidos en `IMPORT_WHITELIST`. Si el programa intenta utilizar estas funciones o importar otros archivos se lanzará `PrimitivaPeligrosaError`.
+El intérprete y la CLI ejecutan el código en modo seguro de forma predeterminada. Este modo valida el AST y prohíbe primitivas como `leer_archivo`, `escribir_archivo`, `obtener_url`, `hilo`, `leer`, `escribir`, `existe`, `eliminar` y `enviar_post`. El validador `ValidadorProhibirReflexion` también bloquea llamadas a `eval`, `exec` y otras funciones de reflexión, además de impedir el acceso a atributos internos. Asimismo, las instrucciones `import` solo están permitidas para módulos instalados o incluidos en `IMPORT_WHITELIST`. Antes de cargar el código las rutas se normalizan con `os.path.realpath` y se comparan con `os.path.commonpath`, por lo que un enlace simbólico o un directorio como `modules_fake` no pueden evadir el filtro. Si el programa intenta utilizar estas funciones o importar otros archivos se lanzará `PrimitivaPeligrosaError`.
 La validación se realiza mediante una cadena de validadores configurada por la
 función `construir_cadena`, lo que facilita añadir nuevas comprobaciones en el
 futuro.

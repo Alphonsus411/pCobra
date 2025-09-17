@@ -12,7 +12,10 @@ El validador ``ValidadorProhibirReflexion`` impide utilizar ``eval``, ``exec`` y
 otras funciones de reflexión o acceder a atributos internos como ``__dict__``.
 También se valida la
 instrucción ``import`` para permitir únicamente los módulos instalados o los
-especificados en ``IMPORT_WHITELIST``. La instrucción ``usar`` está limitada a
+especificados en ``IMPORT_WHITELIST``. Antes de ejecutar el módulo la ruta se
+normaliza con ``os.path.realpath`` y se compara con ``os.path.commonpath`` para
+evitar evasiones mediante prefijos como ``modules_fake`` o enlaces simbólicos.
+La instrucción ``usar`` está limitada a
 los paquetes listados en ``USAR_WHITELIST`` ubicado en
 ``src/pcobra/cobra/usar_loader.py``. Si esta lista se encuentra vacía, la
 función ``obtener_modulo`` provocará un ``PermissionError`` y no se podrán

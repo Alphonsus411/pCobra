@@ -76,6 +76,31 @@ MODULES_PATH = os.path.abspath(
 IMPORT_WHITELIST = set()
 
 
+def _ruta_import_permitida(ruta: str) -> bool:
+    """Indica si una ruta está autorizada para importarse."""
+
+    ruta_abs = os.path.abspath(ruta)
+    ruta_real = os.path.realpath(ruta_abs)
+    allowed_roots = [MODULES_PATH, *IMPORT_WHITELIST]
+
+    for root in allowed_roots:
+        if not root:
+            continue
+        root_abs = os.path.abspath(root)
+        root_real = os.path.realpath(root_abs)
+        try:
+            if (
+                os.path.commonpath([ruta_abs, root_abs]) == root_abs
+                and os.path.commonpath([ruta_real, root_real]) == root_real
+            ):
+                return True
+        except ValueError:
+            # En diferentes unidades (por ejemplo en Windows) commonpath puede
+            # fallar; en tal caso la ruta no pertenece al directorio permitido.
+            continue
+    return False
+
+
 class ExcepcionCobra(Exception):
     def __init__(self, valor):
         super().__init__(valor)
@@ -91,12 +116,9 @@ class InterpretadorCobra:
         import ast
 
         ruta_abs = os.path.abspath(ruta)
+        if not _ruta_import_permitida(ruta_abs):
+            raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
         ruta_real = os.path.realpath(ruta_abs)
-        allowed_roots = [MODULES_PATH, *IMPORT_WHITELIST]
-        if not any(os.path.commonpath([ruta_abs, root]) == root for root in allowed_roots):
-            raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
-        if not any(os.path.commonpath([ruta_real, root]) == root for root in allowed_roots):
-            raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
 
         try:
             with open(ruta_real, "r", encoding="utf-8") as f:
@@ -702,13 +724,14 @@ class InterpretadorCobra:
         # Cada módulo inicia su propia validación
         self._validados.clear()
         ruta = os.path.abspath(nodo.ruta)
-        if not ruta.startswith(MODULES_PATH) and ruta not in IMPORT_WHITELIST:
+        if not _ruta_import_permitida(ruta):
             raise PrimitivaPeligrosaError(
                 f"Importación de módulo no permitida: {nodo.ruta}"
             )
 
         try:
-            with open(ruta, "r", encoding="utf-8") as f:
+            ruta_real = os.path.realpath(ruta)
+            with open(ruta_real, "r", encoding="utf-8") as f:
                 codigo = f.read()
         except FileNotFoundError:
             raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
