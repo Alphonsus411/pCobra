@@ -506,3 +506,70 @@ imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
 ```
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.
+
+## 23. Operaciones con colecciones
+
+El módulo `pcobra.corelibs.coleccion` ahora ofrece funciones pensadas para transformar y analizar listas sin perder el orden de los elementos ni sacrificar seguridad de tipos. Las más destacadas son:
+
+- `mapear`, `filtrar` y `reducir` para aplicar funciones, quedarte con elementos relevantes y sintetizar resultados.
+- `encontrar` y `tomar` para acceder rápidamente a elementos puntuales.
+- `aplanar`, `zip_listas` y `mezclar` para reorganizar la información manteniendo copias y sin modificar la entrada original.
+- `agrupar_por` y `particionar` para clasificar datos de acuerdo a una clave o predicado.
+
+En paralelo, `standard_library.lista` incorpora capas de mayor nivel:
+
+- `mapear_seguro` captura las excepciones durante la transformación y te indica qué elementos fallaron.
+- `ventanas` crea ventanas deslizantes de cualquier tamaño y paso.
+- `chunk` divide una secuencia en bloques regulares con la opción de descartar los incompletos.
+
+### Receta paso a paso
+
+El siguiente ejemplo encadena todas las piezas anteriores para procesar una lista de registros de sensores:
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.lista as lista
+
+var lecturas = [
+    {"sensor": "temperatura", "valor": 18},
+    {"sensor": "temperatura", "valor": 23},
+    {"sensor": "humedad", "valor": None},
+    {"sensor": "temperatura", "valor": 21},
+]
+
+# 1. Nos quedamos con valores numéricos y los convertimos a grados Fahrenheit.
+var depurados, errores = lista.mapear_seguro(
+    lecturas,
+    lambda item: item["valor"] * 9 / 5 + 32,
+    valor_por_defecto=None,
+)
+
+# 2. Filtramos las lecturas válidas y agrupamos por sensor.
+var validas = core.filtrar(depurados, lambda valor: valor != None)
+var grupos = core.agrupar_por(lecturas, "sensor")
+
+# 3. Calculamos el promedio del sensor de temperatura.
+var temperaturas = grupos["temperatura"]
+var promedio_temperatura = core.promedio(
+    core.mapear(
+        core.filtrar(temperaturas, lambda item: item["valor"] != None),
+        lambda item: item["valor"],
+    )
+)
+
+# 4. Recorremos los datos en ventanas de dos en dos para detectar cambios bruscos.
+var ventanas = lista.ventanas(validas, 2, paso=1)
+
+# 5. Mezclamos las lecturas para probar un algoritmo aleatorio de manera reproducible.
+var muestra = core.mezclar(validas, semilla=42)
+
+imprimir(depurados)
+imprimir(errores)
+imprimir(promedio_temperatura)
+imprimir(ventanas)
+imprimir(muestra)
+```
+
+Cada paso mantiene el orden de entrada y devuelve nuevas listas, de modo que puedes reutilizar la variable original más adelante. `mezclar` acepta un parámetro `semilla` para producir barajados reproducibles en pruebas o demostraciones.
+
+Las funciones están disponibles tanto al ejecutar Cobra directamente como al transpirar a Python o JavaScript: la semántica se conserva gracias a las implementaciones equivalentes en `core/nativos/coleccion.js`.

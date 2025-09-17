@@ -21,7 +21,22 @@ from corelibs.texto import (
 from corelibs.numero import es_par, es_primo, factorial, promedio
 from corelibs.archivo import leer, escribir, existe, eliminar
 from corelibs.tiempo import ahora, formatear, dormir
-from corelibs.coleccion import ordenar, maximo, minimo, sin_duplicados
+from corelibs.coleccion import (
+    ordenar,
+    maximo,
+    minimo,
+    sin_duplicados,
+    mapear,
+    filtrar,
+    reducir,
+    encontrar,
+    aplanar,
+    agrupar_por,
+    particionar,
+    mezclar,
+    zip_listas,
+    tomar,
+)
 from corelibs.seguridad import hash_sha256, generar_uuid
 from corelibs.red import obtener_url, enviar_post
 from corelibs.sistema import obtener_os, ejecutar, obtener_env, listar_dir
@@ -58,6 +73,16 @@ __all__ = [
     "maximo",
     "minimo",
     "sin_duplicados",
+    "mapear",
+    "filtrar",
+    "reducir",
+    "encontrar",
+    "aplanar",
+    "agrupar_por",
+    "particionar",
+    "mezclar",
+    "zip_listas",
+    "tomar",
     "hash_sha256",
     "generar_uuid",
     "obtener_url",

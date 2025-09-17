@@ -19,4 +19,22 @@ importar & Importación de módulo\\
 intentar & Bloque de manejo de errores\\
 excepto & Captura de excepción\\
 \end{tabular}
+
+\section*{Colecciones}
+\begin{tabular}{ll}
+\textbf{Función} & \textbf{Descripción}\\\hline
+\texttt{mapear(lista, funcion)} & Aplica una función preservando el orden.\\
+\texttt{filtrar(lista, funcion)} & Conserva los elementos que cumplan la condición.\\
+\texttt{reducir(lista, funcion, inicial)} & Acumula valores de izquierda a derecha.\\
+\texttt{encontrar(lista, funcion)} & Devuelve el primer elemento válido o \texttt{None}.\\
+\texttt{aplanar(lista)} & Colapsa un nivel de anidación en una nueva lista.\\
+\texttt{agrupar\_por(lista, clave)} & Agrupa por clave manteniendo el orden de llegada.\\
+\texttt{particionar(lista, funcion)} & Divide en dos listas (verdaderos y falsos).\\
+\texttt{mezclar(lista, semilla)} & Copia barajada con semilla opcional para pruebas.\\
+\texttt{zip\_listas(a, b, ...)} & Crea tuplas alineadas hasta la lista más corta.\\
+\texttt{tomar(lista, n)} & Obtiene los primeros \texttt{n} elementos sin mutar.\\
+\texttt{mapear\_seguro(lista, funcion)} & Devuelve resultados y excepciones por elemento.\\
+\texttt{ventanas(lista, tam, paso)} & Genera ventanas deslizantes; usa \texttt{incluir\_incompletas}.\\
+\texttt{chunk(lista, tam)} & Construye bloques consecutivos del mismo tamaño.\\
+\end{tabular}
 \end{document}
