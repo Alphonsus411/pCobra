@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Callable
 
 import pytest
@@ -20,6 +21,17 @@ try:  # nosec B001
     import pcobra  # noqa: F401
 except Exception:
     pass
+
+if "requests" not in sys.modules:
+    fake_requests = ModuleType("requests")
+    fake_requests.Response = type("Response", (), {})
+
+    def _fail(*_args, **_kwargs):  # pragma: no cover - solo para pruebas
+        raise RuntimeError("requests no disponible en el entorno de pruebas")
+
+    fake_requests.get = _fail
+    fake_requests.post = _fail
+    sys.modules["requests"] = fake_requests
 
 
 @pytest.fixture

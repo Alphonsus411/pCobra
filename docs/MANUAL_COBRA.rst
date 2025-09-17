@@ -161,6 +161,77 @@ Factorial recursivo::
 
    imprimir(factorial(5))
 
+Operaciones numéricas con ``corelibs.numero``
+--------------------------------------------
+
+La biblioteca estándar también incluye utilidades numéricas inspiradas en
+``math`` y ``statistics`` de Python. Permiten normalizar valores, generar
+aleatorios reproducibles y analizar datos sin abandonar Cobra.
+
+.. code-block:: python
+
+   import pcobra.corelibs as core
+
+   medidas = [1.2, 1.8, 2.0, 2.5]
+   print(core.absoluto(-3))
+   print(core.redondear(3.14159, 3))
+   print(core.clamp(5, 0, 3))
+   print(core.mediana(medidas))
+   print(core.desviacion_estandar(medidas, muestral=True))
+
+.. list-table:: Equivalencias con bibliotecas numéricas
+   :header-rows: 1
+   :widths: 20 25 25 30
+
+   * - Cobra
+     - Python ``math``/``statistics``
+     - ``numpy``
+     - JavaScript ``Math``
+   * - ``absoluto(x)``
+     - ``math.fabs(x)``
+     - ``numpy.abs(x)``
+     - ``Math.abs(x)``
+   * - ``redondear(x, n)``
+     - ``round(x, n)``
+     - ``numpy.round(x, n)``
+     - ``Math.round(x * 10**n) / 10**n``
+   * - ``piso(x)``
+     - ``math.floor(x)``
+     - ``numpy.floor(x)``
+     - ``Math.floor(x)``
+   * - ``techo(x)``
+     - ``math.ceil(x)``
+     - ``numpy.ceil(x)``
+     - ``Math.ceil(x)``
+   * - ``raiz(x, n)``
+     - ``math.pow(x, 1/n)``
+     - ``numpy.power(x, 1/n)``
+     - ``Math.pow(x, 1/n)``
+   * - ``potencia(a, b)``
+     - ``math.pow(a, b)``
+     - ``numpy.power(a, b)``
+     - ``Math.pow(a, b)``
+   * - ``clamp(x, a, b)``
+     - ``min(max(x, a), b)``
+     - ``numpy.clip(x, a, b)``
+     - ``Math.min(Math.max(x, a), b)``
+   * - ``aleatorio(a, b)``
+     - ``random.uniform(a, b)``
+     - ``numpy.random.uniform(a, b)``
+     - ``Math.random() * (b - a) + a``
+   * - ``mediana(datos)``
+     - ``statistics.median(datos)``
+     - ``numpy.median(datos)``
+     - «Sin equivalente directo; ordenar y promediar»
+   * - ``moda(datos)``
+     - ``statistics.mode(datos)``
+     - ``numpy.unique(datos, return_counts=True)``
+     - «Sin equivalente directo; contar frecuencias»
+   * - ``desviacion_estandar(datos)``
+     - ``statistics.pstdev(datos)``
+     - ``numpy.std(datos)``
+     - «Sin equivalente directo; implementar manualmente»
+
 Transpilación y ejecución
 -------------------------
 

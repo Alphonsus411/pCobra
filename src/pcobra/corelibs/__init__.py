@@ -18,7 +18,23 @@ from corelibs.texto import (
     rellenar_derecha,
     normalizar_unicode,
 )
-from corelibs.numero import es_par, es_primo, factorial, promedio
+from corelibs.numero import (
+    absoluto,
+    aleatorio,
+    clamp,
+    desviacion_estandar,
+    es_par,
+    es_primo,
+    factorial,
+    mediana,
+    moda,
+    piso,
+    potencia,
+    promedio,
+    raiz,
+    redondear,
+    techo,
+)
 from corelibs.archivo import leer, escribir, existe, eliminar
 from corelibs.tiempo import ahora, formatear, dormir
 from corelibs.coleccion import (
@@ -58,10 +74,21 @@ __all__ = [
     "rellenar_izquierda",
     "rellenar_derecha",
     "normalizar_unicode",
+    "absoluto",
+    "aleatorio",
+    "clamp",
+    "desviacion_estandar",
     "es_par",
     "es_primo",
     "factorial",
+    "mediana",
+    "moda",
+    "piso",
+    "potencia",
     "promedio",
+    "raiz",
+    "redondear",
+    "techo",
     "leer",
     "escribir",
     "existe",

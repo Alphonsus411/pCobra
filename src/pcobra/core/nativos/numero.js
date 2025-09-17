@@ -1,3 +1,120 @@
+export function absoluto(n) {
+    return Math.abs(n);
+}
+
+
+export function redondear(valor, ndigitos = null) {
+    if (ndigitos === null || ndigitos === undefined) {
+        return Math.round(valor);
+    }
+    const factor = Math.pow(10, ndigitos);
+    return Math.round(valor * factor) / factor;
+}
+
+
+export function piso(valor) {
+    return Math.floor(valor);
+}
+
+
+export function techo(valor) {
+    return Math.ceil(valor);
+}
+
+
+export function raiz(valor, indice = 2) {
+    const indiceFloat = Number(indice);
+    if (indiceFloat === 0) {
+        throw new Error("El índice de la raíz no puede ser cero");
+    }
+    if (valor < 0) {
+        if (Number.isInteger(indiceFloat)) {
+            if (Math.abs(indiceFloat) % 2 === 0) {
+                throw new Error("No se puede calcular la raíz par de un número negativo");
+            }
+        } else {
+            throw new Error(
+                "No se puede calcular la raíz de índice fraccionario de un número negativo",
+            );
+        }
+    }
+    const magnitud = Math.pow(Math.abs(valor), 1 / indiceFloat);
+    return valor < 0 ? -magnitud : magnitud;
+}
+
+
+export function potencia(base, exponente) {
+    return Math.pow(base, exponente);
+}
+
+
+export function clamp(valor, minimo, maximo) {
+    if (minimo > maximo) {
+        throw new Error("El mínimo no puede ser mayor que el máximo");
+    }
+    return Math.min(Math.max(valor, minimo), maximo);
+}
+
+
+export function aleatorio(inicio = 0, fin = 1) {
+    if (inicio > fin) {
+        throw new Error("El inicio no puede ser mayor que el fin");
+    }
+    return Math.random() * (fin - inicio) + inicio;
+}
+
+
+export function mediana(lista) {
+    if (!lista || lista.length === 0) {
+        throw new Error("No se puede calcular la mediana de una secuencia vacía");
+    }
+    const ordenada = [...lista].sort((a, b) => a - b);
+    const mitad = Math.floor(ordenada.length / 2);
+    if (ordenada.length % 2 === 0) {
+        return (ordenada[mitad - 1] + ordenada[mitad]) / 2;
+    }
+    return ordenada[mitad];
+}
+
+
+export function moda(lista) {
+    if (!lista || lista.length === 0) {
+        throw new Error("No se puede calcular la moda de una secuencia vacía");
+    }
+    const frecuencias = new Map();
+    let maxConteo = 0;
+    let modaActual = lista[0];
+    for (const valor of lista) {
+        const conteo = (frecuencias.get(valor) ?? 0) + 1;
+        frecuencias.set(valor, conteo);
+        if (conteo > maxConteo) {
+            maxConteo = conteo;
+            modaActual = valor;
+        }
+    }
+    return modaActual;
+}
+
+
+export function desviacion_estandar(lista, muestral = false) {
+    if (!lista || lista.length === 0) {
+        throw new Error(
+            "No se puede calcular la desviación estándar de una secuencia vacía",
+        );
+    }
+    if (muestral && lista.length < 2) {
+        throw new Error("La desviación estándar muestral requiere al menos dos valores");
+    }
+    const promedio = lista.reduce((acc, val) => acc + val, 0) / lista.length;
+    const sumaCuadrados = lista.reduce(
+        (acc, val) => acc + Math.pow(val - promedio, 2),
+        0,
+    );
+    const divisor = muestral && lista.length > 1 ? lista.length - 1 : lista.length;
+    return Math.sqrt(sumaCuadrados / divisor);
+}
+
+
 export function es_par(n) {
     return n % 2 === 0;
 }
