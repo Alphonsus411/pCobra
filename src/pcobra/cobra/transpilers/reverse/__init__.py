@@ -43,6 +43,7 @@ _MODULOS = [
     "cobra.transpilers.reverse.from_pascal",
     "cobra.transpilers.reverse.from_visualbasic",
     "cobra.transpilers.reverse.from_wasm",
+    "pcobra.cobra.reverse",
 ]
 
 # Importaciones seguras -------------------------------------------------
