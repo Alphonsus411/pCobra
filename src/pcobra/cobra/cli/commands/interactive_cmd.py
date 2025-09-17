@@ -198,7 +198,11 @@ class InteractiveCommand(BaseCommand):
             # Validar dependencias
             validar_dependencias("python", module_map.get_toml_map())
         except (ValueError, FileNotFoundError) as err:
-            mostrar_error(_("Error de inicialización: {err}").format(err=err))
+            mostrar_error(
+                _("Error de dependencias durante la inicialización: {err}").format(
+                    err=err
+                )
+            )
             return 1
 
         # Configurar modo seguro y validadores

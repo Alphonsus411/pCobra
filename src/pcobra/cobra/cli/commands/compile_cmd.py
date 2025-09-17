@@ -165,13 +165,15 @@ class CompileCommand(BaseCommand):
             return 1
 
         mod_info = module_map.get_toml_map()
+        transpilador_objetivo = getattr(args, "backend", None) or args.tipo
+
         try:
             if getattr(args, "tipos", None):
                 langs = [t.strip() for t in args.tipos.split(",") if t.strip()]
                 for lang in langs:
                     validar_dependencias(lang, mod_info)
             else:
-                validar_dependencias(args.tipo, mod_info)
+                validar_dependencias(transpilador_objetivo, mod_info)
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
@@ -204,7 +206,7 @@ class CompileCommand(BaseCommand):
                     mostrar_error(_("Tiempo de ejecución excedido"))
                     return 1
             else:
-                transpilador = args.tipo if not getattr(args, "backend", None) else args.backend
+                transpilador = transpilador_objetivo
                 if transpilador not in TRANSPILERS:
                     raise ValueError(_("Transpilador no soportado."))
                 transp = TRANSPILERS[transpilador]()
