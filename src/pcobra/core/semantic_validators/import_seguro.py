@@ -8,10 +8,9 @@ class ValidadorImportSeguro(ValidadorBase):
     """Valida que las instrucciones import sean seguras."""
 
     def visit_import(self, nodo: NodoImport):
-        from core.interpreter import MODULES_PATH, IMPORT_WHITELIST
+        from core.interpreter import _ruta_import_permitida
 
-        ruta = os.path.abspath(nodo.ruta)
-        if not ruta.startswith(MODULES_PATH) and ruta not in IMPORT_WHITELIST:
+        if not _ruta_import_permitida(nodo.ruta):
             raise PrimitivaPeligrosaError(
                 f"Importación de módulo no permitida: {nodo.ruta}"
             )
