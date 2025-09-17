@@ -1,3 +1,8 @@
+## v10.1.0 - 2025-08-24
+- Integración completa de Hololang como lenguaje intermedio oficial del compilador.
+- Reestructuración de la cadena de transpilación para emitir Hololang antes de despachar a cada backend.
+- Incorporación del generador de ensamblador basado en el IR de Hololang y documentación asociada.
+
 ## v10.0.10 - Pendiente de liberación
 - Actualización de la dependencia `agix` a la versión 1.6.0.
 - Mejora de rendimiento y compatibilidad derivada de esta actualización.

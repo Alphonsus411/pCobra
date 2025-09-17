@@ -13,6 +13,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 ## Table of Contents
 
 - Project Description
+- Hololang-centric architecture
 - Installation
 - Project Structure
 - Supported tools and scripts
@@ -77,6 +78,16 @@ You can experiment with Cobra directly in your browser:
 ## Project Description
 
 Cobra is designed to make programming in Spanish easier, allowing developers to use a more accessible language. Through its lexer, parser and transpilers, Cobra can analyze, execute and convert code to other languages, providing support for variables, functions, control structures and data structures such as lists, dictionaries and classes. For a step-by-step tutorial check the [Cobra Manual](MANUAL_COBRA.rst). The full language specification is available in [SPEC_COBRA.md](SPEC_COBRA.md).
+
+## Hololang-centric architecture
+
+Cobra's toolchain revolves around Hololang, an intermediate language that captures the program semantics in a portable format. The main flow works as follows:
+
+1. The front-end parses the source code and builds the Cobra AST.
+2. That AST is normalized and lowered into Hololang representations that encode control structures, modules and types.
+3. The transpilers consume the Hololang IR to generate code for each supported backend.
+
+Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. The `cobra transpila` command can output Hololang files directly or route them to the `asm` backend to obtain assembly listings.
 
 ## Installation
 

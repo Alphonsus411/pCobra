@@ -23,6 +23,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 ## Tabla de Contenidos
 
 - Descripción del Proyecto
+- Arquitectura centrada en Hololang
 - Instalación
 - Cómo usar la CLI
 - Descargas
@@ -101,6 +102,16 @@ Puedes experimentar con Cobra directamente en tu navegador:
 Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible. A través de su lexer, parser y transpiladores, Cobra puede analizar, ejecutar y convertir código a otros lenguajes, brindando soporte para variables, funciones, estructuras de control y estructuras de datos como listas, diccionarios y clases.
 Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
 La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SPEC_COBRA.md).
+
+## Arquitectura centrada en Hololang
+
+La cadena de herramientas de Cobra se articula alrededor de Hololang, un lenguaje intermedio diseñado para describir los programas de forma explícita y portable. El flujo principal funciona de la siguiente manera:
+
+1. El front-end analiza el código fuente y construye el AST de Cobra.
+2. Ese AST se normaliza y se transforma en representaciones Hololang que capturan estructuras de control, módulos y tipos.
+3. Los transpiladores consumen el IR Hololang para generar código en los distintos backends soportados.
+
+Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador de ensamblador que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. El comando `cobra transpila` puede emitir directamente los ficheros Hololang o derivarlos a `asm` para obtener la salida en ensamblador.
 
 ## Instalación
 
