@@ -57,6 +57,24 @@ def test_texto_funcs():
 
 
 def test_numero_funcs():
+    assert core.absoluto(-5) == 5
+    assert core.absoluto(-5.2) == pytest.approx(5.2)
+    assert core.redondear(3.14159, 2) == pytest.approx(3.14)
+    assert core.redondear(3.6) == 4
+    assert core.piso(3.9) == 3
+    assert core.techo(3.1) == 4
+    assert core.raiz(9) == pytest.approx(3.0)
+    assert core.raiz(-8, 3) == pytest.approx(-2.0)
+    assert core.potencia(2, 3) == pytest.approx(8.0)
+    assert core.clamp(5, 0, 3) == 3
+    assert 1 <= core.aleatorio(1, 2, semilla=42) <= 2
+    assert core.mediana([1, 2, 3, 4]) == 2.5
+    assert core.moda([1, 1, 2, 2, 2]) == 2
+    datos = [2, 4, 4, 4, 5, 5, 7, 9]
+    assert core.desviacion_estandar(datos) == pytest.approx(2.0)
+    assert core.desviacion_estandar(datos, muestral=True) == pytest.approx(
+        2.1380899353
+    )
     assert core.es_par(4) is True
     assert core.es_par(5) is False
     assert core.es_primo(7) is True
@@ -406,6 +424,17 @@ def test_transpile_texto():
 
 def test_transpile_numero():
     ast = [
+        NodoLlamadaFuncion("absoluto", [NodoValor(-5)]),
+        NodoLlamadaFuncion("redondear", [NodoValor(3.14159), NodoValor(2)]),
+        NodoLlamadaFuncion("piso", [NodoValor(3.9)]),
+        NodoLlamadaFuncion("techo", [NodoValor(3.1)]),
+        NodoLlamadaFuncion("raiz", [NodoValor(9)]),
+        NodoLlamadaFuncion("potencia", [NodoValor(2), NodoValor(3)]),
+        NodoLlamadaFuncion("clamp", [NodoValor(5), NodoValor(0), NodoValor(3)]),
+        NodoLlamadaFuncion("aleatorio", [NodoValor(1), NodoValor(2)]),
+        NodoLlamadaFuncion("mediana", [NodoValor("[1,2,3]")]),
+        NodoLlamadaFuncion("moda", [NodoValor("[1,1,2]")]),
+        NodoLlamadaFuncion("desviacion_estandar", [NodoValor("[1,2,3]")]),
         NodoLlamadaFuncion("es_par", [NodoValor(2)]),
         NodoLlamadaFuncion("es_primo", [NodoValor(3)]),
         NodoLlamadaFuncion("factorial", [NodoValor(3)]),
@@ -415,6 +444,17 @@ def test_transpile_numero():
     js = TranspiladorJavaScript().generate_code(ast)
     py_exp = (
         IMPORTS_PY
+        + "absoluto(-5)\n"
+        + "redondear(3.14159, 2)\n"
+        + "piso(3.9)\n"
+        + "techo(3.1)\n"
+        + "raiz(9)\n"
+        + "potencia(2, 3)\n"
+        + "clamp(5, 0, 3)\n"
+        + "aleatorio(1, 2)\n"
+        + "mediana([1,2,3])\n"
+        + "moda([1,1,2])\n"
+        + "desviacion_estandar([1,2,3])\n"
         + "es_par(2)\n"
         + "es_primo(3)\n"
         + "factorial(3)\n"
@@ -422,6 +462,17 @@ def test_transpile_numero():
     )
     js_exp = (
         IMPORTS_JS
+        + "absoluto(-5);\n"
+        + "redondear(3.14159, 2);\n"
+        + "piso(3.9);\n"
+        + "techo(3.1);\n"
+        + "raiz(9);\n"
+        + "potencia(2, 3);\n"
+        + "clamp(5, 0, 3);\n"
+        + "aleatorio(1, 2);\n"
+        + "mediana([1,2,3]);\n"
+        + "moda([1,1,2]);\n"
+        + "desviacion_estandar([1,2,3]);\n"
         + "es_par(2);\n"
         + "es_primo(3);\n"
         + "factorial(3);\n"
