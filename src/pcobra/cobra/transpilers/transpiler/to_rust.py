@@ -32,6 +32,7 @@ from core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
+from cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
 from cobra.transpilers.transpiler.rust_nodes.asignacion import visit_asignacion as _visit_asignacion
 from cobra.transpilers.transpiler.rust_nodes.condicional import visit_condicional as _visit_condicional
@@ -167,6 +168,7 @@ class TranspiladorRust(BaseTranspiler):
         return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
+        nodos = ensure_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = optimize_constants(nodos)
         for nodo in nodos:
