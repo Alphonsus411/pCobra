@@ -115,10 +115,11 @@ def run_transpiler_pool(languages: list, ast, executor) -> list:
     if len(languages) > MAX_LANGUAGES:
         raise ValueError(_("Demasiados lenguajes especificados"))
     with multiprocessing.Pool(processes=min(len(languages), MAX_PROCESSES)) as pool:
+        # ``map_async`` no acepta ``timeout`` como argumento, por lo que el límite
+        # de ejecución se controla exclusivamente mediante ``AsyncResult.get``.
         return pool.map_async(
             executor,
             [(lang, ast) for lang in languages],
-            timeout=PROCESS_TIMEOUT
         ).get(timeout=PROCESS_TIMEOUT)
 
 class CompileCommand(BaseCommand):
