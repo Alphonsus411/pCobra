@@ -55,8 +55,18 @@ class ExecuteCommand(BaseCommand):
 
         Raises:
             ValueError: Si el archivo no existe o excede el tamaño máximo
+                permitido. Los errores de archivo inexistente se convierten
+                en ValueError con un mensaje amigable para la CLI.
         """
-        ruta = validar_archivo_existente(archivo)
+        try:
+            ruta = validar_archivo_existente(archivo)
+        except FileNotFoundError as exc:
+            raise ValueError(
+                _(
+                    "No se encontró el archivo '{path}'. "
+                    "Verifica la ruta e inténtalo de nuevo."
+                ).format(path=archivo)
+            ) from exc
         if ruta.stat().st_size > self.MAX_FILE_SIZE:
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.MAX_FILE_SIZE} bytes)")
 
