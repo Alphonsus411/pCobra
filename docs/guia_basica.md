@@ -327,3 +327,21 @@ enum Color:
     ROJO, VERDE, AZUL
 fin
 ```
+
+### Ejemplo: limpiar texto y detectar palíndromos
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.texto as texto
+
+var titulo = core.titulo("crónicas de cobra")
+imprimir(titulo)  # 'Crónicas De Cobra'
+
+var limpio = core.quitar_espacios("  hola\t mundo \n")
+imprimir(limpio)  # 'hola mundo'
+
+imprimir(texto.quitar_acentos("Canción"))  # 'Cancion'
+imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
+```
+
+Este fragmento muestra cómo combinar las utilidades de `corelibs.texto` con los atajos de `standard_library.texto` para trabajar con Unicode sin perder legibilidad.

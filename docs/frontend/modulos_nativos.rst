@@ -97,14 +97,25 @@ Sistema
 
 Texto
 -----
-- ``mayusculas(texto)`` convierte a mayusculas.
-- ``minusculas(texto)`` convierte a minusculas.
+- ``mayusculas(texto)`` convierte a mayúsculas.
+- ``minusculas(texto)`` convierte a minúsculas.
+- ``capitalizar(texto)`` pone en mayúscula la primera letra y el resto en minúscula.
+- ``titulo(texto)`` aplica estilo de título considerando separadores comunes.
 - ``invertir(texto)`` invierte el texto.
-- ``concatenar(...cadenas)`` une varias cadenas.
+- ``concatenar(...cadenas)`` une varias cadenas sin separador.
+- ``quitar_espacios(texto, modo='ambos', caracteres=None)`` elimina espacios o caracteres de los extremos.
+- ``dividir(texto, separador=None, maximo=None)`` separa una cadena en partes.
+- ``unir(separador, piezas)`` concatena elementos insertando un separador.
+- ``reemplazar(texto, antiguo, nuevo, conteo=None)`` sustituye apariciones de una subcadena.
+- ``empieza_con(texto, prefijos)`` y ``termina_con(texto, sufijos)`` comprueban prefijos o sufijos.
+- ``incluye(texto, subcadena)`` verifica si la subcadena aparece.
+- ``rellenar_izquierda(texto, ancho, relleno=' ')`` y ``rellenar_derecha(...)`` completan el texto hasta un ancho.
+- ``normalizar_unicode(texto, forma='NFC')`` transforma la representación Unicode.
 
 .. code-block:: cobra
 
-   imprimir(mayusculas("cobra"))
+   imprimir(titulo("cobra feroz"))
+   imprimir(quitar_espacios("  hola  "))
 
 Tiempo
 ------

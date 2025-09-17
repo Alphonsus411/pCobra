@@ -27,8 +27,30 @@ IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("js"))
 def test_texto_funcs():
     assert core.mayusculas("hola") == "HOLA"
     assert core.minusculas("HOLA") == "hola"
+    assert core.capitalizar("cobra") == "Cobra"
+    assert core.capitalizar("") == ""
+    assert core.titulo("árbol de navidad") == "Árbol De Navidad"
     assert core.invertir("abc") == "cba"
     assert core.concatenar("a", "b") == "ab"
+    assert core.quitar_espacios("  hola  ") == "hola"
+    assert core.quitar_espacios("--hola--", modo="derecha", caracteres="-") == "--hola"
+    with pytest.raises(ValueError):
+        core.quitar_espacios("hola", modo="otro")
+    assert core.dividir("  hola   mundo  ") == ["hola", "mundo"]
+    assert core.dividir("a,b,c", ",", 1) == ["a", "b,c"]
+    assert core.unir("-", ["1", 2, "3"]) == "1-2-3"
+    assert core.reemplazar("banana", "na", "NA", 1) == "baNAna"
+    assert core.reemplazar("abc", "", "-", 2) == "-a-bc"
+    assert core.empieza_con("cobral", ("co", "za")) is True
+    assert core.termina_con("cobral", ("co", "al")) is True
+    assert core.incluye("hola", "ol") is True
+    assert core.rellenar_izquierda("7", 3, "0") == "007"
+    assert core.rellenar_derecha("7", 3, "0") == "700"
+    with pytest.raises(ValueError):
+        core.rellenar_izquierda("hola", 10, "")
+    assert core.normalizar_unicode("A\u0301", "NFC") == "Á"
+    with pytest.raises(ValueError):
+        core.normalizar_unicode("hola", "XYZ")
 
 
 def test_numero_funcs():
@@ -178,6 +200,8 @@ def test_red_host_whitelist_rechaza(monkeypatch):
 def test_red_obtener_url_redireccion_fuera_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     mock_resp = MagicMock(text="ok", url="https://otro.com")
+    mock_resp.status_code = 302
+    mock_resp.headers = {"location": "https://otro.com"}
     mock_resp.raise_for_status.return_value = None
     with patch("pcobra.corelibs.red.requests.get", return_value=mock_resp):
         with pytest.raises(ValueError):
@@ -187,6 +211,8 @@ def test_red_obtener_url_redireccion_fuera_whitelist(monkeypatch):
 def test_red_enviar_post_redireccion_fuera_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     mock_resp = MagicMock(text="ok", url="https://otro.com")
+    mock_resp.status_code = 302
+    mock_resp.headers = {"location": "https://otro.com"}
     mock_resp.raise_for_status.return_value = None
     with patch("pcobra.corelibs.red.requests.post", return_value=mock_resp):
         with pytest.raises(ValueError):
@@ -243,8 +269,36 @@ def test_transpile_texto():
     ast = [
         NodoLlamadaFuncion("mayusculas", [NodoValor("'hola'")]),
         NodoLlamadaFuncion("minusculas", [NodoValor("'HOLA'")]),
+        NodoLlamadaFuncion("capitalizar", [NodoValor("'cobra'")]),
+        NodoLlamadaFuncion("titulo", [NodoValor("'cobra feroz'")]),
         NodoLlamadaFuncion("invertir", [NodoValor("'abc'")]),
         NodoLlamadaFuncion("concatenar", [NodoValor("'a'"), NodoValor("'b'")]),
+        NodoLlamadaFuncion("quitar_espacios", [NodoValor("'  hola  '")]),
+        NodoLlamadaFuncion("dividir", [NodoValor("'a b c'")]),
+        NodoLlamadaFuncion("unir", [NodoValor("'-'"), NodoValor('["a","b"]')]),
+        NodoLlamadaFuncion(
+            "reemplazar",
+            [
+                NodoValor("'banana'"),
+                NodoValor("'na'"),
+                NodoValor("'NA'"),
+                NodoValor(1),
+            ],
+        ),
+        NodoLlamadaFuncion("empieza_con", [NodoValor("'cobra'"), NodoValor("'co'")]),
+        NodoLlamadaFuncion("termina_con", [NodoValor("'cobra'"), NodoValor("'bra'")]),
+        NodoLlamadaFuncion("incluye", [NodoValor("'cobra'"), NodoValor("'ob'")]),
+        NodoLlamadaFuncion(
+            "rellenar_izquierda",
+            [NodoValor("'7'"), NodoValor(3), NodoValor("'0'")],
+        ),
+        NodoLlamadaFuncion(
+            "rellenar_derecha",
+            [NodoValor("'7'"), NodoValor(3), NodoValor("'0'")],
+        ),
+        NodoLlamadaFuncion(
+            "normalizar_unicode", [NodoValor("'Á'"), NodoValor("'NFD'")]
+        ),
     ]
     py = TranspiladorPython().generate_code(ast)
     js = TranspiladorJavaScript().generate_code(ast)
@@ -252,15 +306,39 @@ def test_transpile_texto():
         IMPORTS_PY
         + "mayusculas('hola')\n"
         + "minusculas('HOLA')\n"
+        + "capitalizar('cobra')\n"
+        + "titulo('cobra feroz')\n"
         + "invertir('abc')\n"
         + "concatenar('a', 'b')\n"
+        + "quitar_espacios('  hola  ')\n"
+        + "dividir('a b c')\n"
+        + "unir('-', [\"a\",\"b\"])\n"
+        + "reemplazar('banana', 'na', 'NA', 1)\n"
+        + "empieza_con('cobra', 'co')\n"
+        + "termina_con('cobra', 'bra')\n"
+        + "incluye('cobra', 'ob')\n"
+        + "rellenar_izquierda('7', 3, '0')\n"
+        + "rellenar_derecha('7', 3, '0')\n"
+        + "normalizar_unicode('Á', 'NFD')\n"
     )
     js_exp = (
         IMPORTS_JS
         + "mayusculas('hola');\n"
         + "minusculas('HOLA');\n"
+        + "capitalizar('cobra');\n"
+        + "titulo('cobra feroz');\n"
         + "invertir('abc');\n"
-        + "concatenar('a', 'b');"
+        + "concatenar('a', 'b');\n"
+        + "quitar_espacios('  hola  ');\n"
+        + "dividir('a b c');\n"
+        + "unir('-', [\"a\",\"b\"]);\n"
+        + "reemplazar('banana', 'na', 'NA', 1);\n"
+        + "empieza_con('cobra', 'co');\n"
+        + "termina_con('cobra', 'bra');\n"
+        + "incluye('cobra', 'ob');\n"
+        + "rellenar_izquierda('7', 3, '0');\n"
+        + "rellenar_derecha('7', 3, '0');\n"
+        + "normalizar_unicode('Á', 'NFD');"
     )
     assert py == py_exp
     assert js == js_exp

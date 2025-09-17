@@ -7,6 +7,7 @@
 - Actualización de la dependencia `agix` a la versión 1.6.0.
 - Mejora de rendimiento y compatibilidad derivada de esta actualización.
 - Actualización de `holobit-sdk` a la versión 1.0.9 y ajuste de `graficar`/`proyectar` al nuevo API.
+- Ampliación de `corelibs.texto` y nuevas utilidades en `standard_library.texto` con soporte Unicode y pruebas asociadas.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.
