@@ -7,6 +7,7 @@ de línea de comandos del lenguaje Cobra, incluyendo:
 - Procesamiento de argumentos
 - Gestión de comandos
 - Utilidades de CLI
+- Selección de *backends* como ``hololang`` mediante la opción ``--backend``
 
 Para más información, consulte la documentación completa.
 """

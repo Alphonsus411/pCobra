@@ -69,6 +69,13 @@ transpilar_parser.add_argument(
     help="Lenguaje de salida",
 )
 transpilar_parser.add_argument(
+    "--backend",
+    dest="backend",
+    choices=LANG_CHOICES,
+    default=None,
+    help="Alias de --lenguaje para integraciones",
+)
+transpilar_parser.add_argument(
     "--o", "--salida",
     dest="salida",
     help="Archivo donde guardar el código generado",
@@ -101,7 +108,10 @@ def main(argumentos: Optional[List[str]] = None) -> int:
     if args.comando == "transpilar":
         comando = CompileCommand()
         compile_args = argparse.Namespace(
-            archivo=args.archivo, tipo=args.lenguaje, backend=None, tipos=None
+            archivo=args.archivo,
+            tipo=args.lenguaje,
+            backend=getattr(args, "backend", None),
+            tipos=None,
         )
         if args.salida:
             messages.disable_colors()
