@@ -1,0 +1,14 @@
+use holo.core::*;
+use holo.bits::*;
+
+let saludo = "Hola desde Hololang";
+
+fn principal() {
+    let espectro = holobit([0.8, -0.5, 1.2]);
+    print(saludo);
+    print("Norma: " + norma(espectro));
+}
+
+fn norma(holo) {
+    return magnitud(holo);
+}

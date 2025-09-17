@@ -1,0 +1,11 @@
+var saludo = "Hola desde Cobra"
+
+func principal() :
+    var espectro = holobit([0.8, -0.5, 1.2])
+    imprimir(saludo)
+    imprimir("Norma: " + norma(espectro))
+fin
+
+func norma(holo) :
+    return magnitud(holo)
+fin

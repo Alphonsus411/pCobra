@@ -29,3 +29,17 @@ Excepciones y hilos
        hilo tarea()
    catch e:
        imprimir(e)
+
+Transpilación con Hololang
+--------------------------
+Los archivos disponibles en ``examples/hololang`` muestran cómo convertir
+programas Cobra a Hololang y viceversa, además de generar salidas en Python o
+ensamblador.  Ejecuta, por ejemplo:
+
+.. code-block:: bash
+
+   cobra compilar examples/hololang/saludo.co --backend hololang
+   cobra transpilar-inverso examples/hololang/saludo.holo --origen hololang --destino python
+
+El primer comando imprime la versión Hololang del programa ``saludo.co`` y el
+segundo parte desde Hololang para reconstruir el código Python equivalente.

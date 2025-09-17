@@ -21,6 +21,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    ../../docs/lenguajes_soportados
    ../../docs/lenguajes
    sintaxis
+   hololang
    avances
    proximos_pasos
    optimizaciones
@@ -57,7 +58,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
 Introducción
 --------------------
 
-Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Ademas, ofrece soporte para generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly, permitiendo su ejecucion en multiples plataformas.
+Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Su cadena de compilación incorpora Hololang como lenguaje intermedio para coordinar la transpilación hacia distintos backends. Ademas, ofrece soporte para generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly, permitiendo su ejecucion en multiples plataformas.
 
 
 
