@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from standard_library.archivo import leer, escribir, adjuntar, existe
 from standard_library.fecha import hoy, formatear, sumar_dias
-from standard_library.lista import cabeza, cola, longitud, combinar
+from standard_library.lista import (
+    cabeza,
+    cola,
+    longitud,
+    combinar,
+    mapear_seguro,
+    ventanas,
+    chunk,
+)
 from standard_library.logica import conjuncion, disyuncion, negacion
 from standard_library.util import es_nulo, es_vacio, rel, repetir
 from standard_library.texto import (
@@ -26,6 +34,9 @@ __all__ = [
     "cola",
     "longitud",
     "combinar",
+    "mapear_seguro",
+    "ventanas",
+    "chunk",
     "conjuncion",
     "disyuncion",
     "negacion",

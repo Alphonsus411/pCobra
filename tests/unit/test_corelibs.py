@@ -1,5 +1,8 @@
+import operator
 import os
+import random
 import sys
+from collections import OrderedDict
 from datetime import datetime
 from types import ModuleType
 from unittest.mock import MagicMock, patch
@@ -111,6 +114,63 @@ def test_coleccion_funcs():
     assert core.maximo(datos) == 3
     assert core.minimo(datos) == 1
     assert core.sin_duplicados(datos) == [3, 1, 2]
+    assert core.mapear(datos, lambda x: x + 1) == [4, 2, 3, 2]
+    assert core.filtrar(datos, lambda x: x % 2 == 0) == [2]
+    assert core.reducir([1, 2, 3], operator.add) == 6
+    assert core.reducir([1, 2, 3], operator.add, 10) == 16
+    assert core.encontrar(datos, lambda x: x > 2) == 3
+    assert core.encontrar(datos, lambda x: x > 10, predeterminado="ninguno") == "ninguno"
+    assert core.aplanar([[1, 2], (3, 4)]) == [1, 2, 3, 4]
+    estructuras = [
+        {"tipo": "a", "valor": 1},
+        {"tipo": "b", "valor": 2},
+        {"tipo": "a", "valor": 3},
+    ]
+    agrupado = core.agrupar_por(estructuras, lambda x: x["tipo"])
+    assert isinstance(agrupado, OrderedDict)
+    assert list(agrupado.keys()) == ["a", "b"]
+    assert [e["valor"] for e in agrupado["a"]] == [1, 3]
+
+    class Objeto:
+        def __init__(self, categoria):
+            self.categoria = categoria
+
+    objetos = [Objeto("x"), Objeto("x"), Objeto("y")]
+    agrupados_objetos = core.agrupar_por(objetos, "categoria")
+    assert list(agrupados_objetos.keys()) == ["x", "y"]
+
+    pares, impares = core.particionar(range(5), lambda x: x % 2 == 0)
+    assert pares == [0, 2, 4]
+    assert impares == [1, 3]
+    esperado = [1, 2, 3]
+    random.Random(7).shuffle(esperado)
+    assert core.mezclar([1, 2, 3], semilla=7) == esperado
+    assert core.zip_listas([1, 2], ["a", "b", "c"]) == [(1, "a"), (2, "b")]
+    assert core.zip_listas() == []
+    assert core.tomar(datos, 2) == [3, 1]
+    assert core.tomar(datos, 0) == []
+    assert core.mapear([], lambda x: x) == []
+
+
+def test_coleccion_validaciones():
+    with pytest.raises(ValueError):
+        core.maximo([])
+    with pytest.raises(ValueError):
+        core.minimo([])
+    with pytest.raises(TypeError):
+        core.mapear([1], None)
+    with pytest.raises(TypeError):
+        core.filtrar([1], "no callable")
+    with pytest.raises(ValueError):
+        core.reducir([], operator.add)
+    with pytest.raises(TypeError):
+        core.particionar([1], None)
+    with pytest.raises(KeyError):
+        core.agrupar_por([{"tipo": "a"}], "categoria")
+    with pytest.raises(ValueError):
+        core.tomar([1], -1)
+    with pytest.raises(TypeError):
+        core.tomar([1], 1.5)
 
 
 def test_seguridad_funcs():
@@ -418,6 +478,19 @@ def test_transpile_coleccion():
         NodoLlamadaFuncion("maximo", [NodoValor("[1,2]")]),
         NodoLlamadaFuncion("minimo", [NodoValor("[1,2]")]),
         NodoLlamadaFuncion("sin_duplicados", [NodoValor("[1,1]")]),
+        NodoLlamadaFuncion("mapear", [NodoValor("[1,2]"), NodoValor("duplicar")]),
+        NodoLlamadaFuncion("filtrar", [NodoValor("[1,2,3]"), NodoValor("es_par")]),
+        NodoLlamadaFuncion(
+            "reducir",
+            [NodoValor("[1,2,3]"), NodoValor("sumar"), NodoValor(0)],
+        ),
+        NodoLlamadaFuncion("encontrar", [NodoValor("[1,2,3]"), NodoValor("es_par")]),
+        NodoLlamadaFuncion("aplanar", [NodoValor("[[1,2],[3,4]]")]),
+        NodoLlamadaFuncion("agrupar_por", [NodoValor("datos"), NodoValor("'tipo'")]),
+        NodoLlamadaFuncion("particionar", [NodoValor("[1,2,3]"), NodoValor("es_par")]),
+        NodoLlamadaFuncion("mezclar", [NodoValor("[1,2,3]"), NodoValor(1)]),
+        NodoLlamadaFuncion("zip_listas", [NodoValor("[1,2]"), NodoValor("[3,4]")]),
+        NodoLlamadaFuncion("tomar", [NodoValor("[1,2,3]"), NodoValor(2)]),
     ]
     py = TranspiladorPython().generate_code(ast)
     js = TranspiladorJavaScript().generate_code(ast)
@@ -427,13 +500,33 @@ def test_transpile_coleccion():
         + "maximo([1,2])\n"
         + "minimo([1,2])\n"
         + "sin_duplicados([1,1])\n"
+        + "mapear([1,2], duplicar)\n"
+        + "filtrar([1,2,3], es_par)\n"
+        + "reducir([1,2,3], sumar, 0)\n"
+        + "encontrar([1,2,3], es_par)\n"
+        + "aplanar([[1,2],[3,4]])\n"
+        + "agrupar_por(datos, 'tipo')\n"
+        + "particionar([1,2,3], es_par)\n"
+        + "mezclar([1,2,3], 1)\n"
+        + "zip_listas([1,2], [3,4])\n"
+        + "tomar([1,2,3], 2)\n"
     )
     js_exp = (
         IMPORTS_JS
         + "ordenar([3,1]);\n"
         + "maximo([1,2]);\n"
         + "minimo([1,2]);\n"
-        + "sin_duplicados([1,1]);"
+        + "sin_duplicados([1,1]);\n"
+        + "mapear([1,2], duplicar);\n"
+        + "filtrar([1,2,3], es_par);\n"
+        + "reducir([1,2,3], sumar, 0);\n"
+        + "encontrar([1,2,3], es_par);\n"
+        + "aplanar([[1,2],[3,4]]);\n"
+        + "agrupar_por(datos, 'tipo');\n"
+        + "particionar([1,2,3], es_par);\n"
+        + "mezclar([1,2,3], 1);\n"
+        + "zip_listas([1,2], [3,4]);\n"
+        + "tomar([1,2,3], 2);"
     )
     assert py == py_exp
     assert js == js_exp
