@@ -573,3 +573,29 @@ imprimir(muestra)
 Cada paso mantiene el orden de entrada y devuelve nuevas listas, de modo que puedes reutilizar la variable original más adelante. `mezclar` acepta un parámetro `semilla` para producir barajados reproducibles en pruebas o demostraciones.
 
 Las funciones están disponibles tanto al ejecutar Cobra directamente como al transpirar a Python o JavaScript: la semántica se conserva gracias a las implementaciones equivalentes en `core/nativos/coleccion.js`.
+
+## 24. Procesamiento de datos tabulares
+
+El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que permite trabajar con tablas desde Cobra sin exponerse a los detalles internos del `DataFrame`. Las funciones devuelven listas de diccionarios o diccionarios de listas, estructuras fáciles de manipular desde Cobra o al transpirar a Python.
+
+- `leer_csv` y `leer_json` cargan archivos en disco y devuelven registros con valores `None` cuando la fuente contiene datos perdidos.
+- `describir` calcula estadísticas básicas (`count`, `mean`, `std`, percentiles) para cada columna.
+- `seleccionar_columnas` y `filtrar` permiten aislar subconjuntos antes de seguir procesando los datos.
+- `agrupar_y_resumir` aplica agregaciones (`sum`, `mean`, funciones personalizadas) agrupando por columnas clave.
+- `a_listas` y `de_listas` convierten entre lista de registros y diccionario de columnas, facilitando la interoperabilidad con librerías externas.
+
+```cobra
+usar pandas
+
+ventas = pandas.leer_csv('ventas.csv')
+ventas_limpias = pandas.filtrar(ventas, lambda fila: fila['monto'] != None)
+resumen = pandas.agrupar_y_resumir(
+    ventas_limpias,
+    por=['region'],
+    agregaciones={'monto': 'sum'}
+)
+columnas = pandas.a_listas(resumen)
+imprimir(columnas['region'])
+```
+
+> **Diferencias entre backends:** las funciones de lectura y estadística solo están disponibles cuando el objetivo de ejecución es Python, ya que dependen de `pandas`. En JavaScript puedes seguir usando `seleccionar_columnas`, `filtrar`, `a_listas` y `de_listas`, pero las operaciones avanzadas dispararán un error explicando la limitación.

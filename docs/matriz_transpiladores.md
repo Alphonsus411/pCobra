@@ -57,3 +57,7 @@
 > **Nota:** además de aparecer como destino en la tabla, Hololang ahora puede
 > emplearse como lenguaje de origen gracias al adaptador de IR a AST incluido
 > en los transpiladores principales.
+
+> **Compatibilidad de la biblioteca de datos:** las funciones de `standard_library.datos` que dependen de `pandas` solo están
+> disponibles al generar código Python. Al apuntar a JavaScript recibirás un error orientativo indicando cómo recrear la
+> funcionalidad de forma manual.

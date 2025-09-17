@@ -55,12 +55,22 @@ imprimir sugerencias[0]
 ```
 
 ## Análisis de Datos
-Con `pandas` y `matplotlib` puedes procesar CSV y generar gráficos:
+
+El módulo `pandas` de la biblioteca estándar facilita leer archivos CSV/JSON y obtener resúmenes estadísticos sin perder la sencillez de Cobra. El siguiente programa carga ventas, filtra los registros incompletos y agrupa por mes para graficar posteriormente con `matplotlib`:
 
 ```cobra
 usar pandas, matplotlib
-datos = pandas.leer_csv("datos.csv")
-figura = datos.graficar(x="fecha", y="valor")
+
+ventas = pandas.leer_csv("ventas.csv")
+limpias = pandas.filtrar(ventas, lambda fila: fila['monto'] != None)
+mensuales = pandas.agrupar_y_resumir(
+    limpias,
+    por=['mes'],
+    agregaciones={'monto': 'sum'}
+)
+
+columnas = pandas.a_listas(mensuales)
+figura = matplotlib.linea(x=columnas['mes'], y=columnas['monto_sum'])
 matplotlib.guardar(figura, "salida.png")
 ```
 
@@ -71,8 +81,7 @@ cobra ejecutar analisis.co
 ```
 Puedes revisar el cuaderno interactivo `notebooks/casos_reales/analisis_datos.ipynb` para seguirlo paso a paso.
 
-
-Instala las dependencias `pandas` y `matplotlib` antes de correrlo.
+> **Requisitos:** instala `pandas` y `matplotlib`. Si transpiras a JavaScript, las funciones de lectura y estadística (`leer_csv`, `leer_json`, `describir`, `agrupar_y_resumir`) no estarán disponibles y deberás preparar los datos manualmente.
 
 ## Aplicación web
 Un servicio mínimo con Flask puede generarse y ejecutarse con Cobra:
