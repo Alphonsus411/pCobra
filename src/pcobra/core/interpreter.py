@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import Optional
 
 from pcobra.cobra.core import Token, TipoToken, Lexer
 from core.optimizations import (
@@ -51,6 +52,7 @@ from core.ast_nodes import (
 )
 from pcobra.cobra.core import Parser
 from core.memoria.gestor_memoria import GestorMemoriaGenetico
+from core.hololang_ir import HololangModule, build_hololang_ir
 from core.semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
@@ -181,6 +183,8 @@ class InterpretadorCobra:
         self.gestor_memoria = GestorMemoriaGenetico()
         self.estrategia = self.gestor_memoria.poblacion[0]
         self.op_memoria = 0
+        # Último IR generado a partir del AST ejecutado
+        self.ultimo_ir: Optional[HololangModule] = None
 
     @property
     def variables(self):
@@ -309,6 +313,8 @@ class InterpretadorCobra:
         ast = remove_dead_code(
             inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
         )
+        # Genera y expone el IR de Hololang correspondiente al AST
+        self.ultimo_ir = self.generar_hololang_ir(ast)
         register_execution(ast)
         self.analizador.analizar(ast)
         for nodo in ast:
@@ -317,6 +323,12 @@ class InterpretadorCobra:
             if resultado is not None:
                 return resultado
         return None
+
+    # -- Generación de IR ----------------------------------------------------
+    def generar_hololang_ir(self, ast) -> HololangModule:
+        """Convierte un AST de Cobra en un módulo IR de Hololang."""
+
+        return build_hololang_ir(ast)
 
     def ejecutar_nodo(self, nodo):
         self._validar(nodo)
