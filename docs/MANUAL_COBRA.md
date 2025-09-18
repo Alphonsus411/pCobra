@@ -557,6 +557,8 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 
 - `capitalizar` y `titulo` para aplicar estilos de texto comunes.
 - `quitar_espacios`, `dividir` y `unir` para recortar y recomponer cadenas de forma precisa, incluso con caracteres personalizados.
+- `dividir_derecha` complementa a `dividir` al comenzar desde el final, y `particionar_texto` / `particionar_derecha` replican los
+  métodos `str.partition`/`str.rpartition` devolviendo siempre tres componentes.
 - `reemplazar`, `empieza_con`, `termina_con` e `incluye` para búsquedas y sustituciones expresivas.
 - `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
@@ -572,11 +574,14 @@ import standard_library.texto as texto
 
 imprimir(core.titulo("guía de cobra"))          # 'Guía De Cobra'
 imprimir(core.dividir("uno   dos\ttres"))       # ['uno', 'dos', 'tres']
+imprimir(core.dividir_derecha("uno-dos-tres", "-", 1))  # ['uno-dos', 'tres']
 imprimir(texto.quitar_acentos("Canción"))       # 'Cancion'
 imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
 imprimir(core.quitar_prefijo("🧪Prueba", "🧪"))      # 'Prueba'
 imprimir(core.centrar_texto("cobra", 9, "*"))        # '**cobra**'
 imprimir(core.minusculas_casefold("Straße"))         # 'strasse'
+imprimir(core.particionar_texto("ruta/archivo.ext", "/"))  # ('ruta', '/', 'archivo.ext')
+imprimir(texto.particionar_derecha("archivo.tar.gz", "."))  # ('archivo.tar', '.', 'gz')
 ```
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.

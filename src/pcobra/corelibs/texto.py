@@ -87,6 +87,39 @@ def dividir(texto: str, separador: str | None = None, maximo: int | None = None)
     return texto.split(separador, maxsplit)
 
 
+def dividir_derecha(
+    texto: str, separador: str | None = None, maximo: int | None = None
+) -> list[str]:
+    """Divide ``texto`` desde la derecha usando ``str.rsplit``.
+
+    Cuando ``separador`` es ``None`` se emplea cualquier secuencia de espacios en blanco
+    como delimitador y se ignoran resultados vacíos consecutivos, igual que hace
+    :meth:`str.rsplit`. ``maximo`` limita el número de divisiones que se realizarán.
+
+    Args:
+        texto: Cadena a fragmentar.
+        separador: Cadena que actuará como separador. Si es ``None`` se consideran
+            espacios en blanco.
+        maximo: Número máximo de divisiones a efectuar. ``None`` o valores negativos
+            se interpretan como "sin límite".
+
+    Returns:
+        Lista de subcadenas obtenida desde la derecha hacia la izquierda.
+
+    Raises:
+        ValueError: Si ``separador`` es una cadena vacía.
+    """
+
+    if separador == "":
+        raise ValueError("separador no puede ser una cadena vacía")
+
+    if maximo is None or maximo < 0:
+        maxsplit = -1
+    else:
+        maxsplit = maximo
+    return texto.rsplit(separador, maxsplit)
+
+
 def unir(separador: str, piezas: Iterable[str]) -> str:
     """Une ``piezas`` empleando ``separador`` como delimitador."""
 
@@ -158,6 +191,54 @@ def rellenar_izquierda(texto: str, ancho: int, relleno: str = " ") -> str:
     faltan = ancho - len(texto)
     repetidos = (relleno * ((faltan // len(relleno)) + 1))[:faltan]
     return repetidos + texto
+
+
+def particionar(texto: str, separador: str) -> tuple[str, str, str]:
+    """Particiona ``texto`` alrededor de ``separador`` usando ``str.partition``.
+
+    Args:
+        texto: Cadena completa que se desea segmentar.
+        separador: Delimitador exacto a localizar dentro de ``texto``.
+
+    Returns:
+        Una tupla ``(antes, separador, despues)``. Si el separador no aparece,
+        ``antes`` será ``texto`` completo y los otros dos elementos serán cadenas
+        vacías.
+
+    Raises:
+        TypeError: Si ``separador`` no es una cadena.
+        ValueError: Si ``separador`` es una cadena vacía.
+    """
+
+    if not isinstance(separador, str):
+        raise TypeError("separador debe ser una cadena")
+    if separador == "":
+        raise ValueError("separador no puede ser una cadena vacía")
+    return texto.partition(separador)
+
+
+def particionar_derecha(texto: str, separador: str) -> tuple[str, str, str]:
+    """Particiona ``texto`` desde la derecha utilizando ``str.rpartition``.
+
+    Args:
+        texto: Cadena de origen.
+        separador: Delimitador que se intentará localizar.
+
+    Returns:
+        Una tupla ``(antes, separador, despues)`` donde ``antes`` contiene todo lo que
+        aparece a la izquierda de la última ocurrencia de ``separador``. Si el
+        separador no está presente se devuelve ``("", "", texto)``.
+
+    Raises:
+        TypeError: Si ``separador`` no es una cadena.
+        ValueError: Si ``separador`` es una cadena vacía.
+    """
+
+    if not isinstance(separador, str):
+        raise TypeError("separador debe ser una cadena")
+    if separador == "":
+        raise ValueError("separador no puede ser una cadena vacía")
+    return texto.rpartition(separador)
 
 
 def rellenar_derecha(texto: str, ancho: int, relleno: str = " ") -> str:
