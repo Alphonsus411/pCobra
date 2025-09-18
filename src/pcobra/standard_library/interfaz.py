@@ -53,6 +53,56 @@ def mostrar_codigo(
     return resaltado
 
 
+def mostrar_markdown(
+    contenido: str,
+    *,
+    console: Console | None = None,
+    **markdown_kwargs: Any,
+) -> Any:
+    """Renderiza texto Markdown con Rich y lo envía a la consola indicada."""
+
+    try:
+        from rich.markdown import Markdown
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    render = Markdown(contenido, **markdown_kwargs)
+
+    console_obj = _obtener_console(console)
+    console_obj.print(render)
+    return render
+
+
+def mostrar_json(
+    datos: Any,
+    *,
+    console: Console | None = None,
+    indent: int | None = 2,
+    sort_keys: bool = True,
+) -> Any:
+    """Muestra datos JSON o estructuras Python con formato legible."""
+
+    try:
+        from rich.json import JSON
+        from rich.pretty import Pretty
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    console_obj = _obtener_console(console)
+
+    render: Any
+    if isinstance(datos, str):
+        render = JSON(datos, indent=indent)
+    else:
+        try:
+            render = JSON.from_data(datos, indent=indent, sort_keys=sort_keys)
+        except (TypeError, ValueError):
+            render = Pretty(datos)
+
+    console_obj.print(render)
+    return render
+
+
 def _agregar_a_arbol(arbol: Any, contenido: Any) -> None:
     if isinstance(contenido, Mapping):
         for clave, valor in contenido.items():
@@ -300,6 +350,8 @@ def iniciar_gui_idle(*, destino: GuiTarget | None = None, **kwargs: Any) -> None
 
 __all__ = [
     "mostrar_codigo",  # Resalta fragmentos de código en la consola.
+    "mostrar_markdown",  # Renderiza texto Markdown enriquecido.
+    "mostrar_json",  # Formatea estructuras o cadenas JSON.
     "mostrar_arbol",  # Renderiza estructuras jerárquicas con Rich Tree.
     "preguntar_confirmacion",  # Pregunta sí/no utilizando ``rich.prompt``.
     "mostrar_tabla",  # Construye tablas a partir de mapeos o secuencias.

@@ -782,6 +782,10 @@ El módulo `standard_library.interfaz` incorpora una capa de presentación const
 
 - `mostrar_tabla` acepta listas de diccionarios o secuencias y genera automáticamente los encabezados. Puedes personalizar el título y aplicar estilos Rich a cada columna.
 - `mostrar_panel` dibuja recuadros con bordes y soporta títulos, estilos y expansión.
+- `mostrar_markdown` procesa texto con formato y respeta tablas, listas y
+  resaltado inline.
+- `mostrar_json` ordena y colorea diccionarios o listas para inspeccionarlos
+  rápidamente desde la terminal.
 - `barra_progreso` expone un *context manager* que devuelve el objeto :class:`Progress` y el identificador de la tarea, lo que permite actualizar la barra con `advance` o `update`.
 - `imprimir_aviso` y `limpiar_consola` unifican la presentación de mensajes informativos, de advertencia o de error.
 - `iniciar_gui` e `iniciar_gui_idle` sirven como atajos seguros para lanzar las aplicaciones Flet oficiales del proyecto.
@@ -795,6 +799,13 @@ var participantes = [
 ]
 
 ui.mostrar_tabla(participantes, titulo="Referentes")
+ui.mostrar_markdown("""\
+## Resumen
+
+- Se cargaron los datos de participantes.
+- Los totales están listos para exportar.
+""")
+ui.mostrar_json({"total": longitud(participantes), "estado": "ok"})
 ui.imprimir_aviso("Datos cargados", nivel="exito")
 
 con ui.barra_progreso(descripcion="Procesando", total=3) como (progreso, tarea):

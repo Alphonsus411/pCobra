@@ -31,6 +31,8 @@ from standard_library.interfaz import (
     iniciar_gui,
     iniciar_gui_idle,
     limpiar_consola,
+    mostrar_markdown,
+    mostrar_json,
     mostrar_panel,
     mostrar_tabla,
 )
@@ -115,6 +117,8 @@ __all__: list[str] = [
     "escribir_excel",
     "mostrar_tabla",
     "mostrar_panel",
+    "mostrar_markdown",
+    "mostrar_json",
     "barra_progreso",
     "limpiar_consola",
     "imprimir_aviso",
@@ -137,6 +141,8 @@ de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
 escribir_excel: Callable[..., None]
 mostrar_tabla: Callable[..., Any]
 mostrar_panel: Callable[..., Any]
+mostrar_markdown: Callable[..., Any]
+mostrar_json: Callable[..., Any]
 barra_progreso: Callable[..., Any]
 limpiar_consola: Callable[..., None]
 imprimir_aviso: Callable[..., None]

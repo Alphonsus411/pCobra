@@ -9,6 +9,13 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
   [`rich.syntax.Syntax`](https://rich.readthedocs.io/en/stable/syntax.html) y lo
   imprime en la consola indicada. Devuelve el objeto `Syntax` para posteriores
   personalizaciones.
+- **`mostrar_markdown(contenido, **opciones)`**: interpreta cadenas Markdown con
+  `rich.markdown.Markdown`, incluyendo tablas, listas y resaltado inline. Admite
+  pasar argumentos extras compatibles con `Markdown`.
+- **`mostrar_json(datos, indent=2, sort_keys=True)`**: serializa diccionarios o
+  listas con `rich.json.JSON`. Si recibe una cadena se asume que ya contiene
+  JSON válido. Cuando el objeto no puede convertirse automáticamente se
+  utiliza `rich.pretty.Pretty` para mostrar su representación.
 - **`mostrar_arbol(nodos, titulo=None)`**: convierte diccionarios o listas
   anidadas en un árbol visual basado en `rich.tree.Tree`, ideal para mostrar
   estructuras de carpetas o relaciones jerárquicas.
@@ -29,6 +36,8 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
 ```python
 from standard_library.interfaz import (
     barra_progreso,
+    mostrar_json,
+    mostrar_markdown,
     mostrar_arbol,
     mostrar_codigo,
     mostrar_tabla,
@@ -41,6 +50,13 @@ filas = [
 
 mostrar_tabla(filas, titulo="Referentes")
 mostrar_codigo("print('hola cobra')", "python")
+mostrar_markdown("""\
+# Informe
+
+- Uso de Markdown desde Cobra
+- Integración con Rich
+""")
+mostrar_json({"lenguaje": "Cobra", "version": "10.0.9"})
 mostrar_arbol(
     [
         ("src", ["cobra.co", ("modulos", ["texto.co", "interfaz.co"])])],
