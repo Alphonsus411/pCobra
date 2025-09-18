@@ -204,6 +204,223 @@ def agrupar_y_resumir(
     return _sanear_registros(agrupado.to_dict(orient="records"))
 
 
+def ordenar_tabla(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    por: str | Sequence[str],
+    ascendente: bool | Sequence[bool] = True,
+) -> Tabla:
+    """Ordena ``datos`` por las columnas indicadas inspirándose en ``pandas`` y ``R``.
+
+    Parameters
+    ----------
+    datos:
+        Registros tabulares convertibles a :class:`pandas.DataFrame`.
+    por:
+        Nombre de la columna o lista de columnas utilizadas como clave de orden.
+    ascendente:
+        Indicador global o lista booleana que define el sentido del ordenamiento
+        para cada columna. Por defecto se ordena de forma ascendente.
+
+    Returns
+    -------
+    Tabla
+        Lista de diccionarios ordenada según las claves solicitadas.
+    """
+
+    df = _a_dataframe(datos)
+    columnas = [por] if isinstance(por, str) else list(por)
+    faltantes = [col for col in columnas if col not in df.columns]
+    if faltantes:
+        raise KeyError(f"Columnas inexistentes para ordenar: {', '.join(faltantes)}")
+
+    if isinstance(ascendente, bool):
+        sentido: bool | list[bool] = ascendente
+    else:
+        if isinstance(ascendente, Sequence) and not isinstance(ascendente, (str, bytes)):
+            sentido = list(ascendente)
+            if len(sentido) != len(columnas):
+                raise ValueError("La lista 'ascendente' debe coincidir con las columnas.")
+            if not all(isinstance(valor, bool) for valor in sentido):
+                raise TypeError("Los valores en 'ascendente' deben ser booleanos.")
+        else:  # pragma: no cover - verificación defensiva
+            raise TypeError("'ascendente' debe ser un booleano o secuencia de booleanos.")
+
+    ordenado = df.sort_values(columnas, ascending=sentido, na_position="last")
+    return _sanear_registros(ordenado.to_dict(orient="records"))
+
+
+def combinar_tablas(
+    izquierda: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    derecha: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    claves: (
+        str
+        | Sequence[str]
+        | tuple[str | Sequence[str], str | Sequence[str]]
+        | Mapping[str, str | Sequence[str]]
+    ),
+    tipo: str = "inner",
+) -> Tabla:
+    """Combina tablas al estilo ``pandas.merge`` y ``dplyr::join`` manteniendo saneamiento.
+
+    Parameters
+    ----------
+    izquierda, derecha:
+        Tablas o estructuras convertibles a :class:`pandas.DataFrame`.
+    claves:
+        Columna compartida o par de columnas (izquierda, derecha) empleadas como
+        llave de unión. Puede ser una cadena, una secuencia o un ``dict`` con las
+        claves ``"izquierda"`` y ``"derecha"``.
+    tipo:
+        Variante del join a realizar: ``inner``, ``left``, ``right``, ``outer`` o ``cross``.
+
+    Returns
+    -------
+    Tabla
+        Lista de registros combinados según el tipo de unión solicitado.
+    """
+
+    permitidos = {"inner", "left", "right", "outer", "cross"}
+    if tipo not in permitidos:
+        raise ValueError(f"Tipo de combinación no soportado: {tipo}")
+
+    df_izq = _a_dataframe(izquierda)
+    df_der = _a_dataframe(derecha)
+
+    def _a_lista(valor: str | Sequence[str]) -> list[str]:
+        if isinstance(valor, str):
+            return [valor]
+        return list(valor)
+
+    if isinstance(claves, Mapping):
+        if "izquierda" not in claves or "derecha" not in claves:
+            raise KeyError("El mapeo de 'claves' debe incluir 'izquierda' y 'derecha'.")
+        claves_izq = _a_lista(claves["izquierda"])
+        claves_der = _a_lista(claves["derecha"])
+    elif isinstance(claves, tuple) and len(claves) == 2:
+        claves_izq = _a_lista(claves[0])
+        claves_der = _a_lista(claves[1])
+    else:
+        claves_izq = _a_lista(claves)  # type: ignore[arg-type]
+        claves_der = claves_izq
+
+    if len(claves_izq) != len(claves_der):
+        raise ValueError("Las claves izquierda y derecha deben tener la misma longitud.")
+
+    faltantes_izq = [col for col in claves_izq if col not in df_izq.columns]
+    faltantes_der = [col for col in claves_der if col not in df_der.columns]
+    if faltantes_izq or faltantes_der:
+        faltantes = []
+        if faltantes_izq:
+            faltantes.append(f"izquierda: {', '.join(faltantes_izq)}")
+        if faltantes_der:
+            faltantes.append(f"derecha: {', '.join(faltantes_der)}")
+        raise KeyError(f"Columnas inexistentes para combinar ({'; '.join(faltantes)})")
+
+    combinado = pd.merge(
+        df_izq,
+        df_der,
+        how=tipo,
+        left_on=claves_izq,
+        right_on=claves_der,
+        sort=False,
+        copy=False,
+    )
+    return _sanear_registros(combinado.to_dict(orient="records"))
+
+
+def rellenar_nulos(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    valores: Mapping[str, Any],
+) -> Tabla:
+    """Rellena valores faltantes por columna siguiendo ``pandas`` y ``tidyr`` de R.
+
+    Parameters
+    ----------
+    datos:
+        Datos tabulares convertibles a :class:`pandas.DataFrame`.
+    valores:
+        Diccionario ``columna -> valor`` con los reemplazos para cada campo.
+
+    Returns
+    -------
+    Tabla
+        Tabla saneada donde los valores nulos se sustituyeron según ``valores``.
+    """
+
+    df = _a_dataframe(datos)
+    faltantes = [col for col in valores.keys() if col not in df.columns]
+    if faltantes:
+        raise KeyError(f"Columnas inexistentes para rellenar: {', '.join(faltantes)}")
+    relleno = df.fillna(value=dict(valores))
+    return _sanear_registros(relleno.to_dict(orient="records"))
+
+
+def pivotar_tabla(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    index: str | Sequence[str],
+    columnas: str | Sequence[str],
+    valores: str | Sequence[str],
+    agregacion: str | Sequence[str] | Mapping[str, str | Sequence[str] | Callable[[pd.Series], Any]],
+) -> Tabla:
+    """Reorganiza datos tabulares como ``pandas.pivot_table`` y ``tidyr::pivot_wider``.
+
+    Parameters
+    ----------
+    datos:
+        Datos de origen convertibles a :class:`pandas.DataFrame`.
+    index:
+        Columna o columnas que identifican cada fila pivoteada.
+    columnas:
+        Columna(s) cuyos valores formarán nuevos encabezados.
+    valores:
+        Medidas que se distribuyen en la tabla resultante.
+    agregacion:
+        Función o etiqueta(s) de agregación compatible(s) con ``pandas``.
+
+    Returns
+    -------
+    Tabla
+        Lista de registros pivoteados con encabezados aplanados y valores saneados.
+    """
+
+    df = _a_dataframe(datos)
+
+    def _asegurar_lista(entrada: str | Sequence[str]) -> list[str]:
+        if isinstance(entrada, str):
+            return [entrada]
+        return list(entrada)
+
+    columnas_index = _asegurar_lista(index)
+    columnas_columnas = _asegurar_lista(columnas)
+    columnas_valores = _asegurar_lista(valores)
+
+    faltantes = [
+        col
+        for col in columnas_index + columnas_columnas + columnas_valores
+        if col not in df.columns
+    ]
+    if faltantes:
+        raise KeyError(f"Columnas inexistentes para pivotar: {', '.join(dict.fromkeys(faltantes))}")
+
+    pivotado = pd.pivot_table(
+        df,
+        index=columnas_index,
+        columns=columnas_columnas,
+        values=columnas_valores,
+        aggfunc=agregacion,
+        dropna=False,
+    ).reset_index()
+
+    if isinstance(pivotado.columns, pd.MultiIndex):
+        columnas_pivot = [
+            "_".join([str(nivel) for nivel in col if str(nivel) != ""]).strip("_")
+            for col in pivotado.columns.values
+        ]
+        pivotado.columns = columnas_pivot
+
+    return _sanear_registros(pivotado.to_dict(orient="records"))
+
+
 def a_listas(datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame) -> dict[str, list[Any]]:
     """Convierte ``datos`` a un diccionario ``columna -> lista``."""
 

@@ -9,11 +9,15 @@ from pcobra.standard_library import datos as datos_mod
 from pcobra.standard_library.datos import (
     agrupar_y_resumir,
     a_listas,
+    combinar_tablas,
     de_listas,
     describir,
     filtrar,
     leer_csv,
     leer_json,
+    ordenar_tabla,
+    pivotar_tabla,
+    rellenar_nulos,
     seleccionar_columnas,
 )
 
@@ -23,6 +27,36 @@ def _tabla_base() -> list[dict[str, object]]:
         {"categoria": "A", "valor": 10, "etiqueta": "foo"},
         {"categoria": "A", "valor": 5, "etiqueta": "bar"},
         {"categoria": "B", "valor": 3, "etiqueta": "baz"},
+    ]
+
+
+@pytest.fixture
+def tabla_clientes() -> list[dict[str, object]]:
+    return [
+        {"cliente_id": 1, "region": "norte"},
+        {"cliente_id": 2, "region": "sur"},
+        {"cliente_id": 3, "region": "norte"},
+    ]
+
+
+@pytest.fixture
+def tabla_pedidos() -> list[dict[str, object | None]]:
+    return [
+        {"cliente": 1, "mes": "enero", "monto": 120.0, "unidades": 5},
+        {"cliente": 1, "mes": None, "monto": None, "unidades": 2},
+        {"cliente": 2, "mes": "enero", "monto": 80.0, "unidades": 3},
+        {"cliente": 4, "mes": "enero", "monto": 60.0, "unidades": 1},
+    ]
+
+
+@pytest.fixture
+def tabla_metricas() -> list[dict[str, object | None]]:
+    return [
+        {"region": "norte", "mes": "enero", "monto": 100, "descuento": 5},
+        {"region": "norte", "mes": "enero", "monto": 40, "descuento": 2},
+        {"region": "norte", "mes": "febrero", "monto": 50, "descuento": None},
+        {"region": "sur", "mes": "enero", "monto": 70, "descuento": 1},
+        {"region": "sur", "mes": "febrero", "monto": 30, "descuento": 3},
     ]
 
 
@@ -71,6 +105,17 @@ def test_agrupar_y_resumir():
     assert resultado == esperado
 
 
+def test_ordenar_tabla_multiple(tabla_pedidos: list[dict[str, object | None]]):
+    ordenado = ordenar_tabla(tabla_pedidos, por=["cliente", "unidades"], ascendente=[True, False])
+    esperado = [
+        {"cliente": 1, "mes": "enero", "monto": 120.0, "unidades": 5},
+        {"cliente": 1, "mes": None, "monto": None, "unidades": 2},
+        {"cliente": 2, "mes": "enero", "monto": 80.0, "unidades": 3},
+        {"cliente": 4, "mes": "enero", "monto": 60.0, "unidades": 1},
+    ]
+    assert ordenado == esperado
+
+
 def test_describir_contiene_metricas():
     df = pd.DataFrame(_tabla_base())
     resumen = describir(df)
@@ -96,6 +141,60 @@ def test_leer_csv_error(tmp_path: Path):
     csv_path.write_text('valor\n"1', encoding="utf-8")
     with pytest.raises(ValueError):
         leer_csv(csv_path)
+
+
+def test_combinar_tablas_inner(tabla_clientes, tabla_pedidos):
+    combinado = combinar_tablas(
+        tabla_clientes,
+        tabla_pedidos,
+        claves=("cliente_id", "cliente"),
+        tipo="inner",
+    )
+    clientes_presentes = {fila["cliente_id"] for fila in combinado}
+    assert clientes_presentes == {1, 2}
+    assert all("mes" in fila and "monto" in fila for fila in combinado)
+
+
+def test_combinar_tablas_outer(tabla_clientes, tabla_pedidos):
+    combinado = combinar_tablas(
+        tabla_clientes,
+        tabla_pedidos,
+        claves={"izquierda": "cliente_id", "derecha": "cliente"},
+        tipo="outer",
+    )
+    # Se conservan clientes sin pedidos y pedidos sin cliente registrado.
+    from collections import Counter
+
+    ids = Counter((fila.get("cliente_id"), fila.get("cliente")) for fila in combinado)
+    assert ids == Counter({(1, 1): 2, (2, 2): 1, (3, None): 1, (None, 4): 1})
+
+
+def test_rellenar_nulos_por_columna(tabla_pedidos):
+    rellenos = rellenar_nulos(tabla_pedidos, {"monto": 0.0, "mes": "sin datos"})
+    assert any(fila["mes"] == "sin datos" for fila in rellenos)
+    assert any(fila["monto"] == 0.0 for fila in rellenos)
+    # Las columnas no reemplazadas conservan sus valores originales.
+    assert rellenos[0]["unidades"] == 5
+
+
+def test_pivotar_tabla_multiple_metricas(tabla_metricas):
+    pivotado = pivotar_tabla(
+        tabla_metricas,
+        index="region",
+        columnas="mes",
+        valores=["monto", "descuento"],
+        agregacion={"monto": ["sum", "mean"], "descuento": "mean"},
+    )
+    regiones = {fila["region"] for fila in pivotado}
+    assert regiones == {"norte", "sur"}
+    # Se generan columnas con agregaciones múltiples y valores saneados.
+    columnas_generadas = set(pivotado[0].keys())
+    assert {
+        "region",
+        "monto_sum_enero",
+        "monto_mean_febrero",
+        "descuento_mean_enero",
+    }.issubset(columnas_generadas)
 
 
 def test_desde_modulo_publico():

@@ -80,4 +80,13 @@ excepto & Captura de excepción\\
 \texttt{rellenar\_ceros(cad, ancho)} & Antepone ceros respetando signos como \texttt{str.zfill}.\\
 \texttt{minusculas\_casefold(cad)} & Convierte a minúsculas Unicode agresivas (casefold).\\
 \end{tabular}
+
+\section*{Datos tabulares}
+\begin{tabular}{ll}
+\textbf{Función} & \textbf{Descripción}\\\hline
+\texttt{ordenar\_tabla(datos, por, ascendente)} & Ordena múltiples columnas al estilo pandas/R manteniendo listas de registros.\\
+\texttt{combinar\_tablas(izq, der, claves, tipo)} & Realiza joins internos/externos validando claves antes de cruzar la información.\\
+\texttt{rellenar\_nulos(datos, valores)} & Sustituye valores perdidos por columna siguiendo reglas declarativas.\\
+\texttt{pivotar\_tabla(datos, index, columnas, valores, agregacion)} & Reorganiza métricas a formato ancho con agregaciones múltiples.\\
+\end{tabular}
 \end{document}
