@@ -672,3 +672,33 @@ imprimir(columnas['region'])
 ```
 
 > **Diferencias entre backends:** las funciones de lectura y estadística solo están disponibles cuando el objetivo de ejecución es Python, ya que dependen de `pandas`. En JavaScript puedes seguir usando `seleccionar_columnas`, `filtrar`, `a_listas` y `de_listas`, pero las operaciones avanzadas dispararán un error explicando la limitación.
+
+## 25. Interfaces de consola enriquecidas
+
+El módulo `standard_library.interfaz` incorpora una capa de presentación construida sobre [`rich`](https://rich.readthedocs.io/) para crear paneles, tablas y barras de progreso sin tener que manipular manualmente códigos ANSI. Estas utilidades están pensadas para scripts de línea de comandos escritos en Cobra o en Python y mantienen el mismo API en ambos contextos.
+
+- `mostrar_tabla` acepta listas de diccionarios o secuencias y genera automáticamente los encabezados. Puedes personalizar el título y aplicar estilos Rich a cada columna.
+- `mostrar_panel` dibuja recuadros con bordes y soporta títulos, estilos y expansión.
+- `barra_progreso` expone un *context manager* que devuelve el objeto :class:`Progress` y el identificador de la tarea, lo que permite actualizar la barra con `advance` o `update`.
+- `imprimir_aviso` y `limpiar_consola` unifican la presentación de mensajes informativos, de advertencia o de error.
+- `iniciar_gui` e `iniciar_gui_idle` sirven como atajos seguros para lanzar las aplicaciones Flet oficiales del proyecto.
+
+```cobra
+usar standard_library.interfaz como ui
+
+var participantes = [
+    {"Nombre": "Ada", "Rol": "Pionera"},
+    {"Nombre": "Hedy", "Rol": "Educadora"},
+]
+
+ui.mostrar_tabla(participantes, titulo="Referentes")
+ui.imprimir_aviso("Datos cargados", nivel="exito")
+
+con ui.barra_progreso(descripcion="Procesando", total=3) como (progreso, tarea):
+    para var _ in rango(0, 3):
+        progreso.advance(tarea)
+```
+
+![Tabla generada con `mostrar_tabla`](frontend/_static/interfaz_tabla.svg)
+
+> Consejo: si necesitas usar estas utilidades desde un entorno que no tiene `rich` instalado, captura la excepción `RuntimeError` que lanzan y muestra un mensaje alternativo.

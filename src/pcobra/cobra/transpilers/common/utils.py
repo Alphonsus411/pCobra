@@ -49,6 +49,7 @@ STANDARD_IMPORTS = {
         "import * as coleccion from './nativos/coleccion.js';",
         "import * as numero from './nativos/numero.js';",
         "import * as logica from './nativos/logica.js';",
+        "import * as interfaz from './nativos/interfaz.js';",
         "import * as red from './nativos/red.js';",
         "import * as seguridad from './nativos/seguridad.js';",
         "import * as sistema from './nativos/sistema.js';",
