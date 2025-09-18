@@ -134,6 +134,18 @@ def test_numero_funcs():
     assert core.contar_bits(0) == 0
     assert core.contar_bits(255) == 8
     assert core.contar_bits(-3) == 2
+    assert core.rotar_bits_izquierda(0b1011, 1) == 0b0111
+    assert core.rotar_bits_izquierda(0b1011, 5) == 0b0111
+    assert core.rotar_bits_derecha(0b1011, 1) == 0b1101
+    assert core.rotar_bits_derecha(0b1011, 5) == 0b1101
+    assert core.rotar_bits_izquierda(-2, 1, ancho_bits=8) == -3
+    assert core.rotar_bits_derecha(-2, 2, ancho_bits=8) == -65
+    assert core.rotar_bits_izquierda(0x1234, 20, ancho_bits=16) == 0x2341
+    assert core.rotar_bits_derecha(0x1234, 20, ancho_bits=16) == 0x4123
+    assert core.rotar_bits_izquierda(0x80000001, 36, ancho_bits=32) == 0x18
+    assert core.rotar_bits_derecha(0x80000001, 36, ancho_bits=32) == 0x18000000
+    with pytest.raises(ValueError):
+        core.rotar_bits_izquierda(1, 1, ancho_bits=0)
     assert core.entero_a_base(255, 16) == "FF"
     assert core.entero_a_base(-10, 2) == "-1010"
     assert core.entero_desde_base("ff", 16) == 255
