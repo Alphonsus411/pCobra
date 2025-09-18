@@ -237,6 +237,13 @@ varias tareas sin perder legibilidad:
 
 - `recolectar` envuelve `asyncio.gather`, cancela el resto de corrutinas si una
   falla y resulta familiar para quienes hayan usado `Promise.all`.
+- `iterar_completadas` recorre los valores conforme se resuelven las tareas al
+  estilo de `asyncio.as_completed`, algo equivalente a combinar `Promise.race`
+  con iteraciones manuales en JavaScript.
+- `recolectar_resultados` mantiene el orden de las corrutinas originales y
+  devuelve para cada una un diccionario con su estado final, emulando
+  `Promise.allSettled` y aprovechando la semántica de cancelación propia de
+  Python.
 - `carrera` delega en `asyncio.wait(FIRST_COMPLETED)` y cancela el resto tras
   obtener el primer resultado, igual que `Promise.race`.
 - `esperar_timeout` cubre `asyncio.wait_for` garantizando que la corrutina se
@@ -247,11 +254,26 @@ varias tareas sin perder legibilidad:
 Puedes importarlas desde `pcobra.corelibs` directamente:
 
 ```python
-from pcobra.corelibs import carrera, recolectar
+from pcobra.corelibs import (
+    carrera,
+    iterar_completadas,
+    recolectar,
+    recolectar_resultados,
+)
 
 resultado = await carrera(tarea_rapida(), tarea_lenta())
 datos = await recolectar(tarea_a(), tarea_b())
+estados = await recolectar_resultados(tarea_exitosa(), tarea_que_falla())
+
+async for valor in iterar_completadas(tarea_lenta(), tarea_rapida()):
+    print("llegó:", valor)
 ```
+
+La combinación de estas utilidades facilita alternar entre estilos típicos de
+Python y de JavaScript sin perder características de ninguno: se conservan las
+excepciones nativas de `asyncio` (por ejemplo, cancelaciones explícitas) y al
+mismo tiempo se proveen resultados agregados o streams ordenados como los que
+ofrecen las *promises* en navegadores modernos.
 
 ## 11. Transpilación y ejecución
 

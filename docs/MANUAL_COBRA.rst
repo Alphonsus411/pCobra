@@ -99,6 +99,14 @@ su resultado con ``esperar``.
 
    esperar principal()
 
+El módulo :mod:`pcobra.corelibs.asincrono` ofrece varios atajos que reproducen
+patrones habituales tanto de ``asyncio`` como de las *promises* en JavaScript.
+``recolectar`` equivale a ``asyncio.gather``/``Promise.all``,
+``iterar_completadas`` se inspira en ``asyncio.as_completed`` y permite
+procesar resultados a medida que van llegando, mientras que
+``recolectar_resultados`` devuelve una estructura similar a ``Promise.allSettled``
+con los estados finales (cumplida, rechazada o cancelada) de cada corrutina.
+
 Decoradores
 -----------
 
