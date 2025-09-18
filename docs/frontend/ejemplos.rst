@@ -43,3 +43,27 @@ ensamblador.  Ejecuta, por ejemplo:
 
 El primer comando imprime la versión Hololang del programa ``saludo.co`` y el
 segundo parte desde Hololang para reconstruir el código Python equivalente.
+
+
+Interfaces de consola enriquecidas
+----------------------------------
+
+Las utilidades de ``standard_library.interfaz`` permiten componer tablas,
+paneles y barras de progreso directamente desde Cobra o desde scripts Python.
+
+.. code-block:: cobra
+
+   usar standard_library.interfaz como ui
+
+   var datos = [
+       {"Nombre": "Ada", "Rol": "Pionera"},
+       {"Nombre": "Grace", "Rol": "Arquitecta"},
+   ]
+
+   ui.mostrar_tabla(datos, titulo="Personas clave")
+   ui.imprimir_aviso("Tabla generada", nivel="exito")
+
+.. figure:: _static/interfaz_tabla.svg
+   :alt: Captura de una tabla renderizada con Rich
+
+   Vista previa producida por ``mostrar_tabla`` en la consola.

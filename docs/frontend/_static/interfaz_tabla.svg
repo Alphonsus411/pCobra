@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 160" role="img" aria-labelledby="titulo descripcion">
+  <title id="titulo">Vista previa de mostrar_tabla</title>
+  <desc id="descripcion">Tabla ficticia renderizada en la consola utilizando Rich.</desc>
+  <rect x="1" y="1" width="458" height="158" rx="8" ry="8" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+  <text x="230" y="32" font-family="'Fira Code', 'Courier New', monospace" font-size="18" fill="#38bdf8" text-anchor="middle">Referentes</text>
+  <line x1="20" y1="50" x2="440" y2="50" stroke="#38bdf8" stroke-width="1.5" />
+  <text x="60" y="78" font-family="'Fira Code', 'Courier New', monospace" font-size="15" fill="#e2e8f0">Nombre</text>
+  <text x="280" y="78" font-family="'Fira Code', 'Courier New', monospace" font-size="15" fill="#e2e8f0">Rol</text>
+  <line x1="20" y1="90" x2="440" y2="90" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 4" />
+  <text x="60" y="114" font-family="'Fira Code', 'Courier New', monospace" font-size="15" fill="#f8fafc">Ada</text>
+  <text x="280" y="114" font-family="'Fira Code', 'Courier New', monospace" font-size="15" fill="#f8fafc">Pionera</text>
+  <text x="60" y="140" font-family="'Fira Code', 'Courier New', monospace" font-size="15" fill="#f8fafc">Hedy</text>
+  <text x="280" y="140" font-family="'Fira Code', 'Courier New', monospace" font-size="15" fill="#f8fafc">Educadora</text>
+</svg>

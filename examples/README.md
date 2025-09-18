@@ -27,6 +27,9 @@ Este directorio reúne distintos ejemplos de uso de Cobra y material relacionado
   cobra ejecutar examples/tutorial_basico/hola_mundo.co
   ```
 
+- **main.py**: script Python que muestra cómo usar `standard_library.interfaz` para
+  imprimir tablas y barras de progreso enriquecidas en la consola.
+
 ## Archivos individuales
 
 - `clase_metodo_atributo.co`

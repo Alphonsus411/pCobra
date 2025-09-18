@@ -22,6 +22,15 @@ from standard_library.datos import (
     seleccionar_columnas,
 )
 from standard_library.fecha import hoy, formatear, sumar_dias
+from standard_library.interfaz import (
+    barra_progreso,
+    imprimir_aviso,
+    iniciar_gui,
+    iniciar_gui_idle,
+    limpiar_consola,
+    mostrar_panel,
+    mostrar_tabla,
+)
 from standard_library.lista import (
     cabeza,
     chunk,
@@ -94,6 +103,13 @@ __all__: list[str] = [
     "agrupar_y_resumir",
     "a_listas",
     "de_listas",
+    "mostrar_tabla",
+    "mostrar_panel",
+    "barra_progreso",
+    "limpiar_consola",
+    "imprimir_aviso",
+    "iniciar_gui",
+    "iniciar_gui_idle",
 ]
 
 
@@ -106,3 +122,10 @@ filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Calla
 agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
+mostrar_tabla: Callable[..., Any]
+mostrar_panel: Callable[..., Any]
+barra_progreso: Callable[..., Any]
+limpiar_consola: Callable[..., None]
+imprimir_aviso: Callable[..., None]
+iniciar_gui: Callable[..., None]
+iniciar_gui_idle: Callable[..., None]
