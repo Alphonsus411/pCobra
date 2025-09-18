@@ -12,6 +12,7 @@ from pcobra.standard_library.datos import (
     combinar_tablas,
     de_listas,
     describir,
+    desplegar_tabla,
     escribir_excel,
     filtrar,
     leer_csv,
@@ -200,6 +201,43 @@ def test_rellenar_nulos_por_columna(tabla_pedidos):
     assert any(fila["monto"] == 0.0 for fila in rellenos)
     # Las columnas no reemplazadas conservan sus valores originales.
     assert rellenos[0]["unidades"] == 5
+
+
+def test_desplegar_tabla_con_varias_columnas(tabla_metricas):
+    desplegada = desplegar_tabla(
+        tabla_metricas,
+        identificadores=["region", "mes"],
+        valores=["monto", "descuento"],
+        var_name="metrica",
+        value_name="valor",
+    )
+    assert len(desplegada) == len(tabla_metricas) * 2
+    assert desplegada[0] == {
+        "region": "norte",
+        "mes": "enero",
+        "metrica": "monto",
+        "valor": 100,
+    }
+    registro_descuento = next(
+        fila
+        for fila in desplegada
+        if fila["region"] == "norte" and fila["mes"] == "febrero" and fila["metrica"] == "descuento"
+    )
+    assert registro_descuento["valor"] is None
+
+
+def test_desplegar_tabla_sin_especificar_valores():
+    datos = [
+        {"id": 1, "col_a": 10, "col_b": None},
+        {"id": 2, "col_a": 20, "col_b": 30},
+    ]
+    desplegada = desplegar_tabla(datos, identificadores="id")
+    assert desplegada == [
+        {"id": 1, "variable": "col_a", "value": 10},
+        {"id": 2, "variable": "col_a", "value": 20},
+        {"id": 1, "variable": "col_b", "value": None},
+        {"id": 2, "variable": "col_b", "value": 30},
+    ]
 
 
 def test_pivotar_tabla_multiple_metricas(tabla_metricas):

@@ -17,6 +17,7 @@ from standard_library.datos import (
     de_listas,
     describir,
     filtrar,
+    desplegar_tabla,
     leer_csv,
     leer_excel,
     leer_json,
@@ -107,6 +108,7 @@ __all__: list[str] = [
     "describir",
     "seleccionar_columnas",
     "filtrar",
+    "desplegar_tabla",
     "agrupar_y_resumir",
     "a_listas",
     "de_listas",
@@ -128,6 +130,7 @@ leer_excel: Callable[..., list[dict[str, Any]]]
 describir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]]
 seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
 filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
+desplegar_tabla: Callable[..., list[dict[str, Any]]]
 agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]

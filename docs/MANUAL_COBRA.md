@@ -717,6 +717,7 @@ El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que pe
 - `ordenar_tabla` admite ordenar por varias columnas controlando el sentido ascendente o descendente de cada una.
 - `combinar_tablas` replica los `join` de pandas y R para cruzar datasets con claves compartidas o diferenciadas.
 - `rellenar_nulos` rellena valores perdidos por columna antes de analizar la información.
+- `desplegar_tabla` transforma los datos a formato largo, equivalente a `pivot_longer` de R o `pandas.melt`.
 - `pivotar_tabla` reorganiza los datos en formato ancho calculando métricas múltiples de manera declarativa.
 - `a_listas` y `de_listas` convierten entre lista de registros y diccionario de columnas, facilitando la interoperabilidad con librerías externas.
 
@@ -739,6 +740,13 @@ resumen_ancho = pandas.pivotar_tabla(
     columnas='mes',
     valores='monto',
     agregacion='sum'
+)
+resumen_largo = pandas.desplegar_tabla(
+    ventas_completas,
+    identificadores=['region', 'mes'],
+    valores=['monto'],
+    var_name='metrica',
+    value_name='valor'
 )
 columnas = pandas.a_listas(resumen)
 imprimir(columnas['region'])
