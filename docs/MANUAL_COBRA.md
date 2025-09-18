@@ -574,6 +574,34 @@ Cada paso mantiene el orden de entrada y devuelve nuevas listas, de modo que pue
 
 Las funciones están disponibles tanto al ejecutar Cobra directamente como al transpirar a Python o JavaScript: la semántica se conserva gracias a las implementaciones equivalentes en `core/nativos/coleccion.js`.
 
+### Operaciones lógicas reutilizables
+
+`pcobra.corelibs.logica` reúne operadores booleanos con validaciones explícitas de tipo. Las versiones de `standard_library.logica` reutilizan la misma implementación para ofrecer una API homogénea en cualquier backend.
+
+- `conjuncion`, `disyuncion` y `negacion` cubren las puertas clásicas.
+- `xor`, `nand`, `nor`, `implica` y `equivale` facilitan construir tablas de verdad completas.
+- `xor_multiple` acepta un número arbitrario de argumentos y exige al menos dos valores.
+- `todas` y `alguna` validan colecciones de booleanos antes de aplicar `all`/`any`.
+
+Los parámetros no booleanos producen un `TypeError` descriptivo, lo cual ayuda a detectar errores lógicos tempranamente. Además, la versión en JavaScript (`core/nativos/logica.js`) replica la semántica para mantener el comportamiento al transpirar.
+
+```cobra
+import pcobra.corelibs.logica as logica
+import standard_library.logica as logica_alto_nivel
+
+imprimir(logica.xor(True, False))                 # True
+imprimir(logica.implica(True, False))             # False
+imprimir(logica_alto_nivel.xor_multiple(True, False, False))  # True
+
+var sensores = [True, True, False]
+imprimir(logica_alto_nivel.alguna(sensores))      # True
+
+# Lanzan errores al recibir datos que no son booleanos
+logica.todas([True, 1])  # -> TypeError
+```
+
+> **Recomendación:** al combinar `xor_multiple` con colecciones calculadas dinámicamente verifica previamente la longitud de la entrada para evitar el `ValueError` que se lanza cuando se proporcionan menos de dos argumentos.
+
 ## 24. Procesamiento de datos tabulares
 
 El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que permite trabajar con tablas desde Cobra sin exponerse a los detalles internos del `DataFrame`. Las funciones devuelven listas de diccionarios o diccionarios de listas, estructuras fáciles de manipular desde Cobra o al transpirar a Python.

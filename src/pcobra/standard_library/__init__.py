@@ -31,7 +31,19 @@ from standard_library.lista import (
     mapear_seguro,
     ventanas,
 )
-from standard_library.logica import conjuncion, disyuncion, negacion
+from standard_library.logica import (
+    conjuncion,
+    disyuncion,
+    negacion,
+    xor,
+    nand,
+    nor,
+    implica,
+    equivale,
+    xor_multiple,
+    todas,
+    alguna,
+)
 from standard_library.texto import (
     es_anagrama,
     es_palindromo,
@@ -58,6 +70,14 @@ __all__: list[str] = [
     "conjuncion",
     "disyuncion",
     "negacion",
+    "xor",
+    "nand",
+    "nor",
+    "implica",
+    "equivale",
+    "xor_multiple",
+    "todas",
+    "alguna",
     "es_nulo",
     "es_vacio",
     "rel",

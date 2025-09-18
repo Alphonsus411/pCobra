@@ -83,6 +83,48 @@ def test_numero_funcs():
     assert core.promedio([1, 2, 3]) == 2.0
 
 
+def test_logica_funcs():
+    casos = [
+        (False, False),
+        (False, True),
+        (True, False),
+        (True, True),
+    ]
+    for a, b in casos:
+        assert core.conjuncion(a, b) is (a and b)
+        assert core.disyuncion(a, b) is (a or b)
+        assert core.negacion(a) is (not a)
+        assert core.xor(a, b) is ((a and not b) or (not a and b))
+        assert core.nand(a, b) is (not (a and b))
+        assert core.nor(a, b) is (not (a or b))
+        assert core.implica(a, b) is ((not a) or b)
+        assert core.equivale(a, b) is (a is b)
+
+    assert core.xor_multiple(True, False, True) is False
+    assert core.xor_multiple(False, False, False) is False
+    assert core.xor_multiple(True, True, True, False) is True
+
+    assert core.todas([True, True, True]) is True
+    assert core.todas([True, False, True]) is False
+    assert core.alguna([False, False, True]) is True
+    assert core.alguna([False, False, False]) is False
+
+    with pytest.raises(TypeError):
+        core.conjuncion(1, True)
+    with pytest.raises(TypeError):
+        core.disyuncion(True, "no bool")
+    with pytest.raises(TypeError):
+        core.negacion("no bool")
+    with pytest.raises(ValueError):
+        core.xor_multiple(True)
+    with pytest.raises(TypeError):
+        core.xor_multiple(True, 0)
+    with pytest.raises(TypeError):
+        core.todas([True, 1])
+    with pytest.raises(TypeError):
+        core.alguna([False, None])
+
+
 def test_archivo_funcs(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     nombre = "f.txt"
