@@ -159,6 +159,96 @@ def entero_desde_base(cadena: str, base: int, *, alfabeto: str | None = None) ->
     return signo * valor
 
 
+def longitud_bits(valor: int) -> int:
+    """Devuelve la cantidad de bits necesarios para representar ``valor``.
+
+    La semántica coincide con :meth:`int.bit_length`, por lo que los enteros
+    negativos utilizan su magnitud absoluta para el cálculo y ``0`` retorna
+    ``0``.
+    """
+
+    if not isinstance(valor, int):
+        raise TypeError("longitud_bits solo acepta valores enteros")
+    return valor.bit_length()
+
+
+def contar_bits(valor: int) -> int:
+    """Cuenta cuántos bits a ``1`` contiene la representación de ``valor``.
+
+    Esta función es equivalente a :meth:`int.bit_count` y funciona tanto para
+    enteros positivos como negativos usando complemento a dos.
+    """
+
+    if not isinstance(valor, int):
+        raise TypeError("contar_bits solo acepta valores enteros")
+    return valor.bit_count()
+
+
+def entero_a_bytes(
+    valor: int,
+    longitud: int | None = None,
+    *,
+    byteorder: str = "big",
+    signed: bool = False,
+) -> bytes:
+    """Convierte ``valor`` en una secuencia de bytes.
+
+    Si ``longitud`` es ``None`` se calculará automáticamente el mínimo número
+    de bytes capaz de representar el entero respetando ``signed``. El parámetro
+    ``byteorder`` debe ser ``"big"`` o ``"little"``, coherente con
+    :meth:`int.to_bytes`.
+    """
+
+    if not isinstance(valor, int):
+        raise TypeError("Solo se pueden convertir valores enteros a bytes")
+    if not isinstance(byteorder, str):
+        raise TypeError("byteorder debe ser una cadena de texto")
+    if byteorder not in {"big", "little"}:
+        raise ValueError("byteorder debe ser 'big' o 'little'")
+
+    if longitud is not None:
+        if not isinstance(longitud, int):
+            raise TypeError("La longitud debe ser un entero")
+        if longitud < 0:
+            raise ValueError("La longitud no puede ser negativa")
+        return valor.to_bytes(longitud, byteorder, signed=signed)
+
+    if valor < 0 and not signed:
+        raise OverflowError("Se requiere signed=True para convertir enteros negativos")
+
+    longitud_calculada = 1
+    while True:
+        try:
+            return valor.to_bytes(longitud_calculada, byteorder, signed=signed)
+        except OverflowError:
+            longitud_calculada += 1
+
+
+def entero_desde_bytes(
+    datos,
+    *,
+    byteorder: str = "big",
+    signed: bool = False,
+) -> int:
+    """Construye un entero a partir de ``datos`` interpretados como bytes.
+
+    ``datos`` puede ser cualquier objeto similar a bytes. El parámetro
+    ``byteorder`` acepta los mismos valores que :func:`entero_a_bytes`.
+    """
+
+    if not isinstance(byteorder, str):
+        raise TypeError("byteorder debe ser una cadena de texto")
+    if byteorder not in {"big", "little"}:
+        raise ValueError("byteorder debe ser 'big' o 'little'")
+
+    try:
+        buffer = bytes(datos)
+    except TypeError as exc:  # pragma: no cover - error explícito
+        raise TypeError("Se requiere un objeto similar a bytes") from exc
+
+    return int.from_bytes(buffer, byteorder, signed=signed)
+
+
 def raiz(valor, indice: float = 2):
     """Calcula la raíz ``indice``-ésima de ``valor``."""
 

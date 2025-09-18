@@ -219,6 +219,21 @@ aleatorios reproducibles y analizar datos sin abandonar Cobra.
      - ``random.uniform(a, b)``
      - ``numpy.random.uniform(a, b)``
      - ``Math.random() * (b - a) + a``
+
+Los enteros también cuentan con atajos binarios que replican la API moderna de
+Python:
+
+.. code-block:: python
+
+   print(core.longitud_bits(255))
+   print(core.contar_bits(-3))
+   print(core.entero_a_bytes(-1, signed=True))
+   print(core.entero_desde_bytes(b"\xff", signed=True))
+
+Las funciones ``longitud_bits`` y ``contar_bits`` recuperan información del
+entero sin escribir operadores manuales, mientras que ``entero_a_bytes`` y
+``entero_desde_bytes`` facilitan la conversión a representaciones binarias en
+los órdenes ``big`` y ``little``.
    * - ``mcd(a, b, ...)``
      - ``math.gcd(a, b, ...)``
      - ``numpy.gcd.reduce([a, b, ...])``
