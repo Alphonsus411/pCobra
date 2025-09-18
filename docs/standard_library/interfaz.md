@@ -5,6 +5,16 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
 - **`mostrar_tabla(filas, columnas=None, titulo=None, estilos=None)`**: construye una
   tabla a partir de listas de diccionarios o secuencias y la imprime usando la consola
   indicada. Devuelve el objeto `Table` para ajustes adicionales.
+- **`mostrar_codigo(codigo, lenguaje)`**: resalta código fuente usando
+  [`rich.syntax.Syntax`](https://rich.readthedocs.io/en/stable/syntax.html) y lo
+  imprime en la consola indicada. Devuelve el objeto `Syntax` para posteriores
+  personalizaciones.
+- **`mostrar_arbol(nodos, titulo=None)`**: convierte diccionarios o listas
+  anidadas en un árbol visual basado en `rich.tree.Tree`, ideal para mostrar
+  estructuras de carpetas o relaciones jerárquicas.
+- **`preguntar_confirmacion(mensaje, por_defecto=True)`**: solicita una respuesta
+  afirmativa o negativa mediante `rich.prompt.Confirm`, respetando el valor por
+  defecto especificado.
 - **`mostrar_panel(contenido, titulo=None, estilo="bold cyan")`**: crea un panel con
   bordes y permite definir el estilo interior y el color del borde.
 - **`barra_progreso(descripcion="Progreso", total=None)`**: context manager que
@@ -17,7 +27,12 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
   distribuidas con Cobra, validando previamente que la dependencia esté disponible.
 
 ```python
-from standard_library.interfaz import mostrar_tabla, barra_progreso
+from standard_library.interfaz import (
+    barra_progreso,
+    mostrar_arbol,
+    mostrar_codigo,
+    mostrar_tabla,
+)
 
 filas = [
     {"Nombre": "Ada", "Rol": "Pionera"},
@@ -25,6 +40,12 @@ filas = [
 ]
 
 mostrar_tabla(filas, titulo="Referentes")
+mostrar_codigo("print('hola cobra')", "python")
+mostrar_arbol(
+    [
+        ("src", ["cobra.co", ("modulos", ["texto.co", "interfaz.co"])])],
+    titulo="Proyecto",
+)
 with barra_progreso(total=3, descripcion="Cargando") as (progreso, tarea):
     for _ in range(3):
         progreso.advance(tarea)
