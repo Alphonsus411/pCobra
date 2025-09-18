@@ -21,6 +21,18 @@ def _asegurar_booleano(valor: bool, nombre: str = "valor") -> bool:
     raise TypeError(f"{nombre} debe ser un booleano, se recibió {type(valor).__name__}")
 
 
+def es_verdadero(valor: bool) -> bool:
+    """Valida que *valor* sea booleano y retorna ``bool(valor)``."""
+
+    return bool(_asegurar_booleano(valor))
+
+
+def es_falso(valor: bool) -> bool:
+    """Valida que *valor* sea booleano y retorna ``bool(not valor)``."""
+
+    return bool(not _asegurar_booleano(valor))
+
+
 def conjuncion(a: bool, b: bool) -> bool:
     """Devuelve ``True`` cuando *a* y *b* son verdaderos."""
 
@@ -147,6 +159,8 @@ def paridad(valores: Iterable[bool]) -> bool:
 
 
 __all__ = [
+    "es_verdadero",
+    "es_falso",
     "conjuncion",
     "disyuncion",
     "negacion",

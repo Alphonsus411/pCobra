@@ -198,6 +198,15 @@ def test_logica_funcs():
 
     assert core.xor_multiple(True, False, True) is False
     assert core.xor_multiple(False, False, False) is False
+    assert core.es_verdadero(True) is True
+    assert core.es_verdadero(False) is False
+    assert core.es_falso(True) is False
+    assert core.es_falso(False) is True
+    for valor in (1, "False", None):
+        with pytest.raises(TypeError):
+            core.es_verdadero(valor)
+        with pytest.raises(TypeError):
+            core.es_falso(valor)
     assert core.xor_multiple(True, True, True, False) is True
 
     assert core.todas([True, True, True]) is True

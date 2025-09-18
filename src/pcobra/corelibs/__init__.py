@@ -33,6 +33,8 @@ from corelibs.texto import (
     normalizar_unicode,
 )
 from corelibs.logica import (
+    es_verdadero,
+    es_falso,
     conjuncion,
     disyuncion,
     negacion,
@@ -154,6 +156,8 @@ __all__ = [
     "rellenar_izquierda",
     "rellenar_derecha",
     "normalizar_unicode",
+    "es_verdadero",
+    "es_falso",
     "conjuncion",
     "disyuncion",
     "negacion",

@@ -6,6 +6,38 @@ from typing import Iterable
 
 from pcobra.corelibs import logica as _logica
 
+__all__ = [
+    "es_verdadero",
+    "es_falso",
+    "conjuncion",
+    "disyuncion",
+    "negacion",
+    "xor",
+    "nand",
+    "nor",
+    "implica",
+    "equivale",
+    "xor_multiple",
+    "todas",
+    "alguna",
+    "ninguna",
+    "solo_uno",
+    "conteo_verdaderos",
+    "paridad",
+]
+
+
+def es_verdadero(valor: bool) -> bool:
+    """Replica ``operator.truth`` validando que el argumento sea booleano."""
+
+    return _logica.es_verdadero(valor)
+
+
+def es_falso(valor: bool) -> bool:
+    """Replica ``operator.not_`` validando que el argumento sea booleano."""
+
+    return _logica.es_falso(valor)
+
 
 def conjuncion(a: bool, b: bool) -> bool:
     """Retorna ``True`` si ambos argumentos son verdaderos."""

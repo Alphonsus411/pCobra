@@ -657,6 +657,7 @@ Las funciones están disponibles tanto al ejecutar Cobra directamente como al tr
 
 `pcobra.corelibs.logica` reúne operadores booleanos con validaciones explícitas de tipo. Las versiones de `standard_library.logica` reutilizan la misma implementación para ofrecer una API homogénea en cualquier backend.
 
+- `es_verdadero` y `es_falso` encapsulan `bool()` y ``not`` emulando `operator.truth` y `operator.not_`, respectivamente, pero con comprobaciones de tipo estrictas.
 - `conjuncion`, `disyuncion` y `negacion` cubren las puertas clásicas.
 - `xor`, `nand`, `nor`, `implica` y `equivale` facilitan construir tablas de verdad completas.
 - `xor_multiple` acepta un número arbitrario de argumentos y exige al menos dos valores.
