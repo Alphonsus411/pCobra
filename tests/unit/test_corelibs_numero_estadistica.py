@@ -59,3 +59,25 @@ def test_mediana_negativos_y_precision():
 def test_redondear_precision():
     valor = core.redondear(2 / 3, 3)
     assert valor == pytest.approx(0.667, rel=1e-6)
+
+
+def test_entero_a_base_validaciones():
+    with pytest.raises(ValueError):
+        core.entero_a_base(10, 1)
+    with pytest.raises(ValueError):
+        core.entero_a_base(10, 37)
+    with pytest.raises(TypeError):
+        core.entero_a_base(3.14, 10)
+
+
+def test_entero_desde_base_validaciones():
+    with pytest.raises(ValueError):
+        core.entero_desde_base("", 10)
+    with pytest.raises(ValueError):
+        core.entero_desde_base("102", 2)
+    with pytest.raises(ValueError):
+        core.entero_desde_base("A", 16, alfabeto="0123456789ABCDEF"[:-1])
+
+
+def test_producto_lista_vacia():
+    assert core.producto([]) == 1

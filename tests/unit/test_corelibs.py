@@ -82,6 +82,10 @@ def test_numero_funcs():
     assert core.redondear(3.6) == 4
     assert core.piso(3.9) == 3
     assert core.techo(3.1) == 4
+    assert core.mcd(48, 18) == 6
+    assert core.mcm(4, 6, 8) == 24
+    assert core.es_cercano(1.0, 1.0 + 1e-10) is True
+    assert core.es_cercano(1.0, 1.1, tolerancia_relativa=0.2) is True
     assert core.raiz(9) == pytest.approx(3.0)
     assert core.raiz(-8, 3) == pytest.approx(-2.0)
     assert core.potencia(2, 3) == pytest.approx(8.0)
@@ -89,6 +93,12 @@ def test_numero_funcs():
     assert 1 <= core.aleatorio(1, 2, semilla=42) <= 2
     assert core.mediana([1, 2, 3, 4]) == 2.5
     assert core.moda([1, 1, 2, 2, 2]) == 2
+    assert core.producto([2, 3, 5]) == 30
+    assert core.producto([], inicio=10) == 10
+    assert core.entero_a_base(255, 16) == "FF"
+    assert core.entero_a_base(-10, 2) == "-1010"
+    assert core.entero_desde_base("ff", 16) == 255
+    assert core.entero_desde_base("-1010", 2) == -10
     datos = [2, 4, 4, 4, 5, 5, 7, 9]
     assert core.desviacion_estandar(datos) == pytest.approx(2.0)
     assert core.desviacion_estandar(datos, muestral=True) == pytest.approx(
