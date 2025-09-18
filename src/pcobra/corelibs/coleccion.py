@@ -204,3 +204,69 @@ def tomar(lista: Iterable[T] | Sequence[T], cantidad: int) -> List[T]:
         raise ValueError("cantidad debe ser positiva")
     elementos = _asegurar_iterable(lista)
     return elementos[:cantidad]
+
+
+def tomar_mientras(
+    lista: Iterable[T] | Sequence[T], funcion: Callable[[T], bool]
+) -> List[T]:
+    """Recoge elementos mientras ``funcion`` devuelva ``True``."""
+
+    elementos = _asegurar_iterable(lista)
+    fn = _asegurar_callable(funcion)
+    resultado: List[T] = []
+    for elemento in elementos:
+        if not fn(elemento):
+            break
+        resultado.append(elemento)
+    return resultado
+
+
+def descartar_mientras(
+    lista: Iterable[T] | Sequence[T], funcion: Callable[[T], bool]
+) -> List[T]:
+    """Descarta elementos iniciales mientras ``funcion`` sea ``True``."""
+
+    elementos = _asegurar_iterable(lista)
+    fn = _asegurar_callable(funcion)
+    resultado: List[T] = []
+    descartando = True
+    for elemento in elementos:
+        if descartando and fn(elemento):
+            continue
+        descartando = False
+        resultado.append(elemento)
+    return resultado
+
+
+def scanear(
+    lista: Iterable[T] | Sequence[T],
+    funcion: Callable[[U, T], U],
+    inicial: U | object = _SIN_VALOR,
+) -> List[U]:
+    """Genera acumulaciones parciales de izquierda a derecha."""
+
+    elementos = iter(_asegurar_iterable(lista))
+    fn = _asegurar_callable(funcion)
+    resultado: List[U] = []
+
+    if inicial is _SIN_VALOR:
+        try:
+            acumulado = next(elementos)  # type: ignore[assignment]
+        except StopIteration:
+            return []
+        resultado.append(acumulado)  # type: ignore[arg-type]
+    else:
+        acumulado = inicial
+        resultado.append(acumulado)
+
+    for elemento in elementos:
+        acumulado = fn(acumulado, elemento)
+        resultado.append(acumulado)
+    return resultado
+
+
+def pares_consecutivos(lista: Iterable[T] | Sequence[T]) -> List[Tuple[T, T]]:
+    """Devuelve pares ``(anterior, actual)`` consecutivos."""
+
+    elementos = _asegurar_iterable(lista)
+    return list(zip(elementos, elementos[1:]))

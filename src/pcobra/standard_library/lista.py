@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from typing import Any, Callable, Iterable, List, Sequence, Tuple
 
-from corelibs.coleccion import tomar as tomar_core
+from corelibs.coleccion import (
+    tomar as tomar_core,
+    tomar_mientras as tomar_mientras_core,
+    descartar_mientras as descartar_mientras_core,
+    scanear as scanear_core,
+    pares_consecutivos as pares_consecutivos_core,
+)
+
+_SIN_INICIAL = object()
 
 
 def cabeza(lista):
@@ -109,4 +117,42 @@ def chunk(
             break
         resultado.append(bloque)
     return resultado
+
+
+def tomar_mientras(
+    lista: Iterable[Any] | Sequence[Any], funcion: Callable[[Any], bool]
+) -> List[Any]:
+    """Obtiene los elementos iniciales que cumplen ``funcion``."""
+
+    elementos = _asegurar_lista(lista)
+    return tomar_mientras_core(elementos, funcion)
+
+
+def descartar_mientras(
+    lista: Iterable[Any] | Sequence[Any], funcion: Callable[[Any], bool]
+) -> List[Any]:
+    """Elimina elementos iniciales mientras ``funcion`` devuelva ``True``."""
+
+    elementos = _asegurar_lista(lista)
+    return descartar_mientras_core(elementos, funcion)
+
+
+def scanear(
+    lista: Iterable[Any] | Sequence[Any],
+    funcion: Callable[[Any, Any], Any],
+    inicial: Any | object = _SIN_INICIAL,
+) -> List[Any]:
+    """Devuelve las acumulaciones parciales de ``funcion``."""
+
+    elementos = _asegurar_lista(lista)
+    if inicial is _SIN_INICIAL:
+        return scanear_core(elementos, funcion)
+    return scanear_core(elementos, funcion, inicial)
+
+
+def pares_consecutivos(lista: Iterable[Any] | Sequence[Any]) -> List[Tuple[Any, Any]]:
+    """Construye pares consecutivos ``(anterior, actual)``."""
+
+    elementos = _asegurar_lista(lista)
+    return pares_consecutivos_core(elementos)
 

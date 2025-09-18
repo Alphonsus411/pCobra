@@ -82,6 +82,10 @@ from corelibs.coleccion import (
     mezclar,
     zip_listas,
     tomar,
+    tomar_mientras,
+    descartar_mientras,
+    scanear,
+    pares_consecutivos,
 )
 from corelibs.seguridad import hash_sha256, generar_uuid
 from corelibs.red import (
@@ -187,6 +191,10 @@ __all__ = [
     "mezclar",
     "zip_listas",
     "tomar",
+    "tomar_mientras",
+    "descartar_mientras",
+    "scanear",
+    "pares_consecutivos",
     "hash_sha256",
     "generar_uuid",
     "obtener_url",

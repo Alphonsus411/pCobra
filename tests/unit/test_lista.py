@@ -27,6 +27,23 @@ def test_lista():
     ]
     assert lista.chunk([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]
     assert lista.chunk([1, 2, 3, 4, 5], 2, incluir_incompleto=False) == [[1, 2], [3, 4]]
+    assert lista.tomar_mientras((3, 2, 1, 0), lambda x: x > 0) == [3, 2, 1]
+    assert lista.descartar_mientras([0, 0, 1, 2], lambda x: x == 0) == [1, 2]
+    assert lista.scanear([1, 2, 3], lambda acc, x: acc + x) == [1, 3, 6]
+    assert lista.scanear([1, 2, 3], lambda acc, x: acc + x, 0) == [0, 1, 3, 6]
+    assert lista.scanear([], lambda acc, x: acc + x, 5) == [5]
+    assert lista.pares_consecutivos(["a", "b", "c"]) == [("a", "b"), ("b", "c")]
+    with pytest.raises(TypeError):
+        lista.tomar_mientras(123, lambda x: x)
+    with pytest.raises(TypeError):
+        lista.descartar_mientras(123, lambda x: x)
+    with pytest.raises(TypeError):
+        lista.scanear([1, 2], "no callable")
+    def reventar(acc, x):  # pragma: no cover - auxiliar para excepciones
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        lista.scanear([1, 2], reventar)
     with pytest.raises(ValueError):
         lista.ventanas(datos, 0)
     with pytest.raises(ValueError):
