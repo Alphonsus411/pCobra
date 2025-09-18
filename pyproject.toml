@@ -150,6 +150,7 @@ markers = [
     "fuzz: pruebas de mutación/fuzzing",
     "performance: pruebas de rendimiento",
     "windows: pruebas específicas de Windows",
+    "asyncio: pruebas que utilizan bucles de eventos asíncronos",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
