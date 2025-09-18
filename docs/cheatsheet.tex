@@ -37,4 +37,22 @@ excepto & Captura de excepción\\
 \texttt{ventanas(lista, tam, paso)} & Genera ventanas deslizantes; usa \texttt{incluir\_incompletas}.\\
 \texttt{chunk(lista, tam)} & Construye bloques consecutivos del mismo tamaño.\\
 \end{tabular}
+
+\section*{Lógica}
+\begin{tabular}{ll}
+\textbf{Función} & \textbf{Descripción}\\\hline
+\texttt{conjuncion(a, b)} & Verdadero solo si ambos argumentos lo son.\\
+\texttt{disyuncion(a, b)} & Verdadero si al menos un argumento lo es.\\
+\texttt{negacion(valor)} & Invierte el valor lógico.\\
+\texttt{xor(a, b)} & Verdadero cuando los argumentos difieren.\\
+\texttt{nand(a, b)} & Equivale a \texttt{not (a and b)}.\\
+\texttt{nor(a, b)} & Equivale a \texttt{not (a or b)}.\\
+\texttt{implica(a, b)} & Falsa solo cuando \texttt{a} es verdadero y \texttt{b} falso.\\
+\texttt{equivale(a, b)} & Verdadera cuando ambos valores coinciden.\\
+\texttt{xor\_multiple(*valores)} & XOR acumulado; requiere al menos dos entradas.\\
+\texttt{todas(valores)} & Valida que todos los elementos sean verdaderos.\\
+\texttt{alguna(valores)} & Comprueba si al menos un elemento es verdadero.\\
+\end{tabular}
+
+\textit{Todas las funciones validan que las entradas sean booleanas y lanzan \texttt{TypeError} si se proporciona otro tipo.}
 \end{document}
