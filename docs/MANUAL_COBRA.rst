@@ -100,12 +100,18 @@ su resultado con ``esperar``.
    esperar principal()
 
 El módulo :mod:`pcobra.corelibs.asincrono` ofrece varios atajos que reproducen
-patrones habituales tanto de ``asyncio`` como de las *promises* en JavaScript.
-``recolectar`` equivale a ``asyncio.gather``/``Promise.all``,
-``iterar_completadas`` se inspira en ``asyncio.as_completed`` y permite
-procesar resultados a medida que van llegando, mientras que
-``recolectar_resultados`` devuelve una estructura similar a ``Promise.allSettled``
-con los estados finales (cumplida, rechazada o cancelada) de cada corrutina.
+patrones habituales tanto de ``asyncio`` como de las *promises* en JavaScript y
+las rutinas concurrentes en Go. ``recolectar`` equivale a
+``asyncio.gather``/``Promise.all``, ``primero_exitoso`` se comporta como
+``Promise.any`` al devolver el primer resultado sin excepciones y
+``iterar_completadas`` se inspira en ``asyncio.as_completed`` para procesar
+respuestas a medida que van llegando. ``recolectar_resultados`` devuelve una
+estructura similar a ``Promise.allSettled`` con los estados finales (cumplida,
+rechazada o cancelada) de cada corrutina, mientras que
+``mapear_concurrencia`` implementa un patrón de *worker pool* estilo Go a
+través de ``asyncio.Semaphore`` para respetar un ``limite`` máximo de tareas y
+decidir, mediante ``return_exceptions``, si los errores cancelan el resto o se
+registran junto a sus posiciones originales.
 
 Decoradores
 -----------

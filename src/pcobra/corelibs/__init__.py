@@ -125,8 +125,10 @@ from corelibs.asincrono import (
     iterar_completadas,
     recolectar_resultados,
     carrera,
+    primero_exitoso,
     esperar_timeout,
     crear_tarea,
+    mapear_concurrencia,
 )
 
 __all__ = [
@@ -248,8 +250,10 @@ __all__ = [
     "iterar_completadas",
     "recolectar_resultados",
     "carrera",
+    "primero_exitoso",
     "esperar_timeout",
     "crear_tarea",
+    "mapear_concurrencia",
 ]
 
 quitar_prefijo.__doc__ = (
@@ -344,4 +348,19 @@ carrera.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.asincrono.carrera`. Expone un comportamiento"
     " semejante a ``Promise.race`` empleando :func:`asyncio.wait` para devolver"
     " el primer resultado disponible."
+)
+
+primero_exitoso.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.primero_exitoso`. Funciona como"
+    " ``Promise.any`` al devolver el primer resultado sin excepciones y agrupa"
+    " los fallos restantes en una ``ExceptionGroup`` si ninguna corrutina"
+    " completa con éxito."
+)
+
+mapear_concurrencia.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.mapear_concurrencia`. Permite"
+    " limitar el número de corrutinas simultáneas con ``asyncio.Semaphore``,"
+    " un patrón equivalente a los *worker pools* de Go, y documenta el"
+    " parámetro ``limite`` junto con la opción ``return_exceptions`` para"
+    " decidir si se propagan o coleccionan los errores."
 )
