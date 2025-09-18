@@ -263,6 +263,17 @@ def test_coleccion_funcs():
     assert core.zip_listas() == []
     assert core.tomar(datos, 2) == [3, 1]
     assert core.tomar(datos, 0) == []
+    assert core.tomar_mientras([5, 4, 3, 0, 1], lambda x: x > 0) == [5, 4, 3]
+    assert core.tomar_mientras([], lambda _: True) == []
+    assert core.descartar_mientras([0, 0, 1, 2], lambda x: x == 0) == [1, 2]
+    assert core.descartar_mientras([], lambda _: False) == []
+    assert core.scanear([1, 2, 3], operator.add) == [1, 3, 6]
+    assert core.scanear([1, 2, 3], operator.mul, 1) == [1, 1, 2, 6]
+    assert core.scanear([], operator.add) == []
+    assert core.scanear([], operator.add, 5) == [5]
+    assert core.pares_consecutivos([1, 2, 3]) == [(1, 2), (2, 3)]
+    assert core.pares_consecutivos([]) == []
+    assert core.pares_consecutivos([1]) == []
     assert core.mapear([], lambda x: x) == []
 
 
@@ -285,6 +296,33 @@ def test_coleccion_validaciones():
         core.tomar([1], -1)
     with pytest.raises(TypeError):
         core.tomar([1], 1.5)
+    with pytest.raises(TypeError):
+        core.tomar_mientras(123, lambda x: x)
+    with pytest.raises(TypeError):
+        core.tomar_mientras([1], None)
+    with pytest.raises(TypeError):
+        core.descartar_mientras(123, lambda x: x)
+    with pytest.raises(TypeError):
+        core.descartar_mientras([1], "no callable")
+    with pytest.raises(TypeError):
+        core.scanear([1, 2], "no callable")
+
+
+def test_coleccion_excepciones():
+    def explota(valor):
+        raise RuntimeError("boom")
+
+    def explota_scan(acumulado, valor):  # pragma: no cover - auxilia en prueba
+        raise RuntimeError("scan")
+
+    with pytest.raises(RuntimeError):
+        core.tomar_mientras([1, 2, 3], explota)
+
+    with pytest.raises(RuntimeError):
+        core.descartar_mientras([0, 1, 2], explota)
+
+    with pytest.raises(RuntimeError):
+        core.scanear([1, 2, 3], explota_scan)
 
 
 def test_seguridad_funcs():

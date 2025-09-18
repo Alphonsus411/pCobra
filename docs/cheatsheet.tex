@@ -33,6 +33,10 @@ excepto & Captura de excepción\\
 \texttt{mezclar(lista, semilla)} & Copia barajada con semilla opcional para pruebas.\\
 \texttt{zip\_listas(a, b, ...)} & Crea tuplas alineadas hasta la lista más corta.\\
 \texttt{tomar(lista, n)} & Obtiene los primeros \texttt{n} elementos sin mutar.\\
+\texttt{tomar\_mientras(lista, funcion)} & Prefijo mientras la condición sea cierta; inspirado en Kotlin \texttt{takeWhile} y Ruby \texttt{Enumerable\#take\_while}.\\
+\texttt{descartar\_mientras(lista, funcion)} & Omite el prefijo que cumple la condición, como \texttt{dropWhile} de Kotlin y Ruby \texttt{Enumerable\#drop\_while}.\\
+\texttt{scanear(lista, funcion, inicial)} & Acumulaciones parciales al estilo Kotlin \texttt{scan}/\texttt{runningFold} y Ruby \texttt{Enumerable\#inject}.\\
+\texttt{pares\_consecutivos(lista)} & Pares deslizantes, similar a Kotlin \texttt{zipWithNext} y Ruby \texttt{each\_cons(2)}.\\
 \texttt{mapear\_seguro(lista, funcion)} & Devuelve resultados y excepciones por elemento.\\
 \texttt{ventanas(lista, tam, paso)} & Genera ventanas deslizantes; usa \texttt{incluir\_incompletas}.\\
 \texttt{chunk(lista, tam)} & Construye bloques consecutivos del mismo tamaño.\\
