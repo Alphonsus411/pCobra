@@ -444,6 +444,81 @@ def rellenar_nulos(
     return _sanear_registros(relleno.to_dict(orient="records"))
 
 
+def desplegar_tabla(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    *,
+    identificadores: str | Sequence[str] | None = None,
+    valores: str | Sequence[str] | None = None,
+    var_name: str | None = None,
+    value_name: str | None = None,
+    ignorar_indice: bool = True,
+) -> Tabla:
+    """Convierte ``datos`` a formato largo como ``pandas.melt`` o ``pivot_longer`` de R.
+
+    Parameters
+    ----------
+    datos:
+        Tabla de origen convertible a :class:`pandas.DataFrame`.
+    identificadores:
+        Columna o columnas que permanecen como identificadores en la salida
+        (argumento ``id_vars`` de :func:`pandas.melt`). Si es ``None`` se usan
+        todas las columnas salvo las indicadas en ``valores``.
+    valores:
+        Columnas que se apilan en formato largo (equivalente a ``value_vars``).
+        Si es ``None`` se consideran todas las columnas no presentes en
+        ``identificadores``.
+    var_name:
+        Nombre opcional para la columna con las etiquetas originales. Por
+        defecto se conserva ``"variable"`` igual que :func:`pandas.melt`.
+    value_name:
+        Nombre opcional para la columna con los valores. Mantiene ``"value"``
+        cuando no se especifica.
+    ignorar_indice:
+        Replica el parámetro ``ignore_index`` de :func:`pandas.melt`. Cuando es
+        ``True`` se reinicia el índice en la tabla resultante.
+
+    Returns
+    -------
+    Tabla
+        Lista de registros saneados en formato largo.
+    """
+
+    df = _a_dataframe(datos)
+
+    def _asegurar_lista(entrada: str | Sequence[str] | None) -> list[str] | None:
+        if entrada is None:
+            return None
+        if isinstance(entrada, str):
+            return [entrada]
+        return list(entrada)
+
+    columnas_id = _asegurar_lista(identificadores)
+    columnas_valor = _asegurar_lista(valores)
+
+    def _validar(nombre: str, columnas: list[str] | None) -> None:
+        if columnas is None:
+            return
+        faltantes = [col for col in columnas if col not in df.columns]
+        if faltantes:
+            raise KeyError(f"Columnas inexistentes para {nombre}: {', '.join(faltantes)}")
+
+    _validar("identificadores", columnas_id)
+    _validar("valores", columnas_valor)
+
+    argumentos: dict[str, Any] = {
+        "id_vars": columnas_id,
+        "value_vars": columnas_valor,
+        "ignore_index": ignorar_indice,
+    }
+    if var_name is not None:
+        argumentos["var_name"] = var_name
+    if value_name is not None:
+        argumentos["value_name"] = value_name
+
+    derretido = pd.melt(df, **argumentos)
+    return _sanear_registros(derretido.to_dict(orient="records"))
+
+
 def pivotar_tabla(
     datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
     index: str | Sequence[str],
