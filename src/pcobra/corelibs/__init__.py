@@ -73,6 +73,8 @@ from corelibs.numero import (
     producto,
     promedio,
     raiz,
+    rotar_bits_derecha,
+    rotar_bits_izquierda,
     redondear,
     techo,
 )
@@ -190,6 +192,8 @@ __all__ = [
     "producto",
     "promedio",
     "raiz",
+    "rotar_bits_derecha",
+    "rotar_bits_izquierda",
     "redondear",
     "techo",
     "leer",

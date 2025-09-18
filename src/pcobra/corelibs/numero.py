@@ -184,6 +184,86 @@ def contar_bits(valor: int) -> int:
     return valor.bit_count()
 
 
+def _preparar_rotacion(
+    valor: int, desplazamiento: int, ancho_bits: int | None
+) -> tuple[int, int, int, int]:
+    if not isinstance(valor, int):
+        raise TypeError("La rotación de bits solo admite enteros")
+    if not isinstance(desplazamiento, int):
+        raise TypeError("El desplazamiento debe ser un entero")
+
+    if ancho_bits is not None:
+        if not isinstance(ancho_bits, int):
+            raise TypeError("ancho_bits debe ser un entero o None")
+        if ancho_bits <= 0:
+            raise ValueError("ancho_bits debe ser mayor que cero")
+        ancho = ancho_bits
+    else:
+        magnitud = abs(valor)
+        ancho = max(magnitud.bit_length(), 1)
+
+    mascara = (1 << ancho) - 1
+    valor_normalizado = valor & mascara
+    desplazamiento_mod = 0 if ancho == 0 else desplazamiento % ancho
+    return valor_normalizado, ancho, mascara, desplazamiento_mod
+
+
+def _reinterpretar_signo(resultado: int, ancho: int, ancho_bits: int | None) -> int:
+    if ancho_bits is None:
+        return resultado
+    signo = 1 << (ancho - 1)
+    if resultado & signo:
+        return resultado - (1 << ancho)
+    return resultado
+
+
+def rotar_bits_izquierda(
+    valor: int, desplazamiento: int, *, ancho_bits: int | None = None
+) -> int:
+    """Rota los bits de ``valor`` hacia la izquierda.
+
+    ``desplazamiento`` se normaliza módulo la longitud efectiva del operando o el
+    ``ancho_bits`` solicitado. El parámetro opcional ``ancho_bits`` permite
+    emular palabras con tamaño fijo, reproduciendo la semántica de
+    ``rotate_left`` en Go o Rust y devolviendo el resultado en complemento a dos
+    cuando el bit más significativo queda activado.
+    """
+
+    valor_normalizado, ancho, mascara, desplazamiento_mod = _preparar_rotacion(
+        valor, desplazamiento, ancho_bits
+    )
+    if desplazamiento_mod == 0:
+        resultado = valor_normalizado
+    else:
+        resultado = (
+            (valor_normalizado << desplazamiento_mod)
+            | (valor_normalizado >> (ancho - desplazamiento_mod))
+        ) & mascara
+    return _reinterpretar_signo(resultado, ancho, ancho_bits)
+
+
+def rotar_bits_derecha(
+    valor: int, desplazamiento: int, *, ancho_bits: int | None = None
+) -> int:
+    """Rota los bits de ``valor`` hacia la derecha.
+
+    Comparte la semántica de :func:`rotar_bits_izquierda`, incluyendo el soporte
+    para ``ancho_bits`` como compatibilidad con ``rotate_right`` en Go o Rust.
+    """
+
+    valor_normalizado, ancho, mascara, desplazamiento_mod = _preparar_rotacion(
+        valor, desplazamiento, ancho_bits
+    )
+    if desplazamiento_mod == 0:
+        resultado = valor_normalizado
+    else:
+        resultado = (
+            (valor_normalizado >> desplazamiento_mod)
+            | (valor_normalizado << (ancho - desplazamiento_mod))
+        ) & mascara
+    return _reinterpretar_signo(resultado, ancho, ancho_bits)
+
+
 def entero_a_bytes(
     valor: int,
     longitud: int | None = None,

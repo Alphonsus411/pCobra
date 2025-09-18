@@ -234,6 +234,11 @@ Las funciones ``longitud_bits`` y ``contar_bits`` recuperan información del
 entero sin escribir operadores manuales, mientras que ``entero_a_bytes`` y
 ``entero_desde_bytes`` facilitan la conversión a representaciones binarias en
 los órdenes ``big`` y ``little``.
+
+Las utilidades ``rotar_bits_izquierda`` y ``rotar_bits_derecha`` trasladan la
+semántica de ``rotate_left``/``rotate_right`` presente en Go y Rust. Basta
+indicar ``ancho_bits`` para emular palabras de tamaño fijo y conservar el signo
+mediante representación en complemento a dos.
    * - ``mcd(a, b, ...)``
      - ``math.gcd(a, b, ...)``
      - ``numpy.gcd.reduce([a, b, ...])``
