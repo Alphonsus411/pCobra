@@ -122,6 +122,8 @@ from corelibs.sistema import (
 )
 from corelibs.asincrono import (
     recolectar,
+    iterar_completadas,
+    recolectar_resultados,
     carrera,
     esperar_timeout,
     crear_tarea,
@@ -243,6 +245,8 @@ __all__ = [
     "obtener_env",
     "listar_dir",
     "recolectar",
+    "iterar_completadas",
+    "recolectar_resultados",
     "carrera",
     "esperar_timeout",
     "crear_tarea",
@@ -321,6 +325,19 @@ recolectar.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.asincrono.recolectar`. Equivale a"
     " coordinar varias corrutinas como haría ``Promise.all`` en JavaScript,"
     " delegando en :func:`asyncio.gather`."
+)
+
+iterar_completadas.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.iterar_completadas`. Permite"
+    " observar los resultados conforme cada tarea finaliza, similar a"
+    " combinar ``Promise.race`` con iteraciones sobre ``Promise.all`` en"
+    " JavaScript, aprovechando :func:`asyncio.as_completed`."
+)
+
+recolectar_resultados.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.recolectar_resultados`. Su"
+    " interfaz recuerda a ``Promise.allSettled`` al devolver el estado de"
+    " cada corrutina junto al valor o la excepción capturada."
 )
 
 carrera.__doc__ = (

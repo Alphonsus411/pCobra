@@ -7,6 +7,95 @@ import pcobra.corelibs.red as red
 import pcobra.corelibs.sistema as sistema
 
 
+@pytest.mark.asyncio
+async def test_iterar_completadas_respeta_orden_de_finalizacion():
+    async def tarea(valor, espera):
+        await asyncio.sleep(espera)
+        return valor
+
+    resultados = [
+        resultado
+        async for resultado in asincrono.iterar_completadas(
+            tarea("lento", 0.03),
+            tarea("rapido", 0.0),
+            tarea("medio", 0.01),
+        )
+    ]
+
+    assert resultados == ["rapido", "medio", "lento"]
+
+
+@pytest.mark.asyncio
+async def test_iterar_completadas_cancela_pendientes_en_error():
+    cancelada = asyncio.Event()
+
+    async def exitosa():
+        await asyncio.sleep(0.005)
+        return "ok"
+
+    async def fallida():
+        await asyncio.sleep(0.01)
+        raise RuntimeError("boom")
+
+    async def larga():
+        try:
+            await asyncio.sleep(0.1)
+        except asyncio.CancelledError:
+            cancelada.set()
+            raise
+
+    resultados = []
+    with pytest.raises(RuntimeError):
+        async for resultado in asincrono.iterar_completadas(
+            exitosa(), fallida(), larga()
+        ):
+            resultados.append(resultado)
+
+    assert resultados == ["ok"]
+    assert cancelada.is_set()
+
+
+@pytest.mark.asyncio
+async def test_recolectar_resultados_reporta_estados():
+    cancelada = asyncio.Event()
+
+    async def exitosa():
+        await asyncio.sleep(0.0)
+        return 42
+
+    async def fallida():
+        await asyncio.sleep(0.0)
+        raise ValueError("error")
+
+    async def cancelable():
+        try:
+            await asyncio.sleep(0.1)
+        except asyncio.CancelledError:
+            cancelada.set()
+            raise
+
+    tarea_cancelada = asyncio.create_task(cancelable())
+    await asyncio.sleep(0)
+    tarea_cancelada.cancel()
+    await asyncio.sleep(0)
+
+    estados = await asincrono.recolectar_resultados(
+        exitosa(), fallida(), tarea_cancelada
+    )
+
+    assert estados[0]["estado"] == "cumplida"
+    assert estados[0]["resultado"] == 42
+    assert estados[0]["excepcion"] is None
+
+    assert estados[1]["estado"] == "rechazada"
+    assert isinstance(estados[1]["excepcion"], ValueError)
+
+    assert estados[2]["estado"] == "cancelada"
+    assert estados[2]["resultado"] is None
+    assert isinstance(estados[2]["excepcion"], asyncio.CancelledError)
+    assert cancelada.is_set()
+
+
 class _FakeStream:
     def __init__(self, response):
         self._response = response

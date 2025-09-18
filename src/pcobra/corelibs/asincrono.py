@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
-from typing import Any, Awaitable, Coroutine, TypeVar
+from typing import Any, AsyncIterator, Awaitable, Coroutine, TypeVar
 
 T = TypeVar("T")
 
@@ -134,3 +134,94 @@ def crear_tarea(
     if not asyncio.iscoroutine(corutina):
         raise TypeError("crear_tarea() requiere una corrutina de asyncio")
     return asyncio.create_task(corutina)
+
+
+async def iterar_completadas(
+    *corutinas: Awaitable[T] | Coroutine[Any, Any, T]
+) -> AsyncIterator[T]:
+    """Devuelve los resultados a medida que cada corrutina termina.
+
+    Se apoya en :func:`asyncio.as_completed` para ofrecer un comportamiento
+    parecido al de ``Promise.any``/``Promise.race`` iterados manualmente en
+    JavaScript. Los resultados se emiten en el orden en el que finalizan las
+    tareas subyacentes.
+    """
+
+    if not corutinas:
+        return
+
+    tareas = [_asegurar_tarea(corutina) for corutina in corutinas]
+    try:
+        for futura in asyncio.as_completed(tareas):
+            try:
+                resultado = await futura
+            except asyncio.CancelledError:
+                for tarea in tareas:
+                    if tarea is not futura:
+                        tarea.cancel()
+                raise
+            except Exception:
+                for tarea in tareas:
+                    if tarea is not futura:
+                        tarea.cancel()
+                raise
+            else:
+                yield resultado
+    except asyncio.CancelledError:
+        for tarea in tareas:
+            tarea.cancel()
+        raise
+    finally:
+        for tarea in tareas:
+            if not tarea.done():
+                tarea.cancel()
+        if tareas:
+            await asyncio.gather(*tareas, return_exceptions=True)
+
+
+async def recolectar_resultados(
+    *corutinas: Awaitable[T] | Coroutine[Any, Any, T]
+) -> list[dict[str, Any]]:
+    """Ejecuta ``corutinas`` y reporta sus estados finales.
+
+    La forma de la respuesta imita a ``Promise.allSettled`` en JavaScript al
+    producir una lista de diccionarios con las claves ``estado``, ``resultado``
+    y ``excepcion``. El orden del resultado se mantiene respecto a los
+    parámetros proporcionados.
+    """
+
+    if not corutinas:
+        return []
+
+    tareas = [_asegurar_tarea(corutina) for corutina in corutinas]
+    estados: list[dict[str, Any]] = [{} for _ in tareas]
+
+    try:
+        for indice, tarea in enumerate(tareas):
+            try:
+                valor = await tarea
+            except asyncio.CancelledError as exc:
+                estados[indice] = {
+                    "estado": "cancelada",
+                    "resultado": None,
+                    "excepcion": exc,
+                }
+            except Exception as exc:
+                estados[indice] = {
+                    "estado": "rechazada",
+                    "resultado": None,
+                    "excepcion": exc,
+                }
+            else:
+                estados[indice] = {
+                    "estado": "cumplida",
+                    "resultado": valor,
+                    "excepcion": None,
+                }
+        return estados
+    except asyncio.CancelledError:
+        for tarea in tareas:
+            tarea.cancel()
+        raise
+    finally:
+        await asyncio.gather(*tareas, return_exceptions=True)
