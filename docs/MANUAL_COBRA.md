@@ -669,6 +669,10 @@ El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que pe
 - `describir` calcula estadísticas básicas (`count`, `mean`, `std`, percentiles) para cada columna.
 - `seleccionar_columnas` y `filtrar` permiten aislar subconjuntos antes de seguir procesando los datos.
 - `agrupar_y_resumir` aplica agregaciones (`sum`, `mean`, funciones personalizadas) agrupando por columnas clave.
+- `ordenar_tabla` admite ordenar por varias columnas controlando el sentido ascendente o descendente de cada una.
+- `combinar_tablas` replica los `join` de pandas y R para cruzar datasets con claves compartidas o diferenciadas.
+- `rellenar_nulos` rellena valores perdidos por columna antes de analizar la información.
+- `pivotar_tabla` reorganiza los datos en formato ancho calculando métricas múltiples de manera declarativa.
 - `a_listas` y `de_listas` convierten entre lista de registros y diccionario de columnas, facilitando la interoperabilidad con librerías externas.
 
 ```cobra
@@ -680,6 +684,16 @@ resumen = pandas.agrupar_y_resumir(
     ventas_limpias,
     por=['region'],
     agregaciones={'monto': 'sum'}
+)
+ventas_ordenadas = pandas.ordenar_tabla(ventas_limpias, por=['region', 'mes'], ascendente=[True, False])
+ventas_con_clientes = pandas.combinar_tablas(clientes, ventas_limpias, claves=('cliente_id', 'cliente'), tipo='left')
+ventas_completas = pandas.rellenar_nulos(ventas_con_clientes, {'monto': 0})
+resumen_ancho = pandas.pivotar_tabla(
+    ventas_completas,
+    index='region',
+    columnas='mes',
+    valores='monto',
+    agregacion='sum'
 )
 columnas = pandas.a_listas(resumen)
 imprimir(columnas['region'])
