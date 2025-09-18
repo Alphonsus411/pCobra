@@ -99,6 +99,12 @@ from corelibs.sistema import (
     obtener_env,
     listar_dir,
 )
+from corelibs.asincrono import (
+    recolectar,
+    carrera,
+    esperar_timeout,
+    crear_tarea,
+)
 
 __all__ = [
     "mayusculas",
@@ -194,6 +200,10 @@ __all__ = [
     "ejecutar_stream",
     "obtener_env",
     "listar_dir",
+    "recolectar",
+    "carrera",
+    "esperar_timeout",
+    "crear_tarea",
 ]
 
 quitar_prefijo.__doc__ = (
@@ -237,4 +247,16 @@ minusculas_casefold.__doc__ = (
     " de ``str.casefold`` en Python, puede lograrse en Go con ``cases.Fold`` del"
     " paquete ``x/text`` y en JavaScript mediante normalización previa y"
     " ``toLocaleLowerCase``."
+)
+
+recolectar.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.recolectar`. Equivale a"
+    " coordinar varias corrutinas como haría ``Promise.all`` en JavaScript,"
+    " delegando en :func:`asyncio.gather`."
+)
+
+carrera.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.carrera`. Expone un comportamiento"
+    " semejante a ``Promise.race`` empleando :func:`asyncio.wait` para devolver"
+    " el primer resultado disponible."
 )

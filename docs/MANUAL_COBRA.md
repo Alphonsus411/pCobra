@@ -230,6 +230,29 @@ asincronico func revisar_servidor():
 fin
 ```
 
+### Utilidades de coordinación
+
+El módulo `pcobra.corelibs.asincrono` ofrece atajos sobre `asyncio` para combinar
+varias tareas sin perder legibilidad:
+
+- `recolectar` envuelve `asyncio.gather`, cancela el resto de corrutinas si una
+  falla y resulta familiar para quienes hayan usado `Promise.all`.
+- `carrera` delega en `asyncio.wait(FIRST_COMPLETED)` y cancela el resto tras
+  obtener el primer resultado, igual que `Promise.race`.
+- `esperar_timeout` cubre `asyncio.wait_for` garantizando que la corrutina se
+  cancela limpiamente si se supera el límite.
+- `crear_tarea` centraliza la creación de tareas para evitar fugas de corrutinas
+  al integrar Cobra con bibliotecas Python.
+
+Puedes importarlas desde `pcobra.corelibs` directamente:
+
+```python
+from pcobra.corelibs import carrera, recolectar
+
+resultado = await carrera(tarea_rapida(), tarea_lenta())
+datos = await recolectar(tarea_a(), tarea_b())
+```
+
 ## 11. Transpilación y ejecución
 
 - Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.

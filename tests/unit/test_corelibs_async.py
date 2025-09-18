@@ -1,5 +1,8 @@
+import asyncio
+
 import pytest
 
+import pcobra.corelibs.asincrono as asincrono
 import pcobra.corelibs.red as red
 import pcobra.corelibs.sistema as sistema
 
@@ -220,3 +223,118 @@ async def test_ejecutar_stream_error_provoca_excepcion(monkeypatch):
         async for _ in gen:
             pass
     assert "fallo" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_recolectar_retorna_valores_en_orden():
+    async def producir(valor, demora):
+        await asyncio.sleep(demora)
+        return valor
+
+    resultado = await asincrono.recolectar(producir("uno", 0.01), producir("dos", 0.02))
+    assert resultado == ["uno", "dos"]
+
+
+@pytest.mark.asyncio
+async def test_recolectar_cancela_al_fallar():
+    cancelada = asyncio.Event()
+
+    async def fallar():
+        await asyncio.sleep(0.01)
+        raise RuntimeError("boom")
+
+    async def lenta():
+        try:
+            await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            cancelada.set()
+            raise
+
+    with pytest.raises(RuntimeError):
+        await asincrono.recolectar(fallar(), lenta())
+    assert cancelada.is_set()
+
+
+@pytest.mark.asyncio
+async def test_carrera_devuelve_primer_resultado():
+    cancelada = asyncio.Event()
+
+    async def rapida():
+        await asyncio.sleep(0.01)
+        return "ok"
+
+    async def lenta():
+        try:
+            await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            cancelada.set()
+            raise
+
+    resultado = await asincrono.carrera(rapida(), lenta())
+    assert resultado == "ok"
+    assert cancelada.is_set()
+
+
+@pytest.mark.asyncio
+async def test_carrera_propaga_excepcion_y_cancela():
+    cancelada = asyncio.Event()
+
+    async def fallar():
+        await asyncio.sleep(0.01)
+        raise ValueError("fallo")
+
+    async def lenta():
+        try:
+            await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            cancelada.set()
+            raise
+
+    with pytest.raises(ValueError):
+        await asincrono.carrera(fallar(), lenta())
+    assert cancelada.is_set()
+
+
+@pytest.mark.asyncio
+async def test_esperar_timeout_devuelve_resultado():
+    resultado = await asincrono.esperar_timeout(asyncio.sleep(0.01, result="hecho"), 0.5)
+    assert resultado == "hecho"
+
+
+@pytest.mark.asyncio
+async def test_esperar_timeout_cancela_en_exceso():
+    cancelada = asyncio.Event()
+
+    async def lenta():
+        try:
+            await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            cancelada.set()
+            raise
+
+    with pytest.raises(asyncio.TimeoutError):
+        await asincrono.esperar_timeout(lenta(), 0.01)
+    assert cancelada.is_set()
+
+
+@pytest.mark.asyncio
+async def test_crear_tarea_envuelve_corrutinas():
+    async def producir():
+        await asyncio.sleep(0)
+        return 42
+
+    tarea = asincrono.crear_tarea(producir())
+    assert isinstance(tarea, asyncio.Task)
+    assert await tarea == 42
+
+
+@pytest.mark.asyncio
+async def test_crear_tarea_reutiliza_tareas_existentes():
+    async def producir():
+        await asyncio.sleep(0)
+        return "ok"
+
+    original = asyncio.create_task(producir())
+    reutilizada = asincrono.crear_tarea(original)
+    assert reutilizada is original
+    assert await reutilizada == "ok"
