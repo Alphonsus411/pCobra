@@ -132,6 +132,22 @@ def incluye(texto: str, subcadena: str) -> bool:
     return subcadena in texto
 
 
+def quitar_prefijo(texto: str, prefijo: str) -> str:
+    """Emula ``str.removeprefix`` de Python, ``strings.TrimPrefix`` de Go y el patrón ``startsWith``/``slice`` de JavaScript."""
+
+    if prefijo and texto.startswith(prefijo):
+        return texto[len(prefijo) :]
+    return texto
+
+
+def quitar_sufijo(texto: str, sufijo: str) -> str:
+    """Replica ``str.removesuffix`` de Python, ``strings.TrimSuffix`` en Go y el recorte con ``endsWith``/``slice`` en JavaScript."""
+
+    if sufijo and texto.endswith(sufijo):
+        return texto[: -len(sufijo)]
+    return texto
+
+
 def rellenar_izquierda(texto: str, ancho: int, relleno: str = " ") -> str:
     """Rellena ``texto`` por la izquierda hasta alcanzar ``ancho`` caracteres."""
 
@@ -171,3 +187,44 @@ def normalizar_unicode(texto: str, forma: str = "NFC") -> str:
     if forma not in formas_permitidas:
         raise ValueError(f"forma debe ser una de {sorted(formas_permitidas)}")
     return unicodedata.normalize(forma, texto)
+
+
+def dividir_lineas(texto: str, conservar_delimitadores: bool = False) -> list[str]:
+    """Hace eco de ``str.splitlines`` (Python), ``bufio.Scanner`` (Go) y ``String.prototype.split`` (JS)."""
+
+    return texto.splitlines(keepends=conservar_delimitadores)
+
+
+def contar_subcadena(
+    texto: str,
+    subcadena: str,
+    inicio: int | None = None,
+    fin: int | None = None,
+) -> int:
+    """Imita ``str.count`` (Python), ``strings.Count`` (Go) y ``String.prototype.split`` para conteos en JS."""
+
+    if inicio is None and fin is None:
+        return texto.count(subcadena)
+    if inicio is None:
+        return texto.count(subcadena, 0, fin)
+    if fin is None:
+        return texto.count(subcadena, inicio)
+    return texto.count(subcadena, inicio, fin)
+
+
+def centrar_texto(texto: str, ancho: int, relleno: str = " ") -> str:
+    """Se alinea con ``str.center`` (Python), ``strings.Repeat`` en Go y ``padStart``/``padEnd`` en JS."""
+
+    return texto.center(ancho, relleno)
+
+
+def rellenar_ceros(texto: str, ancho: int) -> str:
+    """Equivale a ``str.zfill`` (Python), ``fmt.Sprintf`` en Go y ``padStart`` con ``'0'`` en JS."""
+
+    return texto.zfill(ancho)
+
+
+def minusculas_casefold(texto: str) -> str:
+    """Aplica ``str.casefold`` (Python), ``cases.Fold`` del paquete ``x/text`` en Go y ``toLocaleLowerCase`` estricto en JS."""
+
+    return texto.casefold()

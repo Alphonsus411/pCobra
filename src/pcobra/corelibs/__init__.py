@@ -9,11 +9,18 @@ from corelibs.texto import (
     concatenar,
     quitar_espacios,
     dividir,
+    dividir_lineas,
     unir,
     reemplazar,
     empieza_con,
     termina_con,
     incluye,
+    quitar_prefijo,
+    quitar_sufijo,
+    contar_subcadena,
+    centrar_texto,
+    rellenar_ceros,
+    minusculas_casefold,
     rellenar_izquierda,
     rellenar_derecha,
     normalizar_unicode,
@@ -92,11 +99,18 @@ __all__ = [
     "concatenar",
     "quitar_espacios",
     "dividir",
+    "dividir_lineas",
     "unir",
     "reemplazar",
     "empieza_con",
     "termina_con",
     "incluye",
+    "quitar_prefijo",
+    "quitar_sufijo",
+    "contar_subcadena",
+    "centrar_texto",
+    "rellenar_ceros",
+    "minusculas_casefold",
     "rellenar_izquierda",
     "rellenar_derecha",
     "normalizar_unicode",
@@ -161,3 +175,46 @@ __all__ = [
     "obtener_env",
     "listar_dir",
 ]
+
+quitar_prefijo.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.quitar_prefijo`. Equivale a ``str.removeprefix`` "
+    "en Python, ``strings.TrimPrefix`` en Go y puede reproducirse en JavaScript"
+    " combinando ``String.prototype.startsWith`` con ``slice``."
+)
+
+quitar_sufijo.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.quitar_sufijo`. Se inspira en ``str.removesuffix`` "
+    "de Python, ``strings.TrimSuffix`` del paquete estándar de Go y en el uso de"
+    " ``String.prototype.endsWith`` junto a ``slice`` en JavaScript."
+)
+
+dividir_lineas.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.dividir_lineas`. Ofrece la misma semántica"
+    " que ``str.splitlines`` de Python, comparable a recorrer líneas con ``bufio.Scanner``"
+    " en Go o dividir por expresiones ``/\r?\n/`` en JavaScript."
+)
+
+contar_subcadena.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.contar_subcadena`. Equivale a usar"
+    " ``str.count`` en Python, ``strings.Count`` en Go o dividir cadenas en JavaScript"
+    " para cuantificar apariciones."
+)
+
+centrar_texto.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.centrar_texto`. Refleja ``str.center`` de"
+    " Python, puede replicarse en Go combinando ``strings.Repeat`` y operaciones de"
+    " concatenación y en JavaScript mediante ``padStart`` y ``padEnd``."
+)
+
+rellenar_ceros.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.rellenar_ceros`. Es análogo a ``str.zfill``"
+    " de Python, a ``fmt.Sprintf(\"%0*d\", ancho, valor)`` en Go y a ``padStart``"
+    " con ceros en JavaScript."
+)
+
+minusculas_casefold.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.minusculas_casefold`. Sigue las reglas"
+    " de ``str.casefold`` en Python, puede lograrse en Go con ``cases.Fold`` del"
+    " paquete ``x/text`` y en JavaScript mediante normalización previa y"
+    " ``toLocaleLowerCase``."
+)

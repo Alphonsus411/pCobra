@@ -537,6 +537,9 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `reemplazar`, `empieza_con`, `termina_con` e `incluye` para búsquedas y sustituciones expresivas.
 - `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
+- `quitar_prefijo` y `quitar_sufijo` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y los patrones `startsWith`/`endsWith` + `slice` en JavaScript.
+- `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
+- `minusculas_casefold` aplica minúsculas intensivas (`casefold`) que homogeneizan mayúsculas, ß alemana o símbolos con diacríticos.
 
 En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
 
@@ -548,6 +551,9 @@ imprimir(core.titulo("guía de cobra"))          # 'Guía De Cobra'
 imprimir(core.dividir("uno   dos\ttres"))       # ['uno', 'dos', 'tres']
 imprimir(texto.quitar_acentos("Canción"))       # 'Cancion'
 imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
+imprimir(core.quitar_prefijo("🧪Prueba", "🧪"))      # 'Prueba'
+imprimir(core.centrar_texto("cobra", 9, "*"))        # '**cobra**'
+imprimir(core.minusculas_casefold("Straße"))         # 'strasse'
 ```
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.
