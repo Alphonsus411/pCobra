@@ -2,8 +2,11 @@ from importlib import util
 from pathlib import Path
 import sys
 from types import ModuleType
+from unittest.mock import MagicMock
 
 import pytest
+
+sys.modules.setdefault("httpx", ModuleType("httpx"))
 
 
 def _cargar_logica():
@@ -36,3 +39,31 @@ def test_es_verdadero_es_falso_tipos_invalidos():
             logica.es_verdadero(valor)
         with pytest.raises(TypeError):
             logica.es_falso(valor)
+
+
+def test_entonces_si_no_valores_directos():
+    assert logica.entonces(True, "dato") == "dato"
+    assert logica.entonces(False, "dato") is None
+    assert logica.si_no(False, 7) == 7
+    assert logica.si_no(True, 7) is None
+
+
+def test_entonces_si_no_perezoso():
+    accion = MagicMock(return_value="llamado")
+    assert logica.entonces(True, accion) == "llamado"
+    accion.assert_called_once_with()
+
+    accion.reset_mock()
+    accion.return_value = "omitido"
+    assert logica.entonces(False, accion) is None
+    accion.assert_not_called()
+
+    accion.reset_mock()
+    accion.return_value = "otro"
+    assert logica.si_no(False, accion) == "otro"
+    accion.assert_called_once_with()
+
+    accion.reset_mock()
+    accion.return_value = None
+    assert logica.si_no(True, accion) is None
+    accion.assert_not_called()

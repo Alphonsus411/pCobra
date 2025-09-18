@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 sys.modules.setdefault("yaml", ModuleType("yaml"))
+sys.modules.setdefault("httpx", ModuleType("httpx"))
 
 import core.ast_nodes as core_ast_nodes
 
@@ -198,6 +199,34 @@ def test_logica_funcs():
 
     assert core.xor_multiple(True, False, True) is False
     assert core.xor_multiple(False, False, False) is False
+
+
+def test_logica_entonces_si_no_valores_directos():
+    assert core.entonces(True, "cobra") == "cobra"
+    assert core.entonces(False, "cobra") is None
+    assert core.si_no(False, 42) == 42
+    assert core.si_no(True, 42) is None
+
+
+def test_logica_entonces_si_no_perezoso():
+    accion = MagicMock(return_value="ejecutado")
+    assert core.entonces(True, accion) == "ejecutado"
+    accion.assert_called_once_with()
+
+    accion.reset_mock()
+    accion.return_value = True
+    assert core.entonces(False, accion) is None
+    accion.assert_not_called()
+
+    accion.reset_mock()
+    accion.return_value = "omitido"
+    assert core.si_no(False, accion) == "omitido"
+    accion.assert_called_once_with()
+
+    accion.reset_mock()
+    accion.return_value = None
+    assert core.si_no(True, accion) is None
+    accion.assert_not_called()
     assert core.es_verdadero(True) is True
     assert core.es_verdadero(False) is False
     assert core.es_falso(True) is False

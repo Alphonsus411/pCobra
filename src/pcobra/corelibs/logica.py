@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Callable, Iterable, TypeVar
+
+T = TypeVar("T")
+
+
+def _evaluar_resultado(resultado: T | Callable[[], T]) -> T:
+    """Evalúa *resultado* si es un callable, de lo contrario lo retorna tal cual."""
+
+    if callable(resultado):
+        return resultado()
+    return resultado
 
 
 def _asegurar_booleano(valor: bool, nombre: str = "valor") -> bool:
@@ -53,6 +63,30 @@ def negacion(valor: bool) -> bool:
     """Devuelve el opuesto lógico de ``valor``."""
 
     return not _asegurar_booleano(valor)
+
+
+def entonces(valor: bool, resultado: T | Callable[[], T]) -> T | None:
+    """Devuelve *resultado* cuando ``valor`` es verdadero.
+
+    Si *resultado* es un callable, se evalúa perezosamente solo cuando ``valor``
+    es ``True``. En caso contrario, retorna ``None``.
+    """
+
+    if _asegurar_booleano(valor):
+        return _evaluar_resultado(resultado)
+    return None
+
+
+def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
+    """Devuelve *resultado* únicamente cuando ``valor`` es falso.
+
+    Si *resultado* es un callable, se evalúa perezosamente solo cuando ``valor``
+    es ``False``. En caso contrario, retorna ``None``.
+    """
+
+    if not _asegurar_booleano(valor):
+        return _evaluar_resultado(resultado)
+    return None
 
 
 def xor(a: bool, b: bool) -> bool:
@@ -170,6 +204,8 @@ __all__ = [
     "implica",
     "equivale",
     "xor_multiple",
+    "entonces",
+    "si_no",
     "todas",
     "alguna",
     "ninguna",
