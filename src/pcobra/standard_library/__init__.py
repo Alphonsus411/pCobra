@@ -41,6 +41,8 @@ from standard_library.lista import (
     ventanas,
 )
 from standard_library.logica import (
+    es_verdadero,
+    es_falso,
     conjuncion,
     disyuncion,
     negacion,
@@ -76,6 +78,8 @@ __all__: list[str] = [
     "mapear_seguro",
     "ventanas",
     "chunk",
+    "es_verdadero",
+    "es_falso",
     "conjuncion",
     "disyuncion",
     "negacion",
