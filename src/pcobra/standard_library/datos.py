@@ -113,6 +113,95 @@ def leer_json(ruta: str | Path, *, orient: str | None = None, lineas: bool = Fal
     return _sanear_registros(df.to_dict(orient="records"))
 
 
+def leer_excel(
+    ruta: str | Path,
+    *,
+    hoja: str | int | None = 0,
+    encabezado: int | Sequence[int] | None = 0,
+    engine: str | None = None,
+) -> Tabla:
+    """Lee una hoja de cálculo de Excel y la devuelve como lista de registros.
+
+    Parameters
+    ----------
+    ruta:
+        Ruta al archivo Excel (``.xlsx``/``.xls``). Puede ser relativa o absoluta.
+    hoja:
+        Nombre o índice de la hoja que se desea cargar. Por defecto la primera hoja.
+    encabezado:
+        Fila(s) utilizada(s) como encabezado, igual que en :func:`pandas.read_excel`.
+        Usa ``None`` para tratar la hoja como datos sin cabecera.
+    engine:
+        Motor de lectura a utilizar. ``pandas`` delega en librerías como
+        ``openpyxl`` (``.xlsx``) o ``xlrd`` (``.xls``). Si no se indica se deja que
+        :mod:`pandas` elija automáticamente.
+    """
+
+    ruta_excel = Path(ruta)
+    try:
+        dataframe = pd.read_excel(
+            ruta_excel,
+            sheet_name=hoja,
+            header=encabezado,
+            engine=engine,
+        )
+    except FileNotFoundError as exc:
+        raise ValueError(f"No fue posible leer el Excel: {exc}") from exc
+    except ImportError as exc:
+        raise ValueError(
+            "No fue posible leer el Excel: falta el motor requerido (por ejemplo 'openpyxl')."
+        ) from exc
+    except ValueError as exc:
+        raise ValueError(f"No fue posible leer el Excel: {exc}") from exc
+
+    if isinstance(dataframe, dict):
+        raise ValueError(
+            "Se recibió un libro con múltiples hojas. Especifica una sola hoja mediante el parámetro 'hoja'."
+        )
+
+    return _sanear_registros(dataframe.to_dict(orient="records"))
+
+
+def escribir_excel(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    ruta: str | Path,
+    *,
+    hoja: str = "Hoja1",
+    incluir_indice: bool = False,
+    engine: str | None = None,
+) -> None:
+    """Escribe ``datos`` en un archivo Excel utilizando :mod:`pandas`.
+
+    Parameters
+    ----------
+    datos:
+        Registros tabulares convertibles a :class:`pandas.DataFrame`.
+    ruta:
+        Ruta de destino del libro Excel. Se crearán las carpetas intermedias si es necesario.
+    hoja:
+        Nombre de la hoja donde se volcarán los datos. Por defecto ``"Hoja1"``.
+    incluir_indice:
+        Si es ``True`` se incluye el índice del :class:`~pandas.DataFrame` como primera columna.
+    engine:
+        Motor de escritura (por ejemplo ``"openpyxl"`` o ``"xlsxwriter"``). Si es ``None``
+        se deja que :mod:`pandas` seleccione uno compatible con la extensión del archivo.
+    """
+
+    df = _a_dataframe(datos)
+    ruta_excel = Path(ruta)
+    ruta_excel.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with pd.ExcelWriter(ruta_excel, engine=engine) as writer:
+            df.to_excel(writer, sheet_name=hoja, index=incluir_indice)
+    except ImportError as exc:
+        raise ValueError(
+            "No fue posible escribir el Excel: falta el motor requerido (por ejemplo 'openpyxl' o 'xlsxwriter')."
+        ) from exc
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"No fue posible escribir el Excel: {exc}") from exc
+
+
 def describir(datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame) -> Registro:
     """Genera estadísticas descriptivas para cada columna de ``datos``.
 

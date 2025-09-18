@@ -18,7 +18,9 @@ from standard_library.datos import (
     describir,
     filtrar,
     leer_csv,
+    leer_excel,
     leer_json,
+    escribir_excel,
     seleccionar_columnas,
 )
 from standard_library.fecha import hoy, formatear, sumar_dias
@@ -101,12 +103,14 @@ __all__: list[str] = [
     "es_anagrama",
     "leer_csv",
     "leer_json",
+    "leer_excel",
     "describir",
     "seleccionar_columnas",
     "filtrar",
     "agrupar_y_resumir",
     "a_listas",
     "de_listas",
+    "escribir_excel",
     "mostrar_tabla",
     "mostrar_panel",
     "barra_progreso",
@@ -120,12 +124,14 @@ __all__: list[str] = [
 # Se exponen las firmas para mejorar el autocompletado en editores compatibles.
 leer_csv: Callable[..., list[dict[str, Any]]]
 leer_json: Callable[..., list[dict[str, Any]]]
+leer_excel: Callable[..., list[dict[str, Any]]]
 describir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]]
 seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
 filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
 agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
+escribir_excel: Callable[..., None]
 mostrar_tabla: Callable[..., Any]
 mostrar_panel: Callable[..., Any]
 barra_progreso: Callable[..., Any]
