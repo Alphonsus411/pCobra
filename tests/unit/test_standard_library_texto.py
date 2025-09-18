@@ -52,3 +52,17 @@ def test_centrar_rellenar_y_casefold():
     assert texto.rellenar_ceros("-5", 4) == "-005"
     assert texto.rellenar_ceros("猫", 3) == "00猫"
     assert texto.minusculas_casefold("Straße") == "strasse"
+
+
+def test_dividir_y_particionar():
+    assert texto.dividir_derecha("uno-dos-tres", "-", 1) == ["uno-dos", "tres"]
+    assert texto.dividir_derecha("  α  β  γ  ", None, 1) == ["  α  β", "γ"]
+    with pytest.raises(ValueError):
+        texto.dividir_derecha("abc", "")
+    assert texto.particionar("mañana", "ñ") == ("ma", "ñ", "ana")
+    assert texto.particionar("毒🐍", "🐍") == ("毒", "🐍", "")
+    assert texto.particionar("sin", "x") == ("sin", "", "")
+    with pytest.raises(ValueError):
+        texto.particionar("abc", "")
+    assert texto.particionar_derecha("uno-dos-tres", "-") == ("uno-dos", "-", "tres")
+    assert texto.particionar_derecha("sin", "-") == ("", "", "sin")

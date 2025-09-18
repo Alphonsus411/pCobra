@@ -17,6 +17,7 @@ from pcobra.corelibs import (
     centrar_texto as _centrar_texto,
     contar_subcadena as _contar_subcadena,
     dividir,
+    dividir_derecha as _dividir_derecha,
     dividir_lineas as _dividir_lineas,
     invertir,
     minusculas,
@@ -25,6 +26,8 @@ from pcobra.corelibs import (
     quitar_espacios,
     quitar_prefijo as _quitar_prefijo,
     quitar_sufijo as _quitar_sufijo,
+    particionar_derecha as _particionar_derecha,
+    particionar_texto as _particionar,
     rellenar_ceros as _rellenar_ceros,
     unir,
 )
@@ -37,10 +40,13 @@ __all__ = [
     "quitar_prefijo",
     "quitar_sufijo",
     "dividir_lineas",
+    "dividir_derecha",
     "contar_subcadena",
     "centrar_texto",
     "rellenar_ceros",
     "minusculas_casefold",
+    "particionar",
+    "particionar_derecha",
 ]
 
 
@@ -130,6 +136,19 @@ def dividir_lineas(texto: str, conservar_delimitadores: bool = False) -> list[st
     return _dividir_lineas(texto, conservar_delimitadores)
 
 
+def dividir_derecha(
+    texto: str, separador: str | None = None, maximo: int | None = None
+) -> list[str]:
+    """Divide ``texto`` desde la derecha respetando las reglas de ``str.rsplit``.
+
+    Ejemplo::
+
+        dividir_derecha("uno-dos-tres", "-", 1)  # -> ["uno-dos", "tres"]
+    """
+
+    return _dividir_derecha(texto, separador, maximo)
+
+
 def contar_subcadena(
     texto: str,
     subcadena: str,
@@ -167,3 +186,15 @@ def minusculas_casefold(texto: str) -> str:
     """Devuelve ``texto`` en minúsculas intensivas según Unicode (casefold)."""
 
     return _minusculas_casefold(texto)
+
+
+def particionar(texto: str, separador: str) -> tuple[str, str, str]:
+    """Particiona ``texto`` alrededor del primer ``separador`` encontrado."""
+
+    return _particionar(texto, separador)
+
+
+def particionar_derecha(texto: str, separador: str) -> tuple[str, str, str]:
+    """Particiona ``texto`` tomando la última coincidencia de ``separador``."""
+
+    return _particionar_derecha(texto, separador)

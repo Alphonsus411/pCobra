@@ -41,6 +41,10 @@ def test_texto_funcs():
         core.quitar_espacios("hola", modo="otro")
     assert core.dividir("  hola   mundo  ") == ["hola", "mundo"]
     assert core.dividir("a,b,c", ",", 1) == ["a", "b,c"]
+    assert core.dividir_derecha("uno-dos-tres", "-", 1) == ["uno-dos", "tres"]
+    assert core.dividir_derecha("  α  β  γ  ", None, 1) == ["  α  β", "γ"]
+    with pytest.raises(ValueError):
+        core.dividir_derecha("abc", "")
     assert core.unir("-", ["1", 2, "3"]) == "1-2-3"
     assert core.reemplazar("banana", "na", "NA", 1) == "baNAna"
     assert core.reemplazar("abc", "", "-", 2) == "-a-bc"
@@ -73,6 +77,16 @@ def test_texto_funcs():
     assert core.normalizar_unicode("A\u0301", "NFC") == "Á"
     with pytest.raises(ValueError):
         core.normalizar_unicode("hola", "XYZ")
+    assert core.particionar_texto("mañana", "ñ") == ("ma", "ñ", "ana")
+    assert core.particionar_texto("毒🐍", "🐍") == ("毒", "🐍", "")
+    assert core.particionar_texto("sin", "x") == ("sin", "", "")
+    with pytest.raises(TypeError):
+        core.particionar_texto("abc", 123)
+    with pytest.raises(ValueError):
+        core.particionar_texto("abc", "")
+    assert core.particionar_derecha("uno-dos-tres", "-") == ("uno-dos", "-", "tres")
+    assert core.particionar_derecha("sin", "-") == ("", "", "sin")
+    assert core.particionar_derecha("mañana", "a") == ("mañan", "a", "")
 
 
 def test_numero_funcs():
