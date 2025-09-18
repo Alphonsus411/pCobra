@@ -12,8 +12,10 @@ from pcobra.standard_library.datos import (
     combinar_tablas,
     de_listas,
     describir,
+    escribir_excel,
     filtrar,
     leer_csv,
+    leer_excel,
     leer_json,
     ordenar_tabla,
     pivotar_tabla,
@@ -141,6 +143,29 @@ def test_leer_csv_error(tmp_path: Path):
     csv_path.write_text('valor\n"1', encoding="utf-8")
     with pytest.raises(ValueError):
         leer_csv(csv_path)
+
+
+def test_escribir_y_leer_excel(tmp_path: Path):
+    pytest.importorskip("openpyxl")
+    tabla = _tabla_base()
+    ruta = tmp_path / "salida" / "tabla.xlsx"
+    escribir_excel(tabla, ruta, hoja="Datos", engine="openpyxl")
+    assert ruta.exists()
+    leidos = leer_excel(ruta, hoja="Datos", engine="openpyxl")
+    assert leidos == tabla
+
+
+def test_leer_excel_sin_encabezado(tmp_path: Path):
+    pytest.importorskip("openpyxl")
+    ruta = tmp_path / "sin_encabezado.xlsx"
+    pd.DataFrame([[1, "A"], [2, "B"]]).to_excel(
+        ruta,
+        header=False,
+        index=False,
+        engine="openpyxl",
+    )
+    datos = leer_excel(ruta, encabezado=None, engine="openpyxl")
+    assert datos == [{0: 1, 1: "A"}, {0: 2, 1: "B"}]
 
 
 def test_combinar_tablas_inner(tabla_clientes, tabla_pedidos):
