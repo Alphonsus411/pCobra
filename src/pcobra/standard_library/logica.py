@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Callable, Iterable, TypeVar
 
 from pcobra.corelibs import logica as _logica
+
+T = TypeVar("T")
 
 __all__ = [
     "es_verdadero",
@@ -12,6 +14,8 @@ __all__ = [
     "conjuncion",
     "disyuncion",
     "negacion",
+    "entonces",
+    "si_no",
     "xor",
     "nand",
     "nor",
@@ -55,6 +59,26 @@ def negacion(valor: bool) -> bool:
     """Devuelve el opuesto lógico de ``valor``."""
 
     return _logica.negacion(valor)
+
+
+def entonces(valor: bool, resultado: T | Callable[[], T]) -> T | None:
+    """Devuelve *resultado* cuando ``valor`` es verdadero.
+
+    Si se pasa un callable, su ejecución es diferida hasta que la condición
+    resulta verdadera, evitando efectos secundarios innecesarios.
+    """
+
+    return _logica.entonces(valor, resultado)
+
+
+def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
+    """Devuelve *resultado* solo cuando ``valor`` es falso.
+
+    Permite trabajar con callables diferidos, análogo a ``takeUnless`` en
+    Kotlin y útil para encapsular lógica opcional.
+    """
+
+    return _logica.si_no(valor, resultado)
 
 
 def xor(a: bool, b: bool) -> bool:
