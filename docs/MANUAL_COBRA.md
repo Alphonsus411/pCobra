@@ -633,6 +633,10 @@ Las funciones están disponibles tanto al ejecutar Cobra directamente como al tr
 - `xor`, `nand`, `nor`, `implica` y `equivale` facilitan construir tablas de verdad completas.
 - `xor_multiple` acepta un número arbitrario de argumentos y exige al menos dos valores.
 - `todas` y `alguna` validan colecciones de booleanos antes de aplicar `all`/`any`.
+- `ninguna` retorna `True` únicamente cuando todos los elementos son falsos, como el agregador ``none`` de Cobra.
+- `solo_uno` verifica si exactamente un elemento es verdadero, equivalente a ``one?`` y lanza `ValueError` si no recibe argumentos.
+- `conteo_verdaderos` devuelve el total de verdaderos (similar a ``count``) y permite reutilizar el resultado para otras comprobaciones.
+- `paridad` informa si el número de verdaderos es par; internamente reutiliza `conteo_verdaderos` y equivale a calcular ``count(valores) % 2 == 0``.
 
 Los parámetros no booleanos producen un `TypeError` descriptivo, lo cual ayuda a detectar errores lógicos tempranamente. Además, la versión en JavaScript (`core/nativos/logica.js`) replica la semántica para mantener el comportamiento al transpirar.
 
@@ -646,6 +650,10 @@ imprimir(logica_alto_nivel.xor_multiple(True, False, False))  # True
 
 var sensores = [True, True, False]
 imprimir(logica_alto_nivel.alguna(sensores))      # True
+imprimir(logica_alto_nivel.ninguna(sensores))     # False
+imprimir(logica_alto_nivel.solo_uno(True, False, False))  # True
+imprimir(logica_alto_nivel.conteo_verdaderos(sensores))   # 2
+imprimir(logica_alto_nivel.paridad(sensores))     # False
 
 # Lanzan errores al recibir datos que no son booleanos
 logica.todas([True, 1])  # -> TypeError

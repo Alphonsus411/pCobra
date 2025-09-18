@@ -37,6 +37,21 @@ def test_logica_colecciones():
     assert logica.alguna([False, False, True]) is True
     assert logica.alguna([False, False]) is False
 
+    casos_coleccion = [
+        ([False, False], True, False, 0, True),
+        ([True, False], False, True, 1, False),
+        ([True, True, False], False, False, 2, True),
+        ([True, True, True], False, False, 3, False),
+    ]
+    for valores, ninguna_esperado, solo_uno_esperado, conteo_esperado, paridad_esperada in casos_coleccion:
+        assert logica.ninguna(valores) is ninguna_esperado
+        assert logica.solo_uno(*valores) is solo_uno_esperado
+        assert logica.conteo_verdaderos(valores) == conteo_esperado
+        assert logica.paridad(valores) is paridad_esperada
+
+    assert logica.solo_uno(True, False, False, False) is True
+    assert logica.solo_uno(False, False, False) is False
+
 
 def test_logica_valida_entradas():
     with pytest.raises(TypeError):
@@ -53,4 +68,14 @@ def test_logica_valida_entradas():
         logica.todas([True, 1])
     with pytest.raises(TypeError):
         logica.alguna([False, None])
+    with pytest.raises(ValueError):
+        logica.solo_uno()
+    with pytest.raises(TypeError):
+        logica.solo_uno(True, 0)
+    with pytest.raises(TypeError):
+        logica.ninguna([True, 1])
+    with pytest.raises(TypeError):
+        logica.conteo_verdaderos([False, None])
+    with pytest.raises(TypeError):
+        logica.paridad([True, "no bool"])
 

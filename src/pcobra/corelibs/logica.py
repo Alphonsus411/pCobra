@@ -106,6 +106,46 @@ def alguna(valores: Iterable[bool]) -> bool:
     return any(lista)
 
 
+def ninguna(valores: Iterable[bool]) -> bool:
+    """Devuelve ``True`` cuando todos los elementos son ``False``."""
+
+    lista = list(valores)
+    for indice, valor in enumerate(lista):
+        _asegurar_booleano(valor, f"valor_{indice}")
+    return not any(lista)
+
+
+def solo_uno(*valores: bool) -> bool:
+    """Devuelve ``True`` si exactamente uno de los argumentos es verdadero."""
+
+    if not valores:
+        raise ValueError("Se necesita al menos un valor booleano para solo_uno")
+
+    verdaderos = 0
+    for indice, valor in enumerate(valores):
+        if _asegurar_booleano(valor, f"valor_{indice}"):
+            verdaderos += 1
+            if verdaderos > 1:
+                return False
+    return verdaderos == 1
+
+
+def conteo_verdaderos(valores: Iterable[bool]) -> int:
+    """Cuenta la cantidad de elementos verdaderos en *valores*."""
+
+    contador = 0
+    for indice, valor in enumerate(valores):
+        if _asegurar_booleano(valor, f"valor_{indice}"):
+            contador += 1
+    return contador
+
+
+def paridad(valores: Iterable[bool]) -> bool:
+    """Retorna ``True`` si el número de verdaderos en *valores* es par."""
+
+    return conteo_verdaderos(valores) % 2 == 0
+
+
 __all__ = [
     "conjuncion",
     "disyuncion",
@@ -118,4 +158,8 @@ __all__ = [
     "xor_multiple",
     "todas",
     "alguna",
+    "ninguna",
+    "solo_uno",
+    "conteo_verdaderos",
+    "paridad",
 ]
