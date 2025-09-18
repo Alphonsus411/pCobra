@@ -67,8 +67,21 @@ from corelibs.coleccion import (
     tomar,
 )
 from corelibs.seguridad import hash_sha256, generar_uuid
-from corelibs.red import obtener_url, enviar_post
-from corelibs.sistema import obtener_os, ejecutar, obtener_env, listar_dir
+from corelibs.red import (
+    obtener_url,
+    obtener_url_async,
+    enviar_post,
+    enviar_post_async,
+    descargar_archivo,
+)
+from corelibs.sistema import (
+    obtener_os,
+    ejecutar,
+    ejecutar_async,
+    ejecutar_stream,
+    obtener_env,
+    listar_dir,
+)
 
 __all__ = [
     "mayusculas",
@@ -137,9 +150,14 @@ __all__ = [
     "hash_sha256",
     "generar_uuid",
     "obtener_url",
+    "obtener_url_async",
     "enviar_post",
+    "enviar_post_async",
+    "descargar_archivo",
     "obtener_os",
     "ejecutar",
+    "ejecutar_async",
+    "ejecutar_stream",
     "obtener_env",
     "listar_dir",
 ]

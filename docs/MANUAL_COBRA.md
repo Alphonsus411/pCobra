@@ -199,6 +199,11 @@ imprimir('principal')
 
 - Declara funciones asíncronas con `asincronico func`.
 - Usa `esperar` para aguardar su resultado.
+- Las utilidades de red y sistema con sufijo `_async` devuelven tareas que
+  deben combinarse con `esperar` (o `await` en los lenguajes generados).
+- `descargar_archivo` y `ejecutar_stream` también son asíncronas; la primera
+  guarda ficheros respetando la lista blanca de hosts y la segunda produce
+  un iterador que emite los fragmentos de salida de un proceso.
 
 ```cobra
 asincronico func tarea():
@@ -209,6 +214,19 @@ fin
 func principal():
     esperar tarea()
     imprimir('fin')
+fin
+```
+
+Puedes mezclar estas primitivas dentro de la misma corrutina:
+
+```cobra
+asincronico func revisar_servidor():
+    html = esperar obtener_url_async("https://example.com")
+    esperar descargar_archivo("https://example.com/logo.png", "descargas/logo.png")
+    resultado = esperar ejecutar_async(['echo', 'ok'], permitidos=['/bin/echo'])
+    para cada linea en ejecutar_stream(['echo', 'hola'], permitidos=['/bin/echo']):
+        imprimir(linea)
+    retornar html
 fin
 ```
 
@@ -235,6 +253,33 @@ codigo = "imprimir('hola')"
 parser = Parser(codigo)
 arbol = parser.parsear()
 print(TranspiladorPython().generate_code(arbol))
+```
+
+Un programa Cobra como el anterior se transpila a Python generando corrutinas
+con `await` sobre las utilidades `_async`:
+
+```python
+async def revisar_servidor():
+    html = await obtener_url_async("https://example.com")
+    await descargar_archivo("https://example.com/logo.png", "descargas/logo.png")
+    resultado = await ejecutar_async(['echo', 'ok'], permitidos=['/bin/echo'])
+    async for linea in ejecutar_stream(['echo', 'hola'], permitidos=['/bin/echo']):
+        print(linea)
+    return html
+```
+
+Y la versión JavaScript utiliza `await` de forma equivalente:
+
+```javascript
+export async function revisar_servidor() {
+    const html = await obtener_url_async("https://example.com");
+    await descargar_archivo("https://example.com/logo.png", "descargas/logo.png");
+    const resultado = await ejecutar_async(['echo', 'ok'], ['/bin/echo']);
+    for await (const linea of ejecutar_stream(['echo', 'hola'], ['/bin/echo'])) {
+        console.log(linea);
+    }
+    return html;
+}
 ```
 
 ### Guías rápidas de transpilación entre lenguajes

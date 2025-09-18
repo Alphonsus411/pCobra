@@ -644,6 +644,15 @@ def test_transpile_red():
         NodoLlamadaFuncion(
             "enviar_post", [NodoValor("'https://x'"), NodoValor('{"a":1}')]
         ),
+        NodoLlamadaFuncion("obtener_url_async", [NodoValor("'https://x'")]),
+        NodoLlamadaFuncion(
+            "enviar_post_async",
+            [NodoValor("'https://x'"), NodoValor('{"a":1}')],
+        ),
+        NodoLlamadaFuncion(
+            "descargar_archivo",
+            [NodoValor("'https://x'"), NodoValor("'salida.bin'")],
+        ),
     ]
     py = TranspiladorPython().generate_code(ast)
     js = TranspiladorJavaScript().generate_code(ast)
@@ -651,11 +660,17 @@ def test_transpile_red():
         IMPORTS_PY
         + "obtener_url('https://x')\n"
         + "enviar_post('https://x', {\"a\":1})\n"
+        + "obtener_url_async('https://x')\n"
+        + "enviar_post_async('https://x', {\"a\":1})\n"
+        + "descargar_archivo('https://x', 'salida.bin')\n"
     )
     js_exp = (
         IMPORTS_JS
         + "obtener_url('https://x');\n"
-        + "enviar_post('https://x', {\"a\":1});"
+        + "enviar_post('https://x', {\"a\":1});\n"
+        + "obtener_url_async('https://x');\n"
+        + "enviar_post_async('https://x', {\"a\":1});\n"
+        + "descargar_archivo('https://x', 'salida.bin');"
     )
     assert py == py_exp
     assert js == js_exp

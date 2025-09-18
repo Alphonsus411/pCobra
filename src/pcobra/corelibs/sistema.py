@@ -1,19 +1,67 @@
 """Funciones relacionadas con el sistema operativo."""
 
+from __future__ import annotations
+
+import asyncio
 import os
 import platform
 import shutil
 import subprocess
-from typing import Iterable
+from collections.abc import Iterable
+from typing import AsyncIterator
 
 # Variable de entorno que permite definir una lista blanca mínima
 WHITELIST_ENV = "COBRA_EJECUTAR_PERMITIDOS"
 # Lista capturada una sola vez al importar el módulo para evitar cambios en
 # tiempo de ejecución.
 _lista_env = os.getenv(WHITELIST_ENV)
-PERMITIDOS_FIJOS = (
-    tuple(_lista_env.split(os.pathsep)) if _lista_env else ()
-)
+PERMITIDOS_FIJOS = tuple(_lista_env.split(os.pathsep)) if _lista_env else ()
+
+
+def _normalizar_rutas(rutas: Iterable[str]) -> set[str]:
+    return {
+        os.path.normcase(os.path.normpath(os.path.realpath(ruta))) for ruta in rutas
+    }
+
+
+def _obtener_permitidos(permitidos: Iterable[str] | None) -> set[str]:
+    if permitidos is None:
+        if PERMITIDOS_FIJOS:
+            permitidos_iter = PERMITIDOS_FIJOS
+        else:
+            raise ValueError("Se requiere lista blanca de comandos permitidos")
+    else:
+        permitidos_iter = permitidos
+    normalizados = _normalizar_rutas(permitidos_iter)
+    if not normalizados:
+        raise ValueError("Lista blanca de comandos vacía")
+    return normalizados
+
+
+def _resolver_ejecutable(
+    comando: list[str], permitidos: Iterable[str] | None
+) -> tuple[list[str], str, int]:
+    if not comando:
+        raise ValueError("Comando vacío")
+
+    permitidos_reales = _obtener_permitidos(permitidos)
+
+    exe = comando[0]
+    exe_resuelto = shutil.which(exe) if not os.path.isabs(exe) else exe
+    if exe_resuelto is None:
+        raise ValueError(f"Comando no permitido: {exe}")
+    exe_real = os.path.realpath(exe_resuelto)
+    exe_normalizado = os.path.normcase(os.path.normpath(exe_real))
+    if exe_normalizado not in permitidos_reales:
+        raise ValueError(f"Comando no permitido: {exe_real}")
+    inode = os.stat(exe_real).st_ino
+    return comando, exe_real, inode
+
+
+def _verificar_inode(exe_real: str, inode_inicial: int) -> None:
+    inode_final = os.stat(exe_real).st_ino
+    if inode_final != inode_inicial:
+        raise RuntimeError("El ejecutable cambió durante la ejecución")
 
 
 def obtener_os() -> str:
@@ -58,29 +106,7 @@ def ejecutar(
     ``RuntimeError`` indicando que el archivo fue modificado durante el
     proceso.
     """
-    if not comando:
-        raise ValueError("Comando vacío")
-
-    if permitidos is None:
-        if PERMITIDOS_FIJOS:
-            permitidos = PERMITIDOS_FIJOS
-        else:
-            raise ValueError("Se requiere lista blanca de comandos permitidos")
-
-    if comando:
-        exe = comando[0]
-        exe_resuelto = shutil.which(exe) if not os.path.isabs(exe) else exe
-        if exe_resuelto is None:
-            raise ValueError(f"Comando no permitido: {exe}")
-        exe_real = os.path.realpath(exe_resuelto)
-        exe_normalizado = os.path.normcase(os.path.normpath(exe_real))
-        permitidos_reales = {
-            os.path.normcase(os.path.normpath(os.path.realpath(p))) for p in permitidos
-        }
-        if exe_normalizado not in permitidos_reales:
-            raise ValueError(f"Comando no permitido: {exe_real}")
-        inode = os.stat(exe_real).st_ino
-    args = comando
+    args, exe_real, inode = _resolver_ejecutable(comando, permitidos)
     try:
         resultado = subprocess.run(
             args,
@@ -90,9 +116,7 @@ def ejecutar(
             stderr=subprocess.PIPE,
             timeout=timeout,
         )
-        inode_final = os.stat(exe_real).st_ino
-        if inode_final != inode:
-            raise RuntimeError("El ejecutable cambió durante la ejecución")
+        _verificar_inode(exe_real, inode)
         return resultado.stdout
     except subprocess.TimeoutExpired as exc:
         if exc.stderr:
@@ -104,6 +128,118 @@ def ejecutar(
         if exc.stderr:
             return exc.stderr
         raise RuntimeError(f"Error al ejecutar '{' '.join(comando)}': {exc}") from exc
+
+
+def _decodificar(data: bytes | None) -> str:
+    return (data or b"").decode("utf-8", errors="replace")
+
+
+async def ejecutar_async(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> str:
+    """Versión asíncrona de :func:`ejecutar`."""
+
+    args, exe_real, inode = _resolver_ejecutable(comando, permitidos)
+    proc = await asyncio.create_subprocess_exec(
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(
+            proc.communicate(), timeout=timeout
+        )
+    except asyncio.TimeoutError as exc:
+        proc.kill()
+        stdout_bytes, stderr_bytes = await proc.communicate()
+        if stderr_bytes:
+            return _decodificar(stderr_bytes)
+        raise RuntimeError(
+            f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+        ) from exc
+    _verificar_inode(exe_real, inode)
+    if proc.returncode:
+        if stderr_bytes:
+            return _decodificar(stderr_bytes)
+        raise RuntimeError(
+            f"Error al ejecutar '{' '.join(comando)}': código {proc.returncode}"
+        )
+    return _decodificar(stdout_bytes)
+
+
+async def ejecutar_stream(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> AsyncIterator[str]:
+    """Devuelve un iterador asíncrono con la salida estándar del proceso."""
+
+    args, exe_real, inode = _resolver_ejecutable(comando, permitidos)
+    proc = await asyncio.create_subprocess_exec(
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    loop = asyncio.get_running_loop()
+    inicio = loop.time()
+    stderr_bytes = b""
+    try:
+        assert proc.stdout is not None
+        while True:
+            restante = None
+            if timeout is not None:
+                restante = timeout - (loop.time() - inicio)
+                if restante <= 0:
+                    raise asyncio.TimeoutError
+            try:
+                if restante is None:
+                    chunk = await proc.stdout.readline()
+                else:
+                    chunk = await asyncio.wait_for(proc.stdout.readline(), restante)
+            except asyncio.TimeoutError as exc:
+                proc.kill()
+                _, stderr_bytes = await proc.communicate()
+                if stderr_bytes:
+                    raise RuntimeError(_decodificar(stderr_bytes)) from exc
+                raise RuntimeError(
+                    f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+                ) from exc
+            if not chunk:
+                break
+            yield chunk.decode("utf-8", errors="replace")
+
+        restante = None
+        if timeout is not None:
+            restante = timeout - (loop.time() - inicio)
+            if restante <= 0:
+                raise asyncio.TimeoutError
+        try:
+            if restante is None:
+                await proc.wait()
+            else:
+                await asyncio.wait_for(proc.wait(), restante)
+        except asyncio.TimeoutError as exc:
+            proc.kill()
+            _, stderr_bytes = await proc.communicate()
+            if stderr_bytes:
+                raise RuntimeError(_decodificar(stderr_bytes)) from exc
+            raise RuntimeError(
+                f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+            ) from exc
+
+        if proc.stderr is not None:
+            stderr_bytes = await proc.stderr.read()
+    finally:
+        _verificar_inode(exe_real, inode)
+
+    if proc.returncode:
+        if stderr_bytes:
+            raise RuntimeError(_decodificar(stderr_bytes))
+        raise RuntimeError(
+            f"Error al ejecutar '{' '.join(comando)}': código {proc.returncode}"
+        )
 
 
 def obtener_env(nombre: str) -> str | None:
