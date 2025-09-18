@@ -56,6 +56,87 @@ async def test_iterar_completadas_cancela_pendientes_en_error():
 
 
 @pytest.mark.asyncio
+async def test_primero_exitoso_devuelve_primer_resultado_sin_excepcion():
+    async def fallida():
+        await asyncio.sleep(0.005)
+        raise RuntimeError("fallo")
+
+    async def exitosa():
+        await asyncio.sleep(0.01)
+        return "hecho"
+
+    resultado = await asincrono.primero_exitoso(fallida(), exitosa())
+
+    assert resultado == "hecho"
+
+
+@pytest.mark.asyncio
+async def test_primero_exitoso_agrupar_errores_si_todo_falla():
+    async def fallida(mensaje):
+        await asyncio.sleep(0.0)
+        raise ValueError(mensaje)
+
+    with pytest.raises(ExceptionGroup) as excinfo:
+        await asincrono.primero_exitoso(fallida("uno"), fallida("dos"))
+
+    assert len(excinfo.value.exceptions) == 2
+    assert {type(ex) for ex in excinfo.value.exceptions} == {ValueError}
+
+
+@pytest.mark.asyncio
+async def test_mapear_concurrencia_respeta_limite():
+    contador = 0
+    maximo = 0
+    candado = asyncio.Lock()
+
+    def construir(indice):
+        async def tarea():
+            nonlocal contador, maximo
+            async with candado:
+                contador += 1
+                maximo = max(maximo, contador)
+            try:
+                await asyncio.sleep(0.001)
+                return indice
+            finally:
+                async with candado:
+                    contador -= 1
+
+        return tarea
+
+    funciones = [construir(i) for i in range(5)]
+    resultados = await asincrono.mapear_concurrencia(funciones, limite=2)
+
+    assert resultados == list(range(5))
+    assert maximo <= 2
+
+
+@pytest.mark.asyncio
+async def test_mapear_concurrencia_return_exceptions():
+    def fallida():
+        async def tarea():
+            await asyncio.sleep(0)
+            raise RuntimeError("boom")
+
+        return tarea
+
+    def exitosa(valor):
+        async def tarea():
+            await asyncio.sleep(0)
+            return valor
+
+        return tarea
+
+    funciones = [fallida(), exitosa("ok")]
+    resultados = await asincrono.mapear_concurrencia(
+        funciones, limite=3, return_exceptions=True
+    )
+
+    assert isinstance(resultados[0], RuntimeError)
+    assert resultados[1] == "ok"
+
+
+@pytest.mark.asyncio
 async def test_recolectar_resultados_reporta_estados():
     cancelada = asyncio.Event()
 

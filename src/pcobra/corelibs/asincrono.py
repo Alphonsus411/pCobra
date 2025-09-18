@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
-from typing import Any, AsyncIterator, Awaitable, Coroutine, TypeVar
+from typing import Any, AsyncIterator, Awaitable, Callable, Coroutine, Iterable, TypeVar
 
 T = TypeVar("T")
 
@@ -93,6 +93,52 @@ async def carrera(
                 await tarea
 
 
+async def primero_exitoso(
+    *corutinas: Awaitable[T] | Coroutine[Any, Any, T]
+) -> T:
+    """Devuelve el primer resultado satisfactorio de ``corutinas``.
+
+    Opera de manera análoga a ``Promise.any`` en JavaScript: se ejecutan todas
+    las corrutinas en paralelo y se devuelve el primer valor que no levante
+    excepciones. Si todas fallan se lanza una :class:`ExceptionGroup` con los
+    errores encontrados. Una cancelación externa provoca que el resto de tareas
+    se cancelen y se propague el :class:`asyncio.CancelledError` original.
+    """
+
+    if not corutinas:
+        raise ValueError("primero_exitoso() necesita al menos una corrutina")
+
+    tareas = [_asegurar_tarea(corutina) for corutina in corutinas]
+    errores: list[BaseException] = []
+
+    try:
+        for futura in asyncio.as_completed(tareas):
+            try:
+                resultado = await futura
+            except asyncio.CancelledError:
+                for tarea in tareas:
+                    tarea.cancel()
+                raise
+            except BaseException as exc:
+                errores.append(exc)
+            else:
+                for tarea in tareas:
+                    if tarea is not futura and not tarea.done():
+                        tarea.cancel()
+                return resultado
+    except asyncio.CancelledError:
+        for tarea in tareas:
+            tarea.cancel()
+        raise
+    finally:
+        if tareas:
+            await asyncio.gather(*tareas, return_exceptions=True)
+
+    if errores:
+        raise ExceptionGroup("Todas las tareas fallaron", errores)
+    raise RuntimeError("No se obtuvo ningún resultado exitoso")
+
+
 async def esperar_timeout(
     corutina: Awaitable[T] | Coroutine[Any, Any, T], timeout: float | None
 ) -> T:
@@ -177,6 +223,68 @@ async def iterar_completadas(
                 tarea.cancel()
         if tareas:
             await asyncio.gather(*tareas, return_exceptions=True)
+
+
+async def mapear_concurrencia(
+    funciones: Iterable[Callable[[], Awaitable[T] | Coroutine[Any, Any, T]]],
+    limite: int,
+    *,
+    return_exceptions: bool = False,
+) -> list[T | BaseException]:
+    """Ejecuta ``funciones`` respetando ``limite`` tareas simultáneas.
+
+    Aplica un control explícito de concurrencia similar a los *worker pools* de
+    Go mediante :class:`asyncio.Semaphore`. Al igual que ``Promise.all`` se
+    preserva el orden de los resultados, pero es posible limitar cuántas
+    corrutinas corren a la vez. Cuando ``return_exceptions`` es ``False`` el
+    primer error detiene el resto de tareas; si vale ``True`` las excepciones se
+    devuelven en la posición que les corresponde. ``limite`` debe ser al menos
+    ``1``.
+    """
+
+    if limite < 1:
+        raise ValueError("limite debe ser un entero positivo")
+
+    lista_funciones = list(funciones)
+    if not lista_funciones:
+        return []
+
+    semaforo = asyncio.Semaphore(limite)
+
+    async def ejecutar(funcion: Callable[[], Awaitable[T] | Coroutine[Any, Any, T]]):
+        async with semaforo:
+            try:
+                awaitable = funcion()
+            except Exception as exc:
+                if isinstance(exc, asyncio.CancelledError):
+                    raise
+                if return_exceptions:
+                    return exc
+                raise
+
+            tarea = _asegurar_tarea(awaitable)
+
+            try:
+                return await tarea
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                if return_exceptions:
+                    return exc
+                raise
+
+    tareas = [asyncio.create_task(ejecutar(funcion)) for funcion in lista_funciones]
+
+    try:
+        resultados = await asyncio.gather(*tareas, return_exceptions=return_exceptions)
+    except asyncio.CancelledError:
+        for tarea in tareas:
+            tarea.cancel()
+        raise
+    finally:
+        await asyncio.gather(*tareas, return_exceptions=True)
+
+    return list(resultados)
 
 
 async def recolectar_resultados(
