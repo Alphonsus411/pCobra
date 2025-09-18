@@ -6,7 +6,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any, Callable, Iterator, Literal
 
-from rich.console import Console, RenderableType
+from rich.columns import Columns
+from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
 from rich.progress import (
     BarColumn,
@@ -17,6 +18,7 @@ from rich.progress import (
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
+from rich.padding import Padding
 from rich.table import Table
 
 NivelAviso = Literal["info", "exito", "advertencia", "error"]
@@ -231,6 +233,70 @@ def mostrar_tabla(
     return tabla
 
 
+def mostrar_columnas(
+    elementos: Iterable[RenderableType | str],
+    *,
+    numero_columnas: int | None = None,
+    titulo: str | None = None,
+    expandir: bool = True,
+    igualar_ancho: bool = False,
+    alinear: Literal["left", "center", "right"] | None = None,
+    padding: int | tuple[int, int] | tuple[int, int, int, int] = (0, 1),
+    console: Console | None = None,
+) -> Columns:
+    """Crea una cuadrícula de elementos utilizando ``rich.columns.Columns``.
+
+    Args:
+        elementos: Colección de textos o renderizables Rich que se mostrarán.
+        numero_columnas: Máximo de columnas deseadas. Los elementos se reparten de
+            izquierda a derecha y, si se excede el límite, se agrupan verticalmente
+            por columnas. Cuando es ``None`` se deja que Rich decida el número.
+        titulo: Encabezado opcional a mostrar sobre el bloque de columnas.
+        expandir: Si ``True`` la cuadrícula ocupará todo el ancho disponible.
+        igualar_ancho: Fuerza a que todas las columnas midan lo mismo.
+        alinear: Alineación del contenido (``"left"``, ``"center"`` o ``"right"``).
+        padding: Relleno aplicado a cada celda (top, right, bottom, left).
+        console: Instancia de :class:`rich.console.Console` en la que imprimir.
+
+    Returns:
+        La instancia de :class:`rich.columns.Columns` generada, útil para pruebas o
+        reutilización posterior.
+    """
+
+    console_obj = _obtener_console(console)
+    renderizables = list(elementos)
+
+    if numero_columnas is not None:
+        if numero_columnas <= 0:
+            raise ValueError("numero_columnas debe ser un entero positivo")
+        if renderizables:
+            limite = min(numero_columnas, len(renderizables))
+            columnas_virtuales: list[list[RenderableType | str]] = [
+                [] for _ in range(limite)
+            ]
+            for indice, renderizable in enumerate(renderizables):
+                columnas_virtuales[indice % limite].append(renderizable)
+            renderizables = [
+                Group(*columna)
+                if len(columna) > 1
+                else columna[0]
+                for columna in columnas_virtuales
+            ]
+        else:
+            renderizables = []
+
+    columnas_render = Columns(
+        renderizables,
+        padding=padding,
+        expand=expandir,
+        equal=igualar_ancho,
+        align=alinear,
+        title=titulo,
+    )
+    console_obj.print(columnas_render)
+    return columnas_render
+
+
 def mostrar_panel(
     contenido: RenderableType,
     *,
@@ -252,6 +318,75 @@ def mostrar_panel(
     console_obj = _obtener_console(console)
     console_obj.print(panel)
     return panel
+
+
+@contextmanager
+def grupo_consola(
+    titulo: str | None = None,
+    *,
+    console: Console | None = None,
+    sangria: int = 4,
+    estilo_titulo: str | None = "bold",
+) -> Iterator[Console]:
+    """Agrupa múltiples impresiones siguiendo la semántica de ``console.group``.
+
+    Si la instancia de :class:`rich.console.Console` proporcionada ya implementa
+    ``group`` se delega directamente en ella. En caso contrario se simula el
+    agrupado capturando las impresiones, añadiendo un título opcional y aplicando
+    sangría mediante :class:`rich.padding.Padding`.
+
+    Args:
+        titulo: Texto que encabezará el grupo. En la simulación se imprime antes
+            del contenido indentado.
+        console: Consola Rich a utilizar. Si no se indica se creará una nueva.
+        sangria: Número de espacios usados para indentar en la simulación.
+        estilo_titulo: Estilo Rich aplicado al título cuando se imprime manualmente.
+
+    Yields:
+        La consola sobre la que imprimir los mensajes agrupados.
+    """
+
+    console_obj = _obtener_console(console)
+    group_callable = getattr(console_obj, "group", None)
+    if callable(group_callable):
+        args = (titulo,) if titulo is not None else ()
+        try:
+            contexto = group_callable(*args)
+        except TypeError:
+            contexto = None
+        else:
+            if hasattr(contexto, "__enter__") and hasattr(contexto, "__exit__"):
+                with contexto:
+                    yield console_obj
+                return
+
+    class _GrupoProxy:
+        def __init__(self, base: Console) -> None:
+            self._base = base
+            self._llamadas: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+
+        def print(self, *objetos: Any, **kwargs: Any) -> None:  # type: ignore[override]
+            self._llamadas.append((objetos, kwargs))
+
+        def __getattr__(self, nombre: str) -> Any:
+            return getattr(self._base, nombre)
+
+    proxy = _GrupoProxy(console_obj)
+    try:
+        yield proxy  # type: ignore[misc]
+    finally:
+        llamadas = proxy._llamadas
+        if titulo is not None:
+            console_obj.print(titulo, style=estilo_titulo)
+        for args, kwargs in llamadas:
+            if not args:
+                console_obj.print(**kwargs)
+                continue
+            if len(args) == 1:
+                renderizable = args[0]
+            else:
+                renderizable = Group(*args)
+            console_obj.print(Padding(renderizable, (0, 0, 0, sangria)), **kwargs)
 
 
 @contextmanager
@@ -355,7 +490,9 @@ __all__ = [
     "mostrar_arbol",  # Renderiza estructuras jerárquicas con Rich Tree.
     "preguntar_confirmacion",  # Pregunta sí/no utilizando ``rich.prompt``.
     "mostrar_tabla",  # Construye tablas a partir de mapeos o secuencias.
+    "mostrar_columnas",  # Organiza elementos en un diseño de columnas.
     "mostrar_panel",  # Envuelve contenido en paneles estilizados.
+    "grupo_consola",  # Agrupa mensajes con sangría estilo consola.
     "barra_progreso",  # Proporciona un contexto con barra de progreso.
     "limpiar_consola",  # Limpia la salida de la consola objetivo.
     "imprimir_aviso",  # Muestra mensajes de estado con iconos estándar.

@@ -3,18 +3,21 @@ from __future__ import annotations
 import builtins
 import importlib.util
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-from rich.console import Console
+from rich.columns import Columns
+from rich.console import Console, Group
 from rich.json import JSON
 from rich.markdown import Markdown
+from rich.padding import Padding
+from rich.pretty import Pretty
 from rich.syntax import Syntax
 from rich.table import Table
 from rich.tree import Tree
-from rich.pretty import Pretty
 
 
 def _cargar_interfaz() -> ModuleType:
@@ -40,6 +43,8 @@ mostrar_markdown = interfaz.mostrar_markdown
 mostrar_json = interfaz.mostrar_json
 mostrar_arbol = interfaz.mostrar_arbol
 preguntar_confirmacion = interfaz.preguntar_confirmacion
+mostrar_columnas = interfaz.mostrar_columnas
+grupo_consola = interfaz.grupo_consola
 
 
 def test_mostrar_codigo_resalta_codigo_en_console_mock():
@@ -246,6 +251,45 @@ def test_mostrar_tabla_con_valores_simples_crea_columna_generica():
     assert tabla.columns[0]._cells == ["unico"]
 
 
+def test_mostrar_columnas_imprime_render_columns():
+    console = Mock()
+    console.print = Mock()
+
+    columnas = mostrar_columnas(["uno", "dos"], titulo="Listado", console=console)
+
+    console.print.assert_called_once()
+    render = console.print.call_args.args[0]
+    assert isinstance(render, Columns)
+    assert columnas is render
+    assert render.title == "Listado"
+    assert render.renderables == ["uno", "dos"]
+
+
+def test_mostrar_columnas_reparte_elementos_por_limite():
+    console = Mock()
+    console.print = Mock()
+
+    columnas = mostrar_columnas(["A", "B", "C", "D"], numero_columnas=2, console=console)
+
+    render = console.print.call_args.args[0]
+    assert columnas is render
+    assert isinstance(render, Columns)
+    assert len(render.renderables) == 2
+    primera, segunda = render.renderables
+    assert isinstance(primera, Group)
+    assert primera.renderables == ["A", "C"]
+    assert segunda == "B" or (
+        isinstance(segunda, Group) and segunda.renderables == ["B", "D"]
+    )
+
+
+def test_mostrar_columnas_valida_numero_columnas():
+    console = Mock()
+
+    with pytest.raises(ValueError):
+        mostrar_columnas(["solo"], numero_columnas=0, console=console)
+
+
 def test_imprimir_aviso_formatea_estilo(monkeypatch):
     console = Mock(spec=Console)
     imprimir_aviso("Proceso finalizado", nivel="exito", console=console)
@@ -281,6 +325,47 @@ def test_mostrar_panel_devuelve_render():
     console = Mock(spec=Console)
     panel = mostrar_panel("Hola", titulo="Panel", console=console)
     console.print.assert_called_once_with(panel)
+
+
+def test_grupo_consola_delega_en_console_group():
+    console = Mock()
+    console.print = Mock()
+    eventos: list[str | None] = []
+
+    @contextmanager
+    def fake_group(label=None):
+        eventos.append(label)
+        yield
+        eventos.append("fin")
+
+    console.group.side_effect = fake_group
+
+    with grupo_consola(titulo="Bloque", console=console) as agrupada:
+        agrupada.print("Hola")
+
+    console.group.assert_called_once_with("Bloque")
+    console.print.assert_called_once_with("Hola")
+    assert eventos == ["Bloque", "fin"]
+
+
+def test_grupo_consola_sin_group_simula_sangria():
+    console = Mock()
+    console.print = Mock()
+
+    with grupo_consola(titulo="Detalle", console=console) as agrupada:
+        agrupada.print("Linea 1")
+        agrupada.print("Linea 2", style="bold")
+
+    assert console.print.call_count == 3
+    titulo_llamada = console.print.call_args_list[0]
+    assert titulo_llamada.args[0] == "Detalle"
+    padding_1 = console.print.call_args_list[1].args[0]
+    padding_2 = console.print.call_args_list[2].args[0]
+    assert isinstance(padding_1, Padding)
+    assert isinstance(padding_2, Padding)
+    assert padding_1.renderable == "Linea 1"
+    assert padding_2.renderable == "Linea 2"
+    assert console.print.call_args_list[2].kwargs.get("style") == "bold"
 
 
 def test_iniciar_gui_invoca_flet_app(monkeypatch):

@@ -5,6 +5,9 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
 - **`mostrar_tabla(filas, columnas=None, titulo=None, estilos=None)`**: construye una
   tabla a partir de listas de diccionarios o secuencias y la imprime usando la consola
   indicada. Devuelve el objeto `Table` para ajustes adicionales.
+- **`mostrar_columnas(elementos, numero_columnas=None, titulo=None)`**: reparte una
+  lista de elementos en columnas equilibradas con la ayuda de `rich.columns.Columns`.
+  Ideal para recrear listados tipo `console.table` sin construir tablas completas.
 - **`mostrar_codigo(codigo, lenguaje)`**: resalta código fuente usando
   [`rich.syntax.Syntax`](https://rich.readthedocs.io/en/stable/syntax.html) y lo
   imprime en la consola indicada. Devuelve el objeto `Syntax` para posteriores
@@ -24,6 +27,8 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
   defecto especificado.
 - **`mostrar_panel(contenido, titulo=None, estilo="bold cyan")`**: crea un panel con
   bordes y permite definir el estilo interior y el color del borde.
+- **`grupo_consola(titulo=None)`**: context manager que agrupa varias impresiones con
+  sangría, emulando el comportamiento de `console.group` del navegador.
 - **`barra_progreso(descripcion="Progreso", total=None)`**: context manager que
   devuelve el `Progress` de Rich y el identificador de la tarea.
 - **`limpiar_consola(console=None)`**: invoca `Console.clear()` sobre la consola
@@ -36,10 +41,12 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
 ```python
 from standard_library.interfaz import (
     barra_progreso,
+    grupo_consola,
+    mostrar_columnas,
+    mostrar_codigo,
     mostrar_json,
     mostrar_markdown,
     mostrar_arbol,
-    mostrar_codigo,
     mostrar_tabla,
 )
 
@@ -65,4 +72,14 @@ mostrar_arbol(
 with barra_progreso(total=3, descripcion="Cargando") as (progreso, tarea):
     for _ in range(3):
         progreso.advance(tarea)
+
+# Agrupar mensajes para simular console.group/console.table
+with grupo_consola(titulo="Resultados") as consola:
+    consola.print("Resumen general")
+    mostrar_columnas(
+        ["Ada", "Hedy", "Grace", "Radia"],
+        numero_columnas=2,
+        console=consola,
+        titulo="Participantes",
+    )
 ```

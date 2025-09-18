@@ -781,11 +781,13 @@ imprimir(columnas['region'])
 El módulo `standard_library.interfaz` incorpora una capa de presentación construida sobre [`rich`](https://rich.readthedocs.io/) para crear paneles, tablas y barras de progreso sin tener que manipular manualmente códigos ANSI. Estas utilidades están pensadas para scripts de línea de comandos escritos en Cobra o en Python y mantienen el mismo API en ambos contextos.
 
 - `mostrar_tabla` acepta listas de diccionarios o secuencias y genera automáticamente los encabezados. Puedes personalizar el título y aplicar estilos Rich a cada columna.
+- `mostrar_columnas` distribuye listas simples en una cuadrícula similar a `console.table` sin necesidad de definir encabezados.
 - `mostrar_panel` dibuja recuadros con bordes y soporta títulos, estilos y expansión.
 - `mostrar_markdown` procesa texto con formato y respeta tablas, listas y
   resaltado inline.
 - `mostrar_json` ordena y colorea diccionarios o listas para inspeccionarlos
   rápidamente desde la terminal.
+- `grupo_consola` funciona como `console.group`, agrupando impresiones bajo un mismo título con sangría opcional.
 - `barra_progreso` expone un *context manager* que devuelve el objeto :class:`Progress` y el identificador de la tarea, lo que permite actualizar la barra con `advance` o `update`.
 - `imprimir_aviso` y `limpiar_consola` unifican la presentación de mensajes informativos, de advertencia o de error.
 - `iniciar_gui` e `iniciar_gui_idle` sirven como atajos seguros para lanzar las aplicaciones Flet oficiales del proyecto.
@@ -807,6 +809,10 @@ ui.mostrar_markdown("""\
 """)
 ui.mostrar_json({"total": longitud(participantes), "estado": "ok"})
 ui.imprimir_aviso("Datos cargados", nivel="exito")
+
+con ui.grupo_consola(titulo="Participantes") como consola:
+    consola.print("Listado breve")
+    ui.mostrar_columnas([p["Nombre"] para p en participantes], numero_columnas=2, console=consola)
 
 con ui.barra_progreso(descripcion="Procesando", total=3) como (progreso, tarea):
     para var _ in rango(0, 3):
