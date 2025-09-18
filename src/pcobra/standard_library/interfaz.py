@@ -35,6 +35,81 @@ def _es_secuencia(objeto: FilaTabla) -> bool:
     return isinstance(objeto, Sequence) and not isinstance(objeto, (str, bytes, bytearray))
 
 
+def mostrar_codigo(
+    codigo: str,
+    lenguaje: str,
+    console: Console | None = None,
+) -> Any:
+    """Resalta ``codigo`` con Rich y lo imprime en la consola indicada."""
+
+    try:
+        from rich.syntax import Syntax
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    console_obj = _obtener_console(console)
+    resaltado = Syntax(codigo, lenguaje)
+    console_obj.print(resaltado)
+    return resaltado
+
+
+def _agregar_a_arbol(arbol: Any, contenido: Any) -> None:
+    if isinstance(contenido, Mapping):
+        for clave, valor in contenido.items():
+            rama = arbol.add(str(clave))
+            _agregar_a_arbol(rama, valor)
+    elif isinstance(contenido, tuple) and len(contenido) == 2:
+        etiqueta, hijos = contenido
+        rama = arbol.add(str(etiqueta))
+        _agregar_a_arbol(rama, hijos)
+    elif isinstance(contenido, Sequence) and not isinstance(
+        contenido, (str, bytes, bytearray)
+    ):
+        for elemento in contenido:
+            _agregar_a_arbol(arbol, elemento)
+    elif contenido is not None:
+        arbol.add(str(contenido))
+
+
+def mostrar_arbol(
+    nodos: Any,
+    *,
+    titulo: str | None = None,
+    console: Console | None = None,
+) -> Any:
+    """Construye un árbol visual a partir de ``nodos`` y lo imprime con Rich."""
+
+    try:
+        from rich.tree import Tree
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    etiqueta_raiz = titulo if titulo is not None else "Árbol"
+    arbol = Tree(etiqueta_raiz)
+    _agregar_a_arbol(arbol, nodos)
+
+    console_obj = _obtener_console(console)
+    console_obj.print(arbol)
+    return arbol
+
+
+def preguntar_confirmacion(
+    mensaje: str,
+    *,
+    por_defecto: bool = True,
+    console: Console | None = None,
+) -> bool:
+    """Solicita confirmación al usuario devolviendo ``True`` o ``False``."""
+
+    try:
+        from rich.prompt import Confirm
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    console_obj = _obtener_console(console)
+    return Confirm.ask(mensaje, default=por_defecto, console=console_obj)
+
+
 def mostrar_tabla(
     filas: Iterable[FilaTabla],
     *,
@@ -224,11 +299,14 @@ def iniciar_gui_idle(*, destino: GuiTarget | None = None, **kwargs: Any) -> None
 
 
 __all__ = [
-    "mostrar_tabla",
-    "mostrar_panel",
-    "barra_progreso",
-    "limpiar_consola",
-    "imprimir_aviso",
-    "iniciar_gui",
-    "iniciar_gui_idle",
+    "mostrar_codigo",  # Resalta fragmentos de código en la consola.
+    "mostrar_arbol",  # Renderiza estructuras jerárquicas con Rich Tree.
+    "preguntar_confirmacion",  # Pregunta sí/no utilizando ``rich.prompt``.
+    "mostrar_tabla",  # Construye tablas a partir de mapeos o secuencias.
+    "mostrar_panel",  # Envuelve contenido en paneles estilizados.
+    "barra_progreso",  # Proporciona un contexto con barra de progreso.
+    "limpiar_consola",  # Limpia la salida de la consola objetivo.
+    "imprimir_aviso",  # Muestra mensajes de estado con iconos estándar.
+    "iniciar_gui",  # Lanza la aplicación gráfica principal.
+    "iniciar_gui_idle",  # Inicia el entorno gráfico de experimentación.
 ]
