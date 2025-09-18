@@ -47,6 +47,25 @@ def test_texto_funcs():
     assert core.empieza_con("cobral", ("co", "za")) is True
     assert core.termina_con("cobral", ("co", "al")) is True
     assert core.incluye("hola", "ol") is True
+    assert core.quitar_prefijo("prefijo", "pre") == "fijo"
+    assert core.quitar_prefijo("prefijo", "prE") == "prefijo"
+    assert core.quitar_sufijo("archivo.tmp", ".tmp") == "archivo"
+    assert core.quitar_sufijo("archivo.tmp", ".tm") == "archivo.tmp"
+    assert core.dividir_lineas("uno\r\ndos\n") == ["uno", "dos"]
+    assert core.dividir_lineas("uno\r\ndos\n", conservar_delimitadores=True) == [
+        "uno\r\n",
+        "dos\n",
+    ]
+    assert core.dividir_lineas("") == []
+    assert core.contar_subcadena("banana", "na") == 2
+    assert core.contar_subcadena("banana", "na", 0, 3) == 0
+    assert core.centrar_texto("cobra", 9, "*") == "**cobra**"
+    with pytest.raises(TypeError):
+        core.centrar_texto("cobra", 10, "--")
+    assert core.rellenar_ceros("7", 3) == "007"
+    assert core.rellenar_ceros("-5", 4) == "-005"
+    assert core.rellenar_ceros("猫", 3) == "00猫"
+    assert core.minusculas_casefold("Straße") == "strasse"
     assert core.rellenar_izquierda("7", 3, "0") == "007"
     assert core.rellenar_derecha("7", 3, "0") == "700"
     with pytest.raises(ValueError):
