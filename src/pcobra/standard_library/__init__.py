@@ -27,10 +27,12 @@ from standard_library.datos import (
 from standard_library.fecha import hoy, formatear, sumar_dias
 from standard_library.interfaz import (
     barra_progreso,
+    grupo_consola,
     imprimir_aviso,
     iniciar_gui,
     iniciar_gui_idle,
     limpiar_consola,
+    mostrar_columnas,
     mostrar_markdown,
     mostrar_json,
     mostrar_panel,
@@ -116,9 +118,11 @@ __all__: list[str] = [
     "de_listas",
     "escribir_excel",
     "mostrar_tabla",
+    "mostrar_columnas",
     "mostrar_panel",
     "mostrar_markdown",
     "mostrar_json",
+    "grupo_consola",
     "barra_progreso",
     "limpiar_consola",
     "imprimir_aviso",
@@ -140,9 +144,11 @@ a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dic
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
 escribir_excel: Callable[..., None]
 mostrar_tabla: Callable[..., Any]
+mostrar_columnas: Callable[..., Any]
 mostrar_panel: Callable[..., Any]
 mostrar_markdown: Callable[..., Any]
 mostrar_json: Callable[..., Any]
+grupo_consola: Callable[..., Any]
 barra_progreso: Callable[..., Any]
 limpiar_consola: Callable[..., None]
 imprimir_aviso: Callable[..., None]
