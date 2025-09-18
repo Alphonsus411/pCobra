@@ -8,9 +8,12 @@ Ejemplo rápido::
     texto.centrar_texto("cobra", 10, "-")    # -> "---cobra--"
     texto.dividir_lineas("uno\r\ndos\n", conservar_delimitadores=True)
     # -> ["uno\r\n", "dos\n"]
+    texto.subcadena_despues("ruta/archivo.txt", "/")  # -> "archivo.txt"
 """
 
 from __future__ import annotations
+
+from typing import Any, TypeVar, overload
 
 import unicodedata
 from pcobra.corelibs import (
@@ -29,8 +32,15 @@ from pcobra.corelibs import (
     particionar_derecha as _particionar_derecha,
     particionar_texto as _particionar,
     rellenar_ceros as _rellenar_ceros,
+    subcadena_antes as _subcadena_antes,
+    subcadena_despues as _subcadena_despues,
+    subcadena_antes_ultima as _subcadena_antes_ultima,
+    subcadena_despues_ultima as _subcadena_despues_ultima,
     unir,
 )
+
+_T = TypeVar("_T")
+_SIN_VALOR = object()
 
 __all__ = [
     "quitar_acentos",
@@ -41,6 +51,10 @@ __all__ = [
     "quitar_sufijo",
     "dividir_lineas",
     "dividir_derecha",
+    "subcadena_antes",
+    "subcadena_despues",
+    "subcadena_antes_ultima",
+    "subcadena_despues_ultima",
     "contar_subcadena",
     "centrar_texto",
     "rellenar_ceros",
@@ -147,6 +161,104 @@ def dividir_derecha(
     """
 
     return _dividir_derecha(texto, separador, maximo)
+
+
+@overload
+def subcadena_antes(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_antes(texto: str, separador: str, por_defecto: _T) -> str | _T:
+    ...
+
+
+def subcadena_antes(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
+    """Devuelve lo que antecede al primer ``separador``.
+
+    Equivalente a ``substringBefore`` de Kotlin y admite un ``por_defecto`` para
+    los casos en los que el separador no aparezca. Los separadores vacíos se
+    consideran presentes al inicio de la cadena.
+    """
+
+    if por_defecto is _SIN_VALOR:
+        return _subcadena_antes(texto, separador)
+    return _subcadena_antes(texto, separador, por_defecto)
+
+
+@overload
+def subcadena_despues(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_despues(texto: str, separador: str, por_defecto: _T) -> str | _T:
+    ...
+
+
+def subcadena_despues(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
+    """Obtiene el texto que sigue al primer ``separador``.
+
+    Mantiene la semántica de ``substringAfter`` de Kotlin, devolviendo ``texto``
+    completo salvo que se indique ``por_defecto`` cuando no hay coincidencias.
+    """
+
+    if por_defecto is _SIN_VALOR:
+        return _subcadena_despues(texto, separador)
+    return _subcadena_despues(texto, separador, por_defecto)
+
+
+@overload
+def subcadena_antes_ultima(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_antes_ultima(
+    texto: str, separador: str, por_defecto: _T
+) -> str | _T:
+    ...
+
+
+def subcadena_antes_ultima(
+    texto: str, separador: str, por_defecto: Any = _SIN_VALOR
+) -> Any:
+    """Devuelve lo que hay antes de la última coincidencia de ``separador``.
+
+    Equivale a ``substringBeforeLast`` en Kotlin y permite definir ``por_defecto``
+    para ausencias del separador. Los delimitadores vacíos se consideran
+    presentes al final de la cadena.
+    """
+
+    if por_defecto is _SIN_VALOR:
+        return _subcadena_antes_ultima(texto, separador)
+    return _subcadena_antes_ultima(texto, separador, por_defecto)
+
+
+@overload
+def subcadena_despues_ultima(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_despues_ultima(
+    texto: str, separador: str, por_defecto: _T
+) -> str | _T:
+    ...
+
+
+def subcadena_despues_ultima(
+    texto: str, separador: str, por_defecto: Any = _SIN_VALOR
+) -> Any:
+    """Retorna lo posterior a la última aparición de ``separador``.
+
+    Replica la semántica de ``substringAfterLast`` en Kotlin permitiendo ajustar
+    ``por_defecto`` cuando no hay coincidencias.
+    """
+
+    if por_defecto is _SIN_VALOR:
+        return _subcadena_despues_ultima(texto, separador)
+    return _subcadena_despues_ultima(texto, separador, por_defecto)
 
 
 def contar_subcadena(

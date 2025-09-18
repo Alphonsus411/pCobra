@@ -4,6 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import unicodedata
+from typing import Any, TypeVar, overload
+
+
+_T = TypeVar("_T")
+_SIN_VALOR = object()
+
+
+def _texto_o_defecto(por_defecto: Any, texto: str) -> Any:
+    return texto if por_defecto is _SIN_VALOR else por_defecto
 
 
 def mayusculas(texto: str) -> str:
@@ -118,6 +127,112 @@ def dividir_derecha(
     else:
         maxsplit = maximo
     return texto.rsplit(separador, maxsplit)
+
+
+@overload
+def subcadena_antes(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_antes(texto: str, separador: str, por_defecto: _T) -> str | _T:
+    ...
+
+
+def subcadena_antes(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
+    """Devuelve el segmento a la izquierda de ``separador``.
+
+    Cuando ``separador`` no aparece, retorna ``texto`` completo salvo que se
+    proporcione ``por_defecto``. El comportamiento coincide con utilidades como
+    ``substringBefore`` de Kotlin o ``substringBefore`` de Apache Commons.
+    Soporta separadores vacíos, que se consideran presentes al inicio.
+    """
+
+    indice = texto.find(separador)
+    if indice == -1:
+        return _texto_o_defecto(por_defecto, texto)
+    return texto[:indice]
+
+
+@overload
+def subcadena_despues(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_despues(texto: str, separador: str, por_defecto: _T) -> str | _T:
+    ...
+
+
+def subcadena_despues(texto: str, separador: str, por_defecto: Any = _SIN_VALOR) -> Any:
+    """Retorna el segmento a la derecha de la primera aparición de ``separador``.
+
+    Si no se encuentra ``separador`` se devuelve ``texto`` completo o
+    ``por_defecto`` cuando se especifica, replicando a ``substringAfter`` de
+    Kotlin y homólogos en otras bibliotecas. Los separadores vacíos se tratan
+    como coincidencias al inicio de la cadena.
+    """
+
+    indice = texto.find(separador)
+    if indice == -1:
+        return _texto_o_defecto(por_defecto, texto)
+    return texto[indice + len(separador) :]
+
+
+@overload
+def subcadena_antes_ultima(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_antes_ultima(
+    texto: str, separador: str, por_defecto: _T
+) -> str | _T:
+    ...
+
+
+def subcadena_antes_ultima(
+    texto: str, separador: str, por_defecto: Any = _SIN_VALOR
+) -> Any:
+    """Obtiene el texto anterior a la última aparición de ``separador``.
+
+    Cuando ``separador`` no aparece retorna ``texto`` completo salvo que se
+    indique ``por_defecto``. Equivale a ``substringBeforeLast`` en Kotlin o
+    utilidades similares.
+    """
+
+    indice = texto.rfind(separador)
+    if indice == -1:
+        return _texto_o_defecto(por_defecto, texto)
+    return texto[:indice]
+
+
+@overload
+def subcadena_despues_ultima(texto: str, separador: str) -> str:
+    ...
+
+
+@overload
+def subcadena_despues_ultima(
+    texto: str, separador: str, por_defecto: _T
+) -> str | _T:
+    ...
+
+
+def subcadena_despues_ultima(
+    texto: str, separador: str, por_defecto: Any = _SIN_VALOR
+) -> Any:
+    """Retorna lo que sigue a la última coincidencia de ``separador``.
+
+    Si ``separador`` no se halla, se devuelve ``texto`` completo salvo que se
+    proporcione ``por_defecto``. Se inspira en ``substringAfterLast`` de Kotlin
+    y variantes en otras bibliotecas.
+    """
+
+    indice = texto.rfind(separador)
+    if indice == -1:
+        return _texto_o_defecto(por_defecto, texto)
+    return texto[indice + len(separador) :]
 
 
 def unir(separador: str, piezas: Iterable[str]) -> str:

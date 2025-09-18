@@ -54,6 +54,28 @@ def test_centrar_rellenar_y_casefold():
     assert texto.minusculas_casefold("Straße") == "strasse"
 
 
+def test_subcadenas():
+    assert texto.subcadena_antes("uno-dos", "-") == "uno"
+    assert texto.subcadena_despues("uno-dos", "-") == "dos"
+    assert texto.subcadena_antes_ultima("uno-dos-tres", "-") == "uno-dos"
+    assert texto.subcadena_despues_ultima("uno-dos-tres", "-") == "tres"
+    assert texto.subcadena_antes("texto", "|") == "texto"
+    assert texto.subcadena_despues("texto", "|") == "texto"
+    assert texto.subcadena_antes("texto", "|", "N/A") == "N/A"
+    assert texto.subcadena_despues("texto", "|", "N/A") == "N/A"
+    assert texto.subcadena_antes_ultima("texto", "|", "N/A") == "N/A"
+    assert texto.subcadena_despues_ultima("texto", "|", "N/A") == "N/A"
+    cadena = "毒🐍🍎"
+    assert texto.subcadena_antes(cadena, "🐍") == "毒"
+    assert texto.subcadena_despues(cadena, "🐍") == "🍎"
+    assert texto.subcadena_antes_ultima(cadena, "🐍") == "毒"
+    assert texto.subcadena_despues_ultima(cadena, "🐍") == "🍎"
+    assert texto.subcadena_antes("abc", "") == ""
+    assert texto.subcadena_despues("abc", "") == "abc"
+    assert texto.subcadena_antes_ultima("abc", "") == "abc"
+    assert texto.subcadena_despues_ultima("abc", "") == ""
+
+
 def test_dividir_y_particionar():
     assert texto.dividir_derecha("uno-dos-tres", "-", 1) == ["uno-dos", "tres"]
     assert texto.dividir_derecha("  α  β  γ  ", None, 1) == ["  α  β", "γ"]

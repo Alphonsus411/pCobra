@@ -10,6 +10,10 @@ from corelibs.texto import (
     quitar_espacios,
     dividir,
     dividir_derecha,
+    subcadena_antes,
+    subcadena_despues,
+    subcadena_antes_ultima,
+    subcadena_despues_ultima,
     dividir_lineas,
     unir,
     reemplazar,
@@ -123,6 +127,10 @@ __all__ = [
     "quitar_espacios",
     "dividir",
     "dividir_derecha",
+    "subcadena_antes",
+    "subcadena_despues",
+    "subcadena_antes_ultima",
+    "subcadena_despues_ultima",
     "dividir_lineas",
     "unir",
     "reemplazar",
@@ -236,6 +244,32 @@ dividir_lineas.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.texto.dividir_lineas`. Ofrece la misma semántica"
     " que ``str.splitlines`` de Python, comparable a recorrer líneas con ``bufio.Scanner``"
     " en Go o dividir por expresiones ``/\r?\n/`` en JavaScript."
+)
+
+subcadena_antes.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.subcadena_antes`. Equivalente a"
+    " ``substringBefore`` en Kotlin o ``substringBefore`` de Apache Commons Lang,"
+    " devolviendo el prefijo previo al primer separador y permitiendo definir"
+    " un valor alternativo cuando no se encuentra."
+)
+
+subcadena_despues.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.subcadena_despues`. Similar a"
+    " ``substringAfter`` de Kotlin o a ``substringAfter`` de Apache Commons Lang,"
+    " devuelve el segmento posterior al primer separador y acepta valores"
+    " predeterminados."
+)
+
+subcadena_antes_ultima.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.subcadena_antes_ultima`. Replica el"
+    " comportamiento de ``substringBeforeLast`` en Kotlin al tomar el prefijo"
+    " anterior a la última coincidencia."
+)
+
+subcadena_despues_ultima.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.subcadena_despues_ultima`. Sigue la"
+    " semántica de ``substringAfterLast`` en Kotlin devolviendo el segmento"
+    " posterior a la última coincidencia."
 )
 
 contar_subcadena.__doc__ = (
