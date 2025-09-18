@@ -128,10 +128,32 @@ def test_numero_funcs():
     assert core.moda([1, 1, 2, 2, 2]) == 2
     assert core.producto([2, 3, 5]) == 30
     assert core.producto([], inicio=10) == 10
+    assert core.longitud_bits(0) == 0
+    assert core.longitud_bits(15) == 4
+    assert core.longitud_bits(-10) == 4
+    assert core.contar_bits(0) == 0
+    assert core.contar_bits(255) == 8
+    assert core.contar_bits(-3) == 2
     assert core.entero_a_base(255, 16) == "FF"
     assert core.entero_a_base(-10, 2) == "-1010"
     assert core.entero_desde_base("ff", 16) == 255
     assert core.entero_desde_base("-1010", 2) == -10
+    assert core.entero_a_bytes(0, byteorder="big") == b"\x00"
+    assert core.entero_a_bytes(255, byteorder="big") == b"\xff"
+    assert core.entero_a_bytes(255, 2, byteorder="little") == b"\xff\x00"
+    assert core.entero_a_bytes(-1, byteorder="big", signed=True) == b"\xff"
+    assert core.entero_a_bytes(-129, byteorder="big", signed=True) == b"\xff\x7f"
+    with pytest.raises(OverflowError):
+        core.entero_a_bytes(256, 1, byteorder="big")
+    with pytest.raises(OverflowError):
+        core.entero_a_bytes(-5, byteorder="big")
+    with pytest.raises(ValueError):
+        core.entero_a_bytes(1, 1, byteorder="medio")
+    assert core.entero_desde_bytes(b"\xff", byteorder="big") == 255
+    assert core.entero_desde_bytes(b"\xff", byteorder="big", signed=True) == -1
+    assert core.entero_desde_bytes(bytearray(b"\xff\x00"), byteorder="little") == 255
+    with pytest.raises(ValueError):
+        core.entero_desde_bytes(b"\x00", byteorder="medio")
     datos = [2, 4, 4, 4, 5, 5, 7, 9]
     assert core.desviacion_estandar(datos) == pytest.approx(2.0)
     assert core.desviacion_estandar(datos, muestral=True) == pytest.approx(
