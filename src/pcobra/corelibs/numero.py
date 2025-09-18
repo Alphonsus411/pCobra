@@ -6,6 +6,8 @@ import math
 import random
 from statistics import StatisticsError, median, mode, pstdev, stdev
 
+_ALFABETO_DEFECTO = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 
 def absoluto(valor):
     """Devuelve el valor absoluto de ``valor`` preservando el tipo de enteros."""
@@ -34,6 +36,127 @@ def techo(valor):
     """Equivalente a ``math.ceil``."""
 
     return math.ceil(valor)
+
+
+def mcd(*valores: int) -> int:
+    """Calcula el máximo común divisor de uno o más enteros."""
+
+    if not valores:
+        raise TypeError("mcd requiere al menos un argumento")
+    return math.gcd(*valores)
+
+
+def mcm(*valores: int) -> int:
+    """Calcula el mínimo común múltiplo de uno o más enteros."""
+
+    if not valores:
+        raise TypeError("mcm requiere al menos un argumento")
+    return math.lcm(*valores)
+
+
+def es_cercano(
+    a,
+    b,
+    *,
+    tolerancia_relativa: float = 1e-09,
+    tolerancia_absoluta: float = 0.0,
+) -> bool:
+    """Compara ``a`` y ``b`` usando tolerancias relativas y absolutas.
+
+    Los parámetros ``tolerancia_relativa`` y ``tolerancia_absoluta`` permiten
+    ajustar la sensibilidad de la comparación, igual que :func:`math.isclose`.
+    """
+
+    return math.isclose(a, b, rel_tol=tolerancia_relativa, abs_tol=tolerancia_absoluta)
+
+
+def producto(valores, inicio=1):
+    """Obtiene el producto acumulado de ``valores`` iniciando en ``inicio``.
+
+    El argumento opcional ``inicio`` define el factor neutro inicial, tal como
+    ``start`` en :func:`math.prod`.
+    """
+
+    return math.prod(valores, start=inicio)
+
+
+def _validar_base(base: int) -> None:
+    if not isinstance(base, int):
+        raise TypeError("La base debe ser un entero")
+    if base < 2 or base > 36:
+        raise ValueError("La base debe estar entre 2 y 36")
+
+
+def entero_a_base(valor: int, base: int, *, alfabeto: str | None = None) -> str:
+    """Convierte ``valor`` a una cadena en la ``base`` indicada.
+
+    El parámetro opcional ``alfabeto`` permite proporcionar los símbolos a usar
+    para los dígitos, siempre que cubran la base solicitada.
+    """
+
+    if not isinstance(valor, int):
+        raise TypeError("Solo se admiten enteros para la conversión de base")
+    _validar_base(base)
+    tabla = alfabeto or _ALFABETO_DEFECTO
+    if len(tabla) < base:
+        raise ValueError("El alfabeto proporcionado es demasiado corto para la base")
+    if len(set(tabla[:base])) != base:
+        raise ValueError("El alfabeto debe contener símbolos únicos para la base")
+
+    if valor == 0:
+        return tabla[0]
+
+    signo = "-" if valor < 0 else ""
+    valor = abs(valor)
+    digitos: list[str] = []
+    while valor > 0:
+        valor, resto = divmod(valor, base)
+        digitos.append(tabla[resto])
+    return signo + "".join(reversed(digitos))
+
+
+def entero_desde_base(cadena: str, base: int, *, alfabeto: str | None = None) -> int:
+    """Convierte ``cadena`` escrita en ``base`` a un entero decimal.
+
+    Se puede personalizar el conjunto de símbolos mediante ``alfabeto`` para que
+    coincida con el utilizado en :func:`entero_a_base`.
+    """
+
+    if not isinstance(cadena, str):
+        raise TypeError("La representación debe ser una cadena de texto")
+    _validar_base(base)
+    cadena = cadena.strip()
+    if not cadena:
+        raise ValueError("La cadena no puede estar vacía")
+
+    tabla = alfabeto or _ALFABETO_DEFECTO
+    if len(tabla) < base:
+        raise ValueError("El alfabeto proporcionado es demasiado corto para la base")
+    if len(set(tabla[:base])) != base:
+        raise ValueError("El alfabeto debe contener símbolos únicos para la base")
+
+    signo = 1
+    if cadena[0] in "+-":
+        if len(cadena) == 1:
+            raise ValueError("La cadena no contiene dígitos")
+        signo = -1 if cadena[0] == "-" else 1
+        cadena = cadena[1:]
+
+    if not cadena:
+        raise ValueError("La cadena no contiene dígitos")
+
+    if alfabeto is None:
+        mapa = {car: indice for indice, car in enumerate(tabla[:base])}
+        mapa.update({car.lower(): indice for indice, car in enumerate(tabla[:base])})
+    else:
+        mapa = {car: indice for indice, car in enumerate(tabla[:base])}
+
+    valor = 0
+    for caracter in cadena:
+        if caracter not in mapa or mapa[caracter] >= base:
+            raise ValueError(f"Dígito '{caracter}' inválido para la base {base}")
+        valor = valor * base + mapa[caracter]
+    return signo * valor
 
 
 def raiz(valor, indice: float = 2):

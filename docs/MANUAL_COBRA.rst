@@ -219,6 +219,30 @@ aleatorios reproducibles y analizar datos sin abandonar Cobra.
      - ``random.uniform(a, b)``
      - ``numpy.random.uniform(a, b)``
      - ``Math.random() * (b - a) + a``
+   * - ``mcd(a, b, ...)``
+     - ``math.gcd(a, b, ...)``
+     - ``numpy.gcd.reduce([a, b, ...])``
+     - «Sin equivalente directo; implementar algoritmo de Euclides»
+   * - ``mcm(a, b, ...)``
+     - ``math.lcm(a, b, ...)``
+     - ``numpy.lcm.reduce([a, b, ...])``
+     - «Sin equivalente directo; usar ``mcd`` manualmente»
+   * - ``es_cercano(a, b, tol_rel, tol_abs)``
+     - ``math.isclose(a, b, rel_tol=tol_rel, abs_tol=tol_abs)``
+     - ``numpy.isclose(a, b, rtol=tol_rel, atol=tol_abs)``
+     - ``Math.abs(a - b) <= Math.max(tol_abs, tol_rel * Math.max(Math.abs(a), Math.abs(b)))``
+   * - ``producto(valores, inicio)``
+     - ``math.prod(valores, start=inicio)``
+     - ``numpy.prod(valores, initial=inicio)``
+     - ``valores.reduce((acc, v) => acc * v, inicio)``
+   * - ``entero_a_base(n, base, alfabeto)``
+     - ``format(n, 'x')`` / ``numpy.base_repr(n, base)``
+     - ``numpy.base_repr(n, base)``
+     - ``n.toString(base)``
+   * - ``entero_desde_base(txt, base, alfabeto)``
+     - ``int(txt, base)``
+     - «Sin equivalente directo; combinar ``numpy.array`` y lógica propia»
+     - ``parseInt(txt, base)``
    * - ``mediana(datos)``
      - ``statistics.median(datos)``
      - ``numpy.median(datos)``
@@ -231,6 +255,10 @@ aleatorios reproducibles y analizar datos sin abandonar Cobra.
      - ``statistics.pstdev(datos)``
      - ``numpy.std(datos)``
      - «Sin equivalente directo; implementar manualmente»
+
+Las funciones ``entero_a_base`` y ``entero_desde_base`` admiten números con signo
+y validan que la base esté en el intervalo ``[2, 36]``. El argumento opcional
+``alfabeto`` permite sincronizar el conjunto de dígitos en ambas direcciones.
 
 Transpilación y ejecución
 -------------------------
