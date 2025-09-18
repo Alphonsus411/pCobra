@@ -37,6 +37,10 @@ from corelibs.logica import (
     xor_multiple,
     todas,
     alguna,
+    ninguna,
+    solo_uno,
+    conteo_verdaderos,
+    paridad,
 )
 from corelibs.numero import (
     absoluto,
@@ -131,6 +135,10 @@ __all__ = [
     "xor_multiple",
     "todas",
     "alguna",
+    "ninguna",
+    "solo_uno",
+    "conteo_verdaderos",
+    "paridad",
     "absoluto",
     "aleatorio",
     "clamp",

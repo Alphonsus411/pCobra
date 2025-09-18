@@ -138,6 +138,21 @@ def test_logica_funcs():
     assert core.alguna([False, False, True]) is True
     assert core.alguna([False, False, False]) is False
 
+    casos_coleccion = [
+        ([False, False], True, False, 0, True),
+        ([True, False], False, True, 1, False),
+        ([True, True, False], False, False, 2, True),
+        ([True, True, True], False, False, 3, False),
+    ]
+    for valores, ninguna_esperado, solo_uno_esperado, conteo_esperado, paridad_esperada in casos_coleccion:
+        assert core.ninguna(valores) is ninguna_esperado
+        assert core.solo_uno(*valores) is solo_uno_esperado
+        assert core.conteo_verdaderos(valores) == conteo_esperado
+        assert core.paridad(valores) is paridad_esperada
+
+    assert core.solo_uno(True, False, False, False) is True
+    assert core.solo_uno(False, False, False) is False
+
     with pytest.raises(TypeError):
         core.conjuncion(1, True)
     with pytest.raises(TypeError):
@@ -152,6 +167,16 @@ def test_logica_funcs():
         core.todas([True, 1])
     with pytest.raises(TypeError):
         core.alguna([False, None])
+    with pytest.raises(ValueError):
+        core.solo_uno()
+    with pytest.raises(TypeError):
+        core.solo_uno(True, 0)
+    with pytest.raises(TypeError):
+        core.ninguna([True, 1])
+    with pytest.raises(TypeError):
+        core.conteo_verdaderos([False, None])
+    with pytest.raises(TypeError):
+        core.paridad([True, "no bool"])
 
 
 def test_archivo_funcs(tmp_path, monkeypatch):

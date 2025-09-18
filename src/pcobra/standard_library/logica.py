@@ -72,3 +72,27 @@ def alguna(valores: Iterable[bool]) -> bool:
 
     return _logica.alguna(valores)
 
+
+def ninguna(valores: Iterable[bool]) -> bool:
+    """Devuelve ``True`` cuando ningún elemento es verdadero (equivalente a ``none``)."""
+
+    return _logica.ninguna(valores)
+
+
+def solo_uno(*valores: bool) -> bool:
+    """Retorna ``True`` si exactamente un argumento es verdadero (equivalente a ``one?``)."""
+
+    return _logica.solo_uno(*valores)
+
+
+def conteo_verdaderos(valores: Iterable[bool]) -> int:
+    """Cuenta cuántos elementos son verdaderos (equivalente a ``count``)."""
+
+    return _logica.conteo_verdaderos(valores)
+
+
+def paridad(valores: Iterable[bool]) -> bool:
+    """Informa si la cantidad de verdaderos es par, como usar ``count`` y comprobar ``% 2``."""
+
+    return _logica.paridad(valores)
+
