@@ -37,6 +37,16 @@ from pcobra.corelibs import (
     subcadena_antes_ultima as _subcadena_antes_ultima,
     subcadena_despues_ultima as _subcadena_despues_ultima,
     unir,
+    es_alfabetico as _es_alfabetico,
+    es_alfa_numerico as _es_alfa_numerico,
+    es_decimal as _es_decimal,
+    es_numerico as _es_numerico,
+    es_identificador as _es_identificador,
+    es_imprimible as _es_imprimible,
+    es_ascii as _es_ascii,
+    es_mayusculas as _es_mayusculas,
+    es_minusculas as _es_minusculas,
+    es_espacio as _es_espacio,
 )
 
 _T = TypeVar("_T")
@@ -47,6 +57,16 @@ __all__ = [
     "normalizar_espacios",
     "es_palindromo",
     "es_anagrama",
+    "es_alfabetico",
+    "es_alfa_numerico",
+    "es_decimal",
+    "es_numerico",
+    "es_identificador",
+    "es_imprimible",
+    "es_ascii",
+    "es_mayusculas",
+    "es_minusculas",
+    "es_espacio",
     "quitar_prefijo",
     "quitar_sufijo",
     "dividir_lineas",
@@ -115,6 +135,66 @@ def es_anagrama(texto: str, otro: str, *, ignorar_espacios: bool = True) -> bool
         return normalizar_unicode("".join(sorted(resultado)), "NFC")
 
     return preparar(texto) == preparar(otro)
+
+
+def es_alfabetico(texto: str) -> bool:
+    """Equivale a :meth:`str.isalpha` en Python y acepta letras Unicode."""
+
+    return _es_alfabetico(texto)
+
+
+def es_alfa_numerico(texto: str) -> bool:
+    """Alias en español de :meth:`str.isalnum` para letras o dígitos Unicode."""
+
+    return _es_alfa_numerico(texto)
+
+
+def es_decimal(texto: str) -> bool:
+    """Replica :meth:`str.isdecimal` comprobando solo dígitos decimales."""
+
+    return _es_decimal(texto)
+
+
+def es_numerico(texto: str) -> bool:
+    """Se alinea con :meth:`str.isnumeric` y acepta números Unicode amplios."""
+
+    return _es_numerico(texto)
+
+
+def es_identificador(texto: str) -> bool:
+    """Aplica las reglas de :meth:`str.isidentifier` para nombres válidos en Python."""
+
+    return _es_identificador(texto)
+
+
+def es_imprimible(texto: str) -> bool:
+    """Devuelve lo mismo que :meth:`str.isprintable` sobre caracteres visibles."""
+
+    return _es_imprimible(texto)
+
+
+def es_ascii(texto: str) -> bool:
+    """Equivalente a :meth:`str.isascii` para cadenas limitadas al ASCII."""
+
+    return _es_ascii(texto)
+
+
+def es_mayusculas(texto: str) -> bool:
+    """Imita :meth:`str.isupper` asegurando al menos una letra en mayúsculas."""
+
+    return _es_mayusculas(texto)
+
+
+def es_minusculas(texto: str) -> bool:
+    """Funciona como :meth:`str.islower` validando letras en minúscula."""
+
+    return _es_minusculas(texto)
+
+
+def es_espacio(texto: str) -> bool:
+    """Corresponde a :meth:`str.isspace` para secuencias de espacios Unicode."""
+
+    return _es_espacio(texto)
 
 
 def quitar_prefijo(texto: str, prefijo: str) -> str:

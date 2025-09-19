@@ -36,6 +36,33 @@ def test_texto_funcs():
     assert core.titulo("árbol de navidad") == "Árbol De Navidad"
     assert core.invertir("abc") == "cba"
     assert core.concatenar("a", "b") == "ab"
+    assert core.es_alfabetico("Árbol") is True
+    assert core.es_alfabetico("cobra123") is False
+    assert core.es_alfa_numerico("Cobra123") is True
+    assert core.es_alfa_numerico("cobra!") is False
+    assert core.es_decimal("１２３") is True
+    assert core.es_decimal("四") is False
+    assert core.es_numerico("¾") is True
+    assert core.es_numerico("Ⅷ⅓") is True
+    assert core.es_numerico("texto") is False
+    assert core.es_identificador("variable_1") is True
+    assert core.es_identificador("1variable") is False
+    assert core.es_identificador("nombre-apellido") is False
+    assert core.es_imprimible("texto con espacios") is True
+    assert core.es_imprimible("línea\n") is False
+    assert core.es_ascii("ASCII") is True
+    assert core.es_ascii("á") is False
+    assert core.es_mayusculas("TEXTO") is True
+    assert core.es_mayusculas("123") is False
+    assert core.es_mayusculas("Texto") is False
+    assert core.es_minusculas("texto") is True
+    assert core.es_minusculas("texto!") is True
+    assert core.es_minusculas("Texto") is False
+    assert core.es_minusculas("123") is False
+    assert core.es_espacio(" \t\u2009") is True
+    assert core.es_espacio(" ") is True
+    assert core.es_espacio("") is False
+    assert core.es_espacio("texto") is False
     assert core.quitar_espacios("  hola  ") == "hola"
     assert core.quitar_espacios("--hola--", modo="derecha", caracteres="-") == "--hola"
     with pytest.raises(ValueError):

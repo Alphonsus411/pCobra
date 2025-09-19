@@ -424,3 +424,63 @@ def minusculas_casefold(texto: str) -> str:
     """Aplica ``str.casefold`` (Python), ``cases.Fold`` del paquete ``x/text`` en Go y ``toLocaleLowerCase`` estricto en JS."""
 
     return texto.casefold()
+
+
+def es_alfabetico(texto: str) -> bool:
+    """Equivale a :meth:`str.isalpha` de Python y usa las categorías de letras Unicode."""
+
+    return texto.isalpha()
+
+
+def es_alfa_numerico(texto: str) -> bool:
+    """Es un alias de :meth:`str.isalnum` de Python y acepta letras o dígitos Unicode."""
+
+    return texto.isalnum()
+
+
+def es_decimal(texto: str) -> bool:
+    """Replica :meth:`str.isdecimal` de Python para validar dígitos decimales Unicode."""
+
+    return texto.isdecimal()
+
+
+def es_numerico(texto: str) -> bool:
+    """Correspondencia directa con :meth:`str.isnumeric` de Python para cualquier número Unicode."""
+
+    return texto.isnumeric()
+
+
+def es_identificador(texto: str) -> bool:
+    """Aplica las mismas reglas que :meth:`str.isidentifier` de Python para nombres válidos."""
+
+    return texto.isidentifier()
+
+
+def es_imprimible(texto: str) -> bool:
+    """Imita :meth:`str.isprintable` de Python comprobando caracteres imprimibles o vacíos."""
+
+    return texto.isprintable()
+
+
+def es_ascii(texto: str) -> bool:
+    """Se alinea con :meth:`str.isascii` de Python comprobando que los puntos de código < 128."""
+
+    return texto.isascii()
+
+
+def es_mayusculas(texto: str) -> bool:
+    """Equivale a :meth:`str.isupper` de Python y exige al menos una letra en mayúscula."""
+
+    return texto.isupper()
+
+
+def es_minusculas(texto: str) -> bool:
+    """Se comporta como :meth:`str.islower` de Python verificando letras en minúscula."""
+
+    return texto.islower()
+
+
+def es_espacio(texto: str) -> bool:
+    """Replica :meth:`str.isspace` de Python para secuencias de espacios Unicode."""
+
+    return texto.isspace()

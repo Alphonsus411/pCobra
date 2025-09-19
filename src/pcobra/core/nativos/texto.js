@@ -1,4 +1,13 @@
 const FORMAS_NORMALIZACION = new Set(["NFC", "NFD", "NFKC", "NFKD"]);
+const PATRON_LETRAS = /^\p{Letter}+$/u;
+const PATRON_ALFANUMERICO = /^[\p{Letter}\p{Number}]+$/u;
+const PATRON_DECIMAL = /^\p{Decimal_Number}+$/u;
+const PATRON_NUMERICO = /^\p{Number}+$/u;
+const PATRON_ESPACIOS = /^\p{White_Space}+$/u;
+const PATRON_IDENTIFICADOR_INICIO = /^[\p{ID_Start}_]$/u;
+const PATRON_IDENTIFICADOR_CONTINUA = /^[\p{ID_Continue}_]$/u;
+const REGEX_CONTROLES = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}]/u;
+const REGEX_ESPACIOS = /\p{White_Space}/u;
 
 function repetirRelleno(relleno, longitud) {
     if (relleno.length === 0) {
@@ -233,6 +242,93 @@ export function termina_con(texto, sufijos) {
 
 export function incluye(texto, subcadena) {
     return texto.includes(subcadena);
+}
+
+export function es_alfabetico(texto) {
+    return texto.length > 0 && PATRON_LETRAS.test(texto);
+}
+
+export function es_alfa_numerico(texto) {
+    return texto.length > 0 && PATRON_ALFANUMERICO.test(texto);
+}
+
+export function es_decimal(texto) {
+    return texto.length > 0 && PATRON_DECIMAL.test(texto);
+}
+
+export function es_numerico(texto) {
+    return texto.length > 0 && PATRON_NUMERICO.test(texto);
+}
+
+export function es_identificador(texto) {
+    if (texto.length === 0) {
+        return false;
+    }
+    const caracteres = Array.from(texto);
+    if (!PATRON_IDENTIFICADOR_INICIO.test(caracteres[0])) {
+        return false;
+    }
+    for (let i = 1; i < caracteres.length; i += 1) {
+        if (!PATRON_IDENTIFICADOR_CONTINUA.test(caracteres[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+export function es_imprimible(texto) {
+    for (const caracter of texto) {
+        if (REGEX_CONTROLES.test(caracter)) {
+            return false;
+        }
+        if (REGEX_ESPACIOS.test(caracter) && caracter !== " ") {
+            return false;
+        }
+    }
+    return true;
+}
+
+export function es_ascii(texto) {
+    for (const caracter of texto) {
+        if (caracter.codePointAt(0) > 0x7f) {
+            return false;
+        }
+    }
+    return true;
+}
+
+export function es_mayusculas(texto) {
+    let tieneCased = false;
+    for (const caracter of texto) {
+        const mayuscula = caracter.toLocaleUpperCase();
+        const minuscula = caracter.toLocaleLowerCase();
+        if (mayuscula !== minuscula) {
+            if (caracter !== mayuscula) {
+                return false;
+            }
+            tieneCased = true;
+        }
+    }
+    return tieneCased;
+}
+
+export function es_minusculas(texto) {
+    let tieneCased = false;
+    for (const caracter of texto) {
+        const mayuscula = caracter.toLocaleUpperCase();
+        const minuscula = caracter.toLocaleLowerCase();
+        if (mayuscula !== minuscula) {
+            if (caracter !== minuscula) {
+                return false;
+            }
+            tieneCased = true;
+        }
+    }
+    return tieneCased;
+}
+
+export function es_espacio(texto) {
+    return texto.length > 0 && PATRON_ESPACIOS.test(texto);
 }
 
 export function rellenar_izquierda(texto, ancho, relleno = " ") {
