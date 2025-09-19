@@ -71,6 +71,7 @@ from corelibs.numero import (
     absoluto,
     aleatorio,
     clamp,
+    copiar_signo,
     contar_bits,
     desviacion_estandar,
     entero_a_base,
@@ -78,6 +79,9 @@ from corelibs.numero import (
     entero_desde_base,
     entero_desde_bytes,
     es_cercano,
+    es_finito,
+    es_infinito,
+    es_nan,
     es_par,
     es_primo,
     factorial,
@@ -212,6 +216,7 @@ __all__ = [
     "absoluto",
     "aleatorio",
     "clamp",
+    "copiar_signo",
     "contar_bits",
     "desviacion_estandar",
     "entero_a_base",
@@ -219,6 +224,9 @@ __all__ = [
     "entero_desde_base",
     "entero_desde_bytes",
     "es_cercano",
+    "es_finito",
+    "es_infinito",
+    "es_nan",
     "es_par",
     "es_primo",
     "factorial",
@@ -415,4 +423,26 @@ mapear_concurrencia.__doc__ = (
     " un patrón equivalente a los *worker pools* de Go, y documenta el"
     " parámetro ``limite`` junto con la opción ``return_exceptions`` para"
     " decidir si se propagan o coleccionan los errores."
+)
+
+es_finito.__doc__ = (
+    "Reexporta :func:`math.isfinite`. Indica si un número es finito tras validar"
+    " que el argumento represente un real y evita confundir ``NaN`` o infinitos"
+    " con valores válidos."
+)
+
+es_infinito.__doc__ = (
+    "Reexporta :func:`math.isinf`. Resulta útil para detectar desbordamientos"
+    " positivos o negativos antes de continuar con cálculos numéricos."
+)
+
+es_nan.__doc__ = (
+    "Reexporta :func:`math.isnan`. Permite identificar ``NaN`` conforme a IEEE-754"
+    " manteniendo comprobaciones de tipo explícitas."
+)
+
+copiar_signo.__doc__ = (
+    "Reexporta :func:`math.copysign`. Replica la semántica IEEE-754 conservando"
+    " ceros con signo e infinitos al combinar magnitudes y signos provenientes de"
+    " diferentes cálculos."
 )

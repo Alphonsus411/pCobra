@@ -10,6 +10,7 @@
 - Ampliación de `corelibs.texto` y nuevas utilidades en `standard_library.texto` con soporte Unicode y pruebas asociadas.
 - Validadores `es_*` alineados con `str.is*` disponibles tanto en `pcobra.corelibs.texto` como en `standard_library.texto`, con equivalentes nativos para JavaScript.
 - `standard_library.datos` incorpora lectura y escritura de archivos Parquet y Feather detectando automáticamente los motores opcionales requeridos.
+- `corelibs.numero` añade `es_finito`, `es_infinito`, `es_nan` y `copiar_signo`, reexportados en la biblioteca estándar y con equivalentes nativos que respetan IEEE-754.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.
