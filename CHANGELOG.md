@@ -19,6 +19,7 @@
   Swift, con opciones para ignorar mayúsculas o normalizar Unicode; se
   reexportan en la biblioteca estándar y cuentan con versiones nativas para JavaScript.
 - `corelibs.logica` añade `condicional`, un selector de ramas inspirado en ``when`` (Kotlin) y `case_when` (R) con evaluación perezosa; se reexporta en la biblioteca estándar junto con ejemplos y pruebas actualizadas.
+- `standard_library.datos` incorpora los helpers `pivotar_ancho`, `pivotar_largo` y `mutar_columna` para transformar registros y calcular columnas derivadas.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.

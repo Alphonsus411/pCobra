@@ -786,10 +786,13 @@ El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que pe
 - `leer_feather` y `escribir_feather` intercambian datos con otras herramientas que usan el formato Feather siempre que `pyarrow` esté instalado.
 - `describir` calcula estadísticas básicas (`count`, `mean`, `std`, percentiles) para cada columna.
 - `seleccionar_columnas` y `filtrar` permiten aislar subconjuntos antes de seguir procesando los datos.
+- `mutar_columna` crea o actualiza campos calculados evaluando una función por registro.
 - `agrupar_y_resumir` aplica agregaciones (`sum`, `mean`, funciones personalizadas) agrupando por columnas clave.
 - `ordenar_tabla` admite ordenar por varias columnas controlando el sentido ascendente o descendente de cada una.
 - `combinar_tablas` replica los `join` de pandas y R para cruzar datasets con claves compartidas o diferenciadas.
 - `rellenar_nulos` rellena valores perdidos por columna antes de analizar la información.
+- `pivotar_ancho` compacta métricas en columnas nuevas al estilo de `pivot_wider`.
+- `pivotar_largo` vuelve a expandir columnas en filas con control sobre nombres y valores nulos.
 - `desplegar_tabla` transforma los datos a formato largo, equivalente a `pivot_longer` de R o `pandas.melt`.
 - `pivotar_tabla` reorganiza los datos en formato ancho calculando métricas múltiples de manera declarativa.
 - `a_listas` y `de_listas` convierten entre lista de registros y diccionario de columnas, facilitando la interoperabilidad con librerías externas.
@@ -804,6 +807,11 @@ resumen = pandas.agrupar_y_resumir(
     por=['region'],
     agregaciones={'monto': 'sum'}
 )
+ventas_con_bonus = pandas.mutar_columna(
+    ventas_limpias,
+    'monto_con_bonus',
+    lambda fila: fila['monto'] * 1.05 if fila['monto'] is not None else None,
+)
 ventas_ordenadas = pandas.ordenar_tabla(ventas_limpias, por=['region', 'mes'], ascendente=[True, False])
 ventas_con_clientes = pandas.combinar_tablas(clientes, ventas_limpias, claves=('cliente_id', 'cliente'), tipo='left')
 ventas_completas = pandas.rellenar_nulos(ventas_con_clientes, {'monto': 0})
@@ -814,12 +822,27 @@ resumen_ancho = pandas.pivotar_tabla(
     valores='monto',
     agregacion='sum'
 )
+ventas_por_mes = pandas.pivotar_ancho(
+    ventas_limpias,
+    id_columnas='cliente',
+    nombres_desde='mes',
+    valores_desde='monto',
+    valores_relleno=0,
+)
 resumen_largo = pandas.desplegar_tabla(
     ventas_completas,
     identificadores=['region', 'mes'],
     valores=['monto'],
     var_name='metrica',
     value_name='valor'
+)
+ventas_limpias_largo = pandas.pivotar_largo(
+    ventas_por_mes,
+    columnas=['enero', 'febrero'],
+    id_columnas='cliente',
+    nombres_a='mes',
+    valores_a='monto',
+    eliminar_nulos=True,
 )
 columnas = pandas.a_listas(resumen)
 imprimir(columnas['region'])

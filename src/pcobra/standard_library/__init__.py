@@ -18,6 +18,9 @@ from standard_library.datos import (
     describir,
     filtrar,
     desplegar_tabla,
+    mutar_columna,
+    pivotar_ancho,
+    pivotar_largo,
     leer_csv,
     leer_excel,
     leer_feather,
@@ -167,6 +170,9 @@ __all__: list[str] = [
     "describir",
     "seleccionar_columnas",
     "filtrar",
+    "mutar_columna",
+    "pivotar_ancho",
+    "pivotar_largo",
     "desplegar_tabla",
     "agrupar_y_resumir",
     "a_listas",
@@ -198,6 +204,9 @@ leer_feather: Callable[..., list[dict[str, Any]]]
 describir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]]
 seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
 filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
+mutar_columna: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], str, Callable[[dict[str, Any]], Any]], list[dict[str, Any]]]
+pivotar_ancho: Callable[..., list[dict[str, Any]]]
+pivotar_largo: Callable[..., list[dict[str, Any]]]
 desplegar_tabla: Callable[..., list[dict[str, Any]]]
 agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
