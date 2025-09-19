@@ -1,4 +1,20 @@
+import sys
+from types import ModuleType
+
 import pytest
+
+try:  # pragma: no cover - entorno de CI sin dependencias opcionales
+    import numpy  # noqa: F401
+except ModuleNotFoundError:  # pragma: no cover - fallback para ejecutar pruebas sin numpy
+    modulo_numpy = ModuleType("numpy")
+    modulo_numpy.isscalar = lambda obj: False
+    modulo_numpy.ndarray = type("ndarray", (), {})
+    sys.modules["numpy"] = modulo_numpy
+
+try:  # pragma: no cover - entorno de CI sin dependencias opcionales
+    import pandas  # noqa: F401
+except ModuleNotFoundError:  # pragma: no cover - fallback para ejecutar pruebas sin pandas
+    sys.modules.setdefault("pandas", ModuleType("pandas"))
 
 import standard_library.texto as texto
 
@@ -88,3 +104,28 @@ def test_dividir_y_particionar():
         texto.particionar("abc", "")
     assert texto.particionar_derecha("uno-dos-tres", "-") == ("uno-dos", "-", "tres")
     assert texto.particionar_derecha("sin", "-") == ("", "", "sin")
+
+
+def test_validadores_de_texto():
+    assert texto.es_alfabetico("Cobra") is True
+    assert texto.es_alfabetico("cobra123") is False
+    assert texto.es_alfa_numerico("Cobra123") is True
+    assert texto.es_alfa_numerico("cobra!") is False
+    assert texto.es_decimal("１２３") is True
+    assert texto.es_decimal("Ⅷ") is False
+    assert texto.es_numerico("四") is True
+    assert texto.es_numerico("texto") is False
+    assert texto.es_identificador("variable_1") is True
+    assert texto.es_identificador("-variable") is False
+    assert texto.es_imprimible("texto limpio") is True
+    assert texto.es_imprimible("\u00a0") is False
+    assert texto.es_ascii("ASCII") is True
+    assert texto.es_ascii("ñ") is False
+    assert texto.es_mayusculas("MAYÚSCULAS") is True
+    assert texto.es_mayusculas("MAYUSCULA") is True
+    assert texto.es_mayusculas("Mayúsculas") is False
+    assert texto.es_minusculas("minúsculas") is True
+    assert texto.es_minusculas("Minúsculas") is False
+    assert texto.es_minusculas("123") is False
+    assert texto.es_espacio(" \t") is True
+    assert texto.es_espacio("texto") is False

@@ -587,8 +587,9 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `quitar_prefijo` y `quitar_sufijo` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y los patrones `startsWith`/`endsWith` + `slice` en JavaScript.
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
 - `minusculas_casefold` aplica minúsculas intensivas (`casefold`) que homogeneizan mayúsculas, ß alemana o símbolos con diacríticos.
+- Las comprobaciones `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas` y `es_espacio` replican directamente los métodos `str.is*` de Python.
 
-En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
+En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`, además de accesos directos a los validadores `es_*`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
 
 ```cobra
 import pcobra.corelibs as core
