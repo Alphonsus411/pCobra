@@ -17,11 +17,14 @@ from pcobra.standard_library.datos import (
     escribir_feather,
     escribir_parquet,
     filtrar,
+    mutar_columna,
     leer_csv,
     leer_excel,
     leer_feather,
     leer_json,
     leer_parquet,
+    pivotar_ancho,
+    pivotar_largo,
     ordenar_tabla,
     pivotar_tabla,
     rellenar_nulos,
@@ -87,6 +90,25 @@ def test_seleccionar_columnas_y_filtrar():
     assert filtrado == [{"categoria": "A", "valor": 10}]
 
 
+def test_mutar_columna_crear_y_actualizar():
+    tabla = _tabla_base()
+    con_nueva = mutar_columna(tabla, "valor_doble", lambda fila: fila["valor"] * 2)
+    assert [fila["valor_doble"] for fila in con_nueva] == [20, 10, 6]
+
+    mayusculas = mutar_columna(
+        con_nueva,
+        "etiqueta",
+        lambda fila: str(fila["etiqueta"]).upper(),
+        crear_si_no_existe=False,
+    )
+    assert [fila["etiqueta"] for fila in mayusculas] == ["FOO", "BAR", "BAZ"]
+
+
+def test_mutar_columna_exige_existente():
+    with pytest.raises(KeyError):
+        mutar_columna(_tabla_base(), "nueva", lambda fila: fila["valor"], crear_si_no_existe=False)
+
+
 def test_filtrar_condicion_erronea():
     tabla = _tabla_base()
 
@@ -110,6 +132,45 @@ def test_agrupar_y_resumir():
         {"categoria": "B", "valor_sum": 3},
     ]
     assert resultado == esperado
+
+
+def test_pivotar_ancho_rellena_faltantes():
+    datos = [
+        {"id": 1, "mes": "enero", "monto": 10},
+        {"id": 1, "mes": "febrero", "monto": 12},
+        {"id": 2, "mes": "enero", "monto": 5},
+    ]
+    ancho = pivotar_ancho(
+        datos,
+        id_columnas="id",
+        nombres_desde="mes",
+        valores_desde="monto",
+        valores_relleno=0,
+    )
+    assert ancho == [
+        {"id": 1, "monto_enero": 10, "monto_febrero": 12},
+        {"id": 2, "monto_enero": 5, "monto_febrero": 0},
+    ]
+
+
+def test_pivotar_largo_elimina_nulos():
+    datos = [
+        {"id": 1, "enero": 10, "febrero": None},
+        {"id": 2, "enero": 5, "febrero": 7},
+    ]
+    largo = pivotar_largo(
+        datos,
+        columnas=["enero", "febrero"],
+        id_columnas="id",
+        nombres_a="mes",
+        valores_a="monto",
+        eliminar_nulos=True,
+    )
+    assert largo == [
+        {"id": 1, "mes": "enero", "monto": 10},
+        {"id": 2, "mes": "enero", "monto": 5},
+        {"id": 2, "mes": "febrero", "monto": 7},
+    ]
 
 
 def test_ordenar_tabla_multiple(tabla_pedidos: list[dict[str, object | None]]):

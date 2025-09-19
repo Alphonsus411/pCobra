@@ -367,6 +367,43 @@ def filtrar(
     return _sanear_registros(df.loc[mascara].to_dict(orient="records"))
 
 
+def mutar_columna(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    nombre: str,
+    funcion: Callable[[Registro], Any],
+    *,
+    crear_si_no_existe: bool = True,
+) -> Tabla:
+    """Crea o modifica ``nombre`` evaluando ``funcion`` fila a fila.
+
+    Parameters
+    ----------
+    datos:
+        Datos tabulares convertibles a :class:`pandas.DataFrame`.
+    nombre:
+        Columna a crear o actualizar.
+    funcion:
+        Callable que recibe cada fila como diccionario y devuelve el valor para la
+        columna ``nombre``.
+    crear_si_no_existe:
+        Cuando es ``False`` se exige que ``nombre`` exista previamente en los datos.
+    """
+
+    df = _a_dataframe(datos)
+    if nombre not in df.columns and not crear_si_no_existe:
+        raise KeyError(f"La columna '{nombre}' no existe y no se permite crearla.")
+
+    def _evaluar(fila: pd.Series) -> Any:
+        try:
+            return funcion(fila.to_dict())
+        except Exception as exc:  # pragma: no cover - defensivo
+            raise ValueError(f"Error al calcular la columna '{nombre}': {exc}") from exc
+
+    serie = df.apply(_evaluar, axis=1)
+    df[nombre] = serie
+    return _sanear_registros(df.to_dict(orient="records"))
+
+
 def agrupar_y_resumir(
     datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
     por: Sequence[str],
@@ -557,6 +594,184 @@ def rellenar_nulos(
         raise KeyError(f"Columnas inexistentes para rellenar: {', '.join(faltantes)}")
     relleno = df.fillna(value=dict(valores))
     return _sanear_registros(relleno.to_dict(orient="records"))
+
+
+def pivotar_ancho(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    *,
+    id_columnas: str | Sequence[str] | None = None,
+    nombres_desde: str | Sequence[str],
+    valores_desde: str | Sequence[str],
+    valores_relleno: Any | Mapping[str, Any] | None = None,
+    agregacion: str
+    | Sequence[str]
+    | Callable[[pd.Series], Any]
+    | Mapping[str, str | Sequence[str] | Callable[[pd.Series], Any]]
+    | None = None,
+) -> Tabla:
+    """Convierte datos en formato largo a ancho similar a ``pivot_wider`` de *tidyr*.
+
+    Parameters
+    ----------
+    datos:
+        Registros o columnas convertibles a :class:`pandas.DataFrame`.
+    id_columnas:
+        Columnas que se mantienen como identificadores en la salida. Si es ``None``
+        se infieren como todas las columnas distintas a ``nombres_desde`` y
+        ``valores_desde``.
+    nombres_desde:
+        Columna(s) cuyos valores se usarán como nuevos encabezados.
+    valores_desde:
+        Columna(s) que se distribuyen entre los nuevos encabezados.
+    valores_relleno:
+        Valor o diccionario ``columna -> valor`` para reemplazar resultados nulos
+        tras el pivoteo.
+    agregacion:
+        Función de agregación opcional utilizada cuando existen múltiples filas por
+        combinación de identificadores y encabezados. Por defecto se emplea ``'first'``.
+    """
+
+    df = _a_dataframe(datos)
+
+    def _asegurar_lista(entrada: str | Sequence[str]) -> list[str]:
+        if isinstance(entrada, str):
+            return [entrada]
+        return list(entrada)
+
+    columnas_nombres = _asegurar_lista(nombres_desde)
+    columnas_valores = _asegurar_lista(valores_desde)
+
+    if id_columnas is None:
+        columnas_id = [
+            columna
+            for columna in df.columns
+            if columna not in columnas_nombres and columna not in columnas_valores
+        ]
+        if not columnas_id:
+            raise ValueError(
+                "No fue posible inferir columnas identificadoras. Especifica 'id_columnas'."
+            )
+    else:
+        columnas_id = _asegurar_lista(id_columnas)
+
+    faltantes = [
+        columna
+        for columna in columnas_id + columnas_nombres + columnas_valores
+        if columna not in df.columns
+    ]
+    if faltantes:
+        raise KeyError(
+            "Columnas inexistentes para pivotar en ancho: "
+            f"{', '.join(dict.fromkeys(faltantes))}"
+        )
+
+    aggfunc = agregacion if agregacion is not None else "first"
+    pivotado = pd.pivot_table(
+        df,
+        index=columnas_id,
+        columns=columnas_nombres,
+        values=columnas_valores,
+        aggfunc=aggfunc,
+        dropna=False,
+    ).reset_index()
+
+    if isinstance(pivotado.columns, pd.MultiIndex):
+        columnas_planas = [
+            "_".join(
+                [str(nivel) for nivel in columna if str(nivel) not in {"", "None"}]
+            ).strip("_")
+            for columna in pivotado.columns.values
+        ]
+        pivotado.columns = columnas_planas
+
+    columnas_identificadoras = list(pivotado.columns[: len(columnas_id)])
+
+    if valores_relleno is not None:
+        columnas_objetivo = [
+            columna for columna in pivotado.columns if columna not in columnas_identificadoras
+        ]
+        if isinstance(valores_relleno, Mapping):
+            relleno_filtrado = {
+                columna: valores_relleno[columna]
+                for columna in columnas_objetivo
+                if columna in valores_relleno
+            }
+            if relleno_filtrado:
+                pivotado = pivotado.fillna(value=relleno_filtrado)
+        else:
+            if columnas_objetivo:
+                pivotado.loc[:, columnas_objetivo] = pivotado.loc[
+                    :, columnas_objetivo
+                ].fillna(valores_relleno)
+
+    return _sanear_registros(pivotado.to_dict(orient="records"))
+
+
+def pivotar_largo(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    columnas: str | Sequence[str],
+    *,
+    id_columnas: str | Sequence[str] | None = None,
+    nombres_a: str = "variable",
+    valores_a: str = "value",
+    eliminar_nulos: bool = False,
+) -> Tabla:
+    """Transforma columnas en filas siguiendo el estilo de ``pivot_longer``.
+
+    Parameters
+    ----------
+    datos:
+        Estructura tabular convertible a :class:`pandas.DataFrame`.
+    columnas:
+        Columnas que se apilarán en la salida.
+    id_columnas:
+        Columnas que se mantienen sin modificar como identificadores. Si es ``None``
+        se consideran todas las columnas no incluidas en ``columnas``.
+    nombres_a:
+        Nombre de la columna resultante con las etiquetas originales.
+    valores_a:
+        Nombre de la columna que contendrá los valores apilados.
+    eliminar_nulos:
+        Cuando es ``True`` se eliminan las filas cuyo valor resultante es nulo.
+    """
+
+    df = _a_dataframe(datos)
+
+    def _asegurar_lista(entrada: str | Sequence[str]) -> list[str]:
+        if isinstance(entrada, str):
+            return [entrada]
+        return list(entrada)
+
+    columnas_objetivo = _asegurar_lista(columnas)
+
+    if id_columnas is None:
+        columnas_id = [col for col in df.columns if col not in columnas_objetivo]
+    else:
+        columnas_id = _asegurar_lista(id_columnas)
+
+    faltantes = [
+        columna
+        for columna in columnas_id + columnas_objetivo
+        if columna not in df.columns
+    ]
+    if faltantes:
+        raise KeyError(
+            "Columnas inexistentes para pivotar en largo: "
+            f"{', '.join(dict.fromkeys(faltantes))}"
+        )
+
+    largo = pd.melt(
+        df,
+        id_vars=columnas_id,
+        value_vars=columnas_objetivo,
+        var_name=nombres_a,
+        value_name=valores_a,
+    )
+
+    if eliminar_nulos:
+        largo = largo.dropna(subset=[valores_a])
+
+    return _sanear_registros(largo.to_dict(orient="records"))
 
 
 def desplegar_tabla(
