@@ -11,6 +11,9 @@
 - Validadores `es_*` alineados con `str.is*` disponibles tanto en `pcobra.corelibs.texto` como en `standard_library.texto`, con equivalentes nativos para JavaScript.
 - `standard_library.datos` incorpora lectura y escritura de archivos Parquet y Feather detectando automáticamente los motores opcionales requeridos.
 - `corelibs.numero` añade `es_finito`, `es_infinito`, `es_nan` y `copiar_signo`, reexportados en la biblioteca estándar y con equivalentes nativos que respetan IEEE-754.
+- `corelibs.asincrono` incorpora `grupo_tareas`, un administrador compatible con
+  versiones anteriores que replica la semántica de `asyncio.TaskGroup` y se
+  expone también desde la biblioteca estándar.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.
