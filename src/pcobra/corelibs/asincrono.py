@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from contextlib import asynccontextmanager, suppress
 from typing import (
     TYPE_CHECKING,
@@ -196,6 +197,118 @@ async def esperar_timeout(
             tarea.cancel()
             with suppress(asyncio.CancelledError):
                 await tarea
+
+
+async def reintentar_async(
+    funcion: Callable[[], Awaitable[T] | Coroutine[Any, Any, T]],
+    *,
+    intentos: int = 3,
+    excepciones: type[BaseException]
+    | Sequence[type[BaseException]] = (Exception,),
+    retardo_inicial: float = 0.1,
+    factor_backoff: float = 2.0,
+    max_retardo: float | None = None,
+    jitter: Callable[[float], float]
+    | tuple[float, float]
+    | float
+    | bool
+    | None = None,
+) -> T:
+    """Ejecuta ``funcion`` reintentando ante errores con *backoff* exponencial.
+
+    Cada vez que ``funcion`` arroja una de las ``excepciones`` controladas se
+    reintenta hasta ``intentos`` ocasiones como hace ``Promise.retry`` en
+    JavaScript o los lazos de reintento clásicos en Go. Entre intentos se espera
+    un retardo exponencial calculado a partir de ``retardo_inicial`` y
+    ``factor_backoff``. ``jitter`` permite añadir aleatoriedad para evitar
+    congestión masiva en sistemas distribuidos.
+    """
+
+    if intentos < 1:
+        raise ValueError("intentos debe ser un entero positivo")
+    if retardo_inicial < 0:
+        raise ValueError("retardo_inicial no puede ser negativo")
+    if factor_backoff <= 0:
+        raise ValueError("factor_backoff debe ser mayor que cero")
+    if max_retardo is not None and max_retardo < 0:
+        raise ValueError("max_retardo no puede ser negativo")
+
+    if isinstance(excepciones, type):
+        tipos_controlados: tuple[type[BaseException], ...] = (excepciones,)
+    else:
+        tipos_controlados = tuple(excepciones)
+
+    if not tipos_controlados:
+        raise ValueError("excepciones no puede estar vacío")
+
+    for tipo in tipos_controlados:
+        if not isinstance(tipo, type) or not issubclass(tipo, BaseException):
+            raise TypeError("Cada entrada de excepciones debe ser una excepción")
+
+    def _aplicar_jitter(valor: float) -> float:
+        if jitter is None:
+            return valor
+        if callable(jitter):
+            ajustado = jitter(valor)
+        elif isinstance(jitter, bool):
+            if not jitter:
+                return valor
+            ajustado = random.uniform(0.0, valor)
+        elif isinstance(jitter, tuple):
+            if len(jitter) != 2:
+                raise ValueError("jitter como tupla debe tener dos elementos")
+            minimo, maximo = (float(jitter[0]), float(jitter[1]))
+            if minimo > maximo:
+                minimo, maximo = maximo, minimo
+            ajustado = random.uniform(minimo, maximo)
+        else:
+            amplitud = float(jitter)
+            minimo = valor - amplitud
+            maximo = valor + amplitud
+            if minimo > maximo:
+                minimo, maximo = maximo, minimo
+            ajustado = random.uniform(minimo, maximo)
+        return max(0.0, float(ajustado))
+
+    def _calcular_espera(intento_actual: int) -> float:
+        espera = retardo_inicial * (factor_backoff ** (intento_actual - 1))
+        if max_retardo is not None:
+            espera = min(espera, max_retardo)
+        if espera <= 0:
+            return 0.0
+        return _aplicar_jitter(espera)
+
+    ultimo_error: BaseException | None = None
+
+    for numero_intento in range(1, intentos + 1):
+        try:
+            awaitable = funcion()
+        except tipos_controlados as exc:
+            if isinstance(exc, asyncio.CancelledError):
+                raise
+            ultimo_error = exc
+        else:
+            tarea = _asegurar_tarea(awaitable)
+            try:
+                return await tarea
+            except tipos_controlados as exc:
+                if isinstance(exc, asyncio.CancelledError):
+                    raise
+                ultimo_error = exc
+            except asyncio.CancelledError:
+                raise
+
+        if numero_intento == intentos:
+            assert ultimo_error is not None
+            raise ultimo_error
+
+        espera = _calcular_espera(numero_intento)
+        if espera > 0:
+            await asyncio.sleep(espera)
+
+    if ultimo_error is not None:  # pragma: no cover - ruta por sanidad
+        raise ultimo_error
+    raise RuntimeError("reintentar_async terminó sin resultado ni error")
 
 
 @asynccontextmanager

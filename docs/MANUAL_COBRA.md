@@ -198,6 +198,22 @@ imprimir('principal')
 ## 10. Funciones asincrónicas
 
 - Declara funciones asíncronas con `asincronico func`.
+- Usa `pcobra.corelibs.reintentar_async` para encapsular operaciones frágiles con
+  reintentos exponenciales y *jitter* opcional que evita que todos los clientes
+  repitan al mismo tiempo.
+
+```python
+import pcobra.corelibs as core
+
+# Reintenta hasta cuatro veces con esperas 0.2s, 0.4s, 0.8s...
+resultado = await core.reintentar_async(
+    obtener_datos,
+    intentos=4,
+    excepciones=(TimeoutError,),
+    retardo_inicial=0.2,
+    jitter=lambda base: base * 0.75,
+)
+```
 - Usa `esperar` para aguardar su resultado.
 - Las utilidades de red y sistema con sufijo `_async` devuelven tareas que
   deben combinarse con `esperar` (o `await` en los lenguajes generados).

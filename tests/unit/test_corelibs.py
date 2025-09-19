@@ -19,8 +19,8 @@ import core.ast_nodes as core_ast_nodes
 sys.modules.setdefault("cobra.core.ast_nodes", core_ast_nodes)
 
 import pcobra.corelibs as core
-import pcobra.corelibs.tiempo as core_tiempo
 import pcobra.corelibs.sistema as core_sistema
+import pcobra.corelibs.tiempo as core_tiempo
 from cobra.transpilers.import_helper import get_standard_imports
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -198,6 +198,8 @@ def test_numero_funcs():
     assert core.interpolar(-5, 5, 2.0) == pytest.approx(5.0)
     assert core.envolver_modular(7, 5) == 2
     assert core.envolver_modular(-2, 5) == 3
+
+
     assert core.envolver_modular(7.5, -5.0) == pytest.approx(-2.5)
     with pytest.raises(ZeroDivisionError):
         core.envolver_modular(1, 0)
@@ -255,6 +257,71 @@ def test_numero_funcs():
     assert core.es_primo(4) is False
     assert core.factorial(5) == 120
     assert core.promedio([1, 2, 3]) == 2.0
+
+
+@pytest.mark.asyncio
+async def test_reintentar_async_reintenta_hasta_exito(monkeypatch):
+    llamadas = 0
+    esperas: list[float] = []
+
+    async def falso_sleep(segundos: float):
+        esperas.append(segundos)
+
+    monkeypatch.setattr(asyncio, "sleep", falso_sleep)
+
+    async def operacion():
+        nonlocal llamadas
+        llamadas += 1
+        if llamadas < 3:
+            raise ValueError("fallo transitorio")
+        return "ok"
+
+    resultado = await core.reintentar_async(
+        operacion,
+        intentos=4,
+        excepciones=(ValueError,),
+        retardo_inicial=0.5,
+        factor_backoff=3.0,
+        max_retardo=2.0,
+        jitter=False,
+    )
+
+    assert resultado == "ok"
+    assert llamadas == 3
+    assert esperas == [0.5, 1.5]
+
+
+@pytest.mark.asyncio
+async def test_reintentar_async_aplica_jitter_determinista(monkeypatch):
+    esperas: list[float] = []
+
+    async def falso_sleep(segundos: float):
+        esperas.append(segundos)
+
+    monkeypatch.setattr(asyncio, "sleep", falso_sleep)
+
+    llamadas = 0
+
+    async def operacion():
+        nonlocal llamadas
+        llamadas += 1
+        if llamadas == 1:
+            raise RuntimeError("fallo")
+        return "listo"
+
+    def ajustar(base: float) -> float:
+        return base / 2
+
+    resultado = await core.reintentar_async(
+        operacion,
+        intentos=2,
+        excepciones=(RuntimeError,),
+        retardo_inicial=0.4,
+        jitter=ajustar,
+    )
+
+    assert resultado == "listo"
+    assert esperas == [0.2]
 
 
 def test_logica_funcs():
