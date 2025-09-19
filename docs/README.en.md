@@ -305,6 +305,7 @@ The project officially supports:
 - Transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly: Cobra can convert code to these languages, facilitating integration with external applications.
 - Support for advanced structures: declaration of variables, functions, classes, lists and dictionaries, as well as loops and conditionals.
 - Native modules with I/O functions, math utilities and data structures ready to use from Cobra.
+- Text helpers mirror Python's `textwrap`: `indentar_texto`, `desindentar_texto`, `envolver_texto` and `acortar_texto` expose consistent indentation, wrapping and shortening utilities from both the core libraries and the Spanish standard library.
 - Runtime package installation via the `usar` instruction.
 - Error handling: the system captures and reports syntax errors, easing debugging.
 - Visualization and debugging: detailed output of tokens, AST and syntax errors for simpler development.

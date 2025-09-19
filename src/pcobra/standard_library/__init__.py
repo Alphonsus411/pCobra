@@ -77,6 +77,10 @@ from standard_library.texto import (
     es_mayusculas,
     es_minusculas,
     es_espacio,
+    indentar_texto,
+    desindentar_texto,
+    envolver_texto,
+    acortar_texto,
 )
 from standard_library.util import es_nulo, es_vacio, rel, repetir
 
@@ -126,6 +130,10 @@ __all__: list[str] = [
     "es_mayusculas",
     "es_minusculas",
     "es_espacio",
+    "indentar_texto",
+    "desindentar_texto",
+    "envolver_texto",
+    "acortar_texto",
     "leer_csv",
     "leer_json",
     "leer_excel",

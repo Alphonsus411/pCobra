@@ -22,6 +22,10 @@ from pcobra.corelibs import (
     dividir,
     dividir_derecha as _dividir_derecha,
     dividir_lineas as _dividir_lineas,
+    indentar_texto as _indentar_texto,
+    desindentar_texto as _desindentar_texto,
+    envolver_texto as _envolver_texto,
+    acortar_texto as _acortar_texto,
     invertir,
     minusculas,
     minusculas_casefold as _minusculas_casefold,
@@ -81,6 +85,10 @@ __all__ = [
     "minusculas_casefold",
     "particionar",
     "particionar_derecha",
+    "indentar_texto",
+    "desindentar_texto",
+    "envolver_texto",
+    "acortar_texto",
 ]
 
 
@@ -195,6 +203,53 @@ def es_espacio(texto: str) -> bool:
     """Corresponde a :meth:`str.isspace` para secuencias de espacios Unicode."""
 
     return _es_espacio(texto)
+
+
+def indentar_texto(
+    texto: str,
+    prefijo: str,
+    *,
+    solo_lineas_no_vacias: bool = False,
+) -> str:
+    """Añade un prefijo por línea, igual que :func:`textwrap.indent` en Python."""
+
+    return _indentar_texto(texto, prefijo, solo_lineas_no_vacias=solo_lineas_no_vacias)
+
+
+def desindentar_texto(texto: str) -> str:
+    """Elimina la sangría común como hace :func:`textwrap.dedent` en Python."""
+
+    return _desindentar_texto(texto)
+
+
+def envolver_texto(
+    texto: str,
+    ancho: int = 70,
+    *,
+    indentacion_inicial: str = "",
+    indentacion_subsecuente: str = "",
+    como_texto: bool = False,
+) -> list[str] | str:
+    """Ajusta párrafos usando :func:`textwrap.wrap` o ``fill`` según ``como_texto``."""
+
+    return _envolver_texto(
+        texto,
+        ancho,
+        indentacion_inicial=indentacion_inicial,
+        indentacion_subsecuente=indentacion_subsecuente,
+        como_texto=como_texto,
+    )
+
+
+def acortar_texto(
+    texto: str,
+    ancho: int,
+    *,
+    marcador: str = " [...]",
+) -> str:
+    """Resume frases como :func:`textwrap.shorten`, añadiendo ``marcador`` si recorta."""
+
+    return _acortar_texto(texto, ancho, marcador=marcador)
 
 
 def quitar_prefijo(texto: str, prefijo: str) -> str:
