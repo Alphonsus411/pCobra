@@ -30,6 +30,7 @@ from pcobra.corelibs import (
     minusculas,
     minusculas_casefold as _minusculas_casefold,
     normalizar_unicode,
+    prefijo_comun as _prefijo_comun,
     quitar_espacios,
     quitar_prefijo as _quitar_prefijo,
     quitar_sufijo as _quitar_sufijo,
@@ -41,6 +42,7 @@ from pcobra.corelibs import (
     subcadena_antes_ultima as _subcadena_antes_ultima,
     subcadena_despues_ultima as _subcadena_despues_ultima,
     unir,
+    sufijo_comun as _sufijo_comun,
     es_alfabetico as _es_alfabetico,
     es_alfa_numerico as _es_alfa_numerico,
     es_decimal as _es_decimal,
@@ -73,6 +75,8 @@ __all__ = [
     "es_espacio",
     "quitar_prefijo",
     "quitar_sufijo",
+    "prefijo_comun",
+    "sufijo_comun",
     "dividir_lineas",
     "dividir_derecha",
     "subcadena_antes",
@@ -272,6 +276,40 @@ def quitar_sufijo(texto: str, sufijo: str) -> str:
     """
 
     return _quitar_sufijo(texto, sufijo)
+
+
+def prefijo_comun(
+    texto: str,
+    otro: str,
+    *,
+    ignorar_mayusculas: bool = False,
+    normalizar: str | None = None,
+) -> str:
+    """Obtiene el prefijo compartido con soporte para ignorar mayúsculas y normalizar Unicode."""
+
+    return _prefijo_comun(
+        texto,
+        otro,
+        ignorar_mayusculas=ignorar_mayusculas,
+        normalizar=normalizar,
+    )
+
+
+def sufijo_comun(
+    texto: str,
+    otro: str,
+    *,
+    ignorar_mayusculas: bool = False,
+    normalizar: str | None = None,
+) -> str:
+    """Devuelve el sufijo compartido con las mismas opciones de comparación flexible."""
+
+    return _sufijo_comun(
+        texto,
+        otro,
+        ignorar_mayusculas=ignorar_mayusculas,
+        normalizar=normalizar,
+    )
 
 
 def dividir_lineas(texto: str, conservar_delimitadores: bool = False) -> list[str]:

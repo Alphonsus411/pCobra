@@ -104,6 +104,22 @@ def test_texto_funcs():
     assert core.quitar_prefijo("prefijo", "prE") == "prefijo"
     assert core.quitar_sufijo("archivo.tmp", ".tmp") == "archivo"
     assert core.quitar_sufijo("archivo.tmp", ".tm") == "archivo.tmp"
+    assert core.prefijo_comun("mañana", "Mañanita", ignorar_mayusculas=True) == "mañan"
+    assert core.prefijo_comun(
+        "Canción",
+        "cancio\u0301n",
+        ignorar_mayusculas=True,
+        normalizar="NFC",
+    ) == "Canción"
+    assert core.prefijo_comun("東京タワー", "東京ドーム") == "東京"
+    assert core.sufijo_comun("astronomía", "economía") == "onomía"
+    assert core.sufijo_comun(
+        "Αθηναϊκό",
+        "Λαϊκό",
+        ignorar_mayusculas=True,
+        normalizar="NFC",
+    ) == "αϊκό"
+    assert core.sufijo_comun("hola", "mundo") == ""
     assert core.dividir_lineas("uno\r\ndos\n") == ["uno", "dos"]
     assert core.dividir_lineas("uno\r\ndos\n", conservar_delimitadores=True) == [
         "uno\r\n",

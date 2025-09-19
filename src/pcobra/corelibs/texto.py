@@ -297,6 +297,64 @@ def quitar_sufijo(texto: str, sufijo: str) -> str:
     return texto
 
 
+def prefijo_comun(
+    texto: str,
+    otro: str,
+    *,
+    ignorar_mayusculas: bool = False,
+    normalizar: str | None = None,
+) -> str:
+    """Devuelve el prefijo compartido siguiendo a ``commonPrefixWith`` (Kotlin) y ``String.commonPrefix`` (Swift).
+
+    Args:
+        texto: Primera cadena de referencia.
+        otro: Segunda cadena con la que comparar.
+        ignorar_mayusculas: Cuando es ``True`` la comparación se realiza en
+            modo *casefold*, equivalente a ``commonPrefixWith`` con
+            ``ignoreCase`` en Kotlin.
+        normalizar: Si se indica, ambas cadenas se normalizan con
+            :func:`unicodedata.normalize` antes de comparar, útil para igualar
+            formas Unicode como ``NFC`` o ``NFD``. El resultado se entrega en la
+            misma forma normalizada.
+    """
+
+    base_texto = normalizar_unicode(texto, normalizar) if normalizar else texto
+    base_otro = normalizar_unicode(otro, normalizar) if normalizar else otro
+    comparar_texto = base_texto.casefold() if ignorar_mayusculas else base_texto
+    comparar_otro = base_otro.casefold() if ignorar_mayusculas else base_otro
+
+    limite = min(len(comparar_texto), len(comparar_otro))
+    indice = 0
+    while indice < limite and comparar_texto[indice] == comparar_otro[indice]:
+        indice += 1
+    return base_texto[:indice]
+
+
+def sufijo_comun(
+    texto: str,
+    otro: str,
+    *,
+    ignorar_mayusculas: bool = False,
+    normalizar: str | None = None,
+) -> str:
+    """Obtiene el sufijo común, inspirado en ``commonSuffixWith`` de Kotlin y ``String.commonSuffix`` de Swift."""
+
+    base_texto = normalizar_unicode(texto, normalizar) if normalizar else texto
+    base_otro = normalizar_unicode(otro, normalizar) if normalizar else otro
+    comparar_texto = base_texto.casefold() if ignorar_mayusculas else base_texto
+    comparar_otro = base_otro.casefold() if ignorar_mayusculas else base_otro
+
+    limite = min(len(comparar_texto), len(comparar_otro))
+    indice = 0
+    while indice < limite and (
+        comparar_texto[-(indice + 1)] == comparar_otro[-(indice + 1)]
+    ):
+        indice += 1
+    if indice == 0:
+        return ""
+    return base_texto[-indice:]
+
+
 def rellenar_izquierda(texto: str, ancho: int, relleno: str = " ") -> str:
     """Rellena ``texto`` por la izquierda hasta alcanzar ``ancho`` caracteres."""
 
