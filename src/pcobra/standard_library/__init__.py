@@ -88,7 +88,14 @@ from standard_library.texto import (
     envolver_texto,
     acortar_texto,
 )
-from standard_library.numero import es_finito, es_infinito, es_nan, copiar_signo
+from standard_library.numero import (
+    es_finito,
+    es_infinito,
+    es_nan,
+    copiar_signo,
+    interpolar,
+    envolver_modular,
+)
 from standard_library.util import es_nulo, es_vacio, rel, repetir
 from standard_library.asincrono import grupo_tareas
 
@@ -124,6 +131,8 @@ __all__: list[str] = [
     "es_infinito",
     "es_nan",
     "copiar_signo",
+    "interpolar",
+    "envolver_modular",
     "es_nulo",
     "es_vacio",
     "rel",

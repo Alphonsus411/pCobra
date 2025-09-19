@@ -636,6 +636,18 @@ imprimir(texto.sufijo_comun("astronomía", "economía"))      # 'onomía'
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.
 
+`pcobra.corelibs.numero` también ganó atajos inspirados en `f32::lerp`/`f64::lerp` de Rust y en `kotlin.math.lerp`/`mod`. `interpolar` acota el factor al intervalo `[0, 1]` para evitar extrapolaciones accidentales y devolver siempre el extremo correcto cuando el coeficiente se sale del rango, mientras que `envolver_modular` aplica un residuo euclidiano compatible con `rem_euclid` y el operador `mod` de Kotlin incluso si los valores son negativos.
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.numero as numero
+
+imprimir(core.interpolar(10.0, 20.0, 1.5))   # 20.0: factor fuera de rango saturado
+imprimir(numero.interpolar(-5.0, 5.0, 0.25))  # 0.0: idéntica API en la biblioteca estándar
+imprimir(core.envolver_modular(-3, 5))        # 2: envoltura positiva como en Rust
+imprimir(numero.envolver_modular(7.5, -5.0))  # -2.5: respeta el signo del divisor
+```
+
 ## 23. Operaciones con colecciones
 
 El módulo `pcobra.corelibs.coleccion` ahora ofrece funciones pensadas para transformar y analizar listas sin perder el orden de los elementos ni sacrificar seguridad de tipos. Las más destacadas son:

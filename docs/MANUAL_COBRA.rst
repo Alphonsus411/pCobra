@@ -354,6 +354,22 @@ usar en Cobra. Entre las más destacadas se encuentran:
    print(texto.sufijo_comun("astronomía", "economía"))
    print(texto.es_palindromo("Sé verlas al revés"))
 
+Asimismo, :mod:`pcobra.corelibs.numero` incorpora ``interpolar`` y
+``envolver_modular`` inspiradas en ``f32::lerp`` de Rust y en
+``kotlin.math.lerp``/``mod``. La primera acota el factor a ``[0, 1]`` para
+evitar extrapolaciones involuntarias y la segunda devuelve residuos euclidianos
+con el mismo signo que el divisor incluso si se usan valores negativos.
+
+.. code-block:: python
+
+   import pcobra.corelibs as core
+   import standard_library.numero as numero
+
+   print(core.interpolar(10.0, 20.0, 1.5))    # 20.0
+   print(numero.interpolar(-5.0, 5.0, 0.25))  # 0.0
+   print(core.envolver_modular(-3, 5))         # 2
+   print(numero.envolver_modular(7.5, -5.0))   # -2.5
+
 Transpilación y ejecución
 -------------------------
 

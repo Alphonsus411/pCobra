@@ -193,6 +193,14 @@ def test_numero_funcs():
     assert core.raiz(-8, 3) == pytest.approx(-2.0)
     assert core.potencia(2, 3) == pytest.approx(8.0)
     assert core.clamp(5, 0, 3) == 3
+    assert core.interpolar(0.0, 10.0, 0.25) == pytest.approx(2.5)
+    assert core.interpolar(-5, 5, -1.0) == pytest.approx(-5.0)
+    assert core.interpolar(-5, 5, 2.0) == pytest.approx(5.0)
+    assert core.envolver_modular(7, 5) == 2
+    assert core.envolver_modular(-2, 5) == 3
+    assert core.envolver_modular(7.5, -5.0) == pytest.approx(-2.5)
+    with pytest.raises(ZeroDivisionError):
+        core.envolver_modular(1, 0)
     assert 1 <= core.aleatorio(1, 2, semilla=42) <= 2
     assert core.mediana([1, 2, 3, 4]) == 2.5
     assert core.moda([1, 1, 2, 2, 2]) == 2

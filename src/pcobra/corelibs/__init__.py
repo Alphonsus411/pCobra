@@ -82,6 +82,7 @@ from corelibs.numero import (
     entero_a_bytes,
     entero_desde_base,
     entero_desde_bytes,
+    envolver_modular,
     es_cercano,
     es_finito,
     es_infinito,
@@ -94,6 +95,7 @@ from corelibs.numero import (
     mcm,
     mediana,
     moda,
+    interpolar,
     piso,
     potencia,
     producto,
@@ -237,6 +239,8 @@ __all__ = [
     "aleatorio",
     "clamp",
     "copiar_signo",
+    "interpolar",
+    "envolver_modular",
     "contar_bits",
     "desviacion_estandar",
     "entero_a_base",
@@ -466,4 +470,18 @@ copiar_signo.__doc__ = (
     "Reexporta :func:`math.copysign`. Replica la semántica IEEE-754 conservando"
     " ceros con signo e infinitos al combinar magnitudes y signos provenientes de"
     " diferentes cálculos."
+)
+
+interpolar.__doc__ = (
+    "Interpola valores con la misma saturación que ``f32::lerp`` en Rust y"
+    " documenta el paralelismo con ``kotlin.math.lerp``: el factor se acota al"
+    " rango ``[0, 1]`` para evitar extrapolaciones y manejar factores fuera de"
+    " rango igual que hacen dichas bibliotecas estándar."
+)
+
+envolver_modular.__doc__ = (
+    "Calcula el residuo euclidiano como ``rem_euclid`` en Rust o el operador"
+    " ``mod`` de Kotlin, retornando siempre un valor con el mismo signo que el"
+    " divisor y proporcionando envoltura modular estable incluso con valores"
+    " negativos."
 )

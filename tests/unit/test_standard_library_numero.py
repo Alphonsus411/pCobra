@@ -48,6 +48,16 @@ def test_copiar_signo():
     assert math.isnan(nan)
 
 
+def test_interpolar_y_envolver_modular():
+    assert numero.interpolar(0.0, 10.0, 0.5) == pytest.approx(5.0)
+    assert numero.interpolar(-5.0, 5.0, 3.0) == pytest.approx(5.0)
+    assert numero.envolver_modular(7, 5) == 2
+    assert numero.envolver_modular(-2, 5) == 3
+    assert numero.envolver_modular(7.5, -5.0) == pytest.approx(-2.5)
+    with pytest.raises(ZeroDivisionError):
+        numero.envolver_modular(1, 0)
+
+
 @pytest.mark.parametrize(
     "funcion, argumentos",
     [
@@ -55,6 +65,8 @@ def test_copiar_signo():
         (numero.es_infinito, (object(),)),
         (numero.es_nan, (b"0",)),
         (numero.copiar_signo, ("1", 1)),
+        (numero.interpolar, (0, 1, "factor")),
+        (numero.envolver_modular, (1, "0")),
     ],
 )
 def test_validaciones(funcion, argumentos):

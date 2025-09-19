@@ -11,6 +11,7 @@
 - Validadores `es_*` alineados con `str.is*` disponibles tanto en `pcobra.corelibs.texto` como en `standard_library.texto`, con equivalentes nativos para JavaScript.
 - `standard_library.datos` incorpora lectura y escritura de archivos Parquet y Feather detectando automáticamente los motores opcionales requeridos.
 - `corelibs.numero` añade `es_finito`, `es_infinito`, `es_nan` y `copiar_signo`, reexportados en la biblioteca estándar y con equivalentes nativos que respetan IEEE-754.
+- `corelibs.numero` suma `interpolar` (lerp saturado al estilo de Rust/Kotlin) y `envolver_modular` (residuo euclidiano compatible con `rem_euclid`/`mod`), expuestos también desde `standard_library.numero` y documentados con nuevos ejemplos.
 - `corelibs.asincrono` incorpora `grupo_tareas`, un administrador compatible con
   versiones anteriores que replica la semántica de `asyncio.TaskGroup` y se
   expone también desde la biblioteca estándar.
