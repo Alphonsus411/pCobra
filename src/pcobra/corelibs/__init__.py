@@ -152,6 +152,7 @@ from corelibs.asincrono import (
     carrera,
     primero_exitoso,
     esperar_timeout,
+    reintentar_async,
     crear_tarea,
     mapear_concurrencia,
     grupo_tareas as _grupo_tareas_impl,
@@ -318,6 +319,7 @@ __all__ = [
     "carrera",
     "primero_exitoso",
     "esperar_timeout",
+    "reintentar_async",
     "crear_tarea",
     "mapear_concurrencia",
     "grupo_tareas",
@@ -454,6 +456,14 @@ mapear_concurrencia.__doc__ = (
     " un patrón equivalente a los *worker pools* de Go, y documenta el"
     " parámetro ``limite`` junto con la opción ``return_exceptions`` para"
     " decidir si se propagan o coleccionan los errores."
+)
+
+reintentar_async.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.reintentar_async`. Implementa"
+    " reintentos con *backoff* exponencial al estilo de utilidades basadas en"
+    " ``Promise`` de JavaScript y de los bucles de reintento con gorutinas en"
+    " Go, permitiendo añadir *jitter* para suavizar la contención entre"
+    " clientes."
 )
 
 es_finito.__doc__ = (

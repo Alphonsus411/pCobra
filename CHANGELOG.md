@@ -15,6 +15,9 @@
 - `corelibs.asincrono` incorpora `grupo_tareas`, un administrador compatible con
   versiones anteriores que replica la semántica de `asyncio.TaskGroup` y se
   expone también desde la biblioteca estándar.
+- `corelibs.asincrono` suma `reintentar_async`, que aplica reintentos con
+  *backoff* exponencial y *jitter* opcional, reexportado en la biblioteca
+  estándar junto con documentación y pruebas que validan los tiempos de espera.
 - `corelibs.texto` suma `prefijo_comun` y `sufijo_comun`, inspirados en Kotlin y
   Swift, con opciones para ignorar mayúsculas o normalizar Unicode; se
   reexportan en la biblioteca estándar y cuentan con versiones nativas para JavaScript.
