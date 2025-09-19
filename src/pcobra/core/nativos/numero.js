@@ -12,6 +12,26 @@ export function redondear(valor, ndigitos = null) {
 }
 
 
+function _aNumero(nombre, valor) {
+    if (typeof valor === "number") {
+        return valor;
+    }
+    if (typeof valor === "boolean") {
+        return valor ? 1 : 0;
+    }
+    if (valor != null) {
+        const primitivo = valor.valueOf?.();
+        if (typeof primitivo === "number") {
+            return primitivo;
+        }
+    }
+    throw new TypeError(`${nombre} solo acepta números reales`);
+}
+
+function _esSignoNegativo(valor) {
+    return valor < 0 || (valor === 0 && Object.is(valor, -0));
+}
+
 export function piso(valor) {
     return Math.floor(valor);
 }
@@ -53,6 +73,29 @@ export function clamp(valor, minimo, maximo) {
         throw new Error("El mínimo no puede ser mayor que el máximo");
     }
     return Math.min(Math.max(valor, minimo), maximo);
+}
+
+export function es_finito(valor) {
+    const numero = _aNumero("es_finito", valor);
+    return Number.isFinite(numero);
+}
+
+export function es_infinito(valor) {
+    const numero = _aNumero("es_infinito", valor);
+    return numero === Infinity || numero === -Infinity;
+}
+
+export function es_nan(valor) {
+    const numero = _aNumero("es_nan", valor);
+    return Number.isNaN(numero);
+}
+
+export function copiar_signo(magnitud, signo) {
+    const magnitudNumero = _aNumero("copiar_signo", magnitud);
+    const signoNumero = _aNumero("copiar_signo", signo);
+    const negativo = _esSignoNegativo(signoNumero);
+    const magnitudAbsoluta = Math.abs(magnitudNumero);
+    return negativo ? -magnitudAbsoluta : magnitudAbsoluta;
 }
 
 

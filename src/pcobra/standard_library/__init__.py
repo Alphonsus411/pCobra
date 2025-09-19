@@ -86,6 +86,7 @@ from standard_library.texto import (
     envolver_texto,
     acortar_texto,
 )
+from standard_library.numero import es_finito, es_infinito, es_nan, copiar_signo
 from standard_library.util import es_nulo, es_vacio, rel, repetir
 
 __all__: list[str] = [
@@ -116,6 +117,10 @@ __all__: list[str] = [
     "xor_multiple",
     "todas",
     "alguna",
+    "es_finito",
+    "es_infinito",
+    "es_nan",
+    "copiar_signo",
     "es_nulo",
     "es_vacio",
     "rel",

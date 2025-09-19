@@ -192,6 +192,16 @@ aleatorios reproducibles y analizar datos sin abandonar Cobra.
    print(core.clamp(5, 0, 3))
    print(core.mediana(medidas))
    print(core.desviacion_estandar(medidas, muestral=True))
+   print(core.es_finito(42.0))
+   print(core.es_infinito(float("inf")))
+   print(core.es_nan(float("nan")))
+   print(core.copiar_signo(2.0, -0.0))
+
+Las utilidades ``es_finito``, ``es_infinito`` y ``es_nan`` permiten validar los
+resultados de cálculos con números de punto flotante antes de continuar con el
+flujo del programa. ``copiar_signo`` resulta útil al normalizar magnitudes y
+preservar el signo de ceros, infinitos o ``NaN`` para mantener la compatibilidad
+con otros entornos IEEE-754.
 
 .. list-table:: Equivalencias con bibliotecas numéricas
    :header-rows: 1
@@ -229,6 +239,22 @@ aleatorios reproducibles y analizar datos sin abandonar Cobra.
      - ``min(max(x, a), b)``
      - ``numpy.clip(x, a, b)``
      - ``Math.min(Math.max(x, a), b)``
+   * - ``es_finito(x)``
+     - ``math.isfinite(x)``
+     - ``numpy.isfinite(x)``
+     - ``Number.isFinite(x)``
+   * - ``es_infinito(x)``
+     - ``math.isinf(x)``
+     - ``numpy.isinf(x)``
+     - ``!Number.isFinite(x) && !Number.isNaN(x)``
+   * - ``es_nan(x)``
+     - ``math.isnan(x)``
+     - ``numpy.isnan(x)``
+     - ``Number.isNaN(x)``
+   * - ``copiar_signo(a, b)``
+     - ``math.copysign(a, b)``
+     - ``numpy.copysign(a, b)``
+     - ``Math.abs(a) * (Number.isNaN(b) ? 1 : Math.sign(b) || 1)``
    * - ``aleatorio(a, b)``
      - ``random.uniform(a, b)``
      - ``numpy.random.uniform(a, b)``

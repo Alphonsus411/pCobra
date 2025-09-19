@@ -1,3 +1,4 @@
+import math
 import operator
 import os
 import random
@@ -137,6 +138,30 @@ def test_texto_funcs():
 
 
 def test_numero_funcs():
+    assert core.es_finito(42) is True
+    assert core.es_finito(0.0) is True
+    assert core.es_finito(float("inf")) is False
+    assert core.es_finito(float("nan")) is False
+    assert core.es_infinito(float("inf")) is True
+    assert core.es_infinito(float("-inf")) is True
+    assert core.es_infinito(3.14) is False
+    assert core.es_nan(float("nan")) is True
+    assert core.es_nan(1.0) is False
+    with pytest.raises(TypeError):
+        core.es_finito("0")
+    with pytest.raises(TypeError):
+        core.es_infinito(b"1")
+    with pytest.raises(TypeError):
+        core.es_nan(object())
+    assert core.copiar_signo(3.0, -2.0) == pytest.approx(-3.0)
+    assert core.copiar_signo(-2.5, 7.0) == pytest.approx(2.5)
+    cero_negativo = core.copiar_signo(0.0, -0.0)
+    assert math.copysign(1.0, cero_negativo) == -1.0
+    nan_resultado = core.copiar_signo(float("nan"), -1.0)
+    assert math.isnan(nan_resultado)
+    with pytest.raises(TypeError):
+        core.copiar_signo("1", 1)
+
     assert core.absoluto(-5) == 5
     assert core.absoluto(-5.2) == pytest.approx(5.2)
     assert core.redondear(3.14159, 2) == pytest.approx(3.14)

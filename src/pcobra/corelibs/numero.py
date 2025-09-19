@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import random
+from typing import Any
 from statistics import StatisticsError, median, mode, pstdev, stdev
 
 _ALFABETO_DEFECTO = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -68,6 +69,49 @@ def es_cercano(
     """
 
     return math.isclose(a, b, rel_tol=tolerancia_relativa, abs_tol=tolerancia_absoluta)
+
+
+def _a_float(valor: Any, nombre: str) -> float:
+    """Coacciona ``valor`` a ``float`` validando que represente un número real."""
+
+    if isinstance(valor, bool):
+        valor = int(valor)
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    if isinstance(valor, (str, bytes, bytearray, memoryview)):
+        raise TypeError(f"{nombre} solo acepta números reales")
+    if hasattr(valor, "__float__"):
+        try:
+            return float(valor)
+        except (TypeError, ValueError) as exc:
+            raise TypeError(f"{nombre} solo acepta números reales") from exc
+    raise TypeError(f"{nombre} solo acepta números reales")
+
+
+def es_finito(valor) -> bool:
+    """Indica si ``valor`` representa un número finito."""
+
+    return math.isfinite(_a_float(valor, "es_finito"))
+
+
+def es_infinito(valor) -> bool:
+    """Indica si ``valor`` es positivo o negativo infinito."""
+
+    return math.isinf(_a_float(valor, "es_infinito"))
+
+
+def es_nan(valor) -> bool:
+    """Indica si ``valor`` es ``NaN`` siguiendo la semántica IEEE-754."""
+
+    return math.isnan(_a_float(valor, "es_nan"))
+
+
+def copiar_signo(magnitud, signo):
+    """Devuelve ``magnitud`` con el signo de ``signo`` conservando ``NaN`` y ceros con signo."""
+
+    magnitud_float = _a_float(magnitud, "copiar_signo")
+    signo_float = _a_float(signo, "copiar_signo")
+    return math.copysign(magnitud_float, signo_float)
 
 
 def producto(valores, inicio=1):
