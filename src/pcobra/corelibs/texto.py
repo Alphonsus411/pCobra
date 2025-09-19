@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import textwrap
 import unicodedata
 from typing import Any, TypeVar, overload
 
@@ -406,6 +407,57 @@ def contar_subcadena(
     if fin is None:
         return texto.count(subcadena, inicio)
     return texto.count(subcadena, inicio, fin)
+
+
+def indentar_texto(
+    texto: str,
+    prefijo: str,
+    *,
+    solo_lineas_no_vacias: bool = False,
+) -> str:
+    """Agrega ``prefijo`` al inicio de cada línea empleando :func:`textwrap.indent`."""
+
+    if solo_lineas_no_vacias:
+        predicado = lambda linea: linea.strip() != ""
+    else:
+        predicado = lambda _linea: True
+    return textwrap.indent(texto, prefijo, predicate=predicado)
+
+
+def desindentar_texto(texto: str) -> str:
+    """Elimina la sangría compartida usando :func:`textwrap.dedent`."""
+
+    return textwrap.dedent(texto)
+
+
+def envolver_texto(
+    texto: str,
+    ancho: int = 70,
+    *,
+    indentacion_inicial: str = "",
+    indentacion_subsecuente: str = "",
+    como_texto: bool = False,
+) -> list[str] | str:
+    """Envuelve el párrafo como :func:`textwrap.wrap` y permite devolver texto unido."""
+
+    envoltorio = textwrap.TextWrapper(
+        width=ancho,
+        initial_indent=indentacion_inicial,
+        subsequent_indent=indentacion_subsecuente,
+    )
+    lineas = envoltorio.wrap(texto)
+    return "\n".join(lineas) if como_texto else lineas
+
+
+def acortar_texto(
+    texto: str,
+    ancho: int,
+    *,
+    marcador: str = " [...]",
+) -> str:
+    """Reduce ``texto`` a ``ancho`` caracteres imitando :func:`textwrap.shorten`."""
+
+    return textwrap.shorten(texto, width=ancho, placeholder=marcador)
 
 
 def centrar_texto(texto: str, ancho: int, relleno: str = " ") -> str:

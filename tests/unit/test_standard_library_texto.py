@@ -61,6 +61,40 @@ def test_dividir_lineas_y_contar():
     assert texto.contar_subcadena("bananana", "na", 0, 5) == 1
 
 
+def test_indentar_y_desindentar():
+    bloque = "uno\n  dos\n\n"
+    assert texto.indentar_texto(bloque, "-> ") == "-> uno\n->   dos\n-> \n"
+    assert texto.indentar_texto(bloque, "-> ", solo_lineas_no_vacias=True) == "-> uno\n->   dos\n\n"
+    sangrado = "    uno\n        dos\n    tres"
+    assert texto.desindentar_texto(sangrado) == "uno\n    dos\ntres"
+
+
+def test_envolver_y_acortar_texto():
+    parrafo = "Cobra facilita scripts portables y claros."
+    esperado = [
+        "* Cobra facilita",
+        "  scripts",
+        "  portables y",
+        "  claros.",
+    ]
+    assert texto.envolver_texto(
+        parrafo,
+        18,
+        indentacion_inicial="* ",
+        indentacion_subsecuente="  ",
+    ) == esperado
+    como_parrafo = texto.envolver_texto(
+        parrafo,
+        18,
+        indentacion_inicial="* ",
+        indentacion_subsecuente="  ",
+        como_texto=True,
+    )
+    assert como_parrafo == "\n".join(esperado)
+    assert texto.acortar_texto("Cobra facilita herramientas", 32) == "Cobra facilita herramientas"
+    assert texto.acortar_texto("Cobra facilita herramientas", 18) == "Cobra [...]"
+
+
 def test_centrar_rellenar_y_casefold():
     assert texto.centrar_texto("cobra", 9, "*") == "**cobra**"
     with pytest.raises(TypeError):

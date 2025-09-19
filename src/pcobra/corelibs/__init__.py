@@ -25,6 +25,10 @@ from corelibs.texto import (
     particionar as particionar_texto,
     particionar_derecha,
     contar_subcadena,
+    indentar_texto,
+    desindentar_texto,
+    envolver_texto,
+    acortar_texto,
     centrar_texto,
     rellenar_ceros,
     minusculas_casefold,
@@ -166,6 +170,10 @@ __all__ = [
     "particionar_texto",
     "particionar_derecha",
     "contar_subcadena",
+    "indentar_texto",
+    "desindentar_texto",
+    "envolver_texto",
+    "acortar_texto",
     "centrar_texto",
     "rellenar_ceros",
     "minusculas_casefold",
@@ -324,6 +332,30 @@ contar_subcadena.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.texto.contar_subcadena`. Equivale a usar"
     " ``str.count`` en Python, ``strings.Count`` en Go o dividir cadenas en JavaScript"
     " para cuantificar apariciones."
+)
+
+indentar_texto.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.indentar_texto`. Se apoya en"
+    " ``textwrap.indent`` de Python para añadir prefijos de sangría y puede"
+    " reproducirse en JavaScript con ``String.prototype.replace`` multilinea."
+)
+
+desindentar_texto.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.desindentar_texto`. Emplea"
+    " ``textwrap.dedent`` de Python para eliminar el margen común de sangría,"
+    " patrón que se replica en JavaScript calculando el prefijo compartido."
+)
+
+envolver_texto.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.envolver_texto`. Funciona como"
+    " ``textwrap.wrap`` o ``textwrap.fill`` de Python permitiendo definir"
+    " sangrías iniciales y posteriores al formatear párrafos."
+)
+
+acortar_texto.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.acortar_texto`. Equivale a"
+    " ``textwrap.shorten`` de Python al condensar frases y añadir un marcador"
+    " cuando supera el ancho indicado."
 )
 
 centrar_texto.__doc__ = (

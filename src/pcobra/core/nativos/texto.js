@@ -8,6 +8,8 @@ const PATRON_IDENTIFICADOR_INICIO = /^[\p{ID_Start}_]$/u;
 const PATRON_IDENTIFICADOR_CONTINUA = /^[\p{ID_Continue}_]$/u;
 const REGEX_CONTROLES = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}]/u;
 const REGEX_ESPACIOS = /\p{White_Space}/u;
+const REGEX_SOLO_ESPACIOS = /^[ \t]+$/gm;
+const REGEX_INDENTACION = /(^[ \t]*)(?:[^ \t\n])/gm;
 
 function repetirRelleno(relleno, longitud) {
     if (relleno.length === 0) {
@@ -99,6 +101,23 @@ function dividirConSeparador(texto, separador, maximo) {
     return partes;
 }
 
+function escaparExpresionRegular(texto) {
+    return texto.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
+function dividirPalabraPorLongitud(palabra, longitud) {
+    if (longitud <= 0) {
+        return [palabra];
+    }
+    const partes = [];
+    let inicio = 0;
+    while (inicio < palabra.length) {
+        partes.push(palabra.slice(inicio, inicio + longitud));
+        inicio += longitud;
+    }
+    return partes;
+}
+
 export function mayusculas(texto) {
     return texto.toLocaleUpperCase();
 }
@@ -153,6 +172,139 @@ export function dividir(texto, separador = null, maximo = null) {
         return dividirEspacios(texto, maximo);
     }
     return dividirConSeparador(texto, separador, maximo);
+}
+
+export function indentar_texto(texto, prefijo, opciones = {}) {
+    const { solo_lineas_no_vacias = false } = opciones;
+    const patron = solo_lineas_no_vacias ? /^(?=.*\S)/gm : /^/gm;
+    return texto.replace(patron, () => prefijo);
+}
+
+export function desindentar_texto(texto) {
+    let resultado = texto.replace(REGEX_SOLO_ESPACIOS, "");
+    let margen = null;
+    let coincidencia;
+    while ((coincidencia = REGEX_INDENTACION.exec(resultado)) !== null) {
+        const indentacion = coincidencia[1];
+        if (margen === null) {
+            margen = indentacion;
+        } else if (indentacion.startsWith(margen)) {
+            continue;
+        } else if (margen.startsWith(indentacion)) {
+            margen = indentacion;
+        } else {
+            let i = 0;
+            const limite = Math.min(margen.length, indentacion.length);
+            while (i < limite && margen[i] === indentacion[i]) {
+                i += 1;
+            }
+            margen = margen.slice(0, i);
+        }
+    }
+    REGEX_INDENTACION.lastIndex = 0;
+    if (margen && margen.length > 0) {
+        const patron = new RegExp(`^${escaparExpresionRegular(margen)}`, "gm");
+        resultado = resultado.replace(patron, "");
+    }
+    return resultado;
+}
+
+export function envolver_texto(
+    texto,
+    ancho = 70,
+    opciones = {},
+) {
+    const {
+        indentacion_inicial = "",
+        indentacion_subsecuente = "",
+        como_texto = false,
+    } = opciones;
+    if (ancho <= 0) {
+        throw new Error("ancho debe ser mayor que cero");
+    }
+    const palabras = texto.trim().length
+        ? texto.trim().split(/\s+/u)
+        : [];
+    if (palabras.length === 0) {
+        return como_texto ? "" : [];
+    }
+    const cola = [...palabras];
+    const lineas = [];
+    let indentacionActual = indentacion_inicial;
+    let longitudActual = indentacionActual.length;
+    let palabrasLinea = [];
+
+    const finalizarLinea = () => {
+        if (palabrasLinea.length === 0) {
+            return;
+        }
+        const contenido = palabrasLinea.join(" ");
+        lineas.push(indentacionActual + contenido);
+        indentacionActual = indentacion_subsecuente;
+        palabrasLinea = [];
+        longitudActual = indentacionActual.length;
+    };
+
+    while (cola.length > 0) {
+        let palabra = cola.shift();
+        const extra = palabrasLinea.length > 0 ? 1 : 0;
+        const espacioDisponible = ancho - (longitudActual + extra);
+        if (espacioDisponible > 0 && palabra.length > espacioDisponible) {
+            const partes = dividirPalabraPorLongitud(palabra, espacioDisponible);
+            if (partes.length > 1) {
+                cola.unshift(...partes.slice(1));
+            }
+            palabra = partes[0];
+        }
+        const necesario = extra + palabra.length;
+        if (longitudActual + necesario <= ancho || palabrasLinea.length === 0) {
+            if (extra === 1) {
+                longitudActual += 1;
+            }
+            palabrasLinea.push(palabra);
+            longitudActual += palabra.length;
+        } else {
+            finalizarLinea();
+            cola.unshift(palabra);
+        }
+    }
+
+    finalizarLinea();
+    return como_texto ? lineas.join("\n") : lineas;
+}
+
+export function acortar_texto(
+    texto,
+    ancho,
+    opciones = {},
+) {
+    const { marcador = " [...]" } = opciones;
+    if (ancho <= 0) {
+        throw new Error("ancho debe ser mayor que cero");
+    }
+    const colapsado = texto.trim().length
+        ? texto.trim().split(/\s+/u).join(" ")
+        : "";
+    if (colapsado.length <= ancho) {
+        return colapsado;
+    }
+    const limite = ancho - marcador.length;
+    if (limite < 1) {
+        throw new Error("el marcador es demasiado largo para el ancho indicado");
+    }
+    const palabras = colapsado.split(" ");
+    let resultado = "";
+    for (const palabra of palabras) {
+        const candidato = resultado ? `${resultado} ${palabra}` : palabra;
+        if (candidato.length > limite) {
+            break;
+        }
+        resultado = candidato;
+    }
+    if (!resultado) {
+        return marcador.trim();
+    }
+    return `${resultado}${marcador}`;
 }
 
 export function unir(separador, piezas) {

@@ -586,6 +586,8 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
 - `quitar_prefijo` y `quitar_sufijo` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y los patrones `startsWith`/`endsWith` + `slice` en JavaScript.
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
+- `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.
+- `envolver_texto` ajusta párrafos con sangrías iniciales y posteriores, y `acortar_texto` resume frases al estilo de `textwrap.shorten` añadiendo un marcador configurable.
 - `minusculas_casefold` aplica minúsculas intensivas (`casefold`) que homogeneizan mayúsculas, ß alemana o símbolos con diacríticos.
 - Las comprobaciones `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas` y `es_espacio` replican directamente los métodos `str.is*` de Python.
 
@@ -603,6 +605,8 @@ imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
 imprimir(core.quitar_prefijo("🧪Prueba", "🧪"))      # 'Prueba'
 imprimir(core.centrar_texto("cobra", 9, "*"))        # '**cobra**'
 imprimir(core.minusculas_casefold("Straße"))         # 'strasse'
+imprimir(core.indentar_texto("uno\n dos", "-> "))   # '-> uno\n->  dos'
+imprimir(texto.envolver_texto("Cobra facilita scripts portables", 18, como_texto=True))
 imprimir(core.particionar_texto("ruta/archivo.ext", "/"))  # ('ruta', '/', 'archivo.ext')
 imprimir(texto.particionar_derecha("archivo.tar.gz", "."))  # ('archivo.tar', '.', 'gz')
 ```
