@@ -729,6 +729,7 @@ Las funciones están disponibles tanto al ejecutar Cobra directamente como al tr
 - `conteo_verdaderos` devuelve el total de verdaderos (similar a ``count``) y permite reutilizar el resultado para otras comprobaciones.
 - `paridad` informa si el número de verdaderos es par; internamente reutiliza `conteo_verdaderos` y equivale a calcular ``count(valores) % 2 == 0``.
 - `entonces` y `si_no` encapsulan condicionales perezosos: devuelven el resultado (o ejecutan un callable) solo cuando la condición se cumple, como `takeIf` y `takeUnless` en Kotlin.
+- `condicional` permite encadenar pares ``(condición, resultado)`` inspirándose en ``when`` de Kotlin y `case_when` de R; evalúa cada rama en orden y solo computa la que corresponda.
 
 Los parámetros no booleanos producen un `TypeError` descriptivo, lo cual ayuda a detectar errores lógicos tempranamente. Además, la versión en JavaScript (`core/nativos/logica.js`) replica la semántica para mantener el comportamiento al transpirar.
 
@@ -752,7 +753,7 @@ logica.todas([True, 1])  # -> TypeError
 ```
 
 ```python
-from pcobra.corelibs.logica import entonces, si_no
+from pcobra.corelibs.logica import condicional, entonces, si_no
 
 contador = {"valor": 0}
 
@@ -764,6 +765,14 @@ assert entonces(True, incrementar) == 1         # Ejecuta el callable
 assert entonces(False, incrementar) is None     # No evalúa la rama descartada
 assert si_no(False, "dato") == "dato"         # Equivalente a takeUnless
 assert si_no(True, lambda: "omitido") is None  # La función no se ejecuta
+
+nivel_bateria = 65
+estado = condicional(
+    (lambda: nivel_bateria < 20, "crítico"),
+    (lambda: nivel_bateria < 50, "advertencia"),
+    por_defecto="estable",
+)
+assert estado == "advertencia"
 ```
 
 > **Recomendación:** al combinar `xor_multiple` con colecciones calculadas dinámicamente verifica previamente la longitud de la entrada para evitar el `ValueError` que se lanza cuando se proporcionan menos de dos argumentos.

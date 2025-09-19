@@ -16,6 +16,7 @@ __all__ = [
     "negacion",
     "entonces",
     "si_no",
+    "condicional",
     "xor",
     "nand",
     "nor",
@@ -79,6 +80,15 @@ def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
     """
 
     return _logica.si_no(valor, resultado)
+
+
+def condicional(
+    *casos: tuple[bool | Callable[[], bool], T | Callable[[], T]],
+    por_defecto: T | Callable[[], T] | None = None,
+) -> T | None:
+    """Evalúa pares ``(condición, resultado)`` al estilo ``when`` de Kotlin o ``case_when`` de R."""
+
+    return _logica.condicional(*casos, por_defecto=por_defecto)
 
 
 def xor(a: bool, b: bool) -> bool:

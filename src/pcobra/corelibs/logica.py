@@ -15,6 +15,13 @@ def _evaluar_resultado(resultado: T | Callable[[], T]) -> T:
     return resultado
 
 
+def _evaluar_condicion(condicion: bool | Callable[[], bool], nombre: str) -> bool:
+    """Evalúa *condicion* perezosamente y la valida como booleana."""
+
+    valor = condicion() if callable(condicion) else condicion
+    return _asegurar_booleano(valor, nombre)
+
+
 def _asegurar_booleano(valor: bool, nombre: str = "valor") -> bool:
     """Valida que *valor* sea booleano y lo retorna.
 
@@ -86,6 +93,48 @@ def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
 
     if not _asegurar_booleano(valor):
         return _evaluar_resultado(resultado)
+    return None
+
+
+def condicional(
+    *casos: tuple[bool | Callable[[], bool], T | Callable[[], T]],
+    por_defecto: T | Callable[[], T] | None = None,
+) -> T | None:
+    """Evalúa pares ``(condición, resultado)`` en orden determinista.
+
+    Cada ``caso`` debe ser un iterable de dos elementos donde el primero es una
+    condición booleana (o un callable sin argumentos que la produzca) y el
+    segundo el resultado asociado (o un callable que lo compute). Se evalúa el
+    primer caso verdadero y se retorna su resultado, respetando evaluación
+    perezosa tanto de condiciones como de resultados.
+
+    Args:
+        *casos: pares ``(condición, resultado)`` a verificar en orden.
+        por_defecto: valor o callable a usar cuando ningún caso es verdadero.
+
+    Returns:
+        El resultado del primer caso verdadero o ``por_defecto`` si se
+        proporciona, en caso contrario ``None``.
+
+    Raises:
+        ValueError: si algún caso no contiene exactamente dos elementos.
+        TypeError: si las condiciones no son booleanas ni callables que
+            produzcan booleanos.
+    """
+
+    for indice, caso in enumerate(casos):
+        try:
+            condicion, resultado = caso
+        except (TypeError, ValueError):
+            raise ValueError(
+                "Cada caso debe ser una tupla de dos elementos (condición, resultado)"
+            ) from None
+
+        if _evaluar_condicion(condicion, f"condicion_{indice}"):
+            return _evaluar_resultado(resultado)
+
+    if por_defecto is not None:
+        return _evaluar_resultado(por_defecto)
     return None
 
 
@@ -206,6 +255,7 @@ __all__ = [
     "xor_multiple",
     "entonces",
     "si_no",
+    "condicional",
     "todas",
     "alguna",
     "ninguna",

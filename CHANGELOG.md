@@ -18,6 +18,7 @@
 - `corelibs.texto` suma `prefijo_comun` y `sufijo_comun`, inspirados en Kotlin y
   Swift, con opciones para ignorar mayúsculas o normalizar Unicode; se
   reexportan en la biblioteca estándar y cuentan con versiones nativas para JavaScript.
+- `corelibs.logica` añade `condicional`, un selector de ramas inspirado en ``when`` (Kotlin) y `case_when` (R) con evaluación perezosa; se reexporta en la biblioteca estándar junto con ejemplos y pruebas actualizadas.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.

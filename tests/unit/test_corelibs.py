@@ -361,6 +361,54 @@ def test_logica_entonces_si_no_perezoso():
         core.paridad([True, "no bool"])
 
 
+def test_logica_condicional_evalua_en_orden():
+    eventos: list[str] = []
+
+    def condicion(nombre: str, resultado: bool):
+        def _callable() -> bool:
+            eventos.append(nombre)
+            return resultado
+
+        return _callable
+
+    def resultado(nombre: str, valor: str):
+        def _callable() -> str:
+            eventos.append(nombre)
+            return valor
+
+        return _callable
+
+    valor = core.condicional(
+        (condicion("c1", False), resultado("r1", "primero")),
+        (condicion("c2", True), resultado("r2", "segundo")),
+        (condicion("c3", True), resultado("r3", "tercero")),
+    )
+
+    assert valor == "segundo"
+    assert eventos == ["c1", "c2", "r2"]
+
+
+def test_logica_condicional_por_defecto_perezoso():
+    condicion = MagicMock(return_value=False)
+    resultado = MagicMock(return_value="no usado")
+    por_defecto = MagicMock(return_value="defecto")
+
+    obtenido = core.condicional((condicion, resultado), por_defecto=por_defecto)
+
+    assert obtenido == "defecto"
+    condicion.assert_called_once_with()
+    resultado.assert_not_called()
+    por_defecto.assert_called_once_with()
+
+
+def test_logica_condicional_valida_entradas():
+    with pytest.raises(ValueError):
+        core.condicional((True,), (False, lambda: None))
+
+    with pytest.raises(TypeError):
+        core.condicional((lambda: 1, lambda: "valor"))
+
+
 def test_archivo_funcs(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     nombre = "f.txt"

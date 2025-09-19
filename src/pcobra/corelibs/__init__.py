@@ -64,6 +64,7 @@ from corelibs.logica import (
     xor_multiple,
     entonces,
     si_no,
+    condicional as _condicional,
     todas,
     alguna,
     ninguna,
@@ -169,6 +170,10 @@ def grupo_tareas() -> AsyncContextManager[Any]:
     return _grupo_tareas_impl()
 
 
+#: Evaluador de ramas inspirado en ``when`` de Kotlin y ``case_when`` de R.
+condicional = _condicional
+
+
 __all__ = [
     "mayusculas",
     "minusculas",
@@ -229,6 +234,7 @@ __all__ = [
     "xor_multiple",
     "entonces",
     "si_no",
+    "condicional",
     "todas",
     "alguna",
     "ninguna",

@@ -67,3 +67,39 @@ def test_entonces_si_no_perezoso():
     accion.return_value = None
     assert logica.si_no(True, accion) is None
     accion.assert_not_called()
+
+
+def test_condicional_evalua_en_orden():
+    condicion1 = MagicMock(return_value=False)
+    condicion2 = MagicMock(return_value=True)
+    condicion3 = MagicMock(return_value=True)
+    resultado1 = MagicMock(return_value="uno")
+    resultado2 = MagicMock(return_value="dos")
+    resultado3 = MagicMock(return_value="tres")
+
+    valor = logica.condicional(
+        (condicion1, resultado1),
+        (condicion2, resultado2),
+        (condicion3, resultado3),
+    )
+
+    assert valor == "dos"
+    condicion1.assert_called_once_with()
+    condicion2.assert_called_once_with()
+    condicion3.assert_not_called()
+    resultado1.assert_not_called()
+    resultado2.assert_called_once_with()
+    resultado3.assert_not_called()
+
+
+def test_condicional_por_defecto_perezoso():
+    condicion = MagicMock(return_value=False)
+    resultado = MagicMock(return_value="omitido")
+    por_defecto = MagicMock(return_value="valor")
+
+    obtenido = logica.condicional((condicion, resultado), por_defecto=por_defecto)
+
+    assert obtenido == "valor"
+    condicion.assert_called_once_with()
+    resultado.assert_not_called()
+    por_defecto.assert_called_once_with()
