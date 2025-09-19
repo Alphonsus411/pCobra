@@ -49,6 +49,25 @@ def test_prefijos_y_sufijos():
     assert texto.quitar_sufijo("archivo.log", ".gz") == "archivo.log"
 
 
+def test_prefijo_y_sufijo_comun():
+    assert texto.prefijo_comun("mañana", "Mañanita", ignorar_mayusculas=True) == "mañan"
+    assert texto.prefijo_comun(
+        "Canción",
+        "cancio\u0301n",
+        ignorar_mayusculas=True,
+        normalizar="NFC",
+    ) == "Canción"
+    assert texto.prefijo_comun("東京タワー", "東京ドーム") == "東京"
+    assert texto.sufijo_comun("astronomía", "economía") == "onomía"
+    assert texto.sufijo_comun(
+        "Αθηναϊκό",
+        "Λαϊκό",
+        ignorar_mayusculas=True,
+        normalizar="NFC",
+    ) == "αϊκό"
+    assert texto.sufijo_comun("hola", "mundo") == ""
+
+
 def test_dividir_lineas_y_contar():
     contenido = "uno\r\ndos\n"
     assert texto.dividir_lineas(contenido) == ["uno", "dos"]

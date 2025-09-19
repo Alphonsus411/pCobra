@@ -604,7 +604,7 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `reemplazar`, `empieza_con`, `termina_con` e `incluye` para búsquedas y sustituciones expresivas.
 - `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
-- `quitar_prefijo` y `quitar_sufijo` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y los patrones `startsWith`/`endsWith` + `slice` en JavaScript.
+- `quitar_prefijo`, `quitar_sufijo`, `prefijo_comun` y `sufijo_comun` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y añaden equivalentes a `commonPrefixWith`/`commonSuffixWith` de Kotlin o `String.commonPrefix`/`String.commonSuffix` de Swift con opciones para ignorar mayúsculas y normalizar Unicode.
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
 - `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.
 - `envolver_texto` ajusta párrafos con sangrías iniciales y posteriores, y `acortar_texto` resume frases al estilo de `textwrap.shorten` añadiendo un marcador configurable.
@@ -623,12 +623,15 @@ imprimir(core.dividir_derecha("uno-dos-tres", "-", 1))  # ['uno-dos', 'tres']
 imprimir(texto.quitar_acentos("Canción"))       # 'Cancion'
 imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
 imprimir(core.quitar_prefijo("🧪Prueba", "🧪"))      # 'Prueba'
+imprimir(core.prefijo_comun("Canción", "cancio\u0301n", ignorar_mayusculas=True, normalizar="NFC"))
+# 'Canción'
 imprimir(core.centrar_texto("cobra", 9, "*"))        # '**cobra**'
 imprimir(core.minusculas_casefold("Straße"))         # 'strasse'
 imprimir(core.indentar_texto("uno\n dos", "-> "))   # '-> uno\n->  dos'
 imprimir(texto.envolver_texto("Cobra facilita scripts portables", 18, como_texto=True))
 imprimir(core.particionar_texto("ruta/archivo.ext", "/"))  # ('ruta', '/', 'archivo.ext')
 imprimir(texto.particionar_derecha("archivo.tar.gz", "."))  # ('archivo.tar', '.', 'gz')
+imprimir(texto.sufijo_comun("astronomía", "economía"))      # 'onomía'
 ```
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.

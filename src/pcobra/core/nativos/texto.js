@@ -22,6 +22,13 @@ function repetirRelleno(relleno, longitud) {
     return relleno.repeat(repeticiones).slice(0, longitud);
 }
 
+function normalizarOpcional(texto, forma) {
+    if (forma == null) {
+        return texto;
+    }
+    return normalizar_unicode(texto, forma);
+}
+
 function esEspacio(caracter) {
     return /\s/u.test(caracter);
 }
@@ -352,6 +359,49 @@ export function reemplazar(texto, antiguo, nuevo, conteo = null) {
     }
     resultado += texto.slice(inicio);
     return resultado;
+}
+
+export function prefijo_comun(texto, otro, opciones = {}) {
+    const { ignorar_mayusculas = false, normalizar = null } = opciones;
+    const baseTexto = normalizarOpcional(texto, normalizar);
+    const baseOtro = normalizarOpcional(otro, normalizar);
+    const compararTexto = ignorar_mayusculas
+        ? baseTexto.toLocaleLowerCase()
+        : baseTexto;
+    const compararOtro = ignorar_mayusculas
+        ? baseOtro.toLocaleLowerCase()
+        : baseOtro;
+    const limite = Math.min(compararTexto.length, compararOtro.length);
+    let indice = 0;
+    while (indice < limite && compararTexto[indice] === compararOtro[indice]) {
+        indice += 1;
+    }
+    return baseTexto.slice(0, indice);
+}
+
+export function sufijo_comun(texto, otro, opciones = {}) {
+    const { ignorar_mayusculas = false, normalizar = null } = opciones;
+    const baseTexto = normalizarOpcional(texto, normalizar);
+    const baseOtro = normalizarOpcional(otro, normalizar);
+    const compararTexto = ignorar_mayusculas
+        ? baseTexto.toLocaleLowerCase()
+        : baseTexto;
+    const compararOtro = ignorar_mayusculas
+        ? baseOtro.toLocaleLowerCase()
+        : baseOtro;
+    const limite = Math.min(compararTexto.length, compararOtro.length);
+    let indice = 0;
+    while (
+        indice < limite &&
+        compararTexto[compararTexto.length - indice - 1] ===
+            compararOtro[compararOtro.length - indice - 1]
+    ) {
+        indice += 1;
+    }
+    if (indice === 0) {
+        return "";
+    }
+    return baseTexto.slice(baseTexto.length - indice);
 }
 
 function comienzaCon(texto, prefijos) {

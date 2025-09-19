@@ -320,6 +320,40 @@ Las funciones ``entero_a_base`` y ``entero_desde_base`` admiten números con sig
 y validan que la base esté en el intervalo ``[2, 36]``. El argumento opcional
 ``alfabeto`` permite sincronizar el conjunto de dígitos en ambas direcciones.
 
+Manipulación de texto con ``corelibs.texto``
+-------------------------------------------
+
+El módulo :mod:`pcobra.corelibs.texto` ofrece utilidades Unicode listas para
+usar en Cobra. Entre las más destacadas se encuentran:
+
+* ``quitar_espacios``, ``dividir`` y ``unir`` para limpiar y recomponer
+  cadenas, con soporte para separadores personalizados.
+* ``quitar_prefijo`` y ``quitar_sufijo`` replican
+  ``str.removeprefix``/``str.removesuffix`` de Python, mientras que
+  ``prefijo_comun`` y ``sufijo_comun`` añaden equivalentes a
+  ``commonPrefixWith``/``commonSuffixWith`` de Kotlin o
+  ``String.commonPrefix``/``String.commonSuffix`` de Swift. Ambas admiten
+  ignorar mayúsculas y normalizar Unicode antes de comparar.
+* ``normalizar_unicode`` acepta las formas ``NFC``, ``NFD``, ``NFKC`` y
+  ``NFKD`` para unificar representaciones.
+* ``indentar_texto``/``desindentar_texto``, ``envolver_texto`` y
+  ``acortar_texto`` envuelven párrafos al estilo de ``textwrap``.
+* Las comprobaciones ``es_alfabetico``, ``es_alfa_numerico``, ``es_decimal``,
+  ``es_numerico``, ``es_identificador``, ``es_imprimible``, ``es_ascii``,
+  ``es_mayusculas``, ``es_minusculas`` y ``es_espacio`` reflejan los métodos
+  ``str.is*`` de Python y se exponen también desde
+  :mod:`standard_library.texto` junto con utilidades como ``quitar_acentos``.
+
+.. code-block:: python
+
+   import pcobra.corelibs as core
+   import standard_library.texto as texto
+
+   print(core.quitar_prefijo("🧪Prueba", "🧪"))
+   print(core.prefijo_comun("Canción", "cancio\u0301n", ignorar_mayusculas=True, normalizar="NFC"))
+   print(texto.sufijo_comun("astronomía", "economía"))
+   print(texto.es_palindromo("Sé verlas al revés"))
+
 Transpilación y ejecución
 -------------------------
 
