@@ -3,10 +3,40 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import suppress
-from typing import Any, AsyncIterator, Awaitable, Callable, Coroutine, Iterable, TypeVar
+from contextlib import asynccontextmanager, suppress
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Iterable,
+    TypeVar,
+)
 
 T = TypeVar("T")
+
+try:  # pragma: no cover - Python >= 3.11 lo define de forma nativa
+    ExceptionGroup
+except NameError:  # pragma: no cover - compatibilidad para Python < 3.11
+    class ExceptionGroup(Exception):
+        """Implementación mínima para entornos sin ``ExceptionGroup``."""
+
+        def __init__(self, mensaje: str, excepciones: Iterable[BaseException]):
+            super().__init__(mensaje)
+            self.exceptions = list(excepciones)
+
+
+if TYPE_CHECKING:  # pragma: no cover - solo para tipado
+    from typing import Protocol
+
+    class _TaskGroupProtocol(Protocol):
+        def create_task(
+            self, corutina: Coroutine[Any, Any, Any], *, name: str | None = ...
+        ) -> asyncio.Task[Any]:
+            ...
+
 
 
 def _asegurar_tarea(
@@ -166,6 +196,100 @@ async def esperar_timeout(
             tarea.cancel()
             with suppress(asyncio.CancelledError):
                 await tarea
+
+
+@asynccontextmanager
+async def grupo_tareas() -> AsyncIterator["_TaskGroupProtocol"]:
+    """Gestiona un grupo de tareas que se cancelan juntas ante errores.
+
+    El manejador aprovecha :class:`asyncio.TaskGroup` en Python 3.11+ y ofrece
+    una implementación compatible para versiones anteriores. Todas las tareas
+    lanzadas mediante ``create_task`` se esperan al abandonar el contexto y,
+    cuando alguna falla, el resto se cancela propagando un
+    :class:`ExceptionGroup` con los errores capturados.
+    """
+
+    if hasattr(asyncio, "TaskGroup"):
+        async with asyncio.TaskGroup() as grupo_real:
+            yield grupo_real
+        return
+
+    tareas: set[asyncio.Task[Any]] = set()
+
+    class _GrupoCompat:
+        def create_task(
+            self, corutina: Coroutine[Any, Any, Any], *, name: str | None = None
+        ) -> asyncio.Task[Any]:
+            if not asyncio.iscoroutine(corutina):
+                raise TypeError("grupo_tareas.create_task requiere una corrutina")
+            tarea = (
+                asyncio.create_task(corutina, name=name)
+                if name is not None
+                else asyncio.create_task(corutina)
+            )
+            tareas.add(tarea)
+            tarea.add_done_callback(tareas.discard)
+            return tarea
+
+    async def _esperar_finalizacion(
+        cancelar: bool = False,
+    ) -> tuple[list[BaseException], list[BaseException]]:
+        pendientes = set(tareas)
+        errores: list[BaseException] = []
+        cancelaciones: list[BaseException] = []
+
+        if not pendientes:
+            return errores, cancelaciones
+
+        if cancelar:
+            for tarea in pendientes:
+                tarea.cancel()
+            modo = asyncio.ALL_COMPLETED
+        else:
+            modo = asyncio.FIRST_EXCEPTION
+
+        while pendientes:
+            terminadas, pendientes = await asyncio.wait(
+                pendientes, return_when=modo
+            )
+            for tarea in terminadas:
+                try:
+                    await tarea
+                except asyncio.CancelledError as exc_cancel:
+                    cancelaciones.append(exc_cancel)
+                except BaseException as exc_error:
+                    errores.append(exc_error)
+
+            if pendientes:
+                if cancelar or errores:
+                    for tarea in pendientes:
+                        tarea.cancel()
+                    modo = asyncio.ALL_COMPLETED
+                else:
+                    modo = asyncio.FIRST_EXCEPTION
+
+        return errores, cancelaciones
+
+    grupo = _GrupoCompat()
+    try:
+        yield grupo
+        errores, _ = await _esperar_finalizacion()
+        if errores:
+            raise ExceptionGroup("Errores en grupo de tareas", errores) from None
+    except asyncio.CancelledError:
+        await _esperar_finalizacion(cancelar=True)
+        raise
+    except BaseException as exc:
+        errores, cancelaciones = await _esperar_finalizacion(cancelar=True)
+        if errores:
+            raise ExceptionGroup("Errores en grupo de tareas", [exc, *errores]) from None
+        if cancelaciones:
+            raise ExceptionGroup(
+                "Errores en grupo de tareas", [exc, *cancelaciones]
+            ) from None
+        raise
+    finally:
+        tareas.clear()
 
 
 def crear_tarea(

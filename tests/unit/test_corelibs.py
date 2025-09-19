@@ -1,3 +1,4 @@
+import asyncio
 import math
 import operator
 import os
@@ -872,6 +873,46 @@ def test_transpile_coleccion():
     )
     assert py == py_exp
     assert js == js_exp
+
+
+@pytest.mark.asyncio
+async def test_grupo_tareas_propaga_errores():
+    async def tarea_exitosa():
+        await asyncio.sleep(0)
+        return "ok"
+
+    async def tarea_fallida():
+        await asyncio.sleep(0)
+        raise RuntimeError("fallo intencional")
+
+    with pytest.raises(ExceptionGroup) as excinfo:
+        async with core.grupo_tareas() as grupo:
+            grupo.create_task(tarea_exitosa())
+            grupo.create_task(tarea_fallida())
+
+    assert any(isinstance(error, RuntimeError) for error in excinfo.value.exceptions)
+
+
+@pytest.mark.asyncio
+async def test_grupo_tareas_cancela_pendientes():
+    cancelado = asyncio.Event()
+
+    async def tarea_larga():
+        try:
+            await asyncio.sleep(10)
+        except asyncio.CancelledError:
+            cancelado.set()
+            raise
+
+    async def tarea_que_falla():
+        raise ValueError("boom")
+
+    with pytest.raises(ExceptionGroup):
+        async with core.grupo_tareas() as grupo:
+            grupo.create_task(tarea_larga())
+            grupo.create_task(tarea_que_falla())
+
+    assert cancelado.is_set()
 
 
 def test_transpile_seguridad():

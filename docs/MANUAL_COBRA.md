@@ -250,6 +250,8 @@ varias tareas sin perder legibilidad:
   cancela limpiamente si se supera el límite.
 - `crear_tarea` centraliza la creación de tareas para evitar fugas de corrutinas
   al integrar Cobra con bibliotecas Python.
+- `grupo_tareas` replica `asyncio.TaskGroup`, cancelando las tareas hermanas
+  cuando una falla y manteniendo compatibilidad con Python 3.10.
 
 Puedes importarlas desde `pcobra.corelibs` directamente:
 
@@ -268,6 +270,24 @@ estados = await recolectar_resultados(tarea_exitosa(), tarea_que_falla())
 async for valor in iterar_completadas(tarea_lenta(), tarea_rapida()):
     print("llegó:", valor)
 ```
+
+También puedes coordinar varias corrutinas con un contexto compartido:
+
+```python
+from pcobra.corelibs import grupo_tareas
+
+
+async def procesar_datos():
+    async with grupo_tareas() as tareas:
+        tareas.create_task(obtener_url_async("https://example.com/api"))
+        tareas.create_task(
+            descargar_archivo("https://example.com/logo.png", "logo.png")
+        )
+        # Al fallar una, el resto se cancela y se propaga un ExceptionGroup.
+```
+
+Este manejador también está disponible como `standard_library.grupo_tareas` para
+los programas escritos íntegramente en Cobra.
 
 La combinación de estas utilidades facilita alternar entre estilos típicos de
 Python y de JavaScript sin perder características de ninguno: se conservan las

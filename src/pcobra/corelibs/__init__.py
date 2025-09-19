@@ -1,5 +1,7 @@
 """Colección de utilidades estándar para Cobra."""
 
+from typing import Any, AsyncContextManager
+
 from corelibs.texto import (
     mayusculas,
     minusculas,
@@ -147,7 +149,21 @@ from corelibs.asincrono import (
     esperar_timeout,
     crear_tarea,
     mapear_concurrencia,
+    grupo_tareas as _grupo_tareas_impl,
 )
+
+
+def grupo_tareas() -> AsyncContextManager[Any]:
+    """Contexto asíncrono inspirado en ``asyncio.TaskGroup``.
+
+    Reexporta :func:`pcobra.corelibs.asincrono.grupo_tareas`, garantizando un
+    administrador que coordina las tareas creadas dentro del bloque y cancela
+    las restantes cuando alguna falla, incluso en versiones antiguas de
+    ``asyncio`` donde ``TaskGroup`` no está disponible.
+    """
+
+    return _grupo_tareas_impl()
+
 
 __all__ = [
     "mayusculas",
@@ -290,6 +306,7 @@ __all__ = [
     "esperar_timeout",
     "crear_tarea",
     "mapear_concurrencia",
+    "grupo_tareas",
 ]
 
 quitar_prefijo.__doc__ = (

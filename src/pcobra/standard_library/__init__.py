@@ -88,6 +88,7 @@ from standard_library.texto import (
 )
 from standard_library.numero import es_finito, es_infinito, es_nan, copiar_signo
 from standard_library.util import es_nulo, es_vacio, rel, repetir
+from standard_library.asincrono import grupo_tareas
 
 __all__: list[str] = [
     "leer",
@@ -169,6 +170,7 @@ __all__: list[str] = [
     "imprimir_aviso",
     "iniciar_gui",
     "iniciar_gui_idle",
+    "grupo_tareas",
 ]
 
 
