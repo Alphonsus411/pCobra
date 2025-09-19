@@ -407,6 +407,54 @@ def clamp(valor, minimo, maximo):
     return max(min(valor, maximo), minimo)
 
 
+def interpolar(inicio, fin, factor):
+    """Interpola linealmente de ``inicio`` a ``fin`` como ``lerp`` en Rust/Kotlin."""
+
+    inicio_float = _a_float(inicio, "interpolar")
+    fin_float = _a_float(fin, "interpolar")
+    factor_float = _a_float(factor, "interpolar")
+
+    if math.isnan(inicio_float) or math.isnan(fin_float) or math.isnan(factor_float):
+        return math.nan
+
+    if math.isinf(factor_float):
+        factor_normalizado = 1.0 if factor_float > 0 else 0.0
+    else:
+        factor_normalizado = max(0.0, min(1.0, factor_float))
+
+    if factor_normalizado <= 0.0:
+        return inicio_float
+    if factor_normalizado >= 1.0:
+        return fin_float
+
+    return inicio_float + (fin_float - inicio_float) * factor_normalizado
+
+
+def envolver_modular(valor, modulo):
+    """Calcula el residuo euclidiano, igual que ``rem_euclid`` o ``mod``."""
+
+    if modulo == 0:
+        raise ZeroDivisionError("El módulo no puede ser cero")
+
+    if isinstance(valor, bool):
+        valor = int(valor)
+    if isinstance(modulo, bool):
+        modulo = int(modulo)
+
+    if isinstance(valor, int) and isinstance(modulo, int):
+        return valor % modulo
+
+    valor_float = _a_float(valor, "envolver_modular")
+    modulo_float = _a_float(modulo, "envolver_modular")
+    if modulo_float == 0.0:
+        raise ZeroDivisionError("El módulo no puede ser cero")
+
+    resultado = valor_float % modulo_float
+    if resultado == 0.0:
+        return math.copysign(0.0, modulo_float)
+    return resultado
+
+
 def aleatorio(inicio: float = 0.0, fin: float = 1.0, semilla: int | None = None) -> float:
     """Genera un número aleatorio uniforme entre ``inicio`` y ``fin``."""
 

@@ -75,6 +75,58 @@ export function clamp(valor, minimo, maximo) {
     return Math.min(Math.max(valor, minimo), maximo);
 }
 
+export function interpolar(inicio, fin, factor) {
+    const inicioNumero = _aNumero("interpolar", inicio);
+    const finNumero = _aNumero("interpolar", fin);
+    const factorNumero = _aNumero("interpolar", factor);
+
+    if (
+        Number.isNaN(inicioNumero)
+        || Number.isNaN(finNumero)
+        || Number.isNaN(factorNumero)
+    ) {
+        return Number.NaN;
+    }
+
+    if (!Number.isFinite(factorNumero)) {
+        return factorNumero > 0 ? finNumero : inicioNumero;
+    }
+    if (factorNumero <= 0) {
+        return inicioNumero;
+    }
+    if (factorNumero >= 1) {
+        return finNumero;
+    }
+
+    return inicioNumero + (finNumero - inicioNumero) * factorNumero;
+}
+
+export function envolver_modular(valor, modulo) {
+    const divisor = _aNumero("envolver_modular", modulo);
+    if (divisor === 0) {
+        throw new Error("El módulo no puede ser cero");
+    }
+    const numero = _aNumero("envolver_modular", valor);
+    let resto = numero % divisor;
+
+    if (
+        (resto > 0 && divisor > 0)
+        || (resto < 0 && divisor < 0)
+    ) {
+        return resto;
+    }
+
+    if (resto === 0) {
+        return divisor < 0 || Object.is(divisor, -0) ? -0 : 0;
+    }
+
+    resto += divisor;
+    if (resto === 0) {
+        return divisor < 0 || Object.is(divisor, -0) ? -0 : 0;
+    }
+    return resto;
+}
+
 export function es_finito(valor) {
     const numero = _aNumero("es_finito", valor);
     return Number.isFinite(numero);

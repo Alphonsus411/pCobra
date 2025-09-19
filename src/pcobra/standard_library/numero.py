@@ -8,7 +8,14 @@ from pcobra.corelibs import numero as _numero
 
 RealLike = SupportsFloat | int | float
 
-__all__ = ["es_finito", "es_infinito", "es_nan", "copiar_signo"]
+__all__ = [
+    "es_finito",
+    "es_infinito",
+    "es_nan",
+    "copiar_signo",
+    "interpolar",
+    "envolver_modular",
+]
 
 
 def es_finito(valor: RealLike) -> bool:
@@ -33,3 +40,15 @@ def copiar_signo(magnitud: RealLike, signo: RealLike) -> float:
     """Devuelve ``magnitud`` con el signo de ``signo`` manteniendo ceros con signo."""
 
     return _numero.copiar_signo(magnitud, signo)
+
+
+def interpolar(inicio: RealLike, fin: RealLike, factor: RealLike) -> float:
+    """Interpola linealmente siguiendo ``lerp`` de Rust/Kotlin."""
+
+    return _numero.interpolar(inicio, fin, factor)
+
+
+def envolver_modular(valor: RealLike, modulo: RealLike) -> float | int:
+    """Aplica una envoltura modular como ``rem_euclid``/``mod``."""
+
+    return _numero.envolver_modular(valor, modulo)
