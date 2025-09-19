@@ -20,8 +20,12 @@ from standard_library.datos import (
     desplegar_tabla,
     leer_csv,
     leer_excel,
+    leer_feather,
     leer_json,
+    leer_parquet,
     escribir_excel,
+    escribir_feather,
+    escribir_parquet,
     seleccionar_columnas,
 )
 from standard_library.fecha import hoy, formatear, sumar_dias
@@ -137,6 +141,8 @@ __all__: list[str] = [
     "leer_csv",
     "leer_json",
     "leer_excel",
+    "leer_parquet",
+    "leer_feather",
     "describir",
     "seleccionar_columnas",
     "filtrar",
@@ -145,6 +151,8 @@ __all__: list[str] = [
     "a_listas",
     "de_listas",
     "escribir_excel",
+    "escribir_parquet",
+    "escribir_feather",
     "mostrar_tabla",
     "mostrar_columnas",
     "mostrar_panel",
@@ -163,6 +171,8 @@ __all__: list[str] = [
 leer_csv: Callable[..., list[dict[str, Any]]]
 leer_json: Callable[..., list[dict[str, Any]]]
 leer_excel: Callable[..., list[dict[str, Any]]]
+leer_parquet: Callable[..., list[dict[str, Any]]]
+leer_feather: Callable[..., list[dict[str, Any]]]
 describir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]]
 seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
 filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
@@ -171,6 +181,8 @@ agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[An
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
 escribir_excel: Callable[..., None]
+escribir_parquet: Callable[..., None]
+escribir_feather: Callable[..., None]
 mostrar_tabla: Callable[..., Any]
 mostrar_columnas: Callable[..., Any]
 mostrar_panel: Callable[..., Any]

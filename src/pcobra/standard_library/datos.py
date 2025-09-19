@@ -7,6 +7,7 @@ consumidas directamente desde Cobra sin depender de objetos complejos.
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 
@@ -15,6 +16,39 @@ import pandas as pd
 
 Registro = dict[str, Any]
 Tabla = list[Registro]
+
+
+def _modulo_disponible(nombre: str) -> bool:
+    """Devuelve ``True`` si el módulo indicado puede importarse."""
+
+    return importlib.util.find_spec(nombre) is not None
+
+
+def _seleccionar_motor_parquet(engine: str | None) -> str:
+    """Resuelve el motor a utilizar para leer o escribir archivos Parquet."""
+
+    if engine is not None:
+        if not _modulo_disponible(engine):
+            raise ValueError(
+                "Para trabajar con archivos Parquet usando el motor "
+                f"'{engine}' es necesario instalar el paquete correspondiente."
+            )
+        return engine
+
+    for candidato in ("pyarrow", "fastparquet"):
+        if _modulo_disponible(candidato):
+            return candidato
+
+    raise ValueError(
+        "No se encontró un motor compatible para Parquet. Instala 'pyarrow' o 'fastparquet'."
+    )
+
+
+def _asegurar_pyarrow(accion: str) -> None:
+    """Comprueba la disponibilidad de ``pyarrow`` y lanza un error descriptivo."""
+
+    if not _modulo_disponible("pyarrow"):
+        raise ValueError(f"No fue posible {accion}: instala el paquete opcional 'pyarrow'.")
 
 
 def _a_dataframe(datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame) -> pd.DataFrame:
@@ -198,8 +232,89 @@ def escribir_excel(
         raise ValueError(
             "No fue posible escribir el Excel: falta el motor requerido (por ejemplo 'openpyxl' o 'xlsxwriter')."
         ) from exc
+
+
+def leer_parquet(
+    ruta: str | Path,
+    *,
+    columnas: Sequence[str] | None = None,
+    engine: str | None = None,
+) -> Tabla:
+    """Lee un archivo Parquet y devuelve una lista de registros."""
+
+    ruta_parquet = Path(ruta)
+    motor = _seleccionar_motor_parquet(engine)
+    try:
+        dataframe = pd.read_parquet(ruta_parquet, columns=columnas, engine=motor)
+    except FileNotFoundError as exc:
+        raise ValueError(f"No fue posible leer el Parquet: {exc}") from exc
     except (OSError, ValueError) as exc:
-        raise ValueError(f"No fue posible escribir el Excel: {exc}") from exc
+        raise ValueError(f"No fue posible leer el Parquet: {exc}") from exc
+
+    return _sanear_registros(dataframe.to_dict(orient="records"))
+
+
+def escribir_parquet(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    ruta: str | Path,
+    *,
+    engine: str | None = None,
+    incluir_indice: bool = False,
+    compresion: str | None = None,
+) -> None:
+    """Escribe ``datos`` en formato Parquet creando carpetas si es necesario."""
+
+    df = _a_dataframe(datos)
+    ruta_parquet = Path(ruta)
+    ruta_parquet.parent.mkdir(parents=True, exist_ok=True)
+    motor = _seleccionar_motor_parquet(engine)
+
+    try:
+        df.to_parquet(ruta_parquet, engine=motor, index=incluir_indice, compression=compresion)
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"No fue posible escribir el Parquet: {exc}") from exc
+
+
+def leer_feather(
+    ruta: str | Path,
+    *,
+    columnas: Sequence[str] | None = None,
+) -> Tabla:
+    """Lee un archivo Feather y devuelve sus registros como diccionarios."""
+
+    ruta_feather = Path(ruta)
+    _asegurar_pyarrow("leer el archivo Feather")
+    try:
+        dataframe = pd.read_feather(ruta_feather, columns=columnas)
+    except FileNotFoundError as exc:
+        raise ValueError(f"No fue posible leer el Feather: {exc}") from exc
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"No fue posible leer el Feather: {exc}") from exc
+
+    return _sanear_registros(dataframe.to_dict(orient="records"))
+
+
+def escribir_feather(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    ruta: str | Path,
+    *,
+    incluir_indice: bool = False,
+    compresion: str | None = None,
+) -> None:
+    """Escribe ``datos`` en formato Feather usando ``pyarrow`` como backend."""
+
+    df = _a_dataframe(datos)
+    if incluir_indice:
+        df = df.reset_index()
+
+    ruta_feather = Path(ruta)
+    ruta_feather.parent.mkdir(parents=True, exist_ok=True)
+    _asegurar_pyarrow("escribir el archivo Feather")
+
+    try:
+        df.to_feather(ruta_feather, compression=compresion)
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"No fue posible escribir el Feather: {exc}") from exc
 
 
 def describir(datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame) -> Registro:
