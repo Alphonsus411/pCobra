@@ -9,6 +9,7 @@
 - Actualización de `holobit-sdk` a la versión 1.0.9 y ajuste de `graficar`/`proyectar` al nuevo API.
 - Ampliación de `corelibs.texto` y nuevas utilidades en `standard_library.texto` con soporte Unicode y pruebas asociadas.
 - Validadores `es_*` alineados con `str.is*` disponibles tanto en `pcobra.corelibs.texto` como en `standard_library.texto`, con equivalentes nativos para JavaScript.
+- `standard_library.datos` incorpora lectura y escritura de archivos Parquet y Feather detectando automáticamente los motores opcionales requeridos.
 
 ## v10.0.9 - 2025-08-17
 - Ajuste en `SafeUnpickler` para aceptar los módulos `core.ast_nodes` y `cobra.core.ast_nodes`.

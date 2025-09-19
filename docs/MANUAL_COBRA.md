@@ -738,6 +738,8 @@ assert si_no(True, lambda: "omitido") is None  # La función no se ejecuta
 El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que permite trabajar con tablas desde Cobra sin exponerse a los detalles internos del `DataFrame`. Las funciones devuelven listas de diccionarios o diccionarios de listas, estructuras fáciles de manipular desde Cobra o al transpirar a Python.
 
 - `leer_csv` y `leer_json` cargan archivos en disco y devuelven registros con valores `None` cuando la fuente contiene datos perdidos.
+- `leer_parquet` y `escribir_parquet` manipulan archivos en formato columnar detectando automáticamente si hay motores como `pyarrow` o `fastparquet` disponibles.
+- `leer_feather` y `escribir_feather` intercambian datos con otras herramientas que usan el formato Feather siempre que `pyarrow` esté instalado.
 - `describir` calcula estadísticas básicas (`count`, `mean`, `std`, percentiles) para cada columna.
 - `seleccionar_columnas` y `filtrar` permiten aislar subconjuntos antes de seguir procesando los datos.
 - `agrupar_y_resumir` aplica agregaciones (`sum`, `mean`, funciones personalizadas) agrupando por columnas clave.

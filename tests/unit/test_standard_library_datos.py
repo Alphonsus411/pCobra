@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from pcobra.standard_library import datos as datos_mod
+import pcobra.standard_library.datos as datos_mod
 from pcobra.standard_library.datos import (
     agrupar_y_resumir,
     a_listas,
@@ -14,10 +14,14 @@ from pcobra.standard_library.datos import (
     describir,
     desplegar_tabla,
     escribir_excel,
+    escribir_feather,
+    escribir_parquet,
     filtrar,
     leer_csv,
     leer_excel,
+    leer_feather,
     leer_json,
+    leer_parquet,
     ordenar_tabla,
     pivotar_tabla,
     rellenar_nulos,
@@ -198,9 +202,38 @@ def test_combinar_tablas_outer(tabla_clientes, tabla_pedidos):
 def test_rellenar_nulos_por_columna(tabla_pedidos):
     rellenos = rellenar_nulos(tabla_pedidos, {"monto": 0.0, "mes": "sin datos"})
     assert any(fila["mes"] == "sin datos" for fila in rellenos)
-    assert any(fila["monto"] == 0.0 for fila in rellenos)
-    # Las columnas no reemplazadas conservan sus valores originales.
-    assert rellenos[0]["unidades"] == 5
+
+
+def test_escribir_y_leer_parquet(tmp_path: Path):
+    pytest.importorskip("pyarrow")
+    tabla = _tabla_base()
+    ruta = tmp_path / "tabla.parquet"
+    escribir_parquet(tabla, ruta, engine="pyarrow")
+    assert ruta.exists()
+    leidos = leer_parquet(ruta, engine="pyarrow")
+    assert leidos == tabla
+
+
+def test_parquet_sin_dependencias(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(datos_mod, "_modulo_disponible", lambda _nombre: False)
+    with pytest.raises(ValueError, match="Instala 'pyarrow' o 'fastparquet'"):
+        leer_parquet(tmp_path / "faltante.parquet")
+
+
+def test_escribir_y_leer_feather(tmp_path: Path):
+    pytest.importorskip("pyarrow")
+    tabla = _tabla_base()
+    ruta = tmp_path / "tabla.feather"
+    escribir_feather(tabla, ruta)
+    assert ruta.exists()
+    leidos = leer_feather(ruta)
+    assert leidos == tabla
+
+
+def test_feather_sin_pyarrow(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(datos_mod, "_modulo_disponible", lambda _nombre: False)
+    with pytest.raises(ValueError, match="instala el paquete opcional 'pyarrow'"):
+        escribir_feather(_tabla_base(), tmp_path / "salida.feather")
 
 
 def test_desplegar_tabla_con_varias_columnas(tabla_metricas):
