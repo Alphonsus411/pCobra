@@ -101,6 +101,8 @@ from standard_library.numero import (
     es_infinito,
     es_nan,
     copiar_signo,
+    signo,
+    limitar,
     interpolar,
     envolver_modular,
 )
@@ -138,6 +140,8 @@ __all__: list[str] = [
     "alguna",
     "es_finito",
     "es_infinito",
+    "signo",
+    "limitar",
     "es_nan",
     "copiar_signo",
     "interpolar",

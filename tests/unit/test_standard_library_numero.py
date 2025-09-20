@@ -51,6 +51,22 @@ def test_copiar_signo():
     assert math.isnan(nan)
 
 
+def test_signo_y_limitar():
+    assert numero.signo(-5) == -1
+    assert numero.signo(0) == 0
+    assert numero.signo(3.5) == pytest.approx(1.0)
+    assert math.copysign(1.0, numero.signo(-0.0)) == -1.0
+    assert math.isnan(numero.signo(float("nan")))
+
+    assert numero.limitar(5, 0, 10) == 5
+    assert numero.limitar(-5, -3, 3) == -3
+    assert numero.limitar(2.5, 0.0, 1.0) == pytest.approx(1.0)
+    assert math.isnan(numero.limitar(1.0, float("nan"), 5.0))
+    assert math.isnan(numero.limitar(float("nan"), 0.0, 1.0))
+    with pytest.raises(ValueError):
+        numero.limitar(0, 2, 1)
+
+
 def test_interpolar_y_envolver_modular():
     assert numero.interpolar(0.0, 10.0, 0.5) == pytest.approx(5.0)
     assert numero.interpolar(-5.0, 5.0, 3.0) == pytest.approx(5.0)
@@ -90,6 +106,8 @@ def test_suma_precisa_precision():
         (numero.es_infinito, (object(),)),
         (numero.es_nan, (b"0",)),
         (numero.copiar_signo, ("1", 1)),
+        (numero.signo, (object(),)),
+        (numero.limitar, (1, "0", 2)),
         (numero.interpolar, (0, 1, "factor")),
         (numero.envolver_modular, (1, "0")),
         (numero.raiz_entera, ("9",)),

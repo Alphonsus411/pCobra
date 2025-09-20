@@ -185,6 +185,24 @@ def test_numero_funcs():
     with pytest.raises(TypeError):
         core.copiar_signo("1", 1)
 
+    assert core.signo(-5) == -1
+    assert core.signo(0) == 0
+    assert core.signo(2.5) == pytest.approx(1.0)
+    assert math.copysign(1.0, core.signo(-0.0)) == -1.0
+    assert math.isnan(core.signo(float("nan")))
+    with pytest.raises(TypeError):
+        core.signo("1")
+
+    assert core.limitar(5, 0, 10) == 5
+    assert core.limitar(-5, -3, 3) == -3
+    assert core.limitar(2.5, 0.0, 1.0) == pytest.approx(1.0)
+    assert math.isnan(core.limitar(float("nan"), 0.0, 1.0))
+    assert math.isnan(core.limitar(1.0, float("nan"), 2.0))
+    with pytest.raises(ValueError):
+        core.limitar(0, 2, 1)
+    with pytest.raises(TypeError):
+        core.limitar(0, 1, "2")
+
     assert core.absoluto(-5) == 5
     assert core.absoluto(-5.2) == pytest.approx(5.2)
     assert core.redondear(3.14159, 2) == pytest.approx(3.14)

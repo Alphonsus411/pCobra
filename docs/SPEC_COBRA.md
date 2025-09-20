@@ -150,3 +150,18 @@ El intérprete define la excepción `ExcepcionCobra`. Al ejecutar un `throw` se 
 
 ## Ejemplos mínimos
 Los ejemplos de `frontend/sintaxis.rst` muestran el uso básico del lenguaje: declaraciones con `var`, funciones `func`, condicionales `si`/`sino`, bucles `mientras` y `para`, holobits, importaciones, manejo de excepciones con `try`/`catch`, hilos y decoradores con `@`.
+
+## Biblioteca estándar
+
+El paquete `standard_library.numero` reexporta los atajos numéricos de
+`pcobra.corelibs` con nombres idiomáticos en español. Entre ellos destacan
+`signo`, que devuelve `-1`, `0` o `1` y preserva ceros con signo o `NaN` cuando
+se trabaja con flotantes, y `limitar`, que valida que `minimo` no supere a
+`maximo` y propaga `NaN` si alguno de los extremos no es un número válido.
+
+```cobra
+import standard_library.numero as numero
+
+var direccion = numero.signo(-0.0)        # -0.0 conserva el signo del cero
+var brillo = numero.limitar(1.5, 0.0, 1.0)  # 1.0: el valor queda dentro del rango
+```
