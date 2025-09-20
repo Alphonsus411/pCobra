@@ -860,6 +860,7 @@ assert estado == "advertencia"
 El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que permite trabajar con tablas desde Cobra sin exponerse a los detalles internos del `DataFrame`. Las funciones devuelven listas de diccionarios o diccionarios de listas, estructuras fáciles de manipular desde Cobra o al transpirar a Python.
 
 - `leer_csv` y `leer_json` cargan archivos en disco y devuelven registros con valores `None` cuando la fuente contiene datos perdidos.
+- `escribir_csv` y `escribir_json` guardan tablas saneadas controlando el separador, la codificación, el modo *append* y la generación de JSON Lines.
 - `leer_parquet` y `escribir_parquet` manipulan archivos en formato columnar detectando automáticamente si hay motores como `pyarrow` o `fastparquet` disponibles.
 - `leer_feather` y `escribir_feather` intercambian datos con otras herramientas que usan el formato Feather siempre que `pyarrow` esté instalado.
 - `describir` calcula estadísticas básicas (`count`, `mean`, `std`, percentiles) para cada columna.
@@ -925,6 +926,29 @@ ventas_limpias_largo = pandas.pivotar_largo(
 columnas = pandas.a_listas(resumen)
 imprimir(columnas['region'])
 ```
+
+```cobra
+# Exportar los resultados saneados a disco
+pandas.escribir_csv(
+    ventas_limpias,
+    'salida/reportes/ventas.csv',
+    separador=';',
+    aniadir=True,
+)
+pandas.escribir_json(
+    ventas_limpias,
+    'salida/reportes/ventas.json',
+    indent=2,
+)
+pandas.escribir_json(
+    ventas_limpias,
+    'salida/reportes/ventas.jsonl',
+    lineas=True,
+    aniadir=True,
+)
+```
+
+> Las funciones de escritura crean las carpetas necesarias, evitan duplicar encabezados al anexar CSV y permiten generar archivos JSON convencionales o en formato JSON Lines sin introducir valores `NaN`.
 
 > **Diferencias entre backends:** las funciones de lectura y estadística solo están disponibles cuando el objetivo de ejecución es Python, ya que dependen de `pandas`. En JavaScript puedes seguir usando `seleccionar_columnas`, `filtrar`, `a_listas` y `de_listas`, pero las operaciones avanzadas dispararán un error explicando la limitación.
 

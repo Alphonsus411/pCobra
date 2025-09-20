@@ -28,8 +28,10 @@ from standard_library.datos import (
     leer_feather,
     leer_json,
     leer_parquet,
+    escribir_csv,
     escribir_excel,
     escribir_feather,
+    escribir_json,
     escribir_parquet,
     seleccionar_columnas,
 )
@@ -191,6 +193,8 @@ __all__: list[str] = [
     "agrupar_y_resumir",
     "a_listas",
     "de_listas",
+    "escribir_csv",
+    "escribir_json",
     "escribir_excel",
     "escribir_parquet",
     "escribir_feather",
@@ -227,6 +231,8 @@ desplegar_tabla: Callable[..., list[dict[str, Any]]]
 agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
+escribir_csv: Callable[..., None]
+escribir_json: Callable[..., None]
 escribir_excel: Callable[..., None]
 escribir_parquet: Callable[..., None]
 escribir_feather: Callable[..., None]

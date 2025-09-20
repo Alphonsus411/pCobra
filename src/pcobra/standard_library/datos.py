@@ -8,6 +8,7 @@ consumidas directamente desde Cobra sin depender de objetos complejos.
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
 
@@ -145,6 +146,144 @@ def leer_json(ruta: str | Path, *, orient: str | None = None, lineas: bool = Fal
     except (ValueError, FileNotFoundError) as exc:
         raise ValueError(f"No fue posible leer el JSON: {exc}") from exc
     return _sanear_registros(df.to_dict(orient="records"))
+
+
+def escribir_csv(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    ruta: str | Path,
+    *,
+    separador: str = ",",
+    encoding: str = "utf-8",
+    aniadir: bool = False,
+    incluir_indice: bool = False,
+) -> None:
+    """Escribe ``datos`` en un archivo CSV usando :mod:`pandas`.
+
+    Parameters
+    ----------
+    datos:
+        Registros tabulares convertibles a :class:`pandas.DataFrame`.
+    ruta:
+        Ruta de destino del archivo CSV. Se crearán las carpetas intermedias si es necesario.
+    separador:
+        Separador de columnas que se utilizará al generar el CSV. Por defecto ``,``.
+    encoding:
+        Codificación del archivo de salida. Por defecto ``"utf-8"``.
+    aniadir:
+        Si es ``True`` se abre el archivo en modo *append* sin reescribir la cabecera existente.
+    incluir_indice:
+        Cuando es ``True`` se exporta el índice del :class:`~pandas.DataFrame` como primera columna.
+
+    Raises
+    ------
+    ValueError
+        Si no es posible escribir el archivo por un error del sistema o de ``pandas``.
+    """
+
+    df = _a_dataframe(datos)
+    registros = _sanear_registros(df.to_dict(orient="records"))
+    if registros:
+        df_saneado = pd.DataFrame(registros)
+    else:
+        df_saneado = df.iloc[0:0]
+
+    ruta_csv = Path(ruta)
+    ruta_csv.parent.mkdir(parents=True, exist_ok=True)
+    modo = "a" if aniadir else "w"
+    encabezado = not (aniadir and ruta_csv.exists())
+
+    try:
+        df_saneado.to_csv(
+            ruta_csv,
+            sep=separador,
+            encoding=encoding,
+            index=incluir_indice,
+            header=encabezado,
+            mode=modo,
+            lineterminator="\n",
+        )
+    except (OSError, ValueError, TypeError) as exc:
+        raise ValueError(f"No fue posible escribir el CSV: {exc}") from exc
+
+
+def escribir_json(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    ruta: str | Path,
+    *,
+    encoding: str = "utf-8",
+    aniadir: bool = False,
+    lineas: bool = False,
+    indent: int | None = None,
+) -> None:
+    """Serializa ``datos`` a JSON convencional o en formato JSON Lines.
+
+    Parameters
+    ----------
+    datos:
+        Colección de registros o columnas convertibles a :class:`pandas.DataFrame`.
+    ruta:
+        Ruta del archivo JSON de salida. Se crearán las carpetas necesarias.
+    encoding:
+        Codificación del archivo destino. Por defecto ``"utf-8"``.
+    aniadir:
+        Cuando es ``True`` se agrega el contenido al final del archivo existente.
+    lineas:
+        Escribe en formato JSON Lines cuando es ``True`` (un objeto por línea).
+    indent:
+        Número de espacios para sangrar el JSON cuando ``lineas`` es ``False``. Usa ``None`` para compactar.
+
+    Raises
+    ------
+    ValueError
+        Si no es posible escribir el archivo o si se intenta extender un JSON no basado en listas.
+    """
+
+    df = _a_dataframe(datos)
+    registros = _sanear_registros(df.to_dict(orient="records"))
+    ruta_json = Path(ruta)
+    ruta_json.parent.mkdir(parents=True, exist_ok=True)
+
+    if lineas:
+        modo = "a" if aniadir else "w"
+        try:
+            with ruta_json.open(modo, encoding=encoding) as archivo:
+                for registro in registros:
+                    json.dump(registro, archivo, ensure_ascii=False)
+                    archivo.write("\n")
+        except OSError as exc:
+            raise ValueError(f"No fue posible escribir el JSON: {exc}") from exc
+        return
+
+    contenido: list[Registro]
+    if aniadir and ruta_json.exists():
+        try:
+            texto_existente = ruta_json.read_text(encoding=encoding).strip()
+        except OSError as exc:
+            raise ValueError(
+                f"No fue posible leer el JSON existente para agregar registros: {exc}"
+            ) from exc
+        if texto_existente:
+            try:
+                existente = json.loads(texto_existente)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"No fue posible analizar el JSON existente: {exc}") from exc
+            if not isinstance(existente, list):
+                raise ValueError(
+                    "Solo es posible agregar registros a un JSON que contiene una lista de objetos."
+                )
+            contenido = [*existente, *registros]
+        else:
+            contenido = registros
+    else:
+        contenido = registros
+
+    try:
+        with ruta_json.open("w", encoding=encoding) as archivo:
+            json.dump(contenido, archivo, ensure_ascii=False, indent=indent)
+            if indent is not None:
+                archivo.write("\n")
+    except OSError as exc:
+        raise ValueError(f"No fue posible escribir el JSON: {exc}") from exc
 
 
 def leer_excel(
