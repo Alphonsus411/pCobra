@@ -14,12 +14,14 @@ from typing import (
 
 from pcobra.corelibs import (
     grupo_tareas as _grupo_tareas,
+    proteger_tarea as _proteger_tarea,
+    ejecutar_en_hilo as _ejecutar_en_hilo,
     reintentar_async as _reintentar_async,
 )
 
 T = TypeVar("T")
 
-__all__ = ["grupo_tareas", "reintentar_async"]
+__all__ = ["grupo_tareas", "proteger_tarea", "ejecutar_en_hilo", "reintentar_async"]
 
 
 def grupo_tareas() -> AsyncContextManager[Any]:
@@ -33,6 +35,30 @@ def grupo_tareas() -> AsyncContextManager[Any]:
     """
 
     return _grupo_tareas()
+
+
+def proteger_tarea(awaitable: Awaitable[T] | Coroutine[Any, Any, T]):
+    """Aísla ``awaitable`` de cancelaciones externas al estilo ``Promise.resolve``.
+
+    Igual que ``Promise.resolve`` convierte cualquier valor en una promesa que puede
+    esperarse con seguridad, este helper delega en :func:`asyncio.shield` para
+    devolver un *future* independiente. De esta forma se evita que una cancelación
+    sobre la tarea actual invalide el trabajo original.
+    """
+
+    return _proteger_tarea(awaitable)
+
+
+async def ejecutar_en_hilo(funcion: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+    """Ejecuta ``funcion`` en un hilo, similar a resolver tareas con ``Promise``.
+
+    Internamente invoca :func:`asyncio.to_thread` (o su degradación a
+    ``loop.run_in_executor``) para integrar código síncrono dentro de pipelines
+    asíncronos Cobra. El comportamiento recuerda a ``Promise.resolve`` cuando se
+    envuelven operaciones bloqueantes y se espera su resultado en JavaScript.
+    """
+
+    return await _ejecutar_en_hilo(funcion, *args, **kwargs)
 
 
 async def reintentar_async(

@@ -168,6 +168,8 @@ from corelibs.asincrono import (
     reintentar_async,
     crear_tarea,
     mapear_concurrencia,
+    proteger_tarea,
+    ejecutar_en_hilo,
     grupo_tareas as _grupo_tareas_impl,
 )
 
@@ -348,6 +350,8 @@ __all__ = [
     "reintentar_async",
     "crear_tarea",
     "mapear_concurrencia",
+    "proteger_tarea",
+    "ejecutar_en_hilo",
     "grupo_tareas",
 ]
 

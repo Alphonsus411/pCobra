@@ -113,6 +113,13 @@ través de ``asyncio.Semaphore`` para respetar un ``limite`` máximo de tareas y
 decidir, mediante ``return_exceptions``, si los errores cancelan el resto o se
 registran junto a sus posiciones originales.
 
+Además se incluyen ``proteger_tarea``, que envuelve ``asyncio.shield`` para
+evitar que una cancelación externa interrumpa el trabajo en curso (muy similar a
+como ``Promise.resolve`` preserva un valor ya en proceso), y
+``ejecutar_en_hilo``, que delega en ``asyncio.to_thread`` o
+``run_in_executor`` para llevar funciones bloqueantes a un flujo asincrónico sin
+romper la semántica de ``await``.
+
 Decoradores
 -----------
 

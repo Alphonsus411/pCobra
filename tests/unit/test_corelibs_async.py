@@ -1,4 +1,5 @@
 import asyncio
+import functools
 
 import pytest
 
@@ -23,6 +24,82 @@ async def test_iterar_completadas_respeta_orden_de_finalizacion():
     ]
 
     assert resultados == ["rapido", "medio", "lento"]
+
+
+@pytest.mark.asyncio
+async def test_proteger_tarea_no_provoca_cancelacion_de_trabajo():
+    cancelada = False
+
+    async def tarea_lenta():
+        nonlocal cancelada
+        try:
+            await asyncio.sleep(0.01)
+            return "ok"
+        except asyncio.CancelledError:
+            cancelada = True
+            raise
+
+    original = asyncio.create_task(tarea_lenta())
+    protegida = asincrono.proteger_tarea(original)
+
+    assert protegida is not original
+
+    protegida.cancel()
+    await asyncio.sleep(0)
+
+    assert not original.cancelled()
+
+    resultado = await original
+    assert resultado == "ok"
+    assert not cancelada
+
+
+@pytest.mark.asyncio
+async def test_proteger_tarea_acepta_corutinas_directas():
+    resultado = await asincrono.proteger_tarea(asyncio.sleep(0, result=42))
+
+    assert resultado == 42
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_en_hilo_prefiere_to_thread(monkeypatch):
+    llamado = {}
+
+    async def falso_to_thread(funcion, *args, **kwargs):
+        llamado["args"] = args
+        llamado["kwargs"] = kwargs
+        return funcion(*args, **kwargs)
+
+    monkeypatch.setattr(asincrono.asyncio, "to_thread", falso_to_thread)
+
+    resultado = await asincrono.ejecutar_en_hilo(lambda x, y=0: x + y, 1, y=2)
+
+    assert resultado == 3
+    assert llamado["args"] == (1,)
+    assert llamado["kwargs"] == {"y": 2}
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_en_hilo_degrada_a_run_in_executor(monkeypatch):
+    loop = asyncio.get_running_loop()
+    original = loop.run_in_executor
+    llamado = {}
+
+    def falso_run_in_executor(executor, funcion, *args):
+        llamado["executor"] = executor
+        llamado["funcion"] = funcion
+        llamado["args"] = args
+        return original(executor, funcion, *args)
+
+    monkeypatch.setattr(loop, "run_in_executor", falso_run_in_executor)
+    monkeypatch.delattr(asincrono.asyncio, "to_thread", raising=False)
+
+    resultado = await asincrono.ejecutar_en_hilo(lambda x, *, y: x + y, 1, y=2)
+
+    assert resultado == 3
+    assert llamado["executor"] is None
+    assert isinstance(llamado["funcion"], functools.partial)
+    assert llamado["args"] == ()
 
 
 @pytest.mark.asyncio
