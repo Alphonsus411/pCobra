@@ -13,6 +13,8 @@ __all__ = [
     "es_infinito",
     "es_nan",
     "copiar_signo",
+    "signo",
+    "limitar",
     "raiz_entera",
     "combinaciones",
     "permutaciones",
@@ -44,6 +46,18 @@ def copiar_signo(magnitud: RealLike, signo: RealLike) -> float:
     """Devuelve ``magnitud`` con el signo de ``signo`` manteniendo ceros con signo."""
 
     return _numero.copiar_signo(magnitud, signo)
+
+
+def signo(valor: RealLike) -> float | int:
+    """Calcula el signo de ``valor`` devolviendo ``-1``, ``0`` o ``1`` y propagando ``NaN``."""
+
+    return _numero.signo(valor)
+
+
+def limitar(valor: RealLike, minimo: RealLike, maximo: RealLike) -> float | int:
+    """Restringe ``valor`` al intervalo ``[minimo, maximo]`` validando los límites."""
+
+    return _numero.limitar(valor, minimo, maximo)
 
 
 def raiz_entera(valor: RealLike) -> int:

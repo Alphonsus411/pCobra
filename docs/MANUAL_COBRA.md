@@ -672,6 +672,22 @@ imprimir(core.envolver_modular(-3, 5))        # 2: envoltura positiva como en Ru
 imprimir(numero.envolver_modular(7.5, -5.0))  # -2.5: respeta el signo del divisor
 ```
 
+`signo` y `limitar` complementan estos atajos cuando necesitas clasificar o
+acotar magnitudes con semántica de IEEE-754. `signo` devuelve `-1`, `0` o `1`
+para enteros y preserva ceros con signo o `NaN` al trabajar con flotantes,
+mientras que `limitar` valida que el mínimo no supere al máximo y propaga `NaN`
+si los extremos no son válidos.
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.numero as numero
+
+imprimir(core.signo(-3))                 # -1: enteros devuelven -1/0/1
+imprimir(numero.signo(-0.0))             # -0.0: conserva ceros con signo
+imprimir(core.limitar(120, 0, 100))      # 100: satura el valor al máximo
+imprimir(numero.limitar(float("nan"), 0.0, 1.0))  # NaN propagado
+```
+
 Para cálculos combinatorios o sumas delicadas en precisión cuentas con nuevos
 accesos directos. `raiz_entera` aprovecha `math.isqrt` para trabajar con enteros
 gigantes, `combinaciones` y `permutaciones` delegan en `math.comb`/`math.perm`

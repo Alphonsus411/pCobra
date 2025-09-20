@@ -114,6 +114,27 @@ def copiar_signo(magnitud, signo):
     return math.copysign(magnitud_float, signo_float)
 
 
+def signo(valor):
+    """Obtiene el signo de ``valor`` preservando enteros y ceros con signo."""
+
+    if isinstance(valor, bool):
+        valor = int(valor)
+
+    if isinstance(valor, int):
+        if valor > 0:
+            return 1
+        if valor < 0:
+            return -1
+        return 0
+
+    numero = _a_float(valor, "signo")
+    if math.isnan(numero):
+        return math.nan
+    if numero == 0.0:
+        return math.copysign(0.0, numero)
+    return math.copysign(1.0, numero)
+
+
 def producto(valores, inicio=1):
     """Obtiene el producto acumulado de ``valores`` iniciando en ``inicio``.
 
@@ -413,12 +434,54 @@ def potencia(base, exponente):
     return math.pow(base, exponente)
 
 
+def limitar(valor, minimo, maximo):
+    """Restringe ``valor`` al rango ``[minimo, maximo]`` propagando ``NaN``."""
+
+    if isinstance(valor, bool):
+        valor = int(valor)
+    if isinstance(minimo, bool):
+        minimo = int(minimo)
+    if isinstance(maximo, bool):
+        maximo = int(maximo)
+
+    origen_entero = all(isinstance(argumento, int) for argumento in (valor, minimo, maximo))
+    valor_es_int = isinstance(valor, int)
+    if origen_entero:
+        if minimo > maximo:
+            raise ValueError("El mínimo no puede ser mayor que el máximo")
+        if valor < minimo:
+            return minimo
+        if valor > maximo:
+            return maximo
+        return valor
+
+    valor_float = _a_float(valor, "limitar")
+    minimo_float = _a_float(minimo, "limitar")
+    maximo_float = _a_float(maximo, "limitar")
+
+    if math.isnan(minimo_float) or math.isnan(maximo_float):
+        return math.nan
+    if minimo_float > maximo_float:
+        raise ValueError("El mínimo no puede ser mayor que el máximo")
+    if math.isnan(valor_float):
+        return math.nan
+
+    if valor_float < minimo_float:
+        resultado = minimo_float
+    elif valor_float > maximo_float:
+        resultado = maximo_float
+    else:
+        resultado = valor_float
+
+    if valor_es_int and math.isfinite(resultado) and resultado.is_integer():
+        return int(resultado)
+    return resultado
+
+
 def clamp(valor, minimo, maximo):
     """Restringe ``valor`` al rango ``[minimo, maximo]``."""
 
-    if minimo > maximo:
-        raise ValueError("El mínimo no puede ser mayor que el máximo")
-    return max(min(valor, maximo), minimo)
+    return limitar(valor, minimo, maximo)
 
 
 def interpolar(inicio, fin, factor):

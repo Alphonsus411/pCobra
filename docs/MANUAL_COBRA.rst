@@ -203,6 +203,22 @@ flujo del programa. ``copiar_signo`` resulta útil al normalizar magnitudes y
 preservar el signo de ceros, infinitos o ``NaN`` para mantener la compatibilidad
 con otros entornos IEEE-754.
 
+``signo`` y ``limitar`` completan estas herramientas cuando necesitas clasificar
+o acotar valores reales. ``signo`` devuelve ``-1``, ``0`` o ``1`` para enteros y
+mantiene ceros con signo o ``NaN`` cuando trabajas con flotantes, mientras que
+``limitar`` valida el rango ``[minimo, maximo]`` y también propaga ``NaN`` si
+algún extremo no es un número válido.
+
+.. code-block:: python
+
+   import pcobra.corelibs as core
+   import standard_library.numero as numero
+
+   print(core.signo(-3))                 # -1: enteros devuelven -1/0/1
+   print(numero.signo(-0.0))             # -0.0: conserva ceros con signo
+   print(core.limitar(120, 0, 100))      # 100: satura el valor al máximo
+   print(numero.limitar(float("nan"), 0.0, 1.0))  # NaN propagado
+
 Para cálculos combinatorios y sumas sensibles a errores de redondeo dispones
 de atajos adicionales. ``raiz_entera`` delega en ``math.isqrt`` para obtener la
 raíz cuadrada entera de valores gigantes sin perder precisión, ``combinaciones``
@@ -257,7 +273,7 @@ de significancia en sumas largas.
      - ``math.pow(a, b)``
      - ``numpy.power(a, b)``
      - ``Math.pow(a, b)``
-   * - ``clamp(x, a, b)``
+   * - ``limitar(x, a, b)`` / ``clamp(x, a, b)``
      - ``min(max(x, a), b)``
      - ``numpy.clip(x, a, b)``
      - ``Math.min(Math.max(x, a), b)``

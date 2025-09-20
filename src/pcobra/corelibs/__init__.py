@@ -83,6 +83,7 @@ from corelibs.numero import (
     absoluto,
     aleatorio,
     clamp,
+    limitar,
     copiar_signo,
     combinaciones,
     contar_bits,
@@ -112,6 +113,7 @@ from corelibs.numero import (
     promedio,
     raiz,
     raiz_entera,
+    signo,
     rotar_bits_derecha,
     rotar_bits_izquierda,
     suma_precisa,
@@ -263,8 +265,10 @@ __all__ = [
     "absoluto",
     "aleatorio",
     "clamp",
+    "limitar",
     "copiar_signo",
     "combinaciones",
+    "signo",
     "interpolar",
     "envolver_modular",
     "contar_bits",
@@ -523,6 +527,12 @@ es_nan.__doc__ = (
     " manteniendo comprobaciones de tipo explícitas."
 )
 
+signo.__doc__ = (
+    "Equivalente a ``math.copysign`` combinado con ``math.sign`` de Kotlin o"
+    " ``numpy.sign``. Devuelve ``-1``, ``0`` o ``1`` para enteros y preserva ceros"
+    " con signo o ``NaN`` cuando se trabaja con flotantes."
+)
+
 copiar_signo.__doc__ = (
     "Reexporta :func:`math.copysign`. Replica la semántica IEEE-754 conservando"
     " ceros con signo e infinitos al combinar magnitudes y signos provenientes de"
@@ -541,4 +551,11 @@ envolver_modular.__doc__ = (
     " ``mod`` de Kotlin, retornando siempre un valor con el mismo signo que el"
     " divisor y proporcionando envoltura modular estable incluso con valores"
     " negativos."
+)
+
+limitar.__doc__ = (
+    "Alias descriptivo de :func:`pcobra.corelibs.numero.limitar` para quienes"
+    " prefieren una API en español al clamping ``min``/``max`` habitual,"
+    " garantizando la propagación de ``NaN`` y validando que el mínimo no exceda"
+    " al máximo."
 )
