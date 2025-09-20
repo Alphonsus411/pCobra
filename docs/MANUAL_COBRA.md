@@ -1019,3 +1019,39 @@ con ui.barra_progreso(descripcion="Procesando", total=3) como (progreso, tarea):
 ![Tabla generada con `mostrar_tabla`](frontend/_static/interfaz_tabla.svg)
 
 > Consejo: si necesitas usar estas utilidades desde un entorno que no tiene `rich` instalado, captura la excepción `RuntimeError` que lanzan y muestra un mensaje alternativo.
+
+## 26. Anotaciones y decoradores
+
+Los decoradores permiten añadir comportamiento a funciones y clases. Además de los
+existentes en Python, Cobra expone atajos en español dentro de
+`standard_library.decoradores`:
+
+- `@memoizar` cachea resultados mediante `functools.lru_cache`, ideal para
+  funciones puras o costosas.
+- `@dataclase` crea clases de datos con el mismo API que
+  `dataclasses.dataclass`, manteniendo anotaciones y comparadores útiles para
+  estructurar registros.
+- `@temporizar` mide el tiempo de cada invocación con `time.perf_counter`. Si
+  [`rich`](https://rich.readthedocs.io) está instalado, envía el resultado a una
+  consola enriquecida; en caso contrario utiliza `print` estándar.
+
+```python
+from pcobra.standard_library.decoradores import dataclase, memoizar, temporizar
+
+@dataclase
+class Punto:
+    x: float
+    y: float
+
+@memoizar(maxsize=None)
+def distancia(x, y):
+    return (x ** 2 + y ** 2) ** 0.5
+
+@temporizar(etiqueta="calculo")
+def hipotenusa(punto):
+    return distancia(punto.x, punto.y)
+```
+
+> Consejo: `temporizar` admite un parámetro `consola` para reutilizar una
+> instancia de `rich.console.Console` durante pruebas o integrar el registro con
+> tu sistema de logging.
