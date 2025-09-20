@@ -102,7 +102,7 @@ p.nadar()
 
 ## 4. Control de flujo
 
-- Condicionales con `si`, `sino` y `fin` opcional.
+- Condicionales con `si`, `sino si`/`elseif`, `sino` y `fin` opcional.
 - Bucles `mientras` y `para`.
 - Selección múltiple con `switch` y `case`.
 
@@ -112,6 +112,20 @@ mientras x < 3 :
     imprimir(x)
     x += 1
 ```
+
+Los condicionales admiten cascadas compactas con `sino si` (o `elseif`):
+
+```cobra
+si temperatura > 30:
+    imprimir('calor')
+sino si temperatura > 20:
+    imprimir('templado')
+sino:
+    imprimir('frío')
+fin
+```
+
+Además de `&&`, `||` y `!`, puedes emplear los alias en español `y`, `o` y `no` para las operaciones lógicas.
 
 Ejemplo de `switch`:
 

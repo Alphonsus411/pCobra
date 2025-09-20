@@ -35,7 +35,7 @@ def test_comentarios_anidados_y_linea_en_bloque():
     var x = 1 /* comentario externo
                  /* comentario interno */
                  // comentario de linea dentro
-               */ var y = 2
+               */ var z = 2
     """
     tokens = Lexer(codigo).analizar_token()
     assert [(t.tipo, t.valor) for t in tokens] == [
@@ -44,7 +44,7 @@ def test_comentarios_anidados_y_linea_en_bloque():
         (TipoToken.ASIGNAR, '='),
         (TipoToken.ENTERO, 1),
         (TipoToken.VAR, 'var'),
-        (TipoToken.IDENTIFICADOR, 'y'),
+        (TipoToken.IDENTIFICADOR, 'z'),
         (TipoToken.ASIGNAR, '='),
         (TipoToken.ENTERO, 2),
         (TipoToken.EOF, None),

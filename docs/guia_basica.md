@@ -106,10 +106,14 @@ imprimir x + y
 ```cobra
 si x > y:
     imprimir "x es mayor"
+sino si x == y:
+    imprimir "son iguales"
 sino:
     imprimir "y es mayor"
 fin
 ```
+
+Los operadores lógicos aceptan `y`, `o` y `no` como alias de `&&`, `||` y `!` respectivamente.
 
 ## 4. Bucle mientras
 ```cobra

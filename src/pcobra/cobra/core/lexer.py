@@ -56,6 +56,7 @@ class TipoToken(Enum):
     ATRIBUTO = "ATRIBUTO"
     SI = "SI"
     SINO = "SINO"
+    SINO_SI = "SINO_SI"
     MIENTRAS = "MIENTRAS"
     PARA = "PARA"
     IMPORT = "IMPORT"
@@ -216,6 +217,7 @@ class Lexer:
             (TipoToken.METODO, re.compile(r"\bmetodo\b")),
             (TipoToken.ATRIBUTO, re.compile(r"\batributo\b")),
             (TipoToken.SI, re.compile(r"\bsi\b")),
+            (TipoToken.SINO_SI, re.compile(r"\b(?:sino\s+si|elseif)\b")),
             (TipoToken.SINO, re.compile(r"\bsino\b")),
             (TipoToken.MIENTRAS, re.compile(r"\bmientras\b")),
             (TipoToken.PARA, re.compile(r"\bpara\b")),
@@ -262,6 +264,9 @@ class Lexer:
             (TipoToken.ENTERO, re.compile(r"\d+")),
             (TipoToken.CADENA, re.compile(r"'(?:\\.|[^'])*'|\"(?:\\.|[^\"])*\"")),
             (TipoToken.BOOLEANO, re.compile(r"\b(verdadero|falso)\b")),
+            (TipoToken.AND, re.compile(r"&&|\by\b")),
+            (TipoToken.OR, re.compile(r"\|\||\bo\b")),
+            (TipoToken.NOT, re.compile(r"!|\bno\b")),
             (TipoToken.ASIGNAR_INFERENCIA, re.compile(r":=")),
             (TipoToken.DOSPUNTOS, re.compile(r":")),
             (TipoToken.FIN, re.compile(r"\bfin\b")),
@@ -272,9 +277,6 @@ class Lexer:
             (TipoToken.MENORIGUAL, re.compile(r"<=")),
             (TipoToken.IGUAL, re.compile(r"==")),
             (TipoToken.DIFERENTE, re.compile(r"!=")),
-            (TipoToken.AND, re.compile(r"&&")),
-            (TipoToken.OR, re.compile(r"\|\|")),
-            (TipoToken.NOT, re.compile(r"!")),
             (TipoToken.MOD, re.compile(r"%")),
             (TipoToken.ASIGNAR, re.compile(r"=")),
             (TipoToken.SUMA, re.compile(r"\+")),

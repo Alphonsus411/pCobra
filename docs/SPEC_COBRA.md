@@ -31,7 +31,7 @@ funcion: "func" IDENTIFICADOR "(" parametros? ")" ":" cuerpo "fin"
 clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
-condicional: "si" expr ":" cuerpo ("sino" ":" cuerpo)? "fin"
+condicional: "si" expr ":" cuerpo (("sino si"|"elseif") expr ":" cuerpo)* ("sino" ":" cuerpo)? "fin"
 importacion: "import" CADENA
 usar: "usar" CADENA
 macro: "macro" IDENTIFICADOR "{" statement* "}"
@@ -53,7 +53,7 @@ argumentos: expr ("," expr)*
       | llamada
       | holobit
 holobit: "holobit" "(" "[" [expr ("," expr)*] "]" ")"
-operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"
+operador: "+"|"-"|"*"|"/"|">="|"<="|">"|"<"|"=="|"!="|"&&"|"||"|"y"|"o"
 
 CADENA: /"[^"\n]*"|'[^'\n]*'/
 ENTERO: /[0-9]+/
@@ -67,13 +67,16 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 ## Tokens y palabras reservadas
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `metodo`, `atributo`
-- `si`, `sino`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
+- `si`, `sino`, `sino si`/`elseif`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
 - `switch`, `case`, `clase`, `in`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
+- `&&`/`y`, `||`/`o`, `!`/`no`
 - `imprimir`, `yield`, `esperar`, `romper`, `continuar`, `pasar`, `afirmar`, `eliminar`,
   `global`, `nolocal`, `lambda`, `con`, `finalmente`, `desde`, `como`, `retorno`, `fin`, `hilo`
 
-Además existen tokens para operadores (`+`, `-`, `*`, `/`, `==`, `&&`, etc.), delimitadores como paréntesis, corchetes y llaves, y literales (`ENTERO`, `FLOTANTE`, `CADENA`, `BOOLEANO`).
+Las cascadas condicionales admiten la sintaxis compacta `sino si` (o su alias `elseif`), que el parser reescribe internamente como nodos anidados equivalentes a `sino: si ... fin`.
+
+Además existen tokens para operadores (`+`, `-`, `*`, `/`, `==`, `&&`/`y`, `||`/`o`, `!`/`no`, etc.), delimitadores como paréntesis, corchetes y llaves, y literales (`ENTERO`, `FLOTANTE`, `CADENA`, `BOOLEANO`).
 
 ## Variables y tipos básicos
 ```cobra
@@ -102,8 +105,10 @@ fin
 ```cobra
 si x > 0:
     imprimir "positivo"
+sino si x == 0:
+    imprimir "cero"
 sino:
-    imprimir "no positivo"
+    imprimir "negativo"
 fin
 
 para var i en rango(5):
