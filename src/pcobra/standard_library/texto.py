@@ -36,6 +36,9 @@ from pcobra.corelibs import (
     quitar_espacios,
     quitar_prefijo as _quitar_prefijo,
     quitar_sufijo as _quitar_sufijo,
+    a_snake as _a_snake,
+    a_camel as _a_camel,
+    quitar_envoltura as _quitar_envoltura,
     particionar_derecha as _particionar_derecha,
     particionar_texto as _particionar,
     rellenar_ceros as _rellenar_ceros,
@@ -81,6 +84,9 @@ __all__ = [
     "es_espacio",
     "quitar_prefijo",
     "quitar_sufijo",
+    "a_snake",
+    "a_camel",
+    "quitar_envoltura",
     "prefijo_comun",
     "sufijo_comun",
     "dividir_lineas",
@@ -155,6 +161,24 @@ def es_anagrama(texto: str, otro: str, *, ignorar_espacios: bool = True) -> bool
         return normalizar_unicode("".join(sorted(resultado)), "NFC")
 
     return preparar(texto) == preparar(otro)
+
+
+def a_snake(texto: str) -> str:
+    """Convierte ``texto`` en ``snake_case`` Unicode estable.
+
+    English: Convert ``texto`` into Unicode-aware ``snake_case`` inspired by JS helpers.
+    """
+
+    return _a_snake(texto)
+
+
+def a_camel(texto: str, *, inicial_mayuscula: bool = False) -> str:
+    """Construye ``camelCase`` o ``PascalCase`` al estilo de Swift y JavaScript.
+
+    English: Produce ``camelCase``/``PascalCase`` identifiers similar to Swift and JS tools.
+    """
+
+    return _a_camel(texto, inicial_mayuscula=inicial_mayuscula)
 
 
 def intercambiar_mayusculas(texto: str) -> str:
@@ -352,6 +376,15 @@ def sufijo_comun(
         ignorar_mayusculas=ignorar_mayusculas,
         normalizar=normalizar,
     )
+
+
+def quitar_envoltura(texto: str, prefijo: str, sufijo: str) -> str:
+    """Quita envolturas coincidentes como ``removeSurrounding`` de Kotlin.
+
+    English: Remove matching wrappers mirroring Kotlin, Swift slicing and JS idioms.
+    """
+
+    return _quitar_envoltura(texto, prefijo, sufijo)
 
 
 def dividir_lineas(texto: str, conservar_delimitadores: bool = False) -> list[str]:

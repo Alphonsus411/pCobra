@@ -25,6 +25,9 @@ from corelibs.texto import (
     incluye,
     quitar_prefijo,
     quitar_sufijo,
+    a_snake,
+    a_camel,
+    quitar_envoltura,
     prefijo_comun,
     sufijo_comun,
     particionar as particionar_texto,
@@ -202,6 +205,9 @@ __all__ = [
     "incluye",
     "quitar_prefijo",
     "quitar_sufijo",
+    "a_snake",
+    "a_camel",
+    "quitar_envoltura",
     "prefijo_comun",
     "sufijo_comun",
     "particionar_texto",
@@ -343,6 +349,25 @@ quitar_sufijo.__doc__ = (
     "Reexporta :func:`pcobra.corelibs.texto.quitar_sufijo`. Se inspira en ``str.removesuffix`` "
     "de Python, ``strings.TrimSuffix`` del paquete estándar de Go y en el uso de"
     " ``String.prototype.endsWith`` junto a ``slice`` en JavaScript."
+)
+
+a_snake.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.a_snake`. Convierte identificadores al estilo"
+    " ``snake_case`` como hacen utilidades de JavaScript (por ejemplo, ``lodash.snakeCase``)"
+    " y extensiones populares de Kotlin para homogeneizar nombres."
+)
+
+a_camel.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.a_camel`. Genera ``camelCase``/``PascalCase``"
+    " emulando los transformadores presentes en Swift (``lowerCamelCase``) y en"
+    " bibliotecas de JavaScript."
+)
+
+quitar_envoltura.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.texto.quitar_envoltura`. Reproduce ``removeSurrounding``"
+    " de Kotlin y puede replicarse en Swift combinando ``hasPrefix``/``hasSuffix`` con"
+    " ``dropFirst``/``dropLast``, o en JavaScript mediante ``startsWith``/``endsWith`` y"
+    " ``slice``."
 )
 
 dividir_lineas.__doc__ = (

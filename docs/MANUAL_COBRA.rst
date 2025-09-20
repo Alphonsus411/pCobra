@@ -334,6 +334,12 @@ usar en Cobra. Entre las más destacadas se encuentran:
   ``commonPrefixWith``/``commonSuffixWith`` de Kotlin o
   ``String.commonPrefix``/``String.commonSuffix`` de Swift. Ambas admiten
   ignorar mayúsculas y normalizar Unicode antes de comparar.
+* ``a_snake`` y ``a_camel`` producen identificadores inspirados en
+  extensiones de Kotlin, las rutinas ``lowerCamelCase`` de Swift y
+  utilidades de JavaScript como ``lodash.snakeCase``/``camelCase``; a su
+  vez ``quitar_envoltura`` reproduce ``removeSurrounding`` de Kotlin y el
+  recorte con ``hasPrefix``/``hasSuffix`` de Swift o ``String.prototype.slice``
+  en JavaScript.
 * ``normalizar_unicode`` acepta las formas ``NFC``, ``NFD``, ``NFKC`` y
   ``NFKD`` para unificar representaciones.
 * ``indentar_texto``/``desindentar_texto``, ``envolver_texto`` y
@@ -353,6 +359,9 @@ usar en Cobra. Entre las más destacadas se encuentran:
    print(core.prefijo_comun("Canción", "cancio\u0301n", ignorar_mayusculas=True, normalizar="NFC"))
    print(texto.sufijo_comun("astronomía", "economía"))
    print(texto.es_palindromo("Sé verlas al revés"))
+   print(core.a_snake("MiValorHTTP"))
+   print(texto.a_camel("hola-mundo cobra", inicial_mayuscula=True))
+   print(core.quitar_envoltura("«mañana»", "«", "»"))
 
 Asimismo, :mod:`pcobra.corelibs.numero` incorpora ``interpolar`` y
 ``envolver_modular`` inspiradas en ``f32::lerp`` de Rust y en
