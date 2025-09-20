@@ -123,6 +123,11 @@ def test_centrar_rellenar_y_casefold():
     assert texto.minusculas_casefold("Straße") == "strasse"
 
 
+def test_intercambiar_y_expandir():
+    assert texto.intercambiar_mayusculas("ÁRBOL y Cobra") == "árbol Y cOBRA"
+    assert texto.expandir_tabulaciones("uno\t dos\tfin", tabulaciones=4) == "uno  dos    fin"
+
+
 def test_subcadenas():
     assert texto.subcadena_antes("uno-dos", "-") == "uno"
     assert texto.subcadena_despues("uno-dos", "-") == "dos"
@@ -180,5 +185,9 @@ def test_validadores_de_texto():
     assert texto.es_minusculas("minúsculas") is True
     assert texto.es_minusculas("Minúsculas") is False
     assert texto.es_minusculas("123") is False
+    assert texto.es_titulo("Canción De Cuna") is True
+    assert texto.es_titulo("canción de cuna") is False
     assert texto.es_espacio(" \t") is True
     assert texto.es_espacio("texto") is False
+    assert texto.es_digito("１２３") is True
+    assert texto.es_digito("Ⅻ") is False

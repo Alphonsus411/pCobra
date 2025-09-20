@@ -27,9 +27,11 @@ from pcobra.corelibs import (
     envolver_texto as _envolver_texto,
     acortar_texto as _acortar_texto,
     invertir,
+    intercambiar_mayusculas as _intercambiar_mayusculas,
     minusculas,
     minusculas_casefold as _minusculas_casefold,
     normalizar_unicode,
+    expandir_tabulaciones as _expandir_tabulaciones,
     prefijo_comun as _prefijo_comun,
     quitar_espacios,
     quitar_prefijo as _quitar_prefijo,
@@ -52,6 +54,8 @@ from pcobra.corelibs import (
     es_ascii as _es_ascii,
     es_mayusculas as _es_mayusculas,
     es_minusculas as _es_minusculas,
+    es_titulo as _es_titulo,
+    es_digito as _es_digito,
     es_espacio as _es_espacio,
 )
 
@@ -72,6 +76,8 @@ __all__ = [
     "es_ascii",
     "es_mayusculas",
     "es_minusculas",
+    "es_titulo",
+    "es_digito",
     "es_espacio",
     "quitar_prefijo",
     "quitar_sufijo",
@@ -87,6 +93,8 @@ __all__ = [
     "centrar_texto",
     "rellenar_ceros",
     "minusculas_casefold",
+    "intercambiar_mayusculas",
+    "expandir_tabulaciones",
     "particionar",
     "particionar_derecha",
     "indentar_texto",
@@ -149,6 +157,16 @@ def es_anagrama(texto: str, otro: str, *, ignorar_espacios: bool = True) -> bool
     return preparar(texto) == preparar(otro)
 
 
+def intercambiar_mayusculas(texto: str) -> str:
+    """Alterna mayúsculas y minúsculas de ``texto`` como :meth:`str.swapcase`.
+
+    >>> intercambiar_mayusculas("ÁrBoL")
+    'áRbOl'
+    """
+
+    return _intercambiar_mayusculas(texto)
+
+
 def es_alfabetico(texto: str) -> bool:
     """Equivale a :meth:`str.isalpha` en Python y acepta letras Unicode."""
 
@@ -201,6 +219,30 @@ def es_minusculas(texto: str) -> bool:
     """Funciona como :meth:`str.islower` validando letras en minúscula."""
 
     return _es_minusculas(texto)
+
+
+def es_titulo(texto: str) -> bool:
+    """Comprueba si ``texto`` tiene formato título como :meth:`str.istitle`.
+
+    >>> es_titulo("Canción De Cuna")
+    True
+    >>> es_titulo("Canción de cuna")
+    False
+    """
+
+    return _es_titulo(texto)
+
+
+def es_digito(texto: str) -> bool:
+    """Indica si ``texto`` contiene solo dígitos como :meth:`str.isdigit`.
+
+    >>> es_digito("１２３")
+    True
+    >>> es_digito("Ⅻ")
+    False
+    """
+
+    return _es_digito(texto)
 
 
 def es_espacio(texto: str) -> bool:
@@ -321,6 +363,16 @@ def dividir_lineas(texto: str, conservar_delimitadores: bool = False) -> list[st
     """
 
     return _dividir_lineas(texto, conservar_delimitadores)
+
+
+def expandir_tabulaciones(texto: str, tabulaciones: int = 8) -> str:
+    """Sustituye tabuladores por espacios siguiendo :meth:`str.expandtabs`.
+
+    >>> expandir_tabulaciones("uno\t dos\tfin", tabulaciones=4)
+    'uno  dos    fin'
+    """
+
+    return _expandir_tabulaciones(texto, tabulaciones)
 
 
 def dividir_derecha(

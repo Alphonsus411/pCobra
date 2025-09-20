@@ -345,3 +345,5 @@ imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
 ```
 
 Este fragmento muestra cómo combinar las utilidades de `corelibs.texto` con los atajos de `standard_library.texto` para trabajar con Unicode sin perder legibilidad.
+
+La misma tanda de utilidades incorporó `intercambiar_mayusculas` y `expandir_tabulaciones` para alternar casos y homogeneizar indentaciones mezcladas, además de `es_titulo` y `es_digito` que validan títulos con acentos y dígitos Unicode sin complicaciones.

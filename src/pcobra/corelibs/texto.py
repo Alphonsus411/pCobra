@@ -40,6 +40,12 @@ def titulo(texto: str) -> str:
     return texto.title()
 
 
+def intercambiar_mayusculas(texto: str) -> str:
+    """Intercambia mayúsculas por minúsculas en ``texto`` utilizando ``str.swapcase``."""
+
+    return texto.swapcase()
+
+
 def invertir(texto: str) -> str:
     """Invierte el contenido de ``texto`` carácter por carácter."""
 
@@ -450,6 +456,12 @@ def dividir_lineas(texto: str, conservar_delimitadores: bool = False) -> list[st
     return texto.splitlines(keepends=conservar_delimitadores)
 
 
+def expandir_tabulaciones(texto: str, tabulaciones: int = 8) -> str:
+    """Convierte tabulaciones en espacios respetando ``tabulaciones`` como ancho."""
+
+    return texto.expandtabs(tabulaciones)
+
+
 def contar_subcadena(
     texto: str,
     subcadena: str,
@@ -594,3 +606,15 @@ def es_espacio(texto: str) -> bool:
     """Replica :meth:`str.isspace` de Python para secuencias de espacios Unicode."""
 
     return texto.isspace()
+
+
+def es_titulo(texto: str) -> bool:
+    """Equivale a :meth:`str.istitle` de Python comprobando formato título."""
+
+    return texto.istitle()
+
+
+def es_digito(texto: str) -> bool:
+    """Reproduce :meth:`str.isdigit` de Python aceptando dígitos Unicode."""
+
+    return texto.isdigit()
