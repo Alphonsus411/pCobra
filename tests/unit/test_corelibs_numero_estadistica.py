@@ -1,3 +1,4 @@
+import math
 import sys
 from types import ModuleType
 
@@ -8,6 +9,7 @@ fake_requests.Response = type("Response", (), {})
 fake_requests.get = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("requests no disponible"))
 fake_requests.post = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("requests no disponible"))
 sys.modules.setdefault("requests", fake_requests)
+sys.modules.setdefault("httpx", ModuleType("httpx"))
 
 import pcobra.corelibs as core
 
@@ -39,6 +41,24 @@ def test_raiz_validaciones():
         core.raiz(-1, 2)
     with pytest.raises(ValueError):
         core.raiz(-8, 2.5)
+
+
+def test_raiz_entera_y_combinatoria_core():
+    assert core.raiz_entera(81) == 9
+    assert core.raiz_entera(True) == 1
+    with pytest.raises(ValueError):
+        core.raiz_entera(-16)
+    with pytest.raises(ValueError):
+        core.raiz_entera(7.5)
+
+    assert core.combinaciones(100, 4) == math.comb(100, 4)
+    assert core.permutaciones(12, 6) == math.perm(12, 6)
+    with pytest.raises(ValueError):
+        core.combinaciones(12, -3)
+    with pytest.raises(ValueError):
+        core.permutaciones(8, -1)
+    with pytest.raises(TypeError):
+        core.combinaciones(5.5, 2)
 
 
 def test_clamp_rango_invalido():
@@ -81,3 +101,10 @@ def test_entero_desde_base_validaciones():
 
 def test_producto_lista_vacia():
     assert core.producto([]) == 1
+
+
+def test_suma_precisa_core():
+    datos = [1e16, 1.0, -1e16]
+    assert core.suma_precisa(datos) == pytest.approx(1.0)
+    with pytest.raises(TypeError):
+        core.suma_precisa([1, object()])

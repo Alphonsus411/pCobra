@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import SupportsFloat
+from typing import Iterable, SupportsFloat
 
 from pcobra.corelibs import numero as _numero
 
@@ -13,6 +13,10 @@ __all__ = [
     "es_infinito",
     "es_nan",
     "copiar_signo",
+    "raiz_entera",
+    "combinaciones",
+    "permutaciones",
+    "suma_precisa",
     "interpolar",
     "envolver_modular",
 ]
@@ -40,6 +44,30 @@ def copiar_signo(magnitud: RealLike, signo: RealLike) -> float:
     """Devuelve ``magnitud`` con el signo de ``signo`` manteniendo ceros con signo."""
 
     return _numero.copiar_signo(magnitud, signo)
+
+
+def raiz_entera(valor: RealLike) -> int:
+    """Calcula la raíz cuadrada entera de ``valor`` usando ``math.isqrt``."""
+
+    return _numero.raiz_entera(valor)
+
+
+def combinaciones(n: int, k: int) -> int:
+    """Equivale a ``math.comb`` para contar subconjuntos sin repetición."""
+
+    return _numero.combinaciones(n, k)
+
+
+def permutaciones(n: int, k: int | None = None) -> int:
+    """Obtiene las permutaciones de ``n`` elementos tomando ``k`` posiciones."""
+
+    return _numero.permutaciones(n, k)
+
+
+def suma_precisa(valores: Iterable[RealLike]) -> float:
+    """Suma ``valores`` con precisión extendida equivalente a ``math.fsum``."""
+
+    return _numero.suma_precisa(valores)
 
 
 def interpolar(inicio: RealLike, fin: RealLike, factor: RealLike) -> float:

@@ -7,6 +7,9 @@ from types import ModuleType
 import pytest
 
 
+sys.modules.setdefault("httpx", ModuleType("httpx"))
+
+
 def _cargar_numero():
     ruta = (
         Path(__file__).resolve().parents[2]
@@ -58,6 +61,28 @@ def test_interpolar_y_envolver_modular():
         numero.envolver_modular(1, 0)
 
 
+def test_raiz_entera_y_combinatoria():
+    assert numero.raiz_entera(16) == 4
+    assert numero.raiz_entera(10**12 + 12345) == 1000000
+    with pytest.raises(ValueError):
+        numero.raiz_entera(-9)
+
+    assert numero.combinaciones(52, 5) == 2598960
+    assert numero.permutaciones(10, 3) == 720
+    assert numero.permutaciones(20, 6) == math.perm(20, 6)
+    with pytest.raises(ValueError):
+        numero.combinaciones(10, -1)
+    with pytest.raises(ValueError):
+        numero.permutaciones(10, -2)
+
+
+def test_suma_precisa_precision():
+    datos = [1e16, 1.0, -1e16]
+    assert numero.suma_precisa(datos) == pytest.approx(1.0)
+    with pytest.raises(TypeError):
+        numero.suma_precisa([1.0, "no-num"])
+
+
 @pytest.mark.parametrize(
     "funcion, argumentos",
     [
@@ -67,6 +92,10 @@ def test_interpolar_y_envolver_modular():
         (numero.copiar_signo, ("1", 1)),
         (numero.interpolar, (0, 1, "factor")),
         (numero.envolver_modular, (1, "0")),
+        (numero.raiz_entera, ("9",)),
+        (numero.combinaciones, (5.5, 2)),
+        (numero.permutaciones, ("10", None)),
+        (numero.suma_precisa, ([1, 2, object()],)),
     ],
 )
 def test_validaciones(funcion, argumentos):
