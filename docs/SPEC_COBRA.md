@@ -170,3 +170,16 @@ import standard_library.numero as numero
 var direccion = numero.signo(-0.0)        # -0.0 conserva el signo del cero
 var brillo = numero.limitar(1.5, 0.0, 1.0)  # 1.0: el valor queda dentro del rango
 ```
+
+El módulo `standard_library.datos` usa `pandas` para trabajar con tablas desde Cobra y expone utilidades de lectura y escritura
+que devuelven listas de diccionarios. Las funciones `leer_csv`/`leer_json` normalizan valores perdidos como `None`, mientras que
+`escribir_csv` y `escribir_json` permiten controlar el separador, la codificación, anexar información y producir archivos en JSON
+Lines sin duplicar encabezados.
+
+```cobra
+import standard_library.datos as datos
+
+var registros = datos.leer_csv('datos/ventas.csv')
+datos.escribir_csv(registros, 'salida/ventas.csv', separador=';')
+datos.escribir_json(registros, 'salida/ventas.jsonl', lineas=True, aniadir=True)
+```

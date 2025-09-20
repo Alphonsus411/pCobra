@@ -332,6 +332,30 @@ enum Color:
 fin
 ```
 
+## 29. Entrada y salida de datos tabulares
+```cobra
+import standard_library.datos as datos
+
+var ventas = datos.leer_csv('datos/ventas.csv', separador=';')
+var ventas_limpias = datos.filtrar(ventas, lambda fila: fila['monto'] != None)
+
+datos.escribir_csv(
+    ventas_limpias,
+    'salida/ventas_filtradas.csv',
+    separador=';',
+)
+
+datos.escribir_json(
+    ventas_limpias,
+    'salida/ventas.jsonl',
+    lineas=True,
+    aniadir=True,
+)
+```
+
+Las funciones de `standard_library.datos` crean directorios intermedios cuando es necesario, limpian los valores especiales de `NaN`
+antes de serializar y permiten anexar nuevos registros sin reescribir archivos completos.
+
 ### Ejemplo: limpiar texto y detectar palíndromos
 
 ```cobra

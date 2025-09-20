@@ -13,8 +13,10 @@ from pcobra.standard_library.datos import (
     de_listas,
     describir,
     desplegar_tabla,
+    escribir_csv,
     escribir_excel,
     escribir_feather,
+    escribir_json,
     escribir_parquet,
     filtrar,
     mutar_columna,
@@ -202,6 +204,42 @@ def test_leer_csv_y_json(tmp_path: Path):
     json_path.write_text('[{"categoria": "C", "valor": 7}]', encoding="utf-8")
     datos_json = leer_json(json_path)
     assert datos_json == [{"categoria": "C", "valor": 7}]
+
+
+def test_escribir_csv(tmp_path: Path):
+    tabla = _tabla_base()
+    destino = tmp_path / "reporte" / "datos.csv"
+    escribir_csv(tabla, destino, separador=";", encoding="utf-8")
+    escribir_csv(
+        [{"categoria": "C", "valor": None}],
+        destino,
+        separador=";",
+        encoding="utf-8",
+        aniadir=True,
+    )
+    leidos = leer_csv(destino, separador=";")
+    assert leidos == [
+        {"categoria": "A", "valor": 10, "etiqueta": "foo"},
+        {"categoria": "A", "valor": 5, "etiqueta": "bar"},
+        {"categoria": "B", "valor": 3, "etiqueta": "baz"},
+        {"categoria": "C", "valor": None, "etiqueta": None},
+    ]
+
+
+def test_escribir_json(tmp_path: Path):
+    tabla = _tabla_base()
+    ruta_json = tmp_path / "datos.json"
+    escribir_json(tabla, ruta_json, indent=2)
+    assert leer_json(ruta_json) == tabla
+
+    ruta_jsonl = tmp_path / "datos.jsonl"
+    escribir_json(tabla[:2], ruta_jsonl, lineas=True)
+    escribir_json([{"categoria": "C", "valor": None}], ruta_jsonl, lineas=True, aniadir=True)
+    assert leer_json(ruta_jsonl, lineas=True) == [
+        {"categoria": "A", "valor": 10, "etiqueta": "foo"},
+        {"categoria": "A", "valor": 5, "etiqueta": "bar"},
+        {"categoria": "C", "valor": None, "etiqueta": None},
+    ]
 
 
 def test_leer_csv_error(tmp_path: Path):
