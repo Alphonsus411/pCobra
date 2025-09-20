@@ -1,0 +1,7 @@
+si valor > 0:
+    imprimir("positivo")
+sino si valor == 0:
+    imprimir("cero")
+sino:
+    imprimir("negativo")
+fin

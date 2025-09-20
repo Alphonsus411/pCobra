@@ -11,6 +11,8 @@ PALABRAS_RESERVADAS = frozenset(
         "func",
         "si",
         "sino",
+        "sino si",
+        "elseif",
         "mientras",
         "para",
         "import",
@@ -59,6 +61,9 @@ PALABRAS_RESERVADAS = frozenset(
         "lanzar",
         "option",
         "enum",
+        "y",
+        "o",
+        "no",
     }
 )
 

@@ -128,3 +128,29 @@ def test_lexer_func_and_definir_tokens():
         (TipoToken.EOF, None),
     ]
 
+
+def test_lexer_sino_si_y_elseif_generan_token_unico():
+    codigo = "sino si elseif"
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.SINO_SI, "sino si"),
+        (TipoToken.SINO_SI, "elseif"),
+        (TipoToken.EOF, None),
+    ]
+
+
+def test_lexer_alias_logicos_en_espanol():
+    codigo = "a y b o no c"
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.IDENTIFICADOR, "a"),
+        (TipoToken.AND, "y"),
+        (TipoToken.IDENTIFICADOR, "b"),
+        (TipoToken.OR, "o"),
+        (TipoToken.NOT, "no"),
+        (TipoToken.IDENTIFICADOR, "c"),
+        (TipoToken.EOF, None),
+    ]
+
