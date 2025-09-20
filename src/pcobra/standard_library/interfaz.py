@@ -162,6 +162,118 @@ def preguntar_confirmacion(
     return Confirm.ask(mensaje, default=por_defecto, console=console_obj)
 
 
+def preguntar_texto(
+    mensaje: str,
+    *,
+    por_defecto: str | None = None,
+    console: Console | None = None,
+    validar: Callable[[str], bool] | None = None,
+    mensaje_error: str = "Entrada inválida, intenta nuevamente.",
+) -> str:
+    """Solicita texto libre y permite validar el resultado."""
+
+    try:
+        from rich.prompt import Prompt
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    console_obj = _obtener_console(console)
+
+    while True:
+        respuesta = Prompt.ask(
+            mensaje,
+            default=por_defecto,
+            console=console_obj,
+            show_default=por_defecto is not None,
+        )
+        if validar is None or validar(respuesta):
+            return respuesta
+        console_obj.print(f"[red]{mensaje_error}[/red]")
+
+
+def preguntar_opcion(
+    mensaje: str,
+    opciones: Sequence[Any],
+    *,
+    por_defecto: Any | None = None,
+    console: Console | None = None,
+    mostrar_opciones: bool = True,
+) -> str:
+    """Solicita al usuario elegir un elemento de ``opciones``."""
+
+    try:
+        from rich.prompt import Prompt
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    if not opciones:
+        raise ValueError("Debes proporcionar al menos una opción para elegir.")
+
+    opciones_texto = [str(opcion) for opcion in opciones]
+    valor_defecto: str | None = None
+    if por_defecto is not None:
+        valor_defecto = str(por_defecto)
+        if valor_defecto not in opciones_texto:
+            raise ValueError("El valor por defecto debe estar dentro de las opciones.")
+
+    console_obj = _obtener_console(console)
+    return Prompt.ask(
+        mensaje,
+        choices=opciones_texto,
+        default=valor_defecto,
+        console=console_obj,
+        show_choices=mostrar_opciones,
+        show_default=valor_defecto is not None,
+    )
+
+
+def preguntar_entero(
+    mensaje: str,
+    *,
+    por_defecto: int | None = None,
+    minimo: int | None = None,
+    maximo: int | None = None,
+    console: Console | None = None,
+    mensaje_error: str = "Introduce un número entero válido.",
+) -> int:
+    """Solicita al usuario un número entero y valida rangos opcionales."""
+
+    try:
+        from rich.prompt import IntPrompt
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    if minimo is not None and maximo is not None and minimo > maximo:
+        raise ValueError("El mínimo no puede ser mayor que el máximo.")
+
+    if por_defecto is not None:
+        if minimo is not None and por_defecto < minimo:
+            raise ValueError("El valor por defecto es menor que el mínimo permitido.")
+        if maximo is not None and por_defecto > maximo:
+            raise ValueError("El valor por defecto es mayor que el máximo permitido.")
+
+    console_obj = _obtener_console(console)
+
+    while True:
+        respuesta = IntPrompt.ask(
+            mensaje,
+            default=por_defecto,
+            console=console_obj,
+            show_default=por_defecto is not None,
+        )
+        if minimo is not None and respuesta < minimo:
+            console_obj.print(
+                f"[red]{mensaje_error} Debe ser mayor o igual a {minimo}.[/red]"
+            )
+            continue
+        if maximo is not None and respuesta > maximo:
+            console_obj.print(
+                f"[red]{mensaje_error} Debe ser menor o igual a {maximo}.[/red]"
+            )
+            continue
+        return respuesta
+
+
 def mostrar_tabla(
     filas: Iterable[FilaTabla],
     *,
