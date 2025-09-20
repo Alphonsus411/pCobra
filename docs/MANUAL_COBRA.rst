@@ -203,6 +203,24 @@ flujo del programa. ``copiar_signo`` resulta útil al normalizar magnitudes y
 preservar el signo de ceros, infinitos o ``NaN`` para mantener la compatibilidad
 con otros entornos IEEE-754.
 
+Para cálculos combinatorios y sumas sensibles a errores de redondeo dispones
+de atajos adicionales. ``raiz_entera`` delega en ``math.isqrt`` para obtener la
+raíz cuadrada entera de valores gigantes sin perder precisión, ``combinaciones``
+y ``permutaciones`` aprovechan ``math.comb``/``math.perm`` para contar sin
+repetición incluso con números negativos o muy grandes (propagando las mismas
+excepciones), y ``suma_precisa`` invoca ``math.fsum`` para minimizar la pérdida
+de significancia en sumas largas.
+
+.. code-block:: python
+
+   import pcobra.corelibs as core
+   import standard_library.numero as numero
+
+   print(core.raiz_entera(10**12 + 12345))      # 1000000
+   print(core.combinaciones(52, 5))             # 2598960
+   print(numero.permutaciones(10, 3))           # 720
+   print(numero.suma_precisa([1e16, 1.0, -1e16]))  # 1.0
+
 .. list-table:: Equivalencias con bibliotecas numéricas
    :header-rows: 1
    :widths: 20 25 25 30
@@ -231,6 +249,10 @@ con otros entornos IEEE-754.
      - ``math.pow(x, 1/n)``
      - ``numpy.power(x, 1/n)``
      - ``Math.pow(x, 1/n)``
+   * - ``raiz_entera(x)``
+     - ``math.isqrt(x)``
+     - ``numpy.floor(numpy.sqrt(x))``
+     - ``Math.floor(Math.sqrt(x))``
    * - ``potencia(a, b)``
      - ``math.pow(a, b)``
      - ``numpy.power(a, b)``
@@ -255,6 +277,18 @@ con otros entornos IEEE-754.
      - ``math.copysign(a, b)``
      - ``numpy.copysign(a, b)``
      - ``Math.abs(a) * (Number.isNaN(b) ? 1 : Math.sign(b) || 1)``
+   * - ``combinaciones(n, k)``
+     - ``math.comb(n, k)``
+     - ``numpy.math.comb(n, k)``
+     - ``factorial(n) / (factorial(k) * factorial(n - k))``
+   * - ``permutaciones(n, k)``
+     - ``math.perm(n, k)``
+     - ``numpy.math.perm(n, k)``
+     - ``factorial(n) / factorial(n - k)``
+   * - ``suma_precisa(valores)``
+     - ``math.fsum(valores)``
+     - ``numpy.sum(valores, dtype=numpy.float64)``
+     - ``valores.reduce((total, x) => total + x, 0)``
    * - ``aleatorio(a, b)``
      - ``random.uniform(a, b)``
      - ``numpy.random.uniform(a, b)``

@@ -393,6 +393,20 @@ def raiz(valor, indice: float = 2):
     return -magnitud if valor < 0 else magnitud
 
 
+def raiz_entera(valor):
+    """Obtiene la raíz cuadrada entera de ``valor`` utilizando ``math.isqrt``."""
+
+    if isinstance(valor, bool):
+        valor = int(valor)
+    if isinstance(valor, int):
+        return math.isqrt(valor)
+
+    numero = _a_float(valor, "raiz_entera")
+    if not math.isfinite(numero) or not numero.is_integer():
+        raise ValueError("raiz_entera solo acepta enteros finitos")
+    return math.isqrt(int(numero))
+
+
 def potencia(base, exponente):
     """Eleva ``base`` a ``exponente`` utilizando ``math.pow``."""
 
@@ -523,3 +537,21 @@ def factorial(n: int) -> int:
 def promedio(valores) -> float:
     """Calcula el promedio de una secuencia de valores."""
     return sum(valores) / len(valores) if valores else 0.0
+
+
+def combinaciones(n: int, k: int) -> int:
+    """Retorna ``n`` sobre ``k`` usando :func:`math.comb`."""
+
+    return math.comb(n, k)
+
+
+def permutaciones(n: int, k: int | None = None) -> int:
+    """Calcula las permutaciones de ``n`` tomados de ``k`` en ``k``."""
+
+    return math.perm(n, k)
+
+
+def suma_precisa(valores) -> float:
+    """Suma ``valores`` con precisión extendida como :func:`math.fsum`."""
+
+    return math.fsum(_a_float(valor, "suma_precisa") for valor in valores)

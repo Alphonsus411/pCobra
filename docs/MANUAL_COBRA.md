@@ -672,6 +672,22 @@ imprimir(core.envolver_modular(-3, 5))        # 2: envoltura positiva como en Ru
 imprimir(numero.envolver_modular(7.5, -5.0))  # -2.5: respeta el signo del divisor
 ```
 
+Para cálculos combinatorios o sumas delicadas en precisión cuentas con nuevos
+accesos directos. `raiz_entera` aprovecha `math.isqrt` para trabajar con enteros
+gigantes, `combinaciones` y `permutaciones` delegan en `math.comb`/`math.perm`
+manteniendo los mismos errores ante parámetros negativos, y `suma_precisa`
+utiliza `math.fsum` para reducir errores de cancelación catastrófica.
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.numero as numero
+
+imprimir(core.raiz_entera(10**12 + 12345))      # 1000000
+imprimir(core.combinaciones(52, 5))             # 2598960
+imprimir(numero.permutaciones(10, 3))           # 720
+imprimir(numero.suma_precisa([1e16, 1.0, -1e16]))  # 1.0
+```
+
 ## 23. Operaciones con colecciones
 
 El módulo `pcobra.corelibs.coleccion` ahora ofrece funciones pensadas para transformar y analizar listas sin perder el orden de los elementos ni sacrificar seguridad de tipos. Las más destacadas son:
