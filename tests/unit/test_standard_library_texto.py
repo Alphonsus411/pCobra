@@ -42,6 +42,21 @@ def test_es_anagrama():
     assert texto.es_anagrama("cosa", "caso ", ignorar_espacios=False) is False
 
 
+def test_a_snake_y_a_camel():
+    assert texto.a_snake("HolaMundo") == "hola_mundo"
+    assert texto.a_snake("mañana-tarde Noche") == "mañana_tarde_noche"
+    assert texto.a_snake("JSONDataLoader") == "json_data_loader"
+    assert texto.a_camel("hola mundo") == "holaMundo"
+    assert texto.a_camel("mañana_tarde noche", inicial_mayuscula=True) == "MañanaTardeNoche"
+    assert texto.a_camel("datos-JSON_parser") == "datosJsonParser"
+
+
+def test_quitar_envoltura_normaliza():
+    assert texto.quitar_envoltura("«mañana»", "«", "»") == "mañana"
+    assert texto.quitar_envoltura("cancio\u0301n", "can", "ón") == "ci"
+    assert texto.quitar_envoltura("⚡dato⚡", "", "⚡") == "⚡dato"
+
+
 def test_prefijos_y_sufijos():
     assert texto.quitar_prefijo("🧪Prueba", "🧪") == "Prueba"
     assert texto.quitar_prefijo("demo", "x") == "demo"

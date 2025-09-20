@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import re
 import textwrap
 import unicodedata
 from typing import Any, TypeVar, overload
@@ -10,6 +11,36 @@ from typing import Any, TypeVar, overload
 
 _T = TypeVar("_T")
 _SIN_VALOR = object()
+
+
+_PATRON_TRANSICION_CASO = re.compile(r"(?<=[^\W_])(?=[^\W_])", re.UNICODE)
+_PATRON_SEPARADORES = re.compile(r"[\W_]+", re.UNICODE)
+
+
+def _insertar_espacio_transicion(match: re.Match[str]) -> str:
+    texto = match.string
+    indice = match.start()
+    anterior = texto[indice - 1]
+    siguiente = texto[indice]
+    posterior = texto[indice + 1] if indice + 1 < len(texto) else ""
+    if (anterior.islower() or anterior.isdigit()) and siguiente.isupper():
+        return " "
+    if anterior.isupper() and siguiente.isupper() and posterior and posterior.islower():
+        return " "
+    return ""
+
+
+def _tokenizar_componentes(texto: str) -> list[str]:
+    if not texto:
+        return []
+    normalizado = normalizar_unicode(texto, "NFKC")
+    con_espacios = _PATRON_TRANSICION_CASO.sub(_insertar_espacio_transicion, normalizado)
+    reemplazado = _PATRON_SEPARADORES.sub(" ", con_espacios)
+    return [
+        normalizar_unicode(fragmento, "NFC")
+        for fragmento in reemplazado.split()
+        if fragmento
+    ]
 
 
 def _texto_o_defecto(por_defecto: Any, texto: str) -> Any:
@@ -301,6 +332,53 @@ def quitar_sufijo(texto: str, sufijo: str) -> str:
     if sufijo and texto.endswith(sufijo):
         return texto[: -len(sufijo)]
     return texto
+
+
+def a_snake(texto: str) -> str:
+    """Convierte ``texto`` a ``snake_case`` combinando Unicode como hacen utilidades de JavaScript."""
+
+    componentes = _tokenizar_componentes(texto)
+    return "_".join(fragmento.casefold() for fragmento in componentes)
+
+
+def _capitalizar_camel(texto: str) -> str:
+    if not texto:
+        return ""
+    base = texto.casefold()
+    return base[:1].upper() + base[1:]
+
+
+def a_camel(texto: str, *, inicial_mayuscula: bool = False) -> str:
+    """Genera ``camelCase`` o ``PascalCase`` similar a conversores presentes en Swift y bibliotecas de JavaScript."""
+
+    componentes = _tokenizar_componentes(texto)
+    if not componentes:
+        return ""
+    base = [normalizar_unicode(parte, "NFC") for parte in componentes]
+    if inicial_mayuscula:
+        primera = _capitalizar_camel(base[0])
+    else:
+        primera = base[0].casefold()
+    resto = [_capitalizar_camel(parte) for parte in base[1:]]
+    return "".join([primera, *resto])
+
+
+def quitar_envoltura(texto: str, prefijo: str, sufijo: str) -> str:
+    """Elimina prefijo y sufijo coincidentes al estilo de ``removeSurrounding`` en Kotlin."""
+
+    normal_texto = normalizar_unicode(texto, "NFC")
+    pref = normalizar_unicode(prefijo, "NFC")
+    suf = normalizar_unicode(sufijo, "NFC")
+    if not pref and not suf:
+        return normal_texto
+    patron = re.compile(
+        rf"^{re.escape(pref)}(?P<contenido>.*){re.escape(suf)}$",
+        re.DOTALL,
+    )
+    coincidencia = patron.match(normal_texto)
+    if not coincidencia:
+        return normal_texto
+    return coincidencia.group("contenido")
 
 
 def prefijo_comun(

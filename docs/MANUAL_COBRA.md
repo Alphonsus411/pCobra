@@ -621,6 +621,7 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
 - `quitar_prefijo`, `quitar_sufijo`, `prefijo_comun` y `sufijo_comun` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y añaden equivalentes a `commonPrefixWith`/`commonSuffixWith` de Kotlin o `String.commonPrefix`/`String.commonSuffix` de Swift con opciones para ignorar mayúsculas y normalizar Unicode.
+- `a_snake` y `a_camel` generan identificadores normalizados como lo hacen extensiones de Kotlin, las rutinas `lowerCamelCase` de Swift o utilidades de JavaScript (por ejemplo `lodash.snakeCase`/`camelCase`), mientras que `quitar_envoltura` reproduce `removeSurrounding` de Kotlin junto con los patrones `hasPrefix`/`hasSuffix` de Swift y `String.prototype.slice` en JS.
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
 - `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.
 - `envolver_texto` ajusta párrafos con sangrías iniciales y posteriores, y `acortar_texto` resume frases al estilo de `textwrap.shorten` añadiendo un marcador configurable.
@@ -652,6 +653,9 @@ imprimir(texto.envolver_texto("Cobra facilita scripts portables", 18, como_texto
 imprimir(core.particionar_texto("ruta/archivo.ext", "/"))  # ('ruta', '/', 'archivo.ext')
 imprimir(texto.particionar_derecha("archivo.tar.gz", "."))  # ('archivo.tar', '.', 'gz')
 imprimir(texto.sufijo_comun("astronomía", "economía"))      # 'onomía'
+imprimir(core.a_snake("MiValorHTTP"))                     # 'mi_valor_http'
+imprimir(texto.a_camel("hola-mundo cobra", inicial_mayuscula=True))  # 'HolaMundoCobra'
+imprimir(core.quitar_envoltura("«mañana»", "«", "»"))    # 'mañana'
 ```
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.
