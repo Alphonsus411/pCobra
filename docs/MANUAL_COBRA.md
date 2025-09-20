@@ -625,7 +625,9 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.
 - `envolver_texto` ajusta párrafos con sangrías iniciales y posteriores, y `acortar_texto` resume frases al estilo de `textwrap.shorten` añadiendo un marcador configurable.
 - `minusculas_casefold` aplica minúsculas intensivas (`casefold`) que homogeneizan mayúsculas, ß alemana o símbolos con diacríticos.
-- Las comprobaciones `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas` y `es_espacio` replican directamente los métodos `str.is*` de Python.
+- `intercambiar_mayusculas` alterna mayúsculas y minúsculas en toda la cadena, ideal para depurar textos que mezclan casos.
+- `expandir_tabulaciones` convierte tabuladores en espacios con un ancho configurable para unificar indentaciones mixtas.
+- Las comprobaciones `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas`, `es_titulo`, `es_digito` y `es_espacio` replican directamente los métodos `str.is*` de Python.
 
 En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`, además de accesos directos a los validadores `es_*`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
 
@@ -644,6 +646,8 @@ imprimir(core.prefijo_comun("Canción", "cancio\u0301n", ignorar_mayusculas=True
 imprimir(core.centrar_texto("cobra", 9, "*"))        # '**cobra**'
 imprimir(core.minusculas_casefold("Straße"))         # 'strasse'
 imprimir(core.indentar_texto("uno\n dos", "-> "))   # '-> uno\n->  dos'
+imprimir(core.intercambiar_mayusculas("ÁRBOL y cobra"))  # 'árbol Y COBRA'
+imprimir(core.expandir_tabulaciones("uno\t dos\tfin", 4))  # 'uno  dos    fin'
 imprimir(texto.envolver_texto("Cobra facilita scripts portables", 18, como_texto=True))
 imprimir(core.particionar_texto("ruta/archivo.ext", "/"))  # ('ruta', '/', 'archivo.ext')
 imprimir(texto.particionar_derecha("archivo.tar.gz", "."))  # ('archivo.tar', '.', 'gz')

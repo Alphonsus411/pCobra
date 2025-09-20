@@ -36,6 +36,7 @@ def test_texto_funcs():
     assert core.capitalizar("cobra") == "Cobra"
     assert core.capitalizar("") == ""
     assert core.titulo("árbol de navidad") == "Árbol De Navidad"
+    assert core.intercambiar_mayusculas("ÁRBOL y cobra") == "árbol Y COBRA"
     assert core.invertir("abc") == "cba"
     assert core.concatenar("a", "b") == "ab"
     assert core.es_alfabetico("Árbol") is True
@@ -61,10 +62,14 @@ def test_texto_funcs():
     assert core.es_minusculas("texto!") is True
     assert core.es_minusculas("Texto") is False
     assert core.es_minusculas("123") is False
+    assert core.es_titulo("Canción De Cuna") is True
+    assert core.es_titulo("Canción de cuna") is False
     assert core.es_espacio(" \t\u2009") is True
     assert core.es_espacio(" ") is True
     assert core.es_espacio("") is False
     assert core.es_espacio("texto") is False
+    assert core.es_digito("１２３") is True
+    assert core.es_digito("Ⅻ") is False
     assert core.quitar_espacios("  hola  ") == "hola"
     assert core.quitar_espacios("--hola--", modo="derecha", caracteres="-") == "--hola"
     with pytest.raises(ValueError):
@@ -126,6 +131,7 @@ def test_texto_funcs():
         "dos\n",
     ]
     assert core.dividir_lineas("") == []
+    assert core.expandir_tabulaciones("uno\t dos\tfin", 4) == "uno  dos    fin"
     assert core.contar_subcadena("banana", "na") == 2
     assert core.contar_subcadena("banana", "na", 0, 3) == 0
     assert core.centrar_texto("cobra", 9, "*") == "**cobra**"
