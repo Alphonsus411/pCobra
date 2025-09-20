@@ -133,6 +133,7 @@ from standard_library.numero import (
 )
 from standard_library.util import es_nulo, es_vacio, rel, repetir
 from standard_library.asincrono import grupo_tareas, proteger_tarea, ejecutar_en_hilo
+from standard_library.decoradores import memoizar, dataclase, temporizar
 
 __all__: list[str] = [
     "leer",
@@ -239,6 +240,9 @@ __all__: list[str] = [
     "grupo_tareas",
     "proteger_tarea",
     "ejecutar_en_hilo",
+    "memoizar",
+    "dataclase",
+    "temporizar",
 ]
 
 
@@ -278,3 +282,7 @@ iniciar_gui_idle: Callable[..., None]
 T_co = TypeVar("T_co")
 proteger_tarea: Callable[[Awaitable[T_co] | Coroutine[Any, Any, T_co]], asyncio.Future[T_co]]
 ejecutar_en_hilo: Callable[..., Awaitable[Any]]
+
+memoizar: Callable[..., Callable[..., Any]]
+temporizar: Callable[..., Callable[..., Any]]
+dataclase: Callable[..., Any]
