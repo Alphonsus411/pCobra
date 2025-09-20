@@ -5,6 +5,20 @@ fechas y datos tabulares mediante envoltorios amigables. Cada función
 re-exportada incluye anotaciones de tipo para favorecer el autocompletado y la
 documentación en español, con notas sobre compatibilidad funcional con
 ecosistemas como R o Julia cuando aplica.
+
+Ejemplos rápidos::
+
+    from standard_library import (
+        preguntar_texto,
+        preguntar_opcion,
+        preguntar_entero,
+    )
+
+    nombre = preguntar_texto("¿Cómo te llamas?", por_defecto="Ada")
+    color = preguntar_opcion("Color favorito", ["azul", "verde", "rojo"], por_defecto="azul")
+    edad = preguntar_entero("Edad", minimo=0)
+
+    print(f"{nombre} prefiere el {color} y tiene {edad} años")
 """
 
 from __future__ import annotations
@@ -51,6 +65,10 @@ from standard_library.interfaz import (
     mostrar_json,
     mostrar_panel,
     mostrar_tabla,
+    preguntar_confirmacion,
+    preguntar_entero,
+    preguntar_opcion,
+    preguntar_texto,
 )
 from standard_library.lista import (
     cabeza,
@@ -204,6 +222,10 @@ __all__: list[str] = [
     "escribir_parquet",
     "escribir_feather",
     "mostrar_tabla",
+    "preguntar_confirmacion",
+    "preguntar_texto",
+    "preguntar_opcion",
+    "preguntar_entero",
     "mostrar_columnas",
     "mostrar_panel",
     "mostrar_markdown",

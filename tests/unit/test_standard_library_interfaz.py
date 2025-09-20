@@ -5,6 +5,7 @@ import importlib.util
 import sys
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock
 
@@ -43,6 +44,9 @@ mostrar_markdown = interfaz.mostrar_markdown
 mostrar_json = interfaz.mostrar_json
 mostrar_arbol = interfaz.mostrar_arbol
 preguntar_confirmacion = interfaz.preguntar_confirmacion
+preguntar_texto = interfaz.preguntar_texto
+preguntar_opcion = interfaz.preguntar_opcion
+preguntar_entero = interfaz.preguntar_entero
 mostrar_columnas = interfaz.mostrar_columnas
 grupo_consola = interfaz.grupo_consola
 
@@ -193,6 +197,115 @@ def test_preguntar_confirmacion_usa_valor_por_defecto(monkeypatch):
     )
     assert respuesta_no is False
     assert DummyConfirm.last_call == ("¿Continuar?", False, console)
+
+
+def test_preguntar_texto_valida_hasta_respuesta_correcta(monkeypatch):
+    console = Console(record=True)
+    respuestas = iter(["", "Cobra"])
+
+    class DummyPrompt:
+        llamadas: list[tuple[str, dict[str, Any]]] = []
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.llamadas.append((mensaje, kwargs))
+            return next(respuestas)
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_texto(
+        "Nombre",
+        console=console,
+        validar=lambda valor: valor == "Cobra",
+        mensaje_error="Introduce un nombre válido",
+    )
+
+    assert resultado == "Cobra"
+    assert len(DummyPrompt.llamadas) == 2
+    log = console.export_text()
+    assert "Introduce un nombre válido" in log
+
+
+def test_preguntar_opcion_envia_opciones_como_texto(monkeypatch):
+    console = Mock(spec=Console)
+
+    class DummyPrompt:
+        ultimo_kwargs: dict[str, Any] | None = None
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.ultimo_kwargs = kwargs
+            return kwargs["default"]
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_opcion(
+        "Color",
+        opciones=["azul", "verde"],
+        por_defecto="verde",
+        console=console,
+        mostrar_opciones=False,
+    )
+
+    assert resultado == "verde"
+    assert DummyPrompt.ultimo_kwargs is not None
+    assert DummyPrompt.ultimo_kwargs["choices"] == ["azul", "verde"]
+    assert DummyPrompt.ultimo_kwargs["show_choices"] is False
+
+
+def test_preguntar_opcion_falla_con_defecto_fuera_de_lista(monkeypatch):
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = type("Prompt", (), {"ask": classmethod(lambda cls, *a, **k: "")})
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    with pytest.raises(ValueError):
+        preguntar_opcion("Color", opciones=["azul"], por_defecto="verde")
+
+
+def test_preguntar_entero_respeta_rangos(monkeypatch):
+    console = Console(record=True)
+
+    class DummyIntPrompt:
+        respuestas = iter([1, 4])
+        llamadas: list[tuple[str, dict[str, Any]]] = []
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.llamadas.append((mensaje, kwargs))
+            return next(cls.respuestas)
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.IntPrompt = DummyIntPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_entero(
+        "Cantidad",
+        console=console,
+        minimo=3,
+        maximo=5,
+        mensaje_error="Valor fuera de rango",
+    )
+
+    assert resultado == 4
+    assert len(DummyIntPrompt.llamadas) == 2
+    texto = console.export_text()
+    assert "Valor fuera de rango" in texto
+    assert "mayor o igual a 3" in texto
+
+
+def test_preguntar_entero_con_rangos_invalidos_lanza_error():
+    with pytest.raises(ValueError):
+        preguntar_entero("Cantidad", minimo=5, maximo=3)
+
+    with pytest.raises(ValueError):
+        preguntar_entero("Cantidad", minimo=3, por_defecto=2)
+
+    with pytest.raises(ValueError):
+        preguntar_entero("Cantidad", maximo=3, por_defecto=5)
 
 
 def test_mostrar_tabla_emplea_console_mock():

@@ -375,3 +375,27 @@ imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
 Este fragmento muestra cómo combinar las utilidades de `corelibs.texto` con los atajos de `standard_library.texto` para trabajar con Unicode sin perder legibilidad.
 
 La misma tanda de utilidades incorporó `intercambiar_mayusculas` y `expandir_tabulaciones` para alternar casos y homogeneizar indentaciones mezcladas, además de `es_titulo` y `es_digito` que validan títulos con acentos y dígitos Unicode sin complicaciones.
+
+### Ejemplo: recopilar datos con la interfaz enriquecida
+
+Las nuevas utilidades de `standard_library.interfaz` permiten construir pequeños asistentes de consola sin manejar directamente las API de `rich`. El siguiente fragmento muestra una conversación típica en la terminal:
+
+```python
+from standard_library import (
+    preguntar_texto,
+    preguntar_opcion,
+    preguntar_entero,
+)
+
+nombre = preguntar_texto("¿Cómo te llamas?", por_defecto="Ada")
+lenguaje = preguntar_opcion(
+    "¿Qué lenguaje prefieres?",
+    ["Cobra", "Python", "Rust"],
+    por_defecto="Cobra",
+)
+anios = preguntar_entero("¿Cuántos años llevas programando?", minimo=0)
+
+print(f"{nombre} lleva {anios} años programando y hoy experimenta con {lenguaje}.")
+```
+
+En pantalla se muestran las opciones formateadas por `rich` y se reaprovecha el estilo de colores de Cobra. Cada pregunta valida automáticamente el tipo de entrada y guía a la persona usuaria con mensajes descriptivos.
