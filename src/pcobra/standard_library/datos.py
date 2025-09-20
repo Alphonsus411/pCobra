@@ -543,6 +543,176 @@ def mutar_columna(
     return _sanear_registros(df.to_dict(orient="records"))
 
 
+def separar_columna(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    columna: str,
+    *,
+    en: Sequence[str],
+    separador: str = " ",
+    maximo_divisiones: int | None = None,
+    eliminar_original: bool = True,
+    descartar_nulos: bool = False,
+    relleno: Any | None = None,
+) -> Tabla:
+    """Divide ``columna`` en múltiples campos usando ``pandas.Series.str.split``.
+
+    Parameters
+    ----------
+    datos:
+        Registros tabulares convertibles a :class:`pandas.DataFrame`.
+    columna:
+        Nombre de la columna que se separará.
+    en:
+        Secuencia con los nombres de las columnas resultantes.
+    separador:
+        Delimitador utilizado al fragmentar el texto. Se pasa directamente a
+        :meth:`pandas.Series.str.split`.
+    maximo_divisiones:
+        Número máximo de divisiones a realizar. Por defecto se limita a
+        ``len(en) - 1`` para conservar la última parte completa.
+    eliminar_original:
+        Cuando es ``True`` elimina ``columna`` tras la separación.
+    descartar_nulos:
+        Si es ``True`` descarta las filas donde alguna de las nuevas columnas
+        queda vacía tras el proceso. El filtrado se evalúa después de aplicar
+        ``relleno``.
+    relleno:
+        Valor opcional que reemplazará los fragmentos faltantes antes de
+        evaluar ``descartar_nulos``. Usa ``None`` (por defecto) para conservar
+        los ``NA`` generados por ``pandas``.
+
+    Returns
+    -------
+    Tabla
+        Lista de registros con las columnas recién creadas.
+
+    Notas
+    -----
+    Inspirada en la función ``separate`` de *tidyr* (R) y en ``separatecols``
+    de *DataFrames.jl* (Julia), manteniendo compatibilidad semántica en la
+    manera en que se generan las nuevas columnas y se tratan los valores
+    faltantes.
+    """
+
+    destinos = list(en)
+    if not destinos:
+        raise ValueError("Debes proporcionar al menos una columna de destino.")
+
+    df = _a_dataframe(datos)
+    if columna not in df.columns:
+        raise KeyError(f"La columna '{columna}' no existe en los datos.")
+
+    serie_original = df[columna]
+    serie_texto = serie_original.astype("string")
+    divisiones = len(destinos) - 1 if maximo_divisiones is None else maximo_divisiones
+    partes = serie_texto.str.split(separador, n=divisiones, expand=True)
+
+    # Garantizar que existan suficientes columnas intermedias
+    while partes.shape[1] < len(destinos):
+        partes[partes.shape[1]] = pd.NA
+    partes = partes.iloc[:, : len(destinos)].copy()
+    partes.columns = destinos
+
+    if relleno is not None:
+        partes = partes.fillna(relleno).replace({pd.NA: relleno})
+
+    if descartar_nulos:
+        mascara_validos = ~partes.isna().any(axis=1)
+        df = df.loc[mascara_validos].copy()
+        partes = partes.loc[mascara_validos].copy()
+    else:
+        partes = partes.reindex(df.index, fill_value=pd.NA)
+
+    for destino in destinos:
+        df[destino] = partes[destino]
+
+    if eliminar_original:
+        df = df.drop(columns=[columna])
+
+    return _sanear_registros(df.to_dict(orient="records"))
+
+
+def unir_columnas(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    columnas: Sequence[str],
+    destino: str,
+    *,
+    separador: str = "_",
+    omitir_nulos: bool = True,
+    relleno: str = "",
+    eliminar_original: bool = True,
+) -> Tabla:
+    """Concatena ``columnas`` en ``destino`` controlando valores faltantes.
+
+    Parameters
+    ----------
+    datos:
+        Datos tabulares convertibles a :class:`pandas.DataFrame`.
+    columnas:
+        Columnas que se unirán, en orden.
+    destino:
+        Nombre de la columna resultante.
+    separador:
+        Texto utilizado entre cada fragmento al unir.
+    omitir_nulos:
+        Cuando es ``True`` ignora los valores nulos y elimina separadores
+        redundantes. Si todas las columnas están vacías la salida será ``None``.
+    relleno:
+        Cadena empleada para sustituir valores faltantes cuando
+        ``omitir_nulos`` es ``False``. Se ignora cuando ``omitir_nulos`` es
+        ``True``. Por defecto se usa la cadena vacía.
+    eliminar_original:
+        Si es ``True`` elimina las columnas utilizadas una vez creada la nueva
+        columna.
+
+    Returns
+    -------
+    Tabla
+        Tabla resultante con la columna combinada.
+
+    Notas
+    -----
+    El comportamiento replica el de ``unite`` en *tidyr* (R) y las
+    transformaciones ``select``/``ByRow`` de *DataFrames.jl*, manteniendo la
+    compatibilidad conceptual sobre cómo se tratan los separadores y los
+    valores nulos durante la concatenación.
+    """
+
+    columnas_ordenadas = list(columnas)
+    if not columnas_ordenadas:
+        raise ValueError("Debes especificar al menos una columna a unir.")
+
+    df = _a_dataframe(datos)
+    faltantes = [col for col in columnas_ordenadas if col not in df.columns]
+    if faltantes:
+        raise KeyError(f"Columnas inexistentes para unir: {', '.join(faltantes)}")
+
+    resultados: list[Any] = []
+    for valores in df[columnas_ordenadas].itertuples(index=False, name=None):
+        piezas: list[str] = []
+        for valor in valores:
+            if pd.isna(valor):
+                if omitir_nulos:
+                    continue
+                piezas.append(str(relleno))
+            else:
+                piezas.append(str(valor))
+
+        if not piezas:
+            resultados.append(None if omitir_nulos else str(relleno))
+        else:
+            resultados.append(separador.join(piezas))
+
+    df[destino] = resultados
+
+    if eliminar_original:
+        a_eliminar = [col for col in columnas_ordenadas if col != destino]
+        if a_eliminar:
+            df = df.drop(columns=a_eliminar)
+
+    return _sanear_registros(df.to_dict(orient="records"))
+
+
 def agrupar_y_resumir(
     datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
     por: Sequence[str],

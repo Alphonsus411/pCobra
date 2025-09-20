@@ -11,6 +11,14 @@ El módulo `standard_library.datos` encapsula operaciones comunes sobre datos ta
 - **`describir(datos)`**: calcula estadísticas básicas por columna y devuelve un diccionario de métricas.
 - **`seleccionar_columnas(datos, columnas)`**: extrae columnas específicas y reporta si alguna falta.
 - **`filtrar(datos, condicion)`**: aplica una función por fila y conserva solo los registros que devuelvan `True`.
+- **`separar_columna(datos, columna, *, en, separador=" ", maximo_divisiones=None, eliminar_original=True, descartar_nulos=False, relleno=None)`**:
+  divide una columna en varias partes usando `Series.str.split` manteniendo el mismo
+  comportamiento que `tidyr::separate` (R) y `DataFrames.jl.separatecols`, incluyendo
+  opciones para descartar filas con valores incompletos o reemplazarlos con un valor
+  personalizado.
+- **`unir_columnas(datos, columnas, destino, *, separador="_", omitir_nulos=True, relleno="", eliminar_original=True)`**:
+  concatena columnas en un solo campo controlando los nulos como en `tidyr::unite`
+  o en las transformaciones `ByRow` de DataFrames.jl.
 - **`agrupar_y_resumir(datos, por, agregaciones)`**: agrupa por columnas y aplica agregaciones compatibles con `DataFrame.agg`.
 - **`a_listas(datos)`**: transforma la tabla a un diccionario columna → lista.
 - **`de_listas(columnas)`**: genera una lista de diccionarios a partir de un mapeo de columnas.
@@ -40,6 +48,30 @@ ruta = Path("reportes/ventas.xlsx")
 datos.escribir_excel(tabla, ruta, hoja="Resumen", engine="openpyxl")
 
 registros = datos.leer_excel(ruta, hoja="Resumen", engine="openpyxl")
+
+clientes = [
+    {"cliente": 1, "nombre": "Ada", "zona": "Norte"},
+    {"cliente": 2, "nombre": "Grace", "zona": None},
+]
+
+clientes_con_etiqueta = datos.unir_columnas(
+    clientes,
+    ["nombre", "zona"],
+    "etiqueta",
+    separador=" - ",
+    omitir_nulos=False,
+    relleno="sin zona",
+    eliminar_original=False,
+)
+
+clientes_expandido = datos.separar_columna(
+    clientes_con_etiqueta,
+    "etiqueta",
+    en=["nombre_tag", "zona_tag"],
+    separador=" - ",
+    relleno="sin zona",
+    eliminar_original=False,
+)
 ```
 
 La variable `registros` contendrá nuevamente una lista de diccionarios con los valores saneados (`None` en lugar de `NaN`, enteros en vez de `numpy.int64`, etc.), lista para continuar el procesamiento dentro de Cobra.

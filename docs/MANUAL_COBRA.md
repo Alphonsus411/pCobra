@@ -866,6 +866,12 @@ El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que pe
 - `describir` calcula estadísticas básicas (`count`, `mean`, `std`, percentiles) para cada columna.
 - `seleccionar_columnas` y `filtrar` permiten aislar subconjuntos antes de seguir procesando los datos.
 - `mutar_columna` crea o actualiza campos calculados evaluando una función por registro.
+- `separar_columna` divide un campo compuesto en varias columnas al estilo de
+  `tidyr::separate` en R o `DataFrames.jl.separatecols`, conservando o descartando
+  filas con valores faltantes según tus necesidades.
+- `unir_columnas` concatena columnas en una sola cadena con control sobre
+  delimitadores y nulos, similar a `tidyr::unite` o a las transformaciones
+  `ByRow` de DataFrames.jl.
 - `agrupar_y_resumir` aplica agregaciones (`sum`, `mean`, funciones personalizadas) agrupando por columnas clave.
 - `ordenar_tabla` admite ordenar por varias columnas controlando el sentido ascendente o descendente de cada una.
 - `combinar_tablas` replica los `join` de pandas y R para cruzar datasets con claves compartidas o diferenciadas.
@@ -892,6 +898,21 @@ ventas_con_bonus = pandas.mutar_columna(
     lambda fila: fila['monto'] * 1.05 if fila['monto'] is not None else None,
 )
 ventas_ordenadas = pandas.ordenar_tabla(ventas_limpias, por=['region', 'mes'], ascendente=[True, False])
+ventas_rotuladas = pandas.unir_columnas(
+    ventas_limpias,
+    ['region', 'mes'],
+    'region_mes',
+    separador='-',
+    eliminar_original=False,
+)
+ventas_con_etiquetas = pandas.separar_columna(
+    ventas_rotuladas,
+    'region_mes',
+    en=['region_tag', 'mes_tag'],
+    separador='-',
+    relleno='desconocido',
+    eliminar_original=False,
+)
 ventas_con_clientes = pandas.combinar_tablas(clientes, ventas_limpias, claves=('cliente_id', 'cliente'), tipo='left')
 ventas_completas = pandas.rellenar_nulos(ventas_con_clientes, {'monto': 0})
 resumen_ancho = pandas.pivotar_tabla(

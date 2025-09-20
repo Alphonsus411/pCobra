@@ -1,9 +1,10 @@
 """Biblioteca estándar complementaria para Cobra.
 
 Este paquete expone utilidades enfocadas en manipular colecciones, texto,
-fechas y ahora datos tabulares mediante envoltorios amigables. Cada función
+fechas y datos tabulares mediante envoltorios amigables. Cada función
 re-exportada incluye anotaciones de tipo para favorecer el autocompletado y la
-documentación en español para facilitar su consulta.
+documentación en español, con notas sobre compatibilidad funcional con
+ecosistemas como R o Julia cuando aplica.
 """
 
 from __future__ import annotations
@@ -23,6 +24,8 @@ from standard_library.datos import (
     mutar_columna,
     pivotar_ancho,
     pivotar_largo,
+    separar_columna,
+    unir_columnas,
     leer_csv,
     leer_excel,
     leer_feather,
@@ -187,6 +190,8 @@ __all__: list[str] = [
     "seleccionar_columnas",
     "filtrar",
     "mutar_columna",
+    "separar_columna",
+    "unir_columnas",
     "pivotar_ancho",
     "pivotar_largo",
     "desplegar_tabla",
