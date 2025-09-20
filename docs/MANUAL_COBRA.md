@@ -280,6 +280,12 @@ varias tareas sin perder legibilidad:
   cancela limpiamente si se supera el límite.
 - `crear_tarea` centraliza la creación de tareas para evitar fugas de corrutinas
   al integrar Cobra con bibliotecas Python.
+- `proteger_tarea` reutiliza `asyncio.shield` para aislar corrutinas de
+  cancelaciones externas, muy en la línea de `Promise.resolve` cuando se quiere
+  preservar el trabajo en curso.
+- `ejecutar_en_hilo` usa `asyncio.to_thread` (o `run_in_executor` en versiones
+  antiguas) para llevar funciones síncronas a un flujo asincrónico, igual que
+  `Promise.resolve` permite esperar valores que no son promesas.
 - `grupo_tareas` replica `asyncio.TaskGroup`, cancelando las tareas hermanas
   cuando una falla y manteniendo compatibilidad con Python 3.10.
 
@@ -317,7 +323,9 @@ async def procesar_datos():
 ```
 
 Este manejador también está disponible como `standard_library.grupo_tareas` para
-los programas escritos íntegramente en Cobra.
+los programas escritos íntegramente en Cobra, junto con `standard_library.proteger_tarea`
+y `standard_library.ejecutar_en_hilo` para integrarse con el resto de utilidades
+asíncronas.
 
 La combinación de estas utilidades facilita alternar entre estilos típicos de
 Python y de JavaScript sin perder características de ninguno: se conservan las

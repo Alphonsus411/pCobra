@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import random
 from contextlib import asynccontextmanager, suppress
+import functools
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -52,6 +53,34 @@ def _asegurar_tarea(
     if not asyncio.iscoroutine(awaitable):
         raise TypeError("Se esperaba una corrutina o tarea de asyncio")
     return asyncio.create_task(awaitable)
+
+
+def proteger_tarea(
+    awaitable: Awaitable[T] | Coroutine[Any, Any, T]
+) -> asyncio.Future[T]:
+    """Impide que las cancelaciones externas afecten a ``awaitable``."""
+
+    tarea = _asegurar_tarea(awaitable)
+    return asyncio.shield(tarea)
+
+
+async def ejecutar_en_hilo(
+    funcion: Callable[..., T], *args: Any, **kwargs: Any
+) -> T:
+    """Ejecuta ``funcion`` en un hilo auxiliar respetando la interfaz de asyncio."""
+
+    if not callable(funcion):
+        raise TypeError("ejecutar_en_hilo() requiere un callable")
+
+    to_thread = getattr(asyncio, "to_thread", None)
+    if to_thread is not None:
+        return await to_thread(funcion, *args, **kwargs)
+
+    loop = asyncio.get_running_loop()
+    if kwargs:
+        parcial = functools.partial(funcion, *args, **kwargs)
+        return await loop.run_in_executor(None, parcial)
+    return await loop.run_in_executor(None, funcion, *args)
 
 
 async def recolectar(

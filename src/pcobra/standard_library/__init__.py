@@ -8,7 +8,9 @@ documentación en español para facilitar su consulta.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable, Mapping, Sequence
+import asyncio
+
+from typing import Any, Awaitable, Callable, Coroutine, Iterable, Mapping, Sequence, TypeVar
 
 from standard_library.archivo import leer, escribir, adjuntar, existe
 from standard_library.datos import (
@@ -107,7 +109,7 @@ from standard_library.numero import (
     envolver_modular,
 )
 from standard_library.util import es_nulo, es_vacio, rel, repetir
-from standard_library.asincrono import grupo_tareas
+from standard_library.asincrono import grupo_tareas, proteger_tarea, ejecutar_en_hilo
 
 __all__: list[str] = [
     "leer",
@@ -204,6 +206,8 @@ __all__: list[str] = [
     "iniciar_gui",
     "iniciar_gui_idle",
     "grupo_tareas",
+    "proteger_tarea",
+    "ejecutar_en_hilo",
 ]
 
 
@@ -237,3 +241,7 @@ limpiar_consola: Callable[..., None]
 imprimir_aviso: Callable[..., None]
 iniciar_gui: Callable[..., None]
 iniciar_gui_idle: Callable[..., None]
+
+T_co = TypeVar("T_co")
+proteger_tarea: Callable[[Awaitable[T_co] | Coroutine[Any, Any, T_co]], asyncio.Future[T_co]]
+ejecutar_en_hilo: Callable[..., Awaitable[Any]]

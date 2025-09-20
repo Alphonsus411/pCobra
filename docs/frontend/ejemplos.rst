@@ -30,6 +30,29 @@ Excepciones y hilos
    catch e:
        imprimir(e)
 
+Concurrencia asíncrona segura
+-----------------------------
+
+Las utilidades de ``standard_library.asincrono`` ayudan a mezclar corrutinas de
+``asyncio`` con código bloqueante sin perder control sobre las cancelaciones.
+
+.. code-block:: python
+
+   import asyncio
+   import standard_library as stlib
+
+   async def main():
+       trabajo = asyncio.create_task(asyncio.sleep(0.05, result="ok"))
+       protegido = stlib.proteger_tarea(trabajo)
+       protegido.cancel()  # la cancelación no afecta a la tarea original
+       resultado = await trabajo
+       print("terminó:", resultado)
+
+       valor = await stlib.ejecutar_en_hilo(lambda: sum(range(10_000)))
+       print("cálculo paralelo:", valor)
+
+   asyncio.run(main())
+
 Transpilación con Hololang
 --------------------------
 Los archivos disponibles en ``examples/hololang`` muestran cómo convertir
