@@ -20,6 +20,7 @@ from pcobra.standard_library.datos import (
     escribir_parquet,
     filtrar,
     mutar_columna,
+    separar_columna,
     leer_csv,
     leer_excel,
     leer_feather,
@@ -30,6 +31,7 @@ from pcobra.standard_library.datos import (
     ordenar_tabla,
     pivotar_tabla,
     rellenar_nulos,
+    unir_columnas,
     seleccionar_columnas,
 )
 
@@ -104,6 +106,74 @@ def test_mutar_columna_crear_y_actualizar():
         crear_si_no_existe=False,
     )
     assert [fila["etiqueta"] for fila in mayusculas] == ["FOO", "BAR", "BAZ"]
+
+
+def test_separar_columna_delimitador_personalizado():
+    datos = [
+        {"codigo": "A-01", "extra": 1},
+        {"codigo": "B-02", "extra": 2},
+        {"codigo": None, "extra": 3},
+    ]
+
+    resultado = separar_columna(
+        datos,
+        "codigo",
+        en=["serie", "numero"],
+        separador="-",
+        relleno="sin_dato",
+        eliminar_original=False,
+    )
+
+    assert resultado[0]["serie"] == "A"
+    assert resultado[0]["numero"] == "01"
+    assert resultado[2]["serie"] == "sin_dato"
+    assert resultado[2]["numero"] == "sin_dato"
+
+    solo_completos = separar_columna(
+        datos,
+        "codigo",
+        en=["serie", "numero"],
+        separador="-",
+        descartar_nulos=True,
+    )
+
+    assert len(solo_completos) == 2
+    assert all("serie" in fila and "numero" in fila for fila in solo_completos)
+
+
+def test_unir_columnas_control_nulos():
+    datos = [
+        {"nombre": "Ada", "zona": "Norte", "nivel": None},
+        {"nombre": "Grace", "zona": None, "nivel": "A"},
+        {"nombre": None, "zona": None, "nivel": None},
+    ]
+
+    unidos = unir_columnas(
+        datos,
+        ["nombre", "zona", "nivel"],
+        "etiqueta",
+        separador="/",
+        omitir_nulos=True,
+        eliminar_original=False,
+    )
+
+    assert unidos[0]["etiqueta"] == "Ada/Norte"
+    assert unidos[1]["etiqueta"] == "Grace/A"
+    assert unidos[2]["etiqueta"] is None
+
+    unidos_con_relleno = unir_columnas(
+        datos,
+        ["nombre", "zona"],
+        "nombre_zona",
+        separador=" - ",
+        omitir_nulos=False,
+        relleno="sin dato",
+        eliminar_original=False,
+    )
+
+    assert unidos_con_relleno[0]["nombre_zona"] == "Ada - Norte"
+    assert unidos_con_relleno[1]["nombre_zona"] == "Grace - sin dato"
+    assert unidos_con_relleno[2]["nombre_zona"] == "sin dato - sin dato"
 
 
 def test_mutar_columna_exige_existente():
