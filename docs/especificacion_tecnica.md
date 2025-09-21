@@ -58,6 +58,11 @@ clase Mezcla(Base1, Base2):
     fin
 ```
 
+Cuando una clase está precedida por `@registro`, Cobra genera automáticamente
+los métodos `__init__/constructor`, `__repr__/toString` y `__eq__/equals`
+utilizando los campos declarados en el cuerpo como atributos de instancia. Los
+valores asignados se convierten en parámetros opcionales en el constructor.
+
 ## Control de flujo
 
 Cobra cuenta con condicionales `si`, `sino` y bucles `para` y `mientras`.
