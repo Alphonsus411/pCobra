@@ -309,6 +309,30 @@ fin
 esperar principal()
 ```
 
+Además de funciones, Cobra permite trabajar con contextos y bucles asíncronos.
+
+```cobra
+asincronico con abrir_recurso() como recurso:
+    esperar recurso.procesar()
+fin
+
+asincronico para elemento in flujo_asincronico:
+    imprimir elemento
+fin
+```
+
+Para coordinar varias tareas en paralelo puedes usar los helpers del módulo
+``standard_library.asincrono``:
+
+```cobra
+from standard_library.asincrono importar esperar_todo
+
+asincronico func principal():
+    resultados = esperar esperar_todo(tarea_a(), tarea_b())
+    imprimir resultados
+fin
+```
+
 ## 23. Decoradores
 ```cobra
 @mi_decorador
