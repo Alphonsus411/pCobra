@@ -68,6 +68,15 @@ no / ! & Negación lógica\\
 \section*{Números}
 \begin{tabular}{ll}
 \textbf{Función} & \textbf{Descripción}\\\hline
+\texttt{absoluto(valor)} & Valor absoluto equivalente a \texttt{abs}.\\
+\texttt{redondear(valor, decimales)} & Redondeo con semántica de banca y decimales opcionales.\\
+\texttt{redondear\_arriba(valor)} & Entero inmediato superior usando \texttt{math.ceil}.\\
+\texttt{redondear\_abajo(valor)} & Entero inferior más cercano mediante \texttt{math.floor}.\\
+\texttt{potencia(base, exponente)} & Potencia compatible con enteros y flotantes.\\
+\texttt{dividir\_entero(dividendo, divisor)} & Cociente entero con la regla de piso de Python.\\
+\texttt{resto\_division(dividendo, divisor)} & Residuo que comparte el signo del divisor.\\
+\texttt{limitar(valor, minimo, maximo)} & Acota valores al intervalo cerrado provisto.\\
+\texttt{signo(valor)} & Devuelve -1, 0 o 1 según la dirección del número.\\
 \texttt{mcd(a, b, ...)} & Máximo común divisor como \texttt{math.gcd}.\\
 \texttt{mcm(a, b, ...)} & Mínimo común múltiplo equivalente a \texttt{math.lcm}.\\
 \texttt{es\_cercano(a, b, tol\_rel, tol\_abs)} & Compara con tolerancias opcionales.\\

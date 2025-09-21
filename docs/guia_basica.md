@@ -414,3 +414,33 @@ print(f"{nombre} lleva {anios} años programando y hoy experimenta con {lenguaje
 ```
 
 En pantalla se muestran las opciones formateadas por `rich` y se reaprovecha el estilo de colores de Cobra. Cada pregunta valida automáticamente el tipo de entrada y guía a la persona usuaria con mensajes descriptivos.
+
+## 30. Atajos numéricos de la biblioteca estándar
+
+Las utilidades numéricas ofrecen envoltorios con nombres en español para cálculos frecuentes sin sacrificar precisión.
+
+```python
+from standard_library import (
+    absoluto,
+    redondear,
+    redondear_arriba,
+    redondear_abajo,
+    potencia,
+    dividir_entero,
+    resto_division,
+    limitar,
+    signo,
+)
+
+print(absoluto(-8))               # 8
+print(redondear(2.5))             # 2 → redondeo al par más cercano
+print(redondear_arriba(-1.2))     # -1
+print(redondear_abajo(1.8))       # 1
+print(potencia(9, 0.5))           # 3.0
+print(dividir_entero(-7, 2))      # -4
+print(resto_division(-7, 2))      # 1
+print(limitar(1.5, 0.0, 1.0))     # 1.0
+print(signo(-3))                  # -1
+```
+
+`limitar` acota un valor a un intervalo cerrado, mientras que `signo` devuelve `-1`, `0` o `1` según la dirección del número recibido. Los redondeos delegan en las implementaciones de Python para conservar la semántica de banca y permitir especificar la cantidad de decimales deseada.
