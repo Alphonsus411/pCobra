@@ -493,3 +493,19 @@ print(signo(-3))                  # -1
 ```
 
 `limitar` acota un valor a un intervalo cerrado, mientras que `signo` devuelve `-1`, `0` o `1` según la dirección del número recibido. Los redondeos delegan en las implementaciones de Python para conservar la semántica de banca y permitir especificar la cantidad de decimales deseada.
+
+## 31. Aplazar acciones al salir de un bloque
+
+```cobra
+func procesar_archivo(ruta):
+    recurso = abrir(ruta)
+    aplazar recurso.cerrar()
+    si recurso.tiene_datos():
+        aplazar registrar_lectura(ruta)
+        imprimir "procesando"
+    fin
+    imprimir "listo"
+fin
+```
+
+La palabra clave `aplazar` registra una llamada para que se ejecute cuando se abandona el bloque actual. Resulta útil para liberar recursos o garantizar tareas de limpieza incluso si el flujo termina con un `retorno`, una excepción o un `romper`. Cobra ejecuta las acciones diferidas en orden inverso al de su registro, emulando `defer` en Go, un bloque `try/finally` en Python o una guardia RAII en Rust.
