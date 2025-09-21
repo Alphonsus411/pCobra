@@ -187,6 +187,24 @@ el objeto funciona como iterable en los distintos backends. Si declaras dos
 métodos que colisionan tras la traducción (por ejemplo, `inicializar` y
 `__init__`), Cobra mostrará una advertencia durante el parseo.
 
+### Decorador `@registro`
+
+Para clases que solo almacenan datos puedes utilizar `@registro`. Cobra genera
+automáticamente los métodos especiales de inicialización, representación y
+comparación en cada backend de destino.
+
+```cobra
+@registro
+clase Persona:
+    var nombre = ""
+    var edad = 0
+fin
+```
+
+El constructor acepta los campos declarados (utilizando los valores asignados
+como parámetros opcionales), `toString`/`__repr__` devuelve una cadena con los
+atributos y `equals`/`__eq__` compara instancia a instancia.
+
 ## 12. Herencia múltiple
 ```cobra
 clase Volador:
