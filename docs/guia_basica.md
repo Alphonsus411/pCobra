@@ -172,6 +172,21 @@ clase Persona:
 fin
 ```
 
+También puedes usar alias descriptivos que se traducen automáticamente al
+método especial correspondiente:
+
+```cobra
+clase Coleccion:
+    metodo iterar(self):
+        pasar
+fin
+```
+
+En el código generado por los transpiladores se obtendrá `__iter__`, por lo que
+el objeto funciona como iterable en los distintos backends. Si declaras dos
+métodos que colisionan tras la traducción (por ejemplo, `inicializar` y
+`__init__`), Cobra mostrará una advertencia durante el parseo.
+
 ## 12. Herencia múltiple
 ```cobra
 clase Volador:

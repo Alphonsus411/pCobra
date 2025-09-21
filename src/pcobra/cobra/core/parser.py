@@ -5,7 +5,11 @@ import json
 import os
 from typing import Any, List
 from cobra.core import TipoToken, Token
-from cobra.core.utils import PALABRAS_RESERVADAS, sugerir_palabra_clave
+from cobra.core.utils import (
+    PALABRAS_RESERVADAS,
+    ALIAS_METODOS_ESPECIALES,
+    sugerir_palabra_clave,
+)
 
 from core.ast_nodes import (
     NodoAsignacion,
@@ -75,6 +79,7 @@ class ClassicParser:
         self.posicion = 0
         self.indentacion_actual = 0
         self.errores: list[str] = []
+        self.advertencias: list[str] = []
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -121,6 +126,11 @@ class ClassicParser:
     def reportar_error(self, mensaje: str) -> None:
         """Registra un mensaje de error para reportarlo al final."""
         self.errores.append(mensaje)
+
+    def registrar_advertencia(self, mensaje: str) -> None:
+        """Conserva una advertencia y la publica en el registro."""
+        self.advertencias.append(mensaje)
+        logger.warning(mensaje)
 
     def token_actual(self):
         """Devuelve el token actualmente en procesamiento.
@@ -670,6 +680,8 @@ class ClassicParser:
         nombre = nombre_token.valor
         self.comer(TipoToken.IDENTIFICADOR)
 
+        nombre = ALIAS_METODOS_ESPECIALES.get(nombre, nombre)
+
         # Parámetros de tipo genéricos opcionales
         type_params = self.lista_parametros_tipo()
 
@@ -1115,6 +1127,24 @@ class ClassicParser:
         cuerpo = cuerpo_parser.parsear()
         return NodoMacro(nombre, cuerpo)
 
+    def _verificar_choque_metodos(
+        self,
+        nombre_clase: str,
+        metodo: NodoMetodo,
+        registro: dict[str, NodoMetodo],
+    ) -> None:
+        existente = registro.get(metodo.nombre)
+        if existente is not None:
+            nuevo = metodo.nombre_original or metodo.nombre
+            previo = existente.nombre_original or existente.nombre
+            mensaje = (
+                f"Choque de nombres en la clase '{nombre_clase}': "
+                f"'{nuevo}' y '{previo}' generan el método '{metodo.nombre}'."
+            )
+            self.registrar_advertencia(mensaje)
+        else:
+            registro[metodo.nombre] = metodo
+
     def declaracion_metodo(self, asincronica: bool = False):
         """Parsea la declaración de un método dentro de una clase."""
         if self.token_actual().tipo == TipoToken.ASINCRONICO:
@@ -1127,12 +1157,14 @@ class ClassicParser:
 
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
             raise ParserError("Se esperaba un nombre de método")
-        nombre = self.token_actual().valor
-        if nombre in PALABRAS_RESERVADAS:
+        nombre_original = self.token_actual().valor
+        if nombre_original in PALABRAS_RESERVADAS:
             raise ParserError(
-                f"El nombre del método '{nombre}' es una palabra reservada"
+                f"El nombre del método '{nombre_original}' es una palabra reservada"
             )
         self.comer(TipoToken.IDENTIFICADOR)
+
+        nombre = ALIAS_METODOS_ESPECIALES.get(nombre_original, nombre_original)
 
         # Parámetros de tipo genéricos opcionales para el método
         type_params = self.lista_parametros_tipo()
@@ -1154,7 +1186,12 @@ class ClassicParser:
         self.comer(TipoToken.FIN)
 
         return NodoMetodo(
-            nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params
+            nombre,
+            parametros,
+            cuerpo,
+            asincronica=asincronica,
+            type_params=type_params,
+            nombre_original=nombre_original,
         )
 
     def declaracion_enum(self):
@@ -1251,15 +1288,21 @@ class ClassicParser:
         self.comer(TipoToken.DOSPUNTOS)
 
         metodos = []
+        nombres_metodos: dict[str, NodoMetodo] = {}
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
             if self.token_actual().tipo in [
                 TipoToken.FUNC,
                 TipoToken.METODO,
                 TipoToken.ASINCRONICO,
             ]:
-                metodos.append(self.declaracion_metodo())
+                metodo = self.declaracion_metodo()
+                self._verificar_choque_metodos(nombre, metodo, nombres_metodos)
+                metodos.append(metodo)
             else:
-                metodos.append(self.declaracion())
+                nodo = self.declaracion()
+                if isinstance(nodo, NodoMetodo):
+                    self._verificar_choque_metodos(nombre, nodo, nombres_metodos)
+                metodos.append(nodo)
 
         if self.token_actual().tipo != TipoToken.FIN:
             raise ParserError("Se esperaba 'fin' para cerrar la clase")

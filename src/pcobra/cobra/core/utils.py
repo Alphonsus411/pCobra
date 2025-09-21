@@ -1,6 +1,19 @@
 from difflib import get_close_matches
 from typing import Union, Literal
 
+# Alias legibles para métodos especiales del ecosistema Python.
+ALIAS_METODOS_ESPECIALES = {
+    "inicializar": "__init__",
+    "representar": "__repr__",
+    "iterar": "__iter__",
+    "longitud": "__len__",
+    "contener": "__contains__",
+    "comparar": "__eq__",
+    "ordenar": "__lt__",
+    "entrar": "__enter__",
+    "salir": "__exit__",
+}
+
 # Umbral de similitud para las coincidencias
 UMBRAL_COINCIDENCIA = 0.8
 

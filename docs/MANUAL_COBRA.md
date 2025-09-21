@@ -74,6 +74,25 @@ juan.nombre = 'Juan'
 juan.saludar()
 ```
 
+**Alias de métodos especiales**
+
+Para mejorar la legibilidad, Cobra reconoce varios alias en castellano que se
+transpilan a los métodos especiales habituales del ecosistema Python:
+
+- `inicializar` &rarr; `__init__`
+- `representar` &rarr; `__repr__`
+- `iterar` &rarr; `__iter__`
+- `longitud` &rarr; `__len__`
+- `contener` &rarr; `__contains__`
+- `comparar` &rarr; `__eq__`
+- `ordenar` &rarr; `__lt__`
+- `entrar` &rarr; `__enter__`
+- `salir` &rarr; `__exit__`
+
+El parser registra una advertencia cuando dos declaraciones de la clase generan
+el mismo nombre especial (por ejemplo, `inicializar` y `__init__`) para evitar
+errores silenciosos.
+
 **Herencia múltiple**
 
 Cobra permite que una clase herede de varias bases listándolas entre paréntesis.

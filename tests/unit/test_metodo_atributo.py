@@ -10,10 +10,30 @@ def test_parser_metodo_keyword():
             fin
     fin
     """
-    ast = Parser(Lexer(codigo).analizar_token()).parsear()
+    parser = Parser(Lexer(codigo).analizar_token())
+    ast = parser.parsear()
     clase = ast[0]
     assert isinstance(clase, NodoClase)
     assert clase.metodos[0].nombre == "saludar"
+    assert parser.advertencias == []
+
+
+def test_parser_metodo_alias_especial():
+    codigo = """
+    clase Persona:
+        metodo inicializar(self):
+            pasar
+        fin
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    clase = ast[0]
+    metodo = clase.metodos[0]
+    assert metodo.nombre == "__init__"
+    assert metodo.nombre_original == "inicializar"
+    assert parser.advertencias == []
 
 
 def test_parser_atributo_asignacion():
