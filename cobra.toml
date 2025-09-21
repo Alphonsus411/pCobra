@@ -22,3 +22,8 @@ modulos_prohibidos = ["os", "sys", "socket"]
 [rendimiento]
 # Tiempo máximo permitido para la transpilación de un archivo (en segundos)
 tiempo_max_transpilacion_seg = 300
+
+[analisis]
+# Validaciones opcionales para expresiones "coincidir"
+coincidir_exhaustivo = false
+patrones_inaccesibles = false

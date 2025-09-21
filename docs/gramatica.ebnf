@@ -44,7 +44,8 @@ llamada: IDENTIFICADOR "(" argumentos? ")"
 cuerpo: statement*
 parametros: IDENTIFICADOR ("," IDENTIFICADOR)*
 argumentos: expr ("," expr)*
-?expr: valor (operador valor)*
+?expr: coincidencia
+     | valor (operador valor)*
 ?valor: CADENA
       | ENTERO
       | FLOTANTE
@@ -65,3 +66,5 @@ FLOTANTE: /[0-9]+\.[0-9]+/
 IDENTIFICADOR: /[^\W\d][\w]*/
 
 %ignore /\s+/
+coincidencia: ("coincidir"|"match") expr ":" brazo_coincidencia+ ("sino" "=>" expr)? "fin"
+brazo_coincidencia: "cuando" patron ("si" expr)? "=>" expr
