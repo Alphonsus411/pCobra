@@ -3,7 +3,7 @@
 Los parámetros de tipo de Cobra se traducen a plantillas ``template`` propias
 de C++."""
 
-from cobra.core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoListaTipo,
@@ -24,15 +24,17 @@ from cobra.core.ast_nodes import (
     NodoOption,
     NodoPattern,
     NodoInterface,
+    NodoGarantia,
 )
-from cobra.core import TipoToken
-from core.visitor import NodeVisitor
+from pcobra.cobra.core import TipoToken
+from pcobra.core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
 
 from cobra.transpilers.transpiler.cpp_nodes.asignacion import visit_asignacion as _visit_asignacion
 from cobra.transpilers.transpiler.cpp_nodes.condicional import visit_condicional as _visit_condicional
+from cobra.transpilers.transpiler.cpp_nodes.garantia import visit_garantia as _visit_garantia
 from cobra.transpilers.transpiler.cpp_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
 from cobra.transpilers.transpiler.cpp_nodes.funcion import visit_funcion as _visit_funcion
 from cobra.transpilers.transpiler.cpp_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
@@ -192,6 +194,7 @@ class TranspiladorCPP(BaseTranspiler):
 # Asignar los visitantes externos a la clase
 TranspiladorCPP.visit_asignacion = _visit_asignacion
 TranspiladorCPP.visit_condicional = _visit_condicional
+TranspiladorCPP.visit_garantia = _visit_garantia
 TranspiladorCPP.visit_bucle_mientras = _visit_bucle_mientras
 TranspiladorCPP.visit_funcion = _visit_funcion
 TranspiladorCPP.visit_llamada_funcion = _visit_llamada_funcion

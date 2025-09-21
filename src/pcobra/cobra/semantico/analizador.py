@@ -7,6 +7,12 @@ from core.ast_nodes import (
     NodoFuncion,
     NodoIdentificador,
     NodoMetodo,
+    NodoGarantia,
+    NodoRetorno,
+    NodoThrow,
+    NodoContinuar,
+    NodoRomper,
+    NodoCondicional,
 )
 from core.visitor import NodeVisitor
 from cobra.semantico.tabla import Ambito
@@ -111,6 +117,23 @@ class AnalizadorSemantico(NodeVisitor):
                 return True
         return False
 
+    def _bloque_termina(self, bloque: List[Any]) -> bool:
+        if not bloque:
+            return False
+        terminadores = (NodoRetorno, NodoThrow, NodoContinuar, NodoRomper)
+        ultimo = bloque[-1]
+        if isinstance(ultimo, terminadores):
+            return True
+        if isinstance(ultimo, NodoCondicional):
+            if not ultimo.bloque_sino:
+                return False
+            return self._bloque_termina(ultimo.bloque_si) and self._bloque_termina(
+                ultimo.bloque_sino
+            )
+        if isinstance(ultimo, NodoGarantia):
+            return self._bloque_termina(ultimo.bloque_escape)
+        return False
+
     # Visitas ------------------------------------------------------------
     def visit_asignacion(self, nodo: NodoAsignacion) -> None:
         """Visita un nodo de asignación."""
@@ -133,9 +156,20 @@ class AnalizadorSemantico(NodeVisitor):
         self._validar_nombre(nodo.nombre)
         if self.current_scope.resolver_local(nodo.nombre):
             raise ValueError(f"Símbolo ya declarado: {nodo.nombre}")
-        
+
         self.current_scope.declarar(nodo.nombre, "funcion")
         self._procesar_bloque_codigo(nodo.parametros, nodo.cuerpo)
+
+    def visit_garantia(self, nodo: NodoGarantia) -> None:
+        """Verifica las garantías semánticas del bloque ``sino``."""
+        if not self._bloque_termina(nodo.bloque_escape):
+            raise ValueError(
+                "El bloque 'sino' de 'garantia' debe terminar con 'retorno', 'romper', 'continuar' o 'throw'"
+            )
+        for instruccion in nodo.bloque_escape:
+            instruccion.aceptar(self)
+        for instruccion in nodo.bloque_continuacion:
+            instruccion.aceptar(self)
 
     def visit_metodo(self, nodo: NodoMetodo) -> None:
         """Visita un nodo método."""

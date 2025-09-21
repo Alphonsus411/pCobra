@@ -15,6 +15,7 @@ Para visualizar de manera esquemática el proceso completo de compilación y la 
           | bucle_mientras
           | bucle_para
           | condicional
+          | garantia
           | importacion
           | usar
           | macro
@@ -32,6 +33,7 @@ clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo (("sino si"|"elseif") expr ":" cuerpo)* ("sino" ":" cuerpo)? "fin"
+garantia: ("garantia"|"guard") expr ":" cuerpo "sino" ":" cuerpo "fin"
 importacion: "import" CADENA
 usar: "usar" CADENA
 macro: "macro" IDENTIFICADOR "{" statement* "}"
@@ -67,7 +69,7 @@ Cada regla define construcciones del lenguaje: por ejemplo `asignacion` utiliza 
 ## Tokens y palabras reservadas
 El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las principales palabras clave son:
 - `var`, `variable`, `func`, `metodo`, `atributo`
-- `si`, `sino`, `sino si`/`elseif`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
+- `si`, `sino`, `sino si`/`elseif`, `garantia`/`guard`, `mientras`, `para`, `import`, `usar`, `macro`, `hilo`, `asincronico`
 - `switch`, `case`, `clase`, `in`, `holobit`, `proyectar`, `transformar`, `graficar`
 - `try`/`intentar`, `catch`/`capturar`, `throw`/`lanzar`
 - `&&`/`y`, `||`/`o`, `!`/`no`
@@ -75,6 +77,11 @@ El lexer de `src/pcobra/cobra/lexico/lexer.py` define todos los tokens. Las prin
   `global`, `nolocal`, `lambda`, `con`, `finalmente`, `desde`, `como`, `retorno`, `fin`, `hilo`
 
 Las cascadas condicionales admiten la sintaxis compacta `sino si` (o su alias `elseif`), que el parser reescribe internamente como nodos anidados equivalentes a `sino: si ... fin`.
+
+La sentencia `garantia` introduce un guard clause: evalúa la condición y, si es
+falsa, ejecuta el bloque `sino`, el cual debe finalizar la ejecución actual
+(`retorno`, `throw`/`lanzar`, `continuar` o `romper`). Tras superar la
+verificación, el bloque principal continúa con el flujo normal.
 
 Además existen tokens para operadores (`+`, `-`, `*`, `/`, `==`, `&&`/`y`, `||`/`o`, `!`/`no`, etc.), delimitadores como paréntesis, corchetes y llaves, y literales (`ENTERO`, `FLOTANTE`, `CADENA`, `BOOLEANO`).
 

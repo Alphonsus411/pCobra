@@ -65,6 +65,15 @@ class NodoCondicional(NodoAST):
 
 
 @dataclass
+class NodoGarantia(NodoAST):
+    condicion: Any
+    bloque_continuacion: List[Any]
+    bloque_escape: List[Any]
+
+    """Sentencia ``garantia`` con bloque normal y de escape."""
+
+
+@dataclass
 class NodoBucleMientras(NodoAST):
     condicion: Any
     cuerpo: List[Any]
@@ -559,6 +568,7 @@ __all__ = [
     "NodoAsignacion",
     "NodoHolobit",
     "NodoCondicional",
+    "NodoGarantia",
     "NodoBucleMientras",
     "NodoFor",
     "NodoLista",

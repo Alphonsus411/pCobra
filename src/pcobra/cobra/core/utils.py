@@ -26,6 +26,8 @@ PALABRAS_RESERVADAS = frozenset(
         "sino",
         "sino si",
         "elseif",
+        "garantia",
+        "guard",
         "mientras",
         "para",
         "import",

@@ -7,6 +7,7 @@
           | bucle_mientras
           | bucle_para
           | condicional
+          | garantia
           | importacion
           | usar
           | macro
@@ -28,6 +29,7 @@ clase: "clase" IDENTIFICADOR ":" cuerpo "fin"
 bucle_mientras: "mientras" expr ":" cuerpo "fin"
 bucle_para: "para" IDENTIFICADOR "in" expr ":" cuerpo "fin"
 condicional: "si" expr ":" cuerpo ("sino" ":" cuerpo)? "fin"
+garantia: ("garantia"|"guard") expr ":" cuerpo "sino" ":" cuerpo "fin"
 importacion: "import" CADENA
 usar: "usar" CADENA
 macro: "macro" IDENTIFICADOR "{" statement* "}"

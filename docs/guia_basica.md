@@ -115,6 +115,25 @@ fin
 
 Los operadores lógicos aceptan `y`, `o` y `no` como alias de `&&`, `||` y `!` respectivamente.
 
+### Sentencia `garantia`
+
+Cuando una condición debe cumplirse antes de continuar, la palabra clave `garantia`
+proporciona una verificación temprana. Si la condición es falsa se ejecuta el
+bloque `sino`, que debe terminar la ejecución con `retorno`, `lanzar`,
+`continuar` o una acción equivalente, y la ejecución normal sigue en el bloque
+principal. También es posible usar el alias `guard`.
+
+```cobra
+garantia entrada is not None:
+    procesar(entrada)
+sino:
+    retorno Error("Falta la entrada")
+fin
+```
+
+Esta estructura se transpila como un `if not condicion` en lenguajes como
+Python, JavaScript o C++, lo que facilita patrones de salida temprana.
+
 ## 4. Bucle mientras
 ```cobra
 contador = 0
