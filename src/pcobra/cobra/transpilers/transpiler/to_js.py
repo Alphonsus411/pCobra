@@ -3,7 +3,7 @@
 Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
 forma nativa, por lo que se recurre a tipos dinámicos."""
 
-from cobra.core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoListaTipo,
@@ -34,9 +34,10 @@ from cobra.core.ast_nodes import (
     NodoPattern,
     NodoEnum,
     NodoInterface,
+    NodoGarantia,
 )
-from cobra.core import TipoToken
-from core.visitor import NodeVisitor
+from pcobra.cobra.core import TipoToken
+from pcobra.core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
@@ -46,6 +47,7 @@ from cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
 from cobra.transpilers.transpiler.js_nodes.asignacion import visit_asignacion as _visit_asignacion
 from cobra.transpilers.transpiler.js_nodes.condicional import visit_condicional as _visit_condicional
+from cobra.transpilers.transpiler.js_nodes.garantia import visit_garantia as _visit_garantia
 from cobra.transpilers.transpiler.js_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
 from cobra.transpilers.transpiler.js_nodes.funcion import visit_funcion as _visit_funcion
 from cobra.transpilers.transpiler.js_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
@@ -283,6 +285,7 @@ class TranspiladorJavaScript(BaseTranspiler):
 # Asignar los visitantes externos a la clase
 TranspiladorJavaScript.visit_asignacion = _visit_asignacion
 TranspiladorJavaScript.visit_condicional = _visit_condicional
+TranspiladorJavaScript.visit_garantia = _visit_garantia
 TranspiladorJavaScript.visit_bucle_mientras = _visit_bucle_mientras
 TranspiladorJavaScript.visit_funcion = _visit_funcion
 TranspiladorJavaScript.visit_llamada_funcion = _visit_llamada_funcion

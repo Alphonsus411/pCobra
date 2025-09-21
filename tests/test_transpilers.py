@@ -7,12 +7,16 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from pcobra.core.ast_nodes import (
     NodoValor,
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoIdentificador,
+    NodoGarantia,
+    NodoRetorno,
 )
 import pcobra.cobra.core as cobra_core
 
@@ -20,6 +24,8 @@ import pcobra.cobra.core as cobra_core
 cobra_core.NodoOperacionBinaria = NodoOperacionBinaria
 cobra_core.NodoOperacionUnaria = NodoOperacionUnaria
 cobra_core.NodoIdentificador = NodoIdentificador
+cobra_core.NodoGarantia = NodoGarantia
+cobra_core.NodoRetorno = NodoRetorno
 
 
 def test_generate_code_asignacion_simple() -> None:
@@ -38,3 +44,36 @@ def test_save_file(tmp_path: pytest.TempPathFactory) -> None:
     transpiler.save_file(str(archivo))
     assert archivo.exists()
     assert archivo.read_text(encoding="utf-8") == codigo
+
+
+def _nodo_garantia_basico() -> NodoGarantia:
+    return NodoGarantia(
+        NodoIdentificador("ok"),
+        [NodoAsignacion("ok", NodoValor(1))],
+        [NodoRetorno(NodoValor(0))],
+    )
+
+
+def test_transpilador_python_garantia() -> None:
+    nodo = _nodo_garantia_basico()
+    transpiler = TranspiladorPython()
+    codigo = transpiler.generate_code([nodo])
+    assert "if not ok:" in codigo
+    assert "return 0" in codigo
+
+
+def test_transpilador_js_garantia() -> None:
+    nodo = _nodo_garantia_basico()
+    transpiler = TranspiladorJavaScript()
+    codigo = transpiler.generate_code([nodo])
+    assert "if (!(ok)) {" in codigo
+    assert "return 0" in codigo
+
+
+def test_transpilador_cpp_garantia() -> None:
+    nodo = _nodo_garantia_basico()
+    transpiler = TranspiladorCPP()
+    codigo = transpiler.generate_code([nodo])
+    texto = codigo if isinstance(codigo, str) else "\n".join(codigo)
+    assert "if (!(ok)) {" in texto
+    assert "return 0" in texto

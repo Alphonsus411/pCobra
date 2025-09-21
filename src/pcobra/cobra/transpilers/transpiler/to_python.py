@@ -1,8 +1,9 @@
 """Transpilador que convierte código Cobra en código Python."""
 
-from cobra.core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
+    NodoGarantia,
     NodoBucleMientras,
     NodoFuncion,
     NodoLlamadaFuncion,
@@ -47,9 +48,9 @@ from cobra.core.ast_nodes import (
     NodoPattern,
     NodoGuard,
 )
-from cobra.core import Parser
-from cobra.core import TipoToken, Lexer
-from core.visitor import NodeVisitor
+from pcobra.cobra.core import Parser
+from pcobra.cobra.core import TipoToken, Lexer
+from pcobra.core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from cobra.macro import expandir_macros
@@ -61,6 +62,9 @@ from cobra.transpilers.transpiler.python_nodes.asignacion import (
 )
 from cobra.transpilers.transpiler.python_nodes.condicional import (
     visit_condicional as _visit_condicional,
+)
+from cobra.transpilers.transpiler.python_nodes.garantia import (
+    visit_garantia as _visit_garantia,
 )
 from cobra.transpilers.transpiler.python_nodes.bucle_mientras import (
     visit_bucle_mientras as _visit_bucle_mientras,
@@ -297,7 +301,7 @@ class TranspiladorPython(BaseTranspiler):
         return False
 
     def obtener_valor(self, nodo):
-        from cobra.core import (
+        from pcobra.cobra.core import (
             NodoOperacionBinaria,
             NodoOperacionUnaria,
             NodoIdentificador,
@@ -404,6 +408,7 @@ class TranspiladorPython(BaseTranspiler):
 # Asignar los visitantes externos a la clase
 TranspiladorPython.visit_asignacion = _visit_asignacion
 TranspiladorPython.visit_condicional = _visit_condicional
+TranspiladorPython.visit_garantia = _visit_garantia
 TranspiladorPython.visit_bucle_mientras = _visit_bucle_mientras
 TranspiladorPython.visit_for = _visit_for
 TranspiladorPython.visit_funcion = _visit_funcion

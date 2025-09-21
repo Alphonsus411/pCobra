@@ -4,17 +4,18 @@ import logging
 import json
 import os
 from typing import Any, List
-from cobra.core import TipoToken, Token
-from cobra.core.utils import (
+from .lexer import TipoToken, Token
+from .utils import (
     PALABRAS_RESERVADAS,
     ALIAS_METODOS_ESPECIALES,
     sugerir_palabra_clave,
 )
 
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoHolobit,
     NodoCondicional,
+    NodoGarantia,
     NodoBucleMientras,
     NodoFuncion,
     NodoClase,
@@ -65,7 +66,7 @@ from core.ast_nodes import (
     NodoDiccionarioComprehension,
 )
 
-from core import NodoYield
+from pcobra.core import NodoYield
 
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,7 @@ class ClassicParser:
             TipoToken.TRANSFORMAR: self.declaracion_transformar,
             TipoToken.GRAFICAR: self.declaracion_graficar,
             TipoToken.SI: self.declaracion_condicional,
+            TipoToken.GARANTIA: self.declaracion_garantia,
             TipoToken.PARA: self.declaracion_para,
             TipoToken.MIENTRAS: self.declaracion_mientras,
             TipoToken.FUNC: self.declaracion_funcion,
@@ -632,6 +634,23 @@ class ClassicParser:
                     self.avanzar()
         return bloque
 
+    def _bloque_termina(self, bloque: List[Any]) -> bool:
+        if not bloque:
+            return False
+        terminadores = (NodoRetorno, NodoThrow, NodoContinuar, NodoRomper)
+        ultimo = bloque[-1]
+        if isinstance(ultimo, terminadores):
+            return True
+        if isinstance(ultimo, NodoCondicional):
+            if not ultimo.bloque_sino:
+                return False
+            return self._bloque_termina(ultimo.bloque_si) and self._bloque_termina(
+                ultimo.bloque_sino
+            )
+        if isinstance(ultimo, NodoGarantia):
+            return self._bloque_termina(ultimo.bloque_escape)
+        return False
+
     def _parse_sino_si(self) -> NodoCondicional:
         self.comer(TipoToken.SINO_SI)
         condicion = self.expresion()
@@ -664,6 +683,41 @@ class ClassicParser:
             )
 
         return NodoCondicional(condicion, bloque_si, bloque_sino)
+
+    def declaracion_garantia(self):
+        self.comer(TipoToken.GARANTIA)
+        condicion = self.expresion()
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise ParserError("Se esperaba ':' después de la condición de 'garantia'")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        bloque_continuacion = self._parse_bloque_condicional(
+            [TipoToken.SINO, TipoToken.FIN, TipoToken.EOF], "garantia"
+        )
+
+        if self.token_actual().tipo != TipoToken.SINO:
+            raise ParserError("Se esperaba 'sino' en la declaración 'garantia'")
+        self.comer(TipoToken.SINO)
+
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            raise ParserError("Se esperaba ':' después de 'sino' en 'garantia'")
+        self.comer(TipoToken.DOSPUNTOS)
+
+        bloque_escape = self._parse_bloque_condicional(
+            [TipoToken.FIN, TipoToken.EOF], "garantia sino"
+        )
+
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise ParserError("Se esperaba 'fin' para cerrar la declaración 'garantia'")
+        self.comer(TipoToken.FIN)
+
+        if not self._bloque_termina(bloque_escape):
+            self.registrar_advertencia(
+                "El bloque 'sino' de 'garantia' debería terminar la ejecución con 'retorno', 'lanzar' o 'continuar'"
+            )
+
+        return NodoGarantia(condicion, bloque_continuacion, bloque_escape)
 
     def declaracion_funcion(self, asincronica: bool = False):
         """Parsea una declaración de función."""

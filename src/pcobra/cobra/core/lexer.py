@@ -57,6 +57,7 @@ class TipoToken(Enum):
     SI = "SI"
     SINO = "SINO"
     SINO_SI = "SINO_SI"
+    GARANTIA = "GARANTIA"
     MIENTRAS = "MIENTRAS"
     PARA = "PARA"
     IMPORT = "IMPORT"
@@ -218,6 +219,7 @@ class Lexer:
             (TipoToken.ATRIBUTO, re.compile(r"\batributo\b")),
             (TipoToken.SI, re.compile(r"\bsi\b")),
             (TipoToken.SINO_SI, re.compile(r"\b(?:sino\s+si|elseif)\b")),
+            (TipoToken.GARANTIA, re.compile(r"\b(garantia|guard)\b")),
             (TipoToken.SINO, re.compile(r"\bsino\b")),
             (TipoToken.MIENTRAS, re.compile(r"\bmientras\b")),
             (TipoToken.PARA, re.compile(r"\bpara\b")),

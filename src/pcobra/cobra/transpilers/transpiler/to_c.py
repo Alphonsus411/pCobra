@@ -1,6 +1,6 @@
 """Transpilador básico de Cobra a C."""
 
-from cobra.core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoLista,
     NodoDiccionario,
     NodoValor,
@@ -11,8 +11,8 @@ from cobra.core.ast_nodes import (
     NodoInstancia,
     NodoRetorno,
 )
-from cobra.core import TipoToken
-from core.visitor import NodeVisitor
+from pcobra.cobra.core import TipoToken
+from pcobra.core.visitor import NodeVisitor
 from cobra.transpilers.common.utils import BaseTranspiler
 from core.optimizations import optimize_constants, remove_dead_code
 from cobra.macro import expandir_macros
@@ -66,6 +66,18 @@ def visit_condicional(self, nodo):
         self.agregar_linea("}")
 
 
+def visit_garantia(self, nodo):
+    condicion = self.obtener_valor(nodo.condicion)
+    self.agregar_linea(f"if (!({condicion})) {{")
+    self.indent += 1
+    for instr in getattr(nodo, "bloque_escape", []):
+        instr.aceptar(self)
+    self.indent -= 1
+    self.agregar_linea("}")
+    for instr in getattr(nodo, "bloque_continuacion", []):
+        instr.aceptar(self)
+
+
 def visit_bucle_mientras(self, nodo):
     condicion = self.obtener_valor(nodo.condicion)
     self.agregar_linea(f"while ({condicion}) {{")
@@ -88,6 +100,7 @@ c_nodes = {
     "funcion": visit_funcion,
     "llamada_funcion": visit_llamada_funcion,
     "condicional": visit_condicional,
+    "garantia": visit_garantia,
     "bucle_mientras": visit_bucle_mientras,
     "retorno": visit_retorno,
 }
