@@ -101,6 +101,25 @@ clase Persona:
 fin
 ```
 
+Los métodos especiales admiten alias legibles que se transpilan automáticamente
+al nombre mágico correspondiente. Los alias incorporados son:
+
+| Alias        | Método generado |
+|--------------|-----------------|
+| `inicializar`| `__init__`      |
+| `representar`| `__repr__`      |
+| `iterar`     | `__iter__`      |
+| `longitud`   | `__len__`       |
+| `contener`   | `__contains__`  |
+| `comparar`   | `__eq__`        |
+| `ordenar`    | `__lt__`        |
+| `entrar`     | `__enter__`     |
+| `salir`      | `__exit__`      |
+
+Si dos alias producen el mismo nombre dentro de una clase (por ejemplo,
+`inicializar` y `__init__`), el parser conserva ambos nodos y emite una
+advertencia de choque para facilitar la depuración.
+
 ## Control de flujo
 ```cobra
 si x > 0:

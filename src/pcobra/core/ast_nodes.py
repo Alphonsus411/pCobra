@@ -194,6 +194,7 @@ class NodoMetodo(NodoAST):
     cuerpo: List[Any]
     asincronica: bool = False
     type_params: List[str] = field(default_factory=list)
+    nombre_original: Optional[str] = None
 
     """Método perteneciente a una clase."""
 

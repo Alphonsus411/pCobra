@@ -16,6 +16,8 @@ from core.ast_nodes import (
 )
 from core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from cobra.transpilers.import_helper import get_standard_imports
 from cobra.core import Lexer
 from cobra.core import Parser
@@ -140,6 +142,33 @@ def test_transpilador_decoradores_anidados():
         + "def saluda():\n    print('hola')\n"
     )
     assert codigo == esperado
+
+
+def test_alias_metodo_transpiladores_varios():
+    codigo = """
+    clase Coleccion:
+        metodo iterar(self):
+            pasar
+        fin
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    clase = ast[0]
+    metodo = clase.metodos[0]
+    assert metodo.nombre == "__iter__"
+    assert metodo.nombre_original == "iterar"
+    assert parser.advertencias == []
+
+    codigo_python = TranspiladorPython().generate_code(ast)
+    assert "__iter__" in codigo_python
+
+    codigo_js = TranspiladorJavaScript().generate_code(ast)
+    assert "__iter__" in codigo_js
+
+    codigo_rust = TranspiladorRust().generate_code(ast)
+    assert "__iter__" in codigo_rust
 
 
 def test_transpilador_corutina_await():

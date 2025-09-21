@@ -316,6 +316,9 @@ class TranspiladorPython(BaseTranspiler):
         elif isinstance(nodo, NodoLlamadaFuncion):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre}({args})"
+        elif hasattr(nodo, "nombre") and hasattr(nodo, "argumentos"):
+            args = ", ".join(self.obtener_valor(a) for a in getattr(nodo, "argumentos", []))
+            return f"{getattr(nodo, 'nombre', nodo)}({args})"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
@@ -349,9 +352,21 @@ class TranspiladorPython(BaseTranspiler):
                 return "_"
             else:
                 return self.obtener_valor(nodo.valor)
+        elif getattr(nodo.__class__, "__name__", "") == "NodoPattern":
+            valor = getattr(nodo, "valor", None)
+            if isinstance(valor, list):
+                elems = ", ".join(self.obtener_valor(p) for p in valor)
+                return f"({elems})"
+            if valor == "_":
+                return "_"
+            return self.obtener_valor(valor)
         elif isinstance(nodo, NodoGuard):
             patron = self.obtener_valor(nodo.patron)
             guardia = self.obtener_valor(nodo.condicion)
+            return f"{patron} if {guardia}"
+        elif hasattr(nodo, "patron") and hasattr(nodo, "condicion"):
+            patron = self.obtener_valor(getattr(nodo, "patron"))
+            guardia = self.obtener_valor(getattr(nodo, "condicion"))
             return f"{patron} if {guardia}"
         elif isinstance(nodo, NodoLista):
             elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
