@@ -249,8 +249,15 @@ fin
 ```
 
 ## 18. Expresiones lógicas
+La biblioteca estándar ofrece puertas lógicas listas para usar. Se pueden combinar para expresar reglas complejas sin escribir expresiones manuales.
+
 ```cobra
-imprimir conjuncion(True, False)
+imprimir conjuncion(True, False)      # False
+imprimir disyuncion(False, False)     # False
+imprimir xor(True, False)             # True cuando solo uno es verdadero
+imprimir implicacion(True, False)     # False porque el antecedente se cumple pero el consecuente no
+imprimir equivalencia(True, True)     # True cuando ambos valores coinciden
+imprimir nand(True, True)             # False, negación de la conjunción
 ```
 
 ## 19. Comprensión de listas
