@@ -396,6 +396,21 @@ enum Color:
 fin
 ```
 
+La expresión `coincidir` permite desempaquetar enums y otras estructuras de
+forma declarativa. Cada brazo se inicia con `cuando` y utiliza `=>` para
+indicar el resultado.
+
+```cobra
+var descripcion = coincidir color:
+    cuando Color.ROJO => "caliente"
+    cuando Color.AZUL => "frío"
+    sino => "neutro"
+fin
+```
+
+Si se omite `sino`, Cobra puede verificar opcionalmente que todos los miembros
+de un `enum` estén cubiertos antes de la transpilación.
+
 ## 29. Entrada y salida de datos tabulares
 ```cobra
 import standard_library.datos as datos
