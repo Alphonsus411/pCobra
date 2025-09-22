@@ -1,30 +1,59 @@
 import pytest
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.import_helper import get_standard_imports
-from core.ast_nodes import (
-    NodoAsignacion,
-    NodoCondicional,
-    NodoBucleMientras,
-    NodoFuncion,
-    NodoLlamadaFuncion,
-    NodoHolobit,
-    NodoYield,
-    NodoEsperar,
-    NodoValor,
-    NodoDecorador,
-    NodoIdentificador,
-    NodoMetodo,
-    NodoClase,
-    NodoPasar,
-    NodoSwitch,
-    NodoCase,
-    NodoGlobal,
-    NodoNoLocal,
-    NodoImportDesde,
-    NodoExport,
-)
 from cobra.core import Lexer
 from cobra.core import Parser
+
+try:
+    from pcobra.core.ast_nodes import (
+        NodoAsignacion,
+        NodoCondicional,
+        NodoBucleMientras,
+        NodoFuncion,
+        NodoLlamadaFuncion,
+        NodoHolobit,
+        NodoYield,
+        NodoEsperar,
+        NodoValor,
+        NodoDecorador,
+        NodoIdentificador,
+        NodoMetodo,
+        NodoClase,
+        NodoPasar,
+        NodoSwitch,
+        NodoCase,
+        NodoGlobal,
+        NodoNoLocal,
+        NodoImportDesde,
+        NodoExport,
+        NodoPara,
+        NodoWith,
+    )
+except ImportError:  # pragma: no cover - compatibilidad
+    from core.ast_nodes import (  # type: ignore
+        NodoAsignacion,
+        NodoCondicional,
+        NodoBucleMientras,
+        NodoFuncion,
+        NodoLlamadaFuncion,
+        NodoHolobit,
+        NodoYield,
+        NodoEsperar,
+        NodoValor,
+        NodoDecorador,
+        NodoIdentificador,
+        NodoMetodo,
+        NodoClase,
+        NodoPasar,
+        NodoSwitch,
+        NodoCase,
+        NodoGlobal,
+        NodoNoLocal,
+        NodoImportDesde,
+        NodoExport,
+        NodoPara,
+        NodoWith,
+    )
 
 IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("js"))
 
@@ -149,6 +178,30 @@ def test_async_function_and_await():
         + "await saluda();\n"
         + "}"
     )
+    assert resultado == esperado
+
+
+def test_transpilador_para_asincronico_js():
+    bucle = NodoPara(
+        "item",
+        NodoIdentificador("datos"),
+        [NodoPasar()],
+        asincronico=True,
+    )
+    resultado = TranspiladorJavaScript().generate_code([bucle])
+    esperado = IMPORTS + "for await (let item of datos) {\n;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_with_asincronico_js():
+    contexto = NodoWith(
+        NodoIdentificador("recurso"),
+        "alias",
+        [NodoPasar()],
+        asincronico=True,
+    )
+    resultado = TranspiladorJavaScript().generate_code([contexto])
+    esperado = IMPORTS + "{ /* async with await recurso as alias */\n;\n}"
     assert resultado == esperado
 
 

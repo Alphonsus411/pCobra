@@ -5,13 +5,27 @@ import subprocess
 
 from cobra.core import Token, TipoToken
 from cobra.core import Parser
-from core.ast_nodes import (
-    NodoFuncion,
-    NodoLlamadaFuncion,
-    NodoImprimir,
-    NodoValor,
-    NodoEsperar,
-)
+
+try:
+    from pcobra.core.ast_nodes import (
+        NodoFuncion,
+        NodoLlamadaFuncion,
+        NodoImprimir,
+        NodoValor,
+        NodoEsperar,
+        NodoPara,
+        NodoWith,
+    )
+except ImportError:  # pragma: no cover - entorno heredado
+    from core.ast_nodes import (  # type: ignore
+        NodoFuncion,
+        NodoLlamadaFuncion,
+        NodoImprimir,
+        NodoValor,
+        NodoEsperar,
+        NodoPara,
+        NodoWith,
+    )
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 
@@ -34,6 +48,59 @@ def test_parser_funcion_asincronica():
     ast = Parser(tokens).parsear()
     assert ast[0].asincronica
     assert isinstance(ast[0].cuerpo[0], NodoEsperar)
+
+
+def test_parser_para_asincronico():
+    tokens = [
+        Token(TipoToken.ASINCRONICO, "asincronico"),
+        Token(TipoToken.PARA, "para"),
+        Token(TipoToken.IDENTIFICADOR, "item"),
+        Token(TipoToken.IN, "in"),
+        Token(TipoToken.IDENTIFICADOR, "datos"),
+        Token(TipoToken.DOSPUNTOS, ":"),
+        Token(TipoToken.PASAR, "pasar"),
+        Token(TipoToken.FIN, "fin"),
+        Token(TipoToken.EOF, None),
+    ]
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    assert isinstance(ast[0], NodoPara)
+    assert ast[0].asincronico is True
+
+
+def test_parser_con_asincronico():
+    tokens = [
+        Token(TipoToken.ASINCRONICO, "asincronico"),
+        Token(TipoToken.CON, "con"),
+        Token(TipoToken.IDENTIFICADOR, "recurso"),
+        Token(TipoToken.DOSPUNTOS, ":"),
+        Token(TipoToken.PASAR, "pasar"),
+        Token(TipoToken.FIN, "fin"),
+        Token(TipoToken.EOF, None),
+    ]
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    assert isinstance(ast[0], NodoWith)
+    assert ast[0].asincronico is True
+
+
+def test_parser_con_alias_mixto_emite_advertencia():
+    tokens = [
+        Token(TipoToken.ASINCRONICO, "asincronico"),
+        Token(TipoToken.WITH, "with"),
+        Token(TipoToken.IDENTIFICADOR, "resource"),
+        Token(TipoToken.COMO, "como"),
+        Token(TipoToken.IDENTIFICADOR, "alias"),
+        Token(TipoToken.DOSPUNTOS, ":"),
+        Token(TipoToken.PASAR, "pasar"),
+        Token(TipoToken.FIN, "fin"),
+        Token(TipoToken.EOF, None),
+    ]
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    assert isinstance(ast[0], NodoWith)
+    assert parser.advertencias
+    assert any("mezcla de alias" in mensaje for mensaje in parser.advertencias)
 
 
 def test_transpiler_python_async_exec():

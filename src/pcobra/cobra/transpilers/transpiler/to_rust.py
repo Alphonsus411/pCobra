@@ -80,6 +80,12 @@ def visit_nolocal(self, nodo):
 
 
 def visit_with(self, nodo):
+    if getattr(nodo, "asincronico", False):
+        ctx = self.obtener_valor(nodo.contexto)
+        alias = f" as {nodo.alias}" if nodo.alias else ""
+        self.agregar_linea(
+            f"// async with {ctx}{alias} no tiene equivalente directo en Rust"
+        )
     self.agregar_linea("{")
     self.indent += 1
     for inst in nodo.cuerpo:

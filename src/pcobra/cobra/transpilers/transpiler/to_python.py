@@ -195,7 +195,8 @@ def visit_nolocal(self, nodo):
 def visit_with(self, nodo):
     ctx = self.obtener_valor(nodo.contexto)
     alias = f" as {nodo.alias}" if nodo.alias else ""
-    self.codigo += f"{self.obtener_indentacion()}with {ctx}{alias}:\n"
+    prefijo = "async with" if getattr(nodo, "asincronico", False) else "with"
+    self.codigo += f"{self.obtener_indentacion()}{prefijo} {ctx}{alias}:\n"
     self.nivel_indentacion += 1
     for inst in nodo.cuerpo:
         inst.aceptar(self)

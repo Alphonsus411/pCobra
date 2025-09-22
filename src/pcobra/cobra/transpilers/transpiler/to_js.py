@@ -128,7 +128,9 @@ def visit_nolocal(self, nodo):
 
 def visit_with(self, nodo):
     ctx = self.obtener_valor(nodo.contexto)
-    self.agregar_linea(f"{{ /* with {ctx} */")
+    alias_info = f" as {nodo.alias}" if nodo.alias else ""
+    descriptor = "async with await" if getattr(nodo, "asincronico", False) else "with"
+    self.agregar_linea(f"{{ /* {descriptor} {ctx}{alias_info} */")
     if self.usa_indentacion:
         self.indentacion += 1
     for inst in nodo.cuerpo:

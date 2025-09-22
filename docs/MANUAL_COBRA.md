@@ -279,6 +279,38 @@ asincronico func revisar_servidor():
 fin
 ```
 
+### Bucles y contextos asíncronos
+
+Además de las funciones, puedes declarar bucles y contextos que se ejecuten en
+modo asíncrono. Utiliza el prefijo `asincronico` delante de `para` o `con` para
+indicar que la iteración o el administrador de contexto deben cooperar con el
+bucle de eventos:
+
+```cobra
+asincronico para dato in obtener_stream():
+    imprimir(dato)
+fin
+
+asincronico con recurso como manejador:
+    esperar manejador.procesar()
+fin
+```
+
+El parser mostrará una advertencia si mezclas alias en distintos idiomas, por
+ejemplo `asincronico with ... como alias`; mantén combinaciones homogéneas
+(`con`+`como` o `with`+`as`) para evitar mensajes preventivos.
+
+Compatibilidad de los transpilers:
+
+- **Python** genera `async for` y `async with`, listos para ejecutarse con
+  `await` dentro de corrutinas.
+- **JavaScript** emite `for await (...)` y anota los bloques asíncronos con
+  `/* async with await ... */` para recordarte que debes gestionar manualmente
+  la vida del recurso.
+- **Rust, C++ y otros backends sin soporte directo** insertan comentarios que
+  documentan la intención (`// async with ...`) antes de envolver el cuerpo en
+  un bloque convencional.
+
 ### Utilidades de coordinación
 
 El módulo `pcobra.corelibs.asincrono` ofrece atajos sobre `asyncio` para combinar
