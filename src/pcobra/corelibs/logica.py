@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+from itertools import product
 from typing import Callable, Iterable, TypeVar
 
 T = TypeVar("T")
@@ -241,6 +243,167 @@ def paridad(valores: Iterable[bool]) -> bool:
     return conteo_verdaderos(valores) % 2 == 0
 
 
+def mayoria(valores: Iterable[bool]) -> bool:
+    """Evalúa si existe mayoría de valores verdaderos.
+
+    Args:
+        valores: Iterable con los valores a considerar.
+
+    Returns:
+        ``True`` cuando la cantidad de verdaderos supera a la de falsos.
+
+    Raises:
+        ValueError: si no se proporcionan valores.
+        TypeError: si alguno de los elementos no es booleano.
+    """
+
+    lista = list(valores)
+    if not lista:
+        raise ValueError("Se necesita al menos un valor booleano para mayoria")
+
+    verdaderos = conteo_verdaderos(lista)
+    return verdaderos > len(lista) / 2
+
+
+def exactamente_n(valores: Iterable[bool], cantidad: int) -> bool:
+    """Comprueba si existen exactamente ``cantidad`` valores verdaderos."""
+
+    if isinstance(cantidad, bool) or not isinstance(cantidad, int):
+        raise TypeError(
+            f"cantidad debe ser un entero, se recibió {type(cantidad).__name__}"
+        )
+    if cantidad < 0:
+        raise ValueError("cantidad no puede ser negativa en exactamente_n")
+
+    lista = list(valores)
+    verdaderos = conteo_verdaderos(lista)
+    return verdaderos == cantidad
+
+
+def _generar_nombres(aridad: int, nombres: Iterable[str] | None) -> list[str]:
+    if nombres is None:
+        return [f"p{indice + 1}" for indice in range(aridad)]
+
+    nombres_lista = list(nombres)
+    if len(nombres_lista) != aridad:
+        raise ValueError(
+            "La cantidad de nombres debe coincidir con la aridad especificada"
+        )
+    return nombres_lista
+
+
+def _resolver_aridad(funcion: Callable[..., bool], aridad: int | None) -> int:
+    if aridad is not None:
+        if aridad < 0:
+            raise ValueError("La aridad no puede ser negativa en tabla_verdad")
+        return aridad
+
+    try:
+        firma = inspect.signature(funcion)
+    except (TypeError, ValueError) as error:
+        raise ValueError("No se pudo inferir la aridad de la función proporcionada") from error
+
+    for parametro in firma.parameters.values():
+        if parametro.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+            raise ValueError("tabla_verdad requiere una función con aridad fija")
+        if parametro.kind is inspect.Parameter.KEYWORD_ONLY:
+            raise ValueError(
+                "tabla_verdad solo admite parámetros posicionales; proporciona la aridad manualmente"
+            )
+
+    return sum(
+        parametro.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+        for parametro in firma.parameters.values()
+    )
+
+
+def tabla_verdad(
+    funcion: Callable[..., bool],
+    *,
+    aridad: int | None = None,
+    nombres: Iterable[str] | None = None,
+    nombre_resultado: str = "resultado",
+) -> list[dict[str, bool]]:
+    """Genera la tabla de verdad completa de ``funcion``.
+
+    Args:
+        funcion: Callable booleano del que se calculará la tabla.
+        aridad: Número de argumentos posicionales de la función. Si se omite, se
+            intenta inferir mediante introspección.
+        nombres: Nombres opcionales para las columnas de entrada. Si se
+            proporciona, su longitud debe coincidir con ``aridad``.
+        nombre_resultado: Etiqueta para la columna de salida.
+
+    Returns:
+        Lista de diccionarios que representan cada combinación de entrada y su
+        resultado asociado.
+
+    Raises:
+        TypeError: si ``funcion`` no es callable o si ``nombre_resultado`` no es
+            una cadena.
+        ValueError: cuando la aridad es negativa, cuando no puede inferirse o si
+            los nombres no coinciden con la aridad.
+    """
+
+    if not callable(funcion):
+        raise TypeError("funcion debe ser callable en tabla_verdad")
+    if not isinstance(nombre_resultado, str):
+        raise TypeError("nombre_resultado debe ser una cadena de texto")
+
+    aridad_resuelta = _resolver_aridad(funcion, aridad)
+    nombres_columnas = _generar_nombres(aridad_resuelta, nombres)
+
+    tabla = []
+    for combinacion in product((False, True), repeat=aridad_resuelta):
+        resultado = funcion(*combinacion)
+        fila = dict(zip(nombres_columnas, combinacion))
+        fila[nombre_resultado] = _asegurar_booleano(resultado, "resultado")
+        tabla.append(fila)
+
+    return tabla
+
+
+def diferencia_simetrica(*colecciones: Iterable[bool]) -> tuple[bool, ...]:
+    """Calcula la diferencia simétrica elemento a elemento sobre colecciones."""
+
+    if not colecciones:
+        raise ValueError(
+            "Se necesita al menos una colección booleana para diferencia_simetrica"
+        )
+
+    listas: list[list[bool]] = []
+    longitud_esperada: int | None = None
+    for indice_coleccion, coleccion in enumerate(colecciones):
+        lista = [
+            _asegurar_booleano(valor, f"valor_{indice_coleccion}_{indice}")
+            for indice, valor in enumerate(coleccion)
+        ]
+        if longitud_esperada is None:
+            longitud_esperada = len(lista)
+        elif len(lista) != longitud_esperada:
+            raise ValueError(
+                "Todas las colecciones deben tener la misma longitud en diferencia_simetrica"
+            )
+        listas.append(lista)
+
+    if longitud_esperada is None:
+        return ()
+
+    resultado: list[bool] = []
+    for indice in range(longitud_esperada):
+        valores = [lista[indice] for lista in listas]
+        if len(valores) == 1:
+            resultado.append(valores[0])
+        else:
+            resultado.append(xor_multiple(*valores))
+
+    return tuple(resultado)
+
+
 __all__ = [
     "es_verdadero",
     "es_falso",
@@ -262,4 +425,8 @@ __all__ = [
     "solo_uno",
     "conteo_verdaderos",
     "paridad",
+    "mayoria",
+    "exactamente_n",
+    "tabla_verdad",
+    "diferencia_simetrica",
 ]

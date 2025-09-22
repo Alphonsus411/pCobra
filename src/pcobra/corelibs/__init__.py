@@ -98,6 +98,10 @@ from corelibs.logica import (
     solo_uno,
     conteo_verdaderos,
     paridad,
+    mayoria,
+    exactamente_n,
+    tabla_verdad,
+    diferencia_simetrica,
 )
 from corelibs.numero import (
     absoluto,

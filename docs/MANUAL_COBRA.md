@@ -851,6 +851,9 @@ Las funciones están disponibles tanto al ejecutar Cobra directamente como al tr
 - `solo_uno` verifica si exactamente un elemento es verdadero, equivalente a ``one?`` y lanza `ValueError` si no recibe argumentos.
 - `conteo_verdaderos` devuelve el total de verdaderos (similar a ``count``) y permite reutilizar el resultado para otras comprobaciones.
 - `paridad` informa si el número de verdaderos es par; internamente reutiliza `conteo_verdaderos` y equivale a calcular ``count(valores) % 2 == 0``.
+- `mayoria` y `exactamente_n` ayudan a expresar reglas que dependen de umbrales de verdaderos sin contar manualmente.
+- `diferencia_simetrica` aplica XOR elemento a elemento sobre secuencias de booleanos, útil para comparar lecturas en paralelo.
+- `tabla_verdad` genera todas las combinaciones posibles de entrada y valida que el resultado de la función sea booleano, ideal para documentar reglas de negocio.
 - `entonces` y `si_no` encapsulan condicionales perezosos: devuelven el resultado (o ejecutan un callable) solo cuando la condición se cumple, como `takeIf` y `takeUnless` en Kotlin.
 - `condicional` permite encadenar pares ``(condición, resultado)`` inspirándose en ``when`` de Kotlin y `case_when` de R; evalúa cada rama en orden y solo computa la que corresponda.
 
@@ -870,13 +873,31 @@ imprimir(logica_alto_nivel.ninguna(sensores))     # False
 imprimir(logica_alto_nivel.solo_uno(True, False, False))  # True
 imprimir(logica_alto_nivel.conteo_verdaderos(sensores))   # 2
 imprimir(logica_alto_nivel.paridad(sensores))     # False
+imprimir(logica_alto_nivel.mayoria(sensores))     # True
+imprimir(logica_alto_nivel.exactamente_n(sensores, 2))  # True
+
+var tabla = logica_alto_nivel.tabla_verdad(
+    lambda a, b: logica_alto_nivel.diferencia_simetrica([a], [b])[0],
+    nombres=("a", "b"),
+    nombre_resultado="a⊕b",
+)
+para fila en tabla:
+    imprimir(fila)
 
 # Lanzan errores al recibir datos que no son booleanos
 logica.todas([True, 1])  # -> TypeError
 ```
 
 ```python
-from pcobra.corelibs.logica import condicional, entonces, si_no
+from pcobra.corelibs.logica import (
+    condicional,
+    entonces,
+    si_no,
+    tabla_verdad,
+    diferencia_simetrica,
+    mayoria,
+    exactamente_n,
+)
 
 contador = {"valor": 0}
 
@@ -896,6 +917,17 @@ estado = condicional(
     por_defecto="estable",
 )
 assert estado == "advertencia"
+
+tabla_and = tabla_verdad(lambda a, b: a and b, nombres=("A", "B"), nombre_resultado="A∧B")
+for fila in tabla_and:
+    print(fila)
+
+lecturas_a = [True, False, True]
+lecturas_b = [False, True, False]
+lecturas_c = [True, True, False]
+assert diferencia_simetrica(lecturas_a, lecturas_b, lecturas_c) == (False, True, False)
+assert mayoria(lecturas_a) is True
+assert exactamente_n(lecturas_c, 2) is True
 ```
 
 > **Recomendación:** al combinar `xor_multiple` con colecciones calculadas dinámicamente verifica previamente la longitud de la entrada para evitar el `ValueError` que se lanza cuando se proporcionan menos de dos argumentos.

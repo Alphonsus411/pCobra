@@ -103,3 +103,35 @@ def test_condicional_por_defecto_perezoso():
     condicion.assert_called_once_with()
     resultado.assert_not_called()
     por_defecto.assert_called_once_with()
+
+
+def test_mayoria_exactamente_n_y_diferencia():
+    assert logica.mayoria([True, False, True]) is True
+    assert logica.mayoria([False, False, True]) is False
+
+    with pytest.raises(ValueError):
+        logica.mayoria([])
+
+    assert logica.exactamente_n([True, False, True], 2) is True
+    with pytest.raises(TypeError):
+        logica.exactamente_n([True], 1.2)
+    with pytest.raises(TypeError):
+        logica.exactamente_n([True], True)  # type: ignore[arg-type]
+
+    assert logica.diferencia_simetrica([True, False], [False, False]) == (True, False)
+    with pytest.raises(ValueError):
+        logica.diferencia_simetrica()
+
+
+def test_tabla_verdad_envoltura():
+    tabla = logica.tabla_verdad(lambda a, b: a and b, nombres=("a", "b"))
+
+    assert tabla == [
+        {"a": False, "b": False, "resultado": False},
+        {"a": False, "b": True, "resultado": False},
+        {"a": True, "b": False, "resultado": False},
+        {"a": True, "b": True, "resultado": True},
+    ]
+
+    with pytest.raises(TypeError):
+        logica.tabla_verdad(0)  # type: ignore[arg-type]
