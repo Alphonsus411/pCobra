@@ -32,6 +32,17 @@ function _esSignoNegativo(valor) {
     return valor < 0 || (valor === 0 && Object.is(valor, -0));
 }
 
+function _normalizarSecuenciaNumerica(nombre, valores) {
+    if (valores == null || typeof valores[Symbol.iterator] !== "function") {
+        throw new TypeError(`${nombre} requiere un iterable de números reales`);
+    }
+    const lista = Array.from(valores);
+    if (lista.length === 0) {
+        throw new Error(`No se puede calcular ${nombre} de una secuencia vacía`);
+    }
+    return lista.map((valor) => _aNumero(nombre, valor));
+}
+
 export function piso(valor) {
     return Math.floor(valor);
 }
@@ -234,4 +245,128 @@ export function promedio(lista) {
     if (lista.length === 0) return 0;
     const total = lista.reduce((a, b) => a + b, 0);
     return total / lista.length;
+}
+
+export function varianza(valores) {
+    const lista = _normalizarSecuenciaNumerica("varianza", valores);
+    const promedio = lista.reduce((acc, val) => acc + val, 0) / lista.length;
+    const sumaCuadrados = lista.reduce(
+        (acc, val) => acc + Math.pow(val - promedio, 2),
+        0,
+    );
+    return sumaCuadrados / lista.length;
+}
+
+export function varianza_muestral(valores) {
+    const lista = _normalizarSecuenciaNumerica("varianza_muestral", valores);
+    if (lista.length < 2) {
+        throw new Error("La varianza muestral requiere al menos dos valores");
+    }
+    const promedio = lista.reduce((acc, val) => acc + val, 0) / lista.length;
+    const sumaCuadrados = lista.reduce(
+        (acc, val) => acc + Math.pow(val - promedio, 2),
+        0,
+    );
+    return sumaCuadrados / (lista.length - 1);
+}
+
+export function media_geometrica(valores) {
+    const lista = _normalizarSecuenciaNumerica("media_geometrica", valores);
+    let sumaLogaritmos = 0;
+    let conteoPositivos = 0;
+    for (const valor of lista) {
+        if (valor < 0) {
+            throw new Error("La media geométrica requiere valores no negativos");
+        }
+        if (valor === 0) {
+            return 0;
+        }
+        sumaLogaritmos += Math.log(valor);
+        conteoPositivos += 1;
+    }
+    if (conteoPositivos === 0) {
+        return 0;
+    }
+    return Math.exp(sumaLogaritmos / conteoPositivos);
+}
+
+export function media_armonica(valores) {
+    const lista = _normalizarSecuenciaNumerica("media_armonica", valores);
+    let sumaInversos = 0;
+    for (const valor of lista) {
+        if (valor < 0) {
+            throw new Error(
+                "La media armónica requiere valores estrictamente positivos",
+            );
+        }
+        if (valor === 0) {
+            return 0;
+        }
+        sumaInversos += 1 / valor;
+    }
+    return lista.length / sumaInversos;
+}
+
+export function percentil(valores, porcentaje) {
+    const lista = _normalizarSecuenciaNumerica("percentil", valores);
+    const porcentajeNumero = _aNumero("percentil", porcentaje);
+    if (Number.isNaN(porcentajeNumero)) {
+        return Number.NaN;
+    }
+    if (porcentajeNumero < 0 || porcentajeNumero > 100) {
+        throw new Error("El percentil debe estar en el rango [0, 100]");
+    }
+    const ordenados = [...lista].sort((a, b) => a - b);
+    if (porcentajeNumero === 0) {
+        return ordenados[0];
+    }
+    if (porcentajeNumero === 100) {
+        return ordenados[ordenados.length - 1];
+    }
+    const posicion = (porcentajeNumero / 100) * (ordenados.length - 1);
+    const indiceInferior = Math.floor(posicion);
+    const indiceSuperior = Math.ceil(posicion);
+    if (indiceInferior === indiceSuperior) {
+        return ordenados[indiceInferior];
+    }
+    const fraccion = posicion - indiceInferior;
+    const inferior = ordenados[indiceInferior];
+    const superior = ordenados[indiceSuperior];
+    return inferior + (superior - inferior) * fraccion;
+}
+
+export function cuartiles(valores) {
+    const lista = _normalizarSecuenciaNumerica("cuartiles", valores);
+    return [
+        percentil(lista, 25),
+        percentil(lista, 50),
+        percentil(lista, 75),
+    ];
+}
+
+export function rango_intercuartil(valores) {
+    const [q1, , q3] = cuartiles(valores);
+    return q3 - q1;
+}
+
+export function coeficiente_variacion(valores, muestral = false) {
+    const lista = _normalizarSecuenciaNumerica("coeficiente_variacion", valores);
+    const promedio = lista.reduce((acc, val) => acc + val, 0) / lista.length;
+    if (promedio === 0) {
+        throw new Error(
+            "El coeficiente de variación no está definido para media cero",
+        );
+    }
+    let sumaCuadrados = 0;
+    for (const valor of lista) {
+        sumaCuadrados += Math.pow(valor - promedio, 2);
+    }
+    const divisor = muestral ? lista.length - 1 : lista.length;
+    if (divisor <= 0) {
+        throw new Error(
+            "El coeficiente de variación muestral requiere al menos dos valores",
+        );
+    }
+    const desviacion = Math.sqrt(sumaCuadrados / divisor);
+    return Math.abs(desviacion / promedio);
 }

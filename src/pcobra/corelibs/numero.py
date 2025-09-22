@@ -5,7 +5,18 @@ from __future__ import annotations
 import math
 import random
 from typing import Any
-from statistics import StatisticsError, median, mode, pstdev, stdev
+from statistics import (
+    StatisticsError,
+    fmean,
+    geometric_mean,
+    harmonic_mean,
+    median,
+    mode,
+    pstdev,
+    pvariance,
+    stdev,
+    variance,
+)
 
 _ALFABETO_DEFECTO = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -618,3 +629,124 @@ def suma_precisa(valores) -> float:
     """Suma ``valores`` con precisión extendida como :func:`math.fsum`."""
 
     return math.fsum(_a_float(valor, "suma_precisa") for valor in valores)
+
+
+def _normalizar_secuencia_numerica(valores, nombre: str) -> list[float]:
+    """Convierte ``valores`` en una lista de ``float`` validando su contenido."""
+
+    if isinstance(valores, (str, bytes, bytearray, memoryview)):
+        raise TypeError(f"{nombre} requiere un iterable de números reales")
+    try:
+        iterador = list(valores)
+    except TypeError as exc:  # pragma: no cover - error explícito
+        raise TypeError(f"{nombre} requiere un iterable de números reales") from exc
+
+    if not iterador:
+        raise ValueError(f"No se puede calcular {nombre} de una secuencia vacía")
+
+    resultado: list[float] = []
+    for valor in iterador:
+        try:
+            resultado.append(_a_float(valor, nombre))
+        except TypeError as exc:  # pragma: no cover - mensaje uniforme
+            raise TypeError(f"{nombre} requiere valores numéricos reales") from exc
+    return resultado
+
+
+def varianza(valores) -> float:
+    """Calcula la varianza poblacional de ``valores``."""
+
+    datos = _normalizar_secuencia_numerica(valores, "varianza")
+    return pvariance(datos)
+
+
+def varianza_muestral(valores) -> float:
+    """Calcula la varianza muestral de ``valores``."""
+
+    datos = _normalizar_secuencia_numerica(valores, "varianza_muestral")
+    try:
+        return variance(datos)
+    except StatisticsError as exc:  # pragma: no cover - mensaje uniforme
+        raise ValueError(str(exc)) from exc
+
+
+def media_geometrica(valores) -> float:
+    """Obtiene la media geométrica de ``valores``."""
+
+    datos = _normalizar_secuencia_numerica(valores, "media_geometrica")
+    try:
+        return geometric_mean(datos)
+    except StatisticsError as exc:  # pragma: no cover
+        raise ValueError(str(exc)) from exc
+
+
+def media_armonica(valores) -> float:
+    """Obtiene la media armónica de ``valores``."""
+
+    datos = _normalizar_secuencia_numerica(valores, "media_armonica")
+    try:
+        return harmonic_mean(datos)
+    except StatisticsError as exc:  # pragma: no cover
+        raise ValueError(str(exc)) from exc
+
+
+def percentil(valores, porcentaje: float) -> float:
+    """Calcula el percentil ``porcentaje`` mediante interpolación lineal."""
+
+    datos = _normalizar_secuencia_numerica(valores, "percentil")
+    porcentaje_float = _a_float(porcentaje, "percentil")
+    if math.isnan(porcentaje_float):
+        return math.nan
+    if porcentaje_float < 0.0 or porcentaje_float > 100.0:
+        raise ValueError("El percentil debe estar en el rango [0, 100]")
+
+    datos_ordenados = sorted(datos)
+    if porcentaje_float == 0.0:
+        return datos_ordenados[0]
+    if porcentaje_float == 100.0:
+        return datos_ordenados[-1]
+
+    posicion = (porcentaje_float / 100.0) * (len(datos_ordenados) - 1)
+    indice_inferior = math.floor(posicion)
+    indice_superior = math.ceil(posicion)
+    if indice_inferior == indice_superior:
+        return datos_ordenados[indice_inferior]
+
+    fraccion = posicion - indice_inferior
+    inferior = datos_ordenados[indice_inferior]
+    superior = datos_ordenados[indice_superior]
+    return inferior + (superior - inferior) * fraccion
+
+
+def cuartiles(valores) -> tuple[float, float, float]:
+    """Devuelve los cuartiles ``Q1``, ``Q2`` y ``Q3`` de ``valores``."""
+
+    datos = _normalizar_secuencia_numerica(valores, "cuartiles")
+    q1 = percentil(datos, 25.0)
+    q2 = percentil(datos, 50.0)
+    q3 = percentil(datos, 75.0)
+    return q1, q2, q3
+
+
+def rango_intercuartil(valores) -> float:
+    """Calcula el rango intercuartílico (``Q3 - Q1``) de ``valores``."""
+
+    q1, _, q3 = cuartiles(valores)
+    return q3 - q1
+
+
+def coeficiente_variacion(valores, *, muestral: bool = False) -> float:
+    """Calcula el coeficiente de variación de ``valores``."""
+
+    datos = _normalizar_secuencia_numerica(valores, "coeficiente_variacion")
+    media = fmean(datos)
+    if media == 0.0:
+        raise ValueError("El coeficiente de variación no está definido para media cero")
+
+    if muestral:
+        if len(datos) < 2:
+            raise ValueError("El coeficiente de variación muestral requiere al menos dos valores")
+        dispersion = stdev(datos)
+    else:
+        dispersion = pstdev(datos)
+    return dispersion / abs(media)

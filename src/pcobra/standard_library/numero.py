@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, SupportsFloat
+from typing import Iterable, SupportsFloat, Tuple
 
 from pcobra.corelibs import numero as _numero
 
@@ -21,6 +21,14 @@ __all__ = [
     "suma_precisa",
     "interpolar",
     "envolver_modular",
+    "varianza",
+    "varianza_muestral",
+    "media_geometrica",
+    "media_armonica",
+    "percentil",
+    "cuartiles",
+    "rango_intercuartil",
+    "coeficiente_variacion",
 ]
 
 
@@ -94,3 +102,55 @@ def envolver_modular(valor: RealLike, modulo: RealLike) -> float | int:
     """Aplica una envoltura modular como ``rem_euclid``/``mod``."""
 
     return _numero.envolver_modular(valor, modulo)
+
+
+def varianza(valores: Iterable[RealLike]) -> float:
+    """Calcula la varianza poblacional de ``valores``."""
+
+    return _numero.varianza(valores)
+
+
+def varianza_muestral(valores: Iterable[RealLike]) -> float:
+    """Calcula la varianza muestral de ``valores``."""
+
+    return _numero.varianza_muestral(valores)
+
+
+def media_geometrica(valores: Iterable[RealLike]) -> float:
+    """Devuelve la media geométrica de ``valores``."""
+
+    return _numero.media_geometrica(valores)
+
+
+def media_armonica(valores: Iterable[RealLike]) -> float:
+    """Devuelve la media armónica de ``valores``."""
+
+    return _numero.media_armonica(valores)
+
+
+def percentil(valores: Iterable[RealLike], porcentaje: RealLike) -> float:
+    """Calcula el percentil ``porcentaje`` mediante interpolación lineal."""
+
+    return _numero.percentil(valores, porcentaje)
+
+
+def cuartiles(valores: Iterable[RealLike]) -> Tuple[float, float, float]:
+    """Devuelve los cuartiles ``Q1``, ``Q2`` y ``Q3`` de ``valores``."""
+
+    return _numero.cuartiles(valores)
+
+
+def rango_intercuartil(valores: Iterable[RealLike]) -> float:
+    """Calcula el rango intercuartílico (``Q3 - Q1``)."""
+
+    return _numero.rango_intercuartil(valores)
+
+
+def coeficiente_variacion(
+    valores: Iterable[RealLike],
+    *,
+    muestral: bool = False,
+) -> float:
+    """Calcula el coeficiente de variación de ``valores``."""
+
+    return _numero.coeficiente_variacion(valores, muestral=muestral)

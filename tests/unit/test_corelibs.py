@@ -3,11 +3,14 @@ import math
 import operator
 import os
 import random
+import statistics as stats
 import sys
 from collections import OrderedDict
 from datetime import datetime
 from types import ModuleType
 from unittest.mock import MagicMock, patch
+
+import numpy as np
 
 import pytest
 
@@ -315,6 +318,36 @@ def test_numero_funcs():
     assert core.desviacion_estandar(datos) == pytest.approx(2.0)
     assert core.desviacion_estandar(datos, muestral=True) == pytest.approx(
         2.1380899353
+    )
+    assert core.varianza(datos) == pytest.approx(stats.pvariance(datos))
+    assert core.varianza_muestral(datos) == pytest.approx(stats.variance(datos))
+
+    geometrica = [1, 3, 9, 27]
+    assert core.media_geometrica(geometrica) == pytest.approx(
+        stats.geometric_mean(geometrica)
+    )
+    armonica = [1.5, 2.5, 4.0]
+    assert core.media_armonica(armonica) == pytest.approx(
+        stats.harmonic_mean(armonica)
+    )
+    assert core.media_armonica([1.0, 0.0, 3.0]) == pytest.approx(
+        stats.harmonic_mean([1.0, 0.0, 3.0])
+    )
+
+    assert core.percentil(datos, 25) == pytest.approx(
+        float(np.percentile(datos, 25, method="linear"))
+    )
+    q1, q2, q3 = core.cuartiles(datos)
+    assert q1 == pytest.approx(float(np.percentile(datos, 25, method="linear")))
+    assert q2 == pytest.approx(float(np.percentile(datos, 50, method="linear")))
+    assert q3 == pytest.approx(float(np.percentile(datos, 75, method="linear")))
+    assert core.rango_intercuartil(datos) == pytest.approx(q3 - q1)
+
+    coef_poblacional = stats.pstdev(datos) / abs(stats.fmean(datos))
+    coef_muestral = stats.stdev(datos) / abs(stats.fmean(datos))
+    assert core.coeficiente_variacion(datos) == pytest.approx(coef_poblacional)
+    assert core.coeficiente_variacion(datos, muestral=True) == pytest.approx(
+        coef_muestral
     )
     assert core.es_par(4) is True
     assert core.es_par(5) is False

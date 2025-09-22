@@ -34,6 +34,50 @@ def test_desviacion_estandar_muestral_requiere_dos_valores():
         core.desviacion_estandar([1.0], muestral=True)
 
 
+def test_varianza_validaciones():
+    with pytest.raises(ValueError):
+        core.varianza([])
+    with pytest.raises(ValueError):
+        core.varianza_muestral([1.0])
+    with pytest.raises(TypeError):
+        core.varianza([1.0, "texto"])  # type: ignore[arg-type]
+
+
+def test_medias_avanzadas_validaciones():
+    with pytest.raises(ValueError):
+        core.media_geometrica([])
+    with pytest.raises(ValueError):
+        core.media_armonica([])
+    with pytest.raises(ValueError):
+        core.media_geometrica([-1, 2, 3])
+    with pytest.raises(ValueError):
+        core.media_armonica([-1, 1, 3])
+
+
+def test_percentil_validaciones():
+    with pytest.raises(ValueError):
+        core.percentil([], 50)
+    with pytest.raises(ValueError):
+        core.percentil([1, 2, 3], -10)
+    with pytest.raises(ValueError):
+        core.percentil([1, 2, 3], 150)
+    with pytest.raises(TypeError):
+        core.percentil(object(), 50)  # type: ignore[arg-type]
+    resultado_nan = core.percentil([1, 2, 3], float("nan"))
+    assert math.isnan(resultado_nan)
+
+
+def test_cuartiles_y_coeficiente_variacion_validaciones():
+    with pytest.raises(ValueError):
+        core.cuartiles([])
+    with pytest.raises(ValueError):
+        core.rango_intercuartil([])
+    with pytest.raises(ValueError):
+        core.coeficiente_variacion([1, -1])
+    with pytest.raises(ValueError):
+        core.coeficiente_variacion([5.0], muestral=True)
+
+
 def test_raiz_validaciones():
     with pytest.raises(ValueError):
         core.raiz(4, 0)
