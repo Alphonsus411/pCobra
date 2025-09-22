@@ -339,6 +339,21 @@ class NodoRetorno(NodoAST):
 
 
 @dataclass
+class NodoDefer(NodoAST):
+    expresion: Any
+    linea: Optional[int] = None
+    columna: Optional[int] = None
+
+    """Sentencia que difiere la ejecución de una expresión."""
+
+    def __repr__(self):
+        return (
+            f"NodoDefer(expresion={self.expresion}, linea={self.linea}, "
+            f"columna={self.columna})"
+        )
+
+
+@dataclass
 class NodoYield(NodoAST):
     expresion: Any
 
@@ -604,6 +619,7 @@ __all__ = [
     "NodoLlamadaFuncion",
     "NodoHilo",
     "NodoRetorno",
+    "NodoDefer",
     "NodoYield",
     "NodoEsperar",
     "NodoOption",

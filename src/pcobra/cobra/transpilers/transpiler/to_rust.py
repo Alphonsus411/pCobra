@@ -26,6 +26,7 @@ from cobra.core.ast_nodes import (
     NodoPattern,
     NodoGuard,
     NodoInterface,
+    NodoDefer,
 )
 from cobra.core import TipoToken
 from core.visitor import NodeVisitor
@@ -51,6 +52,7 @@ from cobra.transpilers.transpiler.rust_nodes.switch import visit_switch as _visi
 from cobra.transpilers.transpiler.rust_nodes.try_catch import visit_try_catch as _visit_try_catch
 from cobra.transpilers.transpiler.rust_nodes.throw import visit_throw as _visit_throw
 from cobra.transpilers.transpiler.rust_nodes.option import visit_option as _visit_option
+from cobra.transpilers.transpiler.rust_nodes.defer import visit_defer as _visit_defer
 
 
 def visit_assert(self, nodo):
@@ -116,6 +118,8 @@ class TranspiladorRust(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+        self._defer_counter = 0
+        self.usa_defer_helpers = False
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -171,6 +175,9 @@ class TranspiladorRust(BaseTranspiler):
             patron = self.obtener_valor(nodo.patron)
             guardia = self.obtener_valor(nodo.condicion)
             return f"{patron} if {guardia}"
+        if hasattr(nodo, "argumentos") and hasattr(nodo, "nombre"):
+            args = ", ".join(self.obtener_valor(a) for a in getattr(nodo, "argumentos", []))
+            return f"{getattr(nodo, 'nombre', nodo)}({args})"
         return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
@@ -179,7 +186,28 @@ class TranspiladorRust(BaseTranspiler):
         nodos = optimize_constants(nodos)
         for nodo in nodos:
             nodo.aceptar(self)
-        return "\n".join(self.codigo)
+        lineas = list(self.codigo)
+        if self.usa_defer_helpers:
+            helpers = [
+                "struct CobraDefer<F: FnOnce()> {",
+                "    callback: Option<F>,",
+                "}",
+                "impl<F: FnOnce()> CobraDefer<F> {",
+                "    fn new(callback: F) -> Self {",
+                "        Self { callback: Some(callback) }",
+                "    }",
+                "}",
+                "impl<F: FnOnce()> Drop for CobraDefer<F> {",
+                "    fn drop(&mut self) {",
+                "        if let Some(callback) = self.callback.take() {",
+                "            callback();",
+                "        }",
+                "    }",
+                "}",
+                "",
+            ]
+            lineas = helpers + lineas
+        return "\n".join(lineas)
 
 
 # Asignar los visitantes externos a la clase
@@ -208,3 +236,4 @@ TranspiladorRust.visit_switch = _visit_switch
 TranspiladorRust.visit_try_catch = _visit_try_catch
 TranspiladorRust.visit_throw = _visit_throw
 TranspiladorRust.visit_option = _visit_option
+TranspiladorRust.visit_defer = _visit_defer

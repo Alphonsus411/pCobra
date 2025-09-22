@@ -1,5 +1,5 @@
 import pytest
-from cobra.core import Lexer, TipoToken
+from pcobra.cobra.core.lexer import Lexer, TipoToken
 
 
 def test_lexer_palabras_nuevas():
@@ -38,3 +38,10 @@ def test_lexer_palabras_nuevas_en():
     tipos = [t.tipo for t in tokens if t.tipo != TipoToken.EOF]
     assert TipoToken.WITH in tipos
     assert TipoToken.AS in tipos
+
+
+def test_lexer_token_defer_y_aplazar():
+    codigo = "defer limpiar()\naplazar cerrar()"
+    tokens = Lexer(codigo).analizar_token()
+    tipos = [t.tipo for t in tokens if t.tipo != TipoToken.EOF]
+    assert tipos.count(TipoToken.DEFER) == 2

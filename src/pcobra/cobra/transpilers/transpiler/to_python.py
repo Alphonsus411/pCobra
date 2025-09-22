@@ -21,6 +21,7 @@ from pcobra.core.ast_nodes import (
     NodoMetodo,
     NodoValor,
     NodoRetorno,
+    NodoDefer,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
     NodoIdentificador,
@@ -135,6 +136,7 @@ from cobra.transpilers.transpiler.python_nodes.decorador import (
     visit_decorador as _visit_decorador,
 )
 from cobra.transpilers.transpiler.python_nodes.yield_ import visit_yield as _visit_yield
+from cobra.transpilers.transpiler.python_nodes.defer import visit_defer as _visit_defer
 from cobra.transpilers.transpiler.python_nodes.esperar import (
     visit_esperar as _visit_esperar,
 )
@@ -240,7 +242,10 @@ class TranspiladorPython(BaseTranspiler):
         self.codigo = get_standard_imports("python")
         self.usa_asyncio = False
         self.usa_typing = False
+        self.usa_contextlib = False
         self.nivel_indentacion = 0
+        self._defer_stack: list[str] = []
+        self._defer_counter = 0
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -279,6 +284,8 @@ class TranspiladorPython(BaseTranspiler):
             codigo = self.codigo
         if self.usa_typing:
             codigo = "from typing import TypeVar, Generic\n" + codigo
+        if self.usa_contextlib:
+            codigo = "import contextlib\n" + codigo
         if self.usa_asyncio:
             codigo = "import asyncio\n" + codigo
         return codigo
@@ -439,6 +446,7 @@ TranspiladorPython.visit_identificador = _visit_identificador
 TranspiladorPython.visit_para = _visit_para
 TranspiladorPython.visit_decorador = _visit_decorador
 TranspiladorPython.visit_yield = _visit_yield
+TranspiladorPython.visit_defer = _visit_defer
 TranspiladorPython.visit_romper = _visit_romper
 TranspiladorPython.visit_continuar = _visit_continuar
 TranspiladorPython.visit_pasar = _visit_pasar

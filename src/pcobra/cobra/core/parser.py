@@ -39,6 +39,7 @@ from pcobra.core.ast_nodes import (
     NodoDecorador,
     NodoTryCatch,
     NodoThrow,
+    NodoDefer,
     NodoRomper,
     NodoContinuar,
     NodoPasar,
@@ -81,6 +82,7 @@ class ClassicParser:
         self.indentacion_actual = 0
         self.errores: list[str] = []
         self.advertencias: list[str] = []
+        self._contexto_bloques: list[str] = []
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -101,6 +103,7 @@ class ClassicParser:
             TipoToken.HILO: self.declaracion_hilo,
             TipoToken.TRY: self.declaracion_try_catch,
             TipoToken.INTENTAR: self.declaracion_try_catch,
+            TipoToken.DEFER: self.declaracion_defer,
             TipoToken.THROW: self.declaracion_throw,
             TipoToken.LANZAR: self.declaracion_throw,
             TipoToken.YIELD: self.declaracion_yield,
@@ -133,6 +136,11 @@ class ClassicParser:
         """Conserva una advertencia y la publica en el registro."""
         self.advertencias.append(mensaje)
         logger.warning(mensaje)
+
+    def _en_bloque_funcional(self) -> bool:
+        """Indica si el parser se encuentra dentro de una función o método."""
+
+        return any(ctx in {"funcion", "metodo"} for ctx in self._contexto_bloques)
 
     def token_actual(self):
         """Devuelve el token actualmente en procesamiento.
@@ -754,21 +762,27 @@ class ClassicParser:
         max_iteraciones = 1000  # Límite para evitar bucles infinitos
         iteraciones = 0
 
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            iteraciones += 1
-            if iteraciones > max_iteraciones:
-                raise RuntimeError("Bucle infinito detectado en declaracion_funcion")
+        self._contexto_bloques.append("funcion")
+        try:
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+                iteraciones += 1
+                if iteraciones > max_iteraciones:
+                    raise RuntimeError(
+                        "Bucle infinito detectado en declaracion_funcion"
+                    )
 
-            try:
-                if self.token_actual().tipo == TipoToken.RETORNO:
-                    self.comer(TipoToken.RETORNO)
-                    expresion = self.expresion()
-                    cuerpo.append(NodoRetorno(expresion))
-                else:
-                    cuerpo.append(self.declaracion())
-            except ParserError as e:
-                logger.error(f"Error en el cuerpo de la función '{nombre}': {e}")
-                self.avanzar()
+                try:
+                    if self.token_actual().tipo == TipoToken.RETORNO:
+                        self.comer(TipoToken.RETORNO)
+                        expresion = self.expresion()
+                        cuerpo.append(NodoRetorno(expresion))
+                    else:
+                        cuerpo.append(self.declaracion())
+                except ParserError as e:
+                    logger.error(f"Error en el cuerpo de la función '{nombre}': {e}")
+                    self.avanzar()
+        finally:
+            self._contexto_bloques.pop()
 
         # Verifica y consume 'fin'
         if self.token_actual().tipo != TipoToken.FIN:
@@ -1022,6 +1036,26 @@ class ClassicParser:
 
         return NodoTryCatch(bloque_try, nombre_exc, bloque_catch, bloque_finally)
 
+    def declaracion_defer(self):
+        """Parsea una sentencia ``defer``/``aplazar`` que difiere una acción."""
+
+        token_defer = self.token_actual()
+        self.comer(TipoToken.DEFER)
+        expresion = self.expresion()
+
+        if not self._en_bloque_funcional():
+            ubicacion = (
+                f" en línea {token_defer.linea}, columna {token_defer.columna}"
+                if token_defer.linea is not None and token_defer.columna is not None
+                else ""
+            )
+            self.registrar_advertencia(
+                "La instrucción 'defer' solo garantiza su ejecución dentro de una "
+                f"función o método{ubicacion}."
+            )
+
+        return NodoDefer(expresion, token_defer.linea, token_defer.columna)
+
     def declaracion_throw(self):
         """Parsea una declaración 'throw'."""
         if self.token_actual().tipo in (TipoToken.THROW, TipoToken.LANZAR):
@@ -1147,8 +1181,12 @@ class ClassicParser:
             raise ParserError("Se esperaba ':' después de 'con'/'with'")
         self.comer(TipoToken.DOSPUNTOS)
         cuerpo = []
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            cuerpo.append(self.declaracion())
+        self._contexto_bloques.append("metodo")
+        try:
+            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
+                cuerpo.append(self.declaracion())
+        finally:
+            self._contexto_bloques.pop()
         if self.token_actual().tipo != TipoToken.FIN:
             raise ParserError("Se esperaba 'fin' para cerrar el bloque 'con'")
         self.comer(TipoToken.FIN)
