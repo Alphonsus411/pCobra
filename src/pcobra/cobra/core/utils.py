@@ -34,6 +34,7 @@ PALABRAS_RESERVADAS = frozenset(
         "try",
         "catch",
         "throw",
+        "defer",
         "hilo",
         "retorno",
         "fin",
@@ -79,6 +80,7 @@ PALABRAS_RESERVADAS = frozenset(
         "y",
         "o",
         "no",
+        "aplazar",
     }
 )
 

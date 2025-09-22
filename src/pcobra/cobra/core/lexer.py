@@ -69,6 +69,7 @@ class TipoToken(Enum):
     TRANSFORMAR = "TRANSFORMAR"
     GRAFICAR = "GRAFICAR"
     TRY = "TRY"
+    DEFER = "DEFER"
     CATCH = "CATCH"
     THROW = "THROW"
     INTENTAR = "INTENTAR"
@@ -240,6 +241,7 @@ class Lexer:
             (TipoToken.TRANSFORMAR, re.compile(r"\btransformar\b")),
             (TipoToken.GRAFICAR, re.compile(r"\bgraficar\b")),
             (TipoToken.TRY, re.compile(r"\btry\b")),
+            (TipoToken.DEFER, re.compile(r"\b(defer|aplazar)\b")),
             (TipoToken.CATCH, re.compile(r"\bcatch\b")),
             (TipoToken.THROW, re.compile(r"\bthrow\b")),
             (TipoToken.INTENTAR, re.compile(r"\bintentar\b")),

@@ -35,6 +35,7 @@ from pcobra.core.ast_nodes import (
     NodoEnum,
     NodoInterface,
     NodoGarantia,
+    NodoDefer,
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
@@ -79,6 +80,7 @@ from cobra.transpilers.transpiler.js_nodes.identificador import visit_identifica
 from cobra.transpilers.transpiler.js_nodes.para import visit_para as _visit_para
 from cobra.transpilers.transpiler.js_nodes.decorador import visit_decorador as _visit_decorador
 from cobra.transpilers.transpiler.js_nodes.yield_ import visit_yield as _visit_yield
+from cobra.transpilers.transpiler.js_nodes.defer import visit_defer as _visit_defer
 from cobra.transpilers.transpiler.js_nodes.esperar import visit_esperar as _visit_esperar
 from cobra.transpilers.transpiler.js_nodes.romper import visit_romper as _visit_romper
 from cobra.transpilers.transpiler.js_nodes.continuar import visit_continuar as _visit_continuar
@@ -172,6 +174,8 @@ class TranspiladorJavaScript(BaseTranspiler):
         self.codigo = get_standard_imports("js")
         self.indentacion = 0
         self.usa_indentacion = None
+        self._defer_stack: list[str] = []
+        self._defer_counter = 0
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -317,6 +321,7 @@ TranspiladorJavaScript.visit_identificador = _visit_identificador
 TranspiladorJavaScript.visit_para = _visit_para
 TranspiladorJavaScript.visit_decorador = _visit_decorador
 TranspiladorJavaScript.visit_yield = _visit_yield
+TranspiladorJavaScript.visit_defer = _visit_defer
 TranspiladorJavaScript.visit_romper = _visit_romper
 TranspiladorJavaScript.visit_continuar = _visit_continuar
 TranspiladorJavaScript.visit_pasar = _visit_pasar

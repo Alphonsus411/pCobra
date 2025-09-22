@@ -1,5 +1,5 @@
-from cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from core.ast_nodes import (
+from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -26,6 +26,7 @@ from core.ast_nodes import (
     NodoNoLocal,
     NodoPattern,
     NodoGuard,
+    NodoDefer,
 )
 
 
@@ -63,6 +64,39 @@ def test_transpilador_funcion():
     t = TranspiladorRust()
     resultado = t.generate_code(ast)
     esperado = "fn miFuncion(a, b) {\n    let x = a + b;\n}"
+    assert resultado == esperado
+
+
+def test_transpilador_rust_con_defer():
+    ast = [
+        NodoFuncion(
+            "cerrar",
+            [],
+            [NodoDefer(NodoLlamadaFuncion("limpiar", []), linea=1, columna=1)],
+        )
+    ]
+    t = TranspiladorRust()
+    resultado = t.generate_code(ast)
+    esperado = (
+        "struct CobraDefer<F: FnOnce()> {\n"
+        + "    callback: Option<F>,\n"
+        + "}\n"
+        + "impl<F: FnOnce()> CobraDefer<F> {\n"
+        + "    fn new(callback: F) -> Self {\n"
+        + "        Self { callback: Some(callback) }\n"
+        + "    }\n"
+        + "}\n"
+        + "impl<F: FnOnce()> Drop for CobraDefer<F> {\n"
+        + "    fn drop(&mut self) {\n"
+        + "        if let Some(callback) = self.callback.take() {\n"
+        + "            callback();\n"
+        + "        }\n"
+        + "    }\n"
+        + "}\n\n"
+        + "fn cerrar() {\n"
+        + "    let _cobra_defer_guard_0 = CobraDefer::new(|| { limpiar(); });\n"
+        + "}"
+    )
     assert resultado == esperado
 
 

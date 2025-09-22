@@ -16,6 +16,8 @@ try:
         NodoPasar,
         NodoPara,
         NodoWith,
+        NodoDefer,
+        NodoRetorno,
     )
     from pcobra.core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
 except ImportError:  # pragma: no cover - compatibilidad
@@ -36,6 +38,8 @@ except ImportError:  # pragma: no cover - compatibilidad
         NodoPasar,
         NodoPara,
         NodoWith,
+        NodoDefer,
+        NodoRetorno,
     )
     from core.ast_nodes import (  # type: ignore
         NodoSwitch,
@@ -43,12 +47,14 @@ except ImportError:  # pragma: no cover - compatibilidad
         NodoPattern,
         NodoGuard,
     )
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from cobra.transpilers.import_helper import get_standard_imports
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from pcobra.cobra.transpilers import import_helper as pc_import_helper
+from pcobra.cobra.core.lexer import Lexer
+from pcobra.cobra.core.parser import Parser
+
+get_standard_imports = pc_import_helper.get_standard_imports
 
 IMPORTS = get_standard_imports("python")
 
@@ -103,8 +109,35 @@ def test_transpilador_funcion():
     transpilador = TranspiladorPython()
     resultado = transpilador.generate_code(ast)
     esperado = (
-        IMPORTS
-        + "def miFuncion(a, b):\n    x = a + b\n"
+        "import contextlib\n"
+        + IMPORTS
+        + "def miFuncion(a, b):\n"
+        + "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "        x = a + b\n"
+    )
+    assert resultado == esperado
+
+
+def test_transpilador_funcion_con_defer():
+    ast = [
+        NodoFuncion(
+            "cerrar",
+            [],
+            [
+                NodoDefer(NodoLlamadaFuncion("limpiar", []), linea=1, columna=1),
+                NodoRetorno(NodoValor(1)),
+            ],
+        )
+    ]
+    transpilador = TranspiladorPython()
+    resultado = transpilador.generate_code(ast)
+    esperado = (
+        "import contextlib\n"
+        + IMPORTS
+        + "def cerrar():\n"
+        + "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "        __cobra_defer_stack_0.callback(lambda: limpiar())\n"
+        + "        return 1\n"
     )
     assert resultado == esperado
 
@@ -164,10 +197,13 @@ def test_transpilador_decoradores_anidados():
     )
     codigo = TranspiladorPython().generate_code([func])
     esperado = (
-        IMPORTS
+        "import contextlib\n"
+        + IMPORTS
         + "@d1\n"
         + "@d2\n"
-        + "def saluda():\n    print('hola')\n"
+        + "def saluda():\n"
+        + "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "        print('hola')\n"
     )
     assert codigo == esperado
 
@@ -210,9 +246,14 @@ def test_transpilador_corutina_await():
     codigo = TranspiladorPython().generate_code([f1, f2])
     esperado = (
         "import asyncio\n"
+        + "import contextlib\n"
         + IMPORTS
-        + "async def saluda():\n    print(1)\n"
-        + "async def principal():\n    await saluda()\n"
+        + "async def saluda():\n"
+        + "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "        print(1)\n"
+        + "async def principal():\n"
+        + "    with contextlib.ExitStack() as __cobra_defer_stack_1:\n"
+        + "        await saluda()\n"
     )
     assert codigo == esperado
 
@@ -285,10 +326,12 @@ def test_transpilador_clase_compleja():
     codigo = TranspiladorPython().generate_code([clase])
     esperado = (
         "import asyncio\n"
+        + "import contextlib\n"
         + IMPORTS
         + "class Hija(Base1, Base2):\n"
         + "    async def run(self):\n"
-        + "        await tarea()\n"
+        + "        with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "            await tarea()\n"
     )
     assert codigo == esperado
 
@@ -301,12 +344,14 @@ def test_decoradores_en_clase_y_metodo():
     codigo = TranspiladorPython().generate_code([clase])
     esperado = (
         "import asyncio\n"
+        + "import contextlib\n"
         + IMPORTS
         + "@dec\n"
         + "class C:\n"
         + "    @dec\n"
         + "    async def run(self):\n"
-        + "        pass\n"
+        + "        with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "            pass\n"
     )
     assert codigo == esperado
 
@@ -329,11 +374,13 @@ def test_transpilador_funcion_generica():
     func = NodoFuncion("identidad", ["x"], [NodoPasar()], type_params=["T"])
     codigo = TranspiladorPython().generate_code([func])
     esperado = (
-        "from typing import TypeVar, Generic\n"
+        "import contextlib\n"
+        + "from typing import TypeVar, Generic\n"
         + IMPORTS
         + "T = TypeVar('T')\n"
         + "def identidad(x):\n"
-        + "    pass\n"
+        + "    with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "        pass\n"
     )
     assert codigo == esperado
 
@@ -343,11 +390,13 @@ def test_transpilador_clase_generica():
     clase = NodoClase("Caja", [metodo], type_params=["T"])
     codigo = TranspiladorPython().generate_code([clase])
     esperado = (
-        "from typing import TypeVar, Generic\n"
+        "import contextlib\n"
+        + "from typing import TypeVar, Generic\n"
         + IMPORTS
         + "T = TypeVar('T')\n"
         + "class Caja(Generic[T]):\n"
         + "    def identidad(self, x):\n"
-        + "        pass\n"
+        + "        with contextlib.ExitStack() as __cobra_defer_stack_0:\n"
+        + "            pass\n"
     )
     assert codigo == esperado

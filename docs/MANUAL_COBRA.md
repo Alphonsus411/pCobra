@@ -159,6 +159,27 @@ switch opcion:
 fin
 ```
 
+### Acciones diferidas con `defer` / `aplazar`
+
+Cuando necesites garantizar que una operación se ejecute al abandonar una función
+o método, utiliza la sentencia `defer` (o su alias en español `aplazar`). La
+expresión indicada se registrará y se ejecutará automáticamente al final del
+bloque actual, incluso si el control sale por una excepción. Si declaras
+varias sentencias diferidas, se ejecutan en orden inverso al que aparecen.
+
+```cobra
+func procesar(archivo):
+    defer cerrar(archivo)
+    defer registrar('proceso terminado')
+    transformar(archivo)
+fin
+```
+
+En el ejemplo anterior primero se registrará el mensaje y, por último, se
+cerrará el recurso. Los transpiladores generan estructuras `try/finally`,
+context managers o guardas de liberación equivalentes, por lo que la limpieza
+está garantizada tanto en el flujo normal como ante errores.
+
 ## 5. Manejo de errores
 
 - `try` agrupa código que puede fallar. Su alias en español es `intentar`.

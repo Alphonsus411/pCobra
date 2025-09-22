@@ -1,8 +1,10 @@
 import pytest
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.import_helper import get_standard_imports
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers import import_helper as pc_js_import_helper
+from pcobra.cobra.core.lexer import Lexer
+from pcobra.cobra.core.parser import Parser
+
+get_standard_imports = pc_js_import_helper.get_standard_imports
 
 try:
     from pcobra.core.ast_nodes import (
@@ -28,6 +30,7 @@ try:
         NodoExport,
         NodoPara,
         NodoWith,
+        NodoDefer,
     )
 except ImportError:  # pragma: no cover - compatibilidad
     from core.ast_nodes import (  # type: ignore
@@ -53,6 +56,7 @@ except ImportError:  # pragma: no cover - compatibilidad
         NodoExport,
         NodoPara,
         NodoWith,
+        NodoDefer,
     )
 
 IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("js"))
@@ -88,8 +92,50 @@ def test_transpilador_funcion():
     ast = [NodoFuncion("miFuncion", ["a", "b"], [NodoAsignacion("x", "a + b")])]
     transpilador = TranspiladorJavaScript()
     resultado = transpilador.generate_code(ast)
-    expected = IMPORTS + "function miFuncion(a, b) {\n    let x = a + b;\n}"
+    expected = (
+        IMPORTS
+        + "function miFuncion(a, b) {\n"
+        + "    const __cobra_defer_stack_0 = [];\n"
+        + "    try {\n"
+        + "        let x = a + b;\n"
+        + "    } finally {\n"
+        + "        while (__cobra_defer_stack_0.length) {\n"
+        + "            __cobra_defer_stack_0.pop()();\n"
+        + "        }\n"
+        + "    }\n"
+        + "}"
+    )
     assert resultado == expected
+
+
+def test_transpilador_js_con_defer():
+    ast = [
+        NodoFuncion(
+            "cerrar",
+            [],
+            [
+                NodoDefer(NodoLlamadaFuncion("limpiar", []), linea=1, columna=1),
+                NodoPasar(),
+            ],
+        )
+    ]
+    transpilador = TranspiladorJavaScript()
+    resultado = transpilador.generate_code(ast)
+    esperado = (
+        IMPORTS
+        + "function cerrar() {\n"
+        + "const __cobra_defer_stack_0 = [];\n"
+        + "try {\n"
+        + "__cobra_defer_stack_0.push(() => limpiar());\n"
+        + ";\n"
+        + "} finally {\n"
+        + "while (__cobra_defer_stack_0.length) {\n"
+        + "__cobra_defer_stack_0.pop()();\n"
+        + "}\n"
+        + "}\n"
+        + "}"
+    )
+    assert resultado == esperado
 
 
 def test_transpilador_llamada_funcion():
@@ -112,7 +158,19 @@ def test_transpilador_yield():
     ast = [NodoFuncion("generador", [], [NodoYield(NodoValor(1))])]
     t = TranspiladorJavaScript()
     resultado = t.generate_code(ast)
-    esperado = IMPORTS + "function generador() {\nyield 1;\n}"
+    esperado = (
+        IMPORTS
+        + "function generador() {\n"
+        + "const __cobra_defer_stack_0 = [];\n"
+        + "try {\n"
+        + "yield 1;\n"
+        + "} finally {\n"
+        + "while (__cobra_defer_stack_0.length) {\n"
+        + "__cobra_defer_stack_0.pop()();\n"
+        + "}\n"
+        + "}\n"
+        + "}"
+    )
     assert resultado == esperado
 
 
@@ -124,7 +182,14 @@ def test_transpilador_decoradores_funcion_js():
     resultado = t.generate_code([func])
     esperado = IMPORTS + (
         "function saluda() {\n"
+        + "const __cobra_defer_stack_0 = [];\n"
+        + "try {\n"
         + ";\n"
+        + "} finally {\n"
+        + "while (__cobra_defer_stack_0.length) {\n"
+        + "__cobra_defer_stack_0.pop()();\n"
+        + "}\n"
+        + "}\n"
         + "}\n"
         + "saluda = d2(saluda);\n"
         + "saluda = d1(saluda);"
@@ -175,7 +240,14 @@ def test_async_function_and_await():
     resultado = t.generate_code(ast)
     esperado = IMPORTS + (
         "async function principal() {\n"
+        + "const __cobra_defer_stack_0 = [];\n"
+        + "try {\n"
         + "await saluda();\n"
+        + "} finally {\n"
+        + "while (__cobra_defer_stack_0.length) {\n"
+        + "__cobra_defer_stack_0.pop()();\n"
+        + "}\n"
+        + "}\n"
         + "}"
     )
     assert resultado == esperado
@@ -216,6 +288,14 @@ def test_export_import():
     esperado = IMPORTS + (
         "import { saluda } from './mod.js';\n"
         + "function saluda() {\n"
+        + "const __cobra_defer_stack_0 = [];\n"
+        + "try {\n"
+        + ";\n"
+        + "} finally {\n"
+        + "while (__cobra_defer_stack_0.length) {\n"
+        + "__cobra_defer_stack_0.pop()();\n"
+        + "}\n"
+        + "}\n"
         + "}\n"
         + "export { saluda };"
     )
@@ -232,7 +312,14 @@ def test_decoradores_en_clase_y_metodo_js():
     esperado = IMPORTS + (
         "class C {\n"
         + "async run(a) {\n"
+        + "const __cobra_defer_stack_0 = [];\n"
+        + "try {\n"
         + ";\n"
+        + "} finally {\n"
+        + "while (__cobra_defer_stack_0.length) {\n"
+        + "__cobra_defer_stack_0.pop()();\n"
+        + "}\n"
+        + "}\n"
         + "}\n"
         + "}\n"
         + "C.prototype.run = dec(C.prototype.run);\n"
