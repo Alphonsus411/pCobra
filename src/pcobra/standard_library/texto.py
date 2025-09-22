@@ -13,9 +13,21 @@ Ejemplo rápido::
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, TypeVar, overload
 
 import unicodedata
+
+from pcobra.corelibs.texto import (
+    encontrar as _encontrar_texto,
+    encontrar_derecha as _encontrar_derecha_texto,
+    indice as _indice_texto,
+    indice_derecha as _indice_derecha_texto,
+    formatear as _formatear_texto,
+    formatear_mapa as _formatear_mapa_texto,
+    tabla_traduccion as _tabla_traduccion_texto,
+    traducir as _traducir_texto,
+)
 from pcobra.corelibs import (
     centrar_texto as _centrar_texto,
     contar_subcadena as _contar_subcadena,
@@ -91,10 +103,14 @@ __all__ = [
     "sufijo_comun",
     "dividir_lineas",
     "dividir_derecha",
+    "encontrar",
+    "encontrar_derecha",
     "subcadena_antes",
     "subcadena_despues",
     "subcadena_antes_ultima",
     "subcadena_despues_ultima",
+    "indice",
+    "indice_derecha",
     "contar_subcadena",
     "centrar_texto",
     "rellenar_ceros",
@@ -107,6 +123,10 @@ __all__ = [
     "desindentar_texto",
     "envolver_texto",
     "acortar_texto",
+    "formatear",
+    "formatear_mapa",
+    "tabla_traduccion",
+    "traducir",
 ]
 
 
@@ -127,6 +147,178 @@ def normalizar_espacios(texto: str) -> str:
 
     partes = dividir(texto)
     return unir(" ", partes) if partes else ""
+
+
+@overload
+def encontrar(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def encontrar(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def encontrar(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Replica ``corelibs.texto.encontrar`` manteniendo la semántica de ``str.find``."""
+
+    if por_defecto is _SIN_VALOR:
+        return _encontrar_texto(texto, subcadena, inicio, fin)
+    return _encontrar_texto(
+        texto,
+        subcadena,
+        inicio,
+        fin,
+        por_defecto=por_defecto,
+    )
+
+
+@overload
+def encontrar_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def encontrar_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def encontrar_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Equivalente a ``str.rfind`` con ``por_defecto`` opcional."""
+
+    if por_defecto is _SIN_VALOR:
+        return _encontrar_derecha_texto(texto, subcadena, inicio, fin)
+    return _encontrar_derecha_texto(
+        texto,
+        subcadena,
+        inicio,
+        fin,
+        por_defecto=por_defecto,
+    )
+
+
+@overload
+def indice(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def indice(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def indice(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Devuelve la primera posición como ``str.index`` o usa ``por_defecto``."""
+
+    if por_defecto is _SIN_VALOR:
+        return _indice_texto(texto, subcadena, inicio, fin)
+    return _indice_texto(
+        texto,
+        subcadena,
+        inicio,
+        fin,
+        por_defecto=por_defecto,
+    )
+
+
+@overload
+def indice_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def indice_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def indice_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Emula ``str.rindex`` devolviendo ``por_defecto`` si se indica."""
+
+    if por_defecto is _SIN_VALOR:
+        return _indice_derecha_texto(texto, subcadena, inicio, fin)
+    return _indice_derecha_texto(
+        texto,
+        subcadena,
+        inicio,
+        fin,
+        por_defecto=por_defecto,
+    )
 
 
 def es_palindromo(
@@ -568,3 +760,27 @@ def particionar_derecha(texto: str, separador: str) -> tuple[str, str, str]:
     """Particiona ``texto`` tomando la última coincidencia de ``separador``."""
 
     return _particionar_derecha(texto, separador)
+
+
+def formatear(formato: str, *args: Any, **kwargs: Any) -> str:
+    """Atajo de alto nivel para ``corelibs.texto.formatear``."""
+
+    return _formatear_texto(formato, *args, **kwargs)
+
+
+def formatear_mapa(formato: str, valores: Mapping[str, Any]) -> str:
+    """Versión directa de ``str.format_map`` a través del núcleo de Cobra."""
+
+    return _formatear_mapa_texto(formato, valores)
+
+
+def tabla_traduccion(*argumentos: Any) -> dict[int, str | None]:
+    """Construye tablas compatibles con ``traducir`` y ``str.translate``."""
+
+    return _tabla_traduccion_texto(*argumentos)
+
+
+def traducir(texto: str, tabla: Mapping[int, str | None]) -> str:
+    """Aplica la tabla producida por ``tabla_traduccion`` sobre ``texto``."""
+
+    return _traducir_texto(texto, tabla)
