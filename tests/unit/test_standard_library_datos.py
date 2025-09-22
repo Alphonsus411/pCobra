@@ -9,6 +9,9 @@ import pcobra.standard_library.datos as datos_mod
 from pcobra.standard_library.datos import (
     agrupar_y_resumir,
     a_listas,
+    calcular_percentiles,
+    correlacion_pearson,
+    correlacion_spearman,
     combinar_tablas,
     de_listas,
     describir,
@@ -19,6 +22,7 @@ from pcobra.standard_library.datos import (
     escribir_json,
     escribir_parquet,
     filtrar,
+    matriz_covarianza,
     mutar_columna,
     separar_columna,
     leer_csv,
@@ -31,6 +35,7 @@ from pcobra.standard_library.datos import (
     ordenar_tabla,
     pivotar_tabla,
     rellenar_nulos,
+    resumen_rapido,
     unir_columnas,
     seleccionar_columnas,
 )
@@ -71,6 +76,40 @@ def tabla_metricas() -> list[dict[str, object | None]]:
         {"region": "norte", "mes": "febrero", "monto": 50, "descuento": None},
         {"region": "sur", "mes": "enero", "monto": 70, "descuento": 1},
         {"region": "sur", "mes": "febrero", "monto": 30, "descuento": 3},
+    ]
+
+
+@pytest.fixture
+def tabla_estadistica() -> list[dict[str, object | None]]:
+    return [
+        {
+            "ventas": 10.0,
+            "costos": 15.0,
+            "unidades": 3,
+            "fecha": pd.Timestamp("2024-01-01"),
+            "segmento": "A",
+        },
+        {
+            "ventas": 20.0,
+            "costos": 30.0,
+            "unidades": 6,
+            "fecha": pd.Timestamp("2024-01-02"),
+            "segmento": "A",
+        },
+        {
+            "ventas": 30.0,
+            "costos": 45.0,
+            "unidades": None,
+            "fecha": pd.Timestamp("2024-01-03"),
+            "segmento": "B",
+        },
+        {
+            "ventas": 40.0,
+            "costos": None,
+            "unidades": 12,
+            "fecha": None,
+            "segmento": "B",
+        },
     ]
 
 
@@ -262,6 +301,58 @@ def test_describir_contiene_metricas():
     assert "valor" in resumen
     assert "mean" in resumen["valor"]
     assert resumen["valor"]["mean"] == pytest.approx(6.0)
+
+
+def test_correlaciones_controladas(tabla_estadistica: list[dict[str, object | None]]):
+    pearson = correlacion_pearson(tabla_estadistica, columnas=["ventas", "costos", "unidades"])
+    assert pearson["ventas"]["costos"] == pytest.approx(1.0)
+    assert pearson["ventas"]["unidades"] == pytest.approx(1.0)
+    assert pearson["ventas"]["ventas"] == pytest.approx(1.0)
+
+    spearman = correlacion_spearman(tabla_estadistica)
+    assert spearman["ventas"]["costos"] == pytest.approx(1.0)
+    assert spearman["ventas"]["unidades"] == pytest.approx(1.0)
+
+    with pytest.raises(KeyError):
+        correlacion_pearson(tabla_estadistica, columnas=["ventas", "faltante"])
+
+
+def test_correlacion_sin_numericos():
+    datos = [{"categoria": "A"}, {"categoria": "B"}]
+    with pytest.raises(ValueError):
+        correlacion_pearson(datos)
+
+
+def test_matriz_covarianza(tabla_estadistica: list[dict[str, object | None]]):
+    matriz = matriz_covarianza(tabla_estadistica, columnas=["ventas", "costos", "unidades"])
+    assert matriz["ventas"]["costos"] == pytest.approx(150.0)
+    assert matriz["ventas"]["unidades"] == pytest.approx(70.0)
+    assert matriz["costos"]["unidades"] == pytest.approx(22.5)
+
+
+def test_percentiles_por_defecto(tabla_estadistica: list[dict[str, object | None]]):
+    percentiles = calcular_percentiles(tabla_estadistica)
+    assert percentiles["ventas"]["p25"] == pytest.approx(17.5)
+    assert percentiles["ventas"]["p50"] == pytest.approx(25.0)
+    assert percentiles["ventas"]["p75"] == pytest.approx(32.5)
+    assert percentiles["costos"]["p75"] == pytest.approx(37.5)
+    assert percentiles["unidades"]["p75"] == pytest.approx(9.0)
+
+    with pytest.raises(ValueError):
+        calcular_percentiles(tabla_estadistica, percentiles=())
+    with pytest.raises(ValueError):
+        calcular_percentiles(tabla_estadistica, percentiles=[-0.1, 0.5])
+
+
+def test_resumen_rapido(tabla_estadistica: list[dict[str, object | None]]):
+    resumen = resumen_rapido(tabla_estadistica)
+    assert len(resumen) == 5
+    por_columna = {item["columna"]: item for item in resumen}
+
+    assert por_columna["ventas"]["media"] == pytest.approx(25.0)
+    assert por_columna["costos"]["nulos"] == 1
+    assert por_columna["fecha"]["min"] == "2024-01-01T00:00:00"
+    assert por_columna["segmento"]["ejemplo"] == "A"
 
 
 def test_leer_csv_y_json(tmp_path: Path):

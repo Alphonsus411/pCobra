@@ -31,13 +31,18 @@ from standard_library.archivo import leer, escribir, adjuntar, existe
 from standard_library.datos import (
     agrupar_y_resumir,
     a_listas,
+    calcular_percentiles,
+    correlacion_pearson,
+    correlacion_spearman,
     de_listas,
     describir,
     filtrar,
     desplegar_tabla,
+    matriz_covarianza,
     mutar_columna,
     pivotar_ancho,
     pivotar_largo,
+    resumen_rapido,
     separar_columna,
     unir_columnas,
     leer_csv,
@@ -206,6 +211,11 @@ __all__: list[str] = [
     "leer_parquet",
     "leer_feather",
     "describir",
+    "correlacion_pearson",
+    "correlacion_spearman",
+    "matriz_covarianza",
+    "calcular_percentiles",
+    "resumen_rapido",
     "seleccionar_columnas",
     "filtrar",
     "mutar_columna",
@@ -253,6 +263,11 @@ leer_excel: Callable[..., list[dict[str, Any]]]
 leer_parquet: Callable[..., list[dict[str, Any]]]
 leer_feather: Callable[..., list[dict[str, Any]]]
 describir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, Any]]
+correlacion_pearson: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]]
+correlacion_spearman: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]]
+matriz_covarianza: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, dict[str, Any]]]
+calcular_percentiles: Callable[..., dict[str, dict[str, Any]]]
+resumen_rapido: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
 seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
 filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
 mutar_columna: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], str, Callable[[dict[str, Any]], Any]], list[dict[str, Any]]]
