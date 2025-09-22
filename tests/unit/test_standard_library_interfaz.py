@@ -47,8 +47,11 @@ preguntar_confirmacion = interfaz.preguntar_confirmacion
 preguntar_texto = interfaz.preguntar_texto
 preguntar_opcion = interfaz.preguntar_opcion
 preguntar_entero = interfaz.preguntar_entero
+preguntar_password = interfaz.preguntar_password
+preguntar_opciones_multiple = interfaz.preguntar_opciones_multiple
 mostrar_columnas = interfaz.mostrar_columnas
 grupo_consola = interfaz.grupo_consola
+mostrar_tabla_paginada = interfaz.mostrar_tabla_paginada
 
 
 def test_mostrar_codigo_resalta_codigo_en_console_mock():
@@ -228,6 +231,52 @@ def test_preguntar_texto_valida_hasta_respuesta_correcta(monkeypatch):
     assert "Introduce un nombre válido" in log
 
 
+def test_preguntar_password_reintenta_hasta_validar(monkeypatch):
+    console = Console(record=True)
+
+    class DummyPrompt:
+        respuestas = iter(["", "secreto"])
+        llamadas: list[tuple[str, dict[str, Any]]] = []
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.llamadas.append((mensaje, kwargs))
+            valor = next(cls.respuestas)
+            if not valor and kwargs.get("default") is not None:
+                return kwargs["default"]
+            return valor
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_password(
+        "Clave",
+        console=console,
+        validar=lambda valor: bool(valor.strip()),
+    )
+
+    assert resultado == "secreto"
+    primera_llamada = DummyPrompt.llamadas[0][1]
+    assert primera_llamada.get("password") is True
+    registro = console.export_text()
+    assert "Contraseña inválida" in registro
+
+
+def test_preguntar_password_sin_rich_lanza_error(monkeypatch):
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "rich.prompt":
+            raise ModuleNotFoundError("sin rich")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(RuntimeError):
+        preguntar_password("Clave")
+
+
 def test_preguntar_opcion_envia_opciones_como_texto(monkeypatch):
     console = Mock(spec=Console)
 
@@ -264,6 +313,106 @@ def test_preguntar_opcion_falla_con_defecto_fuera_de_lista(monkeypatch):
 
     with pytest.raises(ValueError):
         preguntar_opcion("Color", opciones=["azul"], por_defecto="verde")
+
+
+def test_preguntar_opciones_multiple_muestra_y_devuelve_lista(monkeypatch):
+    console = Mock(spec=Console)
+    console.print = Mock()
+
+    class DummyPrompt:
+        respuestas = iter(["1,2"])
+        llamadas: list[tuple[str, dict[str, Any]]] = []
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.llamadas.append((mensaje, kwargs))
+            return next(cls.respuestas)
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_opciones_multiple(
+        "Selecciona",
+        opciones=["azul", "verde"],
+        console=console,
+    )
+
+    assert resultado == ["azul", "verde"]
+    assert console.print.call_args_list[0].args[0] == "1. azul"
+    assert console.print.call_args_list[1].args[0] == "2. verde"
+    kwargs = DummyPrompt.llamadas[0][1]
+    assert kwargs.get("show_default") is False
+
+
+def test_preguntar_opciones_multiple_valida_errores(monkeypatch):
+    console = Console(record=True)
+
+    class DummyPrompt:
+        respuestas = iter(["2", "2,1"])
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            return next(cls.respuestas)
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_opciones_multiple(
+        "Selecciona",
+        opciones=["azul", "verde"],
+        console=console,
+        minimo=2,
+    )
+
+    assert resultado == ["verde", "azul"]
+    texto = console.export_text()
+    assert "al menos" in texto
+
+
+def test_preguntar_opciones_multiple_por_defecto_respetado(monkeypatch):
+    console = Mock(spec=Console)
+    console.print = Mock()
+
+    class DummyPrompt:
+        llamadas: list[tuple[str, dict[str, Any]]] = []
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.llamadas.append((mensaje, kwargs))
+            return kwargs["default"]
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = preguntar_opciones_multiple(
+        "Selecciona",
+        opciones=["azul", "verde", "rojo"],
+        por_defecto=[1, "rojo"],
+        maximo=3,
+        console=console,
+    )
+
+    assert resultado == ["azul", "rojo"]
+    llamada = DummyPrompt.llamadas[0][1]
+    assert llamada["default"] == "1,rojo"
+    assert llamada["show_default"] is True
+
+
+def test_preguntar_opciones_multiple_sin_rich_lanza_error(monkeypatch):
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "rich.prompt":
+            raise ModuleNotFoundError("sin rich")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(RuntimeError):
+        preguntar_opciones_multiple("Selecciona", opciones=["uno", "dos"])
 
 
 def test_preguntar_entero_respeta_rangos(monkeypatch):
@@ -363,6 +512,73 @@ def test_mostrar_tabla_con_valores_simples_crea_columna_generica():
     assert [col.header for col in tabla.columns] == ["valor"]
     assert tabla.columns[0]._cells == ["unico"]
 
+
+def test_mostrar_tabla_paginada_usa_prompt_para_paginar(monkeypatch):
+    tablas_creadas: list[list[Any]] = []
+
+    def fake_mostrar_tabla(filas, **kwargs):
+        tablas_creadas.append(list(filas))
+        return f"tabla_{len(tablas_creadas)}"
+
+    monkeypatch.setattr(interfaz, "mostrar_tabla", fake_mostrar_tabla)
+
+    class DummyPrompt:
+        respuestas = iter(["", "q"])
+        llamadas: list[tuple[str, dict[str, Any]]] = []
+
+        @classmethod
+        def ask(cls, mensaje, **kwargs):
+            cls.llamadas.append((mensaje, kwargs))
+            return next(cls.respuestas)
+
+    prompt_mod = ModuleType("rich.prompt")
+    prompt_mod.Prompt = DummyPrompt
+    monkeypatch.setitem(sys.modules, "rich.prompt", prompt_mod)
+
+    resultado = mostrar_tabla_paginada(
+        list(range(5)),
+        tamano_pagina=2,
+        titulo="Datos",
+        console=Mock(spec=Console),
+    )
+
+    assert resultado == ["tabla_1", "tabla_2"]
+    assert tablas_creadas == [[0, 1], [2, 3]]
+    assert DummyPrompt.llamadas[0][1]["show_default"] is False
+
+
+def test_mostrar_tabla_paginada_una_pagina_no_importa_prompt(monkeypatch):
+    observadas: list[list[Any]] = []
+
+    def fake_mostrar_tabla(filas, **kwargs):
+        observadas.append(list(filas))
+        return "tabla"
+
+    monkeypatch.setattr(interfaz, "mostrar_tabla", fake_mostrar_tabla)
+
+    resultado = mostrar_tabla_paginada([1, 2], tamano_pagina=10, console=Mock(spec=Console))
+
+    assert resultado == ["tabla"]
+    assert observadas == [[1, 2]]
+
+
+def test_mostrar_tabla_paginada_sin_rich_lanza_error(monkeypatch):
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "rich.prompt":
+            raise ModuleNotFoundError("sin rich")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(RuntimeError):
+        mostrar_tabla_paginada([1, 2, 3], tamano_pagina=1)
+
+
+def test_mostrar_tabla_paginada_valida_tamano_pagina():
+    with pytest.raises(ValueError):
+        mostrar_tabla_paginada([], tamano_pagina=0)
 
 def test_mostrar_columnas_imprime_render_columns():
     console = Mock()

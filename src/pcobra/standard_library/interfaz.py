@@ -191,6 +191,45 @@ def preguntar_texto(
         console_obj.print(f"[red]{mensaje_error}[/red]")
 
 
+def preguntar_password(
+    mensaje: str,
+    *,
+    console: Console | None = None,
+    validar: Callable[[str], bool] | None = None,
+    mensaje_error: str = "Contraseña inválida, intenta nuevamente.",
+) -> str:
+    """Solicita una contraseña ocultando la entrada del usuario.
+
+    Args:
+        mensaje: Texto mostrado al usuario.
+        console: Consola Rich donde se realizará la pregunta.
+        validar: Función opcional que recibe la contraseña introducida y devuelve
+            ``True`` cuando es válida.
+        mensaje_error: Texto mostrado cuando la validación falla.
+
+    Returns:
+        La contraseña introducida por la persona usuaria.
+    """
+
+    try:
+        from rich.prompt import Prompt
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    console_obj = _obtener_console(console)
+
+    while True:
+        respuesta = Prompt.ask(
+            mensaje,
+            console=console_obj,
+            password=True,
+            show_default=False,
+        )
+        if validar is None or validar(respuesta):
+            return respuesta
+        console_obj.print(f"[red]{mensaje_error}[/red]")
+
+
 def preguntar_opcion(
     mensaje: str,
     opciones: Sequence[Any],
@@ -225,6 +264,128 @@ def preguntar_opcion(
         show_choices=mostrar_opciones,
         show_default=valor_defecto is not None,
     )
+
+
+def preguntar_opciones_multiple(
+    mensaje: str,
+    opciones: Sequence[Any],
+    *,
+    por_defecto: Sequence[Any] | Any | None = None,
+    minimo: int = 1,
+    maximo: int | None = None,
+    console: Console | None = None,
+    separador: str = ",",
+    mostrar_opciones: bool = True,
+    permitir_indices: bool = True,
+    mensaje_error: str = "Selecciona opciones válidas separadas por comas.",
+    mensaje_error_minimo: str = "Debes seleccionar al menos {minimo} opción(es).",
+    mensaje_error_maximo: str = "No puedes seleccionar más de {maximo} opción(es).",
+) -> list[Any]:
+    """Permite elegir múltiples elementos de ``opciones`` devolviendo una lista.
+
+    Las opciones pueden seleccionarse escribiendo su texto o, cuando
+    ``permitir_indices`` es ``True``, indicando el número asociado en el listado.
+    """
+
+    try:
+        from rich.prompt import Prompt
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    if not opciones:
+        raise ValueError("Debes proporcionar al menos una opción para elegir.")
+    if minimo < 0:
+        raise ValueError("El mínimo no puede ser negativo.")
+    if maximo is not None and maximo < minimo:
+        raise ValueError("El máximo no puede ser menor que el mínimo.")
+
+    opciones_lista = list(opciones)
+    opciones_texto = [str(opcion) for opcion in opciones_lista]
+    mapa_valores: dict[str, Any] = {
+        texto.lower(): opcion for texto, opcion in zip(opciones_texto, opciones_lista)
+    }
+    mapa_indices: dict[str, Any] = {
+        str(indice): opcion
+        for indice, opcion in enumerate(opciones_lista, start=1)
+    }
+
+    console_obj = _obtener_console(console)
+
+    if mostrar_opciones:
+        for indice, texto in enumerate(opciones_texto, start=1):
+            console_obj.print(f"{indice}. {texto}")
+
+    def _normalizar_default(valor: Any) -> str:
+        if isinstance(valor, int) and permitir_indices:
+            if valor < 1 or valor > len(opciones_lista):
+                raise ValueError("El valor por defecto está fuera de rango.")
+            return str(valor)
+        texto = str(valor).strip()
+        if permitir_indices and texto.isdigit():
+            indice = int(texto)
+            if indice < 1 or indice > len(opciones_lista):
+                raise ValueError("El valor por defecto está fuera de rango.")
+            return texto
+        if texto.lower() not in mapa_valores:
+            raise ValueError("El valor por defecto debe coincidir con alguna opción.")
+        return texto
+
+    valores_defecto_normalizados: list[str] | None = None
+    if por_defecto is not None:
+        if isinstance(por_defecto, (str, int)):
+            valores_iterables = [por_defecto]
+        else:
+            valores_iterables = list(por_defecto)
+        valores_defecto_normalizados = [_normalizar_default(valor) for valor in valores_iterables]
+        if maximo is not None and len(valores_defecto_normalizados) > maximo:
+            raise ValueError("El valor por defecto supera el máximo permitido.")
+        if len(valores_defecto_normalizados) < minimo:
+            raise ValueError("El valor por defecto no alcanza el mínimo requerido.")
+
+    default_prompt = (
+        separador.join(valores_defecto_normalizados)
+        if valores_defecto_normalizados is not None
+        else None
+    )
+
+    while True:
+        respuesta = Prompt.ask(
+            mensaje,
+            console=console_obj,
+            default=default_prompt,
+            show_default=default_prompt is not None,
+        )
+        seleccionados: list[Any] = []
+        tokens = [fragmento.strip() for fragmento in respuesta.split(separador) if fragmento.strip()]
+
+        errores: list[str] = []
+        for token in tokens:
+            opcion_elegida: Any | None = None
+            token_lower = token.lower()
+            if permitir_indices and token.isdigit():
+                opcion_elegida = mapa_indices.get(token)
+            if opcion_elegida is None:
+                opcion_elegida = mapa_valores.get(token_lower)
+            if opcion_elegida is None:
+                errores.append(token)
+                continue
+            if opcion_elegida not in seleccionados:
+                seleccionados.append(opcion_elegida)
+
+        if errores:
+            console_obj.print(f"[red]{mensaje_error} ({', '.join(errores)})[/red]")
+            continue
+        if len(seleccionados) < minimo:
+            console_obj.print(
+                f"[red]{mensaje_error_minimo.format(minimo=minimo)}[/red]"
+            )
+            continue
+        if maximo is not None and len(seleccionados) > maximo:
+            console_obj.print(
+                f"[red]{mensaje_error_maximo.format(maximo=maximo)}[/red]"
+            )
+            continue
+        return seleccionados
 
 
 def preguntar_entero(
@@ -343,6 +504,74 @@ def mostrar_tabla(
 
     console_obj.print(tabla)
     return tabla
+
+
+def mostrar_tabla_paginada(
+    filas: Iterable[FilaTabla],
+    *,
+    tamano_pagina: int = 10,
+    console: Console | None = None,
+    mensaje_continuar: str = "Pulsa ENTER para continuar o escribe 'q' para salir.",
+    opciones_salir: Sequence[str] = ("q", "quit", "salir", "n"),
+    titulo: str | None = None,
+    **kwargs: Any,
+) -> list[Table]:
+    """Muestra una tabla paginada devolviendo la lista de tablas renderizadas."""
+
+    if tamano_pagina <= 0:
+        raise ValueError("tamano_pagina debe ser un entero positivo")
+
+    filas_materializadas = list(filas)
+    console_obj = _obtener_console(console)
+
+    total = len(filas_materializadas)
+    kwargs_globales = dict(kwargs)
+    titulo_base = titulo if titulo is not None else kwargs_globales.pop("titulo", None)
+
+    if total <= tamano_pagina:
+        tabla_unica = mostrar_tabla(
+            filas_materializadas,
+            console=console_obj,
+            titulo=titulo_base,
+            **kwargs_globales,
+        )
+        return [tabla_unica]
+
+    try:
+        from rich.prompt import Prompt
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    tablas: list[Table] = []
+    total_paginas = (total + tamano_pagina - 1) // tamano_pagina
+    opciones_salida = {opcion.lower() for opcion in opciones_salir}
+
+    for numero_pagina, inicio in enumerate(range(0, total, tamano_pagina), start=1):
+        subfilas = filas_materializadas[inicio : inicio + tamano_pagina]
+        titulo_pagina = (
+            None
+            if titulo_base is None
+            else f"{titulo_base} ({numero_pagina}/{total_paginas})"
+        )
+        tabla = mostrar_tabla(
+            subfilas,
+            console=console_obj,
+            titulo=titulo_pagina,
+            **kwargs_globales,
+        )
+        tablas.append(tabla)
+        if numero_pagina >= total_paginas:
+            break
+        respuesta = Prompt.ask(
+            mensaje_continuar,
+            console=console_obj,
+            default="",
+            show_default=False,
+        )
+        if respuesta and respuesta.strip().lower() in opciones_salida:
+            break
+
+    return tablas
 
 
 def mostrar_columnas(
@@ -601,7 +830,9 @@ __all__ = [
     "mostrar_json",  # Formatea estructuras o cadenas JSON.
     "mostrar_arbol",  # Renderiza estructuras jerárquicas con Rich Tree.
     "preguntar_confirmacion",  # Pregunta sí/no utilizando ``rich.prompt``.
+    "preguntar_password",  # Solicita contraseñas ocultando la entrada.
     "mostrar_tabla",  # Construye tablas a partir de mapeos o secuencias.
+    "mostrar_tabla_paginada",  # Divide tablas extensas en varias páginas.
     "mostrar_columnas",  # Organiza elementos en un diseño de columnas.
     "mostrar_panel",  # Envuelve contenido en paneles estilizados.
     "grupo_consola",  # Agrupa mensajes con sangría estilo consola.
@@ -610,4 +841,5 @@ __all__ = [
     "imprimir_aviso",  # Muestra mensajes de estado con iconos estándar.
     "iniciar_gui",  # Lanza la aplicación gráfica principal.
     "iniciar_gui_idle",  # Inicia el entorno gráfico de experimentación.
+    "preguntar_opciones_multiple",  # Permite seleccionar varias opciones.
 ]

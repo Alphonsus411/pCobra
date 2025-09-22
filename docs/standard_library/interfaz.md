@@ -25,6 +25,13 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
 - **`preguntar_confirmacion(mensaje, por_defecto=True)`**: solicita una respuesta
   afirmativa o negativa mediante `rich.prompt.Confirm`, respetando el valor por
   defecto especificado.
+- **`preguntar_password(mensaje, validar=None)`**: pide una contraseña ocultando
+  la entrada. Puede recibir una función de validación para repetir el prompt
+  hasta obtener una respuesta válida.
+- **`preguntar_opciones_multiple(mensaje, opciones, minimo=1, maximo=None)`**:
+  permite seleccionar varias opciones a la vez introduciendo números o textos
+  separados por comas. Devuelve una lista con los elementos elegidos en el mismo
+  orden en el que fueron reconocidos.
 - **`mostrar_panel(contenido, titulo=None, estilo="bold cyan")`**: crea un panel con
   bordes y permite definir el estilo interior y el color del borde.
 - **`grupo_consola(titulo=None)`**: context manager que agrupa varias impresiones con
@@ -35,6 +42,9 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
   objetivo.
 - **`imprimir_aviso(mensaje, nivel="info")`**: imprime mensajes consistentes con un
   icono y estilo según el nivel.
+- **`mostrar_tabla_paginada(filas, tamano_pagina=10)`**: divide colecciones largas
+  en varias tablas mostrando cada bloque por separado y preguntando si se desea
+  continuar. Devuelve una lista con las tablas generadas.
 - **`iniciar_gui`** e **`iniciar_gui_idle`**: lanzan las aplicaciones Flet
   distribuidas con Cobra, validando previamente que la dependencia esté disponible.
 
@@ -48,6 +58,7 @@ from standard_library.interfaz import (
     mostrar_markdown,
     mostrar_arbol,
     mostrar_tabla,
+    mostrar_tabla_paginada,
 )
 
 filas = [
@@ -82,4 +93,37 @@ with grupo_consola(titulo="Resultados") as consola:
         console=consola,
         titulo="Participantes",
     )
+
+# Nuevos prompts interactivos
+
+Los prompts basados en `rich.prompt` comparten el mismo patrón de uso y devuelven
+tipos nativos de Python para integrarlos fácilmente en scripts.
+
+```python
+from standard_library.interfaz import (
+    preguntar_password,
+    preguntar_opciones_multiple,
+)
+
+clave = preguntar_password("Introduce la clave del servicio")
+etiquetas = preguntar_opciones_multiple(
+    "Selecciona etiquetas",
+    opciones=["backend", "frontend", "devops", "datos"],
+    minimo=2,
+    maximo=3,
+)
+print({"clave": clave, "etiquetas": etiquetas})
+
+tablas = mostrar_tabla_paginada(
+    filas=filas,
+    tamano_pagina=1,
+    titulo="Referentes",
+)
+print(f"Se mostraron {len(tablas)} páginas")
+```
+
+> **Compatibilidad:** todas las funciones que dependen de Rich realizan una
+> comprobación previa y levantan `RuntimeError` cuando la librería no está
+> instalada. En entornos sin Rich puedes sustituirlas o envolverlas en bloques
+> `try/except` según tus necesidades.
 ```
