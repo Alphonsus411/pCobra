@@ -138,7 +138,15 @@ from standard_library.numero import (
 )
 from standard_library.util import es_nulo, es_vacio, rel, repetir
 from standard_library.asincrono import grupo_tareas, proteger_tarea, ejecutar_en_hilo
-from standard_library.decoradores import memoizar, dataclase, temporizar
+from standard_library.decoradores import (
+    dataclase,
+    depreciado,
+    memoizar,
+    reintentar,
+    reintentar_async,
+    sincronizar,
+    temporizar,
+)
 
 __all__: list[str] = [
     "leer",
@@ -253,6 +261,10 @@ __all__: list[str] = [
     "memoizar",
     "dataclase",
     "temporizar",
+    "depreciado",
+    "sincronizar",
+    "reintentar",
+    "reintentar_async",
 ]
 
 
@@ -301,3 +313,7 @@ ejecutar_en_hilo: Callable[..., Awaitable[Any]]
 memoizar: Callable[..., Callable[..., Any]]
 temporizar: Callable[..., Callable[..., Any]]
 dataclase: Callable[..., Any]
+depreciado: Callable[..., Callable[..., Any]]
+sincronizar: Callable[..., Callable[..., Any]]
+reintentar: Callable[..., Callable[..., Any]]
+reintentar_async: Callable[..., Callable[..., Any]]
