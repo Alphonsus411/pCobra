@@ -8,6 +8,7 @@ consumidas directamente desde Cobra sin depender de objetos complejos.
 from __future__ import annotations
 
 import importlib.util
+import math
 import json
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sequence
@@ -465,7 +466,166 @@ def describir(datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataF
 
     df = _a_dataframe(datos)
     descripcion = df.describe(include="all").fillna(np.nan)
-    return {columna: {indice: _sanear_valor(valor) for indice, valor in serie.items()} for columna, serie in descripcion.to_dict().items()}
+    return {
+        columna: {indice: _sanear_valor(valor) for indice, valor in serie.items()}
+        for columna, serie in descripcion.to_dict().items()
+    }
+
+
+def _calcular_correlacion(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    *,
+    columnas: Sequence[str] | None = None,
+    metodo: str,
+) -> Registro:
+    """Calcula una matriz de correlación usando ``pandas`` y la normaliza."""
+
+    df = _a_dataframe(datos)
+    if columnas is not None:
+        faltantes = [col for col in columnas if col not in df.columns]
+        if faltantes:
+            raise KeyError(f"Columnas inexistentes para correlación: {', '.join(faltantes)}")
+        df_num = df.loc[:, list(columnas)].apply(pd.to_numeric, errors="coerce")
+    else:
+        df_num = df.select_dtypes(include=[np.number])
+
+    if df_num.empty:
+        raise ValueError("No hay columnas numéricas para calcular correlaciones.")
+
+    matriz = df_num.corr(method=metodo)
+    return {
+        columna: {indice: _sanear_valor(valor) for indice, valor in serie.items()}
+        for columna, serie in matriz.to_dict().items()
+    }
+
+
+def correlacion_pearson(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    columnas: Sequence[str] | None = None,
+) -> Registro:
+    """Devuelve la matriz de correlación de Pearson como diccionario anidado."""
+
+    return _calcular_correlacion(datos, columnas=columnas, metodo="pearson")
+
+
+def correlacion_spearman(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    columnas: Sequence[str] | None = None,
+) -> Registro:
+    """Devuelve la matriz de correlación de Spearman como diccionario anidado."""
+
+    return _calcular_correlacion(datos, columnas=columnas, metodo="spearman")
+
+
+def matriz_covarianza(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    columnas: Sequence[str] | None = None,
+) -> Registro:
+    """Calcula la matriz de covarianzas normalizada en diccionarios simples."""
+
+    df = _a_dataframe(datos)
+    if columnas is not None:
+        faltantes = [col for col in columnas if col not in df.columns]
+        if faltantes:
+            raise KeyError(f"Columnas inexistentes para covarianzas: {', '.join(faltantes)}")
+        df_num = df.loc[:, list(columnas)].apply(pd.to_numeric, errors="coerce")
+    else:
+        df_num = df.select_dtypes(include=[np.number])
+
+    if df_num.empty:
+        raise ValueError("No hay columnas numéricas para calcular covarianzas.")
+
+    matriz = df_num.cov()
+    return {
+        columna: {indice: _sanear_valor(valor) for indice, valor in serie.items()}
+        for columna, serie in matriz.to_dict().items()
+    }
+
+
+def calcular_percentiles(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    *,
+    columnas: Sequence[str] | None = None,
+    percentiles: Sequence[float] = (0.25, 0.5, 0.75),
+    interpolacion: str = "linear",
+) -> Registro:
+    """Obtiene percentiles para columnas numéricas, incluyendo los cuartiles."""
+
+    if not percentiles:
+        raise ValueError("Debes indicar al menos un percentil.")
+    for valor in percentiles:
+        if not 0 <= valor <= 1:
+            raise ValueError("Los percentiles deben estar entre 0 y 1.")
+
+    df = _a_dataframe(datos)
+    if columnas is not None:
+        faltantes = [col for col in columnas if col not in df.columns]
+        if faltantes:
+            raise KeyError(f"Columnas inexistentes para percentiles: {', '.join(faltantes)}")
+        df_num = df.loc[:, list(columnas)].apply(pd.to_numeric, errors="coerce")
+    else:
+        df_num = df.select_dtypes(include=[np.number])
+
+    if df_num.empty:
+        raise ValueError("No hay columnas numéricas para calcular percentiles.")
+
+    cuantiles = df_num.quantile(percentiles, interpolation=interpolacion)
+
+    resultado: Registro = {}
+    for columna in df_num.columns:
+        serie = cuantiles[columna]
+        resumen_columna: dict[str, Any] = {}
+        for indice, valor in serie.items():
+            porcentaje = indice * 100
+            if math.isclose(porcentaje, round(porcentaje)):
+                etiqueta = f"p{int(round(porcentaje))}"
+            else:
+                etiqueta = f"p{porcentaje:.6g}".rstrip("0").rstrip(".")
+            resumen_columna[etiqueta] = _sanear_valor(valor)
+        resultado[columna] = resumen_columna
+    return resultado
+
+
+def resumen_rapido(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+) -> list[Registro]:
+    """Genera un resumen compacto por columna (tipo, nulos, valores claves)."""
+
+    df = _a_dataframe(datos)
+    resumen: list[Registro] = []
+    for columna in df.columns:
+        serie = df[columna]
+        sin_nulos = serie.dropna()
+        entrada: Registro = {
+            "columna": columna,
+            "tipo": str(serie.dtype),
+            "n_filas": int(len(serie)),
+            "nulos": int(serie.isna().sum()),
+            "unicos": int(serie.nunique(dropna=True)),
+        }
+        ejemplo = _sanear_valor(sin_nulos.iloc[0]) if not sin_nulos.empty else None
+        entrada["ejemplo"] = ejemplo
+
+        if pd.api.types.is_numeric_dtype(serie):
+            entrada.update(
+                {
+                    "min": _sanear_valor(serie.min(skipna=True)),
+                    "max": _sanear_valor(serie.max(skipna=True)),
+                    "media": _sanear_valor(serie.mean(skipna=True)),
+                }
+            )
+        elif pd.api.types.is_datetime64_any_dtype(serie):
+            entrada.update(
+                {
+                    "min": _sanear_valor(serie.min(skipna=True)),
+                    "max": _sanear_valor(serie.max(skipna=True)),
+                }
+            )
+
+        resumen.append(entrada)
+
+    return resumen
+
 
 
 def seleccionar_columnas(
