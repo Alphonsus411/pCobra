@@ -13,12 +13,20 @@ from corelibs.texto import (
     quitar_espacios,
     dividir,
     dividir_derecha,
+    encontrar as _texto_encontrar,
+    encontrar_derecha as _texto_encontrar_derecha,
     subcadena_antes,
     subcadena_despues,
     subcadena_antes_ultima,
     subcadena_despues_ultima,
+    indice as _texto_indice,
+    indice_derecha as _texto_indice_derecha,
     dividir_lineas,
     unir,
+    formatear as _texto_formatear,
+    formatear_mapa as _texto_formatear_mapa,
+    tabla_traduccion as _texto_tabla_traduccion,
+    traducir as _texto_traducir,
     reemplazar,
     empieza_con,
     termina_con,
@@ -57,6 +65,18 @@ from corelibs.texto import (
     rellenar_derecha,
     normalizar_unicode,
 )
+
+encontrar_texto = _texto_encontrar
+encontrar_derecha_texto = _texto_encontrar_derecha
+indice_texto = _texto_indice
+indice_derecha_texto = _texto_indice_derecha
+formatear_texto = _texto_formatear
+formatear_texto_mapa = _texto_formatear_mapa
+formatear_mapa = _texto_formatear_mapa
+tabla_traduccion_texto = _texto_tabla_traduccion
+tabla_traduccion = _texto_tabla_traduccion
+traducir_texto = _texto_traducir
+traducir = _texto_traducir
 from corelibs.logica import (
     es_verdadero,
     es_falso,
@@ -201,12 +221,28 @@ __all__ = [
     "quitar_espacios",
     "dividir",
     "dividir_derecha",
+    "encontrar",
+    "encontrar_texto",
+    "encontrar_derecha",
+    "encontrar_derecha_texto",
     "subcadena_antes",
     "subcadena_despues",
     "subcadena_antes_ultima",
     "subcadena_despues_ultima",
+    "indice",
+    "indice_texto",
+    "indice_derecha",
+    "indice_derecha_texto",
     "dividir_lineas",
     "unir",
+    "formatear",
+    "formatear_mapa",
+    "tabla_traduccion",
+    "traducir",
+    "formatear_texto",
+    "formatear_texto_mapa",
+    "tabla_traduccion_texto",
+    "traducir_texto",
     "reemplazar",
     "empieza_con",
     "termina_con",

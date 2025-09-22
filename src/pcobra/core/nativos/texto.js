@@ -11,6 +11,136 @@ const REGEX_ESPACIOS = /\p{White_Space}/u;
 const REGEX_SOLO_ESPACIOS = /^[ \t]+$/gm;
 const REGEX_INDENTACION = /(^[ \t]*)(?:[^ \t\n])/gm;
 
+const SIN_VALOR = Symbol("sin_valor");
+
+function asegurarEntero(nombre, valor) {
+    if (typeof valor === "boolean") {
+        return valor ? 1 : 0;
+    }
+    if (typeof valor !== "number" || !Number.isInteger(valor)) {
+        throw new TypeError(`${nombre} debe ser un entero`);
+    }
+    return valor;
+}
+
+function asegurarEnteroOpcional(nombre, valor) {
+    if (valor == null) {
+        return null;
+    }
+    return asegurarEntero(nombre, valor);
+}
+
+function ajustarRango(longitud, inicio, fin) {
+    let inicioReal = inicio;
+    let finReal = fin == null ? longitud : fin;
+    if (inicioReal < 0) {
+        inicioReal += longitud;
+        if (inicioReal < 0) {
+            inicioReal = 0;
+        }
+    } else if (inicioReal > longitud) {
+        inicioReal = longitud;
+    }
+    if (fin == null) {
+        finReal = longitud;
+    } else {
+        if (finReal < 0) {
+            finReal += longitud;
+        }
+        if (finReal < 0) {
+            finReal = 0;
+        } else if (finReal > longitud) {
+            finReal = longitud;
+        }
+    }
+    if (finReal < inicioReal) {
+        finReal = inicioReal;
+    }
+    return { inicio: inicioReal, fin: finReal };
+}
+
+function procesarPlantilla(formato, obtenerValor) {
+    let resultado = "";
+    let indiceAuto = 0;
+    for (let i = 0; i < formato.length; ) {
+        const caracter = formato[i];
+        if (caracter === "{") {
+            if (i + 1 < formato.length && formato[i + 1] === "{") {
+                resultado += "{";
+                i += 2;
+                continue;
+            }
+            const cierre = formato.indexOf("}", i + 1);
+            if (cierre === -1) {
+                throw new Error("faltan llaves de cierre en la plantilla");
+            }
+            const contenido = formato.slice(i + 1, cierre);
+            const [campoCrudo] = contenido.split(":", 1);
+            const campo = campoCrudo.trim();
+            let valor;
+            if (campo === "") {
+                valor = obtenerValor({ tipo: "auto", indice: indiceAuto });
+                indiceAuto += 1;
+            } else if (/^\d+$/.test(campo)) {
+                valor = obtenerValor({ tipo: "posicional", indice: Number.parseInt(campo, 10) });
+            } else {
+                valor = obtenerValor({ tipo: "nombrado", clave: campo });
+            }
+            resultado += String(valor);
+            i = cierre + 1;
+            continue;
+        }
+        if (caracter === "}" && i + 1 < formato.length && formato[i + 1] === "}") {
+            resultado += "}";
+            i += 2;
+            continue;
+        }
+        if (caracter === "}") {
+            throw new Error("llave de cierre sin escapar");
+        }
+        resultado += caracter;
+        i += 1;
+    }
+    return resultado;
+}
+
+function obtenerCodigoClave(clave) {
+    if (typeof clave === "number" && Number.isInteger(clave)) {
+        return clave;
+    }
+    if (typeof clave === "string") {
+        const caracteres = Array.from(clave);
+        if (caracteres.length !== 1) {
+            throw new Error("las claves deben ser enteros o una cadena de un carácter");
+        }
+        return caracteres[0].codePointAt(0);
+    }
+    throw new TypeError("las claves deben ser enteros o cadenas");
+}
+
+function normalizarValorTraduccion(valor) {
+    if (valor == null) {
+        return null;
+    }
+    if (typeof valor === "number" && Number.isInteger(valor)) {
+        return String.fromCodePoint(valor);
+    }
+    if (typeof valor === "string") {
+        return valor;
+    }
+    throw new TypeError("los valores deben ser cadenas, enteros o null");
+}
+
+function crearTablaDesdeMapa(mapeo) {
+    const tabla = Object.create(null);
+    const entradas = mapeo instanceof Map ? mapeo.entries() : Object.entries(mapeo);
+    for (const [clave, valor] of entradas) {
+        const codigo = obtenerCodigoClave(clave);
+        tabla[codigo] = normalizarValorTraduccion(valor);
+    }
+    return tabla;
+}
+
 function repetirRelleno(relleno, longitud) {
     if (relleno.length === 0) {
         throw new Error("relleno no puede ser una cadena vacía");
@@ -179,6 +309,206 @@ export function dividir(texto, separador = null, maximo = null) {
         return dividirEspacios(texto, maximo);
     }
     return dividirConSeparador(texto, separador, maximo);
+}
+
+export function encontrar(texto, subcadena, inicio = 0, fin = null, opciones = {}) {
+    if (typeof subcadena !== "string") {
+        throw new TypeError("subcadena debe ser una cadena");
+    }
+    const inicioReal = asegurarEntero("inicio", inicio);
+    const finReal = asegurarEnteroOpcional("fin", fin);
+    const opcionesEfectivas = opciones == null ? {} : opciones;
+    const tienePorDefecto = Object.prototype.hasOwnProperty.call(
+        opcionesEfectivas,
+        "por_defecto",
+    );
+    const { por_defecto: porDefecto = SIN_VALOR } = opcionesEfectivas;
+    const { inicio: indiceInicio, fin: indiceFin } = ajustarRango(
+        texto.length,
+        inicioReal,
+        finReal,
+    );
+    const segmento = texto.slice(indiceInicio, indiceFin);
+    const posicionRelativa = segmento.indexOf(subcadena);
+    if (posicionRelativa === -1) {
+        return tienePorDefecto ? porDefecto : -1;
+    }
+    return indiceInicio + posicionRelativa;
+}
+
+export function encontrar_derecha(
+    texto,
+    subcadena,
+    inicio = 0,
+    fin = null,
+    opciones = {},
+) {
+    if (typeof subcadena !== "string") {
+        throw new TypeError("subcadena debe ser una cadena");
+    }
+    const inicioReal = asegurarEntero("inicio", inicio);
+    const finReal = asegurarEnteroOpcional("fin", fin);
+    const opcionesEfectivas = opciones == null ? {} : opciones;
+    const tienePorDefecto = Object.prototype.hasOwnProperty.call(
+        opcionesEfectivas,
+        "por_defecto",
+    );
+    const { por_defecto: porDefecto = SIN_VALOR } = opcionesEfectivas;
+    const { inicio: indiceInicio, fin: indiceFin } = ajustarRango(
+        texto.length,
+        inicioReal,
+        finReal,
+    );
+    const segmento = texto.slice(indiceInicio, indiceFin);
+    const posicionRelativa = segmento.lastIndexOf(subcadena);
+    if (posicionRelativa === -1) {
+        return tienePorDefecto ? porDefecto : -1;
+    }
+    return indiceInicio + posicionRelativa;
+}
+
+export function indice(texto, subcadena, inicio = 0, fin = null, opciones = {}) {
+    const opcionesEfectivas = opciones == null ? {} : opciones;
+    const tienePorDefecto = Object.prototype.hasOwnProperty.call(
+        opcionesEfectivas,
+        "por_defecto",
+    );
+    const { por_defecto: porDefecto = SIN_VALOR } = opcionesEfectivas;
+    const posicion = encontrar(texto, subcadena, inicio, fin);
+    if (posicion === -1) {
+        if (tienePorDefecto) {
+            return porDefecto;
+        }
+        throw new Error("subcadena no encontrada");
+    }
+    return posicion;
+}
+
+export function indice_derecha(texto, subcadena, inicio = 0, fin = null, opciones = {}) {
+    const opcionesEfectivas = opciones == null ? {} : opciones;
+    const tienePorDefecto = Object.prototype.hasOwnProperty.call(
+        opcionesEfectivas,
+        "por_defecto",
+    );
+    const { por_defecto: porDefecto = SIN_VALOR } = opcionesEfectivas;
+    const posicion = encontrar_derecha(texto, subcadena, inicio, fin);
+    if (posicion === -1) {
+        if (tienePorDefecto) {
+            return porDefecto;
+        }
+        throw new Error("subcadena no encontrada");
+    }
+    return posicion;
+}
+
+export function formatear(formato, ...args) {
+    if (typeof formato !== "string") {
+        throw new TypeError("formato debe ser una cadena");
+    }
+    return procesarPlantilla(formato, ({ tipo, indice, clave }) => {
+        if (tipo === "auto" || tipo === "posicional") {
+            if (indice >= args.length) {
+                throw new Error("faltan argumentos posicionales");
+            }
+            return args[indice];
+        }
+        throw new Error("usa formatear_mapa para campos nombrados");
+    });
+}
+
+export function formatear_mapa(formato, valores) {
+    if (typeof formato !== "string") {
+        throw new TypeError("formato debe ser una cadena");
+    }
+    if (valores == null || typeof valores !== "object") {
+        throw new TypeError("valores debe ser un mapeo");
+    }
+    const mapa = valores instanceof Map ? valores : new Map(Object.entries(valores));
+    return procesarPlantilla(formato, ({ tipo, clave }) => {
+        if (tipo !== "nombrado") {
+            throw new Error("solo se permiten claves nombradas en formatear_mapa");
+        }
+        if (!mapa.has(clave)) {
+            throw new Error(`clave '${clave}' no encontrada`);
+        }
+        return mapa.get(clave);
+    });
+}
+
+export function tabla_traduccion(...argumentos) {
+    if (argumentos.length === 0) {
+        throw new Error("tabla_traduccion requiere al menos un argumento");
+    }
+    if (argumentos.length === 1) {
+        const mapeo = argumentos[0];
+        if (mapeo == null || typeof mapeo !== "object") {
+            throw new TypeError("mapeo debe ser un mapeo");
+        }
+        return crearTablaDesdeMapa(mapeo);
+    }
+    if (argumentos.length === 2 || argumentos.length === 3) {
+        const [desde, hacia, eliminados = ""] = argumentos;
+        if (typeof desde !== "string") {
+            throw new TypeError("desde debe ser una cadena");
+        }
+        if (typeof hacia !== "string") {
+            throw new TypeError("hacia debe ser una cadena");
+        }
+        if (typeof eliminados !== "string") {
+            throw new TypeError("eliminados debe ser una cadena");
+        }
+        const origen = Array.from(desde);
+        const destino = Array.from(hacia);
+        if (origen.length !== destino.length) {
+            throw new Error("desde y hacia deben tener la misma longitud");
+        }
+        const tabla = Object.create(null);
+        for (let i = 0; i < origen.length; i += 1) {
+            tabla[origen[i].codePointAt(0)] = destino[i];
+        }
+        for (const caracter of Array.from(eliminados)) {
+            tabla[caracter.codePointAt(0)] = null;
+        }
+        return tabla;
+    }
+    throw new Error("tabla_traduccion acepta 1, 2 o 3 argumentos");
+}
+
+export function traducir(texto, tabla) {
+    if (tabla == null || typeof tabla !== "object") {
+        throw new TypeError("tabla debe ser un mapeo");
+    }
+    const esMapa = tabla instanceof Map;
+    const resultado = [];
+    for (const caracter of texto) {
+        const codigo = caracter.codePointAt(0);
+        let reemplazo;
+        if (esMapa) {
+            if (tabla.has(codigo)) {
+                reemplazo = tabla.get(codigo);
+            } else if (tabla.has(caracter)) {
+                reemplazo = tabla.get(caracter);
+            }
+        } else if (Object.prototype.hasOwnProperty.call(tabla, codigo)) {
+            reemplazo = tabla[codigo];
+        } else if (Object.prototype.hasOwnProperty.call(tabla, caracter)) {
+            reemplazo = tabla[caracter];
+        }
+        if (reemplazo === undefined) {
+            resultado.push(caracter);
+        } else if (reemplazo === null) {
+            continue;
+        } else if (typeof reemplazo === "string") {
+            resultado.push(reemplazo);
+        } else if (typeof reemplazo === "number" && Number.isInteger(reemplazo)) {
+            resultado.push(String.fromCodePoint(reemplazo));
+        } else {
+            throw new TypeError(
+                "las entradas de la tabla deben ser cadenas, enteros o null",
+            );
+        }
+    }
+    return resultado.join("");
 }
 
 export function indentar_texto(texto, prefijo, opciones = {}) {

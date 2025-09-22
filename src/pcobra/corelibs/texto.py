@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
+import operator
 import re
 import textwrap
 import unicodedata
@@ -45,6 +46,19 @@ def _tokenizar_componentes(texto: str) -> list[str]:
 
 def _texto_o_defecto(por_defecto: Any, texto: str) -> Any:
     return texto if por_defecto is _SIN_VALOR else por_defecto
+
+
+def _asegurar_entero(nombre: str, valor: int) -> int:
+    try:
+        return operator.index(valor)
+    except TypeError:  # pragma: no cover - rama de error específica
+        raise TypeError(f"{nombre} debe ser un entero") from None
+
+
+def _asegurar_entero_opcional(nombre: str, valor: int | None) -> int | None:
+    if valor is None:
+        return None
+    return _asegurar_entero(nombre, valor)
 
 
 def mayusculas(texto: str) -> str:
@@ -168,6 +182,188 @@ def dividir_derecha(
 
 
 @overload
+def encontrar(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def encontrar(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def encontrar(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Localiza ``subcadena`` desde la izquierda devolviendo su índice o ``-1``."""
+
+    if not isinstance(subcadena, str):
+        raise TypeError("subcadena debe ser una cadena")
+    inicio_indice = _asegurar_entero("inicio", inicio)
+    fin_indice = _asegurar_entero_opcional("fin", fin)
+    if fin_indice is None:
+        posicion = texto.find(subcadena, inicio_indice)
+    else:
+        posicion = texto.find(subcadena, inicio_indice, fin_indice)
+    if posicion == -1 and por_defecto is not _SIN_VALOR:
+        return por_defecto
+    return posicion
+
+
+@overload
+def encontrar_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def encontrar_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def encontrar_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Busca ``subcadena`` desde la derecha retornando su índice o ``-1``."""
+
+    if not isinstance(subcadena, str):
+        raise TypeError("subcadena debe ser una cadena")
+    inicio_indice = _asegurar_entero("inicio", inicio)
+    fin_indice = _asegurar_entero_opcional("fin", fin)
+    if fin_indice is None:
+        posicion = texto.rfind(subcadena, inicio_indice)
+    else:
+        posicion = texto.rfind(subcadena, inicio_indice, fin_indice)
+    if posicion == -1 and por_defecto is not _SIN_VALOR:
+        return por_defecto
+    return posicion
+
+
+@overload
+def indice(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def indice(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def indice(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Emula ``str.index`` arrojando ``ValueError`` si no se encuentra."""
+
+    if por_defecto is _SIN_VALOR:
+        posicion = encontrar(texto, subcadena, inicio=inicio, fin=fin)
+        if posicion == -1:
+            raise ValueError("subcadena no encontrada")
+        return posicion
+    return encontrar(
+        texto,
+        subcadena,
+        inicio=inicio,
+        fin=fin,
+        por_defecto=por_defecto,
+    )
+
+
+@overload
+def indice_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+) -> int:
+    ...
+
+
+@overload
+def indice_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: _T,
+) -> int | _T:
+    ...
+
+
+def indice_derecha(
+    texto: str,
+    subcadena: str,
+    inicio: int = 0,
+    fin: int | None = None,
+    *,
+    por_defecto: Any = _SIN_VALOR,
+) -> Any:
+    """Equivalente a ``str.rindex`` con ``por_defecto`` opcional."""
+
+    if por_defecto is _SIN_VALOR:
+        posicion = encontrar_derecha(texto, subcadena, inicio=inicio, fin=fin)
+        if posicion == -1:
+            raise ValueError("subcadena no encontrada")
+        return posicion
+    return encontrar_derecha(
+        texto,
+        subcadena,
+        inicio=inicio,
+        fin=fin,
+        por_defecto=por_defecto,
+    )
+
+
+@overload
 def subcadena_antes(texto: str, separador: str) -> str:
     ...
 
@@ -277,6 +473,68 @@ def unir(separador: str, piezas: Iterable[str]) -> str:
     """Une ``piezas`` empleando ``separador`` como delimitador."""
 
     return separador.join(str(parte) for parte in piezas)
+
+
+def formatear(formato: str, *args: Any, **kwargs: Any) -> str:
+    """Formatea ``formato`` usando ``str.format`` con validación de tipos."""
+
+    if not isinstance(formato, str):
+        raise TypeError("formato debe ser una cadena")
+    return formato.format(*args, **kwargs)
+
+
+def formatear_mapa(formato: str, valores: Mapping[str, Any]) -> str:
+    """Equivalente a ``str.format_map`` exigiendo un mapeo explícito."""
+
+    if not isinstance(formato, str):
+        raise TypeError("formato debe ser una cadena")
+    if not isinstance(valores, Mapping):
+        raise TypeError("valores debe ser un mapeo")
+    return formato.format_map(valores)
+
+
+def _normalizar_tabla_maketrans(tabla: dict[int, int | str | None]) -> dict[int, str | None]:
+    resultado: dict[int, str | None] = {}
+    for clave, valor in tabla.items():
+        if isinstance(valor, int):
+            resultado[clave] = chr(valor)
+        else:
+            resultado[clave] = valor
+    return resultado
+
+
+def tabla_traduccion(*argumentos: Any) -> dict[int, str | None]:
+    """Reproduce ``str.maketrans`` con verificaciones amigables."""
+
+    cantidad = len(argumentos)
+    if cantidad == 0:
+        raise TypeError("tabla_traduccion requiere al menos un argumento")
+    if cantidad == 1:
+        mapeo = argumentos[0]
+        if not isinstance(mapeo, Mapping):
+            raise TypeError("mapeo debe ser un mapeo")
+        return _normalizar_tabla_maketrans(str.maketrans(mapeo))
+    if cantidad in {2, 3}:
+        desde, hacia = argumentos[0], argumentos[1]
+        eliminados = argumentos[2] if cantidad == 3 else ""
+        if not isinstance(desde, str):
+            raise TypeError("desde debe ser una cadena")
+        if not isinstance(hacia, str):
+            raise TypeError("hacia debe ser una cadena")
+        if not isinstance(eliminados, str):
+            raise TypeError("eliminados debe ser una cadena")
+        if len(desde) != len(hacia):
+            raise ValueError("desde y hacia deben tener la misma longitud")
+        return _normalizar_tabla_maketrans(str.maketrans(desde, hacia, eliminados))
+    raise TypeError("tabla_traduccion acepta 1, 2 o 3 argumentos")
+
+
+def traducir(texto: str, tabla: Mapping[int, str | None]) -> str:
+    """Aplica ``str.translate`` validando la tabla de traducción."""
+
+    if not isinstance(tabla, Mapping):
+        raise TypeError("tabla debe ser un mapeo")
+    return texto.translate(tabla)
 
 
 def reemplazar(

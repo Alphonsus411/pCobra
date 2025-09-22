@@ -664,11 +664,13 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `quitar_prefijo`, `quitar_sufijo`, `prefijo_comun` y `sufijo_comun` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y añaden equivalentes a `commonPrefixWith`/`commonSuffixWith` de Kotlin o `String.commonPrefix`/`String.commonSuffix` de Swift con opciones para ignorar mayúsculas y normalizar Unicode.
 - `a_snake` y `a_camel` generan identificadores normalizados como lo hacen extensiones de Kotlin, las rutinas `lowerCamelCase` de Swift o utilidades de JavaScript (por ejemplo `lodash.snakeCase`/`camelCase`), mientras que `quitar_envoltura` reproduce `removeSurrounding` de Kotlin junto con los patrones `hasPrefix`/`hasSuffix` de Swift y `String.prototype.slice` en JS.
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
+- `encontrar` y `encontrar_derecha` replican `str.find`/`str.rfind` aceptando un ``por_defecto`` opcional, mientras que `indice` e `indice_derecha` imitan `str.index`/`str.rindex` con la posibilidad de devolver valores alternativos cuando no hay coincidencias.
 - `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.
 - `envolver_texto` ajusta párrafos con sangrías iniciales y posteriores, y `acortar_texto` resume frases al estilo de `textwrap.shorten` añadiendo un marcador configurable.
 - `minusculas_casefold` aplica minúsculas intensivas (`casefold`) que homogeneizan mayúsculas, ß alemana o símbolos con diacríticos.
 - `intercambiar_mayusculas` alterna mayúsculas y minúsculas en toda la cadena, ideal para depurar textos que mezclan casos.
 - `expandir_tabulaciones` convierte tabuladores en espacios con un ancho configurable para unificar indentaciones mixtas.
+- `formatear` simplifica interpolaciones al estilo de `str.format`, `formatear_mapa` acepta mapeos como `str.format_map` y el dúo `tabla_traduccion`/`traducir` construye y aplica tablas compatibles con `str.maketrans`/`str.translate` en ambos backends.
 - Las comprobaciones `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas`, `es_titulo`, `es_digito` y `es_espacio` replican directamente los métodos `str.is*` de Python.
 
 En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`, además de accesos directos a los validadores `es_*`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
@@ -697,6 +699,11 @@ imprimir(texto.sufijo_comun("astronomía", "economía"))      # 'onomía'
 imprimir(core.a_snake("MiValorHTTP"))                     # 'mi_valor_http'
 imprimir(texto.a_camel("hola-mundo cobra", inicial_mayuscula=True))  # 'HolaMundoCobra'
 imprimir(core.quitar_envoltura("«mañana»", "«", "»"))    # 'mañana'
+imprimir(core.encontrar_texto("banana", "na"))           # 2
+imprimir(core.indice_texto("banana", "zz", por_defecto=-1))  # -1
+tabla = core.tabla_traduccion_texto("áé", "ae", "í")
+imprimir(core.traducir_texto("áéí", tabla))              # 'ae'
+imprimir(core.formatear_texto("{} {}", "hola", "cobra"))  # 'hola cobra'
 ```
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.

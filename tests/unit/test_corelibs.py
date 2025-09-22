@@ -138,6 +138,47 @@ def test_texto_funcs():
     with pytest.raises(TypeError):
         core.centrar_texto("cobra", 10, "--")
     assert core.rellenar_ceros("7", 3) == "007"
+    assert core.encontrar_texto("banana", "na") == 2
+    assert core.encontrar_texto("banana", "na", 2) == 2
+    assert core.encontrar_texto("banana", "xy") == -1
+    assert core.encontrar_texto("banana", "xy", por_defecto=None) is None
+    assert core.encontrar_texto("mañana", "ña", 0, 4) == 2
+    assert core.encontrar_derecha_texto("banana", "na") == 4
+    assert core.encontrar_derecha_texto("banana", "na", 0, 4) == 2
+    assert core.encontrar_derecha_texto("banana", "zz", por_defecto="") == ""
+    assert core.indice_texto("banana", "na") == 2
+    assert core.indice_texto("banana", "na", 2) == 2
+    with pytest.raises(ValueError):
+        core.indice_texto("banana", "zz")
+    assert core.indice_texto("banana", "zz", por_defecto=-1) == -1
+    assert core.indice_derecha_texto("banana", "na") == 4
+    with pytest.raises(ValueError):
+        core.indice_derecha_texto("banana", "zz")
+    assert core.indice_derecha_texto("banana", "zz", por_defecto="nada") == "nada"
+    with pytest.raises(TypeError):
+        core.encontrar_texto("texto", 123)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        core.encontrar_texto("texto", "t", inicio="0")  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        core.encontrar_texto("texto", "t", fin="5")  # type: ignore[arg-type]
+    assert core.formatear_texto("{}-{}", "hola", "cobra") == "hola-cobra"
+    with pytest.raises(TypeError):
+        core.formatear_texto(123, "hola")  # type: ignore[arg-type]
+    assert core.formatear_texto_mapa("Hola {nombre}", {"nombre": "Cobra"}) == "Hola Cobra"
+    with pytest.raises(TypeError):
+        core.formatear_texto_mapa("Hola {nombre}", ["Cobra"])  # type: ignore[arg-type]
+    tabla = core.tabla_traduccion_texto("áé", "ae", "í")
+    assert tabla[ord("á")] == "a"
+    assert tabla[ord("é")] == "e"
+    assert tabla[ord("í")] is None
+    assert core.traducir_texto("áéí", tabla) == "ae"
+    assert core.traducir_texto("sin cambios", {}) == "sin cambios"
+    with pytest.raises(TypeError):
+        core.tabla_traduccion_texto(123)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        core.tabla_traduccion_texto("ab", "c")
+    with pytest.raises(TypeError):
+        core.traducir_texto("texto", [1, 2, 3])  # type: ignore[arg-type]
     assert core.rellenar_ceros("-5", 4) == "-005"
     assert core.rellenar_ceros("猫", 3) == "00猫"
     assert core.minusculas_casefold("Straße") == "strasse"
@@ -872,6 +913,48 @@ def test_transpile_texto():
         + "rellenar_izquierda('7', 3, '0');\n"
         + "rellenar_derecha('7', 3, '0');\n"
         + "normalizar_unicode('Á', 'NFD');"
+    )
+    assert py == py_exp
+    assert js == js_exp
+
+
+def test_transpile_texto_busquedas():
+    ast = [
+        NodoLlamadaFuncion("encontrar_texto", [NodoValor("'banana'"), NodoValor("'na'")]),
+        NodoLlamadaFuncion("indice_texto", [NodoValor("'banana'"), NodoValor("'na'")]),
+        NodoLlamadaFuncion(
+            "formatear_texto",
+            [NodoValor("'{} {}'"), NodoValor("'hola'"), NodoValor("'cobra'")],
+        ),
+        NodoLlamadaFuncion(
+            "formatear_texto_mapa",
+            [NodoValor("'Hola {nombre}'"), NodoValor("{'nombre': 'Cobra'}")],
+        ),
+        NodoLlamadaFuncion(
+            "traducir_texto",
+            [
+                NodoValor("'áéí'"),
+                NodoValor("tabla_traduccion_texto('áé', 'ae', 'í')"),
+            ],
+        ),
+    ]
+    py = TranspiladorPython().generate_code(ast)
+    js = TranspiladorJavaScript().generate_code(ast)
+    py_exp = (
+        IMPORTS_PY
+        + "encontrar_texto('banana', 'na')\n"
+        + "indice_texto('banana', 'na')\n"
+        + "formatear_texto('{} {}', 'hola', 'cobra')\n"
+        + "formatear_texto_mapa('Hola {nombre}', {'nombre': 'Cobra'})\n"
+        + "traducir_texto('áéí', tabla_traduccion_texto('áé', 'ae', 'í'))\n"
+    )
+    js_exp = (
+        IMPORTS_JS
+        + "encontrar_texto(NodoValor(valor=\"'banana'\"), NodoValor(valor=\"'na'\"));\n"
+        + "indice_texto(NodoValor(valor=\"'banana'\"), NodoValor(valor=\"'na'\"));\n"
+        + "formatear_texto(NodoValor(valor=\"'{} {}'\"), NodoValor(valor=\"'hola'\"), NodoValor(valor=\"'cobra'\"));\n"
+        + "formatear_texto_mapa(NodoValor(valor=\"'Hola {nombre}'\"), NodoValor(valor=\"{'nombre': 'Cobra'}\"));\n"
+        + "traducir_texto(NodoValor(valor=\"'áéí'\"), NodoValor(valor=\"tabla_traduccion_texto('áé', 'ae', 'í')\"));"
     )
     assert py == py_exp
     assert js == js_exp

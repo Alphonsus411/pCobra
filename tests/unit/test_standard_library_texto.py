@@ -1,3 +1,4 @@
+import importlib.machinery as _machinery
 import sys
 from types import ModuleType
 
@@ -15,6 +16,49 @@ try:  # pragma: no cover - entorno de CI sin dependencias opcionales
     import pandas  # noqa: F401
 except ModuleNotFoundError:  # pragma: no cover - fallback para ejecutar pruebas sin pandas
     sys.modules.setdefault("pandas", ModuleType("pandas"))
+
+try:  # pragma: no cover - simplifica las pruebas cuando rich no está instalado
+    import rich  # noqa: F401
+except ModuleNotFoundError:
+    rich_mod = ModuleType("rich")
+    rich_mod.__spec__ = _machinery.ModuleSpec("rich", loader=None)
+    sys.modules.setdefault("rich", rich_mod)
+    columnas_mod = ModuleType("columns")
+    columnas_mod.__spec__ = _machinery.ModuleSpec("rich.columns", loader=None)
+    columnas_mod.Columns = type("Columns", (), {})
+    sys.modules.setdefault("rich.columns", columnas_mod)
+    console_mod = ModuleType("console")
+    console_mod.__spec__ = _machinery.ModuleSpec("rich.console", loader=None)
+    console_mod.Console = type("Console", (), {})
+    console_mod.Group = type("Group", (), {})
+    console_mod.RenderableType = object
+    sys.modules.setdefault("rich.console", console_mod)
+    tabla_mod = ModuleType("table")
+    tabla_mod.__spec__ = _machinery.ModuleSpec("rich.table", loader=None)
+    tabla_mod.Table = type("Table", (), {})
+    sys.modules.setdefault("rich.table", tabla_mod)
+    texto_mod = ModuleType("text")
+    texto_mod.__spec__ = _machinery.ModuleSpec("rich.text", loader=None)
+    texto_mod.Text = type("Text", (), {})
+    sys.modules.setdefault("rich.text", texto_mod)
+    panel_mod = ModuleType("panel")
+    panel_mod.__spec__ = _machinery.ModuleSpec("rich.panel", loader=None)
+    panel_mod.Panel = type("Panel", (), {})
+    sys.modules.setdefault("rich.panel", panel_mod)
+    progress_mod = ModuleType("progress")
+    progress_mod.__spec__ = _machinery.ModuleSpec("rich.progress", loader=None)
+    progress_mod.BarColumn = type("BarColumn", (), {})
+    progress_mod.Progress = type("Progress", (), {})
+    progress_mod.SpinnerColumn = type("SpinnerColumn", (), {})
+    progress_mod.TaskID = int
+    progress_mod.TextColumn = type("TextColumn", (), {})
+    progress_mod.TimeElapsedColumn = type("TimeElapsedColumn", (), {})
+    progress_mod.TimeRemainingColumn = type("TimeRemainingColumn", (), {})
+    sys.modules.setdefault("rich.progress", progress_mod)
+    padding_mod = ModuleType("padding")
+    padding_mod.__spec__ = _machinery.ModuleSpec("rich.padding", loader=None)
+    padding_mod.Padding = type("Padding", (), {})
+    sys.modules.setdefault("rich.padding", padding_mod)
 
 import standard_library.texto as texto
 
@@ -163,6 +207,22 @@ def test_subcadenas():
     assert texto.subcadena_despues("abc", "") == "abc"
     assert texto.subcadena_antes_ultima("abc", "") == "abc"
     assert texto.subcadena_despues_ultima("abc", "") == ""
+
+
+def test_busquedas_formato_y_traduccion():
+    assert texto.encontrar("banana", "na") == 2
+    assert texto.encontrar("banana", "zz") == -1
+    assert texto.encontrar("banana", "zz", por_defecto=None) is None
+    assert texto.encontrar_derecha("banana", "na") == 4
+    assert texto.indice("banana", "na") == 2
+    with pytest.raises(ValueError):
+        texto.indice("banana", "zz")
+    assert texto.indice_derecha("banana", "na") == 4
+    assert texto.indice_derecha("banana", "zz", por_defecto="nada") == "nada"
+    assert texto.formatear("{} {}", "hola", "cobra") == "hola cobra"
+    assert texto.formatear_mapa("Hola {nombre}", {"nombre": "Cobra"}) == "Hola Cobra"
+    tabla = texto.tabla_traduccion("áé", "ae", "í")
+    assert texto.traducir("áéí", tabla) == "ae"
 
 
 def test_dividir_y_particionar():
