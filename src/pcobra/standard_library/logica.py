@@ -29,6 +29,10 @@ __all__ = [
     "solo_uno",
     "conteo_verdaderos",
     "paridad",
+    "mayoria",
+    "exactamente_n",
+    "tabla_verdad",
+    "diferencia_simetrica",
 ]
 
 
@@ -161,4 +165,39 @@ def paridad(valores: Iterable[bool]) -> bool:
     """Informa si la cantidad de verdaderos es par, como usar ``count`` y comprobar ``% 2``."""
 
     return _logica.paridad(valores)
+
+
+def mayoria(valores: Iterable[bool]) -> bool:
+    """Indica si la cantidad de verdaderos supera a la de falsos."""
+
+    return _logica.mayoria(valores)
+
+
+def exactamente_n(valores: Iterable[bool], cantidad: int) -> bool:
+    """Comprueba si existen exactamente ``cantidad`` elementos verdaderos."""
+
+    return _logica.exactamente_n(valores, cantidad)
+
+
+def tabla_verdad(
+    funcion: Callable[..., bool],
+    *,
+    aridad: int | None = None,
+    nombres: Iterable[str] | None = None,
+    nombre_resultado: str = "resultado",
+) -> list[dict[str, bool]]:
+    """Genera una tabla de verdad íntegramente validada."""
+
+    return _logica.tabla_verdad(
+        funcion,
+        aridad=aridad,
+        nombres=nombres,
+        nombre_resultado=nombre_resultado,
+    )
+
+
+def diferencia_simetrica(*colecciones: Iterable[bool]) -> tuple[bool, ...]:
+    """Combina colecciones booleanas mediante diferencia simétrica elemento a elemento."""
+
+    return _logica.diferencia_simetrica(*colecciones)
 

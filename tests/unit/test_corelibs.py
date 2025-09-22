@@ -574,6 +574,68 @@ def test_logica_condicional_valida_entradas():
         core.condicional((lambda: 1, lambda: "valor"))
 
 
+def test_logica_mayoria_exactamente_n_y_diferencia():
+    assert core.mayoria([True, True, False]) is True
+    assert core.mayoria([True, False, False]) is False
+
+    with pytest.raises(ValueError):
+        core.mayoria([])
+    with pytest.raises(TypeError):
+        core.mayoria([True, 1])
+
+    assert core.exactamente_n([True, False, True, False], 2) is True
+    assert core.exactamente_n([True, False], 0) is False
+    assert core.exactamente_n([], 0) is True
+
+    with pytest.raises(TypeError):
+        core.exactamente_n([True], 1.5)
+    with pytest.raises(TypeError):
+        core.exactamente_n([True], True)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        core.exactamente_n([False], -1)
+
+    assert core.diferencia_simetrica([True, False], [False, False]) == (True, False)
+    assert core.diferencia_simetrica([True, False, True]) == (True, False, True)
+    assert core.diferencia_simetrica(
+        [True, False, True],
+        [False, False, True],
+        [True, True, False],
+    ) == (False, True, False)
+
+    with pytest.raises(ValueError):
+        core.diferencia_simetrica()
+    with pytest.raises(ValueError):
+        core.diferencia_simetrica([True], [True, False])
+
+
+def test_logica_tabla_verdad():
+    tabla = core.tabla_verdad(
+        lambda a, b: core.conjuncion(a, core.disyuncion(a, b)),
+        nombres=("a", "b"),
+        nombre_resultado="salida",
+    )
+
+    assert tabla == [
+        {"a": False, "b": False, "salida": False},
+        {"a": False, "b": True, "salida": False},
+        {"a": True, "b": False, "salida": True},
+        {"a": True, "b": True, "salida": True},
+    ]
+
+    tabla_inferida = core.tabla_verdad(lambda a: core.negacion(a))
+    assert tabla_inferida == [
+        {"p1": False, "resultado": True},
+        {"p1": True, "resultado": False},
+    ]
+
+    with pytest.raises(TypeError):
+        core.tabla_verdad(123)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        core.tabla_verdad(lambda a: a, nombres=("a", "b"))
+    with pytest.raises(ValueError):
+        core.tabla_verdad(lambda *valores: True)
+
+
 def test_archivo_funcs(tmp_path, monkeypatch):
     monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
     nombre = "f.txt"
