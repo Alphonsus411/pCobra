@@ -282,7 +282,7 @@ class ClassicParser:
             logger.error(f"Error en la declaración: {e}")
             raise
 
-    def declaracion_para(self):
+    def declaracion_para(self, asincronico: bool = False):
         """Parsea una declaración de bucle 'para'."""
         self.comer(TipoToken.PARA)  # Consume el token 'para'
 
@@ -370,7 +370,7 @@ class ClassicParser:
             f"Bucle 'para' parseado correctamente: variable={variable}, "
             f"iterable={iterable}, cuerpo={cuerpo}"
         )
-        return NodoPara(variable, iterable, cuerpo)
+        return NodoPara(variable, iterable, cuerpo, asincronico)
 
     def llamada_funcion(self):
         """Parsea una llamada a función."""
@@ -1038,9 +1038,16 @@ class ClassicParser:
     def declaracion_asincronico(self):
         """Parsea una declaración comenzada con 'asincronico'."""
         self.comer(TipoToken.ASINCRONICO)
-        if self.token_actual().tipo == TipoToken.FUNC:
+        siguiente = self.token_actual()
+        if siguiente.tipo == TipoToken.FUNC:
             return self.declaracion_funcion(True)
-        raise ParserError("Se esperaba 'func' después de 'asincronico'")
+        if siguiente.tipo == TipoToken.PARA:
+            return self.declaracion_para(asincronico=True)
+        if siguiente.tipo in (TipoToken.CON, TipoToken.WITH):
+            return self.declaracion_con(asincronico=True)
+        raise ParserError(
+            "Se esperaba 'func', 'para' o 'con/with' después de 'asincronico'"
+        )
 
     def declaracion_esperar(self):
         """Parsea una expresión 'esperar' para await."""
@@ -1108,20 +1115,34 @@ class ClassicParser:
                 break
         return NodoNoLocal(nombres)
 
-    def declaracion_con(self):
+    def declaracion_con(self, asincronico: bool = False):
         """Parsea el contexto ``con``/``with`` similar a ``with`` en Python."""
-        if self.token_actual().tipo in (TipoToken.CON, TipoToken.WITH):
+        token_con = self.token_actual()
+        if token_con.tipo in (TipoToken.CON, TipoToken.WITH):
             self.avanzar()
         else:
             raise ParserError("Se esperaba 'con' o 'with'")
         contexto = self.expresion()
         alias = None
+        alias_token = None
         if self.token_actual().tipo in (TipoToken.COMO, TipoToken.AS):
+            alias_token = self.token_actual()
             self.avanzar()
             if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
                 raise ParserError("Se esperaba un identificador luego de 'como' o 'as'")
             alias = self.token_actual().valor
             self.comer(TipoToken.IDENTIFICADOR)
+        if (
+            alias_token is not None
+            and ((token_con.tipo == TipoToken.WITH and alias_token.tipo == TipoToken.COMO)
+                 or (token_con.tipo == TipoToken.CON and alias_token.tipo == TipoToken.AS))
+        ):
+            expresion_entrada = f"{token_con.valor} ... {alias_token.valor}"
+            self.registrar_advertencia(
+                "Se detectó una mezcla de alias en la instrucción 'con/with'. "
+                "Procura utilizar 'with ... as' o 'con ... como' de forma consistente. "
+                f"Entrada: {expresion_entrada}"
+            )
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
             raise ParserError("Se esperaba ':' después de 'con'/'with'")
         self.comer(TipoToken.DOSPUNTOS)
@@ -1131,7 +1152,7 @@ class ClassicParser:
         if self.token_actual().tipo != TipoToken.FIN:
             raise ParserError("Se esperaba 'fin' para cerrar el bloque 'con'")
         self.comer(TipoToken.FIN)
-        return NodoWith(contexto, alias, cuerpo)
+        return NodoWith(contexto, alias, cuerpo, asincronico)
 
     def declaracion_desde(self):
         """Importa un símbolo específico desde un módulo."""

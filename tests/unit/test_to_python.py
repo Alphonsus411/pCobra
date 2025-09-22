@@ -1,20 +1,48 @@
-from core.ast_nodes import (
-    NodoAsignacion,
-    NodoCondicional,
-    NodoBucleMientras,
-    NodoFuncion,
-    NodoLlamadaFuncion,
-    NodoHolobit,
-    NodoValor,
-    NodoDecorador,
-    NodoIdentificador,
-    NodoEsperar,
-    NodoMetodo,
-    NodoClase,
-    NodoImprimir,
-    NodoPasar,
-)
-from core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
+try:
+    from pcobra.core.ast_nodes import (
+        NodoAsignacion,
+        NodoCondicional,
+        NodoBucleMientras,
+        NodoFuncion,
+        NodoLlamadaFuncion,
+        NodoHolobit,
+        NodoValor,
+        NodoDecorador,
+        NodoIdentificador,
+        NodoEsperar,
+        NodoMetodo,
+        NodoClase,
+        NodoImprimir,
+        NodoPasar,
+        NodoPara,
+        NodoWith,
+    )
+    from pcobra.core.ast_nodes import NodoSwitch, NodoCase, NodoPattern, NodoGuard
+except ImportError:  # pragma: no cover - compatibilidad
+    from core.ast_nodes import (  # type: ignore
+        NodoAsignacion,
+        NodoCondicional,
+        NodoBucleMientras,
+        NodoFuncion,
+        NodoLlamadaFuncion,
+        NodoHolobit,
+        NodoValor,
+        NodoDecorador,
+        NodoIdentificador,
+        NodoEsperar,
+        NodoMetodo,
+        NodoClase,
+        NodoImprimir,
+        NodoPasar,
+        NodoPara,
+        NodoWith,
+    )
+    from core.ast_nodes import (  # type: ignore
+        NodoSwitch,
+        NodoCase,
+        NodoPattern,
+        NodoGuard,
+    )
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_rust import TranspiladorRust
@@ -186,6 +214,30 @@ def test_transpilador_corutina_await():
         + "async def saluda():\n    print(1)\n"
         + "async def principal():\n    await saluda()\n"
     )
+    assert codigo == esperado
+
+
+def test_transpilador_para_asincronico():
+    bucle = NodoPara(
+        "item",
+        NodoIdentificador("datos"),
+        [NodoPasar()],
+        asincronico=True,
+    )
+    codigo = TranspiladorPython().generate_code([bucle])
+    esperado = IMPORTS + "async for item in datos:\n    pass\n"
+    assert codigo == esperado
+
+
+def test_transpilador_with_asincronico():
+    contexto = NodoWith(
+        NodoIdentificador("recurso"),
+        "alias",
+        [NodoPasar()],
+        asincronico=True,
+    )
+    codigo = TranspiladorPython().generate_code([contexto])
+    esperado = IMPORTS + "async with recurso as alias:\n    pass\n"
     assert codigo == esperado
 
 

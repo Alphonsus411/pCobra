@@ -424,6 +424,16 @@ class NodoWith(NodoAST):
     contexto: Any
     alias: str | None
     cuerpo: List[Any]
+    asincronico: bool = False
+
+    def __repr__(self):
+        return (
+            "NodoWith("
+            f"contexto={self.contexto}, "
+            f"alias={self.alias}, "
+            f"cuerpo={self.cuerpo}, "
+            f"asincronico={self.asincronico})"
+        )
 
 
 @dataclass
@@ -482,6 +492,7 @@ class NodoPara(NodoAST):
     variable: Any
     iterable: Any
     cuerpo: List[Any]
+    asincronico: bool = False
 
     """Bucle ``para`` que itera sobre un iterable."""
 
@@ -490,7 +501,8 @@ class NodoPara(NodoAST):
             "NodoPara("
             f"variable={self.variable}, "
             f"iterable={self.iterable}, "
-            f"cuerpo={self.cuerpo})"
+            f"cuerpo={self.cuerpo}, "
+            f"asincronico={self.asincronico})"
         )
 
 
