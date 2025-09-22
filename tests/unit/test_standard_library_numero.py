@@ -1,9 +1,11 @@
 from importlib import util
 from pathlib import Path
 import math
+import statistics as stats
 import sys
 from types import ModuleType
 
+import numpy as np
 import pytest
 
 
@@ -99,6 +101,64 @@ def test_suma_precisa_precision():
         numero.suma_precisa([1.0, "no-num"])
 
 
+def test_estadisticas_avanzadas():
+    datos = [2, 4, 4, 4, 5, 5, 7, 9]
+    assert numero.varianza(datos) == pytest.approx(stats.pvariance(datos))
+    assert numero.varianza_muestral(datos) == pytest.approx(stats.variance(datos))
+
+    geometrica = [1, 3, 9, 27]
+    assert numero.media_geometrica(geometrica) == pytest.approx(
+        stats.geometric_mean(geometrica)
+    )
+    armonica = [1.5, 2.5, 4.0]
+    assert numero.media_armonica(armonica) == pytest.approx(
+        stats.harmonic_mean(armonica)
+    )
+    assert numero.media_armonica([1.0, 0.0, 3.0]) == pytest.approx(
+        stats.harmonic_mean([1.0, 0.0, 3.0])
+    )
+
+    assert numero.percentil(datos, 25) == pytest.approx(
+        float(np.percentile(datos, 25, method="linear"))
+    )
+    q1, q2, q3 = numero.cuartiles(datos)
+    assert q1 == pytest.approx(float(np.percentile(datos, 25, method="linear")))
+    assert q2 == pytest.approx(float(np.percentile(datos, 50, method="linear")))
+    assert q3 == pytest.approx(float(np.percentile(datos, 75, method="linear")))
+    assert numero.rango_intercuartil(datos) == pytest.approx(q3 - q1)
+
+    coef_poblacional = stats.pstdev(datos) / abs(stats.fmean(datos))
+    coef_muestral = stats.stdev(datos) / abs(stats.fmean(datos))
+    assert numero.coeficiente_variacion(datos) == pytest.approx(coef_poblacional)
+    assert numero.coeficiente_variacion(datos, muestral=True) == pytest.approx(
+        coef_muestral
+    )
+
+
+def test_estadisticas_avanzadas_validaciones():
+    with pytest.raises(ValueError):
+        numero.varianza([])
+    with pytest.raises(ValueError):
+        numero.varianza_muestral([1.0])
+    with pytest.raises(ValueError):
+        numero.media_geometrica([-1, 1, 2])
+    with pytest.raises(ValueError):
+        numero.media_armonica([-1, 1, 3])
+    with pytest.raises(ValueError):
+        numero.percentil([], 50)
+    with pytest.raises(ValueError):
+        numero.percentil([1, 2, 3], 120)
+    assert math.isnan(numero.percentil([1, 2, 3], float("nan")))
+    with pytest.raises(ValueError):
+        numero.cuartiles([])
+    with pytest.raises(ValueError):
+        numero.rango_intercuartil([])
+    with pytest.raises(ValueError):
+        numero.coeficiente_variacion([1, -1])
+    with pytest.raises(ValueError):
+        numero.coeficiente_variacion([10.0], muestral=True)
+
+
 @pytest.mark.parametrize(
     "funcion, argumentos",
     [
@@ -114,6 +174,11 @@ def test_suma_precisa_precision():
         (numero.combinaciones, (5.5, 2)),
         (numero.permutaciones, ("10", None)),
         (numero.suma_precisa, ([1, 2, object()],)),
+        (numero.varianza, ([1, object()],)),
+        (numero.media_geometrica, ([1, object()],)),
+        (numero.media_armonica, ([1, object()],)),
+        (numero.percentil, ([1, 2, 3], "50")),
+        (numero.coeficiente_variacion, ([1, object()],)),
     ],
 )
 def test_validaciones(funcion, argumentos):

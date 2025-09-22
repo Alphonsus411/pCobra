@@ -752,6 +752,25 @@ imprimir(numero.permutaciones(10, 3))           # 720
 imprimir(numero.suma_precisa([1e16, 1.0, -1e16]))  # 1.0
 ```
 
+Las métricas estadísticas también se ampliaron con `varianza` y `varianza_muestral`
+para medir la dispersión poblacional o de una muestra, mientras que
+`media_geometrica` y `media_armonica` facilitan el análisis de tasas de crecimiento
+o promedios ponderados inversamente. Para exploraciones descriptivas rápidas puedes
+calcular `percentil`, `cuartiles` y `rango_intercuartil` mediante interpolación
+lineal coherente con NumPy, y `coeficiente_variacion` normaliza la desviación
+estándar respecto a la media con soporte para ambos enfoques (poblacional y
+muestral).
+
+```cobra
+import pcobra.corelibs as core
+
+datos = [2, 4, 4, 4, 5, 5, 7, 9]
+imprimir(core.varianza(datos))                 # 2.0
+imprimir(core.media_geometrica([1, 3, 9, 27]))  # 6.0
+imprimir(core.percentil(datos, 75))             # 5.5
+imprimir(core.coeficiente_variacion(datos))     # 0.2828...
+```
+
 ## 23. Operaciones con colecciones
 
 El módulo `pcobra.corelibs.coleccion` ahora ofrece funciones pensadas para transformar y analizar listas sin perder el orden de los elementos ni sacrificar seguridad de tipos. Las más destacadas son:
