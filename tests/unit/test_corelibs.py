@@ -1268,6 +1268,26 @@ async def test_grupo_tareas_cancela_pendientes():
     assert cancelado.is_set()
 
 
+def test_hipotenusa_y_distancia_euclidiana_core():
+    assert core.hipotenusa(3, 4) == pytest.approx(5.0)
+    assert core.hipotenusa([2, 3, 6]) == pytest.approx(math.sqrt(49.0))
+
+    punto_a = (0.0, 0.0, 0.0)
+    punto_b = (1.0, 2.0, 2.0)
+    assert core.distancia_euclidiana(punto_a, punto_b) == pytest.approx(3.0)
+
+    with pytest.raises(TypeError):
+        core.hipotenusa()
+    with pytest.raises(TypeError):
+        core.hipotenusa("34")
+    with pytest.raises(TypeError):
+        core.distancia_euclidiana("00", "11")
+    with pytest.raises(TypeError):
+        core.distancia_euclidiana([1, "b"], [0, 0])
+    with pytest.raises(ValueError):
+        core.distancia_euclidiana([0.0, 0.0], [1.0])
+
+
 def test_transpile_seguridad():
     ast = [
         NodoLlamadaFuncion("hash_sha256", [NodoValor("'a'")]),

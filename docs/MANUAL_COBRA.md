@@ -800,6 +800,26 @@ imprimir(core.envolver_modular(-3, 5))        # 2: envoltura positiva como en Ru
 imprimir(numero.envolver_modular(7.5, -5.0))  # -2.5: respeta el signo del divisor
 ```
 
+Cuando trabajes con coordenadas 2D o 3D tienes atajos listos para reutilizar la
+semántica de `math.hypot` y `math.dist` sin preocuparte por conversiones. Tanto
+`hipotenusa` como `distancia_euclidiana` aceptan iterables o componentes sueltos,
+verifican que todos los valores sean numéricos reales y reportan errores
+claros si las dimensiones no coinciden.
+
+```cobra
+import pcobra.corelibs as core
+import standard_library.numero as numero
+
+vector = [3.0, 4.0]
+punto_a = (0.0, 0.0, 0.0)
+punto_b = (1.0, 2.0, 2.0)
+
+imprimir(core.hipotenusa(*vector))                 # 5.0
+imprimir(numero.hipotenusa(vector))                # 5.0
+imprimir(core.distancia_euclidiana(punto_a, punto_b))  # 3.0
+imprimir(numero.distancia_euclidiana(punto_a, punto_b))  # 3.0
+```
+
 `signo` y `limitar` complementan estos atajos cuando necesitas clasificar o
 acotar magnitudes con semántica de IEEE-754. `signo` devuelve `-1`, `0` o `1`
 para enteros y preserva ceros con signo o `NaN` al trabajar con flotantes,

@@ -69,6 +69,26 @@ def test_signo_y_limitar():
         numero.limitar(0, 2, 1)
 
 
+def test_hipotenusa_y_distancia_euclidiana():
+    assert numero.hipotenusa(3, 4) == pytest.approx(5.0)
+    assert numero.hipotenusa([2, 3, 6]) == pytest.approx(math.sqrt(49.0))
+
+    punto_a = (0.0, 0.0, 0.0)
+    punto_b = (1.0, 2.0, 2.0)
+    assert numero.distancia_euclidiana(punto_a, punto_b) == pytest.approx(3.0)
+
+    with pytest.raises(TypeError):
+        numero.hipotenusa()
+    with pytest.raises(TypeError):
+        numero.hipotenusa("34")
+    with pytest.raises(TypeError):
+        numero.distancia_euclidiana("00", "11")
+    with pytest.raises(TypeError):
+        numero.distancia_euclidiana([1, "b"], [0, 0])
+    with pytest.raises(ValueError):
+        numero.distancia_euclidiana([0.0, 0.0], [1.0])
+
+
 def test_interpolar_y_envolver_modular():
     assert numero.interpolar(0.0, 10.0, 0.5) == pytest.approx(5.0)
     assert numero.interpolar(-5.0, 5.0, 3.0) == pytest.approx(5.0)
@@ -170,6 +190,10 @@ def test_estadisticas_avanzadas_validaciones():
         (numero.limitar, (1, "0", 2)),
         (numero.interpolar, (0, 1, "factor")),
         (numero.envolver_modular, (1, "0")),
+        (numero.hipotenusa, ()),
+        (numero.hipotenusa, ("34",)),
+        (numero.distancia_euclidiana, ("00", "11")),
+        (numero.distancia_euclidiana, ([1, "b"], [0, 0])),
         (numero.raiz_entera, ("9",)),
         (numero.combinaciones, (5.5, 2)),
         (numero.permutaciones, ("10", None)),
