@@ -25,6 +25,10 @@ El módulo `standard_library.datos` encapsula operaciones comunes sobre datos ta
   concatena columnas en un solo campo controlando los nulos como en `tidyr::unite`
   o en las transformaciones `ByRow` de DataFrames.jl.
 - **`agrupar_y_resumir(datos, por, agregaciones)`**: agrupa por columnas y aplica agregaciones compatibles con `DataFrame.agg`.
+- **`tabla_cruzada(datos, filas, columnas, *, valores=None, aggfunc='count', normalizar=None)`**:
+  genera tablas de contingencia a partir de columnas categóricas usando
+  `pandas.crosstab`, permitiendo sumarizar medidas adicionales y obtener
+  proporciones por fila, columna o sobre el total.
 - **`a_listas(datos)`**: transforma la tabla a un diccionario columna → lista.
 - **`de_listas(columnas)`**: genera una lista de diccionarios a partir de un mapeo de columnas.
 

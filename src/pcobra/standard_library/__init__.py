@@ -42,6 +42,7 @@ from standard_library.datos import (
     mutar_columna,
     pivotar_ancho,
     pivotar_largo,
+    tabla_cruzada,
     resumen_rapido,
     separar_columna,
     unir_columnas,
@@ -232,6 +233,7 @@ __all__: list[str] = [
     "pivotar_ancho",
     "pivotar_largo",
     "desplegar_tabla",
+    "tabla_cruzada",
     "agrupar_y_resumir",
     "a_listas",
     "de_listas",
@@ -286,6 +288,7 @@ mutar_columna: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]],
 pivotar_ancho: Callable[..., list[dict[str, Any]]]
 pivotar_largo: Callable[..., list[dict[str, Any]]]
 desplegar_tabla: Callable[..., list[dict[str, Any]]]
+tabla_cruzada: Callable[..., list[dict[str, Any]]]
 agrupar_y_resumir: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str], Mapping[str, Any]], list[dict[str, Any]]]
 a_listas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], dict[str, list[Any]]]
 de_listas: Callable[[Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
