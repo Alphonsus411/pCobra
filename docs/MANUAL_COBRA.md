@@ -738,7 +738,22 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `formatear` simplifica interpolaciones al estilo de `str.format`, `formatear_mapa` acepta mapeos como `str.format_map` y el dúo `tabla_traduccion`/`traducir` construye y aplica tablas compatibles con `str.maketrans`/`str.translate` en ambos backends.
 - Las comprobaciones `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas`, `es_titulo`, `es_digito` y `es_espacio` replican directamente los métodos `str.is*` de Python.
 
-En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`, además de accesos directos a los validadores `es_*`. Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
+En la biblioteca estándar (`standard_library.texto`) se añadieron utilidades de mayor nivel como `quitar_acentos`, `normalizar_espacios`, `es_palindromo` y `es_anagrama`, además de accesos directos a los validadores `es_*`. Se suman también `codificar` y `decodificar`, que validan tipos y nombres de encoding antes de operar y permiten seleccionar políticas de errores (`strict`, `ignore`, `replace`, etc.) para decidir cómo tratar símbolos problemáticos.
+
+```cobra
+import standard_library.texto as texto
+
+intentar:
+    texto.codificar("Señal", encoding="ascii")
+capturar error:
+    imprimir(error)
+fin
+
+var datos = texto.codificar("hola€", encoding="ascii", errores="ignore")
+imprimir(texto.decodificar(datos, encoding="ascii"))  # 'hola'
+```
+
+Estas funciones combinan las primitivas anteriores para resolver tareas frecuentes como limpiar entrada de usuarios, validar palíndromos independientemente de acentos o comparar cadenas ignorando espacios.
 
 ```cobra
 import pcobra.corelibs as core

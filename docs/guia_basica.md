@@ -468,6 +468,15 @@ imprimir(limpio)  # 'hola mundo'
 
 imprimir(texto.quitar_acentos("Canción"))  # 'Cancion'
 imprimir(texto.es_palindromo("Sé verlas al revés"))  # True
+
+intentar:
+    texto.codificar("Señal", encoding="ascii")
+capturar error:
+    imprimir("falló la codificación:", error)
+fin
+
+var datos = texto.codificar("hola€", encoding="ascii", errores="ignore")
+imprimir(texto.decodificar(datos, encoding="ascii"))  # 'hola'
 ```
 
 Este fragmento muestra cómo combinar las utilidades de `corelibs.texto` con los atajos de `standard_library.texto` para trabajar con Unicode sin perder legibilidad.

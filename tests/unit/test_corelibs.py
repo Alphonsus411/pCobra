@@ -202,6 +202,18 @@ def test_texto_funcs():
     assert core.particionar_derecha("uno-dos-tres", "-") == ("uno-dos", "-", "tres")
     assert core.particionar_derecha("sin", "-") == ("", "", "sin")
     assert core.particionar_derecha("mañana", "a") == ("mañan", "a", "")
+    assert core.codificar_texto("Señal", "latin-1") == b"Se\xf1al"
+    with pytest.raises(UnicodeEncodeError):
+        core.codificar_texto("€", "ascii")
+    assert core.codificar_texto("hola€", "ascii", errores="ignore") == b"hola"
+    assert core.decodificar_texto(b"Se\xf1al", "latin-1") == "Señal"
+    with pytest.raises(UnicodeDecodeError):
+        core.decodificar_texto(b"\xff", "utf-8")
+    assert core.decodificar_texto(b"hola\xff", "utf-8", errores="ignore") == "hola"
+    with pytest.raises(TypeError):
+        core.codificar_texto(123)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        core.decodificar_texto("texto")  # type: ignore[arg-type]
 
 
 def test_numero_funcs():
