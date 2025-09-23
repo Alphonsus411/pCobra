@@ -203,6 +203,7 @@ from corelibs.asincrono import (
     recolectar_resultados,
     carrera,
     primero_exitoso,
+    limitar_tiempo,
     esperar_timeout,
     reintentar_async,
     crear_tarea,
@@ -402,6 +403,7 @@ __all__ = [
     "recolectar_resultados",
     "carrera",
     "primero_exitoso",
+    "limitar_tiempo",
     "esperar_timeout",
     "reintentar_async",
     "crear_tarea",
@@ -618,4 +620,11 @@ limitar.__doc__ = (
     " prefieren una API en español al clamping ``min``/``max`` habitual,"
     " garantizando la propagación de ``NaN`` y validando que el mínimo no exceda"
     " al máximo."
+)
+
+limitar_tiempo.__doc__ = (
+    "Reexporta :func:`pcobra.corelibs.asincrono.limitar_tiempo`. Ofrece un"
+    " contexto asíncrono que utiliza ``asyncio.timeout`` cuando está disponible y"
+    " recrea su semántica en versiones anteriores cancelando la tarea en curso"
+    " para disparar un ``asyncio.TimeoutError`` opcionalmente personalizado."
 )
