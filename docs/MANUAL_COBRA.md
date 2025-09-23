@@ -1060,6 +1060,7 @@ El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que pe
 - `pivotar_ancho` compacta métricas en columnas nuevas al estilo de `pivot_wider`.
 - `pivotar_largo` vuelve a expandir columnas en filas con control sobre nombres y valores nulos.
 - `desplegar_tabla` transforma los datos a formato largo, equivalente a `pivot_longer` de R o `pandas.melt`.
+- `tabla_cruzada` calcula tablas de contingencia a partir de etiquetas por filas y columnas, con agregaciones y normalización opcional.
 - `pivotar_tabla` reorganiza los datos en formato ancho calculando métricas múltiples de manera declarativa.
 - `a_listas` y `de_listas` convierten entre lista de registros y diccionario de columnas, facilitando la interoperabilidad con librerías externas.
 
@@ -1127,6 +1128,23 @@ ventas_limpias_largo = pandas.pivotar_largo(
 )
 columnas = pandas.a_listas(resumen)
 imprimir(columnas['region'])
+```
+
+```cobra
+# Comparar regiones por mes contando registros y calculando proporciones
+conteo_mensual = pandas.tabla_cruzada(
+    ventas_limpias,
+    filas='region',
+    columnas='mes',
+)
+participacion = pandas.tabla_cruzada(
+    ventas_limpias,
+    filas='region',
+    columnas='mes',
+    normalizar='filas',
+)
+imprimir(conteo_mensual)
+imprimir(participacion)
 ```
 
 ```cobra

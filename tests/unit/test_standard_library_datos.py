@@ -34,6 +34,7 @@ from pcobra.standard_library.datos import (
     pivotar_largo,
     ordenar_tabla,
     pivotar_tabla,
+    tabla_cruzada,
     rellenar_nulos,
     resumen_rapido,
     unir_columnas,
@@ -213,6 +214,65 @@ def test_unir_columnas_control_nulos():
     assert unidos_con_relleno[0]["nombre_zona"] == "Ada - Norte"
     assert unidos_con_relleno[1]["nombre_zona"] == "Grace - sin dato"
     assert unidos_con_relleno[2]["nombre_zona"] == "sin dato - sin dato"
+
+
+def test_tabla_cruzada_conteo_simple():
+    datos = [
+        {"region": "norte", "genero": "F"},
+        {"region": "norte", "genero": "M"},
+        {"region": "sur", "genero": "F"},
+    ]
+
+    tabla = tabla_cruzada(datos, "region", "genero")
+
+    assert tabla == [
+        {"region": "norte", "F": 1, "M": 1},
+        {"region": "sur", "F": 1, "M": 0},
+    ]
+
+
+def test_tabla_cruzada_agregacion_personalizada():
+    datos = [
+        {"region": "norte", "mes": "enero", "monto": 100},
+        {"region": "norte", "mes": "enero", "monto": 50},
+        {"region": "norte", "mes": "febrero", "monto": 20},
+        {"region": "sur", "mes": "enero", "monto": 70},
+        {"region": "sur", "mes": "febrero", "monto": 30},
+    ]
+
+    tabla = tabla_cruzada(
+        datos,
+        "region",
+        "mes",
+        valores="monto",
+        aggfunc="sum",
+    )
+
+    assert tabla == [
+        {"region": "norte", "enero": 150, "febrero": 20},
+        {"region": "sur", "enero": 70, "febrero": 30},
+    ]
+
+
+def test_tabla_cruzada_normalizacion_filas_columnas():
+    datos = [
+        {"segmento": "A", "estado": "activo"},
+        {"segmento": "A", "estado": "activo"},
+        {"segmento": "A", "estado": "inactivo"},
+        {"segmento": "B", "estado": "activo"},
+    ]
+
+    por_filas = tabla_cruzada(datos, "segmento", "estado", normalizar="filas")
+    assert por_filas[0]["activo"] == pytest.approx(2 / 3)
+    assert por_filas[0]["inactivo"] == pytest.approx(1 / 3)
+    assert por_filas[1]["activo"] == pytest.approx(1.0)
+    assert por_filas[1]["inactivo"] == pytest.approx(0.0)
+
+    por_columnas = tabla_cruzada(datos, "segmento", "estado", normalizar="columnas")
+    assert por_columnas[0]["activo"] == pytest.approx(2 / 3)
+    assert por_columnas[1]["activo"] == pytest.approx(1 / 3)
+    assert por_columnas[0]["inactivo"] == pytest.approx(1.0)
+    assert por_columnas[1]["inactivo"] == pytest.approx(0.0)
 
 
 def test_mutar_columna_exige_existente():

@@ -20,6 +20,42 @@ Registro = dict[str, Any]
 Tabla = list[Registro]
 
 
+__all__ = [
+    "leer_csv",
+    "leer_json",
+    "escribir_csv",
+    "escribir_json",
+    "leer_excel",
+    "escribir_excel",
+    "leer_parquet",
+    "escribir_parquet",
+    "leer_feather",
+    "escribir_feather",
+    "describir",
+    "correlacion_pearson",
+    "correlacion_spearman",
+    "matriz_covarianza",
+    "calcular_percentiles",
+    "resumen_rapido",
+    "seleccionar_columnas",
+    "filtrar",
+    "mutar_columna",
+    "separar_columna",
+    "unir_columnas",
+    "agrupar_y_resumir",
+    "ordenar_tabla",
+    "combinar_tablas",
+    "rellenar_nulos",
+    "pivotar_ancho",
+    "pivotar_largo",
+    "desplegar_tabla",
+    "pivotar_tabla",
+    "tabla_cruzada",
+    "a_listas",
+    "de_listas",
+]
+
+
 def _modulo_disponible(nombre: str) -> bool:
     """Devuelve ``True`` si el módulo indicado puede importarse."""
 
@@ -1382,6 +1418,150 @@ def pivotar_tabla(
         pivotado.columns = columnas_pivot
 
     return _sanear_registros(pivotado.to_dict(orient="records"))
+
+
+def tabla_cruzada(
+    datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame,
+    filas: str | Sequence[str],
+    columnas: str | Sequence[str],
+    *,
+    valores: str | Sequence[Any] | pd.Series | None = None,
+    aggfunc: str
+    | Callable[[pd.Series], Any]
+    | Sequence[str | Callable[[pd.Series], Any]]
+    | None = "count",
+    normalizar: str | bool | None = None,
+) -> Tabla:
+    """Construye una tabla cruzada mediante :func:`pandas.crosstab`.
+
+    Parameters
+    ----------
+    datos:
+        Registros tabulares convertibles a :class:`pandas.DataFrame`.
+    filas:
+        Columna o columnas categóricas que formarán el índice de la tabla.
+    columnas:
+        Columna o columnas que se expandirán como encabezados.
+    valores:
+        Columna con los valores a agregar o una secuencia con una medida por
+        fila. Cuando es ``None`` (por defecto) la función devuelve conteos.
+    aggfunc:
+        Función de agregación compatible con ``pandas``. Se ignora cuando no se
+        proporcionan ``valores`` y por defecto cuenta los registros.
+    normalizar:
+        Permite obtener proporciones en lugar de valores absolutos. Acepta los
+        alias ``"filas"``/``"index"`` y ``"columnas"``/``"columns"`` para
+        normalizar por filas o columnas, ``"total"``/``"all"``/``True`` para el
+        total global y ``None`` para omitir la normalización.
+
+    Returns
+    -------
+    Tabla
+        Lista de registros con los encabezados aplanados y valores saneados.
+
+    Raises
+    ------
+    KeyError
+        Si alguna columna indicada en ``filas``, ``columnas`` o ``valores`` no
+        existe en los datos de entrada.
+    ValueError
+        Si ``valores`` no coincide en longitud con los datos o si ``normalizar``
+        tiene un alias desconocido.
+    """
+
+    df = _a_dataframe(datos)
+
+    def _asegurar_columnas(
+        seleccion: str | Sequence[str], nombre: str
+    ) -> pd.Series | list[pd.Series]:
+        columnas_sel = [seleccion] if isinstance(seleccion, str) else list(seleccion)
+        if not columnas_sel:
+            raise ValueError(f"Debes proporcionar al menos una columna para {nombre}.")
+        faltantes = [col for col in columnas_sel if col not in df.columns]
+        if faltantes:
+            raise KeyError(
+                f"Columnas inexistentes para {nombre}: {', '.join(dict.fromkeys(faltantes))}"
+            )
+        series = [df[col] for col in columnas_sel]
+        return series[0] if len(series) == 1 else series
+
+    index = _asegurar_columnas(filas, "filas")
+    columnas_sel = _asegurar_columnas(columnas, "columnas")
+
+    if valores is None:
+        valores_crosstab: pd.Series | None = None
+        if aggfunc not in (None, "count"):
+            raise ValueError(
+                "No es posible usar 'aggfunc' sin proporcionar la columna 'valores'."
+            )
+        aggfunc_param = None
+    else:
+        if isinstance(valores, str):
+            if valores not in df.columns:
+                raise KeyError(f"La columna '{valores}' indicada en 'valores' no existe.")
+            valores_crosstab = df[valores]
+        else:
+            serie_valores = pd.Series(valores)
+            if len(serie_valores) != len(df.index):
+                raise ValueError(
+                    "La secuencia entregada en 'valores' debe tener la misma longitud que los datos."
+                )
+            valores_crosstab = serie_valores
+        aggfunc_param = aggfunc
+        if aggfunc_param is None:
+            raise ValueError(
+                "Debes indicar una función de agregación cuando proporcionas la columna 'valores'."
+            )
+
+    if normalizar in (None, False):
+        normalizar_param: str | bool = False
+    elif normalizar is True:
+        normalizar_param = "all"
+    elif isinstance(normalizar, str):
+        mapa_normalizacion = {
+            "filas": "index",
+            "fila": "index",
+            "index": "index",
+            "indices": "index",
+            "columnas": "columns",
+            "columna": "columns",
+            "columns": "columns",
+            "total": "all",
+            "todo": "all",
+            "all": "all",
+        }
+        clave = normalizar.lower()
+        if clave not in mapa_normalizacion:
+            raise ValueError(
+                "El parámetro 'normalizar' solo admite None, 'filas', 'columnas', 'total' o sus equivalentes."
+            )
+        normalizar_param = mapa_normalizacion[clave]
+    else:
+        raise ValueError(
+            "El parámetro 'normalizar' debe ser None, un booleano o un alias conocido ('filas', 'columnas', 'total')."
+        )
+
+    tabla = pd.crosstab(
+        index=index,
+        columns=columnas_sel,
+        values=valores_crosstab,
+        aggfunc=aggfunc_param,
+        normalize=normalizar_param,
+        dropna=False,
+    )
+
+    resultado = tabla.reset_index()
+    if isinstance(resultado.columns, pd.MultiIndex):
+        resultado.columns = [
+            "_".join(
+                str(nivel) for nivel in col if str(nivel) not in {"", "None"}
+            ).strip("_")
+            for col in resultado.columns.to_flat_index()
+        ]
+    else:
+        resultado.columns = [col if isinstance(col, str) else str(col) for col in resultado.columns]
+
+    return _sanear_registros(resultado.to_dict(orient="records"))
 
 
 def a_listas(datos: Iterable[Registro] | Mapping[str, Sequence[Any]] | pd.DataFrame) -> dict[str, list[Any]]:
