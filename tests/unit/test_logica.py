@@ -1,12 +1,31 @@
 import sys
+from importlib import util
 from pathlib import Path
+from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 import pytest
 
-import standard_library.logica as logica
+sys.modules.setdefault("httpx", ModuleType("httpx"))
+
+
+def _cargar_logica() -> ModuleType:
+    ruta = ROOT / "src" / "pcobra" / "standard_library" / "logica.py"
+    spec = util.spec_from_file_location("standard_library.logica", ruta)
+    modulo = util.module_from_spec(spec)
+    if "standard_library" not in sys.modules:
+        paquete = ModuleType("standard_library")
+        paquete.__path__ = [str(ruta.parent)]
+        sys.modules["standard_library"] = paquete
+    sys.modules["standard_library.logica"] = modulo
+    assert spec.loader is not None
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+logica = _cargar_logica()
 
 
 def test_logica_tablas_de_verdad():
@@ -78,4 +97,25 @@ def test_logica_valida_entradas():
         logica.conteo_verdaderos([False, None])
     with pytest.raises(TypeError):
         logica.paridad([True, "no bool"])
+
+
+def test_coalesce_predicado_por_defecto():
+    assert logica.coalesce(None, False, 0, "dato") == "dato"
+    assert logica.coalesce(None, "", None) is None
+
+
+def test_coalesce_predicado_personalizado():
+    assert logica.coalesce(1, 3, 4, predicado=lambda valor: valor % 2 == 0) == 4
+    assert logica.coalesce("", "texto", predicado=lambda valor: len(valor) > 3) == "texto"
+
+
+def test_coalesce_valida_predicado_y_argumentos():
+    with pytest.raises(ValueError):
+        logica.coalesce()
+
+    with pytest.raises(TypeError):
+        logica.coalesce(1, predicado="no callable")  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError):
+        logica.coalesce(1, predicado=lambda _: "no bool")
 

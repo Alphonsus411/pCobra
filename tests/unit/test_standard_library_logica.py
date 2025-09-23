@@ -2,7 +2,7 @@ from importlib import util
 from pathlib import Path
 import sys
 from types import ModuleType
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 
@@ -105,6 +105,15 @@ def test_condicional_por_defecto_perezoso():
     por_defecto.assert_called_once_with()
 
 
+def test_coalesce_predeterminado_y_personalizado():
+    assert logica.coalesce(None, False, 0, "ok") == "ok"
+    assert logica.coalesce(None, "", None) is None
+
+    es_par = MagicMock(side_effect=lambda numero: numero % 2 == 0)
+    assert logica.coalesce(1, 3, 4, predicado=es_par) == 4
+    es_par.assert_has_calls([call(1), call(3), call(4)])
+
+
 def test_mayoria_exactamente_n_y_diferencia():
     assert logica.mayoria([True, False, True]) is True
     assert logica.mayoria([False, False, True]) is False
@@ -121,6 +130,17 @@ def test_mayoria_exactamente_n_y_diferencia():
     assert logica.diferencia_simetrica([True, False], [False, False]) == (True, False)
     with pytest.raises(ValueError):
         logica.diferencia_simetrica()
+
+
+def test_coalesce_valida_predicado():
+    with pytest.raises(ValueError):
+        logica.coalesce()
+
+    with pytest.raises(TypeError):
+        logica.coalesce(1, predicado="no callable")  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError):
+        logica.coalesce(1, predicado=lambda _: "no bool")
 
 
 def test_tabla_verdad_envoltura():
