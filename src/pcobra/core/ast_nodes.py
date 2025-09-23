@@ -159,6 +159,7 @@ class NodoFuncion(NodoAST):
     decoradores: List[Any] = field(default_factory=list)
     asincronica: bool = False
     type_params: List[str] = field(default_factory=list)
+    nombre_original: Optional[str] = None
 
     """Declaración de una función definida por el usuario."""
 

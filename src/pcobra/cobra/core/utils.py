@@ -10,8 +10,15 @@ ALIAS_METODOS_ESPECIALES = {
     "contener": "__contains__",
     "comparar": "__eq__",
     "ordenar": "__lt__",
+    "texto": "__str__",
+    "llamar": "__call__",
+    "obtener_item": "__getitem__",
+    "poner_item": "__setitem__",
+    "borrar_item": "__delitem__",
     "entrar": "__enter__",
     "salir": "__exit__",
+    "entrar_async": "__aenter__",
+    "salir_async": "__aexit__",
 }
 
 # Umbral de similitud para las coincidencias

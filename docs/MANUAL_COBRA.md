@@ -77,21 +77,33 @@ juan.saludar()
 **Alias de métodos especiales**
 
 Para mejorar la legibilidad, Cobra reconoce varios alias en castellano que se
-transpilan a los métodos especiales habituales del ecosistema Python:
+transpilan a los métodos especiales habituales del ecosistema Python. Los alias
+nuevos (`texto`, `llamar`, `obtener_item`, `poner_item`, `borrar_item`,
+`entrar_async`, `salir_async`) amplían la cobertura de protocolos comunes.
 
-- `inicializar` &rarr; `__init__`
-- `representar` &rarr; `__repr__`
-- `iterar` &rarr; `__iter__`
-- `longitud` &rarr; `__len__`
-- `contener` &rarr; `__contains__`
-- `comparar` &rarr; `__eq__`
-- `ordenar` &rarr; `__lt__`
-- `entrar` &rarr; `__enter__`
-- `salir` &rarr; `__exit__`
+- **Alias síncronos** (válidos tanto para funciones como para métodos):
+  - `inicializar` &rarr; `__init__`
+  - `representar` &rarr; `__repr__`
+  - `iterar` &rarr; `__iter__`
+  - `longitud` &rarr; `__len__`
+  - `contener` &rarr; `__contains__`
+  - `comparar` &rarr; `__eq__`
+  - `ordenar` &rarr; `__lt__`
+  - `texto` &rarr; `__str__`
+  - `llamar` &rarr; `__call__`
+  - `obtener_item` &rarr; `__getitem__`
+  - `poner_item` &rarr; `__setitem__`
+  - `borrar_item` &rarr; `__delitem__`
+  - `entrar` &rarr; `__enter__`
+  - `salir` &rarr; `__exit__`
+- **Alias asincrónicos** (úsalos junto con la palabra clave `asincronico` para
+  declarar context managers asíncronos):
+  - `entrar_async` &rarr; `__aenter__`
+  - `salir_async` &rarr; `__aexit__`
 
 El parser registra una advertencia cuando dos declaraciones de la clase generan
-el mismo nombre especial (por ejemplo, `inicializar` y `__init__`) para evitar
-errores silenciosos.
+el mismo nombre especial (por ejemplo, `inicializar` y `__init__` o
+`entrar_async` y `__aenter__`) para evitar errores silenciosos.
 
 **Herencia múltiple**
 
