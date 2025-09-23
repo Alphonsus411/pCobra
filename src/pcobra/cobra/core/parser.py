@@ -739,10 +739,10 @@ class ClassicParser:
             )
         if nombre_token.tipo != TipoToken.IDENTIFICADOR:
             raise ParserError("Se esperaba un nombre para la función después de 'func'")
-        nombre = nombre_token.valor
+        nombre_original = nombre_token.valor
         self.comer(TipoToken.IDENTIFICADOR)
 
-        nombre = ALIAS_METODOS_ESPECIALES.get(nombre, nombre)
+        nombre = ALIAS_METODOS_ESPECIALES.get(nombre_original, nombre_original)
 
         # Parámetros de tipo genéricos opcionales
         type_params = self.lista_parametros_tipo()
@@ -791,7 +791,12 @@ class ClassicParser:
 
         logger.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
         return NodoFuncion(
-            nombre, parametros, cuerpo, asincronica=asincronica, type_params=type_params
+            nombre,
+            parametros,
+            cuerpo,
+            asincronica=asincronica,
+            type_params=type_params,
+            nombre_original=nombre_original,
         )
 
     def declaracion_imprimir(self):
