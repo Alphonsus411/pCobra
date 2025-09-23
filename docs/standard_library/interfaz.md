@@ -36,6 +36,9 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
   bordes y permite definir el estilo interior y el color del borde.
 - **`grupo_consola(titulo=None)`**: context manager que agrupa varias impresiones con
   sangría, emulando el comportamiento de `console.group` del navegador.
+- **`estado_temporal(mensaje, spinner='dots')`**: muestra un mensaje de estado con
+  animación mientras se ejecutan tareas dentro del bloque `with`, reutilizando el
+  método `Console.status` de Rich.
 - **`barra_progreso(descripcion="Progreso", total=None)`**: context manager que
   devuelve el `Progress` de Rich y el identificador de la tarea.
 - **`limpiar_consola(console=None)`**: invoca `Console.clear()` sobre la consola
@@ -49,8 +52,11 @@ El módulo ofrece utilidades listas para usar con [`rich`](https://rich.readthed
   distribuidas con Cobra, validando previamente que la dependencia esté disponible.
 
 ```python
+import time
+
 from standard_library.interfaz import (
     barra_progreso,
+    estado_temporal,
     grupo_consola,
     mostrar_columnas,
     mostrar_codigo,
@@ -83,6 +89,10 @@ mostrar_arbol(
 with barra_progreso(total=3, descripcion="Cargando") as (progreso, tarea):
     for _ in range(3):
         progreso.advance(tarea)
+
+with estado_temporal("Sincronizando API"):
+    # Ejecuta aquí tu operación costosa.
+    time.sleep(1)
 
 # Agrupar mensajes para simular console.group/console.table
 with grupo_consola(titulo="Resultados") as consola:

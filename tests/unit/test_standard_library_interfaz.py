@@ -52,6 +52,7 @@ preguntar_opciones_multiple = interfaz.preguntar_opciones_multiple
 mostrar_columnas = interfaz.mostrar_columnas
 grupo_consola = interfaz.grupo_consola
 mostrar_tabla_paginada = interfaz.mostrar_tabla_paginada
+estado_temporal = interfaz.estado_temporal
 
 
 def test_mostrar_codigo_resalta_codigo_en_console_mock():
@@ -633,6 +634,36 @@ def test_limpiar_consola_invoca_clear():
     console = Mock(spec=Console)
     limpiar_consola(console=console)
     console.clear.assert_called_once()
+
+
+def test_estado_temporal_usa_console_status():
+    console = Mock(spec=Console)
+    status_cm = Mock()
+    status_cm.__enter__ = Mock(return_value="en curso")
+    status_cm.__exit__ = Mock()
+    console.status.return_value = status_cm
+
+    with estado_temporal("Procesando", console=console) as estado:
+        assert estado == "en curso"
+
+    console.status.assert_called_once_with("Procesando", spinner="dots")
+    status_cm.__enter__.assert_called_once_with()
+    status_cm.__exit__.assert_called_once()
+
+
+def test_estado_temporal_sin_rich_status_lanza_error(monkeypatch):
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "rich.status":
+            raise ModuleNotFoundError("sin rich.status")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(RuntimeError):
+        with estado_temporal("Procesando"):
+            pass
 
 
 def test_barra_progreso_avanza():
