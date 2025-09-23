@@ -82,6 +82,58 @@ def es_cercano(
     return math.isclose(a, b, rel_tol=tolerancia_relativa, abs_tol=tolerancia_absoluta)
 
 
+def _normalizar_componentes(componentes, nombre: str) -> list[float]:
+    if isinstance(componentes, (str, bytes, bytearray, memoryview)):
+        raise TypeError(f"{nombre} requiere un iterable de números reales")
+    try:
+        valores = list(componentes)
+    except TypeError as exc:  # pragma: no cover - mensaje uniforme
+        raise TypeError(f"{nombre} requiere un iterable de números reales") from exc
+    if not valores:
+        raise ValueError(f"{nombre} requiere al menos un componente")
+
+    resultado: list[float] = []
+    for valor in valores:
+        try:
+            resultado.append(_a_float(valor, nombre))
+        except TypeError as exc:  # pragma: no cover - mensaje uniforme
+            raise TypeError(f"{nombre} requiere componentes numéricos reales") from exc
+    return resultado
+
+
+def hipotenusa(*componentes) -> float:
+    """Calcula la hipotenusa n-dimensional usando :func:`math.hypot`."""
+
+    if not componentes:
+        raise TypeError("hipotenusa requiere al menos un componente")
+
+    if len(componentes) == 1:
+        try:
+            valor_unico = _a_float(componentes[0], "hipotenusa")
+        except TypeError:
+            valores = _normalizar_componentes(componentes[0], "hipotenusa")
+        else:
+            valores = [valor_unico]
+    else:
+        valores = [_a_float(valor, "hipotenusa") for valor in componentes]
+
+    if not valores:
+        raise ValueError("hipotenusa requiere al menos un componente")
+    return math.hypot(*valores)
+
+
+def distancia_euclidiana(punto_a, punto_b) -> float:
+    """Calcula la distancia euclidiana entre ``punto_a`` y ``punto_b``."""
+
+    componentes_a = _normalizar_componentes(punto_a, "distancia_euclidiana")
+    componentes_b = _normalizar_componentes(punto_b, "distancia_euclidiana")
+    if len(componentes_a) != len(componentes_b):
+        raise ValueError(
+            "distancia_euclidiana requiere puntos con la misma dimensión"
+        )
+    return math.dist(componentes_a, componentes_b)
+
+
 def _a_float(valor: Any, nombre: str) -> float:
     """Coacciona ``valor`` a ``float`` validando que represente un número real."""
 

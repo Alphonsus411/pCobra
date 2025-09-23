@@ -15,6 +15,8 @@ __all__ = [
     "copiar_signo",
     "signo",
     "limitar",
+    "hipotenusa",
+    "distancia_euclidiana",
     "raiz_entera",
     "combinaciones",
     "permutaciones",
@@ -66,6 +68,20 @@ def limitar(valor: RealLike, minimo: RealLike, maximo: RealLike) -> float | int:
     """Restringe ``valor`` al intervalo ``[minimo, maximo]`` validando los límites."""
 
     return _numero.limitar(valor, minimo, maximo)
+
+
+def hipotenusa(*componentes: RealLike | Iterable[RealLike]) -> float:
+    """Calcula la hipotenusa n-dimensional validando los componentes."""
+
+    return _numero.hipotenusa(*componentes)
+
+
+def distancia_euclidiana(
+    punto_a: Iterable[RealLike], punto_b: Iterable[RealLike]
+) -> float:
+    """Obtiene la distancia euclidiana entre ``punto_a`` y ``punto_b``."""
+
+    return _numero.distancia_euclidiana(punto_a, punto_b)
 
 
 def raiz_entera(valor: RealLike) -> int:
