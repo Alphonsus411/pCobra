@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import codecs
 from collections.abc import Iterable, Mapping
 import operator
 import re
@@ -101,6 +102,84 @@ def concatenar(*cadenas: str) -> str:
     """Concatena las cadenas proporcionadas sin separador adicional."""
 
     return "".join(cadenas)
+
+
+def codificar(texto: str, encoding: str = "utf-8", errores: str = "strict") -> bytes:
+    """Codifica ``texto`` empleando la codificación y política de errores indicadas."""
+
+    if not isinstance(texto, str):
+        raise TypeError("texto debe ser una cadena")
+    if not isinstance(encoding, str):
+        raise TypeError("encoding debe ser una cadena")
+    if not isinstance(errores, str):
+        raise TypeError("errores debe ser una cadena")
+
+    try:
+        codecs.lookup(encoding)
+    except LookupError as exc:
+        raise LookupError(f"el encoding '{encoding}' no está disponible") from exc
+
+    try:
+        codecs.lookup_error(errores)
+    except LookupError as exc:
+        raise LookupError(
+            f"la política de errores '{errores}' no está registrada"
+        ) from exc
+
+    try:
+        return codecs.encode(texto, encoding, errores)
+    except UnicodeEncodeError as exc:
+        raise UnicodeEncodeError(
+            exc.encoding,
+            exc.object,
+            exc.start,
+            exc.end,
+            f"no se pudo codificar el texto usando '{encoding}': {exc.reason}",
+        ) from None
+
+
+def decodificar(
+    datos: bytes | bytearray | memoryview,
+    encoding: str = "utf-8",
+    errores: str = "strict",
+) -> str:
+    """Decodifica ``datos`` según la codificación y política de errores solicitadas."""
+
+    if not isinstance(datos, (bytes, bytearray, memoryview)):
+        raise TypeError("datos debe ser un objeto de bytes")
+    if not isinstance(encoding, str):
+        raise TypeError("encoding debe ser una cadena")
+    if not isinstance(errores, str):
+        raise TypeError("errores debe ser una cadena")
+
+    try:
+        codecs.lookup(encoding)
+    except LookupError as exc:
+        raise LookupError(f"el encoding '{encoding}' no está disponible") from exc
+
+    try:
+        codecs.lookup_error(errores)
+    except LookupError as exc:
+        raise LookupError(
+            f"la política de errores '{errores}' no está registrada"
+        ) from exc
+
+    buffer: bytes | bytearray
+    if isinstance(datos, memoryview):
+        buffer = datos.tobytes()
+    else:
+        buffer = datos
+
+    try:
+        return bytes(buffer).decode(encoding, errores)
+    except UnicodeDecodeError as exc:
+        raise UnicodeDecodeError(
+            exc.encoding,
+            exc.object,
+            exc.start,
+            exc.end,
+            f"no se pudo decodificar los datos usando '{encoding}': {exc.reason}",
+        ) from None
 
 
 def quitar_espacios(

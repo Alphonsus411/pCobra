@@ -36,6 +36,36 @@ assert es_anagrama("Roma", "amor") is True
 assert es_anagrama("cosa", "caso ", ignorar_espacios=False) is False
 ```
 
+## `codificar(texto: str, encoding: str = "utf-8", errores: str = "strict") -> bytes`
+Genera bytes a partir de una cadena validando tanto la codificación como la política de errores. Úsalo cuando necesites producir archivos en distintos formatos o preparar mensajes para sockets.
+
+```python
+from standard_library.texto import codificar
+
+try:
+    codificar("Señal", "ascii")
+except UnicodeEncodeError as exc:
+    print(exc)  # no se pudo codificar el texto usando 'ascii': ordinal not in range(128)
+
+assert codificar("Señal", "latin-1") == b"Se\xf1al"
+assert codificar("hola€", "ascii", errores="ignore") == b"hola"
+```
+
+## `decodificar(datos: bytes | bytearray | memoryview, encoding: str = "utf-8", errores: str = "strict") -> str`
+Convierte datos binarios en texto asegurándose de que el `encoding` exista y permitiendo elegir la estrategia de recuperación ante bytes inválidos.
+
+```python
+from standard_library.texto import decodificar
+
+try:
+    decodificar(b"hola\xff", "utf-8")
+except UnicodeDecodeError as exc:
+    print(exc)  # no se pudo decodificar los datos usando 'utf-8': invalid start byte
+
+assert decodificar(b"Se\xf1al", "latin-1") == "Señal"
+assert decodificar(b"hola\xff", "utf-8", errores="ignore") == "hola"
+```
+
 ## Búsquedas con `encontrar`/`indice`
 `encontrar` y `encontrar_derecha` replican la semántica de `str.find`/`str.rfind` devolviendo `-1` cuando no hallan la subcadena, o bien el valor indicado en `por_defecto`. Las variantes `indice` e `indice_derecha` siguen a `str.index`/`str.rindex` y permiten retornar un valor alternativo en lugar de lanzar un error. Los índices que se devuelven son base cero, en sintonía con Python y JavaScript.
 

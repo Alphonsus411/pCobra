@@ -44,6 +44,8 @@ from pcobra.corelibs import (
     minusculas_casefold as _minusculas_casefold,
     normalizar_unicode,
     expandir_tabulaciones as _expandir_tabulaciones,
+    codificar_texto as _codificar_texto,
+    decodificar_texto as _decodificar_texto,
     prefijo_comun as _prefijo_comun,
     quitar_espacios,
     quitar_prefijo as _quitar_prefijo,
@@ -82,6 +84,8 @@ __all__ = [
     "normalizar_espacios",
     "es_palindromo",
     "es_anagrama",
+    "codificar",
+    "decodificar",
     "es_alfabetico",
     "es_alfa_numerico",
     "es_decimal",
@@ -353,6 +357,22 @@ def es_anagrama(texto: str, otro: str, *, ignorar_espacios: bool = True) -> bool
         return normalizar_unicode("".join(sorted(resultado)), "NFC")
 
     return preparar(texto) == preparar(otro)
+
+
+def codificar(texto: str, encoding: str = "utf-8", errores: str = "strict") -> bytes:
+    """Convierte texto en bytes validando explícitamente la codificación y la política."""
+
+    return _codificar_texto(texto, encoding=encoding, errores=errores)
+
+
+def decodificar(
+    datos: bytes | bytearray | memoryview,
+    encoding: str = "utf-8",
+    errores: str = "strict",
+) -> str:
+    """Interpreta datos binarios como texto controlando codificación y errores."""
+
+    return _decodificar_texto(datos, encoding=encoding, errores=errores)
 
 
 def a_snake(texto: str) -> str:

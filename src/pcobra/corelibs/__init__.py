@@ -10,6 +10,8 @@ from corelibs.texto import (
     intercambiar_mayusculas,
     invertir,
     concatenar,
+    codificar as _texto_codificar,
+    decodificar as _texto_decodificar,
     quitar_espacios,
     dividir,
     dividir_derecha,
@@ -63,7 +65,7 @@ from corelibs.texto import (
     es_espacio,
     rellenar_izquierda,
     rellenar_derecha,
-    normalizar_unicode,
+normalizar_unicode,
 )
 
 encontrar_texto = _texto_encontrar
@@ -77,6 +79,8 @@ tabla_traduccion_texto = _texto_tabla_traduccion
 tabla_traduccion = _texto_tabla_traduccion
 traducir_texto = _texto_traducir
 traducir = _texto_traducir
+codificar_texto = _texto_codificar
+decodificar_texto = _texto_decodificar
 from corelibs.logica import (
     es_verdadero,
     es_falso,

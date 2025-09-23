@@ -108,6 +108,17 @@ def test_prefijos_y_sufijos():
     assert texto.quitar_sufijo("archivo.log", ".gz") == "archivo.log"
 
 
+def test_codificar_decodificar_control_errores():
+    assert texto.codificar("Señal", "latin-1") == b"Se\xf1al"
+    with pytest.raises(UnicodeEncodeError):
+        texto.codificar("€", "ascii")
+    assert texto.codificar("hola€", "ascii", errores="ignore") == b"hola"
+    assert texto.decodificar(b"Se\xf1al", "latin-1") == "Señal"
+    with pytest.raises(UnicodeDecodeError):
+        texto.decodificar(b"\xff", "utf-8")
+    assert texto.decodificar(b"hola\xff", "utf-8", errores="ignore") == "hola"
+
+
 def test_prefijo_y_sufijo_comun():
     assert texto.prefijo_comun("mañana", "Mañanita", ignorar_mayusculas=True) == "mañan"
     assert texto.prefijo_comun(
