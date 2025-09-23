@@ -507,6 +507,15 @@ print(f"{nombre} lleva {anios} años programando y hoy experimenta con {lenguaje
 
 En pantalla se muestran las opciones formateadas por `rich` y se reaprovecha el estilo de colores de Cobra. Cada pregunta valida automáticamente el tipo de entrada y guía a la persona usuaria con mensajes descriptivos.
 
+Cuando necesites realizar una operación costosa tras recopilar los datos puedes envolverla con `estado_temporal` para informar al usuario mientras se completa:
+
+```python
+from standard_library.interfaz import estado_temporal
+
+with estado_temporal("Guardando respuestas"):
+    guardar_resultados(nombre, lenguaje, anios)
+```
+
 ## 30. Atajos numéricos de la biblioteca estándar
 
 Las utilidades numéricas ofrecen envoltorios con nombres en español para cálculos frecuentes sin sacrificar precisión.

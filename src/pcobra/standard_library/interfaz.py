@@ -731,6 +731,26 @@ def grupo_consola(
 
 
 @contextmanager
+def estado_temporal(
+    mensaje: str,
+    *,
+    console: Console | None = None,
+    spinner: str = "dots",
+) -> Iterator[Any]:
+    """Muestra un estado temporal usando ``Console.status``."""
+
+    try:
+        from rich.status import Status
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    console_obj = _obtener_console(console)
+    status_obj: Status = console_obj.status(mensaje, spinner=spinner)
+    with status_obj as estado:
+        yield estado
+
+
+@contextmanager
 def barra_progreso(
     *,
     descripcion: str = "Progreso",
@@ -836,6 +856,7 @@ __all__ = [
     "mostrar_columnas",  # Organiza elementos en un diseño de columnas.
     "mostrar_panel",  # Envuelve contenido en paneles estilizados.
     "grupo_consola",  # Agrupa mensajes con sangría estilo consola.
+    "estado_temporal",  # Gestiona estados temporales con Rich Status.
     "barra_progreso",  # Proporciona un contexto con barra de progreso.
     "limpiar_consola",  # Limpia la salida de la consola objetivo.
     "imprimir_aviso",  # Muestra mensajes de estado con iconos estándar.

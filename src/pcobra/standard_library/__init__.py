@@ -61,6 +61,7 @@ from standard_library.datos import (
 from standard_library.fecha import hoy, formatear, sumar_dias
 from standard_library.interfaz import (
     barra_progreso,
+    estado_temporal,
     grupo_consola,
     imprimir_aviso,
     iniciar_gui,
@@ -252,6 +253,7 @@ __all__: list[str] = [
     "mostrar_markdown",
     "mostrar_json",
     "grupo_consola",
+    "estado_temporal",
     "barra_progreso",
     "limpiar_consola",
     "imprimir_aviso",
@@ -303,6 +305,7 @@ mostrar_panel: Callable[..., Any]
 mostrar_markdown: Callable[..., Any]
 mostrar_json: Callable[..., Any]
 grupo_consola: Callable[..., Any]
+estado_temporal: Callable[..., Any]
 barra_progreso: Callable[..., Any]
 limpiar_consola: Callable[..., None]
 imprimir_aviso: Callable[..., None]
