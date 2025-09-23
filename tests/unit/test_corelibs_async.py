@@ -62,6 +62,44 @@ async def test_proteger_tarea_acepta_corutinas_directas():
 
 
 @pytest.mark.asyncio
+async def test_limitar_tiempo_permite_finalizar():
+    async with asincrono.limitar_tiempo(0.05):
+        await asyncio.sleep(0)
+
+
+@pytest.mark.asyncio
+async def test_limitar_tiempo_expira_con_mensaje_y_cancela_tarea():
+    cancelada = False
+
+    async def tarea_lenta():
+        nonlocal cancelada
+        try:
+            await asyncio.sleep(0.05)
+        except asyncio.CancelledError:
+            cancelada = True
+            raise
+
+    with pytest.raises(asyncio.TimeoutError) as excinfo:
+        async with asincrono.limitar_tiempo(0.01, mensaje="agotado"):
+            await tarea_lenta()
+
+    assert "agotado" in str(excinfo.value)
+    assert cancelada
+
+
+@pytest.mark.asyncio
+async def test_limitar_tiempo_funciona_sin_asyncio_timeout(monkeypatch):
+    monkeypatch.delattr(asincrono.asyncio, "timeout", raising=False)
+
+    async def tarea_lenta():
+        await asyncio.sleep(0.05)
+
+    with pytest.raises(asyncio.TimeoutError):
+        async with asincrono.limitar_tiempo(0.01):
+            await tarea_lenta()
+
+
+@pytest.mark.asyncio
 async def test_ejecutar_en_hilo_prefiere_to_thread(monkeypatch):
     llamado = {}
 

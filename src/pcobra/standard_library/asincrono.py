@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import (
     Any,
     AsyncContextManager,
+    AsyncIterator,
     Awaitable,
     Callable,
     Coroutine,
@@ -17,11 +19,18 @@ from pcobra.corelibs import (
     proteger_tarea as _proteger_tarea,
     ejecutar_en_hilo as _ejecutar_en_hilo,
     reintentar_async as _reintentar_async,
+    limitar_tiempo as _limitar_tiempo,
 )
 
 T = TypeVar("T")
 
-__all__ = ["grupo_tareas", "proteger_tarea", "ejecutar_en_hilo", "reintentar_async"]
+__all__ = [
+    "grupo_tareas",
+    "limitar_tiempo",
+    "proteger_tarea",
+    "ejecutar_en_hilo",
+    "reintentar_async",
+]
 
 
 def grupo_tareas() -> AsyncContextManager[Any]:
@@ -35,6 +44,16 @@ def grupo_tareas() -> AsyncContextManager[Any]:
     """
 
     return _grupo_tareas()
+
+
+@asynccontextmanager
+async def limitar_tiempo(
+    segundos: float | None, *, mensaje: str | None = None
+) -> AsyncIterator[None]:
+    """Limita la ejecución del bloque actual a ``segundos`` como máximo."""
+
+    async with _limitar_tiempo(segundos, mensaje=mensaje):
+        yield
 
 
 def proteger_tarea(awaitable: Awaitable[T] | Coroutine[Any, Any, T]):

@@ -362,6 +362,11 @@ varias tareas sin perder legibilidad:
   obtener el primer resultado, igual que `Promise.race`.
 - `esperar_timeout` cubre `asyncio.wait_for` garantizando que la corrutina se
   cancela limpiamente si se supera el límite.
+- `limitar_tiempo` proporciona un contexto asíncrono que aprovecha
+  `asyncio.timeout` en Python 3.11+ y replica su comportamiento en versiones
+  anteriores cancelando la tarea actual cuando el bloque supera el límite
+  configurado, permitiendo definir un mensaje personalizado para el
+  `TimeoutError` resultante.
 - `crear_tarea` centraliza la creación de tareas para evitar fugas de corrutinas
   al integrar Cobra con bibliotecas Python.
 - `proteger_tarea` reutiliza `asyncio.shield` para aislar corrutinas de

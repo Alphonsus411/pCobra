@@ -64,6 +64,66 @@ def proteger_tarea(
     return asyncio.shield(tarea)
 
 
+@asynccontextmanager
+async def limitar_tiempo(
+    segundos: float | None, *, mensaje: str | None = None
+) -> AsyncIterator[None]:
+    """Limita el tiempo de ejecución del bloque asíncrono."""
+
+    if segundos is None:
+        yield
+        return
+
+    timeout_cm = getattr(asyncio, "timeout", None)
+    if timeout_cm is not None:
+        try:
+            async with timeout_cm(segundos):
+                yield
+        except asyncio.TimeoutError:
+            if mensaje is not None:
+                raise asyncio.TimeoutError(mensaje) from None
+            raise
+        return
+
+    loop = asyncio.get_running_loop()
+    tarea_actual = asyncio.current_task()
+    if tarea_actual is None:  # pragma: no cover - entornos ajenos a asyncio
+        yield
+        return
+
+    fin = loop.create_future()
+    expirado = False
+
+    async def vigilante() -> None:
+        nonlocal expirado
+        try:
+            await asyncio.wait_for(fin, segundos)
+        except asyncio.TimeoutError:
+            expirado = True
+            tarea_actual.cancel()
+            raise
+
+    supervisor = asyncio.create_task(vigilante())
+    try:
+        try:
+            yield
+        except asyncio.CancelledError:
+            if expirado:
+                if mensaje is not None:
+                    raise asyncio.TimeoutError(mensaje) from None
+                raise asyncio.TimeoutError() from None
+            raise
+    finally:
+        if not fin.done():
+            fin.set_result(None)
+        with suppress(asyncio.CancelledError):
+            try:
+                await supervisor
+            except asyncio.TimeoutError:
+                if not expirado:
+                    raise
+
+
 async def ejecutar_en_hilo(
     funcion: Callable[..., T], *args: Any, **kwargs: Any
 ) -> T:
