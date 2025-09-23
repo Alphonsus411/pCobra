@@ -98,6 +98,59 @@ def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
     return None
 
 
+def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
+    """Retorna el primer elemento que satisface el predicado.
+
+    Args:
+        *valores: Secuencia de valores a inspeccionar.
+        predicado: Función que determina si un valor es aceptable. Si se omite,
+            se considera válido todo elemento distinto de ``None`` y cuyo valor
+            lógico sea verdadero.
+
+    Returns:
+        El primer elemento que cumpla el predicado o ``None`` si ninguno lo
+        hace.
+
+    Raises:
+        ValueError: si no se proporcionan valores a evaluar.
+        TypeError: si *predicado* no es invocable o si su resultado no es un
+            booleano.
+    """
+
+    if not valores:
+        raise ValueError("Se necesita al menos un valor para coalesce")
+
+    if predicado is None:
+        def _predicado_por_defecto(valor: T) -> bool:
+            return valor is not None and bool(valor)
+
+        funcion_predicado: Callable[[T], bool] = _predicado_por_defecto
+    else:
+        if not callable(predicado):
+            raise TypeError("predicado debe ser callable en coalesce")
+
+        firma = inspect.signature(predicado)
+        acepta_posicional = any(
+            parametro.kind in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
+            or parametro.kind is inspect.Parameter.VAR_POSITIONAL
+            for parametro in firma.parameters.values()
+        )
+
+        if not acepta_posicional:
+            raise TypeError("predicado debe aceptar al menos un argumento posicional")
+
+        funcion_predicado = predicado
+
+    for indice, valor in enumerate(valores):
+        if _asegurar_booleano(funcion_predicado(valor), f"predicado_valor_{indice}"):
+            return valor
+
+    return None
+
+
 def condicional(
     *casos: tuple[bool | Callable[[], bool], T | Callable[[], T]],
     por_defecto: T | Callable[[], T] | None = None,
@@ -419,6 +472,7 @@ __all__ = [
     "entonces",
     "si_no",
     "condicional",
+    "coalesce",
     "todas",
     "alguna",
     "ninguna",

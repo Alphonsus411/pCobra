@@ -955,6 +955,7 @@ Las funciones están disponibles tanto al ejecutar Cobra directamente como al tr
 - `diferencia_simetrica` aplica XOR elemento a elemento sobre secuencias de booleanos, útil para comparar lecturas en paralelo.
 - `tabla_verdad` genera todas las combinaciones posibles de entrada y valida que el resultado de la función sea booleano, ideal para documentar reglas de negocio.
 - `entonces` y `si_no` encapsulan condicionales perezosos: devuelven el resultado (o ejecutan un callable) solo cuando la condición se cumple, como `takeIf` y `takeUnless` en Kotlin.
+- `coalesce` replica el patrón de `COALESCE` en SQL o `firstNotNullOf` en Kotlin: recorre los argumentos y devuelve el primero que no sea `None` y cumpla el predicado indicado (por defecto, que su valor lógico sea verdadero).
 - `condicional` permite encadenar pares ``(condición, resultado)`` inspirándose en ``when`` de Kotlin y `case_when` de R; evalúa cada rama en orden y solo computa la que corresponda.
 
 Los parámetros no booleanos producen un `TypeError` descriptivo, lo cual ayuda a detectar errores lógicos tempranamente. Además, la versión en JavaScript (`core/nativos/logica.js`) replica la semántica para mantener el comportamiento al transpirar.
@@ -991,6 +992,7 @@ logica.todas([True, 1])  # -> TypeError
 ```python
 from pcobra.corelibs.logica import (
     condicional,
+    coalesce,
     entonces,
     si_no,
     tabla_verdad,
@@ -1008,6 +1010,8 @@ def incrementar():
 assert entonces(True, incrementar) == 1         # Ejecuta el callable
 assert entonces(False, incrementar) is None     # No evalúa la rama descartada
 assert si_no(False, "dato") == "dato"         # Equivalente a takeUnless
+assert coalesce(None, "", "respaldo") == "respaldo"  # Igual que SQL COALESCE
+assert coalesce("", predicado=lambda valor: valor is not None) == ""
 assert si_no(True, lambda: "omitido") is None  # La función no se ejecuta
 
 nivel_bateria = 65
