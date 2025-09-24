@@ -40,7 +40,10 @@ class TipoToken(Enum):
     DIVIDIR = "DIVIDIR"
     MULTIPLICAR = "MULTIPLICAR"
     CLASE = "CLASE"
+    ESTRUCTURA = "ESTRUCTURA"
+    REGISTRO = "REGISTRO"
     ENUM = "ENUM"
+    ENUMERACION = "ENUMERACION"
     INTERFACE = "INTERFACE"
     DICCIONARIO = "DICCIONARIO"
     LISTA = "LISTA"
@@ -233,7 +236,10 @@ class Lexer:
             (TipoToken.SWITCH, re.compile(r"\b(switch|segun)\b")),
             (TipoToken.CASE, re.compile(r"\b(case|caso)\b")),
             (TipoToken.CLASE, re.compile(r"\bclase\b")),
+            (TipoToken.ESTRUCTURA, re.compile(r"\bestructura\b")),
+            (TipoToken.REGISTRO, re.compile(r"\bregistro\b")),
             (TipoToken.ENUM, re.compile(r"\benum\b")),
+            (TipoToken.ENUMERACION, re.compile(r"\benumeracion\b")),
             (TipoToken.INTERFACE, re.compile(r"\b(interface|trait)\b")),
             (TipoToken.IN, re.compile(r"\bin\b")),
             (TipoToken.HOLOBIT, re.compile(r"\bholobit\b")),

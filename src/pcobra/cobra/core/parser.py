@@ -73,6 +73,25 @@ from pcobra.core import NodoYield
 logger = logging.getLogger(__name__)
 
 
+ALIAS_DECLARACION_CLASE = (
+    TipoToken.CLASE,
+    TipoToken.ESTRUCTURA,
+    TipoToken.REGISTRO,
+)
+ALIAS_DECLARACION_ENUM = (
+    TipoToken.ENUM,
+    TipoToken.ENUMERACION,
+)
+
+TOKEN_A_LEXEMA = {
+    TipoToken.CLASE: "clase",
+    TipoToken.ESTRUCTURA: "estructura",
+    TipoToken.REGISTRO: "registro",
+    TipoToken.ENUM: "enum",
+    TipoToken.ENUMERACION: "enumeracion",
+}
+
+
 class ClassicParser:
     """Convierte una lista de tokens en nodos del AST."""
 
@@ -83,6 +102,8 @@ class ClassicParser:
         self.errores: list[str] = []
         self.advertencias: list[str] = []
         self._contexto_bloques: list[str] = []
+        self._aliases_clase: list[str] = []
+        self._aliases_enum: list[str] = []
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -112,7 +133,10 @@ class ClassicParser:
             TipoToken.PASAR: self.declaracion_pasar,
             TipoToken.MACRO: self.declaracion_macro,
             TipoToken.CLASE: self.declaracion_clase,
+            TipoToken.ESTRUCTURA: self.declaracion_clase,
+            TipoToken.REGISTRO: self.declaracion_clase,
             TipoToken.ENUM: self.declaracion_enum,
+            TipoToken.ENUMERACION: self.declaracion_enum,
             TipoToken.INTERFACE: self.declaracion_interface,
             TipoToken.AFIRMAR: self.declaracion_afirmar,
             TipoToken.ELIMINAR: self.declaracion_eliminar,
@@ -186,6 +210,49 @@ class ClassicParser:
             raise ParserError(
                 f"Se esperaba {tipo}, pero se encontró {self.token_actual().tipo}"
             )
+
+    @staticmethod
+    def _formatear_lista_palabras(palabras, conjuncion: str = "y") -> str:
+        lista = list(palabras)
+        if not lista:
+            return ""
+        if len(lista) == 1:
+            return f"'{lista[0]}'"
+        prefijo = ", ".join(f"'{palabra}'" for palabra in lista[:-1])
+        return f"{prefijo} {conjuncion} '{lista[-1]}'"
+
+    def _consumir_alias_palabra_clave(
+        self,
+        tipos_validos,
+        nombre_contexto: str,
+        descripcion: str,
+        alias_attr: str,
+    ) -> Token:
+        token = self.token_actual()
+        if token.tipo not in tipos_validos:
+            alias_permitidos = [TOKEN_A_LEXEMA[t] for t in tipos_validos]
+            esperado = self._formatear_lista_palabras(
+                alias_permitidos, conjuncion="o"
+            )
+            raise ParserError(
+                f"Se esperaba {esperado} para declarar {descripcion}"
+            )
+
+        self.avanzar()
+
+        valor = token.valor if isinstance(token.valor, str) else None
+        alias_historial: list[str] = getattr(self, alias_attr)
+        if valor and valor not in alias_historial:
+            if alias_historial:
+                previos = self._formatear_lista_palabras(alias_historial)
+                self.registrar_advertencia(
+                    "Se detectó una mezcla de alias al declarar "
+                    f"{nombre_contexto}: previamente se usó {previos} y ahora "
+                    f"'{valor}'."
+                )
+            alias_historial.append(valor)
+
+        return token
 
     def _parsear_base(self):
         nodos = []
@@ -1314,7 +1381,12 @@ class ClassicParser:
 
     def declaracion_enum(self):
         """Parsea la declaración de un enum."""
-        self.comer(TipoToken.ENUM)
+        self._consumir_alias_palabra_clave(
+            ALIAS_DECLARACION_ENUM,
+            "enumeraciones",
+            "un enum o una enumeración",
+            "_aliases_enum",
+        )
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
             raise ParserError("Se esperaba un nombre de enum")
         nombre = self.token_actual().valor
@@ -1377,7 +1449,12 @@ class ClassicParser:
 
     def declaracion_clase(self):
         """Parsea la declaración de una clase."""
-        self.comer(TipoToken.CLASE)
+        self._consumir_alias_palabra_clave(
+            ALIAS_DECLARACION_CLASE,
+            "clases",
+            "una clase",
+            "_aliases_clase",
+        )
 
         if self.token_actual().tipo != TipoToken.IDENTIFICADOR:
             raise ParserError("Se esperaba un nombre de clase")

@@ -19,9 +19,18 @@ IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("js"))
 def test_parser_enum():
     codigo = "enum Color: ROJO, VERDE fin"
     ast = Parser(Lexer(codigo).analizar_token()).parsear()
-    assert isinstance(ast[0], NodoEnum)
+    assert type(ast[0]).__name__ == "NodoEnum"
     assert ast[0].nombre == "Color"
     assert ast[0].miembros == ["ROJO", "VERDE"]
+
+
+def test_parser_enumeracion_alias():
+    codigo = "enumeracion Estado: ACTIVO, INACTIVO fin"
+    parser = Parser(Lexer(codigo).analizar_token())
+    ast = parser.parsear()
+    assert type(ast[0]).__name__ == "NodoEnum"
+    assert ast[0].nombre == "Estado"
+    assert ast[0].miembros == ["ACTIVO", "INACTIVO"]
 
 
 def test_transpilador_python_enum():

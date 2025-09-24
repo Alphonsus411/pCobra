@@ -75,3 +75,29 @@ def test_parser_condicional_si_sino():
         pytest.fail("El parser ha entrado en una recursión infinita.")
     except Exception as e:
         pytest.fail(f"Error en el parser: {e}")
+
+
+def test_parser_declaracion_enumeracion():
+    codigo = "enumeracion Estado: ACTIVO, INACTIVO fin"
+    tokens = Lexer(codigo).analizar_token()
+    parser = Parser(tokens)
+    ast = parser.parsear()
+    assert ast, "Se esperaba al menos un nodo en el AST"
+    enum = ast[0]
+    assert type(enum).__name__ == "NodoEnum"
+    assert enum.nombre == "Estado"
+    assert enum.miembros == ["ACTIVO", "INACTIVO"]
+
+
+def test_parser_advertencia_alias_enum():
+    codigo = """
+    enum Primero: UNO fin
+    enumeracion Segundo: DOS fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    parser = Parser(tokens)
+    parser.parsear()
+    assert parser.advertencias, "Se esperaba una advertencia por mezclar alias"
+    mensaje = parser.advertencias[0]
+    assert "enumeraciones" in mensaje
+    assert "'enum'" in mensaje and "'enumeracion'" in mensaje
