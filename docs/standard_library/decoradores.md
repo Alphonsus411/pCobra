@@ -40,6 +40,32 @@ class Punto:
     y: float
 ```
 
+## `orden_total`
+
+Permite definir comparaciones completas en clases de datos usando
+:func:`functools.total_ordering`. Acepta tanto ``@orden_total`` como
+``@orden_total()`` y valida que se aplique sobre una clase.
+
+```python
+from pcobra.standard_library.decoradores import dataclase, orden_total
+
+@orden_total
+@dataclase
+class Punto:
+    x: int
+    y: int
+
+    def __lt__(self, otro: "Punto") -> bool:
+        return (self.x, self.y) < (otro.x, otro.y)
+
+    def __eq__(self, otro: object) -> bool:
+        if not isinstance(otro, Punto):
+            return NotImplemented
+        return (self.x, self.y) == (otro.x, otro.y)
+
+assert Punto(0, 1) <= Punto(0, 1) < Punto(1, 0)
+```
+
 ## `temporizar`
 
 Mide el tiempo de ejecución de una función usando `time.perf_counter` y reporta
@@ -151,3 +177,28 @@ async def descargar_archivo():
 > - [Rich](https://rich.readthedocs.io/) para mensajes con estilo.
 > - `pcobra.corelibs` ya provee `reintentar_async`, por lo que no es necesario
 >   instalar nada adicional para los reintentos asíncronos más allá de Cobra.
+
+## `despachar_por_tipo`
+
+Equivalente en español de :func:`functools.singledispatch`. Construye una
+función despachadora que selecciona la implementación adecuada según el tipo del
+primer argumento posicional. Añade atajos en español:
+
+- ``registrar``: versión localizada de ``register`` con validación de tipos.
+- ``despachar``: equivalente localizado de ``dispatch``.
+- ``registros``: acceso de solo lectura al mapeo de implementaciones.
+
+```python
+from pcobra.standard_library.decoradores import despachar_por_tipo
+
+@despachar_por_tipo()
+def describir(valor):
+    return f"Valor genérico: {valor!r}"
+
+@describir.registrar(int)
+def _(valor: int) -> str:
+    return f"Entero: {valor}"
+
+assert describir(5) == "Entero: 5"
+assert describir(5.0).startswith("Valor genérico")
+```

@@ -55,6 +55,8 @@ depreciado = decoradores.depreciado
 sincronizar = decoradores.sincronizar
 reintentar = decoradores.reintentar
 reintentar_async = decoradores.reintentar_async
+orden_total = decoradores.orden_total
+despachar_por_tipo = decoradores.despachar_por_tipo
 
 
 def test_memoizar_cachea_resultados():
@@ -226,3 +228,61 @@ async def test_reintentar_async_envuelve_corelibs(monkeypatch: pytest.MonkeyPatc
     assert consola.mensajes[0].endswith("reintento 2/3")
     assert consola.mensajes[0].startswith("[reintentar:")
     assert consola.estilos == ["bold yellow"]
+
+
+def test_orden_total_completa_operadores() -> None:
+    @orden_total
+    class Carta:
+        def __init__(self, valor: int, palo: str) -> None:
+            self.valor = valor
+            self.palo = palo
+
+        def __eq__(self, otro: object) -> bool:
+            if not isinstance(otro, Carta):
+                return NotImplemented
+            return (self.valor, self.palo) == (otro.valor, otro.palo)
+
+        def __lt__(self, otro: "Carta") -> bool:
+            return (self.valor, self.palo) < (otro.valor, otro.palo)
+
+    menor = Carta(1, "bastos")
+    medio = Carta(1, "copas")
+    mayor = Carta(2, "oros")
+
+    assert menor <= medio <= mayor
+    assert mayor >= medio > menor
+    assert menor != mayor
+    assert not (mayor < menor)
+
+
+def test_orden_total_requiere_clase() -> None:
+    with pytest.raises(TypeError):
+        orden_total(lambda: None)
+
+
+def test_despachar_por_tipo_registra_y_despacha() -> None:
+    @despachar_por_tipo
+    def describir(valor: object) -> str:
+        return f"Valor genérico: {valor!r}"
+
+    @describir.registrar(int)
+    def _(valor: int) -> str:
+        return f"Entero: {valor}"
+
+    @describir.registrar(str)
+    def _(valor: str) -> str:
+        return f"Cadena: {valor}".upper()
+
+    assert describir(5) == "Entero: 5"
+    assert describir("hola") == "CADENA: HOLA"
+    assert describir(5.0).startswith("Valor genérico")
+
+    handler = describir.despachar(int)
+    assert handler(3) == "Entero: 3"
+    assert int in describir.registros
+
+    with pytest.raises(TypeError):
+        describir.registrar("no es un tipo")  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError):
+        describir.despachar("no es un tipo")  # type: ignore[arg-type]
