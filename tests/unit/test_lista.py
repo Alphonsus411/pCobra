@@ -20,6 +20,17 @@ def test_lista():
     )
     assert resultados == [1, 0, 3]
     assert len(errores) == 1 and errores[0][0] == 2
+    assert lista.mapear_aplanado([1, 3], lambda x: range(x)) == [0, 0, 1, 2]
+
+    class Caja:
+        def __init__(self, valor):
+            self.valor = valor
+
+    cajas = [Caja(1), Caja(2)]
+    resultado_cajas = lista.mapear_aplanado(cajas, lambda caja: (caja,))
+    assert all(isinstance(elem, Caja) for elem in resultado_cajas)
+    assert resultado_cajas[0] is cajas[0]
+    assert resultado_cajas[1] is cajas[1]
     assert lista.ventanas([1, 2, 3, 4], 2) == [[1, 2], [2, 3], [3, 4]]
     assert lista.ventanas([1, 2, 3, 4], 3, paso=2, incluir_incompletas=True) == [
         [1, 2, 3],
@@ -39,6 +50,8 @@ def test_lista():
         lista.descartar_mientras(123, lambda x: x)
     with pytest.raises(TypeError):
         lista.scanear([1, 2], "no callable")
+    with pytest.raises(TypeError):
+        lista.mapear_aplanado([1], lambda _: 42)
     def reventar(acc, x):  # pragma: no cover - auxiliar para excepciones
         raise RuntimeError("boom")
 

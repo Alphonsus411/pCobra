@@ -880,7 +880,7 @@ imprimir(core.coeficiente_variacion(datos))     # 0.2828...
 
 El módulo `pcobra.corelibs.coleccion` ahora ofrece funciones pensadas para transformar y analizar listas sin perder el orden de los elementos ni sacrificar seguridad de tipos. Las más destacadas son:
 
-- `mapear`, `filtrar` y `reducir` para aplicar funciones, quedarte con elementos relevantes y sintetizar resultados.
+- `mapear`, `mapear_aplanado`, `filtrar` y `reducir` para aplicar funciones, quedarte con elementos relevantes y sintetizar resultados.
 - `encontrar` y `tomar` para acceder rápidamente a elementos puntuales.
 - `aplanar`, `zip_listas` y `mezclar` para reorganizar la información manteniendo copias y sin modificar la entrada original.
 - `agrupar_por` y `particionar` para clasificar datos de acuerdo a una clave o predicado.
@@ -888,6 +888,7 @@ El módulo `pcobra.corelibs.coleccion` ahora ofrece funciones pensadas para tran
 En paralelo, `standard_library.lista` incorpora capas de mayor nivel:
 
 - `mapear_seguro` captura las excepciones durante la transformación y te indica qué elementos fallaron.
+- `mapear_aplanado` combina el mapeo con un aplanado de un nivel para trabajar con iterables anidados.
 - `ventanas` crea ventanas deslizantes de cualquier tamaño y paso.
 - `chunk` divide una secuencia en bloques regulares con la opción de descartar los incompletos.
 
