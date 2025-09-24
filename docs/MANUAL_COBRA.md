@@ -82,20 +82,25 @@ nuevos (`texto`, `llamar`, `obtener_item`, `poner_item`, `borrar_item`,
 `entrar_async`, `salir_async`) amplían la cobertura de protocolos comunes.
 
 - **Alias síncronos** (válidos tanto para funciones como para métodos):
-  - `inicializar` &rarr; `__init__`
-  - `representar` &rarr; `__repr__`
-  - `iterar` &rarr; `__iter__`
-  - `longitud` &rarr; `__len__`
-  - `contener` &rarr; `__contains__`
-  - `comparar` &rarr; `__eq__`
-  - `ordenar` &rarr; `__lt__`
-  - `texto` &rarr; `__str__`
-  - `llamar` &rarr; `__call__`
-  - `obtener_item` &rarr; `__getitem__`
-  - `poner_item` &rarr; `__setitem__`
+  - `asignar_atributo` &rarr; `__setattr__`
+  - `borrar_atributo` &rarr; `__delattr__`
   - `borrar_item` &rarr; `__delitem__`
+  - `booleano` &rarr; `__bool__`
+  - `comparar` &rarr; `__eq__`
+  - `contener` &rarr; `__contains__`
   - `entrar` &rarr; `__enter__`
+  - `inicializar` &rarr; `__init__`
+  - `iterar` &rarr; `__iter__`
+  - `llamar` &rarr; `__call__`
+  - `longitud` &rarr; `__len__`
+  - `obtener_atributo` &rarr; `__getattr__`
+  - `obtener_hash` &rarr; `__hash__`
+  - `obtener_item` &rarr; `__getitem__`
+  - `ordenar` &rarr; `__lt__`
+  - `poner_item` &rarr; `__setitem__`
+  - `representar` &rarr; `__repr__`
   - `salir` &rarr; `__exit__`
+  - `texto` &rarr; `__str__`
 - **Alias asincrónicos** (úsalos junto con la palabra clave `asincronico` para
   declarar context managers asíncronos):
   - `entrar_async` &rarr; `__aenter__`

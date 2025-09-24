@@ -1,5 +1,8 @@
+import pytest
+
 from cobra.core import Lexer
 from cobra.core import Parser
+from pcobra.cobra.core.utils import ALIAS_METODOS_ESPECIALES
 from pcobra.core.ast_nodes import (
     NodoClase,
     NodoMetodo,
@@ -108,4 +111,30 @@ def test_parser_funcion_alias_especial():
     assert isinstance(funcion, NodoFuncion)
     assert funcion.nombre == "__str__"
     assert funcion.nombre_original == "texto"
+    assert parser.advertencias == []
+
+
+@pytest.mark.parametrize(
+    ("alias", "nombre_dunder"),
+    sorted(ALIAS_METODOS_ESPECIALES.items()),
+)
+def test_parser_metodo_alias_tabla(alias, nombre_dunder):
+    prefijo = "asincronico " if alias.endswith("_async") else ""
+    codigo = f"""
+    clase Ejemplo:
+        {prefijo}metodo {alias}(self):
+            pasar
+        fin
+    fin
+    """
+    parser = Parser(Lexer(codigo).analizar_token())
+    clase = parser.parsear()[0]
+    metodo = clase.metodos[0]
+    assert isinstance(metodo, NodoMetodo)
+    assert metodo.nombre == nombre_dunder
+    assert metodo.nombre_original == alias
+    if alias.endswith("_async"):
+        assert metodo.asincronica is True
+    else:
+        assert metodo.asincronica is False
     assert parser.advertencias == []
