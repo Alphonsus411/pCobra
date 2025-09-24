@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Iterable as IterableABC
 from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeVar
 
 T = TypeVar("T")
@@ -77,6 +78,22 @@ def mapear(lista: Iterable[T] | Sequence[T], funcion: Callable[[T], U]) -> List[
     elementos = _asegurar_iterable(lista)
     fn = _asegurar_callable(funcion)
     return [fn(elem) for elem in elementos]
+
+
+def mapear_aplanado(
+    iterable: Iterable[T] | Sequence[T], funcion: Callable[[T], Iterable[U]]
+) -> List[U]:
+    """Aplica ``funcion`` a cada elemento y aplana un nivel del resultado."""
+
+    elementos = _asegurar_iterable(iterable, nombre="iterable")
+    fn = _asegurar_callable(funcion)
+    resultado: List[U] = []
+    for elemento in elementos:
+        valor = fn(elemento)
+        if not isinstance(valor, IterableABC):
+            raise TypeError("funcion debe devolver un iterable")
+        resultado.extend(valor)
+    return resultado
 
 
 def filtrar(lista: Iterable[T] | Sequence[T], funcion: Callable[[T], bool]) -> List[T]:

@@ -83,6 +83,7 @@ from standard_library.lista import (
     cola,
     combinar,
     longitud,
+    mapear_aplanado,
     mapear_seguro,
     ventanas,
 )
@@ -162,6 +163,7 @@ __all__: list[str] = [
     "cola",
     "longitud",
     "combinar",
+    "mapear_aplanado",
     "mapear_seguro",
     "ventanas",
     "chunk",

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Callable, Iterable, List, Sequence, Tuple
 
 from corelibs.coleccion import (
+    mapear_aplanado as mapear_aplanado_core,
     tomar as tomar_core,
     tomar_mientras as tomar_mientras_core,
     descartar_mientras as descartar_mientras_core,
@@ -70,6 +71,20 @@ def mapear_seguro(
             resultados.append(valor_por_defecto)
             errores.append((elemento, exc))
     return resultados, errores
+
+
+def mapear_aplanado(
+    lista: Iterable[Any] | Sequence[Any], funcion: Callable[[Any], Iterable[Any]]
+) -> List[Any]:
+    """Aplica ``funcion`` y concatena los iterables resultantes en una lista.
+
+    El orden de los elementos producidos se mantiene estable respecto a la
+    entrada. Si ``funcion`` devuelve un valor que no sea iterable se lanza un
+    ``TypeError`` para facilitar el diagnóstico.
+    """
+
+    elementos = _asegurar_lista(lista)
+    return mapear_aplanado_core(elementos, funcion)
 
 
 def ventanas(
@@ -155,4 +170,20 @@ def pares_consecutivos(lista: Iterable[Any] | Sequence[Any]) -> List[Tuple[Any, 
 
     elementos = _asegurar_lista(lista)
     return pares_consecutivos_core(elementos)
+
+
+__all__ = [
+    "cabeza",
+    "cola",
+    "longitud",
+    "combinar",
+    "mapear_seguro",
+    "mapear_aplanado",
+    "ventanas",
+    "chunk",
+    "tomar_mientras",
+    "descartar_mientras",
+    "scanear",
+    "pares_consecutivos",
+]
 

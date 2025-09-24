@@ -699,11 +699,24 @@ def test_coleccion_funcs():
     assert core.sin_duplicados(datos) == [3, 1, 2]
     assert core.mapear(datos, lambda x: x + 1) == [4, 2, 3, 2]
     assert core.filtrar(datos, lambda x: x % 2 == 0) == [2]
+    assert core.mapear_aplanado([1, 3], lambda x: range(x)) == [0, 0, 1, 2]
     assert core.reducir([1, 2, 3], operator.add) == 6
     assert core.reducir([1, 2, 3], operator.add, 10) == 16
     assert core.encontrar(datos, lambda x: x > 2) == 3
     assert core.encontrar(datos, lambda x: x > 10, predeterminado="ninguno") == "ninguno"
     assert core.aplanar([[1, 2], (3, 4)]) == [1, 2, 3, 4]
+    
+    class Caja:
+        def __init__(self, valor):
+            self.valor = valor
+
+    cajas = [Caja(1), Caja(2)]
+    resultado_cajas = core.mapear_aplanado(cajas, lambda caja: (caja,))
+    assert [c.valor for c in cajas] == [1, 2]
+    assert all(isinstance(elem, Caja) for elem in resultado_cajas)
+    assert resultado_cajas[0] is cajas[0]
+    assert resultado_cajas[1] is cajas[1]
+
     estructuras = [
         {"tipo": "a", "valor": 1},
         {"tipo": "b", "valor": 2},
@@ -755,6 +768,8 @@ def test_coleccion_validaciones():
         core.mapear([1], None)
     with pytest.raises(TypeError):
         core.filtrar([1], "no callable")
+    with pytest.raises(TypeError):
+        core.mapear_aplanado([1], lambda _: 42)
     with pytest.raises(ValueError):
         core.reducir([], operator.add)
     with pytest.raises(TypeError):
