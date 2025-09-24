@@ -676,6 +676,36 @@ def test_archivo_rechaza_rutas_invalidas(monkeypatch, tmp_path, func, ruta):
         func(ruta(tmp_path))
 
 
+def test_archivo_existe_rechaza_fuera_del_sandbox(monkeypatch, tmp_path):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    archivo_forzado = tmp_path.parent / "fuera.txt"
+    archivo_forzado.write_text("contenido", encoding="utf-8")
+
+    assert not core.existe(str(archivo_forzado))
+    assert not core.existe("../fuera.txt")
+
+
+def test_archivo_eliminar_inexistente_no_falla(monkeypatch, tmp_path):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    core.eliminar("no-existe.txt")
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "symlink"), reason="La plataforma no soporta enlaces simbólicos"
+)
+def test_archivo_eliminar_no_sigue_enlace_fuera(monkeypatch, tmp_path):
+    monkeypatch.setenv("COBRA_IO_BASE_DIR", str(tmp_path))
+    objetivo = tmp_path.parent / "externo.txt"
+    objetivo.write_text("seguro", encoding="utf-8")
+    enlace = tmp_path / "enlace.txt"
+    enlace.symlink_to(objetivo)
+
+    with pytest.raises(ValueError):
+        core.eliminar(enlace.name)
+
+    assert objetivo.exists()
+
+
 def test_tiempo_funcs(monkeypatch):
     ahora = core.ahora()
     assert isinstance(ahora, datetime)

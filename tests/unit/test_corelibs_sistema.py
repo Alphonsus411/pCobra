@@ -1,3 +1,4 @@
+import asyncio
 import os
 import subprocess
 import importlib
@@ -55,6 +56,66 @@ def test_ejecutar_permitido_con_ruta(monkeypatch):
     monkeypatch.setattr(core_sistema.subprocess, "run", lambda *a, **k: proc)
     permitido = core_sistema.os.path.realpath("/bin/echo")
     assert core.ejecutar(["/bin/echo", "ok"], permitidos=[permitido], timeout=1) == "ok"
+
+
+def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
+    permitido = core_sistema.os.path.realpath("/usr/bin/env")
+    comando = ["env", "VAR=1"]
+    llamado: dict[str, list[str]] = {}
+
+    def fake_which(binario: str) -> str | None:
+        return permitido if binario == "env" else None
+
+    def fake_run(args, **kwargs):
+        llamado["args"] = args
+        comando[0] = "otro"
+        return SimpleNamespace(stdout="", stderr="")
+
+    monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
+    monkeypatch.setattr(core_sistema.subprocess, "run", fake_run)
+    monkeypatch.setattr(core_sistema.os, "stat", lambda _path: SimpleNamespace(st_ino=1))
+
+    salida = core.ejecutar(comando, permitidos=[permitido])
+
+    assert salida == ""
+    assert llamado["args"][0] == permitido
+    assert llamado["args"] is not comando
+    assert comando[0] == "otro"
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
+    permitido = core_sistema.os.path.realpath("/usr/bin/env")
+    comando = ["env"]
+    llamado: dict[str, list[str]] = {}
+
+    def fake_which(binario: str) -> str | None:
+        return permitido if binario == "env" else None
+
+    class FakeProc:
+        returncode = 0
+        stdout = None
+        stderr = None
+
+        async def communicate(self):
+            return b"", b""
+
+    async def fake_create_subprocess_exec(*args, **kwargs):
+        llamado["args"] = list(args)
+        comando[0] = "otro"
+        return FakeProc()
+
+    monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
+    monkeypatch.setattr(
+        core_sistema.asyncio, "create_subprocess_exec", fake_create_subprocess_exec
+    )
+    monkeypatch.setattr(core_sistema.os, "stat", lambda _path: SimpleNamespace(st_ino=1))
+
+    salida = await core_sistema.ejecutar_async(comando, permitidos=[permitido])
+
+    assert salida == ""
+    assert llamado["args"][0] == permitido
+    assert comando[0] == "otro"
 
 
 def test_ejecutar_sin_lista_blanca(monkeypatch):
