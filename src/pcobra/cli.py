@@ -15,7 +15,11 @@ sys.modules.setdefault("core", core_pkg)
 sys.modules.setdefault("compiler", compiler_pkg)
 
 import re
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
+    load_dotenv = None
 from .cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from .cobra.cli.commands.execute_cmd import ExecuteCommand
 from .cobra.cli.utils import messages
@@ -25,6 +29,11 @@ logger = logging.getLogger(__name__)
 
 def configurar_entorno() -> None:
     """Carga variables de entorno desde un archivo .env si está presente."""
+    if load_dotenv is None:
+        logger.debug(
+            "python-dotenv no está instalado; se omite la carga automática del archivo .env"
+        )
+        return
     try:
         cargado = load_dotenv()
     except OSError as exc:
