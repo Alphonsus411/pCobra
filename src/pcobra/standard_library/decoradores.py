@@ -13,7 +13,12 @@ import threading
 import time
 import warnings
 from dataclasses import dataclass as _dataclass
-from functools import lru_cache as _lru_cache, wraps
+from functools import (
+    lru_cache as _lru_cache,
+    singledispatch as _singledispatch,
+    total_ordering as _total_ordering,
+    wraps,
+)
 import importlib.util
 from typing import Any, Awaitable, Callable, Optional, ParamSpec, Sequence, TypeVar, overload
 
@@ -29,6 +34,7 @@ else:  # pragma: no cover - ``rich`` es opcional.
 P = ParamSpec("P")
 R = TypeVar("R")
 T = TypeVar("T")
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def _validar_parametros_reintento(
@@ -138,6 +144,78 @@ def memoizar(
 
     def decorador(objetivo: Callable[P, R]) -> Callable[P, R]:
         return _lru_cache(maxsize=maxsize, typed=typed)(objetivo)
+
+    if funcion is not None:
+        return decorador(funcion)
+    return decorador
+
+
+@overload
+def orden_total(_cls: type[T], /) -> type[T]:
+    ...
+
+
+@overload
+def orden_total() -> Callable[[type[T]], type[T]]:
+    ...
+
+
+def orden_total(
+    _cls: type[T] | None = None,
+    /,
+) -> type[T] | Callable[[type[T]], type[T]]:
+    """Aplica :func:`functools.total_ordering` validando el objetivo."""
+
+    def decorador(clase: type[T]) -> type[T]:
+        if not inspect.isclass(clase):
+            raise TypeError("orden_total solo puede aplicarse sobre clases")
+        return _total_ordering(clase)
+
+    if _cls is not None:
+        return decorador(_cls)
+    return decorador
+
+
+@overload
+def despachar_por_tipo(funcion: F, /) -> F:
+    ...
+
+
+@overload
+def despachar_por_tipo() -> Callable[[F], F]:
+    ...
+
+
+def despachar_por_tipo(funcion: F | None = None, /) -> F | Callable[[F], F]:
+    """Crea un despachador por tipo basado en :func:`functools.singledispatch`."""
+
+    def decorador(objetivo: F) -> F:
+        if not callable(objetivo):
+            raise TypeError("despachar_por_tipo requiere una función callable")
+
+        despachador = _singledispatch(objetivo)
+
+        def registrar(tipo: type[Any], /) -> Callable[[F], F]:
+            if not isinstance(tipo, type):
+                raise TypeError("registrar solo acepta clases o tipos")
+
+            def _registrar(funcion_registro: F) -> F:
+                if not callable(funcion_registro):
+                    raise TypeError("registrar requiere una función callable")
+                return despachador.register(tipo)(funcion_registro)  # type: ignore[misc]
+
+            return _registrar
+
+        def despachar(tipo: type[Any], /) -> Callable[..., Any]:
+            if not isinstance(tipo, type):
+                raise TypeError("despachar solo acepta clases o tipos")
+            return despachador.dispatch(tipo)
+
+        setattr(despachador, "registrar", registrar)
+        setattr(despachador, "despachar", despachar)
+        setattr(despachador, "registros", despachador.registry)
+
+        return despachador  # type: ignore[return-value]
 
     if funcion is not None:
         return decorador(funcion)
@@ -564,4 +642,6 @@ __all__ = [
     "sincronizar",
     "reintentar",
     "reintentar_async",
+    "orden_total",
+    "despachar_por_tipo",
 ]

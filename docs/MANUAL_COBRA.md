@@ -1258,9 +1258,19 @@ existentes en Python, Cobra expone atajos en español dentro de
 - `@temporizar` mide el tiempo de cada invocación con `time.perf_counter`. Si
   [`rich`](https://rich.readthedocs.io) está instalado, envía el resultado a una
   consola enriquecida; en caso contrario utiliza `print` estándar.
+- `@orden_total` (envoltorio de `functools.total_ordering`) completa los
+  operadores de comparación a partir de `__eq__` y uno adicional.
+- `@despachar_por_tipo` expone el despacho por tipo de `functools.singledispatch`
+  con métodos `registrar` y `despachar` en español.
 
 ```python
-from pcobra.standard_library.decoradores import dataclase, memoizar, temporizar
+from pcobra.standard_library.decoradores import (
+    dataclase,
+    memoizar,
+    temporizar,
+    orden_total,
+    despachar_por_tipo,
+)
 
 @dataclase
 class Punto:
@@ -1274,6 +1284,30 @@ def distancia(x, y):
 @temporizar(etiqueta="calculo")
 def hipotenusa(punto):
     return distancia(punto.x, punto.y)
+
+
+@orden_total()
+@dataclase
+class Version:
+    mayor: int
+    menor: int
+
+    def __lt__(self, otro: "Version") -> bool:
+        return (self.mayor, self.menor) < (otro.mayor, otro.menor)
+
+
+@despachar_por_tipo
+def describir(valor):
+    return f"Valor genérico: {valor!r}"
+
+
+@describir.registrar(Version)
+def _(valor: Version) -> str:
+    return f"Version {valor.mayor}.{valor.menor}"
+
+
+assert Version(1, 2) < Version(2, 0)
+assert describir(Version(1, 0)) == "Version 1.0"
 ```
 
 > Consejo: `temporizar` admite un parámetro `consola` para reutilizar una

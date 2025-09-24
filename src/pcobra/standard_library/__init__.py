@@ -144,7 +144,9 @@ from standard_library.asincrono import grupo_tareas, proteger_tarea, ejecutar_en
 from standard_library.decoradores import (
     dataclase,
     depreciado,
+    despachar_por_tipo,
     memoizar,
+    orden_total,
     reintentar,
     reintentar_async,
     sincronizar,
@@ -271,6 +273,8 @@ __all__: list[str] = [
     "sincronizar",
     "reintentar",
     "reintentar_async",
+    "orden_total",
+    "despachar_por_tipo",
 ]
 
 
@@ -325,3 +329,5 @@ depreciado: Callable[..., Callable[..., Any]]
 sincronizar: Callable[..., Callable[..., Any]]
 reintentar: Callable[..., Callable[..., Any]]
 reintentar_async: Callable[..., Callable[..., Any]]
+orden_total: Callable[..., type[Any]]
+despachar_por_tipo: Callable[..., Callable[..., Any]]
