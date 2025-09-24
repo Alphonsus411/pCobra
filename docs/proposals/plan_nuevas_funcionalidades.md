@@ -1,5 +1,13 @@
 # Plan de ampliación de Cobra inspirado en lenguajes soportados
 
+## Resumen ejecutivo consolidado
+
+- **Biblioteca estándar**: expandir cadenas, colecciones, números y booleanos con APIs inspiradas en Python y en los demás lenguajes soportados para reducir brechas funcionales.
+- **Modelo de ejecución**: introducir asincronía idiomática, decoradores utilitarios y un plan de migración gradual que preserve compatibilidad hacia atrás.
+- **Computación cuántica holográfica**: definir un puente `Cobra ↔ Hololang` con decoradores de alto nivel, simulador local y controles de seguridad.
+- **Interoperabilidad multilenguaje**: alinear las capacidades de Cobra con JavaScript, Rust, Go, Kotlin, Swift, R, Julia, Matlab, C/C++ y WebAssembly.
+- **Documentación y adopción**: acompañar cada fase con manuales, notebooks, automatización de pruebas y seguimiento de indicadores.
+
 ## Objetivos generales
 
 1. Incorporar funcionalidades idiomáticas presentes en Python que aún no existen en Cobra para fortalecer la biblioteca estándar y la expresividad del lenguaje.
@@ -257,4 +265,15 @@ y facilita su incorporación como issues o historias dentro del repositorio.
 | F5.2.a | Publicar notebooks demostrativos | Añadir `notebooks/async.ipynb`, `notebooks/cuanticidad.ipynb`, `notebooks/ffi.ipynb` | Tests `pytest -k notebook-smoke` con `papermill` | Documentar en `docs/notebooks/README.md` | Depende de fases respectivas |
 | F5.3.a | Integrar suites de pruebas nuevas al CI | Actualizar `Makefile`, workflows en `.github/workflows/ci.yml` y `pyproject.toml` | Ejecutar pipeline local `make ci` | Añadir sección en `CONTRIBUTING.md` | Depende de F1-F4 |
 | F5.3.b | Crear generadores para pruebas diferenciales | Scripts en `scripts/genera_pruebas_diferenciales.py` | Tests de regresión en `tests/scripts/test_generadores.py` | Documentar proceso en `docs/coverage.md` | Depende de F5.3.a |
+
+---
+
+## Estrategia de conciliación con la rama principal
+
+- **Resolución aplicada**: se consolidó este plan con la versión base asegurando que los objetivos generales y las fases del backlog queden integradas en un único documento sin secciones duplicadas.
+- **Política de merges**: los archivos de `docs/proposals` pueden fusionarse usando la estrategia `union` para concatenar cambios complementarios en lugar de generar conflictos manuales.
+- **Guía operativa**:
+  1. Actualizar la rama de trabajo con `git fetch` y `git merge origin/main` antes de continuar.
+  2. Si aparece un conflicto en este archivo, aceptar ambos bloques y revisar que las tablas mantengan el orden por fase.
+  3. Ejecutar la revisión ortográfica o `make lint-docs` (cuando esté disponible) antes de confirmar los cambios.
 
