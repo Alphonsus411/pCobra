@@ -22,6 +22,53 @@ def test_parser_declaracion_clase():
     assert metodo.nombre == "saludar"
 
 
+def test_parser_declaracion_estructura():
+    codigo = """
+    estructura Registro:
+        pasar
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    assert len(ast) == 1
+    clase = ast[0]
+    assert isinstance(clase, NodoClase)
+    assert clase.nombre == "Registro"
+
+
+def test_parser_declaracion_registro():
+    codigo = """
+    registro Archivo:
+        pasar
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    assert len(ast) == 1
+    clase = ast[0]
+    assert isinstance(clase, NodoClase)
+    assert clase.nombre == "Archivo"
+
+
+def test_parser_advertencia_alias_clase():
+    codigo = """
+    clase Uno:
+        pasar
+    fin
+
+    estructura Dos:
+        pasar
+    fin
+    """
+    tokens = Lexer(codigo).analizar_token()
+    parser = Parser(tokens)
+    parser.parsear()
+    assert parser.advertencias, "Se esperaba una advertencia por mezclar alias"
+    mensaje = parser.advertencias[0]
+    assert "clases" in mensaje
+    assert "'clase'" in mensaje and "'estructura'" in mensaje
+
+
 def test_parser_clase_alias_choque_nombres():
     codigo = """
     clase Persona:

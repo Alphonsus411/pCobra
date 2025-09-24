@@ -57,7 +57,7 @@ fin
 
 ## 3. Clases y objetos
 
-- Define una clase con `clase Nombre:` y finaliza con `fin`.
+- Define una clase con `clase Nombre:`, o si lo prefieres con `estructura` o `registro`, y finaliza con `fin`.
 - Las clases pueden declarar atributos y métodos.
 
 ```cobra
@@ -105,6 +105,10 @@ El parser registra una advertencia cuando dos declaraciones de la clase generan
 el mismo nombre especial (por ejemplo, `inicializar` y `__init__` o
 `entrar_async` y `__aenter__`) para evitar errores silenciosos.
 
+Además, puedes mezclar `clase`, `estructura` o `registro` para iniciar una
+definición, aunque el parser emitirá una advertencia si detecta más de un alias
+en el mismo archivo. El objetivo es ayudarte a mantener un estilo uniforme.
+
 **Herencia múltiple**
 
 Cobra permite que una clase herede de varias bases listándolas entre paréntesis.
@@ -129,6 +133,16 @@ clase Pato(Volador, Nadador):
 var p = Pato()
 p.volar()
 p.nadar()
+```
+
+### Enumeraciones
+
+Declara conjuntos de valores simbólicos con `enum` o su alias `enumeracion`. El
+parser trata ambos términos como equivalentes y avisará si se mezclan en el
+mismo archivo para mantener la coherencia.
+
+```cobra
+enumeracion Estado: ACTIVO, INACTIVO fin
 ```
 
 ## 4. Control de flujo
