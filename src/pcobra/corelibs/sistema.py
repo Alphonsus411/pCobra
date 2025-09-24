@@ -44,9 +44,11 @@ def _resolver_ejecutable(
     if not comando:
         raise ValueError("Comando vacío")
 
+    args = list(comando)
+
     permitidos_reales = _obtener_permitidos(permitidos)
 
-    exe = comando[0]
+    exe = args[0]
     exe_resuelto = shutil.which(exe) if not os.path.isabs(exe) else exe
     if exe_resuelto is None:
         raise ValueError(f"Comando no permitido: {exe}")
@@ -55,7 +57,8 @@ def _resolver_ejecutable(
     if exe_normalizado not in permitidos_reales:
         raise ValueError(f"Comando no permitido: {exe_real}")
     inode = os.stat(exe_real).st_ino
-    return comando, exe_real, inode
+    args[0] = exe_real
+    return args, exe_real, inode
 
 
 def _verificar_inode(exe_real: str, inode_inicial: int) -> None:
@@ -122,12 +125,12 @@ def ejecutar(
         if exc.stderr:
             return exc.stderr
         raise RuntimeError(
-            f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+            f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
         ) from exc
     except subprocess.CalledProcessError as exc:
         if exc.stderr:
             return exc.stderr
-        raise RuntimeError(f"Error al ejecutar '{' '.join(comando)}': {exc}") from exc
+        raise RuntimeError(f"Error al ejecutar '{' '.join(args)}': {exc}") from exc
 
 
 def _decodificar(data: bytes | None) -> str:
@@ -157,14 +160,14 @@ async def ejecutar_async(
         if stderr_bytes:
             return _decodificar(stderr_bytes)
         raise RuntimeError(
-            f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+            f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
         ) from exc
     _verificar_inode(exe_real, inode)
     if proc.returncode:
         if stderr_bytes:
             return _decodificar(stderr_bytes)
         raise RuntimeError(
-            f"Error al ejecutar '{' '.join(comando)}': código {proc.returncode}"
+            f"Error al ejecutar '{' '.join(args)}': código {proc.returncode}"
         )
     return _decodificar(stdout_bytes)
 
@@ -204,7 +207,7 @@ async def ejecutar_stream(
                 if stderr_bytes:
                     raise RuntimeError(_decodificar(stderr_bytes)) from exc
                 raise RuntimeError(
-                    f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+                    f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
                 ) from exc
             if not chunk:
                 break
@@ -226,7 +229,7 @@ async def ejecutar_stream(
             if stderr_bytes:
                 raise RuntimeError(_decodificar(stderr_bytes)) from exc
             raise RuntimeError(
-                f"Tiempo de espera agotado al ejecutar '{' '.join(comando)}'"
+                f"Tiempo de espera agotado al ejecutar '{' '.join(args)}'"
             ) from exc
 
         if proc.stderr is not None:
@@ -238,7 +241,7 @@ async def ejecutar_stream(
         if stderr_bytes:
             raise RuntimeError(_decodificar(stderr_bytes))
         raise RuntimeError(
-            f"Error al ejecutar '{' '.join(comando)}': código {proc.returncode}"
+            f"Error al ejecutar '{' '.join(args)}': código {proc.returncode}"
         )
 
 
