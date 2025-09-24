@@ -206,6 +206,30 @@ el objeto funciona como iterable en los distintos backends. Si declaras dos
 métodos que colisionan tras la traducción (por ejemplo, `inicializar` y
 `__init__`), Cobra mostrará una advertencia durante el parseo.
 
+Los alias admitidos cubren los protocolos más habituales de Python:
+
+- `asignar_atributo` &rarr; `__setattr__`
+- `borrar_atributo` &rarr; `__delattr__`
+- `borrar_item` &rarr; `__delitem__`
+- `booleano` &rarr; `__bool__`
+- `comparar` &rarr; `__eq__`
+- `contener` &rarr; `__contains__`
+- `entrar` &rarr; `__enter__`
+- `entrar_async` &rarr; `__aenter__`
+- `inicializar` &rarr; `__init__`
+- `iterar` &rarr; `__iter__`
+- `llamar` &rarr; `__call__`
+- `longitud` &rarr; `__len__`
+- `obtener_atributo` &rarr; `__getattr__`
+- `obtener_hash` &rarr; `__hash__`
+- `obtener_item` &rarr; `__getitem__`
+- `ordenar` &rarr; `__lt__`
+- `poner_item` &rarr; `__setitem__`
+- `representar` &rarr; `__repr__`
+- `salir` &rarr; `__exit__`
+- `salir_async` &rarr; `__aexit__`
+- `texto` &rarr; `__str__`
+
 ### Decorador `@registro`
 
 Para clases que solo almacenan datos puedes utilizar `@registro`. Cobra genera

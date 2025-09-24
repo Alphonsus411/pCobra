@@ -111,17 +111,29 @@ fin
 Los métodos especiales admiten alias legibles que se transpilan automáticamente
 al nombre mágico correspondiente. Los alias incorporados son:
 
-| Alias        | Método generado |
-|--------------|-----------------|
-| `inicializar`| `__init__`      |
-| `representar`| `__repr__`      |
-| `iterar`     | `__iter__`      |
-| `longitud`   | `__len__`       |
-| `contener`   | `__contains__`  |
-| `comparar`   | `__eq__`        |
-| `ordenar`    | `__lt__`        |
-| `entrar`     | `__enter__`     |
-| `salir`      | `__exit__`      |
+| Alias              | Método generado |
+|--------------------|-----------------|
+| `asignar_atributo` | `__setattr__`   |
+| `borrar_atributo`  | `__delattr__`   |
+| `borrar_item`      | `__delitem__`   |
+| `booleano`         | `__bool__`      |
+| `comparar`         | `__eq__`        |
+| `contener`         | `__contains__`  |
+| `entrar`           | `__enter__`     |
+| `entrar_async`     | `__aenter__`    |
+| `inicializar`      | `__init__`      |
+| `iterar`           | `__iter__`      |
+| `llamar`           | `__call__`      |
+| `longitud`         | `__len__`       |
+| `obtener_atributo` | `__getattr__`   |
+| `obtener_hash`     | `__hash__`      |
+| `obtener_item`     | `__getitem__`   |
+| `ordenar`          | `__lt__`        |
+| `poner_item`       | `__setitem__`   |
+| `representar`      | `__repr__`      |
+| `salir`            | `__exit__`      |
+| `salir_async`      | `__aexit__`     |
+| `texto`            | `__str__`       |
 
 Si dos alias producen el mismo nombre dentro de una clase (por ejemplo,
 `inicializar` y `__init__`), el parser conserva ambos nodos y emite una
