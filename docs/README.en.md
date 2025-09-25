@@ -87,7 +87,7 @@ Cobra's toolchain revolves around Hololang, an intermediate language that captur
 2. That AST is normalized and lowered into Hololang representations that encode control structures, modules and types.
 3. The transpilers consume the Hololang IR to generate code for each supported backend.
 
-Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. The `cobra transpila` command can output Hololang files directly or route them to the `asm` backend to obtain assembly listings.
+Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. The `cobra transpilar` command can output Hololang files directly or route them to the `asm` backend to obtain assembly listings.
 
 ## Installation
 
