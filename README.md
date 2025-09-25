@@ -111,7 +111,7 @@ La cadena de herramientas de Cobra se articula alrededor de Hololang, un lenguaj
 2. Ese AST se normaliza y se transforma en representaciones Hololang que capturan estructuras de control, módulos y tipos.
 3. Los transpiladores consumen el IR Hololang para generar código en los distintos backends soportados.
 
-Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador de ensamblador que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. El comando `cobra transpila` puede emitir directamente los ficheros Hololang o derivarlos a `asm` para obtener la salida en ensamblador.
+Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador de ensamblador que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. El comando `cobra transpilar` puede emitir directamente los ficheros Hololang o derivarlos a `asm` para obtener la salida en ensamblador.
 
 ## Instalación
 
@@ -152,7 +152,7 @@ cobra archivo.co --no-seguro
 ### Ejemplo de transpilación
 
 ```bash
-cobra transpila hola.co --dest python
+cobra transpilar hola.co --lenguaje python
 ```
 
 Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [docs/frontend](docs/frontend).
