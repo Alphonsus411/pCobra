@@ -1,47 +1,47 @@
 Manejo de la caché de AST y tokens
 ==================================
 
-La compilación de archivos Cobra genera árboles de sintaxis abstracta
-(AST) y tokens que se guardan en formato JSON para acelerar futuras
-ejecuciones.
+La caché incremental usa **SQLitePlus** para almacenar AST completos, tokens y
+fragmentos. Por defecto se crea la base de datos en ``~/.cobra/sqliteplus/core.db``
+y es obligatorio definir la variable de entorno ``SQLITE_DB_KEY`` antes de usar
+la CLI. Puedes cambiar la ruta exportando ``COBRA_DB_PATH``::
+
+   export SQLITE_DB_KEY="clave-local"
+   export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"
 
 .. note::
-   La caché usa un **checksum** del código (SHA256) para nombrar los
-   archivos. Puedes modificar la ruta predeterminada con la variable de
-   entorno ``COBRA_AST_CACHE``.
+   ``COBRA_AST_CACHE`` permanece como alias de compatibilidad. Al definirla,
+   se derivará una ruta ``cache.db`` dentro del directorio indicado y se emitirá
+   una advertencia de obsolescencia.
 
-Nombre y extensiones de los archivos
-------------------------------------
+Nombre y extensiones
+--------------------
 
-Cada archivo del directorio de caché recibe por nombre el SHA256
-calculado a partir del código fuente original. Los AST se almacenan
-como JSON con extensión ``.ast`` y los tokens con extensión ``.tok``.
+Los registros se indexan por el SHA256 del código fuente. El comando guarda el
+AST completo y los tokens asociados dentro de tablas SQLite, evitando archivos
+intermedios en disco.
 
 Fragmentos reutilizables
 ------------------------
 
-Además de estos archivos, existe el subdirectorio ``cache/fragmentos``
-que guarda fragmentos intermedios que pueden reutilizarse entre
-compilaciones.
+Los fragmentos utilizados por el parser también se almacenan en la base. Cada
+fragmento se identifica con el hash del código sobre el que se calculó, lo que
+permite reutilizarlos entre compilaciones.
 
-Variable de entorno ``COBRA_AST_CACHE``
----------------------------------------
+Limpieza de la base
+-------------------
 
-Por defecto la caché se coloca en ``cache`` dentro de la raíz del
-proyecto. Puedes cambiar esta ubicación definiendo la variable de
-entorno ``COBRA_AST_CACHE`` antes de ejecutar la compilación. Esta
-variable afecta tanto a los archivos ``.ast`` y ``.tok`` como al
-subdirectorio ``cache/fragmentos``.
+Para eliminar todas las entradas y recompac tar la base utiliza::
 
-Limpiar la caché
-----------------
+   cobra cache --vacuum
 
-Para eliminar todos los archivos ``.ast`` y ``.tok`` junto con los
-fragmentos almacenados, existe el subcomando:
+Migración desde JSON
+--------------------
 
-.. code-block:: bash
+Si aún conservas archivos ``.ast`` y ``.tok`` del esquema anterior, impórtalos
+con el script auxiliar incluido en ``scripts/``::
 
-   cobra cache
+   python scripts/migrar_cache_sqliteplus.py --origen /ruta/a/cache
 
-que borra los ficheros generados e informa por pantalla que la caché ha
-sido limpiada.
+El script recorre los hashes existentes, los inserta en SQLitePlus y deja la
+base lista para reutilizar la caché sin repetir el análisis.
