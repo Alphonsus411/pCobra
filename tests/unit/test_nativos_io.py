@@ -93,20 +93,36 @@ def test_obtener_url_host_no_permitido(monkeypatch):
 
 def test_obtener_url_redireccion_fuera_whitelist(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    mock_resp = MagicMock(text="ok", url="https://otro.com")
-    mock_resp.raise_for_status.return_value = None
-    with patch('requests.get', return_value=mock_resp):
+    redirect_resp = MagicMock(
+        status_code=302,
+        headers={"Location": "https://otro.com"},
+        url="https://example.com/redirect",
+    )
+    redirect_resp.iter_content.return_value = []
+    with patch('requests.get', return_value=redirect_resp) as mock_get:
         with pytest.raises(ValueError):
             io.obtener_url('https://example.com', permitir_redirecciones=True)
+        mock_get.assert_called_once_with(
+            'https://example.com', timeout=5, allow_redirects=False, stream=True
+        )
+    redirect_resp.close.assert_called_once()
 
 
 def test_obtener_url_redireccion_http(monkeypatch):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
-    mock_resp = MagicMock(text="ok", url="http://example.com")
-    mock_resp.raise_for_status.return_value = None
-    with patch('requests.get', return_value=mock_resp):
+    redirect_resp = MagicMock(
+        status_code=301,
+        headers={"Location": "http://example.com"},
+        url="https://example.com/redirect",
+    )
+    redirect_resp.iter_content.return_value = []
+    with patch('requests.get', return_value=redirect_resp) as mock_get:
         with pytest.raises(ValueError):
             io.obtener_url('https://example.com', permitir_redirecciones=True)
+        mock_get.assert_called_once_with(
+            'https://example.com', timeout=5, allow_redirects=False, stream=True
+        )
+    redirect_resp.close.assert_called_once()
 
 
 def test_obtener_url_respuesta_muy_grande(monkeypatch):
