@@ -6,7 +6,7 @@ Version 10.0.9
 
 - Tweaks in `SafeUnpickler` to support `core.ast_nodes` and `cobra.core.ast_nodes`.
 - `corelibs.sistema.ejecutar` now runs only whitelisted executables provided via the `permitidos` argument or the `COBRA_EJECUTAR_PERMITIDOS` environment variable.
-- Added an incremental JSON cache for AST and tokens to speed up repeated compilations.
+- Migrated the incremental AST/token cache to SQLitePlus to speed up repeated compilations.
 
 Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly, allowing greater versatility when running and deploying Cobra code.
 
@@ -87,7 +87,7 @@ Cobra's toolchain revolves around Hololang, an intermediate language that captur
 2. That AST is normalized and lowered into Hololang representations that encode control structures, modules and types.
 3. The transpilers consume the Hololang IR to generate code for each supported backend.
 
-Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. The `cobra transpila` command can output Hololang files directly or route them to the `asm` backend to obtain assembly listings.
+Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. The `cobra transpilar` command can output Hololang files directly or route them to the `asm` backend to obtain assembly listings.
 
 ## Installation
 
@@ -335,18 +335,41 @@ cobra benchthreads --output threads.json
 
 The result contains three entries (sequential, cli_hilos and kernel_hilos) with the times and CPU usage.
 
-## Incremental cache
+## Incremental cache and SQLitePlus
 
-Cobra stores tokens and ASTs in an incremental JSON cache to avoid
-reprocessing files that have not changed. The default location is the
-`cache/` directory or the path specified by the `COBRA_AST_CACHE`
-environment variable.
-
-Clear all cached files with:
+Starting with the SQLitePlus migration, Cobra persists the incremental AST
+and token cache inside an encrypted SQLite database instead of loose JSON
+files. The default database is created at `~/.cobra/sqliteplus/core.db`, and
+it requires the `SQLITE_DB_KEY` environment variable to open the connection.
+Override the location with `COBRA_DB_PATH` when you need to store the cache in
+a different directory. The former `COBRA_AST_CACHE` variable now acts only as a
+compatibility alias that derives a `cache.db` file from the provided path and
+emits a deprecation warning.
 
 ```bash
-cobra cache
+export SQLITE_DB_KEY=local-secret
+export COBRA_DB_PATH=$HOME/.cobra/sqliteplus/core.db  # optional override
 ```
+
+Use the `cobra cache` command to wipe the database, optionally compacting it
+afterward with `--vacuum`:
+
+```bash
+cobra cache --vacuum
+```
+
+### Migrating existing JSON caches
+
+If you still have the previous `cache/` directory with `.ast` and `.tok` files,
+you can import them into SQLitePlus with the helper script:
+
+```bash
+python scripts/migrar_cache_sqliteplus.py --origen /path/to/cache
+```
+
+Run the script after configuring `SQLITE_DB_KEY` (and optionally `COBRA_DB_PATH`).
+It recreates every stored hash inside the SQLite tables so subsequent runs avoid
+re-parsing unchanged sources.
 
 # Usage
 

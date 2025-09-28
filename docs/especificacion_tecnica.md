@@ -161,3 +161,20 @@ switch x:
 fin
 ```
 
+## Almacenamiento y migración de la caché
+
+La caché incremental de tokens y AST se gestiona mediante SQLitePlus. Por defecto
+se crea la base `~/.cobra/sqliteplus/core.db`, accesible únicamente si se define
+la variable de entorno `SQLITE_DB_KEY`. Para usar otra ubicación establece
+`COBRA_DB_PATH` antes de ejecutar la CLI o los módulos de análisis.
+
+Las instalaciones con archivos JSON generados por versiones anteriores pueden
+migrarse con:
+
+```bash
+python scripts/migrar_cache_sqliteplus.py --origen /ruta/a/cache
+```
+
+Este script recorre los hashes guardados en `.ast`/`.tok`, los inserta en la base
+de datos y deja el entorno listo para reutilizar la caché desde la nueva
+infraestructura.

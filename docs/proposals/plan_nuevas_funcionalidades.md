@@ -15,8 +15,6 @@
 3. Extender la paridad de características con los demás lenguajes soportados por el transpilador (JavaScript, Rust, Go, Kotlin, etc.) para que los programas Cobra conserven semántica al migrar.
 4. Definir un conjunto de tareas implementables y priorizadas que permitan desplegar estas mejoras de forma incremental.
 
----
-
 ## Ampliaciones inspiradas en Python
 
 ### Manipulación avanzada de textos y cadenas
@@ -196,8 +194,6 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 - Publicar RFCs previos a cambios en gramática o palabras reservadas.
 - Coordinar con mantenedores de extensiones (VS Code, Jupyter) para actualizar el soporte sintáctico.
 
----
-
 ## Backlog de implementación práctica
 
 El siguiente backlog descompone cada tarea macro en actividades implementables con entregables concretos
@@ -266,7 +262,6 @@ y facilita su incorporación como issues o historias dentro del repositorio.
 | F5.3.a | Integrar suites de pruebas nuevas al CI | Actualizar `Makefile`, workflows en `.github/workflows/ci.yml` y `pyproject.toml` | Ejecutar pipeline local `make ci` | Añadir sección en `CONTRIBUTING.md` | Depende de F1-F4 |
 | F5.3.b | Crear generadores para pruebas diferenciales | Scripts en `scripts/genera_pruebas_diferenciales.py` | Tests de regresión en `tests/scripts/test_generadores.py` | Documentar proceso en `docs/coverage.md` | Depende de F5.3.a |
 
----
 
 ## Estrategia de conciliación con la rama principal
 
@@ -276,4 +271,5 @@ y facilita su incorporación como issues o historias dentro del repositorio.
   1. Actualizar la rama de trabajo con `git fetch` y `git merge origin/main` antes de continuar.
   2. Si aparece un conflicto en este archivo, aceptar ambos bloques y revisar que las tablas mantengan el orden por fase.
   3. Ejecutar la revisión ortográfica o `make lint-docs` (cuando esté disponible) antes de confirmar los cambios.
+
 

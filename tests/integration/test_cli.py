@@ -1,9 +1,31 @@
-import pytest
+import importlib
+import sqlite3
 from io import StringIO
+from types import SimpleNamespace
 from unittest.mock import patch
+
+import pytest
+
 import pcobra  # ensure package is initialized
+import cobra.cli.cli as cli_module
 from cobra.cli.cli import main
-from cobra.cli.commands import modules_cmd
+from cobra.cli.commands import cache_cmd, modules_cmd
+from pcobra.cobra.core import Lexer, Parser
+
+
+def _reload_ast_cache(monkeypatch):
+    monkeypatch.delenv("COBRA_AST_CACHE", raising=False)
+    import core.ast_cache as ast_cache_module
+
+    ast_cache_module = importlib.reload(ast_cache_module)
+    ast_cache_module.limpiar_cache()
+    importlib.reload(cache_cmd)
+    return ast_cache_module
+
+
+@pytest.fixture(autouse=True)
+def _stub_gettext(monkeypatch):
+    monkeypatch.setattr(cli_module, "setup_gettext", lambda _lang=None: (lambda msg: msg))
 
 
 def test_cli_help():
@@ -65,3 +87,31 @@ def test_modulos_instalar_enlace_simbolico(tmp_path, monkeypatch):
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["modulos", "instalar", str(link)])
     assert "inv\u00e1lida" in out.getvalue().lower()
+
+
+def test_cache_command_clears_database(monkeypatch, base_datos_temporal):
+    ast_cache_module = _reload_ast_cache(monkeypatch)
+    monkeypatch.setattr(Lexer, "tokenizar", lambda self: [])
+    monkeypatch.setattr(Parser, "parsear", lambda self: [])
+
+    ast_cache_module.obtener_ast("var cli = 3")
+
+    with sqlite3.connect(base_datos_temporal) as conn:
+        before = conn.execute("SELECT COUNT(*) FROM ast_cache").fetchone()[0]
+    assert before == 1
+
+    info = []
+    errores = []
+    monkeypatch.setattr(cache_cmd, "mostrar_info", lambda msg: info.append(msg))
+    monkeypatch.setattr(cache_cmd, "mostrar_error", lambda msg: errores.append(msg))
+    monkeypatch.setattr(cache_cmd, "_", lambda msg: msg)
+
+    args = SimpleNamespace(vacuum=True)
+    resultado = cache_cmd.CacheCommand().run(args)
+
+    assert resultado == 0
+    assert info and not errores
+    with sqlite3.connect(base_datos_temporal) as conn:
+        ast_rows = conn.execute("SELECT COUNT(*) FROM ast_cache").fetchone()[0]
+        frag_rows = conn.execute("SELECT COUNT(*) FROM ast_fragments").fetchone()[0]
+    assert ast_rows == frag_rows == 0

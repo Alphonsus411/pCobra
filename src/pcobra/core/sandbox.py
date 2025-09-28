@@ -153,13 +153,14 @@ def ejecutar_en_sandbox_js(
         )
 
     codigo_serializado = json.dumps(codigo)
+    timeout_ms = "undefined" if timeout is None else str(int(timeout * 1000))
     script = f"""
 const {{ NodeVM }} = require('vm2');
 let output = '';
 const vm = new NodeVM({{
     console: 'redirect',
     sandbox: {{ process: undefined }},
-    timeout: {timeout * 1000},
+    timeout: {timeout_ms},
     eval: false,
     wasm: false,
     require: false,
@@ -230,12 +231,15 @@ process.stdout.write(output);
 
                 inicio = time.monotonic()
                 while True:
-                    restante = inicio + timeout - time.monotonic()
-                    if restante <= 0:
-                        proc.kill()
-                        return "Error: tiempo de ejecuci\u00f3n agotado"
+                    if timeout is None:
+                        restante = None
+                    else:
+                        restante = inicio + timeout - time.monotonic()
+                        if restante <= 0:
+                            proc.kill()
+                            return "Error: tiempo de ejecuci\u00f3n agotado"
                     rlist, _, _ = select.select([proc.stdout], [], [], restante)
-                    if not rlist:
+                    if timeout is not None and not rlist:
                         proc.kill()
                         return "Error: tiempo de ejecuci\u00f3n agotado"
                     chunk = proc.stdout.read(1024)
@@ -287,7 +291,7 @@ def ejecutar_en_contenedor(
     Los backends soportados son ``python``, ``js``, ``cpp`` y ``rust``. Cada
     backend utiliza una imagen específica que debe estar construida
     previamente. ``timeout`` define el límite de tiempo en segundos para la
-    ejecución del contenedor.
+    ejecución del contenedor o ``None`` para desactivar el límite.
 
     El contenedor se lanza sin acceso a la red (``--network=none``), como el
     usuario ``nobody`` (``--user 65534:65534``), con el sistema de archivos en

@@ -56,12 +56,39 @@ def escribir(ruta: PathLike, datos: str) -> None:
         f.write(datos)
 
 
-def existe(ruta: str) -> bool:
-    """Indica si el archivo *ruta* existe."""
-    return os.path.exists(ruta)
+def existe(ruta: PathLike) -> bool:
+    """Indica si el archivo existe dentro del directorio permitido."""
+
+    try:
+        objetivo = Path(ruta)
+        if objetivo.is_absolute():
+            base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
+            destino = objetivo.resolve()
+            destino.relative_to(base)
+        else:
+            destino = _resolver_ruta(objetivo)
+    except ValueError:
+        return False
+    return destino.exists()
 
 
-def eliminar(ruta: str) -> None:
-    """Elimina el archivo si existe."""
-    if os.path.exists(ruta):
-        os.remove(ruta)
+def eliminar(ruta: PathLike) -> None:
+    """Elimina un archivo dentro del directorio permitido."""
+
+    ruta_segura = _resolver_ruta(ruta) if not Path(ruta).is_absolute() else Path(ruta)
+    if ruta_segura.is_absolute():
+        base = Path(os.environ.get("COBRA_IO_BASE_DIR") or Path.cwd()).resolve()
+        destino = ruta_segura.resolve()
+        try:
+            destino.relative_to(base)
+        except ValueError as exc:
+            raise ValueError("La ruta queda fuera del directorio permitido") from exc
+        ruta_segura = destino
+    else:
+        ruta_segura = ruta_segura.resolve()
+    try:
+        ruta_segura.unlink(missing_ok=True)
+    except TypeError:
+        # Compatibilidad con versiones de Python anteriores a 3.8.
+        if ruta_segura.exists():
+            ruta_segura.unlink()

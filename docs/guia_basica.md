@@ -32,10 +32,10 @@ Para ejecutar un archivo Cobra desde la línea de comandos:
 cobra archivo.co
 ```
 
-También puedes transpilar el programa a otros lenguajes usando la opción `--to`:
+También puedes transpilar el programa a otros lenguajes usando la opción `--lenguaje` (o su alias `--backend`):
 
 ```bash
-cobra archivo.co --to python
+cobra archivo.co --lenguaje python
 ```
 
 ### Ejecución en GitHub Codespaces

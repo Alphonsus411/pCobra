@@ -18,8 +18,16 @@ from cobra.cli.utils.semver import es_nueva_version, es_version_valida
 # Configuración de logging
 logger = logging.getLogger(__name__)
 
-# Cliente de CobraHub
-client = CobraHubClient()
+# Cliente de CobraHub (inicializado bajo demanda)
+_client: Optional[CobraHubClient] = None
+
+
+def _get_client() -> CobraHubClient:
+    """Obtiene una instancia única del cliente de CobraHub."""
+    global _client
+    if _client is None:
+        _client = CobraHubClient()
+    return _client
 
 # Constantes
 MODULES_PATH = Path(os.path.dirname(__file__)) / ".." / "modules"
@@ -79,7 +87,7 @@ class ModulesCommand(BaseCommand):
             "listar": self._listar_modulos,
             "instalar": lambda: self._instalar_modulo(args.ruta),
             "remover": lambda: self._remover_modulo(args.nombre),
-            "publicar": lambda: 0 if client.publicar_modulo(args.ruta) else 1,
+            "publicar": lambda: 0 if _get_client().publicar_modulo(args.ruta) else 1,
             "buscar": lambda: self._buscar_modulo(args.nombre)
         }
 
@@ -349,7 +357,7 @@ class ModulesCommand(BaseCommand):
 
         try:
             destino = str(Path(MODULES_PATH) / nombre)
-            ok = client.descargar_modulo(nombre, destino)
+            ok = _get_client().descargar_modulo(nombre, destino)
             if ok:
                 ModulesCommand._actualizar_lock(nombre, None)
             return 0 if ok else 1
