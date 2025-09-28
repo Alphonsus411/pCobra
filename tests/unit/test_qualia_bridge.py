@@ -229,3 +229,25 @@ def test_load_state_recovers_existing_data(tmp_path, monkeypatch):
     assert module.QUALIA.history == ["persisted()"]
     assert module.QUALIA.knowledge.node_counts["NodoAsignacion"] == 3
     assert "lambda" in module.QUALIA.knowledge.patterns
+
+
+def test_migration_followed_by_persistence(tmp_path, monkeypatch):
+    home = _configure_env(tmp_path, monkeypatch)
+    legacy_file = home / ".cobra" / "qualia_state.json"
+    legacy_file.parent.mkdir(parents=True, exist_ok=True)
+    legacy_file.write_text(
+        json.dumps({"history": ["legacy()"], "knowledge": {}}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    module, _ = _reload_qualia(tmp_path, monkeypatch)
+    module.register_execution("var nuevo = 1")
+
+    with module.database.get_connection() as conn:
+        payload = conn.execute(
+            "SELECT payload FROM qualia_state WHERE id = 1"
+        ).fetchone()[0]
+
+    data = json.loads(payload)
+    assert data["history"][0] == "legacy()"
+    assert any("var nuevo = 1" in entry for entry in data["history"])

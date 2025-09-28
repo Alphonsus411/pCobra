@@ -4,45 +4,15 @@ import sys
 
 import pytest
 from pcobra.cobra.core import Lexer, Parser
-import pcobra.core.database as core_database
 
 
-def _reload_ast_cache(monkeypatch, tmp_path):
-    cache_dir = tmp_path / "cache"
-    monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
-    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
-    monkeypatch.delenv("COBRA_DB_PATH", raising=False)
-    database_module = importlib.reload(core_database)
-
-    class SQLitePlusStub:
-        def __init__(self, db_path: str, cipher_key: str | None = None):
-            self._db_path = db_path
-
-        def get_connection(self):
-            conn = sqlite3.connect(self._db_path)
-            conn.execute("PRAGMA foreign_keys = ON")
-            return conn
-
-    monkeypatch.setattr(
-        database_module,
-        "_load_sqliteplus_class",
-        lambda: SQLitePlusStub,
-        raising=False,
-    )
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_CLASS", SQLitePlusStub, raising=False
-    )
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
-    )
-
+def _reload_ast_cache(monkeypatch):
+    monkeypatch.delenv("COBRA_AST_CACHE", raising=False)
     sys.modules.pop("core.ast_cache", None)
     module = importlib.import_module("core.ast_cache")
-    return module, cache_dir
-
-
-def _db_path(cache_dir):
-    return cache_dir / "cache.db"
+    module = importlib.reload(module)
+    module.limpiar_cache()
+    return module
 
 
 def _count_rows(db_path, table):
@@ -51,8 +21,8 @@ def _count_rows(db_path, table):
         return cursor.fetchone()[0]
 
 
-def test_obtener_ast_reutiliza(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_obtener_ast_reutiliza(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
     llamadas = {"count": 0}
 
@@ -67,25 +37,27 @@ def test_obtener_ast_reutiliza(monkeypatch, tmp_path):
     ast_cache.obtener_ast(codigo)
 
     assert llamadas["count"] == 1
-    assert _count_rows(_db_path(cache_dir), "ast_cache") == 1
+    with sqlite3.connect(base_datos_temporal) as conn:
+        rows = conn.execute("SELECT source FROM ast_cache").fetchall()
+    assert rows == [(codigo,)]
 
 
 @pytest.mark.timeout(5)
-def test_limpiar_cache(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_limpiar_cache(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
     codigo = "var y = 2"
 
     monkeypatch.setattr(Parser, "parsear", lambda self: [])
     ast_cache.obtener_ast(codigo)
-    assert _count_rows(_db_path(cache_dir), "ast_cache") > 0
-
+    assert _count_rows(base_datos_temporal, "ast_cache") > 0
+    assert _count_rows(base_datos_temporal, "ast_fragments") > 0
     ast_cache.limpiar_cache(vacuum=True)
-    assert _count_rows(_db_path(cache_dir), "ast_cache") == 0
-    assert _count_rows(_db_path(cache_dir), "ast_fragments") == 0
+    assert _count_rows(base_datos_temporal, "ast_cache") == 0
+    assert _count_rows(base_datos_temporal, "ast_fragments") == 0
 
 
-def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_obtener_tokens_reutiliza(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
     llamadas = {"count": 0}
 
@@ -100,11 +72,15 @@ def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
     ast_cache.obtener_tokens(codigo)
 
     assert llamadas["count"] == 1
-    assert _count_rows(_db_path(cache_dir), "ast_fragments") == 1
+    with sqlite3.connect(base_datos_temporal) as conn:
+        rows = conn.execute(
+            "SELECT fragment_name FROM ast_fragments ORDER BY fragment_name"
+        ).fetchall()
+    assert rows == [("full_tokens",)]
 
 
-def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_obtener_ast_reutiliza_tokens(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
     token_calls = {"count": 0}
     parse_calls = {"count": 0}
@@ -123,7 +99,7 @@ def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
     codigo = "var a = 5"
     ast_cache.obtener_ast(codigo)
 
-    with sqlite3.connect(_db_path(cache_dir)) as conn:
+    with sqlite3.connect(base_datos_temporal) as conn:
         conn.execute("UPDATE ast_cache SET ast_json = 'null'")
         conn.commit()
 
@@ -133,8 +109,8 @@ def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
     assert parse_calls["count"] == 2
 
 
-def test_cache_fragmentos(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_cache_fragmentos(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
     llamadas = {"count": 0}
 
@@ -148,4 +124,4 @@ def test_cache_fragmentos(monkeypatch, tmp_path):
     ast_cache.obtener_tokens_fragmento(codigo)
     ast_cache.obtener_tokens_fragmento(codigo)
     assert llamadas["count"] == 1
-    assert _count_rows(_db_path(cache_dir), "ast_fragments") >= 1
+    assert _count_rows(base_datos_temporal, "ast_fragments") >= 1

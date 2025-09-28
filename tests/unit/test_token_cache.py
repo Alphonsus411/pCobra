@@ -2,63 +2,33 @@ import importlib
 import sqlite3
 import sys
 
-import pytest
 from pcobra.cobra.core import Lexer, Parser
-import pcobra.core.database as core_database
 
 
-def _reload_ast_cache(monkeypatch, tmp_path):
-    cache_dir = tmp_path / "cache"
-    monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
-    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
-    monkeypatch.delenv("COBRA_DB_PATH", raising=False)
-    database_module = importlib.reload(core_database)
-
-    class SQLitePlusStub:
-        def __init__(self, db_path: str, cipher_key: str | None = None):
-            self._db_path = db_path
-
-        def get_connection(self):
-            conn = sqlite3.connect(self._db_path)
-            conn.execute("PRAGMA foreign_keys = ON")
-            return conn
-
-    monkeypatch.setattr(
-        database_module,
-        "_load_sqliteplus_class",
-        lambda: SQLitePlusStub,
-        raising=False,
-    )
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_CLASS", SQLitePlusStub, raising=False
-    )
-    monkeypatch.setattr(
-        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
-    )
-
+def _reload_ast_cache(monkeypatch):
+    monkeypatch.delenv("COBRA_AST_CACHE", raising=False)
     sys.modules.pop("core.ast_cache", None)
     module = importlib.import_module("core.ast_cache")
-    return module, cache_dir
+    module = importlib.reload(module)
+    module.limpiar_cache()
+    return module
 
 
-def _db_path(cache_dir):
-    return cache_dir / "cache.db"
-
-
-def _count_rows(db_path, table):
+def _fetch_fragment_rows(db_path):
     with sqlite3.connect(db_path) as conn:
-        cursor = conn.execute(f"SELECT COUNT(*) FROM {table}")
-        return cursor.fetchone()[0]
+        return conn.execute(
+            "SELECT fragment_name, content FROM ast_fragments ORDER BY fragment_name"
+        ).fetchall()
 
 
-def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_obtener_tokens_reutiliza(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
     llamadas = {"count": 0}
 
     def fake_tokenizar(self):
         llamadas["count"] += 1
-        return []
+        return ["token"]
 
     monkeypatch.setattr(Lexer, "tokenizar", fake_tokenizar)
 
@@ -67,52 +37,40 @@ def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
     ast_cache.obtener_tokens(codigo)
 
     assert llamadas["count"] == 1
-    assert _count_rows(_db_path(cache_dir), "ast_fragments") == 1
+    rows = _fetch_fragment_rows(base_datos_temporal)
+    assert len(rows) == 1
+    nombre, contenido = rows[0]
+    assert nombre == "full_tokens"
+    assert "token" in contenido
 
 
-def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_tokens_persistidos(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
-    token_calls = {"count": 0}
-    parse_calls = {"count": 0}
+    monkeypatch.setattr(Lexer, "tokenizar", lambda self: ["uno", "dos"])
 
-    def fake_tokenizar(self):
-        token_calls["count"] += 1
-        return []
+    codigo = "var persistido = 1"
+    tokens = ast_cache.obtener_tokens(codigo)
 
-    def fake_parsear(self):
-        parse_calls["count"] += 1
-        return []
+    with sqlite3.connect(base_datos_temporal) as conn:
+        stored = conn.execute(
+            "SELECT content FROM ast_fragments WHERE fragment_name = ?",
+            ("full_tokens",),
+        ).fetchone()
 
-    monkeypatch.setattr(Lexer, "tokenizar", fake_tokenizar)
-    monkeypatch.setattr(Parser, "parsear", fake_parsear)
-
-    codigo = "var a = 5"
-    ast_cache.obtener_ast(codigo)
-
-    with sqlite3.connect(_db_path(cache_dir)) as conn:
-        conn.execute("UPDATE ast_cache SET ast_json = 'null'")
-        conn.commit()
-
-    ast_cache.obtener_ast(codigo)
-
-    assert token_calls["count"] == 1
-    assert parse_calls["count"] == 2
+    assert stored is not None
+    assert "uno" in stored[0]
+    assert tokens == ast_cache.obtener_tokens(codigo)
 
 
-def test_cache_fragmentos(monkeypatch, tmp_path):
-    ast_cache, cache_dir = _reload_ast_cache(monkeypatch, tmp_path)
+def test_fragmentos_limpiar(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
-    llamadas = {"count": 0}
+    monkeypatch.setattr(Lexer, "tokenizar", lambda self: ["a"])
+    monkeypatch.setattr(Parser, "parsear", lambda self: ["ast"])
 
-    def fake_tokenizar(self, *a, **k):
-        llamadas["count"] += 1
-        return []
+    ast_cache.obtener_ast("var limpia = 2")
+    assert _fetch_fragment_rows(base_datos_temporal)
 
-    monkeypatch.setattr(Lexer, "_tokenizar_base", fake_tokenizar, raising=False)
-
-    codigo = "imprimir(1)\n"
-    ast_cache.obtener_tokens_fragmento(codigo)
-    ast_cache.obtener_tokens_fragmento(codigo)
-    assert llamadas["count"] == 1
-    assert _count_rows(_db_path(cache_dir), "ast_fragments") >= 1
+    ast_cache.limpiar_cache()
+    assert _fetch_fragment_rows(base_datos_temporal) == []
