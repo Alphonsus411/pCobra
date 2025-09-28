@@ -9,14 +9,17 @@ variables de entorno.
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import os
 import sqlite3
+import sys
 import threading
+import types
+import warnings
 from contextlib import contextmanager
 from dataclasses import is_dataclass, asdict
-import sys
-import types
 from importlib import util as importlib_util
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
@@ -55,20 +58,50 @@ _TABLES_READY = False
 _INIT_LOCK = threading.Lock()
 _DB_LOCK = threading.Lock()
 
+_PATH_PREFIXES = ("path:", "file:")
+
 
 def _looks_like_path(value: str) -> bool:
     """Heurística sencilla para determinar si un valor parece una ruta."""
 
     if not value:
         return False
-    if value.startswith(("/", "./", "../", "~")):
+    candidate = value.strip()
+    if _looks_like_base64_token(candidate):
+        return False
+    if candidate.startswith(("/", "./", "../", "~")):
         return True
-    if value.endswith(".db"):
+    if candidate.endswith(".db"):
         return True
     seps = {os.sep}
     if os.altsep:
         seps.add(os.altsep)
-    return any(sep in value for sep in seps)
+    return any(sep in candidate for sep in seps)
+
+
+def _looks_like_base64_token(value: str) -> bool:
+    """Detecta valores que parecen pertenecer claramente a una clave base64."""
+
+    candidate = value.strip()
+    if len(candidate) < 16:
+        return False
+    std_alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
+    url_alphabet = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_=")
+    if all(ch in std_alphabet for ch in candidate):
+        normalized = candidate
+    elif all(ch in url_alphabet for ch in candidate):
+        normalized = candidate.replace("-", "+").replace("_", "/")
+    else:
+        return False
+
+    padding = len(normalized) % 4
+    if padding:
+        normalized = normalized + "=" * (4 - padding)
+    try:
+        base64.b64decode(normalized, validate=True)
+    except (binascii.Error, ValueError):
+        return False
+    return True
 
 
 def _load_sqliteplus_class():
@@ -144,17 +177,42 @@ def _resolve_paths() -> tuple[Path, str | None]:
         )
 
     env_path = os.environ.get(COBRA_DB_PATH_ENV)
+    cipher_key = raw_key or None
+    path_value = None
+    path_source = None
+
     if env_path:
-        db_path = Path(env_path).expanduser()
-    elif _looks_like_path(raw_key):
-        db_path = Path(raw_key).expanduser()
+        path_value = env_path
+        path_source = "environment"
     else:
+        for prefix in _PATH_PREFIXES:
+            if raw_key.startswith(prefix):
+                path_value = raw_key[len(prefix) :].strip()
+                cipher_key = None
+                path_source = "prefix"
+                break
+
+    if path_value:
+        if not _looks_like_path(path_value):
+            warnings.warn(
+                "El valor utilizado para la ruta de la base de datos no parece una ruta válida: %s"
+                % path_value,
+                RuntimeWarning,
+            )
+        db_path = Path(path_value).expanduser()
+    else:
+        if _looks_like_path(raw_key):
+            warnings.warn(
+                "El valor de 'SQLITE_DB_KEY' parece una ruta. Usa 'COBRA_DB_PATH' o el prefijo 'path:'"
+                " si deseas desactivar el cifrado. Se tratará el valor como clave de cifrado.",
+                RuntimeWarning,
+            )
         db_path = DEFAULT_DB_PATH
 
-    cipher_key = raw_key or None
-    if cipher_key and _looks_like_path(cipher_key):
-        # El valor se interpreta como ruta (compatibilidad con configuraciones previas).
-        cipher_key = None
+    if path_source == "prefix" and not path_value:
+        raise DatabaseKeyError(
+            "El prefijo de ruta en 'SQLITE_DB_KEY' requiere una ruta no vacía."
+        )
 
     db_path.parent.mkdir(parents=True, exist_ok=True)
     return db_path, cipher_key
