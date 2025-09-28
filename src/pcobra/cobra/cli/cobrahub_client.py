@@ -4,15 +4,14 @@ import os
 import re
 import urllib.parse
 from pathlib import Path
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, TYPE_CHECKING
 from urllib.parse import urlparse
-
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3 import Retry
 
 from cobra.cli.i18n import _
 from cobra.cli.utils.messages import mostrar_error, mostrar_info
+
+if TYPE_CHECKING:  # pragma: no cover - solo para tipado
+    import requests
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +42,16 @@ class CobraHubClient:
             raise ValueError(_("URL de CobraHub demasiado larga"))
         return url
 
-    def _configurar_sesion(self) -> requests.Session:
+    def _configurar_sesion(self) -> "requests.Session":
         """Configura una sesión HTTP con reintentos y timeouts."""
+        try:
+            import requests
+            from requests.adapters import HTTPAdapter
+            from urllib3 import Retry
+        except ModuleNotFoundError as exc:  # pragma: no cover - error de entorno
+            raise RuntimeError(
+                _("El comando requiere el paquete 'requests'. Instálalo para continuar.")) from exc
+
         session = requests.Session()
         retry_strategy = Retry(
             total=self.MAX_RETRIES,

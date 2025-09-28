@@ -3,6 +3,8 @@ from argparse import ArgumentParser
 from cobra.cli.i18n import _
 from cobra.cli.utils import messages
 
+__all__ = ["CustomArgumentParser"]
+
 
 class CustomArgumentParser(ArgumentParser):
     """ArgumentParser personalizado que usa mostrar_error y muestra la ayuda."""
