@@ -173,6 +173,40 @@ def save_state(spirit: QualiaSpirit) -> None:
         conn.commit()
 
 
+def reset_state() -> dict[str, Any]:
+    """Elimina el estado persistido de Qualia y limpia restos heredados."""
+
+    resultado: dict[str, Any] = {
+        "rows_deleted": False,
+        "legacy_removed": False,
+        "legacy_error": None,
+    }
+
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM qualia_state")
+        conn.commit()
+        resultado["rows_deleted"] = cursor.rowcount > 0
+
+    if os.path.exists(LEGACY_STATE_FILE):
+        try:
+            os.remove(LEGACY_STATE_FILE)
+        except OSError as exc:  # pragma: no cover - casos poco frecuentes
+            LOGGER.warning(
+                "No se pudo eliminar el archivo de estado heredado %s: %s",
+                LEGACY_STATE_FILE,
+                exc,
+            )
+            resultado["legacy_error"] = str(exc)
+        else:
+            resultado["legacy_removed"] = True
+
+    QUALIA.history.clear()
+    QUALIA.knowledge = QualiaKnowledge()
+
+    return resultado
+
+
 QUALIA = load_state()
 
 

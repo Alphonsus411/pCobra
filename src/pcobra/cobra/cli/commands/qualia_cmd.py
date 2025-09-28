@@ -1,7 +1,6 @@
 import json
 from argparse import ArgumentParser
-from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from cobra.cli.commands.base import BaseCommand
 from cobra.cli.i18n import _
@@ -65,16 +64,20 @@ class QualiaCommand(BaseCommand):
                 return 0
 
             if accion == self.ACCION_REINICIAR:
-                state = Path(qualia_bridge.STATE_FILE)
-                if state.exists():
-                    try:
-                        state.unlink()
-                        mostrar_info(_("Estado de Qualia eliminado"))
-                    except PermissionError:
-                        mostrar_error(_("No hay permisos para eliminar el archivo de estado"))
-                        return 1
+                resultado = qualia_bridge.reset_state()
+                if resultado.get("rows_deleted") or resultado.get("legacy_removed"):
+                    mostrar_info(_("Estado de Qualia eliminado"))
                 else:
                     mostrar_info(_("No existe estado de Qualia"))
+
+                if resultado.get("legacy_error"):
+                    mostrar_error(
+                        _("No se pudo eliminar el archivo de estado heredado: {error}").format(
+                            error=resultado["legacy_error"]
+                        )
+                    )
+                    return 1
+
                 return 0
 
             mostrar_error(_("Acción no reconocida"))
