@@ -28,6 +28,7 @@ from cobra.cli.commands.execute_cmd import ExecuteCommand
 from cobra.cli.commands.flet_cmd import FletCommand
 from cobra.cli.commands.init_cmd import InitCommand
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
+from cobra.cli.commands.agix_cmd import AgixCommand
 from core.interpreter import InterpretadorCobra
 from cobra.cli.commands.jupyter_cmd import JupyterCommand
 from cobra.cli.commands.modules_cmd import ModulesCommand
@@ -74,7 +75,7 @@ class AppConfig:
         BenchTranspilersCommand, BenchThreadsCommand,
         ProfileCommand, QualiaCommand, CacheCommand,
         TranspilarInversoCommand, VerifyCommand,
-        PluginsCommand
+        PluginsCommand, AgixCommand
     ]
 
 
