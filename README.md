@@ -947,17 +947,25 @@ A partir de la migración a **SQLitePlus**, la caché incremental de AST y token
 se almacena en una base de datos `SQLite` cifrada en lugar de archivos sueltos.
 La ruta por defecto es `~/.cobra/sqliteplus/core.db`, que se crea
 automáticamente al primer acceso. Para inicializar la conexión es obligatoria la
-variable de entorno `SQLITE_DB_KEY`, cuyo valor actúa como clave de cifrado (o
-como pista para la ruta en despliegues sin cifrado).
+variable de entorno `SQLITE_DB_KEY`, cuyo valor actúa como clave de cifrado.
+Si necesitas una ubicación distinta configura `COBRA_DB_PATH`; cuando se
+proporciona, el valor de `SQLITE_DB_KEY` se mantiene como clave incluso si
+contiene `/` u otros separadores.
 
 ```bash
 export SQLITE_DB_KEY="clave-local"          # Obligatorio para abrir la base
 export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"  # Opcional; usa el
                                                         # valor por defecto
+# Para despliegues sin cifrado puedes usar un prefijo explícito:
+export SQLITE_DB_KEY="path:/var/cache/pcobra/core.db"
 ```
 
 Si necesitas ubicar la base de datos en otro sitio, ajusta `COBRA_DB_PATH` a la
-ubicación deseada antes de ejecutar `cobra`. La antigua variable
+ubicación deseada antes de ejecutar `cobra`. Como compatibilidad adicional, un
+valor de `SQLITE_DB_KEY` que empiece por `path:` o `file:` se interpreta como
+ruta explícita y desactiva el cifrado; en cualquier otro caso el valor se trata
+como clave aunque contenga separadores y se emitirá una advertencia si parece
+una ruta. La antigua variable
 `COBRA_AST_CACHE` continúa disponible únicamente como alias de compatibilidad:
 si la defines, el sistema derivará automáticamente una ruta `cache.db` en ese
 directorio y mostrará una advertencia de depreciación.
