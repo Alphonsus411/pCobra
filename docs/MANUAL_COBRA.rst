@@ -449,6 +449,26 @@ volver a transpilarlos con ``cobra transpilar-inverso``::
 
    cobra transpilar-inverso ejemplo.py --origen=python --destino=js
 
+Caché incremental con SQLitePlus
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+La caché de tokens y AST utiliza SQLitePlus como backend. La base predeterminada
+se crea en ``~/.cobra/sqliteplus/core.db`` y exige definir ``SQLITE_DB_KEY``
+antes de ejecutar la CLI o los intérpretes. Para usar otra ubicación exporta
+``COBRA_DB_PATH``::
+
+   export SQLITE_DB_KEY="clave-local"
+   export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"
+
+El subcomando ``cobra cache --vacuum`` limpia y recompac ta la base. Para
+migrar caches heredadas en formato JSON ejecuta el script incluido en
+``scripts/``::
+
+   python scripts/migrar_cache_sqliteplus.py --origen /ruta/a/cache
+
+El proceso inserta los hashes ``.ast``/``.tok`` en SQLitePlus, permitiendo que
+las ejecuciones posteriores reutilicen la caché sin rehacer el análisis.
+
 Limitaciones de los backends
 ----------------------------
 

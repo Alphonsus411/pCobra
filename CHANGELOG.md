@@ -4,6 +4,8 @@
 - Incorporación del generador de ensamblador basado en el IR de Hololang y documentación asociada.
 
 ## v10.0.10 - Pendiente de liberación
+- Migración de la caché incremental a SQLitePlus con base en `~/.cobra/sqliteplus/core.db`.
+- Nuevas variables de entorno `SQLITE_DB_KEY` (obligatoria) y `COBRA_DB_PATH` (opcional) documentadas para configurar la base de datos.
 - Actualización de la dependencia `agix` a la versión 1.6.0.
 - Mejora de rendimiento y compatibilidad derivada de esta actualización.
 - Actualización de `holobit-sdk` a la versión 1.0.9 y ajuste de `graficar`/`proyectar` al nuevo API.
