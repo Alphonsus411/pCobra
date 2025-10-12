@@ -1,0 +1,4 @@
+# Facilitar merges en documentación de propuestas
+# Usa el driver "union" integrado para concatenar cambios cuando varios equipos
+# actualicen la misma propuesta en paralelo.
+docs/proposals/*.md merge=union

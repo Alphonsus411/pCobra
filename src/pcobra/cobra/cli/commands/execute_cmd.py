@@ -138,7 +138,9 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_en_sandbox(self, codigo: str) -> int:
         """Ejecuta el código en un entorno sandbox."""
         try:
-            ejecutar_en_sandbox(codigo)
+            salida = ejecutar_en_sandbox(codigo)
+            if salida:
+                mostrar_info(str(salida))
             return 0
         except SecurityError as e:
             self.logger.error("Error de seguridad en sandbox", extra={"error": str(e)})

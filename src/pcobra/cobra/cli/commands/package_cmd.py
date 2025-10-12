@@ -80,19 +80,24 @@ class PaqueteCommand(BaseCommand):
                 size=MAX_ZIP_SIZE//1024//1024))
 
     @staticmethod
-    def _validar_modulos(mods: List[Path]) -> None:
-        """Valida la lista de módulos.
-        
+    def _validar_modulos(mods: List[Path]) -> List[Path]:
+        """Valida la lista de módulos y garantiza que sean rutas.
+
         Args:
-            mods: Lista de rutas a módulos
-            
+            mods: Lista de rutas (o cadenas) a módulos
+
+        Returns:
+            List[Path]: Lista normalizada de rutas a módulos
+
         Raises:
             ValueError: Si no hay módulos o hay demasiados
         """
-        if len(mods) > MAX_FILES:
+        paths = [m if isinstance(m, Path) else Path(m) for m in mods]
+        if len(paths) > MAX_FILES:
             raise ValueError(_("Demasiados archivos en el paquete (máximo {max})").format(max=MAX_FILES))
-        if not mods:
+        if not paths:
             raise ValueError(_("No se encontraron módulos"))
+        return paths
 
     @staticmethod
     def _crear(src: Path, pkg: Path, nombre: str, version: str) -> int:
@@ -117,7 +122,7 @@ class PaqueteCommand(BaseCommand):
                 return 1
 
             mods = [f for f in src.iterdir() if f.suffix in ALLOWED_EXTENSIONS]
-            PaqueteCommand._validar_modulos(mods)
+            mods = PaqueteCommand._validar_modulos(mods)
 
             mod_list = ", ".join(f'"{m.name}"' for m in mods)
             contenido = (
@@ -159,22 +164,24 @@ class PaqueteCommand(BaseCommand):
                 return 1
 
             PaqueteCommand._validar_zip(pkg)
-            modules_dir = Path(modules_cmd.MODULES_PATH)
+            modules_dir = Path(modules_cmd.MODULES_PATH).resolve()
             modules_dir.mkdir(parents=True, exist_ok=True)
 
             with zipfile.ZipFile(pkg) as zf:
                 file_list = [name for name in zf.namelist() if name.endswith(".co")]
-                PaqueteCommand._validar_modulos(file_list)
+                module_paths = [Path(name) for name in file_list]
+                module_paths = PaqueteCommand._validar_modulos(module_paths)
 
-                for name in file_list:
+                for name, rel_path in zip(file_list, module_paths):
                     # Validar y normalizar ruta
                     try:
-                        safe_path = Path(name).resolve().relative_to(modules_dir)
+                        candidate = (modules_dir / rel_path).resolve()
+                        candidate.relative_to(modules_dir)
                     except (ValueError, RuntimeError):
                         mostrar_error(_("Nombre de archivo no válido en el paquete"))
                         return 1
 
-                    dest = modules_dir / safe_path
+                    dest = candidate
                     if dest.exists() and dest.is_symlink():
                         mostrar_error(
                             _("El destino {dest} es un enlace simbólico").format(dest=dest)

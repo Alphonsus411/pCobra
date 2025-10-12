@@ -1,46 +1,89 @@
+import hashlib
 import importlib
-import os
-import sys
 import json
+import sqlite3
+import sys
 
 import pytest
+import pcobra.core.database as core_database
 
 
 def _prepare_cache(monkeypatch, tmp_path):
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
-    if "core.ast_cache" in sys.modules:
-        importlib.reload(sys.modules["core.ast_cache"])
-    return cache_dir
+    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+    monkeypatch.delenv("COBRA_DB_PATH", raising=False)
+    database_module = importlib.reload(core_database)
+
+    class SQLitePlusStub:
+        def __init__(self, db_path: str, cipher_key: str | None = None):
+            self._db_path = db_path
+
+        def get_connection(self):
+            conn = sqlite3.connect(self._db_path)
+            conn.execute("PRAGMA foreign_keys = ON")
+            return conn
+
+    monkeypatch.setattr(
+        database_module,
+        "_load_sqliteplus_class",
+        lambda: SQLitePlusStub,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        database_module, "_SQLITEPLUS_CLASS", SQLitePlusStub, raising=False
+    )
+    monkeypatch.setattr(
+        database_module, "_SQLITEPLUS_INSTANCE", None, raising=False
+    )
+    sys.modules.pop("core.ast_cache", None)
+    module = importlib.import_module("core.ast_cache")
+    return module, cache_dir
 
 
-def _escribir_malicioso(ruta):
-    with open(ruta, "w", encoding="utf-8") as f:
-        f.write("{malformed json]")
+def _db_path(cache_dir):
+    return cache_dir / "cache.db"
 
 
 def test_carga_ast_malicioso(monkeypatch, tmp_path):
-    _prepare_cache(monkeypatch, tmp_path)
-    from core.ast_cache import _ruta_cache, obtener_ast
+    ast_cache, cache_dir = _prepare_cache(monkeypatch, tmp_path)
 
     codigo = "var x = 1"
-    ruta = _ruta_cache(codigo)
-    os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    _escribir_malicioso(ruta)
+    from pcobra.cobra.core import Parser
+    monkeypatch.setattr(Parser, "parsear", lambda self: [])
+    ast_cache.obtener_ast(codigo)
+
+    hash_key = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    with sqlite3.connect(_db_path(cache_dir)) as conn:
+        conn.execute(
+            "UPDATE ast_cache SET ast_json = '{malformed json]' WHERE hash = ?",
+            (hash_key,),
+        )
+        conn.commit()
 
     with pytest.raises(json.JSONDecodeError):
-        obtener_ast(codigo)
+        ast_cache.obtener_ast(codigo)
 
 
 def test_carga_tokens_maliciosos(monkeypatch, tmp_path):
-    _prepare_cache(monkeypatch, tmp_path)
-    from core.ast_cache import _ruta_tokens, obtener_tokens
+    ast_cache, cache_dir = _prepare_cache(monkeypatch, tmp_path)
 
     codigo = "var x = 1"
-    ruta = _ruta_tokens(codigo)
-    os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    _escribir_malicioso(ruta)
+    from pcobra.cobra.core import Parser
+    monkeypatch.setattr(Parser, "parsear", lambda self: [])
+    ast_cache.obtener_tokens(codigo)
+
+    hash_key = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+    with sqlite3.connect(_db_path(cache_dir)) as conn:
+        conn.execute(
+            """
+            UPDATE ast_fragments
+            SET content = '{malformed json]'
+            WHERE hash = ? AND fragment_name = 'full_tokens'
+            """,
+            (hash_key,),
+        )
+        conn.commit()
 
     with pytest.raises(json.JSONDecodeError):
-        obtener_tokens(codigo)
-
+        ast_cache.obtener_tokens(codigo)

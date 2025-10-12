@@ -1,9 +1,11 @@
 import json
+import logging
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Any, List, Union
 
 from pcobra.cobra.core import Lexer, Parser
+from core import database
 from core.qualia_knowledge import QualiaKnowledge
 
 
@@ -30,7 +32,10 @@ def _resolve_state_file() -> str:
     return path
 
 
-STATE_FILE = _resolve_state_file()
+LEGACY_STATE_FILE = _resolve_state_file()
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class QualiaSpirit:
@@ -65,48 +70,141 @@ class QualiaSpirit:
             and self.knowledge.modules_used.get("matplotlib", 0) == 0
         ):
             sugerencias.append(
-                "Si usas pandas, podr\u00edas utilizar matplotlib para graficar."
+                "Si usas pandas, podrías utilizar matplotlib para graficar."
             )
 
         if not sugerencias:
-            sugerencias.append("\u00a1Sigue as\u00ed!")
+            sugerencias.append("¡Sigue así!")
 
         return sugerencias
 
 
-def load_state() -> QualiaSpirit:
-    """Carga el estado del ``QualiaSpirit`` desde ``STATE_FILE``."""
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        spirit = QualiaSpirit()
-        spirit.history = data.get("history", [])
-        spirit.knowledge = QualiaKnowledge.from_dict(data.get("knowledge", {}))
+def _payload_to_dict(payload: Any) -> dict[str, Any] | None:
+    """Convierte el ``payload`` obtenido de la base de datos en un diccionario."""
+
+    if payload is None:
+        return None
+    if isinstance(payload, memoryview):  # pragma: no cover - ruta dependiente de sqlite
+        payload = payload.tobytes()
+    if isinstance(payload, (bytes, bytearray)):
+        payload = payload.decode("utf-8")
+    if isinstance(payload, str):
+        try:
+            return json.loads(payload)
+        except json.JSONDecodeError as exc:  # pragma: no cover - corrupción inesperada
+            LOGGER.warning("No se pudo decodificar el estado guardado: %s", exc)
+            return None
+    LOGGER.warning("Tipo de payload inesperado: %s", type(payload).__name__)
+    return None
+
+
+def _build_spirit(data: dict[str, Any] | None) -> QualiaSpirit:
+    spirit = QualiaSpirit()
+    if not data:
         return spirit
-    return QualiaSpirit()
+    spirit.history = list(data.get("history", []))
+    spirit.knowledge = QualiaKnowledge.from_dict(data.get("knowledge", {}))
+    return spirit
+
+
+def _migrate_legacy_state(cursor, conn) -> dict[str, Any] | None:
+    """Migra el estado almacenado en el archivo JSON heredado."""
+
+    if not os.path.exists(LEGACY_STATE_FILE):
+        return None
+
+    if os.path.islink(LEGACY_STATE_FILE) or Path(LEGACY_STATE_FILE).is_symlink():
+        raise ValueError("QUALIA_STATE_PATH se convirtió en un enlace simbólico")
+
+    with open(LEGACY_STATE_FILE, "r", encoding="utf-8") as fh:
+        legacy_data = json.load(fh)
+
+    payload = json.dumps(legacy_data, ensure_ascii=False)
+    cursor.execute(
+        "INSERT OR REPLACE INTO qualia_state(id, payload) VALUES (1, ?)",
+        (payload,),
+    )
+    conn.commit()
+
+    try:
+        os.remove(LEGACY_STATE_FILE)
+    except OSError as exc:  # pragma: no cover - casos poco comunes
+        LOGGER.warning(
+            "No se pudo eliminar el archivo de estado heredado %s: %s",
+            LEGACY_STATE_FILE,
+            exc,
+        )
+    else:
+        LOGGER.info("Migrado el estado de qualia desde %s", LEGACY_STATE_FILE)
+
+    return legacy_data
+
+
+def load_state() -> QualiaSpirit:
+    """Carga el estado del ``QualiaSpirit`` desde la base de datos."""
+
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        data = _migrate_legacy_state(cursor, conn)
+        if data is None:
+            cursor.execute("SELECT payload FROM qualia_state WHERE id = 1")
+            row = cursor.fetchone()
+            data = _payload_to_dict(row[0]) if row else None
+    return _build_spirit(data)
 
 
 def save_state(spirit: QualiaSpirit) -> None:
-    """Guarda el estado de ``spirit`` en ``STATE_FILE``."""
-    os.makedirs(os.path.dirname(STATE_FILE), mode=0o700, exist_ok=True)
+    """Guarda el estado de ``spirit`` en la base de datos."""
 
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
-    fd = os.open(STATE_FILE, flags, 0o600)
-    if os.path.islink(STATE_FILE) or Path(STATE_FILE).is_symlink():
-        os.close(fd)
-        raise ValueError("QUALIA_STATE_PATH se convirti\u00f3 en un enlace simb\u00f3lico")
+    payload = json.dumps(
+        {
+            "history": spirit.history,
+            "knowledge": spirit.knowledge.as_dict(),
+        },
+        ensure_ascii=False,
+    )
 
-    os.fchmod(fd, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        json.dump(
-            {
-                "history": spirit.history,
-                "knowledge": spirit.knowledge.as_dict(),
-            },
-            fh,
-            ensure_ascii=False,
-            indent=2,
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO qualia_state(id, payload) VALUES (1, ?)",
+            (payload,),
         )
+        conn.commit()
+
+
+def reset_state() -> dict[str, Any]:
+    """Elimina el estado persistido de Qualia y limpia restos heredados."""
+
+    resultado: dict[str, Any] = {
+        "rows_deleted": False,
+        "legacy_removed": False,
+        "legacy_error": None,
+    }
+
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM qualia_state")
+        conn.commit()
+        resultado["rows_deleted"] = cursor.rowcount > 0
+
+    if os.path.exists(LEGACY_STATE_FILE):
+        try:
+            os.remove(LEGACY_STATE_FILE)
+        except OSError as exc:  # pragma: no cover - casos poco frecuentes
+            LOGGER.warning(
+                "No se pudo eliminar el archivo de estado heredado %s: %s",
+                LEGACY_STATE_FILE,
+                exc,
+            )
+            resultado["legacy_error"] = str(exc)
+        else:
+            resultado["legacy_removed"] = True
+
+    QUALIA.history.clear()
+    QUALIA.knowledge = QualiaKnowledge()
+
+    return resultado
 
 
 QUALIA = load_state()

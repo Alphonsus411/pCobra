@@ -1,89 +1,76 @@
 import importlib
+import sqlite3
 import sys
-import hashlib
-import pytest
-from cobra.core import Lexer
-from cobra.core import Parser
+
+from pcobra.cobra.core import Lexer, Parser
 
 
-def test_obtener_tokens_reutiliza(monkeypatch, tmp_path):
-    cache_dir = tmp_path / "cache"
-    monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
+def _reload_ast_cache(monkeypatch):
+    monkeypatch.delenv("COBRA_AST_CACHE", raising=False)
+    sys.modules.pop("core.ast_cache", None)
+    module = importlib.import_module("core.ast_cache")
+    module = importlib.reload(module)
+    module.limpiar_cache()
+    return module
 
-    if 'core.ast_cache' in sys.modules:
-        importlib.reload(sys.modules['core.ast_cache'])
-    from core.ast_cache import obtener_tokens
+
+def _fetch_fragment_rows(db_path):
+    with sqlite3.connect(db_path) as conn:
+        return conn.execute(
+            "SELECT fragment_name, content FROM ast_fragments ORDER BY fragment_name"
+        ).fetchall()
+
+
+def test_obtener_tokens_reutiliza(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
     llamadas = {"count": 0}
 
     def fake_tokenizar(self):
         llamadas["count"] += 1
-        return []
+        return ["token"]
 
     monkeypatch.setattr(Lexer, "tokenizar", fake_tokenizar)
 
     codigo = "var z = 3"
-    obtener_tokens(codigo)
-    obtener_tokens(codigo)
+    ast_cache.obtener_tokens(codigo)
+    ast_cache.obtener_tokens(codigo)
 
     assert llamadas["count"] == 1
-    archivos = list(cache_dir.glob("*.tok"))
-    assert len(archivos) == 1
+    rows = _fetch_fragment_rows(base_datos_temporal)
+    assert len(rows) == 1
+    nombre, contenido = rows[0]
+    assert nombre == "full_tokens"
+    assert "token" in contenido
 
 
-def test_obtener_ast_reutiliza_tokens(monkeypatch, tmp_path):
-    cache_dir = tmp_path / "cache"
-    monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
+def test_tokens_persistidos(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
-    if 'core.ast_cache' in sys.modules:
-        importlib.reload(sys.modules['core.ast_cache'])
-    from core.ast_cache import obtener_ast
+    monkeypatch.setattr(Lexer, "tokenizar", lambda self: ["uno", "dos"])
 
-    token_calls = {"count": 0}
-    parse_calls = {"count": 0}
+    codigo = "var persistido = 1"
+    tokens = ast_cache.obtener_tokens(codigo)
 
-    def fake_tokenizar(self):
-        token_calls["count"] += 1
-        return []
+    with sqlite3.connect(base_datos_temporal) as conn:
+        stored = conn.execute(
+            "SELECT content FROM ast_fragments WHERE fragment_name = ?",
+            ("full_tokens",),
+        ).fetchone()
 
-    def fake_parsear(self):
-        parse_calls["count"] += 1
-        return []
-
-    monkeypatch.setattr(Lexer, "tokenizar", fake_tokenizar)
-    monkeypatch.setattr(Parser, "parsear", fake_parsear)
-
-    codigo = "var a = 5"
-    obtener_ast(codigo)
-
-    # eliminar archivo AST para forzar nueva construcción manteniendo tokens
-    checksum = hashlib.sha256(codigo.encode("utf-8")).hexdigest()
-    ast_path = cache_dir / f"{checksum}.ast"
-    if ast_path.exists():
-        ast_path.unlink()
-
-    obtener_ast(codigo)
-
-    assert token_calls["count"] == 1
-    assert parse_calls["count"] == 2
-    assert (cache_dir / f"{checksum}.tok").exists()
+    assert stored is not None
+    assert "uno" in stored[0]
+    assert tokens == ast_cache.obtener_tokens(codigo)
 
 
-def test_cache_fragmentos(monkeypatch, tmp_path):
-    cache_dir = tmp_path / "cache"
-    monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
+def test_fragmentos_limpiar(monkeypatch, base_datos_temporal):
+    ast_cache = _reload_ast_cache(monkeypatch)
 
-    from core.ast_cache import obtener_tokens_fragmento
+    monkeypatch.setattr(Lexer, "tokenizar", lambda self: ["a"])
+    monkeypatch.setattr(Parser, "parsear", lambda self: ["ast"])
 
-    llamadas = {"count": 0}
+    ast_cache.obtener_ast("var limpia = 2")
+    assert _fetch_fragment_rows(base_datos_temporal)
 
-    def fake_tokenizar(self, *a, **k):
-        llamadas["count"] += 1
-        return []
-
-    monkeypatch.setattr(Lexer, "_tokenizar_base", fake_tokenizar)
-
-    codigo = "imprimir(1)\n"
-    obtener_tokens_fragmento(codigo)
-    obtener_tokens_fragmento(codigo)
-    assert llamadas["count"] == 1
+    ast_cache.limpiar_cache()
+    assert _fetch_fragment_rows(base_datos_temporal) == []

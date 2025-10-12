@@ -515,6 +515,28 @@ Convierte programas entre distintos lenguajes usando la CLI:
   cobra transpilar-inverso reporte.cob --origen=cobol --destino=python
   ```
 
+### Caché incremental con SQLitePlus
+
+La caché de tokens y AST se almacena ahora en una base SQLite gestionada por
+SQLitePlus. La ruta predeterminada es `~/.cobra/sqliteplus/core.db` y requiere
+configurar `SQLITE_DB_KEY` antes de usar la CLI o el intérprete. Puedes cambiar
+la ubicación exportando `COBRA_DB_PATH`:
+
+```bash
+export SQLITE_DB_KEY="clave-local"
+export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"
+```
+
+El comando `cobra cache --vacuum` limpia la base y la recompac ta. Si conservas
+archivos `.ast`/`.tok` heredados, migra la información ejecutando:
+
+```bash
+python scripts/migrar_cache_sqliteplus.py --origen /ruta/a/cache
+```
+
+El script convierte los hashes JSON en registros SQLite para que las siguientes
+ejecuciones reutilicen la caché sin reprocesar el código.
+
 ### Transpiladores disponibles
 
 La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados:

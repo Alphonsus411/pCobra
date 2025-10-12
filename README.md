@@ -10,7 +10,7 @@ Versión 10.0.9
 
 - Ajustes en `SafeUnpickler` para admitir `core.ast_nodes` y `cobra.core.ast_nodes`.
 - `corelibs.sistema.ejecutar` ahora requiere una lista blanca mediante `permitidos` o `COBRA_EJECUTAR_PERMITIDOS`.
-- Caché incremental en formato JSON para AST y tokens.
+- Caché incremental respaldada por SQLitePlus para AST y tokens.
 - Actualización a Agix 1.4.0.
 
 [English version available here](docs/README.en.md)
@@ -941,15 +941,67 @@ Para obtener un reporte de cobertura en la terminal ejecuta:
 pytest --cov=src --cov-report=term-missing --cov-fail-under=95
 ````
 
-## Caché del AST
+## Caché del AST y SQLitePlus
 
-Cobra puede almacenar los árboles de sintaxis (AST) y los tokens en formato JSON dentro de la carpeta `cache` situada en la raíz del proyecto. La caché se activa al definir la variable de entorno `COBRA_AST_CACHE`, que también permite establecer una ubicación personalizada. Cada archivo se nombra con el SHA256 del código y utiliza extensiones `.ast` para los árboles y `.tok` para los tokens. Además, existe el subdirectorio `cache/fragmentos` para los fragmentos generados durante la compilación.
-
-Para limpiar la caché elimina los archivos y directorios generados:
+A partir de la migración a **SQLitePlus**, la caché incremental de AST y tokens
+se almacena en una base de datos `SQLite` cifrada en lugar de archivos sueltos.
+La ruta por defecto es `~/.cobra/sqliteplus/core.db`, que se crea
+automáticamente al primer acceso. Para inicializar la conexión es obligatoria la
+variable de entorno `SQLITE_DB_KEY`, cuyo valor actúa como clave de cifrado.
+Si necesitas una ubicación distinta configura `COBRA_DB_PATH`; cuando se
+proporciona, el valor de `SQLITE_DB_KEY` se mantiene como clave incluso si
+contiene `/` u otros separadores.
 
 ```bash
-rm cache/*.ast cache/*.tok && rm -r cache/fragmentos
+export SQLITE_DB_KEY="clave-local"          # Obligatorio para abrir la base
+export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"  # Opcional; usa el
+                                                        # valor por defecto
+# Para despliegues sin cifrado puedes usar un prefijo explícito:
+export SQLITE_DB_KEY="path:/var/cache/pcobra/core.db"
 ```
+
+Si necesitas ubicar la base de datos en otro sitio, ajusta `COBRA_DB_PATH` a la
+ubicación deseada antes de ejecutar `cobra`. Como compatibilidad adicional, un
+valor de `SQLITE_DB_KEY` que empiece por `path:` o `file:` se interpreta como
+ruta explícita y desactiva el cifrado; en cualquier otro caso el valor se trata
+como clave aunque contenga separadores y se emitirá una advertencia si parece
+una ruta. La antigua variable
+`COBRA_AST_CACHE` continúa disponible únicamente como alias de compatibilidad:
+si la defines, el sistema derivará automáticamente una ruta `cache.db` en ese
+directorio y mostrará una advertencia de depreciación.
+
+### Limpieza y mantenimiento
+
+El comando `cobra cache` sigue siendo el método soportado para borrar la caché y
+ahora opera directamente sobre la base de datos. Incluye la opción `--vacuum`
+para recompac tar la base tras la limpieza:
+
+```bash
+cobra cache --vacuum
+```
+
+### Migración de cachés JSON anteriores
+
+Si conservas el directorio `cache/` con los archivos `.ast`/`.tok` utilizados en
+versiones anteriores, puedes importarlos a SQLitePlus con el siguiente flujo:
+
+1. Define `SQLITE_DB_KEY` (y `COBRA_DB_PATH` si deseas una ruta distinta).
+2. Ejecuta el script auxiliar desde la raíz del proyecto, indicando la carpeta
+   donde se encuentran los archivos heredados:
+
+   ```bash
+   python scripts/migrar_cache_sqliteplus.py --origen /ruta/al/cache
+   ```
+
+   El script convierte cada hash almacenado en JSON y recrea los fragmentos en
+   la tabla SQLite. Las ejecuciones posteriores reutilizarán esa información sin
+   necesidad de reanalizar tus fuentes.
+
+3. Verifica la migración listando el contenido con cualquier visor SQLite o
+   ejecutando nuevamente `cobra cache --vacuum` para comprobar que la conexión se
+   inicializa correctamente.
+
+Tras la migración, los ficheros JSON pueden eliminarse si ya no son necesarios.
 
 ## Generar documentación
 

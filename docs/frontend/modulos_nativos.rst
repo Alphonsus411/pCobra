@@ -65,9 +65,10 @@ Red
 - ``obtener_url(url, permitir_redirecciones=False)`` recupera el contenido de una URL ``https://``.
 - ``enviar_post(url, datos, permitir_redirecciones=False)`` envia datos por ``POST`` a una URL ``https://``.
   Las peticiones no siguen redirecciones a menos que se habilite ``permitir_redirecciones=True``.
-  Los destinos se validan opcionalmente con la lista de hosts definida en
-  la variable de entorno ``COBRA_HOST_WHITELIST``. Si se permiten redirecciones,
-  el host final tras la redirección también debe pertenecer a la lista blanca.
+  Cada salto se valida manualmente: primero se comprueba que el esquema siga
+  siendo ``https`` y después que el host aparezca en la lista blanca definida en
+  ``COBRA_HOST_WHITELIST`` antes de realizar la siguiente petición. Esto impide
+  que la función siga redirecciones hacia destinos no autorizados.
 
 .. code-block:: cobra
 
