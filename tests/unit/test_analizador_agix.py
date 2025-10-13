@@ -2,7 +2,7 @@ import pcobra  # garantiza rutas para submódulos
 from unittest.mock import MagicMock, patch
 import pytest
 
-from ia import analizador_agix
+from pcobra.ia import analizador_agix
 
 
 

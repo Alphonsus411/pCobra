@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List
 
-from compiler.llvm_backend import generar_ir_funcion
+from pcobra.compiler.llvm_backend import generar_ir_funcion
 from pcobra.core import ast_nodes
 from pcobra.cobra.core import TipoToken
 
@@ -13,7 +13,7 @@ class TranspiladorLLVM:
     """Transpilador muy básico para LLVM.
 
     Solo maneja funciones sin parámetros cuyo cuerpo es una única expresión
-    soportada por :mod:`compiler.llvm_backend`.
+    soportada por :mod:`pcobra.compiler.llvm_backend`.
     """
 
     def _to_expr(self, node):

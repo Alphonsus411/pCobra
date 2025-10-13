@@ -6,10 +6,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from cobra.core import Lexer, Parser, TipoToken
-from core.ast_nodes import NodoFuncion, NodoValor, NodoOperacionBinaria
-from core.interpreter import InterpretadorCobra
-from compiler.llvm_backend import generar_ir_funcion
+from pcobra.cobra.core import Lexer, Parser, TipoToken
+from pcobra.core.ast_nodes import NodoFuncion, NodoValor, NodoOperacionBinaria
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.compiler.llvm_backend import generar_ir_funcion
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_DIR = ROOT / "examples" / "llvm"
