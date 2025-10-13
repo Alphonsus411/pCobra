@@ -138,6 +138,12 @@ class InterpretadorCobra:
                 raise ImportError(
                     "Importaciones no permitidas en los validadores adicionales."
                 )
+            if isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id == "__import__":
+                    raise SyntaxError(
+                        "El uso de __import__ está bloqueado en los validadores adicionales."
+                    )
 
         from RestrictedPython import compile_restricted
         from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
