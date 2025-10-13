@@ -1,6 +1,6 @@
-from core.semantic_validators.base import ValidadorBase
-from core.ast_nodes import NodoLlamadaFuncion, NodoLlamadaMetodo, NodoAtributo
-from core.semantic_validators.primitiva_peligrosa import PrimitivaPeligrosaError
+from .base import ValidadorBase
+from ..ast_nodes import NodoLlamadaFuncion, NodoLlamadaMetodo, NodoAtributo
+from .primitiva_peligrosa import PrimitivaPeligrosaError
 
 
 class ValidadorProhibirReflexion(ValidadorBase):

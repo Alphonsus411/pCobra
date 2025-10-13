@@ -1,6 +1,6 @@
 """Transpilador muy básico que genera código WebAssembly en formato WAT."""
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoOperacionBinaria,
@@ -8,11 +8,11 @@ from cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
 )
-from cobra.core import TipoToken
-from core.visitor import NodeVisitor
-from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code
-from cobra.macro import expandir_macros
+from pcobra.cobra.core import TipoToken
+from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.core.optimizations import optimize_constants, remove_dead_code
+from pcobra.cobra.macro import expandir_macros
 
 
 class TranspiladorWasm(BaseTranspiler):

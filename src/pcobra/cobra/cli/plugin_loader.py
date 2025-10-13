@@ -8,7 +8,7 @@ import warnings
 from typing import Optional, List
 
 try:
-    from cobra.cli.plugin import PluginCommand, cargar_plugin_seguro, descubrir_plugins
+    from pcobra.cobra.cli.plugin import PluginCommand, cargar_plugin_seguro, descubrir_plugins
     
     warnings.warn(
         "El módulo plugin_loader está deprecado. Use cobra.cli.plugin en su lugar.",

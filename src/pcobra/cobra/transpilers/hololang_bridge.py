@@ -23,8 +23,8 @@ from pcobra.core.hololang_ir import (
     HololangWhile,
 )
 
-from cobra.core import Token, TipoToken
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core import Token, TipoToken
+from pcobra.cobra.core.ast_nodes import (
     NodoAtributo,
     NodoAsignacion,
     NodoBucleMientras,

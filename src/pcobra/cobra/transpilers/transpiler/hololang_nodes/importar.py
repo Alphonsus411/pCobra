@@ -1,7 +1,7 @@
 """Gestión de importaciones para Hololang."""
 
-from cobra.core import Lexer, Parser
-from cobra.transpilers.common.utils import load_mapped_module
+from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.transpilers.common.utils import load_mapped_module
 
 
 def visit_import(self, nodo):

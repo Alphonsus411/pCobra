@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 
-from cobra.transpilers.common.utils import BaseTranspiler
-from core.hololang_ir import (
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.core.hololang_ir import (
     HololangAssignment,
     HololangCall,
     HololangExpressionStatement,
@@ -20,13 +20,13 @@ from core.hololang_ir import (
     HololangWhile,
     build_hololang_ir,
 )
-from core.optimizations import (
+from pcobra.core.optimizations import (
     eliminate_common_subexpressions,
     inline_functions,
     optimize_constants,
     remove_dead_code,
 )
-from cobra.macro import expandir_macros
+from pcobra.cobra.macro import expandir_macros
 
 
 class TranspiladorASM(BaseTranspiler):

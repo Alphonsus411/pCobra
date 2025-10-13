@@ -1,4 +1,4 @@
-from cobra.transpilers.semantica import procesar_bloque
+from pcobra.cobra.transpilers.semantica import procesar_bloque
 
 def visit_for(self, nodo):
     iterable = self.obtener_valor(nodo.iterable)

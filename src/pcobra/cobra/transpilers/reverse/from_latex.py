@@ -9,8 +9,8 @@ from typing import Any, List
 from sympy.parsing.latex import parse_latex
 from sympy.printing.pycode import pycode
 
-from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from cobra.transpilers.reverse.from_python import ReverseFromPython
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.transpilers.reverse.from_python import ReverseFromPython
 
 
 class ReverseFromLatex(BaseReverseTranspiler):

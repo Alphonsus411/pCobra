@@ -4,11 +4,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error
-from cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 
 
 class JupyterCommand(BaseCommand):

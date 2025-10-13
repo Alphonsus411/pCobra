@@ -5,22 +5,22 @@ Este módulo implementa la conversión de código Swift a nodos AST de Cobra
 utilizando el parser tree-sitter.
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_swift import ReverseFromSwift
+    >>> from pcobra.cobra.transpilers.reverse.from_swift import ReverseFromSwift
     >>> transpiler = ReverseFromSwift()
     >>> ast = transpiler.generate_ast("func hello() { print('Hello') }")
 """
 import re
 from typing import Any, List
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoLlamadaFuncion,
     NodoValor,
 )
 
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
-from cobra.transpilers.reverse.base import BaseReverseTranspiler  # type: ignore
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler  # type: ignore
 
 
 class ReverseFromSwift(TreeSitterReverseTranspiler):

@@ -6,15 +6,15 @@ from __future__ import annotations
 import re
 from typing import Any, List
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoIdentificador,
     NodoLlamadaFuncion,
     NodoValor,
 )
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
-from cobra.transpilers.reverse.base import BaseReverseTranspiler  # type: ignore
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler  # type: ignore
 
 
 def _parse_expression(texto: str) -> Any:

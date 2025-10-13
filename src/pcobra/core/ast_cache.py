@@ -12,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable
 
-from pcobra.core import database
+from . import database
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ def _serialize_token(obj: Any) -> dict[str, Any]:
 def _get_node_classes() -> dict[str, type]:
     global _NODE_CLASSES
     if _NODE_CLASSES is None:
-        from core import ast_nodes as _ast_nodes
+        from . import ast_nodes as _ast_nodes
 
         _NODE_CLASSES = {name: getattr(_ast_nodes, name) for name in AST_NODE_CLASS_NAMES}
     return _NODE_CLASSES

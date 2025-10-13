@@ -8,7 +8,7 @@ ecosistemas como R o Julia cuando aplica.
 
 Ejemplos rápidos::
 
-    from standard_library import (
+    from . import (
         preguntar_texto,
         preguntar_opcion,
         preguntar_entero,
@@ -27,8 +27,8 @@ import asyncio
 
 from typing import Any, Awaitable, Callable, Coroutine, Iterable, Mapping, Sequence, TypeVar
 
-from standard_library.archivo import leer, escribir, adjuntar, existe
-from standard_library.datos import (
+from .archivo import leer, escribir, adjuntar, existe
+from .datos import (
     agrupar_y_resumir,
     a_listas,
     calcular_percentiles,
@@ -58,8 +58,8 @@ from standard_library.datos import (
     escribir_parquet,
     seleccionar_columnas,
 )
-from standard_library.fecha import hoy, formatear, sumar_dias
-from standard_library.interfaz import (
+from .fecha import hoy, formatear, sumar_dias
+from .interfaz import (
     barra_progreso,
     estado_temporal,
     grupo_consola,
@@ -77,7 +77,7 @@ from standard_library.interfaz import (
     preguntar_opcion,
     preguntar_texto,
 )
-from standard_library.lista import (
+from .lista import (
     cabeza,
     chunk,
     cola,
@@ -87,7 +87,7 @@ from standard_library.lista import (
     mapear_seguro,
     ventanas,
 )
-from standard_library.logica import (
+from .logica import (
     es_verdadero,
     es_falso,
     conjuncion,
@@ -103,7 +103,7 @@ from standard_library.logica import (
     todas,
     alguna,
 )
-from standard_library.texto import (
+from .texto import (
     es_anagrama,
     es_palindromo,
     normalizar_espacios,
@@ -129,7 +129,7 @@ from standard_library.texto import (
     intercambiar_mayusculas,
     expandir_tabulaciones,
 )
-from standard_library.numero import (
+from .numero import (
     es_finito,
     es_infinito,
     es_nan,
@@ -139,9 +139,9 @@ from standard_library.numero import (
     interpolar,
     envolver_modular,
 )
-from standard_library.util import es_nulo, es_vacio, rel, repetir
-from standard_library.asincrono import grupo_tareas, proteger_tarea, ejecutar_en_hilo
-from standard_library.decoradores import (
+from .util import es_nulo, es_vacio, rel, repetir
+from .asincrono import grupo_tareas, proteger_tarea, ejecutar_en_hilo
+from .decoradores import (
     dataclase,
     depreciado,
     despachar_por_tipo,

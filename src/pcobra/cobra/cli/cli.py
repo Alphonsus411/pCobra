@@ -7,41 +7,41 @@ from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
 
-from cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
 import argcomplete
 from argcomplete.completers import FilesCompleter, DirectoriesCompleter
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.commands.bench_cmd import BenchCommand
-from cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
-from cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
-from cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
-from cobra.cli.commands.cache_cmd import CacheCommand
-from cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
-from cobra.cli.commands.container_cmd import ContainerCommand
-from cobra.cli.commands.crear_cmd import CrearCommand
-from cobra.cli.commands.dependencias_cmd import DependenciasCommand
-from cobra.cli.commands.docs_cmd import DocsCommand
-from cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
-from cobra.cli.commands.execute_cmd import ExecuteCommand
-from cobra.cli.commands.flet_cmd import FletCommand
-from cobra.cli.commands.init_cmd import InitCommand
-from cobra.cli.commands.interactive_cmd import InteractiveCommand
-from cobra.cli.commands.agix_cmd import AgixCommand
-from core.interpreter import InterpretadorCobra
-from cobra.cli.commands.jupyter_cmd import JupyterCommand
-from cobra.cli.commands.modules_cmd import ModulesCommand
-from cobra.cli.commands.package_cmd import PaqueteCommand
-from cobra.cli.commands.plugins_cmd import PluginsCommand
-from cobra.cli.commands.profile_cmd import ProfileCommand
-from cobra.cli.commands.qualia_cmd import QualiaCommand
-from cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
-from cobra.cli.commands.verify_cmd import VerifyCommand
-from cobra.cli.i18n import _, format_traceback, setup_gettext
-from cobra.cli.plugin import descubrir_plugins
-from cobra.cli.utils import messages
-from cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
+from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
+from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
+from pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
+from pcobra.cobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.container_cmd import ContainerCommand
+from pcobra.cobra.cli.commands.crear_cmd import CrearCommand
+from pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
+from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
+from pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands.flet_cmd import FletCommand
+from pcobra.cobra.cli.commands.init_cmd import InitCommand
+from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
+from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
+from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
+from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
+from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
+from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
+from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
+from pcobra.cobra.cli.plugin import descubrir_plugins
+from pcobra.cobra.cli.utils import messages
+from pcobra.cobra.cli.utils import config as config_module
 
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")

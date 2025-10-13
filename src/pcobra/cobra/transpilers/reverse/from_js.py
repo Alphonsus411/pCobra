@@ -5,7 +5,7 @@ Este módulo implementa la conversión de código JavaScript a nodos AST de Cobr
 utilizando el parser tree-sitter.
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_js import ReverseFromJS
+    >>> from pcobra.cobra.transpilers.reverse.from_js import ReverseFromJS
     >>> transpiler = ReverseFromJS()
     >>> ast = transpiler.generate_ast("function main() { return 0; }")
 """
@@ -13,8 +13,8 @@ from typing import Any, List
 
 from tree_sitter import Node
 
-from cobra.core import Token, TipoToken
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core import Token, TipoToken
+from pcobra.cobra.core.ast_nodes import (
     NodoClase,
     NodoFuncion,
     NodoMetodo,
@@ -34,7 +34,7 @@ from cobra.core.ast_nodes import (
     NodoOption,
 )
 
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
 
 
 class ReverseFromJS(TreeSitterReverseTranspiler):

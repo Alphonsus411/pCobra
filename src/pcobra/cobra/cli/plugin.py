@@ -12,8 +12,8 @@ from importlib.metadata import entry_points
 from typing import List, Optional, Any
 from argparse import ArgumentParser
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.plugin_registry import (
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.plugin_registry import (
     obtener_registro,
     obtener_registro_detallado,
     registrar_plugin,

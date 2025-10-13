@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from pylsp import hookimpl, lsp
-from standard_library import __all__ as STD_FUNCS
+from pcobra.standard_library import __all__ as STD_FUNCS
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand

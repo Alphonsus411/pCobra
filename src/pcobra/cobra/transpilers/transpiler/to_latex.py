@@ -1,6 +1,6 @@
 """Transpilador simple de Cobra a LaTeX."""
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -9,18 +9,18 @@ from cobra.core.ast_nodes import (
     NodoImprimir,
     NodoAtributo,
 )
-from core.visitor import NodeVisitor
-from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code
-from cobra.macro import expandir_macros
+from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.core.optimizations import optimize_constants, remove_dead_code
+from pcobra.cobra.macro import expandir_macros
 
-from cobra.transpilers.transpiler.latex_nodes.asignacion import visit_asignacion as _visit_asignacion
-from cobra.transpilers.transpiler.latex_nodes.funcion import visit_funcion as _visit_funcion
-from cobra.transpilers.transpiler.latex_nodes.llamada_funcion import (
+from pcobra.cobra.transpilers.transpiler.latex_nodes.asignacion import visit_asignacion as _visit_asignacion
+from pcobra.cobra.transpilers.transpiler.latex_nodes.funcion import visit_funcion as _visit_funcion
+from pcobra.cobra.transpilers.transpiler.latex_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from cobra.transpilers.transpiler.latex_nodes.imprimir import visit_imprimir as _visit_imprimir
-from cobra.transpilers.transpiler.latex_nodes.retorno import visit_retorno as _visit_retorno
+from pcobra.cobra.transpilers.transpiler.latex_nodes.imprimir import visit_imprimir as _visit_imprimir
+from pcobra.cobra.transpilers.transpiler.latex_nodes.retorno import visit_retorno as _visit_retorno
 
 latex_nodes = {
     "asignacion": _visit_asignacion,

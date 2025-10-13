@@ -5,11 +5,11 @@ Este módulo implementa la conversión de código R a nodos AST de Cobra
 utilizando el parser tree-sitter.
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_r import ReverseFromR
+    >>> from pcobra.cobra.transpilers.reverse.from_r import ReverseFromR
     >>> transpiler = ReverseFromR()
     >>> ast = transpiler.generate_ast("x <- 5")
 """
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 class ReverseFromR(TreeSitterReverseTranspiler):
     """Transpilador inverso de R a Cobra usando tree-sitter.

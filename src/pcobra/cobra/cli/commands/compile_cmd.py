@@ -6,44 +6,44 @@ from importlib.metadata import entry_points
 
 from argcomplete.completers import FilesCompleter
 
-from cobra.transpilers import module_map
-from cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from cobra.transpilers.transpiler.to_c import TranspiladorC
-from cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
-from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
-from cobra.transpilers.transpiler.to_go import TranspiladorGo
-from cobra.transpilers.transpiler.to_java import TranspiladorJava
-from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.transpiler.to_hololang import TranspiladorHololang
-from cobra.transpilers.transpiler.to_julia import TranspiladorJulia
-from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
-from cobra.transpilers.transpiler.to_llvm import TranspiladorLLVM
-from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
-from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
-from cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_r import TranspiladorR
-from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
-from cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
-from cobra.transpilers.transpiler.to_swift import TranspiladorSwift
-from core.ast_cache import obtener_ast
-from core.sandbox import validar_dependencias
-from core.semantic_validators import (
+from pcobra.cobra.transpilers import module_map
+from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from pcobra.cobra.transpilers.transpiler.to_c import TranspiladorC
+from pcobra.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
+from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from pcobra.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
+from pcobra.cobra.transpilers.transpiler.to_go import TranspiladorGo
+from pcobra.cobra.transpilers.transpiler.to_java import TranspiladorJava
+from pcobra.cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
+from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_hololang import TranspiladorHololang
+from pcobra.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
+from pcobra.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from pcobra.cobra.transpilers.transpiler.to_llvm import TranspiladorLLVM
+from pcobra.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
+from pcobra.cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
+from pcobra.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
+from pcobra.cobra.transpilers.transpiler.to_php import TranspiladorPHP
+from pcobra.cobra.transpilers.transpiler.to_perl import TranspiladorPerl
+from pcobra.cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
+from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
+from pcobra.cobra.transpilers.transpiler.to_r import TranspiladorR
+from pcobra.cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
+from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from pcobra.cobra.transpilers.transpiler.to_swift import TranspiladorSwift
+from pcobra.core.ast_cache import obtener_ast
+from pcobra.core.sandbox import validar_dependencias
+from pcobra.core.semantic_validators import (
     PrimitivaPeligrosaError,
     construir_cadena,
 )
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from cobra.cli.utils.validators import validar_archivo_existente
-from cobra.core import ParserError
-from core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.core import ParserError
+from pcobra.core.cobra_config import tiempo_max_transpilacion
 
 # Constantes de configuración
 MAX_PROCESSES = 4

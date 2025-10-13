@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -51,105 +51,105 @@ from cobra.core.ast_nodes import (
     NodoGuard,
     NodoPara,
 )
-from cobra.core import TipoToken
-from cobra.transpilers.common.utils import BaseTranspiler, get_standard_imports
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from cobra.macro import expandir_macros
+from pcobra.cobra.core import TipoToken
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_standard_imports
+from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.macro import expandir_macros
 
-from cobra.transpilers.transpiler.hololang_nodes.asignacion import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,
 )
-from cobra.transpilers.transpiler.hololang_nodes.condicional import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.condicional import (
     visit_condicional as _visit_condicional,
 )
-from cobra.transpilers.transpiler.hololang_nodes.bucle_mientras import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.bucle_mientras import (
     visit_bucle_mientras as _visit_bucle_mientras,
 )
-from cobra.transpilers.transpiler.hololang_nodes.for_ import visit_for as _visit_for
-from cobra.transpilers.transpiler.hololang_nodes.funcion import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.for_ import visit_for as _visit_for
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.funcion import (
     visit_funcion as _visit_funcion,
 )
-from cobra.transpilers.transpiler.hololang_nodes.llamada_funcion import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from cobra.transpilers.transpiler.hololang_nodes.llamada_metodo import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.llamada_metodo import (
     visit_llamada_metodo as _visit_llamada_metodo,
 )
-from cobra.transpilers.transpiler.hololang_nodes.imprimir import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.imprimir import (
     visit_imprimir as _visit_imprimir,
 )
-from cobra.transpilers.transpiler.hololang_nodes.retorno import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.retorno import (
     visit_retorno as _visit_retorno,
 )
-from cobra.transpilers.transpiler.hololang_nodes.holobit import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.holobit import (
     visit_holobit as _visit_holobit,
 )
-from cobra.transpilers.transpiler.hololang_nodes.lista import visit_lista as _visit_lista
-from cobra.transpilers.transpiler.hololang_nodes.diccionario import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.lista import visit_lista as _visit_lista
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.diccionario import (
     visit_diccionario as _visit_diccionario,
 )
-from cobra.transpilers.transpiler.hololang_nodes.clase import visit_clase as _visit_clase
-from cobra.transpilers.transpiler.hololang_nodes.metodo import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.clase import visit_clase as _visit_clase
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.metodo import (
     visit_metodo as _visit_metodo,
 )
-from cobra.transpilers.transpiler.hololang_nodes.try_catch import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.try_catch import (
     visit_try_catch as _visit_try_catch,
 )
-from cobra.transpilers.transpiler.hololang_nodes.throw import visit_throw as _visit_throw
-from cobra.transpilers.transpiler.hololang_nodes.importar import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.throw import visit_throw as _visit_throw
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.importar import (
     visit_import as _visit_import,
 )
-from cobra.transpilers.transpiler.hololang_nodes.usar import visit_usar as _visit_usar
-from cobra.transpilers.transpiler.hololang_nodes.hilo import visit_hilo as _visit_hilo
-from cobra.transpilers.transpiler.hololang_nodes.instancia import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.usar import visit_usar as _visit_usar
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.hilo import visit_hilo as _visit_hilo
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
-from cobra.transpilers.transpiler.hololang_nodes.atributo import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.atributo import (
     visit_atributo as _visit_atributo,
 )
-from cobra.transpilers.transpiler.hololang_nodes.proyectar import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.proyectar import (
     visit_proyectar as _visit_proyectar,
 )
-from cobra.transpilers.transpiler.hololang_nodes.transformar import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.transformar import (
     visit_transformar as _visit_transformar,
 )
-from cobra.transpilers.transpiler.hololang_nodes.graficar import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.graficar import (
     visit_graficar as _visit_graficar,
 )
-from cobra.transpilers.transpiler.hololang_nodes.operacion_binaria import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.operacion_binaria import (
     visit_operacion_binaria as _visit_operacion_binaria,
 )
-from cobra.transpilers.transpiler.hololang_nodes.operacion_unaria import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.operacion_unaria import (
     visit_operacion_unaria as _visit_operacion_unaria,
 )
-from cobra.transpilers.transpiler.hololang_nodes.valor import visit_valor as _visit_valor
-from cobra.transpilers.transpiler.hololang_nodes.identificador import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.valor import visit_valor as _visit_valor
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.identificador import (
     visit_identificador as _visit_identificador,
 )
-from cobra.transpilers.transpiler.hololang_nodes.para import visit_para as _visit_para
-from cobra.transpilers.transpiler.hololang_nodes.decorador import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.para import visit_para as _visit_para
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.decorador import (
     visit_decorador as _visit_decorador,
 )
-from cobra.transpilers.transpiler.hololang_nodes.yield_ import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.yield_ import (
     visit_yield as _visit_yield,
 )
-from cobra.transpilers.transpiler.hololang_nodes.esperar import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.esperar import (
     visit_esperar as _visit_esperar,
 )
-from cobra.transpilers.transpiler.hololang_nodes.romper import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.romper import (
     visit_romper as _visit_romper,
 )
-from cobra.transpilers.transpiler.hololang_nodes.continuar import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.continuar import (
     visit_continuar as _visit_continuar,
 )
-from cobra.transpilers.transpiler.hololang_nodes.pasar import visit_pasar as _visit_pasar
-from cobra.transpilers.transpiler.hololang_nodes.switch import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.pasar import visit_pasar as _visit_pasar
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.switch import (
     visit_switch as _visit_switch,
 )
-from cobra.transpilers.transpiler.hololang_nodes.option import (
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.option import (
     visit_option as _visit_option,
 )
-from cobra.transpilers.transpiler.hololang_nodes.enum import visit_enum as _visit_enum
+from pcobra.cobra.transpilers.transpiler.hololang_nodes.enum import visit_enum as _visit_enum
 
 
 ASYNC_IMPORT = "use holo.async::*;"

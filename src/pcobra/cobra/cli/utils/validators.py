@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cobra.cli.i18n import _
+from pcobra.cobra.cli.i18n import _
 
 
 def validar_archivo_existente(ruta: str | Path) -> Path:

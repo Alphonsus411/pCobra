@@ -1,5 +1,5 @@
-from core.semantic_validators.base import ValidadorBase
-from core.ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
+from .base import ValidadorBase
+from ..ast_nodes import NodoLlamadaFuncion, NodoHilo, NodoLlamadaMetodo
 
 
 class PrimitivaPeligrosaError(Exception):

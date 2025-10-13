@@ -9,7 +9,7 @@ permitiendo la traducción de programas Python al lenguaje Cobra.
 import ast
 from typing import Any, List, Optional, Union
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
     NodoBucleMientras,
@@ -37,8 +37,8 @@ from cobra.core.ast_nodes import (
     NodoListaComprehension,
     NodoDiccionarioComprehension,
 )
-from cobra.core import Token, TipoToken
-from cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.core import Token, TipoToken
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 
 
 class ReverseFromPython(BaseReverseTranspiler):

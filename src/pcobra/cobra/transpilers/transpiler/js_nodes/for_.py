@@ -1,4 +1,4 @@
-from cobra.transpilers.semantica import procesar_bloque
+from pcobra.cobra.transpilers.semantica import procesar_bloque
 
 def visit_for(self, nodo):
     """Transpila un bucle 'for...of' en JavaScript, permitiendo anidación."""

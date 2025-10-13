@@ -6,8 +6,8 @@ from __future__ import annotations
 import re
 from typing import Any, List
 
-from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from cobra.core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
 
 
 def _parse_expression(text: str) -> Any:

@@ -7,8 +7,8 @@ utilizando el parser tree-sitter.
 
 from typing import Any, List
 
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
-from cobra.core.ast_nodes import (
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoFuncion,
     NodoIdentificador,

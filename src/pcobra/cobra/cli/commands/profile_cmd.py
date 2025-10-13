@@ -13,18 +13,18 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Optional, Any
 
-from cobra.core import Lexer
-from cobra.core import Parser
-from cobra.transpilers import module_map
-from core.interpreter import InterpretadorCobra
-from core.sandbox import validar_dependencias
-from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.commands.execute_cmd import ExecuteCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser
+from pcobra.cobra.transpilers import module_map
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.sandbox import validar_dependencias
+from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 
 
 class ProfileCommand(BaseCommand):

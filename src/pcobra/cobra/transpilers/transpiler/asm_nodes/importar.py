@@ -1,5 +1,5 @@
-from cobra.core import Lexer
-from cobra.core import Parser
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser
 
 
 def visit_import(self, nodo):

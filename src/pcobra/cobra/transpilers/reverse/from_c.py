@@ -14,7 +14,7 @@ del lenguaje C incluyendo:
 Ejemplos:
     Uso básico del transpilador:
 
-    >>> from cobra.transpilers.reverse.from_c import ReverseFromC
+    >>> from pcobra.cobra.transpilers.reverse.from_c import ReverseFromC
     >>> transpiler = ReverseFromC()
     >>> ast = transpiler.generate_ast("int main() { return 0; }")
 
@@ -24,7 +24,7 @@ Nota:
 
 from typing import Any, List, Optional
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoBloque,
     NodoDeclaracion,
     NodoExpresion,
@@ -34,7 +34,7 @@ from cobra.core.ast_nodes import (
     NodoTipo,
     NodoValor
 )
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromC(TreeSitterReverseTranspiler):

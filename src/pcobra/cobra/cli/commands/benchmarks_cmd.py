@@ -7,10 +7,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 
 class BenchmarksCommand(BaseCommand):

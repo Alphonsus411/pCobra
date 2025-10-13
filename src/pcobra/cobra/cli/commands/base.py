@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from typing import Any
 
-from cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
 class BaseCommand:
     """Clase base para subcomandos de la CLI."""

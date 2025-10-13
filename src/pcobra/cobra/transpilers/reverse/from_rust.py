@@ -5,18 +5,18 @@ Este módulo implementa la conversión de código Rust a nodos AST de Cobra
 utilizando el parser tree-sitter.
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_rust import ReverseFromRust
+    >>> from pcobra.cobra.transpilers.reverse.from_rust import ReverseFromRust
     >>> transpiler = ReverseFromRust()
     >>> ast = transpiler.generate_ast("fn main() { println!(\"Hello\"); }")
 """
 from typing import Any, List
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoBloque,
     NodoFuncion,
     NodoIdentificador,
 )
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromRust(TreeSitterReverseTranspiler):

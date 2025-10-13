@@ -8,9 +8,9 @@ from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
 from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.core.utils import PALABRAS_RESERVADAS
-from core.interpreter import InterpretadorCobra
-from core.qualia_bridge import get_suggestions
-from core.sandbox import ejecutar_en_sandbox
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.qualia_bridge import get_suggestions
+from pcobra.core.sandbox import ejecutar_en_sandbox
 
 
 def _get_version() -> str:

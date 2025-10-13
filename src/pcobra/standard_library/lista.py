@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Iterable, List, Sequence, Tuple
 
-from corelibs.coleccion import (
+from pcobra.corelibs.coleccion import (
     mapear_aplanado as mapear_aplanado_core,
     tomar as tomar_core,
     tomar_mientras as tomar_mientras_core,

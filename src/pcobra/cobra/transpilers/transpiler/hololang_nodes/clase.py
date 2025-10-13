@@ -1,6 +1,6 @@
 """Clases para Hololang."""
 
-from cobra.transpilers.semantica import procesar_bloque
+from pcobra.cobra.transpilers.semantica import procesar_bloque
 
 
 def visit_clase(self, nodo):

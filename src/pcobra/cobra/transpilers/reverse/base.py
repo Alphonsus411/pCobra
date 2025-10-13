@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Any
-from core.visitor import NodeVisitor
+from pcobra.core.visitor import NodeVisitor
 
 class BaseReverseTranspiler(NodeVisitor, ABC):
     """Clase base para transpiladores inversos que generan el AST de Cobra."""

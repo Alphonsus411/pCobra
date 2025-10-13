@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Optional, Tuple, Dict, TYPE_CHECKING
 from urllib.parse import urlparse
 
-from cobra.cli.i18n import _
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     import requests

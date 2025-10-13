@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
-from cobra.cli.i18n import _
-from cobra.cli.utils import messages
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils import messages
 
 __all__ = ["CustomArgumentParser"]
 

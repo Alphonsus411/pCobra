@@ -9,7 +9,7 @@ except ImportError as exc:  # pragma: no cover - dependencia externa
     raise ImportError(
         "No se pudo importar 'lark'. Instálalo ejecutando 'pip install lark-parser'."
     ) from exc
-from cobra.core import Token, TipoToken
+from pcobra.cobra.core import Token, TipoToken
 
 
 class LarkParser:

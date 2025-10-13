@@ -7,8 +7,8 @@ Si la versión instalada del SDK no dispone de las operaciones
 from holobit_sdk.core.holobit import Holobit as SDKHolobit
 import numpy as np
 
-from core.holobits.holobit import Holobit
-from core.holobits.graficar import _to_sdk_holobit
+from .holobit import Holobit
+from .graficar import _to_sdk_holobit
 
 
 def transformar(hb: Holobit, operacion: str, *parametros):

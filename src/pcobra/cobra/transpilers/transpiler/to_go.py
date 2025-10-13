@@ -2,7 +2,7 @@
 
 import re
 
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -15,43 +15,43 @@ from core.ast_nodes import (
     NodoLlamadaMetodo,
     NodoInstancia,
 )
-from cobra.core.lexer import TipoToken
-from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from cobra.macro import expandir_macros
+from pcobra.cobra.core.lexer import TipoToken
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.macro import expandir_macros
 
-from cobra.transpilers.transpiler.go_nodes.asignacion import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,
 )
-from cobra.transpilers.transpiler.go_nodes.funcion import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.funcion import (
     visit_funcion as _visit_funcion,
 )
-from cobra.transpilers.transpiler.go_nodes.llamada_funcion import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from cobra.transpilers.transpiler.go_nodes.imprimir import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.imprimir import (
     visit_imprimir as _visit_imprimir,
 )
-from cobra.transpilers.transpiler.go_nodes.condicional import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.condicional import (
     visit_condicional as _visit_condicional,
 )
-from cobra.transpilers.transpiler.go_nodes.bucle_mientras import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.bucle_mientras import (
     visit_bucle_mientras as _visit_bucle_mientras,
 )
-from cobra.transpilers.transpiler.go_nodes.for_ import visit_for as _visit_for
-from cobra.transpilers.transpiler.go_nodes.clase import visit_clase as _visit_clase
-from cobra.transpilers.transpiler.go_nodes.metodo import visit_metodo as _visit_metodo
-from cobra.transpilers.transpiler.go_nodes.retorno import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.for_ import visit_for as _visit_for
+from pcobra.cobra.transpilers.transpiler.go_nodes.clase import visit_clase as _visit_clase
+from pcobra.cobra.transpilers.transpiler.go_nodes.metodo import visit_metodo as _visit_metodo
+from pcobra.cobra.transpilers.transpiler.go_nodes.retorno import (
     visit_retorno as _visit_retorno,
 )
-from cobra.transpilers.transpiler.go_nodes.romper import visit_romper as _visit_romper
-from cobra.transpilers.transpiler.go_nodes.continuar import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.romper import visit_romper as _visit_romper
+from pcobra.cobra.transpilers.transpiler.go_nodes.continuar import (
     visit_continuar as _visit_continuar,
 )
-from cobra.transpilers.transpiler.go_nodes.llamada_metodo import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.llamada_metodo import (
     visit_llamada_metodo as _visit_llamada_metodo,
 )
-from cobra.transpilers.transpiler.go_nodes.instancia import (
+from pcobra.cobra.transpilers.transpiler.go_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
 

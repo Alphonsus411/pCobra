@@ -1,6 +1,6 @@
 """Transpilador simple de Cobra a Mojo."""
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -12,10 +12,10 @@ from cobra.core.ast_nodes import (
     NodoAtributo,
     NodoRetorno,
 )
-from cobra.core import TipoToken
-from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants
-from cobra.macro import expandir_macros
+from pcobra.cobra.core import TipoToken
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.core.optimizations import optimize_constants
+from pcobra.cobra.macro import expandir_macros
 
 
 def visit_asignacion(self, nodo: NodoAsignacion):

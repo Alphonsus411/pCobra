@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, List, Tuple
 import copy
 
-from core.ast_nodes import (
+from ..ast_nodes import (
     NodoFuncion,
     NodoRetorno,
     NodoLlamadaFuncion,
@@ -21,7 +21,7 @@ from core.ast_nodes import (
     NodoNoLocal,
     NodoIdentificador,
 )
-from core.visitor import NodeVisitor
+from ..visitor import NodeVisitor
 
 
 class _FunctionInliner(NodeVisitor):

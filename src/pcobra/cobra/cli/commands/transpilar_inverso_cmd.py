@@ -7,13 +7,13 @@ from contextlib import contextmanager
 from chardet import detect
 from jsonschema import ValidationError
 
-import cobra.transpilers.reverse as reverse_module
-from cobra.cli.commands.base import BaseCommand, CommandError
-from cobra.cli.commands.compile_cmd import TRANSPILERS
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from cobra.cli.utils.validators import validar_archivo_existente
+import pcobra.cobra.transpilers.reverse as reverse_module
+from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
+from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 
 # Configuración del logging
 logger = logging.getLogger(__name__)

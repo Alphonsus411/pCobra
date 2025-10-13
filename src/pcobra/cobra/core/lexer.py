@@ -538,7 +538,7 @@ class Lexer:
         Returns:
             Lista de tokens
         """
-        from core.ast_cache import obtener_tokens_fragmento
+        from pcobra.core.ast_cache import obtener_tokens_fragmento
 
         self.tokens = []
         for linea in self.codigo_fuente.splitlines(keepends=True):
