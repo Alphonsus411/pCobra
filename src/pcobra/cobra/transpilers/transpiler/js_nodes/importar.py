@@ -1,4 +1,4 @@
-from cobra.transpilers.module_map import get_mapped_path
+from pcobra.cobra.transpilers.module_map import get_mapped_path
 
 def visit_import(self, nodo):
     """Genera una importación ES module."""

@@ -6,9 +6,9 @@ no impedir el uso de los demás.
 """
 from typing import List, Type
 
-from cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 try:  # pragma: no cover - dependencia opcional
-    from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+    from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
     class TreeSitterReverseTranspiler(BaseReverseTranspiler):  # type: ignore
         """Stub cuando tree-sitter no está disponible."""

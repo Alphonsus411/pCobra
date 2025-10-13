@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
-from core.ast_nodes import NodoAST
+from .ast_nodes import NodoAST
 
 
 @dataclass

@@ -5,7 +5,7 @@ Las clases y funciones relacionadas con plugins se encuentran ahora en
 ``cobra.cli.plugin``. Por favor, actualiza tus imports para usar el nuevo módulo.
 
 Example:
-    from cobra.cli.plugin import PluginInterface  # Forma recomendada
+    from pcobra.cobra.cli.plugin import PluginInterface  # Forma recomendada
 """
 import warnings
 
@@ -16,6 +16,6 @@ warnings.warn(
     stacklevel=2
 )
 
-from cobra.cli.plugin import PluginInterface
+from pcobra.cobra.cli.plugin import PluginInterface
 
 __all__ = ["PluginInterface"]

@@ -1,4 +1,4 @@
-from cobra.usar_loader import obtener_modulo
+from pcobra.cobra.usar_loader import obtener_modulo
 
 
 def visit_usar(self, nodo):
@@ -6,6 +6,6 @@ def visit_usar(self, nodo):
 
     ind = self.obtener_indentacion()
     self.codigo += (
-        f"{ind}from cobra.usar_loader import obtener_modulo\n"
+        f"{ind}from pcobra.cobra.usar_loader import obtener_modulo\n"
         f"{ind}{nodo.modulo} = obtener_modulo('{nodo.modulo}')\n"
     )

@@ -19,7 +19,7 @@ from pygments.token import (
     Whitespace,
 )
 
-from cobra.core.lexer import TipoToken
+from pcobra.cobra.core.lexer import TipoToken
 
 # Mapeo entre los tipos de token del lexer principal y los tokens de Pygments
 # junto con la expresión regular que los reconoce. El orden es importante,

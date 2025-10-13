@@ -1,7 +1,7 @@
 # coding: utf-8
 """Módulo de compatibilidad para el antiguo validador semántico."""
 
-from core.semantic_validators import (
+from .semantic_validators import (
     PrimitivaPeligrosaError,
     ValidadorPrimitivaPeligrosa,
     construir_cadena,

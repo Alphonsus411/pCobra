@@ -3,8 +3,8 @@
 
 from typing import Any, List
 
-import cobra.core.ast_nodes
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+import pcobra.cobra as cobra
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
 
 
 class ReverseFromCPP(TreeSitterReverseTranspiler):

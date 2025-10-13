@@ -1,6 +1,6 @@
 """Bloques try-catch en Hololang."""
 
-from cobra.transpilers.semantica import procesar_bloque
+from pcobra.cobra.transpilers.semantica import procesar_bloque
 
 
 def visit_try_catch(self, nodo):

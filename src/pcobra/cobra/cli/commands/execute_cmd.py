@@ -4,22 +4,22 @@ from typing import Any
 
 from argcomplete.completers import FilesCompleter
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from cobra.cli.utils.validators import validar_archivo_existente
-from cobra.core import Lexer, LexerError
-from cobra.core import Parser, ParserError
-from cobra.transpilers import module_map
-from core.interpreter import InterpretadorCobra
-from core.sandbox import (
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.core import Lexer, LexerError
+from pcobra.cobra.core import Parser, ParserError
+from pcobra.cobra.transpilers import module_map
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.sandbox import (
     SecurityError,
     ejecutar_en_contenedor,
     ejecutar_en_sandbox,
     validar_dependencias,
 )
-from core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from core.resource_limits import limitar_cpu_segundos
+from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.core.resource_limits import limitar_cpu_segundos
 
 
 class ExecuteCommand(BaseCommand):

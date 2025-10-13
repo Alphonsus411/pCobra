@@ -11,8 +11,8 @@ from dataclasses import dataclass
 import re
 from typing import Any, Iterator, List, Optional
 
-from cobra.core import Token, TipoToken
-from core.ast_nodes import (
+from pcobra.cobra.core import Token, TipoToken
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoAtributo,
     NodoBucleMientras,

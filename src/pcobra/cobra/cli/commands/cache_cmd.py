@@ -1,13 +1,13 @@
 from typing import Any
 import sqlite3
 
-from core.ast_cache import limpiar_cache
+from pcobra.core.ast_cache import limpiar_cache
 from pcobra.core.database import DatabaseDependencyError, DatabaseKeyError
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_info, mostrar_error
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_info, mostrar_error
 
 
 class CacheCommand(BaseCommand):

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, List
 
-from core.visitor import NodeVisitor
-from core.ast_nodes import (
+from ..visitor import NodeVisitor
+from ..ast_nodes import (
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,

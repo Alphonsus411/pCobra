@@ -2,7 +2,7 @@
 
 from typing import Any, AsyncContextManager
 
-from corelibs.texto import (
+from .texto import (
     mayusculas,
     minusculas,
     capitalizar,
@@ -65,7 +65,7 @@ from corelibs.texto import (
     es_espacio,
     rellenar_izquierda,
     rellenar_derecha,
-normalizar_unicode,
+    normalizar_unicode,
 )
 
 encontrar_texto = _texto_encontrar
@@ -81,7 +81,7 @@ traducir_texto = _texto_traducir
 traducir = _texto_traducir
 codificar_texto = _texto_codificar
 decodificar_texto = _texto_decodificar
-from corelibs.logica import (
+from .logica import (
     es_verdadero,
     es_falso,
     conjuncion,
@@ -108,7 +108,7 @@ from corelibs.logica import (
     tabla_verdad,
     diferencia_simetrica,
 )
-from corelibs.numero import (
+from .numero import (
     absoluto,
     aleatorio,
     clamp,
@@ -159,9 +159,9 @@ from corelibs.numero import (
     varianza,
     varianza_muestral,
 )
-from corelibs.archivo import leer, escribir, existe, eliminar
-from corelibs.tiempo import ahora, formatear, dormir
-from corelibs.coleccion import (
+from .archivo import leer, escribir, existe, eliminar
+from .tiempo import ahora, formatear, dormir
+from .coleccion import (
     ordenar,
     maximo,
     minimo,
@@ -182,15 +182,15 @@ from corelibs.coleccion import (
     scanear,
     pares_consecutivos,
 )
-from corelibs.seguridad import hash_sha256, generar_uuid
-from corelibs.red import (
+from .seguridad import hash_sha256, generar_uuid
+from .red import (
     obtener_url,
     obtener_url_async,
     enviar_post,
     enviar_post_async,
     descargar_archivo,
 )
-from corelibs.sistema import (
+from .sistema import (
     obtener_os,
     ejecutar,
     ejecutar_async,
@@ -198,7 +198,7 @@ from corelibs.sistema import (
     obtener_env,
     listar_dir,
 )
-from corelibs.asincrono import (
+from .asincrono import (
     recolectar,
     iterar_completadas,
     recolectar_resultados,

@@ -7,16 +7,16 @@ from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 from argparse import ArgumentParser
 
-from cobra.cli.commands.compile_cmd import TRANSPILERS
-from cobra.core import Lexer
-from cobra.core import Parser
-from core.interpreter import InterpretadorCobra
-from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.core import Lexer
+from pcobra.cobra.core import Parser
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 
 # Constantes
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB

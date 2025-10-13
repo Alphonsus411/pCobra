@@ -1,4 +1,4 @@
-from cobra.core.ast_nodes import NodoValor
+from pcobra.cobra.core.ast_nodes import NodoValor
 
 
 def visit_imprimir(self, nodo):

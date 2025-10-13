@@ -1,3 +1,4 @@
+import importlib
 import logging
 import sys
 from typing import List, Optional
@@ -10,6 +11,13 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
 from . import cobra as cobra_pkg
 from . import compiler as compiler_pkg
 from . import core as core_pkg
+from .cobra.cli import commands as cobra_cli_commands
+
+# Alias explícitos hacia el paquete real de comandos del CLI
+cli = importlib.import_module("pcobra.cobra.cli.cli")
+commands = cobra_cli_commands
+sys.modules.setdefault("pcobra.cli.cli", cli)
+sys.modules.setdefault("pcobra.cli.commands", cobra_cli_commands)
 from .cobra.cli.cli import CliApplication
 
 # Registrar alias de paquetes para compatibilidad con imports absolutos

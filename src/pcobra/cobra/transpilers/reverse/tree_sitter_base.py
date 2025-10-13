@@ -13,8 +13,8 @@ except Exception:  # pragma: no cover - dependencia opcional
         """Excepción genérica para errores de tree-sitter."""
         pass
 
-from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from cobra.core.ast_nodes import (
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoFuncion,

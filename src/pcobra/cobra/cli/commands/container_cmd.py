@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any
 from argparse import ArgumentParser
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
 def validar_tag(valor: str) -> str:
     """Valida que el tag tenga un formato válido para Docker."""

@@ -1,11 +1,11 @@
 from typing import Dict, Optional
 from dataclasses import dataclass
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.i18n import _
-from cobra.cli.plugin_registry import obtener_registro_detallado
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_info, mostrar_error
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.plugin_registry import obtener_registro_detallado
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_info, mostrar_error
 
 
 @dataclass

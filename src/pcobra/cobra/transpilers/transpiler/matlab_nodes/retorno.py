@@ -1,4 +1,4 @@
-from core.ast_nodes import NodoRetorno
+from pcobra.core.ast_nodes import NodoRetorno
 
 
 def visit_retorno(self, nodo: NodoRetorno):

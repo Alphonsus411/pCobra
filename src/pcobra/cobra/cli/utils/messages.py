@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from contextlib import contextmanager
 
 try:
-    from cobra.cli.i18n import _
+    from pcobra.cobra.cli.i18n import _
 except ImportError:
     # Fallback si el módulo de internacionalización no está disponible
     def _(text: str) -> str:

@@ -1,14 +1,14 @@
 """Cadena de validadores semánticos para el modo seguro de Cobra."""
 
-from core.semantic_validators.primitiva_peligrosa import (
+from .primitiva_peligrosa import (
     PrimitivaPeligrosaError,
     ValidadorPrimitivaPeligrosa,
 )
-from core.semantic_validators.auditoria import ValidadorAuditoria
-from core.semantic_validators.import_seguro import ValidadorImportSeguro
-from core.semantic_validators.fs_access import ValidadorSistemaArchivos
-from core.semantic_validators.reflexion_segura import ValidadorProhibirReflexion
-from core.cobra_config import auditoria_activa
+from .auditoria import ValidadorAuditoria
+from .import_seguro import ValidadorImportSeguro
+from .fs_access import ValidadorSistemaArchivos
+from .reflexion_segura import ValidadorProhibirReflexion
+from ..cobra_config import auditoria_activa
 
 # Instancia por defecto reutilizable de la cadena de validación
 _CADENA_DEFECTO = None

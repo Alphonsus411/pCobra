@@ -1,4 +1,4 @@
-from cobra.core.ast_nodes import NodoRetorno, NodoValor
+from pcobra.cobra.core.ast_nodes import NodoRetorno, NodoValor
 
 
 def _inferir_tipo(expr):

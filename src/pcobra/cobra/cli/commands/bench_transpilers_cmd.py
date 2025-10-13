@@ -6,12 +6,12 @@ from pathlib import Path
 from timeit import timeit
 from typing import Any, Dict, List
 
-from cobra.cli.commands.base import BaseCommand
-from cobra.cli.commands.compile_cmd import TRANSPILERS
-from cobra.cli.i18n import _
-from cobra.cli.utils.argument_parser import CustomArgumentParser
-from cobra.cli.utils.messages import mostrar_error, mostrar_info
-from core.ast_cache import obtener_ast
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.core.ast_cache import obtener_ast
 
 # Constantes del proyecto
 PROGRAM_DIR = Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"

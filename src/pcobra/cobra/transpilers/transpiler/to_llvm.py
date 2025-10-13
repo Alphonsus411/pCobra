@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import List
 
 from compiler.llvm_backend import generar_ir_funcion
-from core import ast_nodes
-from cobra.core import TipoToken
+from pcobra.core import ast_nodes
+from pcobra.cobra.core import TipoToken
 
 
 class TranspiladorLLVM:

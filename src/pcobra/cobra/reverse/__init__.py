@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import List, Any
 
-import cobra.transpilers.reverse as _legacy_reverse
-from cobra.transpilers.reverse import BaseReverseTranspiler
+import pcobra.cobra.transpilers.reverse as _legacy_reverse
+from pcobra.cobra.transpilers.reverse import BaseReverseTranspiler
 
 from .hololang_parser import HololangParser, parse_hololang
 

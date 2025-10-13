@@ -21,8 +21,8 @@ except ModuleNotFoundError:  # pragma: no cover
 import yaml
 from jsonschema import validate, ValidationError
 
-from cobra.cli.utils.semver import es_version_valida
-from cobra.transpilers import module_map
+from pcobra.cobra.cli.utils.semver import es_version_valida
+from pcobra.cobra.transpilers import module_map
 
 # Constantes
 MAX_FILE_SIZE = 10_000_000  # 10MB

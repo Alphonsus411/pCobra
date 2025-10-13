@@ -5,8 +5,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Union
 
-from core.visitor import NodeVisitor
-from cobra.transpilers.module_map import get_mapped_path
+from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.transpilers.module_map import get_mapped_path
 
 # ---------------------------------------------------------------------------
 # Clases base
@@ -36,9 +36,9 @@ class BaseTranspiler(NodeVisitor, ABC):
 
 STANDARD_IMPORTS = {
     "python": (
-        "from core.nativos import *\n"
-        "from corelibs import *\n"
-        "from standard_library import *\n"
+        "from pcobra.core.nativos import *\n"
+        "from pcobra.corelibs import *\n"
+        "from pcobra.standard_library import *\n"
     ),
     "js": [
         "import * as io from './nativos/io.js';",

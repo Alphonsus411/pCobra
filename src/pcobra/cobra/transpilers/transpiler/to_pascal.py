@@ -1,6 +1,6 @@
 """Transpilador que genera código Pascal a partir de Cobra."""
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -11,18 +11,18 @@ from cobra.core.ast_nodes import (
     NodoOperacionUnaria,
     NodoAtributo,
 )
-from cobra.core import TipoToken
-from core.visitor import NodeVisitor
-from cobra.transpilers.common.utils import BaseTranspiler
-from core.optimizations import optimize_constants, remove_dead_code, inline_functions
-from cobra.macro import expandir_macros
+from pcobra.cobra.core import TipoToken
+from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.macro import expandir_macros
 
-from cobra.transpilers.transpiler.pascal_nodes.asignacion import visit_asignacion as _visit_asignacion
-from cobra.transpilers.transpiler.pascal_nodes.funcion import visit_funcion as _visit_funcion
-from cobra.transpilers.transpiler.pascal_nodes.llamada_funcion import (
+from pcobra.cobra.transpilers.transpiler.pascal_nodes.asignacion import visit_asignacion as _visit_asignacion
+from pcobra.cobra.transpilers.transpiler.pascal_nodes.funcion import visit_funcion as _visit_funcion
+from pcobra.cobra.transpilers.transpiler.pascal_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from cobra.transpilers.transpiler.pascal_nodes.imprimir import visit_imprimir as _visit_imprimir
+from pcobra.cobra.transpilers.transpiler.pascal_nodes.imprimir import visit_imprimir as _visit_imprimir
 
 pascal_nodes = {
     "asignacion": _visit_asignacion,

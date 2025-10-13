@@ -14,7 +14,7 @@ from typing import Iterable, List, Optional, Sequence
 
 from pcobra.cobra.core import Token, TipoToken
 
-from core.ast_nodes import (
+from .ast_nodes import (
     NodoAsignacion,
     NodoBucleMientras,
     NodoCondicional,

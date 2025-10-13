@@ -1,7 +1,7 @@
 """Analizador semántico que construye la tabla de símbolos y verifica errores."""
 from typing import List, Optional, Any, Set
 
-from core.ast_nodes import (
+from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoClase,
     NodoFuncion,
@@ -14,8 +14,8 @@ from core.ast_nodes import (
     NodoRomper,
     NodoCondicional,
 )
-from core.visitor import NodeVisitor
-from cobra.semantico.tabla import Ambito
+from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.semantico.tabla import Ambito
 
 
 class AnalizadorSemantico(NodeVisitor):

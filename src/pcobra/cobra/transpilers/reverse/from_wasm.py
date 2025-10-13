@@ -5,8 +5,8 @@ from __future__ import annotations
 
 from typing import Any, List, Union
 
-from cobra.transpilers.reverse.base import BaseReverseTranspiler
-from cobra.core.ast_nodes import NodoAsignacion, NodoFuncion, NodoIdentificador, NodoValor
+from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.core.ast_nodes import NodoAsignacion, NodoFuncion, NodoIdentificador, NodoValor
 
 try:
     from wabt import Wabt  # type: ignore

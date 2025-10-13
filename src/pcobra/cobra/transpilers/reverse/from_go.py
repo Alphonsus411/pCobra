@@ -12,7 +12,7 @@ Soporta las principales construcciones del lenguaje Go incluyendo:
 - Manejo de paquetes
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_go import ReverseFromGo
+    >>> from pcobra.cobra.transpilers.reverse.from_go import ReverseFromGo
     >>> transpiler = ReverseFromGo()
     >>> ast = transpiler.generate_ast("func main() { return }")
 
@@ -20,7 +20,7 @@ Nota:
     Requiere que el parser tree-sitter para Go esté instalado y configurado.
 """
 
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromGo(TreeSitterReverseTranspiler):

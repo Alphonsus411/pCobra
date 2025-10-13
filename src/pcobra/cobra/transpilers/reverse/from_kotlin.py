@@ -5,7 +5,7 @@ Este módulo implementa la conversión de código Kotlin a nodos AST de Cobra
 utilizando el parser tree-sitter.
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_kotlin import ReverseFromKotlin
+    >>> from pcobra.cobra.transpilers.reverse.from_kotlin import ReverseFromKotlin
     >>> transpiler = ReverseFromKotlin()
     >>> ast = transpiler.generate_ast("fun main() { return }")
 
@@ -13,13 +13,13 @@ Nota:
     Requiere que el parser tree-sitter para Kotlin esté instalado y configurado.
 """
 
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoBloque,
     NodoDeclaracion,
     NodoExpresion,
     NodoFuncion
 )
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 
 class ReverseFromKotlin(TreeSitterReverseTranspiler):

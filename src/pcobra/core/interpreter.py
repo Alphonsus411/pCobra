@@ -5,20 +5,20 @@ import os
 from typing import Optional
 
 from pcobra.cobra.core import Token, TipoToken, Lexer
-from core.optimizations import (
+from .optimizations import (
     optimize_constants,
     remove_dead_code,
     inline_functions,
     eliminate_common_subexpressions,
 )
-from core.type_utils import (
+from .type_utils import (
     verificar_sumables,
     verificar_numeros,
     verificar_comparables,
     verificar_booleanos,
     verificar_booleano,
 )
-from core.ast_nodes import (
+from .ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoBucleMientras,
@@ -51,20 +51,20 @@ from core.ast_nodes import (
     NodoAST,
 )
 from pcobra.cobra.core import Parser
-from core.memoria.gestor_memoria import GestorMemoriaGenetico
-from core.hololang_ir import HololangModule, build_hololang_ir
-from core.semantic_validators import (
+from .memoria.gestor_memoria import GestorMemoriaGenetico
+from .hololang_ir import HololangModule, build_hololang_ir
+from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
 from pcobra.cobra.semantico import AnalizadorSemantico
-from core.qualia_bridge import register_execution
-from core.cobra_config import (
+from .qualia_bridge import register_execution
+from .cobra_config import (
     limite_nodos,
     limite_memoria_mb,
     limite_cpu_segundos,
 )
-from core.resource_limits import (
+from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
 )
@@ -156,7 +156,7 @@ class InterpretadorCobra:
             "Exception": builtins.Exception,
             "object": builtins.object,
         }
-        from core.semantic_validators.base import ValidadorBase
+        from .semantic_validators.base import ValidadorBase
 
         namespace = {
             "__builtins__": safe_builtins,

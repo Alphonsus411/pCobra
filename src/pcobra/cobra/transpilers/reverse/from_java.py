@@ -4,8 +4,8 @@ from typing import List
 
 from tree_sitter import Node
 
-from cobra.core import Token, TipoToken
-from cobra.core.ast_nodes import (
+from pcobra.cobra.core import Token, TipoToken
+from pcobra.cobra.core.ast_nodes import (
     NodoClase,
     NodoMetodo,
     NodoBucleMientras,
@@ -16,7 +16,7 @@ from cobra.core.ast_nodes import (
     NodoCondicional,
 )
 
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler, TreeSitterNode
 
 
 class ReverseFromJava(TreeSitterReverseTranspiler):

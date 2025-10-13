@@ -1,6 +1,6 @@
 """Visitadores de asignación para Hololang."""
 
-from cobra.transpilers.semantica import datos_asignacion
+from pcobra.cobra.transpilers.semantica import datos_asignacion
 
 
 def visit_asignacion(self, nodo):

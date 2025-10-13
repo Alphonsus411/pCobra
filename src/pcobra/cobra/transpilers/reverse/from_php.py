@@ -5,14 +5,14 @@ Este módulo implementa la conversión de código PHP a nodos AST de Cobra
 utilizando el parser tree-sitter.
 
 Ejemplos:
-    >>> from cobra.transpilers.reverse.from_php import ReverseFromPHP
+    >>> from pcobra.cobra.transpilers.reverse.from_php import ReverseFromPHP
     >>> transpiler = ReverseFromPHP()
     >>> ast = transpiler.generate_ast("<?php echo 'Hola'; ?>")
 
 Nota:
     Requiere que el parser tree-sitter para PHP esté instalado y configurado.
 """
-from cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 
 class ReverseFromPHP(TreeSitterReverseTranspiler):
     """Transpilador inverso de PHP a Cobra usando tree-sitter.

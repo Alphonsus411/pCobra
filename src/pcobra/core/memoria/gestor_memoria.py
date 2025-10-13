@@ -2,7 +2,7 @@
 
 import random
 
-from core.memoria.estrategia_memoria import EstrategiaMemoria
+from .estrategia_memoria import EstrategiaMemoria
 
 
 class GestorMemoriaGenetico:
