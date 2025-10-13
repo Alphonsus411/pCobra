@@ -23,3 +23,37 @@ for pkg in _submodules:
     except Exception as e:  # nosec B110
         logger.error("Error al importar %s", pkg, exc_info=True)
         raise
+
+# Registrar alias de compatibilidad para importaciones absolutas heredadas
+def _registrar_alias_legacy() -> None:
+    """Sincroniza los nombres históricos ``cobra`` y ``core`` con ``pcobra``."""
+
+    cobra_spec = importlib.util.find_spec("pcobra.cobra")
+    if cobra_spec is None:
+        return
+
+    cobra_pkg = importlib.import_module("pcobra.cobra")
+    _sys.modules.setdefault("cobra", cobra_pkg)
+
+    core_spec = importlib.util.find_spec("pcobra.cobra.core")
+    if core_spec is not None:
+        core_pkg = importlib.import_module("pcobra.cobra.core")
+        _sys.modules.setdefault("cobra.core", core_pkg)
+        for nombre, modulo in list(_sys.modules.items()):
+            if nombre.startswith("pcobra.cobra.core."):
+                alias = "cobra.core." + nombre.split("pcobra.cobra.core.", 1)[1]
+                _sys.modules.setdefault(alias, modulo)
+
+    legacy_core_spec = importlib.util.find_spec("pcobra.core")
+    if legacy_core_spec is None:
+        return
+
+    legacy_core = importlib.import_module("pcobra.core")
+    _sys.modules.setdefault("core", legacy_core)
+    for nombre, modulo in list(_sys.modules.items()):
+        if nombre.startswith("pcobra.core."):
+            alias = "core." + nombre.split("pcobra.core.", 1)[1]
+            _sys.modules.setdefault(alias, modulo)
+
+
+_registrar_alias_legacy()

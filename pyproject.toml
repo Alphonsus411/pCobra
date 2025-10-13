@@ -79,7 +79,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["pcobra"]
+include = ["pcobra", "cobra", "core"]
 
 [project.scripts]
 cobra = "pcobra.cli:main"
