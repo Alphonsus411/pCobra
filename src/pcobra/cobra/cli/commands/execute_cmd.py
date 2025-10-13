@@ -2,12 +2,11 @@ import logging
 import os
 from typing import Any
 
-from argcomplete.completers import FilesCompleter
-
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
@@ -33,7 +32,9 @@ class ExecuteCommand(BaseCommand):
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Ejecuta un script Cobra"))
-        parser.add_argument("archivo", help=_("Ruta al archivo a ejecutar")).completer = FilesCompleter()
+        parser.add_argument(
+            "archivo", help=_("Ruta al archivo a ejecutar")
+        ).completer = files_completer()
         parser.add_argument(
             "--sandbox",
             action="store_true",

@@ -1,8 +1,11 @@
 import os
-import yaml
-
-from typing import Dict, Any
 import logging
+from typing import Any, Dict
+
+try:  # pragma: no cover - dependencia opcional
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - entornos sin PyYAML
+    yaml = None  # type: ignore[assignment]
 
 try:
     import tomllib  # Python ≥3.11
@@ -32,6 +35,12 @@ def get_map() -> Dict[str, Any]:
     """Carga el mapa YAML de módulos soportados."""
     global _cache
     if _cache is None:
+        if yaml is None:
+            logger.debug(
+                "PyYAML no está instalado; se devuelve un mapa de módulos vacío.",
+            )
+            _cache = {}
+            return _cache
         try:
             if os.path.exists(MODULE_MAP_PATH):
                 with open(MODULE_MAP_PATH, 'r', encoding='utf-8') as f:
@@ -39,7 +48,7 @@ def get_map() -> Dict[str, Any]:
             else:
                 data = {}
             _cache = data
-        except (yaml.YAMLError, OSError) as e:
+        except (yaml.YAMLError, OSError) as e:  # type: ignore[attr-defined]
             logger.error(f"Error al cargar el archivo de mapeo: {e}")
             return {}
     return _cache

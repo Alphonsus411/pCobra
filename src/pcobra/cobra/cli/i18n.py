@@ -4,6 +4,7 @@ Proporciona funciones para la traducción de textos y mensajes de error.
 """
 
 import gettext
+import logging
 import os
 import traceback
 from pathlib import Path
@@ -31,6 +32,8 @@ _TRACEBACK_TRANSLATIONS: Dict[str, Dict[str, str]] = {
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 LOCALE_DIR = ROOT_DIR / "frontend" / "docs" / "locale"
 
+logger = logging.getLogger(__name__)
+
 # Inicialización de la función de traducción por defecto
 _ = gettext.gettext
 
@@ -48,7 +51,6 @@ def setup_gettext(lang: Optional[str] = None) -> Callable[[str], str]:
         
     Raises:
         ValueError: Si el idioma no está soportado.
-        FileNotFoundError: Si el directorio de traducciones no existe.
     """
     selected = lang or os.environ.get("COBRA_LANG", DEFAULT_LANG)
     
@@ -56,7 +58,10 @@ def setup_gettext(lang: Optional[str] = None) -> Callable[[str], str]:
         raise ValueError(f"Idioma no soportado: {selected}")
         
     if not LOCALE_DIR.exists():
-        raise FileNotFoundError(f"Directorio de traducciones no encontrado: {LOCALE_DIR}")
+        logger.debug(
+            "Directorio de traducciones %s no encontrado; se utilizarán traducciones por defecto.",
+            LOCALE_DIR,
+        )
 
     translation = gettext.translation(
         "cobra",

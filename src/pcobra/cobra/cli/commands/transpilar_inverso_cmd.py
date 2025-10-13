@@ -1,11 +1,28 @@
-import os
-import logging
 import inspect
-from typing import Optional, Dict, Type, Any
+import logging
+import os
 from argparse import ArgumentParser, Namespace
 from contextlib import contextmanager
-from chardet import detect
-from jsonschema import ValidationError
+from typing import Any, Dict, Optional, Type
+
+try:  # pragma: no cover - dependencia opcional
+    from chardet import detect as _detect_encoding
+except ModuleNotFoundError:  # pragma: no cover - entornos sin chardet
+    _detect_encoding = None
+
+try:  # pragma: no cover - dependencia opcional
+    from jsonschema import ValidationError as _JSONSchemaValidationError
+except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
+    _JSONSchemaValidationError = None
+    class _FallbackValidationError(RuntimeError):
+        """Excepción básica usada cuando falta jsonschema."""
+
+        pass
+else:
+    class _FallbackValidationError(_JSONSchemaValidationError):  # type: ignore[misc]
+        pass
+
+ValidationError = _FallbackValidationError
 
 import pcobra.cobra.transpilers.reverse as reverse_module
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
@@ -140,13 +157,22 @@ class TranspilarInversoCommand(BaseCommand):
         Returns:
             str: Codificación detectada
         """
-        with open(archivo, 'rb') as f:
+        if _detect_encoding is None:
+            logger.debug(
+                "chardet no está instalado; se asumirá codificación utf-8 para %s",
+                archivo,
+            )
+            return "utf-8"
+
+        with open(archivo, "rb") as f:
             raw_data = f.read()
-        resultado = detect(raw_data)
-        encoding = resultado['encoding']
+        resultado = _detect_encoding(raw_data)
+        encoding = resultado.get("encoding") if isinstance(resultado, dict) else None
         if not encoding:
-            logger.warning(f"No se pudo detectar la codificación para {archivo}, usando utf-8")
-            encoding = 'utf-8'
+            logger.warning(
+                "No se pudo detectar la codificación para %s, usando utf-8", archivo
+            )
+            encoding = "utf-8"
         return encoding
 
     def _verificar_dependencias(self, origen: str, destino: str) -> None:

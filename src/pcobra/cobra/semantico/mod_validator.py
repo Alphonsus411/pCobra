@@ -11,15 +11,25 @@ comprobaciones incluyen:
 
 from __future__ import annotations
 
+import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 try:
     import tomllib  # Python >= 3.11
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
-import yaml
-from jsonschema import validate, ValidationError
+
+try:  # pragma: no cover - dependencia opcional
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - entornos sin PyYAML
+    yaml = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - dependencia opcional
+    from jsonschema import ValidationError, validate
+except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
+    ValidationError = None  # type: ignore[assignment]
+    validate = None  # type: ignore[assignment]
 
 from pcobra.cobra.cli.utils.semver import es_version_valida
 from pcobra.cobra.transpilers import module_map
@@ -28,15 +38,21 @@ from pcobra.cobra.transpilers import module_map
 MAX_FILE_SIZE = 10_000_000  # 10MB
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
 
+logger = logging.getLogger(__name__)
+
 # Verificar existencia del esquema y cargarlo
 if not os.path.exists(SCHEMA_PATH):
     raise FileNotFoundError(f"No se encuentra el archivo de esquema: {SCHEMA_PATH}")
 
-try:
-    with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
-        SCHEMA = yaml.safe_load(f)
-except (yaml.YAMLError, OSError) as e:
-    raise RuntimeError(f"Error al cargar el esquema: {e}") from None
+if yaml is None:
+    logger.debug("PyYAML no está instalado; se omite la carga del esquema cobra_mod.")
+    SCHEMA: dict[str, Any] | None = None
+else:
+    try:
+        with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+            SCHEMA = yaml.safe_load(f)
+    except (yaml.YAMLError, OSError) as e:  # type: ignore[attr-defined]
+        raise RuntimeError(f"Error al cargar el esquema: {e}") from None
 
 
 def cargar_mod(path: str | None = None) -> Dict[str, Any]:
@@ -73,10 +89,14 @@ def cargar_mod(path: str | None = None) -> Dict[str, Any]:
     try:
         return tomllib.loads(data.decode("utf-8"))
     except (tomllib.TOMLDecodeError, UnicodeDecodeError):
+        if yaml is None:
+            raise ValueError(
+                "No se pudo parsear cobra.mod: PyYAML no está instalado para usar el formato YAML.",
+            )
         try:
             resultado = yaml.safe_load(data)
             return resultado if resultado is not None else {}
-        except yaml.YAMLError as e:
+        except yaml.YAMLError as e:  # type: ignore[attr-defined]
             raise ValueError(f"Error al parsear archivo: {e}") from None
 
 
@@ -92,10 +112,15 @@ def validar_mod(path: str | None = None) -> None:
         OSError: Si hay problemas al acceder a los archivos.
     """
     datos = cargar_mod(path)
-    try:
-        validate(instance=datos, schema=SCHEMA)
-    except ValidationError as e:
-        raise ValueError(f"Archivo cobra.mod inválido: {e.message}") from None
+    if SCHEMA is None or validate is None or ValidationError is None:
+        logger.debug(
+            "Se omite la validación por esquema de cobra.mod por dependencias opcionales faltantes.",
+        )
+    else:
+        try:
+            validate(instance=datos, schema=SCHEMA)
+        except ValidationError as e:
+            raise ValueError(f"Archivo cobra.mod inválido: {e.message}") from None
 
     errores: list[str] = []
     archivos_py: set[str] = set()

@@ -9,9 +9,6 @@ from contextlib import contextmanager
 
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
-import argcomplete
-from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
 from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
@@ -42,6 +39,12 @@ from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.plugin import descubrir_plugins
 from pcobra.cobra.cli.utils import messages
 from pcobra.cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.utils.autocomplete import (
+    autocomplete_available,
+    directories_completer,
+    enable_autocomplete,
+    files_completer,
+)
 
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
@@ -217,9 +220,9 @@ class CliApplication:
                         self._configure_autocomplete(sub)
                 continue
             if action.dest in file_args:
-                action.completer = FilesCompleter()
+                action.completer = files_completer()
             elif action.dest in dir_args:
-                action.completer = DirectoriesCompleter()
+                action.completer = directories_completer()
 
     def _build_argument_parser(self) -> CustomArgumentParser:
         parser = CustomArgumentParser(
@@ -242,8 +245,13 @@ class CliApplication:
         default_command = self.command_registry.get_default_command()
         if default_command:
             self.parser.set_defaults(cmd=default_command)
-        self._configure_autocomplete(self.parser)
-        argcomplete.autocomplete(self.parser)
+        if autocomplete_available():
+            self._configure_autocomplete(self.parser)
+            enable_autocomplete(self.parser)
+        else:
+            logging.getLogger(__name__).debug(
+                "Autocompletado deshabilitado: argcomplete no está instalado.",
+            )
 
         return self.parser.parse_args(argv)
 

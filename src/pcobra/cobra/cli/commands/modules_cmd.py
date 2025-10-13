@@ -1,11 +1,20 @@
+import logging
 import os
 import shutil
-import logging
-from typing import Any, Dict, Optional
 from argparse import ArgumentParser
+from contextlib import nullcontext
 from pathlib import Path
-from filelock import FileLock
-import yaml
+from typing import Any, Dict, Optional
+
+try:  # pragma: no cover - dependencias opcionales
+    from filelock import FileLock
+except ModuleNotFoundError:  # pragma: no cover - entornos sin filelock
+    FileLock = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - dependencia opcional
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - entornos sin PyYAML
+    yaml = None  # type: ignore[assignment]
 from pcobra.cobra.semantico import mod_validator
 from pcobra.cobra.transpilers.module_map import MODULE_MAP_PATH
 from pcobra.cobra.cli.cobrahub_client import CobraHubClient
@@ -37,6 +46,12 @@ MODULE_EXTENSION = ".co"
 
 # Crear directorio de módulos si no existe
 MODULES_PATH.mkdir(parents=True, exist_ok=True)
+
+
+def _lock_context(path: Path):
+    if FileLock is None:
+        return nullcontext()
+    return FileLock(f"{path}.lock")
 
 class ModulesCommand(BaseCommand):
     """Gestiona los módulos instalados."""
@@ -78,6 +93,14 @@ class ModulesCommand(BaseCommand):
         Raises:
             ValueError: Si la acción no es válida
         """
+        if yaml is None:
+            mostrar_error(
+                _(
+                    "El comando de módulos requiere la dependencia opcional 'PyYAML'."
+                )
+            )
+            return 1
+
         accion = args.accion
         if not accion:
             mostrar_error(_("Debe especificar una acción"))
@@ -114,6 +137,14 @@ class ModulesCommand(BaseCommand):
             IOError: Si hay error al leer el archivo
             yaml.YAMLError: Si hay error en el formato YAML
         """
+        if yaml is None:
+            mostrar_error(
+                _(
+                    "La lectura de versiones de módulos requiere la dependencia 'PyYAML'."
+                )
+            )
+            return None
+
         try:
             if os.path.exists(MODULE_MAP_PATH):
                 with open(MODULE_MAP_PATH, "r", encoding="utf-8") as f:
@@ -140,9 +171,15 @@ class ModulesCommand(BaseCommand):
             yaml.YAMLError: Si hay error en el formato YAML
         """
         data: Dict = {}
+        if yaml is None:
+            mostrar_error(
+                _("La gestión del archivo lock requiere la dependencia 'PyYAML'.")
+            )
+            return {LOCK_KEY: {}}
+
         try:
             if os.path.exists(LOCK_FILE):
-                with FileLock(f"{LOCK_FILE}.lock"):
+                with _lock_context(Path(LOCK_FILE)):
                     with open(LOCK_FILE, "r", encoding="utf-8") as f:
                         data = yaml.safe_load(f) or {}
         except (IOError, yaml.YAMLError) as e:
@@ -208,10 +245,18 @@ class ModulesCommand(BaseCommand):
             IOError: Si hay error al escribir el archivo
             yaml.YAMLError: Si hay error en el formato YAML
         """
+        if yaml is None:
+            mostrar_error(
+                _(
+                    "Actualizar el lock de módulos requiere la dependencia 'PyYAML'."
+                )
+            )
+            return
+
         if not nombre or not ModulesCommand._validar_nombre_modulo(nombre):
             return
         try:
-            with FileLock(f"{LOCK_FILE}.lock"):
+            with _lock_context(Path(LOCK_FILE)):
                 data = ModulesCommand._cargar_lock()
                 data[LOCK_KEY][nombre] = version
                 with open(LOCK_FILE, "w", encoding="utf-8") as f:
@@ -325,12 +370,13 @@ class ModulesCommand(BaseCommand):
 
             mostrar_info(_("Módulo {name} eliminado").format(name=nombre))
 
-            with FileLock(f"{LOCK_FILE}.lock"):
-                data = ModulesCommand._cargar_lock()
-                if nombre in data.get(LOCK_KEY, {}):
-                    del data[LOCK_KEY][nombre]
-                    with open(LOCK_FILE, "w", encoding="utf-8") as f:
-                        yaml.safe_dump(data, f)
+            if yaml is not None:
+                with _lock_context(Path(LOCK_FILE)):
+                    data = ModulesCommand._cargar_lock()
+                    if nombre in data.get(LOCK_KEY, {}):
+                        del data[LOCK_KEY][nombre]
+                        with open(LOCK_FILE, "w", encoding="utf-8") as f:
+                            yaml.safe_dump(data, f)
             return 0
 
         except Exception as e:

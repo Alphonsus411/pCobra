@@ -11,13 +11,24 @@ from queue import Empty
 from pathlib import Path
 from packaging.version import Version
 
-from RestrictedPython import compile_restricted, safe_builtins
-from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
-from RestrictedPython.Guards import (
-    guarded_iter_unpack_sequence,
-    guarded_unpack_sequence,
-)
-from RestrictedPython.PrintCollector import PrintCollector
+try:  # pragma: no cover - dependencia opcional
+    from RestrictedPython import compile_restricted, safe_builtins
+    from RestrictedPython.Eval import default_guarded_getitem, default_guarded_getattr
+    from RestrictedPython.Guards import (
+        guarded_iter_unpack_sequence,
+        guarded_unpack_sequence,
+    )
+    from RestrictedPython.PrintCollector import PrintCollector
+    HAS_RESTRICTED_PYTHON = True
+except ModuleNotFoundError:  # pragma: no cover - entornos sin RestrictedPython
+    compile_restricted = None  # type: ignore[assignment]
+    safe_builtins = {}  # type: ignore[assignment]
+    default_guarded_getitem = None  # type: ignore[assignment]
+    default_guarded_getattr = None  # type: ignore[assignment]
+    guarded_iter_unpack_sequence = None  # type: ignore[assignment]
+    guarded_unpack_sequence = None  # type: ignore[assignment]
+    PrintCollector = None  # type: ignore[assignment]
+    HAS_RESTRICTED_PYTHON = False
 
 
 MIN_VM2_VERSION = Version("3.9.19")
@@ -66,6 +77,11 @@ def ejecutar_en_sandbox(
     ``memoria_mb`` el máximo de memoria en megabytes. Se lanza ``TimeoutError``
     o ``MemoryError`` si se exceden estos límites.
     """
+    if not HAS_RESTRICTED_PYTHON:
+        raise RuntimeError(
+            "RestrictedPython no está instalado; la sandbox de Cobra no está disponible.",
+        )
+
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
     except SyntaxError as se:  # pragma: no cover - comportamiento simple
