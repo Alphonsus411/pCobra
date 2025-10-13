@@ -1,6 +1,8 @@
 import importlib
 import logging
 import sys
+from importlib import import_module
+from types import ModuleType
 from typing import List, Optional
 
 try:
@@ -13,19 +15,50 @@ from . import compiler as compiler_pkg
 from . import core as core_pkg
 from .cobra.cli import commands as cobra_cli_commands
 
+logger = logging.getLogger(__name__)
+
+
+def _alias_module(origen: str, destino: str) -> ModuleType:
+    """Registra ``destino`` como alias del módulo ``origen``."""
+
+    modulo = import_module(origen)
+    sys.modules.setdefault(destino, modulo)
+    return modulo
+
+
 # Alias explícitos hacia el paquete real de comandos del CLI
-cli = importlib.import_module("pcobra.cobra.cli.cli")
+cli = _alias_module("pcobra.cobra.cli.cli", "pcobra.cli.cli")
 commands = cobra_cli_commands
-sys.modules.setdefault("pcobra.cli.cli", cli)
-sys.modules.setdefault("pcobra.cli.commands", cobra_cli_commands)
+
+
+def _configurar_alias_paquete_cli() -> None:
+    """Expone ``pcobra.cobra.cli`` como si fuese ``pcobra.cli``.
+
+    El proyecto mantiene compatibilidad histórica con importaciones que
+    asumían que ``pcobra.cli`` era un paquete. Sin embargo, el fichero
+    actual se llama ``cli.py`` y, por tanto, Python lo trata como un
+    módulo en lugar de paquete, lo que rompe importaciones como
+    ``pcobra.cli.utils``. Para evitar ``ModuleNotFoundError`` registramos
+    alias explícitos y propagamos el ``__path__`` del paquete real.
+    """
+
+    paquete_cli = _alias_module("pcobra.cobra.cli", "pcobra.cli")
+    # Marcar el módulo como paquete reexportando su ``__path__`` original.
+    if hasattr(paquete_cli, "__path__"):
+        globals()["__path__"] = list(paquete_cli.__path__)  # type: ignore[assignment]
+
+    _alias_module("pcobra.cobra.cli.commands", "pcobra.cli.commands")
+    _alias_module("pcobra.cobra.cli.utils", "pcobra.cli.utils")
+    _alias_module("pcobra.cobra.cli.utils.semver", "pcobra.cli.utils.semver")
+
+
+_configurar_alias_paquete_cli()
 from .cobra.cli.cli import CliApplication
 
 # Registrar alias de paquetes para compatibilidad con imports absolutos
 sys.modules.setdefault("cobra", cobra_pkg)
 sys.modules.setdefault("core", core_pkg)
 sys.modules.setdefault("compiler", compiler_pkg)
-
-logger = logging.getLogger(__name__)
 
 
 def configurar_entorno() -> None:
