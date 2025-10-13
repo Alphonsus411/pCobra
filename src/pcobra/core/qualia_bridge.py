@@ -36,6 +36,7 @@ LEGACY_STATE_FILE = _resolve_state_file()
 
 
 LOGGER = logging.getLogger(__name__)
+_DATABASE_AVAILABLE = True
 
 
 class QualiaSpirit:
@@ -143,18 +144,38 @@ def _migrate_legacy_state(cursor, conn) -> dict[str, Any] | None:
 def load_state() -> QualiaSpirit:
     """Carga el estado del ``QualiaSpirit`` desde la base de datos."""
 
-    with database.get_connection() as conn:
-        cursor = conn.cursor()
-        data = _migrate_legacy_state(cursor, conn)
-        if data is None:
-            cursor.execute("SELECT payload FROM qualia_state WHERE id = 1")
-            row = cursor.fetchone()
-            data = _payload_to_dict(row[0]) if row else None
-    return _build_spirit(data)
+    global _DATABASE_AVAILABLE
+
+    try:
+        with database.get_connection() as conn:
+            cursor = conn.cursor()
+            data = _migrate_legacy_state(cursor, conn)
+            if data is None:
+                cursor.execute("SELECT payload FROM qualia_state WHERE id = 1")
+                row = cursor.fetchone()
+                data = _payload_to_dict(row[0]) if row else None
+        _DATABASE_AVAILABLE = True
+        return _build_spirit(data)
+    except database.DatabaseDependencyError as exc:  # pragma: no cover - dependencias opcionales
+        _DATABASE_AVAILABLE = False
+        LOGGER.warning(
+            "La base de datos de Qualia no está disponible: %s", exc
+        )
+    except Exception as exc:  # pragma: no cover - registro defensivo
+        _DATABASE_AVAILABLE = False
+        LOGGER.error(
+            "Error inesperado al cargar el estado de Qualia: %s", exc,
+            exc_info=True,
+        )
+    return QualiaSpirit()
 
 
 def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en la base de datos."""
+
+    if not _DATABASE_AVAILABLE:
+        LOGGER.debug("Base de datos de Qualia inactiva; se omite el guardado persistente.")
+        return
 
     payload = json.dumps(
         {
@@ -181,6 +202,14 @@ def reset_state() -> dict[str, Any]:
         "legacy_removed": False,
         "legacy_error": None,
     }
+
+    if not _DATABASE_AVAILABLE:
+        LOGGER.debug(
+            "Base de datos de Qualia inactiva; solo se limpia el estado en memoria.",
+        )
+        QUALIA.history.clear()
+        QUALIA.knowledge = QualiaKnowledge()
+        return resultado
 
     with database.get_connection() as conn:
         cursor = conn.cursor()

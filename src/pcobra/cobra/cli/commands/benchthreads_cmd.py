@@ -23,7 +23,11 @@ else:
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra
-from jupyter_kernel import CobraKernel
+
+try:  # pragma: no cover - dependencia opcional
+    from jupyter_kernel import CobraKernel
+except ModuleNotFoundError:  # pragma: no cover - entornos sin ipykernel
+    CobraKernel = None  # type: ignore[assignment]
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -142,6 +146,10 @@ class BenchThreadsCommand(BaseCommand):
 
     def _run_kernel(self, code: str) -> None:
         """Ejecuta código usando el kernel de Jupyter."""
+        if CobraKernel is None:
+            raise RuntimeError(
+                "El kernel de Jupyter no está disponible; instala ipykernel para usar este comando.",
+            )
         kernel = CobraKernel()
         kernel.do_execute(code, silent=True)
 

@@ -4,8 +4,6 @@ import os
 from importlib import import_module
 from importlib.metadata import entry_points
 
-from argcomplete.completers import FilesCompleter
-
 from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from pcobra.cobra.transpilers.transpiler.to_c import TranspiladorC
@@ -42,6 +40,7 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
 from pcobra.core.cobra_config import tiempo_max_transpilacion
 
@@ -130,7 +129,7 @@ class CompileCommand(BaseCommand):
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
         parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
-        parser.add_argument("archivo").completer = FilesCompleter()
+        parser.add_argument("archivo").completer = files_completer()
         parser.add_argument(
             "--tipo",
             choices=LANG_CHOICES,

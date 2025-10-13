@@ -5,17 +5,31 @@ import traceback
 from typing import Optional, Any
 from types import TracebackType
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.lexers import PygmentsLexer
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.output import DummyOutput
+try:  # pragma: no cover - dependencia opcional
+    from prompt_toolkit import PromptSession
+    from prompt_toolkit.lexers import PygmentsLexer
+    from prompt_toolkit.history import FileHistory
+    from prompt_toolkit.output import DummyOutput
+    try:
+        from prompt_toolkit.output.win32 import NoConsoleScreenBufferError
+    except Exception:  # pragma: no cover - solo disponible en Windows
+        class NoConsoleScreenBufferError(Exception):
+            """Excepción usada cuando la consola no soporta buffer de pantalla."""
 
-try:
-    from prompt_toolkit.output.win32 import NoConsoleScreenBufferError
-except Exception:  # pragma: no cover - solo disponible en Windows
+            pass
+    PROMPT_TOOLKIT_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
+    PromptSession = None  # type: ignore[assignment]
+    PygmentsLexer = None  # type: ignore[assignment]
+    FileHistory = None  # type: ignore[assignment]
+    DummyOutput = None  # type: ignore[assignment]
+
     class NoConsoleScreenBufferError(Exception):
-        """Excepción usada cuando la consola no soporta buffer de pantalla."""
+        """Excepción usada como marcador cuando falta prompt_toolkit."""
+
         pass
+
+    PROMPT_TOOLKIT_AVAILABLE = False
 
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
@@ -168,6 +182,14 @@ class InteractiveCommand(BaseCommand):
         Returns:
             0 en caso de éxito, 1 en caso de error
         """
+        if not PROMPT_TOOLKIT_AVAILABLE:
+            mostrar_error(
+                _(
+                    "El modo interactivo requiere la dependencia opcional 'prompt_toolkit'."
+                )
+            )
+            return 1
+
         try:
             # Validar y configurar límite de memoria
             memory_limit = getattr(args, "memory_limit", self.MEMORY_LIMIT_MB)
