@@ -6,7 +6,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from ia.analizador_agix import generar_sugerencias
+from pcobra.ia.analizador_agix import generar_sugerencias
 
 class AgixCommand(BaseCommand):
     """Genera sugerencias para código Cobra usando agix."""
