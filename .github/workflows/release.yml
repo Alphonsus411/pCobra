@@ -57,6 +57,12 @@ jobs:
   release:
     needs: [publish-artifacts, build-executables]
     runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -68,10 +74,10 @@ jobs:
           tag_name: ${{ github.ref_name }}
           files: dist/**
       - name: Notify Slack
-        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        if: always() && env.SLACK_WEBHOOK_URL != ''
         uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # v2
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK_URL }}
           SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
           SLACK_MESSAGE: |
             Release ${{ github.ref_name }} ${{ job.status }}
@@ -79,19 +85,19 @@ jobs:
       - name: Send release email
         if: |
           always() &&
-          secrets.SMTP_SERVER != '' &&
-          secrets.SMTP_PORT != '' &&
-          secrets.SMTP_USERNAME != '' &&
-          secrets.SMTP_PASSWORD != ''
+          env.SMTP_SERVER != '' &&
+          env.SMTP_PORT != '' &&
+          env.SMTP_USERNAME != '' &&
+          env.SMTP_PASSWORD != ''
         uses: dawidd6/action-send-mail@2cea9617b09d79a095af21254fbcb7ae95903dde # v3
         with:
-          server: ${{ secrets.SMTP_SERVER }}
-          port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
+          server: ${{ env.SMTP_SERVER }}
+          port: ${{ env.SMTP_PORT }}
+          username: ${{ env.SMTP_USERNAME }}
+          password: ${{ env.SMTP_PASSWORD }}
           subject: "Release ${{ github.ref_name }}"
           to: "devs@example.com"
-          from: "Cobra CI <${{ secrets.SMTP_USERNAME }}>"
+          from: "Cobra CI <${{ env.SMTP_USERNAME }}>"
           body: |
             Se ha publicado la versión ${{ github.ref_name }}.
             https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
