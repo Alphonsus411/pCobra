@@ -61,15 +61,39 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import importlib
-          for pkg in ["sphinx", "pyright"]:
-              importlib.import_module(pkg.replace('-', '_'))
+          import importlib, sys
+
+          required_modules = ["sphinx"]
+          missing = []
+          for module in required_modules:
+              try:
+                  importlib.import_module(module)
+              except ImportError:
+                  missing.append(module)
+
+          if missing:
+              sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
           PY
+          pyright --version
       - name: Verify extra packages (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          python -c "import importlib; [importlib.import_module(pkg.replace('-', '_')) for pkg in ['sphinx','pyright']]"
+          python - <<'PY'
+          import importlib, sys
+
+          required_modules = ["sphinx"]
+          missing = []
+          for module in required_modules:
+              try:
+                  importlib.import_module(module)
+              except ImportError:
+                  missing.append(module)
+
+          if missing:
+              sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
+          PY
+          pyright --version
       - name: Seguridad de dependencias
         if: env.SAFETY_API_KEY != ''
         shell: bash
@@ -175,15 +199,39 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import importlib
-          for pkg in ["sphinx", "pyright"]:
-              importlib.import_module(pkg.replace('-', '_'))
+          import importlib, sys
+
+          required_modules = ["sphinx"]
+          missing = []
+          for module in required_modules:
+              try:
+                  importlib.import_module(module)
+              except ImportError:
+                  missing.append(module)
+
+          if missing:
+              sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
           PY
+          pyright --version
       - name: Verify extra packages (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          python -c "import importlib; [importlib.import_module(pkg.replace('-', '_')) for pkg in ['sphinx','pyright']]"
+          python - <<'PY'
+          import importlib, sys
+
+          required_modules = ["sphinx"]
+          missing = []
+          for module in required_modules:
+              try:
+                  importlib.import_module(module)
+              except ImportError:
+                  missing.append(module)
+
+          if missing:
+              sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
+          PY
+          pyright --version
       - name: Compare benchmarks
         run: |
           python scripts/benchmarks/compare_releases.py \
