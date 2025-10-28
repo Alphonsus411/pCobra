@@ -128,7 +128,11 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        parser = subparsers.add_parser(self.name, help=_("Transpila un archivo"))
+        parser = subparsers.add_parser(
+            self.name,
+            help=_("Transpila un archivo"),
+            aliases=["transpilar"],
+        )
         parser.add_argument("archivo").completer = files_completer()
         parser.add_argument(
             "--tipo",
