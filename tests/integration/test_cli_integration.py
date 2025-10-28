@@ -1,12 +1,11 @@
 import os
-import sys
-import os
-import sys
 import shutil
+import sys
 from pathlib import Path
 
-import pexpect
 import pytest
+
+pexpect = pytest.importorskip("pexpect")
 
 ROOT = Path(__file__).resolve().parents[2]
 PATCH_DIR = Path(__file__).parent

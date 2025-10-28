@@ -1,5 +1,9 @@
 """Pruebas para el transpilador inverso de Perl."""
 
+import pytest
+
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_perl import ReverseFromPerl
 from core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
 

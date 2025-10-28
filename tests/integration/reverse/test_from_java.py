@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_java import ReverseFromJava
 from core.ast_nodes import (
     NodoClase,

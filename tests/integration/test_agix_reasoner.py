@@ -9,7 +9,9 @@ import importlib
 import sys
 import types
 
-import agix
+import pytest
+
+agix = pytest.importorskip("agix")
 
 sys.modules.setdefault("src", types.ModuleType("src"))
 sys.modules["src.agix"] = agix

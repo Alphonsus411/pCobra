@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_cpp import ReverseFromCPP
 from core.ast_nodes import NodoClase, NodoMetodo, NodoAsignacion, NodoBloque
 

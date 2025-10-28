@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_swift import ReverseFromSwift
 from core.ast_nodes import NodoFuncion, NodoLlamadaFuncion, NodoValor
 
