@@ -1,5 +1,9 @@
 """Pruebas para el transpilador inverso de Fortran."""
 
+import pytest
+
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_fortran import ReverseFromFortran
 from core.ast_nodes import (
     NodoAsignacion,

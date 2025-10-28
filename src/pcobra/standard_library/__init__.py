@@ -28,36 +28,58 @@ import asyncio
 from typing import Any, Awaitable, Callable, Coroutine, Iterable, Mapping, Sequence, TypeVar
 
 from .archivo import leer, escribir, adjuntar, existe
-from .datos import (
-    agrupar_y_resumir,
-    a_listas,
-    calcular_percentiles,
-    correlacion_pearson,
-    correlacion_spearman,
-    de_listas,
-    describir,
-    filtrar,
-    desplegar_tabla,
-    matriz_covarianza,
-    mutar_columna,
-    pivotar_ancho,
-    pivotar_largo,
-    tabla_cruzada,
-    resumen_rapido,
-    separar_columna,
-    unir_columnas,
-    leer_csv,
-    leer_excel,
-    leer_feather,
-    leer_json,
-    leer_parquet,
-    escribir_csv,
-    escribir_excel,
-    escribir_feather,
-    escribir_json,
-    escribir_parquet,
-    seleccionar_columnas,
-)
+DATOS_EXPORTS = [
+    "agrupar_y_resumir",
+    "a_listas",
+    "calcular_percentiles",
+    "correlacion_pearson",
+    "correlacion_spearman",
+    "de_listas",
+    "describir",
+    "filtrar",
+    "desplegar_tabla",
+    "matriz_covarianza",
+    "mutar_columna",
+    "pivotar_ancho",
+    "pivotar_largo",
+    "tabla_cruzada",
+    "resumen_rapido",
+    "separar_columna",
+    "unir_columnas",
+    "leer_csv",
+    "leer_excel",
+    "leer_feather",
+    "leer_json",
+    "leer_parquet",
+    "escribir_csv",
+    "escribir_excel",
+    "escribir_feather",
+    "escribir_json",
+    "escribir_parquet",
+    "seleccionar_columnas",
+]
+
+try:
+    from . import datos as _datos
+except ModuleNotFoundError as _datos_error:  # pragma: no cover - depende de extras
+    def _crear_stub(nombre: str):
+        def _stub(*_args, **_kwargs):
+            raise ModuleNotFoundError(
+                "Las utilidades de 'standard_library.datos' requieren los paquetes "
+                "opcionales 'pandas' y 'numpy'. Instálalos para habilitarlas."
+            ) from _datos_error
+
+        _stub.__name__ = nombre
+        _stub.__doc__ = (
+            "Función no disponible: requiere dependencias opcionales 'pandas' y 'numpy'."
+        )
+        return _stub
+
+    for _nombre in DATOS_EXPORTS:
+        globals()[_nombre] = _crear_stub(_nombre)
+else:
+    for _nombre in DATOS_EXPORTS:
+        globals()[_nombre] = getattr(_datos, _nombre)
 from .fecha import hoy, formatear, sumar_dias
 from .interfaz import (
     barra_progreso,

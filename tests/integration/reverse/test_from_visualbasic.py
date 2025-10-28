@@ -1,5 +1,9 @@
 """Pruebas de aceptación para el transpilador inverso de VisualBasic."""
 
+import pytest
+
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_visualbasic import ReverseFromVisualBasic
 from core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
 

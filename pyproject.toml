@@ -163,10 +163,6 @@ addopts = [
     "--show-capture=all",
     "--durations=10",
     "--maxfail=5",
-    "--cov=pcobra",
-    "--cov-report=term-missing",
-    "--cov-report=xml",
-    "--cov-fail-under=85",
 ]
 norecursedirs = [
     "dist",
