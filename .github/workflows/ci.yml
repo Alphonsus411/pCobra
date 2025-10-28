@@ -104,11 +104,15 @@ jobs:
         if: env.SAFETY_API_KEY == ''
         run: echo "SAFETY_API_KEY no presente. Omitiendo verificación de dependencias."
       - name: Scan for secrets
+        if: runner.os == 'Linux'
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         with:
           config-path: gitleaks.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Skip secret scan on non-Linux runners
+        if: runner.os != 'Linux'
+        run: echo "Secret scanning sólo está disponible en runners Linux."
       - name: Run linters
         if: runner.os != 'Windows'
         shell: bash
