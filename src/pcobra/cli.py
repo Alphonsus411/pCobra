@@ -3,7 +3,7 @@ import logging
 import sys
 from importlib import import_module
 from types import ModuleType
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 try:
     from dotenv import load_dotenv
@@ -80,11 +80,37 @@ def configurar_entorno() -> None:
         logger.warning("El archivo .env no se cargó")
 
 
+def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:
+    """Devuelve una copia de ``argumentos`` con alias habituales corregidos.
+
+    Los usuarios de la antigua CLI podían invocar ``python -m pcobra.cli ayuda``
+    para mostrar la ayuda general. Tras la reestructuración del paquete,
+    ``ayuda`` dejó de ser una orden válida y provocaba ``invalid choice``. Aquí
+    interceptamos esos casos para redirigirlos hacia las banderas oficiales del
+    analizador de argumentos.
+    """
+
+    if argumentos is None:
+        return None
+
+    normalizados = list(argumentos)
+    if not normalizados:
+        return normalizados
+
+    primer_argumento = normalizados[0].lower()
+    if primer_argumento in {"ayuda", "help"}:
+        normalizados[0:1] = ["--ayuda"]
+
+    return normalizados
+
+
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
     configurar_entorno()
     aplicacion = CliApplication()
-    return aplicacion.run(argumentos)
+    argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
+    argv = _normalizar_argumentos(argv_entrada)
+    return aplicacion.run(argv)
 
 
 if __name__ == "__main__":
