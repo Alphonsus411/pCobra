@@ -14,7 +14,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/pcobra-cli:latest
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME != '' && format('{0}/pcobra-cli:latest', secrets.DOCKERHUB_USERNAME) || '' }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # Fijado a commit para seguridad de la cadena de suministro.
         with:
@@ -32,14 +34,14 @@ jobs:
           key: ${{ runner.os }}-docker-${{ github.sha }}
           restore-keys: ${{ runner.os }}-docker-
       - name: Login to Docker registry
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
           registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
       - name: Build and push Docker image
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v5
         with:
           context: .
@@ -49,10 +51,10 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}
           push: true
       - name: Move Docker cache
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         run: mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Scan image for vulnerabilities
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # 0.32.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}
@@ -61,12 +63,12 @@ jobs:
           vuln-type: 'os,library'
           ignore-unfixed: true
       - name: Smoke test
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        run: docker run --rm $IMAGE_NAME --version
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
+        run: docker run --rm "$IMAGE_NAME" --version
       - name: Check image size
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         run: |
-          size=$(docker image inspect $IMAGE_NAME --format '{{.Size}}')
+          size=$(docker image inspect "$IMAGE_NAME" --format '{{.Size}}')
           echo "Image size: $size bytes"
           max_size=$((50 * 1024 * 1024))
           if [ "$size" -ge "$max_size" ]; then
@@ -74,10 +76,10 @@ jobs:
             exit 1
           fi
       - name: Save image
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        run: docker save $IMAGE_NAME -o pcobra-cli.tar
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
+        run: docker save "$IMAGE_NAME" -o pcobra-cli.tar
       - name: Upload artifact
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pcobra-cli-image
