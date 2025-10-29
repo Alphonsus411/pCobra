@@ -13,6 +13,7 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
 from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
 from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
+from pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
 from pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
 from pcobra.cobra.cli.commands.cache_cmd import CacheCommand
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
@@ -74,7 +75,7 @@ class AppConfig:
         DependenciasCommand, DocsCommand, EmpaquetarCommand,
         PaqueteCommand, CrearCommand, InitCommand,
         JupyterCommand, FletCommand, ContainerCommand,
-        BenchCommand, BenchmarksCommand,
+        BenchCommand, BenchmarksCommand, BenchmarksV2Command,
         BenchTranspilersCommand, BenchThreadsCommand,
         ProfileCommand, QualiaCommand, CacheCommand,
         TranspilarInversoCommand, VerifyCommand,

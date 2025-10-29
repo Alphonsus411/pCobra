@@ -4,31 +4,30 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import contextmanager
-from typing import Any, Callable, Iterator, Literal
+from typing import Any, Callable, Iterator, Literal, TYPE_CHECKING
 
-from rich.columns import Columns
-from rich.console import Console, Group, RenderableType
-from rich.panel import Panel
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskID,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
-from rich.padding import Padding
-from rich.table import Table
+if TYPE_CHECKING:  # pragma: no cover - solo para herramientas de análisis estático
+    from rich.columns import Columns
+    from rich.console import Console, Group, RenderableType
+    from rich.panel import Panel
+    from rich.progress import Progress, TaskID
+    from rich.table import Table
 
 NivelAviso = Literal["info", "exito", "advertencia", "error"]
 FilaTabla = Mapping[str, Any] | Sequence[Any]
 
 
-def _obtener_console(console: Console | None) -> Console:
+def _obtener_console(console: "Console" | None) -> "Console":
     """Devuelve la consola proporcionada o crea una nueva en modo seguro."""
 
-    return console if console is not None else Console()
+    if console is not None:
+        return console
+    try:
+        from rich.console import Console  # type: ignore
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
+    return Console()
 
 
 def _es_secuencia(objeto: FilaTabla) -> bool:
@@ -459,6 +458,11 @@ def mostrar_tabla(
         personalizaciones adicionales.
     """
 
+    try:
+        from rich.table import Table  # type: ignore
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
     console_obj = _obtener_console(console)
     filas_materializadas = list(filas)
 
@@ -604,6 +608,12 @@ def mostrar_columnas(
         reutilización posterior.
     """
 
+    try:
+        from rich.columns import Columns  # type: ignore
+        from rich.console import Group  # type: ignore
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
     console_obj = _obtener_console(console)
     renderizables = list(elementos)
 
@@ -649,6 +659,11 @@ def mostrar_panel(
 ) -> Panel:
     """Muestra un panel decorado con Rich y devuelve el render creado."""
 
+    try:
+        from rich.panel import Panel  # type: ignore
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+
     panel = Panel(
         contenido,
         title=titulo,
@@ -686,6 +701,12 @@ def grupo_consola(
     Yields:
         La consola sobre la que imprimir los mensajes agrupados.
     """
+
+    try:
+        from rich.console import Group  # type: ignore
+        from rich.padding import Padding  # type: ignore
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
 
     console_obj = _obtener_console(console)
     group_callable = getattr(console_obj, "group", None)
@@ -759,6 +780,19 @@ def barra_progreso(
     transient: bool = True,
 ) -> Iterator[tuple[Progress, TaskID]]:
     """Context manager que crea una barra de progreso lista para usar."""
+
+    try:
+        from rich.progress import (  # type: ignore
+            BarColumn,
+            Progress,
+            SpinnerColumn,
+            TaskID,
+            TextColumn,
+            TimeElapsedColumn,
+            TimeRemainingColumn,
+        )
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
+        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
 
     console_obj = _obtener_console(console)
 

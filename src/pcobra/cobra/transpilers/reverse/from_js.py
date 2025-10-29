@@ -11,7 +11,10 @@ Ejemplos:
 """
 from typing import Any, List
 
-from tree_sitter import Node
+try:  # pragma: no cover - depende de tree-sitter
+    from tree_sitter import Node  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - permite importación sin dependencia
+    from typing import Any as Node  # type: ignore
 
 from pcobra.cobra.core import Token, TipoToken
 from pcobra.cobra.core.ast_nodes import (
