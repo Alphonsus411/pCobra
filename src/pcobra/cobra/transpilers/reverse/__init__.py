@@ -10,13 +10,15 @@ from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 try:  # pragma: no cover - dependencia opcional
     from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
+    _TREE_SITTER_IMPORT_ERROR = exc
+
     class TreeSitterReverseTranspiler(BaseReverseTranspiler):  # type: ignore
         """Stub cuando tree-sitter no está disponible."""
 
         def __init__(self, *args, **kwargs) -> None:  # noqa: D401
             raise ModuleNotFoundError(
                 "tree_sitter es necesario para los transpiladores inversos"
-            ) from exc
+            ) from _TREE_SITTER_IMPORT_ERROR
 
 # Lista de módulos a intentar importar
 _MODULOS = [

@@ -12,3 +12,12 @@ import sys
 SRC_PATH = Path(__file__).resolve().parent / "src"
 if SRC_PATH.exists():
     sys.path.insert(0, str(SRC_PATH))
+
+    # Asegurar que el alias ``core`` apunte al paquete real incluso si existen
+    # carpetas de pruebas con el mismo nombre en el ``sys.path``.
+    try:  # pragma: no cover - depende del entorno de ejecución
+        import importlib
+
+        sys.modules.setdefault("core", importlib.import_module("core"))
+    except ModuleNotFoundError:
+        pass

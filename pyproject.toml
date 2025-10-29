@@ -42,6 +42,10 @@ dependencies = [
     "prompt_toolkit==3.0.51",
     "Pygments==2.19.2",
     "argcomplete==3.6.2",
+    "httpx==0.28.1",
+    "lark==1.2.2",
+    "rich==14.0.0",
+    "sympy==1.13.3",
 ]
 
 [project.urls]
@@ -110,8 +114,8 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
-ignore = ["F403", "F405"]
+select = ["E9", "F63", "F7", "F82"]
+ignore = []
 
 [tool.mypy]
 python_version = "3.11"

@@ -61,13 +61,15 @@ DATOS_EXPORTS = [
 
 try:
     from . import datos as _datos
-except ModuleNotFoundError as _datos_error:  # pragma: no cover - depende de extras
+except ModuleNotFoundError as exc:  # pragma: no cover - depende de extras
+    _MISSING_DATOS_ERROR = exc
+
     def _crear_stub(nombre: str):
         def _stub(*_args, **_kwargs):
             raise ModuleNotFoundError(
                 "Las utilidades de 'standard_library.datos' requieren los paquetes "
                 "opcionales 'pandas' y 'numpy'. Instálalos para habilitarlas."
-            ) from _datos_error
+            ) from _MISSING_DATOS_ERROR
 
         _stub.__name__ = nombre
         _stub.__doc__ = (
