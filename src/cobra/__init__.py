@@ -7,6 +7,8 @@ módulo delgado que delega en los paquetes reales y registra alias en
 sin modificaciones.
 """
 
+from __future__ import annotations
+
 from importlib import import_module
 import sys
 from types import ModuleType
@@ -14,11 +16,34 @@ from types import ModuleType
 _target_name = "pcobra.cobra"
 _target: ModuleType = import_module(_target_name)
 
-# Permitir que ``import cobra`` entregue el paquete real.
-sys.modules[__name__] = _target
+__all__ = list(getattr(_target, "__all__", ()))
+for _name in __all__:
+    globals()[_name] = getattr(_target, _name)
 
-# Asegurar que ``cobra.core`` resuelva al núcleo actualizado.
+
+def __getattr__(name: str):
+    """Delegar atributos en :mod:`pcobra.cobra` de forma perezosa."""
+
+    try:
+        valor = getattr(_target, name)
+    except AttributeError as exc:  # pragma: no cover - delegación directa
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from exc
+    else:
+        globals()[name] = valor
+        if isinstance(valor, ModuleType):
+            sys.modules.setdefault(f"{__name__}.{name}", valor)
+        return valor
+
+
+def __dir__() -> list[str]:
+    return sorted(set(__all__) | set(globals()) | set(dir(_target)))
+
+
+# Asegurar que los alias clásicos siguen resolviéndose correctamente.
+sys.modules.setdefault(_target_name, _target)
 sys.modules.setdefault(f"{__name__}.core", import_module("pcobra.cobra.core"))
-
-# Mantener ``import core`` para código heredado cuando solo se invoca ``import cobra``.
 sys.modules.setdefault("core", import_module("pcobra.core"))
+for _mod_name, _mod in list(sys.modules.items()):
+    if _mod_name.startswith(f"{_target_name}."):
+        alias = __name__ + _mod_name[len(_target_name):]
+        sys.modules.setdefault(alias, _mod)
