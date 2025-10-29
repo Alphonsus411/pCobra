@@ -1,11 +1,9 @@
 """Operaciones para proyectar holobits usando ``holobit-sdk``."""
 
-from holobit_sdk.visualization.projector import proyectar_holograma
-from holobit_sdk.core.quark import Quark
-from holobit_sdk.core.holobit import Holobit as SDKHolobit
+from __future__ import annotations
 
 from .holobit import Holobit
-from .graficar import _to_sdk_holobit
+from .graficar import _to_sdk_holobit, proyectar_holograma
 
 
 def proyectar(hb: Holobit, modo: str):
