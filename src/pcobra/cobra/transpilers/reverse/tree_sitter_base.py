@@ -20,12 +20,13 @@ else:
     except ModuleNotFoundError as exc:  # pragma: no cover - depende de tree_sitter-languages
         TREE_SITTER_AVAILABLE = False
         _TREE_SITTER_IMPORT_ERROR = exc
+        _MISSING_TREE_SITTER_LANG_ERROR = exc
 
         def get_parser(language: str) -> Any:
             raise NotImplementedError(
                 "Las funciones basadas en tree-sitter requieren instalar "
                 "las dependencias opcionales 'tree-sitter' y 'tree-sitter-languages'."
-            ) from exc
+            ) from _MISSING_TREE_SITTER_LANG_ERROR
     else:
         try:  # Compatibilidad con versiones antiguas
             from tree_sitter_languages import TreeSitterLanguageError as TreeSitterError  # type: ignore

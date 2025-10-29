@@ -14,6 +14,7 @@ from typing import (
     Callable,
     Coroutine,
     Iterable,
+    Sequence,
     TypeVar,
 )
 
