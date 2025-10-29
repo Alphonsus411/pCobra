@@ -4,7 +4,6 @@ Si la versión instalada del SDK no dispone de las operaciones
 ``escalar`` o ``mover`` se aplican cálculos locales equivalentes.
 """
 
-from holobit_sdk.core.holobit import Holobit as SDKHolobit
 import numpy as np
 
 from .holobit import Holobit

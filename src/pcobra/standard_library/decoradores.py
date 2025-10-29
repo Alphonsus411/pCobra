@@ -24,7 +24,11 @@ from typing import Any, Awaitable, Callable, Optional, ParamSpec, Sequence, Type
 
 from pcobra.corelibs import reintentar_async as _reintentar_async
 
-_rich_spec = importlib.util.find_spec("rich.console")
+try:  # pragma: no branch - inicialización simple
+    _rich_spec = importlib.util.find_spec("rich.console")
+except ModuleNotFoundError:  # pragma: no cover - la dependencia es opcional
+    _rich_spec = None
+
 if _rich_spec is not None:
     from rich.console import Console  # type: ignore[assignment]
 else:  # pragma: no cover - ``rich`` es opcional.
