@@ -4,13 +4,44 @@ from __future__ import annotations
 from typing import Any, List, Optional, Union
 import logging
 from dataclasses import dataclass
-from tree_sitter import Node, Tree
-from tree_sitter_languages import get_parser
-try:  # Compatibilidad con versiones antiguas
-    from tree_sitter_languages import TreeSitterLanguageError as TreeSitterError  # type: ignore
-except Exception:  # pragma: no cover - dependencia opcional
+
+TREE_SITTER_AVAILABLE = True
+_TREE_SITTER_IMPORT_ERROR: Exception | None = None
+
+try:  # pragma: no cover - depende de dependencias opcionales
+    from tree_sitter import Node, Tree  # type: ignore
+except ModuleNotFoundError as exc:  # pragma: no cover - depende de tree-sitter
+    TREE_SITTER_AVAILABLE = False
+    _TREE_SITTER_IMPORT_ERROR = exc
+    Node = Tree = Any  # type: ignore[assignment]
+else:
+    try:  # pragma: no cover - depende de tree_sitter-languages
+        from tree_sitter_languages import get_parser
+    except ModuleNotFoundError as exc:  # pragma: no cover - depende de tree_sitter-languages
+        TREE_SITTER_AVAILABLE = False
+        _TREE_SITTER_IMPORT_ERROR = exc
+
+        def get_parser(language: str) -> Any:
+            raise NotImplementedError(
+                "Las funciones basadas en tree-sitter requieren instalar "
+                "las dependencias opcionales 'tree-sitter' y 'tree-sitter-languages'."
+            ) from exc
+    else:
+        try:  # Compatibilidad con versiones antiguas
+            from tree_sitter_languages import TreeSitterLanguageError as TreeSitterError  # type: ignore
+        except Exception:  # pragma: no cover - dependencia opcional
+
+            class TreeSitterError(Exception):
+                """Excepción genérica para errores de tree-sitter."""
+
+                pass
+
+
+if "TreeSitterError" not in globals():  # pragma: no cover - solo cuando faltan dependencias
+
     class TreeSitterError(Exception):
-        """Excepción genérica para errores de tree-sitter."""
+        """Excepción genérica utilizada cuando tree-sitter no está disponible."""
+
         pass
 
 from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
@@ -62,6 +93,11 @@ class TreeSitterReverseTranspiler(BaseReverseTranspiler):
         super().__init__()
         if not self.LANGUAGE:
             raise ValueError("LANGUAGE debe definirse en la subclase")
+        if not TREE_SITTER_AVAILABLE:
+            raise NotImplementedError(
+                "Las capacidades de transpilación inversa requieren las "
+                "dependencias opcionales 'tree-sitter' y 'tree-sitter-languages'."
+            ) from _TREE_SITTER_IMPORT_ERROR
         try:
             self.parser = get_parser(self.LANGUAGE)
         except Exception as exc:

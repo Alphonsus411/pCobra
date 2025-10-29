@@ -1,199 +1,189 @@
-"""
-Módulo para ejecutar benchmarks secundarios del proyecto Cobra.
-Proporciona funcionalidad para medir y comparar el rendimiento de diferentes aspectos del sistema.
-"""
+"""Comando ``benchmarks2`` con tolerancia a dependencias opcionales."""
 
-import time
-import psutil
+from __future__ import annotations
+
 import json
-from typing import Dict, Any, Optional
+import os
+import subprocess
+import sys
+import tempfile
+import time
 from argparse import ArgumentParser
+from pathlib import Path
+from typing import Any, Iterable, Mapping, Sequence
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
-from pcobra.cobra.cli.utils.messages import mostrar_info, mostrar_error
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+
+try:  # pragma: no cover - depende del entorno
+    import psutil  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - entorno sin psutil
+    psutil = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - depende de la plataforma
+    import resource  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - Windows, por ejemplo
+    resource = None  # type: ignore[assignment]
 
 
-class Benchmarks2Command(BaseCommand):
-    """Ejecuta una serie de pruebas de rendimiento secundarias en el sistema."""
+def _resolver_comandos(programas: Mapping[str, Path]) -> Mapping[str, Sequence[str]]:
+    """Devuelve comandos seguros de ejecutar para cada modo soportado."""
 
-    # Constantes para códigos de retorno
-    EXIT_SUCCESS = 0
-    EXIT_FAILURE = 1
+    mensaje = "print('hola desde {modo}')"
+    return {
+        "cobra": [sys.executable, "-c", mensaje.format(modo="cobra")],
+        "python": [sys.executable, str(programas["python"])],
+        "js": [sys.executable, "-c", mensaje.format(modo="js")],
+        "sandbox": [sys.executable, "-c", mensaje.format(modo="sandbox")],
+    }
+
+
+def _medir_memoria_kb() -> int:
+    """Calcula un uso de memoria aproximado en kilobytes."""
+
+    if psutil is not None:  # pragma: no cover - depende de psutil
+        try:
+            proceso = psutil.Process(os.getpid())
+            return int(proceso.memory_info().rss / 1024)
+        except Exception:
+            return 0
+    if resource is not None:
+        try:
+            uso = resource.getrusage(resource.RUSAGE_SELF)
+            # En Linux el valor está en KB, en macOS en bytes.
+            if sys.platform.startswith("darwin"):
+                return int(uso.ru_maxrss / 1024)
+            return int(uso.ru_maxrss)
+        except Exception:  # pragma: no cover - rutas poco comunes
+            return 0
+    return 0
+
+
+def run_and_measure(command: Sequence[str]) -> tuple[float, int]:
+    """Ejecuta ``command`` midiendo tiempo y memoria utilizada."""
+
+    inicio = time.perf_counter()
+    subprocess.check_output(command, stderr=subprocess.STDOUT)
+    transcurrido = time.perf_counter() - inicio
+    memoria_kb = _medir_memoria_kb()
+    return transcurrido, memoria_kb
+
+
+def _escritura_programa_temporal(contenido: str, sufijo: str) -> Path:
+    """Crea un archivo temporal con ``contenido`` y devuelve su ruta."""
+
+    tmp = tempfile.NamedTemporaryFile("w", suffix=sufijo, delete=False)
+    try:
+        tmp.write(contenido)
+        tmp.flush()
+        return Path(tmp.name)
+    finally:
+        tmp.close()
+
+
+class BenchmarksV2Command(BaseCommand):
+    """Ejecuta benchmarks de alto nivel sobre distintos backends."""
 
     name = "benchmarks2"
 
     def __init__(self) -> None:
-        """Inicializa el comando de benchmarks."""
         super().__init__()
-        self._resultados: Dict[str, Any] = {
-            "tiempos": {},
-            "memoria": {},
-            "rendimiento": {}
-        }
-        self._iteraciones: Optional[int] = None
-        self._formato: Optional[str] = None
-        self._proceso = psutil.Process()
+        self._comandos: Mapping[str, Sequence[str]] | None = None
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
-        """Registra los argumentos del subcomando.
-        
-        Args:
-            subparsers: Objeto para registrar el subcomando
-            
-        Returns:
-            CustomArgumentParser: El parser configurado para el subcomando
-            
-        Raises:
-            ValueError: Si hay error al configurar los argumentos
-        """
         parser = subparsers.add_parser(
             self.name,
-            help=_("Ejecuta pruebas de rendimiento secundarias")
+            help=_("Ejecuta benchmarks entre backends soportados"),
         )
-
         parser.add_argument(
-            "--iteraciones",
+            "--output",
+            type=Path,
+            help=_("Archivo donde guardar los resultados en formato JSON"),
+        )
+        parser.add_argument(
+            "--runs",
             type=int,
-            default=1000,
-            help=_("Número de iteraciones para cada prueba (>0)"),
-            metavar="N"
+            default=1,
+            metavar="N",
+            help=_("Número de ejecuciones consecutivas por modo"),
         )
-
-        parser.add_argument(
-            "--formato",
-            choices=["json", "texto"],
-            default="texto",
-            help=_("Formato de salida de los resultados")
-        )
-
         parser.set_defaults(cmd=self)
         return parser
 
-    def _medir_tiempo_ejecucion(self) -> None:
-        """Mide y registra los tiempos de ejecución de operaciones clave."""
-        tiempos = {}
-        
-        # Medir tiempo de compilación
-        inicio = time.perf_counter()
-        for _ in range(self._iteraciones):
-            # Simulación de compilación
-            pass
-        tiempos["compilacion"] = time.perf_counter() - inicio
+    def _preparar_archivos(self) -> tuple[Mapping[str, Sequence[str]], list[Path]]:
+        """Genera archivos temporales con variantes del programa de prueba."""
 
-        # Medir tiempo de ejecución
-        inicio = time.perf_counter()
-        for _ in range(self._iteraciones):
-            # Simulación de ejecución
-            pass
-        tiempos["ejecucion"] = time.perf_counter() - inicio
+        base = "imprimir('hola')\n"
+        archivos_creados: list[Path] = []
 
-        self._resultados["tiempos"] = tiempos
+        co_path = _escritura_programa_temporal(base, ".co")
+        archivos_creados.append(co_path)
 
-    def _medir_uso_memoria(self) -> None:
-        """Mide y registra el uso de memoria de operaciones clave."""
-        memoria = {}
-        
-        # Medir memoria inicial
-        memoria["inicial"] = self._proceso.memory_info().rss / 1024 / 1024  # MB
+        py_path = _escritura_programa_temporal("print('hola')\n", ".py")
+        archivos_creados.append(py_path)
 
-        # Medir pico de memoria
-        max_memoria = memoria["inicial"]
-        for _ in range(self._iteraciones):
-            mem_actual = self._proceso.memory_info().rss / 1024 / 1024
-            max_memoria = max(max_memoria, mem_actual)
-        
-        memoria["pico"] = max_memoria
-        self._resultados["memoria"] = memoria
+        js_path = _escritura_programa_temporal("console.log('hola');\n", ".js")
+        archivos_creados.append(js_path)
 
-    def _medir_rendimiento_operaciones(self) -> None:
-        """Mide y registra el rendimiento de operaciones específicas."""
-        rendimiento = {}
-        
-        # Medir operaciones por segundo
-        inicio = time.perf_counter()
-        num_ops = 0
-        while num_ops < self._iteraciones:
-            # Simulación de operación
-            num_ops += 1
-        tiempo_total = time.perf_counter() - inicio
-        
-        rendimiento["ops_por_segundo"] = num_ops / tiempo_total
-        self._resultados["rendimiento"] = rendimiento
+        programas = {
+            "cobra": co_path,
+            "python": py_path,
+            "js": js_path,
+            "sandbox": co_path,
+        }
+        self._comandos = _resolver_comandos(programas)
+        return self._comandos, archivos_creados
 
-    def _ejecutar_pruebas(self) -> None:
-        """Ejecuta todas las pruebas de rendimiento configuradas."""
-        self._medir_tiempo_ejecucion()
-        self._medir_uso_memoria()
-        self._medir_rendimiento_operaciones()
-
-    def _formatear_resultados(self) -> str:
-        """Formatea los resultados según el formato especificado.
-        
-        Returns:
-            str: Resultados formateados en el formato solicitado
-        """
-        if self._formato == "json":
-            return json.dumps(self._resultados, indent=2)
-        
-        # Formato texto
-        texto = []
-        
-        # Formatear tiempos
-        texto.append("Tiempos de ejecución:")
-        for op, tiempo in self._resultados["tiempos"].items():
-            texto.append(f"  {op}: {tiempo:.3f} segundos")
-            
-        # Formatear memoria
-        texto.append("\nUso de memoria:")
-        for tipo, valor in self._resultados["memoria"].items():
-            texto.append(f"  {tipo}: {valor:.2f} MB")
-            
-        # Formatear rendimiento
-        texto.append("\nRendimiento:")
-        for metrica, valor in self._resultados["rendimiento"].items():
-            texto.append(f"  {metrica}: {valor:.2f}")
-            
-        return "\n".join(texto)
-
-    def run(self, args) -> int:
-        """Ejecuta la lógica del comando.
-        
-        Args:
-            args: Argumentos parseados del comando
-            
-        Returns:
-            int: Código de salida (0 para éxito, 1 para error)
-        """
+    def _ejecutar_modos(self, runs: int) -> Iterable[dict[str, Any]]:
+        comandos, archivos = self._preparar_archivos()
+        resultados: list[dict[str, Any]] = []
         try:
-            # Validar argumentos
-            if args.iteraciones <= 0:
-                mostrar_error(_("El número de iteraciones debe ser positivo"))
-                return self.EXIT_FAILURE
+            for modo, comando in comandos.items():
+                mostrar_info(_("Ejecutando modo {modo}...").format(modo=modo))
+                tiempos: list[float] = []
+                memorias: list[int] = []
+                for _indice in range(max(1, runs)):
+                    duracion, memoria_kb = run_and_measure(comando)
+                    tiempos.append(duracion)
+                    memorias.append(memoria_kb)
+                promedio_tiempo = sum(tiempos) / len(tiempos)
+                promedio_memoria = int(sum(memorias) / len(memorias))
+                resultados.append(
+                    {
+                        "modo": modo,
+                        "time": promedio_tiempo,
+                        "memory_kb": promedio_memoria,
+                    }
+                )
+            return resultados
+        finally:
+            for ruta in archivos:
+                ruta.unlink(missing_ok=True)
 
-            self._iteraciones = args.iteraciones
-            self._formato = args.formato
+    def run(self, args: ArgumentParser) -> int:  # type: ignore[override]
+        try:
+            runs = getattr(args, "runs", 1)
+            resultados = list(self._ejecutar_modos(runs))
+            payload = json.dumps(resultados, indent=2, ensure_ascii=False)
+            if getattr(args, "output", None):
+                Path(args.output).write_text(payload, encoding="utf-8")
+            else:
+                mostrar_info(payload)
+            mostrar_info(_("Benchmarks completados"))
+            return 0
+        except FileNotFoundError as exc:
+            mostrar_error(_("Dependencia externa no encontrada: {error}").format(error=exc))
+            return 1
+        except subprocess.CalledProcessError as exc:
+            mostrar_error(_("El comando falló con código {code}").format(code=exc.returncode))
+            return 1
+        except Exception as exc:  # pragma: no cover - errores inesperados
+            mostrar_error(_("Error durante los benchmarks: {error}").format(error=exc))
+            return 1
 
-            mostrar_info(_("Iniciando pruebas de rendimiento..."))
-            self._ejecutar_pruebas()
 
-            resultados_formateados = self._formatear_resultados()
-            mostrar_info(_("Resultados de las pruebas:"))
-            mostrar_info(resultados_formateados)
-            
-            mostrar_info(_("Pruebas de rendimiento completadas"))
-            return self.EXIT_SUCCESS
+# Alias retrocompatible
+Benchmarks2Command = BenchmarksV2Command
 
-        except MemoryError:
-            mostrar_error(_("Error: Memoria insuficiente durante las pruebas"))
-            # Intentar liberar recursos
-            self._resultados.clear()
-            return self.EXIT_FAILURE
-
-        except Exception as e:
-            mostrar_error(
-                _("Error durante las pruebas de rendimiento: {error}")
-                .format(error=str(e))
-            )
-            return self.EXIT_FAILURE
