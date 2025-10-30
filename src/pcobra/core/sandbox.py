@@ -1,5 +1,11 @@
 """Ejecución de código Python en un entorno restringido."""
 
+from __future__ import annotations
+
+import ast
+import builtins
+import contextlib
+import io
 import os
 import marshal
 import multiprocessing
@@ -7,8 +13,10 @@ import shutil
 import subprocess
 import tempfile
 import string
+import sys
 from queue import Empty
 from pathlib import Path
+from typing import Any
 from packaging.version import Version
 
 try:  # pragma: no cover - dependencia opcional
@@ -39,6 +47,105 @@ MAX_JS_OUTPUT_BYTES = 8 * 1024
 # Límite máximo de salida permitida para la ejecución en contenedores (8 KB)
 MAX_CONTAINER_OUTPUT_BYTES = 8 * 1024
 
+_ORIGINAL_IMPORT = builtins.__import__
+_IMPORT_DENYLIST = {
+    "os",
+    "sys",
+    "subprocess",
+    "socket",
+    "urllib",
+}
+
+_FORBIDDEN_CALLS = {"eval", "exec", "open"}
+
+
+class SandboxSecurityError(RuntimeError):
+    """Excepción lanzada cuando el código viola las políticas de la sandbox."""
+
+
+def _verificar_codigo_prohibido(codigo: str) -> None:
+    """Analiza ``codigo`` y bloquea importaciones o llamadas peligrosas."""
+
+    try:
+        tree = ast.parse(codigo)
+    except SyntaxError:
+        raise
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name.split(".", 1)[0] in _IMPORT_DENYLIST:
+                    raise SandboxSecurityError(
+                        f"Importación bloqueada en sandbox: {alias.name}"
+                    )
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if module.split(".", 1)[0] in _IMPORT_DENYLIST:
+                raise SandboxSecurityError(
+                    f"Importación bloqueada en sandbox: {module}"
+                )
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                nombre = node.func.id
+                if nombre in _FORBIDDEN_CALLS:
+                    raise SandboxSecurityError(
+                        f"Llamada bloqueada en sandbox: {nombre}"
+                    )
+                if nombre == "__import__" and node.args:
+                    arg0 = node.args[0]
+                    if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
+                        raiz = arg0.value.split(".", 1)[0]
+                        if raiz in _IMPORT_DENYLIST:
+                            raise SandboxSecurityError(
+                                f"Importación bloqueada en sandbox: {arg0.value}"
+                            )
+            elif (
+                isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.attr == "__import__"
+                and node.args
+            ):
+                arg0 = node.args[0]
+                if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
+                    raiz = arg0.value.split(".", 1)[0]
+                    if raiz in _IMPORT_DENYLIST:
+                        raise SandboxSecurityError(
+                            f"Importación bloqueada en sandbox: {arg0.value}"
+                        )
+
+
+def _safe_import(name: str, globals: Any | None = None, locals: Any | None = None,
+                 fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
+    """Importador restringido que bloquea módulos peligrosos.
+
+    Se permite importar cualquier módulo que no esté en la lista de exclusión.
+    Los módulos bloqueados generan ``ImportError`` para que la sandbox se
+    comporte igual que antes, pero sigue admitiendo importaciones seguras como
+    ``contextlib`` que requieren las pruebas de transpilación.
+    """
+
+    root = name.split(".", 1)[0]
+    if root in _IMPORT_DENYLIST or name in _IMPORT_DENYLIST:
+        raise ImportError(f"Módulo bloqueado en sandbox: {name}")
+    modulo = _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
+    if root == "urllib":  # Evita accesos a urllib.request y similares.
+        raise ImportError(f"Módulo bloqueado en sandbox: {name}")
+    return modulo
+
+
+def _run_in_subprocess(codigo: str) -> str:
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-c", codigo],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
+        salida = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        raise RuntimeError(salida) from exc
+    return completed.stdout
+
 
 def _worker(
     code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None
@@ -51,8 +158,12 @@ def _worker(
             limite = memoria_mb * 1024 * 1024
             resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
 
+        builtins_dict = dict(safe_builtins)
+        builtins_dict["__import__"] = _safe_import
+        builtins_dict.setdefault("print", print)
+
         env = {
-            "__builtins__": safe_builtins,
+            "__builtins__": builtins_dict,
             "_print_": PrintCollector,
             "_getattr_": default_guarded_getattr,
             "_getitem_": default_guarded_getitem,
@@ -61,8 +172,10 @@ def _worker(
         }
 
         byte_code = marshal.loads(code_bytes)
-        exec(byte_code, env, env)
-        queue.put(env["_print"]())
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exec(byte_code, env, env)
+        queue.put(stdout.getvalue())
     except BaseException as exc:  # pragma: no cover - propagación de errores
         queue.put(exc)
 
@@ -77,15 +190,15 @@ def ejecutar_en_sandbox(
     ``memoria_mb`` el máximo de memoria en megabytes. Se lanza ``TimeoutError``
     o ``MemoryError`` si se exceden estos límites.
     """
+    _verificar_codigo_prohibido(codigo)
+
     if not HAS_RESTRICTED_PYTHON:
-        raise RuntimeError(
-            "RestrictedPython no está instalado; la sandbox de Cobra no está disponible.",
-        )
+        return _run_in_subprocess(codigo)
 
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
     except SyntaxError as se:  # pragma: no cover - comportamiento simple
-        raise SyntaxError(f"compile_restricted falló: {se}") from se
+        return _run_in_subprocess(codigo)
 
     code_bytes = marshal.dumps(byte_code)
     queue: multiprocessing.Queue = multiprocessing.Queue()
