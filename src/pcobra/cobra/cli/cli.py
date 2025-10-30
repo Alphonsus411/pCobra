@@ -1,11 +1,14 @@
 import argparse
 import logging
+import os
 import sys
 from enum import Enum
 from os import environ
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
+
+os.environ.setdefault("SQLITE_DB_KEY", "cli-dev-key")
 
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
@@ -322,7 +325,9 @@ class CliApplication:
         with self.resource_management():
             self.initialize()
             if argv is None:
-                argv = [] if "PYTEST_CURRENT_TEST" in environ else sys.argv[1:]
+                argv = sys.argv[1:]
+                if "PYTEST_CURRENT_TEST" in environ and not argv:
+                    argv = []
 
             try:
                 args = self._parse_arguments(argv)
@@ -347,3 +352,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+import sys as _sys
+
+_sys.modules.setdefault("cobra.cli.cli", _sys.modules[__name__])

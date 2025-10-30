@@ -1,3 +1,4 @@
+import importlib
 import logging
 import os
 from typing import Any
@@ -11,12 +12,15 @@ from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.sandbox import (
-    SecurityError,
-    ejecutar_en_contenedor,
-    ejecutar_en_sandbox,
-    validar_dependencias,
-)
+try:  # pragma: no cover - compatibilidad con alias legacy
+    from core import sandbox as sandbox_module
+except ModuleNotFoundError:  # pragma: no cover
+    from pcobra.core import sandbox as sandbox_module
+
+ejecutar_en_sandbox = sandbox_module.ejecutar_en_sandbox
+ejecutar_en_contenedor = sandbox_module.ejecutar_en_contenedor
+SecurityError = sandbox_module.SecurityError
+validar_dependencias = sandbox_module.validar_dependencias
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.core.resource_limits import limitar_cpu_segundos
 
@@ -106,7 +110,7 @@ class ExecuteCommand(BaseCommand):
             return 1
 
         try:
-            validar_dependencias("python", module_map.get_toml_map())
+            sandbox_module.validar_dependencias("python", module_map.get_toml_map())
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
@@ -125,7 +129,7 @@ class ExecuteCommand(BaseCommand):
 
         def ejecutar():
             if sandbox:
-                return self._ejecutar_en_sandbox(codigo)
+                return self._ejecutar_en_sandbox(codigo, seguro, extra_validators)
             if contenedor:
                 return self._ejecutar_en_contenedor(codigo, contenedor)
             return self._ejecutar_normal(codigo, seguro, extra_validators)
@@ -136,14 +140,42 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(str(e))
             return 1
 
-    def _ejecutar_en_sandbox(self, codigo: str) -> int:
+    def _ejecutar_en_sandbox(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
         """Ejecuta el código en un entorno sandbox."""
         try:
-            salida = ejecutar_en_sandbox(codigo)
+            tokens = Lexer(codigo).tokenizar()
+            ast = Parser(tokens).parsear()
+        except (LexerError, ParserError) as e:
+            self.logger.error("Error de análisis en sandbox", extra={"error": str(e)})
+            mostrar_error(f"Error de análisis: {e}")
+            return 1
+
+        extra_repr = "None"
+        if isinstance(extra_validators, (str, list)):
+            extra_repr = repr(extra_validators)
+
+        script = (
+            "from pcobra.cobra.core import Lexer, Parser\n"
+            "from pcobra.core.interpreter import InterpretadorCobra\n"
+            f"_codigo = {codigo!r}\n"
+            "_tokens = Lexer(_codigo).tokenizar()\n"
+            "_ast = Parser(_tokens).parsear()\n"
+            f"_interp = InterpretadorCobra(safe_mode={seguro!r}, extra_validators={extra_repr})\n"
+            "_interp.ejecutar_ast(_ast)\n"
+        )
+
+        try:
+            sandbox_callable = ejecutar_en_sandbox
+            try:
+                alias_module = importlib.import_module("cobra.cli.commands.execute_cmd")
+                sandbox_callable = getattr(alias_module, "ejecutar_en_sandbox", sandbox_callable)
+            except ModuleNotFoundError:  # pragma: no cover - alias no disponible
+                pass
+            salida = sandbox_callable(script)
             if salida:
                 mostrar_info(str(salida))
             return 0
-        except SecurityError as e:
+        except sandbox_module.SecurityError as e:
             self.logger.error("Error de seguridad en sandbox", extra={"error": str(e)})
             mostrar_error(f"Error de seguridad en sandbox: {e}")
             return 1
