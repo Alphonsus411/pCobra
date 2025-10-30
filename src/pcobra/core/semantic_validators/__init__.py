@@ -1,5 +1,11 @@
 """Cadena de validadores semánticos para el modo seguro de Cobra."""
 
+from __future__ import annotations
+
+import sys
+
+from types import FunctionType
+
 from .primitiva_peligrosa import (
     PrimitivaPeligrosaError,
     ValidadorPrimitivaPeligrosa,
@@ -12,6 +18,7 @@ from ..cobra_config import auditoria_activa
 
 # Instancia por defecto reutilizable de la cadena de validación
 _CADENA_DEFECTO = None
+_CACHE_INFO: tuple[FunctionType, bool] | None = None
 
 
 def construir_cadena(extra_validators=None):
@@ -20,12 +27,18 @@ def construir_cadena(extra_validators=None):
     Si no se proporcionan validadores extra, la cadena se crea una única vez y
     se reutiliza en llamadas sucesivas.
     """
-    global _CADENA_DEFECTO
+    global _CADENA_DEFECTO, _CACHE_INFO
 
-    if extra_validators is None and _CADENA_DEFECTO is not None:
+    auditoria = auditoria_activa()
+
+    if (
+        extra_validators is None
+        and _CADENA_DEFECTO is not None
+        and _CACHE_INFO == (ValidadorPrimitivaPeligrosa.__init__, auditoria)
+    ):
         return _CADENA_DEFECTO
 
-    if auditoria_activa():
+    if auditoria:
         primero = ValidadorAuditoria()
         actual = primero.set_siguiente(ValidadorPrimitivaPeligrosa())
     else:
@@ -41,6 +54,7 @@ def construir_cadena(extra_validators=None):
 
     if extra_validators is None:
         _CADENA_DEFECTO = primero
+        _CACHE_INFO = (ValidadorPrimitivaPeligrosa.__init__, auditoria)
 
     return primero
 
@@ -53,3 +67,5 @@ __all__ = [
     "ValidadorProhibirReflexion",
     "construir_cadena",
 ]
+
+sys.modules["core.semantic_validators"] = sys.modules[__name__]

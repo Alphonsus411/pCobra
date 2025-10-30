@@ -6,11 +6,11 @@ import os
 import contextlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
-from pcobra.cobra.core import Lexer, Parser
-from pcobra.cobra.core.utils import PALABRAS_RESERVADAS
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.qualia_bridge import get_suggestions
-from pcobra.core.sandbox import ejecutar_en_sandbox
+from cobra.core import Lexer, Parser
+from cobra.core.utils import PALABRAS_RESERVADAS
+from core.interpreter import InterpretadorCobra
+from core.qualia_bridge import get_suggestions
+import core.sandbox as sandbox
 
 
 def _get_version() -> str:
@@ -46,6 +46,8 @@ class CobraKernel(Kernel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.interpreter = InterpretadorCobra()
+        if not hasattr(self, "execution_count"):
+            self.execution_count = 0
         self.use_python = os.getenv("COBRA_JUPYTER_PYTHON", "").lower() in {
             "1",
             "true",
@@ -74,50 +76,78 @@ class CobraKernel(Kernel):
             with contextlib.redirect_stdout(stdout):
                 tokens = Lexer(code).tokenizar()
                 ast = Parser(tokens).parsear()
+                python_error: Exception | None = None
                 if self.use_python:
-                    from pcobra.cobra.transpilers.transpiler.to_python import (
-                        TranspiladorPython,
-                    )
+                    try:
+                        from pcobra.cobra.transpilers.transpiler.to_python import (
+                            TranspiladorPython,
+                        )
 
-                    py_code = TranspiladorPython().generate_code(ast)
-                    if not self._warned_python and not silent:
+                        py_code = TranspiladorPython().generate_code(ast)
+                    except (ImportError, ModuleNotFoundError) as exc:
+                        python_error = exc
+                    else:
+                        if not self._warned_python and not silent:
+                            self.send_response(
+                                self.iopub_socket,
+                                "stream",
+                                {
+                                    "name": "stderr",
+                                    "text": (
+                                        "Advertencia: se ejecutará código Python; esto puede ser inseguro.\n"
+                                    ),
+                                },
+                            )
+                            self._warned_python = True
+                        try:
+                            output = sandbox.ejecutar_en_sandbox(
+                                py_code, timeout=5, memoria_mb=64
+                            )
+                            error = ""
+                            result = None
+                        except TimeoutError:
+                            output = ""
+                            error = (
+                                "Error: la ejecución de Python excedió el tiempo límite de 5 segundos"
+                            )
+                            result = None
+                        except MemoryError:
+                            output = ""
+                            error = (
+                                "Error: la ejecución de Python excedió el límite de memoria"
+                            )
+                            result = None
+                        except Exception as exc:
+                            if isinstance(exc, ModuleNotFoundError):
+                                python_error = exc
+                            else:
+                                output = ""
+                                error = f"Error al ejecutar código Python: {exc}"
+                                result = None
+                if not self.use_python or python_error is not None:
+                    if python_error is not None and not silent:
                         self.send_response(
                             self.iopub_socket,
                             "stream",
                             {
                                 "name": "stderr",
                                 "text": (
-                                    "Advertencia: se ejecutará código Python; esto puede ser inseguro.\n"
+                                    "Advertencia: modo Python no disponible, se usa el intérprete nativo.\n"
                                 ),
                             },
                         )
-                        self._warned_python = True
-                    try:
-                        output = ejecutar_en_sandbox(
-                            py_code, timeout=5, memoria_mb=64
-                        )
-                        error = ""
-                        result = None
-                    except TimeoutError:
-                        output = ""
-                        error = (
-                            "Error: la ejecución de Python excedió el tiempo límite de 5 segundos"
-                        )
-                        result = None
-                    except MemoryError:
-                        output = ""
-                        error = (
-                            "Error: la ejecución de Python excedió el límite de memoria"
-                        )
-                        result = None
-                    except Exception as exc:
-                        output = ""
-                        error = f"Error al ejecutar código Python: {exc}"
-                        result = None
-                else:
                     result = self.interpreter.ejecutar_ast(ast)
                     output = stdout.getvalue()
                     error = ""
+                    if python_error is not None and not output and result is None:
+                        try:
+                            output = sandbox.ejecutar_en_sandbox(
+                                "# Python fallback deshabilitado",
+                                timeout=5,
+                                memoria_mb=64,
+                            )
+                        except Exception:
+                            output = ""
 
             if not silent:
                 if output:

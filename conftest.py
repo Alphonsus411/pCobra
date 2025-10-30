@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from pathlib import Path
 import sys
 
@@ -20,6 +21,33 @@ except ModuleNotFoundError:
 import asyncio
 import inspect
 from typing import Any
+
+
+def _restore_alias(module_name: str, alias: str) -> None:
+    """Garantiza que el alias ``alias`` apunte al módulo real."""
+
+    module = import_module(module_name)
+    sys.modules[alias] = module
+    prefix = f"{module_name}."
+    alias_prefix = f"{alias}."
+    for name, mod in list(sys.modules.items()):
+        if name.startswith(prefix):
+            sys.modules[alias_prefix + name[len(prefix) :]] = mod
+
+
+def pytest_runtest_setup(item):  # noqa: ARG001
+    """Restaura los alias dinámicos antes de cada prueba."""
+
+    for prefix in ("cobra.transpilers", "pcobra.cobra.transpilers"):
+        for name in [mod for mod in sys.modules if mod.startswith(prefix)]:
+            sys.modules.pop(name, None)
+    _restore_alias("pcobra.core", "core")
+    _restore_alias("pcobra.cobra", "cobra")
+
+
+def pytest_collectstart(collector):  # noqa: ARG001
+    _restore_alias("pcobra.core", "core")
+    _restore_alias("pcobra.cobra", "cobra")
 
 
 def _ejecutar_corutina(funcion, **kwargs: Any) -> None:

@@ -9,11 +9,17 @@ Las funciones para limitar recursos ``limitar_memoria_mb`` y
 de implementaciones manuales.
 """
 
+from __future__ import annotations
+
+import sys
+
 from .ast_nodes import *
 from .ast_nodes import NodoListaComprehension, NodoDiccionarioComprehension, NodoEnum
 from .visitor import NodeVisitor
 from .performance import optimizar, perfilar
 from .resource_limits import limitar_memoria_mb, limitar_cpu_segundos
+
+sys.modules["core"] = sys.modules[__name__]
 
 __all__ = [
     "NodoAST",
