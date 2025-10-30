@@ -6,6 +6,10 @@ AST se realiza de forma explícita en los módulos que lo necesitan para
 evitar dependencias circulares durante la inicialización del paquete.
 """
 
+from __future__ import annotations
+
+import sys
+
 from pcobra.cobra.core.lexer import (
     Lexer,
     Token,
@@ -32,6 +36,8 @@ __all__ = [
     "TipoToken",
     *_ast_nodes.__all__,
 ]
+
+sys.modules["cobra.core"] = sys.modules[__name__]
 
 
 def __getattr__(name: str):

@@ -1,8 +1,26 @@
 import os
+import sys
 import urllib.parse
 from pathlib import Path
+from types import ModuleType
 
-import requests
+try:
+    import requests
+except ModuleNotFoundError as exc:  # pragma: no cover - entorno sin requests
+    requests = ModuleType("requests")
+
+    class _Response:  # pragma: no cover - interfaz mínima
+        pass
+
+    def _missing(*_args, **_kwargs):
+        raise ModuleNotFoundError(
+            "El módulo opcional 'requests' es necesario para realizar peticiones HTTP."
+        ) from exc
+
+    requests.Response = _Response
+    requests.get = _missing
+    requests.post = _missing
+    sys.modules.setdefault("requests", requests)
 
 
 # Mantener estos límites alineados con ``corelibs.red``.
