@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""Punto de entrada de desarrollo para la CLI de Cobra."""
+
+from pathlib import Path
+import sys
+
+
+def _bootstrap_paths() -> None:
+    raiz = Path(__file__).resolve().parents[2]
+    posibles = [raiz, raiz / "src"]
+    for ruta in posibles:
+        ruta_str = str(ruta)
+        if ruta_str not in sys.path:
+            sys.path.insert(0, ruta_str)
+
+
+if __name__ == "__main__":
+    _bootstrap_paths()
+    from cobra.cli.cli import main as cobra_main
+
+    cobra_main()

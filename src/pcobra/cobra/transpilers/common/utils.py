@@ -36,9 +36,9 @@ class BaseTranspiler(NodeVisitor, ABC):
 
 STANDARD_IMPORTS = {
     "python": (
-        "from pcobra.core.nativos import *\n"
-        "from pcobra.corelibs import *\n"
-        "from pcobra.standard_library import *\n"
+        "from core.nativos import *\n"
+        "from corelibs import *\n"
+        "from standard_library import *\n"
     ),
     "js": [
         "import * as io from './nativos/io.js';",
@@ -48,8 +48,6 @@ STANDARD_IMPORTS = {
         "import * as archivo from './nativos/archivo.js';",
         "import * as coleccion from './nativos/coleccion.js';",
         "import * as numero from './nativos/numero.js';",
-        "import * as logica from './nativos/logica.js';",
-        "import * as interfaz from './nativos/interfaz.js';",
         "import * as red from './nativos/red.js';",
         "import * as seguridad from './nativos/seguridad.js';",
         "import * as sistema from './nativos/sistema.js';",

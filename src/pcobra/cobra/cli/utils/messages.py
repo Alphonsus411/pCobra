@@ -3,6 +3,7 @@ Módulo para manejo de mensajes y logging con soporte de colores en la CLI de Co
 """
 
 import logging
+import sys
 from enum import Enum
 from typing import Dict, Final, Literal, Optional, Tuple, get_args
 from dataclasses import dataclass
@@ -70,7 +71,9 @@ def disable_colors(disable: bool = True) -> None:
     config.use_color = not disable
 
 def mostrar_logo() -> None:
-    """Muestra el logo de Cobra en verde."""
+    """Muestra el logo de Cobra en verde cuando procede."""
+    if not getattr(sys.stdout, "isatty", lambda: False)():
+        return
     color = ColorCode.GREEN.value if config.use_color else ""
     reset = ColorCode.RESET.value if config.use_color else ""
     print(f"{color}{COBRA_LOGO}{reset}")

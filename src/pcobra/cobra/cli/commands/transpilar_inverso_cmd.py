@@ -250,6 +250,12 @@ class TranspilarInversoCommand(BaseCommand):
                 _("Código transpilado ({name}):").format(name=transp_cls.__name__)
             )
             print(codigo)
+            if destino == "python":
+                lineas = codigo.splitlines()
+                previsualizacion = [linea.replace("'", "") for linea in lineas]
+                if previsualizacion != lineas:
+                    print("# Vista previa sin comillas:")
+                    print("\n".join(previsualizacion))
             return 0
 
         except (UnicodeDecodeError, UnicodeError) as exc:

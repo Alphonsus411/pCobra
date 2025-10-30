@@ -316,6 +316,8 @@ class TranspiladorPython(BaseTranspiler):
         )
 
         if isinstance(nodo, NodoValor):
+            if isinstance(nodo.valor, str):
+                return repr(nodo.valor)
             return str(nodo.valor)
         elif isinstance(nodo, NodoAtributo):
             obj = self.obtener_valor(nodo.objeto)

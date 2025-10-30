@@ -8,16 +8,33 @@ from ..ctypes_bridge import (
     obtener_funcion,
     cargar_funcion,
 )
-from ..pybind_bridge import (
-    compilar_extension,
-    cargar_extension,
-    compilar_y_cargar,
-)
-from ..rust_bridge import (
-    compilar_crate,
-    cargar_crate,
-    compilar_y_cargar_crate,
-)
+try:
+    from ..pybind_bridge import (
+        compilar_extension,
+        cargar_extension,
+        compilar_y_cargar,
+    )
+except ModuleNotFoundError:  # pragma: no cover - depende de entorno opcional
+    def _missing_pybind11(*_args, **_kwargs):
+        raise RuntimeError(
+            "pybind11 no está disponible. Instala 'pybind11' para usar las primitivas C++"
+        )
+
+    compilar_extension = cargar_extension = compilar_y_cargar = _missing_pybind11
+
+try:
+    from ..rust_bridge import (
+        compilar_crate,
+        cargar_crate,
+        compilar_y_cargar_crate,
+    )
+except ModuleNotFoundError:  # pragma: no cover - depende de entorno opcional
+    def _missing_rust(*_args, **_kwargs):
+        raise RuntimeError(
+            "Soporte de Rust no disponible. Instala dependencias opcionales para usarlo"
+        )
+
+    compilar_crate = cargar_crate = compilar_y_cargar_crate = _missing_rust
 
 __all__ = [
     "leer_archivo",
