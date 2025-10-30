@@ -1,4 +1,4 @@
-"""Alias de compatibilidad para ``pcobra.cobra``."""
+"""Puente de compatibilidad para ``pcobra.corelibs``."""
 
 from __future__ import annotations
 
@@ -7,14 +7,10 @@ from pathlib import Path
 import sys
 from types import ModuleType
 
-_SRC = Path(__file__).resolve().parents[1] / "src"
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
-
-_target_name = "pcobra.cobra"
+_target_name = "pcobra.corelibs"
 _target: ModuleType = import_module(_target_name)
 
-__all__ = list(getattr(_target, "__all__", ()))
+__all__ = [name for name in getattr(_target, "__all__", ()) if hasattr(_target, name)]
 for _name in __all__:
     globals()[_name] = getattr(_target, _name)
 
@@ -24,13 +20,11 @@ __path__ = [str(_local_path), *map(str, getattr(_target, "__path__", []))]
 
 def __getattr__(name: str):
     try:
-        valor = getattr(_target, name)
+        value = getattr(_target, name)
     except AttributeError as exc:  # pragma: no cover - delegación directa
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from exc
-    globals()[name] = valor
-    if isinstance(valor, ModuleType):
-        sys.modules.setdefault(f"{__name__}.{name}", valor)
-    return valor
+    globals()[name] = value
+    return value
 
 
 def __dir__() -> list[str]:
@@ -41,12 +35,3 @@ def __dir__() -> list[str]:
 
 
 sys.modules.setdefault(_target_name, _target)
-sys.modules.setdefault(__name__, sys.modules[__name__])
-for _mod_name, _mod in list(sys.modules.items()):
-    if _mod_name.startswith(f"{_target_name}."):
-        if _mod_name.startswith(f"{_target_name}.cli"):
-            continue
-        alias = __name__ + _mod_name[len(_target_name):]
-        sys.modules.setdefault(alias, _mod)
-
-sys.modules.setdefault("core", import_module("pcobra.core"))

@@ -135,11 +135,24 @@ def _safe_import(name: str, globals: Any | None = None, locals: Any | None = Non
 
 def _run_in_subprocess(codigo: str) -> str:
     try:
+        env = os.environ.copy()
+        repo_root = Path(__file__).resolve().parents[3]
+        src_root = repo_root / "src"
+        pythonpath = env.get("PYTHONPATH", "")
+        extra_paths = [str(repo_root), str(src_root)]
+        current = pythonpath.split(os.pathsep) if pythonpath else []
+        updated = current[:]
+        for ruta in extra_paths:
+            if ruta not in current:
+                updated.insert(0, ruta)
+        env["PYTHONPATH"] = os.pathsep.join(updated) if updated else ""
+
         completed = subprocess.run(
             [sys.executable, "-c", codigo],
             capture_output=True,
             text=True,
             check=True,
+            env=env,
         )
     except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
         salida = exc.stderr.strip() or exc.stdout.strip() or str(exc)
