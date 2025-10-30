@@ -82,22 +82,42 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          paths=()
           if [ -d tests ]; then
-            pytest tests src/tests --cov=src --cov-report=xml \
-              --cov-fail-under=95
-          else
-            pytest src/tests --cov=src --cov-report=xml \
-              --cov-fail-under=95
+            paths+=("tests")
           fi
+          if [ -d src/tests ]; then
+            paths+=("src/tests")
+          fi
+
+          if [ "${#paths[@]}" -eq 0 ]; then
+            echo "No se encontraron directorios de pruebas."
+            exit 1
+          fi
+
+          pytest "${paths[@]}" --cov=src --cov-report=xml \
+            --cov-fail-under=95
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          $paths = @()
           if (Test-Path tests) {
-            pytest tests src/tests --cov=src --cov-report=xml --cov-fail-under=95
-          } else {
-            pytest src/tests --cov=src --cov-report=xml --cov-fail-under=95
+            $paths += 'tests'
           }
+          if (Test-Path 'src/tests') {
+            $paths += 'src/tests'
+          }
+
+          if ($paths.Count -eq 0) {
+            Write-Error 'No se encontraron directorios de pruebas.'
+            exit 1
+          }
+
+          pytest $paths `
+            --cov=src `
+            --cov-report=xml `
+            --cov-fail-under=95
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5
         with:

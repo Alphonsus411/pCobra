@@ -136,26 +136,46 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          paths=()
           if [ -d tests ]; then
-            pytest tests src/tests --cov=src --cov-report=xml \
-              --cov-report=term-missing --cov-fail-under=95 -m "not windows"
-            pytest tests src/tests -m windows
-          else
-            pytest src/tests --cov=src --cov-report=xml \
-              --cov-report=term-missing --cov-fail-under=95 -m "not windows"
-            pytest src/tests -m windows
+            paths+=("tests")
           fi
+          if [ -d src/tests ]; then
+            paths+=("src/tests")
+          fi
+
+          if [ "${#paths[@]}" -eq 0 ]; then
+            echo "No se encontraron directorios de pruebas."
+            exit 1
+          fi
+
+          pytest "${paths[@]}" --cov=src --cov-report=xml \
+            --cov-report=term-missing --cov-fail-under=95 -m "not windows"
+          pytest "${paths[@]}" -m windows
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          $paths = @()
           if (Test-Path tests) {
-            pytest tests src/tests --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=95 -m "not windows"
-            pytest tests src/tests -m windows
-          } else {
-            pytest src/tests --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=95 -m "not windows"
-            pytest src/tests -m windows
+            $paths += 'tests'
           }
+          if (Test-Path 'src/tests') {
+            $paths += 'src/tests'
+          }
+
+          if ($paths.Count -eq 0) {
+            Write-Error 'No se encontraron directorios de pruebas.'
+            exit 1
+          }
+
+          pytest $paths `
+            --cov=src `
+            --cov-report=xml `
+            --cov-report=term-missing `
+            --cov-fail-under=95 `
+            -m 'not windows'
+          pytest $paths -m windows
       - name: Run LLVM examples
         if: runner.os == 'Linux'
         shell: bash
