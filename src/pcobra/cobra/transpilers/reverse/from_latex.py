@@ -6,8 +6,12 @@ from __future__ import annotations
 import re
 from typing import Any, List
 
-from sympy.parsing.latex import parse_latex
-from sympy.printing.pycode import pycode
+try:
+    from sympy.parsing.latex import parse_latex  # type: ignore[import-not-found]
+    from sympy.printing.pycode import pycode  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover - dependencia opcional
+    parse_latex = None  # type: ignore[assignment]
+    pycode = None  # type: ignore[assignment]
 
 from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 from pcobra.cobra.transpilers.reverse.from_python import ReverseFromPython
@@ -32,7 +36,20 @@ class ReverseFromLatex(BaseReverseTranspiler):
         """Transforma una expresión LaTeX en su equivalente en Python."""
 
         expr = expr.strip().strip("$")
-        return pycode(parse_latex(expr))
+        if parse_latex is not None and pycode is not None:
+            return pycode(parse_latex(expr))
+        return self._latex_expr_to_python_basico(expr)
+
+    def _latex_expr_to_python_basico(self, expr: str) -> str:
+        """Conversión simple cuando :mod:`sympy` no está disponible."""
+
+        expr = expr.replace("\\left", "").replace("\\right", "")
+        expr = re.sub(r"\\text\{([^}]*)\}", r"\1", expr)
+        expr = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", r"(\1)/(\2)", expr)
+        expr = expr.replace("^", "**")
+        expr = expr.replace("\\", "")
+        expr = expr.replace("{", "(").replace("}", ")")
+        return expr.strip()
 
     def _extract_braces(self, line: str) -> str:
         """Obtiene el contenido de las llaves ``{}`` de un comando LaTeX."""

@@ -1,7 +1,7 @@
 """Parser alternativo basado en Lark para cargar la gramática EBNF."""
 from __future__ import annotations
 from pathlib import Path
-from typing import List, Optional
+from typing import Iterable, List, Optional
 import json
 try:
     from lark import Lark, ParseError
@@ -27,20 +27,33 @@ class LarkParser:
             ValueError: Si la gramática está vacía o es inválida
         """
         self.tokens = tokens
-        grammar_path = Path(__file__).resolve().parents[3] / "docs" / "gramatica.ebnf"
+        grammar_path = self._resolver_ruta_gramatica()
 
         try:
             with open(grammar_path, "r", encoding="utf-8") as f:
                 grammar = f.read()
         except FileNotFoundError as exc:
             raise FileNotFoundError(
-                f"No se encuentra el archivo de gramática: {grammar_path}"
+                "No se encuentra el archivo de gramática"
             ) from exc
 
         if not grammar.strip():
             raise ValueError("El archivo de gramática está vacío")
 
         self._lark = Lark(grammar, start="start")
+
+    @staticmethod
+    def _resolver_ruta_gramatica() -> Path:
+        """Intenta localizar ``gramatica.ebnf`` ascendiendo desde el módulo."""
+
+        candidatos: Iterable[Path] = (
+            parent / "docs" / "gramatica.ebnf" for parent in Path(__file__).resolve().parents
+        )
+        for candidato in candidatos:
+            if candidato.is_file():
+                return candidato
+        # Si no se encuentra en ninguno de los directorios ascendentes, exponer error claro
+        raise FileNotFoundError("No se encuentra el archivo de gramática")
 
     def _tokens_to_source(self) -> str:
         """
@@ -56,7 +69,7 @@ class LarkParser:
             elif t.tipo == TipoToken.EOF:
                 continue
             else:
-                parts.append(str(t.valor))
+                parts.append("None" if t.valor is None else repr(t.valor))
         return " ".join(parts)
 
     def parsear(self) -> Optional[object]:

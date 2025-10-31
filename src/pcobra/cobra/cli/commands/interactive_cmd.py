@@ -134,8 +134,8 @@ class InteractiveCommand(BaseCommand):
             mostrar_error(_("Línea demasiado larga"))
             return False
 
-        # Validar caracteres especiales
-        if re.search(r"[^\w\s\-\.\'\"]+", linea):
+        # Rechazar solo caracteres de control no imprimibles
+        if re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", linea):
             mostrar_error(_("La entrada contiene caracteres no permitidos"))
             return False
 
@@ -182,14 +182,6 @@ class InteractiveCommand(BaseCommand):
         Returns:
             0 en caso de éxito, 1 en caso de error
         """
-        if not PROMPT_TOOLKIT_AVAILABLE:
-            mostrar_error(
-                _(
-                    "El modo interactivo requiere la dependencia opcional 'prompt_toolkit'."
-                )
-            )
-            return 1
-
         try:
             # Validar y configurar límite de memoria
             memory_limit = getattr(args, "memory_limit", self.MEMORY_LIMIT_MB)
@@ -241,6 +233,13 @@ class InteractiveCommand(BaseCommand):
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
         sandbox_docker = getattr(args, "sandbox_docker", None)
+        if not PROMPT_TOOLKIT_AVAILABLE:
+            mostrar_advertencia(
+                _(
+                    "'prompt_toolkit' no está disponible; se activará un REPL básico sin autocompletado."
+                )
+            )
+            return self._run_repl_basico(args, validador)
         history_path = os.path.expanduser("~/.cobra_history")
         os.makedirs(os.path.dirname(history_path), exist_ok=True)
         try:
@@ -292,6 +291,51 @@ class InteractiveCommand(BaseCommand):
                 except RuntimeError as err:
                     self._log_error(_("Error crítico"), err)
                 except Exception as err:
+                    self._log_error(_("Error general"), err, include_traceback=True)
+
+        return 0
+
+    def _run_repl_basico(self, args: Any, validador: Optional[Any]) -> int:
+        """Ejecuta un bucle REPL simplificado sin ``prompt_toolkit``."""
+
+        sandbox = getattr(args, "sandbox", False)
+        sandbox_docker = getattr(args, "sandbox_docker", None)
+        if sandbox_docker:
+            mostrar_error(
+                _(
+                    "El REPL básico no soporta la opción --sandbox-docker sin 'prompt_toolkit'."
+                )
+            )
+            return 1
+
+        with self:
+            while True:
+                try:
+                    linea = input("cobra> ").strip()
+                except (KeyboardInterrupt, EOFError):
+                    mostrar_info(_("Saliendo..."))
+                    break
+
+                if not self.validar_entrada(linea):
+                    continue
+
+                if linea in ["salir", "salir()"]:
+                    break
+
+                if self._procesar_comando_especial(linea, validador):
+                    continue
+
+                try:
+                    if sandbox:
+                        self._ejecutar_en_sandbox(linea)
+                    else:
+                        ast = self.procesar_ast(linea, validador)
+                        self.interpretador.ejecutar_ast(ast)
+                except (LexerError, ParserError) as err:
+                    self._log_error(_("Error de sintaxis"), err)
+                except RuntimeError as err:
+                    self._log_error(_("Error crítico"), err)
+                except Exception as err:  # pragma: no cover - fallos inesperados
                     self._log_error(_("Error general"), err, include_traceback=True)
 
         return 0

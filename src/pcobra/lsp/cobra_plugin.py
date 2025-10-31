@@ -4,7 +4,28 @@ from __future__ import annotations
 
 import logging
 import re
-from pylsp import hookimpl, lsp
+
+try:
+    from pylsp import hookimpl, lsp  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover - dependencia opcional
+
+    def hookimpl(func=None, **_kwargs):  # type: ignore[no-redef]
+        """Decorador neutro cuando ``python-lsp-server`` no está presente."""
+
+        if func is None:
+            return lambda f: f
+        return func
+
+    class _DummyLSP:  # pragma: no cover - funcionalidad mínima
+        class DiagnosticSeverity:
+            Error = 1
+            Warning = 2
+
+        class CompletionItemKind:
+            Keyword = 14
+            Function = 3
+
+    lsp = _DummyLSP()  # type: ignore[assignment]
 from pcobra.standard_library import __all__ as STD_FUNCS
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
