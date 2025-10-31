@@ -11,8 +11,9 @@ from __future__ import annotations
 import importlib
 import sys
 
+_CLI_MODULE = importlib.import_module("pcobra.cli")
 from pcobra.cli import *  # noqa: F401,F403 - reexportado deliberadamente
-from pcobra.cli import __all__  # type: ignore
+__all__ = getattr(_CLI_MODULE, "__all__", [name for name in vars(_CLI_MODULE) if not name.startswith("_")])
 
 _ALIASES = {
     "cli.cli": "pcobra.cobra.cli.cli",
