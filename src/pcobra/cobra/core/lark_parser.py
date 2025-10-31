@@ -57,20 +57,43 @@ class LarkParser:
 
     def _tokens_to_source(self) -> str:
         """
-        Convierte la lista de tokens a una cadena de texto.
+        Convierte la lista de tokens a una cadena legible para depuración.
 
-        Returns:
-            str: Cadena de texto representando los tokens
+        Esta representación mantiene los comportamientos históricos del
+        proyecto, como escapar las cadenas con ``json.dumps`` y utilizar
+        ``repr`` para el resto de tokens. Es la que emplean los tests
+        unitarios para validar que la conversión conserva caracteres
+        especiales.
         """
+
         parts = []
         for t in self.tokens:
+            if t.tipo == TipoToken.EOF:
+                continue
             if t.tipo == TipoToken.CADENA:
                 parts.append(json.dumps(t.valor))
-            elif t.tipo == TipoToken.EOF:
-                continue
             else:
                 parts.append("None" if t.valor is None else repr(t.valor))
         return " ".join(parts)
+
+    def _tokens_to_code(self) -> str:
+        """Reconstruye el código fuente aproximado a partir de los tokens."""
+
+        lexemas = []
+        for t in self.tokens:
+            if t.tipo == TipoToken.EOF:
+                continue
+            if t.tipo == TipoToken.CADENA:
+                lexemas.append(json.dumps(t.valor))
+                continue
+
+            valor = t.valor
+            if valor is None:
+                lexemas.append("")
+            else:
+                lexemas.append(str(valor))
+
+        return " ".join(part for part in lexemas if part)
 
     def parsear(self) -> Optional[object]:
         """
@@ -83,7 +106,7 @@ class LarkParser:
             ParseError: Si ocurre un error durante el parsing
         """
         try:
-            source = self._tokens_to_source()
+            source = self._tokens_to_code()
             return self._lark.parse(source)
         except ParseError as e:
             raise ParseError(f"Error durante el parsing: {str(e)}")
