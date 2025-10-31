@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import tempfile
 import string
-import sys
 from queue import Empty
 from pathlib import Path
 from typing import Any
@@ -54,9 +53,119 @@ _IMPORT_DENYLIST = {
     "subprocess",
     "socket",
     "urllib",
+    "builtins",
+    "importlib",
 }
 
 _FORBIDDEN_CALLS = {"eval", "exec", "open"}
+
+
+if HAS_RESTRICTED_PYTHON:
+    _SANDBOX_BUILTINS = dict(safe_builtins)
+else:  # pragma: no cover - rutas sin RestrictedPython
+    _FALLBACK_SAFE_BUILTINS = {
+        "abs",
+        "all",
+        "any",
+        "bin",
+        "bool",
+        "bytearray",
+        "bytes",
+        "callable",
+        "chr",
+        "complex",
+        "dict",
+        "divmod",
+        "enumerate",
+        "filter",
+        "float",
+        "format",
+        "frozenset",
+        "getattr",
+        "hasattr",
+        "hash",
+        "hex",
+        "id",
+        "int",
+        "isinstance",
+        "issubclass",
+        "iter",
+        "len",
+        "list",
+        "map",
+        "max",
+        "min",
+        "next",
+        "object",
+        "oct",
+        "ord",
+        "pow",
+        "print",
+        "property",
+        "range",
+        "repr",
+        "reversed",
+        "round",
+        "set",
+        "slice",
+        "sorted",
+        "staticmethod",
+        "str",
+        "sum",
+        "super",
+        "tuple",
+        "type",
+        "zip",
+        "BaseException",
+        "Exception",
+        "ArithmeticError",
+        "LookupError",
+        "RuntimeError",
+        "ValueError",
+        "TypeError",
+        "KeyError",
+        "IndexError",
+        "AttributeError",
+        "StopIteration",
+        "StopAsyncIteration",
+    }
+    _SANDBOX_BUILTINS = {
+        nombre: getattr(builtins, nombre)
+        for nombre in _FALLBACK_SAFE_BUILTINS
+        if hasattr(builtins, nombre)
+    }
+    _SANDBOX_BUILTINS.setdefault("True", True)  # type: ignore[assignment]
+    _SANDBOX_BUILTINS.setdefault("False", False)  # type: ignore[assignment]
+    _SANDBOX_BUILTINS.setdefault("None", None)  # type: ignore[assignment]
+    _SANDBOX_BUILTINS.setdefault("__build_class__", builtins.__build_class__)
+
+    if PrintCollector is None:  # pragma: no cover - fallback sencillo
+        class _FallbackPrintCollector:
+            def __init__(self) -> None:
+                self._buffer: list[str] = []
+
+            def __call__(self, *values: Any) -> str:
+                if values:
+                    self._buffer.append(" ".join(map(str, values)))
+                return "\n".join(self._buffer)
+
+        PrintCollector = _FallbackPrintCollector  # type: ignore[assignment]
+
+    if default_guarded_getitem is None:
+        def default_guarded_getitem(obj: Any, item: Any) -> Any:
+            return obj[item]
+
+    if default_guarded_getattr is None:
+        def default_guarded_getattr(obj: Any, attr: str, default: Any = None) -> Any:
+            return getattr(obj, attr, default)
+
+    if guarded_iter_unpack_sequence is None:
+        def guarded_iter_unpack_sequence(seq: Any) -> Any:
+            return iter(seq)
+
+    if guarded_unpack_sequence is None:
+        def guarded_unpack_sequence(seq: Any) -> Any:
+            return list(seq)
 
 
 class SandboxSecurityError(RuntimeError):
@@ -133,20 +242,6 @@ def _safe_import(name: str, globals: Any | None = None, locals: Any | None = Non
     return modulo
 
 
-def _run_in_subprocess(codigo: str) -> str:
-    try:
-        completed = subprocess.run(
-            [sys.executable, "-c", codigo],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
-        salida = exc.stderr.strip() or exc.stdout.strip() or str(exc)
-        raise RuntimeError(salida) from exc
-    return completed.stdout
-
-
 def _worker(
     code_bytes: bytes, queue: multiprocessing.Queue, memoria_mb: int | None
 ) -> None:
@@ -158,18 +253,24 @@ def _worker(
             limite = memoria_mb * 1024 * 1024
             resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
 
-        builtins_dict = dict(safe_builtins)
+        builtins_dict = dict(_SANDBOX_BUILTINS)
         builtins_dict["__import__"] = _safe_import
         builtins_dict.setdefault("print", print)
 
         env = {
             "__builtins__": builtins_dict,
-            "_print_": PrintCollector,
-            "_getattr_": default_guarded_getattr,
-            "_getitem_": default_guarded_getitem,
-            "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
-            "_unpack_sequence_": guarded_unpack_sequence,
         }
+
+        if PrintCollector is not None:
+            env["_print_"] = PrintCollector
+        if default_guarded_getattr is not None:
+            env["_getattr_"] = default_guarded_getattr
+        if default_guarded_getitem is not None:
+            env["_getitem_"] = default_guarded_getitem
+        if guarded_iter_unpack_sequence is not None:
+            env["_iter_unpack_sequence_"] = guarded_iter_unpack_sequence
+        if guarded_unpack_sequence is not None:
+            env["_unpack_sequence_"] = guarded_unpack_sequence
 
         byte_code = marshal.loads(code_bytes)
         stdout = io.StringIO()
@@ -192,13 +293,13 @@ def ejecutar_en_sandbox(
     """
     _verificar_codigo_prohibido(codigo)
 
-    if not HAS_RESTRICTED_PYTHON:
-        return _run_in_subprocess(codigo)
-
-    try:
-        byte_code = compile_restricted(codigo, "<string>", "exec")
-    except SyntaxError as se:  # pragma: no cover - comportamiento simple
-        return _run_in_subprocess(codigo)
+    if HAS_RESTRICTED_PYTHON and compile_restricted is not None:
+        try:
+            byte_code = compile_restricted(codigo, "<string>", "exec")
+        except SyntaxError as se:  # pragma: no cover - comportamiento simple
+            raise SyntaxError(f"compile_restricted falló: {se}") from se
+    else:
+        byte_code = compile(codigo, "<string>", "exec")
 
     code_bytes = marshal.dumps(byte_code)
     queue: multiprocessing.Queue = multiprocessing.Queue()
