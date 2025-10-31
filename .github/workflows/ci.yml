@@ -79,20 +79,21 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          python - <<'PY'
-          import importlib, sys
+          $script = @'
+import importlib, sys
 
-          required_modules = ["sphinx"]
-          missing = []
-          for module in required_modules:
-              try:
-                  importlib.import_module(module)
-              except ImportError:
-                  missing.append(module)
+required_modules = ["sphinx"]
+missing = []
+for module in required_modules:
+    try:
+        importlib.import_module(module)
+    except ImportError:
+        missing.append(module)
 
-          if missing:
-              sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
-          PY
+if missing:
+    sys.exit(f"Faltan módulos de Python: {', '.join(missing)}")
+'@
+          python -c $script
           pyright --version
       - name: Seguridad de dependencias
         if: env.SAFETY_API_KEY != ''
