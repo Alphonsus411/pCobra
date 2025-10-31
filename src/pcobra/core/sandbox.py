@@ -63,76 +63,36 @@ _FORBIDDEN_CALLS = {"eval", "exec", "open"}
 if HAS_RESTRICTED_PYTHON:
     _SANDBOX_BUILTINS = dict(safe_builtins)
 else:  # pragma: no cover - rutas sin RestrictedPython
-    _FALLBACK_SAFE_BUILTINS = {
-        "abs",
-        "all",
-        "any",
-        "bin",
-        "bool",
-        "bytearray",
-        "bytes",
-        "callable",
-        "chr",
-        "complex",
-        "dict",
-        "divmod",
-        "enumerate",
-        "filter",
-        "float",
-        "format",
-        "frozenset",
-        "getattr",
-        "hasattr",
-        "hash",
-        "hex",
-        "id",
-        "int",
-        "isinstance",
-        "issubclass",
-        "iter",
-        "len",
-        "list",
-        "map",
-        "max",
-        "min",
-        "next",
-        "object",
-        "oct",
-        "ord",
-        "pow",
-        "print",
-        "property",
-        "range",
-        "repr",
-        "reversed",
-        "round",
-        "set",
-        "slice",
-        "sorted",
-        "staticmethod",
-        "str",
-        "sum",
-        "super",
-        "tuple",
-        "type",
-        "zip",
-        "BaseException",
-        "Exception",
-        "ArithmeticError",
-        "LookupError",
-        "RuntimeError",
-        "ValueError",
-        "TypeError",
-        "KeyError",
-        "IndexError",
-        "AttributeError",
-        "StopIteration",
-        "StopAsyncIteration",
+    # Construimos la tabla de builtins seguros a partir del espacio estándar,
+    # eliminando únicamente las primitivas peligrosas. Esto garantiza que las
+    # excepciones y utilidades comunes sigan disponibles incluso sin
+    # RestrictedPython.
+    _FALLBACK_BLOCKED_BUILTINS = {
+        "__import__",
+        "eval",
+        "exec",
+        "open",
+        "input",
+        "help",
+        "compile",
+        "globals",
+        "locals",
+        "vars",
+        "quit",
+        "exit",
+        "breakpoint",
     }
     _SANDBOX_BUILTINS = {
         nombre: getattr(builtins, nombre)
-        for nombre in _FALLBACK_SAFE_BUILTINS
-        if hasattr(builtins, nombre)
+        for nombre in dir(builtins)
+        if (
+            hasattr(builtins, nombre)
+            and (
+                not nombre.startswith("_")
+                or nombre in {"__build_class__", "__doc__"}
+            )
+            and nombre not in _FALLBACK_BLOCKED_BUILTINS
+        )
     }
     _SANDBOX_BUILTINS.setdefault("True", True)  # type: ignore[assignment]
     _SANDBOX_BUILTINS.setdefault("False", False)  # type: ignore[assignment]
