@@ -15,6 +15,7 @@ try:  # pragma: no branch - dependencia opcional
     from holobit_sdk.core.quark import Quark
     from holobit_sdk.core.holobit import Holobit as SDKHolobit
 except ModuleNotFoundError as _holobit_error:  # pragma: no cover - entorno mínimo
+    _HOLOBIT_SDK_ERROR = _holobit_error
     def _registrar_modulo(nombre: str) -> ModuleType:
         modulo = sys.modules.get(nombre)
         if modulo is None:
@@ -45,7 +46,7 @@ except ModuleNotFoundError as _holobit_error:  # pragma: no cover - entorno mín
     def proyectar_holograma(_hb: "SDKHolobit") -> None:  # type: ignore[override]
         raise ModuleNotFoundError(
             "Las funciones de holobits requieren la dependencia opcional 'holobit_sdk'."
-        ) from _holobit_error
+        ) from _HOLOBIT_SDK_ERROR
 
     _projector_mod.proyectar_holograma = proyectar_holograma
 
@@ -73,14 +74,13 @@ except ModuleNotFoundError as _holobit_error:  # pragma: no cover - entorno mín
         def rotar(self, *_args, **_kwargs) -> None:  # pragma: no cover - simple
             raise ModuleNotFoundError(
                 "La rotación de holobits requiere la dependencia opcional 'holobit_sdk'."
-            ) from _holobit_error
+            ) from _HOLOBIT_SDK_ERROR
 
     _holobit_mod = ModuleType("holobit_sdk.core.holobit")
     _holobit_mod.Holobit = SDKHolobit
     sys.modules["holobit_sdk.core.holobit"] = _holobit_mod
     _core_mod.holobit = _holobit_mod
 
-    _HOLOBIT_SDK_ERROR = _holobit_error
 else:  # pragma: no cover - entorno con dependencia instalada
     _HOLOBIT_SDK_ERROR = None
 
