@@ -93,17 +93,18 @@ class ModulesCommand(BaseCommand):
         Raises:
             ValueError: Si la acción no es válida
         """
-        if yaml is None:
-            mostrar_error(
-                _(
-                    "El comando de módulos requiere la dependencia opcional 'PyYAML'."
-                )
-            )
-            return 1
-
         accion = args.accion
         if not accion:
             mostrar_error(_("Debe especificar una acción"))
+            return 1
+
+        if yaml is None and accion in {"publicar", "buscar"}:
+            mostrar_error(
+                _(
+                    "El comando de módulos requiere la dependencia opcional 'PyYAML' "
+                    "para la acción solicitada."
+                )
+            )
             return 1
 
         acciones = {
@@ -303,7 +304,8 @@ class ModulesCommand(BaseCommand):
             if not ModulesCommand._validar_ruta(ruta):
                 raise ValueError(_("Ruta de módulo inválida"))
 
-            mod_validator.validar_mod(MODULE_MAP_PATH)
+            if yaml is not None:
+                mod_validator.validar_mod(MODULE_MAP_PATH)
             ruta_abs = os.path.abspath(ruta)
 
             if not os.path.exists(ruta_abs):
@@ -323,17 +325,19 @@ class ModulesCommand(BaseCommand):
             shutil.copy2(ruta_abs, destino)
             mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
 
-            version = ModulesCommand._obtener_version(ruta_abs)
-            if version and not es_version_valida(version):
-                raise ValueError(_("Versión de módulo inválida"))
+            version = None
+            if yaml is not None:
+                version = ModulesCommand._obtener_version(ruta_abs)
+                if version and not es_version_valida(version):
+                    raise ValueError(_("Versión de módulo inválida"))
 
-            actual = ModulesCommand._obtener_version_lock(nombre)
-            if actual and version and not es_nueva_version(version, actual):
-                raise ValueError(
-                    _("La nueva versión {v} no supera a {a}").format(v=version, a=actual)
-                )
+                actual = ModulesCommand._obtener_version_lock(nombre)
+                if actual and version and not es_nueva_version(version, actual):
+                    raise ValueError(
+                        _("La nueva versión {v} no supera a {a}").format(v=version, a=actual)
+                    )
 
-            ModulesCommand._actualizar_lock(nombre, version)
+                ModulesCommand._actualizar_lock(nombre, version)
             return 0
 
         except Exception as e:

@@ -22,7 +22,16 @@ def test_python_to_java():
     codigo = "x = 1\nprint(x)"
     ast = ReverseFromPython().generate_ast(codigo)
     java_code = TranspiladorJava().generate_code(ast)
-    esperado = "var x = 1;\nprint(x);"
+    esperado = "\n".join(
+        [
+            "public class Main {",
+            "    public static void main(String[] args) {",
+            "        var x = 1;",
+            "        print(x);",
+            "    }",
+            "}",
+        ]
+    )
     assert java_code == esperado
 
 

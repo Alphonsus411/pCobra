@@ -111,10 +111,23 @@ def _load_sqliteplus_class():
 
     try:
         dist = distribution("sqliteplus-enhanced")
-    except PackageNotFoundError as exc:  # pragma: no cover - dependencia ausente
-        raise DatabaseDependencyError(
-            "El paquete 'sqliteplus-enhanced' es obligatorio para la base de datos."
-        ) from exc
+    except PackageNotFoundError:  # pragma: no cover - dependencia ausente
+        warnings.warn(
+            "'sqliteplus-enhanced' no está instalado; se utilizará una base de datos SQLite "
+            "simplificada sin cifrado.",
+            RuntimeWarning,
+        )
+
+        class SQLitePlusFallback:
+            def __init__(self, db_path: str, cipher_key: str | None = None):
+                self._db_path = db_path
+                self._cipher_key = cipher_key
+
+            def get_connection(self) -> sqlite3.Connection:
+                return sqlite3.connect(self._db_path)
+
+        _SQLITEPLUS_CLASS = SQLitePlusFallback
+        return _SQLITEPLUS_CLASS
 
     module_path = dist.locate_file("utils/sqliteplus_sync.py")
     if not Path(module_path).exists():  # pragma: no cover - instalación dañada

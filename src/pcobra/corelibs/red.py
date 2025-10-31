@@ -4,15 +4,36 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import urllib.parse
 
-import httpx
 import requests
+
+try:  # pragma: no cover - depende de extras opcionales
+    import httpx  # type: ignore[import-not-found]
+except ModuleNotFoundError as exc:  # pragma: no cover - entorno sin httpx
+    httpx = None  # type: ignore[assignment]
+    _HTTPX_IMPORT_ERROR = exc
+else:
+    _HTTPX_IMPORT_ERROR = None
+
+if TYPE_CHECKING:  # pragma: no cover - solo para chequeo de tipos
+    import httpx as _httpx
 
 
 _MAX_RESP_SIZE = 1024 * 1024
 _MAX_REDIRECTS = 5
+
+
+def _require_httpx() -> "_httpx":
+    """Devuelve el módulo :mod:`httpx` o lanza un error descriptivo."""
+
+    if httpx is None:
+        raise ModuleNotFoundError(
+            "Las utilidades asíncronas de red requieren el paquete opcional 'httpx'. "
+            "Instálalo ejecutando 'pip install httpx'."
+        ) from _HTTPX_IMPORT_ERROR
+    return httpx
 
 
 def _obtener_hosts_permitidos() -> set[str]:
@@ -135,7 +156,7 @@ def enviar_post(url: str, datos: dict, permitir_redirecciones: bool = False) -> 
             resp.close()
 
 
-async def _leer_respuesta_async(resp: httpx.Response) -> str:
+async def _leer_respuesta_async(resp: "_httpx.Response") -> str:
     datos = bytearray()
     async for chunk in resp.aiter_bytes(chunk_size=8192):
         datos.extend(chunk)
@@ -144,7 +165,7 @@ async def _leer_respuesta_async(resp: httpx.Response) -> str:
     return datos.decode(resp.encoding or "utf-8", errors="replace")
 
 
-async def _descargar_a_archivo(resp: httpx.Response, destino: Path) -> Path:
+async def _descargar_a_archivo(resp: "_httpx.Response", destino: Path) -> Path:
     total = 0
     with destino.open("wb") as archivo:
         async for chunk in resp.aiter_bytes(chunk_size=8192):
@@ -167,7 +188,8 @@ async def _realizar_peticion_async(
     hosts = _obtener_hosts_permitidos()
     url_actual = url
     redirecciones_restantes = _MAX_REDIRECTS
-    async with httpx.AsyncClient(follow_redirects=False, timeout=5.0) as client:
+    httpx_mod = _require_httpx()
+    async with httpx_mod.AsyncClient(follow_redirects=False, timeout=5.0) as client:
         while True:
             _validar_host(url_actual, hosts)
             request_args: dict[str, Any] = {"data": datos} if datos is not None else {}
