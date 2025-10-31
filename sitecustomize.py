@@ -18,6 +18,7 @@ if SRC_PATH.exists():
     try:  # pragma: no cover - depende del entorno de ejecución
         import importlib
 
-        sys.modules.setdefault("core", importlib.import_module("core"))
+        core_module = importlib.import_module("pcobra.core")
+        sys.modules["core"] = core_module
     except ModuleNotFoundError:
         pass
