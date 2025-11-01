@@ -146,16 +146,20 @@ def ejecutar(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        run_kwargs = {
+            "check": True,
+            "text": True,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "timeout": timeout,
+        }
         if os.name == "posix":
             args_exec[0] = f"/proc/self/fd/{fd}"
+            run_kwargs["pass_fds"] = (fd,)
 
         resultado = subprocess.run(
             args_exec,
-            check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=timeout,
+            **run_kwargs,
         )
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
@@ -194,13 +198,17 @@ async def ejecutar_async(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        create_kwargs = {
+            "stdout": asyncio.subprocess.PIPE,
+            "stderr": asyncio.subprocess.PIPE,
+        }
         if os.name == "posix":
             args_exec[0] = f"/proc/self/fd/{fd}"
+            create_kwargs["pass_fds"] = (fd,)
 
         proc = await asyncio.create_subprocess_exec(
             *args_exec,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            **create_kwargs,
         )
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(
@@ -245,12 +253,16 @@ async def ejecutar_stream(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
+        create_kwargs = {
+            "stdout": asyncio.subprocess.PIPE,
+            "stderr": asyncio.subprocess.PIPE,
+        }
         if os.name == "posix":
             args_exec[0] = f"/proc/self/fd/{fd}"
+            create_kwargs["pass_fds"] = (fd,)
         proc = await asyncio.create_subprocess_exec(
             *args_exec,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            **create_kwargs,
         )
         loop = asyncio.get_running_loop()
         inicio = loop.time()
