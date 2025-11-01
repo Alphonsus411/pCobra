@@ -40,11 +40,11 @@ def test_cli_help():
 def test_modulos_instalar_ruta_no_archivo(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
-    monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
-    mod_file = tmp_path / "cobra.mod"
+    monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
+    mod_file = tmp_path / "module_map.toml"
     mod_file.write_text("lock: {}\n")
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
-    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
 
     ruta = tmp_path / "dir"
     ruta.mkdir()
@@ -57,11 +57,11 @@ def test_modulos_instalar_ruta_no_archivo(tmp_path, monkeypatch):
 def test_modulos_instalar_extension_invalida(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
-    monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
-    mod_file = tmp_path / "cobra.mod"
+    monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
+    mod_file = tmp_path / "module_map.toml"
     mod_file.write_text("lock: {}\n")
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
-    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
 
     archivo = tmp_path / "m.txt"
     archivo.write_text("x = 1")
@@ -74,11 +74,11 @@ def test_modulos_instalar_extension_invalida(tmp_path, monkeypatch):
 def test_modulos_instalar_enlace_simbolico(tmp_path, monkeypatch):
     mods_dir = tmp_path / "mods"
     mods_dir.mkdir()
-    monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
-    mod_file = tmp_path / "cobra.mod"
+    monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
+    mod_file = tmp_path / "module_map.toml"
     mod_file.write_text("lock: {}\n")
     monkeypatch.setattr(modules_cmd, "MODULE_MAP_PATH", str(mod_file))
-    monkeypatch.setattr(modules_cmd, "LOCK_FILE", str(mod_file))
+    monkeypatch.setattr(modules_cmd, "LOCK_FILE", mod_file)
 
     real_file = tmp_path / "m.co"
     real_file.write_text("var x = 1")

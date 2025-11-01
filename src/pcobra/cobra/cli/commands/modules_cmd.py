@@ -38,20 +38,80 @@ def _get_client() -> CobraHubClient:
         _client = CobraHubClient()
     return _client
 
+
+class _ClientProxy:
+    """Proxy perezoso para exponer el cliente de CobraHub."""
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(_get_client(), name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        setattr(_get_client(), name, value)
+
+
+client = _ClientProxy()
+
 # Constantes
-MODULES_PATH = Path(os.path.dirname(__file__)) / ".." / "modules"
-LOCK_FILE = MODULE_MAP_PATH
+USER_CONFIG_DIR = Path.home() / ".cobra"
+MODULES_PATH: Path = USER_CONFIG_DIR / "modules"
+LOCK_FILE: Path = USER_CONFIG_DIR / "module_map.toml"
 LOCK_KEY = "lock"
 MODULE_EXTENSION = ".co"
-
-# Crear directorio de módulos si no existe
-MODULES_PATH.mkdir(parents=True, exist_ok=True)
 
 
 def _lock_context(path: Path):
     if FileLock is None:
         return nullcontext()
     return FileLock(f"{path}.lock")
+
+
+def _ensure_modules_dir() -> bool:
+    """Garantiza que el directorio de módulos existe y es accesible."""
+
+    modules_dir = Path(MODULES_PATH)
+    try:
+        modules_dir.mkdir(parents=True, exist_ok=True)
+        return True
+    except PermissionError as exc:
+        logger.error(f"Sin permisos para crear directorio de módulos: {exc}")
+        mostrar_error(
+            _(
+                "No se pudo preparar el directorio de módulos en {ruta}: {err}"
+            ).format(ruta=modules_dir, err=str(exc))
+        )
+    except OSError as exc:
+        logger.error(f"Error al preparar directorio de módulos: {exc}")
+        mostrar_error(
+            _(
+                "Error al preparar el directorio de módulos en {ruta}: {err}"
+            ).format(ruta=modules_dir, err=str(exc))
+        )
+    return False
+
+
+def _ensure_lock_parent() -> bool:
+    """Garantiza que existe el directorio del archivo de lock."""
+
+    lock_path = Path(LOCK_FILE)
+    lock_parent = lock_path.parent
+    try:
+        lock_parent.mkdir(parents=True, exist_ok=True)
+        return True
+    except PermissionError as exc:
+        logger.error(f"Sin permisos para preparar lock de módulos: {exc}")
+        mostrar_error(
+            _("No se pudo preparar el archivo de lock en {ruta}: {err}").format(
+                ruta=lock_parent, err=str(exc)
+            )
+        )
+    except OSError as exc:
+        logger.error(f"Error al preparar lock de módulos: {exc}")
+        mostrar_error(
+            _("Error al preparar el archivo de lock en {ruta}: {err}").format(
+                ruta=lock_parent, err=str(exc)
+            )
+        )
+    return False
 
 class ModulesCommand(BaseCommand):
     """Gestiona los módulos instalados."""
@@ -179,9 +239,10 @@ class ModulesCommand(BaseCommand):
             return {LOCK_KEY: {}}
 
         try:
-            if os.path.exists(LOCK_FILE):
-                with _lock_context(Path(LOCK_FILE)):
-                    with open(LOCK_FILE, "r", encoding="utf-8") as f:
+            lock_path = Path(LOCK_FILE)
+            if lock_path.exists():
+                with _lock_context(lock_path):
+                    with open(lock_path, "r", encoding="utf-8") as f:
                         data = yaml.safe_load(f) or {}
         except (IOError, yaml.YAMLError) as e:
             logger.error(f"Error al cargar lock: {str(e)}")
@@ -256,11 +317,15 @@ class ModulesCommand(BaseCommand):
 
         if not nombre or not ModulesCommand._validar_nombre_modulo(nombre):
             return
+        if not _ensure_lock_parent():
+            return
+
         try:
-            with _lock_context(Path(LOCK_FILE)):
+            lock_path = Path(LOCK_FILE)
+            with _lock_context(lock_path):
                 data = ModulesCommand._cargar_lock()
                 data[LOCK_KEY][nombre] = version
-                with open(LOCK_FILE, "w", encoding="utf-8") as f:
+                with open(lock_path, "w", encoding="utf-8") as f:
                     yaml.safe_dump(data, f)
         except (IOError, yaml.YAMLError) as e:
             logger.error(f"Error al actualizar lock: {str(e)}")
@@ -275,7 +340,16 @@ class ModulesCommand(BaseCommand):
         """
         try:
             mod_validator.validar_mod(MODULE_MAP_PATH)
-            mods = [f for f in os.listdir(MODULES_PATH) if f.endswith(MODULE_EXTENSION)]
+            modules_dir = Path(MODULES_PATH)
+            if not modules_dir.exists():
+                mostrar_info(_("No hay módulos instalados"))
+                return 0
+
+            mods = [
+                f.name
+                for f in modules_dir.iterdir()
+                if f.is_file() and f.name.endswith(MODULE_EXTENSION)
+            ]
             if not mods:
                 mostrar_info(_("No hay módulos instalados"))
             else:
@@ -318,11 +392,28 @@ class ModulesCommand(BaseCommand):
             if not ModulesCommand._validar_nombre_modulo(nombre):
                 raise ValueError(_("Nombre de módulo inválido"))
 
-            destino = MODULES_PATH / nombre
+            if not _ensure_modules_dir():
+                return 1
+
+            modules_dir = Path(MODULES_PATH)
+            destino = modules_dir / nombre
             if destino.exists() and destino.is_symlink():
                 raise ValueError(_("El destino {dest} es un enlace simbólico").format(dest=destino))
 
-            shutil.copy2(ruta_abs, destino)
+            try:
+                shutil.copy2(ruta_abs, destino)
+            except PermissionError as exc:
+                raise ValueError(
+                    _("Sin permisos para copiar a {dest}: {err}").format(
+                        dest=destino, err=str(exc)
+                    )
+                ) from exc
+            except OSError as exc:
+                raise ValueError(
+                    _("No se pudo copiar el módulo a {dest}: {err}").format(
+                        dest=destino, err=str(exc)
+                    )
+                ) from exc
             mostrar_info(_("Módulo instalado en {dest}").format(dest=destino))
 
             version = None
@@ -363,7 +454,11 @@ class ModulesCommand(BaseCommand):
             return 1
 
         try:
-            archivo = MODULES_PATH / nombre
+            if not _ensure_modules_dir():
+                return 1
+
+            modules_dir = Path(MODULES_PATH)
+            archivo = modules_dir / nombre
             if not archivo.exists():
                 raise ValueError(_("El módulo {name} no existe").format(name=nombre))
 
@@ -375,11 +470,15 @@ class ModulesCommand(BaseCommand):
             mostrar_info(_("Módulo {name} eliminado").format(name=nombre))
 
             if yaml is not None:
-                with _lock_context(Path(LOCK_FILE)):
+                if not _ensure_lock_parent():
+                    return 1
+
+                lock_path = Path(LOCK_FILE)
+                with _lock_context(lock_path):
                     data = ModulesCommand._cargar_lock()
                     if nombre in data.get(LOCK_KEY, {}):
                         del data[LOCK_KEY][nombre]
-                        with open(LOCK_FILE, "w", encoding="utf-8") as f:
+                        with open(lock_path, "w", encoding="utf-8") as f:
                             yaml.safe_dump(data, f)
             return 0
 
@@ -406,7 +505,8 @@ class ModulesCommand(BaseCommand):
             return 1
 
         try:
-            destino = str(Path(MODULES_PATH) / nombre)
+            modules_dir = Path(MODULES_PATH)
+            destino = str(modules_dir / nombre)
             ok = _get_client().descargar_modulo(nombre, destino)
             if ok:
                 ModulesCommand._actualizar_lock(nombre, None)

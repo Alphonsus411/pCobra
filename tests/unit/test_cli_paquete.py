@@ -25,7 +25,7 @@ def test_paquete_crear_instalar(tmp_path, monkeypatch):
         data = tomllib.loads(zf.read("cobra.pkg").decode("utf-8"))
     assert data["paquete"]["nombre"] == "demo"
     mods_dir = tmp_path / "mods"
-    monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(mods_dir))
+    monkeypatch.setattr(modules_cmd, "MODULES_PATH", mods_dir)
 
     with patch("sys.stdout", new_callable=StringIO):
         main(["paquete", "instalar", str(pkg)])

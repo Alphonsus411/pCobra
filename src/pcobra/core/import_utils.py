@@ -4,25 +4,24 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from pathlib import Path
 from typing import Iterable, FrozenSet, Tuple
 
 from pcobra.cobra.core import Lexer, Parser
 from .ast_nodes import NodoAsignacion, NodoClase, NodoFuncion, NodoExport
 
-# Ruta por defecto donde se instalan los módulos empaquetados junto al CLI.
-MODULES_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "cli", "modules")
-)
+# Ruta por defecto donde se instalan los módulos del usuario.
+MODULES_PATH = Path.home() / ".cobra" / "modules"
 
 # Lista blanca global que permite rutas adicionales durante la ejecución de pruebas
 # o cuando el usuario desea importar módulos propios.
-IMPORT_WHITELIST: set[str] = set()
+IMPORT_WHITELIST: set[str | os.PathLike[str]] = {MODULES_PATH}
 
 
 def _normalizar_rutas(ruta: str) -> tuple[str, str]:
     """Devuelve la ruta absoluta y su resolución real (sin enlaces simbólicos)."""
 
-    ruta_abs = os.path.abspath(ruta)
+    ruta_abs = os.path.abspath(os.fspath(ruta))
     ruta_real = os.path.realpath(ruta_abs)
     return ruta_abs, ruta_real
 
