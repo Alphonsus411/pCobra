@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Optional
 
-from pcobra.cobra.core import Token, TipoToken, Lexer
+from pcobra.cobra.core import Token, TipoToken
 from .optimizations import (
     optimize_constants,
     remove_dead_code,
@@ -50,7 +50,6 @@ from .ast_nodes import (
     NodoImportDesde,
     NodoAST,
 )
-from pcobra.cobra.core import Parser
 from .memoria.gestor_memoria import GestorMemoriaGenetico
 from .hololang_ir import HololangModule, build_hololang_ir
 from .semantic_validators import (
@@ -68,38 +67,30 @@ from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
 )
-
-# Ruta de los módulos instalados junto con una lista blanca opcional.
-MODULES_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "cli", "modules")
+from .import_utils import (
+    MODULES_PATH as _DEFAULT_MODULES_PATH,
+    IMPORT_WHITELIST,
+    ruta_import_permitida,
+    cargar_ast_modulo,
 )
-IMPORT_WHITELIST = set()
+
+MODULES_PATH = _DEFAULT_MODULES_PATH
 
 
 def _ruta_import_permitida(ruta: str) -> bool:
     """Indica si una ruta está autorizada para importarse."""
 
-    ruta_abs = os.path.abspath(ruta)
-    ruta_real = os.path.realpath(ruta_abs)
-    allowed_roots = [MODULES_PATH, *IMPORT_WHITELIST]
+    _sincronizar_config_import()
+    return ruta_import_permitida(ruta, MODULES_PATH, IMPORT_WHITELIST)
 
-    for root in allowed_roots:
-        if not root:
-            continue
-        root_abs = os.path.abspath(root)
-        root_real = os.path.realpath(root_abs)
-        try:
-            if (
-                os.path.commonpath([ruta_abs, root_abs]) == root_abs
-                and os.path.commonpath([ruta_real, root_real]) == root_real
-            ):
-                return True
-        except ValueError:
-            # En diferentes unidades (por ejemplo en Windows) commonpath puede
-            # fallar; en tal caso la ruta no pertenece al directorio permitido.
-            continue
-    return False
 
+def _sincronizar_config_import() -> None:
+    """Mantiene sincronizados los valores compartidos con :mod:`import_utils`."""
+
+    from . import import_utils as _import_utils
+
+    _import_utils.MODULES_PATH = MODULES_PATH
+    _import_utils.IMPORT_WHITELIST = IMPORT_WHITELIST
 
 class ExcepcionCobra(Exception):
     def __init__(self, valor):
@@ -729,31 +720,29 @@ class InterpretadorCobra:
         """Carga y ejecuta un módulo especificado en la declaración import."""
         # Cada módulo inicia su propia validación
         self._validados.clear()
-        ruta = os.path.abspath(nodo.ruta)
-        if not _ruta_import_permitida(ruta):
-            raise PrimitivaPeligrosaError(
-                f"Importación de módulo no permitida: {nodo.ruta}"
-            )
-
+        ruta = nodo.ruta
+        _sincronizar_config_import()
         try:
-            ruta_real = os.path.realpath(ruta)
-            with open(ruta_real, "r", encoding="utf-8") as f:
-                codigo = f.read()
+            ast = cargar_ast_modulo(
+                ruta,
+                modules_path=MODULES_PATH,
+                whitelist=IMPORT_WHITELIST,
+            )
+        except PermissionError as exc:
+            raise PrimitivaPeligrosaError(str(exc)) from exc
         except FileNotFoundError:
             raise FileNotFoundError(f"Módulo no encontrado: {nodo.ruta}")
-
-        lexer = Lexer(codigo)
-        tokens = lexer.analizar_token()
-        ast = Parser(tokens).parsear()
+        except Exception as exc:
+            raise ImportError(
+                f"Error al analizar el módulo importado '{nodo.ruta}': {exc}"
+            ) from exc
         total = self._contar_nodos(ast)
         max_nodos = limite_nodos()
         if total > max_nodos:
             raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
         for subnodo in ast:
             self._validar(subnodo)
-            resultado = self.ejecutar_nodo(subnodo)
-            if resultado is not None:
-                return resultado
+            self.ejecutar_nodo(subnodo)
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""

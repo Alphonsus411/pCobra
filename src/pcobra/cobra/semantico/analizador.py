@@ -1,4 +1,8 @@
 """Analizador semántico que construye la tabla de símbolos y verifica errores."""
+
+from __future__ import annotations
+
+import os
 from typing import List, Optional, Any, Set
 
 from pcobra.core.ast_nodes import (
@@ -13,9 +17,11 @@ from pcobra.core.ast_nodes import (
     NodoContinuar,
     NodoRomper,
     NodoCondicional,
+    NodoImport,
 )
 from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.semantico.tabla import Ambito
+from pcobra.core.import_utils import obtener_simbolos_modulo
 
 
 class AnalizadorSemantico(NodeVisitor):
@@ -26,20 +32,41 @@ class AnalizadorSemantico(NodeVisitor):
         self.global_scope = Ambito()
         self.current_scope = self.global_scope
         self.herencia: dict[str, List[str]] = {}
+        self._import_cache: dict[str, Set[tuple[str, str]]] = {}
 
     def analizar(self, ast: List) -> None:
         """Analiza el AST completo visitando cada nodo.
-        
+
         Args:
             ast: Lista de nodos del AST a analizar
         """
         for nodo in ast:
             nodo.aceptar(self)
 
+    def _simbolos_importados(self, ruta: str) -> Set[tuple[str, str]]:
+        """Obtiene y memoriza los símbolos declarados en un módulo importado."""
+
+        ruta_abs = os.path.abspath(ruta)
+        ruta_real = os.path.realpath(ruta_abs)
+        cache_key = ruta_real
+        if cache_key not in self._import_cache:
+            try:
+                simbolos = obtener_simbolos_modulo(ruta)
+            except FileNotFoundError as exc:
+                raise FileNotFoundError(f"Módulo no encontrado: {ruta}") from exc
+            except PermissionError as exc:
+                raise ImportError(str(exc)) from exc
+            except Exception as exc:
+                raise ImportError(
+                    f"Error al analizar el módulo importado '{ruta}': {exc}"
+                ) from exc
+            self._import_cache[cache_key] = simbolos
+        return self._import_cache[cache_key]
+
     # Utilidades ---------------------------------------------------------
     def _con_nuevo_ambito(self) -> Ambito:
         """Crea y establece un nuevo ámbito anidado.
-        
+
         Returns:
             El nuevo ámbito creado
         """
@@ -139,12 +166,19 @@ class AnalizadorSemantico(NodeVisitor):
         """Visita un nodo de asignación."""
         nombre = nodo.variable
         self._validar_nombre(nombre)
-        
+
         if not self.current_scope.resolver_local(nombre):
             self.current_scope.declarar(nombre, "variable")
-            
+
         if hasattr(nodo.expresion, "aceptar"):
             nodo.expresion.aceptar(self)
+
+    def visit_import(self, nodo: NodoImport) -> None:
+        """Registra los símbolos declarados por un módulo importado."""
+
+        for nombre, tipo in self._simbolos_importados(nodo.ruta):
+            if not self.current_scope.resolver_local(nombre):
+                self.current_scope.declarar(nombre, tipo)
 
     def visit_identificador(self, nodo: NodoIdentificador) -> None:
         """Visita un nodo identificador."""
