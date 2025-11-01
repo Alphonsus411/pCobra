@@ -13,6 +13,11 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     import requests
 
+try:  # pragma: no cover - dependencia opcional
+    import requests  # type: ignore[no-redef]
+except ModuleNotFoundError:  # pragma: no cover - entornos sin requests
+    requests = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 # URL base de CobraHub, sobreescribible en pruebas.
@@ -89,21 +94,46 @@ class CobraHubClient:
             mostrar_error(_("URL de CobraHub inválida"))
             return False
 
-    def _validar_ruta_destino(self, destino: str) -> Optional[str]:
-        """Valida y retorna la ruta absoluta de destino si es válida."""
+    def _validar_ruta_destino(
+        self, destino: str, base_permitida: Optional[str] = None
+    ) -> Optional[str]:
+        """Valida y retorna la ruta absoluta de destino si es válida.
+
+        Args:
+            destino: Ruta proporcionada por el usuario.
+            base_permitida: Directorio base permitido para la descarga. Si no se
+                especifica, se utiliza el directorio de trabajo actual.
+        """
+
         try:
             ruta = Path(destino)
-            if ruta.is_absolute() or ".." in ruta.parts:
+            if ruta.is_symlink():
+                mostrar_error(_("Ruta de destino inválida"))
+                return None
+            if ".." in ruta.parts:
                 mostrar_error(_("Ruta de destino inválida"))
                 return None
 
-            ruta_abs = ruta.resolve()
-            dir_trabajo = Path.cwd().resolve()
+            try:
+                base = (
+                    Path(base_permitida).resolve(strict=False)
+                    if base_permitida
+                    else Path.cwd().resolve(strict=False)
+                )
+            except Exception as exc:
+                logger.error(f"Base permitida inválida: {exc}")
+                mostrar_error(_("Error validando ruta de destino"))
+                return None
+
+            if ruta.is_absolute():
+                ruta_abs = ruta.resolve(strict=False)
+            else:
+                ruta_abs = (base / ruta).resolve(strict=False)
 
             try:
-                ruta_abs.relative_to(dir_trabajo)
+                ruta_abs.relative_to(base)
             except ValueError:
-                mostrar_error(_("Ruta fuera del directorio de trabajo"))
+                mostrar_error(_("Ruta fuera del directorio permitido"))
                 return None
 
             if not os.access(ruta_abs.parent, os.W_OK):
@@ -193,12 +223,14 @@ class CobraHubClient:
             mostrar_error(_("Error publicando módulo: {err}").format(err=str(e)))
             return False
 
-    def descargar_modulo(self, nombre: str, destino: str) -> bool:
+    def descargar_modulo(
+        self, nombre: str, destino: str, base_permitida: Optional[str] = None
+    ) -> bool:
         """Descarga un módulo de CobraHub asegurando HTTPS y hosts autorizados."""
         if not self._validar_nombre_modulo(nombre):
             return False
 
-        destino_abs = self._validar_ruta_destino(destino)
+        destino_abs = self._validar_ruta_destino(destino, base_permitida)
         if not destino_abs or not self._validar_url():
             return False
 
@@ -279,10 +311,12 @@ def publicar_modulo(ruta: str) -> bool:
     return CobraHubClient().publicar_modulo(ruta)
 
 
-def descargar_modulo(nombre: str, destino: str) -> bool:
+def descargar_modulo(
+    nombre: str, destino: str, base_permitida: Optional[str] = None
+) -> bool:
     """Descarga un módulo desde CobraHub con redirecciones HTTPS y autorizadas."""
     os.environ["COBRAHUB_URL"] = COBRAHUB_URL
-    return CobraHubClient().descargar_modulo(nombre, destino)
+    return CobraHubClient().descargar_modulo(nombre, destino, base_permitida)
 
 
 __all__ = ["CobraHubClient", "publicar_modulo", "descargar_modulo"]

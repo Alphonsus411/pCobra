@@ -1,5 +1,6 @@
 from io import StringIO
 from unittest.mock import patch, MagicMock
+import os
 import sys
 from types import ModuleType
 import hashlib
@@ -43,13 +44,16 @@ class _PatchedSession:
 def _use_patched_session(monkeypatch):
     """Fuerza que los clientes usen la sesión parcheada durante las pruebas."""
 
-    session = _PatchedSession()
-    monkeypatch.setattr(modules_cmd.client, "session", session)
-
     def _factory(self):
         return _PatchedSession()
 
     monkeypatch.setattr(cobrahub_client.CobraHubClient, "_configurar_sesion", _factory)
+
+    if modules_cmd.yaml is None and "yaml" in sys.modules:
+        modules_cmd.yaml = sys.modules["yaml"]
+
+    session = _PatchedSession()
+    monkeypatch.setattr(modules_cmd.client, "session", session)
     return session
 
 
@@ -187,6 +191,71 @@ def test_descargar_modulo_ruta_valida(tmp_path, monkeypatch):
     assert archivo.exists()
     assert archivo.read_bytes() == b"x"
     mock_get.assert_called_once()
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_ruta_absoluta_en_base(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    base = tmp_path / "mods"
+    base.mkdir()
+    destino = base / "m.co"
+
+    with patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+        resp = MagicMock()
+        resp.raise_for_status.return_value = None
+        resp.content = b"x"
+        resp.headers = {}
+        resp.url = f"{cobrahub_client.COBRAHUB_URL}/modulos/m.co"
+        mock_get.return_value = resp
+        ok = cobrahub_client.descargar_modulo(
+            "m.co", str(destino), base_permitida=str(base)
+        )
+
+    assert ok
+    assert destino.exists()
+    assert destino.read_bytes() == b"x"
+    mock_get.assert_called_once()
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_ruta_parent_fuera_base(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    base = tmp_path / "mods"
+    base.mkdir()
+    destino = base / ".." / "escape" / "m.co"
+
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+        ok = cobrahub_client.descargar_modulo(
+            "m.co", str(destino), base_permitida=str(base)
+        )
+
+    assert not ok
+    err.assert_called_once()
+    mock_get.assert_not_called()
+
+
+@pytest.mark.timeout(5)
+def test_descargar_modulo_ruta_symlink_fuera_base(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    base = tmp_path / "mods"
+    base.mkdir()
+    externo = tmp_path / "externo"
+    externo.mkdir()
+    destino_real = externo / "fuera.co"
+    destino_real.write_text("")
+    enlace = base / "link.co"
+    os.symlink(destino_real, enlace)
+
+    with patch("cobra.cli.cobrahub_client.mostrar_error") as err, \
+            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+        ok = cobrahub_client.descargar_modulo(
+            "m.co", str(enlace), base_permitida=str(base)
+        )
+
+    assert not ok
+    err.assert_called_once()
+    mock_get.assert_not_called()
 
 
 @pytest.mark.timeout(5)

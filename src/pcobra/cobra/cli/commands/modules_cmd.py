@@ -505,9 +505,14 @@ class ModulesCommand(BaseCommand):
             return 1
 
         try:
-            modules_dir = Path(MODULES_PATH)
-            destino = str(modules_dir / nombre)
-            ok = _get_client().descargar_modulo(nombre, destino)
+            if not _ensure_modules_dir():
+                return 1
+
+            modules_dir = Path(MODULES_PATH).resolve()
+            destino = str((modules_dir / nombre).resolve(strict=False))
+            ok = _get_client().descargar_modulo(
+                nombre, destino, base_permitida=str(modules_dir)
+            )
             if ok:
                 ModulesCommand._actualizar_lock(nombre, None)
             return 0 if ok else 1
