@@ -11,10 +11,12 @@ línea de comandos, utilizando ``subprocess`` detrás de escena.
 from __future__ import annotations
 
 import queue
+import shlex
 import subprocess
 import threading
 import time
-from typing import Any, Optional
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 
 class _EOFType:
@@ -36,7 +38,7 @@ class spawn:
 
     def __init__(
         self,
-        command: str,
+        command: Union[str, Sequence[str]],
         *,
         env: Optional[dict[str, str]] = None,
         encoding: str = "utf-8",
@@ -44,9 +46,16 @@ class spawn:
     ) -> None:
         self.timeout = timeout
         self._encoding = encoding
+        if isinstance(command, str):
+            cmd = shlex.split(command)
+        else:
+            cmd = [
+                arg.decode(encoding) if isinstance(arg, bytes) else str(arg)
+                for arg in command
+            ]
         self._process = subprocess.Popen(
-            command,
-            shell=True,
+            cmd,
+            shell=False,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
