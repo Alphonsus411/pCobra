@@ -125,30 +125,52 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
             return None
 
         func = expr.func
-        if isinstance(func, ast.Name) and func.id == "__import__" and expr.args:
+        if isinstance(func, ast.Attribute):
+            func_name = func.attr
+        elif isinstance(func, ast.Name):
+            func_name = func.id
+        else:
+            return None
+
+        if func_name != "__import__":
+            return None
+
+        module_name: str | None = None
+        if expr.args:
             arg0 = expr.args[0]
             if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
                 module_name = arg0.value
-                root = module_name.split(".", 1)[0]
-                return module_name, root
-        return None
+
+        if module_name is None:
+            for keyword in expr.keywords:
+                if keyword.arg == "name":
+                    value = keyword.value
+                    if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                        module_name = value.value
+                        break
+
+        if module_name is None:
+            return None
+
+        root = module_name.split(".", 1)[0]
+        return module_name, root
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
+            info = _import_call_info(node)
+            if info:
+                module_name, root = info
+                if root in _IMPORT_DENYLIST:
+                    raise SandboxSecurityError(
+                        f"Importación bloqueada en sandbox: {module_name}"
+                    )
+
             if isinstance(node.func, ast.Name):
                 nombre = node.func.id
                 if nombre in _FORBIDDEN_CALLS or nombre in forbidden_aliases:
                     raise SandboxSecurityError(
                         f"Llamada bloqueada en sandbox: {nombre}"
                     )
-                if nombre == "__import__" and node.args:
-                    arg0 = node.args[0]
-                    if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
-                        raiz = arg0.value.split(".", 1)[0]
-                        if raiz in _IMPORT_DENYLIST:
-                            raise SandboxSecurityError(
-                                f"Importación bloqueada en sandbox: {arg0.value}"
-                            )
             elif isinstance(node.func, ast.Attribute):
                 info = _import_call_info(node.func.value)
                 if info and node.func.attr in _FORBIDDEN_CALLS:
@@ -157,19 +179,7 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                         "Llamada bloqueada en sandbox: "
                         f"__import__('{module_name}').{node.func.attr}"
                     )
-                if (
-                    isinstance(node.func.value, ast.Name)
-                    and node.func.attr == "__import__"
-                    and node.args
-                ):
-                    arg0 = node.args[0]
-                    if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
-                        raiz = arg0.value.split(".", 1)[0]
-                        if raiz in _IMPORT_DENYLIST:
-                            raise SandboxSecurityError(
-                                f"Importación bloqueada en sandbox: {arg0.value}"
-                            )
-                elif node.func.attr in _FORBIDDEN_CALLS:
+                if node.func.attr in _FORBIDDEN_CALLS:
                     base_name = _leftmost_name(node.func.value)
                     if base_name and (
                         base_name in module_aliases
