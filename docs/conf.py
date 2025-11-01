@@ -59,12 +59,14 @@ autodoc_mock_imports = [
 # Habilitar la generación automática de autosummary
 autosummary_generate = True
 
-# The master toctree document (cambiado a minúsculas)
-master_doc = 'manual_cobra'
+# Determinar el documento maestro considerando mayúsculas/minúsculas
+for candidate in ['manual_cobra', 'MANUAL_COBRA']:
+    if (ROOT_DIR / 'docs' / f'{candidate}.rst').exists():
+        master_doc = candidate
+        break
+else:
+    raise FileNotFoundError('No se encontró el archivo manual_cobra.rst ni MANUAL_COBRA.rst')
 
-# Verificar que el archivo principal existe
-if not (ROOT_DIR / 'docs' / f'{master_doc}.rst').exists():
-    raise FileNotFoundError(f"El archivo {master_doc}.rst no existe")
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
