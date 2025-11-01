@@ -47,3 +47,17 @@ def test_import_builtins_open_call_bloqueado():
     codigo = "__import__('builtins').open('archivo.txt', 'w')"
     with pytest.raises(SandboxSecurityError):
         ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_import_builtins_open_attr_keyword_bloqueado():
+    codigo = "__import__(name='builtins').open"
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_import_builtins_open_call_keyword_bloqueado():
+    codigo = "__import__(name='builtins').open('archivo.txt', 'w')"
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox(codigo)
