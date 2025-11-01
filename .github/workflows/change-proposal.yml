@@ -1,0 +1,155 @@
+name: Propuesta de cambios automatizada
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * 2'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  change-proposal:
+    name: Generar propuesta y validar pruebas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Instalar dependencias
+        uses: ./.github/actions/install
+        with:
+          extra: "flask requests"
+
+      - name: Ejecutar pruebas automatizadas
+        id: run-tests
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p reports
+          paths=()
+          if [ -d tests ]; then
+            paths+=("tests")
+          fi
+          if [ -d src/tests ]; then
+            paths+=("src/tests")
+          fi
+
+          if [ "${#paths[@]}" -eq 0 ]; then
+            echo "No se encontraron directorios de pruebas. Se omite pytest."
+            echo "exit_code=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          pytest "${paths[@]}" \
+            --cov=src \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term-missing | tee reports/pytest-output.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit $status
+
+      - name: Generar informe de resultados
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.run-tests.outcome }}
+          TEST_EXIT_CODE: ${{ steps.run-tests.outputs.exit_code }}
+        run: |
+          mkdir -p docs/ci
+          mkdir -p reports
+          fecha=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          if [ "$TEST_OUTCOME" = "success" ]; then
+            estado="✅ Todas las pruebas pasaron correctamente."
+            detalle="Las verificaciones automáticas confirmaron que la base de código sigue funcionando."
+          else
+            estado="❌ Se detectaron fallos en la suite de pruebas."
+            detalle="Revisa el artefacto 'informes-pruebas' para analizar el log detallado de pytest y planificar los cambios necesarios."
+          fi
+
+          cat <<'MD' > docs/ci/reporte-propuesta.md
+# Informe de validación automática
+
+MD
+          cat <<MD >> docs/ci/reporte-propuesta.md
+- Fecha de ejecución: $fecha
+- Resultado de las pruebas: $estado
+
+## Detalles
+
+$detalle
+
+## Próximos pasos
+
+1. Revisa los resultados adjuntos a este flujo (artefactos y cobertura).
+2. Actualiza el código según sea necesario y vuelve a ejecutar el flujo para validar los cambios.
+MD
+
+      - name: Preparar resumen del Pull Request
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.run-tests.outcome }}
+          TEST_EXIT_CODE: ${{ steps.run-tests.outputs.exit_code }}
+        run: |
+          fecha=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          if [ "$TEST_OUTCOME" = "success" ]; then
+            cat <<EOF > pr_body.md
+## Resumen
+- Ejecutar pytest con cobertura para validar la base de código.
+- Generar un informe actualizado en `docs/ci/reporte-propuesta.md`.
+
+## Resultados
+- Fecha de ejecución: $fecha
+- Estado de la suite: ✅ sin errores.
+
+Todo listo para revisar y fusionar los cambios.
+EOF
+          else
+            cat <<EOF > pr_body.md
+## Resumen
+- Ejecutar pytest con cobertura para validar la base de código.
+- Generar un informe actualizado en `docs/ci/reporte-propuesta.md`.
+
+## Resultados
+- Fecha de ejecución: $fecha
+- Estado de la suite: ❌ fallos detectados (código de salida $TEST_EXIT_CODE).
+
+Consulta el artefacto `informes-pruebas` para revisar el log completo de pytest y los detalles de cobertura antes de aplicar cambios definitivos.
+EOF
+          fi
+
+      - name: Subir informes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informes-pruebas
+          path: |
+            reports
+
+      - name: Revisar cambios pendientes
+        run: |
+          git status --short
+          git diff
+
+      - name: Crear Pull Request con informe
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore: generar informe automático de validación'
+          title: 'chore: informe automático de validación de cambios'
+          body-path: pr_body.md
+          branch: chore/auto-change-proposal
+          delete-branch: true
+          token: ${{ secrets.GITHUB_TOKEN }}
