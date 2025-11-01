@@ -145,6 +145,29 @@ class NodoDiccionarioTipo(NodoAST):
 
 
 @dataclass
+class NodoTipo(NodoAST):
+    """Representa una referencia a un tipo con soporte para genéricos."""
+
+    nombre: Any
+    genericos: List[Any] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        from pcobra.cobra.core.lexer import Token
+
+        if isinstance(self.nombre, NodoTipo):  # Compatibilidad con construcciones anidadas
+            self.genericos = list(self.nombre.genericos)
+            self.nombre = self.nombre.nombre
+        if isinstance(self.nombre, Token):
+            self.nombre = self.nombre.valor
+        self.nombre = str(self.nombre)
+        self.genericos = list(self.genericos)
+
+    def __repr__(self) -> str:
+        genericos = f", genericos={self.genericos!r}" if self.genericos else ""
+        return f"NodoTipo(nombre={self.nombre!r}{genericos})"
+
+
+@dataclass
 class NodoDecorador(NodoAST):
     expresion: Any
 
@@ -603,6 +626,7 @@ __all__ = [
     "NodoDiccionario",
     "NodoListaTipo",
     "NodoDiccionarioTipo",
+    "NodoTipo",
     "NodoDecorador",
     "NodoFuncion",
     "NodoMetodoAbstracto",
