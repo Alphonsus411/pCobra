@@ -26,29 +26,29 @@ class DocsCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando."""
-        try:
-            import sphinx
-        except ImportError:
-            mostrar_error(_("Sphinx no está instalado. Ejecuta 'pip install sphinx sphinx-rtd-theme'."))
-            return 1
-
-        raiz = Path(__file__).resolve().parents[3]
-        source = raiz / "frontend" / "docs"
-        build = raiz / "frontend" / "build" / "html"
+        raiz = self._obtener_raiz()
+        source = raiz / "docs"
+        build = source / "_build" / "html"
         api = source / "api"
-        codigo = raiz / "backend" / "src"
+        codigo = raiz / "src" / "pcobra"
 
         # Validar todos los directorios necesarios
         if not self._validar_directorios(source, codigo):
             return 1
 
         # Crear directorios si no existen
-        for dir in (build.parent, api):
+        for dir in (api, build):
             try:
                 dir.mkdir(parents=True, exist_ok=True)
             except OSError as e:
                 mostrar_error(_("Error al crear directorio {dir}: {err}").format(dir=dir, err=e))
                 return 1
+
+        try:
+            import sphinx
+        except ImportError:
+            mostrar_error(_("Sphinx no está instalado. Ejecuta 'pip install sphinx sphinx-rtd-theme'."))
+            return 1
 
         try:
             self._ejecutar_sphinx(api, codigo, source, build)
@@ -58,13 +58,17 @@ class DocsCommand(BaseCommand):
             mostrar_error(_("Error generando la documentación: {err}").format(err=e))
             return 1
 
+    def _obtener_raiz(self) -> Path:
+        """Devuelve la ruta raíz del repositorio."""
+        return Path(__file__).resolve().parents[5]
+
     def _validar_directorios(self, source: Path, codigo: Path) -> bool:
         """Valida la existencia de directorios requeridos."""
         if not source.exists():
-            mostrar_error(_("No se encuentra el directorio de documentación"))
+            mostrar_error(_("No se encuentra el directorio de documentación en {path}").format(path=source))
             return False
         if not codigo.exists():
-            mostrar_error(_("No se encuentra el directorio de código fuente"))
+            mostrar_error(_("No se encuentra el directorio de código fuente en {path}").format(path=codigo))
             return False
         return True
 
