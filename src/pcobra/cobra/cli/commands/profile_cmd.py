@@ -24,7 +24,10 @@ from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.cli.utils.validators import (
+    normalizar_validadores_extra,
+    validar_archivo_existente,
+)
 
 
 class ProfileCommand(BaseCommand):
@@ -91,7 +94,12 @@ class ProfileCommand(BaseCommand):
         depurar: bool = self._obtener_argumento(args, "depurar", False)
         formatear: bool = self._obtener_argumento(args, "formatear", False)
         seguro: bool = self._obtener_argumento(args, "seguro", True)
-        extra_validators: Optional[str] = self._obtener_argumento(args, "validadores_extra")
+        raw_extra_validators = self._obtener_argumento(args, "extra_validators")
+        try:
+            extra_validators = normalizar_validadores_extra(raw_extra_validators)
+        except TypeError:
+            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
+            return 1
         analysis: bool = self._obtener_argumento(args, "analysis", False)
 
         validar_archivo_existente(archivo)

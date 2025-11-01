@@ -38,7 +38,12 @@ from core.interpreter import InterpretadorCobra
 
 
 def _args():
-    return SimpleNamespace(seguro=False, validadores_extra=None, sandbox=False, sandbox_docker=None)
+    return SimpleNamespace(
+        seguro=False,
+        extra_validators=None,
+        sandbox=False,
+        sandbox_docker=None,
+    )
 
 
 def test_interactive_exit():

@@ -52,7 +52,7 @@ def test_interactive_cmd_without_console(monkeypatch, capsys):
         sandbox=False,
         sandbox_docker=None,
         seguro=False,
-        validadores_extra=None,
+        extra_validators=None,
     )
 
     result = cmd.run(args)
