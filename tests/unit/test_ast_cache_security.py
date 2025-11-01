@@ -3,6 +3,7 @@ import importlib
 import json
 import sqlite3
 import sys
+import warnings
 
 import pytest
 import pcobra.core.database as core_database
@@ -13,6 +14,7 @@ def _prepare_cache(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_AST_CACHE", str(cache_dir))
     monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
     monkeypatch.delenv("COBRA_DB_PATH", raising=False)
+    monkeypatch.setenv("SQLITE_DB_KEY", "security-test-key")
     database_module = importlib.reload(core_database)
 
     class SQLitePlusStub:
@@ -87,3 +89,23 @@ def test_carga_tokens_maliciosos(monkeypatch, tmp_path):
 
     with pytest.raises(json.JSONDecodeError):
         ast_cache.obtener_tokens(codigo)
+
+
+def test_alias_sin_clave_emite_advertencia_y_falla(monkeypatch, tmp_path):
+    monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
+    monkeypatch.delenv("COBRA_DB_PATH", raising=False)
+    monkeypatch.setenv("COBRA_AST_CACHE", str(tmp_path / "legacy"))
+
+    sys.modules.pop("pcobra.core.ast_cache", None)
+    sys.modules.pop("core.ast_cache", None)
+    ast_cache_module = importlib.import_module("pcobra.core.ast_cache")
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        with pytest.raises(core_database.DatabaseKeyError) as excinfo:
+            ast_cache_module._with_connection(lambda conn: None)
+
+    messages = [str(item.message) for item in caught]
+    assert any("COBRA_AST_CACHE" in message for message in messages)
+    assert any("'SQLITE_DB_KEY'" in message for message in messages)
+    assert "'SQLITE_DB_KEY' es obligatoria" in str(excinfo.value)
