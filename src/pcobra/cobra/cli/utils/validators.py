@@ -1,5 +1,6 @@
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Optional, TypeVar, Union
 
 from pcobra.cobra.cli.i18n import _
 
@@ -25,6 +26,8 @@ def validar_archivo_existente(ruta: str | Path) -> Path:
 
 
 ExtraValidatorsInput = Union[str, Path, Iterable[Union[str, Path]]]
+
+ValidatorT = TypeVar("ValidatorT")
 
 
 def _convertir_path_a_str(valor: Union[str, Path]) -> str:
@@ -53,3 +56,40 @@ def normalizar_validadores_extra(
         return normalizados
 
     raise TypeError("Los validadores extra deben ser rutas o listas de rutas")
+
+
+def cargar_validadores_extra(
+    extra_validators: Optional[Union[str, Path, Iterable[Union[str, Path]]]],
+    loader: Callable[[str], Iterable[ValidatorT]],
+) -> Optional[Union[Iterable[ValidatorT], list[ValidatorT]]]:
+    """Convierte rutas de validadores en instancias utilizando ``loader``.
+
+    Args:
+        extra_validators: Rutas o colecciones de rutas a módulos de validadores.
+        loader: Función encargada de cargar los validadores para una ruta.
+
+    Returns:
+        Lista de validadores cargados o el valor original si ya eran instancias.
+    """
+
+    if extra_validators is None:
+        return None
+
+    if isinstance(extra_validators, (str, Path)):
+        return loader(_convertir_path_a_str(extra_validators))
+
+    if isinstance(extra_validators, Iterable):
+        elementos = list(extra_validators)
+        if all(isinstance(elemento, (str, Path)) for elemento in elementos):
+            cargados: list[ValidatorT] = []
+            for elemento in elementos:
+                resultado = loader(_convertir_path_a_str(elemento))
+                if isinstance(resultado, Iterable) and not isinstance(resultado, (str, bytes)):
+                    cargados.extend(resultado)
+                elif resultado is not None:
+                    cargados.append(resultado)
+            return cargados
+
+        return elementos
+
+    return extra_validators

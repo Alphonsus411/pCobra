@@ -25,6 +25,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
+    cargar_validadores_extra,
     normalizar_validadores_extra,
     validar_archivo_existente,
 )
@@ -100,6 +101,9 @@ class ProfileCommand(BaseCommand):
         except TypeError:
             mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
             return 1
+        extra_validators = cargar_validadores_extra(
+            extra_validators, InterpretadorCobra._cargar_validadores
+        )
         analysis: bool = self._obtener_argumento(args, "analysis", False)
 
         validar_archivo_existente(archivo)
@@ -135,11 +139,7 @@ class ProfileCommand(BaseCommand):
 
         if seguro:
             try:
-                validador = construir_cadena(
-                    InterpretadorCobra._cargar_validadores(extra_validators)
-                    if isinstance(extra_validators, str)
-                    else extra_validators
-                )
+                validador = construir_cadena(extra_validators)
                 for nodo in ast:
                     nodo.aceptar(validador)
             except PrimitivaPeligrosaError as pe:

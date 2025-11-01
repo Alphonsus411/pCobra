@@ -2,6 +2,8 @@
 
 import logging
 import os
+from collections.abc import Iterable
+from pathlib import Path
 from typing import Optional
 
 from pcobra.cobra.core import Token, TipoToken
@@ -187,6 +189,21 @@ class InterpretadorCobra:
         extra = extra_validators
         if isinstance(extra, str):
             extra = self._cargar_validadores(extra)
+        elif isinstance(extra, Iterable) and not isinstance(extra, (str, bytes)):
+            elementos = list(extra)
+            if all(isinstance(elem, (str, Path)) for elem in elementos):
+                cargados = []
+                for ruta in elementos:
+                    resultado = self._cargar_validadores(str(ruta))
+                    if isinstance(resultado, Iterable) and not isinstance(
+                        resultado, (str, bytes)
+                    ):
+                        cargados.extend(resultado)
+                    elif resultado is not None:
+                        cargados.append(resultado)
+                extra = cargados
+            else:
+                extra = elementos
 
         self.safe_mode = safe_mode
         self._validador = construir_cadena(extra) if safe_mode else None

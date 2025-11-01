@@ -171,9 +171,11 @@ def test_cli_validadores_extra(tmp_path):
     ruta = tmp_path / "vals.py"
     ruta.write_text("VALIDADORES_EXTRA = []\n")
     with patch("cli.commands.execute_cmd.InterpretadorCobra") as mock_interp:
+        mock_interp._cargar_validadores.return_value = []
         main([f"--extra-validators={ruta}", "ejecutar", str(archivo)])
+        mock_interp._cargar_validadores.assert_called_once_with(str(ruta))
         mock_interp.assert_called_once_with(
-            safe_mode=True, extra_validators=str(ruta)
+            safe_mode=True, extra_validators=[]
         )
         mock_interp.return_value.ejecutar_ast.assert_called_once()
 
