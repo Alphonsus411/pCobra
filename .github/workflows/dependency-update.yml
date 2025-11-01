@@ -1,0 +1,62 @@
+name: Actualizar dependencias
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    name: Regenerar archivos de dependencias
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar pip-tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-tools
+
+      - name: Actualizar requirements.txt
+        run: |
+          pip-compile --upgrade --resolver=backtracking \
+            --output-file=requirements.txt \
+            pyproject.toml
+
+      - name: Actualizar requirements-dev.txt
+        run: |
+          pip-compile --upgrade --resolver=backtracking \
+            --extra dev \
+            --output-file=requirements-dev.txt \
+            pyproject.toml
+
+      - name: Comprobar cambios
+        run: |
+          git status --short
+          git diff
+
+      - name: Crear Pull Request de actualización
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore: actualizar dependencias automáticamente'
+          title: 'chore: actualizar dependencias automáticamente'
+          body: |
+            ## Resumen
+            - Ejecutar `pip-compile --upgrade` para regenerar los archivos de dependencias.
+            - Actualizar `requirements.txt` y `requirements-dev.txt` con las últimas versiones compatibles.
+          branch: chore/auto-update-dependencies
+          delete-branch: true
+          token: ${{ secrets.GITHUB_TOKEN }}
