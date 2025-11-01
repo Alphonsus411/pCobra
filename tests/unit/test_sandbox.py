@@ -26,3 +26,31 @@ def test_error_sintaxis():
     """Si compile_restricted falla se debe propagar SyntaxError."""
     with pytest.raises(SyntaxError):
         ejecutar_en_sandbox("for")
+
+
+@pytest.mark.timeout(5)
+def test_operacion_bloqueada_alias_prohibido():
+    codigo = "from builtins import open as abrir\nabrir('archivo.txt', 'w')"
+    with pytest.raises(Exception):
+        ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_operacion_bloqueada_io_open():
+    codigo = "import io\nio.open('archivo.txt', 'w')"
+    with pytest.raises(Exception):
+        ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_operacion_bloqueada_io_alias_modulo():
+    codigo = "import io as biblioteca\nbiblioteca.open('archivo.txt', 'w')"
+    with pytest.raises(Exception):
+        ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_operacion_bloqueada_pathlib_path_open():
+    codigo = "from pathlib import Path\nPath('archivo.txt').open('w')"
+    with pytest.raises(Exception):
+        ejecutar_en_sandbox(codigo)

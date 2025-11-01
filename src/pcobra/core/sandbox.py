@@ -57,6 +57,7 @@ _IMPORT_DENYLIST = {
 }
 
 _FORBIDDEN_CALLS = {"eval", "exec", "open"}
+_KNOWN_MODULE_SOURCES = {"builtins", "io", "pathlib"}
 
 
 class SandboxSecurityError(RuntimeError):
@@ -71,23 +72,56 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
     except SyntaxError:
         raise
 
+    forbidden_aliases: set[str] = set()
+    module_aliases: dict[str, str] = {}
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name.split(".", 1)[0] in _IMPORT_DENYLIST:
+                root = alias.name.split(".", 1)[0]
+                if root in _IMPORT_DENYLIST:
                     raise SandboxSecurityError(
                         f"Importación bloqueada en sandbox: {alias.name}"
                     )
+                if root in _KNOWN_MODULE_SOURCES:
+                    alias_name = alias.asname or root
+                    module_aliases[alias_name] = root
         elif isinstance(node, ast.ImportFrom):
             module = node.module or ""
-            if module.split(".", 1)[0] in _IMPORT_DENYLIST:
+            root = module.split(".", 1)[0] if module else ""
+            if root in _IMPORT_DENYLIST:
                 raise SandboxSecurityError(
                     f"Importación bloqueada en sandbox: {module}"
                 )
-        elif isinstance(node, ast.Call):
+            if root in _KNOWN_MODULE_SOURCES:
+                for alias in node.names:
+                    alias_name = alias.asname or alias.name
+                    if alias.name in _FORBIDDEN_CALLS:
+                        forbidden_aliases.add(alias_name)
+                        continue
+                    module_aliases[alias_name] = root
+
+    def _leftmost_name(expr: ast.AST) -> str | None:
+        current = expr
+        while True:
+            if isinstance(current, ast.Name):
+                return current.id
+            if isinstance(current, ast.Attribute):
+                current = current.value
+                continue
+            if isinstance(current, ast.Call):
+                current = current.func
+                continue
+            if isinstance(current, ast.Subscript):
+                current = current.value
+                continue
+            return None
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name):
                 nombre = node.func.id
-                if nombre in _FORBIDDEN_CALLS:
+                if nombre in _FORBIDDEN_CALLS or nombre in forbidden_aliases:
                     raise SandboxSecurityError(
                         f"Llamada bloqueada en sandbox: {nombre}"
                     )
@@ -101,16 +135,27 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                             )
             elif (
                 isinstance(node.func, ast.Attribute)
-                and isinstance(node.func.value, ast.Name)
-                and node.func.attr == "__import__"
-                and node.args
             ):
-                arg0 = node.args[0]
-                if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
-                    raiz = arg0.value.split(".", 1)[0]
-                    if raiz in _IMPORT_DENYLIST:
+                if (
+                    isinstance(node.func.value, ast.Name)
+                    and node.func.attr == "__import__"
+                    and node.args
+                ):
+                    arg0 = node.args[0]
+                    if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
+                        raiz = arg0.value.split(".", 1)[0]
+                        if raiz in _IMPORT_DENYLIST:
+                            raise SandboxSecurityError(
+                                f"Importación bloqueada en sandbox: {arg0.value}"
+                            )
+                elif node.func.attr in _FORBIDDEN_CALLS:
+                    base_name = _leftmost_name(node.func.value)
+                    if base_name and (
+                        base_name in module_aliases
+                        or base_name in _KNOWN_MODULE_SOURCES
+                    ):
                         raise SandboxSecurityError(
-                            f"Importación bloqueada en sandbox: {arg0.value}"
+                            f"Llamada bloqueada en sandbox: {base_name}.{node.func.attr}"
                         )
 
 
