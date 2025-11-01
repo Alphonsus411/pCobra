@@ -188,7 +188,6 @@ def _ensure_alias_configured() -> None:
     key_env = database.SQLITE_DB_KEY_ENV
     existing_path = os.environ.get(db_path_env)
     if existing_path:
-        os.environ.setdefault(key_env, existing_path)
         warnings.warn(
             "El uso de 'COBRA_AST_CACHE' está obsoleto; utilice 'COBRA_DB_PATH' en su lugar.",
             DeprecationWarning,
@@ -206,7 +205,18 @@ def _ensure_alias_configured() -> None:
         db_path = target.with_suffix(".db")
 
     os.environ[db_path_env] = str(db_path)
-    os.environ.setdefault(key_env, str(db_path))
+    warnings.warn(
+        "El uso de 'COBRA_AST_CACHE' está obsoleto; utilice 'COBRA_DB_PATH' en su lugar.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    if os.environ.get(key_env) is None:
+        warnings.warn(
+            "El alias heredado 'COBRA_AST_CACHE' no configura la clave 'SQLITE_DB_KEY'; "
+            "defínela antes de acceder a la caché.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     logger.debug("Alias 'COBRA_AST_CACHE' redirigido a %s", db_path)
     _ALIAS_CONFIGURED = True
 
