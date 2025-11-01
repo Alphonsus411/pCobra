@@ -51,6 +51,7 @@ class AnalizadorSemantico(NodeVisitor):
         cache_key = ruta_real
         if cache_key not in self._import_cache:
             try:
+                self._sincronizar_config_import()
                 simbolos = obtener_simbolos_modulo(ruta)
             except FileNotFoundError as exc:
                 raise FileNotFoundError(f"Módulo no encontrado: {ruta}") from exc
@@ -62,6 +63,18 @@ class AnalizadorSemantico(NodeVisitor):
                 ) from exc
             self._import_cache[cache_key] = simbolos
         return self._import_cache[cache_key]
+
+    def _sincronizar_config_import(self) -> None:
+        """Alinea la configuración compartida de importaciones con el intérprete."""
+
+        try:
+            from pcobra.core import interpreter as _interpreter
+        except Exception:  # pragma: no cover - importación opcional
+            return
+
+        sincronizar = getattr(_interpreter, "_sincronizar_config_import", None)
+        if callable(sincronizar):
+            sincronizar()
 
     # Utilidades ---------------------------------------------------------
     def _con_nuevo_ambito(self) -> Ambito:
