@@ -1,5 +1,5 @@
 import pytest
-from core.sandbox import ejecutar_en_sandbox
+from core.sandbox import SandboxSecurityError, ejecutar_en_sandbox
 
 
 @pytest.mark.timeout(5)
@@ -33,3 +33,17 @@ def test_subprocess_bloqueado():
     """Asegura que no se pueda invocar subprocess dentro de la sandbox."""
     with pytest.raises(Exception):
         ejecutar_en_sandbox("__import__('subprocess').run(['echo', 'hola'])")
+
+
+@pytest.mark.timeout(5)
+def test_import_builtins_open_attr_bloqueado():
+    codigo = "__import__('builtins').open"
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_import_builtins_open_call_bloqueado():
+    codigo = "__import__('builtins').open('archivo.txt', 'w')"
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox(codigo)
