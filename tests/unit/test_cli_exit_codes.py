@@ -30,6 +30,6 @@ def test_exit_code_execute_missing(tmp_path):
 
 @pytest.mark.timeout(5)
 def test_exit_code_module_remove_missing(tmp_path, monkeypatch):
-    monkeypatch.setattr(modules_cmd, "MODULES_PATH", str(tmp_path))
+    monkeypatch.setattr(modules_cmd, "MODULES_PATH", tmp_path)
     code = _run_sys_exit(["modulos", "remover", "algo.co"])
     assert code != 0
