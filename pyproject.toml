@@ -75,6 +75,12 @@ dev = [
     "pytest-timeout==2.4.0",
     "ruff==0.12.8",
     "mypy==1.17.1",
+    "bandit==1.8.6",
+    "black==25.1.0",
+    "isort==6.0.1",
+    "snakeviz==2.2.2",
+    "codecov==2.1.13",
+    "pyright",
 ]
 
 [tool.setuptools]
