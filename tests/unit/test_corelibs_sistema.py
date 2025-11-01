@@ -28,26 +28,31 @@ def test_ejecutar_exitoso(monkeypatch):
     assert core.ejecutar(["echo", "ok"], permitidos=[permitido], timeout=1) == "ok"
 
 
-def test_ejecutar_error(monkeypatch):
+def test_ejecutar_error(monkeypatch, tmp_path):
     def raise_err(*a, **k):
         raise subprocess.CalledProcessError(1, a[0], stderr="fallo")
 
     monkeypatch.setattr(core_sistema.subprocess, "run", raise_err)
-    monkeypatch.setattr(core_sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
-    monkeypatch.setattr(
-        core_sistema.os, "stat", lambda _path: SimpleNamespace(st_ino=1)
+    permitido = tmp_path / "bad"
+    permitido.write_text("")
+    permitido.chmod(0o755)
+
+    def fake_which(binario: str) -> str | None:
+        return str(permitido) if binario == "bad" else None
+
+    monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
+    permitido_real = core_sistema.os.path.realpath(str(permitido))
+    assert (
+        core.ejecutar(["bad"], permitidos=[permitido_real], timeout=1) == "fallo"
     )
-    permitido = core_sistema.os.path.realpath("/usr/bin/bad")
-    assert core.ejecutar(["bad"], permitidos=[permitido], timeout=1) == "fallo"
 
     def raise_err2(*a, **k):
         raise subprocess.CalledProcessError(1, a[0])
 
     monkeypatch.setattr(core_sistema.subprocess, "run", raise_err2)
-    monkeypatch.setattr(core_sistema.shutil, "which", lambda x: f"/usr/bin/{x}")
-    permitido = core_sistema.os.path.realpath("/usr/bin/bad")
+    monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
     with pytest.raises(RuntimeError):
-        core.ejecutar(["bad"], permitidos=[permitido], timeout=1)
+        core.ejecutar(["bad"], permitidos=[permitido_real], timeout=1)
 
 
 def test_ejecutar_permitido_con_ruta(monkeypatch):
@@ -73,12 +78,14 @@ def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
 
     monkeypatch.setattr(core_sistema.shutil, "which", fake_which)
     monkeypatch.setattr(core_sistema.subprocess, "run", fake_run)
-    monkeypatch.setattr(core_sistema.os, "stat", lambda _path: SimpleNamespace(st_ino=1))
 
     salida = core.ejecutar(comando, permitidos=[permitido])
 
     assert salida == ""
-    assert llamado["args"][0] == permitido
+    if os.name == "posix":
+        assert llamado["args"][0].startswith("/proc/self/fd/")
+    else:
+        assert llamado["args"][0] == permitido
     assert llamado["args"] is not comando
     assert comando[0] == "otro"
 
@@ -109,13 +116,80 @@ async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
     monkeypatch.setattr(
         core_sistema.asyncio, "create_subprocess_exec", fake_create_subprocess_exec
     )
-    monkeypatch.setattr(core_sistema.os, "stat", lambda _path: SimpleNamespace(st_ino=1))
 
     salida = await core_sistema.ejecutar_async(comando, permitidos=[permitido])
 
     assert salida == ""
-    assert llamado["args"][0] == permitido
+    if os.name == "posix":
+        assert llamado["args"][0].startswith("/proc/self/fd/")
+    else:
+        assert llamado["args"][0] == permitido
     assert comando[0] == "otro"
+
+
+def test_ejecutar_detecta_reemplazo(monkeypatch, tmp_path):
+    original = tmp_path / "programa"
+    original.write_text("echo")
+    original.chmod(0o755)
+    permitido = core_sistema.os.path.realpath(str(original))
+
+    ejecutado = False
+
+    def fake_run(*args, **kwargs):
+        nonlocal ejecutado
+        ejecutado = True
+        return SimpleNamespace(stdout="", stderr="")
+
+    real_resolver = core_sistema._resolver_ejecutable
+
+    def fake_resolver(cmd, permitidos):
+        resultado = real_resolver(cmd, permitidos)
+        reemplazo = tmp_path / "programa_nuevo"
+        reemplazo.write_text("otro")
+        reemplazo.chmod(0o755)
+        os.replace(reemplazo, original)
+        return resultado
+
+    monkeypatch.setattr(core_sistema.subprocess, "run", fake_run)
+    monkeypatch.setattr(core_sistema, "_resolver_ejecutable", fake_resolver)
+
+    with pytest.raises(RuntimeError, match="cambió"):
+        core_sistema.ejecutar([str(original)], permitidos=[permitido])
+
+    assert not ejecutado
+
+
+def test_ejecutar_detecta_reemplazo_en_windows(monkeypatch, tmp_path):
+    original = tmp_path / "programa.exe"
+    original.write_text("echo")
+    original.chmod(0o755)
+    permitido = core_sistema.os.path.realpath(str(original))
+
+    ejecutado = False
+
+    def fake_run(*args, **kwargs):
+        nonlocal ejecutado
+        ejecutado = True
+        return SimpleNamespace(stdout="", stderr="")
+
+    real_resolver = core_sistema._resolver_ejecutable
+
+    def fake_resolver(cmd, permitidos):
+        resultado = real_resolver(cmd, permitidos)
+        reemplazo = tmp_path / "programa_nuevo.exe"
+        reemplazo.write_text("otro")
+        reemplazo.chmod(0o755)
+        os.replace(reemplazo, original)
+        return resultado
+
+    monkeypatch.setattr(core_sistema.os, "name", "nt")
+    monkeypatch.setattr(core_sistema.subprocess, "run", fake_run)
+    monkeypatch.setattr(core_sistema, "_resolver_ejecutable", fake_resolver)
+
+    with pytest.raises(RuntimeError, match="cambió"):
+        core_sistema.ejecutar([str(original)], permitidos=[permitido])
+
+    assert not ejecutado
 
 
 def test_ejecutar_sin_lista_blanca(monkeypatch):

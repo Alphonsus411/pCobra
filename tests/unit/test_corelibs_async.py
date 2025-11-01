@@ -1,6 +1,9 @@
 import asyncio
 import functools
 
+import os
+from types import SimpleNamespace
+
 import pytest
 
 import pcobra.corelibs.asincrono as asincrono
@@ -341,7 +344,9 @@ async def test_obtener_url_async(monkeypatch):
 
     cliente = _FakeAsyncClient([_FakeResponse(body=b"hola", url="https://example.com")])
 
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente)
+    if red.httpx is None:
+        monkeypatch.setattr(red, "httpx", SimpleNamespace())
+    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
 
     texto = await red.obtener_url_async("https://example.com")
     assert texto == "hola"
@@ -357,7 +362,9 @@ async def test_descargar_archivo_async_elimina_si_falla(monkeypatch, tmp_path):
             yield b"a" * (red._MAX_RESP_SIZE + 1)
 
     cliente = _FakeAsyncClient([_ResponseGrande()])
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente)
+    if red.httpx is None:
+        monkeypatch.setattr(red, "httpx", SimpleNamespace())
+    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
 
     destino = tmp_path / "archivo.bin"
     with pytest.raises(ValueError):
@@ -370,7 +377,9 @@ async def test_descargar_archivo_async(monkeypatch, tmp_path):
     monkeypatch.setenv("COBRA_HOST_WHITELIST", "example.com")
     respuesta = _FakeResponse(body=b"contenido")
     cliente = _FakeAsyncClient([respuesta])
-    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente)
+    if red.httpx is None:
+        monkeypatch.setattr(red, "httpx", SimpleNamespace())
+    monkeypatch.setattr(red.httpx, "AsyncClient", lambda **_kwargs: cliente, raising=False)
 
     destino = tmp_path / "datos.bin"
     ruta = await red.descargar_archivo("https://example.com", destino)
@@ -393,8 +402,15 @@ class _FakeProcBase:
 
 @pytest.mark.asyncio
 async def test_ejecutar_async_devuelve_stdout(monkeypatch):
-    monkeypatch.setattr(sistema, "_resolver_ejecutable", lambda cmd, _: (cmd, "/bin/falso", 1))
-    monkeypatch.setattr(sistema, "_verificar_inode", lambda *_args: None)
+    def fake_resolver(cmd, _):
+        args = list(cmd)
+        args[0] = "/bin/falso"
+        fd = os.open(os.devnull, os.O_RDONLY)
+        return args, "/bin/falso", fd, 0, 0
+
+    monkeypatch.setattr(sistema, "_resolver_ejecutable", fake_resolver)
+    monkeypatch.setattr(sistema, "_verificar_descriptor", lambda *_args: None)
+    monkeypatch.setattr(sistema, "_verificar_ruta", lambda *_args: None)
 
     async def fake_create(*_args, **_kwargs):
         return _FakeProcBase(stdout=b"ok", stderr=b"", returncode=0)
@@ -411,8 +427,15 @@ async def test_ejecutar_async_devuelve_stdout(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ejecutar_async_retorna_stderr_en_error(monkeypatch):
-    monkeypatch.setattr(sistema, "_resolver_ejecutable", lambda cmd, _: (cmd, "/bin/falso", 1))
-    monkeypatch.setattr(sistema, "_verificar_inode", lambda *_args: None)
+    def fake_resolver(cmd, _):
+        args = list(cmd)
+        args[0] = "/bin/falso"
+        fd = os.open(os.devnull, os.O_RDONLY)
+        return args, "/bin/falso", fd, 0, 0
+
+    monkeypatch.setattr(sistema, "_resolver_ejecutable", fake_resolver)
+    monkeypatch.setattr(sistema, "_verificar_descriptor", lambda *_args: None)
+    monkeypatch.setattr(sistema, "_verificar_ruta", lambda *_args: None)
 
     async def fake_create(*_args, **_kwargs):
         return _FakeProcBase(stdout=b"", stderr=b"fallo", returncode=1)
@@ -461,8 +484,15 @@ class _FakeProcStream:
 
 @pytest.mark.asyncio
 async def test_ejecutar_stream_yield(monkeypatch):
-    monkeypatch.setattr(sistema, "_resolver_ejecutable", lambda cmd, _: (cmd, "/bin/falso", 1))
-    monkeypatch.setattr(sistema, "_verificar_inode", lambda *_args: None)
+    def fake_resolver(cmd, _):
+        args = list(cmd)
+        args[0] = "/bin/falso"
+        fd = os.open(os.devnull, os.O_RDONLY)
+        return args, "/bin/falso", fd, 0, 0
+
+    monkeypatch.setattr(sistema, "_resolver_ejecutable", fake_resolver)
+    monkeypatch.setattr(sistema, "_verificar_descriptor", lambda *_args: None)
+    monkeypatch.setattr(sistema, "_verificar_ruta", lambda *_args: None)
 
     async def fake_create(*_args, **_kwargs):
         return _FakeProcStream([b"uno\n", b"dos\n"], stderr=b"", returncode=0)
@@ -486,8 +516,15 @@ async def test_ejecutar_stream_yield(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ejecutar_stream_error_provoca_excepcion(monkeypatch):
-    monkeypatch.setattr(sistema, "_resolver_ejecutable", lambda cmd, _: (cmd, "/bin/falso", 1))
-    monkeypatch.setattr(sistema, "_verificar_inode", lambda *_args: None)
+    def fake_resolver(cmd, _):
+        args = list(cmd)
+        args[0] = "/bin/falso"
+        fd = os.open(os.devnull, os.O_RDONLY)
+        return args, "/bin/falso", fd, 0, 0
+
+    monkeypatch.setattr(sistema, "_resolver_ejecutable", fake_resolver)
+    monkeypatch.setattr(sistema, "_verificar_descriptor", lambda *_args: None)
+    monkeypatch.setattr(sistema, "_verificar_ruta", lambda *_args: None)
 
     async def fake_create(*_args, **_kwargs):
         return _FakeProcStream([b"salida\n"], stderr=b"fallo", returncode=1)
