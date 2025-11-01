@@ -1,12 +1,16 @@
 import importlib
 import logging
 import os
+import sys
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.cli.utils.validators import (
+    normalizar_validadores_extra,
+    validar_archivo_existente,
+)
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
@@ -23,6 +27,14 @@ SecurityError = sandbox_module.SecurityError
 validar_dependencias = sandbox_module.validar_dependencias
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.core.resource_limits import limitar_cpu_segundos
+
+sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
+
+
+def _obtener_interpretador_cls():
+    """Obtiene la clase de intérprete respetando posibles mocks de pruebas."""
+
+    return getattr(sys.modules[__name__], "InterpretadorCobra", InterpretadorCobra)
 
 
 class ExecuteCommand(BaseCommand):
@@ -101,13 +113,14 @@ class ExecuteCommand(BaseCommand):
         depurar = getattr(args, "depurar", False)
         formatear = getattr(args, "formatear", False)
         seguro = getattr(args, "seguro", True)
-        extra_validators = getattr(args, "validadores_extra", None)
+        raw_extra_validators = getattr(args, "extra_validators", None)
+        try:
+            extra_validators = normalizar_validadores_extra(raw_extra_validators)
+        except TypeError:
+            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
+            return 1
         sandbox = getattr(args, "sandbox", False)
         contenedor = getattr(args, "contenedor", None)
-
-        if extra_validators and not isinstance(extra_validators, (str, list)):
-            mostrar_error("Los validadores extra deben ser una ruta o lista")
-            return 1
 
         try:
             sandbox_module.validar_dependencias("python", module_map.get_toml_map())
@@ -207,9 +220,10 @@ class ExecuteCommand(BaseCommand):
             return 1
 
         if seguro:
+            interpretador_cls = _obtener_interpretador_cls()
             try:
                 validador = construir_cadena(
-                    InterpretadorCobra._cargar_validadores(extra_validators)
+                    interpretador_cls._cargar_validadores(extra_validators)
                     if isinstance(extra_validators, str)
                     else extra_validators
                 )
@@ -221,7 +235,8 @@ class ExecuteCommand(BaseCommand):
                 return 1
 
         try:
-            InterpretadorCobra(
+            interpretador_cls = _obtener_interpretador_cls()
+            interpretador_cls(
                 safe_mode=seguro,
                 extra_validators=extra_validators,
             ).ejecutar_ast(ast)
