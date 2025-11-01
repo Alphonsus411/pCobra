@@ -8,6 +8,7 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
+    cargar_validadores_extra,
     normalizar_validadores_extra,
     validar_archivo_existente,
 )
@@ -219,14 +220,14 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(f"Error de análisis: {e}")
             return 1
 
+        interpretador_cls = _obtener_interpretador_cls()
+        resolved_extra_validators = cargar_validadores_extra(
+            extra_validators, interpretador_cls._cargar_validadores
+        )
+
         if seguro:
-            interpretador_cls = _obtener_interpretador_cls()
             try:
-                validador = construir_cadena(
-                    interpretador_cls._cargar_validadores(extra_validators)
-                    if isinstance(extra_validators, str)
-                    else extra_validators
-                )
+                validador = construir_cadena(resolved_extra_validators)
                 for nodo in ast:
                     nodo.aceptar(validador)
             except PrimitivaPeligrosaError as pe:
@@ -235,10 +236,9 @@ class ExecuteCommand(BaseCommand):
                 return 1
 
         try:
-            interpretador_cls = _obtener_interpretador_cls()
             interpretador_cls(
                 safe_mode=seguro,
-                extra_validators=extra_validators,
+                extra_validators=resolved_extra_validators,
             ).ejecutar_ast(ast)
             return 0
         except Exception as e:

@@ -51,7 +51,10 @@ from pcobra.cobra.cli.utils.messages import (
     mostrar_error,
     mostrar_info,
 )
-from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
+from pcobra.cobra.cli.utils.validators import (
+    cargar_validadores_extra,
+    normalizar_validadores_extra,
+)
 from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
 
 
@@ -228,13 +231,12 @@ class InteractiveCommand(BaseCommand):
         except TypeError:
             mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
             return 1
+        extra_validators = cargar_validadores_extra(
+            extra_validators, InterpretadorCobra._cargar_validadores
+        )
         validador = None
         if seguro:
-            validador = construir_cadena(
-                InterpretadorCobra._cargar_validadores(extra_validators)
-                if isinstance(extra_validators, str)
-                else extra_validators
-            )
+            validador = construir_cadena(extra_validators)
 
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
