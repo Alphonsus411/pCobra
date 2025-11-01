@@ -77,18 +77,27 @@ class DependenciasCommand(BaseCommand):
 
     @staticmethod
     def _get_project_root() -> Path:
-        """Obtiene la ruta raíz del proyecto.
-        
+        """Obtiene la ruta raíz del proyecto buscando indicadores conocidos.
+
         Returns:
             Path: Ruta absoluta a la raíz del proyecto
-            
+
         Raises:
             RuntimeError: Si no se puede determinar la ruta del proyecto
         """
-        try:
-            return Path(__file__).resolve().parents[4]
-        except Exception as e:
-            raise RuntimeError("No se pudo determinar la ruta del proyecto") from e
+
+        override = os.environ.get("PCOBRA_PROJECT_ROOT") or os.environ.get("PCOBRA_CODE_ROOT")
+        if override:
+            ruta_override = Path(override).expanduser().resolve()
+            if ruta_override.exists():
+                return ruta_override
+
+        ruta_actual = Path(__file__).resolve()
+        for candidato in ruta_actual.parents:
+            if (candidato / "pyproject.toml").exists() or (candidato / "requirements.txt").exists():
+                return candidato
+
+        raise RuntimeError("No se pudo determinar la ruta del proyecto")
 
     @classmethod
     def _ruta_requirements(cls) -> Path:
@@ -134,15 +143,33 @@ class DependenciasCommand(BaseCommand):
         ruta = cls._ruta_requirements()
         if ruta.exists():
             try:
-                with open(ruta, "r", encoding="utf-8") as f:
-                    deps = [
-                        line.strip()
-                        for line in f
-                        if cls._validar_dependencia(line.strip())
-                    ]
+                contenido = ruta.read_bytes()
             except IOError as e:
                 logger.exception("Error leyendo requirements.txt")
                 raise IOError(f"Error leyendo requirements.txt: {e}") from e
+
+            texto: str | None = None
+            for codificacion in ("utf-8", "utf-16", "utf-16-le", "utf-16-be"):
+                try:
+                    texto = contenido.decode(codificacion)
+                    break
+                except UnicodeDecodeError:
+                    continue
+
+            if texto is None:
+                raise UnicodeDecodeError(
+                    "utf-8",
+                    contenido,
+                    0,
+                    len(contenido),
+                    "No se pudo decodificar requirements.txt",
+                )
+
+            deps = [
+                linea.strip()
+                for linea in texto.splitlines()
+                if cls._validar_dependencia(linea.strip())
+            ]
         return deps
 
     @classmethod
