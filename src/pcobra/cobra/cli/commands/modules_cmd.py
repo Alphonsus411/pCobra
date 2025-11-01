@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 from argparse import ArgumentParser
-from contextlib import nullcontext
+from contextlib import nullcontext, contextmanager
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -63,6 +63,18 @@ def _lock_context(path: Path):
     if FileLock is None:
         return nullcontext()
     return FileLock(f"{path}.lock")
+
+
+@contextmanager
+def _chdir(path: Path):
+    """Context manager para cambiar temporalmente el directorio actual."""
+
+    anterior = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(anterior)
 
 
 def _ensure_modules_dir() -> bool:
@@ -505,9 +517,13 @@ class ModulesCommand(BaseCommand):
             return 1
 
         try:
+            if not _ensure_modules_dir():
+                return 1
+
             modules_dir = Path(MODULES_PATH)
-            destino = str(modules_dir / nombre)
-            ok = _get_client().descargar_modulo(nombre, destino)
+
+            with _chdir(modules_dir):
+                ok = _get_client().descargar_modulo(nombre, nombre)
             if ok:
                 ModulesCommand._actualizar_lock(nombre, None)
             return 0 if ok else 1
