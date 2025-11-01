@@ -175,8 +175,12 @@ class CliApplication:
         )
         parser.add_argument("--ayuda", action="help",
                           help=_("Muestra esta ayuda y termina"))
-        parser.add_argument("--format", action="store_true",
-                          help=_("Format file before processing"))
+        parser.add_argument(
+            "--format",
+            dest="formatear",
+            action="store_true",
+            help=_("Format file before processing"),
+        )
         parser.add_argument("--debug", action="store_true",
                           help=_("Show debug messages"))
         parser.add_argument("-v", "--verbose", action="count", default=0,

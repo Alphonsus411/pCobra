@@ -92,7 +92,7 @@ class ProfileCommand(BaseCommand):
         output: Optional[str] = self._obtener_argumento(args, "output")
         ui: Optional[str] = self._obtener_argumento(args, "ui")
         depurar: bool = self._obtener_argumento(args, "depurar", False)
-        formatear: bool = self._obtener_argumento(args, "formatear", False)
+        formatear: bool = bool(self._obtener_argumento(args, "formatear", False))
         seguro: bool = self._obtener_argumento(args, "seguro", True)
         raw_extra_validators = self._obtener_argumento(args, "extra_validators")
         try:

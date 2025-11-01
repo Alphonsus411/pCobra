@@ -111,7 +111,7 @@ class ExecuteCommand(BaseCommand):
             return 1
 
         depurar = getattr(args, "depurar", False)
-        formatear = getattr(args, "formatear", False)
+        formatear = bool(getattr(args, "formatear", False))
         seguro = getattr(args, "seguro", True)
         raw_extra_validators = getattr(args, "extra_validators", None)
         try:
