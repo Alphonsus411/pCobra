@@ -52,7 +52,7 @@ class CobraHubClient:
         try:
             import requests
             from requests.adapters import HTTPAdapter
-            from urllib3 import Retry
+            from urllib3.util.retry import Retry
         except ModuleNotFoundError as exc:  # pragma: no cover - error de entorno
             raise RuntimeError(
                 _("El comando requiere el paquete 'requests'. Instálalo para continuar.")) from exc

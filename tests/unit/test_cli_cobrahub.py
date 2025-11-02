@@ -44,10 +44,13 @@ class _PatchedSession:
 def _use_patched_session(monkeypatch):
     """Fuerza que los clientes usen la sesión parcheada durante las pruebas."""
 
+    original = cobrahub_client.CobraHubClient._configurar_sesion
+
     def _factory(self):
         return _PatchedSession()
 
     monkeypatch.setattr(cobrahub_client.CobraHubClient, "_configurar_sesion", _factory)
+    monkeypatch.setattr(cobrahub_client, "_original_configurar_sesion", original, raising=False)
 
     if modules_cmd.yaml is None and "yaml" in sys.modules:
         modules_cmd.yaml = sys.modules["yaml"]
@@ -55,6 +58,20 @@ def _use_patched_session(monkeypatch):
     session = _PatchedSession()
     monkeypatch.setattr(modules_cmd.client, "session", session)
     return session
+
+
+def test_configurar_sesion_real_crea_sesion():
+    original = getattr(cobrahub_client, "_original_configurar_sesion", None)
+    assert original is not None, "La sesión real debe estar disponible para las pruebas"
+
+    cliente = cobrahub_client.CobraHubClient.__new__(cobrahub_client.CobraHubClient)
+    sesion = original(cliente)
+
+    try:
+        assert hasattr(sesion, "get")
+        assert hasattr(sesion, "post")
+    finally:
+        sesion.close()
 
 
 @pytest.mark.timeout(5)
