@@ -33,6 +33,17 @@ Las tareas etiquetadas como `good first issue` están orientadas a la comunidad 
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
   [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
+## Dependencias y versionado
+
+- Mantén sincronizadas las versiones fijadas en `pyproject.toml`,
+  `requirements.txt` y `requirements-dev.txt`. Cuando se actualice una
+  dependencia, revisa los tres archivos y aplica el mismo número de versión.
+- En particular, la versión soportada de `requests` se define en `pyproject.toml`
+  y debe replicarse en los archivos de requirements para evitar divergencias.
+- Tras modificar requisitos, ejecuta `cobra dependencias listar` (o una
+  instalación de prueba con `pip install -r requirements.txt`) para comprobar
+  que no existan entradas duplicadas o incompatibles.
+
 ## PYTHONPATH y PyCharm
 
 Para que las importaciones `from src...` funcionen durante el desarrollo,
