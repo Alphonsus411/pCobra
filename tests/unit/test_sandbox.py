@@ -1,5 +1,7 @@
+import os
+
 import pytest
-from core.sandbox import ejecutar_en_sandbox
+from core.sandbox import _run_in_subprocess, ejecutar_en_sandbox
 
 
 @pytest.mark.timeout(5)
@@ -54,3 +56,18 @@ def test_operacion_bloqueada_pathlib_path_open():
     codigo = "from pathlib import Path\nPath('archivo.txt').open('w')"
     with pytest.raises(Exception):
         ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_run_in_subprocess_timeout():
+    codigo = "import time\ntime.sleep(2)"
+    with pytest.raises(TimeoutError):
+        _run_in_subprocess(codigo, timeout=0.2)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Control de memoria no soportado en Windows")
+@pytest.mark.timeout(5)
+def test_run_in_subprocess_memory_limit():
+    codigo = "datos = bytearray(200 * 1024 * 1024)"
+    with pytest.raises(MemoryError):
+        _run_in_subprocess(codigo, memoria_mb=64)

@@ -17,7 +17,7 @@ import sys
 from types import ModuleType
 from queue import Empty
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from packaging.version import Version
 
 try:  # pragma: no cover - dependencia opcional
@@ -277,29 +277,65 @@ def _safe_import(name: str, globals: Any | None = None, locals: Any | None = Non
     return modulo
 
 
-def _run_in_subprocess(codigo: str) -> str:
-    try:
-        env = os.environ.copy()
-        repo_root = Path(__file__).resolve().parents[3]
-        src_root = repo_root / "src"
-        pythonpath = env.get("PYTHONPATH", "")
-        extra_paths = [str(repo_root), str(src_root)]
-        current = pythonpath.split(os.pathsep) if pythonpath else []
-        updated = current[:]
-        for ruta in extra_paths:
-            if ruta not in current:
-                updated.insert(0, ruta)
-        env["PYTHONPATH"] = os.pathsep.join(updated) if updated else ""
+def _run_in_subprocess(
+    codigo: str, timeout: float | None = None, memoria_mb: int | None = None
+) -> str:
+    """Ejecuta ``codigo`` en un subproceso de Python sin restricciones.
 
+    ``timeout`` define el tiempo máximo de ejecución en segundos. ``memoria_mb``
+    establece el límite superior de memoria (en megabytes) utilizando
+    ``resource.RLIMIT_AS`` en sistemas POSIX. En Windows se lanza
+    ``NotImplementedError`` cuando se solicita un límite de memoria y se emite
+    ``ValueError`` si el parámetro no es positivo. Se lanza ``TimeoutError`` si
+    el subproceso excede el tiempo y ``MemoryError`` si el proceso hijo supera
+    el límite asignado.
+    """
+
+    env = os.environ.copy()
+    repo_root = Path(__file__).resolve().parents[3]
+    src_root = repo_root / "src"
+    pythonpath = env.get("PYTHONPATH", "")
+    extra_paths = [str(repo_root), str(src_root)]
+    current = pythonpath.split(os.pathsep) if pythonpath else []
+    updated = current[:]
+    for ruta in extra_paths:
+        if ruta not in current:
+            updated.insert(0, ruta)
+    env["PYTHONPATH"] = os.pathsep.join(updated) if updated else ""
+
+    preexec_fn: Callable[[], None] | None = None
+    if memoria_mb is not None:
+        if memoria_mb <= 0:
+            raise ValueError("memoria_mb debe ser un entero positivo")
+        if os.name == "nt":
+            raise NotImplementedError(
+                "El límite de memoria no está soportado en Windows"
+            )
+
+        def limitar_memoria() -> None:
+            import resource
+
+            limite = memoria_mb * 1024 * 1024
+            resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
+
+        preexec_fn = limitar_memoria
+
+    try:
         completed = subprocess.run(
             [sys.executable, "-c", codigo],
             capture_output=True,
             text=True,
             check=True,
             env=env,
+            timeout=timeout,
+            preexec_fn=preexec_fn,
         )
+    except subprocess.TimeoutExpired as exc:  # pragma: no cover - comportamiento simple
+        raise TimeoutError("Tiempo de ejecución agotado") from exc
     except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
         salida = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        if "MemoryError" in salida:
+            raise MemoryError("Límite de memoria excedido en sandbox") from exc
         raise RuntimeError(salida) from exc
     return completed.stdout
 
@@ -350,12 +386,12 @@ def ejecutar_en_sandbox(
     _verificar_codigo_prohibido(codigo)
 
     if not HAS_RESTRICTED_PYTHON:
-        return _run_in_subprocess(codigo)
+        return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
 
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
     except SyntaxError as se:  # pragma: no cover - comportamiento simple
-        return _run_in_subprocess(codigo)
+        return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
 
     code_bytes = marshal.dumps(byte_code)
     queue: multiprocessing.Queue = multiprocessing.Queue()
