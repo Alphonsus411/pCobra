@@ -149,13 +149,16 @@ def obtener_modulo(nombre: str):
         print(f"Paquete '{spec}' no encontrado. Instalando con pip...")
 
         try:
+            argumentos = spec.split()
             cmd = [
                 sys.executable,
                 "-m",
                 "pip",
                 "install",
-                "--require-hashes",
-            ] + spec.split()
+            ]
+            if any(arg.startswith("--hash") for arg in argumentos):
+                cmd.append("--require-hashes")
+            cmd += argumentos
             subprocess.run(cmd, check=True)
             print(f"Paquete instalado: {spec}")
         except subprocess.CalledProcessError as exc:

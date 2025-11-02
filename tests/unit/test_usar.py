@@ -23,43 +23,69 @@ from cobra import usar_loader
 
 def test_obtener_modulo_instala_si_no_existe(monkeypatch):
     mock_mod = ModuleType('demo')
-    usar_loader.USAR_WHITELIST.add('demo')
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', 'demo')
     monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
     with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]) as mock_import, \
          patch.object(usar_loader.subprocess, 'run') as mock_run:
         mock_run.return_value.returncode = 0
         mod = usar_loader.obtener_modulo('demo')
-    usar_loader.USAR_WHITELIST.remove('demo')
     mock_run.assert_called_once_with([sys.executable, '-m', 'pip', 'install', 'demo'], check=True)
     assert mod is mock_mod
 
 
 def test_obtener_modulo_desde_corelibs_sin_pip():
-    usar_loader.USAR_WHITELIST.add('texto')
+    usar_loader.USAR_WHITELIST['texto'] = 'texto'
     with patch.object(usar_loader.subprocess, 'run') as mock_run:
         mod = usar_loader.obtener_modulo('texto')
-    usar_loader.USAR_WHITELIST.remove('texto')
+    del usar_loader.USAR_WHITELIST['texto']
     mock_run.assert_not_called()
     assert mod.mayusculas('hola') == 'HOLA'
 
 
 def test_obtener_modulo_rechaza_paquete_fuera_de_lista():
-    usar_loader.USAR_WHITELIST.clear()
-    usar_loader.USAR_WHITELIST.add('ok')
-    with pytest.raises(PermissionError):
-        usar_loader.obtener_modulo('malo')
-    usar_loader.USAR_WHITELIST.clear()
+    original = usar_loader.USAR_WHITELIST.copy()
+    try:
+        usar_loader.USAR_WHITELIST.clear()
+        usar_loader.USAR_WHITELIST['ok'] = 'ok'
+        with pytest.raises(PermissionError):
+            usar_loader.obtener_modulo('malo')
+    finally:
+        usar_loader.USAR_WHITELIST.clear()
+        usar_loader.USAR_WHITELIST.update(original)
 
 
 def test_obtener_modulo_instalacion_deshabilitada(monkeypatch):
-    usar_loader.USAR_WHITELIST.add('demo')
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', 'demo')
     monkeypatch.delenv('COBRA_USAR_INSTALL', raising=False)
     with patch.object(usar_loader.importlib, 'import_module', side_effect=ModuleNotFoundError()):
         with patch.object(usar_loader.subprocess, 'run') as mock_run:
             with pytest.raises(RuntimeError):
                 usar_loader.obtener_modulo('demo')
             mock_run.assert_not_called()
-    usar_loader.USAR_WHITELIST.remove('demo')
+
+
+def test_obtener_modulo_instala_con_hashes(monkeypatch):
+    mock_mod = ModuleType('demo')
+    spec = 'demo==1.0 --hash=sha256:abc123'
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', spec)
+    monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
+    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]) as mock_import, \
+         patch.object(usar_loader.subprocess, 'run') as mock_run:
+        mock_run.return_value.returncode = 0
+        mod = usar_loader.obtener_modulo('demo')
+    mock_run.assert_called_once_with(
+        [
+            sys.executable,
+            '-m',
+            'pip',
+            'install',
+            '--require-hashes',
+            'demo==1.0',
+            '--hash=sha256:abc123',
+        ],
+        check=True,
+    )
+    assert mod is mock_mod
 
 
 @pytest.mark.timeout(5)

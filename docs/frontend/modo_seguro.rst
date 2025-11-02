@@ -19,7 +19,10 @@ La instrucción ``usar`` está limitada a
 los paquetes listados en ``USAR_WHITELIST`` ubicado en
 ``src/pcobra/cobra/usar_loader.py``. Si esta lista se encuentra vacía, la
 función ``obtener_modulo`` provocará un ``PermissionError`` y no se podrán
-instalar dependencias nuevas.
+instalar dependencias nuevas. Cuando alguna entrada de la lista blanca aporta
+hashes mediante ``--hash=`` el cargador añade ``--require-hashes`` a la orden
+``pip install`` para reforzar la verificación; en los demás casos se omite
+automáticamente.
 
 La cadena comienza con ``ValidadorAuditoria`` que registra mediante
 ``logging.warning`` cada primitiva utilizada. Esta auditoría puede

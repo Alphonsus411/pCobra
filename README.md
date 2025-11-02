@@ -555,8 +555,11 @@ Al ejecutar `programa.co`, se procesará primero `modulo.co` y luego se imprimir
 
 La sentencia `usar "paquete"` intenta importar un módulo de Python. Si el
 paquete no está disponible, Cobra ejecutará `pip install paquete` para
-instalarlo y luego lo cargará en tiempo de ejecución. El módulo queda
-registrado en el entorno bajo el mismo nombre para su uso posterior.
+instalarlo y luego lo cargará en tiempo de ejecución. Cuando la entrada de la
+lista blanca incluye hashes (`--hash=`) se añade automáticamente la bandera
+`--require-hashes` para que `pip` verifique el contenido; de lo contrario se
+omite. El módulo queda registrado en el entorno bajo el mismo nombre para su
+uso posterior.
 Para restringir qué dependencias pueden instalarse se emplea la variable
 `USAR_WHITELIST` definida en `src/pcobra/cobra/usar_loader.py`. Basta con
 añadir o quitar nombres de paquetes en dicho conjunto para modificar la lista
