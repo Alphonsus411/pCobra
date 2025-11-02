@@ -68,7 +68,7 @@ nest-asyncio==1.6.0
 networkx==3.5
 nh3==0.2.21
 nodeenv==1.9.1
-numpy==2.3.2
+numpy>=1.26,<2.0
 oauthlib==3.2.2
 packaging==25.0
 pandas==2.3.1
