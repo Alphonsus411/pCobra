@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 import string
 import sys
+from types import ModuleType
 from queue import Empty
 from pathlib import Path
 from typing import Any
@@ -57,10 +58,18 @@ _IMPORT_DENYLIST = {
 }
 
 _FORBIDDEN_CALLS = {"eval", "exec", "open"}
+_FORBIDDEN_NAMES = _FORBIDDEN_CALLS | {"__import__"}
 _KNOWN_MODULE_SOURCES = {"builtins", "io", "pathlib"}
 
 if not HAS_RESTRICTED_PYTHON:
     _IMPORT_DENYLIST.add("builtins")
+
+if HAS_RESTRICTED_PYTHON:
+    _SANDBOX_BASE_BUILTINS: dict[str, Any] = dict(safe_builtins)
+else:  # pragma: no cover - ejecución sin RestrictedPython
+    _SANDBOX_BASE_BUILTINS = {}
+
+_SANITIZED_BUILTINS_MODULE: ModuleType | None = None
 
 
 class SandboxSecurityError(RuntimeError):
@@ -76,7 +85,7 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
         raise
 
     forbidden_aliases: set[str] = set()
-    module_aliases: dict[str, str] = {}
+    module_aliases: dict[str, str] = {"__builtins__": "builtins"}
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -135,6 +144,27 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id == "getattr":
+                if len(node.args) >= 2:
+                    base = node.args[0]
+                    attr_arg = node.args[1]
+                    attr_name: str | None = None
+                    if isinstance(attr_arg, ast.Constant) and isinstance(attr_arg.value, str):
+                        attr_name = attr_arg.value
+                    elif isinstance(attr_arg, ast.Str):  # pragma: no cover - compatibilidad
+                        attr_name = attr_arg.s
+
+                    if attr_name in _FORBIDDEN_NAMES:
+                        base_name = _leftmost_name(base)
+                        if base_name and (
+                            base_name in module_aliases
+                            or base_name in _KNOWN_MODULE_SOURCES
+                        ):
+                            raise SandboxSecurityError(
+                                "Acceso bloqueado en sandbox: "
+                                f"getattr({base_name}, '{attr_name}')"
+                            )
+
             if isinstance(node.func, ast.Name):
                 nombre = node.func.id
                 if nombre in _FORBIDDEN_CALLS or nombre in forbidden_aliases:
@@ -188,6 +218,30 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                     f"__import__('{module_name}').{node.attr}"
                 )
 
+        elif isinstance(node, ast.Subscript):
+            base_name = _leftmost_name(node.value)
+            if base_name and (
+                base_name in module_aliases or base_name in _KNOWN_MODULE_SOURCES
+            ):
+                clave: str | None = None
+                indice = node.slice
+                if isinstance(indice, ast.Constant) and isinstance(indice.value, str):
+                    clave = indice.value
+                elif isinstance(indice, ast.Str):  # pragma: no cover - compatibilidad
+                    clave = indice.s
+                elif isinstance(indice, ast.Index):  # pragma: no cover - Python<3.9
+                    valor = indice.value
+                    if isinstance(valor, ast.Constant) and isinstance(valor.value, str):
+                        clave = valor.value
+                    elif isinstance(valor, ast.Str):
+                        clave = valor.s
+
+                if clave in _FORBIDDEN_NAMES:
+                    raise SandboxSecurityError(
+                        "Acceso bloqueado en sandbox: "
+                        f"{base_name}[{clave!r}]"
+                    )
+
 
 def _safe_import(name: str, globals: Any | None = None, locals: Any | None = None,
                  fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
@@ -202,6 +256,21 @@ def _safe_import(name: str, globals: Any | None = None, locals: Any | None = Non
     root = name.split(".", 1)[0]
     if root in _IMPORT_DENYLIST or name in _IMPORT_DENYLIST:
         raise ImportError(f"Módulo bloqueado en sandbox: {name}")
+
+    if root == "builtins":
+        global _SANITIZED_BUILTINS_MODULE
+        if _SANITIZED_BUILTINS_MODULE is None:
+            modulo_sanitizado = ModuleType("builtins")
+            atributos_permitidos = dict(_SANDBOX_BASE_BUILTINS)
+            atributos_permitidos.setdefault("print", print)
+            atributos_permitidos["__import__"] = _safe_import
+            for prohibido in _FORBIDDEN_NAMES:
+                atributos_permitidos.pop(prohibido, None)
+            for clave, valor in atributos_permitidos.items():
+                setattr(modulo_sanitizado, clave, valor)
+            _SANITIZED_BUILTINS_MODULE = modulo_sanitizado
+        return _SANITIZED_BUILTINS_MODULE
+
     modulo = _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
     if root == "urllib":  # Evita accesos a urllib.request y similares.
         raise ImportError(f"Módulo bloqueado en sandbox: {name}")
@@ -246,7 +315,7 @@ def _worker(
             limite = memoria_mb * 1024 * 1024
             resource.setrlimit(resource.RLIMIT_AS, (limite, limite))
 
-        builtins_dict = dict(safe_builtins)
+        builtins_dict = dict(_SANDBOX_BASE_BUILTINS)
         builtins_dict["__import__"] = _safe_import
         builtins_dict.setdefault("print", print)
 
