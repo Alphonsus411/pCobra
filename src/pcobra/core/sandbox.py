@@ -59,6 +59,7 @@ _IMPORT_DENYLIST = {
 
 _FORBIDDEN_CALLS = {"eval", "exec", "open"}
 _FORBIDDEN_NAMES = _FORBIDDEN_CALLS | {"__import__"}
+_FORBIDDEN_ATTRIBUTES = {"__dict__", "__class__"}
 _KNOWN_MODULE_SOURCES = {"builtins", "io", "pathlib"}
 
 if not HAS_RESTRICTED_PYTHON:
@@ -113,7 +114,9 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                         continue
                     module_aliases[alias_name] = root
 
-    def _leftmost_name(expr: ast.AST) -> str | None:
+    def _leftmost_name(expr: ast.AST | None) -> str | None:
+        if expr is None:
+            return None
         current = expr
         while True:
             if isinstance(current, ast.Name):
@@ -128,6 +131,67 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 current = current.value
                 continue
             return None
+
+    def _call_matches(func: ast.AST, nombres: set[str]) -> bool:
+        """Determina si ``func`` apunta a alguna llamada en ``nombres``."""
+
+        if isinstance(func, ast.Name):
+            return func.id in nombres
+        if isinstance(func, ast.Attribute) and func.attr in nombres:
+            base = _leftmost_name(func.value)
+            return bool(
+                base
+                and (
+                    base in module_aliases
+                    or base in _KNOWN_MODULE_SOURCES
+                    or module_aliases.get(base) in _KNOWN_MODULE_SOURCES
+                )
+            )
+        return False
+
+    def _extract_string(expr: ast.AST | None) -> str | None:
+        """Obtiene el literal de texto utilizado como índice o nombre."""
+
+        if expr is None:
+            return None
+        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
+            return expr.value
+        if isinstance(expr, ast.Str):  # pragma: no cover - compatibilidad
+            return expr.s
+        if isinstance(expr, ast.Index):  # pragma: no cover - Python<3.9
+            return _extract_string(expr.value)
+        return None
+
+    def _is_builtins_reference(expr: ast.AST | None) -> bool:
+        """Comprueba si ``expr`` hace referencia (directa o indirecta) a ``builtins``."""
+
+        if expr is None:
+            return False
+
+        nombre = _leftmost_name(expr)
+        if nombre in {"builtins", "__builtins__"}:
+            return True
+        if nombre and module_aliases.get(nombre) == "builtins":
+            return True
+        if nombre == "builtins" and nombre in _KNOWN_MODULE_SOURCES:
+            return True
+        if isinstance(expr, ast.Call):
+            if _call_matches(expr.func, {"vars"}):
+                if expr.args and _is_builtins_reference(expr.args[0]):
+                    return True
+            if _call_matches(expr.func, {"getattr"}):
+                base_expr = expr.args[0] if expr.args else None
+                attr_expr = expr.args[1] if len(expr.args) > 1 else None
+                attr_name = _extract_string(attr_expr)
+                if (
+                    attr_name in (_FORBIDDEN_ATTRIBUTES | _FORBIDDEN_NAMES)
+                    and _is_builtins_reference(base_expr)
+                ):
+                    return True
+            info = _import_call_info(expr)
+            if info and info[0] == "builtins":
+                return True
+        return False
 
     def _import_call_info(expr: ast.AST) -> tuple[str, str] | None:
         if not isinstance(expr, ast.Call):
@@ -148,17 +212,14 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 if len(node.args) >= 2:
                     base = node.args[0]
                     attr_arg = node.args[1]
-                    attr_name: str | None = None
-                    if isinstance(attr_arg, ast.Constant) and isinstance(attr_arg.value, str):
-                        attr_name = attr_arg.value
-                    elif isinstance(attr_arg, ast.Str):  # pragma: no cover - compatibilidad
-                        attr_name = attr_arg.s
+                    attr_name = _extract_string(attr_arg)
 
-                    if attr_name in _FORBIDDEN_NAMES:
+                    if attr_name in (_FORBIDDEN_NAMES | _FORBIDDEN_ATTRIBUTES):
                         base_name = _leftmost_name(base)
                         if base_name and (
                             base_name in module_aliases
                             or base_name in _KNOWN_MODULE_SOURCES
+                            or module_aliases.get(base_name) in _KNOWN_MODULE_SOURCES
                         ):
                             raise SandboxSecurityError(
                                 "Acceso bloqueado en sandbox: "
@@ -217,30 +278,54 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                     "Llamada bloqueada en sandbox: "
                     f"__import__('{module_name}').{node.attr}"
                 )
+            base_nombre = _leftmost_name(node.value)
+            if (
+                node.attr in _FORBIDDEN_ATTRIBUTES
+                and base_nombre
+                and (
+                    base_nombre in module_aliases
+                    or base_nombre in _KNOWN_MODULE_SOURCES
+                    or module_aliases.get(base_nombre) in _KNOWN_MODULE_SOURCES
+                )
+            ):
+                raise SandboxSecurityError(
+                    "Acceso bloqueado en sandbox: "
+                    f"{base_nombre}.{node.attr}"
+                )
 
         elif isinstance(node, ast.Subscript):
+            clave = _extract_string(getattr(node, "slice", None))
             base_name = _leftmost_name(node.value)
-            if base_name and (
-                base_name in module_aliases or base_name in _KNOWN_MODULE_SOURCES
+            if (
+                clave in _FORBIDDEN_NAMES
+                and base_name
+                and (
+                    base_name in module_aliases or base_name in _KNOWN_MODULE_SOURCES
+                )
             ):
-                clave: str | None = None
-                indice = node.slice
-                if isinstance(indice, ast.Constant) and isinstance(indice.value, str):
-                    clave = indice.value
-                elif isinstance(indice, ast.Str):  # pragma: no cover - compatibilidad
-                    clave = indice.s
-                elif isinstance(indice, ast.Index):  # pragma: no cover - Python<3.9
-                    valor = indice.value
-                    if isinstance(valor, ast.Constant) and isinstance(valor.value, str):
-                        clave = valor.value
-                    elif isinstance(valor, ast.Str):
-                        clave = valor.s
+                raise SandboxSecurityError(
+                    "Acceso bloqueado en sandbox: "
+                    f"{base_name}[{clave!r}]"
+                )
 
-                if clave in _FORBIDDEN_NAMES:
-                    raise SandboxSecurityError(
-                        "Acceso bloqueado en sandbox: "
-                        f"{base_name}[{clave!r}]"
-                    )
+            if (
+                isinstance(node.value, ast.Call)
+                and clave in _FORBIDDEN_NAMES
+                and _call_matches(node.value.func, {"getattr", "vars"})
+                and _is_builtins_reference(node.value.args[0] if node.value.args else None)
+            ):
+                # Bloquea patrones como vars(__builtins__)["open"] o
+                # getattr(__builtins__, "__dict__")["exec"], que recuperan
+                # funciones vetadas de contenedores aparentemente seguros.
+                descripcion_llamada = (
+                    ast.unparse(node.value)
+                    if hasattr(ast, "unparse")
+                    else "llamada"
+                )
+                raise SandboxSecurityError(
+                    "Acceso bloqueado en sandbox: "
+                    f"{descripcion_llamada}[{clave!r}]"
+                )
 
 
 def _safe_import(name: str, globals: Any | None = None, locals: Any | None = None,

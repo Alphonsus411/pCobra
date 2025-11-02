@@ -61,3 +61,31 @@ def test_subscript_en_builtins_import_bloqueado():
     codigo = "__builtins__.__dict__['__import__']('os')"
     with pytest.raises(SandboxSecurityError):
         ejecutar_en_sandbox(codigo)
+
+
+@pytest.mark.timeout(5)
+def test_dunder_dict_attr_bloqueado(monkeypatch):
+    monkeypatch.setattr("core.sandbox.HAS_RESTRICTED_PYTHON", False, raising=False)
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox("__builtins__.__dict__")
+
+
+@pytest.mark.timeout(5)
+def test_getattr_dunder_dict_bloqueado(monkeypatch):
+    monkeypatch.setattr("core.sandbox.HAS_RESTRICTED_PYTHON", False, raising=False)
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox("getattr(__builtins__, '__dict__')")
+
+
+@pytest.mark.timeout(5)
+def test_getattr_dunder_dict_subscript_open_bloqueado(monkeypatch):
+    monkeypatch.setattr("core.sandbox.HAS_RESTRICTED_PYTHON", False, raising=False)
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox("getattr(__builtins__, '__dict__')['open']")
+
+
+@pytest.mark.timeout(5)
+def test_vars_builtins_open_bloqueado(monkeypatch):
+    monkeypatch.setattr("core.sandbox.HAS_RESTRICTED_PYTHON", False, raising=False)
+    with pytest.raises(SandboxSecurityError):
+        ejecutar_en_sandbox("vars(__builtins__)['open']")
