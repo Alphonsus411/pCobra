@@ -68,6 +68,9 @@ def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
     comando = ["env", "VAR=1"]
     llamado: dict[str, list[str]] = {}
 
+    monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
+    monkeypatch.setattr(core_sistema.sys, "platform", "linux", raising=False)
+
     def fake_which(binario: str) -> str | None:
         return permitido if binario == "env" else None
 
@@ -82,12 +85,31 @@ def test_ejecutar_reemplaza_y_copia_argumentos(monkeypatch):
     salida = core.ejecutar(comando, permitidos=[permitido])
 
     assert salida == ""
-    if os.name == "posix":
-        assert llamado["args"][0].startswith("/proc/self/fd/")
-    else:
-        assert llamado["args"][0] == permitido
+    assert llamado["args"][0].startswith("/proc/self/fd/")
     assert llamado["args"] is not comando
     assert comando[0] == "otro"
+
+
+def test_ejecutar_no_usa_proc_self_en_darwin(monkeypatch, tmp_path):
+    ejecutable = tmp_path / "prog"
+    ejecutable.write_text("#!/bin/sh\nexit 0\n")
+    ejecutable.chmod(0o755)
+
+    permitido = core_sistema.os.path.realpath(str(ejecutable))
+    llamado: dict[str, list[str]] = {}
+
+    def fake_run(args, **kwargs):
+        llamado["args"] = args
+        return SimpleNamespace(stdout="", stderr="")
+
+    monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
+    monkeypatch.setattr(core_sistema.sys, "platform", "darwin", raising=False)
+    monkeypatch.setattr(core_sistema.subprocess, "run", fake_run)
+
+    salida = core_sistema.ejecutar([str(ejecutable)], permitidos=[permitido])
+
+    assert salida == ""
+    assert llamado["args"][0] == permitido
 
 
 @pytest.mark.asyncio
@@ -95,6 +117,9 @@ async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
     permitido = core_sistema.os.path.realpath("/usr/bin/env")
     comando = ["env"]
     llamado: dict[str, list[str]] = {}
+
+    monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
+    monkeypatch.setattr(core_sistema.sys, "platform", "linux", raising=False)
 
     def fake_which(binario: str) -> str | None:
         return permitido if binario == "env" else None
@@ -120,11 +145,86 @@ async def test_ejecutar_async_reemplaza_y_copia_argumentos(monkeypatch):
     salida = await core_sistema.ejecutar_async(comando, permitidos=[permitido])
 
     assert salida == ""
-    if os.name == "posix":
-        assert llamado["args"][0].startswith("/proc/self/fd/")
-    else:
-        assert llamado["args"][0] == permitido
+    assert llamado["args"][0].startswith("/proc/self/fd/")
     assert comando[0] == "otro"
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_async_no_usa_proc_self_en_darwin(monkeypatch):
+    permitido = core_sistema.os.path.realpath("/usr/bin/env")
+    comando = ["env"]
+    llamado: dict[str, list[str]] = {}
+
+    class FakeProc:
+        returncode = 0
+        stdout = None
+        stderr = None
+
+        async def communicate(self):
+            return b"", b""
+
+    async def fake_create_subprocess_exec(*args, **kwargs):
+        llamado["args"] = list(args)
+        return FakeProc()
+
+    monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
+    monkeypatch.setattr(core_sistema.sys, "platform", "darwin", raising=False)
+    monkeypatch.setattr(
+        core_sistema.asyncio, "create_subprocess_exec", fake_create_subprocess_exec
+    )
+
+    salida = await core_sistema.ejecutar_async(comando, permitidos=[permitido])
+
+    assert salida == ""
+    assert llamado["args"][0] == permitido
+
+
+@pytest.mark.asyncio
+async def test_ejecutar_stream_no_usa_proc_self_en_darwin(monkeypatch):
+    permitido = core_sistema.os.path.realpath("/usr/bin/env")
+    comando = ["env"]
+    llamado: dict[str, list[str]] = {}
+
+    class FakeStdout:
+        def __init__(self) -> None:
+            self._chunks = [b"linea\n", b""]
+
+        async def readline(self) -> bytes:
+            return self._chunks.pop(0)
+
+    class FakeStderr:
+        async def read(self) -> bytes:
+            return b""
+
+    class FakeProc:
+        returncode = 0
+
+        def __init__(self) -> None:
+            self.stdout = FakeStdout()
+            self.stderr = FakeStderr()
+
+        async def wait(self) -> int:
+            return 0
+
+    async def fake_create_subprocess_exec(*args, **kwargs):
+        llamado["args"] = list(args)
+        return FakeProc()
+
+    monkeypatch.setattr(core_sistema.os, "name", "posix", raising=False)
+    monkeypatch.setattr(core_sistema.sys, "platform", "darwin", raising=False)
+    monkeypatch.setattr(
+        core_sistema.asyncio, "create_subprocess_exec", fake_create_subprocess_exec
+    )
+
+    resultado = [
+        linea
+        async for linea in core_sistema.ejecutar_stream(
+            comando, permitidos=[permitido]
+        )
+    ]
+
+    assert resultado == ["linea\n"]
+    assert llamado["args"][0] == permitido
 
 
 def test_ejecutar_detecta_reemplazo(monkeypatch, tmp_path):

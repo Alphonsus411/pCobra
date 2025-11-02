@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 import platform
 import shutil
 import subprocess
@@ -146,7 +147,7 @@ def ejecutar(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        if os.name == "posix":
+        if os.name == "posix" and sys.platform.startswith("linux"):
             args_exec[0] = f"/proc/self/fd/{fd}"
 
         resultado = subprocess.run(
@@ -194,7 +195,7 @@ async def ejecutar_async(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        if os.name == "posix":
+        if os.name == "posix" and sys.platform.startswith("linux"):
             args_exec[0] = f"/proc/self/fd/{fd}"
 
         proc = await asyncio.create_subprocess_exec(
@@ -245,7 +246,7 @@ async def ejecutar_stream(
     try:
         _verificar_descriptor(fd, st_dev, st_ino)
         _verificar_ruta(exe_real, st_dev, st_ino)
-        if os.name == "posix":
+        if os.name == "posix" and sys.platform.startswith("linux"):
             args_exec[0] = f"/proc/self/fd/{fd}"
         proc = await asyncio.create_subprocess_exec(
             *args_exec,
