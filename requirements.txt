@@ -46,7 +46,7 @@ jupyter_core==5.8.1
 keyring==25.6.0
 kiwisolver==1.4.9
 markdown-it-py==3.0.0
-matplotlib==3.10.5
+matplotlib==3.9.4
 matplotlib-inline==0.1.7
 mdurl==0.1.2
 more-itertools==10.7.0
@@ -90,7 +90,7 @@ RestrictedPython==8.0
 rfc3986==2.0.0
 rich==14.0.0
 rpds-py==0.27.0
-scipy==1.16.1
+scipy==1.13.1
 setuptools==80.1.0
 six==1.17.0
 smooth_criminal==0.4.0
