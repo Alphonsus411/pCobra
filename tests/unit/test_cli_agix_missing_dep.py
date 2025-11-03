@@ -16,7 +16,7 @@ def test_cli_agix_sin_agix(tmp_path, capsys):
         activacion=None,
         dominancia=None,
     )
-    with patch("ia.analizador_agix.Reasoner", None):
+    with patch("pcobra.ia.analizador_agix.Reasoner", None):
         exit_code = cmd.run(args)
     salida = capsys.readouterr().out
     assert exit_code == 1

@@ -19,7 +19,7 @@ def test_cli_agix_generates_suggestion(tmp_path, capsys):
     )
     instancia = MagicMock()
     instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
-    with patch("ia.analizador_agix.Reasoner", return_value=instancia):
+    with patch("pcobra.ia.analizador_agix.Reasoner", return_value=instancia):
         cmd.run(args)
     salida = capsys.readouterr().out.strip()
     assert "Usar nombres descriptivos" in salida
@@ -30,8 +30,8 @@ def test_cli_agix_pad_values(tmp_path, capsys):
     archivo.write_text("var x = 5")
     instancia = MagicMock()
     instancia.select_best_model.return_value = {"reason": "Usar nombres descriptivos"}
-    with patch("ia.analizador_agix.Reasoner", return_value=instancia):
-        with patch("ia.analizador_agix.PADState") as pad_mock:
+    with patch("pcobra.ia.analizador_agix.Reasoner", return_value=instancia):
+        with patch("pcobra.ia.analizador_agix.PADState") as pad_mock:
             with patch("cobra.cli.cli.setup_gettext", return_value=lambda s: s):
                 with patch(
                     "cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES",
