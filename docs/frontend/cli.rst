@@ -160,8 +160,8 @@ Ejemplo:
 
 Subcomando ``agix``
 ------------------
-Analiza un archivo y sugiere mejoras utilizando ``agix``. El proyecto usa
-``agix`` en su versión ``1.6.0``, que permite ponderar la precisión e
+Analiza un archivo y sugiere mejoras utilizando ``agix``. El proyecto requiere
+``agix`` en su versión ``>=1.4,<2``, que permite ponderar la precisión e
 interpretabilidad de las recomendaciones y mapea internamente módulos bajo
 ``src.agix`` para mantener compatibilidad. La selección de la mejor
 recomendación se realiza con la clase ``Reasoner`` de
