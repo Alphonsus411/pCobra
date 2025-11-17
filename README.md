@@ -6,12 +6,12 @@
 
 ## Qué es pCobra
 
-Versión 10.0.9
+Versión 10.0.12
 
-- Ajustes en `SafeUnpickler` para admitir `core.ast_nodes` y `cobra.core.ast_nodes`.
-- `corelibs.sistema.ejecutar` ahora requiere una lista blanca mediante `permitidos` o `COBRA_EJECUTAR_PERMITIDOS`.
-- Caché incremental respaldada por SQLitePlus para AST y tokens.
-- Actualización a Agix 1.4.0.
+- La caché incremental de AST y tokens se consolidó en **SQLitePlus** con script de migración y variables `SQLITE_DB_KEY`/`COBRA_DB_PATH` para definir la base de datos.
+- `corelibs.asincrono` incorpora `grupo_tareas` y `reintentar_async`, reexportados en la biblioteca estándar para coordinar corrutinas y reintentos con *backoff*.
+- `corelibs.texto`, `corelibs.numero` y `standard_library.datos` añaden validadores `es_*`, helpers como `prefijo_comun`/`sufijo_comun`, funciones `interpolar`/`envolver_modular` y lectura/escritura de Parquet y Feather.
+- `corelibs.sistema.ejecutar` mantiene la ejecución en modo seguro con listas blancas obligatorias tanto en Python como en los *bindings* nativos.
 
 [English version available here](docs/README.en.md)
 
@@ -226,9 +226,9 @@ Los ejecutables precompilados para Cobra se publican en la sección de [Releases
 
 | Versión | Plataforma | Enlace |
 | --- | --- | --- |
-| 10.0.9 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-linux) |
-| 10.0.9 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra.exe) |
-| 10.0.9 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-macos) |
+| 10.0.12 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-linux) |
+| 10.0.12 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra.exe) |
+| 10.0.12 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-macos) |
 
 Para comprobar la integridad del archivo descargado calcula su hash SHA256 y compáralo con el publicado:
 
@@ -1187,7 +1187,7 @@ Este proyecto sigue el esquema [SemVer](https://semver.org/lang/es/). Los numero
 
 ## Historial de Cambios
 
- - Versión 10.0.9: ajustes en `SafeUnpickler`, restricciones en `corelibs.sistema.ejecutar`, caché incremental en formato JSON para AST y tokens, y actualización a Agix 1.4.0.
+ - Versión 10.0.12: migración de la caché incremental a SQLitePlus, nuevos helpers (`grupo_tareas`, `reintentar_async`, `prefijo_comun`, `interpolar`, `envolver_modular`) y soporte Parquet/Feather en la biblioteca estándar.
 
 ## Publicar una nueva versión
 
@@ -1198,8 +1198,8 @@ El workflow [`Deploy Docs`](.github/workflows/pages.yml) generará la documentac
 Consulta la [guía de lanzamiento](docs/release.md) para más detalles sobre el etiquetado, secretos y el flujo de la pipeline.
 
 ```bash
-git tag v10.0.9
-git push origin v10.0.9
+git tag v10.0.12
+git push origin v10.0.12
 ```
 
 Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuración de GitHub Actions](.github/workflows).

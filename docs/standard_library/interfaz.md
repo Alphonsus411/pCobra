@@ -80,7 +80,7 @@ mostrar_markdown("""\
 - Uso de Markdown desde Cobra
 - Integración con Rich
 """)
-mostrar_json({"lenguaje": "Cobra", "version": "10.0.9"})
+mostrar_json({"lenguaje": "Cobra", "version": "10.0.12"})
 mostrar_arbol(
     [
         ("src", ["cobra.co", ("modulos", ["texto.co", "interfaz.co"])])],
