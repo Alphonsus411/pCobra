@@ -16,8 +16,11 @@ Opciones principales:
 
 - ``archivo``: ruta del script ``.co``.
 - ``--tipo``: lenguaje de salida (``python``, ``js``, ``hololang``, ``asm``,
-  ``rust``, ``cpp``, ``go``, ``ruby``, ``r``, ``julia``, ``java``, ``cobol``,
-  ``fortran``, ``pascal``, ``php``, ``matlab``, ``latex``, ``wasm``).
+  ``rust``, ``cpp``, ``c``, ``go``, ``kotlin``, ``swift``, ``ruby``, ``r``,
+  ``julia``, ``java``, ``cobol``, ``fortran``, ``pascal``, ``php``, ``perl``,
+  ``visualbasic``, ``matlab``, ``mojo``, ``latex``, ``llvm``, ``wasm`` y
+  cualquier transpilador extra registrado; consulta ``cobra compilar --help``
+  para la lista completa y actualizada).
 - ``--backend``: alias de ``--tipo`` útil para integraciones automatizadas.
   Admite los mismos lenguajes disponibles, incluido ``hololang``.
 - ``--tipos``: lista de lenguajes separados por comas para transpilación paralela.
