@@ -20,7 +20,7 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 
 # Constantes
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-VALID_EXTENSIONS = {'.cobra', '.cbr'}
+VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
 
 class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
@@ -89,9 +89,11 @@ class VerifyCommand(BaseCommand):
         """
         path = Path(file_path)
         if not path.suffix in VALID_EXTENSIONS:
-            raise ValueError(_("Extensión de archivo no válida. Debe ser: {}").format(
-                ", ".join(VALID_EXTENSIONS)
-            ))
+            raise ValueError(
+                _("Extensión de archivo no válida. Debe ser: {}").format(
+                    ", ".join(sorted(VALID_EXTENSIONS))
+                )
+            )
         
         if path.stat().st_size > MAX_FILE_SIZE:
             raise ValueError(_("El archivo es demasiado grande (máximo {} MB)").format(
