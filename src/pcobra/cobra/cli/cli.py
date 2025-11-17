@@ -177,6 +177,7 @@ class CliApplication:
                           help=_("Muestra esta ayuda y termina"))
         parser.add_argument(
             "--format",
+            "--formatear",
             dest="formatear",
             action="store_true",
             help=_("Format file before processing"),
