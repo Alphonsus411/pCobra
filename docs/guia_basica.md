@@ -8,9 +8,9 @@ Puedes obtener binarios precompilados desde la sección de [Releases](https://gi
 
 | Versión | Plataforma | Enlace |
 | --- | --- | --- |
-| 10.0.9 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-linux) |
-| 10.0.9 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra.exe) |
-| 10.0.9 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-macos) |
+| 10.0.12 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-linux) |
+| 10.0.12 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra.exe) |
+| 10.0.12 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-macos) |
 
 Para verificar la integridad del archivo descargado calcula su hash SHA256 y compáralo con el valor publicado:
 

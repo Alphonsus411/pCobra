@@ -18,7 +18,7 @@ def _get_version() -> str:
     try:
         return version("pcobra")
     except PackageNotFoundError:
-        return "10.0.9"
+        return "10.0.12"
 
 
 __version__ = _get_version()

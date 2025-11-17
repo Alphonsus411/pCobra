@@ -2,11 +2,12 @@
 [![Codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/work/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra/branch/work)
 [![Stable release](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 
-Version 10.0.9
+Version 10.0.12
 
-- Tweaks in `SafeUnpickler` to support `core.ast_nodes` and `cobra.core.ast_nodes`.
-- `corelibs.sistema.ejecutar` now runs only whitelisted executables provided via the `permitidos` argument or the `COBRA_EJECUTAR_PERMITIDOS` environment variable.
-- Migrated the incremental AST/token cache to SQLitePlus to speed up repeated compilations.
+- The incremental AST/token cache now lives in **SQLitePlus**, with `SQLITE_DB_KEY`/`COBRA_DB_PATH` to define the encrypted database and a helper script to migrate previous JSON entries.
+- `corelibs.asincrono` ships `grupo_tareas` and `reintentar_async`, re-exported by the standard library to coordinate coroutines with structured concurrency and retries featuring exponential backoff and jitter.
+- `corelibs.texto`, `corelibs.numero` and `standard_library.datos` expand the `es_*` validators, add helpers like `prefijo_comun`/`sufijo_comun`, `interpolar`, `envolver_modular`, and provide Parquet/Feather IO wrappers.
+- `corelibs.sistema.ejecutar` enforces explicit whitelists in Python and native bindings to keep command execution locked down by default.
 
 Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly, allowing greater versatility when running and deploying Cobra code.
 
@@ -211,9 +212,9 @@ Precompiled executables for Cobra are published in the repository's [Releases](h
 
 | Version | Platform | Link |
 | --- | --- | --- |
-| 10.0.9 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-linux) |
-| 10.0.9 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra.exe) |
-| 10.0.9 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.9/cobra-macos) |
+| 10.0.12 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-linux) |
+| 10.0.12 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra.exe) |
+| 10.0.12 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-macos) |
 
 To verify the integrity of the downloaded file, compute its SHA256 hash and compare it with the published value:
 

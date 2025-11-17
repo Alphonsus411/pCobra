@@ -10,7 +10,7 @@ from cobra.cli.plugin_registry import limpiar_registro
 
 class DummyPlugin(PluginCommand):
     name = "dummy"
-    version = "10.0.9"
+    version = "10.0.12"
 
     def register_subparser(self, subparsers):
         pass
@@ -40,10 +40,12 @@ def test_cli_plugins_muestra_registro():
         group="cobra.plugins",
     )
     limpiar_registro()
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch(
+        "cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))
+    ):
         with patch("sys.stdout", new_callable=StringIO) as out:
             main(["plugins"])
-    assert "dummy 10.0.9" in out.getvalue().strip()
+    assert "dummy 10.0.12" in out.getvalue().strip()
 
 
 def test_cli_plugin_ejemplo_hola():
@@ -53,7 +55,9 @@ def test_cli_plugin_ejemplo_hola():
         group="cobra.plugins",
     )
     limpiar_registro()
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch(
+        "cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))
+    ):
         with patch("sys.stdout", new_callable=StringIO) as out:
             main(["hola"])
     assert "¡Hola desde un plugin!" in out.getvalue().strip()
@@ -61,7 +65,9 @@ def test_cli_plugin_ejemplo_hola():
 
 def test_cli_plugins_sin_plugins():
     limpiar_registro()
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints(())):
+    with patch(
+        "cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints(())
+    ):
         with patch("sys.stdout", new_callable=StringIO) as out:
             main(["plugins"])
     assert "No hay plugins instalados" in out.getvalue()
