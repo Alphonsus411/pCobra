@@ -228,7 +228,11 @@ class InterpretadorCobra:
         try:
             for contexto in reversed(self.contextos):
                 if nombre in contexto:
-                    return contexto[nombre]
+                    valor = contexto[nombre]
+                    valor_resuelto = self._materializar_valor(valor, visitados)
+                    if valor_resuelto is not valor:
+                        contexto[nombre] = valor_resuelto
+                    return valor_resuelto
             return None
         finally:
             visitados.remove(nombre)
@@ -287,6 +291,41 @@ class InterpretadorCobra:
             "bases": bases,
             "metodos": [self._construir_funcion(m) for m in nodo.metodos],
         }
+
+    def _materializar_valor(self, valor, visitados=None):
+        """Convierte cualquier nodo de expresión en su valor inmediato.
+
+        El resultado se limita a valores simples reutilizables para evitar
+        reevaluaciones posteriores cuando el valor se guarda en el contexto.
+        """
+
+        if isinstance(valor, NodoValor):
+            return valor.valor
+        if isinstance(valor, Token) and valor.tipo in {
+            TipoToken.ENTERO,
+            TipoToken.FLOTANTE,
+            TipoToken.CADENA,
+            TipoToken.BOOLEANO,
+        }:
+            return valor.valor
+
+        expresiones_soportadas = (
+            NodoAsignacion,
+            NodoIdentificador,
+            NodoInstancia,
+            NodoAtributo,
+            NodoHolobit,
+            NodoEsperar,
+            NodoOperacionBinaria,
+            NodoOperacionUnaria,
+            NodoLlamadaMetodo,
+            NodoLlamadaFuncion,
+        )
+
+        if isinstance(valor, expresiones_soportadas):
+            return self.evaluar_expresion(valor, visitados)
+
+        return valor
 
     # -- Gestión de memoria -------------------------------------------------
     def solicitar_memoria(self, tam):
@@ -465,6 +504,7 @@ class InterpretadorCobra:
         if valor_nodo is nodo:
             raise ValueError("Asignación no puede evaluarse a sí misma")
         valor = self.evaluar_expresion(valor_nodo, visitados)
+        valor = self._materializar_valor(valor, visitados)
         self._verificar_valor_contexto(valor)
         if isinstance(nombre, NodoAtributo):
             objeto = self.evaluar_expresion(nombre.objeto, visitados)
@@ -516,7 +556,11 @@ class InterpretadorCobra:
             if objeto is None:
                 raise ValueError("Objeto no definido al acceder al atributo")
             atributos = objeto.get("__atributos__", {})
-            return atributos.get(expresion.nombre)
+            valor = atributos.get(expresion.nombre)
+            valor_resuelto = self._materializar_valor(valor, visitados)
+            if valor_resuelto is not valor:
+                atributos[expresion.nombre] = valor_resuelto
+            return valor_resuelto
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
