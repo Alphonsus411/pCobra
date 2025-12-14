@@ -345,7 +345,7 @@ def obtener_tokens(codigo: str):
     if tokens is not None:
         return tokens
 
-    from pcobra.core import Lexer
+    from pcobra.core.lexer import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     _store_fragment(hash_key, codigo, _FULL_TOKENS_KEY, tokens)
@@ -361,7 +361,7 @@ def obtener_ast(codigo: str):
         return ast
 
     tokens = obtener_tokens(codigo)
-    from pcobra.core import Parser
+    from pcobra.core.parser import Parser
 
     ast = Parser(tokens).parsear()
     _store_ast(hash_key, codigo, ast)
@@ -376,7 +376,7 @@ def obtener_tokens_fragmento(codigo: str):
     if tokens is not None:
         return tokens
 
-    from pcobra.core import Lexer
+    from pcobra.core.lexer import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     _store_fragment(hash_key, codigo, _FRAGMENT_TOKENS_KEY, tokens)
@@ -392,7 +392,7 @@ def obtener_ast_fragmento(codigo: str):
         return ast
 
     tokens = obtener_tokens_fragmento(codigo)
-    from pcobra.core import Parser
+    from pcobra.core.parser import Parser
 
     ast = Parser(tokens).parsear()
     _store_fragment(hash_key, codigo, _FRAGMENT_AST_KEY, ast)
