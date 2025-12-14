@@ -91,7 +91,7 @@ _FRAGMENT_AST_KEY = "fragment_ast"
 
 def _is_token_like(obj: Any) -> bool:
     try:
-        from pcobra.cobra.core.lexer import Token
+        from pcobra.core.lexer import Token
     except ModuleNotFoundError:  # pragma: no cover - entornos acotados
         Token = None  # type: ignore
 
@@ -127,7 +127,7 @@ def _get_node_classes() -> dict[str, type]:
 def _get_enum_classes() -> dict[str, type]:
     global _ENUM_CLASSES
     if _ENUM_CLASSES is None:
-        from pcobra.cobra.core.lexer import TipoToken
+        from pcobra.core.lexer import TipoToken
 
         _ENUM_CLASSES = {"TipoToken": TipoToken}
     return _ENUM_CLASSES
@@ -151,7 +151,7 @@ def _serialize(obj: Any) -> Any:
 
 
 def _deserialize(data: Any) -> Any:
-    from pcobra.cobra.core.lexer import Token, TipoToken
+    from pcobra.core.lexer import Token, TipoToken
 
     if isinstance(data, list):
         return [_deserialize(i) for i in data]
@@ -345,7 +345,7 @@ def obtener_tokens(codigo: str):
     if tokens is not None:
         return tokens
 
-    from pcobra.cobra.core import Lexer
+    from pcobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     _store_fragment(hash_key, codigo, _FULL_TOKENS_KEY, tokens)
@@ -361,7 +361,7 @@ def obtener_ast(codigo: str):
         return ast
 
     tokens = obtener_tokens(codigo)
-    from pcobra.cobra.core import Parser
+    from pcobra.core import Parser
 
     ast = Parser(tokens).parsear()
     _store_ast(hash_key, codigo, ast)
@@ -376,7 +376,7 @@ def obtener_tokens_fragmento(codigo: str):
     if tokens is not None:
         return tokens
 
-    from pcobra.cobra.core import Lexer
+    from pcobra.core import Lexer
 
     tokens = Lexer(codigo).tokenizar()
     _store_fragment(hash_key, codigo, _FRAGMENT_TOKENS_KEY, tokens)
@@ -392,7 +392,7 @@ def obtener_ast_fragmento(codigo: str):
         return ast
 
     tokens = obtener_tokens_fragmento(codigo)
-    from pcobra.cobra.core import Parser
+    from pcobra.core import Parser
 
     ast = Parser(tokens).parsear()
     _store_fragment(hash_key, codigo, _FRAGMENT_AST_KEY, ast)

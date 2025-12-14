@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Optional
 
-from pcobra.cobra.core import Token, TipoToken
+from pcobra.core import Token, TipoToken
 from .optimizations import (
     optimize_constants,
     remove_dead_code,
@@ -56,7 +56,7 @@ from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from pcobra.cobra.semantico import AnalizadorSemantico
+from pcobra.core.semantico import AnalizadorSemantico
 from .qualia_bridge import register_execution
 from .cobra_config import (
     limite_nodos,
@@ -746,7 +746,7 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from pcobra.cobra.usar_loader import obtener_modulo
+        from pcobra.core.usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)
