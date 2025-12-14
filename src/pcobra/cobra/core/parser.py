@@ -4,7 +4,8 @@ import logging
 import json
 import os
 from typing import Any, List
-from .lexer import TipoToken, Token
+
+from pcobra.core.lexer import TipoToken, Token
 from .utils import (
     PALABRAS_RESERVADAS,
     ALIAS_METODOS_ESPECIALES,
