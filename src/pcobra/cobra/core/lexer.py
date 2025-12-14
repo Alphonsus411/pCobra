@@ -10,29 +10,9 @@ import re
 from enum import Enum
 from typing import Dict, List, Optional, Pattern, Tuple, Union, cast
 
+from pcobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
+
 logger = logging.getLogger(__name__)
-
-
-class LexerError(Exception):
-    """Excepción base para errores del analizador léxico."""
-
-    def __init__(self, mensaje: str, linea: int, columna: int) -> None:
-        super().__init__(mensaje)
-        self.linea = linea
-        self.columna = columna
-
-
-class InvalidTokenError(LexerError):
-    """Excepción para símbolos no reconocidos."""
-
-    pass
-
-
-class UnclosedStringError(LexerError):
-    """Excepción para cadenas sin cerrar."""
-
-    pass
-
 
 class TipoToken(Enum):
     """Enumeración de todos los tipos de tokens soportados."""
