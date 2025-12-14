@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable, List, Optional, Sequence
 
-from pcobra.core import Token, TipoToken
+from pcobra.core.lexer import Token, TipoToken
 
 from .ast_nodes import (
     NodoAsignacion,
