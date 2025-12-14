@@ -866,14 +866,14 @@ manualmente:
 
 ```bash
 cobra ejecutar tests/data/hola.cobra
-cobra ejecutar tests/data/suma.cobra
+cobra ejecutar tests/data/suma.co
 ```
 
 También puedes transpilar los ejemplos para ver el código Python generado:
 
 ```bash
 cobra transpilar tests/data/hola.cobra
-cobra transpilar tests/data/suma.cobra
+cobra transpilar tests/data/suma.co
 ```
 
 ### Pruebas de rendimiento
