@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Optional
 
-from pcobra.core import Token, TipoToken
+from pcobra.core.lexer import Token, TipoToken
 from .optimizations import (
     optimize_constants,
     remove_dead_code,
