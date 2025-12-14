@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Optional
 
-from pcobra.cobra.core import Token, TipoToken
+from pcobra.core import Token, TipoToken
 from .optimizations import (
     optimize_constants,
     remove_dead_code,
@@ -56,7 +56,7 @@ from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from pcobra.cobra.semantico import AnalizadorSemantico
+from pcobra.core.semantico import AnalizadorSemantico
 from .qualia_bridge import register_execution
 from .cobra_config import (
     limite_nodos,
@@ -218,9 +218,8 @@ class InterpretadorCobra:
     def obtener_variable(self, nombre, visitados=None):
         """Busca una variable en la pila de contextos.
 
-        Utiliza un conjunto de nombres visitados para detectar referencias
-        circulares y evitar bucles infinitos al resolver identificadores
-        encadenados.
+        Evita seguir referencias encadenadas para prevenir bucles
+        innecesarios y devuelve el valor almacenado directamente.
         """
         visitados = visitados or set()
         if nombre in visitados:
@@ -230,29 +229,103 @@ class InterpretadorCobra:
             for contexto in reversed(self.contextos):
                 if nombre in contexto:
                     valor = contexto[nombre]
-                    # Resuelve nodos simples a valores primitivos
-                    while isinstance(
-                        valor,
-                        (
-                            NodoValor,
-                            NodoIdentificador,
-                            NodoAsignacion,
-                            NodoInstancia,
-                            NodoAtributo,
-                            NodoOperacionBinaria,
-                            NodoOperacionUnaria,
-                            NodoEsperar,
-                            NodoLlamadaFuncion,
-                            NodoLlamadaMetodo,
-                            NodoHolobit,
-                            Token,
-                        ),
-                    ):
-                        valor = self.evaluar_expresion(valor, visitados)
-                    return valor
+                    valor_resuelto = self._materializar_valor(valor, visitados)
+                    if valor_resuelto is not valor:
+                        contexto[nombre] = valor_resuelto
+                    return valor_resuelto
             return None
         finally:
             visitados.remove(nombre)
+
+    def _verificar_valor_contexto(self, valor):
+        """Valida que el contexto sólo guarde tipos simples o contenedores.
+
+        Se detectan referencias circulares utilizando una pila iterativa para
+        evitar recursión profunda.
+        """
+
+        permitidos = (int, float, bool, str, type(None))
+        contenedores = (dict, list, tuple, set)
+        if isinstance(valor, permitidos):
+            return
+        if not isinstance(valor, contenedores):
+            raise TypeError(
+                "Solo se permiten tipos primitivos o diccionarios en el contexto"
+            )
+
+        pila = [(valor, set())]
+        while pila:
+            actual, ancestros = pila.pop()
+            if id(actual) in ancestros:
+                raise RuntimeError("Referencia circular detectada en el contexto")
+            nuevos_ancestros = ancestros | {id(actual)}
+
+            if isinstance(actual, dict):
+                elementos = actual.values()
+            elif isinstance(actual, (list, tuple, set)):
+                elementos = actual
+            else:
+                continue
+
+            for elem in elementos:
+                if isinstance(elem, permitidos):
+                    continue
+                if isinstance(elem, contenedores):
+                    pila.append((elem, nuevos_ancestros))
+                else:
+                    continue
+
+    def _construir_funcion(self, nodo):
+        return {
+            "tipo": "funcion",
+            "nombre": nodo.nombre,
+            "parametros": list(nodo.parametros),
+            "cuerpo": list(nodo.cuerpo),
+            "contexto": self.contextos[-1].copy(),
+        }
+
+    def _construir_clase(self, nodo, bases):
+        return {
+            "tipo": "clase",
+            "nombre": nodo.nombre,
+            "bases": bases,
+            "metodos": [self._construir_funcion(m) for m in nodo.metodos],
+        }
+
+    def _materializar_valor(self, valor, visitados=None):
+        """Convierte cualquier nodo de expresión en su valor inmediato.
+
+        El resultado se limita a valores simples reutilizables para evitar
+        reevaluaciones posteriores cuando el valor se guarda en el contexto.
+        """
+
+        if isinstance(valor, NodoValor):
+            return valor.valor
+        if isinstance(valor, Token) and valor.tipo in {
+            TipoToken.ENTERO,
+            TipoToken.FLOTANTE,
+            TipoToken.CADENA,
+            TipoToken.BOOLEANO,
+        }:
+            return valor.valor
+
+        expresiones_soportadas = (
+            NodoAsignacion,
+            NodoIdentificador,
+            NodoInstancia,
+            NodoAtributo,
+            NodoHolobit,
+            NodoEsperar,
+            NodoOperacionBinaria,
+            NodoOperacionUnaria,
+            NodoLlamadaMetodo,
+            NodoLlamadaFuncion,
+        )
+
+        if isinstance(valor, expresiones_soportadas):
+            return self.evaluar_expresion(valor, visitados)
+
+        return valor
 
     # -- Gestión de memoria -------------------------------------------------
     def solicitar_memoria(self, tam):
@@ -431,11 +504,14 @@ class InterpretadorCobra:
         if valor_nodo is nodo:
             raise ValueError("Asignación no puede evaluarse a sí misma")
         valor = self.evaluar_expresion(valor_nodo, visitados)
+        valor = self._materializar_valor(valor, visitados)
+        self._verificar_valor_contexto(valor)
         if isinstance(nombre, NodoAtributo):
             objeto = self.evaluar_expresion(nombre.objeto, visitados)
             if objeto is None:
                 raise ValueError("Objeto no definido para asignación de atributo")
             atributos = objeto.setdefault("__atributos__", {})
+            self._verificar_valor_contexto(valor)
             atributos[nombre.nombre] = valor
         else:
             if getattr(nodo, "inferencia", False):
@@ -480,7 +556,11 @@ class InterpretadorCobra:
             if objeto is None:
                 raise ValueError("Objeto no definido al acceder al atributo")
             atributos = objeto.get("__atributos__", {})
-            return atributos.get(expresion.nombre)
+            valor = atributos.get(expresion.nombre)
+            valor_resuelto = self._materializar_valor(valor, visitados)
+            if valor_resuelto is not valor:
+                atributos[expresion.nombre] = valor_resuelto
+            return valor_resuelto
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
@@ -588,7 +668,9 @@ class InterpretadorCobra:
 
     def ejecutar_funcion(self, nodo):
         """Registra una función definida por el usuario."""
-        self.variables[nodo.nombre] = nodo
+        funcion = self._construir_funcion(nodo)
+        self._verificar_valor_contexto(funcion)
+        self.variables[nodo.nombre] = funcion
 
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
@@ -603,23 +685,28 @@ class InterpretadorCobra:
                 print(valor)
         else:
             funcion = self.obtener_variable(nodo.nombre)
-            if not isinstance(funcion, NodoFuncion):
+            if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
                 print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
                 return None
 
-            if len(funcion.parametros) != len(nodo.argumentos):
-                print(f"Error: se esperaban {len(funcion.parametros)} argumentos")
+            if len(funcion["parametros"]) != len(nodo.argumentos):
+                print(
+                    f"Error: se esperaban {len(funcion['parametros'])} argumentos"
+                )
                 return None
 
             contiene_yield = any(
-                self._contiene_yield(instr) for instr in funcion.cuerpo
+                self._contiene_yield(instr) for instr in funcion["cuerpo"]
             )
 
             def preparar_contexto():
-                self.contextos.append({})
+                contexto_base = funcion.get("contexto", {}).copy()
+                self._verificar_valor_contexto(contexto_base)
+                self.contextos.append(contexto_base)
                 self.mem_contextos.append({})
-                for nombre_param, arg in zip(funcion.parametros, nodo.argumentos):
+                for nombre_param, arg in zip(funcion["parametros"], nodo.argumentos):
                     valor = self.evaluar_expresion(arg)
+                    self._verificar_valor_contexto(valor)
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[-1][nombre_param] = (indice, 1)
                     self.variables[nombre_param] = valor
@@ -635,7 +722,7 @@ class InterpretadorCobra:
                 def generador():
                     preparar_contexto()
                     try:
-                        for instr in funcion.cuerpo:
+                        for instr in funcion["cuerpo"]:
                             if isinstance(instr, NodoYield):
                                 yield self.evaluar_expresion(instr.expresion)
                             else:
@@ -649,7 +736,7 @@ class InterpretadorCobra:
             else:
                 preparar_contexto()
                 resultado = None
-                for instruccion in funcion.cuerpo:
+                for instruccion in funcion["cuerpo"]:
                     resultado = self.ejecutar_nodo(instruccion)
                     if resultado is not None:
                         break
@@ -661,19 +748,22 @@ class InterpretadorCobra:
         bases_resueltas = []
         for base_nombre in nodo.bases:
             base = self.obtener_variable(base_nombre)
-            if not isinstance(base, NodoClase):
+            if not isinstance(base, dict) or base.get("tipo") != "clase":
                 raise ValueError(f"Clase base '{base_nombre}' no definida")
             bases_resueltas.append(base)
-        nodo.bases_resueltas = bases_resueltas
-        self.variables[nodo.nombre] = nodo
+        clase = self._construir_clase(nodo, bases_resueltas)
+        self._verificar_valor_contexto(clase)
+        self.variables[nodo.nombre] = clase
 
     def ejecutar_instancia(self, nodo):
         """Crea una instancia de la clase indicada."""
         clase = self.obtener_variable(nodo.nombre_clase)
-        if not isinstance(clase, NodoClase):
+        if not isinstance(clase, dict) or clase.get("tipo") != "clase":
             raise ValueError(f"Clase '{nodo.nombre_clase}' no definida")
-        bases = getattr(clase, "bases_resueltas", [])
-        return {"__clase__": clase, "__bases__": bases, "__atributos__": {}}
+        bases = clase.get("bases", [])
+        instancia = {"__clase__": clase, "__bases__": bases, "__atributos__": {}}
+        self._verificar_valor_contexto(instancia)
+        return instancia
 
     def ejecutar_llamada_metodo(self, nodo):
         """Invoca un método de un objeto instanciado."""
@@ -683,13 +773,14 @@ class InterpretadorCobra:
         clase = objeto["__clase__"]
 
         def buscar_metodo(clase_actual):
+            metodos = clase_actual.get("metodos", [])
             metodo = next(
-                (m for m in clase_actual.metodos if m.nombre == nodo.nombre_metodo),
+                (m for m in metodos if m.get("nombre") == nodo.nombre_metodo),
                 None,
             )
             if metodo is not None:
                 return metodo
-            for base in getattr(clase_actual, "bases_resueltas", []):
+            for base in clase_actual.get("bases", []):
                 encontrado = buscar_metodo(base)
                 if encontrado is not None:
                     return encontrado
@@ -697,16 +788,21 @@ class InterpretadorCobra:
 
         metodo = buscar_metodo(clase)
         if metodo is None:
-            raise ValueError(f"M\u00e9todo '{nodo.nombre_metodo}' no encontrado")
+            raise ValueError(f"Método '{nodo.nombre_metodo}' no encontrado")
 
         contexto = {"self": objeto}
-        self.contextos.append(contexto)
+        contexto_base = metodo.get("contexto", {}).copy()
+        contexto_base.update(contexto)
+        self._verificar_valor_contexto(contexto_base)
+        self.contextos.append(contexto_base)
         self.mem_contextos.append({})
-        for nombre_param, arg in zip(metodo.parametros[1:], nodo.argumentos):
-            self.variables[nombre_param] = self.evaluar_expresion(arg)
+        for nombre_param, arg in zip(metodo.get("parametros", [])[1:], nodo.argumentos):
+            valor = self.evaluar_expresion(arg)
+            self._verificar_valor_contexto(valor)
+            self.variables[nombre_param] = valor
 
         resultado = None
-        for instruccion in metodo.cuerpo:
+        for instruccion in metodo.get("cuerpo", []):
             resultado = self.ejecutar_nodo(instruccion)
             if resultado is not None:
                 break
@@ -746,7 +842,7 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from pcobra.cobra.usar_loader import obtener_modulo
+        from pcobra.core.usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)

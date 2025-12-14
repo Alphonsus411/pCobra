@@ -10,20 +10,19 @@ from __future__ import annotations
 
 import sys
 
-from pcobra.cobra.core.lexer import (
-    Lexer,
-    Token,
-    TipoToken,
-    LexerError,
+from pcobra.core import ast_nodes as _ast_nodes
+from pcobra.core.lexer import (
     InvalidTokenError,
+    Lexer,
+    LexerError,
+    TipoToken,
+    Token,
     UnclosedStringError,
 )
 
-# Reexportar todos los nodos del AST para facilitar el acceso a ellos.
-from . import ast_nodes as _ast_nodes
-
-# Agregar los nodos del AST al espacio de nombres del paquete.
-globals().update({name: getattr(_ast_nodes, name) for name in dir(_ast_nodes) if not name.startswith("_")})
+# Reexportar los nodos del AST directamente desde ``pcobra.core``.
+_AST_NODE_NAMES = list(_ast_nodes.__all__)
+globals().update({name: getattr(_ast_nodes, name) for name in _AST_NODE_NAMES})
 
 __all__ = [
     "Lexer",
@@ -34,7 +33,7 @@ __all__ = [
     "UnclosedStringError",
     "Token",
     "TipoToken",
-    *_ast_nodes.__all__,
+    *_AST_NODE_NAMES,
 ]
 
 sys.modules["cobra.core"] = sys.modules[__name__]
@@ -47,7 +46,7 @@ def __getattr__(name: str):
     evitar dependencias circulares y tiempos de carga innecesarios.
     """
     if name in {"Parser", "ParserError"}:
-        from . import parser as _parser
+        from pcobra.core import parser as _parser
 
         globals().update({"Parser": _parser.Parser, "ParserError": _parser.ParserError})
         return globals()[name]

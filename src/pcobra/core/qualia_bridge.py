@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Any, List, Union
 
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.core import Lexer, Parser
 from . import database
 from .qualia_knowledge import QualiaKnowledge
 

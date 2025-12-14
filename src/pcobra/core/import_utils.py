@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, FrozenSet, Tuple
 
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.core import Lexer, Parser
 from .ast_nodes import NodoAsignacion, NodoClase, NodoFuncion, NodoExport
 
 # Ruta por defecto donde se instalan los módulos del usuario.
