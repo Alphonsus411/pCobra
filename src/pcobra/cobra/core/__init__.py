@@ -11,14 +11,8 @@ from __future__ import annotations
 import sys
 
 from pcobra.core import ast_nodes as _ast_nodes
-from pcobra.core.lexer import (
-    InvalidTokenError,
-    Lexer,
-    LexerError,
-    TipoToken,
-    Token,
-    UnclosedStringError,
-)
+from pcobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
+from .lexer import Lexer, TipoToken, Token
 
 # Reexportar los nodos del AST directamente desde ``pcobra.core``.
 _AST_NODE_NAMES = list(_ast_nodes.__all__)
