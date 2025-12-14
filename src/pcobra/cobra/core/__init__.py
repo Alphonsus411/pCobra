@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sys
 
-from pcobra.cobra.core.lexer import (
+from pcobra.core.lexer import (
     Lexer,
     Token,
     TipoToken,
@@ -47,7 +47,7 @@ def __getattr__(name: str):
     evitar dependencias circulares y tiempos de carga innecesarios.
     """
     if name in {"Parser", "ParserError"}:
-        from . import parser as _parser
+        from pcobra.core import parser as _parser
 
         globals().update({"Parser": _parser.Parser, "ParserError": _parser.ParserError})
         return globals()[name]

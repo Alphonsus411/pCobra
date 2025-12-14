@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
-    from pcobra.cobra.core.lexer import Token, TipoToken
+    from pcobra.core.lexer import Token, TipoToken
 
 
 @dataclass
@@ -25,7 +25,7 @@ class NodoAsignacion(NodoAST):
     """Representa la asignación de una expresión a una variable."""
 
     def __post_init__(self):
-        from pcobra.cobra.core.lexer import Token
+        from pcobra.core.lexer import Token
 
         if isinstance(self.variable, Token):
             nombre = self.variable.valor
@@ -152,7 +152,7 @@ class NodoTipo(NodoAST):
     genericos: List[Any] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        from pcobra.cobra.core.lexer import Token
+        from pcobra.core.lexer import Token
 
         if isinstance(self.nombre, NodoTipo):  # Compatibilidad con construcciones anidadas
             self.genericos = list(self.nombre.genericos)
@@ -294,7 +294,7 @@ class NodoIdentificador(NodoAST):
     """Uso de una variable o identificador."""
 
     def __post_init__(self):
-        from pcobra.cobra.core.lexer import Token
+        from pcobra.core.lexer import Token
 
         if isinstance(self.nombre, Token):
             self.nombre = self.nombre.valor
@@ -319,7 +319,7 @@ class NodoIdentificador(NodoAST):
         if isinstance(valor, NodoValor):
             return valor.valor
 
-        from pcobra.cobra.core.lexer import Token, TipoToken
+        from pcobra.core.lexer import Token, TipoToken
 
         if isinstance(valor, Token) and valor.tipo in {
             TipoToken.ENTERO,
