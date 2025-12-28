@@ -1,0 +1,73 @@
+Fase 2 · Asincronía y decoradores
+=================================
+
+Contexto de origen
+------------------
+Derivado del plan de tareas estructuradas existente, esta fase introduce asincronía en el lenguaje y decoradores utilitarios. Las acciones se basan en las tareas F2.1, F2.2 y F2.3 de la hoja de ruta.
+
+Tarea F2.1 – Palabras clave "asincrono" y "espera"
+----------------------------------------------------
+Objetivo: Extender el front‑end para soportar funciones asíncronas y la espera de promesas.
+
+Subtareas
+
+- Gramática: añadir tokens y reglas para `asincrono` y `espera` en el lexer/parser, manteniendo compatibilidad con sintaxis actual.
+- Árbol de análisis: propagar nodos y metadatos necesarios hacia el generador de Hololang.
+- Generación Hololang: incorporar traducción a construcciones async/await equivalentes.
+- Pruebas: crear carpeta `tests/frontend/async` con casos de éxito/errores, cubriendo funciones asíncronas, llamadas anidadas y errores de sintaxis.
+- Documentación: redactar un RFC técnico breve con cambios sintácticos y semánticos.
+
+Entregables
+
+- Actualización de gramática y parser.
+- Nuevas pruebas unitarias en `tests/frontend/async`.
+- RFC técnico en `docs/frontend/async_rfc.md` (o ruta equivalente dentro de `docs/`).
+
+Tarea F2.2 – Librería de tareas
+-------------------------------
+Objetivo: Proveer primitivas estándar para trabajar con concurrencia ligera.
+
+Subtareas
+
+- API: diseñar las funciones `tarea.agrupar`, `tarea.tiempo_limite` y el espacio de nombres `canal.*` (envío/recepción no bloqueante, cierre).
+- Runtime: implementar utilidades en `standard_library` o `src/cobra/std` reutilizando event loop existente o uno mínimo.
+- Errores y cancelación: definir excepciones específicas para timeout y cierre de canal, con pruebas unitarias.
+- Documentación: añadir ejemplos de uso y limitaciones en la guía de la biblioteca estándar.
+- Ejemplos: incluir snippets demostrativos en `examples/async/`.
+
+Entregables
+
+- Módulo `std/async.py` (ubicación según layout de biblioteca).
+- Casos de prueba para la API de tareas y canales.
+- Documentación y ejemplos en `examples/async/` y manuales correspondientes.
+
+Tarea F2.3 – Decoradores utilitarios
+------------------------------------
+Objetivo: Incorporar decoradores comunes para mejorar ergonomía y validaciones en tiempo de ejecución.
+
+Subtareas
+
+- `@memoriza`: implementar memoización con limpieza opcional y pruebas de concurrencia básica.
+- `@valida_tipos`: validar anotaciones de tipo en tiempo de ejecución con mensajes claros.
+- `@despues`: ejecutar callbacks post-función, asegurando propagación de errores.
+- `@asegura_contexto`: verificar contexto (por ejemplo, invariantes de thread/loop) antes de invocar.
+- Compatibilidad: garantizar que los decoradores funcionan con funciones síncronas y asíncronas cuando aplique.
+- Documentación y ejemplos: agregar guía de uso y casos en la sección de decoradores de la biblioteca estándar.
+
+Entregables
+
+- Implementación de los decoradores en el módulo de utilidades correspondiente (p.ej., `std/decoradores.py`).
+- Pruebas de integración que combinen decoradores con funciones asíncronas y tareas.
+- Guía de uso actualizada en la documentación.
+
+Dependencias y orden sugerido
+-----------------------------
+1. Completar Tarea F2.1 para habilitar sintaxis y semántica base de asincronía.
+2. Implementar Tarea F2.2 reutilizando la sintaxis asíncrona y asegurando compatibilidad con `espera`.
+3. Añadir los decoradores de Tarea F2.3, validando su interacción con la nueva librería de tareas.
+
+Criterios de aceptación generales
+---------------------------------
+- Cobertura de pruebas que valide rutas felices y errores esperados.
+- Documentación actualizada con ejemplos ejecutables.
+- Estilo y nombres coherentes con el resto de la biblioteca estándar.
