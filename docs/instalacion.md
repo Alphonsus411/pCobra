@@ -46,6 +46,34 @@ Si prefieres evitar los scripts incluidos en el repositorio, estos pasos usan
 Con este flujo puedes recrear rápidamente un entorno limpio después de limpiar
 el árbol de trabajo o al migrar a una máquina nueva.
 
+## Gestión reproducible de dependencias
+
+`pyproject.toml` es la fuente única de verdad para dependencias de ejecución y extras (`dev`, `docs`, `notebooks`, etc.).
+
+Los archivos lock/constraints se regeneran con:
+
+```bash
+make deps-sync
+# equivalente:
+# bash scripts/sync_requirements.sh
+```
+
+Para actualizar a las últimas versiones compatibles:
+
+```bash
+bash scripts/sync_requirements.sh --upgrade
+```
+
+Para verificar drift en CI o localmente:
+
+```bash
+make deps-check
+# equivalente:
+# bash scripts/check_requirements_drift.sh
+```
+
+Este proceso mantiene sincronizados: `requirements.txt`, `requirements-dev.txt` y `docs/requirements.txt`.
+
 ## Instalación de gramáticas
 
 Algunos transpiladores inversos utilizan [tree-sitter](https://tree-sitter.github.io/tree-sitter/).

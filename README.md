@@ -256,7 +256,21 @@ El proyecto se organiza en las siguientes carpetas:
 - `docker/`: Archivos de configuración para contenedores.
 - `binder/`: Archivos para ejecutar el proyecto en Binder.
 
-Los archivos `requirements.txt` y `pyproject.toml` en la raíz definen las dependencias del proyecto.
+Los archivos `requirements*.txt` son *locks* generados automáticamente a partir de `pyproject.toml`, que es la única fuente de verdad para dependencias de runtime y extras (`dev`, `docs`, `notebooks`, etc.).
+
+Para regenerarlos de forma reproducible usa:
+
+```bash
+make deps-sync
+# o con actualización de versiones compatibles
+bash scripts/sync_requirements.sh --upgrade
+```
+
+Para validar que no hay drift entre `pyproject.toml` y los locks:
+
+```bash
+make deps-check
+```
 
 # Herramientas y scripts soportados
 
@@ -809,9 +823,9 @@ modifican archivos dentro de `.github/workflows/`, evitando que se integren
 definiciones inválidas en la canalización de CI.
 
 Esta instrucción añade el proyecto al `PYTHONPATH` e instala todas las
-dependencias listadas en `requirements-dev.txt`, las cuales están incluidas en
-el extra `dev` de `pyproject.toml`. Sin estas bibliotecas las pruebas fallarán
-debido a módulos no encontrados.
+dependencias listadas en `requirements-dev.txt`, generado desde el extra `dev`
+de `pyproject.toml`. Sin estas bibliotecas las pruebas fallarán debido a
+módulos no encontrados.
 
 Si prefieres ejecutar las pruebas directamente desde el repositorio sin
 instalar el paquete, utiliza el script `scripts/test.sh`:
