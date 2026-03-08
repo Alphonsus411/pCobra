@@ -119,6 +119,33 @@ Hololang actúa como contrato estable entre el front-end y los generadores de c�
 pip install pcobra
 ```
 
+### Instalación por perfiles (extras opcionales)
+
+```bash
+# Excel (.xlsx)
+pip install "pcobra[excel]"
+
+# Formatos columnares/binarios (Parquet/Feather)
+pip install "pcobra[columnar]"
+# alias equivalente
+pip install "pcobra[io-binary]"
+
+# Transpilación inversa desde WebAssembly
+pip install "pcobra[reverse-wasm]"
+
+# Servidor de lenguaje (LSP)
+pip install "pcobra[lsp]"
+
+# Generación de documentación
+pip install "pcobra[docs]"
+```
+
+Si instalas desde el repositorio local, usa la misma sintaxis con `.`:
+
+```bash
+pip install -e .[excel]
+```
+
 ### Instalación con pipx
 
 ```bash
