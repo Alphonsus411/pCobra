@@ -47,7 +47,7 @@ class DocsCommand(BaseCommand):
         try:
             import sphinx
         except ImportError:
-            mostrar_error(_("Sphinx no está instalado. Ejecuta 'pip install sphinx sphinx-rtd-theme'."))
+            mostrar_error(_("No se encontró Sphinx. Instala el extra de documentación con 'pip install .[docs]'."))
             return 1
 
         try:

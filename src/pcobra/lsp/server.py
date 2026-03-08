@@ -14,12 +14,12 @@ except ModuleNotFoundError as exc:  # pragma: no cover - dependencia opcional
 
         def __init__(self, *_args, **_kwargs) -> None:
             raise ModuleNotFoundError(
-                "El paquete opcional 'python-lsp-server' es necesario para el servidor LSP."
+                "El servidor LSP requiere el extra opcional 'lsp'. Instálalo con 'pip install .[lsp]' (incluye 'python-lsp-server')."
             ) from _PYLSP_ERROR
 
     def _fallback_start_io_lang_server(*_args, **_kwargs):  # pragma: no cover
         raise ModuleNotFoundError(
-            "El paquete opcional 'python-lsp-server' es necesario para iniciar el servidor LSP."
+            "El inicio del servidor LSP requiere el extra opcional 'lsp'. Instálalo con 'pip install .[lsp]' (incluye 'python-lsp-server')."
         ) from _PYLSP_ERROR
 
     start_io_lang_server = _fallback_start_io_lang_server  # type: ignore[assignment]
@@ -54,7 +54,7 @@ def main() -> None:
         import logging
 
         logging.getLogger(__name__).warning(
-            "python-lsp-server no está instalado; el servidor LSP no se iniciará."
+            "No se encontró el extra 'lsp'; el servidor LSP no se iniciará (usa 'pip install .[lsp]')."
         )
         return
 

@@ -37,10 +37,21 @@ El módulo `standard_library.datos` encapsula operaciones comunes sobre datos ta
 Las operaciones con libros de Excel delegan en motores opcionales de `pandas`. Para archivos modernos (`.xlsx`) se recomienda instalar `openpyxl`::
 
 ```
-pip install openpyxl
+pip install "pcobra[excel]"
+# o, desde repositorio local
+pip install -e .[excel]
 ```
 
 Si prefieres `xlsxwriter` u otro motor compatible, especifica su nombre mediante el argumento `engine`. Cobra detecta internamente los errores de importación y reporta un mensaje claro indicando el motor faltante.
+
+
+Para formatos columnares/binarios (`Parquet`/`Feather`) instala el perfil:
+
+```bash
+pip install "pcobra[columnar]"
+# alias equivalente
+pip install "pcobra[io-binary]"
+```
 
 ### Ejemplos rápidos
 

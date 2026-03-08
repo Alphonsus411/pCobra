@@ -13,7 +13,7 @@ try:
     from sexpdata import loads, Symbol  # type: ignore
 except Exception as exc:  # pragma: no cover - dependencias opcionales
     raise ImportError(
-        "Se requieren las dependencias 'wabt' y 'sexpdata' para ReverseFromWasm"
+        "Faltan dependencias opcionales para ReverseFromWasm. Instala el extra con 'pip install .[reverse-wasm]' (incluye 'wabt' y 'sexpdata')."
     ) from exc
 
 

@@ -369,7 +369,7 @@ def _asegurar_openpyxl() -> Any:
     try:
         import openpyxl  # type: ignore[import-not-found]
     except ModuleNotFoundError as exc:  # pragma: no cover - depende del entorno
-        raise ValueError("Para trabajar con Excel instala 'openpyxl'.") from exc
+        raise ValueError("Para trabajar con Excel instala el extra opcional con 'pip install .[excel]' (incluye 'openpyxl').") from exc
     return openpyxl
 
 
@@ -441,15 +441,17 @@ def leer_excel(
 
 def _asegurar_pyarrow(accion: str) -> tuple[Any, Any]:
     if not _modulo_disponible("pyarrow"):
-        mensaje = "Instala 'pyarrow' o 'fastparquet'." if "Parquet" in accion else "instala el paquete opcional 'pyarrow'."
-        raise ValueError(f"No fue posible {accion}: {mensaje}")
+        raise ValueError(
+            f"No fue posible {accion}: instala el extra opcional con 'pip install .[columnar]' (incluye 'pyarrow')."
+        )
     try:
         import pyarrow as pa  # type: ignore[import-not-found]
         import pyarrow.feather as feather  # type: ignore[import-not-found]
         import pyarrow.parquet as pq  # type: ignore[import-not-found]
     except ModuleNotFoundError as exc:  # pragma: no cover - depende del entorno
-        mensaje = "Instala 'pyarrow' o 'fastparquet'." if "Parquet" in accion else "instala el paquete opcional 'pyarrow'."
-        raise ValueError(f"No fue posible {accion}: {mensaje}") from exc
+        raise ValueError(
+            f"No fue posible {accion}: instala el extra opcional con 'pip install .[columnar]' (incluye 'pyarrow')."
+        ) from exc
     return pa, (feather, pq)
 
 

@@ -16,6 +16,36 @@ pip install -e .[dev]
 
 Copia `.env.example` a `.env` y verifica la instalación con `cobra --version`.
 
+
+## Perfiles de instalación (extras)
+
+Según el uso, puedes instalar extras específicos:
+
+```bash
+# Soporte Excel (.xlsx)
+pip install -e .[excel]
+
+# Soporte columnar/binario (Parquet y Feather con pyarrow)
+pip install -e .[columnar]
+# alias equivalente
+pip install -e .[io-binary]
+
+# Reverse transpiler WASM
+pip install -e .[reverse-wasm]
+
+# Servidor de lenguaje
+pip install -e .[lsp]
+
+# Tooling de documentación
+pip install -e .[docs]
+```
+
+Puedes combinar extras en una sola instalación:
+
+```bash
+pip install -e .[excel,columnar,lsp]
+```
+
 ## Recrear el entorno con herramientas estándar
 
 Si prefieres evitar los scripts incluidos en el repositorio, estos pasos usan
