@@ -70,6 +70,12 @@ docker:
 	docker build -t cobra-python -f docker/python.Dockerfile .
 	docker build -t cobra-rust -f docker/rust.Dockerfile .
 
+deps-sync:
+	bash scripts/sync_requirements.sh
+
+deps-check:
+	bash scripts/check_requirements_drift.sh
+
 docs:
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
 
@@ -81,4 +87,4 @@ clean:
 	rm -rf .pytest_cache .mypy_cache .coverage htmlcov \
 	       $(BUILDDIR) .venv dist build bench_results.json
 
-.PHONY: help install run test coverage lint format typecheck secrets docker docs publicar-blog clean check
+.PHONY: help install run test coverage lint format typecheck secrets docker docs deps-sync deps-check publicar-blog clean check
