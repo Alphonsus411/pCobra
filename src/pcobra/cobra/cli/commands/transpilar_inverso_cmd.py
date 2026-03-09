@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 from argparse import ArgumentParser, Namespace
@@ -53,13 +52,23 @@ class UnsupportedLanguageError(Exception):
 class TranspilationError(Exception):
     """Error lanzado cuando ocurre un problema durante la transpilación."""
     pass
-REVERSE_TRANSPILERS: Dict[str, Type] = {
-    (getattr(cls, "LANGUAGE", name.replace("ReverseFrom", "")).lower()): cls
-    for name, cls in inspect.getmembers(reverse_module, inspect.isclass)
-    if name.startswith("ReverseFrom")
-}
-
+REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
 ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
+
+
+def validar_consistencia_reverse_transpilers() -> None:
+    """Valida que la CLI y el registro interno compartan la misma política."""
+    policy = set(reverse_module.REVERSE_SCOPE_LANGUAGES)
+    registry = set(reverse_module.REGISTERED_REVERSE_TRANSPILERS.keys())
+    cli = set(REVERSE_TRANSPILERS.keys())
+    if cli != registry or not registry.issubset(policy):
+        raise RuntimeError(
+            "Inconsistencia de reverse transpilers: "
+            f"policy={sorted(policy)}, registry={sorted(registry)}, cli={sorted(cli)}"
+        )
+
+
+validar_consistencia_reverse_transpilers()
 
 @contextmanager
 def archivo_fuente(ruta: str, codificacion: str):
