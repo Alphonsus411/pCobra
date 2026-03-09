@@ -98,7 +98,23 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["pcobra", "cobra", "core"]
+include = [
+    "pcobra*",
+    "cobra*",
+    "core*",
+    "cli*",
+    "lsp*",
+]
+exclude = [
+    "*.tests",
+    "*.tests.*",
+    "tests",
+    "tests.*",
+    "*.test",
+    "*.test.*",
+    "*.stubs",
+    "*.stubs.*",
+]
 
 [project.scripts]
 cobra = "pcobra.cli:main"
