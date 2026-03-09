@@ -32,19 +32,34 @@ imprimir(x)
 
 # Configuración de cada backend: extensión y comandos de ejecución
 BACKENDS = {
-    "python": {
-        "ext": "py",
-        "run": ["python", "{file}"]
-    },
-    "js": {
-        "ext": "js",
-        "run": ["node", "{file}"]
-    },
+    "python": {"ext": "py", "run": ["python", "{file}"]},
+    "js": {"ext": "js", "run": ["node", "{file}"]},
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
-        "run": ["{tmp}/prog_rs"]
-    }
+        "run": ["{tmp}/prog_rs"],
+    },
+    "wasm": {
+        "ext": "wat",
+        "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
+        "run": ["wasmtime", "{tmp}/prog.wasm"],
+    },
+    "go": {"ext": "go", "run": ["go", "run", "{file}"]},
+    "cpp": {
+        "ext": "cpp",
+        "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
+        "run": ["{tmp}/prog_cpp"],
+    },
+    "java": {
+        "ext": "java",
+        "compile": ["javac", "{file}"],
+        "run": ["java", "-cp", "{tmp}", "Main"],
+    },
+    "asm": {
+        "ext": "s",
+        "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
+        "run": ["{tmp}/prog_asm"],
+    },
 }
 
 
@@ -128,7 +143,7 @@ def main() -> None:
         cobra_cmd = [
             sys.executable,
             "-m",
-            "src.cli.cli",
+            "cobra.cli.cli",
             "ejecutar",
             str(co_file),
         ]
@@ -141,7 +156,7 @@ def main() -> None:
             transp_cmd = [
                 sys.executable,
                 "-m",
-                "src.cli.cli",
+                "cobra.cli.cli",
                 "compilar",
                 str(co_file),
                 "--tipo",

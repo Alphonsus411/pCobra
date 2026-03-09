@@ -123,9 +123,11 @@ class BenchmarksCommand(BaseCommand):
 
 BACKENDS: Mapping[str, Sequence[str]] = {
     "python": ("python",),
+    "rust": ("rust",),
     "js": ("javascript",),
+    "wasm": ("wat", "wasm"),
     "go": ("go",),
     "cpp": ("cpp",),
-    "ruby": ("ruby",),
-    "rust": ("rust",),
+    "java": ("java",),
+    "asm": ("assembler", "asm"),
 }

@@ -23,27 +23,13 @@ ast_nodes.__getattr__ = __getattr__
 
 dummy_transpilers = {
     "asm": "TranspiladorASM",
-    "c": "TranspiladorC",
-    "cobol": "TranspiladorCOBOL",
     "cpp": "TranspiladorCPP",
-    "fortran": "TranspiladorFortran",
     "go": "TranspiladorGo",
     "java": "TranspiladorJava",
-    "kotlin": "TranspiladorKotlin",
     "js": "TranspiladorJavaScript",
-    "julia": "TranspiladorJulia",
-    "latex": "TranspiladorLatex",
-    "matlab": "TranspiladorMatlab",
-    "mojo": "TranspiladorMojo",
-    "pascal": "TranspiladorPascal",
-    "php": "TranspiladorPHP",
-    "perl": "TranspiladorPerl",
-    "visualbasic": "TranspiladorVisualBasic",
-    "r": "TranspiladorR",
-    "ruby": "TranspiladorRuby",
+    "python": "TranspiladorPython",
     "rust": "TranspiladorRust",
     "wasm": "TranspiladorWasm",
-    "swift": "TranspiladorSwift",
 }
 
 for suffix, class_name in dummy_transpilers.items():

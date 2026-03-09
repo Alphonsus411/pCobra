@@ -21,28 +21,13 @@ def _stub(mod_name: str, cls_name: str) -> None:
 
 for name, cls in [
     ("to_asm", "TranspiladorASM"),
-    ("to_c", "TranspiladorC"),
-    ("to_cobol", "TranspiladorCOBOL"),
     ("to_cpp", "TranspiladorCPP"),
-    ("to_fortran", "TranspiladorFortran"),
     ("to_go", "TranspiladorGo"),
     ("to_java", "TranspiladorJava"),
-    ("to_kotlin", "TranspiladorKotlin"),
     ("to_js", "TranspiladorJavaScript"),
-    ("to_julia", "TranspiladorJulia"),
-    ("to_latex", "TranspiladorLatex"),
-    ("to_matlab", "TranspiladorMatlab"),
-    ("to_mojo", "TranspiladorMojo"),
-    ("to_pascal", "TranspiladorPascal"),
-    ("to_php", "TranspiladorPHP"),
-    ("to_perl", "TranspiladorPerl"),
-    ("to_visualbasic", "TranspiladorVisualBasic"),
     ("to_python", "TranspiladorPython"),
-    ("to_r", "TranspiladorR"),
-    ("to_ruby", "TranspiladorRuby"),
     ("to_rust", "TranspiladorRust"),
     ("to_wasm", "TranspiladorWasm"),
-    ("to_swift", "TranspiladorSwift"),
 ]:
     _stub(name, cls)
 
