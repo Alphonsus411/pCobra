@@ -6,9 +6,13 @@ no impedir el uso de los demás.
 """
 import logging
 from importlib import import_module
-from typing import List, Type
+from typing import Dict, List, Type
 
 from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
+from pcobra.cobra.transpilers.reverse.policy import (
+    REVERSE_SCOPE_LANGUAGES,
+    REVERSE_SCOPE_MODULES,
+)
 try:  # pragma: no cover - dependencia opcional
     from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
 except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
@@ -25,32 +29,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
 # Lista de módulos a intentar importar
 logger = logging.getLogger(__name__)
 
-_MODULOS = [
-    "pcobra.cobra.transpilers.reverse.from_c",
-    "pcobra.cobra.transpilers.reverse.from_cpp",
-    "pcobra.cobra.transpilers.reverse.from_js",
-    "pcobra.cobra.transpilers.reverse.from_java",
-    "pcobra.cobra.transpilers.reverse.from_go",
-    "pcobra.cobra.transpilers.reverse.from_julia",
-    "pcobra.cobra.transpilers.reverse.from_php",
-    "pcobra.cobra.transpilers.reverse.from_perl",
-    "pcobra.cobra.transpilers.reverse.from_r",
-    "pcobra.cobra.transpilers.reverse.from_ruby",
-    "pcobra.cobra.transpilers.reverse.from_rust",
-    "pcobra.cobra.transpilers.reverse.from_swift",
-    "pcobra.cobra.transpilers.reverse.from_kotlin",
-    "pcobra.cobra.transpilers.reverse.from_fortran",
-    "pcobra.cobra.transpilers.reverse.from_python",
-    "pcobra.cobra.transpilers.reverse.from_asm",
-    "pcobra.cobra.transpilers.reverse.from_cobol",
-    "pcobra.cobra.transpilers.reverse.from_latex",
-    "pcobra.cobra.transpilers.reverse.from_matlab",
-    "pcobra.cobra.transpilers.reverse.from_mojo",
-    "pcobra.cobra.transpilers.reverse.from_pascal",
-    "pcobra.cobra.transpilers.reverse.from_visualbasic",
-    "pcobra.cobra.transpilers.reverse.from_wasm",
-    "pcobra.cobra.reverse",
-]
+_MODULOS = list(REVERSE_SCOPE_MODULES.values())
 
 _LEGACY_FALLBACKS = {
     mod_name: mod_name.replace("pcobra.cobra", "cobra", 1)
@@ -140,6 +119,13 @@ INCOMPLETE_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
     if cls.__name__ not in {"ReverseFromPython", "ReverseFromJS", "ReverseFromJava"}
 ]
 
+REGISTERED_REVERSE_TRANSPILERS: Dict[str, Type[BaseReverseTranspiler]] = {
+    getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower(): cls
+    for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS
+    if getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower()
+    in REVERSE_SCOPE_LANGUAGES
+}
+
 __all__ = ["BaseReverseTranspiler", "TreeSitterReverseTranspiler"] + [
     cls.__name__ for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS
-]
+] + ["REGISTERED_REVERSE_TRANSPILERS", "REVERSE_SCOPE_LANGUAGES"]
