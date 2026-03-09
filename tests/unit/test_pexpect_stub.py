@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-import pexpect
+from pcobra._stubs import pexpect
 
 
 def test_spawn_split_string_command_without_shell_injection() -> None:

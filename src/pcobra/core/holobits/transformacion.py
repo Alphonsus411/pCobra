@@ -4,7 +4,9 @@ Si la versión instalada del SDK no dispone de las operaciones
 ``escalar`` o ``mover`` se aplican cálculos locales equivalentes.
 """
 
-import numpy as np
+from pcobra._stubs.compat import import_optional_module
+
+np = import_optional_module("numpy", safe_stub=True)
 
 from .holobit import Holobit
 from .graficar import _to_sdk_holobit

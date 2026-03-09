@@ -6,6 +6,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any, Callable, Iterator, Literal, TYPE_CHECKING
 
+from pcobra._stubs.compat import import_optional_attr
+
 if TYPE_CHECKING:  # pragma: no cover - solo para herramientas de análisis estático
     from rich.columns import Columns
     from rich.console import Console, Group, RenderableType
@@ -22,11 +24,7 @@ def _obtener_console(console: "Console" | None) -> "Console":
 
     if console is not None:
         return console
-    try:
-        from rich.console import Console  # type: ignore
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
-
+    Console = import_optional_attr("rich.console", "Console", safe_stub=True)  # type: ignore
     return Console()
 
 
@@ -43,10 +41,7 @@ def mostrar_codigo(
 ) -> Any:
     """Resalta ``codigo`` con Rich y lo imprime en la consola indicada."""
 
-    try:
-        from rich.syntax import Syntax
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Syntax = import_optional_attr("rich.syntax", "Syntax", safe_stub=True)
 
     console_obj = _obtener_console(console)
     resaltado = Syntax(codigo, lenguaje)
@@ -62,10 +57,7 @@ def mostrar_markdown(
 ) -> Any:
     """Renderiza texto Markdown con Rich y lo envía a la consola indicada."""
 
-    try:
-        from rich.markdown import Markdown
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Markdown = import_optional_attr("rich.markdown", "Markdown", safe_stub=True)
 
     render = Markdown(contenido, **markdown_kwargs)
 
@@ -83,11 +75,8 @@ def mostrar_json(
 ) -> Any:
     """Muestra datos JSON o estructuras Python con formato legible."""
 
-    try:
-        from rich.json import JSON
-        from rich.pretty import Pretty
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    JSON = import_optional_attr("rich.json", "JSON", safe_stub=True)
+    Pretty = import_optional_attr("rich.pretty", "Pretty", safe_stub=True)
 
     console_obj = _obtener_console(console)
 
@@ -130,10 +119,7 @@ def mostrar_arbol(
 ) -> Any:
     """Construye un árbol visual a partir de ``nodos`` y lo imprime con Rich."""
 
-    try:
-        from rich.tree import Tree
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Tree = import_optional_attr("rich.tree", "Tree", safe_stub=True)
 
     etiqueta_raiz = titulo if titulo is not None else "Árbol"
     arbol = Tree(etiqueta_raiz)
@@ -152,10 +138,7 @@ def preguntar_confirmacion(
 ) -> bool:
     """Solicita confirmación al usuario devolviendo ``True`` o ``False``."""
 
-    try:
-        from rich.prompt import Confirm
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Confirm = import_optional_attr("rich.prompt", "Confirm", safe_stub=True)
 
     console_obj = _obtener_console(console)
     return Confirm.ask(mensaje, default=por_defecto, console=console_obj)
@@ -171,10 +154,7 @@ def preguntar_texto(
 ) -> str:
     """Solicita texto libre y permite validar el resultado."""
 
-    try:
-        from rich.prompt import Prompt
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Prompt = import_optional_attr("rich.prompt", "Prompt", safe_stub=True)
 
     console_obj = _obtener_console(console)
 
@@ -210,10 +190,7 @@ def preguntar_password(
         La contraseña introducida por la persona usuaria.
     """
 
-    try:
-        from rich.prompt import Prompt
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Prompt = import_optional_attr("rich.prompt", "Prompt", safe_stub=True)
 
     console_obj = _obtener_console(console)
 
@@ -239,10 +216,7 @@ def preguntar_opcion(
 ) -> str:
     """Solicita al usuario elegir un elemento de ``opciones``."""
 
-    try:
-        from rich.prompt import Prompt
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Prompt = import_optional_attr("rich.prompt", "Prompt", safe_stub=True)
 
     if not opciones:
         raise ValueError("Debes proporcionar al menos una opción para elegir.")
@@ -286,10 +260,7 @@ def preguntar_opciones_multiple(
     ``permitir_indices`` es ``True``, indicando el número asociado en el listado.
     """
 
-    try:
-        from rich.prompt import Prompt
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Prompt = import_optional_attr("rich.prompt", "Prompt", safe_stub=True)
 
     if not opciones:
         raise ValueError("Debes proporcionar al menos una opción para elegir.")
@@ -398,10 +369,7 @@ def preguntar_entero(
 ) -> int:
     """Solicita al usuario un número entero y valida rangos opcionales."""
 
-    try:
-        from rich.prompt import IntPrompt
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    IntPrompt = import_optional_attr("rich.prompt", "IntPrompt", safe_stub=True)
 
     if minimo is not None and maximo is not None and minimo > maximo:
         raise ValueError("El mínimo no puede ser mayor que el máximo.")
@@ -458,10 +426,7 @@ def mostrar_tabla(
         personalizaciones adicionales.
     """
 
-    try:
-        from rich.table import Table  # type: ignore
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Table = import_optional_attr("rich.table", "Table", safe_stub=True)  # type: ignore
 
     console_obj = _obtener_console(console)
     filas_materializadas = list(filas)
@@ -541,10 +506,7 @@ def mostrar_tabla_paginada(
         )
         return [tabla_unica]
 
-    try:
-        from rich.prompt import Prompt
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Prompt = import_optional_attr("rich.prompt", "Prompt", safe_stub=True)
 
     tablas: list[Table] = []
     total_paginas = (total + tamano_pagina - 1) // tamano_pagina
@@ -608,11 +570,8 @@ def mostrar_columnas(
         reutilización posterior.
     """
 
-    try:
-        from rich.columns import Columns  # type: ignore
-        from rich.console import Group  # type: ignore
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Columns = import_optional_attr("rich.columns", "Columns", safe_stub=True)  # type: ignore
+    Group = import_optional_attr("rich.console", "Group", safe_stub=True)  # type: ignore
 
     console_obj = _obtener_console(console)
     renderizables = list(elementos)
@@ -659,10 +618,7 @@ def mostrar_panel(
 ) -> Panel:
     """Muestra un panel decorado con Rich y devuelve el render creado."""
 
-    try:
-        from rich.panel import Panel  # type: ignore
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Panel = import_optional_attr("rich.panel", "Panel", safe_stub=True)  # type: ignore
 
     panel = Panel(
         contenido,
@@ -702,11 +658,8 @@ def grupo_consola(
         La consola sobre la que imprimir los mensajes agrupados.
     """
 
-    try:
-        from rich.console import Group  # type: ignore
-        from rich.padding import Padding  # type: ignore
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Group = import_optional_attr("rich.console", "Group", safe_stub=True)  # type: ignore
+    Padding = import_optional_attr("rich.padding", "Padding", safe_stub=True)  # type: ignore
 
     console_obj = _obtener_console(console)
     group_callable = getattr(console_obj, "group", None)
@@ -760,10 +713,7 @@ def estado_temporal(
 ) -> Iterator[Any]:
     """Muestra un estado temporal usando ``Console.status``."""
 
-    try:
-        from rich.status import Status
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de la instalación de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    Status = import_optional_attr("rich.status", "Status", safe_stub=True)
 
     console_obj = _obtener_console(console)
     status_obj: Status = console_obj.status(mensaje, spinner=spinner)
@@ -781,18 +731,13 @@ def barra_progreso(
 ) -> Iterator[tuple[Progress, TaskID]]:
     """Context manager que crea una barra de progreso lista para usar."""
 
-    try:
-        from rich.progress import (  # type: ignore
-            BarColumn,
-            Progress,
-            SpinnerColumn,
-            TaskID,
-            TextColumn,
-            TimeElapsedColumn,
-            TimeRemainingColumn,
-        )
-    except ModuleNotFoundError as exc:  # pragma: no cover - depende de Rich
-        raise RuntimeError("Rich no está instalado. Ejecuta 'pip install rich'.") from exc
+    BarColumn = import_optional_attr("rich.progress", "BarColumn", safe_stub=True)
+    Progress = import_optional_attr("rich.progress", "Progress", safe_stub=True)
+    SpinnerColumn = import_optional_attr("rich.progress", "SpinnerColumn", safe_stub=True)
+    TaskID = import_optional_attr("rich.progress", "TaskID", safe_stub=True)
+    TextColumn = import_optional_attr("rich.progress", "TextColumn", safe_stub=True)
+    TimeElapsedColumn = import_optional_attr("rich.progress", "TimeElapsedColumn", safe_stub=True)
+    TimeRemainingColumn = import_optional_attr("rich.progress", "TimeRemainingColumn", safe_stub=True)
 
     console_obj = _obtener_console(console)
 

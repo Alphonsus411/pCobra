@@ -6,7 +6,9 @@ import sys
 from types import ModuleType
 from typing import Iterable
 
-import numpy as np
+from pcobra._stubs.compat import import_optional_module
+
+np = import_optional_module("numpy", safe_stub=True)
 
 from .holobit import Holobit
 

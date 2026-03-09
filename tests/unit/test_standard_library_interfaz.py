@@ -10,15 +10,18 @@ from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-from rich.columns import Columns
-from rich.console import Console, Group
-from rich.json import JSON
-from rich.markdown import Markdown
-from rich.padding import Padding
-from rich.pretty import Pretty
-from rich.syntax import Syntax
-from rich.table import Table
-from rich.tree import Tree
+from pcobra._stubs.compat import import_optional_attr
+
+Columns = import_optional_attr("rich.columns", "Columns", safe_stub=True)
+Console = import_optional_attr("rich.console", "Console", safe_stub=True)
+Group = import_optional_attr("rich.console", "Group", safe_stub=True)
+JSON = import_optional_attr("rich.json", "JSON", safe_stub=True)
+Markdown = import_optional_attr("rich.markdown", "Markdown", safe_stub=True)
+Padding = import_optional_attr("rich.padding", "Padding", safe_stub=True)
+Pretty = import_optional_attr("rich.pretty", "Pretty", safe_stub=True)
+Syntax = import_optional_attr("rich.syntax", "Syntax", safe_stub=True)
+Table = import_optional_attr("rich.table", "Table", safe_stub=True)
+Tree = import_optional_attr("rich.tree", "Tree", safe_stub=True)
 
 
 def _cargar_interfaz() -> ModuleType:
@@ -68,18 +71,9 @@ def test_mostrar_codigo_resalta_codigo_en_console_mock():
     assert resaltado is render
 
 
-def test_mostrar_codigo_sin_rich_syntax_lanza_error(monkeypatch):
-    original_import = builtins.__import__
-
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "rich.syntax":
-            raise ModuleNotFoundError("simulado")
-        return original_import(name, globals, locals, fromlist, level)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    with pytest.raises(RuntimeError):
-        mostrar_codigo("print('hola')", "python")
+def test_mostrar_codigo_sin_rich_syntax_usa_fallback_stub():
+    render = mostrar_codigo("print('hola')", "python")
+    assert isinstance(render, Syntax)
 
 
 def test_mostrar_markdown_instancia_render_correcto():
@@ -91,18 +85,9 @@ def test_mostrar_markdown_instancia_render_correcto():
     assert isinstance(render, Markdown)
 
 
-def test_mostrar_markdown_sin_dependencia_lanza_error(monkeypatch):
-    original_import = builtins.__import__
-
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "rich.markdown":
-            raise ModuleNotFoundError("sin rich.markdown")
-        return original_import(name, globals, locals, fromlist, level)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    with pytest.raises(RuntimeError):
-        mostrar_markdown("**Hola**")
+def test_mostrar_markdown_sin_dependencia_usa_fallback_stub():
+    render = mostrar_markdown("**Hola**")
+    assert isinstance(render, Markdown)
 
 
 def test_mostrar_json_cadena_emplea_json_render():
@@ -132,18 +117,9 @@ def test_mostrar_json_objeto_no_serializable_usa_pretty(monkeypatch):
     assert isinstance(render, Pretty)
 
 
-def test_mostrar_json_sin_dependencia_lanza_error(monkeypatch):
-    original_import = builtins.__import__
-
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name in {"rich.json", "rich.pretty"}:
-            raise ModuleNotFoundError("sin dependencia")
-        return original_import(name, globals, locals, fromlist, level)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    with pytest.raises(RuntimeError):
-        mostrar_json({"clave": "valor"})
+def test_mostrar_json_sin_dependencia_usa_fallback_stub():
+    render = mostrar_json({"clave": "valor"})
+    assert render is not None
 
 
 def test_mostrar_arbol_construye_ramas_en_orden():
@@ -264,18 +240,15 @@ def test_preguntar_password_reintenta_hasta_validar(monkeypatch):
     assert "Contraseña inválida" in registro
 
 
-def test_preguntar_password_sin_rich_lanza_error(monkeypatch):
-    original_import = builtins.__import__
+def test_preguntar_password_sin_rich_usa_fallback_stub(monkeypatch):
+    class DummyPrompt:
+        @classmethod
+        def ask(cls, *_args, **_kwargs):
+            return "secreto"
 
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "rich.prompt":
-            raise ModuleNotFoundError("sin rich")
-        return original_import(name, globals, locals, fromlist, level)
+    monkeypatch.setattr(interfaz, "import_optional_attr", lambda *_a, **_k: DummyPrompt)
 
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    with pytest.raises(RuntimeError):
-        preguntar_password("Clave")
+    assert preguntar_password("Clave") == "secreto"
 
 
 def test_preguntar_opcion_envia_opciones_como_texto(monkeypatch):
@@ -402,18 +375,22 @@ def test_preguntar_opciones_multiple_por_defecto_respetado(monkeypatch):
     assert llamada["show_default"] is True
 
 
-def test_preguntar_opciones_multiple_sin_rich_lanza_error(monkeypatch):
-    original_import = builtins.__import__
+def test_preguntar_opciones_multiple_sin_rich_usa_fallback_stub(monkeypatch):
+    class DummyPrompt:
+        @classmethod
+        def ask(cls, *_args, **_kwargs):
+            return "1"
 
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "rich.prompt":
-            raise ModuleNotFoundError("sin rich")
-        return original_import(name, globals, locals, fromlist, level)
+    real_import = interfaz.import_optional_attr
 
-    monkeypatch.setattr(builtins, "__import__", fake_import)
+    def fake_import(module: str, attr: str, **kwargs):
+        if module == "rich.prompt" and attr == "Prompt":
+            return DummyPrompt
+        return real_import(module, attr, **kwargs)
 
-    with pytest.raises(RuntimeError):
-        preguntar_opciones_multiple("Selecciona", opciones=["uno", "dos"])
+    monkeypatch.setattr(interfaz, "import_optional_attr", fake_import)
+
+    assert preguntar_opciones_multiple("Selecciona", opciones=["uno", "dos"]) == ["uno"]
 
 
 def test_preguntar_entero_respeta_rangos(monkeypatch):
@@ -563,18 +540,23 @@ def test_mostrar_tabla_paginada_una_pagina_no_importa_prompt(monkeypatch):
     assert observadas == [[1, 2]]
 
 
-def test_mostrar_tabla_paginada_sin_rich_lanza_error(monkeypatch):
-    original_import = builtins.__import__
+def test_mostrar_tabla_paginada_sin_rich_usa_fallback_stub(monkeypatch):
+    class DummyPrompt:
+        @classmethod
+        def ask(cls, *_args, **_kwargs):
+            return "q"
 
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "rich.prompt":
-            raise ModuleNotFoundError("sin rich")
-        return original_import(name, globals, locals, fromlist, level)
+    real_import = interfaz.import_optional_attr
 
-    monkeypatch.setattr(builtins, "__import__", fake_import)
+    def fake_import(module: str, attr: str, **kwargs):
+        if module == "rich.prompt" and attr == "Prompt":
+            return DummyPrompt
+        return real_import(module, attr, **kwargs)
 
-    with pytest.raises(RuntimeError):
-        mostrar_tabla_paginada([1, 2, 3], tamano_pagina=1)
+    monkeypatch.setattr(interfaz, "import_optional_attr", fake_import)
+
+    tablas = mostrar_tabla_paginada([1, 2, 3], tamano_pagina=1)
+    assert len(tablas) == 1
 
 
 def test_mostrar_tabla_paginada_valida_tamano_pagina():
@@ -651,19 +633,9 @@ def test_estado_temporal_usa_console_status():
     status_cm.__exit__.assert_called_once()
 
 
-def test_estado_temporal_sin_rich_status_lanza_error(monkeypatch):
-    original_import = builtins.__import__
-
-    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "rich.status":
-            raise ModuleNotFoundError("sin rich.status")
-        return original_import(name, globals, locals, fromlist, level)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    with pytest.raises(RuntimeError):
-        with estado_temporal("Procesando"):
-            pass
+def test_estado_temporal_sin_rich_status_usa_fallback_stub():
+    with estado_temporal("Procesando") as estado:
+        assert estado is not None
 
 
 def test_barra_progreso_avanza():

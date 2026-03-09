@@ -22,6 +22,7 @@ from functools import (
 import importlib.util
 from typing import Any, Awaitable, Callable, Optional, ParamSpec, Sequence, TypeVar, overload
 
+from pcobra._stubs.compat import import_optional_attr
 from pcobra.corelibs import reintentar_async as _reintentar_async
 
 try:  # pragma: no branch - inicialización simple
@@ -30,7 +31,7 @@ except ModuleNotFoundError:  # pragma: no cover - la dependencia es opcional
     _rich_spec = None
 
 if _rich_spec is not None:
-    from rich.console import Console  # type: ignore[assignment]
+    Console = import_optional_attr("rich.console", "Console", safe_stub=True)  # type: ignore[assignment]
 else:  # pragma: no cover - ``rich`` es opcional.
     Console = None  # type: ignore[assignment]
 
