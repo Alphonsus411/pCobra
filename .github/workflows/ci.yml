@@ -132,6 +132,84 @@ jobs:
       - name: Validate changelog
         shell: bash
         run: python scripts/check_changelog.py
+      - name: Packaging check (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          rm -rf dist
+          python -m pip wheel . -w dist --no-deps
+          python - <<'PY'
+          import pathlib
+          import zipfile
+
+          wheels = sorted(pathlib.Path('dist').glob('*.whl'))
+          if not wheels:
+              raise SystemExit('No se encontró wheel en dist/.')
+
+          wheel = wheels[0]
+          with zipfile.ZipFile(wheel) as zf:
+              names = zf.namelist()
+              if any('/tests/' in n or n.endswith('/tests') for n in names):
+                  raise SystemExit('El wheel incluye directorios de pruebas y no debería.')
+              if any('/stubs/' in n or n.endswith('/stubs') for n in names):
+                  raise SystemExit('El wheel incluye directorios stubs y no debería.')
+          print(f'Wheel inspeccionado correctamente: {wheel.name}')
+          PY
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+          python - <<'PY'
+          import importlib
+
+          modules = [
+              'pcobra.cobra',
+              'pcobra.standard_library',
+              'pcobra.lsp',
+              'pcobra.gui',
+          ]
+
+          for module in modules:
+              importlib.import_module(module)
+
+          print('Smoke import de módulos críticos OK.')
+          PY
+      - name: Packaging check (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path dist) { Remove-Item dist -Recurse -Force }
+          python -m pip wheel . -w dist --no-deps
+          python - <<'PY'
+          import pathlib
+          import zipfile
+
+          wheels = sorted(pathlib.Path('dist').glob('*.whl'))
+          if not wheels:
+              raise SystemExit('No se encontró wheel en dist/.')
+
+          wheel = wheels[0]
+          with zipfile.ZipFile(wheel) as zf:
+              names = zf.namelist()
+              if any('/tests/' in n or n.endswith('/tests') for n in names):
+                  raise SystemExit('El wheel incluye directorios de pruebas y no debería.')
+              if any('/stubs/' in n or n.endswith('/stubs') for n in names):
+                  raise SystemExit('El wheel incluye directorios stubs y no debería.')
+          print(f'Wheel inspeccionado correctamente: {wheel.name}')
+          PY
+          python -m pip install --force-reinstall --no-deps dist\*.whl
+          python - <<'PY'
+          import importlib
+
+          modules = [
+              'pcobra.cobra',
+              'pcobra.standard_library',
+              'pcobra.lsp',
+              'pcobra.gui',
+          ]
+
+          for module in modules:
+              importlib.import_module(module)
+
+          print('Smoke import de módulos críticos OK.')
+          PY
       - name: Run tests
         if: runner.os != 'Windows'
         shell: bash
