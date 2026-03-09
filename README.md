@@ -15,7 +15,7 @@ Versión 10.0.12
 
 [English version available here](docs/README.en.md)
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly, facilitando su despliegue en distintos entornos.
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Java y WebAssembly, facilitando su despliegue en distintos entornos.
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
@@ -312,7 +312,7 @@ El proyecto soporta oficialmente:
 # Características Principales
 
 - Lexer y Parser: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
-- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
+- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Java y WebAssembly: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
 - Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
 - Módulos nativos con funciones de E/S, utilidades matemáticas y estructuras de datos para usar directamente desde Cobra.
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
@@ -560,7 +560,7 @@ para var i en rango(2) :
 '''
 ````
 
-Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println`, en Kotlin `println`, en Swift `print`, en R se usa `print` y en Julia `println`; en Java se usa `System.out.println`, en COBOL `DISPLAY`, en Fortran `print *` y en Pascal `writeln`, en VisualBasic `Console.WriteLine`, en Ruby `puts`, en PHP `echo`, en Matlab `disp`, en Mojo `print` y en LaTeX `\texttt{}`.
+Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println` y en Java se usa `System.out.println`.
 
 ## Integración con holobit-sdk
 
@@ -635,7 +635,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 ## Invocar el transpilador
 
 La carpeta [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler)
-contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C y WebAssembly. Una vez
+contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Java y WebAssembly. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
 
@@ -654,31 +654,21 @@ print(resultado)
 Para otros lenguajes puedes invocar los nuevos transpiladores así:
 
 ```python
-from cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
-from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
-from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
-from cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
-from cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
-from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
-from cobra.transpilers.transpiler.to_swift import TranspiladorSwift
-from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
-from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from cobra.transpilers.transpiler.to_go import TranspiladorGo
+from cobra.transpilers.transpiler.to_java import TranspiladorJava
+from cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
-codigo_cobol = TranspiladorCOBOL().generate_code(arbol)
-codigo_fortran = TranspiladorFortran().generate_code(arbol)
-codigo_pascal = TranspiladorPascal().generate_code(arbol)
-codigo_ruby = TranspiladorRuby().generate_code(arbol)
-codigo_php = TranspiladorPHP().generate_code(arbol)
-codigo_perl = TranspiladorPerl().generate_code(arbol)
-codigo_visualbasic = TranspiladorVisualBasic().generate_code(arbol)
-codigo_kotlin = TranspiladorKotlin().generate_code(arbol)
-codigo_swift = TranspiladorSwift().generate_code(arbol)
-codigo_matlab = TranspiladorMatlab().generate_code(arbol)
-codigo_mojo = TranspiladorMojo().generate_code(arbol)
-codigo_latex = TranspiladorLatex().generate_code(arbol)
+codigo_js = TranspiladorJavaScript().generate_code(arbol)
+codigo_rust = TranspiladorRust().generate_code(arbol)
+codigo_cpp = TranspiladorCPP().generate_code(arbol)
+codigo_go = TranspiladorGo().generate_code(arbol)
+codigo_java = TranspiladorJava().generate_code(arbol)
+codigo_asm = TranspiladorASM().generate_code(arbol)
+codigo_wasm = TranspiladorWasm().generate_code(arbol)
 ```
 
 Tras obtener el código con ``generate_code`` puedes guardarlo usando ``save_file``:

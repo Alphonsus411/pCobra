@@ -9,7 +9,7 @@ Version 10.0.12
 - `corelibs.texto`, `corelibs.numero` and `standard_library.datos` expand the `es_*` validators, add helpers like `prefijo_comun`/`sufijo_comun`, `interpolar`, `envolver_modular`, and provide Parquet/Feather IO wrappers.
 - `corelibs.sistema.ejecutar` enforces explicit whitelists in Python and native bindings to keep command execution locked down by default.
 
-Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly, allowing greater versatility when running and deploying Cobra code.
+Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to Python, JavaScript, assembly, Rust, C++, Go, Java and WebAssembly, allowing greater versatility when running and deploying Cobra code.
 
 ## Table of Contents
 
@@ -303,7 +303,7 @@ The project officially supports:
 # Main Features
 
 - Lexer and Parser: Implementation of a lexer to tokenize the source code and a parser to build an abstract syntax tree (AST).
-- Transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly: Cobra can convert code to these languages, facilitating integration with external applications.
+- Transpilers to Python, JavaScript, assembly, Rust, C++, Go, Java and WebAssembly: Cobra can convert code to these languages, facilitating integration with external applications.
 - Support for advanced structures: declaration of variables, functions, classes, lists and dictionaries, as well as loops and conditionals.
 - Native modules with I/O functions, math utilities and data structures ready to use from Cobra.
 - Text helpers mirror Python's `textwrap`: `indentar_texto`, `desindentar_texto`, `envolver_texto` and `acortar_texto` expose consistent indentation, wrapping and shortening utilities from both the core libraries and the Spanish standard library.
@@ -531,7 +531,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C and WebAssembly. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to Python, JavaScript, assembly, Rust, C++, Go, Java and WebAssembly. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
@@ -548,31 +548,21 @@ print(resultado)
 For other languages you can invoke the additional transpilers like this:
 
 ```python
-from cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
-from cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
-from cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
-from cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from cobra.transpilers.transpiler.to_perl import TranspiladorPerl
-from cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
-from cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
-from cobra.transpilers.transpiler.to_swift import TranspiladorSwift
-from cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
-from cobra.transpilers.transpiler.to_latex import TranspiladorLatex
+from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from cobra.transpilers.transpiler.to_rust import TranspiladorRust
+from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
+from cobra.transpilers.transpiler.to_go import TranspiladorGo
+from cobra.transpilers.transpiler.to_java import TranspiladorJava
+from cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
-codigo_cobol = TranspiladorCOBOL().generate_code(arbol)
-codigo_fortran = TranspiladorFortran().generate_code(arbol)
-codigo_pascal = TranspiladorPascal().generate_code(arbol)
-codigo_ruby = TranspiladorRuby().generate_code(arbol)
-codigo_php = TranspiladorPHP().generate_code(arbol)
-codigo_perl = TranspiladorPerl().generate_code(arbol)
-codigo_visualbasic = TranspiladorVisualBasic().generate_code(arbol)
-codigo_kotlin = TranspiladorKotlin().generate_code(arbol)
-codigo_swift = TranspiladorSwift().generate_code(arbol)
-codigo_matlab = TranspiladorMatlab().generate_code(arbol)
-codigo_mojo = TranspiladorMojo().generate_code(arbol)
-codigo_latex = TranspiladorLatex().generate_code(arbol)
+codigo_js = TranspiladorJavaScript().generate_code(arbol)
+codigo_rust = TranspiladorRust().generate_code(arbol)
+codigo_cpp = TranspiladorCPP().generate_code(arbol)
+codigo_go = TranspiladorGo().generate_code(arbol)
+codigo_java = TranspiladorJava().generate_code(arbol)
+codigo_asm = TranspiladorASM().generate_code(arbol)
+codigo_wasm = TranspiladorWasm().generate_code(arbol)
 ```
 
 After obtaining the code with ``generate_code`` you can save it using ``save_file``:

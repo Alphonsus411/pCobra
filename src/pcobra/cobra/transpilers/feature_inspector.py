@@ -21,7 +21,8 @@ TRANSPILERS = {
     "Rust": "to_rust.py",
     "Go": "to_go.py",
     "Java": "to_java.py",
-    "Hololang": "to_hololang.py",
+    "Assembly": "to_asm.py",
+    "WASM": "to_wasm.py",
 }
 
 # Patrones para detectar características registradas en los transpiladores

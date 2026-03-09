@@ -6,30 +6,13 @@ from importlib.metadata import entry_points
 
 from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from pcobra.cobra.transpilers.transpiler.to_c import TranspiladorC
-from pcobra.cobra.transpilers.transpiler.to_cobol import TranspiladorCOBOL
 from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from pcobra.cobra.transpilers.transpiler.to_fortran import TranspiladorFortran
 from pcobra.cobra.transpilers.transpiler.to_go import TranspiladorGo
 from pcobra.cobra.transpilers.transpiler.to_java import TranspiladorJava
-from pcobra.cobra.transpilers.transpiler.to_kotlin import TranspiladorKotlin
 from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from pcobra.cobra.transpilers.transpiler.to_hololang import TranspiladorHololang
-from pcobra.cobra.transpilers.transpiler.to_julia import TranspiladorJulia
-from pcobra.cobra.transpilers.transpiler.to_latex import TranspiladorLatex
-from pcobra.cobra.transpilers.transpiler.to_llvm import TranspiladorLLVM
-from pcobra.cobra.transpilers.transpiler.to_matlab import TranspiladorMatlab
-from pcobra.cobra.transpilers.transpiler.to_mojo import TranspiladorMojo
-from pcobra.cobra.transpilers.transpiler.to_pascal import TranspiladorPascal
-from pcobra.cobra.transpilers.transpiler.to_php import TranspiladorPHP
-from pcobra.cobra.transpilers.transpiler.to_perl import TranspiladorPerl
-from pcobra.cobra.transpilers.transpiler.to_visualbasic import TranspiladorVisualBasic
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from pcobra.cobra.transpilers.transpiler.to_r import TranspiladorR
-from pcobra.cobra.transpilers.transpiler.to_ruby import TranspiladorRuby
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
-from pcobra.cobra.transpilers.transpiler.to_swift import TranspiladorSwift
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
 from pcobra.core.semantic_validators import (
@@ -52,30 +35,13 @@ MAX_LANGUAGES = 10
 
 TRANSPILERS = {
     "python": TranspiladorPython,
-    "js": TranspiladorJavaScript,
-    "hololang": TranspiladorHololang,
-    "asm": TranspiladorASM,
     "rust": TranspiladorRust,
-    "cpp": TranspiladorCPP,
-    "c": TranspiladorC,
-    "go": TranspiladorGo,
-    "kotlin": TranspiladorKotlin,
-    "swift": TranspiladorSwift,
-    "ruby": TranspiladorRuby,
-    "r": TranspiladorR,
-    "julia": TranspiladorJulia,
-    "java": TranspiladorJava,
-    "cobol": TranspiladorCOBOL,
-    "fortran": TranspiladorFortran,
-    "pascal": TranspiladorPascal,
-    "php": TranspiladorPHP,
-    "perl": TranspiladorPerl,
-    "visualbasic": TranspiladorVisualBasic,
-    "matlab": TranspiladorMatlab,
-    "mojo": TranspiladorMojo,
-    "latex": TranspiladorLatex,
-    "llvm": TranspiladorLLVM,
+    "js": TranspiladorJavaScript,
     "wasm": TranspiladorWasm,
+    "go": TranspiladorGo,
+    "cpp": TranspiladorCPP,
+    "java": TranspiladorJava,
+    "asm": TranspiladorASM,
 }
 
 # Cargar transpiladores externos

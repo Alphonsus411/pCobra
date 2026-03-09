@@ -77,7 +77,7 @@ def test_exceso_tipos(monkeypatch, tmp_path):
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.module_map.get_toml_map", lambda: {})
 
-    many_langs = "python,js,c,cpp,go,java,cobol,fortran,pascal,php,rust"
+    many_langs = "python,js,cpp,go,java,asm,rust,wasm,python,js,rust"
     args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=many_langs)
     rc = CompileCommand().run(args)
 
