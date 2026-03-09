@@ -29,12 +29,6 @@ imprimir(x)
 """
 
 BACKENDS = {
-    "c": {
-        "ext": "c",
-        "compile": ["gcc", "{file}", "-O2", "-o", "{tmp}/prog_c"],
-        "run": ["{tmp}/prog_c"],
-        "bin": "{tmp}/prog_c",
-    },
     "cpp": {
         "ext": "cpp",
         "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
@@ -46,6 +40,24 @@ BACKENDS = {
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
         "run": ["{tmp}/prog_rs"],
         "bin": "{tmp}/prog_rs",
+    },
+    "java": {
+        "ext": "java",
+        "compile": ["javac", "{file}"],
+        "run": ["java", "-cp", "{tmp}", "Main"],
+        "bin": "{tmp}/Main.class",
+    },
+    "asm": {
+        "ext": "s",
+        "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
+        "run": ["{tmp}/prog_asm"],
+        "bin": "{tmp}/prog_asm",
+    },
+    "wasm": {
+        "ext": "wat",
+        "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
+        "run": ["wasmtime", "{tmp}/prog.wasm"],
+        "bin": "{tmp}/prog.wasm",
     },
 }
 

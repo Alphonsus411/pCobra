@@ -21,6 +21,7 @@ from core.interpreter import InterpretadorCobra
 from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
+from tests.utils.targets import RUNNABLE_TARGETS
 
 from tests.utils.runtime import run_code
 
@@ -39,23 +40,6 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
         if lang == "js" and not shutil.which("node"):
             pytest.skip("node no disponible")
         return run_code(lang, codigo)
-    if lang == "ruby":
-        if not shutil.which("ruby"):
-            pytest.skip("ruby no disponible")
-        proc = subprocess.run(["ruby", "-"], input=codigo, text=True,
-                               capture_output=True, check=True)
-        return proc.stdout
-    if lang == "c":
-        comp = shutil.which("gcc")
-        if not comp:
-            pytest.skip("gcc no disponible")
-        src = tmp_path / "prog.c"
-        src.write_text(codigo)
-        exe = tmp_path / "prog"
-        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True,
-                              check=True)
-        return proc.stdout
     if lang == "cpp":
         comp = shutil.which("g++")
         if not comp:
@@ -100,20 +84,7 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
     pytest.skip(f"ejecuci\u00f3n no soportada para {lang}")
 
 
-# Lenguajes con soporte de ejecución en los tests
-RUNNABLE_LANGS = [
-    "python",
-    "js",
-    "ruby",
-    "c",
-    "cpp",
-    "go",
-    "rust",
-    "java",
-]
-
-
-@pytest.mark.parametrize("lang", RUNNABLE_LANGS)
+@pytest.mark.parametrize("lang", RUNNABLE_TARGETS)
 def test_transpile_semantics(tmp_path, lang):
     src = Path("tests/data/ejemplo.co")
     esperado = obtener_salida_interprete(src)

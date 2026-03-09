@@ -1,9 +1,5 @@
-import sys
 from pathlib import Path
-from io import StringIO
-from unittest.mock import patch
-import subprocess
-import shutil
+import sys
 
 import pytest
 
@@ -12,31 +8,16 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 import pcobra  # noqa: F401
-from core.interpreter import InterpretadorCobra
-from cobra.core import Lexer
-from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
-from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
-
+from cobra.core import Lexer, Parser
 from tests.integration.test_transpile_semantics import (
     ejecutar_codigo,
     obtener_salida_interprete,
 )
+from tests.utils.targets import RUNNABLE_TARGETS, SUPPORTED_TARGETS
 
 
-RUNTIME_LANGS = {
-    "python",
-    "js",
-    "ruby",
-    "c",
-    "cpp",
-    "go",
-    "rust",
-    "java",
-}
-
-
-@pytest.mark.parametrize("lang", sorted(TRANSPILERS.keys()))
+@pytest.mark.parametrize("lang", SUPPORTED_TARGETS)
 def test_generate_and_syntax(tmp_path, lang):
     src = Path("tests/data/ejemplo.co")
     tokens = Lexer(src.read_text()).analizar_token()
@@ -46,7 +27,7 @@ def test_generate_and_syntax(tmp_path, lang):
     assert isinstance(codigo, str)
     assert codigo.strip() != ""
 
-    if lang in RUNTIME_LANGS:
+    if lang in RUNNABLE_TARGETS:
         esperado = obtener_salida_interprete(src)
         salida = ejecutar_codigo(lang, codigo, tmp_path)
         assert salida == esperado
