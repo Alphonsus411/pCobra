@@ -1,133 +1,67 @@
 Estado de los lenguajes soportados
 =================================
 
-En la actualidad Cobra puede generar código para múltiples lenguajes. A
-continuación se lista cada backend y su estado de soporte. Para más
-detalles consulta :doc:`frontend/backends` y la sección
-*Características Principales* del `README.md <../README.md>`_.
+Esta guía separa los destinos de transpilación por nivel de soporte para evitar
+ambigüedades entre backends principales y experimentales.
 
-.. list-table:: Estado de los backends
+Tier 1 (soporte principal)
+--------------------------
+
+.. list-table:: Backends Tier 1
    :header-rows: 1
 
    * - Lenguaje
+     - Identificador CLI
      - Estado
    * - Python
+     - ``python``
      - Estable
    * - JavaScript
+     - ``js``
      - Estable
+   * - Rust
+     - ``rust``
+     - Estable
+   * - C++
+     - ``cpp``
+     - Estable
+
+Tier 2 (soporte parcial/experimental)
+-------------------------------------
+
+.. list-table:: Backends Tier 2
+   :header-rows: 1
+
+   * - Lenguaje
+     - Identificador CLI
+     - Estado
+   * - Go
+     - ``go``
+     - Parcial
+   * - Java
+     - ``java``
+     - Parcial
    * - Ensamblador
+     - ``asm``
      - Cobertura básica
-   * - C
-     - Experimental
-   * - C++
-     - Experimental
-   * - Rust
-     - Parcial
-   * - WebAssembly
-     - Experimental
-   * - Go
-     - Parcial
-   * - Kotlin
-     - Parcial
-   * - Swift
-     - Parcial
-   * - R
-     - Parcial
-   * - Julia
-     - Parcial
-   * - Java
-     - Parcial
-   * - COBOL
-     - Parcial
-   * - Fortran
-     - Parcial
-   * - Pascal
-     - Parcial
-   * - VisualBasic
-     - Parcial
-   * - Ruby
-     - Parcial
-   * - PHP
-     - Parcial
-   * - Perl
-     - Parcial
-   * - Matlab
-     - Parcial
-   * - Mojo
-     - Parcial
-   * - LaTeX
-     - Parcial
-
-Transpiladores inversos
------------------------
-
-Los siguientes lenguajes pueden convertirse a Cobra:
-
-.. list-table:: Lenguajes de entrada
-   :header-rows: 1
-
-   * - Lenguaje
-     - Estado
-   * - Ensamblador
-     - Experimental
-   * - C
-     - Experimental
-   * - C++
-     - Experimental
-   * - COBOL
-     - Experimental
-   * - Fortran
-     - Experimental (tree-sitter)
-   * - Go
-     - Experimental
-   * - Java
-     - Experimental
-   * - JavaScript
-     - Experimental
-   * - Julia
-     - Experimental
-   * - Kotlin
-     - Experimental
-   * - LaTeX
-     - Experimental
-   * - Matlab
-     - Experimental
-   * - Mojo
-     - Experimental
-   * - Pascal
-     - Experimental
-   * - Perl
-     - Experimental
-   * - PHP
-     - Experimental
-   * - Python
-     - Experimental
-   * - R
-     - Experimental
-   * - Ruby
-     - Experimental
-   * - Rust
-     - Experimental
-   * - Swift
-     - Experimental
-   * - VisualBasic
-     - Experimental (tree-sitter)
-   * - WebAssembly
+   * - WebAssembly (WAT)
+     - ``wasm``
      - Experimental
 
-Instalación de gramáticas
--------------------------
+Transpilación inversa (feature independiente)
+---------------------------------------------
 
-Para habilitar estos transpiladores inversos es necesario instalar las gramáticas de `tree-sitter`:
+La transpilación inversa se documenta como una capacidad separada de los
+backends de salida. Su objetivo es convertir código fuente de otros lenguajes
+a AST de Cobra para migraciones o análisis.
 
 .. code-block:: bash
 
-   pip install tree-sitter-languages
+   cobra transpilar-inverso script.py --origen=python --destino=cobra
 
-Este paquete incluye gramáticas para los lenguajes listados y puede instalarse junto con las dependencias del proyecto.
-
-Para conocer el alcance y las limitaciones del soporte de LaTeX consulte :doc:`soporte_latex`.
-
+Esta funcionalidad es experimental y su cobertura depende del frontend de
+entrada, por lo que no debe interpretarse como soporte de salida equivalente a
+los backends Tier 1/Tier 2.
 
 Comparativa de características
 ------------------------------
@@ -141,4 +75,3 @@ Diferencias identificadas
 
 - Go y Java no soportan condicionales ni bucles. Se recomienda implementar estas
   estructuras; véase el `issue #11 <issues/11_soporte_condicionales_bucles_go_java.md>`_.
-

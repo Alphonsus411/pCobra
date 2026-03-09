@@ -15,14 +15,10 @@ Transpila un archivo Cobra a otro lenguaje.
 Opciones principales:
 
 - ``archivo``: ruta del script ``.co``.
-- ``--tipo``: lenguaje de salida (``python``, ``js``, ``hololang``, ``asm``,
-  ``rust``, ``cpp``, ``c``, ``go``, ``kotlin``, ``swift``, ``ruby``, ``r``,
-  ``julia``, ``java``, ``cobol``, ``fortran``, ``pascal``, ``php``, ``perl``,
-  ``visualbasic``, ``matlab``, ``mojo``, ``latex``, ``llvm``, ``wasm`` y
-  cualquier transpilador extra registrado; consulta ``cobra compilar --help``
-  para la lista completa y actualizada).
+- ``--tipo``: lenguaje de salida (``python``, ``rust``, ``js``, ``wasm``,
+  ``go``, ``cpp``, ``java`` y ``asm``).
 - ``--backend``: alias de ``--tipo`` útil para integraciones automatizadas.
-  Admite los mismos lenguajes disponibles, incluido ``hololang``.
+  Admite los mismos lenguajes disponibles.
 - ``--tipos``: lista de lenguajes separados por comas para transpilación paralela.
 
 Ejemplo:
@@ -35,7 +31,7 @@ Otro ejemplo generando varios lenguajes a la vez:
 
 .. code-block:: bash
 
-   cobra compilar hola.co --tipos=python,js,c
+   cobra compilar hola.co --tipos=python,js,cpp
 
 Subcomando ``ejecutar``
 ----------------------
@@ -74,8 +70,8 @@ Ejemplo:
 .. code-block:: text
 
    $ cobra menu
-   Lenguajes destino disponibles: python, js, c...
-   Lenguajes de origen disponibles: python, js, c...
+   Lenguajes destino disponibles: python, rust, js, wasm, go, cpp, java, asm...
+   Lenguajes de origen disponibles: python, js, rust...
    ¿Desea transpilar? (s/n): s
    ¿Transpilar desde Cobra a otro lenguaje? (s/n): s
    Ruta al archivo Cobra: hola.co

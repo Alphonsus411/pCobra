@@ -34,8 +34,8 @@ El comando ``cobra`` cuenta con varias subopciones:
 
    cobra compilar archivo.co --tipo python
    cobra compilar archivo.co --tipo asm
-   cobra compilar archivo.co --tipo ruby
-   cobra compilar archivo.co --tipo php
+   cobra compilar archivo.co --tipo js
+   cobra compilar archivo.co --tipo wasm
    cobra ejecutar archivo.co --depurar
    cobra modulos listar
    cobra docs
