@@ -22,7 +22,9 @@ from itertools import groupby
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence
 
-import numpy as np
+from pcobra._stubs.compat import import_optional_module
+
+np = import_optional_module("numpy", safe_stub=True)
 
 Registro = dict[str, Any]
 Tabla = list[Registro]

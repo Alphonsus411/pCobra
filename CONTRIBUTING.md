@@ -178,3 +178,36 @@ Recuerda ejecutar `make lint` antes de enviar tu pull request.
 ## Contacto
 
 Si tienes dudas o necesitas ayuda, únete a nuestro canal comunitario en Discord (enlace disponible próximamente).
+
+## Uso de stubs internos para dependencias opcionales
+
+Para evitar colisiones con paquetes de terceros, los stubs del proyecto viven en
+`pcobra/_stubs/` y **no** deben publicarse como paquetes top-level (`numpy`,
+`pandas`, `rich`, `pexpect`, etc.).
+
+### Estrategia obligatoria de importación
+
+Cuando un módulo dependa de una librería opcional, sigue esta secuencia:
+
+1. Intentar importar la librería real.
+2. Hacer fallback al stub interno **solo** cuando:
+   - el error sea `ModuleNotFoundError` del módulo objetivo, y
+   - el fallback esté marcado como seguro.
+
+Para ello usa `pcobra._stubs.compat` (`import_optional_module` o
+`import_optional_attr`) con `safe_stub=True` únicamente en dependencias
+aprobadas para fallback.
+
+### Cuándo usar stubs
+
+- Pruebas en entornos mínimos sin dependencias pesadas.
+- Compatibilidad de utilidades no críticas donde existe una implementación
+  reducida y documentada.
+
+### Limitaciones de los stubs
+
+- No replican toda la API de la librería real.
+- Su comportamiento está acotado a los casos que usa actualmente el proyecto.
+- No deben usarse para evaluar rendimiento ni compatibilidad completa.
+- Si una funcionalidad requiere APIs avanzadas, instala la dependencia real en
+  lugar de ampliar el stub sin justificación.

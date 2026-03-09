@@ -536,7 +536,7 @@ def test_escribir_y_leer_parquet(tmp_path: Path):
 
 def test_parquet_sin_dependencias(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(datos_mod, "_modulo_disponible", lambda _nombre: False)
-    with pytest.raises(ValueError, match="Instala 'pyarrow' o 'fastparquet'"):
+    with pytest.raises(ValueError, match="instala el extra opcional"):
         leer_parquet(tmp_path / "faltante.parquet")
 
 
@@ -552,7 +552,7 @@ def test_escribir_y_leer_feather(tmp_path: Path):
 
 def test_feather_sin_pyarrow(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(datos_mod, "_modulo_disponible", lambda _nombre: False)
-    with pytest.raises(ValueError, match="instala el paquete opcional 'pyarrow'"):
+    with pytest.raises(ValueError, match="instala el extra opcional"):
         escribir_feather(_tabla_base(), tmp_path / "salida.feather")
 
 
