@@ -15,7 +15,7 @@ Versión 10.0.12
 
 [English version available here](docs/README.en.md)
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en Python, JavaScript, ensamblador, Rust, C++, Go, Java y WebAssembly, facilitando su despliegue en distintos entornos.
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` y `asm`, facilitando su despliegue en distintos entornos.
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
@@ -727,7 +727,7 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
   ```
 
 ```bash
-# Compilar un archivo a Python, JavaScript, ensamblador, Rust, C++, Go, Kotlin, Swift, R, Julia, Java, COBOL, Fortran, Pascal, Ruby, PHP, Perl, VisualBasic, Matlab, Mojo, LaTeX, C o WebAssembly
+# Compilar un archivo a: python, rust, js, wasm, go, cpp, java o asm
 cobra compilar programa.co --tipo python
 
 # Transpilar inverso de Python a JavaScript
@@ -930,17 +930,13 @@ de error.
 
 ````bash
 cobra compilar programa.co --tipo=python
-cobra compilar programa.co --tipo=asm
-cobra compilar programa.co --tipo=cpp
+cobra compilar programa.co --tipo=rust
+cobra compilar programa.co --tipo=js
+cobra compilar programa.co --tipo=wasm
 cobra compilar programa.co --tipo=go
-cobra compilar programa.co --tipo=ruby
-cobra compilar programa.co --tipo=r
-cobra compilar programa.co --tipo=julia
+cobra compilar programa.co --tipo=cpp
 cobra compilar programa.co --tipo=java
-cobra compilar programa.co --tipo=cobol
-cobra compilar programa.co --tipo=fortran
-cobra compilar programa.co --tipo=pascal
-cobra compilar programa.co --tipo=php
+cobra compilar programa.co --tipo=asm
 echo $?  # 0 al compilar sin problemas
 
 cobra ejecutar inexistente.co
@@ -1237,29 +1233,14 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 
 ## Lenguajes soportados
 
-- Python
-- JavaScript
-- ensamblador
-- Rust
-- C++
-- Go
-- Kotlin
-- Swift
-- R
-- Julia
-- Java
-- COBOL
-- Fortran
-- Pascal
-- Ruby
-- PHP
-- Perl
-- Visual Basic
-- Matlab
-- Mojo
-- LaTeX
-- C
-- WebAssembly
+- python
+- rust
+- js
+- wasm
+- go
+- cpp
+- java
+- asm
 
 Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
 
