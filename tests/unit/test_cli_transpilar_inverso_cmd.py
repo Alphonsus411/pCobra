@@ -47,3 +47,22 @@ def test_transpilar_inverso_consistencia_registry_cli():
     policy = set(transpilar_inverso_cmd.reverse_module.REVERSE_SCOPE_LANGUAGES)
     assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS.keys()).issubset(policy)
     assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS.keys()) == set(transpilar_inverso_cmd.ORIGIN_CHOICES)
+
+
+def test_transpilar_inverso_origen_fuera_de_politica(tmp_path):
+    from pcobra.cobra.cli.commands import transpilar_inverso_cmd
+
+    archivo = tmp_path / "a.rs"
+    archivo.write_text("fn main() {}")
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        main([
+            "transpilar-inverso",
+            str(archivo),
+            "--origen=rust",
+            "--destino=python",
+        ])
+
+    assert "Origen fuera de política de transpilación inversa" in out.getvalue()
+    for origen in transpilar_inverso_cmd.ORIGIN_CHOICES:
+        assert origen in out.getvalue()

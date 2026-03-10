@@ -200,6 +200,16 @@ class TranspilarInversoCommand(BaseCommand):
                 f"No hay transpilador disponible para el lenguaje de destino '{destino}'"
             )
 
+    def _validar_origen_en_politica(self, origen: str) -> None:
+        """Valida que el origen esté dentro de la política de reverse transpilation."""
+        permitidos = set(reverse_module.REVERSE_SCOPE_LANGUAGES)
+        if origen not in permitidos:
+            sugeridos = ", ".join(ORIGIN_CHOICES)
+            raise UnsupportedLanguageError(
+                "Origen fuera de política de transpilación inversa: "
+                f"'{origen}'. Usa uno de: {sugeridos}"
+            )
+
     def run(self, args: Namespace) -> int:
         """Ejecuta la transpilación del código.
         
@@ -215,6 +225,8 @@ class TranspilarInversoCommand(BaseCommand):
         try:
             origen = args.origen.lower()
             destino = args.destino.lower()
+
+            self._validar_origen_en_politica(origen)
 
             logger.debug(f"Iniciando validación del archivo {args.archivo}")
 
