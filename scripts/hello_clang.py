@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compila y ejecuta el ejemplo 'Hello World' usando clang."""
+"""Compila y ejecuta el ejemplo 'Hello World' usando clang++."""
 from __future__ import annotations
 import subprocess
 import time
@@ -8,14 +8,14 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-SOURCE = ROOT / "examples" / "hello_world" / "c.c"
+SOURCE = ROOT / "examples" / "hello_world" / "cpp.cpp"
 BINARY = HERE / "hello_clang.bin"
 
 
 def compile_with_clang() -> float:
     """Compila el archivo de ejemplo y devuelve el tiempo empleado."""
     start = time.perf_counter()
-    subprocess.run(["clang", str(SOURCE), "-o", str(BINARY)], check=True)
+    subprocess.run(["clang++", str(SOURCE), "-o", str(BINARY)], check=True)
     return time.perf_counter() - start
 
 

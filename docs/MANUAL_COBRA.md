@@ -539,31 +539,16 @@ ejecuciones reutilicen la caché sin reprocesar el código.
 
 ### Transpiladores disponibles
 
-La carpeta [`examples/hello_world`](examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados:
+La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados:
 
-- **ASM** – [hola.asm](examples/hello_world/asm/hola.asm)
-- **C** – [hola.c](examples/hello_world/c/hola.c)
-- **COBOL** – [hola.cob](examples/hello_world/cobol/hola.cob)
-- **C++** – [hola.cpp](examples/hello_world/cpp/hola.cpp)
-- **Fortran** – [hola.f90](examples/hello_world/fortran/hola.f90)
-- **Go** – [hola.go](examples/hello_world/go/hola.go)
-- **Java** – [Hola.java](examples/hello_world/java/Hola.java)
-- **JavaScript** – [hola.js](examples/hello_world/javascript/hola.js)
-- **Julia** – [hola.jl](examples/hello_world/julia/hola.jl)
-- **Kotlin** – [hola.kt](examples/hello_world/kotlin/hola.kt)
-- **LaTeX** – [hola.tex](examples/hello_world/latex/hola.tex)
-- **Matlab** – [hola.m](examples/hello_world/matlab/hola.m)
-- **Mojo** – [hola.mojo](examples/hello_world/mojo/hola.mojo)
-- **Pascal** – [hola.pas](examples/hello_world/pascal/hola.pas)
-- **Perl** – [hola.pl](examples/hello_world/perl/hola.pl)
-- **PHP** – [hola.php](examples/hello_world/php/hola.php)
-- **Python** – [hola.py](examples/hello_world/python/hola.py)
-- **R** – [hola.r](examples/hello_world/r/hola.r)
-- **Ruby** – [hola.rb](examples/hello_world/ruby/hola.rb)
-- **Rust** – [hola.rs](examples/hello_world/rust/hola.rs)
-- **Swift** – [hola.swift](examples/hello_world/swift/hola.swift)
-- **Visual Basic** – [Hola.vb](examples/hello_world/visualbasic/Hola.vb)
-- **WebAssembly** – [hola.wat](examples/hello_world/wasm/hola.wat)
+- **ASM** – [hola.asm](../examples/hello_world/asm/hola.asm)
+- **C++** – [hola.cpp](../examples/hello_world/cpp/hola.cpp)
+- **Go** – [hola.go](../examples/hello_world/go/hola.go)
+- **Java** – [Hola.java](../examples/hello_world/java/Hola.java)
+- **JavaScript** – [hola.js](../examples/hello_world/javascript/hola.js)
+- **Python** – [hola.py](../examples/hello_world/python/hola.py)
+- **Rust** – [hola.rs](../examples/hello_world/rust/hola.rs)
+- **WebAssembly** – [hola.wat](../examples/hello_world/wasm/hola.wat)
 
 ### Características aún no soportadas
 
