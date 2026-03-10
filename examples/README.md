@@ -8,10 +8,7 @@ Este directorio reúne distintos ejemplos de uso de Cobra y material relacionado
   ```bash
   cobra ejecutar examples/avanzados/<tema>/<archivo>.co
   ```
-- **hello_world/**: demostraciones "Hola Mundo" en varios lenguajes. El ejemplo en Cobra se ejecuta con:
-  ```bash
-  cobra ejecutar examples/hello_world/cobra/hola.co
-  ```
+- **hello_world/**: demostraciones "Hola Mundo" para 8 destinos objetivo (`asm`, `cpp`, `go`, `java`, `javascript`, `python`, `rust`, `wasm`).
 - **[hola_mundo](hola_mundo/)**: ejemplo mínimo para transpilar a Python.
   ```bash
   cobra examples/hola_mundo/hola.co --to python
