@@ -7,6 +7,7 @@ from typing import List, Tuple, Union
 
 from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.module_map import get_mapped_path
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # ---------------------------------------------------------------------------
 # Clases base
@@ -54,14 +55,11 @@ STANDARD_IMPORTS = {
         "import * as texto from './nativos/texto.js';",
         "import * as tiempo from './nativos/tiempo.js';",
     ],
-    "hololang": [
-        "use holo.core::*;",
-        "use holo.bits::*;",
-    ],
-    "swift": [],
-    "perl": [],
-    "visualbasic": [],
 }
+
+for _target in OFFICIAL_TARGETS:
+    STANDARD_IMPORTS.setdefault(_target, [])
+
 
 
 def save_file(content: Union[str, List[str]], path: str) -> None:

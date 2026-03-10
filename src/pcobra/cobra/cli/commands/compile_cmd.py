@@ -13,6 +13,7 @@ from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
 from pcobra.core.semantic_validators import (
@@ -61,7 +62,7 @@ for ep in eps:
     except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
-LANG_CHOICES = sorted(TRANSPILERS.keys())
+LANG_CHOICES = sorted(set(TRANSPILERS.keys()).intersection(OFFICIAL_TARGETS))
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
