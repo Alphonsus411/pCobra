@@ -38,11 +38,8 @@ logger = logging.getLogger(__name__)
 MAX_FILE_SIZE = 1024 * 1024  # 1MB
 EXTENSIONES_POR_LENGUAJE: Dict[str, str] = {
     "python": ".py",
-    "c": ".c",
-    "cpp": ".cpp",
     "js": ".js",
     "java": ".java",
-    # Añadir más extensiones según sea necesario
 }
 
 class UnsupportedLanguageError(Exception):
