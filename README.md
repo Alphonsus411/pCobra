@@ -15,7 +15,14 @@ Versión 10.0.12
 
 [English version available here](docs/README.en.md)
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación capaz de generar código en `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` y `asm`, facilitando su despliegue en distintos entornos.
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida: `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` y `asm`.
+
+Tiers oficiales de soporte de backends:
+
+- **Tier 1**: `python`, `rust`, `js`, `wasm`
+- **Tier 2**: `go`, `cpp`, `java`, `asm`
+
+La fuente de verdad para esta clasificación es `src/pcobra/cobra/transpilers/targets.py`.
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
@@ -789,7 +796,9 @@ cobra transpilar-inverso script.py --origen=python --destino=cobra
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-Actualmente es posible convertir a Cobra código escrito en ensamblador, C, C++, COBOL, Fortran, Go, Java, JavaScript, Julia, Kotlin, LaTeX, Matlab, Mojo, Pascal, Perl, PHP, Python, R, Ruby, Rust, Swift, VisualBasic y WebAssembly.
+Actualmente es posible convertir a Cobra código escrito en los lenguajes de la lista canónica: ensamblador (`asm`), C++ (`cpp`), Go (`go`), Java (`java`), JavaScript (`js`), Python (`python`), Rust (`rust`) y WebAssembly (`wasm`).
+
+Tiers de referencia (salida): Tier 1 (`python`, `rust`, `js`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). La fuente de verdad es `src/pcobra/cobra/transpilers/targets.py`.
 
 ### Diseño extensible de la CLI
 
@@ -1243,6 +1252,8 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 - asm
 
 Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
+
+Tiers oficiales: **Tier 1** (`python`, `rust`, `js`, `wasm`) y **Tier 2** (`go`, `cpp`, `java`, `asm`). Fuente de verdad: `src/pcobra/cobra/transpilers/targets.py`.
 
 # Licencia
 
