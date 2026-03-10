@@ -38,3 +38,38 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 2. No existen módulos `to_*` de lenguajes fuera de alcance en el árbol de código principal.
 3. Los tests de compilación/transpilación de targets soportados pasan en CI.
 4. README y documentación principal no anuncian destinos fuera de Tier 1/2.
+
+
+## Matriz mínima garantizada (Tier 1 / Tier 2)
+
+> Esta matriz define el **mínimo contractual** que se valida por pruebas de regresión para cada backend.
+
+| Backend | Tier | holobit(...) | proyectar(...) | transformar(...) | graficar(...) | `corelibs` | `standard_library` |
+|---|---|---|---|---|---|---|---|
+| Python | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo |
+| JavaScript | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | 🟡 Parcial (runtime JS nativo) | 🟡 Parcial (según mapeo) |
+| Rust | Tier 1 | 🟡 Parcial (`holobit`) | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | 🟡 Parcial | ❌ No garantizado |
+| WASM | Tier 1 | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado |
+| Go | Tier 2 | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | 🟡 Parcial | ❌ No garantizado |
+| C++ | Tier 2 | 🟡 Parcial (`holobit`) | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | 🟡 Parcial | ❌ No garantizado |
+| Java | Tier 2 | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado |
+| ASM | Tier 2 | 🟡 Parcial (IR simbólico) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | ❌ No garantizado | ❌ No garantizado |
+
+### Cobertura de regresión asociada
+
+Se añade una suite dedicada que cubre:
+
+1. Importación de cada transpilador oficial (`to_python`, `to_js`, `to_rust`, `to_wasm`, `to_go`, `to_cpp`, `to_java`, `to_asm`).
+2. Generación mínima de código por backend para detectar roturas por dependencias.
+3. Casos representativos por backend para:
+   - `holobit(...)`
+   - `proyectar(...)`
+   - `transformar(...)`
+   - `graficar(...)`
+4. Operación típica de librerías de runtime (`longitud(...)`) en todos los backends donde existe llamada de función.
+
+### Política de interpretación
+
+- **Tier 1** prioriza estabilidad funcional y cobertura de primitivas Holobit en Python/JS.
+- **Tier 2** prioriza continuidad de generación y compatibilidad incremental, con cobertura parcial explícita.
+- Cualquier backend fuera de esta matriz se considera fuera de contrato.
