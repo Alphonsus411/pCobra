@@ -30,6 +30,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # Configuración del logging
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class TranspilationError(Exception):
     pass
 REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
 ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
+DESTINO_CHOICES = sorted(set(TRANSPILERS.keys()).intersection(OFFICIAL_TARGETS))
 
 
 def validar_consistencia_reverse_transpilers() -> None:
@@ -124,9 +126,10 @@ class TranspilarInversoCommand(BaseCommand):
         parser.add_argument(
             "--destino",
             help=_("Lenguaje de destino para la transpilación ({})").format(
-                ", ".join(sorted(TRANSPILERS.keys()))
+                ", ".join(DESTINO_CHOICES)
             ),
-            required=True
+            required=True,
+            choices=DESTINO_CHOICES,
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -198,6 +201,11 @@ class TranspilarInversoCommand(BaseCommand):
         if destino not in TRANSPILERS:
             raise UnsupportedLanguageError(
                 f"No hay transpilador disponible para el lenguaje de destino '{destino}'"
+            )
+        if destino not in OFFICIAL_TARGETS:
+            raise UnsupportedLanguageError(
+                "Lenguaje de destino fuera de Tier 1/Tier 2: "
+                f"'{destino}'. Usa uno de: {', '.join(DESTINO_CHOICES)}"
             )
 
     def _validar_origen_en_politica(self, origen: str) -> None:
