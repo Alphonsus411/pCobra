@@ -9,10 +9,6 @@ from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
-# ---------------------------------------------------------------------------
-# Clases base
-# ---------------------------------------------------------------------------
-
 
 class BaseTranspiler(NodeVisitor, ABC):
     """Clase base para los transpiladores que generan código."""
@@ -28,11 +24,6 @@ class BaseTranspiler(NodeVisitor, ABC):
     def save_file(self, path: str) -> None:
         """Guarda el código generado en la ruta dada."""
         save_file(self.codigo, path)
-
-
-# ---------------------------------------------------------------------------
-# Funciones de utilidad
-# ---------------------------------------------------------------------------
 
 
 STANDARD_IMPORTS = {
@@ -55,11 +46,90 @@ STANDARD_IMPORTS = {
         "import * as texto from './nativos/texto.js';",
         "import * as tiempo from './nativos/tiempo.js';",
     ],
+    "rust": ["use crate::corelibs::*;", "use crate::standard_library::*;"],
+    "go": [
+        'import "cobra/corelibs"',
+        'import "cobra/standard_library"',
+    ],
+    "cpp": [
+        "#include <cobra/corelibs.hpp>",
+        "#include <cobra/standard_library.hpp>",
+    ],
+    "java": [
+        "import cobra.corelibs.*;",
+        "import cobra.standard_library.*;",
+    ],
+    "wasm": [
+        ";; runtime import: corelibs",
+        ";; runtime import: standard_library",
+    ],
+    "asm": [
+        "; runtime import corelibs",
+        "; runtime import standard_library",
+    ],
+}
+
+
+RUNTIME_HOOKS = {
+    "rust": [
+        "fn cobra_proyectar(hb: &str, modo: &str) {",
+        "    println!(\"[cobra::proyectar] {} {}\", hb, modo);",
+        "}",
+        "fn cobra_transformar(hb: &str, op: &str, params: &[&str]) {",
+        "    println!(\"[cobra::transformar] {} {} {:?}\", hb, op, params);",
+        "}",
+        "fn cobra_graficar(hb: &str) {",
+        "    println!(\"[cobra::graficar] {}\", hb);",
+        "}",
+    ],
+    "go": [
+        "func cobraProyectar(hb any, modo any) {",
+        '    fmt.Printf("[cobra::proyectar] %v %v\\n", hb, modo)',
+        "}",
+        "func cobraTransformar(hb any, op any, params ...any) {",
+        '    fmt.Printf("[cobra::transformar] %v %v %v\\n", hb, op, params)',
+        "}",
+        "func cobraGraficar(hb any) {",
+        '    fmt.Printf("[cobra::graficar] %v\\n", hb)',
+        "}",
+    ],
+    "cpp": [
+        "inline void cobra_proyectar(const auto& hb, const auto& modo) {",
+        "    std::cout << \"[cobra::proyectar] \" << hb << \" \" << modo << std::endl;",
+        "}",
+        "inline void cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {",
+        "    std::cout << \"[cobra::transformar] \" << hb << \" \" << op << std::endl;",
+        "}",
+        "inline void cobra_graficar(const auto& hb) {",
+        "    std::cout << \"[cobra::graficar] \" << hb << std::endl;",
+        "}",
+    ],
+    "java": [
+        "private static void cobraProyectar(Object hb, Object modo) {",
+        "    System.out.println(\"[cobra::proyectar] \" + hb + \" \" + modo);",
+        "}",
+        "private static void cobraTransformar(Object hb, Object op, Object... params) {",
+        "    System.out.println(\"[cobra::transformar] \" + hb + \" \" + op);",
+        "}",
+        "private static void cobraGraficar(Object hb) {",
+        "    System.out.println(\"[cobra::graficar] \" + hb);",
+        "}",
+    ],
+    "wasm": [
+        ";; runtime hook cobra_proyectar(hb, modo)",
+        ";; runtime hook cobra_transformar(hb, op, ...params)",
+        ";; runtime hook cobra_graficar(hb)",
+    ],
+    "asm": [
+        "; hook cobra_proyectar hb modo",
+        "; hook cobra_transformar hb op ...params",
+        "; hook cobra_graficar hb",
+    ],
 }
 
 for _target in OFFICIAL_TARGETS:
     STANDARD_IMPORTS.setdefault(_target, [])
-
+    RUNTIME_HOOKS.setdefault(_target, [])
 
 
 def save_file(content: Union[str, List[str]], path: str) -> None:
@@ -77,6 +147,11 @@ def get_standard_imports(language: str) -> Union[str, List[str]]:
     return imports
 
 
+def get_runtime_hooks(language: str) -> List[str]:
+    """Devuelve hooks auxiliares de runtime para *language*."""
+    return list(RUNTIME_HOOKS.get(language, []))
+
+
 def load_mapped_module(path: str, language: str) -> Tuple[str, str]:
     """Carga el módulo indicado respetando el mapeo configurado."""
     ruta = get_mapped_path(path, language)
@@ -89,6 +164,8 @@ __all__ = [
     "BaseTranspiler",
     "save_file",
     "get_standard_imports",
+    "get_runtime_hooks",
     "load_mapped_module",
     "STANDARD_IMPORTS",
+    "RUNTIME_HOOKS",
 ]

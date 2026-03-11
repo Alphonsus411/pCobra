@@ -25,10 +25,13 @@ from pcobra.core.ast_nodes import (
     NodoPattern,
     NodoInterface,
     NodoGarantia,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
@@ -121,12 +124,34 @@ def visit_interface(self, nodo):
     self.indent -= 1
     self.agregar_linea("};")
 
+
+
+def visit_proyectar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    modo = self.obtener_valor(nodo.modo)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobra_proyectar({hb}, {modo});")
+
+
+def visit_transformar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    op = self.obtener_valor(nodo.operacion)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobra_transformar({hb}, {op}, {{}});")
+
+
+def visit_graficar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobra_graficar({hb});")
+
 class TranspiladorCPP(BaseTranspiler):
     """Transpila el AST de Cobra a código C++ sencillo."""
 
     def __init__(self):
         self.codigo = []
         self.indent = 0
+        self.usa_runtime_holobit = False
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -194,6 +219,10 @@ class TranspiladorCPP(BaseTranspiler):
         nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)
+        if self.usa_runtime_holobit:
+            hooks = get_runtime_hooks("cpp")
+            if hooks:
+                self.codigo = ["#include <iostream>", "#include <string>", ""] + hooks + [""] + self.codigo
         return "\n".join(self.codigo)
 
 
@@ -225,3 +254,7 @@ TranspiladorCPP.visit_interface = visit_interface
 TranspiladorCPP.visit_option = _visit_option
 TranspiladorCPP.visit_pattern = _visit_pattern
 TranspiladorCPP.visit_retorno = _visit_retorno
+
+TranspiladorCPP.visit_proyectar = visit_proyectar
+TranspiladorCPP.visit_transformar = visit_transformar
+TranspiladorCPP.visit_graficar = visit_graficar

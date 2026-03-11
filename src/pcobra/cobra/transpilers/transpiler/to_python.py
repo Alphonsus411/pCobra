@@ -55,7 +55,7 @@ from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
-from pcobra.cobra.transpilers.common.utils import get_standard_imports
+from pcobra.cobra.transpilers.common.utils import get_standard_imports, get_runtime_hooks
 from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
 from pcobra.cobra.transpilers.transpiler.python_nodes.asignacion import (
@@ -240,6 +240,9 @@ class TranspiladorPython(BaseTranspiler):
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
         self.codigo = get_standard_imports("python")
+        hooks = "\n".join(get_runtime_hooks("python"))
+        if hooks:
+            self.codigo += hooks + "\n"
         self.usa_asyncio = False
         self.usa_typing = False
         self.usa_contextlib = False

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
 from pcobra.core.hololang_ir import (
     HololangAssignment,
     HololangCall,
@@ -48,7 +48,13 @@ class TranspiladorASM(BaseTranspiler):
         """
 
         modulo = self._asegurar_modulo(programa)
-        self._lineas = []
+        usa_runtime_holobit = isinstance(programa, list) and any(
+            n.__class__.__name__ in {"NodoProyectar", "NodoTransformar", "NodoGraficar"}
+            for n in programa
+        )
+        self._lineas = list(get_runtime_hooks("asm")) if usa_runtime_holobit else []
+        if self._lineas:
+            self._lineas.append("")
         self._indent = 0
         for instruccion in modulo.body:
             self._emitir(instruccion)
