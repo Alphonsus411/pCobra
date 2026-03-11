@@ -62,35 +62,31 @@ La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
   El comando anterior muestra por pantalla el Hololang equivalente y puede
   guardarse con ``--salida``.
 
-* **De Hololang a Cobra y otros backends:**
+* **Transpilación inversa disponible en la política actual:**
 
   .. code-block:: bash
 
-     cobra transpilar-inverso examples/hololang/saludo.holo \
-         --origen hololang \
-         --destino python
+     cobra transpilar-inverso examples/reverse/demo.py \
+         --origen python \
+         --destino java
 
-  ``transpilar-inverso`` analiza el código Hololang, lo convierte al AST de
-  Cobra y, a continuación, vuelve a emitirlo con el transpilador seleccionado.
-  Si deseas reconstruir una versión canónica en Hololang basta con indicar
-  ``--destino hololang``.
+  La transpilación inversa soportada por política acepta como origen
+  ``python``, ``js`` y ``java``. Si trabajas con Hololang, la ruta recomendada
+  es generar Hololang desde Cobra y continuar desde ese artefacto.
 
 Generación de ensamblador desde Hololang
 ----------------------------------------
 
-Una vez que dispones del código Hololang, puedes obtener ensamblador simbólico
-empleando la misma cadena de transpilación inversa:
+Una vez que dispones del código Hololang, puedes convertirlo a ensamblador
+simbólico con el backend ``asm`` desde el flujo Cobra → backend:
 
 .. code-block:: bash
 
-   cobra transpilar-inverso examples/hololang/saludo.holo \
-       --origen hololang \
-       --destino asm
+   cobra compilar examples/hololang/saludo.co --backend asm
 
-El transpilador ``asm`` consume el IR de Hololang y produce instrucciones
-legibles que describen asignaciones, saltos condicionales y bucles.  Esto es
-útil para auditar optimizaciones o para integrarse con herramientas de nivel
-inferior.
+El transpilador ``asm`` produce instrucciones legibles que describen
+asignaciones, saltos condicionales y bucles. Esto es útil para auditar
+optimizaciones o para integrarse con herramientas de nivel inferior.
 
 Recursos adicionales
 --------------------

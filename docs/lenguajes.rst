@@ -42,19 +42,9 @@ Los siguientes lenguajes de la lista canónica pueden convertirse a Cobra:
      - Estado
    * - Python
      - Experimental
-   * - Rust
-     - Experimental
    * - JavaScript
      - Experimental
-   * - WebAssembly
-     - Experimental
-   * - Go
-     - Experimental
-   * - C++
-     - Experimental
    * - Java
-     - Experimental
-   * - Ensamblador
      - Experimental
 
 Instalación de gramáticas
@@ -66,4 +56,4 @@ Para habilitar estos transpiladores inversos es necesario instalar las gramátic
 
    pip install tree-sitter-languages
 
-Este paquete incluye gramáticas para los lenguajes listados y puede instalarse junto con las dependencias del proyecto.
+Este paquete incluye gramáticas para los lenguajes listados (``python``, ``js`` y ``java``) y puede instalarse junto con las dependencias del proyecto.

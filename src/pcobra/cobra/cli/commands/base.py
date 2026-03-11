@@ -47,5 +47,7 @@ class BaseCommand:
         raise NotImplementedError
 
 
-class CommandError:
+class CommandError(Exception):
+    """Error controlado para fallos esperables en comandos CLI."""
+
     pass

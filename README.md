@@ -796,7 +796,7 @@ cobra transpilar-inverso script.py --origen=python --destino=cobra
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-Actualmente es posible convertir a Cobra código escrito en los lenguajes de la lista canónica: ensamblador (`asm`), C++ (`cpp`), Go (`go`), Java (`java`), JavaScript (`js`), Python (`python`), Rust (`rust`) y WebAssembly (`wasm`).
+Actualmente es posible convertir a Cobra código escrito en `python`, `js` y `java`.
 
 Tiers de referencia (salida): Tier 1 (`python`, `rust`, `js`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). La fuente de verdad es `src/pcobra/cobra/transpilers/targets.py`.
 
