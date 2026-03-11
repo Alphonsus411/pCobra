@@ -66,3 +66,20 @@ def test_transpilar_inverso_origen_fuera_de_politica(tmp_path):
     assert "Origen fuera de política de transpilación inversa" in out.getvalue()
     for origen in transpilar_inverso_cmd.ORIGIN_CHOICES:
         assert origen in out.getvalue()
+
+
+def test_transpilar_inverso_destino_fuera_tier_rechazado_explicitamente():
+    from pcobra.cobra.cli.commands import transpilar_inverso_cmd
+
+    cmd = transpilar_inverso_cmd.TranspilarInversoCommand()
+
+    with patch.object(transpilar_inverso_cmd, "TRANSPILERS", {"python": FakeTranspiler, "externo": FakeTranspiler}):
+        try:
+            cmd._verificar_dependencias("python", "externo")
+        except transpilar_inverso_cmd.UnsupportedLanguageError as exc:
+            mensaje = str(exc)
+        else:
+            raise AssertionError("Se esperaba UnsupportedLanguageError para destino externo")
+
+    assert "fuera de Tier 1/Tier 2" in mensaje
+    assert "externo" in mensaje
