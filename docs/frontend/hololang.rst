@@ -8,6 +8,12 @@ emiten código para otros lenguajes o para ensamblador simbólico.  En esta guí
 se resume la sintaxis disponible, cómo integrarla con Cobra y cómo aprovecharla
 para generar artefactos adicionales.
 
+.. important::
+
+   Hololang se mantiene como **intermedio no oficial de salida pública**.
+   Actualmente no existe un destino CLI registrado como ``hololang`` en
+   ``cobra compilar``; su uso está acotado al pipeline interno Cobra → IR → backend.
+
 Sintaxis básica de Hololang
 ---------------------------
 
@@ -57,10 +63,11 @@ La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
 
   .. code-block:: bash
 
-     cobra compilar examples/hololang/saludo.co --backend hololang
+     cobra compilar examples/hololang/saludo.co --backend python
 
-  El comando anterior muestra por pantalla el Hololang equivalente y puede
-  guardarse con ``--salida``.
+  El comando anterior genera una salida válida de backend registrado
+  (en este ejemplo, ``python``). Hololang se utiliza internamente como IR y no
+  como destino público de la CLI.
 
 * **Transpilación inversa disponible en la política actual:**
 

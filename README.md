@@ -791,7 +791,7 @@ Puedes usar `cobra transpilar-inverso` para leer un archivo en otro lenguaje,
 convertirlo al AST de Cobra y luego generarlo en cualquier backend soportado.
 
 ```bash
-cobra transpilar-inverso script.py --origen=python --destino=cobra
+cobra transpilar-inverso script.py --origen=python --destino=python
 ```
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
@@ -934,6 +934,22 @@ Si tu entorno es más lento o más rápido, ajusta el valor de
 Se han incluido pruebas que verifican los códigos de salida de la CLI. Los
 subcomandos devuelven `0` al finalizar correctamente y un valor distinto en caso
 de error.
+
+### Comandos válidos por destino
+
+La siguiente lista se generó a partir de `LANG_CHOICES` en `src/pcobra/cobra/cli/commands/compile_cmd.py`
+(ordenada alfabéticamente) para mantener la documentación alineada con la CLI real:
+
+````bash
+cobra compilar programa.co --tipo=asm
+cobra compilar programa.co --tipo=cpp
+cobra compilar programa.co --tipo=go
+cobra compilar programa.co --tipo=java
+cobra compilar programa.co --tipo=js
+cobra compilar programa.co --tipo=python
+cobra compilar programa.co --tipo=rust
+cobra compilar programa.co --tipo=wasm
+````
 
 ### Ejemplos de subcomandos
 
