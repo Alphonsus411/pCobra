@@ -42,7 +42,7 @@ from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
-from pcobra.cobra.transpilers.common.utils import get_standard_imports
+from pcobra.cobra.transpilers.common.utils import get_standard_imports, get_runtime_hooks
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
@@ -172,6 +172,7 @@ class TranspiladorJavaScript(BaseTranspiler):
     def __init__(self):
         # Incluir importaciones de modulos nativos
         self.codigo = get_standard_imports("js")
+        self.codigo.extend(get_runtime_hooks("js"))
         self.indentacion = 0
         self.usa_indentacion = None
         self._defer_stack: list[str] = []

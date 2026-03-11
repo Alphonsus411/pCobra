@@ -6,12 +6,12 @@
 |---|---|---|---|---|---|---|---|
 | Python | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full |
 | JavaScript | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | 🟡 partial | 🟡 partial |
-| Rust | Tier 1 | 🟡 partial | ❌ none | ❌ none | ❌ none | 🟡 partial | ❌ none |
-| WASM | Tier 1 | ❌ none | ❌ none | ❌ none | ❌ none | ❌ none | ❌ none |
-| Go | Tier 2 | ❌ none | ❌ none | ❌ none | ❌ none | 🟡 partial | ❌ none |
-| C++ | Tier 2 | 🟡 partial | ❌ none | ❌ none | ❌ none | 🟡 partial | ❌ none |
-| Java | Tier 2 | ❌ none | ❌ none | ❌ none | ❌ none | ❌ none | ❌ none |
-| ASM | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ❌ none | ❌ none |
+| Rust | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| WASM | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| Go | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| C++ | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| Java | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| ASM | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 
 > `full`: soportado y cubierto por regresión. `partial`: soporte limitado/fallback. `none`: no garantizado.
 

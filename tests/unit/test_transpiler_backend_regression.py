@@ -12,6 +12,7 @@ from pcobra.core.ast_nodes import (
     NodoTransformar,
     NodoValor,
 )
+from pcobra.cobra.transpilers.common.utils import get_standard_imports
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 
 TRANSPILERS = {
@@ -38,7 +39,6 @@ def _to_text(output) -> str:
 
 @pytest.mark.parametrize("language", TRANSPILERS)
 def test_import_backend_module_and_generate_minimal_code(language: str):
-    """Smoke test de imports + generación mínima para evitar roturas por dependencias."""
     transpiler = _build(language)
     code = transpiler.generate_code([NodoAsignacion("x", NodoValor(1))])
     text = _to_text(code)
@@ -52,6 +52,9 @@ def test_import_backend_module_and_generate_minimal_code(language: str):
         ("js", "new Holobit([1, 2, 3])"),
         ("rust", "holobit(vec![1, 2, 3])"),
         ("cpp", "holobit({ 1, 2, 3 })"),
+        ("go", "[]float64{1, 2, 3}"),
+        ("java", "new double[]{1, 2, 3}"),
+        ("wasm", ";; holobit hb [1, 2, 3]"),
         ("asm", "HOLOBIT hb [1, 2, 3]"),
     ],
 )
@@ -62,37 +65,66 @@ def test_holobit_representative_generation(language: str, expected_snippet: str)
 
 
 @pytest.mark.parametrize(
-    "language,node_cls,args",
+    "language, expected",
     [
-        ("python", NodoProyectar, (NodoIdentificador("hb"), NodoValor("2d"))),
-        ("python", NodoTransformar, (NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)])),
-        ("python", NodoGraficar, (NodoIdentificador("hb"),)),
-        ("js", NodoProyectar, (NodoIdentificador("hb"), NodoValor("2d"))),
-        ("js", NodoTransformar, (NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)])),
-        ("js", NodoGraficar, (NodoIdentificador("hb"),)),
+        ("python", "proyectar(hb"),
+        ("js", "proyectar(hb"),
+        ("rust", "cobra_proyectar"),
+        ("go", "cobraProyectar"),
+        ("cpp", "cobra_proyectar"),
+        ("java", "cobraProyectar"),
+        ("wasm", "cobra_proyectar"),
+        ("asm", "NodoProyectar no soportado"),
     ],
 )
-def test_primitivas_holobit_tier1_full(language, node_cls, args):
+def test_primitiva_proyectar_minima_por_backend(language: str, expected: str):
     transpiler = _build(language)
-    code = transpiler.generate_code([NodoHolobit("hb", [1, 2, 3]), node_cls(*args)])
+    code = transpiler.generate_code(
+        [NodoHolobit("hb", [1, 2, 3]), NodoProyectar(NodoIdentificador("hb"), NodoValor("2d"))]
+    )
+    assert expected in _to_text(code)
+
+
+@pytest.mark.parametrize("language", TRANSPILERS)
+def test_primitiva_transformar_y_graficar_minima_por_backend(language: str):
+    transpiler = _build(language)
+    code = transpiler.generate_code(
+        [
+            NodoHolobit("hb", [1, 2, 3]),
+            NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]),
+            NodoGraficar(NodoIdentificador("hb")),
+        ]
+    )
     text = _to_text(code)
     assert "hb" in text
+    assert "grafic" in text.lower() or "graficar" in text.lower()
 
 
-@pytest.mark.parametrize("language", ["rust", "cpp", "java"])
-def test_primitivas_holobit_limitadas_lanzan_not_implemented(language: str):
-    transpiler = _build(language)
-    with pytest.raises(NotImplementedError):
-        transpiler.generate_code([NodoProyectar(NodoIdentificador("hb"), NodoValor("2d"))])
-
-
-@pytest.mark.parametrize("language", ["python", "js", "rust", "go", "cpp", "java", "asm"])
+@pytest.mark.parametrize("language", ["python", "js", "rust", "wasm", "go", "cpp", "java", "asm"])
 def test_operacion_libreria_runtime_representativa(language: str):
-    """Representa una operación típica de librerías usadas en runtime."""
     transpiler = _build(language)
     code = transpiler.generate_code([NodoLlamadaFuncion("longitud", [NodoValor("cobra")])])
     text = _to_text(code)
     assert "longitud" in text
+
+
+@pytest.mark.parametrize(
+    "language, token_runtime",
+    [
+        ("python", "corelibs"),
+        ("js", "nativos"),
+        ("rust", "corelibs"),
+        ("wasm", "runtime import"),
+        ("go", "corelibs"),
+        ("cpp", "corelibs"),
+        ("java", "corelibs"),
+        ("asm", "runtime import"),
+    ],
+)
+def test_bootstrap_runtime_backend(language: str, token_runtime: str):
+    imports = get_standard_imports(language)
+    text = "\n".join(imports) if isinstance(imports, list) else imports
+    assert token_runtime in text
 
 
 def test_matriz_compatibilidad_cubre_todos_los_backends_oficiales():

@@ -12,6 +12,10 @@ from pcobra.cobra.core.ast_nodes import (
     NodoAtributo,
     NodoLlamadaMetodo,
     NodoInstancia,
+    NodoHolobit,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
@@ -53,6 +57,35 @@ from pcobra.cobra.transpilers.transpiler.java_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
 
+
+
+def visit_holobit(self, nodo):
+    valores = ", ".join(str(v) for v in nodo.valores or [])
+    nombre = nodo.nombre or "hb"
+    self.agregar_linea(f"double[] {nombre} = new double[]{{{valores}}};")
+
+
+def visit_proyectar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    modo = self.obtener_valor(nodo.modo)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobraProyectar({hb}, {modo});")
+
+
+def visit_transformar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    op = self.obtener_valor(nodo.operacion)
+    params = ", ".join(self.obtener_valor(p) for p in nodo.parametros)
+    args = f", {params}" if params else ""
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobraTransformar({hb}, {op}{args});")
+
+
+def visit_graficar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobraGraficar({hb});")
+
 java_nodes = {
     "asignacion": _visit_asignacion,
     "funcion": _visit_funcion,
@@ -68,6 +101,10 @@ java_nodes = {
     "continuar": _visit_continuar,
     "llamada_metodo": _visit_llamada_metodo,
     "instancia": _visit_instancia,
+    "holobit": visit_holobit,
+    "proyectar": visit_proyectar,
+    "transformar": visit_transformar,
+    "graficar": visit_graficar,
 }
 
 
@@ -75,6 +112,7 @@ class TranspiladorJava(BaseTranspiler):
     def __init__(self):
         self.codigo = []
         self.indent = 0
+        self.usa_runtime_holobit = False
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -135,6 +173,24 @@ class TranspiladorJava(BaseTranspiler):
 
         self.agregar_linea("public class Main {")
         self.indent += 1
+
+        self.usa_runtime_holobit = any(n.__class__.__name__ in {"NodoProyectar", "NodoTransformar", "NodoGraficar"} for n in nodos)
+        if self.usa_runtime_holobit:
+            self.agregar_linea("private static void cobraProyectar(Object hb, Object modo) {")
+            self.indent += 1
+            self.agregar_linea('System.out.println("[cobra::proyectar] " + hb + " " + modo);')
+            self.indent -= 1
+            self.agregar_linea("}")
+            self.agregar_linea("private static void cobraTransformar(Object hb, Object op, Object... params) {")
+            self.indent += 1
+            self.agregar_linea('System.out.println("[cobra::transformar] " + hb + " " + op);')
+            self.indent -= 1
+            self.agregar_linea("}")
+            self.agregar_linea("private static void cobraGraficar(Object hb) {")
+            self.indent += 1
+            self.agregar_linea('System.out.println("[cobra::graficar] " + hb);')
+            self.indent -= 1
+            self.agregar_linea("}")
 
         for f in funciones:
             f.aceptar(self)

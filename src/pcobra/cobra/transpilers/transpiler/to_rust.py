@@ -27,10 +27,14 @@ from pcobra.cobra.core.ast_nodes import (
     NodoGuard,
     NodoInterface,
     NodoDefer,
+    NodoHolobit,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
@@ -112,6 +116,27 @@ def visit_interface(self, nodo):
     self.agregar_linea("}")
 
 
+
+
+def visit_proyectar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    modo = self.obtener_valor(nodo.modo)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f'cobra_proyectar(&format!("{{}}", {hb}), &format!("{{}}", {modo}));')
+
+
+def visit_transformar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    op = self.obtener_valor(nodo.operacion)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f'cobra_transformar(&format!("{{}}", {hb}), &format!("{{}}", {op}), &[]);')
+
+
+def visit_graficar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f'cobra_graficar(&format!("{{}}", {hb}));')
+
 class TranspiladorRust(BaseTranspiler):
     """Transpila el AST de Cobra a código Rust sencillo."""
 
@@ -120,6 +145,7 @@ class TranspiladorRust(BaseTranspiler):
         self.indent = 0
         self._defer_counter = 0
         self.usa_defer_helpers = False
+        self.usa_runtime_holobit = False
 
     def generate_code(self, ast):
         self.codigo = self.transpilar(ast)
@@ -187,6 +213,10 @@ class TranspiladorRust(BaseTranspiler):
         for nodo in nodos:
             nodo.aceptar(self)
         lineas = list(self.codigo)
+        if self.usa_runtime_holobit:
+            hooks = get_runtime_hooks("rust")
+            if hooks:
+                lineas = hooks + [""] + lineas
         if self.usa_defer_helpers:
             helpers = [
                 "struct CobraDefer<F: FnOnce()> {",
@@ -237,3 +267,7 @@ TranspiladorRust.visit_try_catch = _visit_try_catch
 TranspiladorRust.visit_throw = _visit_throw
 TranspiladorRust.visit_option = _visit_option
 TranspiladorRust.visit_defer = _visit_defer
+
+TranspiladorRust.visit_proyectar = visit_proyectar
+TranspiladorRust.visit_transformar = visit_transformar
+TranspiladorRust.visit_graficar = visit_graficar

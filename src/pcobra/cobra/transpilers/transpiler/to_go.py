@@ -14,9 +14,13 @@ from pcobra.core.ast_nodes import (
     NodoAtributo,
     NodoLlamadaMetodo,
     NodoInstancia,
+    NodoHolobit,
+    NodoProyectar,
+    NodoTransformar,
+    NodoGraficar,
 )
 from pcobra.cobra.core.lexer import TipoToken
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
@@ -55,6 +59,35 @@ from pcobra.cobra.transpilers.transpiler.go_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
 
+
+
+def visit_holobit(self, nodo):
+    valores = ", ".join(str(v) for v in nodo.valores or [])
+    nombre = nodo.nombre or "_hb"
+    self.agregar_linea(f"{nombre} := []float64{{{valores}}}")
+
+
+def visit_proyectar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    modo = self.obtener_valor(nodo.modo)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobraProyectar({hb}, {modo})")
+
+
+def visit_transformar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    op = self.obtener_valor(nodo.operacion)
+    params = ", ".join(self.obtener_valor(p) for p in nodo.parametros)
+    args = f", {params}" if params else ""
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobraTransformar({hb}, {op}{args})")
+
+
+def visit_graficar(self, nodo):
+    hb = self.obtener_valor(nodo.holobit)
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"cobraGraficar({hb})")
+
 go_nodes = {
     "asignacion": _visit_asignacion,
     "funcion": _visit_funcion,
@@ -70,6 +103,10 @@ go_nodes = {
     "continuar": _visit_continuar,
     "llamada_metodo": _visit_llamada_metodo,
     "instancia": _visit_instancia,
+    "holobit": visit_holobit,
+    "proyectar": visit_proyectar,
+    "transformar": visit_transformar,
+    "graficar": visit_graficar,
 }
 
 
@@ -78,6 +115,7 @@ class TranspiladorGo(BaseTranspiler):
         self.codigo = []
         self.indent = 0
         self.imports: set[str] = set()
+        self.usa_runtime_holobit = False
 
     def agregar_import(self, nombre: str) -> None:
         """Registra un paquete para importar."""
@@ -89,6 +127,7 @@ class TranspiladorGo(BaseTranspiler):
     def generate_code(self, ast):
         self.codigo = []
         self.imports = set()
+        self.usa_runtime_holobit = False
 
         nodos = expandir_macros(ast)
 
@@ -118,6 +157,13 @@ class TranspiladorGo(BaseTranspiler):
 
         codigo = "\n".join(self.codigo)
 
+        if self.usa_runtime_holobit:
+            encabezado = "package main\n\nimport (\n    \"fmt\"\n)\n\n"
+            hooks = "\n".join(get_runtime_hooks("go"))
+            if hooks:
+                hooks += "\n\n"
+            return encabezado + hooks + codigo
+
         encabezado = "package main\n"
         if self.imports:
             encabezado += "\nimport (\n"
@@ -126,7 +172,6 @@ class TranspiladorGo(BaseTranspiler):
             encabezado += ")\n\n"
         else:
             encabezado += "\n"
-
         return encabezado + codigo
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
