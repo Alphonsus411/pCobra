@@ -497,10 +497,10 @@ export async function revisar_servidor() {
 
 Convierte programas entre distintos lenguajes usando la CLI:
 
-- **De Cobra a C**
+- **De Cobra a C++**
 
   ```bash
-  cobra compilar hola.co --tipo c
+  cobra compilar hola.co --tipo cpp
   ```
 
 - **De Python a JavaScript**
@@ -509,10 +509,10 @@ Convierte programas entre distintos lenguajes usando la CLI:
   cobra transpilar-inverso ejemplo.py --origen=python --destino=js
   ```
 
-- **De COBOL a Python**
+- **De Java a Python**
 
   ```bash
-  cobra transpilar-inverso reporte.cob --origen=cobol --destino=python
+  cobra transpilar-inverso Ejemplo.java --origen=java --destino=python
   ```
 
 ### Caché incremental con SQLitePlus
@@ -819,7 +819,7 @@ imprimir(core.formatear_texto("{} {}", "hola", "cobra"))  # 'hola cobra'
 
 Estas herramientas están disponibles al transpirar tanto a Python como a JavaScript y respetan los casos borde como cadenas vacías o entradas Unicode combinadas.
 
-`pcobra.corelibs.numero` también ganó atajos inspirados en `f32::lerp`/`f64::lerp` de Rust y en `kotlin.math.lerp`/`mod`. `interpolar` acota el factor al intervalo `[0, 1]` para evitar extrapolaciones accidentales y devolver siempre el extremo correcto cuando el coeficiente se sale del rango, mientras que `envolver_modular` aplica un residuo euclidiano compatible con `rem_euclid` y el operador `mod` de Kotlin incluso si los valores son negativos.
+`pcobra.corelibs.numero` también ganó atajos inspirados en `f32::lerp`/`f64::lerp` de Rust y en `math.fma`/`fmod`. `interpolar` acota el factor al intervalo `[0, 1]` para evitar extrapolaciones accidentales y devolver siempre el extremo correcto cuando el coeficiente se sale del rango, mientras que `envolver_modular` aplica un residuo euclidiano compatible con `rem_euclid` y operaciones equivalentes disponibles en Python/Java incluso si los valores son negativos.
 
 ```cobra
 import pcobra.corelibs as core

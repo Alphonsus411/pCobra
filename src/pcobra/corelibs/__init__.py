@@ -605,14 +605,14 @@ copiar_signo.__doc__ = (
 
 interpolar.__doc__ = (
     "Interpola valores con la misma saturación que ``f32::lerp`` en Rust y"
-    " documenta el paralelismo con ``kotlin.math.lerp``: el factor se acota al"
+    " documenta el paralelismo con ``math.fma``: el factor se acota al"
     " rango ``[0, 1]`` para evitar extrapolaciones y manejar factores fuera de"
     " rango igual que hacen dichas bibliotecas estándar."
 )
 
 envolver_modular.__doc__ = (
     "Calcula el residuo euclidiano como ``rem_euclid`` en Rust o el operador"
-    " ``mod`` de Kotlin, retornando siempre un valor con el mismo signo que el"
+    " de módulo en Python/Java, retornando siempre un valor con el mismo signo que el"
     " divisor y proporcionando envoltura modular estable incluso con valores"
     " negativos."
 )

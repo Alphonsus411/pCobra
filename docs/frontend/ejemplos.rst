@@ -62,10 +62,11 @@ ensamblador.  Ejecuta, por ejemplo:
 .. code-block:: bash
 
    cobra compilar examples/hololang/saludo.co --backend hololang
-   cobra transpilar-inverso examples/hololang/saludo.holo --origen hololang --destino python
+   cobra transpilar-inverso examples/hello_world/python.py --origen python --destino java
 
 El primer comando imprime la versión Hololang del programa ``saludo.co`` y el
-segundo parte desde Hololang para reconstruir el código Python equivalente.
+segundo demuestra el flujo de transpilación inversa soportado por política
+desde ``python`` hacia ``java``.
 
 
 Interfaces de consola enriquecidas

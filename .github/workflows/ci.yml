@@ -132,6 +132,9 @@ jobs:
       - name: Validate changelog
         shell: bash
         run: python scripts/check_changelog.py
+      - name: Validate targets policy docs
+        shell: bash
+        run: python scripts/validate_targets_policy.py
       - name: Packaging check (Linux/macOS)
         if: runner.os != 'Windows'
         shell: bash

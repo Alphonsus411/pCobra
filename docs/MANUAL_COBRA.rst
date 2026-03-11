@@ -422,7 +422,7 @@ usar en Cobra. Entre las más destacadas se encuentran:
 
 Asimismo, :mod:`pcobra.corelibs.numero` incorpora ``interpolar`` y
 ``envolver_modular`` inspiradas en ``f32::lerp`` de Rust y en
-``kotlin.math.lerp``/``mod``. La primera acota el factor a ``[0, 1]`` para
+``math.fma``/``fmod``. La primera acota el factor a ``[0, 1]`` para
 evitar extrapolaciones involuntarias y la segunda devuelve residuos euclidianos
 con el mismo signo que el divisor incluso si se usan valores negativos.
 

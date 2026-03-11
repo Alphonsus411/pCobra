@@ -873,7 +873,6 @@ PYTHONPATH=$PWD pytest tests --cov=pcobra --cov-report=term-missing \
 - Node.js
 - gcc y g++
 - Go (`golang-go`)
-- Ruby (`ruby`)
 - Rust (`rustc`)
 - Java (`default-jdk`)
 
