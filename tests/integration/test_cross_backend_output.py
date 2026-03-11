@@ -34,12 +34,6 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
         if lang == "js" and not shutil.which("node"):
             pytest.skip("node no disponible")
         return run_code(lang, codigo)
-    if lang == "ruby":
-        if not shutil.which("ruby"):
-            pytest.skip("ruby no disponible")
-        proc = subprocess.run(["ruby", "-"], input=codigo, text=True,
-                               capture_output=True, check=True)
-        return proc.stdout
     if lang == "c":
         comp = shutil.which("gcc")
         if not comp:

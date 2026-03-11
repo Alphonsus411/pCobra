@@ -57,28 +57,11 @@ def _run_rust(code: str) -> str:
             return exc.stderr or f"Error: {exc}"
 
 
-def _run_ruby(code: str) -> str:
-    """Ejecuta código Ruby mediante el intérprete ``ruby``."""
-    with tempfile.NamedTemporaryFile("w", suffix=".rb", delete=False) as tmp:
-        tmp.write(code)
-        tmp_path = tmp.name
-    try:
-        proc = subprocess.run(
-            ["ruby", tmp_path], capture_output=True, text=True, check=True
-        )
-        return proc.stdout
-    except subprocess.CalledProcessError as exc:  # pragma: no cover - error simple
-        return exc.stderr or f"Error: {exc}"
-    finally:
-        os.unlink(tmp_path)
-
-
 _RUNNERS: Dict[str, Callable[[str], str]] = {
     "python": _run_python,
     "js": _run_js,
     "go": _run_go,
     "rust": _run_rust,
-    "ruby": _run_ruby,
 }
 
 
@@ -128,4 +111,3 @@ def run_code(lang: str, code: str) -> str:
                 return f"Error de sintaxis: {stderr or stdout or exc}"
 
     return runner(code)
-
