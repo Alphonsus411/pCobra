@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pcobra.cobra.cli.commands.interactive_cmd import (
+    DOCKER_EXECUTABLE_TARGETS,
     DOCKER_RUNTIME_TARGETS,
     InteractiveCommand,
 )
@@ -43,7 +44,7 @@ def test_parser_acepta_todos_los_targets_oficiales(target):
 
 def test_runtime_docker_rechaza_target_oficial_no_ejecutable_en_contenedor():
     _, _, cmd = _build_parser_and_command()
-    target_no_runtime = next(t for t in OFFICIAL_TARGETS if t not in DOCKER_RUNTIME_TARGETS)
+    target_no_runtime = next(t for t in OFFICIAL_TARGETS if t not in DOCKER_EXECUTABLE_TARGETS)
     args = SimpleNamespace(
         memory_limit=cmd.MEMORY_LIMIT_MB,
         ignore_memory_limit=False,
@@ -62,5 +63,5 @@ def test_runtime_docker_rechaza_target_oficial_no_ejecutable_en_contenedor():
     assert mock_error.call_count == 1
     msg = mock_error.call_args.args[0]
     assert target_no_runtime in msg
-    for runtime_target in DOCKER_RUNTIME_TARGETS:
+    for runtime_target in DOCKER_EXECUTABLE_TARGETS:
         assert runtime_target in msg

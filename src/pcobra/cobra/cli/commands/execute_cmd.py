@@ -12,6 +12,11 @@ from pcobra.cobra.cli.utils.validators import (
     validar_archivo_existente,
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
+from pcobra.cobra.cli.target_policies import (
+    DOCKER_EXECUTABLE_TARGETS,
+    parse_target,
+    resolve_docker_backend,
+)
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
@@ -58,8 +63,9 @@ class ExecuteCommand(BaseCommand):
         )
         parser.add_argument(
             "--contenedor",
-            choices=["python", "js", "cpp", "rust"],
-            help=_("Ejecuta el código en un contenedor Docker"),
+            type=parse_target,
+            choices=DOCKER_EXECUTABLE_TARGETS,
+            help=_("Ejecuta el código en un contenedor Docker (python, javascript, cpp, rust)"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -200,7 +206,8 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
         """Ejecuta el código en un contenedor Docker."""
         try:
-            salida = ejecutar_en_contenedor(codigo, contenedor)
+            backend_runtime = resolve_docker_backend(contenedor)
+            salida = ejecutar_en_contenedor(codigo, backend_runtime)
             if salida:
                 mostrar_info(str(salida))
             return 0

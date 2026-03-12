@@ -53,10 +53,16 @@ from pcobra.cobra.cli.utils.messages import (
 )
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
+from pcobra.cobra.cli.target_policies import (
+    DOCKER_EXECUTABLE_TARGETS,
+    DOCKER_RUNTIME_BY_TARGET,
+    parse_target,
+    resolve_docker_backend,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
-DOCKER_RUNTIME_TARGETS = ("python", "js", "cpp", "rust")
+DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 
 
 class InteractiveCommand(BaseCommand):
@@ -105,10 +111,11 @@ class InteractiveCommand(BaseCommand):
         )
         parser.add_argument(
             "--sandbox-docker",
+            type=parse_target,
             choices=OFFICIAL_TARGETS,
             help=_(
                 "Target oficial para transpilación en modo interactivo. "
-                "Solo python/js/cpp/rust se pueden ejecutar en contenedor Docker."
+                "Solo python/javascript/cpp/rust se pueden ejecutar en contenedor Docker."
             ),
         )
         parser.add_argument(
@@ -246,7 +253,7 @@ class InteractiveCommand(BaseCommand):
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
         sandbox_docker = getattr(args, "sandbox_docker", None)
-        if sandbox_docker and sandbox_docker not in DOCKER_RUNTIME_TARGETS:
+        if sandbox_docker and sandbox_docker not in DOCKER_EXECUTABLE_TARGETS:
             mostrar_error(
                 _(
                     "El target '{target}' está soportado para transpilación, "
@@ -254,7 +261,7 @@ class InteractiveCommand(BaseCommand):
                     "{runtime_targets}."
                 ).format(
                     target=sandbox_docker,
-                    runtime_targets=", ".join(DOCKER_RUNTIME_TARGETS),
+                    runtime_targets=", ".join(DOCKER_EXECUTABLE_TARGETS),
                 )
             )
             return 1
@@ -419,7 +426,8 @@ class InteractiveCommand(BaseCommand):
             backend: Backend a utilizar
         """
         try:
-            salida = ejecutar_en_contenedor(linea, backend)
+            backend_runtime = resolve_docker_backend(backend)
+            salida = ejecutar_en_contenedor(linea, backend_runtime)
             if salida:
                 mostrar_info(str(salida))
         except Exception as err:

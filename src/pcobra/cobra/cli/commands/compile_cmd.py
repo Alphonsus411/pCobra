@@ -13,6 +13,7 @@ from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
+from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
     build_target_help_by_tier,
@@ -122,19 +123,20 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo").completer = files_completer()
         parser.add_argument(
             "--tipo",
-            type=normalize_target_name,
+            type=parse_target,
             choices=LANG_CHOICES,
             default="python",
             help=_("Tipo de código generado ({targets})").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
             "--backend",
-            type=normalize_target_name,
+            type=parse_target,
             choices=LANG_CHOICES,
             help=_("Alias de --tipo ({targets})").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
             "--tipos",
+            type=parse_target_list,
             help=_("Lista de lenguajes separados por comas ({targets})").format(targets=TARGETS_HELP),
         )
         parser.set_defaults(cmd=self)
@@ -161,7 +163,7 @@ class CompileCommand(BaseCommand):
 
         try:
             if getattr(args, "tipos", None):
-                langs = [normalize_target_name(t) for t in args.tipos.split(",") if t.strip()]
+                langs = list(args.tipos)
                 for lang in langs:
                     validar_dependencias_con_alias(lang, mod_info)
             else:
@@ -180,7 +182,7 @@ class CompileCommand(BaseCommand):
                 nodo.aceptar(validador)
 
             if getattr(args, "tipos", None):
-                lenguajes = [normalize_target_name(t) for t in args.tipos.split(",") if t.strip()]
+                lenguajes = list(args.tipos)
                 for lang in lenguajes:
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
