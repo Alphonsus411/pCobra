@@ -51,9 +51,9 @@ FULL_EXPECTATIONS = {
     },
     "js": {
         "holobit": ["import * as io from './nativos/io.js';", "new Holobit([1, 2, 3])"],
-        "proyectar": ["proyectar(hb, 2d);"],
-        "transformar": ["transformar(hb, rotar, 90);"],
-        "graficar": ["graficar(hb);"],
+        "proyectar": ["function cobra_proyectar", "cobra_proyectar(hb, 2d);"],
+        "transformar": ["function cobra_transformar", "cobra_transformar(hb, rotar, 90);"],
+        "graficar": ["function cobra_graficar", "cobra_graficar(hb);"],
     },
 }
 

@@ -3,4 +3,4 @@ def visit_transformar(self, nodo):
     op = self.obtener_valor(nodo.operacion)
     params = ", ".join(self.obtener_valor(p) for p in nodo.parametros)
     argumentos = ", ".join(filter(None, [hb, op, params]))
-    self.agregar_linea(f"transformar({argumentos});")
+    self.agregar_linea(f"cobra_transformar({argumentos});")
