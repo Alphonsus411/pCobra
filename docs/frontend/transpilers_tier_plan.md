@@ -21,7 +21,7 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 ### Tarea 3 — Asegurar compatibilidad con Holobit SDK y librerías base
 - [x] Mantener intactos los transpiladores soportados que ya emiten construcciones `holobit`.
 - [x] Conservar flujo de validación de dependencias (`validar_dependencias`) en `compilar`.
-- [x] Añadir pruebas de regresión para `holobit`, `graficar`, `proyectar`, `transformar`, `corelibs` y `standard_library` en Tier 1 y Tier 2 (suite dedicada en `tests/unit/test_transpiler_backend_regression.py`).
+- [x] Añadir pruebas de regresión para `holobit`, `graficar`, `proyectar`, `transformar`, `corelibs` y `standard_library` en Tier 1 y Tier 2 (suite dedicada en `tests/integration/transpilers/`).
 
 ### Tarea 4 — Limpiar y alinear pruebas
 - [x] Retirar tests unitarios/integración de backends eliminados.
@@ -54,6 +54,14 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 | C++ | Tier 2 | 🟡 Parcial (emisión `holobit`) | 🟡 Parcial (hook `cobra_proyectar`) | 🟡 Parcial (hook `cobra_transformar`) | 🟡 Parcial (hook `cobra_graficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
 | Java | Tier 2 | 🟡 Parcial (array `double[]`) | 🟡 Parcial (hook `cobraProyectar`) | 🟡 Parcial (hook `cobraTransformar`) | 🟡 Parcial (hook `cobraGraficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
 | ASM | Tier 2 | 🟡 Parcial (IR simbólico) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (`CALL` runtime) | 🟡 Parcial (`CALL` runtime) |
+
+
+### Estado de integración de suite oficial (CI)
+- [x] Suite dedicada para los 8 backends oficiales ubicada en `tests/integration/transpilers/`.
+- [x] Casos separados por tier (`test_official_backends_tier1.py` y `test_official_backends_tier2.py`).
+- [x] Criterio **full** aplicado con asserts estrictos de símbolos/hooks/imports esperados.
+- [x] Criterio **partial** aplicado con asserts de fallback explícito y no-rotura de generación.
+- [x] Validación en CI al ejecutarse `pytest tests` dentro de los workflows (`test.yml`/`ci.yml`).
 
 ### Cobertura de regresión asociada
 
