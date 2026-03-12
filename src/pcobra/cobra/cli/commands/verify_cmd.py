@@ -8,6 +8,8 @@ from unittest.mock import patch
 from argparse import ArgumentParser
 
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.cli.target_policies import parse_target_list
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra
@@ -26,7 +28,7 @@ class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
-    SUPPORTED_LANGUAGES = {"python", "js"}
+    SUPPORTED_LANGUAGES = tuple(t for t in OFFICIAL_TARGETS if t in {"python", "javascript"})
     
     def __init__(self) -> None:
         """Inicializa el comando y el intérprete."""
@@ -55,7 +57,8 @@ class VerifyCommand(BaseCommand):
             "--lenguajes",
             "-l",
             required=True,
-            help=_("Lista de lenguajes separados por comas (soportados: python, js)"),
+            type=parse_target_list,
+            help=_("Lista de lenguajes separados por comas (soportados: python, javascript)"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -72,7 +75,7 @@ class VerifyCommand(BaseCommand):
         if not languages:
             raise ValueError(_("La lista de lenguajes no puede estar vacía"))
         
-        unsupported = set(languages) - self.SUPPORTED_LANGUAGES
+        unsupported = set(languages) - set(self.SUPPORTED_LANGUAGES)
         if unsupported:
             raise ValueError(
                 _("Lenguajes no soportados: {}").format(", ".join(unsupported))
@@ -152,8 +155,10 @@ class VerifyCommand(BaseCommand):
             
             if lang == "python":
                 salida = ejecutar_en_sandbox(codigo_gen)
-            else:
+            elif lang == "javascript":
                 salida = ejecutar_en_sandbox_js(codigo_gen)
+            else:
+                return None, _("Runtime no soportado para {}").format(lang)
                 
             # Normalizar terminaciones de línea
             return salida.replace('\r\n', '\n'), None
@@ -201,7 +206,7 @@ class VerifyCommand(BaseCommand):
             if not args.archivo or not args.lenguajes:
                 raise ValueError(_("Se requieren archivo y lenguajes"))
                 
-            lenguajes = [lang.strip() for lang in args.lenguajes.split(",") if lang.strip()]
+            lenguajes = list(args.lenguajes)
             self._validate_languages(lenguajes)
             
             codigo = self._read_source_file(args.archivo)

@@ -17,3 +17,11 @@ def test_verify_command_accepts_co_file(tmp_path):
 
     # No debe lanzar excepción.
     comando._validate_file(str(archivo))
+
+
+def test_verify_command_supported_languages_canonicos():
+    comando = VerifyCommand()
+
+    assert "python" in comando.SUPPORTED_LANGUAGES
+    assert "javascript" in comando.SUPPORTED_LANGUAGES
+    assert "js" not in comando.SUPPORTED_LANGUAGES
