@@ -97,7 +97,7 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "js": {
         "contract": "mixed",
-        "evidence": "Holobit/proyección/transformación/graficado con símbolos directos; `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
+        "evidence": "Primitivas Holobit en JS resueltas con hooks explícitos `cobra_*` inyectados en codegen; `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
     },
     "rust": {
         "contract": "partial",

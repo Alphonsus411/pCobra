@@ -47,7 +47,7 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 | Backend | Tier | holobit(...) | proyectar(...) | transformar(...) | graficar(...) | `corelibs` | `standard_library` |
 |---|---|---|---|---|---|---|---|
 | Python | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo |
-| JavaScript | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | 🟡 Parcial (runtime JS nativo) | 🟡 Parcial (según mapeo) |
+| JavaScript | Tier 1 | ✅ Completo | ✅ Completo (hook `cobra_proyectar`) | ✅ Completo (hook `cobra_transformar`) | ✅ Completo (hook `cobra_graficar`) | 🟡 Parcial (runtime JS nativo) | 🟡 Parcial (según mapeo) |
 | Rust | Tier 1 | 🟡 Parcial (emisión `holobit`) | 🟡 Parcial (hook `cobra_proyectar`) | 🟡 Parcial (hook `cobra_transformar`) | 🟡 Parcial (hook `cobra_graficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
 | WASM | Tier 1 | 🟡 Parcial (comentario IR) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime import/call) | 🟡 Parcial (runtime import/call) |
 | Go | Tier 2 | 🟡 Parcial (slice nativo) | 🟡 Parcial (hook `cobraProyectar`) | 🟡 Parcial (hook `cobraTransformar`) | 🟡 Parcial (hook `cobraGraficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
@@ -78,6 +78,7 @@ Se añade una suite dedicada que cubre:
 
 ### Política de interpretación
 
+- En JavaScript, `proyectar/transformar/graficar` se resuelven mediante hooks explícitos `cobra_*` inyectados por el transpiler para evitar dependencia implícita de símbolos globales.
 - **Tier 1** prioriza estabilidad funcional y cobertura de primitivas Holobit en Python/JS.
 - **Tier 2** prioriza continuidad de generación y compatibilidad incremental, con cobertura parcial explícita.
 - Cualquier backend fuera de esta matriz se considera fuera de contrato.

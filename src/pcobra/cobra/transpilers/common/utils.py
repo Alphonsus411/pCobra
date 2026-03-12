@@ -71,6 +71,26 @@ STANDARD_IMPORTS = {
 
 
 RUNTIME_HOOKS = {
+    "js": [
+        "function cobra_proyectar(hb, modo) {",
+        "    if (hb && typeof hb.proyectar === 'function') {",
+        "        return hb.proyectar(modo);",
+        "    }",
+        "    console.log('[cobra::proyectar]', hb, modo);",
+        "}",
+        "function cobra_transformar(hb, op, ...params) {",
+        "    if (hb && typeof hb.transformar === 'function') {",
+        "        return hb.transformar(op, ...params);",
+        "    }",
+        "    console.log('[cobra::transformar]', hb, op, params);",
+        "}",
+        "function cobra_graficar(hb) {",
+        "    if (hb && typeof hb.graficar === 'function') {",
+        "        return hb.graficar();",
+        "    }",
+        "    console.log('[cobra::graficar]', hb);",
+        "}",
+    ],
     "rust": [
         "fn cobra_proyectar(hb: &str, modo: &str) {",
         "    println!(\"[cobra::proyectar] {} {}\", hb, modo);",
