@@ -132,7 +132,7 @@ jobs:
       - name: Validate changelog
         shell: bash
         run: python scripts/check_changelog.py
-      - name: Validate targets policy docs
+      - name: Validate targets policy (whitelist + key paths)
         shell: bash
         run: python scripts/validate_targets_policy.py
       - name: Packaging check (Linux/macOS)
