@@ -68,3 +68,13 @@ def test_get_toml_map_invalid_file_returns_empty_and_logs_error(tmp_path, monkey
 def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
     assert module_map.get_mapped_path("m", "python") == "m"
+
+
+def test_get_mapped_path_resuelve_canonico_desde_alias_legacy(monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"js": "m.js"}})
+    assert module_map.get_mapped_path("m", "javascript") == "m.js"
+
+
+def test_get_mapped_path_resuelve_alias_legacy_desde_canonico(monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}})
+    assert module_map.get_mapped_path("m", "js") == "m.js"
