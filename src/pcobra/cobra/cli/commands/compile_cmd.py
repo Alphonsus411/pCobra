@@ -13,7 +13,12 @@ from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    build_target_help_by_tier,
+    normalize_target_name,
+    resolution_candidates,
+)
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
 from pcobra.core.semantic_validators import (
@@ -37,7 +42,7 @@ MAX_LANGUAGES = 10
 TRANSPILERS = {
     "python": TranspiladorPython,
     "rust": TranspiladorRust,
-    "js": TranspiladorJavaScript,
+    "javascript": TranspiladorJavaScript,
     "wasm": TranspiladorWasm,
     "go": TranspiladorGo,
     "cpp": TranspiladorCPP,
@@ -58,11 +63,12 @@ for ep in eps:
             logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
             continue
         cls = getattr(import_module(module_name), class_name)
-        TRANSPILERS[ep.name] = cls
+        TRANSPILERS[normalize_target_name(ep.name)] = cls
     except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
 LANG_CHOICES = sorted(set(TRANSPILERS.keys()).intersection(OFFICIAL_TARGETS))
+TARGETS_HELP = build_target_help_by_tier()
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
@@ -75,6 +81,19 @@ def validate_file(filepath: str) -> bool:
     if os.path.getsize(path) > MAX_FILE_SIZE:
         raise ValueError(f"El archivo excede el tamaño máximo permitido ({MAX_FILE_SIZE} bytes)")
     return True
+
+def validar_dependencias_con_alias(backend: str, mod_info: dict) -> None:
+    """Valida dependencias probando nombre canónico y aliases históricos."""
+    last_error = None
+    for candidate in resolution_candidates(backend):
+        try:
+            validar_dependencias(candidate, mod_info)
+            return
+        except (ValueError, FileNotFoundError) as exc:
+            last_error = exc
+    if last_error is not None:
+        raise last_error
+
 
 def run_transpiler_pool(languages: list, ast, executor) -> list:
     """Ejecuta los transpiladores en paralelo con límites de seguridad."""
@@ -103,18 +122,20 @@ class CompileCommand(BaseCommand):
         parser.add_argument("archivo").completer = files_completer()
         parser.add_argument(
             "--tipo",
+            type=normalize_target_name,
             choices=LANG_CHOICES,
             default="python",
-            help=_("Tipo de código generado"),
+            help=_("Tipo de código generado ({targets})").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
             "--backend",
+            type=normalize_target_name,
             choices=LANG_CHOICES,
-            help=_("Alias de --tipo"),
+            help=_("Alias de --tipo ({targets})").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
             "--tipos",
-            help=_("Lista de lenguajes separados por comas"),
+            help=_("Lista de lenguajes separados por comas ({targets})").format(targets=TARGETS_HELP),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -136,15 +157,15 @@ class CompileCommand(BaseCommand):
             return 1
 
         mod_info = module_map.get_toml_map()
-        transpilador_objetivo = getattr(args, "backend", None) or args.tipo
+        transpilador_objetivo = normalize_target_name(getattr(args, "backend", None) or args.tipo)
 
         try:
             if getattr(args, "tipos", None):
-                langs = [t.strip() for t in args.tipos.split(",") if t.strip()]
+                langs = [normalize_target_name(t) for t in args.tipos.split(",") if t.strip()]
                 for lang in langs:
-                    validar_dependencias(lang, mod_info)
+                    validar_dependencias_con_alias(lang, mod_info)
             else:
-                validar_dependencias(transpilador_objetivo, mod_info)
+                validar_dependencias_con_alias(transpilador_objetivo, mod_info)
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
@@ -159,7 +180,7 @@ class CompileCommand(BaseCommand):
                 nodo.aceptar(validador)
 
             if getattr(args, "tipos", None):
-                lenguajes = [t.strip() for t in args.tipos.split(",") if t.strip()]
+                lenguajes = [normalize_target_name(t) for t in args.tipos.split(",") if t.strip()]
                 for lang in lenguajes:
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))

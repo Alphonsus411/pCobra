@@ -30,7 +30,11 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    build_target_help_by_tier,
+    normalize_target_name,
+)
 
 # Configuración del logging
 logger = logging.getLogger(__name__)
@@ -39,6 +43,7 @@ logger = logging.getLogger(__name__)
 MAX_FILE_SIZE = 1024 * 1024  # 1MB
 EXTENSIONES_POR_LENGUAJE: Dict[str, str] = {
     "python": ".py",
+    "javascript": ".js",
     "js": ".js",
     "java": ".java",
 }
@@ -53,6 +58,7 @@ class TranspilationError(Exception):
 REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
 ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
 DESTINO_CHOICES = sorted(set(TRANSPILERS.keys()).intersection(OFFICIAL_TARGETS))
+TARGETS_HELP = build_target_help_by_tier()
 
 
 def validar_consistencia_reverse_transpilers() -> None:
@@ -125,10 +131,11 @@ class TranspilarInversoCommand(BaseCommand):
         )
         parser.add_argument(
             "--destino",
-            help=_("Lenguaje de destino para la transpilación ({})").format(
-                ", ".join(DESTINO_CHOICES)
+            help=_("Lenguaje de destino para la transpilación ({targets})").format(
+                targets=TARGETS_HELP
             ),
             required=True,
+            type=normalize_target_name,
             choices=DESTINO_CHOICES,
         )
         parser.set_defaults(cmd=self)
@@ -232,7 +239,7 @@ class TranspilarInversoCommand(BaseCommand):
         """
         try:
             origen = args.origen.lower()
-            destino = args.destino.lower()
+            destino = normalize_target_name(args.destino)
 
             self._validar_origen_en_politica(origen)
 

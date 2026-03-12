@@ -7,7 +7,11 @@ from typing import List, Tuple, Union
 
 from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.module_map import get_mapped_path
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    normalize_target_name,
+    resolution_candidates,
+)
 
 
 class BaseTranspiler(NodeVisitor, ABC):
@@ -32,7 +36,7 @@ STANDARD_IMPORTS = {
         "from corelibs import *\n"
         "from standard_library import *\n"
     ),
-    "js": [
+    "javascript": [
         "import * as io from './nativos/io.js';",
         "import * as net from './nativos/red.js';",
         "import * as matematicas from './nativos/matematicas.js';",
@@ -71,7 +75,7 @@ STANDARD_IMPORTS = {
 
 
 RUNTIME_HOOKS = {
-    "js": [
+    "javascript": [
         "function cobra_proyectar(hb, modo) {",
         "    if (hb && typeof hb.proyectar === 'function') {",
         "        return hb.proyectar(modo);",
@@ -161,7 +165,7 @@ def save_file(content: Union[str, List[str]], path: str) -> None:
 
 def get_standard_imports(language: str) -> Union[str, List[str]]:
     """Devuelve las importaciones por defecto para *language*."""
-    imports = STANDARD_IMPORTS.get(language, [])
+    imports = STANDARD_IMPORTS.get(normalize_target_name(language), [])
     if isinstance(imports, list):
         return list(imports)
     return imports
@@ -169,12 +173,17 @@ def get_standard_imports(language: str) -> Union[str, List[str]]:
 
 def get_runtime_hooks(language: str) -> List[str]:
     """Devuelve hooks auxiliares de runtime para *language*."""
-    return list(RUNTIME_HOOKS.get(language, []))
+    return list(RUNTIME_HOOKS.get(normalize_target_name(language), []))
 
 
 def load_mapped_module(path: str, language: str) -> Tuple[str, str]:
     """Carga el módulo indicado respetando el mapeo configurado."""
-    ruta = get_mapped_path(path, language)
+    ruta = path
+    for candidate in resolution_candidates(language):
+        ruta_candidate = get_mapped_path(path, candidate)
+        if ruta_candidate != path:
+            ruta = ruta_candidate
+            break
     with open(ruta, "r", encoding="utf-8") as f:
         contenido = f.read()
     return contenido, ruta
