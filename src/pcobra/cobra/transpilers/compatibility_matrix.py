@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from typing import Final
 
+from pcobra.cobra.transpilers.targets import normalize_target_name
+
 BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     "python": {
         "tier": "tier1",
@@ -24,7 +26,7 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
         "corelibs": "full",
         "standard_library": "full",
     },
-    "js": {
+    "javascript": {
         "tier": "tier1",
         "holobit": "full",
         "proyectar": "full",
@@ -95,7 +97,7 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
         "contract": "full",
         "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas directas a primitivas Holobit.",
     },
-    "js": {
+    "javascript": {
         "contract": "mixed",
         "evidence": "Primitivas Holobit en JS resueltas con hooks explícitos `cobra_*` inyectados en codegen; `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
     },
@@ -125,4 +127,14 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
 }
 
-__all__ = ["BACKEND_COMPATIBILITY", "BACKEND_COMPATIBILITY_NOTES"]
+def get_backend_compatibility(backend: str) -> dict[str, str] | None:
+    """Obtiene compatibilidad por backend aplicando normalización canónica."""
+    return BACKEND_COMPATIBILITY.get(normalize_target_name(backend))
+
+
+def get_backend_compatibility_notes(backend: str) -> dict[str, str] | None:
+    """Obtiene notas de compatibilidad por backend con normalización."""
+    return BACKEND_COMPATIBILITY_NOTES.get(normalize_target_name(backend))
+
+
+__all__ = ["BACKEND_COMPATIBILITY", "BACKEND_COMPATIBILITY_NOTES", "get_backend_compatibility", "get_backend_compatibility_notes"]
