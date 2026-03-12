@@ -5,8 +5,8 @@ Esta matriz documenta qué garantías ofrece cada backend para:
 - imports base de runtime (`corelibs`, `standard_library`)
 
 Niveles:
-- ``full``: soportado y cubierto por regresión.
-- ``partial``: soporte limitado (fallback explícito, hooks o passthrough sin semántica completa).
+- ``full``: soportado con aserciones estrictas (símbolos/hooks/imports esperados).
+- ``partial``: soporte limitado validado por fallback explícito y no rotura de generación.
 - ``none``: no garantizado por backend.
 """
 
@@ -93,35 +93,35 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
-        "evidence": "Emite imports de corelibs/standard_library y llamadas directas a primitivas Holobit.",
+        "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas directas a primitivas Holobit.",
     },
     "js": {
         "contract": "mixed",
-        "evidence": "Holobit completo; corelibs/standard_library en modo parcial con runtime JS nativo.",
+        "evidence": "Holobit/proyección/transformación/graficado con símbolos directos; `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
     },
     "rust": {
         "contract": "partial",
-        "evidence": "Primitivas Holobit vía hooks cobra_* y llamadas runtime passthrough para librerías.",
+        "evidence": "Hooks `cobra_*` para primitivas Holobit y llamadas passthrough (`longitud(cobra)`, `mostrar(hola)`).",
     },
     "wasm": {
         "contract": "partial",
-        "evidence": "Soporte por comentarios/hooks de runtime (fallback explícito).",
+        "evidence": "Fallback explícito por comentarios/hooks de runtime (`;; runtime hook` / `;; call runtime`).",
     },
     "go": {
         "contract": "partial",
-        "evidence": "Hooks cobra* para primitivas y llamadas passthrough a librerías.",
+        "evidence": "Hooks `cobra*` para primitivas y passthrough de runtime base (`longitud`/`mostrar`).",
     },
     "cpp": {
         "contract": "partial",
-        "evidence": "Hooks cobra_* inline para primitivas y llamadas passthrough a librerías.",
+        "evidence": "Hooks inline `cobra_*` para primitivas y passthrough de runtime base.",
     },
     "java": {
         "contract": "partial",
-        "evidence": "Hooks cobra* estáticos para primitivas y llamadas passthrough a librerías.",
+        "evidence": "Hooks estáticos `cobra*` para primitivas y passthrough de runtime base.",
     },
     "asm": {
         "contract": "partial",
-        "evidence": "Fallback por hooks/comentarios y llamadas CALL para runtime base.",
+        "evidence": "Fallback por hooks/comentarios (`Nodo ... no soportado`) y `CALL` para runtime base.",
     },
 }
 
