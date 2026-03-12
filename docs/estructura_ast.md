@@ -65,22 +65,12 @@ Transpiladores --> ASM
 Transpiladores --> Rust
 Transpiladores --> "C++"
 Transpiladores --> Go
-Transpiladores --> Kotlin
-Transpiladores --> Swift
-Transpiladores --> R
-Transpiladores --> Julia
 Transpiladores --> Java
-Transpiladores --> COBOL
-Transpiladores --> Fortran
-Transpiladores --> Pascal
-Transpiladores --> VisualBasic
-Transpiladores --> Ruby
-Transpiladores --> PHP
-Transpiladores --> Perl
-Transpiladores --> Matlab
-Transpiladores --> Mojo
-Transpiladores --> LaTeX
-Transpiladores --> C
 Transpiladores --> WebAssembly
 @enduml
 ```
+
+
+## Archivo histórico (no soportado)
+
+El diagrama antiguo incluía menciones a Kotlin, Swift, R, Julia, COBOL, Fortran, Pascal, VisualBasic, Ruby, PHP, Perl, Matlab, Mojo, LaTeX y C. Esas referencias se conservan solo como histórico y no forman parte de los 8 targets oficiales actuales.

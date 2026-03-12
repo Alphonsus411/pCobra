@@ -10,7 +10,7 @@ WORKDIR /work
 # COPY script.js /work/script.js
 
 # Puedes instalar herramientas JS si las usas desde Cobra o transpiler
-# RUN npm install -g esbuild typescript
+# RUN npm install -g esbuild
 
 # Entrypoint por defecto: evalúa JS desde stdin
 ENTRYPOINT ["node", "-"]
