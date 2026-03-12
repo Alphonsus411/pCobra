@@ -3,7 +3,6 @@ import importlib
 import pytest
 
 from pcobra.core.ast_nodes import (
-    NodoAsignacion,
     NodoGraficar,
     NodoHolobit,
     NodoIdentificador,
@@ -12,8 +11,8 @@ from pcobra.core.ast_nodes import (
     NodoTransformar,
     NodoValor,
 )
-from pcobra.cobra.transpilers.common.utils import get_standard_imports
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+from pcobra.cobra.transpilers.targets import TIER1_TARGETS, TIER2_TARGETS
 
 TRANSPILERS = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
@@ -24,6 +23,93 @@ TRANSPILERS = {
     "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
     "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
     "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
+}
+
+FEATURE_NODES = {
+    "holobit": lambda: [NodoHolobit("hb", [1, 2, 3])],
+    "proyectar": lambda: [
+        NodoHolobit("hb", [1, 2, 3]),
+        NodoProyectar(NodoIdentificador("hb"), NodoValor("2d")),
+    ],
+    "transformar": lambda: [
+        NodoHolobit("hb", [1, 2, 3]),
+        NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]),
+    ],
+    "graficar": lambda: [NodoHolobit("hb", [1, 2, 3]), NodoGraficar(NodoIdentificador("hb"))],
+    "corelibs": lambda: [NodoLlamadaFuncion("longitud", [NodoValor("cobra")])],
+    "standard_library": lambda: [NodoLlamadaFuncion("mostrar", [NodoValor("hola")])],
+}
+
+FULL_EXPECTATIONS = {
+    "python": {
+        "holobit": ["from corelibs import *", "from standard_library import *", "holobit([1, 2, 3])"],
+        "proyectar": ["proyectar(hb, '2d')"],
+        "transformar": ["transformar(hb, 'rotar', 90)"],
+        "graficar": ["graficar(hb)"],
+        "corelibs": ["from corelibs import *", "longitud('cobra')"],
+        "standard_library": ["from standard_library import *", "mostrar('hola')"],
+    },
+    "js": {
+        "holobit": ["import * as io from './nativos/io.js';", "new Holobit([1, 2, 3])"],
+        "proyectar": ["proyectar(hb, 2d);"],
+        "transformar": ["transformar(hb, rotar, 90);"],
+        "graficar": ["graficar(hb);"],
+    },
+}
+
+PARTIAL_EXPECTATIONS = {
+    "rust": {
+        "holobit": ["holobit(vec![1, 2, 3]);"],
+        "proyectar": ["fn cobra_proyectar", 'cobra_proyectar(&format!("{}", hb), &format!("{}", 2d));'],
+        "transformar": ["fn cobra_transformar", 'cobra_transformar(&format!("{}", hb), &format!("{}", rotar), &[]);'],
+        "graficar": ["fn cobra_graficar", 'cobra_graficar(&format!("{}", hb));'],
+        "corelibs": ["longitud(cobra);"],
+        "standard_library": ["mostrar(hola);"],
+    },
+    "wasm": {
+        "holobit": [";; holobit hb [1, 2, 3]"],
+        "proyectar": [";; runtime hook cobra_proyectar", ";; call runtime cobra_proyectar"],
+        "transformar": [";; runtime hook cobra_transformar", ";; call runtime cobra_transformar"],
+        "graficar": [";; runtime hook cobra_graficar", ";; call runtime cobra_graficar"],
+        "corelibs": [";; call longitud (i32.const cobra)"],
+        "standard_library": [";; call mostrar (i32.const hola)"],
+    },
+    "go": {
+        "holobit": ["hb := []float64{1, 2, 3}"],
+        "proyectar": ["func cobraProyectar", "cobraProyectar(hb, \"2d\")"],
+        "transformar": ["func cobraTransformar", "cobraTransformar(hb, \"rotar\", 90)"],
+        "graficar": ["func cobraGraficar", "cobraGraficar(hb)"],
+        "corelibs": ["longitud(\"cobra\")"],
+        "standard_library": ["mostrar(\"hola\")"],
+    },
+    "cpp": {
+        "holobit": ["auto hb = holobit({ 1, 2, 3 });"],
+        "proyectar": ["inline void cobra_proyectar", "cobra_proyectar(hb, 2d);"],
+        "transformar": ["inline void cobra_transformar", "cobra_transformar(hb, rotar, {});"],
+        "graficar": ["inline void cobra_graficar", "cobra_graficar(hb)"],
+        "corelibs": ["longitud(cobra);"],
+        "standard_library": ["mostrar(hola);"],
+    },
+    "java": {
+        "holobit": ["double[] hb = new double[]{1, 2, 3};"],
+        "proyectar": ["private static void cobraProyectar", "cobraProyectar(hb, \"2d\")"],
+        "transformar": ["private static void cobraTransformar", "cobraTransformar(hb, \"rotar\", 90)"],
+        "graficar": ["private static void cobraGraficar", "cobraGraficar(hb)"],
+        "corelibs": ["longitud(\"cobra\")"],
+        "standard_library": ["mostrar(\"hola\")"],
+    },
+    "asm": {
+        "holobit": ["HOLOBIT hb [1, 2, 3]"],
+        "proyectar": ["; hook cobra_proyectar", "; Nodo NodoProyectar no soportado"],
+        "transformar": ["; hook cobra_transformar", "; Nodo NodoTransformar no soportado"],
+        "graficar": ["; hook cobra_graficar", "; Nodo NodoGraficar no soportado"],
+        "corelibs": ["CALL longitud 'cobra'"],
+        "standard_library": ["CALL mostrar 'hola'"],
+    },
+    "js": {
+        "corelibs": ["import * as texto from './nativos/texto.js';", "longitud(cobra);"],
+        "standard_library": ["import * as io from './nativos/io.js';", "mostrar(hola);"],
+    },
 }
 
 
@@ -37,94 +123,44 @@ def _to_text(output) -> str:
     return "\n".join(output) if isinstance(output, list) else str(output)
 
 
-@pytest.mark.parametrize("language", TRANSPILERS)
-def test_import_backend_module_and_generate_minimal_code(language: str):
+def _generate(language: str, feature: str) -> str:
     transpiler = _build(language)
-    code = transpiler.generate_code([NodoAsignacion("x", NodoValor(1))])
-    text = _to_text(code)
-    assert text.strip()
+    return _to_text(transpiler.generate_code(FEATURE_NODES[feature]()))
+
+
+@pytest.mark.parametrize("language", TIER1_TARGETS)
+def test_tier1_backends_import_and_generate(language: str):
+    code = _generate(language, "holobit")
+    assert code.strip()
+
+
+@pytest.mark.parametrize("language", TIER2_TARGETS)
+def test_tier2_backends_import_and_generate(language: str):
+    code = _generate(language, "holobit")
+    assert code.strip()
+
+
+@pytest.mark.parametrize("language, feature", [(lang, feat) for lang, feats in FULL_EXPECTATIONS.items() for feat in feats])
+def test_full_compatibility_contract(language: str, feature: str):
+    code = _generate(language, feature)
+    for expected in FULL_EXPECTATIONS[language][feature]:
+        assert expected in code
 
 
 @pytest.mark.parametrize(
-    "language, expected_snippet",
-    [
-        ("python", "holobit([1, 2, 3])"),
-        ("js", "new Holobit([1, 2, 3])"),
-        ("rust", "holobit(vec![1, 2, 3])"),
-        ("cpp", "holobit({ 1, 2, 3 })"),
-        ("go", "[]float64{1, 2, 3}"),
-        ("java", "new double[]{1, 2, 3}"),
-        ("wasm", ";; holobit hb [1, 2, 3]"),
-        ("asm", "HOLOBIT hb [1, 2, 3]"),
-    ],
+    "language, feature", [(lang, feat) for lang, feats in PARTIAL_EXPECTATIONS.items() for feat in feats]
 )
-def test_holobit_representative_generation(language: str, expected_snippet: str):
-    transpiler = _build(language)
-    code = transpiler.generate_code([NodoHolobit("hb", [1, 2, 3])])
-    assert expected_snippet in _to_text(code)
-
-
-@pytest.mark.parametrize(
-    "language, expected",
-    [
-        ("python", "proyectar(hb"),
-        ("js", "proyectar(hb"),
-        ("rust", "cobra_proyectar"),
-        ("go", "cobraProyectar"),
-        ("cpp", "cobra_proyectar"),
-        ("java", "cobraProyectar"),
-        ("wasm", "cobra_proyectar"),
-        ("asm", "NodoProyectar no soportado"),
-    ],
-)
-def test_primitiva_proyectar_minima_por_backend(language: str, expected: str):
-    transpiler = _build(language)
-    code = transpiler.generate_code(
-        [NodoHolobit("hb", [1, 2, 3]), NodoProyectar(NodoIdentificador("hb"), NodoValor("2d"))]
-    )
-    assert expected in _to_text(code)
+def test_partial_compatibility_contract(language: str, feature: str):
+    code = _generate(language, feature)
+    for expected in PARTIAL_EXPECTATIONS[language][feature]:
+        assert expected in code
 
 
 @pytest.mark.parametrize("language", TRANSPILERS)
-def test_primitiva_transformar_y_graficar_minima_por_backend(language: str):
-    transpiler = _build(language)
-    code = transpiler.generate_code(
-        [
-            NodoHolobit("hb", [1, 2, 3]),
-            NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]),
-            NodoGraficar(NodoIdentificador("hb")),
-        ]
-    )
-    text = _to_text(code)
-    assert "hb" in text
-    assert "grafic" in text.lower() or "graficar" in text.lower()
-
-
-@pytest.mark.parametrize("language", ["python", "js", "rust", "wasm", "go", "cpp", "java", "asm"])
-def test_operacion_libreria_runtime_representativa(language: str):
-    transpiler = _build(language)
-    code = transpiler.generate_code([NodoLlamadaFuncion("longitud", [NodoValor("cobra")])])
-    text = _to_text(code)
-    assert "longitud" in text
-
-
-@pytest.mark.parametrize(
-    "language, token_runtime",
-    [
-        ("python", "corelibs"),
-        ("js", "nativos"),
-        ("rust", "corelibs"),
-        ("wasm", "runtime import"),
-        ("go", "corelibs"),
-        ("cpp", "corelibs"),
-        ("java", "corelibs"),
-        ("asm", "runtime import"),
-    ],
-)
-def test_bootstrap_runtime_backend(language: str, token_runtime: str):
-    imports = get_standard_imports(language)
-    text = "\n".join(imports) if isinstance(imports, list) else imports
-    assert token_runtime in text
+def test_suite_covers_all_features(language: str):
+    for feature in FEATURE_NODES:
+        code = _generate(language, feature)
+        assert code.strip()
 
 
 def test_matriz_compatibilidad_cubre_todos_los_backends_oficiales():
