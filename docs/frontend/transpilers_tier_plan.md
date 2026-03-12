@@ -21,12 +21,12 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 ### Tarea 3 — Asegurar compatibilidad con Holobit SDK y librerías base
 - [x] Mantener intactos los transpiladores soportados que ya emiten construcciones `holobit`.
 - [x] Conservar flujo de validación de dependencias (`validar_dependencias`) en `compilar`.
-- [ ] Añadir pruebas de regresión para `graficar`, `proyectar`, `transformar`, `escalar` y `mover` en Tier 1 y Tier 2.
+- [x] Añadir pruebas de regresión para `holobit`, `graficar`, `proyectar`, `transformar`, `corelibs` y `standard_library` en Tier 1 y Tier 2 (suite dedicada en `tests/unit/test_transpiler_backend_regression.py`).
 
 ### Tarea 4 — Limpiar y alinear pruebas
 - [x] Retirar tests unitarios/integración de backends eliminados.
 - [x] Reescribir matrices de pruebas para clasificar por Tier 1/Tier 2.
-- [ ] Añadir pipeline de smoke tests mínimo para los 8 targets soportados.
+- [x] Añadir pipeline de smoke tests mínimo para los 8 targets soportados (incluido en CI al ejecutarse `pytest` sobre `tests/unit`).
 
 ### Tarea 5 — Actualizar documentación pública
 - [x] Actualizar secciones principales del README (ES/EN) con la nueva lista de destinos.
@@ -48,12 +48,12 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 |---|---|---|---|---|---|---|---|
 | Python | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo |
 | JavaScript | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | 🟡 Parcial (runtime JS nativo) | 🟡 Parcial (según mapeo) |
-| Rust | Tier 1 | 🟡 Parcial (`holobit`) | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | 🟡 Parcial | ❌ No garantizado |
-| WASM | Tier 1 | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado |
-| Go | Tier 2 | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | 🟡 Parcial | ❌ No garantizado |
-| C++ | Tier 2 | 🟡 Parcial (`holobit`) | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | 🟡 Parcial | ❌ No garantizado |
-| Java | Tier 2 | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado | ❌ No garantizado |
-| ASM | Tier 2 | 🟡 Parcial (IR simbólico) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | ❌ No garantizado | ❌ No garantizado |
+| Rust | Tier 1 | 🟡 Parcial (emisión `holobit`) | 🟡 Parcial (hook `cobra_proyectar`) | 🟡 Parcial (hook `cobra_transformar`) | 🟡 Parcial (hook `cobra_graficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
+| WASM | Tier 1 | 🟡 Parcial (comentario IR) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime import/call) | 🟡 Parcial (runtime import/call) |
+| Go | Tier 2 | 🟡 Parcial (slice nativo) | 🟡 Parcial (hook `cobraProyectar`) | 🟡 Parcial (hook `cobraTransformar`) | 🟡 Parcial (hook `cobraGraficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
+| C++ | Tier 2 | 🟡 Parcial (emisión `holobit`) | 🟡 Parcial (hook `cobra_proyectar`) | 🟡 Parcial (hook `cobra_transformar`) | 🟡 Parcial (hook `cobra_graficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
+| Java | Tier 2 | 🟡 Parcial (array `double[]`) | 🟡 Parcial (hook `cobraProyectar`) | 🟡 Parcial (hook `cobraTransformar`) | 🟡 Parcial (hook `cobraGraficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
+| ASM | Tier 2 | 🟡 Parcial (IR simbólico) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (`CALL` runtime) | 🟡 Parcial (`CALL` runtime) |
 
 ### Cobertura de regresión asociada
 

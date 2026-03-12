@@ -6,7 +6,7 @@ Esta matriz documenta qué garantías ofrece cada backend para:
 
 Niveles:
 - ``full``: soportado y cubierto por regresión.
-- ``partial``: soporte limitado (fallback o subconjunto).
+- ``partial``: soporte limitado (fallback explícito, hooks o passthrough sin semántica completa).
 - ``none``: no garantizado por backend.
 """
 
@@ -89,4 +89,40 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     },
 }
 
-__all__ = ["BACKEND_COMPATIBILITY"]
+
+BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
+    "python": {
+        "contract": "full",
+        "evidence": "Emite imports de corelibs/standard_library y llamadas directas a primitivas Holobit.",
+    },
+    "js": {
+        "contract": "mixed",
+        "evidence": "Holobit completo; corelibs/standard_library en modo parcial con runtime JS nativo.",
+    },
+    "rust": {
+        "contract": "partial",
+        "evidence": "Primitivas Holobit vía hooks cobra_* y llamadas runtime passthrough para librerías.",
+    },
+    "wasm": {
+        "contract": "partial",
+        "evidence": "Soporte por comentarios/hooks de runtime (fallback explícito).",
+    },
+    "go": {
+        "contract": "partial",
+        "evidence": "Hooks cobra* para primitivas y llamadas passthrough a librerías.",
+    },
+    "cpp": {
+        "contract": "partial",
+        "evidence": "Hooks cobra_* inline para primitivas y llamadas passthrough a librerías.",
+    },
+    "java": {
+        "contract": "partial",
+        "evidence": "Hooks cobra* estáticos para primitivas y llamadas passthrough a librerías.",
+    },
+    "asm": {
+        "contract": "partial",
+        "evidence": "Fallback por hooks/comentarios y llamadas CALL para runtime base.",
+    },
+}
+
+__all__ = ["BACKEND_COMPATIBILITY", "BACKEND_COMPATIBILITY_NOTES"]
