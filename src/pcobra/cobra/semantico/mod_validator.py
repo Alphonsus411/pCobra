@@ -4,7 +4,8 @@ Este módulo proporciona utilidades para leer un archivo ``cobra.mod``
 (tanto en formato YAML como TOML) y verificar su integridad. Las
 comprobaciones incluyen:
 
-- Existencia de los archivos declarados en las claves ``python`` y ``js``.
+- Existencia de los archivos declarados para los backends oficiales definidos en
+  ``OFFICIAL_TARGETS`` (con compatibilidad legacy para ``js``).
 - Validez de las versiones indicadas utilizando el formato semver.
 - Detección de nombres de módulos o archivos duplicados.
 """
@@ -13,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 try:
     import tomllib  # Python >= 3.11
@@ -33,12 +34,17 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
 
 from pcobra.cobra.cli.utils.semver import es_version_valida
 from pcobra.cobra.transpilers import module_map
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
 
 # Constantes
 MAX_FILE_SIZE = 10_000_000  # 10MB
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
 
 logger = logging.getLogger(__name__)
+
+LEGACY_TARGET_ALIASES: dict[str, str] = {
+    "js": "javascript",
+}
 
 # Verificar existencia del esquema y cargarlo
 if not os.path.exists(SCHEMA_PATH):
@@ -100,6 +106,28 @@ def cargar_mod(path: str | None = None) -> Dict[str, Any]:
             raise ValueError(f"Error al parsear archivo: {e}") from None
 
 
+
+def _normalize_module_targets(modulo: str, info: dict[str, Any]) -> dict[str, Any]:
+    """Normaliza claves legacy de targets y emite advertencias de deprecación."""
+    normalized = dict(info)
+    for legacy, canonical in LEGACY_TARGET_ALIASES.items():
+        legacy_value = normalized.get(legacy)
+        if legacy_value is None:
+            continue
+
+        logger.warning(
+            "La clave '%s' para el módulo %s está deprecada; usa '%s'.",
+            legacy,
+            modulo,
+            canonical,
+        )
+
+        if canonical not in normalized:
+            normalized[canonical] = legacy_value
+
+    return normalized
+
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -123,8 +151,9 @@ def validar_mod(path: str | None = None) -> None:
             raise ValueError(f"Archivo cobra.mod inválido: {e.message}") from None
 
     errores: list[str] = []
-    archivos_py: set[str] = set()
-    archivos_js: set[str] = set()
+    backend_archivos: dict[str, set[str]] = {
+        target: set() for target in OFFICIAL_TARGETS
+    }
 
     for modulo, info in datos.items():
         if modulo == "lock":
@@ -134,8 +163,10 @@ def validar_mod(path: str | None = None) -> None:
             errores.append(f"Entrada inválida para {modulo}")
             continue
 
+        info_normalized = _normalize_module_targets(modulo, info)
+
         # Validar versión
-        version = info.get("version")
+        version = info_normalized.get("version")
         if version is not None:
             try:
                 if not es_version_valida(str(version)):
@@ -143,17 +174,18 @@ def validar_mod(path: str | None = None) -> None:
             except (TypeError, ValueError):
                 errores.append(f"Formato de versión inválido para {modulo}")
 
-        # Validar archivos
-        for clave in ("python", "js"):
-            ruta = info.get(clave)
+        # Validar archivos por targets canónicos soportados
+        for target in OFFICIAL_TARGETS:
+            canonical_target = normalize_target_name(target)
+            ruta = info_normalized.get(canonical_target)
             if not ruta:
                 continue
 
             if not isinstance(ruta, str):
-                errores.append(f"Ruta inválida para {clave} en {modulo}")
+                errores.append(f"Ruta inválida para {canonical_target} en {modulo}")
                 continue
 
-            registro = archivos_py if clave == "python" else archivos_js
+            registro = backend_archivos.setdefault(canonical_target, set())
             if ruta in registro:
                 errores.append(f"Archivo duplicado: {ruta}")
             else:

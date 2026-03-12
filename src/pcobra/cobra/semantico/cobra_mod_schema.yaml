@@ -10,10 +10,14 @@ patternProperties:
         pattern: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:[-+].*)?$'
       python:
         type: string
+      javascript:
+        type: string
       js:
         type: string
+        deprecated: true
     anyOf:
       - required: [python]
+      - required: [javascript]
       - required: [js]
 properties:
   lock:

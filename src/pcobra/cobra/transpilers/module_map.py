@@ -12,6 +12,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
+from pcobra.cobra.transpilers.targets import resolution_candidates
+
 logger = logging.getLogger(__name__)
 
 MODULE_MAP_PATH = os.environ.get(
@@ -74,7 +76,18 @@ def get_toml_map():
 def get_mapped_path(module: str, backend: str) -> str:
     """Return the path for *module* mapped for the given *backend*.
 
-    If no mapping exists, the original module path is returned.
+    Resuelve con nombre canónico y aliases legacy del backend para mantener
+    compatibilidad retroactiva. Si no hay mapeo, devuelve ``module``.
     """
     mapa = get_toml_map()
-    return mapa.get(module, {}).get(backend, module)
+    module_mapping = mapa.get(module, {})
+
+    if not isinstance(module_mapping, dict):
+        return module
+
+    for candidate in resolution_candidates(backend):
+        mapped = module_mapping.get(candidate)
+        if isinstance(mapped, str):
+            return mapped
+
+    return module
