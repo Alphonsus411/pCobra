@@ -474,14 +474,14 @@ Limitaciones de los backends
 
 * **Python y JavaScript**: implementan la mayoría de características y son los
   más estables.
-* **C y C++**: se consideran experimentales; no soportan clases ni excepciones
+* **C++**: se considera experimental; no soporta clases ni excepciones
   complejas.
 * **Rust**: carece de herencia múltiple y requiere anotaciones de tipo
   explícitas para estructuras complejas.
 * **WebAssembly**: limitado a operaciones numéricas básicas y sin soporte de
   cadenas.
-* **Otros backends** (Go, R, Julia, etc.): poseen cobertura parcial y pueden
-  carecer de bibliotecas estándar equivalentes.
+* **Go, Java y ASM**: poseen cobertura parcial y pueden carecer de
+  bibliotecas estándar equivalentes en funciones avanzadas.
 
 Recomendaciones de estilo
 -------------------------

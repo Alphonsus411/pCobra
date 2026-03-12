@@ -372,7 +372,7 @@ cobra benchthreads --output threads.json
 El resultado contiene tres entradas (secuencial, cli_hilos y kernel_hilos) con
 los tiempos y uso de CPU.
 
-Para generar binarios en C, C++ y Rust y medir su rendimiento ejecuta:
+Para generar binarios en C++ y Rust y medir su rendimiento ejecuta:
 
 ```bash
 cobra bench --binary

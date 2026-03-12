@@ -5,14 +5,14 @@
 - **Biblioteca estándar**: expandir cadenas, colecciones, números y booleanos con APIs inspiradas en Python y en los demás lenguajes soportados para reducir brechas funcionales.
 - **Modelo de ejecución**: introducir asincronía idiomática, decoradores utilitarios y un plan de migración gradual que preserve compatibilidad hacia atrás.
 - **Computación cuántica holográfica**: definir un puente `Cobra ↔ Hololang` con decoradores de alto nivel, simulador local y controles de seguridad.
-- **Interoperabilidad multilenguaje**: alinear las capacidades de Cobra con JavaScript, Rust, Go, Kotlin, Swift, R, Julia, Matlab, C/C++ y WebAssembly.
+- **Interoperabilidad multilenguaje**: alinear las capacidades de Cobra con los 8 targets oficiales (`python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java`, `asm`).
 - **Documentación y adopción**: acompañar cada fase con manuales, notebooks, automatización de pruebas y seguimiento de indicadores.
 
 ## Objetivos generales
 
 1. Incorporar funcionalidades idiomáticas presentes en Python que aún no existen en Cobra para fortalecer la biblioteca estándar y la expresividad del lenguaje.
 2. Diseñar un puente de alto nivel que permita aprovechar decoradores y primitivas de computación cuántica holográfica, integrando Cobra con Hololang como capa de bajo nivel.
-3. Extender la paridad de características con los demás lenguajes soportados por el transpilador (JavaScript, Rust, Go, Kotlin, etc.) para que los programas Cobra conserven semántica al migrar.
+3. Extender la paridad de características con los targets oficiales del transpilador (Python, JavaScript, Rust, Go, C++, Java, ASM y WebAssembly) para que los programas Cobra conserven semántica al migrar.
 4. Definir un conjunto de tareas implementables y priorizadas que permitan desplegar estas mejoras de forma incremental.
 
 ## Ampliaciones inspiradas en Python
@@ -91,7 +91,7 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 
 ## Inspiración en otros lenguajes del transpilador
 
-### JavaScript / TypeScript
+### JavaScript
 - **Promesas**: `promesa.resolver`, `promesa.rechazar`, `Promesa.todo`, `Promesa.carrera` para mapear con `Promise`.
 - **Etiquetas de plantilla**: `plantilla_html` para integración con front-end.
 - **Decorador `@observa_evento`** para enlazar eventos del DOM al transpilador JS.
@@ -106,18 +106,18 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 - **Canales tipados**: interoperables con `canal.crea` y backends Go.
 - **`defer`** como palabra reservada adicional.
 
-### Kotlin / Swift
-- **Extensiones de funciones** (`extiende Tipo { ... }`).
-- **Corutinas estructuradas**: `alcance_corutina { ... }`.
-- **Sistemas de sellado**: `clase sellada` para jerarquías restringidas.
+### Java
+- **Paridad orientada a objetos**: clases, interfaces y excepciones con semántica consistente.
+- **Anotaciones de interoperabilidad** para bibliotecas Java existentes.
+- **Optimización de colecciones** para `ArrayList`/`HashMap` en generación de código.
 
-### R / Julia / Matlab
-- **Vectores columna y matrices** con operaciones `mapa`, `reduce`, `broadcast`.
-- **`modulo.cientifico`** con utilidades estadísticas avanzadas (`media_geometrica`, `desviacion_robusta`).
-- **Integración con notebooks** mediante `@grafica_inline`.
+### Assembly (ASM)
+- **Intrínsecos controlados** para operaciones numéricas críticas.
+- **Macros de ensamblador** orientadas a depuración de runtime.
+- **Perfiles de salida** para diagnósticos y tamaño mínimo.
 
-### WebAssembly / C / C++
-- **Atributos de interoperabilidad** `@no_mangle`, `@externo("C")` para controlar nombres.
+### WebAssembly / C++
+- **Atributos de interoperabilidad** `@no_mangle`, `@externo` para controlar nombres.
 - **Estructuras empaquetadas** (`estructura empaquetada [alineacion=1]`).
 - **Funciones intrínsecas** (`intrinseco.suma_vectorial`).
 
@@ -171,12 +171,12 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 3. **Tarea F4.3 – Goroutines y defer**
    - Introducir `rutina_ligera` y `defer`, asegurar correspondencia en Go y Python.
    - Entregables: especificación, casos de uso.
-4. **Tarea F4.4 – Extensiones Kotlin/Swift**
-   - Implementar `extiende Tipo { ... }`, `clase sellada` y corutinas estructuradas.
-   - Entregables: actualización de la gramática y transpilers correspondientes.
+4. **Tarea F4.4 – Paridad Java y ASM**
+   - Consolidar clases, interfaces, excepciones y utilidades de bajo nivel en Java/ASM.
+   - Entregables: actualización de gramática, runtime y transpiladores Java/ASM.
 5. **Tarea F4.5 – Interoperabilidad de bajo nivel**
    - Añadir atributos `@no_mangle`, `@externo`, estructuras empaquetadas e intrínsecos.
-   - Entregables: pruebas en targets C/C++/WASM, documentación de FFI.
+   - Entregables: pruebas en targets C++/WASM, documentación de FFI.
 
 ### Fase 5 · Documentación y adopción
 1. **Tarea F5.1 – Manual y tutoriales**
@@ -247,9 +247,9 @@ y facilita su incorporación como issues o historias dentro del repositorio.
 | F4.2.b | Sincronizar transpiladores (Rust, Python) con `resultado` | Ajustar `src/cobra/transpiladores/{rust,python}.py` y generadores de enums | Tests golden en `tests/transpilacion/rust/test_resultado.rs` | Tabla de equivalencias en `docs/matriz_transpiladores.md` | Depende de F4.2.a |
 | F4.3.a | Añadir `rutina_ligera` y `defer` al parser | Modificar gramática y AST en `src/cobra/frontend` | Tests de sintaxis y semántica en `tests/frontend/go/test_rutinas.py` | Documentar patrón en `docs/frontend/go.md` | Requiere F2.1 |
 | F4.3.b | Integrar goroutines y `defer` en backends Go y Python | Actualizar `src/cobra/transpiladores/{go,python}.py` y runtime | Tests end-to-end en `tests/transpilacion/go/test_defer.go` | Ejemplos en `examples/go/` | Depende de F4.3.a |
-| F4.4.a | Implementar extensiones de tipo (`extiende Tipo { ... }`) | Añadir soporte al parser y a generadores Kotlin/Swift | Tests en `tests/transpilacion/kotlin/test_extensiones.kt` | Documentar en `docs/frontend/kotlin.md` | Requiere F2.1 |
-| F4.4.b | Añadir `clase sellada` y corutinas estructuradas | Ajustar runtime y transpilers Kotlin/Swift | Tests de jerarquías en `tests/transpilacion/kotlin/test_clases_selladas.kt` | Tutorial en `docs/frontend/kotlin.md` | Depende de F4.4.a |
-| F4.5.a | Agregar atributos `@no_mangle`, `@externo` | Extender parser y generadores C/C++/WASM | Tests de FFI en `tests/transpilacion/c/test_externo.c` | Documentar en `docs/limitaciones_cpp_sandbox.md` | Ninguna |
+| F4.4.a | Fortalecer clases/interfaces para backend Java | Ajustar parser y generador en `src/cobra/transpiladores/java/` | Tests en `tests/transpilacion/java/test_interfaces.java` | Documentar en `docs/frontend/java.md` | Requiere F2.1 |
+| F4.4.b | Mejorar salida ASM para diagnóstico y rendimiento | Ajustar backend ASM y runtime mínimo | Tests en `tests/transpilacion/asm/test_optimizaciones.asm` | Tutorial en `docs/frontend/asm.md` | Depende de F4.4.a |
+| F4.5.a | Agregar atributos `@no_mangle`, `@externo` | Extender parser y generadores C++/WASM | Tests de FFI en `tests/transpilacion/cpp/test_externo.cpp` | Documentar en `docs/limitaciones_cpp_sandbox.md` | Ninguna |
 | F4.5.b | Soporte para estructuras empaquetadas e intrínsecos | Ajustar representación de tipos en `src/cobra/backend/tipos.py` y runtime wasm | Tests binarios en `tests/transpilacion/wasm/test_intrinsecos.wat` | Guía en `docs/arquitectura_parser_transpiladores.md` | Depende de F4.5.a |
 
 ### Fase 5 · Documentación y adopción
@@ -273,3 +273,11 @@ y facilita su incorporación como issues o historias dentro del repositorio.
   3. Ejecutar la revisión ortográfica o `make lint-docs` (cuando esté disponible) antes de confirmar los cambios.
 
 
+
+
+## Archivo histórico (targets no soportados)
+
+> Esta sección conserva referencias de planeación antiguas. No representa targets oficiales actuales del producto.
+
+- Se exploraron ideas para Kotlin, Swift, R, Julia y Matlab en una versión previa de este plan.
+- También hubo menciones a C como target independiente; actualmente la política oficial se limita a `cpp`.
