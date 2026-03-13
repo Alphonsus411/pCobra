@@ -98,32 +98,14 @@ ALLOWED_TARGET_ALIASES = {
 # Nota: NO es una lista negra de prohibidos, sino un catálogo de términos de lenguaje
 # conocidos; la validación real la decide ALLOWED_TARGET_ALIASES.
 KNOWN_LANGUAGE_ALIASES = {
-    # Permitidos
+    # Dominios permitidos en la política vigente
     *ALLOWED_TARGET_ALIASES,
-    # Históricos/no permitidos en política actual
-    "cobol",
-    "ruby",
+    # Términos fuera de alcance que queremos bloquear explícitamente.
     "kotlin",
     "swift",
-    "typescript",
-    "php",
-    "perl",
-    "pascal",
-    "fortran",
-    "visualbasic",
-    "visual basic",
-    "matlab",
-    "mojo",
+    "ruby",
     "julia",
-    "latex",
-    "scala",
-    "haskell",
-    "lua",
-    "dart",
-    "elixir",
-    "clojure",
-    "f#",
-    "c#",
+    "matlab",
 }
 
 # Excepciones históricas explícitas (archivo + patrón + motivo).
@@ -140,36 +122,6 @@ HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
     ),
     "docs/soporte_latex.md": (
         (r"latex", "Documento de soporte del parser de LaTeX, no target de compilación."),
-    ),
-    "docs/cheatsheet.tex": (
-        (r"kotlin|ruby", "Comparativas pedagógicas en cheatsheet heredado."),
-    ),
-    "docs/MANUAL_COBRA.md": (
-        (
-            r"kotlin|swift",
-            "Comparativas históricas de API en manual; no declara targets soportados.",
-        ),
-    ),
-    "docs/MANUAL_COBRA.rst": (
-        (
-            r"kotlin|swift",
-            "Comparativas históricas de API en manual; no declara targets soportados.",
-        ),
-    ),
-    "docs/standard_library/logica.md": (
-        (r"kotlin", "Comparativa puntual de comportamiento de función."),
-    ),
-    "docs/estructura_ast.md": (
-        (
-            r"kotlin|swift|r|julia|cobol|fortran|pascal|visual\s*basic|ruby|php|perl|matlab|mojo|latex|c",
-            "Sección explícitamente histórica sobre targets descartados.",
-        ),
-    ),
-    "docs/proposals/plan_nuevas_funcionalidades.md": (
-        (
-            r"kotlin|swift|r|julia|matlab",
-            "Propuesta histórica, no documentación normativa de targets.",
-        ),
     ),
 }
 

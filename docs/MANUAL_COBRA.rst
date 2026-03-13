@@ -387,16 +387,13 @@ usar en Cobra. Entre las más destacadas se encuentran:
   cadenas, con soporte para separadores personalizados.
 * ``quitar_prefijo`` y ``quitar_sufijo`` replican
   ``str.removeprefix``/``str.removesuffix`` de Python, mientras que
-  ``prefijo_comun`` y ``sufijo_comun`` añaden equivalentes a
-  ``commonPrefixWith``/``commonSuffixWith`` de Kotlin o
-  ``String.commonPrefix``/``String.commonSuffix`` de Swift. Ambas admiten
-  ignorar mayúsculas y normalizar Unicode antes de comparar.
+  ``prefijo_comun`` y ``sufijo_comun`` ofrecen comparaciones estables de
+  prefijos/sufijos entre targets oficiales, con soporte para ignorar
+  mayúsculas y normalizar Unicode antes de comparar.
 * ``a_snake`` y ``a_camel`` producen identificadores inspirados en
-  extensiones de Kotlin, las rutinas ``lowerCamelCase`` de Swift y
-  utilidades de JavaScript como ``lodash.snakeCase``/``camelCase``; a su
-  vez ``quitar_envoltura`` reproduce ``removeSurrounding`` de Kotlin y el
-  recorte con ``hasPrefix``/``hasSuffix`` de Swift o ``String.prototype.slice``
-  en JavaScript.
+  convenciones internas de nombres para código portable, y
+  ``quitar_envoltura`` aplica recortes simétricos de prefijo/sufijo con
+  comportamiento homogéneo en los targets oficiales (incluido JavaScript).
 * ``normalizar_unicode`` acepta las formas ``NFC``, ``NFD``, ``NFKC`` y
   ``NFKD`` para unificar representaciones.
 * ``indentar_texto``/``desindentar_texto``, ``envolver_texto`` y

@@ -38,10 +38,10 @@ no / ! & Negación lógica\\
 \texttt{mezclar(lista, semilla)} & Copia barajada con semilla opcional para pruebas.\\
 \texttt{zip\_listas(a, b, ...)} & Crea tuplas alineadas hasta la lista más corta.\\
 \texttt{tomar(lista, n)} & Obtiene los primeros \texttt{n} elementos sin mutar.\\
-\texttt{tomar\_mientras(lista, funcion)} & Prefijo mientras la condición sea cierta; inspirado en Kotlin \texttt{takeWhile} y Ruby \texttt{Enumerable\#take\_while}.\\
-\texttt{descartar\_mientras(lista, funcion)} & Omite el prefijo que cumple la condición, como \texttt{dropWhile} de Kotlin y Ruby \texttt{Enumerable\#drop\_while}.\\
-\texttt{scanear(lista, funcion, inicial)} & Acumulaciones parciales al estilo Kotlin \texttt{scan}/\texttt{runningFold} y Ruby \texttt{Enumerable\#inject}.\\
-\texttt{pares\_consecutivos(lista)} & Pares deslizantes, similar a Kotlin \texttt{zipWithNext} y Ruby \texttt{each\_cons(2)}.\\
+\texttt{tomar\_mientras(lista, funcion)} & Prefijo mientras la condición sea cierta; equivalente al patrón de recorrido perezoso en la librería estándar de Cobra.\\
+\texttt{descartar\_mientras(lista, funcion)} & Omite el prefijo que cumple la condición, siguiendo la misma semántica de filtros progresivos de Cobra.\\
+\texttt{scanear(lista, funcion, inicial)} & Acumulaciones parciales para construir estados intermedios sobre secuencias Cobra.\\
+\texttt{pares\_consecutivos(lista)} & Pares deslizantes para análisis local de vecindad dentro de listas Cobra.\\
 \texttt{mapear\_seguro(lista, funcion)} & Devuelve resultados y excepciones por elemento.\\
 \texttt{ventanas(lista, tam, paso)} & Genera ventanas deslizantes; usa \texttt{incluir\_incompletas}.\\
 \texttt{chunk(lista, tam)} & Construye bloques consecutivos del mismo tamaño.\\
@@ -94,7 +94,7 @@ no / ! & Negación lógica\\
 \texttt{quitar\_sufijo(cad, sufijo)} & Recorta el sufijo coincidente, inspirado en \texttt{str.removesuffix}.\\
 \texttt{dividir\_lineas(cad, conservar)} & Divide por saltos de línea opcionalmente manteniéndolos.\\
 \texttt{expandir\_tabulaciones(cad, ancho)} & Reemplaza tabuladores por espacios como \texttt{str.expandtabs}.\\
-\texttt{subcadena\_antes(cad, sep, defecto)} & Prefijo antes del primer separador; como Kotlin \texttt{substringBefore}.\\
+\texttt{subcadena\_antes(cad, sep, defecto)} & Prefijo antes del primer separador con semántica consistente entre los targets oficiales.\\
 \texttt{subcadena\_despues(cad, sep, defecto)} & Sufijo tras el primer separador; equivalente a \texttt{substringAfter}.\\
 \texttt{subcadena\_antes\_ultima(cad, sep, defecto)} & Prefijo previo a la última coincidencia; similar a \texttt{substringBeforeLast}.\\
 \texttt{subcadena\_despues\_ultima(cad, sep, defecto)} & Segmento posterior a la última coincidencia; como \texttt{substringAfterLast}.\\
@@ -110,7 +110,7 @@ no / ! & Negación lógica\\
 \section*{Datos tabulares}
 \begin{tabular}{ll}
 \textbf{Función} & \textbf{Descripción}\\\hline
-\texttt{ordenar\_tabla(datos, por, ascendente)} & Ordena múltiples columnas al estilo pandas/R manteniendo listas de registros.\\
+\texttt{ordenar\_tabla(datos, por, ascendente)} & Ordena múltiples columnas sobre listas de registros manteniendo el contrato estable de Cobra.\\
 \texttt{combinar\_tablas(izq, der, claves, tipo)} & Realiza joins internos/externos validando claves antes de cruzar la información.\\
 \texttt{rellenar\_nulos(datos, valores)} & Sustituye valores perdidos por columna siguiendo reglas declarativas.\\
 \texttt{pivotar\_tabla(datos, index, columnas, valores, agregacion)} & Reorganiza métricas a formato ancho con agregaciones múltiples.\\

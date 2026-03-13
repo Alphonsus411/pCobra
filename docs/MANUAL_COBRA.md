@@ -757,8 +757,8 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `reemplazar`, `empieza_con`, `termina_con` e `incluye` para búsquedas y sustituciones expresivas.
 - `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
-- `quitar_prefijo`, `quitar_sufijo`, `prefijo_comun` y `sufijo_comun` replican `str.removeprefix`/`str.removesuffix` de Python, `strings.TrimPrefix`/`TrimSuffix` de Go y añaden equivalentes a `commonPrefixWith`/`commonSuffixWith` de Kotlin o `String.commonPrefix`/`String.commonSuffix` de Swift con opciones para ignorar mayúsculas y normalizar Unicode.
-- `a_snake` y `a_camel` generan identificadores normalizados como lo hacen extensiones de Kotlin, las rutinas `lowerCamelCase` de Swift o utilidades de JavaScript (por ejemplo `lodash.snakeCase`/`camelCase`), mientras que `quitar_envoltura` reproduce `removeSurrounding` de Kotlin junto con los patrones `hasPrefix`/`hasSuffix` de Swift y `String.prototype.slice` en JS.
+- `quitar_prefijo`, `quitar_sufijo`, `prefijo_comun` y `sufijo_comun` ofrecen operaciones consistentes para recorte y comparación de texto en Cobra, con opciones para ignorar mayúsculas y normalizar Unicode.
+- `a_snake` y `a_camel` generan identificadores normalizados para mantener portabilidad entre targets oficiales, mientras que `quitar_envoltura` aplica recortes simétricos de prefijo/sufijo con semántica uniforme (incluido JS).
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
 - `encontrar` y `encontrar_derecha` replican `str.find`/`str.rfind` aceptando un ``por_defecto`` opcional, mientras que `indice` e `indice_derecha` imitan `str.index`/`str.rindex` con la posibilidad de devolver valores alternativos cuando no hay coincidencias.
 - `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.
@@ -986,9 +986,9 @@ Las funciones están disponibles tanto al ejecutar Cobra directamente como al tr
 - `mayoria` y `exactamente_n` ayudan a expresar reglas que dependen de umbrales de verdaderos sin contar manualmente.
 - `diferencia_simetrica` aplica XOR elemento a elemento sobre secuencias de booleanos, útil para comparar lecturas en paralelo.
 - `tabla_verdad` genera todas las combinaciones posibles de entrada y valida que el resultado de la función sea booleano, ideal para documentar reglas de negocio.
-- `entonces` y `si_no` encapsulan condicionales perezosos: devuelven el resultado (o ejecutan un callable) solo cuando la condición se cumple, como `takeIf` y `takeUnless` en Kotlin.
-- `coalesce` replica el patrón de `COALESCE` en SQL o `firstNotNullOf` en Kotlin: recorre los argumentos y devuelve el primero que no sea `None` y cumpla el predicado indicado (por defecto, que su valor lógico sea verdadero).
-- `condicional` permite encadenar pares ``(condición, resultado)`` inspirándose en ``when`` de Kotlin y `case_when` de R; evalúa cada rama en orden y solo computa la que corresponda.
+- `entonces` y `si_no` encapsulan condicionales perezosos: devuelven el resultado (o ejecutan un callable) solo cuando la condición correspondiente se cumple.
+- `coalesce` recorre los argumentos y devuelve el primero que no sea `None` y cumpla el predicado indicado (por defecto, que su valor lógico sea verdadero), siguiendo el patrón de valor disponible más temprano.
+- `condicional` permite encadenar pares ``(condición, resultado)``; evalúa cada rama en orden y solo computa la que corresponda.
 
 Los parámetros no booleanos producen un `TypeError` descriptivo, lo cual ayuda a detectar errores lógicos tempranamente. Además, la versión en JavaScript (`core/nativos/logica.js`) replica la semántica para mantener el comportamiento al transpirar.
 
@@ -1080,18 +1080,18 @@ El módulo `standard_library.datos` añade una capa ligera sobre `pandas` que pe
 - `seleccionar_columnas` y `filtrar` permiten aislar subconjuntos antes de seguir procesando los datos.
 - `mutar_columna` crea o actualiza campos calculados evaluando una función por registro.
 - `separar_columna` divide un campo compuesto en varias columnas al estilo de
-  `tidyr::separate` en R o `DataFrames.jl.separatecols`, conservando o descartando
+  separación declarativa por delimitadores en formatos tabulares, conservando o descartando
   filas con valores faltantes según tus necesidades.
 - `unir_columnas` concatena columnas en una sola cadena con control sobre
   delimitadores y nulos, similar a `tidyr::unite` o a las transformaciones
   `ByRow` de DataFrames.jl.
 - `agrupar_y_resumir` aplica agregaciones (`sum`, `mean`, funciones personalizadas) agrupando por columnas clave.
 - `ordenar_tabla` admite ordenar por varias columnas controlando el sentido ascendente o descendente de cada una.
-- `combinar_tablas` replica los `join` de pandas y R para cruzar datasets con claves compartidas o diferenciadas.
+- `combinar_tablas` ejecuta uniones internas o externas para cruzar datasets con claves compartidas o diferenciadas.
 - `rellenar_nulos` rellena valores perdidos por columna antes de analizar la información.
 - `pivotar_ancho` compacta métricas en columnas nuevas al estilo de `pivot_wider`.
 - `pivotar_largo` vuelve a expandir columnas en filas con control sobre nombres y valores nulos.
-- `desplegar_tabla` transforma los datos a formato largo, equivalente a `pivot_longer` de R o `pandas.melt`.
+- `desplegar_tabla` transforma los datos a formato largo para facilitar agregaciones, filtros y visualización posterior.
 - `tabla_cruzada` calcula tablas de contingencia a partir de etiquetas por filas y columnas, con agregaciones y normalización opcional.
 - `pivotar_tabla` reorganiza los datos en formato ancho calculando métricas múltiples de manera declarativa.
 - `a_listas` y `de_listas` convierten entre lista de registros y diccionario de columnas, facilitando la interoperabilidad con librerías externas.
