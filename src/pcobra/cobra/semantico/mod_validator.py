@@ -46,6 +46,8 @@ LEGACY_TARGET_ALIASES: dict[str, str] = {
     "js": "javascript",
 }
 
+DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = ("python", "javascript")
+
 # Verificar existencia del esquema y cargarlo
 if not os.path.exists(SCHEMA_PATH):
     raise FileNotFoundError(f"No se encuentra el archivo de esquema: {SCHEMA_PATH}")
@@ -128,6 +130,43 @@ def _normalize_module_targets(modulo: str, info: dict[str, Any]) -> dict[str, An
     return normalized
 
 
+def _required_targets_from_policy() -> tuple[str, ...]:
+    """Obtiene targets requeridos desde ``cobra.toml`` según política de proyecto."""
+    toml_map = module_map.get_toml_map()
+    if not isinstance(toml_map, dict):
+        return DEFAULT_REQUIRED_TARGETS
+
+    project_cfg = toml_map.get("project")
+    if not isinstance(project_cfg, dict):
+        project_cfg = toml_map.get("proyecto")
+
+    raw_targets = None
+    if isinstance(project_cfg, dict):
+        raw_targets = project_cfg.get("required_targets")
+        if raw_targets is None:
+            raw_targets = project_cfg.get("targets_requeridos")
+
+    if not raw_targets:
+        return DEFAULT_REQUIRED_TARGETS
+
+    if not isinstance(raw_targets, list):
+        logger.warning(
+            "La política de targets requeridos en cobra.toml debe ser lista; se usa valor por defecto %s.",
+            DEFAULT_REQUIRED_TARGETS,
+        )
+        return DEFAULT_REQUIRED_TARGETS
+
+    normalized: list[str] = []
+    for target in raw_targets:
+        if not isinstance(target, str):
+            continue
+        canonical = normalize_target_name(target)
+        if canonical in OFFICIAL_TARGETS and canonical not in normalized:
+            normalized.append(canonical)
+
+    return tuple(normalized) if normalized else DEFAULT_REQUIRED_TARGETS
+
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -154,6 +193,7 @@ def validar_mod(path: str | None = None) -> None:
     backend_archivos: dict[str, set[str]] = {
         target: set() for target in OFFICIAL_TARGETS
     }
+    required_targets = _required_targets_from_policy()
 
     for modulo, info in datos.items():
         if modulo == "lock":
@@ -173,6 +213,17 @@ def validar_mod(path: str | None = None) -> None:
                     errores.append(f"Versión inválida para {modulo}: {version}")
             except (TypeError, ValueError):
                 errores.append(f"Formato de versión inválido para {modulo}")
+
+        missing_required = [
+            target for target in required_targets if not info_normalized.get(target)
+        ]
+        if missing_required:
+            joined_targets = ", ".join(missing_required)
+            errores.append(
+                "Faltan rutas para targets requeridos por política "
+                f"en {modulo}: {joined_targets}. "
+                "Decláralas en cobra.mod o ajusta [project].required_targets en cobra.toml."
+            )
 
         # Validar archivos por targets canónicos soportados
         for target in OFFICIAL_TARGETS:

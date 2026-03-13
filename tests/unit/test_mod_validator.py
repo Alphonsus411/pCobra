@@ -59,6 +59,10 @@ def test_validador_js_legacy_normaliza_y_advierte(tmp_path, caplog, monkeypatch)
     _write_yaml(tmp_path / "cobra.mod", data)
 
     monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["javascript"]}},
+    )
 
     with caplog.at_level("WARNING"):
         validar_mod(str(tmp_path / "cobra.mod"))
@@ -74,4 +78,41 @@ def test_validador_javascript_canonico(tmp_path, monkeypatch):
     _write_yaml(tmp_path / "cobra.mod", data)
 
     monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["javascript"]}},
+    )
     validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_respeta_required_targets_desde_politica(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python"]}},
+    )
+
+    validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_reporta_targets_faltantes_con_mensaje_claro(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python", "javascript"]}},
+    )
+
+    with pytest.raises(ValueError, match="Faltan rutas para targets requeridos por política"):
+        validar_mod(str(tmp_path / "cobra.mod"))

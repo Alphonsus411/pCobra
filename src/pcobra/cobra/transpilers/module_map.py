@@ -80,7 +80,13 @@ def get_mapped_path(module: str, backend: str) -> str:
     compatibilidad retroactiva. Si no hay mapeo, devuelve ``module``.
     """
     mapa = get_toml_map()
-    module_mapping = mapa.get(module, {})
+    modulos = mapa.get("modulos", {}) if isinstance(mapa, dict) else {}
+
+    if isinstance(modulos, dict) and isinstance(modulos.get(module), dict):
+        module_mapping = modulos.get(module, {})
+    else:
+        # Compatibilidad con formatos legacy donde el módulo está en la raíz.
+        module_mapping = mapa.get(module, {}) if isinstance(mapa, dict) else {}
 
     if not isinstance(module_mapping, dict):
         return module

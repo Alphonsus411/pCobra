@@ -34,3 +34,32 @@ Otro ejemplo mínimo:
 language = "es"
 program_name = "cobra-cli"
 ```
+
+## Mappings multi-backend (`cobra.toml` y `cobra.mod`)
+
+Para resolver imports de módulos transpilados en varios backends, define rutas por
+target en `cobra.mod` y opcionalmente declara la política de targets requeridos en
+`pcobra.toml`/`cobra.toml`:
+
+```toml
+[project]
+required_targets = ["python", "javascript"]
+
+[modulos."modulo.co"]
+python = "build/modulo.py"
+rust = "build/modulo.rs"
+javascript = "build/modulo.js"
+wasm = "build/modulo.wasm"
+go = "build/modulo.go"
+cpp = "build/modulo.cpp"
+java = "build/modulo.java"
+asm = "build/modulo.asm"
+```
+
+### ¿Qué targets pueden omitirse intencionalmente?
+
+- Puedes omitir cualquier target **no incluido** en `required_targets`.
+- Si no declaras política, la validación asume por defecto que `python` y
+  `javascript` son requeridos.
+- Para proyectos que solo distribuyen un subconjunto de backends, ajusta
+  explícitamente `required_targets` para evitar errores de validación.
