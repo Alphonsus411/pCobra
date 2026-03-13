@@ -6,7 +6,13 @@ import subprocess
 import sys
 import tempfile
 import time
+import tomllib
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS, normalize_target_name
 
 try:
     import resource
@@ -29,8 +35,8 @@ fin
 imprimir(x)
 """
 
-# Configuración de cada backend: extensión y comandos de ejecución
-BACKENDS = {
+# Configuración técnica por backend (extensiones/comandos)
+BACKEND_METADATA = {
     "python": {"ext": "py", "run": ["python", "{file}"]},
     "javascript": {"ext": "js", "run": ["node", "{file}"]},
     "rust": {
@@ -60,6 +66,40 @@ BACKENDS = {
         "run": ["{tmp}/prog_asm"],
     },
 }
+
+
+def validate_local_targets_policy(repo_root: Path) -> None:
+    """Valida que cobra.toml local no declare backends fuera de política oficial."""
+    config_path = repo_root / "cobra.toml"
+    if not config_path.exists():
+        return
+
+    config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    project_cfg = config.get("project", {})
+    raw_targets = project_cfg.get("required_targets", project_cfg.get("targets_requeridos"))
+    if not raw_targets:
+        return
+
+    if not isinstance(raw_targets, list):
+        raise RuntimeError(
+            "Config local inválida: [project].required_targets debe ser una lista de backends oficiales."
+        )
+
+    unsupported = []
+    for target in raw_targets:
+        canonical = normalize_target_name(str(target))
+        if canonical not in OFFICIAL_TARGETS:
+            unsupported.append(str(target))
+    if unsupported:
+        raise RuntimeError(
+            "Config local inválida: backends no oficiales en [project].required_targets: "
+            f"{', '.join(unsupported)}. Oficiales: {', '.join(OFFICIAL_TARGETS)}"
+        )
+
+
+def benchmark_backends() -> tuple[str, ...]:
+    """Backends del benchmark derivados de la política oficial por tier."""
+    return tuple(target for target in (*TIER1_TARGETS, *TIER2_TARGETS) if target in BACKEND_METADATA)
 
 
 def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
@@ -115,8 +155,11 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
 
 
 def main() -> None:
+    repo_root = REPO_ROOT
+    validate_local_targets_policy(repo_root)
+
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
+    env["PYTHONPATH"] = str(repo_root / "src")
     tmp_file = tempfile.NamedTemporaryFile(suffix=".toml", delete=False)
     tmp_file.close()
     env["COBRA_TOML"] = str(Path(tmp_file.name))
@@ -125,7 +168,8 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         co_file = Path(tmpdir) / "program.co"
         co_file.write_text(CODE)
-        for backend, cfg in BACKENDS.items():
+        for backend in benchmark_backends():
+            cfg = BACKEND_METADATA[backend]
             run_cmd = cfg["run"]
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
             transp_cmd = [
