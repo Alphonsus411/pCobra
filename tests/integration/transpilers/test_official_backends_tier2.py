@@ -3,8 +3,11 @@ import pytest
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.targets import TIER2_TARGETS
 from tests.integration.transpilers.backend_contracts import (
+    CORE_RUNTIME_FEATURES,
+    HOLOBIT_FEATURES,
     PARTIAL_EXPECTATIONS,
     REQUIRED_FEATURES,
+    RUNTIME_HOOK_EXPECTATIONS,
     STRICT_FULL_EXPECTATIONS,
     TRANSPILERS,
     generate_code,
@@ -38,6 +41,28 @@ def test_tier2_backend_contract_matches_compatibility_matrix(backend: str, featu
         expected_fallbacks = PARTIAL_EXPECTATIONS[backend][feature]
         for fallback in expected_fallbacks:
             assert fallback in generated
+
+
+@pytest.mark.parametrize("backend", TIER2_BACKENDS)
+@pytest.mark.parametrize("feature", HOLOBIT_FEATURES)
+def test_tier2_holobit_primitives_generate_code_for_every_official_target(backend: str, feature: str):
+    generated = generate_code(backend, feature)
+    assert generated.strip(), f"{backend} no generó código para {feature}"
+
+
+@pytest.mark.parametrize("backend", TIER2_BACKENDS)
+def test_tier2_core_runtime_minimum_cases_are_covered(backend: str):
+    for feature in CORE_RUNTIME_FEATURES:
+        generated = generate_code(backend, feature)
+        assert generated.strip(), f"{backend} no generó salida para {feature}"
+
+
+@pytest.mark.parametrize("backend", TIER2_BACKENDS)
+def test_tier2_backend_runtime_hooks_are_present_when_expected(backend: str):
+    expected_hooks = RUNTIME_HOOK_EXPECTATIONS[backend]
+    generated = generate_code(backend, "proyectar")
+    for hook in expected_hooks:
+        assert hook in generated
 
 
 def test_tier2_suite_targets_only_official_backends():

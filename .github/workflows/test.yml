@@ -82,6 +82,9 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          pytest tests/integration/transpilers/test_official_backends_tier1.py \
+            tests/integration/transpilers/test_official_backends_tier2.py
+
           paths=()
           if [ -d tests ]; then
             paths+=("tests")
@@ -101,6 +104,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_tier2.py
+
           $paths = @()
           if (Test-Path tests) {
             $paths += 'tests'
