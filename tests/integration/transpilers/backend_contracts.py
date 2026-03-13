@@ -24,6 +24,18 @@ REQUIRED_FEATURES: Final[tuple[str, ...]] = (
     "standard_library",
 )
 
+HOLOBIT_FEATURES: Final[tuple[str, ...]] = (
+    "holobit",
+    "proyectar",
+    "transformar",
+    "graficar",
+)
+
+CORE_RUNTIME_FEATURES: Final[tuple[str, ...]] = (
+    "corelibs",
+    "standard_library",
+)
+
 TRANSPILERS: dict[str, tuple[str, str]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
     "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
@@ -131,6 +143,25 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "corelibs": ("CALL longitud 'cobra'",),
         "standard_library": ("CALL mostrar 'hola'",),
     },
+}
+
+RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
+    "python": (),
+    "javascript": ("function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
+    "rust": ("fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
+    "wasm": (
+        ";; runtime hook cobra_proyectar",
+        ";; runtime hook cobra_transformar",
+        ";; runtime hook cobra_graficar",
+    ),
+    "go": ("func cobraProyectar", "func cobraTransformar", "func cobraGraficar"),
+    "cpp": ("inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
+    "java": (
+        "private static void cobraProyectar",
+        "private static void cobraTransformar",
+        "private static void cobraGraficar",
+    ),
+    "asm": ("; hook cobra_proyectar", "; hook cobra_transformar", "; hook cobra_graficar"),
 }
 
 
