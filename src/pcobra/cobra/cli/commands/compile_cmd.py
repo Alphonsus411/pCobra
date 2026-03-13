@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
 
@@ -15,6 +16,7 @@ from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
 from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
     build_target_help_by_tier,
     normalize_target_name,
     resolution_candidates,
@@ -59,17 +61,39 @@ except TypeError:  # Compatibilidad con versiones antiguas
 
 for ep in eps:
     try:
+        normalized_ep_name = normalize_target_name(ep.name)
+        if normalized_ep_name not in OFFICIAL_TARGETS:
+            logging.warning(
+                "Plugin de transpilador '%s' omitido: target no oficial (solo se permite %s)",
+                ep.name,
+                ", ".join(OFFICIAL_TARGETS),
+            )
+            continue
         module_name, class_name = ep.value.split(":", 1)
         if not all(c.isalnum() or c in "._" for c in module_name + class_name):
             logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
             continue
         cls = getattr(import_module(module_name), class_name)
-        TRANSPILERS[normalize_target_name(ep.name)] = cls
+        TRANSPILERS[normalized_ep_name] = cls
     except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
-LANG_CHOICES = list(target_cli_choices(tuple(TRANSPILERS.keys())))
+LANG_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
 TARGETS_HELP = build_target_help_by_tier()
+
+
+def parse_official_target_list(value: str) -> list[str]:
+    """Normaliza una lista de targets y asegura que sean oficiales."""
+    parsed_targets = parse_target_list(value)
+    unsupported_targets = [target for target in parsed_targets if target not in OFFICIAL_TARGETS]
+    if unsupported_targets:
+        raise ArgumentTypeError(
+            _("Targets no soportados: {targets}. Soportados: {supported}").format(
+                targets=", ".join(unsupported_targets),
+                supported=", ".join(LANG_CHOICES),
+            )
+        )
+    return parsed_targets
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
@@ -136,7 +160,7 @@ class CompileCommand(BaseCommand):
         )
         parser.add_argument(
             "--tipos",
-            type=parse_target_list,
+            type=parse_official_target_list,
             help=_("Lista de lenguajes separados por comas ({targets})").format(targets=TARGETS_HELP),
         )
         parser.set_defaults(cmd=self)
@@ -151,19 +175,27 @@ class CompileCommand(BaseCommand):
     def run(self, args):
         """Ejecuta la lógica del comando."""
         archivo = args.archivo
-        
+
         try:
             validate_file(archivo)
         except ValueError as e:
             mostrar_error(str(e))
             return 1
 
+        tipos_argument = getattr(args, "tipos", None)
+        if isinstance(tipos_argument, str):
+            try:
+                tipos_argument = parse_official_target_list(tipos_argument)
+            except ArgumentTypeError as parse_error:
+                mostrar_error(str(parse_error))
+                return 1
+
         mod_info = module_map.get_toml_map()
         transpilador_objetivo = normalize_target_name(getattr(args, "backend", None) or args.tipo)
 
         try:
-            if getattr(args, "tipos", None):
-                langs = list(args.tipos)
+            if tipos_argument:
+                langs = list(tipos_argument)
                 for lang in langs:
                     validar_dependencias_con_alias(lang, mod_info)
             else:
@@ -181,8 +213,8 @@ class CompileCommand(BaseCommand):
             for nodo in ast:
                 nodo.aceptar(validador)
 
-            if getattr(args, "tipos", None):
-                lenguajes = list(args.tipos)
+            if tipos_argument:
+                lenguajes = list(tipos_argument)
                 for lang in lenguajes:
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
