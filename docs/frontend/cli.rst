@@ -15,7 +15,7 @@ Transpila un archivo Cobra a otro lenguaje.
 Opciones principales:
 
 - ``archivo``: ruta del script ``.co``.
-- ``--tipo``: lenguaje de salida (``python``, ``rust``, ``js``, ``wasm``,
+- ``--tipo``: lenguaje de salida (``python``, ``rust``, ``javascript``, ``wasm``,
   ``go``, ``cpp``, ``java`` y ``asm``).
 - ``--backend``: alias de ``--tipo`` útil para integraciones automatizadas.
   Admite los mismos lenguajes disponibles.
@@ -31,7 +31,7 @@ Otro ejemplo generando varios lenguajes a la vez:
 
 .. code-block:: bash
 
-   cobra compilar hola.co --tipos=python,js,cpp
+   cobra compilar hola.co --tipos=python,javascript,cpp
 
 Subcomando ``ejecutar``
 ----------------------
@@ -70,7 +70,7 @@ Ejemplo:
 .. code-block:: text
 
    $ cobra menu
-   Lenguajes destino disponibles: python, rust, js, wasm, go, cpp, java, asm...
+   Lenguajes destino disponibles: python, rust, javascript, wasm, go, cpp, java, asm...
    Lenguajes de origen disponibles: python, js, rust...
    ¿Desea transpilar? (s/n): s
    ¿Transpilar desde Cobra a otro lenguaje? (s/n): s

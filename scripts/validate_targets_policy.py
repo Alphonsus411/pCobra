@@ -21,6 +21,13 @@ import re
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TARGET_ALIASES
+
 # Rutas clave a escanear según política.
 SCAN_ROOTS = (
     "README.md",
@@ -80,16 +87,9 @@ LOCKFILES = {
 
 # Lista blanca de términos/alias permitidos para targets.
 ALLOWED_TARGET_ALIASES = {
-    "python",
-    "rust",
-    "javascript",
-    "js",
-    "wasm",
-    "go",
-    "cpp",
+    *OFFICIAL_TARGETS,
+    *TARGET_ALIASES.keys(),
     "c++",  # Alias textual común de cpp.
-    "java",
-    "asm",
     "assembly",  # Alias de asm.
     "ensamblador",  # Alias de asm en español.
 }
@@ -224,7 +224,7 @@ def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
+    root = ROOT
     errors: list[str] = []
 
     for path in iter_scan_files(root):
@@ -255,7 +255,7 @@ def main() -> int:
 
                 errors.append(
                     f"{rel}:{line_no}: referencia fuera de política -> '{term}'"
-                    f" (permitidos: python, rust, javascript/js, wasm, go, cpp, java, asm)"
+                    f" (permitidos: {', '.join(OFFICIAL_TARGETS)}; aliases: {', '.join(sorted(TARGET_ALIASES))})"
                 )
 
     if errors:

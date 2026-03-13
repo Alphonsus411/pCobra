@@ -31,9 +31,9 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
     build_target_help_by_tier,
     normalize_target_name,
+    target_cli_choices,
 )
 
 # Configuración del logging
@@ -57,7 +57,7 @@ class TranspilationError(Exception):
     pass
 REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
 ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
-DESTINO_CHOICES = sorted(set(TRANSPILERS.keys()).intersection(OFFICIAL_TARGETS))
+DESTINO_CHOICES = list(target_cli_choices(tuple(TRANSPILERS.keys())))
 TARGETS_HELP = build_target_help_by_tier()
 
 

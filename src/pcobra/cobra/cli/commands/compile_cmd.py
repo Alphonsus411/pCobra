@@ -15,10 +15,10 @@ from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
 from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
     build_target_help_by_tier,
     normalize_target_name,
     resolution_candidates,
+    target_cli_choices,
 )
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
@@ -68,7 +68,7 @@ for ep in eps:
     except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
-LANG_CHOICES = sorted(set(TRANSPILERS.keys()).intersection(OFFICIAL_TARGETS))
+LANG_CHOICES = list(target_cli_choices(tuple(TRANSPILERS.keys())))
 TARGETS_HELP = build_target_help_by_tier()
 
 def validate_file(filepath: str) -> bool:

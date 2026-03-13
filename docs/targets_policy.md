@@ -9,7 +9,7 @@ Lista oficial de destinos para `cobra compilar`:
 
 1. `python`
 2. `rust`
-3. `js`
+3. `javascript`
 4. `wasm`
 5. `go`
 6. `cpp`
@@ -23,7 +23,7 @@ Fuente de verdad en código: `src/pcobra/cobra/transpilers/targets.py`.
 Lista oficial de orígenes para `cobra transpilar-inverso`:
 
 1. `python`
-2. `js`
+2. `js` (alias histórico de JavaScript)
 3. `java`
 
 Fuente de verdad en código: `src/pcobra/cobra/transpilers/reverse/policy.py`.

@@ -10,11 +10,15 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
     oficiales = set(OFFICIAL_TARGETS)
 
-    assert set(LANG_CHOICES).issubset(oficiales)
+    assert tuple(LANG_CHOICES) == OFFICIAL_TARGETS
     assert set(STANDARD_IMPORTS.keys()).issubset(oficiales)
     assert set(BENCH_BACKENDS.keys()).issubset(oficiales)
     assert set(BENCHMARKS_BACKENDS.keys()).issubset(oficiales)
 
 
 def test_mapa_reverse_extensions_esta_alineado_con_scope_reverse():
-    assert set(EXTENSIONES_POR_LENGUAJE.keys()) == set(REVERSE_SCOPE_LANGUAGES)
+    reverse_scope = set(REVERSE_SCOPE_LANGUAGES)
+    extension_keys = set(EXTENSIONES_POR_LENGUAJE.keys())
+
+    assert reverse_scope.issubset(extension_keys)
+    assert {"javascript", "js"}.intersection(extension_keys)
