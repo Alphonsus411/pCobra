@@ -2,6 +2,7 @@ from argparse import _StoreAction
 
 from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, CompileCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
 def _build_parser():
@@ -28,3 +29,13 @@ def test_compile_parser_normaliza_alias_js_en_tipo_y_tipos():
 
     assert args.tipo == "javascript"
     assert args.tipos == ["python", "javascript"]
+
+
+def test_compile_help_refleja_labels_amigables_y_nombres_canonicos():
+    _, compile_parser = _build_parser()
+    help_text = compile_parser.format_help()
+
+    assert "JavaScript (javascript)" in help_text
+    assert "Ensamblador (asm)" in help_text
+    for target in OFFICIAL_TARGETS:
+        assert target in help_text

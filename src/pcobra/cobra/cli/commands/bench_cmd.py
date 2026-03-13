@@ -42,7 +42,7 @@ imprimir(x)
 
 BACKENDS = {
     "python": {"ext": "py", "run": ["python", "{file}"]},
-    "js": {"ext": "js", "run": ["node", "{file}"]},
+    "javascript": {"ext": "js", "run": ["node", "{file}"]},
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],

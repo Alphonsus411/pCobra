@@ -2,14 +2,14 @@ Soporte de backends
 ===================
 
 Cobra permite generar código para los siguientes destinos mediante el subcomando
-``compilar``: ``python``, ``rust``, ``js``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
+``compilar``: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
 
 Ejemplos de uso:
 
 .. code-block:: bash
 
    cobra compilar programa.co --backend python
-   cobra compilar programa.co --backend js
+   cobra compilar programa.co --backend javascript
    cobra compilar programa.co --backend rust
    cobra compilar programa.co --backend cpp
    cobra compilar programa.co --backend go
@@ -45,7 +45,7 @@ entre documentación y CLI:
    cobra compilar programa.co --backend cpp
    cobra compilar programa.co --backend go
    cobra compilar programa.co --backend java
-   cobra compilar programa.co --backend js
+   cobra compilar programa.co --backend javascript
    cobra compilar programa.co --backend python
    cobra compilar programa.co --backend rust
    cobra compilar programa.co --backend wasm
