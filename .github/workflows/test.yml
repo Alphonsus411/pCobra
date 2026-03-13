@@ -34,12 +34,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk
+          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
       - name: Install system packages (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install -y --no-progress mingw golang ruby rust openjdk
+          choco install -y --no-progress mingw golang rust openjdk
       - name: Install dependencies
         uses: ./.github/actions/install
         with:

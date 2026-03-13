@@ -73,4 +73,5 @@ Transpiladores --> WebAssembly
 
 ## Archivo histórico (no soportado)
 
-El diagrama antiguo incluía menciones a Kotlin, Swift, R, Julia, COBOL, Fortran, Pascal, VisualBasic, Ruby, PHP, Perl, Matlab, Mojo, LaTeX y C. Esas referencias se conservan solo como histórico y no forman parte de los 8 targets oficiales actuales.
+Las referencias históricas a targets retirados se eliminaron de esta guía para
+mantenerla alineada con los 8 destinos oficiales actuales.

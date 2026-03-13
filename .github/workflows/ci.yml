@@ -40,18 +40,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            gcc g++ golang-go ruby-full rustc default-jdk clang llvm
+            gcc g++ golang-go rustc default-jdk clang llvm
       - name: Install system packages (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
           brew update
-          brew install gcc go ruby rust openjdk llvm
+          brew install gcc go rust openjdk llvm
       - name: Install system packages (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install -y --no-progress mingw golang ruby rust openjdk llvm
+          choco install -y --no-progress mingw golang rust openjdk llvm
       - name: Install dependencies
         uses: ./.github/actions/install
         with:
@@ -305,7 +305,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ golang-go ruby-full rustc default-jdk
+          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
       - name: Install dependencies
         uses: ./.github/actions/install
         with:

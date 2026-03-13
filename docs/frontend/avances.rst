@@ -73,17 +73,16 @@ Ejemplo del asistente de consola:
 .. code-block:: text
 
    $ cobra menu
-   Lenguajes destino disponibles: python, js, c...
-   Lenguajes de origen disponibles: python, js, c...
+   Lenguajes destino disponibles: python, rust, javascript, wasm, go, cpp, java, asm
+   Lenguajes de origen disponibles: python, js, java
    ¿Desea transpilar? (s/n): s
    ¿Transpilar desde Cobra a otro lenguaje? (s/n): n
    Ruta al archivo origen: ejemplo.py
    Lenguaje origen: python
-   Lenguaje destino: js
+   Lenguaje destino: javascript
 
 Para abrir la interfaz gráfica ejecuta:
 
 .. code-block:: bash
 
    cobra gui
-
