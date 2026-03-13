@@ -89,3 +89,16 @@ Se añade una suite dedicada que cubre:
 - El nombre canónico del target de JavaScript pasa a ser `javascript` en ejemplos, configuración y documentación.
 - El alias histórico `js` se mantiene **deprecated pero funcional** para compatibilidad temporal con proyectos existentes.
 - Recomendación: actualizar comandos y archivos (`pcobra.toml`, `cobra.mod`) para usar `javascript`.
+
+## Checklist de cierre (auditoría de limpieza)
+
+- [x] Auditoría en `src/`, `docs/`, `examples/` y `docker/` para detectar menciones fuera de los 8 backends oficiales.
+  - Evidencia: `python scripts/validate_targets_policy.py` y revisión dirigida de rutas clave de front-end.
+- [x] Documentación principal sincronizada con tiers oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+  - Evidencia: revisión y ajuste de `README.md`, `docs/lenguajes_soportados.rst`, `docs/matriz_transpiladores.md` y `docs/frontend/backends.rst`.
+- [x] Ejemplos y guías de CLI sin targets retirados.
+  - Evidencia: actualización de `docs/frontend/avances.rst` para listar solo destinos y orígenes vigentes.
+- [x] CI/packaging alineado: se retiró instalación de toolchains no oficiales.
+  - Evidencia: limpieza de instalaciones de runtimes no canónicos en `.github/workflows/ci.yml` y `.github/workflows/test.yml`.
+- [x] Registro final de consistencia ejecutado.
+  - Evidencia: validación con `python scripts/validate_targets_policy.py`.

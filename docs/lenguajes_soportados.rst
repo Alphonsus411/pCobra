@@ -17,13 +17,13 @@ Tier 1 (soporte principal)
      - ``python``
      - Estable
    * - JavaScript
-     - ``js``
+     - ``javascript`` (alias: ``js``)
      - Estable
    * - Rust
      - ``rust``
      - Estable
-   * - C++
-     - ``cpp``
+   * - WebAssembly (WAT)
+     - ``wasm``
      - Estable
 
 Tier 2 (soporte parcial/experimental)
@@ -41,12 +41,12 @@ Tier 2 (soporte parcial/experimental)
    * - Java
      - ``java``
      - Parcial
+   * - C++
+     - ``cpp``
+     - Parcial
    * - Ensamblador
      - ``asm``
      - Cobertura básica
-   * - WebAssembly (WAT)
-     - ``wasm``
-     - Experimental
 
 Transpilación inversa (feature independiente)
 ---------------------------------------------
