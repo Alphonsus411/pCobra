@@ -82,3 +82,10 @@ Se añade una suite dedicada que cubre:
 - **Tier 1** prioriza estabilidad funcional y cobertura de primitivas Holobit en Python/JS.
 - **Tier 2** prioriza continuidad de generación y compatibilidad incremental, con cobertura parcial explícita.
 - Cualquier backend fuera de esta matriz se considera fuera de contrato.
+
+
+## Nota de migración (`js` → `javascript`)
+
+- El nombre canónico del target de JavaScript pasa a ser `javascript` en ejemplos, configuración y documentación.
+- El alias histórico `js` se mantiene **deprecated pero funcional** para compatibilidad temporal con proyectos existentes.
+- Recomendación: actualizar comandos y archivos (`pcobra.toml`, `cobra.mod`) para usar `javascript`.

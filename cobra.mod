@@ -6,7 +6,7 @@
 # [modulo.co]
 # version = "1.0.0"
 # python = "modulo.py"
-# js = "modulo.js"
+# javascript = "modulo.js"
 
 [lock]
 # Aún no se han registrado módulos transpilados.

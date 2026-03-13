@@ -4,10 +4,9 @@
 
 [modulos."modulo.co"]
 python = "modulo.py"
-js = "modulo.js"
+javascript = "modulo.js"
 
 # Puedes añadir más entradas como:
 # [modulos."ciencia/genetica.co"]
 # python = "ciencia/genetica.py"
-# js = "ciencia/genetica.js"
-
+# javascript = "ciencia/genetica.js"

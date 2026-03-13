@@ -15,11 +15,11 @@ Versión 10.0.12
 
 [English version available here](docs/README.en.md)
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida: `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` y `asm`.
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
 
 Tiers oficiales de soporte de backends:
 
-- **Tier 1**: `python`, `rust`, `js`, `wasm`
+- **Tier 1**: `python`, `rust`, `javascript`, `wasm`
 - **Tier 2**: `go`, `cpp`, `java`, `asm`
 
 La fuente de verdad para esta clasificación es `src/pcobra/cobra/transpilers/targets.py`.
@@ -632,7 +632,7 @@ Ejemplo de formato:
 modulo.co:
   version: "1.0.0"
   python: modulo.py
-  js: modulo.js
+  javascript: modulo.js
 ```
 
 Si una entrada no se encuentra, el transpilador cargará directamente el archivo
@@ -734,11 +734,11 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
   ```
 
 ```bash
-# Compilar un archivo a: python, rust, js, wasm, go, cpp, java o asm
+# Compilar un archivo a: python, rust, javascript, wasm, go, cpp, java o asm
 cobra compilar programa.co --tipo python
 
 # Transpilar inverso de Python a JavaScript
-cobra transpilar-inverso script.py --origen=python --destino=js
+cobra transpilar-inverso script.py --origen=python --destino=javascript
 
 # Ejemplo de mensaje de error al compilar un archivo inexistente
 cobra compilar noexiste.co
@@ -762,7 +762,7 @@ cobra profile programa.co --output salida.prof
 # O mostrar el perfil directamente en pantalla
 cobra profile programa.co
 # Verificar la salida en Python y JavaScript
-cobra verificar ejemplo.co --lenguajes=python,js
+cobra verificar ejemplo.co --lenguajes=python,javascript
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
@@ -796,9 +796,9 @@ cobra transpilar-inverso script.py --origen=python --destino=python
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-Actualmente es posible convertir a Cobra código escrito en `python`, `js` y `java`.
+Actualmente es posible convertir a Cobra código escrito en `python`, `javascript` y `java`.
 
-Tiers de referencia (salida): Tier 1 (`python`, `rust`, `js`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). La fuente de verdad es `src/pcobra/cobra/transpilers/targets.py`.
+Tiers de referencia (salida): Tier 1 (`python`, `rust`, `javascript`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). La fuente de verdad es `src/pcobra/cobra/transpilers/targets.py`.
 
 ### Diseño extensible de la CLI
 
@@ -944,7 +944,7 @@ cobra compilar programa.co --tipo=asm
 cobra compilar programa.co --tipo=cpp
 cobra compilar programa.co --tipo=go
 cobra compilar programa.co --tipo=java
-cobra compilar programa.co --tipo=js
+cobra compilar programa.co --tipo=javascript
 cobra compilar programa.co --tipo=python
 cobra compilar programa.co --tipo=rust
 cobra compilar programa.co --tipo=wasm
@@ -955,7 +955,7 @@ cobra compilar programa.co --tipo=wasm
 ````bash
 cobra compilar programa.co --tipo=python
 cobra compilar programa.co --tipo=rust
-cobra compilar programa.co --tipo=js
+cobra compilar programa.co --tipo=javascript
 cobra compilar programa.co --tipo=wasm
 cobra compilar programa.co --tipo=go
 cobra compilar programa.co --tipo=cpp
@@ -1259,7 +1259,7 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 
 - python
 - rust
-- js
+- javascript
 - wasm
 - go
 - cpp
@@ -1268,7 +1268,7 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 
 Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
 
-Tiers oficiales: **Tier 1** (`python`, `rust`, `js`, `wasm`) y **Tier 2** (`go`, `cpp`, `java`, `asm`). Fuente de verdad: `src/pcobra/cobra/transpilers/targets.py`.
+Tiers oficiales: **Tier 1** (`python`, `rust`, `javascript`, `wasm`) y **Tier 2** (`go`, `cpp`, `java`, `asm`). Fuente de verdad: `src/pcobra/cobra/transpilers/targets.py`.
 
 # Licencia
 
