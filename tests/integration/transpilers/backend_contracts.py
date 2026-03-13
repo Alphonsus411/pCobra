@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+from typing import Final
 
 from pcobra.core.ast_nodes import (
     NodoGraficar,
@@ -14,9 +15,18 @@ from pcobra.core.ast_nodes import (
     NodoValor,
 )
 
+REQUIRED_FEATURES: Final[tuple[str, ...]] = (
+    "holobit",
+    "proyectar",
+    "transformar",
+    "graficar",
+    "corelibs",
+    "standard_library",
+)
+
 TRANSPILERS: dict[str, tuple[str, str]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "js": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
     "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
     "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
@@ -53,7 +63,7 @@ STRICT_FULL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "corelibs": ("longitud('cobra')",),
         "standard_library": ("mostrar('hola')",),
     },
-    "js": {
+    "javascript": {
         "holobit": (
             "import * as io from './nativos/io.js';",
             "import * as texto from './nativos/texto.js';",
@@ -66,7 +76,7 @@ STRICT_FULL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
 }
 
 PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
-    "js": {
+    "javascript": {
         "corelibs": ("longitud(cobra);",),
         "standard_library": ("mostrar(hola);",),
     },
