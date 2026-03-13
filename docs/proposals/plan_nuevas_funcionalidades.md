@@ -275,9 +275,9 @@ y facilita su incorporación como issues o historias dentro del repositorio.
 
 
 
-## Archivo histórico (targets no soportados)
+## Nota de trazabilidad del documento
 
-> Esta sección conserva referencias de planeación antiguas. No representa targets oficiales actuales del producto.
+> Este plan mantiene únicamente referencias alineadas con los targets oficiales actuales del producto.
 
-- Se exploraron ideas para Kotlin, Swift, R, Julia y Matlab en una versión previa de este plan.
-- También hubo menciones a C como target independiente; actualmente la política oficial se limita a `cpp`.
+- Se retiraron comparativas y propuestas ligadas a targets fuera de política.
+- Cualquier ampliación futura debe justificarse con paridad interna entre `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` y `asm`.
