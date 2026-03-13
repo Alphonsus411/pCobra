@@ -239,10 +239,7 @@ def visit_diccionario_comprehension(self, nodo):
 class TranspiladorPython(BaseTranspiler):
     def __init__(self):
         # Incluir los modulos nativos al inicio del codigo generado
-        self.codigo = get_standard_imports("python")
-        hooks = "\n".join(get_runtime_hooks("python"))
-        if hooks:
-            self.codigo += hooks + "\n"
+        self.codigo = ""
         self.usa_asyncio = False
         self.usa_typing = False
         self.usa_contextlib = False
@@ -261,6 +258,15 @@ class TranspiladorPython(BaseTranspiler):
         nodos = ensure_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
+        usa_holobit = any(
+            isinstance(n, (NodoHolobit, NodoProyectar, NodoTransformar, NodoGraficar))
+            for n in nodos
+        )
+        self.codigo = get_standard_imports("python")
+        if usa_holobit:
+            hooks = "\n".join(get_runtime_hooks("python"))
+            if hooks:
+                self.codigo += hooks + "\n\n"
         for nodo in nodos:
             nodo.aceptar(self)
         if (

@@ -49,7 +49,7 @@ class TranspiladorASM(BaseTranspiler):
 
         modulo = self._asegurar_modulo(programa)
         usa_runtime_holobit = isinstance(programa, list) and any(
-            n.__class__.__name__ in {"NodoProyectar", "NodoTransformar", "NodoGraficar"}
+            n.__class__.__name__ in {"NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"}
             for n in programa
         )
         self._lineas = list(get_runtime_hooks("asm")) if usa_runtime_holobit else []
