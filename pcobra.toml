@@ -1,12 +1,29 @@
 # pcobra.toml
-# Mapeo de módulos Cobra transpilados a Python o JavaScript.
+# Mapeo de módulos Cobra transpilados a múltiples backends oficiales.
 # Este archivo se genera o mantiene manualmente tras usar comandos como `cobra transpilar`.
+
+[project]
+# Targets requeridos por política del proyecto. Puedes reducir esta lista
+# si decides omitir intencionalmente algunos backends en `cobra.mod`.
+required_targets = ["python", "javascript"]
 
 [modulos."modulo.co"]
 python = "modulo.py"
+rust = "modulo.rs"
 javascript = "modulo.js"
+wasm = "modulo.wasm"
+go = "modulo.go"
+cpp = "modulo.cpp"
+java = "modulo.java"
+asm = "modulo.asm"
 
 # Puedes añadir más entradas como:
 # [modulos."ciencia/genetica.co"]
 # python = "ciencia/genetica.py"
+# rust = "ciencia/genetica.rs"
 # javascript = "ciencia/genetica.js"
+# wasm = "ciencia/genetica.wasm"
+# go = "ciencia/genetica.go"
+# cpp = "ciencia/genetica.cpp"
+# java = "ciencia/genetica.java"
+# asm = "ciencia/genetica.asm"
