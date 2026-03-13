@@ -63,7 +63,7 @@ La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
 
   .. code-block:: bash
 
-     cobra compilar examples/hololang/saludo.co --backend python
+     cobra compilar examples/hola_mundo/hola.co --backend python
 
   El comando anterior genera una salida válida de backend registrado
   (en este ejemplo, ``python``). Hololang se utiliza internamente como IR y no
@@ -73,7 +73,7 @@ La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
 
   .. code-block:: bash
 
-     cobra transpilar-inverso examples/reverse/demo.py \
+     cobra transpilar-inverso examples/hello_world/python.py \
          --origen python \
          --destino java
 
@@ -89,7 +89,7 @@ simbólico con el backend ``asm`` desde el flujo Cobra → backend:
 
 .. code-block:: bash
 
-   cobra compilar examples/hololang/saludo.co --backend asm
+   cobra compilar examples/hola_mundo/hola.co --backend asm
 
 El transpilador ``asm`` produce instrucciones legibles que describen
 asignaciones, saltos condicionales y bucles. Esto es útil para auditar
@@ -99,5 +99,4 @@ Recursos adicionales
 --------------------
 
 * Consulta :doc:`sintaxis` para repasar el lenguaje original de Cobra.
-* En ``examples/hololang`` encontrarás archivos listos para realizar las
-  conversiones mostradas en esta página.
+* Usa cualquier programa ``.co`` de ``examples/`` para repetir los flujos mostrados en esta página.

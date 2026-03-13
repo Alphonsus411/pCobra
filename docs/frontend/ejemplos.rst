@@ -53,20 +53,17 @@ Las utilidades de ``standard_library.asincrono`` ayudan a mezclar corrutinas de
 
    asyncio.run(main())
 
-Transpilación con Hololang
---------------------------
-Los archivos disponibles en ``examples/hololang`` muestran cómo convertir
-programas Cobra a Hololang y viceversa, además de generar salidas en Python o
-ensamblador.  Ejecuta, por ejemplo:
+Transpilación inversa oficial
+-----------------------------
+La política oficial de transpilación inversa soporta orígenes ``python``, ``js``
+y ``java``. Puedes probar el flujo con:
 
 .. code-block:: bash
 
-   cobra compilar examples/hololang/saludo.co --backend hololang
    cobra transpilar-inverso examples/hello_world/python.py --origen python --destino java
 
-El primer comando imprime la versión Hololang del programa ``saludo.co`` y el
-segundo demuestra el flujo de transpilación inversa soportado por política
-desde ``python`` hacia ``java``.
+Este comando demuestra una conversión entre lenguajes admitidos por política,
+sin depender de targets fuera del alcance oficial.
 
 
 Interfaces de consola enriquecidas
