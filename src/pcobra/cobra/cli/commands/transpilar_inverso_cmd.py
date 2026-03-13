@@ -24,6 +24,7 @@ else:
 ValidationError = _FallbackValidationError
 
 import pcobra.cobra.transpilers.reverse as reverse_module
+from pcobra.cobra.transpilers.reverse.policy import normalize_reverse_language
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
@@ -56,7 +57,7 @@ class TranspilationError(Exception):
     """Error lanzado cuando ocurre un problema durante la transpilación."""
     pass
 REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
-ORIGIN_CHOICES = sorted(REVERSE_TRANSPILERS.keys())
+ORIGIN_CHOICES = sorted(reverse_module.REVERSE_SCOPE_LANGUAGES)
 DESTINO_CHOICES = list(target_cli_choices(tuple(TRANSPILERS.keys())))
 TARGETS_HELP = build_target_help_by_tier()
 
@@ -64,12 +65,15 @@ TARGETS_HELP = build_target_help_by_tier()
 def validar_consistencia_reverse_transpilers() -> None:
     """Valida que la CLI y el registro interno compartan la misma política."""
     policy = set(reverse_module.REVERSE_SCOPE_LANGUAGES)
+    aliases = set(getattr(reverse_module, "REVERSE_SCOPE_ALIASES", {}).keys())
     registry = set(reverse_module.REGISTERED_REVERSE_TRANSPILERS.keys())
     cli = set(REVERSE_TRANSPILERS.keys())
-    if cli != registry or not registry.issubset(policy):
+    allowed = policy | aliases
+    if cli != registry or not registry.issubset(allowed):
         raise RuntimeError(
             "Inconsistencia de reverse transpilers: "
-            f"policy={sorted(policy)}, registry={sorted(registry)}, cli={sorted(cli)}"
+            f"policy={sorted(policy)}, aliases={sorted(aliases)}, "
+            f"registry={sorted(registry)}, cli={sorted(cli)}"
         )
 
 
@@ -238,7 +242,7 @@ class TranspilarInversoCommand(BaseCommand):
             CommandError: Si hay errores en la validación o transpilación
         """
         try:
-            origen = args.origen.lower()
+            origen = normalize_reverse_language(args.origen)
             destino = normalize_target_name(args.destino)
 
             self._validar_origen_en_politica(origen)
