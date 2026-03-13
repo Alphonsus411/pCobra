@@ -99,7 +99,8 @@ compiladores correspondientes y accesibles desde `PATH`:
 - Node.js
 - Go
 - Rust (`rustc`)
-- Ruby
+- Java (`javac`)
+- C++ (`g++` o `clang++`)
 
 Puedes ejecutar únicamente estas pruebas con:
 
@@ -112,6 +113,15 @@ Para correr todo el conjunto de pruebas, incluidas las anteriores:
 ```bash
 PYTHONPATH=$PWD/src pytest
 ```
+
+### Checklist: árbol limpio de lenguajes no oficiales
+
+Antes de abrir un PR que toque transpilación, ejemplos, extensiones o imágenes Docker, verifica:
+
+- [ ] No se añadieron referencias a targets fuera de la política oficial (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- [ ] No se añadieron referencias de `transpilar-inverso` fuera de los orígenes oficiales (`python`, `js`, `java`).
+- [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` no contienen archivos huérfanos de lenguajes fuera de alcance.
+- [ ] Se ejecutó un barrido de cadenas/rutas para detectar menciones residuales antes de enviar cambios.
 
 ### Añadir soporte para nuevos lenguajes en `run_code`
 

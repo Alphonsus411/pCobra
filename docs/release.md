@@ -36,3 +36,13 @@ Al crear una etiqueta `vX.Y.Z` se ejecuta el workflow [`release.yml`](../.github
 5. Envía notificaciones a Slack y correo electrónico si corresponde.
 
 Consulta el [archivo del workflow](../.github/workflows/release.yml) para más detalles.
+
+
+## Checklist de release: árbol limpio de lenguajes no oficiales
+
+Antes de etiquetar una versión, confirma explícitamente:
+
+- [ ] No hay referencias activas en código, ejemplos o scripts a lenguajes fuera del set oficial de salida (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- [ ] No hay referencias activas en reverse fuera del set oficial de entrada (`python`, `js`, `java`).
+- [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` están alineados con el alcance oficial.
+- [ ] Se ejecutó un barrido final de cadenas y rutas para detectar residuos antes de publicar.
