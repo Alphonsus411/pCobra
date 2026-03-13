@@ -15,6 +15,12 @@
 
 > `full`: soportado y cubierto por regresión. `partial`: soporte limitado/fallback. `none`: no garantizado.
 
+## Contrato runtime Holobit
+
+- Referencia técnica: `docs/contrato_runtime_holobit.md`.
+- Hooks mínimos: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`.
+- Inserción de hooks/imports: solo cuando el AST usa nodos Holobit.
+
 ## Matriz histórica de características del AST
 
 | Característica | Python | JavaScript | C++ | Rust | Go | Java | Assembly | WASM |

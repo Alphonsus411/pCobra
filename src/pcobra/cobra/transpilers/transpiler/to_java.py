@@ -18,7 +18,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoGraficar,
 )
 from pcobra.cobra.core import TipoToken
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler
+from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
@@ -174,23 +174,13 @@ class TranspiladorJava(BaseTranspiler):
         self.agregar_linea("public class Main {")
         self.indent += 1
 
-        self.usa_runtime_holobit = any(n.__class__.__name__ in {"NodoProyectar", "NodoTransformar", "NodoGraficar"} for n in nodos)
+        self.usa_runtime_holobit = any(
+            n.__class__.__name__ in {"NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"}
+            for n in nodos
+        )
         if self.usa_runtime_holobit:
-            self.agregar_linea("private static void cobraProyectar(Object hb, Object modo) {")
-            self.indent += 1
-            self.agregar_linea('System.out.println("[cobra::proyectar] " + hb + " " + modo);')
-            self.indent -= 1
-            self.agregar_linea("}")
-            self.agregar_linea("private static void cobraTransformar(Object hb, Object op, Object... params) {")
-            self.indent += 1
-            self.agregar_linea('System.out.println("[cobra::transformar] " + hb + " " + op);')
-            self.indent -= 1
-            self.agregar_linea("}")
-            self.agregar_linea("private static void cobraGraficar(Object hb) {")
-            self.indent += 1
-            self.agregar_linea('System.out.println("[cobra::graficar] " + hb);')
-            self.indent -= 1
-            self.agregar_linea("}")
+            for hook in get_runtime_hooks("java"):
+                self.agregar_linea(hook)
 
         for f in funciones:
             f.aceptar(self)

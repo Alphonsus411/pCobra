@@ -171,8 +171,7 @@ def visit_diccionario_comprehension(self, nodo):
 class TranspiladorJavaScript(BaseTranspiler):
     def __init__(self):
         # Incluir importaciones de modulos nativos
-        self.codigo = get_standard_imports("js")
-        self.codigo.extend(get_runtime_hooks("js"))
+        self.codigo = []
         self.indentacion = 0
         self.usa_indentacion = None
         self._defer_stack: list[str] = []
@@ -274,6 +273,14 @@ class TranspiladorJavaScript(BaseTranspiler):
         ast_raiz = ensure_cobra_ast(ast_raiz)
         ast_raiz = expandir_macros(ast_raiz)
         ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
+        usa_holobit = any(
+            isinstance(n, (NodoProyectar, NodoTransformar, NodoGraficar))
+            or n.__class__.__name__ == "NodoHolobit"
+            for n in ast_raiz
+        )
+        self.codigo = list(get_standard_imports("js"))
+        if usa_holobit:
+            self.codigo.extend(get_runtime_hooks("js"))
         for nodo in ast_raiz:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
