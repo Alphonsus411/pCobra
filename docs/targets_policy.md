@@ -32,6 +32,12 @@ Fuente de verdad en código: `src/pcobra/cobra/transpilers/reverse/policy.py`.
 
 - No se deben documentar otros lenguajes como targets oficiales de salida o de
   reverse en la documentación principal.
+- Los scripts de benchmark (`scripts/benchmarks/run_benchmarks.py`,
+  `scripts/benchmarks/compare_backends.py`,
+  `scripts/benchmarks/binary_bench.py`) deben derivar siempre la lista de
+  backends desde `src/pcobra/cobra/transpilers/targets.py`
+  (`OFFICIAL_TARGETS`, `TIER1_TARGETS`, `TIER2_TARGETS`) y limitarse a mantener
+  metadatos técnicos (extensiones/comandos) locales.
 - Cualquier ampliación o reducción del alcance debe actualizar:
   - este archivo,
   - la fuente de verdad en código,
