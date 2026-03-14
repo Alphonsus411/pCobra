@@ -88,7 +88,9 @@ class TranspiladorWasm(BaseTranspiler):
     def visit_holobit(self, nodo: NodoHolobit):
         nombre = nodo.nombre or "hb"
         valores = ", ".join(str(v) for v in nodo.valores or [])
+        self.usa_runtime_holobit = True
         self.agregar_linea(f";; holobit {nombre} [{valores}]")
+        self.agregar_linea(";; call runtime cobra_holobit")
 
     def visit_proyectar(self, nodo: NodoProyectar):
         self.usa_runtime_holobit = True
