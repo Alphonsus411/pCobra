@@ -47,7 +47,6 @@ MAX_FILE_SIZE = 1024 * 1024  # 1MB
 EXTENSIONES_POR_LENGUAJE: Dict[str, str] = {
     "python": ".py",
     "javascript": ".js",
-    "js": ".js",
     "java": ".java",
 }
 
@@ -62,6 +61,21 @@ REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TR
 ORIGIN_CHOICES = sorted(reverse_module.REVERSE_SCOPE_LANGUAGES)
 DESTINO_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
 TARGETS_HELP = build_target_help_by_tier()
+
+
+def _validate_official_target_or_raise(target: str, *, context: str) -> str:
+    """Valida que un target pertenezca a la whitelist oficial."""
+    canonical = normalize_target_name(target)
+    if canonical not in OFFICIAL_TARGETS:
+        raise UnsupportedLanguageError(
+            "Lenguaje de destino fuera de Tier 1/Tier 2 en {context}: "
+            "'{target}'. Usa uno de: {allowed}".format(
+                context=context,
+                target=target,
+                allowed=", ".join(DESTINO_CHOICES),
+            )
+        )
+    return canonical
 
 
 def validar_consistencia_reverse_transpilers() -> None:
@@ -215,11 +229,7 @@ class TranspilarInversoCommand(BaseCommand):
             raise UnsupportedLanguageError(
                 f"No hay transpilador disponible para el lenguaje de destino '{destino}'"
             )
-        if destino not in OFFICIAL_TARGETS:
-            raise UnsupportedLanguageError(
-                "Lenguaje de destino fuera de Tier 1/Tier 2: "
-                f"'{destino}'. Usa uno de: {', '.join(DESTINO_CHOICES)}"
-            )
+        _validate_official_target_or_raise(destino, context="CLI transpilar-inverso")
 
     def _validar_origen_en_politica(self, origen: str) -> None:
         """Valida que el origen esté dentro de la política de reverse transpilation."""
@@ -245,7 +255,10 @@ class TranspilarInversoCommand(BaseCommand):
         """
         try:
             origen = normalize_reverse_language(args.origen)
-            destino = normalize_target_name(args.destino)
+            destino = _validate_official_target_or_raise(
+                args.destino,
+                context="CLI transpilar-inverso",
+            )
 
             self._validar_origen_en_politica(origen)
 

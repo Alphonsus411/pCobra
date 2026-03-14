@@ -27,6 +27,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
 
 # Constantes
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
@@ -40,7 +41,7 @@ fin
 imprimir(x)
 """
 
-BACKENDS = {
+BACKEND_CANDIDATES = {
     "python": {"ext": "py", "run": ["python", "{file}"]},
     "javascript": {"ext": "js", "run": ["node", "{file}"]},
     "rust": {
@@ -48,6 +49,11 @@ BACKENDS = {
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
         "run": ["{tmp}/prog_rs"],
     },
+}
+BACKENDS = {
+    target: cfg
+    for target, cfg in BACKEND_CANDIDATES.items()
+    if normalize_target_name(target) in OFFICIAL_TARGETS
 }
 
 def run_and_measure(

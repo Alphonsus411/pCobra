@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -70,6 +72,16 @@ class BenchmarksCommand(BaseCommand):
             results: list[dict[str, Any]] = []
             iteraciones = max(1, getattr(args, "iteraciones", 1))
             backend_filtro = getattr(args, "backend", None)
+            if backend_filtro:
+                backend_filtro = normalize_target_name(backend_filtro)
+                if backend_filtro not in OFFICIAL_TARGETS:
+                    mostrar_error(
+                        _("Backend no permitido: {backend}. Permitidos: {allowed}").format(
+                            backend=getattr(args, "backend", backend_filtro),
+                            allowed=", ".join(OFFICIAL_TARGETS),
+                        )
+                    )
+                    return 1
 
             if script.exists():
                 cmd = [sys.executable, str(script)]
@@ -121,7 +133,7 @@ class BenchmarksCommand(BaseCommand):
             )
             return 1
 
-BACKENDS: Mapping[str, Sequence[str]] = {
+_BACKEND_ALIASES: Mapping[str, Sequence[str]] = {
     "python": ("python",),
     "rust": ("rust",),
     "javascript": ("javascript", "js"),
@@ -130,4 +142,9 @@ BACKENDS: Mapping[str, Sequence[str]] = {
     "cpp": ("cpp",),
     "java": ("java",),
     "asm": ("assembler", "asm"),
+}
+
+BACKENDS: Mapping[str, Sequence[str]] = {
+    target: _BACKEND_ALIASES.get(target, (normalize_target_name(target),))
+    for target in OFFICIAL_TARGETS
 }

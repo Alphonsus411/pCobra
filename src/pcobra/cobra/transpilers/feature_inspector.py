@@ -10,20 +10,21 @@ from pathlib import Path
 import re
 from typing import Dict, List
 
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_label
+
 # Carpeta donde se encuentran los transpiladores individuales
 BASE_DIR = Path(__file__).resolve().parent / "transpiler"
 
-# Archivos a inspeccionar y su nombre de lenguaje asociado
-TRANSPILERS = {
-    "Python": "to_python.py",
-    "JavaScript": "to_js.py",
-    "C++": "to_cpp.py",
-    "Rust": "to_rust.py",
-    "Go": "to_go.py",
-    "Java": "to_java.py",
-    "Assembly": "to_asm.py",
-    "WASM": "to_wasm.py",
+_TRANSPILER_FILE_BY_TARGET = {
+    "javascript": "to_js.py",
+    "cpp": "to_cpp.py",
+    "asm": "to_asm.py",
 }
+
+
+def _resolve_transpiler_file(target: str) -> str:
+    canonical = normalize_target_name(target)
+    return _TRANSPILER_FILE_BY_TARGET.get(canonical, f"to_{canonical}.py")
 
 # Patrones para detectar características registradas en los transpiladores
 # 1) Asignaciones como `TranspiladorX.visit_algo = ...`
@@ -35,8 +36,10 @@ _DICT_PATTERN = re.compile(r"['\"]([a-zA-Z_]+)['\"]\s*:\s*visit_[a-zA-Z_]+")
 def extract_features() -> Dict[str, List[str]]:
     """Devuelve un mapeo de lenguaje a la lista de características soportadas."""
     features: Dict[str, List[str]] = {}
-    for language, filename in TRANSPILERS.items():
-        path = BASE_DIR / filename
+    for target in OFFICIAL_TARGETS:
+        canonical = normalize_target_name(target)
+        language = target_label(canonical)
+        path = BASE_DIR / _resolve_transpiler_file(canonical)
         if not path.exists():
             continue
         content = path.read_text(encoding="utf-8")

@@ -53,6 +53,20 @@ TRANSPILERS = {
     "asm": TranspiladorASM,
 }
 
+
+def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
+    """Valida backend contra la whitelist oficial y devuelve su forma canónica."""
+    canonical = normalize_target_name(backend)
+    if canonical not in OFFICIAL_TARGETS:
+        raise ValueError(
+            _("Backend no permitido en {context}: {backend}. Permitidos: {supported}").format(
+                context=context,
+                backend=backend,
+                supported=", ".join(target_cli_choices(OFFICIAL_TARGETS)),
+            )
+        )
+    return canonical
+
 # Cargar transpiladores externos
 try:
     eps = entry_points(group="cobra.transpilers")
@@ -61,8 +75,12 @@ except TypeError:  # Compatibilidad con versiones antiguas
 
 for ep in eps:
     try:
-        normalized_ep_name = normalize_target_name(ep.name)
-        if normalized_ep_name not in OFFICIAL_TARGETS:
+        try:
+            normalized_ep_name = _validate_official_backend_or_raise(
+                ep.name,
+                context="plugins(entry_points)",
+            )
+        except ValueError:
             logging.warning(
                 "Plugin de transpilador '%s' omitido: target no oficial (solo se permite %s)",
                 ep.name,
@@ -191,7 +209,14 @@ class CompileCommand(BaseCommand):
                 return 1
 
         mod_info = module_map.get_toml_map()
-        transpilador_objetivo = normalize_target_name(getattr(args, "backend", None) or args.tipo)
+        try:
+            transpilador_objetivo = _validate_official_backend_or_raise(
+                getattr(args, "backend", None) or args.tipo,
+                context="CLI",
+            )
+        except ValueError as validation_err:
+            mostrar_error(str(validation_err))
+            return 1
 
         try:
             if tipos_argument:
@@ -216,6 +241,10 @@ class CompileCommand(BaseCommand):
             if tipos_argument:
                 lenguajes = list(tipos_argument)
                 for lang in lenguajes:
+                    try:
+                        _validate_official_backend_or_raise(lang, context="CLI --tipos")
+                    except ValueError as validation_err:
+                        raise ValueError(str(validation_err))
                     if lang not in TRANSPILERS:
                         raise ValueError(_("Transpilador no soportado."))
                 
