@@ -26,6 +26,11 @@ def _resolve_transpiler_file(target: str) -> str:
     canonical = normalize_target_name(target)
     return _TRANSPILER_FILE_BY_TARGET.get(canonical, f"to_{canonical}.py")
 
+
+TRANSPILERS: Dict[str, str] = {
+    normalize_target_name(target): _resolve_transpiler_file(target) for target in OFFICIAL_TARGETS
+}
+
 # Patrones para detectar características registradas en los transpiladores
 # 1) Asignaciones como `TranspiladorX.visit_algo = ...`
 _ASSIGN_PATTERN = re.compile(r"visit_([a-zA-Z_]+)\s*=")
@@ -36,10 +41,9 @@ _DICT_PATTERN = re.compile(r"['\"]([a-zA-Z_]+)['\"]\s*:\s*visit_[a-zA-Z_]+")
 def extract_features() -> Dict[str, List[str]]:
     """Devuelve un mapeo de lenguaje a la lista de características soportadas."""
     features: Dict[str, List[str]] = {}
-    for target in OFFICIAL_TARGETS:
-        canonical = normalize_target_name(target)
+    for canonical, transpiler_file in TRANSPILERS.items():
         language = target_label(canonical)
-        path = BASE_DIR / _resolve_transpiler_file(canonical)
+        path = BASE_DIR / transpiler_file
         if not path.exists():
             continue
         content = path.read_text(encoding="utf-8")
