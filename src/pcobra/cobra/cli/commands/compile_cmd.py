@@ -21,6 +21,7 @@ from pcobra.cobra.transpilers.targets import (
     normalize_target_name,
     resolution_candidates,
     target_cli_choices,
+    target_label,
 )
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
@@ -260,7 +261,8 @@ class CompileCommand(BaseCommand):
                     for lang, nombre, resultado in resultados:
                         mostrar_info(
                             _("Código generado ({nombre}) para {lang}:").format(
-                                nombre=nombre, lang=lang
+                                nombre=nombre,
+                                lang=f"{target_label(lang)} ({lang})",
                             )
                         )
                         print(resultado)

@@ -8,6 +8,7 @@ OFFICIAL_TARGETS: Final[Tuple[str, ...]] = TIER1_TARGETS + TIER2_TARGETS
 
 TARGET_ALIASES: Final[dict[str, str]] = {
     "js": "javascript",
+    "ensamblador": "asm",
 }
 
 TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
@@ -50,7 +51,16 @@ def target_label(target: str) -> str:
 def build_target_help_by_tier() -> str:
     """Devuelve ayuda agrupada por tier con etiqueta amigable + nombre canónico."""
 
+    aliases_by_target: dict[str, tuple[str, ...]] = {
+        target: tuple(alias for alias, canonical in TARGET_ALIASES.items() if canonical == target)
+        for target in OFFICIAL_TARGETS
+    }
+
     def _fmt(target: str) -> str:
+        aliases = aliases_by_target.get(target, ())
+        if aliases:
+            aliases_txt = ", ".join(aliases)
+            return f"{target_label(target)} ({target}; alias: {aliases_txt})"
         return f"{target_label(target)} ({target})"
 
     tier1 = ", ".join(_fmt(target) for target in TIER1_TARGETS)

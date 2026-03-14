@@ -22,20 +22,20 @@ def test_compile_tipo_choices_usa_lang_choices_centrales():
     assert tuple(action.choices) == tuple(LANG_CHOICES)
 
 
-def test_compile_parser_normaliza_alias_js_en_tipo_y_tipos():
+def test_compile_parser_normaliza_aliases_js_y_ensamblador_en_tipo_y_tipos():
     parser, _ = _build_parser()
 
-    args = parser.parse_args(["compilar", "input.co", "--tipo", "js", "--tipos", "python,js"])
+    args = parser.parse_args(["compilar", "input.co", "--tipo", "ensamblador", "--tipos", "python,js,ensamblador"])
 
-    assert args.tipo == "javascript"
-    assert args.tipos == ["python", "javascript"]
+    assert args.tipo == "asm"
+    assert args.tipos == ["python", "javascript", "asm"]
 
 
 def test_compile_help_refleja_labels_amigables_y_nombres_canonicos():
     _, compile_parser = _build_parser()
     help_text = compile_parser.format_help()
 
-    assert "JavaScript (javascript)" in help_text
-    assert "Ensamblador (asm)" in help_text
+    assert "JavaScript (javascript; alias: js)" in help_text
+    assert "Ensamblador (asm; alias: ensamblador)" in help_text
     for target in OFFICIAL_TARGETS:
         assert target in help_text
