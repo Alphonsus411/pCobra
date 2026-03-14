@@ -68,7 +68,8 @@ from pcobra.cobra.transpilers.transpiler.go_nodes.instancia import (
 def visit_holobit(self, nodo):
     valores = ", ".join(str(v) for v in nodo.valores or [])
     nombre = nodo.nombre or "_hb"
-    self.agregar_linea(f"{nombre} := []float64{{{valores}}}")
+    self.usa_runtime_holobit = True
+    self.agregar_linea(f"{nombre} := cobraHolobit([]float64{{{valores}}})")
 
 
 def visit_proyectar(self, nodo):

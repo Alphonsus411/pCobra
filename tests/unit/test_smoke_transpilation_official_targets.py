@@ -1,6 +1,7 @@
 import pytest
 
 from pcobra.core.ast_nodes import (
+    NodoAsignacion,
     NodoGraficar,
     NodoHolobit,
     NodoIdentificador,
@@ -31,20 +32,37 @@ def ast_holobit_runtime():
 @pytest.mark.parametrize(
     "transpilador, fragmentos",
     [
-        (TranspiladorPython, ["from corelibs import *", "from standard_library import *", "def cobra_proyectar("]),
-        (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "function cobra_proyectar(hb, modo) {"]),
-        (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn cobra_proyectar(hb: &str, modo: &str) {"]),
-        (TranspiladorWasm, [";; runtime import: corelibs", ";; runtime import: standard_library", "(func $cobra_proyectar (param $hb i32) (param $modo i32)"]),
-        (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobraProyectar(hb any, modo any) {"]),
-        (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline void cobra_proyectar(const auto& hb, const auto& modo) {"]),
-        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static void cobraProyectar(Object hb, Object modo) {"]),
-        (TranspiladorASM, ["; runtime import corelibs", "; runtime import standard_library", "cobra_proyectar:"]),
+        (TranspiladorPython, ["from corelibs import *", "from standard_library import *", "def cobra_holobit(", "def cobra_proyectar(", "def cobra_transformar(", "def cobra_graficar("]),
+        (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
+        (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn cobra_holobit(valores: Vec<f64>)", "fn cobra_proyectar(hb: &str, modo: &str)", "fn cobra_transformar(hb: &str, op: &str", "fn cobra_graficar(hb: &str)"]),
+        (TranspiladorWasm, [";; runtime import: corelibs", ";; runtime import: standard_library", "(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"]),
+        (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobraHolobit(valores []float64)", "func cobraProyectar(hb any, modo any)", "func cobraTransformar(hb any, op any", "func cobraGraficar(hb any)"]),
+        (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"]),
+        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static Object cobraHolobit", "private static void cobraProyectar", "private static void cobraTransformar", "private static void cobraGraficar"]),
+        (TranspiladorASM, ["; runtime import corelibs", "; runtime import standard_library", "cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"]),
     ],
 )
 def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(transpilador, fragmentos, ast_holobit_runtime):
     code = transpilador().generate_code(ast_holobit_runtime)
     for fragmento in fragmentos:
         assert fragmento in code
+
+
+@pytest.mark.parametrize(
+    "transpilador",
+    [
+        TranspiladorPython,
+        TranspiladorRust,
+        TranspiladorWasm,
+        TranspiladorGo,
+        TranspiladorCPP,
+        TranspiladorJava,
+    ],
+)
+def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador):
+    code = transpilador().generate_code([NodoAsignacion(variable="x", expresion=NodoValor(1))])
+    assert "corelibs" in code
+    assert "standard_library" in code
 
 
 def test_module_map_resuelve_targets_en_cobra_toml_y_cobra_mod(tmp_path, monkeypatch):
