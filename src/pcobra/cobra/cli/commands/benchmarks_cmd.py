@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_label
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
@@ -85,14 +85,14 @@ class BenchmarksCommand(BaseCommand):
 
             if script.exists():
                 cmd = [sys.executable, str(script)]
-                for _ in range(iteraciones):
+                for _iteration in range(iteraciones):
                     out = subprocess.check_output(cmd, text=True)
                     data = json.loads(out)
                     if backend_filtro:
                         data = [d for d in data if d.get("backend") == backend_filtro]
                     results.extend(data)
             else:  # Fallback ligero cuando el script no está disponible
-                for _ in range(iteraciones):
+                for _iteration in range(iteraciones):
                     for backend in BACKENDS:
                         if backend_filtro and backend != backend_filtro:
                             continue
@@ -110,9 +110,13 @@ class BenchmarksCommand(BaseCommand):
                 salida.write_text(payload, encoding="utf-8")
             else:
                 for res in results:
+                    backend = res.get("backend", "?")
+                    backend_display = backend
+                    if backend in OFFICIAL_TARGETS:
+                        backend_display = f"{target_label(backend)} ({backend})"
                     mostrar_info(
                         _("{backend}: tiempo {time}s, memoria {mem}KB").format(
-                            backend=res.get("backend", "?"),
+                            backend=backend_display,
                             time=res.get("time", "?"),
                             mem=res.get("memory_kb", "?"),
                         )

@@ -44,5 +44,5 @@ def test_cli_compilar_varios_tipos_en_paralelo(tmp_path):
 
     lineas = [re.sub(r"\x1b\[[0-9;]*m", "", l) for l in out.getvalue().strip().splitlines()]
     texto = "\n".join(lineas)
-    assert "Código generado (TranspiladorPython) para python:" in texto
-    assert "Código generado (TranspiladorJavaScript) para js:" in texto
+    assert "Código generado (TranspiladorPython) para Python (python):" in texto
+    assert "Código generado (TranspiladorJavaScript) para JavaScript (javascript):" in texto
