@@ -12,7 +12,7 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
-INVALID_LANGUAGES = ("ruby", "typescript", "kotlin")
+INVALID_LANGUAGES = ("backend_x", "backend_y", "backend_z")
 
 
 def _build_parser_for(command):
