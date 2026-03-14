@@ -57,4 +57,7 @@ def test_transpilador_holobit():
     ast = [NodoHolobit("miHolobit", [0.8, -0.5, 1.2])]
     t = TranspiladorASM()
     resultado = t.generate_code(ast)
-    assert resultado == "HOLOBIT miHolobit [0.8, -0.5, 1.2]"
+    assert "; runtime import corelibs" in resultado
+    assert "; runtime import standard_library" in resultado
+    assert "cobra_proyectar:" in resultado
+    assert "HOLOBIT miHolobit [0.8, -0.5, 1.2]" in resultado

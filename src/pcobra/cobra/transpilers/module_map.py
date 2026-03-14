@@ -33,24 +33,42 @@ COBRA_TOML_PATH = os.environ.get(
 _cache = None
 _toml_cache = None
 
+
+def _load_toml_file(path: str) -> Dict[str, Any]:
+    if not os.path.exists(path):
+        return {}
+    with open(path, 'rb') as f:
+        return tomllib.load(f) or {}
+
 def get_map() -> Dict[str, Any]:
-    """Carga el mapa YAML de módulos soportados."""
+    """Carga el mapa de módulos soportados desde ``cobra.mod``.
+
+    Soporta formato TOML (preferido) y YAML legacy como compatibilidad.
+    """
     global _cache
     if _cache is None:
-        if yaml is None:
-            logger.debug(
-                "PyYAML no está instalado; se devuelve un mapa de módulos vacío.",
-            )
-            _cache = {}
-            return _cache
         try:
             if os.path.exists(MODULE_MAP_PATH):
-                with open(MODULE_MAP_PATH, 'r', encoding='utf-8') as f:
-                    data = yaml.safe_load(f) or {}
+                if MODULE_MAP_PATH.endswith('.toml') or MODULE_MAP_PATH.endswith('.mod'):
+                    data = _load_toml_file(MODULE_MAP_PATH)
+                elif yaml is not None:
+                    with open(MODULE_MAP_PATH, 'r', encoding='utf-8') as f:
+                        data = yaml.safe_load(f) or {}
+                else:
+                    logger.debug(
+                        "PyYAML no está instalado; se devuelve un mapa de módulos vacío.",
+                    )
+                    data = {}
             else:
                 data = {}
             _cache = data
-        except (yaml.YAMLError, OSError) as e:  # type: ignore[attr-defined]
+        except (tomllib.TOMLDecodeError, OSError) as e:
+            logger.error(f"Error al cargar el archivo de mapeo (TOML): {e}")
+            return {}
+        except Exception as e:  # pragma: no cover - compatibilidad YAML opcional
+            if yaml is not None and isinstance(e, yaml.YAMLError):  # type: ignore[attr-defined]
+                logger.error(f"Error al cargar el archivo de mapeo (YAML): {e}")
+                return {}
             logger.error(f"Error al cargar el archivo de mapeo: {e}")
             return {}
     return _cache
@@ -83,12 +101,21 @@ def get_mapped_path(module: str, backend: str) -> str:
     modulos = mapa.get("modulos", {}) if isinstance(mapa, dict) else {}
 
     if isinstance(modulos, dict) and isinstance(modulos.get(module), dict):
-        module_mapping = modulos.get(module, {})
+        module_mapping = dict(modulos.get(module, {}))
     else:
         # Compatibilidad con formatos legacy donde el módulo está en la raíz.
-        module_mapping = mapa.get(module, {}) if isinstance(mapa, dict) else {}
+        root_mapping = mapa.get(module, {}) if isinstance(mapa, dict) else {}
+        module_mapping = dict(root_mapping) if isinstance(root_mapping, dict) else {}
 
-    if not isinstance(module_mapping, dict):
+    # Fallback/merge con cobra.mod (TOML/YAML legacy).
+    mapa_mod = get_map()
+    modulos_mod = mapa_mod.get("modulos", {}) if isinstance(mapa_mod, dict) else {}
+    if isinstance(modulos_mod, dict) and isinstance(modulos_mod.get(module), dict):
+        module_mapping = {**modulos_mod.get(module, {}), **module_mapping}
+    elif isinstance(mapa_mod, dict) and isinstance(mapa_mod.get(module), dict):
+        module_mapping = {**mapa_mod.get(module, {}), **module_mapping}
+
+    if not isinstance(module_mapping, dict) or not module_mapping:
         return module
 
     for candidate in resolution_candidates(backend):

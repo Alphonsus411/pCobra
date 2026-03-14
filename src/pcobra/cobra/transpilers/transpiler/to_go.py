@@ -20,7 +20,11 @@ from pcobra.core.ast_nodes import (
     NodoGraficar,
 )
 from pcobra.cobra.core.lexer import TipoToken
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    BaseTranspiler,
+    get_runtime_hooks,
+    get_standard_imports,
+)
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
@@ -157,21 +161,26 @@ class TranspiladorGo(BaseTranspiler):
 
         codigo = "\n".join(self.codigo)
 
+        imports = set(get_standard_imports("go"))
+        imports.update(self.imports)
         if self.usa_runtime_holobit:
-            encabezado = "package main\n\nimport (\n    \"fmt\"\n)\n\n"
+            imports.add("fmt")
+
+        encabezado = "package main\n"
+        if imports:
+            encabezado += "\nimport (\n"
+            for imp in sorted(imports):
+                encabezado += f'    "{imp}"\n'
+            encabezado += ")\n\n"
+        else:
+            encabezado += "\n"
+
+        if self.usa_runtime_holobit:
             hooks = "\n".join(get_runtime_hooks("go"))
             if hooks:
                 hooks += "\n\n"
             return encabezado + hooks + codigo
 
-        encabezado = "package main\n"
-        if self.imports:
-            encabezado += "\nimport (\n"
-            for imp in sorted(self.imports):
-                encabezado += f'    "{imp}"\n'
-            encabezado += ")\n\n"
-        else:
-            encabezado += "\n"
         return encabezado + codigo
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
@@ -208,4 +217,3 @@ class TranspiladorGo(BaseTranspiler):
 # Asignar visitantes
 for nombre, funcion in go_nodes.items():
     setattr(TranspiladorGo, f"visit_{nombre}", funcion)
-

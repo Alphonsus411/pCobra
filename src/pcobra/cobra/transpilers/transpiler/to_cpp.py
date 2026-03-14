@@ -31,7 +31,11 @@ from pcobra.core.ast_nodes import (
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    BaseTranspiler,
+    get_runtime_hooks,
+    get_standard_imports,
+)
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
@@ -219,11 +223,22 @@ class TranspiladorCPP(BaseTranspiler):
         nodos = remove_dead_code(optimize_constants(nodos))
         for nodo in nodos:
             nodo.aceptar(self)
+        lineas = list(self.codigo)
+
+        imports = get_standard_imports("cpp")
+        if imports:
+            lineas = list(imports) + [""] + lineas
+
         if self.usa_runtime_holobit:
             hooks = get_runtime_hooks("cpp")
             if hooks:
-                self.codigo = ["#include <iostream>", "#include <string>", ""] + hooks + [""] + self.codigo
-        return "\n".join(self.codigo)
+                lineas = [
+                    "#include <iostream>",
+                    "#include <string>",
+                    "#include <initializer_list>",
+                    "",
+                ] + hooks + [""] + lineas
+        return "\n".join(lineas)
 
 
 # Asignar los visitantes externos a la clase

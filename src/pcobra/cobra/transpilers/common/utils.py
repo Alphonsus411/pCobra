@@ -38,7 +38,6 @@ STANDARD_IMPORTS = {
     ),
     "javascript": [
         "import * as io from './nativos/io.js';",
-        "import * as net from './nativos/red.js';",
         "import * as matematicas from './nativos/matematicas.js';",
         "import { Pila, Cola } from './nativos/estructuras.js';",
         "import * as archivo from './nativos/archivo.js';",
@@ -51,10 +50,7 @@ STANDARD_IMPORTS = {
         "import * as tiempo from './nativos/tiempo.js';",
     ],
     "rust": ["use crate::corelibs::*;", "use crate::standard_library::*;"],
-    "go": [
-        'import "cobra/corelibs"',
-        'import "cobra/standard_library"',
-    ],
+    "go": ["cobra/corelibs", "cobra/standard_library"],
     "cpp": [
         "#include <cobra/corelibs.hpp>",
         "#include <cobra/standard_library.hpp>",
