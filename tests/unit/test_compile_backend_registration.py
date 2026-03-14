@@ -10,8 +10,12 @@ class DummyTranspiler:
 def test_register_transpiler_backend_rechaza_backend_no_oficial(monkeypatch):
     monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
 
-    with pytest.raises(ValueError, match=r"Backend no permitido en tests: ruby"):
-        compile_cmd.register_transpiler_backend("ruby", DummyTranspiler, context="tests")
+    with pytest.raises(
+        ValueError, match=r"Backend no permitido en tests: backend_no_soportado"
+    ):
+        compile_cmd.register_transpiler_backend(
+            "backend_no_soportado", DummyTranspiler, context="tests"
+        )
 
 
 def test_register_transpiler_backend_normaliza_alias_y_registra(monkeypatch):
