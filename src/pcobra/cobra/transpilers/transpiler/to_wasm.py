@@ -15,7 +15,11 @@ from pcobra.cobra.core.ast_nodes import (
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    BaseTranspiler,
+    get_runtime_hooks,
+    get_standard_imports,
+)
 from pcobra.core.optimizations import optimize_constants, remove_dead_code
 from pcobra.cobra.macro import expandir_macros
 
@@ -99,6 +103,9 @@ class TranspiladorWasm(BaseTranspiler):
         self.agregar_linea(";; call runtime cobra_graficar")
 
     def transpilar(self, nodos):
+        self.codigo = list(get_standard_imports("wasm"))
+        if self.codigo:
+            self.codigo.append("")
         nodos = expandir_macros(nodos)
         # Evitamos el uso de ``inline_functions`` para no eliminar funciones
         # sencillas (como ``main``) que no tengan llamadas directas.
@@ -109,5 +116,5 @@ class TranspiladorWasm(BaseTranspiler):
         if self.usa_runtime_holobit:
             hooks = get_runtime_hooks("wasm")
             if hooks:
-                self.codigo = hooks + self.codigo
+                self.codigo = hooks + [""] + self.codigo
         return "\n".join(self.codigo)

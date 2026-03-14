@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    BaseTranspiler,
+    get_runtime_hooks,
+    get_standard_imports,
+)
 from pcobra.core.hololang_ir import (
     HololangAssignment,
     HololangCall,
@@ -52,8 +56,13 @@ class TranspiladorASM(BaseTranspiler):
             n.__class__.__name__ in {"NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"}
             for n in programa
         )
-        self._lineas = list(get_runtime_hooks("asm")) if usa_runtime_holobit else []
-        if self._lineas:
+        self._lineas = []
+        if usa_runtime_holobit:
+            self._lineas.extend(get_standard_imports("asm"))
+            if self._lineas:
+                self._lineas.append("")
+            self._lineas.extend(get_runtime_hooks("asm"))
+        if self._lineas and self._lineas[-1] != "":
             self._lineas.append("")
         self._indent = 0
         for instruccion in modulo.body:
@@ -166,4 +175,3 @@ class TranspiladorASM(BaseTranspiler):
             return
 
         raise TypeError(f"Instrucción no soportada: {type(instruccion).__name__}")
-

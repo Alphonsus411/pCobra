@@ -34,7 +34,11 @@ from pcobra.cobra.core.ast_nodes import (
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    BaseTranspiler,
+    get_runtime_hooks,
+    get_standard_imports,
+)
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
@@ -213,6 +217,9 @@ class TranspiladorRust(BaseTranspiler):
         for nodo in nodos:
             nodo.aceptar(self)
         lineas = list(self.codigo)
+        imports = get_standard_imports("rust")
+        if imports:
+            lineas = list(imports) + [""] + lineas
         if self.usa_runtime_holobit:
             hooks = get_runtime_hooks("rust")
             if hooks:

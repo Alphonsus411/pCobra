@@ -18,7 +18,11 @@ from pcobra.cobra.core.ast_nodes import (
     NodoGraficar,
 )
 from pcobra.cobra.core import TipoToken
-from pcobra.cobra.transpilers.common.utils import BaseTranspiler, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    BaseTranspiler,
+    get_runtime_hooks,
+    get_standard_imports,
+)
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
@@ -159,6 +163,7 @@ class TranspiladorJava(BaseTranspiler):
             return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
+        self.codigo = []
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
 
@@ -170,6 +175,12 @@ class TranspiladorJava(BaseTranspiler):
                 funciones.append(nodo)
             else:
                 otros.append(nodo)
+
+        imports = get_standard_imports("java")
+        for imp in imports:
+            self.agregar_linea(imp)
+        if imports:
+            self.agregar_linea("")
 
         self.agregar_linea("public class Main {")
         self.indent += 1
@@ -207,4 +218,3 @@ class TranspiladorJava(BaseTranspiler):
 # Asignar visitantes
 for nombre, funcion in java_nodes.items():
     setattr(TranspiladorJava, f"visit_{nombre}", funcion)
-
