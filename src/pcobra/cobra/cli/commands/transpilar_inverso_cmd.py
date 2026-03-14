@@ -30,8 +30,10 @@ from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.target_policies import parse_target
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
     build_target_help_by_tier,
     normalize_target_name,
     target_cli_choices,
@@ -58,7 +60,7 @@ class TranspilationError(Exception):
     pass
 REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
 ORIGIN_CHOICES = sorted(reverse_module.REVERSE_SCOPE_LANGUAGES)
-DESTINO_CHOICES = list(target_cli_choices(tuple(TRANSPILERS.keys())))
+DESTINO_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
 TARGETS_HELP = build_target_help_by_tier()
 
 
@@ -139,7 +141,7 @@ class TranspilarInversoCommand(BaseCommand):
                 targets=TARGETS_HELP
             ),
             required=True,
-            type=normalize_target_name,
+            type=parse_target,
             choices=DESTINO_CHOICES,
         )
         parser.set_defaults(cmd=self)

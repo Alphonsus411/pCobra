@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.target_policies import parse_target_list
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_cli_choices
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra
@@ -28,7 +28,8 @@ class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
-    SUPPORTED_LANGUAGES = tuple(t for t in OFFICIAL_TARGETS if t in {"python", "javascript"})
+    OFFICIAL_LANGUAGE_CHOICES = target_cli_choices(OFFICIAL_TARGETS)
+    SUPPORTED_LANGUAGES = target_cli_choices(("python", "javascript"))
     
     def __init__(self) -> None:
         """Inicializa el comando y el intérprete."""
@@ -58,7 +59,13 @@ class VerifyCommand(BaseCommand):
             "-l",
             required=True,
             type=parse_target_list,
-            help=_("Lista de lenguajes separados por comas (soportados: python, javascript)"),
+            help=_(
+                "Lista de lenguajes separados por comas. "
+                "Oficiales: {official}. Ejecutables en verificación: {runtime}"
+            ).format(
+                official=", ".join(self.OFFICIAL_LANGUAGE_CHOICES),
+                runtime=", ".join(self.SUPPORTED_LANGUAGES),
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -78,7 +85,10 @@ class VerifyCommand(BaseCommand):
         unsupported = set(languages) - set(self.SUPPORTED_LANGUAGES)
         if unsupported:
             raise ValueError(
-                _("Lenguajes no soportados: {}").format(", ".join(unsupported))
+                _("Lenguajes no soportados: {unsupported}. Soportados: {supported}").format(
+                    unsupported=", ".join(sorted(unsupported)),
+                    supported=", ".join(self.SUPPORTED_LANGUAGES),
+                )
             )
 
     def _validate_file(self, file_path: str) -> None:

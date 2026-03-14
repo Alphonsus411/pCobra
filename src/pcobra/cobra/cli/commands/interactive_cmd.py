@@ -59,10 +59,11 @@ from pcobra.cobra.cli.target_policies import (
     parse_target,
     resolve_docker_backend,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_cli_choices
 
 
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
+SANDBOX_DOCKER_CHOICES = target_cli_choices(OFFICIAL_TARGETS)
 
 
 class InteractiveCommand(BaseCommand):
@@ -112,7 +113,7 @@ class InteractiveCommand(BaseCommand):
         parser.add_argument(
             "--sandbox-docker",
             type=parse_target,
-            choices=OFFICIAL_TARGETS,
+            choices=SANDBOX_DOCKER_CHOICES,
             help=_(
                 "Target oficial para transpilación en modo interactivo. "
                 "Solo python/javascript/cpp/rust se pueden ejecutar en contenedor Docker."
