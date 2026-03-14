@@ -24,3 +24,11 @@ def test_verify_parser_normaliza_alias_js_en_lista_de_lenguajes():
     args = parser.parse_args(["verificar", "script.co", "--lenguajes", "python,js"])
 
     assert args.lenguajes == ["python", "javascript"]
+
+
+def test_parse_target_list_normaliza_alias_ensamblador_a_asm():
+    parser = _build_parser_with_command(VerifyCommand())
+
+    args = parser.parse_args(["verificar", "script.co", "--lenguajes", "python,ensamblador"])
+
+    assert args.lenguajes == ["python", "asm"]

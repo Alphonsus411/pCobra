@@ -27,7 +27,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.core.cobra_config import tiempo_max_transpilacion
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_label
 
 # Constantes
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
@@ -205,6 +205,7 @@ class BenchCommand(BaseCommand):
             Lista con resultados del benchmark
         """
         results = []
+        backend_display = f"{target_label(backend)} ({backend})" if backend in OFFICIAL_TARGETS else backend
         run_cmd = cfg["run"]
         src_file = Path(tmpdir) / f"program.{cfg['ext']}"
         
@@ -223,7 +224,7 @@ class BenchCommand(BaseCommand):
             out = subprocess.check_output(transp_cmd, env=env, text=True)
         except subprocess.CalledProcessError as e:
             mostrar_info(_("Error al compilar {backend}: {error}").format(
-                backend=backend, error=str(e)
+                backend=backend_display, error=str(e)
             ))
             return results
 
@@ -247,7 +248,7 @@ class BenchCommand(BaseCommand):
                 subprocess.run(compile_cmd, check=True, timeout=SUBPROCESS_TIMEOUT)
             except (subprocess.SubprocessError, subprocess.TimeoutExpired) as e:
                 mostrar_info(_("Error al compilar {backend}: {error}").format(
-                    backend=backend, error=str(e)
+                    backend=backend_display, error=str(e)
                 ))
                 return results
 
@@ -255,7 +256,7 @@ class BenchCommand(BaseCommand):
         cmd = [arg.format(file=src_file, tmp=tmpdir) for arg in run_cmd]
         if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
             mostrar_info(_("Ejecutable no encontrado para {backend}: {cmd}").format(
-                backend=backend, cmd=cmd[0]
+                backend=backend_display, cmd=cmd[0]
             ))
             return results
 
