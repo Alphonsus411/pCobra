@@ -31,11 +31,26 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TARGET_ALIASES
 # Rutas clave a escanear según política.
 SCAN_ROOTS = (
     "README.md",
+    "src",
+    "tests",
     "docs",
     "examples",
     "docker",
     "scripts",
+    ".github",
 )
+
+# Rutas generadas que no deben escanearse para evitar falsos positivos en artefactos.
+GENERATED_PATH_PARTS = {
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "site",
+    "build",
+    "dist",
+    "docs/_build",
+}
 
 # Extensiones típicamente no textuales o no relevantes para política de targets.
 BINARY_OR_GENERATED_SUFFIXES = {
@@ -123,6 +138,39 @@ HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
     "docs/soporte_latex.md": (
         (r"latex", "Documento de soporte del parser de LaTeX, no target de compilación."),
     ),
+    ".github/workflows/pages.yml": (
+        (r"latex", "Workflow de publicación de documentación PDF generada con LaTeX."),
+    ),
+    "src/pcobra/standard_library/__init__.py": (
+        (r"julia", "Docstring comparativo de ecosistemas numéricos; no define targets."),
+    ),
+    "src/pcobra/standard_library/logica.py": (
+        (r"kotlin", "Docstrings comparan semántica de utilidades booleanas con otras APIs."),
+    ),
+    "src/pcobra/standard_library/numero.py": (
+        (r"kotlin", "Docstring de lerp con referencia comparativa de nomenclatura."),
+    ),
+    "src/pcobra/standard_library/texto.py": (
+        (
+            r"kotlin|swift",
+            "Docstrings pedagógicos comparan helpers de cadenas con librerías conocidas.",
+        ),
+    ),
+    "src/pcobra/corelibs/__init__.py": (
+        (
+            r"kotlin|swift",
+            "Comentarios de compatibilidad nombran APIs análogas para facilitar migraciones.",
+        ),
+    ),
+    "src/pcobra/corelibs/numero.py": (
+        (r"kotlin", "Docstring de interpolación con referencia equivalente en otras plataformas."),
+    ),
+    "src/pcobra/corelibs/texto.py": (
+        (
+            r"kotlin|swift",
+            "Docstrings de utilidades de texto incluyen referencias comparativas no funcionales.",
+        ),
+    ),
 }
 
 LANGUAGE_PATTERN = re.compile(
@@ -157,9 +205,18 @@ def iter_scan_files(root: Path) -> list[Path]:
         if not path.exists():
             continue
         if path.is_file():
+            rel = path.relative_to(root).as_posix()
+            if any(part in rel for part in GENERATED_PATH_PARTS):
+                continue
             files.append(path)
             continue
-        files.extend(p for p in path.rglob("*") if p.is_file())
+        for candidate in path.rglob("*"):
+            if not candidate.is_file():
+                continue
+            rel = candidate.relative_to(root).as_posix()
+            if any(part in rel for part in GENERATED_PATH_PARTS):
+                continue
+            files.append(candidate)
     return files
 
 
