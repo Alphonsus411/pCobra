@@ -54,6 +54,13 @@ TRANSPILERS = {
 }
 
 
+def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
+    """Registra un backend validando que pertenezca al set oficial."""
+    canonical = _validate_official_backend_or_raise(backend, context=context)
+    TRANSPILERS[canonical] = transpiler_cls
+    return canonical
+
+
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     """Valida backend contra la whitelist oficial y devuelve su forma canónica."""
     canonical = normalize_target_name(backend)
@@ -92,7 +99,7 @@ for ep in eps:
             logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
             continue
         cls = getattr(import_module(module_name), class_name)
-        TRANSPILERS[normalized_ep_name] = cls
+        register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
     except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
