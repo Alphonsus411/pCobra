@@ -19,6 +19,7 @@ def test_benchmarks_command_runs(monkeypatch):
         return fake_out
 
     mensajes: list[str] = []
+    monkeypatch.setattr(bm.Path, "exists", lambda self: True)
     monkeypatch.setattr(bm.subprocess, "check_output", fake_check_output)
     monkeypatch.setattr(bm, "mostrar_info", lambda m: mensajes.append(m))
 
@@ -36,6 +37,7 @@ def test_benchmarks_command_handles_errors(monkeypatch):
         raise bm.subprocess.CalledProcessError(1, cmd)
 
     errores: list[str] = []
+    monkeypatch.setattr(bm.Path, "exists", lambda self: True)
     monkeypatch.setattr(bm.subprocess, "check_output", fake_check_output)
     monkeypatch.setattr(bm, "mostrar_error", lambda m: errores.append(m))
 

@@ -44,7 +44,7 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
         def generate_code(self, _ast):
             return "js"
 
-    monkeypatch.setattr(compile_module, "TRANSPILERS", {"python": FakePython, "js": FakeJS})
+    monkeypatch.setattr(compile_module, "TRANSPILERS", {"python": FakePython, "javascript": FakeJS})
 
     class DummyPool:
         def __init__(self, processes=None):
@@ -76,5 +76,5 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
 
     assert exit_code == 0
     salida = out.getvalue()
-    assert "Código generado (FakePython) para python:" in salida
-    assert "Código generado (FakeJS) para js:" in salida
+    assert "Código generado (FakePython) para Python (python):" in salida
+    assert "Código generado (FakeJS) para JavaScript (javascript):" in salida
