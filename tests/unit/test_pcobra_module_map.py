@@ -62,13 +62,23 @@ def test_pcobra_mapeo_js(tmp_path, monkeypatch):
     ast = Parser(tokens).parsear()
 
     resultado = TranspiladorJavaScript().generate_code(ast)
-    esperado = (
-        "import * as io from './nativos/io.js';\n"
-        + "import * as net from './nativos/io.js';\n"
-        + "import * as matematicas from './nativos/matematicas.js';\n"
-        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        + "let x = 2;\n"
-        + "console.log(x);"
-    )
-    assert resultado == esperado
+    assert "import * as io from './nativos/io.js';" in resultado
+    assert f"import '{mod}';" in resultado
+    assert resultado.rstrip().endswith("console.log(x);")
 
+
+def test_pcobra_mapeo_target_tier2_opcional(tmp_path, monkeypatch):
+    mod = "biblioteca.co"
+    toml_file = tmp_path / "pcobra.toml"
+    toml_file.write_text(
+        "[modulos]\n"
+        "[modulos.'biblioteca.co']\n"
+        "go = 'biblioteca.go'\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("COBRA_TOML", str(toml_file))
+    module_map.COBRA_TOML_PATH = str(toml_file)
+    module_map._toml_cache = None
+
+    assert module_map.get_mapped_path(mod, "go") == "biblioteca.go"

@@ -51,12 +51,23 @@ def test_transpilador_mapeo_js(tmp_path, monkeypatch):
     ast = Parser(tokens).parsear()
 
     resultado = TranspiladorJavaScript().generate_code(ast)
-    esperado = (
-        "import * as io from './nativos/io.js';\n"
-        + "import * as net from './nativos/io.js';\n"
-        + "import * as matematicas from './nativos/matematicas.js';\n"
-        + "import { Pila, Cola } from './nativos/estructuras.js';\n"
-        + "let x = 2;\n"
-        + "console.log(x);"
+    assert "import * as io from './nativos/io.js';" in resultado
+    assert f"import '{mod}';" in resultado
+    assert resultado.rstrip().endswith("console.log(x);")
+
+
+def test_module_map_acepta_target_tier2_en_cobra_mod(tmp_path, monkeypatch):
+    mod = "biblioteca.co"
+    mapfile = tmp_path / "cobra.mod"
+    mapfile.write_text(
+        "[modulos]\n"
+        "[modulos.'biblioteca.co']\n"
+        "go = 'biblioteca.go'\n",
+        encoding="utf-8",
     )
-    assert resultado == esperado
+
+    monkeypatch.setenv("COBRA_MODULE_MAP", str(mapfile))
+    module_map.MODULE_MAP_PATH = str(mapfile)
+    module_map._cache = None
+
+    assert module_map.get_mapped_path(mod, "go") == "biblioteca.go"

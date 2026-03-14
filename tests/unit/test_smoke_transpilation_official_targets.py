@@ -61,7 +61,8 @@ def test_module_map_resuelve_targets_en_cobra_toml_y_cobra_mod(tmp_path, monkeyp
     mod_file.write_text(
         "[modulos]\n"
         "[modulos.'biblioteca.co']\n"
-        "rust = 'biblioteca.rs'\n",
+        "rust = 'biblioteca.rs'\n"
+        "go = 'biblioteca.go'\n",
         encoding="utf-8",
     )
 
@@ -78,3 +79,4 @@ def test_module_map_resuelve_targets_en_cobra_toml_y_cobra_mod(tmp_path, monkeyp
     assert module_map.get_mapped_path(modulo, "python") == "biblioteca.py"
     assert module_map.get_mapped_path(modulo, "js") == "biblioteca.js"
     assert module_map.get_mapped_path(modulo, "rust") == "biblioteca.rs"
+    assert module_map.get_mapped_path(modulo, "go") == "biblioteca.go"
