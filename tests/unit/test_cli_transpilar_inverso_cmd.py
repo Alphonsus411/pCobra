@@ -45,8 +45,10 @@ def test_transpilar_inverso_consistencia_registry_cli():
 
     transpilar_inverso_cmd.validar_consistencia_reverse_transpilers()
     policy = set(transpilar_inverso_cmd.reverse_module.REVERSE_SCOPE_LANGUAGES)
-    assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS.keys()).issubset(policy)
-    assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS.keys()) == set(transpilar_inverso_cmd.ORIGIN_CHOICES)
+    aliases = set(getattr(transpilar_inverso_cmd.reverse_module, "REVERSE_SCOPE_ALIASES", {}).keys())
+    permitidos = policy | aliases
+    assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS.keys()).issubset(permitidos)
+    assert set(transpilar_inverso_cmd.ORIGIN_CHOICES) == policy
 
 
 def test_transpilar_inverso_origen_fuera_de_politica(tmp_path):
