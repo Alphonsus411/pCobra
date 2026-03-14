@@ -34,7 +34,12 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
 
 from pcobra.cobra.cli.utils.semver import es_version_valida
 from pcobra.cobra.transpilers import module_map
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+    normalize_target_name,
+)
 
 # Constantes
 MAX_FILE_SIZE = 10_000_000  # 10MB
@@ -46,7 +51,7 @@ LEGACY_TARGET_ALIASES: dict[str, str] = {
     "js": "javascript",
 }
 
-DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = ("python", "javascript")
+DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = TIER1_TARGETS
 
 # Verificar existencia del esquema y cargarlo
 if not os.path.exists(SCHEMA_PATH):
@@ -167,6 +172,17 @@ def _required_targets_from_policy() -> tuple[str, ...]:
     return tuple(normalized) if normalized else DEFAULT_REQUIRED_TARGETS
 
 
+def _warn_if_tier2_used_as_optional_mapping(modulo: str, info: dict[str, Any]) -> None:
+    """Emite trazas informativas cuando un módulo declara mappings Tier 2 opcionales."""
+    tier2_present = [target for target in TIER2_TARGETS if info.get(target)]
+    if tier2_present:
+        logger.debug(
+            "El módulo %s declara targets Tier 2 opcionales: %s",
+            modulo,
+            ", ".join(tier2_present),
+        )
+
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -204,6 +220,7 @@ def validar_mod(path: str | None = None) -> None:
             continue
 
         info_normalized = _normalize_module_targets(modulo, info)
+        _warn_if_tier2_used_as_optional_mapping(modulo, info_normalized)
 
         # Validar versión
         version = info_normalized.get("version")

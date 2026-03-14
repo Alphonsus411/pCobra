@@ -116,3 +116,54 @@ def test_validador_reporta_targets_faltantes_con_mensaje_claro(tmp_path, monkeyp
 
     with pytest.raises(ValueError, match="Faltan rutas para targets requeridos por política"):
         validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_por_defecto_exige_tier1_completo(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {},
+    )
+
+    with pytest.raises(ValueError, match="rust, javascript, wasm"):
+        validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_permite_targets_tier2_opcionales_en_mapeo(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    rs = tmp_path / "m.rs"
+    rs.write_text("fn main() {}")
+    js = tmp_path / "m.js"
+    js.write_text("let x = 1;")
+    wasm = tmp_path / "m.wasm"
+    wasm.write_text("00")
+    go = tmp_path / "m.go"
+    go.write_text("package main")
+
+    mod = tmp_path / "m.co"
+    data = {
+        str(mod): {
+            "version": "0.1.0",
+            "python": str(py),
+            "rust": str(rs),
+            "javascript": str(js),
+            "wasm": str(wasm),
+            "go": str(go),
+        },
+    }
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {},
+    )
+
+    validar_mod(str(tmp_path / "cobra.mod"))
