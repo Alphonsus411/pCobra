@@ -1,3 +1,9 @@
+"""Benchmark script.
+
+La política de targets se hereda de ``src/pcobra/cobra/transpilers/targets.py``
+a través de ``scripts/benchmarks/targets_policy.py``.
+"""
+
 import json
 import os
 import re
@@ -6,13 +12,17 @@ import subprocess
 import sys
 import tempfile
 import time
-import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS, normalize_target_name
+from scripts.benchmarks.targets_policy import (
+    benchmark_backends,
+    validate_backend_metadata,
+    validate_local_targets_policy,
+)
 
 try:
     import resource
@@ -66,41 +76,6 @@ BACKEND_METADATA = {
         "run": ["{tmp}/prog_asm"],
     },
 }
-
-
-def validate_local_targets_policy(repo_root: Path) -> None:
-    """Valida que cobra.toml local no declare backends fuera de política oficial."""
-    config_path = repo_root / "cobra.toml"
-    if not config_path.exists():
-        return
-
-    config = tomllib.loads(config_path.read_text(encoding="utf-8"))
-    project_cfg = config.get("project", {})
-    raw_targets = project_cfg.get("required_targets", project_cfg.get("targets_requeridos"))
-    if not raw_targets:
-        return
-
-    if not isinstance(raw_targets, list):
-        raise RuntimeError(
-            "Config local inválida: [project].required_targets debe ser una lista de backends oficiales."
-        )
-
-    unsupported = []
-    for target in raw_targets:
-        canonical = normalize_target_name(str(target))
-        if canonical not in OFFICIAL_TARGETS:
-            unsupported.append(str(target))
-    if unsupported:
-        raise RuntimeError(
-            "Config local inválida: backends no oficiales en [project].required_targets: "
-            f"{', '.join(unsupported)}. Oficiales: {', '.join(OFFICIAL_TARGETS)}"
-        )
-
-
-def benchmark_backends() -> tuple[str, ...]:
-    """Backends del benchmark derivados de la política oficial por tier."""
-    return tuple(target for target in (*TIER1_TARGETS, *TIER2_TARGETS) if target in BACKEND_METADATA)
-
 
 def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.
@@ -156,6 +131,7 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
 
 def main() -> None:
     repo_root = REPO_ROOT
+    validate_backend_metadata(BACKEND_METADATA, context="run_benchmarks")
     validate_local_targets_policy(repo_root)
 
     env = os.environ.copy()
@@ -168,7 +144,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         co_file = Path(tmpdir) / "program.co"
         co_file.write_text(CODE)
-        for backend in benchmark_backends():
+        for backend in benchmark_backends(BACKEND_METADATA):
             cfg = BACKEND_METADATA[backend]
             run_cmd = cfg["run"]
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
