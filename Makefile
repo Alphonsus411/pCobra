@@ -65,10 +65,10 @@ check: lint test typecheck
 
 docker:
 	docker build -t cobra -f docker/Dockerfile .
-	docker build -t cobra-cpp -f docker/cpp.Dockerfile .
-	docker build -t cobra-js -f docker/js.Dockerfile .
-	docker build -t cobra-python -f docker/python.Dockerfile .
-	docker build -t cobra-rust -f docker/rust.Dockerfile .
+	docker build -t cobra-cpp -f docker/backends/cpp.Dockerfile .
+	docker build -t cobra-js -f docker/backends/js.Dockerfile .
+	docker build -t cobra-python -f docker/backends/python.Dockerfile .
+	docker build -t cobra-rust -f docker/backends/rust.Dockerfile .
 
 deps-sync:
 	bash scripts/sync_requirements.sh
