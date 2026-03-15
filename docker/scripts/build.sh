@@ -1,14 +1,32 @@
 #!/bin/sh
 
-# Build principal Cobra
+set -eu
+
+# Imágenes Docker soportadas para ejecución/sandbox
+IMAGENES="cobra cobra-cpp cobra-js cobra-python cobra-rust"
+
+# Build principal Cobra CLI
+
+echo "[1/5] Construyendo cobra (docker/Dockerfile)"
 docker build -t cobra -f docker/Dockerfile .
 
-# Build por lenguaje (transpilers)
-docker build -t cobra-cpp -f docker/cpp.Dockerfile .
-docker build -t cobra-js -f docker/js.Dockerfile .
-docker build -t cobra-python -f docker/python.Dockerfile .
-docker build -t cobra-rust -f docker/rust.Dockerfile .
+# Build por backend soportado en contenedor
 
-echo "✅ Imágenes construidas:"
-docker images | grep cobra
+echo "[2/5] Construyendo cobra-cpp (docker/backends/cpp.Dockerfile)"
+docker build -t cobra-cpp -f docker/backends/cpp.Dockerfile .
 
+echo "[3/5] Construyendo cobra-js (docker/backends/js.Dockerfile)"
+docker build -t cobra-js -f docker/backends/js.Dockerfile .
+
+echo "[4/5] Construyendo cobra-python (docker/backends/python.Dockerfile)"
+docker build -t cobra-python -f docker/backends/python.Dockerfile .
+
+echo "[5/5] Construyendo cobra-rust (docker/backends/rust.Dockerfile)"
+docker build -t cobra-rust -f docker/backends/rust.Dockerfile .
+
+echo "✅ Imágenes Docker construidas (ejecución en contenedor):"
+for img in $IMAGENES; do
+    docker image ls "$img"
+done
+
+echo "ℹ️ Política actual: wasm/asm y el resto de Tier 2 (go/java) se soportan como targets de transpilación, no como runtimes Docker."
