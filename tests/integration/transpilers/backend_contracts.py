@@ -67,7 +67,7 @@ STRICT_FULL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "holobit": (
             "from corelibs import *",
             "from standard_library import *",
-            "hb = holobit([1, 2, 3])",
+            "hb = cobra_holobit([1, 2, 3])",
         ),
         "proyectar": ("proyectar(hb, '2d')",),
         "transformar": ("transformar(hb, 'rotar', 90)",),
@@ -79,7 +79,7 @@ STRICT_FULL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "holobit": (
             "import * as io from './nativos/io.js';",
             "import * as texto from './nativos/texto.js';",
-            "let hb = new Holobit([1, 2, 3]);",
+            "let hb = cobra_holobit([1, 2, 3]);",
         ),
         "proyectar": ("proyectar(hb, 2d);",),
         "transformar": ("transformar(hb, rotar, 90);",),
@@ -93,7 +93,7 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "standard_library": ("mostrar(hola);",),
     },
     "rust": {
-        "holobit": ("let hb = holobit(vec![1, 2, 3]);",),
+        "holobit": ("let hb = cobra_holobit(vec![1, 2, 3]);",),
         "proyectar": ("fn cobra_proyectar", "cobra_proyectar(&format!(\"{}\", hb), &format!(\"{}\", 2d));"),
         "transformar": (
             "fn cobra_transformar",
@@ -104,15 +104,15 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "standard_library": ("mostrar(hola);",),
     },
     "wasm": {
-        "holobit": (";; holobit hb [1, 2, 3]",),
-        "proyectar": (";; runtime hook cobra_proyectar", ";; call runtime cobra_proyectar"),
-        "transformar": (";; runtime hook cobra_transformar", ";; call runtime cobra_transformar"),
-        "graficar": (";; runtime hook cobra_graficar", ";; call runtime cobra_graficar"),
-        "corelibs": (";; call longitud (i32.const cobra)",),
-        "standard_library": (";; call mostrar (i32.const hola)",),
+        "holobit": ("(drop (call $cobra_holobit (i32.const 1)))",),
+        "proyectar": ("(func $cobra_proyectar", "(call $cobra_proyectar (local.get $hb) (i32.const 2d))"),
+        "transformar": ("(func $cobra_transformar", "(call $cobra_transformar (local.get $hb) (i32.const rotar))"),
+        "graficar": ("(func $cobra_graficar", "(call $cobra_graficar (local.get $hb))"),
+        "corelibs": ("(call $longitud (i32.const cobra))",),
+        "standard_library": ("(call $mostrar (i32.const hola))",),
     },
     "go": {
-        "holobit": ("hb := []float64{1, 2, 3}",),
+        "holobit": ("hb := cobraHolobit([]float64{1, 2, 3})",),
         "proyectar": ("func cobraProyectar", 'cobraProyectar(hb, "2d")'),
         "transformar": ("func cobraTransformar", 'cobraTransformar(hb, "rotar", 90)'),
         "graficar": ("func cobraGraficar", "cobraGraficar(hb)"),
@@ -120,7 +120,7 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "standard_library": ('mostrar("hola")',),
     },
     "cpp": {
-        "holobit": ("auto hb = holobit({ 1, 2, 3 });",),
+        "holobit": ("auto hb = cobra_holobit({ 1, 2, 3 });",),
         "proyectar": ("inline void cobra_proyectar", "cobra_proyectar(hb, 2d);"),
         "transformar": ("inline void cobra_transformar", "cobra_transformar(hb, rotar, {});"),
         "graficar": ("inline void cobra_graficar", "cobra_graficar(hb);"),
@@ -128,7 +128,7 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "standard_library": ("mostrar(hola);",),
     },
     "java": {
-        "holobit": ("double[] hb = new double[]{1, 2, 3};",),
+        "holobit": ("Object hb = cobraHolobit(new double[]{1, 2, 3});",),
         "proyectar": ("private static void cobraProyectar", 'cobraProyectar(hb, "2d")'),
         "transformar": ("private static void cobraTransformar", 'cobraTransformar(hb, "rotar", 90)'),
         "graficar": ("private static void cobraGraficar", "cobraGraficar(hb);"),
@@ -150,9 +150,9 @@ RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
     "javascript": ("function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
     "rust": ("fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
     "wasm": (
-        ";; runtime hook cobra_proyectar",
-        ";; runtime hook cobra_transformar",
-        ";; runtime hook cobra_graficar",
+        "(func $cobra_proyectar",
+        "(func $cobra_transformar",
+        "(func $cobra_graficar",
     ),
     "go": ("func cobraProyectar", "func cobraTransformar", "func cobraGraficar"),
     "cpp": ("inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
@@ -161,7 +161,7 @@ RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
         "private static void cobraTransformar",
         "private static void cobraGraficar",
     ),
-    "asm": ("; hook cobra_proyectar", "; hook cobra_transformar", "; hook cobra_graficar"),
+    "asm": ("cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
 }
 
 

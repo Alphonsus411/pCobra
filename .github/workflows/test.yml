@@ -91,7 +91,8 @@ jobs:
         shell: bash
         run: |
           pytest tests/integration/transpilers/test_official_backends_tier1.py \
-            tests/integration/transpilers/test_official_backends_tier2.py
+            tests/integration/transpilers/test_official_backends_tier2.py \
+            tests/integration/transpilers/test_official_backends_contracts.py
 
           paths=()
           if [ -d tests ]; then
@@ -112,7 +113,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_tier2.py
+          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_tier2.py tests/integration/transpilers/test_official_backends_contracts.py
 
           $paths = @()
           if (Test-Path tests) {

@@ -1,0 +1,41 @@
+import * as io from './nativos/io.js';
+import * as matematicas from './nativos/matematicas.js';
+import { Pila, Cola } from './nativos/estructuras.js';
+import * as archivo from './nativos/archivo.js';
+import * as coleccion from './nativos/coleccion.js';
+import * as numero from './nativos/numero.js';
+import * as red from './nativos/red.js';
+import * as seguridad from './nativos/seguridad.js';
+import * as sistema from './nativos/sistema.js';
+import * as texto from './nativos/texto.js';
+import * as tiempo from './nativos/tiempo.js';
+function cobra_holobit(valores) {
+    if (typeof holobit === 'function') {
+        return holobit(valores);
+    }
+    throw new Error('Runtime hook holobit no disponible en JavaScript');
+}
+function cobra_proyectar(hb, modo) {
+    if (hb && typeof hb.proyectar === 'function') {
+        return hb.proyectar(modo);
+    }
+    throw new Error('Runtime hook proyectar no disponible en JavaScript');
+}
+function cobra_transformar(hb, op, ...params) {
+    if (hb && typeof hb.transformar === 'function') {
+        return hb.transformar(op, ...params);
+    }
+    throw new Error('Runtime hook transformar no disponible en JavaScript');
+}
+function cobra_graficar(hb) {
+    if (hb && typeof hb.graficar === 'function') {
+        return hb.graficar();
+    }
+    throw new Error('Runtime hook graficar no disponible en JavaScript');
+}
+let hb = cobra_holobit([1, 2, 3]);
+cobra_proyectar(hb, 2d);
+cobra_transformar(hb, rotar, 90);
+cobra_graficar(hb);
+longitud(cobra);
+mostrar(hola);

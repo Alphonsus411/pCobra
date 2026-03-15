@@ -1,0 +1,29 @@
+package main
+
+import (
+    "cobra/corelibs"
+    "cobra/standard_library"
+    "fmt"
+)
+
+func cobraHolobit(valores []float64) []float64 {
+    panic("runtime hook holobit no disponible en Go")
+}
+func cobraProyectar(hb any, modo any) {
+    panic(fmt.Sprintf("runtime hook proyectar no disponible en Go: %v %v", hb, modo))
+}
+func cobraTransformar(hb any, op any, params ...any) {
+    panic(fmt.Sprintf("runtime hook transformar no disponible en Go: %v %v %v", hb, op, params))
+}
+func cobraGraficar(hb any) {
+    panic(fmt.Sprintf("runtime hook graficar no disponible en Go: %v", hb))
+}
+
+func main() {
+    hb := cobraHolobit([]float64{1, 2, 3})
+    cobraProyectar(hb, "2d")
+    cobraTransformar(hb, "rotar", 90)
+    cobraGraficar(hb)
+    longitud("cobra")
+    mostrar("hola")
+}
