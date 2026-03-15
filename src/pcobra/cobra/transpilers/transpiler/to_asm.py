@@ -53,9 +53,14 @@ class TranspiladorASM(BaseTranspiler):
 
         modulo = self._asegurar_modulo(programa)
         usa_runtime_holobit = isinstance(programa, list) and any(
-            n.__class__.__name__ in {"NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"}
-            for n in programa
+            n.__class__.__name__ == "NodoHolobit" for n in programa
         )
+        if isinstance(programa, list):
+            for nodo in programa:
+                if nodo.__class__.__name__ in {"NodoProyectar", "NodoTransformar", "NodoGraficar"}:
+                    raise NotImplementedError(
+                        f"ASM no soporta '{nodo.__class__.__name__[4:].lower()}' de forma nativa"
+                    )
         self._lineas = []
         if usa_runtime_holobit:
             self._lineas.extend(get_standard_imports("asm"))

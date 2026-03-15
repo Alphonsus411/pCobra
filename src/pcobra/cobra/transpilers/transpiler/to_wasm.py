@@ -80,29 +80,42 @@ class TranspiladorWasm(BaseTranspiler):
         else:
             self.agregar_linea("(return)")
 
+    def _obtener_i32(self, nodo, contexto: str) -> str:
+        valor = self.obtener_valor(nodo)
+        if isinstance(valor, str) and valor.startswith("(") and valor.endswith(")"):
+            return valor
+        raise NotImplementedError(
+            f"{contexto}: no se pudo bajar a i32 en wasm para nodo={type(nodo).__name__}"
+        )
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
-        self.agregar_linea(f";; call {nodo.nombre} {args}")
+        args = " ".join(self._obtener_i32(a, "llamada_funcion") for a in nodo.argumentos)
+        sufijo = f" {args}" if args else ""
+        self.agregar_linea(f"(call ${nodo.nombre}{sufijo})")
 
     def visit_holobit(self, nodo: NodoHolobit):
-        nombre = nodo.nombre or "hb"
-        valores = ", ".join(str(v) for v in nodo.valores or [])
         self.usa_runtime_holobit = True
-        self.agregar_linea(f";; holobit {nombre} [{valores}]")
-        self.agregar_linea(";; call runtime cobra_holobit")
+        primer_valor = nodo.valores[0] if nodo.valores else 0
+        self.agregar_linea(
+            f"(drop (call $cobra_holobit {self._obtener_i32(primer_valor, 'holobit')}))"
+        )
 
     def visit_proyectar(self, nodo: NodoProyectar):
         self.usa_runtime_holobit = True
-        self.agregar_linea(";; call runtime cobra_proyectar")
+        hb = self._obtener_i32(nodo.holobit, "proyectar.holobit")
+        modo = self._obtener_i32(nodo.modo, "proyectar.modo")
+        self.agregar_linea(f"(call $cobra_proyectar {hb} {modo})")
 
     def visit_transformar(self, nodo: NodoTransformar):
         self.usa_runtime_holobit = True
-        self.agregar_linea(";; call runtime cobra_transformar")
+        hb = self._obtener_i32(nodo.holobit, "transformar.holobit")
+        op = self._obtener_i32(nodo.operacion, "transformar.operacion")
+        self.agregar_linea(f"(call $cobra_transformar {hb} {op})")
 
     def visit_graficar(self, nodo: NodoGraficar):
         self.usa_runtime_holobit = True
-        self.agregar_linea(";; call runtime cobra_graficar")
+        hb = self._obtener_i32(nodo.holobit, "graficar.holobit")
+        self.agregar_linea(f"(call $cobra_graficar {hb})")
 
     def transpilar(self, nodos):
         self.codigo = list(get_standard_imports("wasm"))
