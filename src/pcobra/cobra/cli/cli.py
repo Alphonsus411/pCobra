@@ -43,6 +43,10 @@ from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.plugin import descubrir_plugins
 from pcobra.cobra.cli.utils import messages
 from pcobra.cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.target_policies import (
+    legacy_aliases_flag_help,
+    set_legacy_target_aliases_enabled,
+)
 from pcobra.cobra.cli.utils.autocomplete import (
     autocomplete_available,
     directories_completer,
@@ -202,6 +206,11 @@ class CliApplication:
         parser.add_argument("--extra-validators",
                           help=_("Path to custom validators module"),
                           type=Path)
+        parser.add_argument(
+            "--allow-legacy-target-aliases",
+            action="store_true",
+            help=legacy_aliases_flag_help(),
+        )
 
     def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
         """Configura autocompletado para argumentos comunes.
@@ -262,6 +271,7 @@ class CliApplication:
                 "Autocompletado deshabilitado: argcomplete no está instalado.",
             )
 
+        set_legacy_target_aliases_enabled("--allow-legacy-target-aliases" in argv)
         return self.parser.parse_args(argv)
 
     def _handle_execution_error(self, exc: Exception, language: str) -> int:
