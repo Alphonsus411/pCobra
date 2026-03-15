@@ -56,6 +56,24 @@ Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 | ASM | Tier 2 | 🟡 Parcial (IR simbólico) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (`CALL` runtime) | 🟡 Parcial (`CALL` runtime) |
 
 
+
+### Matriz contractual para `tests/integration/test_holobit_tiers.py`
+
+Para mantener trazabilidad del contrato Holobit SDK/runtime, la suite `test_holobit_tiers.py` valida estas primitivas:
+- `holobit`
+- `proyectar`
+- `transformar`
+- `graficar`
+- `escalar`
+- `mover`
+
+Regla de validación por backend:
+- Si la matriz marca `full`, se aplican asserts estrictos de símbolos/imports/hooks definidos en `STRICT_FULL_EXPECTATIONS`.
+- Si la matriz marca `partial`, se exige fallback explícito (`PARTIAL_EXPECTATIONS`) y generación no vacía.
+
+Nota de mapeo:
+- `escalar` y `mover` se verifican usando el mismo nivel contractual de `transformar` (compatibilidad incremental basada en hooks de transformación).
+
 ### Estado de integración de suite oficial (CI)
 - [x] Suite dedicada para los 8 backends oficiales ubicada en `tests/integration/transpilers/`.
 - [x] Casos separados por tier (`test_official_backends_tier1.py` y `test_official_backends_tier2.py`).
