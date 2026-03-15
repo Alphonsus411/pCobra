@@ -77,9 +77,20 @@ Nota de mapeo:
 ### Estado de integración de suite oficial (CI)
 - [x] Suite dedicada para los 8 backends oficiales ubicada en `tests/integration/transpilers/`.
 - [x] Casos separados por tier (`test_official_backends_tier1.py` y `test_official_backends_tier2.py`).
+- [x] Suite contractual consolidada (`test_official_backends_contracts.py`) con validaciones por feature (`holobit`, `proyectar`, `transformar`, `graficar`, `corelibs`, `standard_library`) para los 8 targets oficiales.
+- [x] Snapshots/golden files por backend en `tests/integration/transpilers/golden/` para detectar regresiones de codegen.
 - [x] Criterio **full** aplicado con asserts estrictos de símbolos/hooks/imports esperados.
 - [x] Criterio **partial** aplicado con asserts de fallback explícito y no-rotura de generación.
-- [x] Validación en CI al ejecutarse `pytest tests` dentro de los workflows (`test.yml`/`ci.yml`).
+- [x] Validación en CI al ejecutarse `pytest tests` dentro de los workflows (`test.yml`/`ci.yml`) y ejecución explícita de la suite contractual en `test.yml`.
+
+#### Resultados reales (última corrida local de la suite contractual)
+
+- Comando ejecutado: `pytest tests/integration/transpilers/test_official_backends_contracts.py -q`.
+- Resultado: **25 pruebas aprobadas**, **1 omitida** (ejecución JavaScript omitida si falta dependencia externa `node-fetch`), **0 fallos**.
+- Evidencia funcional incluida en la suite:
+  - Transpilación validada para `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+  - Verificación de imports y hooks runtime esperados por backend.
+  - Verificación de ejecución en entorno local para Python; JavaScript se ejecuta cuando Node + dependencias runtime están presentes.
 
 ### Cobertura de regresión asociada
 

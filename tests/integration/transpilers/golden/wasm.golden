@@ -1,0 +1,22 @@
+(func $cobra_holobit (param $hb i32) (result i32)
+  unreachable
+  i32.const 0
+)
+(func $cobra_proyectar (param $hb i32) (param $modo i32)
+  unreachable
+)
+(func $cobra_transformar (param $hb i32) (param $op i32)
+  unreachable
+)
+(func $cobra_graficar (param $hb i32)
+  unreachable
+)
+
+;; backend wasm: imports de runtime administrados externamente
+
+(drop (call $cobra_holobit (i32.const 1)))
+(call $cobra_proyectar (local.get $hb) (i32.const 2d))
+(call $cobra_transformar (local.get $hb) (i32.const rotar))
+(call $cobra_graficar (local.get $hb))
+(call $longitud (i32.const cobra))
+(call $mostrar (i32.const hola))
