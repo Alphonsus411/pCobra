@@ -1,3 +1,9 @@
+"""Benchmark script.
+
+La política de targets se hereda de ``src/pcobra/cobra/transpilers/targets.py``
+a través de ``scripts/benchmarks/targets_policy.py``.
+"""
+
 import argparse
 import json
 import subprocess
