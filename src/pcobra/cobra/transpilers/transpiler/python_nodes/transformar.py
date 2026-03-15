@@ -3,4 +3,4 @@ def visit_transformar(self, nodo):
     op = self.obtener_valor(nodo.operacion)
     params = ", ".join(self.obtener_valor(p) for p in nodo.parametros)
     argumentos = f"{hb}, {op}" + (", " + params if params else "")
-    self.codigo += f"{self.obtener_indentacion()}transformar({argumentos})\n"
+    self.codigo += f"{self.obtener_indentacion()}cobra_transformar({argumentos})\n"

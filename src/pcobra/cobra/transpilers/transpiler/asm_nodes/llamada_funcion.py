@@ -1,3 +1,4 @@
 def visit_llamada_funcion(self, nodo):
-    # Por ahora se ignoran los argumentos y se realiza una llamada directa
-    self.agregar_linea(f"call {nodo.nombre}")
+    args = " ".join(self.obtener_valor(arg) for arg in getattr(nodo, "argumentos", []))
+    sufijo = f" {args}" if args else ""
+    self.agregar_linea(f"CALL {nodo.nombre}{sufijo}")

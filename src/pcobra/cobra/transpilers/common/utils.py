@@ -60,12 +60,10 @@ STANDARD_IMPORTS = {
         "import cobra.standard_library.*;",
     ],
     "wasm": [
-        ";; runtime import: corelibs",
-        ";; runtime import: standard_library",
+        ";; backend wasm: imports de runtime administrados externamente",
     ],
     "asm": [
-        "; runtime import corelibs",
-        "; runtime import standard_library",
+        "; backend asm: imports de runtime administrados externamente",
     ],
 }
 
@@ -75,143 +73,147 @@ RUNTIME_HOOKS = {
         "def cobra_holobit(valores):",
         "    if 'holobit' in globals() and callable(globals()['holobit']):",
         "        return holobit(valores)",
-        "    return list(valores)",
+        "    raise NotImplementedError('Runtime hook holobit no disponible en Python')",
         "",
         "def cobra_proyectar(hb, modo):",
         "    if 'proyectar' in globals() and callable(globals()['proyectar']):",
         "        return proyectar(hb, modo)",
         "    if hasattr(hb, 'proyectar') and callable(getattr(hb, 'proyectar')):",
         "        return hb.proyectar(modo)",
-        "    print('[cobra::proyectar]', hb, modo)",
-        "    return hb",
+        "    raise NotImplementedError('Runtime hook proyectar no disponible en Python')",
         "",
         "def cobra_transformar(hb, op, *params):",
         "    if 'transformar' in globals() and callable(globals()['transformar']):",
         "        return transformar(hb, op, *params)",
         "    if hasattr(hb, 'transformar') and callable(getattr(hb, 'transformar')):",
         "        return hb.transformar(op, *params)",
-        "    print('[cobra::transformar]', hb, op, params)",
-        "    return hb",
+        "    raise NotImplementedError('Runtime hook transformar no disponible en Python')",
         "",
         "def cobra_graficar(hb):",
         "    if 'graficar' in globals() and callable(globals()['graficar']):",
         "        return graficar(hb)",
         "    if hasattr(hb, 'graficar') and callable(getattr(hb, 'graficar')):",
         "        return hb.graficar()",
-        "    print('[cobra::graficar]', hb)",
-        "    return hb",
+        "    raise NotImplementedError('Runtime hook graficar no disponible en Python')",
     ],
     "javascript": [
         "function cobra_holobit(valores) {",
         "    if (typeof holobit === 'function') {",
         "        return holobit(valores);",
         "    }",
-        "    return Array.isArray(valores) ? valores : [];",
+        "    throw new Error('Runtime hook holobit no disponible en JavaScript');",
         "}",
         "function cobra_proyectar(hb, modo) {",
         "    if (hb && typeof hb.proyectar === 'function') {",
         "        return hb.proyectar(modo);",
         "    }",
-        "    console.log('[cobra::proyectar]', hb, modo);",
+        "    throw new Error('Runtime hook proyectar no disponible en JavaScript');",
         "}",
         "function cobra_transformar(hb, op, ...params) {",
         "    if (hb && typeof hb.transformar === 'function') {",
         "        return hb.transformar(op, ...params);",
         "    }",
-        "    console.log('[cobra::transformar]', hb, op, params);",
+        "    throw new Error('Runtime hook transformar no disponible en JavaScript');",
         "}",
         "function cobra_graficar(hb) {",
         "    if (hb && typeof hb.graficar === 'function') {",
         "        return hb.graficar();",
         "    }",
-        "    console.log('[cobra::graficar]', hb);",
+        "    throw new Error('Runtime hook graficar no disponible en JavaScript');",
         "}",
     ],
     "rust": [
-        "fn cobra_holobit(valores: Vec<f64>) -> Vec<f64> {",
-        "    valores",
+        "fn cobra_holobit(_valores: Vec<f64>) -> Vec<f64> {",
+        "    panic!(\"Runtime hook holobit no disponible en Rust\")",
         "}",
         "fn cobra_proyectar(hb: &str, modo: &str) {",
-        "    println!(\"[cobra::proyectar] {} {}\", hb, modo);",
+        "    panic!(\"Runtime hook proyectar no disponible en Rust: {} {}\", hb, modo);",
         "}",
         "fn cobra_transformar(hb: &str, op: &str, params: &[&str]) {",
-        "    println!(\"[cobra::transformar] {} {} {:?}\", hb, op, params);",
+        "    panic!(\"Runtime hook transformar no disponible en Rust: {} {} {:?}\", hb, op, params);",
         "}",
         "fn cobra_graficar(hb: &str) {",
-        "    println!(\"[cobra::graficar] {}\", hb);",
+        "    panic!(\"Runtime hook graficar no disponible en Rust: {}\", hb);",
         "}",
     ],
     "go": [
         "func cobraHolobit(valores []float64) []float64 {",
-        "    return valores",
+        "    panic(\"runtime hook holobit no disponible en Go\")",
         "}",
         "func cobraProyectar(hb any, modo any) {",
-        '    fmt.Printf("[cobra::proyectar] %v %v\\n", hb, modo)',
+        '    panic(fmt.Sprintf("runtime hook proyectar no disponible en Go: %v %v", hb, modo))',
         "}",
         "func cobraTransformar(hb any, op any, params ...any) {",
-        '    fmt.Printf("[cobra::transformar] %v %v %v\\n", hb, op, params)',
+        '    panic(fmt.Sprintf("runtime hook transformar no disponible en Go: %v %v %v", hb, op, params))',
         "}",
         "func cobraGraficar(hb any) {",
-        '    fmt.Printf("[cobra::graficar] %v\\n", hb)',
+        '    panic(fmt.Sprintf("runtime hook graficar no disponible en Go: %v", hb))',
         "}",
     ],
     "cpp": [
         "inline auto cobra_holobit(const auto& valores) {",
-        "    return valores;",
+        "    throw std::runtime_error(\"runtime hook holobit no disponible en C++\");",
         "}",
         "inline void cobra_proyectar(const auto& hb, const auto& modo) {",
-        "    std::cout << \"[cobra::proyectar] \" << hb << \" \" << modo << std::endl;",
+        "    throw std::runtime_error(\"runtime hook proyectar no disponible en C++\");",
         "}",
         "inline void cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {",
-        "    std::cout << \"[cobra::transformar] \" << hb << \" \" << op << std::endl;",
+        "    throw std::runtime_error(\"runtime hook transformar no disponible en C++\");",
         "}",
         "inline void cobra_graficar(const auto& hb) {",
-        "    std::cout << \"[cobra::graficar] \" << hb << std::endl;",
+        "    throw std::runtime_error(\"runtime hook graficar no disponible en C++\");",
         "}",
     ],
     "java": [
         "private static Object cobraHolobit(Object valores) {",
-        "    return valores;",
+        "    throw new UnsupportedOperationException(\"runtime hook holobit no disponible en Java\");",
         "}",
         "private static void cobraProyectar(Object hb, Object modo) {",
-        "    System.out.println(\"[cobra::proyectar] \" + hb + \" \" + modo);",
+        "    throw new UnsupportedOperationException(\"runtime hook proyectar no disponible en Java\");",
         "}",
         "private static void cobraTransformar(Object hb, Object op, Object... params) {",
-        "    System.out.println(\"[cobra::transformar] \" + hb + \" \" + op);",
+        "    throw new UnsupportedOperationException(\"runtime hook transformar no disponible en Java\");",
         "}",
         "private static void cobraGraficar(Object hb) {",
-        "    System.out.println(\"[cobra::graficar] \" + hb);",
+        "    throw new UnsupportedOperationException(\"runtime hook graficar no disponible en Java\");",
         "}",
     ],
     "wasm": [
         "(func $cobra_holobit (param $hb i32) (result i32)",
-        "  local.get $hb",
+        "  unreachable",
+        "  i32.const 0",
         ")",
         "(func $cobra_proyectar (param $hb i32) (param $modo i32)",
-        "  nop",
+        "  unreachable",
         ")",
         "(func $cobra_transformar (param $hb i32) (param $op i32)",
-        "  nop",
+        "  unreachable",
         ")",
         "(func $cobra_graficar (param $hb i32)",
-        "  nop",
+        "  unreachable",
         ")",
     ],
     "asm": [
         "cobra_holobit:",
-        "    ret",
+        "    ; ERROR: runtime hook no implementado",
+        "    ud2",
         "cobra_proyectar:",
-        "    ret",
+        "    ; ERROR: runtime hook no implementado",
+        "    ud2",
         "cobra_transformar:",
-        "    ret",
+        "    ; ERROR: runtime hook no implementado",
+        "    ud2",
         "cobra_graficar:",
-        "    ret",
+        "    ; ERROR: runtime hook no implementado",
+        "    ud2",
     ],
 }
 
 for _target in OFFICIAL_TARGETS:
-    STANDARD_IMPORTS.setdefault(_target, [])
-    RUNTIME_HOOKS.setdefault(_target, [])
+    if _target not in STANDARD_IMPORTS:
+        raise RuntimeError(f"STANDARD_IMPORTS no define entradas para target '{_target}'")
+    if _target not in RUNTIME_HOOKS:
+        raise RuntimeError(f"RUNTIME_HOOKS no define entradas para target '{_target}'")
 
 
 def save_file(content: Union[str, List[str]], path: str) -> None:
@@ -223,7 +225,10 @@ def save_file(content: Union[str, List[str]], path: str) -> None:
 
 def get_standard_imports(language: str) -> Union[str, List[str]]:
     """Devuelve las importaciones por defecto para *language*."""
-    imports = STANDARD_IMPORTS.get(normalize_target_name(language), [])
+    target = normalize_target_name(language)
+    if target not in STANDARD_IMPORTS:
+        raise ValueError(f"Target sin STANDARD_IMPORTS configurado: {language}")
+    imports = STANDARD_IMPORTS[target]
     if isinstance(imports, list):
         return list(imports)
     return imports
@@ -231,7 +236,10 @@ def get_standard_imports(language: str) -> Union[str, List[str]]:
 
 def get_runtime_hooks(language: str) -> List[str]:
     """Devuelve hooks auxiliares de runtime para *language*."""
-    return list(RUNTIME_HOOKS.get(normalize_target_name(language), []))
+    target = normalize_target_name(language)
+    if target not in RUNTIME_HOOKS:
+        raise ValueError(f"Target sin RUNTIME_HOOKS configurado: {language}")
+    return list(RUNTIME_HOOKS[target])
 
 
 def load_mapped_module(path: str, language: str) -> Tuple[str, str]:

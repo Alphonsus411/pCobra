@@ -83,9 +83,9 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     "asm": {
         "tier": "tier2",
         "holobit": "partial",
-        "proyectar": "partial",
-        "transformar": "partial",
-        "graficar": "partial",
+        "proyectar": "none",
+        "transformar": "none",
+        "graficar": "none",
         "corelibs": "partial",
         "standard_library": "partial",
     },
@@ -95,7 +95,7 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
-        "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas directas a primitivas Holobit.",
+        "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas a hooks `cobra_*` con firmas consistentes para primitivas Holobit.",
     },
     "javascript": {
         "contract": "mixed",
@@ -107,7 +107,7 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "wasm": {
         "contract": "partial",
-        "evidence": "Fallback explícito por comentarios/hooks de runtime (`;; runtime hook` / `;; call runtime`).",
+        "evidence": "Llamadas WAT explícitas a hooks `cobra_*`; cuando el runtime no está implementado, los hooks ejecutan `unreachable` (error explícito, sin no-op).",
     },
     "go": {
         "contract": "partial",
@@ -122,8 +122,8 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
         "evidence": "Hooks estáticos `cobra*` para primitivas y passthrough de runtime base.",
     },
     "asm": {
-        "contract": "partial",
-        "evidence": "Fallback por hooks/comentarios (`Nodo ... no soportado`) y `CALL` para runtime base.",
+        "contract": "mixed",
+        "evidence": "`holobit` se emite como instrucción ASM/IR; `proyectar`/`transformar`/`graficar` fallan con `NotImplementedError` explícito. Las llamadas `CALL` conservan argumentos.",
     },
 }
 
