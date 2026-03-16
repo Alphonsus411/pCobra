@@ -129,12 +129,12 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
 
 def get_backend_compatibility(backend: str) -> dict[str, str] | None:
     """Obtiene compatibilidad por backend aplicando normalización canónica."""
-    return BACKEND_COMPATIBILITY.get(normalize_target_name(backend))
+    return BACKEND_COMPATIBILITY.get(normalize_target_name(backend, allow_legacy_aliases=True))
 
 
 def get_backend_compatibility_notes(backend: str) -> dict[str, str] | None:
     """Obtiene notas de compatibilidad por backend con normalización."""
-    return BACKEND_COMPATIBILITY_NOTES.get(normalize_target_name(backend))
+    return BACKEND_COMPATIBILITY_NOTES.get(normalize_target_name(backend, allow_legacy_aliases=True))
 
 
 __all__ = ["BACKEND_COMPATIBILITY", "BACKEND_COMPATIBILITY_NOTES", "get_backend_compatibility", "get_backend_compatibility_notes"]

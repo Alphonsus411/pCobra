@@ -165,7 +165,7 @@ def _required_targets_from_policy() -> tuple[str, ...]:
     for target in raw_targets:
         if not isinstance(target, str):
             continue
-        canonical = normalize_target_name(target)
+        canonical = normalize_target_name(target, allow_legacy_aliases=True)
         if canonical in OFFICIAL_TARGETS and canonical not in normalized:
             normalized.append(canonical)
 
@@ -244,7 +244,7 @@ def validar_mod(path: str | None = None) -> None:
 
         # Validar archivos por targets canónicos soportados
         for target in OFFICIAL_TARGETS:
-            canonical_target = normalize_target_name(target)
+            canonical_target = normalize_target_name(target, allow_legacy_aliases=True)
             ruta = info_normalized.get(canonical_target)
             if not ruta:
                 continue

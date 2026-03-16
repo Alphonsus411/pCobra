@@ -7,11 +7,11 @@ de línea de comandos del lenguaje Cobra, incluyendo:
 - Procesamiento de argumentos
 - Gestión de comandos
 - Utilidades de CLI
-- Selección de *backends* canónicos: ``python``, ``rust``, ``js``, ``wasm``,
+- Selección de *backends* canónicos: ``python``, ``rust``, ``javascript``, ``wasm``,
   ``go``, ``cpp``, ``java`` y ``asm``.
 
 Tier de soporte de backends:
-- Tier 1: ``python``, ``rust``, ``js``, ``wasm``
+- Tier 1: ``python``, ``rust``, ``javascript``, ``wasm``
 - Tier 2: ``go``, ``cpp``, ``java``, ``asm``
 
 Fuente de verdad: ``src/pcobra/cobra/transpilers/targets.py``.

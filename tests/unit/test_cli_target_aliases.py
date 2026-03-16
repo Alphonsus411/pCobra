@@ -1,3 +1,5 @@
+import pytest
+
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -5,30 +7,28 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
 def _build_parser_with_command(command):
     parser = CustomArgumentParser(prog="cobra")
+    parser.add_argument("--allow-legacy-target-aliases", action="store_true")
     subparsers = parser.add_subparsers(dest="command")
     command.register_subparser(subparsers)
     return parser
 
 
-def test_execute_parser_normaliza_alias_js_a_javascript_en_contenedor():
+def test_execute_parser_rechaza_alias_js_en_contenedor_por_defecto():
     parser = _build_parser_with_command(ExecuteCommand())
 
-    args = parser.parse_args(["ejecutar", "script.co", "--contenedor", "js"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["ejecutar", "script.co", "--contenedor", "js"])
 
-    assert args.contenedor == "javascript"
 
-
-def test_verify_parser_normaliza_alias_js_en_lista_de_lenguajes():
+def test_verify_parser_rechaza_alias_js_en_lista_de_lenguajes_por_defecto():
     parser = _build_parser_with_command(VerifyCommand())
 
-    args = parser.parse_args(["verificar", "script.co", "--lenguajes", "python,js"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,js"])
 
-    assert args.lenguajes == ["python", "javascript"]
 
-
-def test_parse_target_list_normaliza_alias_ensamblador_a_asm():
+def test_verify_parser_rechaza_alias_ensamblador_en_lista_de_lenguajes_por_defecto():
     parser = _build_parser_with_command(VerifyCommand())
 
-    args = parser.parse_args(["verificar", "script.co", "--lenguajes", "python,ensamblador"])
-
-    assert args.lenguajes == ["python", "asm"]
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,ensamblador"])

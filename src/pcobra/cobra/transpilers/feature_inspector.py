@@ -23,12 +23,12 @@ _TRANSPILER_FILE_BY_TARGET = {
 
 
 def _resolve_transpiler_file(target: str) -> str:
-    canonical = normalize_target_name(target)
+    canonical = normalize_target_name(target, allow_legacy_aliases=True)
     return _TRANSPILER_FILE_BY_TARGET.get(canonical, f"to_{canonical}.py")
 
 
 TRANSPILERS: Dict[str, str] = {
-    normalize_target_name(target): _resolve_transpiler_file(target) for target in OFFICIAL_TARGETS
+    normalize_target_name(target, allow_legacy_aliases=True): _resolve_transpiler_file(target) for target in OFFICIAL_TARGETS
 }
 
 # Patrones para detectar características registradas en los transpiladores
