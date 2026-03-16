@@ -56,4 +56,4 @@ Para habilitar estos transpiladores inversos es necesario instalar las gramátic
 
    pip install tree-sitter-languages
 
-Este paquete incluye gramáticas para los lenguajes listados (``python``, ``js`` y ``java``) y puede instalarse junto con las dependencias del proyecto.
+Este paquete incluye gramáticas para los lenguajes listados (``python``, ``javascript`` y ``java``) y puede instalarse junto con las dependencias del proyecto.

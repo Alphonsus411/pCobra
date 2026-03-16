@@ -24,11 +24,10 @@ from cobra.cli.commands import modules_cmd
             ],
         ),
         (
-            "js",
+            "javascript",
             [
                 "Código generado (TranspiladorJavaScript):",
                 "import * as io from './nativos/io.js';",
-                "import * as net from './nativos/red.js';",
                 "import * as matematicas from './nativos/matematicas.js';",
                 "import { Pila, Cola } from './nativos/estructuras.js';",
                 "let x =",

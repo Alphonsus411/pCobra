@@ -9,7 +9,7 @@ Version 10.0.12
 - `corelibs.texto`, `corelibs.numero` and `standard_library.datos` expand the `es_*` validators, add helpers like `prefijo_comun`/`sufijo_comun`, `interpolar`, `envolver_modular`, and provide Parquet/Feather IO wrappers.
 - `corelibs.sistema.ejecutar` enforces explicit whitelists in Python and native bindings to keep command execution locked down by default.
 
-Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` and `asm`, allowing greater versatility when running and deploying Cobra code.
+Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`, allowing greater versatility when running and deploying Cobra code.
 
 ## Table of Contents
 
@@ -303,7 +303,7 @@ The project officially supports:
 # Main Features
 
 - Lexer and Parser: Implementation of a lexer to tokenize the source code and a parser to build an abstract syntax tree (AST).
-- Transpilers to `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` and `asm`: Cobra can convert code to these targets, facilitating integration with external applications.
+- Transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`: Cobra can convert code to these targets, facilitating integration with external applications.
 - Support for advanced structures: declaration of variables, functions, classes, lists and dictionaries, as well as loops and conditionals.
 - Native modules with I/O functions, math utilities and data structures ready to use from Cobra.
 - Text helpers mirror Python's `textwrap`: `indentar_texto`, `desindentar_texto`, `envolver_texto` and `acortar_texto` expose consistent indentation, wrapping and shortening utilities from both the core libraries and the Spanish standard library.
@@ -524,14 +524,14 @@ Example format:
 modulo.co:
   version: "1.0.0"
   python: modulo.py
-  js: modulo.js
+  javascript: modulo.js
 ```
 
 If an entry is not found, the transpiler will load the file indicated in the `import` instruction. To add or modify routes just edit `cobra.mod` and run the tests again.
 
 ## Calling the transpiler
 
-The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` and `asm`. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`. Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython

@@ -59,6 +59,7 @@ def _run_rust(code: str) -> str:
 
 _RUNNERS: Dict[str, Callable[[str], str]] = {
     "python": _run_python,
+    "javascript": _run_js,
     "js": _run_js,
     "go": _run_go,
     "rust": _run_rust,
@@ -71,7 +72,7 @@ def run_code(lang: str, code: str) -> str:
     Parameters
     ----------
     lang: str
-        Identificador del lenguaje (por ejemplo ``"python"`` o ``"js"``).
+        Identificador del lenguaje (por ejemplo ``"python"`` o ``"javascript"``).
     code: str
         Código fuente a ejecutar.
 
@@ -93,7 +94,7 @@ def run_code(lang: str, code: str) -> str:
     # Realiza una comprobación de sintaxis previa a la ejecución para los
     # lenguajes interpretados más comunes. Esto permite detectar errores de
     # forma explícita antes de invocar al *runner* correspondiente.
-    if lang in {"python", "js"}:
+    if lang in {"python", "javascript", "js"}:
         suffix = ".py" if lang == "python" else ".js"
         with tempfile.TemporaryDirectory() as tmpdir:
             src = Path(tmpdir) / f"snippet{suffix}"
