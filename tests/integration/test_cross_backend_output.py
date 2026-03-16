@@ -33,7 +33,7 @@ def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
     if lang in {"python", "javascript"}:
         if lang == "javascript" and not shutil.which("node"):
             pytest.skip("node no disponible")
-        return run_code("js" if lang == "javascript" else lang, codigo)
+        return run_code(lang, codigo)
     if lang == "c":
         comp = shutil.which("gcc")
         if not comp:

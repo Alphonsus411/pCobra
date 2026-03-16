@@ -53,5 +53,5 @@ def test_end_to_end(tmp_path, lang, monkeypatch):
     if lang == "javascript" and not shutil.which("node"):
         pytest.skip("node no disponible")
 
-    salida = run_code("js" if lang == "javascript" else lang, codigo_generado)
+    salida = run_code(lang, codigo_generado)
     assert salida == esperado

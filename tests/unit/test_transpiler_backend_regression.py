@@ -16,7 +16,7 @@ from pcobra.cobra.transpilers.targets import TIER1_TARGETS, TIER2_TARGETS
 
 TRANSPILERS = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "js": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
     "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
     "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
@@ -49,7 +49,7 @@ FULL_EXPECTATIONS = {
         "corelibs": ["from corelibs import *", "longitud('cobra')"],
         "standard_library": ["from standard_library import *", "mostrar('hola')"],
     },
-    "js": {
+    "javascript": {
         "holobit": ["import * as io from './nativos/io.js';", "new Holobit([1, 2, 3])"],
         "proyectar": ["function cobra_proyectar", "cobra_proyectar(hb, 2d);"],
         "transformar": ["function cobra_transformar", "cobra_transformar(hb, rotar, 90);"],
@@ -106,7 +106,7 @@ PARTIAL_EXPECTATIONS = {
         "corelibs": ["CALL longitud 'cobra'"],
         "standard_library": ["CALL mostrar 'hola'"],
     },
-    "js": {
+    "javascript": {
         "corelibs": ["import * as texto from './nativos/texto.js';", "longitud(cobra);"],
         "standard_library": ["import * as io from './nativos/io.js';", "mostrar(hola);"],
     },

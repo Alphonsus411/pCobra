@@ -42,6 +42,6 @@ def test_runtime_js_ejecucion(request, codigo_cobra_fixture):
     lineas = codigo_js.splitlines()[12:]
     codigo_js = "\n".join(lineas)
 
-    salida = run_code("js", codigo_js)
+    salida = run_code("javascript", codigo_js)
 
     assert "1" in salida
