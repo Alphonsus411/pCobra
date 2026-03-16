@@ -72,7 +72,7 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
     archivo.write_text("var x = 5")
 
     with patch("sys.stdout", new_callable=StringIO) as out:
-        exit_code = cli_module.main(["compilar", str(archivo), "--tipos=python,js"])
+        exit_code = cli_module.main(["compilar", str(archivo), "--tipos=python,javascript"])
 
     assert exit_code == 0
     salida = out.getvalue()

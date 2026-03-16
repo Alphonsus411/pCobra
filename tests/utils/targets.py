@@ -3,4 +3,4 @@
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 SUPPORTED_TARGETS = OFFICIAL_TARGETS
-RUNNABLE_TARGETS = ("python", "js", "go", "cpp", "rust", "java")
+RUNNABLE_TARGETS = ("python", "javascript", "go", "cpp", "rust", "java")

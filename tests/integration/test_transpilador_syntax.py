@@ -20,7 +20,7 @@ from cobra.core import Lexer as SrcLexer
 
 LANG_EXT = {
     "python": ".py",
-    "js": ".js",
+    "javascript": ".js",
     "rust": ".rs",
     "wasm": ".wat",
     "go": ".go",
@@ -37,7 +37,7 @@ def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
 
         py_compile.compile(str(archivo), doraise=True)
         ast.parse(archivo.read_text())
-    elif lang == "js":
+    elif lang == "javascript":
         if not shutil.which("node"):
             pytest.skip("node no disponible")
         subprocess.run(["node", "--check", str(archivo)], check=True)
@@ -69,7 +69,7 @@ def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
         assert "(module" in contenido
 
 
-VALID_SYNTAX_TARGETS = ("python", "js", "go")
+VALID_SYNTAX_TARGETS = ("python", "javascript", "go")
 
 
 @pytest.mark.parametrize("lang", VALID_SYNTAX_TARGETS)

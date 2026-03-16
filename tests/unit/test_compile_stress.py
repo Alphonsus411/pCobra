@@ -22,7 +22,7 @@ def test_compile_command_parallel_outputs_unique(tmp_path):
         archivo=str(archivo),
         tipo='python',
         backend=None,
-        tipos='python,js,c,cpp',
+        tipos='python,javascript,c,cpp',
     )
     with patch(
         'cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar',

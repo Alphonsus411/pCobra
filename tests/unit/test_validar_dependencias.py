@@ -28,7 +28,7 @@ def test_compilar_dependencia_invalida_js(tmp_path, monkeypatch):
     mapping = {str(mod): {"js": str(tmp_path / 'no.js')}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
     with patch("sys.stdout", new_callable=StringIO) as out:
-        main(["compilar", str(prog), "--tipo=js"])
+        main(["compilar", str(prog), "--tipo=javascript"])
     assert "dependencia" in out.getvalue().lower()
 
 

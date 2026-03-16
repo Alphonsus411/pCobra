@@ -14,3 +14,4 @@ jobs:
           python-version: "3.11"
       - run: pip install black
       - run: black --check .
+      - run: python scripts/lint_legacy_aliases.py

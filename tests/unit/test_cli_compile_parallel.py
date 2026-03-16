@@ -40,7 +40,7 @@ def test_cli_compilar_varios_tipos_en_paralelo(tmp_path):
          patch("cobra.transpilers.transpiler.to_python.TranspiladorPython.transpilar", _fake_transpile), \
          patch("cobra.transpilers.transpiler.to_js.TranspiladorJavaScript.transpilar", _fake_transpile), \
          patch("sys.stdout", new_callable=StringIO) as out:
-        main(["compilar", str(archivo), "--tipos=python,js"])
+        main(["compilar", str(archivo), "--tipos=python,javascript"])
 
     lineas = [re.sub(r"\x1b\[[0-9;]*m", "", l) for l in out.getvalue().strip().splitlines()]
     texto = "\n".join(lineas)

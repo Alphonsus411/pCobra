@@ -36,10 +36,10 @@ def obtener_salida_interprete(archivo: Path) -> str:
 
 
 def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
-    if lang in {"python", "js"}:
-        if lang == "js" and not shutil.which("node"):
+    if lang in {"python", "javascript"}:
+        if lang == "javascript" and not shutil.which("node"):
             pytest.skip("node no disponible")
-        return run_code(lang, codigo)
+        return run_code("js" if lang == "javascript" else lang, codigo)
     if lang == "cpp":
         comp = shutil.which("g++")
         if not comp:
