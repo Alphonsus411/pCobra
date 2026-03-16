@@ -109,7 +109,7 @@ def test_menu_compile(monkeypatch):
 
 
 def test_menu_transpilar_inverso(monkeypatch):
-    inputs = iter(["s", "n", "archivo.py", "python", "js"])
+    inputs = iter(["s", "n", "archivo.py", "python", "javascript"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
 
     called = {}
@@ -123,4 +123,4 @@ def test_menu_transpilar_inverso(monkeypatch):
     assert main(["menu"]) == 0
     assert called['args'].archivo == "archivo.py"
     assert called['args'].origen == "python"
-    assert called['args'].destino == "js"
+    assert called['args'].destino == "javascript"

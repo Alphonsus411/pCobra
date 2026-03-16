@@ -54,7 +54,7 @@ para luego transpilarlo nuevamente. Este proceso se ejecuta así:
 El comando `cobra transpilar-inverso` automatiza estos pasos.
 
 ```bash
-cobra transpilar-inverso ejemplo.py --origen=python --destino=js
+cobra transpilar-inverso ejemplo.py --origen=python --destino=javascript
 ```
 
 La conversión inversa puede ser parcial y ciertas construcciones avanzadas del

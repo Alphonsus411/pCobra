@@ -506,7 +506,7 @@ Convierte programas entre distintos lenguajes usando la CLI:
 - **De Python a JavaScript**
 
   ```bash
-  cobra transpilar-inverso ejemplo.py --origen=python --destino=js
+  cobra transpilar-inverso ejemplo.py --origen=python --destino=javascript
   ```
 
 - **De Java a Python**

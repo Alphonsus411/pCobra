@@ -25,7 +25,7 @@ import cobra.transpilers.module_map as module_map
 from tests.utils.runtime import run_code
 
 
-@pytest.mark.parametrize("lang", ["python", "js"])
+@pytest.mark.parametrize("lang", ["python", "javascript"])
 def test_end_to_end(tmp_path, lang, monkeypatch):
     # Copiar archivo de ejemplo a ruta temporal
     src_file = Path("tests/data/ejemplo.co")
@@ -50,8 +50,8 @@ def test_end_to_end(tmp_path, lang, monkeypatch):
     codigo_generado = "\n".join(out.getvalue().splitlines()[1:])
 
     # Verificar disponibilidad de ejecutable externo
-    if lang == "js" and not shutil.which("node"):
+    if lang == "javascript" and not shutil.which("node"):
         pytest.skip("node no disponible")
 
-    salida = run_code(lang, codigo_generado)
+    salida = run_code("js" if lang == "javascript" else lang, codigo_generado)
     assert salida == esperado

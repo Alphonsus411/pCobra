@@ -444,7 +444,7 @@ permite comparar la salida de un programa transpilado a distintos lenguajes
 Adicionalmente puedes convertir código escrito en otros lenguajes a Cobra y
 volver a transpilarlos con ``cobra transpilar-inverso``::
 
-   cobra transpilar-inverso ejemplo.py --origen=python --destino=js
+   cobra transpilar-inverso ejemplo.py --origen=python --destino=javascript
 
 Caché incremental con SQLitePlus
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

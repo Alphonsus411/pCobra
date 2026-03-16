@@ -93,7 +93,7 @@ def test_run_transpiler_pool_small_list(monkeypatch):
 
     monkeypatch.setattr(multiprocessing, "Pool", DummyPool)
 
-    languages = ["python", "js"]
+    languages = ["python", "javascript"]
     ast = None
     resultado = run_transpiler_pool(languages, ast, dummy_executor)
     esperado = [(lang, f"resultado_{lang}") for lang in languages]
