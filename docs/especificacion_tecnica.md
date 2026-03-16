@@ -4,6 +4,18 @@ Este documento resume la sintaxis y la semántica básica del lenguaje Cobra.
 
 Para ver ejemplos completos de compilación y transpilación, consulta la carpeta [`examples/hello_world`](../examples/hello_world), donde encontrarás un `README.md` con instrucciones de uso y los códigos generados en diversos lenguajes.
 
+## Targets oficiales de transpilación
+
+En runtime oficial y para soporte de producción, Cobra define **únicamente** 8
+targets de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`,
+`java` y `asm`.
+
+La fuente de verdad de este contrato es:
+`src/pcobra/cobra/transpilers/targets.py` (`OFFICIAL_TARGETS`).
+
+Cualquier backend fuera de esa lista debe considerarse experimental y no forma
+parte del paquete instalable de producción.
+
 ## Estructura general
 
 Un programa Cobra está formado por sentencias separadas por saltos de línea e indentadas con espacios. El punto de entrada se define en la función `principal`.
