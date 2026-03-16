@@ -2,6 +2,12 @@
 
 Este documento actúa como README del experimento para compilar Cobra con LLVM. Resume el estado actual del prototipo, sus limitaciones y los siguientes pasos propuestos.
 
+
+## Ubicación del prototipo en el repositorio
+
+El backend de ejemplo se mantiene fuera del runtime oficial en:
+`experiments/llvm_backend.py`.
+
 ## Limitaciones actuales
 
 - Traducción parcial del árbol de sintaxis abstracta; solo se cubren expresiones aritméticas y estructuras de control básicas.
