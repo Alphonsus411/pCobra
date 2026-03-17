@@ -161,13 +161,13 @@ HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
     ),
     "docs/estructura_ast.md": (
         (
-            r"kotlin|swift|r|julia|cobol|fortran|pascal|visual\s*basic|ruby|php|perl|matlab|mojo|latex|c",
+            r"kotlin|swift|\br\b|julia|cobol|fortran|pascal|visual\s*basic|ruby|php|perl|matlab|mojo|latex|\bc\b",
             "Sección explícitamente histórica sobre targets descartados.",
         ),
     ),
     "docs/proposals/plan_nuevas_funcionalidades.md": (
         (
-            r"kotlin|swift|r|julia|matlab",
+            r"kotlin|swift|\br\b|julia|matlab",
             "Propuesta histórica, no documentación normativa de targets.",
         ),
     ),
@@ -211,13 +211,13 @@ def iter_scan_files(root: Path) -> list[Path]:
     return files
 
 
-def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]:
+def is_historical_exception(rel_path: str, term: str) -> tuple[bool, str | None]:
     rules = HISTORICAL_EXCEPTIONS.get(rel_path)
     if not rules:
         return False, None
 
     for pattern, reason in rules:
-        if re.search(pattern, line, flags=re.IGNORECASE):
+        if re.search(pattern, term, flags=re.IGNORECASE):
             return True, reason
 
     return False, None
@@ -249,7 +249,7 @@ def main() -> int:
                 if normalized in ALLOWED_TARGET_ALIASES:
                     continue
 
-                exempted, reason = is_historical_exception(rel, line)
+                exempted, reason = is_historical_exception(rel, term)
                 if exempted:
                     continue
 
