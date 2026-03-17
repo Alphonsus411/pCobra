@@ -12,7 +12,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
-from pcobra.cobra.transpilers.targets import resolution_candidates
+from pcobra.cobra.transpilers.targets import resolution_candidates_with_legacy_aliases
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ def get_mapped_path(module: str, backend: str) -> str:
     if not isinstance(module_mapping, dict) or not module_mapping:
         return module
 
-    for candidate in resolution_candidates(backend):
+    for candidate in resolution_candidates_with_legacy_aliases(backend):
         mapped = module_mapping.get(candidate)
         if isinstance(mapped, str):
             return mapped

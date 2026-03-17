@@ -18,7 +18,7 @@ DOCKER_EXECUTABLE_TARGETS = tuple(
 # Backend runtime que espera ``core.sandbox.ejecutar_en_contenedor``.
 DOCKER_RUNTIME_BY_TARGET: dict[str, str] = {
     "python": "python",
-    "javascript": "js",
+    "javascript": "javascript",
     "cpp": "cpp",
     "rust": "rust",
 }

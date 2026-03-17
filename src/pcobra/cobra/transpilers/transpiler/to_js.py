@@ -144,7 +144,7 @@ def visit_with(self, nodo):
 
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
-    modulo = get_mapped_path(nodo.modulo, "js")
+    modulo = get_mapped_path(nodo.modulo, "javascript")
     self.agregar_linea(f"import {{ {nodo.nombre}{alias} }} from '{modulo}';")
 
 
@@ -278,9 +278,9 @@ class TranspiladorJavaScript(BaseTranspiler):
             or n.__class__.__name__ == "NodoHolobit"
             for n in ast_raiz
         )
-        self.codigo = list(get_standard_imports("js"))
+        self.codigo = list(get_standard_imports("javascript"))
         if usa_holobit:
-            self.codigo.extend(get_runtime_hooks("js"))
+            self.codigo.extend(get_runtime_hooks("javascript"))
         for nodo in ast_raiz:
             if hasattr(nodo, "aceptar"):
                 nodo.aceptar(self)
