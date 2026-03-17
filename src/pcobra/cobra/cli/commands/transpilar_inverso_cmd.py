@@ -31,6 +31,7 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
     build_target_help_by_tier,
     normalize_target_name,
     target_cli_choices,
