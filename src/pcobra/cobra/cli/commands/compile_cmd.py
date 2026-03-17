@@ -43,6 +43,7 @@ TRANSPILERS = {
     "python": TranspiladorPython,
     "rust": TranspiladorRust,
     "javascript": TranspiladorJavaScript,
+    "js": TranspiladorJavaScript,
     "wasm": TranspiladorWasm,
     "go": TranspiladorGo,
     "cpp": TranspiladorCPP,
