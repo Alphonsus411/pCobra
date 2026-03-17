@@ -21,7 +21,7 @@ Se añade el archivo ``cobra.toml`` para definir el mapeo de módulos en formato
 
    ["modulo.co"]
    python = "modulo.py"
-   js = "modulo.js"
+   javascript = "modulo.js"
 
 Compilación de extensiones C++ con PyBind11
 ------------------------------------------
@@ -74,7 +74,7 @@ Ejemplo del asistente de consola:
 
    $ cobra menu
    Lenguajes destino disponibles: python, rust, javascript, wasm, go, cpp, java, asm
-   Lenguajes de origen disponibles: python, js, java
+   Lenguajes de origen disponibles: python, javascript, java
    ¿Desea transpilar? (s/n): s
    ¿Transpilar desde Cobra a otro lenguaje? (s/n): n
    Ruta al archivo origen: ejemplo.py
