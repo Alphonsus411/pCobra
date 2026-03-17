@@ -92,6 +92,86 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
 }
 
 
+# Piso contractual: nivel mínimo que cada backend debe mantener por feature.
+# Si BACKEND_COMPATIBILITY baja por debajo de este umbral, debe considerarse regresión.
+MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
+    "python": {
+        "tier": "tier1",
+        "holobit": "full",
+        "proyectar": "full",
+        "transformar": "full",
+        "graficar": "full",
+        "corelibs": "full",
+        "standard_library": "full",
+    },
+    "javascript": {
+        "tier": "tier1",
+        "holobit": "full",
+        "proyectar": "full",
+        "transformar": "full",
+        "graficar": "full",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+    "rust": {
+        "tier": "tier1",
+        "holobit": "partial",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+    "wasm": {
+        "tier": "tier1",
+        "holobit": "partial",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+    "go": {
+        "tier": "tier2",
+        "holobit": "partial",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+    "cpp": {
+        "tier": "tier2",
+        "holobit": "partial",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+    "java": {
+        "tier": "tier2",
+        "holobit": "partial",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+    "asm": {
+        "tier": "tier2",
+        "holobit": "partial",
+        "proyectar": "none",
+        "transformar": "none",
+        "graficar": "none",
+        "corelibs": "partial",
+        "standard_library": "partial",
+    },
+}
+
+COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "full": 2}
+
+
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
@@ -137,4 +217,11 @@ def get_backend_compatibility_notes(backend: str) -> dict[str, str] | None:
     return BACKEND_COMPATIBILITY_NOTES.get(normalize_target_name(backend, allow_legacy_aliases=True))
 
 
-__all__ = ["BACKEND_COMPATIBILITY", "BACKEND_COMPATIBILITY_NOTES", "get_backend_compatibility", "get_backend_compatibility_notes"]
+__all__ = [
+    "BACKEND_COMPATIBILITY",
+    "MIN_REQUIRED_BACKEND_COMPATIBILITY",
+    "COMPATIBILITY_LEVEL_ORDER",
+    "BACKEND_COMPATIBILITY_NOTES",
+    "get_backend_compatibility",
+    "get_backend_compatibility_notes",
+]
