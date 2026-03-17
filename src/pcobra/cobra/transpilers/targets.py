@@ -3,8 +3,9 @@
 from typing import Final, Tuple
 
 TIER1_TARGETS: Final[Tuple[str, ...]] = ("python", "rust", "javascript", "wasm")
+TIER1_LEGACY_ALIASES: Final[Tuple[str, ...]] = ("js",)
 TIER2_TARGETS: Final[Tuple[str, ...]] = ("go", "cpp", "java", "asm")
-OFFICIAL_TARGETS: Final[Tuple[str, ...]] = TIER1_TARGETS + TIER2_TARGETS
+OFFICIAL_TARGETS: Final[Tuple[str, ...]] = TIER1_TARGETS + TIER1_LEGACY_ALIASES + TIER2_TARGETS
 
 TARGET_ALIASES: Final[dict[str, str]] = {
     "js": "javascript",
