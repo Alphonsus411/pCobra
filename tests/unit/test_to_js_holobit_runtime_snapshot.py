@@ -25,3 +25,10 @@ def test_js_codegen_holobit_runtime_hooks_snapshot():
     assert "cobra_proyectar(hb, 2d);" in code
     assert "cobra_transformar(hb, rotar, 90);" in code
     assert "cobra_graficar(hb);" in code
+
+    assert "throw new Error('[cobra::proyectar]" in code
+    assert "throw new Error('[cobra::transformar]" in code
+    assert "throw new Error('[cobra::graficar]" in code
+    assert "console.log('[cobra::proyectar]'" not in code
+    assert "console.log('[cobra::transformar]'" not in code
+    assert "console.log('[cobra::graficar]'" not in code
