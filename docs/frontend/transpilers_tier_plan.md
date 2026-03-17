@@ -119,10 +119,21 @@ Se añade una suite dedicada que cubre:
 - El alias histórico `js` se mantiene **deprecated pero funcional** para compatibilidad temporal con proyectos existentes.
 - Recomendación: actualizar comandos y archivos (`pcobra.toml`, `cobra.mod`) para usar `javascript`.
 
+
+## Política anti-regresión
+
+Para evitar desalineaciones entre código, CLI y documentación pública, se incorpora el validador obligatorio `scripts/ci/validate_targets.py` con tres controles bloqueantes:
+
+1. Sincronía estricta entre `OFFICIAL_TARGETS` (`src/pcobra/cobra/transpilers/targets.py`) y el registro `TRANSPILERS` (`src/pcobra/cobra/cli/commands/compile_cmd.py`).
+2. Auditoría del árbol `src/pcobra/cobra/transpilers/transpiler/` para impedir `to_*.py` fuera del contrato oficial.
+3. Detección textual de aliases legacy en rutas públicas de CLI y documentación de usuario final.
+
+Este check se ejecuta como **paso obligatorio de CI** en `.github/workflows/ci.yml` y `.github/workflows/test.yml`.
+
 ## Checklist de cierre (auditoría de limpieza)
 
 - [x] Auditoría en `src/`, `docs/`, `examples/` y `docker/` para detectar menciones fuera de los 8 backends oficiales.
-  - Evidencia: `python scripts/validate_targets_policy.py` y revisión dirigida de rutas clave de front-end.
+  - Evidencia: `python scripts/ci/validate_targets.py` y revisión dirigida de rutas clave de front-end.
 - [x] Documentación principal sincronizada con tiers oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
   - Evidencia: revisión y ajuste de `README.md`, `docs/lenguajes_soportados.rst`, `docs/matriz_transpiladores.md` y `docs/frontend/backends.rst`.
 - [x] Ejemplos y guías de CLI sin targets retirados.
@@ -130,4 +141,4 @@ Se añade una suite dedicada que cubre:
 - [x] CI/packaging alineado: se retiró instalación de toolchains no oficiales.
   - Evidencia: limpieza de instalaciones de runtimes no canónicos en `.github/workflows/ci.yml` y `.github/workflows/test.yml`.
 - [x] Registro final de consistencia ejecutado.
-  - Evidencia: validación con `python scripts/validate_targets_policy.py`.
+  - Evidencia: validación con `python scripts/ci/validate_targets.py`.

@@ -66,14 +66,14 @@ jobs:
       - name: Skip secret scan on non-Linux runners
         if: runner.os != 'Linux'
         run: echo "Secret scanning sólo está disponible en runners Linux."
-      - name: Validate targets policy (whitelist + key paths)
+      - name: Validate targets anti-regression policy
         if: runner.os != 'Windows'
         shell: bash
-        run: python scripts/validate_targets_policy.py
-      - name: Validate targets policy (whitelist + key paths) (Windows)
+        run: python scripts/ci/validate_targets.py
+      - name: Validate targets anti-regression policy (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: python scripts/validate_targets_policy.py
+        run: python scripts/ci/validate_targets.py
       - name: Run linters
         if: runner.os != 'Windows'
         shell: bash

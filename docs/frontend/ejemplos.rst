@@ -55,7 +55,7 @@ Las utilidades de ``standard_library.asincrono`` ayudan a mezclar corrutinas de
 
 Transpilación inversa oficial
 -----------------------------
-La política oficial de transpilación inversa soporta orígenes ``python``, ``js``
+La política oficial de transpilación inversa soporta orígenes ``python``, ``javascript``
 y ``java``. Puedes probar el flujo con:
 
 .. code-block:: bash
