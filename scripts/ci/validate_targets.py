@@ -22,6 +22,7 @@ TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
 PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py",
     ROOT / "src/pcobra/cobra/cli/target_policies.py",
+    ROOT / "src/pcobra/cobra/cli/commands/benchmarks_cmd.py",
     ROOT / "README.md",
     ROOT / "docs/config_cli.md",
     ROOT / "docs/lenguajes_soportados.rst",
@@ -30,14 +31,7 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "docs/frontend/ejemplos.rst",
 )
 
-LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {
-    "docs/lenguajes_soportados.rst": (
-        re.compile(r"alias:\s*``js``", re.IGNORECASE),
-    ),
-    "src/pcobra/cobra/cli/target_policies.py": (
-        re.compile(r'"javascript"\s*:\s*"js"', re.IGNORECASE),
-    ),
-}
+LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {}
 
 
 def _literal_eval(node: ast.AST):

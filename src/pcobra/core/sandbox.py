@@ -695,7 +695,7 @@ def ejecutar_en_contenedor(
 ) -> str:
     """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
 
-    Los backends soportados son ``python``, ``js``, ``cpp`` y ``rust``. Cada
+    Los backends soportados son ``python``, ``javascript``, ``cpp`` y ``rust``. Cada
     backend utiliza una imagen específica que debe estar construida
     previamente. ``timeout`` define el límite de tiempo en segundos para la
     ejecución del contenedor o ``None`` para desactivar el límite.
@@ -709,7 +709,8 @@ def ejecutar_en_contenedor(
 
     imagenes = {
         "python": "cobra-python-sandbox",
-        "js": "cobra-js-sandbox",
+        "javascript": "cobra-js-sandbox",
+        "js": "cobra-js-sandbox",  # compatibilidad interna
         "cpp": "cobra-cpp-sandbox",
         "rust": "cobra-rust-sandbox",
     }

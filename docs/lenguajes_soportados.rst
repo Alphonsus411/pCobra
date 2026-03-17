@@ -17,7 +17,7 @@ Tier 1 (soporte principal)
      - ``python``
      - Estable
    * - JavaScript
-     - ``javascript`` (alias: ``js``)
+     - ``javascript``
      - Estable
    * - Rust
      - ``rust``

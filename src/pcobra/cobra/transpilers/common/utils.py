@@ -10,7 +10,6 @@ from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
     normalize_target_name,
-    resolution_candidates,
 )
 
 
@@ -244,12 +243,7 @@ def get_runtime_hooks(language: str) -> List[str]:
 
 def load_mapped_module(path: str, language: str) -> Tuple[str, str]:
     """Carga el módulo indicado respetando el mapeo configurado."""
-    ruta = path
-    for candidate in resolution_candidates(language):
-        ruta_candidate = get_mapped_path(path, candidate)
-        if ruta_candidate != path:
-            ruta = ruta_candidate
-            break
+    ruta = get_mapped_path(path, language)
     with open(ruta, "r", encoding="utf-8") as f:
         contenido = f.read()
     return contenido, ruta

@@ -40,6 +40,12 @@ def normalize_target_name(target: str, *, allow_legacy_aliases: bool = False) ->
 
 def resolution_candidates(target: str) -> Tuple[str, ...]:
     """Devuelve posibles nombres válidos para resolver compatibilidad retroactiva."""
+    canonical = normalize_target_name(target)
+    return (canonical,)
+
+
+def resolution_candidates_with_legacy_aliases(target: str) -> Tuple[str, ...]:
+    """Devuelve candidatos canónicos + aliases legacy para migración interna."""
     canonical = normalize_target_name(target, allow_legacy_aliases=True)
     aliases = tuple(alias for alias, canon in LEGACY_TARGET_ALIASES.items() if canon == canonical)
     return (canonical, *aliases)

@@ -134,7 +134,7 @@ def validate_file(filepath: str) -> bool:
     return True
 
 def validar_dependencias_con_alias(backend: str, mod_info: dict) -> None:
-    """Valida dependencias probando nombre canónico y aliases históricos."""
+    """Valida dependencias usando únicamente el target canónico público."""
     last_error = None
     for candidate in resolution_candidates(backend):
         try:
