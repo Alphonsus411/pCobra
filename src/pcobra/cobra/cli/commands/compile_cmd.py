@@ -6,15 +6,11 @@ from importlib import import_module
 from importlib.metadata import entry_points
 
 from pcobra.cobra.transpilers import module_map
-from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from pcobra.cobra.transpilers.transpiler.to_go import TranspiladorGo
-from pcobra.cobra.transpilers.transpiler.to_java import TranspiladorJava
-from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
-from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
+from pcobra.cobra.transpilers.registry import (
+    build_official_transpilers,
+    official_transpiler_targets,
+)
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
     build_target_help_by_tier,
@@ -43,16 +39,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
-TRANSPILERS = {
-    "python": TranspiladorPython,
-    "rust": TranspiladorRust,
-    "javascript": TranspiladorJavaScript,
-    "wasm": TranspiladorWasm,
-    "go": TranspiladorGo,
-    "cpp": TranspiladorCPP,
-    "java": TranspiladorJava,
-    "asm": TranspiladorASM,
-}
+TRANSPILERS = build_official_transpilers()
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -64,7 +51,7 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     """Valida backend contra la whitelist oficial y devuelve su forma canónica."""
-    canonical = normalize_target_name(backend)
+    canonical = normalize_target_name(backend, allow_legacy_aliases=True)
     if canonical not in OFFICIAL_TARGETS:
         raise ValueError(
             _("Backend no permitido en {context}: {backend}. Permitidos: {supported}").format(
@@ -104,7 +91,7 @@ for ep in eps:
     except Exception as exc:
         logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
-LANG_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
+LANG_CHOICES = list(target_cli_choices(official_transpiler_targets()))
 TARGETS_HELP = build_target_help_by_tier()
 
 

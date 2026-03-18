@@ -63,3 +63,19 @@ asm = "build/modulo.asm"
   `javascript` son requeridos.
 - Para proyectos que solo distribuyen un subconjunto de backends, ajusta
   explícitamente `required_targets` para evitar errores de validación.
+
+## Regla de consistencia de targets oficiales
+
+La CLI no debe mantener listas duplicadas de lenguajes soportados. La fuente de
+verdad para los targets oficiales es `src/pcobra/cobra/transpilers/targets.py`
+a través de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS`.
+
+En consecuencia:
+
+- `cobra compilar` debe derivar `TRANSPILERS` y `LANG_CHOICES` desde
+  `OFFICIAL_TARGETS` y un registro canónico compartido.
+- Los scripts auxiliares, especialmente benchmarks y validaciones CI, deben
+  reutilizar utilidades comunes basadas en esa misma política.
+- Cualquier nuevo backend oficial requiere actualizar primero esa fuente única y
+  después el registro canónico correspondiente; no se permiten listas
+  hardcodeadas duplicadas en la CLI o en scripts.
