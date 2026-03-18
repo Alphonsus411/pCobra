@@ -257,11 +257,6 @@ jobs:
             --cov-fail-under=95 `
             -m 'not windows'
           pytest $paths -m windows
-      - name: Run LLVM examples
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          PYTHONPATH=src python scripts/test_llvm_examples.py
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5
         with:
