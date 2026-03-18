@@ -116,3 +116,58 @@ def test_validador_reporta_targets_faltantes_con_mensaje_claro(tmp_path, monkeyp
 
     with pytest.raises(ValueError, match="Faltan rutas para targets requeridos por política"):
         validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_omite_requisitos_estaticos_de_schema_para_usar_politica(monkeypatch):
+    schema = {
+        "patternProperties": {
+            ".*\\.co$": {
+                "type": "object",
+                "anyOf": [
+                    {"required": ["python"]},
+                    {"required": ["javascript"]},
+                ],
+            },
+        },
+    }
+
+    captured = {}
+
+    def fake_validate(*, instance, schema):
+        captured["instance"] = instance
+        captured["schema"] = schema
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", schema)
+    monkeypatch.setattr("cobra.semantico.mod_validator.validate", fake_validate)
+    monkeypatch.setattr("cobra.semantico.mod_validator.ValidationError", Exception)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.cargar_mod",
+        lambda _path=None: {"mod.co": {"version": "0.1.0", "rust": "mod.rs"}},
+    )
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["rust"]}},
+    )
+    monkeypatch.setattr("cobra.semantico.mod_validator.os.path.exists", lambda _path: True)
+
+    validar_mod("cobra.mod")
+
+    assert captured["instance"] == {"mod.co": {"version": "0.1.0", "rust": "mod.rs"}}
+    module_schema = next(iter(captured["schema"]["patternProperties"].values()))
+    assert "anyOf" not in module_schema
+
+
+def test_validador_permite_modulo_rust_only_cuando_politica_lo_requiere(tmp_path, monkeypatch):
+    rust = tmp_path / "m.rs"
+    rust.write_text("fn main() {}")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "rust": str(rust)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["rust"]}},
+    )
+    monkeypatch.setattr("cobra.semantico.mod_validator.validate", lambda **_kwargs: None)
+
+    validar_mod(str(tmp_path / "cobra.mod"))
