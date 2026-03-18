@@ -10,6 +10,7 @@ from pcobra.core.ast_nodes import (
     NodoValor,
 )
 from pcobra.cobra.transpilers.common.utils import get_runtime_hooks, get_standard_imports
+from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from pcobra.cobra.transpilers.transpiler.to_go import TranspiladorGo
@@ -46,7 +47,7 @@ HOOK_SYMBOLS = {
 def _programa_holobit_minimo():
     hb = NodoIdentificador("hb")
     return [
-        NodoHolobit(nombre="hb", valores=[1.0, 2.0, 3.0]),
+        NodoHolobit(nombre="hb", valores=[1, 2, 3]),
         NodoProyectar(holobit=hb, modo=NodoValor("2d")),
         NodoTransformar(
             holobit=hb,
@@ -63,6 +64,9 @@ def _programa_sin_holobit():
 
 @pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
 def test_inserta_hooks_runtime_holobit_desde_contrato_central(target, transpilador_cls):
+    if any(BACKEND_COMPATIBILITY[target][feature] == "none" for feature in ("proyectar", "transformar", "graficar")):
+        pytest.skip(f"{target} no soporta todas las primitivas Holobit del programa mínimo")
+
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
 
     # contrato central: al usar Holobit, todos los hooks del backend deben aparecer
@@ -83,6 +87,9 @@ def test_no_inserta_runtime_hooks_sin_nodos_holobit(target, transpilador_cls):
 
 @pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
 def test_imports_minimos_runtime_por_backend(target, transpilador_cls):
+    if any(BACKEND_COMPATIBILITY[target][feature] == "none" for feature in ("proyectar", "transformar", "graficar")):
+        pytest.skip(f"{target} no soporta todas las primitivas Holobit del programa mínimo")
+
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
     imports = get_standard_imports(target)
     if isinstance(imports, str):
