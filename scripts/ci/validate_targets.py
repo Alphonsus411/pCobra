@@ -5,6 +5,8 @@ Checks:
 1) Igualdad exacta entre ``OFFICIAL_TARGETS`` y las claves efectivas de ``TRANSPILERS``.
 2) No existen módulos ``to_*.py`` fuera de los 8 targets oficiales.
 3) Detección textual de aliases legacy en rutas públicas de CLI/docs de usuario.
+4) ``transpilar-inverso`` expone únicamente orígenes reverse canónicos y destinos
+   dentro de ``OFFICIAL_TARGETS``.
 """
 
 from __future__ import annotations
@@ -21,6 +23,12 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
+    DESTINO_CHOICES,
+    ORIGIN_CHOICES,
+    REVERSE_TRANSPILERS,
+)
+from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from pcobra.cobra.transpilers.targets import LEGACY_TARGET_ALIASES, OFFICIAL_TARGETS
 
 PUBLIC_TEXT_PATHS = (
@@ -102,6 +110,35 @@ def validate_no_legacy_aliases_in_public_paths(legacy_aliases: dict[str, str]) -
     return errors
 
 
+def validate_reverse_cli_contract(
+    official_targets: tuple[str, ...],
+    reverse_scope_languages: tuple[str, ...],
+) -> list[str]:
+    errors: list[str] = []
+
+    if tuple(DESTINO_CHOICES) != tuple(official_targets):
+        errors.append(
+            "transpilar-inverso: DESTINO_CHOICES no coincide exactamente con "
+            f"OFFICIAL_TARGETS -> destino={DESTINO_CHOICES}, official={official_targets}"
+        )
+
+    if tuple(ORIGIN_CHOICES) != tuple(sorted(reverse_scope_languages)):
+        errors.append(
+            "transpilar-inverso: ORIGIN_CHOICES no coincide con REVERSE_SCOPE_LANGUAGES "
+            f"-> origen={ORIGIN_CHOICES}, reverse={tuple(sorted(reverse_scope_languages))}"
+        )
+
+    reverse_registry = tuple(REVERSE_TRANSPILERS.keys())
+    extras = sorted(set(reverse_registry) - set(reverse_scope_languages))
+    if extras:
+        errors.append(
+            "transpilar-inverso: REVERSE_TRANSPILERS expone aliases/no canónicos -> "
+            + ", ".join(extras)
+        )
+
+    return errors
+
+
 
 def main() -> int:
     errors: list[str] = []
@@ -122,6 +159,7 @@ def main() -> int:
 
     errors.extend(validate_transpiler_modules(official_targets))
     errors.extend(validate_no_legacy_aliases_in_public_paths(legacy_aliases))
+    errors.extend(validate_reverse_cli_contract(official_targets, tuple(REVERSE_SCOPE_LANGUAGES)))
 
     if errors:
         print("❌ Validación anti-regresión de targets: FALLÓ", file=sys.stderr)
