@@ -19,6 +19,7 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from scripts.benchmarks.targets_policy import (
+    BINARY_BENCHMARK_METADATA,
     benchmark_backends,
     validate_backend_metadata,
     validate_local_targets_policy,
@@ -44,38 +45,7 @@ fin
 imprimir(x)
 """
 
-BACKEND_METADATA = {
-    "cpp": {
-        "ext": "cpp",
-        "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
-        "run": ["{tmp}/prog_cpp"],
-        "bin": "{tmp}/prog_cpp",
-    },
-    "rust": {
-        "ext": "rs",
-        "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
-        "run": ["{tmp}/prog_rs"],
-        "bin": "{tmp}/prog_rs",
-    },
-    "java": {
-        "ext": "java",
-        "compile": ["javac", "{file}"],
-        "run": ["java", "-cp", "{tmp}", "Main"],
-        "bin": "{tmp}/Main.class",
-    },
-    "asm": {
-        "ext": "s",
-        "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
-        "run": ["{tmp}/prog_asm"],
-        "bin": "{tmp}/prog_asm",
-    },
-    "wasm": {
-        "ext": "wat",
-        "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
-        "run": ["wasmtime", "{tmp}/prog.wasm"],
-        "bin": "{tmp}/prog.wasm",
-    },
-}
+BACKEND_METADATA = BINARY_BENCHMARK_METADATA
 
 def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.

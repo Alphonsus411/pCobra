@@ -20,6 +20,7 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from scripts.benchmarks.targets_policy import (
+    BENCHMARK_BACKEND_METADATA,
     benchmark_backends,
     validate_backend_metadata,
     validate_local_targets_policy,
@@ -46,37 +47,8 @@ fin
 imprimir(x)
 """
 
-# Configuración técnica por backend: extensión y comandos de ejecución
-BACKEND_METADATA = {
-    "python": {"ext": "py", "run": ["python", "{file}"]},
-    "javascript": {"ext": "js", "run": ["node", "{file}"]},
-    "rust": {
-        "ext": "rs",
-        "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
-        "run": ["{tmp}/prog_rs"],
-    },
-    "wasm": {
-        "ext": "wat",
-        "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
-        "run": ["wasmtime", "{tmp}/prog.wasm"],
-    },
-    "go": {"ext": "go", "run": ["go", "run", "{file}"]},
-    "cpp": {
-        "ext": "cpp",
-        "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
-        "run": ["{tmp}/prog_cpp"],
-    },
-    "java": {
-        "ext": "java",
-        "compile": ["javac", "{file}"],
-        "run": ["java", "-cp", "{tmp}", "Main"],
-    },
-    "asm": {
-        "ext": "s",
-        "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
-        "run": ["{tmp}/prog_asm"],
-    },
-}
+# Metadata técnica común por backend (extensiones/comandos)
+BACKEND_METADATA = BENCHMARK_BACKEND_METADATA
 
 def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[float, int]:
     """Ejecuta *cmd* y devuelve ``(tiempo_en_segundos, memoria_en_kb)``.

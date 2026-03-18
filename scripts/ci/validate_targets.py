@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-"""Validaciones anti-regresión para targets oficiales y aliases legacy.
+"""Validaciones anti-regresión para targets oficiales.
 
 Checks:
-1) OFFICIAL_TARGETS (targets.py) == claves de TRANSPILERS (compile_cmd.py).
-2) No existen módulos to_*.py fuera de targets oficiales (considerando aliases legacy).
+1) Igualdad exacta entre ``OFFICIAL_TARGETS`` y las claves efectivas de ``TRANSPILERS``.
+2) No existen módulos ``to_*.py`` fuera de los 8 targets oficiales.
 3) Detección textual de aliases legacy en rutas públicas de CLI/docs de usuario.
 """
 
 from __future__ import annotations
 
-import ast
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TARGETS_FILE = ROOT / "src/pcobra/cobra/transpilers/targets.py"
-COMPILE_CMD_FILE = ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py"
+SRC_ROOT = ROOT / "src"
 TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
+
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.transpilers.targets import LEGACY_TARGET_ALIASES, OFFICIAL_TARGETS
 
 PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py",
@@ -34,82 +38,41 @@ PUBLIC_TEXT_PATHS = (
 LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {}
 
 
-def _literal_eval(node: ast.AST):
-    return ast.literal_eval(node)
-
 
 def read_official_targets_and_aliases() -> tuple[tuple[str, ...], dict[str, str]]:
-    tree = ast.parse(TARGETS_FILE.read_text(encoding="utf-8"), filename=str(TARGETS_FILE))
-    values: dict[str, object] = {}
-
-    for stmt in tree.body:
-        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
-            name = stmt.target.id
-            if stmt.value is None:
-                continue
-            try:
-                values[name] = _literal_eval(stmt.value)
-            except Exception:
-                pass
-        elif isinstance(stmt, ast.Assign):
-            for target in stmt.targets:
-                if isinstance(target, ast.Name):
-                    try:
-                        values[target.id] = _literal_eval(stmt.value)
-                    except Exception:
-                        pass
-
-    official = values.get("OFFICIAL_TARGETS")
-    if not isinstance(official, tuple):
-        # fallback: TIER1 + TIER2
-        tier1 = values.get("TIER1_TARGETS", ())
-        tier2 = values.get("TIER2_TARGETS", ())
-        official = tuple(tier1) + tuple(tier2)
-
-    legacy_aliases = values.get("LEGACY_TARGET_ALIASES", {})
-    if not isinstance(legacy_aliases, dict):
-        legacy_aliases = {}
-
-    return tuple(str(t) for t in official), {str(k): str(v) for k, v in legacy_aliases.items()}
+    return tuple(OFFICIAL_TARGETS), dict(LEGACY_TARGET_ALIASES)
 
 
-def read_transpiler_registry_keys() -> set[str]:
-    tree = ast.parse(COMPILE_CMD_FILE.read_text(encoding="utf-8"), filename=str(COMPILE_CMD_FILE))
-    for stmt in tree.body:
-        if isinstance(stmt, ast.Assign):
-            for target in stmt.targets:
-                if isinstance(target, ast.Name) and target.id == "TRANSPILERS" and isinstance(stmt.value, ast.Dict):
-                    keys = set()
-                    for key in stmt.value.keys:
-                        if isinstance(key, ast.Constant) and isinstance(key.value, str):
-                            keys.add(key.value)
-                    return keys
-    raise RuntimeError("No se pudo leer TRANSPILERS desde compile_cmd.py")
+
+def read_transpiler_registry_keys() -> tuple[str, ...]:
+    return tuple(TRANSPILERS.keys())
 
 
-def validate_transpiler_modules(official: tuple[str, ...], legacy_aliases: dict[str, str]) -> list[str]:
+
+def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
     errors: list[str] = []
-    to_files = sorted(TRANSPILER_DIR.glob("to_*.py"))
+    allowed_suffixes = {"javascript" if target == "javascript" else target for target in official}
+    alias_suffix_map = {"js": "javascript"}
 
-    normalized_allowed = set(official)
-    for alias, canonical in legacy_aliases.items():
-        if canonical in normalized_allowed:
-            normalized_allowed.add(alias)
-
-    for file_path in to_files:
-        suffix = file_path.stem[3:]  # remove to_
-        canonical = legacy_aliases.get(suffix, suffix)
+    for file_path in sorted(TRANSPILER_DIR.glob("to_*.py")):
+        suffix = file_path.stem.removeprefix("to_")
+        canonical = alias_suffix_map.get(suffix, suffix)
         if canonical not in official:
             errors.append(
                 f"{file_path.relative_to(ROOT)}: módulo fuera de OFFICIAL_TARGETS -> to_{suffix}.py"
+            )
+            continue
+        if suffix not in allowed_suffixes and suffix not in alias_suffix_map:
+            errors.append(
+                f"{file_path.relative_to(ROOT)}: sufijo no canónico para target oficial -> to_{suffix}.py"
             )
 
     return errors
 
 
+
 def validate_no_legacy_aliases_in_public_paths(legacy_aliases: dict[str, str]) -> list[str]:
     errors: list[str] = []
-    # Check textual aliases used as target values in CLI/docs.
     alias_group = "|".join(re.escape(alias) for alias in sorted(legacy_aliases))
     if not alias_group:
         return errors
@@ -129,14 +92,15 @@ def validate_no_legacy_aliases_in_public_paths(legacy_aliases: dict[str, str]) -
 
         for line_no, line in enumerate(text.splitlines(), start=1):
             for pat in patterns:
-                m = pat.search(line)
-                if not m:
+                match = pat.search(line)
+                if not match:
                     continue
                 if any(ap.search(line) for ap in allow_patterns):
                     continue
-                errors.append(f"{rel}:{line_no}: alias legacy en ruta pública -> {m.group(1)}")
+                errors.append(f"{rel}:{line_no}: alias legacy en ruta pública -> {match.group(1)}")
 
     return errors
+
 
 
 def main() -> int:
@@ -145,17 +109,18 @@ def main() -> int:
     official_targets, legacy_aliases = read_official_targets_and_aliases()
     transpilers = read_transpiler_registry_keys()
 
-    missing_in_registry = sorted(set(official_targets) - transpilers)
-    extra_in_registry = sorted(transpilers - set(official_targets))
-
-    if missing_in_registry or extra_in_registry:
+    if transpilers != official_targets:
+        missing_in_registry = sorted(set(official_targets) - set(transpilers))
+        extra_in_registry = sorted(set(transpilers) - set(official_targets))
         errors.append("Desalineación OFFICIAL_TARGETS vs TRANSPILERS:")
+        errors.append(f"  - OFFICIAL_TARGETS: {', '.join(official_targets)}")
+        errors.append(f"  - TRANSPILERS: {', '.join(transpilers)}")
         if missing_in_registry:
             errors.append(f"  - faltan en TRANSPILERS: {', '.join(missing_in_registry)}")
         if extra_in_registry:
             errors.append(f"  - sobran en TRANSPILERS: {', '.join(extra_in_registry)}")
 
-    errors.extend(validate_transpiler_modules(official_targets, legacy_aliases))
+    errors.extend(validate_transpiler_modules(official_targets))
     errors.extend(validate_no_legacy_aliases_in_public_paths(legacy_aliases))
 
     if errors:
@@ -166,6 +131,7 @@ def main() -> int:
 
     print("✅ Validación anti-regresión de targets: OK")
     print(f"   OFFICIAL_TARGETS: {', '.join(official_targets)}")
+    print(f"   TRANSPILERS: {', '.join(transpilers)}")
     return 0
 
 
