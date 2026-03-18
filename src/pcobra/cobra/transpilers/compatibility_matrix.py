@@ -14,7 +14,18 @@ from __future__ import annotations
 
 from typing import Final
 
-from pcobra.cobra.transpilers.targets import normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+
+CONTRACT_FEATURES: Final[tuple[str, ...]] = (
+    "holobit",
+    "proyectar",
+    "transformar",
+    "graficar",
+    "corelibs",
+    "standard_library",
+)
+VALID_COMPATIBILITY_LEVELS: Final[tuple[str, ...]] = ("none", "partial", "full")
+VALID_TIERS: Final[tuple[str, ...]] = ("tier1", "tier2")
 
 BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     "python": {
@@ -207,6 +218,82 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
 }
 
+
+def _validate_contract_shape(name: str, matrix: dict[str, dict[str, str]]) -> None:
+    missing_backends = [backend for backend in OFFICIAL_TARGETS if backend not in matrix]
+    if missing_backends:
+        raise RuntimeError(
+            f"{name} no define compatibilidad para backends oficiales: {missing_backends}"
+        )
+
+    extra_backends = sorted(set(matrix) - set(OFFICIAL_TARGETS))
+    if extra_backends:
+        raise RuntimeError(
+            f"{name} contiene backends no oficiales o sin registrar: {extra_backends}"
+        )
+
+    for backend, contract in matrix.items():
+        if contract.get("tier") not in VALID_TIERS:
+            raise RuntimeError(
+                f"{name}[{backend}] tiene tier inválido: {contract.get('tier')!r}"
+            )
+
+        missing_features = [
+            feature for feature in CONTRACT_FEATURES if feature not in contract
+        ]
+        if missing_features:
+            raise RuntimeError(
+                f"{name}[{backend}] no define features requeridas: {missing_features}"
+            )
+
+        extra_features = sorted(
+            set(contract) - {"tier", *CONTRACT_FEATURES}
+        )
+        if extra_features:
+            raise RuntimeError(
+                f"{name}[{backend}] contiene features no reconocidas: {extra_features}"
+            )
+
+        for feature in CONTRACT_FEATURES:
+            level = contract[feature]
+            if level not in VALID_COMPATIBILITY_LEVELS:
+                raise RuntimeError(
+                    f"{name}[{backend}][{feature}] tiene nivel inválido: {level!r}"
+                )
+
+
+def validate_backend_compatibility_contract() -> None:
+    """Valida que la matriz pública y su mínimo requerido no se desalineen."""
+    _validate_contract_shape("BACKEND_COMPATIBILITY", BACKEND_COMPATIBILITY)
+    _validate_contract_shape(
+        "MIN_REQUIRED_BACKEND_COMPATIBILITY",
+        MIN_REQUIRED_BACKEND_COMPATIBILITY,
+    )
+
+    for backend in OFFICIAL_TARGETS:
+        actual = BACKEND_COMPATIBILITY[backend]
+        required = MIN_REQUIRED_BACKEND_COMPATIBILITY[backend]
+        if actual["tier"] != required["tier"]:
+            raise RuntimeError(
+                f"Tier contractual inconsistente para {backend}: "
+                f"{actual['tier']} != {required['tier']}"
+            )
+
+        for feature in CONTRACT_FEATURES:
+            actual_level = actual[feature]
+            required_level = required[feature]
+            if (
+                COMPATIBILITY_LEVEL_ORDER[actual_level]
+                < COMPATIBILITY_LEVEL_ORDER[required_level]
+            ):
+                raise RuntimeError(
+                    f"Regresión contractual en {backend}.{feature}: "
+                    f"{actual_level} < {required_level}"
+                )
+
+
+validate_backend_compatibility_contract()
+
 def get_backend_compatibility(backend: str) -> dict[str, str] | None:
     """Obtiene compatibilidad por backend aplicando normalización canónica."""
     return BACKEND_COMPATIBILITY.get(normalize_target_name(backend, allow_legacy_aliases=True))
@@ -222,6 +309,8 @@ __all__ = [
     "MIN_REQUIRED_BACKEND_COMPATIBILITY",
     "COMPATIBILITY_LEVEL_ORDER",
     "BACKEND_COMPATIBILITY_NOTES",
+    "CONTRACT_FEATURES",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
+    "validate_backend_compatibility_contract",
 ]

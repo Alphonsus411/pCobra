@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Union
 
 from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.transpilers.compatibility_matrix import CONTRACT_FEATURES
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
@@ -64,6 +65,57 @@ STANDARD_IMPORTS = {
     "asm": [
         "; backend asm: imports de runtime administrados externamente",
     ],
+}
+
+HOOK_SIGNATURE_MARKERS = {
+    "python": {
+        "holobit": "def cobra_holobit(",
+        "proyectar": "def cobra_proyectar(",
+        "transformar": "def cobra_transformar(",
+        "graficar": "def cobra_graficar(",
+    },
+    "javascript": {
+        "holobit": "function cobra_holobit(",
+        "proyectar": "function cobra_proyectar(",
+        "transformar": "function cobra_transformar(",
+        "graficar": "function cobra_graficar(",
+    },
+    "rust": {
+        "holobit": "fn cobra_holobit(",
+        "proyectar": "fn cobra_proyectar(",
+        "transformar": "fn cobra_transformar(",
+        "graficar": "fn cobra_graficar(",
+    },
+    "go": {
+        "holobit": "func cobraHolobit(",
+        "proyectar": "func cobraProyectar(",
+        "transformar": "func cobraTransformar(",
+        "graficar": "func cobraGraficar(",
+    },
+    "cpp": {
+        "holobit": "inline auto cobra_holobit(",
+        "proyectar": "inline void cobra_proyectar(",
+        "transformar": "inline void cobra_transformar(",
+        "graficar": "inline void cobra_graficar(",
+    },
+    "java": {
+        "holobit": "private static Object cobraHolobit(",
+        "proyectar": "private static void cobraProyectar(",
+        "transformar": "private static void cobraTransformar(",
+        "graficar": "private static void cobraGraficar(",
+    },
+    "wasm": {
+        "holobit": "(func $cobra_holobit",
+        "proyectar": "(func $cobra_proyectar",
+        "transformar": "(func $cobra_transformar",
+        "graficar": "(func $cobra_graficar",
+    },
+    "asm": {
+        "holobit": "cobra_holobit:",
+        "proyectar": "cobra_proyectar:",
+        "transformar": "cobra_transformar:",
+        "graficar": "cobra_graficar:",
+    },
 }
 
 
@@ -208,11 +260,51 @@ RUNTIME_HOOKS = {
     ],
 }
 
-for _target in OFFICIAL_TARGETS:
-    if _target not in STANDARD_IMPORTS:
-        raise RuntimeError(f"STANDARD_IMPORTS no define entradas para target '{_target}'")
-    if _target not in RUNTIME_HOOKS:
-        raise RuntimeError(f"RUNTIME_HOOKS no define entradas para target '{_target}'")
+def validate_runtime_contracts() -> None:
+    """Valida imports/hooks de runtime para todos los backends oficiales."""
+    holobit_features = CONTRACT_FEATURES[:4]
+    for target in OFFICIAL_TARGETS:
+        if target not in STANDARD_IMPORTS:
+            raise RuntimeError(
+                f"STANDARD_IMPORTS no define entradas para target '{target}'"
+            )
+        if target not in RUNTIME_HOOKS:
+            raise RuntimeError(
+                f"RUNTIME_HOOKS no define entradas para target '{target}'"
+            )
+        if target not in HOOK_SIGNATURE_MARKERS:
+            raise RuntimeError(
+                f"HOOK_SIGNATURE_MARKERS no define firmas para target '{target}'"
+            )
+
+        imports = STANDARD_IMPORTS[target]
+        if isinstance(imports, str):
+            if not imports.strip():
+                raise RuntimeError(
+                    f"STANDARD_IMPORTS['{target}'] no puede ser una cadena vacía"
+                )
+        elif not imports:
+            raise RuntimeError(
+                f"STANDARD_IMPORTS['{target}'] no puede ser una lista vacía"
+            )
+
+        hooks = RUNTIME_HOOKS[target]
+        if not hooks:
+            raise RuntimeError(
+                f"RUNTIME_HOOKS['{target}'] debe definir hooks cobra_* para Holobit"
+            )
+
+        hook_blob = "\n".join(hooks)
+        for feature in holobit_features:
+            marker = HOOK_SIGNATURE_MARKERS[target][feature]
+            if marker not in hook_blob:
+                raise RuntimeError(
+                    f"RUNTIME_HOOKS['{target}'] no contiene la firma esperada "
+                    f"para {feature}: {marker}"
+                )
+
+
+validate_runtime_contracts()
 
 
 def save_file(content: Union[str, List[str]], path: str) -> None:
@@ -257,4 +349,6 @@ __all__ = [
     "load_mapped_module",
     "STANDARD_IMPORTS",
     "RUNTIME_HOOKS",
+    "HOOK_SIGNATURE_MARKERS",
+    "validate_runtime_contracts",
 ]
