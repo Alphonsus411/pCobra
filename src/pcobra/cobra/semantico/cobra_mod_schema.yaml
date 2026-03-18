@@ -15,10 +15,6 @@ patternProperties:
       js:
         type: string
         deprecated: true
-    anyOf:
-      - required: [python]
-      - required: [javascript]
-      - required: [js]
 properties:
   lock:
     type: object

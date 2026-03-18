@@ -12,6 +12,7 @@ comprobaciones incluyen:
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 from typing import Any, Dict
@@ -167,6 +168,30 @@ def _required_targets_from_policy() -> tuple[str, ...]:
     return tuple(normalized) if normalized else DEFAULT_REQUIRED_TARGETS
 
 
+def _schema_without_backend_presence_requirements(
+    schema: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Devuelve una copia del esquema sin requisitos estáticos de backends.
+
+    La presencia de rutas backend se valida después mediante la política del
+    proyecto (`required_targets`), por lo que el esquema solo debe comprobar
+    forma y tipos básicos.
+    """
+    if schema is None:
+        return None
+
+    sanitized = copy.deepcopy(schema)
+    pattern_properties = sanitized.get("patternProperties")
+    if not isinstance(pattern_properties, dict):
+        return sanitized
+
+    for module_schema in pattern_properties.values():
+        if isinstance(module_schema, dict):
+            module_schema.pop("anyOf", None)
+
+    return sanitized
+
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -185,7 +210,10 @@ def validar_mod(path: str | None = None) -> None:
         )
     else:
         try:
-            validate(instance=datos, schema=SCHEMA)
+            validate(
+                instance=datos,
+                schema=_schema_without_backend_presence_requirements(SCHEMA),
+            )
         except ValidationError as e:
             raise ValueError(f"Archivo cobra.mod inválido: {e.message}") from None
 
