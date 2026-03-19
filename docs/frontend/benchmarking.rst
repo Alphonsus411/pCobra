@@ -60,6 +60,10 @@ Resultados recientes
 Los benchmarks pueden ejecutarse con ``cobra bench``. El siguiente
 resumen se obtuvo con ``scripts/benchmarks/compare_backends.py``.
 
+La selección de backends y los nombres mostrados en reportes públicos deben
+seguir la política oficial definida en ``src/pcobra/cobra/transpilers/targets.py``.
+
+
 Las cifras que se muestran a continuación corresponden a Cobra 9.0.
 
 También puedes ejecutar el script manualmente:
@@ -80,7 +84,7 @@ También puedes ejecutar el script manualmente:
    * - python
      - 0.10
      - 0
-   * - js
+   * - javascript
      - 0.05
      - 0
 

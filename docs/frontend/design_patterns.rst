@@ -48,7 +48,7 @@ Fábrica de transpiladores
 ------------------------
 
 El comando ``compilar`` utiliza un diccionario ``TRANSPILERS`` como
-fábrica de transpiladores. Cada entrada asocia un alias con la clase que
+fábrica de transpiladores. Cada entrada asocia el nombre canónico del target con la clase que
 implementa la conversión de AST a un lenguaje concreto.
 Los transpiladores externos se registran a través de *entry points* y se
 agregan al diccionario al iniciar el comando.
@@ -57,7 +57,7 @@ agregan al diccionario al iniciar el comando.
 
    TRANSPILERS = {
        "python": TranspiladorPython,
-       "js": TranspiladorJavaScript,
+       "javascript": TranspiladorJavaScript,
        ...
    }
 
