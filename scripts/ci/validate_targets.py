@@ -11,7 +11,6 @@ Checks:
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
@@ -21,6 +20,8 @@ TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
 
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
@@ -29,33 +30,12 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
     REVERSE_TRANSPILERS,
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
-from pcobra.cobra.transpilers.targets import LEGACY_TARGET_ALIASES, OFFICIAL_TARGETS
-
-PUBLIC_TEXT_PATHS = (
-    ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py",
-    ROOT / "src/pcobra/cobra/cli/target_policies.py",
-    ROOT / "src/pcobra/cobra/cli/commands/benchmarks_cmd.py",
-    ROOT / "README.md",
-    ROOT / "docs/config_cli.md",
-    ROOT / "docs/lenguajes_soportados.rst",
-    ROOT / "docs/targets_policy.md",
-    ROOT / "docs/frontend/index.rst",
-    ROOT / "docs/frontend/avances.rst",
-    ROOT / "docs/frontend/backends.rst",
-    ROOT / "docs/frontend/benchmarking.rst",
-    ROOT / "docs/frontend/cli.rst",
-    ROOT / "docs/frontend/ejemplos.rst",
-    ROOT / "docs/frontend/hololang.rst",
-    ROOT / "docs/frontend/referencia.rst",
+from scripts.targets_policy_common import (
+    LEGACY_ALIAS_ALLOWLIST,
+    PUBLIC_TEXT_PATHS,
+    build_legacy_alias_patterns,
+    read_target_policy,
 )
-
-LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {}
-
-
-
-def read_official_targets_and_aliases() -> tuple[tuple[str, ...], dict[str, str]]:
-    return tuple(OFFICIAL_TARGETS), dict(LEGACY_TARGET_ALIASES)
-
 
 
 def read_transpiler_registry_keys() -> tuple[str, ...]:
@@ -87,15 +67,9 @@ def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
 
 def validate_no_legacy_aliases_in_public_paths(legacy_aliases: dict[str, str]) -> list[str]:
     errors: list[str] = []
-    alias_group = "|".join(re.escape(alias) for alias in sorted(legacy_aliases))
-    if not alias_group:
+    patterns = build_legacy_alias_patterns(legacy_aliases)
+    if not patterns:
         return errors
-
-    patterns = (
-        re.compile(rf"\b(?:--(?:tipo|tipos|backend|origen|destino)\s+|--(?:tipo|tipos|backend|origen|destino)=)({alias_group})\b", re.IGNORECASE),
-        re.compile(rf"['\"]({alias_group})['\"]", re.IGNORECASE),
-        re.compile(rf"``({alias_group})``", re.IGNORECASE),
-    )
 
     for path in PUBLIC_TEXT_PATHS:
         if not path.exists():
@@ -149,7 +123,9 @@ def validate_reverse_cli_contract(
 def main() -> int:
     errors: list[str] = []
 
-    official_targets, legacy_aliases = read_official_targets_and_aliases()
+    policy = read_target_policy()
+    official_targets = policy["official_targets"]
+    legacy_aliases = policy["legacy_aliases"]
     transpilers = read_transpiler_registry_keys()
 
     if transpilers != official_targets:
@@ -174,6 +150,8 @@ def main() -> int:
         return 1
 
     print("✅ Validación anti-regresión de targets: OK")
+    print(f"   Tier 1: {', '.join(policy['tier1_targets'])}")
+    print(f"   Tier 2: {', '.join(policy['tier2_targets'])}")
     print(f"   OFFICIAL_TARGETS: {', '.join(official_targets)}")
     print(f"   TRANSPILERS: {', '.join(transpilers)}")
     return 0
