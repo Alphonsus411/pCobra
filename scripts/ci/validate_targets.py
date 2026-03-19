@@ -38,9 +38,15 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "README.md",
     ROOT / "docs/config_cli.md",
     ROOT / "docs/lenguajes_soportados.rst",
+    ROOT / "docs/targets_policy.md",
     ROOT / "docs/frontend/index.rst",
     ROOT / "docs/frontend/avances.rst",
+    ROOT / "docs/frontend/backends.rst",
+    ROOT / "docs/frontend/benchmarking.rst",
+    ROOT / "docs/frontend/cli.rst",
     ROOT / "docs/frontend/ejemplos.rst",
+    ROOT / "docs/frontend/hololang.rst",
+    ROOT / "docs/frontend/referencia.rst",
 )
 
 LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {}

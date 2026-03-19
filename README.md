@@ -24,6 +24,10 @@ Tiers oficiales de soporte de backends:
 
 La fuente de verdad para esta clasificación es `src/pcobra/cobra/transpilers/targets.py`.
 
+### Política de targets oficial
+
+La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/transpilers/targets.py`, que actúa como fuente única de verdad del proyecto.
+
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
 
@@ -118,7 +122,7 @@ La cadena de herramientas de Cobra se articula alrededor de Hololang, un lenguaj
 2. Ese AST se normaliza y se transforma en representaciones Hololang que capturan estructuras de control, módulos y tipos.
 3. Los transpiladores consumen el IR Hololang para generar código en los distintos backends soportados.
 
-Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador de ensamblador que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. El comando `cobra transpilar` puede emitir directamente los ficheros Hololang o derivarlos a `asm` para obtener la salida en ensamblador.
+Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador de ensamblador que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. El comando `cobra transpilar` puede emitir directamente los ficheros Hololang o derivarlos al target canónico `asm` para obtener la salida correspondiente.
 
 ## Instalación
 
@@ -319,7 +323,7 @@ El proyecto soporta oficialmente:
 # Características Principales
 
 - Lexer y Parser: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
-- Transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Java y WebAssembly: Cobra puede convertir el código en estos lenguajes, facilitando su integración con aplicaciones externas.
+- Transpiladores a Python, JavaScript, `asm`, Rust, C++, Go, Java y WebAssembly: Cobra puede convertir el código en estos targets oficiales, facilitando su integración con aplicaciones externas.
 - Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
 - Módulos nativos con funciones de E/S, utilidades matemáticas y estructuras de datos para usar directamente desde Cobra.
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
@@ -567,7 +571,7 @@ para var i en rango(2) :
 '''
 ````
 
-Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el modo ensamblador se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println` y en Java se usa `System.out.println`.
+Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el target `asm` se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En C++ se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en C++. En Go se genera `fmt.Println` y en Java se usa `System.out.println`.
 
 ## Integración con holobit-sdk
 
@@ -642,7 +646,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 ## Invocar el transpilador
 
 La carpeta [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler)
-contiene la implementación de los transpiladores a Python, JavaScript, ensamblador, Rust, C++, Go, Java y WebAssembly. Una vez
+contiene la implementación de los transpiladores a Python, JavaScript, `asm`, Rust, C++, Go, Java y WebAssembly. Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
 
