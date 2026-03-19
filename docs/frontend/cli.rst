@@ -33,6 +33,15 @@ Otro ejemplo generando varios lenguajes a la vez:
 
    cobra compilar hola.co --tipos=python,javascript,cpp
 
+Política de targets oficial
+---------------------------
+
+Los nombres canónicos disponibles para ``cobra compilar`` son ``python``,
+``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``. Los
+tiers oficiales son Tier 1 (``python``, ``rust``, ``javascript``, ``wasm``) y
+Tier 2 (``go``, ``cpp``, ``java``, ``asm``), con fuente de verdad en
+``src/pcobra/cobra/transpilers/targets.py``.
+
 Subcomando ``ejecutar``
 ----------------------
 Ejecuta directamente un script Cobra.

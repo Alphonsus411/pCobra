@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detecta usos de aliases legacy de lenguajes en tests/documentación."""
+"""Detecta usos de aliases legacy de targets en rutas públicas y tests."""
 from __future__ import annotations
 
 import re
@@ -9,12 +9,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCAN_DIRS = ("tests", "docs", "examples/hello_world")
 FILE_EXTS = {".py", ".md", ".rst", ".txt", ".yml", ".yaml"}
+PUBLIC_DOC_GLOBS = (
+    "README.md",
+    "docs/*.md",
+    "docs/*.rst",
+    "docs/frontend/*.rst",
+)
+LEGACY_ALIASES = {
+    "js": "javascript",
+    "ensamblador": "asm",
+}
 
 # Allowlist explícita para casos en los que el alias legacy se prueba/documenta
 # intencionalmente (compatibilidad retroactiva).
 ALLOWLIST = {
     "docs/targets_policy.md",
-    "docs/lenguajes_soportados.rst",
     "tests/unit/test_cli_target_aliases.py",
     "tests/unit/test_target_policies.py",
     "tests/unit/test_reverse_scope_docs_consistency.py",
@@ -48,15 +57,18 @@ ALLOWLIST = {
     "tests/unit/test_to_js.py",
     "tests/unit/test_module_map_errors.py",
     "tests/unit/test_benchmarks2_cmd.py",
-    "docs/frontend/design_patterns.rst",
     "tests/integration/test_transpile_semantics.py",
     "tests/integration/test_cross_backend_output.py",
     "tests/integration/test_end_to_end.py",
 }
 
 PATTERNS = [
-    re.compile(r"(['\"])js\1"),
-    re.compile(r"--(?:tipo|tipos|to|destino|contenedor|lenguajes)(?:=|\s+[^\n]*\s)js\b"),
+    re.compile(r'([\'"])(js|ensamblador)\1', re.IGNORECASE),
+    re.compile(r"``(js|ensamblador)``", re.IGNORECASE),
+    re.compile(
+        r"\b(?:--(?:tipo|tipos|to|destino|contenedor|lenguajes|backend|origen)(?:=|\s+))(js|ensamblador)\b",
+        re.IGNORECASE,
+    ),
 ]
 
 
@@ -70,24 +82,41 @@ def iter_files():
                 yield path
 
 
+def iter_public_doc_paths() -> set[Path]:
+    paths: set[Path] = set()
+    for pattern in PUBLIC_DOC_GLOBS:
+        paths.update(path for path in ROOT.glob(pattern) if path.is_file())
+    return paths
+
+
 def main() -> int:
     errors: list[str] = []
+    public_doc_paths = iter_public_doc_paths()
     for path in iter_files():
         rel = path.relative_to(ROOT).as_posix()
         if rel in ALLOWLIST:
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
-        lines = text.splitlines()
-        for i, line in enumerate(lines, start=1):
-            if ".js" in line:
-                line_for_check = line.replace(".js", "")
-            else:
-                line_for_check = line
-            if any(p.search(line_for_check) for p in PATTERNS):
-                errors.append(f"{rel}:{i}: uso legacy detectado -> {line.strip()}")
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            line_for_check = line.replace('.js', '')
+            for pattern in PATTERNS:
+                match = pattern.search(line_for_check)
+                if not match:
+                    continue
+                alias = match.group(2) if match.lastindex and match.lastindex >= 2 else match.group(1)
+                context = (
+                    'ruta pública de documentación'
+                    if path in public_doc_paths
+                    else 'ruta escaneada'
+                )
+                canonical = LEGACY_ALIASES.get(alias.lower(), '?')
+                errors.append(
+                    f"{rel}:{line_no}: uso legacy detectado en {context} -> {alias} (usar {canonical})"
+                )
+                break
 
     if errors:
-        print("Se detectaron aliases legacy ('js') fuera de la allowlist:")
+        print("Se detectaron aliases legacy fuera de la allowlist:")
         for err in errors:
             print(f"- {err}")
         return 1

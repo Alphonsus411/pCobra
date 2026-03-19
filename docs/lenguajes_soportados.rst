@@ -49,12 +49,15 @@ Tier 2 (soporte parcial/experimental)
      - Cobertura básica
 
 
-Regla de fuente única para targets oficiales
--------------------------------------------
+Política de targets oficial
+----------------------------
 
 Los targets oficiales de salida tienen una única fuente de verdad en
 ``src/pcobra/cobra/transpilers/targets.py`` mediante las constantes
-``TIER1_TARGETS``, ``TIER2_TARGETS`` y ``OFFICIAL_TARGETS``.
+``TIER1_TARGETS``, ``TIER2_TARGETS`` y ``OFFICIAL_TARGETS``. Toda la
+documentación pública debe usar únicamente los nombres canónicos
+``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y
+``asm``.
 
 Reglas del proyecto:
 
@@ -62,6 +65,8 @@ Reglas del proyecto:
   registro canónico de transpiladores, sin listas hardcodeadas duplicadas.
 - Los scripts de benchmark y validación CI deben importar utilidades comunes
   basadas en esa misma política, en lugar de redefinir targets por separado.
+- Los aliases legacy o targets retirados no deben aparecer en snippets de CLI,
+  tablas ni texto narrativo de la documentación pública.
 - No deben existir módulos ``to_*.py`` fuera de los 8 backends oficiales.
 
 Transpilación inversa (feature independiente)

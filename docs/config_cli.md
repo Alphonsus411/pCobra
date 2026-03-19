@@ -64,11 +64,14 @@ asm = "build/modulo.asm"
 - Para proyectos que solo distribuyen un subconjunto de backends, ajusta
   explícitamente `required_targets` para evitar errores de validación.
 
-## Regla de consistencia de targets oficiales
+## Política de targets oficial
 
 La CLI no debe mantener listas duplicadas de lenguajes soportados. La fuente de
 verdad para los targets oficiales es `src/pcobra/cobra/transpilers/targets.py`
-a través de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS`.
+a través de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS`. La
+documentación pública y los archivos de configuración deben usar únicamente los
+nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y
+`asm`.
 
 En consecuencia:
 
