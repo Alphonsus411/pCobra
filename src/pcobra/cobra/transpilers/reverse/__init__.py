@@ -10,7 +10,6 @@ from typing import Dict, List, Type
 
 from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 from pcobra.cobra.transpilers.reverse.policy import (
-    REVERSE_SCOPE_ALIASES,
     REVERSE_SCOPE_LANGUAGES,
     REVERSE_SCOPE_MODULES,
     normalize_reverse_language,
@@ -123,18 +122,14 @@ INCOMPLETE_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
 
 REGISTERED_REVERSE_TRANSPILERS: Dict[str, Type[BaseReverseTranspiler]] = {
     normalize_reverse_language(
-        getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower()
+        getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower(),
     ): cls
     for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS
     if normalize_reverse_language(
-        getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower()
+        getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower(),
     )
     in REVERSE_SCOPE_LANGUAGES
 }
-
-for alias, canonical in REVERSE_SCOPE_ALIASES.items():
-    if canonical in REGISTERED_REVERSE_TRANSPILERS:
-        REGISTERED_REVERSE_TRANSPILERS.setdefault(alias, REGISTERED_REVERSE_TRANSPILERS[canonical])
 
 __all__ = ["BaseReverseTranspiler", "TreeSitterReverseTranspiler"] + [
     cls.__name__ for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS

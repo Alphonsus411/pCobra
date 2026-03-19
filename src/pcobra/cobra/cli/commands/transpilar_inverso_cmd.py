@@ -24,7 +24,10 @@ else:
 ValidationError = _FallbackValidationError
 
 import pcobra.cobra.transpilers.reverse as reverse_module
-from pcobra.cobra.transpilers.reverse.policy import normalize_reverse_language
+from pcobra.cobra.transpilers.reverse.policy import (
+    normalize_reverse_language,
+    parse_reverse_source_language,
+)
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
@@ -81,15 +84,12 @@ def _validate_official_target_or_raise(target: str, *, context: str) -> str:
 def validar_consistencia_reverse_transpilers() -> None:
     """Valida que la CLI y el registro interno compartan la misma política."""
     policy = set(reverse_module.REVERSE_SCOPE_LANGUAGES)
-    aliases = set(getattr(reverse_module, "REVERSE_SCOPE_ALIASES", {}).keys())
     registry = set(reverse_module.REGISTERED_REVERSE_TRANSPILERS.keys())
     cli = set(REVERSE_TRANSPILERS.keys())
-    allowed = policy | aliases
-    if cli != registry or not registry.issubset(allowed):
+    if cli != registry or not registry.issubset(policy):
         raise RuntimeError(
             "Inconsistencia de reverse transpilers: "
-            f"policy={sorted(policy)}, aliases={sorted(aliases)}, "
-            f"registry={sorted(registry)}, cli={sorted(cli)}"
+            f"policy={sorted(policy)}, registry={sorted(registry)}, cli={sorted(cli)}"
         )
 
 
@@ -136,7 +136,8 @@ class TranspilarInversoCommand(BaseCommand):
             CustomArgumentParser: Parser configurado para el subcomando
         """
         parser = subparsers.add_parser(
-            self.name, help=_("Transpila desde un lenguaje origen a otro destino")
+            self.name,
+            help=_("Convierte desde un origen reverse soportado hacia un target oficial"),
         )
         parser.add_argument(
             "archivo",
@@ -144,14 +145,22 @@ class TranspilarInversoCommand(BaseCommand):
         )
         parser.add_argument(
             "--origen",
-            help=_("Lenguaje de origen del código fuente ({})").format(
+            help=_(
+                "Lenguaje de origen soportado por reverse transpilation "
+                "(solo canónicos: {})"
+            ).format(
                 ", ".join(ORIGIN_CHOICES)
             ),
             required=True,
+            type=parse_reverse_source_language,
+            choices=ORIGIN_CHOICES,
         )
         parser.add_argument(
             "--destino",
-            help=_("Lenguaje de destino para la transpilación ({targets})").format(
+            help=_(
+                "Lenguaje destino usando exclusivamente OFFICIAL_TARGETS "
+                "({targets})"
+            ).format(
                 targets=TARGETS_HELP
             ),
             required=True,

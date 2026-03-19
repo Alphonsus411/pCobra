@@ -61,6 +61,20 @@ def test_transpilar_inverso_falla_con_destino_fuera_de_targets_oficiales(languag
         ])
 
 
+def test_transpilar_inverso_falla_con_origen_fuera_del_scope_reverse():
+    parser = _build_parser_for(TranspilarInversoCommand())
+
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "transpilar-inverso",
+            "archivo.py",
+            "--origen",
+            "js",
+            "--destino",
+            "python",
+        ])
+
+
 @pytest.mark.parametrize("language", INVALID_LANGUAGES)
 def test_verify_rechaza_lenguajes_fuera_del_runtime_soportado(language):
     verify = VerifyCommand()

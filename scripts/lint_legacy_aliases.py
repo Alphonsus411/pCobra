@@ -18,6 +18,8 @@ ALLOWLIST = {
     "tests/unit/test_cli_target_aliases.py",
     "tests/unit/test_target_policies.py",
     "tests/unit/test_reverse_scope_docs_consistency.py",
+    "tests/unit/test_cli_transpilar_inverso_cmd.py",
+    "tests/unit/test_cli_official_language_restrictions.py",
     "tests/unit/test_compile_cmd_target_choices_aliases.py",
     "tests/unit/test_compile_backend_registration.py",
     "tests/unit/test_mod_validator.py",
