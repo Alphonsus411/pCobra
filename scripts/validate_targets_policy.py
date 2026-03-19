@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
-"""Valida que los targets mencionados respeten la política oficial (lista blanca).
+"""Valida que los targets mencionados respeten la política oficial vigente.
 
-Política oficial de targets permitidos:
-- python
-- rust
-- javascript / js
-- wasm
-- go
-- cpp
-- java
-- asm
+Política oficial pública:
+- Tier 1: python, rust, javascript, wasm
+- Tier 2: go, cpp, java, asm
 
-El escaneo cubre rutas clave del repositorio y permite excepciones históricas
-explícitas/documentadas para no bloquear referencias archivísticas preexistentes.
+La fuente de verdad es ``src/pcobra/cobra/transpilers/targets.py``. Los aliases
+legacy solo se toleran como compatibilidad interna controlada y nunca como
+nombres canónicos públicos.
 """
 
 from __future__ import annotations
@@ -25,8 +20,14 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TARGET_ALIASES
+from scripts.targets_policy_common import (
+    LEGACY_ALIAS_ALLOWLIST,
+    PUBLIC_TEXT_PATH_STRS,
+    read_target_policy,
+)
 
 # Rutas clave a escanear según política.
 SCAN_ROOTS = (
@@ -100,28 +101,10 @@ LOCKFILES = {
     "Cargo.lock",
 }
 
-# Lista blanca de términos/alias permitidos para targets.
-ALLOWED_TARGET_ALIASES = {
-    *OFFICIAL_TARGETS,
-    *TARGET_ALIASES.keys(),
-    "c++",  # Alias textual común de cpp.
-    "assembly",  # Alias de asm.
-    "ensamblador",  # Alias de asm en español.
-}
-
-# Diccionario de aliases/lenguajes conocidos para detectar restos fuera de política.
-# Nota: NO es una lista negra de prohibidos, sino un catálogo de términos de lenguaje
-# conocidos; la validación real la decide ALLOWED_TARGET_ALIASES.
-KNOWN_LANGUAGE_ALIASES = {
-    # Dominios permitidos en la política vigente
-    *ALLOWED_TARGET_ALIASES,
-    # Términos fuera de alcance que queremos bloquear explícitamente.
-    "kotlin",
-    "swift",
-    "ruby",
-    "julia",
-    "matlab",
-}
+# Catálogo amplio para detectar nomenclatura obsoleta o fuera de política.
+# La aceptación real se decide en tiempo de validación según si el término es
+# canónico público, alias legacy interno o término completamente fuera de política.
+KNOWN_LANGUAGE_ALIASES: set[str] | None = None
 
 # Excepciones históricas explícitas (archivo + patrón + motivo).
 # Se usan para no bloquear PRs por referencias archivísticas preexistentes.
@@ -173,10 +156,6 @@ HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
     ),
 }
 
-LANGUAGE_PATTERN = re.compile(
-    r"(?<![\w#.+-])(" + "|".join(sorted(re.escape(t) for t in KNOWN_LANGUAGE_ALIASES)) + r")(?![\w#.+-])",
-    re.IGNORECASE,
-)
 
 
 def is_text_file(path: Path) -> bool:
@@ -196,6 +175,7 @@ def is_text_file(path: Path) -> bool:
         return False
 
     return True
+
 
 
 def iter_scan_files(root: Path) -> list[Path]:
@@ -220,6 +200,7 @@ def iter_scan_files(root: Path) -> list[Path]:
     return files
 
 
+
 def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]:
     rules = HISTORICAL_EXCEPTIONS.get(rel_path)
     if not rules:
@@ -232,17 +213,45 @@ def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]
     return False, None
 
 
+
+def is_allowed_legacy_public_line(rel_path: str, line: str) -> bool:
+    if rel_path not in PUBLIC_TEXT_PATH_STRS:
+        return True
+    allow_patterns = LEGACY_ALIAS_ALLOWLIST.get(rel_path, ())
+    return any(pattern.search(line) for pattern in allow_patterns)
+
+
+
 def main() -> int:
-    root = ROOT
+    policy = read_target_policy()
+    tier1_targets = policy["tier1_targets"]
+    tier2_targets = policy["tier2_targets"]
+    official_targets = policy["official_targets"]
+    public_names = set(policy["public_names"])
+    legacy_aliases = set(policy["legacy_aliases"])
+    non_canonical_public_names = dict(policy["non_canonical_public_names"])
+    out_of_policy_terms = set(policy["out_of_policy_language_terms"])
+    known_language_aliases = public_names | legacy_aliases | set(non_canonical_public_names) | out_of_policy_terms
+    language_pattern = re.compile(
+        r"(?<![\w#.+-])("
+        + "|".join(sorted(re.escape(term) for term in known_language_aliases))
+        + r")(?![\w#.+-])",
+        re.IGNORECASE,
+    )
+
     errors: list[str] = []
 
-    for path in iter_scan_files(root):
+    for path in iter_scan_files(ROOT):
         if not is_text_file(path):
             continue
 
-        rel = path.relative_to(root).as_posix()
+        rel = path.relative_to(ROOT).as_posix()
 
-        if rel == "scripts/validate_targets_policy.py":
+        if rel in {
+            "scripts/validate_targets_policy.py",
+            "scripts/ci/validate_targets.py",
+            "scripts/targets_policy_common.py",
+        }:
             continue
 
         try:
@@ -252,10 +261,29 @@ def main() -> int:
             continue
 
         for line_no, line in enumerate(content.splitlines(), start=1):
-            for match in LANGUAGE_PATTERN.finditer(line):
+            for match in language_pattern.finditer(line):
                 term = match.group(1)
                 normalized = term.lower().strip()
-                if normalized in ALLOWED_TARGET_ALIASES:
+
+                if normalized in public_names:
+                    continue
+
+                if normalized in legacy_aliases:
+                    if rel not in PUBLIC_TEXT_PATH_STRS or is_allowed_legacy_public_line(rel, line):
+                        continue
+                    errors.append(
+                        f"{rel}:{line_no}: alias legacy expuesto como nombre público -> '{term}' "
+                        f"(canónicos públicos: {', '.join(official_targets)})"
+                    )
+                    continue
+
+                if normalized in non_canonical_public_names:
+                    if rel not in PUBLIC_TEXT_PATH_STRS:
+                        continue
+                    errors.append(
+                        f"{rel}:{line_no}: nombre público no canónico -> '{term}' "
+                        f"(usar: {non_canonical_public_names[normalized]}; canónicos públicos: {', '.join(official_targets)})"
+                    )
                     continue
 
                 exempted, reason = is_historical_exception(rel, line)
@@ -263,8 +291,9 @@ def main() -> int:
                     continue
 
                 errors.append(
-                    f"{rel}:{line_no}: referencia fuera de política -> '{term}'"
-                    f" (permitidos: {', '.join(OFFICIAL_TARGETS)}; aliases: {', '.join(sorted(TARGET_ALIASES))})"
+                    f"{rel}:{line_no}: referencia fuera de política -> '{term}' "
+                    f"(tier1: {', '.join(tier1_targets)}; tier2: {', '.join(tier2_targets)}; "
+                    f"canónicos públicos: {', '.join(official_targets)})"
                 )
 
     if errors:
@@ -280,6 +309,9 @@ def main() -> int:
         return 1
 
     print("✅ Validación de política de targets: OK")
+    print(f"   Tier 1: {', '.join(tier1_targets)}")
+    print(f"   Tier 2: {', '.join(tier2_targets)}")
+    print(f"   Canónicos públicos: {', '.join(official_targets)}")
     return 0
 
 
