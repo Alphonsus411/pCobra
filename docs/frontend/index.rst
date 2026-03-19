@@ -66,7 +66,7 @@ Tier de soporte de backends:
 * **Tier 1**: ``python``, ``rust``, ``javascript``, ``wasm``.
 * **Tier 2**: ``go``, ``cpp``, ``java``, ``asm``.
 
-La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py``.
+La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y evitar aliases legacy o targets retirados.
 
 
 

@@ -47,3 +47,8 @@ en ``ejecutar`` o en el modo interactivo.
 
 El subcomando ``docs`` genera la documentación del proyecto en ``docs/build/html``.
 ``empaquetar`` crea un ejecutable independiente usando PyInstaller.
+
+Política de targets oficial
+---------------------------
+Los ejemplos de esta referencia usan exclusivamente targets canónicos. La lista
+oficial y sus tiers se definen en ``src/pcobra/cobra/transpilers/targets.py``.

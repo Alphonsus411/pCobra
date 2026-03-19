@@ -4,7 +4,7 @@ Hololang: sintaxis e interoperabilidad
 Hololang es el lenguaje intermedio utilizado por Cobra para describir programas
 orientados a holobits con un estilo declarativo inspirado en Rust.  Su IR
 funciona como un punto de encuentro entre el AST de Cobra y los backends que
-emiten código para otros lenguajes o para ensamblador simbólico.  En esta guía
+emiten código para otros lenguajes o para el target simbólico ``asm``. En esta guía
 se resume la sintaxis disponible, cómo integrarla con Cobra y cómo aprovecharla
 para generar artefactos adicionales.
 
@@ -78,14 +78,14 @@ La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
          --destino java
 
   La transpilación inversa soportada por política acepta como origen
-  ``python``, ``js`` y ``java``. Si trabajas con Hololang, la ruta recomendada
+  ``python``, ``javascript`` y ``java``. Si trabajas con Hololang, la ruta recomendada
   es generar Hololang desde Cobra y continuar desde ese artefacto.
 
-Generación de ensamblador desde Hololang
+Generación de `asm` desde Hololang
 ----------------------------------------
 
-Una vez que dispones del código Hololang, puedes convertirlo a ensamblador
-simbólico con el backend ``asm`` desde el flujo Cobra → backend:
+Una vez que dispones del código Hololang, puedes convertirlo al target
+canónico ``asm`` desde el flujo Cobra → backend:
 
 .. code-block:: bash
 
@@ -100,3 +100,8 @@ Recursos adicionales
 
 * Consulta :doc:`sintaxis` para repasar el lenguaje original de Cobra.
 * Usa cualquier programa ``.co`` de ``examples/`` para repetir los flujos mostrados en esta página.
+
+Política de targets oficial
+---------------------------
+En documentación pública deben emplearse únicamente nombres canónicos. Para
+salida, la referencia obligatoria es ``src/pcobra/cobra/transpilers/targets.py``.
