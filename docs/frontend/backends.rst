@@ -20,6 +20,14 @@ Ejemplos de uso:
 Para ``wasm``, el backend genera formato WAT que puede convertirse con
 ``wat2wasm`` para obtener un módulo binario ejecutable.
 
+Política de targets oficial
+---------------------------
+
+Los nombres canónicos y la clasificación por tiers de estos backends se derivan
+de ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe
+usar únicamente ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``,
+``java`` y ``asm``.
+
 Matriz de características
 -------------------------
 
