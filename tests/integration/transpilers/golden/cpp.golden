@@ -3,24 +3,24 @@
 #include <initializer_list>
 
 inline auto cobra_holobit(const auto& valores) {
-    throw std::runtime_error("runtime hook holobit no disponible en C++");
+    return valores;
 }
 inline void cobra_proyectar(const auto& hb, const auto& modo) {
-    throw std::runtime_error("runtime hook proyectar no disponible en C++");
+    throw std::runtime_error("Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.");
 }
 inline void cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {
-    throw std::runtime_error("runtime hook transformar no disponible en C++");
+    throw std::runtime_error("Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.");
 }
 inline void cobra_graficar(const auto& hb) {
-    throw std::runtime_error("runtime hook graficar no disponible en C++");
+    throw std::runtime_error("Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.");
 }
 
 #include <cobra/corelibs.hpp>
 #include <cobra/standard_library.hpp>
 
 auto hb = cobra_holobit({ 1, 2, 3 });
-cobra_proyectar(hb, 2d);
-cobra_transformar(hb, rotar, {});
+cobra_proyectar(hb, "2d");
+cobra_transformar(hb, "rotar", {});
 cobra_graficar(hb);
-longitud(cobra);
-mostrar(hola);
+longitud("cobra");
+mostrar("hola");

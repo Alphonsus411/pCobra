@@ -166,6 +166,12 @@ class TranspiladorCPP(BaseTranspiler):
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
+            if isinstance(nodo.valor, str):
+                return '"' + nodo.valor.replace("\\", "\\\\").replace('"', '\\"') + '"'
+            if nodo.valor is None:
+                return "nullptr"
+            if isinstance(nodo.valor, bool):
+                return str(nodo.valor).lower()
             return str(nodo.valor)
         elif isinstance(nodo, NodoAtributo):
             obj = self.obtener_valor(nodo.objeto)
@@ -173,6 +179,24 @@ class TranspiladorCPP(BaseTranspiler):
         elif isinstance(nodo, NodoInstancia):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre_clase}({args})"
+        elif isinstance(nodo, NodoProyectar):
+            hb = self.obtener_valor(nodo.holobit)
+            modo = self.obtener_valor(nodo.modo)
+            self.usa_runtime_holobit = True
+            return f"cobra_proyectar({hb}, {modo})"
+        elif isinstance(nodo, NodoTransformar):
+            hb = self.obtener_valor(nodo.holobit)
+            op = self.obtener_valor(nodo.operacion)
+            self.usa_runtime_holobit = True
+            return f"cobra_transformar({hb}, {op}, {{}})"
+        elif isinstance(nodo, NodoGraficar):
+            hb = self.obtener_valor(nodo.holobit)
+            self.usa_runtime_holobit = True
+            return f"cobra_graficar({hb})"
+        elif getattr(nodo.__class__, "__name__", "") == "NodoHolobit":
+            valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
+            self.usa_runtime_holobit = True
+            return f"cobra_holobit({{ {valores} }})"
         elif isinstance(nodo, NodoIdentificador):
             return nodo.nombre
         elif isinstance(nodo, NodoOperacionBinaria):

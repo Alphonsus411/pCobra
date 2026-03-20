@@ -37,10 +37,53 @@ HOOK_SYMBOLS = {
     "javascript": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
     "rust": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
     "wasm": ["$cobra_holobit", "$cobra_proyectar", "$cobra_transformar", "$cobra_graficar"],
-    "go": ["cobraHolobit(", "cobraProyectar(", "cobraTransformar(", "cobraGraficar("],
+    "go": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
     "cpp": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
-    "java": ["cobraHolobit(", "cobraProyectar(", "cobraTransformar(", "cobraGraficar("],
+    "java": ["cobra_holobit(", "cobra_proyectar(", "cobra_transformar(", "cobra_graficar("],
     "asm": ["cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"],
+}
+
+EXPLICIT_ERROR_MARKERS = {
+    "python": [
+        "Runtime Holobit Python: 'proyectar' requiere la dependencia opcional 'holobit_sdk'.",
+        "Runtime Holobit Python: 'transformar' requiere la dependencia opcional 'holobit_sdk'.",
+        "Runtime Holobit Python: 'graficar' requiere la dependencia opcional 'holobit_sdk'.",
+    ],
+    "javascript": [
+        "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.",
+    ],
+    "rust": [
+        "Runtime Holobit Rust: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Rust: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Rust: 'graficar' requiere runtime avanzado compatible.",
+    ],
+    "wasm": [
+        "Runtime Holobit WASM: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit WASM: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit WASM: 'graficar' requiere runtime avanzado compatible.",
+    ],
+    "go": [
+        "Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Go: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Go: 'graficar' requiere runtime avanzado compatible.",
+    ],
+    "cpp": [
+        "Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.",
+    ],
+    "java": [
+        "Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.",
+    ],
+    "asm": [
+        "Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.",
+    ],
 }
 
 
@@ -64,9 +107,6 @@ def _programa_sin_holobit():
 
 @pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
 def test_inserta_hooks_runtime_holobit_desde_contrato_central(target, transpilador_cls):
-    if any(BACKEND_COMPATIBILITY[target][feature] == "none" for feature in ("proyectar", "transformar", "graficar")):
-        pytest.skip(f"{target} no soporta todas las primitivas Holobit del programa mínimo")
-
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
 
     # contrato central: al usar Holobit, todos los hooks del backend deben aparecer
@@ -87,12 +127,16 @@ def test_no_inserta_runtime_hooks_sin_nodos_holobit(target, transpilador_cls):
 
 @pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
 def test_imports_minimos_runtime_por_backend(target, transpilador_cls):
-    if any(BACKEND_COMPATIBILITY[target][feature] == "none" for feature in ("proyectar", "transformar", "graficar")):
-        pytest.skip(f"{target} no soporta todas las primitivas Holobit del programa mínimo")
-
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
     imports = get_standard_imports(target)
     if isinstance(imports, str):
         imports = [line for line in imports.splitlines() if line.strip()]
     for linea in imports:
         assert linea in codigo
+
+
+@pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
+def test_errores_holobit_explicitos_y_homogeneos(target, transpilador_cls):
+    codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
+    for marker in EXPLICIT_ERROR_MARKERS[target]:
+        assert marker in codigo

@@ -42,7 +42,17 @@ class TranspiladorWasm(BaseTranspiler):
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor) or isinstance(nodo, int):
             valor = nodo.valor if hasattr(nodo, "valor") else nodo
+            if isinstance(valor, str):
+                return "(i32.const 0)"
+            if valor is None:
+                return "(i32.const 0)"
+            if isinstance(valor, bool):
+                return f"(i32.const {1 if valor else 0})"
             return f"(i32.const {valor})"
+        elif isinstance(nodo, NodoHolobit):
+            primer_valor = nodo.valores[0] if nodo.valores else 0
+            self.usa_runtime_holobit = True
+            return f"(call $cobra_holobit {self._obtener_i32(primer_valor, 'holobit.expr')})"
         elif isinstance(nodo, NodoIdentificador):
             return f"(local.get ${nodo.nombre})"
         elif isinstance(nodo, NodoOperacionBinaria):

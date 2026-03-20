@@ -2,23 +2,23 @@ import cobra.corelibs.*;
 import cobra.standard_library.*;
 
 public class Main {
-    private static Object cobraHolobit(Object valores) {
-        throw new UnsupportedOperationException("runtime hook holobit no disponible en Java");
+    private static Object cobra_holobit(Object valores) {
+        return valores;
     }
-    private static void cobraProyectar(Object hb, Object modo) {
-        throw new UnsupportedOperationException("runtime hook proyectar no disponible en Java");
+    private static void cobra_proyectar(Object hb, Object modo) {
+        throw new UnsupportedOperationException("Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.");
     }
-    private static void cobraTransformar(Object hb, Object op, Object... params) {
-        throw new UnsupportedOperationException("runtime hook transformar no disponible en Java");
+    private static void cobra_transformar(Object hb, Object op, Object... params) {
+        throw new UnsupportedOperationException("Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.");
     }
-    private static void cobraGraficar(Object hb) {
-        throw new UnsupportedOperationException("runtime hook graficar no disponible en Java");
+    private static void cobra_graficar(Object hb) {
+        throw new UnsupportedOperationException("Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.");
     }
     public static void main(String[] args) {
-        Object hb = cobraHolobit(new double[]{1, 2, 3});
-        cobraProyectar(hb, "2d");
-        cobraTransformar(hb, "rotar", 90);
-        cobraGraficar(hb);
+        Object hb = cobra_holobit(new double[]{1, 2, 3});
+        cobra_proyectar(hb, "2d");
+        cobra_transformar(hb, "rotar", 90);
+        cobra_graficar(hb);
         longitud("cobra");
         mostrar("hola");
     }

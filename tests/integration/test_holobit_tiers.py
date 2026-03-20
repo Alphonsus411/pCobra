@@ -31,18 +31,15 @@ PRIMITIVE_CONTRACT = {
     },
     "proyectar": {
         "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java"),
-        "none": ("asm",),
+        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "transformar": {
         "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java"),
-        "none": ("asm",),
+        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "graficar": {
         "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java"),
-        "none": ("asm",),
+        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "escalar": {
         "full": ("python", "javascript"),
@@ -56,10 +53,10 @@ PRIMITIVE_CONTRACT = {
 
 FULL_EXPECTATIONS = {
     "python": {
-        "holobit": ("from corelibs import *", "from standard_library import *"),
-        "proyectar": ("def cobra_proyectar", "proyectar(h"),
-        "transformar": ("def cobra_transformar", "transformar(h"),
-        "graficar": ("def cobra_graficar", "graficar(h"),
+        "holobit": ("from corelibs import *", "from standard_library import *", "cobra_holobit([1.0, 2.0, 3.0])"),
+        "proyectar": ("def cobra_proyectar", "cobra_proyectar(h"),
+        "transformar": ("def cobra_transformar", "cobra_transformar(h"),
+        "graficar": ("def cobra_graficar", "cobra_graficar(h"),
         "escalar": ("escalar(h, 2)",),
         "mover": ("mover(h, 1, 2, 3)",),
     },
@@ -75,7 +72,7 @@ FULL_EXPECTATIONS = {
 
 PARTIAL_FALLBACK_MARKERS = {
     "rust": {
-        "holobit": ("NodoHolobit(",),
+        "holobit": ("cobra_holobit(vec![1.0, 2.0, 3.0]);",),
         "proyectar": ("fn cobra_proyectar",),
         "transformar": ("fn cobra_transformar",),
         "graficar": ("fn cobra_graficar",),
@@ -83,7 +80,7 @@ PARTIAL_FALLBACK_MARKERS = {
         "mover": ("mover(h, 1, 2, 3);",),
     },
     "wasm": {
-        "holobit": ("NodoHolobit(",),
+        "holobit": ("(func $cobra_holobit", "(local.set $h (call $cobra_holobit"),
         "proyectar": ("(func $cobra_proyectar",),
         "transformar": ("(func $cobra_transformar",),
         "graficar": ("(func $cobra_graficar",),
@@ -91,15 +88,15 @@ PARTIAL_FALLBACK_MARKERS = {
         "mover": ("(call $mover",),
     },
     "go": {
-        "holobit": ("NodoHolobit(",),
-        "proyectar": ("func cobraProyectar",),
-        "transformar": ("func cobraTransformar",),
-        "graficar": ("func cobraGraficar",),
+        "holobit": ("cobra_holobit([]float64{1.0, 2.0, 3.0})",),
+        "proyectar": ("func cobra_proyectar",),
+        "transformar": ("func cobra_transformar",),
+        "graficar": ("func cobra_graficar",),
         "escalar": ("escalar(h, 2)",),
         "mover": ("mover(h, 1, 2, 3)",),
     },
     "cpp": {
-        "holobit": ("NodoHolobit(",),
+        "holobit": ("cobra_holobit({ 1.0, 2.0, 3.0 });",),
         "proyectar": ("inline void cobra_proyectar",),
         "transformar": ("inline void cobra_transformar",),
         "graficar": ("inline void cobra_graficar",),
@@ -107,18 +104,18 @@ PARTIAL_FALLBACK_MARKERS = {
         "mover": ("mover(h, 1, 2, 3);",),
     },
     "java": {
-        "holobit": ("NodoHolobit(",),
-        "proyectar": ("private static void cobraProyectar",),
-        "transformar": ("private static void cobraTransformar",),
-        "graficar": ("private static void cobraGraficar",),
+        "holobit": ("cobra_holobit(new double[]{1.0, 2.0, 3.0});",),
+        "proyectar": ("private static void cobra_proyectar",),
+        "transformar": ("private static void cobra_transformar",),
+        "graficar": ("private static void cobra_graficar",),
         "escalar": ("escalar(h, 2);",),
         "mover": ("mover(h, 1, 2, 3);",),
     },
     "asm": {
-        "holobit": ("SET h, h[",),
-        "proyectar": ("; Nodo NodoProyectar no soportado",),
-        "transformar": ("; Nodo NodoTransformar no soportado",),
-        "graficar": ("; Nodo NodoGraficar no soportado",),
+        "holobit": ("cobra_holobit:", "SET h, cobra_holobit([1.0, 2.0, 3.0])"),
+        "proyectar": ("cobra_proyectar:", "CALL cobra_proyectar h, '2D'"),
+        "transformar": ("cobra_transformar:", "CALL cobra_transformar h, 'rotar', 'z', 45"),
+        "graficar": ("cobra_graficar:", "CALL cobra_graficar h"),
         "escalar": ("CALL escalar h, 2",),
         "mover": ("CALL mover h, 1, 2, 3",),
     },
@@ -184,24 +181,24 @@ RUNTIME_SMOKE_MARKERS = {
         "standard_library": ("from standard_library import *", "mostrar('hola')"),
     },
     "javascript": {
-        "corelibs": ("import * as texto from './nativos/texto.js';", "longitud(cobra);"),
-        "standard_library": ("import * as io from './nativos/io.js';", "mostrar(hola);"),
+        "corelibs": ("import * as texto from './nativos/texto.js';", "longitud('cobra');"),
+        "standard_library": ("import * as io from './nativos/io.js';", "mostrar('hola');"),
     },
     "rust": {
-        "corelibs": ("use crate::corelibs::*;", "longitud(cobra);"),
-        "standard_library": ("use crate::standard_library::*;", "mostrar(hola);"),
+        "corelibs": ("use crate::corelibs::*;", 'longitud("cobra");'),
+        "standard_library": ("use crate::standard_library::*;", 'mostrar("hola");'),
     },
     "wasm": {
-        "corelibs": (";; backend wasm: imports de runtime administrados externamente", "(call $longitud (i32.const cobra))"),
-        "standard_library": (";; backend wasm: imports de runtime administrados externamente", "(call $mostrar (i32.const hola))"),
+        "corelibs": (";; backend wasm: imports de runtime administrados externamente", "(call $longitud (i32.const 0))"),
+        "standard_library": (";; backend wasm: imports de runtime administrados externamente", "(call $mostrar (i32.const 0))"),
     },
     "go": {
         "corelibs": ('"cobra/corelibs"', 'longitud("cobra")'),
         "standard_library": ('"cobra/standard_library"', 'mostrar("hola")'),
     },
     "cpp": {
-        "corelibs": ("#include <cobra/corelibs.hpp>", "longitud(cobra);"),
-        "standard_library": ("#include <cobra/standard_library.hpp>", "mostrar(hola);"),
+        "corelibs": ("#include <cobra/corelibs.hpp>", 'longitud("cobra");'),
+        "standard_library": ("#include <cobra/standard_library.hpp>", 'mostrar("hola");'),
     },
     "java": {
         "corelibs": ("import cobra.corelibs.*;", 'longitud("cobra")'),
@@ -213,14 +210,14 @@ RUNTIME_SMOKE_MARKERS = {
     },
 }
 HOLOBIT_HOOK_MARKERS = {
-    "python": (),
-    "javascript": ("function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
-    "rust": ("fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
-    "wasm": ("(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"),
-    "go": ("func cobraProyectar", "func cobraTransformar", "func cobraGraficar"),
-    "cpp": ("inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
-    "java": ("private static void cobraProyectar", "private static void cobraTransformar", "private static void cobraGraficar"),
-    "asm": ("cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
+    "python": ("def cobra_holobit", "def cobra_proyectar", "def cobra_transformar", "def cobra_graficar"),
+    "javascript": ("function cobra_holobit", "function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
+    "rust": ("fn cobra_holobit", "fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
+    "wasm": ("(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"),
+    "go": ("func cobra_holobit", "func cobra_proyectar", "func cobra_transformar", "func cobra_graficar"),
+    "cpp": ("inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
+    "java": ("private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"),
+    "asm": ("cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
 }
 
 
@@ -252,13 +249,6 @@ def test_runtime_import_smoke_por_backend(backend, runtime_feature):
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 def test_runtime_hooks_cobra_smoke_por_backend(backend):
-    if BACKEND_COMPATIBILITY[backend]["graficar"] == "none":
-        with pytest.raises(NotImplementedError):
-            _transpilar(HOLOBIT_CASES["graficar"], backend)
-        salida = _transpilar(HOLOBIT_CASES["holobit"], backend)
-        assert salida.strip()
-        return
-
     salida = _transpilar(HOLOBIT_CASES["graficar"], backend)
     assert salida.strip(), f"{backend} debe generar salida no vacía para hooks cobra_*"
 

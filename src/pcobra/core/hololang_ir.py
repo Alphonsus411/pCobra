@@ -19,6 +19,7 @@ from .ast_nodes import (
     NodoBucleMientras,
     NodoCondicional,
     NodoFuncion,
+    NodoGraficar,
     NodoHolobit,
     NodoIdentificador,
     NodoImprimir,
@@ -28,7 +29,9 @@ from .ast_nodes import (
     NodoDiccionario,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
+    NodoProyectar,
     NodoRetorno,
+    NodoTransformar,
     NodoValor,
     NodoFor,
     NodoPara,
@@ -222,8 +225,7 @@ def _expr_to_text(expr) -> str:
 
     if isinstance(expr, NodoHolobit):
         valores = ", ".join(_expr_to_text(v) for v in expr.valores)
-        nombre = expr.nombre or "holobit"
-        return f"{nombre}[{valores}]"
+        return f"cobra_holobit([{valores}])"
 
     if isinstance(expr, Token):
         return _token_to_text(expr)
@@ -298,6 +300,25 @@ def _convert_statement(node) -> HololangStatement:
     if isinstance(node, NodoHolobit):
         return HololangHolobit(node.nombre or "", [_expr_to_text(v) for v in node.valores])
 
+    if isinstance(node, NodoProyectar):
+        return HololangCall(
+            "cobra_proyectar",
+            [_expr_to_text(node.holobit), _expr_to_text(node.modo)],
+        )
+
+    if isinstance(node, NodoTransformar):
+        return HololangCall(
+            "cobra_transformar",
+            [
+                _expr_to_text(node.holobit),
+                _expr_to_text(node.operacion),
+                *[_expr_to_text(param) for param in getattr(node, "parametros", [])],
+            ],
+        )
+
+    if isinstance(node, NodoGraficar):
+        return HololangCall("cobra_graficar", [_expr_to_text(node.holobit)])
+
     return HololangUnknown(f"Nodo {type(node).__name__} no soportado")
 
 
@@ -311,4 +332,3 @@ def build_hololang_ir(ast: Sequence) -> HololangModule:
     statements = [_convert_statement(node) for node in ast]
     module.extend(statements)
     return module
-

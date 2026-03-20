@@ -6,24 +6,24 @@ import (
     "fmt"
 )
 
-func cobraHolobit(valores []float64) []float64 {
-    panic("runtime hook holobit no disponible en Go")
+func cobra_holobit(valores []float64) []float64 {
+    return valores
 }
-func cobraProyectar(hb any, modo any) {
-    panic(fmt.Sprintf("runtime hook proyectar no disponible en Go: %v %v", hb, modo))
+func cobra_proyectar(hb any, modo any) {
+    panic(fmt.Sprintf("Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible. hb=%v modo=%v", hb, modo))
 }
-func cobraTransformar(hb any, op any, params ...any) {
-    panic(fmt.Sprintf("runtime hook transformar no disponible en Go: %v %v %v", hb, op, params))
+func cobra_transformar(hb any, op any, params ...any) {
+    panic(fmt.Sprintf("Runtime Holobit Go: 'transformar' requiere runtime avanzado compatible. hb=%v op=%v params=%v", hb, op, params))
 }
-func cobraGraficar(hb any) {
-    panic(fmt.Sprintf("runtime hook graficar no disponible en Go: %v", hb))
+func cobra_graficar(hb any) {
+    panic(fmt.Sprintf("Runtime Holobit Go: 'graficar' requiere runtime avanzado compatible. hb=%v", hb))
 }
 
 func main() {
-    hb := cobraHolobit([]float64{1, 2, 3})
-    cobraProyectar(hb, "2d")
-    cobraTransformar(hb, "rotar", 90)
-    cobraGraficar(hb)
+    hb := cobra_holobit([]float64{1, 2, 3})
+    cobra_proyectar(hb, "2d")
+    cobra_transformar(hb, "rotar", 90)
+    cobra_graficar(hb)
     longitud("cobra")
     mostrar("hola")
 }

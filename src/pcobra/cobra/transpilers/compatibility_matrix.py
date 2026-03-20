@@ -98,9 +98,9 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     "asm": {
         "tier": "tier2",
         "holobit": "partial",
-        "proyectar": "none",
-        "transformar": "none",
-        "graficar": "none",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
         "corelibs": "partial",
         "standard_library": "partial",
     },
@@ -176,9 +176,9 @@ MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     "asm": {
         "tier": "tier2",
         "holobit": "partial",
-        "proyectar": "none",
-        "transformar": "none",
-        "graficar": "none",
+        "proyectar": "partial",
+        "transformar": "partial",
+        "graficar": "partial",
         "corelibs": "partial",
         "standard_library": "partial",
     },
@@ -190,35 +190,35 @@ COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "fu
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
-        "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas a hooks `cobra_*` con firmas consistentes para primitivas Holobit. Si falta `holobit_sdk`, `proyectar`/`transformar`/`graficar` fallan con error explícito documentado.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Python explícitos y símbolos invocables en el código generado. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` crea `Holobit` real y las primitivas avanzadas fallan con `ModuleNotFoundError` mencionando `holobit_sdk` cuando falta la dependencia.",
     },
     "javascript": {
         "contract": "mixed",
-        "evidence": "Primitivas Holobit en JS resueltas con hooks explícitos `cobra_*` inyectados en codegen; cuando el runtime real no existe, los hooks fallan con error explícito. `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports ES module explícitos del runtime nativo y preservación de llamadas a símbolos (`longitud`, `mostrar`). Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` conserva la colección y las primitivas avanzadas fallan con `Error` explícito.",
     },
     "rust": {
         "contract": "partial",
-        "evidence": "Hooks `cobra_*` para primitivas Holobit y llamadas passthrough (`longitud(cobra)`, `mostrar(hola)`). Los hooks de Holobit señalan error explícito si no existe soporte runtime real.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports `use crate::corelibs::*;` y `use crate::standard_library::*;` más símbolos preservados en codegen. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `panic!` explícito.",
     },
     "wasm": {
         "contract": "partial",
-        "evidence": "Llamadas WAT explícitas a hooks `cobra_*`; cuando el runtime no está implementado, los hooks ejecutan `unreachable` (error explícito, sin no-op).",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa mantener los puntos de llamada WAT al runtime externo administrado fuera del backend. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` propaga el handle de entrada y las primitivas avanzadas ejecutan `unreachable` con comentario descriptivo.",
     },
     "go": {
         "contract": "partial",
-        "evidence": "Hooks `cobra*` para primitivas y passthrough de runtime base (`longitud`/`mostrar`). La ruta degradada de Holobit es error explícito, no no-op.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Go verificables (`cobra/corelibs`, `cobra/standard_library`) y preservación de símbolos de runtime. Holobit usa hooks canónicos `cobra_*`; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `panic` explícito.",
     },
     "cpp": {
         "contract": "partial",
-        "evidence": "Hooks inline `cobra_*` para primitivas y passthrough de runtime base. La ruta degradada de Holobit es error explícito, no no-op.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa includes verificables (`cobra/corelibs.hpp`, `cobra/standard_library.hpp`) y preservación de símbolos de runtime. Holobit usa hooks inline `cobra_*`; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `std::runtime_error` explícito.",
     },
     "java": {
         "contract": "partial",
-        "evidence": "Hooks estáticos `cobra*` para primitivas y passthrough de runtime base. La ruta degradada de Holobit es error explícito, no no-op.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports verificables (`cobra.corelibs.*`, `cobra.standard_library.*`) y preservación de símbolos de runtime. Holobit usa hooks estáticos canónicos `cobra_*`; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `UnsupportedOperationException` explícito.",
     },
     "asm": {
-        "contract": "mixed",
-        "evidence": "`holobit` se emite como instrucción ASM/IR; `proyectar`/`transformar`/`graficar` no están garantizados por el contrato (`none`) y las rutas runtime restantes son explícitas. Las llamadas `CALL` conservan argumentos.",
+        "contract": "partial",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa conservar puntos de llamada `CALL` y declarar explícitamente que el runtime externo se administra fuera del backend. Holobit inyecta hooks `cobra_*`; `cobra_holobit` conserva la representación IR y `proyectar`/`transformar`/`graficar` fallan con `TRAP` explícito, sin `none` ni no-op silencioso.",
     },
 }
 

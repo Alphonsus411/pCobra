@@ -19,6 +19,7 @@ from pcobra.cobra.core.ast_nodes import (
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.cobra.transpilers.common.utils import (
+    ast_contains_node_types,
     BaseTranspiler,
     get_runtime_hooks,
     get_standard_imports,
@@ -67,14 +68,14 @@ def visit_holobit(self, nodo):
     valores = ", ".join(str(v) for v in nodo.valores or [])
     nombre = nodo.nombre or "hb"
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"Object {nombre} = cobraHolobit(new double[]{{{valores}}});")
+    self.agregar_linea(f"Object {nombre} = cobra_holobit(new double[]{{{valores}}});")
 
 
 def visit_proyectar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     modo = self.obtener_valor(nodo.modo)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobraProyectar({hb}, {modo});")
+    self.agregar_linea(f"cobra_proyectar({hb}, {modo});")
 
 
 def visit_transformar(self, nodo):
@@ -83,13 +84,13 @@ def visit_transformar(self, nodo):
     params = ", ".join(self.obtener_valor(p) for p in nodo.parametros)
     args = f", {params}" if params else ""
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobraTransformar({hb}, {op}{args});")
+    self.agregar_linea(f"cobra_transformar({hb}, {op}{args});")
 
 
 def visit_graficar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobraGraficar({hb});")
+    self.agregar_linea(f"cobra_graficar({hb});")
 
 java_nodes = {
     "asignacion": _visit_asignacion,
@@ -150,6 +151,10 @@ class TranspiladorJava(BaseTranspiler):
         elif isinstance(nodo, NodoInstancia):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"new {nodo.nombre_clase}({args})"
+        elif isinstance(nodo, NodoHolobit):
+            valores = ", ".join(self.obtener_valor(v) for v in nodo.valores or [])
+            self.usa_runtime_holobit = True
+            return f"cobra_holobit(new double[]{{{valores}}})"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
@@ -186,9 +191,9 @@ class TranspiladorJava(BaseTranspiler):
         self.agregar_linea("public class Main {")
         self.indent += 1
 
-        self.usa_runtime_holobit = any(
-            n.__class__.__name__ in {"NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"}
-            for n in nodos
+        self.usa_runtime_holobit = ast_contains_node_types(
+            nodos,
+            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
         )
         if self.usa_runtime_holobit:
             for hook in get_runtime_hooks("java"):

@@ -1,18 +1,21 @@
 ; backend asm: imports de runtime administrados externamente
 
 cobra_holobit:
-    ; ERROR: runtime hook no implementado
-    ud2
+    ; Runtime Holobit ASM: 'holobit' conserva el valor de entrada cuando no existe runtime avanzado.
+    RET
 cobra_proyectar:
-    ; ERROR: runtime hook no implementado
-    ud2
+    ; Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.
+    TRAP
 cobra_transformar:
-    ; ERROR: runtime hook no implementado
-    ud2
+    ; Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.
+    TRAP
 cobra_graficar:
-    ; ERROR: runtime hook no implementado
-    ud2
+    ; Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.
+    TRAP
 
 HOLOBIT hb [1, 2, 3]
+CALL cobra_proyectar hb, '2d'
+CALL cobra_transformar hb, 'rotar', 90
+CALL cobra_graficar hb
 CALL longitud 'cobra'
 CALL mostrar 'hola'

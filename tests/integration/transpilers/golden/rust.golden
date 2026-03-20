@@ -1,22 +1,22 @@
-fn cobra_holobit(_valores: Vec<f64>) -> Vec<f64> {
-    panic!("Runtime hook holobit no disponible en Rust")
+fn cobra_holobit(valores: Vec<f64>) -> Vec<f64> {
+    valores
 }
-fn cobra_proyectar(hb: &str, modo: &str) {
-    panic!("Runtime hook proyectar no disponible en Rust: {} {}", hb, modo);
+fn cobra_proyectar(_hb: &str, _modo: &str) {
+    panic!("Runtime Holobit Rust: 'proyectar' requiere runtime avanzado compatible.");
 }
-fn cobra_transformar(hb: &str, op: &str, params: &[&str]) {
-    panic!("Runtime hook transformar no disponible en Rust: {} {} {:?}", hb, op, params);
+fn cobra_transformar(_hb: &str, _op: &str, _params: &[&str]) {
+    panic!("Runtime Holobit Rust: 'transformar' requiere runtime avanzado compatible.");
 }
-fn cobra_graficar(hb: &str) {
-    panic!("Runtime hook graficar no disponible en Rust: {}", hb);
+fn cobra_graficar(_hb: &str) {
+    panic!("Runtime Holobit Rust: 'graficar' requiere runtime avanzado compatible.");
 }
 
 use crate::corelibs::*;
 use crate::standard_library::*;
 
 let hb = cobra_holobit(vec![1, 2, 3]);
-cobra_proyectar(&format!("{}", hb), &format!("{}", 2d));
-cobra_transformar(&format!("{}", hb), &format!("{}", rotar), &[]);
+cobra_proyectar(&format!("{}", hb), &format!("{}", "2d"));
+cobra_transformar(&format!("{}", hb), &format!("{}", "rotar"), &[]);
 cobra_graficar(&format!("{}", hb));
-longitud(cobra);
-mostrar(hola);
+longitud("cobra");
+mostrar("hola");
