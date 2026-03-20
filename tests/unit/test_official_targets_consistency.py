@@ -74,6 +74,34 @@ def test_archivos_reverse_from_py_en_scope_reverse():
     )
 
 
+def test_repo_no_contiene_to_o_from_py_fuera_de_las_rutas_oficiales():
+    transpiler_dir = Path("src/pcobra/cobra/transpilers/transpiler")
+    reverse_dir = Path("src/pcobra/cobra/transpilers/reverse")
+    to_permitidos = {f"to_{target}.py" for target in OFFICIAL_TARGETS if target != "javascript"}
+    to_permitidos.add("to_js.py")
+    from_permitidos = {
+        f"from_{target}.py" for target in REVERSE_SCOPE_LANGUAGES if target != "javascript"
+    }
+    from_permitidos.add("from_js.py")
+
+    encontrados = []
+    for path in Path(".").rglob("to_*.py"):
+        if "__pycache__" in path.parts:
+            continue
+        if path.parent != transpiler_dir or path.name not in to_permitidos:
+            encontrados.append(path.as_posix())
+    for path in Path(".").rglob("from_*.py"):
+        if "__pycache__" in path.parts:
+            continue
+        if path.parent != reverse_dir or path.name not in from_permitidos:
+            encontrados.append(path.as_posix())
+
+    assert not encontrados, (
+        "Aparecieron módulos to_/from_ fuera del alcance o de las ubicaciones oficiales: "
+        f"{encontrados}"
+    )
+
+
 def test_los_tests_no_importan_reverse_transpilers_fuera_del_scope_oficial():
     permitidos = set(REVERSE_SCOPE_LANGUAGES)
     encontrados_fuera_de_scope = {}

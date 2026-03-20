@@ -62,34 +62,61 @@ def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
         )
     return canonical
 
-# Cargar transpiladores externos
-try:
-    eps = entry_points(group="cobra.transpilers")
-except TypeError:  # Compatibilidad con versiones antiguas
-    eps = entry_points().get("cobra.transpilers", [])
 
-for ep in eps:
+def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
+    """Acepta únicamente nombres canónicos oficiales en entry points."""
+    normalized = normalize_target_name(backend, allow_legacy_aliases=False)
+    raw_normalized = backend.strip().lower()
+    if raw_normalized != normalized or normalized not in OFFICIAL_TARGETS:
+        raise ValueError(
+            _(
+                "Backend no permitido en {context}: {backend}. "
+                "Los entry points solo pueden usar nombres canónicos oficiales: {supported}"
+            ).format(
+                context=context,
+                backend=backend,
+                supported=", ".join(target_cli_choices(OFFICIAL_TARGETS)),
+            )
+        )
+    return normalized
+
+
+def _iter_transpiler_entry_points():
     try:
+        return entry_points(group="cobra.transpilers")
+    except TypeError:  # Compatibilidad con versiones antiguas
+        return entry_points().get("cobra.transpilers", [])
+
+
+
+def load_entrypoint_transpilers() -> None:
+    """Carga entry points de transpiladores sin permitir aliases o targets no oficiales."""
+    for ep in _iter_transpiler_entry_points():
         try:
-            normalized_ep_name = _validate_official_backend_or_raise(
-                ep.name,
-                context="plugins(entry_points)",
-            )
-        except ValueError:
-            logging.warning(
-                "Plugin de transpilador '%s' omitido: target no oficial (solo se permite %s)",
-                ep.name,
-                ", ".join(OFFICIAL_TARGETS),
-            )
-            continue
-        module_name, class_name = ep.value.split(":", 1)
-        if not all(c.isalnum() or c in "._" for c in module_name + class_name):
-            logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
-            continue
-        cls = getattr(import_module(module_name), class_name)
-        register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
-    except Exception as exc:
-        logging.error("Error cargando transpilador %s: %s", ep.name, exc)
+            try:
+                normalized_ep_name = _validate_entrypoint_backend_or_raise(
+                    ep.name,
+                    context="plugins(entry_points)",
+                )
+            except ValueError:
+                logging.warning(
+                    "Plugin de transpilador '%s' omitido: target no oficial/no canónico "
+                    "(solo se permite %s)",
+                    ep.name,
+                    ", ".join(OFFICIAL_TARGETS),
+                )
+                continue
+            module_name, class_name = ep.value.split(":", 1)
+            if not all(c.isalnum() or c in "._" for c in module_name + class_name):
+                logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
+                continue
+            cls = getattr(import_module(module_name), class_name)
+            register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
+        except Exception as exc:
+            logging.error("Error cargando transpilador %s: %s", ep.name, exc)
+
+
+load_entrypoint_transpilers()
 
 LANG_CHOICES = list(target_cli_choices(official_transpiler_targets()))
 TARGETS_HELP = build_target_help_by_tier()
