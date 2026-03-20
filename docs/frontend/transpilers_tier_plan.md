@@ -113,11 +113,11 @@ Se añade una suite dedicada que cubre:
 - Cualquier backend fuera de esta matriz se considera fuera de contrato.
 
 
-## Nota de migración (`js` → `javascript`)
+## Nota histórica/no vigente sobre `js`
 
-- El nombre canónico del target de JavaScript pasa a ser `javascript` en ejemplos, configuración y documentación.
-- El alias histórico `js` se mantiene **deprecated pero funcional** para compatibilidad temporal con proyectos existentes.
-- Recomendación: actualizar comandos y archivos (`pcobra.toml`, `cobra.mod`) para usar `javascript`.
+- El nombre canónico vigente del target de JavaScript es `javascript` en ejemplos, configuración y documentación.
+- Las referencias previas a `js` se conservan únicamente como contexto histórico de migración y no deben reutilizarse en documentación pública nueva.
+- Recomendación vigente: usar siempre `javascript` en comandos y archivos (`pcobra.toml`, `cobra.mod`).
 
 
 ## Política anti-regresión

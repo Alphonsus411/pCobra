@@ -141,8 +141,8 @@ pip install "pcobra[columnar]"
 # alias equivalente
 pip install "pcobra[io-binary]"
 
-# Transpilación inversa desde WebAssembly
-pip install "pcobra[reverse-wasm]"
+# Histórico/no vigente: extra legado de reverse WASM
+# La política actual solo documenta reverse para python, javascript y java.
 
 # Servidor de lenguaje (LSP)
 pip install "pcobra[lsp]"
@@ -800,7 +800,7 @@ cobra transpilar-inverso script.py --origen=python --destino=python
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-Actualmente es posible convertir a Cobra código escrito en `python`, `javascript` y `java`.
+Actualmente la transpilación inversa soportada por política acepta código de entrada en `python`, `javascript` y `java`, y la salida debe elegirse entre los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
 
 Tiers de referencia (salida): Tier 1 (`python`, `rust`, `javascript`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). La fuente de verdad es `src/pcobra/cobra/transpilers/targets.py`.
 

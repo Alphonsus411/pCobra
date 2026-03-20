@@ -43,6 +43,6 @@ Consulta el [archivo del workflow](../.github/workflows/release.yml) para más d
 Antes de etiquetar una versión, confirma explícitamente:
 
 - [ ] No hay referencias activas en código, ejemplos o scripts a lenguajes fuera del set oficial de salida (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
-- [ ] No hay referencias activas en reverse fuera del set oficial de entrada (`python`, `js`, `java`).
+- [ ] No hay referencias activas en reverse fuera del set oficial de entrada (`python`, `javascript`, `java`).
 - [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` están alineados con el alcance oficial.
 - [ ] Se ejecutó un barrido final de cadenas y rutas para detectar residuos antes de publicar.

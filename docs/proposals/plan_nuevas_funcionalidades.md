@@ -5,7 +5,7 @@
 - **Biblioteca estándar**: expandir cadenas, colecciones, números y booleanos con APIs inspiradas en Python y en los demás lenguajes soportados para reducir brechas funcionales.
 - **Modelo de ejecución**: introducir asincronía idiomática, decoradores utilitarios y un plan de migración gradual que preserve compatibilidad hacia atrás.
 - **Computación cuántica holográfica**: definir un puente `Cobra ↔ Hololang` con decoradores de alto nivel, simulador local y controles de seguridad.
-- **Interoperabilidad multilenguaje**: alinear las capacidades de Cobra con los 8 targets oficiales (`python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- **Interoperabilidad multilenguaje**: alinear las capacidades de Cobra con los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
 - **Documentación y adopción**: acompañar cada fase con manuales, notebooks, automatización de pruebas y seguimiento de indicadores.
 
 ## Objetivos generales
@@ -280,4 +280,4 @@ y facilita su incorporación como issues o historias dentro del repositorio.
 > Este plan mantiene únicamente referencias alineadas con los targets oficiales actuales del producto.
 
 - Se retiraron comparativas y propuestas ligadas a targets fuera de política.
-- Cualquier ampliación futura debe justificarse con paridad interna entre `python`, `rust`, `js`, `wasm`, `go`, `cpp`, `java` y `asm`.
+- Cualquier ampliación futura debe justificarse con paridad interna entre `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.

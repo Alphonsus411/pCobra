@@ -17,7 +17,7 @@ A continuación se listan algunos de los módulos con menor cobertura detectados
 | `src/pcobra/cobra/cli/cobrahub_client.py` | 16 % |
 | `src/pcobra/cobra/core/parser.py` | 9 % |
 | `src/pcobra/cobra/transpilers/feature_inspector.py` | 0 % |
-| `src/pcobra/cobra/transpilers/reverse/from_c.py` | 3 % |
+| `src/pcobra/cobra/transpilers/reverse/from_java.py` | 3 % |
 | `src/pcobra/cobra/transpilers/transpiler/to_python.py` | 33 % |
 | `src/pcobra/core/ast_nodes.py` | 81 % |
 | `src/pcobra/core/interpreter.py` | 6 % |
@@ -28,6 +28,6 @@ Estos resultados indican que gran parte del código aún carece de cobertura de 
 ## Áreas que requieren atención
 
 - Mejorar la cobertura de los comandos de la CLI.
-- Añadir pruebas para los distintos transpiladores y el intérprete central.
+- Añadir pruebas para los transpiladores oficiales de salida y para la transpilación inversa dentro del alcance vigente (`python`, `javascript`, `java`).
 - Resolver los errores de importación que impiden ejecutar las pruebas.
 
