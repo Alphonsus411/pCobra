@@ -41,10 +41,10 @@ Tier 2 (soporte parcial/experimental)
    * - Java
      - ``java``
      - Parcial
-   * - C++
+   * - ``cpp``
      - ``cpp``
      - Parcial
-   * - Ensamblador
+   * - ``asm``
      - ``asm``
      - Cobertura básica
 
