@@ -6,9 +6,8 @@ def test_graficar_usa_sdk(monkeypatch):
     llamadas = {}
     def fake(hb):
         llamadas['hb'] = hb
-    import importlib
-    gmod = importlib.import_module('core.holobits.graficar')
-    monkeypatch.setattr(gmod, 'proyectar_holograma', fake)
+    monkeypatch.setitem(graficar.__globals__, '_HOLOBIT_SDK_ERROR', None)
+    monkeypatch.setitem(graficar.__globals__, 'proyectar_holograma', fake)
     h = Holobit([1, 2, 3, 4, 5, 6])
     graficar(h)
     assert 'hb' in llamadas
@@ -23,9 +22,8 @@ def test_proyectar_usa_sdk(monkeypatch):
     llamadas = {}
     def fake(hb):
         llamadas['hb'] = hb
-    import importlib
-    pmod = importlib.import_module('core.holobits.proyeccion')
-    monkeypatch.setattr(pmod, 'proyectar_holograma', fake)
+    monkeypatch.setitem(proyectar.__globals__, '_HOLOBIT_SDK_ERROR', None)
+    monkeypatch.setitem(proyectar.__globals__, 'proyectar_holograma', fake)
     h = Holobit([1, 2, 3, 4, 5, 6])
     proyectar(h, '2D')
     assert 'hb' in llamadas
@@ -41,6 +39,7 @@ def test_transformar_usa_sdk(monkeypatch):
     def fake_rotar(self, eje, angulo):
         args['eje'] = eje
         args['angulo'] = angulo
+    monkeypatch.setitem(transformar.__globals__, '_HOLOBIT_SDK_ERROR', None)
     monkeypatch.setattr('holobit_sdk.core.holobit.Holobit.rotar', fake_rotar)
     h = Holobit([1, 2, 3, 4, 5, 6])
     transformar(h, 'rotar', 'z', 45)

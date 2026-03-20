@@ -99,10 +99,21 @@ def _to_sdk_holobit(hb: Holobit) -> SDKHolobit:
     return SDKHolobit(quarks, antiquarks)
 
 
+def _require_holobit_sdk(operacion: str) -> None:
+    """Exige ``holobit_sdk`` para operaciones de runtime no degradables."""
+    if _HOLOBIT_SDK_ERROR is None:
+        return
+
+    raise ModuleNotFoundError(
+        f"La operacion '{operacion}' requiere la dependencia opcional 'holobit_sdk'."
+    ) from _HOLOBIT_SDK_ERROR
+
+
 def graficar(hb: Holobit):
     """Grafica un ``Holobit`` delegando en ``holobit-sdk``."""
     if not isinstance(hb, Holobit):
         raise TypeError("graficar espera una instancia de Holobit")
+    _require_holobit_sdk("graficar")
     sdk_hb = _to_sdk_holobit(hb)
     proyectar_holograma(sdk_hb)
     return None

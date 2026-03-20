@@ -6,20 +6,23 @@
 |---|---|---|---|---|---|---|---|
 | `python` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full |
 | `javascript` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | 🟡 partial | 🟡 partial |
-| `rust` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
+| `rust` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 | `wasm` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
-| `go` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| `cpp` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| `java` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| `asm` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `go` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `cpp` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `java` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `asm` | Tier 2 | 🟡 partial | ⚪ none | ⚪ none | ⚪ none | 🟡 partial | 🟡 partial |
 
-> `full`: soportado y cubierto por regresión. `partial`: soporte limitado/fallback. `none`: no garantizado.
+> `full`: contrato de generación y hooks cubierto por regresión; si falta una dependencia opcional, el fallo debe ser explícito y documentado.
+> `partial`: soporte limitado o stub explícito; genera código, pero puede terminar con error controlado en runtime.
+> `none`: no garantizado y puede rechazar la generación.
 
 ## Contrato runtime Holobit
 
 - Referencia técnica: `docs/contrato_runtime_holobit.md`.
 - Hooks mínimos: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`.
 - Inserción de hooks/imports: solo cuando el AST usa nodos Holobit.
+- Política oficial ante ausencia de `holobit_sdk`: **error explícito y documentado**, no no-op silencioso.
 
 ## Matriz histórica de características del AST
 

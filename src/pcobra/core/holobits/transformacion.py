@@ -9,13 +9,14 @@ from pcobra._stubs.compat import import_optional_module
 np = import_optional_module("numpy", safe_stub=True)
 
 from .holobit import Holobit
-from .graficar import _to_sdk_holobit
+from .graficar import _require_holobit_sdk, _to_sdk_holobit
 
 
 def transformar(hb: Holobit, operacion: str, *parametros):
     """Aplica transformaciones utilizando ``holobit-sdk``."""
     if not isinstance(hb, Holobit):
         raise TypeError("transformar espera una instancia de Holobit")
+    _require_holobit_sdk("transformar")
     sdk_hb = _to_sdk_holobit(hb)
     if operacion == "rotar" and len(parametros) >= 2:
         eje, angulo = parametros[0], float(parametros[1])
@@ -29,6 +30,7 @@ def escalar(hb: Holobit, factor: float):
     """Escala un ``Holobit`` usando ``holobit-sdk``."""
     if not isinstance(hb, Holobit):
         raise TypeError("escalar espera una instancia de Holobit")
+    _require_holobit_sdk("escalar")
     sdk_hb = _to_sdk_holobit(hb)
     if hasattr(sdk_hb, "escalar"):
         sdk_hb.escalar(float(factor))
@@ -42,6 +44,7 @@ def mover(hb: Holobit, x: float, y: float, z: float):
     """Traslada un ``Holobit`` utilizando ``holobit-sdk``."""
     if not isinstance(hb, Holobit):
         raise TypeError("mover espera una instancia de Holobit")
+    _require_holobit_sdk("mover")
     sdk_hb = _to_sdk_holobit(hb)
     if hasattr(sdk_hb, "mover"):
         sdk_hb.mover(float(x), float(y), float(z))
