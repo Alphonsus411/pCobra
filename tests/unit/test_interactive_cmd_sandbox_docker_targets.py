@@ -10,7 +10,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.cli.target_policies import TRANSPILATION_ONLY_TARGETS
 
 
 def _build_parser_and_command():
@@ -21,7 +21,7 @@ def _build_parser_and_command():
     return parser, interactive_parser, cmd
 
 
-def test_sandbox_docker_choices_usa_official_targets():
+def test_sandbox_docker_choices_usa_solo_targets_con_runtime_docker():
     _, interactive_parser, _ = _build_parser_and_command()
 
     action = next(
@@ -30,11 +30,11 @@ def test_sandbox_docker_choices_usa_official_targets():
         if isinstance(a, _StoreAction) and a.dest == "sandbox_docker"
     )
 
-    assert tuple(action.choices) == OFFICIAL_TARGETS
+    assert tuple(action.choices) == DOCKER_EXECUTABLE_TARGETS
 
 
-@pytest.mark.parametrize("target", OFFICIAL_TARGETS)
-def test_parser_acepta_todos_los_targets_oficiales(target):
+@pytest.mark.parametrize("target", DOCKER_EXECUTABLE_TARGETS)
+def test_parser_acepta_todos_los_targets_con_runtime_docker(target):
     parser, _, _ = _build_parser_and_command()
 
     args = parser.parse_args(["interactive", "--sandbox-docker", target])
@@ -44,7 +44,7 @@ def test_parser_acepta_todos_los_targets_oficiales(target):
 
 def test_runtime_docker_rechaza_target_oficial_no_ejecutable_en_contenedor():
     _, _, cmd = _build_parser_and_command()
-    target_no_runtime = next(t for t in OFFICIAL_TARGETS if t not in DOCKER_EXECUTABLE_TARGETS)
+    target_no_runtime = TRANSPILATION_ONLY_TARGETS[0]
     args = SimpleNamespace(
         memory_limit=cmd.MEMORY_LIMIT_MB,
         ignore_memory_limit=False,

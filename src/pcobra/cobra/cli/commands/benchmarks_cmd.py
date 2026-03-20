@@ -7,7 +7,9 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_label
+from pcobra.cobra.transpilers.targets import normalize_target_name, target_label
+
+from scripts.benchmarks.targets_policy import benchmark_backends
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
@@ -74,11 +76,11 @@ class BenchmarksCommand(BaseCommand):
             backend_filtro = getattr(args, "backend", None)
             if backend_filtro:
                 backend_filtro = normalize_target_name(backend_filtro)
-                if backend_filtro not in OFFICIAL_TARGETS:
+                if backend_filtro not in BACKENDS:
                     mostrar_error(
                         _("Backend no permitido: {backend}. Permitidos: {allowed}").format(
                             backend=getattr(args, "backend", backend_filtro),
-                            allowed=", ".join(OFFICIAL_TARGETS),
+                            allowed=", ".join(BACKENDS),
                         )
                     )
                     return 1
@@ -112,7 +114,7 @@ class BenchmarksCommand(BaseCommand):
                 for res in results:
                     backend = res.get("backend", "?")
                     backend_display = backend
-                    if backend in OFFICIAL_TARGETS:
+                    if backend in BACKENDS:
                         backend_display = f"{target_label(backend)} ({backend})"
                     mostrar_info(
                         _("{backend}: tiempo {time}s, memoria {mem}KB").format(
@@ -150,5 +152,5 @@ _BACKEND_ALIASES: Mapping[str, Sequence[str]] = {
 
 BACKENDS: Mapping[str, Sequence[str]] = {
     target: _BACKEND_ALIASES.get(target, (normalize_target_name(target),))
-    for target in OFFICIAL_TARGETS
+    for target in benchmark_backends(_BACKEND_ALIASES)
 }

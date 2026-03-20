@@ -8,8 +8,12 @@ from unittest.mock import patch
 from argparse import ArgumentParser
 
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
-from pcobra.cobra.cli.target_policies import parse_target_list
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_cli_choices
+from pcobra.cobra.cli.target_policies import (
+    OFFICIAL_TRANSPILATION_TARGETS,
+    VERIFICATION_EXECUTABLE_TARGETS,
+    parse_restricted_target_list,
+)
+from pcobra.cobra.transpilers.targets import target_cli_choices
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra
@@ -28,8 +32,8 @@ class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
-    OFFICIAL_LANGUAGE_CHOICES = target_cli_choices(OFFICIAL_TARGETS)
-    SUPPORTED_LANGUAGES = target_cli_choices(("python", "javascript"))
+    OFFICIAL_LANGUAGE_CHOICES = target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS)
+    SUPPORTED_LANGUAGES = target_cli_choices(VERIFICATION_EXECUTABLE_TARGETS)
     
     def __init__(self) -> None:
         """Inicializa el comando y el intérprete."""
@@ -58,10 +62,12 @@ class VerifyCommand(BaseCommand):
             "--lenguajes",
             "-l",
             required=True,
-            type=parse_target_list,
+            type=lambda value: parse_restricted_target_list(
+                value, self.SUPPORTED_LANGUAGES, "verificación ejecutable"
+            ),
             help=_(
-                "Lista de lenguajes separados por comas. "
-                "Oficiales: {official}. Ejecutables en verificación: {runtime}"
+                "Lista de lenguajes separados por comas para verificación ejecutable. "
+                "Oficiales de transpilación: {official}. Ejecutables en verificación: {runtime}"
             ).format(
                 official=", ".join(self.OFFICIAL_LANGUAGE_CHOICES),
                 runtime=", ".join(self.SUPPORTED_LANGUAGES),

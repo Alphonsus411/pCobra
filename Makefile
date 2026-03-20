@@ -20,7 +20,7 @@ help:
 	@echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
 	@echo "  make format          Formatea con black + isort"
 	@echo "  make typecheck       Verifica tipos con mypy + pyright"
-	@echo "  make docker          Construye todos los contenedores"
+	@echo "  make docker          Construye los contenedores oficiales de ejecución (python, javascript, cpp, rust)"
 	@echo "  make docs            Genera documentación Sphinx"
 	@echo "  make clean           Limpia archivos temporales"
 	@echo "  make secrets         Busca secretos con gitleaks"

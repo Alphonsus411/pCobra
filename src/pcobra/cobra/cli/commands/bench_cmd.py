@@ -149,7 +149,7 @@ class BenchCommand(BaseCommand):
         return parser
 
     def _run_benchmarks(self) -> List[Dict[str, Any]]:
-        """Ejecuta los benchmarks para todos los backends configurados.
+        """Ejecuta benchmarks solo sobre los backends con runtime local configurado.
 
         Returns:
             Lista de diccionarios con resultados de los benchmarks
@@ -174,7 +174,7 @@ class BenchCommand(BaseCommand):
                     {"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
                 )
 
-                # Benchmark de los backends
+                # Benchmark de los backends con runner local definido.
                 for backend, cfg in BACKENDS.items():
                     results.extend(self._benchmark_backend(backend, cfg, co_file, tmpdir, env))
         finally:

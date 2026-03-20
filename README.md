@@ -28,6 +28,8 @@ La fuente de verdad para esta clasificación es `src/pcobra/cobra/transpilers/ta
 
 La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/transpilers/targets.py`, que actúa como fuente única de verdad del proyecto.
 
+Además, el proyecto separa explícitamente **targets oficiales de transpilación** de **targets oficiales con runtime de ejecución**. Hoy la ejecución oficial en contenedor/UX de runtime cubre `python`, `javascript`, `cpp` y `rust`. Los targets `go`, `java`, `wasm` y `asm` siguen siendo oficiales para generación de código, pero no deben interpretarse como runtimes Docker/sandbox equivalentes.
+
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
 
@@ -823,7 +825,7 @@ futuro.
 
 ## Ejecución en sandbox (--sandbox)
 
-Algunos comandos permiten ejecutar código Python dentro de una "sandbox" gracias
+Algunos comandos permiten ejecutar código dentro de una sandbox o de contenedores Docker oficiales gracias
 a la biblioteca `RestrictedPython`. Esto limita las operaciones disponibles y
 evita acciones potencialmente peligrosas como leer archivos o importar módulos
 externos. Para activar esta opción utiliza `--sandbox` en los subcomandos

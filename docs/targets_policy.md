@@ -56,6 +56,36 @@ nombres canónicos actuales:
 - `javascript`
 - `java`
 
+
+## Separación explícita entre transpilación y ejecución
+
+Los 8 targets oficiales de salida representan el alcance de **transpilación** del
+proyecto. Eso no implica paridad automática de ejecución.
+
+### Targets oficiales con runtime/tooling de ejecución
+
+Los únicos targets con runtime Docker oficial en la CLI actual son:
+
+- `python`
+- `javascript`
+- `cpp`
+- `rust`
+
+La verificación ejecutable (`cobra verificar`) se limita actualmente a:
+
+- `python`
+- `javascript`
+
+### Targets oficiales solo de generación
+
+Los siguientes backends son oficiales para generar código, pero no deben
+documentarse como runtimes Docker/sandbox oficiales:
+
+- `wasm`
+- `go`
+- `java`
+- `asm`
+
 ## Regla de mantenimiento
 
 - No se deben documentar otros lenguajes como targets oficiales de salida.
