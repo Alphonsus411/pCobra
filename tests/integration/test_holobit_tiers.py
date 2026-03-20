@@ -31,15 +31,18 @@ PRIMITIVE_CONTRACT = {
     },
     "proyectar": {
         "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "partial": ("rust", "wasm", "go", "cpp", "java"),
+        "none": ("asm",),
     },
     "transformar": {
         "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "partial": ("rust", "wasm", "go", "cpp", "java"),
+        "none": ("asm",),
     },
     "graficar": {
         "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "partial": ("rust", "wasm", "go", "cpp", "java"),
+        "none": ("asm",),
     },
     "escalar": {
         "full": ("python", "javascript"),
@@ -142,6 +145,11 @@ def _assert_full_or_partial_contract(lang: str, caso: str, salida: str):
             assert marker in salida
         assert salida.strip(), f"{lang} debe generar salida no vacía para {caso}"
         return
+
+    if lang in PRIMITIVE_CONTRACT[caso].get("none", ()):
+        pytest.fail(
+            f"Backend {lang} no debe llegar a asserts de salida para primitive {caso}"
+        )
 
     pytest.fail(f"Backend {lang} no clasificado en contrato para primitive {caso}")
 

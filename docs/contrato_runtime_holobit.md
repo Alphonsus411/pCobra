@@ -17,6 +17,17 @@ El runtime Holobit mínimo expone **4 hooks**:
 
 ## Semántica mínima
 
+### Política oficial cuando falta `holobit_sdk`
+
+- **Política elegida**: **Opción B**, error explícito y documentado.
+- La ausencia de `holobit_sdk` **no** debe producir un no-op silencioso en las
+  operaciones avanzadas del runtime Holobit.
+- Cuando el backend depende de `holobit_sdk` para ejecutar `proyectar`,
+  `transformar` o `graficar`, debe emitir una excepción/runtime error
+  descriptivo que identifique la dependencia faltante.
+- En Python la señalización esperada es `ModuleNotFoundError` mencionando
+  `holobit_sdk`.
+
 ### `cobra_holobit(valores)`
 - **Entrada**: colección indexable de valores numéricos.
 - **Salida**: representación runtime del holobit para el backend.
@@ -24,18 +35,22 @@ El runtime Holobit mínimo expone **4 hooks**:
 
 ### `cobra_proyectar(hb, modo)`
 - **Entrada**: un holobit `hb` y descriptor de modo `modo`.
-- **Salida**: resultado de la proyección o `hb` cuando aplica fallback.
-- **Comportamiento mínimo**: delegar en implementación nativa si existe; en fallback registrar traza y no fallar por ausencia de backend avanzado.
+- **Salida**: resultado de la proyección cuando el backend la soporta.
+- **Comportamiento mínimo**: delegar en implementación nativa si existe; si la
+  dependencia avanzada falta o el backend no implementa proyección, fallar con
+  error explícito y documentado.
 
 ### `cobra_transformar(hb, op, ...params)`
 - **Entrada**: holobit `hb`, operación `op`, parámetros opcionales.
-- **Salida**: holobit transformado o `hb` sin cambios en fallback.
-- **Comportamiento mínimo**: aplicar operación cuando el backend la soporte; en caso contrario, trazar y continuar.
+- **Salida**: holobit transformado cuando el backend soporta la operación.
+- **Comportamiento mínimo**: aplicar la operación cuando el backend la soporte;
+  en caso contrario, fallar con error explícito y documentado.
 
 ### `cobra_graficar(hb)`
 - **Entrada**: holobit `hb`.
-- **Salida**: backend-dependent (visualización, texto, no-op con traza).
-- **Comportamiento mínimo**: no abortar ejecución si solo existe salida degradada.
+- **Salida**: backend-dependent (visualización o salida equivalente soportada por el backend).
+- **Comportamiento mínimo**: no usar no-op silencioso; si el backend requiere
+  capacidades no disponibles, fallar con error explícito y documentado.
 
 ## Política de inserción de hooks
 
@@ -49,5 +64,9 @@ Si no aparecen estos nodos, no se inyecta runtime Holobit.
 
 ## Estado de implementación por backend
 
-- Python, JavaScript, Rust, Go, C++, Java: hooks ejecutables (funciones/métodos invocables).
-- WASM, ASM: hooks ejecutables mínimos (stubs no-op válidos para ensamblado/generación).
+- Python: hooks ejecutables; si falta `holobit_sdk`, las primitivas avanzadas
+  fallan explícitamente con `ModuleNotFoundError`.
+- JavaScript, Rust, Go, C++, Java: hooks ejecutables mínimos con error
+  explícito cuando el runtime avanzado no está disponible.
+- WASM, ASM: hooks ejecutables mínimos que señalan error explícito en tiempo de
+  ejecución/ensamblado, no no-op silencioso.

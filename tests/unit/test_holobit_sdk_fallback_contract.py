@@ -9,7 +9,7 @@ from pcobra.core.holobits.graficar import (
 )
 from pcobra.core.holobits.holobit import Holobit
 from pcobra.core.holobits.proyeccion import proyectar
-from pcobra.core.holobits.transformacion import transformar
+from pcobra.core.holobits.transformacion import escalar, mover, transformar
 
 
 def test_to_sdk_holobit_builds_stub_object_even_without_optional_sdk():
@@ -33,6 +33,22 @@ def test_to_sdk_holobit_builds_stub_object_even_without_optional_sdk():
         (transformar, (Holobit([1, 2, 3]), "rotar", "z", 45)),
     ),
 )
-def test_holobit_sdk_fallback_fails_gracefully_when_sdk_is_missing(funcion, args):
-    with pytest.raises(ModuleNotFoundError, match="holobit_sdk"):
+def test_holobit_sdk_fallback_raises_explicit_error_when_sdk_is_missing(funcion, args):
+    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|requiere la dependencia opcional"):
+        funcion(*args)
+
+
+@pytest.mark.skipif(
+    _HOLOBIT_SDK_ERROR is None,
+    reason="Solo aplica cuando holobit_sdk no está instalado.",
+)
+@pytest.mark.parametrize(
+    ("funcion", "args"),
+    (
+        (escalar, (Holobit([1, 2, 3]), 2)),
+        (mover, (Holobit([1, 2, 3]), 1, 2, 3)),
+    ),
+)
+def test_holobit_sdk_helpers_also_raise_explicit_error_without_sdk(funcion, args):
+    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|requiere la dependencia opcional"):
         funcion(*args)

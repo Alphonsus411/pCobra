@@ -5,9 +5,13 @@ Esta matriz documenta qué garantías ofrece cada backend para:
 - imports base de runtime (`corelibs`, `standard_library`)
 
 Niveles:
-- ``full``: soportado con aserciones estrictas (símbolos/hooks/imports esperados).
-- ``partial``: soporte limitado validado por fallback explícito y no rotura de generación.
-- ``none``: no garantizado por backend.
+- ``full``: contrato de codegen y hooks cubierto por regresión; si una
+  dependencia opcional falta, el fallo debe ser explícito y documentado.
+- ``partial``: soporte limitado o stub explícito; genera código válido pero la
+  ejecución puede terminar con error controlado en lugar de emular el backend
+  avanzado.
+- ``none``: la feature no está garantizada por backend y puede rechazar la
+  generación.
 """
 
 from __future__ import annotations
@@ -186,15 +190,15 @@ COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "fu
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
-        "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas a hooks `cobra_*` con firmas consistentes para primitivas Holobit.",
+        "evidence": "Imports explícitos (`corelibs`, `standard_library`) + llamadas a hooks `cobra_*` con firmas consistentes para primitivas Holobit. Si falta `holobit_sdk`, `proyectar`/`transformar`/`graficar` fallan con error explícito documentado.",
     },
     "javascript": {
         "contract": "mixed",
-        "evidence": "Primitivas Holobit en JS resueltas con hooks explícitos `cobra_*` inyectados en codegen; `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
+        "evidence": "Primitivas Holobit en JS resueltas con hooks explícitos `cobra_*` inyectados en codegen; cuando el runtime real no existe, los hooks fallan con error explícito. `corelibs` y `standard_library` quedan en passthrough JS (sin quoting/semántica completa).",
     },
     "rust": {
         "contract": "partial",
-        "evidence": "Hooks `cobra_*` para primitivas Holobit y llamadas passthrough (`longitud(cobra)`, `mostrar(hola)`).",
+        "evidence": "Hooks `cobra_*` para primitivas Holobit y llamadas passthrough (`longitud(cobra)`, `mostrar(hola)`). Los hooks de Holobit señalan error explícito si no existe soporte runtime real.",
     },
     "wasm": {
         "contract": "partial",
@@ -202,19 +206,19 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "go": {
         "contract": "partial",
-        "evidence": "Hooks `cobra*` para primitivas y passthrough de runtime base (`longitud`/`mostrar`).",
+        "evidence": "Hooks `cobra*` para primitivas y passthrough de runtime base (`longitud`/`mostrar`). La ruta degradada de Holobit es error explícito, no no-op.",
     },
     "cpp": {
         "contract": "partial",
-        "evidence": "Hooks inline `cobra_*` para primitivas y passthrough de runtime base.",
+        "evidence": "Hooks inline `cobra_*` para primitivas y passthrough de runtime base. La ruta degradada de Holobit es error explícito, no no-op.",
     },
     "java": {
         "contract": "partial",
-        "evidence": "Hooks estáticos `cobra*` para primitivas y passthrough de runtime base.",
+        "evidence": "Hooks estáticos `cobra*` para primitivas y passthrough de runtime base. La ruta degradada de Holobit es error explícito, no no-op.",
     },
     "asm": {
         "contract": "mixed",
-        "evidence": "`holobit` se emite como instrucción ASM/IR; `proyectar`/`transformar`/`graficar` fallan con `NotImplementedError` explícito. Las llamadas `CALL` conservan argumentos.",
+        "evidence": "`holobit` se emite como instrucción ASM/IR; `proyectar`/`transformar`/`graficar` no están garantizados por el contrato (`none`) y las rutas runtime restantes son explícitas. Las llamadas `CALL` conservan argumentos.",
     },
 }
 
