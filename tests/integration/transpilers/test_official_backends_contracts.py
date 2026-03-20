@@ -26,14 +26,14 @@ from tests.integration.transpilers.backend_contracts import REQUIRED_FEATURES, T
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
 HOOK_EXPECTATIONS = {
-    "python": (),
-    "javascript": ("function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
-    "rust": ("fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
-    "wasm": ("(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"),
-    "go": ("func cobraProyectar", "func cobraTransformar", "func cobraGraficar"),
-    "cpp": ("inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
-    "java": ("private static void cobraProyectar", "private static void cobraTransformar", "private static void cobraGraficar"),
-    "asm": ("cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
+    "python": ("def cobra_holobit", "def cobra_proyectar", "def cobra_transformar", "def cobra_graficar"),
+    "javascript": ("function cobra_holobit", "function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
+    "rust": ("fn cobra_holobit", "fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
+    "wasm": ("(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"),
+    "go": ("func cobra_holobit", "func cobra_proyectar", "func cobra_transformar", "func cobra_graficar"),
+    "cpp": ("inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
+    "java": ("private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"),
+    "asm": ("cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
 }
 
 IMPORT_EXPECTATIONS = {
@@ -45,6 +45,49 @@ IMPORT_EXPECTATIONS = {
     "cpp": ("#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>"),
     "java": ("import cobra.corelibs.*;", "import cobra.standard_library.*;"),
     "asm": ("; backend asm: imports de runtime administrados externamente",),
+}
+
+ERROR_EXPECTATIONS = {
+    "python": (
+        "Runtime Holobit Python: 'proyectar' requiere la dependencia opcional 'holobit_sdk'.",
+        "Runtime Holobit Python: 'transformar' requiere la dependencia opcional 'holobit_sdk'.",
+        "Runtime Holobit Python: 'graficar' requiere la dependencia opcional 'holobit_sdk'.",
+    ),
+    "javascript": (
+        "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.",
+    ),
+    "rust": (
+        "Runtime Holobit Rust: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Rust: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Rust: 'graficar' requiere runtime avanzado compatible.",
+    ),
+    "wasm": (
+        "Runtime Holobit WASM: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit WASM: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit WASM: 'graficar' requiere runtime avanzado compatible.",
+    ),
+    "go": (
+        "Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Go: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Go: 'graficar' requiere runtime avanzado compatible.",
+    ),
+    "cpp": (
+        "Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.",
+    ),
+    "java": (
+        "Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.",
+    ),
+    "asm": (
+        "Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.",
+        "Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.",
+        "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.",
+    ),
 }
 
 
@@ -109,6 +152,9 @@ def test_official_backend_generated_code_includes_expected_imports_and_hooks(bac
 
     for hook in HOOK_EXPECTATIONS[backend]:
         assert hook in generated
+
+    for error_marker in ERROR_EXPECTATIONS[backend]:
+        assert error_marker in generated
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)

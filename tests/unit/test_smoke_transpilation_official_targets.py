@@ -36,20 +36,16 @@ def ast_holobit_runtime():
         (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
         (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
         (TranspiladorWasm, ["(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar", "runtime administrados externamente"]),
-        (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobraHolobit(", "func cobraProyectar(", "func cobraTransformar(", "func cobraGraficar("]),
+        (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobra_holobit(", "func cobra_proyectar(", "func cobra_transformar(", "func cobra_graficar("]),
         (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"]),
-        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static Object cobraHolobit", "private static void cobraProyectar", "private static void cobraTransformar", "private static void cobraGraficar"]),
+        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"]),
+        (TranspiladorASM, ["cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:", "TRAP"]),
     ],
 )
 def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(transpilador, fragmentos, ast_holobit_runtime):
     code = transpilador().generate_code(ast_holobit_runtime)
     for fragmento in fragmentos:
         assert fragmento in code
-
-
-def test_smoke_runtime_holobit_asm_expone_limitacion_controlada(ast_holobit_runtime):
-    with pytest.raises(NotImplementedError, match="ASM no soporta 'proyectar' de forma nativa"):
-        TranspiladorASM().generate_code(ast_holobit_runtime)
 
 
 @pytest.mark.parametrize(
@@ -67,6 +63,13 @@ def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador, frag
     code = transpilador().generate_code([NodoAsignacion(variable="x", expresion=NodoValor(1))])
     for fragmento in fragmentos:
         assert fragmento in code
+
+
+def test_smoke_runtime_holobit_asm_expone_fallo_explicito_y_homogeneo(ast_holobit_runtime):
+    code = TranspiladorASM().generate_code(ast_holobit_runtime)
+    assert "Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible." in code
+    assert "Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible." in code
+    assert "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible." in code
 
 
 def test_module_map_resuelve_targets_en_cobra_toml_y_cobra_mod(tmp_path, monkeypatch):

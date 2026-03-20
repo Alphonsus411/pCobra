@@ -160,6 +160,12 @@ class TranspiladorRust(BaseTranspiler):
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
+            if isinstance(nodo.valor, str):
+                return '"' + nodo.valor.replace("\\", "\\\\").replace('"', '\\"') + '"'
+            if nodo.valor is None:
+                return "()"
+            if isinstance(nodo.valor, bool):
+                return str(nodo.valor).lower()
             return str(nodo.valor)
         if isinstance(nodo, NodoAtributo):
             obj = self.obtener_valor(nodo.objeto)
@@ -167,6 +173,10 @@ class TranspiladorRust(BaseTranspiler):
         if isinstance(nodo, NodoInstancia):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre_clase}::new({args})"
+        if isinstance(nodo, NodoHolobit):
+            valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
+            self.usa_runtime_holobit = True
+            return f"cobra_holobit(vec![{valores}])"
         if isinstance(nodo, NodoIdentificador):
             return nodo.nombre
         if isinstance(nodo, NodoOperacionBinaria):

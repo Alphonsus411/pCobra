@@ -55,7 +55,11 @@ from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
-from pcobra.cobra.transpilers.common.utils import get_standard_imports, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    ast_contains_node_types,
+    get_standard_imports,
+    get_runtime_hooks,
+)
 from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
 from pcobra.cobra.transpilers.transpiler.python_nodes.asignacion import (
@@ -258,9 +262,9 @@ class TranspiladorPython(BaseTranspiler):
         nodos = ensure_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
-        usa_holobit = any(
-            isinstance(n, (NodoHolobit, NodoProyectar, NodoTransformar, NodoGraficar))
-            for n in nodos
+        usa_holobit = ast_contains_node_types(
+            nodos,
+            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
         )
         self.codigo = get_standard_imports("python")
         if usa_holobit:
@@ -339,6 +343,9 @@ class TranspiladorPython(BaseTranspiler):
         elif isinstance(nodo, NodoLlamadaFuncion):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre}({args})"
+        elif isinstance(nodo, NodoHolobit):
+            valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
+            return f"cobra_holobit([{valores}])"
         elif hasattr(nodo, "nombre") and hasattr(nodo, "argumentos"):
             args = ", ".join(self.obtener_valor(a) for a in getattr(nodo, "argumentos", []))
             return f"{getattr(nodo, 'nombre', nodo)}({args})"

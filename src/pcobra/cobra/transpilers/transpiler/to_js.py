@@ -4,6 +4,7 @@ Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
 forma nativa, por lo que se recurre a tipos dinámicos."""
 
 from pcobra.core.ast_nodes import (
+    NodoHolobit,
     NodoLista,
     NodoDiccionario,
     NodoListaTipo,
@@ -42,7 +43,11 @@ from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
-from pcobra.cobra.transpilers.common.utils import get_standard_imports, get_runtime_hooks
+from pcobra.cobra.transpilers.common.utils import (
+    ast_contains_node_types,
+    get_standard_imports,
+    get_runtime_hooks,
+)
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
 
@@ -189,6 +194,12 @@ class TranspiladorJavaScript(BaseTranspiler):
 
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
+            if isinstance(nodo.valor, str):
+                return repr(nodo.valor)
+            if nodo.valor is None:
+                return "null"
+            if isinstance(nodo.valor, bool):
+                return str(nodo.valor).lower()
             return str(nodo.valor)
         elif isinstance(nodo, NodoAtributo):
             return f"{self.obtener_valor(nodo.objeto)}.{nodo.nombre}"
@@ -200,6 +211,10 @@ class TranspiladorJavaScript(BaseTranspiler):
         elif isinstance(nodo, NodoLlamadaFuncion):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"{nodo.nombre}({args})"
+        elif isinstance(nodo, NodoHolobit):
+            valores = ", ".join(self.obtener_valor(v) for v in nodo.valores)
+            self.usa_runtime_holobit = True
+            return f"cobra_holobit([{valores}])"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
@@ -273,10 +288,9 @@ class TranspiladorJavaScript(BaseTranspiler):
         ast_raiz = ensure_cobra_ast(ast_raiz)
         ast_raiz = expandir_macros(ast_raiz)
         ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
-        usa_holobit = any(
-            isinstance(n, (NodoProyectar, NodoTransformar, NodoGraficar))
-            or n.__class__.__name__ == "NodoHolobit"
-            for n in ast_raiz
+        usa_holobit = ast_contains_node_types(
+            ast_raiz,
+            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
         )
         self.codigo = list(get_standard_imports("javascript"))
         if usa_holobit:

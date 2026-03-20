@@ -1,22 +1,24 @@
 (func $cobra_holobit (param $hb i32) (result i32)
-  unreachable
-  i32.const 0
+  local.get $hb
 )
 (func $cobra_proyectar (param $hb i32) (param $modo i32)
+  ;; Runtime Holobit WASM: 'proyectar' requiere runtime avanzado compatible.
   unreachable
 )
 (func $cobra_transformar (param $hb i32) (param $op i32)
+  ;; Runtime Holobit WASM: 'transformar' requiere runtime avanzado compatible.
   unreachable
 )
 (func $cobra_graficar (param $hb i32)
+  ;; Runtime Holobit WASM: 'graficar' requiere runtime avanzado compatible.
   unreachable
 )
 
 ;; backend wasm: imports de runtime administrados externamente
 
 (drop (call $cobra_holobit (i32.const 1)))
-(call $cobra_proyectar (local.get $hb) (i32.const 2d))
-(call $cobra_transformar (local.get $hb) (i32.const rotar))
+(call $cobra_proyectar (local.get $hb) (i32.const 0))
+(call $cobra_transformar (local.get $hb) (i32.const 0))
 (call $cobra_graficar (local.get $hb))
-(call $longitud (i32.const cobra))
-(call $mostrar (i32.const hola))
+(call $longitud (i32.const 0))
+(call $mostrar (i32.const 0))

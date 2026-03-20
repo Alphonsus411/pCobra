@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from pcobra.cobra.transpilers.common.utils import (
     BaseTranspiler,
+    ast_contains_node_types,
     get_runtime_hooks,
     get_standard_imports,
 )
@@ -52,15 +53,10 @@ class TranspiladorASM(BaseTranspiler):
         """
 
         modulo = self._asegurar_modulo(programa)
-        usa_runtime_holobit = isinstance(programa, list) and any(
-            n.__class__.__name__ == "NodoHolobit" for n in programa
+        usa_runtime_holobit = isinstance(programa, list) and ast_contains_node_types(
+            programa,
+            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
         )
-        if isinstance(programa, list):
-            for nodo in programa:
-                if nodo.__class__.__name__ in {"NodoProyectar", "NodoTransformar", "NodoGraficar"}:
-                    raise NotImplementedError(
-                        f"ASM no soporta '{nodo.__class__.__name__[4:].lower()}' de forma nativa"
-                    )
         self._lineas = []
         if usa_runtime_holobit:
             self._lineas.extend(get_standard_imports("asm"))

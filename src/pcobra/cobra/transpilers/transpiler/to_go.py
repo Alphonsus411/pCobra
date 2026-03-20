@@ -69,14 +69,14 @@ def visit_holobit(self, nodo):
     valores = ", ".join(str(v) for v in nodo.valores or [])
     nombre = nodo.nombre or "_hb"
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"{nombre} := cobraHolobit([]float64{{{valores}}})")
+    self.agregar_linea(f"{nombre} := cobra_holobit([]float64{{{valores}}})")
 
 
 def visit_proyectar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     modo = self.obtener_valor(nodo.modo)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobraProyectar({hb}, {modo})")
+    self.agregar_linea(f"cobra_proyectar({hb}, {modo})")
 
 
 def visit_transformar(self, nodo):
@@ -85,13 +85,13 @@ def visit_transformar(self, nodo):
     params = ", ".join(self.obtener_valor(p) for p in nodo.parametros)
     args = f", {params}" if params else ""
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobraTransformar({hb}, {op}{args})")
+    self.agregar_linea(f"cobra_transformar({hb}, {op}{args})")
 
 
 def visit_graficar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobraGraficar({hb})")
+    self.agregar_linea(f"cobra_graficar({hb})")
 
 go_nodes = {
     "asignacion": _visit_asignacion,
@@ -202,6 +202,10 @@ class TranspiladorGo(BaseTranspiler):
         elif isinstance(nodo, NodoInstancia):
             args = ", ".join(self.obtener_valor(a) for a in nodo.argumentos)
             return f"&{nodo.nombre_clase}{{{args}}}"
+        elif isinstance(nodo, NodoHolobit):
+            valores = ", ".join(self.obtener_valor(v) for v in nodo.valores or [])
+            self.usa_runtime_holobit = True
+            return f"cobra_holobit([]float64{{{valores}}})"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
