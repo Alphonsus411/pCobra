@@ -13,7 +13,7 @@ def test_cargar_configuracion_python_js(tmp_path, monkeypatch):
     py_out = tmp_path / "m.py"
     js_out = tmp_path / "m.js"
 
-    config = f"\n['{mod}']\npython = '{py_out}'\njs = '{js_out}'\n"
+    config = f"\n['{mod}']\npython = '{py_out}'\njavascript = '{js_out}'\n"
     cfg_file = tmp_path / "pcobra.toml"
     cfg_file.write_text(config)
 
@@ -24,7 +24,7 @@ def test_cargar_configuracion_python_js(tmp_path, monkeypatch):
     data = cargar_configuracion()
     ruta = str(mod)
     assert data[ruta]['python'] == str(py_out)
-    assert data[ruta]['js'] == str(js_out)
+    assert data[ruta]['javascript'] == str(js_out)
 
 
 def test_cargar_configuracion_cache(tmp_path, monkeypatch):

@@ -13,7 +13,7 @@ from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.import_helper import get_standard_imports
 
 IMPORTS_PY = get_standard_imports("python")
-IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("js"))
+IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
 
 
 def test_parser_enum():

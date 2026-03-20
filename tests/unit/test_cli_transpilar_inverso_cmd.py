@@ -87,7 +87,7 @@ def test_transpilar_inverso_destino_fuera_tier_rechazado_explicitamente():
     assert "externo" in mensaje
 
 
-def test_transpilar_inverso_rechaza_alias_legacy_en_origen(tmp_path):
+def test_transpilar_inverso_acepta_origen_canonico_javascript(tmp_path):
     from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
     from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
@@ -98,13 +98,14 @@ def test_transpilar_inverso_rechaza_alias_legacy_en_origen(tmp_path):
     subparsers = parser.add_subparsers(dest="command")
     TranspilarInversoCommand().register_subparser(subparsers)
 
-    with pytest.raises(SystemExit):
-        parser.parse_args([
-            "transpilar-inverso",
-            str(archivo),
-            "--origen=js",
-            "--destino=python",
-        ])
+    args = parser.parse_args([
+        "transpilar-inverso",
+        str(archivo),
+        "--origen=javascript",
+        "--destino=python",
+    ])
+
+    assert args.origen == "javascript"
 
 
 def test_transpilar_inverso_ayuda_acota_origen_y_targets_oficiales():

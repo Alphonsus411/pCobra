@@ -15,7 +15,7 @@ from core.ast_nodes import (
 
 def _strip_js_imports(code: str) -> str:
     lines = code.splitlines()
-    return "\n".join(lines[len(get_standard_imports("js")):])
+    return "\n".join(lines[len(get_standard_imports("javascript")):])
 
 
 def test_roundtrip_js_option_pattern():

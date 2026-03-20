@@ -30,7 +30,7 @@ def test_transpilacion_option():
     rust = TranspiladorRust().generate_code(ast)
 
     assert py == get_standard_imports("python") + "a = 5\nb = None\n"
-    js_imports = "\n".join(get_standard_imports("js")) + "\n"
+    js_imports = "\n".join(get_standard_imports("javascript")) + "\n"
     assert js == js_imports + "let a = 5;\nlet b = null;"
     assert cpp == "auto a = 5;\nauto b = std::nullopt;"
     assert rust == "let a = Some(5);\nlet b = None;"

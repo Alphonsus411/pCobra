@@ -20,12 +20,12 @@ def test_compilar_dependencia_invalida_python(tmp_path, monkeypatch):
 
 
 @pytest.mark.timeout(5)
-def test_compilar_dependencia_invalida_js(tmp_path, monkeypatch):
+def test_compilar_dependencia_invalida_javascript(tmp_path, monkeypatch):
     mod = tmp_path / "m.co"
     mod.write_text("var x = 1")
     prog = tmp_path / "p.co"
     prog.write_text(f"import '{mod}'\nimprimir(x)")
-    mapping = {str(mod): {"js": str(tmp_path / 'no.js')}}
+    mapping = {str(mod): {"javascript": str(tmp_path / 'no.js')}}
     monkeypatch.setattr(module_map, "get_toml_map", lambda: mapping)
     with patch("sys.stdout", new_callable=StringIO) as out:
         main(["compilar", str(prog), "--tipo=javascript"])

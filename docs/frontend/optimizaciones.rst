@@ -19,7 +19,7 @@ Eliminación de subexpresiones comunes
 ------------------------------------
 ``eliminate_common_subexpressions`` detecta expresiones idénticas que se repiten dentro de una misma función o en el nivel global. Dichas expresiones se calculan una única vez asignándose a una variable temporal y las repeticiones se reemplazan por el identificador generado.
 
-Estas optimizaciones se aplican automáticamente antes de ejecutar el intérprete y en los transpiladores a Python, Rust, JavaScript, WebAssembly, Go, C++, Java y ensamblador.
+Estas optimizaciones se aplican automáticamente antes de ejecutar el intérprete y en los transpiladores a Python, Rust, JavaScript, WebAssembly, Go, C++, Java y `asm`.
 
 Decoradores de rendimiento (``Smooth Criminal``)
 ------------------------------------------------

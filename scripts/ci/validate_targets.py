@@ -132,6 +132,7 @@ SKIPPED_SCAN_REL_PATHS = frozenset(
         "scripts/ci/validate_targets.py",
         "scripts/validate_targets_policy.py",
         "scripts/targets_policy_common.py",
+        "scripts/lint_legacy_aliases.py",
     }
 )
 
@@ -365,7 +366,7 @@ def validate_scan_roots(
             continue
 
         for imported in sorted(_collect_python_reverse_imports(path)):
-            canonical = normalize_reverse_language(imported, allow_legacy_aliases=True)
+            canonical = "javascript" if imported == "js" else normalize_reverse_language(imported)
             if canonical not in allowed_reverse:
                 errors.append(
                     f"{rel}: import reverse fuera del alcance oficial -> from_{imported}"

@@ -160,7 +160,7 @@ def test_transpilar_clase_multibase():
     nodo = NodoClase("Hija", [metodo], ["Base1", "Base2"])
     transpiler = TranspiladorJavaScript()
     result = transpiler.generate_code([nodo])
-    imports = "".join(f"{line}\n" for line in get_standard_imports("js"))
+    imports = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
     expected = (
         imports
         + "class Hija extends Base1 { /* bases: Base1, Base2 */\n"

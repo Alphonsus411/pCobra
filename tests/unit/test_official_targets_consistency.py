@@ -33,7 +33,8 @@ def test_mapa_reverse_extensions_esta_alineado_con_scope_reverse():
     extension_keys = set(EXTENSIONES_POR_LENGUAJE.keys())
 
     assert reverse_scope.issubset(extension_keys)
-    assert {"javascript", "js"}.intersection(extension_keys)
+    assert "javascript" in extension_keys
+    assert "js" not in extension_keys
 
 
 def test_archivos_to_py_en_transpiler_oficiales():
@@ -128,10 +129,7 @@ def test_los_tests_no_importan_reverse_transpilers_fuera_del_scope_oficial():
                     continue
 
                 lenguaje = nombre.removeprefix(prefijo)
-                canonico = normalize_reverse_language(
-                    lenguaje,
-                    allow_legacy_aliases=True,
-                )
+                canonico = "javascript" if lenguaje == "js" else normalize_reverse_language(lenguaje)
                 if canonico not in permitidos:
                     imports_fuera_de_scope.add(lenguaje)
 

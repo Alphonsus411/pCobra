@@ -91,10 +91,10 @@ Puedes anteponer `@` a una función para modificar su comportamiento con un deco
        imprimir('hola')
    fin
 
-**Transpilación a Python, Rust, JavaScript, WebAssembly, Go, C++, Java y ensamblador**
+**Transpilación a Python, Rust, JavaScript, WebAssembly, Go, C++, Java y `asm`**
 
 - `imprimir` se transpila a `print` en Python, `console.log` en JavaScript, `println!` en Rust, `System.out.println` en Java, `fmt.Println` en Go, `std::cout` en C++ y secuencias equivalentes en los backends `asm` y `wasm`.
-- Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en ensamblador generan instrucciones `WHILE` y `FOR`.
+- Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en `asm` generan instrucciones `WHILE` y `FOR`.
 - La construcción `holobit` se traduce a `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust y `holobit({...})` en C++, manteniendo equivalencias en `java`, `go`, `asm` y `wasm` según el backend elegido.
 
 Activar el parser de Lark

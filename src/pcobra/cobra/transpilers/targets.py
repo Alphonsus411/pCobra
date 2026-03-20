@@ -6,14 +6,6 @@ TIER1_TARGETS: Final[Tuple[str, ...]] = ("python", "rust", "javascript", "wasm")
 TIER2_TARGETS: Final[Tuple[str, ...]] = ("go", "cpp", "java", "asm")
 OFFICIAL_TARGETS: Final[Tuple[str, ...]] = TIER1_TARGETS + TIER2_TARGETS
 
-LEGACY_TARGET_ALIASES: Final[dict[str, str]] = {
-    "js": "javascript",
-    "ensamblador": "asm",
-}
-
-# Reservado para aliases oficialmente aceptados en entrada de CLI.
-CLI_TARGET_ALIASES: Final[dict[str, str]] = {}
-
 TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "python": "Python",
     "rust": "Rust",
@@ -22,33 +14,19 @@ TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "go": "Go",
     "cpp": "C++",
     "java": "Java",
-    "asm": "Ensamblador",
+    "asm": "ASM",
 }
 
 
-def normalize_target_name(target: str, *, allow_legacy_aliases: bool = False) -> str:
-    """Normaliza *target* al nombre canónico usado internamente.
-
-    Por defecto NO resuelve aliases legacy para evitar aceptarlos en validación
-    directa de argumentos CLI.
-    """
-    normalized = target.strip().lower()
-    if allow_legacy_aliases:
-        return LEGACY_TARGET_ALIASES.get(normalized, normalized)
-    return normalized
+def normalize_target_name(target: str) -> str:
+    """Normaliza *target* al nombre canónico usado internamente."""
+    return target.strip().lower()
 
 
 def resolution_candidates(target: str) -> Tuple[str, ...]:
-    """Devuelve posibles nombres válidos para resolver compatibilidad retroactiva."""
+    """Devuelve posibles nombres válidos para resolver configuraciones canónicas."""
     canonical = normalize_target_name(target)
     return (canonical,)
-
-
-def resolution_candidates_with_legacy_aliases(target: str) -> Tuple[str, ...]:
-    """Devuelve candidatos canónicos + aliases legacy para migración interna."""
-    canonical = normalize_target_name(target, allow_legacy_aliases=True)
-    aliases = tuple(alias for alias, canon in LEGACY_TARGET_ALIASES.items() if canon == canonical)
-    return (canonical, *aliases)
 
 
 def target_cli_choices(available_targets: Tuple[str, ...] | list[str] | set[str]) -> tuple[str, ...]:
@@ -59,7 +37,7 @@ def target_cli_choices(available_targets: Tuple[str, ...] | list[str] | set[str]
 
 def target_label(target: str) -> str:
     """Devuelve la etiqueta amigable de un target canónico."""
-    canonical = normalize_target_name(target, allow_legacy_aliases=True)
+    canonical = normalize_target_name(target)
     return TARGET_FRIENDLY_LABELS.get(canonical, canonical)
 
 

@@ -32,7 +32,7 @@ def test_benchmarks2_generates_json(tmp_path, monkeypatch):
     main(["benchmarks2", "--output", str(salida)])
     data = json.loads(salida.read_text())
     modos = {d["modo"] for d in data}
-    assert {"cobra", "python", "js", "sandbox"}.issubset(modos)
+    assert {"cobra", "python", "javascript", "sandbox"}.issubset(modos)
     for d in data:
         assert isinstance(d["time"], float)
         assert isinstance(d["memory_kb"], int)

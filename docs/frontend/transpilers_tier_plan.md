@@ -4,7 +4,7 @@
 Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 
 - **Tier 1:** Python, Rust, JavaScript, WASM.
-- **Tier 2:** Go, C++, Java, Ensamblador.
+- **Tier 2:** Go, C++, Java, ASM.
 
 ## Tareas estructuradas
 
@@ -111,13 +111,6 @@ Se añade una suite dedicada que cubre:
 - **Tier 1** prioriza estabilidad funcional y cobertura de primitivas Holobit en Python/JS.
 - **Tier 2** prioriza continuidad de generación y compatibilidad incremental, con cobertura parcial explícita.
 - Cualquier backend fuera de esta matriz se considera fuera de contrato.
-
-
-## Nota histórica/no vigente sobre `js`
-
-- El nombre canónico vigente del target de JavaScript es `javascript` en ejemplos, configuración y documentación.
-- Las referencias previas a `js` se conservan únicamente como contexto histórico de migración y no deben reutilizarse en documentación pública nueva.
-- Recomendación vigente: usar siempre `javascript` en comandos y archivos (`pcobra.toml`, `cobra.mod`).
 
 
 ## Política anti-regresión

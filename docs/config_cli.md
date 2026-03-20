@@ -59,8 +59,8 @@ asm = "build/modulo.asm"
 ### ¿Qué targets pueden omitirse intencionalmente?
 
 - Puedes omitir cualquier target **no incluido** en `required_targets`.
-- Si no declaras política, la validación asume por defecto que `python` y
-  `javascript` son requeridos.
+- Si no declaras política, la validación asume por defecto el Tier 1 completo:
+  `python`, `rust`, `javascript` y `wasm`.
 - Para proyectos que solo distribuyen un subconjunto de backends, ajusta
   explícitamente `required_targets` para evitar errores de validación.
 

@@ -10,21 +10,11 @@ SRC_ROOT = ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from pcobra.cobra.transpilers.targets import (
-    CLI_TARGET_ALIASES,
-    LEGACY_TARGET_ALIASES,
-    OFFICIAL_TARGETS,
-    TIER1_TARGETS,
-    TIER2_TARGETS,
-)
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
-PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = tuple(
-    list(OFFICIAL_TARGETS) + list(CLI_TARGET_ALIASES)
-)
-INTERNAL_COMPATIBILITY_TARGET_NAMES: tuple[str, ...] = tuple(
-    list(PUBLIC_ACCEPTED_TARGET_NAMES) + list(LEGACY_TARGET_ALIASES)
-)
+PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
+INTERNAL_COMPATIBILITY_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
 
 PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py",
@@ -52,6 +42,7 @@ NON_CANONICAL_PUBLIC_NAMES: dict[str, str] = {
     'c++': 'cpp',
     'assembly': 'asm',
     'ensamblador': 'asm',
+    'js': 'javascript',
 }
 OUT_OF_POLICY_LANGUAGE_TERMS: frozenset[str] = frozenset({
     'kotlin',
@@ -67,8 +58,8 @@ def read_target_policy() -> dict[str, Any]:
         "tier1_targets": tuple(TIER1_TARGETS),
         "tier2_targets": tuple(TIER2_TARGETS),
         "official_targets": tuple(OFFICIAL_TARGETS),
-        "cli_aliases": dict(CLI_TARGET_ALIASES),
-        "legacy_aliases": dict(LEGACY_TARGET_ALIASES),
+        "cli_aliases": {},
+        "legacy_aliases": {},
         "public_names": tuple(PUBLIC_ACCEPTED_TARGET_NAMES),
         "internal_names": tuple(INTERNAL_COMPATIBILITY_TARGET_NAMES),
         "non_canonical_public_names": dict(NON_CANONICAL_PUBLIC_NAMES),
@@ -86,6 +77,6 @@ def build_legacy_alias_patterns(legacy_aliases: dict[str, str]) -> tuple[re.Patt
             rf"\b(?:--(?:tipo|tipos|backend|origen|destino)\s+|--(?:tipo|tipos|backend|origen|destino)=)({alias_group})\b",
             re.IGNORECASE,
         ),
-        re.compile(rf"['\"]({alias_group})['\"]", re.IGNORECASE),
+        re.compile(rf"""['"]({alias_group})['"]""", re.IGNORECASE),
         re.compile(rf"``({alias_group})``", re.IGNORECASE),
     )

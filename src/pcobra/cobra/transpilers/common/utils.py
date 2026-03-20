@@ -319,7 +319,7 @@ def save_file(content: Union[str, List[str]], path: str) -> None:
 
 def get_standard_imports(language: str) -> Union[str, List[str]]:
     """Devuelve las importaciones por defecto para *language*."""
-    target = normalize_target_name(language, allow_legacy_aliases=True)
+    target = normalize_target_name(language)
     if target not in STANDARD_IMPORTS:
         raise ValueError(f"Target sin STANDARD_IMPORTS configurado: {language}")
     imports = STANDARD_IMPORTS[target]
@@ -330,7 +330,7 @@ def get_standard_imports(language: str) -> Union[str, List[str]]:
 
 def get_runtime_hooks(language: str) -> List[str]:
     """Devuelve hooks auxiliares de runtime para *language*."""
-    target = normalize_target_name(language, allow_legacy_aliases=True)
+    target = normalize_target_name(language)
     if target not in RUNTIME_HOOKS:
         raise ValueError(f"Target sin RUNTIME_HOOKS configurado: {language}")
     return list(RUNTIME_HOOKS[target])
