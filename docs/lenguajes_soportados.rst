@@ -74,11 +74,13 @@ Transpilación inversa (feature independiente)
 
 La transpilación inversa se documenta como una capacidad separada de los
 backends de salida. Su objetivo es convertir código fuente de otros lenguajes
-a AST de Cobra para migraciones o análisis.
+a AST de Cobra para migraciones o análisis. Los orígenes soportados en la base
+actual son ``python``, ``javascript`` y ``java``; el destino final debe ser uno
+de los 8 backends oficiales de salida.
 
 .. code-block:: bash
 
-   cobra transpilar-inverso script.py --origen=python --destino=cobra
+   cobra transpilar-inverso script.py --origen=python --destino=javascript
 
 Esta funcionalidad es experimental y su cobertura depende del frontend de
 entrada, por lo que no debe interpretarse como soporte de salida equivalente a

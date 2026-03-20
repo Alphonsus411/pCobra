@@ -12,7 +12,7 @@ Resultados pre-generados para cada transpilador:
 - `cpp`: `cobra examples/hello_world/cpp.co --to cpp` → [cpp.cpp](cpp.cpp)
 - `go`: `cobra examples/hello_world/go.co --to go` → [go.go](go.go)
 - `java`: `cobra examples/hello_world/java.co --to java` → [java.java](java.java)
-- `javascript`: `cobra examples/hello_world/javascript.co --to javascript` → [javascript.js](javascript.js) (antes `js`)
+- `javascript`: `cobra examples/hello_world/javascript.co --to javascript` → [javascript.js](javascript.js)
 - `python`: `cobra examples/hello_world/python.co --to python` → [python.py](python.py)
 - `rust`: `cobra examples/hello_world/rust.co --to rust` → [rust.rs](rust.rs)
 - `wasm`: `cobra examples/hello_world/wasm.co --to wasm` → [wasm.wat](wasm.wat)

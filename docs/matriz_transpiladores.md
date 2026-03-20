@@ -4,14 +4,14 @@
 
 | Backend | Tier | holobit | proyectar | transformar | graficar | corelibs | standard_library |
 |---|---|---|---|---|---|---|---|
-| Python | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full |
-| JavaScript | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | 🟡 partial | 🟡 partial |
-| Rust | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| WASM | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
-| Go | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| C++ | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| Java | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
-| ASM | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `python` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full |
+| `javascript` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | 🟡 partial | 🟡 partial |
+| `rust` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
+| `wasm` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `go` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
+| `cpp` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
+| `java` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | ✅ full | ✅ full |
+| `asm` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 
 > `full`: soportado y cubierto por regresión. `partial`: soporte limitado/fallback. `none`: no garantizado.
 
@@ -23,7 +23,7 @@
 
 ## Matriz histórica de características del AST
 
-| Característica | Python | JavaScript | C++ | Rust | Go | Java | Assembly | WASM |
+| Característica | `python` | `javascript` | `cpp` | `rust` | `go` | `java` | `asm` | `wasm` |
 |---|---|---|---|---|---|---|---|---|
 | asignacion | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
 | assert | ✅ | ✅ | ✅ | ✅ |  |  |  |  |

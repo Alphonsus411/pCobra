@@ -50,7 +50,11 @@ usuario final.
 La transpilación inversa se documenta como capacidad independiente. Su política
 de entrada se define en `src/pcobra/cobra/transpilers/reverse/policy.py`.
 La documentación pública debe referirse a los orígenes reverse mediante sus
-nombres canónicos actuales.
+nombres canónicos actuales:
+
+- `python`
+- `javascript`
+- `java`
 
 ## Regla de mantenimiento
 
@@ -62,7 +66,8 @@ nombres canónicos actuales.
   (`OFFICIAL_TARGETS`, `TIER1_TARGETS`, `TIER2_TARGETS`) y limitarse a mantener
   metadatos técnicos locales.
 - La CI debe incluir comprobaciones textuales para impedir la reaparición de
-  aliases legacy en rutas de documentación pública.
+  aliases legacy, módulos reverse borrados, extras no vigentes o ejemplos de
+  CLI fuera de política en rutas de documentación pública y ejemplos.
 - Cualquier ampliación o reducción del alcance debe actualizar:
   - este archivo,
   - la fuente de verdad en código,

@@ -7,12 +7,16 @@ Checks:
 3) Detección textual de aliases legacy en rutas públicas de CLI/docs de usuario.
 4) ``transpilar-inverso`` expone únicamente orígenes reverse canónicos y destinos
    dentro de ``OFFICIAL_TARGETS``.
+5) La documentación pública y los ejemplos no mencionan módulos reverse borrados,
+   extras no vigentes ni ejemplos CLI fuera de política, salvo que estén marcados
+   explícitamente como históricos/no vigentes.
 """
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = ROOT / "src"
@@ -119,6 +123,100 @@ def validate_reverse_cli_contract(
     return errors
 
 
+DOCUMENTATION_SCAN_ROOTS = (
+    ROOT / "README.md",
+    ROOT / "docs",
+    ROOT / "examples",
+)
+
+DOCUMENTATION_PATH_EXCLUDE_PARTS = (
+    "docs/notebooks/",
+)
+
+DOCUMENTATION_ALLOWED_HISTORICAL_PARTS = (
+    "docs/historico/",
+)
+
+REMOVED_REVERSE_MODULE_PATTERNS = (
+    "from_c.py",
+    "from_cpp.py",
+    "from_go.py",
+    "from_rust.py",
+    "from_wasm.py",
+    "from_asm.py",
+)
+
+HISTORICAL_MARKERS = ("histórico", "historico", "no vigente")
+
+
+def _iter_documentation_files() -> tuple[Path, ...]:
+    files: list[Path] = []
+    for path in DOCUMENTATION_SCAN_ROOTS:
+        if path.is_file():
+            files.append(path)
+            continue
+        files.extend(candidate for candidate in path.rglob("*") if candidate.is_file())
+    return tuple(sorted(files))
+
+
+def _is_historical_context(rel: str, line: str) -> bool:
+    rel_lower = rel.lower()
+    line_lower = line.lower()
+    return any(part in rel_lower for part in DOCUMENTATION_ALLOWED_HISTORICAL_PARTS) or any(
+        marker in line_lower for marker in HISTORICAL_MARKERS
+    )
+
+
+def validate_documentation_policy(
+    official_targets: tuple[str, ...],
+    reverse_scope_languages: tuple[str, ...],
+) -> list[str]:
+    errors: list[str] = []
+    official_target_set = set(official_targets)
+    reverse_scope_set = set(reverse_scope_languages)
+    option_pattern = re.compile(r"--(?P<kind>origen|destino)(?:=|\s+)(?P<value>[a-zA-Z0-9_-]+)")
+
+    for path in _iter_documentation_files():
+        rel = path.relative_to(ROOT).as_posix()
+        if any(part in rel for part in DOCUMENTATION_PATH_EXCLUDE_PARTS):
+            continue
+
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            if _is_historical_context(rel, line):
+                continue
+
+            lowered = line.lower()
+
+            for removed_module in REMOVED_REVERSE_MODULE_PATTERNS:
+                if removed_module in lowered:
+                    errors.append(
+                        f"{rel}:{line_no}: referencia documental a módulo reverse retirado -> {removed_module}"
+                    )
+
+            if "reverse-wasm" in lowered:
+                errors.append(
+                    f"{rel}:{line_no}: referencia documental a extra reverse fuera del alcance vigente -> reverse-wasm"
+                )
+
+            if "transpilar-inverso" not in lowered:
+                continue
+
+            for match in option_pattern.finditer(line):
+                kind = match.group("kind")
+                value = match.group("value").strip().lower()
+                if kind == "origen" and value not in reverse_scope_set:
+                    errors.append(
+                        f"{rel}:{line_no}: origen reverse fuera de REVERSE_SCOPE_LANGUAGES -> {value}"
+                    )
+                if kind == "destino" and value not in official_target_set:
+                    errors.append(
+                        f"{rel}:{line_no}: destino reverse fuera de OFFICIAL_TARGETS -> {value}"
+                    )
+
+    return errors
+
+
 
 def main() -> int:
     errors: list[str] = []
@@ -142,6 +240,7 @@ def main() -> int:
     errors.extend(validate_transpiler_modules(official_targets))
     errors.extend(validate_no_legacy_aliases_in_public_paths(legacy_aliases))
     errors.extend(validate_reverse_cli_contract(official_targets, tuple(REVERSE_SCOPE_LANGUAGES)))
+    errors.extend(validate_documentation_policy(official_targets, tuple(REVERSE_SCOPE_LANGUAGES)))
 
     if errors:
         print("❌ Validación anti-regresión de targets: FALLÓ", file=sys.stderr)
