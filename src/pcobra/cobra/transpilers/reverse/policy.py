@@ -19,21 +19,9 @@ REVERSE_SCOPE_MODULES: Final[Dict[str, str]] = {
 }
 
 
-REVERSE_SCOPE_ALIASES: Final[Dict[str, str]] = {
-    "js": "javascript",
-}
-
-
-def normalize_reverse_language(language: str, *, allow_legacy_aliases: bool = False) -> str:
-    """Normaliza el lenguaje reverse al nombre canónico usado internamente.
-
-    Por defecto NO resuelve aliases legacy para evitar aceptarlos en la
-    validación directa de argumentos CLI.
-    """
-    normalized = language.strip().lower()
-    if allow_legacy_aliases:
-        return REVERSE_SCOPE_ALIASES.get(normalized, normalized)
-    return normalized
+def normalize_reverse_language(language: str) -> str:
+    """Normaliza el lenguaje reverse al nombre canónico usado internamente."""
+    return language.strip().lower()
 
 
 def parse_reverse_source_language(value: str) -> str:

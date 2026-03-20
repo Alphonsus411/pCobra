@@ -59,7 +59,7 @@ except ImportError:  # pragma: no cover - compatibilidad
         NodoDefer,
     )
 
-IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("js"))
+IMPORTS = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
 
 
 def test_transpilador_asignacion():
@@ -345,7 +345,7 @@ def test_clase_con_decorador_desde_parser_js():
 
 def test_imports_js_por_defecto():
     resultado = TranspiladorJavaScript().generate_code([])
-    esperado = "\n".join(get_standard_imports("js"))
+    esperado = "\n".join(get_standard_imports("javascript"))
     assert resultado == esperado
 
 

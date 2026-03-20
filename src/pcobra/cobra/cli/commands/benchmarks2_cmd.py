@@ -35,7 +35,7 @@ def _resolver_comandos(programas: Mapping[str, Path]) -> Mapping[str, Sequence[s
     return {
         "cobra": [sys.executable, "-c", mensaje.format(modo="cobra")],
         "python": [sys.executable, str(programas["python"])],
-        "js": [sys.executable, "-c", mensaje.format(modo="js")],
+        "javascript": [sys.executable, "-c", mensaje.format(modo="javascript")],
         "sandbox": [sys.executable, "-c", mensaje.format(modo="sandbox")],
     }
 
@@ -130,7 +130,7 @@ class BenchmarksV2Command(BaseCommand):
         programas = {
             "cobra": co_path,
             "python": py_path,
-            "js": js_path,
+            "javascript": js_path,
             "sandbox": co_path,
         }
         self._comandos = _resolver_comandos(programas)

@@ -20,7 +20,7 @@ def test_transpilar_lista_tipo_python():
 def test_transpilar_diccionario_tipo_js():
     nodo = NodoDiccionarioTipo("datos", "str", "int", [(NodoValor("a"), NodoValor(1))])
     result = TranspiladorJavaScript().generate_code([nodo])
-    imports = "".join(f"{line}\n" for line in get_standard_imports("js"))
+    imports = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
     expected = imports + "let datos = {a: 1};"
     assert result.strip() == expected.strip()
 

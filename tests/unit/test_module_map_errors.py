@@ -70,14 +70,14 @@ def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):
     assert module_map.get_mapped_path("m", "python") == "m"
 
 
-def test_get_mapped_path_resuelve_canonico_desde_alias_legacy(monkeypatch):
-    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"js": "m.js"}})
+def test_get_mapped_path_usa_solo_claves_canonicas(monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}})
     assert module_map.get_mapped_path("m", "javascript") == "m.js"
 
 
-def test_get_mapped_path_resuelve_alias_legacy_desde_canonico(monkeypatch):
+def test_get_mapped_path_rechaza_backend_no_canonico(monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}})
-    assert module_map.get_mapped_path("m", "js") == "m.js"
+    assert module_map.get_mapped_path("m", "js") == "m"
 
 
 def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):
@@ -86,4 +86,4 @@ def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):
         "get_toml_map",
         lambda: {"modulos": {"m": {"javascript": "dist/m.js"}}},
     )
-    assert module_map.get_mapped_path("m", "js") == "dist/m.js"
+    assert module_map.get_mapped_path("m", "javascript") == "dist/m.js"

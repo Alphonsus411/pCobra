@@ -50,7 +50,7 @@ def test_pcobra_mapeo_js(tmp_path, monkeypatch):
     js_out = tmp_path / "m.js"
     js_out.write_text("let x = 2;\n")
 
-    mapping = {str(mod): {"js": str(js_out)}}
+    mapping = {str(mod): {"javascript": str(js_out)}}
     toml_file = tmp_path / "pcobra.toml"
     _write_toml(toml_file, mapping)
 

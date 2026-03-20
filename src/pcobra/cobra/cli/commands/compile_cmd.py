@@ -51,7 +51,7 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     """Valida backend contra la whitelist oficial y devuelve su forma canónica."""
-    canonical = normalize_target_name(backend, allow_legacy_aliases=True)
+    canonical = normalize_target_name(backend)
     if canonical not in OFFICIAL_TARGETS:
         raise ValueError(
             _("Backend no permitido en {context}: {backend}. Permitidos: {supported}").format(
@@ -65,7 +65,7 @@ def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
 
 def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
     """Acepta únicamente nombres canónicos oficiales en entry points."""
-    normalized = normalize_target_name(backend, allow_legacy_aliases=False)
+    normalized = normalize_target_name(backend)
     raw_normalized = backend.strip().lower()
     if raw_normalized != normalized or normalized not in OFFICIAL_TARGETS:
         raise ValueError(

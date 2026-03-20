@@ -12,7 +12,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
-from pcobra.cobra.transpilers.targets import resolution_candidates_with_legacy_aliases
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +94,12 @@ def get_toml_map():
 def get_mapped_path(module: str, backend: str) -> str:
     """Return the path for *module* mapped for the given *backend*.
 
-    Resuelve con nombre canónico y aliases legacy del backend para mantener
-    compatibilidad retroactiva. Si no hay mapeo, devuelve ``module``.
+    Resuelve únicamente con nombres canónicos oficiales. Si no hay mapeo,
+    devuelve ``module``.
     """
+    canonical_backend = normalize_target_name(backend)
+    if canonical_backend not in OFFICIAL_TARGETS:
+        return module
     mapa = get_toml_map()
     modulos = mapa.get("modulos", {}) if isinstance(mapa, dict) else {}
 
@@ -118,9 +121,8 @@ def get_mapped_path(module: str, backend: str) -> str:
     if not isinstance(module_mapping, dict) or not module_mapping:
         return module
 
-    for candidate in resolution_candidates_with_legacy_aliases(backend):
-        mapped = module_mapping.get(candidate)
-        if isinstance(mapped, str):
-            return mapped
+    mapped = module_mapping.get(canonical_backend)
+    if isinstance(mapped, str):
+        return mapped
 
     return module

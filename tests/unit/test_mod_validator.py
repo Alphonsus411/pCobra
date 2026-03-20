@@ -18,7 +18,7 @@ def test_validador_archivo_faltante(tmp_path, monkeypatch):
 
 
 def test_validador_campos_faltantes(tmp_path):
-    """Debe fallar si falta un backend requerido (python o javascript/js)."""
+    """Debe fallar si falta un backend requerido por la política."""
     mod = tmp_path / "x.co"
     data = {str(mod): {"version": "0.1.0"}}
     _write_yaml(tmp_path / "cobra.mod", data)
@@ -51,30 +51,11 @@ def test_validador_duplicados(tmp_path):
         validar_mod(str(tmp_path / "cobra.mod"))
 
 
-def test_validador_js_legacy_normaliza_y_advierte(tmp_path, caplog, monkeypatch):
-    js = tmp_path / "m.js"
-    js.write_text("console.log('ok')")
-    mod = tmp_path / "m.co"
-    data = {str(mod): {"version": "0.1.0", "js": str(js)}}
-    _write_yaml(tmp_path / "cobra.mod", data)
-
-    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
-    monkeypatch.setattr(
-        "cobra.semantico.mod_validator.module_map.get_toml_map",
-        lambda: {"project": {"required_targets": ["javascript"]}},
-    )
-
-    with caplog.at_level("WARNING"):
-        validar_mod(str(tmp_path / "cobra.mod"))
-
-    assert "está deprecada; usa 'javascript'" in caplog.text
-
-
 def test_validador_javascript_canonico(tmp_path, monkeypatch):
-    js = tmp_path / "m.js"
-    js.write_text("console.log('ok')")
+    javascript_output = tmp_path / "m.js"
+    javascript_output.write_text("console.log('ok')")
     mod = tmp_path / "m.co"
-    data = {str(mod): {"version": "0.1.0", "javascript": str(js)}}
+    data = {str(mod): {"version": "0.1.0", "javascript": str(javascript_output)}}
     _write_yaml(tmp_path / "cobra.mod", data)
 
     monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
@@ -140,8 +121,8 @@ def test_validador_permite_targets_tier2_opcionales_en_mapeo(tmp_path, monkeypat
     py.write_text("x = 1")
     rs = tmp_path / "m.rs"
     rs.write_text("fn main() {}")
-    js = tmp_path / "m.js"
-    js.write_text("let x = 1;")
+    javascript_output = tmp_path / "m.js"
+    javascript_output.write_text("let x = 1;")
     wasm = tmp_path / "m.wasm"
     wasm.write_text("00")
     go = tmp_path / "m.go"
@@ -153,7 +134,7 @@ def test_validador_permite_targets_tier2_opcionales_en_mapeo(tmp_path, monkeypat
             "version": "0.1.0",
             "python": str(py),
             "rust": str(rs),
-            "javascript": str(js),
+            "javascript": str(javascript_output),
             "wasm": str(wasm),
             "go": str(go),
         },

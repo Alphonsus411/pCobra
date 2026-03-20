@@ -56,10 +56,6 @@ Source = "https://github.com/Alphonsus411/pCobra"
 excel = ["openpyxl>=3.1,<4"]
 columnar = ["pyarrow>=17,<22"]
 io-binary = ["pyarrow>=17,<22"]
-reverse-wasm = [
-    "wabt>=0.1.2,<1",
-    "sexpdata>=1.0,<2",
-]
 lsp = ["python-lsp-server~=1.13"]
 ml = [
     "tensorflow>=2.13,<2.17",

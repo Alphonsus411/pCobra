@@ -710,7 +710,6 @@ def ejecutar_en_contenedor(
     imagenes = {
         "python": "cobra-python-sandbox",
         "javascript": "cobra-js-sandbox",
-        "js": "cobra-js-sandbox",  # compatibilidad interna
         "cpp": "cobra-cpp-sandbox",
         "rust": "cobra-rust-sandbox",
     }

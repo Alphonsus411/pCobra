@@ -5,11 +5,7 @@ from pcobra.cobra.transpilers.reverse.policy import REVERSE_SCOPE_LANGUAGES
 
 
 def _normalizar(token: str) -> str:
-    t = token.strip().lower()
-    aliases = {
-        "javascript": "js",
-    }
-    return aliases.get(t, t)
+    return token.strip().lower()
 
 
 def test_docs_lenguajes_transpiladores_inversos_alineado_con_scope():
@@ -28,10 +24,10 @@ def test_readme_lista_de_reverse_scope_alineada_con_policy():
     contenido = Path("README.md").read_text(encoding="utf-8")
     linea = next(
         l for l in contenido.splitlines()
-        if l.startswith("Actualmente es posible convertir a Cobra código escrito en")
+        if l.startswith("Actualmente la transpilación inversa soportada por política acepta código de entrada en")
     )
     encontrados = {
         _normalizar(token)
-        for token in re.findall(r"`([^`]+)`", linea)
+        for token in re.findall(r"`([^`]+)`", linea[: linea.index(', y la salida')])
     }
     assert encontrados == set(REVERSE_SCOPE_LANGUAGES)

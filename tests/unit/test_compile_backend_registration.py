@@ -21,10 +21,10 @@ def test_register_transpiler_backend_rechaza_backend_no_oficial(monkeypatch):
         )
 
 
-def test_register_transpiler_backend_normaliza_alias_y_registra(monkeypatch):
+def test_register_transpiler_backend_acepta_backend_canonico(monkeypatch):
     monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
 
-    canonical = compile_cmd.register_transpiler_backend("js", DummyTranspiler, context="tests")
+    canonical = compile_cmd.register_transpiler_backend("javascript", DummyTranspiler, context="tests")
 
     assert canonical == "javascript"
     assert compile_cmd.TRANSPILERS["javascript"] is DummyTranspiler

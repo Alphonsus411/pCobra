@@ -30,7 +30,7 @@ from cobra.transpilers.transpiler.to_python import TranspiladorPython
 from core.ast_nodes import NodoLlamadaFuncion, NodoValor
 
 IMPORTS_PY = get_standard_imports("python")
-IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("js"))
+IMPORTS_JS = "".join(f"{line}\n" for line in get_standard_imports("javascript"))
 
 
 def test_texto_funcs():

@@ -5,7 +5,7 @@ Este módulo proporciona utilidades para leer un archivo ``cobra.mod``
 comprobaciones incluyen:
 
 - Existencia de los archivos declarados para los backends oficiales definidos en
-  ``OFFICIAL_TARGETS`` (con compatibilidad legacy para ``js``).
+  ``OFFICIAL_TARGETS``.
 - Validez de las versiones indicadas utilizando el formato semver.
 - Detección de nombres de módulos o archivos duplicados.
 """
@@ -46,10 +46,6 @@ MAX_FILE_SIZE = 10_000_000  # 10MB
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
 
 logger = logging.getLogger(__name__)
-
-LEGACY_TARGET_ALIASES: dict[str, str] = {
-    "js": "javascript",
-}
 
 DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = TIER1_TARGETS
 
@@ -114,26 +110,6 @@ def cargar_mod(path: str | None = None) -> Dict[str, Any]:
 
 
 
-def _normalize_module_targets(modulo: str, info: dict[str, Any]) -> dict[str, Any]:
-    """Normaliza claves legacy de targets y emite advertencias de deprecación."""
-    normalized = dict(info)
-    for legacy, canonical in LEGACY_TARGET_ALIASES.items():
-        legacy_value = normalized.get(legacy)
-        if legacy_value is None:
-            continue
-
-        logger.warning(
-            "La clave '%s' para el módulo %s está deprecada; usa '%s'.",
-            legacy,
-            modulo,
-            canonical,
-        )
-
-        if canonical not in normalized:
-            normalized[canonical] = legacy_value
-
-    return normalized
-
 
 def _required_targets_from_policy() -> tuple[str, ...]:
     """Obtiene targets requeridos desde ``cobra.toml`` según política de proyecto."""
@@ -165,7 +141,7 @@ def _required_targets_from_policy() -> tuple[str, ...]:
     for target in raw_targets:
         if not isinstance(target, str):
             continue
-        canonical = normalize_target_name(target, allow_legacy_aliases=True)
+        canonical = normalize_target_name(target)
         if canonical in OFFICIAL_TARGETS and canonical not in normalized:
             normalized.append(canonical)
 
@@ -219,7 +195,7 @@ def validar_mod(path: str | None = None) -> None:
             errores.append(f"Entrada inválida para {modulo}")
             continue
 
-        info_normalized = _normalize_module_targets(modulo, info)
+        info_normalized = dict(info)
         _warn_if_tier2_used_as_optional_mapping(modulo, info_normalized)
 
         # Validar versión
@@ -244,7 +220,7 @@ def validar_mod(path: str | None = None) -> None:
 
         # Validar archivos por targets canónicos soportados
         for target in OFFICIAL_TARGETS:
-            canonical_target = normalize_target_name(target, allow_legacy_aliases=True)
+            canonical_target = normalize_target_name(target)
             ruta = info_normalized.get(canonical_target)
             if not ruta:
                 continue
