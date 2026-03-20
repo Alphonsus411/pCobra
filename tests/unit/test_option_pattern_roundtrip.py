@@ -1,7 +1,5 @@
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
-from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from cobra.transpilers.reverse.from_js import ReverseFromJS
-from cobra.transpilers.reverse.from_cpp import ReverseFromCPP
 from cobra.transpilers.import_helper import get_standard_imports
 import pytest
 from core.ast_nodes import (
@@ -38,20 +36,3 @@ def test_roundtrip_js_option_pattern():
     ast_back = parser.generate_ast(code)
     assert ast_back == ast
 
-
-def test_roundtrip_cpp_option_pattern():
-    try:
-        parser = ReverseFromCPP()
-    except NotImplementedError:
-        pytest.skip("tree-sitter C++ no disponible")
-    ast = [
-        NodoAsignacion("a", NodoOption(None)),
-        NodoSwitch(
-            NodoIdentificador("a"),
-            [NodoCase(NodoPattern(NodoValor(1)), [NodoAsignacion("y", NodoValor(1))])],
-            [NodoAsignacion("y", NodoValor(0))],
-        ),
-    ]
-    code = TranspiladorCPP().generate_code(ast)
-    ast_back = parser.generate_ast(code)
-    assert ast_back == ast

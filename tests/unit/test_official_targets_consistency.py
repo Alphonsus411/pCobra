@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 from pcobra.cobra.cli.commands.bench_cmd import BACKENDS as BENCH_BACKENDS
@@ -6,7 +7,10 @@ from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import EXTENSIONES_POR_LENGUAJE
 from pcobra.cobra.transpilers.common.utils import STANDARD_IMPORTS
 from pcobra.cobra.transpilers.feature_inspector import TRANSPILERS as FEATURE_INSPECTOR_TRANSPILERS
-from pcobra.cobra.transpilers.reverse.policy import REVERSE_SCOPE_LANGUAGES
+from pcobra.cobra.transpilers.reverse.policy import (
+    REVERSE_SCOPE_LANGUAGES,
+    normalize_reverse_language,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
@@ -67,4 +71,46 @@ def test_archivos_reverse_from_py_en_scope_reverse():
         "Se encontraron reverse transpilers fuera del alcance definido en policy.py: "
         f"{', '.join(fuera_de_scope)}. "
         f"Permitidos reverse: {', '.join(REVERSE_SCOPE_LANGUAGES)}"
+    )
+
+
+def test_los_tests_no_importan_reverse_transpilers_fuera_del_scope_oficial():
+    permitidos = set(REVERSE_SCOPE_LANGUAGES)
+    encontrados_fuera_de_scope = {}
+
+    for path in Path("tests").rglob("test_*.py"):
+        modulo = ast.parse(path.read_text(encoding="utf-8"))
+        imports_fuera_de_scope = set()
+
+        for node in ast.walk(modulo):
+            nombres = []
+            if isinstance(node, ast.ImportFrom) and node.module:
+                nombres = [node.module]
+            elif isinstance(node, ast.Import):
+                nombres = [alias.name for alias in node.names]
+
+            for nombre in nombres:
+                prefijo = None
+                if nombre.startswith("cobra.transpilers.reverse.from_"):
+                    prefijo = "cobra.transpilers.reverse.from_"
+                elif nombre.startswith("pcobra.cobra.transpilers.reverse.from_"):
+                    prefijo = "pcobra.cobra.transpilers.reverse.from_"
+
+                if prefijo is None:
+                    continue
+
+                lenguaje = nombre.removeprefix(prefijo)
+                canonico = normalize_reverse_language(
+                    lenguaje,
+                    allow_legacy_aliases=True,
+                )
+                if canonico not in permitidos:
+                    imports_fuera_de_scope.add(lenguaje)
+
+        if imports_fuera_de_scope:
+            encontrados_fuera_de_scope[path.as_posix()] = sorted(imports_fuera_de_scope)
+
+    assert not encontrados_fuera_de_scope, (
+        "Se encontraron tests que importan reverse transpilers fuera del scope oficial: "
+        f"{encontrados_fuera_de_scope}. Permitidos: {', '.join(REVERSE_SCOPE_LANGUAGES)}"
     )
