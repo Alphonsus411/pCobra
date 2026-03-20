@@ -60,6 +60,11 @@ Resultados recientes
 Los benchmarks pueden ejecutarse con ``cobra bench``. El siguiente
 resumen se obtuvo con ``scripts/benchmarks/compare_backends.py``.
 
+La suite de benchmarking usa únicamente backends con metadatos técnicos y
+runner configurados. Esto significa que un target oficial de transpilación puede
+quedar fuera del benchmark ejecutable si no existe runtime/herramienta oficial
+para medirlo de forma homogénea.
+
 La selección de backends y los nombres mostrados en reportes públicos deben
 seguir la política oficial definida en ``src/pcobra/cobra/transpilers/targets.py``.
 

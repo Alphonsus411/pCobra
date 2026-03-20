@@ -695,7 +695,9 @@ def ejecutar_en_contenedor(
 ) -> str:
     """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
 
-    Los backends soportados son ``python``, ``javascript``, ``cpp`` y ``rust``. Cada
+    Los backends soportados son ``python``, ``javascript``, ``cpp`` y ``rust``.
+    Los targets oficiales ``go``, ``java``, ``wasm`` y ``asm`` se consideran
+    destinos de transpilación y quedan fuera del runtime Docker oficial. Cada
     backend utiliza una imagen específica que debe estar construida
     previamente. ``timeout`` define el límite de tiempo en segundos para la
     ejecución del contenedor o ``None`` para desactivar el límite.

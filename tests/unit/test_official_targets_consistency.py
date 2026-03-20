@@ -11,6 +11,7 @@ from pcobra.cobra.transpilers.reverse.policy import (
     REVERSE_SCOPE_LANGUAGES,
     normalize_reverse_language,
 )
+from pcobra.cobra.cli.target_policies import DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
@@ -140,3 +141,9 @@ def test_los_tests_no_importan_reverse_transpilers_fuera_del_scope_oficial():
         "Se encontraron tests que importan reverse transpilers fuera del scope oficial: "
         f"{encontrados_fuera_de_scope}. Permitidos: {', '.join(REVERSE_SCOPE_LANGUAGES)}"
     )
+
+
+def test_politica_runtime_vs_transpilacion_es_explicita():
+    assert set(DOCKER_EXECUTABLE_TARGETS).issubset(set(OFFICIAL_TARGETS))
+    assert set(TRANSPILATION_ONLY_TARGETS) == {"wasm", "go", "java", "asm"}
+    assert set(DOCKER_EXECUTABLE_TARGETS) | set(TRANSPILATION_ONLY_TARGETS) == set(OFFICIAL_TARGETS)

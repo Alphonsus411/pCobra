@@ -29,4 +29,4 @@ for img in $IMAGENES; do
     docker image ls "$img"
 done
 
-echo "ℹ️ Política actual: wasm/asm y el resto de Tier 2 (go/java) se soportan como targets de transpilación, no como runtimes Docker."
+echo "ℹ️ Política actual: go, java, wasm y asm se soportan como targets oficiales de transpilación, no como runtimes Docker oficiales."

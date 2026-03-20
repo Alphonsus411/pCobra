@@ -224,8 +224,12 @@ Ejemplo:
    cobra gui
 
 Al ejecutarlo se abre una ventana con un editor de texto y botones para
-ejecutar o limpiar el código. Es una forma rápida de probar programas
-sin usar la terminal.
+ejecutar o limpiar el código. Es una forma rápida de probar programas sin usar
+la terminal.
+
+Cuando uses ``--sandbox-docker``, la CLI solo ofrece runtimes Docker oficiales:
+``python``, ``javascript``, ``cpp`` y ``rust``. Los demás targets oficiales
+(``wasm``, ``go``, ``java``, ``asm``) siguen siendo destinos de transpilación.
 
 Subcomando ``plugins``
 ---------------------
@@ -269,9 +273,10 @@ Ejemplo:
 
 Subcomando ``benchmarks``
 -----------------------
-Compara el rendimiento de los distintos backends y muestra un resumen
-en formato JSON. Opcionalmente puede guardarse en un archivo mediante
-``--output``.
+Compara el rendimiento de los backends con runner configurado en la suite y
+muestra un resumen en formato JSON. Opcionalmente puede guardarse en un
+archivo mediante ``--output``. Esto no implica paridad de ejecución para
+todos los targets oficiales de transpilación.
 
 Ejemplo:
 

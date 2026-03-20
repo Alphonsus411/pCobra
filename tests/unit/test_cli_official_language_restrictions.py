@@ -9,6 +9,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.target_policies import DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
@@ -98,3 +99,21 @@ def test_set_oficial_documentado_en_tests():
         "java",
         "asm",
     )
+
+
+def test_interactive_rechaza_targets_solo_transpilacion_en_parseo():
+    parser = _build_parser_for(InteractiveCommand(MagicMock()))
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["interactive", "--sandbox-docker", TRANSPILATION_ONLY_TARGETS[0]])
+
+
+def test_set_runtime_docker_documentado_en_tests():
+    assert DOCKER_EXECUTABLE_TARGETS == ("python", "javascript", "cpp", "rust")
+
+
+def test_verify_parseo_rechaza_targets_solo_transpilacion():
+    parser = _build_parser_for(VerifyCommand())
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "archivo.co", "--lenguajes", TRANSPILATION_ONLY_TARGETS[0]])
