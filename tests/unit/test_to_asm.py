@@ -1,4 +1,5 @@
 from cobra.transpilers.transpiler.to_asm import TranspiladorASM
+from pcobra.core.hololang_ir import build_hololang_ir
 from core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
@@ -57,7 +58,16 @@ def test_transpilador_holobit():
     ast = [NodoHolobit("miHolobit", [0.8, -0.5, 1.2])]
     t = TranspiladorASM()
     resultado = t.generate_code(ast)
-    assert "; runtime import corelibs" in resultado
-    assert "; runtime import standard_library" in resultado
+    assert "; backend asm: imports de runtime administrados externamente" in resultado
     assert "cobra_proyectar:" in resultado
     assert "HOLOBIT miHolobit [0.8, -0.5, 1.2]" in resultado
+
+
+def test_transpilador_holobit_desde_hololang_module_inyecta_hooks():
+    modulo = build_hololang_ir([NodoAsignacion("hb", NodoHolobit("", [0.8, -0.5, 1.2]))])
+
+    resultado = TranspiladorASM().generate_code(modulo)
+
+    assert "; backend asm: imports de runtime administrados externamente" in resultado
+    assert "cobra_holobit:" in resultado
+    assert "SET hb, cobra_holobit([0.8, -0.5, 1.2])" in resultado
