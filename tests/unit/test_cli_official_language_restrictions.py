@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
@@ -117,3 +117,15 @@ def test_verify_parseo_rechaza_targets_solo_transpilacion():
 
     with pytest.raises(SystemExit):
         parser.parse_args(["verificar", "archivo.co", "--lenguajes", TRANSPILATION_ONLY_TARGETS[0]])
+
+
+def test_compile_choices_no_reintroducen_hololang():
+    parser = _build_parser_for(CompileCommand())
+    compilar_parser = parser._subparsers._group_actions[0].choices["compilar"]
+
+    backend_action = next(action for action in compilar_parser._actions if action.dest == "backend")
+    tipo_action = next(action for action in compilar_parser._actions if action.dest == "tipo")
+
+    assert "hololang" not in LANG_CHOICES
+    assert "hololang" not in backend_action.choices
+    assert "hololang" not in tipo_action.choices
