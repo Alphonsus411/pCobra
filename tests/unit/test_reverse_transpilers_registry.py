@@ -8,8 +8,21 @@ def test_reverse_transpilers_registry_matches_policy_scope():
     registered = set(reverse_mod.REGISTERED_REVERSE_TRANSPILERS.keys())
 
     assert policy_scope == {"python", "javascript", "java"}
-    assert registered.issubset(policy_scope)
+    assert registered == policy_scope
+    assert "hololang" not in registered
     assert "js" not in registered
 
     assert "ReverseFromPython" in reverse_mod.__all__
     assert "ReverseFromJava" in reverse_mod.__all__
+    assert "ReverseFromHololang" not in reverse_mod.__all__
+
+
+def test_pcobra_cobra_reverse_no_expone_api_experimental_hololang():
+    reverse_public_mod = importlib.import_module("pcobra.cobra.reverse")
+
+    assert "ReverseFromHololang" not in reverse_public_mod.__all__
+    assert "HololangParser" not in reverse_public_mod.__all__
+    assert "parse_hololang" not in reverse_public_mod.__all__
+    assert not hasattr(reverse_public_mod, "ReverseFromHololang")
+    assert not hasattr(reverse_public_mod, "HololangParser")
+    assert not hasattr(reverse_public_mod, "parse_hololang")
