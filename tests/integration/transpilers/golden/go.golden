@@ -7,16 +7,16 @@ import (
 )
 
 func cobraHolobit(valores []float64) []float64 {
-    panic("runtime hook holobit no disponible en Go")
+    panic("runtime hook holobit requiere soporte Holobit disponible en Go")
 }
 func cobraProyectar(hb any, modo any) {
-    panic(fmt.Sprintf("runtime hook proyectar no disponible en Go: %v %v", hb, modo))
+    panic(fmt.Sprintf("runtime hook proyectar requiere soporte Holobit disponible en Go: %v %v", hb, modo))
 }
 func cobraTransformar(hb any, op any, params ...any) {
-    panic(fmt.Sprintf("runtime hook transformar no disponible en Go: %v %v %v", hb, op, params))
+    panic(fmt.Sprintf("runtime hook transformar requiere soporte Holobit disponible en Go: %v %v %v", hb, op, params))
 }
 func cobraGraficar(hb any) {
-    panic(fmt.Sprintf("runtime hook graficar no disponible en Go: %v", hb))
+    panic(fmt.Sprintf("runtime hook graficar requiere soporte Holobit disponible en Go: %v", hb))
 }
 
 func main() {

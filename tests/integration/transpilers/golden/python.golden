@@ -1,31 +1,34 @@
 from core.nativos import *
 from corelibs import *
 from standard_library import *
+def _cobra_missing_holobit(feature):
+    raise RuntimeError(f'Runtime hook {feature} requiere soporte Holobit disponible en Python')
+
 def cobra_holobit(valores):
     if 'holobit' in globals() and callable(globals()['holobit']):
         return holobit(valores)
-    raise NotImplementedError('Runtime hook holobit no disponible en Python')
+    raise RuntimeError('Runtime hook holobit requiere soporte Holobit disponible en Python')
 
 def cobra_proyectar(hb, modo):
     if 'proyectar' in globals() and callable(globals()['proyectar']):
         return proyectar(hb, modo)
     if hasattr(hb, 'proyectar') and callable(getattr(hb, 'proyectar')):
         return hb.proyectar(modo)
-    raise NotImplementedError('Runtime hook proyectar no disponible en Python')
+    _cobra_missing_holobit('proyectar')
 
 def cobra_transformar(hb, op, *params):
     if 'transformar' in globals() and callable(globals()['transformar']):
         return transformar(hb, op, *params)
     if hasattr(hb, 'transformar') and callable(getattr(hb, 'transformar')):
         return hb.transformar(op, *params)
-    raise NotImplementedError('Runtime hook transformar no disponible en Python')
+    _cobra_missing_holobit('transformar')
 
 def cobra_graficar(hb):
     if 'graficar' in globals() and callable(globals()['graficar']):
         return graficar(hb)
     if hasattr(hb, 'graficar') and callable(getattr(hb, 'graficar')):
         return hb.graficar()
-    raise NotImplementedError('Runtime hook graficar no disponible en Python')
+    _cobra_missing_holobit('graficar')
 
 hb = cobra_holobit([1, 2, 3])
 cobra_proyectar(hb, '2d')

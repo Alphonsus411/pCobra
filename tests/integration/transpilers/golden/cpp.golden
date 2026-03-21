@@ -3,16 +3,16 @@
 #include <initializer_list>
 
 inline auto cobra_holobit(const auto& valores) {
-    throw std::runtime_error("runtime hook holobit no disponible en C++");
+    throw std::runtime_error("runtime hook holobit requiere soporte Holobit disponible en C++");
 }
 inline void cobra_proyectar(const auto& hb, const auto& modo) {
-    throw std::runtime_error("runtime hook proyectar no disponible en C++");
+    throw std::runtime_error("runtime hook proyectar requiere soporte Holobit disponible en C++");
 }
 inline void cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {
-    throw std::runtime_error("runtime hook transformar no disponible en C++");
+    throw std::runtime_error("runtime hook transformar requiere soporte Holobit disponible en C++");
 }
 inline void cobra_graficar(const auto& hb) {
-    throw std::runtime_error("runtime hook graficar no disponible en C++");
+    throw std::runtime_error("runtime hook graficar requiere soporte Holobit disponible en C++");
 }
 
 #include <cobra/corelibs.hpp>
