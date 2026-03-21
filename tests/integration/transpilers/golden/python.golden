@@ -3,7 +3,7 @@ from corelibs import *
 from standard_library import *
 def _cobra_missing_holobit(feature):
     raise ModuleNotFoundError(
-        f"Runtime Holobit Python: '{feature}' requiere la dependencia opcional 'holobit_sdk'."
+        f"Runtime Holobit Python: '{feature}' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
     )
 
 def _cobra_import_holobit_runtime():
@@ -21,7 +21,7 @@ def cobra_proyectar(hb, modo):
     except ModuleNotFoundError as exc:
         if 'holobit_sdk' not in str(exc):
             raise ModuleNotFoundError(
-                f"Runtime Holobit Python: 'proyectar' requiere la dependencia opcional 'holobit_sdk'."
+                f"Runtime Holobit Python: 'proyectar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
             ) from exc
         raise
 
@@ -32,7 +32,7 @@ def cobra_transformar(hb, op, *params):
     except ModuleNotFoundError as exc:
         if 'holobit_sdk' not in str(exc):
             raise ModuleNotFoundError(
-                f"Runtime Holobit Python: 'transformar' requiere la dependencia opcional 'holobit_sdk'."
+                f"Runtime Holobit Python: 'transformar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
             ) from exc
         raise
 
@@ -43,7 +43,7 @@ def cobra_graficar(hb):
     except ModuleNotFoundError as exc:
         if 'holobit_sdk' not in str(exc):
             raise ModuleNotFoundError(
-                f"Runtime Holobit Python: 'graficar' requiere la dependencia opcional 'holobit_sdk'."
+                f"Runtime Holobit Python: 'graficar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
             ) from exc
         raise
 

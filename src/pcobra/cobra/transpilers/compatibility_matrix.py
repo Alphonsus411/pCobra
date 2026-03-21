@@ -5,8 +5,8 @@ Esta matriz documenta qué garantías ofrece cada backend para:
 - imports base de runtime (`corelibs`, `standard_library`)
 
 Niveles:
-- ``full``: contrato de codegen y hooks cubierto por regresión; si una
-  dependencia opcional falta, el fallo debe ser explícito y documentado.
+- ``full``: contrato de codegen y hooks cubierto por regresión; si falta una
+  dependencia requerida por el backend, el fallo debe ser explícito y documentado.
 - ``partial``: soporte limitado o stub explícito; genera código válido pero la
   ejecución puede terminar con error controlado en lugar de emular el backend
   avanzado.
@@ -190,7 +190,7 @@ COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "fu
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Python explícitos y símbolos invocables en el código generado. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` crea `Holobit` real y las primitivas avanzadas fallan con `ModuleNotFoundError` mencionando `holobit_sdk` cuando falta la dependencia.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Python explícitos y símbolos invocables en el código generado. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` crea `Holobit` real y las primitivas avanzadas fallan con `ModuleNotFoundError` mencionando `holobit_sdk` cuando el entorno incumple la dependencia obligatoria de Python `>=3.10`.",
     },
     "javascript": {
         "contract": "partial",

@@ -119,7 +119,7 @@ Hololang puede documentarse en la documentación principal **solo** como IR/pipe
 
 ## Packaging y prerrequisitos que afectan al alcance real
 
-- `pyproject.toml` declara `holobit-sdk==1.0.8` solo para Python `>=3.10`.
+- `pyproject.toml` declara `holobit-sdk==1.0.8` como dependencia obligatoria para instalaciones con Python `>=3.10`.
 - El runtime JavaScript y su sandbox dependen además del entorno (`node`, `vm2` y, en ciertas pruebas contractuales, `node-fetch`).
 - `Makefile` solo construye contenedores oficiales para `python`, `javascript`, `cpp` y `rust`.
 

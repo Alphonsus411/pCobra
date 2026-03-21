@@ -1,7 +1,8 @@
 """Transformaciones de ``Holobit`` a través de ``holobit-sdk``.
 
-Si la versión instalada del SDK no dispone de las operaciones
-``escalar`` o ``mover`` se aplican cálculos locales equivalentes.
+En Python ``>=3.10`` este SDK forma parte del contrato obligatorio de
+instalación de ``pcobra``. Si la versión instalada no dispone de las
+operaciones ``escalar`` o ``mover`` se aplican cálculos locales equivalentes.
 """
 
 from pcobra._stubs.compat import import_optional_module
@@ -13,7 +14,7 @@ from .graficar import _require_holobit_sdk, _to_sdk_holobit
 
 
 def transformar(hb: Holobit, operacion: str, *parametros):
-    """Aplica transformaciones utilizando ``holobit-sdk``."""
+    """Aplica transformaciones utilizando ``holobit-sdk`` requerido por el runtime."""
     if not isinstance(hb, Holobit):
         raise TypeError("transformar espera una instancia de Holobit")
     _require_holobit_sdk("transformar")
@@ -27,7 +28,7 @@ def transformar(hb: Holobit, operacion: str, *parametros):
 
 
 def escalar(hb: Holobit, factor: float):
-    """Escala un ``Holobit`` usando ``holobit-sdk``."""
+    """Escala un ``Holobit`` usando ``holobit-sdk`` requerido por el runtime."""
     if not isinstance(hb, Holobit):
         raise TypeError("escalar espera una instancia de Holobit")
     _require_holobit_sdk("escalar")
@@ -41,7 +42,7 @@ def escalar(hb: Holobit, factor: float):
 
 
 def mover(hb: Holobit, x: float, y: float, z: float):
-    """Traslada un ``Holobit`` utilizando ``holobit-sdk``."""
+    """Traslada un ``Holobit`` utilizando ``holobit-sdk`` requerido por el runtime."""
     if not isinstance(hb, Holobit):
         raise TypeError("mover espera una instancia de Holobit")
     _require_holobit_sdk("mover")

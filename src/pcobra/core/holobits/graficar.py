@@ -1,4 +1,8 @@
-"""Funciones para graficar objetos ``Holobit`` utilizando ``holobit-sdk``."""
+"""Funciones para graficar objetos ``Holobit`` utilizando ``holobit-sdk``.
+
+En instalaciones de ``pcobra`` sobre Python ``>=3.10``, ``holobit-sdk`` forma
+parte del contrato de dependencias obligatorio.
+"""
 
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ from .holobit import Holobit
 
 _MISSING_HOLOBIT_ERROR: ModuleNotFoundError | None = None
 
-try:  # pragma: no branch - dependencia opcional
+try:  # pragma: no branch - dependencia obligatoria en Python >=3.10
     from holobit_sdk.visualization.projector import proyectar_holograma
     from holobit_sdk.core.quark import Quark
     from holobit_sdk.core.holobit import Holobit as SDKHolobit
@@ -50,13 +54,13 @@ except ModuleNotFoundError as exc:  # pragma: no cover - entorno mínimo
 
     def proyectar_holograma(_hb: "SDKHolobit") -> None:  # type: ignore[override]
         raise ModuleNotFoundError(
-            "Las funciones de holobits requieren la dependencia opcional 'holobit_sdk'."
+            "Las funciones de holobits requieren 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
         ) from _MISSING_HOLOBIT_ERROR
 
     _projector_mod.proyectar_holograma = proyectar_holograma
 
     class Quark:  # type: ignore[no-redef]
-        """Quark mínimo utilizado cuando ``holobit_sdk`` no está disponible."""
+        """Quark mínimo utilizado en entornos desalineados sin ``holobit_sdk``."""
 
         def __init__(self, valor: float, x: float, y: float, z: float = 0.0) -> None:
             self.valor = float(valor)
@@ -68,7 +72,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - entorno mínimo
     _core_mod.quark = _quark_mod
 
     class SDKHolobit:  # type: ignore[no-redef]
-        """Implementación básica para escenarios sin ``holobit_sdk``."""
+        """Implementación básica para entornos desalineados sin ``holobit_sdk``."""
 
         def __init__(
             self, quarks: Iterable[Quark], antiquarks: Iterable[Quark]
@@ -78,7 +82,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - entorno mínimo
 
         def rotar(self, *_args, **_kwargs) -> None:  # pragma: no cover - simple
             raise ModuleNotFoundError(
-                "La rotación de holobits requiere la dependencia opcional 'holobit_sdk'."
+                "La rotación de holobits requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
             ) from _MISSING_HOLOBIT_ERROR
 
     _holobit_mod = ModuleType("holobit_sdk.core.holobit")
@@ -100,12 +104,12 @@ def _to_sdk_holobit(hb: Holobit) -> SDKHolobit:
 
 
 def _require_holobit_sdk(operacion: str) -> None:
-    """Exige ``holobit_sdk`` para operaciones de runtime no degradables."""
+    """Exige ``holobit_sdk`` según el contrato obligatorio del runtime Python."""
     if _HOLOBIT_SDK_ERROR is None:
         return
 
     raise ModuleNotFoundError(
-        f"La operacion '{operacion}' requiere la dependencia opcional 'holobit_sdk'."
+        f"La operacion '{operacion}' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10."
     ) from _HOLOBIT_SDK_ERROR
 
 

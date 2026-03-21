@@ -120,7 +120,7 @@ HOOK_SIGNATURE_MARKERS = {
 
 
 RUNTIME_ERROR_MESSAGE = {
-    "python": "Runtime Holobit Python: '{feature}' requiere la dependencia opcional 'holobit_sdk'.",
+    "python": "Runtime Holobit Python: '{feature}' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
     "javascript": "Runtime Holobit JavaScript: '{feature}' requiere runtime avanzado compatible.",
     "rust": "Runtime Holobit Rust: '{feature}' requiere runtime avanzado compatible.",
     "go": "Runtime Holobit Go: '{feature}' requiere runtime avanzado compatible.",
@@ -135,7 +135,7 @@ RUNTIME_HOOKS = {
     "python": [
         "def _cobra_missing_holobit(feature):",
         "    raise ModuleNotFoundError(",
-        "        f\"Runtime Holobit Python: '{feature}' requiere la dependencia opcional 'holobit_sdk'.\"",
+        "        f\"Runtime Holobit Python: '{feature}' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.\"",
         "    )",
         "",
         "def _cobra_import_holobit_runtime():",
@@ -153,7 +153,7 @@ RUNTIME_HOOKS = {
         "    except ModuleNotFoundError as exc:",
         "        if 'holobit_sdk' not in str(exc):",
         "            raise ModuleNotFoundError(",
-        "                f\"Runtime Holobit Python: 'proyectar' requiere la dependencia opcional 'holobit_sdk'.\"",
+        "                f\"Runtime Holobit Python: 'proyectar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.\"",
         "            ) from exc",
         "        raise",
         "",
@@ -164,7 +164,7 @@ RUNTIME_HOOKS = {
         "    except ModuleNotFoundError as exc:",
         "        if 'holobit_sdk' not in str(exc):",
         "            raise ModuleNotFoundError(",
-        "                f\"Runtime Holobit Python: 'transformar' requiere la dependencia opcional 'holobit_sdk'.\"",
+        "                f\"Runtime Holobit Python: 'transformar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.\"",
         "            ) from exc",
         "        raise",
         "",
@@ -175,7 +175,7 @@ RUNTIME_HOOKS = {
         "    except ModuleNotFoundError as exc:",
         "        if 'holobit_sdk' not in str(exc):",
         "            raise ModuleNotFoundError(",
-        "                f\"Runtime Holobit Python: 'graficar' requiere la dependencia opcional 'holobit_sdk'.\"",
+        "                f\"Runtime Holobit Python: 'graficar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.\"",
         "            ) from exc",
         "        raise",
     ],
