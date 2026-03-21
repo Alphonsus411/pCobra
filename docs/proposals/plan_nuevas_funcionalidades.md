@@ -1,19 +1,47 @@
-# Plan de ampliación de Cobra inspirado en lenguajes soportados
+# Plan vigente de nuevas funcionalidades
+
+> **Estado:** propuesta activa.
+>
+> **Alcance de política:** este plan **no amplía `OFFICIAL_TARGETS`** ni introduce nuevos targets públicos de salida. Cualquier referencia a pipelines internos, investigación o material retirado debe mantenerse fuera de esta propuesta activa o enlazarse con etiquetas visibles de **experimental**, **histórico** o **fuera de política**.
+>
+> **Contexto archivado:** la antigua línea de trabajo sobre computación holográfica/Hololang se conserva únicamente como material **experimental · fuera de política** en [`docs/experimental/plan_nuevas_funcionalidades_hololang.md`](../experimental/plan_nuevas_funcionalidades_hololang.md).
 
 ## Resumen ejecutivo consolidado
 
-- **Biblioteca estándar**: expandir cadenas, colecciones, números y booleanos con APIs inspiradas en Python y en los demás lenguajes soportados para reducir brechas funcionales.
-- **Modelo de ejecución**: introducir asincronía idiomática, decoradores utilitarios y un plan de migración gradual que preserve compatibilidad hacia atrás.
-- **Computación cuántica holográfica**: definir un puente `Cobra ↔ Hololang` con decoradores de alto nivel, simulador local y controles de seguridad.
-- **Interoperabilidad multilenguaje**: alinear las capacidades de Cobra con los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- **Biblioteca estándar**: ampliar textos, colecciones, números y booleanos con APIs inspiradas en Python y compatibles con la arquitectura actual.
+- **Modelo de ejecución**: introducir asincronía idiomática, decoradores utilitarios y utilidades concurrentes sin cambiar la política pública de targets.
+- **Interoperabilidad multilenguaje**: priorizar mejoras que mantengan paridad semántica dentro de los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
 - **Documentación y adopción**: acompañar cada fase con manuales, notebooks, automatización de pruebas y seguimiento de indicadores.
 
 ## Objetivos generales
 
 1. Incorporar funcionalidades idiomáticas presentes en Python que aún no existen en Cobra para fortalecer la biblioteca estándar y la expresividad del lenguaje.
-2. Diseñar un puente de alto nivel que permita aprovechar decoradores y primitivas de computación cuántica holográfica, integrando Cobra con Hololang como capa de bajo nivel.
-3. Extender la paridad de características con los targets oficiales del transpilador (Python, JavaScript, Rust, Go, C++, Java, ASM y WebAssembly) para que los programas Cobra conserven semántica al migrar.
-4. Definir un conjunto de tareas implementables y priorizadas que permitan desplegar estas mejoras de forma incremental.
+2. Mejorar la paridad de características entre los targets oficiales del transpilador para que los programas Cobra conserven semántica al migrar.
+3. Definir tareas implementables y priorizadas que puedan desplegarse de forma incremental sin abrir nuevos targets públicos.
+4. Mantener toda la documentación de la propuesta alineada con la estructura actual `src/pcobra/cobra/...`.
+
+## Guardas de política para esta propuesta
+
+### Targets públicos que sí forman parte del plan vigente
+
+Los únicos targets públicos de salida contemplados por esta propuesta son:
+
+- `python`
+- `rust`
+- `javascript`
+- `wasm`
+- `go`
+- `cpp`
+- `java`
+- `asm`
+
+### Referencias explícitamente fuera de alcance
+
+- No se propone el pipeline interno **experimental** `hololang` como target público ni como ampliación de `OFFICIAL_TARGETS`.
+- No se propone `llvm`, `latex` ni otros artefactos experimentales como targets públicos.
+- No deben reaparecer aliases legacy del backend JavaScript en ejemplos, tablas o rutas de implementación.
+
+---
 
 ## Ampliaciones inspiradas en Python
 
@@ -59,42 +87,12 @@
 
 ---
 
-## Puente holográfico para computación cuántica
-
-### Objetivo
-Crear un subsistema que conecte el código Cobra con rutinas cuánticas descritas en Hololang, permitiendo escribir algoritmos cuánticos de alto nivel mediante decoradores y abstracciones idiomáticas.
-
-### Componentes propuestos
-1. **Decorador `@cuantico`**: marca funciones Cobra que deben compilarse hacia kernels cuánticos en Hololang.
-2. **Módulo `holo.cuantica`** con primitivas:
-   - `prepara_estado(base, amplitudes)`
-   - `aplica_puerta(nombre, qubits, parametros=None)`
-   - `mide(qubits, repeticion=1)`
-   - `superposicion(qubits)`
-3. **Generador Hololang** que traduzca decoradores a bloques específicos (`hololang.quantum.kernel`).
-4. **Administrador de recursos holográficos**: gestiona el envío de instrucciones a motores holográficos externos.
-5. **Simulador local** para pruebas deterministas cuando no haya hardware holográfico disponible.
-6. **API de resultados** (`ResultadoCuantico`) con métodos `probabilidades()`, `colapsa()`, `visualiza()`.
-
-### Flujo de trabajo
-1. El usuario declara `@cuantico` y utiliza primitivas `holo.cuantica` dentro de la función.
-2. El transpilador detecta el decorador y transforma el AST Cobra en nodos Hololang especializados.
-3. Hololang genera código intermedio holográfico (por ejemplo `hololang.qholo`) que puede ejecutarse en simuladores o hardware real.
-4. Los resultados vuelven como objetos Cobra con métodos de post-procesamiento.
-
-### Seguridad y sandboxing
-- Lista blanca de puertas permitidas configurable por proyecto.
-- Validación de topología (número máximo de qubits, profundidad de circuito).
-- Registro de auditoría con metadatos para depuración.
-
----
-
-## Inspiración en otros lenguajes del transpilador
+## Inspiración en otros lenguajes oficiales del transpilador
 
 ### JavaScript
 - **Promesas**: `promesa.resolver`, `promesa.rechazar`, `Promesa.todo`, `Promesa.carrera` para mapear con `Promise`.
 - **Etiquetas de plantilla**: `plantilla_html` para integración con front-end.
-- **Decorador `@observa_evento`** para enlazar eventos del DOM al transpilador JS.
+- **Decorador `@observa_evento`** para enlazar eventos del DOM al backend `javascript`.
 
 ### Rust
 - **`resultado`** como enumeración (`exito`, `error`) con métodos `desempaqueta_or`, `mapa_error`.
@@ -103,7 +101,7 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 
 ### Go
 - **`rutina_ligera { ... }`** equivalente a goroutines.
-- **Canales tipados**: interoperables con `canal.crea` y backends Go.
+- **Canales tipados**: interoperables con `canal.crea` y backend `go`.
 - **`defer`** como palabra reservada adicional.
 
 ### Java
@@ -111,12 +109,12 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 - **Anotaciones de interoperabilidad** para bibliotecas Java existentes.
 - **Optimización de colecciones** para `ArrayList`/`HashMap` en generación de código.
 
-### Assembly (ASM)
+### ASM
 - **Intrínsecos controlados** para operaciones numéricas críticas.
-- **Macros de ensamblador** orientadas a depuración de runtime.
+- **Macros de bajo nivel** orientadas a depuración de runtime en `asm`.
 - **Perfiles de salida** para diagnósticos y tamaño mínimo.
 
-### WebAssembly / C++
+### WebAssembly / `cpp`
 - **Atributos de interoperabilidad** `@no_mangle`, `@externo` para controlar nombres.
 - **Estructuras empaquetadas** (`estructura empaquetada [alineacion=1]`).
 - **Funciones intrínsecas** (`intrinseco.suma_vectorial`).
@@ -128,156 +126,109 @@ Crear un subsistema que conecte el código Cobra con rutinas cuánticas descrita
 ### Fase 1 · Fundamentos de la biblioteca
 1. **Tarea F1.1 – Nuevas utilidades de cadenas**
    - Diseñar API `texto.*`, actualizar especificación léxica y casos de prueba.
-   - Entregables: documentación en `docs/MANUAL_COBRA`, implementación en `src/cobra/std/texto.py` (nuevo módulo).
+   - Entregables: documentación en `docs/MANUAL_COBRA.md`, implementación en `src/pcobra/cobra/core/` y módulos de soporte asociados bajo `src/pcobra/cobra/`.
 2. **Tarea F1.2 – Operaciones numéricas y booleanas**
    - Añadir métodos `clamp`, `bit_length`, `es_potencia_de_dos`, `xor`, `como_entero`.
-   - Entregables: actualización de runtime, pruebas unitarias en `tests/runtime/test_numeros.py`.
+   - Entregables: actualización de runtime/semántica vigente y pruebas unitarias.
 3. **Tarea F1.3 – Colecciones avanzadas**
    - Implementar `lista.compacta`, `lista.desempaqueta`, `diccionario.*`.
-   - Entregables: documentación, pruebas sobre listas/diccionarios.
+   - Entregables: documentación y pruebas sobre listas/diccionarios.
 
 ### Fase 2 · Asincronía y decoradores
 1. **Tarea F2.1 – Palabras clave `asincrono` y `espera`**
-   - Extender gramática, parser y generador Hololang.
-   - Entregables: RFC técnico, cobertura en `tests/frontend/async`.
+   - Extender gramática, parser y transpiladores oficiales vigentes.
+   - Entregables: RFC técnico y cobertura en pruebas.
 2. **Tarea F2.2 – Librería de tareas**
    - Implementar `tarea.agrupar`, `tarea.tiempo_limite`, `canal.*`.
-   - Entregables: módulo `std/async.py`, documentación y ejemplos.
+   - Entregables: módulos de soporte bajo `src/pcobra/cobra/` y ejemplos.
 3. **Tarea F2.3 – Decoradores utilitarios**
    - Incorporar `@memoriza`, `@valida_tipos`, `@despues`, `@asegura_contexto`.
    - Entregables: pruebas de integración y guía de uso.
 
-### Fase 3 · Computación cuántica holográfica
-1. **Tarea F3.1 – Especificación del decorador `@cuantico`**
-   - Definir sintaxis, opciones y metadatos.
-   - Entregables: documento de diseño, ejemplos en `notebooks/cuanticidad`.
-2. **Tarea F3.2 – Backend Hololang cuántico**
-   - Implementar traducción AST→Hololang con bloques `hololang.quantum`.
-   - Entregables: módulo `src/cobra/transpiladores/hololang/cuanto.py`, pruebas de snapshots.
-3. **Tarea F3.3 – Simulador y adaptadores**
-   - Crear simulador local y conectores a hardware externo.
-   - Entregables: CLI `cobra cuantico --simular`, documentación en `docs/cuanticidad.md`.
-4. **Tarea F3.4 – Seguridad y auditoría**
-   - Lista blanca de puertas, límites de recursos y bitácora.
-   - Entregables: configuración en `cobra.toml`, reportes en `logs/cuantico.log`.
-
-### Fase 4 · Integración con otros lenguajes
-1. **Tarea F4.1 – Promesas y eventos JS**
-   - Adaptar transpilador JS para mapear `promesa.*` y `@observa_evento`.
-   - Entregables: ejemplos `examples/js/promesas.co`.
-2. **Tarea F4.2 – Resultados estilo Rust**
-   - Agregar tipo `resultado` y métodos asociados, garantizar traducción a Rust y Python.
-   - Entregables: módulo `std/resultado.py`, pruebas cross-language.
-3. **Tarea F4.3 – Goroutines y defer**
-   - Introducir `rutina_ligera` y `defer`, asegurar correspondencia en Go y Python.
-   - Entregables: especificación, casos de uso.
-4. **Tarea F4.4 – Paridad Java y ASM**
-   - Consolidar clases, interfaces, excepciones y utilidades de bajo nivel en Java/ASM.
-   - Entregables: actualización de gramática, runtime y transpiladores Java/ASM.
-5. **Tarea F4.5 – Interoperabilidad de bajo nivel**
+### Fase 3 · Integración con otros lenguajes oficiales
+1. **Tarea F3.1 – Promesas y eventos en `javascript`**
+   - Adaptar el backend `javascript` para mapear `promesa.*` y `@observa_evento`.
+   - Entregables: ejemplos, documentación y pruebas de integración.
+2. **Tarea F3.2 – Resultados estilo Rust**
+   - Agregar tipo `resultado` y métodos asociados, garantizando traducción a `rust` y `python`.
+   - Entregables: módulos compartidos, pruebas cross-language y documentación.
+3. **Tarea F3.3 – Goroutines y `defer`**
+   - Introducir `rutina_ligera` y `defer`, asegurando correspondencia en `go` y `python` cuando aplique.
+   - Entregables: especificación y casos de uso.
+4. **Tarea F3.4 – Paridad Java y ASM**
+   - Consolidar clases, interfaces, excepciones y utilidades de bajo nivel en `java` y `asm`.
+   - Entregables: actualización de gramática, runtime y transpiladores.
+5. **Tarea F3.5 – Interoperabilidad de bajo nivel**
    - Añadir atributos `@no_mangle`, `@externo`, estructuras empaquetadas e intrínsecos.
-   - Entregables: pruebas en targets C++/WASM, documentación de FFI.
+   - Entregables: pruebas en `cpp`/`wasm` y documentación de FFI.
 
-### Fase 5 · Documentación y adopción
-1. **Tarea F5.1 – Manual y tutoriales**
-   - Actualizar manuales (`docs/MANUAL_COBRA`, `docs/guia_basica.md`) y crear tutorial paso a paso.
-2. **Tarea F5.2 – Ejemplos y notebooks**
-   - Añadir notebooks para asincronía, cuántica y FFI.
-3. **Tarea F5.3 – Automatización de pruebas**
-   - Integrar suites en CI, añadir generadores de código para pruebas diferenciales.
+### Fase 4 · Documentación y adopción
+1. **Tarea F4.1 – Manual y tutoriales**
+   - Actualizar manuales (`docs/MANUAL_COBRA.md`, `docs/guia_basica.md`) y crear tutorial paso a paso.
+2. **Tarea F4.2 – Ejemplos y notebooks**
+   - Añadir notebooks para asincronía, FFI y nuevas APIs de biblioteca estándar.
+3. **Tarea F4.3 – Automatización de pruebas**
+   - Integrar suites en CI y añadir generadores de código para pruebas diferenciales.
 
 ---
 
 ## Consideraciones transversales
 - Crear indicadores de cobertura específicos por fase para evaluar adopción.
-- Mantener compatibilidad hacia atrás con alias y `deprecacion_programada`.
+- Mantener compatibilidad hacia atrás con alias y `deprecacion_programada`, pero sin exponer aliases legacy en UX pública.
 - Publicar RFCs previos a cambios en gramática o palabras reservadas.
 - Coordinar con mantenedores de extensiones (VS Code, Jupyter) para actualizar el soporte sintáctico.
+- Cualquier referencia futura a Hololang, LLVM, LaTeX u otros pipelines no oficiales debe mantenerse fuera de esta propuesta activa y marcarse de forma visible como **experimental**, **histórica** o **fuera de política**.
 
 ## Backlog de implementación práctica
 
-El siguiente backlog descompone cada tarea macro en actividades implementables con entregables concretos
-y facilita su incorporación como issues o historias dentro del repositorio.
+El siguiente backlog descompone cada tarea macro en actividades implementables con entregables concretos y facilita su incorporación como issues o historias dentro del repositorio.
 
 ### Fase 1 · Fundamentos de la biblioteca
 
 | ID | Descripción | Cambios de código principales | Pruebas | Documentación | Dependencias |
 | --- | --- | --- | --- | --- | --- |
-| F1.1.a | Formalizar API de `texto` y actualizar especificaciones léxicas | Añadir interfaces en `docs/SPEC_COBRA.md` y esquemas en `src/cobra/std/__init__.py` | Revisión estática mediante `scripts/check_specs.py` | RFC breve en `docs/proposals` | Ninguna |
-| F1.1.b | Implementar núcleo `texto.normaliza`, `texto.division_inteligente` y variantes | Nuevo módulo `src/cobra/std/texto.py`, registro en `cobra.mod` y `pyproject.toml` | Casos unitarios en `tests/std/test_texto.py` cubriendo unicode, mutaciones y errores | Ejemplos en `docs/MANUAL_COBRA.md` y `docs/guia_basica.md` | Requiere F1.1.a |
-| F1.1.c | Integrar reemplazos con expresiones regulares | Incorporar dependencia opcional en `requirements.txt` si falta `regex`, exponer wrappers en runtime | Pruebas con patrones complejos y límites de reemplazo en `tests/std/test_texto_regex.py` | Nota de compatibilidad y ejemplos en `docs/standard_library/texto.md` | Depende de F1.1.b |
-| F1.1.d | Añadir métodos destructivos (`!`) al compilador | Ajustar parser en `src/cobra/frontend/parser.py`, actualizar AST y código objetivo | Tests en `tests/frontend/test_mutaciones.py` asegurando generación correcta para todos los targets | Documentar semántica y advertencias en `MANUAL_COBRA` | Requiere F1.1.b |
-| F1.2.a | Extender tipos numéricos con `clamp`, `bit_length`, `es_potencia_de_dos` | Modificar `src/cobra/runtime/numeros.py` y exponer intrínsecos | Tests paramétricos en `tests/runtime/test_numeros.py` | Tabla de métodos en `docs/standard_library/numeros.md` | Ninguna |
-| F1.2.b | Añadir operaciones booleanas `xor`, `como_entero` | Actualizar `src/cobra/runtime/booleanos.py` y convertir booleanos a ints en transpilers | Casos cruzados en `tests/runtime/test_booleanos.py` | Actualizar cheatsheet en `docs/cheatsheet.tex` | Ninguna |
-| F1.2.c | Sincronizar transpiladores con nuevas primitivas numéricas | Ajustar generadores en `src/cobra/transpiladores/{python,js,go}.py` | Tests de integración en `tests/transpilacion/test_numeros.py` verificando paridad | Añadir matriz comparativa en `docs/matriz_transpiladores.md` | Depende de F1.2.a |
-| F1.3.a | Implementar utilidades de listas (`compacta`, `desempaqueta`) | Extender `src/cobra/runtime/listas.py` y helpers en `src/cobra/std/lista.py` | Nuevos tests en `tests/runtime/test_listas.py` | Manual estándar de colecciones | Ninguna |
-| F1.3.b | Desarrollar mejoras para diccionarios (`obtener_clave`, `a_objeto`) | Modificar `src/cobra/runtime/diccionarios.py` y crear `SimpleNamespace` Cobra | Tests en `tests/runtime/test_diccionarios.py` y `tests/transpilacion/test_objetos.py` | Documentar en `docs/standard_library/diccionarios.md` | Requiere F1.3.a |
-| F1.3.c | Integrar alias y compatibilidad en CLI | Añadir comandos de ejemplo en `examples/colecciones` y plantillas en `scripts/genera_ejemplos.py` | Tests de snapshot en `tests/examples/test_colecciones.py` | Tutorial en `docs/README.en.md` sección colecciones | Depende de F1.3.a |
+| F1.1.a | Formalizar API de `texto` y actualizar especificaciones léxicas | Añadir interfaces en `docs/SPEC_COBRA.md` y adaptar módulos de núcleo bajo `src/pcobra/cobra/` | Revisión estática mediante scripts de especificación | RFC breve en `docs/proposals/` | Ninguna |
+| F1.1.b | Implementar núcleo `texto.normaliza`, `texto.division_inteligente` y variantes | Nuevos módulos bajo `src/pcobra/cobra/` y registro en la configuración vigente del proyecto | Casos unitarios cubriendo unicode, mutaciones y errores | Ejemplos en `docs/MANUAL_COBRA.md` y `docs/guia_basica.md` | Requiere F1.1.a |
+| F1.1.c | Integrar reemplazos con expresiones regulares | Incorporar dependencia opcional si hiciera falta y exponer wrappers en runtime/stdlib vigente | Pruebas con patrones complejos y límites de reemplazo | Nota de compatibilidad y ejemplos en `docs/standard_library/texto.md` | Depende de F1.1.b |
+| F1.1.d | Añadir métodos destructivos (`!`) al compilador | Ajustar parser en `src/pcobra/cobra/core/parser.py` y estructuras AST/código objetivo asociadas | Tests asegurando generación correcta para todos los targets oficiales | Documentar semántica y advertencias en `docs/MANUAL_COBRA.md` | Requiere F1.1.b |
+| F1.2.a | Extender tipos numéricos con `clamp`, `bit_length`, `es_potencia_de_dos` | Modificar runtime/semántica vigente bajo `src/pcobra/cobra/` y exponer intrínsecos | Tests paramétricos en runtime | Tabla de métodos en `docs/standard_library/numero.md` | Ninguna |
+| F1.2.b | Añadir operaciones booleanas `xor`, `como_entero` | Actualizar helpers semánticos y compatibilidad entre transpilers | Casos cruzados de comportamiento | Actualizar cheatsheet en `docs/cheatsheet.tex` | Ninguna |
+| F1.2.c | Sincronizar transpilers con nuevas primitivas numéricas | Ajustar generadores en `src/pcobra/cobra/transpilers/transpiler/{to_python.py,to_js.py,to_go.py}` | Tests de integración verificando paridad | Añadir matriz comparativa en `docs/matriz_transpiladores.md` | Depende de F1.2.a |
+| F1.3.a | Implementar utilidades de listas (`compacta`, `desempaqueta`) | Extender runtime y helpers de biblioteca estándar bajo `src/pcobra/cobra/` | Nuevos tests de listas | Manual estándar de colecciones | Ninguna |
+| F1.3.b | Desarrollar mejoras para diccionarios (`obtener_clave`, `a_objeto`) | Modificar runtime y crear una abstracción de namespace Cobra | Tests de runtime y transpilación asociados | Documentar en `docs/standard_library/datos.md` | Requiere F1.3.a |
+| F1.3.c | Integrar ejemplos y compatibilidad en CLI | Añadir comandos/plantillas de ejemplo sin introducir nombres de target no canónicos | Tests de snapshot y smoke tests | Tutorial en `docs/README.en.md` sección colecciones | Depende de F1.3.a |
 
 ### Fase 2 · Asincronía y decoradores
 
 | ID | Descripción | Cambios de código principales | Pruebas | Documentación | Dependencias |
 | --- | --- | --- | --- | --- | --- |
-| F2.1.a | Añadir tokens `asincrono` y `espera` a la gramática | Actualizar `docs/gramatica.ebnf`, lexer y parser en `src/cobra/frontend` | Tests sintácticos en `tests/frontend/async/test_tokens.py` | Nota de versión en `CHANGELOG.md` | Ninguna |
-| F2.1.b | Emitir AST y bytecode base para funciones async | Ajustar nodos en `src/cobra/frontend/nodos.py` y generadores en `src/cobra/backend` | Tests de AST en `tests/frontend/async/test_ast.py` y snapshots | Documentar arquitectura en `docs/frontend/asincronia.md` | Requiere F2.1.a |
-| F2.1.c | Conectar transpilers con async/await | Actualizar `src/cobra/transpiladores/{python,js,go,hololang}.py` | Tests end-to-end en `tests/transpilacion/async/test_corutinas.py` | Añadir guía en `docs/proposals/asincronia.md` | Requiere F2.1.b |
-| F2.2.a | Crear módulo `std/async.py` con `tarea.agrupar`, `tarea.tiempo_limite` | Nuevo archivo `src/cobra/std/asyncio.py` integrando event loop | Tests concurrentes en `tests/std/test_async.py` con `pytest.mark.asyncio` | Ejemplos en `examples/async/` y tutorial | Requiere F2.1.c |
-| F2.2.b | Implementar canales (`canal.crea`, `canal.enviar`, `canal.recibir`) | Extender runtime y adaptadores en `src/cobra/runtime/async_canal.py` | Pruebas de estrés con `tests/std/test_canal.py` | Documentar patrones de productor-consumidor | Depende de F2.2.a |
-| F2.3.a | Incorporar decoradores `@memoriza`, `@valida_tipos` | Añadir módulo `src/cobra/std/decoradores/cache.py` y validadores | Tests de funcionalidad en `tests/std/test_decoradores_cache.py` | Manual de decoradores en `docs/standard_library/decoradores.md` | Requiere F1.1 y F1.2 |
-| F2.3.b | Implementar `@despues`, `@asegura_contexto` con scheduler | Crear scheduler simple en `src/cobra/runtime/scheduler.py` | Tests temporales en `tests/runtime/test_scheduler.py` usando relojes simulados | Añadir advertencias de bloqueo en manual | Depende de F2.2.a |
+| F2.1.a | Añadir tokens `asincrono` y `espera` a la gramática | Actualizar `docs/gramatica.ebnf`, lexer y parser bajo `src/pcobra/cobra/core/` | Tests sintácticos para tokens async | Nota de versión en `CHANGELOG.md` | Ninguna |
+| F2.1.b | Emitir AST base para funciones async | Ajustar nodos/árbol interno y generadores oficiales | Tests de AST y snapshots | Documentar arquitectura en `docs/frontend/arquitectura.rst` o equivalente | Requiere F2.1.a |
+| F2.1.c | Conectar transpilers con async/await | Actualizar `src/pcobra/cobra/transpilers/transpiler/{to_python.py,to_js.py,to_go.py}` sin añadir nuevos targets públicos | Tests end-to-end de corutinas | Añadir guía en `docs/proposals/` si procede | Requiere F2.1.b |
+| F2.2.a | Crear soporte de tareas con `tarea.agrupar` y `tarea.tiempo_limite` | Nuevos módulos bajo `src/pcobra/cobra/` integrando el event loop vigente | Tests concurrentes | Ejemplos y tutorial | Requiere F2.1.c |
+| F2.2.b | Implementar canales (`canal.crea`, `canal.enviar`, `canal.recibir`) | Extender runtime y adaptadores bajo `src/pcobra/cobra/` | Pruebas de estrés | Documentar patrones de productor-consumidor | Depende de F2.2.a |
+| F2.3.a | Incorporar decoradores `@memoriza`, `@valida_tipos` | Añadir soporte compartido bajo `src/pcobra/cobra/` y validadores | Tests de funcionalidad | Manual de decoradores en `docs/standard_library/decoradores.md` | Requiere F1.1 y F1.2 |
+| F2.3.b | Implementar `@despues`, `@asegura_contexto` con scheduler | Crear scheduler simple y adaptadores | Tests temporales usando relojes simulados | Añadir advertencias de bloqueo en manual | Depende de F2.2.a |
 
-### Fase 3 · Computación cuántica holográfica
-
-| ID | Descripción | Cambios de código principales | Pruebas | Documentación | Dependencias |
-| --- | --- | --- | --- | --- | --- |
-| F3.1.a | Definir metadatos del decorador `@cuantico` | Añadir anotaciones en `docs/proposals/cuanticidad.md` y esquema en `src/cobra/frontend/atributos.py` | Validaciones de análisis estático en `tests/frontend/quantum/test_validacion.py` | FAQ inicial en `docs/cuanticidad.md` | Requiere F2.3 |
-| F3.1.b | Crear AST especializado para bloques cuánticos | Nuevos nodos en `src/cobra/frontend/nodos_cuanticos.py` y visitas en `src/cobra/backend/visitas_cuanticas.py` | Tests de construcción en `tests/frontend/quantum/test_ast.py` | Sección técnica en `docs/arquitectura_parser_transpiladores.md` | Depende de F3.1.a |
-| F3.2.a | Generar código Hololang desde decoradores | Módulo `src/cobra/transpiladores/hololang/cuanto.py` con integración en `cobra.mod` | Snapshot tests con `tests/transpilacion/quantum/test_hololang.py` | Manual de interoperabilidad en `docs/standard_library/holo.md` | Depende de F3.1.b |
-| F3.2.b | Implementar adaptadores a motores holográficos | Conector en `src/cobra/runtime/quantum/cliente.py`, configuración en `cobra.toml` | Tests con simulador falso en `tests/runtime/quantum/test_cliente.py` | Guía de despliegue en `docs/cuanticidad.md` | Depende de F3.2.a |
-| F3.3.a | Desarrollar simulador local determinista | Añadir `src/cobra/runtime/quantum/simulador.py` y CLI `cobra cuantico --simular` | Tests deterministas en `tests/runtime/quantum/test_simulador.py` | Tutorial paso a paso en `notebooks/cuanticidad/simulador.ipynb` | Depende de F3.2.b |
-| F3.4.a | Incorporar controles de seguridad y auditoría | Middleware en `src/cobra/runtime/quantum/seguridad.py`, logging en `logs/cuantico.log` | Tests de límites en `tests/runtime/quantum/test_seguridad.py` | Documentar políticas en `docs/cuanticidad.md` | Depende de F3.3.a |
-
-### Fase 4 · Integración con otros lenguajes
+### Fase 3 · Integración con otros lenguajes oficiales
 
 | ID | Descripción | Cambios de código principales | Pruebas | Documentación | Dependencias |
 | --- | --- | --- | --- | --- | --- |
-| F4.1.a | Mapear `promesa.*` y `@observa_evento` en backend JS | Ajustar `src/cobra/transpiladores/js/promesas.py` y runtime JS | Tests de integración en `tests/transpilacion/js/test_promesas.py` | Guía en `docs/interfaces.md` | Requiere F2.2 |
-| F4.1.b | Exponer plantillas etiquetadas `plantilla_html` | Añadir helper en `src/cobra/std/html.py` y transpilar a template strings | Tests de snapshots en `tests/transpilacion/js/test_html.py` | Ejemplos en `examples/js/` | Depende de F4.1.a |
-| F4.2.a | Implementar tipo `resultado` en runtime común | Archivo `src/cobra/runtime/resultado.py` con métodos `mapa_error`, `desempaqueta_or` | Tests cruzados en `tests/runtime/test_resultado.py` y transpilación comparativa | Documentar patrón en `docs/standard_library/resultado.md` | Ninguna |
-| F4.2.b | Sincronizar transpiladores (Rust, Python) con `resultado` | Ajustar `src/cobra/transpiladores/{rust,python}.py` y generadores de enums | Tests golden en `tests/transpilacion/rust/test_resultado.rs` | Tabla de equivalencias en `docs/matriz_transpiladores.md` | Depende de F4.2.a |
-| F4.3.a | Añadir `rutina_ligera` y `defer` al parser | Modificar gramática y AST en `src/cobra/frontend` | Tests de sintaxis y semántica en `tests/frontend/go/test_rutinas.py` | Documentar patrón en `docs/frontend/go.md` | Requiere F2.1 |
-| F4.3.b | Integrar goroutines y `defer` en backends Go y Python | Actualizar `src/cobra/transpiladores/{go,python}.py` y runtime | Tests end-to-end en `tests/transpilacion/go/test_defer.go` | Ejemplos en `examples/go/` | Depende de F4.3.a |
-| F4.4.a | Fortalecer clases/interfaces para backend Java | Ajustar parser y generador en `src/cobra/transpiladores/java/` | Tests en `tests/transpilacion/java/test_interfaces.java` | Documentar en `docs/frontend/java.md` | Requiere F2.1 |
-| F4.4.b | Mejorar salida ASM para diagnóstico y rendimiento | Ajustar backend ASM y runtime mínimo | Tests en `tests/transpilacion/asm/test_optimizaciones.asm` | Tutorial en `docs/frontend/asm.md` | Depende de F4.4.a |
-| F4.5.a | Agregar atributos `@no_mangle`, `@externo` | Extender parser y generadores C++/WASM | Tests de FFI en `tests/transpilacion/cpp/test_externo.cpp` | Documentar en `docs/limitaciones_cpp_sandbox.md` | Ninguna |
-| F4.5.b | Soporte para estructuras empaquetadas e intrínsecos | Ajustar representación de tipos en `src/cobra/backend/tipos.py` y runtime wasm | Tests binarios en `tests/transpilacion/wasm/test_intrinsecos.wat` | Guía en `docs/arquitectura_parser_transpiladores.md` | Depende de F4.5.a |
+| F3.1.a | Mapear `promesa.*` y `@observa_evento` en backend `javascript` | Ajustar `src/pcobra/cobra/transpilers/transpiler/to_js.py` y helpers de nodos `js_nodes/` | Tests de integración de promesas | Guía en `docs/interfaces.md` | Requiere F2.2 |
+| F3.1.b | Exponer plantillas etiquetadas `plantilla_html` | Añadir helper compartido y transpilar a template strings | Tests de snapshots | Ejemplos front-end | Depende de F3.1.a |
+| F3.2.a | Implementar tipo `resultado` en runtime común | Archivo y helpers bajo `src/pcobra/cobra/` con métodos `mapa_error`, `desempaqueta_or` | Tests cruzados y comparativos | Documentar patrón en `docs/standard_library/logica.md` o ruta equivalente | Ninguna |
+| F3.2.b | Sincronizar transpilers (`rust`, `python`) con `resultado` | Ajustar `src/pcobra/cobra/transpilers/transpiler/{to_rust.py,to_python.py}` | Tests golden y comparativos | Tabla de equivalencias en `docs/matriz_transpiladores.md` | Depende de F3.2.a |
+| F3.3.a | Añadir `rutina_ligera` y `defer` al parser | Modificar gramática y AST bajo `src/pcobra/cobra/core/` | Tests de sintaxis y semántica | Documentar patrón en documentación de Go cuando exista | Requiere F2.1 |
+| F3.3.b | Integrar goroutines y `defer` en backends `go` y `python` | Actualizar `src/pcobra/cobra/transpilers/transpiler/{to_go.py,to_python.py}` y runtime asociado | Tests end-to-end | Ejemplos en `examples/go/` si se incorporan | Depende de F3.3.a |
+| F3.4.a | Fortalecer clases/interfaces para backend `java` | Ajustar parser y generador en `src/pcobra/cobra/transpilers/transpiler/` | Tests de integración Java | Documentar en `docs/frontend/` cuando proceda | Requiere F2.1 |
+| F3.4.b | Mejorar salida `asm` para diagnóstico y rendimiento | Ajustar backend `asm` y runtime mínimo | Tests de transpilación ASM | Tutorial técnico en `docs/frontend/` si se incorpora | Depende de F3.4.a |
+| F3.5.a | Agregar atributos `@no_mangle`, `@externo` | Extender parser y generadores `cpp`/`wasm` | Tests de FFI | Documentar en `docs/limitaciones_cpp_sandbox.md` | Ninguna |
+| F3.5.b | Soporte para estructuras empaquetadas e intrínsecos | Ajustar representación de tipos y runtime `wasm` | Tests binarios/semánticos | Guía en `docs/arquitectura_parser_transpiladores.md` | Depende de F3.5.a |
 
-### Fase 5 · Documentación y adopción
+### Fase 4 · Documentación y adopción
 
 | ID | Descripción | Cambios de código principales | Pruebas | Documentación | Dependencias |
 | --- | --- | --- | --- | --- | --- |
-| F5.1.a | Actualizar manuales con nuevas APIs | Revisar `docs/MANUAL_COBRA.md`, `docs/guia_basica.md`, `docs/README.en.md` | Validación con `make docs` y revisión ortográfica | Plantillas de snippets en `docs/standard_library` | Depende de fases 1-4 |
-| F5.1.b | Crear tutorial guiado paso a paso | Notebook `notebooks/tutorial_novedades.ipynb` y script `examples/tutorial/main.co` | Ejecución manual en CI y `pytest -k tutorial` | Entrada de blog en `docs/blog_minilenguaje.md` | Depende de F5.1.a |
-| F5.2.a | Publicar notebooks demostrativos | Añadir `notebooks/async.ipynb`, `notebooks/cuanticidad.ipynb`, `notebooks/ffi.ipynb` | Tests `pytest -k notebook-smoke` con `papermill` | Documentar en `docs/notebooks/README.md` | Depende de fases respectivas |
-| F5.3.a | Integrar suites de pruebas nuevas al CI | Actualizar `Makefile`, workflows en `.github/workflows/ci.yml` y `pyproject.toml` | Ejecutar pipeline local `make ci` | Añadir sección en `CONTRIBUTING.md` | Depende de F1-F4 |
-| F5.3.b | Crear generadores para pruebas diferenciales | Scripts en `scripts/genera_pruebas_diferenciales.py` | Tests de regresión en `tests/scripts/test_generadores.py` | Documentar proceso en `docs/coverage.md` | Depende de F5.3.a |
-
-
-## Estrategia de conciliación con la rama principal
-
-- **Resolución aplicada**: se consolidó este plan con la versión base asegurando que los objetivos generales y las fases del backlog queden integradas en un único documento sin secciones duplicadas.
-- **Política de merges**: los archivos de `docs/proposals` pueden fusionarse usando la estrategia `union` para concatenar cambios complementarios en lugar de generar conflictos manuales.
-- **Guía operativa**:
-  1. Actualizar la rama de trabajo con `git fetch` y `git merge origin/main` antes de continuar.
-  2. Si aparece un conflicto en este archivo, aceptar ambos bloques y revisar que las tablas mantengan el orden por fase.
-  3. Ejecutar la revisión ortográfica o `make lint-docs` (cuando esté disponible) antes de confirmar los cambios.
-
-
-
-
-## Nota de trazabilidad del documento
-
-> Este plan mantiene únicamente referencias alineadas con los targets oficiales actuales del producto.
-
-- Se retiraron comparativas y propuestas ligadas a targets fuera de política.
-- Cualquier ampliación futura debe justificarse con paridad interna entre `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+| F4.1.a | Actualizar manuales con nuevas APIs | Revisar `docs/MANUAL_COBRA.md`, `docs/guia_basica.md`, `docs/README.en.md` | Validación con la pipeline de docs y revisión ortográfica | Plantillas de snippets en `docs/standard_library/` | Depende de fases 1-3 |
+| F4.1.b | Crear tutorial guiado paso a paso | Notebook y ejemplo principal de novedades | Ejecución manual en CI y smoke tests | Entrada de blog o guía interna | Depende de F4.1.a |
+| F4.2.a | Añadir suites diferenciales en CI | Extender scripts/CI para verificar semántica en los 8 targets oficiales | Ejecución automatizada por matriz | Documentar criterios de cobertura | Depende de fases 1-3 |

@@ -150,6 +150,7 @@ La validación automática de política/targets vigila de forma explícita estos
 
 - `README.md`
 - `docs/`
+- `docs/proposals/` (tratadas como documentación activa mientras no se archiven en `docs/historico/` o `docs/experimental/`)
 - `docs/MANUAL_COBRA.md`
 - `tests/utils/`
 - `tests/performance/`
@@ -173,6 +174,8 @@ Las únicas exclusiones históricas explícitas permitidas son:
 - `docs/historico/`
 
 Todo contenido fuera de esas carpetas debe considerarse vigente y sujeto a la política oficial.
+
+En particular, `docs/proposals/` queda dentro del alcance vigilado: si una propuesta sigue activa, debe usar nombres canónicos, rutas actuales y no presentar targets experimentales como públicos.
 
 ## Comprobaciones verificables
 

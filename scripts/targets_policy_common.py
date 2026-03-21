@@ -26,6 +26,7 @@ from pcobra.cobra.transpilers.targets import (
 )
 
 PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
+ACTIVE_PROPOSAL_PATHS = tuple(sorted((ROOT / "docs/proposals").glob("*.md")))
 PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
 INTERNAL_COMPATIBILITY_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
 
@@ -64,10 +65,13 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "docs/frontend/ejemplos.rst",
     ROOT / "docs/frontend/hololang.rst",
     ROOT / "docs/frontend/referencia.rst",
+    *ACTIVE_PROPOSAL_PATHS,
 )
 PUBLIC_TEXT_PATH_STRS: frozenset[str] = frozenset(
     path.relative_to(ROOT).as_posix() for path in PUBLIC_TEXT_PATHS
 )
+
+PROPOSAL_POLICY_PATHS = ACTIVE_PROPOSAL_PATHS
 
 PUBLIC_RUNTIME_POLICY_PATHS = (
     ROOT / "README.md",
