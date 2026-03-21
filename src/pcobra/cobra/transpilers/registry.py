@@ -45,8 +45,9 @@ def build_official_transpilers() -> dict[str, type]:
 
 def official_transpiler_targets() -> tuple[str, ...]:
     """Devuelve los targets del registro canónico en el orden oficial."""
-    require_exact_official_targets(
-        TRANSPILER_CLASS_PATHS,
-        context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+    return target_cli_choices(
+        require_exact_official_targets(
+            TRANSPILER_CLASS_PATHS,
+            context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+        )
     )
-    return target_cli_choices(OFFICIAL_TARGETS)

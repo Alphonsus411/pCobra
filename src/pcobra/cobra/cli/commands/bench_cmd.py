@@ -24,10 +24,12 @@ from pathlib import Path
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.core.cobra_config import tiempo_max_transpilacion
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_label
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_label
+from scripts.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, validate_backend_metadata
 
 # Constantes
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
@@ -41,19 +43,14 @@ fin
 imprimir(x)
 """
 
-BACKEND_CANDIDATES = {
-    "python": {"ext": "py", "run": ["python", "{file}"]},
-    "javascript": {"ext": "js", "run": ["node", "{file}"]},
-    "rust": {
-        "ext": "rs",
-        "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
-        "run": ["{tmp}/prog_rs"],
-    },
-}
+validate_backend_metadata(
+    BENCHMARK_BACKEND_METADATA,
+    context="pcobra.cobra.cli.commands.bench_cmd.BENCHMARK_BACKEND_METADATA",
+)
 BACKENDS = {
-    target: cfg
-    for target, cfg in BACKEND_CANDIDATES.items()
-    if normalize_target_name(target) in OFFICIAL_TARGETS
+    target: BENCHMARK_BACKEND_METADATA[target]
+    for target in OFFICIAL_RUNTIME_TARGETS
+    if target in BENCHMARK_BACKEND_METADATA
 }
 
 def run_and_measure(

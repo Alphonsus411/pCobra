@@ -159,6 +159,12 @@ def main() -> int:
     tier1_targets = policy["tier1_targets"]
     tier2_targets = policy["tier2_targets"]
     official_targets = policy["official_targets"]
+    expected_official_targets = tuple((*tier1_targets, *tier2_targets))
+    if tuple(official_targets) != expected_official_targets:
+        raise RuntimeError(
+            "Política inválida: OFFICIAL_TARGETS debe ser exactamente tier1 + tier2 -> "
+            f"official={official_targets}, tier1={tier1_targets}, tier2={tier2_targets}"
+        )
     public_names = set(policy["public_names"])
     legacy_aliases = set(policy["legacy_aliases"])
     non_canonical_public_names = dict(policy["non_canonical_public_names"])

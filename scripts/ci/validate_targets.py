@@ -34,6 +34,7 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
     REVERSE_TRANSPILERS,
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
+from pcobra.cobra.transpilers.targets import TIER1_TARGETS, TIER2_TARGETS
 from pcobra.cobra.transpilers.reverse.policy import normalize_reverse_language
 from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
@@ -342,6 +343,8 @@ def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
     }
     alias_suffix_map = {"js": "javascript"}
 
+    found_canonical_suffixes: set[str] = set()
+
     for file_path in sorted(TRANSPILER_DIR.glob("to_*.py")):
         suffix = file_path.stem.removeprefix("to_")
         canonical = alias_suffix_map.get(suffix, suffix)
@@ -350,10 +353,17 @@ def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
                 f"{file_path.relative_to(ROOT)}: módulo fuera de OFFICIAL_TARGETS -> to_{suffix}.py"
             )
             continue
+        found_canonical_suffixes.add(canonical)
         if suffix not in allowed_suffixes and suffix not in alias_suffix_map:
             errors.append(
                 f"{file_path.relative_to(ROOT)}: sufijo no canónico para target oficial -> to_{suffix}.py"
             )
+
+    if found_canonical_suffixes != set(official):
+        errors.append(
+            "TRANSPILER_DIR: los módulos to_*.py no cubren exactamente OFFICIAL_TARGETS -> "
+            f"found={sorted(found_canonical_suffixes)}, official={list(official)}"
+        )
 
     return errors
 
@@ -432,6 +442,29 @@ def validate_experimental_docs_scope() -> list[str]:
 
     return errors
 
+
+
+
+def validate_policy_tiers(policy: dict[str, object]) -> list[str]:
+    errors: list[str] = []
+    tier1_targets = tuple(policy["tier1_targets"])
+    tier2_targets = tuple(policy["tier2_targets"])
+    official_targets = tuple(policy["official_targets"])
+    expected = tuple((*TIER1_TARGETS, *TIER2_TARGETS))
+
+    if tier1_targets != TIER1_TARGETS:
+        errors.append(
+            f"tier1_targets desalineado con targets.py -> {tier1_targets} (esperado: {TIER1_TARGETS})"
+        )
+    if tier2_targets != TIER2_TARGETS:
+        errors.append(
+            f"tier2_targets desalineado con targets.py -> {tier2_targets} (esperado: {TIER2_TARGETS})"
+        )
+    if official_targets != expected:
+        errors.append(
+            f"official_targets desalineado con tier1+tier2 -> {official_targets} (esperado: {expected})"
+        )
+    return errors
 
 def validate_reverse_cli_contract(
     official_targets: tuple[str, ...],
@@ -731,6 +764,7 @@ def main() -> int:
     errors: list[str] = []
 
     policy = read_target_policy()
+    errors.extend(validate_policy_tiers(policy))
     official_targets = policy["official_targets"]
     official_runtime_targets = policy["official_runtime_targets"]
     verification_targets = policy["verification_targets"]

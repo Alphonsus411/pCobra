@@ -13,7 +13,7 @@ from pcobra.cobra.transpilers.reverse.policy import (
     normalize_reverse_language,
 )
 from pcobra.cobra.cli.target_policies import DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     PUBLIC_RUNTIME_POLICY_PATHS,
@@ -38,7 +38,7 @@ def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
     assert tuple(TRANSPILER_CLASS_PATHS) == OFFICIAL_TARGETS
     assert set(STANDARD_IMPORTS.keys()).issubset(oficiales)
     assert set(BENCH_BACKENDS.keys()).issubset(oficiales)
-    assert set(BENCHMARKS_BACKENDS.keys()).issubset(oficiales)
+    assert tuple(BENCHMARKS_BACKENDS) == OFFICIAL_TARGETS
     assert set(FEATURE_INSPECTOR_TRANSPILERS.keys()).issubset(oficiales)
     assert "js" not in LANG_CHOICES
     assert "js" not in TRANSPILER_CLASS_PATHS
@@ -47,6 +47,23 @@ def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
     assert "js" not in BENCHMARKS_BACKENDS
     assert "js" not in FEATURE_INSPECTOR_TRANSPILERS
 
+
+
+
+def test_targets_y_tiers_oficiales_permancen_exactos():
+    assert OFFICIAL_TARGETS == (
+        "python",
+        "rust",
+        "javascript",
+        "wasm",
+        "go",
+        "cpp",
+        "java",
+        "asm",
+    )
+    assert TIER1_TARGETS == ("python", "rust", "javascript", "wasm")
+    assert TIER2_TARGETS == ("go", "cpp", "java", "asm")
+    assert TIER1_TARGETS + TIER2_TARGETS == OFFICIAL_TARGETS
 
 def test_mapa_reverse_extensions_esta_alineado_con_scope_reverse():
     reverse_scope = set(REVERSE_SCOPE_LANGUAGES)
@@ -67,12 +84,9 @@ def test_archivos_to_py_en_transpiler_oficiales():
     if (base / "to_js.py").exists():
         found.add("javascript")
 
-    oficiales = set(OFFICIAL_TARGETS)
-    fuera_de_scope = sorted(found - oficiales)
-    assert not fuera_de_scope, (
-        "Se encontraron transpilers fuera de los 8 targets oficiales: "
-        f"{', '.join(fuera_de_scope)}. "
-        f"Oficiales: {', '.join(OFFICIAL_TARGETS)}"
+    assert found == set(OFFICIAL_TARGETS), (
+        "Los módulos to_*.py deben corresponder exactamente a los 8 targets oficiales: "
+        f"encontrados={sorted(found)}, oficiales={list(OFFICIAL_TARGETS)}"
     )
 
 
