@@ -40,8 +40,10 @@ La referencia primaria está en estos archivos:
 ### Holobit
 
 - `python` es el único backend documentado hoy como `full` de punta a punta en la matriz.
+- Ningún backend fuera de `python` debe promocionarse en documentación pública como "compatibilidad total con Holobit SDK", "compatibilidad SDK completa" o equivalente.
 - `javascript` debe leerse como soporte contractual **parcial** también en Holobit: genera hooks canónicos `cobra_*`, conserva la colección de entrada y falla con `Error` explícito cuando falta runtime avanzado.
 - `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben leerse como soporte contractual **parcial**: el backend emite código, hooks y/o fallbacks verificables; no promete equivalencia total de ejecución.
+- En todos los backends `partial`, `proyectar`, `transformar` y `graficar` deben mantener fallos explícitos y documentados; una degradación a no-op silencioso es una regresión contractual.
 
 ### `corelibs` y `standard_library`
 

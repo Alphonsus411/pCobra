@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -67,3 +68,36 @@ def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
 
     hololang = Path("docs/frontend/hololang.rst").read_text(encoding="utf-8").lower()
     assert "hololang`` en ``cobra compilar``" in hololang
+
+
+PUBLIC_HOLOBIT_CONTRACT_DOCS = [
+    Path("README.md"),
+    Path("docs/instalacion.md"),
+    Path("docs/contrato_runtime_holobit.md"),
+    Path("docs/matriz_transpiladores.md"),
+    Path("docs/targets_policy.md"),
+]
+
+FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS = [
+    re.compile(r"(javascript|rust|wasm|go|cpp|java|asm).{0,120}(figura como|aparece como|es|tiene).{0,40}(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)", re.IGNORECASE | re.DOTALL),
+]
+
+
+def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
+    for path in PUBLIC_HOLOBIT_CONTRACT_DOCS:
+        contenido = path.read_text(encoding="utf-8")
+        lowered = contenido.lower()
+        for pattern in FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS:
+            assert not pattern.search(contenido), (
+                f"La documentación pública {path} no debe promocionar backends no Python a SDK full"
+            )
+        if path in {Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md"), Path("docs/targets_policy.md")}:
+            assert "python" in lowered and "full" in lowered
+            assert "partial" in lowered
+
+
+def test_docs_publicas_exigen_error_explicito_para_backends_partial_en_holobit():
+    for path in (Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md")):
+        contenido = path.read_text(encoding="utf-8").lower()
+        assert "no-op silencioso" in contenido
+        assert "error explícito" in contenido or "fallos explícitos" in contenido

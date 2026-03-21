@@ -68,6 +68,31 @@ Si no aparecen estos nodos, no se inyecta runtime Holobit.
 
 ## Estado de implementación por backend
 
+La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `graficar`, `corelibs` y
+`standard_library` es exactamente esta y debe mantenerse alineada con
+`src/pcobra/cobra/transpilers/compatibility_matrix.py` y `docs/matriz_transpiladores.md`:
+
+| Backend | Tier | holobit | proyectar | transformar | graficar | corelibs | standard_library |
+|---|---|---|---|---|---|---|---|
+| `python` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full |
+| `javascript` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `rust` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `wasm` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `go` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `cpp` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `java` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+| `asm` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
+
+- `python` es el único backend que puede figurar como `full` para estas seis features.
+- `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben permanecer en `partial`
+  mientras no exista paridad real con el runtime avanzado y el SDK de referencia.
+- Ningún backend fuera de `python` debe documentarse como compatibilidad total con Holobit SDK,
+  compatibilidad SDK completa o equivalente semántico de soporte total.
+- En todos los backends `partial`, `proyectar`, `transformar` y `graficar` deben fallar con error
+  explícito y documentado; nunca pueden degradarse a no-op silencioso.
+
+Notas por backend:
+
 - Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con
   Python `>=3.10`, y si aun así falta `holobit_sdk`, las primitivas avanzadas fallan explícitamente
   con `ModuleNotFoundError`.
@@ -75,5 +100,5 @@ Si no aparecen estos nodos, no se inyecta runtime Holobit.
   explícito cuando el runtime avanzado no está disponible. JavaScript no debe documentarse
   como compatibilidad real con Holobit SDK mientras solo conserve la colección de entrada y
   eleve `Error` en `proyectar`/`transformar`/`graficar`.
-- WASM, ASM: hooks ejecutables mínimos que señalan error explícito en tiempo de
-  ejecución/ensamblado, no no-op silencioso.
+- WASM, ASM: contrato `partial`; hooks ejecutables mínimos que señalan error explícito en tiempo
+  de ejecución/ensamblado, no no-op silencioso.

@@ -30,6 +30,10 @@ CONTRACT_FEATURES: Final[tuple[str, ...]] = (
 )
 VALID_COMPATIBILITY_LEVELS: Final[tuple[str, ...]] = ("none", "partial", "full")
 VALID_TIERS: Final[tuple[str, ...]] = ("tier1", "tier2")
+SDK_FULL_BACKENDS: Final[tuple[str, ...]] = ("python",)
+SDK_PARTIAL_BACKENDS: Final[tuple[str, ...]] = tuple(
+    backend for backend in OFFICIAL_TARGETS if backend not in SDK_FULL_BACKENDS
+)
 
 BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     "python": {
@@ -295,6 +299,19 @@ def validate_backend_compatibility_contract() -> None:
                     f"{actual_level} < {required_level}"
                 )
 
+    for feature in CONTRACT_FEATURES:
+        full_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "full"
+        }
+        if full_backends != set(SDK_FULL_BACKENDS):
+            raise RuntimeError(
+                "Promoción contractual inválida: "
+                f"solo {SDK_FULL_BACKENDS} puede figurar como 'full' para {feature}, "
+                f"pero la matriz declara {tuple(sorted(full_backends))}"
+            )
+
 
 validate_backend_compatibility_contract()
 
@@ -314,6 +331,8 @@ __all__ = [
     "COMPATIBILITY_LEVEL_ORDER",
     "BACKEND_COMPATIBILITY_NOTES",
     "CONTRACT_FEATURES",
+    "SDK_FULL_BACKENDS",
+    "SDK_PARTIAL_BACKENDS",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
     "validate_backend_compatibility_contract",

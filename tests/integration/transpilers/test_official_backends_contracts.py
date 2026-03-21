@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    CONTRACT_FEATURES,
+    SDK_FULL_BACKENDS,
+    SDK_PARTIAL_BACKENDS,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.ast_nodes import (
     NodoAsignacion,
@@ -45,6 +50,17 @@ IMPORT_EXPECTATIONS = {
     "cpp": ("#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>"),
     "java": ("import cobra.corelibs.*;", "import cobra.standard_library.*;"),
     "asm": ("; backend asm: imports de runtime administrados externamente",),
+}
+
+
+FAILURE_PRIMITIVES = {
+    "javascript": ("throw new Error",),
+    "rust": ("panic!(",),
+    "wasm": ("unreachable",),
+    "go": ("panic(fmt.Sprintf",),
+    "cpp": ("throw std::runtime_error",),
+    "java": ("throw new UnsupportedOperationException",),
+    "asm": ("TRAP",),
 }
 
 ERROR_EXPECTATIONS = {
@@ -231,3 +247,23 @@ def test_javascript_backend_generated_program_executes_when_node_runtime_is_avai
         )
 
     assert proc.returncode == 0, proc.stderr
+
+
+def test_python_es_el_unico_backend_full_en_la_matriz_contractual():
+    assert SDK_FULL_BACKENDS == ("python",)
+    assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
+
+    for feature in CONTRACT_FEATURES:
+        full_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "full"
+        }
+        assert full_backends == {"python"}
+
+
+@pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)
+def test_partial_backends_codegen_retains_explicit_failure_paths_for_advanced_holobit(backend: str):
+    generated = _generate(backend, _representative_nodes(backend))
+    for primitive in FAILURE_PRIMITIVES[backend]:
+        assert primitive in generated
