@@ -9,7 +9,6 @@ from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
 from pcobra.cobra.transpilers.registry import (
     build_official_transpilers,
-    official_transpiler_targets,
 )
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
@@ -111,6 +110,13 @@ def load_entrypoint_transpilers() -> None:
                 logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
                 continue
             cls = getattr(import_module(module_name), class_name)
+            if normalized_ep_name in TRANSPILERS:
+                logging.warning(
+                    "Plugin de transpilador '%s' omitido: '%s' ya existe en el registro canónico",
+                    ep.name,
+                    normalized_ep_name,
+                )
+                continue
             register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
         except Exception as exc:
             logging.error("Error cargando transpilador %s: %s", ep.name, exc)
@@ -118,8 +124,8 @@ def load_entrypoint_transpilers() -> None:
 
 load_entrypoint_transpilers()
 
-LANG_CHOICES = list(target_cli_choices(official_transpiler_targets()))
-TARGETS_HELP = build_target_help_by_tier()
+LANG_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
+TARGETS_HELP = build_target_help_by_tier(LANG_CHOICES)
 
 
 def parse_official_target_list(value: str) -> list[str]:

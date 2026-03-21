@@ -158,8 +158,7 @@ class TranspilarInversoCommand(BaseCommand):
         parser.add_argument(
             "--destino",
             help=_(
-                "Lenguaje destino usando exclusivamente OFFICIAL_TARGETS "
-                "({targets})"
+                "Destino OFFICIAL_TARGETS: {targets}"
             ).format(
                 targets=TARGETS_HELP
             ),

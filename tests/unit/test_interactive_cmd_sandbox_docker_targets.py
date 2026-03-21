@@ -33,6 +33,17 @@ def test_sandbox_docker_choices_usa_solo_targets_con_runtime_docker():
     assert tuple(action.choices) == DOCKER_EXECUTABLE_TARGETS
 
 
+def test_sandbox_docker_help_deriva_de_targets_canonicos():
+    _, interactive_parser, _ = _build_parser_and_command()
+
+    help_text = interactive_parser.format_help()
+
+    assert "Python (python)" in help_text
+    assert "Rust (rust)" in help_text
+    assert "C++ (cpp)" in help_text
+    assert "Java (java)" not in help_text
+
+
 @pytest.mark.parametrize("target", DOCKER_EXECUTABLE_TARGETS)
 def test_parser_acepta_todos_los_targets_con_runtime_docker(target):
     parser, _, _ = _build_parser_and_command()

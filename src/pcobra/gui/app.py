@@ -5,6 +5,7 @@ import sys
 import flet as ft
 
 from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_cli_choices
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 
@@ -31,12 +32,17 @@ def _transpilar_codigo(codigo: str, lang: str) -> str:
     return transp.generate_code(ast)
 
 
+def _gui_target_choices() -> tuple[str, ...]:
+    """Devuelve targets canónicos visibles en GUI preservando el orden oficial."""
+    return target_cli_choices(set(OFFICIAL_TARGETS) & set(TRANSPILERS))
+
+
 def main(page: ft.Page):
     """Función principal para Flet."""
 
     entrada = ft.TextField(multiline=True, expand=True)
     salida = ft.Text(value="", selectable=True)
-    lenguajes = sorted(TRANSPILERS.keys())
+    lenguajes = list(_gui_target_choices())
     selector = ft.Dropdown(options=[ft.dropdown.Option(lang) for lang in lenguajes])
     activar = ft.Switch(label="Transpilar")
 
