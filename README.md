@@ -17,12 +17,18 @@ Versión 10.0.12
 
 pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
 
+Resumen normativo visible:
+
+- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
+
 Tiers oficiales de soporte de backends:
 
 - **Tier 1**: `python`, `rust`, `javascript`, `wasm`
 - **Tier 2**: `go`, `cpp`, `java`, `asm`
 
-La fuente de verdad para esta clasificación es `src/pcobra/cobra/transpilers/targets.py`.
+Fuentes normativas: `src/pcobra/cobra/transpilers/targets.py` para la lista canónica y los tiers, y `src/pcobra/cobra/cli/target_policies.py` para la separación entre transpilación, runtime oficial y verificación ejecutable.
 
 ### Política de targets oficial
 
@@ -801,9 +807,15 @@ cobra transpilar-inverso script.py --origen=python --destino=python
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-Actualmente la transpilación inversa soportada por política acepta código de entrada en `python`, `javascript` y `java`, y la salida debe elegirse entre los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+Actualmente la transpilación inversa soportada por política acepta código de entrada en `python`, `javascript` y `java`, y la salida debe elegirse entre los 8 targets oficiales de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 
-Tiers de referencia (salida): Tier 1 (`python`, `rust`, `javascript`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). La fuente de verdad es `src/pcobra/cobra/transpilers/targets.py`.
+Separación explícita para usuario final:
+
+- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
+
+Tiers de referencia (salida): Tier 1 (`python`, `rust`, `javascript`, `wasm`) y Tier 2 (`go`, `cpp`, `java`, `asm`). Las fuentes normativas son `src/pcobra/cobra/transpilers/targets.py` y `src/pcobra/cobra/cli/target_policies.py`.
 
 ### Diseño extensible de la CLI
 
@@ -1273,7 +1285,13 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 
 Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
 
-Tiers oficiales: **Tier 1** (`python`, `rust`, `javascript`, `wasm`) y **Tier 2** (`go`, `cpp`, `java`, `asm`). Fuente de verdad: `src/pcobra/cobra/transpilers/targets.py`.
+Separación normativa resumida:
+
+- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
+
+Tiers oficiales: **Tier 1** (`python`, `rust`, `javascript`, `wasm`) y **Tier 2** (`go`, `cpp`, `java`, `asm`). Fuentes normativas: `src/pcobra/cobra/transpilers/targets.py` y `src/pcobra/cobra/cli/target_policies.py`.
 
 # Licencia
 

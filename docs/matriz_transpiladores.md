@@ -4,6 +4,8 @@ Este documento resume el **contrato mínimo vigente** de los backends oficiales.
 
 ## Fuente de verdad y trazabilidad
 
+Lista canónica completa de targets oficiales de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+
 La referencia primaria está en estos archivos:
 
 - `src/pcobra/cobra/transpilers/targets.py`: lista canónica de backends y tiers.
@@ -55,6 +57,12 @@ La compatibilidad mínima exigida por la suite contractual consiste en mantener 
 - `asm`: puntos de llamada `CALL` al runtime externo.
 
 ## Relación entre transpilación y runtime
+
+Separación explícita para leer esta matriz correctamente:
+
+- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
 
 Los 8 backends son oficiales para **generación de código**, pero el tooling oficial de **ejecución** es más pequeño:
 

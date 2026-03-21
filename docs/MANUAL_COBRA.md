@@ -443,7 +443,15 @@ ofrecen las *promises* en navegadores modernos.
 
 ## 11. Transpilación y ejecución
 
-- Compila a Python, JavaScript, ensamblador, Rust o C++ con `cobra compilar archivo.co --tipo python`.
+Antes de usar la CLI, conviene distinguir tres categorías normativas:
+
+- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
+
+Las fuentes normativas visibles para evitar divergencias son `src/pcobra/cobra/transpilers/targets.py` y `src/pcobra/cobra/cli/target_policies.py`.
+
+- Compila a cualquiera de los targets oficiales de transpilación con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
 
 ### Ejemplo de transpilación a Python
@@ -539,16 +547,16 @@ ejecuciones reutilicen la caché sin reprocesar el código.
 
 ### Transpiladores disponibles
 
-La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados:
+La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados. La lista canónica completa de targets oficiales de transpilación es: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 
-- **ASM** – [hola.asm](../examples/hello_world/asm/hola.asm)
-- **C++** – [hola.cpp](../examples/hello_world/cpp/hola.cpp)
-- **Go** – [hola.go](../examples/hello_world/go/hola.go)
-- **Java** – [Hola.java](../examples/hello_world/java/Hola.java)
-- **JavaScript** – [hola.js](../examples/hello_world/javascript/hola.js)
-- **Python** – [hola.py](../examples/hello_world/python/hola.py)
-- **Rust** – [hola.rs](../examples/hello_world/rust/hola.rs)
-- **WebAssembly** – [hola.wat](../examples/hello_world/wasm/hola.wat)
+- **`asm`** – [hola.asm](../examples/hello_world/asm/hola.asm)
+- **`cpp`** – [hola.cpp](../examples/hello_world/cpp/hola.cpp)
+- **`go`** – [hola.go](../examples/hello_world/go/hola.go)
+- **`java`** – [Hola.java](../examples/hello_world/java/Hola.java)
+- **`javascript`** – [hola.js](../examples/hello_world/javascript/hola.js)
+- **`python`** – [hola.py](../examples/hello_world/python/hola.py)
+- **`rust`** – [hola.rs](../examples/hello_world/rust/hola.rs)
+- **`wasm`** – [hola.wat](../examples/hello_world/wasm/hola.wat)
 
 ### Características aún no soportadas
 

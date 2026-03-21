@@ -13,11 +13,22 @@ La fuente única de verdad para los targets oficiales de salida es `src/pcobra/c
 
 El registro canónico de clases está en `src/pcobra/cobra/transpilers/registry.py`.
 
-La separación entre **targets oficiales de transpilación** y **targets con runtime oficial** se aplica hoy en `src/pcobra/cobra/cli/target_policies.py`.
+La separación entre **targets oficiales de transpilación** y **targets con runtime oficial** se aplica hoy en `src/pcobra/cobra/cli/target_policies.py`, que debe citarse junto con `src/pcobra/cobra/transpilers/targets.py` en documentación pública para evitar divergencias.
 
 ## Salida directa oficial
 
-Los únicos destinos oficiales de `cobra compilar` son:
+Los únicos destinos oficiales de `cobra compilar` son la lista canónica completa:
+
+- `python`
+- `rust`
+- `javascript`
+- `wasm`
+- `go`
+- `cpp`
+- `java`
+- `asm`
+
+Estos 8 nombres son la referencia pública completa antes de separarlos por tier.
 
 ### Tier 1
 
