@@ -113,7 +113,7 @@ Ejemplos actuales de documentación segregada:
 - prototipo LLVM;
 - notas de mapeo a LLVM IR;
 - soporte reverse desde LaTeX;
-- referencia retirada del reverse desde WASM.
+- referencia retirada del reverse desde WASM en `docs/experimental/limitaciones_wasm_reverse.md`.
 
 Hololang puede documentarse en la documentación principal **solo** como IR/pipeline interno, nunca como target oficial de salida ni como origen reverse mantenido por política.
 

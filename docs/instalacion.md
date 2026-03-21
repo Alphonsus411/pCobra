@@ -30,10 +30,6 @@ pip install -e .[columnar]
 # alias equivalente
 pip install -e .[io-binary]
 
-# Histórico/no vigente: extra legado de reverse WASM
-# La política actual solo documenta reverse para python, javascript y java.
-# No se recomienda instalar ni publicitar este extra en flujos vigentes.
-
 # Servidor de lenguaje
 pip install -e .[lsp]
 

@@ -30,6 +30,27 @@ def test_docs_experimentales_ya_no_viven_en_rutas_publicas_principales():
         assert not path.exists(), f"La ruta antigua debe haber sido movida: {path}"
 
 
+PUBLIC_GUIDES_WITHOUT_RETIRED_REVERSE_REFERENCES = [
+    Path("README.md"),
+    Path("docs/instalacion.md"),
+]
+
+RETIRED_REVERSE_PUBLIC_TERMS = [
+    "reverse wasm",
+    "wasm reverse",
+    "extra legado de reverse wasm",
+]
+
+
+def test_guias_publicas_no_reintroducen_reverse_wasm_ni_extras_retirados():
+    for path in PUBLIC_GUIDES_WITHOUT_RETIRED_REVERSE_REFERENCES:
+        contenido = path.read_text(encoding="utf-8").lower()
+        for termino in RETIRED_REVERSE_PUBLIC_TERMS:
+            assert termino not in contenido, (
+                f"La guía pública {path} no debe reintroducir menciones retiradas: {termino}"
+            )
+
+
 def test_documentacion_de_tiers_no_sobredimensiona_contrato_holobit():
     plan = Path("docs/frontend/transpilers_tier_plan.md").read_text(encoding="utf-8").lower()
     assert "javascript figura como `partial`" in plan
