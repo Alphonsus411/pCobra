@@ -161,7 +161,7 @@ python -m pytest tests/integration/test_holobit_tiers.py
 | Backend | Tier | holobit | proyectar | transformar | graficar | corelibs | standard_library |
 |---|---|---|---|---|---|---|---|
 | `python` | Tier 1 | full | full | full | full | full | full |
-| `javascript` | Tier 1 | full | full | full | full | partial | partial |
+| `javascript` | Tier 1 | partial | partial | partial | partial | partial | partial |
 | `rust` | Tier 1 | partial | partial | partial | partial | partial | partial |
 | `wasm` | Tier 1 | partial | partial | partial | partial | partial | partial |
 | `go` | Tier 2 | partial | partial | partial | partial | partial | partial |

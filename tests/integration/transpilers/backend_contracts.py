@@ -75,21 +75,17 @@ STRICT_FULL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "corelibs": ("longitud('cobra')",),
         "standard_library": ("mostrar('hola')",),
     },
-    "javascript": {
-        "holobit": (
-            "import * as io from './nativos/io.js';",
-            "import * as texto from './nativos/texto.js';",
-            "let hb = cobra_holobit([1, 2, 3]);",
-        ),
-        "proyectar": ("function cobra_proyectar", "cobra_proyectar(hb, '2d');"),
-        "transformar": ("function cobra_transformar", "cobra_transformar(hb, 'rotar', 90);"),
-        "graficar": ("function cobra_graficar", "cobra_graficar(hb);"),
-        "corelibs": ("longitud('cobra');",),
-        "standard_library": ("mostrar('hola');",),
-    },
 }
 
 PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
+    "javascript": {
+        "holobit": ("function cobra_holobit", "let hb = cobra_holobit([1, 2, 3]);"),
+        "proyectar": ("function cobra_proyectar", "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.", "cobra_proyectar(hb, '2d');"),
+        "transformar": ("function cobra_transformar", "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.", "cobra_transformar(hb, 'rotar', 90);"),
+        "graficar": ("function cobra_graficar", "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.", "cobra_graficar(hb);"),
+        "corelibs": ("longitud('cobra');",),
+        "standard_library": ("mostrar('hola');",),
+    },
     "rust": {
         "holobit": ("let hb = cobra_holobit(vec![1, 2, 3]);",),
         "proyectar": ('fn cobra_proyectar', 'cobra_proyectar(&format!("{}", hb), &format!("{}", "2d"));'),

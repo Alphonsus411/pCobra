@@ -42,73 +42,71 @@ FEATURE_NODES = {
 
 FULL_EXPECTATIONS = {
     "python": {
-        "holobit": ["from corelibs import *", "from standard_library import *", "holobit([1, 2, 3])"],
-        "proyectar": ["proyectar(hb, '2d')"],
-        "transformar": ["transformar(hb, 'rotar', 90)"],
-        "graficar": ["graficar(hb)"],
+        "holobit": ["from corelibs import *", "from standard_library import *", "hb = cobra_holobit([1, 2, 3])"],
+        "proyectar": ["def cobra_proyectar", "cobra_proyectar(hb, '2d')"],
+        "transformar": ["def cobra_transformar", "cobra_transformar(hb, 'rotar', 90)"],
+        "graficar": ["def cobra_graficar", "cobra_graficar(hb)"],
         "corelibs": ["from corelibs import *", "longitud('cobra')"],
         "standard_library": ["from standard_library import *", "mostrar('hola')"],
-    },
-    "javascript": {
-        "holobit": ["import * as io from './nativos/io.js';", "new Holobit([1, 2, 3])"],
-        "proyectar": ["function cobra_proyectar", "cobra_proyectar(hb, 2d);"],
-        "transformar": ["function cobra_transformar", "cobra_transformar(hb, rotar, 90);"],
-        "graficar": ["function cobra_graficar", "cobra_graficar(hb);"],
     },
 }
 
 PARTIAL_EXPECTATIONS = {
+    "javascript": {
+        "holobit": ["function cobra_holobit", "let hb = cobra_holobit([1, 2, 3]);"],
+        "proyectar": ["function cobra_proyectar", "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.", "cobra_proyectar(hb, '2d');"],
+        "transformar": ["function cobra_transformar", "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.", "cobra_transformar(hb, 'rotar', 90);"],
+        "graficar": ["function cobra_graficar", "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.", "cobra_graficar(hb);"],
+        "corelibs": ["import * as texto from './nativos/texto.js';", "longitud('cobra');"],
+        "standard_library": ["import * as io from './nativos/io.js';", "mostrar('hola');"],
+    },
     "rust": {
-        "holobit": ["holobit(vec![1, 2, 3]);"],
-        "proyectar": ["fn cobra_proyectar", 'cobra_proyectar(&format!("{}", hb), &format!("{}", 2d));'],
-        "transformar": ["fn cobra_transformar", 'cobra_transformar(&format!("{}", hb), &format!("{}", rotar), &[]);'],
+        "holobit": ["let hb = cobra_holobit(vec![1, 2, 3]);"],
+        "proyectar": ["fn cobra_proyectar", 'cobra_proyectar(&format!("{}", hb), &format!("{}", "2d"));'],
+        "transformar": ["fn cobra_transformar", 'cobra_transformar(&format!("{}", hb), &format!("{}", "rotar"), &[]);'],
         "graficar": ["fn cobra_graficar", 'cobra_graficar(&format!("{}", hb));'],
-        "corelibs": ["longitud(cobra);"],
-        "standard_library": ["mostrar(hola);"],
+        "corelibs": ['longitud("cobra");'],
+        "standard_library": ['mostrar("hola");'],
     },
     "wasm": {
-        "holobit": [";; holobit hb [1, 2, 3]"],
-        "proyectar": [";; runtime hook cobra_proyectar", ";; call runtime cobra_proyectar"],
-        "transformar": [";; runtime hook cobra_transformar", ";; call runtime cobra_transformar"],
-        "graficar": [";; runtime hook cobra_graficar", ";; call runtime cobra_graficar"],
-        "corelibs": [";; call longitud (i32.const cobra)"],
-        "standard_library": [";; call mostrar (i32.const hola)"],
+        "holobit": ["(drop (call $cobra_holobit (i32.const 1)))"],
+        "proyectar": ["(func $cobra_proyectar", "(call $cobra_proyectar (local.get $hb) (i32.const 0))"],
+        "transformar": ["(func $cobra_transformar", "(call $cobra_transformar (local.get $hb) (i32.const 0))"],
+        "graficar": ["(func $cobra_graficar", "(call $cobra_graficar (local.get $hb))"],
+        "corelibs": ["(call $longitud (i32.const 0))"],
+        "standard_library": ["(call $mostrar (i32.const 0))"],
     },
     "go": {
-        "holobit": ["hb := []float64{1, 2, 3}"],
-        "proyectar": ["func cobraProyectar", "cobraProyectar(hb, \"2d\")"],
-        "transformar": ["func cobraTransformar", "cobraTransformar(hb, \"rotar\", 90)"],
-        "graficar": ["func cobraGraficar", "cobraGraficar(hb)"],
-        "corelibs": ["longitud(\"cobra\")"],
-        "standard_library": ["mostrar(\"hola\")"],
+        "holobit": ["hb := cobra_holobit([]float64{1, 2, 3})"],
+        "proyectar": ["func cobra_proyectar", 'cobra_proyectar(hb, "2d")'],
+        "transformar": ["func cobra_transformar", 'cobra_transformar(hb, "rotar", 90)'],
+        "graficar": ["func cobra_graficar", "cobra_graficar(hb)"],
+        "corelibs": ['longitud("cobra")'],
+        "standard_library": ['mostrar("hola")'],
     },
     "cpp": {
-        "holobit": ["auto hb = holobit({ 1, 2, 3 });"],
-        "proyectar": ["inline void cobra_proyectar", "cobra_proyectar(hb, 2d);"],
-        "transformar": ["inline void cobra_transformar", "cobra_transformar(hb, rotar, {});"],
-        "graficar": ["inline void cobra_graficar", "cobra_graficar(hb)"],
-        "corelibs": ["longitud(cobra);"],
-        "standard_library": ["mostrar(hola);"],
+        "holobit": ["auto hb = cobra_holobit({ 1, 2, 3 });"],
+        "proyectar": ["inline void cobra_proyectar", 'cobra_proyectar(hb, "2d");'],
+        "transformar": ["inline void cobra_transformar", 'cobra_transformar(hb, "rotar", {});'],
+        "graficar": ["inline void cobra_graficar", "cobra_graficar(hb);"],
+        "corelibs": ['longitud("cobra");'],
+        "standard_library": ['mostrar("hola");'],
     },
     "java": {
-        "holobit": ["double[] hb = new double[]{1, 2, 3};"],
-        "proyectar": ["private static void cobraProyectar", "cobraProyectar(hb, \"2d\")"],
-        "transformar": ["private static void cobraTransformar", "cobraTransformar(hb, \"rotar\", 90)"],
-        "graficar": ["private static void cobraGraficar", "cobraGraficar(hb)"],
-        "corelibs": ["longitud(\"cobra\")"],
-        "standard_library": ["mostrar(\"hola\")"],
+        "holobit": ["Object hb = cobra_holobit(new double[]{1, 2, 3});"],
+        "proyectar": ["private static void cobra_proyectar", 'cobra_proyectar(hb, "2d")'],
+        "transformar": ["private static void cobra_transformar", 'cobra_transformar(hb, "rotar", 90)'],
+        "graficar": ["private static void cobra_graficar", "cobra_graficar(hb);"],
+        "corelibs": ['longitud("cobra")'],
+        "standard_library": ['mostrar("hola")'],
     },
     "asm": {
         "holobit": ["HOLOBIT hb [1, 2, 3]"],
-        "proyectar": ["; hook cobra_proyectar", "; Nodo NodoProyectar no soportado"],
-        "transformar": ["; hook cobra_transformar", "; Nodo NodoTransformar no soportado"],
-        "graficar": ["; hook cobra_graficar", "; Nodo NodoGraficar no soportado"],
+        "proyectar": ["cobra_proyectar:", "CALL cobra_proyectar hb, '2d'"],
+        "transformar": ["cobra_transformar:", "CALL cobra_transformar hb, 'rotar', 90"],
+        "graficar": ["cobra_graficar:", "CALL cobra_graficar hb"],
         "corelibs": ["CALL longitud 'cobra'"],
         "standard_library": ["CALL mostrar 'hola'"],
-    },
-    "javascript": {
-        "corelibs": ["import * as texto from './nativos/texto.js';", "longitud(cobra);"],
-        "standard_library": ["import * as io from './nativos/io.js';", "mostrar(hola);"],
     },
 }
 
@@ -119,8 +117,10 @@ def _build(language: str):
     return getattr(mod, cls_name)()
 
 
+
 def _to_text(output) -> str:
     return "\n".join(output) if isinstance(output, list) else str(output)
+
 
 
 def _generate(language: str, feature: str) -> str:
@@ -142,6 +142,7 @@ def test_tier2_backends_import_and_generate(language: str):
 
 @pytest.mark.parametrize("language, feature", [(lang, feat) for lang, feats in FULL_EXPECTATIONS.items() for feat in feats])
 def test_full_compatibility_contract(language: str, feature: str):
+    assert BACKEND_COMPATIBILITY[language][feature] == "full"
     code = _generate(language, feature)
     for expected in FULL_EXPECTATIONS[language][feature]:
         assert expected in code
@@ -151,6 +152,7 @@ def test_full_compatibility_contract(language: str, feature: str):
     "language, feature", [(lang, feat) for lang, feats in PARTIAL_EXPECTATIONS.items() for feat in feats]
 )
 def test_partial_compatibility_contract(language: str, feature: str):
+    assert BACKEND_COMPATIBILITY[language][feature] == "partial"
     code = _generate(language, feature)
     for expected in PARTIAL_EXPECTATIONS[language][feature]:
         assert expected in code
@@ -161,6 +163,7 @@ def test_suite_covers_all_features(language: str):
     for feature in FEATURE_NODES:
         code = _generate(language, feature)
         assert code.strip()
+
 
 
 def test_matriz_compatibilidad_cubre_todos_los_backends_oficiales():
