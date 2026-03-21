@@ -57,9 +57,8 @@ class TranspiladorASM(BaseTranspiler):
             programa,
             ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
         )
-        self._lineas = []
+        self._lineas = list(get_standard_imports("asm"))
         if usa_runtime_holobit:
-            self._lineas.extend(get_standard_imports("asm"))
             if self._lineas:
                 self._lineas.append("")
             self._lineas.extend(get_runtime_hooks("asm"))
