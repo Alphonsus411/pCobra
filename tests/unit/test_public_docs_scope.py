@@ -79,8 +79,22 @@ PUBLIC_HOLOBIT_CONTRACT_DOCS = [
 ]
 
 FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS = [
-    re.compile(r"(javascript|rust|wasm|go|cpp|java|asm).{0,120}(figura como|aparece como|es|tiene).{0,40}(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)", re.IGNORECASE | re.DOTALL),
+    re.compile(
+        r"(javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
+        r"(figura como|aparece como|es|tiene)[^\n]{0,40}"
+        r"(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)",
+        re.IGNORECASE,
+    ),
 ]
+
+PUBLIC_CANONICAL_NAME_DOCS = [
+    Path("README.md"),
+    Path("docs/README.en.md"),
+    Path("docs/config_cli.md"),
+    Path("docs/frontend/arquitectura.rst"),
+]
+
+FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN = re.compile(r"(?<![\w.-])js(?![\w.-])", re.IGNORECASE)
 
 
 def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
@@ -101,3 +115,11 @@ def test_docs_publicas_exigen_error_explicito_para_backends_partial_en_holobit()
         contenido = path.read_text(encoding="utf-8").lower()
         assert "no-op silencioso" in contenido
         assert "error explícito" in contenido or "fallos explícitos" in contenido
+
+
+def test_docs_publicas_clave_no_reintroducen_js_como_nombre_canonico():
+    for path in PUBLIC_CANONICAL_NAME_DOCS:
+        contenido = path.read_text(encoding="utf-8")
+        assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(contenido), (
+            f"La documentación pública {path} no debe usar 'js' como nombre canónico público"
+        )

@@ -119,7 +119,7 @@ PYTHONPATH=$PWD/src pytest
 Antes de abrir un PR que toque transpilación, ejemplos, extensiones o imágenes Docker, verifica:
 
 - [ ] No se añadieron referencias a targets fuera de la política oficial (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
-- [ ] No se añadieron referencias de `transpilar-inverso` fuera de los orígenes oficiales (`python`, `js`, `java`).
+- [ ] No se añadieron referencias de `transpilar-inverso` fuera de los orígenes oficiales (`python`, `javascript`, `java`).
 - [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` no contienen archivos huérfanos de lenguajes fuera de alcance.
 - [ ] Se ejecutó un barrido de cadenas/rutas para detectar menciones residuales antes de enviar cambios.
 
