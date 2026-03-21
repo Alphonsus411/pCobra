@@ -14,6 +14,11 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
 
+LEGACY_MODULE_MAP_KEYS = {
+    "javascript": ("js",),
+    "asm": ("ensamblador",),
+}
+
 logger = logging.getLogger(__name__)
 
 MODULE_MAP_PATH = os.environ.get(
@@ -91,11 +96,20 @@ def get_toml_map():
     return _toml_cache
 
 
+def _find_legacy_module_map_key(module_mapping: dict[str, Any], backend: str) -> str | None:
+    """Detecta aliases legacy configurados para un backend canónico."""
+    for legacy_key in LEGACY_MODULE_MAP_KEYS.get(backend, ()):  # pragma: no branch - tabla pequeña
+        if legacy_key in module_mapping:
+            return legacy_key
+    return None
+
+
 def get_mapped_path(module: str, backend: str) -> str:
     """Return the path for *module* mapped for the given *backend*.
 
     Resuelve únicamente con nombres canónicos oficiales. Si no hay mapeo,
-    devuelve ``module``.
+    devuelve ``module``. Si la configuración usa aliases legacy retirados para
+    el backend solicitado, falla con un error accionable.
     """
     canonical_backend = normalize_target_name(backend)
     if canonical_backend not in OFFICIAL_TARGETS:
@@ -124,5 +138,13 @@ def get_mapped_path(module: str, backend: str) -> str:
     mapped = module_mapping.get(canonical_backend)
     if isinstance(mapped, str):
         return mapped
+
+    legacy_key = _find_legacy_module_map_key(module_mapping, canonical_backend)
+    if legacy_key is not None:
+        raise ValueError(
+            "El módulo "
+            f"{module} usa la clave legacy '{legacy_key}' en cobra.mod/cobra.toml; "
+            f"renómbrala a '{canonical_backend}'."
+        )
 
     return module

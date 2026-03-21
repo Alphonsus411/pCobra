@@ -148,3 +148,37 @@ def test_validador_permite_targets_tier2_opcionales_en_mapeo(tmp_path, monkeypat
     )
 
     validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_rechaza_required_targets_con_alias_legacy(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["js"]}},
+    )
+
+    with pytest.raises(ValueError, match="required_targets.*js.*javascript"):
+        validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_rechaza_required_targets_desconocidos(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python", "desconocido"]}},
+    )
+
+    with pytest.raises(ValueError, match="required_targets.*desconocido"):
+        validar_mod(str(tmp_path / "cobra.mod"))

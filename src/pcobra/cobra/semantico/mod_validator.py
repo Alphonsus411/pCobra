@@ -48,6 +48,10 @@ SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
 logger = logging.getLogger(__name__)
 
 DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = TIER1_TARGETS
+LEGACY_REQUIRED_TARGET_ALIASES: dict[str, str] = {
+    "js": "javascript",
+    "ensamblador": "asm",
+}
 
 # Verificar existencia del esquema y cargarlo
 if not os.path.exists(SCHEMA_PATH):
@@ -138,12 +142,32 @@ def _required_targets_from_policy() -> tuple[str, ...]:
         return DEFAULT_REQUIRED_TARGETS
 
     normalized: list[str] = []
+    invalid_targets: list[str] = []
     for target in raw_targets:
         if not isinstance(target, str):
+            invalid_targets.append(repr(target))
             continue
+
         canonical = normalize_target_name(target)
-        if canonical in OFFICIAL_TARGETS and canonical not in normalized:
+        if canonical in LEGACY_REQUIRED_TARGET_ALIASES:
+            invalid_targets.append(
+                f"{target} (usa '{LEGACY_REQUIRED_TARGET_ALIASES[canonical]}' en su lugar)"
+            )
+            continue
+
+        if canonical not in OFFICIAL_TARGETS:
+            invalid_targets.append(target)
+            continue
+
+        if canonical not in normalized:
             normalized.append(canonical)
+
+    if invalid_targets:
+        joined = ", ".join(invalid_targets)
+        raise ValueError(
+            "La política [project].required_targets de cobra.toml contiene targets inválidos u obsoletos: "
+            f"{joined}. Usa únicamente nombres canónicos: {', '.join(OFFICIAL_TARGETS)}."
+        )
 
     return tuple(normalized) if normalized else DEFAULT_REQUIRED_TARGETS
 
