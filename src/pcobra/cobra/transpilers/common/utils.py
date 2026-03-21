@@ -13,6 +13,13 @@ from pcobra.cobra.transpilers.targets import (
     normalize_target_name,
 )
 
+HOLOBIT_RUNTIME_NODE_TYPES = (
+    "NodoHolobit",
+    "NodoProyectar",
+    "NodoTransformar",
+    "NodoGraficar",
+)
+
 
 class BaseTranspiler(NodeVisitor, ABC):
     """Clase base para los transpiladores que generan código."""
@@ -343,6 +350,11 @@ def ast_contains_node_types(tree, node_type_names: tuple[str, ...]) -> bool:
     return False
 
 
+def ast_requires_holobit_runtime(tree) -> bool:
+    """Indica si ``tree`` requiere inyección del runtime Holobit contractual."""
+    return ast_contains_node_types(tree, HOLOBIT_RUNTIME_NODE_TYPES)
+
+
 def save_file(content: Union[str, List[str]], path: str) -> None:
     """Guarda *content* en la ruta *path*."""
     texto = "\n".join(content) if isinstance(content, list) else str(content)
@@ -389,4 +401,6 @@ __all__ = [
     "RUNTIME_ERROR_MESSAGE",
     "validate_runtime_contracts",
     "ast_contains_node_types",
+    "HOLOBIT_RUNTIME_NODE_TYPES",
+    "ast_requires_holobit_runtime",
 ]

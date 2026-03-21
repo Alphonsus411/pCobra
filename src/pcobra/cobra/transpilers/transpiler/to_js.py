@@ -44,7 +44,7 @@ from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.common.utils import (
-    ast_contains_node_types,
+    ast_requires_holobit_runtime,
     get_standard_imports,
     get_runtime_hooks,
 )
@@ -288,10 +288,7 @@ class TranspiladorJavaScript(BaseTranspiler):
         ast_raiz = ensure_cobra_ast(ast_raiz)
         ast_raiz = expandir_macros(ast_raiz)
         ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
-        usa_holobit = ast_contains_node_types(
-            ast_raiz,
-            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
-        )
+        usa_holobit = ast_requires_holobit_runtime(ast_raiz)
         self.codigo = list(get_standard_imports("javascript"))
         if usa_holobit:
             self.codigo.extend(get_runtime_hooks("javascript"))
