@@ -36,7 +36,7 @@ La política oficial de targets exige que toda documentación pública, snippets
 
 Además, el proyecto separa explícitamente **targets oficiales de transpilación** de **targets oficiales con runtime de ejecución**. Hoy la ejecución oficial en contenedor/UX de runtime cubre `python`, `javascript`, `cpp` y `rust`, tal y como reflejan `src/pcobra/cobra/cli/target_policies.py`, `src/pcobra/core/sandbox.py` y el objetivo `make docker`. Los targets `go`, `java`, `wasm` y `asm` siguen siendo oficiales para generación de código, pero no deben interpretarse como runtimes Docker/sandbox equivalentes.
 
-La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full`, `javascript` como mixto (`full` para primitivas Holobit y `partial` para `corelibs`/`standard_library`) y el resto de backends en `partial`.
+La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` se mantienen en `partial`; en particular, JavaScript no debe promocionarse como soporte SDK pleno de Holobit.
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 

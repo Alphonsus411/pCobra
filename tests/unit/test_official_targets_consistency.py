@@ -14,6 +14,12 @@ from pcobra.cobra.transpilers.reverse.policy import (
 )
 from pcobra.cobra.cli.target_policies import DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from scripts.targets_policy_common import (
+    HOLOBIT_MATRIX_DOC_PATHS,
+    PUBLIC_RUNTIME_POLICY_PATHS,
+    VALIDATION_SCAN_PATHS,
+    read_target_policy,
+)
 
 
 def _extract_backend_from_filename(path: Path, prefix: str = "to_") -> str:
@@ -194,3 +200,46 @@ def test_validacion_ci_bloquea_condicionales_o_tablas_para_backend_c_fuera_de_zo
         "La auditoría CI detectó referencias no permitidas al backend retirado 'c': "
         f"{errores_c}"
     )
+
+
+def test_rutas_bajo_vigilancia_incluyen_docs_y_tests_pedidos():
+    root = Path.cwd().resolve()
+    rel_paths = {path.resolve().relative_to(root).as_posix() for path in VALIDATION_SCAN_PATHS}
+
+    assert "README.md" in rel_paths
+    assert "docs" in rel_paths
+    assert "docs/MANUAL_COBRA.md" in rel_paths
+    assert "tests/utils" in rel_paths
+    assert "tests/performance" in rel_paths
+    assert "tests/integration" in rel_paths
+
+
+def test_allowlist_historica_queda_limitada_a_docs_archivados():
+    from scripts.ci.validate_targets import ALLOWED_HISTORICAL_PATH_PREFIXES
+
+    assert ALLOWED_HISTORICAL_PATH_PREFIXES == (
+        "docs/historico/",
+        "docs/experimental/",
+    )
+
+
+def test_validacion_ci_verifica_listas_publicas_de_runtime_y_matrices_holobit():
+    from scripts.ci.validate_targets import (
+        validate_holobit_public_contract,
+        validate_public_policy_lists,
+    )
+
+    policy = read_target_policy()
+    errores_listas = validate_public_policy_lists(
+        tuple(policy["official_targets"]),
+        tuple(REVERSE_SCOPE_LANGUAGES),
+        official_runtime_targets=tuple(policy["official_runtime_targets"]),
+        transpilation_only_targets=tuple(policy["transpilation_only_targets"]),
+        verification_targets=tuple(policy["verification_targets"]),
+    )
+    errores_holobit = validate_holobit_public_contract()
+
+    assert tuple(path.as_posix() for path in PUBLIC_RUNTIME_POLICY_PATHS)
+    assert tuple(path.as_posix() for path in HOLOBIT_MATRIX_DOC_PATHS)
+    assert not errores_listas, f"Listas públicas desalineadas: {errores_listas}"
+    assert not errores_holobit, f"Claims/matriz Holobit desalineados: {errores_holobit}"

@@ -26,19 +26,13 @@ if str(ROOT) not in sys.path:
 from scripts.targets_policy_common import (
     LEGACY_ALIAS_ALLOWLIST,
     PUBLIC_TEXT_PATH_STRS,
+    VALIDATION_SCAN_PATHS,
     read_target_policy,
 )
 
 # Rutas clave a escanear según política.
-SCAN_ROOTS = (
-    "README.md",
-    "src",
-    "tests",
-    "docs",
-    "examples",
-    "docker",
-    "scripts",
-    ".github",
+SCAN_ROOTS = tuple(
+    path.relative_to(ROOT).as_posix() for path in VALIDATION_SCAN_PATHS
 )
 
 # Rutas generadas que no deben escanearse para evitar falsos positivos en artefactos.
@@ -106,75 +100,6 @@ LOCKFILES = {
 # canónico público, alias legacy interno o término completamente fuera de política.
 KNOWN_LANGUAGE_ALIASES: set[str] | None = None
 
-# Excepciones históricas explícitas (archivo + patrón + motivo).
-# Se usan para no bloquear PRs por referencias archivísticas preexistentes.
-HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
-    "README.md": (
-        (
-            r"latex",
-            "Referencia al cheatsheet en formato LaTeX (documentación de formato).",
-        ),
-    ),
-    "docs/README.en.md": (
-        (
-            r"latex",
-            "Referencia al cheatsheet en formato LaTeX (documentación de formato).",
-        ),
-    ),
-    "docs/frontend/recursos_adicionales.rst": (
-        (r"latex", "Enlace a recurso .tex del cheatsheet."),
-    ),
-    "docs/experimental/soporte_latex.md": (
-        (
-            r"latex",
-            "Documento de soporte del parser de LaTeX, no target de compilación.",
-        ),
-    ),
-    ".github/workflows/pages.yml": (
-        (r"latex", "Workflow de publicación de documentación PDF generada con LaTeX."),
-    ),
-    "src/pcobra/standard_library/__init__.py": (
-        (
-            r"julia",
-            "Docstring comparativo de ecosistemas numéricos; no define targets.",
-        ),
-    ),
-    "src/pcobra/standard_library/logica.py": (
-        (
-            r"kotlin",
-            "Docstrings comparan semántica de utilidades booleanas con otras APIs.",
-        ),
-    ),
-    "src/pcobra/standard_library/numero.py": (
-        (r"kotlin", "Docstring de lerp con referencia comparativa de nomenclatura."),
-    ),
-    "src/pcobra/standard_library/texto.py": (
-        (
-            r"kotlin|swift",
-            "Docstrings pedagógicos comparan helpers de cadenas con librerías conocidas.",
-        ),
-    ),
-    "src/pcobra/corelibs/__init__.py": (
-        (
-            r"kotlin|swift",
-            "Comentarios de compatibilidad nombran APIs análogas para facilitar migraciones.",
-        ),
-    ),
-    "src/pcobra/corelibs/numero.py": (
-        (
-            r"kotlin",
-            "Docstring de interpolación con referencia equivalente en otras plataformas.",
-        ),
-    ),
-    "src/pcobra/corelibs/texto.py": (
-        (
-            r"kotlin|swift",
-            "Docstrings de utilidades de texto incluyen referencias comparativas no funcionales.",
-        ),
-    ),
-}
-
-
 def is_text_file(path: Path) -> bool:
     if path.suffix.lower() in BINARY_OR_GENERATED_SUFFIXES:
         return False
@@ -217,14 +142,8 @@ def iter_scan_files(root: Path) -> list[Path]:
 
 
 def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]:
-    rules = HISTORICAL_EXCEPTIONS.get(rel_path)
-    if not rules:
-        return False, None
-
-    for pattern, reason in rules:
-        if re.search(pattern, line, flags=re.IGNORECASE):
-            return True, reason
-
+    if rel_path.startswith("docs/experimental/") or rel_path.startswith("docs/historico/"):
+        return True, "Contenido archivado/experimental fuera de la documentación normativa."
     return False, None
 
 
@@ -322,10 +241,10 @@ def main() -> int:
         for err in errors:
             print(f" - {err}", file=sys.stderr)
 
-        print("\nExcepciones históricas documentadas:", file=sys.stderr)
-        for rel, rules in sorted(HISTORICAL_EXCEPTIONS.items()):
-            for pattern, reason in rules:
-                print(f" - {rel}: /{pattern}/ -> {reason}", file=sys.stderr)
+        print(
+            "\nExcepciones históricas documentadas: docs/experimental/ y docs/historico/.",
+            file=sys.stderr,
+        )
 
         return 1
 

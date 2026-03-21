@@ -13,9 +13,9 @@ Checks principales:
 from __future__ import annotations
 
 import ast
+import re
 import sys
 from pathlib import Path
-import re
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = ROOT / "src"
@@ -36,22 +36,20 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from pcobra.cobra.transpilers.reverse.policy import normalize_reverse_language
 from scripts.targets_policy_common import (
+    HOLOBIT_MATRIX_DOC_PATHS,
+    HOLOBIT_PUBLIC_CONTRACT_PATHS,
     LEGACY_ALIAS_ALLOWLIST,
     NON_CANONICAL_PUBLIC_NAMES,
     OUT_OF_POLICY_LANGUAGE_TERMS,
     PUBLIC_TEXT_PATHS,
     PUBLIC_TEXT_PATH_STRS,
+    PUBLIC_RUNTIME_POLICY_PATHS,
+    VALIDATION_SCAN_PATHS,
     build_legacy_alias_patterns,
     read_target_policy,
 )
 
-SCAN_ROOTS = (
-    ROOT / "README.md",
-    ROOT / "scripts",
-    ROOT / "docs",
-    ROOT / "tests",
-    ROOT / "examples",
-)
+SCAN_ROOTS = VALIDATION_SCAN_PATHS
 
 GENERATED_PATH_PARTS = (
     "__pycache__/",
@@ -103,12 +101,6 @@ BINARY_OR_GENERATED_SUFFIXES = {
 ALLOWED_HISTORICAL_PATH_PREFIXES = (
     "docs/historico/",
     "docs/experimental/",
-)
-ALLOWED_HISTORICAL_PATHS = frozenset(
-    {
-        "docs/coverage.md",
-        "tests/unit/test_compile_stress.py",
-    }
 )
 
 REMOVED_REVERSE_LANGUAGES = ("c", "cpp", "go", "rust", "wasm", "asm")
@@ -188,6 +180,57 @@ SKIPPED_SCAN_REL_PATHS = frozenset(
     }
 )
 
+POLICY_LITERAL_TARGET_NAMES = frozenset(
+    {
+        "SUPPORTED_TARGETS",
+        "OFFICIAL_TARGETS",
+        "OFFICIAL_RUNTIME_TARGETS",
+        "DOCKER_EXECUTABLE_TARGETS",
+        "VERIFICATION_EXECUTABLE_TARGETS",
+        "TRANSPILATION_ONLY_TARGETS",
+    }
+)
+POLICY_LITERAL_PREFIX_NAMES = frozenset(
+    {
+        "CLI_OFFICIAL_RUNTIME_TARGETS",
+        "CLI_TRANSPILATION_ONLY_TARGETS",
+    }
+)
+
+PUBLIC_POLICY_LIST_PATTERNS: dict[str, tuple[re.Pattern[str], str]] = {
+    "official_targets": (
+        re.compile(r"targets oficiales de transpilación", re.IGNORECASE),
+        "targets oficiales de transpilación",
+    ),
+    "official_runtime_targets": (
+        re.compile(r"targets con runtime oficial", re.IGNORECASE),
+        "targets con runtime oficial",
+    ),
+    "reverse_scope_languages": (
+        re.compile(r"or[ií]genes de transpilaci[oó]n inversa", re.IGNORECASE),
+        "orígenes reverse oficiales",
+    ),
+    "official_runtime_targets_alt": (
+        re.compile(r"runtime oficial en contenedor/sandbox", re.IGNORECASE),
+        "runtime oficial en contenedor/sandbox",
+    ),
+    "transpilation_only_targets": (
+        re.compile(r"targets oficiales solo de transpilaci[oó]n", re.IGNORECASE),
+        "targets oficiales solo de transpilación",
+    ),
+    "verification_targets": (
+        re.compile(r"verificaci[oó]n ejecutable expl[ií]cita en cli", re.IGNORECASE),
+        "verificación ejecutable explícita en CLI",
+    ),
+}
+
+FORBIDDEN_NON_PYTHON_HOLOBIT_FULL_CLAIM = re.compile(
+    r"(javascript|rust|wasm|go|cpp|java|asm).{0,120}"
+    r"(holobit|proyectar|transformar|graficar|corelibs|standard_library).{0,80}"
+    r"(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 def read_transpiler_registry_keys() -> tuple[str, ...]:
     return tuple(TRANSPILERS.keys())
@@ -220,9 +263,76 @@ def _is_generated_or_binary(path: Path) -> bool:
 
 
 def _is_allowed_historical_path(rel: str) -> bool:
-    return rel in ALLOWED_HISTORICAL_PATHS or any(
-        rel.startswith(prefix) for prefix in ALLOWED_HISTORICAL_PATH_PREFIXES
+    return any(rel.startswith(prefix) for prefix in ALLOWED_HISTORICAL_PATH_PREFIXES)
+
+
+def _extract_backtick_targets(line: str, *, allowed_names: set[str]) -> tuple[str, ...]:
+    return tuple(
+        match.lower()
+        for match in re.findall(r"`([^`]+)`", line)
+        if match.lower() in allowed_names
     )
+
+
+def _parse_backend_matrix_table(path: Path) -> dict[str, dict[str, str]]:
+    rows: dict[str, dict[str, str]] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("| `"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        backend = cells[0].strip("`")
+        rows[backend] = {
+            "tier": cells[1].lower().replace(" ", ""),
+            "holobit": cells[2].split()[-1],
+            "proyectar": cells[3].split()[-1],
+            "transformar": cells[4].split()[-1],
+            "graficar": cells[5].split()[-1],
+            "corelibs": cells[6].split()[-1],
+            "standard_library": cells[7].split()[-1],
+        }
+    return rows
+
+
+def _literal_string_collection(node: ast.AST | None) -> tuple[str, ...] | None:
+    if not isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+        return None
+
+    values: list[str] = []
+    for element in node.elts:
+        if not isinstance(element, ast.Constant) or not isinstance(element.value, str):
+            return None
+        values.append(element.value)
+    return tuple(values)
+
+
+def _assignment_target_names(node: ast.Assign | ast.AnnAssign) -> tuple[str, ...]:
+    if isinstance(node, ast.Assign):
+        return tuple(
+            target.id for target in node.targets if isinstance(target, ast.Name)
+        )
+    if isinstance(node.target, ast.Name):
+        return (node.target.id,)
+    return ()
+
+
+def _expected_collection_for_name(
+    name: str,
+    *,
+    official_targets: tuple[str, ...],
+    official_runtime_targets: tuple[str, ...],
+    transpilation_only_targets: tuple[str, ...],
+    verification_targets: tuple[str, ...],
+) -> tuple[str, ...] | None:
+    if name == "SUPPORTED_TARGETS" or name == "OFFICIAL_TARGETS":
+        return official_targets
+    if name in {"OFFICIAL_RUNTIME_TARGETS", "DOCKER_EXECUTABLE_TARGETS"}:
+        return official_runtime_targets
+    if name == "TRANSPILATION_ONLY_TARGETS":
+        return transpilation_only_targets
+    if name == "VERIFICATION_EXECUTABLE_TARGETS":
+        return verification_targets
+    return None
 
 
 def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
@@ -352,6 +462,77 @@ def validate_reverse_cli_contract(
     return errors
 
 
+def validate_public_policy_lists(
+    official_targets: tuple[str, ...],
+    reverse_scope_languages: tuple[str, ...],
+    *,
+    official_runtime_targets: tuple[str, ...],
+    transpilation_only_targets: tuple[str, ...],
+    verification_targets: tuple[str, ...],
+) -> list[str]:
+    errors: list[str] = []
+    allowed_names = set(official_targets) | set(official_runtime_targets) | set(
+        reverse_scope_languages
+    ) | set(transpilation_only_targets) | set(verification_targets)
+    expected_values = {
+        "official_targets": set(official_targets),
+        "official_runtime_targets": set(official_runtime_targets),
+        "official_runtime_targets_alt": set(official_runtime_targets),
+        "reverse_scope_languages": set(reverse_scope_languages),
+        "transpilation_only_targets": set(transpilation_only_targets),
+        "verification_targets": set(verification_targets),
+    }
+
+    for path in PUBLIC_RUNTIME_POLICY_PATHS:
+        if not path.exists():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        for line_no, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            for key, (pattern, label) in PUBLIC_POLICY_LIST_PATTERNS.items():
+                if not pattern.search(line):
+                    continue
+                line_targets = _extract_backtick_targets(line, allowed_names=allowed_names)
+                if not line_targets:
+                    continue
+                found = set(line_targets)
+                expected = expected_values[key]
+                if found != expected:
+                    errors.append(
+                        f"{rel}:{line_no}: lista pública desalineada para {label} -> "
+                        f"{sorted(found)} (esperado: {sorted(expected)})"
+                    )
+    return errors
+
+
+def validate_holobit_public_contract() -> list[str]:
+    errors: list[str] = []
+    expected = read_target_policy()["compatibility_matrix"]
+
+    for path in HOLOBIT_MATRIX_DOC_PATHS:
+        if not path.exists():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        found = _parse_backend_matrix_table(path)
+        if found != expected:
+            errors.append(
+                f"{rel}: matriz contractual Holobit desalineada con compatibility_matrix.py"
+            )
+
+    for path in HOLOBIT_PUBLIC_CONTRACT_PATHS:
+        if not path.exists():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        content = path.read_text(encoding="utf-8")
+        for match in FORBIDDEN_NON_PYTHON_HOLOBIT_FULL_CLAIM.finditer(content):
+            errors.append(
+                f"{rel}: claim público de compatibilidad Holobit fuera de matriz contractual -> {match.group(1)}"
+            )
+
+    return errors
+
+
 def validate_module_file_scope(
     official_targets: tuple[str, ...],
     reverse_scope_languages: tuple[str, ...],
@@ -385,6 +566,60 @@ def validate_module_file_scope(
             errors.append(
                 f"{rel}: archivo from_*.py fuera del alcance reverse oficial o en ubicación no permitida"
             )
+
+    return errors
+
+
+def validate_python_policy_literals(
+    official_targets: tuple[str, ...],
+    *,
+    official_runtime_targets: tuple[str, ...],
+    transpilation_only_targets: tuple[str, ...],
+    verification_targets: tuple[str, ...],
+) -> list[str]:
+    errors: list[str] = []
+    watched_prefixes = (
+        "tests/utils/",
+        "tests/performance/",
+        "tests/integration/",
+    )
+
+    for path in _iter_scan_files():
+        rel = path.relative_to(ROOT).as_posix()
+        if (
+            path.suffix != ".py"
+            or not rel.startswith(watched_prefixes)
+            or _is_generated_or_binary(path)
+        ):
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+
+        for node in tree.body:
+            if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+                continue
+            literal = _literal_string_collection(getattr(node, "value", None))
+            if literal is None:
+                continue
+            for name in _assignment_target_names(node):
+                if name not in POLICY_LITERAL_TARGET_NAMES | POLICY_LITERAL_PREFIX_NAMES:
+                    continue
+                expected = _expected_collection_for_name(
+                    name.removeprefix("CLI_"),
+                    official_targets=official_targets,
+                    official_runtime_targets=official_runtime_targets,
+                    transpilation_only_targets=transpilation_only_targets,
+                    verification_targets=verification_targets,
+                )
+                if expected is None:
+                    continue
+                if tuple(literal) != tuple(expected):
+                    errors.append(
+                        f"{rel}:{getattr(node, 'lineno', 1)}: lista hardcodeada desalineada con target_policies.py -> "
+                        f"{name}={literal} (esperado: {expected})"
+                    )
 
     return errors
 
@@ -497,6 +732,9 @@ def main() -> int:
 
     policy = read_target_policy()
     official_targets = policy["official_targets"]
+    official_runtime_targets = policy["official_runtime_targets"]
+    verification_targets = policy["verification_targets"]
+    transpilation_only_targets = policy["transpilation_only_targets"]
     legacy_aliases = policy["legacy_aliases"]
     transpilers = read_transpiler_registry_keys()
 
@@ -518,7 +756,25 @@ def main() -> int:
     errors.extend(validate_no_legacy_aliases_in_public_paths(legacy_aliases))
     errors.extend(validate_experimental_docs_scope())
     errors.extend(validate_reverse_cli_contract(official_targets, reverse_scope))
+    errors.extend(
+        validate_public_policy_lists(
+            official_targets,
+            reverse_scope,
+            official_runtime_targets=official_runtime_targets,
+            transpilation_only_targets=transpilation_only_targets,
+            verification_targets=verification_targets,
+        )
+    )
+    errors.extend(validate_holobit_public_contract())
     errors.extend(validate_module_file_scope(official_targets, reverse_scope))
+    errors.extend(
+        validate_python_policy_literals(
+            official_targets,
+            official_runtime_targets=official_runtime_targets,
+            transpilation_only_targets=transpilation_only_targets,
+            verification_targets=verification_targets,
+        )
+    )
     errors.extend(validate_scan_roots(official_targets, reverse_scope))
 
     if errors:
@@ -531,13 +787,14 @@ def main() -> int:
     print(f"   Tier 1: {', '.join(policy['tier1_targets'])}")
     print(f"   Tier 2: {', '.join(policy['tier2_targets'])}")
     print(f"   OFFICIAL_TARGETS: {', '.join(official_targets)}")
+    print(f"   Runtime oficial: {', '.join(official_runtime_targets)}")
+    print(f"   Solo transpilación: {', '.join(transpilation_only_targets)}")
+    print(f"   Verificación ejecutable: {', '.join(verification_targets)}")
     print(f"   TRANSPILERS: {', '.join(transpilers)}")
     print(f"   Reverse scope: {', '.join(reverse_scope)}")
     print(
         "   Allowlist histórica: "
-        + ", ".join(
-            (*ALLOWED_HISTORICAL_PATH_PREFIXES, *sorted(ALLOWED_HISTORICAL_PATHS))
-        )
+        + ", ".join(ALLOWED_HISTORICAL_PATH_PREFIXES)
     )
     return 0
 

@@ -13,7 +13,7 @@ El runtime Holobit mínimo expone **4 hooks**:
 3. `cobra_transformar(hb, op, ...params)`
 4. `cobra_graficar(hb)`
 
-> Nota: la forma exacta de la firma varía por lenguaje destino (por ejemplo, `...params` en JS/Go/Java, slices en Rust, listas en C++), pero la **semántica debe preservarse**.
+> Nota: la forma exacta de la firma varía por lenguaje destino (por ejemplo, `...params` en JavaScript/Go/Java, slices en Rust, listas en cpp), pero la **semántica debe preservarse**.
 
 ## Semántica mínima
 
@@ -96,7 +96,7 @@ Notas por backend:
 - Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con
   Python `>=3.10`, y si aun así falta `holobit_sdk`, las primitivas avanzadas fallan explícitamente
   con `ModuleNotFoundError`.
-- JavaScript, Rust, Go, C++, Java: contrato `partial`; hooks ejecutables mínimos con error
+- JavaScript, Rust, Go, cpp, Java: contrato `partial`; hooks ejecutables mínimos con error
   explícito cuando el runtime avanzado no está disponible. JavaScript no debe documentarse
   como compatibilidad real con Holobit SDK mientras solo conserve la colección de entrada y
   eleve `Error` en `proyectar`/`transformar`/`graficar`.
