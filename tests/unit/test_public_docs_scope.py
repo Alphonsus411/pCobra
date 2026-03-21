@@ -30,6 +30,12 @@ def test_docs_experimentales_ya_no_viven_en_rutas_publicas_principales():
         assert not path.exists(), f"La ruta antigua debe haber sido movida: {path}"
 
 
+def test_documentacion_de_tiers_no_sobredimensiona_contrato_holobit():
+    plan = Path("docs/frontend/transpilers_tier_plan.md").read_text(encoding="utf-8").lower()
+    assert "javascript figura como `partial`" in plan
+    assert "javascript figura como `full`" not in plan
+
+
 def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
     policy = Path("docs/targets_policy.md").read_text(encoding="utf-8").lower()
     assert "docs/experimental/" in policy

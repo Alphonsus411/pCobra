@@ -69,7 +69,7 @@ Los tiers oficiales siguen siendo:
 **Seguimiento realista**
 - [x] Hay una matriz contractual pública por backend y feature (`holobit`, `proyectar`, `transformar`, `graficar`, `corelibs`, `standard_library`).
 - [x] Python figura como `full` en todas las features del contrato actual.
-- [x] JavaScript figura como `full` para primitivas Holobit y `partial` para `corelibs`/`standard_library`.
+- [x] JavaScript figura como `partial` para primitivas Holobit, `corelibs` y `standard_library`, en línea con la matriz contractual vigente.
 - [x] Rust, WASM, Go, C++, Java y ASM están declarados explícitamente como `partial` en la matriz actual.
 - [x] Existen suites contractuales por tier y una suite consolidada por backend/feature.
 - [ ] Las suites contractuales no deben darse por totalmente cerradas: en la revisión actual siguen apareciendo desajustes puntuales entre expectativas y codegen real en algunos backends/features parciales.
@@ -108,7 +108,7 @@ Los tiers oficiales siguen siendo:
 
 ```bash
 python -m pytest tests/unit/test_official_targets_consistency.py
-python -m pytest tests/unit/test_compile_cmd_target_choices_aliases.py
+python -m pytest tests/unit/test_cli_target_aliases.py
 python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
 ```
 
@@ -125,7 +125,7 @@ python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
 python scripts/ci/validate_targets.py
 find src/pcobra/cobra/transpilers/transpiler -maxdepth 1 -name 'to_*.py' | sort
 python -m pytest tests/unit/test_cli_target_aliases.py
-python scripts/ci/validate_targets.py
+python -m pytest tests/unit/test_public_docs_scope.py
 ```
 
 ### C. Igualdad entre contrato y matrix
