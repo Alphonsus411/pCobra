@@ -48,7 +48,7 @@ Los tiers oficiales siguen siendo:
 - [x] El árbol principal de transpiladores `to_*.py` ya está recortado a los 8 backends oficiales.
 - [x] La CLI pública rechaza aliases legacy como `js` o `ensamblador`.
 - [x] Existe una auditoría automática para detectar aliases legacy y módulos fuera de política.
-- [ ] `module_map.py` todavía conserva compatibilidad con formatos legacy (`cobra.mod`, YAML y mapeos en raíz), por lo que la limpieza histórica no puede considerarse completada del todo.
+- [x] `module_map.py` ya resuelve solo desde `cobra.toml` con `[modulos."..."]` y los 8 nombres canónicos de `OFFICIAL_TARGETS`.
 - [ ] La limpieza legacy sigue siendo parcial mientras persistan excepciones internas/históricas de compatibilidad y validadores específicos para rutas heredadas.
 - [ ] No hay evidencia en esta revisión de que se hayan eliminado todos los “nodos específicos” históricos fuera de alcance; ese punto requiere auditoría dirigida adicional si se quiere marcar como completado.
 

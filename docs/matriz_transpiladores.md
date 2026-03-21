@@ -9,7 +9,7 @@ La referencia primaria está en estos archivos:
 - `src/pcobra/cobra/transpilers/targets.py`: lista canónica de backends y tiers.
 - `src/pcobra/cobra/transpilers/registry.py`: registro oficial de clases de transpilador.
 - `src/pcobra/cobra/transpilers/compatibility_matrix.py`: matriz contractual por backend/feature.
-- `src/pcobra/cobra/transpilers/module_map.py`: resolución de mapeos por backend, aún con compatibilidad legacy.
+- `src/pcobra/cobra/transpilers/module_map.py`: resolución canónica de mapeos por backend desde `cobra.toml`.
 - `src/pcobra/cobra/cli/target_policies.py`: separación entre targets de transpilación y targets con runtime oficial.
 - `src/pcobra/core/sandbox.py`: alcance real de ejecución en sandbox/contenedor.
 

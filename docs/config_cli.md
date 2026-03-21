@@ -35,11 +35,11 @@ language = "es"
 program_name = "cobra-cli"
 ```
 
-## Mappings multi-backend (`cobra.toml` y `cobra.mod`)
+## Mappings multi-backend en `cobra.toml`
 
 Para resolver imports de módulos transpilados en varios backends, define rutas por
-target en `cobra.mod` y opcionalmente declara la política de targets requeridos en
-`pcobra.toml`/`cobra.toml`:
+backend en `cobra.toml` bajo la tabla canónica `[modulos."..."]`. La resolución
+multi-backend ya no usa `cobra.mod`, `pcobra.toml` ni mappings en raíz.
 
 ```toml
 [project]
@@ -55,6 +55,14 @@ cpp = "build/modulo.cpp"
 java = "build/modulo.java"
 asm = "build/modulo.asm"
 ```
+
+### Reglas de validación
+
+- Solo se aceptan nombres canónicos contenidos en `OFFICIAL_TARGETS`:
+  `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+- Los aliases legacy como `js`, `py`, `golang`, `c++` o `ensamblador` no son válidos.
+- Los mappings de módulos deben vivir dentro de `[modulos."..."]`; las estructuras en raíz ya no se resuelven.
+- `cobra.mod` sigue siendo el archivo validado por `modulos`/empaquetado, pero sus backends también deben respetar exclusivamente los 8 nombres oficiales.
 
 ### ¿Qué targets pueden omitirse intencionalmente?
 

@@ -516,18 +516,17 @@ The statement `usar "paquete"` tries to import a Python module. If the package i
 
 ## Module mapping file
 
-Transpilers look up `cobra.mod` to resolve imports. This file follows a simple YAML schema where each key is the path of the Cobra module and its values indicate the paths of the generated files.
+Transpilers resolve imports from `cobra.toml` using the canonical `[modulos."..."]` table. Only the 8 official backend names are accepted: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, and `asm`. Legacy aliases and root-level mappings are rejected.
 
 Example format:
 
-```yaml
-modulo.co:
-  version: "1.0.0"
-  python: modulo.py
-  javascript: modulo.js
+```toml
+[modulos."modulo.co"]
+python = "modulo.py"
+javascript = "modulo.js"
 ```
 
-If an entry is not found, the transpiler will load the file indicated in the `import` instruction. To add or modify routes just edit `cobra.mod` and run the tests again.
+If an entry is not found, the transpiler will load the file indicated in the `import` instruction. To add or modify routes, edit `cobra.toml` and run the tests again.
 
 ## Calling the transpiler
 
@@ -571,7 +570,7 @@ After obtaining the code with ``generate_code`` you can save it using ``save_fil
 transpiler.save_file("salida.py")
 ```
 
-This requires the package to be installed in editable mode along with all dependencies from `requirements.txt`. If you need to generate files from Cobra modules check the mapping defined in `cobra.mod`.
+This requires the package to be installed in editable mode along with all dependencies from `requirements.txt`. If you need to generate files from Cobra modules check the canonical mapping defined in `cobra.toml`.
 
 ## Concurrency example
 

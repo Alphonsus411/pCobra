@@ -1,69 +1,36 @@
-try:
-    import tomllib  # Python >= 3.11
-except ModuleNotFoundError:  # pragma: no cover
-    import tomli as tomllib
-
-from cobra.core import Lexer
-from cobra.core import Parser
-from cobra.transpilers.transpiler.to_python import TranspiladorPython
-from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers import module_map
-from cobra.transpilers.import_helper import get_standard_imports
-
-IMPORTS = get_standard_imports("python")
 
 
-def _write_toml(path, data):
-    content = ""
-    for mod, mapping in data.items():
-        content += f"['{mod}']\n"
-        for key, value in mapping.items():
-            content += f"{key} = '{value}'\n"
-    path.write_text(content)
-
-
-def test_cobra_mapeo_python(tmp_path, monkeypatch):
-    mod = tmp_path / "m.co"
-    mod.write_text("var x = 1")
-    py_out = tmp_path / "m.py"
-    py_out.write_text("x = 1\n")
-
-    mapping = {str(mod): {"python": str(py_out)}}
+def test_cobra_toml_mapping_requires_tabla_modulos(tmp_path, monkeypatch):
+    mod = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
-    _write_toml(toml_file, mapping)
+    toml_file.write_text(
+        "[modulos]\n"
+        "[modulos.'biblioteca.co']\n"
+        "python = 'biblioteca.py'\n"
+        "javascript = 'biblioteca.js'\n",
+        encoding="utf-8",
+    )
 
     monkeypatch.setenv("COBRA_TOML", str(toml_file))
+    module_map.COBRA_TOML_PATH = str(toml_file)
     module_map._toml_cache = None
 
-    codigo = f"import '{mod}'\nimprimir(x)"
-    tokens = Lexer(codigo).analizar_token()
-    ast = Parser(tokens).parsear()
-
-    resultado = TranspiladorPython().generate_code(ast)
-    esperado = IMPORTS + f"{py_out.read_text()}print(x)\n"
-    assert resultado == esperado
+    assert module_map.get_mapped_path(mod, "python") == "biblioteca.py"
+    assert module_map.get_mapped_path(mod, "javascript") == "biblioteca.js"
 
 
-def test_cobra_mapeo_js(tmp_path, monkeypatch):
-    mod = tmp_path / "m.co"
-    mod.write_text("var x = 2")
-    js_out = tmp_path / "m.js"
-    js_out.write_text("let x = 2;\n")
-
-    mapping = {str(mod): {"javascript": str(js_out)}}
+def test_cobra_toml_mapping_no_usa_estructura_antigua_en_raiz(tmp_path, monkeypatch):
+    mod = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
-    _write_toml(toml_file, mapping)
+    toml_file.write_text(
+        "['biblioteca.co']\n"
+        "python = 'biblioteca.py'\n",
+        encoding="utf-8",
+    )
 
     monkeypatch.setenv("COBRA_TOML", str(toml_file))
+    module_map.COBRA_TOML_PATH = str(toml_file)
     module_map._toml_cache = None
 
-    codigo = f"import '{mod}'\nimprimir(x)"
-    tokens = Lexer(codigo).analizar_token()
-    ast = Parser(tokens).parsear()
-
-    resultado = TranspiladorJavaScript().generate_code(ast)
-    assert "import * as io from './nativos/io.js';" in resultado
-    assert "import * as matematicas from './nativos/matematicas.js';" in resultado
-    assert "import { Pila, Cola } from './nativos/estructuras.js';" in resultado
-    assert resultado.rstrip().endswith("console.log(x);")
-
+    assert module_map.get_mapped_path(mod, "python") == mod

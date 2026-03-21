@@ -10,11 +10,21 @@ patternProperties:
         pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+].*)?$'
       python:
         type: string
+      rust:
+        type: string
       javascript:
         type: string
-    anyOf:
-      - required: [python]
-      - required: [javascript]
+      wasm:
+        type: string
+      go:
+        type: string
+      cpp:
+        type: string
+      java:
+        type: string
+      asm:
+        type: string
+    additionalProperties: false
 properties:
   lock:
     type: object
