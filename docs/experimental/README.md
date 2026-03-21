@@ -31,3 +31,4 @@ Los contenidos de esta carpeta **no** deben reutilizarse como si fueran soporte 
 - `construcciones_llvm_ir.md`: notas exploratorias de mapeo a LLVM IR.
 - `soporte_latex.md`: parser reverse experimental desde pseudocódigo LaTeX.
 - `limitaciones_wasm_reverse.md`: referencia retirada del antiguo reverse desde WASM.
+- `plan_nuevas_funcionalidades_hololang.md`: bloque archivado de investigación holográfica/Hololang, conservado como material experimental y fuera de política.

@@ -141,7 +141,7 @@ Antes de tocar cualquier bloque, el implementador debe asumir esta trazabilidad 
 **Notas de implementación**
 
 - Este ticket no debe reinterpretar la política: debe remitir a los documentos normativos ya vigentes.
-- Cualquier ejemplo público debe usar nombres canónicos y evitar aliases como `js` o nombres narrativos como `ensamblador` cuando se presenten opciones de CLI.
+- Cualquier ejemplo público debe usar nombres canónicos y evitar aliases legacy del backend JavaScript o nombres narrativos no canónicos del backend `asm` cuando se presenten opciones de CLI.
 
 ### Ticket B2 — Auditoría de tests y tooling que declaran backends
 
@@ -249,7 +249,7 @@ Antes de tocar cualquier bloque, el implementador debe asumir esta trazabilidad 
 | Archivos a revisar | `src/pcobra/cobra/cli/target_policies.py`, comandos CLI que consumen estos mensajes |
 | Tests a revisar | `tests/unit/test_cli_target_aliases.py`, `tests/unit/test_official_targets_consistency.py` |
 | Validaciones reales | `python -m pytest tests/unit/test_cli_target_aliases.py`; `python -m pytest tests/unit/test_official_targets_consistency.py` |
-| Criterio de cierre verificable | Los errores, ayudas y mensajes distinguen “target oficial de salida” de “target con runtime oficial”, y la UX no reintroduce aliases como `js` ni etiquetas ambiguas como si fueran nombres CLI válidos. |
+| Criterio de cierre verificable | Los errores, ayudas y mensajes distinguen “target oficial de salida” de “target con runtime oficial”, y la UX no reintroduce aliases legacy del backend JavaScript ni etiquetas ambiguas como si fueran nombres CLI válidos. |
 
 **Trabajo esperado**
 

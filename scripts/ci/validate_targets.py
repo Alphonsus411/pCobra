@@ -137,6 +137,7 @@ EXPERIMENTAL_DOCS = (
     ROOT / "docs/experimental/construcciones_llvm_ir.md",
     ROOT / "docs/experimental/soporte_latex.md",
     ROOT / "docs/experimental/limitaciones_wasm_reverse.md",
+    ROOT / "docs/experimental/plan_nuevas_funcionalidades_hololang.md",
 )
 
 EXPERIMENTAL_DOC_REQUIRED_MARKERS = (
