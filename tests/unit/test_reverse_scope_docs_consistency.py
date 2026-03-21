@@ -27,12 +27,18 @@ def test_readme_lista_de_reverse_scope_alineada_con_policy():
     linea = next(
         l
         for l in contenido.splitlines()
-        if l.startswith(
-            "Actualmente la transpilación inversa soportada por política acepta código de entrada en"
-        )
+        if "Actualmente la transpilación inversa soportada por política acepta código de entrada" in l
     )
+    prefix = linea.split(". Esos tres nombres", maxsplit=1)[0]
     encontrados = {
         _normalizar(token)
-        for token in re.findall(r"`([^`]+)`", linea[: linea.index(", y la salida")])
+        for token in re.findall(r"`([^`]+)`", prefix)
     }
     assert encontrados == set(REVERSE_SCOPE_LANGUAGES)
+
+
+def test_docs_reverse_no_confunden_origenes_con_targets_oficiales_de_salida():
+    contenido = Path("docs/lenguajes.rst").read_text(encoding="utf-8")
+    assert "Orígenes reverse de entrada (no targets de salida)" in contenido
+    assert "runtime oficial" in contenido
+    assert "transpilación" in contenido

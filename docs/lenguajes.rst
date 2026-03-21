@@ -38,6 +38,20 @@ Los targets con runtime oficial son ``python``, ``rust``, ``javascript`` y
 ``cpp``. Esta categoría debe leerse por separado de la lista completa de
 transpilación y de los orígenes reverse.
 
+Runtime experimental/best-effort conservado en tooling auxiliar
+---------------------------------------------------------------
+
+Algunos artefactos auxiliares y tests conservan cobertura best-effort para
+``go`` y ``java``. Estos nombres siguen formando parte de la **transpilación
+oficial**, pero no deben confundirse con runtime oficial de CLI/sandbox.
+
+Targets de transpilación sin runtime público en esta capa
+---------------------------------------------------------
+
+Los targets ``wasm`` y ``asm`` siguen siendo oficiales para generar código,
+pero en la política pública actual no se presentan como runtimes ejecutables
+ni como runtimes experimentales dentro de la suite auxiliar.
+
 Orígenes reverse de entrada (no targets de salida)
 --------------------------------------------------
 

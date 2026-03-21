@@ -10,36 +10,49 @@ import tomllib
 from pathlib import Path
 from typing import Final, Mapping
 
+from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS, TRANSPILATION_ONLY_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_cli_choices
 
+EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = ("go", "java")
+NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = tuple(
+    target
+    for target in TRANSPILATION_ONLY_TARGETS
+    if target not in EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS
+)
+
 BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
-    "python": {"ext": "py", "run": ["python", "{file}"]},
-    "javascript": {"ext": "js", "run": ["node", "{file}"]},
+    "python": {"ext": "py", "run": ["python", "{file}"], "runtime_policy": "official"},
+    "javascript": {"ext": "js", "run": ["node", "{file}"], "runtime_policy": "official"},
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
         "run": ["{tmp}/prog_rs"],
+        "runtime_policy": "official",
     },
     "wasm": {
         "ext": "wat",
         "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
         "run": ["wasmtime", "{tmp}/prog.wasm"],
+        "runtime_policy": "transpilation_only",
     },
-    "go": {"ext": "go", "run": ["go", "run", "{file}"]},
+    "go": {"ext": "go", "run": ["go", "run", "{file}"], "runtime_policy": "experimental"},
     "cpp": {
         "ext": "cpp",
         "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
         "run": ["{tmp}/prog_cpp"],
+        "runtime_policy": "official",
     },
     "java": {
         "ext": "java",
         "compile": ["javac", "{file}"],
         "run": ["java", "-cp", "{tmp}", "Main"],
+        "runtime_policy": "experimental",
     },
     "asm": {
         "ext": "s",
         "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
         "run": ["{tmp}/prog_asm"],
+        "runtime_policy": "transpilation_only",
     },
 }
 
@@ -49,30 +62,35 @@ BINARY_BENCHMARK_METADATA: Final[dict[str, dict[str, object]]] = {
         "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
         "run": ["{tmp}/prog_cpp"],
         "bin": "{tmp}/prog_cpp",
+        "runtime_policy": "official",
     },
     "rust": {
         "ext": "rs",
         "compile": ["rustc", "{file}", "-O", "-o", "{tmp}/prog_rs"],
         "run": ["{tmp}/prog_rs"],
         "bin": "{tmp}/prog_rs",
+        "runtime_policy": "official",
     },
     "java": {
         "ext": "java",
         "compile": ["javac", "{file}"],
         "run": ["java", "-cp", "{tmp}", "Main"],
         "bin": "{tmp}/Main.class",
+        "runtime_policy": "experimental",
     },
     "asm": {
         "ext": "s",
         "compile": ["gcc", "{file}", "-o", "{tmp}/prog_asm"],
         "run": ["{tmp}/prog_asm"],
         "bin": "{tmp}/prog_asm",
+        "runtime_policy": "transpilation_only",
     },
     "wasm": {
         "ext": "wat",
         "compile": ["wat2wasm", "{file}", "-o", "{tmp}/prog.wasm"],
         "run": ["wasmtime", "{tmp}/prog.wasm"],
         "bin": "{tmp}/prog.wasm",
+        "runtime_policy": "transpilation_only",
     },
 }
 
@@ -122,3 +140,22 @@ def benchmark_backends(backends: Mapping[str, object] | None = None) -> tuple[st
     """Devuelve backends benchmark en orden oficial filtrados por metadata disponible."""
     available_targets = OFFICIAL_TARGETS if backends is None else tuple(backends.keys())
     return target_cli_choices(available_targets)
+
+
+def executable_benchmark_backends(
+    backends: Mapping[str, object] | None = None,
+    *,
+    include_experimental: bool = False,
+) -> tuple[str, ...]:
+    """Devuelve solo backends con runtime utilizable por benchmarks ejecutables.
+
+    Por defecto incluye el runtime oficial. Si ``include_experimental=True``,
+    añade además los runtimes best-effort experimentales (`go`, `java`).
+    Los targets `wasm` y `asm` permanecen fuera del benchmark ejecutable
+    automatizado en esta capa.
+    """
+    available_targets = OFFICIAL_TARGETS if backends is None else tuple(backends.keys())
+    allowed = list(OFFICIAL_RUNTIME_TARGETS)
+    if include_experimental:
+        allowed.extend(EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS)
+    return target_cli_choices(tuple(target for target in available_targets if target in allowed))

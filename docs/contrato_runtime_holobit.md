@@ -91,6 +91,13 @@ La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `grafic
 - En todos los backends `partial`, `proyectar`, `transformar` y `graficar` deben fallar con error
   explícito y documentado; nunca pueden degradarse a no-op silencioso.
 
+Lectura de política asociada a esta matriz:
+
+- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con runtime experimental/best-effort**: `go`, `java`.
+- **Targets solo de transpilación sin runtime público**: `wasm`, `asm`.
+
 Notas por backend:
 
 - Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con

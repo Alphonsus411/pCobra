@@ -64,12 +64,16 @@ Separación explícita para leer esta matriz correctamente:
 
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con runtime experimental/best-effort**: `go`, `java`.
+- **Targets oficiales solo de transpilación**: `wasm`, `go`, `java`, `asm`.
 - **Orígenes de transpilación inversa**: `python`, `javascript`, `java` (solo entrada reverse, no destinos adicionales de salida).
 
 Los 8 backends son oficiales para **generación de código**, pero el tooling oficial de **ejecución** es más pequeño:
 
 - runtime oficial en contenedor/sandbox: `python`, `javascript`, `cpp`, `rust`.
+- runtime experimental/best-effort conservado en tooling auxiliar/tests: `go`, `java`.
 - targets oficiales solo de transpilación: `wasm`, `go`, `java`, `asm`.
+- dentro de ese grupo, sin runtime público en esta capa: `wasm`, `asm`.
 - verificación ejecutable explícita en CLI: `python`, `javascript`.
 
 Además:

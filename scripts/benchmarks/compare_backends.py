@@ -21,7 +21,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from scripts.benchmarks.targets_policy import (
     BENCHMARK_BACKEND_METADATA,
-    benchmark_backends,
+    executable_benchmark_backends,
     validate_backend_metadata,
     validate_local_targets_policy,
 )
@@ -113,6 +113,14 @@ def main() -> None:
         "-o",
         help="Archivo donde guardar el JSON con resultados",
     )
+    parser.add_argument(
+        "--include-experimental-runtime",
+        action="store_true",
+        help=(
+            "Incluye runtimes experimentales/best-effort (actualmente `go` y `java`). "
+            "Los targets solo de transpilación sin runtime público (`wasm`, `asm`) siguen excluidos."
+        ),
+    )
     args = parser.parse_args()
 
     repo_root = REPO_ROOT
@@ -141,7 +149,10 @@ def main() -> None:
         elapsed, mem = run_and_measure(cobra_cmd, env)
         results.append({"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem})
 
-        for backend in benchmark_backends(BACKEND_METADATA):
+        for backend in executable_benchmark_backends(
+            BACKEND_METADATA,
+            include_experimental=args.include_experimental_runtime,
+        ):
             cfg = BACKEND_METADATA[backend]
             run_cmd = cfg["run"]
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
@@ -174,7 +185,12 @@ def main() -> None:
             if not shutil.which(cmd[0]) and not os.path.exists(cmd[0]):
                 continue
             elapsed, mem = run_and_measure(cmd, env)
-            results.append({"backend": backend, "time": round(elapsed, 4), "memory_kb": mem})
+            results.append({
+                "backend": backend,
+                "time": round(elapsed, 4),
+                "memory_kb": mem,
+                "runtime_policy": cfg.get("runtime_policy", "unknown"),
+            })
 
     data = json.dumps(results, indent=2)
     if args.output:
