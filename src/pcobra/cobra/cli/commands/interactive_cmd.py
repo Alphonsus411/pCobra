@@ -59,8 +59,10 @@ from pcobra.cobra.cli.target_policies import (
     parse_target,
     resolve_docker_backend,
 )
+from pcobra.cobra.transpilers.targets import build_target_help_by_tier
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
+SANDBOX_DOCKER_HELP = build_target_help_by_tier(SANDBOX_DOCKER_CHOICES)
 
 
 class InteractiveCommand(BaseCommand):
@@ -113,7 +115,9 @@ class InteractiveCommand(BaseCommand):
             choices=SANDBOX_DOCKER_CHOICES,
             help=_(
                 "Target con runtime Docker oficial para modo interactivo "
-                "(python, javascript, cpp, rust)."
+                "({targets})."
+            ).format(
+                targets=SANDBOX_DOCKER_HELP,
             ),
         )
         parser.add_argument(

@@ -1,6 +1,6 @@
 """Targets oficiales de transpilation por nivel de soporte."""
 
-from typing import Final, Tuple
+from typing import Final, Iterable, Tuple
 
 TIER1_TARGETS: Final[Tuple[str, ...]] = ("python", "rust", "javascript", "wasm")
 TIER2_TARGETS: Final[Tuple[str, ...]] = ("go", "cpp", "java", "asm")
@@ -14,7 +14,7 @@ TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "go": "Go",
     "cpp": "C++",
     "java": "Java",
-    "asm": "ASM",
+    "asm": "Ensamblador",
 }
 
 
@@ -35,18 +35,77 @@ def target_cli_choices(available_targets: Tuple[str, ...] | list[str] | set[str]
     return tuple(target for target in OFFICIAL_TARGETS if target in available)
 
 
+def require_official_target_subset(
+    available_targets: Iterable[str],
+    *,
+    context: str,
+) -> tuple[str, ...]:
+    """Valida que todos los targets pertenezcan al conjunto oficial."""
+    normalized = tuple(normalize_target_name(target) for target in available_targets)
+    extras = sorted(set(normalized) - set(OFFICIAL_TARGETS))
+    if extras:
+        raise RuntimeError(
+            "Targets fuera del conjunto canónico en {context}: {extras}. "
+            "Permitidos: {allowed}".format(
+                context=context,
+                extras=", ".join(extras),
+                allowed=", ".join(OFFICIAL_TARGETS),
+            )
+        )
+    return normalized
+
+
+def require_exact_official_targets(
+    available_targets: Iterable[str],
+    *,
+    context: str,
+) -> tuple[str, ...]:
+    """Valida que un conjunto coincida exactamente con ``OFFICIAL_TARGETS``."""
+    normalized = require_official_target_subset(available_targets, context=context)
+    ordered = target_cli_choices(normalized)
+    missing = [target for target in OFFICIAL_TARGETS if target not in normalized]
+    if missing or len(set(normalized)) != len(OFFICIAL_TARGETS):
+        details = []
+        if missing:
+            details.append(f"faltan: {', '.join(missing)}")
+        extra_duplicates = [
+            target for target in OFFICIAL_TARGETS if normalized.count(target) > 1
+        ]
+        if extra_duplicates:
+            details.append(f"duplicados: {', '.join(sorted(set(extra_duplicates)))}")
+        raise RuntimeError(
+            "Conjunto de targets desalineado con OFFICIAL_TARGETS en {context} ({details})".format(
+                context=context,
+                details="; ".join(details) or "orden/cantidad inválidos",
+            )
+        )
+    return ordered
+
+
 def target_label(target: str) -> str:
     """Devuelve la etiqueta amigable de un target canónico."""
     canonical = normalize_target_name(target)
     return TARGET_FRIENDLY_LABELS.get(canonical, canonical)
 
 
-def build_target_help_by_tier() -> str:
+def build_target_help_by_tier(
+    available_targets: Iterable[str] | None = None,
+) -> str:
     """Devuelve ayuda agrupada por tier con etiqueta amigable + nombre canónico."""
 
     def _fmt(target: str) -> str:
         return f"{target_label(target)} ({target})"
 
-    tier1 = ", ".join(_fmt(target) for target in TIER1_TARGETS)
-    tier2 = ", ".join(_fmt(target) for target in TIER2_TARGETS)
-    return f"Tier 1: {tier1}. Tier 2: {tier2}."
+    choices = (
+        target_cli_choices(OFFICIAL_TARGETS)
+        if available_targets is None
+        else target_cli_choices(require_official_target_subset(available_targets, context="build_target_help_by_tier"))
+    )
+    tier1_choices = tuple(target for target in TIER1_TARGETS if target in choices)
+    tier2_choices = tuple(target for target in TIER2_TARGETS if target in choices)
+    sections = []
+    if tier1_choices:
+        sections.append("Tier 1: " + ", ".join(_fmt(target) for target in tier1_choices) + ".")
+    if tier2_choices:
+        sections.append("Tier 2: " + ", ".join(_fmt(target) for target in tier2_choices) + ".")
+    return " ".join(sections)

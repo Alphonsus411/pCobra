@@ -5,7 +5,11 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Final
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    require_exact_official_targets,
+    target_cli_choices,
+)
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
@@ -21,20 +25,11 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 def ordered_official_transpiler_paths() -> tuple[tuple[str, tuple[str, str]], ...]:
     """Devuelve el registro canónico en el orden de ``OFFICIAL_TARGETS``."""
-    missing = [target for target in OFFICIAL_TARGETS if target not in TRANSPILER_CLASS_PATHS]
-    extra = [target for target in TRANSPILER_CLASS_PATHS if target not in OFFICIAL_TARGETS]
-    if missing or extra:
-        details = []
-        if missing:
-            details.append(f"faltan: {', '.join(missing)}")
-        if extra:
-            details.append(f"sobran: {', '.join(extra)}")
-        raise RuntimeError(
-            "Registro canónico de transpiladores desalineado con OFFICIAL_TARGETS ("
-            + "; ".join(details)
-            + ")"
-        )
-    return tuple((target, TRANSPILER_CLASS_PATHS[target]) for target in OFFICIAL_TARGETS)
+    ordered_targets = require_exact_official_targets(
+        TRANSPILER_CLASS_PATHS,
+        context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+    )
+    return tuple((target, TRANSPILER_CLASS_PATHS[target]) for target in ordered_targets)
 
 
 
@@ -50,4 +45,8 @@ def build_official_transpilers() -> dict[str, type]:
 
 def official_transpiler_targets() -> tuple[str, ...]:
     """Devuelve los targets del registro canónico en el orden oficial."""
-    return tuple(target for target, _ in ordered_official_transpiler_paths())
+    require_exact_official_targets(
+        TRANSPILER_CLASS_PATHS,
+        context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+    )
+    return target_cli_choices(OFFICIAL_TARGETS)

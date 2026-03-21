@@ -7,6 +7,7 @@ from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import EXTENSIONES_POR_LENGUAJE
 from pcobra.cobra.transpilers.common.utils import STANDARD_IMPORTS
 from pcobra.cobra.transpilers.feature_inspector import TRANSPILERS as FEATURE_INSPECTOR_TRANSPILERS
+from pcobra.cobra.transpilers.registry import TRANSPILER_CLASS_PATHS
 from pcobra.cobra.transpilers.reverse.policy import (
     REVERSE_SCOPE_LANGUAGES,
     normalize_reverse_language,
@@ -23,6 +24,7 @@ def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
     oficiales = set(OFFICIAL_TARGETS)
 
     assert tuple(LANG_CHOICES) == OFFICIAL_TARGETS
+    assert tuple(TRANSPILER_CLASS_PATHS) == OFFICIAL_TARGETS
     assert set(STANDARD_IMPORTS.keys()).issubset(oficiales)
     assert set(BENCH_BACKENDS.keys()).issubset(oficiales)
     assert set(BENCHMARKS_BACKENDS.keys()).issubset(oficiales)

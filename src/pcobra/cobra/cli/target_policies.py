@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from argparse import ArgumentTypeError
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    normalize_target_name,
+    require_official_target_subset,
+    target_cli_choices,
+)
 
 # Todos los destinos oficiales de generación/transpilación.
-OFFICIAL_TRANSPILATION_TARGETS = OFFICIAL_TARGETS
+OFFICIAL_TRANSPILATION_TARGETS = target_cli_choices(OFFICIAL_TARGETS)
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
 OFFICIAL_RUNTIME_TARGETS = ("python", "javascript", "cpp", "rust")
@@ -24,11 +29,20 @@ DOCKER_EXECUTABLE_TARGETS = OFFICIAL_RUNTIME_TARGETS
 DOCKER_RUNTIME_BY_TARGET: dict[str, str] = {target: target for target in OFFICIAL_RUNTIME_TARGETS}
 
 # Targets con verificación ejecutable oficial dentro de la CLI actual.
-VERIFICATION_EXECUTABLE_TARGETS = ("python", "javascript")
+VERIFICATION_EXECUTABLE_TARGETS = target_cli_choices(("python", "javascript"))
+
+require_official_target_subset(
+    OFFICIAL_RUNTIME_TARGETS,
+    context="pcobra.cobra.cli.target_policies.OFFICIAL_RUNTIME_TARGETS",
+)
+require_official_target_subset(
+    VERIFICATION_EXECUTABLE_TARGETS,
+    context="pcobra.cobra.cli.target_policies.VERIFICATION_EXECUTABLE_TARGETS",
+)
 
 
 def _official_targets_text() -> str:
-    return ", ".join(OFFICIAL_TRANSPILATION_TARGETS)
+    return ", ".join(target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS))
 
 
 def parse_target(value: str) -> str:

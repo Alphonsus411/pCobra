@@ -78,3 +78,27 @@ def test_load_entrypoint_transpilers_registra_backend_canonico(monkeypatch):
     compile_cmd.load_entrypoint_transpilers()
 
     assert compile_cmd.TRANSPILERS == {"python": DummyTranspiler}
+
+
+def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(monkeypatch, caplog):
+    ep = importlib.metadata.EntryPoint(
+        name="python",
+        value="fake.module:DummyExternalTranspiler",
+        group="cobra.transpilers",
+    )
+    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {"python": object})
+    monkeypatch.setattr(
+        compile_cmd,
+        "_iter_transpiler_entry_points",
+        lambda: importlib.metadata.EntryPoints((ep,)),
+    )
+    monkeypatch.setattr(
+        compile_cmd,
+        "import_module",
+        lambda _name: types.SimpleNamespace(DummyExternalTranspiler=DummyTranspiler),
+    )
+
+    compile_cmd.load_entrypoint_transpilers()
+
+    assert compile_cmd.TRANSPILERS == {"python": object}
+    assert "ya existe en el registro canónico" in caplog.text
