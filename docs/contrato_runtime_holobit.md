@@ -64,9 +64,11 @@ Si no aparecen estos nodos, no se inyecta runtime Holobit.
 
 ## Estado de implementación por backend
 
-- Python: hooks ejecutables; si falta `holobit_sdk`, las primitivas avanzadas
+- Python: hooks ejecutables y contrato `full`; si falta `holobit_sdk`, las primitivas avanzadas
   fallan explícitamente con `ModuleNotFoundError`.
-- JavaScript, Rust, Go, C++, Java: hooks ejecutables mínimos con error
-  explícito cuando el runtime avanzado no está disponible.
+- JavaScript, Rust, Go, C++, Java: contrato `partial`; hooks ejecutables mínimos con error
+  explícito cuando el runtime avanzado no está disponible. JavaScript no debe documentarse
+  como compatibilidad real con Holobit SDK mientras solo conserve la colección de entrada y
+  eleve `Error` en `proyectar`/`transformar`/`graficar`.
 - WASM, ASM: hooks ejecutables mínimos que señalan error explícito en tiempo de
   ejecución/ensamblado, no no-op silencioso.

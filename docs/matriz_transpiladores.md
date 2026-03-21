@@ -21,7 +21,7 @@ La referencia primaria está en estos archivos:
 | Backend | Tier | holobit | proyectar | transformar | graficar | corelibs | standard_library |
 |---|---|---|---|---|---|---|---|
 | `python` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full | ✅ full |
-| `javascript` | Tier 1 | ✅ full | ✅ full | ✅ full | ✅ full | 🟡 partial | 🟡 partial |
+| `javascript` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 | `rust` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 | `wasm` | Tier 1 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 | `go` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
@@ -38,7 +38,7 @@ La referencia primaria está en estos archivos:
 ### Holobit
 
 - `python` es el único backend documentado hoy como `full` de punta a punta en la matriz.
-- `javascript` mantiene contrato `full` para las primitivas Holobit, pero eso **no** implica que todo el runtime auxiliar sea `full`.
+- `javascript` debe leerse como soporte contractual **parcial** también en Holobit: genera hooks canónicos `cobra_*`, conserva la colección de entrada y falla con `Error` explícito cuando falta runtime avanzado.
 - `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben leerse como soporte contractual **parcial**: el backend emite código, hooks y/o fallbacks verificables; no promete equivalencia total de ejecución.
 
 ### `corelibs` y `standard_library`

@@ -22,6 +22,6 @@ def test_js_codegen_holobit_runtime_hooks_snapshot():
     assert "function cobra_proyectar(hb, modo) {" in code
     assert "function cobra_transformar(hb, op, ...params) {" in code
     assert "function cobra_graficar(hb) {" in code
-    assert "cobra_proyectar(hb, 2d);" in code
-    assert "cobra_transformar(hb, rotar, 90);" in code
+    assert "cobra_proyectar(hb, '2d');" in code
+    assert "cobra_transformar(hb, 'rotar', 90);" in code
     assert "cobra_graficar(hb);" in code

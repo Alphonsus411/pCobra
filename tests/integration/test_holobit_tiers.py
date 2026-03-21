@@ -26,28 +26,28 @@ SUPPORTED_BY_TIER = {
 # Contrato explícito por primitive/backend para distinguir asserts full vs partial.
 PRIMITIVE_CONTRACT = {
     "holobit": {
-        "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "full": ("python",),
+        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "proyectar": {
-        "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "full": ("python",),
+        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "transformar": {
-        "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "full": ("python",),
+        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "graficar": {
-        "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "full": ("python",),
+        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "escalar": {
-        "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "full": ("python",),
+        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
     "mover": {
-        "full": ("python", "javascript"),
-        "partial": ("rust", "wasm", "go", "cpp", "java", "asm"),
+        "full": ("python",),
+        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
 }
 
@@ -60,17 +60,17 @@ FULL_EXPECTATIONS = {
         "escalar": ("escalar(h, 2)",),
         "mover": ("mover(h, 1, 2, 3)",),
     },
-    "javascript": {
-        "holobit": ("import * as texto from './nativos/texto.js';", "let h ="),
-        "proyectar": ("function cobra_proyectar", "cobra_proyectar(h"),
-        "transformar": ("function cobra_transformar", "cobra_transformar(h"),
-        "graficar": ("function cobra_graficar", "cobra_graficar(h"),
-        "escalar": ("escalar(h, 2);",),
-        "mover": ("mover(h, 1, 2, 3);",),
-    },
 }
 
 PARTIAL_FALLBACK_MARKERS = {
+    "javascript": {
+        "holobit": ("function cobra_holobit", "let h ="),
+        "proyectar": ("function cobra_proyectar", "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible."),
+        "transformar": ("function cobra_transformar", "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible."),
+        "graficar": ("function cobra_graficar", "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible."),
+        "escalar": ("escalar(h, 2);",),
+        "mover": ("mover(h, 1, 2, 3);",),
+    },
     "rust": {
         "holobit": ("cobra_holobit(vec![1.0, 2.0, 3.0]);",),
         "proyectar": ("fn cobra_proyectar",),
@@ -120,6 +120,7 @@ PARTIAL_FALLBACK_MARKERS = {
         "mover": ("CALL mover h, 1, 2, 3",),
     },
 }
+
 
 
 def _transpilar(codigo: str, lang: str) -> str:
