@@ -63,6 +63,7 @@ REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TR
 ORIGIN_CHOICES = sorted(reverse_module.REVERSE_SCOPE_LANGUAGES)
 DESTINO_CHOICES = list(OFFICIAL_TARGETS)
 TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TARGETS)
+REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
 
 
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
@@ -116,11 +117,11 @@ def archivo_fuente(ruta: str, codificacion: str):
         raise
 
 class TranspilarInversoCommand(BaseCommand):
-    """Convierte código desde otro lenguaje a Cobra y luego a otro lenguaje.
+    """Convierte código desde un origen reverse de entrada hacia un target oficial.
     
-    Esta clase implementa un comando que permite transpilar código desde un lenguaje
-    de origen a un lenguaje de destino, pasando por una representación intermedia
-    en el AST de Cobra.
+    Esta clase implementa un comando que permite leer código desde uno de los
+    orígenes reverse mantenidos por política y generar salida en uno de los 8
+    targets oficiales de transpilación, pasando por el AST de Cobra.
     """
 
     name: str = "transpilar-inverso"
@@ -136,7 +137,7 @@ class TranspilarInversoCommand(BaseCommand):
         """
         parser = subparsers.add_parser(
             self.name,
-            help=_("Convierte desde un origen reverse soportado hacia un target oficial"),
+            help=_("Convierte desde un origen reverse de entrada hacia un target oficial de salida"),
         )
         parser.add_argument(
             "archivo",
@@ -145,10 +146,10 @@ class TranspilarInversoCommand(BaseCommand):
         parser.add_argument(
             "--origen",
             help=_(
-                "Lenguaje de origen soportado por reverse transpilation "
-                "(solo canónicos: {})"
+                "Lenguaje de origen para transpilación inversa "
+                "(solo orígenes reverse de entrada: {})"
             ).format(
-                ", ".join(ORIGIN_CHOICES)
+                REVERSE_ORIGINS_HELP
             ),
             required=True,
             type=parse_reverse_source_language,
@@ -157,7 +158,7 @@ class TranspilarInversoCommand(BaseCommand):
         parser.add_argument(
             "--destino",
             help=_(
-                "Destino OFFICIAL_TARGETS: {targets}"
+                "Target oficial de salida (OFFICIAL_TARGETS): {targets}"
             ).format(
                 targets=TARGETS_HELP
             ),
@@ -230,11 +231,11 @@ class TranspilarInversoCommand(BaseCommand):
         """
         if origen not in REVERSE_TRANSPILERS:
             raise UnsupportedLanguageError(
-                f"No hay parser disponible para el lenguaje de origen '{origen}'"
+                f"No hay parser reverse disponible para el lenguaje de origen '{origen}'"
             )
         if destino not in TRANSPILERS:
             raise UnsupportedLanguageError(
-                f"No hay transpilador disponible para el lenguaje de destino '{destino}'"
+                f"No hay transpilador oficial disponible para el lenguaje de destino '{destino}'"
             )
         _validate_official_target_or_raise(destino, context="CLI transpilar-inverso")
 
@@ -245,7 +246,7 @@ class TranspilarInversoCommand(BaseCommand):
             sugeridos = ", ".join(ORIGIN_CHOICES)
             raise UnsupportedLanguageError(
                 "Origen fuera de política de transpilación inversa: "
-                f"'{origen}'. Usa uno de: {sugeridos}"
+                f"'{origen}'. Usa uno de los orígenes reverse de entrada: {sugeridos}"
             )
 
     def run(self, args: Namespace) -> int:
@@ -301,12 +302,19 @@ class TranspilarInversoCommand(BaseCommand):
                     raise ValidationError(f"El archivo '{args.archivo}' está vacío")
 
             # Transpilar código
-            logger.info(f"Iniciando transpilación de {origen} a {destino}")
+            logger.info(
+                "Iniciando transpilación inversa desde origen reverse %s hacia target oficial %s",
+                origen,
+                destino,
+            )
             ast = reverse_cls().load_file(args.archivo)
             codigo = transp_cls().generate_code(ast)
 
             mostrar_info(
-                _("Código transpilado ({name}):").format(name=transp_cls.__name__)
+                _("Código transpilado a target oficial ({name}) desde origen reverse {origin}:").format(
+                    name=transp_cls.__name__,
+                    origin=origen,
+                )
             )
             print(codigo)
             if destino == "python":

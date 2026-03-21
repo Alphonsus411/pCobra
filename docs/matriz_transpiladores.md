@@ -16,7 +16,7 @@ La referencia primaria está en estos archivos:
 - `src/pcobra/cobra/transpilers/reverse/policy.py`: política separada para **orígenes reverse de entrada**.
 - `src/pcobra/core/sandbox.py`: alcance real de ejecución en sandbox/contenedor.
 
-> Esta matriz cubre únicamente **targets oficiales de salida**. No describe orígenes reverse ni pipelines experimentales como LLVM, LaTeX o variantes históricas archivadas en `docs/experimental/` y `docs/historico/`.
+> Esta matriz cubre únicamente **targets oficiales de salida**. No describe orígenes reverse ni pipelines experimentales/internos como Hololang, LLVM, LaTeX o variantes históricas archivadas en `docs/experimental/` y `docs/historico/`.
 
 ## Garantía mínima por backend (Tier 1 / Tier 2)
 
@@ -64,7 +64,7 @@ Separación explícita para leer esta matriz correctamente:
 
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
-- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java` (solo entrada reverse, no destinos adicionales de salida).
 
 Los 8 backends son oficiales para **generación de código**, pero el tooling oficial de **ejecución** es más pequeño:
 

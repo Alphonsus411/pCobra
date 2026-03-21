@@ -112,7 +112,7 @@ Esto debe interpretarse como **contrato de generación y hooks/fallbacks**, no c
 
 ## Experimentos y material histórico
 
-Los contenidos que describan pipelines, parsers reverse o prototipos fuera de los 8 targets oficiales deben mantenerse fuera de la documentación principal o marcados explícitamente.
+Los contenidos que describan pipelines, parsers reverse o prototipos fuera de los 8 targets oficiales deben mantenerse fuera de la documentación principal o marcados explícitamente. Ningún enlace desde la documentación principal hacia `docs/experimental/` o `docs/historico/` debe aparecer sin etiquetas visibles como `experimental`, `interno`, `fuera de política` o `histórico`.
 
 Ubicaciones autorizadas:
 
@@ -126,7 +126,7 @@ Ejemplos actuales de documentación segregada:
 - soporte reverse desde LaTeX;
 - referencia retirada del reverse desde WASM en `docs/experimental/limitaciones_wasm_reverse.md`.
 
-Hololang puede documentarse en la documentación principal **solo** como IR/pipeline interno, nunca como target oficial de salida ni como origen reverse mantenido por política.
+Hololang puede documentarse en la documentación principal **solo** como IR/pipeline interno, nunca como target oficial de salida ni como origen reverse mantenido por política. Si se enlaza una guía de Hololang desde la navegación principal, el texto circundante debe dejar claro que se trata de documentación de pipeline interno.
 
 ## Packaging y prerrequisitos que afectan al alcance real
 

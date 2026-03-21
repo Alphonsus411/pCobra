@@ -37,7 +37,7 @@ Tier 1 (soporte principal)
      - ``wasm``
      - Estable
 
-Tier 2 (soporte parcial/experimental)
+Tier 2 (soporte oficial con cobertura parcial)
 -------------------------------------
 
 .. list-table:: Backends Tier 2
@@ -118,8 +118,9 @@ de los 8 backends oficiales de salida.
    cobra transpilar-inverso script.py --origen=python --destino=javascript
 
 Esta funcionalidad es experimental y su cobertura depende del frontend de
-entrada, por lo que no debe interpretarse como soporte de salida equivalente a
-los backends Tier 1/Tier 2.
+entrada. Los valores ``python``, ``javascript`` y ``java`` se listan aquí como
+**orígenes reverse de entrada**, no como destinos oficiales adicionales de
+salida equivalentes a los backends Tier 1/Tier 2.
 
 Comparativa de características
 ------------------------------
@@ -133,3 +134,12 @@ Diferencias identificadas
 
 - Go y Java no soportan condicionales ni bucles. Se recomienda implementar estas
   estructuras; véase el `issue #11 <issues/11_soporte_condicionales_bucles_go_java.md>`_.
+
+Material fuera de política y documentación segregada
+---------------------------------------------------
+
+Las referencias a Hololang deben leerse como documentación de **pipeline
+interno**. Cualquier material sobre LLVM, reverse desde LaTeX o reverse
+retirado desde WASM debe permanecer en ``docs/experimental/`` con etiqueta
+visible de experimental/fuera de política, mientras que ``docs/historico/``
+queda reservado para material archivado sin vigencia normativa.

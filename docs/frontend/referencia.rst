@@ -52,3 +52,7 @@ Política de targets oficial
 ---------------------------
 Los ejemplos de esta referencia usan exclusivamente targets canónicos. La lista
 oficial y sus tiers se definen en ``src/pcobra/cobra/transpilers/targets.py``.
+
+Los nombres ``python``, ``javascript`` y ``java`` también pueden aparecer en la
+CLI como **orígenes reverse de entrada** para ``cobra transpilar-inverso``. Esa
+capacidad no amplía la lista de destinos oficiales de salida.
