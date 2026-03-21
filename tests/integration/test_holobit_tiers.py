@@ -17,6 +17,8 @@ HOLOBIT_CASES = {
     "graficar": 'var h = holobit([1.0, 2.0, 3.0])\ngraficar(h)\n',
     "proyectar": 'var h = holobit([1.0, 2.0, 3.0])\nproyectar(h, "2D")\n',
     "transformar": 'var h = holobit([1.0, 2.0, 3.0])\ntransformar(h, "rotar", "z", 45)\n',
+}
+PYTHON_RUNTIME_ONLY_CASES = {
     "escalar": 'var h = holobit([1.0, 2.0, 3.0])\nescalar(h, 2)\n',
     "mover": 'var h = holobit([1.0, 2.0, 3.0])\nmover(h, 1, 2, 3)\n',
 }
@@ -44,14 +46,6 @@ PRIMITIVE_CONTRACT = {
         "full": ("python",),
         "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
     },
-    "escalar": {
-        "full": ("python",),
-        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
-    },
-    "mover": {
-        "full": ("python",),
-        "partial": ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"),
-    },
 }
 
 
@@ -70,8 +64,6 @@ FULL_EXPECTATIONS = {
         "proyectar": ("def cobra_proyectar", "cobra_proyectar(h"),
         "transformar": ("def cobra_transformar", "cobra_transformar(h"),
         "graficar": ("def cobra_graficar", "cobra_graficar(h"),
-        "escalar": ("escalar(h, 2)",),
-        "mover": ("mover(h, 1, 2, 3)",),
     },
 }
 
@@ -81,56 +73,42 @@ PARTIAL_FALLBACK_MARKERS = {
         "proyectar": ("function cobra_proyectar", "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible."),
         "transformar": ("function cobra_transformar", "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible."),
         "graficar": ("function cobra_graficar", "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible."),
-        "escalar": ("escalar(h, 2);",),
-        "mover": ("mover(h, 1, 2, 3);",),
     },
     "rust": {
         "holobit": ("cobra_holobit(vec![1.0, 2.0, 3.0]);",),
         "proyectar": ("fn cobra_proyectar",),
         "transformar": ("fn cobra_transformar",),
         "graficar": ("fn cobra_graficar",),
-        "escalar": ("escalar(h, 2);",),
-        "mover": ("mover(h, 1, 2, 3);",),
     },
     "wasm": {
         "holobit": ("(func $cobra_holobit", "(local.set $h (call $cobra_holobit"),
         "proyectar": ("(func $cobra_proyectar",),
         "transformar": ("(func $cobra_transformar",),
         "graficar": ("(func $cobra_graficar",),
-        "escalar": ("(call $escalar",),
-        "mover": ("(call $mover",),
     },
     "go": {
         "holobit": ("cobra_holobit([]float64{1.0, 2.0, 3.0})",),
         "proyectar": ("func cobra_proyectar",),
         "transformar": ("func cobra_transformar",),
         "graficar": ("func cobra_graficar",),
-        "escalar": ("escalar(h, 2)",),
-        "mover": ("mover(h, 1, 2, 3)",),
     },
     "cpp": {
         "holobit": ("cobra_holobit({ 1.0, 2.0, 3.0 });",),
         "proyectar": ("inline void cobra_proyectar",),
         "transformar": ("inline void cobra_transformar",),
         "graficar": ("inline void cobra_graficar",),
-        "escalar": ("escalar(h, 2);",),
-        "mover": ("mover(h, 1, 2, 3);",),
     },
     "java": {
         "holobit": ("cobra_holobit(new double[]{1.0, 2.0, 3.0});",),
         "proyectar": ("private static void cobra_proyectar",),
         "transformar": ("private static void cobra_transformar",),
         "graficar": ("private static void cobra_graficar",),
-        "escalar": ("escalar(h, 2);",),
-        "mover": ("mover(h, 1, 2, 3);",),
     },
     "asm": {
         "holobit": ("cobra_holobit:", "SET h, cobra_holobit([1.0, 2.0, 3.0])"),
         "proyectar": ("cobra_proyectar:", "CALL cobra_proyectar h, '2D'"),
         "transformar": ("cobra_transformar:", "CALL cobra_transformar h, 'rotar', 'z', 45"),
         "graficar": ("cobra_graficar:", "CALL cobra_graficar h"),
-        "escalar": ("CALL escalar h, 2",),
-        "mover": ("CALL mover h, 1, 2, 3",),
     },
 }
 
@@ -287,6 +265,50 @@ def test_only_python_es_full_para_holobit_y_runtime_base():
         }
         assert full_backends == {"python"}
         assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+@pytest.mark.parametrize("caso", PYTHON_RUNTIME_ONLY_CASES.keys())
+def test_escalar_y_mover_se_preservan_como_llamadas_pero_no_se_tratan_como_contrato(backend, caso):
+    salida = _transpilar(PYTHON_RUNTIME_ONLY_CASES[caso], backend)
+    assert salida.strip()
+
+    expected_markers = {
+        "python": {
+            "escalar": "escalar(h, 2)",
+            "mover": "mover(h, 1, 2, 3)",
+        },
+        "javascript": {
+            "escalar": "escalar(h, 2);",
+            "mover": "mover(h, 1, 2, 3);",
+        },
+        "rust": {
+            "escalar": "escalar(h, 2);",
+            "mover": "mover(h, 1, 2, 3);",
+        },
+        "wasm": {
+            "escalar": "(call $escalar",
+            "mover": "(call $mover",
+        },
+        "go": {
+            "escalar": "escalar(h, 2)",
+            "mover": "mover(h, 1, 2, 3)",
+        },
+        "cpp": {
+            "escalar": "escalar(h, 2);",
+            "mover": "mover(h, 1, 2, 3);",
+        },
+        "java": {
+            "escalar": "escalar(h, 2);",
+            "mover": "mover(h, 1, 2, 3);",
+        },
+        "asm": {
+            "escalar": "CALL escalar h, 2",
+            "mover": "CALL mover h, 1, 2, 3",
+        },
+    }
+
+    assert expected_markers[backend][caso] in salida
 
 
 @pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)

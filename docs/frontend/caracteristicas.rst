@@ -23,8 +23,9 @@ imprimir(rotado)
 # Escalar y trasladar
 escalar(x, 2)
 mover(x, 1, 0, -1)
-# ``escalar`` y ``mover`` requieren ``holobit-sdk`` >= 1.0.8; si no está
-# disponible se calcula internamente.
+# ``escalar`` y ``mover`` son helpers del runtime Python y no forman parte del contrato Holobit multi-backend.
+# Con ``holobit-sdk`` >= 1.0.8 delegan en el SDK; si esa versión no expone los métodos,
+# Cobra calcula internamente un equivalente local.
 
 # Graficar el holobit
 graficar(x)

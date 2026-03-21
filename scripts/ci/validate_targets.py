@@ -606,6 +606,21 @@ def validate_holobit_public_contract() -> list[str]:
             errors.append(
                 f"{rel}: claim público de compatibilidad Holobit fuera de matriz contractual -> {match.group(1)}"
             )
+        lowered = content.lower()
+        if "escalar" in lowered or "mover" in lowered:
+            has_python_only_disclaimer = (
+                "solo python" in lowered
+                or "runtime python" in lowered
+            )
+            has_out_of_contract_disclaimer = (
+                "no forman parte del contrato" in lowered
+                or "no forman parte de esta matriz" in lowered
+                or "fuera de alcance del contrato" in lowered
+            )
+            if not (has_python_only_disclaimer and has_out_of_contract_disclaimer):
+                errors.append(
+                    f"{rel}: `escalar`/`mover` no deben mezclarse con el contrato Holobit sin aclarar que son helpers solo-Python fuera de la matriz"
+                )
 
     return errors
 
