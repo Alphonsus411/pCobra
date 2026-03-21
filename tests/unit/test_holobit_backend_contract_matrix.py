@@ -194,3 +194,14 @@ def test_public_docs_match_backend_matrix_exactly_for_contract_features():
         "docs/matriz_transpiladores.md",
     ):
         assert _parse_backend_matrix_table(doc_path) == expected
+
+
+def test_docs_holobit_separan_transpilacion_runtime_oficial_y_best_effort():
+    for doc_path in (
+        "docs/contrato_runtime_holobit.md",
+        "docs/matriz_transpiladores.md",
+    ):
+        contenido = Path(doc_path).read_text(encoding="utf-8")
+        assert "Targets oficiales de transpilación" in contenido
+        assert "Targets con runtime oficial" in contenido
+        assert "runtime experimental/best-effort" in contenido

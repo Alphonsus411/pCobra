@@ -12,7 +12,11 @@ from pcobra.cobra.transpilers.reverse.policy import (
     REVERSE_SCOPE_LANGUAGES,
     normalize_reverse_language,
 )
-from pcobra.cobra.cli.target_policies import DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS
+from pcobra.cobra.cli.target_policies import (
+    DOCKER_EXECUTABLE_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+    TRANSPILATION_ONLY_TARGETS,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
@@ -199,9 +203,21 @@ def test_politicas_y_registros_publicos_no_aceptan_alias_js_como_target_feliz():
 
 
 def test_politica_runtime_vs_transpilacion_es_explicita():
-    assert set(DOCKER_EXECUTABLE_TARGETS).issubset(set(OFFICIAL_TARGETS))
+    assert OFFICIAL_RUNTIME_TARGETS == DOCKER_EXECUTABLE_TARGETS == ("python", "rust", "javascript", "cpp")
     assert set(TRANSPILATION_ONLY_TARGETS) == {"wasm", "go", "java", "asm"}
     assert set(DOCKER_EXECUTABLE_TARGETS) | set(TRANSPILATION_ONLY_TARGETS) == set(OFFICIAL_TARGETS)
+
+
+def test_politica_best_effort_experimental_queda_acotada_y_explicita():
+    experimental_best_effort = tuple(
+        target for target in TRANSPILATION_ONLY_TARGETS if target in {"go", "java"}
+    )
+    sin_runtime = tuple(
+        target for target in TRANSPILATION_ONLY_TARGETS if target not in experimental_best_effort
+    )
+
+    assert experimental_best_effort == ("go", "java")
+    assert sin_runtime == ("wasm", "asm")
 
 
 def test_validacion_ci_bloquea_condicionales_o_tablas_para_backend_c_fuera_de_zonas_historicas():

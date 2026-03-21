@@ -11,7 +11,12 @@ from typing import Callable, Dict
 import pytest
 
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
-from tests.utils.targets import EXPERIMENTAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+from tests.utils.targets import (
+    EXPERIMENTAL_RUNTIME_TARGETS,
+    NO_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+    SUPPORTED_TARGETS,
+)
 
 
 def _run_python(code: str) -> str:
@@ -127,8 +132,12 @@ def execute_transpiled_code(
     """Ejecuta código transpilado respetando la política oficial de runtime.
 
     Por defecto solo permite el runtime oficial definido por
-    ``pcobra.cobra.cli.target_policies``. Los runtimes ``go`` y ``java`` se
-    conservan únicamente como cobertura experimental/best-effort.
+    ``pcobra.cobra.cli.target_policies``.
+
+    Categorías reconocidas por la suite:
+    - runtime oficial: ``python``, ``javascript``, ``cpp``, ``rust``;
+    - runtime experimental/best-effort: ``go``, ``java``;
+    - solo transpilación sin runtime en tests: ``wasm``, ``asm``.
     """
     if lang == "python":
         src = tmp_path / "prog.py"
@@ -189,6 +198,12 @@ def execute_transpiled_code(
             "no forma parte del contrato oficial"
         )
 
+    if lang in NO_RUNTIME_TARGETS:
+        pytest.skip(
+            f"{lang} es un target oficial de transpilación sin runtime oficial ni experimental "
+            "en la suite actual"
+        )
+
     if lang == "go":
         comp = shutil.which("go")
         if not comp:
@@ -215,5 +230,8 @@ def execute_transpiled_code(
 
     if lang in OFFICIAL_RUNTIME_TARGETS:
         pytest.fail(f"Falta implementar ejecución oficial para {lang}")
+
+    if lang in SUPPORTED_TARGETS:
+        pytest.skip(f"{lang} es oficial de transpilación pero no tiene runner asociado en esta suite")
 
     pytest.skip(f"ejecución no soportada para {lang}")

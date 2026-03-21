@@ -9,7 +9,11 @@ from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
-from pcobra.cobra.cli.target_policies import DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS
+from pcobra.cobra.cli.target_policies import (
+    DOCKER_EXECUTABLE_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+    TRANSPILATION_ONLY_TARGETS,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
@@ -109,7 +113,7 @@ def test_interactive_rechaza_targets_solo_transpilacion_en_parseo():
 
 
 def test_set_runtime_docker_documentado_en_tests():
-    assert DOCKER_EXECUTABLE_TARGETS == ("python", "javascript", "cpp", "rust")
+    assert DOCKER_EXECUTABLE_TARGETS == ("python", "rust", "javascript", "cpp")
 
 
 def test_verify_parseo_rechaza_targets_solo_transpilacion():
@@ -129,3 +133,27 @@ def test_compile_choices_no_reintroducen_hololang():
     assert "hololang" not in LANG_CHOICES
     assert "hololang" not in backend_action.choices
     assert "hololang" not in tipo_action.choices
+
+
+def test_tests_documentan_las_tres_categorias_publicas_de_targets():
+    assert OFFICIAL_TARGETS == (
+        "python",
+        "rust",
+        "javascript",
+        "wasm",
+        "go",
+        "cpp",
+        "java",
+        "asm",
+    )
+    assert OFFICIAL_RUNTIME_TARGETS == ("python", "rust", "javascript", "cpp")
+    assert TRANSPILATION_ONLY_TARGETS == ("wasm", "go", "java", "asm")
+
+
+def test_tests_documentan_best_effort_experimental_sin_aliases_publicos():
+    runtime_experimental = tuple(
+        target for target in TRANSPILATION_ONLY_TARGETS if target in {"go", "java"}
+    )
+    assert runtime_experimental == ("go", "java")
+    assert "js" not in OFFICIAL_TARGETS
+    assert "ensamblador" not in OFFICIAL_TARGETS
