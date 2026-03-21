@@ -3,16 +3,16 @@ import cobra.standard_library.*;
 
 public class Main {
     private static Object cobraHolobit(Object valores) {
-        throw new UnsupportedOperationException("runtime hook holobit no disponible en Java");
+        throw new UnsupportedOperationException("runtime hook holobit requiere soporte Holobit disponible en Java");
     }
     private static void cobraProyectar(Object hb, Object modo) {
-        throw new UnsupportedOperationException("runtime hook proyectar no disponible en Java");
+        throw new UnsupportedOperationException("runtime hook proyectar requiere soporte Holobit disponible en Java");
     }
     private static void cobraTransformar(Object hb, Object op, Object... params) {
-        throw new UnsupportedOperationException("runtime hook transformar no disponible en Java");
+        throw new UnsupportedOperationException("runtime hook transformar requiere soporte Holobit disponible en Java");
     }
     private static void cobraGraficar(Object hb) {
-        throw new UnsupportedOperationException("runtime hook graficar no disponible en Java");
+        throw new UnsupportedOperationException("runtime hook graficar requiere soporte Holobit disponible en Java");
     }
     public static void main(String[] args) {
         Object hb = cobraHolobit(new double[]{1, 2, 3});

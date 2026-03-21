@@ -13,25 +13,25 @@ function cobra_holobit(valores) {
     if (typeof holobit === 'function') {
         return holobit(valores);
     }
-    throw new Error('Runtime hook holobit no disponible en JavaScript');
+    throw new Error('Runtime hook holobit requiere soporte Holobit disponible en JavaScript');
 }
 function cobra_proyectar(hb, modo) {
     if (hb && typeof hb.proyectar === 'function') {
         return hb.proyectar(modo);
     }
-    throw new Error('Runtime hook proyectar no disponible en JavaScript');
+    throw new Error('Runtime hook proyectar requiere soporte Holobit disponible en JavaScript');
 }
 function cobra_transformar(hb, op, ...params) {
     if (hb && typeof hb.transformar === 'function') {
         return hb.transformar(op, ...params);
     }
-    throw new Error('Runtime hook transformar no disponible en JavaScript');
+    throw new Error('Runtime hook transformar requiere soporte Holobit disponible en JavaScript');
 }
 function cobra_graficar(hb) {
     if (hb && typeof hb.graficar === 'function') {
         return hb.graficar();
     }
-    throw new Error('Runtime hook graficar no disponible en JavaScript');
+    throw new Error('Runtime hook graficar requiere soporte Holobit disponible en JavaScript');
 }
 let hb = cobra_holobit([1, 2, 3]);
 cobra_proyectar(hb, 2d);

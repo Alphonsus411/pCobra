@@ -1,14 +1,14 @@
 fn cobra_holobit(_valores: Vec<f64>) -> Vec<f64> {
-    panic!("Runtime hook holobit no disponible en Rust")
+    panic!("Runtime hook holobit requiere soporte Holobit disponible en Rust")
 }
 fn cobra_proyectar(hb: &str, modo: &str) {
-    panic!("Runtime hook proyectar no disponible en Rust: {} {}", hb, modo);
+    panic!("Runtime hook proyectar requiere soporte Holobit disponible en Rust: {} {}", hb, modo);
 }
 fn cobra_transformar(hb: &str, op: &str, params: &[&str]) {
-    panic!("Runtime hook transformar no disponible en Rust: {} {} {:?}", hb, op, params);
+    panic!("Runtime hook transformar requiere soporte Holobit disponible en Rust: {} {} {:?}", hb, op, params);
 }
 fn cobra_graficar(hb: &str) {
-    panic!("Runtime hook graficar no disponible en Rust: {}", hb);
+    panic!("Runtime hook graficar requiere soporte Holobit disponible en Rust: {}", hb);
 }
 
 use crate::corelibs::*;
