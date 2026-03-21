@@ -182,3 +182,15 @@ def test_politica_runtime_vs_transpilacion_es_explicita():
     assert set(DOCKER_EXECUTABLE_TARGETS).issubset(set(OFFICIAL_TARGETS))
     assert set(TRANSPILATION_ONLY_TARGETS) == {"wasm", "go", "java", "asm"}
     assert set(DOCKER_EXECUTABLE_TARGETS) | set(TRANSPILATION_ONLY_TARGETS) == set(OFFICIAL_TARGETS)
+
+
+def test_validacion_ci_bloquea_condicionales_o_tablas_para_backend_c_fuera_de_zonas_historicas():
+    from scripts.ci.validate_targets import validate_scan_roots
+
+    errores = validate_scan_roots(tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES))
+    errores_c = [error for error in errores if "backend retirado 'c'" in error]
+
+    assert not errores_c, (
+        "La auditoría CI detectó referencias no permitidas al backend retirado 'c': "
+        f"{errores_c}"
+    )
