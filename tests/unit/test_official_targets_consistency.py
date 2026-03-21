@@ -20,6 +20,11 @@ def _extract_backend_from_filename(path: Path, prefix: str = "to_") -> str:
     return path.stem.removeprefix(prefix)
 
 
+def _canonical_reverse_impl_name(language: str) -> str:
+    canonico = normalize_reverse_language(language)
+    return "javascript" if canonico == "js" else canonico
+
+
 def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
     oficiales = set(OFFICIAL_TARGETS)
 
@@ -29,6 +34,12 @@ def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
     assert set(BENCH_BACKENDS.keys()).issubset(oficiales)
     assert set(BENCHMARKS_BACKENDS.keys()).issubset(oficiales)
     assert set(FEATURE_INSPECTOR_TRANSPILERS.keys()).issubset(oficiales)
+    assert "js" not in LANG_CHOICES
+    assert "js" not in TRANSPILER_CLASS_PATHS
+    assert "js" not in STANDARD_IMPORTS
+    assert "js" not in BENCH_BACKENDS
+    assert "js" not in BENCHMARKS_BACKENDS
+    assert "js" not in FEATURE_INSPECTOR_TRANSPILERS
 
 
 def test_mapa_reverse_extensions_esta_alineado_con_scope_reverse():
@@ -132,7 +143,7 @@ def test_los_tests_no_importan_reverse_transpilers_fuera_del_scope_oficial():
                     continue
 
                 lenguaje = nombre.removeprefix(prefijo)
-                canonico = "javascript" if lenguaje == "js" else normalize_reverse_language(lenguaje)
+                canonico = _canonical_reverse_impl_name(lenguaje)
                 if canonico not in permitidos:
                     imports_fuera_de_scope.add(lenguaje)
 
@@ -143,6 +154,28 @@ def test_los_tests_no_importan_reverse_transpilers_fuera_del_scope_oficial():
         "Se encontraron tests que importan reverse transpilers fuera del scope oficial: "
         f"{encontrados_fuera_de_scope}. Permitidos: {', '.join(REVERSE_SCOPE_LANGUAGES)}"
     )
+
+
+def test_helpers_y_registros_de_tests_no_reintroducen_alias_js_como_nombre_publico():
+    runtime_helper = Path("tests/utils/runtime.py").read_text(encoding="utf-8")
+    transpile_time = Path("tests/performance/test_transpile_time.py").read_text(encoding="utf-8")
+
+    assert '"js": _run_js' not in runtime_helper
+    assert '{"python", "javascript", "js"}' not in runtime_helper
+    assert '"js": "TranspiladorJavaScript"' not in transpile_time
+    assert '"javascript": "TranspiladorJavaScript"' in transpile_time
+    assert '"javascript": "js"' in transpile_time
+    assert '_MODULE_SUFFIX_BY_TARGET' in transpile_time
+
+
+def test_politicas_y_registros_publicos_no_aceptan_alias_js_como_target_feliz():
+    assert "js" not in LANG_CHOICES
+    assert "js" not in DOCKER_EXECUTABLE_TARGETS
+    assert "js" not in OFFICIAL_TARGETS
+    assert "js" not in REVERSE_SCOPE_LANGUAGES
+    assert "js" not in TRANSPILER_CLASS_PATHS
+    assert "js" not in FEATURE_INSPECTOR_TRANSPILERS
+    assert "js" not in EXTENSIONES_POR_LENGUAJE
 
 
 def test_politica_runtime_vs_transpilacion_es_explicita():
