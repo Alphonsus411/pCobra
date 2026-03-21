@@ -1,5 +1,18 @@
 # Matriz de transpiladores
 
+Este documento resume el **contrato mínimo vigente** de los backends oficiales. No es una promesa de cobertura completa del AST ni de paridad de ejecución entre todos los destinos.
+
+## Fuente de verdad y trazabilidad
+
+La referencia primaria está en estos archivos:
+
+- `src/pcobra/cobra/transpilers/targets.py`: lista canónica de backends y tiers.
+- `src/pcobra/cobra/transpilers/registry.py`: registro oficial de clases de transpilador.
+- `src/pcobra/cobra/transpilers/compatibility_matrix.py`: matriz contractual por backend/feature.
+- `src/pcobra/cobra/transpilers/module_map.py`: resolución de mapeos por backend, aún con compatibilidad legacy.
+- `src/pcobra/cobra/cli/target_policies.py`: separación entre targets de transpilación y targets con runtime oficial.
+- `src/pcobra/core/sandbox.py`: alcance real de ejecución en sandbox/contenedor.
+
 ## Garantía mínima por backend (Tier 1 / Tier 2)
 
 | Backend | Tier | holobit | proyectar | transformar | graficar | corelibs | standard_library |
@@ -13,95 +26,75 @@
 | `java` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 | `asm` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 
-> `full`: contrato de generación y hooks cubierto por regresión; si falta una dependencia opcional, el fallo debe ser explícito y documentado.
-> `partial`: soporte limitado o stub explícito; genera código, pero puede terminar con error controlado en runtime.
-## Contrato runtime Holobit
+> `full`: contrato de generación y símbolos/hooks cubierto por regresión.
+>
+> `partial`: el backend genera código y conserva hooks/fallbacks esperados, pero puede requerir runtime externo o terminar en error controlado.
 
-- Referencia técnica: `docs/contrato_runtime_holobit.md`.
-- Hooks mínimos: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`.
-- Inserción de hooks/imports: solo cuando el AST usa nodos Holobit.
-- Política oficial ante ausencia de `holobit_sdk`: **error explícito y documentado**, no no-op silencioso.
+## Lectura correcta del contrato
 
-## Qué significa “compatibilidad con el resto de librerías”
+### Holobit
 
-Para `corelibs` y `standard_library`, la compatibilidad por backend se interpreta así:
+- `python` es el único backend documentado hoy como `full` de punta a punta en la matriz.
+- `javascript` mantiene contrato `full` para las primitivas Holobit, pero eso **no** implica que todo el runtime auxiliar sea `full`.
+- `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben leerse como soporte contractual **parcial**: el backend emite código, hooks y/o fallbacks verificables; no promete equivalencia total de ejecución.
 
-- `python`: el código generado debe importar explícitamente `corelibs` y `standard_library`, y conservar llamadas a símbolos como `longitud(...)` y `mostrar(...)`.
-- `javascript`: el código generado debe inyectar los imports ES module del runtime nativo (`./nativos/...`) y preservar las llamadas de símbolos.
-- `rust`: el backend debe emitir `use crate::corelibs::*;` y `use crate::standard_library::*;`, dejando las llamadas como símbolos verificables en el source generado.
-- `wasm`: el backend declara que el runtime se administra externamente; la compatibilidad consiste en conservar puntos de llamada WAT al runtime (`$longitud`, `$mostrar`) y no ocultar la dependencia.
-- `go`: la compatibilidad mínima exige imports verificables de `cobra/corelibs` y `cobra/standard_library`, más la preservación de llamadas a símbolos.
-- `cpp`: la compatibilidad mínima exige `#include <cobra/corelibs.hpp>` y `#include <cobra/standard_library.hpp>`, más la preservación de llamadas a símbolos.
-- `java`: la compatibilidad mínima exige `import cobra.corelibs.*;` y `import cobra.standard_library.*;`, más la preservación de llamadas a símbolos.
-- `asm`: la compatibilidad mínima consiste en declarar que el runtime externo se administra fuera del backend y preservar puntos de llamada `CALL longitud ...` / `CALL mostrar ...`.
+### `corelibs` y `standard_library`
 
-## Estado backend por backend para Holobit
+La compatibilidad mínima exigida por la suite contractual consiste en mantener imports/includes/puntos de llamada verificables en el código generado:
 
-- `python`: `cobra_holobit` construye un `Holobit` real; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` delegan al runtime Python y, si falta `holobit_sdk`, fallan con `ModuleNotFoundError` explícito.
-- `javascript`: `cobra_holobit` conserva la colección; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` fallan con `Error` homogéneo.
-- `rust`: `cobra_holobit` devuelve la colección; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` fallan con `panic!` homogéneo.
-- `wasm`: `cobra_holobit` devuelve el handle/valor i32 de entrada; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` ejecutan `unreachable` con comentario descriptivo.
-- `go`: `cobra_holobit` devuelve la colección; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` fallan con `panic(fmt.Sprintf(...))` homogéneo.
-- `cpp`: `cobra_holobit` devuelve la colección; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` fallan con `std::runtime_error` homogéneo.
-- `java`: `cobra_holobit` devuelve la colección; `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` fallan con `UnsupportedOperationException` homogéneo.
-- `asm`: se mantiene como backend limitado, pero ya no usa `none` para las primitivas avanzadas; inyecta hooks `cobra_*` y las rutas de `proyectar`, `transformar` y `graficar` fallan con `TRAP` explícito y homogéneo.
+- `python`: imports Python explícitos.
+- `javascript`: imports del runtime JS nativo `./nativos/...`.
+- `rust`: `use crate::corelibs::*;` y `use crate::standard_library::*;`.
+- `wasm`: puntos de llamada WAT y administración externa del runtime.
+- `go`: imports `cobra/corelibs` y `cobra/standard_library`.
+- `cpp`: includes `cobra/corelibs.hpp` y `cobra/standard_library.hpp`.
+- `java`: imports `cobra.corelibs.*` y `cobra.standard_library.*`.
+- `asm`: puntos de llamada `CALL` al runtime externo.
 
-## Matriz histórica de características del AST
+## Relación entre transpilación y runtime
 
-| Característica | `python` | `javascript` | `cpp` | `rust` | `go` | `java` | `asm` | `wasm` |
-|---|---|---|---|---|---|---|---|---|
-| asignacion | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| assert | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| atributo | ✅ | ✅ |  |  |  |  |  |  |
-| bucle_mientras | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| clase | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| condicional | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| continuar | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| decorador | ✅ | ✅ |  |  |  |  |  |  |
-| defer | ✅ | ✅ |  | ✅ |  |  |  |  |
-| del | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| diccionario | ✅ | ✅ |  |  |  |  |  |  |
-| diccionario_comprehension | ✅ | ✅ |  |  |  |  |  |  |
-| diccionario_tipo | ✅ | ✅ | ✅ |  |  |  |  |  |
-| elemento |  | ✅ |  |  |  |  |  |  |
-| enum | ✅ | ✅ |  |  |  |  |  |  |
-| esperar | ✅ | ✅ |  |  |  |  |  |  |
-| export |  | ✅ |  |  |  |  |  |  |
-| for | ✅ | ✅ |  |  |  |  |  |  |
-| funcion | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| garantia | ✅ | ✅ | ✅ |  |  |  |  |  |
-| global | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| graficar | ✅ | ✅ |  |  |  |  |  |  |
-| hilo | ✅ | ✅ |  |  |  |  |  |  |
-| holobit | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| identificador | ✅ | ✅ |  |  |  |  |  |  |
-| import | ✅ | ✅ |  |  |  |  |  |  |
-| import_desde | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| imprimir | ✅ | ✅ |  |  |  |  |  |  |
-| instancia | ✅ | ✅ |  |  |  |  |  |  |
-| interface | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| lista | ✅ | ✅ |  |  |  |  |  |  |
-| lista_comprehension | ✅ | ✅ |  |  |  |  |  |  |
-| lista_tipo | ✅ | ✅ | ✅ |  |  |  |  |  |
-| llamada_funcion | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| llamada_metodo | ✅ | ✅ |  |  |  |  |  |  |
-| metodo | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| no_local | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| nolocal | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| operacion_binaria | ✅ | ✅ |  |  |  |  |  |  |
-| operacion_unaria | ✅ | ✅ |  |  |  |  |  |  |
-| option | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| para | ✅ | ✅ |  |  |  |  |  |  |
-| pasar | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| pattern |  | ✅ | ✅ |  |  |  |  |  |
-| proyectar | ✅ | ✅ |  |  |  |  |  |  |
-| retorno | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| romper | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| switch | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| throw | ✅ | ✅ |  | ✅ |  |  |  |  |
-| transformar | ✅ | ✅ |  |  |  |  |  |  |
-| try_catch | ✅ | ✅ |  | ✅ |  |  |  |  |
-| usar | ✅ |  |  |  |  |  |  |  |
-| valor | ✅ | ✅ |  |  |  |  |  |  |
-| with | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
-| yield | ✅ | ✅ | ✅ | ✅ |  |  |  |  |
+Los 8 backends son oficiales para **generación de código**, pero el tooling oficial de **ejecución** es más pequeño:
+
+- runtime oficial en contenedor/sandbox: `python`, `javascript`, `cpp`, `rust`.
+- targets oficiales solo de transpilación: `wasm`, `go`, `java`, `asm`.
+- verificación ejecutable explícita en CLI: `python`, `javascript`.
+
+Además:
+
+- el runtime JavaScript depende del entorno (`node`, `vm2` y, para ciertas pruebas, `node-fetch`);
+- `holobit-sdk` está declarado en `pyproject.toml` como dependencia condicionada a Python `>=3.10`.
+
+## Qué valida realmente la batería actual
+
+La cobertura contractual actual se apoya en:
+
+- `tests/integration/transpilers/test_official_backends_tier1.py`
+- `tests/integration/transpilers/test_official_backends_tier2.py`
+- `tests/integration/transpilers/test_official_backends_contracts.py`
+- `tests/integration/test_holobit_tiers.py`
+- `tests/unit/test_holobit_backend_contract_matrix.py`
+- `tests/unit/test_official_targets_consistency.py`
+
+Estas suites verifican, como mínimo:
+
+1. que los 8 backends oficiales generan salida;
+2. que el nivel declarado en la matrix coincide con símbolos/hooks/fallbacks esperados;
+3. que la forma del contrato no se desalineó del mínimo requerido;
+4. que la política pública no reintroduce aliases o targets fuera de alcance.
+
+La mera existencia de esta batería no debe leerse como garantía de verde permanente: precisamente estas suites son las que detectan los desajustes cuando la implementación real no coincide con el contrato documentado.
+
+## Criterios verificables sugeridos
+
+```bash
+python scripts/ci/validate_targets.py
+python -m pytest tests/unit/test_official_targets_consistency.py
+python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
+python -m pytest tests/integration/transpilers/test_official_backends_tier1.py
+python -m pytest tests/integration/transpilers/test_official_backends_tier2.py
+python -m pytest tests/integration/transpilers/test_official_backends_contracts.py
+```
+
+## Nota sobre la antigua “matriz de características del AST”
+
+La tabla histórica de cobertura amplia del AST se elimina de este documento porque inducía a leer como contrato lo que hoy no está respaldado por la batería contractual vigente. Si se quiere recuperar una matriz así, debe derivarse de tests automáticos backend por backend y marcarse explícitamente como **histórica** o **exploratoria**, no contractual.
