@@ -359,7 +359,7 @@ Compatibilidad de los transpilers:
 - **JavaScript** emite `for await (...)` y anota los bloques asíncronos con
   `/* async with await ... */` para recordarte que debes gestionar manualmente
   la vida del recurso.
-- **Rust, C++ y otros backends sin soporte directo** insertan comentarios que
+- **Rust, cpp y otros backends sin soporte directo** insertan comentarios que
   documentan la intención (`// async with ...`) antes de envolver el cuerpo en
   un bloque convencional.
 
@@ -505,7 +505,7 @@ export async function revisar_servidor() {
 
 Convierte programas entre distintos lenguajes usando la CLI:
 
-- **De Cobra a C++**
+- **De Cobra a cpp**
 
   ```bash
   cobra compilar hola.co --tipo cpp
@@ -766,7 +766,7 @@ El módulo `pcobra.corelibs.texto` se amplió con herramientas inspiradas en `st
 - `rellenar_izquierda` y `rellenar_derecha` para completar cadenas con cualquier patrón.
 - `normalizar_unicode` que acepta las formas `NFC`, `NFD`, `NFKC` y `NFKD` para trabajar con Unicode de forma predecible.
 - `quitar_prefijo`, `quitar_sufijo`, `prefijo_comun` y `sufijo_comun` ofrecen operaciones consistentes para recorte y comparación de texto en Cobra, con opciones para ignorar mayúsculas y normalizar Unicode.
-- `a_snake` y `a_camel` generan identificadores normalizados para mantener portabilidad entre targets oficiales, mientras que `quitar_envoltura` aplica recortes simétricos de prefijo/sufijo con semántica uniforme (incluido JS).
+- `a_snake` y `a_camel` generan identificadores normalizados para mantener portabilidad entre targets oficiales, mientras que `quitar_envoltura` aplica recortes simétricos de prefijo/sufijo con semántica uniforme (incluido JavaScript).
 - `dividir_lineas` respeta combinaciones `\r\n` como `str.splitlines`, `contar_subcadena` acepta intervalos opcionales al estilo `str.count`, `centrar_texto` centra con relleno como `str.center` y `rellenar_ceros` añade ceros como `str.zfill`.
 - `encontrar` y `encontrar_derecha` replican `str.find`/`str.rfind` aceptando un ``por_defecto`` opcional, mientras que `indice` e `indice_derecha` imitan `str.index`/`str.rindex` con la posibilidad de devolver valores alternativos cuando no hay coincidencias.
 - `indentar_texto` y `desindentar_texto` replican `textwrap.indent`/`dedent` para aplicar o eliminar sangrías comunes sin perder líneas en blanco relevantes.

@@ -144,6 +144,36 @@ Hololang puede documentarse en la documentación principal **solo** como IR/pipe
   - la fuente de verdad en código,
   - y la validación automática en CI.
 
+## Cobertura exacta de la validación automática
+
+La validación automática de política/targets vigila de forma explícita estos árboles y documentos:
+
+- `README.md`
+- `docs/`
+- `docs/MANUAL_COBRA.md`
+- `tests/utils/`
+- `tests/performance/`
+- `tests/integration/`
+- `scripts/`
+- `src/pcobra/cobra/cli/commands/compile_cmd.py`
+- `src/pcobra/cobra/cli/commands/benchmarks_cmd.py`
+- `src/pcobra/cobra/cli/target_policies.py`
+
+Dentro de ese alcance la CI comprueba, como mínimo:
+
+- que no reaparezcan aliases legacy presentados como válidos (los aliases legacy de JavaScript y asm);
+- que no queden ramas activas, módulos o condicionales para backends retirados/fuera de política como el backend retirado de C;
+- que las listas públicas y/o hardcodeadas de runtime, transpilación, verificación y reverse sigan alineadas con `target_policies.py`, `targets.py` y `reverse/policy.py`;
+- que la documentación pública sobre Holobit (`README.md`, `docs/MANUAL_COBRA.md`, `docs/contrato_runtime_holobit.md`, `docs/matriz_transpiladores.md`, `docs/targets_policy.md`) no promocione compatibilidad superior a la matriz contractual;
+- que las tablas contractuales de Holobit sigan idénticas a `src/pcobra/cobra/transpilers/compatibility_matrix.py`.
+
+Las únicas exclusiones históricas explícitas permitidas son:
+
+- `docs/experimental/`
+- `docs/historico/`
+
+Todo contenido fuera de esas carpetas debe considerarse vigente y sujeto a la política oficial.
+
 ## Comprobaciones verificables
 
 ```bash
