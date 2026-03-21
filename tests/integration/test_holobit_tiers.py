@@ -5,7 +5,10 @@ from cobra.core import Lexer, Parser
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     COMPATIBILITY_LEVEL_ORDER,
+    CONTRACT_FEATURES,
     MIN_REQUIRED_BACKEND_COMPATIBILITY,
+    SDK_FULL_BACKENDS,
+    SDK_PARTIAL_BACKENDS,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
@@ -51,6 +54,16 @@ PRIMITIVE_CONTRACT = {
     },
 }
 
+
+PARTIAL_ADVANCED_FAILURE_PRIMITIVES = {
+    "javascript": {"proyectar": "throw new Error", "transformar": "throw new Error", "graficar": "throw new Error"},
+    "rust": {"proyectar": "panic!(", "transformar": "panic!(", "graficar": "panic!("},
+    "wasm": {"proyectar": "unreachable", "transformar": "unreachable", "graficar": "unreachable"},
+    "go": {"proyectar": "panic(fmt.Sprintf", "transformar": "panic(fmt.Sprintf", "graficar": "panic(fmt.Sprintf"},
+    "cpp": {"proyectar": "throw std::runtime_error", "transformar": "throw std::runtime_error", "graficar": "throw std::runtime_error"},
+    "java": {"proyectar": "throw new UnsupportedOperationException", "transformar": "throw new UnsupportedOperationException", "graficar": "throw new UnsupportedOperationException"},
+    "asm": {"proyectar": "TRAP", "transformar": "TRAP", "graficar": "TRAP"},
+}
 FULL_EXPECTATIONS = {
     "python": {
         "holobit": ("from corelibs import *", "from standard_library import *", "cobra_holobit([1.0, 2.0, 3.0])"),
@@ -255,3 +268,30 @@ def test_runtime_hooks_cobra_smoke_por_backend(backend):
 
     for hook_marker in HOLOBIT_HOOK_MARKERS[backend]:
         assert hook_marker in salida
+
+
+def test_only_python_es_full_para_holobit_y_runtime_base():
+    assert SDK_FULL_BACKENDS == ("python",)
+    assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
+
+    for feature in CONTRACT_FEATURES:
+        full_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "full"
+        }
+        partial_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "partial"
+        }
+        assert full_backends == {"python"}
+        assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+
+@pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)
+@pytest.mark.parametrize("feature", ("proyectar", "transformar", "graficar"))
+def test_backends_partial_mantienen_fallo_explicito_en_operaciones_avanzadas(backend, feature):
+    salida = _transpilar(HOLOBIT_CASES[feature], backend)
+    assert salida.strip()
+    assert PARTIAL_ADVANCED_FAILURE_PRIMITIVES[backend][feature] in salida

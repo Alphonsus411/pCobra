@@ -1,5 +1,7 @@
 import pytest
 from core.holobits import Holobit, graficar, proyectar, transformar
+from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
 def test_graficar_usa_sdk(monkeypatch):
@@ -44,3 +46,13 @@ def test_transformar_usa_sdk(monkeypatch):
     h = Holobit([1, 2, 3, 4, 5, 6])
     transformar(h, 'rotar', 'z', 45)
     assert args == {'eje': 'z', 'angulo': 45.0}
+
+
+def test_python_es_el_unico_backend_con_sdk_full():
+    for feature in CONTRACT_FEATURES:
+        full_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "full"
+        }
+        assert full_backends == {"python"}

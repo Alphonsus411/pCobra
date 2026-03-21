@@ -7,11 +7,15 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
     get_standard_imports,
 )
+from pathlib import Path
+
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     COMPATIBILITY_LEVEL_ORDER,
     CONTRACT_FEATURES,
     MIN_REQUIRED_BACKEND_COMPATIBILITY,
+    SDK_FULL_BACKENDS,
+    SDK_PARTIAL_BACKENDS,
     validate_backend_compatibility_contract,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
@@ -135,3 +139,58 @@ def test_codegen_contract_for_cobra_hooks_matches_matrix_level(
         else:
             for line in imports:
                 assert line in code
+
+
+def _parse_backend_matrix_table(doc_path: str) -> dict[str, dict[str, str]]:
+    lines = Path(doc_path).read_text(encoding="utf-8").splitlines()
+    rows: dict[str, dict[str, str]] = {}
+    for line in lines:
+        stripped = line.strip()
+        if not stripped.startswith("| `"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        backend = cells[0].strip("`")
+        tier = cells[1].lower().replace(" ", "")
+        rows[backend] = {
+            "tier": tier,
+            "holobit": cells[2].split()[-1],
+            "proyectar": cells[3].split()[-1],
+            "transformar": cells[4].split()[-1],
+            "graficar": cells[5].split()[-1],
+            "corelibs": cells[6].split()[-1],
+            "standard_library": cells[7].split()[-1],
+        }
+    return rows
+
+
+def test_only_python_is_full_for_sdk_contract_features():
+    assert SDK_FULL_BACKENDS == ("python",)
+    assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
+
+    for feature in CONTRACT_FEATURES:
+        full_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "full"
+        }
+        partial_backends = {
+            backend
+            for backend in OFFICIAL_TARGETS
+            if BACKEND_COMPATIBILITY[backend][feature] == "partial"
+        }
+
+        assert full_backends == {"python"}
+        assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+
+def test_public_docs_match_backend_matrix_exactly_for_contract_features():
+    expected = {
+        backend: {feature: BACKEND_COMPATIBILITY[backend][feature] for feature in ("tier", *CONTRACT_FEATURES)}
+        for backend in OFFICIAL_TARGETS
+    }
+
+    for doc_path in (
+        "docs/contrato_runtime_holobit.md",
+        "docs/matriz_transpiladores.md",
+    ):
+        assert _parse_backend_matrix_table(doc_path) == expected
