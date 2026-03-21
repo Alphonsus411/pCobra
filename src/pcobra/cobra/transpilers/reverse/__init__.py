@@ -1,9 +1,13 @@
 """Componentes para convertir código de otros lenguajes a Cobra.
 
+Este paquete registra únicamente transpiladores inversos de **entrada**.
+No amplía el conjunto de targets oficiales de salida del proyecto.
+
 El módulo realiza importaciones seguras de los distintos transpiladores. Si
 alguno no puede cargarse por dependencias faltantes, simplemente se ignora para
 no impedir el uso de los demás.
 """
+
 import logging
 from importlib import import_module
 from typing import Dict, List, Type
@@ -14,8 +18,11 @@ from pcobra.cobra.transpilers.reverse.policy import (
     REVERSE_SCOPE_MODULES,
     normalize_reverse_language,
 )
+
 try:  # pragma: no cover - dependencia opcional
-    from pcobra.cobra.transpilers.reverse.tree_sitter_base import TreeSitterReverseTranspiler
+    from pcobra.cobra.transpilers.reverse.tree_sitter_base import (
+        TreeSitterReverseTranspiler,
+    )
 except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
     _TREE_SITTER_IMPORT_ERROR = exc
 
@@ -27,14 +34,14 @@ except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
                 "tree_sitter es necesario para los transpiladores inversos"
             ) from _TREE_SITTER_IMPORT_ERROR
 
-# Lista de módulos a intentar importar
+
+# Lista de módulos de orígenes reverse a intentar importar.
 logger = logging.getLogger(__name__)
 
 _MODULOS = list(REVERSE_SCOPE_MODULES.values())
 
 _LEGACY_FALLBACKS = {
-    mod_name: mod_name.replace("pcobra.cobra", "cobra", 1)
-    for mod_name in _MODULOS
+    mod_name: mod_name.replace("pcobra.cobra", "cobra", 1) for mod_name in _MODULOS
 }
 
 # Importaciones seguras -------------------------------------------------
@@ -104,13 +111,15 @@ for mod_name in list(_MODULOS):
 TREE_SITTER_TRANSPILERS: List[Type[TreeSitterReverseTranspiler]] = [
     cls
     for cls_name, cls in globals().items()
-    if cls_name.startswith("ReverseFrom") and issubclass(cls, TreeSitterReverseTranspiler)
+    if cls_name.startswith("ReverseFrom")
+    and issubclass(cls, TreeSitterReverseTranspiler)
 ]
 
 CUSTOM_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
     cls
     for cls_name, cls in globals().items()
-    if cls_name.startswith("ReverseFrom") and issubclass(cls, BaseReverseTranspiler)
+    if cls_name.startswith("ReverseFrom")
+    and issubclass(cls, BaseReverseTranspiler)
     and cls not in TREE_SITTER_TRANSPILERS
 ]
 
@@ -131,6 +140,8 @@ REGISTERED_REVERSE_TRANSPILERS: Dict[str, Type[BaseReverseTranspiler]] = {
     in REVERSE_SCOPE_LANGUAGES
 }
 
-__all__ = ["BaseReverseTranspiler", "TreeSitterReverseTranspiler"] + [
-    cls.__name__ for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS
-] + ["REGISTERED_REVERSE_TRANSPILERS", "REVERSE_SCOPE_LANGUAGES"]
+__all__ = (
+    ["BaseReverseTranspiler", "TreeSitterReverseTranspiler"]
+    + [cls.__name__ for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS]
+    + ["REGISTERED_REVERSE_TRANSPILERS", "REVERSE_SCOPE_LANGUAGES"]
+)

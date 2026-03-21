@@ -10,7 +10,11 @@ SRC_ROOT = ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 
 PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
 PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
@@ -22,7 +26,10 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/benchmarks_cmd.py",
     ROOT / "README.md",
     ROOT / "docs/config_cli.md",
+    ROOT / "docs/especificacion_tecnica.md",
+    ROOT / "docs/lenguajes.rst",
     ROOT / "docs/lenguajes_soportados.rst",
+    ROOT / "docs/matriz_transpiladores.md",
     ROOT / "docs/targets_policy.md",
     ROOT / "docs/frontend/index.rst",
     ROOT / "docs/frontend/avances.rst",
@@ -39,18 +46,20 @@ PUBLIC_TEXT_PATH_STRS: frozenset[str] = frozenset(
 
 LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {}
 NON_CANONICAL_PUBLIC_NAMES: dict[str, str] = {
-    'c++': 'cpp',
-    'assembly': 'asm',
-    'ensamblador': 'asm',
-    'js': 'javascript',
+    "c++": "cpp",
+    "assembly": "asm",
+    "ensamblador": "asm",
+    "js": "javascript",
 }
-OUT_OF_POLICY_LANGUAGE_TERMS: frozenset[str] = frozenset({
-    'kotlin',
-    'swift',
-    'ruby',
-    'julia',
-    'matlab',
-})
+OUT_OF_POLICY_LANGUAGE_TERMS: frozenset[str] = frozenset(
+    {
+        "kotlin",
+        "swift",
+        "ruby",
+        "julia",
+        "matlab",
+    }
+)
 
 
 def read_target_policy() -> dict[str, Any]:
@@ -67,7 +76,9 @@ def read_target_policy() -> dict[str, Any]:
     }
 
 
-def build_legacy_alias_patterns(legacy_aliases: dict[str, str]) -> tuple[re.Pattern[str], ...]:
+def build_legacy_alias_patterns(
+    legacy_aliases: dict[str, str],
+) -> tuple[re.Pattern[str], ...]:
     alias_group = "|".join(re.escape(alias) for alias in sorted(legacy_aliases))
     if not alias_group:
         return ()

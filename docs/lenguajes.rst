@@ -23,19 +23,19 @@ Fuente de verdad: ``src/pcobra/cobra/transpilers/targets.py``.
      - Tier 1
    * - Go
      - Tier 2
-   * - C++
+   * - ``cpp``
      - Tier 2
    * - Java
      - Tier 2
-   * - Ensamblador
+   * - ``asm``
      - Tier 2
 
-Transpiladores inversos
------------------------
+Orígenes reverse de entrada (no targets de salida)
+--------------------------------------------------
 
-Los siguientes lenguajes de la lista canónica pueden convertirse a Cobra:
+Los siguientes lenguajes de la lista canónica reverse pueden convertirse a Cobra como **entrada** de ``cobra transpilar-inverso``. No deben confundirse con los targets oficiales de salida.
 
-.. list-table:: Lenguajes de entrada
+.. list-table:: Lenguajes de entrada reverse
    :header-rows: 1
 
    * - Lenguaje
@@ -57,3 +57,11 @@ Para habilitar estos transpiladores inversos es necesario instalar las gramátic
    pip install tree-sitter-languages
 
 Este paquete incluye gramáticas para los lenguajes listados (``python``, ``javascript`` y ``java``) y puede instalarse junto con las dependencias del proyecto.
+
+Experimentos y material separado
+--------------------------------
+
+Los pipelines o prototipos fuera del alcance oficial se conservan en ubicaciones separadas para no contaminar la política pública:
+
+- ``docs/experimental/`` para experimentos como LLVM, reverse desde LaTeX o referencias retiradas.
+- ``docs/historico/`` para material archivado sin vigencia normativa.

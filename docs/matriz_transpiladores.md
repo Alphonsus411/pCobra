@@ -11,7 +11,10 @@ La referencia primaria está en estos archivos:
 - `src/pcobra/cobra/transpilers/compatibility_matrix.py`: matriz contractual por backend/feature.
 - `src/pcobra/cobra/transpilers/module_map.py`: resolución canónica de mapeos por backend desde `cobra.toml`.
 - `src/pcobra/cobra/cli/target_policies.py`: separación entre targets de transpilación y targets con runtime oficial.
+- `src/pcobra/cobra/transpilers/reverse/policy.py`: política separada para **orígenes reverse de entrada**.
 - `src/pcobra/core/sandbox.py`: alcance real de ejecución en sandbox/contenedor.
+
+> Esta matriz cubre únicamente **targets oficiales de salida**. No describe orígenes reverse ni pipelines experimentales como LLVM, LaTeX o variantes históricas archivadas en `docs/experimental/` y `docs/historico/`.
 
 ## Garantía mínima por backend (Tier 1 / Tier 2)
 
@@ -43,7 +46,7 @@ La referencia primaria está en estos archivos:
 La compatibilidad mínima exigida por la suite contractual consiste en mantener imports/includes/puntos de llamada verificables en el código generado:
 
 - `python`: imports Python explícitos.
-- `javascript`: imports del runtime JS nativo `./nativos/...`.
+- `javascript`: imports del runtime JavaScript nativo `./nativos/...`.
 - `rust`: `use crate::corelibs::*;` y `use crate::standard_library::*;`.
 - `wasm`: puntos de llamada WAT y administración externa del runtime.
 - `go`: imports `cobra/corelibs` y `cobra/standard_library`.
@@ -80,7 +83,7 @@ Estas suites verifican, como mínimo:
 1. que los 8 backends oficiales generan salida;
 2. que el nivel declarado en la matrix coincide con símbolos/hooks/fallbacks esperados;
 3. que la forma del contrato no se desalineó del mínimo requerido;
-4. que la política pública no reintroduce aliases o targets fuera de alcance.
+4. que la política pública no reintroduce aliases, targets fuera de alcance ni orígenes reverse mezclados con backends de salida.
 
 La mera existencia de esta batería no debe leerse como garantía de verde permanente: precisamente estas suites son las que detectan los desajustes cuando la implementación real no coincide con el contrato documentado.
 
@@ -88,7 +91,9 @@ La mera existencia de esta batería no debe leerse como garantía de verde perma
 
 ```bash
 python scripts/ci/validate_targets.py
+python scripts/validate_targets_policy.py
 python -m pytest tests/unit/test_official_targets_consistency.py
+python -m pytest tests/unit/test_public_docs_scope.py
 python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
 python -m pytest tests/integration/transpilers/test_official_backends_tier1.py
 python -m pytest tests/integration/transpilers/test_official_backends_tier2.py

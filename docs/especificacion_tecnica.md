@@ -2,7 +2,7 @@
 
 Este documento resume la sintaxis y la semántica básica del lenguaje Cobra.
 
-Para ver ejemplos completos de compilación y transpilación, consulta la carpeta [`examples/hello_world`](../examples/hello_world), donde encontrarás un `README.md` con instrucciones de uso y los códigos generados en diversos lenguajes.
+Para ver ejemplos completos de compilación y transpilación, consulta la carpeta [`examples/hello_world`](../examples/hello_world), donde encontrarás un `README.md` con instrucciones de uso y los códigos generados para targets oficiales.
 
 ## Targets oficiales de transpilación
 
@@ -13,8 +13,16 @@ targets de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`,
 La fuente de verdad de este contrato es:
 `src/pcobra/cobra/transpilers/targets.py` (`OFFICIAL_TARGETS`).
 
-Cualquier backend fuera de esa lista debe considerarse experimental y no forma
+Cualquier backend o pipeline fuera de esa lista debe considerarse experimental y no forma
 parte del paquete instalable de producción.
+
+## Experimentos y documentación separada
+
+Los materiales sobre Hololang, LLVM, reverse desde LaTeX o referencias retiradas de reverse no amplían la lista anterior.
+
+- **Hololang**: se documenta como IR interno y flujo auxiliar, no como target público de salida.
+- **LLVM / LaTeX / reverse WASM retirado**: se mantienen separados en `docs/experimental/`.
+- **Histórico**: los documentos archivados deben permanecer en `docs/historico/`.
 
 ## Estructura general
 

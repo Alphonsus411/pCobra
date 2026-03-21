@@ -102,17 +102,25 @@ BINARY_OR_GENERATED_SUFFIXES = {
 
 ALLOWED_HISTORICAL_PATH_PREFIXES = (
     "docs/historico/",
+    "docs/experimental/",
 )
-ALLOWED_HISTORICAL_PATHS = frozenset({
-    "docs/coverage.md",
-    "tests/unit/test_compile_stress.py",
-})
+ALLOWED_HISTORICAL_PATHS = frozenset(
+    {
+        "docs/coverage.md",
+        "tests/unit/test_compile_stress.py",
+    }
+)
 
 REMOVED_REVERSE_LANGUAGES = ("c", "cpp", "go", "rust", "wasm", "asm")
-REMOVED_REVERSE_MODULE_PATTERNS = tuple(f"from_{language}.py" for language in REMOVED_REVERSE_LANGUAGES)
+REMOVED_REVERSE_MODULE_PATTERNS = tuple(
+    f"from_{language}.py" for language in REMOVED_REVERSE_LANGUAGES
+)
 REMOVED_TRANSPILER_MODULE_PATTERNS = ("to_c.py",)
 REMOVED_BACKEND_NAME_PATTERNS: dict[str, re.Pattern[str]] = {
-    "c": re.compile(r"(?<![\w.-])(?:--(?:tipo|tipos|backend|destino)(?:=|\s+)|`)(c)(?:`)?(?![\w.-])", re.IGNORECASE),
+    "c": re.compile(
+        r"(?<![\w.-])(?:--(?:tipo|tipos|backend|destino)(?:=|\s+)|`)(c)(?:`)?(?![\w.-])",
+        re.IGNORECASE,
+    ),
     "reverse-wasm": re.compile(r"(?<![\w.-])(reverse-wasm)(?![\w.-])", re.IGNORECASE),
 }
 REVERSE_IMPORT_PREFIXES = (
@@ -120,10 +128,44 @@ REVERSE_IMPORT_PREFIXES = (
     "pcobra.cobra.transpilers.reverse.from_",
 )
 
+EXPERIMENTAL_DOCS = (
+    ROOT / "docs/experimental/README.md",
+    ROOT / "docs/experimental/llvm_prototype.md",
+    ROOT / "docs/experimental/construcciones_llvm_ir.md",
+    ROOT / "docs/experimental/soporte_latex.md",
+    ROOT / "docs/experimental/limitaciones_wasm_reverse.md",
+)
+
+EXPERIMENTAL_DOC_REQUIRED_MARKERS = (
+    "experimental",
+    "política",
+)
+
+UNOFFICIAL_PUBLIC_TARGET_PATTERNS: dict[str, re.Pattern[str]] = {
+    "hololang-cli-target": re.compile(
+        r"--(?:backend|destino)(?:=|\s+)(hololang)(?![\w.-])",
+        re.IGNORECASE,
+    ),
+    "llvm-cli-target": re.compile(
+        r"--(?:backend|destino)(?:=|\s+)(llvm)(?![\w.-])",
+        re.IGNORECASE,
+    ),
+    "latex-cli-target": re.compile(
+        r"--(?:backend|destino|origen)(?:=|\s+)(latex)(?![\w.-])",
+        re.IGNORECASE,
+    ),
+    "hololang-public-target-claim": re.compile(
+        r"(?:target|destino)(?:\s+can[oó]nico|\s+oficial|\s+de\s+salida)?\s+[`']?(hololang)[`']?",
+        re.IGNORECASE,
+    ),
+}
+
 PUBLIC_NAME_PATTERNS: dict[str, re.Pattern[str]] = {
     alias: re.compile(rf"(?<![\w.+-])({re.escape(alias)})(?![\w.+-])", re.IGNORECASE)
     for alias in sorted(
-        set(NON_CANONICAL_PUBLIC_NAMES) | set(read_target_policy()["legacy_aliases"]) | set(OUT_OF_POLICY_LANGUAGE_TERMS)
+        set(NON_CANONICAL_PUBLIC_NAMES)
+        | set(read_target_policy()["legacy_aliases"])
+        | set(OUT_OF_POLICY_LANGUAGE_TERMS)
     )
 }
 
@@ -137,10 +179,8 @@ SKIPPED_SCAN_REL_PATHS = frozenset(
 )
 
 
-
 def read_transpiler_registry_keys() -> tuple[str, ...]:
     return tuple(TRANSPILERS.keys())
-
 
 
 def _iter_scan_files() -> tuple[Path, ...]:
@@ -153,7 +193,6 @@ def _iter_scan_files() -> tuple[Path, ...]:
             continue
         files.extend(candidate for candidate in path.rglob("*") if candidate.is_file())
     return tuple(sorted(files))
-
 
 
 def _is_generated_or_binary(path: Path) -> bool:
@@ -170,17 +209,17 @@ def _is_generated_or_binary(path: Path) -> bool:
     return b"\x00" in sample
 
 
-
 def _is_allowed_historical_path(rel: str) -> bool:
     return rel in ALLOWED_HISTORICAL_PATHS or any(
         rel.startswith(prefix) for prefix in ALLOWED_HISTORICAL_PATH_PREFIXES
     )
 
 
-
 def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
     errors: list[str] = []
-    allowed_suffixes = {"javascript" if target == "javascript" else target for target in official}
+    allowed_suffixes = {
+        "javascript" if target == "javascript" else target for target in official
+    }
     alias_suffix_map = {"js": "javascript"}
 
     for file_path in sorted(TRANSPILER_DIR.glob("to_*.py")):
@@ -199,8 +238,9 @@ def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
     return errors
 
 
-
-def validate_no_legacy_aliases_in_public_paths(legacy_aliases: dict[str, str]) -> list[str]:
+def validate_no_legacy_aliases_in_public_paths(
+    legacy_aliases: dict[str, str],
+) -> list[str]:
     errors: list[str] = []
     patterns = build_legacy_alias_patterns(legacy_aliases)
     if not patterns:
@@ -220,10 +260,57 @@ def validate_no_legacy_aliases_in_public_paths(legacy_aliases: dict[str, str]) -
                     continue
                 if any(ap.search(line) for ap in allow_patterns):
                     continue
-                errors.append(f"{rel}:{line_no}: alias legacy en ruta pública -> {match.group(1)}")
+                errors.append(
+                    f"{rel}:{line_no}: alias legacy en ruta pública -> {match.group(1)}"
+                )
 
     return errors
 
+
+def validate_experimental_docs_scope() -> list[str]:
+    errors: list[str] = []
+
+    for path in EXPERIMENTAL_DOCS:
+        rel = path.relative_to(ROOT).as_posix()
+        if not path.exists():
+            errors.append(
+                f"{rel}: falta documentación experimental segregada requerida"
+            )
+            continue
+        text = path.read_text(encoding="utf-8")
+        lowered = text.lower()
+        for required in EXPERIMENTAL_DOC_REQUIRED_MARKERS:
+            if required not in lowered:
+                errors.append(
+                    f"{rel}: falta marcador obligatorio de documentación experimental -> {required}"
+                )
+
+    old_public_paths = (
+        ROOT / "docs/llvm_prototype.md",
+        ROOT / "docs/construcciones_llvm_ir.md",
+        ROOT / "docs/soporte_latex.md",
+        ROOT / "docs/limitaciones_wasm_reverse.md",
+    )
+    for old_path in old_public_paths:
+        if old_path.exists():
+            errors.append(
+                f"{old_path.relative_to(ROOT).as_posix()}: el documento debe vivir en docs/experimental/"
+            )
+
+    for path in PUBLIC_TEXT_PATHS:
+        if not path.exists():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            for name, pattern in UNOFFICIAL_PUBLIC_TARGET_PATTERNS.items():
+                match = pattern.search(line)
+                if match:
+                    errors.append(
+                        f"{rel}:{line_no}: referencia pública a target/pipeline no oficial ({name}) -> {match.group(1)}"
+                    )
+
+    return errors
 
 
 def validate_reverse_cli_contract(
@@ -255,15 +342,20 @@ def validate_reverse_cli_contract(
     return errors
 
 
-
 def validate_module_file_scope(
     official_targets: tuple[str, ...],
     reverse_scope_languages: tuple[str, ...],
 ) -> list[str]:
     errors: list[str] = []
-    official_modules = {f"to_{target}.py" for target in official_targets if target != "javascript"}
+    official_modules = {
+        f"to_{target}.py" for target in official_targets if target != "javascript"
+    }
     official_modules.add("to_js.py")
-    reverse_modules = {f"from_{target}.py" for target in reverse_scope_languages if target != "javascript"}
+    reverse_modules = {
+        f"from_{target}.py"
+        for target in reverse_scope_languages
+        if target != "javascript"
+    }
     reverse_modules.add("from_js.py")
 
     for path in sorted(ROOT.rglob("to_*.py")):
@@ -287,7 +379,6 @@ def validate_module_file_scope(
     return errors
 
 
-
 def _collect_python_reverse_imports(path: Path) -> set[str]:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -309,7 +400,6 @@ def _collect_python_reverse_imports(path: Path) -> set[str]:
     return imports
 
 
-
 def validate_scan_roots(
     official_targets: tuple[str, ...],
     reverse_scope_languages: tuple[str, ...],
@@ -317,7 +407,12 @@ def validate_scan_roots(
     errors: list[str] = []
     allowed_reverse = set(reverse_scope_languages)
     public_name_map = dict(NON_CANONICAL_PUBLIC_NAMES)
-    public_name_map.update({alias: canonical for alias, canonical in read_target_policy()["legacy_aliases"].items()})
+    public_name_map.update(
+        {
+            alias: canonical
+            for alias, canonical in read_target_policy()["legacy_aliases"].items()
+        }
+    )
 
     for path in _iter_scan_files():
         rel = path.relative_to(ROOT).as_posix()
@@ -334,7 +429,9 @@ def validate_scan_roots(
             lowered = line.lower()
 
             if not historical_path:
-                for removed_module in REMOVED_REVERSE_MODULE_PATTERNS + REMOVED_TRANSPILER_MODULE_PATTERNS:
+                for removed_module in (
+                    REMOVED_REVERSE_MODULE_PATTERNS + REMOVED_TRANSPILER_MODULE_PATTERNS
+                ):
                     if removed_module in lowered:
                         errors.append(
                             f"{rel}:{line_no}: referencia a módulo retirado -> {removed_module}"
@@ -366,14 +463,17 @@ def validate_scan_roots(
             continue
 
         for imported in sorted(_collect_python_reverse_imports(path)):
-            canonical = "javascript" if imported == "js" else normalize_reverse_language(imported)
+            canonical = (
+                "javascript"
+                if imported == "js"
+                else normalize_reverse_language(imported)
+            )
             if canonical not in allowed_reverse:
                 errors.append(
                     f"{rel}: import reverse fuera del alcance oficial -> from_{imported}"
                 )
 
     return errors
-
 
 
 def main() -> int:
@@ -391,13 +491,16 @@ def main() -> int:
         errors.append(f"  - OFFICIAL_TARGETS: {', '.join(official_targets)}")
         errors.append(f"  - TRANSPILERS: {', '.join(transpilers)}")
         if missing_in_registry:
-            errors.append(f"  - faltan en TRANSPILERS: {', '.join(missing_in_registry)}")
+            errors.append(
+                f"  - faltan en TRANSPILERS: {', '.join(missing_in_registry)}"
+            )
         if extra_in_registry:
             errors.append(f"  - sobran en TRANSPILERS: {', '.join(extra_in_registry)}")
 
     reverse_scope = tuple(REVERSE_SCOPE_LANGUAGES)
     errors.extend(validate_transpiler_modules(official_targets))
     errors.extend(validate_no_legacy_aliases_in_public_paths(legacy_aliases))
+    errors.extend(validate_experimental_docs_scope())
     errors.extend(validate_reverse_cli_contract(official_targets, reverse_scope))
     errors.extend(validate_module_file_scope(official_targets, reverse_scope))
     errors.extend(validate_scan_roots(official_targets, reverse_scope))
@@ -416,7 +519,9 @@ def main() -> int:
     print(f"   Reverse scope: {', '.join(reverse_scope)}")
     print(
         "   Allowlist histórica: "
-        + ", ".join((*ALLOWED_HISTORICAL_PATH_PREFIXES, *sorted(ALLOWED_HISTORICAL_PATHS)))
+        + ", ".join(
+            (*ALLOWED_HISTORICAL_PATH_PREFIXES, *sorted(ALLOWED_HISTORICAL_PATHS))
+        )
     )
     return 0
 

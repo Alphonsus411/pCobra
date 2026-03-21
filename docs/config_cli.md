@@ -60,7 +60,7 @@ asm = "build/modulo.asm"
 
 - Solo se aceptan nombres canónicos contenidos en `OFFICIAL_TARGETS`:
   `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
-- Los aliases legacy como `js`, `py`, `golang`, `c++` o `ensamblador` no son válidos.
+- Los aliases legacy, abreviaturas históricas y traducciones antiguas de nombres de backend no son válidos; usa siempre los 8 identificadores canónicos oficiales.
 - Los mappings de módulos deben vivir dentro de `[modulos."..."]`; las estructuras en raíz ya no se resuelven.
 - `cobra.mod` sigue siendo el archivo validado por `modulos`/empaquetado, pero sus backends también deben respetar exclusivamente los 8 nombres oficiales.
 
