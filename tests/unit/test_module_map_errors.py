@@ -1,6 +1,7 @@
 import builtins
 import logging
 
+import pytest
 
 from cobra.transpilers import module_map
 
@@ -78,6 +79,20 @@ def test_get_mapped_path_usa_solo_claves_canonicas(monkeypatch):
 def test_get_mapped_path_rechaza_backend_no_canonico(monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}})
     assert module_map.get_mapped_path("m", "js") == "m"
+
+
+def test_get_mapped_path_falla_si_mapping_usa_clave_legacy_para_backend_canonico(monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"js": "m.js"}})
+
+    with pytest.raises(ValueError, match="clave legacy 'js'.*'javascript'"):
+        module_map.get_mapped_path("m", "javascript")
+
+
+def test_get_mapped_path_falla_si_mapping_usa_clave_legacy_asm(monkeypatch):
+    monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"ensamblador": "m.asm"}})
+
+    with pytest.raises(ValueError, match="clave legacy 'ensamblador'.*'asm'"):
+        module_map.get_mapped_path("m", "asm")
 
 
 def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):
