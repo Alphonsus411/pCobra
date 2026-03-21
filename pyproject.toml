@@ -180,6 +180,7 @@ markers = [
     "integration: pruebas de integración",
     "fuzz: pruebas de mutación/fuzzing",
     "performance: pruebas de rendimiento",
+    "experimental: pruebas best-effort o manuales fuera del contrato oficial de runtime",
     "windows: pruebas específicas de Windows",
     "asyncio: pruebas que utilizan bucles de eventos asíncronos",
 ]

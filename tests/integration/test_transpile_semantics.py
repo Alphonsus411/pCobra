@@ -2,8 +2,6 @@ import sys
 from pathlib import Path
 from io import StringIO
 from unittest.mock import patch
-import subprocess
-import shutil
 import importlib
 import types
 
@@ -21,9 +19,8 @@ from core.interpreter import InterpretadorCobra
 from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
-from tests.utils.targets import RUNNABLE_TARGETS
-
-from tests.utils.runtime import run_code
+from tests.utils.runtime import execute_transpiled_code
+from tests.utils.targets import EXPERIMENTAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
 
 
 def obtener_salida_interprete(archivo: Path) -> str:
@@ -35,56 +32,7 @@ def obtener_salida_interprete(archivo: Path) -> str:
     return out.getvalue()
 
 
-def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
-    if lang in {"python", "javascript"}:
-        if lang == "javascript" and not shutil.which("node"):
-            pytest.skip("node no disponible")
-        return run_code(lang, codigo)
-    if lang == "cpp":
-        comp = shutil.which("g++")
-        if not comp:
-            pytest.skip("g++ no disponible")
-        src = tmp_path / "prog.cpp"
-        src.write_text(codigo)
-        exe = tmp_path / "prog"
-        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True,
-                              check=True)
-        return proc.stdout
-    if lang == "go":
-        comp = shutil.which("go")
-        if not comp:
-            pytest.skip("go no disponible")
-        src = tmp_path / "prog.go"
-        src.write_text(codigo)
-        proc = subprocess.run([comp, "run", str(src)], capture_output=True,
-                              text=True, check=True)
-        return proc.stdout
-    if lang == "rust":
-        comp = shutil.which("rustc")
-        if not comp:
-            pytest.skip("rustc no disponible")
-        src = tmp_path / "prog.rs"
-        src.write_text(codigo)
-        exe = tmp_path / "prog"
-        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True,
-                              check=True)
-        return proc.stdout
-    if lang == "java":
-        comp = shutil.which("javac")
-        if not comp:
-            pytest.skip("javac no disponible")
-        src = tmp_path / "Main.java"
-        src.write_text(codigo)
-        subprocess.run([comp, str(src)], cwd=tmp_path, check=True)
-        proc = subprocess.run(["java", "-cp", str(tmp_path), "Main"],
-                              capture_output=True, text=True, check=True)
-        return proc.stdout
-    pytest.skip(f"ejecuci\u00f3n no soportada para {lang}")
-
-
-@pytest.mark.parametrize("lang", RUNNABLE_TARGETS)
+@pytest.mark.parametrize("lang", OFFICIAL_RUNTIME_TARGETS)
 def test_transpile_semantics(tmp_path, lang):
     src = Path("tests/data/ejemplo.co")
     esperado = obtener_salida_interprete(src)
@@ -93,5 +41,20 @@ def test_transpile_semantics(tmp_path, lang):
     ast = Parser(tokens).parsear()
     codigo = TRANSPILERS[lang]().generate_code(ast)
 
-    salida = ejecutar_codigo(lang, codigo, tmp_path)
+    salida = execute_transpiled_code(lang, codigo, tmp_path)
+    assert salida == esperado
+
+
+@pytest.mark.experimental
+@pytest.mark.parametrize("lang", EXPERIMENTAL_RUNTIME_TARGETS)
+def test_transpile_semantics_experimental_runtime(tmp_path, lang):
+    """Cobertura best-effort para runtimes no oficiales conservados manualmente."""
+    src = Path("tests/data/ejemplo.co")
+    esperado = obtener_salida_interprete(src)
+
+    tokens = Lexer(src.read_text()).analizar_token()
+    ast = Parser(tokens).parsear()
+    codigo = TRANSPILERS[lang]().generate_code(ast)
+
+    salida = execute_transpiled_code(lang, codigo, tmp_path, allow_experimental=True)
     assert salida == esperado
