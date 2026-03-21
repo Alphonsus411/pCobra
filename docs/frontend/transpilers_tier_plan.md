@@ -1,137 +1,176 @@
 # Plan de implementación por tiers de transpilación (pCobra)
 
 ## Objetivo
-Reducir y estabilizar los targets de transpilación de pCobra en dos niveles:
 
-- **Tier 1:** Python, Rust, JavaScript, WASM.
-- **Tier 2:** Go, C++, Java, ASM.
+Dejar por escrito un estado **realista y verificable** del frente de transpilación actual de pCobra, separando cuatro bloques de seguimiento:
 
-## Tareas estructuradas
+1. registro canónico de targets,
+2. limpieza legacy,
+3. compatibilidad Holobit/runtime,
+4. tooling de ejecución.
 
-### Tarea 1 — Congelar el contrato de targets soportados
-- [x] Actualizar el registro único de transpiladores (`TRANSPILERS`) para exponer solo los 8 targets aprobados.
-- [x] Sincronizar `LANG_CHOICES` con ese registro.
-- [x] Publicar una política explícita de compatibilidad por tier en documentación técnica y de usuario.
+Los tiers oficiales siguen siendo:
 
-### Tarea 2 — Retirar código de backends fuera de alcance
-- [x] Eliminar implementaciones `to_*` que no pertenecen a Tier 1/2.
-- [x] Eliminar nodos específicos (`*_nodes`) de backends retirados.
-- [x] Ejecutar auditoría final de imports para garantizar ausencia total de referencias obsoletas en código de producción.
+- **Tier 1:** `python`, `rust`, `javascript`, `wasm`.
+- **Tier 2:** `go`, `cpp`, `java`, `asm`.
 
-### Tarea 3 — Asegurar compatibilidad con Holobit SDK y librerías base
-- [x] Mantener intactos los transpiladores soportados que ya emiten construcciones `holobit`.
-- [x] Conservar flujo de validación de dependencias (`validar_dependencias`) en `compilar`.
-- [x] Añadir pruebas de regresión para `holobit`, `graficar`, `proyectar`, `transformar`, `corelibs` y `standard_library` en Tier 1 y Tier 2 (suite dedicada en `tests/integration/transpilers/`).
+> Este documento ya no debe leerse como “todo completado”, sino como una hoja de seguimiento basada en el estado real del código a fecha de revisión.
 
-### Tarea 4 — Limpiar y alinear pruebas
-- [x] Retirar tests unitarios/integración de backends eliminados.
-- [x] Reescribir matrices de pruebas para clasificar por Tier 1/Tier 2.
-- [x] Añadir pipeline de smoke tests mínimo para los 8 targets soportados (incluido en CI al ejecutarse `pytest` sobre `tests/unit`).
+## Bloque 1 — Registro canónico de targets
 
-### Tarea 5 — Actualizar documentación pública
-- [x] Actualizar secciones principales del README (ES/EN) con la nueva lista de destinos.
-- [x] Ajustar ejemplos de importación de transpiladores a los 8 soportados.
-- [x] Revisar documentación secundaria y ejemplos históricos para eliminar menciones residuales.
+**Estado actual:** en gran parte resuelto, con validaciones automáticas claras.
 
-## Criterios de aceptación
-1. El comando `cobra compilar --tipo` solo acepta los 8 targets de Tier 1/2.
-2. No existen módulos `to_*` de lenguajes fuera de alcance en el árbol de código principal.
-3. Los tests de compilación/transpilación de targets soportados pasan en CI.
-4. README y documentación principal no anuncian destinos fuera de Tier 1/2.
+**Archivos vinculados**
+- `src/pcobra/cobra/transpilers/targets.py`
+- `src/pcobra/cobra/transpilers/registry.py`
+- `src/pcobra/cobra/transpilers/compatibility_matrix.py`
+- `src/pcobra/cobra/cli/commands/compile_cmd.py`
 
+**Seguimiento realista**
+- [x] Existe una fuente de verdad para los nombres canónicos y los tiers en `targets.py`.
+- [x] El registro canónico de clases (`registry.py`) expone exactamente 8 backends oficiales.
+- [x] `LANG_CHOICES` deriva del registro oficial y la CLI valida nombres canónicos.
+- [x] La matriz contractual (`compatibility_matrix.py`) cubre exclusivamente los 8 targets oficiales y valida su propia forma.
+- [ ] Sigue pendiente simplificar mensajes, documentación y ayudas para que toda la terminología pública dependa de una única ruta de política, sin duplicidades entre CLI y documentación.
 
-## Matriz mínima garantizada (Tier 1 / Tier 2)
+## Bloque 2 — Limpieza legacy
 
-> Esta matriz define el **mínimo contractual** que se valida por pruebas de regresión para cada backend.
+**Estado actual:** avanzada, pero no cerrada al 100 % si se exige ausencia total de compatibilidades históricas internas.
 
-| Backend | Tier | holobit(...) | proyectar(...) | transformar(...) | graficar(...) | `corelibs` | `standard_library` |
+**Archivos vinculados**
+- `src/pcobra/cobra/transpilers/module_map.py`
+- `src/pcobra/cobra/transpilers/registry.py`
+- `src/pcobra/cobra/transpilers/targets.py`
+- `scripts/ci/validate_targets.py`
+- `tests/unit/test_cli_target_aliases.py`
+
+**Seguimiento realista**
+- [x] El árbol principal de transpiladores `to_*.py` ya está recortado a los 8 backends oficiales.
+- [x] La CLI pública rechaza aliases legacy como `js` o `ensamblador`.
+- [x] Existe una auditoría automática para detectar aliases legacy y módulos fuera de política.
+- [ ] `module_map.py` todavía conserva compatibilidad con formatos legacy (`cobra.mod`, YAML y mapeos en raíz), por lo que la limpieza histórica no puede considerarse completada del todo.
+- [ ] La limpieza legacy sigue siendo parcial mientras persistan excepciones internas/históricas de compatibilidad y validadores específicos para rutas heredadas.
+- [ ] No hay evidencia en esta revisión de que se hayan eliminado todos los “nodos específicos” históricos fuera de alcance; ese punto requiere auditoría dirigida adicional si se quiere marcar como completado.
+
+## Bloque 3 — Compatibilidad Holobit/runtime
+
+**Estado actual:** existe contrato explícito, pero el soporte es desigual por backend y no debe presentarse como paridad funcional total.
+
+**Archivos vinculados**
+- `src/pcobra/cobra/transpilers/compatibility_matrix.py`
+- `src/pcobra/cobra/transpilers/targets.py`
+- `src/pcobra/cobra/transpilers/module_map.py`
+- `pyproject.toml`
+- `tests/integration/test_holobit_tiers.py`
+- `tests/integration/transpilers/test_official_backends_contracts.py`
+- `tests/integration/transpilers/test_official_backends_tier1.py`
+- `tests/integration/transpilers/test_official_backends_tier2.py`
+
+**Seguimiento realista**
+- [x] Hay una matriz contractual pública por backend y feature (`holobit`, `proyectar`, `transformar`, `graficar`, `corelibs`, `standard_library`).
+- [x] Python figura como `full` en todas las features del contrato actual.
+- [x] JavaScript figura como `full` para primitivas Holobit y `partial` para `corelibs`/`standard_library`.
+- [x] Rust, WASM, Go, C++, Java y ASM están declarados explícitamente como `partial` en la matriz actual.
+- [x] Existen suites contractuales por tier y una suite consolidada por backend/feature.
+- [ ] Las suites contractuales no deben darse por totalmente cerradas: en la revisión actual siguen apareciendo desajustes puntuales entre expectativas y codegen real en algunos backends/features parciales.
+- [ ] El proyecto no garantiza ejecución end-to-end homogénea para los 8 backends: fuera de Python y JavaScript la evidencia principal es de **codegen contractual**, no de runtime completo.
+- [ ] El runtime JavaScript sigue dependiendo de prerrequisitos externos del entorno (`node`, `vm2`, y en algunos casos `node-fetch`), así que no debe describirse como garantía incondicional.
+- [ ] La dependencia `holobit-sdk` está declarada en `pyproject.toml` solo para Python `>=3.10`; la documentación no debe presentar su disponibilidad como universal ni incondicional.
+
+## Bloque 4 — Tooling de ejecución
+
+**Estado actual:** separado de la transpilación, con alcance mucho más reducido.
+
+**Archivos vinculados**
+- `src/pcobra/core/sandbox.py`
+- `src/pcobra/cobra/cli/target_policies.py`
+- `Makefile`
+- `pyproject.toml`
+- `.github/workflows/test.yml`
+- `.github/workflows/ci.yml`
+
+**Seguimiento realista**
+- [x] La política de CLI separa targets oficiales de transpilación y targets oficiales con runtime.
+- [x] `sandbox.py` documenta y aplica soporte de ejecución en contenedor solo para `python`, `javascript`, `cpp` y `rust`.
+- [x] `Makefile` construye contenedores oficiales únicamente para esos cuatro runtimes.
+- [x] La CI ejecuta suites contractuales bloqueantes para los backends oficiales.
+- [ ] `make test` y `make check` no expresan por sí solos una matriz de ejecución por backend; esa separación vive principalmente en tests específicos y workflows.
+- [ ] `go`, `java`, `wasm` y `asm` siguen siendo targets oficiales de generación, pero no deben documentarse como runtimes Docker/sandbox equivalentes.
+
+## Criterios de aceptación verificables
+
+### A. Registro canónico de targets
+
+1. `OFFICIAL_TARGETS`, el registro de transpiladores y `LANG_CHOICES` permanecen alineados.
+2. La matriz contractual define exactamente los 8 backends oficiales.
+
+**Comprobaciones sugeridas**
+
+```bash
+python -m pytest tests/unit/test_official_targets_consistency.py
+python -m pytest tests/unit/test_compile_cmd_target_choices_aliases.py
+python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
+```
+
+### B. Limpieza legacy
+
+1. No aparecen menciones a orígenes reverse retirados en rutas públicas actuales.
+2. No existen módulos `to_*.py` fuera del alcance oficial.
+3. La CLI pública rechaza aliases legacy (`js`, `ensamblador`, etc.).
+4. No hay aliases legacy en código productivo expuesto por la política pública.
+
+**Comprobaciones sugeridas**
+
+```bash
+python scripts/ci/validate_targets.py
+find src/pcobra/cobra/transpilers/transpiler -maxdepth 1 -name 'to_*.py' | sort
+python -m pytest tests/unit/test_cli_target_aliases.py
+python scripts/ci/validate_targets.py
+```
+
+### C. Igualdad entre contrato y matrix
+
+1. La suite por tier valida que cada backend respeta el nivel declarado en `compatibility_matrix.py`.
+2. La validación estructural del contrato no detecta regresiones por debajo del mínimo requerido.
+
+**Comprobaciones sugeridas**
+
+```bash
+python -m pytest tests/integration/transpilers/test_official_backends_tier1.py
+python -m pytest tests/integration/transpilers/test_official_backends_tier2.py
+python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
+```
+
+### D. Suites contractuales por backend
+
+1. La suite consolidada por backend/feature transpila los 8 backends oficiales.
+2. Python debe ejecutar el programa generado en el runtime del repositorio.
+3. JavaScript solo se considera ejecutable cuando el entorno dispone de `node` y dependencias runtime.
+
+**Comprobaciones sugeridas**
+
+```bash
+python -m pytest tests/integration/transpilers/test_official_backends_contracts.py
+python -m pytest tests/integration/test_holobit_tiers.py
+```
+
+## Matriz mínima contractual vigente
+
+> La matriz contractual vigente es la de `src/pcobra/cobra/transpilers/compatibility_matrix.py`. Se resume aquí sin prometer más de lo que hoy valida el código.
+
+| Backend | Tier | holobit | proyectar | transformar | graficar | corelibs | standard_library |
 |---|---|---|---|---|---|---|---|
-| Python | Tier 1 | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo | ✅ Completo |
-| JavaScript | Tier 1 | ✅ Completo | ✅ Completo (hook `cobra_proyectar`) | ✅ Completo (hook `cobra_transformar`) | ✅ Completo (hook `cobra_graficar`) | 🟡 Parcial (runtime JS nativo) | 🟡 Parcial (según mapeo) |
-| Rust | Tier 1 | 🟡 Parcial (emisión `holobit`) | 🟡 Parcial (hook `cobra_proyectar`) | 🟡 Parcial (hook `cobra_transformar`) | 🟡 Parcial (hook `cobra_graficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
-| WASM | Tier 1 | 🟡 Parcial (comentario IR) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime hook) | 🟡 Parcial (runtime import/call) | 🟡 Parcial (runtime import/call) |
-| Go | Tier 2 | 🟡 Parcial (slice nativo) | 🟡 Parcial (hook `cobraProyectar`) | 🟡 Parcial (hook `cobraTransformar`) | 🟡 Parcial (hook `cobraGraficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
-| C++ | Tier 2 | 🟡 Parcial (emisión `holobit`) | 🟡 Parcial (hook `cobra_proyectar`) | 🟡 Parcial (hook `cobra_transformar`) | 🟡 Parcial (hook `cobra_graficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
-| Java | Tier 2 | 🟡 Parcial (array `double[]`) | 🟡 Parcial (hook `cobraProyectar`) | 🟡 Parcial (hook `cobraTransformar`) | 🟡 Parcial (hook `cobraGraficar`) | 🟡 Parcial (passthrough) | 🟡 Parcial (passthrough) |
-| ASM | Tier 2 | 🟡 Parcial (IR simbólico) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (comentario/fallback) | 🟡 Parcial (`CALL` runtime) | 🟡 Parcial (`CALL` runtime) |
+| `python` | Tier 1 | full | full | full | full | full | full |
+| `javascript` | Tier 1 | full | full | full | full | partial | partial |
+| `rust` | Tier 1 | partial | partial | partial | partial | partial | partial |
+| `wasm` | Tier 1 | partial | partial | partial | partial | partial | partial |
+| `go` | Tier 2 | partial | partial | partial | partial | partial | partial |
+| `cpp` | Tier 2 | partial | partial | partial | partial | partial | partial |
+| `java` | Tier 2 | partial | partial | partial | partial | partial | partial |
+| `asm` | Tier 2 | partial | partial | partial | partial | partial | partial |
 
+## Nota de interpretación
 
-
-### Matriz contractual para `tests/integration/test_holobit_tiers.py`
-
-Para mantener trazabilidad del contrato Holobit SDK/runtime, la suite `test_holobit_tiers.py` valida estas primitivas:
-- `holobit`
-- `proyectar`
-- `transformar`
-- `graficar`
-- `escalar`
-- `mover`
-
-Regla de validación por backend:
-- Si la matriz marca `full`, se aplican asserts estrictos de símbolos/imports/hooks definidos en `STRICT_FULL_EXPECTATIONS`.
-- Si la matriz marca `partial`, se exige fallback explícito (`PARTIAL_EXPECTATIONS`) y generación no vacía.
-
-Nota de mapeo:
-- `escalar` y `mover` se verifican usando el mismo nivel contractual de `transformar` (compatibilidad incremental basada en hooks de transformación).
-
-### Estado de integración de suite oficial (CI)
-- [x] Suite dedicada para los 8 backends oficiales ubicada en `tests/integration/transpilers/`.
-- [x] Casos separados por tier (`test_official_backends_tier1.py` y `test_official_backends_tier2.py`).
-- [x] Suite contractual consolidada (`test_official_backends_contracts.py`) con validaciones por feature (`holobit`, `proyectar`, `transformar`, `graficar`, `corelibs`, `standard_library`) para los 8 targets oficiales.
-- [x] Snapshots/golden files por backend en `tests/integration/transpilers/golden/` para detectar regresiones de codegen.
-- [x] Criterio **full** aplicado con asserts estrictos de símbolos/hooks/imports esperados.
-- [x] Criterio **partial** aplicado con asserts de fallback explícito y no-rotura de generación.
-- [x] Validación en CI al ejecutarse `pytest tests` dentro de los workflows (`test.yml`/`ci.yml`) y ejecución explícita de la suite contractual en `test.yml`.
-
-#### Resultados reales (última corrida local de la suite contractual)
-
-- Comando ejecutado: `pytest tests/integration/transpilers/test_official_backends_contracts.py -q`.
-- Resultado: **25 pruebas aprobadas**, **1 omitida** (ejecución JavaScript omitida si falta dependencia externa `node-fetch`), **0 fallos**.
-- Evidencia funcional incluida en la suite:
-  - Transpilación validada para `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
-  - Verificación de imports y hooks runtime esperados por backend.
-  - Verificación de ejecución en entorno local para Python; JavaScript se ejecuta cuando Node + dependencias runtime están presentes.
-
-### Cobertura de regresión asociada
-
-Se añade una suite dedicada que cubre:
-
-1. Importación de cada transpilador oficial (`to_python`, `to_js`, `to_rust`, `to_wasm`, `to_go`, `to_cpp`, `to_java`, `to_asm`).
-2. Generación mínima de código por backend para detectar roturas por dependencias.
-3. Casos representativos por backend para:
-   - `holobit(...)`
-   - `proyectar(...)`
-   - `transformar(...)`
-   - `graficar(...)`
-4. Operación típica de librerías de runtime (`longitud(...)`) en todos los backends donde existe llamada de función.
-
-### Política de interpretación
-
-- En JavaScript, `proyectar/transformar/graficar` se resuelven mediante hooks explícitos `cobra_*` inyectados por el transpiler para evitar dependencia implícita de símbolos globales.
-- **Tier 1** prioriza estabilidad funcional y cobertura de primitivas Holobit en Python/JS.
-- **Tier 2** prioriza continuidad de generación y compatibilidad incremental, con cobertura parcial explícita.
-- Cualquier backend fuera de esta matriz se considera fuera de contrato.
-
-
-## Política anti-regresión
-
-Para evitar desalineaciones entre código, CLI y documentación pública, se incorpora el validador obligatorio `scripts/ci/validate_targets.py` con tres controles bloqueantes:
-
-1. Sincronía estricta entre `OFFICIAL_TARGETS` (`src/pcobra/cobra/transpilers/targets.py`) y el registro `TRANSPILERS` (`src/pcobra/cobra/cli/commands/compile_cmd.py`).
-2. Auditoría del árbol `src/pcobra/cobra/transpilers/transpiler/` para impedir `to_*.py` fuera del contrato oficial.
-3. Detección textual de aliases legacy en rutas públicas de CLI y documentación de usuario final.
-
-Este check se ejecuta como **paso obligatorio de CI** en `.github/workflows/ci.yml` y `.github/workflows/test.yml`.
-
-## Checklist de cierre (auditoría de limpieza)
-
-- [x] Auditoría en `src/`, `docs/`, `examples/` y `docker/` para detectar menciones fuera de los 8 backends oficiales.
-  - Evidencia: `python scripts/ci/validate_targets.py` y revisión dirigida de rutas clave de front-end.
-- [x] Documentación principal sincronizada con tiers oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
-  - Evidencia: revisión y ajuste de `README.md`, `docs/lenguajes_soportados.rst`, `docs/matriz_transpiladores.md` y `docs/frontend/backends.rst`.
-- [x] Ejemplos y guías de CLI sin targets retirados.
-  - Evidencia: actualización de `docs/frontend/avances.rst` para listar solo destinos y orígenes vigentes.
-- [x] CI/packaging alineado: se retiró instalación de toolchains no oficiales.
-  - Evidencia: limpieza de instalaciones de runtimes no canónicos en `.github/workflows/ci.yml` y `.github/workflows/test.yml`.
-- [x] Registro final de consistencia ejecutado.
-  - Evidencia: validación con `python scripts/ci/validate_targets.py`.
+- **`full`** significa contrato cubierto por regresión de generación y símbolos/hooks esperados.
+- **`partial`** significa generación contractual con fallback o error explícito, no equivalencia funcional total con Python.
+- El hecho de que un backend sea oficial para **transpilación** no implica que tenga runtime Docker/sandbox oficial ni ejecución automática en todas las suites.
