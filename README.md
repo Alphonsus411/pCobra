@@ -145,9 +145,6 @@ pip install "pcobra[columnar]"
 # alias equivalente
 pip install "pcobra[io-binary]"
 
-# Histórico/no vigente: extra legado de reverse WASM
-# La política actual solo documenta reverse para python, javascript y java.
-
 # Servidor de lenguaje (LSP)
 pip install "pcobra[lsp]"
 
