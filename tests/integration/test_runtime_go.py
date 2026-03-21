@@ -16,12 +16,13 @@ from cobra.core import Lexer, Parser  # noqa: E402
 from cobra.transpilers.transpiler.to_go import TranspiladorGo  # noqa: E402
 
 
+@pytest.mark.experimental
 @pytest.mark.skipif(shutil.which("go") is None, reason="requiere Go")
 @pytest.mark.parametrize(
     "codigo_cobra_fixture", ["codigo_imprimir", "codigo_bucle_simple"]
 )
-def test_runtime_go_ejecucion(request, codigo_cobra_fixture):
-    """Transpila y ejecuta snippets Cobra básicos en Go."""
+def test_runtime_go_ejecucion_experimental(request, codigo_cobra_fixture):
+    """Cobertura manual/best-effort para Go; no es runtime oficial contractual."""
     codigo_cobra = request.getfixturevalue(codigo_cobra_fixture)
     lexer = Lexer(codigo_cobra)
     tokens = lexer.analizar_token()
@@ -31,4 +32,3 @@ def test_runtime_go_ejecucion(request, codigo_cobra_fixture):
     salida = run_code("go", codigo_go)
 
     assert "1" in salida
-

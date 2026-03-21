@@ -17,6 +17,7 @@ import cobra.transpilers.module_map as module_map_backend
 import cobra.transpilers.module_map as module_map_src
 from cobra.cli.cli import main
 from cobra.core import Lexer as SrcLexer
+from tests.utils.targets import SUPPORTED_TARGETS
 
 LANG_EXT = {
     "python": ".py",
@@ -69,7 +70,9 @@ def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
         assert "(module" in contenido
 
 
-VALID_SYNTAX_TARGETS = ("python", "javascript", "go")
+VALID_SYNTAX_TARGETS = tuple(
+    target for target in SUPPORTED_TARGETS if target in {"python", "javascript", "go"}
+)
 
 
 @pytest.mark.parametrize("lang", VALID_SYNTAX_TARGETS)

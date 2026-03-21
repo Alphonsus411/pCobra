@@ -1,11 +1,12 @@
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
-import subprocess
-import shutil
 import importlib
 import types
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
 
 if not hasattr(importlib, "ModuleType"):
     importlib.ModuleType = types.ModuleType
@@ -24,78 +25,17 @@ for nombre in dir(core_ast_nodes):
 from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
-import pytest
 
-from tests.utils.runtime import run_code
-
-
-def ejecutar_codigo(lang: str, codigo: str, tmp_path: Path) -> str:
-    if lang in {"python", "javascript"}:
-        if lang == "javascript" and not shutil.which("node"):
-            pytest.skip("node no disponible")
-        return run_code(lang, codigo)
-    if lang == "c":
-        comp = shutil.which("gcc")
-        if not comp:
-            pytest.skip("gcc no disponible")
-        src = tmp_path / "prog.c"
-        src.write_text(codigo)
-        exe = tmp_path / "prog"
-        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True,
-                              check=True)
-        return proc.stdout
-    if lang == "cpp":
-        comp = shutil.which("g++")
-        if not comp:
-            pytest.skip("g++ no disponible")
-        src = tmp_path / "prog.cpp"
-        src.write_text(codigo)
-        exe = tmp_path / "prog"
-        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True,
-                              check=True)
-        return proc.stdout
-    if lang == "go":
-        comp = shutil.which("go")
-        if not comp:
-            pytest.skip("go no disponible")
-        src = tmp_path / "prog.go"
-        src.write_text(codigo)
-        proc = subprocess.run([comp, "run", str(src)], capture_output=True,
-                              text=True, check=True)
-        return proc.stdout
-    if lang == "rust":
-        comp = shutil.which("rustc")
-        if not comp:
-            pytest.skip("rustc no disponible")
-        src = tmp_path / "prog.rs"
-        src.write_text(codigo)
-        exe = tmp_path / "prog"
-        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
-        proc = subprocess.run([str(exe)], capture_output=True, text=True,
-                              check=True)
-        return proc.stdout
-    if lang == "java":
-        comp = shutil.which("javac")
-        if not comp:
-            pytest.skip("javac no disponible")
-        src = tmp_path / "Main.java"
-        src.write_text(codigo)
-        subprocess.run([comp, str(src)], cwd=tmp_path, check=True)
-        proc = subprocess.run(["java", "-cp", str(tmp_path), "Main"],
-                              capture_output=True, text=True, check=True)
-        return proc.stdout
-    pytest.skip(f"ejecución no soportada para {lang}")
+from tests.utils.runtime import execute_transpiled_code
+from tests.utils.targets import EXPERIMENTAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
 
 
-def test_cross_backend_output(tmp_path, transpiler_case):
-    archivo, esperados = transpiler_case
+def _collect_output_differences(tmp_path, archivo, esperados, *, langs, allow_experimental=False):
     tokens = Lexer(archivo.read_text()).analizar_token()
     ast = Parser(tokens).parsear()
 
     diferencias = {}
-    for lang in TRANSPILERS:
+    for lang in langs:
         if lang not in esperados:
             continue
         transpiler = TRANSPILERS[lang]()
@@ -107,7 +47,12 @@ def test_cross_backend_output(tmp_path, transpiler_case):
             diferencias[lang] = f"Error: {e}"
             continue
         try:
-            salida = ejecutar_codigo(lang, codigo, tmp_path)
+            salida = execute_transpiled_code(
+                lang,
+                codigo,
+                tmp_path,
+                allow_experimental=allow_experimental,
+            )
         except pytest.skip.Exception:
             continue
         except Exception as e:  # pylint: disable=broad-except
@@ -115,4 +60,32 @@ def test_cross_backend_output(tmp_path, transpiler_case):
             continue
         if salida != esperados[lang]:
             diferencias[lang] = salida
+    return diferencias
+
+
+def test_cross_backend_output(tmp_path, transpiler_case):
+    """Compara únicamente los runtimes oficiales equivalentes entre backends."""
+    archivo, esperados = transpiler_case
+
+    diferencias = _collect_output_differences(
+        tmp_path,
+        archivo,
+        esperados,
+        langs=OFFICIAL_RUNTIME_TARGETS,
+    )
     assert not diferencias, f"Salidas distintas: {diferencias}"
+
+
+@pytest.mark.experimental
+def test_cross_backend_output_experimental_best_effort(tmp_path, transpiler_case):
+    """Go/Java se validan aparte como cobertura experimental, no contractual."""
+    archivo, esperados = transpiler_case
+
+    diferencias = _collect_output_differences(
+        tmp_path,
+        archivo,
+        esperados,
+        langs=EXPERIMENTAL_RUNTIME_TARGETS,
+        allow_experimental=True,
+    )
+    assert not diferencias, f"Salidas experimentales distintas: {diferencias}"

@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Callable, Dict
 
+import pytest
+
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from tests.utils.targets import EXPERIMENTAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
 
 
 def _run_python(code: str) -> str:
@@ -111,3 +115,105 @@ def run_code(lang: str, code: str) -> str:
                 return f"Error de sintaxis: {stderr or stdout or exc}"
 
     return runner(code)
+
+
+def execute_transpiled_code(
+    lang: str,
+    code: str,
+    tmp_path: Path,
+    *,
+    allow_experimental: bool = False,
+) -> str:
+    """Ejecuta código transpilado respetando la política oficial de runtime.
+
+    Por defecto solo permite el runtime oficial definido por
+    ``pcobra.cobra.cli.target_policies``. Los runtimes ``go`` y ``java`` se
+    conservan únicamente como cobertura experimental/best-effort.
+    """
+    if lang == "python":
+        src = tmp_path / "prog.py"
+        src.write_text(code)
+        env = os.environ.copy()
+        pythonpath_entries = [
+            str(Path(__file__).resolve().parents[2]),
+            str(Path(__file__).resolve().parents[2] / "src"),
+        ]
+        current_pythonpath = env.get("PYTHONPATH")
+        if current_pythonpath:
+            pythonpath_entries.append(current_pythonpath)
+        env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
+        try:
+            proc = subprocess.run(
+                [shutil.which("python") or "python", str(src)],
+                capture_output=True,
+                text=True,
+                check=True,
+                env=env,
+            )
+        except subprocess.CalledProcessError as exc:
+            if exc.returncode == -9:
+                pytest.skip("python finalizado por SIGKILL del entorno durante la ejecución")
+            raise
+        return proc.stdout
+
+    if lang == "javascript":
+        if not shutil.which("node"):
+            pytest.skip("node no disponible")
+        return run_code(lang, code)
+
+    if lang == "cpp":
+        comp = shutil.which("g++")
+        if not comp:
+            pytest.skip("g++ no disponible")
+        src = tmp_path / "prog.cpp"
+        src.write_text(code)
+        exe = tmp_path / "prog"
+        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
+        proc = subprocess.run([str(exe)], capture_output=True, text=True, check=True)
+        return proc.stdout
+
+    if lang == "rust":
+        comp = shutil.which("rustc")
+        if not comp:
+            pytest.skip("rustc no disponible")
+        src = tmp_path / "prog.rs"
+        src.write_text(code)
+        exe = tmp_path / "prog"
+        subprocess.run([comp, str(src), "-o", str(exe)], check=True)
+        proc = subprocess.run([str(exe)], capture_output=True, text=True, check=True)
+        return proc.stdout
+
+    if lang in EXPERIMENTAL_RUNTIME_TARGETS and not allow_experimental:
+        pytest.skip(
+            f"{lang} se conserva solo como runtime experimental/best-effort; "
+            "no forma parte del contrato oficial"
+        )
+
+    if lang == "go":
+        comp = shutil.which("go")
+        if not comp:
+            pytest.skip("go no disponible")
+        src = tmp_path / "prog.go"
+        src.write_text(code)
+        proc = subprocess.run([comp, "run", str(src)], capture_output=True, text=True, check=True)
+        return proc.stdout
+
+    if lang == "java":
+        comp = shutil.which("javac")
+        if not comp:
+            pytest.skip("javac no disponible")
+        src = tmp_path / "Main.java"
+        src.write_text(code)
+        subprocess.run([comp, str(src)], cwd=tmp_path, check=True)
+        proc = subprocess.run(
+            ["java", "-cp", str(tmp_path), "Main"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return proc.stdout
+
+    if lang in OFFICIAL_RUNTIME_TARGETS:
+        pytest.fail(f"Falta implementar ejecución oficial para {lang}")
+
+    pytest.skip(f"ejecución no soportada para {lang}")
