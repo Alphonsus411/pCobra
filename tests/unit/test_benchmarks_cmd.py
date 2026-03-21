@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -46,3 +49,26 @@ def test_benchmarks_command_handles_errors(monkeypatch):
     assert rc == 3
     assert errores
 
+
+@pytest.mark.timeout(20)
+def test_benchmarks_module_imports_without_scripts_package(tmp_path):
+    """El comando debe importarse desde una instalación sin depender de scripts/."""
+    repo_root = bm.Path(__file__).resolve().parents[2]
+    src_dir = repo_root / "src"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(src_dir)
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import cobra.cli.commands.benchmarks_cmd as bm; print(tuple(bm.BACKENDS))",
+        ],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert "python" in proc.stdout
