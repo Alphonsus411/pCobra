@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pcobra.cobra.transpilers.common.utils import (
     BaseTranspiler,
-    ast_contains_node_types,
+    ast_requires_holobit_runtime,
     get_runtime_hooks,
     get_standard_imports,
 )
@@ -53,9 +53,8 @@ class TranspiladorASM(BaseTranspiler):
         """
 
         modulo = self._asegurar_modulo(programa)
-        usa_runtime_holobit = isinstance(programa, list) and ast_contains_node_types(
-            programa,
-            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
+        usa_runtime_holobit = isinstance(programa, list) and ast_requires_holobit_runtime(
+            programa
         )
         self._lineas = list(get_standard_imports("asm"))
         if usa_runtime_holobit:

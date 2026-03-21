@@ -19,7 +19,7 @@ from pcobra.cobra.core.ast_nodes import (
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.cobra.transpilers.common.utils import (
-    ast_contains_node_types,
+    ast_requires_holobit_runtime,
     BaseTranspiler,
     get_runtime_hooks,
     get_standard_imports,
@@ -191,10 +191,7 @@ class TranspiladorJava(BaseTranspiler):
         self.agregar_linea("public class Main {")
         self.indent += 1
 
-        self.usa_runtime_holobit = ast_contains_node_types(
-            nodos,
-            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
-        )
+        self.usa_runtime_holobit = ast_requires_holobit_runtime(nodos)
         if self.usa_runtime_holobit:
             for hook in get_runtime_hooks("java"):
                 self.agregar_linea(hook)

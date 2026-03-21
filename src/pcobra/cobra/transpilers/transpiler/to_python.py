@@ -56,7 +56,7 @@ from pcobra.cobra.transpilers.common.utils import BaseTranspiler
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.common.utils import (
-    ast_contains_node_types,
+    ast_requires_holobit_runtime,
     get_standard_imports,
     get_runtime_hooks,
 )
@@ -262,10 +262,7 @@ class TranspiladorPython(BaseTranspiler):
         nodos = ensure_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
-        usa_holobit = ast_contains_node_types(
-            nodos,
-            ("NodoHolobit", "NodoProyectar", "NodoTransformar", "NodoGraficar"),
-        )
+        usa_holobit = ast_requires_holobit_runtime(nodos)
         self.codigo = get_standard_imports("python")
         if usa_holobit:
             hooks = "\n".join(get_runtime_hooks("python"))
