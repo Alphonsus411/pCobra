@@ -2,17 +2,25 @@ Hololang: sintaxis e interoperabilidad
 ======================================
 
 Hololang es el lenguaje intermedio utilizado por Cobra para describir programas
-orientados a holobits con un estilo declarativo inspirado en Rust.  Su IR
+orientados a holobits con un estilo declarativo inspirado en Rust. Su IR
 funciona como un punto de encuentro entre el AST de Cobra y los backends que
 emiten código para otros lenguajes o para el target simbólico ``asm``. En esta guía
 se resume la sintaxis disponible, cómo integrarla con Cobra y cómo aprovecharla
-para generar artefactos adicionales.
+como artefacto interno del compilador.
 
 .. important::
 
-   Hololang se mantiene como **intermedio no oficial de salida pública**.
-   Actualmente no existe un destino CLI registrado como ``hololang`` en
-   ``cobra compilar``; su uso está acotado al pipeline interno Cobra → IR → backend.
+   Hololang se mantiene como **IR interno/experimental** y **no** como target
+   oficial de salida pública. Actualmente no existe un destino CLI registrado
+   como ``hololang`` en ``cobra compilar``; su uso está acotado al pipeline
+   interno Cobra → IR → backend.
+
+.. warning::
+
+   La política oficial de salida solo reconoce ``python``, ``rust``,
+   ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``. Cualquier
+   mención a Hololang en esta página debe leerse como explicación del pipeline
+   interno, no como ampliación de los targets soportados.
 
 Sintaxis básica de Hololang
 ---------------------------
@@ -57,19 +65,20 @@ Ejemplo completo generado a partir de un programa Cobra:
 Interoperar con Cobra
 ---------------------
 
-La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
+La CLI pública de Cobra no expone a Hololang como destino oficial independiente.
+Los flujos soportados públicamente son:
 
-* **De Cobra a Hololang:**
+* **Compilar Cobra hacia un backend oficial:**
 
   .. code-block:: bash
 
      cobra compilar examples/hola_mundo/hola.co --backend python
 
   El comando anterior genera una salida válida de backend registrado
-  (en este ejemplo, ``python``). Hololang se utiliza internamente como IR y no
-  como destino público de la CLI.
+  (en este ejemplo, ``python``). Hololang puede intervenir internamente como IR,
+  pero no aparece como destino público de la CLI.
 
-* **Transpilación inversa disponible en la política actual:**
+* **Transpilación inversa soportada por política:**
 
   .. code-block:: bash
 
@@ -77,15 +86,21 @@ La CLI de Cobra expone comandos para convertir código entre ambos lenguajes:
          --origen python \
          --destino java
 
-  La transpilación inversa soportada por política acepta como origen
-  ``python``, ``javascript`` y ``java``. Si trabajas con Hololang, la ruta recomendada
-  es generar Hololang desde Cobra y continuar desde ese artefacto.
+  La transpilación inversa soportada por política acepta como **origen de
+  entrada** ``python``, ``javascript`` y ``java``. Estos orígenes reverse no son
+  targets oficiales de salida.
 
-Generación de `asm` desde Hololang
-----------------------------------------
+.. note::
 
-Una vez que dispones del código Hololang, puedes convertirlo al target
-canónico ``asm`` desde el flujo Cobra → backend:
+   El paquete ``src/pcobra/cobra/reverse`` contiene utilidades internas ligadas
+   a Hololang. Dichas utilidades no forman parte de la política pública de
+   reverse mantenida en ``src/pcobra/cobra/transpilers/reverse/policy.py``.
+
+Generación de `asm` en el pipeline interno
+-----------------------------------------
+
+Una vez que el compilador dispone del IR interno, el flujo Cobra → backend puede
+terminar en el target canónico ``asm``:
 
 .. code-block:: bash
 
@@ -100,6 +115,7 @@ Recursos adicionales
 
 * Consulta :doc:`sintaxis` para repasar el lenguaje original de Cobra.
 * Usa cualquier programa ``.co`` de ``examples/`` para repetir los flujos mostrados en esta página.
+* Revisa ``docs/experimental/`` si necesitas contexto sobre pipelines no oficiales conservados por motivos de investigación.
 
 Política de targets oficial
 ---------------------------

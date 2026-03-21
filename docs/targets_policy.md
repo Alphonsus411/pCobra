@@ -50,7 +50,7 @@ No se deben publicar aliases legacy ni targets retirados en snippets o tablas de
 
 ## Reverse de entrada
 
-La transpilación inversa se documenta como capacidad independiente. Su política de entrada se define en `src/pcobra/cobra/transpilers/reverse/policy.py`.
+La transpilación inversa se documenta como capacidad independiente. Su política de **orígenes de entrada** se define en `src/pcobra/cobra/transpilers/reverse/policy.py`.
 
 Los orígenes reverse canónicos vigentes son:
 
@@ -58,7 +58,7 @@ Los orígenes reverse canónicos vigentes son:
 - `javascript`
 - `java`
 
-La documentación pública no debe reintroducir el antiguo origen reverse asociado a WASM ni otros orígenes retirados.
+Estos nombres describen **lenguajes de entrada para `cobra transpilar-inverso`**, no targets oficiales de salida. La documentación pública no debe mezclar ambas categorías ni reintroducir el antiguo origen reverse asociado a WASM u otros orígenes retirados.
 
 ## Separación explícita entre transpilación y ejecución
 
@@ -99,6 +99,24 @@ A día de hoy:
 
 Esto debe interpretarse como **contrato de generación y hooks/fallbacks**, no como promesa universal de ejecución equivalente entre backends.
 
+## Experimentos y material histórico
+
+Los contenidos que describan pipelines, parsers reverse o prototipos fuera de los 8 targets oficiales deben mantenerse fuera de la documentación principal o marcados explícitamente.
+
+Ubicaciones autorizadas:
+
+- `docs/experimental/`: experimentos, prototipos o referencias de investigación.
+- `docs/historico/`: material archivado sin vigencia normativa.
+
+Ejemplos actuales de documentación segregada:
+
+- prototipo LLVM;
+- notas de mapeo a LLVM IR;
+- soporte reverse desde LaTeX;
+- referencia retirada del reverse desde WASM.
+
+Hololang puede documentarse en la documentación principal **solo** como IR/pipeline interno, nunca como target oficial de salida ni como origen reverse mantenido por política.
+
 ## Packaging y prerrequisitos que afectan al alcance real
 
 - `pyproject.toml` declara `holobit-sdk==1.0.8` solo para Python `>=3.10`.
@@ -109,7 +127,7 @@ Esto debe interpretarse como **contrato de generación y hooks/fallbacks**, no c
 
 - No se deben documentar otros lenguajes como targets oficiales de salida.
 - El registro de transpiladores (`registry.py`), la CLI (`compile_cmd.py`) y la matrix contractual (`compatibility_matrix.py`) deben mantenerse alineados con `OFFICIAL_TARGETS`.
-- La CI debe incluir comprobaciones textuales para impedir la reaparición de aliases legacy, módulos reverse borrados, extras no vigentes o ejemplos de CLI fuera de política en rutas de documentación pública y ejemplos.
+- La CI debe incluir comprobaciones textuales para impedir la reaparición de aliases legacy, módulos reverse borrados, extras no vigentes, ejemplos de CLI fuera de política o documentación experimental presentada como soporte oficial.
 - Cualquier ampliación o reducción del alcance debe actualizar:
   - este archivo,
   - la fuente de verdad en código,
@@ -119,8 +137,10 @@ Esto debe interpretarse como **contrato de generación y hooks/fallbacks**, no c
 
 ```bash
 python scripts/ci/validate_targets.py
+python scripts/validate_targets_policy.py
 python -m pytest tests/unit/test_official_targets_consistency.py
 python -m pytest tests/unit/test_cli_target_aliases.py
+python -m pytest tests/unit/test_public_docs_scope.py
 python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
 python -m pytest tests/integration/transpilers/test_official_backends_tier1.py
 python -m pytest tests/integration/transpilers/test_official_backends_tier2.py

@@ -16,3 +16,5 @@ jobs:
       - run: black --check .
       - name: Detect legacy target aliases in public docs
         run: python scripts/lint_legacy_aliases.py
+      - name: Validate public documentation targets policy
+        run: python scripts/validate_targets_policy.py

@@ -1,7 +1,10 @@
 """Política de alcance para reverse transpilation.
 
+Este módulo define únicamente **orígenes reverse de entrada** para
+``cobra transpilar-inverso``. No describe targets oficiales de salida.
+
 Recorte activo:
-- Solo se consideran lenguajes oficialmente mantenidos para reverse transpilation:
+- Solo se consideran lenguajes oficialmente mantenidos como origen reverse:
   Python, JavaScript y Java.
 - Cualquier módulo fuera de este alcance no se debe cargar desde el registro
   principal ni exponer en la CLI.
@@ -20,7 +23,7 @@ REVERSE_SCOPE_MODULES: Final[Dict[str, str]] = {
 
 
 def normalize_reverse_language(language: str) -> str:
-    """Normaliza el lenguaje reverse al nombre canónico usado internamente."""
+    """Normaliza el origen reverse al nombre canónico usado internamente."""
     return language.strip().lower()
 
 

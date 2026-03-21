@@ -70,10 +70,18 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python scripts/ci/validate_targets.py
+      - name: Validate public documentation targets policy
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/validate_targets_policy.py
       - name: Validate targets anti-regression policy (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/ci/validate_targets.py
+      - name: Validate public documentation targets policy (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/validate_targets_policy.py
       - name: Run linters
         if: runner.os != 'Windows'
         shell: bash

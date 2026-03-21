@@ -110,25 +110,40 @@ KNOWN_LANGUAGE_ALIASES: set[str] | None = None
 # Se usan para no bloquear PRs por referencias archivísticas preexistentes.
 HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
     "README.md": (
-        (r"latex", "Referencia al cheatsheet en formato LaTeX (documentación de formato)."),
+        (
+            r"latex",
+            "Referencia al cheatsheet en formato LaTeX (documentación de formato).",
+        ),
     ),
     "docs/README.en.md": (
-        (r"latex", "Referencia al cheatsheet en formato LaTeX (documentación de formato)."),
+        (
+            r"latex",
+            "Referencia al cheatsheet en formato LaTeX (documentación de formato).",
+        ),
     ),
     "docs/frontend/recursos_adicionales.rst": (
         (r"latex", "Enlace a recurso .tex del cheatsheet."),
     ),
-    "docs/soporte_latex.md": (
-        (r"latex", "Documento de soporte del parser de LaTeX, no target de compilación."),
+    "docs/experimental/soporte_latex.md": (
+        (
+            r"latex",
+            "Documento de soporte del parser de LaTeX, no target de compilación.",
+        ),
     ),
     ".github/workflows/pages.yml": (
         (r"latex", "Workflow de publicación de documentación PDF generada con LaTeX."),
     ),
     "src/pcobra/standard_library/__init__.py": (
-        (r"julia", "Docstring comparativo de ecosistemas numéricos; no define targets."),
+        (
+            r"julia",
+            "Docstring comparativo de ecosistemas numéricos; no define targets.",
+        ),
     ),
     "src/pcobra/standard_library/logica.py": (
-        (r"kotlin", "Docstrings comparan semántica de utilidades booleanas con otras APIs."),
+        (
+            r"kotlin",
+            "Docstrings comparan semántica de utilidades booleanas con otras APIs.",
+        ),
     ),
     "src/pcobra/standard_library/numero.py": (
         (r"kotlin", "Docstring de lerp con referencia comparativa de nomenclatura."),
@@ -146,7 +161,10 @@ HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
         ),
     ),
     "src/pcobra/corelibs/numero.py": (
-        (r"kotlin", "Docstring de interpolación con referencia equivalente en otras plataformas."),
+        (
+            r"kotlin",
+            "Docstring de interpolación con referencia equivalente en otras plataformas.",
+        ),
     ),
     "src/pcobra/corelibs/texto.py": (
         (
@@ -155,7 +173,6 @@ HISTORICAL_EXCEPTIONS: dict[str, tuple[tuple[str, str], ...]] = {
         ),
     ),
 }
-
 
 
 def is_text_file(path: Path) -> bool:
@@ -175,7 +192,6 @@ def is_text_file(path: Path) -> bool:
         return False
 
     return True
-
 
 
 def iter_scan_files(root: Path) -> list[Path]:
@@ -200,7 +216,6 @@ def iter_scan_files(root: Path) -> list[Path]:
     return files
 
 
-
 def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]:
     rules = HISTORICAL_EXCEPTIONS.get(rel_path)
     if not rules:
@@ -213,13 +228,11 @@ def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]
     return False, None
 
 
-
 def is_allowed_legacy_public_line(rel_path: str, line: str) -> bool:
     if rel_path not in PUBLIC_TEXT_PATH_STRS:
         return True
     allow_patterns = LEGACY_ALIAS_ALLOWLIST.get(rel_path, ())
     return any(pattern.search(line) for pattern in allow_patterns)
-
 
 
 def main() -> int:
@@ -231,7 +244,12 @@ def main() -> int:
     legacy_aliases = set(policy["legacy_aliases"])
     non_canonical_public_names = dict(policy["non_canonical_public_names"])
     out_of_policy_terms = set(policy["out_of_policy_language_terms"])
-    known_language_aliases = public_names | legacy_aliases | set(non_canonical_public_names) | out_of_policy_terms
+    known_language_aliases = (
+        public_names
+        | legacy_aliases
+        | set(non_canonical_public_names)
+        | out_of_policy_terms
+    )
     language_pattern = re.compile(
         r"(?<![\w#.+-])("
         + "|".join(sorted(re.escape(term) for term in known_language_aliases))
@@ -269,7 +287,10 @@ def main() -> int:
                     continue
 
                 if normalized in legacy_aliases:
-                    if rel not in PUBLIC_TEXT_PATH_STRS or is_allowed_legacy_public_line(rel, line):
+                    if (
+                        rel not in PUBLIC_TEXT_PATH_STRS
+                        or is_allowed_legacy_public_line(rel, line)
+                    ):
                         continue
                     errors.append(
                         f"{rel}:{line_no}: alias legacy expuesto como nombre público -> '{term}' "

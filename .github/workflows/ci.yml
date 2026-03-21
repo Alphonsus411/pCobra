@@ -135,6 +135,9 @@ jobs:
       - name: Validate targets anti-regression policy
         shell: bash
         run: python scripts/ci/validate_targets.py
+      - name: Validate public documentation targets policy
+        shell: bash
+        run: python scripts/validate_targets_policy.py
       - name: Lint legacy target aliases in tests/docs
         shell: bash
         run: python scripts/lint_legacy_aliases.py

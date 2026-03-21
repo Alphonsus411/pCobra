@@ -1,7 +1,10 @@
-# Prototipo LLVM
+# [EXPERIMENTAL] Prototipo LLVM
+
+> **Estado:** experimental.
+> **Ámbito:** investigación técnica, fuera de los 8 targets oficiales de salida.
+> **Política:** este documento no debe interpretarse como soporte oficial de `cobra compilar`.
 
 Este documento actúa como README del experimento para compilar Cobra con LLVM. Resume el estado actual del prototipo, sus limitaciones y los siguientes pasos propuestos.
-
 
 ## Ubicación del prototipo en el repositorio
 
@@ -35,4 +38,3 @@ El backend de ejemplo se mantiene fuera del runtime oficial en:
   - Documentar los hallazgos técnicos.
   - Mantener la rama prototipo como referencia histórica.
   - Redirigir esfuerzos a otros backends o prioridades del proyecto.
-
