@@ -26,7 +26,7 @@ def test_transpilador_inexistente(monkeypatch, tmp_path):
     rc = CompileCommand().run(args)
 
     assert rc == 1
-    assert any("Transpilador no soportado" in m for m in mensajes)
+    assert any("Backend no permitido" in m for m in mensajes)
 
 
 @pytest.mark.timeout(5)
@@ -77,7 +77,7 @@ def test_exceso_tipos(monkeypatch, tmp_path):
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.module_map.get_toml_map", lambda: {})
 
-    many_langs = "python,js,cpp,go,java,asm,rust,wasm,python,js,rust"
+    many_langs = "python,javascript,cpp,go,java,asm,rust,wasm,python,javascript,rust"
     args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=many_langs)
     rc = CompileCommand().run(args)
 

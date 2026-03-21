@@ -26,14 +26,19 @@ dummy_transpilers = {
     "cpp": "TranspiladorCPP",
     "go": "TranspiladorGo",
     "java": "TranspiladorJava",
-    "js": "TranspiladorJavaScript",
+    "javascript": "TranspiladorJavaScript",
     "python": "TranspiladorPython",
     "rust": "TranspiladorRust",
     "wasm": "TranspiladorWasm",
 }
 
-for suffix, class_name in dummy_transpilers.items():
-    mod_name = f"cobra.transpilers.transpiler.to_{suffix}"
+_MODULE_SUFFIX_BY_TARGET = {
+    "javascript": "js",
+}
+
+for target, class_name in dummy_transpilers.items():
+    module_suffix = _MODULE_SUFFIX_BY_TARGET.get(target, target)
+    mod_name = f"cobra.transpilers.transpiler.to_{module_suffix}"
     if mod_name not in sys.modules:
         module = types.ModuleType(mod_name)
         setattr(module, class_name, type(class_name, (), {"generate_code": lambda self, ast: ""}))
