@@ -20,7 +20,7 @@ Se añade el archivo ``cobra.toml`` para definir el mapeo de módulos en formato
 
 .. code-block:: toml
 
-   ["modulo.co"]
+   [modulos."modulo.co"]
    python = "modulo.py"
    javascript = "modulo.js"
 

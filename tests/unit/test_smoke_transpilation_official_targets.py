@@ -72,34 +72,25 @@ def test_smoke_runtime_holobit_asm_expone_fallo_explicito_y_homogeneo(ast_holobi
     assert "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible." in code
 
 
-def test_module_map_resuelve_targets_en_cobra_toml_y_cobra_mod(tmp_path, monkeypatch):
+def test_module_map_resuelve_targets_solo_desde_cobra_toml(tmp_path, monkeypatch):
     modulo = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
         "[modulos]\n"
         "[modulos.'biblioteca.co']\n"
         "python = 'biblioteca.py'\n"
-        "javascript = 'biblioteca.js'\n",
-        encoding="utf-8",
-    )
-    mod_file = tmp_path / "cobra.mod"
-    mod_file.write_text(
-        "[modulos]\n"
-        "[modulos.'biblioteca.co']\n"
+        "javascript = 'biblioteca.js'\n"
         "rust = 'biblioteca.rs'\n"
         "go = 'biblioteca.go'\n",
         encoding="utf-8",
     )
 
     monkeypatch.setenv("COBRA_TOML", str(toml_file))
-    monkeypatch.setenv("COBRA_MODULE_MAP", str(mod_file))
 
     import pcobra.cobra.transpilers.module_map as module_map
 
     module_map.COBRA_TOML_PATH = str(toml_file)
-    module_map.MODULE_MAP_PATH = str(mod_file)
     module_map._toml_cache = None
-    module_map._cache = None
 
     assert module_map.get_mapped_path(modulo, "python") == "biblioteca.py"
     assert module_map.get_mapped_path(modulo, "javascript") == "biblioteca.js"

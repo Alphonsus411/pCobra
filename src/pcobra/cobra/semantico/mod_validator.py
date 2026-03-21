@@ -6,6 +6,7 @@ comprobaciones incluyen:
 
 - Existencia de los archivos declarados para los backends oficiales definidos en
   ``OFFICIAL_TARGETS``.
+- Rechazo de aliases legacy o backends fuera de la lista canónica oficial.
 - Validez de las versiones indicadas utilizando el formato semver.
 - Detección de nombres de módulos o archivos duplicados.
 """
@@ -159,6 +160,18 @@ def _warn_if_tier2_used_as_optional_mapping(modulo: str, info: dict[str, Any]) -
         )
 
 
+def _find_noncanonical_backend_keys(info: dict[str, Any]) -> list[str]:
+    """Devuelve claves backend no canónicas presentes en un mapping de módulo."""
+    ignored_keys = {"version"}
+    noncanonical: list[str] = []
+    for key in info:
+        if key in ignored_keys:
+            continue
+        if key not in OFFICIAL_TARGETS:
+            noncanonical.append(key)
+    return sorted(noncanonical)
+
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -197,6 +210,17 @@ def validar_mod(path: str | None = None) -> None:
 
         info_normalized = dict(info)
         _warn_if_tier2_used_as_optional_mapping(modulo, info_normalized)
+
+        invalid_backend_keys = _find_noncanonical_backend_keys(info_normalized)
+        if invalid_backend_keys:
+            errores.append(
+                "Backends no canónicos en {modulo}: {targets}. "
+                "Usa únicamente: {allowed}".format(
+                    modulo=modulo,
+                    targets=", ".join(invalid_backend_keys),
+                    allowed=", ".join(OFFICIAL_TARGETS),
+                )
+            )
 
         # Validar versión
         version = info_normalized.get("version")
