@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("tree_sitter")
+
 from cobra.transpilers.reverse.from_java import ReverseFromJava
 from cobra.transpilers.reverse.from_js import ReverseFromJS
 from cobra.transpilers.reverse.from_python import ReverseFromPython
