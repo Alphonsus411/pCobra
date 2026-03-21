@@ -123,6 +123,16 @@ REMOVED_BACKEND_NAME_PATTERNS: dict[str, re.Pattern[str]] = {
     ),
     "reverse-wasm": re.compile(r"(?<![\w.-])(reverse-wasm)(?![\w.-])", re.IGNORECASE),
 }
+REMOVED_C_CONDITIONAL_PATTERNS: dict[str, re.Pattern[str]] = {
+    "lang==c": re.compile(
+        r"\b(?:lang|language|lenguaje|backend|target|destino)\s*==\s*['\"]c['\"]"
+    ),
+    "lang!=c": re.compile(
+        r"\b(?:lang|language|lenguaje|backend|target|destino)\s*!=\s*['\"]c['\"]"
+    ),
+    "c-dict-key": re.compile(r"(?:\{|,)\s*['\"]c['\"]\s*:"),
+    "c-extension": re.compile(r"['\"]\.c['\"]"),
+}
 REVERSE_IMPORT_PREFIXES = (
     "cobra.transpilers.reverse.from_",
     "pcobra.cobra.transpilers.reverse.from_",
@@ -442,6 +452,12 @@ def validate_scan_roots(
                     if match:
                         errors.append(
                             f"{rel}:{line_no}: referencia a backend retirado -> {retired_name}"
+                        )
+
+                for pattern_name, pattern in REMOVED_C_CONDITIONAL_PATTERNS.items():
+                    if pattern.search(line):
+                        errors.append(
+                            f"{rel}:{line_no}: rama/helper/tabla fuera de política para backend retirado 'c' -> {pattern_name}"
                         )
 
                 if rel in PUBLIC_TEXT_PATH_STRS:
