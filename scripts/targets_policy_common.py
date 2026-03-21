@@ -48,6 +48,7 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/benchmarks_cmd.py",
     ROOT / "README.md",
     ROOT / "docs/MANUAL_COBRA.md",
+    ROOT / "docs/README.en.md",
     ROOT / "docs/config_cli.md",
     ROOT / "docs/contrato_runtime_holobit.md",
     ROOT / "docs/especificacion_tecnica.md",
@@ -71,6 +72,7 @@ PUBLIC_TEXT_PATH_STRS: frozenset[str] = frozenset(
 PUBLIC_RUNTIME_POLICY_PATHS = (
     ROOT / "README.md",
     ROOT / "docs/MANUAL_COBRA.md",
+    ROOT / "docs/README.en.md",
     ROOT / "docs/matriz_transpiladores.md",
     ROOT / "docs/targets_policy.md",
 )
@@ -78,6 +80,7 @@ PUBLIC_RUNTIME_POLICY_PATHS = (
 HOLOBIT_PUBLIC_CONTRACT_PATHS = (
     ROOT / "README.md",
     ROOT / "docs/MANUAL_COBRA.md",
+    ROOT / "docs/README.en.md",
     ROOT / "docs/contrato_runtime_holobit.md",
     ROOT / "docs/matriz_transpiladores.md",
     ROOT / "docs/targets_policy.md",

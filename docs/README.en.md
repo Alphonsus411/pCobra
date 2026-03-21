@@ -14,7 +14,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 ## Table of Contents
 
 - Project Description
-- Hololang-centric architecture
+- Internal architecture with Hololang (internal IR)
 - Installation
 - Project Structure
 - Supported tools and scripts
@@ -40,7 +40,7 @@ Cobra is a programming language designed in Spanish, aimed at creating tools, si
 - [Cobra Manual in PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Basic guide](guia_basica.md)
 - [Technical specification](especificacion_tecnica.md)
-- [Cheatsheet](cheatsheet.tex) – compile it to PDF with LaTeX
+- [Cheatsheet](cheatsheet.tex) – internal documentation source in LaTeX, not an official output target
 - [Real use cases](casos_reales.md)
 - [Node sandbox limitations](limitaciones_node_sandbox.md)
 - Example notebooks and real cases
@@ -80,15 +80,15 @@ You can experiment with Cobra directly in your browser:
 
 Cobra is designed to make programming in Spanish easier, allowing developers to use a more accessible language. Through its lexer, parser and transpilers, Cobra can analyze, execute and convert code to other languages, providing support for variables, functions, control structures and data structures such as lists, dictionaries and classes. For a step-by-step tutorial check the [Cobra Manual](MANUAL_COBRA.rst). The full language specification is available in [SPEC_COBRA.md](SPEC_COBRA.md).
 
-## Hololang-centric architecture
+## Internal architecture with Hololang (internal IR)
 
-Cobra's toolchain revolves around Hololang, an intermediate language that captures the program semantics in a portable format. The main flow works as follows:
+Cobra's toolchain uses Hololang as an **internal IR**. Hololang is not a public official output target nor an extra backend; any mention here should be read as pipeline documentation only. The main flow works as follows:
 
 1. The front-end parses the source code and builds the Cobra AST.
 2. That AST is normalized and lowered into Hololang representations that encode control structures, modules and types.
 3. The transpilers consume the Hololang IR to generate code for each supported backend.
 
-Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. The `cobra transpilar` command can output Hololang files directly or route them to the `asm` backend to obtain assembly listings.
+Hololang acts as a stable contract between the front-end and the code generators, enabling new targets without touching the original parser. Thanks to this intermediate layer Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. Any Hololang artifact should be treated as an **internal or experimental** pipeline artifact, while the public official output set remains limited to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`.
 
 ## Installation
 

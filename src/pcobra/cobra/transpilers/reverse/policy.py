@@ -1,10 +1,11 @@
 """Política de alcance para reverse transpilation.
 
 Este módulo define únicamente **orígenes reverse de entrada** para
-``cobra transpilar-inverso``. No describe targets oficiales de salida.
+``cobra transpilar-inverso``. No describe targets oficiales de salida ni amplía
+el set oficial de backends públicos.
 
 Recorte activo:
-- Solo se consideran lenguajes oficialmente mantenidos como origen reverse:
+- Solo se consideran lenguajes oficialmente mantenidos como origen reverse de entrada:
   Python, JavaScript y Java.
 - Cualquier módulo fuera de este alcance no se debe cargar desde el registro
   principal ni exponer en la CLI.
@@ -23,17 +24,17 @@ REVERSE_SCOPE_MODULES: Final[Dict[str, str]] = {
 
 
 def normalize_reverse_language(language: str) -> str:
-    """Normaliza el origen reverse al nombre canónico usado internamente."""
+    """Normaliza un origen reverse de entrada al nombre canónico interno."""
     return language.strip().lower()
 
 
 def parse_reverse_source_language(value: str) -> str:
-    """Valida un origen reverse CLI aceptando solo nombres canónicos."""
+    """Valida un origen reverse CLI aceptando solo nombres canónicos de entrada."""
     canonical = normalize_reverse_language(value)
     if canonical not in REVERSE_SCOPE_LANGUAGES:
         raise ArgumentTypeError(
             "Lenguaje de origen no soportado para transpilación inversa: "
-            "'{value}'. Usa uno canónico: {supported}.".format(
+            "'{value}'. Este comando solo acepta orígenes reverse de entrada: {supported}.".format(
                 value=value.strip(),
                 supported=", ".join(REVERSE_SCOPE_LANGUAGES),
             )

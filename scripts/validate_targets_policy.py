@@ -100,6 +100,45 @@ LOCKFILES = {
 # canónico público, alias legacy interno o término completamente fuera de política.
 KNOWN_LANGUAGE_ALIASES: set[str] | None = None
 
+AMBIGUOUS_ARCHIVE_LINK_LABELS = (
+    "experimental",
+    "histórico",
+    "historico",
+    "interno",
+    "interna",
+    "internal",
+    "fuera de política",
+    "fuera de politica",
+    "sin vigencia",
+)
+
+PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS = {
+    "hololang": re.compile(
+        r"(?=.*\bhololang\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
+        re.IGNORECASE,
+    ),
+    "llvm": re.compile(
+        r"(?=.*\bllvm\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
+        re.IGNORECASE,
+    ),
+    "latex": re.compile(
+        r"(?=.*\blatex\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|origen|orígenes|origenes|salida|output)\b)",
+        re.IGNORECASE,
+    ),
+    "reverse-wasm": re.compile(
+        r"\b(?:reverse\s+(?:desde|from)\s+(?:wasm|webassembly)|(?:wasm|webassembly)\s+reverse)\b",
+        re.IGNORECASE,
+    ),
+}
+
+PUBLIC_NON_OFFICIAL_REQUIRED_LABELS = {
+    "hololang": ("interno", "interna", "internal", "experimental", "ir"),
+    "llvm": ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
+    "latex": ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
+    "reverse-wasm": ("experimental", "retirado", "histórico", "historico", "fuera de política", "fuera de politica"),
+}
+
+
 def is_text_file(path: Path) -> bool:
     if path.suffix.lower() in BINARY_OR_GENERATED_SUFFIXES:
         return False
@@ -204,6 +243,31 @@ def main() -> int:
             continue
 
         for line_no, line in enumerate(content.splitlines(), start=1):
+            lowered = line.lower()
+            if rel in PUBLIC_TEXT_PATH_STRS:
+                if ("docs/experimental/" in line or "docs/historico/" in line) and not any(
+                    label in lowered for label in AMBIGUOUS_ARCHIVE_LINK_LABELS
+                ):
+                    errors.append(
+                        f"{rel}:{line_no}: enlace ambiguo a documentación experimental/histórica; añade etiqueta visible (experimental/interno/fuera de política/histórico)"
+                    )
+
+                for label, pattern in PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS.items():
+                    if not pattern.search(line):
+                        continue
+                    if label == "hololang" and any(
+                        marker in lowered
+                        for marker in ("no expone", "no es", "no describe", "pipeline interno")
+                    ):
+                        continue
+                    if not any(
+                        marker in lowered
+                        for marker in PUBLIC_NON_OFFICIAL_REQUIRED_LABELS[label]
+                    ):
+                        errors.append(
+                            f"{rel}:{line_no}: referencia pública ambigua a {label}; debe etiquetarse como interno/experimental/fuera de política según corresponda"
+                        )
+
             for match in language_pattern.finditer(line):
                 term = match.group(1)
                 normalized = term.lower().strip()

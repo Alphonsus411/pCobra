@@ -225,6 +225,50 @@ PUBLIC_POLICY_LIST_PATTERNS: dict[str, tuple[re.Pattern[str], str]] = {
     ),
 }
 
+
+ARCHIVE_LINK_REQUIRED_MARKERS = (
+    "experimental",
+    "histórico",
+    "historico",
+    "interno",
+    "interna",
+    "internal",
+    "fuera de política",
+    "fuera de politica",
+    "sin vigencia",
+)
+
+PUBLIC_NON_OFFICIAL_LABELLED_PATTERNS: dict[str, tuple[re.Pattern[str], tuple[str, ...]]] = {
+    "hololang-public-context": (
+        re.compile(
+            r"(?=.*\bhololang\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
+            re.IGNORECASE,
+        ),
+        ("interno", "interna", "internal", "experimental", "ir"),
+    ),
+    "llvm-public-context": (
+        re.compile(
+            r"(?=.*\bllvm\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
+            re.IGNORECASE,
+        ),
+        ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
+    ),
+    "latex-public-context": (
+        re.compile(
+            r"(?=.*\blatex\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|origen|orígenes|origenes|salida|output)\b)",
+            re.IGNORECASE,
+        ),
+        ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
+    ),
+    "reverse-wasm-public-context": (
+        re.compile(
+            r"\b(?:reverse\s+(?:desde|from)\s+(?:wasm|webassembly)|(?:wasm|webassembly)\s+reverse)\b",
+            re.IGNORECASE,
+        ),
+        ("experimental", "retirado", "histórico", "historico", "fuera de política", "fuera de politica"),
+    ),
+}
+
 FORBIDDEN_NON_PYTHON_HOLOBIT_FULL_CLAIM = re.compile(
     r"(javascript|rust|wasm|go|cpp|java|asm).{0,120}"
     r"(holobit|proyectar|transformar|graficar|corelibs|standard_library).{0,80}"
@@ -729,6 +773,26 @@ def validate_scan_roots(
                         )
 
                 if rel in PUBLIC_TEXT_PATH_STRS:
+                    if ("docs/experimental/" in line or "docs/historico/" in line) and not any(
+                        marker in lowered for marker in ARCHIVE_LINK_REQUIRED_MARKERS
+                    ):
+                        errors.append(
+                            f"{rel}:{line_no}: enlace ambiguo a docs/experimental o docs/historico sin etiqueta visible"
+                        )
+
+                    for pattern_name, (pattern, markers) in PUBLIC_NON_OFFICIAL_LABELLED_PATTERNS.items():
+                        if not pattern.search(line):
+                            continue
+                        if pattern_name == "hololang-public-context" and any(
+                            marker in lowered
+                            for marker in ("no expone", "no es", "no describe", "pipeline interno")
+                        ):
+                            continue
+                        if not any(marker in lowered for marker in markers):
+                            errors.append(
+                                f"{rel}:{line_no}: referencia pública ambigua fuera de política -> {pattern_name}"
+                            )
+
                     for alias, pattern in PUBLIC_NAME_PATTERNS.items():
                         match = pattern.search(line)
                         if not match:

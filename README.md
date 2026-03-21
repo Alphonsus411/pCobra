@@ -44,7 +44,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 ## Tabla de Contenidos
 
 - Descripción del Proyecto
-- Arquitectura centrada en Hololang
+- Arquitectura interna con Hololang (IR interno)
 - Instalación
 - Cómo usar la CLI
 - Descargas
@@ -73,7 +73,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - [Guía básica](docs/guia_basica.md)
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
-- [Cheatsheet](docs/cheatsheet.tex) – compílalo a PDF con LaTeX
+- [Cheatsheet](docs/cheatsheet.tex) – fuente documental interna en LaTeX, no target oficial de salida
 - [Casos de uso reales](docs/casos_reales.md)
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
 - [Limitaciones del sandbox de `cpp`](docs/limitaciones_cpp_sandbox.md)
@@ -124,15 +124,15 @@ Cobra está diseñado para facilitar la programación en español, permitiendo q
 Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
 La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
-## Arquitectura centrada en Hololang
+## Arquitectura interna con Hololang (IR interno)
 
-La cadena de herramientas de Cobra se articula alrededor de Hololang, un lenguaje intermedio diseñado para describir los programas de forma explícita y portable. El flujo principal funciona de la siguiente manera:
+La cadena de herramientas de Cobra utiliza Hololang como **IR interno** del compilador. Hololang no es un target oficial de salida ni un backend público adicional; su presencia en esta sección debe leerse como descripción del pipeline interno del proyecto. El flujo principal funciona de la siguiente manera:
 
 1. El front-end analiza el código fuente y construye el AST de Cobra.
 2. Ese AST se normaliza y se transforma en representaciones Hololang que capturan estructuras de control, módulos y tipos.
 3. Los transpiladores consumen el IR Hololang para generar código en los distintos backends soportados.
 
-Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. El comando `cobra transpilar` puede emitir directamente los ficheros Hololang o derivarlos al target canónico `asm` para obtener la salida correspondiente.
+Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. Cualquier artefacto Hololang debe entenderse como salida **interna o experimental** del pipeline, mientras que la salida pública oficial sigue limitada a `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
 
 ## Instalación
 
@@ -798,8 +798,7 @@ El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 
 ## Conversión desde otros lenguajes a Cobra
 
-Puedes usar `cobra transpilar-inverso` para leer un archivo en otro lenguaje,
-convertirlo al AST de Cobra y luego generarlo en cualquier backend soportado.
+Puedes usar `cobra transpilar-inverso` para leer un archivo en otro lenguaje, convertirlo al AST de Cobra y luego generarlo en uno de los 8 backends oficiales de salida. Los valores `python`, `javascript` y `java` aparecen aquí en doble papel: pueden ser **orígenes reverse de entrada** y, por separado, también targets oficiales de salida cuando se usan como `--destino`.
 
 ```bash
 cobra transpilar-inverso script.py --origen=python --destino=python
@@ -807,7 +806,7 @@ cobra transpilar-inverso script.py --origen=python --destino=python
 
 El proceso intenta mapear instrucciones básicas, pero características muy específicas pueden requerir ajustes manuales. Actualmente la cobertura varía según el lenguaje y puede que ciertas construcciones no estén implementadas.
 
-Actualmente la transpilación inversa soportada por política acepta código de entrada en `python`, `javascript` y `java`, y la salida debe elegirse entre los 8 targets oficiales de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+Actualmente la transpilación inversa soportada por política acepta código de entrada solo en `python`, `javascript` y `java`. Esos tres nombres son **orígenes reverse**, no destinos oficiales adicionales. La salida debe elegirse entre los 8 targets oficiales de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 
 Separación explícita para usuario final:
 
