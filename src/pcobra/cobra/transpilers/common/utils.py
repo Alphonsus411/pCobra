@@ -180,16 +180,41 @@ RUNTIME_HOOKS = {
         "        raise",
     ],
     "javascript": [
+        "function _cobra_global_this() {",
+        "    if (typeof globalThis !== 'undefined') {",
+        "        return globalThis;",
+        "    }",
+        "    if (typeof window !== 'undefined') {",
+        "        return window;",
+        "    }",
+        "    if (typeof global !== 'undefined') {",
+        "        return global;",
+        "    }",
+        "    return undefined;",
+        "}",
         "function cobra_holobit(valores) {",
+        "    const runtime = _cobra_global_this();",
+        "    if (runtime && typeof runtime.holobit === 'function') {",
+        "        return runtime.holobit(valores);",
+        "    }",
         "    return Array.isArray(valores) ? valores : [valores];",
         "}",
         "function cobra_proyectar(hb, modo) {",
+        "    if (hb && typeof hb.proyectar === 'function') {",
+        "        return hb.proyectar(modo);",
+        "    }",
         "    throw new Error(\"Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.\");",
         "}",
         "function cobra_transformar(hb, op, ...params) {",
+        "    if (hb && typeof hb.transformar === 'function') {",
+        "        return hb.transformar(op, ...params);",
+        "    }",
         "    throw new Error(\"Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.\");",
         "}",
         "function cobra_graficar(hb) {",
+        "    if (hb && typeof hb.graficar === 'function') {",
+        "        return hb.graficar();",
+        "    }",
         "    throw new Error(\"Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.\");",
         "}",
     ],
@@ -329,15 +354,74 @@ def validate_runtime_contracts() -> None:
 validate_runtime_contracts()
 
 
+HOLOBIT_RUNTIME_REFERENCES = (
+    "cobra_holobit",
+    "cobra_proyectar",
+    "cobra_transformar",
+    "cobra_graficar",
+)
+
+
+def _iter_tree_values(tree):
+    """Recorre valores anidados de ``tree`` soportando listas, dicts y objetos con ``__dict__``/``__slots__``."""
+    if tree is None:
+        return
+    if isinstance(tree, dict):
+        for key, value in tree.items():
+            yield key
+            yield value
+        return
+    if isinstance(tree, (list, tuple, set)):
+        yield from tree
+        return
+
+    data = getattr(tree, "__dict__", None)
+    if data:
+        yield from data.values()
+
+    for slot in getattr(tree, "__slots__", ()):
+        if slot in {"__dict__", "__weakref__"}:
+            continue
+        try:
+            yield getattr(tree, slot)
+        except AttributeError:
+            continue
+
+
+def tree_contains_text_patterns(tree, patterns: tuple[str, ...]) -> bool:
+    """Indica si ``tree`` contiene alguna cadena que referencie uno de los patrones dados."""
+    if tree is None:
+        return False
+    if isinstance(tree, str):
+        return any(pattern in tree for pattern in patterns)
+
+    for value in _iter_tree_values(tree):
+        if tree_contains_text_patterns(value, patterns):
+            return True
+    return False
+
+
+def program_uses_holobit_runtime(tree) -> bool:
+    """Detecta referencias al runtime Holobit tanto en AST Cobra como en IR Hololang."""
+    ast_nodes = (
+        "NodoHolobit",
+        "NodoProyectar",
+        "NodoTransformar",
+        "NodoGraficar",
+        "HololangHolobit",
+    )
+    if ast_contains_node_types(tree, ast_nodes):
+        return True
+    return tree_contains_text_patterns(tree, HOLOBIT_RUNTIME_REFERENCES)
+
+
 def ast_contains_node_types(tree, node_type_names: tuple[str, ...]) -> bool:
     """Indica si ``tree`` contiene algún nodo cuyo nombre de clase esté en ``node_type_names``."""
     if tree is None:
         return False
-    if isinstance(tree, (list, tuple, set)):
-        return any(ast_contains_node_types(item, node_type_names) for item in tree)
     if tree.__class__.__name__ in node_type_names:
         return True
-    for value in getattr(tree, "__dict__", {}).values():
+    for value in _iter_tree_values(tree):
         if ast_contains_node_types(value, node_type_names):
             return True
     return False
@@ -389,4 +473,7 @@ __all__ = [
     "RUNTIME_ERROR_MESSAGE",
     "validate_runtime_contracts",
     "ast_contains_node_types",
+    "tree_contains_text_patterns",
+    "program_uses_holobit_runtime",
+    "HOLOBIT_RUNTIME_REFERENCES",
 ]
