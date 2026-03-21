@@ -5,11 +5,11 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from pcobra.cobra.transpilers.targets import normalize_target_name, target_label
 
-from scripts.benchmarks.targets_policy import benchmark_backends
+from scripts.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
@@ -139,18 +139,8 @@ class BenchmarksCommand(BaseCommand):
             )
             return 1
 
-_BACKEND_ALIASES: Mapping[str, Sequence[str]] = {
-    "python": ("python",),
-    "rust": ("rust",),
-    "javascript": ("javascript",),
-    "wasm": ("wasm",),
-    "go": ("go",),
-    "cpp": ("cpp",),
-    "java": ("java",),
-    "asm": ("asm",),
-}
-
-BACKENDS: Mapping[str, Sequence[str]] = {
-    target: _BACKEND_ALIASES.get(target, (normalize_target_name(target),))
-    for target in benchmark_backends(_BACKEND_ALIASES)
-}
+validate_backend_metadata(
+    BENCHMARK_BACKEND_METADATA,
+    context="pcobra.cobra.cli.commands.benchmarks_cmd.BENCHMARK_BACKEND_METADATA",
+)
+BACKENDS = benchmark_backends(BENCHMARK_BACKEND_METADATA)

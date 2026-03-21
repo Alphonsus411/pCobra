@@ -39,7 +39,6 @@ from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
     build_target_help_by_tier,
     normalize_target_name,
-    target_cli_choices,
 )
 
 # Configuración del logging
@@ -62,8 +61,8 @@ class TranspilationError(Exception):
     pass
 REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
 ORIGIN_CHOICES = sorted(reverse_module.REVERSE_SCOPE_LANGUAGES)
-DESTINO_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
-TARGETS_HELP = build_target_help_by_tier()
+DESTINO_CHOICES = list(OFFICIAL_TARGETS)
+TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TARGETS)
 
 
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:

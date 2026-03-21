@@ -15,7 +15,6 @@ from pcobra.cobra.transpilers.targets import (
     build_target_help_by_tier,
     normalize_target_name,
     resolution_candidates,
-    target_cli_choices,
     target_label,
 )
 from pcobra.core.ast_cache import obtener_ast
@@ -56,7 +55,7 @@ def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
             _("Backend no permitido en {context}: {backend}. Permitidos: {supported}").format(
                 context=context,
                 backend=backend,
-                supported=", ".join(target_cli_choices(OFFICIAL_TARGETS)),
+                supported=", ".join(OFFICIAL_TARGETS),
             )
         )
     return canonical
@@ -74,7 +73,7 @@ def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
             ).format(
                 context=context,
                 backend=backend,
-                supported=", ".join(target_cli_choices(OFFICIAL_TARGETS)),
+                supported=", ".join(OFFICIAL_TARGETS),
             )
         )
     return normalized
@@ -124,8 +123,8 @@ def load_entrypoint_transpilers() -> None:
 
 load_entrypoint_transpilers()
 
-LANG_CHOICES = list(target_cli_choices(OFFICIAL_TARGETS))
-TARGETS_HELP = build_target_help_by_tier(LANG_CHOICES)
+LANG_CHOICES = list(OFFICIAL_TARGETS)
+TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TARGETS)
 
 
 def parse_official_target_list(value: str) -> list[str]:

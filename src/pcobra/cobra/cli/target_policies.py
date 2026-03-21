@@ -13,10 +13,10 @@ from pcobra.cobra.transpilers.targets import (
 )
 
 # Todos los destinos oficiales de generación/transpilación.
-OFFICIAL_TRANSPILATION_TARGETS = target_cli_choices(OFFICIAL_TARGETS)
+OFFICIAL_TRANSPILATION_TARGETS = tuple(OFFICIAL_TARGETS)
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
-OFFICIAL_RUNTIME_TARGETS = ("python", "javascript", "cpp", "rust")
+OFFICIAL_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
 
 # Targets oficiales que hoy son solo de generación y no prometen runtime oficial.
 TRANSPILATION_ONLY_TARGETS = tuple(

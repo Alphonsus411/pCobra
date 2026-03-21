@@ -82,6 +82,36 @@ def require_exact_official_targets(
     return ordered
 
 
+def require_exact_tier_targets(
+    available_targets: Iterable[str],
+    *,
+    expected_tier: tuple[str, ...],
+    context: str,
+) -> tuple[str, ...]:
+    """Valida que un conjunto coincida exactamente con un tier oficial."""
+    normalized = require_official_target_subset(available_targets, context=context)
+    ordered = target_cli_choices(normalized)
+    expected_order = tuple(target for target in OFFICIAL_TARGETS if target in expected_tier)
+    missing = [target for target in expected_order if target not in normalized]
+    extras = sorted(set(normalized) - set(expected_order))
+    if missing or extras or len(set(normalized)) != len(expected_order):
+        details = []
+        if missing:
+            details.append(f"faltan: {', '.join(missing)}")
+        if extras:
+            details.append(f"sobran: {', '.join(extras)}")
+        duplicated = [target for target in expected_order if normalized.count(target) > 1]
+        if duplicated:
+            details.append(f"duplicados: {', '.join(sorted(set(duplicated)))}")
+        raise RuntimeError(
+            "Conjunto de targets desalineado con {context} ({details})".format(
+                context=context,
+                details="; ".join(details) or "orden/cantidad inválidos",
+            )
+        )
+    return tuple(target for target in ordered if target in expected_order)
+
+
 def target_label(target: str) -> str:
     """Devuelve la etiqueta amigable de un target canónico."""
     canonical = normalize_target_name(target)
