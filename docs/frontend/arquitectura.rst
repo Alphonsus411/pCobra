@@ -62,7 +62,7 @@ optimizar el rendimiento y evitar fugas de memoria.
        CLI -> Lexer;
    Interprete -> Memoria;
    Interprete -> ModulosNativos;
-   Transpiladores -> {Python JS Asm Rust Cpp Go Java Wasm};
+   Transpiladores -> {Python JavaScript Asm Rust Cpp Go Java Wasm};
    }
  
 Interacción de los módulos
@@ -91,4 +91,3 @@ Diagrama de flujo general
 
 .. uml:: uml/arquitectura_general.puml
    :caption: Flujo del compilador y transpiladores
-

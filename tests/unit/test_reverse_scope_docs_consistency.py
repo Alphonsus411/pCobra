@@ -37,6 +37,21 @@ def test_readme_lista_de_reverse_scope_alineada_con_policy():
     assert encontrados == set(REVERSE_SCOPE_LANGUAGES)
 
 
+def test_contributing_checklist_reverse_scope_alineada_con_policy():
+    contenido = Path("CONTRIBUTING.md").read_text(encoding="utf-8")
+    linea = next(
+        l
+        for l in contenido.splitlines()
+        if "transpilar-inverso" in l and "orígenes oficiales" in l
+    )
+    encontrados = {
+        _normalizar(token)
+        for token in re.findall(r"`([^`]+)`", linea)
+        if _normalizar(token) in set(REVERSE_SCOPE_LANGUAGES)
+    }
+    assert encontrados == set(REVERSE_SCOPE_LANGUAGES)
+
+
 def test_docs_reverse_no_confunden_origenes_con_targets_oficiales_de_salida():
     contenido = Path("docs/lenguajes.rst").read_text(encoding="utf-8")
     assert "Orígenes reverse de entrada (no targets de salida)" in contenido
