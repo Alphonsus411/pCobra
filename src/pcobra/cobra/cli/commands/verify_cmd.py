@@ -10,7 +10,10 @@ from argparse import ArgumentParser
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
+    OFFICIAL_TRANSPILATION_TARGETS_HELP,
     VERIFICATION_EXECUTABLE_TARGETS,
+    VERIFICATION_EXECUTABLE_TARGETS_HELP,
+    build_runtime_capability_message,
     parse_restricted_target_list,
 )
 from pcobra.cobra.transpilers.targets import target_cli_choices
@@ -67,10 +70,15 @@ class VerifyCommand(BaseCommand):
             ),
             help=_(
                 "Lista de lenguajes separados por comas para verificación ejecutable. "
-                "Oficiales de transpilación: {official}. Ejecutables en verificación: {runtime}"
+                "Targets oficiales de transpilación: {official}. "
+                "Runtimes oficiales de verificación: {runtime}. {policy}"
             ).format(
-                official=", ".join(self.OFFICIAL_LANGUAGE_CHOICES),
-                runtime=", ".join(self.SUPPORTED_LANGUAGES),
+                official=OFFICIAL_TRANSPILATION_TARGETS_HELP,
+                runtime=VERIFICATION_EXECUTABLE_TARGETS_HELP,
+                policy=build_runtime_capability_message(
+                    capability="verificación ejecutable",
+                    allowed_targets=VERIFICATION_EXECUTABLE_TARGETS,
+                ),
             ),
         )
         parser.set_defaults(cmd=self)
