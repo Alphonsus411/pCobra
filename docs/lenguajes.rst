@@ -2,11 +2,12 @@ Estado de los lenguajes soportados
 =================================
 
 En la actualidad Cobra puede generar código para una lista canónica de
-destinos de salida. A continuación se lista cada backend y su estado de
-soporte por tier. Para más detalles consulta :doc:`frontend/backends` y la
+destinos de salida: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``,
+``cpp``, ``java`` y ``asm``. A continuación se lista cada backend y su estado
+de soporte por tier. Para más detalles consulta :doc:`frontend/backends` y la
 sección *Características Principales* del `README.md <../README.md>`_.
 
-Fuente de verdad: ``src/pcobra/cobra/transpilers/targets.py``.
+Fuentes normativas: ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/cobra/cli/target_policies.py``.
 
 .. list-table:: Estado de los backends
    :header-rows: 1
@@ -29,6 +30,13 @@ Fuente de verdad: ``src/pcobra/cobra/transpilers/targets.py``.
      - Tier 2
    * - ``asm``
      - Tier 2
+
+Targets con runtime oficial (no equivalen a toda la transpilación)
+--------------------------------------------------------------------
+
+Los targets con runtime oficial son ``python``, ``rust``, ``javascript`` y
+``cpp``. Esta categoría debe leerse por separado de la lista completa de
+transpilación y de los orígenes reverse.
 
 Orígenes reverse de entrada (no targets de salida)
 --------------------------------------------------

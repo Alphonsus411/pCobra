@@ -1,8 +1,19 @@
 Estado de los lenguajes soportados
 =================================
 
-Esta guía separa los destinos de transpilación por nivel de soporte para evitar
-ambigüedades entre backends principales y experimentales.
+Esta guía separa explícitamente los **targets oficiales de transpilación**, los
+**targets con runtime oficial** y los **orígenes de transpilación inversa** para
+evitar ambigüedades entre categorías distintas.
+
+La lista canónica completa de targets oficiales de transpilación es:
+``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y
+``asm``.
+
+Fuentes normativas visibles:
+
+- ``src/pcobra/cobra/transpilers/targets.py`` para la lista canónica y los tiers.
+- ``src/pcobra/cobra/cli/target_policies.py`` para la separación entre
+  transpilación, runtime oficial y verificación ejecutable.
 
 Tier 1 (soporte principal)
 --------------------------
@@ -48,16 +59,40 @@ Tier 2 (soporte parcial/experimental)
      - ``asm``
      - Cobertura básica
 
+Targets con runtime oficial
+---------------------------
+
+.. list-table:: Targets con runtime oficial
+   :header-rows: 1
+
+   * - Lenguaje
+     - Identificador CLI
+     - Alcance
+   * - Python
+     - ``python``
+     - Runtime oficial
+   * - Rust
+     - ``rust``
+     - Runtime oficial
+   * - JavaScript
+     - ``javascript``
+     - Runtime oficial
+   * - ``cpp``
+     - ``cpp``
+     - Runtime oficial
+
 
 Política de targets oficial
 ----------------------------
 
 Los targets oficiales de salida tienen una única fuente de verdad en
 ``src/pcobra/cobra/transpilers/targets.py`` mediante las constantes
-``TIER1_TARGETS``, ``TIER2_TARGETS`` y ``OFFICIAL_TARGETS``. Toda la
-documentación pública debe usar únicamente los nombres canónicos
-``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y
-``asm``.
+``TIER1_TARGETS``, ``TIER2_TARGETS`` y ``OFFICIAL_TARGETS``. La separación
+operativa entre targets oficiales de transpilación, targets con runtime
+oficial y targets solo de transpilación se refleja en
+``src/pcobra/cobra/cli/target_policies.py``. Toda la documentación pública
+debe usar únicamente los nombres canónicos ``python``, ``rust``,
+``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
 
 Reglas del proyecto:
 
