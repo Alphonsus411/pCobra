@@ -7,9 +7,11 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from pcobra.cobra.transpilers.targets import normalize_target_name, target_label
-
-from scripts.benchmarks.targets_policy import benchmark_backends
+from pcobra.cobra.transpilers.targets import (
+    normalize_target_name,
+    target_cli_choices,
+    target_label,
+)
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
@@ -152,5 +154,5 @@ _BACKEND_ALIASES: Mapping[str, Sequence[str]] = {
 
 BACKENDS: Mapping[str, Sequence[str]] = {
     target: _BACKEND_ALIASES.get(target, (normalize_target_name(target),))
-    for target in benchmark_backends(_BACKEND_ALIASES)
+    for target in target_cli_choices(tuple(_BACKEND_ALIASES))
 }
