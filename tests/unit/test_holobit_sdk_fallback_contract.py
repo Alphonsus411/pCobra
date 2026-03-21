@@ -12,7 +12,7 @@ from pcobra.core.holobits.proyeccion import proyectar
 from pcobra.core.holobits.transformacion import escalar, mover, transformar
 
 
-def test_to_sdk_holobit_builds_stub_object_even_without_optional_sdk():
+def test_to_sdk_holobit_builds_stub_object_even_without_sdk_in_misaligned_env():
     sdk_hb = _to_sdk_holobit(Holobit([1, 2, 3]))
 
     assert hasattr(sdk_hb, "quarks")
@@ -23,7 +23,7 @@ def test_to_sdk_holobit_builds_stub_object_even_without_optional_sdk():
 
 @pytest.mark.skipif(
     _HOLOBIT_SDK_ERROR is None,
-    reason="Solo aplica cuando holobit_sdk no está instalado.",
+    reason="Solo aplica cuando el entorno no tiene holobit_sdk instalado.",
 )
 @pytest.mark.parametrize(
     ("funcion", "args"),
@@ -33,14 +33,14 @@ def test_to_sdk_holobit_builds_stub_object_even_without_optional_sdk():
         (transformar, (Holobit([1, 2, 3]), "rotar", "z", 45)),
     ),
 )
-def test_holobit_sdk_fallback_raises_explicit_error_when_sdk_is_missing(funcion, args):
-    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|requiere la dependencia opcional"):
+def test_holobit_sdk_fallback_raises_explicit_error_when_required_sdk_is_missing(funcion, args):
+    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"):
         funcion(*args)
 
 
 @pytest.mark.skipif(
     _HOLOBIT_SDK_ERROR is None,
-    reason="Solo aplica cuando holobit_sdk no está instalado.",
+    reason="Solo aplica cuando el entorno no tiene holobit_sdk instalado.",
 )
 @pytest.mark.parametrize(
     ("funcion", "args"),
@@ -49,6 +49,6 @@ def test_holobit_sdk_fallback_raises_explicit_error_when_sdk_is_missing(funcion,
         (mover, (Holobit([1, 2, 3]), 1, 2, 3)),
     ),
 )
-def test_holobit_sdk_helpers_also_raise_explicit_error_without_sdk(funcion, args):
-    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|requiere la dependencia opcional"):
+def test_holobit_sdk_helpers_also_raise_explicit_error_without_required_sdk(funcion, args):
+    with pytest.raises(ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"):
         funcion(*args)

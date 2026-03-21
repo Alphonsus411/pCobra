@@ -20,13 +20,17 @@ El runtime Holobit mínimo expone **4 hooks**:
 ### Política oficial cuando falta `holobit_sdk`
 
 - **Política elegida**: **Opción B**, error explícito y documentado.
-- La ausencia de `holobit_sdk` **no** debe producir un no-op silencioso en las
-  operaciones avanzadas del runtime Holobit.
+- En packaging, `holobit-sdk==1.0.8` forma parte de la instalación **obligatoria**
+  de `pcobra` cuando se usa Python `>=3.10`.
+- La ausencia efectiva de `holobit_sdk` en ese rango **no** debe producir un
+  no-op silencioso en las operaciones avanzadas del runtime Holobit; se trata
+  de un entorno desalineado respecto al contrato de instalación.
 - Cuando el backend depende de `holobit_sdk` para ejecutar `proyectar`,
   `transformar` o `graficar`, debe emitir una excepción/runtime error
   descriptivo que identifique la dependencia faltante.
 - En Python la señalización esperada es `ModuleNotFoundError` mencionando
-  `holobit_sdk`.
+  `holobit_sdk` y aclarando que se esperaba como dependencia obligatoria en
+  Python `>=3.10`.
 
 ### `cobra_holobit(valores)`
 - **Entrada**: colección indexable de valores numéricos.
@@ -64,8 +68,9 @@ Si no aparecen estos nodos, no se inyecta runtime Holobit.
 
 ## Estado de implementación por backend
 
-- Python: hooks ejecutables y contrato `full`; si falta `holobit_sdk`, las primitivas avanzadas
-  fallan explícitamente con `ModuleNotFoundError`.
+- Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con
+  Python `>=3.10`, y si aun así falta `holobit_sdk`, las primitivas avanzadas fallan explícitamente
+  con `ModuleNotFoundError`.
 - JavaScript, Rust, Go, C++, Java: contrato `partial`; hooks ejecutables mínimos con error
   explícito cuando el runtime avanzado no está disponible. JavaScript no debe documentarse
   como compatibilidad real con Holobit SDK mientras solo conserve la colección de entrada y

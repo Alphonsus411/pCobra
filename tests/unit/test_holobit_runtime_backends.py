@@ -45,9 +45,9 @@ HOOK_SYMBOLS = {
 
 EXPLICIT_ERROR_MARKERS = {
     "python": [
-        "Runtime Holobit Python: 'proyectar' requiere la dependencia opcional 'holobit_sdk'.",
-        "Runtime Holobit Python: 'transformar' requiere la dependencia opcional 'holobit_sdk'.",
-        "Runtime Holobit Python: 'graficar' requiere la dependencia opcional 'holobit_sdk'.",
+        "Runtime Holobit Python: 'proyectar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
+        "Runtime Holobit Python: 'transformar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
+        "Runtime Holobit Python: 'graficar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
     ],
     "javascript": [
         "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.",

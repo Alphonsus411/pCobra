@@ -576,7 +576,7 @@ Al generar código para Python, `imprimir` se convierte en `print`, `mientras` e
 
 ## Integración con holobit-sdk
 
-El proyecto declara `holobit-sdk==1.0.8` en `pyproject.toml` como dependencia condicionada a Python `>=3.10`. Las funciones `graficar`, `proyectar`, `transformar`, `escalar` y `mover` del runtime Python delegan en esa API cuando está disponible. La política contractual actual prioriza **errores explícitos** cuando falta `holobit_sdk` en operaciones avanzadas, en lugar de prometer emulación completa en todos los entornos.
+El proyecto declara `holobit-sdk==1.0.8` en `pyproject.toml` como dependencia **obligatoria** cuando se instala con Python `>=3.10`. Las funciones `graficar`, `proyectar`, `transformar`, `escalar` y `mover` del runtime Python delegan en esa API como parte del contrato soportado para ese rango. Si el entorno queda desalineado y `holobit_sdk` falta igualmente, el runtime prioriza **errores explícitos** en lugar de prometer emulación completa en todos los entornos.
 
 ```python
 from core.holobits import Holobit, graficar, proyectar, transformar, escalar, mover
