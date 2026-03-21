@@ -117,6 +117,24 @@ def test_docs_publicas_exigen_error_explicito_para_backends_partial_en_holobit()
         assert "error explícito" in contenido or "fallos explícitos" in contenido
 
 
+def test_docs_contractuales_no_mezclan_helpers_python_con_contrato_holobit():
+    for path in (Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md")):
+        contenido = " ".join(path.read_text(encoding="utf-8").lower().split())
+        assert "escalar" in contenido
+        assert "mover" in contenido
+        assert "solo python" in contenido or "runtime python" in contenido
+        assert "no forman parte del contrato" in contenido or "no forman parte de esta matriz" in contenido
+
+
+def test_docs_frontend_marcan_escalar_y_mover_como_helpers_python():
+    for path in (Path("docs/frontend/referencia.rst"), Path("docs/frontend/caracteristicas.rst")):
+        contenido = " ".join(path.read_text(encoding="utf-8").lower().split())
+        assert "escalar" in contenido
+        assert "mover" in contenido
+        assert "runtime python" in contenido
+        assert "no forman parte del contrato" in contenido
+
+
 def test_docs_publicas_clave_no_reintroducen_js_como_nombre_canonico():
     for path in PUBLIC_CANONICAL_NAME_DOCS:
         contenido = path.read_text(encoding="utf-8")

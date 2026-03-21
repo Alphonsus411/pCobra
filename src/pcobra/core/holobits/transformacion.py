@@ -1,8 +1,14 @@
-"""Transformaciones de ``Holobit`` a través de ``holobit-sdk``.
+"""Transformaciones y helpers del runtime Python para ``Holobit``.
 
-En Python ``>=3.10`` este SDK forma parte del contrato obligatorio de
-instalación de ``pcobra``. Si la versión instalada no dispone de las
-operaciones ``escalar`` o ``mover`` se aplican cálculos locales equivalentes.
+``transformar`` forma parte del contrato Holobit transversal usado por los
+transpiladores oficiales. En cambio, ``escalar`` y ``mover`` son helpers del
+runtime Python: se exportan como API pública local, pero no pertenecen a la
+matriz contractual multi-backend.
+
+En Python ``>=3.10`` ``holobit-sdk`` forma parte del contrato obligatorio de
+instalación de ``pcobra``. Cuando el SDK existe pero no expone métodos nativos
+``escalar`` o ``mover``, estos helpers aplican un cálculo local equivalente
+sobre la representación convertida al SDK.
 """
 
 from pcobra._stubs.compat import import_optional_module
@@ -14,7 +20,7 @@ from .graficar import _require_holobit_sdk, _to_sdk_holobit
 
 
 def transformar(hb: Holobit, operacion: str, *parametros):
-    """Aplica transformaciones utilizando ``holobit-sdk`` requerido por el runtime."""
+    """Aplica la transformación contractual soportada por el runtime Python."""
     if not isinstance(hb, Holobit):
         raise TypeError("transformar espera una instancia de Holobit")
     _require_holobit_sdk("transformar")
@@ -28,7 +34,7 @@ def transformar(hb: Holobit, operacion: str, *parametros):
 
 
 def escalar(hb: Holobit, factor: float):
-    """Escala un ``Holobit`` usando ``holobit-sdk`` requerido por el runtime."""
+    """Helper exclusivo del runtime Python para escalar un ``Holobit``."""
     if not isinstance(hb, Holobit):
         raise TypeError("escalar espera una instancia de Holobit")
     _require_holobit_sdk("escalar")
@@ -42,7 +48,7 @@ def escalar(hb: Holobit, factor: float):
 
 
 def mover(hb: Holobit, x: float, y: float, z: float):
-    """Traslada un ``Holobit`` utilizando ``holobit-sdk`` requerido por el runtime."""
+    """Helper exclusivo del runtime Python para trasladar un ``Holobit``."""
     if not isinstance(hb, Holobit):
         raise TypeError("mover espera una instancia de Holobit")
     _require_holobit_sdk("mover")

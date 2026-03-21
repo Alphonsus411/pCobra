@@ -21,10 +21,25 @@ Funciones integradas
 - ``proyectar(h, modo)``: proyecta un holobit en ``modo`` (por ejemplo ``'2D'``).
 - ``transformar(h, accion, valor)``: aplica una transformación sobre un holobit.
 - ``graficar(h)``: visualiza el holobit en pantalla.
+
+Contrato Holobit transversal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+El contrato multi-backend documentado públicamente cubre solo
+``holobit``, ``proyectar``, ``transformar`` y ``graficar``. Consulta
+``docs/contrato_runtime_holobit.md`` y ``docs/matriz_transpiladores.md`` para
+el nivel exacto de soporte por backend.
+
+Helpers adicionales del runtime Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 - ``escalar(h, factor)``: multiplica las coordenadas por ``factor``.
 - ``mover(h, x, y, z)``: traslada el holobit en el espacio.
-  Estas funciones están disponibles en ``holobit-sdk`` desde la versión ``1.0.8``;
-  en versiones anteriores Cobra realiza el cálculo de forma interna.
+
+Estas dos funciones son helpers del runtime Python y **no forman parte del
+contrato** Holobit transversal multi-backend. En entornos Python con
+``holobit-sdk`` desde la versión ``1.0.8`` delegan en el SDK; si la versión
+presente no expone esos métodos, Cobra aplica un cálculo local equivalente.
 
 Uso de la CLI
 -------------

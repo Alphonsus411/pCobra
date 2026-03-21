@@ -6,7 +6,7 @@ Definir una API mínima y estable para que los transpiladores de Cobra soporten 
 
 ## Nombres canónicos
 
-El runtime Holobit mínimo expone **4 hooks**:
+El runtime Holobit mínimo expone **4 hooks contractuales**:
 
 1. `cobra_holobit(valores)`
 2. `cobra_proyectar(hb, modo)`
@@ -14,6 +14,14 @@ El runtime Holobit mínimo expone **4 hooks**:
 4. `cobra_graficar(hb)`
 
 > Nota: la forma exacta de la firma varía por lenguaje destino (por ejemplo, `...params` en JavaScript/Go/Java, slices en Rust, listas en cpp), pero la **semántica debe preservarse**.
+
+## Fuera de alcance del contrato transversal
+
+Las funciones `escalar(hb, factor)` y `mover(hb, x, y, z)` **no forman parte del
+contrato** Holobit multi-backend. Son helpers adicionales del runtime Python
+(`src/pcobra/core/holobits`) y deben documentarse como tales; no deben
+aparecer en la matriz contractual pública al mismo nivel que
+`proyectar`/`transformar`/`graficar`.
 
 ## Semántica mínima
 
@@ -84,6 +92,7 @@ La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `grafic
 | `asm` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 
 - `python` es el único backend que puede figurar como `full` para estas seis features.
+- `escalar` y `mover` quedan fuera de esta tabla porque son helpers del runtime Python, no features del contrato transversal.
 - `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben permanecer en `partial`
   mientras no exista paridad real con el runtime avanzado y el SDK de referencia.
 - Ningún backend fuera de `python` debe documentarse como compatibilidad total con Holobit SDK,
