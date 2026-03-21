@@ -56,13 +56,14 @@ from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
 from pcobra.cobra.cli.target_policies import (
     DOCKER_EXECUTABLE_TARGETS,
     DOCKER_RUNTIME_BY_TARGET,
-    parse_target,
+    OFFICIAL_RUNTIME_TARGETS_HELP,
+    build_runtime_capability_message,
+    parse_runtime_target,
     resolve_docker_backend,
 )
-from pcobra.cobra.transpilers.targets import build_target_help_by_tier
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
-SANDBOX_DOCKER_HELP = build_target_help_by_tier(SANDBOX_DOCKER_CHOICES)
+SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
 
 
 class InteractiveCommand(BaseCommand):
@@ -111,13 +112,21 @@ class InteractiveCommand(BaseCommand):
         )
         parser.add_argument(
             "--sandbox-docker",
-            type=parse_target,
+            type=lambda value: parse_runtime_target(
+                value,
+                allowed_targets=SANDBOX_DOCKER_CHOICES,
+                capability="modo interactivo con Docker",
+            ),
             choices=SANDBOX_DOCKER_CHOICES,
             help=_(
                 "Target con runtime Docker oficial para modo interactivo "
-                "({targets})."
+                "({targets}). {policy}"
             ).format(
                 targets=SANDBOX_DOCKER_HELP,
+                policy=build_runtime_capability_message(
+                    capability="modo interactivo con Docker",
+                    allowed_targets=SANDBOX_DOCKER_CHOICES,
+                ),
             ),
         )
         parser.add_argument(
@@ -257,13 +266,9 @@ class InteractiveCommand(BaseCommand):
         sandbox_docker = getattr(args, "sandbox_docker", None)
         if sandbox_docker and sandbox_docker not in DOCKER_EXECUTABLE_TARGETS:
             mostrar_error(
-                _(
-                    "El target '{target}' está soportado para transpilación, "
-                    "pero --sandbox-docker solo puede ejecutar en contenedor: "
-                    "{runtime_targets}."
-                ).format(
-                    target=sandbox_docker,
-                    runtime_targets=", ".join(DOCKER_EXECUTABLE_TARGETS),
+                build_runtime_capability_message(
+                    capability="modo interactivo con Docker",
+                    allowed_targets=DOCKER_EXECUTABLE_TARGETS,
                 )
             )
             return 1

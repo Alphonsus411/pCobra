@@ -9,7 +9,7 @@ WORKDIR /work
 # Copiar script opcional si lo deseas (sólo si lo usas)
 # COPY script.js /work/script.js
 
-# Puedes instalar herramientas JS si las usas desde Cobra o transpiler
+# Este backend solo cubre runtime oficial de JavaScript; no implica soporte ejecutable para wasm/go/java/asm
 # RUN npm install -g esbuild
 
 # Entrypoint por defecto: evalúa JS desde stdin

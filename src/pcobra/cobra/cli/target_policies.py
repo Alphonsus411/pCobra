@@ -6,6 +6,7 @@ from argparse import ArgumentTypeError
 
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
+    build_target_help_by_tier,
     normalize_target_name,
     require_official_target_subset,
     target_cli_choices,
@@ -41,18 +42,79 @@ require_official_target_subset(
 )
 
 
-def _official_targets_text() -> str:
-    return ", ".join(target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS))
+OFFICIAL_TRANSPILATION_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TRANSPILATION_TARGETS)
+OFFICIAL_RUNTIME_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_RUNTIME_TARGETS)
+VERIFICATION_EXECUTABLE_TARGETS_HELP = build_target_help_by_tier(VERIFICATION_EXECUTABLE_TARGETS)
+
+
+def official_transpilation_targets_text() -> str:
+    return ", ".join(OFFICIAL_TRANSPILATION_TARGETS)
+
+
+def official_runtime_targets_text() -> str:
+    return ", ".join(OFFICIAL_RUNTIME_TARGETS)
+
+
+def verification_runtime_targets_text() -> str:
+    return ", ".join(VERIFICATION_EXECUTABLE_TARGETS)
+
+
+def transpilation_only_targets_text() -> str:
+    return ", ".join(TRANSPILATION_ONLY_TARGETS)
+
+
+def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
+    return (
+        "Targets oficiales de transpilación: {official}. "
+        "Solo tienen runtime oficial para {capability}: {allowed}. "
+        "Targets solo transpilación: {transpilation_only}."
+    ).format(
+        official=official_transpilation_targets_text(),
+        capability=capability,
+        allowed=", ".join(allowed_targets),
+        transpilation_only=transpilation_only_targets_text(),
+    )
+
+
+def invalid_target_error(value: str) -> str:
+    return "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}.".format(
+        value=value.strip(),
+        supported=official_transpilation_targets_text(),
+    )
+
+
+def restricted_target_error(*, unsupported: list[str], capability: str, allowed_targets: tuple[str, ...]) -> str:
+    return (
+        "Los targets {unsupported} son oficiales para transpilación, "
+        "pero no tienen runtime oficial para {capability}. "
+        "Targets oficiales: {official}. Usa solo: {allowed}. "
+        "Targets solo transpilación: {transpilation_only}."
+    ).format(
+        unsupported=", ".join(unsupported),
+        capability=capability,
+        official=official_transpilation_targets_text(),
+        allowed=", ".join(allowed_targets),
+        transpilation_only=transpilation_only_targets_text(),
+    )
 
 
 def parse_target(value: str) -> str:
     """Valida target CLI aceptando solo nombres canónicos oficiales."""
     canonical = normalize_target_name(value)
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
+        raise ArgumentTypeError(invalid_target_error(value))
+    return canonical
+
+
+def parse_runtime_target(value: str, *, allowed_targets: tuple[str, ...], capability: str) -> str:
+    """Valida un target oficial restringido a una capacidad con runtime."""
+    canonical = parse_target(value)
+    if canonical not in allowed_targets:
         raise ArgumentTypeError(
-            "Target no soportado: '{value}'. Usa uno canónico: {supported}.".format(
-                value=value.strip(),
-                supported=_official_targets_text(),
+            restricted_target_error(
+                unsupported=[canonical],
+                capability=capability,
+                allowed_targets=allowed_targets,
             )
         )
     return canonical
@@ -66,18 +128,16 @@ def parse_target_list(value: str) -> list[str]:
     return parsed
 
 
-
 def parse_restricted_target_list(value: str, allowed_targets: tuple[str, ...], capability: str) -> list[str]:
     """Valida una lista de targets oficiales restringida a una capacidad concreta."""
     parsed = parse_target_list(value)
     unsupported = [target for target in parsed if target not in allowed_targets]
     if unsupported:
         raise ArgumentTypeError(
-            "Los targets {unsupported} son oficiales para transpilación, pero no "
-            "están disponibles para {capability}. Usa solo: {allowed}.".format(
-                unsupported=", ".join(unsupported),
+            restricted_target_error(
+                unsupported=unsupported,
                 capability=capability,
-                allowed=", ".join(allowed_targets),
+                allowed_targets=allowed_targets,
             )
         )
     return parsed
@@ -89,14 +149,12 @@ def resolve_docker_backend(target: str) -> str:
     Algunos targets oficiales (`go`, `java`, `wasm`, `asm`) son de transpilación
     oficial, pero no exponen runtime Docker oficial.
     """
-    normalized = parse_target(target)
-    if normalized not in DOCKER_EXECUTABLE_TARGETS:
-        supported = ", ".join(DOCKER_EXECUTABLE_TARGETS)
-        raise ValueError(
-            "El target '{target}' está soportado para transpilación, "
-            "pero Docker solo ejecuta: {supported}.".format(
-                target=normalized,
-                supported=supported,
-            )
+    try:
+        normalized = parse_runtime_target(
+            target,
+            allowed_targets=DOCKER_EXECUTABLE_TARGETS,
+            capability="ejecución en contenedor Docker",
         )
+    except ArgumentTypeError as exc:
+        raise ValueError(str(exc)) from exc
     return DOCKER_RUNTIME_BY_TARGET[normalized]

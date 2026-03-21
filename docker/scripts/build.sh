@@ -2,7 +2,7 @@
 
 set -eu
 
-# Imágenes Docker soportadas para ejecución/sandbox
+# Imágenes Docker oficiales con runtime ejecutable en contenedor/sandbox
 IMAGENES="cobra cobra-cpp cobra-js cobra-python cobra-rust"
 
 # Build principal Cobra CLI
@@ -10,7 +10,7 @@ IMAGENES="cobra cobra-cpp cobra-js cobra-python cobra-rust"
 echo "[1/5] Construyendo cobra (docker/Dockerfile)"
 docker build -t cobra -f docker/Dockerfile .
 
-# Build por backend soportado en contenedor
+# Build por backend con runtime Docker oficial
 
 echo "[2/5] Construyendo cobra-cpp (docker/backends/cpp.Dockerfile)"
 docker build -t cobra-cpp -f docker/backends/cpp.Dockerfile .
@@ -29,4 +29,6 @@ for img in $IMAGENES; do
     docker image ls "$img"
 done
 
-echo "ℹ️ Política actual: go, java, wasm y asm se soportan como targets oficiales de transpilación, no como runtimes Docker oficiales."
+echo "ℹ️ Política actual: los 8 targets oficiales de Cobra son python, rust, javascript, wasm, go, cpp, java y asm."
+echo "ℹ️ Runtime Docker oficial solo para: python, javascript, cpp y rust."
+echo "ℹ️ Targets solo transpilación (sin runtime Docker oficial): wasm, go, java y asm."

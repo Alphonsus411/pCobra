@@ -14,7 +14,9 @@ from pcobra.cobra.cli.utils.validators import (
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.cli.target_policies import (
     DOCKER_EXECUTABLE_TARGETS,
-    parse_target,
+    OFFICIAL_RUNTIME_TARGETS_HELP,
+    build_runtime_capability_message,
+    parse_runtime_target,
     resolve_docker_backend,
 )
 from pcobra.cobra.core import Lexer, LexerError
@@ -63,9 +65,22 @@ class ExecuteCommand(BaseCommand):
         )
         parser.add_argument(
             "--contenedor",
-            type=parse_target,
+            type=lambda value: parse_runtime_target(
+                value,
+                allowed_targets=DOCKER_EXECUTABLE_TARGETS,
+                capability="ejecución en contenedor Docker",
+            ),
             choices=DOCKER_EXECUTABLE_TARGETS,
-            help=_("Ejecuta el código en un contenedor Docker (python, javascript, cpp, rust)"),
+            help=_(
+                "Ejecuta el código en un contenedor Docker con runtime oficial "
+                "({targets}). {policy}"
+            ).format(
+                targets=OFFICIAL_RUNTIME_TARGETS_HELP,
+                policy=build_runtime_capability_message(
+                    capability="ejecución en contenedor Docker",
+                    allowed_targets=DOCKER_EXECUTABLE_TARGETS,
+                ),
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser
