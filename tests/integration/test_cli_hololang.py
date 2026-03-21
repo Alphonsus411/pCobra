@@ -7,66 +7,40 @@ from unittest.mock import patch
 import pytest
 
 import pcobra  # noqa: F401 - asegura el registro de paquetes
-import cobra.cli.i18n as cli_i18n
 from cobra.cli.cli import main
 from cobra.cli.utils import messages
-from cobra.transpilers import module_map
-import core.ast_cache as ast_cache
-from pcobra.cobra.core import Lexer as CobraLexer, Parser as CobraParser
-from cobra.cli.commands import compile_cmd as compile_module
 
 
 def _run_cli(arguments: list[str]) -> tuple[int, str]:
     with messages.color_disabled():
         with patch("sys.stdout", new_callable=StringIO) as stdout:
             try:
-                exit_code = main(arguments)
+                exit_code = main(["--no-color", *arguments])
             except SystemExit as exc:
                 exit_code = exc.code if isinstance(exc.code, int) else 1
     return exit_code, stdout.getvalue()
 
 
 @pytest.mark.timeout(5)
-def test_cli_compilar_rechaza_backend_hololang_fuera_de_targets_oficiales(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    locale_dir = tmp_path / "locale"
-    locale_dir.mkdir()
-    monkeypatch.setattr(cli_i18n, "LOCALE_DIR", locale_dir)
-    monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
-    monkeypatch.setenv("COBRA_TOML", str(tmp_path / "missing.toml"))
-    monkeypatch.setenv("COBRA_AST_CACHE", str(tmp_path / "cache"))
-
-    def _parse(code: str):
-        tokens = CobraLexer(code).tokenizar()
-        return CobraParser(tokens).parsear()
-
-    monkeypatch.setattr(ast_cache, "obtener_ast", _parse)
-    monkeypatch.setattr(compile_module, "obtener_ast", _parse)
-
+def test_cli_compilar_rechaza_backend_hololang_con_mensaje_de_choices(tmp_path: Path) -> None:
     archivo = tmp_path / "saludo.co"
     archivo.write_text('imprimir("hola")\n', encoding="utf-8")
 
     exit_code, salida = _run_cli(["compilar", str(archivo), "--backend", "hololang"])
 
-    assert exit_code != 0
-    assert "hololang" in salida.lower()
-    assert "python, rust, javascript, wasm, go, cpp, java, asm" in salida.lower()
+    salida_normalizada = salida.lower()
+    assert exit_code == 2
+    assert "target no soportado" in salida_normalizada
+    assert "hololang" in salida_normalizada
+    assert "--backend" in salida_normalizada
+    assert "python" in salida_normalizada
+    assert "asm" in salida_normalizada
 
 
 @pytest.mark.timeout(5)
-def test_cli_transpilar_inverso_rechaza_hololang_fuera_de_scope(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    locale_dir = tmp_path / "locale"
-    locale_dir.mkdir()
-    monkeypatch.setattr(cli_i18n, "LOCALE_DIR", locale_dir)
-    monkeypatch.setattr(module_map, "get_toml_map", lambda: {})
-    monkeypatch.setenv("COBRA_TOML", str(tmp_path / "missing.toml"))
-    monkeypatch.setenv("COBRA_AST_CACHE", str(tmp_path / "cache"))
-
-    archivo = tmp_path / "saludo.holo"
-    archivo.write_text('let saludo = "hola";\nprint(saludo);\n', encoding="utf-8")
+def test_cli_transpilar_inverso_rechaza_origen_hololang_con_mensaje_de_choices(tmp_path: Path) -> None:
+    archivo = tmp_path / "saludo.py"
+    archivo.write_text('print("hola")\n', encoding="utf-8")
 
     exit_code, salida = _run_cli(
         [
@@ -79,6 +53,11 @@ def test_cli_transpilar_inverso_rechaza_hololang_fuera_de_scope(
         ]
     )
 
-    assert exit_code != 0
-    assert "hololang" in salida.lower()
-    assert "python, javascript, java" in salida.lower()
+    salida_normalizada = salida.lower()
+    assert exit_code == 2
+    assert "lenguaje de origen no soportado para transpilación inversa" in salida_normalizada
+    assert "hololang" in salida_normalizada
+    assert "--origen" in salida_normalizada
+    assert "python" in salida_normalizada
+    assert "javascript" in salida_normalizada
+    assert "java" in salida_normalizada
