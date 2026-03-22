@@ -56,7 +56,6 @@ Official backend support tiers:
 - [Cobra Manual in PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Basic guide](guia_basica.md)
 - [Technical specification](especificacion_tecnica.md)
-- [Cheatsheet](cheatsheet.tex) – internal documentation source in LaTeX, not an official output target
 - [Real use cases](casos_reales.md)
 - [Node sandbox limitations](limitaciones_node_sandbox.md)
 - Example notebooks and real cases

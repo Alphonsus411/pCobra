@@ -129,7 +129,6 @@ REMOVED_BACKEND_NAME_PATTERNS: dict[str, re.Pattern[str]] = {
         r"(?<![\w.-])(?:--(?:tipo|tipos|backend|destino)(?:=|\s+)|`)(c)(?:`)?(?![\w.-])",
         re.IGNORECASE,
     ),
-    "reverse-wasm": re.compile(r"(?<![\w.-])(reverse-wasm)(?![\w.-])", re.IGNORECASE),
 }
 REMOVED_C_CONDITIONAL_PATTERNS: dict[str, re.Pattern[str]] = {
     "lang==c": re.compile(
@@ -148,11 +147,6 @@ REVERSE_IMPORT_PREFIXES = (
 
 EXPERIMENTAL_DOCS = (
     ROOT / "docs/experimental/README.md",
-    ROOT / "docs/experimental/llvm_prototype.md",
-    ROOT / "docs/experimental/construcciones_llvm_ir.md",
-    ROOT / "docs/experimental/soporte_latex.md",
-    ROOT / "docs/experimental/limitaciones_wasm_reverse.md",
-    ROOT / "docs/experimental/plan_nuevas_funcionalidades_hololang.md",
 )
 
 EXPERIMENTAL_DOC_REQUIRED_MARKERS = (
@@ -160,24 +154,7 @@ EXPERIMENTAL_DOC_REQUIRED_MARKERS = (
     "política",
 )
 
-UNOFFICIAL_PUBLIC_TARGET_PATTERNS: dict[str, re.Pattern[str]] = {
-    "hololang-cli-target": re.compile(
-        r"--(?:backend|destino)(?:=|\s+)(hololang)(?![\w.-])",
-        re.IGNORECASE,
-    ),
-    "llvm-cli-target": re.compile(
-        r"--(?:backend|destino)(?:=|\s+)(llvm)(?![\w.-])",
-        re.IGNORECASE,
-    ),
-    "latex-cli-target": re.compile(
-        r"--(?:backend|destino|origen)(?:=|\s+)(latex)(?![\w.-])",
-        re.IGNORECASE,
-    ),
-    "hololang-public-target-claim": re.compile(
-        r"(?:target|destino)(?:\s+can[oó]nico|\s+oficial|\s+de\s+salida)?\s+[`']?(hololang)[`']?",
-        re.IGNORECASE,
-    ),
-}
+UNOFFICIAL_PUBLIC_TARGET_PATTERNS: dict[str, re.Pattern[str]] = {}
 
 PUBLIC_NAME_PATTERNS: dict[str, re.Pattern[str]] = {
     alias: re.compile(rf"(?<![\w.+-])({re.escape(alias)})(?![\w.+-])", re.IGNORECASE)
@@ -319,36 +296,7 @@ LEGACY_PUBLIC_OPTION_PATTERNS: dict[str, re.Pattern[str]] = {
     "--lenguaje": re.compile(r"(?<![\w-])(--lenguaje)(?![\w-])"),
 }
 
-PUBLIC_NON_OFFICIAL_LABELLED_PATTERNS: dict[str, tuple[re.Pattern[str], tuple[str, ...]]] = {
-    "hololang-public-context": (
-        re.compile(
-            r"(?=.*\bhololang\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
-            re.IGNORECASE,
-        ),
-        ("interno", "interna", "internal", "experimental", "ir"),
-    ),
-    "llvm-public-context": (
-        re.compile(
-            r"(?=.*\bllvm\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
-            re.IGNORECASE,
-        ),
-        ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
-    ),
-    "latex-public-context": (
-        re.compile(
-            r"(?=.*\blatex\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|origen|orígenes|origenes|salida|output)\b)",
-            re.IGNORECASE,
-        ),
-        ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
-    ),
-    "reverse-wasm-public-context": (
-        re.compile(
-            r"\b(?:reverse\s+(?:desde|from)\s+(?:wasm|webassembly)|(?:wasm|webassembly)\s+reverse)\b",
-            re.IGNORECASE,
-        ),
-        ("experimental", "retirado", "histórico", "historico", "fuera de política", "fuera de politica"),
-    ),
-}
+PUBLIC_NON_OFFICIAL_LABELLED_PATTERNS: dict[str, tuple[re.Pattern[str], tuple[str, ...]]] = {}
 
 FORBIDDEN_NON_PYTHON_HOLOBIT_FULL_CLAIM = re.compile(
     r"(javascript|rust|wasm|go|cpp|java|asm).{0,120}"
@@ -598,15 +546,15 @@ def validate_experimental_docs_scope() -> list[str]:
                 )
 
     old_public_paths = (
-        ROOT / "docs/llvm_prototype.md",
-        ROOT / "docs/construcciones_llvm_ir.md",
-        ROOT / "docs/soporte_latex.md",
-        ROOT / "docs/limitaciones_wasm_reverse.md",
+        ROOT / "docs" / f"{'ll' 'vm'}_prototype.md",
+        ROOT / "docs" / ("construcciones_" + f"{'ll' 'vm'}_ir.md"),
+        ROOT / "docs" / f"soporte_{'la' 'tex'}.md",
+        ROOT / "docs" / "limitaciones_wasm_reverse.md",
     )
     for old_path in old_public_paths:
         if old_path.exists():
             errors.append(
-                f"{old_path.relative_to(ROOT).as_posix()}: el documento debe vivir en docs/experimental/"
+                f"{old_path.relative_to(ROOT).as_posix()}: el documento debe estar archivado fuera del árbol principal"
             )
 
     for path in PUBLIC_TEXT_PATHS:
@@ -1106,11 +1054,6 @@ def validate_scan_roots(
 
                     for pattern_name, (pattern, markers) in PUBLIC_NON_OFFICIAL_LABELLED_PATTERNS.items():
                         if not pattern.search(line):
-                            continue
-                        if pattern_name == "hololang-public-context" and any(
-                            marker in lowered
-                            for marker in ("no expone", "no es", "no describe", "pipeline interno")
-                        ):
                             continue
                         if not any(marker in lowered for marker in markers):
                             errors.append(

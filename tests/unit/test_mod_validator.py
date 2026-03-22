@@ -172,7 +172,7 @@ def test_validador_rechaza_backend_fuera_de_los_8_oficiales(tmp_path, monkeypatc
     py = tmp_path / "m.py"
     py.write_text("x = 1")
     mod = tmp_path / "m.co"
-    data = {str(mod): {"version": "0.1.0", "python": str(py), "hololang": str(py)}}
+    data = {str(mod): {"version": "0.1.0", "python": str(py), "fantasy": str(py)}}
     _write_yaml(tmp_path / "cobra.mod", data)
 
     monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)

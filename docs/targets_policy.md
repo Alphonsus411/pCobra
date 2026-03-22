@@ -78,15 +78,8 @@ Los contenidos que describan pipelines, parsers reverse o prototipos fuera de lo
 
 Ubicaciones autorizadas:
 
-- `docs/experimental/`: experimentos, prototipos o referencias de investigación.
-- `docs/historico/`: material archivado sin vigencia normativa.
-
-Ejemplos actuales de documentación segregada:
-
-- prototipo LLVM;
-- notas de mapeo a LLVM IR;
-- soporte reverse desde LaTeX;
-- referencia retirada del reverse desde WASM en `docs/experimental/limitaciones_wasm_reverse.md`.
+- `archive/retired_targets/`: material retirado del árbol principal, sin validación normal de CI.
+- `docs/historico/`: material archivado sin vigencia normativa que siga siendo parte de la documentación del repositorio.
 
 Los IR internos o pipelines auxiliares solo pueden mencionarse en la documentación principal como arquitectura interna del compilador, nunca como targets oficiales de salida ni como orígenes reverse mantenidos por política. Las guías dedicadas a esos artefactos deben permanecer fuera de la navegación pública principal y etiquetarse como documentación experimental o de mantenimiento.
 

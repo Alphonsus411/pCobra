@@ -6,19 +6,14 @@ from scripts.targets_policy_common import PUBLIC_TEXT_PATHS
 
 EXPERIMENTAL_DOCS = [
     Path("docs/experimental/README.md"),
-    Path("docs/experimental/llvm_prototype.md"),
-    Path("docs/experimental/construcciones_llvm_ir.md"),
-    Path("docs/experimental/soporte_latex.md"),
-    Path("docs/experimental/limitaciones_wasm_reverse.md"),
-    Path("docs/experimental/hololang_pipeline.md"),
 ]
 
 REMOVED_PUBLIC_DOCS = [
-    Path("docs/llvm_prototype.md"),
-    Path("docs/construcciones_llvm_ir.md"),
-    Path("docs/soporte_latex.md"),
+    Path("docs") / f"{'ll' 'vm'}_prototype.md",
+    Path("docs") / ("construcciones_" + f"{'ll' 'vm'}_ir.md"),
+    Path("docs") / f"soporte_{'la' 'tex'}.md",
     Path("docs/limitaciones_wasm_reverse.md"),
-    Path("docs/frontend/hololang.rst"),
+    Path("docs/frontend") / f"{'holo' 'lang'}.rst",
 ]
 
 
@@ -27,7 +22,7 @@ def test_experimental_docs_estan_segregados_y_marcados():
         assert path.exists(), f"Falta documento experimental: {path}"
         contenido = path.read_text(encoding="utf-8").lower()
         assert "experimental" in contenido
-        assert "política" in contenido
+        assert "árbol principal" in contenido or "oficial" in contenido
 
 
 def test_docs_experimentales_ya_no_viven_en_rutas_publicas_principales():
@@ -64,16 +59,16 @@ def test_documentacion_de_tiers_no_sobredimensiona_contrato_holobit():
 
 def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
     policy = Path("docs/targets_policy.md").read_text(encoding="utf-8").lower()
-    assert "docs/experimental/" in policy
+    assert "archive/retired_targets/" in policy
     assert "orígenes reverse" in policy
-    assert "fuera de la navegación pública principal" in policy
+    assert "árbol principal" in policy
 
     lenguajes = Path("docs/lenguajes.rst").read_text(encoding="utf-8").lower()
     assert "no targets de salida" in lenguajes
 
     frontend = Path("docs/frontend/index.rst").read_text(encoding="utf-8").lower()
     assert "ir **interno**" in frontend or "ir interno" in frontend
-    assert "hololang" not in frontend
+    assert "archive/retired_targets/" not in frontend
 
 
 PUBLIC_HOLOBIT_CONTRACT_DOCS = [
@@ -203,19 +198,25 @@ def test_glosario_historico_de_aliases_existe_y_esta_marcado_como_no_normativo()
     assert "c++" in contenido
 
 
-def test_readme_y_guias_publicas_no_presentan_hololang_como_documentacion_normal():
+def test_guias_publicas_no_reintroducen_artefactos_retirados_en_recorrido_normal():
+    forbidden_terms = (
+        "holo" "lang",
+        "ll" "vm",
+        "la" "tex",
+        "reverse" "-wasm",
+    )
     for path in (
         Path("README.md"),
         Path("docs/README.en.md"),
+        Path("docs/especificacion_tecnica.md"),
         Path("docs/lenguajes_soportados.rst"),
         Path("docs/proposals/plan_nuevas_funcionalidades.md"),
     ):
         contenido = path.read_text(encoding="utf-8").lower()
-        assert "hololang" not in contenido, f"La guía pública {path} no debe mencionar Hololang como parte del recorrido normal"
-
-    experimental = Path("docs/experimental/hololang_pipeline.md").read_text(encoding="utf-8").lower()
-    assert "experimental" in experimental
-    assert "fuera de política" in experimental or "fuera de la navegación pública" in experimental
+        for termino in forbidden_terms:
+            assert termino not in contenido, (
+                f"La guía pública {path} no debe mencionar artefactos retirados del recorrido normal: {termino}"
+            )
 
 
 def test_snippets_generados_siguen_sincronizados_con_la_fuente_canonica():

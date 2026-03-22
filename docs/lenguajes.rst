@@ -49,5 +49,5 @@ Experimentos y material separado
 
 Los pipelines o prototipos fuera del alcance oficial se conservan en ubicaciones separadas para no contaminar la política pública:
 
-- ``docs/experimental/`` para experimentos como LLVM, reverse desde LaTeX o referencias retiradas.
-- ``docs/historico/`` para material archivado sin vigencia normativa.
+- ``archive/retired_targets/`` para material histórico retirado del árbol principal.
+- ``docs/historico/`` para glosarios o notas archivadas que sigan siendo parte de la documentación del repositorio.
