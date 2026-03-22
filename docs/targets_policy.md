@@ -126,7 +126,7 @@ Ejemplos actuales de documentación segregada:
 - soporte reverse desde LaTeX;
 - referencia retirada del reverse desde WASM en `docs/experimental/limitaciones_wasm_reverse.md`.
 
-Hololang puede documentarse en la documentación principal **solo** como IR/pipeline interno, nunca como target oficial de salida ni como origen reverse mantenido por política. Si se enlaza una guía de Hololang desde la navegación principal, el texto circundante debe dejar claro que se trata de documentación de pipeline interno.
+Los IR internos o pipelines auxiliares solo pueden mencionarse en la documentación principal como arquitectura interna del compilador, nunca como targets oficiales de salida ni como orígenes reverse mantenidos por política. Las guías dedicadas a esos artefactos deben permanecer fuera de la navegación pública principal y etiquetarse como documentación experimental o de mantenimiento.
 
 ## Packaging y prerrequisitos que afectan al alcance real
 

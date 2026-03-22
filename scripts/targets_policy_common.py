@@ -74,7 +74,6 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "docs/frontend/cli.rst",
     ROOT / "docs/frontend/contenedores.rst",
     ROOT / "docs/frontend/ejemplos.rst",
-    ROOT / "docs/frontend/hololang.rst",
     ROOT / "docs/frontend/optimizaciones.rst",
     ROOT / "docs/frontend/referencia.rst",
     ROOT / "docs/frontend/sintaxis.rst",

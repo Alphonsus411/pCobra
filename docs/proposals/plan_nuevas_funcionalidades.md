@@ -4,7 +4,7 @@
 >
 > **Alcance de política:** este plan **no amplía `OFFICIAL_TARGETS`** ni introduce nuevos targets públicos de salida. Cualquier referencia a pipelines internos, investigación o material retirado debe mantenerse fuera de esta propuesta activa o enlazarse con etiquetas visibles de **experimental**, **histórico** o **fuera de política**.
 >
-> **Contexto archivado:** la antigua línea de trabajo sobre computación holográfica/Hololang se conserva únicamente como material **experimental · fuera de política** en [`docs/experimental/plan_nuevas_funcionalidades_hololang.md`](../experimental/plan_nuevas_funcionalidades_hololang.md).
+> **Contexto archivado:** la antigua línea de trabajo sobre un pipeline holográfico interno se conserva únicamente como material **experimental · fuera de política** dentro de `docs/experimental/`.
 
 ## Resumen ejecutivo consolidado
 
@@ -37,7 +37,7 @@ Los únicos targets públicos de salida contemplados por esta propuesta son:
 
 ### Referencias explícitamente fuera de alcance
 
-- No se propone el pipeline interno **experimental** `hololang` como target público ni como ampliación de `OFFICIAL_TARGETS`.
+- No se propone ningún pipeline interno **experimental** como target público ni como ampliación de `OFFICIAL_TARGETS`.
 - No se propone `llvm`, `latex` ni otros artefactos experimentales como targets públicos.
 - No deben reaparecer aliases legacy del backend JavaScript en ejemplos, tablas o rutas de implementación.
 
@@ -177,7 +177,7 @@ Los únicos targets públicos de salida contemplados por esta propuesta son:
 - Mantener compatibilidad hacia atrás con alias y `deprecacion_programada`, pero sin exponer aliases legacy en UX pública.
 - Publicar RFCs previos a cambios en gramática o palabras reservadas.
 - Coordinar con mantenedores de extensiones (VS Code, Jupyter) para actualizar el soporte sintáctico.
-- Cualquier referencia futura a Hololang, LLVM, LaTeX u otros pipelines no oficiales debe mantenerse fuera de esta propuesta activa y marcarse de forma visible como **experimental**, **histórica** o **fuera de política**.
+- Cualquier referencia futura a pipelines internos no oficiales, LLVM, LaTeX u otros artefactos fuera de política debe mantenerse fuera de esta propuesta activa y marcarse de forma visible como **experimental**, **histórica** o **fuera de política**.
 
 ## Backlog de implementación práctica
 

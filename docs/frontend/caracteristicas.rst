@@ -4,7 +4,7 @@ Caracteristicas principales de Cobra
 - **Sintaxis en espanol**: Todas las palabras clave y estructuras del lenguaje estan en español, para facilitar su uso por hablantes nativos.
 - **Gestion de memoria automatica**: Cobra incorpora un sistema de manejo de memoria basado en algoritmos genéticos que optimiza el uso de los recursos durante la ejecución.
 - **Soporte para holobits**: Un tipo de dato multidimensional que permite trabajar con datos de alta complejidad.
-- **Interoperabilidad con Hololang**: El transpilador genera un IR intermedio expresado en Hololang, lo que permite convertir proyectos Cobra a múltiples lenguajes como representación interna para facilitar etapas intermedias del compilador.
+- **IR interno del compilador**: El transpilador puede generar una representación intermedia interna para facilitar etapas del compilador antes de producir cualquiera de los backends oficiales.
 - **Transpilador a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``**: Los programas escritos en Cobra pueden transpilarse a estos destinos oficiales, facilitando su ejecución en distintas plataformas.
 - **Nombres Unicode**: Los identificadores aceptan caracteres como `á`, `ñ` o `Ω`.
 

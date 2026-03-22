@@ -10,6 +10,7 @@ EXPERIMENTAL_DOCS = [
     Path("docs/experimental/construcciones_llvm_ir.md"),
     Path("docs/experimental/soporte_latex.md"),
     Path("docs/experimental/limitaciones_wasm_reverse.md"),
+    Path("docs/experimental/hololang_pipeline.md"),
 ]
 
 REMOVED_PUBLIC_DOCS = [
@@ -17,6 +18,7 @@ REMOVED_PUBLIC_DOCS = [
     Path("docs/construcciones_llvm_ir.md"),
     Path("docs/soporte_latex.md"),
     Path("docs/limitaciones_wasm_reverse.md"),
+    Path("docs/frontend/hololang.rst"),
 ]
 
 
@@ -64,12 +66,14 @@ def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
     policy = Path("docs/targets_policy.md").read_text(encoding="utf-8").lower()
     assert "docs/experimental/" in policy
     assert "orígenes reverse" in policy
+    assert "fuera de la navegación pública principal" in policy
 
     lenguajes = Path("docs/lenguajes.rst").read_text(encoding="utf-8").lower()
     assert "no targets de salida" in lenguajes
 
-    hololang = Path("docs/frontend/hololang.rst").read_text(encoding="utf-8").lower()
-    assert "hololang`` en ``cobra compilar``" in hololang
+    frontend = Path("docs/frontend/index.rst").read_text(encoding="utf-8").lower()
+    assert "ir **interno**" in frontend or "ir interno" in frontend
+    assert "hololang" not in frontend
 
 
 PUBLIC_HOLOBIT_CONTRACT_DOCS = [
@@ -197,3 +201,18 @@ def test_glosario_historico_de_aliases_existe_y_esta_marcado_como_no_normativo()
     assert "sin vigencia normativa" in contenido
     assert "js" in contenido
     assert "c++" in contenido
+
+
+def test_readme_y_guias_publicas_no_presentan_hololang_como_documentacion_normal():
+    for path in (
+        Path("README.md"),
+        Path("docs/README.en.md"),
+        Path("docs/lenguajes_soportados.rst"),
+        Path("docs/proposals/plan_nuevas_funcionalidades.md"),
+    ):
+        contenido = path.read_text(encoding="utf-8").lower()
+        assert "hololang" not in contenido, f"La guía pública {path} no debe mencionar Hololang como parte del recorrido normal"
+
+    experimental = Path("docs/experimental/hololang_pipeline.md").read_text(encoding="utf-8").lower()
+    assert "experimental" in experimental
+    assert "fuera de política" in experimental or "fuera de la navegación pública" in experimental

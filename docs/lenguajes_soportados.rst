@@ -138,8 +138,4 @@ Diferencias identificadas
 Material fuera de política y documentación segregada
 ---------------------------------------------------
 
-Las referencias a Hololang deben leerse como documentación de **pipeline
-interno**. Cualquier material sobre LLVM, reverse desde LaTeX o reverse
-retirado desde WASM debe permanecer en ``docs/experimental/`` con etiqueta
-visible de experimental/fuera de política, mientras que ``docs/historico/``
-queda reservado para material archivado sin vigencia normativa.
+Cualquier documentación sobre IR internos, prototipos o pipelines auxiliares debe leerse como material de **pipeline interno** y mantenerse fuera del recorrido público normal. El material sobre LLVM, reverse desde LaTeX o reverse retirado desde WASM debe permanecer en ``docs/experimental/`` con etiqueta visible de experimental/fuera de política, mientras que ``docs/historico/`` queda reservado para material archivado sin vigencia normativa.
