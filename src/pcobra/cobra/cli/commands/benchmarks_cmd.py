@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.transpilers.targets import normalize_target_name, target_label
+from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_label
 
 from scripts.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
 

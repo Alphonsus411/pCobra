@@ -18,7 +18,8 @@ from __future__ import annotations
 
 from typing import Final
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
     "holobit",

@@ -7,7 +7,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
+from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 logger = logging.getLogger(__name__)
 

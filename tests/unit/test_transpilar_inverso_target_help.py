@@ -26,9 +26,11 @@ def test_transpilar_inverso_destino_choices_usa_targets_oficiales():
     assert tuple(action.choices) == OFFICIAL_TARGETS
 
 
-def test_transpilar_inverso_help_refleja_labels_amigables():
+def test_transpilar_inverso_help_refleja_solo_nombres_canonicos():
     _, reverse_parser = _build_parser()
     help_text = reverse_parser.format_help()
 
-    assert "JavaScript (javascript)" in help_text
-    assert "Ensamblador (asm)" in help_text
+    assert "Tier 1: python, rust, javascript, wasm." in help_text
+    assert "Tier 2: go, cpp, java, asm." in help_text
+    assert "JavaScript (javascript)" not in help_text
+    assert "Ensamblador (asm)" not in help_text

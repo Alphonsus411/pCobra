@@ -31,11 +31,15 @@ def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
     assert args.tipos == ["python", "javascript", "asm"]
 
 
-def test_compile_help_refleja_labels_amigables_y_nombres_canonicos():
+def test_compile_help_refleja_solo_nombres_canonicos():
     _, compile_parser = _build_parser()
     help_text = compile_parser.format_help()
 
-    assert "JavaScript (javascript)" in help_text
-    assert "Ensamblador (asm)" in help_text
+    normalized_help = " ".join(help_text.split())
+
+    assert "Tier 1: python, rust, javascript, wasm." in normalized_help
+    assert "Tier 2: go, cpp, java, asm." in normalized_help
+    assert "JavaScript (javascript)" not in help_text
+    assert "Ensamblador (asm)" not in help_text
     for target in OFFICIAL_TARGETS:
         assert target in help_text

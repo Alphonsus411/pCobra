@@ -35,12 +35,8 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
 
 from pcobra.cobra.cli.utils.semver import es_version_valida
 from pcobra.cobra.transpilers import module_map
-from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
-    TIER1_TARGETS,
-    TIER2_TARGETS,
-    normalize_target_name,
-)
+from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 # Constantes
 MAX_FILE_SIZE = 10_000_000  # 10MB

@@ -8,10 +8,8 @@ from typing import List, Tuple, Union
 from pcobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.compatibility_matrix import CONTRACT_FEATURES
 from pcobra.cobra.transpilers.module_map import get_mapped_path
-from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
-    normalize_target_name,
-)
+from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.cobra.transpilers.transpiler.js_nodes.runtime_holobit import (
     build_holobit_runtime_lines as build_javascript_holobit_runtime_lines,
     build_standard_runtime_lines as build_javascript_standard_runtime_lines,

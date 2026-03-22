@@ -36,11 +36,11 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.target_policies import parse_target
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
-from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
+from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
     normalize_target_name,
 )
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # Configuración del logging
 logger = logging.getLogger(__name__)

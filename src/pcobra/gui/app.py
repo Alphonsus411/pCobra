@@ -5,7 +5,8 @@ import sys
 import flet as ft
 
 from pcobra.cobra.core import Lexer, Parser
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_cli_choices
+from pcobra.cobra.transpilers.target_utils import target_cli_choices
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 

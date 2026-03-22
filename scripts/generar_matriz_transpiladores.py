@@ -27,7 +27,8 @@ from pcobra.cobra.cli.target_policies import (  # noqa: E402
     render_public_policy_summary,
 )
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES  # noqa: E402
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_label  # noqa: E402
+from pcobra.cobra.transpilers.target_utils import target_label  # noqa: E402
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS  # noqa: E402
 
 BEST_EFFORT_RUNTIME_TARGETS_INTERNAL = BEST_EFFORT_RUNTIME_TARGETS
 

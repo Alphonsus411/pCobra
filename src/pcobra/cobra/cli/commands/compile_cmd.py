@@ -11,13 +11,13 @@ from pcobra.cobra.transpilers.registry import (
     build_official_transpilers,
     official_transpiler_targets,
 )
-from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
+from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
     normalize_target_name,
     resolution_candidates,
     target_label,
 )
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
 from pcobra.core.semantic_validators import (
