@@ -53,6 +53,12 @@ A nivel público, la lectura correcta de la matriz contractual es:
 - Los demás backends oficiales deben presentarse, como máximo, en el nivel contractual `partial` cuando corresponda.
 - La documentación pública no debe promocionar a ningún backend distinto de `python` como compatibilidad SDK completa.
 
+Interpretación oficial adicional:
+
+- Tener runtime oficial verificable, adaptadores mantenidos, `corelibs`/`standard_library` ejecutables o hooks `cobra_*` concretos **no eleva automáticamente** a un backend a compatibilidad `full`.
+- La categoría `ADVANCED_HOLOBIT_RUNTIME_TARGETS` debe leerse como **adaptador Holobit mantenido por el proyecto**, no como paridad SDK completa.
+- `holobit_sdk` solo es dependencia contractual de `python`; fuera de `python`, la compatibilidad es por adaptadores o puentes contractuales propios.
+
 ## Reverse
 
 La transpilación inversa se documenta como capacidad separada. Sus orígenes de entrada se definen en `src/pcobra/cobra/transpilers/reverse/policy.py`.

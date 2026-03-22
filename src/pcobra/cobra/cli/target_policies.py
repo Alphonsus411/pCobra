@@ -49,7 +49,7 @@ VERIFICATION_EXECUTABLE_TARGETS = target_cli_choices(("python", "javascript", "c
 # a nivel de runtime mantenido y verificable por el proyecto.
 OFFICIAL_STANDARD_LIBRARY_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
 
-# Targets con soporte Holobit avanzado mantenido oficialmente por el proyecto.
+# Targets con adaptador Holobit mantenido oficialmente por el proyecto.
 # Esto no equivale a compatibilidad SDK total: fuera de Python sigue siendo
 # compatibilidad parcial según ``compatibility_matrix.py``.
 ADVANCED_HOLOBIT_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
@@ -132,7 +132,7 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
         ),
         (
             "advanced_holobit_runtime_targets",
-            "Targets con soporte Holobit avanzado mantenido por el proyecto",
+            "Targets con adaptador Holobit mantenido por el proyecto",
             ADVANCED_HOLOBIT_RUNTIME_TARGETS,
         ),
         ("sdk_compatible_targets", "Compatibilidad SDK completa", SDK_COMPATIBLE_TARGETS),
@@ -195,7 +195,7 @@ def validate_runtime_support_contract() -> None:
 
     if set(ADVANCED_HOLOBIT_RUNTIME_TARGETS) != set(OFFICIAL_RUNTIME_TARGETS):
         raise RuntimeError(
-            "ADVANCED_HOLOBIT_RUNTIME_TARGETS debe coincidir con los backends de runtime oficial con soporte Holobit avanzado mantenido: "
+            "ADVANCED_HOLOBIT_RUNTIME_TARGETS debe coincidir con los backends de runtime oficial con adaptador Holobit mantenido: "
             f"runtime={OFFICIAL_RUNTIME_TARGETS}, holobit={ADVANCED_HOLOBIT_RUNTIME_TARGETS}"
         )
 
