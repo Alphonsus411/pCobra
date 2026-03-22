@@ -24,7 +24,7 @@ Los 8 backends oficiales son:
 
 En CLI, documentación, ejemplos, tablas y configuración pública solo se aceptan los 8 nombres canónicos anteriores.
 
-Los nombres heredados o no canónicos no forman parte del contrato público y deben permanecer fuera de la documentación normativa. Si hace falta conservar memoria histórica, debe hacerse únicamente en material archivado como `docs/historico/targets_aliases_legacy.md`, nunca en las guías activas.
+Los nombres heredados o no canónicos no forman parte del contrato público y deben permanecer fuera de la documentación normativa. Si hace falta conservar memoria histórica, debe hacerse únicamente en material archivado como `archive/retired_targets/docs/targets_aliases_legacy.md`, nunca en las guías activas.
 
 La política pública ya no conserva una capa histórica de nombres aceptados ni tablas auxiliares para lenguajes fuera de política.
 

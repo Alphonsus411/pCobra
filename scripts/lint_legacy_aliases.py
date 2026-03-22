@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.targets_policy_common import NON_CANONICAL_PUBLIC_NAMES
+from scripts.targets_policy_common import FORBIDDEN_PUBLIC_TARGET_ALIASES
 
 SCAN_PATHS = [
     ROOT / "pyproject.toml",
@@ -44,10 +44,9 @@ TEXT_EXTS = {".py", ".md", ".rst", ".toml", ".yaml", ".yml", ".json", ".txt"}
 IGNORED_PATH_PREFIXES = (
     "docs/experimental/",
     "docs/frontend/api/",
-    "docs/historico/",
 )
 
-LEGACY_ALIAS_TERMS = tuple(sorted(NON_CANONICAL_PUBLIC_NAMES))
+LEGACY_ALIAS_TERMS = tuple(sorted(alias for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES))
 LEGACY_ALIAS_GROUP = "|".join(re.escape(term) for term in LEGACY_ALIAS_TERMS)
 LEGACY_OPTION_GROUP = r"--a"
 
@@ -77,9 +76,7 @@ GENERAL_PUBLIC_ALIAS_TOKEN_PATTERNS = [
     re.compile(rf"(?i)(?<![\w.+/-])({LEGACY_ALIAS_GROUP})(?![\w.+/-])"),
 ]
 
-LEGACY_ALIAS_LINE_ALLOWLIST = {
-    "tests/unit/test_mod_validator.py": (re.compile(r'"js"\s*:'),),
-}
+LEGACY_ALIAS_LINE_ALLOWLIST = {}
 
 
 def _strip_known_extensions(line: str) -> str:

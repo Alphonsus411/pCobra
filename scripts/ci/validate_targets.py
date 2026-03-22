@@ -18,15 +18,15 @@ from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
 from pcobra.cobra.transpilers.registry import TRANSPILER_CLASS_PATHS, official_transpiler_targets
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
-from scripts.targets_policy_common import NON_CANONICAL_PUBLIC_NAMES, PUBLIC_TEXT_PATHS
+from scripts.targets_policy_common import FORBIDDEN_PUBLIC_TARGET_ALIASES, PUBLIC_TEXT_PATHS
 from scripts.validate_targets_policy import _find_public_alias_errors
 
 TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
 REVERSE_DIR = ROOT / "src/pcobra/cobra/transpilers/reverse"
 GOLDEN_DIR = ROOT / "tests/integration/transpilers/golden"
 ALLOWED_HISTORICAL_PATH_PREFIXES = (
-    "docs/historico/",
     "docs/experimental/",
+    "archive/retired_targets/",
 )
 
 
@@ -160,7 +160,6 @@ def main() -> int:
     print("✅ Validación CI de targets: OK")
     print(f"   OFFICIAL_TARGETS: {', '.join(official_targets)}")
     print(f"   REVERSE_SCOPE_LANGUAGES: {', '.join(reverse_scope)}")
-    print(f"   Aliases públicos prohibidos: {', '.join(sorted(NON_CANONICAL_PUBLIC_NAMES))}")
     return 0
 
 

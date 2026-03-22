@@ -108,12 +108,12 @@ HOLOBIT_MATRIX_DOC_PATHS = (
     ROOT / "docs/matriz_transpiladores.md",
 )
 
-NON_CANONICAL_PUBLIC_NAMES: dict[str, str] = {
-    "c++": "cpp",
-    "assembly": "asm",
-    "ensamblador": "asm",
-    "js": "javascript",
-}
+FORBIDDEN_PUBLIC_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
+    ("c++", "cpp"),
+    ("assembly", "asm"),
+    ("ensamblador", "asm"),
+    ("js", "javascript"),
+)
 
 
 def read_target_policy() -> dict[str, Any]:
@@ -131,7 +131,6 @@ def read_target_policy() -> dict[str, Any]:
         "sdk_compatible_targets": tuple(SDK_COMPATIBLE_TARGETS),
         "public_names": tuple(PUBLIC_ACCEPTED_TARGET_NAMES),
         "internal_names": tuple(INTERNAL_COMPATIBILITY_TARGET_NAMES),
-        "non_canonical_public_names": dict(NON_CANONICAL_PUBLIC_NAMES),
         "compatibility_matrix": {
             backend: {
                 feature: BACKEND_COMPATIBILITY[backend][feature]

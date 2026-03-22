@@ -131,11 +131,11 @@ def test_transpilar_inverso_ayuda_acota_origen_y_targets_oficiales():
     assert "tier 2" in ayuda_normalizada
 
 
-def test_regresion_parse_reverse_source_language_rechaza_alias_legacy_js():
+def test_regresion_parse_reverse_source_language_rechaza_valor_fuera_del_scope():
     from pcobra.cobra.transpilers.reverse.policy import parse_reverse_source_language
 
     with pytest.raises(argparse.ArgumentTypeError):
-        parse_reverse_source_language("js")
+        parse_reverse_source_language("fantasy")
 
 
 def test_regresion_transpilar_inverso_choices_y_scope_siguen_alineados_con_politica():
