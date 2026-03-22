@@ -12,9 +12,9 @@ clase Caja<T>:
     fin
 ```
 
-Al transpilar a Python, Rust o C++ los parámetros se convierten en las
+Al transpilar a `python`, `rust` o `cpp` los parámetros se convierten en las
 construcciones genéricas propias de cada lenguaje. En lenguajes sin soporte
-de genéricos, como JavaScript, los parámetros de tipo se omiten y se utilizan
+de genéricos, como `javascript`, los parámetros de tipo se omiten y se utilizan
 tipos dinámicos.
 
 ```python
@@ -45,7 +45,7 @@ class Caja {};
 ```
 
 ```javascript
-// Los parámetros genéricos se ignoran por la naturaleza dinámica de JS
+// Los parámetros genéricos se ignoran por la naturaleza dinámica de `javascript`
 function identidad(x) {
     return x;
 }

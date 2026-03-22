@@ -162,7 +162,7 @@ La validación automática de política/targets vigila de forma explícita estos
 
 Dentro de ese alcance la CI comprueba, como mínimo:
 
-- que no reaparezcan aliases legacy presentados como válidos (los aliases legacy de JavaScript y asm);
+- que no reaparezcan aliases legacy presentados como válidos (véase `docs/historico/targets_aliases_legacy.md`, histórico);
 - que no queden ramas activas, módulos o condicionales para backends retirados/fuera de política como el backend retirado de C;
 - que las listas públicas y/o hardcodeadas de runtime, transpilación, verificación y reverse sigan alineadas con `target_policies.py`, `targets.py` y `reverse/policy.py`;
 - que la documentación pública sobre Holobit (`README.md`, `docs/MANUAL_COBRA.md`, `docs/contrato_runtime_holobit.md`, `docs/matriz_transpiladores.md`, `docs/targets_policy.md`) no promocione compatibilidad superior a la matriz contractual;

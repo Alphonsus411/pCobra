@@ -1,4 +1,4 @@
-# Limitaciones del sandbox de C++
+# Limitaciones del sandbox de `cpp`
 
 `compilar_en_sandbox_cpp` ejecuta el código dentro del contenedor Docker
 `cobra-cpp-sandbox`. El contenedor se lanza con restricciones estrictas de
@@ -12,7 +12,7 @@ seguridad:
   (`--pids-limit` y `--memory`).
 
 Si la imagen no está disponible o Docker no está instalado se rechaza la
-operación con un error indicando que el contenedor de C++ no puede usarse.
+operación con un error indicando que el contenedor de `cpp` no puede usarse.
 
 ## Limitaciones en Windows
 

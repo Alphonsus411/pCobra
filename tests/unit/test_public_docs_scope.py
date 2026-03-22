@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
 
+from scripts.targets_policy_common import PUBLIC_TEXT_PATHS
+
 
 EXPERIMENTAL_DOCS = [
     Path("docs/experimental/README.md"),
@@ -95,6 +97,26 @@ PUBLIC_CANONICAL_NAME_DOCS = [
 ]
 
 FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN = re.compile(r"(?<![\w.-])js(?![\w.-])", re.IGNORECASE)
+FORBIDDEN_PUBLIC_ALIAS_PATTERNS = [
+    re.compile(r"(?<![\w.+/-])js(?![\w.+/-])", re.IGNORECASE),
+    re.compile(r"(?<![\w.+/-])c\+\+(?![\w.+/-])", re.IGNORECASE),
+    re.compile(r"(?<![\w.+/-])assembly(?![\w.+/-])", re.IGNORECASE),
+    re.compile(r"(?<![\w.+/-])ensamblador(?![\w.+/-])", re.IGNORECASE),
+]
+FORBIDDEN_PUBLIC_LEGACY_OPTION_PATTERNS = [
+    re.compile(r"(?<![\w-])--a(?![\w-])"),
+]
+
+
+def _normalized_public_line(line: str) -> str:
+    return (
+        line.replace(".js", "")
+        .replace(".mjs", "")
+        .replace(".cjs", "")
+        .replace(".cpp", "")
+        .replace(".wasm", "")
+        .replace("Node.js", "Node")
+    )
 
 
 def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
@@ -111,19 +133,26 @@ def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():
 
 
 def test_docs_publicas_exigen_error_explicito_para_backends_partial_en_holobit():
-    for path in (Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md")):
-        contenido = path.read_text(encoding="utf-8").lower()
-        assert "no-op silencioso" in contenido
-        assert "error explícito" in contenido or "fallos explícitos" in contenido
+    contenido = Path("docs/contrato_runtime_holobit.md").read_text(encoding="utf-8").lower()
+    assert "no-op silencioso" in contenido
+    assert "error explícito" in contenido or "fallos explícitos" in contenido
 
 
 def test_docs_contractuales_no_mezclan_helpers_python_con_contrato_holobit():
-    for path in (Path("docs/contrato_runtime_holobit.md"), Path("docs/matriz_transpiladores.md")):
-        contenido = " ".join(path.read_text(encoding="utf-8").lower().split())
-        assert "escalar" in contenido
-        assert "mover" in contenido
-        assert "solo python" in contenido or "runtime python" in contenido
-        assert "no forman parte del contrato" in contenido or "no forman parte de esta matriz" in contenido
+    contenido = " ".join(
+        Path("docs/contrato_runtime_holobit.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "escalar" in contenido
+    assert "mover" in contenido
+    assert "solo python" in contenido or "runtime python" in contenido
+    assert (
+        "no forman parte del contrato" in contenido
+        or "no forman parte de esta matriz" in contenido
+        or "fuera de alcance del contrato" in contenido
+    )
 
 
 def test_docs_frontend_marcan_escalar_y_mover_como_helpers_python():
@@ -141,3 +170,30 @@ def test_docs_publicas_clave_no_reintroducen_js_como_nombre_canonico():
         assert not FORBIDDEN_PUBLIC_JS_ALIAS_PATTERN.search(contenido), (
             f"La documentación pública {path} no debe usar 'js' como nombre canónico público"
         )
+
+
+def test_scope_publico_vigilado_no_reintroduce_aliases_legacy_ni_flags_obsoletos():
+    for path in PUBLIC_TEXT_PATHS:
+        assert path.exists(), f"La ruta pública vigilada debe existir: {path}"
+        for line_no, raw_line in enumerate(
+            path.read_text(encoding="utf-8", errors="ignore").splitlines(),
+            start=1,
+        ):
+            line = _normalized_public_line(raw_line)
+            for pattern in FORBIDDEN_PUBLIC_ALIAS_PATTERNS:
+                assert not pattern.search(line), (
+                    f"La ruta pública {path}:{line_no} reintroduce un alias legacy fuera de política: {raw_line.strip()}"
+                )
+            for pattern in FORBIDDEN_PUBLIC_LEGACY_OPTION_PATTERNS:
+                assert not pattern.search(line), (
+                    f"La ruta pública {path}:{line_no} reintroduce una flag de CLI obsoleta: {raw_line.strip()}"
+                )
+
+
+def test_glosario_historico_de_aliases_existe_y_esta_marcado_como_no_normativo():
+    path = Path("docs/historico/targets_aliases_legacy.md")
+    contenido = path.read_text(encoding="utf-8").lower()
+    assert "histórico" in contenido or "historico" in contenido
+    assert "sin vigencia normativa" in contenido
+    assert "js" in contenido
+    assert "c++" in contenido

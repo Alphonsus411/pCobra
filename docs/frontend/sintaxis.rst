@@ -91,11 +91,11 @@ Puedes anteponer `@` a una función para modificar su comportamiento con un deco
        imprimir('hola')
    fin
 
-**Transpilación a Python, Rust, JavaScript, WebAssembly, Go, C++, Java y `asm`**
+**Transpilación a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``**
 
-- `imprimir` se transpila a `print` en Python, `console.log` en JavaScript, `println!` en Rust, `System.out.println` en Java, `fmt.Println` en Go, `std::cout` en C++ y secuencias equivalentes en los backends `asm` y `wasm`.
+- `imprimir` se transpila a `print` en `python`, `console.log` en `javascript`, `println!` en `rust`, `System.out.println` en `java`, `fmt.Println` en `go`, `std::cout` en `cpp` y secuencias equivalentes en los backends `asm` y `wasm`.
 - Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en `asm` generan instrucciones `WHILE` y `FOR`.
-- La construcción `holobit` se traduce a `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust y `holobit({...})` en C++, manteniendo equivalencias en `java`, `go`, `asm` y `wasm` según el backend elegido.
+- La construcción `holobit` se traduce a `holobit([...])` en `python`, `new Holobit([...])` en `javascript`, `holobit(vec![...])` en `rust` y `holobit({...})` en `cpp`, manteniendo equivalencias en `java`, `go`, `asm` y `wasm` según el backend elegido.
 
 Activar el parser de Lark
 -------------------------
@@ -109,4 +109,3 @@ de entorno ``COBRA_PARSER`` a ``lark`` antes de ejecutar Cobra:
    cobra ejecutar programa.co
 
 Si no defines esta variable se seguirá empleando el parser tradicional.
-

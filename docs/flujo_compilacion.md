@@ -10,7 +10,7 @@ start
 :Parser;
 :AST intermedio;
 :Transpilador;
-:Codigo destino (Python, JS, ...);
+:Codigo destino (`python`, `javascript`, ...);
 stop
 @enduml
 ```
