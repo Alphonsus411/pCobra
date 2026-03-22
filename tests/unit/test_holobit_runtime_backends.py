@@ -10,7 +10,6 @@ from pcobra.core.ast_nodes import (
     NodoValor,
 )
 from pcobra.cobra.transpilers.common.utils import get_runtime_hooks, get_standard_imports
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
 from pcobra.cobra.transpilers.transpiler.to_go import TranspiladorGo
@@ -19,7 +18,6 @@ from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from pcobra.cobra.transpilers.transpiler.to_python import TranspiladorPython
 from pcobra.cobra.transpilers.transpiler.to_rust import TranspiladorRust
 from pcobra.cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
-
 
 BACKENDS = [
     ("python", TranspiladorPython),
@@ -43,47 +41,15 @@ HOOK_SYMBOLS = {
     "asm": ["cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"],
 }
 
-EXPLICIT_ERROR_MARKERS = {
-    "python": [
-        "Runtime Holobit Python: 'proyectar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
-        "Runtime Holobit Python: 'transformar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
-        "Runtime Holobit Python: 'graficar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
-    ],
-    "javascript": [
-        "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.",
-    ],
-    "rust": [
-        "Runtime Holobit Rust: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Rust: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Rust: 'graficar' requiere runtime avanzado compatible.",
-    ],
-    "wasm": [
-        "Runtime Holobit WASM: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit WASM: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit WASM: 'graficar' requiere runtime avanzado compatible.",
-    ],
-    "go": [
-        "Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Go: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Go: 'graficar' requiere runtime avanzado compatible.",
-    ],
-    "cpp": [
-        "Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.",
-    ],
-    "java": [
-        "Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.",
-    ],
-    "asm": [
-        "Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.",
-    ],
+ADAPTER_MARKERS = {
+    "python": ["Runtime Holobit Python: 'proyectar' requiere 'holobit_sdk'"],
+    "javascript": ["Runtime Holobit JavaScript: modo de proyección no soportado por el adaptador oficial", "const vista = `Holobit(${holobit.valores.join(', ')})`"],
+    "rust": ["Runtime Holobit Rust: modo de proyección no soportado por el adaptador oficial", "struct CobraRuntimeError"],
+    "wasm": ["host-managed", '(import "pcobra:holobit" "cobra_transformar"'],
+    "go": ["Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible."],
+    "cpp": ["Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible."],
+    "java": ["Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible."],
+    "asm": ["Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible."],
 }
 
 
@@ -92,11 +58,7 @@ def _programa_holobit_minimo():
     return [
         NodoHolobit(nombre="hb", valores=[1, 2, 3]),
         NodoProyectar(holobit=hb, modo=NodoValor("2d")),
-        NodoTransformar(
-            holobit=hb,
-            operacion=NodoValor("rotar"),
-            parametros=[NodoValor(90)],
-        ),
+        NodoTransformar(holobit=hb, operacion=NodoValor("rotar"), parametros=[NodoValor(90)]),
         NodoGraficar(holobit=hb),
     ]
 
@@ -108,11 +70,8 @@ def _programa_sin_holobit():
 @pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
 def test_inserta_hooks_runtime_holobit_desde_contrato_central(target, transpilador_cls):
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
-
-    # contrato central: al usar Holobit, todos los hooks del backend deben aparecer
     for marcador in HOOK_SYMBOLS[target]:
         assert marcador in codigo
-
     for linea in get_runtime_hooks(target):
         if linea.strip():
             assert linea in codigo
@@ -136,7 +95,7 @@ def test_imports_minimos_runtime_por_backend(target, transpilador_cls):
 
 
 @pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
-def test_errores_holobit_explicitos_y_homogeneos(target, transpilador_cls):
+def test_runtime_holobit_expone_adaptador_o_error_explicito(target, transpilador_cls):
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
-    for marker in EXPLICIT_ERROR_MARKERS[target]:
+    for marker in ADAPTER_MARKERS[target]:
         assert marker in codigo

@@ -198,15 +198,15 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "javascript": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports ES module explícitos del runtime nativo y preservación de llamadas a símbolos (`longitud`, `mostrar`). Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` conserva la colección y las primitivas avanzadas fallan con `Error` explícito, por lo que el contrato real es `partial` y no compatibilidad SDK completa.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports ES module explícitos y una capa adaptadora mantenida por el proyecto (`cobraJsCorelibs`, `cobraJsStandardLibrary`) que hace invocables `longitud` y `mostrar`. Holobit usa hooks `cobra_*` canónicos sobre un objeto runtime propio (`__cobra_tipo__=holobit`) con proyección 1D/2D/3D, transformaciones base (`escalar`, `normalizar`, `mover`, `rotar` sobre eje z) y `graficar` textual; el contrato sigue siendo `partial` porque no equivale al SDK Python ni cubre toda la semántica avanzada.",
     },
     "rust": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports `use crate::corelibs::*;` y `use crate::standard_library::*;` más símbolos preservados en codegen. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `panic!` explícito.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports base más una capa adaptadora Rust mantenida por el proyecto (`longitud`, `mostrar`) generada inline. Holobit usa hooks `cobra_*` canónicos sobre `CobraHolobit` y devuelve `Result` con `CobraRuntimeError`; soporta proyecciones 1D/2D/3D/vector, transformaciones base (`escalar`, `normalizar`, `mover`, `rotar` planar) y `graficar` textual. El contrato permanece `partial` porque no existe paridad completa con `holobit_sdk`.",
     },
     "wasm": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa mantener los puntos de llamada WAT al runtime externo administrado fuera del backend. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` propaga el handle de entrada y las primitivas avanzadas ejecutan `unreachable` con comentario descriptivo.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa emitir wrappers WAT e imports explícitos hacia un runtime host-managed (`pcobra:corelibs`, `pcobra:standard_library`). Holobit usa hooks `cobra_*` canónicos que delegan en imports `pcobra:holobit`; el backend deja de usar `unreachable`, pero sigue en `partial` porque la semántica completa depende del host y del protocolo de handles/param buffers externo al módulo generado.",
     },
     "go": {
         "contract": "partial",

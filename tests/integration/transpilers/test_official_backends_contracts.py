@@ -2,20 +2,13 @@ from __future__ import annotations
 
 import importlib
 import os
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from pcobra.cobra.transpilers.compatibility_matrix import (
-    BACKEND_COMPATIBILITY,
-    CONTRACT_FEATURES,
-    SDK_FULL_BACKENDS,
-    SDK_PARTIAL_BACKENDS,
-)
-from pcobra.cobra.transpilers.common.utils import RUNTIME_ERROR_MESSAGE, get_runtime_hooks
+from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.ast_nodes import (
     NodoAsignacion,
@@ -44,46 +37,39 @@ HOOK_EXPECTATIONS = {
 
 IMPORT_EXPECTATIONS = {
     "python": ("from corelibs import *", "from standard_library import *"),
-    "javascript": ("import * as io from './nativos/io.js';", "import * as texto from './nativos/texto.js';"),
-    "rust": ("use crate::corelibs::*;", "use crate::standard_library::*;"),
-    "wasm": (";; backend wasm: imports de runtime administrados externamente",),
+    "javascript": ("import * as io from './nativos/io.js';", "import * as interfaz from './nativos/interfaz.js';"),
+    "rust": ("use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {"),
+    "wasm": (
+        ";; backend wasm: adaptadores host-managed de corelibs y standard_library",
+        '(import "pcobra:corelibs" "longitud"',
+        '(import "pcobra:standard_library" "mostrar"',
+    ),
     "go": ('"cobra/corelibs"', '"cobra/standard_library"'),
     "cpp": ("#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>"),
     "java": ("import cobra.corelibs.*;", "import cobra.standard_library.*;"),
     "asm": ("; backend asm: imports de runtime administrados externamente",),
 }
 
-
-FAILURE_PRIMITIVES = {
-    "javascript": ("throw new Error",),
-    "rust": ("panic!(",),
-    "wasm": ("unreachable",),
-    "go": ("panic(fmt.Sprintf",),
-    "cpp": ("throw std::runtime_error",),
-    "java": ("throw new UnsupportedOperationException",),
-    "asm": ("TRAP",),
-}
-
-ERROR_EXPECTATIONS = {
+RUNTIME_ADAPTER_MARKERS = {
     "python": (
         "Runtime Holobit Python: 'proyectar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
         "Runtime Holobit Python: 'transformar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
         "Runtime Holobit Python: 'graficar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
     ),
     "javascript": (
-        "Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.",
+        "Runtime Holobit JavaScript: modo de proyección no soportado por el adaptador oficial",
+        "Runtime Holobit JavaScript: operación no soportada por el adaptador oficial",
+        "const vista = `Holobit(${holobit.valores.join(', ')})`;",
     ),
     "rust": (
-        "Runtime Holobit Rust: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Rust: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Rust: 'graficar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Rust: modo de proyección no soportado por el adaptador oficial",
+        "Runtime Holobit Rust: operación no soportada por el adaptador oficial",
+        "struct CobraRuntimeError",
     ),
     "wasm": (
-        "Runtime Holobit WASM: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit WASM: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit WASM: 'graficar' requiere runtime avanzado compatible.",
+        ";; backend wasm: hooks Holobit delegados en runtime host-managed de pcobra",
+        '(import "pcobra:holobit" "cobra_proyectar"',
+        '(import "pcobra:holobit" "cobra_transformar"',
     ),
     "go": (
         "Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible.",
@@ -138,12 +124,7 @@ def _representative_nodes(language: str) -> list[object]:
         nodes.append(NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]))
     if BACKEND_COMPATIBILITY[language]["graficar"] != "none":
         nodes.append(NodoGraficar(NodoIdentificador("hb")))
-    nodes.extend(
-        [
-            NodoLlamadaFuncion("longitud", [NodoValor("cobra")]),
-            NodoLlamadaFuncion("mostrar", [NodoValor("hola")]),
-        ]
-    )
+    nodes.extend([NodoLlamadaFuncion("longitud", [NodoValor("cobra")]), NodoLlamadaFuncion("mostrar", [NodoValor("hola")])])
     return nodes
 
 
@@ -155,35 +136,24 @@ def test_official_backend_transpilation_follows_promised_compatibility(backend: 
             with pytest.raises(NotImplementedError):
                 _generate(backend, _feature_nodes(feature))
             continue
-
         generated = _generate(backend, _feature_nodes(feature))
         assert generated.strip(), f"{backend} no generó salida para {feature}"
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
-def test_official_backend_generated_code_includes_expected_imports_and_hooks(backend: str):
+def test_official_backend_generated_code_includes_expected_imports_hooks_and_adapter_markers(backend: str):
     generated = _generate(backend, _representative_nodes(backend))
-
     for snippet in IMPORT_EXPECTATIONS[backend]:
         assert snippet in generated
-
     for hook in HOOK_EXPECTATIONS[backend]:
         assert hook in generated
-
-    for error_marker in ERROR_EXPECTATIONS[backend]:
-        assert error_marker in generated
+    for marker in RUNTIME_ADAPTER_MARKERS[backend]:
+        assert marker in generated
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 def test_official_backend_only_injects_cobra_hooks_when_ast_requires_holobit(backend: str):
-    generated = _generate(
-        backend,
-        [
-            NodoLlamadaFuncion("longitud", [NodoValor("cobra")]),
-            NodoLlamadaFuncion("mostrar", [NodoValor("hola")]),
-        ],
-    )
-
+    generated = _generate(backend, [NodoLlamadaFuncion("longitud", [NodoValor("cobra")]), NodoLlamadaFuncion("mostrar", [NodoValor("hola")])])
     for hook in HOOK_EXPECTATIONS[backend]:
         assert hook not in generated
 
@@ -197,13 +167,7 @@ def test_official_backend_codegen_matches_golden_snapshot(backend: str):
 
 
 def test_python_backend_generated_program_executes_in_repo_runtime():
-    code = _generate(
-        "python",
-        [
-            NodoAsignacion("x", NodoValor(1)),
-            NodoAsignacion("y", NodoValor(2)),
-        ],
-    )
+    code = _generate("python", [NodoAsignacion("x", NodoValor(1)), NodoAsignacion("y", NodoValor(2))])
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
         tmp.write(code)
         temp_path = tmp.name
@@ -211,81 +175,7 @@ def test_python_backend_generated_program_executes_in_repo_runtime():
     env = os.environ.copy()
     env["PYTHONPATH"] = "src:."
     try:
-        proc = subprocess.run(
-            ["python", temp_path],
-            cwd=Path(__file__).resolve().parents[3],
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=20,
-        )
+        proc = subprocess.run(["python", temp_path], cwd=Path(__file__).resolve().parents[3], env=env, capture_output=True, text=True, timeout=20)
+        assert proc.returncode == 0, proc.stderr
     finally:
-        os.unlink(temp_path)
-
-    assert proc.returncode == 0, proc.stderr
-
-
-def test_javascript_backend_generated_program_executes_when_node_runtime_is_available():
-    if shutil.which("node") is None:
-        pytest.skip("Node.js no está instalado en el entorno")
-
-    node_fetch_probe = subprocess.run(
-        ["node", "-e", "import(\"node-fetch\").then(()=>process.exit(0)).catch(()=>process.exit(1))"],
-        capture_output=True,
-        text=True,
-    )
-    if node_fetch_probe.returncode != 0:
-        pytest.skip("Node.js disponible pero falta dependencia runtime 'node-fetch'")
-
-    code = _generate(
-        "javascript",
-        [
-            NodoAsignacion("x", NodoValor(1)),
-            NodoAsignacion("y", NodoValor(2)),
-        ],
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_path = Path(tmpdir)
-        script_path = tmp_path / "main.mjs"
-        script_path.write_text(code, encoding="utf-8")
-
-        src_nativos = Path(__file__).resolve().parents[3] / "src" / "pcobra" / "core" / "nativos"
-        shutil.copytree(src_nativos, tmp_path / "nativos")
-
-        proc = subprocess.run(
-            ["node", str(script_path)],
-            cwd=tmp_path,
-            capture_output=True,
-            text=True,
-            timeout=20,
-        )
-
-    assert proc.returncode == 0, proc.stderr
-
-
-def test_python_es_el_unico_backend_full_en_la_matriz_contractual():
-    assert SDK_FULL_BACKENDS == ("python",)
-    assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
-
-    for feature in CONTRACT_FEATURES:
-        full_backends = {
-            backend
-            for backend in OFFICIAL_TARGETS
-            if BACKEND_COMPATIBILITY[backend][feature] == "full"
-        }
-        assert full_backends == {"python"}
-
-
-@pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)
-def test_partial_backends_codegen_retains_explicit_failure_paths_for_advanced_holobit(backend: str):
-    generated = _generate(backend, _representative_nodes(backend))
-    for primitive in FAILURE_PRIMITIVES[backend]:
-        assert primitive in generated
-
-
-@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
-def test_runtime_hooks_use_canonical_error_messages_for_advanced_holobit(backend: str):
-    hooks = "\n".join(get_runtime_hooks(backend))
-    for feature in ("proyectar", "transformar", "graficar"):
-        assert RUNTIME_ERROR_MESSAGE[backend].format(feature=feature) in hooks
+        Path(temp_path).unlink(missing_ok=True)

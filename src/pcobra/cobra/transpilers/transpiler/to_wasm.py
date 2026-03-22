@@ -114,18 +114,21 @@ class TranspiladorWasm(BaseTranspiler):
         self.usa_runtime_holobit = True
         hb = self._obtener_i32(nodo.holobit, "proyectar.holobit")
         modo = self._obtener_i32(nodo.modo, "proyectar.modo")
-        self.agregar_linea(f"(call $cobra_proyectar {hb} {modo})")
+        self.agregar_linea(f"(drop (call $cobra_proyectar {hb} {modo}))")
 
     def visit_transformar(self, nodo: NodoTransformar):
         self.usa_runtime_holobit = True
         hb = self._obtener_i32(nodo.holobit, "transformar.holobit")
         op = self._obtener_i32(nodo.operacion, "transformar.operacion")
-        self.agregar_linea(f"(call $cobra_transformar {hb} {op})")
+        params_len = len(getattr(nodo, 'parametros', []))
+        self.agregar_linea(
+            f"(drop (call $cobra_transformar {hb} {op} (i32.const {params_len})))"
+        )
 
     def visit_graficar(self, nodo: NodoGraficar):
         self.usa_runtime_holobit = True
         hb = self._obtener_i32(nodo.holobit, "graficar.holobit")
-        self.agregar_linea(f"(call $cobra_graficar {hb})")
+        self.agregar_linea(f"(drop (call $cobra_graficar {hb}))")
 
     def transpilar(self, nodos):
         self.codigo = list(get_standard_imports("wasm"))

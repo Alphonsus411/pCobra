@@ -9,48 +9,33 @@ IMPORT_MARKERS = {
     "javascript": (
         "import * as io from './nativos/io.js';",
         "import * as texto from './nativos/texto.js';",
+        "import * as interfaz from './nativos/interfaz.js';",
     ),
-    "rust": ("use crate::corelibs::*;", "use crate::standard_library::*;"),
+    "rust": (
+        "use crate::corelibs::*;",
+        "use crate::standard_library::*;",
+        "fn longitud<T: ToString>(valor: T) -> usize {",
+    ),
     "go": ('"cobra/corelibs"', '"cobra/standard_library"'),
     "cpp": ("#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>"),
     "java": ("import cobra.corelibs.*;", "import cobra.standard_library.*;"),
-    "wasm": (";; backend wasm: imports de runtime administrados externamente",),
+    "wasm": (
+        ";; backend wasm: adaptadores host-managed de corelibs y standard_library",
+        '(import "pcobra:corelibs" "longitud"',
+        '(import "pcobra:standard_library" "mostrar"',
+    ),
     "asm": ("; backend asm: imports de runtime administrados externamente",),
 }
 
 CALL_SITE_MARKERS = {
-    "python": {
-        "corelibs": "longitud('cobra')",
-        "standard_library": "mostrar('hola')",
-    },
-    "javascript": {
-        "corelibs": "longitud('cobra');",
-        "standard_library": "mostrar('hola');",
-    },
-    "rust": {
-        "corelibs": 'longitud("cobra");',
-        "standard_library": 'mostrar("hola");',
-    },
-    "go": {
-        "corelibs": 'longitud("cobra")',
-        "standard_library": 'mostrar("hola")',
-    },
-    "cpp": {
-        "corelibs": 'longitud("cobra");',
-        "standard_library": 'mostrar("hola");',
-    },
-    "java": {
-        "corelibs": 'longitud("cobra")',
-        "standard_library": 'mostrar("hola")',
-    },
-    "wasm": {
-        "corelibs": "(call $longitud (i32.const 0))",
-        "standard_library": "(call $mostrar (i32.const 0))",
-    },
-    "asm": {
-        "corelibs": "CALL longitud 'cobra'",
-        "standard_library": "CALL mostrar 'hola'",
-    },
+    "python": {"corelibs": "longitud('cobra')", "standard_library": "mostrar('hola')"},
+    "javascript": {"corelibs": "longitud('cobra');", "standard_library": "mostrar('hola');"},
+    "rust": {"corelibs": 'longitud("cobra");', "standard_library": 'mostrar("hola");'},
+    "go": {"corelibs": 'longitud("cobra")', "standard_library": 'mostrar("hola")'},
+    "cpp": {"corelibs": 'longitud("cobra");', "standard_library": 'mostrar("hola");'},
+    "java": {"corelibs": 'longitud("cobra")', "standard_library": 'mostrar("hola")'},
+    "wasm": {"corelibs": "(call $longitud (i32.const 0))", "standard_library": "(call $mostrar (i32.const 0))"},
+    "asm": {"corelibs": "CALL longitud 'cobra'", "standard_library": "CALL mostrar 'hola'"},
 }
 
 HOLOBIT_CALL_SITE_MARKERS = {
@@ -68,23 +53,15 @@ HOLOBIT_CALL_SITE_MARKERS = {
 @pytest.mark.parametrize("backend", tuple(IMPORT_MARKERS))
 def test_minimal_runtime_import_markers_are_emitted_per_backend(backend: str):
     generated = generate_code(backend, "corelibs")
-
     for marker in IMPORT_MARKERS[backend]:
         assert marker in generated
 
 
 @pytest.mark.parametrize(
     ("backend", "feature"),
-    [
-        (backend, feature)
-        for backend in CALL_SITE_MARKERS
-        for feature in ("corelibs", "standard_library")
-    ],
+    [(backend, feature) for backend in CALL_SITE_MARKERS for feature in ("corelibs", "standard_library")],
 )
-def test_minimal_runtime_call_sites_are_preserved_per_backend(
-    backend: str,
-    feature: str,
-):
+def test_minimal_runtime_call_sites_are_preserved_per_backend(backend: str, feature: str):
     generated = generate_code(backend, feature)
     assert CALL_SITE_MARKERS[backend][feature] in generated
 

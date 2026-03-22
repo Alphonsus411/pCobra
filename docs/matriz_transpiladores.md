@@ -23,3 +23,9 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 | `asm` | asm | Tier 2 | solo_transpilacion | partial | partial | partial | partial | partial | partial |
 
 > `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.
+
+## Compatibilidad real de los Tier 1 parciales
+
+- `javascript`: adaptador oficial con objeto runtime `holobit`, proyecciones 1D/2D/3D/vector, transformaciones base y `graficar` textual; `corelibs`/`standard_library` expuestos mediante alias ejecutables.
+- `rust`: adaptador oficial inline con `CobraHolobit`, `CobraRuntimeError`, `Result`, proyecciones y transformaciones base; `corelibs`/`standard_library` materializados como funciones del runtime generado.
+- `wasm`: wrappers WAT e imports `pcobra:*` para Holobit, `corelibs` y `standard_library`; soporte real dependiente de host, por eso sigue en `partial`.
