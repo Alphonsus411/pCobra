@@ -34,7 +34,6 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
     REVERSE_TRANSPILERS,
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
-from pcobra.cobra.transpilers.targets import TIER1_TARGETS, TIER2_TARGETS
 from pcobra.cobra.transpilers.reverse.policy import normalize_reverse_language
 from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
@@ -191,6 +190,9 @@ POLICY_LITERAL_TARGET_NAMES = frozenset(
         "DOCKER_EXECUTABLE_TARGETS",
         "VERIFICATION_EXECUTABLE_TARGETS",
         "TRANSPILATION_ONLY_TARGETS",
+        "BEST_EFFORT_RUNTIME_TARGETS",
+        "EXPERIMENTAL_RUNTIME_TARGETS",
+        "NO_RUNTIME_TARGETS",
     }
 )
 POLICY_LITERAL_PREFIX_NAMES = frozenset(
@@ -386,6 +388,8 @@ def _expected_collection_for_name(
     official_targets: tuple[str, ...],
     official_runtime_targets: tuple[str, ...],
     transpilation_only_targets: tuple[str, ...],
+    best_effort_runtime_targets: tuple[str, ...],
+    no_runtime_targets: tuple[str, ...],
     verification_targets: tuple[str, ...],
 ) -> tuple[str, ...] | None:
     if name == "SUPPORTED_TARGETS" or name == "OFFICIAL_TARGETS":
@@ -394,6 +398,10 @@ def _expected_collection_for_name(
         return official_runtime_targets
     if name == "TRANSPILATION_ONLY_TARGETS":
         return transpilation_only_targets
+    if name in {"BEST_EFFORT_RUNTIME_TARGETS", "EXPERIMENTAL_RUNTIME_TARGETS"}:
+        return best_effort_runtime_targets
+    if name == "NO_RUNTIME_TARGETS":
+        return no_runtime_targets
     if name == "VERIFICATION_EXECUTABLE_TARGETS":
         return verification_targets
     return None
@@ -513,16 +521,8 @@ def validate_policy_tiers(policy: dict[str, object]) -> list[str]:
     tier1_targets = tuple(policy["tier1_targets"])
     tier2_targets = tuple(policy["tier2_targets"])
     official_targets = tuple(policy["official_targets"])
-    expected = tuple((*TIER1_TARGETS, *TIER2_TARGETS))
+    expected = tuple((*tier1_targets, *tier2_targets))
 
-    if tier1_targets != TIER1_TARGETS:
-        errors.append(
-            f"tier1_targets desalineado con targets.py -> {tier1_targets} (esperado: {TIER1_TARGETS})"
-        )
-    if tier2_targets != TIER2_TARGETS:
-        errors.append(
-            f"tier2_targets desalineado con targets.py -> {tier2_targets} (esperado: {TIER2_TARGETS})"
-        )
     if official_targets != expected:
         errors.append(
             f"official_targets desalineado con tier1+tier2 -> {official_targets} (esperado: {expected})"
@@ -689,6 +689,8 @@ def validate_python_policy_literals(
     *,
     official_runtime_targets: tuple[str, ...],
     transpilation_only_targets: tuple[str, ...],
+    best_effort_runtime_targets: tuple[str, ...],
+    no_runtime_targets: tuple[str, ...],
     verification_targets: tuple[str, ...],
 ) -> list[str]:
     errors: list[str] = []
@@ -725,6 +727,8 @@ def validate_python_policy_literals(
                     official_targets=official_targets,
                     official_runtime_targets=official_runtime_targets,
                     transpilation_only_targets=transpilation_only_targets,
+                    best_effort_runtime_targets=best_effort_runtime_targets,
+                    no_runtime_targets=no_runtime_targets,
                     verification_targets=verification_targets,
                 )
                 if expected is None:
@@ -878,6 +882,8 @@ def main() -> int:
     official_runtime_targets = policy["official_runtime_targets"]
     verification_targets = policy["verification_targets"]
     transpilation_only_targets = policy["transpilation_only_targets"]
+    best_effort_runtime_targets = policy["best_effort_runtime_targets"]
+    no_runtime_targets = policy["no_runtime_targets"]
     legacy_aliases = policy["legacy_aliases"]
     transpilers = read_transpiler_registry_keys()
 
@@ -915,6 +921,8 @@ def main() -> int:
             official_targets,
             official_runtime_targets=official_runtime_targets,
             transpilation_only_targets=transpilation_only_targets,
+            best_effort_runtime_targets=best_effort_runtime_targets,
+            no_runtime_targets=no_runtime_targets,
             verification_targets=verification_targets,
         )
     )

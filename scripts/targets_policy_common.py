@@ -11,7 +11,9 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from pcobra.cobra.cli.target_policies import (
-    DOCKER_EXECUTABLE_TARGETS,
+    BEST_EFFORT_RUNTIME_TARGETS,
+    NO_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS,
 )
@@ -127,9 +129,11 @@ def read_target_policy() -> dict[str, Any]:
         "tier1_targets": tuple(TIER1_TARGETS),
         "tier2_targets": tuple(TIER2_TARGETS),
         "official_targets": tuple(OFFICIAL_TARGETS),
-        "official_runtime_targets": tuple(DOCKER_EXECUTABLE_TARGETS),
+        "official_runtime_targets": tuple(OFFICIAL_RUNTIME_TARGETS),
         "verification_targets": tuple(VERIFICATION_EXECUTABLE_TARGETS),
         "transpilation_only_targets": tuple(TRANSPILATION_ONLY_TARGETS),
+        "best_effort_runtime_targets": tuple(BEST_EFFORT_RUNTIME_TARGETS),
+        "no_runtime_targets": tuple(NO_RUNTIME_TARGETS),
         "cli_aliases": {},
         "legacy_aliases": {},
         "public_names": tuple(PUBLIC_ACCEPTED_TARGET_NAMES),

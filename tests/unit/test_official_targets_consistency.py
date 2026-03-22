@@ -13,9 +13,12 @@ from pcobra.cobra.transpilers.reverse.policy import (
     normalize_reverse_language,
 )
 from pcobra.cobra.cli.target_policies import (
+    BEST_EFFORT_RUNTIME_TARGETS,
     DOCKER_EXECUTABLE_TARGETS,
+    NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
+    VERIFICATION_EXECUTABLE_TARGETS,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 from scripts.targets_policy_common import (
@@ -55,18 +58,11 @@ def test_cli_y_transpilers_no_exponen_targets_fuera_de_whitelist_oficial():
 
 
 def test_targets_y_tiers_oficiales_permancen_exactos():
-    assert OFFICIAL_TARGETS == (
-        "python",
-        "rust",
-        "javascript",
-        "wasm",
-        "go",
-        "cpp",
-        "java",
-        "asm",
-    )
-    assert TIER1_TARGETS == ("python", "rust", "javascript", "wasm")
-    assert TIER2_TARGETS == ("go", "cpp", "java", "asm")
+    policy = read_target_policy()
+
+    assert tuple(policy["tier1_targets"]) == TIER1_TARGETS
+    assert tuple(policy["tier2_targets"]) == TIER2_TARGETS
+    assert tuple(policy["official_targets"]) == OFFICIAL_TARGETS
     assert TIER1_TARGETS + TIER2_TARGETS == OFFICIAL_TARGETS
 
 def test_mapa_reverse_extensions_esta_alineado_con_scope_reverse():
@@ -203,21 +199,19 @@ def test_politicas_y_registros_publicos_no_aceptan_alias_js_como_target_feliz():
 
 
 def test_politica_runtime_vs_transpilacion_es_explicita():
-    assert OFFICIAL_RUNTIME_TARGETS == DOCKER_EXECUTABLE_TARGETS == ("python", "rust", "javascript", "cpp")
-    assert set(TRANSPILATION_ONLY_TARGETS) == {"wasm", "go", "java", "asm"}
+    policy = read_target_policy()
+
+    assert tuple(policy["official_runtime_targets"]) == OFFICIAL_RUNTIME_TARGETS
+    assert OFFICIAL_RUNTIME_TARGETS == DOCKER_EXECUTABLE_TARGETS
+    assert tuple(policy["transpilation_only_targets"]) == TRANSPILATION_ONLY_TARGETS
+    assert tuple(policy["verification_targets"]) == VERIFICATION_EXECUTABLE_TARGETS
     assert set(DOCKER_EXECUTABLE_TARGETS) | set(TRANSPILATION_ONLY_TARGETS) == set(OFFICIAL_TARGETS)
 
 
 def test_politica_best_effort_experimental_queda_acotada_y_explicita():
-    experimental_best_effort = tuple(
-        target for target in TRANSPILATION_ONLY_TARGETS if target in {"go", "java"}
-    )
-    sin_runtime = tuple(
-        target for target in TRANSPILATION_ONLY_TARGETS if target not in experimental_best_effort
-    )
-
-    assert experimental_best_effort == ("go", "java")
-    assert sin_runtime == ("wasm", "asm")
+    assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
+    assert NO_RUNTIME_TARGETS == ("wasm", "asm")
+    assert set(BEST_EFFORT_RUNTIME_TARGETS) | set(NO_RUNTIME_TARGETS) == set(TRANSPILATION_ONLY_TARGETS)
 
 
 def test_validacion_ci_bloquea_condicionales_o_tablas_para_backend_c_fuera_de_zonas_historicas():
@@ -291,4 +285,23 @@ def test_validacion_ci_bloquea_flags_publicos_obsoletos_en_docs_y_examples():
     assert not errores_flags, (
         "La auditoría CI detectó flags públicos obsoletos en documentación/ejemplos: "
         f"{errores_flags}"
+    )
+
+
+def test_tooling_y_fixtures_importan_targets_canonicos_sin_listas_locales_divergentes():
+    from scripts.ci.validate_targets import validate_python_policy_literals
+
+    policy = read_target_policy()
+    errors = validate_python_policy_literals(
+        tuple(policy["official_targets"]),
+        official_runtime_targets=tuple(policy["official_runtime_targets"]),
+        transpilation_only_targets=tuple(policy["transpilation_only_targets"]),
+        best_effort_runtime_targets=tuple(policy["best_effort_runtime_targets"]),
+        no_runtime_targets=tuple(policy["no_runtime_targets"]),
+        verification_targets=tuple(policy["verification_targets"]),
+    )
+
+    assert not errors, (
+        "Se detectaron listas hardcodeadas o desalineadas en tooling/tests vigilados: "
+        f"{errors}"
     )

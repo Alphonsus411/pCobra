@@ -23,6 +23,15 @@ TRANSPILATION_ONLY_TARGETS = tuple(
     target for target in OFFICIAL_TRANSPILATION_TARGETS if target not in OFFICIAL_RUNTIME_TARGETS
 )
 
+# Targets best-effort conservados fuera del contrato oficial de runtime.
+BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(("go", "java"))
+EXPERIMENTAL_RUNTIME_TARGETS = BEST_EFFORT_RUNTIME_TARGETS
+
+# Targets sin runtime automatizado en la CLI/suite actual.
+NO_RUNTIME_TARGETS = tuple(
+    target for target in TRANSPILATION_ONLY_TARGETS if target not in BEST_EFFORT_RUNTIME_TARGETS
+)
+
 # Alias semántico conservado para la UX existente.
 DOCKER_EXECUTABLE_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
@@ -39,6 +48,14 @@ require_official_target_subset(
 require_official_target_subset(
     VERIFICATION_EXECUTABLE_TARGETS,
     context="pcobra.cobra.cli.target_policies.VERIFICATION_EXECUTABLE_TARGETS",
+)
+require_official_target_subset(
+    BEST_EFFORT_RUNTIME_TARGETS,
+    context="pcobra.cobra.cli.target_policies.BEST_EFFORT_RUNTIME_TARGETS",
+)
+require_official_target_subset(
+    NO_RUNTIME_TARGETS,
+    context="pcobra.cobra.cli.target_policies.NO_RUNTIME_TARGETS",
 )
 
 

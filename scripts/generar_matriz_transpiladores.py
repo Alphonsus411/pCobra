@@ -17,14 +17,15 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "src"))
 
-from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS, TRANSPILATION_ONLY_TARGETS  # noqa: E402
+from pcobra.cobra.cli.target_policies import (  # noqa: E402
+    BEST_EFFORT_RUNTIME_TARGETS,
+    NO_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+)
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES  # noqa: E402
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_label  # noqa: E402
 
-EXPERIMENTAL_RUNTIME_TARGETS = ("go", "java")
-NO_RUNTIME_TARGETS = tuple(
-    target for target in TRANSPILATION_ONLY_TARGETS if target not in EXPERIMENTAL_RUNTIME_TARGETS
-)
+EXPERIMENTAL_RUNTIME_TARGETS = BEST_EFFORT_RUNTIME_TARGETS
 
 
 def _runtime_policy(target: str) -> str:
