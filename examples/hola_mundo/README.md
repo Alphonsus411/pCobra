@@ -3,5 +3,5 @@
 Transpila este ejemplo a Python con:
 
 ```bash
-cobra hola.co --to python
+cobra compilar hola.co --tipo python
 ```

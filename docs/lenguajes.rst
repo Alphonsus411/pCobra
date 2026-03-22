@@ -34,9 +34,7 @@ Fuentes normativas: ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/c
 Targets con runtime oficial (no equivalen a toda la transpilación)
 --------------------------------------------------------------------
 
-Los targets con runtime oficial son ``python``, ``rust``, ``javascript`` y
-``cpp``. Esta categoría debe leerse por separado de la lista completa de
-transpilación y de los orígenes reverse.
+Los targets con runtime oficial son ``python``, ``rust``, ``javascript`` y ``cpp``. Esta categoría debe leerse por separado de la lista completa de transpilación y de los orígenes reverse.
 
 Runtime experimental/best-effort conservado en tooling auxiliar
 ---------------------------------------------------------------

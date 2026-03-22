@@ -239,6 +239,9 @@ def test_rutas_bajo_vigilancia_incluyen_docs_y_tests_pedidos():
     assert "README.md" in rel_paths
     assert "docs" in rel_paths
     assert "docs/MANUAL_COBRA.md" in rel_paths
+    assert "examples" in rel_paths
+    assert "docker" in rel_paths
+    assert "extensions" in rel_paths
     assert "tests/utils" in rel_paths
     assert "tests/performance" in rel_paths
     assert "tests/integration" in rel_paths
@@ -273,3 +276,19 @@ def test_validacion_ci_verifica_listas_publicas_de_runtime_y_matrices_holobit():
     assert tuple(path.as_posix() for path in HOLOBIT_MATRIX_DOC_PATHS)
     assert not errores_listas, f"Listas públicas desalineadas: {errores_listas}"
     assert not errores_holobit, f"Claims/matriz Holobit desalineados: {errores_holobit}"
+
+
+def test_validacion_ci_bloquea_flags_publicos_obsoletos_en_docs_y_examples():
+    from scripts.ci.validate_targets import validate_scan_roots
+
+    errores = validate_scan_roots(tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES))
+    errores_flags = [
+        error
+        for error in errores
+        if "opción CLI pública obsoleta/no canónica" in error
+    ]
+
+    assert not errores_flags, (
+        "La auditoría CI detectó flags públicos obsoletos en documentación/ejemplos: "
+        f"{errores_flags}"
+    )

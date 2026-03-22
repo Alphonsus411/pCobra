@@ -17,7 +17,7 @@ El script ``docker/scripts/build.sh`` construye estas imágenes de ejecución en
 
 - ``cobra``
 - ``cobra-python``
-- ``cobra-js``
+- ``cobra-javascript``
 - ``cobra-cpp``
 - ``cobra-rust``
 
