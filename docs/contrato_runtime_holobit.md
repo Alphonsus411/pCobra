@@ -4,6 +4,15 @@
 
 Definir una API mínima y estable para que los transpiladores de Cobra soporten los nodos Holobit de forma homogénea entre backends.
 
+## Decisión explícita de producto
+
+La decisión oficial vigente es:
+
+- **compatibilidad total (`full`) solo en `python`**;
+- **compatibilidad adaptada (`partial`) en `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm`**.
+
+En consecuencia, este documento deja de interpretar cualquier runtime adaptado como si fuera paridad funcional real con el SDK Python. Si un backend no replica el comportamiento de referencia, debe documentarse y validarse como `partial`, aunque tenga hooks ejecutables, imports concretos o adaptadores mantenidos por el proyecto.
+
 ## Nombres canónicos
 
 El runtime Holobit mínimo expone **4 hooks contractuales**:
@@ -33,9 +42,12 @@ aparecer en la matriz contractual pública al mismo nivel que
 - La ausencia efectiva de `holobit_sdk` en ese rango **no** debe producir un
   no-op silencioso en las operaciones avanzadas del runtime Holobit; se trata
   de un entorno desalineado respecto al contrato de instalación.
-- Cuando el backend depende de `holobit_sdk` para ejecutar `proyectar`,
-  `transformar` o `graficar`, debe emitir una excepción/runtime error
-  descriptivo que identifique la dependencia faltante.
+- **Solo `python` depende contractualmente de `holobit_sdk`** para ofrecer compatibilidad `full`.
+- Los demás backends (`javascript`, `rust`, `wasm`, `go`, `cpp`, `java`, `asm`)
+  **no dependen de `holobit_sdk`**: ofrecen adaptadores o puentes contractuales propios,
+  y por eso siguen en `partial`.
+- Cuando un backend `partial` no soporta una operación o necesita runtime externo, debe
+  emitir un error o señalización explícita y verificable, nunca un no-op silencioso.
 - En Python la señalización esperada es `ModuleNotFoundError` mencionando
   `holobit_sdk` y aclarando que se esperaba como dependencia obligatoria en
   Python `>=3.10`.
@@ -75,29 +87,68 @@ Los transpiladores solo deben insertar hooks/imports de runtime Holobit cuando e
 Si no aparecen estos nodos, no se inyecta runtime Holobit.
 
 
-## Compatibilidad real por backend Tier 1 parcial
+## Definición contractual por backend
 
-### JavaScript
-- `holobit`: representación propia inmutable (`{ __cobra_tipo__: 'holobit', valores, historial }`).
-- `proyectar`: soporta `1d`, `2d`, `3d`, `vector`.
-- `transformar`: soporta `escalar`, `normalizar`, `mover`/`trasladar` y `rotar` sobre eje `z`.
-- `graficar`: genera una vista textual `Holobit(...)` y la emite vía `mostrar`.
-- `corelibs` / `standard_library`: alias invocables `longitud` y `mostrar` sobre una capa adaptadora oficial JS.
-- Sigue en `partial` porque no replica el SDK Python completo ni sus capacidades avanzadas.
+### Python (`full`)
+- Hooks `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`: ejecutables y alineados con el runtime Python de referencia.
+- `corelibs` / `standard_library`: imports Python explícitos y símbolos invocables en el código generado.
+- `holobit_sdk`: **dependencia obligatoria** para compatibilidad `full` en Python `>=3.10`.
+- Error esperado si falta el SDK: `ModuleNotFoundError` mencionando `holobit_sdk`.
 
-### Rust
-- `holobit`: `struct CobraHolobit { valores, historial }`.
-- `proyectar`: devuelve `Result<Vec<f64>, CobraRuntimeError>` con modos `1d`, `2d`, `3d`, `vector`.
-- `transformar`: devuelve `Result<CobraHolobit, CobraRuntimeError>` con operaciones base (`escalar`, `normalizar`, `mover`, `rotar` planar).
-- `graficar`: devuelve `Result<String, CobraRuntimeError>` y reutiliza `mostrar`.
-- `corelibs` / `standard_library`: funciones inline `longitud` y `mostrar` mantenidas por el proyecto.
-- Sigue en `partial` porque no existe paridad semántica completa con `holobit_sdk` ni con el runtime Python.
+### JavaScript (`partial`)
+- Hooks `cobra_*`: adaptador oficial mantenido por el proyecto sobre objeto runtime propio (`__cobra_tipo__ = 'holobit'`).
+- `cobra_holobit`: crea la representación adaptada.
+- `cobra_proyectar`: soporta `1d`, `2d`, `3d`, `vector`.
+- `cobra_transformar`: soporta `escalar`, `normalizar`, `mover`/`trasladar` y `rotar` sobre eje `z`.
+- `cobra_graficar`: genera vista textual y la emite por `mostrar`.
+- `corelibs` / `standard_library`: alias invocables `longitud` y `mostrar` sobre capa adaptadora oficial JS.
+- `holobit_sdk`: **no aplica**; el backend no lo usa.
+- Limitación oficial: fuera del adaptador soportado, falla con error explícito de contrato `partial`.
 
-### WASM
-- `holobit`, `proyectar`, `transformar`, `graficar`: wrappers WAT concretos que delegan en imports host-managed `pcobra:holobit`.
-- `corelibs` / `standard_library`: wrappers WAT concretos hacia `pcobra:corelibs.longitud` y `pcobra:standard_library.mostrar`.
-- El backend deja de depender de `unreachable` como fallback principal.
-- Sigue en `partial` porque el comportamiento final depende del runtime host y del protocolo externo de handles/parámetros.
+### Rust (`partial`)
+- Hooks `cobra_*`: adaptador oficial mantenido por el proyecto sobre `CobraHolobit`.
+- `cobra_holobit`: crea `CobraHolobit`.
+- `cobra_proyectar`: devuelve `Result<Vec<f64>, CobraRuntimeError>` con modos `1d`, `2d`, `3d`, `vector`.
+- `cobra_transformar`: devuelve `Result<CobraHolobit, CobraRuntimeError>` con operaciones base.
+- `cobra_graficar`: devuelve `Result<String, CobraRuntimeError>` y reutiliza `mostrar`.
+- `corelibs` / `standard_library`: funciones inline `longitud` y `mostrar`.
+- `holobit_sdk`: **no aplica**; el backend no lo usa.
+- Limitación oficial: el adaptador no equivale a la semántica completa de Python y debe fallar con `CobraRuntimeError` explícito cuando no cubre una operación.
+
+### WASM (`partial`)
+- Hooks `cobra_*`: puente contractual que delega en imports host-managed `pcobra:holobit`.
+- `corelibs` / `standard_library`: wrappers WAT hacia `pcobra:corelibs.longitud` y `pcobra:standard_library.mostrar`.
+- `holobit_sdk`: **no aplica dentro del módulo generado**.
+- Limitación oficial: la semántica final depende del host, del protocolo externo de handles y de buffers/parámetros.
+
+### Go (`partial`)
+- Hooks `cobra_*`: adaptador mínimo mantenido por el proyecto sobre `CobraHolobit`.
+- `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`: cubren la semántica básica adaptada.
+- `corelibs` / `standard_library`: adaptadores mínimos `longitud` y `mostrar`.
+- `holobit_sdk`: **no aplica**; el backend no lo usa.
+- Limitación oficial: usa runtime best-effort no público y hace `panic` explícito cuando la operación o los datos salen del contrato adaptado.
+
+### cpp (`partial`)
+- Hooks `cobra_*`: adaptador mantenido por el proyecto sobre `CobraHolobit`.
+- `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`: cubren la semántica básica adaptada.
+- `corelibs` / `standard_library`: includes verificables y adaptadores mínimos `longitud` y `mostrar`.
+- `holobit_sdk`: **no aplica**; el backend no lo usa.
+- Limitación oficial: usa `std::runtime_error` explícito cuando una operación sale del adaptador soportado.
+
+### Java (`partial`)
+- Hooks `cobra_*`: adaptador mantenido por el proyecto sobre `CobraHolobit`.
+- `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`: cubren la semántica básica adaptada.
+- `corelibs` / `standard_library`: imports verificables y adaptadores mínimos `longitud` y `mostrar`.
+- `holobit_sdk`: **no aplica**; el backend no lo usa.
+- Limitación oficial: usa `UnsupportedOperationException` explícita cuando una operación sale del adaptador soportado.
+
+### ASM (`partial`)
+- Hooks `cobra_*`: capa de inspección/diagnóstico, no runtime equivalente.
+- `cobra_holobit`: conserva la representación simbólica del IR.
+- `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`: exigen runtime externo y hacen `TRAP` explícito en el stub generado.
+- `corelibs` / `standard_library`: se preservan como puntos de llamada `CALL` administrados externamente.
+- `holobit_sdk`: **no aplica**; el backend no lo usa ni lo sustituye.
+- Limitación oficial: no debe presentarse como backend con runtime público ni con paridad SDK equivalente.
 
 ## Estado de implementación por backend
 
@@ -131,7 +182,7 @@ Lectura de política asociada a esta matriz:
 - **Targets con runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con soporte Holobit avanzado mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con adaptador Holobit mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
 - **Compatibilidad SDK completa**: `python`.
 - **Targets con runtime best-effort no público**: `go`, `java`.
 - **Targets solo de transpilación sin runtime público**: `wasm`, `asm`.
@@ -146,12 +197,12 @@ Notas por backend:
 - Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con
   Python `>=3.10`, y si aun así falta `holobit_sdk`, las primitivas avanzadas fallan explícitamente
   con `ModuleNotFoundError`.
-- JavaScript: contrato `partial`; usa un adaptador oficial mantenido por el proyecto sobre runtime javascript nativo. `cobra_holobit` crea un objeto runtime propio, `proyectar` soporta salidas 1D/2D/3D/vector, `transformar` cubre `escalar`, `normalizar`, `mover`/`trasladar` y rotación planar sobre `z`, y `graficar` produce una vista textual. No debe documentarse como compatibilidad completa con Holobit SDK.
-- Rust: contrato `partial`; usa un adaptador oficial mantenido por el proyecto con `CobraHolobit`, `CobraRuntimeError` y `Result`. Implementa proyecciones y transformaciones base equivalentes al adaptador oficial, pero sin paridad total con `holobit_sdk`.
-- WASM: contrato `partial`; usa hooks WAT concretos que delegan en imports host-managed (`pcobra:holobit`, `pcobra:corelibs`, `pcobra:standard_library`). Ya no usa `unreachable`, pero la semántica completa sigue dependiendo del host.
+- JavaScript: contrato `partial`; usa un adaptador oficial mantenido por el proyecto sobre runtime JavaScript nativo. No debe documentarse como compatibilidad completa con Holobit SDK ni como backend dependiente de `holobit_sdk`.
+- Rust: contrato `partial`; usa un adaptador oficial mantenido por el proyecto con `CobraHolobit`, `CobraRuntimeError` y `Result`. Implementa proyecciones y transformaciones base del adaptador, pero sin paridad total con `holobit_sdk`.
+- WASM: contrato `partial`; usa hooks WAT concretos que delegan en imports host-managed (`pcobra:holobit`, `pcobra:corelibs`, `pcobra:standard_library`). No usa `holobit_sdk` dentro del módulo generado y la semántica completa sigue dependiendo del host.
 - `cpp`: contrato `partial`, pero sigue siendo el backend Tier 2 con runtime oficial verificable mantenido por el proyecto mediante adaptadores mínimos ejecutables (`CobraHolobit`, `longitud`, `mostrar`, proyecciones y transformaciones base).
 - `go` y `java`: contrato `partial`; se mantienen como targets oficiales de generación con adaptadores mínimos mantenidos por el proyecto, sin promesa de runtime oficial verificable ni paridad SDK.
-- `asm`: contrato `partial` solo como backend de inspección/diagnóstico; conserva hooks y puntos de llamada, pero no debe presentarse como destino con runtime oficial, soporte Holobit avanzado mantenido ni compatibilidad SDK equivalente.
+- `asm`: contrato `partial` solo como backend de inspección/diagnóstico; conserva hooks y puntos de llamada, pero no debe presentarse como destino con runtime oficial, adaptador Holobit mantenido ni compatibilidad SDK equivalente.
 - Los hooks contractuales canónicos siguen limitados a `cobra_holobit`,
   `cobra_proyectar`, `cobra_transformar` y `cobra_graficar`; no deben aparecer
   hooks multi-backend para `escalar` o `mover`.

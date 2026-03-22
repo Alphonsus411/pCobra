@@ -21,6 +21,7 @@ def build_standard_runtime_lines() -> list[str]:
 def build_holobit_runtime_lines() -> list[str]:
     return [
         ';; backend wasm: hooks Holobit delegados en runtime host-managed de pcobra',
+        ';; backend wasm: contrato partial; no usa holobit_sdk dentro del módulo generado y depende del host para la semántica completa',
         '(import "pcobra:holobit" "cobra_holobit" (func $host_cobra_holobit (param i32) (result i32)))',
         '(import "pcobra:holobit" "cobra_proyectar" (func $host_cobra_proyectar (param i32) (param i32) (result i32)))',
         '(import "pcobra:holobit" "cobra_transformar" (func $host_cobra_transformar (param i32) (param i32) (param i32) (result i32)))',

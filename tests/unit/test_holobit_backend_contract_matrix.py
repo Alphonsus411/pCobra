@@ -58,7 +58,7 @@ HOOK_CALL_MARKERS = {
     "cpp": {
         "holobit": "auto hb = cobra_holobit({ 1, 2, 3 });",
         "proyectar": 'cobra_proyectar(hb, "2d");',
-        "transformar": 'cobra_transformar(hb, "rotar", {});',
+        "transformar": 'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});',
         "graficar": "cobra_graficar(hb);",
     },
     "java": {

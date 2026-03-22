@@ -66,7 +66,7 @@ def main() -> int:
         f"{', '.join(OFFICIAL_STANDARD_LIBRARY_TARGETS)}"
     )
     print(
-        "   Soporte Holobit avanzado mantenido: "
+        "   Adaptador Holobit mantenido: "
         f"{', '.join(ADVANCED_HOLOBIT_RUNTIME_TARGETS)}"
     )
     print(f"   Compatibilidad SDK completa: {', '.join(SDK_COMPATIBLE_TARGETS)}")

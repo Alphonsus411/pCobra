@@ -151,13 +151,13 @@ HOOK_SIGNATURE_MARKERS = {
 
 RUNTIME_ERROR_MESSAGE = {
     "python": "Runtime Holobit Python: '{feature}' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
-    "javascript": "Runtime Holobit JavaScript: '{feature}' requiere runtime avanzado compatible.",
-    "rust": "Runtime Holobit Rust: '{feature}' requiere runtime avanzado compatible.",
-    "go": "Runtime Holobit Go: '{feature}' requiere runtime avanzado compatible.",
-    "cpp": "Runtime Holobit C++: '{feature}' requiere runtime avanzado compatible.",
-    "java": "Runtime Holobit Java: '{feature}' requiere runtime avanzado compatible.",
-    "wasm": "Runtime Holobit WASM: '{feature}' requiere runtime avanzado compatible.",
-    "asm": "Runtime Holobit ASM: '{feature}' requiere runtime avanzado compatible.",
+    "javascript": "Runtime Holobit JavaScript: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
+    "rust": "Runtime Holobit Rust: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
+    "go": "Runtime Holobit Go: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
+    "cpp": "Runtime Holobit C++: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
+    "java": "Runtime Holobit Java: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
+    "wasm": "Runtime Holobit WASM: feature={feature}; contrato partial; backend host-managed sin holobit_sdk dentro del módulo generado.",
+    "asm": "Runtime Holobit ASM: feature={feature}; contrato partial; backend de inspección/diagnóstico sin holobit_sdk ni runtime embebido.",
 }
 
 
@@ -264,12 +264,49 @@ def validate_runtime_contracts() -> None:
                 )
 
         for feature in advanced_features:
+            expected_error = RUNTIME_ERROR_MESSAGE[target].format(feature=feature)
             if target == "python":
-                expected_error = RUNTIME_ERROR_MESSAGE[target].format(feature=feature)
                 if expected_error not in hook_blob:
                     raise RuntimeError(
                         f"RUNTIME_HOOKS['{target}'] no contiene el error explícito "
                         f"esperado para {feature}: {expected_error}"
+                    )
+                continue
+
+        if target in {"javascript", "rust", "go", "cpp", "java"}:
+            required_markers = (
+                "contrato partial",
+                "holobit_sdk",
+                "semántica completa de Python",
+            )
+            for marker in required_markers:
+                if marker not in hook_blob:
+                    raise RuntimeError(
+                        f"RUNTIME_HOOKS['{target}'] no contiene la nota contractual explícita requerida: {marker}"
+                    )
+
+        if target == "wasm":
+            required_markers = (
+                "contrato partial",
+                "host-managed",
+                "holobit_sdk",
+            )
+            for marker in required_markers:
+                if marker not in hook_blob:
+                    raise RuntimeError(
+                        f"RUNTIME_HOOKS['{target}'] no contiene la nota contractual explícita requerida: {marker}"
+                    )
+
+        if target == "asm":
+            required_markers = (
+                "contrato partial",
+                "inspección/diagnóstico",
+                "holobit_sdk",
+            )
+            for marker in required_markers:
+                if marker not in hook_blob:
+                    raise RuntimeError(
+                        f"RUNTIME_HOOKS['{target}'] no contiene la nota contractual explícita requerida: {marker}"
                     )
 
         if target == "asm" and "backend de inspección/diagnóstico" not in hook_blob:
