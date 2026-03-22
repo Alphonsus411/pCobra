@@ -9,6 +9,7 @@ from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
 from pcobra.cobra.transpilers.registry import (
     build_official_transpilers,
+    official_transpiler_targets,
 )
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
@@ -123,8 +124,8 @@ def load_entrypoint_transpilers() -> None:
 
 load_entrypoint_transpilers()
 
-LANG_CHOICES = list(OFFICIAL_TARGETS)
-TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TARGETS)
+LANG_CHOICES = list(official_transpiler_targets())
+TARGETS_HELP = build_target_help_by_tier(tuple(LANG_CHOICES))
 
 
 def parse_official_target_list(value: str) -> list[str]:

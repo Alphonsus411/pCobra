@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 
+from scripts.generate_target_policy_docs import generate as generate_target_policy_docs
 from scripts.targets_policy_common import PUBLIC_TEXT_PATHS
-
 
 EXPERIMENTAL_DOCS = [
     Path("docs/experimental/README.md"),
@@ -216,3 +216,19 @@ def test_readme_y_guias_publicas_no_presentan_hololang_como_documentacion_normal
     experimental = Path("docs/experimental/hololang_pipeline.md").read_text(encoding="utf-8").lower()
     assert "experimental" in experimental
     assert "fuera de política" in experimental or "fuera de la navegación pública" in experimental
+
+
+def test_snippets_generados_siguen_sincronizados_con_la_fuente_canonica():
+    watched = [
+        Path("README.md"),
+        Path("docs/README.en.md"),
+        Path("docs/_generated/target_policy_summary.rst"),
+        Path("docs/_generated/official_targets_table.rst"),
+        Path("docs/_generated/runtime_capability_matrix.rst"),
+        Path("docs/_generated/reverse_scope_table.rst"),
+        Path("docs/_generated/cli_backend_examples.rst"),
+    ]
+    before = {path: path.read_text(encoding="utf-8") for path in watched}
+    generate_target_policy_docs()
+    after = {path: path.read_text(encoding="utf-8") for path in watched}
+    assert before == after

@@ -1,35 +1,11 @@
 Estado de los lenguajes soportados
 =================================
 
-En la actualidad Cobra puede generar código para una lista canónica de
-destinos de salida: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``,
-``cpp``, ``java`` y ``asm``. A continuación se lista cada backend y su estado
-de soporte por tier. Para más detalles consulta :doc:`frontend/backends` y la
-sección *Características Principales* del `README.md <../README.md>`_.
+En la actualidad Cobra puede generar código para la lista canónica de destinos de salida definida por la política pública. A continuación se incluye el estado oficial derivado automáticamente desde dicha fuente normativa. Para más detalles consulta :doc:`frontend/backends` y la sección *Características Principales* del `README.md <../README.md>`_.
 
 Fuentes normativas: ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/cobra/cli/target_policies.py``.
 
-.. list-table:: Estado de los backends
-   :header-rows: 1
-
-   * - Lenguaje
-     - Estado
-   * - Python
-     - Tier 1
-   * - Rust
-     - Tier 1
-   * - JavaScript
-     - Tier 1
-   * - WebAssembly
-     - Tier 1
-   * - Go
-     - Tier 2
-   * - ``cpp``
-     - Tier 2
-   * - Java
-     - Tier 2
-   * - ``asm``
-     - Tier 2
+.. include:: _generated/official_targets_table.rst
 
 Targets con runtime oficial (no equivalen a toda la transpilación)
 --------------------------------------------------------------------
@@ -55,17 +31,7 @@ Orígenes reverse de entrada (no targets de salida)
 
 Los siguientes lenguajes de la lista canónica reverse pueden convertirse a Cobra como **entrada** de ``cobra transpilar-inverso``. No deben confundirse con los targets oficiales de salida.
 
-.. list-table:: Lenguajes de entrada reverse
-   :header-rows: 1
-
-   * - Lenguaje
-     - Estado
-   * - Python
-     - Experimental
-   * - JavaScript
-     - Experimental
-   * - Java
-     - Experimental
+.. include:: _generated/reverse_scope_table.rst
 
 Instalación de gramáticas
 -------------------------

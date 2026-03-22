@@ -40,10 +40,16 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
     REVERSE_TRANSPILERS,
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
+from pcobra.cobra.transpilers.registry import (
+    official_transpiler_module_filenames,
+    official_transpiler_registry_literal,
+    official_transpiler_targets,
+)
 from pcobra.cobra.transpilers.reverse.policy import (
     REVERSE_SCOPE_MODULES,
     normalize_reverse_language,
 )
+from scripts.generate_target_policy_docs import generate as generate_target_policy_docs
 from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     HOLOBIT_PUBLIC_CONTRACT_PATHS,
@@ -210,42 +216,15 @@ POLICY_LITERAL_PREFIX_NAMES = frozenset(
     }
 )
 
-EXPECTED_OFFICIAL_TARGETS = (
-    "python",
-    "rust",
-    "javascript",
-    "wasm",
-    "go",
-    "cpp",
-    "java",
-    "asm",
-)
+EXPECTED_OFFICIAL_TARGETS = tuple(official_transpiler_targets())
 EXPECTED_REVERSE_SCOPE_LANGUAGES = ("python", "javascript", "java")
-EXPECTED_TRANSPILER_MODULES = (
-    "to_python.py",
-    "to_rust.py",
-    "to_js.py",
-    "to_wasm.py",
-    "to_go.py",
-    "to_cpp.py",
-    "to_java.py",
-    "to_asm.py",
-)
+EXPECTED_TRANSPILER_MODULES = tuple(official_transpiler_module_filenames())
 EXPECTED_REVERSE_MODULES = (
     "from_python.py",
     "from_js.py",
     "from_java.py",
 )
-EXPECTED_TRANSPILER_REGISTRY = {
-    "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
-    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
-    "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
-    "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
-    "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
-    "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
-}
+EXPECTED_TRANSPILER_REGISTRY = official_transpiler_registry_literal()
 EXPECTED_REVERSE_SCOPE_MODULES = {
     "python": "pcobra.cobra.transpilers.reverse.from_python",
     "javascript": "pcobra.cobra.transpilers.reverse.from_js",
@@ -1169,6 +1148,33 @@ def validate_scan_roots(
     return errors
 
 
+
+def validate_generated_target_policy_docs() -> list[str]:
+    errors: list[str] = []
+    snapshots: dict[str, str] = {}
+    watched = [
+        ROOT / "README.md",
+        ROOT / "docs/README.en.md",
+        ROOT / "docs/_generated/target_policy_summary.rst",
+        ROOT / "docs/_generated/official_targets_table.rst",
+        ROOT / "docs/_generated/runtime_capability_matrix.rst",
+        ROOT / "docs/_generated/reverse_scope_table.rst",
+        ROOT / "docs/_generated/cli_backend_examples.rst",
+    ]
+    for path in watched:
+        snapshots[path.as_posix()] = path.read_text(encoding="utf-8") if path.exists() else ""
+
+    generate_target_policy_docs()
+
+    for path in watched:
+        current = path.read_text(encoding="utf-8") if path.exists() else ""
+        previous = snapshots[path.as_posix()]
+        if current != previous:
+            errors.append(
+                f"{path.relative_to(ROOT)}: documentación/snippet desalineado con la fuente canónica; ejecuta scripts/generate_target_policy_docs.py"
+            )
+    return errors
+
 def main() -> int:
     errors: list[str] = []
 
@@ -1226,6 +1232,7 @@ def main() -> int:
             verification_targets=verification_targets,
         )
     )
+    errors.extend(validate_generated_target_policy_docs())
     errors.extend(validate_scan_roots(official_targets, reverse_scope))
     errors.extend(validate_targeted_artifact_roots(official_targets, reverse_scope))
 

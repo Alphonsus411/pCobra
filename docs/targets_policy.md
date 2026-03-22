@@ -17,45 +17,11 @@ La separación entre **targets oficiales de transpilación** y **targets con run
 
 ## Salida directa oficial
 
-Los únicos destinos oficiales de `cobra compilar` son la lista canónica completa:
-
-- `python`
-- `rust`
-- `javascript`
-- `wasm`
-- `go`
-- `cpp`
-- `java`
-- `asm`
-
-Estos 8 nombres son la referencia pública completa antes de separarlos por tier.
-
-### Tier 1
-
-1. `python`
-2. `rust`
-3. `javascript`
-4. `wasm`
-
-### Tier 2
-
-1. `go`
-2. `cpp`
-3. `java`
-4. `asm`
+La lista pública de destinos oficiales y su separación por tiers se sincroniza desde la política canónica y se resume en el README generado y en `docs/_generated/target_policy_summary.rst`. Estos 8 nombres son la referencia pública completa antes de separar runtime y reverse.
 
 ## Política de nombres canónicos
 
-En documentación pública, ejemplos de CLI, tablas, archivos de configuración y texto narrativo deben usarse exclusivamente los nombres canónicos:
-
-- `python`
-- `rust`
-- `javascript`
-- `wasm`
-- `go`
-- `cpp`
-- `java`
-- `asm`
+En documentación pública, ejemplos de CLI, tablas, archivos de configuración y texto narrativo deben usarse exclusivamente los nombres canónicos definidos por la fuente canónica compartida.
 
 No se deben publicar aliases legacy ni targets retirados en snippets o tablas de usuario final.
 
@@ -63,11 +29,7 @@ No se deben publicar aliases legacy ni targets retirados en snippets o tablas de
 
 La transpilación inversa se documenta como capacidad independiente. Su política de **orígenes de entrada** se define en `src/pcobra/cobra/transpilers/reverse/policy.py`.
 
-Los orígenes reverse canónicos vigentes son:
-
-- `python`
-- `javascript`
-- `java`
+Los orígenes reverse canónicos vigentes se derivan de `src/pcobra/cobra/transpilers/reverse/policy.py` y se publican mediante los snippets generados desde la política canónica.
 
 Estos nombres describen **lenguajes de entrada para `cobra transpilar-inverso`**, no targets oficiales de salida. La documentación pública no debe mezclar ambas categorías ni reintroducir el antiguo origen reverse asociado a WASM u otros orígenes retirados.
 

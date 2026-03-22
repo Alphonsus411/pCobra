@@ -15,8 +15,7 @@ Transpila un archivo Cobra a otro lenguaje.
 Opciones principales:
 
 - ``archivo``: ruta del script ``.co``.
-- ``--tipo``: lenguaje de salida (``python``, ``rust``, ``javascript``, ``wasm``,
-  ``go``, ``cpp``, ``java`` y ``asm``).
+- ``--tipo``: lenguaje de salida derivado de la política canónica de targets.
 - ``--backend``: alias de ``--tipo`` útil para integraciones automatizadas.
   Admite los mismos lenguajes disponibles.
 - ``--tipos``: lista de lenguajes separados por comas para transpilación paralela.
@@ -36,11 +35,9 @@ Otro ejemplo generando varios lenguajes a la vez:
 Política de targets oficial
 ---------------------------
 
-Los nombres canónicos disponibles para ``cobra compilar`` son ``python``,
-``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``. Los
-tiers oficiales son Tier 1 (``python``, ``rust``, ``javascript``, ``wasm``) y
-Tier 2 (``go``, ``cpp``, ``java``, ``asm``), con fuente de verdad en
-``src/pcobra/cobra/transpilers/targets.py``.
+La lista de nombres canónicos disponibles para ``cobra compilar`` y sus tiers se incluye automáticamente desde la política canónica:
+
+.. include:: ../_generated/target_policy_summary.rst
 
 La política pública separa de forma estricta **salida oficial** y **runtime
 oficial**. Generar código para ``go``, ``java``, ``wasm`` o ``asm`` no implica

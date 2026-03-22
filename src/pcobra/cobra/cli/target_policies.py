@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 from argparse import ArgumentTypeError
+from typing import Literal
 
 from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
     build_target_help_by_tier,
+    format_target_sequence,
     normalize_target_name,
     require_official_target_subset,
     target_cli_choices,
 )
+
+RenderMarkup = Literal["plain", "markdown", "rst"]
 
 # Todos los destinos oficiales de generación/transpilación.
 OFFICIAL_TRANSPILATION_TARGETS = tuple(OFFICIAL_TARGETS)
@@ -82,7 +86,6 @@ require_official_target_subset(
     context="pcobra.cobra.cli.target_policies.SDK_COMPATIBLE_TARGETS",
 )
 
-
 OFFICIAL_TRANSPILATION_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TRANSPILATION_TARGETS)
 OFFICIAL_RUNTIME_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_RUNTIME_TARGETS)
 VERIFICATION_EXECUTABLE_TARGETS_HELP = build_target_help_by_tier(VERIFICATION_EXECUTABLE_TARGETS)
@@ -114,6 +117,64 @@ def sdk_compatible_targets_text() -> str:
 
 def transpilation_only_targets_text() -> str:
     return ", ".join(TRANSPILATION_ONLY_TARGETS)
+
+
+def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
+    """Devuelve las categorías públicas que deben reutilizar CLI/docs/tests."""
+    return (
+        ("official_targets", "Targets oficiales de transpilación", OFFICIAL_TRANSPILATION_TARGETS),
+        ("official_runtime_targets", "Targets con runtime oficial verificable", OFFICIAL_RUNTIME_TARGETS),
+        ("verification_targets", "Targets con verificación ejecutable explícita en CLI", VERIFICATION_EXECUTABLE_TARGETS),
+        (
+            "official_standard_library_targets",
+            "Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime",
+            OFFICIAL_STANDARD_LIBRARY_TARGETS,
+        ),
+        (
+            "advanced_holobit_runtime_targets",
+            "Targets con soporte Holobit avanzado mantenido por el proyecto",
+            ADVANCED_HOLOBIT_RUNTIME_TARGETS,
+        ),
+        ("sdk_compatible_targets", "Compatibilidad SDK completa", SDK_COMPATIBLE_TARGETS),
+        (
+            "transpilation_only_targets",
+            "Targets sin runtime oficial público aunque tengan generación de código",
+            TRANSPILATION_ONLY_TARGETS,
+        ),
+    )
+
+
+def render_public_policy_summary(*, markup: RenderMarkup = "plain") -> str:
+    """Renderiza el resumen público de política sin duplicar listas manuales."""
+    return "\n".join(
+        f"- **{label}**: {format_target_sequence(targets, markup=markup)}."
+        for _, label, targets in iter_public_policy_items()
+    )
+
+
+def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: RenderMarkup = "plain") -> str:
+    """Renderiza la línea pública de orígenes reverse oficiales."""
+    return (
+        "- **Orígenes de transpilación inversa**: "
+        + format_target_sequence(reverse_scope, markup=markup)
+        + "."
+    )
+
+
+def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
+    return (
+        "Targets oficiales de transpilación: {official}. "
+        "Solo tienen runtime oficial para {capability}: {allowed}. "
+        "Los targets {non_runtime} siguen siendo salidas oficiales de generación de código, "
+        "pero no equivalen a un runtime oficial ni a soporte oficial de librerías en ejecución. "
+        "Targets solo transpilación: {transpilation_only}."
+    ).format(
+        official=official_transpilation_targets_text(),
+        capability=capability,
+        allowed=", ".join(allowed_targets),
+        non_runtime=", ".join(TRANSPILATION_ONLY_TARGETS),
+        transpilation_only=transpilation_only_targets_text(),
+    )
 
 
 def validate_runtime_support_contract() -> None:
@@ -173,22 +234,6 @@ def validate_runtime_support_contract() -> None:
 validate_runtime_support_contract()
 
 
-def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
-    return (
-        "Targets oficiales de transpilación: {official}. "
-        "Solo tienen runtime oficial para {capability}: {allowed}. "
-        "Los targets {non_runtime} siguen siendo salidas oficiales de generación de código, "
-        "pero no equivalen a un runtime oficial ni a soporte oficial de librerías en ejecución. "
-        "Targets solo transpilación: {transpilation_only}."
-    ).format(
-        official=official_transpilation_targets_text(),
-        capability=capability,
-        allowed=", ".join(allowed_targets),
-        non_runtime=", ".join(TRANSPILATION_ONLY_TARGETS),
-        transpilation_only=transpilation_only_targets_text(),
-    )
-
-
 def invalid_target_error(value: str) -> str:
     return "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}.".format(
         value=value.strip(),
@@ -235,6 +280,16 @@ def parse_runtime_target(value: str, *, allowed_targets: tuple[str, ...], capabi
     return canonical
 
 
+
+def resolve_docker_backend(target: str) -> str:
+    """Resuelve el backend de runtime Docker solo para nombres canónicos oficiales."""
+    canonical = parse_runtime_target(
+        target,
+        allowed_targets=DOCKER_EXECUTABLE_TARGETS,
+        capability="ejecución en contenedor",
+    )
+    return DOCKER_RUNTIME_BY_TARGET[canonical]
+
 def parse_target_list(value: str) -> list[str]:
     """Valida una lista de targets separados por comas."""
     parsed = [parse_target(item) for item in value.split(",") if item.strip()]
@@ -256,20 +311,3 @@ def parse_restricted_target_list(value: str, allowed_targets: tuple[str, ...], c
             )
         )
     return parsed
-
-
-def resolve_docker_backend(target: str) -> str:
-    """Resuelve backend runtime de Docker para un target oficial canónico.
-
-    Algunos targets oficiales (`go`, `java`, `wasm`, `asm`) son de transpilación
-    oficial, pero no exponen runtime Docker oficial.
-    """
-    try:
-        normalized = parse_runtime_target(
-            target,
-            allowed_targets=DOCKER_EXECUTABLE_TARGETS,
-            capability="ejecución en contenedor Docker",
-        )
-    except ArgumentTypeError as exc:
-        raise ValueError(str(exc)) from exc
-    return DOCKER_RUNTIME_BY_TARGET[normalized]
