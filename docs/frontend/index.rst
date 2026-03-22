@@ -58,17 +58,13 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
 Introducción
 --------------------
 
-Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Su cadena de compilación puede apoyarse en una **representación intermedia (IR) interna** para coordinar la transpilación hacia distintos backends. La clasificación pública de destinos y tiers se deriva automáticamente desde la política canónica del proyecto.
+Cobra fue creado con la idea de facilitar la programación en español y añadir soporte para trabajar con datos complejos como los holobits. En su documentación pública, la salida oficial del proyecto se resume en una sola narrativa: pCobra transpila a 8 backends oficiales agrupados por tiers, con una política separada de runtime, Holobit y SDK.
 
 .. include:: ../_generated/target_policy_summary.rst
 
-La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y evitar aliases legacy o targets retirados. Cuando sea útil mencionar la arquitectura, debe describirse únicamente como un pipeline o IR **interno**, sin presentarlo como un lenguaje de usuario ni como un destino oficial adicional.
-
-
-
-
+La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/cobra/cli/target_policies.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y no presentar artefactos internos como si fueran backends adicionales.
 
 Repositorio de Ejemplos
 ----------------------
 
-Los proyectos de demostracion se encuentran en `cobra-ejemplos <https://github.com/Alphonsus411/pCobra/tree/work/examples>`_.
+Los proyectos de demostración se encuentran en `cobra-ejemplos <https://github.com/Alphonsus411/pCobra/tree/work/examples>`_.

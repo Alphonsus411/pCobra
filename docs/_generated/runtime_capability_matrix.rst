@@ -1,55 +1,64 @@
-.. list-table:: Diferencia entre codegen, runtime, librerías y SDK
+.. list-table:: Diferencia entre transpilación, runtime, Holobit y SDK
    :header-rows: 1
 
    * - Backend
+     - Tier
      - Runtime oficial verificable
-     - Verificación ejecutable CLI
-     - ``corelibs``/``standard_library`` oficiales en runtime
      - Runtime best-effort no público
+     - Holobit mantenido por el proyecto
+     - ``corelibs``/``standard_library`` oficiales en runtime
      - Compatibilidad SDK completa
    * - ``python``
-     - Sí
-     - Sí
+     - Tier 1
      - Sí
      - No
+     - Sí
+     - Sí
      - Sí
    * - ``rust``
-     - Sí
-     - Sí
+     - Tier 1
      - Sí
      - No
+     - Sí
+     - Sí
      - No
    * - ``javascript``
-     - Sí
-     - Sí
+     - Tier 1
      - Sí
      - No
+     - Sí
+     - Sí
      - No
    * - ``wasm``
+     - Tier 1
      - No
      - No
      - No
      - No
      - No
    * - ``go``
-     - No
-     - No
+     - Tier 2
      - No
      - Sí
+     - No
+     - No
      - No
    * - ``cpp``
-     - Sí
-     - Sí
+     - Tier 2
      - Sí
      - No
+     - Sí
+     - Sí
      - No
    * - ``java``
-     - No
-     - No
+     - Tier 2
      - No
      - Sí
      - No
+     - No
+     - No
    * - ``asm``
+     - Tier 2
      - No
      - No
      - No

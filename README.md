@@ -24,7 +24,7 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con soporte Holobit avanzado mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con adaptador Holobit mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
 - **Compatibilidad SDK completa**: `python`.
 - **Targets sin runtime oficial público aunque tengan generación de código**: `wasm`, `go`, `java`, `asm`.
 - **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
@@ -51,7 +51,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 ## Tabla de Contenidos
 
 - Descripción del Proyecto
-- Arquitectura interna del compilador (IR interno)
+- Arquitectura del compilador
 - Instalación
 - Cómo usar la CLI
 - Descargas
@@ -130,15 +130,15 @@ Cobra está diseñado para facilitar la programación en español, permitiendo q
 Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
 La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
-## Arquitectura interna del compilador (IR interno)
+## Arquitectura del compilador
 
-La cadena de herramientas de Cobra puede utilizar una **IR interna** del compilador para desacoplar el front-end de los generadores de código. Esa IR no forma parte de la interfaz pública de usuario ni constituye un target oficial adicional. El flujo principal funciona de la siguiente manera:
+La cadena de herramientas de Cobra separa el front-end de los generadores de código mediante una arquitectura interna de compilación. Esa arquitectura es un detalle de implementación y no forma parte de la lista pública de backends oficiales. El flujo principal funciona de la siguiente manera:
 
 1. El front-end analiza el código fuente y construye el AST de Cobra.
-2. Ese AST se normaliza y se transforma en una representación intermedia interna que captura estructuras de control, módulos y tipos.
+2. Ese AST se normaliza internamente para coordinar estructuras de control, módulos y tipos antes de la generación de código.
 3. Los transpiladores consumen esa IR para generar código en los distintos backends soportados.
 
-Esta capa intermedia actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ella, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. Cualquier artefacto intermedio debe entenderse como salida **interna o experimental** del pipeline, mientras que la salida pública oficial sigue limitada a `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+Esta organización actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ello, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. En la documentación pública, la salida oficial sigue limitada a `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
 
 ## Instalación
 

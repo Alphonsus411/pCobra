@@ -19,9 +19,11 @@ sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ))
 
 from pcobra.cobra.cli.target_policies import (  # noqa: E402
+    ADVANCED_HOLOBIT_RUNTIME_TARGETS,
     BEST_EFFORT_RUNTIME_TARGETS,
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
+    SDK_COMPATIBLE_TARGETS,
     render_public_policy_summary,
 )
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES  # noqa: E402
@@ -52,11 +54,40 @@ def _build_markdown() -> str:
         f"- **Targets con runtime best-effort no público**: {', '.join(f'`{t}`' for t in BEST_EFFORT_RUNTIME_TARGETS_INTERNAL)}.",
         f"- **Targets solo de transpilación**: {', '.join(f'`{t}`' for t in NO_RUNTIME_TARGETS)}.",
         "",
-        "## Matriz contractual",
+        "## Estado público por backend",
         "",
-        "| Backend | Nombre | Tier | runtime_policy | " + " | ".join(CONTRACT_FEATURES) + " |",
-        "|---|---|---|---|" + "---|" * len(CONTRACT_FEATURES),
+        "| Backend | Nombre | Tier | runtime_publico | holobit_publico | sdk_real |",
+        "|---|---|---|---|---|---|",
     ]
+    for backend in OFFICIAL_TARGETS:
+        contract = BACKEND_COMPATIBILITY[backend]
+        runtime_status = _runtime_policy(backend)
+        holobit_status = (
+            "sdk_full"
+            if backend in SDK_COMPATIBLE_TARGETS
+            else "adaptador_mantenido_partial"
+            if backend in ADVANCED_HOLOBIT_RUNTIME_TARGETS
+            else "partial"
+        )
+        sdk_status = "full" if backend in SDK_COMPATIBLE_TARGETS else "partial"
+        row = [
+            f"`{backend}`",
+            target_label(backend),
+            contract["tier"].replace("tier", "Tier "),
+            runtime_status,
+            holobit_status,
+            sdk_status,
+        ]
+        lines.append("| " + " | ".join(row) + " |")
+    lines.extend(
+        [
+            "",
+            "## Matriz contractual",
+            "",
+            "| Backend | Nombre | Tier | runtime_policy | " + " | ".join(CONTRACT_FEATURES) + " |",
+            "|---|---|---|---|" + "---|" * len(CONTRACT_FEATURES),
+        ]
+    )
     for backend in OFFICIAL_TARGETS:
         contract = BACKEND_COMPATIBILITY[backend]
         row = [
@@ -71,6 +102,7 @@ def _build_markdown() -> str:
         [
             "",
             "> `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.",
+            "> `holobit_publico` resume la promesa pública: `sdk_full` solo aplica a `python`; `adaptador_mantenido_partial` aplica a `rust`, `javascript` y `cpp`; el resto permanece en `partial`.",
         ]
     )
     return "\n".join(lines) + "\n"

@@ -8,16 +8,16 @@ Para ver ejemplos completos de compilación y transpilación, consulta la carpet
 
 En runtime oficial y para soporte de producción, Cobra define **únicamente** los targets de transpilación publicados por la política canónica. Esa lista se deriva de `src/pcobra/cobra/transpilers/targets.py` (`OFFICIAL_TARGETS`) y del registro canónico en `src/pcobra/cobra/transpilers/registry.py`.
 
-Cualquier backend o pipeline fuera de esa lista debe considerarse experimental y no forma
+Cualquier backend o flujo de implementación fuera de esa lista debe considerarse experimental y no forma
 parte del paquete instalable de producción.
 
 ## Experimentos y documentación separada
 
-Los materiales sobre IR internos o artefactos retirados no amplían la lista
+Los materiales sobre arquitectura de compilación o artefactos retirados no amplían la lista
 anterior. Tampoco deben enlazarse desde la documentación principal de forma
 ambigua o sin etiquetar su estado.
 
-- **IR interno del compilador**: puede mencionarse de forma breve como parte de la arquitectura, no como target público de salida.
+- **Arquitectura del compilador**: puede mencionarse de forma breve como parte de la implementación, no como target público de salida.
 - **Histórico**: los documentos archivados deben permanecer fuera del árbol
   principal distribuido y citarse como `histórico` o `sin vigencia normativa`.
 

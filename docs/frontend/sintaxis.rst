@@ -91,11 +91,20 @@ Puedes anteponer `@` a una función para modificar su comportamiento con un deco
        imprimir('hola')
    fin
 
-**Transpilación a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``**
+**Transpilación a los 8 backends oficiales**
 
-- `imprimir` se transpila a `print` en `python`, `console.log` en `javascript`, `println!` en `rust`, `System.out.println` en `java`, `fmt.Println` en `go`, `std::cout` en `cpp` y secuencias equivalentes en los backends `asm` y `wasm`.
-- Los bucles `mientras` y `para` se convierten en `while` y `for` en los lenguajes de alto nivel, mientras que en `asm` generan instrucciones `WHILE` y `FOR`.
-- La construcción `holobit` se traduce a `holobit([...])` en `python`, `new Holobit([...])` en `javascript`, `holobit(vec![...])` en `rust` y `holobit({...})` en `cpp`, manteniendo equivalencias en `java`, `go`, `asm` y `wasm` según el backend elegido.
+Cobra transpila únicamente a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
+
+- ``imprimir`` genera la forma idiomática equivalente de cada backend oficial.
+- ``mientras`` y ``para`` se traducen a construcciones de control equivalentes del backend de salida o a la representación contractual que corresponda.
+- ``holobit``, ``proyectar``, ``transformar`` y ``graficar`` se emiten según el contrato público vigente del backend:
+
+  - ``python`` ofrece soporte ``full`` y compatibilidad SDK completa.
+  - ``rust``, ``javascript`` y ``cpp`` ofrecen runtime oficial verificable con adaptador Holobit mantenido por el proyecto, en estado contractual ``partial``.
+  - ``go`` y ``java`` mantienen hooks/adaptadores ``partial`` sobre runtime best-effort no público.
+  - ``wasm`` y ``asm`` generan hooks/puentes contractuales de solo transpilación y no deben documentarse como runtime oficial público.
+
+Cuando una librería o hook no alcanza paridad completa en un backend ``partial``, la documentación pública debe describirlo como soporte contractual limitado, no como equivalencia total con el runtime Python.
 
 Activar el parser de Lark
 -------------------------
