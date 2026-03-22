@@ -6,7 +6,6 @@ from importlib import import_module
 from typing import Final
 
 from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
     require_exact_official_targets,
     target_cli_choices,
 )
@@ -32,7 +31,6 @@ def ordered_official_transpiler_paths() -> tuple[tuple[str, tuple[str, str]], ..
     return tuple((target, TRANSPILER_CLASS_PATHS[target]) for target in ordered_targets)
 
 
-
 def build_official_transpilers() -> dict[str, type]:
     """Carga las clases oficiales desde el registro canónico."""
     registry: dict[str, type] = {}
@@ -40,7 +38,6 @@ def build_official_transpilers() -> dict[str, type]:
         module = import_module(module_name)
         registry[target] = getattr(module, class_name)
     return registry
-
 
 
 def official_transpiler_targets() -> tuple[str, ...]:
@@ -51,3 +48,16 @@ def official_transpiler_targets() -> tuple[str, ...]:
             context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
         )
     )
+
+
+def official_transpiler_module_filenames() -> tuple[str, ...]:
+    """Devuelve los nombres de archivo ``to_*.py`` canónicos del registro oficial."""
+    return tuple(
+        module_name.rsplit(".", 1)[-1] + ".py"
+        for _, (module_name, _) in ordered_official_transpiler_paths()
+    )
+
+
+def official_transpiler_registry_literal() -> dict[str, tuple[str, str]]:
+    """Devuelve el literal esperado del registro canónico para auditorías."""
+    return {target: value for target, value in ordered_official_transpiler_paths()}

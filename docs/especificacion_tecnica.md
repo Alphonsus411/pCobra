@@ -6,12 +6,7 @@ Para ver ejemplos completos de compilación y transpilación, consulta la carpet
 
 ## Targets oficiales de transpilación
 
-En runtime oficial y para soporte de producción, Cobra define **únicamente** 8
-targets de transpilación: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`,
-`java` y `asm`.
-
-La fuente de verdad de este contrato es:
-`src/pcobra/cobra/transpilers/targets.py` (`OFFICIAL_TARGETS`).
+En runtime oficial y para soporte de producción, Cobra define **únicamente** los targets de transpilación publicados por la política canónica. Esa lista se deriva de `src/pcobra/cobra/transpilers/targets.py` (`OFFICIAL_TARGETS`) y del registro canónico en `src/pcobra/cobra/transpilers/registry.py`.
 
 Cualquier backend o pipeline fuera de esa lista debe considerarse experimental y no forma
 parte del paquete instalable de producción.

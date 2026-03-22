@@ -1,6 +1,10 @@
 """Targets oficiales de transpilation por nivel de soporte."""
 
-from typing import Final, Iterable, Tuple
+from __future__ import annotations
+
+from typing import Final, Iterable, Literal, Tuple
+
+MarkupKind = Literal["plain", "markdown", "rst"]
 
 TIER1_TARGETS: Final[Tuple[str, ...]] = ("python", "rust", "javascript", "wasm")
 TIER2_TARGETS: Final[Tuple[str, ...]] = ("go", "cpp", "java", "asm")
@@ -12,9 +16,9 @@ TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "javascript": "JavaScript",
     "wasm": "WebAssembly",
     "go": "Go",
-    "cpp": "C++",
+    "cpp": "cpp",
     "java": "Java",
-    "asm": "Ensamblador",
+    "asm": "asm",
 }
 
 
@@ -118,13 +122,60 @@ def target_label(target: str) -> str:
     return TARGET_FRIENDLY_LABELS.get(canonical, canonical)
 
 
+def target_tier(target: str) -> str:
+    """Devuelve el tier público de un target canónico."""
+    canonical = normalize_target_name(target)
+    if canonical in TIER1_TARGETS:
+        return "Tier 1"
+    if canonical in TIER2_TARGETS:
+        return "Tier 2"
+    raise RuntimeError(f"Target fuera de política: {target}")
+
+
+def format_target_name(target: str, *, markup: MarkupKind = "plain") -> str:
+    """Formatea un target canónico para documentación/CLI."""
+    canonical = normalize_target_name(target)
+    if markup in {"markdown", "rst"}:
+        return f"``{canonical}``" if markup == "rst" else f"`{canonical}`"
+    return canonical
+
+
+def format_target_sequence(
+    targets: Iterable[str],
+    *,
+    markup: MarkupKind = "plain",
+    separator: str = ", ",
+) -> str:
+    """Formatea una secuencia ordenada de targets canónicos."""
+    normalized = target_cli_choices(require_official_target_subset(targets, context="format_target_sequence"))
+    return separator.join(format_target_name(target, markup=markup) for target in normalized)
+
+
+def official_target_rows(
+    targets: Iterable[str] | None = None,
+) -> tuple[dict[str, str], ...]:
+    """Devuelve filas documentales derivadas de la política canónica."""
+    chosen = OFFICIAL_TARGETS if targets is None else target_cli_choices(
+        require_official_target_subset(targets, context="official_target_rows")
+    )
+    return tuple(
+        {
+            "target": target,
+            "label": target_label(target),
+            "tier": target_tier(target),
+        }
+        for target in chosen
+    )
+
+
 def build_target_help_by_tier(
     available_targets: Iterable[str] | None = None,
 ) -> str:
     """Devuelve ayuda agrupada por tier con etiqueta amigable + nombre canónico."""
 
     def _fmt(target: str) -> str:
-        return f"{target_label(target)} ({target})"
+        label = target_label(target)
+        return target if label == target else f"{label} ({target})"
 
     choices = (
         target_cli_choices(OFFICIAL_TARGETS)
@@ -139,3 +190,11 @@ def build_target_help_by_tier(
     if tier2_choices:
         sections.append("Tier 2: " + ", ".join(_fmt(target) for target in tier2_choices) + ".")
     return " ".join(sections)
+
+
+def build_tier_summary_lines(*, markup: MarkupKind = "plain") -> tuple[str, ...]:
+    """Devuelve líneas resumidas de tiers derivadas de la fuente canónica."""
+    return (
+        f"**Tier 1**: {format_target_sequence(TIER1_TARGETS, markup=markup)}.",
+        f"**Tier 2**: {format_target_sequence(TIER2_TARGETS, markup=markup)}.",
+    )

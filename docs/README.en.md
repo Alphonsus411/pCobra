@@ -11,6 +11,22 @@ Version 10.0.12
 
 Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`, allowing greater versatility when running and deploying Cobra code.
 
+Policy snapshot (generated from the canonical target policy):
+
+<!-- BEGIN GENERATED TARGET POLICY SUMMARY EN -->
+- **Official transpilation targets**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets with official verifiable runtime**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets with explicit executable CLI verification**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets with maintained `corelibs`/`standard_library` runtime support**: `python`, `rust`, `javascript`, `cpp`.
+- **Full SDK compatibility**: `python`.
+- **Reverse transpilation input origins**: `python`, `javascript`, `java`.
+
+Official backend support tiers:
+
+- **Tier 1**: `python`, `rust`, `javascript`, `wasm`.
+- **Tier 2**: `go`, `cpp`, `java`, `asm`.
+<!-- END GENERATED TARGET POLICY SUMMARY EN -->
+
 ## Table of Contents
 
 - Project Description

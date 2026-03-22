@@ -7,7 +7,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,8 @@ def get_mapped_path(module: str, backend: str) -> str:
     exclusivamente desde ``cobra.toml`` usando la estructura
     ``[modulos."<module>"]``. Si no hay mapeo válido, devuelve ``module``.
     """
-    if backend not in OFFICIAL_TARGETS:
+    canonical_backend = normalize_target_name(backend)
+    if backend != canonical_backend or canonical_backend not in OFFICIAL_TARGETS:
         return module
 
     mapa = get_toml_map()
@@ -67,5 +68,5 @@ def get_mapped_path(module: str, backend: str) -> str:
     if not isinstance(module_mapping, dict):
         return module
 
-    mapped = module_mapping.get(backend)
+    mapped = module_mapping.get(canonical_backend)
     return mapped if isinstance(mapped, str) else module

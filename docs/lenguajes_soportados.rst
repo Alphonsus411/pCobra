@@ -5,22 +5,9 @@ Esta guía separa explícitamente los **targets oficiales de transpilación**, l
 **targets con runtime oficial** y los **orígenes de transpilación inversa** para
 evitar ambigüedades entre categorías distintas.
 
-Resumen normativo:
+Resumen normativo derivado automáticamente desde la política canónica:
 
-- **Targets oficiales de transpilación**: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
-- **Targets con runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y ``cpp``.
-- **Targets con verificación ejecutable explícita en CLI**: ``python``, ``rust``, ``javascript`` y ``cpp``.
-- **Targets con soporte oficial mantenido de** ``corelibs``/**standard_library**
-  **en runtime**: ``python``, ``rust``, ``javascript`` y ``cpp``.
-- **Targets con soporte Holobit avanzado mantenido por el proyecto**:
-  ``python``, ``rust``, ``javascript`` y ``cpp``.
-- **Compatibilidad SDK completa**: ``python``.
-- **Targets sin runtime oficial público aunque tengan codegen oficial**:
-  ``go``, ``java``, ``wasm`` y ``asm``.
-
-La lista canónica completa de targets oficiales de transpilación es:
-``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y
-``asm``.
+.. include:: _generated/target_policy_summary.rst
 
 Fuentes normativas visibles:
 
@@ -31,129 +18,22 @@ Fuentes normativas visibles:
 Tier 1 (soporte principal)
 --------------------------
 
-.. list-table:: Backends Tier 1
-   :header-rows: 1
-
-   * - Lenguaje
-     - Identificador CLI
-     - Estado
-   * - Python
-     - ``python``
-     - Estable
-   * - JavaScript
-     - ``javascript``
-     - Estable
-   * - Rust
-     - ``rust``
-     - Estable
-   * - WebAssembly (WAT)
-     - ``wasm``
-     - Estable
+.. include:: _generated/official_targets_table.rst
 
 Tier 2 (soporte oficial con cobertura parcial)
 -------------------------------------
 
-.. list-table:: Backends Tier 2
-   :header-rows: 1
-
-   * - Lenguaje
-     - Identificador CLI
-     - Estado
-   * - Go
-     - ``go``
-     - Parcial
-   * - Java
-     - ``java``
-     - Parcial
-   * - ``cpp``
-     - ``cpp``
-     - Parcial
-   * - ``asm``
-     - ``asm``
-     - Cobertura básica
+.. include:: _generated/official_targets_table.rst
 
 Targets con runtime oficial
 ---------------------------
 
-.. list-table:: Targets con runtime oficial
-   :header-rows: 1
-
-   * - Lenguaje
-     - Identificador CLI
-     - Alcance
-   * - Python
-     - ``python``
-     - Runtime oficial
-   * - Rust
-     - ``rust``
-     - Runtime oficial
-   * - JavaScript
-     - ``javascript``
-     - Runtime oficial
-   * - ``cpp``
-     - ``cpp``
-     - Runtime oficial
+.. include:: _generated/official_targets_table.rst
 
 Capacidades públicas por nivel de promesa
 -----------------------------------------
 
-.. list-table:: Diferencia entre codegen, runtime, librerías y SDK
-   :header-rows: 1
-
-   * - Backend
-     - Runtime oficial verificable
-     - Verificación ejecutable CLI
-     - ``corelibs``/``standard_library`` oficiales en runtime
-     - Holobit avanzado mantenido
-     - Compatibilidad SDK completa
-   * - ``python``
-     - Sí
-     - Sí
-     - Sí
-     - Sí
-     - Sí
-   * - ``rust``
-     - Sí
-     - Sí
-     - Sí
-     - Sí
-     - No (sigue en ``partial``)
-   * - ``javascript``
-     - Sí
-     - Sí
-     - Sí
-     - Sí
-     - No (sigue en ``partial``)
-   * - ``cpp``
-     - Sí
-     - Sí
-     - Sí
-     - Sí
-     - No (sigue en ``partial``)
-   * - ``wasm``
-     - No
-     - No
-     - No como runtime oficial; solo wrappers/codegen host-managed
-     - No como promesa pública de runtime oficial
-     - No
-   * - ``go``
-     - No (best-effort interno/no público)
-     - No
-     - No como runtime oficial; solo adaptadores mínimos
-     - No como promesa pública de runtime oficial
-     - No
-   * - ``java``
-     - No (best-effort interno/no público)
-     - No
-     - No como runtime oficial; solo adaptadores mínimos
-     - No como promesa pública de runtime oficial
-     - No
-   * - ``asm``
-     - No
-     - No
-     - No como runtime oficial; solo puntos de llamada/diagnóstico
-     - No como promesa pública de runtime oficial
-     - No
+.. include:: _generated/runtime_capability_matrix.rst
 
 
 Política de targets oficial

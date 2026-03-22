@@ -10,6 +10,7 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 - **Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con soporte Holobit avanzado mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
 - **Compatibilidad SDK completa**: `python`.
+- **Targets sin runtime oficial público aunque tengan generación de código**: `wasm`, `go`, `java`, `asm`.
 - **Targets con runtime best-effort no público**: `go`, `java`.
 - **Targets solo de transpilación**: `wasm`, `asm`.
 
@@ -27,10 +28,3 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 | `asm` | asm | Tier 2 | solo_transpilacion | partial | partial | partial | partial | partial | partial |
 
 > `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.
-> Las columnas `holobit`, `corelibs` y `standard_library` describen la **compatibilidad contractual mínima de codegen/runtime**; no implican por sí mismas compatibilidad SDK completa. Esa promesa sigue reservada a `python`.
-
-## Compatibilidad real de los Tier 1 parciales
-
-- `javascript`: adaptador oficial con objeto runtime `holobit`, proyecciones 1D/2D/3D/vector, transformaciones base y `graficar` textual; `corelibs`/`standard_library` expuestos mediante alias ejecutables.
-- `rust`: adaptador oficial inline con `CobraHolobit`, `CobraRuntimeError`, `Result`, proyecciones y transformaciones base; `corelibs`/`standard_library` materializados como funciones del runtime generado.
-- `wasm`: wrappers WAT e imports `pcobra:*` para Holobit, `corelibs` y `standard_library`; soporte real dependiente de host, por eso sigue en `partial`.

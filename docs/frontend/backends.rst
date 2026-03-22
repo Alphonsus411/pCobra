@@ -1,21 +1,13 @@
 Soporte de backends
 ===================
 
-Cobra permite generar código para los siguientes destinos mediante el subcomando
-``compilar``: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
+Cobra permite generar código para los destinos definidos por el registro canónico de transpiladores.
 
-Ejemplos de uso:
+.. include:: ../_generated/target_policy_summary.rst
 
-.. code-block:: bash
+Ejemplos de uso generados desde el registro canónico:
 
-   cobra compilar programa.co --backend python
-   cobra compilar programa.co --backend javascript
-   cobra compilar programa.co --backend rust
-   cobra compilar programa.co --backend cpp
-   cobra compilar programa.co --backend go
-   cobra compilar programa.co --backend java
-   cobra compilar programa.co --backend asm
-   cobra compilar programa.co --backend wasm
+.. include:: ../_generated/cli_backend_examples.rst
 
 Para ``wasm``, el backend genera formato WAT que puede convertirse con
 ``wat2wasm`` para obtener un módulo binario ejecutable.

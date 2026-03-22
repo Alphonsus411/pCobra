@@ -16,8 +16,14 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "src"))
+sys.path.insert(0, str(RAIZ))
 
-from pcobra.cobra.cli.target_policies import BEST_EFFORT_RUNTIME_TARGETS, NO_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS  # noqa: E402
+from pcobra.cobra.cli.target_policies import (  # noqa: E402
+    BEST_EFFORT_RUNTIME_TARGETS,
+    NO_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+    render_public_policy_summary,
+)
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES  # noqa: E402
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_label  # noqa: E402
 
@@ -42,8 +48,7 @@ def _build_markdown() -> str:
         "",
         "## Resumen de política",
         "",
-        f"- **Targets oficiales de transpilación**: {', '.join(f'`{t}`' for t in OFFICIAL_TARGETS)}.",
-        f"- **Targets con runtime oficial**: {', '.join(f'`{t}`' for t in OFFICIAL_RUNTIME_TARGETS)}.",
+        render_public_policy_summary(markup="markdown"),
         f"- **Targets con runtime best-effort no público**: {', '.join(f'`{t}`' for t in BEST_EFFORT_RUNTIME_TARGETS_INTERNAL)}.",
         f"- **Targets solo de transpilación**: {', '.join(f'`{t}`' for t in NO_RUNTIME_TARGETS)}.",
         "",
