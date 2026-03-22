@@ -60,7 +60,7 @@ from pcobra.cobra.transpilers.common.utils import (
     get_standard_imports,
     get_runtime_hooks,
 )
-from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
+from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
 
 from pcobra.cobra.transpilers.transpiler.python_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,
@@ -259,7 +259,7 @@ class TranspiladorPython(BaseTranspiler):
         return "    " * self.nivel_indentacion
 
     def transpilar(self, nodos):
-        nodos = ensure_cobra_ast(nodos)
+        nodos = normalize_to_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = remove_dead_code(inline_functions(optimize_constants(nodos)))
         usa_holobit = ast_requires_holobit_runtime(nodos)

@@ -1,4 +1,4 @@
-"""Transpilador que genera un ensamblador simbólico desde Hololang IR."""
+"""Transpilador que genera un ensamblador simbólico desde el IR interno."""
 
 from __future__ import annotations
 
@@ -9,21 +9,21 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.core.hololang_ir import (
-    HololangAssignment,
-    HololangCall,
-    HololangExpressionStatement,
-    HololangFor,
-    HololangFunction,
-    HololangHolobit,
-    HololangIf,
-    HololangModule,
-    HololangPrint,
-    HololangReturn,
-    HololangStatement,
-    HololangUnknown,
-    HololangWhile,
-    build_hololang_ir,
+from pcobra.core.internal_ir import (
+    InternalIRAssignment,
+    InternalIRCall,
+    InternalIRExpressionStatement,
+    InternalIRFor,
+    InternalIRFunction,
+    InternalIRHolobit,
+    InternalIRIf,
+    InternalIRModule,
+    InternalIRPrint,
+    InternalIRReturn,
+    InternalIRStatement,
+    InternalIRUnknown,
+    InternalIRWhile,
+    build_internal_ir,
 )
 from pcobra.core.optimizations import (
     eliminate_common_subexpressions,
@@ -35,7 +35,7 @@ from pcobra.cobra.macro import expandir_macros
 
 
 class TranspiladorASM(BaseTranspiler):
-    """Genera una salida estilo ensamblador a partir del IR de Hololang."""
+    """Genera una salida estilo ensamblador a partir del IR interno."""
 
     def __init__(self) -> None:
         self._lineas: list[str] = []
@@ -48,7 +48,7 @@ class TranspiladorASM(BaseTranspiler):
         """Genera el código ensamblador para ``programa``.
 
         ``programa`` puede ser una lista de nodos AST de Cobra o un módulo de
-        IR de Hololang.  Si se proporciona AST, se aplica la misma cadena de
+        IR interno.  Si se proporciona AST, se aplica la misma cadena de
         optimizaciones utilizada por el intérprete antes de construir el IR.
         """
 
@@ -71,8 +71,8 @@ class TranspiladorASM(BaseTranspiler):
     # ------------------------------------------------------------------
     # Conversión y utilidades internas
     # ------------------------------------------------------------------
-    def _asegurar_modulo(self, programa) -> HololangModule:
-        if isinstance(programa, HololangModule):
+    def _asegurar_modulo(self, programa) -> InternalIRModule:
+        if isinstance(programa, InternalIRModule):
             return programa
 
         nodos = expandir_macros(programa)
@@ -81,17 +81,17 @@ class TranspiladorASM(BaseTranspiler):
                 eliminate_common_subexpressions(optimize_constants(nodos))
             )
         )
-        return build_hololang_ir(optimizados)
+        return build_internal_ir(optimizados)
 
     def _agregar_linea(self, texto: str) -> None:
         self._lineas.append("    " * self._indent + texto)
 
-    def _emitir(self, instruccion: HololangStatement) -> None:
-        if isinstance(instruccion, HololangAssignment):
+    def _emitir(self, instruccion: InternalIRStatement) -> None:
+        if isinstance(instruccion, InternalIRAssignment):
             self._agregar_linea(f"SET {instruccion.target}, {instruccion.value}")
             return
 
-        if isinstance(instruccion, HololangIf):
+        if isinstance(instruccion, InternalIRIf):
             self._agregar_linea(f"IF {instruccion.condition}")
             self._indent += 1
             for stmt in instruccion.then_branch:
@@ -106,7 +106,7 @@ class TranspiladorASM(BaseTranspiler):
             self._agregar_linea("END")
             return
 
-        if isinstance(instruccion, HololangWhile):
+        if isinstance(instruccion, InternalIRWhile):
             self._agregar_linea(f"WHILE {instruccion.condition}")
             self._indent += 1
             for stmt in instruccion.body:
@@ -115,7 +115,7 @@ class TranspiladorASM(BaseTranspiler):
             self._agregar_linea("END")
             return
 
-        if isinstance(instruccion, HololangFor):
+        if isinstance(instruccion, InternalIRFor):
             self._agregar_linea(
                 f"FOR {instruccion.target} IN {instruccion.iterable}"
             )
@@ -126,7 +126,7 @@ class TranspiladorASM(BaseTranspiler):
             self._agregar_linea("END")
             return
 
-        if isinstance(instruccion, HololangFunction):
+        if isinstance(instruccion, InternalIRFunction):
             for decorador in instruccion.decorators:
                 self._agregar_linea(f"DECORATOR {decorador}")
             encabezado = "FUNC " + instruccion.name
@@ -142,34 +142,34 @@ class TranspiladorASM(BaseTranspiler):
             self._agregar_linea("ENDFUNC")
             return
 
-        if isinstance(instruccion, HololangReturn):
+        if isinstance(instruccion, InternalIRReturn):
             if instruccion.value is None:
                 self._agregar_linea("RETURN")
             else:
                 self._agregar_linea(f"RETURN {instruccion.value}")
             return
 
-        if isinstance(instruccion, HololangCall):
+        if isinstance(instruccion, InternalIRCall):
             args = ", ".join(instruccion.arguments)
             sufijo = f" {args}" if args else ""
             self._agregar_linea(f"CALL {instruccion.name}{sufijo}")
             return
 
-        if isinstance(instruccion, HololangExpressionStatement):
+        if isinstance(instruccion, InternalIRExpressionStatement):
             self._agregar_linea(instruccion.expression)
             return
 
-        if isinstance(instruccion, HololangPrint):
+        if isinstance(instruccion, InternalIRPrint):
             self._agregar_linea(f"PRINT {instruccion.expression}")
             return
 
-        if isinstance(instruccion, HololangHolobit):
+        if isinstance(instruccion, InternalIRHolobit):
             valores = ", ".join(instruccion.values)
             nombre = instruccion.name or "_"
             self._agregar_linea(f"HOLOBIT {nombre} [{valores}]")
             return
 
-        if isinstance(instruccion, HololangUnknown):
+        if isinstance(instruccion, InternalIRUnknown):
             self._agregar_linea(f"; {instruccion.description}")
             return
 

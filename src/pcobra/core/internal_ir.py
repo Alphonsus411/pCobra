@@ -1,8 +1,8 @@
-"""Representación intermedia para Hololang.
+"""Representación intermedia interna de Cobra.
 
 Este módulo define una serie de estructuras de datos ligeras que modelan
-instrucciones de Hololang y una utilidad para transformar el AST de Cobra a
-esta representación.  El objetivo es proporcionar un formato intermedio
+instrucciones internas y una utilidad para transformar el AST de Cobra a
+esta representación. El objetivo es proporcionar un formato intermedio
 estable que pueda ser consumido por backends como el generador de ensamblador
 sin depender de los nodos específicos del AST de Cobra.
 """
@@ -39,17 +39,17 @@ from .ast_nodes import (
 
 
 # ---------------------------------------------------------------------------
-#  Dataclasses que describen el IR de Hololang
+#  Dataclasses que describen el IR interno
 # ---------------------------------------------------------------------------
 
 
 @dataclass(slots=True)
-class HololangStatement:
-    """Clase base para instrucciones Hololang."""
+class InternalIRStatement:
+    """Clase base para instrucciones del IR interno."""
 
 
 @dataclass(slots=True)
-class HololangAssignment(HololangStatement):
+class InternalIRAssignment(InternalIRStatement):
     """Asignación simple ``SET``."""
 
     target: str
@@ -58,51 +58,51 @@ class HololangAssignment(HololangStatement):
 
 
 @dataclass(slots=True)
-class HololangIf(HololangStatement):
+class InternalIRIf(InternalIRStatement):
     """Bloque condicional ``IF``."""
 
     condition: str
-    then_branch: List[HololangStatement] = field(default_factory=list)
-    else_branch: List[HololangStatement] = field(default_factory=list)
+    then_branch: List[InternalIRStatement] = field(default_factory=list)
+    else_branch: List[InternalIRStatement] = field(default_factory=list)
 
 
 @dataclass(slots=True)
-class HololangWhile(HololangStatement):
+class InternalIRWhile(InternalIRStatement):
     """Bucle ``WHILE``."""
 
     condition: str
-    body: List[HololangStatement] = field(default_factory=list)
+    body: List[InternalIRStatement] = field(default_factory=list)
 
 
 @dataclass(slots=True)
-class HololangFor(HololangStatement):
+class InternalIRFor(InternalIRStatement):
     """Bucle ``FOR`` estilo ``for-in``."""
 
     target: str
     iterable: str
-    body: List[HololangStatement] = field(default_factory=list)
+    body: List[InternalIRStatement] = field(default_factory=list)
 
 
 @dataclass(slots=True)
-class HololangFunction(HololangStatement):
+class InternalIRFunction(InternalIRStatement):
     """Definición de función."""
 
     name: str
     parameters: List[str] = field(default_factory=list)
-    body: List[HololangStatement] = field(default_factory=list)
+    body: List[InternalIRStatement] = field(default_factory=list)
     decorators: List[str] = field(default_factory=list)
     async_flag: bool = False
 
 
 @dataclass(slots=True)
-class HololangReturn(HololangStatement):
+class InternalIRReturn(InternalIRStatement):
     """Sentencia ``RETURN``."""
 
     value: Optional[str] = None
 
 
 @dataclass(slots=True)
-class HololangCall(HololangStatement):
+class InternalIRCall(InternalIRStatement):
     """Llamada a función o método utilizada como instrucción."""
 
     name: str
@@ -110,21 +110,21 @@ class HololangCall(HololangStatement):
 
 
 @dataclass(slots=True)
-class HololangExpressionStatement(HololangStatement):
+class InternalIRExpressionStatement(InternalIRStatement):
     """Instrucción genérica basada en una expresión textual."""
 
     expression: str
 
 
 @dataclass(slots=True)
-class HololangPrint(HololangStatement):
+class InternalIRPrint(InternalIRStatement):
     """Instrucción de impresión."""
 
     expression: str
 
 
 @dataclass(slots=True)
-class HololangHolobit(HololangStatement):
+class InternalIRHolobit(InternalIRStatement):
     """Declaración de holobit."""
 
     name: str
@@ -132,19 +132,19 @@ class HololangHolobit(HololangStatement):
 
 
 @dataclass(slots=True)
-class HololangUnknown(HololangStatement):
+class InternalIRUnknown(InternalIRStatement):
     """Nodo para representar construcciones aún no soportadas."""
 
     description: str
 
 
 @dataclass(slots=True)
-class HololangModule:
+class InternalIRModule:
     """Contenedor superior del IR."""
 
-    body: List[HololangStatement] = field(default_factory=list)
+    body: List[InternalIRStatement] = field(default_factory=list)
 
-    def extend(self, statements: Iterable[HololangStatement]) -> None:
+    def extend(self, statements: Iterable[InternalIRStatement]) -> None:
         self.body.extend(statements)
 
 
@@ -241,39 +241,39 @@ def _target_name(variable) -> str:
     return str(variable)
 
 
-def _convert_statement(node) -> HololangStatement:
+def _convert_statement(node) -> InternalIRStatement:
     if isinstance(node, NodoAsignacion):
         nombre = getattr(node, "identificador", node.variable)
         valor = getattr(node, "expresion", getattr(node, "valor", None))
-        return HololangAssignment(_target_name(nombre), _expr_to_text(valor), node.inferencia)
+        return InternalIRAssignment(_target_name(nombre), _expr_to_text(valor), node.inferencia)
 
     if isinstance(node, NodoCondicional):
         cond = _expr_to_text(node.condicion)
         then_branch = [_convert_statement(n) for n in node.bloque_si]
         else_branch = [_convert_statement(n) for n in node.bloque_sino]
-        return HololangIf(cond, then_branch, else_branch)
+        return InternalIRIf(cond, then_branch, else_branch)
 
     if isinstance(node, NodoBucleMientras):
         condicion = _expr_to_text(node.condicion)
         cuerpo = [_convert_statement(n) for n in node.cuerpo]
-        return HololangWhile(condicion, cuerpo)
+        return InternalIRWhile(condicion, cuerpo)
 
     if isinstance(node, NodoFor):
         objetivo = _target_name(node.variable)
         iterable = _expr_to_text(node.iterable)
         cuerpo = [_convert_statement(n) for n in node.cuerpo]
-        return HololangFor(objetivo, iterable, cuerpo)
+        return InternalIRFor(objetivo, iterable, cuerpo)
 
     if isinstance(node, NodoPara):
         objetivo = _target_name(node.variable)
         iterable = _expr_to_text(node.iterable)
         cuerpo = [_convert_statement(n) for n in node.cuerpo]
-        return HololangFor(objetivo, iterable, cuerpo)
+        return InternalIRFor(objetivo, iterable, cuerpo)
 
     if isinstance(node, NodoFuncion):
         cuerpo = [_convert_statement(n) for n in node.cuerpo]
         decoradores = [_expr_to_text(d) for d in getattr(node, "decoradores", [])]
-        return HololangFunction(
+        return InternalIRFunction(
             name=node.nombre,
             parameters=list(node.parametros),
             body=cuerpo,
@@ -283,31 +283,31 @@ def _convert_statement(node) -> HololangStatement:
 
     if isinstance(node, NodoRetorno):
         valor = _expr_to_text(node.expresion) if getattr(node, "expresion", None) else None
-        return HololangReturn(valor)
+        return InternalIRReturn(valor)
 
     if isinstance(node, NodoLlamadaFuncion):
         args = [_expr_to_text(arg) for arg in node.argumentos]
-        return HololangCall(node.nombre, args)
+        return InternalIRCall(node.nombre, args)
 
     if isinstance(node, NodoLlamadaMetodo):
         objeto = _expr_to_text(node.objeto)
         args = [_expr_to_text(arg) for arg in node.argumentos]
-        return HololangCall(f"{objeto}.{node.nombre_metodo}", args)
+        return InternalIRCall(f"{objeto}.{node.nombre_metodo}", args)
 
     if isinstance(node, NodoImprimir):
-        return HololangPrint(_expr_to_text(node.expresion))
+        return InternalIRPrint(_expr_to_text(node.expresion))
 
     if isinstance(node, NodoHolobit):
-        return HololangHolobit(node.nombre or "", [_expr_to_text(v) for v in node.valores])
+        return InternalIRHolobit(node.nombre or "", [_expr_to_text(v) for v in node.valores])
 
     if isinstance(node, NodoProyectar):
-        return HololangCall(
+        return InternalIRCall(
             "cobra_proyectar",
             [_expr_to_text(node.holobit), _expr_to_text(node.modo)],
         )
 
     if isinstance(node, NodoTransformar):
-        return HololangCall(
+        return InternalIRCall(
             "cobra_transformar",
             [
                 _expr_to_text(node.holobit),
@@ -317,15 +317,15 @@ def _convert_statement(node) -> HololangStatement:
         )
 
     if isinstance(node, NodoGraficar):
-        return HololangCall("cobra_graficar", [_expr_to_text(node.holobit)])
+        return InternalIRCall("cobra_graficar", [_expr_to_text(node.holobit)])
 
-    return HololangUnknown(f"Nodo {type(node).__name__} no soportado")
+    return InternalIRUnknown(f"Nodo {type(node).__name__} no soportado")
 
 
-def build_hololang_ir(ast: Sequence) -> HololangModule:
-    """Convierte una secuencia de nodos AST a un :class:`HololangModule`."""
+def build_internal_ir(ast: Sequence) -> InternalIRModule:
+    """Convierte una secuencia de nodos AST a un :class:`InternalIRModule`."""
 
-    module = HololangModule()
+    module = InternalIRModule()
     if ast is None:
         return module
 

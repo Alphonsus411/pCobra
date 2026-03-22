@@ -17,7 +17,7 @@ def test_reverse_transpilers_registry_matches_policy_scope():
     assert "ReverseFromHololang" not in reverse_mod.__all__
 
 
-def test_pcobra_cobra_reverse_no_expone_api_experimental_hololang():
+def test_pcobra_cobra_reverse_no_expone_backend_legacy_experimental():
     reverse_public_mod = importlib.import_module("pcobra.cobra.reverse")
 
     assert "ReverseFromHololang" not in reverse_public_mod.__all__
@@ -28,7 +28,7 @@ def test_pcobra_cobra_reverse_no_expone_api_experimental_hololang():
     assert not hasattr(reverse_public_mod, "parse_hololang")
 
 
-def test_reverse_policy_modules_no_incluyen_hololang():
+def test_reverse_policy_modules_no_incluyen_backend_legacy_hololang():
     policy_mod = importlib.import_module("pcobra.cobra.transpilers.reverse.policy")
 
     assert "hololang" not in policy_mod.REVERSE_SCOPE_LANGUAGES

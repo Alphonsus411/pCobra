@@ -25,8 +25,8 @@ def _run_cli(arguments: list[str]) -> tuple[int, str]:
 def test_regresion_cli_compilar_rechaza_backend_hololang_con_mensaje_de_choices(
     tmp_path: Path,
 ) -> None:
-    # Regresión: la política pública mantiene `hololang` fuera del recorrido normal
-    # y lo rechaza como target público vigente de `cobra compilar`.
+    # Regresión: el backend legado/experimental `hololang` sigue fuera del
+    # recorrido público, aunque la tubería interna ahora use un IR neutral.
     archivo = tmp_path / "saludo.co"
     archivo.write_text('imprimir("hola")\n', encoding="utf-8")
 
@@ -45,8 +45,8 @@ def test_regresion_cli_compilar_rechaza_backend_hololang_con_mensaje_de_choices(
 def test_regresion_cli_transpilar_inverso_rechaza_origen_hololang_con_mensaje_de_choices(
     tmp_path: Path,
 ) -> None:
-    # Regresión: `hololang` queda fuera del scope reverse oficial y de la
-    # documentación pública normal; este test verifica rechazo, no soporte.
+    # Regresión: `hololang` permanece fuera del scope reverse oficial; el
+    # rechazo público debe mantenerse aunque la implementación interna cambie.
     archivo = tmp_path / "saludo.py"
     archivo.write_text('print("hola")\n', encoding="utf-8")
 

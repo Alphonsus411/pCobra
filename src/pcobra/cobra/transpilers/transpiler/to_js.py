@@ -49,7 +49,7 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
 )
 from pcobra.cobra.transpilers.module_map import get_mapped_path
-from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
+from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
 
 from pcobra.cobra.transpilers.transpiler.js_nodes.asignacion import visit_asignacion as _visit_asignacion
 from pcobra.cobra.transpilers.transpiler.js_nodes.condicional import visit_condicional as _visit_condicional
@@ -285,7 +285,7 @@ class TranspiladorJavaScript(BaseTranspiler):
             return str(nodo)
 
     def transpilar(self, ast_raiz):
-        ast_raiz = ensure_cobra_ast(ast_raiz)
+        ast_raiz = normalize_to_cobra_ast(ast_raiz)
         ast_raiz = expandir_macros(ast_raiz)
         ast_raiz = remove_dead_code(inline_functions(optimize_constants(ast_raiz)))
         usa_holobit = ast_requires_holobit_runtime(ast_raiz)
