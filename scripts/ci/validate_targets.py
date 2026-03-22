@@ -8,6 +8,8 @@ Checks principales:
    módulos retirados ni nombres públicos no canónicos salvo en rutas históricas acotadas.
 4) ``transpilar-inverso`` expone únicamente orígenes reverse canónicos y destinos dentro
    de ``OFFICIAL_TARGETS``.
+5) Árboles vigilados (transpilers, reverse, golden, benchmarks y docs públicas) no pueden
+   incorporar artefactos, imports o aliases asociados a backends no oficiales o retirados.
 """
 
 from __future__ import annotations
@@ -21,6 +23,10 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = ROOT / "src"
 TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
 REVERSE_DIR = ROOT / "src/pcobra/cobra/transpilers/reverse"
+REVERSE_POLICY_PATH = REVERSE_DIR / "policy.py"
+TRANSPILER_REGISTRY_PATH = ROOT / "src/pcobra/cobra/transpilers/registry.py"
+GOLDEN_DIR = ROOT / "tests/integration/transpilers/golden"
+BENCHMARKS_DIR = ROOT / "scripts/benchmarks"
 
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
@@ -204,6 +210,66 @@ POLICY_LITERAL_PREFIX_NAMES = frozenset(
     }
 )
 
+EXPECTED_OFFICIAL_TARGETS = (
+    "python",
+    "rust",
+    "javascript",
+    "wasm",
+    "go",
+    "cpp",
+    "java",
+    "asm",
+)
+EXPECTED_REVERSE_SCOPE_LANGUAGES = ("python", "javascript", "java")
+EXPECTED_TRANSPILER_MODULES = (
+    "to_python.py",
+    "to_rust.py",
+    "to_js.py",
+    "to_wasm.py",
+    "to_go.py",
+    "to_cpp.py",
+    "to_java.py",
+    "to_asm.py",
+)
+EXPECTED_REVERSE_MODULES = (
+    "from_python.py",
+    "from_js.py",
+    "from_java.py",
+)
+EXPECTED_TRANSPILER_REGISTRY = {
+    "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
+    "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
+    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
+    "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
+    "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
+    "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
+    "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
+}
+EXPECTED_REVERSE_SCOPE_MODULES = {
+    "python": "pcobra.cobra.transpilers.reverse.from_python",
+    "javascript": "pcobra.cobra.transpilers.reverse.from_js",
+    "java": "pcobra.cobra.transpilers.reverse.from_java",
+}
+EXPECTED_REVERSE_SCOPE_CLASS_NAMES = {
+    "python": "ReverseFromPython",
+    "javascript": "ReverseFromJS",
+    "java": "ReverseFromJava",
+}
+TARGETED_ARTIFACT_SCAN_ROOTS = (
+    TRANSPILER_DIR,
+    REVERSE_DIR,
+    GOLDEN_DIR,
+    BENCHMARKS_DIR,
+    *PUBLIC_TEXT_PATHS,
+)
+TARGETED_ARTIFACT_FILENAME_ALLOWLIST = {
+    "tests/integration/transpilers/golden": {
+        f"{target}.golden" for target in EXPECTED_OFFICIAL_TARGETS
+    },
+}
+FORBIDDEN_PUBLIC_ALIAS_TOKENS = frozenset(NON_CANONICAL_PUBLIC_NAMES)
+
 PUBLIC_POLICY_LIST_PATTERNS: dict[str, tuple[re.Pattern[str], str]] = {
     "official_targets": (
         re.compile(r"targets oficiales de transpilación", re.IGNORECASE),
@@ -381,6 +447,39 @@ def _literal_string_collection(node: ast.AST | None) -> tuple[str, ...] | None:
     return tuple(values)
 
 
+def _literal_string_dict(
+    node: ast.AST | None,
+) -> dict[str, str | tuple[str, ...]] | None:
+    if not isinstance(node, ast.Dict):
+        return None
+
+    literal: dict[str, str | tuple[str, ...]] = {}
+    for key, value in zip(node.keys, node.values):
+        if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
+            return None
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            literal[key.value] = value.value
+            continue
+        collection = _literal_string_collection(value)
+        if collection is None:
+            return None
+        literal[key.value] = collection
+    return literal
+
+
+def _read_assignment_literal(path: Path, name: str) -> ast.AST | None:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            if node.target.id == name:
+                return node.value
+        elif isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == name:
+                    return node.value
+    return None
+
+
 def _assignment_target_names(node: ast.Assign | ast.AnnAssign) -> tuple[str, ...]:
     if isinstance(node, ast.Assign):
         return tuple(
@@ -418,6 +517,11 @@ def _expected_collection_for_name(
 
 def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
     errors: list[str] = []
+    if tuple(official) != EXPECTED_OFFICIAL_TARGETS:
+        errors.append(
+            "OFFICIAL_TARGETS no coincide con la whitelist mantenida por CI -> "
+            f"{tuple(official)} (esperado: {EXPECTED_OFFICIAL_TARGETS})"
+        )
     allowed_suffixes = {
         "javascript" if target == "javascript" else target for target in official
     }
@@ -443,6 +547,13 @@ def validate_transpiler_modules(official: tuple[str, ...]) -> list[str]:
         errors.append(
             "TRANSPILER_DIR: los módulos to_*.py no cubren exactamente OFFICIAL_TARGETS -> "
             f"found={sorted(found_canonical_suffixes)}, official={list(official)}"
+        )
+
+    exact_modules = tuple(sorted(path.name for path in TRANSPILER_DIR.glob("to_*.py")))
+    if exact_modules != tuple(sorted(EXPECTED_TRANSPILER_MODULES)):
+        errors.append(
+            "src/pcobra/cobra/transpilers/transpiler: el árbol to_*.py debe contener "
+            f"exactamente {list(EXPECTED_TRANSPILER_MODULES)} -> encontrados={list(exact_modules)}"
         )
 
     return errors
@@ -667,6 +778,11 @@ def validate_module_file_scope(
     reverse_scope_languages: tuple[str, ...],
 ) -> list[str]:
     errors: list[str] = []
+    if tuple(reverse_scope_languages) != EXPECTED_REVERSE_SCOPE_LANGUAGES:
+        errors.append(
+            "REVERSE_SCOPE_LANGUAGES no coincide con la whitelist mantenida por CI -> "
+            f"{tuple(reverse_scope_languages)} (esperado: {EXPECTED_REVERSE_SCOPE_LANGUAGES})"
+        )
     official_modules = {
         f"to_{target}.py" for target in official_targets if target != "javascript"
     }
@@ -689,6 +805,11 @@ def validate_module_file_scope(
             "exactamente con la política reverse oficial -> "
             f"encontrados={reverse_dir_modules}, esperados={expected_reverse_dir_modules}"
         )
+    if tuple(reverse_dir_modules) != tuple(sorted(EXPECTED_REVERSE_MODULES)):
+        errors.append(
+            "src/pcobra/cobra/transpilers/reverse: el árbol from_*.py debe contener "
+            f"exactamente {list(EXPECTED_REVERSE_MODULES)} -> encontrados={reverse_dir_modules}"
+        )
 
     for path in sorted(ROOT.rglob("to_*.py")):
         rel = path.relative_to(ROOT).as_posix()
@@ -707,6 +828,55 @@ def validate_module_file_scope(
             errors.append(
                 f"{rel}: archivo from_*.py fuera del alcance reverse oficial o en ubicación no permitida"
             )
+
+    return errors
+
+
+def validate_registry_tables() -> list[str]:
+    errors: list[str] = []
+
+    registry_literal = _literal_string_dict(
+        _read_assignment_literal(TRANSPILER_REGISTRY_PATH, "TRANSPILER_CLASS_PATHS")
+    )
+    expected_registry_literal = {
+        key: value for key, value in EXPECTED_TRANSPILER_REGISTRY.items()
+    }
+    if registry_literal != expected_registry_literal:
+        errors.append(
+            "src/pcobra/cobra/transpilers/registry.py: TRANSPILER_CLASS_PATHS debe coincidir "
+            f"exactamente con el registro oficial -> encontrado={registry_literal}, "
+            f"esperado={expected_registry_literal}"
+        )
+
+    reverse_languages = _literal_string_collection(
+        _read_assignment_literal(REVERSE_POLICY_PATH, "REVERSE_SCOPE_LANGUAGES")
+    )
+    if reverse_languages != EXPECTED_REVERSE_SCOPE_LANGUAGES:
+        errors.append(
+            "src/pcobra/cobra/transpilers/reverse/policy.py: REVERSE_SCOPE_LANGUAGES debe "
+            f"coincidir exactamente con la whitelist reverse -> encontrado={reverse_languages}, "
+            f"esperado={EXPECTED_REVERSE_SCOPE_LANGUAGES}"
+        )
+
+    reverse_modules = _literal_string_dict(
+        _read_assignment_literal(REVERSE_POLICY_PATH, "REVERSE_SCOPE_MODULES")
+    )
+    if reverse_modules != EXPECTED_REVERSE_SCOPE_MODULES:
+        errors.append(
+            "src/pcobra/cobra/transpilers/reverse/policy.py: REVERSE_SCOPE_MODULES debe "
+            f"coincidir exactamente con el registro reverse oficial -> encontrado={reverse_modules}, "
+            f"esperado={EXPECTED_REVERSE_SCOPE_MODULES}"
+        )
+
+    reverse_class_names = _literal_string_dict(
+        _read_assignment_literal(REVERSE_POLICY_PATH, "REVERSE_SCOPE_CLASS_NAMES")
+    )
+    if reverse_class_names != EXPECTED_REVERSE_SCOPE_CLASS_NAMES:
+        errors.append(
+            "src/pcobra/cobra/transpilers/reverse/policy.py: REVERSE_SCOPE_CLASS_NAMES debe "
+            f"coincidir exactamente con el registro reverse oficial -> encontrado={reverse_class_names}, "
+            f"esperado={EXPECTED_REVERSE_SCOPE_CLASS_NAMES}"
+        )
 
     return errors
 
@@ -788,6 +958,85 @@ def _collect_python_reverse_imports(path: Path) -> set[str]:
                 if module.startswith(prefix):
                     imports.add(module.removeprefix(prefix))
     return imports
+
+
+def _collect_python_transpiler_imports(path: Path) -> set[str]:
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (SyntaxError, UnicodeDecodeError):
+        return set()
+
+    imports: set[str] = set()
+    prefixes = (
+        "cobra.transpilers.transpiler.to_",
+        "pcobra.cobra.transpilers.transpiler.to_",
+    )
+    for node in ast.walk(tree):
+        modules: list[str] = []
+        if isinstance(node, ast.ImportFrom) and node.module:
+            modules = [node.module]
+        elif isinstance(node, ast.Import):
+            modules = [alias.name for alias in node.names]
+
+        for module in modules:
+            for prefix in prefixes:
+                if module.startswith(prefix):
+                    imports.add(module.removeprefix(prefix))
+    return imports
+
+
+def validate_targeted_artifact_roots(
+    official_targets: tuple[str, ...],
+    reverse_scope_languages: tuple[str, ...],
+) -> list[str]:
+    errors: list[str] = []
+    allowed_transpiler_imports = set(official_targets)
+    allowed_reverse_imports = set(reverse_scope_languages)
+    transpiler_alias_map = {"js": "javascript"}
+    reverse_alias_map = {"js": "javascript"}
+
+    for root in TARGETED_ARTIFACT_SCAN_ROOTS:
+        if not root.exists():
+            continue
+        files = (root,) if root.is_file() else tuple(
+            candidate for candidate in sorted(root.rglob("*")) if candidate.is_file()
+        )
+        for path in files:
+            rel = path.relative_to(ROOT).as_posix()
+            if _is_generated_or_binary(path):
+                continue
+
+            for prefix, allowed in TARGETED_ARTIFACT_FILENAME_ALLOWLIST.items():
+                if rel.startswith(prefix + "/") and path.name not in allowed:
+                    errors.append(
+                        f"{rel}: artefacto no oficial en árbol vigilado -> {path.name} "
+                        f"(permitidos: {sorted(allowed)})"
+                    )
+
+            if path.suffix == ".py":
+                for imported in sorted(_collect_python_transpiler_imports(path)):
+                    canonical = transpiler_alias_map.get(imported, imported)
+                    if canonical not in allowed_transpiler_imports:
+                        errors.append(
+                            f"{rel}: import a transpilador fuera del conjunto oficial -> to_{imported}"
+                        )
+                for imported in sorted(_collect_python_reverse_imports(path)):
+                    canonical = reverse_alias_map.get(imported, normalize_reverse_language(imported))
+                    if canonical not in allowed_reverse_imports:
+                        errors.append(
+                            f"{rel}: import reverse fuera del conjunto reverse oficial -> from_{imported}"
+                        )
+
+            lowered_name_parts = [part.lower() for part in path.parts]
+            if any(part in {"golden", "fixtures", "benchmarks"} for part in lowered_name_parts):
+                stem_tokens = re.split(r"[^a-z0-9+_-]+", path.stem.lower())
+                for alias in sorted(FORBIDDEN_PUBLIC_ALIAS_TOKENS):
+                    if alias in stem_tokens:
+                        errors.append(
+                            f"{rel}: artefacto asociado a alias público no permitido -> {alias}"
+                        )
+
+    return errors
 
 
 def validate_scan_roots(
@@ -943,6 +1192,7 @@ def main() -> int:
     )
     errors.extend(validate_holobit_public_contract())
     errors.extend(validate_module_file_scope(official_targets, reverse_scope))
+    errors.extend(validate_registry_tables())
     errors.extend(
         validate_python_policy_literals(
             official_targets,
@@ -954,6 +1204,7 @@ def main() -> int:
         )
     )
     errors.extend(validate_scan_roots(official_targets, reverse_scope))
+    errors.extend(validate_targeted_artifact_roots(official_targets, reverse_scope))
 
     if errors:
         print("❌ Validación anti-regresión de targets: FALLÓ", file=sys.stderr)
