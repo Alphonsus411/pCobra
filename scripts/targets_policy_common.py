@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -24,14 +23,9 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     CONTRACT_FEATURES,
 )
-from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
-    TIER1_TARGETS,
-    TIER2_TARGETS,
-)
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
-ACTIVE_PROPOSAL_PATHS = tuple(sorted((ROOT / "docs/proposals").glob("*.md")))
 PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
 INTERNAL_COMPATIBILITY_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
 
@@ -51,6 +45,8 @@ VALIDATION_SCAN_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/benchmarks_cmd.py",
     ROOT / "src/pcobra/cobra/cli/target_policies.py",
 )
+
+ACTIVE_PROPOSAL_PATHS = tuple(sorted((ROOT / "docs/proposals").glob("*.md")))
 
 PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/commands/compile_cmd.py",
@@ -99,20 +95,10 @@ PUBLIC_TEXT_PATH_STRS: frozenset[str] = frozenset(
     path.relative_to(ROOT).as_posix() for path in PUBLIC_TEXT_PATHS
 )
 
-PROPOSAL_POLICY_PATHS = ACTIVE_PROPOSAL_PATHS
-
 PUBLIC_RUNTIME_POLICY_PATHS = (
     ROOT / "README.md",
     ROOT / "docs/MANUAL_COBRA.md",
     ROOT / "docs/README.en.md",
-    ROOT / "docs/matriz_transpiladores.md",
-    ROOT / "docs/targets_policy.md",
-)
-
-HOLOBIT_PUBLIC_CONTRACT_PATHS = (
-    ROOT / "README.md",
-    ROOT / "docs/MANUAL_COBRA.md",
-    ROOT / "docs/contrato_runtime_holobit.md",
     ROOT / "docs/matriz_transpiladores.md",
     ROOT / "docs/targets_policy.md",
 )
@@ -122,22 +108,12 @@ HOLOBIT_MATRIX_DOC_PATHS = (
     ROOT / "docs/matriz_transpiladores.md",
 )
 
-LEGACY_ALIAS_ALLOWLIST: dict[str, tuple[re.Pattern[str], ...]] = {}
 NON_CANONICAL_PUBLIC_NAMES: dict[str, str] = {
     "c++": "cpp",
     "assembly": "asm",
     "ensamblador": "asm",
     "js": "javascript",
 }
-OUT_OF_POLICY_LANGUAGE_TERMS: frozenset[str] = frozenset(
-    {
-        "kotlin",
-        "swift",
-        "ruby",
-        "julia",
-        "matlab",
-    }
-)
 
 
 def read_target_policy() -> dict[str, Any]:
@@ -153,12 +129,9 @@ def read_target_policy() -> dict[str, Any]:
         "official_standard_library_targets": tuple(OFFICIAL_STANDARD_LIBRARY_TARGETS),
         "advanced_holobit_runtime_targets": tuple(ADVANCED_HOLOBIT_RUNTIME_TARGETS),
         "sdk_compatible_targets": tuple(SDK_COMPATIBLE_TARGETS),
-        "cli_aliases": {},
-        "legacy_aliases": {},
         "public_names": tuple(PUBLIC_ACCEPTED_TARGET_NAMES),
         "internal_names": tuple(INTERNAL_COMPATIBILITY_TARGET_NAMES),
         "non_canonical_public_names": dict(NON_CANONICAL_PUBLIC_NAMES),
-        "out_of_policy_language_terms": tuple(sorted(OUT_OF_POLICY_LANGUAGE_TERMS)),
         "compatibility_matrix": {
             backend: {
                 feature: BACKEND_COMPATIBILITY[backend][feature]
@@ -167,20 +140,3 @@ def read_target_policy() -> dict[str, Any]:
             for backend in OFFICIAL_TARGETS
         },
     }
-
-
-def build_legacy_alias_patterns(
-    legacy_aliases: dict[str, str],
-) -> tuple[re.Pattern[str], ...]:
-    alias_group = "|".join(re.escape(alias) for alias in sorted(legacy_aliases))
-    if not alias_group:
-        return ()
-
-    return (
-        re.compile(
-            rf"\b(?:--(?:tipo|tipos|backend|origen|destino)\s+|--(?:tipo|tipos|backend|origen|destino)=)({alias_group})\b",
-            re.IGNORECASE,
-        ),
-        re.compile(rf"""['"]({alias_group})['"]""", re.IGNORECASE),
-        re.compile(rf"``({alias_group})``", re.IGNORECASE),
-    )

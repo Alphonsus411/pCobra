@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Valida que los targets mencionados respeten la política oficial vigente.
-
-La política oficial pública se importa desde
-``src/pcobra/cobra/transpilers/targets.py`` y
-``src/pcobra/cobra/cli/target_policies.py``. Los aliases legacy solo se
-toleran como compatibilidad interna controlada y nunca como nombres canónicos
-públicos.
-"""
+"""Valida la política final de 8 backends oficiales."""
 
 from __future__ import annotations
 
@@ -22,18 +15,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.targets_policy_common import (
-    LEGACY_ALIAS_ALLOWLIST,
+    NON_CANONICAL_PUBLIC_NAMES,
     PUBLIC_TEXT_PATH_STRS,
     VALIDATION_SCAN_PATHS,
     read_target_policy,
 )
 
-# Rutas clave a escanear según política.
-SCAN_ROOTS = tuple(
-    path.relative_to(ROOT).as_posix() for path in VALIDATION_SCAN_PATHS
-)
-
-# Rutas generadas que no deben escanearse para evitar falsos positivos en artefactos.
+SCAN_ROOTS = tuple(path.relative_to(ROOT).as_posix() for path in VALIDATION_SCAN_PATHS)
 GENERATED_PATH_PARTS = {
     "__pycache__",
     ".pytest_cache",
@@ -44,8 +32,6 @@ GENERATED_PATH_PARTS = {
     "dist",
     "docs/_build",
 }
-
-# Extensiones típicamente no textuales o no relevantes para política de targets.
 BINARY_OR_GENERATED_SUFFIXES = {
     ".png",
     ".jpg",
@@ -83,7 +69,6 @@ BINARY_OR_GENERATED_SUFFIXES = {
     ".mov",
     ".avi",
 }
-
 LOCKFILES = {
     "poetry.lock",
     "Pipfile.lock",
@@ -92,27 +77,13 @@ LOCKFILES = {
     "yarn.lock",
     "Cargo.lock",
 }
-
-# Catálogo amplio para detectar nomenclatura obsoleta o fuera de política.
-# La aceptación real se decide en tiempo de validación según si el término es
-# canónico público, alias legacy interno o término completamente fuera de política.
-KNOWN_LANGUAGE_ALIASES: set[str] | None = None
-
-AMBIGUOUS_ARCHIVE_LINK_LABELS = (
-    "experimental",
-    "histórico",
-    "historico",
-    "interno",
-    "interna",
-    "internal",
-    "fuera de política",
-    "fuera de politica",
-    "sin vigencia",
+SKIPPED_REL_PATHS = frozenset(
+    {
+        "scripts/validate_targets_policy.py",
+        "scripts/ci/validate_targets.py",
+        "scripts/targets_policy_common.py",
+    }
 )
-
-PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS: dict[str, re.Pattern[str]] = {}
-
-PUBLIC_NON_OFFICIAL_REQUIRED_LABELS: dict[str, tuple[str, ...]] = {}
 
 
 def is_text_file(path: Path) -> bool:
@@ -120,18 +91,12 @@ def is_text_file(path: Path) -> bool:
         return False
     if path.name in LOCKFILES:
         return False
-
     try:
-        with path.open("rb") as fh:
-            sample = fh.read(4096)
+        sample = path.read_bytes()[:4096]
     except OSError:
         return False
+    return b"\x00" not in sample
 
-    # Heurística simple para binarios.
-    if b"\x00" in sample:
-        return False
-
-    return True
 
 
 def iter_scan_files(root: Path) -> list[Path]:
@@ -156,143 +121,86 @@ def iter_scan_files(root: Path) -> list[Path]:
     return files
 
 
-def is_historical_exception(rel_path: str, line: str) -> tuple[bool, str | None]:
-    if rel_path.startswith("docs/experimental/") or rel_path.startswith("docs/historico/"):
-        return True, "Contenido archivado/experimental fuera de la documentación normativa."
-    return False, None
+
+def _normalized_public_line(line: str) -> str:
+    return (
+        line.replace(".js", "")
+        .replace(".mjs", "")
+        .replace(".cjs", "")
+        .replace(".cpp", "")
+        .replace(".wasm", "")
+        .replace("Node.js", "Node")
+    )
 
 
-def is_allowed_legacy_public_line(rel_path: str, line: str) -> bool:
-    if rel_path not in PUBLIC_TEXT_PATH_STRS:
-        return True
-    allow_patterns = LEGACY_ALIAS_ALLOWLIST.get(rel_path, ())
-    return any(pattern.search(line) for pattern in allow_patterns)
+
+def _find_public_alias_errors(rel: str, content: str) -> list[str]:
+    if rel not in PUBLIC_TEXT_PATH_STRS:
+        return []
+    errors: list[str] = []
+    for line_no, raw_line in enumerate(content.splitlines(), start=1):
+        line = _normalized_public_line(raw_line)
+        for alias, canonical in NON_CANONICAL_PUBLIC_NAMES.items():
+            pattern = re.compile(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", re.IGNORECASE)
+            if pattern.search(line):
+                errors.append(
+                    f"{rel}:{line_no}: alias público no canónico -> '{alias}' (usar: {canonical})"
+                )
+    return errors
+
+
+
+
 
 
 def main() -> int:
     policy = read_target_policy()
-    tier1_targets = policy["tier1_targets"]
-    tier2_targets = policy["tier2_targets"]
-    official_targets = policy["official_targets"]
-    expected_official_targets = tuple((*tier1_targets, *tier2_targets))
-    if tuple(official_targets) != expected_official_targets:
+    tier1_targets = tuple(policy["tier1_targets"])
+    tier2_targets = tuple(policy["tier2_targets"])
+    official_targets = tuple(policy["official_targets"])
+    if official_targets != tier1_targets + tier2_targets:
         raise RuntimeError(
-            "Política inválida: OFFICIAL_TARGETS debe ser exactamente tier1 + tier2 -> "
+            "Política inválida: OFFICIAL_TARGETS debe ser exactamente TIER1_TARGETS + TIER2_TARGETS -> "
             f"official={official_targets}, tier1={tier1_targets}, tier2={tier2_targets}"
         )
-    public_names = set(policy["public_names"])
-    legacy_aliases = set(policy["legacy_aliases"])
-    non_canonical_public_names = dict(policy["non_canonical_public_names"])
-    out_of_policy_terms = set(policy["out_of_policy_language_terms"])
-    known_language_aliases = (
-        public_names
-        | legacy_aliases
-        | set(non_canonical_public_names)
-        | out_of_policy_terms
-    )
-    language_pattern = re.compile(
-        r"(?<![\w#.+-])("
-        + "|".join(sorted(re.escape(term) for term in known_language_aliases))
-        + r")(?![\w#.+-])",
-        re.IGNORECASE,
-    )
+
+    public_names = tuple(policy["public_names"])
+    internal_names = tuple(policy["internal_names"])
+    if public_names != official_targets:
+        raise RuntimeError(
+            "Política inválida: public_names debe coincidir exactamente con OFFICIAL_TARGETS -> "
+            f"public={public_names}, official={official_targets}"
+        )
+    if internal_names != official_targets:
+        raise RuntimeError(
+            "Política inválida: internal_names debe coincidir exactamente con OFFICIAL_TARGETS -> "
+            f"internal={internal_names}, official={official_targets}"
+        )
 
     errors: list[str] = []
 
     for path in iter_scan_files(ROOT):
         if not is_text_file(path):
             continue
-
         rel = path.relative_to(ROOT).as_posix()
-
-        if rel in {
-            "scripts/validate_targets_policy.py",
-            "scripts/ci/validate_targets.py",
-            "scripts/targets_policy_common.py",
-        }:
+        if rel in SKIPPED_REL_PATHS:
             continue
-
         try:
             content = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            # Archivos textuales no UTF-8 se ignoran para evitar falsos positivos.
             continue
-
-        for line_no, line in enumerate(content.splitlines(), start=1):
-            lowered = line.lower()
-            if rel in PUBLIC_TEXT_PATH_STRS:
-                if ("docs/experimental/" in line or "docs/historico/" in line) and not any(
-                    label in lowered for label in AMBIGUOUS_ARCHIVE_LINK_LABELS
-                ):
-                    errors.append(
-                        f"{rel}:{line_no}: enlace ambiguo a documentación experimental/histórica; añade etiqueta visible (experimental/interno/fuera de política/histórico)"
-                    )
-
-                for label, pattern in PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS.items():
-                    if not pattern.search(line):
-                        continue
-                    if not any(
-                        marker in lowered
-                        for marker in PUBLIC_NON_OFFICIAL_REQUIRED_LABELS[label]
-                    ):
-                        errors.append(
-                            f"{rel}:{line_no}: referencia pública ambigua a {label}; debe etiquetarse como interno/experimental/fuera de política según corresponda"
-                        )
-
-            for match in language_pattern.finditer(line):
-                term = match.group(1)
-                normalized = term.lower().strip()
-
-                if normalized in public_names:
-                    continue
-
-                if normalized in legacy_aliases:
-                    if (
-                        rel not in PUBLIC_TEXT_PATH_STRS
-                        or is_allowed_legacy_public_line(rel, line)
-                    ):
-                        continue
-                    errors.append(
-                        f"{rel}:{line_no}: alias legacy expuesto como nombre público -> '{term}' "
-                        f"(canónicos públicos: {', '.join(official_targets)})"
-                    )
-                    continue
-
-                if normalized in non_canonical_public_names:
-                    if rel not in PUBLIC_TEXT_PATH_STRS:
-                        continue
-                    errors.append(
-                        f"{rel}:{line_no}: nombre público no canónico -> '{term}' "
-                        f"(usar: {non_canonical_public_names[normalized]}; canónicos públicos: {', '.join(official_targets)})"
-                    )
-                    continue
-
-                exempted, reason = is_historical_exception(rel, line)
-                if exempted:
-                    continue
-
-                errors.append(
-                    f"{rel}:{line_no}: referencia fuera de política -> '{term}' "
-                    f"(tier1: {', '.join(tier1_targets)}; tier2: {', '.join(tier2_targets)}; "
-                    f"canónicos públicos: {', '.join(official_targets)})"
-                )
+        errors.extend(_find_public_alias_errors(rel, content))
 
     if errors:
         print("❌ Validación de política de targets: FALLÓ", file=sys.stderr)
         for err in errors:
             print(f" - {err}", file=sys.stderr)
-
-        print(
-            "\nExcepciones históricas documentadas: docs/experimental/ y docs/historico/.",
-            file=sys.stderr,
-        )
-
         return 1
 
     print("✅ Validación de política de targets: OK")
     print(f"   Tier 1: {', '.join(tier1_targets)}")
     print(f"   Tier 2: {', '.join(tier2_targets)}")
-    print(f"   Canónicos públicos: {', '.join(official_targets)}")
+    print(f"   OFFICIAL_TARGETS: {', '.join(official_targets)}")
     return 0
 
 

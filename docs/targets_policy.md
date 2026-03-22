@@ -1,147 +1,101 @@
 # Política oficial de targets
 
-Este documento define la política de lenguajes soportados que debe mantenerse coherente entre código, CLI, CI y documentación pública.
+Este documento define el contrato final que debe mantenerse alineado entre código, CLI, CI y documentación pública.
 
-## Fuente de verdad
+## Fuente única de verdad
 
-La fuente única de verdad para los targets oficiales de salida es `src/pcobra/cobra/transpilers/targets.py`. En ese módulo se definen explícitamente:
+La fuente única de verdad para los backends oficiales de salida es `src/pcobra/cobra/transpilers/targets.py`.
+
+Ese módulo define exactamente:
 
 - `TIER1_TARGETS`
 - `TIER2_TARGETS`
 - `OFFICIAL_TARGETS`
-- helpers como `normalize_target_name`, `target_cli_choices` y `build_target_help_by_tier`
+- helpers canónicos como `normalize_target_name`, `target_cli_choices`, `build_target_help_by_tier` y `official_target_rows`
 
-El registro canónico de clases está en `src/pcobra/cobra/transpilers/registry.py`.
+Los 8 backends oficiales son:
 
-La separación entre **targets oficiales de transpilación** y **targets con runtime oficial** se aplica hoy en `src/pcobra/cobra/cli/target_policies.py`, que debe citarse junto con `src/pcobra/cobra/transpilers/targets.py` en documentación pública para evitar divergencias.
+- **Tier 1**: `python`, `rust`, `javascript`, `wasm`
+- **Tier 2**: `go`, `cpp`, `java`, `asm`
 
-## Salida directa oficial
+`OFFICIAL_TARGETS` debe ser siempre la concatenación exacta de `TIER1_TARGETS + TIER2_TARGETS`.
 
-La lista pública de destinos oficiales y su separación por tiers se sincroniza desde la política canónica y se resume en el README generado y en `docs/_generated/target_policy_summary.rst`. Estos 8 nombres son la referencia pública completa antes de separar runtime y reverse.
+## Nombres públicos permitidos
 
-## Política de nombres canónicos
+En CLI, documentación, ejemplos, tablas y configuración pública solo se aceptan los 8 nombres canónicos anteriores.
 
-En documentación pública, ejemplos de CLI, tablas, archivos de configuración y texto narrativo deben usarse exclusivamente los nombres canónicos definidos por la fuente canónica compartida.
+Los nombres heredados o no canónicos no forman parte del contrato público y deben permanecer fuera de la documentación normativa. Si hace falta conservar memoria histórica, debe hacerse únicamente en material archivado como `docs/historico/targets_aliases_legacy.md`, nunca en las guías activas.
 
-No se deben publicar aliases legacy ni targets retirados en snippets o tablas de usuario final.
+La política pública ya no conserva una capa histórica de nombres aceptados ni tablas auxiliares para lenguajes fuera de política.
 
-## Reverse de entrada
+## Alcance del contrato
 
-La transpilación inversa se documenta como capacidad independiente. Su política de **orígenes de entrada** se define en `src/pcobra/cobra/transpilers/reverse/policy.py`.
+Los 8 nombres de `OFFICIAL_TARGETS` describen el alcance oficial de **transpilación de salida**.
 
-Los orígenes reverse canónicos vigentes se derivan de `src/pcobra/cobra/transpilers/reverse/policy.py` y se publican mediante los snippets generados desde la política canónica.
+Eso no implica que todos los backends prometan el mismo runtime o la misma compatibilidad de librerías. Esa separación vive en `src/pcobra/cobra/cli/target_policies.py`, que deriva subconjuntos públicos como:
 
-Estos nombres describen **lenguajes de entrada para `cobra transpilar-inverso`**, no targets oficiales de salida. La documentación pública no debe mezclar ambas categorías ni reintroducir el antiguo origen reverse asociado a WASM u otros orígenes retirados.
+- `OFFICIAL_RUNTIME_TARGETS`
+- `VERIFICATION_EXECUTABLE_TARGETS`
+- `TRANSPILATION_ONLY_TARGETS`
+- `BEST_EFFORT_RUNTIME_TARGETS`
+- `NO_RUNTIME_TARGETS`
+- `OFFICIAL_STANDARD_LIBRARY_TARGETS`
+- `ADVANCED_HOLOBIT_RUNTIME_TARGETS`
+- `SDK_COMPATIBLE_TARGETS`
 
-## Separación explícita entre transpilación y ejecución
-
-Los 8 targets oficiales de salida representan el alcance de **transpilación** del proyecto. Eso no implica paridad automática de ejecución. Para Tier 2, la decisión mantenida por el proyecto es: `cpp` sigue como backend oficial fuerte con runtime mantenido; `go` y `java` se mantienen como targets oficiales de codegen con adaptadores mínimos; `asm` queda como backend de inspección/diagnóstico, no como destino con compatibilidad SDK equivalente.
-
-### Targets oficiales con runtime/tooling de ejecución
-
-Los únicos targets con runtime Docker oficial en la CLI y en `src/pcobra/core/sandbox.py` son:
-
-- `python`
-- `javascript`
-- `cpp`
-- `rust`
-
-La verificación ejecutable (`cobra verificar`) se limita actualmente a:
-
-- `python`
-- `javascript`
-
-### Targets oficiales solo de generación o sin runtime oficial público
-
-Los siguientes backends son oficiales para generar código, pero no deben documentarse como runtimes Docker/sandbox oficiales:
-
-- `wasm`: solo transpilación con runtime host-managed externo.
-- `go`: codegen oficial con adaptadores mínimos mantenidos por el proyecto, sin runtime oficial fuerte.
-- `java`: codegen oficial con adaptadores mínimos mantenidos por el proyecto, sin runtime oficial fuerte.
-- `asm`: backend de inspección/diagnóstico; conserva hooks y puntos de llamada, pero no promete compatibilidad SDK equivalente.
+La matriz contractual por backend y feature vive en `src/pcobra/cobra/transpilers/compatibility_matrix.py` y se publica en `docs/matriz_transpiladores.md`.
 
 ## Compatibilidad contractual mínima
 
-La política pública de compatibilidad por feature se resume en `src/pcobra/cobra/transpilers/compatibility_matrix.py`.
+A nivel público, la lectura correcta de la matriz contractual es:
 
-A día de hoy:
+- `python` es el único backend que puede presentarse como `full` para compatibilidad SDK completa.
+- Los demás backends oficiales deben presentarse, como máximo, en el nivel contractual `partial` cuando corresponda.
+- La documentación pública no debe promocionar a ningún backend distinto de `python` como compatibilidad SDK completa.
 
-- `python` es `full` para `holobit`, `proyectar`, `transformar`, `graficar`, `corelibs` y `standard_library`.
-- `javascript` es `partial` para primitivas Holobit, `corelibs` y `standard_library`: genera hooks `cobra_*`, conserva la colección base en `cobra_holobit` y falla explícitamente en operaciones avanzadas; no debe venderse como paridad SDK completa.
-- `rust`, `wasm`, `go`, `cpp`, `java` y `asm` están en `partial` para todas las features contractuales actuales.
+## Reverse
 
-Esto debe interpretarse como **contrato de generación y hooks/fallbacks**, no como promesa universal de ejecución equivalente entre backends.
+La transpilación inversa se documenta como capacidad separada. Sus orígenes de entrada se definen en `src/pcobra/cobra/transpilers/reverse/policy.py`.
 
-## Experimentos y material histórico
+Esos orígenes reverse **no amplían** `OFFICIAL_TARGETS`: describen entradas aceptadas por `cobra transpilar-inverso`, no targets oficiales de salida. La documentación pública debe hablar de **orígenes reverse** y dejar claro que no son targets de salida.
 
-Los contenidos que describan pipelines, parsers reverse o prototipos fuera de los 8 targets oficiales deben mantenerse fuera de la documentación principal o marcados explícitamente. Ningún enlace desde la documentación principal hacia `docs/experimental/` o `docs/historico/` debe aparecer sin etiquetas visibles como `experimental`, `interno`, `fuera de política` o `histórico`.
+## Archivo histórico y experimentos
 
-Ubicaciones autorizadas:
+Cualquier resto histórico o experimental debe vivir fuera del recorrido normativo principal. Las ubicaciones explícitas para ello son:
 
-- `archive/retired_targets/`: material retirado del árbol principal, sin validación normal de CI.
-- `docs/historico/`: material archivado sin vigencia normativa que siga siendo parte de la documentación del repositorio.
-
-Los IR internos o pipelines auxiliares solo pueden mencionarse en la documentación principal como arquitectura interna del compilador, nunca como targets oficiales de salida ni como orígenes reverse mantenidos por política. Las guías dedicadas a esos artefactos deben permanecer fuera de la navegación pública principal y etiquetarse como documentación experimental o de mantenimiento.
-
-## Packaging y prerrequisitos que afectan al alcance real
-
-- `pyproject.toml` declara `holobit-sdk==1.0.8` como dependencia obligatoria para instalaciones con Python `>=3.10`.
-- El runtime JavaScript y su sandbox dependen además del entorno (`node`, `vm2` y, en ciertas pruebas contractuales, `node-fetch`).
-- `Makefile` solo construye contenedores oficiales para `python`, `javascript`, `cpp` y `rust`.
-
-## Regla de mantenimiento
-
-- No se deben documentar otros lenguajes como targets oficiales de salida.
-- El registro de transpiladores (`registry.py`), la CLI (`compile_cmd.py`) y la matrix contractual (`compatibility_matrix.py`) deben mantenerse alineados con `OFFICIAL_TARGETS`.
-- La CI debe incluir comprobaciones textuales para impedir la reaparición de aliases legacy, módulos reverse borrados, extras no vigentes, ejemplos de CLI fuera de política o documentación experimental presentada como soporte oficial.
-- Cualquier ampliación o reducción del alcance debe actualizar:
-  - este archivo,
-  - la fuente de verdad en código,
-  - y la validación automática en CI.
-
-## Cobertura exacta de la validación automática
-
-La validación automática de política/targets vigila de forma explícita estos árboles y documentos:
-
-- `README.md`
-- `docs/`
-- `docs/proposals/` (tratadas como documentación activa mientras no se archiven en `docs/historico/` o `docs/experimental/`)
-- `docs/MANUAL_COBRA.md`
-- `tests/utils/`
-- `tests/performance/`
-- `tests/integration/`
-- `scripts/`
-- `src/pcobra/cobra/cli/commands/compile_cmd.py`
-- `src/pcobra/cobra/cli/commands/benchmarks_cmd.py`
-- `src/pcobra/cobra/cli/target_policies.py`
-
-Dentro de ese alcance la CI comprueba, como mínimo:
-
-- que no reaparezcan aliases legacy presentados como válidos (véase `docs/historico/targets_aliases_legacy.md`, histórico);
-- que no queden ramas activas, módulos o condicionales para backends retirados/fuera de política como el backend retirado de C;
-- que las listas públicas y/o hardcodeadas de runtime, transpilación, verificación y reverse sigan alineadas con `target_policies.py`, `targets.py` y `reverse/policy.py`;
-- que la documentación pública sobre Holobit (`README.md`, `docs/MANUAL_COBRA.md`, `docs/contrato_runtime_holobit.md`, `docs/matriz_transpiladores.md`, `docs/targets_policy.md`) no promocione compatibilidad superior a la matriz contractual;
-- que las tablas contractuales de Holobit sigan idénticas a `src/pcobra/cobra/transpilers/compatibility_matrix.py`.
-
-Las únicas exclusiones históricas explícitas permitidas son:
-
-- `docs/experimental/`
+- `archive/retired_targets/`
 - `docs/historico/`
+- `docs/experimental/`
 
-Todo contenido fuera de esas carpetas debe considerarse vigente y sujeto a la política oficial.
+Esas rutas pertenecen al árbol principal del repositorio solo como archivo o material experimental, no como definición vigente del producto final.
 
-En particular, `docs/proposals/` queda dentro del alcance vigilado: si una propuesta sigue activa, debe usar nombres canónicos, rutas actuales y no presentar targets experimentales como públicos.
+## Qué valida automáticamente el repositorio
 
-## Comprobaciones verificables
+La política simplificada valida únicamente estos puntos:
+
+1. `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` coinciden exactamente.
+2. Los registros y artefactos oficiales (`registry.py`, CLI, módulos `to_*.py`, módulos reverse dentro de su scope, golden files y documentación derivada) permanecen alineados con esos 8 backends.
+3. La documentación pública y los textos vigilados no reintroducen aliases públicos no canónicos.
+
+La validación ya no mantiene reglas dedicadas a restos históricos concretos si no forman parte del producto final.
+
+## Documentación derivada
+
+Los artefactos derivados deben regenerarse desde la política simplificada:
+
+- `docs/_generated/target_policy_summary.md`
+- `docs/_generated/target_policy_summary.rst`
+- `docs/_generated/official_targets_table.rst`
+- `docs/_generated/runtime_capability_matrix.rst`
+- `docs/_generated/reverse_scope_table.rst`
+- `docs/_generated/cli_backend_examples.rst`
+- `docs/matriz_transpiladores.md`
+
+## Comprobaciones recomendadas
 
 ```bash
-python scripts/ci/validate_targets.py
 python scripts/validate_targets_policy.py
+python scripts/ci/validate_targets.py
+python -m pytest tests/unit/test_validate_targets_policy_script.py
 python -m pytest tests/unit/test_official_targets_consistency.py
-python -m pytest tests/unit/test_cli_target_aliases.py
-python -m pytest tests/unit/test_public_docs_scope.py
-python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
-python -m pytest tests/integration/transpilers/test_official_backends_tier1.py
-python -m pytest tests/integration/transpilers/test_official_backends_tier2.py
-python -m pytest tests/integration/transpilers/test_official_backends_contracts.py
 ```
