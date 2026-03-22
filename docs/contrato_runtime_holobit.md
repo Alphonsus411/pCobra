@@ -107,6 +107,10 @@ Lectura de política asociada a esta matriz:
 - **Targets con runtime experimental/best-effort**: `go`, `java`.
 - **Targets solo de transpilación sin runtime público**: `wasm`, `asm`.
 
+Tener "runtime oficial" o "runtime experimental" **no equivale** a compatibilidad
+`full` del contrato Holobit/SDK: fuera de `python`, el estado contractual
+vigente sigue siendo `partial`.
+
 Notas por backend:
 
 - Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con
@@ -118,3 +122,6 @@ Notas por backend:
   eleve `Error` en `proyectar`/`transformar`/`graficar`.
 - WASM, ASM: contrato `partial`; hooks ejecutables mínimos que señalan error explícito en tiempo
   de ejecución/ensamblado, no no-op silencioso.
+- Los hooks contractuales canónicos siguen limitados a `cobra_holobit`,
+  `cobra_proyectar`, `cobra_transformar` y `cobra_graficar`; no deben aparecer
+  hooks multi-backend para `escalar` o `mover`.

@@ -74,6 +74,10 @@ Separación explícita para leer esta matriz correctamente:
 - **Targets oficiales solo de transpilación**: `wasm`, `go`, `java`, `asm`.
 - **Orígenes de transpilación inversa**: `python`, `javascript`, `java` (solo entrada reverse, no destinos adicionales de salida).
 
+Que un backend figure con "runtime oficial" o "runtime experimental/best-effort"
+no lo promociona automáticamente a `full` en Holobit ni en SDK: la única fila
+`full` de esta matriz sigue siendo `python`.
+
 Los 8 backends son oficiales para **generación de código**, pero el tooling oficial de **ejecución** es más pequeño:
 
 - runtime oficial en contenedor/sandbox: `python`, `javascript`, `cpp`, `rust`.
@@ -94,6 +98,7 @@ Además:
 - En `python`, la integración avanzada Holobit depende de `holobit-sdk`; cuando falta esa dependencia, el contrato correcto es fallar con `ModuleNotFoundError` explícito, no degradar a stub silencioso.
 - En `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm`, `corelibs` y `standard_library` solo garantizan imports/includes/puntos de llamada conservados y verificables en el código generado; no equivalen a compatibilidad completa de runtime.
 - En todos los backends `partial`, los hooks `cobra_*` deben inyectarse únicamente cuando el AST contiene primitivas Holobit (`NodoHolobit`, `NodoProyectar`, `NodoTransformar`, `NodoGraficar`).
+- En todos los backends, los hooks contractuales Holobit siguen siendo solo `cobra_holobit`, `cobra_proyectar`, `cobra_transformar` y `cobra_graficar`; `escalar` y `mover` permanecen como helpers del runtime Python y no deben promocionarse a hooks multi-backend.
 - En todos los backends `partial`, `proyectar`, `transformar` y `graficar` deben terminar en error explícito (`Error`, `panic!`, `panic`, `std::runtime_error`, `UnsupportedOperationException`, `unreachable`, `TRAP`) cuando el runtime avanzado no existe.
 - Si un backend cambia el nombre de símbolos de `corelibs` o `standard_library`, o deja de emitir sus imports/includes mínimos, eso debe tratarse como regresión contractual aunque el resto del archivo siga transpilandose.
 
