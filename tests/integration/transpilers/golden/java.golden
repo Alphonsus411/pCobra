@@ -2,17 +2,137 @@ import cobra.corelibs.*;
 import cobra.standard_library.*;
 
 public class Main {
-    private static Object cobra_holobit(Object valores) {
-        return valores;
+    private static final class CobraHolobit {
+        private final double[] valores;
+        private final java.util.List<String> historial;
+    
+        private CobraHolobit(double[] valores, java.util.List<String> historial) {
+            this.valores = java.util.Arrays.copyOf(valores, valores.length);
+            this.historial = new java.util.ArrayList<>(historial);
+        }
     }
-    private static void cobra_proyectar(Object hb, Object modo) {
-        throw new UnsupportedOperationException("Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.");
+    
+    private static CobraHolobit cobra_holobit(Object valores) {
+        if (valores instanceof double[] vector) {
+            return new CobraHolobit(vector, java.util.List.of("creado"));
+        }
+        if (valores instanceof java.util.List<?> lista) {
+            double[] salida = new double[lista.size()];
+            for (int i = 0; i < lista.size(); i++) {
+                salida[i] = cobraToDouble(lista.get(i));
+            }
+            return new CobraHolobit(salida, java.util.List.of("creado"));
+        }
+        throw new IllegalArgumentException("Runtime Holobit Java: valor no compatible para holobit: " + valores);
     }
-    private static void cobra_transformar(Object hb, Object op, Object... params) {
-        throw new UnsupportedOperationException("Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.");
+    
+    private static CobraHolobit cobraNormalizarHolobit(Object hb) {
+        if (hb instanceof CobraHolobit holobit) {
+            return new CobraHolobit(holobit.valores, holobit.historial);
+        }
+        return cobra_holobit(hb);
     }
-    private static void cobra_graficar(Object hb) {
-        throw new UnsupportedOperationException("Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.");
+    
+    private static double cobraToDouble(Object valor) {
+        if (valor instanceof Number numero) {
+            return numero.doubleValue();
+        }
+        return Double.parseDouble(String.valueOf(valor));
+    }
+    
+    private static double[] cobraDimensionar(double[] valores, int dimension) {
+        return java.util.Arrays.copyOf(valores, dimension);
+    }
+    
+    private static double[] cobra_proyectar(Object hb, Object modo) {
+        CobraHolobit holobit = cobraNormalizarHolobit(hb);
+        String modoNormalizado = String.valueOf(modo).trim().toLowerCase();
+        return switch (modoNormalizado) {
+            case "1d", "linea" -> cobraDimensionar(holobit.valores, 1);
+            case "2d", "plano" -> cobraDimensionar(holobit.valores, 2);
+            case "3d", "espacio" -> cobraDimensionar(holobit.valores, 3);
+            case "vector" -> java.util.Arrays.copyOf(holobit.valores, holobit.valores.length);
+            default -> throw new UnsupportedOperationException(
+                "Runtime Holobit Java: modo de proyección no soportado por el adaptador oficial: " + modo
+            );
+        };
+    }
+    
+    private static CobraHolobit cobra_transformar(Object hb, Object op, Object... params) {
+        CobraHolobit holobit = cobraNormalizarHolobit(hb);
+        double[] valores = java.util.Arrays.copyOf(holobit.valores, holobit.valores.length);
+        String operacion = String.valueOf(op).trim().toLowerCase();
+        switch (operacion) {
+            case "escalar" -> {
+                double factor = params.length > 0 ? cobraToDouble(params[0]) : 1.0;
+                for (int i = 0; i < valores.length; i++) valores[i] *= factor;
+            }
+            case "normalizar" -> {
+                double maximo = 1.0;
+                for (double valor : valores) maximo = Math.max(maximo, Math.abs(valor));
+                for (int i = 0; i < valores.length; i++) valores[i] /= maximo;
+            }
+            case "mover", "trasladar" -> {
+                valores = cobraDimensionar(valores, 3);
+                if (params.length > 0) valores[0] += cobraToDouble(params[0]);
+                if (params.length > 1) valores[1] += cobraToDouble(params[1]);
+                if (params.length > 2) valores[2] += cobraToDouble(params[2]);
+            }
+            case "rotar" -> {
+                valores = cobraDimensionar(valores, 3);
+                String eje = "z";
+                int anguloIndex = 0;
+                if (params.length > 0 && params[0] instanceof String texto) {
+                    eje = texto.trim().toLowerCase();
+                    anguloIndex = 1;
+                }
+                if (!"z".equals(eje)) {
+                    throw new UnsupportedOperationException(
+                        "Runtime Holobit Java: rotación soportada solo sobre eje z en el adaptador oficial: " + eje
+                    );
+                }
+                double grados = params.length > anguloIndex ? cobraToDouble(params[anguloIndex]) : 0.0;
+                double radianes = Math.toRadians(grados);
+                double x = valores[0];
+                double y = valores[1];
+                valores[0] = Math.round((x * Math.cos(radianes) - y * Math.sin(radianes)) * 1_000_000d) / 1_000_000d;
+                valores[1] = Math.round((x * Math.sin(radianes) + y * Math.cos(radianes)) * 1_000_000d) / 1_000_000d;
+            }
+            default -> throw new UnsupportedOperationException(
+                "Runtime Holobit Java: operación no soportada por el adaptador oficial: " + op
+            );
+        }
+        java.util.List<String> historial = new java.util.ArrayList<>(holobit.historial);
+        historial.add("transformar:" + operacion);
+        return new CobraHolobit(valores, historial);
+    }
+    
+    private static int longitud(Object valor) {
+        if (valor instanceof CobraHolobit holobit) {
+            return holobit.valores.length;
+        }
+        if (valor instanceof CharSequence texto) {
+            return texto.length();
+        }
+        if (valor instanceof java.util.Collection<?> coleccion) {
+            return coleccion.size();
+        }
+        return String.valueOf(valor).length();
+    }
+    
+    private static Object mostrar(Object... valores) {
+        for (Object valor : valores) {
+            System.out.println(valor);
+        }
+        if (valores.length == 0) return null;
+        return valores.length == 1 ? valores[0] : java.util.Arrays.asList(valores);
+    }
+    
+    private static String cobra_graficar(Object hb) {
+        CobraHolobit holobit = cobraNormalizarHolobit(hb);
+        String vista = "Holobit(" + java.util.Arrays.toString(holobit.valores) + ")";
+        mostrar(vista);
+        return vista;
     }
     public static void main(String[] args) {
         Object hb = cobra_holobit(new double[]{1, 2, 3});

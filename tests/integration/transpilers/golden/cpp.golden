@@ -1,18 +1,154 @@
-#include <iostream>
-#include <string>
+#include <algorithm>
+#include <cmath>
+#include <cctype>
 #include <initializer_list>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
-inline auto cobra_holobit(const auto& valores) {
+struct CobraHolobit {
+    std::vector<double> valores;
+    std::vector<std::string> historial;
+};
+
+inline CobraHolobit cobra_holobit(const std::vector<double>& valores) {
+    return CobraHolobit{valores, {"creado"}};
+}
+
+template <typename T>
+inline std::string cobra_runtime_arg(const T& valor) {
+    std::ostringstream salida;
+    salida << valor;
+    return salida.str();
+}
+
+inline std::string cobra_runtime_arg(const std::string& valor) {
+    return valor;
+}
+
+inline std::string cobra_runtime_arg(const char* valor) {
+    return std::string(valor);
+}
+
+inline CobraHolobit cobra_normalizar_holobit(const CobraHolobit& hb) {
+    return hb;
+}
+
+inline CobraHolobit cobra_normalizar_holobit(const std::vector<double>& valores) {
+    return cobra_holobit(valores);
+}
+
+inline std::vector<double> cobra_dimensionar(std::vector<double> valores, std::size_t dimension) {
+    if (valores.size() > dimension) {
+        valores.resize(dimension);
+    }
+    while (valores.size() < dimension) {
+        valores.push_back(0.0);
+    }
     return valores;
 }
-inline void cobra_proyectar(const auto& hb, const auto& modo) {
-    throw std::runtime_error("Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.");
+
+inline double cobra_parse_double(const std::string& texto) {
+    return std::stod(texto);
 }
-inline void cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {
-    throw std::runtime_error("Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.");
+
+inline std::vector<double> cobra_proyectar(const auto& hb, const auto& modo) {
+    const CobraHolobit holobit = cobra_normalizar_holobit(hb);
+    std::string modo_normalizado = cobra_runtime_arg(modo);
+    std::transform(modo_normalizado.begin(), modo_normalizado.end(), modo_normalizado.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (modo_normalizado == "1d" || modo_normalizado == "linea") {
+        return cobra_dimensionar(holobit.valores, 1);
+    }
+    if (modo_normalizado == "2d" || modo_normalizado == "plano") {
+        return cobra_dimensionar(holobit.valores, 2);
+    }
+    if (modo_normalizado == "3d" || modo_normalizado == "espacio") {
+        return cobra_dimensionar(holobit.valores, 3);
+    }
+    if (modo_normalizado == "vector") {
+        return holobit.valores;
+    }
+    throw std::runtime_error("Runtime Holobit C++: modo de proyección no soportado por el adaptador oficial: " + cobra_runtime_arg(modo));
 }
-inline void cobra_graficar(const auto& hb) {
-    throw std::runtime_error("Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.");
+
+inline CobraHolobit cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {
+    CobraHolobit holobit = cobra_normalizar_holobit(hb);
+    std::vector<double> valores = holobit.valores;
+    std::vector<std::string> lista_params(params);
+    std::string operacion = cobra_runtime_arg(op);
+    std::transform(operacion.begin(), operacion.end(), operacion.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (operacion == "escalar") {
+        const double factor = lista_params.empty() ? 1.0 : cobra_parse_double(lista_params[0]);
+        for (double& valor : valores) {
+            valor *= factor;
+        }
+    } else if (operacion == "normalizar") {
+        double maximo = 1.0;
+        for (double valor : valores) {
+            maximo = std::max(maximo, std::abs(valor));
+        }
+        for (double& valor : valores) {
+            valor /= maximo;
+        }
+    } else if (operacion == "mover" || operacion == "trasladar") {
+        valores = cobra_dimensionar(valores, 3);
+        if (!lista_params.empty()) valores[0] += cobra_parse_double(lista_params[0]);
+        if (lista_params.size() > 1) valores[1] += cobra_parse_double(lista_params[1]);
+        if (lista_params.size() > 2) valores[2] += cobra_parse_double(lista_params[2]);
+    } else if (operacion == "rotar") {
+        valores = cobra_dimensionar(valores, 3);
+        std::string eje = "z";
+        std::size_t angulo_index = 0;
+        if (!lista_params.empty() && !lista_params[0].empty() && !std::isdigit(static_cast<unsigned char>(lista_params[0][0])) && lista_params[0][0] != '-') {
+            eje = lista_params[0];
+            std::transform(eje.begin(), eje.end(), eje.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            angulo_index = 1;
+        }
+        if (eje != "z") {
+            throw std::runtime_error("Runtime Holobit C++: rotación soportada solo sobre eje z en el adaptador oficial: " + eje);
+        }
+        const double grados = lista_params.size() > angulo_index ? cobra_parse_double(lista_params[angulo_index]) : 0.0;
+        const double radianes = grados * 3.14159265358979323846 / 180.0;
+        const double x = valores[0];
+        const double y = valores[1];
+        valores[0] = std::round((x * std::cos(radianes) - y * std::sin(radianes)) * 1000000.0) / 1000000.0;
+        valores[1] = std::round((x * std::sin(radianes) + y * std::cos(radianes)) * 1000000.0) / 1000000.0;
+    } else {
+        throw std::runtime_error("Runtime Holobit C++: operación no soportada por el adaptador oficial: " + cobra_runtime_arg(op));
+    }
+    auto historial = holobit.historial;
+    historial.push_back("transformar:" + operacion);
+    return CobraHolobit{valores, historial};
+}
+
+template <typename T>
+inline std::size_t longitud(const T& valor) {
+    return cobra_runtime_arg(valor).size();
+}
+
+inline std::size_t longitud(const CobraHolobit& hb) {
+    return hb.valores.size();
+}
+
+template <typename T>
+inline T mostrar(const T& valor) {
+    std::cout << valor << std::endl;
+    return valor;
+}
+
+inline std::string cobra_graficar(const auto& hb) {
+    const CobraHolobit holobit = cobra_normalizar_holobit(hb);
+    std::ostringstream salida;
+    salida << "Holobit(";
+    for (std::size_t i = 0; i < holobit.valores.size(); ++i) {
+        if (i > 0) salida << ", ";
+        salida << holobit.valores[i];
+    }
+    salida << ")";
+    const std::string vista = salida.str();
+    mostrar(vista);
+    return vista;
 }
 
 #include <cobra/corelibs.hpp>
@@ -20,7 +156,7 @@ inline void cobra_graficar(const auto& hb) {
 
 auto hb = cobra_holobit({ 1, 2, 3 });
 cobra_proyectar(hb, "2d");
-cobra_transformar(hb, "rotar", {});
+cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});
 cobra_graficar(hb);
 longitud("cobra");
 mostrar("hola");

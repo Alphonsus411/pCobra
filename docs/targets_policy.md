@@ -73,7 +73,7 @@ Estos nombres describen **lenguajes de entrada para `cobra transpilar-inverso`**
 
 ## Separación explícita entre transpilación y ejecución
 
-Los 8 targets oficiales de salida representan el alcance de **transpilación** del proyecto. Eso no implica paridad automática de ejecución.
+Los 8 targets oficiales de salida representan el alcance de **transpilación** del proyecto. Eso no implica paridad automática de ejecución. Para Tier 2, la decisión mantenida por el proyecto es: `cpp` sigue como backend oficial fuerte con runtime mantenido; `go` y `java` se mantienen como targets oficiales de codegen con adaptadores mínimos; `asm` queda como backend de inspección/diagnóstico, no como destino con compatibilidad SDK equivalente.
 
 ### Targets oficiales con runtime/tooling de ejecución
 
@@ -89,14 +89,14 @@ La verificación ejecutable (`cobra verificar`) se limita actualmente a:
 - `python`
 - `javascript`
 
-### Targets oficiales solo de generación
+### Targets oficiales solo de generación o sin runtime oficial público
 
 Los siguientes backends son oficiales para generar código, pero no deben documentarse como runtimes Docker/sandbox oficiales:
 
-- `wasm`
-- `go`
-- `java`
-- `asm`
+- `wasm`: solo transpilación con runtime host-managed externo.
+- `go`: codegen oficial con adaptadores mínimos mantenidos por el proyecto, sin runtime oficial fuerte.
+- `java`: codegen oficial con adaptadores mínimos mantenidos por el proyecto, sin runtime oficial fuerte.
+- `asm`: backend de inspección/diagnóstico; conserva hooks y puntos de llamada, pero no promete compatibilidad SDK equivalente.
 
 ## Compatibilidad contractual mínima
 

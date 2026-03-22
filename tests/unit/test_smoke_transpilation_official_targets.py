@@ -37,8 +37,8 @@ def ast_holobit_runtime():
         (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
         (TranspiladorWasm, ["(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar", "host-managed"]),
         (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobra_holobit(", "func cobra_proyectar(", "func cobra_transformar(", "func cobra_graficar("]),
-        (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"]),
-        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"]),
+        (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline CobraHolobit cobra_holobit", "inline std::vector<double> cobra_proyectar", "inline CobraHolobit cobra_transformar", "inline std::string cobra_graficar"]),
+        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static CobraHolobit cobra_holobit", "private static double[] cobra_proyectar", "private static CobraHolobit cobra_transformar", "private static String cobra_graficar"]),
         (TranspiladorASM, ["cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:", "TRAP"]),
     ],
 )
@@ -67,9 +67,10 @@ def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador, frag
 
 def test_smoke_runtime_holobit_asm_expone_fallo_explicito_y_homogeneo(ast_holobit_runtime):
     code = TranspiladorASM().generate_code(ast_holobit_runtime)
-    assert "Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible." in code
-    assert "Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible." in code
-    assert "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible." in code
+    assert "backend asm: runtime de inspección/diagnóstico" in code
+    assert "la proyección requiere runtime externo." in code
+    assert "la transformación requiere runtime externo." in code
+    assert "la visualización requiere runtime externo." in code
 
 
 def test_module_map_resuelve_targets_solo_desde_cobra_toml(tmp_path, monkeypatch):

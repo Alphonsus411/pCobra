@@ -210,19 +210,19 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "go": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Go verificables (`cobra/corelibs`, `cobra/standard_library`) y preservación de símbolos de runtime. Holobit usa hooks canónicos `cobra_*`; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `panic` explícito.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Go verificables y adaptadores mínimos mantenidos por el proyecto (`longitud`, `mostrar`) sobre un runtime best-effort no público. Holobit usa hooks canónicos `cobra_*` sobre `CobraHolobit`; soporta proyecciones 1D/2D/3D/vector, transformaciones base (`escalar`, `normalizar`, `mover`/`trasladar`, rotación planar sobre eje z) y `graficar` textual. Sigue en `partial` porque el backend no promete runtime oficial fuerte ni paridad de SDK.",
     },
     "cpp": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa includes verificables (`cobra/corelibs.hpp`, `cobra/standard_library.hpp`) y preservación de símbolos de runtime. Holobit usa hooks inline `cobra_*`; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `std::runtime_error` explícito.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa includes verificables (`cobra/corelibs.hpp`, `cobra/standard_library.hpp`) y adaptadores mínimos mantenidos por el proyecto (`longitud`, `mostrar`). Holobit usa hooks inline `cobra_*` sobre `CobraHolobit`; soporta proyecciones 1D/2D/3D/vector, transformaciones base (`escalar`, `normalizar`, `mover`/`trasladar`, rotación planar sobre eje z) y `graficar` textual. `cpp` sigue en `partial` porque mantiene runtime oficial fuerte del proyecto, pero sin equivaler al SDK Python completo.",
     },
     "java": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports verificables (`cobra.corelibs.*`, `cobra.standard_library.*`) y preservación de símbolos de runtime. Holobit usa hooks estáticos canónicos `cobra_*`; `cobra_holobit` devuelve la colección y las primitivas avanzadas fallan con `UnsupportedOperationException` explícito.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports verificables (`cobra.corelibs.*`, `cobra.standard_library.*`) y adaptadores mínimos mantenidos por el proyecto (`longitud`, `mostrar`) sobre un runtime best-effort no público. Holobit usa hooks estáticos canónicos `cobra_*` sobre `CobraHolobit`; soporta proyecciones 1D/2D/3D/vector, transformaciones base (`escalar`, `normalizar`, `mover`/`trasladar`, rotación planar sobre eje z) y `graficar` textual. Sigue en `partial` porque no promete runtime oficial fuerte ni paridad de SDK.",
     },
     "asm": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa conservar puntos de llamada `CALL` y declarar explícitamente que el runtime externo se administra fuera del backend. Holobit inyecta hooks `cobra_*`; `cobra_holobit` conserva la representación IR y `proyectar`/`transformar`/`graficar` fallan con `TRAP` explícito, sin `none` ni no-op silencioso.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa conservar puntos de llamada `CALL` y declarar explícitamente que el runtime externo se administra fuera del backend. Holobit inyecta hooks `cobra_*` solo como capa de inspección/diagnóstico; `cobra_holobit` conserva la representación IR y `proyectar`/`transformar`/`graficar` exigen runtime externo con `TRAP` explícito. No debe documentarse como backend con paridad SDK equivalente.",
     },
 }
 
