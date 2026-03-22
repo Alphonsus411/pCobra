@@ -140,8 +140,9 @@ def visit_proyectar(self, nodo):
 def visit_transformar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     op = self.obtener_valor(nodo.operacion)
+    params = ", ".join(f"cobra_runtime_arg({self.obtener_valor(p)})" for p in nodo.parametros)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f"cobra_transformar({hb}, {op}, {{}});")
+    self.agregar_linea(f"cobra_transformar({hb}, {op}, {{{params}}});")
 
 
 def visit_graficar(self, nodo):
@@ -188,7 +189,8 @@ class TranspiladorCPP(BaseTranspiler):
             hb = self.obtener_valor(nodo.holobit)
             op = self.obtener_valor(nodo.operacion)
             self.usa_runtime_holobit = True
-            return f"cobra_transformar({hb}, {op}, {{}})"
+            params = ", ".join(f"cobra_runtime_arg({self.obtener_valor(p)})" for p in nodo.parametros)
+            return f"cobra_transformar({hb}, {op}, {{{params}}})"
         elif isinstance(nodo, NodoGraficar):
             hb = self.obtener_valor(nodo.holobit)
             self.usa_runtime_holobit = True
@@ -257,9 +259,14 @@ class TranspiladorCPP(BaseTranspiler):
             hooks = get_runtime_hooks("cpp")
             if hooks:
                 lineas = [
-                    "#include <iostream>",
-                    "#include <string>",
+                    "#include <algorithm>",
+                    "#include <cmath>",
+                    "#include <cctype>",
                     "#include <initializer_list>",
+                    "#include <iostream>",
+                    "#include <sstream>",
+                    "#include <string>",
+                    "#include <vector>",
                     "",
                 ] + hooks + [""] + lineas
         return "\n".join(lineas)

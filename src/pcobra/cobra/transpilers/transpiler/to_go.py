@@ -165,13 +165,13 @@ class TranspiladorGo(BaseTranspiler):
         imports = set(get_standard_imports("go"))
         imports.update(self.imports)
         if self.usa_runtime_holobit:
-            imports.add("fmt")
+            imports.update({"fmt", "math", "strconv", "strings"})
 
         encabezado = "package main\n"
         if imports:
             encabezado += "\nimport (\n"
             for imp in sorted(imports):
-                encabezado += f'    "{imp}"\n'
+                encabezado += f"    {imp}\n" if "\"" in imp else f'    "{imp}"\n'
             encabezado += ")\n\n"
         else:
             encabezado += "\n"

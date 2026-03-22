@@ -119,7 +119,7 @@ La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `grafic
 - `python` es el único backend que puede figurar como `full` para estas seis features.
 - `escalar` y `mover` quedan fuera de esta tabla porque son helpers del runtime Python, no features del contrato transversal.
 - `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben permanecer en `partial`
-  mientras no exista paridad real con el runtime avanzado y el SDK de referencia.
+  mientras no exista paridad real con el runtime avanzado y el SDK de referencia. En Tier 2, `cpp` es el único backend con runtime oficial fuerte; `go` y `java` quedan en codegen oficial con adaptadores mínimos; `asm` queda como backend de inspección/diagnóstico.
 - Ningún backend fuera de `python` debe documentarse como compatibilidad total con Holobit SDK,
   compatibilidad SDK completa o equivalente semántico de soporte total.
 - En todos los backends `partial`, `proyectar`, `transformar` y `graficar` deben fallar con error
@@ -141,10 +141,12 @@ Notas por backend:
 - Python: hooks ejecutables y contrato `full`; `holobit-sdk` es obligatorio en instalaciones con
   Python `>=3.10`, y si aun así falta `holobit_sdk`, las primitivas avanzadas fallan explícitamente
   con `ModuleNotFoundError`.
-- JavaScript: contrato `partial`; usa un adaptador oficial mantenido por el proyecto sobre runtime JS nativo. `cobra_holobit` crea un objeto runtime propio, `proyectar` soporta salidas 1D/2D/3D/vector, `transformar` cubre `escalar`, `normalizar`, `mover`/`trasladar` y rotación planar sobre `z`, y `graficar` produce una vista textual. No debe documentarse como compatibilidad completa con Holobit SDK.
+- JavaScript: contrato `partial`; usa un adaptador oficial mantenido por el proyecto sobre runtime javascript nativo. `cobra_holobit` crea un objeto runtime propio, `proyectar` soporta salidas 1D/2D/3D/vector, `transformar` cubre `escalar`, `normalizar`, `mover`/`trasladar` y rotación planar sobre `z`, y `graficar` produce una vista textual. No debe documentarse como compatibilidad completa con Holobit SDK.
 - Rust: contrato `partial`; usa un adaptador oficial mantenido por el proyecto con `CobraHolobit`, `CobraRuntimeError` y `Result`. Implementa proyecciones y transformaciones base equivalentes al adaptador oficial, pero sin paridad total con `holobit_sdk`.
 - WASM: contrato `partial`; usa hooks WAT concretos que delegan en imports host-managed (`pcobra:holobit`, `pcobra:corelibs`, `pcobra:standard_library`). Ya no usa `unreachable`, pero la semántica completa sigue dependiendo del host.
-- Go, cpp, Java, ASM: contrato `partial`; hooks ejecutables mínimos con error explícito cuando el runtime avanzado no está disponible.
+- `cpp`: contrato `partial`, pero sigue siendo el backend Tier 2 con runtime oficial fuerte mantenido por el proyecto mediante adaptadores mínimos ejecutables (`CobraHolobit`, `longitud`, `mostrar`, proyecciones y transformaciones base).
+- `go` y `java`: contrato `partial`; se mantienen como targets oficiales de generación con adaptadores mínimos mantenidos por el proyecto, sin promesa de runtime oficial fuerte ni paridad SDK.
+- `asm`: contrato `partial` solo como backend de inspección/diagnóstico; conserva hooks y puntos de llamada, pero no debe presentarse como destino con compatibilidad SDK equivalente.
 - Los hooks contractuales canónicos siguen limitados a `cobra_holobit`,
   `cobra_proyectar`, `cobra_transformar` y `cobra_graficar`; no deben aparecer
   hooks multi-backend para `escalar` o `mover`.

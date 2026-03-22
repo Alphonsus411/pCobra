@@ -46,10 +46,10 @@ ADAPTER_MARKERS = {
     "javascript": ["Runtime Holobit JavaScript: modo de proyección no soportado por el adaptador oficial", "const vista = `Holobit(${holobit.valores.join(', ')})`"],
     "rust": ["Runtime Holobit Rust: modo de proyección no soportado por el adaptador oficial", "struct CobraRuntimeError"],
     "wasm": ["host-managed", '(import "pcobra:holobit" "cobra_transformar"'],
-    "go": ["Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible."],
-    "cpp": ["Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible."],
-    "java": ["Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible."],
-    "asm": ["Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible."],
+    "go": ["type CobraHolobit struct", "Runtime Holobit Go: modo de proyección no soportado por el adaptador oficial", "func longitud(valor any) int {"],
+    "cpp": ["inline CobraHolobit cobra_holobit", "Runtime Holobit C++: modo de proyección no soportado por el adaptador oficial", "inline std::size_t longitud(const T& valor) {"],
+    "java": ["private static CobraHolobit cobra_holobit", "Runtime Holobit Java: modo de proyección no soportado por el adaptador oficial", "private static int longitud(Object valor) {"],
+    "asm": ["backend asm: runtime de inspección/diagnóstico", "backend de inspección/diagnóstico; la proyección requiere runtime externo."],
 }
 
 

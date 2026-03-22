@@ -48,8 +48,8 @@ PARTIAL_MARKERS = {
         "graficar": ("(func $cobra_graficar",),
     },
     "go": {"holobit": ("cobra_holobit([]float64{1.0, 2.0, 3.0})",), "proyectar": ("func cobra_proyectar",), "transformar": ("func cobra_transformar",), "graficar": ("func cobra_graficar",)},
-    "cpp": {"holobit": ("cobra_holobit({ 1.0, 2.0, 3.0 });",), "proyectar": ("inline void cobra_proyectar",), "transformar": ("inline void cobra_transformar",), "graficar": ("inline void cobra_graficar",)},
-    "java": {"holobit": ("cobra_holobit(new double[]{1.0, 2.0, 3.0});",), "proyectar": ("private static void cobra_proyectar",), "transformar": ("private static void cobra_transformar",), "graficar": ("private static void cobra_graficar",)},
+    "cpp": {"holobit": ("cobra_holobit({ 1.0, 2.0, 3.0 });",), "proyectar": ("inline std::vector<double> cobra_proyectar",), "transformar": ("inline CobraHolobit cobra_transformar",), "graficar": ("inline std::string cobra_graficar",)},
+    "java": {"holobit": ("cobra_holobit(new double[]{1.0, 2.0, 3.0});",), "proyectar": ("private static double[] cobra_proyectar",), "transformar": ("private static CobraHolobit cobra_transformar",), "graficar": ("private static String cobra_graficar",)},
     "asm": {"holobit": ("cobra_holobit:",), "proyectar": ("cobra_proyectar:",), "transformar": ("cobra_transformar:",), "graficar": ("cobra_graficar:",)},
 }
 FULL_MARKERS = {
@@ -76,8 +76,8 @@ HOOK_MARKERS = {
     "rust": ("fn cobra_holobit", "fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
     "wasm": ("(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"),
     "go": ("func cobra_holobit", "func cobra_proyectar", "func cobra_transformar", "func cobra_graficar"),
-    "cpp": ("inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
-    "java": ("private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"),
+    "cpp": ("inline CobraHolobit cobra_holobit", "inline std::vector<double> cobra_proyectar", "inline CobraHolobit cobra_transformar", "inline std::string cobra_graficar"),
+    "java": ("private static CobraHolobit cobra_holobit", "private static double[] cobra_proyectar", "private static CobraHolobit cobra_transformar", "private static String cobra_graficar"),
     "asm": ("cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
 }
 

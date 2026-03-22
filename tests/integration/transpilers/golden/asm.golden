@@ -1,16 +1,17 @@
 ; backend asm: imports de runtime administrados externamente
 
+; backend asm: runtime de inspección/diagnóstico, sin paridad SDK equivalente
 cobra_holobit:
-    ; Runtime Holobit ASM: 'holobit' conserva el valor de entrada cuando no existe runtime avanzado.
+    ; Runtime Holobit ASM: backend de inspección; conserva la representación simbólica del holobit.
     RET
 cobra_proyectar:
-    ; Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.
+    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la proyección requiere runtime externo.
     TRAP
 cobra_transformar:
-    ; Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.
+    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la transformación requiere runtime externo.
     TRAP
 cobra_graficar:
-    ; Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.
+    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la visualización requiere runtime externo.
     TRAP
 
 HOLOBIT hb [1, 2, 3]

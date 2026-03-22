@@ -20,6 +20,18 @@ from pcobra.cobra.transpilers.transpiler.rust_nodes.runtime_holobit import (
     build_holobit_runtime_lines as build_rust_holobit_runtime_lines,
     build_standard_runtime_lines as build_rust_standard_runtime_lines,
 )
+from pcobra.cobra.transpilers.transpiler.go_nodes.runtime_holobit import (
+    build_holobit_runtime_lines as build_go_holobit_runtime_lines,
+)
+from pcobra.cobra.transpilers.transpiler.cpp_nodes.runtime_holobit import (
+    build_holobit_runtime_lines as build_cpp_holobit_runtime_lines,
+)
+from pcobra.cobra.transpilers.transpiler.java_nodes.runtime_holobit import (
+    build_holobit_runtime_lines as build_java_holobit_runtime_lines,
+)
+from pcobra.cobra.transpilers.transpiler.asm_nodes.runtime_holobit import (
+    build_holobit_runtime_lines as build_asm_holobit_runtime_lines,
+)
 from pcobra.cobra.transpilers.transpiler.wasm_runtime import (
     build_holobit_runtime_lines as build_wasm_holobit_runtime_lines,
     build_standard_runtime_lines as build_wasm_standard_runtime_lines,
@@ -70,7 +82,7 @@ STANDARD_IMPORTS = {
         *build_javascript_standard_runtime_lines(),
     ],
     "rust": build_rust_standard_runtime_lines(),
-    "go": ["cobra/corelibs", "cobra/standard_library"],
+    "go": ['_ "cobra/corelibs"', '_ "cobra/standard_library"'],
     "cpp": [
         "#include <cobra/corelibs.hpp>",
         "#include <cobra/standard_library.hpp>",
@@ -111,16 +123,16 @@ HOOK_SIGNATURE_MARKERS = {
         "graficar": "func cobra_graficar(",
     },
     "cpp": {
-        "holobit": "inline auto cobra_holobit(",
-        "proyectar": "inline void cobra_proyectar(",
-        "transformar": "inline void cobra_transformar(",
-        "graficar": "inline void cobra_graficar(",
+        "holobit": "inline CobraHolobit cobra_holobit(",
+        "proyectar": "inline std::vector<double> cobra_proyectar(",
+        "transformar": "inline CobraHolobit cobra_transformar(",
+        "graficar": "inline std::string cobra_graficar(",
     },
     "java": {
-        "holobit": "private static Object cobra_holobit(",
-        "proyectar": "private static void cobra_proyectar(",
-        "transformar": "private static void cobra_transformar(",
-        "graficar": "private static void cobra_graficar(",
+        "holobit": "private static CobraHolobit cobra_holobit(",
+        "proyectar": "private static double[] cobra_proyectar(",
+        "transformar": "private static CobraHolobit cobra_transformar(",
+        "graficar": "private static String cobra_graficar(",
     },
     "wasm": {
         "holobit": "(func $cobra_holobit",
@@ -199,64 +211,13 @@ RUNTIME_HOOKS = {
     ],
     "javascript": build_javascript_holobit_runtime_lines(),
     "rust": build_rust_holobit_runtime_lines(),
-    "go": [
-        "func cobra_holobit(valores []float64) []float64 {",
-        "    return valores",
-        "}",
-        "func cobra_proyectar(hb any, modo any) {",
-        '    panic(fmt.Sprintf("Runtime Holobit Go: \'proyectar\' requiere runtime avanzado compatible. hb=%v modo=%v", hb, modo))',
-        "}",
-        "func cobra_transformar(hb any, op any, params ...any) {",
-        '    panic(fmt.Sprintf("Runtime Holobit Go: \'transformar\' requiere runtime avanzado compatible. hb=%v op=%v params=%v", hb, op, params))',
-        "}",
-        "func cobra_graficar(hb any) {",
-        '    panic(fmt.Sprintf("Runtime Holobit Go: \'graficar\' requiere runtime avanzado compatible. hb=%v", hb))',
-        "}",
-    ],
-    "cpp": [
-        "inline auto cobra_holobit(const auto& valores) {",
-        "    return valores;",
-        "}",
-        "inline void cobra_proyectar(const auto& hb, const auto& modo) {",
-        "    throw std::runtime_error(\"Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.\");",
-        "}",
-        "inline void cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {",
-        "    throw std::runtime_error(\"Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.\");",
-        "}",
-        "inline void cobra_graficar(const auto& hb) {",
-        "    throw std::runtime_error(\"Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.\");",
-        "}",
-    ],
-    "java": [
-        "private static Object cobra_holobit(Object valores) {",
-        "    return valores;",
-        "}",
-        "private static void cobra_proyectar(Object hb, Object modo) {",
-        "    throw new UnsupportedOperationException(\"Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.\");",
-        "}",
-        "private static void cobra_transformar(Object hb, Object op, Object... params) {",
-        "    throw new UnsupportedOperationException(\"Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.\");",
-        "}",
-        "private static void cobra_graficar(Object hb) {",
-        "    throw new UnsupportedOperationException(\"Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.\");",
-        "}",
-    ],
+    "go": build_go_holobit_runtime_lines(),
+    "cpp": build_cpp_holobit_runtime_lines(),
+    "java": build_java_holobit_runtime_lines(),
     "wasm": build_wasm_holobit_runtime_lines(),
-    "asm": [
-        "cobra_holobit:",
-        "    ; Runtime Holobit ASM: 'holobit' conserva el valor de entrada cuando no existe runtime avanzado.",
-        "    RET",
-        "cobra_proyectar:",
-        "    ; Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.",
-        "    TRAP",
-        "cobra_transformar:",
-        "    ; Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.",
-        "    TRAP",
-        "cobra_graficar:",
-        "    ; Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.",
-        "    TRAP",
-    ],
+    "asm": build_asm_holobit_runtime_lines(),
 }
+
 
 def validate_runtime_contracts() -> None:
     """Valida imports/hooks de runtime para todos los backends oficiales."""
@@ -303,13 +264,18 @@ def validate_runtime_contracts() -> None:
                 )
 
         for feature in advanced_features:
-            if target in {"python", "go", "cpp", "java", "asm"}:
+            if target == "python":
                 expected_error = RUNTIME_ERROR_MESSAGE[target].format(feature=feature)
                 if expected_error not in hook_blob:
                     raise RuntimeError(
                         f"RUNTIME_HOOKS['{target}'] no contiene el error explícito "
                         f"esperado para {feature}: {expected_error}"
                     )
+
+        if target == "asm" and "backend de inspección/diagnóstico" not in hook_blob:
+            raise RuntimeError(
+                "RUNTIME_HOOKS['asm'] debe declararse explícitamente como backend de inspección/diagnóstico"
+            )
 
         forbidden_markers = ("cobra_escalar", "cobra_mover")
         for forbidden_marker in forbidden_markers:

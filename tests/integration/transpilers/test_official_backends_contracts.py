@@ -30,8 +30,8 @@ HOOK_EXPECTATIONS = {
     "rust": ("fn cobra_holobit", "fn cobra_proyectar", "fn cobra_transformar", "fn cobra_graficar"),
     "wasm": ("(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar"),
     "go": ("func cobra_holobit", "func cobra_proyectar", "func cobra_transformar", "func cobra_graficar"),
-    "cpp": ("inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"),
-    "java": ("private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"),
+    "cpp": ("inline CobraHolobit cobra_holobit", "inline std::vector<double> cobra_proyectar", "inline CobraHolobit cobra_transformar", "inline std::string cobra_graficar"),
+    "java": ("private static CobraHolobit cobra_holobit", "private static double[] cobra_proyectar", "private static CobraHolobit cobra_transformar", "private static String cobra_graficar"),
     "asm": ("cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
 }
 
@@ -72,24 +72,24 @@ RUNTIME_ADAPTER_MARKERS = {
         '(import "pcobra:holobit" "cobra_transformar"',
     ),
     "go": (
-        "Runtime Holobit Go: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Go: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Go: 'graficar' requiere runtime avanzado compatible.",
+        "type CobraHolobit struct",
+        "Runtime Holobit Go: modo de proyección no soportado por el adaptador oficial",
+        "func mostrar(valores ...any) any {",
     ),
     "cpp": (
-        "Runtime Holobit C++: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit C++: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit C++: 'graficar' requiere runtime avanzado compatible.",
+        "Runtime Holobit C++: modo de proyección no soportado por el adaptador oficial",
+        "Runtime Holobit C++: operación no soportada por el adaptador oficial",
+        "inline std::size_t longitud(const T& valor) {",
     ),
     "java": (
-        "Runtime Holobit Java: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Java: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.",
+        "Runtime Holobit Java: modo de proyección no soportado por el adaptador oficial",
+        "Runtime Holobit Java: operación no soportada por el adaptador oficial",
+        "private static int longitud(Object valor) {",
     ),
     "asm": (
-        "Runtime Holobit ASM: 'proyectar' requiere runtime avanzado compatible.",
-        "Runtime Holobit ASM: 'transformar' requiere runtime avanzado compatible.",
-        "Runtime Holobit ASM: 'graficar' requiere runtime avanzado compatible.",
+        "runtime de inspección/diagnóstico",
+        "la proyección requiere runtime externo.",
+        "la visualización requiere runtime externo.",
     ),
 }
 

@@ -81,3 +81,22 @@ def test_tier2_backend_runtime_hooks_are_present_when_expected(backend: str):
 def test_tier2_suite_targets_only_official_backends():
     assert set(TIER2_BACKENDS) == set(TIER2_TARGETS)
     assert set(TIER2_BACKENDS).issubset(set(TRANSPILERS))
+
+
+def test_tier2_target_roles_remain_explicit():
+    assert BACKEND_COMPATIBILITY["cpp"]["holobit"] == "partial"
+    assert BACKEND_COMPATIBILITY["go"]["holobit"] == "partial"
+    assert BACKEND_COMPATIBILITY["java"]["holobit"] == "partial"
+    assert BACKEND_COMPATIBILITY["asm"]["holobit"] == "partial"
+
+
+def test_tier2_cpp_se_mantiene_como_runtime_oficial_fuerte_y_go_java_como_adaptadores_minimos():
+    cpp = generate_code("cpp", "graficar")
+    go = generate_code("go", "graficar")
+    java = generate_code("java", "graficar")
+    asm = generate_code("asm", "graficar")
+
+    assert "inline std::string cobra_graficar" in cpp
+    assert "func cobra_graficar(hb any) string" in go
+    assert "private static String cobra_graficar(Object hb)" in java
+    assert "runtime de inspección/diagnóstico" in asm
