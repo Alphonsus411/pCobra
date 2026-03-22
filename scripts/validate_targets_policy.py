@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Valida que los targets mencionados respeten la política oficial vigente.
 
-Política oficial pública:
-- Tier 1: python, rust, javascript, wasm
-- Tier 2: go, cpp, java, asm
-
-La fuente de verdad es ``src/pcobra/cobra/transpilers/targets.py``. Los aliases
-legacy solo se toleran como compatibilidad interna controlada y nunca como
-nombres canónicos públicos.
+La política oficial pública se importa desde
+``src/pcobra/cobra/transpilers/targets.py`` y
+``src/pcobra/cobra/cli/target_policies.py``. Los aliases legacy solo se
+toleran como compatibilidad interna controlada y nunca como nombres canónicos
+públicos.
 """
 
 from __future__ import annotations

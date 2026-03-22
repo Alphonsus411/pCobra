@@ -10,15 +10,15 @@ import tomllib
 from pathlib import Path
 from typing import Final, Mapping
 
-from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS, TRANSPILATION_ONLY_TARGETS
+from pcobra.cobra.cli.target_policies import (
+    BEST_EFFORT_RUNTIME_TARGETS,
+    NO_RUNTIME_TARGETS,
+    OFFICIAL_RUNTIME_TARGETS,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_cli_choices
 
-EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = ("go", "java")
-NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = tuple(
-    target
-    for target in TRANSPILATION_ONLY_TARGETS
-    if target not in EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS
-)
+EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
+NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = NO_RUNTIME_TARGETS
 
 BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
     "python": {"ext": "py", "run": ["python", "{file}"], "runtime_policy": "official"},
