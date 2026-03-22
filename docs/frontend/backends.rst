@@ -1,7 +1,7 @@
 Soporte de backends
 ===================
 
-Cobra permite generar código para los destinos definidos por el registro canónico de transpiladores.
+La documentación pública de pCobra describe una sola familia de salida: **8 backends oficiales** agrupados en Tier 1 y Tier 2.
 
 .. include:: ../_generated/target_policy_summary.rst
 
@@ -9,35 +9,25 @@ Ejemplos de uso generados desde el registro canónico:
 
 .. include:: ../_generated/cli_backend_examples.rst
 
-Para ``wasm``, el backend genera formato WAT que puede convertirse con
-``wat2wasm`` para obtener un módulo binario ejecutable.
-
 Política de targets oficial
 ---------------------------
 
-Los nombres canónicos y la clasificación por tiers de estos backends se derivan
-de ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe
-usar únicamente ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``,
-``java`` y ``asm``.
+Los nombres canónicos y la clasificación por tiers de estos backends se derivan de ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe usar únicamente ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
 
-Esto describe la **salida oficial de transpilación**, no la cobertura de
-ejecución. El runtime oficial público de CLI/contenedores está limitado a
-``python``, ``javascript``, ``cpp`` y ``rust``. Los targets ``go``, ``java``,
-``wasm`` y ``asm`` siguen siendo oficiales para generación de código, pero no
-deben presentarse como equivalentes a esos runtimes oficiales ni como soporte
-oficial de librerías en ejecución.
+Esto describe la **salida oficial de transpilación**, no una promesa uniforme de ejecución. La lectura correcta es:
+
+- Runtime oficial verificable: ``python``, ``rust``, ``javascript``, ``cpp``.
+- Runtime best-effort no público: ``go``, ``java``.
+- Solo transpilación pública: ``wasm``, ``asm``.
+- Compatibilidad SDK completa: solo ``python``.
+- Estado Holobit público: ``python`` ``full``; el resto de backends oficiales, ``partial`` según la matriz contractual.
 
 Matriz de características
 -------------------------
 
-Para un resumen completo de la cobertura por lenguaje, revisa la `matriz de transpiladores <../../docs/matriz_transpiladores.md>`_:
+Para un resumen completo de la cobertura contractual por backend, revisa la matriz de transpiladores:
 
 .. include:: ../../docs/matriz_transpiladores.md
-
-Diferencias identificadas
--------------------------
-
-- Go y Java no soportan condicionales ni bucles. Consulta el `issue #11 <../issues/11_soporte_condicionales_bucles_go_java.md>`_ para seguimiento y contribuciones.
 
 Comandos válidos por destino
 ----------------------------

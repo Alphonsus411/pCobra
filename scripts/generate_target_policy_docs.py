@@ -91,13 +91,35 @@ def _official_targets_table_rst() -> str:
         "   * - Lenguaje",
         "     - Identificador CLI",
         "     - Tier",
+        "     - Runtime público",
+        "     - Holobit público",
+        "     - SDK real",
     ]
     for row in official_target_rows():
+        backend = row["target"]
+        holobit_status = (
+            "full"
+            if backend in SDK_COMPATIBLE_TARGETS
+            else "adaptador mantenido (partial)"
+            if backend in OFFICIAL_RUNTIME_TARGETS
+            else "partial"
+        )
+        runtime_status = (
+            "oficial verificable"
+            if backend in OFFICIAL_RUNTIME_TARGETS
+            else "best-effort no público"
+            if backend in BEST_EFFORT_RUNTIME_TARGETS
+            else "solo transpilación"
+        )
+        sdk_status = "completa" if backend in SDK_COMPATIBLE_TARGETS else "parcial"
         lines.extend(
             [
                 f"   * - {row['label']}",
-                f"     - ``{row['target']}``",
+                f"     - ``{backend}``",
                 f"     - {row['tier']}",
+                f"     - {runtime_status}",
+                f"     - {holobit_status}",
+                f"     - {sdk_status}",
             ]
         )
     return "\n".join(lines) + "\n"
@@ -105,24 +127,27 @@ def _official_targets_table_rst() -> str:
 
 def _runtime_capability_matrix_rst() -> str:
     lines = [
-        ".. list-table:: Diferencia entre codegen, runtime, librerías y SDK",
+        ".. list-table:: Diferencia entre transpilación, runtime, Holobit y SDK",
         "   :header-rows: 1",
         "",
         "   * - Backend",
+        "     - Tier",
         "     - Runtime oficial verificable",
-        "     - Verificación ejecutable CLI",
-        "     - ``corelibs``/``standard_library`` oficiales en runtime",
         "     - Runtime best-effort no público",
+        "     - Holobit mantenido por el proyecto",
+        "     - ``corelibs``/``standard_library`` oficiales en runtime",
         "     - Compatibilidad SDK completa",
     ]
     for backend in OFFICIAL_TARGETS:
+        tier = BACKEND_COMPATIBILITY[backend]["tier"].replace("tier", "Tier ")
         lines.extend(
             [
                 f"   * - ``{backend}``",
+                f"     - {tier}",
                 f"     - {'Sí' if backend in OFFICIAL_RUNTIME_TARGETS else 'No'}",
-                f"     - {'Sí' if backend in VERIFICATION_EXECUTABLE_TARGETS else 'No'}",
-                f"     - {'Sí' if backend in OFFICIAL_STANDARD_LIBRARY_TARGETS else 'No'}",
                 f"     - {'Sí' if backend in BEST_EFFORT_RUNTIME_TARGETS else 'No'}",
+                f"     - {'Sí' if backend in OFFICIAL_RUNTIME_TARGETS else 'No'}",
+                f"     - {'Sí' if backend in OFFICIAL_STANDARD_LIBRARY_TARGETS else 'No'}",
                 f"     - {'Sí' if backend in SDK_COMPATIBLE_TARGETS else 'No'}",
             ]
         )

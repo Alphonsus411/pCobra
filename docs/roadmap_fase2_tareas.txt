@@ -12,8 +12,8 @@ Objetivo: Extender el front‑end para soportar funciones asíncronas y la esper
 Subtareas
 
 - Gramática: añadir tokens y reglas para `asincrono` y `espera` en el lexer/parser, manteniendo compatibilidad con sintaxis actual.
-- Árbol de análisis: propagar nodos y metadatos necesarios hacia el generador de IR interno.
-- Generación IR interno: incorporar traducción a construcciones async/await equivalentes.
+- Árbol de análisis: propagar nodos y metadatos necesarios hacia el generador interno de código.
+- Generación interna: incorporar traducción a construcciones async/await equivalentes.
 - Pruebas: crear carpeta `tests/frontend/async` con casos de éxito/errores, cubriendo funciones asíncronas, llamadas anidadas y errores de sintaxis.
 - Documentación: redactar un RFC técnico breve con cambios sintácticos y semánticos.
 

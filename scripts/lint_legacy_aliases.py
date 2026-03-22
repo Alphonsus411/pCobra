@@ -78,6 +78,23 @@ GENERAL_PUBLIC_ALIAS_TOKEN_PATTERNS = [
 
 LEGACY_ALIAS_LINE_ALLOWLIST = {}
 
+FORBIDDEN_PUBLIC_NARRATIVE_PATTERNS = [
+    re.compile(r"(?i)\bir\s+intern[oa]\b"),
+    re.compile(r"(?i)\bpipelines?\s+intern[oa]s?\b"),
+]
+
+NARRATIVE_EXCEPTION_PATH_FRAGMENTS = (
+    "CHANGELOG.md",
+    "migration",
+    "migracion",
+    "migración",
+    "historico",
+    "historico/",
+    "archive/retired_targets/",
+    "docs/experimental/",
+    "docs/proposals/",
+)
+
 
 def _strip_known_extensions(line: str) -> str:
     return (
@@ -160,6 +177,17 @@ def main() -> int:
                                 f"{rel}:{line_no}: alias público fuera de política detectado -> {match.group(1).strip()}"
                             )
                             break
+                        else:
+                            if any(fragment in rel for fragment in NARRATIVE_EXCEPTION_PATH_FRAGMENTS):
+                                continue
+                            for pattern in FORBIDDEN_PUBLIC_NARRATIVE_PATTERNS:
+                                match = pattern.search(line_for_check)
+                                if not match:
+                                    continue
+                                errors.append(
+                                    f"{rel}:{line_no}: narrativa pública no oficial detectada -> {match.group(0).strip()}"
+                                )
+                                break
 
     if errors:
         print("Se detectaron aliases legacy o extras retirados:")

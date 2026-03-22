@@ -1,35 +1,27 @@
 Estado de los lenguajes soportados
 =================================
 
-En la actualidad Cobra puede generar código para la lista canónica de destinos de salida definida por la política pública. A continuación se incluye el estado oficial derivado automáticamente desde dicha fuente normativa. Para más detalles consulta :doc:`frontend/backends` y la sección *Características Principales* del `README.md <../README.md>`_.
-
-Fuentes normativas: ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/cobra/cli/target_policies.py``.
+La narrativa pública de pCobra es única: el proyecto transpila a **8 backends oficiales** y los organiza en **Tier 1** y **Tier 2**. La lista canónica y el reparto por tiers se derivan de ``src/pcobra/cobra/transpilers/targets.py``; la política de runtime, Holobit y SDK se deriva de ``src/pcobra/cobra/cli/target_policies.py``.
 
 .. include:: _generated/official_targets_table.rst
 
-Targets con runtime oficial (no equivalen a toda la transpilación)
---------------------------------------------------------------------
+Estado público de runtime, Holobit y SDK
+----------------------------------------
 
-Los targets con runtime oficial son ``python``, ``rust``, ``javascript`` y ``cpp``. Esta categoría debe leerse por separado de la lista completa de transpilación y de los orígenes reverse.
+.. include:: _generated/runtime_capability_matrix.rst
 
-Runtime experimental/best-effort conservado en tooling auxiliar
----------------------------------------------------------------
+Lectura correcta de la política pública:
 
-Algunos artefactos auxiliares y tests conservan cobertura best-effort para
-``go`` y ``java``. Estos nombres siguen formando parte de la **transpilación
-oficial**, pero no deben confundirse con runtime oficial de CLI/sandbox.
-
-Targets de transpilación sin runtime público en esta capa
----------------------------------------------------------
-
-Los targets ``wasm`` y ``asm`` siguen siendo oficiales para generar código,
-pero en la política pública actual no se presentan como runtimes ejecutables
-ni como runtimes experimentales dentro de la suite auxiliar.
+- Los backends oficiales de salida son únicamente ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
+- El runtime oficial verificable solo cubre ``python``, ``rust``, ``javascript`` y ``cpp``.
+- ``go`` y ``java`` conservan runtime best-effort no público; ``wasm`` y ``asm`` son targets oficiales de solo transpilación.
+- La compatibilidad SDK completa solo puede prometerse para ``python``.
+- El soporte Holobit debe leerse siempre junto con la matriz contractual: ``python`` es ``full``; el resto de backends oficiales permanecen en ``partial``.
 
 Orígenes reverse de entrada (no targets de salida)
 --------------------------------------------------
 
-Los siguientes lenguajes de la lista canónica reverse pueden convertirse a Cobra como **entrada** de ``cobra transpilar-inverso``. No deben confundirse con los targets oficiales de salida.
+Los siguientes lenguajes pertenecen al alcance reverse como **entrada** de ``cobra transpilar-inverso``. No son targets oficiales adicionales de salida.
 
 .. include:: _generated/reverse_scope_table.rst
 
@@ -43,11 +35,3 @@ Para habilitar estos transpiladores inversos es necesario instalar las gramátic
    pip install tree-sitter-languages
 
 Este paquete incluye gramáticas para los lenguajes listados (``python``, ``javascript`` y ``java``) y puede instalarse junto con las dependencias del proyecto.
-
-Experimentos y material separado
---------------------------------
-
-Los pipelines o prototipos fuera del alcance oficial se conservan en ubicaciones separadas para no contaminar la política pública:
-
-- ``archive/retired_targets/`` para material histórico retirado del árbol principal.
-- ``archive/retired_targets/`` para glosarios o notas archivadas fuera del árbol documental distribuido.

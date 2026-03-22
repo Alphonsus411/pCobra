@@ -1,7 +1,7 @@
 Manual de Referencia de Cobra
 =============================
 
-Esta sección describe brevemente las palabras clave y funciones integradas del lenguaje.
+Esta sección describe brevemente las palabras clave, funciones integradas y la política pública de soporte por backend.
 
 Palabras clave
 --------------
@@ -22,6 +22,11 @@ Funciones integradas
 - ``transformar(h, accion, valor)``: aplica una transformación sobre un holobit.
 - ``graficar(h)``: visualiza el holobit en pantalla.
 
+Backends oficiales documentados públicamente
+--------------------------------------------
+
+pCobra transpila únicamente a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``. Esa lista no se amplía con aliases, nombres alternativos ni artefactos internos.
+
 Contrato Holobit transversal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -29,6 +34,13 @@ El contrato multi-backend documentado públicamente cubre solo
 ``holobit``, ``proyectar``, ``transformar`` y ``graficar``. Consulta
 ``docs/contrato_runtime_holobit.md`` y ``docs/matriz_transpiladores.md`` para
 el nivel exacto de soporte por backend.
+
+Lectura correcta del soporte:
+
+- ``python``: ``full`` y compatibilidad SDK completa.
+- ``rust``, ``javascript`` y ``cpp``: adaptador mantenido por el proyecto, con estado contractual ``partial``.
+- ``go`` y ``java``: adaptadores/hook ``partial`` sobre runtime best-effort no público.
+- ``wasm`` y ``asm``: hooks/puentes contractuales ``partial`` orientados a transpilación.
 
 Helpers adicionales del runtime Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
