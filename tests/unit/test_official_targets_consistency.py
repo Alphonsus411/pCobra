@@ -88,6 +88,16 @@ def test_archivos_to_py_en_transpiler_oficiales():
         "Los módulos to_*.py deben corresponder exactamente a los 8 targets oficiales: "
         f"encontrados={sorted(found)}, oficiales={list(OFFICIAL_TARGETS)}"
     )
+    assert tuple(sorted(path.name for path in base.glob("to_*.py"))) == (
+        "to_asm.py",
+        "to_cpp.py",
+        "to_go.py",
+        "to_java.py",
+        "to_js.py",
+        "to_python.py",
+        "to_rust.py",
+        "to_wasm.py",
+    )
 
 
 def test_archivos_reverse_from_py_en_scope_reverse():
@@ -106,6 +116,11 @@ def test_archivos_reverse_from_py_en_scope_reverse():
         "Se encontraron reverse transpilers fuera del alcance definido en policy.py: "
         f"{', '.join(fuera_de_scope)}. "
         f"Permitidos reverse: {', '.join(REVERSE_SCOPE_LANGUAGES)}"
+    )
+    assert tuple(sorted(path.name for path in base.glob("from_*.py"))) == (
+        "from_java.py",
+        "from_js.py",
+        "from_python.py",
     )
 
 
@@ -304,4 +319,26 @@ def test_tooling_y_fixtures_importan_targets_canonicos_sin_listas_locales_diverg
     assert not errors, (
         "Se detectaron listas hardcodeadas o desalineadas en tooling/tests vigilados: "
         f"{errors}"
+    )
+
+
+def test_validacion_ci_verifica_registros_y_arboles_de_artefactos_oficiales():
+    from scripts.ci.validate_targets import (
+        validate_registry_tables,
+        validate_targeted_artifact_roots,
+    )
+
+    errores_registro = validate_registry_tables()
+    errores_artefactos = validate_targeted_artifact_roots(
+        tuple(OFFICIAL_TARGETS),
+        tuple(REVERSE_SCOPE_LANGUAGES),
+    )
+
+    assert not errores_registro, (
+        "La validación CI detectó registros forward/reverse fuera del contrato oficial: "
+        f"{errores_registro}"
+    )
+    assert not errores_artefactos, (
+        "La validación CI detectó artefactos/imports/aliases no oficiales en árboles vigilados: "
+        f"{errores_artefactos}"
     )

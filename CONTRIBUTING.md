@@ -123,6 +123,49 @@ Antes de abrir un PR que toque transpilación, ejemplos, extensiones o imágenes
 - [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` no contienen archivos huérfanos de lenguajes fuera de alcance.
 - [ ] Se ejecutó un barrido de cadenas/rutas para detectar menciones residuales antes de enviar cambios.
 
+### Regla de mantenimiento coordinado para targets oficiales
+
+El conjunto oficial actual de backends públicos es:
+
+- `python`
+- `rust`
+- `javascript`
+- `wasm`
+- `go`
+- `cpp`
+- `java`
+- `asm`
+
+Y el alcance reverse oficial actual es:
+
+- `python`
+- `javascript`
+- `java`
+
+La CI valida automáticamente que no aparezcan artefactos de backends no oficiales,
+retirados o aliases públicos no permitidos en:
+
+- `src/pcobra/cobra/transpilers/transpiler/`
+- `src/pcobra/cobra/transpilers/reverse/`
+- `src/pcobra/cobra/transpilers/registry.py`
+- `tests/integration/transpilers/golden/`
+- `scripts/benchmarks/`
+- documentación pública y rutas vigiladas por `scripts/ci/validate_targets.py`
+
+Esto incluye nombres de archivo, imports Python, tablas de registro, snapshots
+golden, scripts auxiliares y texto público.
+
+Si en el futuro se amplía o cambia el conjunto oficial, **no basta** con añadir
+un módulo nuevo. El cambio debe actualizar de forma coordinada:
+
+1. Código fuente y registros canónicos (`targets`, `registry`, reverse policy, CLI).
+2. Tests y snapshots (`golden`, fixtures, ayudas de runtime y benchmarks).
+3. Documentación pública.
+4. Reglas de CI, en especial `scripts/ci/validate_targets.py`.
+
+Si falta cualquiera de esas piezas, la validación debe fallar y el cambio no debe
+considerarse completo.
+
 ### Añadir soporte para nuevos lenguajes en `run_code`
 
 1. Crea una función `_run_<lenguaje>` en `tests/utils/runtime.py` que invoque
