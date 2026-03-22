@@ -21,8 +21,10 @@ from pcobra.cobra.transpilers.feature_inspector import TRANSPILERS as FEATURE_IN
 from pcobra.cobra.transpilers.registry import TRANSPILER_CLASS_PATHS, official_transpiler_targets
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from tests.utils.targets import assert_official_targets_partition
 from scripts.ci.validate_targets import (
     ALLOWED_HISTORICAL_PATH_PREFIXES,
+    validate_final_backend_repo_audit,
     validate_python_policy_literals,
     validate_registry_tables,
     validate_scan_roots,
@@ -34,7 +36,10 @@ from scripts.targets_policy_common import VALIDATION_SCAN_PATHS, read_target_pol
 
 def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     oficiales = tuple(OFFICIAL_TARGETS)
+    particion = assert_official_targets_partition(transpilers=TRANSPILERS)
 
+    assert particion["tier1"] == TIER1_TARGETS
+    assert particion["tier2"] == TIER2_TARGETS
     assert oficiales == TIER1_TARGETS + TIER2_TARGETS
     assert tuple(official_transpiler_targets()) == oficiales
     assert tuple(TRANSPILER_CLASS_PATHS) == oficiales
@@ -92,6 +97,7 @@ def test_modulos_y_artefactos_vigilados_cubren_solo_el_contrato_final():
 def test_auditoria_textual_no_detecta_aliases_publicos_no_canonicos():
     assert not validate_scan_roots(tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES))
     assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
+    assert not validate_final_backend_repo_audit()
 
 
 

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -27,6 +28,40 @@ GOLDEN_DIR = ROOT / "tests/integration/transpilers/golden"
 ALLOWED_HISTORICAL_PATH_PREFIXES = (
     "docs/experimental/",
     "archive/retired_targets/",
+)
+REPO_AUDIT_ALLOWED_PATH_PREFIXES = ALLOWED_HISTORICAL_PATH_PREFIXES + (
+    "docs/proposals/",
+)
+REPO_AUDIT_SCAN_ROOTS = ("src", "docs", "tests", "scripts")
+REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
+    {
+        "scripts/lint_legacy_aliases.py",
+        "scripts/targets_policy_common.py",
+        "scripts/validate_targets_policy.py",
+        "scripts/ci/validate_targets.py",
+        "tests/unit/test_cli_target_aliases.py",
+        "tests/unit/test_public_docs_scope.py",
+        "tests/unit/test_validate_targets_policy_script.py",
+        "tests/unit/test_reverse_transpilers_registry.py",
+        "tests/unit/test_verify_cmd.py",
+        "tests/unit/test_cli_compilar_tipos.py",
+        "tests/performance/test_transpile_time.py",
+        "scripts/benchmarks/targets_policy.py",
+        "docs/frontend/uml/arquitectura_general.puml",
+    }
+)
+REPO_AUDIT_FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE), "backend retirado 'hololang'"),
+    (re.compile(r"(?<![\w/-])reverse[ -]wasm(?![\w/-])", re.IGNORECASE), "pipeline retirado 'reverse wasm'"),
+    (re.compile(r"(?<![\w/-])llvm(?![\w/-])", re.IGNORECASE), "backend/pipeline retirado 'llvm'"),
+    (re.compile(r"(?<![\w/-])latex(?![\w/-])", re.IGNORECASE), "backend/pipeline retirado 'latex'"),
+)
+REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
+    (
+        re.compile(r'(?P<quote>[\"\'])' + re.escape(alias) + r'(?P=quote)', re.IGNORECASE),
+        alias,
+    )
+    for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES
 )
 
 
@@ -142,6 +177,44 @@ def validate_python_policy_literals(
 
 
 
+def _iter_repo_audit_files() -> list[Path]:
+    files: list[Path] = []
+    for root_name in REPO_AUDIT_SCAN_ROOTS:
+        base = ROOT / root_name
+        if not base.exists():
+            continue
+        files.extend(path for path in base.rglob("*") if path.is_file())
+    return files
+
+
+
+def _is_historical_repo_path(rel: str) -> bool:
+    return rel in REPO_AUDIT_ALLOWED_FILE_PATHS or rel.startswith(REPO_AUDIT_ALLOWED_PATH_PREFIXES)
+
+
+
+def validate_final_backend_repo_audit() -> list[str]:
+    errors: list[str] = []
+    for path in _iter_repo_audit_files():
+        rel = path.relative_to(ROOT).as_posix()
+        if _is_historical_repo_path(rel):
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for pattern, description in REPO_AUDIT_FORBIDDEN_TERMS:
+            for match in pattern.finditer(content):
+                line_no = content.count("\n", 0, match.start()) + 1
+                errors.append(f"{rel}:{line_no}: referencia fuera del conjunto final -> {description}")
+        for pattern, alias in REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS:
+            for match in pattern.finditer(content):
+                line_no = content.count("\n", 0, match.start()) + 1
+                errors.append(f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}")
+    return errors
+
+
+
 def main() -> int:
     official_targets = tuple(OFFICIAL_TARGETS)
     reverse_scope = tuple(REVERSE_SCOPE_LANGUAGES)
@@ -150,6 +223,7 @@ def main() -> int:
     errors.extend(validate_targeted_artifact_roots(official_targets, reverse_scope))
     errors.extend(validate_scan_roots(official_targets, reverse_scope))
     errors.extend(validate_python_policy_literals(official_targets))
+    errors.extend(validate_final_backend_repo_audit())
 
     if errors:
         print("❌ Validación CI de targets: FALLÓ", file=sys.stderr)

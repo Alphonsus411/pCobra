@@ -12,7 +12,8 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     SDK_FULL_BACKENDS,
     SDK_PARTIAL_BACKENDS,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from tests.utils.targets import assert_official_targets_partition, official_targets_for_tier
 
 HOLOBIT_CASES = {
     "holobit": "var h = holobit([1.0, 2.0, 3.0])\n",
@@ -25,8 +26,8 @@ PYTHON_RUNTIME_ONLY_CASES = {
     "mover": 'var h = holobit([1.0, 2.0, 3.0])\nmover(h, 1, 2, 3)\n',
 }
 SUPPORTED_BY_TIER = {
-    "tier1": {primitive: TIER1_TARGETS for primitive in HOLOBIT_CASES},
-    "tier2": {primitive: TIER2_TARGETS for primitive in HOLOBIT_CASES},
+    tier: {primitive: official_targets_for_tier(tier) for primitive in HOLOBIT_CASES}
+    for tier in ("tier1", "tier2")
 }
 PARTIAL_MARKERS = {
     "javascript": {
@@ -93,6 +94,12 @@ def _assert_minimum_compatibility(backend: str, feature: str):
     actual = BACKEND_COMPATIBILITY[backend][feature]
     required = MIN_REQUIRED_BACKEND_COMPATIBILITY[backend][feature]
     assert COMPATIBILITY_LEVEL_ORDER[actual] >= COMPATIBILITY_LEVEL_ORDER[required]
+
+
+def test_particion_oficial_de_tiers_permanece_como_fuente_unica():
+    partition = assert_official_targets_partition(transpilers=TRANSPILERS)
+    assert tuple(partition) == ("tier1", "tier2")
+
 
 
 @pytest.mark.parametrize("tier", ["tier1", "tier2"])
