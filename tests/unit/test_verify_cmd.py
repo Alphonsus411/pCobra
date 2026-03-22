@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand, VALID_EXTENSIONS
 
@@ -24,4 +25,25 @@ def test_verify_command_supported_languages_canonicos():
 
     assert "python" in comando.SUPPORTED_LANGUAGES
     assert "javascript" in comando.SUPPORTED_LANGUAGES
+    assert "rust" in comando.SUPPORTED_LANGUAGES
+    assert "cpp" in comando.SUPPORTED_LANGUAGES
     assert "js" not in comando.SUPPORTED_LANGUAGES
+
+
+@pytest.mark.parametrize("language", ["rust", "cpp"])
+def test_verify_command_usa_contenedor_para_runtimes_compilados(language):
+    comando = VerifyCommand()
+
+    class DummyTranspiler:
+        def generate_code(self, _ast):
+            return "codigo"
+
+    with patch(
+        "pcobra.cobra.cli.commands.verify_cmd.ejecutar_en_contenedor",
+        return_value="ok\n",
+    ) as mock_runtime:
+        salida, error = comando._compile_and_execute([], language, DummyTranspiler())
+
+    assert error is None
+    assert salida == "ok\n"
+    mock_runtime.assert_called_once_with("codigo", language)

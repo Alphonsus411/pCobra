@@ -307,6 +307,18 @@ PUBLIC_POLICY_LIST_PATTERNS: dict[str, tuple[re.Pattern[str], str]] = {
         re.compile(r"verificaci[oó]n ejecutable expl[ií]cita en cli", re.IGNORECASE),
         "verificación ejecutable explícita en CLI",
     ),
+    "official_standard_library_targets": (
+        re.compile(r"soporte oficial mantenido de `corelibs`/`standard_library` en runtime", re.IGNORECASE),
+        "soporte oficial mantenido de corelibs/standard_library en runtime",
+    ),
+    "advanced_holobit_runtime_targets": (
+        re.compile(r"soporte holobit avanzado mantenido por el proyecto", re.IGNORECASE),
+        "soporte Holobit avanzado mantenido por el proyecto",
+    ),
+    "sdk_compatible_targets": (
+        re.compile(r"compatibilidad sdk completa", re.IGNORECASE),
+        "compatibilidad SDK completa",
+    ),
 }
 
 
@@ -691,11 +703,16 @@ def validate_public_policy_lists(
     official_runtime_targets: tuple[str, ...],
     transpilation_only_targets: tuple[str, ...],
     verification_targets: tuple[str, ...],
+    official_standard_library_targets: tuple[str, ...],
+    advanced_holobit_runtime_targets: tuple[str, ...],
+    sdk_compatible_targets: tuple[str, ...],
 ) -> list[str]:
     errors: list[str] = []
     allowed_names = set(official_targets) | set(official_runtime_targets) | set(
         reverse_scope_languages
-    ) | set(transpilation_only_targets) | set(verification_targets)
+    ) | set(transpilation_only_targets) | set(verification_targets) | set(
+        official_standard_library_targets
+    ) | set(advanced_holobit_runtime_targets) | set(sdk_compatible_targets)
     expected_values = {
         "official_targets": set(official_targets),
         "official_targets_available": set(official_targets),
@@ -706,6 +723,9 @@ def validate_public_policy_lists(
         "reverse_scope_languages_available": set(reverse_scope_languages),
         "transpilation_only_targets": set(transpilation_only_targets),
         "verification_targets": set(verification_targets),
+        "official_standard_library_targets": set(official_standard_library_targets),
+        "advanced_holobit_runtime_targets": set(advanced_holobit_runtime_targets),
+        "sdk_compatible_targets": set(sdk_compatible_targets),
     }
 
     for path in PUBLIC_TEXT_PATHS:
@@ -1188,6 +1208,9 @@ def main() -> int:
             official_runtime_targets=official_runtime_targets,
             transpilation_only_targets=transpilation_only_targets,
             verification_targets=verification_targets,
+            official_standard_library_targets=tuple(policy["official_standard_library_targets"]),
+            advanced_holobit_runtime_targets=tuple(policy["advanced_holobit_runtime_targets"]),
+            sdk_compatible_targets=tuple(policy["sdk_compatible_targets"]),
         )
     )
     errors.extend(validate_holobit_public_contract())

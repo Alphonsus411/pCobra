@@ -20,7 +20,11 @@ from pcobra.cobra.transpilers.targets import target_cli_choices
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from pcobra.core.sandbox import (
+    ejecutar_en_contenedor,
+    ejecutar_en_sandbox,
+    ejecutar_en_sandbox_js,
+)
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -182,6 +186,8 @@ class VerifyCommand(BaseCommand):
                 salida = ejecutar_en_sandbox(codigo_gen)
             elif lang == "javascript":
                 salida = ejecutar_en_sandbox_js(codigo_gen)
+            elif lang in {"cpp", "rust"}:
+                salida = ejecutar_en_contenedor(codigo_gen, lang)
             else:
                 return None, _("Runtime no soportado para {}").format(lang)
                 

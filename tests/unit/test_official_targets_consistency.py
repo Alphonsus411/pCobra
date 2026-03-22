@@ -13,12 +13,16 @@ from pcobra.cobra.transpilers.reverse.policy import (
     normalize_reverse_language,
 )
 from pcobra.cobra.cli.target_policies import (
+    ADVANCED_HOLOBIT_RUNTIME_TARGETS,
     BEST_EFFORT_RUNTIME_TARGETS,
     DOCKER_EXECUTABLE_TARGETS,
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
+    OFFICIAL_STANDARD_LIBRARY_TARGETS,
+    SDK_COMPATIBLE_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS,
+    validate_runtime_support_contract,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 from scripts.targets_policy_common import (
@@ -223,6 +227,14 @@ def test_politica_runtime_vs_transpilacion_es_explicita():
     assert set(DOCKER_EXECUTABLE_TARGETS) | set(TRANSPILATION_ONLY_TARGETS) == set(OFFICIAL_TARGETS)
 
 
+def test_politica_publica_de_runtime_bibliotecas_holobit_y_sdk_es_consistente():
+    validate_runtime_support_contract()
+
+    assert OFFICIAL_STANDARD_LIBRARY_TARGETS == OFFICIAL_RUNTIME_TARGETS
+    assert ADVANCED_HOLOBIT_RUNTIME_TARGETS == OFFICIAL_RUNTIME_TARGETS
+    assert SDK_COMPATIBLE_TARGETS == ("python",)
+
+
 def test_politica_best_effort_experimental_queda_acotada_y_explicita():
     assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
     assert NO_RUNTIME_TARGETS == ("wasm", "asm")
@@ -278,6 +290,9 @@ def test_validacion_ci_verifica_listas_publicas_de_runtime_y_matrices_holobit():
         official_runtime_targets=tuple(policy["official_runtime_targets"]),
         transpilation_only_targets=tuple(policy["transpilation_only_targets"]),
         verification_targets=tuple(policy["verification_targets"]),
+        official_standard_library_targets=tuple(policy["official_standard_library_targets"]),
+        advanced_holobit_runtime_targets=tuple(policy["advanced_holobit_runtime_targets"]),
+        sdk_compatible_targets=tuple(policy["sdk_compatible_targets"]),
     )
     errores_holobit = validate_holobit_public_contract()
 

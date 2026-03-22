@@ -5,7 +5,11 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 ## Resumen de política
 
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
-- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con soporte Holobit avanzado mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
+- **Compatibilidad SDK completa**: `python`.
 - **Targets con runtime best-effort no público**: `go`, `java`.
 - **Targets solo de transpilación**: `wasm`, `asm`.
 
@@ -23,6 +27,7 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 | `asm` | asm | Tier 2 | solo_transpilacion | partial | partial | partial | partial | partial | partial |
 
 > `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.
+> Las columnas `holobit`, `corelibs` y `standard_library` describen la **compatibilidad contractual mínima de codegen/runtime**; no implican por sí mismas compatibilidad SDK completa. Esa promesa sigue reservada a `python`.
 
 ## Compatibilidad real de los Tier 1 parciales
 

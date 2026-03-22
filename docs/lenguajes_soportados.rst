@@ -5,6 +5,19 @@ Esta guía separa explícitamente los **targets oficiales de transpilación**, l
 **targets con runtime oficial** y los **orígenes de transpilación inversa** para
 evitar ambigüedades entre categorías distintas.
 
+Resumen normativo:
+
+- **Targets oficiales de transpilación**: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
+- **Targets con runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y ``cpp``.
+- **Targets con verificación ejecutable explícita en CLI**: ``python``, ``rust``, ``javascript`` y ``cpp``.
+- **Targets con soporte oficial mantenido de** ``corelibs``/**standard_library**
+  **en runtime**: ``python``, ``rust``, ``javascript`` y ``cpp``.
+- **Targets con soporte Holobit avanzado mantenido por el proyecto**:
+  ``python``, ``rust``, ``javascript`` y ``cpp``.
+- **Compatibilidad SDK completa**: ``python``.
+- **Targets sin runtime oficial público aunque tengan codegen oficial**:
+  ``go``, ``java``, ``wasm`` y ``asm``.
+
 La lista canónica completa de targets oficiales de transpilación es:
 ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y
 ``asm``.
@@ -81,6 +94,67 @@ Targets con runtime oficial
      - ``cpp``
      - Runtime oficial
 
+Capacidades públicas por nivel de promesa
+-----------------------------------------
+
+.. list-table:: Diferencia entre codegen, runtime, librerías y SDK
+   :header-rows: 1
+
+   * - Backend
+     - Runtime oficial verificable
+     - Verificación ejecutable CLI
+     - ``corelibs``/``standard_library`` oficiales en runtime
+     - Holobit avanzado mantenido
+     - Compatibilidad SDK completa
+   * - ``python``
+     - Sí
+     - Sí
+     - Sí
+     - Sí
+     - Sí
+   * - ``rust``
+     - Sí
+     - Sí
+     - Sí
+     - Sí
+     - No (sigue en ``partial``)
+   * - ``javascript``
+     - Sí
+     - Sí
+     - Sí
+     - Sí
+     - No (sigue en ``partial``)
+   * - ``cpp``
+     - Sí
+     - Sí
+     - Sí
+     - Sí
+     - No (sigue en ``partial``)
+   * - ``wasm``
+     - No
+     - No
+     - No como runtime oficial; solo wrappers/codegen host-managed
+     - No como promesa pública de runtime oficial
+     - No
+   * - ``go``
+     - No (best-effort interno/no público)
+     - No
+     - No como runtime oficial; solo adaptadores mínimos
+     - No como promesa pública de runtime oficial
+     - No
+   * - ``java``
+     - No (best-effort interno/no público)
+     - No
+     - No como runtime oficial; solo adaptadores mínimos
+     - No como promesa pública de runtime oficial
+     - No
+   * - ``asm``
+     - No
+     - No
+     - No como runtime oficial; solo puntos de llamada/diagnóstico
+     - No como promesa pública de runtime oficial
+     - No
+
 
 Política de targets oficial
 ----------------------------
@@ -128,6 +202,11 @@ Comparativa de características
 La cobertura de características por lenguaje se resume en la matriz de transpiladores:
 
 .. include:: matriz_transpiladores.md
+
+La tabla anterior debe leerse junto con esa matriz: que un backend tenga
+``partial`` en Holobit o librerías base significa que **puede generar hooks o
+adaptadores**, no que tenga automáticamente runtime oficial verificable ni
+compatibilidad SDK completa.
 
 Diferencias identificadas
 -------------------------

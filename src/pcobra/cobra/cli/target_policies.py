@@ -37,8 +37,21 @@ DOCKER_EXECUTABLE_TARGETS = OFFICIAL_RUNTIME_TARGETS
 # Backend runtime que espera ``core.sandbox.ejecutar_en_contenedor``.
 DOCKER_RUNTIME_BY_TARGET: dict[str, str] = {target: target for target in OFFICIAL_RUNTIME_TARGETS}
 
-# Targets con verificación ejecutable oficial dentro de la CLI actual.
-VERIFICATION_EXECUTABLE_TARGETS = target_cli_choices(("python", "javascript"))
+# Targets oficiales cuyo runtime también puede verificarse ejecutando realmente
+# el código generado desde la CLI/suite actual.
+VERIFICATION_EXECUTABLE_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+
+# Targets con soporte oficial de librerías base (`corelibs`/`standard_library`)
+# a nivel de runtime mantenido y verificable por el proyecto.
+OFFICIAL_STANDARD_LIBRARY_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+
+# Targets con soporte Holobit avanzado mantenido oficialmente por el proyecto.
+# Esto no equivale a compatibilidad SDK total: fuera de Python sigue siendo
+# compatibilidad parcial según ``compatibility_matrix.py``.
+ADVANCED_HOLOBIT_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+
+# Compatibilidad SDK completa: hoy solo Python puede prometerla públicamente.
+SDK_COMPATIBLE_TARGETS = target_cli_choices(("python",))
 
 require_official_target_subset(
     OFFICIAL_RUNTIME_TARGETS,
@@ -55,6 +68,18 @@ require_official_target_subset(
 require_official_target_subset(
     NO_RUNTIME_TARGETS,
     context="pcobra.cobra.cli.target_policies.NO_RUNTIME_TARGETS",
+)
+require_official_target_subset(
+    OFFICIAL_STANDARD_LIBRARY_TARGETS,
+    context="pcobra.cobra.cli.target_policies.OFFICIAL_STANDARD_LIBRARY_TARGETS",
+)
+require_official_target_subset(
+    ADVANCED_HOLOBIT_RUNTIME_TARGETS,
+    context="pcobra.cobra.cli.target_policies.ADVANCED_HOLOBIT_RUNTIME_TARGETS",
+)
+require_official_target_subset(
+    SDK_COMPATIBLE_TARGETS,
+    context="pcobra.cobra.cli.target_policies.SDK_COMPATIBLE_TARGETS",
 )
 
 
@@ -75,8 +100,77 @@ def verification_runtime_targets_text() -> str:
     return ", ".join(VERIFICATION_EXECUTABLE_TARGETS)
 
 
+def official_standard_library_targets_text() -> str:
+    return ", ".join(OFFICIAL_STANDARD_LIBRARY_TARGETS)
+
+
+def advanced_holobit_runtime_targets_text() -> str:
+    return ", ".join(ADVANCED_HOLOBIT_RUNTIME_TARGETS)
+
+
+def sdk_compatible_targets_text() -> str:
+    return ", ".join(SDK_COMPATIBLE_TARGETS)
+
+
 def transpilation_only_targets_text() -> str:
     return ", ".join(TRANSPILATION_ONLY_TARGETS)
+
+
+def validate_runtime_support_contract() -> None:
+    """Valida que las promesas públicas de runtime no contradigan la matriz contractual."""
+    from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+
+    if set(VERIFICATION_EXECUTABLE_TARGETS) != set(OFFICIAL_RUNTIME_TARGETS):
+        raise RuntimeError(
+            "VERIFICATION_EXECUTABLE_TARGETS debe cubrir exactamente los runtimes oficiales verificables: "
+            f"runtime={OFFICIAL_RUNTIME_TARGETS}, verification={VERIFICATION_EXECUTABLE_TARGETS}"
+        )
+
+    if set(OFFICIAL_STANDARD_LIBRARY_TARGETS) != set(OFFICIAL_RUNTIME_TARGETS):
+        raise RuntimeError(
+            "OFFICIAL_STANDARD_LIBRARY_TARGETS debe coincidir con los backends de runtime oficial mantenido: "
+            f"runtime={OFFICIAL_RUNTIME_TARGETS}, standard_library={OFFICIAL_STANDARD_LIBRARY_TARGETS}"
+        )
+
+    if set(ADVANCED_HOLOBIT_RUNTIME_TARGETS) != set(OFFICIAL_RUNTIME_TARGETS):
+        raise RuntimeError(
+            "ADVANCED_HOLOBIT_RUNTIME_TARGETS debe coincidir con los backends de runtime oficial con soporte Holobit avanzado mantenido: "
+            f"runtime={OFFICIAL_RUNTIME_TARGETS}, holobit={ADVANCED_HOLOBIT_RUNTIME_TARGETS}"
+        )
+
+    for backend in OFFICIAL_RUNTIME_TARGETS:
+        contract = BACKEND_COMPATIBILITY[backend]
+        if contract["corelibs"] == "none" or contract["standard_library"] == "none":
+            raise RuntimeError(
+                f"{backend} figura como runtime oficial pero no garantiza corelibs/standard_library ejecutables"
+            )
+        if any(
+            contract[feature] == "none"
+            for feature in ("holobit", "proyectar", "transformar", "graficar")
+        ):
+            raise RuntimeError(
+                f"{backend} figura como runtime oficial pero no garantiza hooks Holobit mínimos"
+            )
+
+    for backend in SDK_COMPATIBLE_TARGETS:
+        contract = BACKEND_COMPATIBILITY[backend]
+        if any(
+            contract[feature] != "full"
+            for feature in (
+                "holobit",
+                "proyectar",
+                "transformar",
+                "graficar",
+                "corelibs",
+                "standard_library",
+            )
+        ):
+            raise RuntimeError(
+                f"{backend} figura como compatibilidad SDK completa sin cubrir todas las features en nivel full"
+            )
+
+
+validate_runtime_support_contract()
 
 
 def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
