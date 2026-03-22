@@ -151,23 +151,6 @@ def test_validador_permite_targets_tier2_opcionales_en_mapeo(tmp_path, monkeypat
 
 
 
-def test_validador_rechaza_alias_legacy_en_mapping(tmp_path, monkeypatch):
-    py = tmp_path / "m.py"
-    py.write_text("x = 1")
-    mod = tmp_path / "m.co"
-    data = {str(mod): {"version": "0.1.0", "js": str(py), "python": str(py)}}
-    _write_yaml(tmp_path / "cobra.mod", data)
-
-    monkeypatch.setattr("cobra.semantico.mod_validator.SCHEMA", None)
-    monkeypatch.setattr(
-        "cobra.semantico.mod_validator.module_map.get_toml_map",
-        lambda: {"project": {"required_targets": ["python"]}},
-    )
-
-    with pytest.raises(ValueError, match="Backends no canónicos"):
-        validar_mod(str(tmp_path / "cobra.mod"))
-
-
 def test_validador_rechaza_backend_fuera_de_los_8_oficiales(tmp_path, monkeypatch):
     py = tmp_path / "m.py"
     py.write_text("x = 1")

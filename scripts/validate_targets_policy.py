@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.targets_policy_common import (
-    NON_CANONICAL_PUBLIC_NAMES,
+    FORBIDDEN_PUBLIC_TARGET_ALIASES,
     PUBLIC_TEXT_PATH_STRS,
     VALIDATION_SCAN_PATHS,
     read_target_policy,
@@ -140,7 +140,7 @@ def _find_public_alias_errors(rel: str, content: str) -> list[str]:
     errors: list[str] = []
     for line_no, raw_line in enumerate(content.splitlines(), start=1):
         line = _normalized_public_line(raw_line)
-        for alias, canonical in NON_CANONICAL_PUBLIC_NAMES.items():
+        for alias, canonical in FORBIDDEN_PUBLIC_TARGET_ALIASES:
             pattern = re.compile(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", re.IGNORECASE)
             if pattern.search(line):
                 errors.append(

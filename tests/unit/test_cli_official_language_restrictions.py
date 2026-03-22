@@ -74,7 +74,7 @@ def test_transpilar_inverso_falla_con_origen_fuera_del_scope_reverse():
             "transpilar-inverso",
             "archivo.py",
             "--origen",
-            "js",
+            "fantasy",
             "--destino",
             "python",
         ])
@@ -133,10 +133,9 @@ def test_tests_documentan_las_tres_categorias_publicas_de_targets():
     assert TRANSPILATION_ONLY_TARGETS == ("wasm", "go", "java", "asm")
 
 
-def test_tests_documentan_best_effort_experimental_sin_aliases_publicos():
+def test_tests_documentan_best_effort_experimental_sin_ampliar_el_set_oficial():
     runtime_experimental = tuple(
         target for target in TRANSPILATION_ONLY_TARGETS if target in {"go", "java"}
     )
     assert runtime_experimental == ("go", "java")
-    assert "js" not in OFFICIAL_TARGETS
-    assert "ensamblador" not in OFFICIAL_TARGETS
+    assert len(OFFICIAL_TARGETS) == 8

@@ -50,4 +50,4 @@ Experimentos y material separado
 Los pipelines o prototipos fuera del alcance oficial se conservan en ubicaciones separadas para no contaminar la política pública:
 
 - ``archive/retired_targets/`` para material histórico retirado del árbol principal.
-- ``docs/historico/`` para glosarios o notas archivadas que sigan siendo parte de la documentación del repositorio.
+- ``archive/retired_targets/`` para glosarios o notas archivadas fuera del árbol documental distribuido.

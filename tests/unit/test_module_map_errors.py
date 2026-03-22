@@ -39,13 +39,13 @@ def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):
     assert module_map.get_mapped_path("m", "python") == "m"
 
 
-def test_get_mapped_path_rechaza_backend_no_canonico(monkeypatch):
+def test_get_mapped_path_devuelve_original_para_backend_fuera_del_set_canonico(monkeypatch):
     monkeypatch.setattr(
         module_map,
         "get_toml_map",
         lambda: {"modulos": {"m": {"javascript": "dist/m.js"}}},
     )
-    assert module_map.get_mapped_path("m", "js") == "m"
+    assert module_map.get_mapped_path("m", "fantasy") == "m"
 
 
 def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):

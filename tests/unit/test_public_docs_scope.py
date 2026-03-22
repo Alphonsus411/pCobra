@@ -189,8 +189,10 @@ def test_scope_publico_vigilado_no_reintroduce_aliases_legacy_ni_flags_obsoletos
                 )
 
 
-def test_glosario_historico_de_aliases_existe_y_esta_marcado_como_no_normativo():
-    path = Path("docs/historico/targets_aliases_legacy.md")
+def test_el_historial_de_aliases_sale_del_arbol_documental_publico():
+    assert not Path("docs/historico/targets_aliases_legacy.md").exists()
+
+    path = Path("archive/retired_targets/docs/targets_aliases_legacy.md")
     contenido = path.read_text(encoding="utf-8").lower()
     assert "histórico" in contenido or "historico" in contenido
     assert "sin vigencia normativa" in contenido

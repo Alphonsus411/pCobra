@@ -97,4 +97,4 @@ Diferencias identificadas
 Material fuera de política y documentación segregada
 ---------------------------------------------------
 
-Cualquier documentación sobre IR internos, prototipos o pipelines auxiliares debe leerse como material de **pipeline interno** y mantenerse fuera del recorrido público normal. El material retirado del producto actual debe conservarse fuera del árbol principal distribuido, mientras que ``docs/historico/`` queda reservado para material archivado sin vigencia normativa que siga formando parte de la documentación del repositorio.
+Cualquier documentación sobre IR internos, prototipos o pipelines auxiliares debe leerse como material de **pipeline interno** y mantenerse fuera del recorrido público normal. El material retirado del producto actual debe conservarse fuera del árbol principal distribuido, y el material archivado sin vigencia normativa debe vivir fuera del árbol documental distribuido, por ejemplo en ``archive/retired_targets/``.

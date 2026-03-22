@@ -30,17 +30,17 @@ def test_register_transpiler_backend_acepta_backend_canonico(monkeypatch):
     assert compile_cmd.TRANSPILERS["javascript"] is DummyTranspiler
 
 
-def test_validate_entrypoint_backend_rechaza_alias_legacy():
+def test_validate_entrypoint_backend_rechaza_backend_fuera_del_set_oficial():
     with pytest.raises(
         ValueError,
         match=r"entry points solo pueden usar nombres canónicos oficiales",
     ):
-        compile_cmd._validate_entrypoint_backend_or_raise("js", context="tests")
+        compile_cmd._validate_entrypoint_backend_or_raise("fantasy", context="tests")
 
 
-def test_load_entrypoint_transpilers_omite_backend_no_canonico(monkeypatch, caplog):
+def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeypatch, caplog):
     ep = importlib.metadata.EntryPoint(
-        name="js",
+        name="fantasy",
         value="tests.unit.test_compile_backend_registration:DummyTranspiler",
         group="cobra.transpilers",
     )
