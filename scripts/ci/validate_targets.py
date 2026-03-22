@@ -57,6 +57,7 @@ GENERATED_PATH_PARTS = (
     ".pytest_cache/",
     ".mypy_cache/",
     ".ruff_cache/",
+    "node_modules/",
     "docs/_build/",
 )
 
@@ -204,6 +205,14 @@ PUBLIC_POLICY_LIST_PATTERNS: dict[str, tuple[re.Pattern[str], str]] = {
         re.compile(r"targets oficiales de transpilación", re.IGNORECASE),
         "targets oficiales de transpilación",
     ),
+    "official_targets_available": (
+        re.compile(r"lenguajes destino disponibles", re.IGNORECASE),
+        "lenguajes destino disponibles",
+    ),
+    "official_targets_accepted_names": (
+        re.compile(r"official backend names are accepted", re.IGNORECASE),
+        "official backend names are accepted",
+    ),
     "official_runtime_targets": (
         re.compile(r"targets con runtime oficial", re.IGNORECASE),
         "targets con runtime oficial",
@@ -211,6 +220,10 @@ PUBLIC_POLICY_LIST_PATTERNS: dict[str, tuple[re.Pattern[str], str]] = {
     "reverse_scope_languages": (
         re.compile(r"or[ií]genes de transpilaci[oó]n inversa", re.IGNORECASE),
         "orígenes reverse oficiales",
+    ),
+    "reverse_scope_languages_available": (
+        re.compile(r"lenguajes de origen disponibles", re.IGNORECASE),
+        "lenguajes de origen disponibles",
     ),
     "official_runtime_targets_alt": (
         re.compile(r"runtime oficial en contenedor/sandbox", re.IGNORECASE),
@@ -238,6 +251,11 @@ ARCHIVE_LINK_REQUIRED_MARKERS = (
     "fuera de politica",
     "sin vigencia",
 )
+
+LEGACY_PUBLIC_OPTION_PATTERNS: dict[str, re.Pattern[str]] = {
+    "--to": re.compile(r"(?<![\w-])(--to)(?![\w-])"),
+    "--lenguaje": re.compile(r"(?<![\w-])(--lenguaje)(?![\w-])"),
+}
 
 PUBLIC_NON_OFFICIAL_LABELLED_PATTERNS: dict[str, tuple[re.Pattern[str], tuple[str, ...]]] = {
     "hololang-public-context": (
@@ -554,14 +572,17 @@ def validate_public_policy_lists(
     ) | set(transpilation_only_targets) | set(verification_targets)
     expected_values = {
         "official_targets": set(official_targets),
+        "official_targets_available": set(official_targets),
+        "official_targets_accepted_names": set(official_targets),
         "official_runtime_targets": set(official_runtime_targets),
         "official_runtime_targets_alt": set(official_runtime_targets),
         "reverse_scope_languages": set(reverse_scope_languages),
+        "reverse_scope_languages_available": set(reverse_scope_languages),
         "transpilation_only_targets": set(transpilation_only_targets),
         "verification_targets": set(verification_targets),
     }
 
-    for path in PUBLIC_RUNTIME_POLICY_PATHS:
+    for path in PUBLIC_TEXT_PATHS:
         if not path.exists():
             continue
         rel = path.relative_to(ROOT).as_posix()
@@ -767,6 +788,14 @@ def validate_scan_roots(
             lowered = line.lower()
 
             if not historical_path:
+                if rel in PUBLIC_TEXT_PATH_STRS:
+                    for option_name, pattern in LEGACY_PUBLIC_OPTION_PATTERNS.items():
+                        match = pattern.search(line)
+                        if match:
+                            errors.append(
+                                f"{rel}:{line_no}: opción CLI pública obsoleta/no canónica -> {option_name}"
+                            )
+
                 for removed_module in (
                     REMOVED_REVERSE_MODULE_PATTERNS + REMOVED_TRANSPILER_MODULE_PATTERNS
                 ):

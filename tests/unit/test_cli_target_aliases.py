@@ -15,31 +15,33 @@ def _build_parser_with_command(command):
     return parser
 
 
-def test_execute_parser_rechaza_alias_js_en_contenedor():
+def test_regresion_execute_parser_rechaza_alias_js_en_contenedor():
     parser = _build_parser_with_command(ExecuteCommand())
 
     with pytest.raises(SystemExit):
         parser.parse_args(["ejecutar", "script.co", "--contenedor", "js"])
 
 
-def test_verify_parser_rechaza_alias_js_en_lista_de_lenguajes():
+def test_regresion_verify_parser_rechaza_alias_js_en_lista_de_lenguajes():
     parser = _build_parser_with_command(VerifyCommand())
 
     with pytest.raises(SystemExit):
         parser.parse_args(["verificar", "script.co", "--lenguajes", "python,js"])
 
 
-def test_parse_target_rechaza_alias_js_como_nombre_simple():
+def test_regresion_parse_target_rechaza_alias_js_como_nombre_simple():
     with pytest.raises(argparse.ArgumentTypeError):
         parse_target("js")
 
 
-def test_parse_target_list_rechaza_alias_js_dentro_de_lista():
+def test_regresion_parse_target_list_rechaza_alias_js_dentro_de_lista():
     with pytest.raises(argparse.ArgumentTypeError):
         parse_target_list("python,js")
 
 
-def test_verify_parser_rechaza_alias_ensamblador_en_lista_de_lenguajes():
+def test_regresion_verify_parser_rechaza_alias_ensamblador_en_lista_de_lenguajes():
+    # Regresión: "ensamblador" se conserva solo como término legacy rechazado,
+    # no como nombre público soportado del target oficial `asm`.
     parser = _build_parser_with_command(VerifyCommand())
 
     with pytest.raises(SystemExit):

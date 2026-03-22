@@ -51,9 +51,11 @@ def test_transpilar_inverso_consistencia_registry_cli():
     assert set(transpilar_inverso_cmd.ORIGIN_CHOICES) == policy
 
 
-def test_transpilar_inverso_origen_fuera_de_politica(tmp_path):
+def test_regresion_transpilar_inverso_rechaza_origen_reverse_retirado_rust(tmp_path):
     from pcobra.cobra.cli.commands import transpilar_inverso_cmd
 
+    # Regresión: `rust` ya no forma parte de los orígenes reverse oficiales;
+    # este caso conserva el rechazo explícito, no un soporte vigente.
     archivo = tmp_path / "a.rs"
     archivo.write_text("fn main() {}")
 
@@ -118,18 +120,20 @@ def test_transpilar_inverso_ayuda_acota_origen_y_targets_oficiales():
 
     ayuda = subparser.format_help()
 
-    assert "reverse transpilation" in ayuda.lower()
-    assert "official_targets" in ayuda.lower()
+    ayuda_normalizada = ayuda.lower()
+    assert "orígenes reverse" in ayuda_normalizada or "origen" in ayuda_normalizada
+    assert "tier 1" in ayuda_normalizada
+    assert "tier 2" in ayuda_normalizada
 
 
-def test_parse_reverse_source_language_rechaza_alias_legacy():
+def test_regresion_parse_reverse_source_language_rechaza_alias_legacy_js():
     from pcobra.cobra.transpilers.reverse.policy import parse_reverse_source_language
 
     with pytest.raises(argparse.ArgumentTypeError):
         parse_reverse_source_language("js")
 
 
-def test_transpilar_inverso_choices_y_scope_no_reintroducen_hololang():
+def test_regresion_transpilar_inverso_choices_y_scope_no_reintroducen_hololang():
     from pcobra.cobra.cli.commands import transpilar_inverso_cmd
 
     assert "hololang" not in transpilar_inverso_cmd.ORIGIN_CHOICES
@@ -138,7 +142,7 @@ def test_transpilar_inverso_choices_y_scope_no_reintroducen_hololang():
 
 
 
-def test_parse_reverse_source_language_rechaza_hololang_con_mensaje_canonico():
+def test_regresion_parse_reverse_source_language_rechaza_hololang_con_mensaje_canonico():
     from pcobra.cobra.transpilers.reverse.policy import parse_reverse_source_language
 
     with pytest.raises(argparse.ArgumentTypeError) as exc_info:

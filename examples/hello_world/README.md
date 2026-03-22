@@ -13,16 +13,16 @@ Lectura recomendada de la política asociada:
 Cada ejemplo se puede generar ejecutando:
 
 ```bash
-cobra examples/hello_world/<lenguaje>.co --to <lenguaje>
+cobra compilar examples/hello_world/<lenguaje>.co --tipo <lenguaje>
 ```
 
 Resultados pre-generados para cada transpilador oficial:
 
-- `python`: `cobra examples/hello_world/python.co --to python` → [python.py](python.py)
-- `rust`: `cobra examples/hello_world/rust.co --to rust` → [rust.rs](rust.rs)
-- `javascript`: `cobra examples/hello_world/javascript.co --to javascript` → [javascript.js](javascript.js)
-- `wasm`: `cobra examples/hello_world/wasm.co --to wasm` → [wasm.wat](wasm.wat)
-- `go`: `cobra examples/hello_world/go.co --to go` → [go.go](go.go)
-- `cpp`: `cobra examples/hello_world/cpp.co --to cpp` → [cpp.cpp](cpp.cpp)
-- `java`: `cobra examples/hello_world/java.co --to java` → [java.java](java.java)
-- `asm`: `cobra examples/hello_world/asm.co --to asm` → [asm.asm](asm.asm)
+- `python`: `cobra compilar examples/hello_world/python.co --tipo python` → [python.py](python.py)
+- `rust`: `cobra compilar examples/hello_world/rust.co --tipo rust` → [rust.rs](rust.rs)
+- `javascript`: `cobra compilar examples/hello_world/javascript.co --tipo javascript` → [javascript.js](javascript.js)
+- `wasm`: `cobra compilar examples/hello_world/wasm.co --tipo wasm` → [wasm.wat](wasm.wat)
+- `go`: `cobra compilar examples/hello_world/go.co --tipo go` → [go.go](go.go)
+- `cpp`: `cobra compilar examples/hello_world/cpp.co --tipo cpp` → [cpp.cpp](cpp.cpp)
+- `java`: `cobra compilar examples/hello_world/java.co --tipo java` → [java.java](java.java)
+- `asm`: `cobra compilar examples/hello_world/asm.co --tipo asm` → [asm.asm](asm.asm)

@@ -32,10 +32,10 @@ Para ejecutar un archivo Cobra desde la línea de comandos:
 cobra archivo.co
 ```
 
-También puedes transpilar el programa a otros lenguajes usando la opción `--lenguaje` (o su alias `--backend`):
+También puedes transpilar el programa a otros lenguajes usando el subcomando `compilar` con la opción canónica `--tipo` (o `--backend`, si integras herramientas externas):
 
 ```bash
-cobra archivo.co --lenguaje python
+cobra compilar archivo.co --tipo python
 ```
 
 ### Ejecución en GitHub Codespaces
@@ -126,7 +126,7 @@ fin
 ```
 
 Esta estructura se transpila como un `if not condicion` en lenguajes como
-Python, JavaScript o C++, lo que facilita patrones de salida temprana.
+Python, JavaScript o `cpp`, lo que facilita patrones de salida temprana.
 
 ## 4. Bucle mientras
 ```cobra

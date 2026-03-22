@@ -24,7 +24,7 @@ Además, conviene leerlos con esta distinción:
 - **hello_world/**: demostraciones "Hola Mundo" para los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
 - **[hola_mundo](hola_mundo/)**: ejemplo mínimo para transpilar a Python.
   ```bash
-  cobra examples/hola_mundo/hola.co --to python
+  cobra compilar examples/hola_mundo/hola.co --tipo python
   ```
 - **plugins/**: plugins de muestra instalables en modo editable. Para probarlos:
   ```bash

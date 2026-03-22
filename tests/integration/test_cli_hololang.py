@@ -22,7 +22,11 @@ def _run_cli(arguments: list[str]) -> tuple[int, str]:
 
 
 @pytest.mark.timeout(5)
-def test_cli_compilar_rechaza_backend_hololang_con_mensaje_de_choices(tmp_path: Path) -> None:
+def test_regresion_cli_compilar_rechaza_backend_hololang_con_mensaje_de_choices(
+    tmp_path: Path,
+) -> None:
+    # Regresión: `hololang` solo puede aparecer como IR/pipeline interno, no
+    # como target público vigente de `cobra compilar`.
     archivo = tmp_path / "saludo.co"
     archivo.write_text('imprimir("hola")\n', encoding="utf-8")
 
@@ -38,7 +42,11 @@ def test_cli_compilar_rechaza_backend_hololang_con_mensaje_de_choices(tmp_path: 
 
 
 @pytest.mark.timeout(5)
-def test_cli_transpilar_inverso_rechaza_origen_hololang_con_mensaje_de_choices(tmp_path: Path) -> None:
+def test_regresion_cli_transpilar_inverso_rechaza_origen_hololang_con_mensaje_de_choices(
+    tmp_path: Path,
+) -> None:
+    # Regresión: `hololang` no forma parte del scope reverse oficial definido
+    # en `reverse/policy.py`; este test verifica rechazo, no soporte.
     archivo = tmp_path / "saludo.py"
     archivo.write_text('print("hola")\n', encoding="utf-8")
 

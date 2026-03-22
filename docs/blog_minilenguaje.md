@@ -9,7 +9,7 @@ imprimir("Hola mundo")
 ```
 Para transpilar este código a Python ejecuta:
 ```bash
-cobra archivo.co --lenguaje python
+cobra compilar archivo.co --tipo python
 ```
 
 ## Referencias

@@ -197,7 +197,7 @@ cobra archivo.co --no-seguro
 ### Ejemplo de transpilación
 
 ```bash
-cobra transpilar hola.co --lenguaje python
+cobra compilar hola.co --tipo python
 ```
 
 Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [docs/frontend](docs/frontend).
