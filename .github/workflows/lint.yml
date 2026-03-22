@@ -18,3 +18,5 @@ jobs:
         run: python scripts/lint_legacy_aliases.py
       - name: Validate public documentation targets policy
         run: python scripts/validate_targets_policy.py
+      - name: Validate runtime contract matrix
+        run: python scripts/validate_runtime_contract.py

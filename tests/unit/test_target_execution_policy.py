@@ -29,4 +29,4 @@ def test_resolve_docker_backend_rechaza_targets_oficiales_solo_transpilacion(tar
 
 def test_verify_runtime_es_subconjunto_explicito_del_runtime_oficial():
     assert set(VERIFICATION_EXECUTABLE_TARGETS).issubset(set(DOCKER_EXECUTABLE_TARGETS))
-    assert VERIFICATION_EXECUTABLE_TARGETS == ("python", "javascript")
+    assert VERIFICATION_EXECUTABLE_TARGETS == ("python", "rust", "javascript", "cpp")

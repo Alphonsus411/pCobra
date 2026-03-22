@@ -74,6 +74,10 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python scripts/validate_targets_policy.py
+      - name: Validate runtime contract matrix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/validate_runtime_contract.py
       - name: Validate targets anti-regression policy (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -82,6 +86,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/validate_targets_policy.py
+      - name: Validate runtime contract matrix (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/validate_runtime_contract.py
       - name: Run linters
         if: runner.os != 'Windows'
         shell: bash

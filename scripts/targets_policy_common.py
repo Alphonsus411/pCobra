@@ -11,9 +11,12 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from pcobra.cobra.cli.target_policies import (
+    ADVANCED_HOLOBIT_RUNTIME_TARGETS,
     BEST_EFFORT_RUNTIME_TARGETS,
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
+    OFFICIAL_STANDARD_LIBRARY_TARGETS,
+    SDK_COMPATIBLE_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS,
 )
@@ -142,6 +145,9 @@ def read_target_policy() -> dict[str, Any]:
         "transpilation_only_targets": tuple(TRANSPILATION_ONLY_TARGETS),
         "best_effort_runtime_targets": tuple(BEST_EFFORT_RUNTIME_TARGETS),
         "no_runtime_targets": tuple(NO_RUNTIME_TARGETS),
+        "official_standard_library_targets": tuple(OFFICIAL_STANDARD_LIBRARY_TARGETS),
+        "advanced_holobit_runtime_targets": tuple(ADVANCED_HOLOBIT_RUNTIME_TARGETS),
+        "sdk_compatible_targets": tuple(SDK_COMPATIBLE_TARGETS),
         "cli_aliases": {},
         "legacy_aliases": {},
         "public_names": tuple(PUBLIC_ACCEPTED_TARGET_NAMES),

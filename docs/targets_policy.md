@@ -105,7 +105,7 @@ La política pública de compatibilidad por feature se resume en `src/pcobra/cob
 A día de hoy:
 
 - `python` es `full` para `holobit`, `proyectar`, `transformar`, `graficar`, `corelibs` y `standard_library`.
-- `javascript` es `partial` para primitivas Holobit, `corelibs` y `standard_library`: genera hooks `cobra_*`, conserva la colección base en `cobra_holobit` y falla explícitamente en operaciones avanzadas; no debe venderse como compatibilidad SDK completa.
+- `javascript` es `partial` para primitivas Holobit, `corelibs` y `standard_library`: genera hooks `cobra_*`, conserva la colección base en `cobra_holobit` y falla explícitamente en operaciones avanzadas; no debe venderse como paridad SDK completa.
 - `rust`, `wasm`, `go`, `cpp`, `java` y `asm` están en `partial` para todas las features contractuales actuales.
 
 Esto debe interpretarse como **contrato de generación y hooks/fallbacks**, no como promesa universal de ejecución equivalente entre backends.

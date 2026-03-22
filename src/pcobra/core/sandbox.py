@@ -48,6 +48,14 @@ MAX_JS_OUTPUT_BYTES = 8 * 1024
 # Límite máximo de salida permitida para la ejecución en contenedores (8 KB)
 MAX_CONTAINER_OUTPUT_BYTES = 8 * 1024
 
+CONTAINER_IMAGE_BY_BACKEND = {
+    "python": "cobra-python-sandbox",
+    "javascript": "cobra-js-sandbox",
+    "cpp": "cobra-cpp-sandbox",
+    "rust": "cobra-rust-sandbox",
+}
+OFFICIAL_CONTAINER_BACKENDS = tuple(CONTAINER_IMAGE_BY_BACKEND)
+
 _ORIGINAL_IMPORT = builtins.__import__
 _IMPORT_DENYLIST = {
     "os",
@@ -696,11 +704,12 @@ def ejecutar_en_contenedor(
     """Ejecuta ``codigo`` dentro de un contenedor Docker según ``backend``.
 
     Los backends soportados son ``python``, ``javascript``, ``cpp`` y ``rust``.
-    Los targets oficiales ``go``, ``java``, ``wasm`` y ``asm`` se consideran
-    destinos de transpilación y quedan fuera del runtime Docker oficial. Cada
-    backend utiliza una imagen específica que debe estar construida
-    previamente. ``timeout`` define el límite de tiempo en segundos para la
-    ejecución del contenedor o ``None`` para desactivar el límite.
+    Son los mismos backends que hoy forman la matriz pública de runtime oficial
+    verificable. Los targets oficiales ``go``, ``java``, ``wasm`` y ``asm`` se
+    consideran destinos de transpilación y quedan fuera del runtime Docker
+    oficial. Cada backend utiliza una imagen específica que debe estar
+    construida previamente. ``timeout`` define el límite de tiempo en segundos
+    para la ejecución del contenedor o ``None`` para desactivar el límite.
 
     El contenedor se lanza sin acceso a la red (``--network=none``), como el
     usuario ``nobody`` (``--user 65534:65534``), con el sistema de archivos en
@@ -709,24 +718,17 @@ def ejecutar_en_contenedor(
     mediante ``--pids-limit``, ``--memory`` y ``--cpus`` para evitar abusos del sistema.
     """
 
-    imagenes = {
-        "python": "cobra-python-sandbox",
-        "javascript": "cobra-js-sandbox",
-        "cpp": "cobra-cpp-sandbox",
-        "rust": "cobra-rust-sandbox",
-    }
-
-    if backend not in imagenes:
+    if backend not in CONTAINER_IMAGE_BY_BACKEND:
         if backend in {"go", "java", "wasm", "asm"}:
             raise ValueError(
                 "Backend sin runtime Docker oficial: "
                 f"{backend}. pCobra puede generar código para ese target, "
                 "pero no lo expone como ejecución real oficial en contenedor. "
-                "Runtimes Docker oficiales: python, javascript, cpp, rust."
+                f"Runtimes Docker oficiales: {', '.join(OFFICIAL_CONTAINER_BACKENDS)}."
             )
         raise ValueError(
             "Backend no soportado para ejecución en contenedor: "
-            f"{backend}. Runtimes Docker oficiales: python, javascript, cpp, rust."
+            f"{backend}. Runtimes Docker oficiales: {', '.join(OFFICIAL_CONTAINER_BACKENDS)}."
         )
 
     docker_path = shutil.which("docker")
@@ -766,7 +768,7 @@ def ejecutar_en_contenedor(
         "/tmp",
         "--cap-drop=ALL",
         "-i",
-        imagenes[backend],
+        CONTAINER_IMAGE_BY_BACKEND[backend],
     ]
 
     try:

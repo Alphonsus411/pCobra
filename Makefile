@@ -20,7 +20,8 @@ help:
 	@echo "  make lint            Ejecuta linters: ruff, mypy, bandit"
 	@echo "  make format          Formatea con black + isort"
 	@echo "  make typecheck       Verifica tipos con mypy + pyright"
-	@echo "  make docker          Construye los contenedores oficiales de ejecución (python, javascript, cpp, rust)"
+	@echo "  make docker          Construye la matriz oficial de runtimes verificables (python, javascript, rust, cpp)"
+	@echo "  make validate-runtime-contract  Valida la matriz pública de runtime/stdlib/Holobit"
 	@echo "  make docs            Genera documentación Sphinx"
 	@echo "  make clean           Limpia archivos temporales"
 	@echo "  make secrets         Busca secretos con gitleaks"
@@ -60,8 +61,11 @@ typecheck:
 secrets:
 	gitleaks detect --source . --redact
 
-check: lint test typecheck
+check: lint test typecheck validate-runtime-contract
 	@echo "✅ Todo en orden. Código listo para commit o build."
+
+validate-runtime-contract:
+	$(PYTHON) scripts/validate_runtime_contract.py
 
 docker:
 	docker build -t cobra -f docker/Dockerfile .
@@ -87,4 +91,4 @@ clean:
 	rm -rf .pytest_cache .mypy_cache .coverage htmlcov \
 	       $(BUILDDIR) .venv dist build bench_results.json
 
-.PHONY: help install run test coverage lint format typecheck secrets docker docs deps-sync deps-check publicar-blog clean check
+.PHONY: help install run test coverage lint format typecheck secrets docker docs deps-sync deps-check publicar-blog clean check validate-runtime-contract
