@@ -1,4 +1,4 @@
-"""Adaptadores entre el IR de Hololang y el AST de Cobra."""
+"""Adaptadores entre el IR interno y el AST de Cobra."""
 
 from __future__ import annotations
 
@@ -7,20 +7,20 @@ import re
 from collections.abc import Sequence
 from typing import Any, Iterable, List
 
-from pcobra.core.hololang_ir import (
-    HololangAssignment,
-    HololangCall,
-    HololangExpressionStatement,
-    HololangFor,
-    HololangFunction,
-    HololangHolobit,
-    HololangIf,
-    HololangModule,
-    HololangPrint,
-    HololangReturn,
-    HololangStatement,
-    HololangUnknown,
-    HololangWhile,
+from pcobra.core.internal_ir import (
+    InternalIRAssignment,
+    InternalIRCall,
+    InternalIRExpressionStatement,
+    InternalIRFor,
+    InternalIRFunction,
+    InternalIRHolobit,
+    InternalIRIf,
+    InternalIRModule,
+    InternalIRPrint,
+    InternalIRReturn,
+    InternalIRStatement,
+    InternalIRUnknown,
+    InternalIRWhile,
 )
 
 from pcobra.cobra.core import Token, TipoToken
@@ -45,7 +45,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoValor,
 )
 
-__all__ = ["is_hololang_ir", "hololang_ir_to_cobra_ast", "ensure_cobra_ast"]
+__all__ = ["is_internal_ir", "internal_ir_to_cobra_ast", "normalize_to_cobra_ast"]
 
 
 _KEYWORD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
@@ -58,68 +58,68 @@ _KEYWORD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 ]
 
 
-def is_hololang_ir(obj: Any) -> bool:
-    """Determina si ``obj`` corresponde al IR de Hololang."""
+def is_internal_ir(obj: Any) -> bool:
+    """Determina si ``obj`` corresponde al IR interno."""
 
-    if isinstance(obj, HololangModule):
+    if isinstance(obj, InternalIRModule):
         return True
-    if isinstance(obj, HololangStatement):
+    if isinstance(obj, InternalIRStatement):
         return True
     if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
-        return all(isinstance(elem, HololangStatement) for elem in obj)
+        return all(isinstance(elem, InternalIRStatement) for elem in obj)
     return False
 
 
-def ensure_cobra_ast(programa: Any) -> list[Any]:
+def normalize_to_cobra_ast(programa: Any) -> list[Any]:
     """Devuelve nodos AST de Cobra a partir de ``programa``."""
 
     if programa is None:
         return []
-    if isinstance(programa, HololangModule):
+    if isinstance(programa, InternalIRModule):
         return [
             _convert_statement(stmt)
             for stmt in programa.body
             if stmt is not None
         ]
     if isinstance(programa, Sequence) and not isinstance(programa, (str, bytes)):
-        if all(isinstance(elem, HololangStatement) for elem in programa):
+        if all(isinstance(elem, InternalIRStatement) for elem in programa):
             return [_convert_statement(stmt) for stmt in programa if stmt is not None]
         return list(programa)
-    if isinstance(programa, HololangStatement):
+    if isinstance(programa, InternalIRStatement):
         return [_convert_statement(programa)]
     return programa
 
 
-def hololang_ir_to_cobra_ast(programa: Any) -> list[Any]:
-    """Alias público de :func:`ensure_cobra_ast`."""
+def internal_ir_to_cobra_ast(programa: Any) -> list[Any]:
+    """Alias público de :func:`normalize_to_cobra_ast`."""
 
-    return ensure_cobra_ast(programa)
+    return normalize_to_cobra_ast(programa)
 
 
-def _convert_statement(stmt: HololangStatement) -> Any:
-    if isinstance(stmt, HololangAssignment):
+def _convert_statement(stmt: InternalIRStatement) -> Any:
+    if isinstance(stmt, InternalIRAssignment):
         destino = _parse_target(stmt.target)
         valor = _parse_expression(stmt.value)
         return NodoAsignacion(destino, valor, stmt.inference)
 
-    if isinstance(stmt, HololangIf):
+    if isinstance(stmt, InternalIRIf):
         condicion = _parse_expression(stmt.condition)
         bloque_si = [_convert_statement(s) for s in stmt.then_branch]
         bloque_sino = [_convert_statement(s) for s in stmt.else_branch]
         return NodoCondicional(condicion, bloque_si, bloque_sino)
 
-    if isinstance(stmt, HololangWhile):
+    if isinstance(stmt, InternalIRWhile):
         condicion = _parse_expression(stmt.condition)
         cuerpo = [_convert_statement(s) for s in stmt.body]
         return NodoBucleMientras(condicion, cuerpo)
 
-    if isinstance(stmt, HololangFor):
+    if isinstance(stmt, InternalIRFor):
         variable = _parse_target(stmt.target)
         iterable = _parse_expression(stmt.iterable)
         cuerpo = [_convert_statement(s) for s in stmt.body]
         return NodoPara(variable, iterable, cuerpo)
 
-    if isinstance(stmt, HololangFunction):
+    if isinstance(stmt, InternalIRFunction):
         cuerpo = [_convert_statement(s) for s in stmt.body]
         decoradores = [
             NodoDecorador(_parse_expression(expr))
@@ -134,34 +134,34 @@ def _convert_statement(stmt: HololangStatement) -> Any:
             asincronica=stmt.async_flag,
         )
 
-    if isinstance(stmt, HololangReturn):
+    if isinstance(stmt, InternalIRReturn):
         if stmt.value is None:
             valor = NodoValor(None)
         else:
             valor = _parse_expression(stmt.value)
         return NodoRetorno(valor)
 
-    if isinstance(stmt, HololangCall):
+    if isinstance(stmt, InternalIRCall):
         expresion = _parse_expression(_format_call(stmt.name, stmt.arguments))
         if isinstance(expresion, (NodoLlamadaFuncion, NodoLlamadaMetodo)):
             return expresion
         argumentos = [_parse_expression(arg) for arg in stmt.arguments]
         return NodoLlamadaFuncion(stmt.name, argumentos)
 
-    if isinstance(stmt, HololangExpressionStatement):
+    if isinstance(stmt, InternalIRExpressionStatement):
         return _parse_expression(stmt.expression)
 
-    if isinstance(stmt, HololangPrint):
+    if isinstance(stmt, InternalIRPrint):
         return NodoImprimir(_parse_expression(stmt.expression))
 
-    if isinstance(stmt, HololangHolobit):
+    if isinstance(stmt, InternalIRHolobit):
         nombre = stmt.name or None
         valores = [_parse_expression(valor) for valor in stmt.values]
         return NodoHolobit(nombre, valores)
 
-    if isinstance(stmt, HololangUnknown):
+    if isinstance(stmt, InternalIRUnknown):
         raise ValueError(
-            f"Nodo IR de Hololang no soportado: {stmt.description}"
+            f"Nodo de IR interno no soportado: {stmt.description}"
         )
 
     raise TypeError(f"Tipo de instrucción no reconocido: {type(stmt)!r}")

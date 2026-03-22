@@ -1,8 +1,8 @@
 """Compatibilidad pública para reverse transpilation.
 
 Este paquete reexporta únicamente la API pública soportada por
-``pcobra.cobra.transpilers.reverse``. Componentes experimentales como la lógica
-específica de Hololang no deben exponerse desde aquí.
+``pcobra.cobra.transpilers.reverse``. Componentes experimentales o legados no
+deben exponerse desde aquí.
 """
 from __future__ import annotations
 

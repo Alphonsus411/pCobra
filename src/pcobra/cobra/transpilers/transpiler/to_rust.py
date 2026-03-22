@@ -41,7 +41,7 @@ from pcobra.cobra.transpilers.common.utils import (
 )
 from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
-from pcobra.cobra.transpilers.hololang_bridge import ensure_cobra_ast
+from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
 
 from pcobra.cobra.transpilers.transpiler.rust_nodes.asignacion import visit_asignacion as _visit_asignacion
 from pcobra.cobra.transpilers.transpiler.rust_nodes.condicional import visit_condicional as _visit_condicional
@@ -221,7 +221,7 @@ class TranspiladorRust(BaseTranspiler):
         return str(getattr(nodo, "valor", nodo))
 
     def transpilar(self, nodos):
-        nodos = ensure_cobra_ast(nodos)
+        nodos = normalize_to_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
         nodos = optimize_constants(nodos)
         for nodo in nodos:

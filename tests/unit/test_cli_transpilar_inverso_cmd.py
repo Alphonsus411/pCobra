@@ -138,7 +138,7 @@ def test_regresion_parse_reverse_source_language_rechaza_alias_legacy_js():
         parse_reverse_source_language("js")
 
 
-def test_regresion_transpilar_inverso_choices_y_scope_no_reintroducen_hololang():
+def test_regresion_transpilar_inverso_choices_y_scope_no_reintroducen_backend_legacy_hololang():
     from pcobra.cobra.cli.commands import transpilar_inverso_cmd
 
     assert "hololang" not in transpilar_inverso_cmd.ORIGIN_CHOICES
