@@ -34,3 +34,9 @@ def test_reverse_policy_modules_no_incluyen_hololang():
     assert "hololang" not in policy_mod.REVERSE_SCOPE_LANGUAGES
     assert "hololang" not in policy_mod.REVERSE_SCOPE_MODULES
     assert all("hololang" not in module for module in policy_mod.REVERSE_SCOPE_MODULES.values())
+
+
+def test_reverse_registry_no_habilita_fallback_legacy_publico_por_defecto():
+    reverse_mod = importlib.import_module("pcobra.cobra.transpilers.reverse")
+
+    assert getattr(reverse_mod, "_ALLOW_INTERNAL_LEGACY_FALLBACKS") is False

@@ -34,7 +34,10 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
     REVERSE_TRANSPILERS,
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
-from pcobra.cobra.transpilers.reverse.policy import normalize_reverse_language
+from pcobra.cobra.transpilers.reverse.policy import (
+    REVERSE_SCOPE_MODULES,
+    normalize_reverse_language,
+)
 from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     HOLOBIT_PUBLIC_CONTRACT_PATHS,
@@ -546,14 +549,20 @@ def validate_reverse_cli_contract(
             f"OFFICIAL_TARGETS -> destino={DESTINO_CHOICES}, official={official_targets}"
         )
 
-    if tuple(ORIGIN_CHOICES) != tuple(sorted(reverse_scope_languages)):
+    if tuple(ORIGIN_CHOICES) != tuple(reverse_scope_languages):
         errors.append(
             "transpilar-inverso: ORIGIN_CHOICES no coincide con REVERSE_SCOPE_LANGUAGES "
-            f"-> origen={ORIGIN_CHOICES}, reverse={tuple(sorted(reverse_scope_languages))}"
+            f"-> origen={ORIGIN_CHOICES}, reverse={tuple(reverse_scope_languages)}"
         )
 
     reverse_registry = tuple(REVERSE_TRANSPILERS.keys())
+    missing = sorted(set(reverse_scope_languages) - set(reverse_registry))
     extras = sorted(set(reverse_registry) - set(reverse_scope_languages))
+    if missing:
+        errors.append(
+            "transpilar-inverso: REVERSE_TRANSPILERS no cubre todos los orígenes "
+            f"canónicos -> faltan {', '.join(missing)}"
+        )
     if extras:
         errors.append(
             "transpilar-inverso: REVERSE_TRANSPILERS expone aliases/no canónicos -> "
@@ -667,6 +676,18 @@ def validate_module_file_scope(
         if target != "javascript"
     }
     reverse_modules.add("from_js.py")
+
+    reverse_dir_modules = sorted(path.name for path in REVERSE_DIR.glob("from_*.py"))
+    expected_reverse_dir_modules = sorted(
+        Path(module_name.rsplit(".", 1)[-1] + ".py").name
+        for module_name in REVERSE_SCOPE_MODULES.values()
+    )
+    if reverse_dir_modules != expected_reverse_dir_modules:
+        errors.append(
+            "src/pcobra/cobra/transpilers/reverse: los módulos from_*.py no coinciden "
+            "exactamente con la política reverse oficial -> "
+            f"encontrados={reverse_dir_modules}, esperados={expected_reverse_dir_modules}"
+        )
 
     for path in sorted(ROOT.rglob("to_*.py")):
         rel = path.relative_to(ROOT).as_posix()

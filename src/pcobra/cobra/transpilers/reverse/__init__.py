@@ -9,11 +9,13 @@ no impedir el uso de los demás.
 """
 
 import logging
+import os
 from importlib import import_module
 from typing import Dict, List, Type
 
 from pcobra.cobra.transpilers.reverse.base import BaseReverseTranspiler
 from pcobra.cobra.transpilers.reverse.policy import (
+    REVERSE_SCOPE_CLASS_NAMES,
     REVERSE_SCOPE_LANGUAGES,
     REVERSE_SCOPE_MODULES,
     normalize_reverse_language,
@@ -35,92 +37,96 @@ except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
             ) from _TREE_SITTER_IMPORT_ERROR
 
 
-# Lista de módulos de orígenes reverse a intentar importar.
 logger = logging.getLogger(__name__)
 
-_MODULOS = list(REVERSE_SCOPE_MODULES.values())
+_ALLOW_INTERNAL_LEGACY_FALLBACKS = (
+    os.environ.get("PCOBRA_INTERNAL_REVERSE_LEGACY_FALLBACKS") == "1"
+)
+_REGISTERED_REVERSE_CLASSES: Dict[str, Type[BaseReverseTranspiler]] = {}
+_EXPORTED_CLASS_NAMES: List[str] = []
 
-_LEGACY_FALLBACKS = {
-    mod_name: mod_name.replace("pcobra.cobra", "cobra", 1) for mod_name in _MODULOS
-}
 
-# Importaciones seguras -------------------------------------------------
-for mod_name in list(_MODULOS):
+def _import_reverse_module(mod_name: str):
+    """Importa un módulo reverse canónico con fallback legacy solo interno."""
     try:
-        module = import_module(mod_name)
+        return import_module(mod_name)
     except ModuleNotFoundError as exc:
         missing = getattr(exc, "name", None)
-        if missing == mod_name:
-            legacy_mod = _LEGACY_FALLBACKS.get(mod_name)
-            if legacy_mod is None:
-                _MODULOS.remove(mod_name)
-                logger.debug("Transpilador omitido: %s (sin fallback)", mod_name)
-                continue
-            try:
-                module = import_module(legacy_mod)
-                logger.debug(
-                    "Transpilador cargado vía fallback legacy: %s -> %s",
-                    mod_name,
-                    legacy_mod,
-                )
-            except ModuleNotFoundError as legacy_exc:
-                if getattr(legacy_exc, "name", None) == legacy_mod:
-                    logger.info(
-                        "Transpilador no disponible: %s (también falló fallback %s)",
-                        mod_name,
-                        legacy_mod,
-                    )
-                else:
-                    logger.warning(
-                        "Transpilador %s omitido por dependencia opcional faltante: %s",
-                        mod_name,
-                        legacy_exc,
-                    )
-                _MODULOS.remove(mod_name)
-                continue
+        if missing != mod_name or not _ALLOW_INTERNAL_LEGACY_FALLBACKS:
+            raise
+
+        legacy_mod = mod_name.replace("pcobra.cobra", "cobra", 1)
+        logger.warning(
+            "Compatibilidad legacy interna activada para reverse: %s -> %s",
+            mod_name,
+            legacy_mod,
+        )
+        return import_module(legacy_mod)
+
+
+for language in REVERSE_SCOPE_LANGUAGES:
+    mod_name = REVERSE_SCOPE_MODULES[language]
+    class_name = REVERSE_SCOPE_CLASS_NAMES[language]
+
+    try:
+        module = _import_reverse_module(mod_name)
+    except ModuleNotFoundError as exc:
+        if getattr(exc, "name", None) == mod_name:
+            logger.info("Transpilador no disponible: %s", mod_name)
         else:
             logger.warning(
                 "Transpilador %s omitido por dependencia opcional faltante: %s",
                 mod_name,
                 exc,
             )
-            _MODULOS.remove(mod_name)
-            continue
+        continue
     except ImportError as exc:
         logger.warning(
             "Transpilador %s omitido por error de importación: %s",
             mod_name,
             exc,
         )
-        _MODULOS.remove(mod_name)
         continue
 
     try:
-        for attr in dir(module):
-            if attr.startswith("ReverseFrom"):
-                globals()[attr] = getattr(module, attr)
+        cls = getattr(module, class_name)
     except AttributeError as exc:
         logger.warning(
-            "Error inspeccionando %s para registrar transpiladores: %s",
+            "Módulo reverse fuera de contrato esperado (%s no existe en %s): %s",
+            class_name,
             mod_name,
             exc,
         )
-        _MODULOS.remove(mod_name)
+        continue
 
-# Clasificación de transpiladores disponibles ---------------------------
+    globals()[class_name] = cls
+    _EXPORTED_CLASS_NAMES.append(class_name)
+
+    canonical_language = normalize_reverse_language(
+        getattr(cls, "LANGUAGE", language).lower(),
+    )
+    if canonical_language != language:
+        logger.warning(
+            "Transpilador reverse %s declara LANGUAGE=%s; se ignora porque el canónico esperado es %s",
+            class_name,
+            canonical_language,
+            language,
+        )
+        continue
+
+    _REGISTERED_REVERSE_CLASSES[language] = cls
+
+
 TREE_SITTER_TRANSPILERS: List[Type[TreeSitterReverseTranspiler]] = [
     cls
-    for cls_name, cls in globals().items()
-    if cls_name.startswith("ReverseFrom")
-    and issubclass(cls, TreeSitterReverseTranspiler)
+    for cls in _REGISTERED_REVERSE_CLASSES.values()
+    if issubclass(cls, TreeSitterReverseTranspiler)
 ]
 
 CUSTOM_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
     cls
-    for cls_name, cls in globals().items()
-    if cls_name.startswith("ReverseFrom")
-    and issubclass(cls, BaseReverseTranspiler)
-    and cls not in TREE_SITTER_TRANSPILERS
+    for cls in _REGISTERED_REVERSE_CLASSES.values()
+    if cls not in TREE_SITTER_TRANSPILERS
 ]
 
 INCOMPLETE_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
@@ -130,18 +136,13 @@ INCOMPLETE_TRANSPILERS: List[Type[BaseReverseTranspiler]] = [
 ]
 
 REGISTERED_REVERSE_TRANSPILERS: Dict[str, Type[BaseReverseTranspiler]] = {
-    normalize_reverse_language(
-        getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower(),
-    ): cls
-    for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS
-    if normalize_reverse_language(
-        getattr(cls, "LANGUAGE", cls.__name__.replace("ReverseFrom", "")).lower(),
-    )
-    in REVERSE_SCOPE_LANGUAGES
+    language: _REGISTERED_REVERSE_CLASSES[language]
+    for language in REVERSE_SCOPE_LANGUAGES
+    if language in _REGISTERED_REVERSE_CLASSES
 }
 
 __all__ = (
     ["BaseReverseTranspiler", "TreeSitterReverseTranspiler"]
-    + [cls.__name__ for cls in TREE_SITTER_TRANSPILERS + CUSTOM_TRANSPILERS]
+    + _EXPORTED_CLASS_NAMES
     + ["REGISTERED_REVERSE_TRANSPILERS", "REVERSE_SCOPE_LANGUAGES"]
 )

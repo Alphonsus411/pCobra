@@ -59,8 +59,13 @@ class UnsupportedLanguageError(Exception):
 class TranspilationError(Exception):
     """Error lanzado cuando ocurre un problema durante la transpilación."""
     pass
-REVERSE_TRANSPILERS: Dict[str, Type] = dict(reverse_module.REGISTERED_REVERSE_TRANSPILERS)
-ORIGIN_CHOICES = sorted(reverse_module.REVERSE_SCOPE_LANGUAGES)
+
+REVERSE_TRANSPILERS: Dict[str, Type] = {
+    language: reverse_module.REGISTERED_REVERSE_TRANSPILERS[language]
+    for language in reverse_module.REVERSE_SCOPE_LANGUAGES
+    if language in reverse_module.REGISTERED_REVERSE_TRANSPILERS
+}
+ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
 DESTINO_CHOICES = list(OFFICIAL_TARGETS)
 TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TARGETS)
 REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
@@ -86,10 +91,19 @@ def validar_consistencia_reverse_transpilers() -> None:
     policy = set(reverse_module.REVERSE_SCOPE_LANGUAGES)
     registry = set(reverse_module.REGISTERED_REVERSE_TRANSPILERS.keys())
     cli = set(REVERSE_TRANSPILERS.keys())
-    if cli != registry or not registry.issubset(policy):
+    if (
+        cli != registry
+        or tuple(ORIGIN_CHOICES) != tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
+        or not registry.issubset(policy)
+    ):
         raise RuntimeError(
             "Inconsistencia de reverse transpilers: "
-            f"policy={sorted(policy)}, registry={sorted(registry)}, cli={sorted(cli)}"
+            "policy={policy}, registry={registry}, cli={cli}, choices={choices}".format(
+                policy=sorted(policy),
+                registry=sorted(registry),
+                cli=sorted(cli),
+                choices=tuple(ORIGIN_CHOICES),
+            )
         )
 
 

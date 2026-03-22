@@ -1,7 +1,11 @@
 import re
 from pathlib import Path
 
-from pcobra.cobra.transpilers.reverse.policy import REVERSE_SCOPE_LANGUAGES
+from pcobra.cobra.transpilers.reverse.policy import (
+    REVERSE_SCOPE_CLASS_NAMES,
+    REVERSE_SCOPE_LANGUAGES,
+    REVERSE_SCOPE_MODULES,
+)
 
 
 def _normalizar(token: str) -> str:
@@ -57,3 +61,17 @@ def test_docs_reverse_no_confunden_origenes_con_targets_oficiales_de_salida():
     assert "Orígenes reverse de entrada (no targets de salida)" in contenido
     assert "runtime oficial" in contenido
     assert "transpilación" in contenido
+
+
+def test_policy_reverse_define_solo_modulos_y_clases_canonicas():
+    assert REVERSE_SCOPE_LANGUAGES == ("python", "javascript", "java")
+    assert REVERSE_SCOPE_MODULES == {
+        "python": "pcobra.cobra.transpilers.reverse.from_python",
+        "javascript": "pcobra.cobra.transpilers.reverse.from_js",
+        "java": "pcobra.cobra.transpilers.reverse.from_java",
+    }
+    assert REVERSE_SCOPE_CLASS_NAMES == {
+        "python": "ReverseFromPython",
+        "javascript": "ReverseFromJS",
+        "java": "ReverseFromJava",
+    }

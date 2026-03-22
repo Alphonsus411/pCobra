@@ -22,6 +22,12 @@ REVERSE_SCOPE_MODULES: Final[Dict[str, str]] = {
     "java": "pcobra.cobra.transpilers.reverse.from_java",
 }
 
+REVERSE_SCOPE_CLASS_NAMES: Final[Dict[str, str]] = {
+    "python": "ReverseFromPython",
+    "javascript": "ReverseFromJS",
+    "java": "ReverseFromJava",
+}
+
 
 def normalize_reverse_language(language: str) -> str:
     """Normaliza un origen reverse de entrada al nombre canónico interno."""
