@@ -1,7 +1,6 @@
 import pytest
 
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
-from pcobra.cobra.transpilers.targets import TIER2_TARGETS
 from tests.integration.transpilers.backend_contracts import (
     CORE_RUNTIME_FEATURES,
     HOLOBIT_FEATURES,
@@ -12,9 +11,10 @@ from tests.integration.transpilers.backend_contracts import (
     TRANSPILERS,
     generate_code,
 )
+from tests.utils.targets import assert_tier_targets_match_policy
 
 
-TIER2_BACKENDS = tuple(backend for backend in TIER2_TARGETS if BACKEND_COMPATIBILITY.get(backend, {}).get("tier") == "tier2")
+TIER2_BACKENDS = assert_tier_targets_match_policy("tier2", transpilers=TRANSPILERS)
 
 
 @pytest.mark.parametrize("backend", TIER2_BACKENDS)
@@ -79,8 +79,7 @@ def test_tier2_backend_runtime_hooks_are_present_when_expected(backend: str):
 
 
 def test_tier2_suite_targets_only_official_backends():
-    assert set(TIER2_BACKENDS) == set(TIER2_TARGETS)
-    assert set(TIER2_BACKENDS).issubset(set(TRANSPILERS))
+    assert assert_tier_targets_match_policy("tier2", transpilers=TRANSPILERS) == TIER2_BACKENDS
 
 
 def test_tier2_target_roles_remain_explicit():
