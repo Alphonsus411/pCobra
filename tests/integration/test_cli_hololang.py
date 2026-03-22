@@ -69,3 +69,23 @@ def test_regresion_cli_transpilar_inverso_rechaza_origen_hololang_con_mensaje_de
     assert "python" in salida_normalizada
     assert "javascript" in salida_normalizada
     assert "java" in salida_normalizada
+
+
+@pytest.mark.timeout(5)
+def test_regresion_cli_transpilar_inverso_help_solo_enumera_scope_reverse_oficial() -> None:
+    exit_code, salida = _run_cli(["transpilar-inverso", "--help"])
+
+    salida_normalizada = salida.lower()
+    linea_origen = next(
+        linea for linea in salida_normalizada.splitlines() if "--origen" in linea
+    )
+    assert exit_code == 0
+    assert "--origen" in salida_normalizada
+    assert "python" in linea_origen
+    assert "javascript" in linea_origen
+    assert "java" in linea_origen
+    assert "hololang" not in linea_origen
+    assert "rust" not in linea_origen
+    assert "wasm" not in linea_origen
+    assert "cpp" not in linea_origen
+    assert "js}" not in linea_origen

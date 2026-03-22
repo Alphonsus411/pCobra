@@ -49,6 +49,11 @@ def test_transpilar_inverso_consistencia_registry_cli():
     policy = set(transpilar_inverso_cmd.reverse_module.REVERSE_SCOPE_LANGUAGES)
     assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS.keys()).issubset(policy)
     assert set(transpilar_inverso_cmd.ORIGIN_CHOICES) == policy
+    assert tuple(transpilar_inverso_cmd.ORIGIN_CHOICES) == (
+        "python",
+        "javascript",
+        "java",
+    )
 
 
 def test_regresion_transpilar_inverso_rechaza_origen_reverse_retirado_rust(tmp_path):

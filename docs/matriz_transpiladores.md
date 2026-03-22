@@ -18,8 +18,8 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 | `javascript` | JavaScript | Tier 1 | runtime_oficial | partial | partial | partial | partial | partial | partial |
 | `wasm` | WebAssembly | Tier 1 | solo_transpilacion | partial | partial | partial | partial | partial | partial |
 | `go` | Go | Tier 2 | runtime_best_effort_no_publico | partial | partial | partial | partial | partial | partial |
-| `cpp` | C++ | Tier 2 | runtime_oficial | partial | partial | partial | partial | partial | partial |
+| `cpp` | cpp | Tier 2 | runtime_oficial | partial | partial | partial | partial | partial | partial |
 | `java` | Java | Tier 2 | runtime_best_effort_no_publico | partial | partial | partial | partial | partial | partial |
-| `asm` | Ensamblador | Tier 2 | solo_transpilacion | partial | partial | partial | partial | partial | partial |
+| `asm` | asm | Tier 2 | solo_transpilacion | partial | partial | partial | partial | partial | partial |
 
 > `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.
