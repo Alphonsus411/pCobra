@@ -292,6 +292,7 @@ RUNTIME_HOOKS = {
 def validate_runtime_contracts() -> None:
     """Valida imports/hooks de runtime para todos los backends oficiales."""
     holobit_features = CONTRACT_FEATURES[:4]
+    advanced_features = CONTRACT_FEATURES[1:4]
     for target in OFFICIAL_TARGETS:
         if target not in STANDARD_IMPORTS:
             raise RuntimeError(
@@ -330,6 +331,22 @@ def validate_runtime_contracts() -> None:
                 raise RuntimeError(
                     f"RUNTIME_HOOKS['{target}'] no contiene la firma esperada "
                     f"para {feature}: {marker}"
+                )
+
+        for feature in advanced_features:
+            expected_error = RUNTIME_ERROR_MESSAGE[target].format(feature=feature)
+            if expected_error not in hook_blob:
+                raise RuntimeError(
+                    f"RUNTIME_HOOKS['{target}'] no contiene el error explícito "
+                    f"esperado para {feature}: {expected_error}"
+                )
+
+        forbidden_markers = ("cobra_escalar", "cobra_mover")
+        for forbidden_marker in forbidden_markers:
+            if forbidden_marker in hook_blob:
+                raise RuntimeError(
+                    f"RUNTIME_HOOKS['{target}'] no debe exponer hooks fuera del "
+                    f"contrato Holobit transversal: {forbidden_marker}"
                 )
 
 

@@ -15,6 +15,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     SDK_FULL_BACKENDS,
     SDK_PARTIAL_BACKENDS,
 )
+from pcobra.cobra.transpilers.common.utils import RUNTIME_ERROR_MESSAGE, get_runtime_hooks
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.ast_nodes import (
     NodoAsignacion,
@@ -281,3 +282,10 @@ def test_partial_backends_codegen_retains_explicit_failure_paths_for_advanced_ho
     generated = _generate(backend, _representative_nodes(backend))
     for primitive in FAILURE_PRIMITIVES[backend]:
         assert primitive in generated
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_runtime_hooks_use_canonical_error_messages_for_advanced_holobit(backend: str):
+    hooks = "\n".join(get_runtime_hooks(backend))
+    for feature in ("proyectar", "transformar", "graficar"):
+        assert RUNTIME_ERROR_MESSAGE[backend].format(feature=feature) in hooks

@@ -10,6 +10,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     SDK_FULL_BACKENDS,
     SDK_PARTIAL_BACKENDS,
 )
+from pcobra.cobra.transpilers.common.utils import get_runtime_hooks
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 HOLOBIT_CASES = {
@@ -267,6 +268,13 @@ def test_only_python_es_full_para_holobit_y_runtime_base():
         assert partial_backends == set(SDK_PARTIAL_BACKENDS)
 
 
+@pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)
+def test_backends_no_python_permancen_partial_en_toda_la_matriz_y_en_el_minimo_requerido(backend):
+    for feature in CONTRACT_FEATURES:
+        assert BACKEND_COMPATIBILITY[backend][feature] == "partial"
+        assert MIN_REQUIRED_BACKEND_COMPATIBILITY[backend][feature] == "partial"
+
+
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 @pytest.mark.parametrize("caso", PYTHON_RUNTIME_ONLY_CASES.keys())
 def test_escalar_y_mover_se_preservan_como_llamadas_pero_no_se_tratan_como_contrato(backend, caso):
@@ -309,6 +317,13 @@ def test_escalar_y_mover_se_preservan_como_llamadas_pero_no_se_tratan_como_contr
     }
 
     assert expected_markers[backend][caso] in salida
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_runtime_hooks_holobit_no_exponen_helpers_exclusivos_de_python(backend):
+    hooks = "\n".join(get_runtime_hooks(backend))
+    assert "cobra_escalar" not in hooks
+    assert "cobra_mover" not in hooks
 
 
 @pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)
