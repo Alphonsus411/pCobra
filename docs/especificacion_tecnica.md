@@ -13,11 +13,13 @@ parte del paquete instalable de producción.
 
 ## Experimentos y documentación separada
 
-Los materiales sobre IR internos, LLVM, reverse desde LaTeX o referencias retiradas de reverse no amplían la lista anterior. Tampoco deben enlazarse desde la documentación principal de forma ambigua o sin etiquetar su estado.
+Los materiales sobre IR internos o artefactos retirados no amplían la lista
+anterior. Tampoco deben enlazarse desde la documentación principal de forma
+ambigua o sin etiquetar su estado.
 
 - **IR interno del compilador**: puede mencionarse de forma breve como parte de la arquitectura, no como target público de salida.
-- **LLVM / LaTeX / reverse WASM retirado**: se mantienen separados en `docs/experimental/` y deben citarse como `experimental` o `fuera de política`.
-- **Histórico**: los documentos archivados deben permanecer en `docs/historico/` y citarse como `histórico` o `sin vigencia normativa`.
+- **Histórico**: los documentos archivados deben permanecer fuera del árbol
+  principal distribuido y citarse como `histórico` o `sin vigencia normativa`.
 
 ## Estructura general
 

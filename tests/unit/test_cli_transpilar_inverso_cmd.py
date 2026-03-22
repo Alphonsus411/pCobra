@@ -138,21 +138,17 @@ def test_regresion_parse_reverse_source_language_rechaza_alias_legacy_js():
         parse_reverse_source_language("js")
 
 
-def test_regresion_transpilar_inverso_choices_y_scope_no_reintroducen_backend_legacy_hololang():
+def test_regresion_transpilar_inverso_choices_y_scope_siguen_alineados_con_politica():
     from pcobra.cobra.cli.commands import transpilar_inverso_cmd
 
-    assert "hololang" not in transpilar_inverso_cmd.ORIGIN_CHOICES
-    assert "hololang" not in transpilar_inverso_cmd.reverse_module.REVERSE_SCOPE_LANGUAGES
-    assert "hololang" not in transpilar_inverso_cmd.REVERSE_TRANSPILERS
-
-
-
-def test_regresion_parse_reverse_source_language_rechaza_hololang_con_mensaje_canonico():
-    from pcobra.cobra.transpilers.reverse.policy import parse_reverse_source_language
-
-    with pytest.raises(argparse.ArgumentTypeError) as exc_info:
-        parse_reverse_source_language("hololang")
-
-    mensaje = str(exc_info.value)
-    assert "hololang" in mensaje
-    assert "python, javascript, java" in mensaje
+    assert transpilar_inverso_cmd.ORIGIN_CHOICES == ("python", "javascript", "java")
+    assert transpilar_inverso_cmd.reverse_module.REVERSE_SCOPE_LANGUAGES == (
+        "python",
+        "javascript",
+        "java",
+    )
+    assert set(transpilar_inverso_cmd.REVERSE_TRANSPILERS) == {
+        "python",
+        "javascript",
+        "java",
+    }

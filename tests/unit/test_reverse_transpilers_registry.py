@@ -9,31 +9,36 @@ def test_reverse_transpilers_registry_matches_policy_scope():
 
     assert policy_scope == {"python", "javascript", "java"}
     assert registered == policy_scope
-    assert "hololang" not in registered
     assert "js" not in registered
 
     assert "ReverseFromPython" in reverse_mod.__all__
     assert "ReverseFromJava" in reverse_mod.__all__
-    assert "ReverseFromHololang" not in reverse_mod.__all__
+    assert "ReverseFromJS" in reverse_mod.__all__
 
 
 def test_pcobra_cobra_reverse_no_expone_backend_legacy_experimental():
     reverse_public_mod = importlib.import_module("pcobra.cobra.reverse")
 
-    assert "ReverseFromHololang" not in reverse_public_mod.__all__
-    assert "HololangParser" not in reverse_public_mod.__all__
-    assert "parse_hololang" not in reverse_public_mod.__all__
-    assert not hasattr(reverse_public_mod, "ReverseFromHololang")
-    assert not hasattr(reverse_public_mod, "HololangParser")
-    assert not hasattr(reverse_public_mod, "parse_hololang")
+    assert set(reverse_public_mod.__all__) == {
+        "BaseReverseTranspiler",
+        "TreeSitterReverseTranspiler",
+        "REGISTERED_REVERSE_TRANSPILERS",
+        "REVERSE_SCOPE_LANGUAGES",
+        "ReverseFromJava",
+        "ReverseFromJS",
+        "ReverseFromPython",
+    }
 
 
-def test_reverse_policy_modules_no_incluyen_backend_legacy_hololang():
+def test_reverse_policy_modules_solo_incluyen_scope_canonico():
     policy_mod = importlib.import_module("pcobra.cobra.transpilers.reverse.policy")
 
-    assert "hololang" not in policy_mod.REVERSE_SCOPE_LANGUAGES
-    assert "hololang" not in policy_mod.REVERSE_SCOPE_MODULES
-    assert all("hololang" not in module for module in policy_mod.REVERSE_SCOPE_MODULES.values())
+    assert policy_mod.REVERSE_SCOPE_LANGUAGES == ("python", "javascript", "java")
+    assert policy_mod.REVERSE_SCOPE_MODULES == {
+        "python": "pcobra.cobra.transpilers.reverse.from_python",
+        "javascript": "pcobra.cobra.transpilers.reverse.from_js",
+        "java": "pcobra.cobra.transpilers.reverse.from_java",
+    }
 
 
 def test_reverse_registry_no_habilita_fallback_legacy_publico_por_defecto():

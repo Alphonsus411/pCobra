@@ -80,7 +80,6 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - [Guía básica](docs/guia_basica.md)
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
-- [Cheatsheet](docs/cheatsheet.tex) – fuente documental interna en LaTeX, no target oficial de salida
 - [Casos de uso reales](docs/casos_reales.md)
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
 - [Limitaciones del sandbox de `cpp`](docs/limitaciones_cpp_sandbox.md)

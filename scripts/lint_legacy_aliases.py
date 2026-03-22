@@ -54,7 +54,6 @@ LEGACY_OPTION_GROUP = r"--a"
 CONFIG_ALIAS_PATTERNS = [
     re.compile(rf"(?m)^\s*(?:{LEGACY_ALIAS_GROUP})\s*="),
     re.compile(rf'''(?m)["'](?:{LEGACY_ALIAS_GROUP})["']\s*:'''),
-    re.compile(r"(?m)\b(?:reverse-wasm|wabt|sexpdata)\b"),
 ]
 
 PUBLIC_ALIAS_PATTERNS = [

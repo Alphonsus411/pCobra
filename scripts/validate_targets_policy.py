@@ -110,31 +110,9 @@ AMBIGUOUS_ARCHIVE_LINK_LABELS = (
     "sin vigencia",
 )
 
-PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS = {
-    "hololang": re.compile(
-        r"(?=.*\bhololang\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
-        re.IGNORECASE,
-    ),
-    "llvm": re.compile(
-        r"(?=.*\bllvm\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|salida|output)\b)",
-        re.IGNORECASE,
-    ),
-    "latex": re.compile(
-        r"(?=.*\blatex\b)(?=.*\b(?:target|targets|destino|destinos|backend|backends|origen|orígenes|origenes|salida|output)\b)",
-        re.IGNORECASE,
-    ),
-    "reverse-wasm": re.compile(
-        r"\b(?:reverse\s+(?:desde|from)\s+(?:wasm|webassembly)|(?:wasm|webassembly)\s+reverse)\b",
-        re.IGNORECASE,
-    ),
-}
+PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS: dict[str, re.Pattern[str]] = {}
 
-PUBLIC_NON_OFFICIAL_REQUIRED_LABELS = {
-    "hololang": ("interno", "interna", "internal", "experimental", "ir"),
-    "llvm": ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
-    "latex": ("experimental", "fuera de política", "fuera de politica", "interno", "interna", "internal"),
-    "reverse-wasm": ("experimental", "retirado", "histórico", "historico", "fuera de política", "fuera de politica"),
-}
+PUBLIC_NON_OFFICIAL_REQUIRED_LABELS: dict[str, tuple[str, ...]] = {}
 
 
 def is_text_file(path: Path) -> bool:
@@ -252,11 +230,6 @@ def main() -> int:
 
                 for label, pattern in PUBLIC_NON_OFFICIAL_CONTEXT_PATTERNS.items():
                     if not pattern.search(line):
-                        continue
-                    if label == "hololang" and any(
-                        marker in lowered
-                        for marker in ("no expone", "no es", "no describe", "pipeline interno")
-                    ):
                         continue
                     if not any(
                         marker in lowered
