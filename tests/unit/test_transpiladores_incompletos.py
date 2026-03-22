@@ -18,8 +18,16 @@ class NodoDesconocido(NodoAST):
 
 def test_transpiladores_cpp_rust_global_vacio():
     ast = [NodoGlobal(["x"])]
-    assert TranspiladorCPP().generate_code(ast) == "// global x"
-    assert TranspiladorRust().generate_code(ast) == "// global x"
+    cpp_code = TranspiladorCPP().generate_code(ast)
+    rust_code = TranspiladorRust().generate_code(ast)
+
+    assert "#include <cobra/corelibs.hpp>" in cpp_code
+    assert "#include <cobra/standard_library.hpp>" in cpp_code
+    assert cpp_code.endswith("// global x")
+
+    assert "use crate::corelibs::*;" in rust_code
+    assert "use crate::standard_library::*;" in rust_code
+    assert rust_code.endswith("// global x")
 
 
 def test_transpilador_js_nodo_invalido_attribute_error():

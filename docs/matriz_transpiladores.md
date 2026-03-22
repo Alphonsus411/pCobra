@@ -87,6 +87,16 @@ Además:
 - el runtime JavaScript depende del entorno (`node`, `vm2` y, para ciertas pruebas, `node-fetch`);
 - `holobit-sdk` está declarado en `pyproject.toml` como dependencia condicionada a Python `>=3.10`.
 
+## Límites conocidos que deben leerse como parte del contrato
+
+- `python` sigue siendo el único backend `full` real para `holobit`, `proyectar`, `transformar`, `graficar`, `corelibs` y `standard_library`.
+- Ningún backend `partial` debe publicitarse como paridad real con Python ni como integración completa con `holobit-sdk`.
+- En `python`, la integración avanzada Holobit depende de `holobit-sdk`; cuando falta esa dependencia, el contrato correcto es fallar con `ModuleNotFoundError` explícito, no degradar a stub silencioso.
+- En `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm`, `corelibs` y `standard_library` solo garantizan imports/includes/puntos de llamada conservados y verificables en el código generado; no equivalen a compatibilidad completa de runtime.
+- En todos los backends `partial`, los hooks `cobra_*` deben inyectarse únicamente cuando el AST contiene primitivas Holobit (`NodoHolobit`, `NodoProyectar`, `NodoTransformar`, `NodoGraficar`).
+- En todos los backends `partial`, `proyectar`, `transformar` y `graficar` deben terminar en error explícito (`Error`, `panic!`, `panic`, `std::runtime_error`, `UnsupportedOperationException`, `unreachable`, `TRAP`) cuando el runtime avanzado no existe.
+- Si un backend cambia el nombre de símbolos de `corelibs` o `standard_library`, o deja de emitir sus imports/includes mínimos, eso debe tratarse como regresión contractual aunque el resto del archivo siga transpilandose.
+
 ## Qué valida realmente la batería actual
 
 La cobertura contractual actual se apoya en:

@@ -174,6 +174,20 @@ def test_official_backend_generated_code_includes_expected_imports_and_hooks(bac
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_official_backend_only_injects_cobra_hooks_when_ast_requires_holobit(backend: str):
+    generated = _generate(
+        backend,
+        [
+            NodoLlamadaFuncion("longitud", [NodoValor("cobra")]),
+            NodoLlamadaFuncion("mostrar", [NodoValor("hola")]),
+        ],
+    )
+
+    for hook in HOOK_EXPECTATIONS[backend]:
+        assert hook not in generated
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
 def test_official_backend_codegen_matches_golden_snapshot(backend: str):
     generated = _generate(backend, _representative_nodes(backend)).strip() + "\n"
     golden_file = GOLDEN_DIR / f"{backend}.golden"
