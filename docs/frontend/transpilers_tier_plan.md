@@ -46,7 +46,7 @@ Los tiers oficiales siguen siendo:
 
 **Seguimiento realista**
 - [x] El árbol principal de transpiladores `to_*.py` ya está recortado a los 8 backends oficiales.
-- [x] La CLI pública rechaza aliases legacy como `js` o `ensamblador`.
+- [x] La CLI pública rechaza aliases legacy archivados en `docs/historico/targets_aliases_legacy.md` (histórico).
 - [x] Existe una auditoría automática para detectar aliases legacy y módulos fuera de política.
 - [x] `module_map.py` ya resuelve solo desde `cobra.toml` con `[modulos."..."]` y los 8 nombres canónicos de `OFFICIAL_TARGETS`.
 - [ ] La limpieza legacy sigue siendo parcial mientras persistan excepciones internas/históricas de compatibilidad y validadores específicos para rutas heredadas.
@@ -70,7 +70,7 @@ Los tiers oficiales siguen siendo:
 - [x] Hay una matriz contractual pública por backend y feature (`holobit`, `proyectar`, `transformar`, `graficar`, `corelibs`, `standard_library`).
 - [x] Python figura como `full` en todas las features del contrato actual.
 - [x] JavaScript figura como `partial` para primitivas Holobit, `corelibs` y `standard_library`, en línea con la matriz contractual vigente.
-- [x] Rust, WASM, Go, C++, Java y ASM están declarados explícitamente como `partial` en la matriz actual.
+- [x] `rust`, `wasm`, `go`, `cpp`, `java` y `asm` están declarados explícitamente como `partial` en la matriz actual.
 - [x] Existen suites contractuales por tier y una suite consolidada por backend/feature.
 - [ ] Las suites contractuales no deben darse por totalmente cerradas: en la revisión actual siguen apareciendo desajustes puntuales entre expectativas y codegen real en algunos backends/features parciales.
 - [ ] El proyecto no garantiza ejecución end-to-end homogénea para los 8 backends: fuera de Python y JavaScript la evidencia principal es de **codegen contractual**, no de runtime completo.
@@ -116,7 +116,7 @@ python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
 
 1. No aparecen menciones a orígenes reverse retirados en rutas públicas actuales.
 2. No existen módulos `to_*.py` fuera del alcance oficial.
-3. La CLI pública rechaza aliases legacy (`js`, `ensamblador`, etc.).
+3. La CLI pública rechaza aliases legacy archivados en `docs/historico/targets_aliases_legacy.md` (histórico).
 4. No hay aliases legacy en código productivo expuesto por la política pública.
 
 **Comprobaciones sugeridas**

@@ -2,6 +2,13 @@
 
 Este directorio contiene una plantilla mínima de extensión que habilita el resaltado básico para archivos `.co`.
 
+## Política de nombres en ayudas y ejemplos
+
+Cuando esta extensión documente comandos de transpilación o ejemplos de CLI,
+debe usar únicamente los 8 nombres canónicos de salida: `python`, `rust`,
+`javascript`, `wasm`, `go`, `cpp`, `java` y `asm`. No debe presentar aliases
+legacy o nombres históricos como opciones públicas válidas.
+
 ## Instalación de dependencias
 
 ```bash

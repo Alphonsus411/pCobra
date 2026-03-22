@@ -257,6 +257,7 @@ ARCHIVE_LINK_REQUIRED_MARKERS = (
 )
 
 LEGACY_PUBLIC_OPTION_PATTERNS: dict[str, re.Pattern[str]] = {
+    "--a": re.compile(r"(?<![\w-])(--a)(?![\w-])"),
     "--to": re.compile(r"(?<![\w-])(--to)(?![\w-])"),
     "--lenguaje": re.compile(r"(?<![\w-])(--lenguaje)(?![\w-])"),
 }

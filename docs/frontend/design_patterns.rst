@@ -85,7 +85,7 @@ asignan dinámicamente las funciones ``visit_<nodo>``:
    for nombre, funcion in go_nodes.items():
        setattr(TranspiladorGo, f"visit_{nombre}", funcion)
 
-Otros lenguajes como C++ realizan asignaciones equivalentes de forma
+Otros lenguajes como ``cpp`` realizan asignaciones equivalentes de forma
 explícita para mantener separada la lógica de cada nodo.
 
 Patr\u00f3n Command
@@ -97,4 +97,3 @@ registra sus argumentos en ``register_subparser`` y ejecuta la l\u00f3gica en
 ``entry_points`` del grupo ``cobra.plugins`` y las instancia de manera
 segura. As\u00ed se a\u00f1aden nuevas funcionalidades sin acoplar el n\u00facleo a
 c\u00f3digo espec\u00edfico de cada plugin.
-

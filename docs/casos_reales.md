@@ -97,7 +97,7 @@ def hola():
 Compila y lanza el servidor con:
 
 ```bash
-cobra compilar app_web.co --a python -o build/app_web.py
+cobra compilar app_web.co --tipo python -o build/app_web.py
 python build/app_web.py
 ```
 
@@ -113,6 +113,6 @@ pantalla = pygame.nueva_pantalla(640, 480)
 Para ejecutarlo:
 
 ```bash
-cobra compilar juego.co --a python
+cobra compilar juego.co --tipo python
 python juego.py
 ```

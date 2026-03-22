@@ -60,13 +60,13 @@ Lexer --> Parser
 Parser --> AST
 AST --> Transpiladores
 Transpiladores --> Python
-Transpiladores --> JS
-Transpiladores --> ASM
+Transpiladores --> javascript
+Transpiladores --> asm
 Transpiladores --> Rust
-Transpiladores --> "C++"
+Transpiladores --> cpp
 Transpiladores --> Go
 Transpiladores --> Java
-Transpiladores --> WebAssembly
+Transpiladores --> wasm
 @enduml
 ```
 
