@@ -21,7 +21,6 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    ../../docs/lenguajes_soportados
    ../../docs/lenguajes
    sintaxis
-   hololang
    avances
    proximos_pasos
    optimizaciones
@@ -59,14 +58,14 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
 Introducción
 --------------------
 
-Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Su cadena de compilación incorpora Hololang como **lenguaje intermedio interno** para coordinar la transpilación hacia distintos backends. Actualmente, los destinos canónicos de salida son: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
+Cobra fue creado con la idea de facilitar la programacion en español, optimizando la gestion de memoria y anadiendo soporte para trabajar con datos de alta complejidad como los holobits. Su cadena de compilación puede apoyarse en una **representación intermedia (IR) interna** para coordinar la transpilación hacia distintos backends. Actualmente, los destinos canónicos de salida son: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``.
 
 Tier de soporte de backends:
 
 * **Tier 1**: ``python``, ``rust``, ``javascript``, ``wasm``.
 * **Tier 2**: ``go``, ``cpp``, ``java``, ``asm``.
 
-La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y evitar aliases legacy o targets retirados. La guía de Hololang incluida en esta documentación debe leerse únicamente como material de pipeline **interno**, no como un destino oficial adicional.
+La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y evitar aliases legacy o targets retirados. Cuando sea útil mencionar la arquitectura, debe describirse únicamente como un pipeline o IR **interno**, sin presentarlo como un lenguaje de usuario ni como un destino oficial adicional.
 
 
 

@@ -45,7 +45,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 ## Tabla de Contenidos
 
 - Descripción del Proyecto
-- Arquitectura interna con Hololang (IR interno)
+- Arquitectura interna del compilador (IR interno)
 - Instalación
 - Cómo usar la CLI
 - Descargas
@@ -125,15 +125,15 @@ Cobra está diseñado para facilitar la programación en español, permitiendo q
 Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
 La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
-## Arquitectura interna con Hololang (IR interno)
+## Arquitectura interna del compilador (IR interno)
 
-La cadena de herramientas de Cobra utiliza Hololang como **IR interno** del compilador. Hololang no es un target oficial de salida ni un backend público adicional; su presencia en esta sección debe leerse como descripción del pipeline interno del proyecto. El flujo principal funciona de la siguiente manera:
+La cadena de herramientas de Cobra puede utilizar una **IR interna** del compilador para desacoplar el front-end de los generadores de código. Esa IR no forma parte de la interfaz pública de usuario ni constituye un target oficial adicional. El flujo principal funciona de la siguiente manera:
 
 1. El front-end analiza el código fuente y construye el AST de Cobra.
-2. Ese AST se normaliza y se transforma en representaciones Hololang que capturan estructuras de control, módulos y tipos.
-3. Los transpiladores consumen el IR Hololang para generar código en los distintos backends soportados.
+2. Ese AST se normaliza y se transforma en una representación intermedia interna que captura estructuras de control, módulos y tipos.
+3. Los transpiladores consumen esa IR para generar código en los distintos backends soportados.
 
-Hololang actúa como contrato estable entre el front-end y los generadores de código, permitiendo incorporar nuevos destinos sin modificar el parser original. Gracias a esta capa intermedia, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. Cualquier artefacto Hololang debe entenderse como salida **interna o experimental** del pipeline, mientras que la salida pública oficial sigue limitada a `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+Esta capa intermedia actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ella, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. Cualquier artefacto intermedio debe entenderse como salida **interna o experimental** del pipeline, mientras que la salida pública oficial sigue limitada a `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
 
 ## Instalación
 
