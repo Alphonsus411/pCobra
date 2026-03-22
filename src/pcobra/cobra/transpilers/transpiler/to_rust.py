@@ -126,20 +126,24 @@ def visit_proyectar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     modo = self.obtener_valor(nodo.modo)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f'cobra_proyectar(&format!("{{}}", {hb}), &format!("{{}}", {modo}));')
+    self.agregar_linea(f'let _ = cobra_proyectar(&{hb}, &format!("{{}}", {modo}));')
 
 
 def visit_transformar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     op = self.obtener_valor(nodo.operacion)
+    params = ", ".join(f"{self.obtener_valor(param)} as f64" for param in nodo.parametros)
+    params_slice = f'&[{params}]' if params else '&[]'
     self.usa_runtime_holobit = True
-    self.agregar_linea(f'cobra_transformar(&format!("{{}}", {hb}), &format!("{{}}", {op}), &[]);')
+    self.agregar_linea(
+        f'let _ = cobra_transformar(&{hb}, &format!("{{}}", {op}), {params_slice});'
+    )
 
 
 def visit_graficar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     self.usa_runtime_holobit = True
-    self.agregar_linea(f'cobra_graficar(&format!("{{}}", {hb}));')
+    self.agregar_linea(f'let _ = cobra_graficar(&{hb});')
 
 class TranspiladorRust(BaseTranspiler):
     """Transpila el AST de Cobra a código Rust sencillo."""

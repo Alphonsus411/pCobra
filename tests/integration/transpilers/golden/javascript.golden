@@ -9,17 +9,145 @@ import * as seguridad from './nativos/seguridad.js';
 import * as sistema from './nativos/sistema.js';
 import * as texto from './nativos/texto.js';
 import * as tiempo from './nativos/tiempo.js';
+import * as interfaz from './nativos/interfaz.js';
+
+const cobraJsCorelibs = Object.freeze({
+    longitud(valor) {
+        if (typeof texto.longitud === 'function') {
+            return texto.longitud(valor);
+        }
+        if (typeof coleccion.longitud === 'function') {
+            return coleccion.longitud(valor);
+        }
+        if (valor == null) {
+            return 0;
+        }
+        if (typeof valor === 'string' || Array.isArray(valor)) {
+            return valor.length;
+        }
+        if (typeof valor === 'object') {
+            return Object.keys(valor).length;
+        }
+        return String(valor).length;
+    },
+});
+
+const cobraJsStandardLibrary = Object.freeze({
+    mostrar(...args) {
+        if (typeof io.mostrar === 'function') {
+            return io.mostrar(...args);
+        }
+        if (typeof interfaz.imprimirAviso === 'function' && args.length === 1) {
+            interfaz.imprimirAviso(String(args[0]), { nivel: 'info' });
+            return args[0];
+        }
+        console.log(...args);
+        return args.length <= 1 ? (args[0] ?? null) : args;
+    },
+});
+
+const longitud = (valor) => cobraJsCorelibs.longitud(valor);
+const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);
+function cobraNormalizarHolobit(hb) {
+    if (hb && hb.__cobra_tipo__ === 'holobit' && Array.isArray(hb.valores)) {
+        return {
+            __cobra_tipo__: 'holobit',
+            valores: hb.valores.map((valor) => Number(valor)),
+            historial: Array.isArray(hb.historial) ? [...hb.historial] : [],
+        };
+    }
+    if (Array.isArray(hb)) {
+        return cobra_holobit(hb);
+    }
+    throw new Error(`Runtime Holobit JavaScript: valor no compatible para holobit: ${String(hb)}`);
+}
+
+function cobraCrearVectorDimension(valores, dimension) {
+    const normalizados = valores.slice(0, dimension);
+    while (normalizados.length < dimension) {
+        normalizados.push(0);
+    }
+    return normalizados;
+}
+
 function cobra_holobit(valores) {
-    return Array.isArray(valores) ? valores : [valores];
+    const lista = Array.isArray(valores) ? valores : [valores];
+    return Object.freeze({
+        __cobra_tipo__: 'holobit',
+        valores: lista.map((valor) => Number(valor)),
+        historial: ['creado'],
+    });
 }
+
 function cobra_proyectar(hb, modo) {
-    throw new Error("Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.");
+    const holobit = cobraNormalizarHolobit(hb);
+    const modoNormalizado = String(modo).trim().toLowerCase();
+    switch (modoNormalizado) {
+        case '1d':
+        case 'linea':
+            return cobraCrearVectorDimension(holobit.valores, 1);
+        case '2d':
+        case 'plano':
+            return cobraCrearVectorDimension(holobit.valores, 2);
+        case '3d':
+        case 'espacio':
+            return cobraCrearVectorDimension(holobit.valores, 3);
+        case 'vector':
+            return [...holobit.valores];
+        default:
+            throw new Error(`Runtime Holobit JavaScript: modo de proyección no soportado por el adaptador oficial: ${modo}`);
+    }
 }
+
 function cobra_transformar(hb, op, ...params) {
-    throw new Error("Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.");
+    const holobit = cobraNormalizarHolobit(hb);
+    const operacion = String(op).trim().toLowerCase();
+    let valores = [...holobit.valores];
+
+    if (operacion === 'escalar') {
+        const factor = Number(params[0] ?? 1);
+        valores = valores.map((valor) => valor * factor);
+    } else if (operacion === 'normalizar') {
+        const maximo = Math.max(1, ...valores.map((valor) => Math.abs(valor)));
+        valores = valores.map((valor) => valor / maximo);
+    } else if (operacion === 'mover' || operacion === 'trasladar') {
+        const dx = Number(params[0] ?? 0);
+        const dy = Number(params[1] ?? 0);
+        const dz = Number(params[2] ?? 0);
+        valores = cobraCrearVectorDimension(valores, 3);
+        valores[0] += dx;
+        valores[1] += dy;
+        valores[2] += dz;
+    } else if (operacion === 'rotar') {
+        const eje = String(params[0] ?? 'z').trim().toLowerCase();
+        const grados = Number(params[1] ?? params[0] ?? 0);
+        const radianes = (grados * Math.PI) / 180;
+        valores = cobraCrearVectorDimension(valores, 3);
+        if (eje !== 'z') {
+            throw new Error(`Runtime Holobit JavaScript: rotación soportada solo sobre eje z en el adaptador oficial, recibido ${eje}`);
+        }
+        const [x, y, z] = valores;
+        valores = [
+            Number((x * Math.cos(radianes) - y * Math.sin(radianes)).toFixed(6)),
+            Number((x * Math.sin(radianes) + y * Math.cos(radianes)).toFixed(6)),
+            z,
+        ];
+    } else {
+        throw new Error(`Runtime Holobit JavaScript: operación no soportada por el adaptador oficial: ${op}`);
+    }
+
+    return Object.freeze({
+        __cobra_tipo__: 'holobit',
+        valores,
+        historial: [...holobit.historial, `transformar:${operacion}`],
+    });
 }
+
 function cobra_graficar(hb) {
-    throw new Error("Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.");
+    const holobit = cobraNormalizarHolobit(hb);
+    const vista = `Holobit(${holobit.valores.join(', ')})`;
+    mostrar(vista);
+    return vista;
 }
 let hb = cobra_holobit([1, 2, 3]);
 cobra_proyectar(hb, '2d');

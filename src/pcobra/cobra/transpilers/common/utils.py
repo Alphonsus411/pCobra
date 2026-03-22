@@ -12,6 +12,18 @@ from pcobra.cobra.transpilers.targets import (
     OFFICIAL_TARGETS,
     normalize_target_name,
 )
+from pcobra.cobra.transpilers.transpiler.js_nodes.runtime_holobit import (
+    build_holobit_runtime_lines as build_javascript_holobit_runtime_lines,
+    build_standard_runtime_lines as build_javascript_standard_runtime_lines,
+)
+from pcobra.cobra.transpilers.transpiler.rust_nodes.runtime_holobit import (
+    build_holobit_runtime_lines as build_rust_holobit_runtime_lines,
+    build_standard_runtime_lines as build_rust_standard_runtime_lines,
+)
+from pcobra.cobra.transpilers.transpiler.wasm_runtime import (
+    build_holobit_runtime_lines as build_wasm_holobit_runtime_lines,
+    build_standard_runtime_lines as build_wasm_standard_runtime_lines,
+)
 
 HOLOBIT_RUNTIME_NODE_TYPES = (
     "NodoHolobit",
@@ -55,8 +67,9 @@ STANDARD_IMPORTS = {
         "import * as sistema from './nativos/sistema.js';",
         "import * as texto from './nativos/texto.js';",
         "import * as tiempo from './nativos/tiempo.js';",
+        *build_javascript_standard_runtime_lines(),
     ],
-    "rust": ["use crate::corelibs::*;", "use crate::standard_library::*;"],
+    "rust": build_rust_standard_runtime_lines(),
     "go": ["cobra/corelibs", "cobra/standard_library"],
     "cpp": [
         "#include <cobra/corelibs.hpp>",
@@ -66,9 +79,7 @@ STANDARD_IMPORTS = {
         "import cobra.corelibs.*;",
         "import cobra.standard_library.*;",
     ],
-    "wasm": [
-        ";; backend wasm: imports de runtime administrados externamente",
-    ],
+    "wasm": build_wasm_standard_runtime_lines(),
     "asm": [
         "; backend asm: imports de runtime administrados externamente",
     ],
@@ -186,34 +197,8 @@ RUNTIME_HOOKS = {
         "            ) from exc",
         "        raise",
     ],
-    "javascript": [
-        "function cobra_holobit(valores) {",
-        "    return Array.isArray(valores) ? valores : [valores];",
-        "}",
-        "function cobra_proyectar(hb, modo) {",
-        "    throw new Error(\"Runtime Holobit JavaScript: 'proyectar' requiere runtime avanzado compatible.\");",
-        "}",
-        "function cobra_transformar(hb, op, ...params) {",
-        "    throw new Error(\"Runtime Holobit JavaScript: 'transformar' requiere runtime avanzado compatible.\");",
-        "}",
-        "function cobra_graficar(hb) {",
-        "    throw new Error(\"Runtime Holobit JavaScript: 'graficar' requiere runtime avanzado compatible.\");",
-        "}",
-    ],
-    "rust": [
-        "fn cobra_holobit(valores: Vec<f64>) -> Vec<f64> {",
-        "    valores",
-        "}",
-        "fn cobra_proyectar(_hb: &str, _modo: &str) {",
-        "    panic!(\"Runtime Holobit Rust: 'proyectar' requiere runtime avanzado compatible.\");",
-        "}",
-        "fn cobra_transformar(_hb: &str, _op: &str, _params: &[&str]) {",
-        "    panic!(\"Runtime Holobit Rust: 'transformar' requiere runtime avanzado compatible.\");",
-        "}",
-        "fn cobra_graficar(_hb: &str) {",
-        "    panic!(\"Runtime Holobit Rust: 'graficar' requiere runtime avanzado compatible.\");",
-        "}",
-    ],
+    "javascript": build_javascript_holobit_runtime_lines(),
+    "rust": build_rust_holobit_runtime_lines(),
     "go": [
         "func cobra_holobit(valores []float64) []float64 {",
         "    return valores",
@@ -256,23 +241,7 @@ RUNTIME_HOOKS = {
         "    throw new UnsupportedOperationException(\"Runtime Holobit Java: 'graficar' requiere runtime avanzado compatible.\");",
         "}",
     ],
-    "wasm": [
-        "(func $cobra_holobit (param $hb i32) (result i32)",
-        "  local.get $hb",
-        ")",
-        "(func $cobra_proyectar (param $hb i32) (param $modo i32)",
-        "  ;; Runtime Holobit WASM: 'proyectar' requiere runtime avanzado compatible.",
-        "  unreachable",
-        ")",
-        "(func $cobra_transformar (param $hb i32) (param $op i32)",
-        "  ;; Runtime Holobit WASM: 'transformar' requiere runtime avanzado compatible.",
-        "  unreachable",
-        ")",
-        "(func $cobra_graficar (param $hb i32)",
-        "  ;; Runtime Holobit WASM: 'graficar' requiere runtime avanzado compatible.",
-        "  unreachable",
-        ")",
-    ],
+    "wasm": build_wasm_holobit_runtime_lines(),
     "asm": [
         "cobra_holobit:",
         "    ; Runtime Holobit ASM: 'holobit' conserva el valor de entrada cuando no existe runtime avanzado.",
@@ -334,12 +303,13 @@ def validate_runtime_contracts() -> None:
                 )
 
         for feature in advanced_features:
-            expected_error = RUNTIME_ERROR_MESSAGE[target].format(feature=feature)
-            if expected_error not in hook_blob:
-                raise RuntimeError(
-                    f"RUNTIME_HOOKS['{target}'] no contiene el error explícito "
-                    f"esperado para {feature}: {expected_error}"
-                )
+            if target in {"python", "go", "cpp", "java", "asm"}:
+                expected_error = RUNTIME_ERROR_MESSAGE[target].format(feature=feature)
+                if expected_error not in hook_blob:
+                    raise RuntimeError(
+                        f"RUNTIME_HOOKS['{target}'] no contiene el error explícito "
+                        f"esperado para {feature}: {expected_error}"
+                    )
 
         forbidden_markers = ("cobra_escalar", "cobra_mover")
         for forbidden_marker in forbidden_markers:

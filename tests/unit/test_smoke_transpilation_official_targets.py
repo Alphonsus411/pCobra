@@ -33,9 +33,9 @@ def ast_holobit_runtime():
     "transpilador, fragmentos",
     [
         (TranspiladorPython, ["from corelibs import *", "from standard_library import *", "def cobra_holobit(", "def cobra_proyectar(", "def cobra_transformar(", "def cobra_graficar("]),
-        (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
-        (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
-        (TranspiladorWasm, ["(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar", "runtime administrados externamente"]),
+        (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "import * as interfaz from './nativos/interfaz.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
+        (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
+        (TranspiladorWasm, ["(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar", "host-managed"]),
         (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobra_holobit(", "func cobra_proyectar(", "func cobra_transformar(", "func cobra_graficar("]),
         (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline auto cobra_holobit", "inline void cobra_proyectar", "inline void cobra_transformar", "inline void cobra_graficar"]),
         (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static Object cobra_holobit", "private static void cobra_proyectar", "private static void cobra_transformar", "private static void cobra_graficar"]),
@@ -53,7 +53,7 @@ def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(transpilador, fra
     [
         (TranspiladorPython, ["corelibs", "standard_library"]),
         (TranspiladorRust, ["corelibs", "standard_library"]),
-        (TranspiladorWasm, ["runtime administrados externamente"]),
+        (TranspiladorWasm, ["host-managed"]),
         (TranspiladorGo, ["cobra/corelibs", "cobra/standard_library"]),
         (TranspiladorCPP, ["cobra/corelibs.hpp", "cobra/standard_library.hpp"]),
         (TranspiladorJava, ["cobra.corelibs", "cobra.standard_library"]),

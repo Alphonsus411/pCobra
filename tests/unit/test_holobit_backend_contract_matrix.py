@@ -39,15 +39,15 @@ HOOK_CALL_MARKERS = {
     },
     "rust": {
         "holobit": "cobra_holobit(vec![1, 2, 3]);",
-        "proyectar": 'cobra_proyectar(&format!("{}", hb), &format!("{}", "2d"));',
-        "transformar": 'cobra_transformar(&format!("{}", hb), &format!("{}", "rotar"), &[]);',
-        "graficar": 'cobra_graficar(&format!("{}", hb));',
+        "proyectar": 'let _ = cobra_proyectar(&hb, &format!("{}", "2d"));',
+        "transformar": 'let _ = cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]);',
+        "graficar": 'let _ = cobra_graficar(&hb);',
     },
     "wasm": {
         "holobit": "(drop (call $cobra_holobit (i32.const 1)))",
-        "proyectar": "(call $cobra_proyectar (local.get $hb) (i32.const 0))",
-        "transformar": "(call $cobra_transformar (local.get $hb) (i32.const 0))",
-        "graficar": "(call $cobra_graficar (local.get $hb))",
+        "proyectar": "(drop (call $cobra_proyectar (local.get $hb) (i32.const 0)))",
+        "transformar": "(drop (call $cobra_transformar (local.get $hb) (i32.const 0) (i32.const 1)))",
+        "graficar": "(drop (call $cobra_graficar (local.get $hb)))",
     },
     "go": {
         "holobit": "hb := cobra_holobit([]float64{1, 2, 3})",

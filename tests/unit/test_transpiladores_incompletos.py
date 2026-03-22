@@ -27,6 +27,7 @@ def test_transpiladores_cpp_rust_global_vacio():
 
     assert "use crate::corelibs::*;" in rust_code
     assert "use crate::standard_library::*;" in rust_code
+    assert "fn longitud<T: ToString>(valor: T) -> usize {" in rust_code
     assert rust_code.endswith("// global x")
 
 

@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+
+def build_standard_runtime_lines() -> list[str]:
+    return [
+        ';; backend wasm: adaptadores host-managed de corelibs y standard_library',
+        '(import "pcobra:corelibs" "longitud" (func $host_longitud (param i32) (result i32)))',
+        '(import "pcobra:standard_library" "mostrar" (func $host_mostrar (param i32)))',
+        '(func $longitud (param $value i32) (result i32)',
+        '  local.get $value',
+        '  call $host_longitud',
+        ')',
+        '(func $mostrar (param $value i32)',
+        '  local.get $value',
+        '  call $host_mostrar',
+        ')',
+    ]
+
+
+
+def build_holobit_runtime_lines() -> list[str]:
+    return [
+        ';; backend wasm: hooks Holobit delegados en runtime host-managed de pcobra',
+        '(import "pcobra:holobit" "cobra_holobit" (func $host_cobra_holobit (param i32) (result i32)))',
+        '(import "pcobra:holobit" "cobra_proyectar" (func $host_cobra_proyectar (param i32) (param i32) (result i32)))',
+        '(import "pcobra:holobit" "cobra_transformar" (func $host_cobra_transformar (param i32) (param i32) (param i32) (result i32)))',
+        '(import "pcobra:holobit" "cobra_graficar" (func $host_cobra_graficar (param i32) (result i32)))',
+        '(func $cobra_holobit (param $hb i32) (result i32)',
+        '  local.get $hb',
+        '  call $host_cobra_holobit',
+        ')',
+        '(func $cobra_proyectar (param $hb i32) (param $modo i32) (result i32)',
+        '  local.get $hb',
+        '  local.get $modo',
+        '  call $host_cobra_proyectar',
+        ')',
+        '(func $cobra_transformar (param $hb i32) (param $op i32) (param $params_len i32) (result i32)',
+        '  local.get $hb',
+        '  local.get $op',
+        '  local.get $params_len',
+        '  call $host_cobra_transformar',
+        ')',
+        '(func $cobra_graficar (param $hb i32) (result i32)',
+        '  local.get $hb',
+        '  call $host_cobra_graficar',
+        ')',
+    ]
