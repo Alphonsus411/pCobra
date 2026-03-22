@@ -104,10 +104,10 @@ Lectura de política asociada a esta matriz:
 
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con runtime experimental/best-effort**: `go`, `java`.
+- **Targets con runtime best-effort no público**: `go`, `java`.
 - **Targets solo de transpilación sin runtime público**: `wasm`, `asm`.
 
-Tener "runtime oficial" o "runtime experimental" **no equivale** a compatibilidad
+Tener "runtime oficial" o "runtime best-effort no público" **no equivale** a compatibilidad
 `full` del contrato Holobit/SDK: fuera de `python`, el estado contractual
 vigente sigue siendo `partial`.
 

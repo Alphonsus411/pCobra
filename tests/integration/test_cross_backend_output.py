@@ -27,7 +27,7 @@ from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 
 from tests.utils.runtime import execute_transpiled_code
-from tests.utils.targets import EXPERIMENTAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+from tests.utils.targets import BEST_EFFORT_INTERNAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
 
 
 def _collect_output_differences(tmp_path, archivo, esperados, *, langs, allow_experimental=False):
@@ -85,7 +85,7 @@ def test_cross_backend_output_experimental_best_effort(tmp_path, transpiler_case
         tmp_path,
         archivo,
         esperados,
-        langs=EXPERIMENTAL_RUNTIME_TARGETS,
+        langs=BEST_EFFORT_INTERNAL_RUNTIME_TARGETS,
         allow_experimental=True,
     )
     assert not diferencias, f"Salidas experimentales distintas: {diferencias}"

@@ -71,7 +71,8 @@ class VerifyCommand(BaseCommand):
             help=_(
                 "Lista de lenguajes separados por comas para verificación ejecutable. "
                 "Targets oficiales de transpilación: {official}. "
-                "Runtimes oficiales de verificación: {runtime}. {policy}"
+                "Runtimes oficiales de verificación: {runtime}. "
+                "Aquí se compara ejecución real, no solo generación de código. {policy}"
             ).format(
                 official=OFFICIAL_TRANSPILATION_TARGETS_HELP,
                 runtime=VERIFICATION_EXECUTABLE_TARGETS_HELP,

@@ -25,7 +25,6 @@ TRANSPILATION_ONLY_TARGETS = tuple(
 
 # Targets best-effort conservados fuera del contrato oficial de runtime.
 BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(("go", "java"))
-EXPERIMENTAL_RUNTIME_TARGETS = BEST_EFFORT_RUNTIME_TARGETS
 
 # Targets sin runtime automatizado en la CLI/suite actual.
 NO_RUNTIME_TARGETS = tuple(
@@ -84,11 +83,14 @@ def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[
     return (
         "Targets oficiales de transpilación: {official}. "
         "Solo tienen runtime oficial para {capability}: {allowed}. "
+        "Los targets {non_runtime} siguen siendo salidas oficiales de generación de código, "
+        "pero no equivalen a un runtime oficial ni a soporte oficial de librerías en ejecución. "
         "Targets solo transpilación: {transpilation_only}."
     ).format(
         official=official_transpilation_targets_text(),
         capability=capability,
         allowed=", ".join(allowed_targets),
+        non_runtime=", ".join(TRANSPILATION_ONLY_TARGETS),
         transpilation_only=transpilation_only_targets_text(),
     )
 
@@ -104,6 +106,8 @@ def restricted_target_error(*, unsupported: list[str], capability: str, allowed_
     return (
         "Los targets {unsupported} son oficiales para transpilación, "
         "pero no tienen runtime oficial para {capability}. "
+        "Generar código para esos targets no implica paridad de ejecución real "
+        "ni soporte oficial de librerías equivalente a `python`, `rust`, `javascript` o `cpp`. "
         "Targets oficiales: {official}. Usa solo: {allowed}. "
         "Targets solo transpilación: {transpilation_only}."
     ).format(

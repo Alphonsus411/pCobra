@@ -5,7 +5,7 @@ Este script ya no intenta inferir una cobertura amplia/exploratoria del AST.
 Su objetivo es regenerar la tabla pública alineada con:
 - los 8 targets oficiales de transpilación;
 - el subconjunto con runtime oficial;
-- el subconjunto conservado como runtime experimental/best-effort.
+- el subconjunto conservado como runtime best-effort no público.
 """
 
 from __future__ import annotations
@@ -17,22 +17,18 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "src"))
 
-from pcobra.cobra.cli.target_policies import (  # noqa: E402
-    BEST_EFFORT_RUNTIME_TARGETS,
-    NO_RUNTIME_TARGETS,
-    OFFICIAL_RUNTIME_TARGETS,
-)
+from pcobra.cobra.cli.target_policies import BEST_EFFORT_RUNTIME_TARGETS, NO_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS  # noqa: E402
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES  # noqa: E402
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, target_label  # noqa: E402
 
-EXPERIMENTAL_RUNTIME_TARGETS = BEST_EFFORT_RUNTIME_TARGETS
+BEST_EFFORT_RUNTIME_TARGETS_INTERNAL = BEST_EFFORT_RUNTIME_TARGETS
 
 
 def _runtime_policy(target: str) -> str:
     if target in OFFICIAL_RUNTIME_TARGETS:
         return "runtime_oficial"
-    if target in EXPERIMENTAL_RUNTIME_TARGETS:
-        return "runtime_experimental_best_effort"
+    if target in BEST_EFFORT_RUNTIME_TARGETS_INTERNAL:
+        return "runtime_best_effort_no_publico"
     if target in NO_RUNTIME_TARGETS:
         return "solo_transpilacion"
     raise RuntimeError(f"Target fuera de política conocida: {target}")
@@ -48,7 +44,7 @@ def _build_markdown() -> str:
         "",
         f"- **Targets oficiales de transpilación**: {', '.join(f'`{t}`' for t in OFFICIAL_TARGETS)}.",
         f"- **Targets con runtime oficial**: {', '.join(f'`{t}`' for t in OFFICIAL_RUNTIME_TARGETS)}.",
-        f"- **Targets con runtime experimental/best-effort**: {', '.join(f'`{t}`' for t in EXPERIMENTAL_RUNTIME_TARGETS)}.",
+        f"- **Targets con runtime best-effort no público**: {', '.join(f'`{t}`' for t in BEST_EFFORT_RUNTIME_TARGETS_INTERNAL)}.",
         f"- **Targets solo de transpilación**: {', '.join(f'`{t}`' for t in NO_RUNTIME_TARGETS)}.",
         "",
         "## Matriz contractual",
@@ -69,7 +65,7 @@ def _build_markdown() -> str:
     lines.extend(
         [
             "",
-            "> `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime experimental/best-effort.",
+            "> `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -78,7 +74,7 @@ def _build_markdown() -> str:
 
 def _write_csv(path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.writer(fh)
+        writer = csv.writer(fh, lineterminator="\n")
         writer.writerow(["backend", "label", "tier", "runtime_policy", *CONTRACT_FEATURES])
         for backend in OFFICIAL_TARGETS:
             contract = BACKEND_COMPATIBILITY[backend]

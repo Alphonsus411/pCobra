@@ -17,7 +17,7 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_cli_choices
 
-EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
+BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
 NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = NO_RUNTIME_TARGETS
 
 BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
@@ -35,7 +35,11 @@ BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
         "run": ["wasmtime", "{tmp}/prog.wasm"],
         "runtime_policy": "transpilation_only",
     },
-    "go": {"ext": "go", "run": ["go", "run", "{file}"], "runtime_policy": "experimental"},
+    "go": {
+        "ext": "go",
+        "run": ["go", "run", "{file}"],
+        "runtime_policy": "best_effort_non_public",
+    },
     "cpp": {
         "ext": "cpp",
         "compile": ["g++", "{file}", "-O2", "-o", "{tmp}/prog_cpp"],
@@ -46,7 +50,7 @@ BENCHMARK_BACKEND_METADATA: Final[dict[str, dict[str, object]]] = {
         "ext": "java",
         "compile": ["javac", "{file}"],
         "run": ["java", "-cp", "{tmp}", "Main"],
-        "runtime_policy": "experimental",
+        "runtime_policy": "best_effort_non_public",
     },
     "asm": {
         "ext": "s",
@@ -76,7 +80,7 @@ BINARY_BENCHMARK_METADATA: Final[dict[str, dict[str, object]]] = {
         "compile": ["javac", "{file}"],
         "run": ["java", "-cp", "{tmp}", "Main"],
         "bin": "{tmp}/Main.class",
-        "runtime_policy": "experimental",
+        "runtime_policy": "best_effort_non_public",
     },
     "asm": {
         "ext": "s",
@@ -150,12 +154,12 @@ def executable_benchmark_backends(
     """Devuelve solo backends con runtime utilizable por benchmarks ejecutables.
 
     Por defecto incluye el runtime oficial. Si ``include_experimental=True``,
-    añade además los runtimes best-effort experimentales (`go`, `java`).
+    añade además los runtimes best-effort no públicos (`go`, `java`).
     Los targets `wasm` y `asm` permanecen fuera del benchmark ejecutable
     automatizado en esta capa.
     """
     available_targets = OFFICIAL_TARGETS if backends is None else tuple(backends.keys())
     allowed = list(OFFICIAL_RUNTIME_TARGETS)
     if include_experimental:
-        allowed.extend(EXPERIMENTAL_BENCHMARK_RUNTIME_TARGETS)
+        allowed.extend(BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS)
     return target_cli_choices(tuple(target for target in available_targets if target in allowed))

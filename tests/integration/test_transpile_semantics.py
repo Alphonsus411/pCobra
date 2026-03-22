@@ -20,7 +20,7 @@ from cobra.core import Lexer
 from cobra.core import Parser
 from cobra.cli.commands.compile_cmd import TRANSPILERS
 from tests.utils.runtime import execute_transpiled_code
-from tests.utils.targets import EXPERIMENTAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+from tests.utils.targets import BEST_EFFORT_INTERNAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
 
 
 def obtener_salida_interprete(archivo: Path) -> str:
@@ -46,7 +46,7 @@ def test_transpile_semantics(tmp_path, lang):
 
 
 @pytest.mark.experimental
-@pytest.mark.parametrize("lang", EXPERIMENTAL_RUNTIME_TARGETS)
+@pytest.mark.parametrize("lang", BEST_EFFORT_INTERNAL_RUNTIME_TARGETS)
 def test_transpile_semantics_experimental_runtime(tmp_path, lang):
     """Cobertura best-effort para runtimes no oficiales conservados manualmente."""
     src = Path("tests/data/ejemplo.co")

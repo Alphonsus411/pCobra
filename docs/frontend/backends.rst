@@ -28,6 +28,13 @@ de ``src/pcobra/cobra/transpilers/targets.py``. La documentación pública debe
 usar únicamente ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``,
 ``java`` y ``asm``.
 
+Esto describe la **salida oficial de transpilación**, no la cobertura de
+ejecución. El runtime oficial público de CLI/contenedores está limitado a
+``python``, ``javascript``, ``cpp`` y ``rust``. Los targets ``go``, ``java``,
+``wasm`` y ``asm`` siguen siendo oficiales para generación de código, pero no
+deben presentarse como equivalentes a esos runtimes oficiales ni como soporte
+oficial de librerías en ejecución.
+
 Matriz de características
 -------------------------
 

@@ -32,6 +32,8 @@ Cobra distingue explícitamente entre dos alcances:
 Los targets ``go``, ``java``, ``wasm`` y ``asm`` se mantienen como destinos de
 **transpilación oficial** y no se publican como runtimes Docker oficiales.
 En consecuencia, no hay Dockerfiles dedicados para su ejecución directa en contenedor.
+Tampoco deben presentarse como equivalentes al soporte de librerías en
+ejecución que sí existe para ``python``, ``javascript``, ``cpp`` y ``rust``.
 
 Ejecutar programas en contenedores
 ----------------------------------
@@ -44,4 +46,6 @@ contenedor temporal usando ``--contenedor``:
    cobra ejecutar hola.co --contenedor=python
 
 La opción ``--contenedor`` solo acepta los runtimes Docker oficiales anteriores;
-no debe interpretarse como paridad automática con todos los targets de generación.
+no debe interpretarse como paridad automática con todos los targets de
+generación ni como promesa de runtime oficial para ``go``, ``java``, ``wasm``
+o ``asm``.

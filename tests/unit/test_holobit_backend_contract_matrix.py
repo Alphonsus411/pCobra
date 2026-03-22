@@ -150,15 +150,20 @@ def _parse_backend_matrix_table(doc_path: str) -> dict[str, dict[str, str]]:
             continue
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         backend = cells[0].strip("`")
-        tier = cells[1].lower().replace(" ", "")
+        if len(cells) >= 10:
+            feature_offset = 4
+            tier = cells[2].lower().replace(" ", "")
+        else:
+            feature_offset = 2
+            tier = cells[1].lower().replace(" ", "")
         rows[backend] = {
             "tier": tier,
-            "holobit": cells[2].split()[-1],
-            "proyectar": cells[3].split()[-1],
-            "transformar": cells[4].split()[-1],
-            "graficar": cells[5].split()[-1],
-            "corelibs": cells[6].split()[-1],
-            "standard_library": cells[7].split()[-1],
+            "holobit": cells[feature_offset].split()[-1],
+            "proyectar": cells[feature_offset + 1].split()[-1],
+            "transformar": cells[feature_offset + 2].split()[-1],
+            "graficar": cells[feature_offset + 3].split()[-1],
+            "corelibs": cells[feature_offset + 4].split()[-1],
+            "standard_library": cells[feature_offset + 5].split()[-1],
         }
     return rows
 
@@ -204,4 +209,4 @@ def test_docs_holobit_separan_transpilacion_runtime_oficial_y_best_effort():
         contenido = Path(doc_path).read_text(encoding="utf-8")
         assert "Targets oficiales de transpilación" in contenido
         assert "Targets con runtime oficial" in contenido
-        assert "runtime experimental/best-effort" in contenido
+        assert "runtime best-effort no público" in contenido
