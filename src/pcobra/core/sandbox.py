@@ -717,7 +717,17 @@ def ejecutar_en_contenedor(
     }
 
     if backend not in imagenes:
-        raise ValueError(f"Backend no soportado: {backend}")
+        if backend in {"go", "java", "wasm", "asm"}:
+            raise ValueError(
+                "Backend sin runtime Docker oficial: "
+                f"{backend}. pCobra puede generar código para ese target, "
+                "pero no lo expone como ejecución real oficial en contenedor. "
+                "Runtimes Docker oficiales: python, javascript, cpp, rust."
+            )
+        raise ValueError(
+            "Backend no soportado para ejecución en contenedor: "
+            f"{backend}. Runtimes Docker oficiales: python, javascript, cpp, rust."
+        )
 
     docker_path = shutil.which("docker")
     if not docker_path:

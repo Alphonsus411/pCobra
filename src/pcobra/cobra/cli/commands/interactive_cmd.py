@@ -120,7 +120,8 @@ class InteractiveCommand(BaseCommand):
             choices=SANDBOX_DOCKER_CHOICES,
             help=_(
                 "Target con runtime Docker oficial para modo interactivo "
-                "({targets}). {policy}"
+                "({targets}). El REPL solo ejecuta runtimes oficiales reales, "
+                "no cualquier target oficial de transpilación. {policy}"
             ).format(
                 targets=SANDBOX_DOCKER_HELP,
                 policy=build_runtime_capability_message(

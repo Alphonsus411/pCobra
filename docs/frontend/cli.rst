@@ -42,6 +42,11 @@ tiers oficiales son Tier 1 (``python``, ``rust``, ``javascript``, ``wasm``) y
 Tier 2 (``go``, ``cpp``, ``java``, ``asm``), con fuente de verdad en
 ``src/pcobra/cobra/transpilers/targets.py``.
 
+La política pública separa de forma estricta **salida oficial** y **runtime
+oficial**. Generar código para ``go``, ``java``, ``wasm`` o ``asm`` no implica
+que esos targets tengan ejecución real oficial en la CLI ni soporte oficial de
+librerías equivalente a ``python``, ``rust``, ``javascript`` o ``cpp``.
+
 Subcomando ``ejecutar``
 ----------------------
 Ejecuta directamente un script Cobra.
@@ -229,7 +234,8 @@ la terminal.
 
 Cuando uses ``--sandbox-docker``, la CLI solo ofrece runtimes Docker oficiales:
 ``python``, ``javascript``, ``cpp`` y ``rust``. Los demás targets oficiales
-(``wasm``, ``go``, ``java``, ``asm``) siguen siendo destinos de transpilación.
+(``wasm``, ``go``, ``java``, ``asm``) siguen siendo destinos de transpilación y
+no deben leerse como equivalentes de ejecución real.
 
 Subcomando ``plugins``
 ---------------------
@@ -276,7 +282,8 @@ Subcomando ``benchmarks``
 Compara el rendimiento de los backends con runner configurado en la suite y
 muestra un resumen en formato JSON. Opcionalmente puede guardarse en un
 archivo mediante ``--output``. Esto no implica paridad de ejecución para
-todos los targets oficiales de transpilación.
+todos los targets oficiales de transpilación: la política pública de runtime
+solo cubre ``python``, ``javascript``, ``cpp`` y ``rust``.
 
 Ejemplo:
 

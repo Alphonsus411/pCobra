@@ -12,7 +12,7 @@ import pytest
 
 from core.sandbox import ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from tests.utils.targets import (
-    EXPERIMENTAL_RUNTIME_TARGETS,
+    BEST_EFFORT_INTERNAL_RUNTIME_TARGETS,
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
     SUPPORTED_TARGETS,
@@ -136,7 +136,7 @@ def execute_transpiled_code(
 
     Categorías reconocidas por la suite:
     - runtime oficial: ``python``, ``javascript``, ``cpp``, ``rust``;
-    - runtime experimental/best-effort: ``go``, ``java``;
+    - runtime best-effort interno/no público: ``go``, ``java``;
     - solo transpilación sin runtime en tests: ``wasm``, ``asm``.
     """
     if lang == "python":
@@ -192,9 +192,9 @@ def execute_transpiled_code(
         proc = subprocess.run([str(exe)], capture_output=True, text=True, check=True)
         return proc.stdout
 
-    if lang in EXPERIMENTAL_RUNTIME_TARGETS and not allow_experimental:
+    if lang in BEST_EFFORT_INTERNAL_RUNTIME_TARGETS and not allow_experimental:
         pytest.skip(
-            f"{lang} se conserva solo como runtime experimental/best-effort; "
+            f"{lang} se conserva solo como runtime best-effort interno/no público; "
             "no forma parte del contrato oficial"
         )
 

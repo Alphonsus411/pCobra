@@ -114,10 +114,12 @@ def main() -> None:
         help="Archivo donde guardar el JSON con resultados",
     )
     parser.add_argument(
+        "--include-best-effort-runtime",
         "--include-experimental-runtime",
+        dest="include_best_effort_runtime",
         action="store_true",
         help=(
-            "Incluye runtimes experimentales/best-effort (actualmente `go` y `java`). "
+            "Incluye runtimes best-effort no públicos (actualmente `go` y `java`). "
             "Los targets solo de transpilación sin runtime público (`wasm`, `asm`) siguen excluidos."
         ),
     )
@@ -151,7 +153,7 @@ def main() -> None:
 
         for backend in executable_benchmark_backends(
             BACKEND_METADATA,
-            include_experimental=args.include_experimental_runtime,
+            include_experimental=args.include_best_effort_runtime,
         ):
             cfg = BACKEND_METADATA[backend]
             run_cmd = cfg["run"]

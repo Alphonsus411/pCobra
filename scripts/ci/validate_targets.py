@@ -191,7 +191,6 @@ POLICY_LITERAL_TARGET_NAMES = frozenset(
         "VERIFICATION_EXECUTABLE_TARGETS",
         "TRANSPILATION_ONLY_TARGETS",
         "BEST_EFFORT_RUNTIME_TARGETS",
-        "EXPERIMENTAL_RUNTIME_TARGETS",
         "NO_RUNTIME_TARGETS",
     }
 )
@@ -348,14 +347,20 @@ def _parse_backend_matrix_table(path: Path) -> dict[str, dict[str, str]]:
             continue
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         backend = cells[0].strip("`")
+        if len(cells) >= 10:
+            feature_offset = 4
+            tier = cells[2].lower().replace(" ", "")
+        else:
+            feature_offset = 2
+            tier = cells[1].lower().replace(" ", "")
         rows[backend] = {
-            "tier": cells[1].lower().replace(" ", ""),
-            "holobit": cells[2].split()[-1],
-            "proyectar": cells[3].split()[-1],
-            "transformar": cells[4].split()[-1],
-            "graficar": cells[5].split()[-1],
-            "corelibs": cells[6].split()[-1],
-            "standard_library": cells[7].split()[-1],
+            "tier": tier,
+            "holobit": cells[feature_offset].split()[-1],
+            "proyectar": cells[feature_offset + 1].split()[-1],
+            "transformar": cells[feature_offset + 2].split()[-1],
+            "graficar": cells[feature_offset + 3].split()[-1],
+            "corelibs": cells[feature_offset + 4].split()[-1],
+            "standard_library": cells[feature_offset + 5].split()[-1],
         }
     return rows
 
@@ -398,7 +403,7 @@ def _expected_collection_for_name(
         return official_runtime_targets
     if name == "TRANSPILATION_ONLY_TARGETS":
         return transpilation_only_targets
-    if name in {"BEST_EFFORT_RUNTIME_TARGETS", "EXPERIMENTAL_RUNTIME_TARGETS"}:
+    if name == "BEST_EFFORT_RUNTIME_TARGETS":
         return best_effort_runtime_targets
     if name == "NO_RUNTIME_TARGETS":
         return no_runtime_targets
