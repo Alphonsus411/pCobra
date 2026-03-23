@@ -42,6 +42,8 @@ SCAN_PATHS = [
 
 TEXT_EXTS = {".py", ".md", ".rst", ".toml", ".yaml", ".yml", ".json", ".txt"}
 IGNORED_PATH_PREFIXES = (
+    "archive/retired_targets/",
+    "docs/historico/",
     "docs/experimental/",
     "docs/frontend/api/",
 )
@@ -91,8 +93,8 @@ NARRATIVE_EXCEPTION_PATH_FRAGMENTS = (
     "historico",
     "historico/",
     "archive/retired_targets/",
+    "docs/historico/",
     "docs/experimental/",
-    "docs/proposals/",
 )
 
 
