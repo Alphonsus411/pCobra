@@ -9,6 +9,7 @@ Lectura recomendada de la política asociada:
 - **Runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
 - **Runtime experimental/best-effort**: `go`, `java`.
 - **Solo transpilación sin runtime público**: `wasm`, `asm`.
+- **Orígenes reverse de entrada**: se documentan por separado (`python`, `javascript`, `java`) y no alteran esta tabla de salidas oficiales.
 
 Cada ejemplo se puede generar ejecutando:
 

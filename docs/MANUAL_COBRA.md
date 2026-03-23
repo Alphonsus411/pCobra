@@ -447,9 +447,13 @@ Antes de usar la CLI, conviene distinguir tres categorías normativas:
 
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con runtime best-effort**: `go`, `java`.
+- **Targets solo de transpilación**: `wasm`, `asm`.
 - **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
 
 Las fuentes normativas visibles para evitar divergencias son `src/pcobra/cobra/transpilers/targets.py` y `src/pcobra/cobra/cli/target_policies.py`.
+
+Los orígenes reverse se mantienen en una categoría separada: describen lenguajes de **entrada** aceptados por `cobra transpilar-inverso`, no targets oficiales adicionales de salida.
 
 - Compila a cualquiera de los targets oficiales de transpilación con `cobra compilar archivo.co --tipo python`.
 - Ejecuta directamente con `cobra ejecutar archivo.co`.
@@ -505,19 +509,19 @@ export async function revisar_servidor() {
 
 Convierte programas entre distintos lenguajes usando la CLI:
 
-- **De Cobra a cpp**
+- **De Cobra a `cpp` (target oficial de salida)**
 
   ```bash
   cobra compilar hola.co --tipo cpp
   ```
 
-- **De Python a JavaScript**
+- **De Python a JavaScript mediante reverse (`python` como origen de entrada y `javascript` como destino oficial)**
 
   ```bash
   cobra transpilar-inverso ejemplo.py --origen=python --destino=javascript
   ```
 
-- **De Java a Python**
+- **De Java a Python mediante reverse (`java` como origen de entrada y `python` como destino oficial)**
 
   ```bash
   cobra transpilar-inverso Ejemplo.java --origen=java --destino=python
@@ -547,7 +551,7 @@ ejecuciones reutilicen la caché sin reprocesar el código.
 
 ### Transpiladores disponibles
 
-La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados. La lista canónica completa de targets oficiales de transpilación es: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados. La lista canónica completa de targets oficiales de transpilación es: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`. Los orígenes reverse se documentan aparte y no cambian esta lista de salida.
 
 - **`asm`** – [hola.asm](../examples/hello_world/asm/hola.asm)
 - **`cpp`** – [hola.cpp](../examples/hello_world/cpp/hola.cpp)

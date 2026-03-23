@@ -17,8 +17,11 @@ Policy snapshot (generated from the canonical target policy):
 - **Official transpilation targets**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets with official verifiable runtime**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets with explicit executable CLI verification**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets with best-effort runtime**: `go`, `java`.
 - **Targets with maintained `corelibs`/`standard_library` runtime support**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets with project-maintained Holobit adapter**: `python`, `rust`, `javascript`, `cpp`.
 - **Full SDK compatibility**: `python`.
+- **Transpilation-only targets**: `wasm`, `asm`.
 - **Reverse transpilation input origins**: `python`, `javascript`, `java`.
 
 Official backend support tiers:
@@ -26,6 +29,8 @@ Official backend support tiers:
 - **Tier 1**: `python`, `rust`, `javascript`, `wasm`.
 - **Tier 2**: `go`, `cpp`, `java`, `asm`.
 <!-- END GENERATED TARGET POLICY SUMMARY EN -->
+
+Public wording rule: keep **official output targets** separate from **reverse transpilation input origins**. Reverse input currently accepts only `python`, `javascript`, and `java`, and that controlled scope does **not** expand the official output list above.
 
 ## Table of Contents
 

@@ -805,7 +805,12 @@ El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 
 ## Conversión desde otros lenguajes a Cobra
 
-Puedes usar `cobra transpilar-inverso` para leer un archivo en otro lenguaje, convertirlo al AST de Cobra y luego generarlo en uno de los 8 backends oficiales de salida. Los valores `python`, `javascript` y `java` aparecen aquí en doble papel: pueden ser **orígenes reverse de entrada** y, por separado, también targets oficiales de salida cuando se usan como `--destino`.
+`cobra transpilar-inverso` documenta una capacidad distinta de la transpilación de salida normal. Aquí conviene separar dos listas para evitar ambigüedades:
+
+- **Targets oficiales de salida**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Orígenes reverse de entrada**: `python`, `javascript`, `java`.
+
+Los nombres `python`, `javascript` y `java` aparecen en ambas listas, pero con papeles distintos: como `--origen` describen **entradas aceptadas** por la ruta reverse; como `--destino` vuelven a significar **targets oficiales de salida ya existentes**. La capacidad reverse no añade targets nuevos ni amplía la lista oficial de salida.
 
 ```bash
 cobra transpilar-inverso script.py --origen=python --destino=python
