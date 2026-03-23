@@ -9,6 +9,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.target_policies import (
+    BEST_EFFORT_RUNTIME_TARGETS,
     DOCKER_EXECUTABLE_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
@@ -130,12 +131,10 @@ def test_compile_choices_siguen_alineados_con_targets_oficiales():
 def test_tests_documentan_las_tres_categorias_publicas_de_targets():
     assert OFFICIAL_TARGETS == official_transpiler_targets()
     assert OFFICIAL_RUNTIME_TARGETS == ("python", "rust", "javascript", "cpp")
-    assert TRANSPILATION_ONLY_TARGETS == ("wasm", "go", "java", "asm")
+    assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
+    assert TRANSPILATION_ONLY_TARGETS == ("wasm", "asm")
 
 
 def test_tests_documentan_best_effort_experimental_sin_ampliar_el_set_oficial():
-    runtime_experimental = tuple(
-        target for target in TRANSPILATION_ONLY_TARGETS if target in {"go", "java"}
-    )
-    assert runtime_experimental == ("go", "java")
+    assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
     assert len(OFFICIAL_TARGETS) == 8

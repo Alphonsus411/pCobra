@@ -74,7 +74,7 @@ class ExecuteCommand(BaseCommand):
             help=_(
                 "Ejecuta el código en un contenedor Docker con runtime oficial "
                 "({targets}). Esta opción ejecuta de verdad el programa; no basta con que el target "
-                "sea oficial para transpilación. {policy}"
+                "sea un target oficial de salida. {policy}"
             ).format(
                 targets=OFFICIAL_RUNTIME_TARGETS_HELP,
                 policy=build_runtime_capability_message(

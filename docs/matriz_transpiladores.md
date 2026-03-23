@@ -7,11 +7,10 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.
+- **Targets con runtime best-effort**: `go`, `java`.
 - **Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con adaptador Holobit mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
 - **Compatibilidad SDK completa**: `python`.
-- **Targets sin runtime oficial público aunque tengan generación de código**: `wasm`, `go`, `java`, `asm`.
-- **Targets con runtime best-effort no público**: `go`, `java`.
 - **Targets solo de transpilación**: `wasm`, `asm`.
 
 ## Estado público por backend

@@ -52,7 +52,8 @@ Lectura normativa de la tabla:
 
 - `python` es el único backend que puede presentarse como compatibilidad SDK completa.
 - `rust`, `javascript` y `cpp` tienen runtime oficial verificable y adaptador Holobit mantenido, pero **siguen siendo `partial`** a nivel contractual.
-- `wasm`, `go`, `java` y `asm` siguen siendo backends oficiales de salida, pero no deben describirse como equivalentes a un runtime oficial público ni a compatibilidad SDK completa.
+- `go` y `java` siguen siendo backends oficiales de salida con runtime best-effort, pero no deben describirse como equivalentes a un runtime oficial público ni a compatibilidad SDK completa.
+- `wasm` y `asm` siguen siendo backends oficiales de salida solo de transpilación, pero no deben describirse como equivalentes a un runtime oficial público ni a compatibilidad SDK completa.
 
 ## Alcance del contrato
 
@@ -62,8 +63,9 @@ Eso no implica que todos los backends prometan el mismo runtime ni la misma cobe
 
 - `OFFICIAL_RUNTIME_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `VERIFICATION_EXECUTABLE_TARGETS`: `python`, `rust`, `javascript`, `cpp`
-- `TRANSPILATION_ONLY_TARGETS`: `wasm`, `asm`
 - `BEST_EFFORT_RUNTIME_TARGETS`: `go`, `java`
+- `TRANSPILATION_ONLY_TARGETS`: `wasm`, `asm`
+- `NO_RUNTIME_TARGETS`: `wasm`, `asm`
 - `OFFICIAL_STANDARD_LIBRARY_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `SDK_COMPATIBLE_TARGETS`: `python`

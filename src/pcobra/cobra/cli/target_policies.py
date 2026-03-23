@@ -22,18 +22,14 @@ OFFICIAL_TRANSPILATION_TARGETS = OFFICIAL_TARGETS
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
 OFFICIAL_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
 
-# Targets oficiales que hoy son solo de generación y no prometen runtime oficial.
-TRANSPILATION_ONLY_TARGETS = tuple(
-    target for target in OFFICIAL_TRANSPILATION_TARGETS if target not in OFFICIAL_RUNTIME_TARGETS
-)
-
 # Targets best-effort conservados fuera del contrato oficial de runtime.
 BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(("go", "java"))
 
+# Targets oficiales que hoy son solo de generación y no prometen runtime.
+TRANSPILATION_ONLY_TARGETS = target_cli_choices(("wasm", "asm"))
+
 # Targets sin runtime automatizado en la CLI/suite actual.
-NO_RUNTIME_TARGETS = tuple(
-    target for target in TRANSPILATION_ONLY_TARGETS if target not in BEST_EFFORT_RUNTIME_TARGETS
-)
+NO_RUNTIME_TARGETS = TRANSPILATION_ONLY_TARGETS
 
 # Alias semántico conservado para la UX existente.
 DOCKER_EXECUTABLE_TARGETS = OFFICIAL_RUNTIME_TARGETS
@@ -125,6 +121,7 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
         ("official_targets", "Targets oficiales de transpilación", OFFICIAL_TRANSPILATION_TARGETS),
         ("official_runtime_targets", "Targets con runtime oficial verificable", OFFICIAL_RUNTIME_TARGETS),
         ("verification_targets", "Targets con verificación ejecutable explícita en CLI", VERIFICATION_EXECUTABLE_TARGETS),
+        ("best_effort_runtime_targets", "Targets con runtime best-effort", BEST_EFFORT_RUNTIME_TARGETS),
         (
             "official_standard_library_targets",
             "Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime",
@@ -138,7 +135,7 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
         ("sdk_compatible_targets", "Compatibilidad SDK completa", SDK_COMPATIBLE_TARGETS),
         (
             "transpilation_only_targets",
-            "Targets sin runtime oficial público aunque tengan generación de código",
+            "Targets solo de transpilación",
             TRANSPILATION_ONLY_TARGETS,
         ),
     )
@@ -163,16 +160,16 @@ def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: Rend
 
 def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
     return (
-        "Targets oficiales de transpilación: {official}. "
-        "Solo tienen runtime oficial para {capability}: {allowed}. "
-        "Los targets {non_runtime} siguen siendo salidas oficiales de generación de código, "
-        "pero no equivalen a un runtime oficial ni a soporte oficial de librerías en ejecución. "
-        "Targets solo transpilación: {transpilation_only}."
+        "Targets oficiales de salida: {official}. "
+        "Targets con runtime oficial para {capability}: {allowed}. "
+        "Targets best-effort: {best_effort}. "
+        "Targets solo de transpilación: {transpilation_only}. "
+        "Generar código para los 8 targets oficiales no implica paridad de ejecución real."
     ).format(
         official=official_transpilation_targets_text(),
         capability=capability,
         allowed=", ".join(allowed_targets),
-        non_runtime=", ".join(TRANSPILATION_ONLY_TARGETS),
+        best_effort=", ".join(BEST_EFFORT_RUNTIME_TARGETS),
         transpilation_only=transpilation_only_targets_text(),
     )
 
@@ -180,6 +177,42 @@ def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[
 def validate_runtime_support_contract() -> None:
     """Valida que las promesas públicas de runtime no contradigan la matriz contractual."""
     from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+
+    runtime_targets = set(OFFICIAL_RUNTIME_TARGETS)
+    best_effort_targets = set(BEST_EFFORT_RUNTIME_TARGETS)
+    transpilation_only_targets = set(TRANSPILATION_ONLY_TARGETS)
+    official_targets = set(OFFICIAL_TRANSPILATION_TARGETS)
+
+    if runtime_targets & best_effort_targets:
+        raise RuntimeError(
+            "OFFICIAL_RUNTIME_TARGETS y BEST_EFFORT_RUNTIME_TARGETS deben ser disjuntos: "
+            f"runtime={OFFICIAL_RUNTIME_TARGETS}, best_effort={BEST_EFFORT_RUNTIME_TARGETS}"
+        )
+
+    if runtime_targets & transpilation_only_targets:
+        raise RuntimeError(
+            "OFFICIAL_RUNTIME_TARGETS y TRANSPILATION_ONLY_TARGETS deben ser disjuntos: "
+            f"runtime={OFFICIAL_RUNTIME_TARGETS}, transpilation_only={TRANSPILATION_ONLY_TARGETS}"
+        )
+
+    if best_effort_targets & transpilation_only_targets:
+        raise RuntimeError(
+            "BEST_EFFORT_RUNTIME_TARGETS y TRANSPILATION_ONLY_TARGETS deben ser disjuntos: "
+            f"best_effort={BEST_EFFORT_RUNTIME_TARGETS}, transpilation_only={TRANSPILATION_ONLY_TARGETS}"
+        )
+
+    if runtime_targets | best_effort_targets | transpilation_only_targets != official_targets:
+        raise RuntimeError(
+            "Los targets oficiales deben particionarse exactamente en runtime oficial, best-effort y solo transpilación: "
+            f"official={OFFICIAL_TRANSPILATION_TARGETS}, runtime={OFFICIAL_RUNTIME_TARGETS}, "
+            f"best_effort={BEST_EFFORT_RUNTIME_TARGETS}, transpilation_only={TRANSPILATION_ONLY_TARGETS}"
+        )
+
+    if set(NO_RUNTIME_TARGETS) != transpilation_only_targets:
+        raise RuntimeError(
+            "NO_RUNTIME_TARGETS debe coincidir exactamente con TRANSPILATION_ONLY_TARGETS: "
+            f"no_runtime={NO_RUNTIME_TARGETS}, transpilation_only={TRANSPILATION_ONLY_TARGETS}"
+        )
 
     if set(VERIFICATION_EXECUTABLE_TARGETS) != set(OFFICIAL_RUNTIME_TARGETS):
         raise RuntimeError(
@@ -242,20 +275,35 @@ def invalid_target_error(value: str) -> str:
 
 
 def restricted_target_error(*, unsupported: list[str], capability: str, allowed_targets: tuple[str, ...]) -> str:
+    best_effort_unsupported = [target for target in unsupported if target in BEST_EFFORT_RUNTIME_TARGETS]
+    transpilation_only_unsupported = [target for target in unsupported if target in TRANSPILATION_ONLY_TARGETS]
+    unsupported_labels: list[str] = []
+    if best_effort_unsupported:
+        unsupported_labels.append(
+            "targets best-effort " + ", ".join(best_effort_unsupported)
+        )
+    if transpilation_only_unsupported:
+        unsupported_labels.append(
+            "targets solo de transpilación " + ", ".join(transpilation_only_unsupported)
+        )
+    if not unsupported_labels:
+        unsupported_labels.append(", ".join(unsupported))
+
     return (
-        "Los targets {unsupported} son oficiales para transpilación, "
+        "Los {unsupported} son targets oficiales de salida, "
         "pero no tienen runtime oficial para {capability}. "
+        "Targets con runtime oficial: {runtime}. "
+        "Targets best-effort: {best_effort}. "
+        "Targets solo de transpilación: {transpilation_only}. "
         "Generar código para esos targets no implica paridad de ejecución real "
-        "ni soporte oficial de librerías equivalente a estos runtimes oficiales: {runtime}. "
-        "Targets oficiales: {official}. Usa solo: {allowed}. "
-        "Targets solo transpilación: {transpilation_only}."
+        "ni compatibilidad SDK completa. Usa solo: {allowed}."
     ).format(
-        unsupported=", ".join(unsupported),
+        unsupported="; ".join(unsupported_labels),
         capability=capability,
         runtime=official_runtime_targets_text(),
-        official=official_transpilation_targets_text(),
-        allowed=", ".join(allowed_targets),
+        best_effort=", ".join(BEST_EFFORT_RUNTIME_TARGETS),
         transpilation_only=transpilation_only_targets_text(),
+        allowed=", ".join(allowed_targets),
     )
 
 
