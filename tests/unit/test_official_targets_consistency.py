@@ -24,6 +24,10 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TI
 from tests.utils.targets import assert_official_targets_partition
 from scripts.ci.validate_targets import (
     ALLOWED_HISTORICAL_PATH_PREFIXES,
+    EXPECTED_GOLDEN_FILES,
+    EXPECTED_TRANSPILER_MODULES,
+    EXPECTED_TRANSPILER_REGISTRY,
+    FINAL_OFFICIAL_TARGETS,
     validate_final_backend_repo_audit,
     validate_python_policy_literals,
     validate_registry_tables,
@@ -38,6 +42,7 @@ def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     oficiales = tuple(OFFICIAL_TARGETS)
     particion = assert_official_targets_partition(transpilers=TRANSPILERS)
 
+    assert oficiales == FINAL_OFFICIAL_TARGETS
     assert particion["tier1"] == TIER1_TARGETS
     assert particion["tier2"] == TIER2_TARGETS
     assert oficiales == TIER1_TARGETS + TIER2_TARGETS
@@ -119,6 +124,40 @@ def test_rutas_bajo_vigilancia_siguen_incluyendo_docs_y_tests_relevantes():
 
 def test_allowlist_historica_queda_limitada_a_rutas_archivadas():
     assert ALLOWED_HISTORICAL_PATH_PREFIXES == (
+        "docs/historico/",
         "docs/experimental/",
         "archive/retired_targets/",
     )
+
+
+def test_contrato_ci_fija_rutas_exactas_de_transpilers_y_goldens():
+    assert EXPECTED_TRANSPILER_MODULES == (
+        "src/pcobra/cobra/transpilers/transpiler/to_python.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_rust.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_js.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_wasm.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_go.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_cpp.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_java.py",
+        "src/pcobra/cobra/transpilers/transpiler/to_asm.py",
+    )
+    assert EXPECTED_GOLDEN_FILES == (
+        "tests/integration/transpilers/golden/python.golden",
+        "tests/integration/transpilers/golden/rust.golden",
+        "tests/integration/transpilers/golden/javascript.golden",
+        "tests/integration/transpilers/golden/wasm.golden",
+        "tests/integration/transpilers/golden/go.golden",
+        "tests/integration/transpilers/golden/cpp.golden",
+        "tests/integration/transpilers/golden/java.golden",
+        "tests/integration/transpilers/golden/asm.golden",
+    )
+    assert EXPECTED_TRANSPILER_REGISTRY == {
+        "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
+        "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
+        "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+        "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
+        "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
+        "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
+        "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
+        "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
+    }

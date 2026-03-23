@@ -58,3 +58,14 @@ def test_main_detecta_alias_publico_no_canonico(tmp_path, monkeypatch, capsys):
     assert result == 1
     assert "alias público no canónico" in captured.err
     assert "docs/guide.md:1" in captured.err
+
+
+def test_ci_validate_targets_fija_ocho_transpilers_y_goldens_exactos():
+    from scripts.ci import validate_targets as ci_validator
+
+    errors = ci_validator.validate_targeted_artifact_roots(
+        ci_validator.FINAL_OFFICIAL_TARGETS,
+        tuple(ci_validator.REVERSE_SCOPE_LANGUAGES),
+    )
+
+    assert errors == []
