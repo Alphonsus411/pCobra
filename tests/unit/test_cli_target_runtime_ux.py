@@ -11,6 +11,7 @@ from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.target_policies import (
+    BEST_EFFORT_RUNTIME_TARGETS,
     DOCKER_EXECUTABLE_TARGETS,
     OFFICIAL_TRANSPILATION_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
@@ -67,9 +68,12 @@ def test_execute_e_interactive_aceptan_solo_targets_runtime(command, flag, suppo
         (ExecuteCommand(), ["ejecutar", "archivo.co", "--contenedor", TRANSPILATION_ONLY_TARGETS[0]], DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS[0]),
         (InteractiveCommand(MagicMock()), ["interactive", "--sandbox-docker", TRANSPILATION_ONLY_TARGETS[0]], DOCKER_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS[0]),
         (VerifyCommand(), ["verificar", "archivo.co", "--lenguajes", TRANSPILATION_ONLY_TARGETS[0]], VERIFICATION_EXECUTABLE_TARGETS, TRANSPILATION_ONLY_TARGETS[0]),
+        (ExecuteCommand(), ["ejecutar", "archivo.co", "--contenedor", BEST_EFFORT_RUNTIME_TARGETS[0]], DOCKER_EXECUTABLE_TARGETS, BEST_EFFORT_RUNTIME_TARGETS[0]),
+        (InteractiveCommand(MagicMock()), ["interactive", "--sandbox-docker", BEST_EFFORT_RUNTIME_TARGETS[0]], DOCKER_EXECUTABLE_TARGETS, BEST_EFFORT_RUNTIME_TARGETS[0]),
+        (VerifyCommand(), ["verificar", "archivo.co", "--lenguajes", BEST_EFFORT_RUNTIME_TARGETS[0]], VERIFICATION_EXECUTABLE_TARGETS, BEST_EFFORT_RUNTIME_TARGETS[0]),
     ],
 )
-def test_errores_cli_aclran_cuando_un_target_es_solo_transpilacion(command, argv, supported_targets, unsupported_target, caplog):
+def test_errores_cli_aclran_cuando_un_target_no_tiene_runtime_oficial(command, argv, supported_targets, unsupported_target, caplog):
     parser, _ = _build_parser_for(command)
 
     with pytest.raises(SystemExit):
@@ -77,8 +81,9 @@ def test_errores_cli_aclran_cuando_un_target_es_solo_transpilacion(command, argv
 
     err = caplog.text
     assert unsupported_target in err
-    assert "solo transpilación" in err
-    assert "oficiales para transpilación" in err
+    assert "targets oficiales de salida" in err
+    assert "Targets best-effort" in err
+    assert "Targets solo de transpilación" in err
     for target in supported_targets:
         assert target in err
 
@@ -98,11 +103,14 @@ def test_ayuda_cli_distingue_runtime_oficial_de_targets_solo_transpilacion(
 ):
     _, subparser = _build_parser_for(command)
 
-    help_text = subparser.format_help()
+    help_text = " ".join(subparser.format_help().split())
 
     assert "runtime oficial" in help_text
-    assert "solo transpilación" in help_text
+    assert "best-effort" in help_text
+    assert "solo de transpilación" in help_text
     for target in runtime_targets:
+        assert target in help_text
+    for target in BEST_EFFORT_RUNTIME_TARGETS:
         assert target in help_text
     for target in transpilation_only_targets:
         assert target in help_text
@@ -142,6 +150,7 @@ def test_interactive_run_mantiene_error_centralizado_para_target_invalido_runtim
 
     assert ret == 1
     assert mensajes
-    assert "solo transpilación" in mensajes[0]
+    assert "Targets best-effort" in mensajes[0]
+    assert "Targets solo de transpilación" in mensajes[0]
     for target in DOCKER_EXECUTABLE_TARGETS:
         assert target in mensajes[0]

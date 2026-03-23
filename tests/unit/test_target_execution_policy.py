@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from argparse import ArgumentTypeError
+
 import pytest
 
 from pcobra.cobra.cli.target_policies import (
@@ -18,7 +20,7 @@ def test_targets_solo_transpilacion_siguen_siendo_oficiales():
 
 @pytest.mark.parametrize("target", TRANSPILATION_ONLY_TARGETS)
 def test_resolve_docker_backend_rechaza_targets_oficiales_solo_transpilacion(target: str):
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ArgumentTypeError) as exc_info:
         resolve_docker_backend(target)
 
     mensaje = str(exc_info.value)

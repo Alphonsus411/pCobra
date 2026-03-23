@@ -52,8 +52,6 @@ def _build_markdown() -> str:
         "## Resumen de política",
         "",
         render_public_policy_summary(markup="markdown"),
-        f"- **Targets con runtime best-effort no público**: {', '.join(f'`{t}`' for t in BEST_EFFORT_RUNTIME_TARGETS_INTERNAL)}.",
-        f"- **Targets solo de transpilación**: {', '.join(f'`{t}`' for t in NO_RUNTIME_TARGETS)}.",
         "",
         "## Estado público por backend",
         "",

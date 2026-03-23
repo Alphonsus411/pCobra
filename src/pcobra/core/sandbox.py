@@ -705,11 +705,13 @@ def ejecutar_en_contenedor(
 
     Los backends soportados son ``python``, ``javascript``, ``cpp`` y ``rust``.
     Son los mismos backends que hoy forman la matriz pública de runtime oficial
-    verificable. Los targets oficiales ``go``, ``java``, ``wasm`` y ``asm`` se
-    consideran destinos de transpilación y quedan fuera del runtime Docker
-    oficial. Cada backend utiliza una imagen específica que debe estar
-    construida previamente. ``timeout`` define el límite de tiempo en segundos
-    para la ejecución del contenedor o ``None`` para desactivar el límite.
+    verificable. ``go`` y ``java`` siguen siendo targets oficiales de salida
+    con runtime best-effort, pero quedan fuera del runtime Docker oficial.
+    ``wasm`` y ``asm`` son targets oficiales solo de transpilación y tampoco
+    tienen runtime Docker oficial. Cada backend utiliza una imagen específica
+    que debe estar construida previamente. ``timeout`` define el límite de
+    tiempo en segundos para la ejecución del contenedor o ``None`` para
+    desactivar el límite.
 
     El contenedor se lanza sin acceso a la red (``--network=none``), como el
     usuario ``nobody`` (``--user 65534:65534``), con el sistema de archivos en
@@ -719,9 +721,16 @@ def ejecutar_en_contenedor(
     """
 
     if backend not in CONTAINER_IMAGE_BY_BACKEND:
-        if backend in {"go", "java", "wasm", "asm"}:
+        if backend in {"go", "java"}:
             raise ValueError(
-                "Backend sin runtime Docker oficial: "
+                "Backend con runtime best-effort pero sin runtime Docker oficial: "
+                f"{backend}. pCobra puede generar código para ese target y conservarlo "
+                "como backend best-effort, pero no lo expone como ejecución real oficial "
+                f"en contenedor. Runtimes Docker oficiales: {', '.join(OFFICIAL_CONTAINER_BACKENDS)}."
+            )
+        if backend in {"wasm", "asm"}:
+            raise ValueError(
+                "Backend oficial solo de transpilación, sin runtime Docker oficial: "
                 f"{backend}. pCobra puede generar código para ese target, "
                 "pero no lo expone como ejecución real oficial en contenedor. "
                 f"Runtimes Docker oficiales: {', '.join(OFFICIAL_CONTAINER_BACKENDS)}."
