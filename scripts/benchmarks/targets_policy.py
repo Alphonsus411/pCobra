@@ -15,7 +15,8 @@ from pcobra.cobra.cli.target_policies import (
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_cli_choices
+from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_cli_choices
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
 NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = NO_RUNTIME_TARGETS

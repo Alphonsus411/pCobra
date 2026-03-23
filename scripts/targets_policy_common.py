@@ -25,9 +25,9 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
-PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
-PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
-INTERNAL_COMPATIBILITY_TARGET_NAMES: tuple[str, ...] = tuple(OFFICIAL_TARGETS)
+PUBLIC_CANONICAL_TARGETS: tuple[str, ...] = OFFICIAL_TARGETS
+PUBLIC_ACCEPTED_TARGET_NAMES: tuple[str, ...] = OFFICIAL_TARGETS
+INTERNAL_COMPATIBILITY_TARGET_NAMES: tuple[str, ...] = OFFICIAL_TARGETS
 
 VALIDATION_SCAN_PATHS = (
     ROOT / "README.md",

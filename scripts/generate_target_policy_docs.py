@@ -35,15 +35,13 @@ from pcobra.cobra.transpilers.compatibility_matrix import (  # noqa: E402
 )
 from pcobra.cobra.transpilers.registry import official_transpiler_targets  # noqa: E402
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES  # noqa: E402
-from pcobra.cobra.transpilers.targets import (  # noqa: E402
-    OFFICIAL_TARGETS,
-    TIER1_TARGETS,
-    TIER2_TARGETS,
+from pcobra.cobra.transpilers.target_utils import (  # noqa: E402
     build_tier_summary_lines,
     format_target_name,
     format_target_sequence,
     official_target_rows,
 )
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS  # noqa: E402
 
 GENERATED_DIR = ROOT / "docs" / "_generated"
 MARKER_START = "<!-- BEGIN GENERATED TARGET POLICY SUMMARY -->"

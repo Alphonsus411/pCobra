@@ -16,7 +16,7 @@ from pcobra.cobra.cli.target_policies import (
     build_runtime_capability_message,
     parse_restricted_target_list,
 )
-from pcobra.cobra.transpilers.targets import target_cli_choices
+from pcobra.cobra.transpilers.target_utils import target_cli_choices
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra

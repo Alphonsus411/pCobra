@@ -5,7 +5,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Final
 
-from pcobra.cobra.transpilers.targets import (
+from pcobra.cobra.transpilers.target_utils import (
     require_exact_official_targets,
     target_cli_choices,
 )

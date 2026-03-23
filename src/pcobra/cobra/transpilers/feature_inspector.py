@@ -10,7 +10,8 @@ from pathlib import Path
 import re
 from typing import Dict, List
 
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, normalize_target_name, target_label
+from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_label
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # Carpeta donde se encuentran los transpiladores individuales
 BASE_DIR = Path(__file__).resolve().parent / "transpiler"

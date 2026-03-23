@@ -5,19 +5,19 @@ from __future__ import annotations
 from argparse import ArgumentTypeError
 from typing import Literal
 
-from pcobra.cobra.transpilers.targets import (
-    OFFICIAL_TARGETS,
+from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
     format_target_sequence,
     normalize_target_name,
     require_official_target_subset,
     target_cli_choices,
 )
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 RenderMarkup = Literal["plain", "markdown", "rst"]
 
 # Todos los destinos oficiales de generación/transpilación.
-OFFICIAL_TRANSPILATION_TARGETS = tuple(OFFICIAL_TARGETS)
+OFFICIAL_TRANSPILATION_TARGETS = OFFICIAL_TARGETS
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
 OFFICIAL_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
@@ -43,19 +43,19 @@ DOCKER_RUNTIME_BY_TARGET: dict[str, str] = {target: target for target in OFFICIA
 
 # Targets oficiales cuyo runtime también puede verificarse ejecutando realmente
 # el código generado desde la CLI/suite actual.
-VERIFICATION_EXECUTABLE_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+VERIFICATION_EXECUTABLE_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
 # Targets con soporte oficial de librerías base (`corelibs`/`standard_library`)
 # a nivel de runtime mantenido y verificable por el proyecto.
-OFFICIAL_STANDARD_LIBRARY_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+OFFICIAL_STANDARD_LIBRARY_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
 # Targets con adaptador Holobit mantenido oficialmente por el proyecto.
 # Esto no equivale a compatibilidad SDK total: fuera de Python sigue siendo
 # compatibilidad parcial según ``compatibility_matrix.py``.
-ADVANCED_HOLOBIT_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+ADVANCED_HOLOBIT_RUNTIME_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
 # Compatibilidad SDK completa: hoy solo Python puede prometerla públicamente.
-SDK_COMPATIBLE_TARGETS = target_cli_choices(("python",))
+SDK_COMPATIBLE_TARGETS = OFFICIAL_TARGETS[:1]
 
 require_official_target_subset(
     OFFICIAL_RUNTIME_TARGETS,
@@ -246,12 +246,13 @@ def restricted_target_error(*, unsupported: list[str], capability: str, allowed_
         "Los targets {unsupported} son oficiales para transpilación, "
         "pero no tienen runtime oficial para {capability}. "
         "Generar código para esos targets no implica paridad de ejecución real "
-        "ni soporte oficial de librerías equivalente a `python`, `rust`, `javascript` o `cpp`. "
+        "ni soporte oficial de librerías equivalente a estos runtimes oficiales: {runtime}. "
         "Targets oficiales: {official}. Usa solo: {allowed}. "
         "Targets solo transpilación: {transpilation_only}."
     ).format(
         unsupported=", ".join(unsupported),
         capability=capability,
+        runtime=official_runtime_targets_text(),
         official=official_transpilation_targets_text(),
         allowed=", ".join(allowed_targets),
         transpilation_only=transpilation_only_targets_text(),
