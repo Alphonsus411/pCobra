@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -114,6 +115,34 @@ FORBIDDEN_PUBLIC_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
     ("ensamblador", "asm"),
     ("js", "javascript"),
 )
+
+
+def normalized_public_line(line: str) -> str:
+    return (
+        line.replace(".js", "")
+        .replace(".mjs", "")
+        .replace(".cjs", "")
+        .replace(".cpp", "")
+        .replace(".wasm", "")
+        .replace("Node.js", "Node")
+    )
+
+
+
+def find_public_alias_errors(rel: str, content: str) -> list[str]:
+    if rel not in PUBLIC_TEXT_PATH_STRS:
+        return []
+    errors: list[str] = []
+    for line_no, raw_line in enumerate(content.splitlines(), start=1):
+        line = normalized_public_line(raw_line)
+        for alias, canonical in FORBIDDEN_PUBLIC_TARGET_ALIASES:
+            pattern = re.compile(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", re.IGNORECASE)
+            if pattern.search(line):
+                errors.append(
+                    f"{rel}:{line_no}: alias público no canónico -> '{alias}' (usar: {canonical})"
+                )
+    return errors
+
 
 
 def read_target_policy() -> dict[str, Any]:

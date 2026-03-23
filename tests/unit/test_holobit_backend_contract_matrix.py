@@ -19,6 +19,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     validate_backend_compatibility_contract,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from scripts.ci.validate_targets import validate_public_documentation_alignment, validate_python_policy_literals
 from tests.integration.transpilers.backend_contracts import generate_code
 
 
@@ -39,9 +40,9 @@ HOOK_CALL_MARKERS = {
     },
     "rust": {
         "holobit": "cobra_holobit(vec![1, 2, 3]);",
-        "proyectar": 'let _ = cobra_proyectar(&hb, &format!("{}", "2d"));',
-        "transformar": 'let _ = cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]);',
-        "graficar": 'let _ = cobra_graficar(&hb);',
+        "proyectar": 'cobra_runtime_expect(cobra_proyectar(&hb, &format!("{}", "2d")));',
+        "transformar": 'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]));',
+        "graficar": 'cobra_runtime_expect(cobra_graficar(&hb));',
     },
     "wasm": {
         "holobit": "(drop (call $cobra_holobit (i32.const 1)))",
@@ -149,6 +150,8 @@ def _parse_backend_matrix_table(doc_path: str) -> dict[str, dict[str, str]]:
         if not stripped.startswith("| `"):
             continue
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) < 8:
+            continue
         backend = cells[0].strip("`")
         if len(cells) >= 10:
             feature_offset = 4
@@ -167,6 +170,14 @@ def _parse_backend_matrix_table(doc_path: str) -> dict[str, dict[str, str]]:
         }
     return rows
 
+
+
+
+def test_contrato_holobit_y_sdk_no_admiten_un_noveno_backend_ni_promociones_full_fuera_de_python():
+    assert len(OFFICIAL_TARGETS) == 8
+    assert set(BACKEND_COMPATIBILITY) == set(OFFICIAL_TARGETS)
+    assert not validate_python_policy_literals(tuple(OFFICIAL_TARGETS))
+    assert not validate_public_documentation_alignment(tuple(OFFICIAL_TARGETS), ("python", "javascript", "java"))
 
 def test_only_python_is_full_for_sdk_contract_features():
     assert SDK_FULL_BACKENDS == ("python",)

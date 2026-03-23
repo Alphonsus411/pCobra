@@ -108,13 +108,13 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         "holobit": ("struct CobraHolobit", "let hb = cobra_holobit(vec![1, 2, 3]);"),
         "proyectar": (
             "fn cobra_proyectar",
-            'let _ = cobra_proyectar(&hb, &format!("{}", "2d"));',
+            'cobra_runtime_expect(cobra_proyectar(&hb, &format!("{}", "2d")));',
         ),
         "transformar": (
             "fn cobra_transformar",
-            'let _ = cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]);',
+            'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]));',
         ),
-        "graficar": ("fn cobra_graficar", 'let _ = cobra_graficar(&hb);'),
+        "graficar": ("fn cobra_graficar", 'cobra_runtime_expect(cobra_graficar(&hb));'),
         "corelibs": ('fn longitud<T: ToString>(valor: T) -> usize {', 'longitud("cobra");'),
         "standard_library": ('fn mostrar<T: Display>(valor: T) {', 'mostrar("hola");'),
     },

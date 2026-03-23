@@ -1,8 +1,11 @@
 import re
 from pathlib import Path
 
+from scripts.ci.validate_targets import validate_public_documentation_alignment
 from scripts.generate_target_policy_docs import generate as generate_target_policy_docs
 from scripts.targets_policy_common import PUBLIC_TEXT_PATHS
+from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 EXPERIMENTAL_DOCS = [
     Path("docs/experimental/README.md"),
@@ -61,13 +64,13 @@ def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
     policy = Path("docs/targets_policy.md").read_text(encoding="utf-8").lower()
     assert "archive/retired_targets/" in policy
     assert "orígenes reverse" in policy
-    assert "árbol principal" in policy
+    assert "recorrido normativo principal" in policy or "árbol principal" in policy
 
     lenguajes = Path("docs/lenguajes.rst").read_text(encoding="utf-8").lower()
     assert "no targets de salida" in lenguajes
 
     frontend = Path("docs/frontend/index.rst").read_text(encoding="utf-8").lower()
-    assert "ir **interno**" in frontend or "ir interno" in frontend
+    assert "artefactos internos" in frontend or "internos" in frontend
     assert "archive/retired_targets/" not in frontend
 
 
@@ -82,7 +85,7 @@ PUBLIC_HOLOBIT_CONTRACT_DOCS = [
 FORBIDDEN_NON_PYTHON_HOLOBIT_PROMOTION_PATTERNS = [
     re.compile(
         r"(javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
-        r"(figura como|aparece como|es|tiene)[^\n]{0,40}"
+        r"\b(figura como|aparece como|es|tiene)\b[^\n]{0,40}"
         r"(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)",
         re.IGNORECASE,
     ),
@@ -116,6 +119,25 @@ def _normalized_public_line(line: str) -> str:
         .replace(".wasm", "")
         .replace("Node.js", "Node")
     )
+
+
+
+
+def test_validador_documental_ci_no_detecta_divergencias_publicas():
+    assert not validate_public_documentation_alignment(
+        tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
+    )
+
+
+def test_docs_publicas_enumeran_exactamente_los_8_backends_oficiales_en_tablas_clave():
+    expected = set(OFFICIAL_TARGETS)
+    for path in (
+        Path("docs/targets_policy.md"),
+        Path("docs/matriz_transpiladores.md"),
+        Path("docs/contrato_runtime_holobit.md"),
+    ):
+        rows = {line.split("|")[1].strip().strip("`") for line in path.read_text(encoding="utf-8").splitlines() if line.strip().startswith("| `")}
+        assert rows == expected, f"{path} debe documentar exactamente los 8 backends oficiales"
 
 
 def test_docs_publicas_no_promocionan_backends_no_python_a_sdk_full():

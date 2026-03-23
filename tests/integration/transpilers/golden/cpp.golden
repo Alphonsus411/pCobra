@@ -7,6 +7,12 @@
 #include <string>
 #include <vector>
 
+inline constexpr const char* COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE = "contrato partial: adaptador oficial mantenido por el proyecto; no equivale a holobit_sdk ni a la semántica completa de Python";
+
+inline std::runtime_error cobra_holobit_partial_contract_error(const std::string& feature, const std::string& detail) {
+    return std::runtime_error("Runtime Holobit C++: feature=" + feature + "; contrato partial; backend sin holobit_sdk; " + detail + ". " + COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE);
+}
+
 struct CobraHolobit {
     std::vector<double> valores;
     std::vector<std::string> historial;
@@ -69,7 +75,7 @@ inline std::vector<double> cobra_proyectar(const auto& hb, const auto& modo) {
     if (modo_normalizado == "vector") {
         return holobit.valores;
     }
-    throw std::runtime_error("Runtime Holobit C++: modo de proyección no soportado por el adaptador oficial: " + cobra_runtime_arg(modo));
+    throw cobra_holobit_partial_contract_error("proyectar", "modo de proyección no soportado por el adaptador oficial: " + cobra_runtime_arg(modo));
 }
 
 inline CobraHolobit cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {
@@ -106,7 +112,7 @@ inline CobraHolobit cobra_transformar(const auto& hb, const auto& op, std::initi
             angulo_index = 1;
         }
         if (eje != "z") {
-            throw std::runtime_error("Runtime Holobit C++: rotación soportada solo sobre eje z en el adaptador oficial: " + eje);
+            throw cobra_holobit_partial_contract_error("transformar", "rotación soportada solo sobre eje z en el adaptador oficial: " + eje);
         }
         const double grados = lista_params.size() > angulo_index ? cobra_parse_double(lista_params[angulo_index]) : 0.0;
         const double radianes = grados * 3.14159265358979323846 / 180.0;
@@ -115,7 +121,7 @@ inline CobraHolobit cobra_transformar(const auto& hb, const auto& op, std::initi
         valores[0] = std::round((x * std::cos(radianes) - y * std::sin(radianes)) * 1000000.0) / 1000000.0;
         valores[1] = std::round((x * std::sin(radianes) + y * std::cos(radianes)) * 1000000.0) / 1000000.0;
     } else {
-        throw std::runtime_error("Runtime Holobit C++: operación no soportada por el adaptador oficial: " + cobra_runtime_arg(op));
+        throw cobra_holobit_partial_contract_error("transformar", "operación no soportada por el adaptador oficial: " + cobra_runtime_arg(op));
     }
     auto historial = holobit.historial;
     historial.push_back("transformar:" + operacion);

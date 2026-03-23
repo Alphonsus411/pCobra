@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validaciones CI simplificadas para el contrato final de 8 backends."""
+"""Validaciones CI estrictas para el contrato final de 8 backends."""
 
 from __future__ import annotations
 
@@ -16,6 +16,13 @@ if str(ROOT) not in sys.path:
 
 from pcobra.cobra.cli.commands.benchmarks_cmd import BACKENDS as BENCHMARKS_BACKENDS
 from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
+from pcobra.cobra.cli.target_policies import SDK_COMPATIBLE_TARGETS
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    CONTRACT_FEATURES,
+    SDK_FULL_BACKENDS,
+    validate_backend_compatibility_contract,
+)
 from pcobra.cobra.transpilers.registry import (
     TRANSPILER_CLASS_PATHS,
     official_transpiler_registry_literal,
@@ -23,8 +30,14 @@ from pcobra.cobra.transpilers.registry import (
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
-from scripts.targets_policy_common import FORBIDDEN_PUBLIC_TARGET_ALIASES, PUBLIC_TEXT_PATHS
-from scripts.validate_targets_policy import _find_public_alias_errors
+from scripts.targets_policy_common import (
+    FORBIDDEN_PUBLIC_TARGET_ALIASES,
+    HOLOBIT_MATRIX_DOC_PATHS,
+    PUBLIC_RUNTIME_POLICY_PATHS,
+    PUBLIC_TEXT_PATHS,
+    find_public_alias_errors,
+    read_target_policy,
+)
 
 FINAL_OFFICIAL_TARGETS = (
     "python",
@@ -102,11 +115,102 @@ REPO_AUDIT_FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (
 )
 REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (
-        re.compile(r'(?P<quote>[\"\'])' + re.escape(alias) + r'(?P=quote)', re.IGNORECASE),
+        re.compile(r'(?P<quote>["\'])' + re.escape(alias) + r'(?P=quote)', re.IGNORECASE),
         alias,
     )
     for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES
 )
+DOC_TABLE_PATHS = (
+    "docs/targets_policy.md",
+    "docs/matriz_transpiladores.md",
+    "docs/contrato_runtime_holobit.md",
+)
+FORBIDDEN_NON_PYTHON_SDK_PROMOTION = re.compile(
+    r"(?P<backend>javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
+    r"\b(figura como|aparece como|es|tiene)\b[^\n]{0,40}"
+    r"(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)",
+    re.IGNORECASE,
+)
+
+
+def _ordered(items: set[str] | tuple[str, ...] | list[str]) -> tuple[str, ...]:
+    return tuple(target for target in FINAL_OFFICIAL_TARGETS if target in set(items))
+
+
+
+def _markdown_table_rows(path: Path) -> list[tuple[int, list[str]]]:
+    rows: list[tuple[int, list[str]]] = []
+    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped.startswith("| `"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        rows.append((line_no, cells))
+    return rows
+
+
+
+def _extract_doc_backend_rows(path: Path) -> list[tuple[int, str]]:
+    rows: list[tuple[int, str]] = []
+    for line_no, cells in _markdown_table_rows(path):
+        backend = cells[0].strip().strip("`")
+        if backend:
+            rows.append((line_no, backend))
+    return rows
+
+
+
+def _parse_backend_matrix_table(doc_path: Path) -> dict[str, dict[str, str]]:
+    rows: dict[str, dict[str, str]] = {}
+    for _line_no, cells in _markdown_table_rows(doc_path):
+        if len(cells) < 8:
+            continue
+        backend = cells[0].strip("`")
+        if len(cells) >= 10:
+            feature_offset = 4
+            tier = cells[2].lower().replace(" ", "")
+        else:
+            feature_offset = 2
+            tier = cells[1].lower().replace(" ", "")
+        rows[backend] = {
+            "tier": tier,
+            "holobit": cells[feature_offset].split()[-1],
+            "proyectar": cells[feature_offset + 1].split()[-1],
+            "transformar": cells[feature_offset + 2].split()[-1],
+            "graficar": cells[feature_offset + 3].split()[-1],
+            "corelibs": cells[feature_offset + 4].split()[-1],
+            "standard_library": cells[feature_offset + 5].split()[-1],
+        }
+    return rows
+
+
+
+def _extract_targets_policy_tier(path: Path, heading: str) -> tuple[str, ...]:
+    content = path.read_text(encoding="utf-8")
+    pattern = re.compile(
+        rf"### {re.escape(heading)}\n\n(?P<body>(?:- `[^`]+`\n)+)",
+        re.MULTILINE,
+    )
+    match = pattern.search(content)
+    if not match:
+        raise RuntimeError(f"{path.relative_to(ROOT).as_posix()}: falta la sección '{heading}'")
+    return tuple(re.findall(r"`([^`]+)`", match.group("body")))
+
+
+
+def _is_historical_repo_path(rel: str) -> bool:
+    return rel in REPO_AUDIT_ALLOWED_FILE_PATHS or rel.startswith(REPO_AUDIT_ALLOWED_PATH_PREFIXES)
+
+
+
+def _iter_repo_audit_files() -> list[Path]:
+    files: list[Path] = []
+    for root_name in REPO_AUDIT_SCAN_ROOTS:
+        base = ROOT / root_name
+        if not base.exists():
+            continue
+        files.extend(path for path in base.rglob("*") if path.is_file())
+    return files
 
 
 
@@ -115,42 +219,42 @@ def validate_registry_tables() -> list[str]:
     expected = FINAL_OFFICIAL_TARGETS
     if tuple(OFFICIAL_TARGETS) != expected:
         errors.append(
-            "OFFICIAL_TARGETS no coincide con el contrato final de ocho backends -> "
+            "src/pcobra/cobra/transpilers/targets.py: OFFICIAL_TARGETS no coincide con el contrato final de 8 backends -> "
             f"official={tuple(OFFICIAL_TARGETS)}, expected={expected}"
         )
     if tuple(TIER1_TARGETS + TIER2_TARGETS) != expected:
         errors.append(
-            "TIER1_TARGETS + TIER2_TARGETS no coincide con OFFICIAL_TARGETS -> "
-            f"tier1+tier2={TIER1_TARGETS + TIER2_TARGETS}, official={expected}"
+            "src/pcobra/cobra/transpilers/targets.py: OFFICIAL_TARGETS debe ser exactamente TIER1_TARGETS + TIER2_TARGETS -> "
+            f"tier1={TIER1_TARGETS}, tier2={TIER2_TARGETS}, official={expected}"
         )
     if tuple(TRANSPILER_CLASS_PATHS) != expected:
         errors.append(
-            "TRANSPILER_CLASS_PATHS no coincide con OFFICIAL_TARGETS -> "
+            "src/pcobra/cobra/transpilers/registry.py: TRANSPILER_CLASS_PATHS no coincide con OFFICIAL_TARGETS -> "
             f"registry={tuple(TRANSPILER_CLASS_PATHS)}, official={expected}"
         )
     if tuple(official_transpiler_targets()) != expected:
         errors.append(
-            "official_transpiler_targets() no coincide con OFFICIAL_TARGETS -> "
+            "src/pcobra/cobra/transpilers/registry.py: official_transpiler_targets() no coincide con OFFICIAL_TARGETS -> "
             f"registry={official_transpiler_targets()}, official={expected}"
         )
     if tuple(TRANSPILERS) != expected:
         errors.append(
-            "TRANSPILERS no coincide con OFFICIAL_TARGETS -> "
+            "src/pcobra/cobra/cli/commands/compile_cmd.py: TRANSPILERS no coincide con OFFICIAL_TARGETS -> "
             f"transpilers={tuple(TRANSPILERS)}, official={expected}"
         )
     if tuple(LANG_CHOICES) != expected:
         errors.append(
-            "LANG_CHOICES no coincide con OFFICIAL_TARGETS -> "
+            "src/pcobra/cobra/cli/commands/compile_cmd.py: LANG_CHOICES no coincide con OFFICIAL_TARGETS -> "
             f"choices={tuple(LANG_CHOICES)}, official={expected}"
         )
     if tuple(BENCHMARKS_BACKENDS) != expected:
         errors.append(
-            "BACKENDS de benchmarks no coincide con OFFICIAL_TARGETS -> "
+            "src/pcobra/cobra/cli/commands/benchmarks_cmd.py: BACKENDS no coincide con OFFICIAL_TARGETS -> "
             f"benchmarks={tuple(BENCHMARKS_BACKENDS)}, official={expected}"
         )
     if official_transpiler_registry_literal() != EXPECTED_TRANSPILER_REGISTRY:
         errors.append(
-            "El literal del registro canónico no coincide con los ocho transpilers finales -> "
+            "src/pcobra/cobra/transpilers/registry.py: el registro oficial no coincide exactamente con los 8 backends esperados -> "
             f"registry={official_transpiler_registry_literal()}, expected={EXPECTED_TRANSPILER_REGISTRY}"
         )
     return errors
@@ -165,52 +269,45 @@ def validate_targeted_artifact_roots(
 
     if tuple(official_targets) != FINAL_OFFICIAL_TARGETS:
         errors.append(
-            "validate_targeted_artifact_roots recibió un conjunto distinto al contrato final -> "
+            "validate_targeted_artifact_roots: conjunto recibido distinto del contrato final -> "
             f"received={tuple(official_targets)}, expected={FINAL_OFFICIAL_TARGETS}"
         )
 
     found_forward_paths = {path.relative_to(ROOT).as_posix() for path in ROOT.rglob("to_*.py")}
     expected_forward_paths = set(EXPECTED_TRANSPILER_MODULES)
-    extra_forward = sorted(found_forward_paths - expected_forward_paths)
-    missing_forward = sorted(expected_forward_paths - found_forward_paths)
-    if extra_forward or missing_forward:
-        errors.append(
-            "Módulos to_*.py desalineados con el contrato final -> "
-            f"missing={missing_forward}, extra={extra_forward}"
-        )
+    for missing in sorted(expected_forward_paths - found_forward_paths):
+        errors.append(f"{missing}: falta módulo oficial to_*.py para un backend canónico")
+    for extra in sorted(found_forward_paths - expected_forward_paths):
+        errors.append(f"{extra}: módulo to_*.py extra fuera de política (posible backend 9 o alias interno expuesto)")
+
     found_forward = {path.name for path in TRANSPILER_DIR.glob("to_*.py")}
     expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES}
     if found_forward != expected_forward:
         errors.append(
-            "El directorio canónico de transpilers no coincide exactamente con los ocho módulos esperados -> "
+            f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: directorio canónico desalineado -> "
             f"found={sorted(found_forward)}, expected={sorted(expected_forward)}"
         )
 
     expected_reverse = {f"from_{target}.py" for target in reverse_scope if target != "javascript"}
     expected_reverse.add("from_js.py")
     found_reverse = {path.name for path in REVERSE_DIR.glob("from_*.py")}
-    extra_reverse = sorted(found_reverse - expected_reverse)
-    missing_reverse = sorted(expected_reverse - found_reverse)
-    if extra_reverse or missing_reverse:
-        errors.append(
-            "Módulos from_*.py desalineados con REVERSE_SCOPE_LANGUAGES -> "
-            f"missing={missing_reverse}, extra={extra_reverse}"
-        )
+    for missing in sorted(expected_reverse - found_reverse):
+        errors.append(f"{REVERSE_DIR.relative_to(ROOT).as_posix()}/{missing}: falta módulo reverse dentro del scope oficial")
+    for extra in sorted(found_reverse - expected_reverse):
+        errors.append(f"{REVERSE_DIR.relative_to(ROOT).as_posix()}/{extra}: módulo reverse extra fuera del scope oficial")
 
     found_golden_paths = {path.relative_to(ROOT).as_posix() for path in ROOT.rglob("*.golden")}
     expected_golden_paths = set(EXPECTED_GOLDEN_FILES)
-    extra_golden = sorted(found_golden_paths - expected_golden_paths)
-    missing_golden = sorted(expected_golden_paths - found_golden_paths)
-    if extra_golden or missing_golden:
-        errors.append(
-            "Golden files desalineados con el contrato final -> "
-            f"missing={missing_golden}, extra={extra_golden}"
-        )
+    for missing in sorted(expected_golden_paths - found_golden_paths):
+        errors.append(f"{missing}: falta golden file oficial para un backend canónico")
+    for extra in sorted(found_golden_paths - expected_golden_paths):
+        errors.append(f"{extra}: golden file extra fuera de política (posible backend 9 no controlado)")
+
     found_golden = {path.name for path in GOLDEN_DIR.glob("*.golden")}
     expected_golden = {Path(path).name for path in EXPECTED_GOLDEN_FILES}
     if found_golden != expected_golden:
         errors.append(
-            "El directorio canónico de goldens no coincide exactamente con los ocho artefactos esperados -> "
+            f"{GOLDEN_DIR.relative_to(ROOT).as_posix()}: directorio canónico de goldens desalineado -> "
             f"found={sorted(found_golden)}, expected={sorted(expected_golden)}"
         )
 
@@ -226,11 +323,78 @@ def validate_scan_roots(
     errors: list[str] = []
     for path in PUBLIC_TEXT_PATHS:
         if not path.exists():
-            errors.append(f"Ruta pública vigilada inexistente: {path.relative_to(ROOT).as_posix()}")
+            errors.append(f"{path.relative_to(ROOT).as_posix()}: ruta pública vigilada inexistente")
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
-        rel = path.relative_to(ROOT).as_posix()
-        errors.extend(_find_public_alias_errors(rel, content))
+        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        errors.extend(find_public_alias_errors(rel, content))
+    return errors
+
+
+
+def validate_public_documentation_alignment(
+    official_targets: tuple[str, ...],
+    reverse_scope: tuple[str, ...],
+) -> list[str]:
+    del reverse_scope
+    errors: list[str] = []
+    expected_targets = tuple(official_targets)
+
+    targets_policy = ROOT / "docs/targets_policy.md"
+    try:
+        tier1 = _extract_targets_policy_tier(targets_policy, "Tier 1")
+        if tier1 != tuple(TIER1_TARGETS):
+            errors.append(
+                f"docs/targets_policy.md: Tier 1 desalineado -> documented={tier1}, expected={tuple(TIER1_TARGETS)}"
+            )
+        tier2 = _extract_targets_policy_tier(targets_policy, "Tier 2")
+        if tier2 != tuple(TIER2_TARGETS):
+            errors.append(
+                f"docs/targets_policy.md: Tier 2 desalineado -> documented={tier2}, expected={tuple(TIER2_TARGETS)}"
+            )
+    except RuntimeError as exc:
+        errors.append(str(exc))
+
+    for rel_path in DOC_TABLE_PATHS:
+        path = ROOT / rel_path
+        rows = _extract_doc_backend_rows(path)
+        if not rows:
+            errors.append(f"{rel_path}: no contiene filas de backends documentadas")
+            continue
+        documented_backends = {backend for _, backend in rows}
+        for line_no, backend in rows:
+            if backend not in expected_targets:
+                errors.append(
+                    f"{rel_path}:{line_no}: backend documentado fuera de política -> {backend}"
+                )
+        missing = [backend for backend in expected_targets if backend not in documented_backends]
+        if missing:
+            errors.append(
+                f"{rel_path}: faltan backends oficiales en la documentación pública -> {tuple(missing)}"
+            )
+
+    expected_matrix = {
+        backend: {feature: BACKEND_COMPATIBILITY[backend][feature] for feature in ("tier", *CONTRACT_FEATURES)}
+        for backend in expected_targets
+    }
+    for rel_path in ("docs/contrato_runtime_holobit.md", "docs/matriz_transpiladores.md"):
+        path = ROOT / rel_path
+        parsed = _parse_backend_matrix_table(path)
+        if parsed != expected_matrix:
+            errors.append(
+                f"{rel_path}: matriz contractual/Holobit desalineada con compatibility_matrix.py -> "
+                f"documented={parsed}, expected={expected_matrix}"
+            )
+
+    for path in (*PUBLIC_RUNTIME_POLICY_PATHS, *HOLOBIT_MATRIX_DOC_PATHS):
+        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        for match in FORBIDDEN_NON_PYTHON_SDK_PROMOTION.finditer(content):
+            backend = match.group("backend").lower()
+            line_no = content.count("\n", 0, match.start()) + 1
+            errors.append(
+                f"{rel}:{line_no}: promoción pública inválida del contrato SDK/Holobit -> backend={backend} debe seguir en partial/no full fuera de python"
+            )
     return errors
 
 
@@ -241,35 +405,45 @@ def validate_python_policy_literals(
 ) -> list[str]:
     errors: list[str] = []
     expected = FINAL_OFFICIAL_TARGETS
+    policy = read_target_policy()
+
     if tuple(official_targets) != expected:
         errors.append(
-            "El conjunto recibido por validate_python_policy_literals no coincide con el contrato final -> "
+            "validate_python_policy_literals: conjunto recibido distinto del contrato final -> "
             f"received={tuple(official_targets)}, expected={expected}"
         )
+    if tuple(policy["official_targets"]) != expected:
+        errors.append(
+            "scripts/targets_policy_common.py: read_target_policy()['official_targets'] no coincide con los 8 oficiales -> "
+            f"policy={tuple(policy['official_targets'])}, expected={expected}"
+        )
+    if tuple(policy["tier1_targets"]) + tuple(policy["tier2_targets"]) != expected:
+        errors.append(
+            "scripts/targets_policy_common.py: read_target_policy() no conserva la partición tier1+tier2 -> "
+            f"tier1={tuple(policy['tier1_targets'])}, tier2={tuple(policy['tier2_targets'])}, expected={expected}"
+        )
+    if tuple(SDK_COMPATIBLE_TARGETS) != ("python",):
+        errors.append(
+            "src/pcobra/cobra/cli/target_policies.py: SDK_COMPATIBLE_TARGETS debe ser exclusivamente ('python',) -> "
+            f"actual={tuple(SDK_COMPATIBLE_TARGETS)}"
+        )
+    if tuple(SDK_FULL_BACKENDS) != ("python",):
+        errors.append(
+            "src/pcobra/cobra/transpilers/compatibility_matrix.py: SDK_FULL_BACKENDS debe ser exclusivamente ('python',) -> "
+            f"actual={tuple(SDK_FULL_BACKENDS)}"
+        )
+    try:
+        validate_backend_compatibility_contract()
+    except RuntimeError as exc:
+        errors.append(f"src/pcobra/cobra/transpilers/compatibility_matrix.py: {exc}")
     return errors
-
-
-
-def _iter_repo_audit_files() -> list[Path]:
-    files: list[Path] = []
-    for root_name in REPO_AUDIT_SCAN_ROOTS:
-        base = ROOT / root_name
-        if not base.exists():
-            continue
-        files.extend(path for path in base.rglob("*") if path.is_file())
-    return files
-
-
-
-def _is_historical_repo_path(rel: str) -> bool:
-    return rel in REPO_AUDIT_ALLOWED_FILE_PATHS or rel.startswith(REPO_AUDIT_ALLOWED_PATH_PREFIXES)
 
 
 
 def validate_final_backend_repo_audit() -> list[str]:
     errors: list[str] = []
     for path in _iter_repo_audit_files():
-        rel = path.relative_to(ROOT).as_posix()
+        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
         if _is_historical_repo_path(rel):
             continue
         try:
@@ -288,21 +462,33 @@ def validate_final_backend_repo_audit() -> list[str]:
 
 
 
+def _run_stage(name: str, errors: list[str]) -> int | None:
+    if not errors:
+        return None
+    print("❌ Validación CI de targets: FALLÓ", file=sys.stderr)
+    print(f" - etapa: {name}", file=sys.stderr)
+    print(f" - {errors[0]}", file=sys.stderr)
+    if len(errors) > 1:
+        print(f" - y {len(errors) - 1} desalineación(es) adicional(es) en la misma etapa", file=sys.stderr)
+    return 1
+
+
+
 def main() -> int:
     official_targets = tuple(OFFICIAL_TARGETS)
     reverse_scope = tuple(REVERSE_SCOPE_LANGUAGES)
-    errors = []
-    errors.extend(validate_registry_tables())
-    errors.extend(validate_targeted_artifact_roots(official_targets, reverse_scope))
-    errors.extend(validate_scan_roots(official_targets, reverse_scope))
-    errors.extend(validate_python_policy_literals(official_targets))
-    errors.extend(validate_final_backend_repo_audit())
-
-    if errors:
-        print("❌ Validación CI de targets: FALLÓ", file=sys.stderr)
-        for error in errors:
-            print(f" - {error}", file=sys.stderr)
-        return 1
+    stages = (
+        ("registros canónicos", validate_registry_tables()),
+        ("artefactos dirigidos", validate_targeted_artifact_roots(official_targets, reverse_scope)),
+        ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
+        ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
+        ("contrato Python/Holobit/SDK", validate_python_policy_literals(official_targets)),
+        ("auditoría de repo", validate_final_backend_repo_audit()),
+    )
+    for stage_name, errors in stages:
+        result = _run_stage(stage_name, errors)
+        if result is not None:
+            return result
 
     print("✅ Validación CI de targets: OK")
     print(f"   OFFICIAL_TARGETS: {', '.join(official_targets)}")

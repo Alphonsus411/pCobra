@@ -1,6 +1,7 @@
 ; backend asm: imports de runtime administrados externamente
 
-; backend asm: runtime de inspección/diagnóstico, sin paridad SDK equivalente
+; backend asm: runtime de inspección/diagnóstico, contrato partial y sin paridad SDK equivalente
+; backend asm: sin holobit_sdk; proyectar/transformar/graficar requieren runtime externo verificable fuera de este backend
 cobra_holobit:
     ; Runtime Holobit ASM: backend de inspección; conserva la representación simbólica del holobit.
     RET

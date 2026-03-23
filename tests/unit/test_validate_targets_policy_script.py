@@ -39,25 +39,56 @@ def test_iter_scan_files_includes_src_and_tests_and_skips_generated(tmp_path):
 
 
 
-def test_main_detecta_alias_publico_no_canonico(tmp_path, monkeypatch, capsys):
+def test_main_falla_rapido_si_hay_alias_publico_no_canonico(monkeypatch, capsys):
     validator = _load_validator_module()
 
-    (tmp_path / "docs").mkdir(parents=True)
-    (tmp_path / "docs" / "guide.md").write_text(
-        "Backend recomendado: js\n",
-        encoding="utf-8",
+    monkeypatch.setattr(validator, "validate_registry_tables", lambda: [])
+    monkeypatch.setattr(validator, "validate_targeted_artifact_roots", lambda *_args: [])
+    monkeypatch.setattr(
+        validator,
+        "validate_scan_roots",
+        lambda *_args: ["docs/guide.md:1: alias público no canónico -> 'js' (usar: javascript)"],
     )
-
-    monkeypatch.setattr(validator, "ROOT", tmp_path)
-    monkeypatch.setattr(validator, "SCAN_ROOTS", ("docs",))
-    monkeypatch.setattr(validator, "PUBLIC_TEXT_PATH_STRS", frozenset({"docs/guide.md"}))
+    monkeypatch.setattr(validator, "validate_public_documentation_alignment", lambda *_args: ["no debería evaluarse"])
+    monkeypatch.setattr(validator, "validate_python_policy_literals", lambda *_args: ["no debería evaluarse"])
+    monkeypatch.setattr(validator, "validate_final_backend_repo_audit", lambda: ["no debería evaluarse"])
 
     result = validator.main()
 
     captured = capsys.readouterr()
     assert result == 1
-    assert "alias público no canónico" in captured.err
+    assert "etapa: escaneo público" in captured.err
     assert "docs/guide.md:1" in captured.err
+    assert "alias público no canónico" in captured.err
+    assert "no debería evaluarse" not in captured.err
+
+
+
+def test_main_falla_rapido_si_aparece_un_to_py_extra(monkeypatch, capsys):
+    validator = _load_validator_module()
+
+    monkeypatch.setattr(validator, "validate_registry_tables", lambda: [])
+    monkeypatch.setattr(
+        validator,
+        "validate_targeted_artifact_roots",
+        lambda *_args: [
+            "src/pcobra/cobra/transpilers/transpiler/to_ruby.py: módulo to_*.py extra fuera de política (posible backend 9 o alias interno expuesto)"
+        ],
+    )
+    monkeypatch.setattr(validator, "validate_scan_roots", lambda *_args: ["no debería evaluarse"])
+    monkeypatch.setattr(validator, "validate_public_documentation_alignment", lambda *_args: ["no debería evaluarse"])
+    monkeypatch.setattr(validator, "validate_python_policy_literals", lambda *_args: ["no debería evaluarse"])
+    monkeypatch.setattr(validator, "validate_final_backend_repo_audit", lambda: ["no debería evaluarse"])
+
+    result = validator.main()
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert "etapa: artefactos dirigidos" in captured.err
+    assert "to_ruby.py" in captured.err
+    assert "backend 9" in captured.err
+    assert "no debería evaluarse" not in captured.err
+
 
 
 def test_ci_validate_targets_fija_ocho_transpilers_y_goldens_exactos():
@@ -69,3 +100,20 @@ def test_ci_validate_targets_fija_ocho_transpilers_y_goldens_exactos():
     )
 
     assert errors == []
+
+
+
+def test_ci_validate_targets_detecta_documentacion_sdk_divergente(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    fake_doc = tmp_path / "tmp_sdk_promo.md"
+    fake_doc.write_text("javascript figura como full para el SDK", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "PUBLIC_RUNTIME_POLICY_PATHS", (fake_doc,))
+    monkeypatch.setattr(ci_validator, "HOLOBIT_MATRIX_DOC_PATHS", tuple())
+    errors = ci_validator.validate_public_documentation_alignment(
+        ci_validator.FINAL_OFFICIAL_TARGETS,
+        tuple(ci_validator.REVERSE_SCOPE_LANGUAGES),
+    )
+
+    assert any("promoción pública inválida" in error for error in errors)
+    assert any("javascript" in error for error in errors)
