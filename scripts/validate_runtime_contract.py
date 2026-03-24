@@ -21,7 +21,11 @@ from pcobra.cobra.cli.target_policies import (
     VERIFICATION_EXECUTABLE_TARGETS,
     validate_runtime_support_contract,
 )
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    BACKEND_FEATURE_GAPS,
+    CONTRACT_FEATURES,
+)
 
 
 def main() -> int:
@@ -56,6 +60,19 @@ def main() -> int:
             if contract[feature] != "full":
                 raise RuntimeError(
                     f"{backend} figura con compatibilidad SDK completa, pero {feature}={contract[feature]}"
+                )
+
+    for backend in OFFICIAL_RUNTIME_TARGETS:
+        for feature in CONTRACT_FEATURES:
+            level = BACKEND_COMPATIBILITY[backend][feature]
+            gaps = BACKEND_FEATURE_GAPS[backend][feature]
+            if level == "full" and gaps:
+                raise RuntimeError(
+                    f"{backend}.{feature} está en full pero declara gaps: {gaps}"
+                )
+            if level == "partial" and not gaps:
+                raise RuntimeError(
+                    f"{backend}.{feature} está en partial pero no declara gaps explícitos"
                 )
 
     print("✅ Runtime contract validation: OK")

@@ -41,3 +41,16 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 
 > `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.
 > `holobit_publico` resume la promesa pública: `sdk_full` solo aplica a `python`; `adaptador_mantenido_partial` aplica a `rust`, `javascript` y `cpp`; el resto permanece en `partial`.
+
+## Gaps verificados por feature (resumen)
+
+| Backend | holobit | proyectar | transformar | graficar | corelibs | standard_library |
+|---|---|---|---|---|---|---|
+| python | sin gaps | sin gaps | sin gaps | sin gaps | sin gaps | sin gaps |
+| javascript | sin paridad SDK completa | `1d/2d/3d/vector` | rotación eje `z` | textual | capa parcial | capa parcial |
+| rust | sin paridad SDK completa | `1d/2d/3d/vector` | rotación eje `z` con parseo runtime | textual | helpers parciales | helpers parciales |
+| wasm | host externo | host `pcobra:holobit` | host `pcobra:holobit` | host `pcobra:holobit` | host `pcobra:corelibs` | host `pcobra:standard_library` |
+| go | sin paridad SDK completa | `1d/2d/3d/vector` | rotación eje `z` | textual | best-effort | best-effort |
+| cpp | sin paridad SDK completa | `1d/2d/3d/vector` | rotación eje `z` | textual | mínimo | mínimo |
+| java | sin paridad SDK completa | `1d/2d/3d/vector` | rotación eje `z` | textual | best-effort | best-effort |
+| asm | simbólico | runtime externo | runtime externo | runtime externo | `CALL` externo | `CALL` externo |
