@@ -3,14 +3,20 @@ import argparse
 import pytest
 
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
-from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
+from pcobra.cobra.cli.target_policies import invalid_target_error, parse_target, parse_target_list
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 
-LEGACY_ALIASES = ("js", "ensamblador", "assembly", "c++")
+ACCEPTED_ALIASES = (
+    ("c++", "cpp"),
+    ("ensamblador", "asm"),
+    ("C++", "cpp"),
+    ("Ensamblador", "asm"),
+)
 
+REJECTED_ALIASES = ("js", "assembly")
 
 
 def _build_parser_with_command(command):
@@ -20,44 +26,56 @@ def _build_parser_with_command(command):
     return parser
 
 
-@pytest.mark.parametrize("alias", LEGACY_ALIASES)
-def test_regresion_parse_target_rechaza_aliases_legacy(alias):
+@pytest.mark.parametrize(("alias", "canonical"), ACCEPTED_ALIASES)
+def test_parse_target_acepta_aliases_publicos(alias, canonical):
+    assert parse_target(alias) == canonical
+
+
+@pytest.mark.parametrize(("alias", "canonical"), ACCEPTED_ALIASES)
+def test_parse_target_list_normaliza_aliases_en_mayusculas_y_minusculas(alias, canonical):
+    assert parse_target_list(f"python,{alias}") == ["python", canonical]
+
+
+@pytest.mark.parametrize("alias", REJECTED_ALIASES)
+def test_parse_target_rechaza_aliases_no_permitidos(alias):
     with pytest.raises(argparse.ArgumentTypeError):
         parse_target(alias)
 
 
-@pytest.mark.parametrize("alias", LEGACY_ALIASES)
-def test_regresion_parse_target_list_rechaza_aliases_legacy(alias):
-    with pytest.raises(argparse.ArgumentTypeError):
-        parse_target_list(f"python,{alias}")
+def test_compile_parser_acepta_alias_c_mas_mas_y_entrega_canonico():
+    parser = _build_parser_with_command(CompileCommand())
+    args = parser.parse_args(["compilar", "script.co", "--tipo", "C++"])
+    assert args.tipo == "cpp"
 
 
+def test_transpilar_inverso_parser_acepta_alias_ensamblador_y_entrega_canonico(tmp_path):
+    archivo = tmp_path / "script.py"
+    archivo.write_text("print('ok')", encoding="utf-8")
 
-def test_regresion_execute_parser_rechaza_alias_js_en_contenedor():
-    parser = _build_parser_with_command(ExecuteCommand())
+    parser = _build_parser_with_command(TranspilarInversoCommand())
+    args = parser.parse_args(
+        [
+            "transpilar-inverso",
+            str(archivo),
+            "--origen",
+            "python",
+            "--destino",
+            "Ensamblador",
+        ]
+    )
+    assert args.destino == "asm"
 
-    with pytest.raises(SystemExit):
-        parser.parse_args(["ejecutar", "script.co", "--contenedor", "js"])
 
-
-
-def test_regresion_verify_parser_rechaza_alias_js_en_lista_de_lenguajes():
+def test_verify_parser_normaliza_alias_ensamblador_y_falla_por_runtime_restringido(caplog):
     parser = _build_parser_with_command(VerifyCommand())
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,js"])
+        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,Ensamblador"])
+
+    assert "targets solo de transpilación asm" in caplog.text
 
 
-
-def test_regresion_verify_parser_rechaza_alias_ensamblador_en_lista_de_lenguajes():
-    parser = _build_parser_with_command(VerifyCommand())
-
-    with pytest.raises(SystemExit):
-        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,ensamblador"])
-
-
-
-def test_compile_parser_no_expone_aliases_legacy_en_choices_publicos():
+def test_compile_parser_no_expone_aliases_en_choices_publicos():
     parser = _build_parser_with_command(CompileCommand())
     compile_parser = parser._subparsers._group_actions[0].choices["compilar"]
 
@@ -66,26 +84,35 @@ def test_compile_parser_no_expone_aliases_legacy_en_choices_publicos():
 
     assert tuple(tipo_action.choices) == tuple(LANG_CHOICES)
     assert tuple(backend_action.choices) == tuple(LANG_CHOICES)
-    for alias in LEGACY_ALIASES:
+    for alias, _ in ACCEPTED_ALIASES:
         assert alias not in tipo_action.choices
         assert alias not in backend_action.choices
 
 
-
-def test_help_publica_del_comando_compilar_no_reintroduce_alias_js():
+def test_help_y_error_muestran_canones_y_ejemplos_de_alias():
     parser = _build_parser_with_command(CompileCommand())
     compile_parser = parser._subparsers._group_actions[0].choices["compilar"]
     help_text = compile_parser.format_help().lower()
 
+    assert "python" in help_text
+    assert "rust" in help_text
     assert "javascript" in help_text
-    assert "js" not in help_text
+    assert "wasm" in help_text
+    assert "go" in help_text
+    assert "cpp" in help_text
+    assert "java" in help_text
+    assert "asm" in help_text
+    assert "aliases aceptados: c++→cpp, ensamblador→asm" in help_text
+
+    message = invalid_target_error("desconocido")
+    assert "python, rust, javascript, wasm, go, cpp, java, asm" in message
+    assert "Aliases aceptados: c++→cpp, ensamblador→asm" in message
 
 
-
-def test_la_whitelist_publica_sigue_sin_aceptar_aliases():
+def test_la_whitelist_publica_sigue_canonica():
     targets = official_transpiler_targets()
     assert targets == tuple(LANG_CHOICES)
-    assert "javascript" in targets
+    assert targets == ("python", "rust", "javascript", "wasm", "go", "cpp", "java", "asm")
     assert len(targets) == 8
-    for alias in LEGACY_ALIASES:
+    for alias, _ in ACCEPTED_ALIASES:
         assert alias not in targets

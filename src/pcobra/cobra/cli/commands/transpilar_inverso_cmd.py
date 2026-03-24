@@ -33,7 +33,7 @@ from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.cobra.cli.target_policies import parse_target
+from pcobra.cobra.cli.target_policies import accepted_target_aliases_examples_text, parse_target
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
@@ -69,6 +69,7 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
 DESTINO_CHOICES = list(official_transpiler_targets())
 TARGETS_HELP = build_target_help_by_tier(tuple(DESTINO_CHOICES))
+TARGET_ALIASES_HELP = accepted_target_aliases_examples_text()
 REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
 
 
@@ -173,9 +174,10 @@ class TranspilarInversoCommand(BaseCommand):
         parser.add_argument(
             "--destino",
             help=_(
-                "Target oficial de salida (registro/transpilación canónica): {targets}"
+                "Target oficial de salida (registro/transpilación canónica): {targets}. Aliases aceptados: {aliases}"
             ).format(
-                targets=TARGETS_HELP
+                targets=TARGETS_HELP,
+                aliases=TARGET_ALIASES_HELP
             ),
             required=True,
             type=parse_target,
