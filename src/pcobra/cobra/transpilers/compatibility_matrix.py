@@ -227,6 +227,73 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
 }
 
+BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    "python": {
+        "holobit": (),
+        "proyectar": (),
+        "transformar": (),
+        "graficar": (),
+        "corelibs": (),
+        "standard_library": (),
+    },
+    "javascript": {
+        "holobit": ("No replica paridad SDK Python completa.",),
+        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
+        "transformar": ("Rotación soportada solo sobre eje z.",),
+        "graficar": ("Solo vista textual via `mostrar`.",),
+        "corelibs": ("Cobertura parcial mediante capa adaptadora JS.",),
+        "standard_library": ("Cobertura parcial mediante capa adaptadora JS.",),
+    },
+    "rust": {
+        "holobit": ("No replica paridad SDK Python completa.",),
+        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
+        "transformar": ("Rotación soportada solo sobre eje z y parámetros parseados en runtime.",),
+        "graficar": ("Solo vista textual via `mostrar`.",),
+        "corelibs": ("Cobertura parcial mediante helpers inline.",),
+        "standard_library": ("Cobertura parcial mediante helpers inline.",),
+    },
+    "wasm": {
+        "holobit": ("Depende de runtime host-managed externo.",),
+        "proyectar": ("Semántica final delegada al host `pcobra:holobit`.",),
+        "transformar": ("Semántica final delegada al host `pcobra:holobit`.",),
+        "graficar": ("Semántica final delegada al host `pcobra:holobit`.",),
+        "corelibs": ("Depende de imports host-managed `pcobra:corelibs`.",),
+        "standard_library": ("Depende de imports host-managed `pcobra:standard_library`.",),
+    },
+    "go": {
+        "holobit": ("No replica paridad SDK Python completa.",),
+        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
+        "transformar": ("Rotación soportada solo sobre eje z.",),
+        "graficar": ("Solo vista textual via `mostrar`.",),
+        "corelibs": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
+        "standard_library": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
+    },
+    "cpp": {
+        "holobit": ("No replica paridad SDK Python completa.",),
+        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
+        "transformar": ("Rotación soportada solo sobre eje z.",),
+        "graficar": ("Solo vista textual via `mostrar`.",),
+        "corelibs": ("Cobertura parcial mediante adaptadores mínimos mantenidos por el proyecto.",),
+        "standard_library": ("Cobertura parcial mediante adaptadores mínimos mantenidos por el proyecto.",),
+    },
+    "java": {
+        "holobit": ("No replica paridad SDK Python completa.",),
+        "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
+        "transformar": ("Rotación soportada solo sobre eje z.",),
+        "graficar": ("Solo vista textual via `mostrar`.",),
+        "corelibs": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
+        "standard_library": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
+    },
+    "asm": {
+        "holobit": ("Representación simbólica de inspección/diagnóstico.",),
+        "proyectar": ("Requiere runtime externo y señaliza TRAP.",),
+        "transformar": ("Requiere runtime externo y señaliza TRAP.",),
+        "graficar": ("Requiere runtime externo y señaliza TRAP.",),
+        "corelibs": ("Puntos de llamada `CALL` gestionados externamente.",),
+        "standard_library": ("Puntos de llamada `CALL` gestionados externamente.",),
+    },
+}
+
 
 def _validate_contract_shape(name: str, matrix: dict[str, dict[str, str]]) -> None:
     missing_backends = [backend for backend in OFFICIAL_TARGETS if backend not in matrix]
@@ -313,6 +380,40 @@ def validate_backend_compatibility_contract() -> None:
                 f"pero la matriz declara {tuple(sorted(full_backends))}"
             )
 
+    missing_gaps_backends = [backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_FEATURE_GAPS]
+    if missing_gaps_backends:
+        raise RuntimeError(
+            f"BACKEND_FEATURE_GAPS no define backends oficiales: {missing_gaps_backends}"
+        )
+    extra_gaps_backends = sorted(set(BACKEND_FEATURE_GAPS) - set(OFFICIAL_TARGETS))
+    if extra_gaps_backends:
+        raise RuntimeError(
+            f"BACKEND_FEATURE_GAPS contiene backends no oficiales: {extra_gaps_backends}"
+        )
+    for backend in OFFICIAL_TARGETS:
+        missing_features = [
+            feature for feature in CONTRACT_FEATURES if feature not in BACKEND_FEATURE_GAPS[backend]
+        ]
+        if missing_features:
+            raise RuntimeError(
+                f"BACKEND_FEATURE_GAPS[{backend}] no define features requeridas: {missing_features}"
+            )
+        for feature in CONTRACT_FEATURES:
+            gaps = BACKEND_FEATURE_GAPS[backend][feature]
+            if not isinstance(gaps, tuple):
+                raise RuntimeError(
+                    f"BACKEND_FEATURE_GAPS[{backend}][{feature}] debe ser tuple[str, ...], recibido={type(gaps).__name__}"
+                )
+            level = BACKEND_COMPATIBILITY[backend][feature]
+            if level == "full" and gaps:
+                raise RuntimeError(
+                    f"BACKEND_FEATURE_GAPS[{backend}][{feature}] no debe declarar gaps cuando el nivel es full"
+                )
+            if level == "partial" and not gaps:
+                raise RuntimeError(
+                    f"BACKEND_FEATURE_GAPS[{backend}][{feature}] debe declarar al menos un gap para contrato partial"
+                )
+
 
 validate_backend_compatibility_contract()
 
@@ -326,15 +427,22 @@ def get_backend_compatibility_notes(backend: str) -> dict[str, str] | None:
     return BACKEND_COMPATIBILITY_NOTES.get(normalize_target_name(backend))
 
 
+def get_backend_feature_gaps(backend: str) -> dict[str, tuple[str, ...]] | None:
+    """Obtiene gaps explícitos por feature para un backend."""
+    return BACKEND_FEATURE_GAPS.get(normalize_target_name(backend))
+
+
 __all__ = [
     "BACKEND_COMPATIBILITY",
     "MIN_REQUIRED_BACKEND_COMPATIBILITY",
     "COMPATIBILITY_LEVEL_ORDER",
     "BACKEND_COMPATIBILITY_NOTES",
+    "BACKEND_FEATURE_GAPS",
     "CONTRACT_FEATURES",
     "SDK_FULL_BACKENDS",
     "SDK_PARTIAL_BACKENDS",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
+    "get_backend_feature_gaps",
     "validate_backend_compatibility_contract",
 ]

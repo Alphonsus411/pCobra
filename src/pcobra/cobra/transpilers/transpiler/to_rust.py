@@ -134,7 +134,7 @@ def visit_proyectar(self, nodo):
 def visit_transformar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     op = self.obtener_valor(nodo.operacion)
-    params = ", ".join(f"{self.obtener_valor(param)} as f64" for param in nodo.parametros)
+    params = ", ".join(f'format!("{{}}", {self.obtener_valor(param)})' for param in nodo.parametros)
     params_slice = f'&[{params}]' if params else '&[]'
     self.usa_runtime_holobit = True
     self.agregar_linea(

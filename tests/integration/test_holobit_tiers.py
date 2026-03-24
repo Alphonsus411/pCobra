@@ -6,6 +6,7 @@ from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.core import Lexer, Parser
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
+    BACKEND_FEATURE_GAPS,
     COMPATIBILITY_LEVEL_ORDER,
     CONTRACT_FEATURES,
     MIN_REQUIRED_BACKEND_COMPATIBILITY,
@@ -39,7 +40,7 @@ PARTIAL_MARKERS = {
     "rust": {
         "holobit": ("struct CobraHolobit",),
         "proyectar": ("fn cobra_proyectar",),
-        "transformar": ("fn cobra_transformar",),
+        "transformar": ("fn cobra_transformar", "if eje != \"z\" {"),
         "graficar": ("fn cobra_graficar",),
     },
     "wasm": {
@@ -148,6 +149,17 @@ def test_only_python_es_full_para_holobit_y_runtime_base():
         partial_backends = {backend for backend in OFFICIAL_TARGETS if BACKEND_COMPATIBILITY[backend][feature] == "partial"}
         assert full_backends == {"python"}
         assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_backends_partial_declaran_gaps_explicitos_por_feature(backend):
+    for feature in CONTRACT_FEATURES:
+        level = BACKEND_COMPATIBILITY[backend][feature]
+        gaps = BACKEND_FEATURE_GAPS[backend][feature]
+        if level == "full":
+            assert gaps == ()
+        elif level == "partial":
+            assert len(gaps) >= 1
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)

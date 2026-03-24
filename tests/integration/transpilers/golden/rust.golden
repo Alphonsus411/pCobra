@@ -4,6 +4,15 @@ fn cobra_holobit_partial_contract_error(feature: &str, detail: impl Into<String>
     CobraRuntimeError::new(format!("Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk; {}. {}", feature, detail.into(), COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE))
 }
 
+fn cobra_param_as_f64(feature: &str, value: &str) -> Result<f64, CobraRuntimeError> {
+    value.trim().parse::<f64>().map_err(|_| {
+        cobra_holobit_partial_contract_error(
+            feature,
+            format!("parámetro numérico no soportado por el adaptador oficial: {}", value),
+        )
+    })
+}
+
 fn cobra_runtime_expect<T>(result: Result<T, CobraRuntimeError>) -> T {
     match result {
         Ok(value) => value,
@@ -71,14 +80,17 @@ fn cobra_proyectar(hb: &CobraHolobit, modo: &str) -> Result<Vec<f64>, CobraRunti
 fn cobra_transformar(
     hb: &CobraHolobit,
     op: &str,
-    params: &[f64],
+    params: &[String],
 ) -> Result<CobraHolobit, CobraRuntimeError> {
     let operacion = op.to_ascii_lowercase();
     let mut valores = hb.valores.clone();
 
     match operacion.as_str() {
         "escalar" => {
-            let factor = params.first().copied().unwrap_or(1.0);
+            let factor = match params.first() {
+                Some(value) => cobra_param_as_f64("transformar", value)?,
+                None => 1.0,
+            };
             valores = valores.into_iter().map(|valor| valor * factor).collect();
         }
         "normalizar" => {
@@ -91,15 +103,44 @@ fn cobra_transformar(
             while valores.len() < 3 {
                 valores.push(0.0);
             }
-            valores[0] += params.get(0).copied().unwrap_or(0.0);
-            valores[1] += params.get(1).copied().unwrap_or(0.0);
-            valores[2] += params.get(2).copied().unwrap_or(0.0);
+            valores[0] += match params.get(0) {
+                Some(value) => cobra_param_as_f64("transformar", value)?,
+                None => 0.0,
+            };
+            valores[1] += match params.get(1) {
+                Some(value) => cobra_param_as_f64("transformar", value)?,
+                None => 0.0,
+            };
+            valores[2] += match params.get(2) {
+                Some(value) => cobra_param_as_f64("transformar", value)?,
+                None => 0.0,
+            };
         }
         "rotar" => {
             while valores.len() < 3 {
                 valores.push(0.0);
             }
-            let grados = params.get(0).copied().unwrap_or(0.0);
+            let (eje, grados_index) = match params.first() {
+                Some(candidate) if !candidate.trim().is_empty() => {
+                    let normalizado = candidate.trim().to_ascii_lowercase();
+                    if normalizado == "x" || normalizado == "y" || normalizado == "z" {
+                        (normalizado, 1usize)
+                    } else {
+                        ("z".to_string(), 0usize)
+                    }
+                }
+                _ => ("z".to_string(), 0usize),
+            };
+            if eje != "z" {
+                return Err(cobra_holobit_partial_contract_error(
+                    "transformar",
+                    format!("rotación soportada solo sobre eje z en el adaptador oficial, recibido {}", eje),
+                ));
+            }
+            let grados = match params.get(grados_index) {
+                Some(value) => cobra_param_as_f64("transformar", value)?,
+                None => 0.0,
+            };
             let radianes = grados.to_radians();
             let (x, y, z) = (valores[0], valores[1], valores[2]);
             valores = vec![
@@ -146,7 +187,7 @@ fn mostrar<T: Display>(valor: T) {
 
 let hb = cobra_holobit(vec![1, 2, 3]);
 cobra_runtime_expect(cobra_proyectar(&hb, &format!("{}", "2d")));
-cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]));
+cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[format!("{}", 90)]));
 cobra_runtime_expect(cobra_graficar(&hb));
 longitud("cobra");
 mostrar("hola");

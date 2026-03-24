@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_FEATURE_GAPS
 from pcobra.core.holobits.graficar import (
     _HOLOBIT_SDK_ERROR,
     _to_sdk_holobit,
@@ -52,3 +53,8 @@ def test_holobit_sdk_fallback_raises_explicit_error_when_required_sdk_is_missing
 def test_holobit_sdk_helpers_also_raise_explicit_error_without_required_sdk(funcion, args):
     with pytest.raises(ModuleNotFoundError, match="holobit_sdk|dependencia obligatoria"):
         funcion(*args)
+
+
+def test_gap_contract_non_python_declara_no_paridad_sdk():
+    for backend in ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"):
+        assert len(BACKEND_FEATURE_GAPS[backend]["holobit"]) >= 1

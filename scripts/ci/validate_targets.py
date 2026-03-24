@@ -19,6 +19,7 @@ from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
 from pcobra.cobra.cli.target_policies import SDK_COMPATIBLE_TARGETS
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
+    BACKEND_FEATURE_GAPS,
     CONTRACT_FEATURES,
     SDK_FULL_BACKENDS,
     validate_backend_compatibility_contract,
@@ -463,6 +464,20 @@ def validate_python_policy_literals(
         validate_backend_compatibility_contract()
     except RuntimeError as exc:
         errors.append(f"src/pcobra/cobra/transpilers/compatibility_matrix.py: {exc}")
+    for backend in FINAL_OFFICIAL_TARGETS:
+        for feature in CONTRACT_FEATURES:
+            level = BACKEND_COMPATIBILITY[backend][feature]
+            gaps = BACKEND_FEATURE_GAPS[backend][feature]
+            if level == "full" and gaps:
+                errors.append(
+                    "src/pcobra/cobra/transpilers/compatibility_matrix.py: "
+                    f"{backend}.{feature} está en full pero declara gaps={gaps}"
+                )
+            if level == "partial" and not gaps:
+                errors.append(
+                    "src/pcobra/cobra/transpilers/compatibility_matrix.py: "
+                    f"{backend}.{feature} está en partial sin gaps explícitos"
+                )
     return errors
 
 

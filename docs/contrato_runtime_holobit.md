@@ -167,6 +167,19 @@ La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `grafic
 | `java` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 | `asm` | Tier 2 | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial | 🟡 partial |
 
+## Mapa de gaps priorizados por backend/feature (estado verificado)
+
+| Backend | holobit | proyectar | transformar | graficar | corelibs | standard_library |
+|---|---|---|---|---|---|---|
+| python | sin gaps contractuales | sin gaps contractuales | sin gaps contractuales | sin gaps contractuales | sin gaps contractuales | sin gaps contractuales |
+| javascript | sin paridad SDK Python completa | modos `1d/2d/3d/vector` | rotación solo eje `z` | vista textual por `mostrar` | capa adaptadora parcial | capa adaptadora parcial |
+| rust | sin paridad SDK Python completa | modos `1d/2d/3d/vector` | rotación solo eje `z`; params parseados en runtime | vista textual por `mostrar` | helpers inline parciales | helpers inline parciales |
+| wasm | depende de host externo | delega en host `pcobra:holobit` | delega en host `pcobra:holobit` | delega en host `pcobra:holobit` | depende de host `pcobra:corelibs` | depende de host `pcobra:standard_library` |
+| go | sin paridad SDK Python completa | modos `1d/2d/3d/vector` | rotación solo eje `z` | vista textual por `mostrar` | adaptadores best-effort | adaptadores best-effort |
+| cpp | sin paridad SDK Python completa | modos `1d/2d/3d/vector` | rotación solo eje `z` | vista textual por `mostrar` | adaptadores mínimos | adaptadores mínimos |
+| java | sin paridad SDK Python completa | modos `1d/2d/3d/vector` | rotación solo eje `z` | vista textual por `mostrar` | adaptadores best-effort | adaptadores best-effort |
+| asm | representación simbólica | requiere runtime externo (`TRAP`) | requiere runtime externo (`TRAP`) | requiere runtime externo (`TRAP`) | `CALL` externo | `CALL` externo |
+
 - `python` es el único backend que puede figurar como `full` para estas seis features.
 - `escalar` y `mover` quedan fuera de esta tabla porque son helpers del runtime Python, no features del contrato transversal.
 - `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` deben permanecer en `partial`
