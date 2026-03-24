@@ -46,6 +46,8 @@ Además, el proyecto separa explícitamente **targets oficiales de salida** de *
 
 La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` se mantienen en `partial`. Eso significa que la **paridad SDK total** solo puede prometerse para `python`. `javascript`, `rust` y `cpp` sí cuentan con runtime oficial verificable y adaptadores mantenidos por el proyecto, pero siguen siendo `partial` en Holobit/SDK. `go` y `java` se mantienen como runtimes best-effort; `wasm` y `asm` como salidas oficiales solo de transpilación. Ninguna de esas categorías debe venderse como runtime oficial verificable ni como compatibilidad SDK equivalente.
 
+**Nota explícita de política:** **los backends retirados no forman parte del árbol operativo**.
+
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 
 

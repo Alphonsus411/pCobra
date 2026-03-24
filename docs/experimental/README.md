@@ -17,5 +17,5 @@ oficiales de salida** los 8 destinos canónicos definidos en
 `src/pcobra/cobra/transpilers/targets.py`.
 
 Los artefactos históricos retirados del producto actual ya no deben residir en
-esta carpeta: se conservan fuera del árbol principal distribuido, en
-`archive/retired_targets/`.
+esta carpeta: se conservan fuera del árbol principal distribuido, como
+histórico segregado sin vigencia operativa.

@@ -90,13 +90,11 @@ Esos orígenes reverse **no amplían** `OFFICIAL_TARGETS`: describen entradas ac
 
 ## Archivo histórico y experimentos
 
-Cualquier resto histórico o experimental debe vivir fuera del recorrido normativo principal. Las ubicaciones explícitas para ello son:
+Cualquier resto histórico o experimental debe mantenerse segregado del recorrido normativo principal y del árbol operativo público.
 
-- `archive/retired_targets/`
-- `docs/historico/`
-- `docs/experimental/`
+**Nota explícita de política:** **los backends retirados no forman parte del árbol operativo**.
 
-Esas rutas pertenecen al repositorio solo como archivo o material experimental, no como definición vigente del producto final.
+Ese material se conserva únicamente como archivo o referencia histórica, sin vigencia normativa para la definición del producto final.
 
 ## Revisión editorial final
 

@@ -125,6 +125,24 @@ DOC_TABLE_PATHS = (
     "docs/matriz_transpiladores.md",
     "docs/contrato_runtime_holobit.md",
 )
+RETIRED_TARGETS_LITERAL = "archive/retired_targets"
+DOC_INDEX_GUARDRAIL_PATHS = (
+    "README.md",
+    "docs/README.en.md",
+    "docs/frontend/index.rst",
+    "docs/conf.py",
+    "docs/frontend/conf.py",
+)
+PACKAGING_GUARDRAIL_PATHS = (
+    "pyproject.toml",
+    "MANIFEST.in",
+)
+IMPORT_GUARDRAIL_SCAN_ROOTS = ("src", "scripts", "tests")
+IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?m)^\s*from\s+archive(?:\.[\w_]+)*\s+import\s+"),
+    re.compile(r"(?m)^\s*import\s+archive(?:\.[\w_]+)*"),
+    re.compile(r"(?i)(sys\.path\.insert|sys\.path\.append|Path\()[^\n]{0,200}archive/retired_targets"),
+)
 FORBIDDEN_NON_PYTHON_SDK_PROMOTION = re.compile(
     r"(?P<backend>javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
     r"\b(figura como|aparece como|es|tiene)\b[^\n]{0,40}"
@@ -440,6 +458,56 @@ def validate_python_policy_literals(
 
 
 
+def validate_retired_targets_guardrail() -> list[str]:
+    """Evita fugas de rutas históricas retiradas en superficies públicas/operativas."""
+    errors: list[str] = []
+
+    for rel_path in DOC_INDEX_GUARDRAIL_PATHS:
+        path = ROOT / rel_path
+        if not path.exists():
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        if RETIRED_TARGETS_LITERAL in content:
+            errors.append(
+                f"{rel_path}: fuga de histórico retirado en índice/documentación pública ({RETIRED_TARGETS_LITERAL})"
+            )
+
+    for rel_path in PACKAGING_GUARDRAIL_PATHS:
+        path = ROOT / rel_path
+        if not path.exists():
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        if RETIRED_TARGETS_LITERAL in content:
+            errors.append(
+                f"{rel_path}: fuga de histórico retirado en rutas de packaging ({RETIRED_TARGETS_LITERAL})"
+            )
+
+    for root_name in IMPORT_GUARDRAIL_SCAN_ROOTS:
+        base = ROOT / root_name
+        if not base.exists():
+            continue
+        for path in base.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(ROOT).as_posix()
+            if _is_historical_repo_path(rel):
+                continue
+            content = path.read_text(encoding="utf-8", errors="ignore")
+            if RETIRED_TARGETS_LITERAL in content:
+                offset = content.find(RETIRED_TARGETS_LITERAL)
+                line_no = content.count("\n", 0, offset) + 1
+                errors.append(
+                    f"{rel}:{line_no}: fuga de histórico retirado en árbol operativo ({RETIRED_TARGETS_LITERAL})"
+                )
+            for pattern in IMPORT_GUARDRAIL_PATTERNS:
+                for match in pattern.finditer(content):
+                    line_no = content.count("\n", 0, match.start()) + 1
+                    errors.append(
+                        f"{rel}:{line_no}: import/ruta operativa no permitida hacia histórico retirado"
+                    )
+    return errors
+
+
 def validate_final_backend_repo_audit() -> list[str]:
     errors: list[str] = []
     for path in _iter_repo_audit_files():
@@ -483,6 +551,7 @@ def main() -> int:
         ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
         ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
         ("contrato Python/Holobit/SDK", validate_python_policy_literals(official_targets)),
+        ("guard-rail histórico retirado", validate_retired_targets_guardrail()),
         ("auditoría de repo", validate_final_backend_repo_audit()),
     )
     for stage_name, errors in stages:

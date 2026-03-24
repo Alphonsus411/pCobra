@@ -62,7 +62,7 @@ def test_documentacion_de_tiers_no_sobredimensiona_contrato_holobit():
 
 def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
     policy = Path("docs/targets_policy.md").read_text(encoding="utf-8").lower()
-    assert "archive/retired_targets/" in policy
+    assert "backends retirados no forman parte del árbol operativo" in policy
     assert "orígenes reverse" in policy
     assert "recorrido normativo principal" in policy or "árbol principal" in policy
 
@@ -71,7 +71,7 @@ def test_politica_y_docs_clave_explican_separacion_de_experimentos_y_reverse():
 
     frontend = Path("docs/frontend/index.rst").read_text(encoding="utf-8").lower()
     assert "artefactos internos" in frontend or "internos" in frontend
-    assert "archive/retired_targets/" not in frontend
+    assert "retired_targets" not in frontend
 
 
 PUBLIC_HOLOBIT_CONTRACT_DOCS = [
@@ -213,13 +213,6 @@ def test_scope_publico_vigilado_no_reintroduce_aliases_legacy_ni_flags_obsoletos
 
 def test_el_historial_de_aliases_sale_del_arbol_documental_publico():
     assert not Path("docs/historico/targets_aliases_legacy.md").exists()
-
-    path = Path("archive/retired_targets/docs/targets_aliases_legacy.md")
-    contenido = path.read_text(encoding="utf-8").lower()
-    assert "histórico" in contenido or "historico" in contenido
-    assert "sin vigencia normativa" in contenido
-    assert "js" in contenido
-    assert "c++" in contenido
 
 
 def test_guias_publicas_no_reintroducen_artefactos_retirados_en_recorrido_normal():

@@ -117,3 +117,32 @@ def test_ci_validate_targets_detecta_documentacion_sdk_divergente(monkeypatch, t
 
     assert any("promoción pública inválida" in error for error in errors)
     assert any("javascript" in error for error in errors)
+
+
+def test_ci_validate_targets_bloquea_fugas_de_retired_targets_en_indices_docs(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    leaked_readme = tmp_path / "README.md"
+    leaked_readme.write_text("referencia inválida a archive/retired_targets", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "DOC_INDEX_GUARDRAIL_PATHS", (leaked_readme.as_posix(),))
+    monkeypatch.setattr(ci_validator, "PACKAGING_GUARDRAIL_PATHS", tuple())
+    monkeypatch.setattr(ci_validator, "IMPORT_GUARDRAIL_SCAN_ROOTS", tuple())
+
+    errors = ci_validator.validate_retired_targets_guardrail()
+
+    assert any("índice/documentación pública" in error for error in errors)
+    assert any("archive/retired_targets" in error for error in errors)
+
+
+def test_ci_validate_targets_guardrail_no_reporta_si_no_hay_fugas(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    clean_doc = tmp_path / "README.md"
+    clean_doc.write_text("sin referencias históricas retiradas", encoding="utf-8")
+    clean_packaging = tmp_path / "MANIFEST.in"
+    clean_packaging.write_text("include README.md\n", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "DOC_INDEX_GUARDRAIL_PATHS", (clean_doc.as_posix(),))
+    monkeypatch.setattr(ci_validator, "PACKAGING_GUARDRAIL_PATHS", (clean_packaging.as_posix(),))
+    monkeypatch.setattr(ci_validator, "IMPORT_GUARDRAIL_SCAN_ROOTS", tuple())
+
+    assert ci_validator.validate_retired_targets_guardrail() == []
