@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Valida la política final de 8 backends oficiales."""
+"""Valida de forma estricta la política final de 8 backends oficiales."""
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
@@ -14,12 +13,16 @@ if str(SRC_ROOT) not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.targets_policy_common import (
-    FORBIDDEN_PUBLIC_TARGET_ALIASES,
-    PUBLIC_TEXT_PATH_STRS,
-    VALIDATION_SCAN_PATHS,
-    read_target_policy,
+from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
+from scripts.ci.validate_targets import (
+    validate_final_backend_repo_audit,
+    validate_public_documentation_alignment,
+    validate_python_policy_literals,
+    validate_registry_tables,
+    validate_scan_roots,
+    validate_targeted_artifact_roots,
 )
+from scripts.targets_policy_common import VALIDATION_SCAN_PATHS, read_target_policy
 
 SCAN_ROOTS = tuple(path.relative_to(ROOT).as_posix() for path in VALIDATION_SCAN_PATHS)
 GENERATED_PATH_PARTS = {
@@ -32,74 +35,11 @@ GENERATED_PATH_PARTS = {
     "dist",
     "docs/_build",
 }
-BINARY_OR_GENERATED_SUFFIXES = {
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".webp",
-    ".pdf",
-    ".svgz",
-    ".ico",
-    ".zip",
-    ".gz",
-    ".tar",
-    ".tgz",
-    ".bz2",
-    ".xz",
-    ".7z",
-    ".jar",
-    ".class",
-    ".o",
-    ".a",
-    ".so",
-    ".dylib",
-    ".dll",
-    ".exe",
-    ".wasm",
-    ".pyc",
-    ".pyo",
-    ".pyd",
-    ".ttf",
-    ".otf",
-    ".woff",
-    ".woff2",
-    ".mp3",
-    ".mp4",
-    ".mov",
-    ".avi",
-}
-LOCKFILES = {
-    "poetry.lock",
-    "Pipfile.lock",
-    "package-lock.json",
-    "pnpm-lock.yaml",
-    "yarn.lock",
-    "Cargo.lock",
-}
-SKIPPED_REL_PATHS = frozenset(
-    {
-        "scripts/validate_targets_policy.py",
-        "scripts/ci/validate_targets.py",
-        "scripts/targets_policy_common.py",
-    }
-)
-
-
-def is_text_file(path: Path) -> bool:
-    if path.suffix.lower() in BINARY_OR_GENERATED_SUFFIXES:
-        return False
-    if path.name in LOCKFILES:
-        return False
-    try:
-        sample = path.read_bytes()[:4096]
-    except OSError:
-        return False
-    return b"\x00" not in sample
 
 
 
 def iter_scan_files(root: Path) -> list[Path]:
+    """Compatibilidad histórica: devuelve ficheros vigilados saltando cachés/generados."""
     files: list[Path] = []
     for entry in SCAN_ROOTS:
         path = root / entry
@@ -122,34 +62,18 @@ def iter_scan_files(root: Path) -> list[Path]:
 
 
 
-def _normalized_public_line(line: str) -> str:
-    return (
-        line.replace(".js", "")
-        .replace(".mjs", "")
-        .replace(".cjs", "")
-        .replace(".cpp", "")
-        .replace(".wasm", "")
-        .replace("Node.js", "Node")
-    )
-
-
-
-def _find_public_alias_errors(rel: str, content: str) -> list[str]:
-    if rel not in PUBLIC_TEXT_PATH_STRS:
-        return []
-    errors: list[str] = []
-    for line_no, raw_line in enumerate(content.splitlines(), start=1):
-        line = _normalized_public_line(raw_line)
-        for alias, canonical in FORBIDDEN_PUBLIC_TARGET_ALIASES:
-            pattern = re.compile(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", re.IGNORECASE)
-            if pattern.search(line):
-                errors.append(
-                    f"{rel}:{line_no}: alias público no canónico -> '{alias}' (usar: {canonical})"
-                )
-    return errors
-
-
-
+def _run_stage(name: str, errors: list[str]) -> int | None:
+    if not errors:
+        return None
+    print("❌ Validación de política de targets: FALLÓ", file=sys.stderr)
+    print(f" - etapa: {name}", file=sys.stderr)
+    print(f" - {errors[0]}", file=sys.stderr)
+    if len(errors) > 1:
+        print(
+            f" - y {len(errors) - 1} desalineación(es) adicional(es) en la misma etapa",
+            file=sys.stderr,
+        )
+    return 1
 
 
 
@@ -158,44 +82,47 @@ def main() -> int:
     tier1_targets = tuple(policy["tier1_targets"])
     tier2_targets = tuple(policy["tier2_targets"])
     official_targets = tuple(policy["official_targets"])
+    reverse_scope = tuple(REVERSE_SCOPE_LANGUAGES)
+
     if official_targets != tier1_targets + tier2_targets:
-        raise RuntimeError(
-            "Política inválida: OFFICIAL_TARGETS debe ser exactamente TIER1_TARGETS + TIER2_TARGETS -> "
-            f"official={official_targets}, tier1={tier1_targets}, tier2={tier2_targets}"
-        )
-
-    public_names = tuple(policy["public_names"])
-    internal_names = tuple(policy["internal_names"])
-    if public_names != official_targets:
-        raise RuntimeError(
-            "Política inválida: public_names debe coincidir exactamente con OFFICIAL_TARGETS -> "
-            f"public={public_names}, official={official_targets}"
-        )
-    if internal_names != official_targets:
-        raise RuntimeError(
-            "Política inválida: internal_names debe coincidir exactamente con OFFICIAL_TARGETS -> "
-            f"internal={internal_names}, official={official_targets}"
-        )
-
-    errors: list[str] = []
-
-    for path in iter_scan_files(ROOT):
-        if not is_text_file(path):
-            continue
-        rel = path.relative_to(ROOT).as_posix()
-        if rel in SKIPPED_REL_PATHS:
-            continue
-        try:
-            content = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            continue
-        errors.extend(_find_public_alias_errors(rel, content))
-
-    if errors:
         print("❌ Validación de política de targets: FALLÓ", file=sys.stderr)
-        for err in errors:
-            print(f" - {err}", file=sys.stderr)
+        print(
+            " - src/pcobra/cobra/transpilers/targets.py: OFFICIAL_TARGETS debe ser exactamente TIER1_TARGETS + TIER2_TARGETS -> "
+            f"official={official_targets}, tier1={tier1_targets}, tier2={tier2_targets}",
+            file=sys.stderr,
+        )
         return 1
+
+    if tuple(policy["public_names"]) != official_targets:
+        print("❌ Validación de política de targets: FALLÓ", file=sys.stderr)
+        print(
+            " - scripts/targets_policy_common.py: public_names debe coincidir exactamente con OFFICIAL_TARGETS -> "
+            f"public={tuple(policy['public_names'])}, official={official_targets}",
+            file=sys.stderr,
+        )
+        return 1
+
+    if tuple(policy["internal_names"]) != official_targets:
+        print("❌ Validación de política de targets: FALLÓ", file=sys.stderr)
+        print(
+            " - scripts/targets_policy_common.py: internal_names debe coincidir exactamente con OFFICIAL_TARGETS -> "
+            f"internal={tuple(policy['internal_names'])}, official={official_targets}",
+            file=sys.stderr,
+        )
+        return 1
+
+    stages = (
+        ("registros canónicos", validate_registry_tables()),
+        ("artefactos dirigidos", validate_targeted_artifact_roots(official_targets, reverse_scope)),
+        ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
+        ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
+        ("contrato Python/Holobit/SDK", validate_python_policy_literals(official_targets)),
+        ("auditoría de repo", validate_final_backend_repo_audit()),
+    )
+    for stage_name, errors in stages:
+        result = _run_stage(stage_name, errors)
+        if result is not None:
+            return result
 
     print("✅ Validación de política de targets: OK")
     print(f"   Tier 1: {', '.join(tier1_targets)}")

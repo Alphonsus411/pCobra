@@ -1,6 +1,7 @@
 import pytest
 
 from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
+from pcobra.cobra.transpilers.targets import TIER2_TARGETS
 from tests.integration.transpilers.backend_contracts import (
     CORE_RUNTIME_FEATURES,
     HOLOBIT_FEATURES,
@@ -99,3 +100,8 @@ def test_tier2_cpp_se_mantiene_como_runtime_oficial_fuerte_y_go_java_como_adapta
     assert "func cobra_graficar(hb any) string" in go
     assert "private static String cobra_graficar(Object hb)" in java
     assert "runtime de inspección/diagnóstico" in asm
+
+
+def test_tier2_suite_no_admite_backends_extra_ni_perdidos():
+    assert TIER2_BACKENDS == TIER2_TARGETS
+    assert len(TIER2_BACKENDS) == 4

@@ -57,14 +57,14 @@ RUNTIME_ADAPTER_MARKERS = {
         "Runtime Holobit Python: 'graficar' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
     ),
     "javascript": (
-        "Runtime Holobit JavaScript: modo de proyección no soportado por el adaptador oficial",
-        "Runtime Holobit JavaScript: operación no soportada por el adaptador oficial",
+        "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
+        "case '2d':",
         "const vista = `Holobit(${holobit.valores.join(', ')})`;",
     ),
     "rust": (
-        "Runtime Holobit Rust: modo de proyección no soportado por el adaptador oficial",
-        "Runtime Holobit Rust: operación no soportada por el adaptador oficial",
+        "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "struct CobraRuntimeError",
+        'cobra_runtime_expect(cobra_graficar(&hb));',
     ),
     "wasm": (
         ";; backend wasm: hooks Holobit delegados en runtime host-managed de pcobra",
@@ -73,18 +73,18 @@ RUNTIME_ADAPTER_MARKERS = {
     ),
     "go": (
         "type CobraHolobit struct",
-        "Runtime Holobit Go: modo de proyección no soportado por el adaptador oficial",
+        "panic(",
         "func mostrar(valores ...any) any {",
     ),
     "cpp": (
-        "Runtime Holobit C++: modo de proyección no soportado por el adaptador oficial",
-        "Runtime Holobit C++: operación no soportada por el adaptador oficial",
+        "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "inline std::size_t longitud(const T& valor) {",
+        'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});',
     ),
     "java": (
-        "Runtime Holobit Java: modo de proyección no soportado por el adaptador oficial",
-        "Runtime Holobit Java: operación no soportada por el adaptador oficial",
+        "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "private static int longitud(Object valor) {",
+        'cobra_transformar(hb, "rotar", 90);',
     ),
     "asm": (
         "runtime de inspección/diagnóstico",
@@ -165,6 +165,15 @@ def test_official_backend_codegen_matches_golden_snapshot(backend: str):
     assert golden_file.exists(), f"Falta golden file para {backend}: {golden_file}"
     assert generated == golden_file.read_text(encoding="utf-8")
 
+
+
+
+def test_suite_y_goldens_cubren_exactamente_los_8_backends_oficiales():
+    golden_backends = tuple(sorted(path.stem for path in GOLDEN_DIR.glob("*.golden")))
+    assert set(golden_backends) == set(OFFICIAL_TARGETS)
+    assert len(golden_backends) == 8
+    assert set(TRANSPILERS) == set(OFFICIAL_TARGETS)
+    assert len(TRANSPILERS) == 8
 
 def test_python_backend_generated_program_executes_in_repo_runtime():
     code = _generate("python", [NodoAsignacion("x", NodoValor(1)), NodoAsignacion("y", NodoValor(2))])
