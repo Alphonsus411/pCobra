@@ -109,10 +109,13 @@ HOLOBIT_MATRIX_DOC_PATHS = (
     ROOT / "docs/matriz_transpiladores.md",
 )
 
-FORBIDDEN_PUBLIC_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
+ACCEPTED_PUBLIC_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
     ("c++", "cpp"),
-    ("assembly", "asm"),
     ("ensamblador", "asm"),
+)
+
+FORBIDDEN_PUBLIC_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
+    ("assembly", "asm"),
     ("js", "javascript"),
 )
 
