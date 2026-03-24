@@ -6,7 +6,11 @@ from importlib import import_module
 from importlib.metadata import entry_points
 
 from pcobra.cobra.transpilers import module_map
-from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
+from pcobra.cobra.cli.target_policies import (
+    accepted_target_aliases_examples_text,
+    parse_target,
+    parse_target_list,
+)
 from pcobra.cobra.transpilers.registry import (
     build_official_transpilers,
     official_transpiler_targets,
@@ -126,6 +130,7 @@ load_entrypoint_transpilers()
 
 LANG_CHOICES = list(official_transpiler_targets())
 TARGETS_HELP = build_target_help_by_tier(tuple(LANG_CHOICES))
+TARGET_ALIASES_HELP = accepted_target_aliases_examples_text()
 
 
 def parse_official_target_list(value: str) -> list[str]:
@@ -196,18 +201,18 @@ class CompileCommand(BaseCommand):
             type=parse_target,
             choices=LANG_CHOICES,
             default="python",
-            help=_("Tipo de código generado ({targets})").format(targets=TARGETS_HELP),
+            help=_("Tipo de código generado ({targets}). Aliases aceptados: {aliases}").format(targets=TARGETS_HELP, aliases=TARGET_ALIASES_HELP),
         )
         parser.add_argument(
             "--backend",
             type=parse_target,
             choices=LANG_CHOICES,
-            help=_("Alias de --tipo ({targets})").format(targets=TARGETS_HELP),
+            help=_("Alias de --tipo ({targets}). Aliases aceptados: {aliases}").format(targets=TARGETS_HELP, aliases=TARGET_ALIASES_HELP),
         )
         parser.add_argument(
             "--tipos",
             type=parse_official_target_list,
-            help=_("Lista de lenguajes separados por comas ({targets})").format(targets=TARGETS_HELP),
+            help=_("Lista de lenguajes separados por comas ({targets}). Aliases aceptados: {aliases}").format(targets=TARGETS_HELP, aliases=TARGET_ALIASES_HELP),
         )
         parser.set_defaults(cmd=self)
         return parser

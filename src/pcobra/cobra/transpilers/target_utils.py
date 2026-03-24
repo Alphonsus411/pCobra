@@ -8,6 +8,11 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TI
 
 MarkupKind = Literal["plain", "markdown", "rst"]
 
+TARGET_ALIASES: Final[dict[str, str]] = {
+    "ensamblador": "asm",
+    "c++": "cpp",
+}
+
 TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "python": "Python",
     "rust": "Rust",
@@ -22,7 +27,8 @@ TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
 
 def normalize_target_name(target: str) -> str:
     """Normaliza *target* al nombre canónico usado internamente."""
-    return target.strip().lower()
+    canonical = target.strip().lower()
+    return TARGET_ALIASES.get(canonical, canonical)
 
 
 def resolution_candidates(target: str) -> tuple[str, ...]:

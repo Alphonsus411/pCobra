@@ -16,6 +16,17 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 RenderMarkup = Literal["plain", "markdown", "rst"]
 
+
+ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
+    ("c++", "cpp"),
+    ("ensamblador", "asm"),
+)
+
+
+def accepted_target_aliases_examples_text() -> str:
+    return ", ".join(f"{alias}→{canonical}" for alias, canonical in ACCEPTED_TARGET_ALIASES)
+
+
 # Todos los destinos oficiales de generación/transpilación.
 OFFICIAL_TRANSPILATION_TARGETS = OFFICIAL_TARGETS
 
@@ -268,9 +279,13 @@ validate_runtime_support_contract()
 
 
 def invalid_target_error(value: str) -> str:
-    return "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}.".format(
+    return (
+        "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}. "
+        "Aliases aceptados: {aliases}."
+    ).format(
         value=value.strip(),
         supported=official_transpilation_targets_text(),
+        aliases=accepted_target_aliases_examples_text(),
     )
 
 
