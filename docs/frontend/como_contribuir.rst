@@ -24,3 +24,27 @@ A continuación se describe el flujo habitual de contribución utilizando GitHub
 6. Espera la revisión y realiza ajustes si es necesario.
 
 Con este flujo mantenemos el código ordenado y es más sencillo revisar cada contribución.
+
+Regeneración de política de targets (obligatorio al tocar docs/CLI)
+--------------------------------------------------------------------
+
+Cuando cambies la política de targets, el registro de transpiladores o documentación pública asociada, regenera todos los artefactos derivados con un único comando:
+
+.. code-block:: bash
+
+   python scripts/generate_target_policy_docs.py
+
+Este comando sincroniza automáticamente:
+
+* ``README.md`` (bloque normativo entre marcadores).
+* ``docs/README.en.md`` (bloque normativo en inglés entre marcadores).
+* ``docs/targets_policy.md`` (tiers, tabla de estado y separación runtime entre marcadores).
+* ``docs/_generated/target_policy_summary.md``.
+* ``docs/_generated/target_policy_summary.rst``.
+* ``docs/_generated/target_policy_tiers.md``.
+* ``docs/_generated/target_policy_status_table.md``.
+* ``docs/_generated/target_policy_runtime_split.md``.
+* ``docs/_generated/official_targets_table.rst``.
+* ``docs/_generated/runtime_capability_matrix.rst``.
+* ``docs/_generated/reverse_scope_table.rst``.
+* ``docs/_generated/cli_backend_examples.rst``.

@@ -15,7 +15,7 @@ Versión 10.0.12
 
 [English version available here](docs/README.en.md)
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida derivada automáticamente de `src/pcobra/cobra/transpilers/targets.py` + `src/pcobra/cobra/transpilers/registry.py`.
 
 Resumen normativo visible (generado desde la política canónica):
 
@@ -809,7 +809,7 @@ El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 
 `cobra transpilar-inverso` documenta una capacidad distinta de la transpilación de salida normal. Aquí conviene separar dos listas para evitar ambigüedades:
 
-- **Targets oficiales de salida**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
+- **Targets oficiales de salida**: consultar el resumen normativo generado al inicio de este README.
 - **Orígenes reverse de entrada**: `python`, `javascript`, `java`.
 
 Los nombres `python`, `javascript` y `java` aparecen en ambas listas, pero con papeles distintos: como `--origen` describen **entradas aceptadas** por la ruta reverse; como `--destino` vuelven a significar **targets oficiales de salida ya existentes**. La capacidad reverse no añade targets nuevos ni amplía la lista oficial de salida.

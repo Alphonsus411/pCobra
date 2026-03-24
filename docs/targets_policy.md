@@ -19,6 +19,7 @@ La política operativa de runtime, Holobit y SDK se deriva de `src/pcobra/cobra/
 
 `OFFICIAL_TARGETS` debe ser siempre la concatenación exacta de `TIER1_TARGETS + TIER2_TARGETS`.
 
+<!-- BEGIN GENERATED TARGET TIERS -->
 ### Tier 1
 
 - `python`
@@ -32,21 +33,24 @@ La política operativa de runtime, Holobit y SDK se deriva de `src/pcobra/cobra/
 - `cpp`
 - `java`
 - `asm`
+<!-- END GENERATED TARGET TIERS -->
 
 En CLI, documentación, ejemplos, tablas y configuración pública **solo** se aceptan esos 8 nombres canónicos.
 
 ## Estado público por backend
 
+<!-- BEGIN GENERATED TARGET STATUS TABLE -->
 | Backend | Tier | Runtime público | Estado Holobit público | Compatibilidad SDK real |
 |---|---|---|---|---|
 | `python` | Tier 1 | oficial verificable | `full`; usa el contrato completo del SDK Python | completa |
 | `rust` | Tier 1 | oficial verificable | adaptador mantenido por el proyecto; estado contractual `partial` | parcial |
 | `javascript` | Tier 1 | oficial verificable | adaptador mantenido por el proyecto; estado contractual `partial` | parcial |
-| `wasm` | Tier 1 | solo transpilación | hooks/puentes contractuales `partial`; depende del host | parcial |
+| `wasm` | Tier 1 | solo transpilación | hooks simbólicos/diagnóstico `partial`; requiere runtime externo | parcial |
 | `go` | Tier 2 | best-effort no público | hooks/adaptadores `partial` sobre runtime best-effort | parcial |
 | `cpp` | Tier 2 | oficial verificable | adaptador mantenido por el proyecto; estado contractual `partial` | parcial |
 | `java` | Tier 2 | best-effort no público | hooks/adaptadores `partial` sobre runtime best-effort | parcial |
 | `asm` | Tier 2 | solo transpilación | hooks simbólicos/diagnóstico `partial`; requiere runtime externo | parcial |
+<!-- END GENERATED TARGET STATUS TABLE -->
 
 Lectura normativa de la tabla:
 
@@ -61,6 +65,7 @@ Los 8 nombres de `OFFICIAL_TARGETS` describen el alcance oficial de **transpilac
 
 Eso no implica que todos los backends prometan el mismo runtime ni la misma cobertura de librerías. La separación pública correcta es:
 
+<!-- BEGIN GENERATED TARGET RUNTIME SPLIT -->
 - `OFFICIAL_RUNTIME_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `VERIFICATION_EXECUTABLE_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `BEST_EFFORT_RUNTIME_TARGETS`: `go`, `java`
@@ -69,6 +74,7 @@ Eso no implica que todos los backends prometan el mismo runtime ni la misma cobe
 - `OFFICIAL_STANDARD_LIBRARY_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: `python`, `rust`, `javascript`, `cpp`
 - `SDK_COMPATIBLE_TARGETS`: `python`
+<!-- END GENERATED TARGET RUNTIME SPLIT -->
 
 La matriz contractual por backend y feature vive en `src/pcobra/cobra/transpilers/compatibility_matrix.py` y se publica en `docs/matriz_transpiladores.md`.
 

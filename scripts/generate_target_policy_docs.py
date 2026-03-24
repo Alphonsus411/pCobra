@@ -48,6 +48,12 @@ MARKER_START = "<!-- BEGIN GENERATED TARGET POLICY SUMMARY -->"
 MARKER_END = "<!-- END GENERATED TARGET POLICY SUMMARY -->"
 EN_MARKER_START = "<!-- BEGIN GENERATED TARGET POLICY SUMMARY EN -->"
 EN_MARKER_END = "<!-- END GENERATED TARGET POLICY SUMMARY EN -->"
+POLICY_TIERS_START = "<!-- BEGIN GENERATED TARGET TIERS -->"
+POLICY_TIERS_END = "<!-- END GENERATED TARGET TIERS -->"
+POLICY_STATUS_TABLE_START = "<!-- BEGIN GENERATED TARGET STATUS TABLE -->"
+POLICY_STATUS_TABLE_END = "<!-- END GENERATED TARGET STATUS TABLE -->"
+POLICY_RUNTIME_SPLIT_START = "<!-- BEGIN GENERATED TARGET RUNTIME SPLIT -->"
+POLICY_RUNTIME_SPLIT_END = "<!-- END GENERATED TARGET RUNTIME SPLIT -->"
 
 
 def _policy_summary_md() -> str:
@@ -80,6 +86,65 @@ def _policy_summary_en_md() -> str:
             "",
             "- **Tier 1**: " + format_target_sequence(TIER1_TARGETS, markup="markdown") + ".",
             "- **Tier 2**: " + format_target_sequence(TIER2_TARGETS, markup="markdown") + ".",
+        ]
+    ).strip() + "\n"
+
+
+def _policy_tiers_md() -> str:
+    return "\n".join(
+        [
+            "### Tier 1",
+            "",
+            *[f"- `{target}`" for target in TIER1_TARGETS],
+            "",
+            "### Tier 2",
+            "",
+            *[f"- `{target}`" for target in TIER2_TARGETS],
+        ]
+    ).strip() + "\n"
+
+
+def _policy_status_table_md() -> str:
+    lines = [
+        "| Backend | Tier | Runtime público | Estado Holobit público | Compatibilidad SDK real |",
+        "|---|---|---|---|---|",
+    ]
+    for row in official_target_rows():
+        backend = row["target"]
+        holobit_status = (
+            "`full`; usa el contrato completo del SDK Python"
+            if backend in SDK_COMPATIBLE_TARGETS
+            else "adaptador mantenido por el proyecto; estado contractual `partial`"
+            if backend in OFFICIAL_RUNTIME_TARGETS
+            else "hooks/adaptadores `partial` sobre runtime best-effort"
+            if backend in BEST_EFFORT_RUNTIME_TARGETS
+            else "hooks simbólicos/diagnóstico `partial`; requiere runtime externo"
+        )
+        runtime_status = (
+            "oficial verificable"
+            if backend in OFFICIAL_RUNTIME_TARGETS
+            else "best-effort no público"
+            if backend in BEST_EFFORT_RUNTIME_TARGETS
+            else "solo transpilación"
+        )
+        sdk_status = "completa" if backend in SDK_COMPATIBLE_TARGETS else "parcial"
+        lines.append(
+            f"| `{backend}` | {row['tier']} | {runtime_status} | {holobit_status} | {sdk_status} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _policy_runtime_split_md() -> str:
+    return "\n".join(
+        [
+            f"- `OFFICIAL_RUNTIME_TARGETS`: {format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup='markdown')}",
+            f"- `VERIFICATION_EXECUTABLE_TARGETS`: {format_target_sequence(VERIFICATION_EXECUTABLE_TARGETS, markup='markdown')}",
+            f"- `BEST_EFFORT_RUNTIME_TARGETS`: {format_target_sequence(BEST_EFFORT_RUNTIME_TARGETS, markup='markdown')}",
+            f"- `TRANSPILATION_ONLY_TARGETS`: {format_target_sequence(NO_RUNTIME_TARGETS, markup='markdown')}",
+            f"- `NO_RUNTIME_TARGETS`: {format_target_sequence(NO_RUNTIME_TARGETS, markup='markdown')}",
+            f"- `OFFICIAL_STANDARD_LIBRARY_TARGETS`: {format_target_sequence(OFFICIAL_STANDARD_LIBRARY_TARGETS, markup='markdown')}",
+            f"- `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: {format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup='markdown')}",
+            f"- `SDK_COMPATIBLE_TARGETS`: {format_target_sequence(SDK_COMPATIBLE_TARGETS, markup='markdown')}",
         ]
     ).strip() + "\n"
 
@@ -219,6 +284,28 @@ def sync_readme_blocks() -> None:
     updated_en = _inject_between_markers(text_en, start=EN_MARKER_START, end=EN_MARKER_END, body=_policy_summary_en_md())
     readme_en.write_text(updated_en, encoding="utf-8")
 
+    policy_doc = ROOT / "docs" / "targets_policy.md"
+    policy_text = policy_doc.read_text(encoding="utf-8")
+    policy_text = _inject_between_markers(
+        policy_text,
+        start=POLICY_TIERS_START,
+        end=POLICY_TIERS_END,
+        body=_policy_tiers_md(),
+    )
+    policy_text = _inject_between_markers(
+        policy_text,
+        start=POLICY_STATUS_TABLE_START,
+        end=POLICY_STATUS_TABLE_END,
+        body=_policy_status_table_md(),
+    )
+    policy_text = _inject_between_markers(
+        policy_text,
+        start=POLICY_RUNTIME_SPLIT_START,
+        end=POLICY_RUNTIME_SPLIT_END,
+        body=_policy_runtime_split_md(),
+    )
+    policy_doc.write_text(policy_text, encoding="utf-8")
+
 
 def generate() -> None:
     _write(GENERATED_DIR / "target_policy_summary.rst", _policy_summary_rst())
@@ -227,6 +314,9 @@ def generate() -> None:
     _write(GENERATED_DIR / "reverse_scope_table.rst", _reverse_scope_table_rst())
     _write(GENERATED_DIR / "cli_backend_examples.rst", _cli_backend_examples_rst())
     _write(GENERATED_DIR / "target_policy_summary.md", _policy_summary_md())
+    _write(GENERATED_DIR / "target_policy_tiers.md", _policy_tiers_md())
+    _write(GENERATED_DIR / "target_policy_status_table.md", _policy_status_table_md())
+    _write(GENERATED_DIR / "target_policy_runtime_split.md", _policy_runtime_split_md())
     sync_readme_blocks()
 
 
