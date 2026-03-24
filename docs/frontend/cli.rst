@@ -44,6 +44,10 @@ oficial**. Generar código para ``go``, ``java``, ``wasm`` o ``asm`` no implica
 que esos targets tengan ejecución real oficial en la CLI ni soporte oficial de
 librerías equivalente a ``python``, ``rust``, ``javascript`` o ``cpp``.
 
+Ejemplos de ``cobra compilar`` para cada backend oficial (generado):
+
+.. include:: ../_generated/cli_backend_examples.rst
+
 Subcomando ``ejecutar``
 ----------------------
 Ejecuta directamente un script Cobra.
@@ -81,8 +85,8 @@ Ejemplo:
 .. code-block:: text
 
    $ cobra menu
-   Lenguajes destino disponibles: python, rust, javascript, wasm, go, cpp, java, asm...
-   Lenguajes de origen disponibles: python, javascript, java...
+   Lenguajes destino disponibles: (ver resumen generado en esta página)...
+   Lenguajes de origen disponibles: (ver resumen generado en esta página)...
    ¿Desea transpilar? (s/n): s
    ¿Transpilar desde Cobra a otro lenguaje? (s/n): s
    Ruta al archivo Cobra: hola.co

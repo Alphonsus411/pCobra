@@ -25,6 +25,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
 )
 from pcobra.cobra.transpilers.registry import (
     TRANSPILER_CLASS_PATHS,
+    official_transpiler_module_filenames,
     official_transpiler_registry_literal,
     official_transpiler_targets,
 )
@@ -39,45 +40,28 @@ from scripts.targets_policy_common import (
     read_target_policy,
 )
 
-FINAL_OFFICIAL_TARGETS = (
-    "python",
-    "rust",
-    "javascript",
-    "wasm",
-    "go",
-    "cpp",
-    "java",
-    "asm",
+FINAL_OFFICIAL_TARGETS = tuple(OFFICIAL_TARGETS)
+EXPECTED_TRANSPILER_MODULES = tuple(
+    f"src/pcobra/cobra/transpilers/transpiler/{filename}"
+    for filename in official_transpiler_module_filenames()
 )
-EXPECTED_TRANSPILER_MODULES = (
-    "src/pcobra/cobra/transpilers/transpiler/to_python.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_rust.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_js.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_wasm.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_go.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_cpp.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_java.py",
-    "src/pcobra/cobra/transpilers/transpiler/to_asm.py",
+EXPECTED_GOLDEN_FILES = tuple(
+    f"tests/integration/transpilers/golden/{target}.golden" for target in FINAL_OFFICIAL_TARGETS
 )
-EXPECTED_GOLDEN_FILES = (
-    "tests/integration/transpilers/golden/python.golden",
-    "tests/integration/transpilers/golden/rust.golden",
-    "tests/integration/transpilers/golden/javascript.golden",
-    "tests/integration/transpilers/golden/wasm.golden",
-    "tests/integration/transpilers/golden/go.golden",
-    "tests/integration/transpilers/golden/cpp.golden",
-    "tests/integration/transpilers/golden/java.golden",
-    "tests/integration/transpilers/golden/asm.golden",
-)
-EXPECTED_TRANSPILER_REGISTRY = {
-    "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
-    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
-    "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
-    "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
-    "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
-    "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
+EXPECTED_TRANSPILER_REGISTRY = official_transpiler_registry_literal()
+CRITICAL_DOCS_GENERATED_CONTRACT = {
+    "README.md": (
+        "<!-- BEGIN GENERATED TARGET POLICY SUMMARY -->",
+        "<!-- END GENERATED TARGET POLICY SUMMARY -->",
+    ),
+    "docs/frontend/backends.rst": (
+        ".. include:: ../_generated/target_policy_summary.rst",
+        ".. include:: ../_generated/cli_backend_examples.rst",
+    ),
+    "docs/frontend/cli.rst": (
+        ".. include:: ../_generated/target_policy_summary.rst",
+        ".. include:: ../_generated/cli_backend_examples.rst",
+    ),
 }
 
 TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
@@ -416,6 +400,31 @@ def validate_public_documentation_alignment(
     return errors
 
 
+def validate_critical_docs_generated_lists(official_targets: tuple[str, ...]) -> list[str]:
+    errors: list[str] = []
+    expected_csv = ", ".join(official_targets)
+    expected_rst_csv = ", ".join(f"``{target}``" for target in official_targets)
+
+    for rel_path, required_fragments in CRITICAL_DOCS_GENERATED_CONTRACT.items():
+        path = ROOT / rel_path
+        if not path.exists():
+            errors.append(f"{rel_path}: documento crítico ausente para validación CI")
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        for fragment in required_fragments:
+            if fragment not in content:
+                errors.append(f"{rel_path}: falta include/marcador canónico requerido -> {fragment}")
+
+        for line_no, line in enumerate(content.splitlines(), start=1):
+            lowered = line.lower()
+            if expected_csv in lowered or expected_rst_csv in lowered:
+                if "generated" in lowered:
+                    continue
+                errors.append(
+                    f"{rel_path}:{line_no}: lista manual de targets detectada en doc crítica; debe derivarse por include/fragmento generado"
+                )
+    return errors
+
 
 def validate_python_policy_literals(
     official_targets: tuple[str, ...],
@@ -550,6 +559,7 @@ def main() -> int:
         ("artefactos dirigidos", validate_targeted_artifact_roots(official_targets, reverse_scope)),
         ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
         ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
+        ("docs críticas generadas", validate_critical_docs_generated_lists(official_targets)),
         ("contrato Python/Holobit/SDK", validate_python_policy_literals(official_targets)),
         ("guard-rail histórico retirado", validate_retired_targets_guardrail()),
         ("auditoría de repo", validate_final_backend_repo_audit()),
