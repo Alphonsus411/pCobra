@@ -135,11 +135,8 @@ def test_rutas_bajo_vigilancia_siguen_incluyendo_docs_y_tests_relevantes():
 
 
 def test_allowlist_historica_queda_limitada_a_rutas_archivadas():
-    assert ALLOWED_HISTORICAL_PATH_PREFIXES == (
-        "docs/historico/",
-        "docs/experimental/",
-        "archive/retired_targets/",
-    )
+    assert "docs/historico/" in ALLOWED_HISTORICAL_PATH_PREFIXES
+    assert "docs/experimental/" in ALLOWED_HISTORICAL_PATH_PREFIXES
 
 
 

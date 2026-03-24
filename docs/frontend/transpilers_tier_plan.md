@@ -46,7 +46,7 @@ Los tiers oficiales siguen siendo:
 
 **Seguimiento realista**
 - [x] El árbol principal de transpiladores `to_*.py` ya está recortado a los 8 backends oficiales.
-- [x] La CLI pública rechaza aliases legacy archivados en `archive/retired_targets/docs/targets_aliases_legacy.md` (histórico).
+- [x] La CLI pública rechaza aliases legacy archivados en el histórico retirado del árbol operativo.
 - [x] Existe una auditoría automática para detectar aliases legacy y módulos fuera de política.
 - [x] `module_map.py` ya resuelve solo desde `cobra.toml` con `[modulos."..."]` y los 8 nombres canónicos de `OFFICIAL_TARGETS`.
 - [ ] La limpieza legacy sigue siendo parcial mientras persistan excepciones internas/históricas de compatibilidad y validadores específicos para rutas heredadas.
@@ -116,7 +116,7 @@ python -m pytest tests/unit/test_holobit_backend_contract_matrix.py
 
 1. No aparecen menciones a orígenes reverse retirados en rutas públicas actuales.
 2. No existen módulos `to_*.py` fuera del alcance oficial.
-3. La CLI pública rechaza aliases legacy archivados en `archive/retired_targets/docs/targets_aliases_legacy.md` (histórico).
+3. La CLI pública rechaza aliases legacy archivados en el histórico retirado del árbol operativo.
 4. No hay aliases legacy en código productivo expuesto por la política pública.
 
 **Comprobaciones sugeridas**
