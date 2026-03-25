@@ -150,6 +150,25 @@ Si no aparecen estos nodos, no se inyecta runtime Holobit.
 - `holobit_sdk`: **no aplica**; el backend no lo usa ni lo sustituye.
 - Limitación oficial: no debe presentarse como backend con runtime público ni con paridad SDK equivalente.
 
+
+## Mapeo de implementación runtime/hooks por backend
+
+El cableado oficial de hooks e imports de runtime está centralizado en
+`src/pcobra/cobra/transpilers/common/utils.py` (tablas `STANDARD_IMPORTS` y
+`RUNTIME_HOOKS`) y cada backend `to_*.py` consume ese contrato mediante
+`get_standard_imports(...)` + `get_runtime_hooks(...)`.
+
+| Backend | Implementación hooks/imports | Punto de inyección en transpiler | Ruta mínima `corelibs`/`standard_library` |
+|---|---|---|---|
+| `python` | `common/utils.py` + hooks inline Python | `to_python.py` | `longitud('cobra')` y `mostrar('hola')` quedan ejecutables en salida Python. |
+| `javascript` | `js_nodes/runtime_holobit.py` | `to_js.py` | Alias `longitud`/`mostrar` sobre adaptador JS oficial. |
+| `rust` | `rust_nodes/runtime_holobit.py` | `to_rust.py` | Helpers inline `longitud`/`mostrar` con contrato `partial`. |
+| `go` | `go_nodes/runtime_holobit.py` | `to_go.py` | Adaptadores mínimos `longitud`/`mostrar` (best-effort no público). |
+| `cpp` | `cpp_nodes/runtime_holobit.py` | `to_cpp.py` | Includes oficiales + adaptadores `longitud`/`mostrar`. |
+| `java` | `java_nodes/runtime_holobit.py` | `to_java.py` | Imports oficiales + adaptadores `longitud`/`mostrar`. |
+| `wasm` | `transpiler/wasm_runtime.py` | `to_wasm.py` | Wrappers host-managed `pcobra:corelibs.longitud` y `pcobra:standard_library.mostrar`; sin runtime oficial embebido. |
+| `asm` | `asm_nodes/runtime_holobit.py` | `to_asm.py` | Puntos `CALL` preservados + fallo contractual explícito (`TRAP`) en primitivas avanzadas; backend solo de transpilación. |
+
 ## Estado de implementación por backend
 
 La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `graficar`, `corelibs` y

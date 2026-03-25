@@ -4,6 +4,7 @@ La política de targets se hereda de ``src/pcobra/cobra/transpilers/targets.py``
 a través de ``scripts/benchmarks/targets_policy.py``.
 """
 
+import argparse
 import json
 import os
 import re
@@ -20,7 +21,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from scripts.benchmarks.targets_policy import (
     BINARY_BENCHMARK_METADATA,
-    benchmark_backends,
+    executable_benchmark_backends,
     validate_backend_metadata,
     validate_local_targets_policy,
 )
@@ -100,6 +101,19 @@ def run_and_measure(cmd: list[str], env: dict[str, str] | None = None) -> tuple[
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Benchmark de binarios por backend")
+    parser.add_argument(
+        "--include-best-effort-runtime",
+        action="store_true",
+        help="Incluye runtimes best-effort no públicos (go/java).",
+    )
+    parser.add_argument(
+        "--include-transpilation-only",
+        action="store_true",
+        help="Incluye targets solo de transpilación (wasm/asm) bajo modo explícito best-effort.",
+    )
+    args = parser.parse_args()
+
     repo_root = REPO_ROOT
     validate_backend_metadata(BACKEND_METADATA, context="binary_bench")
     validate_local_targets_policy(repo_root)
@@ -114,7 +128,16 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         co_file = Path(tmpdir) / "program.co"
         co_file.write_text(CODE)
-        for backend in benchmark_backends(BACKEND_METADATA):
+        selected_backends = list(
+            executable_benchmark_backends(
+                BACKEND_METADATA,
+                include_experimental=args.include_best_effort_runtime,
+            )
+        )
+        if args.include_transpilation_only:
+            selected_backends.extend(target for target in ("wasm", "asm") if target in BACKEND_METADATA)
+
+        for backend in selected_backends:
             cfg = BACKEND_METADATA[backend]
             src_file = Path(tmpdir) / f"program.{cfg['ext']}"
             transp_cmd = [

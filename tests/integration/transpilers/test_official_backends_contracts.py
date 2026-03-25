@@ -175,6 +175,42 @@ def test_suite_y_goldens_cubren_exactamente_los_8_backends_oficiales():
     assert set(TRANSPILERS) == set(OFFICIAL_TARGETS)
     assert len(TRANSPILERS) == 8
 
+MINIMAL_RUNTIME_ROUTE_EXPECTATIONS = {
+    "python": ("longitud('cobra')", "mostrar('hola')"),
+    "javascript": ("longitud('cobra');", "mostrar('hola');"),
+    "rust": ('longitud("cobra");', 'mostrar("hola");'),
+    "go": ('longitud("cobra")', 'mostrar("hola")'),
+    "cpp": ('longitud("cobra");', 'mostrar("hola");'),
+    "java": ('longitud("cobra")', 'mostrar("hola")'),
+    "wasm": (
+        '(import "pcobra:corelibs" "longitud"',
+        '(import "pcobra:standard_library" "mostrar"',
+        'host-managed',
+    ),
+    "asm": (
+        "CALL longitud 'cobra'",
+        "CALL mostrar 'hola'",
+        "runtime de inspección/diagnóstico",
+        "TRAP",
+    ),
+}
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_minimal_corelibs_standard_library_route_or_contractual_failure_is_explicit(backend: str):
+    generated = _generate(backend, [
+        NodoHolobit("hb", [1, 2, 3]),
+        NodoProyectar(NodoIdentificador("hb"), NodoValor("2d")),
+        NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]),
+        NodoGraficar(NodoIdentificador("hb")),
+        NodoLlamadaFuncion("longitud", [NodoValor("cobra")]),
+        NodoLlamadaFuncion("mostrar", [NodoValor("hola")]),
+    ])
+
+    for marker in MINIMAL_RUNTIME_ROUTE_EXPECTATIONS[backend]:
+        assert marker in generated
+
+
 def test_python_backend_generated_program_executes_in_repo_runtime():
     code = _generate("python", [NodoAsignacion("x", NodoValor(1)), NodoAsignacion("y", NodoValor(2))])
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
