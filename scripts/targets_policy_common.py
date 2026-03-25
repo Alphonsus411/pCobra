@@ -119,6 +119,22 @@ FORBIDDEN_PUBLIC_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
     ("js", "javascript"),
 )
 
+FORBIDDEN_NON_PYTHON_SDK_PROMOTION_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"compatibilidad\s+sdk\s+completa", re.IGNORECASE),
+    re.compile(r"full\s+sdk\s+compatibility", re.IGNORECASE),
+    re.compile(r"paridad\s+sdk\s+completa", re.IGNORECASE),
+)
+
+NON_PYTHON_BACKEND_LITERALS: tuple[str, ...] = tuple(
+    backend for backend in OFFICIAL_TARGETS if backend != "python"
+)
+
+SDK_PROMOTION_NEGATIVE_CONTEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"sin\s+paridad\s+sdk\s+completa", re.IGNORECASE),
+    re.compile(r"no\s+deben?.{0,160}compatibilidad\s+sdk\s+completa", re.IGNORECASE),
+    re.compile(r"not\s+full\s+sdk\s+compatibility", re.IGNORECASE),
+)
+
 
 def normalized_public_line(line: str) -> str:
     return (
@@ -146,6 +162,28 @@ def find_public_alias_errors(rel: str, content: str) -> list[str]:
                 )
     return errors
 
+
+
+def find_non_python_sdk_promotion_errors(rel: str, content: str) -> list[str]:
+    errors: list[str] = []
+    for line_no, raw_line in enumerate(content.splitlines(), start=1):
+        lowered = raw_line.lower()
+        if not any(pattern.search(raw_line) for pattern in FORBIDDEN_NON_PYTHON_SDK_PROMOTION_PATTERNS):
+            continue
+        if "solo python" in lowered or "only python" in lowered:
+            continue
+        if any(pattern.search(raw_line) for pattern in SDK_PROMOTION_NEGATIVE_CONTEXT_PATTERNS):
+            continue
+        offending = [
+            backend
+            for backend in NON_PYTHON_BACKEND_LITERALS
+            if re.search(rf"(?<![\w.+/-]){re.escape(backend)}(?![\w.+/-])", lowered)
+        ]
+        if offending:
+            errors.append(
+                f"{rel}:{line_no}: promoción inválida de compatibilidad SDK completa en backend no Python -> {tuple(offending)}"
+            )
+    return errors
 
 
 def read_target_policy() -> dict[str, Any]:

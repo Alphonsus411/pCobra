@@ -130,20 +130,20 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
     """Devuelve las categorías públicas que deben reutilizar CLI/docs/tests."""
     return (
         ("official_targets", "Targets oficiales de transpilación", OFFICIAL_TRANSPILATION_TARGETS),
-        ("official_runtime_targets", "Targets con runtime oficial verificable", OFFICIAL_RUNTIME_TARGETS),
+        ("official_runtime_targets", "Targets con runtime oficial verificable (full SDK solo en python)", OFFICIAL_RUNTIME_TARGETS),
         ("verification_targets", "Targets con verificación ejecutable explícita en CLI", VERIFICATION_EXECUTABLE_TARGETS),
         ("best_effort_runtime_targets", "Targets con runtime best-effort", BEST_EFFORT_RUNTIME_TARGETS),
         (
             "official_standard_library_targets",
-            "Targets con soporte oficial mantenido de `corelibs`/`standard_library` en runtime",
+            "Targets con soporte oficial mantenido de `corelibs`/`standard_library` (partial fuera de python)",
             OFFICIAL_STANDARD_LIBRARY_TARGETS,
         ),
         (
             "advanced_holobit_runtime_targets",
-            "Targets con adaptador Holobit mantenido por el proyecto",
+            "Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)",
             ADVANCED_HOLOBIT_RUNTIME_TARGETS,
         ),
-        ("sdk_compatible_targets", "Compatibilidad SDK completa", SDK_COMPATIBLE_TARGETS),
+        ("sdk_compatible_targets", "Compatibilidad SDK completa (solo python)", SDK_COMPATIBLE_TARGETS),
         (
             "transpilation_only_targets",
             "Targets solo de transpilación",
@@ -262,6 +262,14 @@ def validate_runtime_support_contract() -> None:
             raise RuntimeError(
                 f"{backend} figura como runtime oficial pero no garantiza hooks Holobit mínimos"
             )
+
+
+    non_python_sdk_targets = set(SDK_COMPATIBLE_TARGETS) - {"python"}
+    if non_python_sdk_targets:
+        raise RuntimeError(
+            "SDK_COMPATIBLE_TARGETS no puede incluir targets no Python: "
+            f"sdk={SDK_COMPATIBLE_TARGETS}, invalid={tuple(sorted(non_python_sdk_targets))}"
+        )
 
     for backend in SDK_COMPATIBLE_TARGETS:
         contract = BACKEND_COMPATIBILITY[backend]

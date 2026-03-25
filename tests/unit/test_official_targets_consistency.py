@@ -20,6 +20,7 @@ from pcobra.cobra.transpilers.common.utils import STANDARD_IMPORTS
 from pcobra.cobra.transpilers.feature_inspector import TRANSPILERS as FEATURE_INSPECTOR_TRANSPILERS
 from pcobra.cobra.transpilers.registry import TRANSPILER_CLASS_PATHS, official_transpiler_targets
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
+from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 from scripts.ci.validate_targets import (
     ALLOWED_HISTORICAL_PATH_PREFIXES,
@@ -171,3 +172,27 @@ def test_contrato_ci_fija_rutas_exactas_de_transpilers_y_goldens():
         "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
         "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
     }
+
+
+def test_contrato_sdk_full_solo_en_python_y_resto_partial_por_feature():
+    assert SDK_COMPATIBLE_TARGETS == ("python",)
+
+    for feature in CONTRACT_FEATURES:
+        assert BACKEND_COMPATIBILITY["python"][feature] == "full"
+
+    non_python = tuple(target for target in OFFICIAL_TARGETS if target != "python")
+    for backend in non_python:
+        for feature in CONTRACT_FEATURES:
+            assert BACKEND_COMPATIBILITY[backend][feature] == "partial"
+
+
+def test_summary_publico_no_promociona_sdk_full_fuera_de_python():
+    from pcobra.cobra.cli.target_policies import render_public_policy_summary
+
+    summary = render_public_policy_summary(markup="plain").lower()
+
+    assert "**compatibilidad sdk completa (solo python)**: python" in summary
+    for backend in OFFICIAL_TARGETS:
+        if backend == "python":
+            continue
+        assert f"compatibilidad sdk completa (solo python): {backend}" not in summary
