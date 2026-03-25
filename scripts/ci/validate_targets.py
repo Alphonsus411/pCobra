@@ -68,6 +68,7 @@ CRITICAL_DOCS_GENERATED_CONTRACT = {
 TRANSPILER_DIR = ROOT / "src/pcobra/cobra/transpilers/transpiler"
 REVERSE_DIR = ROOT / "src/pcobra/cobra/transpilers/reverse"
 GOLDEN_DIR = ROOT / "tests/integration/transpilers/golden"
+TARGET_CHECKLIST_PATH = ROOT / "docs/issues/target_cleanup_checklist.md"
 ALLOWED_HISTORICAL_PATH_PREFIXES = (
     "docs/historico/",
     "docs/experimental/",
@@ -134,10 +135,48 @@ FORBIDDEN_NON_PYTHON_SDK_PROMOTION = re.compile(
     r"(full|compatibilidad total con holobit sdk|compatibilidad sdk completa)",
     re.IGNORECASE,
 )
+CHECKLIST_BLOCKS: dict[str, str] = {
+    "to_modules": "módulos to_*.py",
+    "nodes_dirs": "directorios *_nodes",
+    "golden_files": "golden files",
+    "policy_cli": "políticas CLI",
+    "policy_benchmark": "políticas benchmark",
+    "policy_docker": "políticas docker",
+    "policy_docs": "políticas docs",
+    "canonical_cli_commands": "set canónico CLI",
+}
+CANONICAL_POLICY_CLI_COMMANDS: tuple[str, ...] = (
+    "cobra compilar",
+    "cobra verificar",
+    "cobra benchmarks",
+    "cobra transpilar-inverso",
+)
+CLI_POLICY_DOCS = (
+    "docs/targets_policy.md",
+    "docs/matriz_transpiladores.md",
+    "docs/contrato_runtime_holobit.md",
+    "docs/issues/target_cleanup_checklist.md",
+)
 
 
 def _ordered(items: set[str] | tuple[str, ...] | list[str]) -> tuple[str, ...]:
     return tuple(target for target in FINAL_OFFICIAL_TARGETS if target in set(items))
+
+
+def _extract_checklist_block(content: str, block_name: str) -> tuple[str, ...]:
+    pattern = re.compile(
+        rf"<!-- BEGIN {re.escape(block_name)} -->\n(?P<body>.*?)\n<!-- END {re.escape(block_name)} -->",
+        re.DOTALL,
+    )
+    match = pattern.search(content)
+    if not match:
+        raise RuntimeError(f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: falta bloque '{block_name}'")
+    items = tuple(re.findall(r"^- `([^`]+)`", match.group("body"), flags=re.MULTILINE))
+    if not items:
+        raise RuntimeError(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: bloque '{block_name}' sin elementos"
+        )
+    return items
 
 
 
@@ -316,6 +355,75 @@ def validate_targeted_artifact_roots(
 
     return errors
 
+
+
+def validate_operational_checklist(official_targets: tuple[str, ...]) -> list[str]:
+    errors: list[str] = []
+    if not TARGET_CHECKLIST_PATH.exists():
+        return [f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: checklist operativo obligatorio ausente"]
+
+    content = TARGET_CHECKLIST_PATH.read_text(encoding="utf-8")
+    for block in CHECKLIST_BLOCKS:
+        try:
+            _extract_checklist_block(content, block)
+        except RuntimeError as exc:
+            errors.append(str(exc))
+    if errors:
+        return errors
+
+    checklist_to_modules = set(_extract_checklist_block(content, "to_modules"))
+    expected_to_modules = set(EXPECTED_TRANSPILER_MODULES)
+    if checklist_to_modules != expected_to_modules:
+        errors.append(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: inventario to_*.py desalineado -> "
+            f"checklist={sorted(checklist_to_modules)}, expected={sorted(expected_to_modules)}"
+        )
+
+    checklist_nodes = set(_extract_checklist_block(content, "nodes_dirs"))
+    expected_nodes = {path.relative_to(ROOT).as_posix() for path in TRANSPILER_DIR.glob("*_nodes") if path.is_dir()}
+    if checklist_nodes != expected_nodes:
+        errors.append(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: inventario *_nodes desalineado -> "
+            f"checklist={sorted(checklist_nodes)}, expected={sorted(expected_nodes)}"
+        )
+
+    checklist_goldens = set(_extract_checklist_block(content, "golden_files"))
+    expected_goldens = set(EXPECTED_GOLDEN_FILES)
+    if checklist_goldens != expected_goldens:
+        errors.append(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: inventario de goldens desalineado -> "
+            f"checklist={sorted(checklist_goldens)}, expected={sorted(expected_goldens)}"
+        )
+
+    checklist_cli_commands = tuple(_extract_checklist_block(content, "canonical_cli_commands"))
+    if checklist_cli_commands != CANONICAL_POLICY_CLI_COMMANDS:
+        errors.append(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: set canónico CLI desalineado -> "
+            f"checklist={checklist_cli_commands}, expected={CANONICAL_POLICY_CLI_COMMANDS}"
+        )
+
+    canonical_set = set(CANONICAL_POLICY_CLI_COMMANDS)
+    cli_pattern = re.compile(r"`(cobra\s+[a-z0-9_-]+)`", re.IGNORECASE)
+    for rel_path in CLI_POLICY_DOCS:
+        path = ROOT / rel_path
+        if not path.exists():
+            errors.append(f"{rel_path}: documento de política CLI inexistente")
+            continue
+        policy_content = path.read_text(encoding="utf-8", errors="ignore")
+        for match in cli_pattern.finditer(policy_content):
+            command = match.group(1).lower()
+            if command not in canonical_set:
+                line_no = policy_content.count("\n", 0, match.start()) + 1
+                errors.append(
+                    f"{rel_path}:{line_no}: comando CLI fuera del set canónico de política -> {command}"
+                )
+
+    if tuple(official_targets) != FINAL_OFFICIAL_TARGETS:
+        errors.append(
+            "validate_operational_checklist: conjunto recibido distinto del contrato final -> "
+            f"received={tuple(official_targets)}, expected={FINAL_OFFICIAL_TARGETS}"
+        )
+    return errors
 
 
 def validate_scan_roots(
@@ -571,6 +679,7 @@ def main() -> int:
     reverse_scope = tuple(REVERSE_SCOPE_LANGUAGES)
     stages = (
         ("registros canónicos", validate_registry_tables()),
+        ("checklist operativo", validate_operational_checklist(official_targets)),
         ("artefactos dirigidos", validate_targeted_artifact_roots(official_targets, reverse_scope)),
         ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
         ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
