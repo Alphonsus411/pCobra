@@ -132,11 +132,15 @@ def test_help_y_error_muestran_canones_y_ejemplos_de_alias():
     assert "cpp" in help_text
     assert "java" in help_text
     assert "asm" in help_text
-    assert "aliases aceptados: c++→cpp, ensamblador→asm" in help_text
+    assert "aliases aceptados:" in help_text
+    assert "c++→cpp" in help_text
+    assert "ensamblador→asm" in help_text
 
     message = invalid_target_error("desconocido")
     assert "python, rust, javascript, wasm, go, cpp, java, asm" in message
-    assert "Aliases aceptados: c++→cpp, ensamblador→asm" in message
+    assert "Aliases aceptados:" in message
+    assert "c++→cpp" in message
+    assert "ensamblador→asm" in message
 
 
 def test_la_whitelist_publica_sigue_canonica():

@@ -1,13 +1,15 @@
 """Comando CLI para ejecutar scripts de benchmarks."""
 
 from argparse import ArgumentParser
+from argparse import ArgumentTypeError
 import json
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_label
+from pcobra.cobra.transpilers.target_utils import target_label
+from pcobra.cobra.cli.target_policies import parse_target
 
 from scripts.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
 
@@ -75,7 +77,11 @@ class BenchmarksCommand(BaseCommand):
             iteraciones = max(1, getattr(args, "iteraciones", 1))
             backend_filtro = getattr(args, "backend", None)
             if backend_filtro:
-                backend_filtro = normalize_target_name(backend_filtro)
+                try:
+                    backend_filtro = parse_target(backend_filtro)
+                except ArgumentTypeError as parse_error:
+                    mostrar_error(str(parse_error))
+                    return 1
                 if backend_filtro not in BACKENDS:
                     mostrar_error(
                         _("Backend no permitido: {backend}. Permitidos: {allowed}").format(

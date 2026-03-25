@@ -54,7 +54,28 @@ def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeyp
     compile_cmd.load_entrypoint_transpilers()
 
     assert compile_cmd.TRANSPILERS == {}
-    assert "omitido: target no oficial/no canónico" in caplog.text
+    assert "rechazado por política oficial" in caplog.text
+    assert "nombres canónicos oficiales" in caplog.text
+
+
+def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, caplog):
+    ep = importlib.metadata.EntryPoint(
+        name="c++",
+        value="tests.unit.test_compile_backend_registration:DummyTranspiler",
+        group="cobra.transpilers",
+    )
+    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(
+        compile_cmd,
+        "_iter_transpiler_entry_points",
+        lambda: importlib.metadata.EntryPoints((ep,)),
+    )
+
+    compile_cmd.load_entrypoint_transpilers()
+
+    assert compile_cmd.TRANSPILERS == {}
+    assert "rechazado por política oficial" in caplog.text
+    assert "c++" in caplog.text
 
 
 def test_load_entrypoint_transpilers_registra_backend_canonico(monkeypatch):

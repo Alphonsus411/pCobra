@@ -7,6 +7,7 @@ from importlib.metadata import entry_points
 
 from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.cli.target_policies import (
+    OFFICIAL_TRANSPILATION_TARGETS,
     accepted_target_aliases_examples_text,
     parse_target,
     parse_target_list,
@@ -21,7 +22,6 @@ from pcobra.cobra.transpilers.target_utils import (
     resolution_candidates,
     target_label,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
 from pcobra.core.semantic_validators import (
@@ -55,12 +55,12 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     """Valida backend contra la whitelist oficial y devuelve su forma canónica."""
     canonical = normalize_target_name(backend)
-    if canonical not in OFFICIAL_TARGETS:
+    if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ValueError(
             _("Backend no permitido en {context}: {backend}. Permitidos: {supported}").format(
                 context=context,
                 backend=backend,
-                supported=", ".join(OFFICIAL_TARGETS),
+                supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
             )
         )
     return canonical
@@ -70,7 +70,7 @@ def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
     """Acepta únicamente nombres canónicos oficiales en entry points."""
     normalized = normalize_target_name(backend)
     raw_normalized = backend.strip().lower()
-    if raw_normalized != normalized or normalized not in OFFICIAL_TARGETS:
+    if raw_normalized != normalized or normalized not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ValueError(
             _(
                 "Backend no permitido en {context}: {backend}. "
@@ -78,7 +78,7 @@ def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
             ).format(
                 context=context,
                 backend=backend,
-                supported=", ".join(OFFICIAL_TARGETS),
+                supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
             )
         )
     return normalized
@@ -96,22 +96,13 @@ def load_entrypoint_transpilers() -> None:
     """Carga entry points de transpiladores sin permitir aliases o targets no oficiales."""
     for ep in _iter_transpiler_entry_points():
         try:
-            try:
-                normalized_ep_name = _validate_entrypoint_backend_or_raise(
-                    ep.name,
-                    context="plugins(entry_points)",
-                )
-            except ValueError:
-                logging.warning(
-                    "Plugin de transpilador '%s' omitido: target no oficial/no canónico "
-                    "(solo se permite %s)",
-                    ep.name,
-                    ", ".join(OFFICIAL_TARGETS),
-                )
-                continue
+            normalized_ep_name = _validate_entrypoint_backend_or_raise(
+                ep.name,
+                context="plugins(entry_points)",
+            )
             module_name, class_name = ep.value.split(":", 1)
             if not all(c.isalnum() or c in "._" for c in module_name + class_name):
-                logging.warning(f"Nombre de módulo o clase inválido: {ep.value}")
+                raise ValueError(f"Nombre de módulo o clase inválido: {ep.value}")
                 continue
             cls = getattr(import_module(module_name), class_name)
             if normalized_ep_name in TRANSPILERS:
@@ -122,6 +113,12 @@ def load_entrypoint_transpilers() -> None:
                 )
                 continue
             register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
+        except ValueError as exc:
+            logging.error(
+                "Plugin de transpilador '%s' rechazado por política oficial: %s",
+                ep.name,
+                exc,
+            )
         except Exception as exc:
             logging.error("Error cargando transpilador %s: %s", ep.name, exc)
 
@@ -136,7 +133,9 @@ TARGET_ALIASES_HELP = accepted_target_aliases_examples_text()
 def parse_official_target_list(value: str) -> list[str]:
     """Normaliza una lista de targets y asegura que sean oficiales."""
     parsed_targets = parse_target_list(value)
-    unsupported_targets = [target for target in parsed_targets if target not in OFFICIAL_TARGETS]
+    unsupported_targets = [
+        target for target in parsed_targets if target not in OFFICIAL_TRANSPILATION_TARGETS
+    ]
     if unsupported_targets:
         raise ArgumentTypeError(
             _("Targets no soportados: {targets}. Soportados: {supported}").format(
