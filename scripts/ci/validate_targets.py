@@ -37,6 +37,7 @@ from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     PUBLIC_RUNTIME_POLICY_PATHS,
     PUBLIC_TEXT_PATHS,
+    find_non_python_sdk_promotion_errors,
     find_public_alias_errors,
     read_target_policy,
 )
@@ -439,6 +440,7 @@ def validate_scan_roots(
         content = path.read_text(encoding="utf-8", errors="ignore")
         rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
         errors.extend(find_public_alias_errors(rel, content))
+        errors.extend(find_non_python_sdk_promotion_errors(rel, content))
     return errors
 
 

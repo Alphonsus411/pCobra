@@ -146,3 +146,37 @@ def test_ci_validate_targets_guardrail_no_reporta_si_no_hay_fugas(monkeypatch, t
     monkeypatch.setattr(ci_validator, "IMPORT_GUARDRAIL_SCAN_ROOTS", tuple())
 
     assert ci_validator.validate_retired_targets_guardrail() == []
+
+
+def test_ci_validate_targets_bloquea_promocion_sdk_full_en_target_no_python(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    fake_doc = tmp_path / "policy.md"
+    fake_doc.write_text(
+        "Compatibilidad SDK completa para javascript en este entorno",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(ci_validator, "PUBLIC_TEXT_PATHS", (fake_doc,))
+
+    errors = ci_validator.validate_scan_roots(
+        ci_validator.FINAL_OFFICIAL_TARGETS,
+        tuple(ci_validator.REVERSE_SCOPE_LANGUAGES),
+    )
+
+    assert any("promoción inválida de compatibilidad SDK completa" in error for error in errors)
+    assert any("javascript" in error for error in errors)
+
+
+def test_ci_validate_targets_permite_mencionar_sdk_full_para_python(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    fake_doc = tmp_path / "policy.md"
+    fake_doc.write_text("Compatibilidad SDK completa solo para python", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "PUBLIC_TEXT_PATHS", (fake_doc,))
+
+    errors = ci_validator.validate_scan_roots(
+        ci_validator.FINAL_OFFICIAL_TARGETS,
+        tuple(ci_validator.REVERSE_SCOPE_LANGUAGES),
+    )
+
+    assert errors == []
