@@ -48,6 +48,12 @@ def test_compile_parser_acepta_alias_c_mas_mas_y_entrega_canonico():
     assert args.tipo == "cpp"
 
 
+def test_compile_parser_acepta_alias_ensamblador_en_minusculas_y_entrega_canonico():
+    parser = _build_parser_with_command(CompileCommand())
+    args = parser.parse_args(["compilar", "script.co", "--tipo", "ensamblador"])
+    assert args.tipo == "asm"
+
+
 def test_transpilar_inverso_parser_acepta_alias_ensamblador_y_entrega_canonico(tmp_path):
     archivo = tmp_path / "script.py"
     archivo.write_text("print('ok')", encoding="utf-8")
@@ -64,6 +70,30 @@ def test_transpilar_inverso_parser_acepta_alias_ensamblador_y_entrega_canonico(t
         ]
     )
     assert args.destino == "asm"
+
+
+def test_transpilar_inverso_parser_acepta_alias_c_mas_mas_y_entrega_canonico(tmp_path):
+    archivo = tmp_path / "script.py"
+    archivo.write_text("print('ok')", encoding="utf-8")
+
+    parser = _build_parser_with_command(TranspilarInversoCommand())
+    args = parser.parse_args(
+        [
+            "transpilar-inverso",
+            str(archivo),
+            "--origen",
+            "python",
+            "--destino",
+            "C++",
+        ]
+    )
+    assert args.destino == "cpp"
+
+
+def test_verify_parser_acepta_alias_c_mas_mas_y_normaliza_a_canonico():
+    parser = _build_parser_with_command(VerifyCommand())
+    args = parser.parse_args(["verificar", "script.co", "--lenguajes", "python,C++"])
+    assert args.lenguajes == ["python", "cpp"]
 
 
 def test_verify_parser_normaliza_alias_ensamblador_y_falla_por_runtime_restringido(caplog):
