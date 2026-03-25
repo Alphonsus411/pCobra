@@ -16,6 +16,7 @@ from pcobra.cobra.cli.target_policies import (
     OFFICIAL_RUNTIME_TARGETS,
 )
 from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_cli_choices
+from pcobra.cobra.transpilers.target_utils import require_exact_official_targets
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
@@ -132,12 +133,7 @@ def validate_local_targets_policy(repo_root: Path) -> None:
 
 def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -> None:
     """Falla rápido si existe metadata para targets fuera de la whitelist oficial."""
-    unsupported = [target for target in backends if target not in OFFICIAL_TARGETS]
-    if unsupported:
-        raise RuntimeError(
-            f"{context}: target(s) fuera de whitelist oficial: {', '.join(sorted(unsupported))}. "
-            f"Oficiales: {', '.join(OFFICIAL_TARGETS)}"
-        )
+    require_exact_official_targets(backends, context=context)
 
 
 

@@ -6,6 +6,7 @@ from argparse import ArgumentTypeError
 from typing import Literal
 
 from pcobra.cobra.transpilers.target_utils import (
+    TARGET_ALIASES,
     build_target_help_by_tier,
     format_target_sequence,
     normalize_target_name,
@@ -18,8 +19,7 @@ RenderMarkup = Literal["plain", "markdown", "rst"]
 
 
 ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
-    ("c++", "cpp"),
-    ("ensamblador", "asm"),
+    *tuple(TARGET_ALIASES.items()),
 )
 
 
