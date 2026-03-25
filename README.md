@@ -20,6 +20,7 @@ pCobra es un lenguaje de programación escrito en español y pensado para la cre
 Resumen normativo visible (generado desde la política canónica):
 
 <!-- BEGIN GENERATED TARGET POLICY SUMMARY -->
+- **Backends oficiales de salida**: 8 targets canónicos.
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.
@@ -28,7 +29,7 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con adaptador Holobit mantenido por el proyecto**: `python`, `rust`, `javascript`, `cpp`.
 - **Compatibilidad SDK completa**: `python`.
 - **Targets solo de transpilación**: `wasm`, `asm`.
-- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`. Este alcance reverse de entrada está separado de los 8 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
 

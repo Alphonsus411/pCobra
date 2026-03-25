@@ -154,10 +154,16 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
 
 def render_public_policy_summary(*, markup: RenderMarkup = "plain") -> str:
     """Renderiza el resumen público de política sin duplicar listas manuales."""
-    return "\n".join(
+    lines = [
+        "- **Backends oficiales de salida**: "
+        + str(len(OFFICIAL_TRANSPILATION_TARGETS))
+        + " targets canónicos."
+    ]
+    lines.extend(
         f"- **{label}**: {format_target_sequence(targets, markup=markup)}."
         for _, label, targets in iter_public_policy_items()
     )
+    return "\n".join(lines)
 
 
 def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: RenderMarkup = "plain") -> str:
@@ -165,7 +171,7 @@ def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: Rend
     return (
         "- **Orígenes de transpilación inversa**: "
         + format_target_sequence(reverse_scope, markup=markup)
-        + "."
+        + ". Este alcance reverse de entrada está separado de los 8 targets oficiales de salida."
     )
 
 

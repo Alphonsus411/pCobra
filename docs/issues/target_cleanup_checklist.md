@@ -78,6 +78,14 @@ Este documento define el **inventario canónico** y las reglas de aceptación pa
 - `docs/frontend/transpilers_tier_plan.md`
 <!-- END policy_docs -->
 
+
+## Narrativa pública obligatoria
+
+La documentación pública activa debe mantener explícitamente:
+
+- la frase de **8 targets oficiales de salida** (sin alias legacy),
+- la **separación entre transpilación de salida y reverse de entrada**.
+
 ## Reglas de aceptación
 
 1. **Sin archivo extra:** no se acepta ningún `to_*.py`, `*_nodes` o `.golden` fuera del inventario canónico.
