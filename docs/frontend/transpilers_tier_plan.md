@@ -174,3 +174,14 @@ python -m pytest tests/integration/test_holobit_tiers.py
 - **`full`** significa contrato cubierto por regresión de generación y símbolos/hooks esperados.
 - **`partial`** significa generación contractual con fallback o error explícito, no equivalencia funcional total con Python.
 - El hecho de que un backend sea oficial para **transpilación** no implica que tenga runtime Docker/sandbox oficial ni ejecución automática en todas las suites.
+
+## Mantenimiento de la política (checklist operativa)
+
+En cada PR que modifique política de targets, inventario de transpiladores o documentación pública asociada:
+
+1. Revisar y actualizar `docs/issues/target_cleanup_checklist.md` (inventario y reglas de aceptación).
+2. Ejecutar `python scripts/ci/validate_targets.py`.
+3. Bloquear el cambio hasta dejar en verde las tres garantías operativas:
+   - sin archivo extra (`to_*.py`, `*_nodes`, `.golden`);
+   - sin cadena legacy en docs públicas;
+   - sin comandos CLI fuera del set canónico de política (`cobra compilar`, `cobra verificar`, `cobra benchmarks`, `cobra transpilar-inverso`).
