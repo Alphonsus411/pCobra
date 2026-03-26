@@ -106,3 +106,34 @@ Antes de fusionar cambios de política:
 1. Actualizar este checklist si cambia el contrato oficial.
 2. Ejecutar `python scripts/ci/validate_targets.py`.
 3. Corregir cualquier desalineación antes de mergear.
+
+## Checklist de ejecución por fases (bloqueante para merge)
+
+> Estado objetivo: si cualquier casilla queda sin marcar, `scripts/ci/validate_targets.py` debe fallar y bloquear el merge.
+
+### Fase 1 — Hardening de whitelist canónica (CLI + registry + benchmarks policy)
+- [x] `OFFICIAL_TARGETS`, registro y `LANG_CHOICES` están alineados.
+- [x] `scripts/benchmarks/targets_policy.py` valida metadata solo para targets oficiales.
+- [x] No existen aliases públicos fuera de política canónica.
+
+### Fase 2 — Limpieza de restos en docs/scripts/tests + regeneración de derivados
+- [x] No hay `to_*.py` extra fuera del inventario canónico.
+- [x] No hay `*_nodes` extra fuera del inventario canónico.
+- [x] No hay `.golden` extra fuera del inventario canónico.
+- [x] Se regeneraron artefactos derivados de docs cuando aplica (`scripts/generate_target_policy_docs.py`).
+
+### Fase 3 — Consolidación del contrato Holobit/SDK y mensajes públicos
+- [x] Solo `python` se comunica como compatibilidad SDK completa.
+- [x] Backends no Python mantienen narrativa contractual `partial`.
+- [x] Las tablas públicas de contrato Holobit/SDK siguen sincronizadas con la matriz canónica.
+
+### Fase 4 — Depuración de adaptadores/código muerto + actualización de goldens
+- [x] No hay adaptadores legacy fuera de rutas históricas permitidas.
+- [x] El árbol activo de transpiladores está limitado al contrato de 8 backends.
+- [x] Los goldens oficiales existen y corresponden exactamente al set canónico.
+
+### Fase 5 — Validación final integral en CI
+- [x] Política de targets validada (`python scripts/ci/validate_targets.py`).
+- [x] Coherencia de docs públicas validada (`python scripts/validate_targets_policy.py`).
+- [x] Contrato de compatibilidad por backend validado (`python scripts/validate_runtime_contract.py`).
+- [x] Cualquier guardrail en fallo bloquea merge (jobs CI en estado failed).

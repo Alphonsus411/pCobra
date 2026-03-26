@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from scripts.ci.validate_targets import (
     validate_final_backend_repo_audit,
+    validate_operational_checklist,
     validate_public_documentation_alignment,
     validate_python_policy_literals,
     validate_registry_tables,
@@ -35,7 +36,6 @@ GENERATED_PATH_PARTS = {
     "dist",
     "docs/_build",
 }
-
 
 
 def iter_scan_files(root: Path) -> list[Path]:
@@ -61,7 +61,6 @@ def iter_scan_files(root: Path) -> list[Path]:
     return files
 
 
-
 def _run_stage(name: str, errors: list[str]) -> int | None:
     if not errors:
         return None
@@ -74,7 +73,6 @@ def _run_stage(name: str, errors: list[str]) -> int | None:
             file=sys.stderr,
         )
     return 1
-
 
 
 def main() -> int:
@@ -113,10 +111,20 @@ def main() -> int:
 
     stages = (
         ("registros canónicos", validate_registry_tables()),
-        ("artefactos dirigidos", validate_targeted_artifact_roots(official_targets, reverse_scope)),
+        ("checklist operativo", validate_operational_checklist(official_targets)),
+        (
+            "artefactos dirigidos",
+            validate_targeted_artifact_roots(official_targets, reverse_scope),
+        ),
         ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
-        ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
-        ("contrato Python/Holobit/SDK", validate_python_policy_literals(official_targets)),
+        (
+            "documentación pública",
+            validate_public_documentation_alignment(official_targets, reverse_scope),
+        ),
+        (
+            "contrato Python/Holobit/SDK",
+            validate_python_policy_literals(official_targets),
+        ),
         ("auditoría de repo", validate_final_backend_repo_audit()),
     )
     for stage_name, errors in stages:

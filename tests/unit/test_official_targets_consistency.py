@@ -17,11 +17,23 @@ from pcobra.cobra.cli.target_policies import (
     validate_runtime_support_contract,
 )
 from pcobra.cobra.transpilers.common.utils import STANDARD_IMPORTS
-from pcobra.cobra.transpilers.feature_inspector import TRANSPILERS as FEATURE_INSPECTOR_TRANSPILERS
-from pcobra.cobra.transpilers.registry import TRANSPILER_CLASS_PATHS, official_transpiler_targets
+from pcobra.cobra.transpilers.feature_inspector import (
+    TRANSPILERS as FEATURE_INSPECTOR_TRANSPILERS,
+)
+from pcobra.cobra.transpilers.registry import (
+    TRANSPILER_CLASS_PATHS,
+    official_transpiler_targets,
+)
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    CONTRACT_FEATURES,
+)
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 from scripts.ci.validate_targets import (
     ALLOWED_HISTORICAL_PATH_PREFIXES,
     EXPECTED_GOLDEN_FILES,
@@ -29,6 +41,7 @@ from scripts.ci.validate_targets import (
     EXPECTED_TRANSPILER_REGISTRY,
     FINAL_OFFICIAL_TARGETS,
     validate_final_backend_repo_audit,
+    validate_operational_checklist,
     validate_public_documentation_alignment,
     validate_python_policy_literals,
     validate_registry_tables,
@@ -37,7 +50,6 @@ from scripts.ci.validate_targets import (
 )
 from scripts.targets_policy_common import VALIDATION_SCAN_PATHS, read_target_policy
 from tests.utils.targets import assert_official_targets_partition
-
 
 
 def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
@@ -59,7 +71,6 @@ def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     assert set(FEATURE_INSPECTOR_TRANSPILERS).issubset(oficiales)
 
 
-
 def test_politica_publica_y_runtime_siguen_alineados_con_la_fuente_canonica():
     policy = read_target_policy()
 
@@ -71,10 +82,15 @@ def test_politica_publica_y_runtime_siguen_alineados_con_la_fuente_canonica():
     assert tuple(policy["transpilation_only_targets"]) == TRANSPILATION_ONLY_TARGETS
     assert tuple(policy["best_effort_runtime_targets"]) == BEST_EFFORT_RUNTIME_TARGETS
     assert tuple(policy["no_runtime_targets"]) == NO_RUNTIME_TARGETS
-    assert tuple(policy["official_standard_library_targets"]) == OFFICIAL_STANDARD_LIBRARY_TARGETS
-    assert tuple(policy["advanced_holobit_runtime_targets"]) == ADVANCED_HOLOBIT_RUNTIME_TARGETS
+    assert (
+        tuple(policy["official_standard_library_targets"])
+        == OFFICIAL_STANDARD_LIBRARY_TARGETS
+    )
+    assert (
+        tuple(policy["advanced_holobit_runtime_targets"])
+        == ADVANCED_HOLOBIT_RUNTIME_TARGETS
+    )
     assert tuple(policy["sdk_compatible_targets"]) == SDK_COMPATIBLE_TARGETS
-
 
 
 def test_runtime_contractual_permanece_consistente():
@@ -95,22 +111,24 @@ def test_runtime_contractual_permanece_consistente():
     assert SDK_COMPATIBLE_TARGETS == ("python",)
 
 
-
 def test_reverse_scope_permanece_separado_pero_canonico():
     assert tuple(REVERSE_SCOPE_LANGUAGES) == ("python", "javascript", "java")
     assert set(REVERSE_SCOPE_LANGUAGES).issubset(OFFICIAL_TARGETS)
     assert set(REVERSE_SCOPE_LANGUAGES).issubset(EXTENSIONES_POR_LENGUAJE)
 
 
-
 def test_modulos_y_artefactos_vigilados_cubren_solo_el_contrato_final():
     assert not validate_registry_tables()
-    assert not validate_targeted_artifact_roots(tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES))
-
+    assert not validate_operational_checklist(tuple(OFFICIAL_TARGETS))
+    assert not validate_targeted_artifact_roots(
+        tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
+    )
 
 
 def test_auditoria_textual_y_documental_no_detecta_desalineaciones_publicas():
-    assert not validate_scan_roots(tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES))
+    assert not validate_scan_roots(
+        tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
+    )
     assert not validate_public_documentation_alignment(
         tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
     )
@@ -118,10 +136,11 @@ def test_auditoria_textual_y_documental_no_detecta_desalineaciones_publicas():
     assert not validate_final_backend_repo_audit()
 
 
-
 def test_rutas_bajo_vigilancia_siguen_incluyendo_docs_y_tests_relevantes():
     root = Path.cwd().resolve()
-    rel_paths = {path.resolve().relative_to(root).as_posix() for path in VALIDATION_SCAN_PATHS}
+    rel_paths = {
+        path.resolve().relative_to(root).as_posix() for path in VALIDATION_SCAN_PATHS
+    }
 
     assert "README.md" in rel_paths
     assert "docs" in rel_paths
@@ -134,11 +153,9 @@ def test_rutas_bajo_vigilancia_siguen_incluyendo_docs_y_tests_relevantes():
     assert "tests/integration" in rel_paths
 
 
-
 def test_allowlist_historica_queda_limitada_a_rutas_archivadas():
     assert "docs/historico/" in ALLOWED_HISTORICAL_PATH_PREFIXES
     assert "docs/experimental/" in ALLOWED_HISTORICAL_PATH_PREFIXES
-
 
 
 def test_contrato_ci_fija_rutas_exactas_de_transpilers_y_goldens():
@@ -163,9 +180,15 @@ def test_contrato_ci_fija_rutas_exactas_de_transpilers_y_goldens():
         "tests/integration/transpilers/golden/asm.golden",
     )
     assert EXPECTED_TRANSPILER_REGISTRY == {
-        "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
+        "python": (
+            "pcobra.cobra.transpilers.transpiler.to_python",
+            "TranspiladorPython",
+        ),
         "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
-        "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+        "javascript": (
+            "pcobra.cobra.transpilers.transpiler.to_js",
+            "TranspiladorJavaScript",
+        ),
         "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
         "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
         "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
