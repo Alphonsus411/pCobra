@@ -54,6 +54,7 @@ PUBLIC_TEXT_PATHS = (
     ROOT / "src/pcobra/cobra/cli/target_policies.py",
     ROOT / "src/pcobra/cobra/cli/commands/benchmarks_cmd.py",
     ROOT / "README.md",
+    ROOT / "docs/MANUAL_COBRA.rst",
     ROOT / "docs/MANUAL_COBRA.md",
     ROOT / "docs/arquitectura_parser_transpiladores.md",
     ROOT / "docs/blog_minilenguaje.md",
@@ -135,6 +136,21 @@ SDK_PROMOTION_NEGATIVE_CONTEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"not\s+full\s+sdk\s+compatibility", re.IGNORECASE),
 )
 
+FORBIDDEN_LEGACY_BACKEND_STATUS_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(python|rust|javascript|wasm|go|cpp|java|asm)\b.{0,120}\bexperimental(?:es)?\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bcpp\b.{0,120}\bexperimental\b", re.IGNORECASE),
+)
+
+LEGACY_STATUS_ALLOWED_CONTEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"archivo\s+hist[oó]rico", re.IGNORECASE),
+    re.compile(r"referencia\s+hist[oó]rica", re.IGNORECASE),
+    re.compile(r"changelog", re.IGNORECASE),
+    re.compile(r"nota\s+de\s+migraci[oó]n", re.IGNORECASE),
+)
+
 
 def normalized_public_line(line: str) -> str:
     return (
@@ -183,6 +199,25 @@ def find_non_python_sdk_promotion_errors(rel: str, content: str) -> list[str]:
             errors.append(
                 f"{rel}:{line_no}: promoción inválida de compatibilidad SDK completa en backend no Python -> {tuple(offending)}"
             )
+    return errors
+
+
+def find_legacy_backend_status_errors(rel: str, content: str) -> list[str]:
+    if rel not in PUBLIC_TEXT_PATH_STRS:
+        return []
+    errors: list[str] = []
+    for line_no, raw_line in enumerate(content.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        if any(pattern.search(line) for pattern in LEGACY_STATUS_ALLOWED_CONTEXT_PATTERNS):
+            continue
+        for pattern in FORBIDDEN_LEGACY_BACKEND_STATUS_PATTERNS:
+            if pattern.search(line):
+                errors.append(
+                    f"{rel}:{line_no}: terminología legacy fuera de política detectada -> '{line}'"
+                )
+                break
     return errors
 
 

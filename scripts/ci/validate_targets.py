@@ -41,6 +41,7 @@ from scripts.targets_policy_common import (
     HOLOBIT_MATRIX_DOC_PATHS,
     PUBLIC_RUNTIME_POLICY_PATHS,
     PUBLIC_TEXT_PATHS,
+    find_legacy_backend_status_errors,
     find_non_python_sdk_promotion_errors,
     find_public_alias_errors,
     read_target_policy,
@@ -522,6 +523,7 @@ def validate_scan_roots(
         )
         errors.extend(find_public_alias_errors(rel, content))
         errors.extend(find_non_python_sdk_promotion_errors(rel, content))
+        errors.extend(find_legacy_backend_status_errors(rel, content))
     return errors
 
 

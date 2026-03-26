@@ -35,11 +35,11 @@ BEST_EFFORT_RUNTIME_TARGETS_INTERNAL = BEST_EFFORT_RUNTIME_TARGETS
 
 def _runtime_policy(target: str) -> str:
     if target in OFFICIAL_RUNTIME_TARGETS:
-        return "runtime_oficial"
+        return "runtime oficial"
     if target in BEST_EFFORT_RUNTIME_TARGETS_INTERNAL:
-        return "runtime_best_effort_no_publico"
+        return "best-effort"
     if target in NO_RUNTIME_TARGETS:
-        return "solo_transpilacion"
+        return "solo transpilación"
     raise RuntimeError(f"Target fuera de política conocida: {target}")
 
 
@@ -62,9 +62,9 @@ def _build_markdown() -> str:
         contract = BACKEND_COMPATIBILITY[backend]
         runtime_status = _runtime_policy(backend)
         holobit_status = (
-            "sdk_full"
+            "SDK full solo python"
             if backend in SDK_COMPATIBLE_TARGETS
-            else "adaptador_mantenido_partial"
+            else "adaptador mantenido (partial)"
             if backend in ADVANCED_HOLOBIT_RUNTIME_TARGETS
             else "partial"
         )
@@ -100,8 +100,8 @@ def _build_markdown() -> str:
     lines.extend(
         [
             "",
-            "> `runtime_policy` distingue explícitamente entre transpilación oficial, runtime oficial y runtime best-effort no público.",
-            "> `holobit_publico` resume la promesa pública: `sdk_full` solo aplica a `python`; `adaptador_mantenido_partial` aplica a `rust`, `javascript` y `cpp`; el resto permanece en `partial`.",
+            "> `runtime_policy` distingue explícitamente entre runtime oficial, best-effort y solo transpilación.",
+            "> `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `rust`, `javascript` y `cpp` se publican como `adaptador mantenido (partial)`; el resto permanece en `partial`.",
         ]
     )
     return "\n".join(lines) + "\n"
