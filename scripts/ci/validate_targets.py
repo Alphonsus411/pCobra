@@ -31,7 +31,11 @@ from pcobra.cobra.transpilers.registry import (
     official_transpiler_targets,
 )
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
+from pcobra.cobra.transpilers.targets import (
+    OFFICIAL_TARGETS,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
+)
 from scripts.targets_policy_common import (
     FORBIDDEN_PUBLIC_TARGET_ALIASES,
     HOLOBIT_MATRIX_DOC_PATHS,
@@ -48,7 +52,8 @@ EXPECTED_TRANSPILER_MODULES = tuple(
     for filename in official_transpiler_module_filenames()
 )
 EXPECTED_GOLDEN_FILES = tuple(
-    f"tests/integration/transpilers/golden/{target}.golden" for target in FINAL_OFFICIAL_TARGETS
+    f"tests/integration/transpilers/golden/{target}.golden"
+    for target in FINAL_OFFICIAL_TARGETS
 )
 EXPECTED_TRANSPILER_REGISTRY = official_transpiler_registry_literal()
 CRITICAL_DOCS_GENERATED_CONTRACT = {
@@ -95,14 +100,28 @@ REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
     }
 )
 REPO_AUDIT_FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE), "backend retirado 'hololang'"),
-    (re.compile(r"(?<![\w/-])reverse[ -]wasm(?![\w/-])", re.IGNORECASE), "pipeline retirado 'reverse wasm'"),
-    (re.compile(r"(?<![\w/-])llvm(?![\w/-])", re.IGNORECASE), "backend/pipeline retirado 'llvm'"),
-    (re.compile(r"(?<![\w/-])latex(?![\w/-])", re.IGNORECASE), "backend/pipeline retirado 'latex'"),
+    (
+        re.compile(r"(?<![\w/-])hololang(?![\w/-])", re.IGNORECASE),
+        "backend retirado 'hololang'",
+    ),
+    (
+        re.compile(r"(?<![\w/-])reverse[ -]wasm(?![\w/-])", re.IGNORECASE),
+        "pipeline retirado 'reverse wasm'",
+    ),
+    (
+        re.compile(r"(?<![\w/-])llvm(?![\w/-])", re.IGNORECASE),
+        "backend/pipeline retirado 'llvm'",
+    ),
+    (
+        re.compile(r"(?<![\w/-])latex(?![\w/-])", re.IGNORECASE),
+        "backend/pipeline retirado 'latex'",
+    ),
 )
 REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (
-        re.compile(r'(?P<quote>["\'])' + re.escape(alias) + r'(?P=quote)', re.IGNORECASE),
+        re.compile(
+            r'(?P<quote>["\'])' + re.escape(alias) + r"(?P=quote)", re.IGNORECASE
+        ),
         alias,
     )
     for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES
@@ -128,7 +147,9 @@ IMPORT_GUARDRAIL_SCAN_ROOTS = ("src", "scripts", "tests")
 IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?m)^\s*from\s+archive(?:\.[\w_]+)*\s+import\s+"),
     re.compile(r"(?m)^\s*import\s+archive(?:\.[\w_]+)*"),
-    re.compile(r"(?i)(sys\.path\.insert|sys\.path\.append|Path\()[^\n]{0,200}archive/retired_targets"),
+    re.compile(
+        r"(?i)(sys\.path\.insert|sys\.path\.append|Path\()[^\n]{0,200}archive/retired_targets"
+    ),
 )
 FORBIDDEN_NON_PYTHON_SDK_PROMOTION = re.compile(
     r"(?P<backend>javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
@@ -146,6 +167,8 @@ CHECKLIST_BLOCKS: dict[str, str] = {
     "policy_docs": "políticas docs",
     "canonical_cli_commands": "set canónico CLI",
 }
+PHASE_CHECKBOX_PATTERN = re.compile(r"^- \[(?P<mark>[ xX])\]\s+", re.MULTILINE)
+PHASE_HEADER_PATTERN = re.compile(r"^###\s+Fase\s+\d+\s+—\s+.+$", re.MULTILINE)
 CANONICAL_POLICY_CLI_COMMANDS: tuple[str, ...] = (
     "cobra compilar",
     "cobra verificar",
@@ -171,7 +194,9 @@ def _extract_checklist_block(content: str, block_name: str) -> tuple[str, ...]:
     )
     match = pattern.search(content)
     if not match:
-        raise RuntimeError(f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: falta bloque '{block_name}'")
+        raise RuntimeError(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: falta bloque '{block_name}'"
+        )
     items = tuple(re.findall(r"^- `([^`]+)`", match.group("body"), flags=re.MULTILINE))
     if not items:
         raise RuntimeError(
@@ -180,17 +205,17 @@ def _extract_checklist_block(content: str, block_name: str) -> tuple[str, ...]:
     return items
 
 
-
 def _markdown_table_rows(path: Path) -> list[tuple[int, list[str]]]:
     rows: list[tuple[int, list[str]]] = []
-    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for line_no, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
         stripped = line.strip()
         if not stripped.startswith("| `"):
             continue
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         rows.append((line_no, cells))
     return rows
-
 
 
 def _extract_doc_backend_rows(path: Path) -> list[tuple[int, str]]:
@@ -200,7 +225,6 @@ def _extract_doc_backend_rows(path: Path) -> list[tuple[int, str]]:
         if backend:
             rows.append((line_no, backend))
     return rows
-
 
 
 def _parse_backend_matrix_table(doc_path: Path) -> dict[str, dict[str, str]]:
@@ -227,7 +251,6 @@ def _parse_backend_matrix_table(doc_path: Path) -> dict[str, dict[str, str]]:
     return rows
 
 
-
 def _extract_targets_policy_tier(path: Path, heading: str) -> tuple[str, ...]:
     content = path.read_text(encoding="utf-8")
     pattern = re.compile(
@@ -236,14 +259,16 @@ def _extract_targets_policy_tier(path: Path, heading: str) -> tuple[str, ...]:
     )
     match = pattern.search(content)
     if not match:
-        raise RuntimeError(f"{path.relative_to(ROOT).as_posix()}: falta la sección '{heading}'")
+        raise RuntimeError(
+            f"{path.relative_to(ROOT).as_posix()}: falta la sección '{heading}'"
+        )
     return tuple(re.findall(r"`([^`]+)`", match.group("body")))
 
 
-
 def _is_historical_repo_path(rel: str) -> bool:
-    return rel in REPO_AUDIT_ALLOWED_FILE_PATHS or rel.startswith(REPO_AUDIT_ALLOWED_PATH_PREFIXES)
-
+    return rel in REPO_AUDIT_ALLOWED_FILE_PATHS or rel.startswith(
+        REPO_AUDIT_ALLOWED_PATH_PREFIXES
+    )
 
 
 def _iter_repo_audit_files() -> list[Path]:
@@ -254,7 +279,6 @@ def _iter_repo_audit_files() -> list[Path]:
             continue
         files.extend(path for path in base.rglob("*") if path.is_file())
     return files
-
 
 
 def validate_registry_tables() -> list[str]:
@@ -303,7 +327,6 @@ def validate_registry_tables() -> list[str]:
     return errors
 
 
-
 def validate_targeted_artifact_roots(
     official_targets: tuple[str, ...],
     reverse_scope: tuple[str, ...],
@@ -316,12 +339,18 @@ def validate_targeted_artifact_roots(
             f"received={tuple(official_targets)}, expected={FINAL_OFFICIAL_TARGETS}"
         )
 
-    found_forward_paths = {path.relative_to(ROOT).as_posix() for path in ROOT.rglob("to_*.py")}
+    found_forward_paths = {
+        path.relative_to(ROOT).as_posix() for path in ROOT.rglob("to_*.py")
+    }
     expected_forward_paths = set(EXPECTED_TRANSPILER_MODULES)
     for missing in sorted(expected_forward_paths - found_forward_paths):
-        errors.append(f"{missing}: falta módulo oficial to_*.py para un backend canónico")
+        errors.append(
+            f"{missing}: falta módulo oficial to_*.py para un backend canónico"
+        )
     for extra in sorted(found_forward_paths - expected_forward_paths):
-        errors.append(f"{extra}: módulo to_*.py extra fuera de política (posible backend 9 o alias interno expuesto)")
+        errors.append(
+            f"{extra}: módulo to_*.py extra fuera de política (posible backend 9 o alias interno expuesto)"
+        )
 
     found_forward = {path.name for path in TRANSPILER_DIR.glob("to_*.py")}
     expected_forward = {Path(path).name for path in EXPECTED_TRANSPILER_MODULES}
@@ -331,20 +360,30 @@ def validate_targeted_artifact_roots(
             f"found={sorted(found_forward)}, expected={sorted(expected_forward)}"
         )
 
-    expected_reverse = {f"from_{target}.py" for target in reverse_scope if target != "javascript"}
+    expected_reverse = {
+        f"from_{target}.py" for target in reverse_scope if target != "javascript"
+    }
     expected_reverse.add("from_js.py")
     found_reverse = {path.name for path in REVERSE_DIR.glob("from_*.py")}
     for missing in sorted(expected_reverse - found_reverse):
-        errors.append(f"{REVERSE_DIR.relative_to(ROOT).as_posix()}/{missing}: falta módulo reverse dentro del scope oficial")
+        errors.append(
+            f"{REVERSE_DIR.relative_to(ROOT).as_posix()}/{missing}: falta módulo reverse dentro del scope oficial"
+        )
     for extra in sorted(found_reverse - expected_reverse):
-        errors.append(f"{REVERSE_DIR.relative_to(ROOT).as_posix()}/{extra}: módulo reverse extra fuera del scope oficial")
+        errors.append(
+            f"{REVERSE_DIR.relative_to(ROOT).as_posix()}/{extra}: módulo reverse extra fuera del scope oficial"
+        )
 
-    found_golden_paths = {path.relative_to(ROOT).as_posix() for path in ROOT.rglob("*.golden")}
+    found_golden_paths = {
+        path.relative_to(ROOT).as_posix() for path in ROOT.rglob("*.golden")
+    }
     expected_golden_paths = set(EXPECTED_GOLDEN_FILES)
     for missing in sorted(expected_golden_paths - found_golden_paths):
         errors.append(f"{missing}: falta golden file oficial para un backend canónico")
     for extra in sorted(found_golden_paths - expected_golden_paths):
-        errors.append(f"{extra}: golden file extra fuera de política (posible backend 9 no controlado)")
+        errors.append(
+            f"{extra}: golden file extra fuera de política (posible backend 9 no controlado)"
+        )
 
     found_golden = {path.name for path in GOLDEN_DIR.glob("*.golden")}
     expected_golden = {Path(path).name for path in EXPECTED_GOLDEN_FILES}
@@ -357,11 +396,12 @@ def validate_targeted_artifact_roots(
     return errors
 
 
-
 def validate_operational_checklist(official_targets: tuple[str, ...]) -> list[str]:
     errors: list[str] = []
     if not TARGET_CHECKLIST_PATH.exists():
-        return [f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: checklist operativo obligatorio ausente"]
+        return [
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: checklist operativo obligatorio ausente"
+        ]
 
     content = TARGET_CHECKLIST_PATH.read_text(encoding="utf-8")
     for block in CHECKLIST_BLOCKS:
@@ -381,7 +421,11 @@ def validate_operational_checklist(official_targets: tuple[str, ...]) -> list[st
         )
 
     checklist_nodes = set(_extract_checklist_block(content, "nodes_dirs"))
-    expected_nodes = {path.relative_to(ROOT).as_posix() for path in TRANSPILER_DIR.glob("*_nodes") if path.is_dir()}
+    expected_nodes = {
+        path.relative_to(ROOT).as_posix()
+        for path in TRANSPILER_DIR.glob("*_nodes")
+        if path.is_dir()
+    }
     if checklist_nodes != expected_nodes:
         errors.append(
             f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: inventario *_nodes desalineado -> "
@@ -396,7 +440,9 @@ def validate_operational_checklist(official_targets: tuple[str, ...]) -> list[st
             f"checklist={sorted(checklist_goldens)}, expected={sorted(expected_goldens)}"
         )
 
-    checklist_cli_commands = tuple(_extract_checklist_block(content, "canonical_cli_commands"))
+    checklist_cli_commands = tuple(
+        _extract_checklist_block(content, "canonical_cli_commands")
+    )
     if checklist_cli_commands != CANONICAL_POLICY_CLI_COMMANDS:
         errors.append(
             f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: set canónico CLI desalineado -> "
@@ -424,6 +470,35 @@ def validate_operational_checklist(official_targets: tuple[str, ...]) -> list[st
             "validate_operational_checklist: conjunto recibido distinto del contrato final -> "
             f"received={tuple(official_targets)}, expected={FINAL_OFFICIAL_TARGETS}"
         )
+
+    phase_headers = PHASE_HEADER_PATTERN.findall(content)
+    if len(phase_headers) != 5:
+        errors.append(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: se esperaban 5 fases explícitas y se encontraron {len(phase_headers)}"
+        )
+
+    phase_checkbox_matches = list(PHASE_CHECKBOX_PATTERN.finditer(content))
+    if not phase_checkbox_matches:
+        errors.append(
+            f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: faltan checkboxes de estado para las fases"
+        )
+    else:
+        pending_lines = [
+            content[
+                match.end() : (
+                    content.find("\n", match.start())
+                    if content.find("\n", match.start()) != -1
+                    else len(content)
+                )
+            ].strip()
+            for match in phase_checkbox_matches
+            if match.group("mark") != "x" and match.group("mark") != "X"
+        ]
+        if pending_lines:
+            preview = ", ".join(pending_lines[:2])
+            errors.append(
+                f"{TARGET_CHECKLIST_PATH.relative_to(ROOT).as_posix()}: checklist de fases incompleto, quedan tareas sin cerrar -> {preview}"
+            )
     return errors
 
 
@@ -435,14 +510,19 @@ def validate_scan_roots(
     errors: list[str] = []
     for path in PUBLIC_TEXT_PATHS:
         if not path.exists():
-            errors.append(f"{path.relative_to(ROOT).as_posix()}: ruta pública vigilada inexistente")
+            errors.append(
+                f"{path.relative_to(ROOT).as_posix()}: ruta pública vigilada inexistente"
+            )
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
-        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        rel = (
+            path.relative_to(ROOT).as_posix()
+            if path.is_relative_to(ROOT)
+            else str(path)
+        )
         errors.extend(find_public_alias_errors(rel, content))
         errors.extend(find_non_python_sdk_promotion_errors(rel, content))
     return errors
-
 
 
 def validate_public_documentation_alignment(
@@ -480,17 +560,27 @@ def validate_public_documentation_alignment(
                 errors.append(
                     f"{rel_path}:{line_no}: backend documentado fuera de política -> {backend}"
                 )
-        missing = [backend for backend in expected_targets if backend not in documented_backends]
+        missing = [
+            backend
+            for backend in expected_targets
+            if backend not in documented_backends
+        ]
         if missing:
             errors.append(
                 f"{rel_path}: faltan backends oficiales en la documentación pública -> {tuple(missing)}"
             )
 
     expected_matrix = {
-        backend: {feature: BACKEND_COMPATIBILITY[backend][feature] for feature in ("tier", *CONTRACT_FEATURES)}
+        backend: {
+            feature: BACKEND_COMPATIBILITY[backend][feature]
+            for feature in ("tier", *CONTRACT_FEATURES)
+        }
         for backend in expected_targets
     }
-    for rel_path in ("docs/contrato_runtime_holobit.md", "docs/matriz_transpiladores.md"):
+    for rel_path in (
+        "docs/contrato_runtime_holobit.md",
+        "docs/matriz_transpiladores.md",
+    ):
         path = ROOT / rel_path
         parsed = _parse_backend_matrix_table(path)
         if parsed != expected_matrix:
@@ -500,7 +590,11 @@ def validate_public_documentation_alignment(
             )
 
     for path in (*PUBLIC_RUNTIME_POLICY_PATHS, *HOLOBIT_MATRIX_DOC_PATHS):
-        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        rel = (
+            path.relative_to(ROOT).as_posix()
+            if path.is_relative_to(ROOT)
+            else str(path)
+        )
         content = path.read_text(encoding="utf-8", errors="ignore")
         for match in FORBIDDEN_NON_PYTHON_SDK_PROMOTION.finditer(content):
             backend = match.group("backend").lower()
@@ -511,7 +605,9 @@ def validate_public_documentation_alignment(
     return errors
 
 
-def validate_critical_docs_generated_lists(official_targets: tuple[str, ...]) -> list[str]:
+def validate_critical_docs_generated_lists(
+    official_targets: tuple[str, ...],
+) -> list[str]:
     errors: list[str] = []
     expected_csv = ", ".join(official_targets)
     expected_rst_csv = ", ".join(f"``{target}``" for target in official_targets)
@@ -524,7 +620,9 @@ def validate_critical_docs_generated_lists(official_targets: tuple[str, ...]) ->
         content = path.read_text(encoding="utf-8", errors="ignore")
         for fragment in required_fragments:
             if fragment not in content:
-                errors.append(f"{rel_path}: falta include/marcador canónico requerido -> {fragment}")
+                errors.append(
+                    f"{rel_path}: falta include/marcador canónico requerido -> {fragment}"
+                )
 
         for line_no, line in enumerate(content.splitlines(), start=1):
             lowered = line.lower()
@@ -591,7 +689,6 @@ def validate_python_policy_literals(
     return errors
 
 
-
 def validate_retired_targets_guardrail() -> list[str]:
     """Evita fugas de rutas históricas retiradas en superficies públicas/operativas."""
     errors: list[str] = []
@@ -645,7 +742,11 @@ def validate_retired_targets_guardrail() -> list[str]:
 def validate_final_backend_repo_audit() -> list[str]:
     errors: list[str] = []
     for path in _iter_repo_audit_files():
-        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        rel = (
+            path.relative_to(ROOT).as_posix()
+            if path.is_relative_to(ROOT)
+            else str(path)
+        )
         if _is_historical_repo_path(rel):
             continue
         try:
@@ -655,13 +756,16 @@ def validate_final_backend_repo_audit() -> list[str]:
         for pattern, description in REPO_AUDIT_FORBIDDEN_TERMS:
             for match in pattern.finditer(content):
                 line_no = content.count("\n", 0, match.start()) + 1
-                errors.append(f"{rel}:{line_no}: referencia fuera del conjunto final -> {description}")
+                errors.append(
+                    f"{rel}:{line_no}: referencia fuera del conjunto final -> {description}"
+                )
         for pattern, alias in REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS:
             for match in pattern.finditer(content):
                 line_no = content.count("\n", 0, match.start()) + 1
-                errors.append(f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}")
+                errors.append(
+                    f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}"
+                )
     return errors
-
 
 
 def _run_stage(name: str, errors: list[str]) -> int | None:
@@ -671,9 +775,11 @@ def _run_stage(name: str, errors: list[str]) -> int | None:
     print(f" - etapa: {name}", file=sys.stderr)
     print(f" - {errors[0]}", file=sys.stderr)
     if len(errors) > 1:
-        print(f" - y {len(errors) - 1} desalineación(es) adicional(es) en la misma etapa", file=sys.stderr)
+        print(
+            f" - y {len(errors) - 1} desalineación(es) adicional(es) en la misma etapa",
+            file=sys.stderr,
+        )
     return 1
-
 
 
 def main() -> int:
@@ -682,11 +788,23 @@ def main() -> int:
     stages = (
         ("registros canónicos", validate_registry_tables()),
         ("checklist operativo", validate_operational_checklist(official_targets)),
-        ("artefactos dirigidos", validate_targeted_artifact_roots(official_targets, reverse_scope)),
+        (
+            "artefactos dirigidos",
+            validate_targeted_artifact_roots(official_targets, reverse_scope),
+        ),
         ("escaneo público", validate_scan_roots(official_targets, reverse_scope)),
-        ("documentación pública", validate_public_documentation_alignment(official_targets, reverse_scope)),
-        ("docs críticas generadas", validate_critical_docs_generated_lists(official_targets)),
-        ("contrato Python/Holobit/SDK", validate_python_policy_literals(official_targets)),
+        (
+            "documentación pública",
+            validate_public_documentation_alignment(official_targets, reverse_scope),
+        ),
+        (
+            "docs críticas generadas",
+            validate_critical_docs_generated_lists(official_targets),
+        ),
+        (
+            "contrato Python/Holobit/SDK",
+            validate_python_policy_literals(official_targets),
+        ),
         ("guard-rail histórico retirado", validate_retired_targets_guardrail()),
         ("auditoría de repo", validate_final_backend_repo_audit()),
     )

@@ -161,7 +161,7 @@ El cableado oficial de hooks e imports de runtime está centralizado en
 | Backend | Implementación hooks/imports | Punto de inyección en transpiler | Ruta mínima `corelibs`/`standard_library` |
 |---|---|---|---|
 | `python` | `common/utils.py` + hooks inline Python | `to_python.py` | `longitud('cobra')` y `mostrar('hola')` quedan ejecutables en salida Python. |
-| `javascript` | `js_nodes/runtime_holobit.py` | `to_js.py` | Alias `longitud`/`mostrar` sobre adaptador JS oficial. |
+| `javascript` | `js_nodes/runtime_holobit.py` | `to_js.py` | Alias `longitud`/`mostrar` sobre adaptador JavaScript oficial. |
 | `rust` | `rust_nodes/runtime_holobit.py` | `to_rust.py` | Helpers inline `longitud`/`mostrar` con contrato `partial`. |
 | `go` | `go_nodes/runtime_holobit.py` | `to_go.py` | Adaptadores mínimos `longitud`/`mostrar` (best-effort no público). |
 | `cpp` | `cpp_nodes/runtime_holobit.py` | `to_cpp.py` | Includes oficiales + adaptadores `longitud`/`mostrar`. |
