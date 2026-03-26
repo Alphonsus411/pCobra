@@ -469,16 +469,16 @@ las ejecuciones posteriores reutilicen la caché sin rehacer el análisis.
 Limitaciones de los backends
 ----------------------------
 
-* **`python` y `javascript`**: implementan la mayoría de características y son los
-  más estables.
-* **`cpp`**: se considera experimental; no soporta clases ni excepciones
-  complejas.
-* **Rust**: carece de herencia múltiple y requiere anotaciones de tipo
-  explícitas para estructuras complejas.
-* **`wasm`**: limitado a operaciones numéricas básicas y sin soporte de
-  cadenas.
-* **`go`, `java` y `asm`**: poseen cobertura parcial y pueden carecer de
-  bibliotecas estándar equivalentes en funciones avanzadas.
+Los targets oficiales de salida se leen con el esquema contractual actual:
+
+* **Runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y
+  ``cpp``.
+* **Runtime best-effort no público**: ``go`` y ``java``.
+* **Solo transpilación**: ``wasm`` y ``asm`` (requieren runtime externo para
+  ejecutar).
+* **SDK full solo python**: únicamente ``python`` puede documentarse con
+  compatibilidad SDK completa; el resto permanece en estado contractual
+  ``partial``.
 
 Recomendaciones de estilo
 -------------------------
