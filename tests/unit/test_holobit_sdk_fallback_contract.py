@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_FEATURE_GAPS
+from pcobra.cobra.cli.target_policies import SDK_COMPATIBLE_TARGETS
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    BACKEND_FEATURE_GAPS,
+    CONTRACT_FEATURES,
+)
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.holobits.graficar import (
     _HOLOBIT_SDK_ERROR,
     _to_sdk_holobit,
@@ -58,3 +64,15 @@ def test_holobit_sdk_helpers_also_raise_explicit_error_without_required_sdk(func
 def test_gap_contract_non_python_declara_no_paridad_sdk():
     for backend in ("javascript", "rust", "wasm", "go", "cpp", "java", "asm"):
         assert len(BACKEND_FEATURE_GAPS[backend]["holobit"]) >= 1
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_fallback_contract_no_promueve_sdk_full_fuera_de_python(backend: str):
+    if backend == "python":
+        assert backend in SDK_COMPATIBLE_TARGETS
+        return
+
+    assert backend not in SDK_COMPATIBLE_TARGETS
+    for feature in CONTRACT_FEATURES:
+        assert BACKEND_COMPATIBILITY[backend][feature] != "full"
+        assert len(BACKEND_FEATURE_GAPS[backend][feature]) >= 1

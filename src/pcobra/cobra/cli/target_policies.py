@@ -5,6 +5,11 @@ from __future__ import annotations
 from argparse import ArgumentTypeError
 from typing import Literal
 
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    CONTRACT_FEATURES,
+    SDK_FULL_BACKENDS,
+)
 from pcobra.cobra.transpilers.target_utils import (
     TARGET_ALIASES,
     build_target_help_by_tier,
@@ -61,8 +66,8 @@ OFFICIAL_STANDARD_LIBRARY_TARGETS = OFFICIAL_RUNTIME_TARGETS
 # compatibilidad parcial según ``compatibility_matrix.py``.
 ADVANCED_HOLOBIT_RUNTIME_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
-# Compatibilidad SDK completa: hoy solo Python puede prometerla públicamente.
-SDK_COMPATIBLE_TARGETS = ("python",)
+# Compatibilidad SDK completa: se deriva de la matriz contractual.
+SDK_COMPATIBLE_TARGETS = SDK_FULL_BACKENDS
 
 require_official_target_subset(
     OFFICIAL_RUNTIME_TARGETS,
@@ -179,6 +184,7 @@ def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[
     return (
         "Targets oficiales de salida: {official}. "
         "Targets con runtime oficial para {capability}: {allowed}. "
+        "Compatibilidad SDK completa: {sdk_compatible}. "
         "Targets best-effort: {best_effort}. "
         "Targets solo de transpilación: {transpilation_only}. "
         "Generar código para los 8 targets oficiales no implica paridad de ejecución real."
@@ -186,8 +192,18 @@ def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[
         official=official_transpilation_targets_text(),
         capability=capability,
         allowed=", ".join(allowed_targets),
+        sdk_compatible=sdk_compatible_targets_text(),
         best_effort=", ".join(BEST_EFFORT_RUNTIME_TARGETS),
         transpilation_only=transpilation_only_targets_text(),
+    )
+
+
+def _sdk_full_targets_from_matrix() -> tuple[str, ...]:
+    """Deriva targets SDK full desde la matriz contractual canonical."""
+    return tuple(
+        backend
+        for backend in OFFICIAL_TRANSPILATION_TARGETS
+        if all(BACKEND_COMPATIBILITY[backend][feature] == "full" for feature in CONTRACT_FEATURES)
     )
 
 
@@ -264,11 +280,17 @@ def validate_runtime_support_contract() -> None:
             )
 
 
-    non_python_sdk_targets = set(SDK_COMPATIBLE_TARGETS) - {"python"}
-    if non_python_sdk_targets:
+    if SDK_COMPATIBLE_TARGETS != ("python",):
         raise RuntimeError(
-            "SDK_COMPATIBLE_TARGETS no puede incluir targets no Python: "
-            f"sdk={SDK_COMPATIBLE_TARGETS}, invalid={tuple(sorted(non_python_sdk_targets))}"
+            "SDK_COMPATIBLE_TARGETS debe permanecer fijado a ('python',): "
+            f"sdk={SDK_COMPATIBLE_TARGETS}"
+        )
+
+    matrix_sdk_targets = _sdk_full_targets_from_matrix()
+    if SDK_COMPATIBLE_TARGETS != matrix_sdk_targets:
+        raise RuntimeError(
+            "SDK_COMPATIBLE_TARGETS debe coincidir con los backends 'full' de la matriz contractual: "
+            f"sdk={SDK_COMPATIBLE_TARGETS}, matrix={matrix_sdk_targets}"
         )
 
     for backend in SDK_COMPATIBLE_TARGETS:
