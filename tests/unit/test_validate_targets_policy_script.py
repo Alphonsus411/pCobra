@@ -253,3 +253,24 @@ def test_ci_validate_targets_permite_mencionar_sdk_full_para_python(monkeypatch,
     )
 
     assert errors == []
+
+
+def test_ci_validate_targets_runtime_routes_and_shims_ok():
+    from scripts.ci import validate_targets as ci_validator
+
+    errors = ci_validator.validate_runtime_routes_and_shims()
+
+    assert errors == []
+
+
+def test_ci_validate_targets_detecta_firma_critica_desalineada(monkeypatch):
+    from scripts.ci import validate_targets as ci_validator
+
+    monkeypatch.setattr(
+        "cli.cli.main",
+        lambda argv, strict=False: 0,
+    )
+
+    errors = ci_validator.validate_critical_signature_alignment()
+
+    assert any("src/cli/cli.py: firma de main()" in error for error in errors)

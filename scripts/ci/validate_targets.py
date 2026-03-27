@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+import inspect
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = ROOT / "src"
@@ -149,6 +150,27 @@ PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)archive/retired_targets/\*"),
 )
 PRODUCTIVE_PACKAGE_ROOT = "src/pcobra"
+CANONICAL_RUNTIME_ROOT = "src/pcobra"
+SHIM_RUNTIME_ROOTS: tuple[str, ...] = (
+    "src/cobra",
+    "src/core",
+    "src/cli",
+    "src/lsp",
+)
+EXPECTED_SHIM_FILES: tuple[str, ...] = (
+    "src/cobra/__init__.py",
+    "src/cobra/cli/__init__.py",
+    "src/cobra/cli/cli.py",
+    "src/cobra/cli/target_policies.py",
+    "src/cobra/transpilers/__init__.py",
+    "src/cobra/transpilers/targets.py",
+    "src/cobra/transpilers/registry.py",
+    "src/cobra/transpilers/compatibility_matrix.py",
+    "src/core/__init__.py",
+    "src/cli/__init__.py",
+    "src/cli/cli.py",
+    "src/lsp/__init__.py",
+)
 IMPORT_GUARDRAIL_SCAN_ROOTS = ("src", "scripts", "tests")
 IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?m)^\s*from\s+archive(?:\.[\w_]+)*\s+import\s+"),
@@ -350,6 +372,111 @@ def validate_registry_tables() -> list[str]:
         errors.append(
             "src/pcobra/cobra/transpilers/registry.py: el registro oficial no coincide exactamente con los 8 backends esperados -> "
             f"registry={official_transpiler_registry_literal()}, expected={EXPECTED_TRANSPILER_REGISTRY}"
+        )
+    return errors
+
+
+def validate_runtime_routes_and_shims() -> list[str]:
+    """Audita rutas runtime: canónico en ``src/pcobra`` y shims mínimos fuera."""
+    errors: list[str] = []
+
+    canonical_root = ROOT / CANONICAL_RUNTIME_ROOT
+    if not canonical_root.exists():
+        errors.append(f"{CANONICAL_RUNTIME_ROOT}: ruta canónica no encontrada")
+        return errors
+
+    for shim_root in SHIM_RUNTIME_ROOTS:
+        base = ROOT / shim_root
+        if not base.exists():
+            errors.append(f"{shim_root}: ruta shim esperada no encontrada")
+            continue
+        for path in base.rglob("*.py"):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel not in EXPECTED_SHIM_FILES:
+                errors.append(
+                    f"{rel}: archivo fuera de inventario shim (mover lógica productiva a {CANONICAL_RUNTIME_ROOT})"
+                )
+
+    for rel in EXPECTED_SHIM_FILES:
+        path = ROOT / rel
+        if not path.exists():
+            errors.append(f"{rel}: shim esperado no encontrado")
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        lowered = content.lower()
+        if "shim" not in lowered or "históric" not in lowered:
+            errors.append(f"{rel}: debe declararse explícitamente como shim histórico")
+        if "pcobra" not in content:
+            errors.append(f"{rel}: shim sin delegación explícita al árbol canónico pcobra")
+    return errors
+
+
+def validate_critical_signature_alignment() -> list[str]:
+    """Compara firmas/constantes críticas entre árbol canónico y shims publicados."""
+    errors: list[str] = []
+
+    import cli.cli as shim_cli_entry
+    import cobra.cli.cli as shim_cobra_entry
+    import cobra.cli.target_policies as shim_policies
+    import cobra.transpilers.compatibility_matrix as shim_matrix
+    import cobra.transpilers.registry as shim_registry
+    import cobra.transpilers.targets as shim_targets
+    import pcobra.cobra.cli.target_policies as canonical_policies
+    import pcobra.cobra.cli.cli as canonical_cli_entry
+    import pcobra.cobra.transpilers.compatibility_matrix as canonical_matrix
+    import pcobra.cobra.transpilers.registry as canonical_registry
+    import pcobra.cobra.transpilers.targets as canonical_targets
+
+    if tuple(shim_targets.TIER1_TARGETS) != tuple(canonical_targets.TIER1_TARGETS):
+        errors.append("src/cobra/transpilers/targets.py: TIER1_TARGETS desalineado con ruta canónica")
+    if tuple(shim_targets.TIER2_TARGETS) != tuple(canonical_targets.TIER2_TARGETS):
+        errors.append("src/cobra/transpilers/targets.py: TIER2_TARGETS desalineado con ruta canónica")
+    if tuple(shim_targets.OFFICIAL_TARGETS) != tuple(canonical_targets.OFFICIAL_TARGETS):
+        errors.append("src/cobra/transpilers/targets.py: OFFICIAL_TARGETS desalineado con ruta canónica")
+
+    if tuple(shim_registry.TRANSPILER_CLASS_PATHS) != tuple(canonical_registry.TRANSPILER_CLASS_PATHS):
+        errors.append("src/cobra/transpilers/registry.py: TRANSPILER_CLASS_PATHS desalineado con ruta canónica")
+    if tuple(shim_registry.official_transpiler_targets()) != tuple(canonical_registry.official_transpiler_targets()):
+        errors.append("src/cobra/transpilers/registry.py: official_transpiler_targets() desalineado con ruta canónica")
+
+    if tuple(shim_matrix.CONTRACT_FEATURES) != tuple(canonical_matrix.CONTRACT_FEATURES):
+        errors.append("src/cobra/transpilers/compatibility_matrix.py: CONTRACT_FEATURES desalineado con ruta canónica")
+    if tuple(shim_matrix.SDK_FULL_BACKENDS) != tuple(canonical_matrix.SDK_FULL_BACKENDS):
+        errors.append("src/cobra/transpilers/compatibility_matrix.py: SDK_FULL_BACKENDS desalineado con ruta canónica")
+
+    if tuple(shim_policies.OFFICIAL_TRANSPILATION_TARGETS) != tuple(canonical_policies.OFFICIAL_TRANSPILATION_TARGETS):
+        errors.append("src/cobra/cli/target_policies.py: OFFICIAL_TRANSPILATION_TARGETS desalineado con ruta canónica")
+    if tuple(shim_policies.OFFICIAL_RUNTIME_TARGETS) != tuple(canonical_policies.OFFICIAL_RUNTIME_TARGETS):
+        errors.append("src/cobra/cli/target_policies.py: OFFICIAL_RUNTIME_TARGETS desalineado con ruta canónica")
+
+    canonical_sig = inspect.signature(canonical_registry.official_transpiler_targets)
+    shim_sig = inspect.signature(shim_registry.official_transpiler_targets)
+    if shim_sig != canonical_sig:
+        errors.append(
+            "src/cobra/transpilers/registry.py: firma de official_transpiler_targets() desalineada "
+            f"(shim={shim_sig}, canonical={canonical_sig})"
+        )
+
+    canonical_sig = inspect.signature(canonical_policies.parse_target)
+    shim_sig = inspect.signature(shim_policies.parse_target)
+    if shim_sig != canonical_sig:
+        errors.append(
+            "src/cobra/cli/target_policies.py: firma de parse_target() desalineada "
+            f"(shim={shim_sig}, canonical={canonical_sig})"
+        )
+
+    canonical_main_sig = inspect.signature(canonical_cli_entry.main)
+    shim_cli_sig = inspect.signature(shim_cli_entry.main)
+    if shim_cli_sig != canonical_main_sig:
+        errors.append(
+            "src/cli/cli.py: firma de main() desalineada "
+            f"(shim={shim_cli_sig}, canonical={canonical_main_sig})"
+        )
+    shim_cobra_sig = inspect.signature(shim_cobra_entry.main)
+    if shim_cobra_sig != canonical_main_sig:
+        errors.append(
+            "src/cobra/cli/cli.py: firma de main() desalineada "
+            f"(shim={shim_cobra_sig}, canonical={canonical_main_sig})"
         )
     return errors
 
@@ -853,7 +980,9 @@ def main() -> int:
     official_targets = tuple(OFFICIAL_TARGETS)
     reverse_scope = tuple(REVERSE_SCOPE_LANGUAGES)
     stages = (
+        ("rutas runtime y shims", validate_runtime_routes_and_shims()),
         ("registros canónicos", validate_registry_tables()),
+        ("firmas/constantes críticas", validate_critical_signature_alignment()),
         ("checklist operativo", validate_operational_checklist(official_targets)),
         (
             "artefactos dirigidos",

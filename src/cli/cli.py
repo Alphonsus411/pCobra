@@ -1,4 +1,7 @@
-"""Wrapper de compatibilidad para ``python -m cli.cli``."""
+"""Shim histórico mínimo para ``python -m cli.cli``.
+
+Ruta canónica runtime: ``src/pcobra/cobra/cli/cli.py``.
+"""
 
 from __future__ import annotations
 

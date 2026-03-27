@@ -1,9 +1,11 @@
-"""Punto de entrada de compatibilidad para ``cli``.
+"""Shim histórico para el paquete de nivel superior ``cli``.
 
 Permite ejecutar ``python -m cli.cli`` y otras importaciones heredadas que
 asumen que ``cli`` es un paquete de nivel superior. Reexporta todas las
 utilidades expuestas por :mod:`pcobra.cli` y registra alias en
 ``sys.modules`` para los submódulos relevantes.
+
+Ruta canónica runtime: ``src/pcobra/cobra/cli``.
 """
 
 from __future__ import annotations
@@ -27,4 +29,3 @@ for alias, destino in _ALIASES.items():
     except ModuleNotFoundError:  # pragma: no cover - alias opcional
         continue
     sys.modules.setdefault(alias, modulo)
-

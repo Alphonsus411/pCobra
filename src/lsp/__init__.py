@@ -1,8 +1,10 @@
-"""Punto de entrada de compatibilidad para el paquete ``lsp``.
+"""Shim histórico para el paquete ``lsp``.
 
 Este módulo expone los componentes definidos en :mod:`pcobra.lsp` para
 conservar importaciones heredadas como ``import lsp.server`` sin requerir
 que el paquete completo esté instalado como dependencia separada.
+
+Ruta canónica runtime: ``src/pcobra/lsp``.
 """
 
 from __future__ import annotations
@@ -33,4 +35,3 @@ if _plugin_mod is not None:
 
 if _server_mod is not None:
     server = _server_mod  # type: ignore
-

@@ -1,10 +1,12 @@
-"""Compatibilidad para el paquete histórico ``cobra``.
+"""Shim histórico para el paquete ``cobra``.
 
 El proyecto original exponía módulos como ``cobra.core`` y ``core`` en la raíz
 del intérprete. Para facilitar la transición hacia ``pcobra`` mantenemos este
 módulo delgado que delega en los paquetes reales y registra alias en
 ``sys.modules``. Así, los imports absolutos existentes continúan funcionando
 sin modificaciones.
+
+Ruta canónica runtime: ``src/pcobra/**``.
 """
 
 from __future__ import annotations

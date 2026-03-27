@@ -1,4 +1,8 @@
-"""Alias ligero para :mod:`pcobra.cobra.cli`."""
+"""Shim histórico mínimo para :mod:`pcobra.cobra.cli`.
+
+Ruta canónica runtime: ``src/pcobra/cobra/cli``.
+Este módulo sólo existe para compatibilidad hacia atrás.
+"""
 
 from importlib import import_module
 import sys as _sys
