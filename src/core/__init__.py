@@ -1,9 +1,11 @@
-"""Compatibilidad para importaciones absolutas del antiguo paquete ``core``.
+"""Shim histórico para importaciones absolutas del paquete ``core``.
 
 Este módulo delega todas las referencias a :mod:`pcobra.core` para que el
 código legado que utilice ``import core`` continúe funcionando sin necesidad de
 ajustes adicionales. Se replica la ruta de búsqueda del paquete original para
 que ``import core.algo`` cargue los submódulos reales de ``pcobra.core``.
+
+Ruta canónica runtime: ``src/pcobra/core``.
 """
 
 from __future__ import annotations

@@ -1,4 +1,7 @@
-"""Punto de entrada ligero para ``python -m cobra.cli.cli``."""
+"""Shim histórico mínimo para ``python -m cobra.cli.cli``.
+
+Ruta canónica runtime: ``src/pcobra/cobra/cli/cli.py``.
+"""
 
 from __future__ import annotations
 
