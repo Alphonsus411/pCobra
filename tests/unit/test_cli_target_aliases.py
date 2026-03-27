@@ -119,7 +119,7 @@ def test_compile_parser_no_expone_aliases_en_choices_publicos():
         assert alias not in backend_action.choices
 
 
-def test_help_y_error_muestran_canones_y_ejemplos_de_alias():
+def test_help_y_error_muestran_solo_nombres_canonicos_oficiales():
     parser = _build_parser_with_command(CompileCommand())
     compile_parser = parser._subparsers._group_actions[0].choices["compilar"]
     help_text = compile_parser.format_help().lower()
@@ -132,15 +132,9 @@ def test_help_y_error_muestran_canones_y_ejemplos_de_alias():
     assert "cpp" in help_text
     assert "java" in help_text
     assert "asm" in help_text
-    assert "aliases aceptados:" in help_text
-    assert "c++→cpp" in help_text
-    assert "ensamblador→asm" in help_text
 
     message = invalid_target_error("desconocido")
     assert "python, rust, javascript, wasm, go, cpp, java, asm" in message
-    assert "Aliases aceptados:" in message
-    assert "c++→cpp" in message
-    assert "ensamblador→asm" in message
 
 
 def test_la_whitelist_publica_sigue_canonica():
