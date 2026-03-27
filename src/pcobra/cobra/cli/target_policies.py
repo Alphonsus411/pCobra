@@ -316,12 +316,10 @@ validate_runtime_support_contract()
 
 def invalid_target_error(value: str) -> str:
     return (
-        "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}. "
-        "Aliases aceptados: {aliases}."
+        "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}."
     ).format(
         value=value.strip(),
         supported=official_transpilation_targets_text(),
-        aliases=accepted_target_aliases_examples_text(),
     )
 
 

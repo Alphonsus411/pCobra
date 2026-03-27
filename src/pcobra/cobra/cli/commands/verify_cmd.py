@@ -13,7 +13,6 @@ from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS_HELP,
     VERIFICATION_EXECUTABLE_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS_HELP,
-    accepted_target_aliases_examples_text,
     build_runtime_capability_message,
     parse_restricted_target_list,
 )
@@ -35,7 +34,6 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 # Constantes
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
-TARGET_ALIASES_HELP = accepted_target_aliases_examples_text()
 
 class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
@@ -78,7 +76,7 @@ class VerifyCommand(BaseCommand):
                 "Lista de lenguajes separados por comas para verificación ejecutable. "
                 "Targets oficiales de salida: {official}. "
                 "Targets con runtime oficial de verificación: {runtime}. "
-                "Aquí se compara ejecución real, no solo generación de código. {policy} Aliases aceptados: {aliases}"
+                "Aquí se compara ejecución real, no solo generación de código. {policy}"
             ).format(
                 official=OFFICIAL_TRANSPILATION_TARGETS_HELP,
                 runtime=VERIFICATION_EXECUTABLE_TARGETS_HELP,
@@ -86,7 +84,6 @@ class VerifyCommand(BaseCommand):
                     capability="verificación ejecutable",
                     allowed_targets=VERIFICATION_EXECUTABLE_TARGETS,
                 ),
-                aliases=TARGET_ALIASES_HELP,
             ),
         )
         parser.set_defaults(cmd=self)
