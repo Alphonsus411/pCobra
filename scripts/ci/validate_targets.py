@@ -144,6 +144,11 @@ PACKAGING_GUARDRAIL_PATHS = (
     "pyproject.toml",
     "MANIFEST.in",
 )
+PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?i)^\s*prune\s+archive/retired_targets\s*$"),
+    re.compile(r"(?i)archive/retired_targets/\*"),
+)
+PRODUCTIVE_PACKAGE_ROOT = "src/pcobra"
 IMPORT_GUARDRAIL_SCAN_ROOTS = ("src", "scripts", "tests")
 IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?m)^\s*from\s+archive(?:\.[\w_]+)*\s+import\s+"),
@@ -152,6 +157,27 @@ IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
         r"(?i)(sys\.path\.insert|sys\.path\.append|Path\()[^\n]{0,200}archive/retired_targets"
     ),
 )
+PRODUCTIVE_IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?m)^\s*from\s+archive(?:\.[\w_]+)*\s+import\s+"),
+    re.compile(r"(?m)^\s*import\s+archive(?:\.[\w_]+)*"),
+    re.compile(
+        r"(?i)(sys\.path\.insert|sys\.path\.append|Path\()[^\n]{0,200}archive/retired_targets"
+    ),
+    re.compile(r"(?i)archive/retired_targets"),
+)
+PACKAGING_EXPLICIT_EXCLUSIONS = {
+    "MANIFEST.in": (
+        "prune archive/retired_targets",
+        "prune docs/historico",
+        "prune docs/experimental",
+    ),
+    "pyproject.toml": (
+        "tool.setuptools.exclude-package-data",
+        "archive/retired_targets/*",
+        "docs/historico/*",
+        "docs/experimental/*",
+    ),
+}
 FORBIDDEN_NON_PYTHON_SDK_PROMOTION = re.compile(
     r"(?P<backend>javascript|rust|wasm|go|cpp|java|asm)[^\n]{0,120}"
     r"\b(figura como|aparece como|es|tiene)\b[^\n]{0,40}"
@@ -710,9 +736,13 @@ def validate_retired_targets_guardrail() -> list[str]:
         if not path.exists():
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
-        if RETIRED_TARGETS_LITERAL in content:
+        for line_no, line in enumerate(content.splitlines(), start=1):
+            if RETIRED_TARGETS_LITERAL not in line:
+                continue
+            if any(pattern.search(line) for pattern in PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS):
+                continue
             errors.append(
-                f"{rel_path}: fuga de histórico retirado en rutas de packaging ({RETIRED_TARGETS_LITERAL})"
+                f"{rel_path}:{line_no}: fuga de histórico retirado en rutas de packaging ({RETIRED_TARGETS_LITERAL})"
             )
 
     for root_name in IMPORT_GUARDRAIL_SCAN_ROOTS:
@@ -723,6 +753,8 @@ def validate_retired_targets_guardrail() -> list[str]:
             if not path.is_file():
                 continue
             rel = path.relative_to(ROOT).as_posix()
+            if "/__pycache__/" in f"/{rel}" or path.suffix == ".pyc":
+                continue
             if _is_historical_repo_path(rel):
                 continue
             content = path.read_text(encoding="utf-8", errors="ignore")
@@ -738,6 +770,39 @@ def validate_retired_targets_guardrail() -> list[str]:
                     errors.append(
                         f"{rel}:{line_no}: import/ruta operativa no permitida hacia histórico retirado"
                     )
+    return errors
+
+
+def validate_productive_imports_no_retired_artifacts() -> list[str]:
+    """Asegura que src/pcobra no dependa de artefactos retirados."""
+    errors: list[str] = []
+    base = ROOT / PRODUCTIVE_PACKAGE_ROOT
+    if not base.exists():
+        return errors
+
+    for path in base.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        for pattern in PRODUCTIVE_IMPORT_GUARDRAIL_PATTERNS:
+            for match in pattern.finditer(content):
+                line_no = content.count("\n", 0, match.start()) + 1
+                errors.append(
+                    f"{rel}:{line_no}: dependencia productiva prohibida hacia artefactos retirados ({match.group(0).strip()})"
+                )
+
+    for rel_path, required_tokens in PACKAGING_EXPLICIT_EXCLUSIONS.items():
+        path = ROOT / rel_path
+        if not path.exists():
+            errors.append(f"{rel_path}: archivo de packaging no encontrado para verificar exclusiones explícitas")
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        for token in required_tokens:
+            if token not in content:
+                errors.append(
+                    f"{rel_path}: falta exclusión explícita de histórico/experimental en packaging -> {token}"
+                )
     return errors
 
 
@@ -806,6 +871,10 @@ def main() -> int:
         (
             "contrato Python/Holobit/SDK",
             validate_python_policy_literals(official_targets),
+        ),
+        (
+            "imports productivos sin artefactos retirados",
+            validate_productive_imports_no_retired_artifacts(),
         ),
         ("guard-rail histórico retirado", validate_retired_targets_guardrail()),
         ("auditoría de repo", validate_final_backend_repo_audit()),

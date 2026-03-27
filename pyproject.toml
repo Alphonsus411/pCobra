@@ -92,6 +92,13 @@ dev = [
 include-package-data = true
 package-dir = {"" = "src"}
 
+[tool.setuptools.exclude-package-data]
+"*" = [
+    "archive/retired_targets/*",
+    "docs/historico/*",
+    "docs/experimental/*",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = [

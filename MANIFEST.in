@@ -11,6 +11,10 @@ include scripts/install.sh
 include scripts/run.sh
 include .env.example
 
+prune archive/retired_targets
+prune docs/historico
+prune docs/experimental
+
 recursive-include src/pcobra *.py
 recursive-include src/pcobra *.toml
 recursive-include src/pcobra *.yaml

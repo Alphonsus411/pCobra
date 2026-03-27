@@ -120,6 +120,7 @@ Antes de fusionar cambios de política:
 - [x] No hay `to_*.py` extra fuera del inventario canónico.
 - [x] No hay `*_nodes` extra fuera del inventario canónico.
 - [x] No hay `.golden` extra fuera del inventario canónico.
+- [x] Packaging (`MANIFEST.in`/`pyproject.toml`) excluye explícitamente históricos y experimentales no distribuibles.
 - [x] Se regeneraron artefactos derivados de docs cuando aplica (`scripts/generate_target_policy_docs.py`).
 
 ### Fase 3 — Consolidación del contrato Holobit/SDK y mensajes públicos
