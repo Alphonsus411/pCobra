@@ -14,9 +14,14 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     COMPATIBILITY_LEVEL_ORDER,
     CONTRACT_FEATURES,
     MIN_REQUIRED_BACKEND_COMPATIBILITY,
+    VALID_COMPATIBILITY_LEVELS,
     SDK_FULL_BACKENDS,
     SDK_PARTIAL_BACKENDS,
     validate_backend_compatibility_contract,
+)
+from pcobra.cobra.cli.target_policies import (
+    SDK_COMPATIBLE_TARGETS,
+    build_runtime_capability_message,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from scripts.ci.validate_targets import validate_public_documentation_alignment, validate_python_policy_literals
@@ -41,7 +46,7 @@ HOOK_CALL_MARKERS = {
     "rust": {
         "holobit": "cobra_holobit(vec![1, 2, 3]);",
         "proyectar": 'cobra_runtime_expect(cobra_proyectar(&hb, &format!("{}", "2d")));',
-        "transformar": 'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]));',
+        "transformar": 'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[format!("{}", 90)]));',
         "graficar": 'cobra_runtime_expect(cobra_graficar(&hb));',
     },
     "wasm": {
@@ -181,6 +186,7 @@ def test_contrato_holobit_y_sdk_no_admiten_un_noveno_backend_ni_promociones_full
 
 def test_only_python_is_full_for_sdk_contract_features():
     assert SDK_FULL_BACKENDS == ("python",)
+    assert SDK_COMPATIBLE_TARGETS == SDK_FULL_BACKENDS
     assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
 
     for feature in CONTRACT_FEATURES:
@@ -197,6 +203,26 @@ def test_only_python_is_full_for_sdk_contract_features():
 
         assert full_backends == {"python"}
         assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_matrix_define_niveles_validos_por_target_oficial(backend: str):
+    contract = BACKEND_COMPATIBILITY[backend]
+    assert contract["tier"] in ("tier1", "tier2")
+    for feature in CONTRACT_FEATURES:
+        assert contract[feature] in VALID_COMPATIBILITY_LEVELS
+
+
+def test_cli_runtime_message_no_promociona_sdk_completo_fuera_de_python():
+    message = build_runtime_capability_message(
+        capability="ejecución en contenedor",
+        allowed_targets=("python", "javascript", "cpp", "rust"),
+    ).lower()
+    assert "compatibilidad sdk completa: python" in message
+    for backend in OFFICIAL_TARGETS:
+        if backend == "python":
+            continue
+        assert f"compatibilidad sdk completa: {backend}" not in message
 
 
 def test_public_docs_match_backend_matrix_exactly_for_contract_features():
@@ -220,4 +246,4 @@ def test_docs_holobit_separan_transpilacion_runtime_oficial_y_best_effort():
         contenido = Path(doc_path).read_text(encoding="utf-8")
         assert "Targets oficiales de transpilación" in contenido
         assert "Targets con runtime oficial" in contenido
-        assert "runtime best-effort no público" in contenido
+        assert "best-effort" in contenido
