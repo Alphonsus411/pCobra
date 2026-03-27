@@ -43,5 +43,5 @@ def test_reverse_policy_modules_solo_incluyen_scope_canonico():
 
 def test_reverse_registry_no_habilita_fallback_legacy_publico_por_defecto():
     reverse_mod = importlib.import_module("pcobra.cobra.transpilers.reverse")
-
-    assert getattr(reverse_mod, "_ALLOW_INTERNAL_LEGACY_FALLBACKS") is False
+    assert getattr(reverse_mod, "_LEGACY_IMPORT_PHASE") == 1
+    assert getattr(reverse_mod, "_ALLOW_INTERNAL_LEGACY_FALLBACKS") is True

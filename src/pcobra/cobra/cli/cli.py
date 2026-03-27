@@ -202,6 +202,11 @@ class CliApplication:
         parser.add_argument("--extra-validators",
                           help=_("Path to custom validators module"),
                           type=Path)
+        parser.add_argument(
+            "--legacy-imports",
+            action="store_true",
+            help=_("Habilita temporalmente imports legacy (cobra/core). Migre a pcobra.*"),
+        )
 
     def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
         """Configura autocompletado para argumentos comunes.
@@ -340,6 +345,12 @@ class CliApplication:
                 logging.getLogger().setLevel(log_level)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
+                if getattr(args, "legacy_imports", False):
+                    os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+                    messages.mostrar_info(
+                        "Compatibilidad legacy habilitada para esta ejecución. "
+                        "Actualiza tus imports a `pcobra.*` antes de fase 3."
+                    )
                 messages.mostrar_logo()
 
                 return self.execute_command(args)

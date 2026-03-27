@@ -39,8 +39,17 @@ except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
 
 logger = logging.getLogger(__name__)
 
-_ALLOW_INTERNAL_LEGACY_FALLBACKS = (
-    os.environ.get("PCOBRA_INTERNAL_REVERSE_LEGACY_FALLBACKS") == "1"
+_LEGACY_IMPORT_PHASE = int(os.environ.get("PCOBRA_LEGACY_IMPORT_PHASE", "1") or "1")
+if _LEGACY_IMPORT_PHASE < 1:
+    _LEGACY_IMPORT_PHASE = 1
+if _LEGACY_IMPORT_PHASE > 3:
+    _LEGACY_IMPORT_PHASE = 3
+_ALLOW_INTERNAL_LEGACY_FALLBACKS = _LEGACY_IMPORT_PHASE <= 1 or (
+    _LEGACY_IMPORT_PHASE == 2
+    and (
+        os.environ.get("PCOBRA_INTERNAL_REVERSE_LEGACY_FALLBACKS") == "1"
+        or os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"
+    )
 )
 _REGISTERED_REVERSE_CLASSES: Dict[str, Type[BaseReverseTranspiler]] = {}
 _EXPORTED_CLASS_NAMES: List[str] = []
@@ -57,7 +66,8 @@ def _import_reverse_module(mod_name: str):
 
         legacy_mod = mod_name.replace("pcobra.cobra", "cobra", 1)
         logger.warning(
-            "Compatibilidad legacy interna activada para reverse: %s -> %s",
+            "Compatibilidad legacy interna activada para reverse: %s -> %s. "
+            "Migre el import a `pcobra.*` (retirada progresiva: fase 1 warning, fase 2 opt-in, fase 3 eliminación).",
             mod_name,
             legacy_mod,
         )
