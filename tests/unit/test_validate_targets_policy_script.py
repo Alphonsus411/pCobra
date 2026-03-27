@@ -148,6 +148,79 @@ def test_ci_validate_targets_guardrail_no_reporta_si_no_hay_fugas(monkeypatch, t
     assert ci_validator.validate_retired_targets_guardrail() == []
 
 
+def test_ci_validate_targets_guardrail_permite_exclusiones_de_packaging(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    clean_doc = tmp_path / "README.md"
+    clean_doc.write_text("sin referencias históricas retiradas", encoding="utf-8")
+    packaging = tmp_path / "MANIFEST.in"
+    packaging.write_text("prune archive/retired_targets\n", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "DOC_INDEX_GUARDRAIL_PATHS", (clean_doc.as_posix(),))
+    monkeypatch.setattr(ci_validator, "PACKAGING_GUARDRAIL_PATHS", (packaging.as_posix(),))
+    monkeypatch.setattr(ci_validator, "IMPORT_GUARDRAIL_SCAN_ROOTS", tuple())
+
+    assert ci_validator.validate_retired_targets_guardrail() == []
+
+
+def test_ci_validate_targets_bloquea_dependencias_productivas_a_retired_targets(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    package_root = tmp_path / "src" / "pcobra"
+    package_root.mkdir(parents=True)
+    risky_module = package_root / "modulo.py"
+    risky_module.write_text(
+        "from archive.retired_targets.adapters import bridge\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "MANIFEST.in"
+    manifest.write_text(
+        "\n".join(
+            [
+                "prune archive/retired_targets",
+                "prune docs/historico",
+                "prune docs/experimental",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """
+[tool.setuptools.exclude-package-data]
+"*" = ["archive/retired_targets/*", "docs/historico/*", "docs/experimental/*"]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(ci_validator, "ROOT", tmp_path)
+    monkeypatch.setattr(ci_validator, "PRODUCTIVE_PACKAGE_ROOT", "src/pcobra")
+
+    errors = ci_validator.validate_productive_imports_no_retired_artifacts()
+
+    assert any("dependencia productiva prohibida" in error for error in errors)
+    assert any("archive.retired_targets" in error for error in errors)
+
+
+def test_ci_validate_targets_exige_exclusiones_explicitas_en_packaging(monkeypatch, tmp_path):
+    from scripts.ci import validate_targets as ci_validator
+
+    package_root = tmp_path / "src" / "pcobra"
+    package_root.mkdir(parents=True)
+    (package_root / "ok.py").write_text("print('ok')\n", encoding="utf-8")
+    (tmp_path / "MANIFEST.in").write_text("include README.md\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text("[build-system]\nrequires = []\n", encoding="utf-8")
+
+    monkeypatch.setattr(ci_validator, "ROOT", tmp_path)
+    monkeypatch.setattr(ci_validator, "PRODUCTIVE_PACKAGE_ROOT", "src/pcobra")
+
+    errors = ci_validator.validate_productive_imports_no_retired_artifacts()
+
+    assert any("MANIFEST.in: falta exclusión explícita" in error for error in errors)
+    assert any("pyproject.toml: falta exclusión explícita" in error for error in errors)
+
+
 def test_ci_validate_targets_bloquea_promocion_sdk_full_en_target_no_python(monkeypatch, tmp_path):
     from scripts.ci import validate_targets as ci_validator
 

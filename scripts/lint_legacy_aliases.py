@@ -14,6 +14,7 @@ from scripts.targets_policy_common import FORBIDDEN_PUBLIC_TARGET_ALIASES
 
 SCAN_PATHS = [
     ROOT / "pyproject.toml",
+    ROOT / "MANIFEST.in",
     ROOT / "README.md",
     ROOT / "docs",
     ROOT / "examples",
