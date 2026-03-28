@@ -68,6 +68,7 @@ Migración desde targets retirados
 Si tu flujo histórico dependía de targets eliminados, migra a un target oficial según tu necesidad (runtime oficial, best-effort o solo transpilación) y revisa la guía de transición:
 
 - ``docs/migracion_targets_retirados.md``
+- ``docs/historico/migracion_targets_retirados_archivo.md`` (archivo histórico, fuera del flujo activo)
 
 Ejemplos de ``cobra compilar`` para cada backend oficial (generado):
 

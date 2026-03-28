@@ -146,17 +146,13 @@ La documentación pública activa debe respetar estas reglas editoriales:
 4. Describir Holobit solo con el contrato vigente: `python` `full`; el resto, como máximo, `partial` según la matriz contractual.
 5. No presentar a ningún backend distinto de `python` como compatibilidad SDK completa.
 
-## Ventana de deprecación para nombres legacy/retirados
+## Historial de deprecaciones y aliases retirados
 
-Para migraciones de CLI y configuración:
+La política activa no mantiene ventanas ni aliases legacy en el flujo principal.
 
-- **Inicio de deprecación:** `v10.0.10`.
-- **Eliminación definitiva:** `v10.2.0`.
+Si necesitas contexto histórico (ventanas de deprecación, aliases retirados y cronología de eliminación), consulta el archivo histórico:
 
-Durante la ventana:
-
-- Los alias históricos `c++` y `ensamblador` se aceptan temporalmente con `DeprecationWarning`.
-- Los nombres retirados (alias legacy de JavaScript/Python/Node/Go/JVM, etc.) deben fallar con error explícito y alternativa canónica.
+- `docs/historico/migracion_targets_retirados_archivo.md`
 
 ## Reverse
 

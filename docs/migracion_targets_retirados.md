@@ -49,3 +49,11 @@ python scripts/generate_target_policy_docs.py
 python scripts/ci/validate_targets.py
 python scripts/ci/ensure_generated_targets_docs_clean.py
 ```
+
+## Archivo histórico
+
+Para consultar cronologías antiguas de aliases, ejemplos legacy o notas de transición ya cerradas, revisa:
+
+- `docs/historico/migracion_targets_retirados_archivo.md`
+
+Ese material se conserva solo como referencia histórica y no forma parte del flujo operativo activo.
