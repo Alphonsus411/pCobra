@@ -222,7 +222,7 @@ cobra archivo.co --no-seguro
 ### Ejemplo de transpilación
 
 ```bash
-cobra compilar hola.co --tipo python
+cobra compilar hola.co --backend python
 ```
 
 Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [docs/frontend](docs/frontend).
@@ -771,7 +771,7 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
 
 ```bash
 # Compilar un archivo a: python, rust, javascript, wasm, go, cpp, java o asm
-cobra compilar programa.co --tipo python
+cobra compilar programa.co --backend python
 
 # Transpilar inverso de Python a JavaScript
 cobra transpilar-inverso script.py --origen=python --destino=javascript
@@ -797,8 +797,8 @@ cobra empaquetar --output dist
 cobra profile programa.co --output salida.prof
 # O mostrar el perfil directamente en pantalla
 cobra profile programa.co
-# Verificar la salida en Python y JavaScript
-cobra verificar ejemplo.co --lenguajes=python,javascript
+# Compilar en varios backends en una sola llamada
+cobra compilar ejemplo.co --tipos=python,javascript
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
@@ -949,8 +949,8 @@ cobra ejecutar tests/data/suma.co
 También puedes transpilar los ejemplos para ver el código Python generado:
 
 ```bash
-cobra transpilar tests/data/hola.cobra
-cobra transpilar tests/data/suma.co
+cobra compilar tests/data/hola.cobra --backend python
+cobra compilar tests/data/suma.co --backend python
 ```
 
 ### Pruebas de rendimiento
@@ -978,27 +978,27 @@ La siguiente lista se generó a partir de `LANG_CHOICES` en `src/pcobra/cobra/cl
 (ordenada alfabéticamente) para mantener la documentación alineada con la CLI real:
 
 ````bash
-cobra compilar programa.co --tipo=asm
-cobra compilar programa.co --tipo=cpp
-cobra compilar programa.co --tipo=go
-cobra compilar programa.co --tipo=java
-cobra compilar programa.co --tipo=javascript
-cobra compilar programa.co --tipo=python
-cobra compilar programa.co --tipo=rust
-cobra compilar programa.co --tipo=wasm
+cobra compilar programa.co --backend asm
+cobra compilar programa.co --backend cpp
+cobra compilar programa.co --backend go
+cobra compilar programa.co --backend java
+cobra compilar programa.co --backend javascript
+cobra compilar programa.co --backend python
+cobra compilar programa.co --backend rust
+cobra compilar programa.co --backend wasm
 ````
 
 ### Ejemplos de subcomandos
 
 ````bash
-cobra compilar programa.co --tipo=python
-cobra compilar programa.co --tipo=rust
-cobra compilar programa.co --tipo=javascript
-cobra compilar programa.co --tipo=wasm
-cobra compilar programa.co --tipo=go
-cobra compilar programa.co --tipo=cpp
-cobra compilar programa.co --tipo=java
-cobra compilar programa.co --tipo=asm
+cobra compilar programa.co --backend python
+cobra compilar programa.co --backend rust
+cobra compilar programa.co --backend javascript
+cobra compilar programa.co --backend wasm
+cobra compilar programa.co --backend go
+cobra compilar programa.co --backend cpp
+cobra compilar programa.co --backend java
+cobra compilar programa.co --backend asm
 echo $?  # 0 al compilar sin problemas
 
 cobra ejecutar inexistente.co
