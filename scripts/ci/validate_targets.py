@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -16,8 +17,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pcobra.cobra.cli.commands.benchmarks_cmd import BACKENDS as BENCHMARKS_BACKENDS
+from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
 from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
+from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.target_policies import SDK_COMPATIBLE_TARGETS
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     BACKEND_FEATURE_GAPS,
@@ -385,6 +391,73 @@ def validate_registry_tables() -> list[str]:
     return errors
 
 
+def validate_registry_literal_source() -> list[str]:
+    """Exige que TRANSPILER_CLASS_PATHS esté declarado como literal exacto en fuente."""
+    errors: list[str] = []
+    registry_path = ROOT / "src/pcobra/cobra/transpilers/registry.py"
+    if not registry_path.exists():
+        return [f"{registry_path.relative_to(ROOT).as_posix()}: archivo no encontrado"]
+
+    source = registry_path.read_text(encoding="utf-8")
+    module = ast.parse(source, filename=registry_path.as_posix())
+    dict_literal_node: ast.Dict | None = None
+    assign_count = 0
+
+    for node in module.body:
+        if not isinstance(node, ast.AnnAssign):
+            continue
+        if not isinstance(node.target, ast.Name) or node.target.id != "TRANSPILER_CLASS_PATHS":
+            continue
+        assign_count += 1
+        if isinstance(node.value, ast.Dict):
+            dict_literal_node = node.value
+
+    if assign_count != 1:
+        errors.append(
+            "src/pcobra/cobra/transpilers/registry.py: debe existir una única declaración de TRANSPILER_CLASS_PATHS"
+        )
+        return errors
+    if dict_literal_node is None:
+        errors.append(
+            "src/pcobra/cobra/transpilers/registry.py: TRANSPILER_CLASS_PATHS debe declararse como literal dict explícito"
+        )
+        return errors
+
+    extracted: dict[str, tuple[str, str]] = {}
+    for key_node, value_node in zip(dict_literal_node.keys, dict_literal_node.values):
+        if key_node is None:
+            errors.append(
+                "src/pcobra/cobra/transpilers/registry.py: clave no válida en TRANSPILER_CLASS_PATHS"
+            )
+            continue
+        if not isinstance(key_node, ast.Constant) or not isinstance(key_node.value, str):
+            errors.append(
+                "src/pcobra/cobra/transpilers/registry.py: todas las claves de TRANSPILER_CLASS_PATHS deben ser strings literales"
+            )
+            continue
+        if not isinstance(value_node, ast.Tuple) or len(value_node.elts) != 2:
+            errors.append(
+                "src/pcobra/cobra/transpilers/registry.py: cada valor de TRANSPILER_CLASS_PATHS debe ser una tupla literal (módulo, clase)"
+            )
+            continue
+        if not all(
+            isinstance(item, ast.Constant) and isinstance(item.value, str)
+            for item in value_node.elts
+        ):
+            errors.append(
+                "src/pcobra/cobra/transpilers/registry.py: cada tupla en TRANSPILER_CLASS_PATHS debe contener solo strings literales"
+            )
+            continue
+        extracted[key_node.value] = (value_node.elts[0].value, value_node.elts[1].value)
+
+    if extracted != EXPECTED_TRANSPILER_REGISTRY:
+        errors.append(
+            "src/pcobra/cobra/transpilers/registry.py: literal fuente de TRANSPILER_CLASS_PATHS desalineado con el contrato exacto -> "
+            f"source={extracted}, expected={EXPECTED_TRANSPILER_REGISTRY}"
+        )
+    return errors
+
+
 def validate_runtime_routes_and_shims() -> list[str]:
     """Audita rutas runtime: canónico en ``src/pcobra`` y shims mínimos fuera."""
     errors: list[str] = []
@@ -521,6 +594,21 @@ def validate_targeted_artifact_roots(
         errors.append(
             f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: directorio canónico desalineado -> "
             f"found={sorted(found_forward)}, expected={sorted(expected_forward)}"
+        )
+    unexpected_forward = sorted(found_forward - expected_forward)
+    if unexpected_forward:
+        errors.append(
+            f"{TRANSPILER_DIR.relative_to(ROOT).as_posix()}: inventario to_*.py contiene módulos no permitidos -> "
+            f"{unexpected_forward}"
+        )
+    expected_registry_modules = {
+        module_name.rsplit(".", maxsplit=1)[-1] + ".py"
+        for module_name, _ in EXPECTED_TRANSPILER_REGISTRY.values()
+    }
+    if expected_registry_modules != expected_forward:
+        errors.append(
+            "scripts/ci/validate_targets.py: EXPECTED_TRANSPILER_MODULES debe derivar exactamente de EXPECTED_TRANSPILER_REGISTRY -> "
+            f"modules={sorted(expected_forward)}, registry={sorted(expected_registry_modules)}"
         )
 
     expected_reverse = {
@@ -981,6 +1069,42 @@ def validate_final_backend_repo_audit() -> list[str]:
     return errors
 
 
+def _build_command_help(command: object) -> str:
+    parser = CustomArgumentParser(prog="cobra")
+    subparsers = parser.add_subparsers(dest="command")
+    command.register_subparser(subparsers)
+    return parser.format_help()
+
+
+def _build_compile_help() -> str:
+    parser = CustomArgumentParser(prog="cobra")
+    subparsers = parser.add_subparsers(dest="command")
+    CompileCommand().register_subparser(subparsers)
+    compile_parser = parser._subparsers._group_actions[0].choices["compilar"]
+    return compile_parser.format_help()
+
+
+def validate_cli_public_surfaces_no_legacy_aliases() -> list[str]:
+    """Bloquea aliases legacy en ayuda pública de comandos canónicos."""
+    errors: list[str] = []
+    forbidden_aliases = tuple(alias for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES)
+    help_surfaces = {
+        "compile_help": _build_compile_help(),
+        "verify_help": _build_command_help(VerifyCommand()),
+        "benchmarks_help": _build_command_help(BenchmarksCommand()),
+        "reverse_help": _build_command_help(TranspilarInversoCommand()),
+    }
+
+    for surface_name, help_text in help_surfaces.items():
+        lowered = help_text.lower()
+        for alias in forbidden_aliases:
+            if re.search(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", lowered):
+                errors.append(
+                    f"cli:{surface_name}: ayuda pública contiene alias legacy '{alias}'"
+                )
+    return errors
+
+
 def _run_stage(name: str, errors: list[str]) -> int | None:
     if not errors:
         return None
@@ -1001,6 +1125,7 @@ def main() -> int:
     stages = (
         ("rutas runtime y shims", validate_runtime_routes_and_shims()),
         ("registros canónicos", validate_registry_tables()),
+        ("literal exacto de registro", validate_registry_literal_source()),
         ("firmas/constantes críticas", validate_critical_signature_alignment()),
         ("checklist operativo", validate_operational_checklist(official_targets)),
         (
@@ -1021,6 +1146,10 @@ def main() -> int:
             validate_python_policy_literals(official_targets),
         ),
         ("auditoría de repo", validate_final_backend_repo_audit()),
+        (
+            "comandos/help sin aliases legacy",
+            validate_cli_public_surfaces_no_legacy_aliases(),
+        ),
     )
     for stage_name, errors in stages:
         result = _run_stage(stage_name, errors)
