@@ -17,6 +17,16 @@ ACCEPTED_ALIASES = (
 )
 
 REJECTED_ALIASES = ("js", "assembly")
+EXPECTED_CANONICAL_TARGETS = (
+    "python",
+    "rust",
+    "javascript",
+    "wasm",
+    "go",
+    "cpp",
+    "java",
+    "asm",
+)
 
 
 def _build_parser_with_command(command):
@@ -124,23 +134,22 @@ def test_help_y_error_muestran_solo_nombres_canonicos_oficiales():
     compile_parser = parser._subparsers._group_actions[0].choices["compilar"]
     help_text = compile_parser.format_help().lower()
 
-    assert "python" in help_text
-    assert "rust" in help_text
-    assert "javascript" in help_text
-    assert "wasm" in help_text
-    assert "go" in help_text
-    assert "cpp" in help_text
-    assert "java" in help_text
-    assert "asm" in help_text
+    for target in EXPECTED_CANONICAL_TARGETS:
+        assert target in help_text
 
     message = invalid_target_error("desconocido")
-    assert "python, rust, javascript, wasm, go, cpp, java, asm" in message
+    assert ", ".join(EXPECTED_CANONICAL_TARGETS) in message
 
 
 def test_la_whitelist_publica_sigue_canonica():
     targets = official_transpiler_targets()
     assert targets == tuple(LANG_CHOICES)
-    assert targets == ("python", "rust", "javascript", "wasm", "go", "cpp", "java", "asm")
+    assert targets == EXPECTED_CANONICAL_TARGETS
     assert len(targets) == 8
     for alias, _ in ACCEPTED_ALIASES:
         assert alias not in targets
+
+
+def test_parse_target_rechaza_destino_fuera_del_set_canonico():
+    with pytest.raises(argparse.ArgumentTypeError):
+        parse_target("ruby")

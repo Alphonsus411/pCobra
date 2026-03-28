@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from pcobra.cobra.cli.commands.bench_cmd import BACKENDS as BENCH_BACKENDS
 from pcobra.cobra.cli.commands.benchmarks_cmd import BACKENDS as BENCHMARKS_BACKENDS
 from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
@@ -24,6 +26,7 @@ from pcobra.cobra.transpilers.registry import (
     TRANSPILER_CLASS_PATHS,
     official_transpiler_targets,
 )
+import pcobra.cobra.transpilers.registry as transpiler_registry
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
@@ -51,12 +54,26 @@ from scripts.ci.validate_targets import (
 from scripts.targets_policy_common import VALIDATION_SCAN_PATHS, read_target_policy
 from tests.utils.targets import assert_official_targets_partition
 
+EXPECTED_CANONICAL_TARGETS = (
+    "python",
+    "rust",
+    "javascript",
+    "wasm",
+    "go",
+    "cpp",
+    "java",
+    "asm",
+)
+
 
 def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     oficiales = tuple(OFFICIAL_TARGETS)
     particion = assert_official_targets_partition(transpilers=TRANSPILERS)
 
     assert len(oficiales) == 8
+    assert TIER1_TARGETS == EXPECTED_CANONICAL_TARGETS[:4]
+    assert TIER2_TARGETS == EXPECTED_CANONICAL_TARGETS[4:]
+    assert oficiales == EXPECTED_CANONICAL_TARGETS
     assert oficiales == FINAL_OFFICIAL_TARGETS
     assert particion["tier1"] == TIER1_TARGETS
     assert particion["tier2"] == TIER2_TARGETS
@@ -207,6 +224,18 @@ def test_contrato_sdk_full_solo_en_python_y_resto_partial_por_feature():
     for backend in non_python:
         for feature in CONTRACT_FEATURES:
             assert BACKEND_COMPATIBILITY[backend][feature] == "partial"
+
+
+def test_registry_falla_explicito_si_aparece_novena_clave(monkeypatch):
+    registry_with_extra = dict(TRANSPILER_CLASS_PATHS)
+    registry_with_extra["ruby"] = (
+        "pcobra.cobra.transpilers.transpiler.to_ruby",
+        "TranspiladorRuby",
+    )
+    monkeypatch.setattr(transpiler_registry, "TRANSPILER_CLASS_PATHS", registry_with_extra)
+
+    with pytest.raises(RuntimeError, match="claves fuera de contrato"):
+        transpiler_registry._validate_registry_contract()
 
 
 def test_summary_publico_no_promociona_sdk_full_fuera_de_python():
