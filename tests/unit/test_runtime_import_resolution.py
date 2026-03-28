@@ -1,11 +1,14 @@
+import sys
 from types import ModuleType
 
 import cobra.cli.commands.execute_cmd as execute_cmd
 import pcobra.jupyter_kernel as jupyter_kernel
+import pytest
 
 
 def _sandbox_mod() -> ModuleType:
     module = ModuleType("pcobra.core.sandbox")
+    module.__file__ = "/workspace/pCobra/src/pcobra/core/sandbox.py"
     module.ejecutar_en_sandbox = lambda *_a, **_k: None
     module.ejecutar_en_contenedor = lambda *_a, **_k: None
     module.SecurityError = RuntimeError
@@ -30,7 +33,7 @@ def test_execute_cmd_prioriza_sandbox_canonico(monkeypatch):
     assert calls == ["pcobra.core.sandbox"]
 
 
-def test_execute_cmd_hace_fallback_legacy_si_falta_canonico(monkeypatch):
+def test_execute_cmd_hace_fallback_legacy_si_falta_canonico(monkeypatch, caplog):
     calls: list[str] = []
     legacy = _sandbox_mod()
     legacy.__name__ = "core.sandbox"
@@ -44,10 +47,51 @@ def test_execute_cmd_hace_fallback_legacy_si_falta_canonico(monkeypatch):
         raise ModuleNotFoundError(name)
 
     monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
-    resolved = execute_cmd._importar_modulo_sandbox()
+    with caplog.at_level("WARNING"):
+        resolved = execute_cmd._importar_modulo_sandbox()
 
     assert resolved is legacy
     assert calls == ["pcobra.core.sandbox", "core.sandbox"]
+    assert "compatibilidad legacy" in caplog.text
+
+
+def test_execute_cmd_rechaza_fallback_legacy_fuera_de_pcobra(monkeypatch):
+    legacy = _sandbox_mod()
+    legacy.__name__ = "core.sandbox"
+    legacy.__file__ = "/tmp/fake/core/sandbox.py"
+
+    def fake_import(name: str):
+        if name == "pcobra.core.sandbox":
+            raise ModuleNotFoundError(name)
+        if name == "core.sandbox":
+            return legacy
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
+    with pytest.raises(ImportError, match="no apunta al paquete esperado"):
+        execute_cmd._importar_modulo_sandbox()
+
+
+def test_execute_cmd_no_usa_core_falso_inyectado_en_sys_path(monkeypatch, tmp_path):
+    fake_core = tmp_path / "core"
+    fake_core.mkdir()
+    (fake_core / "__init__.py").write_text("", encoding="utf-8")
+    (fake_core / "sandbox.py").write_text(
+        "RASTRO_FAKE = True\n"
+        "def ejecutar_en_sandbox(*_a, **_k):\n    raise RuntimeError('fake')\n"
+        "def ejecutar_en_contenedor(*_a, **_k):\n    raise RuntimeError('fake')\n"
+        "class SecurityError(Exception):\n    pass\n"
+        "def validar_dependencias(*_a, **_k):\n    return None\n",
+        encoding="utf-8",
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.delitem(sys.modules, "core", raising=False)
+    monkeypatch.delitem(sys.modules, "core.sandbox", raising=False)
+
+    resolved = execute_cmd._importar_modulo_sandbox()
+
+    assert getattr(resolved, "RASTRO_FAKE", False) is False
+    assert resolved.__name__ == "pcobra.core.sandbox"
 
 
 def test_kernel_resuelve_dependencias_con_namespace_canonico(monkeypatch):

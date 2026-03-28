@@ -2,6 +2,7 @@ import importlib
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
@@ -39,6 +40,11 @@ def _importar_modulo_sandbox() -> Any:
             module = importlib.import_module("core.sandbox")
         except ModuleNotFoundError:
             raise canon_exc
+        _validar_modulo_sandbox_legacy(module)
+        logging.getLogger(__name__).warning(
+            "Se usó compatibilidad legacy para resolver 'core.sandbox'. "
+            "Migre a 'pcobra.core.sandbox'."
+        )
 
     required = (
         "ejecutar_en_sandbox",
@@ -52,6 +58,22 @@ def _importar_modulo_sandbox() -> Any:
             f"El módulo '{module.__name__}' no define: {', '.join(missing)}"
         )
     return module
+
+
+def _validar_modulo_sandbox_legacy(module: Any) -> None:
+    """Valida que el fallback legacy apunte al paquete esperado."""
+
+    module_file = getattr(module, "__file__", None)
+    if not module_file:
+        raise ImportError("El módulo legacy 'core.sandbox' no expone __file__")
+
+    resolved = Path(module_file).resolve().parts
+    expected_suffix = ("pcobra", "core", "sandbox.py")
+    if tuple(resolved[-len(expected_suffix):]) != expected_suffix:
+        raise ImportError(
+            "El módulo legacy 'core.sandbox' no apunta al paquete esperado "
+            f"('pcobra.core.sandbox'). Ruta detectada: {module_file}"
+        )
 
 
 class _SandboxModuleProxy:
