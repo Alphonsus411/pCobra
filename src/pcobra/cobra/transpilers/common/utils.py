@@ -217,6 +217,53 @@ RUNTIME_HOOKS = {
 }
 
 
+MINIMAL_RUNTIME_ROUTE_MARKERS = {
+    "python": {
+        "corelibs": "from corelibs import *",
+        "standard_library": "from standard_library import *",
+        "minimal_symbols": (),
+    },
+    "javascript": {
+        "corelibs": "import * as coleccion from './nativos/coleccion.js';",
+        "standard_library": "const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);",
+        "minimal_symbols": (
+            "const longitud = (valor) => cobraJsCorelibs.longitud(valor);",
+            "const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);",
+        ),
+    },
+    "rust": {
+        "corelibs": "use crate::corelibs::*;",
+        "standard_library": "use crate::standard_library::*;",
+        "minimal_symbols": ("fn longitud<T: ToString>(valor: T) -> usize {", "fn mostrar<T: Display>(valor: T) {"),
+    },
+    "wasm": {
+        "corelibs": '(import "pcobra:corelibs" "longitud"',
+        "standard_library": '(import "pcobra:standard_library" "mostrar"',
+        "minimal_symbols": ("(func $longitud", "(func $mostrar"),
+    },
+    "go": {
+        "corelibs": '"cobra/corelibs"',
+        "standard_library": '"cobra/standard_library"',
+        "minimal_symbols": ("func longitud(valor any) int {", "func mostrar(valores ...any) any {"),
+    },
+    "cpp": {
+        "corelibs": "#include <cobra/corelibs.hpp>",
+        "standard_library": "#include <cobra/standard_library.hpp>",
+        "minimal_symbols": ("inline std::size_t longitud(const T& valor) {", "inline T mostrar(const T& valor) {"),
+    },
+    "java": {
+        "corelibs": "import cobra.corelibs.*;",
+        "standard_library": "import cobra.standard_library.*;",
+        "minimal_symbols": ("private static int longitud(Object valor) {", "private static Object mostrar(Object... valores) {"),
+    },
+    "asm": {
+        "corelibs": "; backend asm: imports de runtime administrados externamente",
+        "standard_library": "runtime externo",
+        "minimal_symbols": ("cobra_proyectar:", "TRAP"),
+    },
+}
+
+
 def validate_runtime_contracts() -> None:
     """Valida imports/hooks de runtime para todos los backends oficiales."""
     holobit_features = CONTRACT_FEATURES[:4]
@@ -321,6 +368,36 @@ def validate_runtime_contracts() -> None:
                 )
 
 
+def validate_minimal_runtime_routes() -> None:
+    """Valida rutas mínimas `corelibs`/`standard_library` por backend oficial."""
+    for target in OFFICIAL_TARGETS:
+        if target not in MINIMAL_RUNTIME_ROUTE_MARKERS:
+            raise RuntimeError(
+                f"MINIMAL_RUNTIME_ROUTE_MARKERS no define reglas para target '{target}'"
+            )
+
+        markers = MINIMAL_RUNTIME_ROUTE_MARKERS[target]
+        imports = get_standard_imports(target)
+        hooks = "\n".join(get_runtime_hooks(target))
+        import_blob = imports if isinstance(imports, str) else "\n".join(imports)
+        combined = f"{import_blob}\n{hooks}"
+
+        for feature in ("corelibs", "standard_library"):
+            marker = markers[feature]
+            if marker not in combined:
+                raise RuntimeError(
+                    f"Contrato mínimo incumplido en target '{target}' para '{feature}': "
+                    f"falta marcador {marker!r}"
+                )
+
+        for symbol_marker in markers["minimal_symbols"]:
+            if symbol_marker not in combined:
+                raise RuntimeError(
+                    f"Target '{target}' no expone símbolos mínimos ni error explícito esperado: "
+                    f"falta marcador {symbol_marker!r}"
+                )
+
+
 validate_runtime_contracts()
 
 
@@ -377,6 +454,9 @@ def load_mapped_module(path: str, language: str) -> Tuple[str, str]:
     return contenido, ruta
 
 
+validate_minimal_runtime_routes()
+
+
 __all__ = [
     "BaseTranspiler",
     "save_file",
@@ -388,6 +468,8 @@ __all__ = [
     "HOOK_SIGNATURE_MARKERS",
     "RUNTIME_ERROR_MESSAGE",
     "validate_runtime_contracts",
+    "validate_minimal_runtime_routes",
+    "MINIMAL_RUNTIME_ROUTE_MARKERS",
     "ast_contains_node_types",
     "HOLOBIT_RUNTIME_NODE_TYPES",
     "ast_requires_holobit_runtime",

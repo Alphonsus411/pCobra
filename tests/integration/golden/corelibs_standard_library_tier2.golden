@@ -1,0 +1,30 @@
+[go]
+"cobra/corelibs"
+"cobra/standard_library"
+func longitud(valor any) int {
+func mostrar(valores ...any) any {
+longitud("cobra")
+mostrar("hola")
+
+[cpp]
+#include <cobra/corelibs.hpp>
+#include <cobra/standard_library.hpp>
+inline std::size_t longitud(const T& valor) {
+inline T mostrar(const T& valor) {
+longitud("cobra");
+mostrar("hola");
+
+[java]
+import cobra.corelibs.*;
+import cobra.standard_library.*;
+private static int longitud(Object valor) {
+private static Object mostrar(Object... valores) {
+longitud("cobra")
+mostrar("hola")
+
+[asm]
+; backend asm: imports de runtime administrados externamente
+cobra_proyectar:
+TRAP
+CALL longitud 'cobra'
+CALL mostrar 'hola'
