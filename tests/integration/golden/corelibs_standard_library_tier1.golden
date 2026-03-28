@@ -1,0 +1,28 @@
+[python]
+from corelibs import *
+from standard_library import *
+longitud('cobra')
+mostrar('hola')
+
+[javascript]
+import * as coleccion from './nativos/coleccion.js';
+const longitud = (valor) => cobraJsCorelibs.longitud(valor);
+const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);
+longitud('cobra');
+mostrar('hola');
+
+[rust]
+use crate::corelibs::*;
+use crate::standard_library::*;
+fn longitud<T: ToString>(valor: T) -> usize {
+fn mostrar<T: Display>(valor: T) {
+longitud("cobra");
+mostrar("hola");
+
+[wasm]
+(import "pcobra:corelibs" "longitud"
+(import "pcobra:standard_library" "mostrar"
+(func $longitud
+(func $mostrar
+(call $longitud (i32.const 0))
+(call $mostrar (i32.const 0))

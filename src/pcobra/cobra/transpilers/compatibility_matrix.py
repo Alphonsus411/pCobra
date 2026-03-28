@@ -195,7 +195,7 @@ COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "fu
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Python explícitos y símbolos invocables en el código generado. Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` crea `Holobit` real y las primitivas avanzadas fallan con `ModuleNotFoundError` mencionando `holobit_sdk` cuando el entorno incumple la dependencia obligatoria de Python `>=3.10`.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Python explícitos (`from corelibs import *`, `from standard_library import *`) y símbolos mínimos invocables en el código generado (`longitud`, `mostrar`). Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` crea `Holobit` real y las primitivas avanzadas fallan con `ModuleNotFoundError` mencionando `holobit_sdk` cuando el entorno incumple la dependencia obligatoria de Python `>=3.10`.",
     },
     "javascript": {
         "contract": "partial",
@@ -207,7 +207,7 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "wasm": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa emitir wrappers WAT e imports explícitos hacia un runtime host-managed (`pcobra:corelibs`, `pcobra:standard_library`). Holobit usa hooks `cobra_*` canónicos que delegan en imports `pcobra:holobit`: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` no implementan semántica local sino un puente contractual. El backend no usa `holobit_sdk` dentro del módulo generado; la disponibilidad real depende del host y del protocolo de handles/param buffers. Sigue en `partial` porque la semántica completa depende del host externo.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa emitir wrappers WAT e imports explícitos hacia un runtime host-managed (`pcobra:corelibs`, `pcobra:standard_library`) y exponer wrappers mínimos (`$longitud`, `$mostrar`) que delegan al host. Holobit usa hooks `cobra_*` canónicos que delegan en imports `pcobra:holobit`: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar` y `cobra_graficar` no implementan semántica local sino un puente contractual. El backend no usa `holobit_sdk` dentro del módulo generado; la disponibilidad real depende del host y del protocolo de handles/param buffers. Sigue en `partial` porque la semántica completa depende del host externo.",
     },
     "go": {
         "contract": "partial",
@@ -223,7 +223,7 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
     "asm": {
         "contract": "partial",
-        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa conservar puntos de llamada `CALL` y declarar explícitamente que el runtime externo se administra fuera del backend. Holobit inyecta hooks `cobra_*` solo como capa de inspección/diagnóstico: `cobra_holobit` conserva la representación IR simbólica y `cobra_proyectar`/`cobra_transformar`/`cobra_graficar` exigen runtime externo con `TRAP` explícito y sin fallback silencioso. El backend no depende de `holobit_sdk` ni lo sustituye. No debe documentarse como backend con paridad SDK equivalente.",
+        "evidence": "Compatibilidad con `corelibs`/`standard_library` significa conservar puntos de llamada `CALL` (`CALL longitud`, `CALL mostrar`) y declarar explícitamente que el runtime externo se administra fuera del backend. Holobit inyecta hooks `cobra_*` solo como capa de inspección/diagnóstico: `cobra_holobit` conserva la representación IR simbólica y `cobra_proyectar`/`cobra_transformar`/`cobra_graficar` exigen runtime externo con `TRAP` explícito y sin fallback silencioso. El backend no depende de `holobit_sdk` ni lo sustituye. No debe documentarse como backend con paridad SDK equivalente.",
     },
 }
 
