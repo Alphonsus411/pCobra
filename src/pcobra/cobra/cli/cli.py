@@ -10,10 +10,6 @@ from contextlib import contextmanager
 
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
-os.environ.setdefault("SQLITE_DB_KEY", "cli-dev-key")
-
-
-
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
 from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
@@ -55,6 +51,9 @@ from pcobra.cobra.cli.utils.autocomplete import (
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
+SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
+COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
+CLI_DEV_DB_KEY = "cli-dev-key"
 
 
 class LogLevel(Enum):
@@ -156,11 +155,34 @@ class CliApplication:
         logging.shutdown()
 
     def initialize(self) -> None:
+        self._ensure_sqlite_db_key()
         setup_gettext()
         self._setup_logging()
         self.interpreter = InterpretadorCobra()
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
+
+    def _ensure_sqlite_db_key(self) -> None:
+        sqlite_db_key = (environ.get(SQLITE_DB_KEY_ENV) or "").strip()
+        if sqlite_db_key:
+            return
+
+        dev_mode_enabled = environ.get(COBRA_DEV_MODE_ENV, "").strip() == "1"
+        if dev_mode_enabled:
+            environ[SQLITE_DB_KEY_ENV] = CLI_DEV_DB_KEY
+            logging.getLogger(__name__).warning(
+                "Modo desarrollo habilitado (%s=1): usando clave temporal para %s.",
+                COBRA_DEV_MODE_ENV,
+                SQLITE_DB_KEY_ENV,
+            )
+            return
+
+        raise RuntimeError(
+            "Falta la variable de entorno 'SQLITE_DB_KEY'. "
+            "Configúrala antes de iniciar la CLI (ejemplo: "
+            "export SQLITE_DB_KEY='clave-segura'). Para pruebas locales "
+            "controladas puedes usar COBRA_DEV_MODE=1."
+        )
 
     def _setup_logging(self) -> None:
         logging.basicConfig(
