@@ -45,8 +45,20 @@ TRANSPILERS = build_official_transpilers()
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
-    """Registra un backend validando que pertenezca al set oficial."""
+    """Registra un backend externo solo si usa nombre canónico oficial exacto."""
     canonical = _validate_official_backend_or_raise(backend, context=context)
+    raw_normalized = backend.strip().lower()
+    if raw_normalized not in OFFICIAL_TRANSPILATION_TARGETS:
+        raise ValueError(
+            _(
+                "Backend no permitido en {context}: {backend}. "
+                "Los plugins/transpiladores externos solo pueden registrar targets oficiales canónicos: {supported}"
+            ).format(
+                context=context,
+                backend=backend,
+                supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
+            )
+        )
     TRANSPILERS[canonical] = transpiler_cls
     return canonical
 

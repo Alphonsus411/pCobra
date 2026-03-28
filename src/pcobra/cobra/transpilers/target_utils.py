@@ -16,8 +16,8 @@ TARGET_ALIASES: Final[dict[str, str]] = {
 # Alias/nombres legacy o ambiguos que no forman parte del contrato público.
 # Se rechazan explícitamente para evitar aceptación accidental en CLI/plugins.
 LEGACY_OR_AMBIGUOUS_TARGETS: Final[tuple[str, ...]] = (
-    "as" "sembly",
-    "j" "s",
+    "assembly",
+    "js",
     "c",
     "cxx",
     "cpp11",
