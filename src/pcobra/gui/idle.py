@@ -4,7 +4,7 @@ import io
 import sys
 import flet as ft
 
-from pcobra.cobra.core import Lexer, Parser
+from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
 from pcobra.cobra.transpilers.target_utils import target_cli_choices
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.interpreter import InterpretadorCobra
@@ -44,6 +44,20 @@ def _transpilar_codigo(codigo: str, lang: str) -> str:
     return transp.generate_code(ast)
 
 
+def _normalizar_codigo(codigo: str | None) -> str:
+    """Normaliza la entrada para evitar valores ``None``."""
+    return codigo or ""
+
+
+def _formatear_error(exc: Exception) -> str:
+    """Convierte excepciones en mensajes legibles para la GUI."""
+    if isinstance(exc, LexerError):
+        return f"Error léxico (línea {exc.linea}, columna {exc.columna}): {exc}"
+    if isinstance(exc, ParserError):
+        return f"Error de sintaxis: {exc}"
+    return f"Error de ejecución: {exc}"
+
+
 def _gui_target_choices() -> tuple[str, ...]:
     """Devuelve targets canónicos visibles en GUI preservando el orden oficial."""
     return target_cli_choices(set(OFFICIAL_TARGETS) & set(TRANSPILERS))
@@ -59,19 +73,40 @@ def main(page: ft.Page):
     activar = ft.Switch(label="Transpilar")
 
     def ejecutar_handler(e):
-        if activar.value and selector.value in TRANSPILERS:
-            salida.value = _transpilar_codigo(entrada.value, selector.value)
-        else:
-            salida.value = _ejecutar_codigo(entrada.value)
-        page.update()
+        codigo = _normalizar_codigo(entrada.value)
+        try:
+            if activar.value and selector.value in TRANSPILERS:
+                salida.value = _transpilar_codigo(codigo, selector.value)
+            else:
+                salida.value = _ejecutar_codigo(codigo)
+        except (LexerError, ParserError) as exc:
+            salida.value = _formatear_error(exc)
+        except Exception as exc:
+            salida.value = _formatear_error(exc)
+        finally:
+            page.update()
 
     def tokens_handler(e):
-        salida.value = _mostrar_tokens(entrada.value)
-        page.update()
+        codigo = _normalizar_codigo(entrada.value)
+        try:
+            salida.value = _mostrar_tokens(codigo)
+        except (LexerError, ParserError) as exc:
+            salida.value = _formatear_error(exc)
+        except Exception as exc:
+            salida.value = _formatear_error(exc)
+        finally:
+            page.update()
 
     def ast_handler(e):
-        salida.value = _mostrar_ast(entrada.value)
-        page.update()
+        codigo = _normalizar_codigo(entrada.value)
+        try:
+            salida.value = _mostrar_ast(codigo)
+        except (LexerError, ParserError) as exc:
+            salida.value = _formatear_error(exc)
+        except Exception as exc:
+            salida.value = _formatear_error(exc)
+        finally:
+            page.update()
 
     page.add(
         entrada,
