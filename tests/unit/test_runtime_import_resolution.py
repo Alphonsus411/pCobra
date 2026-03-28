@@ -1,0 +1,91 @@
+from types import ModuleType
+
+import cobra.cli.commands.execute_cmd as execute_cmd
+import pcobra.jupyter_kernel as jupyter_kernel
+
+
+def _sandbox_mod() -> ModuleType:
+    module = ModuleType("pcobra.core.sandbox")
+    module.ejecutar_en_sandbox = lambda *_a, **_k: None
+    module.ejecutar_en_contenedor = lambda *_a, **_k: None
+    module.SecurityError = RuntimeError
+    module.validar_dependencias = lambda *_a, **_k: None
+    return module
+
+
+def test_execute_cmd_prioriza_sandbox_canonico(monkeypatch):
+    calls: list[str] = []
+    canonical = _sandbox_mod()
+
+    def fake_import(name: str):
+        calls.append(name)
+        if name == "pcobra.core.sandbox":
+            return canonical
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
+    resolved = execute_cmd._importar_modulo_sandbox()
+
+    assert resolved is canonical
+    assert calls == ["pcobra.core.sandbox"]
+
+
+def test_execute_cmd_hace_fallback_legacy_si_falta_canonico(monkeypatch):
+    calls: list[str] = []
+    legacy = _sandbox_mod()
+    legacy.__name__ = "core.sandbox"
+
+    def fake_import(name: str):
+        calls.append(name)
+        if name == "pcobra.core.sandbox":
+            raise ModuleNotFoundError(name)
+        if name == "core.sandbox":
+            return legacy
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(execute_cmd.importlib, "import_module", fake_import)
+    resolved = execute_cmd._importar_modulo_sandbox()
+
+    assert resolved is legacy
+    assert calls == ["pcobra.core.sandbox", "core.sandbox"]
+
+
+def test_kernel_resuelve_dependencias_con_namespace_canonico(monkeypatch):
+    calls: list[str] = []
+    core_mod = ModuleType("pcobra.cobra.core")
+    core_mod.Lexer = object
+    core_mod.Parser = object
+    core_utils = ModuleType("pcobra.cobra.core.utils")
+    core_utils.PALABRAS_RESERVADAS = ["imprimir"]
+    interpreter = ModuleType("pcobra.core.interpreter")
+    interpreter.InterpretadorCobra = object
+    qualia = ModuleType("pcobra.core.qualia_bridge")
+    qualia.get_suggestions = lambda: ["uno"]
+    sandbox = _sandbox_mod()
+
+    modules = {
+        "pcobra.cobra.core": core_mod,
+        "pcobra.cobra.core.utils": core_utils,
+        "pcobra.core.interpreter": interpreter,
+        "pcobra.core.qualia_bridge": qualia,
+        "pcobra.core.sandbox": sandbox,
+    }
+
+    def fake_import(name: str):
+        calls.append(name)
+        if name in modules:
+            return modules[name]
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(jupyter_kernel.importlib, "import_module", fake_import)
+    deps = jupyter_kernel._resolver_dependencias_kernel()
+
+    assert deps["Lexer"] is object
+    assert deps["sandbox"] is sandbox
+    assert calls == [
+        "pcobra.cobra.core",
+        "pcobra.cobra.core.utils",
+        "pcobra.core.interpreter",
+        "pcobra.core.qualia_bridge",
+        "pcobra.core.sandbox",
+    ]

@@ -4,13 +4,73 @@ import sys
 import io
 import os
 import contextlib
+import importlib
 from importlib.metadata import PackageNotFoundError, version
 from ipykernel.kernelbase import Kernel
-from cobra.core import Lexer, Parser
-from cobra.core.utils import PALABRAS_RESERVADAS
-from core.interpreter import InterpretadorCobra
-from core.qualia_bridge import get_suggestions
-import core.sandbox as sandbox
+
+
+def _importar_modulo_runtime(
+    canonical: str,
+    *,
+    legacy: str | None = None,
+    atributos_requeridos: tuple[str, ...] = (),
+):
+    """Importa un módulo runtime priorizando namespace canónico y valida atributos."""
+
+    try:
+        modulo = importlib.import_module(canonical)
+    except ModuleNotFoundError as canon_exc:
+        if legacy is None:
+            raise
+        try:
+            modulo = importlib.import_module(legacy)
+        except ModuleNotFoundError:
+            raise canon_exc
+
+    faltantes = [attr for attr in atributos_requeridos if not hasattr(modulo, attr)]
+    if faltantes:
+        raise ImportError(
+            f"El módulo '{modulo.__name__}' no expone atributos requeridos: {', '.join(faltantes)}"
+        )
+    return modulo
+
+
+def _resolver_dependencias_kernel() -> dict[str, object]:
+    """Resuelve dependencias del kernel con prioridad en imports canónicos."""
+
+    core_mod = _importar_modulo_runtime(
+        "pcobra.cobra.core",
+        legacy="cobra.core",
+        atributos_requeridos=("Lexer", "Parser"),
+    )
+    core_utils_mod = _importar_modulo_runtime(
+        "pcobra.cobra.core.utils",
+        legacy="cobra.core.utils",
+        atributos_requeridos=("PALABRAS_RESERVADAS",),
+    )
+    interpreter_mod = _importar_modulo_runtime(
+        "pcobra.core.interpreter",
+        legacy="core.interpreter",
+        atributos_requeridos=("InterpretadorCobra",),
+    )
+    qualia_mod = _importar_modulo_runtime(
+        "pcobra.core.qualia_bridge",
+        legacy="core.qualia_bridge",
+        atributos_requeridos=("get_suggestions",),
+    )
+    sandbox_mod = _importar_modulo_runtime(
+        "pcobra.core.sandbox",
+        legacy="core.sandbox",
+        atributos_requeridos=("ejecutar_en_sandbox",),
+    )
+    return {
+        "Lexer": core_mod.Lexer,
+        "Parser": core_mod.Parser,
+        "PALABRAS_RESERVADAS": core_utils_mod.PALABRAS_RESERVADAS,
+        "InterpretadorCobra": interpreter_mod.InterpretadorCobra,
+        "get_suggestions": qualia_mod.get_suggestions,
+        "sandbox": sandbox_mod,
+    }
 
 
 def _get_version() -> str:
@@ -45,7 +105,13 @@ class CobraKernel(Kernel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.interpreter = InterpretadorCobra()
+        deps = _resolver_dependencias_kernel()
+        self._lexer_cls = deps["Lexer"]
+        self._parser_cls = deps["Parser"]
+        self._palabras_reservadas = deps["PALABRAS_RESERVADAS"]
+        self._get_suggestions = deps["get_suggestions"]
+        self._sandbox = deps["sandbox"]
+        self.interpreter = deps["InterpretadorCobra"]()
         if not hasattr(self, "execution_count"):
             self.execution_count = 0
         self.use_python = os.getenv("COBRA_JUPYTER_PYTHON", "").lower() in {
@@ -59,7 +125,7 @@ class CobraKernel(Kernel):
         self, code, silent, store_history=True, user_expressions=None, allow_stdin=False
     ):
         if code.strip() == "%sugerencias":
-            texto = "\n".join(get_suggestions())
+            texto = "\n".join(self._get_suggestions())
             if not silent:
                 self.send_response(
                     self.iopub_socket, "stream", {"name": "stdout", "text": texto}
@@ -74,8 +140,8 @@ class CobraKernel(Kernel):
         stdout = io.StringIO()
         try:
             with contextlib.redirect_stdout(stdout):
-                tokens = Lexer(code).tokenizar()
-                ast = Parser(tokens).parsear()
+                tokens = self._lexer_cls(code).tokenizar()
+                ast = self._parser_cls(tokens).parsear()
                 python_error: Exception | None = None
                 if self.use_python:
                     try:
@@ -100,7 +166,7 @@ class CobraKernel(Kernel):
                             )
                             self._warned_python = True
                         try:
-                            output = sandbox.ejecutar_en_sandbox(
+                            output = self._sandbox.ejecutar_en_sandbox(
                                 py_code, timeout=5, memoria_mb=64
                             )
                             error = ""
@@ -141,7 +207,7 @@ class CobraKernel(Kernel):
                     error = ""
                     if python_error is not None and not output and result is None:
                         try:
-                            output = sandbox.ejecutar_en_sandbox(
+                            output = self._sandbox.ejecutar_en_sandbox(
                                 "# Python fallback deshabilitado",
                                 timeout=5,
                                 memoria_mb=64,
@@ -189,7 +255,7 @@ class CobraKernel(Kernel):
 
     def do_complete(self, code, cursor_pos):
         prefix = code[:cursor_pos].split()[-1]
-        matches = [w for w in PALABRAS_RESERVADAS if w.startswith(prefix)]
+        matches = [w for w in self._palabras_reservadas if w.startswith(prefix)]
         matches += [
             n
             for n in self.interpreter.variables.keys()

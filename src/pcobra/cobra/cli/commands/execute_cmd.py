@@ -23,19 +23,57 @@ from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
-try:  # pragma: no cover - compatibilidad con alias legacy
-    from core import sandbox as sandbox_module
-except ModuleNotFoundError:  # pragma: no cover
-    from pcobra.core import sandbox as sandbox_module
-
-ejecutar_en_sandbox = sandbox_module.ejecutar_en_sandbox
-ejecutar_en_contenedor = sandbox_module.ejecutar_en_contenedor
-SecurityError = sandbox_module.SecurityError
-validar_dependencias = sandbox_module.validar_dependencias
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.core.resource_limits import limitar_cpu_segundos
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
+
+
+def _importar_modulo_sandbox() -> Any:
+    """Resuelve sandbox runtime priorizando namespace canónico."""
+
+    try:
+        module = importlib.import_module("pcobra.core.sandbox")
+    except ModuleNotFoundError as canon_exc:  # pragma: no cover - fallback legacy
+        try:
+            module = importlib.import_module("core.sandbox")
+        except ModuleNotFoundError:
+            raise canon_exc
+
+    required = (
+        "ejecutar_en_sandbox",
+        "ejecutar_en_contenedor",
+        "SecurityError",
+        "validar_dependencias",
+    )
+    missing = [name for name in required if not hasattr(module, name)]
+    if missing:
+        raise ImportError(
+            f"El módulo '{module.__name__}' no define: {', '.join(missing)}"
+        )
+    return module
+
+
+class _SandboxModuleProxy:
+    """Proxy para compatibilidad legacy sin import implícito en carga de módulo."""
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(_importar_modulo_sandbox(), name)
+
+
+sandbox_module = _SandboxModuleProxy()
+
+
+def ejecutar_en_sandbox(*args: Any, **kwargs: Any) -> Any:
+    return sandbox_module.ejecutar_en_sandbox(*args, **kwargs)
+
+
+def ejecutar_en_contenedor(*args: Any, **kwargs: Any) -> Any:
+    return sandbox_module.ejecutar_en_contenedor(*args, **kwargs)
+
+
+def validar_dependencias(*args: Any, **kwargs: Any) -> Any:
+    return sandbox_module.validar_dependencias(*args, **kwargs)
 
 
 def _obtener_interpretador_cls():
@@ -145,7 +183,7 @@ class ExecuteCommand(BaseCommand):
         contenedor = getattr(args, "contenedor", None)
 
         try:
-            sandbox_module.validar_dependencias("python", module_map.get_toml_map())
+            validar_dependencias("python", module_map.get_toml_map())
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
