@@ -1,10 +1,10 @@
-from argparse import ArgumentParser
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error
+
 
 class FletCommand(BaseCommand):
     """Inicia el entorno IDLE basado en Flet."""
@@ -24,6 +24,12 @@ class FletCommand(BaseCommand):
             El parser configurado para este subcomando
         """
         parser = subparsers.add_parser(self.name, help=_("Inicia la interfaz gráfica"))
+        parser.add_argument(
+            "--ui",
+            choices=("idle", "app"),
+            default="idle",
+            help=_("Selecciona la UI a iniciar: 'idle' (por defecto) o 'app'."),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -37,16 +43,36 @@ class FletCommand(BaseCommand):
             int: 0 si la ejecución fue exitosa, 1 en caso de error
             
         Raises:
-            ModuleNotFoundError: Si flet o gui.idle no están instalados
+            ModuleNotFoundError: Si Flet no está instalado o falta un módulo GUI
         """
         try:
             import flet
-            from gui.idle import main
+        except ModuleNotFoundError:
+            mostrar_error(_("Falta la dependencia 'flet'. Ejecuta: pip install flet."))
+            return 1
+
+        ui_target = getattr(args, "ui", "idle")
+        gui_module = "pcobra.gui.idle" if ui_target == "idle" else "pcobra.gui.app"
+
+        try:
+            if ui_target == "idle":
+                from pcobra.gui.idle import main
+            else:
+                from pcobra.gui.app import main
         except ModuleNotFoundError as e:
-            mostrar_error(_("Error: {0}. Ejecuta 'pip install flet'.").format(str(e)))
+            if e.name == "flet":
+                mostrar_error(_("Falta la dependencia 'flet'. Ejecuta: pip install flet."))
+            else:
+                mostrar_error(
+                    _(
+                        "Error interno al importar la GUI ({0}): {1}"
+                    ).format(gui_module, str(e))
+                )
             return 1
         except ImportError as e:
-            mostrar_error(_("Error al importar módulos: {0}").format(str(e)))
+            mostrar_error(
+                _("Error interno de importación en la GUI ({0}): {1}").format(gui_module, str(e))
+            )
             return 1
         
         try:
