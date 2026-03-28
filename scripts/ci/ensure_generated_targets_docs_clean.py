@@ -27,15 +27,28 @@ def _run(command: tuple[str, ...]) -> None:
 
 
 def _diff_has_changes() -> bool:
-    result = subprocess.run(
+    tracked_result = subprocess.run(
         ("git", "diff", "--quiet", "--", *WATCHED_PATHS),
         check=False,
     )
-    return result.returncode != 0
+    if tracked_result.returncode != 0:
+        return True
+
+    untracked_result = subprocess.run(
+        ("git", "status", "--porcelain", "--untracked-files=all", "--", *WATCHED_PATHS),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return bool(untracked_result.stdout.strip())
 
 
 def _print_diff() -> None:
     subprocess.run(("git", "--no-pager", "diff", "--", *WATCHED_PATHS), check=False)
+    subprocess.run(
+        ("git", "status", "--short", "--untracked-files=all", "--", *WATCHED_PATHS),
+        check=False,
+    )
 
 
 def main() -> int:
