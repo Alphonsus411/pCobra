@@ -40,6 +40,14 @@ La política operativa de runtime, Holobit y SDK se deriva de `src/pcobra/cobra/
 
 En CLI, documentación, ejemplos, tablas y configuración pública **solo** se aceptan esos 8 nombres canónicos.
 
+## Declaraciones explícitas del contrato vigente
+
+Para evitar ambigüedades editoriales y de implementación, esta política fija de forma explícita que:
+
+1. El set oficial de backends de salida es **exactamente 8** y coincide 1:1 con `OFFICIAL_TARGETS`.
+2. La compatibilidad SDK **completa** existe únicamente para `python`.
+3. El resto de backends oficiales (`rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`) mantiene únicamente compatibilidad **parcial contractual** según la matriz de compatibilidad.
+
 ## Gobernanza de cambios de targets
 
 La lista canónica de 8 targets (`TIER1_TARGETS`, `TIER2_TARGETS`, `OFFICIAL_TARGETS`) está congelada por contrato operativo.
