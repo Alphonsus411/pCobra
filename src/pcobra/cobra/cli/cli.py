@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import secrets
 import sys
 from enum import Enum
 from os import environ
@@ -53,7 +54,7 @@ CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
 SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
 COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
-CLI_DEV_DB_KEY = "cli-dev-key"
+COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 DB_REQUIRED_COMMAND_NAMES = frozenset({
     "cache",
     "compilar",
@@ -178,17 +179,24 @@ class CliApplication:
             return command.name in DB_REQUIRED_COMMAND_NAMES
         return False
 
-    def _ensure_sqlite_db_key(self) -> None:
+    def _is_enabled_env_flag(self, env_name: str) -> bool:
+        return environ.get(env_name, "").strip() == "1"
+
+    def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
         sqlite_db_key = (environ.get(SQLITE_DB_KEY_ENV) or "").strip()
         if sqlite_db_key:
             return
 
-        dev_mode_enabled = environ.get(COBRA_DEV_MODE_ENV, "").strip() == "1"
-        if dev_mode_enabled:
-            environ[SQLITE_DB_KEY_ENV] = CLI_DEV_DB_KEY
+        dev_mode_enabled = self._is_enabled_env_flag(COBRA_DEV_MODE_ENV)
+        dev_ephemeral_env_confirmation = self._is_enabled_env_flag(COBRA_DEV_EPHEMERAL_CONFIRM_ENV)
+        dev_ephemeral_cli_confirmation = bool(getattr(args, "dev_ephemeral_key", False))
+
+        if dev_mode_enabled and dev_ephemeral_env_confirmation and dev_ephemeral_cli_confirmation:
+            environ[SQLITE_DB_KEY_ENV] = secrets.token_urlsafe(32)
             logging.getLogger(__name__).warning(
-                "Modo desarrollo habilitado (%s=1): usando clave temporal para %s.",
+                "Modo desarrollo confirmado (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
                 COBRA_DEV_MODE_ENV,
+                COBRA_DEV_EPHEMERAL_CONFIRM_ENV,
                 SQLITE_DB_KEY_ENV,
             )
             return
@@ -197,7 +205,9 @@ class CliApplication:
             "Falta la variable de entorno 'SQLITE_DB_KEY'. "
             "Configúrala antes de iniciar la CLI (ejemplo: "
             "export SQLITE_DB_KEY='clave-segura'). Para pruebas locales "
-            "controladas puedes usar COBRA_DEV_MODE=1."
+            "controladas puedes habilitar una clave efímera solo si confirmas "
+            f"explícitamente {COBRA_DEV_MODE_ENV}=1, "
+            f"{COBRA_DEV_EPHEMERAL_CONFIRM_ENV}=1 y el flag --dev-ephemeral-key."
         )
 
     def _setup_logging(self) -> None:
@@ -246,6 +256,15 @@ class CliApplication:
             "--legacy-imports",
             action="store_true",
             help=_("Habilita temporalmente imports legacy (cobra/core). Migre a pcobra.*"),
+        )
+        parser.add_argument(
+            "--dev-ephemeral-key",
+            action="store_true",
+            help=_(
+                "Confirma explícitamente (solo desarrollo local) el uso de una "
+                "clave efímera para SQLITE_DB_KEY. Requiere COBRA_DEV_MODE=1 y "
+                "COBRA_DEV_ALLOW_EPHEMERAL_KEY=1."
+            ),
         )
 
     def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
@@ -420,7 +439,7 @@ class CliApplication:
             try:
                 args = self._parse_arguments(argv)
                 if self._command_requires_sqlite_db_key(args):
-                    self._ensure_sqlite_db_key()
+                    self._ensure_sqlite_db_key(args)
                 log_level = logging.DEBUG if args.verbose > 0 or args.debug else logging.INFO
                 logging.getLogger().setLevel(log_level)
                 setup_gettext(args.lang)
