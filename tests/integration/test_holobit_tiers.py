@@ -83,6 +83,16 @@ HOOK_MARKERS = {
     "java": ("private static CobraHolobit cobra_holobit", "private static double[] cobra_proyectar", "private static CobraHolobit cobra_transformar", "private static String cobra_graficar"),
     "asm": ("cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:"),
 }
+CONTRACTUAL_ERROR_MARKERS = {
+    "python": ("Runtime Holobit Python:", "holobit_sdk"),
+    "javascript": ("Runtime Holobit JavaScript:", "contrato partial", "holobit_sdk"),
+    "rust": ("Runtime Holobit Rust:", "contrato partial", "holobit_sdk"),
+    "wasm": ("Runtime Holobit Wasm:", "contrato partial", "host-managed"),
+    "go": ("Runtime Holobit Go:", "contrato partial", "holobit_sdk"),
+    "cpp": ("Runtime Holobit C++:", "contrato partial", "holobit_sdk"),
+    "java": ("Runtime Holobit Java:", "contrato partial", "holobit_sdk"),
+    "asm": ("contrato partial", "sin holobit_sdk", "TRAP"),
+}
 
 
 def _transpilar(codigo: str, lang: str) -> str:
@@ -139,6 +149,13 @@ def test_runtime_import_smoke_por_backend(backend, runtime_feature):
 def test_runtime_hooks_cobra_smoke_por_backend(backend):
     salida = _transpilar(HOLOBIT_CASES["graficar"], backend)
     for marker in HOOK_MARKERS[backend]:
+        assert marker in salida
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_runtime_hooks_incluyen_mensajes_contractuales_por_backend(backend):
+    salida = _transpilar(HOLOBIT_CASES["transformar"], backend)
+    for marker in CONTRACTUAL_ERROR_MARKERS[backend]:
         assert marker in salida
 
 
