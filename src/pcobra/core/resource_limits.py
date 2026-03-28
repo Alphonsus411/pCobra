@@ -4,6 +4,7 @@ Todos los comandos deben emplear estas funciones en lugar de
 implementaciones manuales para gestionar los límites de recursos."""
 from __future__ import annotations
 
+import importlib
 import logging
 import os
 import sys
@@ -12,6 +13,22 @@ from pcobra.core.cli.i18n import _
 
 logger = logging.getLogger(__name__)
 IS_WINDOWS = os.name == "nt" or sys.platform.startswith("win")
+
+PSUTIL_FALLBACK_ENV = "PCOBRA_ALLOW_PSUTIL_FALLBACK"
+
+
+def _cargar_psutil():
+    """Carga ``psutil`` de forma controlada para minimizar superficie de ataque."""
+
+    modulo = sys.modules.get("psutil")
+    if modulo is not None:
+        return modulo
+
+    # Por seguridad, evitamos importar dinámicamente psutil salvo opt-in explícito.
+    if os.environ.get(PSUTIL_FALLBACK_ENV) != "1":
+        raise ImportError("dynamic psutil import disabled")
+
+    return importlib.import_module("psutil")
 
 
 def limitar_memoria_mb(mb: int) -> None:
@@ -52,7 +69,7 @@ def limitar_memoria_mb(mb: int) -> None:
 
 def _limitar_memoria_psutil(bytes_: int) -> bool:
     try:
-        import psutil  # type: ignore
+        psutil = _cargar_psutil()  # type: ignore
     except ImportError as exc:
         mensaje = _("El módulo 'psutil' no está disponible para limitar la memoria.")
         if IS_WINDOWS:
@@ -125,7 +142,7 @@ def limitar_cpu_segundos(segundos: int) -> None:
 
 def _limitar_cpu_psutil(segundos: int) -> bool:
     try:
-        import psutil  # type: ignore
+        psutil = _cargar_psutil()  # type: ignore
     except ImportError as exc:
         mensaje = _("El módulo 'psutil' no está disponible para limitar la CPU.")
         if IS_WINDOWS:
