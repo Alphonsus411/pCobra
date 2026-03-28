@@ -26,6 +26,7 @@ La unión de ambos tiers es el set oficial de salida de 8 backends.
 - **SDK full:** solo `python`.
 
 Ninguna categoría fuera de `python` puede documentarse como compatibilidad SDK completa.
+En particular, **javascript figura como `partial`** en el contrato vigente.
 
 ## Fuente canónica
 

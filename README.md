@@ -49,6 +49,32 @@ Además, el proyecto separa explícitamente **targets oficiales de salida** de *
 
 La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` se mantienen en `partial`. Eso significa que la **paridad SDK total** solo puede prometerse para `python`. `javascript`, `rust` y `cpp` sí cuentan con runtime oficial verificable y adaptadores mantenidos por el proyecto, pero siguen siendo `partial` en Holobit/SDK. `go` y `java` se mantienen como runtimes best-effort; `wasm` y `asm` como salidas oficiales solo de transpilación. Ninguna de esas categorías debe venderse como runtime oficial verificable ni como compatibilidad SDK equivalente.
 
+### Política de soporte por tiers (SLA y gobernanza)
+
+Definición operativa oficial:
+
+- **Tier 1** (`python`, `rust`, `javascript`, `wasm`): prioridad alta de corrección para regresiones de transpilación y coherencia documental.
+- **Tier 2** (`go`, `cpp`, `java`, `asm`): soporte contractual mantenido con prioridad secundaria frente a Tier 1.
+
+SLA de mantenimiento documental/técnico:
+
+- **Tier 1**: incidencias de regresión de transpilación o desalineación de política deben tener triage inicial en **<= 2 días hábiles** y propuesta de remediación en la siguiente ventana activa de mantenimiento.
+- **Tier 2**: incidencias equivalentes deben tener triage inicial en **<= 5 días hábiles** y corrección según planificación de release o ventana de mantenimiento no crítica.
+
+Criterios de **promoción** de Tier 2 → Tier 1 (todos requeridos durante al menos dos releases consecutivas):
+
+1. Señal estable de uso real.
+2. Cobertura CI sostenida en PR y/o gates equivalentes de calidad.
+3. Runtime/documentación sin desviaciones contractuales frente a la matriz pública.
+
+Criterios de **degradación** de Tier 1 → Tier 2:
+
+1. Incumplimiento sostenido de cobertura CI o calidad operativa.
+2. Dependencias externas no mantenibles en la ventana de releases.
+3. Brecha contractual repetida entre documentación, CLI y comportamiento real.
+
+Cualquier cambio de tier requiere RFC, plan de migración y comunicación explícita en changelog/notas de release.
+
 ### Prerrequisitos por backend de ejecución/runtime
 
 Además del estado `full/partial`, cada backend depende de toolchains o runtime externos que deben existir en el host:
@@ -56,7 +82,7 @@ Además del estado `full/partial`, cada backend depende de toolchains o runtime 
 - `python` (`full`): entorno Python `>=3.10` con dependencias del proyecto; `holobit_sdk` es obligatorio para el contrato Holobit completo.
 - `javascript` (`partial`): `node` y dependencias del runtime JavaScript del proyecto (`vm2`/`node-fetch` cuando aplique en el host).
 - `rust` (`partial`): toolchain Rust (`rustc`/`cargo`) para compilación/ejecución fuera de transpilación.
-- `cpp` (`partial`): compilador C++ (`g++`/`clang++`) y toolchain nativa del sistema.
+- `cpp` (`partial`): compilador `cpp` (`gpp`/`clangpp`) y toolchain nativa del sistema.
 - `go` (`partial`, best-effort): toolchain Go instalada en el host.
 - `java` (`partial`, best-effort): JDK/JRE en el host.
 - `wasm` (`partial`, solo transpilación): host WASM con imports `pcobra:*` para `corelibs`, `standard_library` y Holobit; el módulo generado no embebe ese runtime.
@@ -65,6 +91,23 @@ Además del estado `full/partial`, cada backend depende de toolchains o runtime 
 Sin estos prerrequisitos, pCobra puede conservar generación de código, pero no promete ejecución equivalente al runtime oficial de Python.
 
 **Nota explícita de política:** **los backends retirados no forman parte del árbol operativo**.
+
+Guía de migración para consumidores de targets retirados: `docs/migracion_targets_retirados.md`.
+
+### Compatibilidad explícita por target (Holobit SDK + librerías)
+
+| Target | Tier | Holobit SDK | `holobit`/`proyectar`/`transformar`/`graficar` | `corelibs` | `standard_library` |
+|---|---|---|---|---|---|
+| `python` | Tier 1 | ✅ `full` (requiere `holobit-sdk`) | ✅ `full` | ✅ `full` | ✅ `full` |
+| `rust` | Tier 1 | 🟡 `partial` (sin dependencia de SDK Python) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+| `javascript` | Tier 1 | 🟡 `partial` (sin dependencia de SDK Python) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+| `wasm` | Tier 1 | 🟡 `partial` vía host (`pcobra:*`) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+| `go` | Tier 2 | 🟡 `partial` best-effort | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+| `cpp` | Tier 2 | 🟡 `partial` con adaptador mantenido | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+| `java` | Tier 2 | 🟡 `partial` best-effort | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+| `asm` | Tier 2 | 🟡 `partial` de inspección/diagnóstico | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+
+Fuente normativa de detalle: `docs/contrato_runtime_holobit.md` y `docs/matriz_transpiladores.md`.
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.
 

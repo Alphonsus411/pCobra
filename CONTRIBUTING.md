@@ -136,6 +136,11 @@ El conjunto oficial actual de backends públicos es:
 - `java`
 - `asm`
 
+Lista oficial por tiers:
+
+- **Tier 1**: `python`, `rust`, `javascript`, `wasm`.
+- **Tier 2**: `go`, `cpp`, `java`, `asm`.
+
 Y el alcance reverse oficial actual es:
 
 - `python`
@@ -165,6 +170,20 @@ un módulo nuevo. El cambio debe actualizar de forma coordinada:
 
 Si falta cualquiera de esas piezas, la validación debe fallar y el cambio no debe
 considerarse completo.
+
+### Política de soporte por tiers (SLA)
+
+Definición operativa para incidencias de regresión (transpilación, ayuda CLI o documentación de targets):
+
+- **Tier 1**: triage inicial en <= 2 días hábiles.
+- **Tier 2**: triage inicial en <= 5 días hábiles.
+
+Criterios de promoción/degradación:
+
+- **Promoción (Tier 2 → Tier 1)**: uso sostenido, estabilidad contractual y cobertura CI mantenida durante al menos dos releases consecutivas.
+- **Degradación (Tier 1 → Tier 2)**: incumplimiento sostenido de calidad/CI, bloqueo de dependencias o desviación contractual repetida.
+
+En ambos casos, el cambio exige RFC aprobada, plan de migración y comunicación en changelog/notas de release.
 
 ### Checklist corta: si tocas targets, regenera docs + valida CI de targets
 
