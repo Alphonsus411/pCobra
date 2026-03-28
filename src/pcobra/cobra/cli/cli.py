@@ -305,21 +305,49 @@ class CliApplication:
         print(format_traceback(exc, language))
         return 1
 
+    def _leer_input_seguro(self, prompt: str) -> Optional[str]:
+        try:
+            return input(prompt)
+        except EOFError:
+            messages.mostrar_info(_("Entrada finalizada (EOF). Cancelando menú interactivo."))
+            return None
+        except KeyboardInterrupt:
+            messages.mostrar_info(_("\nInterrupción detectada. Cancelando menú interactivo."))
+            return None
+
     def run_menu(self) -> int:
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
+        if not sys.stdin.isatty():
+            messages.mostrar_error(
+                _("El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."),
+            )
+            return 1
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
         print(_("Lenguajes de origen disponibles:"))
         print(", ".join(ORIGIN_CHOICES))
 
-        if not input(_("¿Desea transpilar? (s/n): ")).strip().lower().startswith("s"):
+        desea_transpilar = self._leer_input_seguro(_("¿Desea transpilar? (s/n): "))
+        if desea_transpilar is None:
+            return 0
+        if not desea_transpilar.strip().lower().startswith("s"):
             return 0
 
-        if input(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): ")).strip().lower().startswith("s"):
-            archivo = input(_("Ruta al archivo Cobra: ")).strip()
-            destino = input(_("Lenguaje destino: ")).strip().lower()
+        transpilar_desde_cobra = self._leer_input_seguro(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): "))
+        if transpilar_desde_cobra is None:
+            return 0
+
+        if transpilar_desde_cobra.strip().lower().startswith("s"):
+            archivo = self._leer_input_seguro(_("Ruta al archivo Cobra: "))
+            if archivo is None:
+                return 0
+            destino = self._leer_input_seguro(_("Lenguaje destino: "))
+            if destino is None:
+                return 0
+            archivo = archivo.strip()
+            destino = destino.strip().lower()
             args = argparse.Namespace(archivo=archivo, tipo=destino, backend=None, tipos=None)
             compile_cmd = self.command_registry.commands.get("compilar")
             if not compile_cmd:
@@ -327,9 +355,18 @@ class CliApplication:
                 return 1
             return compile_cmd.run(args)
         else:
-            archivo = input(_("Ruta al archivo origen: ")).strip()
-            origen = input(_("Lenguaje origen: ")).strip().lower()
-            destino = input(_("Lenguaje destino: ")).strip().lower()
+            archivo = self._leer_input_seguro(_("Ruta al archivo origen: "))
+            if archivo is None:
+                return 0
+            origen = self._leer_input_seguro(_("Lenguaje origen: "))
+            if origen is None:
+                return 0
+            destino = self._leer_input_seguro(_("Lenguaje destino: "))
+            if destino is None:
+                return 0
+            archivo = archivo.strip()
+            origen = origen.strip().lower()
+            destino = destino.strip().lower()
             inv_cmd = self.command_registry.commands.get("transpilar-inverso")
             if not inv_cmd:
                 messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"))
