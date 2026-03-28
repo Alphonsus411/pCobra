@@ -166,7 +166,7 @@ un módulo nuevo. El cambio debe actualizar de forma coordinada:
 Si falta cualquiera de esas piezas, la validación debe fallar y el cambio no debe
 considerarse completo.
 
-### Checklist rápida si tocas targets
+### Checklist corta: si tocas targets, regenera docs + valida CI de targets
 
 - [ ] Ejecuté `python scripts/generate_target_policy_docs.py`.
 - [ ] Ejecuté `python scripts/generar_matriz_transpiladores.py`.
