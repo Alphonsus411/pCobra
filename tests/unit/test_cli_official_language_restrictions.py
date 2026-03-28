@@ -19,6 +19,7 @@ from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 INVALID_LANGUAGES = ("backend_x", "backend_y", "backend_z")
+EXPECTED_CANONICAL_TARGETS = ("python", "rust", "javascript", "wasm", "go", "cpp", "java", "asm")
 
 
 def _build_parser_for(command):
@@ -94,6 +95,7 @@ def test_verify_rechaza_lenguajes_fuera_del_runtime_soportado(language):
 
 
 def test_set_oficial_documentado_en_tests_deriva_del_registro_canonico():
+    assert OFFICIAL_TARGETS == EXPECTED_CANONICAL_TARGETS
     assert OFFICIAL_TARGETS == official_transpiler_targets()
     assert tuple(LANG_CHOICES) == official_transpiler_targets()
 
@@ -123,12 +125,13 @@ def test_compile_choices_siguen_alineados_con_targets_oficiales():
     backend_action = next(action for action in compilar_parser._actions if action.dest == "backend")
     tipo_action = next(action for action in compilar_parser._actions if action.dest == "tipo")
 
-    assert tuple(LANG_CHOICES) == OFFICIAL_TARGETS
-    assert tuple(backend_action.choices) == OFFICIAL_TARGETS
-    assert tuple(tipo_action.choices) == OFFICIAL_TARGETS
+    assert tuple(LANG_CHOICES) == EXPECTED_CANONICAL_TARGETS
+    assert tuple(backend_action.choices) == EXPECTED_CANONICAL_TARGETS
+    assert tuple(tipo_action.choices) == EXPECTED_CANONICAL_TARGETS
 
 
 def test_tests_documentan_las_tres_categorias_publicas_de_targets():
+    assert OFFICIAL_TARGETS == EXPECTED_CANONICAL_TARGETS
     assert OFFICIAL_TARGETS == official_transpiler_targets()
     assert OFFICIAL_RUNTIME_TARGETS == ("python", "rust", "javascript", "cpp")
     assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")

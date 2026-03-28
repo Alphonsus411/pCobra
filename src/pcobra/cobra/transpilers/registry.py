@@ -26,20 +26,33 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 def _validate_registry_contract() -> tuple[str, ...]:
     """Valida que el registro declare exactamente los 8 targets oficiales."""
     configured_keys = tuple(TRANSPILER_CLASS_PATHS)
-    extras = tuple(key for key in configured_keys if key not in OFFICIAL_TARGETS)
-    if extras:
+    missing = tuple(target for target in OFFICIAL_TARGETS if target not in configured_keys)
+    extras = tuple(target for target in configured_keys if target not in OFFICIAL_TARGETS)
+
+    if missing or extras:
         raise RuntimeError(
-            "TRANSPILER_CLASS_PATHS solo puede declarar los 8 targets canónicos "
-            f"{OFFICIAL_TARGETS}. Se detectaron claves fuera de contrato: {extras}."
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe usar exactamente los 8 targets canónicos. "
+            f"missing={missing or '∅'}; extras={extras or '∅'}; "
+            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
         )
 
-    try:
-        return require_exact_official_targets(
-            TRANSPILER_CLASS_PATHS,
-            context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+    if len(configured_keys) != len(OFFICIAL_TARGETS):
+        raise RuntimeError(
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene cardinalidad inválida. "
+            f"len(current)={len(configured_keys)}; len(expected)={len(OFFICIAL_TARGETS)}; "
+            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
         )
-    except RuntimeError:
-        raise
+
+    if configured_keys != OFFICIAL_TARGETS:
+        raise RuntimeError(
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe preservar el orden canónico. "
+            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+        )
+
+    return require_exact_official_targets(
+        TRANSPILER_CLASS_PATHS,
+        context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+    )
 
 
 _ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = _validate_registry_contract()
