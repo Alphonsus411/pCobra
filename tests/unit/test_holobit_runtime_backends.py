@@ -9,6 +9,7 @@ from pcobra.core.ast_nodes import (
     NodoTransformar,
     NodoValor,
 )
+from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.common.utils import get_runtime_hooks, get_standard_imports
 from pcobra.cobra.transpilers.transpiler.to_asm import TranspiladorASM
 from pcobra.cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
@@ -50,6 +51,41 @@ ADAPTER_MARKERS = {
     "cpp": ["inline CobraHolobit cobra_holobit", "contrato partial", "backend sin holobit_sdk", "inline std::size_t longitud(const T& valor) {"],
     "java": ["private static CobraHolobit cobra_holobit", "contrato partial", "backend sin holobit_sdk", "private static int longitud(Object valor) {"],
     "asm": ["backend asm: runtime de inspección/diagnóstico", "contrato partial", "backend de inspección/diagnóstico; la proyección requiere runtime externo."],
+}
+
+FULL_OR_PARTIAL_MARKERS = {
+    "python": {
+        "full": ["ModuleNotFoundError", "holobit_sdk"],
+        "partial": [],
+    },
+    "javascript": {
+        "full": [],
+        "partial": ["Runtime Holobit JavaScript:", "contrato partial", "backend sin holobit_sdk"],
+    },
+    "rust": {
+        "full": [],
+        "partial": ["Runtime Holobit Rust:", "contrato partial", "backend sin holobit_sdk"],
+    },
+    "wasm": {
+        "full": [],
+        "partial": ["Runtime Holobit Wasm:", "host-managed", "contrato partial"],
+    },
+    "go": {
+        "full": [],
+        "partial": ["Runtime Holobit Go:", "contrato partial", "backend sin holobit_sdk"],
+    },
+    "cpp": {
+        "full": [],
+        "partial": ["Runtime Holobit C++:", "contrato partial", "backend sin holobit_sdk"],
+    },
+    "java": {
+        "full": [],
+        "partial": ["Runtime Holobit Java:", "contrato partial", "backend sin holobit_sdk"],
+    },
+    "asm": {
+        "full": [],
+        "partial": ["contrato partial", "inspección/diagnóstico", "TRAP"],
+    },
 }
 
 
@@ -98,4 +134,14 @@ def test_imports_minimos_runtime_por_backend(target, transpilador_cls):
 def test_runtime_holobit_expone_adaptador_o_error_explicito(target, transpilador_cls):
     codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
     for marker in ADAPTER_MARKERS[target]:
+        assert marker in codigo
+
+
+@pytest.mark.parametrize(("target", "transpilador_cls"), BACKENDS)
+@pytest.mark.parametrize("feature", ("holobit", "proyectar", "transformar", "graficar"))
+def test_runtime_holobit_cumple_nivel_full_o_partial_desde_matriz(target, transpilador_cls, feature):
+    codigo = transpilador_cls().generate_code(_programa_holobit_minimo())
+    level = BACKEND_COMPATIBILITY[target][feature]
+    assert level in {"full", "partial"}
+    for marker in FULL_OR_PARTIAL_MARKERS[target][level]:
         assert marker in codigo
