@@ -1,8 +1,8 @@
 import argparse
-
 import pytest
 
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.target_policies import (
@@ -15,6 +15,7 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
+from scripts.targets_policy_common import PUBLIC_TEXT_PATHS, find_public_alias_errors
 
 LEGACY_AMBIGUOUS_ALIASES = (
     ("c++", "cpp"),
@@ -153,6 +154,39 @@ def test_help_y_error_muestran_solo_nombres_canonicos_oficiales():
 
     message = invalid_target_error("desconocido")
     assert ", ".join(EXPECTED_CANONICAL_TARGETS) in message
+
+
+@pytest.mark.parametrize(
+    ("surface_name", "command"),
+    (
+        ("compile", CompileCommand()),
+        ("verify", VerifyCommand()),
+        ("reverse", TranspilarInversoCommand()),
+        ("benchmarks", BenchmarksCommand()),
+    ),
+)
+def test_help_publico_de_comandos_no_reintroduce_aliases_legacy(surface_name, command):
+    parser = _build_parser_with_command(command)
+    help_text = parser.format_help().lower()
+    for alias in REJECTED_ALIASES:
+        assert alias not in help_text, f"{surface_name} help expone alias '{alias}'"
+
+
+def test_docs_publicas_activas_no_exponen_aliases_legacy():
+    monitored = (
+        "README.md",
+        "docs/targets_policy.md",
+        "docs/matriz_transpiladores.md",
+        "docs/frontend/cli.rst",
+    )
+    for path in PUBLIC_TEXT_PATHS:
+        rel = path.relative_to(path.cwd()).as_posix()
+        if rel not in monitored:
+            continue
+        content = path.read_text(encoding="utf-8")
+        assert not find_public_alias_errors(rel, content), (
+            f"{rel} expone aliases legacy en una superficie pública activa"
+        )
 
 
 def test_error_legacy_publico_no_reintroduce_aliases_en_texto():

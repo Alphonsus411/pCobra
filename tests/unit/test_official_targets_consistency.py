@@ -44,8 +44,10 @@ from scripts.ci.validate_targets import (
     EXPECTED_TRANSPILER_MODULES,
     EXPECTED_TRANSPILER_REGISTRY,
     FINAL_OFFICIAL_TARGETS,
+    validate_cli_public_surfaces_no_legacy_aliases,
     validate_final_backend_repo_audit,
     validate_operational_checklist,
+    validate_registry_literal_source,
     validate_public_documentation_alignment,
     validate_python_policy_literals,
     validate_registry_tables,
@@ -139,6 +141,7 @@ def test_reverse_scope_permanece_separado_pero_canonico():
 
 def test_modulos_y_artefactos_vigilados_cubren_solo_el_contrato_final():
     assert not validate_registry_tables()
+    assert not validate_registry_literal_source()
     assert not validate_operational_checklist(tuple(OFFICIAL_TARGETS))
     assert not validate_targeted_artifact_roots(
         tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
@@ -149,6 +152,7 @@ def test_auditoria_textual_y_documental_no_detecta_desalineaciones_publicas():
     assert not validate_scan_roots(
         tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
     )
+    assert not validate_cli_public_surfaces_no_legacy_aliases()
     assert not validate_public_documentation_alignment(
         tuple(OFFICIAL_TARGETS), tuple(REVERSE_SCOPE_LANGUAGES)
     )
