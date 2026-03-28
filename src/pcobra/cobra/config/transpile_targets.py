@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Final, TypedDict
+from typing import Final, Literal, TypedDict
 
 
 class TargetMetadata(TypedDict):
@@ -11,7 +11,8 @@ class TargetMetadata(TypedDict):
     status: str
     release_priority: int
     maintainer: str | None
-    holobit_compatible: bool
+    holobit_contract: Literal["full", "partial", "none"]
+    sdk_contract: Literal["full", "partial", "none"]
 
 
 ALLOWED_TARGETS: Final[tuple[str, ...]] = (
@@ -35,49 +36,57 @@ TARGET_METADATA: Final[dict[str, TargetMetadata]] = {
         "status": "supported",
         "release_priority": 1,
         "maintainer": "core",
-        "holobit_compatible": True,
+        "holobit_contract": "full",
+        "sdk_contract": "full",
     },
     "rust": {
         "status": "supported",
         "release_priority": 2,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
     "javascript": {
         "status": "supported",
         "release_priority": 3,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
     "wasm": {
         "status": "supported",
         "release_priority": 4,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
     "go": {
         "status": "supported",
         "release_priority": 5,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
     "cpp": {
         "status": "supported",
         "release_priority": 6,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
     "java": {
         "status": "supported",
         "release_priority": 7,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
     "asm": {
         "status": "supported",
         "release_priority": 8,
         "maintainer": None,
-        "holobit_compatible": True,
+        "holobit_contract": "partial",
+        "sdk_contract": "partial",
     },
 }
 
@@ -126,8 +135,15 @@ def _validate_target_config() -> None:
             raise RuntimeError(f"Target '{target}' debe declarar release_priority entero")
         if meta["maintainer"] is not None and not isinstance(meta["maintainer"], str):
             raise RuntimeError(f"Target '{target}' debe usar maintainer string o None")
-        if not isinstance(meta["holobit_compatible"], bool):
-            raise RuntimeError(f"Target '{target}' debe declarar holobit_compatible bool")
+        if meta["holobit_contract"] not in {"none", "partial", "full"}:
+            raise RuntimeError(
+                f"Target '{target}' debe declarar holobit_contract en none|partial|full"
+            )
+        if meta["sdk_contract"] not in {"none", "partial", "full"}:
+            raise RuntimeError(
+                f"Target '{target}' debe declarar sdk_contract en none|partial|full"
+            )
+
 
 
 _validate_target_config()

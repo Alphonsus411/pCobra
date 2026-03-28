@@ -4,6 +4,13 @@
 
 ## 1) Integraciones directas detectadas con Holobit SDK
 
+Fuente única de verdad técnica (código):
+
+- `src/pcobra/cobra/transpilers/compatibility_matrix.py`
+  - `SDK_FULL_BACKENDS` / `SDK_PARTIAL_BACKENDS`
+  - `OFFICIAL_RUNTIME_BACKENDS` / `BEST_EFFORT_RUNTIME_BACKENDS` / `TRANSPILATION_ONLY_BACKENDS`
+  - `BACKEND_HOLOBIT_SDK_CAPABILITIES`
+
 ### Wrappers / bindings / adapters
 
 - **Python (`full`)**
@@ -23,6 +30,13 @@
 ### Import hooks
 
 Todos los targets oficiales mantienen hooks canónicos `cobra_*` para Holobit. Esta capacidad es **crítica** para Tier 1 y se bloquea release si baja del mínimo.
+
+### Categorías runtime oficiales (sin inflar compatibilidad)
+
+- **Runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
+- **Runtime best-effort no público**: `go`, `java`.
+- **Solo transpilación**: `wasm`, `asm`.
+- **SDK full**: solo `python` (el resto permanece en `partial` o capacidades puntuales `none` según feature).
 
 ---
 

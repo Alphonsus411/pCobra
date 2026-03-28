@@ -7,8 +7,11 @@ from typing import Literal
 
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
+    BEST_EFFORT_RUNTIME_BACKENDS,
     CONTRACT_FEATURES,
+    OFFICIAL_RUNTIME_BACKENDS,
     SDK_FULL_BACKENDS,
+    TRANSPILATION_ONLY_BACKENDS,
 )
 from pcobra.cobra.transpilers.target_utils import (
     DEPRECATION_WINDOW_REMOVAL_VERSION,
@@ -42,13 +45,13 @@ OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
 )
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
-OFFICIAL_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
+OFFICIAL_RUNTIME_TARGETS = target_cli_choices(OFFICIAL_RUNTIME_BACKENDS)
 
 # Targets best-effort conservados fuera del contrato oficial de runtime.
-BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(("go", "java"))
+BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(BEST_EFFORT_RUNTIME_BACKENDS)
 
 # Targets oficiales que hoy son solo de generación y no prometen runtime.
-TRANSPILATION_ONLY_TARGETS = target_cli_choices(("wasm", "asm"))
+TRANSPILATION_ONLY_TARGETS = target_cli_choices(TRANSPILATION_ONLY_BACKENDS)
 
 # Targets sin runtime automatizado en la CLI/suite actual.
 NO_RUNTIME_TARGETS = TRANSPILATION_ONLY_TARGETS

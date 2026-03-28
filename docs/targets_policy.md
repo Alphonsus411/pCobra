@@ -156,7 +156,7 @@ Para migraciones de CLI y configuración:
 Durante la ventana:
 
 - Los alias históricos `c++` y `ensamblador` se aceptan temporalmente con `DeprecationWarning`.
-- Los nombres retirados (`js`, `py`, `node`, `golang`, `jvm`, etc.) deben fallar con error explícito y alternativa canónica.
+- Los nombres retirados (alias legacy de JavaScript/Python/Node/Go/JVM, etc.) deben fallar con error explícito y alternativa canónica.
 
 ## Reverse
 
