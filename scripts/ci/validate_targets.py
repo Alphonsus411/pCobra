@@ -7,6 +7,8 @@ import re
 import sys
 from pathlib import Path
 import inspect
+import importlib.util
+from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = ROOT / "src"
@@ -415,12 +417,26 @@ def validate_critical_signature_alignment() -> list[str]:
     """Compara firmas/constantes críticas entre árbol canónico y shims publicados."""
     errors: list[str] = []
 
-    import cli.cli as shim_cli_entry
-    import cobra.cli.cli as shim_cobra_entry
-    import cobra.cli.target_policies as shim_policies
-    import cobra.transpilers.compatibility_matrix as shim_matrix
-    import cobra.transpilers.registry as shim_registry
-    import cobra.transpilers.targets as shim_targets
+    def _load_shim_module(path: str, unique_name: str) -> ModuleType:
+        module_path = ROOT / path
+        spec = importlib.util.spec_from_file_location(unique_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"No se pudo cargar spec para {path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules.pop(unique_name, None)
+        sys.modules[unique_name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    shim_cli_entry = _load_shim_module("src/cli/cli.py", "_ci_shim_cli_entry")
+    shim_cobra_entry = _load_shim_module("src/cobra/cli/cli.py", "_ci_shim_cobra_cli_entry")
+    shim_policies = _load_shim_module("src/cobra/cli/target_policies.py", "_ci_shim_target_policies")
+    shim_matrix = _load_shim_module(
+        "src/cobra/transpilers/compatibility_matrix.py",
+        "_ci_shim_compatibility_matrix",
+    )
+    shim_registry = _load_shim_module("src/cobra/transpilers/registry.py", "_ci_shim_registry")
+    shim_targets = _load_shim_module("src/cobra/transpilers/targets.py", "_ci_shim_targets")
     import pcobra.cobra.cli.target_policies as canonical_policies
     import pcobra.cobra.cli.cli as canonical_cli_entry
     import pcobra.cobra.transpilers.compatibility_matrix as canonical_matrix
