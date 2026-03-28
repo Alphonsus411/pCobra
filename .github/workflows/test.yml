@@ -74,6 +74,10 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python scripts/validate_targets_policy.py
+      - name: Regenerate targets docs and verify clean diff
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/ci/ensure_generated_targets_docs_clean.py
       - name: Validate runtime contract matrix
         if: runner.os != 'Windows'
         shell: bash
@@ -86,6 +90,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/validate_targets_policy.py
+      - name: Regenerate targets docs and verify clean diff (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/ci/ensure_generated_targets_docs_clean.py
       - name: Validate runtime contract matrix (Windows)
         if: runner.os == 'Windows'
         shell: pwsh

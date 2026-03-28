@@ -123,17 +123,27 @@ def _evidence_line(content: str, marker: str) -> str:
 
 
 def _build_markdown() -> str:
+    summary_start = "<!-- BEGIN GENERATED MATRIZ POLICY SUMMARY -->"
+    summary_end = "<!-- END GENERATED MATRIZ POLICY SUMMARY -->"
+    status_start = "<!-- BEGIN GENERATED MATRIZ STATUS TABLE -->"
+    status_end = "<!-- END GENERATED MATRIZ STATUS TABLE -->"
     lines = [
         "# Matriz de transpiladores",
         "",
-        "Generado desde `scripts/generar_matriz_transpiladores.py`.",
+        "> ⚠️ Documento parcialmente derivado: los bloques marcados como `BEGIN/END GENERATED`",
+        "> se regeneran automáticamente y no deben editarse manualmente.",
+        "",
+        "Fuente de generación: `scripts/generar_matriz_transpiladores.py`.",
         "",
         "## Resumen de política",
         "",
+        summary_start,
         render_public_policy_summary(markup="markdown"),
+        summary_end,
         "",
         "## Estado público por backend",
         "",
+        status_start,
         "| Backend | Nombre | Tier | runtime_publico | holobit_publico | sdk_real |",
         "|---|---|---|---|---|---|",
     ]
@@ -157,6 +167,7 @@ def _build_markdown() -> str:
             sdk_status,
         ]
         lines.append("| " + " | ".join(row) + " |")
+    lines.append(status_end)
     lines.extend(
         [
             "",
