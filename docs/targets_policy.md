@@ -123,22 +123,16 @@ La transpilación inversa se documenta como capacidad separada. Sus orígenes de
 
 Esos orígenes reverse **no amplían** `OFFICIAL_TARGETS`: describen entradas aceptadas por `cobra transpilar-inverso`, no targets oficiales de salida. La documentación pública debe hablar de **orígenes reverse** y dejar claro que no son targets de salida.
 
-## Archivo histórico y experimentos
-
-Cualquier resto histórico o experimental debe mantenerse segregado del recorrido normativo principal y del árbol operativo público.
-
-Ese material se conserva únicamente como archivo o referencia histórica, sin vigencia normativa para la definición del producto final.
-
 ## Revisión editorial final
 
 Queda **prohibido reintroducir** en páginas públicas activas:
 
 - alias o nombres alternativos de targets,
-- referencias históricas mezcladas con la política activa,
+- referencias obsoletas mezcladas con la política activa,
 - terminología de arquitectura interna presentada como si fuera un backend público,
 - comparativas que inflen el soporte Holobit o la compatibilidad SDK.
 
-La única excepción permitida es una sección **claramente separada** de changelog, historial o nota de migración.
+La única excepción permitida es una sección **claramente separada** de changelog o nota de migración.
 
 ## Qué valida automáticamente el repositorio
 

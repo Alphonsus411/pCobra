@@ -14,7 +14,7 @@ Además, conviene leerlos con esta distinción:
 
 - **Transpilación oficial**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
-- **Runtime experimental/best-effort**: `go`, `java`.
+- **Runtime best-effort**: `go`, `java`.
 - **Solo transpilación sin runtime público**: `wasm`, `asm`.
 
 ## Subcarpetas
@@ -26,7 +26,7 @@ Además, conviene leerlos con esta distinción:
 - **hello_world/**: demostraciones "Hola Mundo" para los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
 - **[hola_mundo](hola_mundo/)**: ejemplo mínimo para transpilar a Python.
   ```bash
-  cobra compilar examples/hola_mundo/hola.co --tipo python
+  cobra compilar examples/hola_mundo/hola.co --backend python
   ```
 - **plugins/**: plugins de muestra instalables en modo editable. Para probarlos:
   ```bash

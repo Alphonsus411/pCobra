@@ -18,11 +18,13 @@ Esto describe la **salida oficial de transpilación**, no una promesa uniforme d
 
 .. include:: ../_generated/official_targets_table.rst
 
-La separación entre salida oficial y runtime se mantiene explícita:
+La separación entre salida oficial y runtime se mantiene explícita y vigente:
 
-- runtime oficial verificable: ``python``, ``rust``, ``javascript`` y ``cpp``;
-- runtime best-effort no público: ``go`` y ``java``;
-- targets solo de transpilación: ``wasm`` y ``asm``.
+- **targets oficiales de salida (8)**: ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``;
+- **runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y ``cpp``;
+- **runtime best-effort**: ``go`` y ``java``;
+- **solo transpilación**: ``wasm`` y ``asm``;
+- **SDK full**: solo ``python``.
 
 Matriz de características
 -------------------------
@@ -34,7 +36,7 @@ Para un resumen completo de la cobertura contractual por backend, revisa la matr
 Comandos válidos por destino
 ----------------------------
 
-Listado generado desde el registro canónico para evitar desalineaciones
-entre documentación y CLI:
+Listado generado desde el registro canónico para evitar desalineaciones entre documentación y CLI.
+Las guías públicas deben usar la nomenclatura canónica de flags: ``--backend`` (equivalente operativo de ``--tipo``) y ``--tipos`` para listas.
 
 .. include:: ../_generated/cli_backend_examples.rst
