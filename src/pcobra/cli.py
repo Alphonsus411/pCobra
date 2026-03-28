@@ -2,7 +2,6 @@ import logging
 import sys
 from importlib import import_module
 from pathlib import Path
-from types import ModuleType
 from typing import Iterable, List, Optional
 
 if __package__ in {None, ""}:
@@ -18,14 +17,10 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
     load_dotenv = None
 
-from src.pcobra import cobra as cobra_pkg
-from src.core import compiler as compiler_pkg
-from src import core as core_pkg
-
 logger = logging.getLogger(__name__)
 
 
-def _alias_module(origen: str, destino: str) -> ModuleType:
+def _alias_module(origen: str, destino: str):
     """Registra ``destino`` como alias del módulo ``origen``."""
 
     modulo = import_module(origen)
@@ -33,39 +28,24 @@ def _alias_module(origen: str, destino: str) -> ModuleType:
     return modulo
 
 
-# Alias explícitos hacia el paquete real de comandos del CLI
-cli = _alias_module("pcobra.cobra.cli.cli", "pcobra.cli.cli")
-commands = cobra_cli_commands
-
-
 def _configurar_alias_paquete_cli() -> None:
-    """Expone ``pcobra.cobra.cli`` como si fuese ``pcobra.cli``.
-
-    El proyecto mantiene compatibilidad histórica con importaciones que
-    asumían que ``pcobra.cli`` era un paquete. Sin embargo, el fichero
-    actual se llama ``cli.py`` y, por tanto, Python lo trata como un
-    módulo en lugar de paquete, lo que rompe importaciones como
-    ``pcobra.cli.utils``. Para evitar ``ModuleNotFoundError`` registramos
-    alias explícitos y propagamos el ``__path__`` del paquete real.
-    """
+    """Expone ``pcobra.cobra.cli`` como si fuese ``pcobra.cli``."""
 
     paquete_cli = _alias_module("pcobra.cobra.cli", "pcobra.cli")
-    # Marcar el módulo como paquete reexportando su ``__path__`` original.
     if hasattr(paquete_cli, "__path__"):
         globals()["__path__"] = list(paquete_cli.__path__)  # type: ignore[assignment]
 
-    _alias_module("pcobra.cobra.cli.commands", "pcobra.cli.commands")
-    _alias_module("pcobra.cobra.cli.utils", "pcobra.cli.utils")
-    _alias_module("pcobra.cobra.cli.utils.semver", "pcobra.cli.utils.semver")
+    _alias_module("pcobra.cobra.cli.cli", "pcobra.cli.cli")
 
 
 _configurar_alias_paquete_cli()
-from .cobra.cli.cli import CliApplication
 
-# Registrar alias de paquetes para compatibilidad con imports absolutos
-sys.modules.setdefault("cobra", cobra_pkg)
-sys.modules.setdefault("core", core_pkg)
-sys.modules.setdefault("compiler", compiler_pkg)
+# Alias explícitos para compatibilidad histórica con ``import cli``.
+sys.modules.setdefault("cli", sys.modules["pcobra.cli"])
+sys.modules.setdefault("cli.cli", sys.modules["pcobra.cli.cli"])
+
+# Reexporte de conveniencia para código legado.
+cli = sys.modules["pcobra.cli.cli"]
 
 
 def configurar_entorno() -> None:
@@ -80,7 +60,7 @@ def configurar_entorno() -> None:
     except OSError as exc:
         logger.error("No se pudo acceder al archivo .env: %s", exc)
         return
-    except Exception as exc:  # pragma: no cover - registro y propagación
+    except Exception:  # pragma: no cover - registro y propagación
         logger.exception("Error inesperado al cargar variables de entorno")
         raise
     if not cargado:
@@ -88,14 +68,7 @@ def configurar_entorno() -> None:
 
 
 def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:
-    """Devuelve una copia de ``argumentos`` con alias habituales corregidos.
-
-    Los usuarios de la antigua CLI podían invocar ``python -m pcobra.cli ayuda``
-    para mostrar la ayuda general. Tras la reestructuración del paquete,
-    ``ayuda`` dejó de ser una orden válida y provocaba ``invalid choice``. Aquí
-    interceptamos esos casos para redirigirlos hacia las banderas oficiales del
-    analizador de argumentos.
-    """
+    """Devuelve una copia de ``argumentos`` con alias habituales corregidos."""
 
     if argumentos is None:
         return None
@@ -113,6 +86,8 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
+    from .cobra.cli.cli import CliApplication
+
     configurar_entorno()
     aplicacion = CliApplication()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
