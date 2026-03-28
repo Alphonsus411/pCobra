@@ -12,7 +12,7 @@ import sys
 # en entornos sin configuración previa (por ejemplo, durante los tests).
 os.environ.setdefault("SQLITE_DB_KEY", "cli-dev-key")
 
-from src.pcobra.cobra.cli.cli import main as _pcobra_main
+from pcobra.cobra.cli.cli import main as _pcobra_main
 
 
 def main(argv: list[str] | None = None) -> int:

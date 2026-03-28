@@ -8,44 +8,44 @@ from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
 
-from src.pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
 os.environ.setdefault("SQLITE_DB_KEY", "cli-dev-key")
 
 
 
-from src.pcobra.cobra.cli.commands.base import BaseCommand
-from src.pcobra.cobra.cli.commands.bench_cmd import BenchCommand
-from src.pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
-from src.pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
-from src.pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
-from src.pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
-from src.pcobra.cobra.cli.commands.cache_cmd import CacheCommand
-from src.pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
-from src.pcobra.cobra.cli.commands.container_cmd import ContainerCommand
-from src.pcobra.cobra.cli.commands.crear_cmd import CrearCommand
-from src.pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
-from src.pcobra.cobra.cli.commands.docs_cmd import DocsCommand
-from src.pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
-from src.pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-from src.pcobra.cobra.cli.commands.flet_cmd import FletCommand
-from src.pcobra.cobra.cli.commands.init_cmd import InitCommand
-from src.pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
-from src.pcobra.cobra.cli.commands.agix_cmd import AgixCommand
-from src.pcobra.core.interpreter import InterpretadorCobra
-from src.pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
-from src.pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
-from src.pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
-from src.pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
-from src.pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
-from src.pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
-from src.pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
-from src.pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
-from src.pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
-from src.pcobra.cobra.cli.plugin import descubrir_plugins
-from src.pcobra.cobra.cli.utils import messages
-from src.pcobra.cobra.cli.utils import config as config_module
-from src.pcobra.cobra.cli.utils.autocomplete import (
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
+from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
+from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
+from pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
+from pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
+from pcobra.cobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.container_cmd import ContainerCommand
+from pcobra.cobra.cli.commands.crear_cmd import CrearCommand
+from pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
+from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
+from pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands.flet_cmd import FletCommand
+from pcobra.cobra.cli.commands.init_cmd import InitCommand
+from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
+from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
+from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
+from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
+from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
+from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
+from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
+from pcobra.cobra.cli.plugin import descubrir_plugins
+from pcobra.cobra.cli.utils import messages
+from pcobra.cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.utils.autocomplete import (
     autocomplete_available,
     directories_completer,
     enable_autocomplete,
