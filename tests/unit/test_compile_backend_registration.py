@@ -14,7 +14,7 @@ def test_register_transpiler_backend_rechaza_backend_no_oficial(monkeypatch):
     monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
 
     with pytest.raises(
-        ValueError, match=r"Backend no permitido en tests: backend_no_soportado"
+        ValueError, match=r"Target no soportado: 'backend_no_soportado'"
     ):
         compile_cmd.register_transpiler_backend(
             "backend_no_soportado", DummyTranspiler, context="tests"
@@ -33,7 +33,7 @@ def test_register_transpiler_backend_acepta_backend_canonico(monkeypatch):
 def test_validate_entrypoint_backend_rechaza_backend_fuera_del_set_oficial():
     with pytest.raises(
         ValueError,
-        match=r"entry points solo pueden usar nombres canónicos oficiales",
+        match=r"Target no soportado: 'fantasy'",
     ):
         compile_cmd._validate_entrypoint_backend_or_raise("fantasy", context="tests")
 
@@ -55,7 +55,7 @@ def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeyp
 
     assert compile_cmd.TRANSPILERS == {}
     assert "rechazado por política oficial" in caplog.text
-    assert "nombres canónicos oficiales" in caplog.text
+    assert "Target no soportado: 'fantasy'" in caplog.text
 
 
 def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, caplog):
@@ -76,6 +76,27 @@ def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, capl
     assert compile_cmd.TRANSPILERS == {}
     assert "rechazado por política oficial" in caplog.text
     assert "c++" in caplog.text
+
+
+@pytest.mark.parametrize("legacy_backend", ("js", "assembly", "nodejs", "python3"))
+def test_load_entrypoint_transpilers_rechaza_backends_legacy_o_ambiguos(monkeypatch, caplog, legacy_backend):
+    ep = importlib.metadata.EntryPoint(
+        name=legacy_backend,
+        value="tests.unit.test_compile_backend_registration:DummyTranspiler",
+        group="cobra.transpilers",
+    )
+    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(
+        compile_cmd,
+        "_iter_transpiler_entry_points",
+        lambda: importlib.metadata.EntryPoints((ep,)),
+    )
+
+    compile_cmd.load_entrypoint_transpilers()
+
+    assert compile_cmd.TRANSPILERS == {}
+    assert "rechazado por política oficial" in caplog.text
+    assert "legacy/ambiguo" in caplog.text
 
 
 def test_load_entrypoint_transpilers_registra_backend_canonico(monkeypatch):
