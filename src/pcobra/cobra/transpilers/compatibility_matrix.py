@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Final
 
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS
 
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
     "holobit",
@@ -294,6 +294,165 @@ BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     },
 }
 
+HOLOBIT_SDK_CAPABILITIES: Final[tuple[str, ...]] = (
+    "runtime",
+    "serializacion",
+    "ipc",
+    "modulos_nativos",
+    "import_hooks",
+)
+
+VALID_HOLOBIT_CAPABILITY_STATUSES: Final[tuple[str, ...]] = (
+    "full",
+    "partial",
+    "none",
+)
+
+CRITICAL_HOLOBIT_CAPABILITIES: Final[tuple[str, ...]] = (
+    "runtime",
+    "import_hooks",
+)
+
+# Matriz operativa de capacidades Holobit por target oficial.
+# Se usa para documentación versionada y para gate de release sobre Tier 1.
+BACKEND_HOLOBIT_SDK_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
+    "python": {
+        "runtime": "full",
+        "serializacion": "full",
+        "ipc": "full",
+        "modulos_nativos": "full",
+        "import_hooks": "full",
+    },
+    "javascript": {
+        "runtime": "partial",
+        "serializacion": "partial",
+        "ipc": "none",
+        "modulos_nativos": "partial",
+        "import_hooks": "full",
+    },
+    "rust": {
+        "runtime": "partial",
+        "serializacion": "partial",
+        "ipc": "none",
+        "modulos_nativos": "partial",
+        "import_hooks": "full",
+    },
+    "wasm": {
+        "runtime": "partial",
+        "serializacion": "partial",
+        "ipc": "partial",
+        "modulos_nativos": "none",
+        "import_hooks": "full",
+    },
+    "go": {
+        "runtime": "partial",
+        "serializacion": "partial",
+        "ipc": "none",
+        "modulos_nativos": "partial",
+        "import_hooks": "full",
+    },
+    "cpp": {
+        "runtime": "partial",
+        "serializacion": "partial",
+        "ipc": "none",
+        "modulos_nativos": "partial",
+        "import_hooks": "full",
+    },
+    "java": {
+        "runtime": "partial",
+        "serializacion": "partial",
+        "ipc": "none",
+        "modulos_nativos": "partial",
+        "import_hooks": "full",
+    },
+    "asm": {
+        "runtime": "partial",
+        "serializacion": "none",
+        "ipc": "none",
+        "modulos_nativos": "none",
+        "import_hooks": "full",
+    },
+}
+
+# Piso crítico: si Tier 1 baja de este mínimo, se bloquea el release.
+MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
+    "python": {
+        "runtime": "full",
+        "import_hooks": "full",
+    },
+    "javascript": {
+        "runtime": "partial",
+        "import_hooks": "full",
+    },
+    "rust": {
+        "runtime": "partial",
+        "import_hooks": "full",
+    },
+    "wasm": {
+        "runtime": "partial",
+        "import_hooks": "full",
+    },
+}
+
+HOLOBIT_CAPABILITY_FALLBACKS: Final[dict[str, dict[str, str]]] = {
+    "python": {
+        "runtime": "Sin fallback automático: exige `holobit_sdk` y falla explícitamente con ModuleNotFoundError.",
+        "serializacion": "Usar objetos `Holobit` del SDK como formato canónico de intercambio.",
+        "ipc": "Reusar runtime Python y tipado `Holobit` en procesos/hilos Python.",
+        "modulos_nativos": "Usar `corelibs`/`standard_library` con implementación oficial Python.",
+        "import_hooks": "Sin fallback: hooks canónicos `cobra_*` se consideran obligatorios.",
+    },
+    "javascript": {
+        "runtime": "Fallback oficial: adaptador runtime JS del proyecto con errores `partial` explícitos.",
+        "serializacion": "Fallback oficial: proyecciones 1d/2d/3d/vector y vista textual `Holobit(...)`.",
+        "ipc": "No soportado: delegar IPC a procesos externos y pasar payload serializado simple.",
+        "modulos_nativos": "Fallback oficial: capa `cobraJsCorelibs` y `cobraJsStandardLibrary`.",
+        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
+    },
+    "rust": {
+        "runtime": "Fallback oficial: adaptador `CobraHolobit` con `Result` y `CobraRuntimeError` explícito.",
+        "serializacion": "Fallback oficial: `Vec<f64>` y parsing controlado en runtime.",
+        "ipc": "No soportado: usar integración externa y pasar datos serializados simples.",
+        "modulos_nativos": "Fallback oficial: helpers inline del backend (`longitud`, `mostrar`).",
+        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
+    },
+    "wasm": {
+        "runtime": "Fallback oficial: runtime host-managed vía imports `pcobra:holobit`.",
+        "serializacion": "Fallback oficial: protocolo host de handles/buffers.",
+        "ipc": "Fallback oficial: integración host↔módulo (import/export) definida por embedding.",
+        "modulos_nativos": "No soportado dentro del módulo; delegar al host.",
+        "import_hooks": "Hooks `cobra_*` obligatorios; delegación explícita al host.",
+    },
+    "go": {
+        "runtime": "Fallback oficial: adaptador best-effort Go con `panic` contractual explícito.",
+        "serializacion": "Fallback oficial: slices/estructuras del adaptador Go.",
+        "ipc": "No soportado: usar capa externa de integración.",
+        "modulos_nativos": "Fallback oficial: helpers mínimos `longitud`/`mostrar`.",
+        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
+    },
+    "cpp": {
+        "runtime": "Fallback oficial: adaptador C++ con `std::runtime_error` contractual explícito.",
+        "serializacion": "Fallback oficial: `std::vector<double>` y utilidades runtime inline.",
+        "ipc": "No soportado: integración por capa externa.",
+        "modulos_nativos": "Fallback oficial: includes/runtime mínimo mantenido por el proyecto.",
+        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
+    },
+    "java": {
+        "runtime": "Fallback oficial: adaptador Java con `UnsupportedOperationException` explícita.",
+        "serializacion": "Fallback oficial: arrays/listas de doubles del adaptador Java.",
+        "ipc": "No soportado: integrar IPC fuera del adaptador oficial.",
+        "modulos_nativos": "Fallback oficial: helpers mínimos runtime Java best-effort.",
+        "import_hooks": "Hooks `cobra_*` obligatorios en codegen; sin fallback silencioso.",
+    },
+    "asm": {
+        "runtime": "Fallback oficial: modo inspección/diagnóstico con `TRAP` en operaciones avanzadas.",
+        "serializacion": "No soportado: usar representación simbólica y resolver fuera del backend.",
+        "ipc": "No soportado: delegación total a runtime externo.",
+        "modulos_nativos": "No soportado: solo puntos de llamada `CALL` externos.",
+        "import_hooks": "Hooks `cobra_*` obligatorios como contratos de inspección.",
+    },
+}
+
 
 def _validate_contract_shape(name: str, matrix: dict[str, dict[str, str]]) -> None:
     missing_backends = [backend for backend in OFFICIAL_TARGETS if backend not in matrix]
@@ -459,6 +618,98 @@ def validate_backend_compatibility_contract() -> None:
                     f"BACKEND_FEATURE_GAPS[{backend}][{feature}] debe declarar al menos un gap para contrato partial"
                 )
 
+    missing_capability_backends = [
+        backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_HOLOBIT_SDK_CAPABILITIES
+    ]
+    if missing_capability_backends:
+        raise RuntimeError(
+            "BACKEND_HOLOBIT_SDK_CAPABILITIES no define backends oficiales: "
+            f"{missing_capability_backends}"
+        )
+    extra_capability_backends = sorted(
+        set(BACKEND_HOLOBIT_SDK_CAPABILITIES) - set(OFFICIAL_TARGETS)
+    )
+    if extra_capability_backends:
+        raise RuntimeError(
+            "BACKEND_HOLOBIT_SDK_CAPABILITIES contiene backends no oficiales: "
+            f"{extra_capability_backends}"
+        )
+
+    for backend in OFFICIAL_TARGETS:
+        capabilities = BACKEND_HOLOBIT_SDK_CAPABILITIES[backend]
+        missing_capabilities = [
+            capability
+            for capability in HOLOBIT_SDK_CAPABILITIES
+            if capability not in capabilities
+        ]
+        if missing_capabilities:
+            raise RuntimeError(
+                f"BACKEND_HOLOBIT_SDK_CAPABILITIES[{backend}] no define capacidades requeridas: {missing_capabilities}"
+            )
+        extra_capabilities = sorted(
+            set(capabilities) - set(HOLOBIT_SDK_CAPABILITIES)
+        )
+        if extra_capabilities:
+            raise RuntimeError(
+                f"BACKEND_HOLOBIT_SDK_CAPABILITIES[{backend}] contiene capacidades no reconocidas: {extra_capabilities}"
+            )
+        for capability in HOLOBIT_SDK_CAPABILITIES:
+            status = capabilities[capability]
+            if status not in VALID_HOLOBIT_CAPABILITY_STATUSES:
+                raise RuntimeError(
+                    f"BACKEND_HOLOBIT_SDK_CAPABILITIES[{backend}][{capability}] tiene estado inválido: {status!r}"
+                )
+
+    validate_tier1_holobit_release_gate(BACKEND_HOLOBIT_SDK_CAPABILITIES)
+
+    missing_fallback_backends = [
+        backend for backend in OFFICIAL_TARGETS if backend not in HOLOBIT_CAPABILITY_FALLBACKS
+    ]
+    if missing_fallback_backends:
+        raise RuntimeError(
+            f"HOLOBIT_CAPABILITY_FALLBACKS no define backends oficiales: {missing_fallback_backends}"
+        )
+    for backend in OFFICIAL_TARGETS:
+        fallback_map = HOLOBIT_CAPABILITY_FALLBACKS[backend]
+        for capability in HOLOBIT_SDK_CAPABILITIES:
+            fallback = fallback_map.get(capability, "")
+            if not isinstance(fallback, str) or not fallback.strip():
+                raise RuntimeError(
+                    f"HOLOBIT_CAPABILITY_FALLBACKS[{backend}][{capability}] debe tener documentación explícita de fallback"
+                )
+
+
+def validate_tier1_holobit_release_gate(
+    capabilities_by_backend: dict[str, dict[str, str]],
+) -> None:
+    """Bloquea release si Tier 1 rompe capacidades críticas Holobit."""
+    for backend in TIER1_TARGETS:
+        if backend not in MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES:
+            raise RuntimeError(
+                f"MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES no define backend Tier 1: {backend}"
+            )
+        if backend not in capabilities_by_backend:
+            raise RuntimeError(
+                f"BACKEND_HOLOBIT_SDK_CAPABILITIES no define backend Tier 1: {backend}"
+            )
+        for capability in CRITICAL_HOLOBIT_CAPABILITIES:
+            required = MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES[backend].get(capability)
+            if required not in VALID_HOLOBIT_CAPABILITY_STATUSES:
+                raise RuntimeError(
+                    f"MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES[{backend}][{capability}] inválido: {required!r}"
+                )
+            current = capabilities_by_backend[backend].get(capability)
+            if current not in VALID_HOLOBIT_CAPABILITY_STATUSES:
+                raise RuntimeError(
+                    f"BACKEND_HOLOBIT_SDK_CAPABILITIES[{backend}][{capability}] inválido: {current!r}"
+                )
+            if COMPATIBILITY_LEVEL_ORDER[current] < COMPATIBILITY_LEVEL_ORDER[required]:
+                raise RuntimeError(
+                    "Regresión crítica Holobit en Tier 1: "
+                    f"{backend}.{capability}={current} < mínimo requerido {required}. "
+                    "El release debe bloquearse."
+                )
+
 
 validate_backend_compatibility_contract()
 
@@ -483,11 +734,18 @@ __all__ = [
     "COMPATIBILITY_LEVEL_ORDER",
     "BACKEND_COMPATIBILITY_NOTES",
     "BACKEND_FEATURE_GAPS",
+    "BACKEND_HOLOBIT_SDK_CAPABILITIES",
+    "HOLOBIT_SDK_CAPABILITIES",
+    "VALID_HOLOBIT_CAPABILITY_STATUSES",
+    "CRITICAL_HOLOBIT_CAPABILITIES",
+    "MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES",
+    "HOLOBIT_CAPABILITY_FALLBACKS",
     "CONTRACT_FEATURES",
     "SDK_FULL_BACKENDS",
     "SDK_PARTIAL_BACKENDS",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
     "get_backend_feature_gaps",
+    "validate_tier1_holobit_release_gate",
     "validate_backend_compatibility_contract",
 ]
