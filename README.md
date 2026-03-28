@@ -47,6 +47,21 @@ Además, el proyecto separa explícitamente **targets oficiales de salida** de *
 
 La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` se mantienen en `partial`. Eso significa que la **paridad SDK total** solo puede prometerse para `python`. `javascript`, `rust` y `cpp` sí cuentan con runtime oficial verificable y adaptadores mantenidos por el proyecto, pero siguen siendo `partial` en Holobit/SDK. `go` y `java` se mantienen como runtimes best-effort; `wasm` y `asm` como salidas oficiales solo de transpilación. Ninguna de esas categorías debe venderse como runtime oficial verificable ni como compatibilidad SDK equivalente.
 
+### Prerrequisitos por backend de ejecución/runtime
+
+Además del estado `full/partial`, cada backend depende de toolchains o runtime externos que deben existir en el host:
+
+- `python` (`full`): entorno Python `>=3.10` con dependencias del proyecto; `holobit_sdk` es obligatorio para el contrato Holobit completo.
+- `javascript` (`partial`): `node` y dependencias del runtime JS del proyecto (`vm2`/`node-fetch` cuando aplique en el host).
+- `rust` (`partial`): toolchain Rust (`rustc`/`cargo`) para compilación/ejecución fuera de transpilación.
+- `cpp` (`partial`): compilador C++ (`g++`/`clang++`) y toolchain nativa del sistema.
+- `go` (`partial`, best-effort): toolchain Go instalada en el host.
+- `java` (`partial`, best-effort): JDK/JRE en el host.
+- `wasm` (`partial`, solo transpilación): host WASM con imports `pcobra:*` para `corelibs`, `standard_library` y Holobit; el módulo generado no embebe ese runtime.
+- `asm` (`partial`, solo transpilación): runtime/ensamblador externo administrado fuera de pCobra.
+
+Sin estos prerrequisitos, pCobra puede conservar generación de código, pero no promete ejecución equivalente al runtime oficial de Python.
+
 **Nota explícita de política:** **los backends retirados no forman parte del árbol operativo**.
 
 El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa cercana para aprender y construir software, reduciendo la barrera del idioma y fomentando la colaboración abierta. A medida que evoluciona, el proyecto busca ampliar su ecosistema, mejorar la transpilación y proveer herramientas que sirvan de puente entre la educación y el desarrollo profesional.

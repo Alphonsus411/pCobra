@@ -27,6 +27,26 @@ COBRA_TOML_PATH = os.environ.get(
 )
 
 _toml_cache = None
+_RUNTIME_PATH_FORBIDDEN_SEGMENTS = (
+    "core/nativos",
+    "corelibs",
+    "standard_library",
+    "pcobra/core",
+    "pcobra/corelibs",
+    "pcobra/standard_library",
+    "cobra/core",
+    "cobra/corelibs",
+    "cobra/standard_library",
+    "nativos/",
+)
+
+
+def _is_runtime_path_forbidden(mapped_path: str) -> bool:
+    """Indica si ``mapped_path`` intenta inyectar rutas de runtime reservadas."""
+    canonical = mapped_path.replace("\\", "/").strip().lower()
+    if not canonical:
+        return False
+    return any(segment in canonical for segment in _RUNTIME_PATH_FORBIDDEN_SEGMENTS)
 
 
 def get_toml_map() -> Dict[str, Any]:
@@ -70,4 +90,14 @@ def get_mapped_path(module: str, backend: str) -> str:
         return module
 
     mapped = module_mapping.get(canonical_backend)
-    return mapped if isinstance(mapped, str) else module
+    if not isinstance(mapped, str):
+        return module
+    if _is_runtime_path_forbidden(mapped):
+        logger.warning(
+            "Mapping de módulo ignorado por política de runtime: módulo=%s backend=%s destino=%s",
+            module,
+            canonical_backend,
+            mapped,
+        )
+        return module
+    return mapped

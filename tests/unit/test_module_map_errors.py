@@ -60,3 +60,23 @@ def test_get_mapped_path_resuelve_desde_tabla_modulos_en_toml(monkeypatch):
 def test_get_mapped_path_ignora_mappings_en_raiz_legacy(monkeypatch):
     monkeypatch.setattr(module_map, "get_toml_map", lambda: {"m": {"javascript": "m.js"}})
     assert module_map.get_mapped_path("m", "javascript") == "m"
+
+
+def test_get_mapped_path_ignora_ruta_runtime_reservada_corelibs(monkeypatch, caplog):
+    monkeypatch.setattr(
+        module_map,
+        "get_toml_map",
+        lambda: {"modulos": {"m": {"javascript": "pcobra/corelibs/texto.js"}}},
+    )
+    with caplog.at_level(logging.WARNING):
+        assert module_map.get_mapped_path("m", "javascript") == "m"
+    assert "ignorado por política de runtime" in caplog.text
+
+
+def test_get_mapped_path_ignora_ruta_runtime_reservada_standard_library(monkeypatch):
+    monkeypatch.setattr(
+        module_map,
+        "get_toml_map",
+        lambda: {"modulos": {"m": {"python": "standard_library/texto.py"}}},
+    )
+    assert module_map.get_mapped_path("m", "python") == "m"
