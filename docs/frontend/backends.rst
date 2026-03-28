@@ -92,6 +92,7 @@ Migración desde targets retirados
 Para proyectos históricos que dependían de targets eliminados, utiliza la guía oficial:
 
 - ``docs/migracion_targets_retirados.md``
+- ``docs/historico/migracion_targets_retirados_archivo.md`` (archivo histórico, fuera del flujo activo)
 
 Matriz de características
 -------------------------

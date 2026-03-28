@@ -52,9 +52,10 @@ Antes de etiquetar una versión, confirma explícitamente:
 
 Antes de publicar una versión con cambios de política de targets:
 
-- [ ] Incluir en release notes la ventana de deprecación vigente (inicio y versión de eliminación definitiva).
-- [ ] Publicar breaking changes con alternativas concretas (`js -> javascript`, `c++ -> cpp`, `ensamblador -> asm`, etc.).
-- [ ] Adjuntar pasos de migración para CI/scripts (`--backend`, `--tipo`, `--tipos`, `--lenguajes`).
+- [ ] Confirmar que la narrativa pública mantiene exclusivamente los 8 targets canónicos de salida.
+- [ ] Adjuntar pasos de migración vigentes para CI/scripts (`--backend`, `--tipo`, `--tipos`).
 - [ ] Ejecutar `python scripts/audit_retired_targets.py <ruta_proyecto>` sobre repos de referencia del ecosistema.
 - [ ] Coordinar copy final con equipo Holobit y validar FAQ de impacto:
   `docs/compatibility/holobit_target_deprecation_faq.md`.
+- [ ] Si se necesita detallar cronología o aliases históricos, enlazar archivo histórico en lugar de incorporarlo al flujo activo:
+  `docs/historico/migracion_targets_retirados_archivo.md`.
