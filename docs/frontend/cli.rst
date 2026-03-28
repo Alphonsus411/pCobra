@@ -39,6 +39,11 @@ La lista de nombres canónicos disponibles para ``cobra compilar`` y sus tiers s
 
 .. include:: ../_generated/target_policy_summary.rst
 
+Lista oficial por tiers usada por la ayuda de CLI:
+
+- **Tier 1**: ``python``, ``rust``, ``javascript``, ``wasm``.
+- **Tier 2**: ``go``, ``cpp``, ``java``, ``asm``.
+
 La política pública separa de forma estricta **salida oficial** y **runtime
 oficial**. Generar código para ``go``, ``java``, ``wasm`` o ``asm`` no implica
 que esos targets tengan ejecución real oficial en la CLI ni soporte oficial de
@@ -49,6 +54,20 @@ Resumen operativo de runtime en la CLI pública:
 - **Runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y ``cpp``.
 - **Runtime best-effort no público**: ``go`` y ``java``.
 - **Solo transpilación (sin runtime oficial CLI)**: ``wasm`` y ``asm``.
+
+SLA de soporte documental/operativo:
+
+- **Tier 1**: triage inicial de regresiones en <= 2 días hábiles.
+- **Tier 2**: triage inicial de regresiones en <= 5 días hábiles.
+
+Para cambios de clasificación (promoción/degradación) se exige RFC + plan de migración.
+
+Migración desde targets retirados
+---------------------------------
+
+Si tu flujo histórico dependía de targets eliminados, migra a un target oficial según tu necesidad (runtime oficial, best-effort o solo transpilación) y revisa la guía de transición:
+
+- ``docs/migracion_targets_retirados.md``
 
 Ejemplos de ``cobra compilar`` para cada backend oficial (generado):
 

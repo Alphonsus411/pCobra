@@ -61,6 +61,34 @@ Cualquier extensión del alcance (por ejemplo, introducir un noveno target, move
 
 No se permiten ampliaciones silenciosas ni “pequeños” cambios ad hoc al registro/CLI que alteren el conjunto oficial sin ese proceso.
 
+## Política de soporte (Tier 1 vs Tier 2) y SLA
+
+Definición pública:
+
+- **Tier 1**: cobertura prioritaria de regresiones de transpilación y consistencia documental.
+- **Tier 2**: soporte contractual mantenido con prioridad secundaria frente a Tier 1.
+
+SLA de triage para incidencias de regresión:
+
+- **Tier 1**: triage inicial en **<= 2 días hábiles**.
+- **Tier 2**: triage inicial en **<= 5 días hábiles**.
+
+### Criterios de promoción y degradación
+
+Promoción (**Tier 2 → Tier 1**), solo con señal sostenida en dos releases consecutivas:
+
+1. Uso real consistente.
+2. Cobertura/gates de CI mantenidos.
+3. Estabilidad contractual (CLI, documentación y comportamiento técnico alineados).
+
+Degradación (**Tier 1 → Tier 2**):
+
+1. Incumplimiento sostenido de calidad o cobertura CI.
+2. Bloqueos de dependencias/toolchain incompatibles con la ventana de mantenimiento.
+3. Desalineación contractual repetida entre runtime/CLI/documentación.
+
+Toda promoción/degradación requiere RFC, plan de migración y comunicación explícita en changelog/notas de release.
+
 ### Regla de bloqueo para el noveno target
 
 Queda explícitamente bloqueado introducir una novena clave de backend en el registro (`TRANSPILER_CLASS_PATHS`) o en validadores CLI sin pasar por RFC + migración.
@@ -135,6 +163,12 @@ Durante la ventana:
 La transpilación inversa se documenta como capacidad separada. Sus orígenes de entrada se definen en `src/pcobra/cobra/transpilers/reverse/policy.py`.
 
 Esos orígenes reverse **no amplían** `OFFICIAL_TARGETS`: describen entradas aceptadas por `cobra transpilar-inverso`, no targets oficiales de salida. La documentación pública debe hablar de **orígenes reverse** y dejar claro que no son targets de salida.
+
+## Migración para usuarios de targets retirados
+
+La guía oficial de transición para flujos heredados está en `docs/migracion_targets_retirados.md`.
+En documentación pública activa deben evitarse snippets de targets retirados; cualquier referencia histórica debe quedar aislada en documentación histórica.
+Queda explícito en esta política que **backends retirados no forman parte del árbol operativo** ni del recorrido normativo principal.
 
 ## Revisión editorial final
 

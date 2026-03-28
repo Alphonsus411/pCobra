@@ -26,6 +26,73 @@ La separación entre salida oficial y runtime se mantiene explícita y vigente:
 - **solo transpilación**: ``wasm`` y ``asm``;
 - **SDK full**: solo ``python``.
 
+Política de soporte por tiers (SLA)
+-----------------------------------
+
+- **Tier 1** (``python``, ``rust``, ``javascript``, ``wasm``): triage inicial de regresiones <= 2 días hábiles.
+- **Tier 2** (``go``, ``cpp``, ``java``, ``asm``): triage inicial de regresiones <= 5 días hábiles.
+
+La promoción/degradación entre tiers requiere RFC aprobada, plan de migración y comunicación en changelog/notas de release.
+
+Compatibilidad explícita de Holobit SDK y librerías por target
+---------------------------------------------------------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Target
+     - Tier
+     - Holobit SDK
+     - corelibs
+     - standard_library
+   * - ``python``
+     - Tier 1
+     - ``full`` (requiere ``holobit-sdk``)
+     - ``full``
+     - ``full``
+   * - ``rust``
+     - Tier 1
+     - ``partial``
+     - ``partial``
+     - ``partial``
+   * - ``javascript``
+     - Tier 1
+     - ``partial``
+     - ``partial``
+     - ``partial``
+   * - ``wasm``
+     - Tier 1
+     - ``partial`` (host-managed)
+     - ``partial`` (host-managed)
+     - ``partial`` (host-managed)
+   * - ``go``
+     - Tier 2
+     - ``partial`` (best-effort)
+     - ``partial``
+     - ``partial``
+   * - ``cpp``
+     - Tier 2
+     - ``partial`` (adaptador mantenido)
+     - ``partial``
+     - ``partial``
+   * - ``java``
+     - Tier 2
+     - ``partial`` (best-effort)
+     - ``partial``
+     - ``partial``
+   * - ``asm``
+     - Tier 2
+     - ``partial`` (inspección/diagnóstico)
+     - ``partial``
+     - ``partial``
+
+Migración desde targets retirados
+---------------------------------
+
+Para proyectos históricos que dependían de targets eliminados, utiliza la guía oficial:
+
+- ``docs/migracion_targets_retirados.md``
+
 Matriz de características
 -------------------------
 

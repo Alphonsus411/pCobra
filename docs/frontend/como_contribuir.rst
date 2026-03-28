@@ -48,3 +48,19 @@ Este comando sincroniza automáticamente:
 * ``docs/_generated/runtime_capability_matrix.rst``.
 * ``docs/_generated/reverse_scope_table.rst``.
 * ``docs/_generated/cli_backend_examples.rst``.
+
+Lista oficial por tiers y política de soporte
+----------------------------------------------
+
+Cuando documentes o modifiques comandos de transpilación, usa siempre esta lista canónica:
+
+- **Tier 1**: ``python``, ``rust``, ``javascript``, ``wasm``.
+- **Tier 2**: ``go``, ``cpp``, ``java``, ``asm``.
+
+Política operativa de soporte:
+
+- Incidencias Tier 1: triage inicial <= 2 días hábiles.
+- Incidencias Tier 2: triage inicial <= 5 días hábiles.
+- Cualquier promoción/degradación entre tiers requiere RFC, plan de migración y actualización de changelog.
+
+No deben reintroducirse ejemplos/snippets de targets retirados en documentación pública activa. Si hace falta contexto histórico, usar únicamente documentación histórica y enlazar la guía ``docs/migracion_targets_retirados.md``.
