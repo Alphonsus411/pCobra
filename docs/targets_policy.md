@@ -1,6 +1,6 @@
 # Política oficial de targets
 
-Este documento fija la narrativa pública canónica de pCobra: el proyecto **transpila únicamente a 8 backends oficiales** agrupados en **Tier 1** y **Tier 2**. Cualquier otra denominación, alias, artefacto de implementación o target retirado queda fuera de las páginas públicas activas.
+Este documento fija la narrativa pública canónica de pCobra: el proyecto **transpila únicamente a 8 backends oficiales** agrupados en **Tier 1** y **Tier 2**. Cualquier otra denominación, alias o artefacto de implementación queda fuera de las páginas públicas activas.
 
 ## Fuente única de verdad
 
@@ -110,8 +110,6 @@ Esos orígenes reverse **no amplían** `OFFICIAL_TARGETS`: describen entradas ac
 
 Cualquier resto histórico o experimental debe mantenerse segregado del recorrido normativo principal y del árbol operativo público.
 
-**Nota explícita de política:** **los backends retirados no forman parte del árbol operativo**.
-
 Ese material se conserva únicamente como archivo o referencia histórica, sin vigencia normativa para la definición del producto final.
 
 ## Revisión editorial final
@@ -119,7 +117,7 @@ Ese material se conserva únicamente como archivo o referencia histórica, sin v
 Queda **prohibido reintroducir** en páginas públicas activas:
 
 - alias o nombres alternativos de targets,
-- referencias a targets retirados como si siguieran vigentes,
+- referencias históricas mezcladas con la política activa,
 - terminología de arquitectura interna presentada como si fuera un backend público,
 - comparativas que inflen el soporte Holobit o la compatibilidad SDK.
 

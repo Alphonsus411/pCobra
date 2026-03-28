@@ -80,7 +80,6 @@ TARGET_CHECKLIST_PATH = ROOT / "docs/issues/target_cleanup_checklist.md"
 ALLOWED_HISTORICAL_PATH_PREFIXES = (
     "docs/historico/",
     "docs/experimental/",
-    "archive/retired_targets/",
 )
 REPO_AUDIT_ALLOWED_PATH_PREFIXES = ALLOWED_HISTORICAL_PATH_PREFIXES
 REPO_AUDIT_SCAN_ROOTS = ("src", "docs", "tests", "scripts")
@@ -146,7 +145,6 @@ PACKAGING_GUARDRAIL_PATHS = (
     "MANIFEST.in",
 )
 PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"(?i)^\s*prune\s+archive/retired_targets\s*$"),
     re.compile(r"(?i)archive/retired_targets/\*"),
 )
 PRODUCTIVE_PACKAGE_ROOT = "src/pcobra"
@@ -189,13 +187,11 @@ PRODUCTIVE_IMPORT_GUARDRAIL_PATTERNS: tuple[re.Pattern[str], ...] = (
 )
 PACKAGING_EXPLICIT_EXCLUSIONS = {
     "MANIFEST.in": (
-        "prune archive/retired_targets",
         "prune docs/historico",
         "prune docs/experimental",
     ),
     "pyproject.toml": (
         "tool.setuptools.exclude-package-data",
-        "archive/retired_targets/*",
         "docs/historico/*",
         "docs/experimental/*",
     ),
