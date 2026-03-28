@@ -1,7 +1,7 @@
 # Matriz de transpiladores
 
 > ⚠️ Documento parcialmente derivado: los bloques marcados como `BEGIN/END GENERATED`
-> se regeneran automáticamente y no deben editarse manualmente.
+> son **obligatorios**, se regeneran automáticamente y no deben editarse manualmente.
 
 Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 

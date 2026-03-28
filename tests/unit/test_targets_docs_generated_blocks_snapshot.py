@@ -11,6 +11,7 @@ from scripts.generate_target_policy_docs import (
     _policy_status_table_md,
     _policy_tiers_md,
 )
+from scripts.generar_matriz_transpiladores import _build_markdown
 from pcobra.cobra.cli.target_policies import build_cli_compile_examples
 
 
@@ -48,6 +49,36 @@ def test_matriz_transpiladores_conserva_bloques_generados_obligatorios():
     assert "<!-- END GENERATED MATRIZ POLICY SUMMARY -->" in content
     assert "<!-- BEGIN GENERATED MATRIZ STATUS TABLE -->" in content
     assert "<!-- END GENERATED MATRIZ STATUS TABLE -->" in content
+
+
+def test_matriz_transpiladores_bloques_criticos_siguen_snapshot_generado():
+    content = Path("docs/matriz_transpiladores.md").read_text(encoding="utf-8")
+    generated_content = _build_markdown()
+
+    summary_block = _extract_block(
+        content,
+        start="<!-- BEGIN GENERATED MATRIZ POLICY SUMMARY -->",
+        end="<!-- END GENERATED MATRIZ POLICY SUMMARY -->",
+    )
+    expected_summary_block = _extract_block(
+        generated_content,
+        start="<!-- BEGIN GENERATED MATRIZ POLICY SUMMARY -->",
+        end="<!-- END GENERATED MATRIZ POLICY SUMMARY -->",
+    )
+
+    status_block = _extract_block(
+        content,
+        start="<!-- BEGIN GENERATED MATRIZ STATUS TABLE -->",
+        end="<!-- END GENERATED MATRIZ STATUS TABLE -->",
+    )
+    expected_status_block = _extract_block(
+        generated_content,
+        start="<!-- BEGIN GENERATED MATRIZ STATUS TABLE -->",
+        end="<!-- END GENERATED MATRIZ STATUS TABLE -->",
+    )
+
+    assert summary_block == expected_summary_block
+    assert status_block == expected_status_block
 
 
 def test_ejemplos_cli_generados_derivan_de_target_policies():

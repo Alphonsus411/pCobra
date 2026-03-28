@@ -1,7 +1,7 @@
 # Política oficial de targets
 
 > ⚠️ Documento parcialmente derivado: los bloques marcados como `BEGIN/END GENERATED`
-> se regeneran automáticamente y no deben editarse manualmente.
+> son **obligatorios**, se regeneran automáticamente y no deben editarse manualmente.
 
 Este documento fija la narrativa pública canónica de pCobra: el proyecto **transpila únicamente a 8 backends oficiales** agrupados en **Tier 1** y **Tier 2**. Cualquier otra denominación, alias o artefacto de implementación queda fuera de las páginas públicas activas.
 

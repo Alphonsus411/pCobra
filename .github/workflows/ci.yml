@@ -140,7 +140,10 @@ jobs:
         run: python scripts/validate_targets_policy.py
       - name: Regenerate targets docs and verify clean diff
         shell: bash
-        run: python scripts/ci/ensure_generated_targets_docs_clean.py
+        run: |
+          python scripts/generate_target_policy_docs.py
+          python scripts/generar_matriz_transpiladores.py
+          git diff --exit-code -- docs/targets_policy.md docs/matriz_transpiladores.md docs/matriz_transpiladores.csv docs/_generated README.md docs/README.en.md
       - name: Validate runtime contract matrix
         shell: bash
         run: python scripts/validate_runtime_contract.py
