@@ -45,10 +45,12 @@ MIN_DOC_PATHS_FOR_MATRIX_CHANGE: tuple[str, ...] = (
     "docs/contrato_runtime_holobit.md",
     "docs/matriz_transpiladores.md",
     "docs/targets_policy.md",
+    "docs/compatibility/holobit-sdk.md",
 )
 
 CONTRACT_TEST_HINTS: tuple[str, ...] = (
     "tests/unit/test_holobit_backend_contract_matrix.py",
+    "tests/unit/test_holobit_sdk_compatibility_report.py",
     "tests/unit/test_official_targets_consistency.py",
     "tests/integration/transpilers/test_official_backends_contracts.py",
     "tests/integration/transpilers/test_backend_contract_canonical_fixtures.py",
