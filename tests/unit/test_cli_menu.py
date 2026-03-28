@@ -78,7 +78,13 @@ for mod, cls in _STUBS.items():
 from cobra.cli.cli import main
 
 
+def _set_tty(monkeypatch, is_tty: bool) -> None:
+    fake_stdin = types.SimpleNamespace(isatty=lambda: is_tty)
+    monkeypatch.setattr("cobra.cli.cli.sys.stdin", fake_stdin)
+
+
 def test_menu_no_transpile(monkeypatch):
+    _set_tty(monkeypatch, True)
     responses = iter(["n"])
     monkeypatch.setattr("builtins.input", lambda _: next(responses))
 
@@ -92,6 +98,7 @@ def test_menu_no_transpile(monkeypatch):
 
 
 def test_menu_compile(monkeypatch):
+    _set_tty(monkeypatch, True)
     inputs = iter(["s", "s", "archivo.cobra", "python"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
 
@@ -109,6 +116,7 @@ def test_menu_compile(monkeypatch):
 
 
 def test_menu_transpilar_inverso(monkeypatch):
+    _set_tty(monkeypatch, True)
     inputs = iter(["s", "n", "archivo.py", "python", "javascript"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
 
@@ -124,3 +132,21 @@ def test_menu_transpilar_inverso(monkeypatch):
     assert called['args'].archivo == "archivo.py"
     assert called['args'].origen == "python"
     assert called['args'].destino == "javascript"
+
+
+def test_menu_no_tty_aborta_con_error(monkeypatch):
+    _set_tty(monkeypatch, False)
+    monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(AssertionError("no debe leer input")))
+    assert main(["menu"]) == 1
+
+
+def test_menu_eof_inmediato_devuelve_cancelacion(monkeypatch):
+    _set_tty(monkeypatch, True)
+    monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(EOFError()))
+    assert main(["menu"]) == 0
+
+
+def test_menu_keyboardinterrupt_devuelve_cancelacion(monkeypatch):
+    _set_tty(monkeypatch, True)
+    monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(KeyboardInterrupt()))
+    assert main(["menu"]) == 0
