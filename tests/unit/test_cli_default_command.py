@@ -3,13 +3,14 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser
+from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, AppConfig
 
 
 def _patch_cli_env(stack: ExitStack) -> None:
     stack.enter_context(patch("cobra.cli.cli.setup_gettext"))
     stack.enter_context(patch("cobra.cli.cli.InterpretadorCobra"))
-    stack.enter_context(patch("cobra.cli.cli.argcomplete.autocomplete"))
+    stack.enter_context(patch("cobra.cli.cli.autocomplete_available", return_value=False))
+    stack.enter_context(patch("cobra.cli.cli.enable_autocomplete"))
     stack.enter_context(patch("cobra.cli.cli.messages.disable_colors"))
     stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
     stack.enter_context(patch("cobra.cli.cli.descubrir_plugins", return_value=[]))
@@ -38,3 +39,24 @@ def test_unknown_command_shows_error_and_help():
     assert excinfo.value.code == 2
     mock_help.assert_called()
     mock_error.assert_called()
+
+
+def test_consecutive_initializations_keep_default_command_isolated():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.DEFAULT_COMMAND", "interactive"))
+        first_app = CliApplication()
+        first_app.initialize()
+        first_args = first_app._parse_arguments([])
+        assert first_args.cmd.name == "interactive"
+
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.DEFAULT_COMMAND", "missing"))
+        second_app = CliApplication()
+        second_app.initialize()
+        second_args = second_app._parse_arguments([])
+        assert second_args.cmd.name == "interactive"
+        assert AppConfig.DEFAULT_COMMAND == "missing"

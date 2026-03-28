@@ -91,6 +91,7 @@ class CommandRegistry:
     def __init__(self, interpreter: Optional[InterpretadorCobra] = None) -> None:
         self.commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
+        self.default_command_name: Optional[str] = AppConfig.DEFAULT_COMMAND
 
     def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
         try:
@@ -123,17 +124,20 @@ class CommandRegistry:
                 logging.error(f"Failed to register subparser for {command.name}: {e}")
                 del self.commands[command.name]
 
-        if AppConfig.DEFAULT_COMMAND not in self.commands:
+        if self.default_command_name not in self.commands:
             fallback = "interactive" if "interactive" in self.commands else next(iter(self.commands), None)
             logging.warning(
-                "Default command '%s' not found. Falling back to '%s'", AppConfig.DEFAULT_COMMAND, fallback
+                "Default command '%s' not found. Falling back to '%s'", self.default_command_name, fallback
             )
-            AppConfig.DEFAULT_COMMAND = fallback
+            self.default_command_name = fallback
 
         return self.commands
 
     def get_default_command(self) -> Optional[BaseCommand]:
-        return self.commands.get(AppConfig.DEFAULT_COMMAND)
+        return self.commands.get(self.default_command_name)
+
+    def get_default_command_name(self) -> Optional[str]:
+        return self.default_command_name
 
 
 class CliApplication:
@@ -280,7 +284,8 @@ class CliApplication:
         menu_parser = subparsers.add_parser("menu", help=_("Modo interactivo"))
         menu_parser.set_defaults(cmd="menu")
 
-        default_command = self.command_registry.get_default_command()
+        default_command_name = self.command_registry.get_default_command_name()
+        default_command = self.command_registry.commands.get(default_command_name)
         if default_command:
             self.parser.set_defaults(cmd=default_command)
         if autocomplete_available():
