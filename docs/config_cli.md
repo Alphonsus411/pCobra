@@ -75,8 +75,8 @@ asm = "build/modulo.asm"
 ## Política de targets oficial
 
 La CLI no debe mantener listas duplicadas de lenguajes soportados. La fuente de
-verdad para los targets oficiales es `src/pcobra/cobra/transpilers/targets.py`
-a través de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS`. La
+verdad para los targets oficiales es `src/pcobra/cobra/config/transpile_targets.py`
+a través de `TARGETS_BY_TIER`, `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS`. La
 documentación pública y los archivos de configuración deben usar únicamente los
 nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y
 `asm`.

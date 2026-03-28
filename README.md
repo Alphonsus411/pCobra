@@ -15,7 +15,7 @@ Versión 10.0.12
 
 [English version available here](docs/README.en.md)
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida derivada automáticamente de `src/pcobra/cobra/transpilers/targets.py` + `src/pcobra/cobra/transpilers/registry.py`.
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida derivada automáticamente de `src/pcobra/cobra/config/transpile_targets.py` + `src/pcobra/cobra/transpilers/registry.py`.
 
 Resumen normativo visible (generado desde la política canónica):
 
@@ -37,11 +37,11 @@ Tiers oficiales de soporte de backends:
 - **Tier 2**: `go`, `cpp`, `java`, `asm`.
 <!-- END GENERATED TARGET POLICY SUMMARY -->
 
-Fuentes normativas: `src/pcobra/cobra/transpilers/targets.py` para la lista canónica y los tiers, y `src/pcobra/cobra/cli/target_policies.py` para la separación entre transpilación, runtime oficial y verificación ejecutable.
+Fuentes normativas: `src/pcobra/cobra/config/transpile_targets.py` para la lista canónica y los tiers, y `src/pcobra/cobra/cli/target_policies.py` para la separación entre transpilación, runtime oficial y verificación ejecutable.
 
 ### Política de targets oficial
 
-La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/transpilers/targets.py`, con el registro canónico de backends en `src/pcobra/cobra/transpilers/registry.py`.
+La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/config/transpile_targets.py`, con el registro canónico de backends en `src/pcobra/cobra/transpilers/registry.py`.
 
 Además, el proyecto separa explícitamente **targets oficiales de salida** de **targets con runtime oficial de ejecución**. Hoy la ejecución oficial verificable —en sandbox, contenedor o comando de verificación— cubre `python`, `javascript`, `cpp` y `rust`, tal y como reflejan `src/pcobra/cobra/cli/target_policies.py`, `src/pcobra/core/sandbox.py`, `src/pcobra/cobra/cli/commands/verify_cmd.py` y el objetivo `make docker`. En la misma categoría quedan el soporte oficial mantenido de `corelibs`/`standard_library` y el soporte Holobit mantenido por el proyecto en esos runtimes. Los targets `go` y `java` se conservan como **runtime best-effort**, mientras que `wasm` y `asm` son **targets solo de transpilación**. Ninguna de esas categorías debe interpretarse como runtime Docker/sandbox oficial equivalente, ni como soporte oficial de librerías en ejecución comparable al de `python`, `rust`, `javascript` o `cpp`.
 

@@ -62,7 +62,7 @@ Cobra fue creado con la idea de facilitar la programación en español y añadir
 
 .. include:: ../_generated/target_policy_summary.rst
 
-La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/cobra/cli/target_policies.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y no presentar artefactos internos como si fueran backends adicionales.
+La fuente de verdad de esta clasificación está en ``src/pcobra/cobra/config/transpile_targets.py`` y ``src/pcobra/cobra/cli/target_policies.py``. La documentación pública debe usar exclusivamente estos nombres canónicos y no presentar artefactos internos como si fueran backends adicionales.
 
 Repositorio de Ejemplos
 ----------------------

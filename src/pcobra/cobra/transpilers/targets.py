@@ -4,21 +4,15 @@ from __future__ import annotations
 
 from typing import Final
 
-EXPECTED_CANONICAL_TARGETS: Final[tuple[str, ...]] = (
-    "python",
-    "rust",
-    "javascript",
-    "wasm",
-    "go",
-    "cpp",
-    "java",
-    "asm",
+from pcobra.cobra.config.transpile_targets import (
+    ALLOWED_TARGETS,
+    OFFICIAL_TARGETS,
+    TARGETS_BY_TIER,
+    TIER1_TARGETS,
+    TIER2_TARGETS,
 )
 
-_TIER1_SIZE: Final[int] = 4
-TIER1_TARGETS: Final[tuple[str, ...]] = EXPECTED_CANONICAL_TARGETS[:_TIER1_SIZE]
-TIER2_TARGETS: Final[tuple[str, ...]] = EXPECTED_CANONICAL_TARGETS[_TIER1_SIZE:]
-OFFICIAL_TARGETS: Final[tuple[str, ...]] = EXPECTED_CANONICAL_TARGETS
+EXPECTED_CANONICAL_TARGETS: Final[tuple[str, ...]] = ALLOWED_TARGETS
 
 
 def _canonical_diff_report(
@@ -31,10 +25,10 @@ def _canonical_diff_report(
     return f"missing={missing or '∅'}; extras={extras or '∅'}; current={current}; expected={expected}"
 
 
-if TIER1_TARGETS != EXPECTED_CANONICAL_TARGETS[:_TIER1_SIZE] or TIER2_TARGETS != EXPECTED_CANONICAL_TARGETS[_TIER1_SIZE:]:
+if tuple(TARGETS_BY_TIER) != ("tier_1", "tier_2"):
     raise RuntimeError(
-        "TIER1_TARGETS/TIER2_TARGETS deben permanecer fijados al contrato canónico de 8 targets. "
-        + _canonical_diff_report(current=TIER1_TARGETS + TIER2_TARGETS)
+        "TARGETS_BY_TIER debe exponer exactamente los grupos tier_1 y tier_2. "
+        f"current={tuple(TARGETS_BY_TIER)}"
     )
 
 if OFFICIAL_TARGETS != EXPECTED_CANONICAL_TARGETS:

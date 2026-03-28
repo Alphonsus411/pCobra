@@ -9,7 +9,7 @@ Resumen normativo derivado automáticamente desde la política canónica:
 
 Fuentes normativas visibles:
 
-- ``src/pcobra/cobra/transpilers/targets.py`` para la lista canónica y los tiers.
+- ``src/pcobra/cobra/config/transpile_targets.py`` para la lista canónica y los tiers.
 - ``src/pcobra/cobra/cli/target_policies.py`` para la separación entre transpilación, runtime oficial, runtime best-effort y compatibilidad SDK.
 - ``src/pcobra/cobra/transpilers/compatibility_matrix.py`` para el estado contractual de Holobit, ``corelibs`` y ``standard_library``.
 
