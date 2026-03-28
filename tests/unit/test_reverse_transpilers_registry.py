@@ -1,4 +1,5 @@
 import importlib
+import sys
 
 
 def test_reverse_transpilers_registry_matches_policy_scope():
@@ -43,5 +44,15 @@ def test_reverse_policy_modules_solo_incluyen_scope_canonico():
 
 def test_reverse_registry_no_habilita_fallback_legacy_publico_por_defecto():
     reverse_mod = importlib.import_module("pcobra.cobra.transpilers.reverse")
+    assert getattr(reverse_mod, "_LEGACY_IMPORT_PHASE") == 1
+    assert getattr(reverse_mod, "_ALLOW_INTERNAL_LEGACY_FALLBACKS") is True
+
+
+def test_reverse_policy_fase_invalida_usa_default_robusto(monkeypatch):
+    monkeypatch.setenv("PCOBRA_LEGACY_IMPORT_PHASE", "beta")
+    sys.modules.pop("pcobra.cobra.transpilers.reverse", None)
+
+    reverse_mod = importlib.import_module("pcobra.cobra.transpilers.reverse")
+
     assert getattr(reverse_mod, "_LEGACY_IMPORT_PHASE") == 1
     assert getattr(reverse_mod, "_ALLOW_INTERNAL_LEGACY_FALLBACKS") is True

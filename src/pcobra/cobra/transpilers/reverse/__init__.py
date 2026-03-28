@@ -39,11 +39,20 @@ except ModuleNotFoundError as exc:  # pragma: no cover - sin tree_sitter
 
 logger = logging.getLogger(__name__)
 
-_LEGACY_IMPORT_PHASE = int(os.environ.get("PCOBRA_LEGACY_IMPORT_PHASE", "1") or "1")
-if _LEGACY_IMPORT_PHASE < 1:
-    _LEGACY_IMPORT_PHASE = 1
-if _LEGACY_IMPORT_PHASE > 3:
-    _LEGACY_IMPORT_PHASE = 3
+def _resolve_legacy_import_phase() -> int:
+    raw_phase = os.environ.get("PCOBRA_LEGACY_IMPORT_PHASE", "1") or "1"
+    try:
+        phase = int(raw_phase)
+    except (TypeError, ValueError):
+        phase = 1
+    if phase < 1:
+        return 1
+    if phase > 3:
+        return 3
+    return phase
+
+
+_LEGACY_IMPORT_PHASE = _resolve_legacy_import_phase()
 _ALLOW_INTERNAL_LEGACY_FALLBACKS = _LEGACY_IMPORT_PHASE <= 1 or (
     _LEGACY_IMPORT_PHASE == 2
     and (

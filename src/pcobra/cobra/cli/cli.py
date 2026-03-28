@@ -37,7 +37,6 @@ from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
 from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
 from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
 from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
-from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.plugin import descubrir_plugins
@@ -53,6 +52,12 @@ from pcobra.cobra.cli.utils.autocomplete import (
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
+
+
+def get_origin_choices() -> List[str]:
+    from pcobra.cobra.cli.commands.transpilar_inverso_cmd import ORIGIN_CHOICES
+
+    return list(ORIGIN_CHOICES)
 
 
 class LogLevel(Enum):
@@ -81,9 +86,17 @@ class AppConfig:
         BenchCommand, BenchmarksCommand, BenchmarksV2Command,
         BenchTranspilersCommand, BenchThreadsCommand,
         ProfileCommand, QualiaCommand, CacheCommand,
-        TranspilarInversoCommand, VerifyCommand,
+        VerifyCommand,
         PluginsCommand, AgixCommand
     ]
+
+    @classmethod
+    def get_base_command_classes(cls) -> List[Type[BaseCommand]]:
+        from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
+            TranspilarInversoCommand,
+        )
+
+        return [*cls.BASE_COMMAND_CLASSES, TranspilarInversoCommand]
 
 
 class CommandRegistry:
@@ -104,7 +117,7 @@ class CommandRegistry:
 
     def register_base_commands(self, subparsers: Any) -> Dict[str, BaseCommand]:
         base_commands = []
-        for cmd_class in AppConfig.BASE_COMMAND_CLASSES:
+        for cmd_class in AppConfig.get_base_command_classes():
             try:
                 base_commands.append(self.create_command(cmd_class))
             except Exception as e:
@@ -288,7 +301,7 @@ class CliApplication:
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
         print(_("Lenguajes de origen disponibles:"))
-        print(", ".join(ORIGIN_CHOICES))
+        print(", ".join(get_origin_choices()))
 
         if not input(_("¿Desea transpilar? (s/n): ")).strip().lower().startswith("s"):
             return 0
@@ -333,11 +346,15 @@ class CliApplication:
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
-            self.initialize()
             if argv is None:
                 argv = sys.argv[1:]
                 if "PYTEST_CURRENT_TEST" in environ and not argv:
                     argv = []
+
+            if self._argv_requests_legacy_imports(argv):
+                os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+
+            self.initialize()
 
             try:
                 args = self._parse_arguments(argv)
@@ -358,6 +375,10 @@ class CliApplication:
                 logging.exception("Fatal error in application")
                 messages.mostrar_error(_("Fatal error: {}").format(str(e)))
                 return 1
+
+    @staticmethod
+    def _argv_requests_legacy_imports(argv: List[str]) -> bool:
+        return "--legacy-imports" in argv
 
 
 def main(argv: Optional[List[str]] = None) -> int:
