@@ -15,6 +15,7 @@ from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
     format_target_sequence,
     normalize_target_name,
+    require_exact_official_targets,
     require_official_target_subset,
     target_cli_choices,
 )
@@ -33,7 +34,10 @@ def accepted_target_aliases_examples_text() -> str:
 
 
 # Todos los destinos oficiales de generación/transpilación.
-OFFICIAL_TRANSPILATION_TARGETS = OFFICIAL_TARGETS
+OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
+    OFFICIAL_TARGETS,
+    context="pcobra.cobra.cli.target_policies.OFFICIAL_TRANSPILATION_TARGETS",
+)
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
 OFFICIAL_RUNTIME_TARGETS = target_cli_choices(("python", "javascript", "cpp", "rust"))
@@ -358,7 +362,10 @@ def restricted_target_error(*, unsupported: list[str], capability: str, allowed_
 
 def parse_target(value: str) -> str:
     """Valida target CLI aceptando solo nombres canónicos oficiales."""
-    canonical = normalize_target_name(value)
+    raw = value.strip()
+    if not raw:
+        raise ArgumentTypeError(invalid_target_error(value))
+    canonical = normalize_target_name(raw)
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))
     return canonical

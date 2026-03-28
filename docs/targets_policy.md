@@ -37,6 +37,18 @@ La política operativa de runtime, Holobit y SDK se deriva de `src/pcobra/cobra/
 
 En CLI, documentación, ejemplos, tablas y configuración pública **solo** se aceptan esos 8 nombres canónicos.
 
+## Gobernanza de cambios de targets
+
+La lista canónica de 8 targets (`TIER1_TARGETS`, `TIER2_TARGETS`, `OFFICIAL_TARGETS`) está congelada por contrato operativo.
+
+Cualquier extensión del alcance (por ejemplo, introducir un noveno target, mover targets entre tiers, o reemplazar un nombre canónico) **requiere obligatoriamente**:
+
+1. RFC explícita aprobada por mantenedores.
+2. Plan de migración versionado (código, CLI, documentación, pruebas y artefactos).
+3. Comunicación de compatibilidad/ruptura en changelog y notas de release.
+
+No se permiten ampliaciones silenciosas ni “pequeños” cambios ad hoc al registro/CLI que alteren el conjunto oficial sin ese proceso.
+
 ## Estado público por backend
 
 <!-- BEGIN GENERATED TARGET STATUS TABLE -->

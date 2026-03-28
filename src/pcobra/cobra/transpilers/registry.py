@@ -9,6 +9,7 @@ from pcobra.cobra.transpilers.target_utils import (
     require_exact_official_targets,
     target_cli_choices,
 )
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
@@ -22,13 +23,30 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 }
 
 
+def _validate_registry_contract() -> tuple[str, ...]:
+    """Valida que el registro declare exactamente los 8 targets oficiales."""
+    try:
+        return require_exact_official_targets(
+            TRANSPILER_CLASS_PATHS,
+            context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
+        )
+    except RuntimeError as exc:
+        configured_keys = tuple(TRANSPILER_CLASS_PATHS)
+        extras = tuple(key for key in configured_keys if key not in OFFICIAL_TARGETS)
+        if extras:
+            raise RuntimeError(
+                "TRANSPILER_CLASS_PATHS solo puede declarar los 8 targets canónicos "
+                f"{OFFICIAL_TARGETS}. Se detectaron claves fuera de contrato: {extras}."
+            ) from exc
+        raise
+
+
+_ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = _validate_registry_contract()
+
+
 def ordered_official_transpiler_paths() -> tuple[tuple[str, tuple[str, str]], ...]:
     """Devuelve el registro canónico en el orden de ``OFFICIAL_TARGETS``."""
-    ordered_targets = require_exact_official_targets(
-        TRANSPILER_CLASS_PATHS,
-        context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
-    )
-    return tuple((target, TRANSPILER_CLASS_PATHS[target]) for target in ordered_targets)
+    return tuple((target, TRANSPILER_CLASS_PATHS[target]) for target in _ORDERED_OFFICIAL_TARGETS)
 
 
 def build_official_transpilers() -> dict[str, type]:
@@ -42,12 +60,7 @@ def build_official_transpilers() -> dict[str, type]:
 
 def official_transpiler_targets() -> tuple[str, ...]:
     """Devuelve los targets del registro canónico en el orden oficial."""
-    return target_cli_choices(
-        require_exact_official_targets(
-            TRANSPILER_CLASS_PATHS,
-            context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
-        )
-    )
+    return target_cli_choices(_ORDERED_OFFICIAL_TARGETS)
 
 
 def official_transpiler_module_filenames() -> tuple[str, ...]:
