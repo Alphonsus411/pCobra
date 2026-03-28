@@ -393,3 +393,29 @@ def test_cli_agix_help(tmp_path: Path) -> None:
     stdout = result.stdout
     assert stdout.startswith("usage: cobra agix")
     assert "--peso-precision" in stdout
+
+
+@pytest.mark.timeout(30)
+def test_cli_y_kernel_arrancan_con_namespace_canonico_en_entorno_minimo(tmp_path: Path) -> None:
+    env = _create_stub_environment(tmp_path)
+    env["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "0"
+    env["PCOBRA_LEGACY_IMPORT_PHASE"] = "2"
+    cmd = [
+        sys.executable,
+        "-c",
+        (
+            "import pcobra.cobra.cli.cli as cli_mod; "
+            "import pcobra.jupyter_kernel as kernel_mod; "
+            "assert hasattr(cli_mod, 'main'); "
+            "assert hasattr(kernel_mod, 'CobraKernel')"
+        ),
+    ]
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
