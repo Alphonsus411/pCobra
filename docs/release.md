@@ -46,3 +46,15 @@ Antes de etiquetar una versión, confirma explícitamente:
 - [ ] No hay referencias activas en reverse fuera del set oficial de entrada (`python`, `javascript`, `java`).
 - [ ] `examples/`, `extensions/`, `scripts/benchmarks/` y `docker/` están alineados con el alcance oficial.
 - [ ] Se ejecutó un barrido final de cadenas y rutas para detectar residuos antes de publicar.
+
+
+## Checklist de release notes (equipo Holobit)
+
+Antes de publicar una versión con cambios de política de targets:
+
+- [ ] Incluir en release notes la ventana de deprecación vigente (inicio y versión de eliminación definitiva).
+- [ ] Publicar breaking changes con alternativas concretas (`js -> javascript`, `c++ -> cpp`, `ensamblador -> asm`, etc.).
+- [ ] Adjuntar pasos de migración para CI/scripts (`--backend`, `--tipo`, `--tipos`, `--lenguajes`).
+- [ ] Ejecutar `python scripts/audit_retired_targets.py <ruta_proyecto>` sobre repos de referencia del ecosistema.
+- [ ] Coordinar copy final con equipo Holobit y validar FAQ de impacto:
+  `docs/compatibility/holobit_target_deprecation_faq.md`.

@@ -342,3 +342,19 @@ Al cerrar esta batería:
 - desaparecen restos productivos/documentales que puedan reabrir targets legacy o aliases públicos;
 - la CI blinda la reintroducción de divergencias entre código, CLI, tests y documentación;
 - el contrato Holobit/`corelibs`/`standard_library` queda mantenido sin sobredimensionar compatibilidad real ni runtime oficial.
+
+## Addendum operativo (2026-03-28): deprecación de nombres/targets retirados
+
+1. **Ventana de deprecación**
+   - Inicio oficial: `v10.0.10`.
+   - Eliminación definitiva: `v10.2.0`.
+2. **Avisos en runtime/CLI**
+   - Alias históricos aún aceptados (`c++`, `ensamblador`) emiten `DeprecationWarning` con versión de retirada.
+   - Nombres retirados (`js`, `py`, `node`, etc.) muestran error con alternativa recomendada.
+3. **Changelog y migración**
+   - Se añadió bloque de breaking changes con alternativas canónicas y pasos de migración.
+4. **Auditoría automatizada**
+   - Script nuevo: `scripts/audit_retired_targets.py`.
+5. **Coordinación release notes + Holobit + FAQ**
+   - Checklist de release en `docs/release.md`.
+   - FAQ de impacto en `docs/compatibility/holobit_target_deprecation_faq.md`.

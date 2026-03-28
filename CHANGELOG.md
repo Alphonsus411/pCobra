@@ -4,6 +4,12 @@
 - Incorporación del generador de ensamblador basado en el IR de Hololang y documentación asociada.
 
 ## v10.0.10 - Pendiente de liberación
+- **Breaking changes (política de targets retirados)**
+  - Se define ventana formal de deprecación para nombres retirados/legacy: inicio en `v10.0.10` y eliminación definitiva en `v10.2.0`.
+  - Alias históricos de CLI (`c++`, `ensamblador`) siguen funcionando temporalmente, pero ahora emiten `DeprecationWarning` con versión de retirada.
+  - Nombres legacy/ambiguos retirados (`js`, `py`, `node`, `golang`, `jvm`, etc.) siguen rechazados y el error ahora incluye alternativa recomendada y fecha de eliminación definitiva.
+  - Se añade `scripts/audit_retired_targets.py` para detectar proyectos/documentación/CI que todavía usen nombres retirados.
+  - Migración recomendada: normalizar todo a nombres canónicos (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`) en scripts, docs y pipelines.
 - Migración de la caché incremental a SQLitePlus con base en `~/.cobra/sqliteplus/core.db`.
 - Nuevas variables de entorno `SQLITE_DB_KEY` (obligatoria) y `COBRA_DB_PATH` (opcional) documentadas para configurar la base de datos.
 - Actualización de la dependencia `agix` para requerir al menos la versión 1.4

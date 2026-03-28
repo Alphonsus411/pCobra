@@ -13,6 +13,10 @@ TARGET_ALIASES: Final[dict[str, str]] = {
     "c++": "cpp",
 }
 
+# Ventana de deprecación pública para alias/targets retirados.
+DEPRECATION_WINDOW_START_VERSION: Final[str] = "10.0.10"
+DEPRECATION_WINDOW_REMOVAL_VERSION: Final[str] = "10.2.0"
+
 # Alias/nombres legacy o ambiguos que no forman parte del contrato público.
 # Se rechazan explícitamente para evitar aceptación accidental en CLI/plugins.
 LEGACY_OR_AMBIGUOUS_TARGETS: Final[tuple[str, ...]] = (
@@ -32,6 +36,24 @@ LEGACY_OR_AMBIGUOUS_TARGETS: Final[tuple[str, ...]] = (
     "jvm",
 )
 
+# Recomendación canónica por cada nombre retirado.
+RETIRED_TARGET_REPLACEMENTS: Final[dict[str, str]] = {
+    "assembly": "asm",
+    "js": "javascript",
+    "c": "cpp",
+    "cxx": "cpp",
+    "cpp11": "cpp",
+    "cpp17": "cpp",
+    "asm64": "asm",
+    "assembler": "asm",
+    "node": "javascript",
+    "nodejs": "javascript",
+    "py": "python",
+    "python3": "python",
+    "golang": "go",
+    "jvm": "java",
+}
+
 TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "python": "Python",
     "rust": "Rust",
@@ -48,6 +70,23 @@ def normalize_target_name(target: str) -> str:
     """Normaliza *target* al nombre canónico usado internamente."""
     canonical = target.strip().lower()
     return TARGET_ALIASES.get(canonical, canonical)
+
+
+def deprecation_window_text() -> str:
+    """Devuelve la ventana de deprecación para mensajes de CLI/docs."""
+    return (
+        f"deprecado desde v{DEPRECATION_WINDOW_START_VERSION}; "
+        f"eliminación definitiva en v{DEPRECATION_WINDOW_REMOVAL_VERSION}"
+    )
+
+
+def retired_target_migration_hint(target: str) -> str:
+    """Construye una recomendación de migración para nombres retirados."""
+    canonical = target.strip().lower()
+    suggested = RETIRED_TARGET_REPLACEMENTS.get(canonical)
+    if suggested:
+        return f"alternativa recomendada: '{suggested}'"
+    return "usa un target canónico oficial"
 
 
 def resolution_candidates(target: str) -> tuple[str, ...]:
