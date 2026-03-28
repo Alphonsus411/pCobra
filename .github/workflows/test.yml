@@ -98,8 +98,11 @@ jobs:
         shell: pwsh
         run: |
           python scripts/generate_target_policy_docs.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/generar_matriz_transpiladores.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code -- docs/targets_policy.md docs/matriz_transpiladores.md docs/matriz_transpiladores.csv docs/_generated README.md docs/README.en.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Validate runtime contract matrix (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
