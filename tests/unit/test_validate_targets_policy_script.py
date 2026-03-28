@@ -162,6 +162,25 @@ def test_ci_validate_targets_guardrail_permite_exclusiones_de_packaging(monkeypa
     assert ci_validator.validate_retired_targets_guardrail() == []
 
 
+def test_ci_validate_targets_guardrail_bloquea_reinclusion_de_retired_targets_en_packaging(
+    monkeypatch, tmp_path
+):
+    from scripts.ci import validate_targets as ci_validator
+
+    clean_doc = tmp_path / "README.md"
+    clean_doc.write_text("sin referencias históricas retiradas", encoding="utf-8")
+    packaging = tmp_path / "MANIFEST.in"
+    packaging.write_text("include archive/retired_targets/*\n", encoding="utf-8")
+    monkeypatch.setattr(ci_validator, "DOC_INDEX_GUARDRAIL_PATHS", (clean_doc.as_posix(),))
+    monkeypatch.setattr(ci_validator, "PACKAGING_GUARDRAIL_PATHS", (packaging.as_posix(),))
+    monkeypatch.setattr(ci_validator, "IMPORT_GUARDRAIL_SCAN_ROOTS", tuple())
+
+    errors = ci_validator.validate_retired_targets_guardrail()
+
+    assert any("fuga de histórico retirado en rutas de packaging" in error for error in errors)
+    assert any("MANIFEST.in:1" in error for error in errors)
+
+
 def test_ci_validate_targets_bloquea_dependencias_productivas_a_retired_targets(monkeypatch, tmp_path):
     from scripts.ci import validate_targets as ci_validator
 
