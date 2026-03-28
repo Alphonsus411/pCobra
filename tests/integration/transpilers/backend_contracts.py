@@ -112,7 +112,7 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
         ),
         "transformar": (
             "fn cobra_transformar",
-            'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[90 as f64]));',
+            'cobra_runtime_expect(cobra_transformar(&hb, &format!("{}", "rotar"), &[format!("{}", 90)]));',
         ),
         "graficar": ("fn cobra_graficar", 'cobra_runtime_expect(cobra_graficar(&hb));'),
         "corelibs": ('fn longitud<T: ToString>(valor: T) -> usize {', 'longitud("cobra");'),
@@ -175,6 +175,144 @@ PARTIAL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
     },
 }
 
+
+CANONICAL_PROGRAM_FIXTURES: Final[dict[str, dict[str, object]]] = {
+    "holobit": {
+        "description": "Creación canónica de holobit",
+        "source": "hb = holobit([1, 2, 3])",
+        "nodes": FEATURE_NODES["holobit"](),
+    },
+    "proyectar": {
+        "description": "Proyección canónica sobre holobit",
+        "source": "hb = holobit([1, 2, 3])\nproyectar(hb, '2d')",
+        "nodes": FEATURE_NODES["proyectar"](),
+    },
+    "transformar": {
+        "description": "Transformación canónica sobre holobit",
+        "source": "hb = holobit([1, 2, 3])\ntransformar(hb, 'rotar', 90)",
+        "nodes": FEATURE_NODES["transformar"](),
+    },
+    "graficar": {
+        "description": "Graficado canónico de holobit",
+        "source": "hb = holobit([1, 2, 3])\ngraficar(hb)",
+        "nodes": FEATURE_NODES["graficar"](),
+    },
+    "corelibs": {
+        "description": "Llamada canónica a corelibs",
+        "source": "usar corelibs\nlongitud('cobra')",
+        "nodes": FEATURE_NODES["corelibs"](),
+    },
+    "standard_library": {
+        "description": "Llamada canónica a standard_library",
+        "source": "usar standard_library\nmostrar('hola')",
+        "nodes": FEATURE_NODES["standard_library"](),
+    },
+}
+
+CANONICAL_FULL_PROGRAM_FIXTURE: Final[dict[str, object]] = {
+    "description": "Programa canónico integral con holobit + runtime base",
+    "source": (
+        "usar corelibs\n"
+        "usar standard_library\n"
+        "hb = holobit([1, 2, 3])\n"
+        "proyectar(hb, '2d')\n"
+        "transformar(hb, 'rotar', 90)\n"
+        "graficar(hb)\n"
+        "longitud('cobra')\n"
+        "mostrar('hola')"
+    ),
+    "nodes": [
+        NodoHolobit("hb", [1, 2, 3]),
+        NodoProyectar(NodoIdentificador("hb"), NodoValor("2d")),
+        NodoTransformar(NodoIdentificador("hb"), NodoValor("rotar"), [NodoValor(90)]),
+        NodoGraficar(NodoIdentificador("hb")),
+        NodoLlamadaFuncion("longitud", [NodoValor("cobra")]),
+        NodoLlamadaFuncion("mostrar", [NodoValor("hola")]),
+    ],
+}
+
+PARTIAL_CONTRACT_ERROR_MARKERS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    "javascript": {
+        "proyectar": (
+            "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
+            "throw new Error(",
+        ),
+        "transformar": (
+            "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
+            "throw new Error(",
+        ),
+        "graficar": (
+            "Runtime Holobit JavaScript: feature=${feature}; contrato partial; backend sin holobit_sdk;",
+            "throw new Error(",
+        ),
+    },
+    "rust": {
+        "proyectar": (
+            "Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",
+            "cobra_holobit_partial_contract_error(",
+        ),
+        "transformar": (
+            "Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",
+            "cobra_holobit_partial_contract_error(",
+        ),
+        "graficar": (
+            "Runtime Holobit Rust: feature={}; contrato partial; backend sin holobit_sdk;",
+            "cobra_holobit_partial_contract_error(",
+        ),
+    },
+    "go": {
+        "proyectar": (
+            "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
+            "cobraHolobitPartialContractPanic(",
+        ),
+        "transformar": (
+            "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
+            "cobraHolobitPartialContractPanic(",
+        ),
+        "graficar": (
+            "Runtime Holobit Go: feature=%s; contrato partial; backend sin holobit_sdk;",
+            "cobraHolobitPartialContractPanic(",
+        ),
+    },
+    "cpp": {
+        "proyectar": (
+            "Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            "cobra_holobit_partial_contract_error(",
+        ),
+        "transformar": (
+            "Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            "cobra_holobit_partial_contract_error(",
+        ),
+        "graficar": (
+            "Runtime Holobit C++: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            "cobra_holobit_partial_contract_error(",
+        ),
+    },
+    "java": {
+        "proyectar": (
+            "Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            "cobraHolobitPartialContractError(",
+        ),
+        "transformar": (
+            "Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            "cobraHolobitPartialContractError(",
+        ),
+        "graficar": (
+            "Runtime Holobit Java: feature=\" + feature + \"; contrato partial; backend sin holobit_sdk;",
+            "cobraHolobitPartialContractError(",
+        ),
+    },
+    "wasm": {
+        "proyectar": ("backend wasm: contrato partial", "depende del host para la semántica completa"),
+        "transformar": ("backend wasm: contrato partial", "depende del host para la semántica completa"),
+        "graficar": ("backend wasm: contrato partial", "depende del host para la semántica completa"),
+    },
+    "asm": {
+        "proyectar": ("runtime de inspección/diagnóstico", "TRAP"),
+        "transformar": ("runtime de inspección/diagnóstico", "TRAP"),
+        "graficar": ("runtime de inspección/diagnóstico", "TRAP"),
+    },
+}
 RUNTIME_HOOK_EXPECTATIONS: Final[dict[str, tuple[str, ...]]] = {
     "python": ("def cobra_holobit", "def cobra_proyectar", "def cobra_transformar", "def cobra_graficar"),
     "javascript": ("function cobra_holobit", "function cobra_proyectar", "function cobra_transformar", "function cobra_graficar"),
@@ -202,3 +340,8 @@ def generate_code(language: str, feature: str) -> str:
     transpiler_class = getattr(importlib.import_module(module_name), class_name)
     output = transpiler_class().generate_code(FEATURE_NODES[feature]())
     return "\n".join(output) if isinstance(output, list) else str(output)
+
+
+def canonical_fixture_nodes(feature: str) -> list[object]:
+    fixture = CANONICAL_PROGRAM_FIXTURES[feature]
+    return list(fixture["nodes"])
