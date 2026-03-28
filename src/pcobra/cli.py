@@ -1,4 +1,3 @@
-import importlib
 import logging
 import sys
 from importlib import import_module
@@ -19,10 +18,9 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
     load_dotenv = None
 
-from pcobra import cobra as cobra_pkg
-from pcobra import compiler as compiler_pkg
-from pcobra import core as core_pkg
-from pcobra.cobra.cli import commands as cobra_cli_commands
+from src.pcobra import cobra as cobra_pkg
+from src.core import compiler as compiler_pkg
+from src import core as core_pkg
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +60,7 @@ def _configurar_alias_paquete_cli() -> None:
 
 
 _configurar_alias_paquete_cli()
-from pcobra.cobra.cli.cli import CliApplication
+from .cobra.cli.cli import CliApplication
 
 # Registrar alias de paquetes para compatibilidad con imports absolutos
 sys.modules.setdefault("cobra", cobra_pkg)
