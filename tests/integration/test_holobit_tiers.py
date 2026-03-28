@@ -159,6 +159,25 @@ def test_runtime_hooks_incluyen_mensajes_contractuales_por_backend(backend):
         assert marker in salida
 
 
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+@pytest.mark.parametrize("feature", ("holobit", "proyectar", "transformar", "graficar"))
+def test_hooks_runtime_respetan_nivel_full_partial_de_matriz(backend: str, feature: str):
+    salida = _transpilar(HOLOBIT_CASES[feature], backend)
+    level = BACKEND_COMPATIBILITY[backend][feature]
+    assert level in {"full", "partial"}
+    if level == "full":
+        assert backend == "python"
+        assert "Runtime Holobit Python:" in salida
+    else:
+        assert "partial" in salida.lower()
+        if backend == "wasm":
+            assert "host-managed" in salida
+        elif backend == "asm":
+            assert "TRAP" in salida
+        else:
+            assert "holobit_sdk" in salida
+
+
 def test_only_python_es_full_para_holobit_y_runtime_base():
     assert SDK_FULL_BACKENDS == ("python",)
     assert set(SDK_FULL_BACKENDS).isdisjoint(SDK_PARTIAL_BACKENDS)

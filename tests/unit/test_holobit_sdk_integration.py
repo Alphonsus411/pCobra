@@ -1,7 +1,13 @@
 import pytest
 from core.holobits import Holobit, graficar, proyectar, transformar
 from pcobra.cobra.cli.target_policies import SDK_COMPATIBLE_TARGETS
-from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY, CONTRACT_FEATURES
+from pcobra.cobra.transpilers.compatibility_matrix import (
+    BACKEND_COMPATIBILITY,
+    CONTRACT_FEATURES,
+    SDK_FULL_BACKENDS,
+    SDK_PARTIAL_BACKENDS,
+)
+from pcobra.cobra.transpilers.common.utils import get_runtime_hooks
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
@@ -50,7 +56,7 @@ def test_transformar_usa_sdk(monkeypatch):
 
 
 def test_python_es_el_unico_backend_con_sdk_full():
-    assert SDK_COMPATIBLE_TARGETS == ("python",)
+    assert SDK_COMPATIBLE_TARGETS == SDK_FULL_BACKENDS == ("python",)
     for feature in CONTRACT_FEATURES:
         full_backends = {
             backend
@@ -72,3 +78,15 @@ def test_sdk_policy_y_matriz_coinciden_para_cada_target_oficial(backend: str):
         assert policy_declares_sdk
     else:
         assert not policy_declares_sdk
+
+
+def test_sdk_partial_backends_coinciden_con_official_targets_menos_python():
+    assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
+
+
+@pytest.mark.parametrize("backend", SDK_PARTIAL_BACKENDS)
+def test_backends_partial_declaran_fallo_o_limite_explicito_en_hooks(backend: str):
+    hook_blob = "\n".join(get_runtime_hooks(backend))
+    assert "partial" in hook_blob.lower()
+    if backend != "wasm":
+        assert "holobit_sdk" in hook_blob
