@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -13,6 +13,8 @@ from pcobra.cobra.cli.target_policies import (
     DOCKER_EXECUTABLE_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
     TRANSPILATION_ONLY_TARGETS,
+    legacy_or_ambiguous_target_error,
+    parse_target,
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
@@ -141,3 +143,69 @@ def test_tests_documentan_las_tres_categorias_publicas_de_targets():
 def test_tests_documentan_best_effort_experimental_sin_ampliar_el_set_oficial():
     assert BEST_EFFORT_RUNTIME_TARGETS == ("go", "java")
     assert len(OFFICIAL_TARGETS) == 8
+
+
+LEGACY_ALIASES_RECHAZADOS = (
+    "assembly",
+    "js",
+    "c",
+    "cxx",
+    "cpp11",
+    "cpp17",
+    "asm64",
+    "assembler",
+    "node",
+    "nodejs",
+    "py",
+    "python3",
+    "golang",
+    "jvm",
+)
+
+
+@pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)
+def test_compile_rechaza_cada_alias_legacy_con_mensaje_uniforme(legacy_alias):
+    parser = _build_parser_for(CompileCommand())
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["compilar", "archivo.co", "--tipo", legacy_alias])
+
+
+@pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)
+def test_interactive_rechaza_cada_alias_legacy_con_mensaje_uniforme(legacy_alias):
+    parser = _build_parser_for(InteractiveCommand(MagicMock()))
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["interactive", "--sandbox-docker", legacy_alias])
+
+
+@pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)
+def test_transpilar_inverso_rechaza_cada_alias_legacy_con_mensaje_uniforme(legacy_alias):
+    parser = _build_parser_for(TranspilarInversoCommand())
+
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "transpilar-inverso",
+            "archivo.py",
+            "--origen",
+            "python",
+            "--destino",
+            legacy_alias,
+        ])
+
+
+@pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)
+def test_verify_rechaza_cada_alias_legacy_con_mensaje_uniforme(legacy_alias):
+    parser = _build_parser_for(VerifyCommand())
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "archivo.co", "--lenguajes", legacy_alias])
+
+
+@pytest.mark.parametrize("legacy_alias", LEGACY_ALIASES_RECHAZADOS)
+def test_parse_target_usa_mensaje_uniforme_para_alias_legacy(legacy_alias):
+    with pytest.raises(ArgumentTypeError) as exc_info:
+        parse_target(legacy_alias)
+
+    assert "Target no permitido por nombre legacy/ambiguo" in str(exc_info.value)
+    assert str(exc_info.value) == legacy_or_ambiguous_target_error(legacy_alias)
