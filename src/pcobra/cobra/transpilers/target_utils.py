@@ -8,10 +8,7 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TI
 
 MarkupKind = Literal["plain", "markdown", "rst"]
 
-TARGET_ALIASES: Final[dict[str, str]] = {
-    "ensamblador": "asm",
-    "c++": "cpp",
-}
+TARGET_ALIASES: Final[dict[str, str]] = {}
 
 # Ventana de deprecación pública para alias/targets retirados.
 DEPRECATION_WINDOW_START_VERSION: Final[str] = "10.0.10"
@@ -20,6 +17,8 @@ DEPRECATION_WINDOW_REMOVAL_VERSION: Final[str] = "10.2.0"
 # Alias/nombres legacy o ambiguos que no forman parte del contrato público.
 # Se rechazan explícitamente para evitar aceptación accidental en CLI/plugins.
 LEGACY_OR_AMBIGUOUS_TARGETS: Final[tuple[str, ...]] = (
+    "c++",
+    "ensamblador",
     "assembly",
     "js",
     "c",
@@ -68,8 +67,7 @@ TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
 
 def normalize_target_name(target: str) -> str:
     """Normaliza *target* al nombre canónico usado internamente."""
-    canonical = target.strip().lower()
-    return TARGET_ALIASES.get(canonical, canonical)
+    return target.strip().lower()
 
 
 def deprecation_window_text() -> str:

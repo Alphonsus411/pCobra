@@ -7,6 +7,7 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCo
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.target_policies import (
     ACCEPTED_TARGET_ALIASES,
+    accepted_target_aliases_examples_text,
     invalid_target_error,
     legacy_or_ambiguous_target_error,
     parse_target,
@@ -15,7 +16,7 @@ from pcobra.cobra.cli.target_policies import (
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 
-ACCEPTED_ALIASES = (
+LEGACY_AMBIGUOUS_ALIASES = (
     ("c++", "cpp"),
     ("ensamblador", "asm"),
     ("C++", "cpp"),
@@ -42,14 +43,16 @@ def _build_parser_with_command(command):
     return parser
 
 
-@pytest.mark.parametrize(("alias", "canonical"), ACCEPTED_ALIASES)
-def test_parse_target_acepta_aliases_publicos(alias, canonical):
-    assert parse_target(alias) == canonical
+@pytest.mark.parametrize(("alias", "_canonical"), LEGACY_AMBIGUOUS_ALIASES)
+def test_parse_target_rechaza_aliases_legacy_o_ambiguos(alias, _canonical):
+    with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
+        parse_target(alias)
 
 
-@pytest.mark.parametrize(("alias", "canonical"), ACCEPTED_ALIASES)
-def test_parse_target_list_normaliza_aliases_en_mayusculas_y_minusculas(alias, canonical):
-    assert parse_target_list(f"python,{alias}") == ["python", canonical]
+@pytest.mark.parametrize(("alias", "_canonical"), LEGACY_AMBIGUOUS_ALIASES)
+def test_parse_target_list_rechaza_aliases_legacy_o_ambiguos(alias, _canonical):
+    with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
+        parse_target_list(f"python,{alias}")
 
 
 @pytest.mark.parametrize("alias", REJECTED_ALIASES)
@@ -65,67 +68,65 @@ def test_parse_target_rechaza_nombres_legacy_o_ambiguos_con_error_explicito(lega
     assert "nombres canónicos oficiales" in legacy_or_ambiguous_target_error(legacy_name)
 
 
-def test_compile_parser_acepta_alias_c_mas_mas_y_entrega_canonico():
+def test_compile_parser_rechaza_alias_c_mas_mas():
     parser = _build_parser_with_command(CompileCommand())
-    args = parser.parse_args(["compilar", "script.co", "--tipo", "C++"])
-    assert args.tipo == "cpp"
+    with pytest.raises(SystemExit):
+        parser.parse_args(["compilar", "script.co", "--tipo", "C++"])
 
 
-def test_compile_parser_acepta_alias_ensamblador_en_minusculas_y_entrega_canonico():
+def test_compile_parser_rechaza_alias_ensamblador_en_minusculas():
     parser = _build_parser_with_command(CompileCommand())
-    args = parser.parse_args(["compilar", "script.co", "--tipo", "ensamblador"])
-    assert args.tipo == "asm"
+    with pytest.raises(SystemExit):
+        parser.parse_args(["compilar", "script.co", "--tipo", "ensamblador"])
 
 
-def test_transpilar_inverso_parser_acepta_alias_ensamblador_y_entrega_canonico(tmp_path):
+def test_transpilar_inverso_parser_rechaza_alias_ensamblador(tmp_path):
     archivo = tmp_path / "script.py"
     archivo.write_text("print('ok')", encoding="utf-8")
 
     parser = _build_parser_with_command(TranspilarInversoCommand())
-    args = parser.parse_args(
-        [
-            "transpilar-inverso",
-            str(archivo),
-            "--origen",
-            "python",
-            "--destino",
-            "Ensamblador",
-        ]
-    )
-    assert args.destino == "asm"
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            [
+                "transpilar-inverso",
+                str(archivo),
+                "--origen",
+                "python",
+                "--destino",
+                "Ensamblador",
+            ]
+        )
 
 
-def test_transpilar_inverso_parser_acepta_alias_c_mas_mas_y_entrega_canonico(tmp_path):
+def test_transpilar_inverso_parser_rechaza_alias_c_mas_mas(tmp_path):
     archivo = tmp_path / "script.py"
     archivo.write_text("print('ok')", encoding="utf-8")
 
     parser = _build_parser_with_command(TranspilarInversoCommand())
-    args = parser.parse_args(
-        [
-            "transpilar-inverso",
-            str(archivo),
-            "--origen",
-            "python",
-            "--destino",
-            "C++",
-        ]
-    )
-    assert args.destino == "cpp"
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            [
+                "transpilar-inverso",
+                str(archivo),
+                "--origen",
+                "python",
+                "--destino",
+                "C++",
+            ]
+        )
 
 
-def test_verify_parser_acepta_alias_c_mas_mas_y_normaliza_a_canonico():
+def test_verify_parser_rechaza_alias_c_mas_mas():
     parser = _build_parser_with_command(VerifyCommand())
-    args = parser.parse_args(["verificar", "script.co", "--lenguajes", "python,C++"])
-    assert args.lenguajes == ["python", "cpp"]
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "script.co", "--lenguajes", "python,C++"])
 
 
-def test_verify_parser_normaliza_alias_ensamblador_y_falla_por_runtime_restringido(caplog):
+def test_verify_parser_rechaza_alias_ensamblador():
     parser = _build_parser_with_command(VerifyCommand())
 
     with pytest.raises(SystemExit):
         parser.parse_args(["verificar", "script.co", "--lenguajes", "python,Ensamblador"])
-
-    assert "targets solo de transpilación asm" in caplog.text
 
 
 def test_compile_parser_no_expone_aliases_en_choices_publicos():
@@ -137,7 +138,7 @@ def test_compile_parser_no_expone_aliases_en_choices_publicos():
 
     assert tuple(tipo_action.choices) == tuple(LANG_CHOICES)
     assert tuple(backend_action.choices) == tuple(LANG_CHOICES)
-    for alias, _ in ACCEPTED_ALIASES:
+    for alias, _ in LEGACY_AMBIGUOUS_ALIASES:
         assert alias not in tipo_action.choices
         assert alias not in backend_action.choices
 
@@ -161,7 +162,7 @@ def test_error_legacy_publico_no_reintroduce_aliases_en_texto():
     for target in EXPECTED_CANONICAL_TARGETS:
         assert target in error_text
 
-    for forbidden_token in (*REJECTED_ALIASES, *(alias.lower() for alias, _ in ACCEPTED_ALIASES)):
+    for forbidden_token in (*REJECTED_ALIASES, *(alias.lower() for alias, _ in LEGACY_AMBIGUOUS_ALIASES)):
         assert forbidden_token not in canonical_section
 
 
@@ -171,19 +172,13 @@ def test_la_whitelist_publica_sigue_canonica():
     assert targets == EXPECTED_CANONICAL_TARGETS
     assert len(targets) == 8
     assert len(set(targets)) == 8
-    for alias, _ in ACCEPTED_ALIASES:
+    for alias, _ in LEGACY_AMBIGUOUS_ALIASES:
         assert alias not in targets
 
 
-def test_aliases_publicos_no_amplian_el_set_canonico():
-    assert tuple(ACCEPTED_TARGET_ALIASES) == (
-        ("ensamblador", "asm"),
-        ("c++", "cpp"),
-    )
-
-    for alias, canonical in ACCEPTED_TARGET_ALIASES:
-        assert alias not in EXPECTED_CANONICAL_TARGETS
-        assert canonical in EXPECTED_CANONICAL_TARGETS
+def test_aliases_publicos_se_mantienen_vacios():
+    assert tuple(ACCEPTED_TARGET_ALIASES) == ()
+    assert accepted_target_aliases_examples_text() == "sin aliases públicos"
 
 
 def test_parse_target_rechaza_destino_fuera_del_set_canonico():

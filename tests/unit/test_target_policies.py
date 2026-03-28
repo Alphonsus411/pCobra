@@ -14,10 +14,9 @@ def test_parse_target_acepta_nombre_canonico():
     assert parse_target("javascript") == "javascript"
 
 
-def test_parse_target_alias_muestra_warning_con_ventana_deprecacion():
-    with pytest.warns(DeprecationWarning) as warns:
-        assert parse_target("c++") == "cpp"
-    assert "v10.0.10..v10.2.0" in str(warns[0].message)
+def test_parse_target_rechaza_alias_legacy_directamente():
+    with pytest.raises(ArgumentTypeError, match="legacy/ambiguo"):
+        parse_target("c++")
 
 
 def test_parse_target_legacy_expone_mensaje_con_migracion_y_version():

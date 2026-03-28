@@ -13,9 +13,9 @@ def test_api_parse_target_valido_canonico() -> None:
     assert parse_target("python") == "python"
 
 
-def test_api_parse_target_alias_permitido_deprecado() -> None:
-    with pytest.deprecated_call(match="Alias de target en desuso"):
-        assert parse_target("c++") == "cpp"
+def test_api_parse_target_alias_legacy_rechazado() -> None:
+    with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
+        parse_target("c++")
 
 
 def test_api_parse_target_invalido_muestra_lista_exacta_con_tiers() -> None:

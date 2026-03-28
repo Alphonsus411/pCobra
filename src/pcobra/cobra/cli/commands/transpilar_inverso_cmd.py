@@ -38,7 +38,6 @@ from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
-    normalize_target_name,
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
@@ -74,7 +73,7 @@ REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
 
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
     """Valida que un target pertenezca a la whitelist oficial."""
-    canonical = normalize_target_name(target)
+    canonical = parse_target(target)
     if canonical not in OFFICIAL_TARGETS:
         raise UnsupportedLanguageError(
             "Lenguaje de destino fuera de Tier 1/Tier 2 en {context}: "
