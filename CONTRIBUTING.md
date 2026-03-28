@@ -142,8 +142,8 @@ Y el alcance reverse oficial actual es:
 - `javascript`
 - `java`
 
-La CI valida automáticamente que no aparezcan artefactos de backends no oficiales,
-retirados o aliases públicos no permitidos en:
+La CI valida automáticamente que no aparezcan artefactos de backends no oficiales
+o aliases públicos no permitidos en:
 
 - `src/pcobra/cobra/transpilers/transpiler/`
 - `src/pcobra/cobra/transpilers/reverse/`

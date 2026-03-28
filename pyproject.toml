@@ -94,7 +94,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.exclude-package-data]
 "*" = [
-    "archive/retired_targets/*",
     "docs/historico/*",
     "docs/experimental/*",
 ]

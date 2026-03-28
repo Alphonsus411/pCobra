@@ -11,7 +11,6 @@ include scripts/install.sh
 include scripts/run.sh
 include .env.example
 
-prune archive/retired_targets
 prune docs/historico
 prune docs/experimental
 
