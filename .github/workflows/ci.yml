@@ -434,4 +434,8 @@ jobs:
         shell: bash
         run: |
           pytest tests/integration/test_holobit_tiers.py \
-            tests/integration/transpilers/test_official_backends_contracts.py
+            tests/integration/transpilers/test_official_backends_contracts.py \
+            tests/integration/transpilers/test_library_compatibility_matrix.py
+      - name: Validate technical library compatibility matrix
+        shell: bash
+        run: python scripts/ci/validate_library_compatibility_matrix.py
