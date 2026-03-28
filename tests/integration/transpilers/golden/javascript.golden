@@ -65,7 +65,7 @@ function cobraNormalizarHolobit(hb) {
     if (Array.isArray(hb)) {
         return cobra_holobit(hb);
     }
-    cobraHolobitPartialContractError('holobit', `valor no compatible para holobit: ${String(hb)}`);
+    cobraHolobitPartialContractError('holobit', `valor no compatible para holobit bajo contrato partial (sin fallback): ${String(hb)}`);
 }
 
 function cobraCrearVectorDimension(valores, dimension) {
@@ -101,7 +101,7 @@ function cobra_proyectar(hb, modo) {
         case 'vector':
             return [...holobit.valores];
         default:
-            cobraHolobitPartialContractError('proyectar', `modo de proyección no soportado por el adaptador oficial: ${modo}`);
+            cobraHolobitPartialContractError('proyectar', `modo de proyección no soportado por contrato partial del adaptador oficial (sin fallback): ${modo}`);
     }
 }
 
@@ -130,7 +130,7 @@ function cobra_transformar(hb, op, ...params) {
         const radianes = (grados * Math.PI) / 180;
         valores = cobraCrearVectorDimension(valores, 3);
         if (eje !== 'z') {
-            cobraHolobitPartialContractError('transformar', `rotación soportada solo sobre eje z en el adaptador oficial, recibido ${eje}`);
+            cobraHolobitPartialContractError('transformar', `rotación soportada solo sobre eje z por contrato partial del adaptador oficial (sin fallback), recibido ${eje}`);
         }
         const [x, y, z] = valores;
         valores = [
@@ -139,7 +139,7 @@ function cobra_transformar(hb, op, ...params) {
             z,
         ];
     } else {
-        cobraHolobitPartialContractError('transformar', `operación no soportada por el adaptador oficial: ${op}`);
+        cobraHolobitPartialContractError('transformar', `operación no soportada por contrato partial del adaptador oficial (sin fallback): ${op}`);
     }
 
     return Object.freeze({

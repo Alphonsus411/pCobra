@@ -1,0 +1,4 @@
+fn cobra_holobit_partial_contract_error(feature: &str, detail: impl Into<String>) -> CobraRuntimeError {
+fn cobra_proyectar(hb: &CobraHolobit, modo: &str) -> Result<Vec<f64>, CobraRuntimeError> {
+fn cobra_transformar(
+fn cobra_graficar(hb: &CobraHolobit) -> Result<String, CobraRuntimeError> {

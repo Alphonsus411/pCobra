@@ -1,0 +1,4 @@
+func cobra_holobit(valores []float64) CobraHolobit {
+func cobra_proyectar(hb any, modo any) []float64 {
+func cobra_transformar(hb any, op any, params ...any) CobraHolobit {
+func cobra_graficar(hb any) string {

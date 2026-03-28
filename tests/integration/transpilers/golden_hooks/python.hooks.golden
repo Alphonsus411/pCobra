@@ -1,0 +1,4 @@
+def cobra_holobit(valores):
+def cobra_proyectar(hb, modo):
+def cobra_transformar(hb, op, *params):
+def cobra_graficar(hb):

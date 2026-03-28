@@ -1,0 +1,4 @@
+    private static CobraHolobit cobra_holobit(Object valores) {
+    private static double[] cobra_proyectar(Object hb, Object modo) {
+    private static CobraHolobit cobra_transformar(Object hb, Object op, Object... params) {
+    private static String cobra_graficar(Object hb) {

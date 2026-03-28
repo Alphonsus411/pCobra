@@ -1,0 +1,4 @@
+inline CobraHolobit cobra_holobit(const std::vector<double>& valores) {
+inline std::vector<double> cobra_proyectar(const auto& hb, const auto& modo) {
+inline CobraHolobit cobra_transformar(const auto& hb, const auto& op, std::initializer_list<std::string> params) {
+inline std::string cobra_graficar(const auto& hb) {

@@ -1,0 +1,4 @@
+function cobra_holobit(valores) {
+function cobra_proyectar(hb, modo) {
+function cobra_transformar(hb, op, ...params) {
+function cobra_graficar(hb) {

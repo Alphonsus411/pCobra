@@ -1,0 +1,4 @@
+(func $cobra_holobit (param $hb i32) (result i32)
+(func $cobra_proyectar (param $hb i32) (param $modo i32) (result i32)
+(func $cobra_transformar (param $hb i32) (param $op i32) (param $params_len i32) (result i32)
+(func $cobra_graficar (param $hb i32) (result i32)
