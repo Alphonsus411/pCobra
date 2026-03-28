@@ -23,6 +23,7 @@ from scripts.ci.validate_targets import (
     validate_scan_roots,
     validate_targeted_artifact_roots,
 )
+from scripts.lint_policy_drift import main as lint_policy_drift_main
 from scripts.targets_policy_common import VALIDATION_SCAN_PATHS, read_target_policy
 
 SCAN_ROOTS = tuple(path.relative_to(ROOT).as_posix() for path in VALIDATION_SCAN_PATHS)
@@ -126,6 +127,10 @@ def main() -> int:
             validate_python_policy_literals(official_targets),
         ),
         ("auditoría de repo", validate_final_backend_repo_audit()),
+        (
+            "policy drift en rutas públicas",
+            [] if lint_policy_drift_main() == 0 else ["scripts/lint_policy_drift.py reportó drift"],
+        ),
     )
     for stage_name, errors in stages:
         result = _run_stage(stage_name, errors)

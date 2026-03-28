@@ -138,6 +138,9 @@ jobs:
       - name: Validate public documentation targets policy
         shell: bash
         run: python scripts/validate_targets_policy.py
+      - name: Validate policy drift in public target text
+        shell: bash
+        run: python scripts/lint_policy_drift.py
       - name: Regenerate targets docs and verify clean diff
         shell: bash
         run: |

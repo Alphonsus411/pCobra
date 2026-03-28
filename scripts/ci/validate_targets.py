@@ -88,6 +88,7 @@ REPO_AUDIT_ALLOWED_FILE_PATHS = frozenset(
     {
         "scripts/lint_legacy_aliases.py",
         "scripts/targets_policy_common.py",
+        "scripts/lint_policy_drift.py",
         "scripts/validate_targets_policy.py",
         "scripts/ci/validate_targets.py",
         "tests/unit/test_cli_target_aliases.py",
@@ -127,6 +128,16 @@ REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS: tuple[tuple[re.Pattern[str], str], ...] = t
         alias,
     )
     for alias, _ in FORBIDDEN_PUBLIC_TARGET_ALIASES
+)
+REPO_AUDIT_PUBLIC_TEXT_PREFIXES: tuple[str, ...] = (
+    "README.md",
+    "docs/",
+    "examples/",
+    "scripts/",
+    "docker/",
+    ".github/workflows/",
+    "pcobra.toml",
+    "cobra.toml",
 )
 DOC_TABLE_PATHS = (
     "docs/targets_policy.md",
@@ -959,12 +970,13 @@ def validate_final_backend_repo_audit() -> list[str]:
                 errors.append(
                     f"{rel}:{line_no}: referencia fuera del conjunto final -> {description}"
                 )
-        for pattern, alias in REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS:
-            for match in pattern.finditer(content):
-                line_no = content.count("\n", 0, match.start()) + 1
-                errors.append(
-                    f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}"
-                )
+        if rel.startswith(REPO_AUDIT_PUBLIC_TEXT_PREFIXES):
+            for pattern, alias in REPO_AUDIT_FORBIDDEN_ALIAS_LITERALS:
+                for match in pattern.finditer(content):
+                    line_no = content.count("\n", 0, match.start()) + 1
+                    errors.append(
+                        f"{rel}:{line_no}: alias legacy literal fuera del conjunto final -> {alias}"
+                    )
     return errors
 
 
