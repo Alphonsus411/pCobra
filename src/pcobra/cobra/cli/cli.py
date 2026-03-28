@@ -54,6 +54,13 @@ CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
 SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
 COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
 CLI_DEV_DB_KEY = "cli-dev-key"
+DB_REQUIRED_COMMAND_NAMES = frozenset({
+    "cache",
+    "compilar",
+    "benchtranspilers",
+    "qualia",
+    "interactive",
+})
 
 
 class LogLevel(Enum):
@@ -159,12 +166,17 @@ class CliApplication:
         logging.shutdown()
 
     def initialize(self) -> None:
-        self._ensure_sqlite_db_key()
         setup_gettext()
         self._setup_logging()
         self.interpreter = InterpretadorCobra()
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
+
+    def _command_requires_sqlite_db_key(self, args: argparse.Namespace) -> bool:
+        command = getattr(args, "cmd", None)
+        if isinstance(command, BaseCommand):
+            return command.name in DB_REQUIRED_COMMAND_NAMES
+        return False
 
     def _ensure_sqlite_db_key(self) -> None:
         sqlite_db_key = (environ.get(SQLITE_DB_KEY_ENV) or "").strip()
@@ -407,6 +419,8 @@ class CliApplication:
 
             try:
                 args = self._parse_arguments(argv)
+                if self._command_requires_sqlite_db_key(args):
+                    self._ensure_sqlite_db_key()
                 log_level = logging.DEBUG if args.verbose > 0 or args.debug else logging.INFO
                 logging.getLogger().setLevel(log_level)
                 setup_gettext(args.lang)
