@@ -80,19 +80,19 @@ RUNTIME_ADAPTER_MARKERS = {
     "cpp": (
         "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "inline std::size_t longitud(const T& valor) {",
-        "parámetro numérico no soportado por el adaptador oficial",
+        "parámetro numérico no soportado por contrato partial del adaptador oficial (sin fallback)",
         'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});',
     ),
     "java": (
         "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "private static int longitud(Object valor) {",
-        "parámetro numérico no soportado por el adaptador oficial",
+        "parámetro numérico no soportado por contrato partial del adaptador oficial (sin fallback)",
         'cobra_transformar(hb, "rotar", 90);',
     ),
     "asm": (
         "runtime de inspección/diagnóstico",
-        "la proyección requiere runtime externo.",
-        "la visualización requiere runtime externo.",
+        "la proyección requiere runtime externo (fallo contractual explícito, sin fallback silencioso).",
+        "la visualización requiere runtime externo (fallo contractual explícito, sin fallback silencioso).",
     ),
 }
 

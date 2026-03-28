@@ -1,18 +1,18 @@
 ; backend asm: imports de runtime administrados externamente
 
 ; backend asm: runtime de inspección/diagnóstico, contrato partial y sin paridad SDK equivalente
-; backend asm: sin holobit_sdk; proyectar/transformar/graficar requieren runtime externo verificable fuera de este backend
+; backend asm: sin holobit_sdk; proyectar/transformar/graficar requieren runtime externo verificable fuera de este backend y no hay fallback silencioso
 cobra_holobit:
     ; Runtime Holobit ASM: backend de inspección; conserva la representación simbólica del holobit.
     RET
 cobra_proyectar:
-    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la proyección requiere runtime externo.
+    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la proyección requiere runtime externo (fallo contractual explícito, sin fallback silencioso).
     TRAP
 cobra_transformar:
-    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la transformación requiere runtime externo.
+    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la transformación requiere runtime externo (fallo contractual explícito, sin fallback silencioso).
     TRAP
 cobra_graficar:
-    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la visualización requiere runtime externo.
+    ; Runtime Holobit ASM: backend de inspección/diagnóstico; la visualización requiere runtime externo (fallo contractual explícito, sin fallback silencioso).
     TRAP
 
 HOLOBIT hb [1, 2, 3]

@@ -29,7 +29,7 @@ public class Main {
             }
             return new CobraHolobit(salida, java.util.List.of("creado"));
         }
-        throw cobraHolobitPartialContractError("holobit", "valor no compatible para holobit: " + valores);
+        throw cobraHolobitPartialContractError("holobit", "valor no compatible para holobit bajo contrato partial (sin fallback): " + valores);
     }
     
     private static CobraHolobit cobraNormalizarHolobit(Object hb) {
@@ -48,7 +48,7 @@ public class Main {
         } catch (NumberFormatException error) {
             throw cobraHolobitPartialContractError(
                 feature,
-                "parámetro numérico no soportado por el adaptador oficial: " + valor
+                "parámetro numérico no soportado por contrato partial del adaptador oficial (sin fallback): " + valor
             );
         }
     }
@@ -67,7 +67,7 @@ public class Main {
             case "vector" -> java.util.Arrays.copyOf(holobit.valores, holobit.valores.length);
             default -> throw cobraHolobitPartialContractError(
                 "proyectar",
-                "modo de proyección no soportado por el adaptador oficial: " + modo
+                "modo de proyección no soportado por contrato partial del adaptador oficial (sin fallback): " + modo
             );
         };
     }
@@ -103,7 +103,7 @@ public class Main {
                 if (!"z".equals(eje)) {
                     throw cobraHolobitPartialContractError(
                         "transformar",
-                        "rotación soportada solo sobre eje z en el adaptador oficial: " + eje
+                        "rotación soportada solo sobre eje z por contrato partial del adaptador oficial (sin fallback): " + eje
                     );
                 }
                 double grados = params.length > anguloIndex ? cobraToDouble("transformar", params[anguloIndex]) : 0.0;
@@ -115,7 +115,7 @@ public class Main {
             }
             default -> throw cobraHolobitPartialContractError(
                 "transformar",
-                "operación no soportada por el adaptador oficial: " + op
+                "operación no soportada por contrato partial del adaptador oficial (sin fallback): " + op
             );
         }
         java.util.List<String> historial = new java.util.ArrayList<>(holobit.historial);
