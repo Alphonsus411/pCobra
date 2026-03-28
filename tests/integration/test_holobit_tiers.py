@@ -6,6 +6,7 @@ from cobra.cli.commands.compile_cmd import TRANSPILERS
 from cobra.core import Lexer, Parser
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
+    BACKEND_COMPATIBILITY_NOTES,
     BACKEND_FEATURE_GAPS,
     COMPATIBILITY_LEVEL_ORDER,
     CONTRACT_FEATURES,
@@ -143,12 +144,21 @@ def test_runtime_hooks_cobra_smoke_por_backend(backend):
 
 def test_only_python_es_full_para_holobit_y_runtime_base():
     assert SDK_FULL_BACKENDS == ("python",)
+    assert set(SDK_FULL_BACKENDS).isdisjoint(SDK_PARTIAL_BACKENDS)
     assert set(SDK_PARTIAL_BACKENDS) == set(OFFICIAL_TARGETS) - {"python"}
     for feature in CONTRACT_FEATURES:
         full_backends = {backend for backend in OFFICIAL_TARGETS if BACKEND_COMPATIBILITY[backend][feature] == "full"}
         partial_backends = {backend for backend in OFFICIAL_TARGETS if BACKEND_COMPATIBILITY[backend][feature] == "partial"}
         assert full_backends == {"python"}
         assert partial_backends == set(SDK_PARTIAL_BACKENDS)
+
+
+def test_sdk_full_y_partial_se_mantienen_como_particion_exacta_de_official_targets():
+    full = set(SDK_FULL_BACKENDS)
+    partial = set(SDK_PARTIAL_BACKENDS)
+    official = set(OFFICIAL_TARGETS)
+    assert full & partial == set()
+    assert full | partial == official
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
@@ -160,6 +170,14 @@ def test_backends_partial_declaran_gaps_explicitos_por_feature(backend):
             assert gaps == ()
         elif level == "partial":
             assert len(gaps) >= 1
+
+
+@pytest.mark.parametrize("backend", OFFICIAL_TARGETS)
+def test_backends_declaran_notas_explicitas_y_trazables(backend):
+    notes = BACKEND_COMPATIBILITY_NOTES[backend]
+    assert notes["contract"] == ("full" if backend in SDK_FULL_BACKENDS else "partial")
+    assert isinstance(notes["evidence"], str)
+    assert notes["evidence"].strip()
 
 
 @pytest.mark.parametrize("backend", OFFICIAL_TARGETS)

@@ -76,3 +76,8 @@ def test_tier1_suite_targets_only_official_backends():
 def test_tier1_suite_no_admite_backends_extra_ni_perdidos():
     assert TIER1_BACKENDS == TIER1_TARGETS
     assert len(TIER1_BACKENDS) == 4
+
+
+def test_tier1_permanece_en_el_contrato_tier1_de_la_matriz():
+    for backend in TIER1_BACKENDS:
+        assert BACKEND_COMPATIBILITY[backend]["tier"] == "tier1"
