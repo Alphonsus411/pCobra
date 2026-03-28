@@ -146,7 +146,10 @@ PACKAGING_GUARDRAIL_PATHS = (
 )
 PACKAGING_RETIRED_LITERAL_ALLOW_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)^\s*prune\s+archive/retired_targets\s*$"),
-    re.compile(r"(?i)archive/retired_targets/\*"),
+    re.compile(
+        r"(?i)^\s*(?:global-exclude|recursive-exclude|exclude)\s+archive/retired_targets(?:/\*)?(?:\s+.*)?$"
+    ),
+    re.compile(r"""(?i)^\s*["']archive/retired_targets/\*["']\s*,?\s*$"""),
 )
 PRODUCTIVE_PACKAGE_ROOT = "src/pcobra"
 IMPORT_GUARDRAIL_SCAN_ROOTS = ("src", "scripts", "tests")
