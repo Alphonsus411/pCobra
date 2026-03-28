@@ -32,6 +32,9 @@ CONTRACT_FEATURES: Final[tuple[str, ...]] = (
 VALID_COMPATIBILITY_LEVELS: Final[tuple[str, ...]] = ("none", "partial", "full")
 VALID_TIERS: Final[tuple[str, ...]] = ("tier1", "tier2")
 SDK_FULL_BACKENDS: Final[tuple[str, ...]] = ("python",)
+OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("python", "javascript", "cpp", "rust")
+BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("go", "java")
+TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ("wasm", "asm")
 SDK_PARTIAL_BACKENDS: Final[tuple[str, ...]] = tuple(
     backend for backend in OFFICIAL_TARGETS if backend not in SDK_FULL_BACKENDS
 )
@@ -553,6 +556,30 @@ def validate_backend_compatibility_contract() -> None:
             f"faltan={tuple(sorted(official_set - (full_set | partial_set)))} "
             f"extras={tuple(sorted((full_set | partial_set) - official_set))}"
         )
+    runtime_set = set(OFFICIAL_RUNTIME_BACKENDS)
+    best_effort_set = set(BEST_EFFORT_RUNTIME_BACKENDS)
+    transpilation_only_set = set(TRANSPILATION_ONLY_BACKENDS)
+    if runtime_set & best_effort_set:
+        raise RuntimeError(
+            "OFFICIAL_RUNTIME_BACKENDS y BEST_EFFORT_RUNTIME_BACKENDS no deben solaparse: "
+            f"{tuple(sorted(runtime_set & best_effort_set))}"
+        )
+    if runtime_set & transpilation_only_set:
+        raise RuntimeError(
+            "OFFICIAL_RUNTIME_BACKENDS y TRANSPILATION_ONLY_BACKENDS no deben solaparse: "
+            f"{tuple(sorted(runtime_set & transpilation_only_set))}"
+        )
+    if best_effort_set & transpilation_only_set:
+        raise RuntimeError(
+            "BEST_EFFORT_RUNTIME_BACKENDS y TRANSPILATION_ONLY_BACKENDS no deben solaparse: "
+            f"{tuple(sorted(best_effort_set & transpilation_only_set))}"
+        )
+    if runtime_set | best_effort_set | transpilation_only_set != official_set:
+        raise RuntimeError(
+            "Las categorías de runtime deben particionar OFFICIAL_TARGETS exactamente: "
+            f"runtime={OFFICIAL_RUNTIME_BACKENDS}; best_effort={BEST_EFFORT_RUNTIME_BACKENDS}; "
+            f"transpilation_only={TRANSPILATION_ONLY_BACKENDS}; official={OFFICIAL_TARGETS}"
+        )
 
     missing_notes_backends = [backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_COMPATIBILITY_NOTES]
     if missing_notes_backends:
@@ -743,6 +770,9 @@ __all__ = [
     "CONTRACT_FEATURES",
     "SDK_FULL_BACKENDS",
     "SDK_PARTIAL_BACKENDS",
+    "OFFICIAL_RUNTIME_BACKENDS",
+    "BEST_EFFORT_RUNTIME_BACKENDS",
+    "TRANSPILATION_ONLY_BACKENDS",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
     "get_backend_feature_gaps",

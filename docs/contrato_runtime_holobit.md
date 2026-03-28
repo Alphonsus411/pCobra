@@ -210,6 +210,9 @@ La tabla contractual vigente para `holobit`, `proyectar`, `transformar`, `grafic
 
 Lectura de política asociada a esta matriz:
 
+> Fuente única de verdad en código: `src/pcobra/cobra/transpilers/compatibility_matrix.py`  
+> (`SDK_FULL_BACKENDS`, `OFFICIAL_RUNTIME_BACKENDS`, `BEST_EFFORT_RUNTIME_BACKENDS`, `TRANSPILATION_ONLY_BACKENDS`).
+
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
 - **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.

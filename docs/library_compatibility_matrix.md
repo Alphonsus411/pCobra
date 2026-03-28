@@ -4,6 +4,8 @@ Fecha de actualización: **2026-03-28**.
 
 Este documento publica el inventario técnico y el estado de compatibilidad de librerías clave de pCobra por cada uno de los **8 targets permitidos** (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
 
+> Contrato canónico: las etiquetas **SDK full**, **runtime oficial**, **best-effort** y **solo transpilación** se toman de `src/pcobra/cobra/transpilers/compatibility_matrix.py` (no de flags booleanos aislados).
+
 ## 1) Inventario de librerías/dependencias clave consumidas por pCobra
 
 - **Runtime base**: `corelibs`, `standard_library`, `holobit-sdk` (solo full en Python), `RestrictedPython` para sandbox.
@@ -45,6 +47,15 @@ Cobertura:
   - Workaround: usar ASM solo para auditoría de transpilación, no para ejecución con IO real.
 - **Go/Java/C++/Rust/JS**: runtime parcial sin paridad total de SDK Python.
   - Workaround: limitarse al subset contractual y mover funcionalidades avanzadas al host.
+
+## 3.1) Lectura correcta del contrato (single source of truth)
+
+- **SDK full**: `python`.
+- **Runtime oficial verificable**: `python`, `rust`, `javascript`, `cpp`.
+- **Runtime best-effort no público**: `go`, `java`.
+- **Solo transpilación**: `wasm`, `asm`.
+
+Estas categorías son ortogonales al detalle por feature (`runtime`, `parser`, `serialización`, `red`): un backend puede tener runtime oficial y seguir en contrato `partial` para Holobit/SDK.
 
 ## 4) Capas de adaptación para mantener API estable
 
