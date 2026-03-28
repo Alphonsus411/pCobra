@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audita proyectos que aún usan aliases/targets retirados en configuración o CLI."""
+"""Auditoría de mantenimiento histórico para detectar aliases/targets retirados (fuera de CI canónico)."""
 
 from __future__ import annotations
 

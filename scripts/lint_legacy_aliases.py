@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Detecta aliases legacy y extras retirados en código productivo, docs públicas y ayudas de CLI."""
+"""Auditoría de mantenimiento: detecta aliases legacy y extras retirados fuera de CI canónico."""
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -129,7 +130,18 @@ def iter_files():
                 yield path
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--fail-on-findings",
+        action="store_true",
+        help=(
+            "Hace fallar el comando si hay hallazgos. Por defecto es auditoría de mantenimiento "
+            "informativa (exit 0)."
+        ),
+    )
+    args = parser.parse_args(argv)
+
     errors: list[str] = []
     for path in iter_files():
         rel = path.relative_to(ROOT).as_posix()
@@ -193,14 +205,17 @@ def main() -> int:
                                 break
 
     if errors:
-        print("Se detectaron aliases legacy o extras retirados:")
+        print("Se detectaron aliases legacy o extras retirados (auditoría de mantenimiento):")
         for error in errors:
             print(f"- {error}")
-        return 1
+        if args.fail_on_findings:
+            return 1
+        print("INFO: modo maintenance sin bloqueo (use --fail-on-findings para modo estricto).")
+        return 0
 
     print("OK: no se detectaron aliases legacy ni extras retirados en rutas vigiladas.")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

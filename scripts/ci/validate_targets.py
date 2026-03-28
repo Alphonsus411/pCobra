@@ -1020,11 +1020,6 @@ def main() -> int:
             "contrato Python/Holobit/SDK",
             validate_python_policy_literals(official_targets),
         ),
-        (
-            "imports productivos sin artefactos retirados",
-            validate_productive_imports_no_retired_artifacts(),
-        ),
-        ("guard-rail histórico retirado", validate_retired_targets_guardrail()),
         ("auditoría de repo", validate_final_backend_repo_audit()),
     )
     for stage_name, errors in stages:

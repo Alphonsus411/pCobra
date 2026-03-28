@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detecta drift de policy en rutas públicas: solo targets oficiales."""
+"""Detecta drift de policy canónica en rutas públicas (set oficial de 8 targets)."""
 
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ SKIP_PREFIXES = ("docs/historico/", "docs/experimental/", "docs/frontend/api/")
 SKIP_FILES = {
     "scripts/ci/validate_targets.py",
     "scripts/lint_legacy_aliases.py",
+    "scripts/audit_retired_targets.py",
     "scripts/targets_policy_common.py",
 }
 OFFICIAL = set(OFFICIAL_TARGETS)
