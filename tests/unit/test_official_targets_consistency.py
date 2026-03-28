@@ -231,9 +231,9 @@ def test_contrato_sdk_full_solo_en_python_y_resto_partial_por_feature():
 
 def test_registry_falla_explicito_si_aparece_novena_clave(monkeypatch):
     registry_with_extra = dict(TRANSPILER_CLASS_PATHS)
-    registry_with_extra["ruby"] = (
-        "pcobra.cobra.transpilers.transpiler.to_ruby",
-        "TranspiladorRuby",
+    registry_with_extra["target_invalido"] = (
+        "pcobra.cobra.transpilers.transpiler.to_target_invalido",
+        "TranspiladorTargetInvalido",
     )
     monkeypatch.setattr(transpiler_registry, "TRANSPILER_CLASS_PATHS", registry_with_extra)
 
