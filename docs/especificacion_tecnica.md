@@ -11,6 +11,16 @@ En runtime oficial y para soporte de producción, Cobra define **únicamente** l
 Cualquier backend o flujo de implementación fuera de esa lista debe considerarse experimental y no forma
 parte del paquete instalable de producción.
 
+## Matriz técnica de compatibilidad de librerías
+
+La matriz vigente de compatibilidad por librería (runtime, parser, serialización y red)
+para los 8 targets oficiales se publica en:
+
+- [`docs/library_compatibility_matrix.md`](./library_compatibility_matrix.md)
+
+Ese documento incluye inventario de dependencias clave, resultados de pruebas por target,
+severidad de incompatibilidades y workarounds operativos.
+
 ## Experimentos y documentación separada
 
 Los materiales sobre arquitectura de compilación o artefactos retirados no amplían la lista
