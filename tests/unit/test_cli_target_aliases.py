@@ -5,7 +5,12 @@ import pytest
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
-from pcobra.cobra.cli.target_policies import invalid_target_error, parse_target, parse_target_list
+from pcobra.cobra.cli.target_policies import (
+    ACCEPTED_TARGET_ALIASES,
+    invalid_target_error,
+    parse_target,
+    parse_target_list,
+)
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 
@@ -146,8 +151,20 @@ def test_la_whitelist_publica_sigue_canonica():
     assert targets == tuple(LANG_CHOICES)
     assert targets == EXPECTED_CANONICAL_TARGETS
     assert len(targets) == 8
+    assert len(set(targets)) == 8
     for alias, _ in ACCEPTED_ALIASES:
         assert alias not in targets
+
+
+def test_aliases_publicos_no_amplian_el_set_canonico():
+    assert tuple(ACCEPTED_TARGET_ALIASES) == (
+        ("ensamblador", "asm"),
+        ("c++", "cpp"),
+    )
+
+    for alias, canonical in ACCEPTED_TARGET_ALIASES:
+        assert alias not in EXPECTED_CANONICAL_TARGETS
+        assert canonical in EXPECTED_CANONICAL_TARGETS
 
 
 def test_parse_target_rechaza_destino_fuera_del_set_canonico():

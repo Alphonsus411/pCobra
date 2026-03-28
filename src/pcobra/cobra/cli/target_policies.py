@@ -29,8 +29,33 @@ ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
 )
 
 
+def _validate_alias_contract() -> tuple[tuple[str, str], ...]:
+    """Asegura que los aliases no amplíen el alcance del contrato canónico."""
+    validated: list[tuple[str, str]] = []
+    for alias, canonical in ACCEPTED_TARGET_ALIASES:
+        normalized_alias = alias.strip().lower()
+        normalized_canonical = canonical.strip().lower()
+        if normalized_canonical not in OFFICIAL_TARGETS:
+            raise RuntimeError(
+                "TARGET_ALIASES contiene un alias fuera de OFFICIAL_TARGETS: "
+                f"{alias}->{canonical}"
+            )
+        if normalized_alias in OFFICIAL_TARGETS:
+            raise RuntimeError(
+                "TARGET_ALIASES no debe duplicar nombres canónicos oficiales: "
+                f"{alias}->{canonical}"
+            )
+        validated.append((normalized_alias, normalized_canonical))
+    return tuple(validated)
+
+
+_VALIDATED_ACCEPTED_TARGET_ALIASES = _validate_alias_contract()
+
+
 def accepted_target_aliases_examples_text() -> str:
-    return ", ".join(f"{alias}→{canonical}" for alias, canonical in ACCEPTED_TARGET_ALIASES)
+    return ", ".join(
+        f"{alias}→{canonical}" for alias, canonical in _VALIDATED_ACCEPTED_TARGET_ALIASES
+    )
 
 
 # Todos los destinos oficiales de generación/transpilación.
@@ -378,6 +403,8 @@ def parse_target(value: str) -> str:
     if not raw:
         raise ArgumentTypeError(invalid_target_error(value))
     canonical = normalize_target_name(raw)
+    if canonical not in OFFICIAL_TARGETS:
+        raise ArgumentTypeError(invalid_target_error(value))
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))
     return canonical

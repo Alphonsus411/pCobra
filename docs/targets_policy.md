@@ -52,6 +52,12 @@ Cualquier extensión del alcance (por ejemplo, introducir un noveno target, move
 
 No se permiten ampliaciones silenciosas ni “pequeños” cambios ad hoc al registro/CLI que alteren el conjunto oficial sin ese proceso.
 
+### Regla de bloqueo para el noveno target
+
+Queda explícitamente bloqueado introducir una novena clave de backend en el registro (`TRANSPILER_CLASS_PATHS`) o en validadores CLI sin pasar por RFC + migración.
+
+Cualquier intento de ampliar el set canónico debe fallar de forma ruidosa en tests/unitarios y en validaciones de arranque del módulo, para evitar drift silencioso entre código, CLI y documentación.
+
 ## Estado público por backend
 
 <!-- BEGIN GENERATED TARGET STATUS TABLE -->
