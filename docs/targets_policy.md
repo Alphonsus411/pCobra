@@ -118,6 +118,18 @@ La documentación pública activa debe respetar estas reglas editoriales:
 4. Describir Holobit solo con el contrato vigente: `python` `full`; el resto, como máximo, `partial` según la matriz contractual.
 5. No presentar a ningún backend distinto de `python` como compatibilidad SDK completa.
 
+## Ventana de deprecación para nombres legacy/retirados
+
+Para migraciones de CLI y configuración:
+
+- **Inicio de deprecación:** `v10.0.10`.
+- **Eliminación definitiva:** `v10.2.0`.
+
+Durante la ventana:
+
+- Los alias históricos `c++` y `ensamblador` se aceptan temporalmente con `DeprecationWarning`.
+- Los nombres retirados (`js`, `py`, `node`, `golang`, `jvm`, etc.) deben fallar con error explícito y alternativa canónica.
+
 ## Reverse
 
 La transpilación inversa se documenta como capacidad separada. Sus orígenes de entrada se definen en `src/pcobra/cobra/transpilers/reverse/policy.py`.

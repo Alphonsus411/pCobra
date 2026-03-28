@@ -12,11 +12,16 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     SDK_FULL_BACKENDS,
 )
 from pcobra.cobra.transpilers.target_utils import (
+    DEPRECATION_WINDOW_REMOVAL_VERSION,
+    DEPRECATION_WINDOW_START_VERSION,
     LEGACY_OR_AMBIGUOUS_TARGETS,
+    RETIRED_TARGET_REPLACEMENTS,
     TARGET_ALIASES,
     build_target_help_by_tier,
+    deprecation_window_text,
     format_target_sequence,
     normalize_target_name,
+    retired_target_migration_hint,
     require_exact_official_targets,
     require_official_target_subset,
     target_cli_choices,
@@ -430,12 +435,20 @@ def invalid_target_error(value: str) -> str:
 
 def legacy_or_ambiguous_target_error(value: str) -> str:
     valid_with_tier = official_targets_with_tier_text()
+    lowered = value.strip().lower()
+    migration_hint = retired_target_migration_hint(lowered)
     return (
         "Target no permitido por nombre legacy/ambiguo: '{value}'. "
+        "Este nombre está retirado ({window}; "
+        "migración obligatoria antes de v{removal}). "
+        "{migration_hint}. "
         "Usa solo nombres canónicos oficiales: {supported}. "
         "Lista exacta válida (target=tier): {valid_with_tier}."
     ).format(
         value=value.strip(),
+        window=deprecation_window_text(),
+        removal=DEPRECATION_WINDOW_REMOVAL_VERSION,
+        migration_hint=migration_hint.capitalize(),
         supported=official_transpilation_targets_text(),
         valid_with_tier=valid_with_tier,
     )
@@ -505,13 +518,32 @@ def parse_target(value: str) -> str:
         warnings.warn(
             (
                 "Alias de target en desuso: '{alias}' -> '{canonical}'. "
-                "Actualiza scripts/CI al nombre canónico."
-            ).format(alias=raw, canonical=canonical_alias),
+                "Ventana: v{start}..v{removal}; a partir de v{removal} será error."
+            ).format(
+                alias=raw,
+                canonical=canonical_alias,
+                start=DEPRECATION_WINDOW_START_VERSION,
+                removal=DEPRECATION_WINDOW_REMOVAL_VERSION,
+            ),
             category=DeprecationWarning,
             stacklevel=2,
         )
     canonical = normalize_target_name(raw)
     if canonical not in OFFICIAL_TARGETS:
+        if lowered in RETIRED_TARGET_REPLACEMENTS:
+            warnings.warn(
+                (
+                    "Uso de target retirado detectado: '{target}'. "
+                    "Alternativa recomendada: '{suggested}'. "
+                    "Eliminación definitiva en v{removal}."
+                ).format(
+                    target=raw,
+                    suggested=RETIRED_TARGET_REPLACEMENTS[lowered],
+                    removal=DEPRECATION_WINDOW_REMOVAL_VERSION,
+                ),
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
         raise ArgumentTypeError(invalid_target_error(value))
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))

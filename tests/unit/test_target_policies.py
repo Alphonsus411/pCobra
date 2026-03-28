@@ -14,6 +14,20 @@ def test_parse_target_acepta_nombre_canonico():
     assert parse_target("javascript") == "javascript"
 
 
+def test_parse_target_alias_muestra_warning_con_ventana_deprecacion():
+    with pytest.warns(DeprecationWarning) as warns:
+        assert parse_target("c++") == "cpp"
+    assert "v10.0.10..v10.2.0" in str(warns[0].message)
+
+
+def test_parse_target_legacy_expone_mensaje_con_migracion_y_version():
+    with pytest.raises(ArgumentTypeError) as exc:
+        parse_target("js")
+    msg = str(exc.value)
+    assert "eliminación definitiva en v10.2.0" in msg
+    assert "Alternativa recomendada: 'javascript'" in msg
+
+
 def test_parse_target_list_preserva_nombres_canonicos():
     assert parse_target_list("python,javascript") == ["python", "javascript"]
 
