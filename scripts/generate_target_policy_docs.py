@@ -27,13 +27,13 @@ from pcobra.cobra.cli.target_policies import (  # noqa: E402
     OFFICIAL_STANDARD_LIBRARY_TARGETS,
     SDK_COMPATIBLE_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS,
+    build_cli_compile_examples,
     render_public_policy_summary,
     render_reverse_scope_summary,
 )
 from pcobra.cobra.transpilers.compatibility_matrix import (  # noqa: E402
     BACKEND_COMPATIBILITY,
 )
-from pcobra.cobra.transpilers.registry import official_transpiler_targets  # noqa: E402
 from pcobra.cobra.transpilers.reverse import REVERSE_SCOPE_LANGUAGES  # noqa: E402
 from pcobra.cobra.transpilers.target_utils import (  # noqa: E402
     build_tier_summary_lines,
@@ -242,8 +242,8 @@ def _reverse_scope_table_rst() -> str:
 
 def _cli_backend_examples_rst() -> str:
     lines = [".. code-block:: bash", ""]
-    for backend in official_transpiler_targets():
-        lines.append(f"   cobra compilar programa.co --backend {backend}")
+    for command in build_cli_compile_examples():
+        lines.append(f"   {command}")
     return "\n".join(lines) + "\n"
 
 

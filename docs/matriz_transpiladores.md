@@ -1,9 +1,13 @@
 # Matriz de transpiladores
 
-Generado desde `scripts/generar_matriz_transpiladores.py`.
+> ⚠️ Documento parcialmente derivado: los bloques marcados como `BEGIN/END GENERATED`
+> se regeneran automáticamente y no deben editarse manualmente.
+
+Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 
 ## Resumen de política
 
+<!-- BEGIN GENERATED MATRIZ POLICY SUMMARY -->
 - **Backends oficiales de salida**: 8 targets canónicos.
 - **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Targets con runtime oficial verificable (full SDK solo en python)**: `python`, `rust`, `javascript`, `cpp`.
@@ -13,9 +17,11 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `rust`, `javascript`, `cpp`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: `wasm`, `asm`.
+<!-- END GENERATED MATRIZ POLICY SUMMARY -->
 
 ## Estado público por backend
 
+<!-- BEGIN GENERATED MATRIZ STATUS TABLE -->
 | Backend | Nombre | Tier | runtime_publico | holobit_publico | sdk_real |
 |---|---|---|---|---|---|
 | `python` | Python | Tier 1 | runtime oficial | SDK full solo python | full |
@@ -26,6 +32,7 @@ Generado desde `scripts/generar_matriz_transpiladores.py`.
 | `cpp` | cpp | Tier 2 | runtime oficial | adaptador mantenido (partial) | partial |
 | `java` | Java | Tier 2 | best-effort | partial | partial |
 | `asm` | asm | Tier 2 | solo transpilación | partial | partial |
+<!-- END GENERATED MATRIZ STATUS TABLE -->
 
 ## Matriz contractual
 

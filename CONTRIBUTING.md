@@ -166,6 +166,13 @@ un módulo nuevo. El cambio debe actualizar de forma coordinada:
 Si falta cualquiera de esas piezas, la validación debe fallar y el cambio no debe
 considerarse completo.
 
+### Checklist rápida si tocas targets
+
+- [ ] Ejecuté `python scripts/generate_target_policy_docs.py`.
+- [ ] Ejecuté `python scripts/generar_matriz_transpiladores.py`.
+- [ ] Verifiqué que no quedan diffs sin commitear en docs generadas de targets.
+- [ ] Validé CI de targets (`python scripts/ci/validate_targets.py` y `python scripts/ci/ensure_generated_targets_docs_clean.py`).
+
 ### Añadir soporte para nuevos lenguajes en `run_code`
 
 1. Crea una función `_run_<lenguaje>` en `tests/utils/runtime.py` que invoque

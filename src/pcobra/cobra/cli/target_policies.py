@@ -135,6 +135,18 @@ def transpilation_only_targets_text() -> str:
     return ", ".join(TRANSPILATION_ONLY_TARGETS)
 
 
+def build_cli_compile_examples(
+    *,
+    source_file: str = "programa.co",
+    command_prefix: str = "cobra compilar",
+) -> tuple[str, ...]:
+    """Construye ejemplos CLI canónicos sin listas hardcodeadas."""
+    return tuple(
+        f"{command_prefix} {source_file} --backend {backend}"
+        for backend in OFFICIAL_TRANSPILATION_TARGETS
+    )
+
+
 def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
     """Devuelve las categorías públicas que deben reutilizar CLI/docs/tests."""
     return (
