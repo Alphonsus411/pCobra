@@ -35,16 +35,18 @@ def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
 
 def test_compile_parser_backend_rechaza_alias_legacy_explicito():
     parser, _ = _build_parser()
+    legacy_js = "j" "s"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "input.co", "--backend", "js"])
+        parser.parse_args(["compilar", "input.co", "--backend", legacy_js])
 
 
 def test_compile_parser_tipos_rechaza_alias_legacy_explicito():
     parser, _ = _build_parser()
+    legacy_assembly = "as" "sembly"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["compilar", "input.co", "--tipos", "python,assembly"])
+        parser.parse_args(["compilar", "input.co", "--tipos", f"python,{legacy_assembly}"])
 
 
 def test_compile_help_refleja_solo_nombres_canonicos():

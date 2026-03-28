@@ -371,12 +371,10 @@ def invalid_target_error(value: str) -> str:
 def legacy_or_ambiguous_target_error(value: str) -> str:
     return (
         "Target no permitido por nombre legacy/ambiguo: '{value}'. "
-        "Usa solo nombres canónicos oficiales o aliases UX públicos: {supported} "
-        "(aliases: {aliases})."
+        "Usa solo nombres canónicos oficiales: {supported}."
     ).format(
         value=value.strip(),
         supported=official_transpilation_targets_text(),
-        aliases=accepted_target_aliases_examples_text(),
     )
 
 
