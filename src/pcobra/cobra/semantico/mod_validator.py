@@ -35,7 +35,10 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin jsonschema
 
 from pcobra.cobra.cli.utils.semver import es_version_valida
 from pcobra.cobra.transpilers import module_map
-from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.transpilers.target_utils import (
+    LEGACY_OR_AMBIGUOUS_TARGETS,
+    normalize_target_name,
+)
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 # Constantes
@@ -45,6 +48,11 @@ SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "cobra_mod_schema.yaml")
 logger = logging.getLogger(__name__)
 
 DEFAULT_REQUIRED_TARGETS: tuple[str, ...] = TIER1_TARGETS
+
+
+def _official_targets_with_tier_text() -> str:
+    tier_rows = [*(f"{target}=tier1" for target in TIER1_TARGETS), *(f"{target}=tier2" for target in TIER2_TARGETS)]
+    return ", ".join(tier_rows)
 
 # Verificar existencia del esquema y cargarlo
 if not os.path.exists(SCHEMA_PATH):
@@ -128,18 +136,33 @@ def _required_targets_from_policy() -> tuple[str, ...]:
         return DEFAULT_REQUIRED_TARGETS
 
     if not isinstance(raw_targets, list):
-        logger.warning(
-            "La política de targets requeridos en cobra.toml debe ser lista; se usa valor por defecto %s.",
-            DEFAULT_REQUIRED_TARGETS,
+        raise ValueError(
+            "La política [project].required_targets en cobra.toml debe ser una lista de strings canónicos. "
+            f"Valor recibido: {type(raw_targets).__name__}. "
+            f"Targets válidos (target=tier): {_official_targets_with_tier_text()}"
         )
-        return DEFAULT_REQUIRED_TARGETS
 
     normalized: list[str] = []
     for target in raw_targets:
         if not isinstance(target, str):
-            continue
+            raise ValueError(
+                "La política [project].required_targets en cobra.toml debe contener solo strings. "
+                f"Elemento inválido: {target!r}. "
+                f"Targets válidos (target=tier): {_official_targets_with_tier_text()}"
+            )
+        if target.strip().lower() in LEGACY_OR_AMBIGUOUS_TARGETS:
+            raise ValueError(
+                "La política [project].required_targets no acepta aliases legacy/ambiguos. "
+                f"Valor inválido: {target}. "
+                f"Targets válidos (target=tier): {_official_targets_with_tier_text()}"
+            )
         canonical = normalize_target_name(target)
-        if canonical in OFFICIAL_TARGETS and canonical not in normalized:
+        if canonical not in OFFICIAL_TARGETS:
+            raise ValueError(
+                "La política [project].required_targets contiene un target no permitido: "
+                f"{target}. Targets válidos (target=tier): {_official_targets_with_tier_text()}"
+            )
+        if canonical not in normalized:
             normalized.append(canonical)
 
     return tuple(normalized) if normalized else DEFAULT_REQUIRED_TARGETS

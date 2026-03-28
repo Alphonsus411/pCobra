@@ -2,6 +2,17 @@ type: object
 patternProperties:
   '.*\.co$':
     type: object
+    propertyNames:
+      enum:
+        - version
+        - python
+        - rust
+        - javascript
+        - wasm
+        - go
+        - cpp
+        - java
+        - asm
     required:
       - version
     properties:

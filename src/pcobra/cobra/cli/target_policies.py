@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from argparse import ArgumentTypeError
+import warnings
 from typing import Literal
 
 from pcobra.cobra.transpilers.compatibility_matrix import (
@@ -416,21 +417,45 @@ validate_runtime_support_contract()
 
 
 def invalid_target_error(value: str) -> str:
+    valid_with_tier = official_targets_with_tier_text()
     return (
-        "Target no soportado: '{value}'. Usa uno canónico oficial: {supported}."
+        "Target no soportado: '{value}'. Usa uno canónico oficial de la matriz: {supported}. "
+        "Lista exacta válida (target=tier): {valid_with_tier}."
     ).format(
         value=value.strip(),
         supported=official_transpilation_targets_text(),
+        valid_with_tier=valid_with_tier,
     )
 
 
 def legacy_or_ambiguous_target_error(value: str) -> str:
+    valid_with_tier = official_targets_with_tier_text()
     return (
         "Target no permitido por nombre legacy/ambiguo: '{value}'. "
-        "Usa solo nombres canónicos oficiales: {supported}."
+        "Usa solo nombres canónicos oficiales: {supported}. "
+        "Lista exacta válida (target=tier): {valid_with_tier}."
     ).format(
         value=value.strip(),
         supported=official_transpilation_targets_text(),
+        valid_with_tier=valid_with_tier,
+    )
+
+
+def official_targets_with_tier_rows() -> tuple[tuple[str, str], ...]:
+    """Devuelve el listado canónico target->tier derivado de la matriz oficial."""
+    return tuple(
+        (
+            target,
+            BACKEND_COMPATIBILITY[target]["tier"],
+        )
+        for target in OFFICIAL_TRANSPILATION_TARGETS
+    )
+
+
+def official_targets_with_tier_text() -> str:
+    """Renderiza ``target=tier`` para mensajes de error contractuales."""
+    return ", ".join(
+        f"{target}={tier}" for target, tier in official_targets_with_tier_rows()
     )
 
 
@@ -475,6 +500,16 @@ def parse_target(value: str) -> str:
     lowered = raw.lower()
     if lowered in LEGACY_OR_AMBIGUOUS_TARGETS:
         raise ArgumentTypeError(legacy_or_ambiguous_target_error(value))
+    if lowered in TARGET_ALIASES:
+        canonical_alias = TARGET_ALIASES[lowered]
+        warnings.warn(
+            (
+                "Alias de target en desuso: '{alias}' -> '{canonical}'. "
+                "Actualiza scripts/CI al nombre canónico."
+            ).format(alias=raw, canonical=canonical_alias),
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
     canonical = normalize_target_name(raw)
     if canonical not in OFFICIAL_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))

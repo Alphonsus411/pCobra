@@ -17,7 +17,6 @@ from pcobra.cobra.transpilers.registry import (
 )
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
-    require_official_target_subset,
     resolution_candidates,
     target_label,
 )
@@ -64,23 +63,11 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
 
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
-    """Valida backend contra la whitelist oficial y devuelve su forma canónica."""
+    """Validador único de backend oficial conectado a la matriz canónica."""
     try:
-        canonical = parse_target(backend)
+        return parse_target(backend)
     except ArgumentTypeError as exc:
         raise ValueError(str(exc)) from exc
-    if canonical not in require_official_target_subset(
-        OFFICIAL_TRANSPILATION_TARGETS,
-        context=f"compile_cmd::{context}",
-    ):
-        raise ValueError(
-            _("Backend no permitido en {context}: {backend}. Permitidos: {supported}").format(
-                context=context,
-                backend=backend,
-                supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
-            )
-        )
-    return canonical
 
 
 def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
@@ -147,21 +134,8 @@ TARGETS_HELP = build_target_help_by_tier(tuple(LANG_CHOICES))
 
 
 def parse_official_target_list(value: str) -> list[str]:
-    """Normaliza una lista de targets y asegura que sean oficiales."""
-    parsed_targets = parse_target_list(value)
-    official_subset = require_official_target_subset(
-        OFFICIAL_TRANSPILATION_TARGETS,
-        context="compile_cmd::parse_official_target_list",
-    )
-    unsupported_targets = [target for target in parsed_targets if target not in official_subset]
-    if unsupported_targets:
-        raise ArgumentTypeError(
-            _("Targets no soportados: {targets}. Soportados: {supported}").format(
-                targets=", ".join(unsupported_targets),
-                supported=", ".join(LANG_CHOICES),
-            )
-        )
-    return parsed_targets
+    """Normaliza una lista de targets usando el validador canónico único."""
+    return parse_target_list(value)
 
 def validate_file(filepath: str) -> bool:
     """Valida que el archivo sea accesible y cumpla con los límites establecidos."""
