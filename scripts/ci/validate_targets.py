@@ -47,6 +47,7 @@ from scripts.targets_policy_common import (
     find_public_alias_errors,
     read_target_policy,
 )
+from scripts.generar_matriz_transpiladores import _build_markdown as build_transpilers_matrix_markdown
 
 FINAL_OFFICIAL_TARGETS = tuple(OFFICIAL_TARGETS)
 EXPECTED_TRANSPILER_MODULES = tuple(
@@ -525,7 +526,7 @@ def validate_targeted_artifact_roots(
         )
 
     found_golden_paths = {
-        path.relative_to(ROOT).as_posix() for path in ROOT.rglob("*.golden")
+        path.relative_to(ROOT).as_posix() for path in GOLDEN_DIR.glob("*.golden")
     }
     expected_golden_paths = set(EXPECTED_GOLDEN_FILES)
     for missing in sorted(expected_golden_paths - found_golden_paths):
@@ -752,6 +753,15 @@ def validate_public_documentation_alignment(
             line_no = content.count("\n", 0, match.start()) + 1
             errors.append(
                 f"{rel}:{line_no}: promoción pública inválida del contrato SDK/Holobit -> backend={backend} debe seguir en partial/no full fuera de python"
+            )
+
+    matriz_path = ROOT / "docs/matriz_transpiladores.md"
+    if matriz_path.exists():
+        current = matriz_path.read_text(encoding="utf-8")
+        expected = build_transpilers_matrix_markdown()
+        if current != expected:
+            errors.append(
+                "docs/matriz_transpiladores.md: contenido no derivado automáticamente desde scripts/generar_matriz_transpiladores.py; ejecutar el script para alinear evidencia/matriz."
             )
     return errors
 
