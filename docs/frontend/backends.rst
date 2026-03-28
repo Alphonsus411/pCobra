@@ -18,6 +18,12 @@ Esto describe la **salida oficial de transpilación**, no una promesa uniforme d
 
 .. include:: ../_generated/official_targets_table.rst
 
+La separación entre salida oficial y runtime se mantiene explícita:
+
+- runtime oficial verificable: ``python``, ``rust``, ``javascript`` y ``cpp``;
+- runtime best-effort no público: ``go`` y ``java``;
+- targets solo de transpilación: ``wasm`` y ``asm``.
+
 Matriz de características
 -------------------------
 

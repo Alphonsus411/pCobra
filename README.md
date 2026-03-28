@@ -52,7 +52,7 @@ La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpil
 Además del estado `full/partial`, cada backend depende de toolchains o runtime externos que deben existir en el host:
 
 - `python` (`full`): entorno Python `>=3.10` con dependencias del proyecto; `holobit_sdk` es obligatorio para el contrato Holobit completo.
-- `javascript` (`partial`): `node` y dependencias del runtime JS del proyecto (`vm2`/`node-fetch` cuando aplique en el host).
+- `javascript` (`partial`): `node` y dependencias del runtime JavaScript del proyecto (`vm2`/`node-fetch` cuando aplique en el host).
 - `rust` (`partial`): toolchain Rust (`rustc`/`cargo`) para compilación/ejecución fuera de transpilación.
 - `cpp` (`partial`): compilador C++ (`g++`/`clang++`) y toolchain nativa del sistema.
 - `go` (`partial`, best-effort): toolchain Go instalada en el host.

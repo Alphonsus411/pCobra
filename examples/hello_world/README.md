@@ -11,10 +11,11 @@ Lectura recomendada de la política asociada:
 - **Solo transpilación sin runtime público**: `wasm`, `asm`.
 - **Orígenes reverse de entrada**: se documentan por separado (`python`, `javascript`, `java`) y no alteran esta tabla de salidas oficiales.
 
-Cada ejemplo se puede generar ejecutando:
+Cada ejemplo se puede generar ejecutando (reemplaza ``<target_oficial>`` por uno
+de los 8 nombres canónicos):
 
 ```bash
-cobra compilar examples/hello_world/<lenguaje>.co --tipo <lenguaje>
+cobra compilar examples/hello_world/<target_oficial>.co --tipo <target_oficial>
 ```
 
 Resultados pre-generados para cada transpilador oficial:

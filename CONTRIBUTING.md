@@ -206,6 +206,13 @@ safety check --full-report
 5. **Etiquetas de PR**: añade `enhancement`, `bug`, `documentation` u otra etiqueta que describa el cambio.
 6. **Revisión**: una vez abierto el PR, espera la revisión de los mantenedores y realiza los cambios solicitados.
 
+Checklist de PR para política de targets (bloqueante)
+
+- [ ] Validé que el PR no introduce referencias públicas a targets fuera de contrato (nombres, aliases, comandos o ejemplos).
+- [ ] Ejecuté `python scripts/ci/validate_targets.py` y no quedaron errores.
+- [ ] Si toqué docs/CLI/ejemplos de targets, regeneré artefactos con `python scripts/generate_target_policy_docs.py`.
+- [ ] Confirmé que los snippets de CLI usan únicamente targets canónicos oficiales.
+
 ¡Agradecemos todas las contribuciones!
 
 ## Actualizar CHANGELOG

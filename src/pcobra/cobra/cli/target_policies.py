@@ -214,21 +214,23 @@ def render_public_policy_summary(*, markup: RenderMarkup = "plain") -> str:
 
 def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: RenderMarkup = "plain") -> str:
     """Renderiza la línea pública de orígenes reverse oficiales."""
+    official_targets_count = len(OFFICIAL_TRANSPILATION_TARGETS)
     return (
         "- **Orígenes de transpilación inversa**: "
         + format_target_sequence(reverse_scope, markup=markup)
-        + ". Este alcance reverse de entrada está separado de los 8 targets oficiales de salida."
+        + f". Este alcance reverse de entrada está separado de los {official_targets_count} targets oficiales de salida."
     )
 
 
 def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[str, ...]) -> str:
+    official_targets_count = len(OFFICIAL_TRANSPILATION_TARGETS)
     return (
         "Targets oficiales de salida: {official}. "
         "Targets con runtime oficial para {capability}: {allowed}. "
         "Compatibilidad SDK completa: {sdk_compatible}. "
         "Targets best-effort: {best_effort}. "
         "Targets solo de transpilación: {transpilation_only}. "
-        "Generar código para los 8 targets oficiales no implica paridad de ejecución real."
+        "Generar código para los {official_count} targets oficiales no implica paridad de ejecución real."
     ).format(
         official=official_transpilation_targets_text(),
         capability=capability,
@@ -236,6 +238,7 @@ def build_runtime_capability_message(*, capability: str, allowed_targets: tuple[
         sdk_compatible=sdk_compatible_targets_text(),
         best_effort=", ".join(BEST_EFFORT_RUNTIME_TARGETS),
         transpilation_only=transpilation_only_targets_text(),
+        official_count=official_targets_count,
     )
 
 

@@ -1,6 +1,11 @@
 # Tutorial Básico
 
-Este directorio contiene un ejemplo mínimo de un programa escrito en Cobra y su transpilación manual a Python.
+Este directorio contiene un ejemplo mínimo de un programa escrito en Cobra y su
+transpilación manual a Python.
+
+Aunque este tutorial usa Python, la política pública del proyecto mantiene 8
+targets oficiales de salida con nombres canónicos: `python`, `rust`,
+`javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
 
 ## Archivos
 
