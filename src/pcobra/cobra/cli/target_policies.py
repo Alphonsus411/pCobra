@@ -11,6 +11,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     SDK_FULL_BACKENDS,
 )
 from pcobra.cobra.transpilers.target_utils import (
+    LEGACY_OR_AMBIGUOUS_TARGETS,
     TARGET_ALIASES,
     build_target_help_by_tier,
     format_target_sequence,
@@ -367,6 +368,18 @@ def invalid_target_error(value: str) -> str:
     )
 
 
+def legacy_or_ambiguous_target_error(value: str) -> str:
+    return (
+        "Target no permitido por nombre legacy/ambiguo: '{value}'. "
+        "Usa solo nombres canónicos oficiales o aliases UX públicos: {supported} "
+        "(aliases: {aliases})."
+    ).format(
+        value=value.strip(),
+        supported=official_transpilation_targets_text(),
+        aliases=accepted_target_aliases_examples_text(),
+    )
+
+
 def restricted_target_error(*, unsupported: list[str], capability: str, allowed_targets: tuple[str, ...]) -> str:
     best_effort_unsupported = [target for target in unsupported if target in BEST_EFFORT_RUNTIME_TARGETS]
     transpilation_only_unsupported = [target for target in unsupported if target in TRANSPILATION_ONLY_TARGETS]
@@ -405,6 +418,9 @@ def parse_target(value: str) -> str:
     raw = value.strip()
     if not raw:
         raise ArgumentTypeError(invalid_target_error(value))
+    lowered = raw.lower()
+    if lowered in LEGACY_OR_AMBIGUOUS_TARGETS:
+        raise ArgumentTypeError(legacy_or_ambiguous_target_error(value))
     canonical = normalize_target_name(raw)
     if canonical not in OFFICIAL_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))

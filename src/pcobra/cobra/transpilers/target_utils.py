@@ -13,6 +13,25 @@ TARGET_ALIASES: Final[dict[str, str]] = {
     "c++": "cpp",
 }
 
+# Alias/nombres legacy o ambiguos que no forman parte del contrato público.
+# Se rechazan explícitamente para evitar aceptación accidental en CLI/plugins.
+LEGACY_OR_AMBIGUOUS_TARGETS: Final[tuple[str, ...]] = (
+    "c",
+    "cxx",
+    "cpp11",
+    "cpp17",
+    "asm64",
+    "assembler",
+    "assembly",
+    "js",
+    "node",
+    "nodejs",
+    "py",
+    "python3",
+    "golang",
+    "jvm",
+)
+
 TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "python": "Python",
     "rust": "Rust",

@@ -8,6 +8,7 @@ from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.target_policies import (
     ACCEPTED_TARGET_ALIASES,
     invalid_target_error,
+    legacy_or_ambiguous_target_error,
     parse_target,
     parse_target_list,
 )
@@ -55,6 +56,13 @@ def test_parse_target_list_normaliza_aliases_en_mayusculas_y_minusculas(alias, c
 def test_parse_target_rechaza_aliases_no_permitidos(alias):
     with pytest.raises(argparse.ArgumentTypeError):
         parse_target(alias)
+
+
+@pytest.mark.parametrize("legacy_name", ("js", "assembly", "nodejs", "python3"))
+def test_parse_target_rechaza_nombres_legacy_o_ambiguos_con_error_explicito(legacy_name):
+    with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
+        parse_target(legacy_name)
+    assert "aliases UX públicos" in legacy_or_ambiguous_target_error(legacy_name)
 
 
 def test_compile_parser_acepta_alias_c_mas_mas_y_entrega_canonico():
@@ -170,3 +178,8 @@ def test_aliases_publicos_no_amplian_el_set_canonico():
 def test_parse_target_rechaza_destino_fuera_del_set_canonico():
     with pytest.raises(argparse.ArgumentTypeError):
         parse_target("target_invalido")
+
+
+def test_parse_target_list_rechaza_nombres_legacy_o_ambiguos():
+    with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
+        parse_target_list("python,js")

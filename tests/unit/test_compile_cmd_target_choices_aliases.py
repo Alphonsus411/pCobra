@@ -1,5 +1,7 @@
 from argparse import _StoreAction
 
+import pytest
+
 from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, CompileCommand
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
@@ -29,6 +31,20 @@ def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
 
     assert args.tipo == "asm"
     assert args.tipos == ["python", "javascript", "asm"]
+
+
+def test_compile_parser_backend_rechaza_alias_legacy_explicito():
+    parser, _ = _build_parser()
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["compilar", "input.co", "--backend", "js"])
+
+
+def test_compile_parser_tipos_rechaza_alias_legacy_explicito():
+    parser, _ = _build_parser()
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["compilar", "input.co", "--tipos", "python,assembly"])
 
 
 def test_compile_help_refleja_solo_nombres_canonicos():
