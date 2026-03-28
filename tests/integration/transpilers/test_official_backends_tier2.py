@@ -105,3 +105,8 @@ def test_tier2_cpp_se_mantiene_como_runtime_oficial_fuerte_y_go_java_como_adapta
 def test_tier2_suite_no_admite_backends_extra_ni_perdidos():
     assert TIER2_BACKENDS == TIER2_TARGETS
     assert len(TIER2_BACKENDS) == 4
+
+
+def test_tier2_permanece_en_el_contrato_tier2_de_la_matriz():
+    for backend in TIER2_BACKENDS:
+        assert BACKEND_COMPATIBILITY[backend]["tier"] == "tier2"

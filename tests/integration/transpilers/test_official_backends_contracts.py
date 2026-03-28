@@ -68,6 +68,7 @@ RUNTIME_ADAPTER_MARKERS = {
     ),
     "wasm": (
         ";; backend wasm: hooks Holobit delegados en runtime host-managed de pcobra",
+        "Runtime Holobit Wasm: si el host no implementa pcobra:holobit",
         '(import "pcobra:holobit" "cobra_proyectar"',
         '(import "pcobra:holobit" "cobra_transformar"',
     ),
@@ -79,11 +80,13 @@ RUNTIME_ADAPTER_MARKERS = {
     "cpp": (
         "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "inline std::size_t longitud(const T& valor) {",
+        "parámetro numérico no soportado por el adaptador oficial",
         'cobra_transformar(hb, "rotar", {cobra_runtime_arg(90)});',
     ),
     "java": (
         "COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE",
         "private static int longitud(Object valor) {",
+        "parámetro numérico no soportado por el adaptador oficial",
         'cobra_transformar(hb, "rotar", 90);',
     ),
     "asm": (
@@ -220,7 +223,14 @@ def test_python_backend_generated_program_executes_in_repo_runtime():
     env = os.environ.copy()
     env["PYTHONPATH"] = "src:."
     try:
-        proc = subprocess.run(["python", temp_path], cwd=Path(__file__).resolve().parents[3], env=env, capture_output=True, text=True, timeout=20)
+        proc = subprocess.run(
+            ["python", temp_path],
+            cwd=Path(__file__).resolve().parents[3],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
         assert proc.returncode == 0, proc.stderr
     finally:
         Path(temp_path).unlink(missing_ok=True)

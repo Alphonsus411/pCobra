@@ -380,6 +380,51 @@ def validate_backend_compatibility_contract() -> None:
                 f"pero la matriz declara {tuple(sorted(full_backends))}"
             )
 
+    full_set = set(SDK_FULL_BACKENDS)
+    partial_set = set(SDK_PARTIAL_BACKENDS)
+    official_set = set(OFFICIAL_TARGETS)
+    if full_set & partial_set:
+        raise RuntimeError(
+            "SDK_FULL_BACKENDS y SDK_PARTIAL_BACKENDS no deben solaparse: "
+            f"{tuple(sorted(full_set & partial_set))}"
+        )
+    if full_set | partial_set != official_set:
+        raise RuntimeError(
+            "SDK_FULL_BACKENDS + SDK_PARTIAL_BACKENDS deben cubrir exactamente OFFICIAL_TARGETS: "
+            f"faltan={tuple(sorted(official_set - (full_set | partial_set)))} "
+            f"extras={tuple(sorted((full_set | partial_set) - official_set))}"
+        )
+
+    missing_notes_backends = [backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_COMPATIBILITY_NOTES]
+    if missing_notes_backends:
+        raise RuntimeError(
+            f"BACKEND_COMPATIBILITY_NOTES no define backends oficiales: {missing_notes_backends}"
+        )
+    extra_notes_backends = sorted(set(BACKEND_COMPATIBILITY_NOTES) - set(OFFICIAL_TARGETS))
+    if extra_notes_backends:
+        raise RuntimeError(
+            f"BACKEND_COMPATIBILITY_NOTES contiene backends no oficiales: {extra_notes_backends}"
+        )
+    for backend in OFFICIAL_TARGETS:
+        notes = BACKEND_COMPATIBILITY_NOTES[backend]
+        if notes.get("contract") not in VALID_COMPATIBILITY_LEVELS:
+            raise RuntimeError(
+                f"BACKEND_COMPATIBILITY_NOTES[{backend}].contract tiene nivel inválido: {notes.get('contract')!r}"
+            )
+        if notes.get("contract") != "full" and backend in SDK_FULL_BACKENDS:
+            raise RuntimeError(
+                f"BACKEND_COMPATIBILITY_NOTES[{backend}] debe declarar contract='full' para backend SDK_FULL"
+            )
+        if notes.get("contract") == "full" and backend in SDK_PARTIAL_BACKENDS:
+            raise RuntimeError(
+                f"BACKEND_COMPATIBILITY_NOTES[{backend}] no puede declarar contract='full' para backend SDK_PARTIAL"
+            )
+        evidence = notes.get("evidence")
+        if not isinstance(evidence, str) or not evidence.strip():
+            raise RuntimeError(
+                f"BACKEND_COMPATIBILITY_NOTES[{backend}] debe declarar evidence no vacío"
+            )
+
     missing_gaps_backends = [backend for backend in OFFICIAL_TARGETS if backend not in BACKEND_FEATURE_GAPS]
     if missing_gaps_backends:
         raise RuntimeError(
