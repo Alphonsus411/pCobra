@@ -12,7 +12,7 @@ Ejemplos de uso generados desde el registro canónico:
 Política de targets oficial
 ---------------------------
 
-Los nombres canónicos y la clasificación por tiers de estos backends se derivan de ``src/pcobra/cobra/transpilers/targets.py`` y ``src/pcobra/cobra/transpilers/registry.py``.
+Los nombres canónicos y la clasificación por tiers de estos backends se derivan de ``src/pcobra/cobra/config/transpile_targets.py`` y ``src/pcobra/cobra/transpilers/registry.py``.
 
 Esto describe la **salida oficial de transpilación**, no una promesa uniforme de ejecución. Para evitar drift documental, el estado por backend se inyecta desde artefactos generados:
 

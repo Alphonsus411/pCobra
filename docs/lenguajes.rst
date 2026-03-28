@@ -1,7 +1,7 @@
 Estado de los lenguajes soportados
 =================================
 
-La narrativa pública de pCobra es única: el proyecto transpila a **8 backends oficiales** y los organiza en **Tier 1** y **Tier 2**. La lista canónica y el reparto por tiers se derivan de ``src/pcobra/cobra/transpilers/targets.py``; la política de runtime, Holobit y SDK se deriva de ``src/pcobra/cobra/cli/target_policies.py``.
+La narrativa pública de pCobra es única: el proyecto transpila a **8 backends oficiales** y los organiza en **Tier 1** y **Tier 2**. La lista canónica y el reparto por tiers se derivan de ``src/pcobra/cobra/config/transpile_targets.py``; la política de runtime, Holobit y SDK se deriva de ``src/pcobra/cobra/cli/target_policies.py``.
 
 .. include:: _generated/official_targets_table.rst
 

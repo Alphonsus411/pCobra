@@ -7,14 +7,15 @@ Este documento fija la narrativa pública canónica de pCobra: el proyecto **tra
 
 ## Fuente única de verdad
 
-La fuente única de verdad para los backends oficiales de salida es `src/pcobra/cobra/transpilers/targets.py`.
+La fuente única de verdad para los backends oficiales de salida es `src/pcobra/cobra/config/transpile_targets.py`.
 
 Ese módulo define exactamente:
 
 - `TIER1_TARGETS`
 - `TIER2_TARGETS`
 - `OFFICIAL_TARGETS`
-- helpers canónicos como `normalize_target_name`, `target_cli_choices`, `build_target_help_by_tier` y `official_target_rows`
+- `TARGETS_BY_TIER` con grupos explícitos `tier_1`/`tier_2`
+- `TARGET_METADATA` con estado, prioridad de release, mantenedor opcional y bandera `holobit_compatible`
 
 La política operativa de runtime, Holobit y SDK se deriva de `src/pcobra/cobra/cli/target_policies.py` y `src/pcobra/cobra/transpilers/compatibility_matrix.py`.
 

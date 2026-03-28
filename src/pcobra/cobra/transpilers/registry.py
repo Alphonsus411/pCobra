@@ -31,7 +31,7 @@ def _validate_registry_contract() -> tuple[str, ...]:
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe usar exactamente los 8 targets canónicos. "
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene claves fuera de contrato y debe usar exactamente los 8 targets canónicos. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
             f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
         )
