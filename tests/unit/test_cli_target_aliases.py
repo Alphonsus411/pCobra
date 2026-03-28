@@ -62,7 +62,7 @@ def test_parse_target_rechaza_aliases_no_permitidos(alias):
 def test_parse_target_rechaza_nombres_legacy_o_ambiguos_con_error_explicito(legacy_name):
     with pytest.raises(argparse.ArgumentTypeError, match="legacy/ambiguo"):
         parse_target(legacy_name)
-    assert "aliases UX públicos" in legacy_or_ambiguous_target_error(legacy_name)
+    assert "nombres canónicos oficiales" in legacy_or_ambiguous_target_error(legacy_name)
 
 
 def test_compile_parser_acepta_alias_c_mas_mas_y_entrega_canonico():
@@ -152,6 +152,17 @@ def test_help_y_error_muestran_solo_nombres_canonicos_oficiales():
 
     message = invalid_target_error("desconocido")
     assert ", ".join(EXPECTED_CANONICAL_TARGETS) in message
+
+
+def test_error_legacy_publico_no_reintroduce_aliases_en_texto():
+    error_text = legacy_or_ambiguous_target_error("js").lower()
+    canonical_section = error_text.split(":", maxsplit=2)[-1]
+
+    for target in EXPECTED_CANONICAL_TARGETS:
+        assert target in error_text
+
+    for forbidden_token in (*REJECTED_ALIASES, *(alias.lower() for alias, _ in ACCEPTED_ALIASES)):
+        assert forbidden_token not in canonical_section
 
 
 def test_la_whitelist_publica_sigue_canonica():

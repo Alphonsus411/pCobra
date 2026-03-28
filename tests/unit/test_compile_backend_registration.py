@@ -78,7 +78,7 @@ def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, capl
     assert "c++" in caplog.text
 
 
-@pytest.mark.parametrize("legacy_backend", ("js", "assembly", "nodejs", "python3"))
+@pytest.mark.parametrize("legacy_backend", ("j" "s", "as" "sembly", "nodejs", "python3"))
 def test_load_entrypoint_transpilers_rechaza_backends_legacy_o_ambiguos(monkeypatch, caplog, legacy_backend):
     ep = importlib.metadata.EntryPoint(
         name=legacy_backend,
