@@ -1,4 +1,9 @@
-"""Generación sencilla de IR para LLVM."""
+"""Generación sencilla de IR para LLVM (experimental/no oficial).
+
+Este módulo se conserva únicamente como referencia histórica de prototipado
+interno y **no** forma parte del contrato público de targets soportados.
+No debe registrarse en CLI, documentación pública ni matrices oficiales.
+"""
 
 from __future__ import annotations
 
@@ -61,4 +66,3 @@ def generar_ir_funcion(nombre: str, expr: Expr) -> str:
     """Devuelve el IR de una función sin parámetros que retorna ``expr``."""
     backend = LLVMBackend()
     return backend.generar_funcion(nombre, expr)
-

@@ -169,4 +169,4 @@ def test_aliases_publicos_no_amplian_el_set_canonico():
 
 def test_parse_target_rechaza_destino_fuera_del_set_canonico():
     with pytest.raises(argparse.ArgumentTypeError):
-        parse_target("ruby")
+        parse_target("target_invalido")
