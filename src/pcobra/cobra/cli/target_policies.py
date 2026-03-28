@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from argparse import ArgumentTypeError
-import warnings
 from typing import Literal
 
 from pcobra.cobra.transpilers.compatibility_matrix import (
@@ -13,10 +12,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
 )
 from pcobra.cobra.transpilers.target_utils import (
     DEPRECATION_WINDOW_REMOVAL_VERSION,
-    DEPRECATION_WINDOW_START_VERSION,
     LEGACY_OR_AMBIGUOUS_TARGETS,
-    RETIRED_TARGET_REPLACEMENTS,
-    TARGET_ALIASES,
     build_target_help_by_tier,
     deprecation_window_text,
     format_target_sequence,
@@ -31,38 +27,12 @@ from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 RenderMarkup = Literal["plain", "markdown", "rst"]
 
 
-ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = (
-    *tuple(TARGET_ALIASES.items()),
-)
-
-
-def _validate_alias_contract() -> tuple[tuple[str, str], ...]:
-    """Asegura que los aliases no amplíen el alcance del contrato canónico."""
-    validated: list[tuple[str, str]] = []
-    for alias, canonical in ACCEPTED_TARGET_ALIASES:
-        normalized_alias = alias.strip().lower()
-        normalized_canonical = canonical.strip().lower()
-        if normalized_canonical not in OFFICIAL_TARGETS:
-            raise RuntimeError(
-                "TARGET_ALIASES contiene un alias fuera de OFFICIAL_TARGETS: "
-                f"{alias}->{canonical}"
-            )
-        if normalized_alias in OFFICIAL_TARGETS:
-            raise RuntimeError(
-                "TARGET_ALIASES no debe duplicar nombres canónicos oficiales: "
-                f"{alias}->{canonical}"
-            )
-        validated.append((normalized_alias, normalized_canonical))
-    return tuple(validated)
-
-
-_VALIDATED_ACCEPTED_TARGET_ALIASES = _validate_alias_contract()
+ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = ()
 
 
 def accepted_target_aliases_examples_text() -> str:
-    return ", ".join(
-        f"{alias}→{canonical}" for alias, canonical in _VALIDATED_ACCEPTED_TARGET_ALIASES
-    )
+    """No existen aliases aceptados en la superficie pública actual."""
+    return "sin aliases públicos"
 
 
 # Todos los destinos oficiales de generación/transpilación.
@@ -513,37 +483,8 @@ def parse_target(value: str) -> str:
     lowered = raw.lower()
     if lowered in LEGACY_OR_AMBIGUOUS_TARGETS:
         raise ArgumentTypeError(legacy_or_ambiguous_target_error(value))
-    if lowered in TARGET_ALIASES:
-        canonical_alias = TARGET_ALIASES[lowered]
-        warnings.warn(
-            (
-                "Alias de target en desuso: '{alias}' -> '{canonical}'. "
-                "Ventana: v{start}..v{removal}; a partir de v{removal} será error."
-            ).format(
-                alias=raw,
-                canonical=canonical_alias,
-                start=DEPRECATION_WINDOW_START_VERSION,
-                removal=DEPRECATION_WINDOW_REMOVAL_VERSION,
-            ),
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
     canonical = normalize_target_name(raw)
     if canonical not in OFFICIAL_TARGETS:
-        if lowered in RETIRED_TARGET_REPLACEMENTS:
-            warnings.warn(
-                (
-                    "Uso de target retirado detectado: '{target}'. "
-                    "Alternativa recomendada: '{suggested}'. "
-                    "Eliminación definitiva en v{removal}."
-                ).format(
-                    target=raw,
-                    suggested=RETIRED_TARGET_REPLACEMENTS[lowered],
-                    removal=DEPRECATION_WINDOW_REMOVAL_VERSION,
-                ),
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
         raise ArgumentTypeError(invalid_target_error(value))
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))
