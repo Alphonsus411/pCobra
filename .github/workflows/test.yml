@@ -74,6 +74,10 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python scripts/validate_targets_policy.py
+      - name: Validate policy drift in public target text
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/lint_policy_drift.py
       - name: Regenerate targets docs and verify clean diff
         if: runner.os != 'Windows'
         shell: bash
@@ -93,6 +97,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/validate_targets_policy.py
+      - name: Validate policy drift in public target text (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/lint_policy_drift.py
       - name: Regenerate targets docs and verify clean diff (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
