@@ -128,6 +128,62 @@ require_official_target_subset(
     context="pcobra.cobra.cli.target_policies.SDK_COMPATIBLE_TARGETS",
 )
 
+
+def _validate_runtime_categories_contract() -> None:
+    """Asegura que runtime/best-effort/transpilación-only particionen el canon."""
+    category_map = {
+        "OFFICIAL_RUNTIME_TARGETS": OFFICIAL_RUNTIME_TARGETS,
+        "BEST_EFFORT_RUNTIME_TARGETS": BEST_EFFORT_RUNTIME_TARGETS,
+        "TRANSPILATION_ONLY_TARGETS": TRANSPILATION_ONLY_TARGETS,
+    }
+    canonical_set = set(OFFICIAL_TRANSPILATION_TARGETS)
+    category_sets = {name: set(values) for name, values in category_map.items()}
+
+    for name, values in category_map.items():
+        missing = tuple(target for target in values if target not in canonical_set)
+        if missing:
+            raise RuntimeError(
+                f"{name} contiene targets fuera del canon oficial. "
+                f"out_of_contract={missing}; canonical={OFFICIAL_TRANSPILATION_TARGETS}"
+            )
+
+    overlap_pairs = []
+    category_names = tuple(category_map)
+    for index, left in enumerate(category_names):
+        for right in category_names[index + 1 :]:
+            overlap = tuple(sorted(category_sets[left] & category_sets[right]))
+            if overlap:
+                overlap_pairs.append((left, right, overlap))
+    if overlap_pairs:
+        overlaps = "; ".join(
+            f"{left}∩{right}={overlap}" for left, right, overlap in overlap_pairs
+        )
+        raise RuntimeError(
+            "Las categorías de targets no deben solaparse entre sí. "
+            f"{overlaps}; canonical={OFFICIAL_TRANSPILATION_TARGETS}"
+        )
+
+    partition_union = (
+        category_sets["OFFICIAL_RUNTIME_TARGETS"]
+        | category_sets["BEST_EFFORT_RUNTIME_TARGETS"]
+        | category_sets["TRANSPILATION_ONLY_TARGETS"]
+    )
+    missing_from_partition = tuple(
+        target for target in OFFICIAL_TRANSPILATION_TARGETS if target not in partition_union
+    )
+    extras_in_partition = tuple(
+        target for target in partition_union if target not in canonical_set
+    )
+    if missing_from_partition or extras_in_partition:
+        raise RuntimeError(
+            "La partición OFFICIAL/BEST_EFFORT/TRANSPILATION_ONLY debe cubrir exactamente el canon. "
+            f"missing={missing_from_partition or '∅'}; extras={extras_in_partition or '∅'}; "
+            f"partition={tuple(sorted(partition_union))}; canonical={OFFICIAL_TRANSPILATION_TARGETS}"
+        )
+
+
+_validate_runtime_categories_contract()
+
 OFFICIAL_TRANSPILATION_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TRANSPILATION_TARGETS)
 OFFICIAL_RUNTIME_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_RUNTIME_TARGETS)
 VERIFICATION_EXECUTABLE_TARGETS_HELP = build_target_help_by_tier(VERIFICATION_EXECUTABLE_TARGETS)
