@@ -1,5 +1,7 @@
 # Proyecto Cobra
 [![Codecov](https://codecov.io/gh/Alphonsus411/pCobra/branch/work/graph/badge.svg)](https://codecov.io/gh/Alphonsus411/pCobra/branch/work)
+[![Tier 1 PR Gate](https://github.com/Alphonsus411/pCobra/actions/workflows/test.yml/badge.svg?event=pull_request)](https://github.com/Alphonsus411/pCobra/actions/workflows/test.yml)
+[![Tier 2 Nightly](https://github.com/Alphonsus411/pCobra/actions/workflows/test.yml/badge.svg?event=schedule)](https://github.com/Alphonsus411/pCobra/actions/workflows/test.yml)
 [![Versión estable](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Alphonsus411/pCobra/HEAD?labpath=notebooks/playground.ipynb)
 

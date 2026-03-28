@@ -5,13 +5,17 @@ on:
     paths: ['**/*.py', 'src/tests/**', '.github/workflows/test.yml']
   pull_request:
     paths: ['**/*.py', 'src/tests/**', '.github/workflows/test.yml']
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  pytest:
+  tier1-required:
+    if: github.event_name != 'schedule'
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -89,6 +93,10 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python scripts/validate_runtime_contract.py
+      - name: Validate workflow target policy
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/ci/validate_workflow_target_matrix.py
       - name: Validate targets anti-regression policy (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -112,6 +120,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/validate_runtime_contract.py
+      - name: Validate workflow target policy (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/ci/validate_workflow_target_matrix.py
       - name: Run linters
         if: runner.os != 'Windows'
         shell: bash
@@ -129,7 +141,6 @@ jobs:
         shell: bash
         run: |
           pytest tests/integration/transpilers/test_official_backends_tier1.py \
-            tests/integration/transpilers/test_official_backends_tier2.py \
             tests/integration/transpilers/test_official_backends_contracts.py
 
           paths=()
@@ -151,7 +162,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_tier2.py tests/integration/transpilers/test_official_backends_contracts.py
+          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_contracts.py
 
           $paths = @()
           if (Test-Path tests) {
@@ -176,8 +187,46 @@ jobs:
           files: coverage.xml
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: coverage-report
+          name: coverage-report-tier1
           path: coverage.xml
+
+
+  tier2-nightly-partial:
+    name: Tier 2 nightly partial matrix
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Install system packages
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ golang-go rustc default-jdk
+      - name: Install dependencies
+        uses: ./.github/actions/install
+      - name: Validate workflow target policy
+        shell: bash
+        run: python scripts/ci/validate_workflow_target_matrix.py
+      - name: Run Tier 2 backend suite
+        shell: bash
+        run: |
+          pytest tests/integration/transpilers/test_official_backends_tier2.py
+          pytest tests/integration/test_holobit_tiers.py
 
 
   contractual-compatibility:

@@ -25,3 +25,11 @@ jobs:
 
       - name: Analizar workflows
         run: ./bin/actionlint -color
+
+      - name: Configurar Python para validaciones de política
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Validar política de targets en workflows
+        run: python scripts/ci/validate_workflow_target_matrix.py
