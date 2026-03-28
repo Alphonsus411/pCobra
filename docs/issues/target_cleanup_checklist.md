@@ -138,3 +138,33 @@ Antes de fusionar cambios de política:
 - [x] Coherencia de docs públicas validada (`python scripts/validate_targets_policy.py`).
 - [x] Contrato de compatibilidad por backend validado (`python scripts/validate_runtime_contract.py`).
 - [x] Cualquier guardrail en fallo bloquea merge (jobs CI en estado failed).
+
+## Registro de ejecución (2026-03-28)
+
+Este bloque deja trazabilidad explícita de la ejecución por fases solicitada para
+el cierre de limpieza de targets y del contrato Holobit/corelibs/standard_library.
+
+1. **Fase 1 — Política canónica + validadores CI**
+   - Se revalidó la política canónica desde `targets/registry/CLI` y los guardrails CI
+     con `python scripts/ci/validate_targets.py` (estado: OK).
+2. **Fase 2 — Limpieza de restos no oficiales**
+   - Se ejecutó `python scripts/validate_targets_policy.py` para verificar que docs
+     públicas y rutas productivas no expongan aliases/backends fuera del contrato
+     canónico (estado: OK).
+3. **Fase 3 — Matriz Holobit SDK + runtime hooks**
+   - Se confirmó que la matriz contractual mantiene `python` como único backend `full`
+     y resto en `partial`, incluyendo la narrativa de hooks/runtime por backend
+     (`python scripts/validate_runtime_contract.py`, estado: OK).
+4. **Fase 4 — Ajustes de pruebas contractuales e integración por tier**
+   - Se corroboró que el inventario canónico de módulos/nodes/goldens por tier sigue
+     sincronizado con el validador integral (`python scripts/ci/validate_targets.py`,
+     estado: OK).
+5. **Fase 5 — Regeneración de documentación + consistencia final**
+   - Se regeneraron artefactos derivados de política con
+     `python scripts/generate_target_policy_docs.py` y se re-ejecutaron validadores
+     de fase 1/2/3 para cierre de consistencia (estado: OK).
+
+**Criterio de salida verificado**: no hay referencias públicas o de build a targets
+fuera de `python,rust,javascript,wasm,go,cpp,java,asm`; además el contrato
+Holobit/corelibs/standard_library queda documentado y probado por tiers mediante
+los validadores de política y runtime.
