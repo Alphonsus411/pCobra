@@ -33,6 +33,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
     CONTRACT_FEATURES,
 )
 from pcobra.cobra.transpilers.targets import (
+    EXPECTED_CANONICAL_TARGETS as TARGETS_MODULE_CANONICAL,
     OFFICIAL_TARGETS,
     TIER1_TARGETS,
     TIER2_TARGETS,
@@ -71,6 +72,8 @@ def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     particion = assert_official_targets_partition(transpilers=TRANSPILERS)
 
     assert len(oficiales) == 8
+    assert len(set(oficiales)) == 8
+    assert TARGETS_MODULE_CANONICAL == EXPECTED_CANONICAL_TARGETS
     assert TIER1_TARGETS == EXPECTED_CANONICAL_TARGETS[:4]
     assert TIER2_TARGETS == EXPECTED_CANONICAL_TARGETS[4:]
     assert oficiales == EXPECTED_CANONICAL_TARGETS

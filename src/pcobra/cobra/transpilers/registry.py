@@ -25,19 +25,20 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 def _validate_registry_contract() -> tuple[str, ...]:
     """Valida que el registro declare exactamente los 8 targets oficiales."""
+    configured_keys = tuple(TRANSPILER_CLASS_PATHS)
+    extras = tuple(key for key in configured_keys if key not in OFFICIAL_TARGETS)
+    if extras:
+        raise RuntimeError(
+            "TRANSPILER_CLASS_PATHS solo puede declarar los 8 targets canónicos "
+            f"{OFFICIAL_TARGETS}. Se detectaron claves fuera de contrato: {extras}."
+        )
+
     try:
         return require_exact_official_targets(
             TRANSPILER_CLASS_PATHS,
             context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
         )
-    except RuntimeError as exc:
-        configured_keys = tuple(TRANSPILER_CLASS_PATHS)
-        extras = tuple(key for key in configured_keys if key not in OFFICIAL_TARGETS)
-        if extras:
-            raise RuntimeError(
-                "TRANSPILER_CLASS_PATHS solo puede declarar los 8 targets canónicos "
-                f"{OFFICIAL_TARGETS}. Se detectaron claves fuera de contrato: {extras}."
-            ) from exc
+    except RuntimeError:
         raise
 
 
