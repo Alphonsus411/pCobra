@@ -173,6 +173,30 @@ considerarse completo.
 - [ ] Verifiqué que no quedan diffs sin commitear en docs generadas de targets.
 - [ ] Validé CI de targets (`python scripts/ci/validate_targets.py` y `python scripts/ci/ensure_generated_targets_docs_clean.py`).
 
+### Gate de auditoría de contrato de targets (obligatorio en CI)
+
+La CI ejecuta además `python scripts/ci/audit_targets_contract.py` como paso
+bloqueante. Este gate valida automáticamente:
+
+1. Set canónico de targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+2. Coherencia entre `targets.py`, `registry.py` y `target_policies.py`.
+3. Consistencia documental mínima, con barrido de términos no permitidos en documentación/workflows.
+4. Regla de mantenimiento de matriz: si cambia
+   `src/pcobra/cobra/transpilers/compatibility_matrix.py`, el PR también debe
+   incluir cambios en tests de contrato y documentación contractual mínima.
+
+Antes de abrir PR, ejecútalo localmente:
+
+```bash
+python scripts/ci/audit_targets_contract.py
+```
+
+Si quieres simular la comparación de un PR contra `main`, puedes pasar SHAs:
+
+```bash
+python scripts/ci/audit_targets_contract.py <base_sha> <head_sha>
+```
+
 ### Añadir soporte para nuevos lenguajes en `run_code`
 
 1. Crea una función `_run_<lenguaje>` en `tests/utils/runtime.py` que invoque
