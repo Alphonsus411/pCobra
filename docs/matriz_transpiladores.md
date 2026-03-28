@@ -50,21 +50,6 @@ Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 > `runtime_policy` distingue explícitamente entre runtime oficial, best-effort y solo transpilación.
 > `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `rust`, `javascript` y `cpp` se publican como `adaptador mantenido (partial)`; el resto permanece en `partial`.
 
-## Prerrequisitos externos por backend
-
-La matriz contractual (`full/partial`) no sustituye los requisitos de entorno:
-
-- `python`: entorno Python `>=3.10` con dependencias de pCobra; `holobit_sdk` es obligatorio para cobertura `full`.
-- `javascript`: runtime Node.js y dependencias del host (por ejemplo `vm2`/`node-fetch` cuando corresponda).
-- `rust`: toolchain `rustc/cargo`.
-- `cpp`: compilador C++ (`g++` o `clang++`).
-- `go`: toolchain Go (backend best-effort).
-- `java`: JDK/JRE (backend best-effort).
-- `wasm`: host WASM que implemente imports `pcobra:corelibs`, `pcobra:standard_library` y `pcobra:holobit`.
-- `asm`: ensamblador/runtime externo fuera del árbol operativo de pCobra.
-
-Sin estos prerrequisitos, el estado oficial se limita a codegen contractual y señalización explícita de error.
-
 ## Evidencia técnica automática (derivada de goldens)
 
 | Backend | Feature | Nivel contrato | Evidencia automática |

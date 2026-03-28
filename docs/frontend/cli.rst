@@ -44,6 +44,12 @@ oficial**. Generar código para ``go``, ``java``, ``wasm`` o ``asm`` no implica
 que esos targets tengan ejecución real oficial en la CLI ni soporte oficial de
 librerías equivalente a ``python``, ``rust``, ``javascript`` o ``cpp``.
 
+Resumen operativo de runtime en la CLI pública:
+
+- **Runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y ``cpp``.
+- **Runtime best-effort no público**: ``go`` y ``java``.
+- **Solo transpilación (sin runtime oficial CLI)**: ``wasm`` y ``asm``.
+
 Ejemplos de ``cobra compilar`` para cada backend oficial (generado):
 
 .. include:: ../_generated/cli_backend_examples.rst

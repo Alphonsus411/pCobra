@@ -7,6 +7,8 @@ Este directorio reúne distintos ejemplos de uso de Cobra y material relacionado
 Toda la documentación y los ejemplos públicos de este directorio deben usar solo
 los 8 nombres canónicos de targets oficiales de transpilación:
 `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+No deben publicarse aliases o variantes fuera de contrato; usa siempre el nombre
+canónico exacto definido por la política oficial.
 
 Además, conviene leerlos con esta distinción:
 
