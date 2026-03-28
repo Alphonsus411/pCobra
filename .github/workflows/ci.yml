@@ -135,6 +135,12 @@ jobs:
       - name: Validate targets anti-regression policy
         shell: bash
         run: python scripts/ci/validate_targets.py
+      - name: Run target contract audit gate
+        shell: bash
+        env:
+          AUDIT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          AUDIT_HEAD_SHA: ${{ github.sha }}
+        run: python scripts/ci/audit_targets_contract.py "${AUDIT_BASE_SHA}" "${AUDIT_HEAD_SHA}"
       - name: Validate public documentation targets policy
         shell: bash
         run: python scripts/validate_targets_policy.py
