@@ -5,12 +5,7 @@ Ruta canónica runtime: ``src/pcobra/cobra/cli/cli.py``.
 
 from __future__ import annotations
 
-import os
 import sys
-
-# Garantiza que la base de datos tenga una clave por defecto cuando se ejecuta
-# en entornos sin configuración previa (por ejemplo, durante los tests).
-os.environ.setdefault("SQLITE_DB_KEY", "cli-dev-key")
 
 from pcobra.cobra.cli.cli import main as _pcobra_main
 

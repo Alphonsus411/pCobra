@@ -1089,12 +1089,19 @@ Si necesitas una ubicación distinta configura `COBRA_DB_PATH`; cuando se
 proporciona, el valor de `SQLITE_DB_KEY` se mantiene como clave incluso si
 contiene `/` u otros separadores.
 
+> ⚠️ La CLI valida `SQLITE_DB_KEY` al arrancar y falla de forma explícita si no
+> está definida. Solo en entorno de desarrollo/pruebas se permite la excepción
+> controlada `COBRA_DEV_MODE=1`, que habilita una clave temporal de sesión.
+
 ```bash
-export SQLITE_DB_KEY="clave-local"          # Obligatorio para abrir la base
+# Ejemplo recomendado: clave aleatoria fuerte para uso local/CI
+export SQLITE_DB_KEY="$(openssl rand -hex 32)"  # Obligatorio para abrir la base
 export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"  # Opcional; usa el
                                                         # valor por defecto
 # Para despliegues sin cifrado puedes usar un prefijo explícito:
 export SQLITE_DB_KEY="path:/var/cache/pcobra/core.db"
+# Solo desarrollo/pruebas controladas:
+export COBRA_DEV_MODE=1
 ```
 
 Si necesitas ubicar la base de datos en otro sitio, ajusta `COBRA_DB_PATH` a la
