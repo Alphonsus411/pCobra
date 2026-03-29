@@ -4,7 +4,6 @@ import importlib
 import importlib.util
 import logging
 import os as _os
-from pathlib import Path as _Path
 import sys as _sys
 import warnings as _warnings
 from typing import Dict, Tuple
@@ -57,15 +56,6 @@ def _legacy_migration_message(phase: int) -> str:
         f"Calendario de retirada: {_LEGACY_IMPORT_SCHEDULE[1]} {_LEGACY_IMPORT_SCHEDULE[2]} {_LEGACY_IMPORT_SCHEDULE[3]} "
         f"Fase actual: {phase}."
     )
-
-_REPO_ROOT = _Path(__file__).resolve().parents[2]
-_BIN_PATH = _REPO_ROOT / "scripts" / "bin"
-if _BIN_PATH.is_dir():
-    _current_path = _os.environ.get("PATH", "")
-    if str(_BIN_PATH) not in _current_path.split(_os.pathsep):
-        _os.environ["PATH"] = (
-            f"{_BIN_PATH}{_os.pathsep}{_current_path}" if _current_path else str(_BIN_PATH)
-        )
 
 # Cargar primero los paquetes base para evitar errores de dependencias cruzadas
 _submodules = ["cobra", "core", "cli", "ia", "jupyter_kernel", "gui", "lsp", "compiler"]

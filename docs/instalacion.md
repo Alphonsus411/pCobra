@@ -16,6 +16,8 @@ pip install -e .[dev]
 
 Copia `.env.example` a `.env` y verifica la instalación con `cobra --version`.
 
+> Nota de bootstrap CLI: `import pcobra` no altera `PATH`. Si en desarrollo local necesitas que el arranque de la CLI preponga `scripts/bin`, usa `PCOBRA_CLI_BOOTSTRAP_PATH=1` al ejecutar `cobra` o `python -m pcobra`.
+
 
 ## Perfiles de instalación (extras)
 
