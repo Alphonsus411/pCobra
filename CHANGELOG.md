@@ -1,3 +1,6 @@
+## v10.0.13 - 2026-03-29
+- Fix: la CLI ya no depende de `scripts.benchmarks` en tiempo de ejecución.
+
 ## v10.1.0 - 2025-08-24
 - Integración completa de Hololang como lenguaje intermedio oficial del compilador.
 - Reestructuración de la cadena de transpilación para emitir Hololang antes de despachar a cada backend.
