@@ -10,8 +10,10 @@ sys.modules.setdefault("cli", cobra_cli)
 sys.modules.setdefault("cli.commands", cobra_cmds)
 sys.modules.setdefault("cli.plugin_registry", cobra_reg)
 
-from cobra.cli.plugin import descubrir_plugins
-from cobra.cli.plugin_registry import obtener_registro, limpiar_registro
+import pytest
+
+from pcobra.cobra.cli.plugin import descubrir_plugins, configure_plugin_policy, PluginPolicyError
+from pcobra.cobra.cli.plugin_registry import obtener_registro, limpiar_registro
 from tests.fake_plugins import GoodPlugin, NotPlugin, BadInitPlugin
 
 
@@ -32,8 +34,9 @@ def test_descubrir_plugins_varios_invalidos(caplog):
         group="cobra.plugins",
     )
     eps = importlib.metadata.EntryPoints((ep_good, ep_bad, ep_crash))
-    with patch("cli.plugin.entry_points", return_value=eps):
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=eps):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["prefix:tests.fake_plugins"])
         with caplog.at_level("WARNING"):
             plugins = descubrir_plugins()
     # Only the valid plugin should be returned
@@ -43,3 +46,32 @@ def test_descubrir_plugins_varios_invalidos(caplog):
     # Errors for the invalid plugins should have been logged
     assert any("no implementa PluginInterface" in r.message for r in caplog.records)
     assert any("Error instanciando plugin" in r.message for r in caplog.records)
+
+
+def test_descubrir_plugins_modo_seguro_falla_si_no_allowlist():
+    ep_good = importlib.metadata.EntryPoint(
+        name="good",
+        value="tests.fake_plugins:GoodPlugin",
+        group="cobra.plugins",
+    )
+    eps = importlib.metadata.EntryPoints((ep_good,))
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=eps):
+        limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=[])
+        with pytest.raises(PluginPolicyError):
+            descubrir_plugins()
+    assert obtener_registro() == {}
+
+
+def test_descubrir_plugins_allowlist_por_prefix():
+    ep_good = importlib.metadata.EntryPoint(
+        name="good",
+        value="tests.fake_plugins:GoodPlugin",
+        group="cobra.plugins",
+    )
+    eps = importlib.metadata.EntryPoints((ep_good,))
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=eps):
+        limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["prefix:tests.fake_plugins"])
+        plugins = descubrir_plugins()
+    assert [p.__class__ for p in plugins] == [GoodPlugin]

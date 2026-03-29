@@ -39,7 +39,12 @@ from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
-from pcobra.cobra.cli.plugin import descubrir_plugins
+from pcobra.cobra.cli.plugin import (
+    descubrir_plugins,
+    configure_plugin_policy,
+    PLUGINS_ALLOWLIST_ENV,
+    PLUGINS_SAFE_MODE_ENV,
+)
 from pcobra.cobra.cli.utils import messages
 from pcobra.cobra.cli.utils import config as config_module
 from pcobra.cobra.cli.utils.autocomplete import (
@@ -297,6 +302,30 @@ class CliApplication:
                 "COBRA_DEV_ALLOW_EPHEMERAL_KEY=1."
             ),
         )
+        parser.add_argument(
+            "--plugins-safe-mode",
+            dest="plugins_safe_mode",
+            action="store_true",
+            help=_("Activa modo seguro de plugins (bloquea no permitidos)"),
+        )
+        parser.add_argument(
+            "--plugins-unsafe-mode",
+            dest="plugins_safe_mode",
+            action="store_false",
+            help=_("Desactiva modo seguro de plugins (permite cualquier plugin)"),
+        )
+        parser.add_argument(
+            "--plugins-allowlist",
+            dest="plugins_allowlist",
+            default=environ.get(PLUGINS_ALLOWLIST_ENV, ""),
+            help=_(
+                "Lista permitida de plugins separados por coma (ruta exacta, "
+                "módulo o prefix:/sha256:hash). También vía COBRA_PLUGINS_ALLOWLIST."
+            ),
+        )
+        parser.set_defaults(
+            plugins_safe_mode=environ.get(PLUGINS_SAFE_MODE_ENV, "1").strip().lower() in {"1", "true", "yes", "on"}
+        )
 
     def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
         """Configura autocompletado para argumentos comunes.
@@ -340,6 +369,11 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
 
+        preliminary_args, _ = self.parser.parse_known_args(argv)
+        configure_plugin_policy(
+            safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
+            allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
+        )
         self._ensure_command_structure()
 
         default_command_name = self.command_registry.get_default_command_name()
