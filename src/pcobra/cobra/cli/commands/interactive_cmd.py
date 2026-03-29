@@ -89,13 +89,7 @@ class InteractiveCommand(BaseCommand):
         super().__init__()
         self.interpretador = interpretador
         self._allow_insecure_fallback = False
-        self._setup_logging()
-
-    def _setup_logging(self) -> None:
-        """Configura el sistema de logging."""
-        logging.basicConfig(
-            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
+        self.logger = logging.getLogger(__name__)
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
@@ -191,10 +185,10 @@ class InteractiveCommand(BaseCommand):
             raise RuntimeError(_("Se excedió la profundidad máxima del AST"))
 
         tokens = Lexer(linea).tokenizar()
-        logging.debug(_("Tokens generados: {tokens}").format(tokens=tokens))
+        self.logger.debug(_("Tokens generados: {tokens}").format(tokens=tokens))
 
         ast = Parser(tokens).parsear()
-        logging.debug(_("AST generado: {ast}").format(ast=ast))
+        self.logger.debug(_("AST generado: {ast}").format(ast=ast))
 
         if validador:
             for nodo in ast:
@@ -460,7 +454,7 @@ class InteractiveCommand(BaseCommand):
         mensaje = f"{categoria}: {error}"
         if include_traceback:
             mensaje += f"\n{traceback.format_exc()}"
-        logging.error(mensaje)
+        self.logger.error(mensaje)
         mostrar_error(mensaje)
 
     def __enter__(self) -> "InteractiveCommand":
@@ -469,7 +463,7 @@ class InteractiveCommand(BaseCommand):
         Returns:
             Self para uso en context manager
         """
-        logging.info(_("Iniciando REPL de Cobra"))
+        self.logger.info(_("Iniciando REPL de Cobra"))
         return self
 
     def __exit__(
@@ -486,7 +480,7 @@ class InteractiveCommand(BaseCommand):
             exc_tb: Traceback de la excepción
         """
         if exc_type is not None:
-            logging.error(
+            self.logger.error(
                 _("Error al finalizar REPL: {exc_val}").format(exc_val=exc_val)
             )
-        logging.info(_("Finalizando REPL de Cobra"))
+        self.logger.info(_("Finalizando REPL de Cobra"))
