@@ -40,7 +40,7 @@ def test_cli_gui_reporta_falta_de_flet(monkeypatch):
     result = cmd.run(_args())
 
     assert result == 1
-    assert "falta el módulo 'flet'" in mensajes[0]
+    assert "faltante detectado 'flet'" in mensajes[0]
     assert "pip install flet" in mensajes[0]
 
 
@@ -63,7 +63,7 @@ def test_cli_gui_reporta_falta_de_modulo_core_en_preflight(monkeypatch):
     result = cmd.run(_args())
 
     assert result == 1
-    assert "Error interno del paquete" in mensajes[0]
+    assert "Error de importación GUI" in mensajes[0]
     assert "pcobra.cobra.core" in mensajes[0]
     assert "pip install -e ." in mensajes[0]
 
@@ -87,7 +87,7 @@ def test_cli_gui_reporta_falta_de_modulo_transpiler_en_preflight(monkeypatch):
     result = cmd.run(_args())
 
     assert result == 1
-    assert "Error interno del paquete" in mensajes[0]
+    assert "Error de importación GUI" in mensajes[0]
     assert "pcobra.cobra.transpilers.targets" in mensajes[0]
     assert "pip install -e ." in mensajes[0]
 
@@ -167,7 +167,7 @@ def test_cli_gui_reporta_error_interno_de_import(monkeypatch):
     result = cmd.run(_args())
 
     assert result == 1
-    assert "Error interno de importación" in mensajes[0]
+    assert "Error de importación GUI" in mensajes[0]
     assert "pcobra.gui.idle" in mensajes[0]
 
 
@@ -194,5 +194,28 @@ def test_cli_gui_reporta_simbolo_faltante_en_preflight(monkeypatch):
     result = cmd.run(_args("idle"))
 
     assert result == 1
-    assert "falta el símbolo 'Parser'" in mensajes[0]
+    assert "pcobra.cobra.core.Parser" in mensajes[0]
     assert "pcobra.cobra.core" in mensajes[0]
+
+
+def test_cli_gui_importerror_sin_name_extrae_modulo_desde_mensaje(monkeypatch):
+    mensajes: list[str] = []
+    cmd = FletCommand()
+    fake_flet = SimpleNamespace(app=lambda **_kwargs: None)
+
+    def _import_module(name: str):
+        if name == "pcobra.gui.idle":
+            err = ImportError("No module named 'rich'")
+            err.name = None
+            raise err
+        return _default_module(name)
+
+    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.mostrar_error", mensajes.append)
+    monkeypatch.setattr("pcobra.cobra.cli.commands.flet_cmd.importlib.import_module", _import_module)
+    monkeypatch.setitem(sys.modules, "flet", fake_flet)
+
+    result = cmd.run(_args())
+
+    assert result == 1
+    assert "faltante detectado 'rich'" in mensajes[0]
+    assert "instala la dependencia" in mensajes[0]
