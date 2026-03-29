@@ -1,5 +1,6 @@
 from argparse import Namespace
 from contextlib import ExitStack
+import logging
 from unittest.mock import patch
 
 from cobra.cli.commands.execute_cmd import ExecuteCommand
@@ -101,3 +102,94 @@ def test_profile_command_with_format_invokes_formatter(tmp_path):
 
     assert resultado == 0
     mock_formatear.assert_called_once_with(str(archivo))
+
+
+def _build_execute_args(archivo, **overrides):
+    args = {
+        "archivo": str(archivo),
+        "sandbox": False,
+        "contenedor": None,
+        "depurar": False,
+        "debug": False,
+        "verbose": 0,
+        "seguro": True,
+        "extra_validators": None,
+        "formatear": False,
+    }
+    args.update(overrides)
+    return Namespace(**args)
+
+
+def test_execute_command_debug_flag_sets_debug_logger(tmp_path):
+    archivo = tmp_path / "programa_debug.co"
+    archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+    args = _build_execute_args(archivo, debug=True)
+    comando = ExecuteCommand()
+
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch("cobra.cli.commands.execute_cmd.module_map.get_toml_map", return_value={})
+        )
+        stack.enter_context(
+            patch("cobra.cli.commands.execute_cmd.sandbox_module.validar_dependencias")
+        )
+        stack.enter_context(
+            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
+        )
+        stack.enter_context(
+            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
+        )
+        resultado = comando.run(args)
+
+    assert resultado == 0
+    assert comando.logger.level == logging.DEBUG
+
+
+def test_execute_command_verbose_flag_sets_debug_logger(tmp_path):
+    archivo = tmp_path / "programa_verbose.co"
+    archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+    args = _build_execute_args(archivo, verbose=1)
+    comando = ExecuteCommand()
+
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch("cobra.cli.commands.execute_cmd.module_map.get_toml_map", return_value={})
+        )
+        stack.enter_context(
+            patch("cobra.cli.commands.execute_cmd.sandbox_module.validar_dependencias")
+        )
+        stack.enter_context(
+            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
+        )
+        stack.enter_context(
+            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
+        )
+        resultado = comando.run(args)
+
+    assert resultado == 0
+    assert comando.logger.level == logging.DEBUG
+
+
+def test_execute_command_depurar_legacy_still_supported(tmp_path):
+    archivo = tmp_path / "programa_legacy.co"
+    archivo.write_text("imprimir('hola')\n", encoding="utf-8")
+    args = _build_execute_args(archivo, depurar=True)
+    comando = ExecuteCommand()
+
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch("cobra.cli.commands.execute_cmd.module_map.get_toml_map", return_value={})
+        )
+        stack.enter_context(
+            patch("cobra.cli.commands.execute_cmd.sandbox_module.validar_dependencias")
+        )
+        stack.enter_context(
+            patch.object(ExecuteCommand, "_limitar_recursos", lambda self, funcion: funcion())
+        )
+        stack.enter_context(
+            patch.object(ExecuteCommand, "_ejecutar_normal", lambda self, codigo, seguro, extra: 0)
+        )
+        resultado = comando.run(args)
+
+    assert resultado == 0
+    assert comando.logger.level == logging.DEBUG
