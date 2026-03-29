@@ -150,3 +150,81 @@ def test_menu_keyboardinterrupt_devuelve_cancelacion(monkeypatch):
     _set_tty(monkeypatch, True)
     monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(KeyboardInterrupt()))
     assert main(["menu"]) == 0
+
+
+def test_menu_compile_reintenta_hasta_destino_valido(monkeypatch):
+    _set_tty(monkeypatch, True)
+    inputs = iter(["s", "s", "archivo.cobra", "invalido", "python"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+
+    called = {}
+
+    def fake_run(self, args):
+        called["args"] = args
+        return 0
+
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.CompileCommand.run", fake_run)
+
+    assert main(["menu"]) == 0
+    assert called["args"].tipo == "python"
+
+
+def test_menu_compile_finaliza_si_supera_intentos_destino(monkeypatch):
+    _set_tty(monkeypatch, True)
+    inputs = iter(["s", "s", "archivo.cobra", "x", "y", "z"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+
+    def fail_run(self, args):
+        raise AssertionError("no debe ejecutar compilar")
+
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.CompileCommand.run", fail_run)
+
+    assert main(["menu"]) == 1
+
+
+def test_menu_transpilar_inverso_reintenta_origen_y_destino(monkeypatch):
+    _set_tty(monkeypatch, True)
+    inputs = iter(["s", "n", "archivo.py", "nope", "python", "bad", "javascript"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+
+    called = {}
+
+    def fake_run(self, args):
+        called["args"] = args
+        return 0
+
+    monkeypatch.setattr("cobra.cli.commands.transpilar_inverso_cmd.TranspilarInversoCommand.run", fake_run)
+
+    assert main(["menu"]) == 0
+    assert called["args"].origen == "python"
+    assert called["args"].destino == "javascript"
+
+
+def test_menu_destino_invalido_y_eof_cancela_controlado(monkeypatch):
+    _set_tty(monkeypatch, True)
+    inputs = iter(["s", "s", "archivo.cobra", "invalido"])
+
+    def fake_input(_):
+        try:
+            return next(inputs)
+        except StopIteration:
+            raise EOFError()
+
+    monkeypatch.setattr("builtins.input", fake_input)
+
+    assert main(["menu"]) == 0
+
+
+def test_menu_origen_invalido_y_keyboardinterrupt_cancela_controlado(monkeypatch):
+    _set_tty(monkeypatch, True)
+    inputs = iter(["s", "n", "archivo.py", "invalido"])
+
+    def fake_input(_):
+        try:
+            return next(inputs)
+        except StopIteration:
+            raise KeyboardInterrupt()
+
+    monkeypatch.setattr("builtins.input", fake_input)
+
+    assert main(["menu"]) == 0

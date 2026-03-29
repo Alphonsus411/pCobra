@@ -36,7 +36,11 @@ from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
 from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
 from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
 from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
-from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
+    TranspilarInversoCommand,
+    ORIGIN_CHOICES,
+    DESTINO_CHOICES as REVERSE_DESTINO_CHOICES,
+)
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.plugin import (
@@ -415,6 +419,47 @@ class CliApplication:
             messages.mostrar_info(_("\nInterrupción detectada. Cancelando menú interactivo."))
             return None
 
+    def _leer_opcion_validada(
+        self,
+        prompt: str,
+        opciones_validas: tuple[str, ...] | list[str],
+        campo: str,
+        max_intentos: int = 3,
+    ) -> tuple[Optional[str], int]:
+        opciones_normalizadas = tuple(opcion.strip().lower() for opcion in opciones_validas)
+        opciones_mostrables = ", ".join(opciones_normalizadas)
+
+        for intento in range(max_intentos):
+            valor = self._leer_input_seguro(prompt)
+            if valor is None:
+                return None, 0
+
+            valor_normalizado = valor.strip().lower()
+            if valor_normalizado in opciones_normalizadas:
+                return valor_normalizado, 0
+
+            restantes = max_intentos - intento - 1
+            messages.mostrar_error(
+                _(
+                    "Valor inválido para {campo}: '{valor}'. Opciones válidas: {opciones}."
+                ).format(
+                    campo=campo,
+                    valor=valor.strip(),
+                    opciones=opciones_mostrables,
+                )
+            )
+            if restantes > 0:
+                messages.mostrar_info(
+                    _("Intente nuevamente. Intentos restantes: {}.").format(restantes)
+                )
+
+        messages.mostrar_error(
+            _(
+                "Demasiados intentos inválidos para {campo}. Finalizando menú interactivo."
+            ).format(campo=campo)
+        )
+        return None, 1
+
     def run_menu(self) -> int:
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
@@ -443,11 +488,14 @@ class CliApplication:
             archivo = self._leer_input_seguro(_("Ruta al archivo Cobra: "))
             if archivo is None:
                 return 0
-            destino = self._leer_input_seguro(_("Lenguaje destino: "))
+            destino, exit_code = self._leer_opcion_validada(
+                _("Lenguaje destino: "),
+                LANG_CHOICES,
+                "destino",
+            )
             if destino is None:
-                return 0
+                return exit_code
             archivo = archivo.strip()
-            destino = destino.strip().lower()
             args = argparse.Namespace(archivo=archivo, tipo=destino, backend=None, tipos=None)
             compile_cmd = self.command_registry.commands.get("compilar")
             if not compile_cmd:
@@ -458,15 +506,21 @@ class CliApplication:
             archivo = self._leer_input_seguro(_("Ruta al archivo origen: "))
             if archivo is None:
                 return 0
-            origen = self._leer_input_seguro(_("Lenguaje origen: "))
+            origen, exit_code = self._leer_opcion_validada(
+                _("Lenguaje origen: "),
+                ORIGIN_CHOICES,
+                "origen",
+            )
             if origen is None:
-                return 0
-            destino = self._leer_input_seguro(_("Lenguaje destino: "))
+                return exit_code
+            destino, exit_code = self._leer_opcion_validada(
+                _("Lenguaje destino: "),
+                tuple(REVERSE_DESTINO_CHOICES),
+                "destino",
+            )
             if destino is None:
-                return 0
+                return exit_code
             archivo = archivo.strip()
-            origen = origen.strip().lower()
-            destino = destino.strip().lower()
             inv_cmd = self.command_registry.commands.get("transpilar-inverso")
             if not inv_cmd:
                 messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"))
