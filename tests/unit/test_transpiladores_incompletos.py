@@ -21,8 +21,8 @@ def test_transpiladores_cpp_rust_global_vacio():
     cpp_code = TranspiladorCPP().generate_code(ast)
     rust_code = TranspiladorRust().generate_code(ast)
 
-    assert "#include <cobra/corelibs.hpp>" in cpp_code
-    assert "#include <cobra/standard_library.hpp>" in cpp_code
+    assert "#include <pcobra/corelibs.hpp>" in cpp_code
+    assert "#include <pcobra/standard_library.hpp>" in cpp_code
     assert cpp_code.endswith("// global x")
 
     assert "use crate::corelibs::*;" in rust_code
