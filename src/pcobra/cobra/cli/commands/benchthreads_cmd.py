@@ -126,7 +126,7 @@ class BenchThreadsCommand(BaseCommand):
             for _ in range(MAX_RETRIES):
                 try:
                     subprocess.run(
-                        [sys.executable, "-m", "cobra.cli.cli", "ejecutar", tmp_name],
+                        [sys.executable, "-m", "pcobra.cobra.cli.cli", "ejecutar", tmp_name],
                         env=env,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
@@ -167,7 +167,6 @@ class BenchThreadsCommand(BaseCommand):
             int: 0 si todo ok, 1 si hay error
         """
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[4])
 
         tmp_file: Optional[Path] = None
         try:

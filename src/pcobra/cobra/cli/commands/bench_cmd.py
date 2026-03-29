@@ -153,7 +153,6 @@ class BenchCommand(BaseCommand):
             Lista de diccionarios con resultados de los benchmarks
         """
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[4])
         
         results = []
         with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as tmp_file:
@@ -166,7 +165,7 @@ class BenchCommand(BaseCommand):
                 co_file.write_text(CODE)
 
                 # Benchmark del intérprete Cobra
-                cobra_cmd = [sys.executable, "-m", "cobra.cli.cli", "ejecutar", str(co_file)]
+                cobra_cmd = [sys.executable, "-m", "pcobra.cobra.cli.cli", "ejecutar", str(co_file)]
                 elapsed, mem = run_and_measure(cobra_cmd, env)
                 results.append(
                     {"backend": "cobra", "time": round(elapsed, 4), "memory_kb": mem}
@@ -211,7 +210,7 @@ class BenchCommand(BaseCommand):
         transp_cmd = [
             sys.executable,
             "-m",
-            "cobra.cli.cli",
+            "pcobra.cobra.cli.cli",
             "compilar",
             str(co_file),
             "--tipo",
