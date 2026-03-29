@@ -19,6 +19,7 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
     load_dotenv = None
 
 logger = logging.getLogger(__name__)
+_CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
 
 # Habilita imports de submódulos canónicos como ``pcobra.cli.commands`` y
 # ``pcobra.cli.cli`` sin reemplazar ``pcobra.cli`` por otro objeto.
@@ -36,6 +37,30 @@ def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:
     sys.modules.setdefault("cli", sys.modules[__name__])
     cli_entrypoint = import_module("pcobra.cli.cli")
     sys.modules.setdefault("cli.cli", cli_entrypoint)
+
+
+def _bootstrap_dev_path_si_opt_in() -> None:
+    """Añade ``scripts/bin`` al PATH únicamente cuando se solicita explícitamente."""
+
+    if os.environ.get(_CLI_BOOTSTRAP_PATH_ENV) != "1":
+        return
+
+    repo_root = Path(__file__).resolve().parents[2]
+    bin_path = repo_root / "scripts" / "bin"
+    if not bin_path.is_dir():
+        logger.debug(
+            "PCOBRA_CLI_BOOTSTRAP_PATH=1 pero %s no existe; se omite bootstrap PATH",
+            bin_path,
+        )
+        return
+
+    current_path = os.environ.get("PATH", "")
+    bin_path_text = str(bin_path)
+    if bin_path_text in current_path.split(os.pathsep):
+        return
+    os.environ["PATH"] = (
+        f"{bin_path_text}{os.pathsep}{current_path}" if current_path else bin_path_text
+    )
 
 
 # Reexporte de conveniencia para código legado dentro de ``pcobra``.
@@ -80,6 +105,7 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
+    _bootstrap_dev_path_si_opt_in()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _normalizar_argumentos(argv_entrada)
 
