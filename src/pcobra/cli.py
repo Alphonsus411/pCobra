@@ -20,6 +20,13 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
 
 logger = logging.getLogger(__name__)
 _CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
+_LEGACY_SHIM_ALIAS_CONTRACT = {
+    # Siempre preservamos el módulo canónico para los wrappers legacy.
+    "always": ("pcobra.cli",),
+    # Alias adicionales que se registran únicamente para rutas legacy concretas.
+    "cli.cli": ("cli", "cli.cli"),
+    "cobra.cli.cli": (),
+}
 
 # Habilita imports de submódulos canónicos como ``pcobra.cli.commands`` y
 # ``pcobra.cli.cli`` sin reemplazar ``pcobra.cli`` por otro objeto.
@@ -38,6 +45,41 @@ def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:
     if ruta_modulo == "cli.cli":
         sys.modules.setdefault("cli", sys.modules.get("cli", sys.modules[__name__]))
         sys.modules.setdefault("cli.cli", get_cli_module())
+
+
+def build_legacy_cli_shim_main(ruta_modulo_legacy: str):
+    """Construye ``main`` para wrappers legacy con un contrato único.
+
+    Contrato de compatibilidad:
+    - siempre registra ``pcobra.cli`` en ``sys.modules``;
+    - aplica alias extra sólo para las rutas definidas en
+      ``_LEGACY_SHIM_ALIAS_CONTRACT``.
+    """
+
+    import importlib
+
+    aliases_extra = _LEGACY_SHIM_ALIAS_CONTRACT.get(ruta_modulo_legacy)
+    if aliases_extra is None:
+        rutas = ", ".join(
+            sorted(k for k in _LEGACY_SHIM_ALIAS_CONTRACT if k != "always")
+        )
+        raise ValueError(
+            f"Ruta legacy no soportada: {ruta_modulo_legacy!r}. Rutas válidas: {rutas}"
+        )
+
+    modulo_pcobra_cli = importlib.import_module("pcobra.cli")
+    sys.modules.setdefault("pcobra.cli", modulo_pcobra_cli)
+    modulo_pcobra_cli._activar_compatibilidad_legacy_si_corresponde(ruta_modulo_legacy)
+
+    modulo_cli_canonico = get_cli_module()
+    modulo_main = import_module("pcobra.cobra.cli.cli").main
+    for alias in aliases_extra:
+        if alias == "cli":
+            sys.modules.setdefault(alias, sys.modules.get(alias, sys.modules[__name__]))
+            continue
+        if alias == "cli.cli":
+            sys.modules.setdefault(alias, modulo_cli_canonico)
+    return modulo_main
 
 
 def _bootstrap_dev_path_si_opt_in() -> None:
