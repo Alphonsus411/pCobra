@@ -64,7 +64,32 @@ def test_validator_import_blocked(tmp_path):
     mod.write_text("__import__('os').system('echo hola')\nVALIDADORES_EXTRA = []\n")
     IMPORT_WHITELIST.add(str(tmp_path))
     try:
-        with pytest.raises(SyntaxError):
+        with pytest.raises(ImportError, match="__import__"):
+            InterpretadorCobra._cargar_validadores(str(mod))
+    finally:
+        IMPORT_WHITELIST.discard(str(tmp_path))
+
+
+def test_validator_getattr_introspeccion_blocked(tmp_path):
+    mod = tmp_path / "vals.py"
+    mod.write_text(
+        "x = getattr(__builtins__, '__subclasses__', None)\n"
+        "VALIDADORES_EXTRA = []\n"
+    )
+    IMPORT_WHITELIST.add(str(tmp_path))
+    try:
+        with pytest.raises(ImportError, match="introspección"):
+            InterpretadorCobra._cargar_validadores(str(mod))
+    finally:
+        IMPORT_WHITELIST.discard(str(tmp_path))
+
+
+def test_validator_magic_attribute_blocked(tmp_path):
+    mod = tmp_path / "vals.py"
+    mod.write_text("x = object.__subclasses__\nVALIDADORES_EXTRA = []\n")
+    IMPORT_WHITELIST.add(str(tmp_path))
+    try:
+        with pytest.raises(ImportError, match="atributo mágico"):
             InterpretadorCobra._cargar_validadores(str(mod))
     finally:
         IMPORT_WHITELIST.discard(str(tmp_path))
@@ -142,6 +167,8 @@ def test_validator_auditoria_con_ruta_real_y_resultado(tmp_path, caplog):
             "ruta_real" in rec.message
             and str(mod.resolve()) in rec.message
             and "permitido" in rec.message
+            and "hash_corto" in rec.message
+            and "fase" in rec.message
             for rec in caplog.records
         )
     finally:
