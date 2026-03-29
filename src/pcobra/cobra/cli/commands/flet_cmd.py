@@ -111,63 +111,78 @@ class FletCommand(BaseCommand):
         return main
 
     def _report_import_error(self, exc: ImportError, context: str) -> None:
-        missing_module = getattr(exc, "name", None) or "desconocido"
-        if missing_module == "flet":
-            mostrar_error(
-                _(
-                    "Error de dependencias GUI en '{0}': falta el módulo '{1}'. "
-                    "Acción: pip install flet"
-                ).format(context, missing_module)
-            )
-            return
-
-        if missing_module.startswith("pcobra."):
-            mostrar_error(
-                _(
-                    "Error interno del paquete en '{0}': no se pudo importar '{1}'. "
-                    "Acción: reinstala el paquete local con 'pip install -e .' "
-                    "y verifica que el módulo exista."
-                ).format(context, missing_module)
-            )
-            return
-
         detail = str(exc) or repr(exc)
-        symbol_match = re.search(r"missing symbol '([^']+)' in module '([^']+)'", detail)
-        if symbol_match:
-            symbol_name, module_name = symbol_match.groups()
-            mostrar_error(
-                _(
-                    "Error de preflight GUI en '{0}': falta el símbolo '{1}' en el módulo '{2}'. "
-                    "Acción: verifica la versión del paquete o reinstala con 'pip install -e .'."
-                ).format(context, symbol_name, module_name)
-            )
-            return
+        missing_target, action = self._parse_missing_target(exc, detail)
+
+        mostrar_error(
+            _(
+                "Error de importación GUI en '{0}': faltante detectado '{1}'. "
+                "Detalle: {2}. Acción sugerida: {3}"
+            ).format(context, missing_target, detail, action)
+        )
+
+    def _parse_missing_target(self, exc: ImportError, detail: str) -> tuple[str, str]:
+        if isinstance(exc, ModuleNotFoundError):
+            missing_module = self._extract_module_from_exception(exc, detail)
+            return missing_module, self._dependency_action(missing_module)
+
+        custom_symbol_match = re.search(r"missing symbol '([^']+)' in module '([^']+)'", detail)
+        if custom_symbol_match:
+            symbol_name, module_name = custom_symbol_match.groups()
+            target = f"{module_name}.{symbol_name}"
+            return target, self._local_import_action(module_name, symbol_name)
 
         not_callable_match = re.search(
             r"symbol '([^']+)' in module '([^']+)' is not callable", detail
         )
         if not_callable_match:
             symbol_name, module_name = not_callable_match.groups()
-            mostrar_error(
-                _(
-                    "Error de preflight GUI en '{0}': el símbolo '{1}' en el módulo '{2}' "
-                    "no es invocable. Acción: corrige la definición del símbolo."
-                ).format(context, symbol_name, module_name)
-            )
-            return
+            target = f"{module_name}.{symbol_name}"
+            return target, self._local_import_action(module_name, symbol_name, callable_required=True)
 
-        if isinstance(exc, ModuleNotFoundError):
-            mostrar_error(
-                _(
-                    "Error interno de importación en '{0}': falta '{1}'. "
-                    "Detalle: {2}. Acción: verifica/importa dependencias del módulo faltante."
-                ).format(context, missing_module, detail)
-            )
-            return
+        cannot_import_match = re.search(r"cannot import name '([^']+)' from '([^']+)'", detail)
+        if cannot_import_match:
+            symbol_name, module_name = cannot_import_match.groups()
+            target = f"{module_name}.{symbol_name}"
+            return target, self._local_import_action(module_name, symbol_name)
 
-        mostrar_error(
-            _(
-                "Error interno de importación en '{0}': {1}. "
-                "Acción: revisa el traceback o reinstala el paquete."
-            ).format(context, detail)
+        missing_module = self._extract_module_from_exception(exc, detail)
+        return missing_module, self._dependency_action(missing_module)
+
+    def _extract_module_from_exception(self, exc: ImportError, detail: str) -> str:
+        missing_module = getattr(exc, "name", None)
+        if missing_module:
+            return missing_module
+
+        patterns = (
+            r"No module named '([^']+)'",
+            r"No module named ([^\s]+)",
+            r"cannot import name '[^']+' from '([^']+)'",
         )
+        for pattern in patterns:
+            match = re.search(pattern, detail)
+            if match:
+                return match.group(1)
+        return "desconocido"
+
+    def _dependency_action(self, missing_module: str) -> str:
+        if missing_module == "flet":
+            return "instala la dependencia faltante con 'pip install flet'."
+        if missing_module.startswith("pcobra."):
+            return (
+                "corrige el import local y verifica que el módulo exista; "
+                "si hace falta reinstala con 'pip install -e .'."
+            )
+        return f"instala la dependencia que provee '{missing_module}' o ajusta el import local."
+
+    def _local_import_action(
+        self,
+        module_name: str,
+        symbol_name: str,
+        callable_required: bool = False,
+    ) -> str:
+        if callable_required:
+            return (
+                f"corrige el import local para que '{module_name}.{symbol_name}' sea invocable."
+            )
+        return f"corrige el import local de '{module_name}.{symbol_name}' o actualiza la dependencia que lo expone."
