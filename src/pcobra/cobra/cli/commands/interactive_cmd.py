@@ -75,6 +75,7 @@ class InteractiveCommand(BaseCommand):
     """
 
     name = "interactive"
+    requires_sqlite_key: bool = False
     MAX_LINE_LENGTH = 10000
     MEMORY_LIMIT_MB = 1024
     MAX_AST_DEPTH = 100

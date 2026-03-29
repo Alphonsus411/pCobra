@@ -13,6 +13,7 @@ class QualiaCommand(BaseCommand):
     """Gestiona el estado del sistema Qualia."""
 
     name = "qualia"
+    requires_sqlite_key: bool = True
     
     # Constantes para las acciones
     ACCION_MOSTRAR = "mostrar"

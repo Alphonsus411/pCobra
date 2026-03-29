@@ -66,13 +66,6 @@ COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
 COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
-DB_REQUIRED_COMMAND_NAMES = frozenset({
-    "cache",
-    "compilar",
-    "benchtranspilers",
-    "qualia",
-    "interactive",
-})
 
 
 class LogLevel(Enum):
@@ -224,13 +217,15 @@ class CliApplication:
     def _command_requires_sqlite_db_key(self, args: argparse.Namespace) -> bool:
         command = getattr(args, "cmd", None)
         if isinstance(command, BaseCommand):
-            return command.name in DB_REQUIRED_COMMAND_NAMES
+            return bool(getattr(command, "requires_sqlite_key", False))
         return False
 
     def _is_enabled_env_flag(self, env_name: str) -> bool:
         return environ.get(env_name, "").strip() == "1"
 
     def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
+        command = getattr(args, "cmd", None)
+        command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
         sqlite_db_key = (environ.get(SQLITE_DB_KEY_ENV) or "").strip()
         if sqlite_db_key:
             return
@@ -242,7 +237,8 @@ class CliApplication:
         if dev_mode_enabled and dev_ephemeral_env_confirmation and dev_ephemeral_cli_confirmation:
             environ[SQLITE_DB_KEY_ENV] = secrets.token_urlsafe(32)
             logging.getLogger(__name__).warning(
-                "Modo desarrollo confirmado (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
+                "Modo desarrollo confirmado para comando '%s' (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
+                command_name,
                 COBRA_DEV_MODE_ENV,
                 COBRA_DEV_EPHEMERAL_CONFIRM_ENV,
                 SQLITE_DB_KEY_ENV,
@@ -250,7 +246,7 @@ class CliApplication:
             return
 
         raise RuntimeError(
-            "Falta la variable de entorno 'SQLITE_DB_KEY'. "
+            f"Falta la variable de entorno 'SQLITE_DB_KEY' (clave requerida por comando '{command_name}'). "
             "Configúrala antes de iniciar la CLI (ejemplo: "
             "export SQLITE_DB_KEY='clave-segura'). Para pruebas locales "
             "controladas puedes habilitar una clave efímera solo si confirmas "
@@ -680,8 +676,14 @@ class CliApplication:
 
             try:
                 args = self._parse_arguments(argv)
+                command = getattr(args, "cmd", None)
+                command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
                 if self._command_requires_sqlite_db_key(args):
                     self._ensure_sqlite_db_key(args)
+                else:
+                    logging.getLogger(__name__).info(
+                        "SQLITE_DB_KEY no requerida por comando '%s'.", command_name
+                    )
                 self._enforce_runtime_safety_policy(args)
                 debug_activo = args.verbose > 0 or args.debug
                 log_level = logging.DEBUG if debug_activo else logging.INFO
