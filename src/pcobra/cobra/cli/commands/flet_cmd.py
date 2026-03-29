@@ -46,9 +46,14 @@ class FletCommand(BaseCommand):
             ModuleNotFoundError: Si Flet no está instalado o falta un módulo GUI
         """
         try:
-            import flet
-        except ModuleNotFoundError:
-            mostrar_error(_("Falta la dependencia 'flet'. Ejecuta: pip install flet."))
+            import flet as flet_runtime
+        except ModuleNotFoundError as e:
+            if e.name == "flet":
+                mostrar_error(_("Falta la dependencia 'flet'. Ejecuta: pip install flet."))
+            else:
+                mostrar_error(
+                    _("Error interno al importar dependencias de GUI: {0}").format(str(e))
+                )
             return 1
 
         ui_target = getattr(args, "ui", "idle")
@@ -76,7 +81,7 @@ class FletCommand(BaseCommand):
             return 1
         
         try:
-            flet.app(target=main)
+            flet_runtime.app(target=main)
             return 0
         except Exception as e:
             mostrar_error(_("Error inesperado al ejecutar la aplicación: {0}").format(str(e)))
