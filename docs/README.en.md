@@ -402,6 +402,14 @@ To run the project directly from the repository you can use the `scripts/run.sh`
 ./scripts/run.sh [options]
 ```
 
+Official CLI entrypoints:
+
+- `pcobra.cli:main` (the installed `cobra` script).
+- `python -m pcobra` (direct passthrough to `pcobra.cli:main`).
+
+`src/pcobra/core/main.py` remains an internal demo/example module and should not
+be treated as a production CLI entrypoint.
+
 For advanced options of safe mode see `frontend/modo_seguro.rst`. Performance measurement examples are available in `frontend/benchmarking.rst`.
 
 To run unit tests use pytest:

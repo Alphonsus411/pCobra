@@ -341,13 +341,27 @@ def _create_stub_environment(tmp_path: Path) -> dict[str, str]:
             dependencias_cmd.DependenciasCommand._get_project_root = classmethod(_project_root)
         except Exception:
             pass
+
+        if os.environ.get("PCOBRA_TRACE_ENTRYPOINT") == "1":
+            try:
+                import pcobra.cli as _pcobra_cli
+
+                _original_main = _pcobra_cli.main
+
+                def _traced_main(*args, **kwargs):
+                    print("ENTRYPOINT_TRACE=pcobra.cli:main")
+                    return _original_main(*args, **kwargs)
+
+                _pcobra_cli.main = _traced_main
+            except Exception:
+                pass
         """,
     )
 
     env = os.environ.copy()
     original_path = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = os.pathsep.join(
-        filter(None, [str(stubs_dir), str(REPO_ROOT / "src"), original_path])
+        filter(None, [str(stubs_dir), str(REPO_ROOT / "src"), str(REPO_ROOT), original_path])
     )
     env["PCOBRA_CODE_ROOT"] = str(REPO_ROOT)
     env["PCOBRA_PROJECT_ROOT"] = str(project_root)
@@ -373,6 +387,46 @@ def _run_cli(args: list[str], env: dict[str, str]) -> subprocess.CompletedProces
                 " ".join(cmd), exc.stdout, exc.stderr
             )
         ) from exc
+
+
+def _run_module_pcobra(args: list[str], env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    cmd = [sys.executable, "-m", "pcobra", *args]
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+        timeout=30,
+    )
+
+
+def _run_cobra_script(args: list[str], env: dict[str, str], tmp_path: Path) -> subprocess.CompletedProcess[str]:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    cobra_script = bin_dir / "cobra"
+    cobra_script.write_text(
+        dedent(
+            """
+            #!/usr/bin/env python3
+            import sys
+            from pcobra.cli import main
+
+            if __name__ == "__main__":
+                sys.exit(main())
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    cobra_script.chmod(0o755)
+    return subprocess.run(
+        [str(cobra_script), *args],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+        timeout=30,
+    )
 
 
 @pytest.mark.timeout(30)
@@ -419,3 +473,17 @@ def test_cli_y_kernel_arrancan_con_namespace_canonico_en_entorno_minimo(tmp_path
         timeout=30,
     )
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.timeout(30)
+def test_entrypoints_python_m_pcobra_y_cobra_comparten_inicializacion(tmp_path: Path) -> None:
+    env = _create_stub_environment(tmp_path)
+    env["PCOBRA_TRACE_ENTRYPOINT"] = "1"
+
+    module_result = _run_module_pcobra(["--help"], env)
+    script_result = _run_cobra_script(["--help"], env, tmp_path)
+
+    assert module_result.returncode == 0, module_result.stderr
+    assert script_result.returncode == 0, script_result.stderr
+    assert "ENTRYPOINT_TRACE=pcobra.cli:main" in module_result.stdout
+    assert "ENTRYPOINT_TRACE=pcobra.cli:main" in script_result.stdout
