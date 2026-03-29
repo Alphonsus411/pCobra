@@ -10,10 +10,12 @@ import os
 import hashlib
 from abc import ABC, abstractmethod
 from importlib import import_module
+from importlib.util import source_from_cache
 from importlib.metadata import entry_points
 from dataclasses import dataclass
 from typing import List, Optional, Any, Iterable
 from argparse import ArgumentParser
+from pathlib import Path
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.plugin_registry import (
@@ -74,7 +76,10 @@ def configure_plugin_policy(
 
     _PLUGIN_POLICY = PluginPolicy(safe_mode=bool(safe_mode), allowlist=allowlist_values)
     logging.getLogger(__name__).debug(
-        "Política de plugins configurada: safe_mode=%s allowlist=%s",
+        (
+            "Política de plugins configurada: safe_mode=%s allowlist=%s "
+            "(sha256 valida el contenido del archivo del módulo; sha256 de ruta queda deprecado)"
+        ),
         _PLUGIN_POLICY.safe_mode,
         list(_PLUGIN_POLICY.allowlist),
     )
@@ -86,16 +91,65 @@ def get_plugin_policy() -> PluginPolicy:
     return _PLUGIN_POLICY
 
 
-def _plugin_allowed(ruta: str, module_name: str) -> bool:
+def _resolve_plugin_module(ruta: str) -> tuple[str, str, Any]:
+    """Resuelve e importa un plugin declarado como ``modulo:Clase``."""
+    module_name, class_name = ruta.split(":", 1)
+    module = import_module(module_name)
+    return module_name, class_name, module
+
+
+def _read_module_file_bytes(module: Any) -> Optional[bytes]:
+    """Lee bytes del archivo asociado al módulo (preferencia por fuente)."""
+    module_file = getattr(module, "__file__", None)
+    if not module_file:
+        return None
+
+    path = Path(module_file)
+    if path.suffix == ".pyc":
+        try:
+            source_path = Path(source_from_cache(str(path)))
+            if source_path.exists():
+                path = source_path
+        except (ValueError, OSError):
+            pass
+
+    try:
+        return path.read_bytes()
+    except OSError:
+        return None
+
+
+def _stable_sha256(value: bytes) -> str:
+    """Calcula sha256 estable en hexadecimal minúscula."""
+    return hashlib.sha256(value).hexdigest().lower()
+
+
+def _plugin_allowed(ruta: str, module_name: str, module: Any) -> bool:
     policy = get_plugin_policy()
     if not policy.safe_mode:
         return True
     if not policy.allowlist:
         return False
-    digest = hashlib.sha256(ruta.encode("utf-8")).hexdigest()
+
+    logger = logging.getLogger(__name__)
+    route_digest = _stable_sha256(ruta.encode("utf-8"))
+    module_bytes = _read_module_file_bytes(module)
+    module_digest = _stable_sha256(module_bytes) if module_bytes is not None else None
+
     for rule in policy.allowlist:
-        if rule.startswith("sha256:") and digest == rule.split(":", 1)[1].lower():
-            return True
+        if rule.startswith("sha256:"):
+            expected = rule.split(":", 1)[1].lower()
+            if module_digest and module_digest == expected:
+                return True
+            if route_digest == expected:
+                logger.warning(
+                    "Regla '%s' aceptada por compatibilidad (sha256 de ruta deprecado). "
+                    "Use sha256 del contenido del módulo '%s'.",
+                    rule,
+                    module_name,
+                )
+                return True
+            continue
         if rule.startswith("prefix:") and module_name.startswith(rule.split(":", 1)[1]):
             return True
         if route_matches := (ruta == rule):
@@ -201,19 +255,22 @@ def cargar_plugin_seguro(ruta: str, origen: Optional[str] = None) -> Optional[Pl
         logging.error(f"Ruta de plugin inválida: {ruta}")
         return None
 
-    if not _plugin_allowed(ruta, module_name):
+    try:
+        _, _, module = _resolve_plugin_module(ruta)
+    except Exception as exc:
+        logging.error(f"Error importando módulo {module_name}: {exc}")
+        return None
+
+    module_file = getattr(module, "__file__", None)
+    if not _plugin_allowed(ruta, module_name, module):
         msg = (
             f"Plugin '{ruta}' rechazado por política de confianza. "
+            f"Se valida el sha256 del contenido de '{module_file or 'módulo_sin___file__'}' "
+            f"(compatibilidad temporal: sha256 de ruta deprecado). "
             f"Configure {PLUGINS_ALLOWLIST_ENV} o desactive --plugins-safe-mode."
         )
         logging.error(msg)
         raise PluginPolicyError(msg)
-
-    try:
-        module = import_module(module_name)
-    except Exception as exc:
-        logging.error(f"Error importando módulo {module_name}: {exc}")
-        return None
 
     try:
         plugin_cls = getattr(module, class_name)

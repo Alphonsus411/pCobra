@@ -1,13 +1,17 @@
 import importlib.metadata
+import hashlib
 from unittest.mock import patch
 
 from pathlib import Path
 import sys
 import types
+from importlib import import_module
+import pytest
 
 from pcobra.cobra.cli.plugin import (
     descubrir_plugins,
     PluginCommand,
+    PluginPolicyError,
     cargar_plugin_seguro,
     configure_plugin_policy,
 )
@@ -128,3 +132,43 @@ def test_plugin_sin_atributo_name():
         plugins = descubrir_plugins()
     assert plugins == []
     assert obtener_registro() == {}
+
+
+def test_cargar_plugin_seguro_sha256_contenido_correcto():
+    module = import_module("tests.unit.test_plugin_loader")
+    digest = hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
+
+    limpiar_registro()
+    configure_plugin_policy(safe_mode=True, allowlist=[f"sha256:{digest}"])
+    plugin = cargar_plugin_seguro("tests.unit.test_plugin_loader:DummyPlugin")
+
+    assert plugin is not None
+    assert plugin.name == "dummy"
+
+
+def test_cargar_plugin_seguro_sha256_incorrecto():
+    limpiar_registro()
+    configure_plugin_policy(safe_mode=True, allowlist=["sha256:" + ("0" * 64)])
+
+    with pytest.raises(PluginPolicyError) as excinfo:
+        cargar_plugin_seguro("tests.unit.test_plugin_loader:DummyPlugin")
+
+    assert "sha256 del contenido" in str(excinfo.value)
+
+
+def test_cargar_plugin_seguro_modulo_sin_file_con_sha256():
+    module = types.SimpleNamespace(SinFilePlugin=DummyPlugin)
+    with patch("pcobra.cobra.cli.plugin.import_module", return_value=module):
+        limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["sha256:" + ("1" * 64)])
+        with pytest.raises(PluginPolicyError) as excinfo:
+            cargar_plugin_seguro("fake.mod:SinFilePlugin")
+
+    assert "módulo_sin___file__" in str(excinfo.value)
+
+
+def test_cargar_plugin_seguro_allowlist_prefix():
+    limpiar_registro()
+    configure_plugin_policy(safe_mode=True, allowlist=["prefix:tests.unit"])
+    plugin = cargar_plugin_seguro("tests.unit.test_plugin_loader:DummyPlugin")
+    assert plugin is not None
