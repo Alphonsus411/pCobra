@@ -1,31 +1,20 @@
-from pcobra.gui import app, idle
+from pcobra.gui import runtime
 
 
-def test_gui_app_filtra_targets_fuera_del_conjunto_canonico(monkeypatch):
+def test_gui_runtime_filtra_targets_fuera_del_conjunto_canonico(monkeypatch):
     monkeypatch.setattr(
-        app,
-        "TRANSPILERS",
-        {
-            "java": object,
-            "python": object,
-            "backend_x": object,
-            "asm": object,
+        runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "target_cli_choices": lambda targets: tuple(sorted(targets, reverse=True)),
+            "OFFICIAL_TARGETS": ("python", "java", "asm"),
+            "TRANSPILERS": {
+                "java": object,
+                "python": object,
+                "backend_x": object,
+                "asm": object,
+            },
         },
     )
 
-    assert app._gui_target_choices() == ("python", "java", "asm")
-
-
-def test_gui_idle_filtra_targets_fuera_del_conjunto_canonico(monkeypatch):
-    monkeypatch.setattr(
-        idle,
-        "TRANSPILERS",
-        {
-            "rust": object,
-            "backend_x": object,
-            "javascript": object,
-            "cpp": object,
-        },
-    )
-
-    assert idle._gui_target_choices() == ("rust", "javascript", "cpp")
+    assert runtime.gui_target_choices() == ("python", "java", "asm")
