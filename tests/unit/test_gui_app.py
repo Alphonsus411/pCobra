@@ -54,11 +54,19 @@ def test_main_renderiza_componentes_minimos(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
-    monkeypatch.setattr(app.runtime, "require_gui_dependencies", lambda: {"TRANSPILERS": {"python": object}})
+    monkeypatch.setattr(
+        app.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
     monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(app.runtime, "ejecutar_codigo", lambda _codigo: "ok")
     monkeypatch.setattr(app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
-    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc: f"error: {exc}")
+    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
 
     page = ft.Page()
     app.main(page)
@@ -71,11 +79,19 @@ def test_main_handler_actualiza_salida(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
-    monkeypatch.setattr(app.runtime, "require_gui_dependencies", lambda: {"TRANSPILERS": {"python": object}})
+    monkeypatch.setattr(
+        app.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
     monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(app.runtime, "ejecutar_codigo", lambda _codigo: "ejecutado")
     monkeypatch.setattr(app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
-    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc: f"error: {exc}")
+    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
 
     page = ft.Page()
     app.main(page)

@@ -27,25 +27,39 @@ def main(page: "ft.Page"):
             else:
                 salida.value = runtime.ejecutar_codigo(codigo)
         except Exception as exc:
-            salida.value = runtime.formatear_error(exc)
+            salida.value = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
         finally:
             page.update()
 
     def tokens_handler(_e):
+        deps = runtime.require_gui_dependencies()
         codigo = runtime.normalizar_codigo(entrada.value)
         try:
             salida.value = runtime.mostrar_tokens(codigo)
         except Exception as exc:
-            salida.value = runtime.formatear_error(exc)
+            salida.value = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
         finally:
             page.update()
 
     def ast_handler(_e):
+        deps = runtime.require_gui_dependencies()
         codigo = runtime.normalizar_codigo(entrada.value)
         try:
             salida.value = runtime.mostrar_ast(codigo)
         except Exception as exc:
-            salida.value = runtime.formatear_error(exc)
+            salida.value = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
         finally:
             page.update()
 

@@ -84,12 +84,23 @@ def mostrar_ast(codigo: str) -> str:
     return str(ast)
 
 
-def formatear_error(exc: Exception) -> str:
-    """Convierte excepciones en mensajes legibles para la GUI."""
-    deps = require_gui_dependencies()
-    if isinstance(exc, deps["LexerError"]):
-        return f"Error léxico (línea {exc.linea}, columna {exc.columna}): {exc}"
-    if isinstance(exc, deps["ParserError"]):
+def formatear_error(
+    exc: Exception,
+    *,
+    lexer_error_type: type[BaseException] | None = None,
+    parser_error_type: type[BaseException] | None = None,
+) -> str:
+    """Convierte excepciones en mensajes legibles para la GUI.
+
+    ``lexer_error_type`` y ``parser_error_type`` se inyectan desde una capa ya
+    inicializada (GUI handlers) para evitar imports/reloads en esta ruta de
+    manejo de errores.
+    """
+    if lexer_error_type is not None and isinstance(exc, lexer_error_type):
+        linea = getattr(exc, "linea", "?")
+        columna = getattr(exc, "columna", "?")
+        return f"Error léxico (línea {linea}, columna {columna}): {exc}"
+    if parser_error_type is not None and isinstance(exc, parser_error_type):
         return f"Error de sintaxis: {exc}"
     return f"Error de ejecución: {exc}"
 
