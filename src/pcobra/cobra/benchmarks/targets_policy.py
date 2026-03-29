@@ -6,7 +6,10 @@ La política oficial de targets se hereda de
 
 from __future__ import annotations
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib  # Fallback para Python < 3.11.
 from pathlib import Path
 from typing import Final, Mapping
 
