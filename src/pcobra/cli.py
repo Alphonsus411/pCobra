@@ -13,6 +13,12 @@ if __package__ in {None, ""}:
         sys.path.insert(0, ruta_paquete)
     __package__ = "pcobra"
 
+if __name__ == "__main__" and __package__ == "pcobra":
+    # ``runpy.run_module("pcobra.cli", run_name="__main__")`` ejecuta este
+    # archivo como ``__main__``; forzamos la carga canónica para conservar
+    # ``sys.modules["pcobra.cli"]`` sin efectos secundarios extra en imports normales.
+    import_module("pcobra.cli")
+
 try:
     from dotenv import load_dotenv
 except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
@@ -31,12 +37,13 @@ if _CANONICAL_CLI_PACKAGE_DIR.is_dir():
 def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:
     """Activa alias legacy mínimos solo para entrypoints heredados."""
 
-    if ruta_modulo not in {"cli", "cli.cli"}:
+    if ruta_modulo == "cli":
+        # ``src/cli/__init__.py`` ya es el paquete legacy; no lo sustituimos.
         return
 
-    sys.modules.setdefault("cli", sys.modules[__name__])
-    cli_entrypoint = import_module("pcobra.cli.cli")
-    sys.modules.setdefault("cli.cli", cli_entrypoint)
+    if ruta_modulo == "cli.cli":
+        sys.modules.setdefault("cli", sys.modules.get("cli", sys.modules[__name__]))
+        sys.modules.setdefault("cli.cli", get_cli_module())
 
 
 def _bootstrap_dev_path_si_opt_in() -> None:
@@ -63,8 +70,18 @@ def _bootstrap_dev_path_si_opt_in() -> None:
     )
 
 
-# Reexporte de conveniencia para código legado dentro de ``pcobra``.
-cli = import_module("pcobra.cli.cli")
+def get_cli_module():
+    """Carga diferida del entrypoint canónico ``pcobra.cli.cli``."""
+
+    return import_module("pcobra.cli.cli")
+
+
+def __getattr__(name: str):
+    """Compatibilidad lazy para ``from pcobra.cli import cli``."""
+
+    if name == "cli":
+        return get_cli_module()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def configurar_entorno() -> None:

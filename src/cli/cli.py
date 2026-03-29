@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import sys
 
-from pcobra import cli as _pcobra_cli
+import importlib
+
+_pcobra_cli = importlib.import_module("pcobra.cli")
+sys.modules.setdefault("pcobra.cli", _pcobra_cli)
 from pcobra.cobra.cli.cli import main as _pcobra_main
 
 _pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cli.cli")
@@ -16,7 +19,10 @@ _pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cli.cli")
 def main(argv: list[str] | None = None) -> int:
     """Delegar en el punto de entrada real de la CLI de Cobra."""
 
-    return _pcobra_main(argv)
+    sys.modules["pcobra.cli"] = _pcobra_cli
+    resultado = _pcobra_main(argv)
+    sys.modules["pcobra.cli"] = _pcobra_cli
+    return resultado
 
 
 if __name__ == "__main__":
