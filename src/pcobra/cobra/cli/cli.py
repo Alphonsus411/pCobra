@@ -64,6 +64,8 @@ CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
 SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
 COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
 COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
+COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
+COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
 DB_REQUIRED_COMMAND_NAMES = frozenset({
     "cache",
     "compilar",
@@ -295,6 +297,24 @@ class CliApplication:
             help=_("Run without safe mode"),
         )
         parser.set_defaults(seguro=True)
+        parser.add_argument(
+            "--allow-insecure-fallback",
+            action="store_true",
+            default=self._is_enabled_env_flag(COBRA_ALLOW_INSECURE_FALLBACK_ENV),
+            help=_(
+                "Permite explícitamente fallback inseguro de sandbox "
+                "(solo para desarrollo controlado)."
+            ),
+        )
+        parser.add_argument(
+            "--allow-insecure-non-interactive",
+            action="store_true",
+            default=self._is_enabled_env_flag(COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV),
+            help=_(
+                "Permite fallback inseguro en CI/no interactivo. "
+                "Requiere --allow-insecure-fallback."
+            ),
+        )
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
                           help=_("Interface language code"))
@@ -341,6 +361,85 @@ class CliApplication:
         parser.set_defaults(
             plugins_safe_mode=environ.get(PLUGINS_SAFE_MODE_ENV, "1").strip().lower() in {"1", "true", "yes", "on"}
         )
+
+    def _is_ci_context(self) -> bool:
+        ci_markers = ("CI", "GITHUB_ACTIONS", "GITLAB_CI", "JENKINS_URL", "BUILD_NUMBER")
+        return any((environ.get(marker) or "").strip() for marker in ci_markers)
+
+    def _is_non_interactive_context(self) -> bool:
+        stdin_is_tty = bool(getattr(sys.stdin, "isatty", lambda: False)())
+        stdout_is_tty = bool(getattr(sys.stdout, "isatty", lambda: False)())
+        return not (stdin_is_tty and stdout_is_tty)
+
+    def _registrar_advertencia_seguridad(
+        self,
+        *,
+        event: str,
+        command_name: str | None,
+        reason: str,
+    ) -> None:
+        logging.getLogger(__name__).warning(
+            "security_policy_warning",
+            extra={
+                "event": event,
+                "command": command_name,
+                "reason": reason,
+            },
+        )
+
+    def _enforce_runtime_safety_policy(self, args: argparse.Namespace) -> None:
+        command_name = getattr(getattr(args, "cmd", None), "name", None)
+        allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
+        allow_insecure_non_interactive = bool(
+            getattr(args, "allow_insecure_non_interactive", False)
+        )
+
+        if allow_insecure_non_interactive and not allow_insecure_fallback:
+            raise RuntimeError(
+                "--allow-insecure-non-interactive requiere "
+                "--allow-insecure-fallback."
+            )
+
+        if not getattr(args, "seguro", True):
+            self._registrar_advertencia_seguridad(
+                event="unsafe_mode",
+                command_name=command_name,
+                reason="safe_mode_disabled",
+            )
+
+        if not allow_insecure_fallback:
+            return
+
+        self._registrar_advertencia_seguridad(
+            event="insecure_fallback",
+            command_name=command_name,
+            reason="explicit_allow_insecure_fallback",
+        )
+        messages.mostrar_advertencia(
+            _(
+                "Fallback inseguro habilitado explícitamente. "
+                "Úselo solo en desarrollo controlado."
+            )
+        )
+
+        if (self._is_ci_context() or self._is_non_interactive_context()) and not allow_insecure_non_interactive:
+            raise RuntimeError(
+                "Fallback inseguro bloqueado en contexto CI/no interactivo. "
+                "Use --allow-insecure-non-interactive para override explícito."
+            )
+
+        if allow_insecure_non_interactive:
+            self._registrar_advertencia_seguridad(
+                event="insecure_fallback_non_interactive_override",
+                command_name=command_name,
+                reason="explicit_non_interactive_override",
+            )
+            messages.mostrar_advertencia(
+                _(
+                    "Override explícito activo: fallback inseguro permitido en "
+                    "contexto CI/no interactivo."
+                )
+            )
 
     def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
         """Configura autocompletado para argumentos comunes.
@@ -583,6 +682,7 @@ class CliApplication:
                 args = self._parse_arguments(argv)
                 if self._command_requires_sqlite_db_key(args):
                     self._ensure_sqlite_db_key(args)
+                self._enforce_runtime_safety_policy(args)
                 debug_activo = args.verbose > 0 or args.debug
                 log_level = logging.DEBUG if debug_activo else logging.INFO
                 logging.getLogger().setLevel(log_level)

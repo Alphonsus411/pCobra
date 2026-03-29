@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 import pcobra  # garantiza rutas para submódulos
+from cobra.cli.cli import CliApplication
 from cobra.core import Lexer
 from cobra.core import Parser
 from core.ast_nodes import NodoLlamadaFuncion, NodoValor
@@ -42,3 +43,11 @@ def test_codigo_seguro_se_ejecuta_en_modo_seguro():
     with patch("sys.stdout", new_callable=StringIO) as out:
         interp.ejecutar_llamada_funcion(nodo)
     assert out.getvalue().strip() == "hola"
+
+
+def test_cli_default_mantiene_modo_seguro_y_fallback_inseguro_deshabilitado():
+    app = CliApplication()
+    app.initialize()
+    args = app._parse_arguments([])
+    assert args.seguro is True
+    assert args.allow_insecure_fallback is False

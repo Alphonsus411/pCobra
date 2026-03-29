@@ -60,3 +60,64 @@ def test_run_propaga_debug_activo_hacia_execute_command():
 
     assert result == 0
     mock_execute_command.assert_called_once_with(args, debug_activo=True)
+
+
+def test_run_bloquea_fallback_inseguro_en_ci_sin_override(monkeypatch):
+    app = CliApplication()
+    args = argparse.Namespace(
+        verbose=0,
+        debug=False,
+        lang="es",
+        no_color=False,
+        legacy_imports=False,
+        cmd=argparse.Namespace(name="ejecutar"),
+        seguro=True,
+        allow_insecure_fallback=True,
+        allow_insecure_non_interactive=False,
+    )
+    monkeypatch.setenv("CI", "1")
+
+    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
+        app, "execute_command", return_value=0
+    ) as mock_execute_command, patch("cobra.cli.cli.messages.mostrar_logo"), patch(
+        "cobra.cli.cli.messages.disable_colors"
+    ), patch("cobra.cli.cli.setup_gettext"), patch("cobra.cli.cli.messages.mostrar_advertencia"), patch(
+        "cobra.cli.cli.messages.mostrar_error"
+    ) as mock_error:
+        result = app.run([])
+
+    assert result == 1
+    mock_execute_command.assert_not_called()
+    assert "CI/no interactivo" in mock_error.call_args[0][0]
+
+
+def test_run_permite_override_explicito_en_ci_y_muestra_mensaje(monkeypatch):
+    app = CliApplication()
+    args = argparse.Namespace(
+        verbose=0,
+        debug=False,
+        lang="es",
+        no_color=False,
+        legacy_imports=False,
+        cmd=argparse.Namespace(name="ejecutar"),
+        seguro=True,
+        allow_insecure_fallback=True,
+        allow_insecure_non_interactive=True,
+    )
+    monkeypatch.setenv("CI", "1")
+
+    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
+        app, "execute_command", return_value=0
+    ) as mock_execute_command, patch("cobra.cli.cli.messages.mostrar_logo"), patch(
+        "cobra.cli.cli.messages.disable_colors"
+    ), patch("cobra.cli.cli.setup_gettext"), patch(
+        "cobra.cli.cli.messages.mostrar_advertencia"
+    ) as mock_warning:
+        result = app.run([])
+
+    assert result == 0
+    mock_execute_command.assert_called_once_with(args, debug_activo=False)
+    assert any(
+        "Override explícito activo" in call.args[0]
+        for call in mock_warning.call_args_list
+    )
