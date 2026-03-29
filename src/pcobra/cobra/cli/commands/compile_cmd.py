@@ -41,6 +41,7 @@ PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
 TRANSPILERS = build_official_transpilers()
+_ENTRYPOINTS_LOADED = False
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -96,9 +97,18 @@ def _iter_transpiler_entry_points():
 
 
 
-def load_entrypoint_transpilers() -> None:
+def load_entrypoint_transpilers() -> tuple[int, int, int]:
     """Carga entry points de transpiladores sin permitir aliases o targets no oficiales."""
-    for ep in _iter_transpiler_entry_points():
+    loaded = 0
+    rejected = 0
+    skipped_existing = 0
+    entrypoint_items = list(_iter_transpiler_entry_points())
+    logging.info(
+        "Iniciando carga de plugins de transpiladores por entry points: total=%d",
+        len(entrypoint_items),
+    )
+
+    for ep in entrypoint_items:
         try:
             normalized_ep_name = _validate_entrypoint_backend_or_raise(
                 ep.name,
@@ -115,19 +125,43 @@ def load_entrypoint_transpilers() -> None:
                     ep.name,
                     normalized_ep_name,
                 )
+                skipped_existing += 1
                 continue
             register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
+            loaded += 1
         except ValueError as exc:
+            rejected += 1
             logging.error(
                 "Plugin de transpilador '%s' rechazado por política oficial: %s",
                 ep.name,
                 exc,
             )
         except Exception as exc:
-            logging.error("Error cargando transpilador %s: %s", ep.name, exc)
+            rejected += 1
+            logging.error("Error cargando transpilador '%s': %s", ep.name, exc)
+
+    logging.info(
+        (
+            "Carga de plugins de transpiladores finalizada: "
+            "total=%d cargados=%d rechazados=%d omitidos=%d"
+        ),
+        len(entrypoint_items),
+        loaded,
+        rejected,
+        skipped_existing,
+    )
+    return loaded, rejected, skipped_existing
 
 
-load_entrypoint_transpilers()
+def _ensure_entrypoints_loaded_once() -> None:
+    """Asegura la carga idempotente de entry points de transpiladores."""
+    global _ENTRYPOINTS_LOADED
+    if _ENTRYPOINTS_LOADED:
+        logging.debug("Carga de plugins por entry points omitida: ya fue ejecutada.")
+        return
+
+    load_entrypoint_transpilers()
+    _ENTRYPOINTS_LOADED = True
 
 LANG_CHOICES = list(official_transpiler_targets())
 TARGETS_HELP = build_target_help_by_tier(tuple(LANG_CHOICES))
@@ -223,6 +257,8 @@ class CompileCommand(BaseCommand):
         except ValueError as e:
             mostrar_error(str(e))
             return 1
+
+        _ensure_entrypoints_loaded_once()
 
         tipos_argument = getattr(args, "tipos", None)
         if isinstance(tipos_argument, str):
