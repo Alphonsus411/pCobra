@@ -20,6 +20,7 @@ class PluginsCommand(BaseCommand):
     """Muestra los plugins instalados."""
 
     name: str = "plugins"
+    requires_sqlite_key: bool = False
     
     # Constantes para comandos y argumentos
     CMD_BUSCAR = "buscar"

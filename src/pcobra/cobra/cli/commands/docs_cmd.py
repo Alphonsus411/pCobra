@@ -11,6 +11,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 class DocsCommand(BaseCommand):
     """Genera la documentación HTML del proyecto."""
     name = "docs"
+    requires_sqlite_key: bool = False
     SPHINX_TIMEOUT = 300  # segundos
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:

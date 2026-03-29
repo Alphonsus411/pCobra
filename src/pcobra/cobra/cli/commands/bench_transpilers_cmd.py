@@ -40,6 +40,7 @@ class BenchTranspilersCommand(BaseCommand):
     """Mide el rendimiento de los transpiladores."""
 
     name = "benchtranspilers"
+    requires_sqlite_key: bool = True
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.

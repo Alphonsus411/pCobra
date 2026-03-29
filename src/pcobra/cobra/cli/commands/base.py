@@ -8,6 +8,8 @@ class BaseCommand:
     
     #: Nombre del subcomando
     name: str = ""
+    #: Indica si el comando requiere clave SQLITE_DB_KEY para operar.
+    requires_sqlite_key: bool = False
     
     def __init__(self) -> None:
         """Inicializa el comando y valida el nombre.

@@ -3,6 +3,7 @@ import os
 from unittest.mock import patch
 
 from cobra.cli.cli import CliApplication
+from cobra.cli.commands.cache_cmd import CacheCommand
 
 
 def test_cli_falla_si_no_hay_sqlite_db_key(monkeypatch):
@@ -11,8 +12,9 @@ def test_cli_falla_si_no_hay_sqlite_db_key(monkeypatch):
     monkeypatch.delenv("COBRA_DEV_ALLOW_EPHEMERAL_KEY", raising=False)
 
     app = CliApplication()
-    with pytest.raises(RuntimeError, match="Falta la variable de entorno 'SQLITE_DB_KEY'"):
-        app._ensure_sqlite_db_key(args=object())
+    args = type("Args", (), {"cmd": CacheCommand()})()
+    with pytest.raises(RuntimeError, match="clave requerida por comando 'cache'"):
+        app._ensure_sqlite_db_key(args=args)
 
 
 def test_cli_funciona_cuando_sqlite_db_key_esta_definida(monkeypatch):

@@ -14,6 +14,7 @@ class CacheCommand(BaseCommand):
     """Limpia la caché del AST basada en la base de datos."""
 
     name: str = "cache"
+    requires_sqlite_key: bool = True
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando."""

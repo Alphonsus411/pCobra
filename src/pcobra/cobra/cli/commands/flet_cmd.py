@@ -12,6 +12,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_error
 class FletCommand(BaseCommand):
     """Inicia el entorno IDLE basado en Flet."""
     name = "gui"
+    requires_sqlite_key: bool = False
     _CRITICAL_GUI_MODULES = (
         "pcobra.cobra.cli.commands.compile_cmd",
         "pcobra.cobra.core",

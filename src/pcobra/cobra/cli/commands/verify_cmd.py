@@ -39,6 +39,7 @@ class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
+    requires_sqlite_key: bool = False
     OFFICIAL_LANGUAGE_CHOICES = target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS)
     SUPPORTED_LANGUAGES = target_cli_choices(VERIFICATION_EXECUTABLE_TARGETS)
     

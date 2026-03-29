@@ -298,6 +298,7 @@ class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes."""
 
     name = "compilar"
+    requires_sqlite_key: bool = True
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
