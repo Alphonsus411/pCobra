@@ -212,6 +212,7 @@ class ExecuteCommand(BaseCommand):
             return 1
         sandbox = getattr(args, "sandbox", False)
         contenedor = getattr(args, "contenedor", None)
+        allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
 
         try:
             validar_dependencias("python", module_map.get_toml_map())
@@ -233,7 +234,12 @@ class ExecuteCommand(BaseCommand):
 
         def ejecutar():
             if sandbox:
-                return self._ejecutar_en_sandbox(codigo, seguro, extra_validators)
+                return self._ejecutar_en_sandbox(
+                    codigo,
+                    seguro,
+                    extra_validators,
+                    allow_insecure_fallback=allow_insecure_fallback,
+                )
             if contenedor:
                 return self._ejecutar_en_contenedor(codigo, contenedor)
             return self._ejecutar_normal(codigo, seguro, extra_validators)
@@ -244,7 +250,14 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(str(e))
             return 1
 
-    def _ejecutar_en_sandbox(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
+    def _ejecutar_en_sandbox(
+        self,
+        codigo: str,
+        seguro: bool,
+        extra_validators: Any,
+        *,
+        allow_insecure_fallback: bool = False,
+    ) -> int:
         """Ejecuta el código en un entorno sandbox."""
         try:
             tokens = Lexer(codigo).tokenizar()
@@ -275,7 +288,10 @@ class ExecuteCommand(BaseCommand):
                 sandbox_callable = getattr(alias_module, "ejecutar_en_sandbox", sandbox_callable)
             except ModuleNotFoundError:  # pragma: no cover - alias no disponible
                 pass
-            salida = sandbox_callable(script)
+            salida = sandbox_callable(
+                script,
+                allow_insecure_fallback=allow_insecure_fallback,
+            )
             if salida:
                 mostrar_info(str(salida))
             return 0

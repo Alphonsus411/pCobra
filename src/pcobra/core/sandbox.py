@@ -6,6 +6,7 @@ import ast
 import builtins
 import contextlib
 import io
+import logging
 import os
 import marshal
 import multiprocessing
@@ -77,6 +78,7 @@ _FORBIDDEN_ATTRIBUTES = {"__dict__", "__class__"}
 _KNOWN_MODULE_SOURCES = {"builtins", "io", "pathlib"}
 _DYNAMIC_IMPORT_CALLS = {"import_module"}
 _FORBIDDEN_IMPORT_HELPERS = {"__loader__"}
+_LOGGER = logging.getLogger(__name__)
 
 
 if HAS_RESTRICTED_PYTHON:
@@ -555,6 +557,14 @@ def ejecutar_en_sandbox(
 
     if not HAS_RESTRICTED_PYTHON:
         if allow_insecure_fallback:
+            _LOGGER.warning(
+                "sandbox_security_warning",
+                extra={
+                    "event": "sandbox_insecure_fallback",
+                    "allow_insecure_fallback": True,
+                    "reason": "restricted_python_missing",
+                },
+            )
             return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
         raise RuntimeError(
             "La sandbox segura requiere RestrictedPython instalado. "

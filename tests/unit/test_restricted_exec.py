@@ -106,7 +106,7 @@ def test_sin_restrictedpython_falla_sin_fallback_inseguro(monkeypatch):
 
 
 @pytest.mark.timeout(5)
-def test_fallback_inseguro_es_explicito(monkeypatch):
+def test_fallback_inseguro_es_explicito(monkeypatch, caplog):
     monkeypatch.setattr(sandbox, "HAS_RESTRICTED_PYTHON", False)
 
     def _fallback(codigo, timeout=None, memoria_mb=None):
@@ -122,6 +122,7 @@ def test_fallback_inseguro_es_explicito(monkeypatch):
     )
 
     assert salida == "fallback:print('hola'):2:64"
+    assert any("sandbox_security_warning" in rec.message for rec in caplog.records)
 
 
 @pytest.mark.timeout(5)

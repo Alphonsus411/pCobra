@@ -87,6 +87,7 @@ class InteractiveCommand(BaseCommand):
         """
         super().__init__()
         self.interpretador = interpretador
+        self._allow_insecure_fallback = False
         self._setup_logging()
 
     def _setup_logging(self) -> None:
@@ -265,6 +266,7 @@ class InteractiveCommand(BaseCommand):
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
         sandbox_docker = getattr(args, "sandbox_docker", None)
+        self._allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
         if sandbox_docker and sandbox_docker not in DOCKER_EXECUTABLE_TARGETS:
             mostrar_error(
                 build_runtime_capability_message(
@@ -420,7 +422,10 @@ class InteractiveCommand(BaseCommand):
             linea: Código a ejecutar
         """
         try:
-            salida = ejecutar_en_sandbox(linea)
+            salida = ejecutar_en_sandbox(
+                linea,
+                allow_insecure_fallback=self._allow_insecure_fallback,
+            )
             if salida:
                 mostrar_info(str(salida))
         except Exception as err:
