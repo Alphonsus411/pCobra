@@ -285,7 +285,13 @@ class ExecuteCommand(BaseCommand):
             return 1
         except RuntimeError as e:
             self.logger.error("Error de ejecución en sandbox", extra={"error": str(e)})
-            mostrar_error(f"Error de ejecución en sandbox: {e}")
+            mensaje = f"Error de ejecución en sandbox: {e}"
+            if "RestrictedPython" in str(e):
+                mensaje += (
+                    "\nSugerencia: instala RestrictedPython para el modo seguro "
+                    "(por ejemplo: pip install RestrictedPython)."
+                )
+            mostrar_error(mensaje)
             return 1
 
     def _ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
