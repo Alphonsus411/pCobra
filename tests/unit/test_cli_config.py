@@ -4,6 +4,7 @@ ENV_VARS = [
     "COBRA_LANG",
     "COBRA_DEFAULT_COMMAND",
     "COBRA_LOG_FORMAT",
+    "COBRA_LOG_FORMATTER",
     "COBRA_PROGRAM_NAME",
 ]
 
@@ -20,6 +21,7 @@ def test_load_config_from_valid_file(tmp_path, monkeypatch):
 language = "en"
 default_command = "run"
 log_format = "%(levelname)s"
+log_formatter = "json"
 program_name = "cobrax"
 """
     )
@@ -32,6 +34,7 @@ program_name = "cobrax"
         "language": "en",
         "default_command": "run",
         "log_format": "%(levelname)s",
+        "log_formatter": "json",
         "program_name": "cobrax",
     }
 
@@ -56,6 +59,7 @@ def test_load_config_with_partial_config(tmp_path, monkeypatch):
     assert data["language"] == "en"
     assert data["default_command"] == DEFAULTS["default_command"]
     assert data["log_format"] == DEFAULTS["log_format"]
+    assert data["log_formatter"] == DEFAULTS["log_formatter"]
     assert data["program_name"] == DEFAULTS["program_name"]
 
 
