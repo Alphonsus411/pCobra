@@ -34,3 +34,33 @@ def test_import_pcobra_no_modifica_path() -> None:
     )
 
     assert proceso.returncode == 0, proceso.stderr
+
+
+def test_import_pcobra_cli_es_liviano_y_sin_side_effects() -> None:
+    env = os.environ.copy()
+    env["PATH"] = "/tmp/pcobra-cli-a:/tmp/pcobra-cli-b"
+    env.pop("PCOBRA_CLI_BOOTSTRAP_PATH", None)
+
+    script = (
+        "import os, sys; "
+        "before = os.environ.get('PATH'); "
+        "import pcobra.cli as pc_cli; "
+        "after = os.environ.get('PATH'); "
+        "lazy_loaded = 'pcobra.cli.cli' in sys.modules; "
+        "print(getattr(pc_cli, '__name__', '')); "
+        "print(before); "
+        "print(after); "
+        "print(lazy_loaded); "
+        "raise SystemExit(0 if before == after and not lazy_loaded else 1)"
+    )
+
+    proceso = subprocess.run(  # nosec B603
+        [sys.executable, "-c", script],
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proceso.returncode == 0, proceso.stderr
