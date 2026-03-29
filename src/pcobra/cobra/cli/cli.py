@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import secrets
@@ -85,6 +86,7 @@ class AppConfig:
     DEFAULT_LANGUAGE = config_data.get("language", "es")
     DEFAULT_COMMAND = config_data.get("default_command", "interactive")
     LOG_FORMAT = config_data.get("log_format", "%(asctime)s - %(levelname)s - %(message)s")
+    LOG_FORMATTER = str(config_data.get("log_formatter", "text")).strip().lower()
     PROGRAM_NAME = config_data.get("program_name", "cobra")
     BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = [
         InteractiveCommand, CompileCommand, ExecuteCommand, ModulesCommand,
@@ -171,6 +173,21 @@ class CliApplication:
         self._subparsers: Optional[argparse._SubParsersAction] = None
         self._commands_registered = False
         self._owned_logging_handlers: list[logging.Handler] = []
+
+    class _SecurityEventJsonFormatter(logging.Formatter):
+        """Formatter JSON opt-in para eventos de auditoría de seguridad."""
+
+        def format(self, record: logging.LogRecord) -> str:
+            payload = {
+                "timestamp": self.formatTime(record, self.datefmt),
+                "level": record.levelname,
+                "logger": record.name,
+                "msg": record.getMessage(),
+            }
+            for field in ("event", "command", "reason", "audit_id"):
+                if hasattr(record, field):
+                    payload[field] = getattr(record, field)
+            return json.dumps(payload, ensure_ascii=False)
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -260,7 +277,10 @@ class CliApplication:
             return
 
         handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
+        if AppConfig.LOG_FORMATTER == "json":
+            handler.setFormatter(self._SecurityEventJsonFormatter())
+        else:
+            handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
         root_logger.addHandler(handler)
         root_logger.setLevel(LogLevel.INFO.value)
         self._owned_logging_handlers.append(handler)
@@ -373,13 +393,19 @@ class CliApplication:
         event: str,
         command_name: str | None,
         reason: str,
+        audit_id: str,
     ) -> None:
+        message = (
+            f"security_policy_warning event={event} command={command_name or 'unknown'} "
+            f"reason={reason} audit_id={audit_id}"
+        )
         logging.getLogger(__name__).warning(
-            "security_policy_warning",
+            message,
             extra={
                 "event": event,
                 "command": command_name,
                 "reason": reason,
+                "audit_id": audit_id,
             },
         )
 
@@ -391,6 +417,12 @@ class CliApplication:
         )
 
         if allow_insecure_non_interactive and not allow_insecure_fallback:
+            self._registrar_advertencia_seguridad(
+                event="invalid_non_interactive_override",
+                command_name=command_name,
+                reason="non_interactive_override_without_fallback",
+                audit_id="SEC-RUNTIME-001",
+            )
             raise RuntimeError(
                 "--allow-insecure-non-interactive requiere "
                 "--allow-insecure-fallback."
@@ -401,6 +433,7 @@ class CliApplication:
                 event="unsafe_mode",
                 command_name=command_name,
                 reason="safe_mode_disabled",
+                audit_id="SEC-RUNTIME-002",
             )
 
         if not allow_insecure_fallback:
@@ -410,6 +443,7 @@ class CliApplication:
             event="insecure_fallback",
             command_name=command_name,
             reason="explicit_allow_insecure_fallback",
+            audit_id="SEC-RUNTIME-003",
         )
         messages.mostrar_advertencia(
             _(
@@ -419,6 +453,12 @@ class CliApplication:
         )
 
         if (self._is_ci_context() or self._is_non_interactive_context()) and not allow_insecure_non_interactive:
+            self._registrar_advertencia_seguridad(
+                event="blocked_insecure_fallback_non_interactive",
+                command_name=command_name,
+                reason="missing_non_interactive_override",
+                audit_id="SEC-RUNTIME-004",
+            )
             raise RuntimeError(
                 "Fallback inseguro bloqueado en contexto CI/no interactivo. "
                 "Use --allow-insecure-non-interactive para override explícito."
@@ -429,6 +469,7 @@ class CliApplication:
                 event="insecure_fallback_non_interactive_override",
                 command_name=command_name,
                 reason="explicit_non_interactive_override",
+                audit_id="SEC-RUNTIME-005",
             )
             messages.mostrar_advertencia(
                 _(

@@ -14,9 +14,29 @@ La interfaz de línea de comandos de Cobra puede personalizarse mediante un arch
 | `language`       | `es`                                                 | Idioma de la interfaz de la CLI.                      |
 | `default_command`| `interactive`                                       | Subcomando ejecutado si no se especifica otro.        |
 | `log_format`     | `%(asctime)s - %(levelname)s - %(message)s`          | Formato para los mensajes de registro (*logging*).    |
+| `log_formatter`  | `text`                                                | Formato del handler raíz: `text` (default) o `json`.  |
 | `program_name`   | `cobra`                                              | Nombre con el que aparece la aplicación en la ayuda.  |
 
-Las variables de entorno `COBRA_LANG`, `COBRA_DEFAULT_COMMAND`, `COBRA_LOG_FORMAT` y `COBRA_PROGRAM_NAME` permiten sobrescribir estos valores.
+Las variables de entorno `COBRA_LANG`, `COBRA_DEFAULT_COMMAND`, `COBRA_LOG_FORMAT`, `COBRA_LOG_FORMATTER` y `COBRA_PROGRAM_NAME` permiten sobrescribir estos valores.
+
+## Eventos de auditoría de política de seguridad
+
+Cuando la CLI detecta rutas críticas de seguridad en runtime, emite warnings con
+campos estructurados para auditoría:
+
+- `event`: tipo de evento de seguridad.
+- `command`: subcomando activo.
+- `reason`: causa concreta de la decisión.
+- `audit_id`: identificador estable de auditoría (`SEC-RUNTIME-00x`).
+
+En modo `text`, el `msg` incluye los campos en línea:
+
+```text
+security_policy_warning event=insecure_fallback command=ejecutar reason=explicit_allow_insecure_fallback audit_id=SEC-RUNTIME-003
+```
+
+En modo `json` (`log_formatter = "json"` o `COBRA_LOG_FORMATTER=json`), el
+handler escribe un objeto JSON por línea apto para pipelines CI/SIEM.
 
 ## Política de seguridad para `SQLITE_DB_KEY` en la CLI
 
@@ -67,6 +87,7 @@ cobra --dev-ephemeral-key compilar ejemplo.co --tipo python
 language = "en"
 default_command = "compile"
 log_format = "%(levelname)s: %(message)s"
+log_formatter = "json"
 program_name = "cobra"
 ```
 

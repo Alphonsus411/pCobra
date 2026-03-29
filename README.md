@@ -918,6 +918,22 @@ La validación se realiza mediante una cadena de validadores configurada por la
 función `construir_cadena`, lo que facilita añadir nuevas comprobaciones en el
 futuro.
 
+### Auditoría de eventos de seguridad en runtime
+
+La CLI registra eventos de auditoría cuando se activan rutas críticas de la
+política de seguridad (por ejemplo, `--no-seguro`, `--allow-insecure-fallback`
+o un bloqueo en CI/no interactivo). Cada warning incluye:
+
+- `event`: nombre del evento de seguridad.
+- `command`: comando afectado.
+- `reason`: motivo de la decisión.
+- `audit_id`: identificador estable (`SEC-RUNTIME-001..005`).
+
+En `text` (default), los campos van serializados en el propio mensaje para
+facilitar parsing por regex. Para pipelines CI/SIEM puedes habilitar salida JSON
+con `log_formatter = "json"` en `cobra-cli.toml` (o
+`COBRA_LOG_FORMATTER=json`), obteniendo un objeto por línea.
+
 ## Ejecución en sandbox (--sandbox)
 
 Algunos comandos permiten ejecutar código dentro de una sandbox o de contenedores Docker oficiales gracias

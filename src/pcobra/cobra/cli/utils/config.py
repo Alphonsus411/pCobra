@@ -15,6 +15,7 @@ DEFAULTS = {
     "language": "es",
     "default_command": "interactive",
     "log_format": "%(asctime)s - %(levelname)s - %(message)s",
+    "log_formatter": "text",
     "program_name": "cobra",
 }
 
@@ -27,7 +28,8 @@ def load_config() -> Dict[str, str]:
 
     Returns:
         Dict[str, str]: Configuración con las claves ``language``,
-        ``default_command``, ``log_format`` y ``program_name``.
+        ``default_command``, ``log_format``, ``log_formatter`` y
+        ``program_name``.
     """
 
     config = DEFAULTS.copy()
@@ -48,6 +50,9 @@ def load_config() -> Dict[str, str]:
         "COBRA_DEFAULT_COMMAND", config["default_command"]
     )
     config["log_format"] = os.environ.get("COBRA_LOG_FORMAT", config["log_format"])
+    config["log_formatter"] = os.environ.get(
+        "COBRA_LOG_FORMATTER", config["log_formatter"]
+    )
     config["program_name"] = os.environ.get(
         "COBRA_PROGRAM_NAME", config["program_name"]
     )
