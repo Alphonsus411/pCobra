@@ -1,4 +1,5 @@
 import importlib.metadata
+import importlib
 import types
 
 import pytest
@@ -144,3 +145,26 @@ def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(m
 
     assert compile_cmd.TRANSPILERS == {"python": object}
     assert "ya existe en el registro canónico" in caplog.text
+
+
+def test_import_compile_cmd_no_carga_plugins_hasta_invocacion_explicita(monkeypatch):
+    calls = {"entry_points": 0}
+    original_entry_points = importlib.metadata.entry_points
+
+    def _fake_entry_points(*args, **kwargs):
+        calls["entry_points"] += 1
+        return importlib.metadata.EntryPoints(())
+
+    monkeypatch.setattr(importlib.metadata, "entry_points", _fake_entry_points)
+
+    importlib.reload(compile_cmd)
+
+    assert calls["entry_points"] == 0
+
+    compile_cmd._ensure_entrypoints_loaded_once()
+    compile_cmd._ensure_entrypoints_loaded_once()
+
+    assert calls["entry_points"] == 1
+
+    monkeypatch.setattr(importlib.metadata, "entry_points", original_entry_points)
+    importlib.reload(compile_cmd)
