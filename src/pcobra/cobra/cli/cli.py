@@ -149,10 +149,23 @@ class CommandRegistry:
 
 
 class CliApplication:
+    """Aplicación principal de CLI con inicialización idempotente por instancia.
+
+    Ciclo de vida esperado:
+    1. `initialize()` construye recursos base una sola vez (parser, intérprete y registry).
+    2. `_parse_arguments()` garantiza que la estructura de subcomandos exista y evita
+       registrar subparsers/comandos más de una vez en la misma instancia.
+    3. `run()` puede invocarse múltiples veces sobre la misma instancia sin conflictos
+       de comandos por doble registro.
+    4. `cleanup()` libera recursos al finalizar cada ejecución de `run()`.
+    """
+
     def __init__(self) -> None:
         self.parser: Optional[CustomArgumentParser] = None
         self.interpreter: Optional[InterpretadorCobra] = None
         self.command_registry: Optional[CommandRegistry] = None
+        self._subparsers: Optional[argparse._SubParsersAction] = None
+        self._commands_registered = False
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -167,11 +180,29 @@ class CliApplication:
         logging.shutdown()
 
     def initialize(self) -> None:
+        if self.parser and self.command_registry and self.interpreter:
+            return
         setup_gettext()
         self._setup_logging()
         self.interpreter = InterpretadorCobra()
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
+
+    def _ensure_command_structure(self) -> None:
+        if not self.parser or not self.command_registry:
+            raise RuntimeError("Application not properly initialized")
+        if self._subparsers is None:
+            self._subparsers = self.parser.add_subparsers(
+                dest="command",
+                parser_class=CustomArgumentParser,
+            )
+        if self._commands_registered:
+            return
+
+        self.command_registry.register_base_commands(self._subparsers)
+        menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
+        menu_parser.set_defaults(cmd="menu")
+        self._commands_registered = True
 
     def _command_requires_sqlite_db_key(self, args: argparse.Namespace) -> bool:
         command = getattr(args, "cmd", None)
@@ -308,12 +339,8 @@ class CliApplication:
     def _parse_arguments(self, argv: List[str]) -> argparse.Namespace:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
-            
-        subparsers = self.parser.add_subparsers(dest="command", parser_class=CustomArgumentParser)
-        self.command_registry.register_base_commands(subparsers)
 
-        menu_parser = subparsers.add_parser("menu", help=_("Modo interactivo"))
-        menu_parser.set_defaults(cmd="menu")
+        self._ensure_command_structure()
 
         default_command_name = self.command_registry.get_default_command_name()
         default_command = self.command_registry.commands.get(default_command_name)

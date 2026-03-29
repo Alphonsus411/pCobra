@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, AppConfig
+from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, AppConfig, CommandRegistry
 
 
 def _patch_cli_env(stack: ExitStack) -> None:
@@ -60,3 +60,50 @@ def test_consecutive_initializations_keep_default_command_isolated():
         second_args = second_app._parse_arguments([])
         assert second_args.cmd.name == "interactive"
         assert AppConfig.DEFAULT_COMMAND == "missing"
+
+
+def test_parse_arguments_is_reentrant_on_same_instance():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
+        app = CliApplication()
+        app.initialize()
+
+        register_spy = stack.enter_context(
+            patch.object(app.command_registry, "register_base_commands", wraps=app.command_registry.register_base_commands)
+        )
+        add_subparsers_spy = stack.enter_context(
+            patch.object(app.parser, "add_subparsers", wraps=app.parser.add_subparsers)
+        )
+
+        first_args = app._parse_arguments([])
+        second_args = app._parse_arguments([])
+
+    assert first_args.cmd.name == "interactive"
+    assert second_args.cmd.name == "interactive"
+    assert register_spy.call_count == 1
+    assert add_subparsers_spy.call_count == 1
+
+
+def test_run_is_reentrant_on_same_instance_without_command_conflict():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
+        mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
+        app = CliApplication()
+
+        register_spy = stack.enter_context(
+            patch(
+                "cobra.cli.cli.CommandRegistry.register_base_commands",
+                autospec=True,
+                wraps=CommandRegistry.register_base_commands,
+            )
+        )
+
+        first_result = app.run([])
+        second_result = app.run([])
+
+    assert first_result == 0
+    assert second_result == 0
+    assert mock_run.call_count == 2
+    assert register_spy.call_count == 1
