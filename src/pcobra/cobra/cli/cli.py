@@ -356,16 +356,19 @@ class CliApplication:
 
         return self.parser.parse_args(argv)
 
-    def _handle_execution_error(self, exc: Exception, language: str) -> int:
+    def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
         if isinstance(exc, ValueError):
             messages.mostrar_error(_("Value error: {}").format(str(exc)))
         elif isinstance(exc, FileNotFoundError):
             messages.mostrar_error(str(exc))
         else:
-            messages.mostrar_error(_("An unexpected error occurred"))
+            messages.mostrar_error(
+                _("An unexpected error occurred. Use --debug or -v to see the full traceback."),
+            )
 
         logging.exception("Error in execution")
-        print(format_traceback(exc, language))
+        if debug_activo:
+            print(format_traceback(exc, language))
         return 1
 
     def _leer_input_seguro(self, prompt: str) -> Optional[str]:
@@ -437,7 +440,7 @@ class CliApplication:
             args = argparse.Namespace(archivo=archivo, origen=origen, destino=destino)
             return inv_cmd.run(args)
 
-    def execute_command(self, args: argparse.Namespace) -> int:
+    def execute_command(self, args: argparse.Namespace, debug_activo: bool = False) -> int:
         """Ejecuta el comando resuelto desde ``args``.
 
         Pre-requisito recomendado: llamar a ``initialize()`` (o ``run()``) antes de
@@ -467,7 +470,7 @@ class CliApplication:
             result = command.run(args)
             return 0 if result is None else result
         except Exception as exc:
-            return self._handle_execution_error(exc, args.lang)
+            return self._handle_execution_error(exc, args.lang, debug_activo)
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
@@ -481,7 +484,8 @@ class CliApplication:
                 args = self._parse_arguments(argv)
                 if self._command_requires_sqlite_db_key(args):
                     self._ensure_sqlite_db_key(args)
-                log_level = logging.DEBUG if args.verbose > 0 or args.debug else logging.INFO
+                debug_activo = args.verbose > 0 or args.debug
+                log_level = logging.DEBUG if debug_activo else logging.INFO
                 logging.getLogger().setLevel(log_level)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
@@ -493,7 +497,7 @@ class CliApplication:
                     )
                 messages.mostrar_logo()
 
-                return self.execute_command(args)
+                return self.execute_command(args, debug_activo=debug_activo)
             except Exception as e:
                 logging.exception("Fatal error in application")
                 messages.mostrar_error(_("Fatal error: {}").format(str(e)))
