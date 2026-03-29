@@ -119,6 +119,12 @@ class ExecuteCommand(BaseCommand):
             "archivo", help=_("Ruta al archivo a ejecutar")
         ).completer = files_completer()
         parser.add_argument(
+            "--debug",
+            action="store_true",
+            default=False,
+            help=_("Show debug messages"),
+        )
+        parser.add_argument(
             "--sandbox",
             action="store_true",
             help=_("Ejecuta el código en una sandbox"),
@@ -192,7 +198,9 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(str(e))
             return 1
 
-        depurar = getattr(args, "depurar", False)
+        debug = bool(getattr(args, "debug", False))
+        verbose = int(getattr(args, "verbose", 0) or 0)
+        depurar = debug or verbose > 0 or bool(getattr(args, "depurar", False))
         formatear = bool(getattr(args, "formatear", False))
         seguro = getattr(args, "seguro", True)
         raw_extra_validators = getattr(args, "extra_validators", None)
@@ -213,7 +221,7 @@ class ExecuteCommand(BaseCommand):
         if formatear and not self._formatear_codigo(args.archivo):
             return 1
 
-        self.logger.setLevel(logging.DEBUG if depurar else logging.ERROR)
+        self.logger.setLevel(logging.DEBUG if depurar else logging.INFO)
 
         try:
             with open(args.archivo, "r", encoding="utf-8") as f:
