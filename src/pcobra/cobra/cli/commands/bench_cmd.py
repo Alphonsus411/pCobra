@@ -30,10 +30,16 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.core.cobra_config import tiempo_max_transpilacion
 from pcobra.cobra.transpilers.target_utils import target_label
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
-from pcobra.cobra.benchmarks.targets_policy import (
-    BENCHMARK_BACKEND_METADATA,
-    validate_backend_metadata,
-)
+try:
+    from pcobra.cobra.benchmarks.targets_policy import (
+        BENCHMARK_BACKEND_METADATA,
+        validate_backend_metadata,
+    )
+except ModuleNotFoundError:  # pragma: no cover - compatibilidad con layouts legacy
+    from scripts.benchmarks.targets_policy import (  # type: ignore
+        BENCHMARK_BACKEND_METADATA,
+        validate_backend_metadata,
+    )
 
 # Constantes
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
