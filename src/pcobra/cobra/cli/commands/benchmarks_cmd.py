@@ -3,10 +3,8 @@
 from argparse import ArgumentParser
 from argparse import ArgumentTypeError
 import json
-import subprocess
-import sys
-from pathlib import Path
 from typing import Any
+from pathlib import Path
 
 from pcobra.cobra.transpilers.target_utils import target_label
 from pcobra.cobra.cli.target_policies import parse_target
@@ -14,6 +12,7 @@ from pcobra.cobra.cli.target_policies import parse_target
 from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -66,13 +65,6 @@ class BenchmarksCommand(BaseCommand):
             int: Código de salida (0 para éxito, otro valor para error)
         """
         try:
-            script = (
-                Path(__file__).resolve().parents[4]
-                / "scripts"
-                / "benchmarks"
-                / "run_benchmarks.py"
-            )
-
             results: list[dict[str, Any]] = []
             iteraciones = max(1, getattr(args, "iteraciones", 1))
             backend_filtro = getattr(args, "backend", None)
@@ -91,26 +83,12 @@ class BenchmarksCommand(BaseCommand):
                     )
                     return 1
 
-            if script.exists():
-                cmd = [sys.executable, str(script)]
-                for _iteration in range(iteraciones):
-                    out = subprocess.check_output(cmd, text=True)
-                    data = json.loads(out)
-                    if backend_filtro:
-                        data = [d for d in data if d.get("backend") == backend_filtro]
-                    results.extend(data)
-            else:  # Fallback ligero cuando el script no está disponible
-                for _iteration in range(iteraciones):
-                    for backend in BACKENDS:
-                        if backend_filtro and backend != backend_filtro:
-                            continue
-                        results.append(
-                            {
-                                "backend": backend,
-                                "time": 0.0,
-                                "memory_kb": 0,
-                            }
-                        )
+            bench_cmd = BenchCommand()
+            for _iteration in range(iteraciones):
+                data = bench_cmd._run_benchmarks()
+                if backend_filtro:
+                    data = [d for d in data if d.get("backend") == backend_filtro]
+                results.extend(data)
 
             salida: Path | None = getattr(args, "output", None)
             if salida is not None:
@@ -131,14 +109,8 @@ class BenchmarksCommand(BaseCommand):
                     )
             return 0
         except FileNotFoundError:
-            mostrar_error(_("No se encontró el script de benchmarks"))
+            mostrar_error(_("No se encontraron herramientas de benchmark requeridas"))
             return 2
-        except subprocess.CalledProcessError as err:
-            mostrar_error(_("Error al ejecutar el script: {err}").format(err=err))
-            return 3
-        except json.JSONDecodeError:
-            mostrar_error(_("Salida de benchmark inválida"))
-            return 4
         except Exception as e:  # pragma: no cover - errores inesperados
             mostrar_error(
                 _("Error durante la ejecución: {error}").format(error=str(e))
