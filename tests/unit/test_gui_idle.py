@@ -67,8 +67,12 @@ def idle_module(monkeypatch):
 
     monkeypatch.setitem(sys.modules, "flet", fake_ft)
     monkeypatch.setitem(sys.modules, "cobra.cli.commands.compile_cmd", dummy_compile)
+    monkeypatch.setitem(sys.modules, "pcobra.cobra.cli.commands.compile_cmd", dummy_compile)
     monkeypatch.setitem(
         sys.modules, "core.interpreter", SimpleNamespace(InterpretadorCobra=DummyInterpreter)
+    )
+    monkeypatch.setitem(
+        sys.modules, "pcobra.core.interpreter", SimpleNamespace(InterpretadorCobra=DummyInterpreter)
     )
 
     module = importlib.import_module("gui.idle")
@@ -146,3 +150,23 @@ def test_event_handlers_actualizan_salida(idle_module):
     assert "NodoImprimir" in salida.value
     page.update.assert_called_once()
 
+
+def test_ejecutar_codigo_restaura_stdout_stderr_tras_excepcion(idle_module, monkeypatch):
+    module, *_ = idle_module
+
+    class DummyInterpreter:
+        def ejecutar_ast(self, ast):
+            print("salida parcial")
+            print("error parcial", file=sys.stderr)
+            raise RuntimeError("fallo forzado")
+
+    monkeypatch.setattr(module, "InterpretadorCobra", DummyInterpreter)
+
+    stdout_original = sys.stdout
+    stderr_original = sys.stderr
+
+    with pytest.raises(RuntimeError, match="fallo forzado"):
+        module._ejecutar_codigo("imprimir('x')")
+
+    assert sys.stdout is stdout_original
+    assert sys.stderr is stderr_original

@@ -1,7 +1,7 @@
 """Aplicación gráfica básica usando Flet para ejecutar código Cobra."""
 
 import io
-import sys
+from contextlib import redirect_stderr, redirect_stdout
 import flet as ft
 
 from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
@@ -14,14 +14,10 @@ from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 def _ejecutar_codigo(codigo: str) -> str:
     """Ejecuta código Cobra y captura la salida impresa."""
     buffer = io.StringIO()
-    stdout = sys.stdout
-    sys.stdout = buffer
-    try:
+    with redirect_stdout(buffer), redirect_stderr(buffer):
         tokens = Lexer(codigo).tokenizar()
         ast = Parser(tokens).parsear()
         InterpretadorCobra().ejecutar_ast(ast)
-    finally:
-        sys.stdout = stdout
     return buffer.getvalue()
 
 
