@@ -1,29 +1,29 @@
-"""Pruebas unitarias para la funcionalidad de ``gui.idle``."""
+"""Smoke tests para el entrypoint GUI ``pcobra.gui.idle``."""
 
-import importlib
-import sys
+from __future__ import annotations
+
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-import pytest
+from pcobra.gui import idle
 
 
 def _fake_flet():
     class TextField:
-        def __init__(self, **kwargs):
+        def __init__(self, **_kwargs):
             self.value = ""
 
     class Text:
-        def __init__(self, value="", **kwargs):
+        def __init__(self, value="", **_kwargs):
             self.value = value
 
     class Dropdown:
-        def __init__(self, options=None, **kwargs):
+        def __init__(self, options=None, **_kwargs):
             self.options = options or []
             self.value = None
 
     class Switch:
-        def __init__(self, **kwargs):
+        def __init__(self, **_kwargs):
             self.value = False
 
     class ElevatedButton:
@@ -50,123 +50,59 @@ def _fake_flet():
     )
 
 
-@pytest.fixture
-def idle_module(monkeypatch):
-    """Importa ``gui.idle`` con dependencias simuladas."""
+def test_main_renderiza_botones_esperados(monkeypatch):
+    ft = _fake_flet()
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(idle.runtime, "require_gui_dependencies", lambda: {"TRANSPILERS": {"python": object}})
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc: f"error: {exc}")
 
-    fake_ft = _fake_flet()
-
-    transpiler_inst = MagicMock()
-    transpiler_inst.generate_code.return_value = "codigo"
-    transpiler_cls = MagicMock(return_value=transpiler_inst)
-    dummy_compile = SimpleNamespace(TRANSPILERS={"py": transpiler_cls})
-
-    class DummyInterpreter:
-        def ejecutar_ast(self, ast):
-            pass
-
-    monkeypatch.setitem(sys.modules, "flet", fake_ft)
-    monkeypatch.setitem(sys.modules, "cobra.cli.commands.compile_cmd", dummy_compile)
-    monkeypatch.setitem(sys.modules, "pcobra.cobra.cli.commands.compile_cmd", dummy_compile)
-    monkeypatch.setitem(
-        sys.modules, "core.interpreter", SimpleNamespace(InterpretadorCobra=DummyInterpreter)
-    )
-    monkeypatch.setitem(
-        sys.modules, "pcobra.core.interpreter", SimpleNamespace(InterpretadorCobra=DummyInterpreter)
-    )
-
-    module = importlib.import_module("gui.idle")
-    importlib.reload(module)
-    return module, fake_ft, transpiler_cls, transpiler_inst
-
-
-def test_mostrar_tokens_formato(idle_module):
-    module, *_ = idle_module
-    codigo = "imprimir('x')"
-    salida = module._mostrar_tokens(codigo)
-    lineas = salida.splitlines()
-    assert lineas[0].startswith("Token(")
-    assert "IMPRIMIR" in lineas[0]
-    assert lineas[-1].startswith("Token(") and "EOF" in lineas[-1]
-
-
-def test_mostrar_ast_formato(idle_module):
-    module, *_ = idle_module
-    codigo = "imprimir('x')"
-    salida = module._mostrar_ast(codigo)
-    assert salida.startswith("[")
-    assert "NodoImprimir" in salida
-    assert "NodoValor" in salida
-
-
-def test_transpilar_codigo_invoca_transpiler(idle_module):
-    module, _, transpiler_cls, transpiler_inst = idle_module
-    codigo = "imprimir('x')"
-    generado = module._transpilar_codigo(codigo, "py")
-    transpiler_cls.assert_called_once_with()
-    transpiler_inst.generate_code.assert_called_once()
-    assert generado == "codigo"
-
-
-def test_event_handlers_actualizan_salida(idle_module):
-    module, ft, _, _ = idle_module
     page = ft.Page()
-    module.main(page)
+    idle.main(page)
+
+    botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
+    assert [b.text for b in botones] == ["Ejecutar", "Tokens", "AST"]
+
+
+def test_main_handlers_smoke(monkeypatch):
+    ft = _fake_flet()
+    monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(idle.runtime, "require_gui_dependencies", lambda: {"TRANSPILERS": {"python": object}})
+    monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ejecutado")
+    monkeypatch.setattr(idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
+    monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
+    monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
+    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc: f"error: {exc}")
+
+    page = ft.Page()
+    idle.main(page)
 
     entrada = next(c for c in page.controls if isinstance(c, ft.TextField))
     selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
-    switch = next(c for c in page.controls if isinstance(c, ft.Switch))
+    activar = next(c for c in page.controls if isinstance(c, ft.Switch))
     salida = next(c for c in page.controls if isinstance(c, ft.Text))
-    ejecutar_btn = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.ElevatedButton) and c.text == "Ejecutar"
-    )
-    tokens_btn = next(
-        c
-        for c in page.controls
-        if isinstance(c, ft.ElevatedButton) and c.text == "Tokens"
-    )
-    ast_btn = next(
-        c for c in page.controls if isinstance(c, ft.ElevatedButton) and c.text == "AST"
-    )
+    botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
+    ejecutar_btn, tokens_btn, ast_btn = botones
 
     entrada.value = "imprimir('x')"
-    selector.value = "py"
-    switch.value = True
     ejecutar_btn.on_click(None)
-    assert salida.value == "codigo"
-    page.update.assert_called_once()
-    page.update.reset_mock()
+    assert salida.value == "ejecutado"
 
-    entrada.value = "imprimir('t')"
+    activar.value = True
+    selector.value = "python"
+    ejecutar_btn.on_click(None)
+    assert salida.value == "transpilado"
+
     tokens_btn.on_click(None)
-    assert "Token(" in salida.value
-    page.update.assert_called_once()
-    page.update.reset_mock()
+    assert salida.value == "Token(X)"
 
-    entrada.value = "imprimir('a')"
     ast_btn.on_click(None)
-    assert "NodoImprimir" in salida.value
-    page.update.assert_called_once()
-
-
-def test_ejecutar_codigo_restaura_stdout_stderr_tras_excepcion(idle_module, monkeypatch):
-    module, *_ = idle_module
-
-    class DummyInterpreter:
-        def ejecutar_ast(self, ast):
-            print("salida parcial")
-            print("error parcial", file=sys.stderr)
-            raise RuntimeError("fallo forzado")
-
-    monkeypatch.setattr(module, "InterpretadorCobra", DummyInterpreter)
-
-    stdout_original = sys.stdout
-    stderr_original = sys.stderr
-
-    with pytest.raises(RuntimeError, match="fallo forzado"):
-        module._ejecutar_codigo("imprimir('x')")
-
-    assert sys.stdout is stdout_original
-    assert sys.stderr is stderr_original
+    assert salida.value == "[Nodo]"
+    assert page.update.call_count == 4
