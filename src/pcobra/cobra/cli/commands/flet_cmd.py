@@ -48,11 +48,15 @@ class FletCommand(BaseCommand):
         try:
             import flet as flet_runtime
         except ModuleNotFoundError as e:
-            if e.name == "flet":
+            missing_module = e.name or "desconocido"
+            if missing_module == "flet":
                 mostrar_error(_("Falta la dependencia 'flet'. Ejecuta: pip install flet."))
             else:
                 mostrar_error(
-                    _("Error interno al importar dependencias de GUI: {0}").format(str(e))
+                    _(
+                        "Falta una dependencia requerida para iniciar GUI: '{0}'. "
+                        "Verifica la instalación de dependencias de core/transpiladores."
+                    ).format(missing_module)
                 )
             return 1
 
@@ -65,13 +69,15 @@ class FletCommand(BaseCommand):
             else:
                 from pcobra.gui.app import main
         except ModuleNotFoundError as e:
-            if e.name == "flet":
+            missing_module = e.name or "desconocido"
+            if missing_module == "flet":
                 mostrar_error(_("Falta la dependencia 'flet'. Ejecuta: pip install flet."))
             else:
                 mostrar_error(
                     _(
-                        "Error interno al importar la GUI ({0}): {1}"
-                    ).format(gui_module, str(e))
+                        "No se pudo cargar la GUI ({0}) porque falta el módulo '{1}'. "
+                        "Verifica dependencias de core/transpiladores."
+                    ).format(gui_module, missing_module)
                 )
             return 1
         except ImportError as e:
