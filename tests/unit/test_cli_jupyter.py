@@ -145,3 +145,20 @@ def test_cli_jupyter_error_subproceso():
 
     assert code == 1
     mock_mostrar_error.assert_called_once()
+
+
+def test_cli_jupyter_notebook_inexistente_retorna_error_claro():
+    cmd = JupyterCommand()
+    with (
+        patch.dict("sys.modules", {"jupyter": object()}),
+        patch("subprocess.run") as mock_run,
+        patch("cobra.cli.commands.jupyter_cmd.mostrar_error") as mock_mostrar_error,
+    ):
+        code = cmd.run(Namespace(notebook="no_existe.ipynb"))
+
+    assert code == 1
+    mock_run.assert_not_called()
+    mock_mostrar_error.assert_called_once()
+    mensaje = mock_mostrar_error.call_args.args[0]
+    assert "No se encontró el notebook indicado" in mensaje
+    assert "Traceback" not in mensaje
