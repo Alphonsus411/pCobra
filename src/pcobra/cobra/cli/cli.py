@@ -175,6 +175,7 @@ class CliApplication:
         self.command_registry: Optional[CommandRegistry] = None
         self._subparsers: Optional[argparse._SubParsersAction] = None
         self._commands_registered = False
+        self._owned_logging_handlers: list[logging.Handler] = []
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -186,7 +187,12 @@ class CliApplication:
     def cleanup(self) -> None:
         if self.interpreter and hasattr(self.interpreter, "cleanup"):
             self.interpreter.cleanup()
-        logging.shutdown()
+        root_logger = logging.getLogger()
+        for handler in self._owned_logging_handlers:
+            if handler in root_logger.handlers:
+                root_logger.removeHandler(handler)
+            handler.close()
+        self._owned_logging_handlers.clear()
 
     def initialize(self) -> None:
         if self.parser and self.command_registry and self.interpreter:
@@ -251,10 +257,15 @@ class CliApplication:
         )
 
     def _setup_logging(self) -> None:
-        logging.basicConfig(
-            level=LogLevel.INFO.value,
-            format=AppConfig.LOG_FORMAT
-        )
+        root_logger = logging.getLogger()
+        if root_logger.handlers:
+            return
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
+        root_logger.addHandler(handler)
+        root_logger.setLevel(LogLevel.INFO.value)
+        self._owned_logging_handlers.append(handler)
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
         parser.add_argument(
