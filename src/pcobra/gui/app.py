@@ -2,13 +2,16 @@
 
 import io
 from contextlib import redirect_stderr, redirect_stdout
-import flet as ft
+from typing import TYPE_CHECKING, Any
 
 from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
 from pcobra.cobra.transpilers.target_utils import target_cli_choices
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+
+if TYPE_CHECKING:
+    import flet as ft
 
 
 def _ejecutar_codigo(codigo: str) -> str:
@@ -48,8 +51,18 @@ def _gui_target_choices() -> tuple[str, ...]:
     return target_cli_choices(set(OFFICIAL_TARGETS) & set(TRANSPILERS))
 
 
-def main(page: ft.Page):
+def _require_flet() -> Any:
+    """Importa Flet de forma diferida para no romper imports de CLI."""
+    try:
+        import flet as ft
+    except ModuleNotFoundError as exc:  # pragma: no cover - validado desde CLI
+        raise RuntimeError("Falta la dependencia 'flet'. Ejecuta: pip install flet.") from exc
+    return ft
+
+
+def main(page: "ft.Page"):
     """Función principal para Flet."""
+    ft = _require_flet()
 
     entrada = ft.TextField(multiline=True, expand=True)
     salida = ft.Text(value="", selectable=True)
