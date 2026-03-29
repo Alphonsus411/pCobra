@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import shutil
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,25 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 class JupyterCommand(BaseCommand):
     """Lanza Jupyter Notebook con el kernel Cobra instalado."""
     name = "jupyter"
+
+    class EjecutableNoEncontradoError(FileNotFoundError):
+        """Error para indicar que no se pudo resolver un ejecutable requerido."""
+
+    @staticmethod
+    def _resolver_ejecutable(ejecutable: str) -> str:
+        """Resuelve la ruta de un ejecutable con validaciones explícitas."""
+        ejecutable_path = Path(ejecutable)
+        if ejecutable_path.exists():
+            return str(ejecutable_path.resolve())
+
+        ejecutable_en_path = shutil.which(ejecutable)
+        if not ejecutable_en_path:
+            raise JupyterCommand.EjecutableNoEncontradoError(ejecutable)
+
+        ejecutable_real = str(Path(ejecutable_en_path).resolve())
+        if not Path(ejecutable_real).exists():
+            raise JupyterCommand.EjecutableNoEncontradoError(ejecutable)
+        return ejecutable_real
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
@@ -68,8 +88,12 @@ class JupyterCommand(BaseCommand):
                 mostrar_error(_("Error al instalar el kernel canónico 'pcobra.jupyter_kernel': {err}").format(err=result.stderr))
                 return 1
 
+            python_executable = self._resolver_ejecutable(sys.executable)
+
             # Preparar comando de Jupyter
             cmd = [
+                python_executable,
+                "-m",
                 "jupyter",
                 "notebook",
                 "--KernelManager.default_kernel_name=cobra",
@@ -81,9 +105,9 @@ class JupyterCommand(BaseCommand):
             subprocess.run(cmd, check=True)
             return 0
 
-        except FileNotFoundError:
+        except JupyterCommand.EjecutableNoEncontradoError:
             mostrar_error(
-                _("No se encontró el ejecutable 'jupyter'. Verifica la instalación.")
+                _("No se encontró el ejecutable de Python para lanzar Jupyter. Verifica la instalación.")
             )
             return 1
         except subprocess.CalledProcessError as e:
