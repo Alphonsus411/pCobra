@@ -11,7 +11,7 @@ from typing import Any
 from pcobra.cobra.transpilers.target_utils import target_label
 from pcobra.cobra.cli.target_policies import parse_target
 
-from scripts.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
+from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
