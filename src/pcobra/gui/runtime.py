@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 from contextlib import redirect_stderr, redirect_stdout
 from functools import lru_cache
 from typing import Any
@@ -17,10 +18,14 @@ def require_gui_dependencies() -> dict[str, Any]:
         from pcobra.cobra.transpilers.target_utils import target_cli_choices
         from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
         from pcobra.core.interpreter import InterpretadorCobra
-    except ModuleNotFoundError as exc:  # pragma: no cover - validado desde CLI
+    except (ImportError, ModuleNotFoundError) as exc:  # pragma: no cover - validado desde CLI
+        missing_target, action = _parse_missing_target(exc)
+        detail = str(exc) or repr(exc)
         raise RuntimeError(
-            "Falta una dependencia de core/transpiladores para la GUI: "
-            f"'{exc.name}'."
+            "Error de importación GUI en 'pcobra.gui.runtime': "
+            f"faltante detectado '{missing_target}'. "
+            f"Detalle: {detail}. "
+            f"Acción sugerida: {action}"
         ) from exc
 
     return {
@@ -33,6 +38,39 @@ def require_gui_dependencies() -> dict[str, Any]:
         "InterpretadorCobra": InterpretadorCobra,
         "TRANSPILERS": TRANSPILERS,
     }
+
+
+def _parse_missing_target(exc: ImportError) -> tuple[str, str]:
+    """Detecta el objetivo de importación faltante y sugiere acción."""
+    detail = str(exc) or repr(exc)
+    if isinstance(exc, ModuleNotFoundError):
+        missing_module = getattr(exc, "name", None) or "desconocido"
+        return missing_module, _dependency_action(missing_module)
+
+    cannot_import_match = re.search(r"cannot import name '([^']+)' from '([^']+)'", detail)
+    if cannot_import_match:
+        symbol_name, module_name = cannot_import_match.groups()
+        target = f"{module_name}.{symbol_name}"
+        return target, _local_import_action(module_name, symbol_name)
+
+    missing_module = getattr(exc, "name", None) or "desconocido"
+    return missing_module, _dependency_action(missing_module)
+
+
+def _dependency_action(missing_module: str) -> str:
+    if missing_module.startswith("pcobra."):
+        return (
+            "corrige el import local y verifica que el módulo exista; "
+            "si hace falta reinstala con 'pip install -e .'."
+        )
+    return f"instala la dependencia que provee '{missing_module}' o ajusta el import local."
+
+
+def _local_import_action(module_name: str, symbol_name: str) -> str:
+    return (
+        f"corrige el import local de '{module_name}.{symbol_name}' "
+        "o actualiza la dependencia que lo expone."
+    )
 
 
 def require_flet() -> Any:

@@ -86,7 +86,9 @@ def test_require_flet_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
         runtime.require_flet()
 
 
-def test_require_gui_dependencies_error_accionable(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_require_gui_dependencies_error_accionable_modulo_ausente(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     real_import = __import__
 
     def _import_fail_core(name, globals=None, locals=None, fromlist=(), level=0):
@@ -98,8 +100,26 @@ def test_require_gui_dependencies_error_accionable(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setattr("builtins.__import__", _import_fail_core)
 
-    with pytest.raises(RuntimeError, match="pcobra.core.interpreter"):
+    with pytest.raises(RuntimeError, match="faltante detectado 'pcobra.core.interpreter'") as excinfo:
         runtime.require_gui_dependencies()
+    assert "Acción sugerida" in str(excinfo.value)
+
+
+def test_require_gui_dependencies_error_accionable_simbolo_ausente(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_import = __import__
+
+    def _import_fail_symbol(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "pcobra.cobra.core" and fromlist:
+            raise ImportError("cannot import name 'Lexer' from 'pcobra.cobra.core'")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr("builtins.__import__", _import_fail_symbol)
+
+    with pytest.raises(RuntimeError, match="faltante detectado 'pcobra.cobra.core.Lexer'") as excinfo:
+        runtime.require_gui_dependencies()
+    assert "corrige el import local de 'pcobra.cobra.core.Lexer'" in str(excinfo.value)
 
 
 def test_require_gui_dependencies_cachea_resultado() -> None:
@@ -109,10 +129,14 @@ def test_require_gui_dependencies_cachea_resultado() -> None:
 
 
 def test_formatear_error_no_masking_si_fallan_dependencias() -> None:
-    exc = RuntimeError("Falta una dependencia de core/transpiladores para la GUI: 'x.y'.")
+    exc = RuntimeError(
+        "Error de importación GUI en 'pcobra.gui.runtime': faltante detectado 'x.y'. "
+        "Detalle: No module named 'x.y'. Acción sugerida: instala la dependencia."
+    )
     assert runtime.formatear_error(exc) == (
         "Error de ejecución: "
-        "Falta una dependencia de core/transpiladores para la GUI: 'x.y'."
+        "Error de importación GUI en 'pcobra.gui.runtime': faltante detectado 'x.y'. "
+        "Detalle: No module named 'x.y'. Acción sugerida: instala la dependencia."
     )
 
 
