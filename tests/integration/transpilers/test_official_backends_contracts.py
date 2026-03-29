@@ -44,9 +44,9 @@ IMPORT_EXPECTATIONS = {
         '(import "pcobra:corelibs" "longitud"',
         '(import "pcobra:standard_library" "mostrar"',
     ),
-    "go": ('"cobra/corelibs"', '"cobra/standard_library"'),
-    "cpp": ("#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>"),
-    "java": ("import cobra.corelibs.*;", "import cobra.standard_library.*;"),
+    "go": ('"pcobra/corelibs"', '"pcobra/standard_library"'),
+    "cpp": ("#include <pcobra/corelibs.hpp>", "#include <pcobra/standard_library.hpp>"),
+    "java": ("import pcobra.corelibs.*;", "import pcobra.standard_library.*;"),
     "asm": ("; backend asm: imports de runtime administrados externamente",),
 }
 

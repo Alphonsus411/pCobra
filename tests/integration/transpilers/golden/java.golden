@@ -1,5 +1,5 @@
-import cobra.corelibs.*;
-import cobra.standard_library.*;
+import pcobra.corelibs.*;
+import pcobra.standard_library.*;
 
 public class Main {
     private static final String COBRA_HOLOBIT_PARTIAL_CONTRACT_NOTE = "contrato partial: adaptador oficial mantenido por el proyecto; no equivale a holobit_sdk ni a la semántica completa de Python";

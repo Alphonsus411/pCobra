@@ -3,6 +3,7 @@ from __future__ import annotations
 """Utilidades comunes para los transpiladores de Cobra."""
 
 from abc import ABC, abstractmethod
+import re
 from typing import List, Tuple, Union
 
 from pcobra.core.visitor import NodeVisitor
@@ -80,14 +81,14 @@ STANDARD_IMPORTS = {
         *build_javascript_standard_runtime_lines(),
     ],
     "rust": build_rust_standard_runtime_lines(),
-    "go": ['_ "cobra/corelibs"', '_ "cobra/standard_library"'],
+    "go": ['_ "pcobra/corelibs"', '_ "pcobra/standard_library"'],
     "cpp": [
-        "#include <cobra/corelibs.hpp>",
-        "#include <cobra/standard_library.hpp>",
+        "#include <pcobra/corelibs.hpp>",
+        "#include <pcobra/standard_library.hpp>",
     ],
     "java": [
-        "import cobra.corelibs.*;",
-        "import cobra.standard_library.*;",
+        "import pcobra.corelibs.*;",
+        "import pcobra.standard_library.*;",
     ],
     "wasm": build_wasm_standard_runtime_lines(),
     "asm": [
@@ -242,18 +243,18 @@ MINIMAL_RUNTIME_ROUTE_MARKERS = {
         "minimal_symbols": ("(func $longitud", "(func $mostrar"),
     },
     "go": {
-        "corelibs": '"cobra/corelibs"',
-        "standard_library": '"cobra/standard_library"',
+        "corelibs": '"pcobra/corelibs"',
+        "standard_library": '"pcobra/standard_library"',
         "minimal_symbols": ("func longitud(valor any) int {", "func mostrar(valores ...any) any {"),
     },
     "cpp": {
-        "corelibs": "#include <cobra/corelibs.hpp>",
-        "standard_library": "#include <cobra/standard_library.hpp>",
+        "corelibs": "#include <pcobra/corelibs.hpp>",
+        "standard_library": "#include <pcobra/standard_library.hpp>",
         "minimal_symbols": ("inline std::size_t longitud(const T& valor) {", "inline T mostrar(const T& valor) {"),
     },
     "java": {
-        "corelibs": "import cobra.corelibs.*;",
-        "standard_library": "import cobra.standard_library.*;",
+        "corelibs": "import pcobra.corelibs.*;",
+        "standard_library": "import pcobra.standard_library.*;",
         "minimal_symbols": ("private static int longitud(Object valor) {", "private static Object mostrar(Object... valores) {"),
     },
     "asm": {
@@ -366,6 +367,26 @@ def validate_runtime_contracts() -> None:
                     f"RUNTIME_HOOKS['{target}'] no debe exponer hooks fuera del "
                     f"contrato Holobit transversal: {forbidden_marker}"
                 )
+
+        if target != "python":
+            forbidden_runtime_routes = (
+                r"\bcobra\.",
+                r"\bcobra/corelibs",
+                r"\bcobra/standard_library",
+                r"\bcobra/core",
+            )
+            combined_blob = "\n".join(
+                [
+                    imports if isinstance(imports, str) else "\n".join(imports),
+                    hook_blob,
+                ]
+            )
+            for forbidden_route in forbidden_runtime_routes:
+                if re.search(forbidden_route, combined_blob):
+                    raise RuntimeError(
+                        f"Runtime contractual inválido en target '{target}': se detectó ruta no canónica {forbidden_route!r}; "
+                        "usar siempre namespace runtime `pcobra` en backends no Python."
+                    )
 
 
 def validate_minimal_runtime_routes() -> None:

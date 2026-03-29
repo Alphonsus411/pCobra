@@ -161,8 +161,8 @@ inline std::string cobra_graficar(const auto& hb) {
     return vista;
 }
 
-#include <cobra/corelibs.hpp>
-#include <cobra/standard_library.hpp>
+#include <pcobra/corelibs.hpp>
+#include <pcobra/standard_library.hpp>
 
 auto hb = cobra_holobit({ 1, 2, 3 });
 cobra_proyectar(hb, "2d");

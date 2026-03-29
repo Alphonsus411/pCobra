@@ -17,9 +17,9 @@ IMPORT_MARKERS = {
         "use crate::standard_library::*;",
         "fn longitud<T: ToString>(valor: T) -> usize {",
     ),
-    "go": ('"cobra/corelibs"', '"cobra/standard_library"'),
-    "cpp": ("#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>"),
-    "java": ("import cobra.corelibs.*;", "import cobra.standard_library.*;"),
+    "go": ('"pcobra/corelibs"', '"pcobra/standard_library"'),
+    "cpp": ("#include <pcobra/corelibs.hpp>", "#include <pcobra/standard_library.hpp>"),
+    "java": ("import pcobra.corelibs.*;", "import pcobra.standard_library.*;"),
     "wasm": (
         ";; backend wasm: adaptadores host-managed de corelibs y standard_library",
         '(import "pcobra:corelibs" "longitud"',

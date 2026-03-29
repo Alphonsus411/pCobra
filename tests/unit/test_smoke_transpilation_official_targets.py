@@ -36,9 +36,9 @@ def ast_holobit_runtime():
         (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "import * as interfaz from './nativos/interfaz.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
         (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
         (TranspiladorWasm, ["(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar", "host-managed"]),
-        (TranspiladorGo, ['"cobra/corelibs"', '"cobra/standard_library"', "func cobra_holobit(", "func cobra_proyectar(", "func cobra_transformar(", "func cobra_graficar("]),
-        (TranspiladorCPP, ["#include <cobra/corelibs.hpp>", "#include <cobra/standard_library.hpp>", "inline CobraHolobit cobra_holobit", "inline std::vector<double> cobra_proyectar", "inline CobraHolobit cobra_transformar", "inline std::string cobra_graficar"]),
-        (TranspiladorJava, ["import cobra.corelibs.*;", "import cobra.standard_library.*;", "private static CobraHolobit cobra_holobit", "private static double[] cobra_proyectar", "private static CobraHolobit cobra_transformar", "private static String cobra_graficar"]),
+        (TranspiladorGo, ['"pcobra/corelibs"', '"pcobra/standard_library"', "func cobra_holobit(", "func cobra_proyectar(", "func cobra_transformar(", "func cobra_graficar("]),
+        (TranspiladorCPP, ["#include <pcobra/corelibs.hpp>", "#include <pcobra/standard_library.hpp>", "inline CobraHolobit cobra_holobit", "inline std::vector<double> cobra_proyectar", "inline CobraHolobit cobra_transformar", "inline std::string cobra_graficar"]),
+        (TranspiladorJava, ["import pcobra.corelibs.*;", "import pcobra.standard_library.*;", "private static CobraHolobit cobra_holobit", "private static double[] cobra_proyectar", "private static CobraHolobit cobra_transformar", "private static String cobra_graficar"]),
         (TranspiladorASM, ["cobra_holobit:", "cobra_proyectar:", "cobra_transformar:", "cobra_graficar:", "TRAP"]),
     ],
 )
@@ -54,9 +54,9 @@ def test_smoke_runtime_holobit_incluye_imports_y_hooks_validos(transpilador, fra
         (TranspiladorPython, ["corelibs", "standard_library"]),
         (TranspiladorRust, ["corelibs", "standard_library"]),
         (TranspiladorWasm, ["host-managed"]),
-        (TranspiladorGo, ["cobra/corelibs", "cobra/standard_library"]),
-        (TranspiladorCPP, ["cobra/corelibs.hpp", "cobra/standard_library.hpp"]),
-        (TranspiladorJava, ["cobra.corelibs", "cobra.standard_library"]),
+        (TranspiladorGo, ["pcobra/corelibs", "pcobra/standard_library"]),
+        (TranspiladorCPP, ["pcobra/corelibs.hpp", "pcobra/standard_library.hpp"]),
+        (TranspiladorJava, ["pcobra.corelibs", "pcobra.standard_library"]),
     ],
 )
 def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador, fragmentos):
@@ -68,9 +68,9 @@ def test_corelibs_y_standard_library_se_mantienen_sin_holobit(transpilador, frag
 def test_smoke_runtime_holobit_asm_expone_fallo_explicito_y_homogeneo(ast_holobit_runtime):
     code = TranspiladorASM().generate_code(ast_holobit_runtime)
     assert "backend asm: runtime de inspección/diagnóstico" in code
-    assert "la proyección requiere runtime externo." in code
-    assert "la transformación requiere runtime externo." in code
-    assert "la visualización requiere runtime externo." in code
+    assert "la proyección requiere runtime externo" in code
+    assert "la transformación requiere runtime externo" in code
+    assert "la visualización requiere runtime externo" in code
 
 
 def test_module_map_resuelve_targets_solo_desde_cobra_toml(tmp_path, monkeypatch):

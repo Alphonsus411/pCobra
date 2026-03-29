@@ -1,8 +1,8 @@
 package main
 
 import (
-    _ "cobra/corelibs"
-    _ "cobra/standard_library"
+    _ "pcobra/corelibs"
+    _ "pcobra/standard_library"
     "fmt"
     "math"
     "strconv"

@@ -68,9 +68,9 @@ RUNTIME_SMOKE_MARKERS = {
     "javascript": {"corelibs": ("const longitud = (valor) => cobraJsCorelibs.longitud(valor);", "longitud('cobra');"), "standard_library": ("const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);", "mostrar('hola');")},
     "rust": {"corelibs": ('fn longitud<T: ToString>(valor: T) -> usize {', 'longitud("cobra");'), "standard_library": ('fn mostrar<T: Display>(valor: T) {', 'mostrar("hola");')},
     "wasm": {"corelibs": ('(import "pcobra:corelibs" "longitud"', '(call $longitud (i32.const 0))'), "standard_library": ('(import "pcobra:standard_library" "mostrar"', '(call $mostrar (i32.const 0))')},
-    "go": {"corelibs": ('"cobra/corelibs"', 'longitud("cobra")'), "standard_library": ('"cobra/standard_library"', 'mostrar("hola")')},
-    "cpp": {"corelibs": ("#include <cobra/corelibs.hpp>", 'longitud("cobra");'), "standard_library": ("#include <cobra/standard_library.hpp>", 'mostrar("hola");')},
-    "java": {"corelibs": ("import cobra.corelibs.*;", 'longitud("cobra")'), "standard_library": ("import cobra.standard_library.*;", 'mostrar("hola")')},
+    "go": {"corelibs": ('"pcobra/corelibs"', 'longitud("cobra")'), "standard_library": ('"pcobra/standard_library"', 'mostrar("hola")')},
+    "cpp": {"corelibs": ("#include <pcobra/corelibs.hpp>", 'longitud("cobra");'), "standard_library": ("#include <pcobra/standard_library.hpp>", 'mostrar("hola");')},
+    "java": {"corelibs": ("import pcobra.corelibs.*;", 'longitud("cobra")'), "standard_library": ("import pcobra.standard_library.*;", 'mostrar("hola")')},
     "asm": {"corelibs": ("CALL longitud 'cobra'",), "standard_library": ("CALL mostrar 'hola'",)},
 }
 HOOK_MARKERS = {
