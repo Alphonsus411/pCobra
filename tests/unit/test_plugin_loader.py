@@ -5,12 +5,13 @@ from pathlib import Path
 import sys
 import types
 
-from cobra.cli.plugin import (
+from pcobra.cobra.cli.plugin import (
     descubrir_plugins,
     PluginCommand,
     cargar_plugin_seguro,
+    configure_plugin_policy,
 )
-from cobra.cli.plugin_registry import obtener_registro, limpiar_registro
+from pcobra.cobra.cli.plugin_registry import obtener_registro, limpiar_registro
 
 # Añadimos la carpeta de plugins de ejemplo al path para poder importar
 # el plugin md2cobra durante las pruebas.
@@ -34,8 +35,9 @@ def test_descubrir_plugins_carga_plugins():
         value="src.tests.test_plugin_loader:DummyPlugin",
         group="cobra.plugins",
     )
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["prefix:src.tests"])
         plugins = descubrir_plugins()
     assert len(plugins) == 1
     assert plugins[0].name == "dummy"
@@ -49,8 +51,9 @@ def test_descubrir_plugins_md2cobra():
         value="md2cobra_plugin:MarkdownToCobraCommand",
         group="cobra.plugins",
     )
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["md2cobra_plugin:MarkdownToCobraCommand"])
         plugins = descubrir_plugins()
     assert any(p.__class__.__name__ == "MarkdownToCobraCommand" for p in plugins)
     assert obtener_registro() == {"md2cobra": "1.0"}
@@ -63,8 +66,9 @@ def test_plugin_ruta_invalida():
         value="invalido",
         group="cobra.plugins",
     )
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["prefix:invalido"])
         plugins = descubrir_plugins()
     assert plugins == []
     assert obtener_registro() == {}
@@ -73,8 +77,9 @@ def test_plugin_ruta_invalida():
 def test_cargar_plugin_seguro_modulo_inexistente():
     """Un módulo inexistente no debe registrarse."""
     ep_value = "no.existe:Nope"
-    with patch("cli.plugin.import_module", side_effect=ModuleNotFoundError):
+    with patch("pcobra.cobra.cli.plugin.import_module", side_effect=ModuleNotFoundError):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=[ep_value])
         plugin = cargar_plugin_seguro(ep_value)
     assert plugin is None
     assert obtener_registro() == {}
@@ -96,8 +101,9 @@ def test_cargar_plugin_seguro_instanciacion_falla():
             pass
 
     module = types.SimpleNamespace(BoomPlugin=BoomPlugin)
-    with patch("cli.plugin.import_module", return_value=module):
+    with patch("pcobra.cobra.cli.plugin.import_module", return_value=module):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["fake.mod:BoomPlugin"])
         plugin = cargar_plugin_seguro("fake.mod:BoomPlugin")
     assert plugin is None
     assert obtener_registro() == {}
@@ -116,8 +122,9 @@ def test_plugin_sin_atributo_name():
         value="tests.test_plugin_loader:SinNombrePlugin",
         group="cobra.plugins",
     )
-    with patch("cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
+    with patch("pcobra.cobra.cli.plugin.entry_points", return_value=importlib.metadata.EntryPoints((ep,))):
         limpiar_registro()
+        configure_plugin_policy(safe_mode=True, allowlist=["tests.test_plugin_loader:SinNombrePlugin"])
         plugins = descubrir_plugins()
     assert plugins == []
     assert obtener_registro() == {}
