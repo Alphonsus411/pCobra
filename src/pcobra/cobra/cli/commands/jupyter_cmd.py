@@ -58,14 +58,14 @@ class JupyterCommand(BaseCommand):
         try:
             # Instalar el kernel de Cobra
             result = subprocess.run(
-                [sys.executable, "-m", "cobra.jupyter_kernel", "install"],
+                [sys.executable, "-m", "pcobra.jupyter_kernel", "install"],
                 check=True,
                 capture_output=True,
                 text=True
             )
 
             if result.returncode != 0:
-                mostrar_error(_("Error al instalar el kernel de Cobra: {err}").format(err=result.stderr))
+                mostrar_error(_("Error al instalar el kernel canónico 'pcobra.jupyter_kernel': {err}").format(err=result.stderr))
                 return 1
 
             # Preparar comando de Jupyter
@@ -87,7 +87,7 @@ class JupyterCommand(BaseCommand):
             )
             return 1
         except subprocess.CalledProcessError as e:
-            mostrar_error(_("Error lanzando Jupyter: {err}").format(err=e))
+            mostrar_error(_("Error lanzando Jupyter tras invocar el módulo canónico 'pcobra.jupyter_kernel': {err}").format(err=e))
             return 1
         except Exception as e:
             mostrar_error(_("Error inesperado: {err}").format(err=str(e)))
