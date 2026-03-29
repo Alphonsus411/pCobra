@@ -5,6 +5,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Iterable, List, Optional
 
+
+
 if __package__ in {None, ""}:
     # Permite ejecutar ``python src/pcobra/cli.py`` sin errores de importación.
     paquete_raiz = Path(__file__).resolve().parent.parent
@@ -18,8 +20,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
     load_dotenv = None
 
-from src.pcobra import cobra as cobra_pkg
-from src.core import compiler as compiler_pkg
+
+import src.core
 from src import core as core_pkg
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ def _alias_module(origen: str, destino: str) -> ModuleType:
 
 # Alias explícitos hacia el paquete real de comandos del CLI
 cli = _alias_module("pcobra.cobra.cli.cli", "pcobra.cli.cli")
-commands = cobra_cli_commands
+commands = ""
 
 
 def _configurar_alias_paquete_cli() -> None:
@@ -63,7 +65,7 @@ _configurar_alias_paquete_cli()
 from .cobra.cli.cli import CliApplication
 
 # Registrar alias de paquetes para compatibilidad con imports absolutos
-sys.modules.setdefault("cobra", cobra_pkg)
+sys.modules.setdefault("cobra", pcobra.cobra)
 sys.modules.setdefault("core", core_pkg)
 sys.modules.setdefault("compiler", compiler_pkg)
 

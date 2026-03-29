@@ -29,3 +29,7 @@ _module.__path__ = [str(_SRC_PACKAGE.parent)]  # type: ignore[attr-defined]
 sys.modules[__name__] = _module
 assert _spec.loader is not None  # ayuda a mypy
 _spec.loader.exec_module(_module)
+
+
+def cobra():
+    return None
