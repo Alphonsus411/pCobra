@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+import inspect
 from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
@@ -59,8 +60,93 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
                 supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
             )
         )
+    _validate_transpiler_class_or_raise(
+        transpiler_cls,
+        backend=canonical,
+        context=context,
+    )
     TRANSPILERS[canonical] = transpiler_cls
     return canonical
+
+
+def _validate_transpiler_class_or_raise(transpiler_cls, *, backend: str, context: str) -> None:
+    """Valida el contrato mínimo de un transpilador externo antes de registrarlo."""
+    if not isinstance(transpiler_cls, type):
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "se esperaba una clase, recibido {type_name}."
+            ).format(
+                backend=backend,
+                context=context,
+                type_name=type(transpiler_cls).__name__,
+            )
+        )
+
+    if not callable(transpiler_cls):
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "la clase '{class_name}' no es callable."
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+            )
+        )
+
+    generate_code = getattr(transpiler_cls, "generate_code", None)
+    if not callable(generate_code):
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "la clase '{class_name}' no implementa el método callable 'generate_code'."
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+            )
+        )
+
+    try:
+        signature = inspect.signature(transpiler_cls)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "no se pudo inspeccionar la firma de '{class_name}': {cause}"
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+                cause=exc,
+            )
+        ) from exc
+
+    required_params = [
+        p.name
+        for p in signature.parameters.values()
+        if p.default is inspect.Signature.empty
+        and p.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+    ]
+    if required_params:
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "la clase '{class_name}' requiere argumentos de inicialización "
+                "({params}). El protocolo soportado por plugins exige constructor sin argumentos."
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+                params=", ".join(required_params),
+            )
+        )
 
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
@@ -132,7 +218,7 @@ def load_entrypoint_transpilers() -> tuple[int, int, int]:
         except ValueError as exc:
             rejected += 1
             logging.error(
-                "Plugin de transpilador '%s' rechazado por política oficial: %s",
+                "Plugin de transpilador '%s' rechazado por política/contrato: %s",
                 ep.name,
                 exc,
             )

@@ -51,7 +51,8 @@ El comando ``compilar`` utiliza un diccionario ``TRANSPILERS`` como
 fábrica de transpiladores. Cada entrada asocia el nombre canónico del target con la clase que
 implementa la conversión de AST a un lenguaje concreto.
 Los transpiladores externos se registran a través de *entry points* y se
-agregan al diccionario al iniciar el comando.
+agregan al diccionario al iniciar el comando, siempre que cumplan el
+contrato de plugins de transpilación.
 
 .. code-block:: python
 
@@ -64,7 +65,7 @@ agregan al diccionario al iniciar el comando.
    for ep in entry_points(group="cobra.transpilers"):
        module_name, class_name = ep.value.split(":", 1)
        cls = getattr(import_module(module_name), class_name)
-       TRANSPILERS[ep.name] = cls
+       register_transpiler_backend(ep.name, cls, context="plugins(entry_points)")
 
 Cuando se solicita un lenguaje, se instancia la clase correspondiente y se
 llama a ``generate_code`` sobre el AST:
@@ -73,6 +74,23 @@ llama a ``generate_code`` sobre el AST:
 
    transp = TRANSPILERS[lang]()
    codigo = transp.generate_code(ast)
+
+Contrato mínimo para plugins de transpiladores
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Para registrarse en el grupo ``cobra.transpilers``, la clase exportada por el
+``entry point`` debe cumplir **todas** estas reglas:
+
+1. Debe ser una clase Python (no una instancia ni otro objeto).
+2. Debe ser *callable*.
+3. Debe implementar un método callable ``generate_code(ast)``.
+4. Debe ser instanciable sin argumentos obligatorios (constructor sin args),
+   porque la CLI crea la instancia como ``TRANSPILERS[target]()``
+   durante la compilación.
+
+Si un plugin no cumple el contrato, Cobra lo rechaza explícitamente y registra
+un error con el nombre del entry point y la causa concreta para facilitar el
+diagnóstico.
 
 Cada transpilador hereda de ``NodeVisitor`` e inyecta las funciones de
 visita desde módulos específicos. Por ejemplo, en el backend de Go se
