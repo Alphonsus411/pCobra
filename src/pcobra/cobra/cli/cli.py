@@ -438,6 +438,13 @@ class CliApplication:
             return inv_cmd.run(args)
 
     def execute_command(self, args: argparse.Namespace) -> int:
+        """Ejecuta el comando resuelto desde ``args``.
+
+        Pre-requisito recomendado: llamar a ``initialize()`` (o ``run()``) antes de
+        invocar este método, para asegurar que parser y registry estén listos.
+        Aun así, si el parser no existe en un estado parcial, devuelve un error
+        controlado en lugar de propagar ``AttributeError``.
+        """
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
             
@@ -445,7 +452,14 @@ class CliApplication:
         if command == "menu":
             return self.run_menu()
         if not command:
-            self.parser.print_help()
+            if self.parser is not None:
+                self.parser.print_help()
+            else:
+                messages.mostrar_error(
+                    _("CLI no inicializada completamente: parser no disponible. "
+                      "Ejecute initialize() antes de execute_command()."),
+                )
+                return 1
             messages.mostrar_error(_("Comando inválido. Use --help para ver opciones."))
             return 1
             
