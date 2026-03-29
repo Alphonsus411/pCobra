@@ -1,4 +1,5 @@
 import importlib
+import re
 from types import ModuleType
 from typing import Any, Callable
 
@@ -12,10 +13,18 @@ class FletCommand(BaseCommand):
     """Inicia el entorno IDLE basado en Flet."""
     name = "gui"
     _CRITICAL_GUI_MODULES = (
+        "pcobra.cobra.cli.commands.compile_cmd",
         "pcobra.cobra.core",
         "pcobra.cobra.transpilers.target_utils",
         "pcobra.cobra.transpilers.targets",
+        "pcobra.core.interpreter",
     )
+    _CRITICAL_GUI_SYMBOLS = {
+        "pcobra.cobra.core": ("Lexer", "Parser"),
+        "pcobra.core.interpreter": ("InterpretadorCobra",),
+        "pcobra.cobra.cli.commands.compile_cmd": ("TRANSPILERS",),
+        "pcobra.cobra.transpilers.target_utils": ("target_cli_choices",),
+    }
 
     def __init__(self) -> None:
         """Inicializa el comando."""
@@ -69,15 +78,6 @@ class FletCommand(BaseCommand):
         except ImportError as e:
             self._report_import_error(e, context=gui_module)
             return 1
-        except AttributeError:
-            mostrar_error(
-                _(
-                    "Error de preflight GUI en '{0}': no existe función 'main'. "
-                    "Acción: verifica la instalación/versión del paquete."
-                ).format(gui_module)
-            )
-            return 1
-
         try:
             flet_runtime.app(target=main)
             return 0
@@ -88,15 +88,26 @@ class FletCommand(BaseCommand):
     def _preflight_gui(self, gui_module: str) -> Callable[..., Any]:
         """Valida dependencias críticas de GUI/core antes de iniciar Flet."""
         for module_name in self._CRITICAL_GUI_MODULES:
-            importlib.import_module(module_name)
+            module = importlib.import_module(module_name)
+            self._validate_required_symbols(module_name, module)
 
         gui = importlib.import_module(gui_module)
         return self._get_main(gui)
 
+    def _validate_required_symbols(self, module_name: str, module: ModuleType) -> None:
+        """Valida símbolos requeridos en módulos críticos para GUI."""
+        for symbol in self._CRITICAL_GUI_SYMBOLS.get(module_name, ()):
+            if not hasattr(module, symbol):
+                raise ImportError(
+                    f"missing symbol '{symbol}' in module '{module_name}'"
+                )
+
     def _get_main(self, gui: ModuleType) -> Callable[..., Any]:
+        if not hasattr(gui, "main"):
+            raise ImportError(f"missing symbol 'main' in module '{gui.__name__}'")
         main = getattr(gui, "main")
         if not callable(main):
-            raise AttributeError("main")
+            raise ImportError(f"symbol 'main' in module '{gui.__name__}' is not callable")
         return main
 
     def _report_import_error(self, exc: ImportError, context: str) -> None:
@@ -110,18 +121,41 @@ class FletCommand(BaseCommand):
             )
             return
 
-        if missing_module.startswith("pcobra.cobra.core") or missing_module.startswith(
-            "pcobra.cobra.transpilers"
-        ):
+        if missing_module.startswith("pcobra."):
             mostrar_error(
                 _(
-                    "Error de dependencias GUI en '{0}': falta el módulo crítico '{1}'. "
-                    "Acción: pip install -e ."
+                    "Error interno del paquete en '{0}': no se pudo importar '{1}'. "
+                    "Acción: reinstala el paquete local con 'pip install -e .' "
+                    "y verifica que el módulo exista."
                 ).format(context, missing_module)
             )
             return
 
         detail = str(exc) or repr(exc)
+        symbol_match = re.search(r"missing symbol '([^']+)' in module '([^']+)'", detail)
+        if symbol_match:
+            symbol_name, module_name = symbol_match.groups()
+            mostrar_error(
+                _(
+                    "Error de preflight GUI en '{0}': falta el símbolo '{1}' en el módulo '{2}'. "
+                    "Acción: verifica la versión del paquete o reinstala con 'pip install -e .'."
+                ).format(context, symbol_name, module_name)
+            )
+            return
+
+        not_callable_match = re.search(
+            r"symbol '([^']+)' in module '([^']+)' is not callable", detail
+        )
+        if not_callable_match:
+            symbol_name, module_name = not_callable_match.groups()
+            mostrar_error(
+                _(
+                    "Error de preflight GUI en '{0}': el símbolo '{1}' en el módulo '{2}' "
+                    "no es invocable. Acción: corrige la definición del símbolo."
+                ).format(context, symbol_name, module_name)
+            )
+            return
+
         if isinstance(exc, ModuleNotFoundError):
             mostrar_error(
                 _(
