@@ -4,6 +4,8 @@
 - Incorporación del generador de ensamblador basado en el IR de Hololang y documentación asociada.
 
 ## v10.0.10 - Pendiente de liberación
+- Refactor de `src/pcobra/__init__.py` para exponer submódulos con carga perezosa (`__getattr__`) y evitar imports ansiosos en `import pcobra`, manteniendo `activar_aliases_legacy()` para compatibilidad con rutas legacy (`cobra`, `core`) bajo activación explícita.
+- Nuevas pruebas de import liviano para garantizar que `import pcobra` no requiere dependencias opcionales (como Flet) ni carga submódulos pesados de forma anticipada.
 - **Breaking changes (política de targets retirados)**
   - Se define ventana formal de deprecación para nombres retirados/legacy: inicio en `v10.0.10` y eliminación definitiva en `v10.2.0`.
   - Alias históricos de CLI (`c++`, `ensamblador`) siguen funcionando temporalmente, pero ahora emiten `DeprecationWarning` con versión de retirada.
