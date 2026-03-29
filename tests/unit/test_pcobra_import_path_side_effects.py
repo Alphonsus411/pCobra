@@ -64,3 +64,55 @@ def test_import_pcobra_cli_es_liviano_y_sin_side_effects() -> None:
     )
 
     assert proceso.returncode == 0, proceso.stderr
+
+
+def test_import_pcobra_es_liviano_sin_dependencias_opcionales() -> None:
+    env = os.environ.copy()
+    env.pop("PCOBRA_ENABLE_LEGACY_IMPORTS", None)
+
+    script = (
+        "import sys; "
+        "import pcobra; "
+        "tiene_gui = 'pcobra.gui' in sys.modules; "
+        "tiene_flet = 'flet' in sys.modules; "
+        "print(tiene_gui); "
+        "print(tiene_flet); "
+        "raise SystemExit(0 if not tiene_gui and not tiene_flet else 1)"
+    )
+
+    proceso = subprocess.run(  # nosec B603
+        [sys.executable, "-c", script],
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proceso.returncode == 0, proceso.stderr
+
+
+def test_pcobra_lazy_load_submodulos_publicos() -> None:
+    env = os.environ.copy()
+
+    script = (
+        "import sys; "
+        "import pcobra; "
+        "antes = 'pcobra.core' in sys.modules; "
+        "_core = pcobra.core; "
+        "despues = 'pcobra.core' in sys.modules; "
+        "print(antes); "
+        "print(despues); "
+        "raise SystemExit(0 if (not antes and despues and _core.__name__ == 'pcobra.core') else 1)"
+    )
+
+    proceso = subprocess.run(  # nosec B603
+        [sys.executable, "-c", script],
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proceso.returncode == 0, proceso.stderr

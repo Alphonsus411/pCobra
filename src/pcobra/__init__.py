@@ -24,6 +24,20 @@ LEGACY_IMPORT_ALIAS_INVENTORY: Dict[str, str] = {
     "core": "pcobra.core",
 }
 
+# Submódulos públicos expuestos de forma perezosa (sin import-time eager loading).
+_LAZY_SUBMODULES = {
+    "cobra",
+    "core",
+    "cli",
+    "ia",
+    "jupyter_kernel",
+    "gui",
+    "lsp",
+    "compiler",
+}
+
+__all__ = sorted(_LAZY_SUBMODULES) + ["activar_aliases_legacy", "LEGACY_IMPORT_ALIAS_INVENTORY"]
+
 
 def _resolve_legacy_import_policy() -> Tuple[int, bool]:
     """Resuelve fase de deprecación de imports legacy y si están habilitados."""
@@ -57,21 +71,42 @@ def _legacy_migration_message(phase: int) -> str:
         f"Fase actual: {phase}."
     )
 
-# Cargar primero los paquetes base para evitar errores de dependencias cruzadas
-_submodules = ["cobra", "core", "cli", "ia", "jupyter_kernel", "gui", "lsp", "compiler"]
 
-for pkg in _submodules:
-    if importlib.util.find_spec(f".{pkg}", __name__) is None:
-        logger.warning("Subm\u00f3dulo %s no encontrado, se omite su importaci\u00f3n", pkg)
-        continue
+def _load_submodule(name: str):
+    """Carga un submódulo público de ``pcobra`` bajo demanda."""
+
+    if name not in _LAZY_SUBMODULES:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    spec = importlib.util.find_spec(f".{name}", __name__)
+    if spec is None:
+        raise AttributeError(
+            f"El submódulo público {name!r} no está disponible en {__name__!r}"
+        )
+
     try:
-        module = importlib.import_module(f".{pkg}", __name__)
-        globals()[pkg] = module
-    except ImportError as e:
-        logger.warning("No se pudo importar %s: %s", pkg, e)
-    except Exception as e:  # nosec B110
-        logger.error("Error al importar %s", pkg, exc_info=True)
+        module = importlib.import_module(f".{name}", __name__)
+    except ImportError as exc:
+        logger.warning("No se pudo importar %s: %s", name, exc)
         raise
+
+    globals()[name] = module
+    return module
+
+
+def __getattr__(name: str):
+    """Expone submódulos públicos de forma lazy para evitar imports ansiosos."""
+
+    if name in _LAZY_SUBMODULES:
+        return _load_submodule(name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    """Incluye la API pública lazy en ``dir(pcobra)``."""
+
+    return sorted(set(globals()) | set(__all__))
+
 
 # Registrar alias de compatibilidad para importaciones absolutas heredadas
 def _registrar_alias_legacy() -> None:
