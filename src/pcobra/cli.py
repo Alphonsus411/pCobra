@@ -13,12 +13,6 @@ if __package__ in {None, ""}:
         sys.path.insert(0, ruta_paquete)
     __package__ = "pcobra"
 
-if __name__ == "__main__" and __package__ == "pcobra":
-    # ``runpy.run_module("pcobra.cli", run_name="__main__")`` ejecuta este
-    # archivo como ``__main__``; forzamos la carga canónica para conservar
-    # ``sys.modules["pcobra.cli"]`` sin efectos secundarios extra en imports normales.
-    import_module("pcobra.cli")
-
 try:
     from dotenv import load_dotenv
 except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno

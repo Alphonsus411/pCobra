@@ -55,7 +55,36 @@ def test_python_m_pcobra_cli_no_colisiona(monkeypatch: pytest.MonkeyPatch):
         runpy.run_module("pcobra.cli", run_name="__main__")
 
     assert exc_info.value.code == 0
-    assert sys.modules["pcobra.cli"].__name__ == "pcobra.cli"
+    assert "pcobra.cli" not in sys.modules
+
+
+def test_python_m_pcobra_cli_no_reimporta_bootstrap(monkeypatch: pytest.MonkeyPatch):
+    _limpiar_aliases()
+
+    fake_cli_module = ModuleType("pcobra.cobra.cli.cli")
+
+    class _FakeCliApplication:
+        def run(self, _argv):
+            return 0
+
+    fake_cli_module.CliApplication = _FakeCliApplication
+    monkeypatch.setitem(sys.modules, "pcobra.cobra.cli.cli", fake_cli_module)
+    monkeypatch.setattr(sys, "argv", ["pcobra.cli"])
+
+    llamadas_import_module: list[str] = []
+    import_module_real = importlib.import_module
+
+    def _spy_import_module(name: str, package: str | None = None):
+        llamadas_import_module.append(name)
+        return import_module_real(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", _spy_import_module)
+
+    with pytest.raises(SystemExit) as exc_info:
+        runpy.run_module("pcobra.cli", run_name="__main__")
+
+    assert exc_info.value.code == 0
+    assert "pcobra.cli" not in llamadas_import_module
 
 
 def test_python_m_cli_cli_no_colisiona(monkeypatch: pytest.MonkeyPatch):
@@ -70,7 +99,7 @@ def test_python_m_cli_cli_no_colisiona(monkeypatch: pytest.MonkeyPatch):
         runpy.run_module("cli.cli", run_name="__main__")
 
     assert exc_info.value.code == 0
-    assert sys.modules["pcobra.cli"].__name__ == "pcobra.cli"
+    assert "pcobra.cli" not in sys.modules
     cli_cli_mod = sys.modules.get("cli.cli")
     if cli_cli_mod is not None:
         assert cli_cli_mod.__name__ in {"cli.cli", "pcobra.cobra.cli.cli"}
