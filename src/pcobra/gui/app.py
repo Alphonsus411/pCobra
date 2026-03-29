@@ -16,13 +16,18 @@ def main(page: "ft.Page"):
     salida = ft.Text(value="", selectable=True)
     lenguajes = list(runtime.gui_target_choices())
     selector = ft.Dropdown(options=[ft.dropdown.Option(lang) for lang in lenguajes])
-    activar = ft.Switch(label="Transpilar")
+    if lenguajes:
+        selector.value = lenguajes[0]
+
+    activar = ft.Switch(label="Transpilar", disabled=not lenguajes)
 
     def ejecutar_handler(_e):
         deps = runtime.require_gui_dependencies()
         codigo = runtime.normalizar_codigo(entrada.value)
         try:
-            if activar.value and selector.value in deps["TRANSPILERS"]:
+            if activar.value and selector.value not in deps["TRANSPILERS"]:
+                salida.value = "Selecciona un lenguaje destino para transpilar"
+            elif activar.value and selector.value in deps["TRANSPILERS"]:
                 salida.value = runtime.transpilar_codigo(codigo, selector.value)
             else:
                 salida.value = runtime.ejecutar_codigo(codigo)
