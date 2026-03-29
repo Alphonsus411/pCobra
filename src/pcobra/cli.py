@@ -109,8 +109,12 @@ def main(argumentos: Optional[List[str]] = None) -> int:
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _normalizar_argumentos(argv_entrada)
 
-    if argv is not None and "--legacy-imports" in argv:
+    flag_legacy_imports = argv is not None and "--legacy-imports" in argv
+    env_legacy_imports = os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"
+    if flag_legacy_imports:
         os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+
+    if flag_legacy_imports or env_legacy_imports:
         from pcobra import activar_aliases_legacy
 
         activar_aliases_legacy()
