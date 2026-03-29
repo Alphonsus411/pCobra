@@ -1,5 +1,6 @@
 """Wrapper ligero para exponer ``pcobra.cobra.cli.cli`` bajo ``cobra.cli``."""
 
+import sys
 from typing import Iterable, Optional
 
 from pcobra.cobra.cli.cli import main as _main
@@ -14,4 +15,4 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
 
 if __name__ == "__main__":  # pragma: no cover - compatibilidad CLI
-    main()
+    sys.exit(main())
