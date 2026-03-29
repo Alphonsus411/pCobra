@@ -1,18 +1,30 @@
-"""Wrapper ligero para exponer ``pcobra.cobra.cli.cli`` bajo ``cobra.cli``."""
+"""Shim de compatibilidad para ``cobra.cli.cli`` en instalaciones legacy.
 
+Ruta canónica: ``pcobra.cobra.cli.cli.main``.
+Motivo del shim: mantener soporte temporal de imports/arranque heredados.
+Garantías de compatibilidad:
+- delegación total al entrypoint canónico;
+- comportamiento uniforme con ``pcobra.cli``, ``cli`` y ``cobra.cli``;
+- ejecución equivalente vía ``python -m cobra.cli.cli`` o archivo script.
+"""
+
+from __future__ import annotations
+
+import importlib
 import sys
-from typing import Iterable, Optional
 
-from pcobra.cobra.cli.cli import main as _main
+_pcobra_cli = importlib.import_module("pcobra.cli")
+sys.modules.setdefault("pcobra.cli", _pcobra_cli)
+from pcobra.cobra.cli.cli import main as _pcobra_main
 
-__all__ = ["main"]
-
-
-def main(argv: Optional[Iterable[str]] = None) -> int:
-    """Ejecuta la entrada principal de la CLI heredada."""
-
-    return _main(list(argv) if argv is not None else None)
+_pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cobra.cli.cli")
 
 
-if __name__ == "__main__":  # pragma: no cover - compatibilidad CLI
+def main(argv: list[str] | None = None) -> int:
+    """Delega siempre en ``pcobra.cobra.cli.cli.main``."""
+
+    return _pcobra_main(argv)
+
+
+if __name__ == "__main__":
     sys.exit(main())

@@ -1,13 +1,17 @@
-"""Shim histórico mínimo para ``python -m cli.cli``.
+"""Shim de compatibilidad para ``python -m cli.cli``.
 
-Ruta canónica runtime: ``src/pcobra/cobra/cli/cli.py``.
+Ruta canónica: ``pcobra.cobra.cli.cli.main``.
+Motivo del shim: mantener operativos entrypoints legacy sin duplicar lógica.
+Garantías de compatibilidad:
+- conserva ``pcobra.cli`` registrado en ``sys.modules``;
+- activa la política legacy de ``pcobra.cli`` para ``cli.cli``;
+- funciona igual al ejecutar como módulo (``python -m cli.cli``) o script.
 """
 
 from __future__ import annotations
 
-import sys
-
 import importlib
+import sys
 
 _pcobra_cli = importlib.import_module("pcobra.cli")
 sys.modules.setdefault("pcobra.cli", _pcobra_cli)
@@ -17,12 +21,9 @@ _pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cli.cli")
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Delegar en el punto de entrada real de la CLI de Cobra."""
+    """Delega siempre en ``pcobra.cobra.cli.cli.main``."""
 
-    sys.modules["pcobra.cli"] = _pcobra_cli
-    resultado = _pcobra_main(argv)
-    sys.modules["pcobra.cli"] = _pcobra_cli
-    return resultado
+    return _pcobra_main(argv)
 
 
 if __name__ == "__main__":
