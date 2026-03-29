@@ -137,4 +137,10 @@ def _registrar_alias_legacy() -> None:
     logger.warning(_legacy_migration_message(phase))
 
 
-_registrar_alias_legacy()
+def activar_aliases_legacy() -> None:
+    """API pública e idempotente para habilitar alias legacy en runtime."""
+
+    _registrar_alias_legacy()
+
+
+activar_aliases_legacy()

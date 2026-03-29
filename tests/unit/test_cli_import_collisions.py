@@ -4,6 +4,7 @@ import importlib
 import runpy
 import sys
 from types import ModuleType
+import os
 
 import pytest
 
@@ -73,3 +74,28 @@ def test_python_m_cli_cli_no_colisiona(monkeypatch: pytest.MonkeyPatch):
     cli_cli_mod = sys.modules.get("cli.cli")
     if cli_cli_mod is not None:
         assert cli_cli_mod.__name__ in {"cli.cli", "pcobra.cobra.cli.cli"}
+
+
+def test_main_con_legacy_imports_activa_aliases_en_runtime(monkeypatch: pytest.MonkeyPatch):
+    _limpiar_aliases()
+    monkeypatch.setenv("PCOBRA_LEGACY_IMPORT_PHASE", "2")
+    monkeypatch.delenv("PCOBRA_ENABLE_LEGACY_IMPORTS", raising=False)
+
+    cli_module = importlib.import_module("pcobra.cli")
+    importlib.import_module("pcobra")
+    _limpiar_aliases()
+
+    fake_cli_module = ModuleType("pcobra.cobra.cli.cli")
+
+    class _FakeCliApplication:
+        def run(self, _argv):
+            return 0
+
+    fake_cli_module.CliApplication = _FakeCliApplication
+    monkeypatch.setitem(sys.modules, "pcobra.cobra.cli.cli", fake_cli_module)
+
+    resultado = cli_module.main(["--legacy-imports", "version"])
+
+    assert resultado == 0
+    assert os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"
+    assert "cobra" in sys.modules

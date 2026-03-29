@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from importlib import import_module
 from pathlib import Path
@@ -79,12 +80,19 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
+    argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
+    argv = _normalizar_argumentos(argv_entrada)
+
+    if argv is not None and "--legacy-imports" in argv:
+        os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+        from pcobra import activar_aliases_legacy
+
+        activar_aliases_legacy()
+
     from .cobra.cli.cli import CliApplication
 
     configurar_entorno()
     aplicacion = CliApplication()
-    argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
-    argv = _normalizar_argumentos(argv_entrada)
     return aplicacion.run(argv)
 
 
