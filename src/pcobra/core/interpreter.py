@@ -105,12 +105,29 @@ class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
     @staticmethod
+    def _registrar_auditoria_validador(
+        ruta_real: str, resultado: str, razon: str | None = None
+    ) -> None:
+        """Registra eventos de auditoría durante la carga de validadores extra."""
+        payload = {
+            "evento": "validador_extra",
+            "ruta_real": ruta_real,
+            "resultado": resultado,
+        }
+        if razon:
+            payload["razon"] = razon
+        logging.warning("Auditoria validador extra: %s", payload)
+
+    @staticmethod
     def _cargar_validadores(ruta):
         """Carga una lista de validadores desde un archivo Python."""
         import ast
 
         ruta_abs = os.path.abspath(ruta)
         if not _ruta_import_permitida(ruta_abs):
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_abs, "rechazado", "fuera_whitelist"
+            )
             raise ImportError(f"Módulo fuera de la lista blanca: {ruta}")
         ruta_real = os.path.realpath(ruta_abs)
 
@@ -118,6 +135,9 @@ class InterpretadorCobra:
             with open(ruta_real, "r", encoding="utf-8") as f:
                 source = f.read()
         except FileNotFoundError as e:
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real, "rechazado", "archivo_no_encontrado"
+            )
             raise FileNotFoundError(
                 f"No se encontró el archivo de validadores: {ruta}"
             ) from e
@@ -125,16 +145,27 @@ class InterpretadorCobra:
         try:
             tree = ast.parse(source, filename=ruta_real)
         except SyntaxError as e:
-            raise ImportError(f"Error de sintaxis en {ruta}: {e}") from e
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real, "rechazado", "sintaxis_invalida"
+            )
+            raise ImportError(
+                "El archivo de validadores tiene sintaxis inválida."
+            ) from e
 
         for node in ast.walk(tree):
             if isinstance(node, (ast.Import, ast.ImportFrom)):
+                InterpretadorCobra._registrar_auditoria_validador(
+                    ruta_real, "rechazado", "import_no_permitido"
+                )
                 raise ImportError(
                     "Importaciones no permitidas en los validadores adicionales."
                 )
             if isinstance(node, ast.Call):
                 func = node.func
                 if isinstance(func, ast.Name) and func.id == "__import__":
+                    InterpretadorCobra._registrar_auditoria_validador(
+                        ruta_real, "rechazado", "dunder_import_bloqueado"
+                    )
                     raise SyntaxError(
                         "El uso de __import__ está bloqueado en los validadores adicionales."
                     )
@@ -169,8 +200,40 @@ class InterpretadorCobra:
             "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
             "_unpack_sequence_": guarded_unpack_sequence,
         }
-        byte_code = compile_restricted(source, ruta_abs, "exec")
-        exec(byte_code, namespace)
+        mem_limit = limite_memoria_mb()
+        cpu_limit = limite_cpu_segundos()
+        if mem_limit is not None:
+            _lim_mem(int(mem_limit))
+        if cpu_limit is not None:
+            _lim_cpu(int(cpu_limit))
+
+        try:
+            byte_code = compile_restricted(source, ruta_abs, "exec")
+            exec(byte_code, namespace)
+        except TimeoutError as e:
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real, "rechazado", "timeout"
+            )
+            raise ImportError(
+                "El validador adicional superó el tiempo permitido."
+            ) from e
+        except (MemoryError, OverflowError) as e:
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real, "rechazado", "memoria_excedida"
+            )
+            raise ImportError(
+                "El validador adicional excede los límites de memoria permitidos."
+            ) from e
+        except Exception as e:
+            InterpretadorCobra._registrar_auditoria_validador(
+                ruta_real, "rechazado", "error_en_ejecucion"
+            )
+            raise ImportError(
+                "No se pudo cargar el validador adicional de forma segura."
+            ) from e
+        InterpretadorCobra._registrar_auditoria_validador(
+            ruta_real, "permitido"
+        )
         return namespace.get("VALIDADORES_EXTRA", [])
 
     def __init__(self, safe_mode: bool = True, extra_validators=None):
