@@ -479,6 +479,14 @@ raíz del proyecto:
 python -m pcobra
 ```
 
+Entrypoints oficiales de CLI:
+
+- `pcobra.cli:main` (script `cobra` instalado por packaging).
+- `python -m pcobra` (passthrough directo a `pcobra.cli:main`).
+
+El módulo `src/pcobra/core/main.py` se conserva como ejemplo/demo interno y no
+debe usarse como entrypoint productivo.
+
 Para conocer las opciones avanzadas del modo seguro revisa
 `docs/frontend/modo_seguro.rst`. Los ejemplos de medición de rendimiento
 están disponibles en `docs/frontend/benchmarking.rst`.

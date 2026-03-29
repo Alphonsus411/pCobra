@@ -1,4 +1,8 @@
-"""Punto de entrada mínimo para ejecutar un saludo de prueba."""
+"""Ejemplo/demo mínimo de ejecución dentro de ``pcobra.core``.
+
+Nota: este módulo **no** es un entrypoint productivo. La CLI oficial vive en
+``pcobra.cli:main`` y ``python -m pcobra`` delega en esa misma ruta.
+"""
 
 from __future__ import annotations
 
@@ -32,11 +36,11 @@ def _cargar_dotenv() -> None:
         logger.info("No se encontró archivo .env en el directorio actual")
 
 
-def main():
-    """Imprime un mensaje de bienvenida."""
+def main() -> None:
+    """Imprime un mensaje de bienvenida para demostraciones internas."""
     _cargar_dotenv()
     print("¡Hola desde Cobra!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
