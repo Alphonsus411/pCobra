@@ -67,7 +67,6 @@ for pkg in _submodules:
     try:
         module = importlib.import_module(f".{pkg}", __name__)
         globals()[pkg] = module
-        _sys.modules.setdefault(pkg, module)
     except ImportError as e:
         logger.warning("No se pudo importar %s: %s", pkg, e)
     except Exception as e:  # nosec B110
@@ -131,6 +130,3 @@ def activar_aliases_legacy() -> None:
     """API pública e idempotente para habilitar alias legacy en runtime."""
 
     _registrar_alias_legacy()
-
-
-activar_aliases_legacy()
