@@ -491,3 +491,44 @@ def test_descargar_modulo_host_no_permitido(tmp_path, monkeypatch):
     err.assert_called_once()
     assert "Host" in err.call_args[0][0]
     mock_get.assert_not_called()
+
+@pytest.mark.timeout(5)
+def test_get_validated_base_url_prioriza_parametro_sobre_entorno(monkeypatch):
+    monkeypatch.setenv("COBRAHUB_URL", "https://entorno.example.com/api")
+
+    client = cobrahub_client.CobraHubClient(base_url="https://inyectada.example.com/api")
+
+    assert client.base_url == "https://inyectada.example.com/api"
+
+
+@pytest.mark.timeout(5)
+def test_funciones_conveniencia_no_modifican_cobrahub_url_en_entorno(tmp_path, monkeypatch):
+    monkeypatch.delenv("COBRAHUB_URL", raising=False)
+    monkeypatch.setattr(cobrahub_client, "COBRAHUB_URL", "https://inyectada.example.com/api")
+
+    archivo = tmp_path / "m.co"
+    archivo.write_text("var x = 1")
+
+    with patch("cobra.cli.cobrahub_client.requests.post") as mock_post, \
+            patch("cobra.cli.cobrahub_client.requests.get") as mock_get:
+        post_resp = MagicMock()
+        post_resp.__enter__.return_value = post_resp
+        post_resp.__exit__.return_value = False
+        post_resp.raise_for_status.return_value = None
+        mock_post.return_value = post_resp
+
+        get_resp = MagicMock()
+        get_resp.__enter__.return_value = get_resp
+        get_resp.__exit__.return_value = False
+        get_resp.raise_for_status.return_value = None
+        get_resp.iter_content = lambda chunk_size: [b"ok"]
+        get_resp.headers = {}
+        get_resp.url = "https://inyectada.example.com/api/modulos/m.co"
+        mock_get.return_value = get_resp
+
+        assert cobrahub_client.publicar_modulo(str(archivo))
+        assert "COBRAHUB_URL" not in os.environ
+
+        destino = tmp_path / "out.co"
+        assert cobrahub_client.descargar_modulo("m.co", str(destino), base_permitida=str(tmp_path))
+        assert "COBRAHUB_URL" not in os.environ
