@@ -4,7 +4,6 @@ import importlib
 import importlib.util
 import logging
 import os as _os
-from pathlib import Path as _Path
 import sys as _sys
 import warnings as _warnings
 from typing import Dict, Tuple
@@ -24,6 +23,20 @@ LEGACY_IMPORT_ALIAS_INVENTORY: Dict[str, str] = {
     "cobra.core": "pcobra.cobra.core",
     "core": "pcobra.core",
 }
+
+# Submódulos públicos expuestos de forma perezosa (sin import-time eager loading).
+_LAZY_SUBMODULES = {
+    "cobra",
+    "core",
+    "cli",
+    "ia",
+    "jupyter_kernel",
+    "gui",
+    "lsp",
+    "compiler",
+}
+
+__all__ = sorted(_LAZY_SUBMODULES) + ["activar_aliases_legacy", "LEGACY_IMPORT_ALIAS_INVENTORY"]
 
 
 def _resolve_legacy_import_policy() -> Tuple[int, bool]:
@@ -58,31 +71,42 @@ def _legacy_migration_message(phase: int) -> str:
         f"Fase actual: {phase}."
     )
 
-_REPO_ROOT = _Path(__file__).resolve().parents[2]
-_BIN_PATH = _REPO_ROOT / "scripts" / "bin"
-if _BIN_PATH.is_dir():
-    _current_path = _os.environ.get("PATH", "")
-    if str(_BIN_PATH) not in _current_path.split(_os.pathsep):
-        _os.environ["PATH"] = (
-            f"{_BIN_PATH}{_os.pathsep}{_current_path}" if _current_path else str(_BIN_PATH)
+
+def _load_submodule(name: str):
+    """Carga un submódulo público de ``pcobra`` bajo demanda."""
+
+    if name not in _LAZY_SUBMODULES:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    spec = importlib.util.find_spec(f".{name}", __name__)
+    if spec is None:
+        raise AttributeError(
+            f"El submódulo público {name!r} no está disponible en {__name__!r}"
         )
 
-# Cargar primero los paquetes base para evitar errores de dependencias cruzadas
-_submodules = ["cobra", "core", "cli", "ia", "jupyter_kernel", "gui", "lsp", "compiler"]
-
-for pkg in _submodules:
-    if importlib.util.find_spec(f".{pkg}", __name__) is None:
-        logger.warning("Subm\u00f3dulo %s no encontrado, se omite su importaci\u00f3n", pkg)
-        continue
     try:
-        module = importlib.import_module(f".{pkg}", __name__)
-        globals()[pkg] = module
-        _sys.modules.setdefault(pkg, module)
-    except ImportError as e:
-        logger.warning("No se pudo importar %s: %s", pkg, e)
-    except Exception as e:  # nosec B110
-        logger.error("Error al importar %s", pkg, exc_info=True)
+        module = importlib.import_module(f".{name}", __name__)
+    except ImportError as exc:
+        logger.warning("No se pudo importar %s: %s", name, exc)
         raise
+
+    globals()[name] = module
+    return module
+
+
+def __getattr__(name: str):
+    """Expone submódulos públicos de forma lazy para evitar imports ansiosos."""
+
+    if name in _LAZY_SUBMODULES:
+        return _load_submodule(name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    """Incluye la API pública lazy en ``dir(pcobra)``."""
+
+    return sorted(set(globals()) | set(__all__))
+
 
 # Registrar alias de compatibilidad para importaciones absolutas heredadas
 def _registrar_alias_legacy() -> None:
@@ -137,4 +161,7 @@ def _registrar_alias_legacy() -> None:
     logger.warning(_legacy_migration_message(phase))
 
 
-_registrar_alias_legacy()
+def activar_aliases_legacy() -> None:
+    """API pública e idempotente para habilitar alias legacy en runtime."""
+
+    _registrar_alias_legacy()

@@ -2,6 +2,7 @@ import importlib
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
@@ -23,19 +24,79 @@ from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
-try:  # pragma: no cover - compatibilidad con alias legacy
-    from core import sandbox as sandbox_module
-except ModuleNotFoundError:  # pragma: no cover
-    from pcobra.core import sandbox as sandbox_module
-
-ejecutar_en_sandbox = sandbox_module.ejecutar_en_sandbox
-ejecutar_en_contenedor = sandbox_module.ejecutar_en_contenedor
-SecurityError = sandbox_module.SecurityError
-validar_dependencias = sandbox_module.validar_dependencias
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.core.semantic_validators.base import ValidadorBase
 from pcobra.core.resource_limits import limitar_cpu_segundos
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
+
+
+def _importar_modulo_sandbox() -> Any:
+    """Resuelve sandbox runtime priorizando namespace canónico."""
+
+    try:
+        module = importlib.import_module("pcobra.core.sandbox")
+    except ModuleNotFoundError as canon_exc:  # pragma: no cover - fallback legacy
+        try:
+            module = importlib.import_module("core.sandbox")
+        except ModuleNotFoundError:
+            raise canon_exc
+        _validar_modulo_sandbox_legacy(module)
+        logging.getLogger(__name__).warning(
+            "Se usó compatibilidad legacy para resolver 'core.sandbox'. "
+            "Migre a 'pcobra.core.sandbox'."
+        )
+
+    required = (
+        "ejecutar_en_sandbox",
+        "ejecutar_en_contenedor",
+        "SecurityError",
+        "validar_dependencias",
+    )
+    missing = [name for name in required if not hasattr(module, name)]
+    if missing:
+        raise ImportError(
+            f"El módulo '{module.__name__}' no define: {', '.join(missing)}"
+        )
+    return module
+
+
+def _validar_modulo_sandbox_legacy(module: Any) -> None:
+    """Valida que el fallback legacy apunte al paquete esperado."""
+
+    module_file = getattr(module, "__file__", None)
+    if not module_file:
+        raise ImportError("El módulo legacy 'core.sandbox' no expone __file__")
+
+    resolved = Path(module_file).resolve().parts
+    expected_suffix = ("pcobra", "core", "sandbox.py")
+    if tuple(resolved[-len(expected_suffix):]) != expected_suffix:
+        raise ImportError(
+            "El módulo legacy 'core.sandbox' no apunta al paquete esperado "
+            f"('pcobra.core.sandbox'). Ruta detectada: {module_file}"
+        )
+
+
+class _SandboxModuleProxy:
+    """Proxy para compatibilidad legacy sin import implícito en carga de módulo."""
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(_importar_modulo_sandbox(), name)
+
+
+sandbox_module = _SandboxModuleProxy()
+
+
+def ejecutar_en_sandbox(*args: Any, **kwargs: Any) -> Any:
+    return sandbox_module.ejecutar_en_sandbox(*args, **kwargs)
+
+
+def ejecutar_en_contenedor(*args: Any, **kwargs: Any) -> Any:
+    return sandbox_module.ejecutar_en_contenedor(*args, **kwargs)
+
+
+def validar_dependencias(*args: Any, **kwargs: Any) -> Any:
+    return sandbox_module.validar_dependencias(*args, **kwargs)
 
 
 def _obtener_interpretador_cls():
@@ -58,6 +119,12 @@ class ExecuteCommand(BaseCommand):
         parser.add_argument(
             "archivo", help=_("Ruta al archivo a ejecutar")
         ).completer = files_completer()
+        parser.add_argument(
+            "--debug",
+            action="store_true",
+            default=False,
+            help=_("Show debug messages"),
+        )
         parser.add_argument(
             "--sandbox",
             action="store_true",
@@ -132,7 +199,9 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(str(e))
             return 1
 
-        depurar = getattr(args, "depurar", False)
+        debug = bool(getattr(args, "debug", False))
+        verbose = int(getattr(args, "verbose", 0) or 0)
+        depurar = debug or verbose > 0 or bool(getattr(args, "depurar", False))
         formatear = bool(getattr(args, "formatear", False))
         seguro = getattr(args, "seguro", True)
         raw_extra_validators = getattr(args, "extra_validators", None)
@@ -145,7 +214,7 @@ class ExecuteCommand(BaseCommand):
         contenedor = getattr(args, "contenedor", None)
 
         try:
-            sandbox_module.validar_dependencias("python", module_map.get_toml_map())
+            validar_dependencias("python", module_map.get_toml_map())
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
@@ -153,7 +222,7 @@ class ExecuteCommand(BaseCommand):
         if formatear and not self._formatear_codigo(args.archivo):
             return 1
 
-        self.logger.setLevel(logging.DEBUG if depurar else logging.ERROR)
+        self.logger.setLevel(logging.DEBUG if depurar else logging.INFO)
 
         try:
             with open(args.archivo, "r", encoding="utf-8") as f:
@@ -216,7 +285,13 @@ class ExecuteCommand(BaseCommand):
             return 1
         except RuntimeError as e:
             self.logger.error("Error de ejecución en sandbox", extra={"error": str(e)})
-            mostrar_error(f"Error de ejecución en sandbox: {e}")
+            mensaje = f"Error de ejecución en sandbox: {e}"
+            if "RestrictedPython" in str(e):
+                mensaje += (
+                    "\nSugerencia: instala RestrictedPython para el modo seguro "
+                    "(por ejemplo: pip install RestrictedPython)."
+                )
+            mostrar_error(mensaje)
             return 1
 
     def _ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
@@ -242,26 +317,57 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(f"Error de análisis: {e}")
             return 1
 
+        interpretador_cls = _obtener_interpretador_cls()
+        validadores_normalizados = extra_validators
+
         if seguro:
-            interpretador_cls = _obtener_interpretador_cls()
             try:
-                validador = construir_cadena(
-                    interpretador_cls._cargar_validadores(extra_validators)
-                    if isinstance(extra_validators, str)
-                    else extra_validators
-                )
+                if extra_validators is None:
+                    validadores_normalizados = None
+                elif isinstance(extra_validators, str):
+                    validadores_normalizados = interpretador_cls._cargar_validadores(extra_validators)
+                elif isinstance(extra_validators, list):
+                    if all(isinstance(ruta, str) for ruta in extra_validators):
+                        acumulado: list[Any] = []
+                        for ruta in extra_validators:
+                            try:
+                                acumulado.extend(interpretador_cls._cargar_validadores(ruta))
+                            except Exception as exc:
+                                raise ValueError(
+                                    _("No se pudieron cargar los validadores extra desde '{path}': {error}").format(
+                                        path=ruta,
+                                        error=exc,
+                                    )
+                                ) from exc
+                        validadores_normalizados = acumulado
+                    else:
+                        validadores_normalizados = extra_validators
+
+                if validadores_normalizados is not None:
+                    if not isinstance(validadores_normalizados, list) or not all(
+                        isinstance(validador, ValidadorBase)
+                        for validador in validadores_normalizados
+                    ):
+                        raise TypeError(
+                            _("Los validadores extra deben ser una lista de instancias de validadores")
+                        )
+
+                validador = construir_cadena(validadores_normalizados)
                 for nodo in ast:
                     nodo.aceptar(validador)
+            except (TypeError, ValueError) as e:
+                self.logger.error("Error cargando validadores extra", extra={"error": str(e)})
+                mostrar_error(str(e))
+                return 1
             except PrimitivaPeligrosaError as pe:
                 self.logger.error("Primitiva peligrosa detectada", extra={"error": str(pe)})
                 mostrar_error(str(pe))
                 return 1
 
         try:
-            interpretador_cls = _obtener_interpretador_cls()
             interpretador_cls(
                 safe_mode=seguro,
-                extra_validators=extra_validators,
+                extra_validators=validadores_normalizados,
             ).ejecutar_ast(ast)
             return 0
         except Exception as e:

@@ -1,6 +1,14 @@
 import subprocess
 import sys
 from pathlib import Path
+import os
+
+
+def _env_without_sqlite_db_key() -> dict[str, str]:
+    env = os.environ.copy()
+    env.pop("SQLITE_DB_KEY", None)
+    env.pop("COBRA_DEV_MODE", None)
+    return env
 
 
 def test_cobra_ayuda_equivalente_help():
@@ -10,6 +18,7 @@ def test_cobra_ayuda_equivalente_help():
         capture_output=True,
         text=True,
         cwd=str(cli_dir),
+        env=_env_without_sqlite_db_key(),
     )
     assert result_help.returncode == 0
     result_ayuda = subprocess.run(
@@ -17,9 +26,23 @@ def test_cobra_ayuda_equivalente_help():
         capture_output=True,
         text=True,
         cwd=str(cli_dir),
+        env=_env_without_sqlite_db_key(),
     )
     assert result_ayuda.returncode == 0
     assert result_help.stdout == result_ayuda.stdout
+
+
+def test_cobra_version_funciona_sin_sqlite_db_key():
+    cli_dir = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--version"],
+        capture_output=True,
+        text=True,
+        cwd=str(cli_dir),
+        env=_env_without_sqlite_db_key(),
+    )
+    assert result.returncode == 0
+    assert "cobra" in result.stdout.lower()
 
 
 def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():

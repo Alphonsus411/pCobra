@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import shutil
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,25 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 class JupyterCommand(BaseCommand):
     """Lanza Jupyter Notebook con el kernel Cobra instalado."""
     name = "jupyter"
+
+    class EjecutableNoEncontradoError(FileNotFoundError):
+        """Error para indicar que no se pudo resolver un ejecutable requerido."""
+
+    @staticmethod
+    def _resolver_ejecutable(ejecutable: str) -> str:
+        """Resuelve la ruta de un ejecutable con validaciones explícitas."""
+        ejecutable_path = Path(ejecutable)
+        if ejecutable_path.exists():
+            return str(ejecutable_path.resolve())
+
+        ejecutable_en_path = shutil.which(ejecutable)
+        if not ejecutable_en_path:
+            raise JupyterCommand.EjecutableNoEncontradoError(ejecutable)
+
+        ejecutable_real = str(Path(ejecutable_en_path).resolve())
+        if not Path(ejecutable_real).exists():
+            raise JupyterCommand.EjecutableNoEncontradoError(ejecutable)
+        return ejecutable_real
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
@@ -53,42 +73,60 @@ class JupyterCommand(BaseCommand):
 
         # Validar ruta del notebook si se proporciona
         if args.notebook:
-            validar_archivo_existente(args.notebook)
+            try:
+                validar_archivo_existente(args.notebook)
+            except FileNotFoundError:
+                mostrar_error(
+                    _("No se encontró el notebook indicado: {path}. Verifica la ruta e inténtalo de nuevo.").format(
+                        path=args.notebook
+                    )
+                )
+                return 1
 
         try:
             # Instalar el kernel de Cobra
             result = subprocess.run(
-                [sys.executable, "-m", "cobra.jupyter_kernel", "install"],
+                [sys.executable, "-m", "pcobra.jupyter_kernel", "install"],
                 check=True,
                 capture_output=True,
                 text=True
             )
 
             if result.returncode != 0:
-                mostrar_error(_("Error al instalar el kernel de Cobra: {err}").format(err=result.stderr))
+                mostrar_error(_("Error al instalar el kernel canónico 'pcobra.jupyter_kernel': {err}").format(err=result.stderr))
                 return 1
 
-            # Preparar comando de Jupyter
-            cmd = [
-                "jupyter",
-                "notebook",
-                "--KernelManager.default_kernel_name=cobra",
-            ]
-            if args.notebook:
-                cmd.append(str(args.notebook))
-
-            # Ejecutar Jupyter
-            subprocess.run(cmd, check=True)
-            return 0
-
-        except FileNotFoundError:
+            python_executable = self._resolver_ejecutable(sys.executable)
+        except JupyterCommand.EjecutableNoEncontradoError:
             mostrar_error(
-                _("No se encontró el ejecutable 'jupyter'. Verifica la instalación.")
+                _("No se encontró el ejecutable de Python para lanzar Jupyter. Verifica la instalación.")
             )
             return 1
         except subprocess.CalledProcessError as e:
-            mostrar_error(_("Error lanzando Jupyter: {err}").format(err=e))
+            mostrar_error(_("Error al instalar o preparar el kernel de Cobra: {err}").format(err=e))
             return 1
         except Exception as e:
-            mostrar_error(_("Error inesperado: {err}").format(err=str(e)))
+            mostrar_error(_("Error inesperado durante la preparación del kernel: {err}").format(err=str(e)))
+            return 1
+
+        # Preparar comando de Jupyter
+        cmd = [
+            python_executable,
+            "-m",
+            "jupyter",
+            "notebook",
+            "--KernelManager.default_kernel_name=cobra",
+        ]
+        if args.notebook:
+            cmd.append(str(args.notebook))
+
+        try:
+            # Ejecutar Jupyter
+            subprocess.run(cmd, check=True)
+            return 0
+        except subprocess.CalledProcessError as e:
+            mostrar_error(_("Error al ejecutar 'jupyter notebook': {err}").format(err=e))
+            return 1
+        except Exception as e:
+            mostrar_error(_("Error inesperado al iniciar Jupyter Notebook: {err}").format(err=str(e)))
             return 1

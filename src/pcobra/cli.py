@@ -1,11 +1,9 @@
 import logging
+import os
 import sys
 from importlib import import_module
 from pathlib import Path
-from types import ModuleType
 from typing import Iterable, List, Optional
-
-
 
 if __package__ in {None, ""}:
     # Permite ejecutar ``python src/pcobra/cli.py`` sin errores de importación.
@@ -20,54 +18,64 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
     load_dotenv = None
 
-
-import src.core
-from src import core as core_pkg
-
 logger = logging.getLogger(__name__)
+_CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
+
+# Habilita imports de submódulos canónicos como ``pcobra.cli.commands`` y
+# ``pcobra.cli.cli`` sin reemplazar ``pcobra.cli`` por otro objeto.
+_CANONICAL_CLI_PACKAGE_DIR = Path(__file__).resolve().parent / "cobra" / "cli"
+if _CANONICAL_CLI_PACKAGE_DIR.is_dir():
+    __path__ = [str(_CANONICAL_CLI_PACKAGE_DIR)]
 
 
-def _alias_module(origen: str, destino: str) -> ModuleType:
-    """Registra ``destino`` como alias del módulo ``origen``."""
+def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:
+    """Activa alias legacy mínimos solo para entrypoints heredados."""
 
-    modulo = import_module(origen)
-    sys.modules.setdefault(destino, modulo)
-    return modulo
+    if ruta_modulo == "cli":
+        # ``src/cli/__init__.py`` ya es el paquete legacy; no lo sustituimos.
+        return
 
-
-# Alias explícitos hacia el paquete real de comandos del CLI
-cli = _alias_module("pcobra.cobra.cli.cli", "pcobra.cli.cli")
-commands = ""
-
-
-def _configurar_alias_paquete_cli() -> None:
-    """Expone ``pcobra.cobra.cli`` como si fuese ``pcobra.cli``.
-
-    El proyecto mantiene compatibilidad histórica con importaciones que
-    asumían que ``pcobra.cli`` era un paquete. Sin embargo, el fichero
-    actual se llama ``cli.py`` y, por tanto, Python lo trata como un
-    módulo en lugar de paquete, lo que rompe importaciones como
-    ``pcobra.cli.utils``. Para evitar ``ModuleNotFoundError`` registramos
-    alias explícitos y propagamos el ``__path__`` del paquete real.
-    """
-
-    paquete_cli = _alias_module("pcobra.cobra.cli", "pcobra.cli")
-    # Marcar el módulo como paquete reexportando su ``__path__`` original.
-    if hasattr(paquete_cli, "__path__"):
-        globals()["__path__"] = list(paquete_cli.__path__)  # type: ignore[assignment]
-
-    _alias_module("pcobra.cobra.cli.commands", "pcobra.cli.commands")
-    _alias_module("pcobra.cobra.cli.utils", "pcobra.cli.utils")
-    _alias_module("pcobra.cobra.cli.utils.semver", "pcobra.cli.utils.semver")
+    if ruta_modulo == "cli.cli":
+        sys.modules.setdefault("cli", sys.modules.get("cli", sys.modules[__name__]))
+        sys.modules.setdefault("cli.cli", get_cli_module())
 
 
-_configurar_alias_paquete_cli()
-from .cobra.cli.cli import CliApplication
+def _bootstrap_dev_path_si_opt_in() -> None:
+    """Añade ``scripts/bin`` al PATH únicamente cuando se solicita explícitamente."""
 
-# Registrar alias de paquetes para compatibilidad con imports absolutos
-sys.modules.setdefault("cobra", pcobra.cobra)
-sys.modules.setdefault("core", core_pkg)
-sys.modules.setdefault("compiler", compiler_pkg)
+    if os.environ.get(_CLI_BOOTSTRAP_PATH_ENV) != "1":
+        return
+
+    repo_root = Path(__file__).resolve().parents[2]
+    bin_path = repo_root / "scripts" / "bin"
+    if not bin_path.is_dir():
+        logger.debug(
+            "PCOBRA_CLI_BOOTSTRAP_PATH=1 pero %s no existe; se omite bootstrap PATH",
+            bin_path,
+        )
+        return
+
+    current_path = os.environ.get("PATH", "")
+    bin_path_text = str(bin_path)
+    if bin_path_text in current_path.split(os.pathsep):
+        return
+    os.environ["PATH"] = (
+        f"{bin_path_text}{os.pathsep}{current_path}" if current_path else bin_path_text
+    )
+
+
+def get_cli_module():
+    """Carga diferida del entrypoint canónico ``pcobra.cli.cli``."""
+
+    return import_module("pcobra.cli.cli")
+
+
+def __getattr__(name: str):
+    """Compatibilidad lazy para ``from pcobra.cli import cli``."""
+
+    if name == "cli":
+        return get_cli_module()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def configurar_entorno() -> None:
@@ -82,7 +90,7 @@ def configurar_entorno() -> None:
     except OSError as exc:
         logger.error("No se pudo acceder al archivo .env: %s", exc)
         return
-    except Exception as exc:  # pragma: no cover - registro y propagación
+    except Exception:  # pragma: no cover - registro y propagación
         logger.exception("Error inesperado al cargar variables de entorno")
         raise
     if not cargado:
@@ -90,14 +98,7 @@ def configurar_entorno() -> None:
 
 
 def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:
-    """Devuelve una copia de ``argumentos`` con alias habituales corregidos.
-
-    Los usuarios de la antigua CLI podían invocar ``python -m pcobra.cli ayuda``
-    para mostrar la ayuda general. Tras la reestructuración del paquete,
-    ``ayuda`` dejó de ser una orden válida y provocaba ``invalid choice``. Aquí
-    interceptamos esos casos para redirigirlos hacia las banderas oficiales del
-    analizador de argumentos.
-    """
+    """Devuelve una copia de ``argumentos`` con alias habituales corregidos."""
 
     if argumentos is None:
         return None
@@ -115,10 +116,24 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
-    configurar_entorno()
-    aplicacion = CliApplication()
+    _bootstrap_dev_path_si_opt_in()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _normalizar_argumentos(argv_entrada)
+
+    flag_legacy_imports = argv is not None and "--legacy-imports" in argv
+    env_legacy_imports = os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"
+    if flag_legacy_imports:
+        os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
+
+    if flag_legacy_imports or env_legacy_imports:
+        from pcobra import activar_aliases_legacy
+
+        activar_aliases_legacy()
+
+    from .cobra.cli.cli import CliApplication
+
+    configurar_entorno()
+    aplicacion = CliApplication()
     return aplicacion.run(argv)
 
 

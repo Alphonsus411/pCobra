@@ -244,6 +244,16 @@ pipx install pcobra
 
 Consulta [docs/instalacion.md](docs/instalacion.md#instalacion-desde-repositorio) para instrucciones avanzadas (gramáticas, plugins, scripts y uso de Docker).
 
+### Bootstrap opcional de `PATH` para desarrollo local
+
+Desde esta versión, `import pcobra` **ya no modifica** `PATH` automáticamente. Si necesitas que la CLI añada `scripts/bin` al `PATH` al iniciar (flujos locales del repositorio), actívalo explícitamente:
+
+```bash
+PCOBRA_CLI_BOOTSTRAP_PATH=1 cobra --help
+```
+
+Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantiene las importaciones de librería libres de efectos secundarios.
+
 ## Cómo usar la CLI
 
 Ejecuta un archivo de Cobra con:
@@ -478,6 +488,14 @@ raíz del proyecto:
 ```bash
 python -m pcobra
 ```
+
+Entrypoints oficiales de CLI:
+
+- `pcobra.cli:main` (script `cobra` instalado por packaging).
+- `python -m pcobra` (passthrough directo a `pcobra.cli:main`).
+
+El módulo `src/pcobra/core/main.py` se conserva como ejemplo/demo interno y no
+debe usarse como entrypoint productivo.
 
 Para conocer las opciones avanzadas del modo seguro revisa
 `docs/frontend/modo_seguro.rst`. Los ejemplos de medición de rendimiento
@@ -1089,12 +1107,19 @@ Si necesitas una ubicación distinta configura `COBRA_DB_PATH`; cuando se
 proporciona, el valor de `SQLITE_DB_KEY` se mantiene como clave incluso si
 contiene `/` u otros separadores.
 
+> ⚠️ La CLI valida `SQLITE_DB_KEY` al arrancar y falla de forma explícita si no
+> está definida. Solo en entorno de desarrollo/pruebas se permite la excepción
+> controlada `COBRA_DEV_MODE=1`, que habilita una clave temporal de sesión.
+
 ```bash
-export SQLITE_DB_KEY="clave-local"          # Obligatorio para abrir la base
+# Ejemplo recomendado: clave aleatoria fuerte para uso local/CI
+export SQLITE_DB_KEY="$(openssl rand -hex 32)"  # Obligatorio para abrir la base
 export COBRA_DB_PATH="$HOME/.cobra/sqliteplus/core.db"  # Opcional; usa el
                                                         # valor por defecto
 # Para despliegues sin cifrado puedes usar un prefijo explícito:
 export SQLITE_DB_KEY="path:/var/cache/pcobra/core.db"
+# Solo desarrollo/pruebas controladas:
+export COBRA_DEV_MODE=1
 ```
 
 Si necesitas ubicar la base de datos en otro sitio, ajusta `COBRA_DB_PATH` a la

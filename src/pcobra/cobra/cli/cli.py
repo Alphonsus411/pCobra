@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import secrets
 import sys
 from enum import Enum
 from os import environ
@@ -8,44 +9,49 @@ from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
 
-from src.pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
-os.environ.setdefault("SQLITE_DB_KEY", "cli-dev-key")
-
-
-
-from src.pcobra.cobra.cli.commands.base import BaseCommand
-from src.pcobra.cobra.cli.commands.bench_cmd import BenchCommand
-from src.pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
-from src.pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
-from src.pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
-from src.pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
-from src.pcobra.cobra.cli.commands.cache_cmd import CacheCommand
-from src.pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
-from src.pcobra.cobra.cli.commands.container_cmd import ContainerCommand
-from src.pcobra.cobra.cli.commands.crear_cmd import CrearCommand
-from src.pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
-from src.pcobra.cobra.cli.commands.docs_cmd import DocsCommand
-from src.pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
-from src.pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-from src.pcobra.cobra.cli.commands.flet_cmd import FletCommand
-from src.pcobra.cobra.cli.commands.init_cmd import InitCommand
-from src.pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
-from src.pcobra.cobra.cli.commands.agix_cmd import AgixCommand
-from src.pcobra.core.interpreter import InterpretadorCobra
-from src.pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
-from src.pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
-from src.pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
-from src.pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
-from src.pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
-from src.pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
-from src.pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand, ORIGIN_CHOICES
-from src.pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
-from src.pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
-from src.pcobra.cobra.cli.plugin import descubrir_plugins
-from src.pcobra.cobra.cli.utils import messages
-from src.pcobra.cobra.cli.utils import config as config_module
-from src.pcobra.cobra.cli.utils.autocomplete import (
+from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
+from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
+from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
+from pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
+from pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
+from pcobra.cobra.cli.commands.cache_cmd import CacheCommand
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.container_cmd import ContainerCommand
+from pcobra.cobra.cli.commands.crear_cmd import CrearCommand
+from pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
+from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
+from pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands.flet_cmd import FletCommand
+from pcobra.cobra.cli.commands.init_cmd import InitCommand
+from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
+from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
+from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
+from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
+from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
+from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
+from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
+from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
+    TranspilarInversoCommand,
+    ORIGIN_CHOICES,
+    DESTINO_CHOICES as REVERSE_DESTINO_CHOICES,
+)
+from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
+from pcobra.cobra.cli.plugin import (
+    descubrir_plugins,
+    configure_plugin_policy,
+    PLUGINS_ALLOWLIST_ENV,
+    PLUGINS_SAFE_MODE_ENV,
+)
+from pcobra.cobra.cli.utils import messages
+from pcobra.cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.utils.autocomplete import (
     autocomplete_available,
     directories_completer,
     enable_autocomplete,
@@ -55,6 +61,16 @@ from src.pcobra.cobra.cli.utils.autocomplete import (
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
+SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
+COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
+COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
+DB_REQUIRED_COMMAND_NAMES = frozenset({
+    "cache",
+    "compilar",
+    "benchtranspilers",
+    "qualia",
+    "interactive",
+})
 
 
 class LogLevel(Enum):
@@ -92,6 +108,7 @@ class CommandRegistry:
     def __init__(self, interpreter: Optional[InterpretadorCobra] = None) -> None:
         self.commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
+        self.default_command_name: Optional[str] = AppConfig.DEFAULT_COMMAND
 
     def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
         try:
@@ -124,24 +141,41 @@ class CommandRegistry:
                 logging.error(f"Failed to register subparser for {command.name}: {e}")
                 del self.commands[command.name]
 
-        if AppConfig.DEFAULT_COMMAND not in self.commands:
+        if self.default_command_name not in self.commands:
             fallback = "interactive" if "interactive" in self.commands else next(iter(self.commands), None)
             logging.warning(
-                "Default command '%s' not found. Falling back to '%s'", AppConfig.DEFAULT_COMMAND, fallback
+                "Default command '%s' not found. Falling back to '%s'", self.default_command_name, fallback
             )
-            AppConfig.DEFAULT_COMMAND = fallback
+            self.default_command_name = fallback
 
         return self.commands
 
     def get_default_command(self) -> Optional[BaseCommand]:
-        return self.commands.get(AppConfig.DEFAULT_COMMAND)
+        return self.commands.get(self.default_command_name)
+
+    def get_default_command_name(self) -> Optional[str]:
+        return self.default_command_name
 
 
 class CliApplication:
+    """Aplicación principal de CLI con inicialización idempotente por instancia.
+
+    Ciclo de vida esperado:
+    1. `initialize()` construye recursos base una sola vez (parser, intérprete y registry).
+    2. `_parse_arguments()` garantiza que la estructura de subcomandos exista y evita
+       registrar subparsers/comandos más de una vez en la misma instancia.
+    3. `run()` puede invocarse múltiples veces sobre la misma instancia sin conflictos
+       de comandos por doble registro.
+    4. `cleanup()` libera recursos al finalizar cada ejecución de `run()`.
+    """
+
     def __init__(self) -> None:
         self.parser: Optional[CustomArgumentParser] = None
         self.interpreter: Optional[InterpretadorCobra] = None
         self.command_registry: Optional[CommandRegistry] = None
+        self._subparsers: Optional[argparse._SubParsersAction] = None
+        self._commands_registered = False
+        self._owned_logging_handlers: list[logging.Handler] = []
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -153,20 +187,85 @@ class CliApplication:
     def cleanup(self) -> None:
         if self.interpreter and hasattr(self.interpreter, "cleanup"):
             self.interpreter.cleanup()
-        logging.shutdown()
+        root_logger = logging.getLogger()
+        for handler in self._owned_logging_handlers:
+            if handler in root_logger.handlers:
+                root_logger.removeHandler(handler)
+            handler.close()
+        self._owned_logging_handlers.clear()
 
     def initialize(self) -> None:
+        if self.parser and self.command_registry and self.interpreter:
+            return
         setup_gettext()
         self._setup_logging()
         self.interpreter = InterpretadorCobra()
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
 
-    def _setup_logging(self) -> None:
-        logging.basicConfig(
-            level=LogLevel.INFO.value,
-            format=AppConfig.LOG_FORMAT
+    def _ensure_command_structure(self) -> None:
+        if not self.parser or not self.command_registry:
+            raise RuntimeError("Application not properly initialized")
+        if self._subparsers is None:
+            self._subparsers = self.parser.add_subparsers(
+                dest="command",
+                parser_class=CustomArgumentParser,
+            )
+        if self._commands_registered:
+            return
+
+        self.command_registry.register_base_commands(self._subparsers)
+        menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
+        menu_parser.set_defaults(cmd="menu")
+        self._commands_registered = True
+
+    def _command_requires_sqlite_db_key(self, args: argparse.Namespace) -> bool:
+        command = getattr(args, "cmd", None)
+        if isinstance(command, BaseCommand):
+            return command.name in DB_REQUIRED_COMMAND_NAMES
+        return False
+
+    def _is_enabled_env_flag(self, env_name: str) -> bool:
+        return environ.get(env_name, "").strip() == "1"
+
+    def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
+        sqlite_db_key = (environ.get(SQLITE_DB_KEY_ENV) or "").strip()
+        if sqlite_db_key:
+            return
+
+        dev_mode_enabled = self._is_enabled_env_flag(COBRA_DEV_MODE_ENV)
+        dev_ephemeral_env_confirmation = self._is_enabled_env_flag(COBRA_DEV_EPHEMERAL_CONFIRM_ENV)
+        dev_ephemeral_cli_confirmation = bool(getattr(args, "dev_ephemeral_key", False))
+
+        if dev_mode_enabled and dev_ephemeral_env_confirmation and dev_ephemeral_cli_confirmation:
+            environ[SQLITE_DB_KEY_ENV] = secrets.token_urlsafe(32)
+            logging.getLogger(__name__).warning(
+                "Modo desarrollo confirmado (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
+                COBRA_DEV_MODE_ENV,
+                COBRA_DEV_EPHEMERAL_CONFIRM_ENV,
+                SQLITE_DB_KEY_ENV,
+            )
+            return
+
+        raise RuntimeError(
+            "Falta la variable de entorno 'SQLITE_DB_KEY'. "
+            "Configúrala antes de iniciar la CLI (ejemplo: "
+            "export SQLITE_DB_KEY='clave-segura'). Para pruebas locales "
+            "controladas puedes habilitar una clave efímera solo si confirmas "
+            f"explícitamente {COBRA_DEV_MODE_ENV}=1, "
+            f"{COBRA_DEV_EPHEMERAL_CONFIRM_ENV}=1 y el flag --dev-ephemeral-key."
         )
+
+    def _setup_logging(self) -> None:
+        root_logger = logging.getLogger()
+        if root_logger.handlers:
+            return
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
+        root_logger.addHandler(handler)
+        root_logger.setLevel(LogLevel.INFO.value)
+        self._owned_logging_handlers.append(handler)
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
         parser.add_argument(
@@ -208,6 +307,39 @@ class CliApplication:
             "--legacy-imports",
             action="store_true",
             help=_("Habilita temporalmente imports legacy (cobra/core). Migre a pcobra.*"),
+        )
+        parser.add_argument(
+            "--dev-ephemeral-key",
+            action="store_true",
+            help=_(
+                "Confirma explícitamente (solo desarrollo local) el uso de una "
+                "clave efímera para SQLITE_DB_KEY. Requiere COBRA_DEV_MODE=1 y "
+                "COBRA_DEV_ALLOW_EPHEMERAL_KEY=1."
+            ),
+        )
+        parser.add_argument(
+            "--plugins-safe-mode",
+            dest="plugins_safe_mode",
+            action="store_true",
+            help=_("Activa modo seguro de plugins (bloquea no permitidos)"),
+        )
+        parser.add_argument(
+            "--plugins-unsafe-mode",
+            dest="plugins_safe_mode",
+            action="store_false",
+            help=_("Desactiva modo seguro de plugins (permite cualquier plugin)"),
+        )
+        parser.add_argument(
+            "--plugins-allowlist",
+            dest="plugins_allowlist",
+            default=environ.get(PLUGINS_ALLOWLIST_ENV, ""),
+            help=_(
+                "Lista permitida de plugins separados por coma (ruta exacta, "
+                "módulo o prefix:/sha256:hash). También vía COBRA_PLUGINS_ALLOWLIST."
+            ),
+        )
+        parser.set_defaults(
+            plugins_safe_mode=environ.get(PLUGINS_SAFE_MODE_ENV, "1").strip().lower() in {"1", "true", "yes", "on"}
         )
 
     def _configure_autocomplete(self, parser: CustomArgumentParser) -> None:
@@ -251,14 +383,16 @@ class CliApplication:
     def _parse_arguments(self, argv: List[str]) -> argparse.Namespace:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
-            
-        subparsers = self.parser.add_subparsers(dest="command", parser_class=CustomArgumentParser)
-        self.command_registry.register_base_commands(subparsers)
 
-        menu_parser = subparsers.add_parser("menu", help=_("Modo interactivo"))
-        menu_parser.set_defaults(cmd="menu")
+        preliminary_args, _ = self.parser.parse_known_args(argv)
+        configure_plugin_policy(
+            safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
+            allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
+        )
+        self._ensure_command_structure()
 
-        default_command = self.command_registry.get_default_command()
+        default_command_name = self.command_registry.get_default_command_name()
+        default_command = self.command_registry.commands.get(default_command_name)
         if default_command:
             self.parser.set_defaults(cmd=default_command)
         if autocomplete_available():
@@ -271,33 +405,108 @@ class CliApplication:
 
         return self.parser.parse_args(argv)
 
-    def _handle_execution_error(self, exc: Exception, language: str) -> int:
+    def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
         if isinstance(exc, ValueError):
             messages.mostrar_error(_("Value error: {}").format(str(exc)))
         elif isinstance(exc, FileNotFoundError):
             messages.mostrar_error(str(exc))
         else:
-            messages.mostrar_error(_("An unexpected error occurred"))
+            messages.mostrar_error(
+                _("An unexpected error occurred. Use --debug or -v to see the full traceback."),
+            )
 
         logging.exception("Error in execution")
-        print(format_traceback(exc, language))
+        if debug_activo:
+            print(format_traceback(exc, language))
         return 1
+
+    def _leer_input_seguro(self, prompt: str) -> Optional[str]:
+        try:
+            return input(prompt)
+        except EOFError:
+            messages.mostrar_info(_("Entrada finalizada (EOF). Cancelando menú interactivo."))
+            return None
+        except KeyboardInterrupt:
+            messages.mostrar_info(_("\nInterrupción detectada. Cancelando menú interactivo."))
+            return None
+
+    def _leer_opcion_validada(
+        self,
+        prompt: str,
+        opciones_validas: tuple[str, ...] | list[str],
+        campo: str,
+        max_intentos: int = 3,
+    ) -> tuple[Optional[str], int]:
+        opciones_normalizadas = tuple(opcion.strip().lower() for opcion in opciones_validas)
+        opciones_mostrables = ", ".join(opciones_normalizadas)
+
+        for intento in range(max_intentos):
+            valor = self._leer_input_seguro(prompt)
+            if valor is None:
+                return None, 0
+
+            valor_normalizado = valor.strip().lower()
+            if valor_normalizado in opciones_normalizadas:
+                return valor_normalizado, 0
+
+            restantes = max_intentos - intento - 1
+            messages.mostrar_error(
+                _(
+                    "Valor inválido para {campo}: '{valor}'. Opciones válidas: {opciones}."
+                ).format(
+                    campo=campo,
+                    valor=valor.strip(),
+                    opciones=opciones_mostrables,
+                )
+            )
+            if restantes > 0:
+                messages.mostrar_info(
+                    _("Intente nuevamente. Intentos restantes: {}.").format(restantes)
+                )
+
+        messages.mostrar_error(
+            _(
+                "Demasiados intentos inválidos para {campo}. Finalizando menú interactivo."
+            ).format(campo=campo)
+        )
+        return None, 1
 
     def run_menu(self) -> int:
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
+        if not sys.stdin.isatty():
+            messages.mostrar_error(
+                _("El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."),
+            )
+            return 1
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
         print(_("Lenguajes de origen disponibles:"))
         print(", ".join(ORIGIN_CHOICES))
 
-        if not input(_("¿Desea transpilar? (s/n): ")).strip().lower().startswith("s"):
+        desea_transpilar = self._leer_input_seguro(_("¿Desea transpilar? (s/n): "))
+        if desea_transpilar is None:
+            return 0
+        if not desea_transpilar.strip().lower().startswith("s"):
             return 0
 
-        if input(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): ")).strip().lower().startswith("s"):
-            archivo = input(_("Ruta al archivo Cobra: ")).strip()
-            destino = input(_("Lenguaje destino: ")).strip().lower()
+        transpilar_desde_cobra = self._leer_input_seguro(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): "))
+        if transpilar_desde_cobra is None:
+            return 0
+
+        if transpilar_desde_cobra.strip().lower().startswith("s"):
+            archivo = self._leer_input_seguro(_("Ruta al archivo Cobra: "))
+            if archivo is None:
+                return 0
+            destino, exit_code = self._leer_opcion_validada(
+                _("Lenguaje destino: "),
+                LANG_CHOICES,
+                "destino",
+            )
+            if destino is None:
+                return exit_code
+            archivo = archivo.strip()
             args = argparse.Namespace(archivo=archivo, tipo=destino, backend=None, tipos=None)
             compile_cmd = self.command_registry.commands.get("compilar")
             if not compile_cmd:
@@ -305,9 +514,24 @@ class CliApplication:
                 return 1
             return compile_cmd.run(args)
         else:
-            archivo = input(_("Ruta al archivo origen: ")).strip()
-            origen = input(_("Lenguaje origen: ")).strip().lower()
-            destino = input(_("Lenguaje destino: ")).strip().lower()
+            archivo = self._leer_input_seguro(_("Ruta al archivo origen: "))
+            if archivo is None:
+                return 0
+            origen, exit_code = self._leer_opcion_validada(
+                _("Lenguaje origen: "),
+                ORIGIN_CHOICES,
+                "origen",
+            )
+            if origen is None:
+                return exit_code
+            destino, exit_code = self._leer_opcion_validada(
+                _("Lenguaje destino: "),
+                tuple(REVERSE_DESTINO_CHOICES),
+                "destino",
+            )
+            if destino is None:
+                return exit_code
+            archivo = archivo.strip()
             inv_cmd = self.command_registry.commands.get("transpilar-inverso")
             if not inv_cmd:
                 messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"))
@@ -315,7 +539,14 @@ class CliApplication:
             args = argparse.Namespace(archivo=archivo, origen=origen, destino=destino)
             return inv_cmd.run(args)
 
-    def execute_command(self, args: argparse.Namespace) -> int:
+    def execute_command(self, args: argparse.Namespace, debug_activo: bool = False) -> int:
+        """Ejecuta el comando resuelto desde ``args``.
+
+        Pre-requisito recomendado: llamar a ``initialize()`` (o ``run()``) antes de
+        invocar este método, para asegurar que parser y registry estén listos.
+        Aun así, si el parser no existe en un estado parcial, devuelve un error
+        controlado en lugar de propagar ``AttributeError``.
+        """
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
             
@@ -323,7 +554,14 @@ class CliApplication:
         if command == "menu":
             return self.run_menu()
         if not command:
-            self.parser.print_help()
+            if self.parser is not None:
+                self.parser.print_help()
+            else:
+                messages.mostrar_error(
+                    _("CLI no inicializada completamente: parser no disponible. "
+                      "Ejecute initialize() antes de execute_command()."),
+                )
+                return 1
             messages.mostrar_error(_("Comando inválido. Use --help para ver opciones."))
             return 1
             
@@ -331,7 +569,7 @@ class CliApplication:
             result = command.run(args)
             return 0 if result is None else result
         except Exception as exc:
-            return self._handle_execution_error(exc, args.lang)
+            return self._handle_execution_error(exc, args.lang, debug_activo)
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
@@ -343,7 +581,10 @@ class CliApplication:
 
             try:
                 args = self._parse_arguments(argv)
-                log_level = logging.DEBUG if args.verbose > 0 or args.debug else logging.INFO
+                if self._command_requires_sqlite_db_key(args):
+                    self._ensure_sqlite_db_key(args)
+                debug_activo = args.verbose > 0 or args.debug
+                log_level = logging.DEBUG if debug_activo else logging.INFO
                 logging.getLogger().setLevel(log_level)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
@@ -355,7 +596,7 @@ class CliApplication:
                     )
                 messages.mostrar_logo()
 
-                return self.execute_command(args)
+                return self.execute_command(args, debug_activo=debug_activo)
             except Exception as e:
                 logging.exception("Fatal error in application")
                 messages.mostrar_error(_("Fatal error: {}").format(str(e)))

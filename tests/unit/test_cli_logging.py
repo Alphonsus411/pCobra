@@ -61,3 +61,35 @@ def test_cli_no_debug(caplog):
     assert ret == 0
     assert logging.getLogger().getEffectiveLevel() == logging.INFO
     assert not any(rec.levelno == logging.DEBUG for rec in caplog.records)
+
+
+def test_cli_run_twice_keeps_third_party_logging_operational():
+    logging.getLogger().handlers.clear()
+    app = CliApplication()
+
+    with patch.object(app, "execute_command", return_value=0), \
+         patch.object(app, "_parse_arguments", side_effect=lambda argv: app.parser.parse_args(argv)), \
+         patch("cobra.cli.cli.messages.mostrar_logo"):
+        assert app.run([]) == 0
+        assert app.run([]) == 0
+
+    third_party_logger = logging.getLogger("third.party")
+    third_party_logger.setLevel(logging.INFO)
+    third_party_logger.propagate = False
+    records = []
+
+    class _ListHandler(logging.Handler):
+        def emit(self, record):
+            records.append(record)
+
+    handler = _ListHandler()
+    third_party_logger.addHandler(handler)
+    try:
+        third_party_logger.info("logging still active after two runs")
+    finally:
+        third_party_logger.removeHandler(handler)
+        handler.close()
+        third_party_logger.propagate = True
+
+    assert len(records) == 1
+    assert records[0].getMessage() == "logging still active after two runs"

@@ -35,14 +35,14 @@ class CobraHubClient:
     MAX_RETRIES = 3
     VALID_MODULE_NAME = re.compile(r"^[\w\-\.]+$")
 
-    def __init__(self):
+    def __init__(self, base_url: Optional[str] = None):
         """Inicializa el cliente con configuración y sesión HTTP."""
-        self.base_url = self._get_validated_base_url()
+        self.base_url = self._get_validated_base_url(base_url)
         self.session = self._configurar_sesion()
 
-    def _get_validated_base_url(self) -> str:
-        """Obtiene y valida la URL base desde variables de entorno."""
-        url = os.environ.get("COBRAHUB_URL", "https://cobrahub.example.com/api")
+    def _get_validated_base_url(self, base_url: Optional[str] = None) -> str:
+        """Obtiene y valida la URL base inyectada o desde variables de entorno."""
+        url = base_url or os.environ.get("COBRAHUB_URL", "https://cobrahub.example.com/api")
         if len(url) > 2048:  # Límite común para URLs
             raise ValueError(_("URL de CobraHub demasiado larga"))
         return url
@@ -307,16 +307,14 @@ class CobraHubClient:
 # Funciones conveniencia para interacción sencilla con CobraHub.
 def publicar_modulo(ruta: str) -> bool:
     """Publica un módulo en CobraHub."""
-    os.environ["COBRAHUB_URL"] = COBRAHUB_URL
-    return CobraHubClient().publicar_modulo(ruta)
+    return CobraHubClient(base_url=COBRAHUB_URL).publicar_modulo(ruta)
 
 
 def descargar_modulo(
     nombre: str, destino: str, base_permitida: Optional[str] = None
 ) -> bool:
     """Descarga un módulo desde CobraHub con redirecciones HTTPS y autorizadas."""
-    os.environ["COBRAHUB_URL"] = COBRAHUB_URL
-    return CobraHubClient().descargar_modulo(nombre, destino, base_permitida)
+    return CobraHubClient(base_url=COBRAHUB_URL).descargar_modulo(nombre, destino, base_permitida)
 
 
 __all__ = ["CobraHubClient", "publicar_modulo", "descargar_modulo"]

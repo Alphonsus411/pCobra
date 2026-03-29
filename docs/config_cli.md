@@ -18,6 +18,48 @@ La interfaz de línea de comandos de Cobra puede personalizarse mediante un arch
 
 Las variables de entorno `COBRA_LANG`, `COBRA_DEFAULT_COMMAND`, `COBRA_LOG_FORMAT` y `COBRA_PROGRAM_NAME` permiten sobrescribir estos valores.
 
+## Política de seguridad para `SQLITE_DB_KEY` en la CLI
+
+Para comandos que requieren base de datos (`cache`, `compilar`, `benchtranspilers`,
+`qualia`, `interactive`), la CLI exige `SQLITE_DB_KEY`.
+
+- **Producción/CI recomendado:** exporta siempre una clave real (`SQLITE_DB_KEY`)
+  gestionada por tu secret manager.
+- **Desarrollo local controlado:** se permite clave efímera **solo** con triple
+  confirmación explícita en la misma ejecución:
+  1. `COBRA_DEV_MODE=1`
+  2. `COBRA_DEV_ALLOW_EPHEMERAL_KEY=1`
+  3. flag CLI `--dev-ephemeral-key`
+
+Cuando se cumplen las tres condiciones, la CLI genera una clave nueva por
+ejecución con `secrets.token_urlsafe(...)` y registra un warning de seguridad no
+sensible indicando que se está usando una clave efímera de desarrollo.
+
+### Ejemplos seguros de arranque local
+
+#### Opción A (preferida): clave explícita
+
+```bash
+export SQLITE_DB_KEY="$(python - <<'PY'
+import secrets
+print(secrets.token_urlsafe(32))
+PY
+)"
+
+cobra compilar ejemplo.co --tipo python
+```
+
+#### Opción B (solo dev local): clave efímera por ejecución
+
+```bash
+COBRA_DEV_MODE=1 \
+COBRA_DEV_ALLOW_EPHEMERAL_KEY=1 \
+cobra --dev-ephemeral-key compilar ejemplo.co --tipo python
+```
+
+> Nota: evita esta opción en CI/prod; está diseñada únicamente para sesiones
+> locales temporales.
+
 ## Ejemplo
 
 ```toml

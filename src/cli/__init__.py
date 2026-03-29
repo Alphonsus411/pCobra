@@ -1,31 +1,19 @@
 """Shim histórico para el paquete de nivel superior ``cli``.
 
-Permite ejecutar ``python -m cli.cli`` y otras importaciones heredadas que
-asumen que ``cli`` es un paquete de nivel superior. Reexporta todas las
-utilidades expuestas por :mod:`pcobra.cli` y registra alias en
-``sys.modules`` para los submódulos relevantes.
-
-Ruta canónica runtime: ``src/pcobra/cobra/cli``.
+Permite ejecutar ``python -m cli.cli`` y ``import cli`` como compatibilidad
+legacy sin colisionar con ``pcobra.cli`` durante la carga.
 """
 
 from __future__ import annotations
 
 import importlib
+
+_pcobra_cli = importlib.import_module("pcobra.cli")
+
 import sys
+sys.modules.setdefault("pcobra.cli", _pcobra_cli)
 
-from pcobra.cli import *  # noqa: F401,F403 - reexportado deliberadamente
-from pcobra.cli import __all__  # type: ignore
+_pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cli")
 
-_ALIASES = {
-    "cli.cli": "pcobra.cobra.cli.cli",
-    "cli.commands": "pcobra.cobra.cli.commands",
-    "cli.utils": "pcobra.cobra.cli.utils",
-    "cli.utils.semver": "pcobra.cobra.cli.utils.semver",
-}
-
-for alias, destino in _ALIASES.items():
-    try:
-        modulo = importlib.import_module(destino)
-    except ModuleNotFoundError:  # pragma: no cover - alias opcional
-        continue
-    sys.modules.setdefault(alias, modulo)
+# Reexportar la API pública del módulo canónico.
+from pcobra.cli import *  # noqa: F401,F403

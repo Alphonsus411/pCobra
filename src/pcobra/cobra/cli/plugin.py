@@ -6,10 +6,13 @@ API pública relacionada con plugins.
 """
 
 import logging
+import os
+import hashlib
 from abc import ABC, abstractmethod
 from importlib import import_module
 from importlib.metadata import entry_points
-from typing import List, Optional, Any
+from dataclasses import dataclass
+from typing import List, Optional, Any, Iterable
 from argparse import ArgumentParser
 
 from pcobra.cobra.cli.commands.base import BaseCommand
@@ -23,6 +26,83 @@ from pcobra.cobra.cli.plugin_registry import (
 DEFAULT_VERSION = "0.1"
 DEFAULT_DESCRIPTION = ""
 PLUGIN_GROUP = "cobra.plugins"
+PLUGINS_ALLOWLIST_ENV = "COBRA_PLUGINS_ALLOWLIST"
+PLUGINS_SAFE_MODE_ENV = "COBRA_PLUGINS_SAFE_MODE"
+
+
+class PluginPolicyError(RuntimeError):
+    """Error cuando un plugin incumple la política de confianza."""
+
+
+@dataclass(frozen=True)
+class PluginPolicy:
+    """Política de confianza para carga de plugins.
+
+    safe_mode=True implica bloqueo estricto de plugins no permitidos.
+    """
+
+    safe_mode: bool = True
+    allowlist: tuple[str, ...] = ()
+
+
+_PLUGIN_POLICY = PluginPolicy()
+
+
+def _parse_allowlist(value: Optional[str]) -> tuple[str, ...]:
+    if value is None:
+        value = os.environ.get(PLUGINS_ALLOWLIST_ENV, "")
+    return tuple(item.strip() for item in value.split(",") if item.strip())
+
+
+def _is_truthy(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def configure_plugin_policy(
+    safe_mode: Optional[bool] = None,
+    allowlist: Optional[Iterable[str] | str] = None,
+) -> PluginPolicy:
+    """Configura la política global de plugins (flags/env)."""
+    global _PLUGIN_POLICY
+    if safe_mode is None:
+        safe_mode = _is_truthy(os.environ.get(PLUGINS_SAFE_MODE_ENV, "1"))
+
+    if allowlist is None or isinstance(allowlist, str):
+        allowlist_values = _parse_allowlist(allowlist)
+    else:
+        allowlist_values = tuple(item.strip() for item in allowlist if item and item.strip())
+
+    _PLUGIN_POLICY = PluginPolicy(safe_mode=bool(safe_mode), allowlist=allowlist_values)
+    logging.getLogger(__name__).debug(
+        "Política de plugins configurada: safe_mode=%s allowlist=%s",
+        _PLUGIN_POLICY.safe_mode,
+        list(_PLUGIN_POLICY.allowlist),
+    )
+    return _PLUGIN_POLICY
+
+
+def get_plugin_policy() -> PluginPolicy:
+    """Obtiene la política de plugins activa."""
+    return _PLUGIN_POLICY
+
+
+def _plugin_allowed(ruta: str, module_name: str) -> bool:
+    policy = get_plugin_policy()
+    if not policy.safe_mode:
+        return True
+    if not policy.allowlist:
+        return False
+    digest = hashlib.sha256(ruta.encode("utf-8")).hexdigest()
+    for rule in policy.allowlist:
+        if rule.startswith("sha256:") and digest == rule.split(":", 1)[1].lower():
+            return True
+        if rule.startswith("prefix:") and module_name.startswith(rule.split(":", 1)[1]):
+            return True
+        if route_matches := (ruta == rule):
+            return route_matches
+        if module_name == rule:
+            return True
+    return False
 
 
 class PluginInterface(ABC):
@@ -91,13 +171,18 @@ def descubrir_plugins() -> List[PluginInterface]:
         eps = entry_points().get(PLUGIN_GROUP, [])
 
     for ep in eps:
-        instancia = cargar_plugin_seguro(ep.value)
-        if instancia is not None:
-            plugins.append(instancia)
+        try:
+            instancia = cargar_plugin_seguro(ep.value, origen=f"entry_point:{ep.name}")
+            if instancia is not None:
+                plugins.append(instancia)
+        except PluginPolicyError:
+            if get_plugin_policy().safe_mode:
+                raise
+            logging.warning("Plugin bloqueado por política (modo inseguro): %s", ep.value)
     return plugins
 
 
-def cargar_plugin_seguro(ruta: str) -> Optional[PluginInterface]:
+def cargar_plugin_seguro(ruta: str, origen: Optional[str] = None) -> Optional[PluginInterface]:
     """Carga de forma segura un plugin a partir de ``modulo:Clase``.
     
     Args:
@@ -115,6 +200,14 @@ def cargar_plugin_seguro(ruta: str) -> Optional[PluginInterface]:
     except ValueError:
         logging.error(f"Ruta de plugin inválida: {ruta}")
         return None
+
+    if not _plugin_allowed(ruta, module_name):
+        msg = (
+            f"Plugin '{ruta}' rechazado por política de confianza. "
+            f"Configure {PLUGINS_ALLOWLIST_ENV} o desactive --plugins-safe-mode."
+        )
+        logging.error(msg)
+        raise PluginPolicyError(msg)
 
     try:
         module = import_module(module_name)
@@ -149,10 +242,25 @@ def cargar_plugin_seguro(ruta: str) -> Optional[PluginInterface]:
     version = getattr(instancia, "version", DEFAULT_VERSION)
     description = getattr(instancia, "description", DEFAULT_DESCRIPTION)
     registrar_plugin(instancia.name, version, description)
+    plugin_origin = getattr(module, "__file__", "origen_desconocido")
+    logging.info(
+        "AUDIT plugin_cargado nombre=%s version=%s origen=%s ruta=%s entrypoint=%s",
+        instancia.name,
+        version,
+        plugin_origin,
+        ruta,
+        origen or "n/a",
+    )
     return instancia
 
 
 __all__ = [
+    "PluginPolicy",
+    "PluginPolicyError",
+    "PLUGINS_ALLOWLIST_ENV",
+    "PLUGINS_SAFE_MODE_ENV",
+    "configure_plugin_policy",
+    "get_plugin_policy",
     "PluginInterface",
     "PluginCommand",
     "descubrir_plugins",

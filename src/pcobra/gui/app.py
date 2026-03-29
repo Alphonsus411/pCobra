@@ -1,58 +1,39 @@
 """Aplicación gráfica básica usando Flet para ejecutar código Cobra."""
 
-import io
-import sys
-import flet as ft
+from typing import TYPE_CHECKING
 
-from pcobra.cobra.core import Lexer, Parser
-from pcobra.cobra.transpilers.target_utils import target_cli_choices
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.gui import runtime
+
+if TYPE_CHECKING:
+    import flet as ft
 
 
-def _ejecutar_codigo(codigo: str) -> str:
-    """Ejecuta código Cobra y captura la salida impresa."""
-    buffer = io.StringIO()
-    stdout = sys.stdout
-    sys.stdout = buffer
-    try:
-        tokens = Lexer(codigo).tokenizar()
-        ast = Parser(tokens).parsear()
-        InterpretadorCobra().ejecutar_ast(ast)
-    finally:
-        sys.stdout = stdout
-    return buffer.getvalue()
-
-
-def _transpilar_codigo(codigo: str, lang: str) -> str:
-    """Transpila código Cobra al lenguaje especificado."""
-    tokens = Lexer(codigo).tokenizar()
-    ast = Parser(tokens).parsear()
-    transp = TRANSPILERS[lang]()
-    return transp.generate_code(ast)
-
-
-def _gui_target_choices() -> tuple[str, ...]:
-    """Devuelve targets canónicos visibles en GUI preservando el orden oficial."""
-    return target_cli_choices(set(OFFICIAL_TARGETS) & set(TRANSPILERS))
-
-
-def main(page: ft.Page):
+def main(page: "ft.Page"):
     """Función principal para Flet."""
+    ft = runtime.require_flet()
 
     entrada = ft.TextField(multiline=True, expand=True)
     salida = ft.Text(value="", selectable=True)
-    lenguajes = list(_gui_target_choices())
+    lenguajes = list(runtime.gui_target_choices())
     selector = ft.Dropdown(options=[ft.dropdown.Option(lang) for lang in lenguajes])
     activar = ft.Switch(label="Transpilar")
 
-    def ejecutar_handler(e):
-        if activar.value and selector.value in TRANSPILERS:
-            salida.value = _transpilar_codigo(entrada.value, selector.value)
-        else:
-            salida.value = _ejecutar_codigo(entrada.value)
-        page.update()
+    def ejecutar_handler(_e):
+        deps = runtime.require_gui_dependencies()
+        codigo = runtime.normalizar_codigo(entrada.value)
+        try:
+            if activar.value and selector.value in deps["TRANSPILERS"]:
+                salida.value = runtime.transpilar_codigo(codigo, selector.value)
+            else:
+                salida.value = runtime.ejecutar_codigo(codigo)
+        except Exception as exc:
+            salida.value = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
+        finally:
+            page.update()
 
     page.add(
         entrada,

@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+import inspect
 from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
@@ -41,6 +42,7 @@ PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
 TRANSPILERS = build_official_transpilers()
+_ENTRYPOINTS_LOADED = False
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -58,8 +60,93 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
                 supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
             )
         )
+    _validate_transpiler_class_or_raise(
+        transpiler_cls,
+        backend=canonical,
+        context=context,
+    )
     TRANSPILERS[canonical] = transpiler_cls
     return canonical
+
+
+def _validate_transpiler_class_or_raise(transpiler_cls, *, backend: str, context: str) -> None:
+    """Valida el contrato mínimo de un transpilador externo antes de registrarlo."""
+    if not isinstance(transpiler_cls, type):
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "se esperaba una clase, recibido {type_name}."
+            ).format(
+                backend=backend,
+                context=context,
+                type_name=type(transpiler_cls).__name__,
+            )
+        )
+
+    if not callable(transpiler_cls):
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "la clase '{class_name}' no es callable."
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+            )
+        )
+
+    generate_code = getattr(transpiler_cls, "generate_code", None)
+    if not callable(generate_code):
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "la clase '{class_name}' no implementa el método callable 'generate_code'."
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+            )
+        )
+
+    try:
+        signature = inspect.signature(transpiler_cls)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "no se pudo inspeccionar la firma de '{class_name}': {cause}"
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+                cause=exc,
+            )
+        ) from exc
+
+    required_params = [
+        p.name
+        for p in signature.parameters.values()
+        if p.default is inspect.Signature.empty
+        and p.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+    ]
+    if required_params:
+        raise ValueError(
+            _(
+                "Contrato inválido para backend '{backend}' en {context}: "
+                "la clase '{class_name}' requiere argumentos de inicialización "
+                "({params}). El protocolo soportado por plugins exige constructor sin argumentos."
+            ).format(
+                backend=backend,
+                context=context,
+                class_name=transpiler_cls.__name__,
+                params=", ".join(required_params),
+            )
+        )
 
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
@@ -96,9 +183,18 @@ def _iter_transpiler_entry_points():
 
 
 
-def load_entrypoint_transpilers() -> None:
+def load_entrypoint_transpilers() -> tuple[int, int, int]:
     """Carga entry points de transpiladores sin permitir aliases o targets no oficiales."""
-    for ep in _iter_transpiler_entry_points():
+    loaded = 0
+    rejected = 0
+    skipped_existing = 0
+    entrypoint_items = list(_iter_transpiler_entry_points())
+    logging.info(
+        "Iniciando carga de plugins de transpiladores por entry points: total=%d",
+        len(entrypoint_items),
+    )
+
+    for ep in entrypoint_items:
         try:
             normalized_ep_name = _validate_entrypoint_backend_or_raise(
                 ep.name,
@@ -115,19 +211,43 @@ def load_entrypoint_transpilers() -> None:
                     ep.name,
                     normalized_ep_name,
                 )
+                skipped_existing += 1
                 continue
             register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
+            loaded += 1
         except ValueError as exc:
+            rejected += 1
             logging.error(
-                "Plugin de transpilador '%s' rechazado por política oficial: %s",
+                "Plugin de transpilador '%s' rechazado por política/contrato: %s",
                 ep.name,
                 exc,
             )
         except Exception as exc:
-            logging.error("Error cargando transpilador %s: %s", ep.name, exc)
+            rejected += 1
+            logging.error("Error cargando transpilador '%s': %s", ep.name, exc)
+
+    logging.info(
+        (
+            "Carga de plugins de transpiladores finalizada: "
+            "total=%d cargados=%d rechazados=%d omitidos=%d"
+        ),
+        len(entrypoint_items),
+        loaded,
+        rejected,
+        skipped_existing,
+    )
+    return loaded, rejected, skipped_existing
 
 
-load_entrypoint_transpilers()
+def _ensure_entrypoints_loaded_once() -> None:
+    """Asegura la carga idempotente de entry points de transpiladores."""
+    global _ENTRYPOINTS_LOADED
+    if _ENTRYPOINTS_LOADED:
+        logging.debug("Carga de plugins por entry points omitida: ya fue ejecutada.")
+        return
+
+    load_entrypoint_transpilers()
+    _ENTRYPOINTS_LOADED = True
 
 LANG_CHOICES = list(official_transpiler_targets())
 TARGETS_HELP = build_target_help_by_tier(tuple(LANG_CHOICES))
@@ -223,6 +343,8 @@ class CompileCommand(BaseCommand):
         except ValueError as e:
             mostrar_error(str(e))
             return 1
+
+        _ensure_entrypoints_loaded_once()
 
         tipos_argument = getattr(args, "tipos", None)
         if isinstance(tipos_argument, str):

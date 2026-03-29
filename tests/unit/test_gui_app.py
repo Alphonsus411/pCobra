@@ -1,37 +1,115 @@
-"""Pruebas para funciones de la aplicación GUI basadas en Flet."""
+"""Smoke tests para el entrypoint GUI ``pcobra.gui.app``."""
 
-import importlib
-import sys
+from __future__ import annotations
+
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-import pytest
+from pcobra.gui import app
 
 
-@pytest.fixture
-def app_module(monkeypatch):
-    """Importa el módulo de la app con Flet y transpiladores simulados."""
-    monkeypatch.setitem(sys.modules, "flet", MagicMock())
+def _fake_flet():
+    class TextField:
+        def __init__(self, **_kwargs):
+            self.value = ""
 
-    class DummyTranspiler:
-        def generate_code(self, ast):
-            return "codigo"
+    class Text:
+        def __init__(self, value="", **_kwargs):
+            self.value = value
 
-    dummy_compile = SimpleNamespace(TRANSPILERS={"python": DummyTranspiler})
-    monkeypatch.setitem(sys.modules, "cobra.cli.commands.compile_cmd", dummy_compile)
+    class Dropdown:
+        def __init__(self, options=None, **_kwargs):
+            self.options = options or []
+            self.value = None
 
-    module = importlib.import_module("gui.app")
-    importlib.reload(module)
-    return module
+    class Switch:
+        def __init__(self, **_kwargs):
+            self.value = False
+
+    class ElevatedButton:
+        def __init__(self, text, on_click=None):
+            self.text = text
+            self.on_click = on_click
+
+    class Page:
+        def __init__(self):
+            self.controls = []
+            self.update = MagicMock()
+
+        def add(self, *args):
+            self.controls.extend(args)
+
+    return SimpleNamespace(
+        TextField=TextField,
+        Text=Text,
+        Dropdown=Dropdown,
+        Switch=Switch,
+        ElevatedButton=ElevatedButton,
+        Page=Page,
+        dropdown=SimpleNamespace(Option=lambda v: v),
+    )
 
 
-def test_ejecutar_codigo_captura_salida(app_module):
-    codigo = "imprimir('Hola, mundo!')"
-    salida = app_module._ejecutar_codigo(codigo)
-    assert salida == "Hola, mundo!\n"
+def test_main_renderiza_componentes_minimos(monkeypatch):
+    ft = _fake_flet()
+    monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        app.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+    monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(app.runtime, "ejecutar_codigo", lambda _codigo: "ok")
+    monkeypatch.setattr(app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
+    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+
+    page = ft.Page()
+    app.main(page)
+
+    botones = [c for c in page.controls if isinstance(c, ft.ElevatedButton)]
+    assert [b.text for b in botones] == ["Ejecutar"]
 
 
-def test_transpilar_codigo_no_vacio(app_module):
-    codigo = "imprimir('Hola, mundo!')"
-    generado = app_module._transpilar_codigo(codigo, "python")
-    assert generado.strip() != ""
+def test_main_handler_actualiza_salida(monkeypatch):
+    ft = _fake_flet()
+    monkeypatch.setattr(app.runtime, "require_flet", lambda: ft)
+    monkeypatch.setattr(app.runtime, "gui_target_choices", lambda: ("python",))
+    monkeypatch.setattr(
+        app.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
+    monkeypatch.setattr(app.runtime, "normalizar_codigo", lambda value: value or "")
+    monkeypatch.setattr(app.runtime, "ejecutar_codigo", lambda _codigo: "ejecutado")
+    monkeypatch.setattr(app.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
+    monkeypatch.setattr(app.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
+
+    page = ft.Page()
+    app.main(page)
+
+    entrada = next(c for c in page.controls if isinstance(c, ft.TextField))
+    selector = next(c for c in page.controls if isinstance(c, ft.Dropdown))
+    activar = next(c for c in page.controls if isinstance(c, ft.Switch))
+    salida = next(c for c in page.controls if isinstance(c, ft.Text))
+    ejecutar_btn = next(
+        c for c in page.controls if isinstance(c, ft.ElevatedButton) and c.text == "Ejecutar"
+    )
+
+    entrada.value = "imprimir('x')"
+    ejecutar_btn.on_click(None)
+    assert salida.value == "ejecutado"
+
+    activar.value = True
+    selector.value = "python"
+    ejecutar_btn.on_click(None)
+    assert salida.value == "transpilado"
+    assert page.update.call_count == 2
