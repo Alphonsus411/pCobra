@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import sys
 
+from pcobra import cli as _pcobra_cli
 from pcobra.cobra.cli.cli import main as _pcobra_main
+
+_pcobra_cli._activar_compatibilidad_legacy_si_corresponde("cli.cli")
 
 
 def main(argv: list[str] | None = None) -> int:

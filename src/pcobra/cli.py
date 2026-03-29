@@ -19,33 +19,26 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
 
 logger = logging.getLogger(__name__)
 
-
-def _alias_module(origen: str, destino: str):
-    """Registra ``destino`` como alias del módulo ``origen``."""
-
-    modulo = import_module(origen)
-    sys.modules.setdefault(destino, modulo)
-    return modulo
+# Habilita imports de submódulos canónicos como ``pcobra.cli.commands`` y
+# ``pcobra.cli.cli`` sin reemplazar ``pcobra.cli`` por otro objeto.
+_CANONICAL_CLI_PACKAGE_DIR = Path(__file__).resolve().parent / "cobra" / "cli"
+if _CANONICAL_CLI_PACKAGE_DIR.is_dir():
+    __path__ = [str(_CANONICAL_CLI_PACKAGE_DIR)]
 
 
-def _configurar_alias_paquete_cli() -> None:
-    """Expone ``pcobra.cobra.cli`` como si fuese ``pcobra.cli``."""
+def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:
+    """Activa alias legacy mínimos solo para entrypoints heredados."""
 
-    paquete_cli = _alias_module("pcobra.cobra.cli", "pcobra.cli")
-    if hasattr(paquete_cli, "__path__"):
-        globals()["__path__"] = list(paquete_cli.__path__)  # type: ignore[assignment]
+    if ruta_modulo not in {"cli", "cli.cli"}:
+        return
 
-    _alias_module("pcobra.cobra.cli.cli", "pcobra.cli.cli")
+    sys.modules.setdefault("cli", sys.modules[__name__])
+    cli_entrypoint = import_module("pcobra.cli.cli")
+    sys.modules.setdefault("cli.cli", cli_entrypoint)
 
 
-_configurar_alias_paquete_cli()
-
-# Alias explícitos para compatibilidad histórica con ``import cli``.
-sys.modules.setdefault("cli", sys.modules["pcobra.cli"])
-sys.modules.setdefault("cli.cli", sys.modules["pcobra.cli.cli"])
-
-# Reexporte de conveniencia para código legado.
-cli = sys.modules["pcobra.cli.cli"]
+# Reexporte de conveniencia para código legado dentro de ``pcobra``.
+cli = import_module("pcobra.cli.cli")
 
 
 def configurar_entorno() -> None:
