@@ -467,7 +467,10 @@ def _worker(
 
 
 def ejecutar_en_sandbox(
-    codigo: str, timeout: int = 5, memoria_mb: int | None = None
+    codigo: str,
+    timeout: int = 5,
+    memoria_mb: int | None = None,
+    allow_insecure_fallback: bool = False,
 ) -> str:
     """Ejecuta una cadena de código Python de forma segura.
 
@@ -475,16 +478,27 @@ def ejecutar_en_sandbox(
     proceso hijo. ``timeout`` especifica el tiempo límite en segundos y
     ``memoria_mb`` el máximo de memoria en megabytes. Se lanza ``TimeoutError``
     o ``MemoryError`` si se exceden estos límites.
+
+    Por defecto no se permite fallback inseguro. Cuando
+    ``allow_insecure_fallback=True`` y ``RestrictedPython`` no está instalado,
+    se ejecuta el código en un subproceso sin restricciones de bytecode seguro.
+    Esta opción es sólo para desarrollo y reduce significativamente la
+    seguridad del aislamiento.
     """
     _verificar_codigo_prohibido(codigo)
 
     if not HAS_RESTRICTED_PYTHON:
-        return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
+        if allow_insecure_fallback:
+            return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
+        raise RuntimeError(
+            "La sandbox segura requiere RestrictedPython instalado. "
+            "Instálalo o habilita allow_insecure_fallback=True solo en desarrollo."
+        )
 
     try:
         byte_code = compile_restricted(codigo, "<string>", "exec")
-    except SyntaxError as se:  # pragma: no cover - comportamiento simple
-        return _run_in_subprocess(codigo, timeout=timeout, memoria_mb=memoria_mb)
+    except SyntaxError:
+        raise
 
     code_bytes = marshal.dumps(byte_code)
     queue: multiprocessing.Queue = multiprocessing.Queue()
