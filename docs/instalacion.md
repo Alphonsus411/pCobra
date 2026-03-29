@@ -75,6 +75,34 @@ Si prefieres evitar los scripts incluidos en el repositorio, estos pasos usan
 Con este flujo puedes recrear rápidamente un entorno limpio después de limpiar
 el árbol de trabajo o al migrar a una máquina nueva.
 
+## Recuperación para usuarios afectados por la dependencia runtime de benchmarks
+
+Si estabas en una versión anterior y el comando `cobra` fallaba por referencias a
+`scripts.benchmarks` durante la ejecución, recupera el entorno con este flujo:
+
+```bash
+# 1) Desinstalar la versión previa
+python -m pip uninstall -y pcobra
+
+# 2) Limpiar y recrear entorno virtual
+deactivate 2>/dev/null || true
+rm -rf .venv
+python -m venv .venv
+source .venv/bin/activate      # Linux/macOS
+# .\\.venv\\Scripts\\activate  # Windows
+
+# 3) Reinstalar la versión corregida
+python -m pip install --upgrade pip
+python -m pip install pcobra==10.0.13
+```
+
+Validación rápida:
+
+```bash
+cobra --version
+python -c "from pcobra.cli import main; print(main(['--ayuda']))"
+```
+
 ## Gestión reproducible de dependencias
 
 `pyproject.toml` es la fuente única de verdad para dependencias de ejecución y extras (`dev`, `docs`, `notebooks`, etc.).
