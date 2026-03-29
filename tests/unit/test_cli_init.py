@@ -35,10 +35,11 @@ def _instalar_stubs_cli(monkeypatch: pytest.MonkeyPatch):
 
     modulo_pcobra_cli = ModuleType("pcobra.cli")
 
-    def _activar_stub(ruta_modulo: str) -> None:
+    def _build_stub(ruta_modulo: str):
         llamadas_legacy.append(ruta_modulo)
+        return _main_stub
 
-    modulo_pcobra_cli._activar_compatibilidad_legacy_si_corresponde = _activar_stub
+    modulo_pcobra_cli.build_legacy_cli_shim_main = _build_stub
     monkeypatch.setitem(sys.modules, "pcobra.cli", modulo_pcobra_cli)
 
     return llamadas_main, llamadas_legacy
@@ -83,5 +84,4 @@ def test_wrappers_ejecutan_como_script(wrapper_path, legacy_route, monkeypatch):
     assert exc_info.value.code == 37
     assert llamadas_main == [None]
     assert llamadas_legacy == [legacy_route]
-
 

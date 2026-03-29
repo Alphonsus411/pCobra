@@ -494,6 +494,13 @@ Entrypoints oficiales de CLI:
 - `pcobra.cli:main` (script `cobra` instalado por packaging).
 - `python -m pcobra` (passthrough directo a `pcobra.cli:main`).
 
+Rutas soportadas explícitamente para compatibilidad de arranque/import:
+
+- `pcobra.cli` ✅ ruta canónica.
+- `cobra.cli.cli` ✅ shim legacy soportado.
+- `python -m pcobra` ✅ ejecuta la ruta canónica.
+- `python -m cobra.cli.cli` ✅ ejecuta el shim legacy canónico.
+
 El módulo `src/pcobra/core/main.py` se conserva como ejemplo/demo interno y no
 debe usarse como entrypoint productivo.
 
