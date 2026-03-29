@@ -8,7 +8,8 @@ from pcobra.cobra.cli.commands import compile_cmd
 
 
 class DummyTranspiler:
-    pass
+    def generate_code(self, ast):
+        return str(ast)
 
 
 def test_register_transpiler_backend_rechaza_backend_no_oficial(monkeypatch):
@@ -55,7 +56,7 @@ def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeyp
     compile_cmd.load_entrypoint_transpilers()
 
     assert compile_cmd.TRANSPILERS == {}
-    assert "rechazado por política oficial" in caplog.text
+    assert "rechazado por política/contrato" in caplog.text
     assert "Target no soportado: 'fantasy'" in caplog.text
 
 
@@ -75,7 +76,7 @@ def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, capl
     compile_cmd.load_entrypoint_transpilers()
 
     assert compile_cmd.TRANSPILERS == {}
-    assert "rechazado por política oficial" in caplog.text
+    assert "rechazado por política/contrato" in caplog.text
     assert "c++" in caplog.text
 
 
@@ -96,7 +97,7 @@ def test_load_entrypoint_transpilers_rechaza_backends_legacy_o_ambiguos(monkeypa
     compile_cmd.load_entrypoint_transpilers()
 
     assert compile_cmd.TRANSPILERS == {}
-    assert "rechazado por política oficial" in caplog.text
+    assert "rechazado por política/contrato" in caplog.text
     assert "legacy/ambiguo" in caplog.text
 
 
@@ -145,6 +146,97 @@ def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(m
 
     assert compile_cmd.TRANSPILERS == {"python": object}
     assert "ya existe en el registro canónico" in caplog.text
+
+
+def test_load_entrypoint_transpilers_rechaza_clase_sin_generate_code(monkeypatch, caplog):
+    class InvalidNoGenerateCode:
+        pass
+
+    ep = importlib.metadata.EntryPoint(
+        name="python",
+        value="fake.module:InvalidNoGenerateCode",
+        group="cobra.transpilers",
+    )
+    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(
+        compile_cmd,
+        "_iter_transpiler_entry_points",
+        lambda: importlib.metadata.EntryPoints((ep,)),
+    )
+    monkeypatch.setattr(
+        compile_cmd,
+        "import_module",
+        lambda _name: types.SimpleNamespace(InvalidNoGenerateCode=InvalidNoGenerateCode),
+    )
+
+    loaded, rejected, skipped = compile_cmd.load_entrypoint_transpilers()
+
+    assert (loaded, rejected, skipped) == (0, 1, 0)
+    assert compile_cmd.TRANSPILERS == {}
+    assert "python" in caplog.text
+    assert "no implementa el método callable 'generate_code'" in caplog.text
+
+
+def test_load_entrypoint_transpilers_rechaza_objeto_que_no_es_clase(monkeypatch, caplog):
+    non_class_object = object()
+    ep = importlib.metadata.EntryPoint(
+        name="python",
+        value="fake.module:not_a_class",
+        group="cobra.transpilers",
+    )
+    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(
+        compile_cmd,
+        "_iter_transpiler_entry_points",
+        lambda: importlib.metadata.EntryPoints((ep,)),
+    )
+    monkeypatch.setattr(
+        compile_cmd,
+        "import_module",
+        lambda _name: types.SimpleNamespace(not_a_class=non_class_object),
+    )
+
+    loaded, rejected, skipped = compile_cmd.load_entrypoint_transpilers()
+
+    assert (loaded, rejected, skipped) == (0, 1, 0)
+    assert compile_cmd.TRANSPILERS == {}
+    assert "python" in caplog.text
+    assert "se esperaba una clase" in caplog.text
+
+
+def test_load_entrypoint_transpilers_rechaza_constructor_con_argumentos_obligatorios(monkeypatch, caplog):
+    class InvalidConstructorTranspiler:
+        def __init__(self, dependency):
+            self.dependency = dependency
+
+        def generate_code(self, ast):
+            return str(ast)
+
+    ep = importlib.metadata.EntryPoint(
+        name="python",
+        value="fake.module:InvalidConstructorTranspiler",
+        group="cobra.transpilers",
+    )
+    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(
+        compile_cmd,
+        "_iter_transpiler_entry_points",
+        lambda: importlib.metadata.EntryPoints((ep,)),
+    )
+    monkeypatch.setattr(
+        compile_cmd,
+        "import_module",
+        lambda _name: types.SimpleNamespace(
+            InvalidConstructorTranspiler=InvalidConstructorTranspiler
+        ),
+    )
+
+    loaded, rejected, skipped = compile_cmd.load_entrypoint_transpilers()
+
+    assert (loaded, rejected, skipped) == (0, 1, 0)
+    assert compile_cmd.TRANSPILERS == {}
+    assert "python" in caplog.text
+    assert "constructor sin argumentos" in caplog.text
 
 
 def test_import_compile_cmd_no_carga_plugins_hasta_invocacion_explicita(monkeypatch):
