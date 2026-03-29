@@ -35,7 +35,11 @@ def test_formatear_error_lexico_y_sintaxis() -> None:
     try:
         deps["Lexer"]("\x00").tokenizar()
     except Exception as exc:
-        mensaje = runtime.formatear_error(exc)
+        mensaje = runtime.formatear_error(
+            exc,
+            lexer_error_type=deps["LexerError"],
+            parser_error_type=deps["ParserError"],
+        )
         assert mensaje.startswith("Error léxico")
     else:  # pragma: no cover
         pytest.fail("Se esperaba error léxico")
@@ -44,7 +48,11 @@ def test_formatear_error_lexico_y_sintaxis() -> None:
         tokens = deps["Lexer"]("imprimir('x'").tokenizar()
         deps["Parser"](tokens).parsear()
     except Exception as exc:
-        mensaje = runtime.formatear_error(exc)
+        mensaje = runtime.formatear_error(
+            exc,
+            lexer_error_type=deps["LexerError"],
+            parser_error_type=deps["ParserError"],
+        )
         assert mensaje.startswith("Error de sintaxis")
     else:  # pragma: no cover
         pytest.fail("Se esperaba error de sintaxis")
@@ -98,3 +106,42 @@ def test_require_gui_dependencies_cachea_resultado() -> None:
     deps_a = runtime.require_gui_dependencies()
     deps_b = runtime.require_gui_dependencies()
     assert deps_a is deps_b
+
+
+def test_formatear_error_no_masking_si_fallan_dependencias() -> None:
+    exc = RuntimeError("Falta una dependencia de core/transpiladores para la GUI: 'x.y'.")
+    assert runtime.formatear_error(exc) == (
+        "Error de ejecución: "
+        "Falta una dependencia de core/transpiladores para la GUI: 'x.y'."
+    )
+
+
+def test_formatear_error_lexico_y_sintactico_sin_recargar_dependencias(monkeypatch) -> None:
+    class FakeLexerError(Exception):
+        def __init__(self):
+            self.linea = 7
+            self.columna = 3
+            super().__init__("token inesperado")
+
+    class FakeParserError(Exception):
+        pass
+
+    llamadas = {"count": 0}
+
+    def _fail_if_called():
+        llamadas["count"] += 1
+        raise AssertionError("formatear_error no debe recargar dependencias")
+
+    monkeypatch.setattr(runtime, "require_gui_dependencies", _fail_if_called)
+
+    assert runtime.formatear_error(
+        FakeLexerError(),
+        lexer_error_type=FakeLexerError,
+        parser_error_type=FakeParserError,
+    ).startswith("Error léxico (línea 7, columna 3)")
+    assert runtime.formatear_error(
+        FakeParserError("faltó ')'"),
+        lexer_error_type=FakeLexerError,
+        parser_error_type=FakeParserError,
+    ) == "Error de sintaxis: faltó ')'"
+    assert llamadas["count"] == 0

@@ -27,7 +27,11 @@ def main(page: "ft.Page"):
             else:
                 salida.value = runtime.ejecutar_codigo(codigo)
         except Exception as exc:
-            salida.value = runtime.formatear_error(exc)
+            salida.value = runtime.formatear_error(
+                exc,
+                lexer_error_type=deps.get("LexerError"),
+                parser_error_type=deps.get("ParserError"),
+            )
         finally:
             page.update()
 

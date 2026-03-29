@@ -54,13 +54,21 @@ def test_main_renderiza_botones_esperados(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
-    monkeypatch.setattr(idle.runtime, "require_gui_dependencies", lambda: {"TRANSPILERS": {"python": object}})
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
     monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ok")
     monkeypatch.setattr(idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
-    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc: f"error: {exc}")
+    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
 
     page = ft.Page()
     idle.main(page)
@@ -73,13 +81,21 @@ def test_main_handlers_smoke(monkeypatch):
     ft = _fake_flet()
     monkeypatch.setattr(idle.runtime, "require_flet", lambda: ft)
     monkeypatch.setattr(idle.runtime, "gui_target_choices", lambda: ("python",))
-    monkeypatch.setattr(idle.runtime, "require_gui_dependencies", lambda: {"TRANSPILERS": {"python": object}})
+    monkeypatch.setattr(
+        idle.runtime,
+        "require_gui_dependencies",
+        lambda: {
+            "TRANSPILERS": {"python": object},
+            "LexerError": RuntimeError,
+            "ParserError": ValueError,
+        },
+    )
     monkeypatch.setattr(idle.runtime, "normalizar_codigo", lambda value: value or "")
     monkeypatch.setattr(idle.runtime, "ejecutar_codigo", lambda _codigo: "ejecutado")
     monkeypatch.setattr(idle.runtime, "transpilar_codigo", lambda _codigo, _lang: "transpilado")
     monkeypatch.setattr(idle.runtime, "mostrar_tokens", lambda _codigo: "Token(X)")
     monkeypatch.setattr(idle.runtime, "mostrar_ast", lambda _codigo: "[Nodo]")
-    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc: f"error: {exc}")
+    monkeypatch.setattr(idle.runtime, "formatear_error", lambda exc, **_kwargs: f"error: {exc}")
 
     page = ft.Page()
     idle.main(page)
