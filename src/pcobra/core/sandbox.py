@@ -14,7 +14,6 @@ import subprocess
 import tempfile
 import string
 import sys
-from types import ModuleType
 from queue import Empty
 from pathlib import Path
 from typing import Any, Callable
@@ -57,29 +56,78 @@ CONTAINER_IMAGE_BY_BACKEND = {
 OFFICIAL_CONTAINER_BACKENDS = tuple(CONTAINER_IMAGE_BY_BACKEND)
 
 _ORIGINAL_IMPORT = builtins.__import__
-_IMPORT_DENYLIST = {
-    "os",
-    "sys",
-    "subprocess",
-    "socket",
-    "urllib",
+_SANDBOX_IMPORT_ALLOWLIST = {
+    "math",
+    "statistics",
+    "decimal",
+    "fractions",
+    "random",
+    "itertools",
+    "functools",
+    "collections",
+    "re",
+    "string",
+    "datetime",
+    "json",
 }
 
 _FORBIDDEN_CALLS = {"eval", "exec", "open"}
 _FORBIDDEN_NAMES = _FORBIDDEN_CALLS | {"__import__"}
 _FORBIDDEN_ATTRIBUTES = {"__dict__", "__class__"}
 _KNOWN_MODULE_SOURCES = {"builtins", "io", "pathlib"}
+_DYNAMIC_IMPORT_CALLS = {"import_module"}
+_FORBIDDEN_IMPORT_HELPERS = {"__loader__"}
 
-if not HAS_RESTRICTED_PYTHON:
-    _IMPORT_DENYLIST.add("builtins")
 
 if HAS_RESTRICTED_PYTHON:
-    _SANDBOX_BASE_BUILTINS: dict[str, Any] = dict(safe_builtins)
+    _SANDBOX_BASE_BUILTINS: dict[str, Any] = {
+        nombre: safe_builtins[nombre]
+        for nombre in (
+            "abs",
+            "all",
+            "any",
+            "bool",
+            "callable",
+            "chr",
+            "dict",
+            "divmod",
+            "enumerate",
+            "Exception",
+            "filter",
+            "float",
+            "hash",
+            "hex",
+            "int",
+            "isinstance",
+            "issubclass",
+            "iter",
+            "len",
+            "list",
+            "map",
+            "max",
+            "min",
+            "next",
+            "object",
+            "oct",
+            "ord",
+            "pow",
+            "range",
+            "repr",
+            "reversed",
+            "round",
+            "set",
+            "slice",
+            "sorted",
+            "str",
+            "sum",
+            "tuple",
+            "zip",
+            "__build_class__",
+        )
+        if nombre in safe_builtins
+    }
 else:  # pragma: no cover - ejecución sin RestrictedPython
     _SANDBOX_BASE_BUILTINS = {}
-
-_SANITIZED_BUILTINS_MODULE: ModuleType | None = None
-
 
 class SandboxSecurityError(RuntimeError):
     """Excepción lanzada cuando el código viola las políticas de la sandbox."""
@@ -95,25 +143,38 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
 
     forbidden_aliases: set[str] = set()
     module_aliases: dict[str, str] = {"__builtins__": "builtins"}
+    dynamic_import_aliases: set[str] = set()
+
+    def _import_esta_permitido(module_name: str) -> bool:
+        root = module_name.split(".", 1)[0]
+        return root in _SANDBOX_IMPORT_ALLOWLIST
 
     for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id == "__loader__":
+            raise SandboxSecurityError("Acceso bloqueado en sandbox: __loader__")
         if isinstance(node, ast.Import):
             for alias in node.names:
                 root = alias.name.split(".", 1)[0]
-                if root in _IMPORT_DENYLIST:
+                if not _import_esta_permitido(alias.name):
                     raise SandboxSecurityError(
                         f"Importación bloqueada en sandbox: {alias.name}"
                     )
+                if alias.name == "importlib":
+                    dynamic_import_aliases.add(alias.asname or "importlib")
                 if root in _KNOWN_MODULE_SOURCES:
                     alias_name = alias.asname or root
                     module_aliases[alias_name] = root
         elif isinstance(node, ast.ImportFrom):
             module = node.module or ""
             root = module.split(".", 1)[0] if module else ""
-            if root in _IMPORT_DENYLIST:
+            if module and not _import_esta_permitido(module):
                 raise SandboxSecurityError(
                     f"Importación bloqueada en sandbox: {module}"
                 )
+            if root == "importlib":
+                for alias in node.names:
+                    if alias.name in _DYNAMIC_IMPORT_CALLS:
+                        dynamic_import_aliases.add(alias.asname or alias.name)
             if root in _KNOWN_MODULE_SOURCES:
                 for alias in node.names:
                     alias_name = alias.asname or alias.name
@@ -243,11 +304,14 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 if nombre == "__import__" and node.args:
                     arg0 = node.args[0]
                     if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
-                        raiz = arg0.value.split(".", 1)[0]
-                        if raiz in _IMPORT_DENYLIST:
+                        if not _import_esta_permitido(arg0.value):
                             raise SandboxSecurityError(
                                 f"Importación bloqueada en sandbox: {arg0.value}"
                             )
+                if nombre in dynamic_import_aliases:
+                    raise SandboxSecurityError(
+                        f"Llamada bloqueada en sandbox: {nombre}"
+                    )
             elif isinstance(node.func, ast.Attribute):
                 info = _import_call_info(node.func.value)
                 if info and node.func.attr in _FORBIDDEN_CALLS:
@@ -263,8 +327,7 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 ):
                     arg0 = node.args[0]
                     if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
-                        raiz = arg0.value.split(".", 1)[0]
-                        if raiz in _IMPORT_DENYLIST:
+                        if not _import_esta_permitido(arg0.value):
                             raise SandboxSecurityError(
                                 f"Importación bloqueada en sandbox: {arg0.value}"
                             )
@@ -277,6 +340,11 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                         raise SandboxSecurityError(
                             f"Llamada bloqueada en sandbox: {base_name}.{node.func.attr}"
                         )
+                if node.func.attr in _DYNAMIC_IMPORT_CALLS:
+                    raise SandboxSecurityError(
+                        "Llamada bloqueada en sandbox: "
+                        f"{_leftmost_name(node.func.value)}.{node.func.attr}"
+                    )
 
         elif isinstance(node, ast.Attribute):
             info = _import_call_info(node.value)
@@ -300,6 +368,11 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                     "Acceso bloqueado en sandbox: "
                     f"{base_nombre}.{node.attr}"
                 )
+            if node.attr in _FORBIDDEN_IMPORT_HELPERS:
+                raise SandboxSecurityError(
+                    "Acceso bloqueado en sandbox: "
+                    f"{base_nombre}.{node.attr}"
+                )
 
         elif isinstance(node, ast.Subscript):
             clave = _extract_string(getattr(node, "slice", None))
@@ -310,6 +383,13 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                 and (
                     base_name in module_aliases or base_name in _KNOWN_MODULE_SOURCES
                 )
+            ):
+                raise SandboxSecurityError(
+                    "Acceso bloqueado en sandbox: "
+                    f"{base_name}[{clave!r}]"
+                )
+            if clave in (_FORBIDDEN_NAMES | _FORBIDDEN_IMPORT_HELPERS) and (
+                _is_builtins_reference(node.value) or base_name in module_aliases
             ):
                 raise SandboxSecurityError(
                     "Acceso bloqueado en sandbox: "
@@ -334,40 +414,26 @@ def _verificar_codigo_prohibido(codigo: str) -> None:
                     "Acceso bloqueado en sandbox: "
                     f"{descripcion_llamada}[{clave!r}]"
                 )
+            if (
+                isinstance(node.value, ast.Call)
+                and clave in {"__builtins__", "__import__"}
+                and _call_matches(node.value.func, {"globals", "locals", "vars"})
+            ):
+                raise SandboxSecurityError(
+                    "Acceso bloqueado en sandbox: "
+                    f"{ast.unparse(node) if hasattr(ast, 'unparse') else 'introspección'}"
+                )
 
 
 def _safe_import(name: str, globals: Any | None = None, locals: Any | None = None,
                  fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
-    """Importador restringido que bloquea módulos peligrosos.
-
-    Se permite importar cualquier módulo que no esté en la lista de exclusión.
-    Los módulos bloqueados generan ``ImportError`` para que la sandbox se
-    comporte igual que antes, pero sigue admitiendo importaciones seguras como
-    ``contextlib`` que requieren las pruebas de transpilación.
-    """
+    """Importador restringido con política de allowlist explícita."""
 
     root = name.split(".", 1)[0]
-    if root in _IMPORT_DENYLIST or name in _IMPORT_DENYLIST:
+    if root not in _SANDBOX_IMPORT_ALLOWLIST:
         raise ImportError(f"Módulo bloqueado en sandbox: {name}")
 
-    if root == "builtins":
-        global _SANITIZED_BUILTINS_MODULE
-        if _SANITIZED_BUILTINS_MODULE is None:
-            modulo_sanitizado = ModuleType("builtins")
-            atributos_permitidos = dict(_SANDBOX_BASE_BUILTINS)
-            atributos_permitidos.setdefault("print", print)
-            atributos_permitidos["__import__"] = _safe_import
-            for prohibido in _FORBIDDEN_NAMES:
-                atributos_permitidos.pop(prohibido, None)
-            for clave, valor in atributos_permitidos.items():
-                setattr(modulo_sanitizado, clave, valor)
-            _SANITIZED_BUILTINS_MODULE = modulo_sanitizado
-        return _SANITIZED_BUILTINS_MODULE
-
-    modulo = _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
-    if root == "urllib":  # Evita accesos a urllib.request y similares.
-        raise ImportError(f"Módulo bloqueado en sandbox: {name}")
-    return modulo
+    return _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
 
 
 def _run_in_subprocess(
