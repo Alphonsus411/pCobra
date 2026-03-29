@@ -53,6 +53,7 @@ Antes de etiquetar una versión, confirma explícitamente:
 Antes de publicar una versión con cambios de política de targets:
 
 - [ ] Confirmar que la narrativa pública mantiene exclusivamente los 8 targets canónicos de salida.
+- [ ] Incluir la nota de corrección: la CLI instalada ya no importa `scripts.benchmarks` en tiempo de ejecución (usa `pcobra.cobra.benchmarks`).
 - [ ] Adjuntar pasos de migración vigentes para CI/scripts (`--backend`, `--tipo`, `--tipos`).
 - [ ] Ejecutar `python scripts/audit_retired_targets.py <ruta_proyecto>` sobre repos de referencia del ecosistema.
 - [ ] Coordinar copy final con equipo Holobit y validar FAQ de impacto:
