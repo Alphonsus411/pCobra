@@ -245,3 +245,31 @@ def test_sandbox_js_elimina_archivo_inexistente(monkeypatch):
 
     salida = ejecutar_en_sandbox_js("console.log('hola')")
     assert salida.strip() == "hola"
+
+
+@pytest.mark.timeout(5)
+def test_sandbox_js_no_escribe_en_directorio_del_modulo(monkeypatch, tmp_path):
+    if not shutil.which("node"):
+        pytest.skip("node no disponible")
+    try:
+        subprocess.run(["node", "-e", "require('vm2')"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("vm2 no disponible")
+
+    modulo_no_escribible = tmp_path / "readonly_pkg"
+    modulo_no_escribible.mkdir()
+    monkeypatch.setattr(sandbox, "__file__", str(modulo_no_escribible / "sandbox.py"))
+
+    original_named_temporary_file = sandbox.tempfile.NamedTemporaryFile
+    llamadas_dir: list[str | None] = []
+
+    def fake_named_temporary_file(*args, **kwargs):
+        llamadas_dir.append(kwargs.get("dir"))
+        return original_named_temporary_file(*args, **kwargs)
+
+    monkeypatch.setattr(sandbox.tempfile, "NamedTemporaryFile", fake_named_temporary_file)
+
+    salida = ejecutar_en_sandbox_js("console.log('hola')")
+    assert salida.strip() == "hola"
+    assert llamadas_dir, "Se esperaba captura del directorio temporal"
+    assert all(ruta != str(modulo_no_escribible) for ruta in llamadas_dir)

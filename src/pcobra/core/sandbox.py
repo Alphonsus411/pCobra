@@ -613,7 +613,9 @@ def ejecutar_en_sandbox_js(
     ``/usr/bin`` o al directorio que contiene el ejecutable de Node; se pueden
     añadir variables específicas mediante ``env_vars``. ``memoria_mb`` limita
     la memoria disponible para la ejecución de Node estableciendo
-    ``--max-old-space-size``.
+    ``--max-old-space-size``. El script temporal se crea en el directorio
+    temporal del sistema y no se almacena dentro del árbol de instalación
+    del paquete.
     """
     import json
     import os
@@ -681,9 +683,9 @@ try {{
 process.stdout.write(output);
 """
 
-    base_dir = Path(__file__).resolve().parent
+    work_dir = tempfile.gettempdir()
     with tempfile.NamedTemporaryFile(
-        "w", suffix=".js", delete=False, dir=base_dir
+        "w", suffix=".js", delete=False, dir=work_dir
     ) as tmp:
         tmp.write(script)
         tmp_path = tmp.name
@@ -699,7 +701,7 @@ process.stdout.write(output);
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            cwd=base_dir,
+            cwd=work_dir,
             env=env,
         ) as proc:  # nosec B603
             if os.stat(node_path).st_ino != inode:
@@ -774,6 +776,11 @@ process.stdout.write(output);
             os.unlink(tmp_path)
         except FileNotFoundError:
             pass
+        except PermissionError:
+            _LOGGER.warning(
+                "No se pudo eliminar el archivo temporal de sandbox JS por permisos",
+                extra={"tmp_path": tmp_path},
+            )
 
 
 def compilar_en_sandbox_cpp(codigo: str) -> str:
