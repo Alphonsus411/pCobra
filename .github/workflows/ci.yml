@@ -165,7 +165,8 @@ jobs:
         shell: bash
         run: |
           rm -rf dist
-          python -m pip wheel . -w dist --no-deps
+          python -m pip install --upgrade build
+          python -m build --wheel --sdist --outdir dist
           python - <<'PY'
           import pathlib
           import zipfile
@@ -203,12 +204,14 @@ jobs:
 
           print('Smoke import de módulos críticos OK.')
           PY
+          pytest tests/cli/test_packaging_smoke.py -m integration -q
       - name: Packaging check (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if (Test-Path dist) { Remove-Item dist -Recurse -Force }
-          python -m pip wheel . -w dist --no-deps
+          python -m pip install --upgrade build
+          python -m build --wheel --sdist --outdir dist
           python - <<'PY'
           import pathlib
           import zipfile
@@ -246,6 +249,7 @@ jobs:
 
           print('Smoke import de módulos críticos OK.')
           PY
+          pytest tests/cli/test_packaging_smoke.py -m integration -q
       - name: Run Tier 1 backend suite (required on PR)
         if: runner.os != 'Windows'
         shell: bash
