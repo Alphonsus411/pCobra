@@ -156,6 +156,19 @@ def test_cargar_plugin_seguro_sha256_incorrecto():
     assert "sha256 del contenido" in str(excinfo.value)
 
 
+def test_cargar_plugin_seguro_rechaza_sha256_de_ruta_legado():
+    route = "tests.unit.test_plugin_loader:DummyPlugin"
+    route_digest = hashlib.sha256(route.encode("utf-8")).hexdigest()
+
+    limpiar_registro()
+    configure_plugin_policy(safe_mode=True, allowlist=[f"sha256:{route_digest}"])
+
+    with pytest.raises(PluginPolicyError) as excinfo:
+        cargar_plugin_seguro(route)
+
+    assert "sha256 de ruta retirado" in str(excinfo.value)
+
+
 def test_cargar_plugin_seguro_modulo_sin_file_con_sha256():
     module = types.SimpleNamespace(SinFilePlugin=DummyPlugin)
     with patch("pcobra.cobra.cli.plugin.import_module", return_value=module):
@@ -165,6 +178,17 @@ def test_cargar_plugin_seguro_modulo_sin_file_con_sha256():
             cargar_plugin_seguro("fake.mod:SinFilePlugin")
 
     assert "módulo_sin___file__" in str(excinfo.value)
+
+
+def test_cargar_plugin_seguro_modulo_no_legible_con_sha256(caplog):
+    limpiar_registro()
+    configure_plugin_policy(safe_mode=True, allowlist=["sha256:" + ("2" * 64)])
+
+    with patch("pcobra.cobra.cli.plugin._read_module_file_bytes", return_value=None):
+        with pytest.raises(PluginPolicyError):
+            cargar_plugin_seguro("tests.unit.test_plugin_loader:DummyPlugin")
+
+    assert "no se pudo leer el archivo del módulo" in caplog.text
 
 
 def test_cargar_plugin_seguro_allowlist_prefix():

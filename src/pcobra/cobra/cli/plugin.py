@@ -78,7 +78,7 @@ def configure_plugin_policy(
     logging.getLogger(__name__).debug(
         (
             "Política de plugins configurada: safe_mode=%s allowlist=%s "
-            "(sha256 valida el contenido del archivo del módulo; sha256 de ruta queda deprecado)"
+            "(sha256 valida únicamente el contenido del archivo real del módulo)"
         ),
         _PLUGIN_POLICY.safe_mode,
         list(_PLUGIN_POLICY.allowlist),
@@ -132,7 +132,6 @@ def _plugin_allowed(ruta: str, module_name: str, module: Any) -> bool:
         return False
 
     logger = logging.getLogger(__name__)
-    route_digest = _stable_sha256(ruta.encode("utf-8"))
     module_bytes = _read_module_file_bytes(module)
     module_digest = _stable_sha256(module_bytes) if module_bytes is not None else None
 
@@ -141,14 +140,13 @@ def _plugin_allowed(ruta: str, module_name: str, module: Any) -> bool:
             expected = rule.split(":", 1)[1].lower()
             if module_digest and module_digest == expected:
                 return True
-            if route_digest == expected:
+            if module_digest is None:
                 logger.warning(
-                    "Regla '%s' aceptada por compatibilidad (sha256 de ruta deprecado). "
-                    "Use sha256 del contenido del módulo '%s'.",
+                    "Regla '%s' rechazada: no se pudo leer el archivo del módulo '%s' "
+                    "para verificar sha256 de contenido.",
                     rule,
                     module_name,
                 )
-                return True
             continue
         if rule.startswith("prefix:") and module_name.startswith(rule.split(":", 1)[1]):
             return True
@@ -266,7 +264,7 @@ def cargar_plugin_seguro(ruta: str, origen: Optional[str] = None) -> Optional[Pl
         msg = (
             f"Plugin '{ruta}' rechazado por política de confianza. "
             f"Se valida el sha256 del contenido de '{module_file or 'módulo_sin___file__'}' "
-            f"(compatibilidad temporal: sha256 de ruta deprecado). "
+            f"(modo legado por sha256 de ruta retirado). "
             f"Configure {PLUGINS_ALLOWLIST_ENV} o desactive --plugins-safe-mode."
         )
         logging.error(msg)
