@@ -1,4 +1,4 @@
-from scripts.benchmarks.targets_policy import (
+from pcobra.cobra.benchmarks.targets_policy import (
     BENCHMARK_BACKEND_METADATA,
     executable_benchmark_backends,
 )

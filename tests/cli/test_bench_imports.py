@@ -30,7 +30,10 @@ def test_bench_cmd_import_uses_pcobra_module(monkeypatch):
 
     bench_cmd = importlib.import_module(BENCH_CMD_MODULE)
 
-    assert attempted_legacy_imports == []
+    assert attempted_legacy_imports == [], (
+        "bench_cmd no debe intentar importar scripts.benchmarks.*; "
+        f"importaciones detectadas={attempted_legacy_imports}"
+    )
     assert bench_cmd.validate_backend_metadata.__module__ == TARGETS_POLICY_MODULE
 
 
@@ -75,4 +78,7 @@ def test_bench_cmd_missing_dependency_reports_real_module(monkeypatch):
         importlib.import_module(BENCH_CMD_MODULE)
 
     assert exc_info.value.name == blocked_module
-    assert "scripts.benchmarks.targets_policy" not in str(exc_info.value)
+    assert "scripts.benchmarks" not in str(exc_info.value), (
+        "Los errores de importación de CLI no deben mencionar el import legacy "
+        "scripts.benchmarks."
+    )
