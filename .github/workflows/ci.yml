@@ -160,6 +160,9 @@ jobs:
       - name: Lint legacy target aliases in tests/docs
         shell: bash
         run: python scripts/lint_legacy_aliases.py
+      - name: Validate `src/` imports do not depend on `scripts.*`
+        shell: bash
+        run: python scripts/ci/check_no_scripts_imports.py
       - name: Packaging check (Linux/macOS)
         if: runner.os != 'Windows'
         shell: bash
@@ -188,21 +191,66 @@ jobs:
                       raise SystemExit(f'El wheel incluye contenidos retirados fuera de política: {token}')
           print(f'Wheel inspeccionado correctamente: {wheel.name}')
           PY
-          python -m pip install --force-reinstall --no-deps dist/*.whl
           python - <<'PY'
-          import importlib
+          import os
+          import pathlib
+          import subprocess
+          import sys
+          import tempfile
+          import venv
 
-          modules = [
-              'pcobra.cobra',
-              'pcobra.standard_library',
-              'pcobra.lsp',
-              'pcobra.gui',
-          ]
+          dist = pathlib.Path('dist')
+          wheels = sorted(dist.glob('*.whl'))
+          sdists = sorted(dist.glob('*.tar.gz'))
+          if not wheels or not sdists:
+              raise SystemExit('Packaging smoke: faltan wheel/sdist en dist/.')
 
-          for module in modules:
-              importlib.import_module(module)
+          with tempfile.TemporaryDirectory(prefix='pcobra-packaging-smoke-') as tmp:
+              venv_dir = pathlib.Path(tmp) / 'venv'
+              venv.EnvBuilder(with_pip=True, clear=True).create(venv_dir)
+              bindir = 'Scripts' if os.name == 'nt' else 'bin'
+              python_bin = venv_dir / bindir / ('python.exe' if os.name == 'nt' else 'python')
+              pip_bin = venv_dir / bindir / ('pip.exe' if os.name == 'nt' else 'pip')
+              cobra_bin = venv_dir / bindir / ('cobra.exe' if os.name == 'nt' else 'cobra')
 
-          print('Smoke import de módulos críticos OK.')
+              subprocess.run(
+                  [str(pip_bin), 'install', '--no-deps', '--force-reinstall', str(wheels[0])],
+                  check=True,
+              )
+              smoke = subprocess.run(
+                  [str(cobra_bin), '--ayuda'],
+                  check=False,
+                  capture_output=True,
+                  text=True,
+                  cwd=tmp,
+              )
+              if smoke.returncode != 0:
+                  raise SystemExit(
+                      'Packaging smoke: `cobra --ayuda` falló en entorno limpio '
+                      f'con código={smoke.returncode} stderr={smoke.stderr!r}'
+                  )
+              stderr = smoke.stderr or ''
+              forbidden = ('ModuleNotFoundError', 'scripts.benchmarks')
+              hit = [token for token in forbidden if token in stderr]
+              if hit:
+                  raise SystemExit(
+                      'Packaging smoke: stderr contiene tokens prohibidos '
+                      f'{hit!r}. stderr={stderr!r}'
+                  )
+              subprocess.run(
+                  [
+                      str(python_bin),
+                      '-I',
+                      '-c',
+                      'import importlib; '
+                      'modules = ['
+                      '"pcobra.cobra", "pcobra.standard_library", "pcobra.lsp", "pcobra.gui"'
+                      ']; '
+                      '[importlib.import_module(m) for m in modules]; '
+                      'print("Smoke import de módulos críticos OK.")',
+                  ],
+                  check=True,
+              )
           PY
           pytest tests/cli/test_packaging_smoke.py -m integration -q
       - name: Packaging check (Windows)
@@ -233,21 +281,65 @@ jobs:
                       raise SystemExit(f'El wheel incluye contenidos retirados fuera de política: {token}')
           print(f'Wheel inspeccionado correctamente: {wheel.name}')
           PY
-          python -m pip install --force-reinstall --no-deps dist\*.whl
           python - <<'PY'
-          import importlib
+          import os
+          import pathlib
+          import subprocess
+          import tempfile
+          import venv
 
-          modules = [
-              'pcobra.cobra',
-              'pcobra.standard_library',
-              'pcobra.lsp',
-              'pcobra.gui',
-          ]
+          dist = pathlib.Path('dist')
+          wheels = sorted(dist.glob('*.whl'))
+          sdists = sorted(dist.glob('*.tar.gz'))
+          if not wheels or not sdists:
+              raise SystemExit('Packaging smoke: faltan wheel/sdist en dist/.')
 
-          for module in modules:
-              importlib.import_module(module)
+          with tempfile.TemporaryDirectory(prefix='pcobra-packaging-smoke-') as tmp:
+              venv_dir = pathlib.Path(tmp) / 'venv'
+              venv.EnvBuilder(with_pip=True, clear=True).create(venv_dir)
+              bindir = 'Scripts' if os.name == 'nt' else 'bin'
+              python_bin = venv_dir / bindir / ('python.exe' if os.name == 'nt' else 'python')
+              pip_bin = venv_dir / bindir / ('pip.exe' if os.name == 'nt' else 'pip')
+              cobra_bin = venv_dir / bindir / ('cobra.exe' if os.name == 'nt' else 'cobra')
 
-          print('Smoke import de módulos críticos OK.')
+              subprocess.run(
+                  [str(pip_bin), 'install', '--no-deps', '--force-reinstall', str(wheels[0])],
+                  check=True,
+              )
+              smoke = subprocess.run(
+                  [str(cobra_bin), '--ayuda'],
+                  check=False,
+                  capture_output=True,
+                  text=True,
+                  cwd=tmp,
+              )
+              if smoke.returncode != 0:
+                  raise SystemExit(
+                      'Packaging smoke: `cobra --ayuda` falló en entorno limpio '
+                      f'con código={smoke.returncode} stderr={smoke.stderr!r}'
+                  )
+              stderr = smoke.stderr or ''
+              forbidden = ('ModuleNotFoundError', 'scripts.benchmarks')
+              hit = [token for token in forbidden if token in stderr]
+              if hit:
+                  raise SystemExit(
+                      'Packaging smoke: stderr contiene tokens prohibidos '
+                      f'{hit!r}. stderr={stderr!r}'
+                  )
+              subprocess.run(
+                  [
+                      str(python_bin),
+                      '-I',
+                      '-c',
+                      'import importlib; '
+                      'modules = ['
+                      '"pcobra.cobra", "pcobra.standard_library", "pcobra.lsp", "pcobra.gui"'
+                      ']; '
+                      '[importlib.import_module(m) for m in modules]; '
+                      'print("Smoke import de módulos críticos OK.")',
+                  ],
+                  check=True,
+              )
           PY
           pytest tests/cli/test_packaging_smoke.py -m integration -q
       - name: Run Tier 1 backend suite (required on PR)
