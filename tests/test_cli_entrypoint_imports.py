@@ -34,5 +34,12 @@ def test_cli_main_carga_registro_sin_import_legacy_scripts_benchmarks() -> None:
         "Invocar pcobra.cli:main con --ayuda debe cargar comandos sin fallar. "
         f"stdout={result.stdout!r} stderr={result.stderr!r}"
     )
-    assert "ModuleNotFoundError" not in result.stderr
-    assert "scripts.benchmarks" not in result.stderr
+    assert "ModuleNotFoundError" not in result.stderr, (
+        "No debe aparecer ModuleNotFoundError al cargar CLI con --ayuda. "
+        f"stderr={result.stderr!r}"
+    )
+    assert "scripts.benchmarks" not in result.stderr, (
+        "El traceback/errores de importación de CLI no deben referenciar "
+        "scripts.benchmarks; debe usarse el módulo canónico del paquete. "
+        f"stderr={result.stderr!r}"
+    )
