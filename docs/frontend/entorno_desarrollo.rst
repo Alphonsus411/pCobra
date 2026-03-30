@@ -21,6 +21,36 @@ Instalación de dependencias
 
       python -m lsp.server
 
+Actualización local tras cambios en imports de CLI
+--------------------------------------------------
+
+Cuando cambies imports usados por el entrypoint ``cobra`` (por ejemplo
+``pcobra.cli`` o módulos bajo ``src/pcobra/cobra/cli``), actualiza tu entorno
+local para evitar que queden rutas cacheadas de instalaciones previas.
+
+Flujo recomendado:
+
+.. code-block:: bash
+
+   python -m pip install -e .[dev] --force-reinstall
+
+Si detectas comportamientos inconsistentes, recrea el entorno virtual:
+
+.. code-block:: bash
+
+   deactivate  # si el venv está activo
+   rm -rf .venv
+   python -m venv .venv
+   source .venv/bin/activate  # En Windows usa .\\.venv\\Scripts\\activate
+   python -m pip install -U pip
+   python -m pip install -e .[dev]
+
+Comprobación rápida del entrypoint ya instalado:
+
+.. code-block:: bash
+
+   cobra --ayuda
+
 Directorio de la extensión de VS Code
 -------------------------------------
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -47,6 +48,36 @@ def test_cli_main_smoke_help_en_entorno_aislado() -> None:
     assert "ModuleNotFoundError" not in result.stderr, (
         "No debe aparecer ModuleNotFoundError al arrancar CLI con --ayuda. "
         f"stderr={result.stderr!r}"
+    )
+
+
+def test_pyproject_entrypoint_cobra_se_mantiene_canonico() -> None:
+    """Contrato: el entrypoint público debe seguir apuntando a ``pcobra.cli:main``."""
+
+    pyproject = REPO_ROOT / "pyproject.toml"
+    with pyproject.open("rb") as fh:
+        data = tomllib.load(fh)
+
+    scripts = data.get("project", {}).get("scripts", {})
+    assert scripts.get("cobra") == "pcobra.cli:main"
+
+
+def test_cli_entrypoint_importa_modulos_instalables_unicamente() -> None:
+    """El import del entrypoint no debe requerir paquetes ``scripts.*``."""
+
+    result = _run_python_isolated(
+        "from pcobra.cli import main; "
+        "import sys; "
+        "assert callable(main); "
+        "assert not any(name == 'scripts' or name.startswith('scripts.') "
+        "for name in sys.modules), "
+        "'Se importó scripts.* durante bootstrap de pcobra.cli'; "
+    )
+
+    assert result.returncode == 0, (
+        "El entrypoint pcobra.cli:main no debe depender de scripts.* "
+        "en import-time. "
+        f"stdout={result.stdout!r} stderr={result.stderr!r}"
     )
 
 
