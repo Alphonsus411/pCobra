@@ -281,15 +281,12 @@ class BenchCommand(BaseCommand):
 
         try:
             if args.binary:
-                repo_root = Path(__file__).resolve().parents[5]
-                script = repo_root / "scripts" / "benchmarks" / "binary_bench.py"
-                if not script.is_file():
-                    raise FileNotFoundError(
-                        _("No se encontró el script de benchmarks esperado en {path}").format(
-                            path=script
-                        )
-                    )
-                subprocess.run([sys.executable, str(script)], check=True)
+                # Nota: scripts/ es solo tooling de desarrollo; el contrato de import
+                # distribuible usa módulos bajo pcobra.*.
+                subprocess.run(
+                    [sys.executable, "-m", "pcobra.cobra.benchmarks.binary_bench"],
+                    check=True,
+                )
             elif args.profile:
                 profiler = cProfile.Profile()
                 with profiler:
