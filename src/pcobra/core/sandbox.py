@@ -981,16 +981,35 @@ def ejecutar_en_contenedor(
         ) from exc
 
 
-def validar_dependencias(backend: str, mod_info: dict) -> None:
+def _resolver_raiz_proyecto(base_dir: str | None = None) -> str:
+    """Resuelve una raíz estable de proyecto para validación de dependencias."""
+    if base_dir is not None:
+        return os.path.realpath(base_dir)
+
+    cobra_toml = os.environ.get("COBRA_TOML")
+    if cobra_toml:
+        return os.path.realpath(os.path.dirname(cobra_toml))
+
+    return os.path.realpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    )
+
+
+def validar_dependencias(
+    backend: str, mod_info: dict, base_dir: str | None = None
+) -> None:
     """Verifica que las rutas de *mod_info* para *backend* existan y sean seguras."""
     if not mod_info:
         return
-    base = os.path.realpath(os.getcwd())
+    base = _resolver_raiz_proyecto(base_dir)
     for mod, data in mod_info.items():
         ruta = data.get(backend)
         if not ruta:
             continue
-        abs_path = os.path.realpath(ruta)
+        ruta_base = ruta
+        if not os.path.isabs(ruta):
+            ruta_base = os.path.join(base, ruta)
+        abs_path = os.path.realpath(ruta_base)
         try:
             comun = os.path.commonpath([base, abs_path])
         except ValueError:
