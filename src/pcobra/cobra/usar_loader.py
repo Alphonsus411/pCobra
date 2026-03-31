@@ -2,6 +2,7 @@ import importlib
 import importlib.util
 import os
 import re
+import shlex
 import subprocess
 from pathlib import Path
 import sys
@@ -17,8 +18,19 @@ USAR_WHITELIST: dict[str, str] = {}
 # Nombre de la variable de entorno que habilita la instalación automática
 USAR_INSTALL_ENV = "COBRA_USAR_INSTALL"
 
+# Variable para habilitar specs flexibles (menos seguras) de forma explícita
+USAR_INSTALL_UNSAFE_ENV = "COBRA_USAR_INSTALL_UNSAFE_SPECS"
+
 # Regex de validación para los nombres de paquetes
 _VALID_NAME_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
+_VALID_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+\-]*$")
+_VALID_STRICT_SPEC_RE = re.compile(
+    r"^(?P<name>[A-Za-z0-9_\-]+)"
+    r"(?:(?:==(?P<pin>[A-Za-z0-9][A-Za-z0-9._+\-]*))"
+    r"|(?:>=(?P<min>[A-Za-z0-9][A-Za-z0-9._+\-]*),<(?P<max>[A-Za-z0-9][A-Za-z0-9._+\-]*)))?$"
+)
+_URL_PREFIXES = ("http://", "https://", "git+", "file://")
+_unsafe_warning_printed = False
 
 
 def _validar_nombre(nombre: str) -> str:
@@ -44,10 +56,52 @@ def _parsear_entrada(entrada: str) -> tuple[str, str]:
     entrada = entrada.strip()
     if not entrada:
         raise ValueError("Entrada vacía en lista blanca")
-    match = re.match(r"([A-Za-z0-9_\-]+)", entrada)
+
+    if os.environ.get(USAR_INSTALL_UNSAFE_ENV):
+        global _unsafe_warning_printed
+        if not _unsafe_warning_printed:
+            print(
+                "ADVERTENCIA: modo inseguro de specs activado "
+                f"({USAR_INSTALL_UNSAFE_ENV}=1). "
+                "Se permiten argumentos avanzados de pip bajo tu propio riesgo."
+            )
+            _unsafe_warning_printed = True
+
+        match = re.match(r"([A-Za-z0-9_\-]+)", entrada)
+        if not match:
+            raise ValueError(f"Entrada de paquete '{entrada}' inválida")
+        nombre_base = _validar_nombre(match.group(1))
+        return nombre_base, entrada
+
+    tokens = [tok for tok in re.split(r"[\s,]+", entrada) if tok]
+    for token in tokens:
+        if token.startswith("-"):
+            raise ValueError(
+                f"Entrada de paquete '{entrada}' contiene flags no permitidos: '{token}'"
+            )
+        token_lower = token.lower()
+        if token_lower.startswith(_URL_PREFIXES):
+            raise ValueError(
+                f"Entrada de paquete '{entrada}' contiene una URL directa no permitida"
+            )
+
+    if "@" in entrada:
+        raise ValueError(f"Entrada de paquete '{entrada}' usa formato no permitido con '@'")
+    if "#" in entrada:
+        raise ValueError(f"Entrada de paquete '{entrada}' contiene hash no permitido")
+
+    match = _VALID_STRICT_SPEC_RE.fullmatch(entrada)
     if not match:
-        raise ValueError(f"Entrada de paquete '{entrada}' inválida")
-    nombre_base = _validar_nombre(match.group(1))
+        raise ValueError(
+            f"Entrada de paquete '{entrada}' no cumple formato permitido: "
+            "nombre | nombre==x.y.z | nombre>=x,<y"
+        )
+
+    nombre_base = _validar_nombre(match.group("name"))
+    for version in (match.group("pin"), match.group("min"), match.group("max")):
+        if version is not None and not _VALID_VERSION_RE.fullmatch(version):
+            raise ValueError(f"Versión '{version}' no es válida en '{entrada}'")
+
     return nombre_base, entrada
 
 
@@ -155,15 +209,22 @@ def obtener_modulo(nombre: str):
         print(f"Paquete '{spec}' no encontrado. Instalando con pip...")
 
         try:
-            argumentos = spec.split()
             cmd = [
                 sys.executable,
                 "-m",
                 "pip",
                 "install",
             ]
-            if any(arg.startswith("--hash") for arg in argumentos):
-                cmd.append("--require-hashes")
+
+            if os.environ.get(USAR_INSTALL_UNSAFE_ENV):
+                print(
+                    "ADVERTENCIA: instalación en modo inseguro; "
+                    "se aceptan argumentos avanzados de pip."
+                )
+                argumentos = shlex.split(spec)
+            else:
+                argumentos = [spec]
+
             cmd += argumentos
             subprocess.run(cmd, check=True)
             print(f"Paquete instalado: {spec}")
