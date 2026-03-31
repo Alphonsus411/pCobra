@@ -70,9 +70,15 @@ def cargar_lista_blanca():
         nombre_base, spec = _parsear_entrada(item)
         USAR_WHITELIST[nombre_base] = spec
 
-    # Cargar desde configuración si se encuentra
-    config_path = Path(__file__).resolve().parent.parent.parent / "cobra.toml"
-    if config_path.exists() and tomli:
+    # Cargar desde configuración si se encuentra en algún padre del archivo
+    config_path = None
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "cobra.toml"
+        if candidate.exists():
+            config_path = candidate
+            break
+
+    if config_path and tomli:
         try:
             with open(config_path, "rb") as f:
                 config = tomli.load(f)
