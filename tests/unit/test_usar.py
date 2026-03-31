@@ -64,12 +64,29 @@ def test_obtener_modulo_instalacion_deshabilitada(monkeypatch):
             mock_run.assert_not_called()
 
 
-def test_obtener_modulo_instala_con_hashes(monkeypatch):
+def test_obtener_modulo_instala_spec_estricto(monkeypatch):
+    mock_mod = ModuleType('demo')
+    spec = 'demo==1.0.0'
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', spec)
+    monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
+    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]), \
+         patch.object(usar_loader.subprocess, 'run') as mock_run:
+        mock_run.return_value.returncode = 0
+        mod = usar_loader.obtener_modulo('demo')
+    mock_run.assert_called_once_with(
+        [sys.executable, '-m', 'pip', 'install', 'demo==1.0.0'],
+        check=True,
+    )
+    assert mod is mock_mod
+
+
+def test_obtener_modulo_modo_inseguro_permite_flags(monkeypatch):
     mock_mod = ModuleType('demo')
     spec = 'demo==1.0 --hash=sha256:abc123'
     monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', spec)
     monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
-    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]) as mock_import, \
+    monkeypatch.setenv('COBRA_USAR_INSTALL_UNSAFE_SPECS', '1')
+    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]), \
          patch.object(usar_loader.subprocess, 'run') as mock_run:
         mock_run.return_value.returncode = 0
         mod = usar_loader.obtener_modulo('demo')
@@ -79,7 +96,6 @@ def test_obtener_modulo_instala_con_hashes(monkeypatch):
             '-m',
             'pip',
             'install',
-            '--require-hashes',
             'demo==1.0',
             '--hash=sha256:abc123',
         ],
