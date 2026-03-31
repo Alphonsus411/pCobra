@@ -99,6 +99,17 @@ def validar_dependencias(*args: Any, **kwargs: Any) -> Any:
     return sandbox_module.validar_dependencias(*args, **kwargs)
 
 
+def _detectar_raiz_proyecto_desde_archivo(archivo: str) -> str:
+    """Detecta una raíz de proyecto estable a partir del archivo objetivo."""
+    candidato = Path(archivo).resolve()
+    if candidato.is_file():
+        candidato = candidato.parent
+    for ruta in (candidato, *candidato.parents):
+        if (ruta / "cobra.toml").exists() or (ruta / "cobra.mod").exists():
+            return str(ruta)
+    return str(Path(module_map.COBRA_TOML_PATH).resolve().parent)
+
+
 def _obtener_interpretador_cls():
     """Obtiene la clase de intérprete respetando posibles mocks de pruebas."""
 
@@ -215,7 +226,12 @@ class ExecuteCommand(BaseCommand):
         allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
 
         try:
-            validar_dependencias("python", module_map.get_toml_map())
+            raiz_proyecto = _detectar_raiz_proyecto_desde_archivo(args.archivo)
+            validar_dependencias(
+                "python",
+                module_map.get_toml_map(),
+                base_dir=raiz_proyecto,
+            )
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
