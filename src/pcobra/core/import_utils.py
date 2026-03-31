@@ -17,6 +17,11 @@ MODULES_PATH = Path.home() / ".cobra" / "modules"
 # Lista blanca global que permite rutas adicionales durante la ejecución de pruebas
 # o cuando el usuario desea importar módulos propios.
 IMPORT_WHITELIST: set[str | os.PathLike[str]] = {MODULES_PATH}
+FingerprintArchivo = tuple[int, int]
+
+
+class _ArchivoModuloInestableError(RuntimeError):
+    """Error interno para reintentar cuando el módulo cambia durante su lectura."""
 
 
 def _normalizar_rutas(ruta: str) -> tuple[str, str]:
@@ -77,15 +82,31 @@ def _leer_codigo_modulo(
         raise FileNotFoundError(ruta) from exc
 
 
+def _fingerprint_archivo(ruta_real: str) -> FingerprintArchivo:
+    """Obtiene metadatos estables de versión para invalidar caché por archivo."""
+
+    try:
+        stat = os.stat(ruta_real)
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(ruta_real) from exc
+    return stat.st_mtime_ns, stat.st_size
+
+
 def cargar_ast_modulo(
     ruta: str,
     *,
     modules_path: str | None = None,
     whitelist: Iterable[str] | None = None,
+    expected_fingerprint: FingerprintArchivo | None = None,
 ):
     """Parsa un módulo Cobra y devuelve su AST."""
 
     codigo, ruta_real = _leer_codigo_modulo(ruta, modules_path, whitelist)
+    if expected_fingerprint is not None:
+        if _fingerprint_archivo(ruta_real) != expected_fingerprint:
+            raise _ArchivoModuloInestableError(
+                f"El módulo cambió durante la lectura: {ruta_real}"
+            )
     lexer = Lexer(codigo)
     tokens = lexer.analizar_token()
     parser = Parser(tokens)
@@ -120,10 +141,14 @@ def _extraer_simbolos(ast_modulo: Iterable) -> FrozenSet[Tuple[str, str]]:
 
 
 @lru_cache(maxsize=128)
-def _simbolos_modulo_cache(ruta_real: str) -> FrozenSet[Tuple[str, str]]:
-    """Versión cacheada de :func:`_extraer_simbolos` basada en la ruta real."""
+def _simbolos_modulo_cache(
+    ruta_real: str, fingerprint: FingerprintArchivo
+) -> FrozenSet[Tuple[str, str]]:
+    """Versión cacheada de :func:`_extraer_simbolos` por ruta+fingerprint."""
 
-    ast_modulo = cargar_ast_modulo(ruta_real)
+    ast_modulo = cargar_ast_modulo(
+        ruta_real, expected_fingerprint=fingerprint
+    )
     return _extraer_simbolos(ast_modulo)
 
 
@@ -131,4 +156,15 @@ def obtener_simbolos_modulo(ruta: str) -> set[Tuple[str, str]]:
     """Devuelve los símbolos declarados exportables de un módulo Cobra."""
 
     _, ruta_real = _normalizar_rutas(ruta)
-    return set(_simbolos_modulo_cache(ruta_real))
+    for _ in range(2):
+        fingerprint = _fingerprint_archivo(ruta_real)
+        try:
+            return set(_simbolos_modulo_cache(ruta_real, fingerprint))
+        except _ArchivoModuloInestableError:
+            # El archivo cambió entre la huella previa y la lectura/parsing.
+            # Reintentamos con una huella nueva para evitar caché inconsistente.
+            continue
+    # Si el archivo está cambiando constantemente, hacemos un último intento que
+    # puede elevar la excepción natural para que el llamador la gestione.
+    fingerprint = _fingerprint_archivo(ruta_real)
+    return set(_simbolos_modulo_cache(ruta_real, fingerprint))
