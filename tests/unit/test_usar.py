@@ -88,6 +88,39 @@ def test_obtener_modulo_instala_con_hashes(monkeypatch):
     assert mod is mock_mod
 
 
+def test_cargar_lista_blanca_detecta_cobra_toml_en_raiz(monkeypatch, tmp_path):
+    proyecto = tmp_path / "proyecto"
+    modulo_dir = proyecto / "src" / "pcobra" / "cobra"
+    modulo_dir.mkdir(parents=True)
+    archivo_modulo = modulo_dir / "usar_loader.py"
+    archivo_modulo.write_text("# archivo simulado", encoding="utf-8")
+    (proyecto / "cobra.toml").write_text(
+        "[usar]\npermitidos = [\"paquete-demo==1.2.3\"]\n", encoding="utf-8"
+    )
+
+    monkeypatch.setattr(usar_loader, "__file__", str(archivo_modulo))
+    monkeypatch.setattr(usar_loader, "tomli", __import__("tomllib"))
+
+    usar_loader.cargar_lista_blanca()
+
+    assert usar_loader.USAR_WHITELIST["paquete-demo"] == "paquete-demo==1.2.3"
+
+
+def test_cargar_lista_blanca_sin_cobra_toml_mantiene_hardcoded(monkeypatch, tmp_path):
+    modulo_dir = tmp_path / "instalacion" / "lib" / "cobra"
+    modulo_dir.mkdir(parents=True)
+    archivo_modulo = modulo_dir / "usar_loader.py"
+    archivo_modulo.write_text("# archivo simulado", encoding="utf-8")
+
+    monkeypatch.setattr(usar_loader, "__file__", str(archivo_modulo))
+    monkeypatch.setattr(usar_loader, "tomli", __import__("tomllib"))
+
+    usar_loader.cargar_lista_blanca()
+
+    assert "numpy" in usar_loader.USAR_WHITELIST
+    assert "agix" in usar_loader.USAR_WHITELIST
+
+
 @pytest.mark.timeout(5)
 def test_interpreter_usar_registra_modulo(monkeypatch):
     mod = ModuleType('math')
