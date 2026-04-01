@@ -27,13 +27,21 @@ def test_ejecutar_ejemplos(nombre: str, ruta_ejemplos: Path) -> None:
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
     esperado = (ruta_ejemplos / f"{nombre}.out").read_text(encoding="utf-8").strip()
+    comando = [sys.executable, "-m", "pcobra.cli", "ejecutar", str(archivo)]
     resultado = subprocess.run(
-        [sys.executable, "-m", "pcobra.cli", "ejecutar", str(archivo)],
+        comando,
         capture_output=True,
         text=True,
     )
     if resultado.returncode != 0:
-        pytest.skip(f"Ejecución falló para {nombre}: {resultado.stderr.strip()}")
+        mensaje = (
+            f"Ejecución falló para {nombre}\n"
+            f"Comando: {' '.join(comando)}\n"
+            f"stderr:\n{resultado.stderr.strip() or '<vacío>'}"
+        )
+        if resultado.stdout.strip():
+            mensaje += f"\nstdout:\n{resultado.stdout.strip()}"
+        pytest.fail(mensaje)
     salida = resultado.stdout.strip().splitlines()[-1]
     assert salida == esperado
 
@@ -44,13 +52,21 @@ def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None
     archivo = ruta_ejemplos / f"{nombre}.cobra"
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
+    comando = [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo)]
     resultado = subprocess.run(
-        [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo)],
+        comando,
         capture_output=True,
         text=True,
     )
     if resultado.returncode != 0:
-        pytest.skip(f"Transpilación falló para {nombre}: {resultado.stderr.strip()}")
+        mensaje = (
+            f"Transpilación falló para {nombre}\n"
+            f"Comando: {' '.join(comando)}\n"
+            f"stderr:\n{resultado.stderr.strip() or '<vacío>'}"
+        )
+        if resultado.stdout.strip():
+            mensaje += f"\nstdout:\n{resultado.stdout.strip()}"
+        pytest.fail(mensaje)
     assert "print(" in resultado.stdout
 
 
@@ -61,13 +77,21 @@ def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path, tmp_p
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
     salida = tmp_path / f"{nombre}.py"
+    comando = [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo), "--salida", str(salida)]
     resultado = subprocess.run(
-        [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo), "--salida", str(salida)],
+        comando,
         capture_output=True,
         text=True,
     )
     if resultado.returncode != 0:
-        pytest.skip(f"Transpilación falló para {nombre}: {resultado.stderr.strip()}")
+        mensaje = (
+            f"Transpilación falló para {nombre}\n"
+            f"Comando: {' '.join(comando)}\n"
+            f"stderr:\n{resultado.stderr.strip() or '<vacío>'}"
+        )
+        if resultado.stdout.strip():
+            mensaje += f"\nstdout:\n{resultado.stdout.strip()}"
+        pytest.fail(mensaje)
     generado = salida.read_text(encoding="utf-8")
     esperado = (
         ruta_ejemplos / "expected_examples" / f"{nombre}.py"
