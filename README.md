@@ -8,7 +8,7 @@
 
 ## Qué es pCobra
 
-Versión 10.0.12
+Versión 10.0.13
 
 - La caché incremental de AST y tokens se consolidó en **SQLitePlus** con script de migración y variables `SQLITE_DB_KEY`/`COBRA_DB_PATH` para definir la base de datos.
 - `corelibs.asincrono` incorpora `grupo_tareas` y `reintentar_async`, reexportados en la biblioteca estándar para coordinar corrutinas y reintentos con *backoff*.
