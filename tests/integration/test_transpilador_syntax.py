@@ -71,7 +71,7 @@ def _check_syntax(lang: str, archivo: Path, tmp_path: Path) -> None:
 
 
 VALID_SYNTAX_TARGETS = tuple(
-    target for target in SUPPORTED_TARGETS if target in {"python", "javascript", "go"}
+    target for target in SUPPORTED_TARGETS if target in LANG_EXT
 )
 
 
