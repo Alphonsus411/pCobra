@@ -35,7 +35,7 @@ install:
 		pip install -e .[dev]
 
 run:
-$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m pcobra
+	$(PYTHON) -m dotenv -f .env run -- $(PYTHON) -m pcobra
 
 test:
 	$(PYTHON) scripts/grammar_coverage.py --threshold=$(GRAMMAR_COV)
@@ -46,17 +46,17 @@ coverage:
 	coverage html
 
 lint:
-        ruff check $(SRC)
-        mypy $(SRC)
-        bandit -r $(SRC)
+	ruff check $(SRC)
+	mypy $(SRC)
+	bandit -r $(SRC)
 
 format:
 	isort $(SRC)
 	black $(SRC)
 
 typecheck:
-        mypy $(SRC)
-        @command -v pyright >/dev/null 2>&1 && pyright || echo "ℹ️ pyright no está instalado"
+	mypy $(SRC)
+	@command -v pyright >/dev/null 2>&1 && pyright || echo "ℹ️ pyright no está instalado"
 
 secrets:
 	gitleaks detect --source . --redact
