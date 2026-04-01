@@ -6,13 +6,18 @@ import pytest
 
 
 def ejemplos_disponibles() -> list[str]:
-    """Busca programas ``.cobra`` con su archivo ``.out`` correspondiente."""
-    base = Path(__file__).resolve().parent.parent / "src" / "pcobra" / "tests" / "data"
-    return sorted(
-        archivo.stem
-        for archivo in base.glob("*.cobra")
-        if (base / f"{archivo.stem}.out").exists()
+    """Busca programas ``.cobra``/``.co`` con su archivo ``.out`` correspondiente."""
+    base = Path(__file__).resolve().parent / "data"
+    ejemplos = sorted(
+        {
+            archivo.stem
+            for patron in ("*.cobra", "*.co")
+            for archivo in base.glob(patron)
+            if (base / f"{archivo.stem}.out").exists()
+        }
     )
+    assert ejemplos, f"No se encontraron ejemplos válidos en {base}"
+    return ejemplos
 
 
 @pytest.mark.parametrize("nombre", ejemplos_disponibles())
