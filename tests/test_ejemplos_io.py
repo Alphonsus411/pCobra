@@ -1,8 +1,11 @@
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def ejemplos_disponibles() -> list[str]:
@@ -70,14 +73,40 @@ def test_transpilar_muestra_fragmentos(nombre: str, ruta_ejemplos: Path) -> None
     assert "print(" in resultado.stdout
 
 
+def _extraer_codigo_generado(stdout: str) -> str:
+    """Obtiene el código transpilado a partir de la salida de CLI."""
+    salida_limpia = _ANSI_RE.sub("", stdout)
+    lineas = salida_limpia.splitlines()
+    for indice, linea in enumerate(lineas):
+        if linea.startswith("from core.nativos import *"):
+            return "\n".join(lineas[indice:]).strip() + "\n"
+    pytest.fail(
+        "No se pudo extraer el código transpilado de la salida CLI. "
+        "Asegúrate de que el comando 'transpilar' imprima el código generado."
+    )
+
+
+def _resolver_snapshot_esperado(ruta_ejemplos: Path, nombre: str) -> Path:
+    """Resuelve el snapshot esperado usando el esquema definitivo por extensión."""
+    base = ruta_ejemplos / "expected_examples"
+    candidatos = (base / f"{nombre}.py", base / f"{nombre}.txt")
+    for candidato in candidatos:
+        if candidato.exists():
+            return candidato
+    pytest.fail(
+        "No existe snapshot esperado para "
+        f"'{nombre}'. Se buscó en: {', '.join(str(p) for p in candidatos)}. "
+        "Regenera snapshots en tests/data/expected_examples/."
+    )
+
+
 @pytest.mark.parametrize("nombre", ejemplos_disponibles())
-def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path, tmp_path: Path) -> None:
-    """Transpila ejemplos y compara el código generado con un archivo de referencia."""
+def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path) -> None:
+    """Transpila ejemplos y compara el código generado con el snapshot versionado."""
     archivo = ruta_ejemplos / f"{nombre}.cobra"
     if not archivo.exists():
         archivo = ruta_ejemplos / f"{nombre}.co"
-    salida = tmp_path / f"{nombre}.py"
-    comando = [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo), "--salida", str(salida)]
+    comando = [sys.executable, "-m", "pcobra.cli", "transpilar", str(archivo)]
     resultado = subprocess.run(
         comando,
         capture_output=True,
@@ -92,8 +121,7 @@ def test_transpilar_coincide_con_archivo(nombre: str, ruta_ejemplos: Path, tmp_p
         if resultado.stdout.strip():
             mensaje += f"\nstdout:\n{resultado.stdout.strip()}"
         pytest.fail(mensaje)
-    generado = salida.read_text(encoding="utf-8")
-    esperado = (
-        ruta_ejemplos / "expected_examples" / f"{nombre}.py"
-    ).read_text(encoding="utf-8")
+    generado = _extraer_codigo_generado(resultado.stdout)
+    snapshot = _resolver_snapshot_esperado(ruta_ejemplos, nombre)
+    esperado = snapshot.read_text(encoding="utf-8")
     assert generado == esperado

@@ -1039,6 +1039,35 @@ cobra compilar tests/data/hola.cobra --backend python
 cobra compilar tests/data/suma.co --backend python
 ```
 
+#### Regenerar snapshots de transpilación (`tests/data/expected_examples`)
+
+Cuando cambie el transpiler de Python, actualiza los snapshots esperados para los
+ejemplos de `tests/data` (los que tienen archivo `.out` asociado):
+
+1. Lista los ejemplos con salida esperada:
+
+   ```bash
+   python - <<'PY'
+   from pathlib import Path
+   base = Path("tests/data")
+   print(sorted(p.stem for p in base.glob("*.out")))
+   PY
+   ```
+
+2. Regenera cada snapshot `.py` ejecutando la CLI por archivo y copiando el
+   bloque de código generado dentro de `tests/data/expected_examples/<nombre>.py`.
+   Ejemplo manual:
+
+   ```bash
+   SQLITE_DB_KEY=test cobra transpilar tests/data/hola.cobra
+   ```
+
+3. Ejecuta la suite de ejemplos para validar que los snapshots quedaron alineados:
+
+   ```bash
+   PYTHONPATH=$PWD SQLITE_DB_KEY=test pytest tests/test_ejemplos_io.py
+   ```
+
 ### Pruebas de rendimiento
 
 El archivo `cobra.toml` incluye una sección `[rendimiento]` con el parámetro
