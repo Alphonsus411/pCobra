@@ -44,7 +44,11 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
 )
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
-from pcobra.cobra.cli.mode_policy import CLI_MODOS_PERMITIDOS, MODO_POR_DEFECTO
+from pcobra.cobra.cli.mode_policy import (
+    CLI_MODOS_PERMITIDOS,
+    MODO_POR_DEFECTO,
+    validar_politica_modo,
+)
 from pcobra.cobra.cli.plugin import (
     descubrir_plugins,
     configure_plugin_policy,
@@ -614,7 +618,7 @@ class CliApplication:
         )
         return None, 1
 
-    def run_menu(self) -> int:
+    def run_menu(self, parsed_args: argparse.Namespace) -> int:
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
         if not sys.stdin.isatty():
@@ -622,6 +626,25 @@ class CliApplication:
                 _("El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."),
             )
             return 1
+        try:
+            validar_politica_modo("compilar", parsed_args)
+        except ValueError as error:
+            messages.mostrar_error(
+                _(
+                    "La opción de transpilación del menú está bloqueada por --modo {modo}. "
+                    "Usa --modo mixto o --modo transpilar para habilitarla."
+                ).format(modo=getattr(parsed_args, "modo", MODO_POR_DEFECTO))
+            )
+            messages.mostrar_info(str(error))
+            return 1
+
+        if str(getattr(parsed_args, "modo", MODO_POR_DEFECTO)).strip().lower() == "transpilar":
+            messages.mostrar_info(
+                _(
+                    "Modo transpilar activo: la opción 'ejecutar' está deshabilitada en menú "
+                    "por política de seguridad."
+                )
+            )
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
@@ -650,12 +673,18 @@ class CliApplication:
             if destino is None:
                 return exit_code
             archivo = archivo.strip()
-            args = argparse.Namespace(archivo=archivo, tipo=destino, backend=None, tipos=None)
+            command_args = argparse.Namespace(
+                archivo=archivo,
+                tipo=destino,
+                backend=None,
+                tipos=None,
+                modo=getattr(parsed_args, "modo", MODO_POR_DEFECTO),
+            )
             compile_cmd = self.command_registry.commands.get("compilar")
             if not compile_cmd:
                 messages.mostrar_error(_("Comando 'compilar' no disponible"))
                 return 1
-            return compile_cmd.run(args)
+            return compile_cmd.run(command_args)
         else:
             archivo = self._leer_input_seguro(_("Ruta al archivo origen: "))
             if archivo is None:
@@ -679,8 +708,13 @@ class CliApplication:
             if not inv_cmd:
                 messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"))
                 return 1
-            args = argparse.Namespace(archivo=archivo, origen=origen, destino=destino)
-            return inv_cmd.run(args)
+            command_args = argparse.Namespace(
+                archivo=archivo,
+                origen=origen,
+                destino=destino,
+                modo=getattr(parsed_args, "modo", MODO_POR_DEFECTO),
+            )
+            return inv_cmd.run(command_args)
 
     def execute_command(self, args: argparse.Namespace, debug_activo: bool = False) -> int:
         """Ejecuta el comando resuelto desde ``args``.
@@ -695,7 +729,7 @@ class CliApplication:
             
         command = getattr(args, "cmd", self.command_registry.get_default_command())
         if command == "menu":
-            return self.run_menu()
+            return self.run_menu(args)
         if not command:
             if self.parser is not None:
                 self.parser.print_help()
