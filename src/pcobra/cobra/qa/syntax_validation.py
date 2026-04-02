@@ -133,9 +133,12 @@ def run_external_command(command: list[str], cwd: Path | None = None) -> tuple[b
 
 def validate_python_syntax() -> ValidationResult:
     src_ok = compileall.compile_dir(str(SRC_DIR), quiet=1, force=False)
-    test_candidates = [*TESTS_DIR.glob("test_*.py")]
-    test_candidates.extend(TESTS_DIR.rglob("unit/**/*.py"))
-    test_candidates.extend(TESTS_DIR.rglob("integration/**/*.py"))
+    excluded_dirs = {".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "tmp", "temp"}
+    test_candidates = [
+        file_path
+        for file_path in TESTS_DIR.rglob("*.py")
+        if all(part not in excluded_dirs for part in file_path.relative_to(TESTS_DIR).parts)
+    ]
 
     tests_ok = True
     errors: list[str] = []
