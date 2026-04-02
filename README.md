@@ -1293,8 +1293,7 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
 - Para lanzar todas las validaciones en un solo paso ejecuta `python scripts/check.py`.
   Este script corre *ruff*, *mypy*, *bandit*, *pytest* y *pyright*.
-  El umbral de cobertura que aplica `pytest` se toma de `pyproject.toml`
-  (`tool.coverage.report.fail_under`), igual que en CI.
+  En este flujo, `pytest` exige `--cov-fail-under=95` para mantener paridad con CI.
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
