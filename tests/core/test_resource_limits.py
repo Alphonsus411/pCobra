@@ -11,6 +11,7 @@ from core import resource_limits
 def test_limitar_memoria_sin_resource_y_psutil_sin_rlimit(monkeypatch, caplog):
     monkeypatch.delitem(sys.modules, "resource", raising=False)
     monkeypatch.setattr(resource_limits, "IS_WINDOWS", True)
+    monkeypatch.setattr(resource_limits, "_WINDOWS_SKIP_LOGGED", False)
     fake_psutil = types.SimpleNamespace(
         Process=lambda: types.SimpleNamespace(),
         RLIMIT_AS=0,
@@ -25,21 +26,23 @@ def test_limitar_memoria_sin_resource_y_psutil_sin_rlimit(monkeypatch, caplog):
         "No se pudo establecer el límite de memoria en Windows" in r.message
         for r in caplog.records
     )
-    info_record = next(
-        (
-            r
-            for r in caplog.records
-            if "Los límites de recursos no son compatibles con Windows; se omiten." in r.message
-        ),
-        None,
-    )
-    assert info_record and info_record.levelno == logging.INFO
+    info_records = [
+        r
+        for r in caplog.records
+        if (
+            r.levelno == logging.INFO
+            and "Los límites de recursos no son compatibles con Windows; se omiten."
+            in r.message
+        )
+    ]
+    assert len(info_records) == 1
 
 
 @pytest.mark.windows
 def test_limitar_cpu_sin_resource_y_psutil_sin_rlimit(monkeypatch, caplog):
     monkeypatch.delitem(sys.modules, "resource", raising=False)
     monkeypatch.setattr(resource_limits, "IS_WINDOWS", True)
+    monkeypatch.setattr(resource_limits, "_WINDOWS_SKIP_LOGGED", False)
     fake_psutil = types.SimpleNamespace(
         Process=lambda: types.SimpleNamespace(),
         RLIMIT_CPU=0,
@@ -54,15 +57,16 @@ def test_limitar_cpu_sin_resource_y_psutil_sin_rlimit(monkeypatch, caplog):
         "No se pudo establecer el límite de CPU en Windows" in r.message
         for r in caplog.records
     )
-    info_record = next(
-        (
-            r
-            for r in caplog.records
-            if "Los límites de recursos no son compatibles con Windows; se omiten." in r.message
-        ),
-        None,
-    )
-    assert info_record and info_record.levelno == logging.INFO
+    info_records = [
+        r
+        for r in caplog.records
+        if (
+            r.levelno == logging.INFO
+            and "Los límites de recursos no son compatibles con Windows; se omiten."
+            in r.message
+        )
+    ]
+    assert len(info_records) == 1
 
 
 def test_limitar_memoria_sin_psutil_en_linux(monkeypatch, caplog):
