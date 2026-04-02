@@ -12,6 +12,11 @@ from pcobra.cobra.core.ast_nodes import (
     NodoProyectar,
     NodoTransformar,
     NodoGraficar,
+    NodoDecorador,
+    NodoImport,
+    NodoUsar,
+    NodoThrow,
+    NodoTryCatch,
 )
 from pcobra.cobra.core import TipoToken
 from pcobra.core.visitor import NodeVisitor
@@ -75,6 +80,8 @@ class TranspiladorWasm(BaseTranspiler):
         self.agregar_linea(f"(local.set ${nombre} {valor})")
 
     def visit_funcion(self, nodo: NodoFuncion):
+        for decorador in getattr(nodo, "decoradores", []):
+            self.visit_decorador(decorador)
         params = " ".join(f"(param ${p} i32)" for p in nodo.parametros)
         self.agregar_linea(f"(func ${nodo.nombre} {params}")
         self.indent += 1
@@ -131,6 +138,29 @@ class TranspiladorWasm(BaseTranspiler):
         hb = self._obtener_i32(nodo.holobit, "graficar.holobit")
         self.agregar_linea(f"(drop (call $cobra_graficar {hb}))")
 
+    def visit_decorador(self, nodo: NodoDecorador):
+        expr = self.obtener_valor(getattr(nodo, "expresion", nodo))
+        self.agregar_linea(f";; @decorador {expr}")
+
+    def visit_import(self, nodo: NodoImport):
+        self.agregar_linea(f";; import {nodo.ruta}")
+
+    def visit_usar(self, nodo: NodoUsar):
+        self.agregar_linea(f";; usar {nodo.modulo}")
+
+    def visit_throw(self, nodo: NodoThrow):
+        _ = self._obtener_i32(nodo.expresion, "throw.expresion")
+        self.agregar_linea("(unreachable)")
+
+    def visit_try_catch(self, nodo: NodoTryCatch):
+        self.agregar_linea(";; try/catch emulado: flujo lineal + marca de fallback")
+        for inst in nodo.bloque_try:
+            inst.aceptar(self)
+        if nodo.bloque_catch:
+            self.agregar_linea(";; catch fallback")
+            for inst in nodo.bloque_catch:
+                inst.aceptar(self)
+
     def transpilar(self, nodos):
         self.codigo = list(get_standard_imports("wasm"))
         if self.codigo:
@@ -150,9 +180,9 @@ class TranspiladorWasm(BaseTranspiler):
 
 
 WASM_FEATURE_NODE_SUPPORT = {
-    "decoradores": (),
-    "imports_corelibs": ("visit_llamada_funcion",),
-    "manejo_errores": (),
+    "decoradores": ("visit_decorador", "visit_funcion"),
+    "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
+    "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": (),
     "tipos_compuestos": (),
 }

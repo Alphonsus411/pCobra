@@ -25,6 +25,11 @@ from pcobra.core.ast_nodes import (
     NodoPattern,
     NodoInterface,
     NodoGarantia,
+    NodoDecorador,
+    NodoImport,
+    NodoUsar,
+    NodoThrow,
+    NodoTryCatch,
     NodoProyectar,
     NodoTransformar,
     NodoGraficar,
@@ -128,6 +133,39 @@ def visit_interface(self, nodo):
     self.indent -= 1
     self.agregar_linea("};")
 
+
+
+def visit_decorador(self, nodo: NodoDecorador):
+    expresion = self.obtener_valor(getattr(nodo, "expresion", nodo))
+    self.agregar_linea(f"// @decorador {expresion}")
+
+
+def visit_import(self, nodo: NodoImport):
+    self.agregar_linea(f"// import {nodo.ruta}")
+
+
+def visit_usar(self, nodo: NodoUsar):
+    self.agregar_linea(f"// usar {nodo.modulo}")
+
+
+def visit_throw(self, nodo: NodoThrow):
+    valor = self.obtener_valor(nodo.expresion)
+    self.agregar_linea(f"throw std::runtime_error({valor});")
+
+
+def visit_try_catch(self, nodo: NodoTryCatch):
+    nombre = nodo.nombre_excepcion or "error"
+    self.agregar_linea("try {")
+    self.indent += 1
+    for inst in nodo.bloque_try:
+        inst.aceptar(self)
+    self.indent -= 1
+    self.agregar_linea(f"}} catch (const std::runtime_error& {nombre}) {{")
+    self.indent += 1
+    for inst in nodo.bloque_catch:
+        inst.aceptar(self)
+    self.indent -= 1
+    self.agregar_linea("}")
 
 
 def visit_proyectar(self, nodo):
@@ -273,9 +311,9 @@ class TranspiladorCPP(BaseTranspiler):
 
 
 CPP_FEATURE_NODE_SUPPORT = {
-    "decoradores": (),
-    "imports_corelibs": ("visit_llamada_funcion",),
-    "manejo_errores": (),
+    "decoradores": ("visit_decorador", "visit_funcion"),
+    "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
+    "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": (),
     "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
 }
@@ -309,6 +347,11 @@ TranspiladorCPP.visit_interface = visit_interface
 TranspiladorCPP.visit_option = _visit_option
 TranspiladorCPP.visit_pattern = _visit_pattern
 TranspiladorCPP.visit_retorno = _visit_retorno
+TranspiladorCPP.visit_decorador = visit_decorador
+TranspiladorCPP.visit_import = visit_import
+TranspiladorCPP.visit_usar = visit_usar
+TranspiladorCPP.visit_throw = visit_throw
+TranspiladorCPP.visit_try_catch = visit_try_catch
 
 TranspiladorCPP.visit_proyectar = visit_proyectar
 TranspiladorCPP.visit_transformar = visit_transformar

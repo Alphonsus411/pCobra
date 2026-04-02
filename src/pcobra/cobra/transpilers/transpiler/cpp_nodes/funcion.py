@@ -2,6 +2,9 @@ from pcobra.core.ast_nodes import NodoRetorno
 
 
 def visit_funcion(self, nodo):
+    for decorador in getattr(nodo, "decoradores", []):
+        if hasattr(self, "visit_decorador"):
+            self.visit_decorador(decorador)
     if getattr(nodo, "type_params", []):
         genericos = ", ".join(f"typename {t}" for t in nodo.type_params)
         self.agregar_linea(f"template <{genericos}>")

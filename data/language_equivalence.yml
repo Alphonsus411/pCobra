@@ -54,9 +54,9 @@ features:
         equivalent: |
           // Equivalencia aproximada con anotaciones/proxies.
           String saludar(String nombre) { return "Hola " + nombre; }
-        status: none
+        status: partial
         limitations:
-          - No existe equivalente directo en el contrato actual del backend.
+          - Se transpila como anotación semántica en comentarios y wrappers.
       wasm:
         equivalent: |
           ;; Decoradores emulados en host/runtime previo al módulo.

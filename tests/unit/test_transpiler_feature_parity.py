@@ -22,6 +22,10 @@ from pcobra.core.ast_nodes import (
     NodoMetodo,
     NodoRetorno,
     NodoRomper,
+    NodoThrow,
+    NodoTryCatch,
+    NodoImport,
+    NodoUsar,
     NodoValor,
 )
 from pcobra.cobra.transpilers.compatibility_matrix import (
@@ -89,6 +93,34 @@ def _transpile(backend: str, nodes: list[object]) -> str:
     return transpiler.generate_code(nodes)
 
 
+def _phase_nodes(feature: str) -> list[object]:
+    if feature == "decoradores":
+        return [
+            NodoFuncion(
+                "saludar",
+                ["nombre"],
+                [NodoRetorno(NodoValor("hola"))],
+                decoradores=[NodoDecorador(NodoIdentificador("traza"))],
+            )
+        ]
+    if feature == "imports_corelibs":
+        return [
+            NodoUsar("corelibs"),
+            NodoImport("standard_library"),
+            NodoLlamadaFuncion("longitud", [NodoValor(3)]),
+        ]
+    if feature == "manejo_errores":
+        return [
+            NodoTryCatch(
+                [NodoThrow(NodoValor("fallo"))],
+                "error",
+                [NodoLlamadaFuncion("mostrar", [NodoIdentificador("error")])],
+                [],
+            )
+        ]
+    raise ValueError(f"Feature de fase no soportada: {feature}")
+
+
 @lru_cache(maxsize=1)
 def _compute_feature_evidence() -> dict[str, dict[str, str]]:
     evidence: dict[str, dict[str, str]] = {backend: {} for backend in OFFICIAL_TARGETS}
@@ -140,3 +172,10 @@ def test_wasm_lowering_error_is_contractual_and_homogeneous():
     transpiler = TranspiladorWasm()
     with pytest.raises(RuntimeError, match="WASM_CONTRACT_ERROR: lowering i32 no soportado"):
         transpiler._obtener_i32(NodoLista([NodoValor(1)]), "tests.wasm.lowering")
+
+
+@pytest.mark.parametrize("backend", ("rust", "go", "cpp", "java", "wasm", "asm"))
+@pytest.mark.parametrize("feature", ("decoradores", "imports_corelibs", "manejo_errores"))
+def test_phase_1_and_2_backends_generate_code_for_priority_features(backend: str, feature: str):
+    salida = _transpile(backend, _phase_nodes(feature))
+    assert salida.strip(), f"Salida vacía para {backend}.{feature}"

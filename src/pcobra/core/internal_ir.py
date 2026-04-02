@@ -35,6 +35,8 @@ from .ast_nodes import (
     NodoValor,
     NodoFor,
     NodoPara,
+    NodoThrow,
+    NodoTryCatch,
 )
 
 
@@ -318,6 +320,15 @@ def _convert_statement(node) -> InternalIRStatement:
 
     if isinstance(node, NodoGraficar):
         return InternalIRCall("cobra_graficar", [_expr_to_text(node.holobit)])
+
+    if isinstance(node, NodoThrow):
+        return InternalIRUnknown(f"throw {_expr_to_text(node.expresion)}")
+
+    if isinstance(node, NodoTryCatch):
+        nombre = node.nombre_excepcion or "error"
+        return InternalIRUnknown(
+            f"try/catch {nombre} (try={len(node.bloque_try)}, catch={len(node.bloque_catch)})"
+        )
 
     return InternalIRUnknown(f"Nodo {type(node).__name__} no soportado")
 

@@ -19,6 +19,9 @@ from pcobra.cobra.core.ast_nodes import (
     NodoNoLocal,
     NodoLambda,
     NodoWith,
+    NodoDecorador,
+    NodoImport,
+    NodoUsar,
     NodoImportDesde,
     NodoOption,
     NodoSwitch,
@@ -107,6 +110,19 @@ def visit_with(self, nodo):
 def visit_import_desde(self, nodo):
     alias = f" as {nodo.alias}" if nodo.alias else ""
     self.agregar_linea(f"use {nodo.modulo}::{nodo.nombre}{alias};")
+
+
+def visit_decorador(self, nodo: NodoDecorador):
+    expresion = self.obtener_valor(getattr(nodo, "expresion", nodo))
+    self.agregar_linea(f"// @decorador {expresion}")
+
+
+def visit_import(self, nodo: NodoImport):
+    self.agregar_linea(f"// import {nodo.ruta}")
+
+
+def visit_usar(self, nodo: NodoUsar):
+    self.agregar_linea(f"// usar {nodo.modulo}")
 
 
 def visit_interface(self, nodo):
@@ -264,8 +280,8 @@ class TranspiladorRust(BaseTranspiler):
 
 
 RUST_FEATURE_NODE_SUPPORT = {
-    "decoradores": (),
-    "imports_corelibs": ("visit_llamada_funcion",),
+    "decoradores": ("visit_decorador", "visit_funcion"),
+    "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
     "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": (),
     "tipos_compuestos": ("visit_lista", "visit_diccionario"),
@@ -294,6 +310,9 @@ TranspiladorRust.visit_nolocal = visit_nolocal
 TranspiladorRust.visit_no_local = visit_nolocal
 TranspiladorRust.visit_with = visit_with
 TranspiladorRust.visit_import_desde = visit_import_desde
+TranspiladorRust.visit_decorador = visit_decorador
+TranspiladorRust.visit_import = visit_import
+TranspiladorRust.visit_usar = visit_usar
 TranspiladorRust.visit_switch = _visit_switch
 TranspiladorRust.visit_try_catch = _visit_try_catch
 TranspiladorRust.visit_throw = _visit_throw
