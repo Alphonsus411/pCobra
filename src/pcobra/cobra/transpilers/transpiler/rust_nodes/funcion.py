@@ -26,7 +26,9 @@ def visit_funcion(self, nodo):
             if tipo and nodo.nombre != "main":
                 retorno = f" -> {tipo}"
             break
-    self.agregar_linea(f"fn {nodo.nombre}{genericos}({parametros}){retorno} {{")
+
+    prefijo = "async fn" if getattr(nodo, "asincronica", False) else "fn"
+    self.agregar_linea(f"{prefijo} {nodo.nombre}{genericos}({parametros}){retorno} {{")
     prev = getattr(self, "current_function", None)
     self.current_function = nodo.nombre
     self.indent += 1
@@ -34,4 +36,9 @@ def visit_funcion(self, nodo):
         instruccion.aceptar(self)
     self.indent -= 1
     self.agregar_linea("}")
+
+    for decorador in reversed(getattr(nodo, "decoradores", [])):
+        decorador_expr = self.obtener_valor(getattr(decorador, "expresion", decorador))
+        self.agregar_linea(f"// decorador aplicado: {nodo.nombre} = {decorador_expr}({nodo.nombre})")
+
     self.current_function = prev

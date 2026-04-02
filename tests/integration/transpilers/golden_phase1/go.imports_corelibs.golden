@@ -1,0 +1,10 @@
+package main
+
+import (
+    _ "pcobra/corelibs"
+    _ "pcobra/standard_library"
+)
+
+func main() {
+    longitud(3)
+}

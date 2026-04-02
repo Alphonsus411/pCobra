@@ -33,6 +33,14 @@ CONTRACT_FEATURES: Final[tuple[str, ...]] = (
 VALID_COMPATIBILITY_LEVELS: Final[tuple[str, ...]] = ("none", "partial", "full")
 VALID_TIERS: Final[tuple[str, ...]] = ("tier1", "tier2")
 SDK_FULL_BACKENDS: Final[tuple[str, ...]] = ("python",)
+FEATURE_FULL_BACKENDS: Final[dict[str, tuple[str, ...]]] = {
+    "holobit": SDK_FULL_BACKENDS,
+    "proyectar": SDK_FULL_BACKENDS,
+    "transformar": SDK_FULL_BACKENDS,
+    "graficar": SDK_FULL_BACKENDS,
+    "corelibs": ("python", "rust", "go"),
+    "standard_library": ("python", "rust", "go"),
+}
 OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("python", "javascript", "cpp", "rust")
 BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("go", "java")
 TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ("wasm", "asm")
@@ -65,8 +73,8 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
         "proyectar": "partial",
         "transformar": "partial",
         "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
+        "corelibs": "full",
+        "standard_library": "full",
     },
     "wasm": {
         "tier": "tier1",
@@ -83,8 +91,8 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
         "proyectar": "partial",
         "transformar": "partial",
         "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
+        "corelibs": "full",
+        "standard_library": "full",
     },
     "cpp": {
         "tier": "tier2",
@@ -143,8 +151,8 @@ MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
         "proyectar": "partial",
         "transformar": "partial",
         "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
+        "corelibs": "full",
+        "standard_library": "full",
     },
     "wasm": {
         "tier": "tier1",
@@ -161,8 +169,8 @@ MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
         "proyectar": "partial",
         "transformar": "partial",
         "graficar": "partial",
-        "corelibs": "partial",
-        "standard_library": "partial",
+        "corelibs": "full",
+        "standard_library": "full",
     },
     "cpp": {
         "tier": "tier2",
@@ -206,9 +214,9 @@ AST_FEATURES: Final[tuple[str, ...]] = (
 )
 
 LANGUAGE_EQUIVALENCE_PRIORITY_PHASES: Final[dict[str, tuple[str, ...]]] = {
-    "fase_1": ("decoradores", "imports_corelibs"),
+    "fase_1": ("decoradores", "async", "imports_corelibs"),
     "fase_2": ("manejo_errores",),
-    "fase_3": ("async", "tipos_compuestos"),
+    "fase_3": ("tipos_compuestos",),
 }
 
 # Mapeo explícito feature -> nodos soportados por backend para la hoja de ruta
@@ -232,14 +240,14 @@ BACKEND_FEATURE_NODE_SUPPORT: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         "decoradores": ("visit_decorador", "visit_funcion"),
         "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
         "manejo_errores": ("visit_try_catch", "visit_throw"),
-        "async": (),
+        "async": ("visit_funcion", "visit_esperar"),
         "tipos_compuestos": ("visit_lista", "visit_diccionario"),
     },
     "go": {
         "decoradores": ("visit_decorador", "visit_funcion"),
         "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
         "manejo_errores": ("visit_try_catch", "visit_throw"),
-        "async": (),
+        "async": ("visit_funcion", "visit_esperar"),
         "tipos_compuestos": (),
     },
     "cpp": {
@@ -296,10 +304,10 @@ AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
     "rust": {
         "funciones": "full",
         "clases": "partial",
-        "decoradores": "partial",
+        "decoradores": "full",
         "control_flujo": "partial",
         "colecciones": "partial",
-        "async": "none",
+        "async": "full",
         "holobit": "partial",
     },
     "wasm": {
@@ -314,10 +322,10 @@ AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
     "go": {
         "funciones": "partial",
         "clases": "partial",
-        "decoradores": "partial",
+        "decoradores": "full",
         "control_flujo": "partial",
         "colecciones": "partial",
-        "async": "partial",
+        "async": "full",
         "holobit": "partial",
     },
     "cpp": {
@@ -417,8 +425,8 @@ BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
         "transformar": ("Rotación soportada solo sobre eje z y parámetros parseados en runtime.",),
         "graficar": ("Solo vista textual via `mostrar`.",),
-        "corelibs": ("Cobertura parcial mediante helpers inline.",),
-        "standard_library": ("Cobertura parcial mediante helpers inline.",),
+        "corelibs": (),
+        "standard_library": (),
     },
     "wasm": {
         "holobit": ("Depende de runtime host-managed externo.",),
@@ -433,8 +441,8 @@ BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
         "proyectar": ("Limitado a modos 1d/2d/3d/vector del adaptador oficial.",),
         "transformar": ("Rotación soportada solo sobre eje z.",),
         "graficar": ("Solo vista textual via `mostrar`.",),
-        "corelibs": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
-        "standard_library": ("Cobertura parcial mediante adaptadores mínimos best-effort.",),
+        "corelibs": (),
+        "standard_library": (),
     },
     "cpp": {
         "holobit": ("No replica paridad SDK Python completa.",),
@@ -700,10 +708,11 @@ def validate_backend_compatibility_contract() -> None:
             for backend in OFFICIAL_TARGETS
             if BACKEND_COMPATIBILITY[backend][feature] == "full"
         }
-        if full_backends != set(SDK_FULL_BACKENDS):
+        expected_full_backends = set(FEATURE_FULL_BACKENDS[feature])
+        if full_backends != expected_full_backends:
             raise RuntimeError(
                 "Promoción contractual inválida: "
-                f"solo {SDK_FULL_BACKENDS} puede figurar como 'full' para {feature}, "
+                f"solo {tuple(sorted(expected_full_backends))} puede figurar como 'full' para {feature}, "
                 f"pero la matriz declara {tuple(sorted(full_backends))}"
             )
 

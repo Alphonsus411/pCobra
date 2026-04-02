@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 
 import pytest
 
@@ -98,9 +99,9 @@ def _contract_status(feature_id: str, backend: str) -> str:
 @pytest.mark.parametrize(
     "phase,expected",
     [
-        ("fase_1", ("decoradores", "imports_corelibs")),
+        ("fase_1", ("decoradores", "async", "imports_corelibs")),
         ("fase_2", ("manejo_errores",)),
-        ("fase_3", ("async", "tipos_compuestos")),
+        ("fase_3", ("tipos_compuestos",)),
     ],
 )
 def test_language_equivalence_priority_phases_follow_contract(phase: str, expected: tuple[str, ...]):
@@ -133,3 +134,28 @@ def test_priority_features_have_minimal_expected_backend_behavior(backend: str, 
     assert generated.strip(), f"{backend} no generó salida para {feature}"
 
     assert status in {"full", "partial", "none"}
+
+
+PHASE1_ACCEPTANCE_MARKERS = {
+    ("rust", "decoradores"): ("// @decorador", "// decorador aplicado:"),
+    ("rust", "async"): ("async fn obtener_datos", "return fetch().await;"),
+    ("rust", "imports_corelibs"): ("use crate::corelibs::*;", "use crate::standard_library::*;"),
+    ("go", "decoradores"): ("// @decorador", "// decorador aplicado:"),
+    ("go", "async"): ("func obtener_datos() any {", "return cobra_await(fetch())"),
+    ("go", "imports_corelibs"): ('"pcobra/corelibs"', '"pcobra/standard_library"'),
+}
+
+
+@pytest.mark.parametrize("backend,feature", tuple(PHASE1_ACCEPTANCE_MARKERS))
+def test_phase1_rust_go_acceptance_markers_are_present(backend: str, feature: str):
+    generated = _generate(backend, _feature_nodes(feature))
+    for marker in PHASE1_ACCEPTANCE_MARKERS[(backend, feature)]:
+        assert marker in generated
+
+
+@pytest.mark.parametrize("backend,feature", tuple(PHASE1_ACCEPTANCE_MARKERS))
+def test_phase1_rust_go_matches_golden_minimum_evidence(backend: str, feature: str):
+    generated = _generate(backend, _feature_nodes(feature)).strip() + "\n"
+    golden = Path(__file__).parent / "golden_phase1" / f"{backend}.{feature}.golden"
+    assert golden.exists(), f"Falta evidencia golden para {backend}/{feature}: {golden}"
+    assert generated == golden.read_text(encoding="utf-8")

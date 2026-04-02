@@ -5,15 +5,11 @@ Versión contrato: 1.0.0
 
 ## Tareas abiertas (status != full)
 
-- [ ] `decoradores` en `rust` → elevar de `partial` a `full`. Contexto: No hay paridad total de metaprogramación tipo Python.
-- [ ] `decoradores` en `go` → elevar de `partial` a `full`. Contexto: Requiere wrappers manuales para componer comportamiento.
 - [ ] `decoradores` en `cpp` → elevar de `partial` a `full`. Contexto: Sin sintaxis nativa tipo @decorador.
 - [ ] `decoradores` en `java` → elevar de `partial` a `full`. Contexto: Se transpila como anotación semántica en comentarios y wrappers.
 - [ ] `decoradores` en `wasm` → elevar de `partial` a `full`. Contexto: Requiere soporte del host para instrumentación.
 - [ ] `decoradores` en `asm` → elevar de `partial` a `full`. Contexto: Instrumentación manual, sin sintaxis declarativa.
 - [ ] `imports_corelibs` en `javascript` → elevar de `partial` a `full`. Contexto: Cobertura parcial vía adaptadores del proyecto.
-- [ ] `imports_corelibs` en `rust` → elevar de `partial` a `full`. Contexto: No existe corelib externa con paridad completa.
-- [ ] `imports_corelibs` en `go` → elevar de `partial` a `full`. Contexto: Runtime no oficial fuerte.
 - [ ] `imports_corelibs` en `cpp` → elevar de `partial` a `full`. Contexto: Cobertura mínima orientada a utilidades base.
 - [ ] `imports_corelibs` en `java` → elevar de `partial` a `full`. Contexto: APIs disponibles son un subconjunto del runtime Python.
 - [ ] `imports_corelibs` en `wasm` → elevar de `partial` a `full`. Contexto: Depende completamente del host embebedor.
@@ -25,8 +21,6 @@ Versión contrato: 1.0.0
 - [ ] `manejo_errores` en `java` → elevar de `partial` a `full`. Contexto: Usa `UnsupportedOperationException` para huecos funcionales.
 - [ ] `manejo_errores` en `wasm` → elevar de `partial` a `full`. Contexto: Semántica de errores depende del host.
 - [ ] `manejo_errores` en `asm` → elevar de `partial` a `full`. Contexto: Solo señalización de fallo; manejo externo.
-- [ ] `async` en `rust` → elevar de `none` a `full`. Contexto: Soporte async no garantizado por contrato.
-- [ ] `async` en `go` → elevar de `partial` a `full`. Contexto: No hay equivalencia 1:1 con await.
 - [ ] `async` en `cpp` → elevar de `none` a `full`. Contexto: Async no garantizado en el contrato actual.
 - [ ] `async` en `java` → elevar de `none` a `full`. Contexto: Async no garantizado por el transpiler actual.
 - [ ] `async` en `wasm` → elevar de `none` a `full`. Contexto: El módulo no garantiza await nativo.

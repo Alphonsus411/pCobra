@@ -23,6 +23,7 @@ from pcobra.core.ast_nodes import (
     NodoProyectar,
     NodoTransformar,
     NodoGraficar,
+    NodoEsperar,
 )
 from pcobra.cobra.core.lexer import TipoToken
 from pcobra.cobra.transpilers.common.utils import (
@@ -111,6 +112,12 @@ def visit_import(self, nodo: NodoImport):
 def visit_usar(self, nodo: NodoUsar):
     self.agregar_linea(f"// usar {nodo.modulo}")
 
+
+
+
+def visit_esperar(self, nodo):
+    expr = self.obtener_valor(nodo.expresion)
+    self.agregar_linea(f"cobra_await({expr})")
 
 def visit_throw(self, nodo: NodoThrow):
     valor = self.obtener_valor(nodo.expresion)
@@ -206,6 +213,9 @@ class TranspiladorGo(BaseTranspiler):
         if self.usa_runtime_holobit:
             imports.update({"fmt", "math", "strconv", "strings"})
 
+        if any("cobra_await(" in linea for linea in self.codigo):
+            imports.add("sync")
+
         encabezado = "package main\n"
         if imports:
             encabezado += "\nimport (\n"
@@ -215,13 +225,29 @@ class TranspiladorGo(BaseTranspiler):
         else:
             encabezado += "\n"
 
+        await_helpers = ""
+        if any("cobra_await(" in linea for linea in self.codigo):
+            await_helpers = (
+                "func cobra_await(valor any) any {\n"
+                "    var wg sync.WaitGroup\n"
+                "    wg.Add(1)\n"
+                "    resultado := valor\n"
+                "    go func() {\n"
+                "        defer wg.Done()\n"
+                "        resultado = valor\n"
+                "    }()\n"
+                "    wg.Wait()\n"
+                "    return resultado\n"
+                "}\n\n"
+            )
+
         if self.usa_runtime_holobit:
             hooks = "\n".join(get_runtime_hooks("go"))
             if hooks:
                 hooks += "\n\n"
-            return encabezado + hooks + codigo
+            return encabezado + hooks + await_helpers + codigo
 
-        return encabezado + codigo
+        return encabezado + await_helpers + codigo
     def obtener_valor(self, nodo):
         if isinstance(nodo, NodoValor):
             if isinstance(nodo.valor, str):
@@ -245,6 +271,8 @@ class TranspiladorGo(BaseTranspiler):
             valores = ", ".join(self.obtener_valor(v) for v in nodo.valores or [])
             self.usa_runtime_holobit = True
             return f"cobra_holobit([]float64{{{valores}}})"
+        elif isinstance(nodo, NodoEsperar):
+            return f"cobra_await({self.obtener_valor(nodo.expresion)})"
         elif isinstance(nodo, NodoOperacionBinaria):
             izq = self.obtener_valor(nodo.izquierda)
             der = self.obtener_valor(nodo.derecha)
@@ -262,7 +290,7 @@ GO_FEATURE_NODE_SUPPORT = {
     "decoradores": ("visit_decorador", "visit_funcion"),
     "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
     "manejo_errores": ("visit_try_catch", "visit_throw"),
-    "async": (),
+    "async": ("visit_funcion", "visit_esperar"),
     "tipos_compuestos": (),
 }
 
@@ -276,3 +304,5 @@ TranspiladorGo.visit_import = visit_import
 TranspiladorGo.visit_usar = visit_usar
 TranspiladorGo.visit_throw = visit_throw
 TranspiladorGo.visit_try_catch = visit_try_catch
+
+TranspiladorGo.visit_esperar = visit_esperar
