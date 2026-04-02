@@ -93,11 +93,31 @@ def _build_roundtrip_loss_report(
             "no se puede medir degradación automáticamente."
         )
 
-    reverse_dest = reverse_cls()
+    try:
+        reverse_dest = reverse_cls()
+    except NotImplementedError as exc:
+        return (
+            "[round-trip] No se pudo inicializar el parser inverso para destino "
+            f"'{destino}' ({exc}); no se puede medir degradación automáticamente."
+        )
+    except Exception as exc:  # pragma: no cover - defensa adicional
+        return (
+            "[round-trip] Error al inicializar parser inverso para destino "
+            f"'{destino}': {exc}."
+        )
+
     imports_estandar = get_standard_imports(destino) or ""
+    imports_prefixes = (
+        [imports_estandar]
+        if isinstance(imports_estandar, str)
+        else [imp for imp in imports_estandar if isinstance(imp, str)]
+    )
     codigo_para_reverse = codigo_generado
-    if imports_estandar and codigo_generado.startswith(imports_estandar):
-        codigo_para_reverse = codigo_generado[len(imports_estandar):]
+    for imports_prefix in imports_prefixes:
+        if imports_prefix and codigo_para_reverse.startswith(imports_prefix):
+            codigo_para_reverse = codigo_para_reverse[len(imports_prefix):]
+            break
+
     try:
         ast_reconstruido = reverse_dest.generate_ast(codigo_para_reverse)
     except NotImplementedError as exc:
