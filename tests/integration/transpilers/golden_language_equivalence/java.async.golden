@@ -1,0 +1,10 @@
+import pcobra.corelibs.*;
+import pcobra.standard_library.*;
+
+public class Main {
+    static void obtener_datos() {
+        return NodoEsperar(expresion=NodoLlamadaFuncion(nombre=fetch, argumentos=[]));
+    }
+    public static void main(String[] args) {
+    }
+}

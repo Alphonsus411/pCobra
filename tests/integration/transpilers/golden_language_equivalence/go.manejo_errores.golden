@@ -1,0 +1,15 @@
+package main
+
+import (
+    _ "pcobra/corelibs"
+    _ "pcobra/standard_library"
+)
+
+func main() {
+    func() {
+        defer func() { if error := recover(); error != nil {
+            panic("error")
+        }}()
+        panic("fallo")
+    }()
+}

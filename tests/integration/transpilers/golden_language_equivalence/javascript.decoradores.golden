@@ -1,0 +1,50 @@
+import * as io from './nativos/io.js';
+import * as matematicas from './nativos/matematicas.js';
+import { Pila, Cola } from './nativos/estructuras.js';
+import * as archivo from './nativos/archivo.js';
+import * as coleccion from './nativos/coleccion.js';
+import * as numero from './nativos/numero.js';
+import * as red from './nativos/red.js';
+import * as seguridad from './nativos/seguridad.js';
+import * as sistema from './nativos/sistema.js';
+import * as texto from './nativos/texto.js';
+import * as tiempo from './nativos/tiempo.js';
+import * as interfaz from './nativos/interfaz.js';
+
+const cobraJsCorelibs = Object.freeze({
+    longitud(valor) {
+        if (typeof texto.longitud === 'function') {
+            return texto.longitud(valor);
+        }
+        if (typeof coleccion.longitud === 'function') {
+            return coleccion.longitud(valor);
+        }
+        if (valor == null) {
+            return 0;
+        }
+        if (typeof valor === 'string' || Array.isArray(valor)) {
+            return valor.length;
+        }
+        if (typeof valor === 'object') {
+            return Object.keys(valor).length;
+        }
+        return String(valor).length;
+    },
+});
+
+const cobraJsStandardLibrary = Object.freeze({
+    mostrar(...args) {
+        if (typeof io.mostrar === 'function') {
+            return io.mostrar(...args);
+        }
+        if (typeof interfaz.imprimirAviso === 'function' && args.length === 1) {
+            interfaz.imprimirAviso(String(args[0]), { nivel: 'info' });
+            return args[0];
+        }
+        console.log(...args);
+        return args.length <= 1 ? (args[0] ?? null) : args;
+    },
+});
+
+const longitud = (valor) => cobraJsCorelibs.longitud(valor);
+const mostrar = (...args) => cobraJsStandardLibrary.mostrar(...args);

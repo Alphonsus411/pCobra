@@ -1,0 +1,5 @@
+; backend asm: imports de runtime administrados externamente
+
+ASYNC FUNC obtener_datos
+    RETURN NodoEsperar(expresion=NodoLlamadaFuncion(nombre=fetch, argumentos=[]))
+ENDFUNC

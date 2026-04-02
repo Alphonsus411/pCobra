@@ -1,0 +1,23 @@
+use crate::corelibs::*;
+use crate::standard_library::*;
+use std::fmt::Display;
+
+fn longitud<T: ToString>(valor: T) -> usize {
+    valor.to_string().chars().count()
+}
+
+fn mostrar<T: Display>(valor: T) {
+    println!("{}", valor);
+}
+
+let resultado: Result<(), Box<dyn std::error::Error>> = (|| {
+    return Err("fallo".into());
+    Ok(())
+})();
+match resultado {
+    Ok(_) => (),
+    Err(e) => {
+        let error = e;
+        return Err("error".into());
+    },
+};

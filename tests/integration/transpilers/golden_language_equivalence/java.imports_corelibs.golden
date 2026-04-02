@@ -1,0 +1,8 @@
+import pcobra.corelibs.*;
+import pcobra.standard_library.*;
+
+public class Main {
+    public static void main(String[] args) {
+        longitud(3);
+    }
+}

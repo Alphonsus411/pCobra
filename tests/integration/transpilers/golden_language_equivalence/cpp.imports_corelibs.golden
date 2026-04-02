@@ -1,0 +1,4 @@
+#include <pcobra/corelibs.hpp>
+#include <pcobra/standard_library.hpp>
+
+longitud(3);

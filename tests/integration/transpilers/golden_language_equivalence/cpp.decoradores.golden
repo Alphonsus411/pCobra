@@ -1,0 +1,7 @@
+#include <pcobra/corelibs.hpp>
+#include <pcobra/standard_library.hpp>
+
+// @decorador traza
+auto saludar(auto nombre) {
+    return "hola";
+}

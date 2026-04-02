@@ -1,0 +1,16 @@
+;; backend wasm: adaptadores host-managed de corelibs y standard_library
+(import "pcobra:corelibs" "longitud" (func $host_longitud (param i32) (result i32)))
+(import "pcobra:standard_library" "mostrar" (func $host_mostrar (param i32)))
+(func $longitud (param $value i32) (result i32)
+  local.get $value
+  call $host_longitud
+)
+(func $mostrar (param $value i32)
+  local.get $value
+  call $host_mostrar
+)
+
+;; try/catch emulado: flujo lineal + marca de fallback
+(unreachable)
+;; catch fallback
+(unreachable)

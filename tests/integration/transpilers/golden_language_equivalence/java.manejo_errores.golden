@@ -1,0 +1,12 @@
+import pcobra.corelibs.*;
+import pcobra.standard_library.*;
+
+public class Main {
+    public static void main(String[] args) {
+        try {
+            throw new UnsupportedOperationException(String.valueOf("fallo"));
+        } catch (Exception error) {
+            throw new UnsupportedOperationException(String.valueOf("error"));
+        }
+    }
+}

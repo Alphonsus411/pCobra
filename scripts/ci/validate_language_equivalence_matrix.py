@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -21,7 +22,10 @@ from pcobra.cobra.transpilers.compatibility_matrix import (  # noqa: E402
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS  # noqa: E402
 
 DATA_PATH = ROOT / "data" / "language_equivalence.yml"
+BASELINE_PATH = ROOT / "data" / "language_equivalence_baseline.yml"
+DOWNGRADES_PATH = ROOT / "data" / "language_equivalence_downgrades.yml"
 DOC_PATH = ROOT / "docs" / "language_equivalence_matrix.md"
+CONTRACT_TEST_PATH = ROOT / "tests" / "integration" / "transpilers" / "test_language_equivalence_contract.py"
 VALID_STATUSES = {"full", "partial", "none"}
 STATUS_SOURCES = {
     "AST_FEATURE_MINIMUM_CONTRACT": AST_FEATURE_MINIMUM_CONTRACT,
@@ -30,13 +34,74 @@ STATUS_SOURCES = {
 }
 
 
+def _load_yaml(path: Path, *, required: bool) -> dict:
+    if not path.exists():
+        if required:
+            raise SystemExit(f"Falta archivo requerido: {path}")
+        return {}
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise SystemExit(f"YAML inválido en {path}")
+    return payload
+
+
 def _load_contract() -> dict:
-    if not DATA_PATH.exists():
-        raise SystemExit(f"Falta contrato YAML: {DATA_PATH}")
-    data = yaml.safe_load(DATA_PATH.read_text(encoding="utf-8"))
-    if not isinstance(data, dict) or "features" not in data:
+    data = _load_yaml(DATA_PATH, required=True)
+    if "features" not in data:
         raise SystemExit("Contrato YAML inválido: se esperaba clave `features`.")
     return data
+
+
+def _build_status_table(payload: dict) -> dict[tuple[str, str], str]:
+    table: dict[tuple[str, str], str] = {}
+    for feature in payload.get("features", []):
+        feature_id = feature["id"]
+        table[(feature_id, "python")] = "full"
+        for backend, metadata in feature.get("backend_equivalents", {}).items():
+            table[(feature_id, backend)] = metadata["status"]
+    return table
+
+
+def _validate_downgrades_against_baseline(contract: dict) -> None:
+    baseline = _load_yaml(BASELINE_PATH, required=True)
+    approved_payload = _load_yaml(DOWNGRADES_PATH, required=True)
+
+    baseline_table = _build_status_table(baseline)
+    current_table = _build_status_table(contract)
+    approved = {
+        (item["feature"], item["backend"])
+        for item in approved_payload.get("approved_downgrades", [])
+        if isinstance(item, dict) and "feature" in item and "backend" in item
+    }
+
+    downgrades: list[str] = []
+    for key, previous in baseline_table.items():
+        current = current_table.get(key)
+        if previous == "full" and current in {"partial", "none"} and key not in approved:
+            feature, backend = key
+            downgrades.append(
+                f"feature={feature}, backend={backend}, baseline={previous}, actual={current}"
+            )
+
+    if downgrades:
+        joined = "\n - ".join(downgrades)
+        raise SystemExit(
+            "Downgrade detectado full -> partial/none sin aprobación explícita en "
+            f"{DOWNGRADES_PATH}:\n - {joined}"
+        )
+
+
+def _run_contract_test_suite() -> None:
+    if not CONTRACT_TEST_PATH.exists():
+        raise SystemExit(f"No existe suite contractual requerida: {CONTRACT_TEST_PATH}")
+
+    command = [sys.executable, "-m", "pytest", str(CONTRACT_TEST_PATH), "-q"]
+    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
+    if result.returncode != 0:
+        stdout = result.stdout.strip()
+        stderr = result.stderr.strip()
+        details = "\n".join(part for part in [stdout, stderr] if part)
+        raise SystemExit(f"La evidencia ejecutable del contrato falló.\n{details}")
 
 
 def main() -> int:
@@ -93,7 +158,10 @@ def main() -> int:
                     f"Feature `{feature_id}` backend `{backend}` requiere limitaciones cuando status != full."
                 )
 
-    print("Contrato de equivalencia validado correctamente.")
+    _validate_downgrades_against_baseline(payload)
+    _run_contract_test_suite()
+
+    print("Contrato de equivalencia validado correctamente + suite contractual en verde.")
     return 0
 
 

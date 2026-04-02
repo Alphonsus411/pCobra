@@ -1,0 +1,12 @@
+package main
+
+import (
+    _ "pcobra/corelibs"
+    _ "pcobra/standard_library"
+)
+
+// @decorador traza
+func saludar(nombre) {
+    return "hola"
+}
+// decorador aplicado: saludar = traza(saludar)
