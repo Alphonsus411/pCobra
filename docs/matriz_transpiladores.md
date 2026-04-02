@@ -53,6 +53,19 @@ Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 > `runtime_policy` distingue explícitamente entre runtime oficial, best-effort y solo transpilación.
 > `holobit_publico` resume la promesa pública: `SDK full solo python` aplica únicamente a `python`; `rust`, `javascript` y `cpp` se publican como `adaptador mantenido (partial)`; el resto permanece en `partial`.
 
+## Política de validación sintáctica por backend
+
+Para la validación automática de salida transpilada se prioriza **compilación real** (o chequeo de compilador) por encima de reglas de formato.
+
+- `python`: `ast.parse`.
+- `javascript`: `node --check`.
+- `rust`: `rustc --emit=metadata`.
+- `go`: `go build` en directorio temporal aislado; `gofmt -l` queda como diagnóstico opcional de estilo y no como criterio único de validez.
+- `cpp`: `clang++ -fsyntax-only`.
+- `java`: `javac`.
+- `wasm`: `wat2wasm`.
+- `asm`: validador interno de tokens/resolución.
+
 ## Evidencia técnica automática (derivada de goldens)
 
 | Backend | Feature | Nivel contrato | Evidencia automática |

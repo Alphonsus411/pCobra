@@ -114,14 +114,35 @@ def _validate_rust(code: str) -> ValidationResult:
 
 
 def _validate_go(code: str) -> ValidationResult:
+    go = shutil.which("go")
+    if not go:
+        return ValidationResult("skipped", "go no está disponible")
     gofmt = shutil.which("gofmt")
-    if not gofmt:
-        return ValidationResult("skipped", "gofmt no está disponible")
     with tempfile.TemporaryDirectory(prefix="pcobra_go_") as tmp:
         file_path = Path(tmp) / "main.go"
+        output_file = Path(tmp) / "main.bin"
         file_path.write_text(code, encoding="utf-8")
-        ok, output = run_external_command([gofmt, "-l", str(file_path)])
-    return ValidationResult("ok", "gofmt -l correcto") if ok else ValidationResult("fail", output)
+        ok, output = run_external_command([go, "build", "-o", str(output_file), str(file_path)])
+        if not ok:
+            return ValidationResult("fail", output)
+
+        if not gofmt:
+            return ValidationResult("ok", "go build correcto (sin diagnóstico de gofmt)")
+
+        gofmt_result = subprocess.run(
+            [gofmt, "-l", str(file_path)],
+            text=True,
+            capture_output=True,
+        )
+        if gofmt_result.returncode != 0:
+            message = (gofmt_result.stderr or gofmt_result.stdout).strip()
+            return ValidationResult("fail", message or "gofmt -l falló")
+
+        style_output = gofmt_result.stdout.strip()
+        if style_output:
+            return ValidationResult("ok", "go build correcto; gofmt -l detectó diferencias de formato")
+
+    return ValidationResult("ok", "go build correcto; gofmt -l correcto")
 
 
 def _validate_cpp(code: str) -> ValidationResult:

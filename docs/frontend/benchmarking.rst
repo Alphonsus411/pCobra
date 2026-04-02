@@ -149,6 +149,20 @@ El archivo resultante es una lista de objetos con las claves
 ``size`` (tamaño del programa), ``lang`` (lenguaje de salida) y
 ``time`` (segundos de ejecución).
 
+Validación de salida transpilada (referencia)
+---------------------------------------------
+
+Cuando el flujo de benchmarking se combina con validación sintáctica de
+backends, el criterio recomendado es homogéneo con compiladores reales:
+
+- ``rust``: ``rustc --emit=metadata``
+- ``java``: ``javac``
+- ``cpp``: ``clang++ -fsyntax-only``
+- ``go``: ``go build`` en temporal aislado
+
+En Go, ``gofmt -l`` se mantiene como chequeo opcional de estilo, pero no se
+usa como única señal de validez del backend.
+
 Benchmark de hilos
 ------------------
 
@@ -159,4 +173,3 @@ los tiempos totales, uso de CPU y operaciones de E/S.
 .. code-block:: bash
 
    cobra benchthreads --output threads.json
-
