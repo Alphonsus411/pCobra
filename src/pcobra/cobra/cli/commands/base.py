@@ -1,7 +1,9 @@
-from argparse import ArgumentParser
-from typing import Any
+from typing import Any, Literal
 
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+
+CommandCapability = Literal["execute", "codegen", "mixed"]
+
 
 class BaseCommand:
     """Clase base para subcomandos de la CLI."""
@@ -10,6 +12,10 @@ class BaseCommand:
     name: str = ""
     #: Indica si el comando requiere clave SQLITE_DB_KEY para operar.
     requires_sqlite_key: bool = False
+    #: Capacidad funcional del comando para políticas de --modo.
+    capability: CommandCapability = "mixed"
+    #: Aliases del subcomando (si aplica).
+    aliases: tuple[str, ...] = ()
     
     def __init__(self) -> None:
         """Inicializa el comando y valida el nombre.

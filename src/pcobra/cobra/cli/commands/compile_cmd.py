@@ -299,6 +299,8 @@ class CompileCommand(BaseCommand):
     """Transpila un archivo Cobra a distintos lenguajes."""
 
     name = "compilar"
+    capability = "codegen"
+    aliases = ("transpilar",)
     requires_sqlite_key: bool = True
 
     def register_subparser(self, subparsers):
@@ -306,7 +308,7 @@ class CompileCommand(BaseCommand):
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
-            aliases=["transpilar"],
+            aliases=list(self.aliases),
         )
         parser.add_argument("archivo").completer = files_completer()
         parser.add_argument(
@@ -341,7 +343,7 @@ class CompileCommand(BaseCommand):
         archivo = args.archivo
 
         try:
-            validar_politica_modo(self.name, args)
+            validar_politica_modo(self.name, args, capability=self.capability)
         except ValueError as e:
             mostrar_error(str(e))
             return 1

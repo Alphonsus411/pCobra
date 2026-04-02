@@ -121,6 +121,7 @@ class ExecuteCommand(BaseCommand):
     """Ejecuta un script Cobra desde un archivo."""
 
     name = "ejecutar"
+    capability = "execute"
     logger = logging.getLogger(__name__)
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
     EXECUTION_TIMEOUT = 30  # segundos
@@ -206,7 +207,7 @@ class ExecuteCommand(BaseCommand):
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
         try:
-            validar_politica_modo(self.name, args)
+            validar_politica_modo(self.name, args, capability=self.capability)
         except ValueError as e:
             mostrar_error(str(e))
             return 1

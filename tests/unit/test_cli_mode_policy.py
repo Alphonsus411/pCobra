@@ -21,7 +21,7 @@ TranspilarInversoCommand = inverse_module.TranspilarInversoCommand
 
 @pytest.mark.parametrize(
     "command_name",
-    ["compilar", "transpilar", "verificar", "transpilar-inverso"],
+    ["compilar", "transpilar", "verificar", "transpilar-inverso", "validar-sintaxis", "qa-validar"],
 )
 def test_modo_cobra_bloquea_todos_los_comandos_codegen(command_name):
     args = SimpleNamespace(modo="cobra")
@@ -165,3 +165,14 @@ def test_menu_modo_transpilar_muestra_solo_transpilar(monkeypatch):
     assert rc == 0
     assert llamadas_ejecutar["count"] == 0
     assert any("menú limitado a 'transpilar'" in m for m in mensajes_info)
+
+
+def test_compile_command_declara_alias_transpilar():
+    assert "transpilar" in CompileCommand.aliases
+
+
+def test_capabilities_declaradas_en_comandos_principales():
+    assert ExecuteCommand.capability == "execute"
+    assert CompileCommand.capability == "codegen"
+    assert VerifyCommand.capability == "codegen"
+    assert TranspilarInversoCommand.capability == "codegen"

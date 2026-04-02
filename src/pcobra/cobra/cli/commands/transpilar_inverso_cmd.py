@@ -201,6 +201,7 @@ class TranspilarInversoCommand(BaseCommand):
     """
 
     name: str = "transpilar-inverso"
+    capability: str = "codegen"
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando en el parser.
@@ -338,7 +339,7 @@ class TranspilarInversoCommand(BaseCommand):
             CommandError: Si hay errores en la validación o transpilación
         """
         try:
-            validar_politica_modo(self.name, args)
+            validar_politica_modo(self.name, args, capability=self.capability)
 
             origen = normalize_reverse_language(args.origen)
             destino = _validate_official_target_or_raise(

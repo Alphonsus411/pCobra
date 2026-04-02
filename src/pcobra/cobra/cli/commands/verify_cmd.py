@@ -40,6 +40,7 @@ class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
+    capability = "codegen"
     requires_sqlite_key: bool = False
     OFFICIAL_LANGUAGE_CHOICES = target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS)
     SUPPORTED_LANGUAGES = target_cli_choices(VERIFICATION_EXECUTABLE_TARGETS)
@@ -236,7 +237,7 @@ class VerifyCommand(BaseCommand):
             0 si la verificación es exitosa, 1 en caso de error
         """
         try:
-            validar_politica_modo(self.name, args)
+            validar_politica_modo(self.name, args, capability=self.capability)
 
             if not args.archivo or not args.lenguajes:
                 raise ValueError(_("Se requieren archivo y lenguajes"))
