@@ -61,7 +61,6 @@ from .semantic_validators import (
     PrimitivaPeligrosaError,
 )
 from pcobra.core.semantico import AnalizadorSemantico
-from .qualia_bridge import register_execution
 from .cobra_config import (
     limite_nodos,
     limite_memoria_mb,
@@ -602,7 +601,12 @@ class InterpretadorCobra:
         )
         # Genera y expone el IR interno correspondiente al AST
         self.ultimo_ir = self.generar_internal_ir(ast)
-        register_execution(ast)
+        try:
+            from .qualia_bridge import register_execution  # optional subsystem
+        except (ImportError, ModuleNotFoundError):
+            register_execution = None
+        if register_execution:
+            register_execution(ast)
         self.analizador.analizar(ast)
         for nodo in ast:
             self._validar(nodo)
