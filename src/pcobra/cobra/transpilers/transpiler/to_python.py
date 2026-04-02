@@ -258,6 +258,7 @@ class TranspiladorPython(BaseTranspiler):
     def obtener_indentacion(self):
         return "    " * self.nivel_indentacion
 
+
     def transpilar(self, nodos):
         nodos = normalize_to_cobra_ast(nodos)
         nodos = expandir_macros(nodos)
@@ -426,6 +427,15 @@ class TranspiladorPython(BaseTranspiler):
             return f"{{{key}: {val} for {nodo.variable} in {it}{cond}}}"
         else:
             return str(getattr(nodo, "valor", nodo))
+
+
+PYTHON_FEATURE_NODE_SUPPORT = {
+    "decoradores": ("visit_decorador", "visit_funcion"),
+    "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
+    "manejo_errores": ("visit_try_catch", "visit_throw"),
+    "async": ("visit_funcion", "visit_esperar"),
+    "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+}
 
 
 # Asignar los visitantes externos a la clase

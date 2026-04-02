@@ -218,6 +218,15 @@ class TranspiladorJava(BaseTranspiler):
         return "\n".join(self.codigo)
 
 
+JAVA_FEATURE_NODE_SUPPORT = {
+    "decoradores": (),
+    "imports_corelibs": ("visit_llamada_funcion",),
+    "manejo_errores": (),
+    "async": (),
+    "tipos_compuestos": (),
+}
+
+
 # Asignar visitantes
 for nombre, funcion in java_nodes.items():
     setattr(TranspiladorJava, f"visit_{nombre}", funcion)

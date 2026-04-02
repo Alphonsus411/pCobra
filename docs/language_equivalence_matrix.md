@@ -21,6 +21,15 @@ Cada feature documenta:
 5. `tipos_compuestos`
 6. `hooks_runtime`
 
+## Priorización de implementación (source of truth)
+
+- **Fase 1:** `decoradores`, `imports_corelibs`.
+- **Fase 2:** `manejo_errores`.
+- **Fase 3:** `async`, `tipos_compuestos`.
+
+El orden anterior se refleja en `LANGUAGE_EQUIVALENCE_PRIORITY_PHASES` dentro de
+`src/pcobra/cobra/transpilers/compatibility_matrix.py`.
+
 ## Resumen de estado por feature/backend
 
 | Feature | python | javascript | rust | go | cpp | java | wasm | asm |

@@ -272,6 +272,15 @@ class TranspiladorCPP(BaseTranspiler):
         return "\n".join(lineas)
 
 
+CPP_FEATURE_NODE_SUPPORT = {
+    "decoradores": (),
+    "imports_corelibs": ("visit_llamada_funcion",),
+    "manejo_errores": (),
+    "async": (),
+    "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+}
+
+
 # Asignar los visitantes externos a la clase
 TranspiladorCPP.visit_asignacion = _visit_asignacion
 TranspiladorCPP.visit_condicional = _visit_condicional

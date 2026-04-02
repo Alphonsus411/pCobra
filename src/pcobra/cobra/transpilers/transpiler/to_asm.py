@@ -174,3 +174,12 @@ class TranspiladorASM(BaseTranspiler):
             return
 
         raise TypeError(f"Instrucción no soportada: {type(instruccion).__name__}")
+
+
+ASM_FEATURE_NODE_SUPPORT = {
+    "decoradores": ("ir:function.decorators",),
+    "imports_corelibs": ("ir:call.longitud", "ir:call.mostrar"),
+    "manejo_errores": (),
+    "async": ("ir:function.async_flag",),
+    "tipos_compuestos": (),
+}
