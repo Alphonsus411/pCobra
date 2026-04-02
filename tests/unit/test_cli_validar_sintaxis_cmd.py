@@ -85,6 +85,27 @@ def test_validar_sintaxis_report_json_en_archivo(monkeypatch, tmp_path: Path):
     assert '"cobra"' in contenido
 
 
+def test_validar_sintaxis_report_json_incluye_errors_by_target_si_existe(monkeypatch, tmp_path: Path):
+    command = ValidarSintaxisCommand()
+    output = tmp_path / "reporte.json"
+
+    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
+    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
+
+    def _fake_run(*_):
+        command._errors_by_target = {"javascript": ['{"stage":"validator","error":"boom"}']}
+        return {"javascript": TargetSummary(ok=0, fail=1, skipped=0)}, True
+
+    monkeypatch.setattr(command, "_run_transpilers_syntax", _fake_run)
+
+    rc = command.run(_args(report_json=str(output), targets="javascript"))
+
+    assert rc == 1
+    contenido = output.read_text(encoding="utf-8")
+    assert '"errors_by_target"' in contenido
+    assert '"javascript"' in contenido
+
+
 def test_validator_javascript_skipped_sin_node(monkeypatch):
     monkeypatch.setattr(cmd_module.shutil, "which", lambda _: None)
 
@@ -114,3 +135,42 @@ def test_parse_targets_invalido():
     command = ValidarSintaxisCommand()
     with pytest.raises(ValueError):
         command._parse_targets("fantasy")
+
+
+def test_run_transpilers_syntax_fallo_en_un_target_y_continua(monkeypatch, tmp_path: Path):
+    command = ValidarSintaxisCommand()
+    fixture = tmp_path / "fixture.co"
+    fixture.write_text("imprimir(1)", encoding="utf-8")
+
+    class _OkTranspiler:
+        def generate_code(self, _ast):
+            return "ok"
+
+    class _BoomTranspiler:
+        def generate_code(self, _ast):
+            raise RuntimeError("boom target")
+
+    monkeypatch.setattr(command, "_load_ast_for_fixture", lambda _: object())
+    monkeypatch.setattr(cmd_module, "TRANSPILER_FIXTURES", [fixture])
+    monkeypatch.setattr(
+        "pcobra.cobra.transpilers.registry.build_official_transpilers",
+        lambda: {"python": _OkTranspiler, "javascript": _BoomTranspiler},
+    )
+    monkeypatch.setattr(
+        cmd_module,
+        "VALIDATORS",
+        {
+            "python": lambda code: ValidationResult("ok", f"ok:{code}"),
+            "javascript": lambda code: ValidationResult("ok", f"ok:{code}"),
+        },
+    )
+
+    summaries, has_failures = command._run_transpilers_syntax(["python", "javascript"], strict=False)
+
+    assert has_failures is True
+    assert summaries["python"] == TargetSummary(ok=1, fail=0, skipped=0)
+    assert summaries["javascript"] == TargetSummary(ok=0, fail=1, skipped=0)
+    assert "javascript" in command._errors_by_target
+    assert command._errors_by_target["javascript"]
+    assert "transpiler_or_validator" in command._errors_by_target["javascript"][0]
+

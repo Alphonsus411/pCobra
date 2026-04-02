@@ -37,6 +37,7 @@ class SyntaxReport:
     cobra: ValidationResult
     targets: dict[str, TargetSummary] = field(default_factory=dict)
     strict: bool = False
+    errors_by_target: dict[str, list[str]] = field(default_factory=dict)
 
 
 def _resolve_project_root() -> Path | None:
@@ -299,16 +300,32 @@ class ValidarSintaxisCommand(BaseCommand):
             raise FileNotFoundError(_("No hay fixtures disponibles para validar transpiladores."))
 
         summaries = {target: TargetSummary() for target in targets}
+        self._errors_by_target: dict[str, list[str]] = {target: [] for target in targets}
         has_failures = False
 
         for fixture in fixtures:
             ast_nodes = self._load_ast_for_fixture(fixture)
             for target in targets:
-                validator = VALIDATORS[target]
-                transpiler_cls = transpilers[target]
-                generated = transpiler_cls().generate_code(ast_nodes)
-                code = generated if isinstance(generated, str) else "\n".join(generated)
-                result = validator(code)
+                try:
+                    validator = VALIDATORS[target]
+                    transpiler_cls = transpilers[target]
+                    transpiler = transpiler_cls()
+                    generated = transpiler.generate_code(ast_nodes)
+                    code = generated if isinstance(generated, str) else "\n".join(generated)
+                    result = validator(code)
+                except Exception as exc:  # noqa: BLE001
+                    try:
+                        fixture_name = str(fixture.relative_to(SRC_DIR.parent))
+                    except ValueError:
+                        fixture_name = str(fixture)
+                    message = (
+                        f'{{"stage":"transpiler_or_validator","target":"{target}",'
+                        f'"fixture":"{fixture_name}","error":"{type(exc).__name__}: {exc}"}}'
+                    )
+                    summaries[target].fail += 1
+                    self._errors_by_target[target].append(message)
+                    has_failures = True
+                    continue
                 if result.status == "ok":
                     summaries[target].ok += 1
                 elif result.status == "skipped":
@@ -331,6 +348,8 @@ class ValidarSintaxisCommand(BaseCommand):
             "targets": {key: asdict(value) for key, value in report.targets.items()},
             "strict": report.strict,
         }
+        if report.errors_by_target:
+            payload["errors_by_target"] = report.errors_by_target
         serialized = json.dumps(payload, ensure_ascii=False, indent=2)
         if destination == "-":
             print(serialized)
@@ -351,13 +370,25 @@ class ValidarSintaxisCommand(BaseCommand):
 
             has_failures = py_result.status != "ok" or cobra_result.status != "ok"
             summaries: dict[str, TargetSummary] = {}
+            errors_by_target: dict[str, list[str]] = {}
 
             if not only_cobra:
                 targets = self._parse_targets(str(getattr(args, "targets", "")))
                 summaries, transpilers_failed = self._run_transpilers_syntax(targets, strict)
+                errors_by_target = {
+                    target: list(messages)
+                    for target, messages in getattr(self, "_errors_by_target", {}).items()
+                    if messages
+                }
                 has_failures = has_failures or transpilers_failed
 
-            report = SyntaxReport(python=py_result, cobra=cobra_result, targets=summaries, strict=strict)
+            report = SyntaxReport(
+                python=py_result,
+                cobra=cobra_result,
+                targets=summaries,
+                strict=strict,
+                errors_by_target=errors_by_target,
+            )
             self._emit_report(report, report_dest)
 
             if has_failures:
