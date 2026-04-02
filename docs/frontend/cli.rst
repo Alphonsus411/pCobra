@@ -107,6 +107,38 @@ Ejemplo:
 
    cobra ejecutar programa.co --no-seguro --depurar
 
+Subcomando ``validar-sintaxis``
+-------------------------------
+Valida sintaxis de Python/Cobra y/o de backends transpilados según el perfil.
+
+Opciones principales:
+
+- ``--perfil``: selecciona alcance de validación.
+
+  - ``solo-cobra``: valida compilación Python de ``src/tests`` + parse de fixtures Cobra.
+  - ``transpiladores``: valida solo sintaxis de código generado en backends oficiales.
+  - ``completo``: ejecuta ambos bloques.
+
+- ``--solo-cobra``: alias **deprecado** equivalente a ``--perfil=solo-cobra``.
+- ``--targets``: CSV de targets al usar perfil con transpiladores.
+- ``--strict``: convierte ``skipped`` en error.
+
+Ejemplos por perfil:
+
+.. code-block:: bash
+
+   # Rápido (Python + parse Cobra)
+   cobra validar-sintaxis --perfil solo-cobra
+
+   # Compatibilidad (alias deprecado)
+   cobra validar-sintaxis --solo-cobra
+
+   # Solo backends para pipeline de transpiladores
+   cobra validar-sintaxis --perfil transpiladores --targets=python,javascript,rust
+
+   # Flujo completo para CI estricta
+   cobra validar-sintaxis --perfil completo --strict --report-json reporte_sintaxis.json
+
 Subcomando ``interactive``
 -------------------------
 Abre el intérprete interactivo. Es el modo por defecto si no se

@@ -152,3 +152,31 @@ Se considerará que la sintaxis está validada para este ciclo cuando:
 - `tests/test_lexer.py` y `tests/test_parser.py` estén en verde.
 - Los tests de transpilación base estén en verde.
 - No existan fallos de CLI atribuibles a entorno en el pipeline principal.
+
+## 6) Perfiles operativos de validación (CLI + pipelines)
+
+Para separar pipelines rápidos y completos, `validar-sintaxis` y `scripts/check.py`
+quedan alineados en tres perfiles:
+
+- `solo-cobra`: validación rápida (Python + parse Cobra).
+- `transpiladores`: valida exclusivamente sintaxis de backends.
+- `completo`: ejecuta todo.
+
+Ejemplos recomendados:
+
+```bash
+# Perfil rápido para PRs tempranos
+cobra validar-sintaxis --perfil solo-cobra
+python scripts/check.py --perfil rapido
+
+# Perfil dedicado a backends/transpiladores
+cobra validar-sintaxis --perfil transpiladores --targets=python,javascript,rust
+python scripts/check.py --perfil transpiladores
+
+# Perfil completo para release o merge final
+cobra validar-sintaxis --perfil completo --strict --report-json reporte_sintaxis.json
+python scripts/check.py --perfil completo
+```
+
+Compatibilidad:
+- `--solo-cobra` se mantiene como alias deprecado de `--perfil solo-cobra`.
