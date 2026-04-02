@@ -35,13 +35,9 @@ def limitar_memoria_mb(mb: int) -> None:
     """Restringe la memoria máxima del proceso actual."""
     bytes_ = mb * 1024 * 1024
     if IS_WINDOWS:
-        if not _limitar_memoria_psutil(bytes_):
-            logger.error(
-                _(
-                    "No se pudo establecer el límite de memoria en Windows; "
-                    "el ajuste se omitirá."
-                ),
-            )
+        # En Windows, psutil.Process.rlimit no está soportado de forma confiable.
+        # Se omite sin WARNING/ERROR para evitar ruido en logs.
+        logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
         return
     try:
         import resource
@@ -108,13 +104,9 @@ def _limitar_memoria_psutil(bytes_: int) -> bool:
 def limitar_cpu_segundos(segundos: int) -> None:
     """Limita el tiempo de CPU en segundos para este proceso."""
     if IS_WINDOWS:
-        if not _limitar_cpu_psutil(segundos):
-            logger.error(
-                _(
-                    "No se pudo establecer el límite de CPU en Windows; "
-                    "el ajuste se omitirá."
-                )
-            )
+        # En Windows, psutil.Process.rlimit no está soportado de forma confiable.
+        # Se omite sin WARNING/ERROR para evitar ruido en logs.
+        logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
         return
     try:
         import resource
