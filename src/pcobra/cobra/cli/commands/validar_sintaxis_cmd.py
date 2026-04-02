@@ -240,6 +240,7 @@ VALIDATORS: dict[str, Callable[[str], ValidationResult]] = {
 
 class ValidarSintaxisCommand(BaseCommand):
     name = "validar-sintaxis"
+    capability = "codegen"
     requires_sqlite_key: bool = False
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
@@ -340,7 +341,7 @@ class ValidarSintaxisCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         try:
-            validar_politica_modo(self.name, args)
+            validar_politica_modo(self.name, args, capability=self.capability)
             strict = bool(getattr(args, "strict", False))
             only_cobra = bool(getattr(args, "solo_cobra", False))
             report_dest = getattr(args, "report_json", None)

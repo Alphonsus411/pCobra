@@ -39,6 +39,7 @@ class QaValidationReport:
 
 class QaValidarCommand(BaseCommand):
     name = "qa-validar"
+    capability = "codegen"
     requires_sqlite_key: bool = False
     SCOPE_CHOICES = ("syntax", "runtime", "all")
 
@@ -185,7 +186,7 @@ class QaValidarCommand(BaseCommand):
 
     def run(self, args: Any) -> int:
         try:
-            validar_politica_modo(self.name, args)
+            validar_politica_modo(self.name, args, capability=self.capability)
             scope = str(getattr(args, "scope", "all"))
             has_failures = False
 

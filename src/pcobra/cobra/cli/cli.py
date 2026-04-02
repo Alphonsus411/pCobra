@@ -344,7 +344,7 @@ class CliApplication:
             default=MODO_POR_DEFECTO,
             help=_(
                 "Define el alcance de la sesión: "
-                "cobra (solo ejecutar/interpretar), "
+                "cobra (solo ejecutar/interpretar; bloquea toda ruta de codegen), "
                 "transpilar (solo generar código), "
                 "mixto (ejecutar y transpilar)."
             ),
@@ -532,7 +532,7 @@ class CliApplication:
             description=_(
                 "CLI de Cobra para ejecutar e interpretar scripts, "
                 "transpilar código a otros lenguajes o usar ambos flujos "
-                "según --modo (cobra, transpilar, mixto)."
+                "según --modo (cobra, transpilar, mixto). En --modo cobra se bloquea todo codegen."
             ),
         )
         self._configure_cli_options(parser)
@@ -641,7 +641,8 @@ class CliApplication:
 
         def _accion_permitida(comando: str) -> bool:
             try:
-                validar_politica_modo(comando, parsed_args)
+                capability = "execute" if comando == "ejecutar" else "codegen"
+                validar_politica_modo(comando, parsed_args, capability=capability)
                 return True
             except ValueError:
                 return False

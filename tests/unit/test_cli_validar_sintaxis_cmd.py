@@ -45,7 +45,7 @@ def test_validar_sintaxis_respeta_validar_politica_modo(monkeypatch):
     mensajes: list[str] = []
 
     monkeypatch.setattr(cmd_module, "mostrar_error", lambda msg: mensajes.append(msg))
-    monkeypatch.setattr(cmd_module, "validar_politica_modo", lambda *_: (_ for _ in ()).throw(ValueError("modo bloqueado")))
+    monkeypatch.setattr(cmd_module, "validar_politica_modo", lambda *_, **__: (_ for _ in ()).throw(ValueError("modo bloqueado")))
 
     rc = command.run(_args())
 
