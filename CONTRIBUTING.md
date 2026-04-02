@@ -85,6 +85,20 @@ Además de las pruebas, ejecuta las verificaciones de estilo con:
 make lint
 ```
 
+### Orden recomendado de validaciones locales
+
+Para iterar más rápido y detectar errores temprano, ejecuta las validaciones
+en este orden:
+
+1. **Smoke de sintaxis**: `python scripts/smoke_syntax.py`
+   - Compila sintaxis Python en `src/` y `tests/`.
+   - Ejecuta parseo básico de fixtures `.co` representativos.
+2. **Lint y tipos**: `make lint` y `make typecheck` (opcional `pyright src`).
+3. **Pruebas unitarias/integración**: `PYTHONPATH=$PWD/src pytest`.
+
+Si prefieres un solo comando secuencial, usa `python scripts/check.py`, que
+sigue este mismo orden.
+
 Cada workflow en `.github/workflows` se valida automáticamente mediante el
 test `tests/test_workflows_yaml.py`. Si añades o modificas un workflow,
 ejecuta `pytest` para asegurarte de que el archivo es YAML válido antes de
