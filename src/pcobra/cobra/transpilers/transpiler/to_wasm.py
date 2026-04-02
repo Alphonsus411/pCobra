@@ -94,8 +94,9 @@ class TranspiladorWasm(BaseTranspiler):
         valor = self.obtener_valor(nodo)
         if isinstance(valor, str) and valor.startswith("(") and valor.endswith(")"):
             return valor
-        raise NotImplementedError(
-            f"{contexto}: no se pudo bajar a i32 en wasm para nodo={type(nodo).__name__}"
+        raise RuntimeError(
+            "WASM_CONTRACT_ERROR: lowering i32 no soportado; "
+            f"contexto={contexto}; nodo={type(nodo).__name__}"
         )
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):

@@ -13,7 +13,8 @@ def test_transpilador_asignacion_wasm():
     ast = [NodoAsignacion("x", 10)]
     t = TranspiladorWasm()
     resultado = t.generate_code(ast)
-    assert resultado == "(local.set $x (i32.const 10))"
+    assert '(import "pcobra:corelibs" "longitud"' in resultado
+    assert "(local.set $x (i32.const 10))" in resultado
 
 
 def test_transpilador_funcion_wasm():
@@ -25,8 +26,5 @@ def test_transpilador_funcion_wasm():
     ast = [NodoFuncion("sumar", ["a", "b"], [NodoAsignacion("x", expr)])]
     t = TranspiladorWasm()
     resultado = t.generate_code(ast)
-    esperado = (
-        "(func $sumar (param $a i32) (param $b i32)\n"
-        + "    (local.set $x (i32.add (local.get $a) (local.get $b)))\n)"
-    )
-    assert resultado == esperado
+    assert "(func $sumar (param $a i32) (param $b i32)" in resultado
+    assert "(local.set $x (i32.add (local.get $a) (local.get $b)))" in resultado
