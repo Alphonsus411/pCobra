@@ -14,7 +14,23 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.core.ast_cache import obtener_ast
 
 # Constantes del proyecto
-PROGRAM_DIR = Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"
+
+
+def _resolve_project_root() -> Path | None:
+    """Resuelve la raíz del proyecto buscando marcadores conocidos."""
+    current = Path(__file__).resolve()
+    for candidate in current.parents:
+        if (candidate / "pyproject.toml").exists() and (candidate / "scripts").is_dir():
+            return candidate
+    return None
+
+
+PROJECT_ROOT = _resolve_project_root()
+PROGRAM_DIR = (
+    PROJECT_ROOT / "scripts" / "benchmarks" / "programs"
+    if PROJECT_ROOT
+    else Path(__file__).resolve().parents[4] / "scripts" / "benchmarks" / "programs"
+)
 MEDIUM_SIZE = 100
 LARGE_SIZE = 1000
 VALID_SIZES = ['small', 'medium', 'large']
@@ -41,6 +57,19 @@ class BenchTranspilersCommand(BaseCommand):
 
     name = "benchtranspilers"
     requires_sqlite_key: bool = True
+
+    @staticmethod
+    def _validate_benchmark_layout() -> None:
+        """Valida que exista la jerarquía base de benchmarks."""
+        benchmarks_root = PROGRAM_DIR.parent
+        if not benchmarks_root.is_dir():
+            raise FileNotFoundError(
+                _(
+                    "No se encontró el directorio base de benchmarks en {path}. "
+                    "Verifica que estés ejecutando desde el repositorio correcto "
+                    "(debe contener pyproject.toml y scripts/benchmarks)."
+                ).format(path=benchmarks_root)
+            )
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
@@ -125,6 +154,7 @@ class BenchTranspilersCommand(BaseCommand):
         """
         try:
             results: List[Dict[str, Any]] = []
+            self._validate_benchmark_layout()
             programs = {s: self._ensure_program(s) for s in VALID_SIZES}
 
             profiler = cProfile.Profile() if getattr(args, "profile", False) else None

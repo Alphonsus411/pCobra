@@ -352,7 +352,11 @@ Mide la velocidad de los distintos transpiladores generando programas de
 tamaño pequeño, mediano y grande. Los tiempos se muestran en formato
 JSON y opcionalmente pueden guardarse con ``--output``. Con ``--profile``
 se ejecuta ``cProfile`` durante la generación y se guarda un archivo
-``bench_transpilers.prof`` para su análisis.
+``bench_transpilers.prof`` para su análisis. La carpeta de programas se
+resuelve de forma automática desde la raíz del proyecto (directorio que
+contiene ``pyproject.toml`` y ``scripts/``) y usa
+``scripts/benchmarks/programs``. Si no existe ``scripts/benchmarks``,
+el comando falla de forma temprana con un mensaje claro.
 
 Ejemplo:
 
