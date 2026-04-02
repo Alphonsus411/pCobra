@@ -1,0 +1,3 @@
+@temporizar(etiqueta="demo")
+def ejecutar():
+    retornar 42

@@ -1,0 +1,3 @@
+@depreciado(mensaje="Usa la nueva API")
+def api_antigua():
+    retornar "ok"

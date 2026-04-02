@@ -1,0 +1,3 @@
+@reintentar(intentos=3)
+def operar():
+    retornar "ok"
