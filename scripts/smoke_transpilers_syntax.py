@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke de transpiladores oficiales + validación de sintaxis por backend."""
+"""Smoke de transpiladores oficiales usando la API canónica de sintaxis."""
 
 from __future__ import annotations
 
@@ -9,61 +9,31 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
 
-COBRA_FIXTURES = [
-    ROOT / "scripts" / "benchmarks" / "programs" / "smoke_assign.co",
-    ROOT / "examples" / "smoke_assign.co",
-]
-
 
 def main() -> int:
     sys.path.insert(0, str(SRC_DIR))
 
-    from pcobra.cobra.qa.syntax_validation import run_transpiler_syntax_validation
-    from pcobra.cobra.transpilers.registry import (
-        build_official_transpilers,
-        official_transpiler_targets,
-    )
+    from pcobra.cobra.qa.syntax_validation import execute_syntax_validation
+    from pcobra.cobra.transpilers.registry import build_official_transpilers, official_transpiler_targets
 
-    transpilers = build_official_transpilers()
     ordered_targets = official_transpiler_targets()
 
-    fixtures = []
-    for fixture in COBRA_FIXTURES:
-        if fixture.exists():
-            fixtures.append(fixture)
-        else:
-            print(f"⚠️ Fixture omitido (no existe): {fixture.relative_to(ROOT)}")
-
-    print("🔎 Smoke de sintaxis de transpiladores oficiales")
+    print("🔎 Smoke de sintaxis de transpiladores oficiales vía API unificada")
     print(f"   Targets: {', '.join(ordered_targets)}")
-    print(f"   Fixtures: {', '.join(str(f.relative_to(ROOT)) for f in fixtures)}")
-    if not fixtures:
-        print("❌ No hay fixtures disponibles para ejecutar el smoke.")
-        return 1
 
-    report, events, has_failures = run_transpiler_syntax_validation(
-        fixtures=fixtures,
-        targets=ordered_targets,
-        transpilers=transpilers,
+    execution = execute_syntax_validation(
+        profile="transpiladores",
+        targets_raw=",".join(ordered_targets),
         strict=False,
+        transpilers=build_official_transpilers(),
     )
-
-    for event in events:
-        fixture_path = Path(event["fixture"])
-        try:
-            label = fixture_path.relative_to(ROOT)
-        except ValueError:
-            label = fixture_path
-        status = event["status"]
-        icon = "✅" if status == "ok" else "⏭️" if status == "skipped" else "❌"
-        print(f"{icon} [{event['target']}] ({label}) {event['message']}")
 
     print("\n📊 Resumen por target")
     for target in ordered_targets:
-        summary = report.targets[target]
+        summary = execution.report.targets[target]
         print(f" - {target}: ok={summary.ok} fail={summary.fail} skipped={summary.skipped}")
 
-    if has_failures:
+    if execution.has_failures:
         print("\n🚨 Smoke de transpiladores con fallos en targets oficiales.")
         return 1
 

@@ -318,6 +318,21 @@ cobra validar-sintaxis --report-json
 
 El comando respeta el `--modo` global de la CLI y puede combinarse con `--modo mixto`, `--modo cobra` o `--modo transpilar`.
 
+**Contrato JSON versionado (`--report-json`)**
+
+El reporte JSON usa `schema_version=1.0.0` y mantiene un flujo único entre CLI y scripts smoke (ambos delegan en `pcobra.cobra.qa.syntax_validation`).
+Campos del contrato actual:
+- `schema_version`
+- `python` (`version`, `result`)
+- `cobra` (`version`, `result`)
+- `targets`
+- `errors_by_target`
+- `profile`
+- `timestamp`
+- `targets_requested`
+- `strict`
+- `python_runtime`
+
 ## Descarga de binarios
 
 Para cada lanzamiento se generan ejecutables para Linux, Windows y macOS mediante
@@ -1327,12 +1342,10 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
 - Ejecuta `make typecheck` para la verificación estática con *mypy* (y
   opcionalmente *pyright* si está instalado).
 - Ejecuta primero el smoke de sintaxis con `python scripts/smoke_syntax.py`
-  (sintaxis Python en `src/` y `tests/`, más parseo básico de fixtures Cobra).
+  (delegación a `pcobra.cobra.qa.syntax_validation` con perfil `solo-cobra`).
 - Ejecuta `python scripts/smoke_transpilers_syntax.py` para transpilación + validación
-  sintáctica cruzada de los 8 targets oficiales (`python`, `javascript`, `rust`, `go`,
-  `cpp`, `java`, `wasm`, `asm`) sobre fixtures `.co` mínimos. El script reporta por
-  target `ok/fail/skipped` (cuando falta una dependencia externa como `node`, `rustc`,
-  `javac`, etc.) y devuelve código de salida no-cero si falla algún target obligatorio.
+  sintáctica cruzada de los 8 targets oficiales; este script también delega en la misma API
+  unificada (`pcobra.cobra.qa.syntax_validation`, perfil `transpiladores`).
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
 - Para lanzar todas las validaciones en un solo paso ejecuta `python scripts/check.py`.
   Este script corre primero `smoke_syntax.py`, luego `smoke_transpilers_syntax.py`,
@@ -1352,6 +1365,8 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   En CI, este mismo orden se conserva dentro del gate principal (smoke sintaxis,
   smoke transpiladores, lint/tipos y pruebas), por lo que `scripts/check.py`
   es la referencia para reproducir el pipeline completo en desarrollo local.
+- CI además ejecuta `python scripts/ci/validate_syntax_report_contract.py` para bloquear
+  cambios del contrato JSON sin actualización de snapshot/documentación.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
   issues y preparar pull requests.
