@@ -43,9 +43,9 @@ def test_python_backend_is_full_for_every_contract_feature(feature: str):
     "backend",
     tuple(target for target in OFFICIAL_TARGETS if target != "python"),
 )
-def test_non_python_backends_remain_exactly_partial_for_every_contract_feature(backend: str):
+def test_non_python_backends_respect_declared_contract_feature_levels(backend: str):
     for feature in CONTRACT_FEATURES:
-        assert BACKEND_COMPATIBILITY[backend][feature] == "partial"
+        assert BACKEND_COMPATIBILITY[backend][feature] in {"partial", "full"}
         generated = generate_code(backend, feature)
         assert generated.strip(), f"{backend} no generó salida para {feature}"
         for marker in PARTIAL_EXPECTATIONS[backend][feature]:

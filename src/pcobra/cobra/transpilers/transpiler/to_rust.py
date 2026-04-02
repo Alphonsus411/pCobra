@@ -24,6 +24,7 @@ from pcobra.cobra.core.ast_nodes import (
     NodoUsar,
     NodoImportDesde,
     NodoOption,
+    NodoEsperar,
     NodoSwitch,
     NodoCase,
     NodoPattern,
@@ -163,6 +164,12 @@ def visit_graficar(self, nodo):
     self.usa_runtime_holobit = True
     self.agregar_linea(f'cobra_runtime_expect(cobra_graficar(&{hb}));')
 
+
+
+def visit_esperar(self, nodo):
+    expr = self.obtener_valor(nodo.expresion)
+    self.agregar_linea(f"{expr}.await;")
+
 class TranspiladorRust(BaseTranspiler):
     """Transpila el AST de Cobra a código Rust sencillo."""
 
@@ -219,6 +226,8 @@ class TranspiladorRust(BaseTranspiler):
             if nodo.valor is None:
                 return "None"
             return f"Some({self.obtener_valor(nodo.valor)})"
+        if isinstance(nodo, NodoEsperar):
+            return f"{self.obtener_valor(nodo.expresion)}.await"
         if isinstance(nodo, NodoLista):
             elems = ", ".join(self.obtener_valor(e) for e in nodo.elementos)
             return f"vec![{elems}]"
@@ -283,7 +292,7 @@ RUST_FEATURE_NODE_SUPPORT = {
     "decoradores": ("visit_decorador", "visit_funcion"),
     "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
     "manejo_errores": ("visit_try_catch", "visit_throw"),
-    "async": (),
+    "async": ("visit_funcion", "visit_esperar"),
     "tipos_compuestos": ("visit_lista", "visit_diccionario"),
 }
 
@@ -322,3 +331,5 @@ TranspiladorRust.visit_defer = _visit_defer
 TranspiladorRust.visit_proyectar = visit_proyectar
 TranspiladorRust.visit_transformar = visit_transformar
 TranspiladorRust.visit_graficar = visit_graficar
+
+TranspiladorRust.visit_esperar = visit_esperar

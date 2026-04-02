@@ -1,0 +1,23 @@
+package main
+
+import (
+    _ "pcobra/corelibs"
+    _ "pcobra/standard_library"
+    "sync"
+)
+
+func cobra_await(valor any) any {
+    var wg sync.WaitGroup
+    wg.Add(1)
+    resultado := valor
+    go func() {
+        defer wg.Done()
+        resultado = valor
+    }()
+    wg.Wait()
+    return resultado
+}
+
+func obtener_datos() any {
+    return cobra_await(fetch())
+}

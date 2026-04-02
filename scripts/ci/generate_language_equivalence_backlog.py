@@ -37,9 +37,11 @@ def main() -> int:
             open_tasks += 1
             limitations = details.get("limitations", [])
             limitation_msg = "; ".join(limitations) if limitations else "Sin limitaciones documentadas."
+            acceptance = details.get("acceptance_criteria", [])
+            acceptance_msg = " | Criterio de aceptación: " + " / ".join(acceptance) if acceptance else ""
             lines.append(
                 f"- [ ] `{feature_id}` en `{backend}` → elevar de `{status}` a `full`. "
-                f"Contexto: {limitation_msg}"
+                f"Contexto: {limitation_msg}{acceptance_msg}"
             )
 
     if open_tasks == 0:
