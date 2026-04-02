@@ -36,7 +36,6 @@ from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.resource_limits import limitar_memoria_mb
-from pcobra.core.qualia_bridge import get_suggestions
 from pcobra.core.sandbox import (
     ejecutar_en_contenedor,
     ejecutar_en_sandbox,
@@ -395,6 +394,13 @@ class InteractiveCommand(BaseCommand):
             return True
 
         if linea == "sugerencias":
+            try:
+                from pcobra.core.qualia_bridge import (
+                    get_suggestions,  # optional subsystem
+                )
+            except (ImportError, ModuleNotFoundError):
+                return True
+
             for s in get_suggestions():
                 mostrar_info(str(s))
             return True
