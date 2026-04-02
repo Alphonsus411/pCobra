@@ -87,6 +87,58 @@ def test_validate_go_ok_con_estilo_pendiente_en_gofmt(monkeypatch):
     assert "detectó diferencias de formato" in result.message
 
 
+def test_validate_python_syntax_incluye_tests_cli_y_core(monkeypatch, tmp_path):
+    tests_dir = tmp_path / "tests"
+    cli_file = tests_dir / "cli" / "test_cli_sample.py"
+    core_file = tests_dir / "core" / "test_core_sample.py"
+    for file_path in (cli_file, core_file):
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("x = 1\n", encoding="utf-8")
+
+    compiled_files: list[Path] = []
+
+    monkeypatch.setattr(sv, "TESTS_DIR", tests_dir)
+    monkeypatch.setattr(sv.compileall, "compile_dir", lambda *_args, **_kwargs: True)
+
+    def _fake_compile(path, doraise):
+        assert doraise is True
+        compiled_files.append(Path(path))
+        return None
+
+    monkeypatch.setattr(sv.py_compile, "compile", _fake_compile)
+
+    result = sv.validate_python_syntax()
+
+    assert result.status == "ok"
+    assert cli_file in compiled_files
+    assert core_file in compiled_files
+
+
+def test_validate_python_syntax_excluye_dirs_no_deseados(monkeypatch, tmp_path):
+    tests_dir = tmp_path / "tests"
+    valid_file = tests_dir / "cli" / "test_cli_sample.py"
+    excluded_file = tests_dir / ".venv" / "lib" / "ignored.py"
+    for file_path in (valid_file, excluded_file):
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("x = 1\n", encoding="utf-8")
+
+    compiled_files: list[Path] = []
+
+    monkeypatch.setattr(sv, "TESTS_DIR", tests_dir)
+    monkeypatch.setattr(sv.compileall, "compile_dir", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(
+        sv.py_compile,
+        "compile",
+        lambda path, doraise: compiled_files.append(Path(path)),
+    )
+
+    result = sv.validate_python_syntax()
+
+    assert result.status == "ok"
+    assert valid_file in compiled_files
+    assert excluded_file not in compiled_files
+
+
 def test_run_transpiler_syntax_validation_resumen_ok_y_fail(monkeypatch):
     monkeypatch.setattr(sv, "load_ast_for_fixture", lambda _fixture: ["ast"])
 
