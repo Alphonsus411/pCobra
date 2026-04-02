@@ -44,6 +44,7 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
 )
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
+from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
@@ -103,7 +104,7 @@ class AppConfig:
         BenchTranspilersCommand, BenchThreadsCommand,
         ProfileCommand, QualiaCommand, CacheCommand,
         TranspilarInversoCommand, VerifyCommand,
-        ValidarSintaxisCommand, PluginsCommand, AgixCommand
+        ValidarSintaxisCommand, QaValidarCommand, PluginsCommand, AgixCommand
     ]
 
 
