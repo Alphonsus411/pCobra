@@ -2,6 +2,7 @@ import logging
 import os
 from argparse import ArgumentParser, Namespace
 from contextlib import contextmanager
+from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, Optional, Type
 
 try:  # pragma: no cover - dependencia opcional
@@ -35,6 +36,7 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.target_policies import parse_target
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
+from pcobra.cobra.transpilers.import_helper import get_standard_imports
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
@@ -59,6 +61,65 @@ class UnsupportedLanguageError(Exception):
 class TranspilationError(Exception):
     """Error lanzado cuando ocurre un problema durante la transpilación."""
     pass
+
+
+def _normalize_ast_for_roundtrip(value: Any) -> Any:
+    """Normaliza nodos AST para comparaciones de round-trip estables."""
+    if is_dataclass(value):
+        return _normalize_ast_for_roundtrip(asdict(value))
+    if isinstance(value, dict):
+        return {
+            key: _normalize_ast_for_roundtrip(val)
+            for key, val in sorted(value.items(), key=lambda item: item[0])
+        }
+    if isinstance(value, (list, tuple)):
+        return [_normalize_ast_for_roundtrip(item) for item in value]
+    if hasattr(value, "__dict__"):
+        return _normalize_ast_for_roundtrip(vars(value))
+    return value
+
+
+def _build_roundtrip_loss_report(
+    *,
+    destino: str,
+    ast_original: Any,
+    codigo_generado: str,
+) -> Optional[str]:
+    """Genera un reporte de degradación comparando AST original vs round-trip."""
+    reverse_cls = REVERSE_TRANSPILERS.get(destino)
+    if reverse_cls is None:
+        return (
+            f"[round-trip] No hay parser inverso para destino '{destino}', "
+            "no se puede medir degradación automáticamente."
+        )
+
+    reverse_dest = reverse_cls()
+    imports_estandar = get_standard_imports(destino) or ""
+    codigo_para_reverse = codigo_generado
+    if imports_estandar and codigo_generado.startswith(imports_estandar):
+        codigo_para_reverse = codigo_generado[len(imports_estandar):]
+    try:
+        ast_reconstruido = reverse_dest.generate_ast(codigo_para_reverse)
+    except NotImplementedError as exc:
+        return (
+            "[round-trip] Conversión parcial detectada: el parser inverso del destino "
+            f"'{destino}' no soporta un nodo generado ({exc})."
+        )
+    except Exception as exc:  # pragma: no cover - defensa adicional
+        return (
+            "[round-trip] No fue posible reconstruir AST para validar pérdida "
+            f"de información en destino '{destino}': {exc}"
+        )
+
+    original_norm = _normalize_ast_for_roundtrip(ast_original)
+    reconstruido_norm = _normalize_ast_for_roundtrip(ast_reconstruido)
+    if original_norm != reconstruido_norm:
+        return (
+            "[round-trip] Posible degradación semántica/sintáctica: "
+            f"AST normalizado distinto tras {destino} -> Cobra."
+        )
+    return None
+
 
 REVERSE_TRANSPILERS: Dict[str, Type] = {
     language: reverse_module.REGISTERED_REVERSE_TRANSPILERS[language]
@@ -323,6 +384,11 @@ class TranspilarInversoCommand(BaseCommand):
             )
             ast = reverse_cls().load_file(args.archivo)
             codigo = transp_cls().generate_code(ast)
+            report = _build_roundtrip_loss_report(
+                destino=destino,
+                ast_original=ast,
+                codigo_generado=codigo,
+            )
 
             mostrar_info(
                 _("Código transpilado a target oficial ({name}) desde origen reverse {origin}:").format(
@@ -331,6 +397,8 @@ class TranspilarInversoCommand(BaseCommand):
                 )
             )
             print(codigo)
+            if report:
+                mostrar_info(report)
             if destino == "python":
                 lineas = codigo.splitlines()
                 previsualizacion = [linea.replace("'", "") for linea in lineas]
@@ -351,7 +419,10 @@ class TranspilarInversoCommand(BaseCommand):
             return 1
         except NotImplementedError as exc:
             logger.error(f"Funcionalidad no implementada: {exc}", exc_info=True)
-            mostrar_error(str(exc))
+            mostrar_error(
+                "Transpilación inversa con pérdida de información: "
+                f"nodo/constructo no soportado ({exc})"
+            )
             return 1
         except (CommandError, ValidationError, UnsupportedLanguageError) as exc:
             mostrar_error(str(exc))

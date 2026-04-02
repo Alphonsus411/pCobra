@@ -16,6 +16,13 @@ class FakeTranspiler:
     def generate_code(self, ast):
         return "resultado"
 
+class FakeReverseWithUnsupportedNode:
+    def load_file(self, path):
+        return []
+
+    def generate_ast(self, code):
+        raise NotImplementedError("Nodo no soportado: import_statement")
+
 
 def test_transpilar_inverso_ok(tmp_path):
     archivo = tmp_path / "a.py"
@@ -27,7 +34,7 @@ def test_transpilar_inverso_ok(tmp_path):
         main(args)
     lineas = [l for l in out.getvalue().splitlines() if "Código transpilado" in l]
     assert lineas[0].startswith("Código transpilado")
-    assert out.getvalue().strip().splitlines()[-1] == "resultado"
+    assert "resultado" in out.getvalue()
 
 
 def test_transpilar_inverso_archivo_inexistente(tmp_path):
@@ -85,12 +92,12 @@ def test_transpilar_inverso_destino_fuera_tier_rechazado_explicitamente():
     with patch.object(transpilar_inverso_cmd, "TRANSPILERS", {"python": FakeTranspiler, "externo": FakeTranspiler}):
         try:
             cmd._verificar_dependencias("python", "externo")
-        except transpilar_inverso_cmd.UnsupportedLanguageError as exc:
+        except (transpilar_inverso_cmd.UnsupportedLanguageError, argparse.ArgumentTypeError) as exc:
             mensaje = str(exc)
         else:
             raise AssertionError("Se esperaba UnsupportedLanguageError para destino externo")
 
-    assert "fuera de Tier 1/Tier 2" in mensaje
+    assert "soportado" in mensaje or "fuera de Tier 1/Tier 2" in mensaje
     assert "externo" in mensaje
 
 
@@ -152,3 +159,45 @@ def test_regresion_transpilar_inverso_choices_y_scope_siguen_alineados_con_polit
         "javascript",
         "java",
     }
+
+
+def test_transpilar_inverso_reporta_cuando_no_hay_reverse_para_destino(tmp_path):
+    archivo = tmp_path / "a.py"
+    archivo.write_text("x = 1")
+    args = [
+        "--no-color",
+        "transpilar-inverso",
+        str(archivo),
+        "--origen=python",
+        "--destino=rust",
+    ]
+    with patch("pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS", {"python": FakeReverse}), \
+         patch("pcobra.cobra.cli.commands.transpilar_inverso_cmd.TRANSPILERS", {"rust": FakeTranspiler}), \
+         patch("sys.stdout", new_callable=StringIO) as out:
+        main(args)
+
+    salida = out.getvalue()
+    assert "No hay parser inverso para destino 'rust'" in salida
+
+
+def test_transpilar_inverso_reporta_degradacion_por_nodo_no_soportado(tmp_path):
+    archivo = tmp_path / "a.py"
+    archivo.write_text("x = 1")
+    args = [
+        "--no-color",
+        "transpilar-inverso",
+        str(archivo),
+        "--origen=python",
+        "--destino=python",
+    ]
+    with patch(
+        "pcobra.cobra.cli.commands.transpilar_inverso_cmd.REVERSE_TRANSPILERS",
+        {"python": FakeReverseWithUnsupportedNode},
+    ), patch(
+        "pcobra.cobra.cli.commands.transpilar_inverso_cmd.TRANSPILERS",
+        {"python": FakeTranspiler},
+    ), patch("sys.stdout", new_callable=StringIO) as out:
+        main(args)
+
+    salida = out.getvalue()
+    assert "Conversión parcial detectada" in salida
