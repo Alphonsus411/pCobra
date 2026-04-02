@@ -46,6 +46,47 @@ def test_validator_asm_detecta_tokens_no_resueltos():
     assert "no resueltos" in result.message
 
 
+def test_validate_go_falla_si_build_falla_aunque_gofmt_exista(monkeypatch):
+    monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None)
+
+    def fake_run_external_command(command, cwd=None):
+        if command[0].endswith("go") and command[1] == "build":
+            return False, "undefined: variableInexistente"
+        raise AssertionError(f"comando inesperado: {command}")
+
+    monkeypatch.setattr(sv, "run_external_command", fake_run_external_command)
+
+    result = sv._validate_go("package main\nfunc main(){ variableInexistente() }\n")
+    assert result.status == "fail"
+    assert "undefined" in result.message
+
+
+def test_validate_go_ok_con_build_y_gofmt_opcional(monkeypatch):
+    monkeypatch.setattr(sv.shutil, "which", lambda cmd: "/usr/bin/go" if cmd == "go" else None)
+    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None: (True, ""))
+
+    result = sv._validate_go("package main\nfunc main(){}\n")
+    assert result.status == "ok"
+    assert "go build correcto" in result.message
+    assert "sin diagnóstico de gofmt" in result.message
+
+
+def test_validate_go_ok_con_estilo_pendiente_en_gofmt(monkeypatch):
+    monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None)
+    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None: (True, ""))
+
+    class _CompletedProcess:
+        returncode = 0
+        stdout = "main.go\n"
+        stderr = ""
+
+    monkeypatch.setattr(sv.subprocess, "run", lambda *args, **kwargs: _CompletedProcess())
+
+    result = sv._validate_go("package main\nfunc main(){}\n")
+    assert result.status == "ok"
+    assert "detectó diferencias de formato" in result.message
+
+
 def test_run_transpiler_syntax_validation_resumen_ok_y_fail(monkeypatch):
     monkeypatch.setattr(sv, "load_ast_for_fixture", lambda _fixture: ["ast"])
 
