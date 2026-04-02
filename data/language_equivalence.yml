@@ -74,6 +74,88 @@ features:
         status: partial
         limitations:
           - Instrumentación manual, sin sintaxis declarativa.
+    decorator_support:
+      memoizar:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      orden_total:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      despachar_por_tipo:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      depreciado:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      sincronizar:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      reintentar:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      reintentar_async:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      dataclase:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
+      temporizar:
+        python: full
+        javascript: full
+        rust: full
+        go: full
+        cpp: partial
+        java: partial
+        wasm: partial
+        asm: partial
 
   - id: imports_corelibs
     cobra_syntax: |

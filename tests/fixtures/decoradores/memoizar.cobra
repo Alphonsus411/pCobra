@@ -1,0 +1,3 @@
+@memoizar(maxsize=64)
+def cuadrado(x):
+    retornar x * x

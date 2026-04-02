@@ -4,6 +4,25 @@ El módulo `standard_library.decoradores` ofrece atajos en español para patrone
 comunes al definir funciones y clases en Python. Facilita alternar entre Cobra y
 Python sin perder expresividad ni documentación.
 
+## Inventario exportado
+
+`standard_library.decoradores` exporta actualmente:
+
+- `memoizar`
+- `dataclase`
+- `temporizar`
+- `depreciado`
+- `sincronizar`
+- `reintentar`
+- `reintentar_async`
+- `orden_total`
+- `despachar_por_tipo`
+
+> Nota de alcance: todos estos decoradores tienen semántica completa en runtime
+> Python. En transpilers no-Python, el soporte de decoradores se limita al
+> contrato del backend (marcadores, comentarios o instrumentación parcial según
+> destino), no necesariamente a la semántica completa del runtime Python.
+
 ## `memoizar`
 
 Envoltorio de :func:`functools.lru_cache`. Permite memorizar el resultado de una
@@ -26,6 +45,10 @@ def fibonacci(n):
     return fibonacci(n - 1) + fibonacci(n - 2)
 ```
 
+**Limitación real fuera de Python runtime:** en backends no-Python, `@memoizar`
+se transpila bajo el contrato general de decoradores del backend y no garantiza
+un caché equivalente a `functools.lru_cache`.
+
 ## `dataclase`
 
 Alias directo de :func:`dataclasses.dataclass` que mantiene todos los
@@ -39,6 +62,9 @@ class Punto:
     x: float
     y: float
 ```
+
+**Limitación real fuera de Python runtime:** el azúcar de `dataclasses` puede no
+mapearse 1:1 a todos los backends.
 
 ## `orden_total`
 
@@ -66,6 +92,10 @@ class Punto:
 assert Punto(0, 1) <= Punto(0, 1) < Punto(1, 0)
 ```
 
+**Limitación real fuera de Python runtime:** la generación automática de todos
+los operadores de comparación puede requerir wrappers o soporte manual según
+backend.
+
 ## `temporizar`
 
 Mide el tiempo de ejecución de una función usando `time.perf_counter` y reporta
@@ -89,6 +119,9 @@ def renderizar():
     ...
 ```
 
+**Limitación real fuera de Python runtime:** la medición y salida por consola se
+apoya en runtime Python (`time.perf_counter`, `print`/Rich).
+
 ## `depreciado`
 
 Emite una advertencia de `DeprecationWarning` cada vez que se ejecuta la
@@ -106,6 +139,9 @@ from pcobra.standard_library.decoradores import depreciado
 def procesar_datos():
     ...
 ```
+
+**Limitación real fuera de Python runtime:** la emisión de `DeprecationWarning`
+es específica de Python; otros backends no garantizan warnings equivalentes.
 
 ## `sincronizar`
 
@@ -127,6 +163,9 @@ candado = Lock()
 def actualizar_cache():
     ...
 ```
+
+**Limitación real fuera de Python runtime:** se basa en `threading.Lock`; otros
+backends no garantizan esta semántica de exclusión mutua automáticamente.
 
 ## `reintentar`
 
@@ -158,6 +197,10 @@ def consultar_servicio():
 > **Nota:** la compatibilidad con Rich es opcional. Si no está instalado, los
 > mensajes se envían mediante `print`.
 
+**Limitación real fuera de Python runtime:** backoff, `jitter`, warnings y
+salida de consola no están garantizados con equivalencia total en todos los
+backends.
+
 ## `reintentar_async`
 
 Versión asíncrona de `reintentar` que delega en
@@ -177,6 +220,10 @@ async def descargar_archivo():
 > - [Rich](https://rich.readthedocs.io/) para mensajes con estilo.
 > - `pcobra.corelibs` ya provee `reintentar_async`, por lo que no es necesario
 >   instalar nada adicional para los reintentos asíncronos más allá de Cobra.
+
+**Limitación real fuera de Python runtime:** el contrato async de cada backend
+puede ser parcial o no estar garantizado para la semántica exacta de
+reintentos.
 
 ## `despachar_por_tipo`
 
@@ -202,3 +249,7 @@ def _(valor: int) -> str:
 assert describir(5) == "Entero: 5"
 assert describir(5.0).startswith("Valor genérico")
 ```
+
+**Limitación real fuera de Python runtime:** `singledispatch` y su registro por
+tipos (`registrar`, `despachar`, `registros`) no tienen equivalencia exacta
+garantizada en todos los targets.

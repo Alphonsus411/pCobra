@@ -1,0 +1,3 @@
+@dataclase
+clase Usuario:
+    nombre = ""

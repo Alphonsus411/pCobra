@@ -1,0 +1,3 @@
+@reintentar_async(intentos=2)
+async def descargar():
+    retornar esperar fetch()

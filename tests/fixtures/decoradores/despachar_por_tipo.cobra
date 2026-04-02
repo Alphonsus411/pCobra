@@ -1,0 +1,3 @@
+@despachar_por_tipo
+def describir(valor):
+    retornar valor

@@ -1,0 +1,3 @@
+@sincronizar
+def incrementar():
+    retornar 1
