@@ -85,6 +85,39 @@ def test_validar_sintaxis_report_json_en_archivo(monkeypatch, tmp_path: Path):
     assert '"cobra"' in contenido
 
 
+def test_validar_sintaxis_report_json_stdout_sin_mensajes_extra(monkeypatch, capsys):
+    command = ValidarSintaxisCommand()
+
+    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
+    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
+    monkeypatch.setattr(command, "_run_transpilers_syntax", lambda *_: ({}, False))
+
+    rc = command.run(_args(report_json="-"))
+
+    assert rc == 0
+    captured = capsys.readouterr()
+    payload = cmd_module.json.loads(captured.out)
+    assert payload["python"]["status"] == "ok"
+    assert payload["cobra"]["status"] == "ok"
+    assert captured.err == ""
+
+
+def test_validar_sintaxis_report_json_stdout_con_error_sin_mensajes_extra(monkeypatch, capsys):
+    command = ValidarSintaxisCommand()
+
+    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("fail", "py fail"))
+    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
+    monkeypatch.setattr(command, "_run_transpilers_syntax", lambda *_: ({}, False))
+
+    rc = command.run(_args(report_json="-"))
+
+    assert rc == 1
+    captured = capsys.readouterr()
+    payload = cmd_module.json.loads(captured.out)
+    assert payload["python"]["status"] == "fail"
+    assert captured.err == ""
+
+
 def test_validator_javascript_skipped_sin_node(monkeypatch):
     monkeypatch.setattr(cmd_module.shutil, "which", lambda _: None)
 
