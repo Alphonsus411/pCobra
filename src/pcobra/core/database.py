@@ -30,6 +30,7 @@ __all__ = [
     "DatabaseKeyError",
     "DEFAULT_DB_PATH",
     "SQLITE_DB_KEY_ENV",
+    "is_sqliteplus_available",
     "get_connection",
     "store_ast",
     "load_ast",
@@ -57,6 +58,7 @@ _SQLITEPLUS_INSTANCE = None
 _TABLES_READY = False
 _INIT_LOCK = threading.Lock()
 _DB_LOCK = threading.Lock()
+_SQLITEPLUS_AVAILABILITY: bool | None = None
 
 _PATH_PREFIXES = ("path:", "file:")
 
@@ -105,13 +107,14 @@ def _looks_like_base64_token(value: str) -> bool:
 
 
 def _load_sqliteplus_class():
-    global _SQLITEPLUS_CLASS
+    global _SQLITEPLUS_CLASS, _SQLITEPLUS_AVAILABILITY
     if _SQLITEPLUS_CLASS is not None:
         return _SQLITEPLUS_CLASS
 
     try:
         dist = distribution("sqliteplus-enhanced")
     except PackageNotFoundError:  # pragma: no cover - dependencia ausente
+        _SQLITEPLUS_AVAILABILITY = False
         warnings.warn(
             "'sqliteplus-enhanced' no está instalado; se utilizará una base de datos SQLite "
             "simplificada sin cifrado.",
@@ -130,10 +133,24 @@ def _load_sqliteplus_class():
         return _SQLITEPLUS_CLASS
 
     module_path = dist.locate_file("utils/sqliteplus_sync.py")
-    if not Path(module_path).exists():  # pragma: no cover - instalación dañada
-        raise DatabaseDependencyError(
-            "No se pudo localizar 'utils/sqliteplus_sync.py' dentro de 'sqliteplus-enhanced'."
+    if not Path(module_path).exists():  # pragma: no cover - instalación incompleta
+        _SQLITEPLUS_AVAILABILITY = False
+        warnings.warn(
+            "Instalación incompleta de 'sqliteplus-enhanced' (falta 'utils/sqliteplus_sync.py'); "
+            "se utilizará una base de datos SQLite simplificada sin cifrado.",
+            RuntimeWarning,
         )
+
+        class SQLitePlusFallback:
+            def __init__(self, db_path: str, cipher_key: str | None = None):
+                self._db_path = db_path
+                self._cipher_key = cipher_key
+
+            def get_connection(self) -> sqlite3.Connection:
+                return sqlite3.connect(self._db_path)
+
+        _SQLITEPLUS_CLASS = SQLitePlusFallback
+        return _SQLITEPLUS_CLASS
 
     # El módulo depende de ``sqliteplus.utils.constants`` pero el paquete no se
     # exporta como paquete instalable. Creamos entradas mínimas en ``sys.modules``
@@ -177,7 +194,17 @@ def _load_sqliteplus_class():
     module = importlib_util.module_from_spec(spec)
     spec.loader.exec_module(module)
     _SQLITEPLUS_CLASS = getattr(module, "SQLitePlus")
+    _SQLITEPLUS_AVAILABILITY = True
     return _SQLITEPLUS_CLASS
+
+
+def is_sqliteplus_available() -> bool:
+    """Indica si la dependencia opcional ``sqliteplus-enhanced`` está operativa."""
+
+    global _SQLITEPLUS_AVAILABILITY
+    if _SQLITEPLUS_AVAILABILITY is None:
+        _load_sqliteplus_class()
+    return bool(_SQLITEPLUS_AVAILABILITY)
 
 
 def _resolve_paths() -> tuple[Path, str | None]:
