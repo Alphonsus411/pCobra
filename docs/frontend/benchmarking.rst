@@ -134,7 +134,10 @@ Para medir la velocidad de cada transpilador puedes ejecutar ``cobra
 benchtranspilers``. Este comando genera programas pequeños, medianos y
 grandes y calcula el tiempo que tarda cada transpilador en producir el
 código de salida. Con la opción ``--profile`` se registra un informe
-detallado en ``bench_transpilers.prof``.
+detallado en ``bench_transpilers.prof``. Los programas se leen/escriben
+en ``scripts/benchmarks/programs`` resolviendo primero la raíz del
+proyecto por ``pyproject.toml`` + ``scripts/``; si no existe
+``scripts/benchmarks`` se reporta un error antes de ejecutar el benchmark.
 
 Ejemplo:
 
@@ -156,5 +159,4 @@ los tiempos totales, uso de CPU y operaciones de E/S.
 .. code-block:: bash
 
    cobra benchthreads --output threads.json
-
 
