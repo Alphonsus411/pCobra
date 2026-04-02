@@ -5,6 +5,9 @@
 
 Fuente de generación: `scripts/generar_matriz_transpiladores.py`.
 
+> Matriz viva de API runtime (`corelibs`/`standard_library`): `python scripts/generar_matriz_api_runtime.py`
+> (salidas en `docs/_generated/runtime_api_matrix.json` y `docs/_generated/runtime_api_matrix.md`).
+
 ## Resumen de política
 
 <!-- BEGIN GENERATED MATRIZ POLICY SUMMARY -->

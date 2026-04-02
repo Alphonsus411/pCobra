@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import Final
 
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS
 
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
@@ -354,6 +355,9 @@ AST_FEATURE_EVIDENCE_BASELINE: Final[dict[str, dict[str, str]]] = AST_FEATURE_MI
 AST_FEATURE_EVIDENCE_SOURCE: Final[str] = (
     "tests/unit/test_transpiler_feature_parity.py::test_feature_parity_matrix_evidence_matches_contract"
 )
+
+
+LIVE_RUNTIME_API_MATRIX: Final[dict[str, object]] = build_runtime_api_matrix()
 
 
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
@@ -981,3 +985,9 @@ __all__ = [
     "validate_ast_feature_parity_release_gate",
     "validate_backend_compatibility_contract",
 ]
+
+
+def get_live_runtime_api_matrix() -> dict[str, object]:
+    """Devuelve una copia ligera de la matriz viva de API runtime por backend."""
+
+    return LIVE_RUNTIME_API_MATRIX
