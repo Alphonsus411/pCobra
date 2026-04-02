@@ -344,6 +344,7 @@ class ValidarSintaxisCommand(BaseCommand):
             strict = bool(getattr(args, "strict", False))
             only_cobra = bool(getattr(args, "solo_cobra", False))
             report_dest = getattr(args, "report_json", None)
+            report_stdout = report_dest == "-"
 
             py_result = _validate_python_syntax()
             cobra_result = _validate_cobra_parse()
@@ -360,10 +361,12 @@ class ValidarSintaxisCommand(BaseCommand):
             self._emit_report(report, report_dest)
 
             if has_failures:
-                mostrar_error(_("La validación de sintaxis encontró errores."))
+                if not report_stdout:
+                    mostrar_error(_("La validación de sintaxis encontró errores."))
                 return 1
 
-            mostrar_info(_("Validación de sintaxis completada correctamente."))
+            if not report_stdout:
+                mostrar_info(_("Validación de sintaxis completada correctamente."))
             return 0
         except Exception as exc:
             mostrar_error(_("Error en validar-sintaxis: {}").format(exc))
