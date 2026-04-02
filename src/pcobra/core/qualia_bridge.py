@@ -195,6 +195,26 @@ def save_state(spirit: QualiaSpirit) -> None:
         conn.commit()
 
 
+_QUALIA_INSTANCE: QualiaSpirit | None = None
+_QUALIA_ENABLED: bool = True
+
+
+def _get_qualia() -> QualiaSpirit:
+    """Devuelve la instancia en memoria inicializándola de forma diferida."""
+    global _QUALIA_INSTANCE, _QUALIA_ENABLED
+
+    if _QUALIA_INSTANCE is None:
+        # Qualia es opcional y no debe bloquear el arranque del REPL.
+        try:
+            _QUALIA_INSTANCE = load_state()
+        except Exception as exc:  # pragma: no cover - protección defensiva
+            _QUALIA_ENABLED = False
+            LOGGER.warning("Qualia deshabilitada por error al inicializar: %s", exc)
+            _QUALIA_INSTANCE = QualiaSpirit()
+
+    return _QUALIA_INSTANCE
+
+
 def reset_state() -> dict[str, Any]:
     """Elimina el estado persistido de Qualia y limpia restos heredados."""
 
@@ -204,12 +224,14 @@ def reset_state() -> dict[str, Any]:
         "legacy_error": None,
     }
 
+    qualia = _get_qualia()
+
     if not _DATABASE_AVAILABLE:
         LOGGER.debug(
             "Base de datos de Qualia inactiva; solo se limpia el estado en memoria.",
         )
-        QUALIA.history.clear()
-        QUALIA.knowledge = QualiaKnowledge()
+        qualia.history.clear()
+        qualia.knowledge = QualiaKnowledge()
         return resultado
 
     with database.get_connection() as conn:
@@ -231,13 +253,10 @@ def reset_state() -> dict[str, Any]:
         else:
             resultado["legacy_removed"] = True
 
-    QUALIA.history.clear()
-    QUALIA.knowledge = QualiaKnowledge()
+    qualia.history.clear()
+    qualia.knowledge = QualiaKnowledge()
 
     return resultado
-
-
-QUALIA = load_state()
 
 
 def register_execution(execution: Union[str, list]) -> None:
@@ -250,11 +269,12 @@ def register_execution(execution: Union[str, list]) -> None:
         ast = execution
         code = str(execution)
 
-    QUALIA.register(code)
-    QUALIA.knowledge.update_from_ast(ast)
-    save_state(QUALIA)
+    qualia = _get_qualia()
+    qualia.register(code)
+    qualia.knowledge.update_from_ast(ast)
+    save_state(qualia)
 
 
 def get_suggestions() -> List[str]:
     """Obtiene sugerencias actuales del estado cargado."""
-    return QUALIA.suggestions()
+    return _get_qualia().suggestions()
