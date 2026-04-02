@@ -18,6 +18,8 @@ def _args(**kwargs) -> Namespace:
         "targets": "",
         "scope": "all",
         "report_json": None,
+        "feature_gap_report": None,
+        "feature_gap_format": "json",
     }
     base.update(kwargs)
     return Namespace(**base)
@@ -96,3 +98,33 @@ def test_qa_validar_reporte_json_agregado(monkeypatch, tmp_path: Path):
     assert rc == 0
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload) == {"syntax", "transpilers", "runtime_equivalence"}
+
+
+def test_qa_validar_exporta_feature_gap_report_markdown(monkeypatch, tmp_path: Path):
+    command = QaValidarCommand()
+    output = tmp_path / "feature-gaps.md"
+
+    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(False))
+    monkeypatch.setattr(cmd_module.VerifyCommand, "run", lambda *_: 0)
+    monkeypatch.setattr(
+        cmd_module,
+        "build_feature_gap_report",
+        lambda: {
+            "python": [],
+            "javascript": [
+                {
+                    "feature": "decoradores",
+                    "expected_level": "full",
+                    "actual_level": "partial",
+                    "missing_nodes": ["visit_decorador"],
+                }
+            ],
+        },
+    )
+
+    rc = command.run(_args(targets="python", feature_gap_report=str(output), feature_gap_format="markdown"))
+
+    assert rc == 0
+    content = output.read_text(encoding="utf-8")
+    assert "## javascript" in content
+    assert "| decoradores | full | partial | visit_decorador |" in content

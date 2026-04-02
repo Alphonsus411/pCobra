@@ -16,6 +16,7 @@ from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.transpilers.compatibility_matrix import build_feature_gap_report
 
 
 @dataclass
@@ -77,6 +78,18 @@ class QaValidarCommand(BaseCommand):
             const="-",
             help=_("Imprime reporte JSON (sin ruta) o lo escribe en la ruta indicada"),
         )
+        parser.add_argument(
+            "--feature-gap-report",
+            nargs="?",
+            const="-",
+            help=_("Exporta reporte de gaps AST en JSON/Markdown (stdout si se omite ruta)"),
+        )
+        parser.add_argument(
+            "--feature-gap-format",
+            choices=("json", "markdown"),
+            default="json",
+            help=_("Formato de exportación para --feature-gap-report"),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -90,6 +103,44 @@ class QaValidarCommand(BaseCommand):
         output_path = Path(destination)
         output_path.write_text(serialized + "\n", encoding="utf-8")
         mostrar_info(_("Reporte JSON escrito en {path}").format(path=output_path))
+
+    def _build_feature_gap_markdown(self, report: dict[str, list[dict[str, Any]]]) -> str:
+        lines = ["# Reporte de gaps de features AST", ""]
+        for backend, rows in report.items():
+            lines.append(f"## {backend}")
+            if not rows:
+                lines.append("- Sin gaps detectados.")
+                lines.append("")
+                continue
+            lines.append("| feature | esperado | actual | nodos/visit_* faltantes |")
+            lines.append("| --- | --- | --- | --- |")
+            for row in rows:
+                missing_nodes = row.get("missing_nodes", [])
+                missing_text = ", ".join(missing_nodes) if missing_nodes else "-"
+                lines.append(
+                    f"| {row.get('feature', '-')} | {row.get('expected_level', '-')} | "
+                    f"{row.get('actual_level', '-')} | {missing_text} |"
+                )
+            lines.append("")
+        return "\n".join(lines).rstrip() + "\n"
+
+    def _emit_feature_gap_report(self, destination: str | None, report_format: str) -> None:
+        if not destination:
+            return
+
+        report = build_feature_gap_report()
+        if report_format == "markdown":
+            serialized = self._build_feature_gap_markdown(report)
+        else:
+            serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
+
+        if destination == "-":
+            print(serialized.rstrip())
+            return
+
+        output_path = Path(destination)
+        output_path.write_text(serialized, encoding="utf-8")
+        mostrar_info(_("Reporte de gaps escrito en {path}").format(path=output_path))
 
     def _run_syntax_scope(self, args: Any) -> tuple[dict[str, Any], dict[str, Any], bool]:
         strict = bool(getattr(args, "strict", False))
@@ -214,6 +265,10 @@ class QaValidarCommand(BaseCommand):
                 runtime_equivalence=asdict(runtime_section),
             )
             self._emit_report(report, getattr(args, "report_json", None))
+            self._emit_feature_gap_report(
+                getattr(args, "feature_gap_report", None),
+                str(getattr(args, "feature_gap_format", "json")).strip().lower() or "json",
+            )
 
             if has_failures:
                 mostrar_error(_("qa-validar detectó errores."))
