@@ -227,6 +227,42 @@ def _get_qualia() -> QualiaSpirit:
     return _QUALIA_INSTANCE
 
 
+def qualia_status() -> dict[str, Any]:
+    """Devuelve un estado mínimo de disponibilidad para la funcionalidad Qualia."""
+
+    # Fuerza la inicialización diferida para detectar si la dependencia opcional
+    # de persistencia está disponible en tiempo de ejecución.
+    _get_qualia()
+
+    if not _DATABASE_AVAILABLE:
+        return {
+            "enabled": False,
+            "reason_code": "optional_dependency_missing",
+            "reason": "la base de datos opcional de Qualia no está disponible",
+        }
+
+    if not _QUALIA_ENABLED:
+        return {
+            "enabled": False,
+            "reason_code": "init_error",
+            "reason": "error al inicializar Qualia",
+        }
+
+    return {"enabled": True, "reason_code": "ok", "reason": None}
+
+
+def is_qualia_enabled() -> bool:
+    """Indica si Qualia está habilitada."""
+
+    return bool(qualia_status()["enabled"])
+
+
+def get_knowledge_snapshot() -> dict[str, Any]:
+    """Obtiene la base de conocimiento actual de Qualia."""
+
+    return _get_qualia().knowledge.as_dict()
+
+
 def reset_state() -> dict[str, Any]:
     """Elimina el estado persistido de Qualia y limpia restos heredados."""
 
