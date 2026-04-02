@@ -40,6 +40,54 @@ def test_run_external_command_fail():
     assert "boom" in output
 
 
+def test_run_external_command_pasa_timeout_a_subprocess(monkeypatch):
+    captured: dict[str, object] = {}
+
+    class _CompletedProcess:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_subprocess_run(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return _CompletedProcess()
+
+    monkeypatch.setattr(sv.subprocess, "run", fake_subprocess_run)
+
+    ok, output = sv.run_external_command(["cmd", "--flag"], timeout_seconds=7)
+
+    assert ok is True
+    assert output == ""
+    assert captured["kwargs"]["timeout"] == 7
+
+
+@pytest.mark.parametrize(
+    ("validator", "tool_name", "code", "expected_target"),
+    [
+        (sv._validate_javascript, "node", "console.log('ok')\n", "javascript"),
+        (sv._validate_rust, "rustc", "fn main() {}\n", "rust"),
+        (sv._validate_go, "go", "package main\nfunc main(){}\n", "go"),
+        (sv._validate_cpp, "clang++", "int main() { return 0; }\n", "cpp"),
+        (sv._validate_java, "javac", "class Main { public static void main(String[] args) {} }\n", "java"),
+        (sv._validate_wasm, "wat2wasm", "(module)\n", "wasm"),
+    ],
+)
+def test_validadores_externos_retornan_fail_en_timeout(monkeypatch, validator, tool_name, code, expected_target):
+    monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd == tool_name else None)
+
+    def fake_run_external_command(_command, cwd=None, timeout_seconds=None):
+        raise sv.subprocess.TimeoutExpired(cmd=_command, timeout=timeout_seconds or 1)
+
+    monkeypatch.setattr(sv, "run_external_command", fake_run_external_command)
+
+    result = validator(code)
+
+    assert result.status == "fail"
+    assert "timeout" in result.message.lower()
+    assert expected_target in result.message.lower()
+
+
 def test_validator_asm_detecta_tokens_no_resueltos():
     result = sv.VALIDATORS["asm"]("<pendiente>\nMOV R1, 3")
     assert result.status == "fail"
@@ -49,7 +97,7 @@ def test_validator_asm_detecta_tokens_no_resueltos():
 def test_validate_go_falla_si_build_falla_aunque_gofmt_exista(monkeypatch):
     monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None)
 
-    def fake_run_external_command(command, cwd=None):
+    def fake_run_external_command(command, cwd=None, timeout_seconds=None):
         if command[0].endswith("go") and command[1] == "build":
             return False, "undefined: variableInexistente"
         raise AssertionError(f"comando inesperado: {command}")
@@ -63,7 +111,7 @@ def test_validate_go_falla_si_build_falla_aunque_gofmt_exista(monkeypatch):
 
 def test_validate_go_ok_con_build_y_gofmt_opcional(monkeypatch):
     monkeypatch.setattr(sv.shutil, "which", lambda cmd: "/usr/bin/go" if cmd == "go" else None)
-    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None: (True, ""))
+    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None, timeout_seconds=None: (True, ""))
 
     result = sv._validate_go("package main\nfunc main(){}\n")
     assert result.status == "ok"
@@ -73,7 +121,7 @@ def test_validate_go_ok_con_build_y_gofmt_opcional(monkeypatch):
 
 def test_validate_go_ok_con_estilo_pendiente_en_gofmt(monkeypatch):
     monkeypatch.setattr(sv.shutil, "which", lambda cmd: f"/usr/bin/{cmd}" if cmd in {"go", "gofmt"} else None)
-    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None: (True, ""))
+    monkeypatch.setattr(sv, "run_external_command", lambda _command, cwd=None, timeout_seconds=None: (True, ""))
 
     class _CompletedProcess:
         returncode = 0

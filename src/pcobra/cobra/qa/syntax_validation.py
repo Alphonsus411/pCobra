@@ -49,6 +49,9 @@ SUPPORTED_VALIDATOR_TARGETS: tuple[str, ...] = (
 )
 SUPPORTED_VALIDATION_PROFILES: tuple[str, ...] = ("solo-cobra", "transpiladores", "completo")
 SYNTAX_REPORT_SCHEMA_VERSION = "1.0.0"
+# Tiempo máximo (en segundos) para herramientas externas de validación de sintaxis.
+# Ajustar este valor si el entorno de CI o la máquina local son más lentos.
+SYNTAX_TOOL_TIMEOUT_SECONDS = 10
 
 
 def _resolve_project_root() -> Path | None:
@@ -119,12 +122,15 @@ def load_ast_for_fixture(fixture: Path):
     return Parser(tokens).parsear()
 
 
-def run_external_command(command: list[str], cwd: Path | None = None) -> tuple[bool, str]:
+def run_external_command(
+    command: list[str], cwd: Path | None = None, timeout_seconds: int | float | None = None
+) -> tuple[bool, str]:
     result = subprocess.run(
         command,
         cwd=str(cwd) if cwd else None,
         text=True,
         capture_output=True,
+        timeout=timeout_seconds,
     )
     if result.returncode == 0:
         return True, ""
@@ -231,7 +237,16 @@ def _validate_javascript(code: str) -> ValidationResult:
     with tempfile.TemporaryDirectory(prefix="pcobra_js_") as tmp:
         file_path = Path(tmp) / "main.js"
         file_path.write_text(code, encoding="utf-8")
-        ok, output = run_external_command([node, "--check", str(file_path)])
+        try:
+            ok, output = run_external_command(
+                [node, "--check", str(file_path)],
+                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return ValidationResult(
+                "fail",
+                f"node --check excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target javascript",
+            )
     return ValidationResult("ok", "node --check correcto") if ok else ValidationResult("fail", output)
 
 
@@ -251,9 +266,16 @@ def _validate_rust(code: str) -> ValidationResult:
         file_path = Path(tmp) / "main.rs"
         output_file = Path(tmp) / "main.rmeta"
         file_path.write_text(normalized, encoding="utf-8")
-        ok, output = run_external_command(
-            [rustc, "--emit=metadata", "--edition=2021", str(file_path), "-o", str(output_file)]
-        )
+        try:
+            ok, output = run_external_command(
+                [rustc, "--emit=metadata", "--edition=2021", str(file_path), "-o", str(output_file)],
+                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return ValidationResult(
+                "fail",
+                f"rustc excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target rust",
+            )
     return ValidationResult("ok", "rustc --emit=metadata correcto") if ok else ValidationResult("fail", output)
 
 
@@ -266,7 +288,16 @@ def _validate_go(code: str) -> ValidationResult:
         file_path = Path(tmp) / "main.go"
         output_file = Path(tmp) / "main.bin"
         file_path.write_text(code, encoding="utf-8")
-        ok, output = run_external_command([go, "build", "-o", str(output_file), str(file_path)])
+        try:
+            ok, output = run_external_command(
+                [go, "build", "-o", str(output_file), str(file_path)],
+                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return ValidationResult(
+                "fail",
+                f"go build excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target go",
+            )
         if not ok:
             return ValidationResult("fail", output)
 
@@ -299,7 +330,16 @@ def _validate_cpp(code: str) -> ValidationResult:
     with tempfile.TemporaryDirectory(prefix="pcobra_cpp_") as tmp:
         file_path = Path(tmp) / "main.cpp"
         file_path.write_text(normalized, encoding="utf-8")
-        ok, output = run_external_command([clangpp, "-fsyntax-only", str(file_path)])
+        try:
+            ok, output = run_external_command(
+                [clangpp, "-fsyntax-only", str(file_path)],
+                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return ValidationResult(
+                "fail",
+                f"clang++ excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target cpp",
+            )
     return ValidationResult("ok", "clang++ -fsyntax-only correcto") if ok else ValidationResult("fail", output)
 
 
@@ -311,7 +351,17 @@ def _validate_java(code: str) -> ValidationResult:
     with tempfile.TemporaryDirectory(prefix="pcobra_java_") as tmp:
         file_path = Path(tmp) / "Main.java"
         file_path.write_text(normalized, encoding="utf-8")
-        ok, output = run_external_command([javac, str(file_path)], cwd=Path(tmp))
+        try:
+            ok, output = run_external_command(
+                [javac, str(file_path)],
+                cwd=Path(tmp),
+                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return ValidationResult(
+                "fail",
+                f"javac excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target java",
+            )
     return ValidationResult("ok", "javac correcto") if ok else ValidationResult("fail", output)
 
 
@@ -323,7 +373,16 @@ def _validate_wasm(code: str) -> ValidationResult:
         file_path = Path(tmp) / "main.wat"
         output_file = Path(tmp) / "main.wasm"
         file_path.write_text(code, encoding="utf-8")
-        ok, output = run_external_command([wat2wasm, str(file_path), "-o", str(output_file)])
+        try:
+            ok, output = run_external_command(
+                [wat2wasm, str(file_path), "-o", str(output_file)],
+                timeout_seconds=SYNTAX_TOOL_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            return ValidationResult(
+                "fail",
+                f"wat2wasm excedió el timeout de {SYNTAX_TOOL_TIMEOUT_SECONDS}s para target wasm",
+            )
     return ValidationResult("ok", "wat2wasm correcto") if ok else ValidationResult("fail", output)
 
 
