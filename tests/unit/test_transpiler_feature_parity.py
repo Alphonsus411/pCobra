@@ -26,7 +26,6 @@ from pcobra.core.ast_nodes import (
 )
 from pcobra.cobra.transpilers.compatibility_matrix import (
     AST_FEATURE_EVIDENCE_BASELINE,
-    AST_FEATURE_MINIMUM_CONTRACT,
     AST_FEATURES,
     validate_ast_feature_parity_release_gate,
 )
@@ -89,21 +88,73 @@ def _transpile(backend: str, nodes: list[object]) -> str:
     return transpiler.generate_code(nodes)
 
 
+DEGRADATION_MARKERS = (
+    "contrato partial",
+    "partial contract",
+    "no soportado",
+    "requires external runtime",
+    "runtime host-managed",
+)
+
+
+def _infer_observed_level(backend: str, feature: str, output: str) -> str:
+    rendered = output.strip()
+    lowered = rendered.lower()
+    if not rendered:
+        return "none"
+
+    if any(marker in lowered for marker in DEGRADATION_MARKERS):
+        return "partial"
+
+    if backend == "python":
+        if feature == "holobit":
+            return (
+                "full"
+                if "_cobra_import_holobit_runtime" in rendered and "cobra_holobit" in rendered
+                else "partial"
+            )
+        if feature == "async":
+            return "full" if "import asyncio" in rendered and "await" in rendered else "partial"
+        if feature == "clases":
+            return "full" if "class Demo" in rendered and "def saludar" in rendered else "partial"
+        if feature == "colecciones":
+            return "full" if "valores =" in rendered and "tabla =" in rendered else "partial"
+        if feature == "control_flujo":
+            return "full" if "x =" in rendered else "partial"
+        return "full" if "from core.nativos import *" in rendered else "partial"
+
+    if backend == "javascript":
+        if feature == "async":
+            return (
+                "full"
+                if "cobraJsCorelibs" in rendered and "cobraJsStandardLibrary" in rendered and "await" in rendered
+                else "partial"
+            )
+        return (
+            "full"
+            if "cobraJsCorelibs" in rendered and "cobraJsStandardLibrary" in rendered
+            else "partial"
+        )
+
+    if backend == "rust" and feature == "funciones":
+        return "full" if "fn sumar" in rendered and "sumar(1);" in rendered else "partial"
+
+    if backend == "cpp" and feature == "funciones":
+        return "full" if "auto sumar" in rendered and "sumar(1);" in rendered else "partial"
+
+    return "partial"
+
+
 @lru_cache(maxsize=1)
 def _compute_feature_evidence() -> dict[str, dict[str, str]]:
     evidence: dict[str, dict[str, str]] = {backend: {} for backend in OFFICIAL_TARGETS}
 
     for backend in OFFICIAL_TARGETS:
         for feature in AST_FEATURES:
-            expected_level = AST_FEATURE_MINIMUM_CONTRACT[backend][feature]
             nodes = _feature_nodes(feature)
             try:
                 output = _transpile(backend, nodes)
             except Exception as exc:
-                if expected_level != "none":
-                    raise AssertionError(
-                        f"{backend}.{feature} falló fuera de contrato mínimo ({expected_level}): {exc}"
-                    ) from exc
                 evidence[backend][feature] = "none"
                 continue
 
@@ -112,11 +163,7 @@ def _compute_feature_evidence() -> dict[str, dict[str, str]]:
                 assert "cobra_holobit" in output, (
                     f"Salida de holobit incoherente para {backend}: faltó hook cobra_holobit."
                 )
-
-            if expected_level == "full":
-                evidence[backend][feature] = "full"
-            else:
-                evidence[backend][feature] = "partial"
+            evidence[backend][feature] = _infer_observed_level(backend, feature, output)
 
     return evidence
 
