@@ -12,7 +12,13 @@ TOOLS = {
     "ruff": ["ruff", "check", "src"],
     "mypy": ["mypy", "src"],
     "bandit": ["bandit", "-r", "src"],
-    "pytest": ["pytest", "--cov=src", "tests", "--cov-report=term-missing"],
+    "pytest": [
+        "pytest",
+        "--cov=src",
+        "tests",
+        "--cov-report=term-missing",
+        "--cov-fail-under=95",
+    ],
     "pyright": ["pyright"],
 }
 
