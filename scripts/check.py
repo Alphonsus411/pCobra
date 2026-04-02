@@ -13,6 +13,7 @@ import sys
 
 TOOLS = [
     ("smoke-syntax", [sys.executable, "scripts/smoke_syntax.py"]),
+    ("smoke-transpilers-syntax", [sys.executable, "scripts/smoke_transpilers_syntax.py"]),
     ("ruff", ["ruff", "check", "src"]),
     ("mypy", ["mypy", "src"]),
     ("bandit", ["bandit", "-r", "src"]),
