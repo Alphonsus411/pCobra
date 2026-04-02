@@ -150,7 +150,11 @@ def visit_usar(self, nodo: NodoUsar):
 
 def visit_throw(self, nodo: NodoThrow):
     valor = self.obtener_valor(nodo.expresion)
-    self.agregar_linea(f"throw std::runtime_error({valor});")
+    self.agregar_linea(
+        "throw std::runtime_error(([&](){ std::ostringstream _cobra_oss; "
+        + f"_cobra_oss << {valor}; return _cobra_oss.str(); "
+        + "})());"
+    )
 
 
 def visit_try_catch(self, nodo: NodoTryCatch):
