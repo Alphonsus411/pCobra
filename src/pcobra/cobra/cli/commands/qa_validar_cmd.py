@@ -151,16 +151,15 @@ class QaValidarCommand(BaseCommand):
 
         if not executable_targets:
             message = "no hay targets con runtime ejecutable en --targets"
-            status = "fail" if strict else "skipped"
             return (
                 RuntimeEquivalenceReport(
-                    status=status,
+                    status="fail",
                     targets_requested=requested_targets,
                     targets_executable=[],
                     exit_code=None,
                     message=message,
                 ),
-                strict,
+                True,
             )
 
         verify_args = Namespace(

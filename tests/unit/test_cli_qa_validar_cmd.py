@@ -85,6 +85,18 @@ def test_qa_validar_strict_falla_si_no_hay_runtime_ejecutable(monkeypatch):
     assert rc == 1
 
 
+def test_qa_validar_no_strict_tambien_falla_si_no_hay_runtime_ejecutable(monkeypatch):
+    command = QaValidarCommand()
+
+    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
+    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
+    monkeypatch.setattr(cmd_module.ValidarSintaxisCommand, "_run_transpilers_syntax", lambda *_: ({}, False))
+
+    rc = command.run(_args(strict=False, targets="wasm", scope="runtime"))
+
+    assert rc == 1
+
+
 def test_qa_validar_reporte_json_agregado(monkeypatch, tmp_path: Path):
     command = QaValidarCommand()
     output = tmp_path / "qa.json"
