@@ -38,6 +38,17 @@ LEGACY_STATE_FILE = _resolve_state_file()
 
 LOGGER = logging.getLogger(__name__)
 _DATABASE_AVAILABLE = True
+_OPTIONAL_DB_LOGGED = False
+
+
+def _disable_optional_database(reason: str) -> None:
+    """Desactiva la persistencia opcional de Qualia y registra una sola vez."""
+
+    global _DATABASE_AVAILABLE, _OPTIONAL_DB_LOGGED
+    _DATABASE_AVAILABLE = False
+    if not _OPTIONAL_DB_LOGGED:
+        LOGGER.info("Qualia subsystem disabled: optional dependency not installed. %s", reason)
+        _OPTIONAL_DB_LOGGED = True
 
 
 class QualiaSpirit:
@@ -147,6 +158,10 @@ def load_state() -> QualiaSpirit:
 
     global _DATABASE_AVAILABLE
 
+    if not database.is_sqliteplus_available():
+        _disable_optional_database("Running with in-memory state only.")
+        return QualiaSpirit()
+
     try:
         with database.get_connection() as conn:
             cursor = conn.cursor()
@@ -158,10 +173,7 @@ def load_state() -> QualiaSpirit:
         _DATABASE_AVAILABLE = True
         return _build_spirit(data)
     except database.DatabaseDependencyError as exc:  # pragma: no cover - dependencias opcionales
-        _DATABASE_AVAILABLE = False
-        LOGGER.warning(
-            "La base de datos de Qualia no está disponible: %s", exc
-        )
+        _disable_optional_database(str(exc))
     except Exception as exc:  # pragma: no cover - registro defensivo
         _DATABASE_AVAILABLE = False
         LOGGER.error(
