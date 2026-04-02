@@ -111,8 +111,8 @@ def _validate_go(code: str) -> ValidationResult:
     with tempfile.TemporaryDirectory(prefix="pcobra_go_") as tmp:
         file_path = Path(tmp) / "main.go"
         file_path.write_text(code, encoding="utf-8")
-        ok, output = _run_command([gofmt, "-w", str(file_path)])
-    return ValidationResult("ok", "gofmt -w correcto") if ok else ValidationResult("fail", output)
+        ok, output = _run_command([gofmt, "-l", str(file_path)])
+    return ValidationResult("ok", "gofmt -l correcto") if ok else ValidationResult("fail", output)
 
 
 def _validate_cpp(code: str) -> ValidationResult:
@@ -200,10 +200,14 @@ def main() -> int:
     print("🔎 Smoke de sintaxis de transpiladores oficiales")
     print(f"   Targets: {', '.join(ordered_targets)}")
     print(f"   Fixtures: {', '.join(str(f.relative_to(ROOT)) for f in fixtures)}")
+    if not fixtures:
+        print("❌ No hay fixtures disponibles para ejecutar el smoke.")
+        return 1
 
     summaries: dict[str, TargetSummary] = {target: TargetSummary() for target in ordered_targets}
 
-    any_fail = False
+    required_targets = set(ordered_targets)
+    any_required_fail = False
     for fixture in fixtures:
         print(f"\n📦 Fixture: {fixture.relative_to(ROOT)}")
         try:
@@ -212,7 +216,7 @@ def main() -> int:
             print(f"❌ Parse/transpilación previa falló: {exc}")
             for target in ordered_targets:
                 summaries[target].fail += 1
-            any_fail = True
+            any_required_fail = True
             continue
 
         for target in ordered_targets:
@@ -221,7 +225,7 @@ def main() -> int:
             if validator is None:
                 print(f"❌ [{target}] sin validador configurado")
                 summaries[target].fail += 1
-                any_fail = True
+                any_required_fail = True
                 continue
 
             try:
@@ -230,7 +234,7 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001
                 print(f"❌ [{target}] transpilación falló: {exc}")
                 summaries[target].fail += 1
-                any_fail = True
+                any_required_fail = True
                 continue
 
             result = validator(code)
@@ -243,7 +247,8 @@ def main() -> int:
             else:
                 print(f"❌ [{target}] {result.message}")
                 summaries[target].fail += 1
-                any_fail = True
+                if target in required_targets:
+                    any_required_fail = True
 
     print("\n📊 Resumen por target")
     for target in ordered_targets:
@@ -252,7 +257,7 @@ def main() -> int:
             f" - {target}: ok={summary.ok} fail={summary.fail} skipped={summary.skipped}"
         )
 
-    if any_fail:
+    if any_required_fail:
         print("\n🚨 Smoke de transpiladores con fallos en targets oficiales.")
         return 1
 

@@ -1309,6 +1309,13 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   (`tool.coverage.report.fail_under`), igual que en CI.
 - El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request;
   para reproducir localmente la validación completa del pipeline usa `python scripts/check.py`.
+- Flujo recomendado para validar **local + CI parity**:
+  1. `python scripts/smoke_syntax.py`
+  2. `python scripts/smoke_transpilers_syntax.py`
+  3. `python scripts/check.py`
+  En CI, este mismo orden se conserva dentro del gate principal (smoke sintaxis,
+  smoke transpiladores, lint/tipos y pruebas), por lo que `scripts/check.py`
+  es la referencia para reproducir el pipeline completo en desarrollo local.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
   issues y preparar pull requests.
