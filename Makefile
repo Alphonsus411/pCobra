@@ -58,10 +58,16 @@ typecheck:
 	mypy $(SRC)
 	@command -v pyright >/dev/null 2>&1 && pyright || echo "ℹ️ pyright no está instalado"
 
+smoke-syntax:
+	$(PYTHON) scripts/smoke_syntax.py
+
+smoke-transpilers-syntax:
+	$(PYTHON) scripts/smoke_transpilers_syntax.py
+
 secrets:
 	gitleaks detect --source . --redact
 
-check: lint test typecheck validate-runtime-contract
+check: smoke-syntax smoke-transpilers-syntax lint typecheck test validate-runtime-contract
 	@echo "✅ Todo en orden. Código listo para commit o build."
 
 validate-runtime-contract:
@@ -91,4 +97,4 @@ clean:
 	rm -rf .pytest_cache .mypy_cache .coverage htmlcov \
 	       $(BUILDDIR) .venv dist build bench_results.json
 
-.PHONY: help install run test coverage lint format typecheck secrets docker docs deps-sync deps-check publicar-blog clean check validate-runtime-contract
+.PHONY: help install run test coverage lint format typecheck smoke-syntax smoke-transpilers-syntax secrets docker docs deps-sync deps-check publicar-blog clean check validate-runtime-contract
