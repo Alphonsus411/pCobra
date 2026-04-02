@@ -194,6 +194,100 @@ MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
 
 COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "full": 2}
 
+AST_FEATURES: Final[tuple[str, ...]] = (
+    "funciones",
+    "clases",
+    "decoradores",
+    "control_flujo",
+    "colecciones",
+    "async",
+    "holobit",
+)
+
+# Matriz ejecutable (respaldada por tests) para nodos AST clave por backend.
+# Esta tabla se usa como piso contractual para el gate de CI de paridad.
+AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
+    "python": {
+        "funciones": "full",
+        "clases": "full",
+        "decoradores": "full",
+        "control_flujo": "full",
+        "colecciones": "full",
+        "async": "full",
+        "holobit": "full",
+    },
+    "javascript": {
+        "funciones": "full",
+        "clases": "full",
+        "decoradores": "full",
+        "control_flujo": "full",
+        "colecciones": "full",
+        "async": "full",
+        "holobit": "partial",
+    },
+    "rust": {
+        "funciones": "full",
+        "clases": "partial",
+        "decoradores": "partial",
+        "control_flujo": "partial",
+        "colecciones": "partial",
+        "async": "none",
+        "holobit": "partial",
+    },
+    "wasm": {
+        "funciones": "partial",
+        "clases": "none",
+        "decoradores": "partial",
+        "control_flujo": "partial",
+        "colecciones": "partial",
+        "async": "none",
+        "holobit": "partial",
+    },
+    "go": {
+        "funciones": "partial",
+        "clases": "partial",
+        "decoradores": "partial",
+        "control_flujo": "partial",
+        "colecciones": "partial",
+        "async": "partial",
+        "holobit": "partial",
+    },
+    "cpp": {
+        "funciones": "full",
+        "clases": "partial",
+        "decoradores": "partial",
+        "control_flujo": "partial",
+        "colecciones": "partial",
+        "async": "none",
+        "holobit": "partial",
+    },
+    "java": {
+        "funciones": "none",
+        "clases": "partial",
+        "decoradores": "none",
+        "control_flujo": "partial",
+        "colecciones": "partial",
+        "async": "none",
+        "holobit": "partial",
+    },
+    "asm": {
+        "funciones": "partial",
+        "clases": "partial",
+        "decoradores": "partial",
+        "control_flujo": "partial",
+        "colecciones": "partial",
+        "async": "partial",
+        "holobit": "partial",
+    },
+}
+
+# Baseline sincronizada con evidencia real de tests parametrizados.
+AST_FEATURE_EVIDENCE_BASELINE: Final[dict[str, dict[str, str]]] = AST_FEATURE_MINIMUM_CONTRACT
+
+AST_FEATURE_EVIDENCE_SOURCE: Final[str] = (
+    "tests/unit/test_transpiler_feature_parity.py::test_feature_parity_matrix_evidence_matches_contract"
+)
+
 
 BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     "python": {
@@ -738,6 +832,42 @@ def validate_tier1_holobit_release_gate(
                 )
 
 
+def validate_ast_feature_parity_release_gate(
+    evidence_by_backend: dict[str, dict[str, str]],
+) -> None:
+    """Bloquea release si la evidencia baja bajo el mínimo contractual AST."""
+    for backend in OFFICIAL_TARGETS:
+        if backend not in AST_FEATURE_MINIMUM_CONTRACT:
+            raise RuntimeError(
+                f"AST_FEATURE_MINIMUM_CONTRACT no define backend oficial: {backend}"
+            )
+        if backend not in evidence_by_backend:
+            raise RuntimeError(
+                "Evidencia AST incompleta: falta backend "
+                f"{backend} (fuente: {AST_FEATURE_EVIDENCE_SOURCE})"
+            )
+        expected_features = AST_FEATURE_MINIMUM_CONTRACT[backend]
+        actual_features = evidence_by_backend[backend]
+        for feature in AST_FEATURES:
+            required = expected_features.get(feature)
+            if required not in VALID_COMPATIBILITY_LEVELS:
+                raise RuntimeError(
+                    f"AST_FEATURE_MINIMUM_CONTRACT[{backend}][{feature}] inválido: {required!r}"
+                )
+            current = actual_features.get(feature)
+            if current not in VALID_COMPATIBILITY_LEVELS:
+                raise RuntimeError(
+                    "Evidencia AST inválida en "
+                    f"{backend}.{feature}: {current!r} (fuente: {AST_FEATURE_EVIDENCE_SOURCE})"
+                )
+            if COMPATIBILITY_LEVEL_ORDER[current] < COMPATIBILITY_LEVEL_ORDER[required]:
+                raise RuntimeError(
+                    "Regresión AST contractual en "
+                    f"{backend}.{feature}: {current} < mínimo {required} "
+                    f"(fuente: {AST_FEATURE_EVIDENCE_SOURCE})"
+                )
+
+
 validate_backend_compatibility_contract()
 
 def get_backend_compatibility(backend: str) -> dict[str, str] | None:
@@ -773,9 +903,14 @@ __all__ = [
     "OFFICIAL_RUNTIME_BACKENDS",
     "BEST_EFFORT_RUNTIME_BACKENDS",
     "TRANSPILATION_ONLY_BACKENDS",
+    "AST_FEATURES",
+    "AST_FEATURE_MINIMUM_CONTRACT",
+    "AST_FEATURE_EVIDENCE_BASELINE",
+    "AST_FEATURE_EVIDENCE_SOURCE",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
     "get_backend_feature_gaps",
     "validate_tier1_holobit_release_gate",
+    "validate_ast_feature_parity_release_gate",
     "validate_backend_compatibility_contract",
 ]
