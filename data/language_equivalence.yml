@@ -1,0 +1,357 @@
+version: "1.0.0"
+source_of_truth: src/pcobra/cobra/transpilers/compatibility_matrix.py
+backends:
+  - python
+  - javascript
+  - rust
+  - go
+  - cpp
+  - java
+  - wasm
+  - asm
+features:
+  - id: decoradores
+    cobra_syntax: |
+      @traza
+      def saludar(nombre):
+          retornar f"Hola {nombre}"
+    python_equivalent: |
+      @traza
+      def saludar(nombre):
+          return f"Hola {nombre}"
+    status_source:
+      matrix: AST_FEATURE_MINIMUM_CONTRACT
+      key: decoradores
+    backend_equivalents:
+      javascript:
+        equivalent: |
+          @traza
+          function saludar(nombre) { return `Hola ${nombre}`; }
+        status: full
+        limitations: []
+      rust:
+        equivalent: |
+          // Decoradores modelados vía wrappers/macros de backend.
+          fn saludar(nombre: &str) -> String { format!("Hola {}", nombre) }
+        status: partial
+        limitations:
+          - No hay paridad total de metaprogramación tipo Python.
+      go:
+        equivalent: |
+          // Decoradores emulados con funciones de orden superior.
+          func Saludar(nombre string) string { return fmt.Sprintf("Hola %s", nombre) }
+        status: partial
+        limitations:
+          - Requiere wrappers manuales para componer comportamiento.
+      cpp:
+        equivalent: |
+          // Decoradores emulados con wrappers y helpers inline.
+          std::string saludar(const std::string& nombre);
+        status: partial
+        limitations:
+          - Sin sintaxis nativa tipo @decorador.
+      java:
+        equivalent: |
+          // Equivalencia aproximada con anotaciones/proxies.
+          String saludar(String nombre) { return "Hola " + nombre; }
+        status: none
+        limitations:
+          - No existe equivalente directo en el contrato actual del backend.
+      wasm:
+        equivalent: |
+          ;; Decoradores emulados en host/runtime previo al módulo.
+        status: partial
+        limitations:
+          - Requiere soporte del host para instrumentación.
+      asm:
+        equivalent: |
+          ; Hook manual previo a CALL objetivo.
+        status: partial
+        limitations:
+          - Instrumentación manual, sin sintaxis declarativa.
+
+  - id: imports_corelibs
+    cobra_syntax: |
+      usar corelibs
+      usar standard_library
+      mostrar(longitud([1,2,3]))
+    python_equivalent: |
+      from corelibs import *
+      from standard_library import *
+      print(longitud([1, 2, 3]))
+    status_source:
+      matrix: BACKEND_COMPATIBILITY
+      key: corelibs
+    backend_equivalents:
+      javascript:
+        equivalent: |
+          import { longitud } from "cobraJsCorelibs";
+          import { mostrar } from "cobraJsStandardLibrary";
+        status: partial
+        limitations:
+          - Cobertura parcial vía adaptadores del proyecto.
+      rust:
+        equivalent: |
+          // Helpers inline del backend para `longitud`/`mostrar`.
+        status: partial
+        limitations:
+          - No existe corelib externa con paridad completa.
+      go:
+        equivalent: |
+          // Adaptadores mínimos best-effort para runtime Go.
+        status: partial
+        limitations:
+          - Runtime no oficial fuerte.
+      cpp:
+        equivalent: |
+          #include "pcobra/corelibs.hpp"
+          #include "pcobra/standard_library.hpp"
+        status: partial
+        limitations:
+          - Cobertura mínima orientada a utilidades base.
+      java:
+        equivalent: |
+          import cobra.corelibs.*;
+          import cobra.standard_library.*;
+        status: partial
+        limitations:
+          - APIs disponibles son un subconjunto del runtime Python.
+      wasm:
+        equivalent: |
+          ;; imports host-managed: pcobra:corelibs / pcobra:standard_library
+        status: partial
+        limitations:
+          - Depende completamente del host embebedor.
+      asm:
+        equivalent: |
+          CALL longitud
+          CALL mostrar
+        status: partial
+        limitations:
+          - Runtime externo requerido para resolver llamadas.
+
+  - id: manejo_errores
+    cobra_syntax: |
+      intentar:
+          transformar(h, "operacion_no_soportada")
+      capturar error:
+          mostrar(error)
+    python_equivalent: |
+      try:
+          transformar(h, "operacion_no_soportada")
+      except Exception as error:
+          print(error)
+    status_source:
+      matrix: BACKEND_COMPATIBILITY
+      key: holobit
+    backend_equivalents:
+      javascript:
+        equivalent: |
+          try { cobra_transformar(h, "x"); } catch (err) { console.error(err); }
+        status: partial
+        limitations:
+          - Errores contractuales explícitos, semántica avanzada no cubierta.
+      rust:
+        equivalent: |
+          match cobra_transformar(&h, "x", &args) {
+              Ok(v) => v,
+              Err(err) => eprintln!("{}", err),
+          }
+        status: partial
+        limitations:
+          - Basado en `Result`, no en excepciones.
+      go:
+        equivalent: |
+          defer func() { if r := recover(); r != nil { fmt.Println(r) } }()
+        status: partial
+        limitations:
+          - Usa `panic/recover` para contratos no soportados.
+      cpp:
+        equivalent: |
+          try { cobra_transformar(h, "x", args); }
+          catch (const std::runtime_error& err) { std::cerr << err.what(); }
+        status: partial
+        limitations:
+          - Contrato centrado en `std::runtime_error`.
+      java:
+        equivalent: |
+          try { CobraRuntime.transformar(h, "x", args); }
+          catch (UnsupportedOperationException err) { System.out.println(err.getMessage()); }
+        status: partial
+        limitations:
+          - Usa `UnsupportedOperationException` para huecos funcionales.
+      wasm:
+        equivalent: |
+          ;; errores devueltos/propagados por host.
+        status: partial
+        limitations:
+          - Semántica de errores depende del host.
+      asm:
+        equivalent: |
+          ; contrato de error vía TRAP
+          TRAP
+        status: partial
+        limitations:
+          - Solo señalización de fallo; manejo externo.
+
+  - id: async
+    cobra_syntax: |
+      async def obtener_datos():
+          retornar esperar cliente.fetch()
+    python_equivalent: |
+      async def obtener_datos():
+          return await client.fetch()
+    status_source:
+      matrix: AST_FEATURE_MINIMUM_CONTRACT
+      key: async
+    backend_equivalents:
+      javascript:
+        equivalent: |
+          async function obtenerDatos() { return await client.fetch(); }
+        status: full
+        limitations: []
+      rust:
+        equivalent: |
+          // Se transpila como sync/fallback en contrato actual.
+        status: none
+        limitations:
+          - Soporte async no garantizado por contrato.
+      go:
+        equivalent: |
+          // Equivalente aproximado con goroutines/channels.
+        status: partial
+        limitations:
+          - No hay equivalencia 1:1 con await.
+      cpp:
+        equivalent: |
+          // Equivalente aproximado con std::future/promises.
+        status: none
+        limitations:
+          - Async no garantizado en el contrato actual.
+      java:
+        equivalent: |
+          // Equivalente aproximado con CompletableFuture.
+        status: none
+        limitations:
+          - Async no garantizado por el transpiler actual.
+      wasm:
+        equivalent: |
+          ;; asincronía coordinada por host/event loop externo.
+        status: none
+        limitations:
+          - El módulo no garantiza await nativo.
+      asm:
+        equivalent: |
+          ; cooperativo/manual mediante runtime externo.
+        status: partial
+        limitations:
+          - Sin primitivas async nativas en backend.
+
+  - id: tipos_compuestos
+    cobra_syntax: |
+      datos = {"nombres": ["Ana", "Luis"], "meta": {"activo": verdadero}}
+    python_equivalent: |
+      datos = {"nombres": ["Ana", "Luis"], "meta": {"activo": True}}
+    status_source:
+      matrix: AST_FEATURE_MINIMUM_CONTRACT
+      key: colecciones
+    backend_equivalents:
+      javascript:
+        equivalent: |
+          const datos = { nombres: ["Ana", "Luis"], meta: { activo: true } };
+        status: full
+        limitations: []
+      rust:
+        equivalent: |
+          // Vec<HashMap<String, Value>> / structs según estrategia del backend.
+        status: partial
+        limitations:
+          - Conversión dinámica limitada frente a Python.
+      go:
+        equivalent: |
+          datos := map[string]any{"nombres": []string{"Ana", "Luis"}}
+        status: partial
+        limitations:
+          - Tipado estático obliga coerciones explícitas.
+      cpp:
+        equivalent: |
+          // std::vector/std::unordered_map con wrappers Cobra.
+        status: partial
+        limitations:
+          - Requiere wrappers para dinamismo tipo diccionario Python.
+      java:
+        equivalent: |
+          Map<String, Object> datos = new HashMap<>();
+        status: partial
+        limitations:
+          - Conversión dinámica y genéricos limitan paridad.
+      wasm:
+        equivalent: |
+          ;; estructuras serializadas y manejadas por host.
+        status: partial
+        limitations:
+          - Representación depende de ABI del host.
+      asm:
+        equivalent: |
+          ; memoria lineal + offsets para arreglos/structs.
+        status: partial
+        limitations:
+          - Modelado manual de estructuras compuestas.
+
+  - id: hooks_runtime
+    cobra_syntax: |
+      h = holobit("abc")
+      proyectar(h, "2d")
+      transformar(h, "escalar", 2)
+      graficar(h)
+    python_equivalent: |
+      h = cobra_holobit("abc")
+      cobra_proyectar(h, "2d")
+      cobra_transformar(h, "escalar", 2)
+      cobra_graficar(h)
+    status_source:
+      matrix: BACKEND_HOLOBIT_SDK_CAPABILITIES
+      key: import_hooks
+    backend_equivalents:
+      javascript:
+        equivalent: |
+          const h = cobra_holobit("abc");
+          cobra_proyectar(h, "2d");
+        status: full
+        limitations: []
+      rust:
+        equivalent: |
+          let h = cobra_holobit("abc");
+          let _ = cobra_proyectar(&h, "2d");
+        status: full
+        limitations: []
+      go:
+        equivalent: |
+          h := cobra_holobit("abc")
+          _ = cobra_proyectar(h, "2d")
+        status: full
+        limitations: []
+      cpp:
+        equivalent: |
+          auto h = cobra_holobit("abc");
+          cobra_proyectar(h, "2d");
+        status: full
+        limitations: []
+      java:
+        equivalent: |
+          var h = CobraRuntime.cobra_holobit("abc");
+          CobraRuntime.cobra_proyectar(h, "2d");
+        status: full
+        limitations: []
+      wasm:
+        equivalent: |
+          ;; import "pcobra:holobit" "cobra_holobit"
+          ;; import "pcobra:holobit" "cobra_proyectar"
+        status: full
+        limitations: []
+      asm:
+        equivalent: |
+          CALL cobra_holobit
+          CALL cobra_proyectar
+        status: full
+        limitations: []
