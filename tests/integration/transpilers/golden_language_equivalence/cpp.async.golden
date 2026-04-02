@@ -1,0 +1,6 @@
+#include <pcobra/corelibs.hpp>
+#include <pcobra/standard_library.hpp>
+
+auto obtener_datos() {
+    return NodoEsperar(expresion=NodoLlamadaFuncion(nombre=fetch, argumentos=[]));
+}

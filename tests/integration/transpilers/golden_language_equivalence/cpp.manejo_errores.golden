@@ -1,0 +1,8 @@
+#include <pcobra/corelibs.hpp>
+#include <pcobra/standard_library.hpp>
+
+try {
+    throw std::runtime_error("fallo");
+} catch (const std::runtime_error& error) {
+    throw std::runtime_error("error");
+}

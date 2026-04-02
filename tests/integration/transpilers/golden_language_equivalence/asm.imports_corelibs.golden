@@ -1,0 +1,3 @@
+; backend asm: imports de runtime administrados externamente
+
+CALL longitud 3

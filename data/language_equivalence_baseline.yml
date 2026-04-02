@@ -1,0 +1,107 @@
+version: 1.0.0
+backends:
+- python
+- javascript
+- rust
+- go
+- cpp
+- java
+- wasm
+- asm
+features:
+- id: decoradores
+  backend_equivalents:
+    javascript:
+      status: full
+    rust:
+      status: full
+    go:
+      status: full
+    cpp:
+      status: partial
+    java:
+      status: partial
+    wasm:
+      status: partial
+    asm:
+      status: partial
+- id: imports_corelibs
+  backend_equivalents:
+    javascript:
+      status: partial
+    rust:
+      status: full
+    go:
+      status: full
+    cpp:
+      status: partial
+    java:
+      status: partial
+    wasm:
+      status: partial
+    asm:
+      status: partial
+- id: manejo_errores
+  backend_equivalents:
+    javascript:
+      status: partial
+    rust:
+      status: partial
+    go:
+      status: partial
+    cpp:
+      status: partial
+    java:
+      status: partial
+    wasm:
+      status: partial
+    asm:
+      status: partial
+- id: async
+  backend_equivalents:
+    javascript:
+      status: full
+    rust:
+      status: full
+    go:
+      status: full
+    cpp:
+      status: none
+    java:
+      status: none
+    wasm:
+      status: none
+    asm:
+      status: partial
+- id: tipos_compuestos
+  backend_equivalents:
+    javascript:
+      status: full
+    rust:
+      status: partial
+    go:
+      status: partial
+    cpp:
+      status: partial
+    java:
+      status: partial
+    wasm:
+      status: partial
+    asm:
+      status: partial
+- id: hooks_runtime
+  backend_equivalents:
+    javascript:
+      status: full
+    rust:
+      status: full
+    go:
+      status: full
+    cpp:
+      status: full
+    java:
+      status: full
+    wasm:
+      status: full
+    asm:
+      status: full
