@@ -54,6 +54,18 @@ jobs:
         uses: ./.github/actions/install
         with:
           extra: "sphinx sphinx-rtd-theme pytest-cov codecov pyright"
+      - name: Run smoke syntax gates
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python scripts/smoke_syntax.py
+          python scripts/smoke_transpilers_syntax.py
+      - name: Run smoke syntax gates (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/smoke_syntax.py
+          python scripts/smoke_transpilers_syntax.py
       - name: Verify extra packages
         if: runner.os != 'Windows'
         shell: bash

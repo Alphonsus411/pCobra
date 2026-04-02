@@ -25,3 +25,26 @@ def test_workflow_file_contains_valid_yaml(workflow_path: Path) -> None:
         yaml.safe_load(content)
     except yaml.YAMLError as exc:  # pragma: no cover - caso de fallo explícito
         pytest.fail(f"El workflow {workflow_path} no es un YAML válido: {exc}")
+
+
+@pytest.mark.parametrize(
+    ("workflow_filename", "job_name"),
+    (
+        ("ci.yml", "tier1-required"),
+        ("test.yml", "tier1-required"),
+    ),
+)
+def test_workflow_has_smoke_syntax_gate(workflow_filename: str, job_name: str) -> None:
+    """Garantiza que el gate temprano de sintaxis siga presente en workflows críticos."""
+    workflow_path = WORKFLOWS_DIR / workflow_filename
+    content = workflow_path.read_text(encoding="utf-8")
+
+    assert f"{job_name}:" in content
+    assert "name: Run smoke syntax gates" in content
+    assert "if: runner.os != 'Windows'" in content
+    assert "shell: bash" in content
+    assert "name: Run smoke syntax gates (Windows)" in content
+    assert "if: runner.os == 'Windows'" in content
+    assert "shell: pwsh" in content
+    assert "python scripts/smoke_syntax.py" in content
+    assert "python scripts/smoke_transpilers_syntax.py" in content
