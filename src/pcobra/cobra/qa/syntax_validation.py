@@ -71,6 +71,17 @@ TRANSPILER_FIXTURES = [
     SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "smoke_assign.co",
     SRC_DIR.parent / "examples" / "smoke_assign.co",
 ]
+FEATURES_FIXTURES_DIR = SRC_DIR.parent / "examples" / "features"
+
+
+def discover_feature_regression_fixtures() -> list[Path]:
+    """Descubre fixtures mínimos de features: examples/features/<id>/minimal.co."""
+    if not FEATURES_FIXTURES_DIR.is_dir():
+        return []
+    return sorted(FEATURES_FIXTURES_DIR.glob("*/minimal.co"))
+
+
+TRANSPILER_FIXTURES.extend(discover_feature_regression_fixtures())
 
 
 @dataclass

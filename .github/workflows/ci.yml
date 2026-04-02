@@ -151,6 +151,12 @@ jobs:
           AUDIT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           AUDIT_HEAD_SHA: ${{ github.sha }}
         run: python scripts/ci/audit_targets_contract.py "${AUDIT_BASE_SHA}" "${AUDIT_HEAD_SHA}"
+      - name: Run language feature rollout gate
+        shell: bash
+        env:
+          AUDIT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          AUDIT_HEAD_SHA: ${{ github.sha }}
+        run: python scripts/ci/audit_feature_rollout.py --base "${AUDIT_BASE_SHA}" --head "${AUDIT_HEAD_SHA}"
       - name: Validate public documentation targets policy
         shell: bash
         run: python scripts/validate_targets_policy.py

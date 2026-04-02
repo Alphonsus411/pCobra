@@ -33,6 +33,34 @@ Las tareas etiquetadas como `good first issue` están orientadas a la comunidad 
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
   [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
+## Nueva feature del lenguaje
+
+Cuando añadas una nueva feature del lenguaje, usa este checklist mínimo:
+
+- [ ] gramática/parser/AST
+- [ ] intérprete
+- [ ] transpilers oficiales
+- [ ] compat matrices
+- [ ] tests unit/integration
+- [ ] docs y ejemplos
+
+Plantilla reutilizable:
+
+- `docs/templates/feature_rollout_checklist.md`
+
+Gates de CI relacionados:
+
+- `python scripts/ci/audit_feature_rollout.py --base <sha_base> --head <sha_head>`
+  valida que cambios en `src/pcobra/standard_library` o parser incluyan al
+  menos una prueba y una actualización documental/matriz.
+- `python scripts/ci/audit_feature_rollout.py --feature-id <feature_id>`
+  ejecuta auditoría rápida del checklist para una feature concreta.
+
+Fixtures de regresión para `validar-sintaxis`:
+
+- Cada feature nueva debe añadir `examples/features/<feature_id>/minimal.co`.
+- `validar-sintaxis` usa automáticamente esos fixtures para smoke de regresión.
+
 ## Dependencias y versionado
 
 - Mantén sincronizadas las versiones fijadas en `pyproject.toml`,
