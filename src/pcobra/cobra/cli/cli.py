@@ -238,6 +238,12 @@ class CliApplication:
         menu_parser.set_defaults(cmd="menu")
         self._commands_registered = True
 
+    def _normalizar_flags_sesion(self, args: argparse.Namespace) -> argparse.Namespace:
+        """Normaliza aliases semánticos de sesión antes de resolver políticas."""
+        if bool(getattr(args, "solo_cobra", False)):
+            args.modo = "cobra"
+        return args
+
     def _command_requires_sqlite_db_key(self, args: argparse.Namespace) -> bool:
         command = getattr(args, "cmd", None)
         if isinstance(command, BaseCommand):
@@ -344,9 +350,17 @@ class CliApplication:
             default=MODO_POR_DEFECTO,
             help=_(
                 "Define el alcance de la sesión: "
-                "cobra (solo ejecutar/interpretar; bloquea toda ruta de codegen), "
+                "cobra (solo programar/interpretar Cobra, sin codegen), "
                 "transpilar (solo generar código), "
                 "mixto (ejecutar y transpilar)."
+            ),
+        )
+        parser.add_argument(
+            "--solo-cobra",
+            action="store_true",
+            help=_(
+                "Alias semántico de --modo cobra: sesión para solo programar/interpretar "
+                "Cobra sin rutas de codegen."
             ),
         )
         parser.add_argument("--lang",
@@ -532,7 +546,8 @@ class CliApplication:
             description=_(
                 "CLI de Cobra para ejecutar e interpretar scripts, "
                 "transpilar código a otros lenguajes o usar ambos flujos "
-                "según --modo (cobra, transpilar, mixto). En --modo cobra se bloquea todo codegen."
+                "según --modo (cobra, transpilar, mixto). "
+                "Modo cobra = solo programar/interpretar Cobra sin codegen."
             ),
         )
         self._configure_cli_options(parser)
@@ -543,6 +558,7 @@ class CliApplication:
             raise RuntimeError("Application not properly initialized")
 
         preliminary_args, _ = self.parser.parse_known_args(argv)
+        preliminary_args = self._normalizar_flags_sesion(preliminary_args)
         configure_plugin_policy(
             safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
             allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
@@ -561,7 +577,8 @@ class CliApplication:
                 "Autocompletado deshabilitado: argcomplete no está instalado.",
             )
 
-        return self.parser.parse_args(argv)
+        parsed = self.parser.parse_args(argv)
+        return self._normalizar_flags_sesion(parsed)
 
     def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
         if isinstance(exc, ValueError):
@@ -666,6 +683,10 @@ class CliApplication:
                     modo=modo, accion=accion
                 )
             )
+            if modo == "cobra" and accion == "ejecutar":
+                messages.mostrar_info(
+                    _("Modo cobra: flujo directo de ejecutar (sin prompts de transpilación).")
+                )
         else:
             print(_("Seleccione una acción:"))
             for idx, (nombre_accion, descripcion) in enumerate(acciones, start=1):

@@ -16,6 +16,14 @@ CAPABILIDADES_POR_MODO: dict[str, tuple[CommandCapability, ...]] = {
     "mixto": ("execute", "codegen", "mixed"),
 }
 
+MENSAJE_BLOQUEO_CODEGEN = _(
+    "Comando de codegen no está permitido en modo '{modo}' por política de sesión. "
+    "Este comando requiere transpilar/generar código (compilar, transpilar, verificar, "
+    "transpilar-inverso o validar-sintaxis con perfil de transpiladores). "
+    "Acción sugerida: cambia a --modo mixto o --modo transpilar "
+    "(también puedes quitar --solo-cobra)."
+)
+
 # Compatibilidad para llamadas históricas por nombre/alias de comando.
 CAPABILIDAD_POR_COMANDO: dict[str, CommandCapability] = {
     "ejecutar": "execute",
@@ -64,6 +72,8 @@ def validar_politica_modo(
         return
 
     if modo == "cobra":
+        if capacidad == "codegen":
+            raise ValueError(MENSAJE_BLOQUEO_CODEGEN.format(modo=modo))
         raise ValueError(
             _(
                 "El comando '{comando}' no está permitido en modo '{modo}'. "
