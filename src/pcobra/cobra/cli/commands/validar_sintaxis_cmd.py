@@ -1,43 +1,24 @@
 from __future__ import annotations
 
-import ast
 import compileall
 import json
 import py_compile
-import shutil
-import subprocess
-import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-
-
-@dataclass
-class ValidationResult:
-    status: str
-    message: str
-
-
-@dataclass
-class TargetSummary:
-    ok: int = 0
-    fail: int = 0
-    skipped: int = 0
-
-
-@dataclass
-class SyntaxReport:
-    python: ValidationResult
-    cobra: ValidationResult
-    targets: dict[str, TargetSummary] = field(default_factory=dict)
-    strict: bool = False
-    errors_by_target: dict[str, list[str]] = field(default_factory=dict)
+from pcobra.cobra.qa.syntax_validation import (
+    SUPPORTED_VALIDATOR_TARGETS,
+    SyntaxReport,
+    ValidationResult,
+    load_ast_for_fixture,
+    run_transpiler_syntax_validation,
+)
 
 
 def _resolve_project_root() -> Path | None:
@@ -60,26 +41,6 @@ TRANSPILER_FIXTURES = [
     SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "smoke_assign.co",
     SRC_DIR.parent / "examples" / "smoke_assign.co",
 ]
-
-
-def _tokenize(lexer):
-    if hasattr(lexer, "tokenizar"):
-        return lexer.tokenizar()
-    if hasattr(lexer, "analizar_token"):
-        return lexer.analizar_token()
-    raise AttributeError("Lexer no expone tokenizar() ni analizar_token().")
-
-
-def _run_command(command: list[str], cwd: Path | None = None) -> tuple[bool, str]:
-    result = subprocess.run(
-        command,
-        cwd=str(cwd) if cwd else None,
-        text=True,
-        capture_output=True,
-    )
-    if result.returncode == 0:
-        return True, ""
-    return False, (result.stderr or result.stdout).strip()
 
 
 def _validate_python_syntax() -> ValidationResult:
@@ -105,138 +66,18 @@ def _validate_python_syntax() -> ValidationResult:
 
 
 def _validate_cobra_parse() -> ValidationResult:
-    from pcobra.cobra.core import Lexer, Parser
-
     for fixture in COBRA_FIXTURES:
         if not fixture.exists():
             return ValidationResult("fail", f"Fixture no encontrado: {fixture}")
 
     for fixture in COBRA_FIXTURES:
-        code = fixture.read_text(encoding="utf-8")
         try:
-            tokens = _tokenize(Lexer(code))
-            Parser(tokens).parsear()
+            load_ast_for_fixture(fixture)
         except Exception as exc:  # noqa: BLE001
             rel_path = fixture.relative_to(SRC_DIR.parent)
             return ValidationResult("fail", f"Parse falló en {rel_path}: {exc}")
 
     return ValidationResult("ok", "Parse básico Cobra correcto")
-
-
-def _validate_python(code: str) -> ValidationResult:
-    try:
-        ast.parse(code)
-    except SyntaxError as exc:
-        return ValidationResult("fail", f"ast.parse falló: {exc}")
-    return ValidationResult("ok", "ast.parse correcto")
-
-
-def _validate_javascript(code: str) -> ValidationResult:
-    node = shutil.which("node")
-    if not node:
-        return ValidationResult("skipped", "node no está disponible")
-    with tempfile.TemporaryDirectory(prefix="pcobra_js_") as tmp:
-        file_path = Path(tmp) / "main.js"
-        file_path.write_text(code, encoding="utf-8")
-        ok, output = _run_command([node, "--check", str(file_path)])
-    return ValidationResult("ok", "node --check correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_rust(code: str) -> ValidationResult:
-    rustc = shutil.which("rustc")
-    if not rustc:
-        return ValidationResult("skipped", "rustc no está disponible")
-    normalized = "\n".join(
-        line
-        for line in code.splitlines()
-        if line.strip() not in {"use crate::corelibs::*;", "use crate::standard_library::*;"}
-    )
-    if "fn main(" not in normalized:
-        body = "\n".join(f"    {line}" for line in normalized.splitlines() if line.strip())
-        normalized = f"fn main() {{\n{body}\n}}"
-    with tempfile.TemporaryDirectory(prefix="pcobra_rust_") as tmp:
-        file_path = Path(tmp) / "main.rs"
-        output_file = Path(tmp) / "main.rmeta"
-        file_path.write_text(normalized, encoding="utf-8")
-        ok, output = _run_command(
-            [rustc, "--emit=metadata", "--edition=2021", str(file_path), "-o", str(output_file)]
-        )
-    return ValidationResult("ok", "rustc --emit=metadata correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_go(code: str) -> ValidationResult:
-    gofmt = shutil.which("gofmt")
-    if not gofmt:
-        return ValidationResult("skipped", "gofmt no está disponible")
-    with tempfile.TemporaryDirectory(prefix="pcobra_go_") as tmp:
-        file_path = Path(tmp) / "main.go"
-        file_path.write_text(code, encoding="utf-8")
-        ok, output = _run_command([gofmt, "-l", str(file_path)])
-    return ValidationResult("ok", "gofmt -l correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_cpp(code: str) -> ValidationResult:
-    clangpp = shutil.which("clang++")
-    if not clangpp:
-        return ValidationResult("skipped", "clang++ no está disponible")
-    normalized = "\n".join(
-        line
-        for line in code.splitlines()
-        if not line.strip().startswith("#include <pcobra/")
-    )
-    with tempfile.TemporaryDirectory(prefix="pcobra_cpp_") as tmp:
-        file_path = Path(tmp) / "main.cpp"
-        file_path.write_text(normalized, encoding="utf-8")
-        ok, output = _run_command([clangpp, "-fsyntax-only", str(file_path)])
-    return ValidationResult("ok", "clang++ -fsyntax-only correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_java(code: str) -> ValidationResult:
-    javac = shutil.which("javac")
-    if not javac:
-        return ValidationResult("skipped", "javac no está disponible")
-    normalized = "\n".join(
-        line for line in code.splitlines() if not line.strip().startswith("import pcobra.")
-    )
-    with tempfile.TemporaryDirectory(prefix="pcobra_java_") as tmp:
-        file_path = Path(tmp) / "Main.java"
-        file_path.write_text(normalized, encoding="utf-8")
-        ok, output = _run_command([javac, str(file_path)], cwd=Path(tmp))
-    return ValidationResult("ok", "javac correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_wasm(code: str) -> ValidationResult:
-    wat2wasm = shutil.which("wat2wasm")
-    if not wat2wasm:
-        return ValidationResult("skipped", "wat2wasm no está disponible")
-    with tempfile.TemporaryDirectory(prefix="pcobra_wasm_") as tmp:
-        file_path = Path(tmp) / "main.wat"
-        output_file = Path(tmp) / "main.wasm"
-        file_path.write_text(code, encoding="utf-8")
-        ok, output = _run_command([wat2wasm, str(file_path), "-o", str(output_file)])
-    return ValidationResult("ok", "wat2wasm correcto") if ok else ValidationResult("fail", output)
-
-
-def _validate_asm(code: str) -> ValidationResult:
-    lines = [line.strip() for line in code.splitlines() if line.strip()]
-    if not lines:
-        return ValidationResult("fail", "salida ASM vacía")
-    unresolved = [line for line in lines if line.startswith("<") and line.endswith(">")]
-    if unresolved:
-        return ValidationResult("fail", f"tokens ASM no resueltos: {unresolved[:3]}")
-    return ValidationResult("ok", "validador interno ASM correcto")
-
-
-VALIDATORS: dict[str, Callable[[str], ValidationResult]] = {
-    "python": _validate_python,
-    "javascript": _validate_javascript,
-    "rust": _validate_rust,
-    "go": _validate_go,
-    "cpp": _validate_cpp,
-    "java": _validate_java,
-    "wasm": _validate_wasm,
-    "asm": _validate_asm,
-}
 
 
 class ValidarSintaxisCommand(BaseCommand):
@@ -275,23 +116,16 @@ class ValidarSintaxisCommand(BaseCommand):
 
     def _parse_targets(self, targets_raw: str) -> list[str]:
         if not targets_raw.strip():
-            return list(VALIDATORS)
+            return list(SUPPORTED_VALIDATOR_TARGETS)
         parsed = [item.strip().lower() for item in targets_raw.split(",") if item.strip()]
         if not parsed:
             raise ValueError(_("La lista --targets está vacía"))
-        invalid = sorted(set(parsed) - set(VALIDATORS))
+        invalid = sorted(set(parsed) - set(SUPPORTED_VALIDATOR_TARGETS))
         if invalid:
             raise ValueError(_("Targets no soportados en --targets: {}.").format(", ".join(invalid)))
         return parsed
 
-    def _load_ast_for_fixture(self, fixture: Path):
-        from pcobra.cobra.core import Lexer, Parser
-
-        code = fixture.read_text(encoding="utf-8")
-        tokens = _tokenize(Lexer(code))
-        return Parser(tokens).parsear()
-
-    def _run_transpilers_syntax(self, targets: list[str], strict: bool) -> tuple[dict[str, TargetSummary], bool]:
+    def _run_transpilers_syntax(self, targets: list[str], strict: bool) -> tuple[dict[str, Any], dict[str, list[str]], bool]:
         from pcobra.cobra.transpilers.registry import build_official_transpilers
 
         transpilers = build_official_transpilers()
@@ -299,44 +133,13 @@ class ValidarSintaxisCommand(BaseCommand):
         if not fixtures:
             raise FileNotFoundError(_("No hay fixtures disponibles para validar transpiladores."))
 
-        summaries = {target: TargetSummary() for target in targets}
-        self._errors_by_target: dict[str, list[str]] = {target: [] for target in targets}
-        has_failures = False
-
-        for fixture in fixtures:
-            ast_nodes = self._load_ast_for_fixture(fixture)
-            for target in targets:
-                try:
-                    validator = VALIDATORS[target]
-                    transpiler_cls = transpilers[target]
-                    transpiler = transpiler_cls()
-                    generated = transpiler.generate_code(ast_nodes)
-                    code = generated if isinstance(generated, str) else "\n".join(generated)
-                    result = validator(code)
-                except Exception as exc:  # noqa: BLE001
-                    try:
-                        fixture_name = str(fixture.relative_to(SRC_DIR.parent))
-                    except ValueError:
-                        fixture_name = str(fixture)
-                    message = (
-                        f'{{"stage":"transpiler_or_validator","target":"{target}",'
-                        f'"fixture":"{fixture_name}","error":"{type(exc).__name__}: {exc}"}}'
-                    )
-                    summaries[target].fail += 1
-                    self._errors_by_target[target].append(message)
-                    has_failures = True
-                    continue
-                if result.status == "ok":
-                    summaries[target].ok += 1
-                elif result.status == "skipped":
-                    summaries[target].skipped += 1
-                    if strict:
-                        has_failures = True
-                else:
-                    summaries[target].fail += 1
-                    has_failures = True
-
-        return summaries, has_failures
+        report, _, has_failures = run_transpiler_syntax_validation(
+            fixtures=fixtures,
+            targets=targets,
+            transpilers=transpilers,
+            strict=strict,
+        )
+        return report.targets, report.errors_by_target, has_failures
 
     def _emit_report(self, report: SyntaxReport, destination: str | None) -> None:
         if not destination:
@@ -369,17 +172,12 @@ class ValidarSintaxisCommand(BaseCommand):
             cobra_result = _validate_cobra_parse()
 
             has_failures = py_result.status != "ok" or cobra_result.status != "ok"
-            summaries: dict[str, TargetSummary] = {}
+            summaries = {}
             errors_by_target: dict[str, list[str]] = {}
 
             if not only_cobra:
                 targets = self._parse_targets(str(getattr(args, "targets", "")))
-                summaries, transpilers_failed = self._run_transpilers_syntax(targets, strict)
-                errors_by_target = {
-                    target: list(messages)
-                    for target, messages in getattr(self, "_errors_by_target", {}).items()
-                    if messages
-                }
+                summaries, errors_by_target, transpilers_failed = self._run_transpilers_syntax(targets, strict)
                 has_failures = has_failures or transpilers_failed
 
             report = SyntaxReport(
