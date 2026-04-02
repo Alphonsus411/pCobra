@@ -27,6 +27,7 @@ from pcobra.core.sandbox import (
 )
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
@@ -235,6 +236,8 @@ class VerifyCommand(BaseCommand):
             0 si la verificación es exitosa, 1 en caso de error
         """
         try:
+            validar_politica_modo(self.name, args)
+
             if not args.archivo or not args.lenguajes:
                 raise ValueError(_("Se requieren archivo y lenguajes"))
                 
