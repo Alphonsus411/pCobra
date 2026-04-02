@@ -16,6 +16,17 @@ IS_WINDOWS = os.name == "nt" or sys.platform.startswith("win")
 
 PSUTIL_FALLBACK_ENV = "PCOBRA_ALLOW_PSUTIL_FALLBACK"
 
+# Evita emitir el mismo log de omisión en cada invocación (REPL/bucles).
+_WINDOWS_SKIP_LOGGED = False
+
+
+def _log_windows_skip_once() -> None:
+    global _WINDOWS_SKIP_LOGGED
+    if _WINDOWS_SKIP_LOGGED:
+        return
+    logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
+    _WINDOWS_SKIP_LOGGED = True
+
 
 def _cargar_psutil():
     """Carga ``psutil`` de forma controlada para minimizar superficie de ataque."""
@@ -35,7 +46,7 @@ def limitar_memoria_mb(mb: int) -> None:
     """Restringe la memoria máxima del proceso actual."""
     bytes_ = mb * 1024 * 1024
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
-        logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
+        _log_windows_skip_once()
         return
     try:
         import resource
@@ -102,7 +113,7 @@ def _limitar_memoria_psutil(bytes_: int) -> bool:
 def limitar_cpu_segundos(segundos: int) -> None:
     """Limita el tiempo de CPU en segundos para este proceso."""
     if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
-        logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
+        _log_windows_skip_once()
         return
     try:
         import resource
