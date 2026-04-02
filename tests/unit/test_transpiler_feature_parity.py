@@ -179,3 +179,17 @@ def test_wasm_lowering_error_is_contractual_and_homogeneous():
 def test_phase_1_and_2_backends_generate_code_for_priority_features(backend: str, feature: str):
     salida = _transpile(backend, _phase_nodes(feature))
     assert salida.strip(), f"Salida vacía para {backend}.{feature}"
+
+
+def test_cpp_throw_stringifies_non_string_literals():
+    salida = _transpile("cpp", [NodoThrow(NodoValor(True)), NodoThrow(NodoValor(1))])
+    assert "std::ostringstream" in salida
+    assert "_cobra_oss << true" in salida
+    assert "_cobra_oss << 1" in salida
+
+
+def test_java_literal_nodes_in_statement_position_emit_valid_statement_expression():
+    salida = _transpile("java", [NodoValor(1), NodoValor("x"), NodoValor(True)])
+    assert "String.valueOf(1);" in salida
+    assert 'String.valueOf("x");' in salida
+    assert "String.valueOf(true);" in salida

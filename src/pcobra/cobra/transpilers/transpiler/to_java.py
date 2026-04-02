@@ -132,7 +132,8 @@ def visit_try_catch(self, nodo: NodoTryCatch):
 
 
 def visit_valor(self, nodo: NodoValor):
-    self.agregar_linea(f"{self.obtener_valor(nodo)};")
+    valor = self.obtener_valor(nodo)
+    self.agregar_linea(f"String.valueOf({valor});")
 
 java_nodes = {
     "asignacion": _visit_asignacion,
