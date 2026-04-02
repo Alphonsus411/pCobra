@@ -150,6 +150,7 @@ def test_menu_ejecutar_en_modo_mixto(monkeypatch):
 
     assert main(["menu"]) == 0
     assert called["args"].archivo == "programa.co"
+    assert called["args"].sandbox is False
 
 
 def test_menu_no_tty_aborta_con_error(monkeypatch):

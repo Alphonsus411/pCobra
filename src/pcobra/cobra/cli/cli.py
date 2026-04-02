@@ -679,7 +679,7 @@ class CliApplication:
                 return 1
             command_args = argparse.Namespace(
                 archivo=archivo.strip(),
-                sandbox=getattr(parsed_args, "seguro", True),
+                sandbox=False,
                 contenedor=None,
                 depurar=getattr(parsed_args, "debug", False),
                 formatear=getattr(parsed_args, "formatear", False),
