@@ -160,6 +160,17 @@ La transpilación inversa se documenta como capacidad separada. Sus orígenes de
 
 Esos orígenes reverse **no amplían** `OFFICIAL_TARGETS`: describen entradas aceptadas por `cobra transpilar-inverso`, no targets oficiales de salida. La documentación pública debe hablar de **orígenes reverse** y dejar claro que no son targets de salida.
 
+### Límites de round-trip por target
+
+Contrato técnico actual para validaciones `Cobra -> target -> Cobra`:
+
+- **`python`**: se valida por equivalencia de AST normalizado en fixtures deterministas, removiendo imports estándar del código intermedio antes del reverse (`from core.nativos`, `from corelibs`, `from standard_library`).  
+- **`javascript`**: se valida por equivalencia de AST normalizado solo en subconjuntos compatibles con el parser reverse (tree-sitter opcional y sin garantizar soporte para todo el bootstrap/runtime generado).  
+- **`java`**: mismo criterio de AST normalizado cuando hay soporte reverse disponible; se considera cobertura parcial y dirigida por fixtures.  
+- **`rust`, `go`, `cpp`, `wasm`, `asm`**: hoy no existe parser reverse oficial de entrada para cerrar round-trip automático hacia Cobra; solo aplica transpilación de salida.
+
+Implicación práctica: los reportes de `cobra transpilar-inverso` pueden advertir degradaciones o ausencia de medición automática cuando el target no tiene reverse parser o cuando el parser reverse no soporta nodos concretos.
+
 ## Migración para usuarios de targets retirados
 
 La guía oficial de transición para flujos heredados está en `docs/migracion_targets_retirados.md`.

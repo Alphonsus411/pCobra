@@ -1,0 +1,9 @@
+let a = null;
+switch (a) {
+    case 1:
+        let y_local = 1;
+        break;
+    default:
+        let y_local = 0;
+        break;
+}
