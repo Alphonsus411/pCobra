@@ -41,6 +41,7 @@ TRANSPILER_FIXTURES = [
     SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "smoke_assign.co",
     SRC_DIR.parent / "examples" / "smoke_assign.co",
 ]
+SUPPORTED_VALIDATION_PROFILES: tuple[str, ...] = ("solo-cobra", "transpiladores", "completo")
 
 
 def _validate_python_syntax() -> ValidationResult:
@@ -93,7 +94,16 @@ class ValidarSintaxisCommand(BaseCommand):
         parser.add_argument(
             "--solo-cobra",
             action="store_true",
-            help=_("Solo ejecuta validaciones Python+Cobra; omite transpiladores"),
+            help=_("Alias deprecado de --perfil=solo-cobra"),
+        )
+        parser.add_argument(
+            "--perfil",
+            default="completo",
+            choices=list(SUPPORTED_VALIDATION_PROFILES),
+            help=_(
+                "Perfil de validación: solo-cobra (Python+parse Cobra), "
+                "transpiladores (solo backends), completo (todo)"
+            ),
         )
         parser.add_argument(
             "--targets",
@@ -165,17 +175,38 @@ class ValidarSintaxisCommand(BaseCommand):
         try:
             validar_politica_modo(self.name, args, capability=self.capability)
             strict = bool(getattr(args, "strict", False))
-            only_cobra = bool(getattr(args, "solo_cobra", False))
+            profile = str(getattr(args, "perfil", "completo")).strip().lower() or "completo"
+            if bool(getattr(args, "solo_cobra", False)):
+                profile = "solo-cobra"
             report_dest = getattr(args, "report_json", None)
 
-            py_result = _validate_python_syntax()
-            cobra_result = _validate_cobra_parse()
+            if profile not in SUPPORTED_VALIDATION_PROFILES:
+                raise ValueError(
+                    _("Perfil no soportado en --perfil: {}.").format(profile)
+                )
 
-            has_failures = py_result.status != "ok" or cobra_result.status != "ok"
+            run_python_cobra = profile in {"solo-cobra", "completo"}
+            run_transpilers = profile in {"transpiladores", "completo"}
+
+            py_result = (
+                _validate_python_syntax()
+                if run_python_cobra
+                else ValidationResult("skipped", "Perfil transpiladores: validación Python omitida")
+            )
+            cobra_result = (
+                _validate_cobra_parse()
+                if run_python_cobra
+                else ValidationResult("skipped", "Perfil transpiladores: parse Cobra omitido")
+            )
+
+            has_failures = (
+                (run_python_cobra and py_result.status != "ok")
+                or (run_python_cobra and cobra_result.status != "ok")
+            )
             summaries = {}
             errors_by_target: dict[str, list[str]] = {}
 
-            if not only_cobra:
+            if run_transpilers:
                 targets = self._parse_targets(str(getattr(args, "targets", "")))
                 summaries, errors_by_target, transpilers_failed = self._run_transpilers_syntax(targets, strict)
                 has_failures = has_failures or transpilers_failed
