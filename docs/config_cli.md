@@ -2,6 +2,21 @@
 
 La interfaz de línea de comandos de Cobra puede personalizarse mediante un archivo de configuración.
 
+## Modos de operación (`--modo`)
+
+El flag global `--modo` delimita qué tipo de acciones permite la sesión:
+
+- `cobra`: solo ejecución/interpretación de programas Cobra.
+- `transpilar`: solo generación de código (transpilación).
+- `mixto` (por defecto): permite ambos flujos.
+
+Ejemplos concretos:
+
+```bash
+cobra --modo cobra ejecutar programa.co
+cobra --modo transpilar compilar programa.co --tipo python
+```
+
 ## Ruta del archivo
 
 - **Nombre:** `cobra-cli.toml`

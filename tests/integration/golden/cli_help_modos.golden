@@ -1,0 +1,3 @@
+CLI de Cobra para ejecutar e interpretar scripts, transpilar código a otros lenguajes o usar ambos flujos según --modo (cobra, transpilar, mixto).
+--modo {cobra,transpilar,mixto}
+Define el alcance de la sesión: cobra (solo ejecutar/interpretar), transpilar (solo generar código), mixto (ejecutar y transpilar).

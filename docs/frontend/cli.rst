@@ -8,6 +8,22 @@ las opciones más importantes y un ejemplo de uso para cada una.
 Al iniciarse, la CLI muestra una cabecera con el logo de Cobra. Si se
 prefiere desactivar los colores puede usarse la opción ``--no-color``.
 
+Modos globales de la CLI (``--modo``)
+-------------------------------------
+
+La opción global ``--modo`` controla qué escenarios se habilitan en la sesión:
+
+- ``cobra``: solo ejecución/interpretación.
+- ``transpilar``: solo generación de código.
+- ``mixto``: ejecución + generación de código.
+
+Ejemplos:
+
+.. code-block:: bash
+
+   cobra --modo cobra ejecutar programa.co
+   cobra --modo transpilar compilar programa.co --tipo python
+
 Subcomando ``compilar``
 ----------------------
 Transpila un archivo Cobra a otro lenguaje.

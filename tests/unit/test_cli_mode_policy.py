@@ -68,34 +68,41 @@ def test_modo_transpilar_permite_compilar_y_falla_por_archivo(monkeypatch, tmp_p
     assert not any("no está permitido" in m for m in mensajes)
 
 
-def test_menu_modo_cobra_bloquea_transpilacion(monkeypatch):
+def test_menu_modo_cobra_muestra_solo_ejecutar(monkeypatch):
     app = CliApplication()
-    app.command_registry = types.SimpleNamespace(commands={}, get_default_command=lambda: None)
-    mensajes_error = []
+    ejecutar_cmd = types.SimpleNamespace(run=lambda args: 0)
+    app.command_registry = types.SimpleNamespace(
+        commands={"ejecutar": ejecutar_cmd},
+        get_default_command=lambda: None,
+    )
     mensajes_info = []
 
     monkeypatch.setattr("cobra.cli.cli.sys.stdin", types.SimpleNamespace(isatty=lambda: True))
-    monkeypatch.setattr("cobra.cli.cli.messages.mostrar_error", lambda msg: mensajes_error.append(msg))
     monkeypatch.setattr("cobra.cli.cli.messages.mostrar_info", lambda msg: mensajes_info.append(msg))
-    monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(AssertionError("no debe pedir input")))
+    monkeypatch.setattr("builtins.input", lambda _: "archivo.co")
 
     rc = app.execute_command(argparse.Namespace(cmd="menu", modo="cobra", lang="es"))
 
-    assert rc == 1
-    assert any("transpilación del menú está bloqueada por --modo cobra" in m for m in mensajes_error)
-    assert any("no está permitido en modo 'cobra'" in m for m in mensajes_info)
+    assert rc == 0
+    assert any("menú limitado a 'ejecutar'" in m for m in mensajes_info)
 
 
-def test_menu_modo_transpilar_no_ejecuta_comando_ejecutar(monkeypatch):
+def test_menu_modo_transpilar_muestra_solo_transpilar(monkeypatch):
     app = CliApplication()
-    app.command_registry = types.SimpleNamespace(commands={}, get_default_command=lambda: None)
+    compilar_cmd = types.SimpleNamespace(run=lambda args: 0)
+    inv_cmd = types.SimpleNamespace(run=lambda args: 0)
+    app.command_registry = types.SimpleNamespace(
+        commands={"compilar": compilar_cmd, "transpilar-inverso": inv_cmd},
+        get_default_command=lambda: None,
+    )
     llamadas_ejecutar = {"count": 0}
     mensajes_info = []
 
     monkeypatch.setattr("cobra.cli.cli.sys.stdin", types.SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr("cobra.cli.cli.messages.mostrar_info", lambda msg: mensajes_info.append(msg))
     monkeypatch.setattr("cobra.cli.cli.messages.mostrar_error", lambda msg: (_ for _ in ()).throw(AssertionError(msg)))
-    monkeypatch.setattr("builtins.input", lambda _: "n")
+    respuestas = iter(["s", "archivo.co", "python"])
+    monkeypatch.setattr("builtins.input", lambda _: next(respuestas))
     monkeypatch.setattr(
         "cobra.cli.commands.execute_cmd.ExecuteCommand.run",
         lambda *_: llamadas_ejecutar.__setitem__("count", llamadas_ejecutar["count"] + 1),
@@ -105,4 +112,4 @@ def test_menu_modo_transpilar_no_ejecuta_comando_ejecutar(monkeypatch):
 
     assert rc == 0
     assert llamadas_ejecutar["count"] == 0
-    assert any("opción 'ejecutar' está deshabilitada" in m for m in mensajes_info)
+    assert any("menú limitado a 'transpilar'" in m for m in mensajes_info)
