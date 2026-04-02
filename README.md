@@ -1292,15 +1292,23 @@ Las contribuciones son bienvenidas. Si deseas contribuir, sigue estos pasos:
   opcionalmente *pyright* si está instalado).
 - Ejecuta primero el smoke de sintaxis con `python scripts/smoke_syntax.py`
   (sintaxis Python en `src/` y `tests/`, más parseo básico de fixtures Cobra).
+- Ejecuta `python scripts/smoke_transpilers_syntax.py` para transpilación + validación
+  sintáctica cruzada de los 8 targets oficiales (`python`, `javascript`, `rust`, `go`,
+  `cpp`, `java`, `wasm`, `asm`) sobre fixtures `.co` mínimos. El script reporta por
+  target `ok/fail/skipped` (cuando falta una dependencia externa como `node`, `rustc`,
+  `javac`, etc.) y devuelve código de salida no-cero si falla algún target obligatorio.
 - Ejecuta `make secrets` para buscar credenciales expuestas usando *gitleaks*.
 - Para lanzar todas las validaciones en un solo paso ejecuta `python scripts/check.py`.
-  Este script corre primero el smoke de sintaxis y luego *ruff*, *mypy*,
+  Este script corre primero `smoke_syntax.py`, luego `smoke_transpilers_syntax.py`,
+  y después *ruff*, *mypy*,
   *bandit*, *pyright* y *pytest*.
-  Orden recomendado: **(1)** smoke sintaxis, **(2)** lint/tipos, **(3)**
+  Orden recomendado: **(1)** smoke sintaxis, **(2)** smoke transpiladores,
+  **(3)** lint/tipos, **(4)**
   pruebas unitarias/integración.
   El umbral de cobertura que aplica `pytest` se toma de `pyproject.toml`
   (`tool.coverage.report.fail_under`), igual que en CI.
-- El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request.
+- El CI de GitHub Actions ejecuta automáticamente estas herramientas en cada pull request;
+  para reproducir localmente la validación completa del pipeline usa `python scripts/check.py`.
 - Envía un pull request.
 - Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para más detalles sobre cómo abrir
   issues y preparar pull requests.
