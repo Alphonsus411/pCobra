@@ -179,7 +179,7 @@ class TranspiladorASM(BaseTranspiler):
 ASM_FEATURE_NODE_SUPPORT = {
     "decoradores": ("ir:function.decorators",),
     "imports_corelibs": ("ir:call.longitud", "ir:call.mostrar"),
-    "manejo_errores": (),
+    "manejo_errores": ("ir:unknown.try_catch", "ir:unknown.throw"),
     "async": ("ir:function.async_flag",),
     "tipos_compuestos": (),
 }

@@ -3,6 +3,11 @@
 import re
 
 from pcobra.core.ast_nodes import (
+    NodoDecorador,
+    NodoImport,
+    NodoUsar,
+    NodoThrow,
+    NodoTryCatch,
     NodoValor,
     NodoIdentificador,
     NodoLlamadaFuncion,
@@ -92,6 +97,40 @@ def visit_graficar(self, nodo):
     hb = self.obtener_valor(nodo.holobit)
     self.usa_runtime_holobit = True
     self.agregar_linea(f"cobra_graficar({hb})")
+
+
+def visit_decorador(self, nodo: NodoDecorador):
+    expresion = self.obtener_valor(getattr(nodo, "expresion", nodo))
+    self.agregar_linea(f"// @decorador {expresion}")
+
+
+def visit_import(self, nodo: NodoImport):
+    self.agregar_linea(f"// import {nodo.ruta}")
+
+
+def visit_usar(self, nodo: NodoUsar):
+    self.agregar_linea(f"// usar {nodo.modulo}")
+
+
+def visit_throw(self, nodo: NodoThrow):
+    valor = self.obtener_valor(nodo.expresion)
+    self.agregar_linea(f"panic({valor})")
+
+
+def visit_try_catch(self, nodo: NodoTryCatch):
+    self.agregar_linea("func() {")
+    self.indent += 1
+    nombre = nodo.nombre_excepcion or "cobraErr"
+    self.agregar_linea(f"defer func() {{ if {nombre} := recover(); {nombre} != nil {{")
+    self.indent += 1
+    for inst in nodo.bloque_catch:
+        inst.aceptar(self)
+    self.indent -= 1
+    self.agregar_linea("}}()")
+    for inst in nodo.bloque_try:
+        inst.aceptar(self)
+    self.indent -= 1
+    self.agregar_linea("}()")
 
 go_nodes = {
     "asignacion": _visit_asignacion,
@@ -220,9 +259,9 @@ class TranspiladorGo(BaseTranspiler):
             return str(getattr(nodo, "valor", nodo))
 
 GO_FEATURE_NODE_SUPPORT = {
-    "decoradores": (),
-    "imports_corelibs": ("visit_llamada_funcion",),
-    "manejo_errores": (),
+    "decoradores": ("visit_decorador", "visit_funcion"),
+    "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
+    "manejo_errores": ("visit_try_catch", "visit_throw"),
     "async": (),
     "tipos_compuestos": (),
 }
@@ -231,3 +270,9 @@ GO_FEATURE_NODE_SUPPORT = {
 # Asignar visitantes
 for nombre, funcion in go_nodes.items():
     setattr(TranspiladorGo, f"visit_{nombre}", funcion)
+
+TranspiladorGo.visit_decorador = visit_decorador
+TranspiladorGo.visit_import = visit_import
+TranspiladorGo.visit_usar = visit_usar
+TranspiladorGo.visit_throw = visit_throw
+TranspiladorGo.visit_try_catch = visit_try_catch

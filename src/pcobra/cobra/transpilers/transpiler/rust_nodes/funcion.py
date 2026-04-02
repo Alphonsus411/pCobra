@@ -13,6 +13,8 @@ def _inferir_tipo(expr):
 
 
 def visit_funcion(self, nodo):
+    for decorador in getattr(nodo, "decoradores", []):
+        self.visit_decorador(decorador)
     parametros = ", ".join(nodo.parametros)
     genericos = (
         f"<{', '.join(nodo.type_params)}>" if getattr(nodo, "type_params", []) else ""

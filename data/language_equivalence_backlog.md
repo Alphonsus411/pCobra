@@ -8,7 +8,7 @@ Versión contrato: 1.0.0
 - [ ] `decoradores` en `rust` → elevar de `partial` a `full`. Contexto: No hay paridad total de metaprogramación tipo Python.
 - [ ] `decoradores` en `go` → elevar de `partial` a `full`. Contexto: Requiere wrappers manuales para componer comportamiento.
 - [ ] `decoradores` en `cpp` → elevar de `partial` a `full`. Contexto: Sin sintaxis nativa tipo @decorador.
-- [ ] `decoradores` en `java` → elevar de `none` a `full`. Contexto: No existe equivalente directo en el contrato actual del backend.
+- [ ] `decoradores` en `java` → elevar de `partial` a `full`. Contexto: Se transpila como anotación semántica en comentarios y wrappers.
 - [ ] `decoradores` en `wasm` → elevar de `partial` a `full`. Contexto: Requiere soporte del host para instrumentación.
 - [ ] `decoradores` en `asm` → elevar de `partial` a `full`. Contexto: Instrumentación manual, sin sintaxis declarativa.
 - [ ] `imports_corelibs` en `javascript` → elevar de `partial` a `full`. Contexto: Cobertura parcial vía adaptadores del proyecto.
