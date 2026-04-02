@@ -147,6 +147,9 @@ class ValidarSintaxisCommand(BaseCommand):
 
             mostrar_info(_("Validación de sintaxis completada correctamente."))
             return 0
+        except ValueError as exc:
+            mostrar_error(str(exc))
+            return 1
         except Exception as exc:
             mostrar_error(_("Error en validar-sintaxis: {}").format(exc))
             return 1

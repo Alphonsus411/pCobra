@@ -246,3 +246,40 @@ def test_menu_origen_invalido_y_keyboardinterrupt_cancela_controlado(monkeypatch
     monkeypatch.setattr("builtins.input", fake_input)
 
     assert main(["menu"]) == 0
+
+
+def test_menu_modo_cobra_solo_pide_ruta_archivo(monkeypatch):
+    _set_tty(monkeypatch, True)
+    prompts: list[str] = []
+
+    def fake_input(prompt: str):
+        prompts.append(prompt)
+        return "programa.co"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    monkeypatch.setattr("cobra.cli.commands.execute_cmd.ExecuteCommand.run", lambda *_: 0)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.CompileCommand.run",
+        lambda *_: (_ for _ in ()).throw(AssertionError("no debe ejecutar compilar en modo cobra")),
+    )
+    monkeypatch.setattr(
+        "cobra.cli.commands.transpilar_inverso_cmd.TranspilarInversoCommand.run",
+        lambda *_: (_ for _ in ()).throw(AssertionError("no debe ejecutar transpilar-inverso en modo cobra")),
+    )
+
+    assert main(["--modo", "cobra", "menu"]) == 0
+    assert prompts == ["Ruta al archivo Cobra: "]
+
+
+def test_menu_solo_cobra_alias_no_pide_prompts_codegen(monkeypatch):
+    _set_tty(monkeypatch, True)
+
+    def fake_input(prompt: str):
+        if "Transpilar" in prompt or "Lenguaje" in prompt or "origen" in prompt:
+            raise AssertionError(f"prompt de codegen inesperado: {prompt}")
+        return "programa.co"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    monkeypatch.setattr("cobra.cli.commands.execute_cmd.ExecuteCommand.run", lambda *_: 0)
+
+    assert main(["--solo-cobra", "menu"]) == 0

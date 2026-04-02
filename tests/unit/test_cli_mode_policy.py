@@ -14,9 +14,13 @@ CliApplication = cli_module.CliApplication
 
 verify_module = import_module("cobra.cli.commands.verify_cmd")
 inverse_module = import_module("cobra.cli.commands.transpilar_inverso_cmd")
+validar_sintaxis_module = import_module("cobra.cli.commands.validar_sintaxis_cmd")
+qa_validar_module = import_module("cobra.cli.commands.qa_validar_cmd")
 mode_policy_module = import_module("cobra.cli.mode_policy")
 VerifyCommand = verify_module.VerifyCommand
 TranspilarInversoCommand = inverse_module.TranspilarInversoCommand
+ValidarSintaxisCommand = validar_sintaxis_module.ValidarSintaxisCommand
+QaValidarCommand = qa_validar_module.QaValidarCommand
 
 
 @pytest.mark.parametrize(
@@ -176,3 +180,43 @@ def test_capabilities_declaradas_en_comandos_principales():
     assert CompileCommand.capability == "codegen"
     assert VerifyCommand.capability == "codegen"
     assert TranspilarInversoCommand.capability == "codegen"
+
+
+def test_flag_global_solo_cobra_equivale_a_modo_cobra():
+    app = CliApplication()
+    app.initialize()
+
+    args = app._parse_arguments(["--solo-cobra", "menu"])
+
+    assert args.solo_cobra is True
+    assert args.modo == "cobra"
+
+
+def test_help_global_refuerza_solo_programar_interpretar_sin_codegen():
+    app = CliApplication()
+    app.initialize()
+
+    help_text = app.parser.format_help()
+
+    assert "--solo-cobra" in help_text
+    assert "solo programar/interpretar Cobra sin codegen" in help_text
+
+
+@pytest.mark.parametrize(
+    ("module", "command", "args"),
+    [
+        (compile_module, CompileCommand(), SimpleNamespace(archivo="demo.co", tipo="python", backend=None, tipos=None, modo="cobra")),
+        (verify_module, VerifyCommand(), SimpleNamespace(archivo="demo.co", lenguajes=["python"], modo="cobra")),
+        (inverse_module, TranspilarInversoCommand(), SimpleNamespace(archivo="demo.py", origen="python", destino="javascript", modo="cobra")),
+        (validar_sintaxis_module, ValidarSintaxisCommand(), SimpleNamespace(modo="cobra", perfil="transpiladores", strict=False, solo_cobra=False, targets="", report_json=None)),
+        (qa_validar_module, QaValidarCommand(), SimpleNamespace(modo="cobra", scope="syntax", strict=False, archivo="demo.co", targets="", report_json=None)),
+    ],
+)
+def test_comandos_codegen_bloqueados_muestran_mensaje_homogeneo(module, command, args, monkeypatch):
+    mensajes = []
+    monkeypatch.setattr(module, "mostrar_error", lambda msg: mensajes.append(msg))
+
+    rc = command.run(args)
+
+    assert rc == 1
+    assert any("Acción sugerida: cambia a --modo mixto o --modo transpilar" in m for m in mensajes)
