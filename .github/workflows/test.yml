@@ -101,6 +101,14 @@ jobs:
           python scripts/generate_target_policy_docs.py
           python scripts/generar_matriz_transpiladores.py
           git diff --exit-code -- docs/targets_policy.md docs/matriz_transpiladores.md docs/matriz_transpiladores.csv docs/_generated README.md docs/README.en.md
+      - name: Validate syntax report JSON contract
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python scripts/ci/validate_syntax_report_contract.py
+      - name: Validate syntax report JSON contract (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/ci/validate_syntax_report_contract.py
       - name: Validate runtime contract matrix
         if: runner.os != 'Windows'
         shell: bash

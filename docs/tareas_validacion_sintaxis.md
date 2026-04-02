@@ -180,3 +180,25 @@ python scripts/check.py --perfil completo
 
 Compatibilidad:
 - `--solo-cobra` se mantiene como alias deprecado de `--perfil solo-cobra`.
+
+
+## 7) Contrato JSON de `validar-sintaxis --report-json` (versionado)
+
+Se define un esquema versionado con `schema_version=1.0.0` y flujo único: CLI + smokes delegan en `pcobra.cobra.qa.syntax_validation`.
+
+Campos obligatorios del contrato:
+- `schema_version`
+- `python` (`version`, `result`)
+- `cobra` (`version`, `result`)
+- `targets`
+- `errors_by_target`
+- `profile`
+- `timestamp`
+- `targets_requested`
+- `strict`
+- `python_runtime`
+
+Gate CI asociado: `python scripts/ci/validate_syntax_report_contract.py`.
+El gate falla si cambia la forma del JSON y no se actualizan:
+1. `tests/data/snapshots/validar_sintaxis_report_schema_v1.json`
+2. Esta documentación/README con el marcador de versión (`schema_version=1.0.0`).

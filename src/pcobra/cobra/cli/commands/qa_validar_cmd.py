@@ -7,12 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.commands.validar_sintaxis_cmd import (
-    ValidarSintaxisCommand,
-    ValidationResult,
-    _validate_cobra_parse,
-    _validate_python_syntax,
-)
+from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidationResult, ValidarSintaxisCommand
+from pcobra.cobra.qa.syntax_validation import execute_syntax_validation
+from pcobra.cobra.transpilers.registry import build_official_transpilers
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
@@ -95,39 +92,32 @@ class QaValidarCommand(BaseCommand):
         mostrar_info(_("Reporte JSON escrito en {path}").format(path=output_path))
 
     def _run_syntax_scope(self, args: Any) -> tuple[dict[str, Any], dict[str, Any], bool]:
-        syntax_command = ValidarSintaxisCommand()
         strict = bool(getattr(args, "strict", False))
-        only_cobra = bool(getattr(args, "solo_cobra", False))
+        profile = "solo-cobra" if bool(getattr(args, "solo_cobra", False)) else "completo"
 
-        py_result = _validate_python_syntax()
-        cobra_result = _validate_cobra_parse()
-        has_failures = py_result.status != "ok" or cobra_result.status != "ok"
+        execution = execute_syntax_validation(
+            profile=profile,
+            targets_raw=str(getattr(args, "targets", "")),
+            strict=strict,
+            transpilers=build_official_transpilers(),
+        )
 
         transpilers: dict[str, Any] = {
-            "status": "skipped",
-            "targets": {},
+            "status": "fail" if execution.has_failures and profile != "solo-cobra" and execution.report.targets else "ok",
+            "targets": {key: asdict(value) for key, value in execution.report.targets.items()},
             "strict": strict,
-            "message": "omitido por --solo-cobra" if only_cobra else "sin ejecución",
+            "message": "omitido por --solo-cobra" if profile == "solo-cobra" else "validación de transpiladores completada",
         }
-
-        if not only_cobra:
-            targets = syntax_command._parse_targets(str(getattr(args, "targets", "")))
-            summaries, transpilers_failed = syntax_command._run_transpilers_syntax(targets, strict)
-            has_failures = has_failures or transpilers_failed
-            transpilers = {
-                "status": "fail" if transpilers_failed else "ok",
-                "targets": {key: asdict(value) for key, value in summaries.items()},
-                "strict": strict,
-                "message": "validación de transpiladores completada",
-            }
+        if profile == "solo-cobra":
+            transpilers["status"] = "skipped"
 
         syntax = {
-            "status": "fail" if has_failures else "ok",
-            "python": asdict(py_result),
-            "cobra": asdict(cobra_result),
+            "status": "fail" if execution.has_failures else "ok",
+            "python": asdict(execution.report.python),
+            "cobra": asdict(execution.report.cobra),
             "strict": strict,
         }
-        return syntax, transpilers, has_failures
+        return syntax, transpilers, execution.has_failures
 
     def _run_runtime_scope(self, args: Any) -> tuple[RuntimeEquivalenceReport, bool]:
         strict = bool(getattr(args, "strict", False))

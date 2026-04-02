@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import ast
+import compileall
 import json
+import platform
+import py_compile
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 
 @dataclass
@@ -25,8 +30,8 @@ class TargetSummary:
 
 @dataclass
 class SyntaxReport:
-    python: ValidationResult | None = None
-    cobra: ValidationResult | None = None
+    python: ValidationResult
+    cobra: ValidationResult
     targets: dict[str, TargetSummary] = field(default_factory=dict)
     strict: bool = False
     errors_by_target: dict[str, list[str]] = field(default_factory=dict)
@@ -42,6 +47,49 @@ SUPPORTED_VALIDATOR_TARGETS: tuple[str, ...] = (
     "wasm",
     "asm",
 )
+SUPPORTED_VALIDATION_PROFILES: tuple[str, ...] = ("solo-cobra", "transpiladores", "completo")
+SYNTAX_REPORT_SCHEMA_VERSION = "1.0.0"
+
+
+def _resolve_project_root() -> Path | None:
+    current = Path(__file__).resolve()
+    for candidate in current.parents:
+        if (candidate / "pyproject.toml").exists() and (candidate / "src").is_dir():
+            return candidate
+    return None
+
+
+PROJECT_ROOT = _resolve_project_root()
+SRC_DIR = (PROJECT_ROOT / "src") if PROJECT_ROOT else Path(__file__).resolve().parents[5] / "src"
+TESTS_DIR = (PROJECT_ROOT / "tests") if PROJECT_ROOT else Path(__file__).resolve().parents[5] / "tests"
+COBRA_FIXTURES = [
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "small.co",
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "factorial.co",
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "medium.co",
+]
+TRANSPILER_FIXTURES = [
+    SRC_DIR.parent / "scripts" / "benchmarks" / "programs" / "smoke_assign.co",
+    SRC_DIR.parent / "examples" / "smoke_assign.co",
+]
+
+
+@dataclass
+class SyntaxValidationExecution:
+    report: SyntaxReport
+    profile: str
+    targets_requested: list[str]
+    has_failures: bool
+
+
+@dataclass
+class SyntaxValidationJsonEnvelope:
+    schema_version: str
+    python: dict[str, str]
+    cobra: dict[str, str]
+    targets: dict[str, dict[str, int]]
+    errors_by_target: dict[str, list[str]]
+    profile: str
+    timestamp: str
 
 
 def _tokenize(lexer):
@@ -70,6 +118,88 @@ def run_external_command(command: list[str], cwd: Path | None = None) -> tuple[b
     if result.returncode == 0:
         return True, ""
     return False, (result.stderr or result.stdout).strip()
+
+
+def validate_python_syntax() -> ValidationResult:
+    src_ok = compileall.compile_dir(str(SRC_DIR), quiet=1, force=False)
+    test_candidates = [*TESTS_DIR.glob("test_*.py")]
+    test_candidates.extend(TESTS_DIR.rglob("unit/**/*.py"))
+    test_candidates.extend(TESTS_DIR.rglob("integration/**/*.py"))
+
+    tests_ok = True
+    errors: list[str] = []
+    for file_path in test_candidates:
+        try:
+            py_compile.compile(str(file_path), doraise=True)
+        except py_compile.PyCompileError as exc:
+            rel_path = str(file_path.relative_to(SRC_DIR.parent))
+            errors.append(f"{rel_path}: {exc.msg}")
+            tests_ok = False
+
+    if src_ok and tests_ok:
+        return ValidationResult("ok", "Sintaxis Python correcta en src/ y tests/")
+    resumen = " ; ".join(errors[:3]) if errors else "compileall detectó errores"
+    return ValidationResult("fail", resumen)
+
+
+def validate_cobra_parse() -> ValidationResult:
+    for fixture in COBRA_FIXTURES:
+        if not fixture.exists():
+            return ValidationResult("fail", f"Fixture no encontrado: {fixture}")
+
+    for fixture in COBRA_FIXTURES:
+        try:
+            load_ast_for_fixture(fixture)
+        except Exception as exc:  # noqa: BLE001
+            rel_path = fixture.relative_to(SRC_DIR.parent)
+            return ValidationResult("fail", f"Parse falló en {rel_path}: {exc}")
+
+    return ValidationResult("ok", "Parse básico Cobra correcto")
+
+
+def _parse_targets_csv(targets_raw: str) -> list[str]:
+    if not targets_raw.strip():
+        return list(SUPPORTED_VALIDATOR_TARGETS)
+    parsed = [item.strip().lower() for item in targets_raw.split(",") if item.strip()]
+    if not parsed:
+        raise ValueError("La lista --targets está vacía")
+    invalid = sorted(set(parsed) - set(SUPPORTED_VALIDATOR_TARGETS))
+    if invalid:
+        raise ValueError(f"Targets no soportados en --targets: {', '.join(invalid)}.")
+    return parsed
+
+
+def _get_cobra_version() -> str:
+    try:
+        return version("pcobra")
+    except PackageNotFoundError:
+        return "dev"
+
+
+def build_syntax_report_payload(execution: SyntaxValidationExecution) -> dict[str, Any]:
+    report = execution.report
+    envelope = SyntaxValidationJsonEnvelope(
+        schema_version=SYNTAX_REPORT_SCHEMA_VERSION,
+        python=asdict(report.python),
+        cobra=asdict(report.cobra),
+        targets={key: asdict(value) for key, value in report.targets.items()},
+        errors_by_target=report.errors_by_target,
+        profile=execution.profile,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+    payload = asdict(envelope)
+    payload["targets_requested"] = execution.targets_requested
+    payload["strict"] = report.strict
+    payload["python_runtime"] = platform.python_version()
+    payload["cobra"] = {
+        "version": _get_cobra_version(),
+        "result": asdict(report.cobra),
+    }
+    payload["python"] = {
+        "version": platform.python_version(),
+        "result": asdict(report.python),
+    }
+    return payload
 
 
 def _validate_python(code: str) -> ValidationResult:
@@ -289,8 +419,75 @@ def run_transpiler_syntax_validation(
                 has_failures = True
 
     report = SyntaxReport(
+        python=ValidationResult("skipped", "Validación Python no ejecutada"),
+        cobra=ValidationResult("skipped", "Validación Cobra no ejecutada"),
         targets=summaries,
         strict=strict,
         errors_by_target={target: msgs for target, msgs in errors_by_target.items() if msgs},
     )
     return report, events, has_failures
+
+
+def execute_syntax_validation(
+    *,
+    profile: str,
+    targets_raw: str,
+    strict: bool,
+    transpilers: dict[str, type],
+) -> SyntaxValidationExecution:
+    normalized_profile = profile.strip().lower() or "completo"
+    if normalized_profile not in SUPPORTED_VALIDATION_PROFILES:
+        raise ValueError(f"Perfil no soportado en --perfil: {normalized_profile}.")
+
+    run_python_cobra = normalized_profile in {"solo-cobra", "completo"}
+    run_transpilers = normalized_profile in {"transpiladores", "completo"}
+
+    py_result = (
+        validate_python_syntax()
+        if run_python_cobra
+        else ValidationResult("skipped", "Perfil transpiladores: validación Python omitida")
+    )
+    cobra_result = (
+        validate_cobra_parse()
+        if run_python_cobra
+        else ValidationResult("skipped", "Perfil transpiladores: parse Cobra omitido")
+    )
+
+    has_failures = (
+        (run_python_cobra and py_result.status != "ok")
+        or (run_python_cobra and cobra_result.status != "ok")
+    )
+
+    targets_requested: list[str] = []
+    summaries: dict[str, TargetSummary] = {}
+    errors_by_target: dict[str, list[str]] = {}
+
+    if run_transpilers:
+        targets_requested = _parse_targets_csv(targets_raw)
+        fixtures = [fixture for fixture in TRANSPILER_FIXTURES if fixture.exists()]
+        if not fixtures:
+            raise FileNotFoundError("No hay fixtures disponibles para validar transpiladores.")
+
+        transpilers_report, _, transpilers_failed = run_transpiler_syntax_validation(
+            fixtures=fixtures,
+            targets=targets_requested,
+            transpilers=transpilers,
+            strict=strict,
+        )
+        summaries = transpilers_report.targets
+        errors_by_target = transpilers_report.errors_by_target
+        has_failures = has_failures or transpilers_failed
+
+    report = SyntaxReport(
+        python=py_result,
+        cobra=cobra_result,
+        targets=summaries,
+        strict=strict,
+        errors_by_target=errors_by_target,
+    )
+    return SyntaxValidationExecution(
+        report=report,
+        profile=normalized_profile,
+        targets_requested=targets_requested,
+        has_failures=has_failures,
+    )

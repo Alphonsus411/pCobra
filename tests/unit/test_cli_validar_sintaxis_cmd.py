@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+import json
 from argparse import Namespace
 from pathlib import Path
 
 import pytest
 
 from cobra.cli.commands import validar_sintaxis_cmd as cmd_module
-from cobra.cli.commands.validar_sintaxis_cmd import (
-    TargetSummary,
-    ValidationResult,
-    ValidarSintaxisCommand,
-)
+from cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
+from pcobra.cobra.qa import syntax_validation as sv
 
 
 def _args(**kwargs) -> Namespace:
@@ -19,24 +17,33 @@ def _args(**kwargs) -> Namespace:
         "strict": False,
         "solo_cobra": False,
         "targets": "",
+        "perfil": "completo",
         "report_json": None,
     }
     base.update(kwargs)
     return Namespace(**base)
 
 
-def test_validar_sintaxis_solo_cobra_ok(monkeypatch):
-    command = ValidarSintaxisCommand()
-
-    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
-    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
-    monkeypatch.setattr(
-        command,
-        "_run_transpilers_syntax",
-        lambda *_: (_ for _ in ()).throw(AssertionError("No debe ejecutar transpiladores")),
+def _execution(*, has_failures: bool = False, profile: str = "completo") -> sv.SyntaxValidationExecution:
+    return sv.SyntaxValidationExecution(
+        report=sv.SyntaxReport(
+            python=sv.ValidationResult("ok", "py"),
+            cobra=sv.ValidationResult("ok", "cobra"),
+            targets={"javascript": sv.TargetSummary(ok=1, fail=0, skipped=0)} if profile != "solo-cobra" else {},
+            strict=False,
+            errors_by_target={},
+        ),
+        profile=profile,
+        targets_requested=[] if profile == "solo-cobra" else ["javascript"],
+        has_failures=has_failures,
     )
 
-    rc = command.run(_args(solo_cobra=True))
+
+def test_validar_sintaxis_solo_cobra_ok(monkeypatch):
+    command = ValidarSintaxisCommand()
+    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(profile="solo-cobra"))
+
+    rc = command.run(_args(solo_cobra=True, perfil="transpiladores"))
     assert rc == 0
 
 
@@ -53,16 +60,9 @@ def test_validar_sintaxis_respeta_validar_politica_modo(monkeypatch):
     assert any("modo bloqueado" in msg for msg in mensajes)
 
 
-def test_validar_sintaxis_strict_convierte_skipped_en_error(monkeypatch):
+def test_validar_sintaxis_strict_convierte_error_en_exit_code_1(monkeypatch):
     command = ValidarSintaxisCommand()
-
-    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
-    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
-    monkeypatch.setattr(
-        command,
-        "_run_transpilers_syntax",
-        lambda *_: ({"javascript": TargetSummary(ok=0, fail=0, skipped=1)}, True),
-    )
+    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution(has_failures=True))
 
     rc = command.run(_args(strict=True, targets="javascript"))
     assert rc == 1
@@ -72,56 +72,29 @@ def test_validar_sintaxis_report_json_en_archivo(monkeypatch, tmp_path: Path):
     command = ValidarSintaxisCommand()
     output = tmp_path / "reporte.json"
 
-    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
-    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
-    monkeypatch.setattr(command, "_run_transpilers_syntax", lambda *_: ({}, False))
+    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: _execution())
 
     rc = command.run(_args(report_json=str(output)))
 
     assert rc == 0
-    assert output.exists()
-    contenido = output.read_text(encoding="utf-8")
-    assert '"python"' in contenido
-    assert '"cobra"' in contenido
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == sv.SYNTAX_REPORT_SCHEMA_VERSION
+    assert "python" in payload and "cobra" in payload
 
 
 def test_validar_sintaxis_report_json_incluye_errors_by_target_si_existe(monkeypatch, tmp_path: Path):
     command = ValidarSintaxisCommand()
     output = tmp_path / "reporte.json"
 
-    monkeypatch.setattr(cmd_module, "_validate_python_syntax", lambda: ValidationResult("ok", "py"))
-    monkeypatch.setattr(cmd_module, "_validate_cobra_parse", lambda: ValidationResult("ok", "cobra"))
-
-    def _fake_run(*_):
-        command._errors_by_target = {"javascript": ['{"stage":"validator","error":"boom"}']}
-        return {"javascript": TargetSummary(ok=0, fail=1, skipped=0)}, True
-
-    monkeypatch.setattr(command, "_run_transpilers_syntax", _fake_run)
+    execution = _execution(has_failures=True)
+    execution.report.errors_by_target = {"javascript": ['{"stage":"validator","error":"boom"}']}
+    monkeypatch.setattr(cmd_module, "execute_syntax_validation", lambda **_: execution)
 
     rc = command.run(_args(report_json=str(output), targets="javascript"))
 
     assert rc == 1
-    contenido = output.read_text(encoding="utf-8")
-    assert '"errors_by_target"' in contenido
-    assert '"javascript"' in contenido
-
-
-def test_validator_javascript_skipped_sin_node(monkeypatch):
-    monkeypatch.setattr(cmd_module.shutil, "which", lambda _: None)
-
-    result = cmd_module._validate_javascript("let x = 1;")
-
-    assert result.status == "skipped"
-    assert "node" in result.message
-
-
-def test_validator_rust_skipped_sin_rustc(monkeypatch):
-    monkeypatch.setattr(cmd_module.shutil, "which", lambda _: None)
-
-    result = cmd_module._validate_rust("fn main() {}")
-
-    assert result.status == "skipped"
-    assert "rustc" in result.message
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["errors_by_target"]["javascript"]
 
 
 @pytest.mark.parametrize("targets", ["javascript,go", "python"])
@@ -135,42 +108,3 @@ def test_parse_targets_invalido():
     command = ValidarSintaxisCommand()
     with pytest.raises(ValueError):
         command._parse_targets("fantasy")
-
-
-def test_run_transpilers_syntax_fallo_en_un_target_y_continua(monkeypatch, tmp_path: Path):
-    command = ValidarSintaxisCommand()
-    fixture = tmp_path / "fixture.co"
-    fixture.write_text("imprimir(1)", encoding="utf-8")
-
-    class _OkTranspiler:
-        def generate_code(self, _ast):
-            return "ok"
-
-    class _BoomTranspiler:
-        def generate_code(self, _ast):
-            raise RuntimeError("boom target")
-
-    monkeypatch.setattr(command, "_load_ast_for_fixture", lambda _: object())
-    monkeypatch.setattr(cmd_module, "TRANSPILER_FIXTURES", [fixture])
-    monkeypatch.setattr(
-        "pcobra.cobra.transpilers.registry.build_official_transpilers",
-        lambda: {"python": _OkTranspiler, "javascript": _BoomTranspiler},
-    )
-    monkeypatch.setattr(
-        cmd_module,
-        "VALIDATORS",
-        {
-            "python": lambda code: ValidationResult("ok", f"ok:{code}"),
-            "javascript": lambda code: ValidationResult("ok", f"ok:{code}"),
-        },
-    )
-
-    summaries, has_failures = command._run_transpilers_syntax(["python", "javascript"], strict=False)
-
-    assert has_failures is True
-    assert summaries["python"] == TargetSummary(ok=1, fail=0, skipped=0)
-    assert summaries["javascript"] == TargetSummary(ok=0, fail=1, skipped=0)
-    assert "javascript" in command._errors_by_target
-    assert command._errors_by_target["javascript"]
-    assert "transpiler_or_validator" in command._errors_by_target["javascript"][0]
-
