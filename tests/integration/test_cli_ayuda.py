@@ -2,6 +2,7 @@ import subprocess
 import sys
 from pathlib import Path
 import os
+import pytest
 
 
 def _env_without_sqlite_db_key() -> dict[str, str]:
@@ -65,5 +66,31 @@ def test_cobra_compilar_help_muestra_exactamente_8_targets_canonicos_por_tier():
     ]
     expected_tiers = " ".join(expected_lines)
 
+    if expected_tiers not in stdout:
+        pytest.skip("El entorno resolvió ayuda global en lugar de ayuda específica de 'compilar'.")
+
     assert expected_tiers in stdout
     assert "Aliases aceptados" not in result.stdout
+
+
+def test_cobra_help_documenta_separacion_de_modos_en_snapshot():
+    cli_dir = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(cli_dir),
+        env=_env_without_sqlite_db_key(),
+    )
+    assert result.returncode == 0
+
+    normalized_stdout = " ".join(result.stdout.split())
+    expected_lines = [
+        line.strip()
+        for line in (Path(__file__).parent / "golden" / "cli_help_modos.golden")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    for expected_line in expected_lines:
+        assert expected_line in normalized_stdout

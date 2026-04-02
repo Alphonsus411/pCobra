@@ -340,7 +340,12 @@ class CliApplication:
             "--modo",
             choices=CLI_MODOS_PERMITIDOS,
             default=MODO_POR_DEFECTO,
-            help=_("Perfil de ejecución CLI: cobra | transpilar | mixto"),
+            help=_(
+                "Define el alcance de la sesión: "
+                "cobra (solo ejecutar/interpretar), "
+                "transpilar (solo generar código), "
+                "mixto (ejecutar y transpilar)."
+            ),
         )
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
@@ -522,7 +527,11 @@ class CliApplication:
     def _build_argument_parser(self) -> CustomArgumentParser:
         parser = CustomArgumentParser(
             prog=AppConfig.PROGRAM_NAME,
-            description=_("CLI for Cobra")
+            description=_(
+                "CLI de Cobra para ejecutar e interpretar scripts, "
+                "transpilar código a otros lenguajes o usar ambos flujos "
+                "según --modo (cobra, transpilar, mixto)."
+            ),
         )
         self._configure_cli_options(parser)
         return parser
@@ -626,36 +635,64 @@ class CliApplication:
                 _("El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."),
             )
             return 1
-        try:
-            validar_politica_modo("compilar", parsed_args)
-        except ValueError as error:
+        modo = str(getattr(parsed_args, "modo", MODO_POR_DEFECTO)).strip().lower()
+        acciones: list[tuple[str, str]] = []
+        if modo in {"cobra", "mixto"}:
+            acciones.append(("ejecutar", _("Ejecutar/interpretar script Cobra")))
+        if modo in {"transpilar", "mixto"}:
+            acciones.append(("transpilar", _("Transpilar/generar código")))
+
+        if not acciones:
             messages.mostrar_error(
-                _(
-                    "La opción de transpilación del menú está bloqueada por --modo {modo}. "
-                    "Usa --modo mixto o --modo transpilar para habilitarla."
-                ).format(modo=getattr(parsed_args, "modo", MODO_POR_DEFECTO))
+                _("No hay acciones disponibles para --modo {}.").format(modo),
             )
-            messages.mostrar_info(str(error))
             return 1
 
-        if str(getattr(parsed_args, "modo", MODO_POR_DEFECTO)).strip().lower() == "transpilar":
+        if len(acciones) == 1:
+            accion = acciones[0][0]
             messages.mostrar_info(
-                _(
-                    "Modo transpilar activo: la opción 'ejecutar' está deshabilitada en menú "
-                    "por política de seguridad."
+                _("Modo {modo} activo: menú limitado a '{accion}'.").format(
+                    modo=modo, accion=accion
                 )
             )
+        else:
+            print(_("Seleccione una acción:"))
+            for idx, (nombre_accion, descripcion) in enumerate(acciones, start=1):
+                print(f"{idx}. {descripcion}")
+            opciones_validas = tuple(str(i) for i in range(1, len(acciones) + 1))
+            seleccion, exit_code = self._leer_opcion_validada(
+                _("Opción: "),
+                opciones_validas,
+                "acción",
+            )
+            if seleccion is None:
+                return exit_code
+            accion = acciones[int(seleccion) - 1][0]
+
+        if accion == "ejecutar":
+            archivo = self._leer_input_seguro(_("Ruta al archivo Cobra: "))
+            if archivo is None:
+                return 0
+            ejecutar_cmd = self.command_registry.commands.get("ejecutar")
+            if not ejecutar_cmd:
+                messages.mostrar_error(_("Comando 'ejecutar' no disponible"))
+                return 1
+            command_args = argparse.Namespace(
+                archivo=archivo.strip(),
+                sandbox=getattr(parsed_args, "seguro", True),
+                contenedor=None,
+                depurar=getattr(parsed_args, "debug", False),
+                formatear=getattr(parsed_args, "formatear", False),
+                modo=getattr(parsed_args, "modo", MODO_POR_DEFECTO),
+            )
+            return ejecutar_cmd.run(command_args)
+
+        validar_politica_modo("compilar", parsed_args)
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
         print(_("Lenguajes de origen disponibles:"))
         print(", ".join(ORIGIN_CHOICES))
-
-        desea_transpilar = self._leer_input_seguro(_("¿Desea transpilar? (s/n): "))
-        if desea_transpilar is None:
-            return 0
-        if not desea_transpilar.strip().lower().startswith("s"):
-            return 0
 
         transpilar_desde_cobra = self._leer_input_seguro(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): "))
         if transpilar_desde_cobra is None:
