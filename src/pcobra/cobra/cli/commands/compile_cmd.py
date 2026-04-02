@@ -29,6 +29,7 @@ from pcobra.core.semantic_validators import (
 )
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
@@ -338,6 +339,12 @@ class CompileCommand(BaseCommand):
     def run(self, args):
         """Ejecuta la lógica del comando."""
         archivo = args.archivo
+
+        try:
+            validar_politica_modo(self.name, args)
+        except ValueError as e:
+            mostrar_error(str(e))
+            return 1
 
         try:
             validate_file(archivo)

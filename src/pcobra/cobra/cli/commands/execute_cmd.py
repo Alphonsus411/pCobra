@@ -7,6 +7,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
     normalizar_validadores_extra,
@@ -204,6 +205,12 @@ class ExecuteCommand(BaseCommand):
         Returns:
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
+        try:
+            validar_politica_modo(self.name, args)
+        except ValueError as e:
+            mostrar_error(str(e))
+            return 1
+
         try:
             self._validar_archivo(args.archivo)
         except ValueError as e:

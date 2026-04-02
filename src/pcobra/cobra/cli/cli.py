@@ -44,6 +44,7 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
 )
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
+from pcobra.cobra.cli.mode_policy import CLI_MODOS_PERMITIDOS, MODO_POR_DEFECTO
 from pcobra.cobra.cli.plugin import (
     descubrir_plugins,
     configure_plugin_policy,
@@ -330,6 +331,12 @@ class CliApplication:
                 "Permite fallback inseguro en CI/no interactivo. "
                 "Requiere --allow-insecure-fallback."
             ),
+        )
+        parser.add_argument(
+            "--modo",
+            choices=CLI_MODOS_PERMITIDOS,
+            default=MODO_POR_DEFECTO,
+            help=_("Perfil de ejecución CLI: cobra | transpilar | mixto"),
         )
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
