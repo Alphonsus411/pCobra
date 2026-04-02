@@ -950,6 +950,65 @@ def validate_ast_feature_parity_release_gate(
 
 validate_backend_compatibility_contract()
 
+
+_AST_FEATURE_NODE_SUPPORT_MAP: Final[dict[str, str]] = {
+    "decoradores": "decoradores",
+    "async": "async",
+    "colecciones": "tipos_compuestos",
+}
+
+
+def build_feature_gap_report(
+    expected_contract: dict[str, dict[str, str]] | None = None,
+    evidence_baseline: dict[str, dict[str, str]] | None = None,
+    backend_node_support: dict[str, dict[str, tuple[str, ...]]] | None = None,
+) -> dict[str, list[dict[str, object]]]:
+    """Construye un reporte explícito de gaps AST por backend."""
+
+    expected = expected_contract or AST_FEATURE_MINIMUM_CONTRACT
+    evidence = evidence_baseline or AST_FEATURE_EVIDENCE_BASELINE
+    node_support = backend_node_support or BACKEND_FEATURE_NODE_SUPPORT
+    reference_backend = "python"
+    report: dict[str, list[dict[str, object]]] = {}
+
+    for backend in OFFICIAL_TARGETS:
+        backend_expected = expected.get(backend, {})
+        backend_actual = evidence.get(backend, {})
+        backend_rows: list[dict[str, object]] = []
+
+        for feature in AST_FEATURES:
+            expected_level = backend_expected.get(feature, "none")
+            actual_level = backend_actual.get(feature, "none")
+            if (
+                expected_level not in COMPATIBILITY_LEVEL_ORDER
+                or actual_level not in COMPATIBILITY_LEVEL_ORDER
+            ):
+                continue
+            if COMPATIBILITY_LEVEL_ORDER[actual_level] >= COMPATIBILITY_LEVEL_ORDER[expected_level]:
+                continue
+
+            missing_nodes: tuple[str, ...] | None = None
+            support_key = _AST_FEATURE_NODE_SUPPORT_MAP.get(feature)
+            if support_key:
+                required_nodes = set(
+                    node_support.get(reference_backend, {}).get(support_key, ())
+                )
+                current_nodes = set(node_support.get(backend, {}).get(support_key, ()))
+                missing_nodes = tuple(sorted(required_nodes - current_nodes))
+
+            backend_rows.append(
+                {
+                    "feature": feature,
+                    "expected_level": expected_level,
+                    "actual_level": actual_level,
+                    "missing_nodes": list(missing_nodes or ()),
+                }
+            )
+
+        report[backend] = backend_rows
+
+    return report
+
 def get_backend_compatibility(backend: str) -> dict[str, str] | None:
     """Obtiene compatibilidad por backend aplicando normalización canónica."""
     return BACKEND_COMPATIBILITY.get(normalize_target_name(backend))
@@ -987,6 +1046,7 @@ __all__ = [
     "AST_FEATURE_MINIMUM_CONTRACT",
     "AST_FEATURE_EVIDENCE_BASELINE",
     "AST_FEATURE_EVIDENCE_SOURCE",
+    "build_feature_gap_report",
     "get_backend_compatibility",
     "get_backend_compatibility_notes",
     "get_backend_feature_gaps",
