@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from importlib import import_module
 import argparse
 import types
+import pytest
 
 compile_module = import_module("cobra.cli.commands.compile_cmd")
 execute_module = import_module("cobra.cli.commands.execute_cmd")
@@ -10,6 +11,57 @@ cli_module = import_module("cobra.cli.cli")
 CompileCommand = compile_module.CompileCommand
 ExecuteCommand = execute_module.ExecuteCommand
 CliApplication = cli_module.CliApplication
+
+verify_module = import_module("cobra.cli.commands.verify_cmd")
+inverse_module = import_module("cobra.cli.commands.transpilar_inverso_cmd")
+mode_policy_module = import_module("cobra.cli.mode_policy")
+VerifyCommand = verify_module.VerifyCommand
+TranspilarInversoCommand = inverse_module.TranspilarInversoCommand
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    ["compilar", "transpilar", "verificar", "transpilar-inverso"],
+)
+def test_modo_cobra_bloquea_todos_los_comandos_codegen(command_name):
+    args = SimpleNamespace(modo="cobra")
+
+    with pytest.raises(ValueError, match="no está permitido"):
+        mode_policy_module.validar_politica_modo(command_name, args)
+
+
+def test_modo_cobra_permite_ejecutar():
+    args = SimpleNamespace(modo="cobra")
+
+    mode_policy_module.validar_politica_modo("ejecutar", args)
+
+
+def test_modo_cobra_bloquea_verificar(monkeypatch, tmp_path):
+    archivo = tmp_path / "demo.co"
+    archivo.write_text("imprimir(1)", encoding="utf-8")
+    mensajes = []
+
+    monkeypatch.setattr(verify_module, "mostrar_error", lambda msg: mensajes.append(msg))
+
+    args = SimpleNamespace(archivo=str(archivo), lenguajes=["python"], modo="cobra")
+    rc = VerifyCommand().run(args)
+
+    assert rc == 1
+    assert any("no está permitido" in m and "--modo" in m for m in mensajes)
+
+
+def test_modo_cobra_bloquea_transpilar_inverso(monkeypatch, tmp_path):
+    archivo = tmp_path / "demo.py"
+    archivo.write_text("print(1)", encoding="utf-8")
+    mensajes = []
+
+    monkeypatch.setattr(inverse_module, "mostrar_error", lambda msg: mensajes.append(msg))
+
+    args = SimpleNamespace(archivo=str(archivo), origen="python", destino="python", modo="cobra")
+    rc = TranspilarInversoCommand().run(args)
+
+    assert rc == 1
+    assert any("no está permitido" in m and "--modo" in m for m in mensajes)
 
 
 def test_modo_cobra_bloquea_compilar(monkeypatch, tmp_path):

@@ -636,10 +636,18 @@ class CliApplication:
             )
             return 1
         modo = str(getattr(parsed_args, "modo", MODO_POR_DEFECTO)).strip().lower()
+
+        def _accion_permitida(comando: str) -> bool:
+            try:
+                validar_politica_modo(comando, parsed_args)
+                return True
+            except ValueError:
+                return False
+
         acciones: list[tuple[str, str]] = []
-        if modo in {"cobra", "mixto"}:
+        if _accion_permitida("ejecutar"):
             acciones.append(("ejecutar", _("Ejecutar/interpretar script Cobra")))
-        if modo in {"transpilar", "mixto"}:
+        if _accion_permitida("compilar"):
             acciones.append(("transpilar", _("Transpilar/generar código")))
 
         if not acciones:
@@ -686,8 +694,6 @@ class CliApplication:
                 modo=getattr(parsed_args, "modo", MODO_POR_DEFECTO),
             )
             return ejecutar_cmd.run(command_args)
-
-        validar_politica_modo("compilar", parsed_args)
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))

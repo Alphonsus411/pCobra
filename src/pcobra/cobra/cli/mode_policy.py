@@ -28,8 +28,9 @@ def validar_politica_modo(command_name: str, args: Namespace) -> None:
 
     modo = obtener_modo_desde_args(args)
     comando = command_name.strip().lower()
+    comandos_codegen = {"compilar", "transpilar", "verificar", "transpilar-inverso"}
 
-    if modo == "cobra" and comando in {"compilar", "transpilar"}:
+    if modo == "cobra" and comando in comandos_codegen:
         raise ValueError(
             _(
                 "El comando '{comando}' no está permitido en modo '{modo}'. "

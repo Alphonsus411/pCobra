@@ -32,6 +32,7 @@ from pcobra.cobra.transpilers.reverse.policy import (
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.target_policies import parse_target
@@ -337,6 +338,8 @@ class TranspilarInversoCommand(BaseCommand):
             CommandError: Si hay errores en la validación o transpilación
         """
         try:
+            validar_politica_modo(self.name, args)
+
             origen = normalize_reverse_language(args.origen)
             destino = _validate_official_target_or_raise(
                 args.destino,
@@ -424,7 +427,7 @@ class TranspilarInversoCommand(BaseCommand):
                 f"nodo/constructo no soportado ({exc})"
             )
             return 1
-        except (CommandError, ValidationError, UnsupportedLanguageError) as exc:
+        except (CommandError, ValidationError, UnsupportedLanguageError, ValueError) as exc:
             mostrar_error(str(exc))
             return 1
         except TranspilationError as exc:
