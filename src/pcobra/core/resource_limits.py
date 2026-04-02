@@ -34,10 +34,7 @@ def _cargar_psutil():
 def limitar_memoria_mb(mb: int) -> None:
     """Restringe la memoria máxima del proceso actual."""
     bytes_ = mb * 1024 * 1024
-    if IS_WINDOWS:
-        # Camino transversal: aplica tanto al REPL como a la ejecución de scripts.
-        # En Windows, psutil.Process.rlimit no está soportado de forma confiable.
-        # Se omite sin WARNING/ERROR para evitar ruido en logs.
+    if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
         return
     try:
@@ -104,10 +101,7 @@ def _limitar_memoria_psutil(bytes_: int) -> bool:
 
 def limitar_cpu_segundos(segundos: int) -> None:
     """Limita el tiempo de CPU en segundos para este proceso."""
-    if IS_WINDOWS:
-        # Camino transversal: aplica tanto al REPL como a la ejecución de scripts.
-        # En Windows, psutil.Process.rlimit no está soportado de forma confiable.
-        # Se omite sin WARNING/ERROR para evitar ruido en logs.
+    if IS_WINDOWS:  # psutil.Process.rlimit no está soportado en Windows.
         logger.info(_("Los límites de recursos no son compatibles con Windows; se omiten."))
         return
     try:
