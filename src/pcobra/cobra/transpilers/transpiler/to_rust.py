@@ -263,6 +263,15 @@ class TranspiladorRust(BaseTranspiler):
         return "\n".join(lineas)
 
 
+RUST_FEATURE_NODE_SUPPORT = {
+    "decoradores": (),
+    "imports_corelibs": ("visit_llamada_funcion",),
+    "manejo_errores": ("visit_try_catch", "visit_throw"),
+    "async": (),
+    "tipos_compuestos": ("visit_lista", "visit_diccionario"),
+}
+
+
 # Asignar los visitantes externos a la clase
 TranspiladorRust.visit_asignacion = _visit_asignacion
 TranspiladorRust.visit_condicional = _visit_condicional

@@ -219,6 +219,15 @@ class TranspiladorGo(BaseTranspiler):
         else:
             return str(getattr(nodo, "valor", nodo))
 
+GO_FEATURE_NODE_SUPPORT = {
+    "decoradores": (),
+    "imports_corelibs": ("visit_llamada_funcion",),
+    "manejo_errores": (),
+    "async": (),
+    "tipos_compuestos": (),
+}
+
+
 # Asignar visitantes
 for nombre, funcion in go_nodes.items():
     setattr(TranspiladorGo, f"visit_{nombre}", funcion)

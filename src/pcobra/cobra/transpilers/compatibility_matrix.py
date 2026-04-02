@@ -204,6 +204,73 @@ AST_FEATURES: Final[tuple[str, ...]] = (
     "holobit",
 )
 
+LANGUAGE_EQUIVALENCE_PRIORITY_PHASES: Final[dict[str, tuple[str, ...]]] = {
+    "fase_1": ("decoradores", "imports_corelibs"),
+    "fase_2": ("manejo_errores",),
+    "fase_3": ("async", "tipos_compuestos"),
+}
+
+# Mapeo explícito feature -> nodos soportados por backend para la hoja de ruta
+# de equivalencia versionada (`data/language_equivalence.yml`).
+BACKEND_FEATURE_NODE_SUPPORT: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    "python": {
+        "decoradores": ("visit_decorador", "visit_funcion"),
+        "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
+        "manejo_errores": ("visit_try_catch", "visit_throw"),
+        "async": ("visit_funcion", "visit_esperar"),
+        "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+    },
+    "javascript": {
+        "decoradores": ("visit_decorador", "visit_funcion"),
+        "imports_corelibs": ("visit_import", "visit_llamada_funcion"),
+        "manejo_errores": ("visit_try_catch", "visit_throw"),
+        "async": ("visit_funcion", "visit_esperar"),
+        "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+    },
+    "rust": {
+        "decoradores": (),
+        "imports_corelibs": ("visit_llamada_funcion",),
+        "manejo_errores": ("visit_try_catch", "visit_throw"),
+        "async": (),
+        "tipos_compuestos": ("visit_lista", "visit_diccionario"),
+    },
+    "go": {
+        "decoradores": (),
+        "imports_corelibs": ("visit_llamada_funcion",),
+        "manejo_errores": (),
+        "async": (),
+        "tipos_compuestos": (),
+    },
+    "cpp": {
+        "decoradores": (),
+        "imports_corelibs": ("visit_llamada_funcion",),
+        "manejo_errores": (),
+        "async": (),
+        "tipos_compuestos": ("visit_lista", "visit_diccionario", "visit_lista_tipo", "visit_diccionario_tipo"),
+    },
+    "java": {
+        "decoradores": (),
+        "imports_corelibs": ("visit_llamada_funcion",),
+        "manejo_errores": (),
+        "async": (),
+        "tipos_compuestos": (),
+    },
+    "wasm": {
+        "decoradores": (),
+        "imports_corelibs": ("visit_llamada_funcion",),
+        "manejo_errores": (),
+        "async": (),
+        "tipos_compuestos": (),
+    },
+    "asm": {
+        "decoradores": ("ir:function.decorators",),
+        "imports_corelibs": ("ir:call.longitud", "ir:call.mostrar"),
+        "manejo_errores": (),
+        "async": ("ir:function.async_flag",),
+        "tipos_compuestos": (),
+    },
+}
+
 # Matriz ejecutable (respaldada por tests) para nodos AST clave por backend.
 # Esta tabla se usa como piso contractual para el gate de CI de paridad.
 AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {

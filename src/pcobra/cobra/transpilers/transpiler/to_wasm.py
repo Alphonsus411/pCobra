@@ -147,3 +147,12 @@ class TranspiladorWasm(BaseTranspiler):
             if hooks:
                 self.codigo = hooks + [""] + self.codigo
         return "\n".join(self.codigo)
+
+
+WASM_FEATURE_NODE_SUPPORT = {
+    "decoradores": (),
+    "imports_corelibs": ("visit_llamada_funcion",),
+    "manejo_errores": (),
+    "async": (),
+    "tipos_compuestos": (),
+}
