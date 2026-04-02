@@ -59,8 +59,18 @@ class QualiaCommand(BaseCommand):
             return 1
 
         try:
+            if accion in {self.ACCION_MOSTRAR, self.ACCION_REINICIAR}:
+                estado = qualia_bridge.qualia_status()
+                if not estado.get("enabled") and estado.get("reason_code") == "optional_dependency_missing":
+                    mostrar_info(
+                        _(
+                            "Qualia está deshabilitada porque falta una dependencia opcional: {reason}"
+                        ).format(reason=estado.get("reason") or _("desconocida"))
+                    )
+                    return 0
+
             if accion == self.ACCION_MOSTRAR:
-                data = qualia_bridge.QUALIA.knowledge.as_dict()
+                data = qualia_bridge.get_knowledge_snapshot()
                 print(json.dumps(data, ensure_ascii=False, indent=2))
                 return 0
 

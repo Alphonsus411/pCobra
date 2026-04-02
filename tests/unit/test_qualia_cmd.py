@@ -27,7 +27,10 @@ def test_reiniciar_limpiar_estado(base_datos_temporal, tmp_path, monkeypatch):
 
     from cobra.cli.cli import main
 
-    with patch("sys.stdout", new_callable=StringIO) as out, patch(
+    with patch(
+        "pcobra.cobra.cli.commands.qualia_cmd.qualia_bridge.qualia_status",
+        return_value={"enabled": True, "reason_code": "ok", "reason": None},
+    ), patch("sys.stdout", new_callable=StringIO) as out, patch(
         "cobra.cli.cli.setup_gettext", return_value=lambda s: s
     ):
         exit_code = main(["qualia", "reiniciar"])
