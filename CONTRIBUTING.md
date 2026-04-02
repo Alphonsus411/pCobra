@@ -335,3 +335,20 @@ aprobadas para fallback.
 - No deben usarse para evaluar rendimiento ni compatibilidad completa.
 - Si una funcionalidad requiere APIs avanzadas, instala la dependencia real en
   lugar de ampliar el stub sin justificación.
+
+## Checklist obligatorio: nuevos métodos/decoradores de `standard_library`
+
+Si añades o modificas API pública en `src/pcobra/standard_library/` (por ejemplo métodos o decoradores), el PR **debe** incluir todos estos puntos:
+
+- [ ] **Código**: implementación y re-export en `src/pcobra/standard_library/__init__.py` (actualizando `__all__`).
+- [ ] **Tests unitarios**: cobertura de comportamiento y contrato público (incluyendo tests anti-regresión para decoradores críticos).
+- [ ] **Matriz de backend**: actualización de estrategia contractual en `data/language_equivalence.yml` (incluyendo `decorator_support` cuando aplique) y coherencia con `src/pcobra/cobra/transpilers/compatibility_matrix.py`.
+- [ ] **Documentación**:
+  - [ ] Actualizar `docs/standard_library/*.md` (uso, limitaciones y workaround cuando el soporte no sea full).
+  - [ ] Mantener al día `docs/language_equivalence_matrix.md` y/o `docs/library_compatibility_matrix.md` según el alcance.
+- [ ] **Gate CI de paridad**: ejecutar `python scripts/ci/audit_stdlib_parity.py` y adjuntar (o revisar) el reporte Markdown generado en `docs/_generated/audit_stdlib_parity_report.md`.
+
+> Regla de severidad del gate `audit_stdlib_parity.py`:
+>
+> - **error**: símbolo público sin estrategia declarada de backend.
+> - **warning**: símbolo con soporte parcial sin workaround documentado.
