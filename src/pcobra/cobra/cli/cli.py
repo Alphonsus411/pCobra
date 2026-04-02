@@ -43,6 +43,7 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
     DESTINO_CHOICES as REVERSE_DESTINO_CHOICES,
 )
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
@@ -102,7 +103,7 @@ class AppConfig:
         BenchTranspilersCommand, BenchThreadsCommand,
         ProfileCommand, QualiaCommand, CacheCommand,
         TranspilarInversoCommand, VerifyCommand,
-        PluginsCommand, AgixCommand
+        ValidarSintaxisCommand, PluginsCommand, AgixCommand
     ]
 
 

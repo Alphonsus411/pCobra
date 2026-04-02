@@ -282,6 +282,42 @@ cobra compilar hola.co --backend python
 
 Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [docs/frontend](docs/frontend).
 
+### Validar sintaxis (paso a paso)
+
+1. **Validación base (Python + Cobra + targets oficiales):**
+
+```bash
+cobra validar-sintaxis
+```
+
+2. **Solo front-end (sin toolchains de transpiladores):**
+
+```bash
+cobra validar-sintaxis --solo-cobra
+```
+
+3. **Limitar targets específicos (lista CSV):**
+
+```bash
+cobra validar-sintaxis --targets python,javascript,rust
+```
+
+4. **Modo estricto en CI (si hay `skipped`, falla):**
+
+```bash
+cobra validar-sintaxis --targets javascript,rust --strict
+```
+
+5. **Generar reporte JSON para pipelines:**
+
+```bash
+cobra validar-sintaxis --report-json reporte_sintaxis.json
+# o imprimir JSON en stdout
+cobra validar-sintaxis --report-json
+```
+
+El comando respeta el `--modo` global de la CLI y puede combinarse con `--modo mixto`, `--modo cobra` o `--modo transpilar`.
+
 ## Descarga de binarios
 
 Para cada lanzamiento se generan ejecutables para Linux, Windows y macOS mediante
