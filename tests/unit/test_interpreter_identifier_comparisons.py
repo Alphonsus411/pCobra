@@ -94,17 +94,16 @@ fin
 
 
 def test_identificador_indefinido_en_comparacion_controlado_sin_recursionerror() -> None:
-    codigo = 'imprimir y == 10\n'
+    codigo = "imprimir y == 10\n"
 
     try:
-        salida = _ejecutar_codigo_y_capturar_salida(codigo)
-    except NameError as exc:
-        assert "Variable no declarada: y" in str(exc)
-        return
+        _ejecutar_codigo_y_capturar_salida(codigo)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
-
-    assert salida == "Variable no declarada: y"
+    except NameError as exc:
+        assert str(exc) == "Variable no declarada: y"
+    else:
+        pytest.fail("Se esperaba NameError para identificador no declarado")
 
 
 def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
@@ -230,8 +229,11 @@ def test_comparacion_con_ciclo_alias_lanza_error_controlado_y_no_recursionerror(
         NodoValor(10),
     )
 
-    with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
-        inter.evaluar_expresion(expresion)
+    try:
+        with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
+            inter.evaluar_expresion(expresion)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
 
 def test_operacion_suma_materializa_identificador_y_alias() -> None:
