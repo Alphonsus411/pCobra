@@ -459,6 +459,7 @@ class InterpretadorCobra:
                         valor,
                         visitados,
                         origen="resolucion_variable",
+                        nombre_variable=nombre,
                     )
                     if isinstance(valor_resuelto, NodoAST):
                         raise RuntimeError(
@@ -528,7 +529,15 @@ class InterpretadorCobra:
             "metodos": [self._construir_funcion(m) for m in nodo.metodos],
         }
 
-    def _materializar_valor(self, valor, visitados=None, origen="general"):
+    def _materializar_valor(
+        self,
+        valor,
+        visitados=None,
+        origen="general",
+        *,
+        nombre_variable=None,
+        operando=None,
+    ):
         """Convierte cualquier nodo de expresión en su valor inmediato.
 
         El resultado se limita a valores simples reutilizables para evitar
@@ -541,22 +550,46 @@ class InterpretadorCobra:
         def _normalizar_contenedor(contenedor):
             if isinstance(contenedor, list):
                 return [
-                    self._materializar_valor(elem, visitados, origen)
+                    self._materializar_valor(
+                        elem,
+                        visitados,
+                        origen,
+                        nombre_variable=nombre_variable,
+                        operando=operando,
+                    )
                     for elem in contenedor
                 ]
             if isinstance(contenedor, tuple):
                 return tuple(
-                    self._materializar_valor(elem, visitados, origen)
+                    self._materializar_valor(
+                        elem,
+                        visitados,
+                        origen,
+                        nombre_variable=nombre_variable,
+                        operando=operando,
+                    )
                     for elem in contenedor
                 )
             if isinstance(contenedor, set):
                 return {
-                    self._materializar_valor(elem, visitados, origen)
+                    self._materializar_valor(
+                        elem,
+                        visitados,
+                        origen,
+                        nombre_variable=nombre_variable,
+                        operando=operando,
+                    )
                     for elem in contenedor
                 }
             if isinstance(contenedor, dict):
                 return {
-                    clave: self._materializar_valor(elem, visitados, origen)
+                    clave: self._materializar_valor(
+                        elem,
+                        visitados,
+                        origen,
+                        nombre_variable=nombre_variable,
+                        operando=operando,
+                    )
                     for clave, elem in contenedor.items()
                 }
             return contenedor
@@ -603,11 +636,21 @@ class InterpretadorCobra:
             if origen == "resolucion_variable":
                 if isinstance(actual, NodoIdentificador):
                     actual = self._resolver_identificador(actual.nombre, visitados)
+                    if isinstance(actual, NodoAST):
+                        nombre_ref = getattr(actual, "nombre", "<desconocido>")
+                        raise RuntimeError(
+                            "Resolución inválida de variable durante materialización: "
+                            f"variable '{nombre_variable or nombre_ref}', "
+                            f"operando '{operando or 'valor'}', "
+                            f"nodo {type(actual).__name__}"
+                        )
                     continue
                 if isinstance(actual, NodoAST):
                     raise RuntimeError(
                         "No se pudo materializar un nodo AST durante la resolución "
-                        f"de variable ({type(actual).__name__})"
+                        f"de variable '{nombre_variable or '<desconocida>'}' "
+                        f"(operando: '{operando or 'valor'}', "
+                        f"nodo: {type(actual).__name__})"
                     )
 
             else:
@@ -961,10 +1004,17 @@ class InterpretadorCobra:
                                 if isinstance(actual, NodoAST)
                                 else actual
                             )
+                            nombre_variable = (
+                                operando_expr.nombre
+                                if isinstance(operando_expr, NodoIdentificador)
+                                else None
+                            )
                             valor_actual = self._materializar_valor(
                                 valor_actual,
                                 visitados,
                                 origen="comparacion_binaria",
+                                nombre_variable=nombre_variable,
+                                operando=nombre_lado,
                             )
                         except RecursionError as exc:
                             raise RuntimeError(
@@ -978,13 +1028,22 @@ class InterpretadorCobra:
                             )
 
                         if isinstance(valor_actual, NodoAST):
+                            nombre_variable = (
+                                operando_expr.nombre
+                                if isinstance(operando_expr, NodoIdentificador)
+                                else "<no_identificador>"
+                            )
                             if valor_actual is actual:
                                 raise RuntimeError(
-                                    "Recursión indirecta detectada: el operando "
-                                    "de comparación no consume nodos"
+                                    "Recursión indirecta detectada al materializar "
+                                    "operando de comparación "
+                                    f"({nombre_lado}, variable: {nombre_variable})"
                                 )
-                            actual = valor_actual
-                            continue
+                            raise RuntimeError(
+                                "Operando de comparación no materializado: "
+                                f"lado {nombre_lado}, variable {nombre_variable}, "
+                                f"nodo {type(valor_actual).__name__}"
+                            )
 
                         return valor_actual
 

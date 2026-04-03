@@ -143,3 +143,37 @@ def test_ast_directo_condicional_identificador_sin_recursionerror() -> None:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
     assert out.getvalue().strip() == "ok"
+
+
+def test_ast_directo_alias_encadenado_en_comparacion_materializa_booleano() -> None:
+    inter = InterpretadorCobra()
+    inter.variables["a"] = NodoIdentificador("b")
+    inter.variables["b"] = NodoValor(10)
+
+    expresion = NodoOperacionBinaria(
+        NodoIdentificador("a"),
+        Token(TipoToken.IGUAL, "=="),
+        NodoValor(10),
+    )
+
+    try:
+        resultado = inter.evaluar_expresion(expresion)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert resultado is True
+
+
+def test_comparacion_con_ciclo_alias_lanza_error_controlado_y_no_recursionerror() -> None:
+    inter = InterpretadorCobra()
+    inter.variables["a"] = NodoIdentificador("b")
+    inter.variables["b"] = NodoIdentificador("a")
+
+    expresion = NodoOperacionBinaria(
+        NodoIdentificador("a"),
+        Token(TipoToken.IGUAL, "=="),
+        NodoValor(10),
+    )
+
+    with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
+        inter.evaluar_expresion(expresion)
