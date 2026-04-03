@@ -1,0 +1,148 @@
+{
+  "proyecto": "pCobra",
+  "tipo": "lenguaje de programación en español con REPL",
+  "objetivo": "depuración y estabilización del frontend (parser, evaluador, REPL)",
+
+  "estado_inicial": {
+    "descripcion": "Lenguaje funcional pero con múltiples bugs en parser, evaluador y REPL",
+    "componentes": [
+      "lexer",
+      "parser",
+      "AST",
+      "analizador semántico",
+      "evaluador/runtime",
+      "REPL"
+    ]
+  },
+
+  "bugs_identificados_inicialmente": [
+    {
+      "id": "BUG-1",
+      "tipo": "parser",
+      "descripcion": "Inconsistencia en el uso de ':' en estructuras 'si'",
+      "estado": "aparentemente resuelto"
+    },
+    {
+      "id": "BUG-2",
+      "tipo": "semántico/runtime",
+      "descripcion": "Recursión infinita con variables no declaradas",
+      "estado": "NO resuelto (evolucionó a bug más profundo)"
+    },
+    {
+      "id": "BUG-3",
+      "tipo": "REPL",
+      "descripcion": "No soporta entrada multilínea progresiva",
+      "estado": "resuelto"
+    }
+  ],
+
+  "bugs_detectados_post_fix": [
+    {
+      "id": "BUG-CRITICO-1",
+      "tipo": "evaluador",
+      "descripcion": "Recursión infinita en expresiones binarias/comparativas con identificadores",
+      "ejemplos": [
+        "imprimir x == 10",
+        "si x == 10:",
+        "imprimir x == y",
+        "imprimir x + 5 == 10"
+      ],
+      "comportamiento_actual": "maximum recursion depth exceeded",
+      "comportamiento_esperado": "evaluación correcta de la expresión o error controlado",
+      "estado": "NO resuelto",
+      "severidad": "critica"
+    },
+    {
+      "id": "BUG-CRITICO-2",
+      "tipo": "AST",
+      "descripcion": "Estructura inconsistente (listas en lugar de nodos)",
+      "error": "'list' object has no attribute '__dict__'",
+      "estado": "parcialmente abordado (no revalidado en última fase)",
+      "severidad": "critica"
+    },
+    {
+      "id": "BUG-3",
+      "tipo": "lexer",
+      "descripcion": "Identificador 'y' interpretado como operador lógico AND",
+      "estado": "supuestamente corregido (no revalidado completamente)",
+      "severidad": "media"
+    },
+    {
+      "id": "BUG-4",
+      "tipo": "REPL",
+      "descripcion": "Casos edge con bloques vacíos y 'fin' suelto",
+      "estado": "mejorado pero no validado completamente",
+      "severidad": "media"
+    }
+  ],
+
+  "hallazgos_clave": [
+    "El parser es funcional y consistente tras fixes",
+    "El REPL multilínea funciona correctamente",
+    "La tabla de símbolos funciona para lectura simple",
+    "El fallo está aislado en la evaluación de expresiones",
+    "El problema NO está en variables, sino en cómo se evalúan dentro de expresiones",
+    "El evaluador probablemente reevalúa nodos en lugar de valores",
+    "Existe acoplamiento incorrecto entre AST y runtime"
+  ],
+
+  "hipotesis_tecnica_actual": {
+    "descripcion": "El evaluador entra en recursión al procesar identificadores dentro de expresiones binarias",
+    "posibles_causas": [
+      "visit_identificador devuelve un nodo en lugar de un valor",
+      "visit_binaria reevalúa nodos en lugar de operar sobre valores ya resueltos",
+      "falta separación entre evaluación y resolución de símbolos",
+      "reevaluación indirecta del mismo nodo AST"
+    ]
+  },
+
+  "flujo_correcto_esperado": [
+    "resolver identificador -> valor",
+    "evaluar operandos -> valores primitivos",
+    "aplicar operador -> resultado",
+    "NO reentrar en el AST original"
+  ],
+
+  "flujo_actual_erroneo": [
+    "evaluar expresión",
+    "resolver identificador",
+    "reevaluar expresión original",
+    "loop recursivo infinito"
+  ],
+
+  "pruebas_clave_realizadas": [
+    {
+      "codigo": "imprimir x",
+      "resultado": "correcto"
+    },
+    {
+      "codigo": "imprimir x == 10",
+      "resultado": "recursion infinita"
+    },
+    {
+      "codigo": "si x == 10:",
+      "resultado": "recursion infinita"
+    },
+    {
+      "codigo": "imprimir x + 5 == 10",
+      "resultado": "recursion infinita"
+    }
+  ],
+
+  "conclusion_actual": {
+    "estado": "lenguaje parcialmente funcional",
+    "problema_principal": "evaluador de expresiones roto",
+    "impacto": "no se pueden usar variables en condiciones ni comparaciones",
+    "prioridad": "arreglar evaluador (ruta crítica)"
+  },
+
+  "siguiente_paso_recomendado": {
+    "objetivo": "corregir evaluador de expresiones binarias",
+    "areas_a_revisar": [
+      "visit_identificador",
+      "visit_binaria",
+      "evaluar_expresion",
+      "conversión AST -> valores runtime"
+    ]
+  }
+}
