@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, List
+import copy
 
 from ..visitor import NodeVisitor
 from ..ast_nodes import (
@@ -91,7 +92,9 @@ class _CommonSubexprEliminator(NodeVisitor):
         if key not in cur:
             nombre = f"_cse{len(cur)}"
             cur[key] = nombre
-            self._current_assigns().append(NodoAsignacion(nombre, expr))
+            self._current_assigns().append(
+                NodoAsignacion(nombre, copy.deepcopy(expr))
+            )
         return NodoIdentificador(cur[key])
 
     # Visit methods --------------------------------------------------------

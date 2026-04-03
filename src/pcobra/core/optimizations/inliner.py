@@ -122,7 +122,7 @@ class _FunctionInliner(NodeVisitor):
 
     def _reemplazar(self, node: Any, reemplazos: dict[str, Any]):
         if isinstance(node, NodoIdentificador) and node.nombre in reemplazos:
-            return reemplazos[node.nombre]
+            return copy.deepcopy(reemplazos[node.nombre])
         for attr, value in vars(node).items():
             if isinstance(value, list):
                 setattr(node, attr, [self._reemplazar(v, reemplazos) for v in value])
