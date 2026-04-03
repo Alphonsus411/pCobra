@@ -247,7 +247,12 @@ def test_operacion_suma_materializa_identificador_y_alias() -> None:
         NodoValor(3),
     )
 
-    assert inter.evaluar_expresion(expresion) == 10
+    try:
+        resultado = inter.evaluar_expresion(expresion)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert resultado == 10
 
 
 def test_operacion_and_materializa_identificador_y_alias() -> None:
@@ -261,7 +266,12 @@ def test_operacion_and_materializa_identificador_y_alias() -> None:
         NodoValor(True),
     )
 
-    assert inter.evaluar_expresion(expresion) is True
+    try:
+        resultado = inter.evaluar_expresion(expresion)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert resultado is True
 
 
 def test_operacion_or_materializa_identificador_y_alias() -> None:
@@ -275,4 +285,9 @@ def test_operacion_or_materializa_identificador_y_alias() -> None:
         NodoValor(True),
     )
 
-    assert inter.evaluar_expresion(expresion) is True
+    try:
+        resultado = inter.evaluar_expresion(expresion)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert resultado is True
