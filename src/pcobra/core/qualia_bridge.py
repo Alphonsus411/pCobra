@@ -197,7 +197,7 @@ def load_state() -> QualiaSpirit:
     global _DATABASE_AVAILABLE
 
     if not _check_qualia_availability():
-        _disable_optional_database("Running with in-memory state only.")
+        _disable_optional_database("sqliteplus no está disponible en tiempo de ejecución")
         return QualiaSpirit()
 
     try:
@@ -212,10 +212,28 @@ def load_state() -> QualiaSpirit:
         return _build_spirit(data)
     except database.DatabaseDependencyError as exc:  # pragma: no cover - dependencias opcionales
         _disable_optional_database(str(exc))
+        return QualiaSpirit()
+    except (ImportError, ModuleNotFoundError) as exc:  # pragma: no cover - dependencias opcionales
+        _disable_optional_database(str(exc))
+        return QualiaSpirit()
+    except FileNotFoundError as exc:  # pragma: no cover - loader opcional
+        _disable_optional_database(str(exc))
+        return QualiaSpirit()
     except Exception as exc:  # pragma: no cover - registro defensivo
+        message = str(exc).lower()
+        if "sqliteplus" in message or "optional" in message:
+            LOGGER.debug(
+                "Fallo opcional detectado al cargar estado de Qualia: %s",
+                exc,
+                exc_info=True,
+            )
+            _disable_optional_database(str(exc))
+            return QualiaSpirit()
+
         _DATABASE_AVAILABLE = False
         LOGGER.error(
-            "Error inesperado al cargar el estado de Qualia: %s", exc,
+            "Error inesperado al cargar el estado de Qualia: %s",
+            exc,
             exc_info=True,
         )
     return QualiaSpirit()
