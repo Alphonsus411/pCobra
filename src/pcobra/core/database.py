@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import logging
 import os
 import sqlite3
 import sys
@@ -61,6 +62,21 @@ _DB_LOCK = threading.Lock()
 _SQLITEPLUS_AVAILABILITY: bool | None = None
 
 _PATH_PREFIXES = ("path:", "file:")
+LOGGER = logging.getLogger(__name__)
+
+
+def _build_sqliteplus_fallback():
+    """Devuelve un adaptador sqlite3 cuando la dependencia opcional no está disponible."""
+
+    class SQLitePlusFallback:
+        def __init__(self, db_path: str, cipher_key: str | None = None):
+            self._db_path = db_path
+            self._cipher_key = cipher_key
+
+        def get_connection(self) -> sqlite3.Connection:
+            return sqlite3.connect(self._db_path)
+
+    return SQLitePlusFallback
 
 
 def _looks_like_path(value: str) -> bool:
@@ -106,7 +122,7 @@ def _looks_like_base64_token(value: str) -> bool:
     return True
 
 
-def _load_sqliteplus_class():
+def _load_sqliteplus_class(*, silent_optional: bool = False):
     global _SQLITEPLUS_CLASS, _SQLITEPLUS_AVAILABILITY
     if _SQLITEPLUS_CLASS is not None:
         return _SQLITEPLUS_CLASS
@@ -115,41 +131,29 @@ def _load_sqliteplus_class():
         dist = distribution("sqliteplus-enhanced")
     except PackageNotFoundError:  # pragma: no cover - dependencia ausente
         _SQLITEPLUS_AVAILABILITY = False
-        warnings.warn(
+        msg = (
             "'sqliteplus-enhanced' no está instalado; se utilizará una base de datos SQLite "
-            "simplificada sin cifrado.",
-            RuntimeWarning,
+            "simplificada sin cifrado."
         )
-
-        class SQLitePlusFallback:
-            def __init__(self, db_path: str, cipher_key: str | None = None):
-                self._db_path = db_path
-                self._cipher_key = cipher_key
-
-            def get_connection(self) -> sqlite3.Connection:
-                return sqlite3.connect(self._db_path)
-
-        _SQLITEPLUS_CLASS = SQLitePlusFallback
+        if silent_optional:
+            LOGGER.debug(msg)
+        else:
+            warnings.warn(msg, RuntimeWarning)
+        _SQLITEPLUS_CLASS = _build_sqliteplus_fallback()
         return _SQLITEPLUS_CLASS
 
     module_path = dist.locate_file("utils/sqliteplus_sync.py")
     if not Path(module_path).exists():  # pragma: no cover - instalación incompleta
         _SQLITEPLUS_AVAILABILITY = False
-        warnings.warn(
+        msg = (
             "Instalación incompleta de 'sqliteplus-enhanced' (falta 'utils/sqliteplus_sync.py'); "
-            "se utilizará una base de datos SQLite simplificada sin cifrado.",
-            RuntimeWarning,
+            "se utilizará una base de datos SQLite simplificada sin cifrado."
         )
-
-        class SQLitePlusFallback:
-            def __init__(self, db_path: str, cipher_key: str | None = None):
-                self._db_path = db_path
-                self._cipher_key = cipher_key
-
-            def get_connection(self) -> sqlite3.Connection:
-                return sqlite3.connect(self._db_path)
-
-        _SQLITEPLUS_CLASS = SQLitePlusFallback
+        if silent_optional:
+            LOGGER.debug(msg)
+        else:
+            warnings.warn(msg, RuntimeWarning)
+        _SQLITEPLUS_CLASS = _build_sqliteplus_fallback()
         return _SQLITEPLUS_CLASS
 
     # El módulo depende de ``sqliteplus.utils.constants`` pero el paquete no se
@@ -203,7 +207,15 @@ def is_sqliteplus_available() -> bool:
 
     global _SQLITEPLUS_AVAILABILITY
     if _SQLITEPLUS_AVAILABILITY is None:
-        _load_sqliteplus_class()
+        try:
+            try:
+                _load_sqliteplus_class(silent_optional=True)
+            except TypeError:
+                # Compatibilidad con pruebas que sustituyen el loader por una
+                # lambda sin parámetros.
+                _load_sqliteplus_class()
+        except DatabaseDependencyError:
+            _SQLITEPLUS_AVAILABILITY = False
     return bool(_SQLITEPLUS_AVAILABILITY)
 
 

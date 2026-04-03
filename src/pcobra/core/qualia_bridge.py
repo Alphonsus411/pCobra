@@ -39,6 +39,7 @@ LEGACY_STATE_FILE = _resolve_state_file()
 LOGGER = logging.getLogger(__name__)
 _DATABASE_AVAILABLE = True
 _OPTIONAL_DB_LOGGED = False
+QUALIA_AVAILABLE: bool | None = None
 
 
 def _disable_optional_database(reason: str) -> None:
@@ -47,8 +48,18 @@ def _disable_optional_database(reason: str) -> None:
     global _DATABASE_AVAILABLE, _OPTIONAL_DB_LOGGED
     _DATABASE_AVAILABLE = False
     if not _OPTIONAL_DB_LOGGED:
-        LOGGER.info("Qualia subsystem disabled: optional dependency not installed. %s", reason)
+        LOGGER.info("Qualia subsystem disabled: optional dependency not installed.")
+        LOGGER.debug("Qualia disable reason: %s", reason)
         _OPTIONAL_DB_LOGGED = True
+
+
+def _check_qualia_availability() -> bool:
+    """Evalúa una sola vez la dependencia opcional usada por Qualia."""
+
+    global QUALIA_AVAILABLE
+    if QUALIA_AVAILABLE is None:
+        QUALIA_AVAILABLE = bool(database.is_sqliteplus_available())
+    return QUALIA_AVAILABLE
 
 
 class QualiaSpirit:
@@ -158,7 +169,7 @@ def load_state() -> QualiaSpirit:
 
     global _DATABASE_AVAILABLE
 
-    if not database.is_sqliteplus_available():
+    if not _check_qualia_availability():
         _disable_optional_database("Running with in-memory state only.")
         return QualiaSpirit()
 
