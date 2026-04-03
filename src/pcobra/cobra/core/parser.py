@@ -106,6 +106,8 @@ class ClassicParser:
         self._contexto_bloques: list[str] = []
         self._aliases_clase: list[str] = []
         self._aliases_enum: list[str] = []
+        # Contrato explícito para bloques estructurados.
+        self._permitir_bloques_vacios = True
         # Mapeo de tokens a funciones de construcción del AST
         self._factories = {
             TipoToken.VAR: self.declaracion_asignacion,
@@ -313,6 +315,9 @@ class ClassicParser:
         """Procesa una instrucción o expresión."""
         token = self.token_actual()
         try:
+            if token.tipo == TipoToken.FIN:
+                raise ParserError("Se encontró 'fin' inesperado")
+
             # Alias 'definir' para declarar funciones
             if token.tipo == TipoToken.IDENTIFICADOR and token.valor == "definir":
                 self.token_actual().tipo = TipoToken.FUNC
@@ -418,24 +423,12 @@ class ClassicParser:
         self._exigir_dospuntos("el iterable en 'para'")
 
         # Parsea el cuerpo del bucle
-        cuerpo = []
-
-        while True:
-            token = self.token_actual()
-            if token.tipo in (TipoToken.FIN, TipoToken.EOF):
-                break
-
-            logger.debug(
-                f"Procesando token dentro del bucle 'para': {self.token_actual()}"
-            )
-
-            posicion_inicial = self.posicion
-            cuerpo.append(self.declaracion())
-
-            if self.posicion == posicion_inicial:
-                raise ParserError(
-                    "La declaración dentro del bucle 'para' no consumió tokens"
-                )
+        cuerpo = self._parse_bloque_condicional(
+            [TipoToken.FIN, TipoToken.EOF],
+            "para",
+            recuperar_errores=False,
+        )
+        self._validar_bloque_vacio("el bucle 'para'", cuerpo)
 
         logger.debug(f"Token actual antes de 'fin': {self.token_actual()}")
         self._exigir_fin("el bucle 'para'")
@@ -528,9 +521,12 @@ class ClassicParser:
 
         self._exigir_dospuntos("la condición del bucle 'mientras'")
 
-        cuerpo = []
-        while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            cuerpo.append(self.declaracion())
+        cuerpo = self._parse_bloque_condicional(
+            [TipoToken.FIN, TipoToken.EOF],
+            "mientras",
+            recuperar_errores=False,
+        )
+        self._validar_bloque_vacio("el bucle 'mientras'", cuerpo)
 
         self._exigir_fin("el bucle 'mientras'")
 
@@ -643,6 +639,7 @@ class ClassicParser:
             "si",
             recuperar_errores=False,
         )
+        self._validar_bloque_vacio("el bloque 'si'", bloque_si)
 
         bloque_sino: List[Any] = []
         if self.token_actual().tipo == TipoToken.SINO_SI:
@@ -653,6 +650,7 @@ class ClassicParser:
             bloque_sino = self._parse_bloque_condicional(
                 [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
+            self._validar_bloque_vacio("el bloque 'sino'", bloque_sino)
 
         self._exigir_fin("el bloque condicional")
 
@@ -680,6 +678,12 @@ class ClassicParser:
                 if self.token_actual().tipo != TipoToken.EOF:
                     self.avanzar()
         return bloque
+
+    def _validar_bloque_vacio(self, contexto: str, bloque: List[Any]) -> None:
+        if self._permitir_bloques_vacios:
+            return
+        if not bloque:
+            raise ParserError(f"No se permiten bloques vacíos en {contexto}")
 
     @staticmethod
     def _bloque(instrucciones: List[Any]) -> NodoBloque:
@@ -714,6 +718,7 @@ class ClassicParser:
             "sino si",
             recuperar_errores=False,
         )
+        self._validar_bloque_vacio("el bloque 'sino si'", bloque_si)
 
         bloque_sino: List[Any] = []
         if self.token_actual().tipo == TipoToken.SINO_SI:
@@ -724,6 +729,7 @@ class ClassicParser:
             bloque_sino = self._parse_bloque_condicional(
                 [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
+            self._validar_bloque_vacio("el bloque 'sino'", bloque_sino)
 
         return NodoCondicional(
             condicion, self._bloque(bloque_si), self._bloque(bloque_sino)
@@ -1030,14 +1036,17 @@ class ClassicParser:
             raise ParserError("Se esperaba 'try' o 'intentar'")
         self._exigir_dospuntos("'try'")
 
-        bloque_try = []
-        while self.token_actual().tipo not in [
-            TipoToken.CATCH,
-            TipoToken.CAPTURAR,
-            TipoToken.FIN,
-            TipoToken.EOF,
-        ]:
-            bloque_try.append(self.declaracion())
+        bloque_try = self._parse_bloque_condicional(
+            [
+                TipoToken.CATCH,
+                TipoToken.CAPTURAR,
+                TipoToken.FIN,
+                TipoToken.EOF,
+            ],
+            "try",
+            recuperar_errores=False,
+        )
+        self._validar_bloque_vacio("el bloque 'try'", bloque_try)
 
         nombre_exc = None
         bloque_catch = []
@@ -1047,19 +1056,23 @@ class ClassicParser:
                 nombre_exc = self.token_actual().valor
                 self.comer(TipoToken.IDENTIFICADOR)
             self._exigir_dospuntos("'catch/capturar'")
-            while self.token_actual().tipo not in [
-                TipoToken.FIN,
-                TipoToken.EOF,
-                TipoToken.FINALMENTE,
-            ]:
-                bloque_catch.append(self.declaracion())
+            bloque_catch = self._parse_bloque_condicional(
+                [TipoToken.FIN, TipoToken.EOF, TipoToken.FINALMENTE],
+                "catch/capturar",
+                recuperar_errores=False,
+            )
+            self._validar_bloque_vacio("el bloque 'catch/capturar'", bloque_catch)
 
         bloque_finally = []
         if self.token_actual().tipo == TipoToken.FINALMENTE:
             self.comer(TipoToken.FINALMENTE)
             self._exigir_dospuntos("'finalmente'")
-            while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-                bloque_finally.append(self.declaracion())
+            bloque_finally = self._parse_bloque_condicional(
+                [TipoToken.FIN, TipoToken.EOF],
+                "finalmente",
+                recuperar_errores=False,
+            )
+            self._validar_bloque_vacio("el bloque 'finalmente'", bloque_finally)
 
         self._exigir_fin("el bloque try/catch")
 
