@@ -528,52 +528,103 @@ class InterpretadorCobra:
         El resultado se limita a valores simples reutilizables para evitar
         reevaluaciones posteriores cuando el valor se guarda en el contexto.
         """
+        visitados = set() if visitados is None else visitados
+        primitivos = (int, float, bool, str, type(None))
+        contenedores = (list, tuple, dict, set)
 
-        if isinstance(valor, NodoValor):
-            return valor.valor
-        if isinstance(valor, Token) and valor.tipo in {
-            TipoToken.ENTERO,
-            TipoToken.FLOTANTE,
-            TipoToken.CADENA,
-            TipoToken.BOOLEANO,
-        }:
-            return valor.valor
+        def _normalizar_contenedor(contenedor):
+            if isinstance(contenedor, list):
+                return [
+                    self._materializar_valor(elem, visitados, origen)
+                    for elem in contenedor
+                ]
+            if isinstance(contenedor, tuple):
+                return tuple(
+                    self._materializar_valor(elem, visitados, origen)
+                    for elem in contenedor
+                )
+            if isinstance(contenedor, set):
+                return {
+                    self._materializar_valor(elem, visitados, origen)
+                    for elem in contenedor
+                }
+            if isinstance(contenedor, dict):
+                return {
+                    clave: self._materializar_valor(elem, visitados, origen)
+                    for clave, elem in contenedor.items()
+                }
+            return contenedor
 
-        if (
-            origen == "resolucion_variable"
-            and isinstance(valor, NodoIdentificador)
-        ):
-            return self._resolver_identificador(valor.nombre, visitados)
+        actual = valor
+        guardia = 0
+        limite_guardia = 128
 
-        if origen == "resolucion_variable":
-            expresiones_soportadas = (
-                NodoAtributo,
-                NodoInstancia,
-                NodoHolobit,
-                NodoEsperar,
-                NodoOperacionBinaria,
-                NodoOperacionUnaria,
-                NodoLlamadaMetodo,
-                NodoLlamadaFuncion,
-            )
-        else:
-            expresiones_soportadas = (
-                NodoAsignacion,
-                NodoIdentificador,
-                NodoInstancia,
-                NodoAtributo,
-                NodoHolobit,
-                NodoEsperar,
-                NodoOperacionBinaria,
-                NodoOperacionUnaria,
-                NodoLlamadaMetodo,
-                NodoLlamadaFuncion,
-            )
+        while True:
+            guardia += 1
+            if guardia > limite_guardia:
+                raise RuntimeError(
+                    "No se pudo materializar el valor: límite de normalización excedido"
+                )
 
-        if isinstance(valor, expresiones_soportadas):
-            return self.evaluar_expresion(valor, visitados)
+            if isinstance(actual, primitivos):
+                return actual
 
-        return valor
+            if isinstance(actual, NodoValor):
+                actual = actual.valor
+                continue
+
+            if isinstance(actual, Token) and actual.tipo in {
+                TipoToken.ENTERO,
+                TipoToken.FLOTANTE,
+                TipoToken.CADENA,
+                TipoToken.BOOLEANO,
+            }:
+                actual = actual.valor
+                continue
+
+            if isinstance(actual, contenedores):
+                actual = _normalizar_contenedor(actual)
+                self._verificar_valor_contexto(actual)
+                return actual
+
+            if origen == "resolucion_variable":
+                if isinstance(actual, NodoIdentificador):
+                    actual = self._resolver_identificador(actual.nombre, visitados)
+                    continue
+                if isinstance(actual, NodoAST):
+                    try:
+                        actual = self.evaluar_expresion(actual, visitados)
+                        continue
+                    except ValueError as exc:
+                        raise RuntimeError(
+                            "No se pudo materializar un nodo AST durante la resolución "
+                            f"de variable ({type(actual).__name__}): {exc}"
+                        ) from exc
+
+            else:
+                expresiones_soportadas = (
+                    NodoAsignacion,
+                    NodoIdentificador,
+                    NodoInstancia,
+                    NodoAtributo,
+                    NodoHolobit,
+                    NodoEsperar,
+                    NodoOperacionBinaria,
+                    NodoOperacionUnaria,
+                    NodoLlamadaMetodo,
+                    NodoLlamadaFuncion,
+                )
+                if isinstance(actual, expresiones_soportadas):
+                    actual = self.evaluar_expresion(actual, visitados)
+                    continue
+
+            if isinstance(actual, NodoAST):
+                raise RuntimeError(
+                    "No se pudo materializar el valor: "
+                    f"nodo AST no resoluble ({type(actual).__name__})"
+                )
+
+            return actual
 
     # -- Gestión de memoria -------------------------------------------------
     def solicitar_memoria(self, tam):
