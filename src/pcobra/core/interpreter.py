@@ -840,6 +840,52 @@ class InterpretadorCobra:
             )
         return resultado
 
+    def _asegurar_ast_aciclico_por_identidad(self, ast, fase: str) -> None:
+        """Verifica que el AST no tenga ciclos por identidad de objetos."""
+
+        visitados_globales: set[int] = set()
+        en_ruta: set[int] = set()
+        pila: list[tuple[object, bool]] = [(ast, False)]
+
+        while pila:
+            actual, salir = pila.pop()
+            if not isinstance(actual, (NodoAST, NodoBloque, list)):
+                continue
+
+            actual_id = id(actual)
+            if salir:
+                en_ruta.discard(actual_id)
+                visitados_globales.add(actual_id)
+                continue
+
+            if actual_id in visitados_globales:
+                continue
+            if actual_id in en_ruta:
+                raise RuntimeError(
+                    f"Se detectó un ciclo en el AST durante '{fase}' "
+                    f"(node_id={actual_id})"
+                )
+
+            en_ruta.add(actual_id)
+            pila.append((actual, True))
+
+            if isinstance(actual, list):
+                hijos = reversed(actual)
+            else:
+                hijos = reversed(list(getattr(actual, "__dict__", {}).values()))
+
+            for hijo in hijos:
+                if not isinstance(hijo, (NodoAST, NodoBloque, list)):
+                    continue
+                hijo_id = id(hijo)
+                if hijo_id in en_ruta:
+                    raise RuntimeError(
+                        f"Se detectó un ciclo en el AST durante '{fase}' "
+                        f"(node_id={hijo_id})"
+                    )
+                if hijo_id not in visitados_globales:
+                    pila.append((hijo, False))
+
     def ejecutar_ast(self, ast):
         # Pipeline explícito:
         # 1) parseo/entrada tipada válida
@@ -860,6 +906,7 @@ class InterpretadorCobra:
             _lim_cpu(cpu)
 
         self._asegurar_ast_tipado(ast, "pre_optimizacion")
+        self._asegurar_ast_aciclico_por_identidad(ast, "pre_optimizacion")
         print("[AST BEFORE OPT]")
         print(ast)
         if self._debug_resumen_ast_habilitado():
@@ -867,9 +914,15 @@ class InterpretadorCobra:
             print(self._resumir_ast(ast))
 
         ast = optimize_constants(ast)
+        self._asegurar_ast_aciclico_por_identidad(ast, "post_optimize_constants")
         ast = eliminate_common_subexpressions(ast)
+        self._asegurar_ast_aciclico_por_identidad(
+            ast, "post_eliminate_common_subexpressions"
+        )
         ast = inline_functions(ast)
+        self._asegurar_ast_aciclico_por_identidad(ast, "post_inline_functions")
         ast = remove_dead_code(ast)
+        self._asegurar_ast_aciclico_por_identidad(ast, "post_remove_dead_code")
 
         print("[AST AFTER OPT]")
         print(ast)
