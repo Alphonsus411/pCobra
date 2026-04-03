@@ -971,6 +971,8 @@ class InterpretadorCobra:
             # Resuelve asignaciones anidadas y devuelve su valor
             return self.ejecutar_asignacion(expresion, visitados)
         elif isinstance(expresion, NodoIdentificador):
+            # Contrato: toda resolución de identificadores pasa por
+            # `_resolver_identificador` para unificar ciclo/materialización.
             return self._resolver_identificador(expresion.nombre, visitados)
         elif isinstance(expresion, NodoInstancia):
             return self.ejecutar_instancia(expresion)
