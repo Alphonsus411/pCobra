@@ -33,10 +33,36 @@ def _resolve_state_file() -> str:
     return path
 
 
-LEGACY_STATE_FILE = _resolve_state_file()
-
-
 LOGGER = logging.getLogger(__name__)
+_LEGACY_STATE_FILE: str | None = None
+_LEGACY_STATE_PATH_DISABLED = False
+
+
+def _get_legacy_state_file() -> str | None:
+    """Resuelve y cachea la ruta heredada; si falla se desactiva esa persistencia."""
+
+    global _LEGACY_STATE_FILE, _LEGACY_STATE_PATH_DISABLED
+
+    if _LEGACY_STATE_PATH_DISABLED:
+        return None
+
+    if _LEGACY_STATE_FILE is not None:
+        return _LEGACY_STATE_FILE
+
+    try:
+        _LEGACY_STATE_FILE = _resolve_state_file()
+    except Exception as exc:  # pragma: no cover - validación de entorno
+        _LEGACY_STATE_PATH_DISABLED = True
+        LOGGER.warning(
+            "Qualia es opcional y no debe bloquear el arranque del REPL; "
+            "se desactiva la persistencia heredada: %s",
+            exc,
+        )
+        return None
+
+    return _LEGACY_STATE_FILE
+
+
 _DATABASE_AVAILABLE = True
 _OPTIONAL_DB_LOGGED = False
 QUALIA_AVAILABLE: bool | None = None
@@ -134,13 +160,14 @@ def _build_spirit(data: dict[str, Any] | None) -> QualiaSpirit:
 def _migrate_legacy_state(cursor, conn) -> dict[str, Any] | None:
     """Migra el estado almacenado en el archivo JSON heredado."""
 
-    if not os.path.exists(LEGACY_STATE_FILE):
+    legacy_state_file = _get_legacy_state_file()
+    if legacy_state_file is None or not os.path.exists(legacy_state_file):
         return None
 
-    if os.path.islink(LEGACY_STATE_FILE) or Path(LEGACY_STATE_FILE).is_symlink():
+    if os.path.islink(legacy_state_file) or Path(legacy_state_file).is_symlink():
         raise ValueError("QUALIA_STATE_PATH se convirtió en un enlace simbólico")
 
-    with open(LEGACY_STATE_FILE, "r", encoding="utf-8") as fh:
+    with open(legacy_state_file, "r", encoding="utf-8") as fh:
         legacy_data = json.load(fh)
 
     payload = json.dumps(legacy_data, ensure_ascii=False)
@@ -151,15 +178,15 @@ def _migrate_legacy_state(cursor, conn) -> dict[str, Any] | None:
     conn.commit()
 
     try:
-        os.remove(LEGACY_STATE_FILE)
+        os.remove(legacy_state_file)
     except OSError as exc:  # pragma: no cover - casos poco comunes
         LOGGER.warning(
             "No se pudo eliminar el archivo de estado heredado %s: %s",
-            LEGACY_STATE_FILE,
+            legacy_state_file,
             exc,
         )
     else:
-        LOGGER.info("Migrado el estado de qualia desde %s", LEGACY_STATE_FILE)
+        LOGGER.info("Migrado el estado de qualia desde %s", legacy_state_file)
 
     return legacy_data
 
@@ -299,13 +326,14 @@ def reset_state() -> dict[str, Any]:
         conn.commit()
         resultado["rows_deleted"] = cursor.rowcount > 0
 
-    if os.path.exists(LEGACY_STATE_FILE):
+    legacy_state_file = _get_legacy_state_file()
+    if legacy_state_file and os.path.exists(legacy_state_file):
         try:
-            os.remove(LEGACY_STATE_FILE)
+            os.remove(legacy_state_file)
         except OSError as exc:  # pragma: no cover - casos poco frecuentes
             LOGGER.warning(
                 "No se pudo eliminar el archivo de estado heredado %s: %s",
-                LEGACY_STATE_FILE,
+                legacy_state_file,
                 exc,
             )
             resultado["legacy_error"] = str(exc)
