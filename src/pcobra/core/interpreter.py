@@ -991,58 +991,6 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoOperacionBinaria):
             tipo = expresion.operador.tipo
 
-            def _materializar_operandos_comparacion():
-                """Evalúa y materializa operandos de comparación."""
-
-                def _resolver_operando(operando_expr, nombre_lado):
-                    nombre_variable = (
-                        operando_expr.nombre
-                        if isinstance(operando_expr, NodoIdentificador)
-                        else None
-                    )
-                    valor_actual = self.evaluar_expresion(operando_expr, visitados)
-                    valor_actual = self._materializar_valor(
-                        valor_actual,
-                        visitados,
-                        origen="comparacion_binaria",
-                        nombre_variable=nombre_variable,
-                        operando=nombre_lado,
-                    )
-
-                    if isinstance(valor_actual, NodoAST):
-                        raise RuntimeError(
-                            "Operando de comparación no materializado: "
-                            f"lado {nombre_lado}, nodo {type(valor_actual).__name__}"
-                        )
-                    return valor_actual
-
-                izquierda_cmp = _resolver_operando(expresion.izquierda, "izquierdo")
-                derecha_cmp = _resolver_operando(expresion.derecha, "derecho")
-                return izquierda_cmp, derecha_cmp
-
-            if tipo == TipoToken.MAYORQUE:
-                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
-                verificar_comparables(izquierda_cmp, derecha_cmp, ">")
-                return izquierda_cmp > derecha_cmp
-            elif tipo == TipoToken.MENORQUE:
-                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
-                verificar_comparables(izquierda_cmp, derecha_cmp, "<")
-                return izquierda_cmp < derecha_cmp
-            elif tipo == TipoToken.MAYORIGUAL:
-                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
-                verificar_comparables(izquierda_cmp, derecha_cmp, ">=")
-                return izquierda_cmp >= derecha_cmp
-            elif tipo == TipoToken.MENORIGUAL:
-                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
-                verificar_comparables(izquierda_cmp, derecha_cmp, "<=")
-                return izquierda_cmp <= derecha_cmp
-            elif tipo == TipoToken.IGUAL:
-                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
-                return izquierda_cmp == derecha_cmp
-            elif tipo == TipoToken.DIFERENTE:
-                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
-                return izquierda_cmp != derecha_cmp
-
             izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
             derecha = self.evaluar_expresion(expresion.derecha, visitados)
 
@@ -1068,6 +1016,48 @@ class InterpretadorCobra:
                 ),
                 operando="derecho",
             )
+
+            if isinstance(izquierda, NodoAST):
+                raise RuntimeError(
+                    "Operando binario no materializado tras resolver: "
+                    f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
+                )
+            if isinstance(derecha, NodoAST):
+                raise RuntimeError(
+                    "Operando binario no materializado tras resolver: "
+                    f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
+                )
+
+            def _aplicar_comparacion(operador):
+                """Valida y aplica una comparación con operandos materializados."""
+                if isinstance(izquierda, NodoAST):
+                    raise RuntimeError(
+                        "Operando de comparación no materializado: "
+                        f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
+                    )
+                if isinstance(derecha, NodoAST):
+                    raise RuntimeError(
+                        "Operando de comparación no materializado: "
+                        f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
+                    )
+                return operador(izquierda, derecha)
+
+            if tipo == TipoToken.MAYORQUE:
+                verificar_comparables(izquierda, derecha, ">")
+                return _aplicar_comparacion(lambda i, d: i > d)
+            elif tipo == TipoToken.MENORQUE:
+                verificar_comparables(izquierda, derecha, "<")
+                return _aplicar_comparacion(lambda i, d: i < d)
+            elif tipo == TipoToken.MAYORIGUAL:
+                verificar_comparables(izquierda, derecha, ">=")
+                return _aplicar_comparacion(lambda i, d: i >= d)
+            elif tipo == TipoToken.MENORIGUAL:
+                verificar_comparables(izquierda, derecha, "<=")
+                return _aplicar_comparacion(lambda i, d: i <= d)
+            elif tipo == TipoToken.IGUAL:
+                return _aplicar_comparacion(lambda i, d: i == d)
+            elif tipo == TipoToken.DIFERENTE:
+                return _aplicar_comparacion(lambda i, d: i != d)
 
             if tipo == TipoToken.SUMA:
                 verificar_sumables(izquierda, derecha)
