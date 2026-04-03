@@ -928,27 +928,77 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
-            izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
-            derecha = self.evaluar_expresion(expresion.derecha, visitados)
             tipo = expresion.operador.tipo
 
             def _materializar_operandos_comparacion():
-                izquierda_cmp = self._materializar_valor(
-                    izquierda, visitados, origen="comparacion_binaria"
-                )
-                derecha_cmp = self._materializar_valor(
-                    derecha, visitados, origen="comparacion_binaria"
-                )
+                """Evalúa y materializa operandos de comparación.
+
+                Contrato: comparaciones nunca deben operar sobre nodos AST.
+                """
+
+                def _resolver_operando(operando_expr, nombre_lado):
+                    actual = operando_expr
+                    nodos_vistos = set()
+                    limite_pasos = 64
+                    pasos = 0
+
+                    while True:
+                        pasos += 1
+                        if pasos > limite_pasos:
+                            raise RuntimeError(
+                                "No se pudo materializar operando de comparación: "
+                                "límite de pasos excedido"
+                            )
+
+                        if isinstance(actual, NodoAST):
+                            ident = id(actual)
+                            if ident in nodos_vistos:
+                                raise RuntimeError(
+                                    "Recursión indirecta detectada al materializar "
+                                    f"operando de comparación ({nombre_lado})"
+                                )
+                            nodos_vistos.add(ident)
+
+                        try:
+                            valor_actual = (
+                                self.evaluar_expresion(actual, visitados)
+                                if isinstance(actual, NodoAST)
+                                else actual
+                            )
+                            valor_actual = self._materializar_valor(
+                                valor_actual,
+                                visitados,
+                                origen="comparacion_binaria",
+                            )
+                        except RecursionError as exc:
+                            raise RuntimeError(
+                                "Se detectó recursión no acotada en una comparación"
+                            ) from exc
+
+                        if isinstance(valor_actual, NodoIdentificador):
+                            raise NameError(
+                                "No se pudo resolver identificador en comparación "
+                                f"({nombre_lado}): {valor_actual.nombre}"
+                            )
+
+                        if isinstance(valor_actual, NodoAST):
+                            if valor_actual is actual:
+                                raise RuntimeError(
+                                    "Recursión indirecta detectada: el operando "
+                                    "de comparación no consume nodos"
+                                )
+                            actual = valor_actual
+                            continue
+
+                        return valor_actual
+
+                izquierda_cmp = _resolver_operando(expresion.izquierda, "izquierdo")
+                derecha_cmp = _resolver_operando(expresion.derecha, "derecho")
 
                 for nombre, operando in (
                     ("izquierdo", izquierda_cmp),
                     ("derecho", derecha_cmp),
                 ):
-                    if isinstance(operando, NodoIdentificador):
-                        raise NameError(
-                            "No se pudo resolver identificador en comparación "
-                            f"({nombre}): {operando.nombre}"
-                        )
                     if isinstance(operando, NodoAST):
                         raise RuntimeError(
                             "Operando no materializado en comparación "
@@ -957,22 +1007,7 @@ class InterpretadorCobra:
 
                 return izquierda_cmp, derecha_cmp
 
-            if tipo == TipoToken.SUMA:
-                verificar_sumables(izquierda, derecha)
-                return izquierda + derecha
-            elif tipo == TipoToken.RESTA:
-                verificar_numeros(izquierda, derecha, "-")
-                return izquierda - derecha
-            elif tipo == TipoToken.MULT:
-                verificar_numeros(izquierda, derecha, "*")
-                return izquierda * derecha
-            elif tipo == TipoToken.DIV:
-                verificar_numeros(izquierda, derecha, "/")
-                return izquierda / derecha
-            elif tipo == TipoToken.MOD:
-                verificar_numeros(izquierda, derecha, "%")
-                return izquierda % derecha
-            elif tipo == TipoToken.MAYORQUE:
+            if tipo == TipoToken.MAYORQUE:
                 izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
                 verificar_comparables(izquierda_cmp, derecha_cmp, ">")
                 return izquierda_cmp > derecha_cmp
@@ -994,6 +1029,25 @@ class InterpretadorCobra:
             elif tipo == TipoToken.DIFERENTE:
                 izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
                 return izquierda_cmp != derecha_cmp
+
+            izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
+            derecha = self.evaluar_expresion(expresion.derecha, visitados)
+
+            if tipo == TipoToken.SUMA:
+                verificar_sumables(izquierda, derecha)
+                return izquierda + derecha
+            elif tipo == TipoToken.RESTA:
+                verificar_numeros(izquierda, derecha, "-")
+                return izquierda - derecha
+            elif tipo == TipoToken.MULT:
+                verificar_numeros(izquierda, derecha, "*")
+                return izquierda * derecha
+            elif tipo == TipoToken.DIV:
+                verificar_numeros(izquierda, derecha, "/")
+                return izquierda / derecha
+            elif tipo == TipoToken.MOD:
+                verificar_numeros(izquierda, derecha, "%")
+                return izquierda % derecha
             elif tipo == TipoToken.AND:
                 verificar_booleanos(izquierda, derecha, "&&")
                 return izquierda and derecha
