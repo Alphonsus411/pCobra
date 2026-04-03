@@ -92,9 +92,6 @@ PALABRAS_RESERVADAS = frozenset(
         "option",
         "enum",
         "enumeracion",
-        "y",
-        "o",
-        "no",
         "aplazar",
     }
 )
