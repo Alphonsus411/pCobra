@@ -917,6 +917,32 @@ class InterpretadorCobra:
             izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
             derecha = self.evaluar_expresion(expresion.derecha, visitados)
             tipo = expresion.operador.tipo
+
+            def _materializar_operandos_comparacion():
+                izquierda_cmp = self._materializar_valor(
+                    izquierda, visitados, origen="comparacion_binaria"
+                )
+                derecha_cmp = self._materializar_valor(
+                    derecha, visitados, origen="comparacion_binaria"
+                )
+
+                for nombre, operando in (
+                    ("izquierdo", izquierda_cmp),
+                    ("derecho", derecha_cmp),
+                ):
+                    if isinstance(operando, NodoIdentificador):
+                        raise NameError(
+                            "No se pudo resolver identificador en comparación "
+                            f"({nombre}): {operando.nombre}"
+                        )
+                    if isinstance(operando, NodoAST):
+                        raise RuntimeError(
+                            "Operando no materializado en comparación "
+                            f"({nombre}): {type(operando).__name__}"
+                        )
+
+                return izquierda_cmp, derecha_cmp
+
             if tipo == TipoToken.SUMA:
                 verificar_sumables(izquierda, derecha)
                 return izquierda + derecha
@@ -933,21 +959,27 @@ class InterpretadorCobra:
                 verificar_numeros(izquierda, derecha, "%")
                 return izquierda % derecha
             elif tipo == TipoToken.MAYORQUE:
-                verificar_comparables(izquierda, derecha, ">")
-                return izquierda > derecha
+                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
+                verificar_comparables(izquierda_cmp, derecha_cmp, ">")
+                return izquierda_cmp > derecha_cmp
             elif tipo == TipoToken.MENORQUE:
-                verificar_comparables(izquierda, derecha, "<")
-                return izquierda < derecha
+                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
+                verificar_comparables(izquierda_cmp, derecha_cmp, "<")
+                return izquierda_cmp < derecha_cmp
             elif tipo == TipoToken.MAYORIGUAL:
-                verificar_comparables(izquierda, derecha, ">=")
-                return izquierda >= derecha
+                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
+                verificar_comparables(izquierda_cmp, derecha_cmp, ">=")
+                return izquierda_cmp >= derecha_cmp
             elif tipo == TipoToken.MENORIGUAL:
-                verificar_comparables(izquierda, derecha, "<=")
-                return izquierda <= derecha
+                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
+                verificar_comparables(izquierda_cmp, derecha_cmp, "<=")
+                return izquierda_cmp <= derecha_cmp
             elif tipo == TipoToken.IGUAL:
-                return izquierda == derecha
+                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
+                return izquierda_cmp == derecha_cmp
             elif tipo == TipoToken.DIFERENTE:
-                return izquierda != derecha
+                izquierda_cmp, derecha_cmp = _materializar_operandos_comparacion()
+                return izquierda_cmp != derecha_cmp
             elif tipo == TipoToken.AND:
                 verificar_booleanos(izquierda, derecha, "&&")
                 return izquierda and derecha
