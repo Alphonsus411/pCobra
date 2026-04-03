@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, TYPE_CHECKING
+import warnings
 
 if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
     from pcobra.core.lexer import Token, TipoToken
@@ -349,29 +350,19 @@ class NodoIdentificador(NodoAST):
         return f"NodoIdentificador({self.nombre})"
 
     def evaluar(self, contexto):
+        warnings.warn(
+            "NodoIdentificador.evaluar está deprecado; use "
+            "InterpretadorCobra._resolver_identificador.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        resolvedor = getattr(contexto, "_resolver_identificador", None)
+        if callable(resolvedor):
+            return resolvedor(self.nombre)
+
         if self.nombre not in contexto:
             raise NameError(f"Identificador no definido: '{self.nombre}'")
-
-        valor = contexto[self.nombre]
-
-        while isinstance(valor, NodoIdentificador):
-            if valor.nombre not in contexto:
-                raise NameError(f"Identificador no definido: '{valor.nombre}'")
-            valor = contexto[valor.nombre]
-
-        if isinstance(valor, NodoValor):
-            return valor.valor
-
-        from pcobra.core.lexer import Token, TipoToken
-
-        if isinstance(valor, Token) and valor.tipo in {
-            TipoToken.ENTERO,
-            TipoToken.FLOTANTE,
-            TipoToken.CADENA,
-            TipoToken.BOOLEANO,
-        }:
-            return valor.valor
-        return valor
+        return contexto[self.nombre]
 
 
 @dataclass
