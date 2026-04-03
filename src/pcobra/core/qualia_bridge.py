@@ -88,6 +88,12 @@ def _check_qualia_availability() -> bool:
     return QUALIA_AVAILABLE
 
 
+def _is_persistence_enabled() -> bool:
+    """Puerta única de persistencia: si falta dependencia, Qualia opera solo en memoria."""
+
+    return _check_qualia_availability() and _DATABASE_AVAILABLE
+
+
 class QualiaSpirit:
     """Modelo simple para registrar ejecuciones y generar sugerencias."""
 
@@ -242,7 +248,7 @@ def load_state() -> QualiaSpirit:
 def save_state(spirit: QualiaSpirit) -> None:
     """Guarda el estado de ``spirit`` en la base de datos."""
 
-    if not _DATABASE_AVAILABLE:
+    if not _is_persistence_enabled():
         LOGGER.debug("Base de datos de Qualia inactiva; se omite el guardado persistente.")
         return
 
@@ -286,11 +292,10 @@ def _get_qualia() -> QualiaSpirit:
 def qualia_status() -> dict[str, Any]:
     """Devuelve un estado mínimo de disponibilidad para la funcionalidad Qualia."""
 
-    # Fuerza la inicialización diferida para detectar si la dependencia opcional
-    # de persistencia está disponible en tiempo de ejecución.
+    # Fuerza la inicialización diferida y el chequeo de la dependencia opcional.
     _get_qualia()
 
-    if not _DATABASE_AVAILABLE:
+    if not _is_persistence_enabled():
         return {
             "enabled": False,
             "reason_code": "optional_dependency_missing",
@@ -330,7 +335,7 @@ def reset_state() -> dict[str, Any]:
 
     qualia = _get_qualia()
 
-    if not _DATABASE_AVAILABLE:
+    if not _is_persistence_enabled():
         LOGGER.debug(
             "Base de datos de Qualia inactiva; solo se limpia el estado en memoria.",
         )

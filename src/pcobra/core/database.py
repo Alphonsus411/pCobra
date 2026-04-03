@@ -156,6 +156,16 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         _SQLITEPLUS_CLASS = _build_sqliteplus_fallback()
         return _SQLITEPLUS_CLASS
 
+    def _use_optional_fallback(message: str):
+        global _SQLITEPLUS_AVAILABILITY, _SQLITEPLUS_CLASS
+        _SQLITEPLUS_AVAILABILITY = False
+        if silent_optional:
+            LOGGER.debug(message)
+        else:
+            warnings.warn(message, RuntimeWarning)
+        _SQLITEPLUS_CLASS = _build_sqliteplus_fallback()
+        return _SQLITEPLUS_CLASS
+
     # El módulo depende de ``sqliteplus.utils.constants`` pero el paquete no se
     # exporta como paquete instalable. Creamos entradas mínimas en ``sys.modules``
     # para satisfacer esas importaciones sin tocar directamente los paquetes
@@ -164,15 +174,18 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
     if constants_name not in sys.modules:
         constants_path = Path(dist.locate_file("utils/constants.py"))
         if not constants_path.exists():  # pragma: no cover - instalación dañada
-            raise DatabaseDependencyError(
-                "No se encontró 'utils/constants.py' en sqliteplus-enhanced."
+            return _use_optional_fallback(
+                "Instalación incompleta de 'sqliteplus-enhanced' "
+                "(falta 'utils/constants.py'); se utilizará SQLite simplificado."
             )
         constants_spec = importlib_util.spec_from_file_location(
             constants_name, constants_path
         )
         if constants_spec is None or constants_spec.loader is None:  # pragma: no cover
-            raise DatabaseDependencyError(
-                "No se pudo cargar 'sqliteplus.utils.constants'."
+            return _use_optional_fallback(
+                "Instalación incompleta de 'sqliteplus-enhanced' "
+                "(no se pudo cargar 'sqliteplus.utils.constants'); "
+                "se utilizará SQLite simplificado."
             )
         constants_module = importlib_util.module_from_spec(constants_spec)
         constants_spec.loader.exec_module(constants_module)
@@ -191,13 +204,21 @@ def _load_sqliteplus_class(*, silent_optional: bool = False):
         "sqliteplus_utils_sync", module_path
     )
     if spec is None or spec.loader is None:  # pragma: no cover - casos extremos
-        raise DatabaseDependencyError(
-            "No se pudo cargar dinámicamente 'SQLitePlus' desde sqliteplus-enhanced."
+        return _use_optional_fallback(
+            "Instalación incompleta de 'sqliteplus-enhanced' "
+            "(no se pudo cargar dinámicamente 'SQLitePlus'); "
+            "se utilizará SQLite simplificado."
         )
 
     module = importlib_util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    _SQLITEPLUS_CLASS = getattr(module, "SQLitePlus")
+    sqliteplus_class = getattr(module, "SQLitePlus", None)
+    if sqliteplus_class is None:  # pragma: no cover - instalación dañada
+        return _use_optional_fallback(
+            "Instalación incompleta de 'sqliteplus-enhanced' "
+            "(falta la clase 'SQLitePlus'); se utilizará SQLite simplificado."
+        )
+    _SQLITEPLUS_CLASS = sqliteplus_class
     _SQLITEPLUS_AVAILABILITY = True
     return _SQLITEPLUS_CLASS
 
@@ -214,8 +235,16 @@ def is_sqliteplus_available() -> bool:
                 # Compatibilidad con pruebas que sustituyen el loader por una
                 # lambda sin parámetros.
                 _load_sqliteplus_class()
-        except DatabaseDependencyError:
+        except Exception as exc:  # pragma: no cover - ruta defensiva opcional
+            LOGGER.debug(
+                "No se pudo validar sqliteplus-enhanced; se asume indisponible: %s",
+                exc,
+                exc_info=True,
+            )
             _SQLITEPLUS_AVAILABILITY = False
+        else:
+            if _SQLITEPLUS_AVAILABILITY is None:
+                _SQLITEPLUS_AVAILABILITY = _SQLITEPLUS_CLASS is not None
     return bool(_SQLITEPLUS_AVAILABILITY)
 
 
