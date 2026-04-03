@@ -445,7 +445,7 @@ class InterpretadorCobra:
 
     def _resolver_identificador(self, nombre, visitados=None):
         """Resuelve un identificador usando únicamente la pila de contextos."""
-        visitados = visitados or set()
+        visitados = set() if visitados is None else visitados
         if nombre in visitados:
             raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
         visitados.add(nombre)
@@ -642,10 +642,31 @@ class InterpretadorCobra:
         except ErrorEstructuraAST as exc:
             raise RuntimeError(f"Estructura AST inválida en fase '{fase}': {exc}") from exc
 
-    def _asegurar_identificador_definido(self, expresion, visitados=None):
-        """Valida identificadores antes de evaluar expresiones compuestas."""
-        if isinstance(expresion, NodoIdentificador):
-            self._resolver_identificador(expresion.nombre, visitados)
+    def _asegurar_no_autorreferencia_asignacion(
+        self, nombre, valor_nodo, visitados
+    ) -> None:
+        """Rechaza autorreferencias directas o indirectas antes de persistir."""
+        if not isinstance(nombre, str):
+            return
+        if self._asignacion_referencia_identificador(valor_nodo, nombre):
+            raise RuntimeError(
+                f"Asignación circular inválida para variable '{nombre}'"
+            )
+        pila = [valor_nodo]
+        while pila:
+            actual = pila.pop()
+            if isinstance(actual, NodoIdentificador):
+                visitados_guard = set(visitados)
+                visitados_guard.add(nombre)
+                self._resolver_identificador(actual.nombre, visitados_guard)
+                continue
+            if isinstance(actual, Token):
+                continue
+            if isinstance(actual, list):
+                pila.extend(actual)
+                continue
+            if isinstance(actual, NodoAST):
+                pila.extend(getattr(actual, "__dict__", {}).values())
 
     def ejecutar_ast(self, ast):
         # Pipeline explícito:
@@ -772,11 +793,13 @@ class InterpretadorCobra:
 
     def ejecutar_asignacion(self, nodo, visitados=None):
         """Evalúa una asignación de variable o atributo."""
+        visitados = set() if visitados is None else visitados
         nombre = getattr(nodo, "identificador", getattr(nodo, "variable", None))
         valor_nodo = getattr(nodo, "expresion", getattr(nodo, "valor", None))
         # Evita llamadas recursivas directas con el mismo nodo
         if valor_nodo is nodo:
             raise ValueError("Asignación no puede evaluarse a sí misma")
+        self._asegurar_no_autorreferencia_asignacion(nombre, valor_nodo, visitados)
         valor = self.evaluar_expresion(valor_nodo, visitados)
         valor = self._materializar_valor(valor, visitados)
         self._verificar_valor_contexto(valor)
@@ -809,6 +832,7 @@ class InterpretadorCobra:
         seguimiento de variables visitadas y detectar referencias circulares
         durante la evaluación.
         """
+        visitados = set() if visitados is None else visitados
         if isinstance(expresion, NodoValor):
             return expresion.valor  # Obtiene el valor directo si es un NodoValor
         elif isinstance(expresion, Token) and expresion.tipo in {
@@ -838,8 +862,6 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
-            self._asegurar_identificador_definido(expresion.izquierda, visitados)
-            self._asegurar_identificador_definido(expresion.derecha, visitados)
             izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
             derecha = self.evaluar_expresion(expresion.derecha, visitados)
             tipo = expresion.operador.tipo

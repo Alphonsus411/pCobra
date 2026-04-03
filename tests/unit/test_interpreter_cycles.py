@@ -32,3 +32,18 @@ def test_variable_apuntando_a_asignacion_autorreferente():
         RuntimeError, match=r"^Asignación circular inválida para variable 'a'$"
     ):
         inter.evaluar_expresion(NodoIdentificador("a"))
+
+
+def test_ejecutar_asignacion_rechaza_autorreferencia_directa():
+    inter = InterpretadorCobra()
+    with pytest.raises(
+        RuntimeError, match=r"^Asignación circular inválida para variable 'a'$"
+    ):
+        inter.ejecutar_asignacion(NodoAsignacion("a", NodoIdentificador("a")))
+
+
+def test_ejecutar_asignacion_rechaza_autorreferencia_indirecta():
+    inter = InterpretadorCobra()
+    inter.variables["b"] = NodoIdentificador("a")
+    with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
+        inter.ejecutar_asignacion(NodoAsignacion("a", NodoIdentificador("b")))
