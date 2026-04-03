@@ -634,13 +634,26 @@ class InterpretadorCobra:
                     pila.append(val)
         return total
 
-    def ejecutar_ast(self, ast):
-        # Reinicia el conjunto de nodos validados al comenzar una ejecución
-        self._validados.clear()
+    @staticmethod
+    def _asegurar_ast_tipado(ast, fase: str) -> None:
+        """Garantiza el contrato mínimo del AST en una fase concreta."""
         try:
             validar_ast_estructural(ast)
         except ErrorEstructuraAST as exc:
-            raise RuntimeError(f"Estructura AST inválida al iniciar ejecución: {exc}") from exc
+            raise RuntimeError(f"Estructura AST inválida en fase '{fase}': {exc}") from exc
+
+    def _asegurar_identificador_definido(self, expresion, visitados=None):
+        """Valida identificadores antes de evaluar expresiones compuestas."""
+        if isinstance(expresion, NodoIdentificador):
+            self._resolver_identificador(expresion.nombre, visitados)
+
+    def ejecutar_ast(self, ast):
+        # Pipeline explícito:
+        # 1) parseo/entrada tipada válida
+        # 2) análisis semántico
+        # 3) evaluación de AST validado
+        self._validados.clear()
+        self._asegurar_ast_tipado(ast, "parseo")
         total = self._contar_nodos(ast)
         max_nodos = limite_nodos()
         if total > max_nodos:
@@ -653,13 +666,11 @@ class InterpretadorCobra:
         if cpu:
             _lim_cpu(cpu)
 
-        try:
-            validar_ast_estructural(ast)
-        except ErrorEstructuraAST as exc:
-            raise RuntimeError(f"Estructura AST inválida antes de optimizaciones: {exc}") from exc
+        self._asegurar_ast_tipado(ast, "pre_optimizacion")
         ast = remove_dead_code(
             inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
         )
+        self._asegurar_ast_tipado(ast, "post_optimizacion")
         # Genera y expone el IR interno correspondiente al AST
         self.ultimo_ir = self.generar_internal_ir(ast)
         try:
@@ -668,7 +679,9 @@ class InterpretadorCobra:
             register_execution = None
         if register_execution:
             register_execution(ast)
+        # Fase 2: análisis semántico estricto
         self.analizador.analizar(ast)
+        # Fase 3: evaluación
         for nodo in ast:
             self._validar(nodo)
             resultado = self.ejecutar_nodo(nodo)
@@ -825,6 +838,8 @@ class InterpretadorCobra:
         elif isinstance(expresion, NodoHolobit):
             return self.ejecutar_holobit(expresion)
         elif isinstance(expresion, NodoOperacionBinaria):
+            self._asegurar_identificador_definido(expresion.izquierda, visitados)
+            self._asegurar_identificador_definido(expresion.derecha, visitados)
             izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
             derecha = self.evaluar_expresion(expresion.derecha, visitados)
             tipo = expresion.operador.tipo
