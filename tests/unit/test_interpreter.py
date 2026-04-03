@@ -6,6 +6,7 @@ from core.interpreter import InterpretadorCobra
 from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoAsignacion,
+    NodoDel,
     NodoValor,
     NodoLlamadaFuncion,
     NodoFuncion,
@@ -150,3 +151,20 @@ def test_operacion_con_valores_nodo():
     )
 
     assert inter.evaluar_expresion(expr) == 5
+
+
+def test_del_elimina_variable_por_identificador():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(1)))
+
+    inter.ejecutar_nodo(NodoDel(NodoIdentificador("x")))
+
+    assert "x" not in inter.variables
+    assert 1 not in inter.variables
+
+
+def test_del_objetivo_no_identificador_lanza_typeerror():
+    inter = InterpretadorCobra()
+
+    with pytest.raises(TypeError, match=r"^del requiere un identificador como objetivo"):
+        inter.ejecutar_nodo(NodoDel(NodoValor(1)))

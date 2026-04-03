@@ -878,7 +878,12 @@ class InterpretadorCobra:
                 )
                 raise AssertionError(mensaje)
         elif isinstance(nodo, NodoDel):
-            nombre = self.evaluar_expresion(nodo.objetivo)
+            if not isinstance(nodo.objetivo, NodoIdentificador):
+                raise TypeError(
+                    "del requiere un identificador como objetivo, "
+                    f"se recibió: {type(nodo.objetivo).__name__}"
+                )
+            nombre = nodo.objetivo.nombre
             if nombre in self.variables:
                 del self.variables[nombre]
         elif isinstance(nodo, NodoGlobal):
