@@ -52,8 +52,10 @@ si 1 == 1
     imprimir "ok"
 fin
 """
-    with pytest.raises(ParserError, match="Se esperaba ':' después de la condición del 'si'"):
+    with pytest.raises(ParserError) as exc_info:
         parse(codigo).parsear()
+
+    assert str(exc_info.value) == "Se esperaba ':' después de la condición del 'si'"
 
 
 def test_condicional_si_sin_fin_lanza_parser_error():
@@ -61,8 +63,10 @@ def test_condicional_si_sin_fin_lanza_parser_error():
 si 1 == 1 :
     imprimir "ok"
 """
-    with pytest.raises(ParserError, match="Se esperaba 'fin' para cerrar el bloque condicional"):
+    with pytest.raises(ParserError) as exc_info:
         parse(codigo).parsear()
+
+    assert str(exc_info.value) == "Se esperaba 'fin' para cerrar el bloque condicional"
 
 
 def test_macro_llaves_desbalanceadas():

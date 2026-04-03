@@ -149,7 +149,10 @@ def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
         ret = cmd.run(_args())
 
     assert ret == 0
-    mock_ejecutar.assert_called_once_with('si 1 == 1 :\nimprimir "ok"\nfin', None)
+    assert mock_ejecutar.call_count == 1
+    codigo_ejecutado, args_ejecutar = mock_ejecutar.call_args[0]
+    assert codigo_ejecutado == 'si 1 == 1 :\nimprimir "ok"\nfin'
+    assert args_ejecutar is None
 
 
 def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
