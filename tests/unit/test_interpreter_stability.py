@@ -1,8 +1,19 @@
 from __future__ import annotations
 
+from io import StringIO
+from unittest.mock import patch
+
 import pytest
 
-from cobra.core import Lexer, Parser
+from cobra.core import Lexer, Parser, TipoToken, Token
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoCondicional,
+    NodoIdentificador,
+    NodoImprimir,
+    NodoOperacionBinaria,
+    NodoValor,
+)
 from core.interpreter import InterpretadorCobra
 
 
@@ -77,3 +88,70 @@ var resultado = y + 4
 """
     )
     assert inter.variables["resultado"] == 7
+
+
+def test_ast_imprimir_comparacion_booleana_sin_recursionerror() -> None:
+    inter = InterpretadorCobra()
+    ast = [
+        NodoAsignacion("x", NodoValor(10)),
+        NodoImprimir(
+            NodoOperacionBinaria(
+                NodoIdentificador("x"),
+                Token(TipoToken.IGUAL, "=="),
+                NodoValor(10),
+            )
+        ),
+    ]
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            for nodo in ast:
+                inter.ejecutar_nodo(nodo)
+    except RecursionError as exc:
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert out.getvalue().strip() in {"True", "False"}
+
+
+def test_ast_condicional_ejecuta_bloque_sin_recursionerror() -> None:
+    inter = InterpretadorCobra()
+    ast = [
+        NodoAsignacion("x", NodoValor(10)),
+        NodoCondicional(
+            NodoOperacionBinaria(
+                NodoIdentificador("x"),
+                Token(TipoToken.IGUAL, "=="),
+                NodoValor(10),
+            ),
+            [NodoImprimir(NodoValor("ok"))],
+            [],
+        ),
+    ]
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            for nodo in ast:
+                inter.ejecutar_nodo(nodo)
+    except RecursionError as exc:
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert out.getvalue().strip() == "ok"
+
+
+def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursionerror() -> None:
+    inter = InterpretadorCobra()
+    nodo = NodoImprimir(
+        NodoOperacionBinaria(
+            NodoIdentificador("y"),
+            Token(TipoToken.IGUAL, "=="),
+            NodoValor(10),
+        )
+    )
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            inter.ejecutar_nodo(nodo)
+    except RecursionError as exc:
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert out.getvalue().strip() == "Variable no declarada: y"
