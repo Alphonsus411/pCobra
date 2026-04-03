@@ -964,132 +964,148 @@ class InterpretadorCobra:
         - nunca debe propagarse un ``NodoAST`` hacia capas superiores.
         """
         visitados = set() if visitados is None else visitados
-        if isinstance(expresion, NodoValor):
-            return expresion.valor  # Obtiene el valor directo si es un NodoValor
-        elif isinstance(expresion, Token) and expresion.tipo in {
-            TipoToken.ENTERO,
-            TipoToken.FLOTANTE,
-            TipoToken.CADENA,
-            TipoToken.BOOLEANO,
-        }:
-            return expresion.valor  # Si es un token de tipo literal, devuelve su valor
-        elif isinstance(expresion, NodoAsignacion):
-            # Resuelve asignaciones anidadas y devuelve su valor
-            return self.ejecutar_asignacion(expresion, visitados)
-        elif isinstance(expresion, NodoIdentificador):
-            return self._resolver_identificador(expresion.nombre, visitados)
-        elif isinstance(expresion, NodoInstancia):
-            return self.ejecutar_instancia(expresion)
-        elif isinstance(expresion, NodoAtributo):
-            objeto = self.evaluar_expresion(expresion.objeto, visitados)
-            if objeto is None:
-                raise ValueError("Objeto no definido al acceder al atributo")
-            atributos = objeto.get("__atributos__", {})
-            valor = atributos.get(expresion.nombre)
-            valor_resuelto = self._materializar_valor(valor, visitados)
-            if valor_resuelto is not valor:
-                atributos[expresion.nombre] = valor_resuelto
-            return valor_resuelto
-        elif isinstance(expresion, NodoHolobit):
-            return self.ejecutar_holobit(expresion)
-        elif isinstance(expresion, NodoOperacionBinaria):
-            tipo = expresion.operador.tipo
-
-            izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
-            derecha = self.evaluar_expresion(expresion.derecha, visitados)
-
-            izquierda = self._materializar_valor(
-                izquierda,
-                visitados,
-                origen="operacion_binaria",
+        if not hasattr(self, "_eval_stack"):
+            self._eval_stack = set()
+        expresion_id = id(expresion)
+        print(
+            f"[EVAL] id={expresion_id} type={type(expresion).__name__} repr={repr(expresion)}"
+        )
+        if expresion_id in self._eval_stack:
+            print(
+                "[RECURSION DETECTED] "
+                f"id={expresion_id} type={type(expresion).__name__} repr={repr(expresion)}"
             )
-            derecha = self._materializar_valor(
-                derecha,
-                visitados,
-                origen="operacion_binaria",
-            )
+            raise Exception("Recursive evaluation detected")
+        self._eval_stack.add(expresion_id)
+        try:
+            if isinstance(expresion, NodoValor):
+                return expresion.valor  # Obtiene el valor directo si es un NodoValor
+            elif isinstance(expresion, Token) and expresion.tipo in {
+                TipoToken.ENTERO,
+                TipoToken.FLOTANTE,
+                TipoToken.CADENA,
+                TipoToken.BOOLEANO,
+            }:
+                return expresion.valor  # Si es un token de tipo literal, devuelve su valor
+            elif isinstance(expresion, NodoAsignacion):
+                # Resuelve asignaciones anidadas y devuelve su valor
+                return self.ejecutar_asignacion(expresion, visitados)
+            elif isinstance(expresion, NodoIdentificador):
+                return self._resolver_identificador(expresion.nombre, visitados)
+            elif isinstance(expresion, NodoInstancia):
+                return self.ejecutar_instancia(expresion)
+            elif isinstance(expresion, NodoAtributo):
+                objeto = self.evaluar_expresion(expresion.objeto, visitados)
+                if objeto is None:
+                    raise ValueError("Objeto no definido al acceder al atributo")
+                atributos = objeto.get("__atributos__", {})
+                valor = atributos.get(expresion.nombre)
+                valor_resuelto = self._materializar_valor(valor, visitados)
+                if valor_resuelto is not valor:
+                    atributos[expresion.nombre] = valor_resuelto
+                return valor_resuelto
+            elif isinstance(expresion, NodoHolobit):
+                return self.ejecutar_holobit(expresion)
+            elif isinstance(expresion, NodoOperacionBinaria):
+                tipo = expresion.operador.tipo
 
-            if isinstance(izquierda, NodoAST):
-                raise RuntimeError(
-                    "Operando binario no materializado tras resolver: "
-                    f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
+                izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
+                derecha = self.evaluar_expresion(expresion.derecha, visitados)
+
+                izquierda = self._materializar_valor(
+                    izquierda,
+                    visitados,
+                    origen="operacion_binaria",
                 )
-            if isinstance(derecha, NodoAST):
-                raise RuntimeError(
-                    "Operando binario no materializado tras resolver: "
-                    f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
+                derecha = self._materializar_valor(
+                    derecha,
+                    visitados,
+                    origen="operacion_binaria",
                 )
 
-            def _aplicar_comparacion(operador):
-                """Valida y aplica una comparación con operandos materializados."""
                 if isinstance(izquierda, NodoAST):
                     raise RuntimeError(
-                        "Operando de comparación no materializado: "
+                        "Operando binario no materializado tras resolver: "
                         f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
                     )
                 if isinstance(derecha, NodoAST):
                     raise RuntimeError(
-                        "Operando de comparación no materializado: "
+                        "Operando binario no materializado tras resolver: "
                         f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
                     )
-                return operador(izquierda, derecha)
 
-            if tipo == TipoToken.MAYORQUE:
-                verificar_comparables(izquierda, derecha, ">")
-                return _aplicar_comparacion(lambda i, d: i > d)
-            elif tipo == TipoToken.MENORQUE:
-                verificar_comparables(izquierda, derecha, "<")
-                return _aplicar_comparacion(lambda i, d: i < d)
-            elif tipo == TipoToken.MAYORIGUAL:
-                verificar_comparables(izquierda, derecha, ">=")
-                return _aplicar_comparacion(lambda i, d: i >= d)
-            elif tipo == TipoToken.MENORIGUAL:
-                verificar_comparables(izquierda, derecha, "<=")
-                return _aplicar_comparacion(lambda i, d: i <= d)
-            elif tipo == TipoToken.IGUAL:
-                return _aplicar_comparacion(lambda i, d: i == d)
-            elif tipo == TipoToken.DIFERENTE:
-                return _aplicar_comparacion(lambda i, d: i != d)
+                def _aplicar_comparacion(operador):
+                    """Valida y aplica una comparación con operandos materializados."""
+                    if isinstance(izquierda, NodoAST):
+                        raise RuntimeError(
+                            "Operando de comparación no materializado: "
+                            f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
+                        )
+                    if isinstance(derecha, NodoAST):
+                        raise RuntimeError(
+                            "Operando de comparación no materializado: "
+                            f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
+                        )
+                    return operador(izquierda, derecha)
 
-            if tipo == TipoToken.SUMA:
-                verificar_sumables(izquierda, derecha)
-                return izquierda + derecha
-            elif tipo == TipoToken.RESTA:
-                verificar_numeros(izquierda, derecha, "-")
-                return izquierda - derecha
-            elif tipo == TipoToken.MULT:
-                verificar_numeros(izquierda, derecha, "*")
-                return izquierda * derecha
-            elif tipo == TipoToken.DIV:
-                verificar_numeros(izquierda, derecha, "/")
-                return izquierda / derecha
-            elif tipo == TipoToken.MOD:
-                verificar_numeros(izquierda, derecha, "%")
-                return izquierda % derecha
-            elif tipo == TipoToken.AND:
-                verificar_booleanos(izquierda, derecha, "&&")
-                return izquierda and derecha
-            elif tipo == TipoToken.OR:
-                verificar_booleanos(izquierda, derecha, "||")
-                return izquierda or derecha
+                if tipo == TipoToken.MAYORQUE:
+                    verificar_comparables(izquierda, derecha, ">")
+                    return _aplicar_comparacion(lambda i, d: i > d)
+                elif tipo == TipoToken.MENORQUE:
+                    verificar_comparables(izquierda, derecha, "<")
+                    return _aplicar_comparacion(lambda i, d: i < d)
+                elif tipo == TipoToken.MAYORIGUAL:
+                    verificar_comparables(izquierda, derecha, ">=")
+                    return _aplicar_comparacion(lambda i, d: i >= d)
+                elif tipo == TipoToken.MENORIGUAL:
+                    verificar_comparables(izquierda, derecha, "<=")
+                    return _aplicar_comparacion(lambda i, d: i <= d)
+                elif tipo == TipoToken.IGUAL:
+                    return _aplicar_comparacion(lambda i, d: i == d)
+                elif tipo == TipoToken.DIFERENTE:
+                    return _aplicar_comparacion(lambda i, d: i != d)
+
+                if tipo == TipoToken.SUMA:
+                    verificar_sumables(izquierda, derecha)
+                    return izquierda + derecha
+                elif tipo == TipoToken.RESTA:
+                    verificar_numeros(izquierda, derecha, "-")
+                    return izquierda - derecha
+                elif tipo == TipoToken.MULT:
+                    verificar_numeros(izquierda, derecha, "*")
+                    return izquierda * derecha
+                elif tipo == TipoToken.DIV:
+                    verificar_numeros(izquierda, derecha, "/")
+                    return izquierda / derecha
+                elif tipo == TipoToken.MOD:
+                    verificar_numeros(izquierda, derecha, "%")
+                    return izquierda % derecha
+                elif tipo == TipoToken.AND:
+                    verificar_booleanos(izquierda, derecha, "&&")
+                    return izquierda and derecha
+                elif tipo == TipoToken.OR:
+                    verificar_booleanos(izquierda, derecha, "||")
+                    return izquierda or derecha
+                else:
+                    raise ValueError(f"Operador no soportado: {tipo}")
+            elif isinstance(expresion, NodoOperacionUnaria):
+                valor = self.evaluar_expresion(expresion.operando, visitados)
+                tipo = expresion.operador.tipo
+                if tipo == TipoToken.NOT:
+                    verificar_booleano(valor, "!")
+                    return not valor
+                else:
+                    raise ValueError(f"Operador unario no soportado: {tipo}")
+            elif isinstance(expresion, NodoEsperar):
+                return self.evaluar_expresion(expresion.expresion, visitados)
+            elif isinstance(expresion, NodoLlamadaMetodo):
+                return self.ejecutar_llamada_metodo(expresion)
+            elif isinstance(expresion, NodoLlamadaFuncion):
+                return self.ejecutar_llamada_funcion(expresion)
             else:
-                raise ValueError(f"Operador no soportado: {tipo}")
-        elif isinstance(expresion, NodoOperacionUnaria):
-            valor = self.evaluar_expresion(expresion.operando, visitados)
-            tipo = expresion.operador.tipo
-            if tipo == TipoToken.NOT:
-                verificar_booleano(valor, "!")
-                return not valor
-            else:
-                raise ValueError(f"Operador unario no soportado: {tipo}")
-        elif isinstance(expresion, NodoEsperar):
-            return self.evaluar_expresion(expresion.expresion, visitados)
-        elif isinstance(expresion, NodoLlamadaMetodo):
-            return self.ejecutar_llamada_metodo(expresion)
-        elif isinstance(expresion, NodoLlamadaFuncion):
-            return self.ejecutar_llamada_funcion(expresion)
-        else:
-            raise ValueError(f"Expresión no soportada: {expresion}")
+                raise ValueError(f"Expresión no soportada: {expresion}")
+        finally:
+            self._eval_stack.discard(expresion_id)
 
     def _evaluar_condicion_control(self, condicion):
         """Evalúa una condición y exige que quede materializada.
