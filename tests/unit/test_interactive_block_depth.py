@@ -92,6 +92,21 @@ def test_bloque_vacio_se_rechaza_al_cerrar_con_fin() -> None:
         cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "fin")
 
 
+def test_bloque_con_solo_blancos_se_rechaza_al_cerrar_con_fin() -> None:
+    cmd = InteractiveCommand(MagicMock())
+    cmd._estado_repl = cmd._crear_estado_repl()
+    buffer_lineas = cmd._estado_repl["buffer_lineas"]
+
+    assert cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "si verdadero:") is None
+    assert cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "   ") is None
+    assert cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "") is None
+    with pytest.raises(
+        ParserError,
+        match=r"^El bloque no puede cerrarse con 'fin' sin sentencias no vacías\.$",
+    ):
+        cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "fin")
+
+
 def test_exceso_lineas_blanco_consecutivas_en_bloque_lanza_error() -> None:
     cmd = InteractiveCommand(MagicMock())
     estado = cmd._crear_estado_repl()
