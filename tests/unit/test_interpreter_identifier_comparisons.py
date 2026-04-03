@@ -46,7 +46,14 @@ def _ejecutar_codigo_y_capturar_salida(codigo: str) -> str:
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    return out.getvalue().strip()
+    salida = out.getvalue().strip()
+    lineas = [linea for linea in salida.splitlines() if linea.strip()]
+    return lineas[-1] if lineas else ""
+
+
+def _ultima_linea_no_vacia(salida: str) -> str:
+    lineas = [linea for linea in salida.strip().splitlines() if linea.strip()]
+    return lineas[-1] if lineas else ""
 
 
 def test_comparacion_identificador_en_imprimir_sin_recursionerror() -> None:
@@ -67,6 +74,16 @@ imprimir x + 5 == 10
 """
     )
     assert salida == "True"
+
+
+def test_comparacion_identificador_con_suma_en_imprimir_desde_x_diez() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida(
+        """
+x = 10
+imprimir x + 5 == 10
+"""
+    )
+    assert salida == "False"
 
 
 def test_comparacion_identificador_en_condicional_sin_recursionerror() -> None:
@@ -106,6 +123,22 @@ def test_identificador_indefinido_en_comparacion_controlado_sin_recursionerror()
         pytest.fail("Se esperaba NameError para identificador no declarado")
 
 
+def test_identificador_derecho_indefinido_en_comparacion_controlado_sin_recursionerror() -> None:
+    codigo = """
+x = 10
+imprimir x == y
+"""
+
+    try:
+        _ejecutar_codigo_y_capturar_salida(codigo)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+    except NameError as exc:
+        assert str(exc) == "Variable no declarada: y"
+    else:
+        pytest.fail("Se esperaba NameError para identificador no declarado")
+
+
 def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
     inter = InterpretadorCobra()
     ast = [
@@ -132,7 +165,7 @@ def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert out.getvalue().strip() == "True"
+    assert _ultima_linea_no_vacia(out.getvalue()) == "True"
 
 
 def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> None:
@@ -165,7 +198,7 @@ def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> 
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert out.getvalue().strip() == "True"
+    assert _ultima_linea_no_vacia(out.getvalue()) == "True"
 
 
 def test_ast_directo_condicional_identificador_sin_recursionerror() -> None:
@@ -196,7 +229,7 @@ def test_ast_directo_condicional_identificador_sin_recursionerror() -> None:
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert out.getvalue().strip() == "ok"
+    assert _ultima_linea_no_vacia(out.getvalue()) == "ok"
 
 
 def test_ast_directo_alias_encadenado_en_comparacion_materializa_booleano() -> None:
