@@ -34,6 +34,11 @@ si 1 == 1:
     assert mensaje == "Se esperaba 'fin' para cerrar el bloque condicional"
 
 
+def test_parser_falla_con_fin_inesperado() -> None:
+    mensaje = _error_de_parseo("fin")
+    assert mensaje == "Se encontró 'fin' inesperado"
+
+
 @pytest.mark.parametrize(
     ("codigo", "prefijo_esperado"),
     [
@@ -65,3 +70,67 @@ si 1 == 1:
 def test_mensajes_de_error_son_consistentes(codigo: str, prefijo_esperado: str) -> None:
     mensaje = _error_de_parseo(codigo)
     assert mensaje.startswith(prefijo_esperado)
+
+
+@pytest.mark.parametrize(
+    ("codigo", "mensaje_esperado"),
+    [
+        (
+            """
+si 1 == 1
+    pasar
+fin
+""",
+            "Se esperaba ':' después de la condición del 'si'",
+        ),
+        (
+            """
+si 1 == 1:
+    pasar
+sino
+    pasar
+fin
+""",
+            "Se esperaba ':' después de 'sino'",
+        ),
+        (
+            """
+si 1 == 1:
+    pasar
+sino
+si 2 == 2
+    pasar
+fin
+""",
+            "Se esperaba ':' después de la condición del 'sino si'",
+        ),
+        (
+            """
+mientras 1 == 1
+    pasar
+fin
+""",
+            "Se esperaba ':' después de la condición del bucle 'mientras'",
+        ),
+        (
+            """
+para i in rango(3)
+    pasar
+fin
+""",
+            "Se esperaba ':' después del iterable en 'para'",
+        ),
+        (
+            """
+try
+    pasar
+fin
+""",
+            "Se esperaba ':' después de 'try'",
+        ),
+    ],
+)
+def test_regresion_mensajes_con_espacios_y_saltos_de_linea(
+    codigo: str, mensaje_esperado: str
+) -> None:
+    assert _error_de_parseo(codigo) == mensaje_esperado
