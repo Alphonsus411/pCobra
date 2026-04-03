@@ -21,8 +21,10 @@ def test_referencia_circular_variable():
 def test_resolucion_encadenada_sin_ciclo():
     inter = InterpretadorCobra()
     inter.variables["a"] = NodoIdentificador("b")
-    inter.variables["b"] = NodoValor(3)
-    assert inter.evaluar_expresion(NodoIdentificador("a")) == 3
+    inter.variables["b"] = NodoValor(10)
+    assert inter.evaluar_expresion(NodoIdentificador("a")) == 10
+    assert inter.variables["a"] == 10
+    assert inter.variables["b"] == 10
 
 
 def test_name_error_variable_ausente_se_distingue_de_ciclo():
@@ -34,17 +36,13 @@ def test_name_error_variable_ausente_se_distingue_de_ciclo():
 def test_variable_apuntando_a_asignacion_autorreferente():
     inter = InterpretadorCobra()
     inter.variables["a"] = NodoAsignacion("tmp", NodoIdentificador("a"))
-    with pytest.raises(
-        RuntimeError, match=r"^Asignación circular inválida para variable 'a'$"
-    ):
+    with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
         inter.evaluar_expresion(NodoIdentificador("a"))
 
 
 def test_ejecutar_asignacion_rechaza_autorreferencia_directa():
     inter = InterpretadorCobra()
-    with pytest.raises(
-        RuntimeError, match=r"^Asignación circular inválida para variable 'a'$"
-    ):
+    with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
         inter.ejecutar_asignacion(NodoAsignacion("a", NodoIdentificador("a")))
 
 
@@ -53,6 +51,19 @@ def test_ejecutar_asignacion_rechaza_autorreferencia_indirecta():
     inter.variables["b"] = NodoIdentificador("a")
     with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
         inter.ejecutar_asignacion(NodoAsignacion("a", NodoIdentificador("b")))
+
+
+def test_ciclo_alias_no_escala_a_recursion_error():
+    inter = InterpretadorCobra()
+    inter.variables["a"] = NodoIdentificador("b")
+    inter.variables["b"] = NodoIdentificador("a")
+
+    try:
+        inter.evaluar_expresion(NodoIdentificador("a"))
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+    except RuntimeError as exc:
+        assert str(exc) == "Ciclo de variables detectado en 'a'"
 
 
 def test_condicional_rechaza_nodo_ast_sin_materializar_en_condicion():
