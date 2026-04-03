@@ -1,6 +1,7 @@
 from types import SimpleNamespace, ModuleType
 from unittest.mock import patch, MagicMock
 from io import StringIO
+import argparse
 import sys
 
 # Crear un módulo falso para evitar que la importación de sandbox
@@ -138,6 +139,17 @@ def test_interactive_history_append(tmp_path):
     assert fake_path.exists()
 
 
+def test_interactive_help_refleja_politica_de_bloques_y_lineas_blancas():
+    cmd = InteractiveCommand(MagicMock())
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='command')
+    subparser = cmd.register_subparser(subparsers)
+
+    assert subparser.description is not None
+    assert 'como máximo 2 líneas en blanco consecutivas' in subparser.description
+    assert 'se prohíben bloques vacíos' in subparser.description
+
+
 def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
     inputs = ['si 1 == 1 :', 'imprimir "ok"', 'fin', 'salir']
     cmd = InteractiveCommand(MagicMock())
@@ -184,26 +196,30 @@ def test_interactive_rechaza_fin_sin_bloque_abierto():
 
     assert ret == 0
     assert mock_ejecutar.call_count == 0
-    assert any("'fin' sin bloque abierto" in str(call.args[0]) for call in mock_error.call_args_list)
+    assert any("'fin' sin bloque abierto." in str(call.args[0]) for call in mock_error.call_args_list)
 
 
-def test_interactive_permite_bloque_vacio():
+def test_interactive_rechaza_bloque_vacio():
     cmd = InteractiveCommand(MagicMock())
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error, \
          patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         ret = cmd.run(_args())
 
     assert ret == 0
-    assert mock_ejecutar.call_count == 1
-    assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nfin'
+    assert mock_ejecutar.call_count == 0
+    assert any(
+        "no puede cerrarse con 'fin' sin sentencias no vacías" in str(call.args[0])
+        for call in mock_error.call_args_list
+    )
 
 
 def test_interactive_lineas_blancas_en_bloque_se_ignoran():
     cmd = InteractiveCommand(MagicMock())
     prompts = []
-    entradas = iter(['si 1 == 1 :', '   ', '', 'fin', 'salir'])
+    entradas = iter(['si 1 == 1 :', '   ', '', 'imprimir "ok"', 'fin', 'salir'])
 
     def _prompt_side_effect(prompt_text):
         prompts.append(prompt_text)
@@ -215,9 +231,9 @@ def test_interactive_lineas_blancas_en_bloque_se_ignoran():
         ret = cmd.run(_args())
 
     assert ret == 0
-    assert prompts[:4] == ['cobra> ', '... ', '... ', '... ']
+    assert prompts[:5] == ['cobra> ', '... ', '... ', '... ', '... ']
     assert mock_ejecutar.call_count == 1
-    assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nfin'
+    assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nimprimir "ok"\nfin'
 
 
 def test_repl_basico_comparte_validacion_fin_sin_bloque():
@@ -230,4 +246,17 @@ def test_repl_basico_comparte_validacion_fin_sin_bloque():
 
     assert ret == 0
     assert mock_ejecutar.call_count == 0
-    assert any("'fin' sin bloque abierto" in str(call.args[0]) for call in mock_error.call_args_list)
+    assert any("'fin' sin bloque abierto." in str(call.args[0]) for call in mock_error.call_args_list)
+
+
+def test_interactive_rechaza_exceso_lineas_blanco_consecutivas_en_bloque():
+    cmd = InteractiveCommand(MagicMock())
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', '', '', '', 'fin', 'salir']), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error:
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    assert mock_ejecutar.call_count == 0
+    assert any("Máximo de 2 líneas en blanco consecutivas" in str(call.args[0]) for call in mock_error.call_args_list)

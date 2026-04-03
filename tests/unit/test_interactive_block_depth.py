@@ -23,7 +23,7 @@ def test_fin_fuera_de_bloque_se_rechaza() -> None:
     cmd = InteractiveCommand(MagicMock())
     cmd._estado_repl = cmd._crear_estado_repl()
 
-    with pytest.raises(ParserError, match=r"^'fin' sin bloque abierto$"):
+    with pytest.raises(ParserError, match=r"^'fin' sin bloque abierto\.$"):
         cmd._actualizar_buffer_y_obtener_codigo_listo([], "fin")
 
 
@@ -77,3 +77,30 @@ def test_lineas_en_blanco_se_ignoran_sin_romper_el_bloque() -> None:
 
     assert mock_ejecutar.call_count == 1
     assert mock_ejecutar.call_args[0][0] == "si verdadero:\nimprimir(1)\nfin"
+
+
+def test_bloque_vacio_se_rechaza_al_cerrar_con_fin() -> None:
+    cmd = InteractiveCommand(MagicMock())
+    cmd._estado_repl = cmd._crear_estado_repl()
+    buffer_lineas = cmd._estado_repl["buffer_lineas"]
+
+    assert cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "si verdadero:") is None
+    with pytest.raises(
+        ParserError,
+        match=r"^El bloque no puede cerrarse con 'fin' sin sentencias no vacías\.$",
+    ):
+        cmd._actualizar_buffer_y_obtener_codigo_listo(buffer_lineas, "fin")
+
+
+def test_exceso_lineas_blanco_consecutivas_en_bloque_lanza_error() -> None:
+    cmd = InteractiveCommand(MagicMock())
+    estado = cmd._crear_estado_repl()
+    estado["nivel_bloque"] = 1
+
+    cmd._manejar_linea_blanca(estado)
+    cmd._manejar_linea_blanca(estado)
+    with pytest.raises(
+        ParserError,
+        match=r"^Máximo de 2 líneas en blanco consecutivas dentro de un bloque\.$",
+    ):
+        cmd._manejar_linea_blanca(estado)
