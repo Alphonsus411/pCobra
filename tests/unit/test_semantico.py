@@ -28,8 +28,10 @@ fin
     ast = Parser(tokens).parsear()
     analizador = AnalizadorSemantico()
 
-    with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
+    with pytest.raises(NameError) as exc_info:
         analizador.analizar(ast)
+
+    assert str(exc_info.value) == "Variable no declarada: x"
 
 
 def test_condicional_variable_no_declarada_con_dos_puntos_espaciado():
