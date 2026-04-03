@@ -423,12 +423,27 @@ class InteractiveCommand(BaseCommand):
             linea: Código a ejecutar
         """
         try:
+            tokens = Lexer(linea).tokenizar()
+            Parser(tokens).parsear()
+
+            script = (
+                "from pcobra.cobra.core import Lexer, Parser\n"
+                "from pcobra.core.interpreter import InterpretadorCobra\n"
+                f"_codigo = {linea!r}\n"
+                "_tokens = Lexer(_codigo).tokenizar()\n"
+                "_ast = Parser(_tokens).parsear()\n"
+                "_interp = InterpretadorCobra()\n"
+                "_interp.ejecutar_ast(_ast)\n"
+            )
+
             salida = ejecutar_en_sandbox(
-                linea,
+                script,
                 allow_insecure_fallback=self._allow_insecure_fallback,
             )
             if salida:
                 mostrar_info(str(salida))
+        except (LexerError, ParserError) as err:
+            self._log_error(_("Error de sintaxis"), err)
         except Exception as err:
             self._log_error(_("Error en sandbox"), err)
 
