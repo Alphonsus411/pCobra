@@ -467,8 +467,9 @@ class InterpretadorCobra:
                             f"'{nombre}' quedó en nodo AST "
                             f"({type(valor_resuelto).__name__})"
                         )
-                    if valor_resuelto is not valor:
-                        contexto[nombre] = valor_resuelto
+                    # Persistimos siempre el valor ya materializado para
+                    # consolidar el contrato de contexto -> materialización.
+                    contexto[nombre] = valor_resuelto
                     return valor_resuelto
             raise NameError(f"Variable no declarada: {nombre}")
         finally:
@@ -538,10 +539,15 @@ class InterpretadorCobra:
         nombre_variable=None,
         operando=None,
     ):
-        """Convierte cualquier nodo de expresión en su valor inmediato.
+        """Convierte nodos/valores a un valor inmediato y materializado.
 
-        El resultado se limita a valores simples reutilizables para evitar
-        reevaluaciones posteriores cuando el valor se guarda en el contexto.
+        Contrato:
+        - si el valor es resoluble, devuelve un valor utilizable por capas
+          superiores (primitivos, contenedores normalizados o entidades runtime);
+        - nunca debe permitir que se propague un ``NodoAST`` residual;
+        - en ``origen='resolucion_variable'`` preserva el flujo
+          ``contexto -> materialización -> persistencia`` para mantener el
+          contexto con valores ya materializados.
         """
         visitados = set() if visitados is None else visitados
         primitivos = (int, float, bool, str, type(None))
@@ -935,7 +941,9 @@ class InterpretadorCobra:
         Contrato explícito de errores del evaluador:
         - identificador ausente -> ``NameError('Variable no declarada: ...')``
         - ciclo de referencias -> ``RuntimeError`` con mensaje de ciclo
-        - nunca ``RecursionError`` por comparación de nodos no resueltos
+        - para comparaciones, ambos operandos se evalúan/materializan por
+          completo antes de aplicar el operador;
+        - nunca debe propagarse un ``NodoAST`` hacia capas superiores.
         """
         visitados = set() if visitados is None else visitados
         if isinstance(expresion, NodoValor):
@@ -970,96 +978,32 @@ class InterpretadorCobra:
             tipo = expresion.operador.tipo
 
             def _materializar_operandos_comparacion():
-                """Evalúa y materializa operandos de comparación.
-
-                Contrato: comparaciones nunca deben operar sobre nodos AST.
-                """
+                """Evalúa y materializa operandos de comparación."""
 
                 def _resolver_operando(operando_expr, nombre_lado):
-                    actual = operando_expr
-                    nodos_vistos = set()
-                    limite_pasos = 64
-                    pasos = 0
+                    nombre_variable = (
+                        operando_expr.nombre
+                        if isinstance(operando_expr, NodoIdentificador)
+                        else None
+                    )
+                    valor_actual = self.evaluar_expresion(operando_expr, visitados)
+                    valor_actual = self._materializar_valor(
+                        valor_actual,
+                        visitados,
+                        origen="comparacion_binaria",
+                        nombre_variable=nombre_variable,
+                        operando=nombre_lado,
+                    )
 
-                    while True:
-                        pasos += 1
-                        if pasos > limite_pasos:
-                            raise RuntimeError(
-                                "No se pudo materializar operando de comparación: "
-                                "límite de pasos excedido"
-                            )
-
-                        if isinstance(actual, NodoAST):
-                            ident = id(actual)
-                            if ident in nodos_vistos:
-                                raise RuntimeError(
-                                    "Recursión indirecta detectada al materializar "
-                                    f"operando de comparación ({nombre_lado})"
-                                )
-                            nodos_vistos.add(ident)
-
-                        try:
-                            valor_actual = (
-                                self.evaluar_expresion(actual, visitados)
-                                if isinstance(actual, NodoAST)
-                                else actual
-                            )
-                            nombre_variable = (
-                                operando_expr.nombre
-                                if isinstance(operando_expr, NodoIdentificador)
-                                else None
-                            )
-                            valor_actual = self._materializar_valor(
-                                valor_actual,
-                                visitados,
-                                origen="comparacion_binaria",
-                                nombre_variable=nombre_variable,
-                                operando=nombre_lado,
-                            )
-                        except RecursionError as exc:
-                            raise RuntimeError(
-                                "Se detectó recursión no acotada en una comparación"
-                            ) from exc
-
-                        if isinstance(valor_actual, NodoIdentificador):
-                            raise NameError(
-                                "No se pudo resolver identificador en comparación "
-                                f"({nombre_lado}): {valor_actual.nombre}"
-                            )
-
-                        if isinstance(valor_actual, NodoAST):
-                            nombre_variable = (
-                                operando_expr.nombre
-                                if isinstance(operando_expr, NodoIdentificador)
-                                else "<no_identificador>"
-                            )
-                            if valor_actual is actual:
-                                raise RuntimeError(
-                                    "Recursión indirecta detectada al materializar "
-                                    "operando de comparación "
-                                    f"({nombre_lado}, variable: {nombre_variable})"
-                                )
-                            raise RuntimeError(
-                                "Operando de comparación no materializado: "
-                                f"lado {nombre_lado}, variable {nombre_variable}, "
-                                f"nodo {type(valor_actual).__name__}"
-                            )
-
-                        return valor_actual
+                    if isinstance(valor_actual, NodoAST):
+                        raise RuntimeError(
+                            "Operando de comparación no materializado: "
+                            f"lado {nombre_lado}, nodo {type(valor_actual).__name__}"
+                        )
+                    return valor_actual
 
                 izquierda_cmp = _resolver_operando(expresion.izquierda, "izquierdo")
                 derecha_cmp = _resolver_operando(expresion.derecha, "derecho")
-
-                for nombre, operando in (
-                    ("izquierdo", izquierda_cmp),
-                    ("derecho", derecha_cmp),
-                ):
-                    if isinstance(operando, NodoAST):
-                        raise RuntimeError(
-                            "Operando no materializado en comparación "
-                            f"({nombre}): {type(operando).__name__}"
-                        )
-
                 return izquierda_cmp, derecha_cmp
 
             if tipo == TipoToken.MAYORQUE:
