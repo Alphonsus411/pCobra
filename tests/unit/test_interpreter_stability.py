@@ -67,3 +67,13 @@ def test_anidamiento_profundo_no_lanza_recursion_error() -> None:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
     assert inter.variables["ok"] == 1
+
+
+def test_identificador_y_en_declaracion_y_uso() -> None:
+    inter = _ejecutar_codigo(
+        """
+var y = 3
+var resultado = y + 4
+"""
+    )
+    assert inter.variables["resultado"] == 7
