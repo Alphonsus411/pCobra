@@ -31,7 +31,7 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 
     PROMPT_TOOLKIT_AVAILABLE = False
 
-from pcobra.cobra.core import Lexer, LexerError
+from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
@@ -78,11 +78,18 @@ class InteractiveCommand(BaseCommand):
     MAX_LINE_LENGTH = 10000
     MEMORY_LIMIT_MB = 1024
     MAX_AST_DEPTH = 100
-    _BLOQUE_APERTURA_RE = re.compile(
-        r"^\s*(si|mientras|para|func|clase|try|intentar|switch)\b.*:\s*$",
-        re.IGNORECASE,
+    _TOKENS_APERTURA_BLOQUE = frozenset(
+        {
+            TipoToken.SI,
+            TipoToken.MIENTRAS,
+            TipoToken.PARA,
+            TipoToken.FUNC,
+            TipoToken.CLASE,
+            TipoToken.TRY,
+            TipoToken.INTENTAR,
+            TipoToken.SWITCH,
+        }
     )
-    _BLOQUE_CIERRE_RE = re.compile(r"\bfin\b", re.IGNORECASE)
 
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
@@ -326,16 +333,15 @@ class InteractiveCommand(BaseCommand):
                     ):
                         continue
 
-                    buffer_lineas.append(linea)
-                    nivel_bloque += self._contar_aperturas_bloque(linea)
-                    nivel_bloque -= self._contar_cierres_bloque(linea)
-                    if nivel_bloque < 0:
-                        nivel_bloque = 0
-                    if nivel_bloque > 0:
+                    codigo = self._actualizar_buffer_y_obtener_codigo_listo(
+                        buffer_lineas,
+                        linea,
+                    )
+                    nivel_bloque = self._calcular_balance_estructural(
+                        "\n".join(buffer_lineas)
+                    )
+                    if codigo is None:
                         continue
-
-                    codigo = "\n".join(buffer_lineas)
-                    buffer_lineas.clear()
 
                     # Ejecutar código
                     if sandbox:
@@ -402,18 +408,17 @@ class InteractiveCommand(BaseCommand):
                 ):
                     continue
 
-                buffer_lineas.append(linea)
-                nivel_bloque += self._contar_aperturas_bloque(linea)
-                nivel_bloque -= self._contar_cierres_bloque(linea)
-                if nivel_bloque < 0:
-                    nivel_bloque = 0
-                if nivel_bloque > 0:
-                    continue
-
-                codigo = "\n".join(buffer_lineas)
-                buffer_lineas.clear()
-
                 try:
+                    codigo = self._actualizar_buffer_y_obtener_codigo_listo(
+                        buffer_lineas,
+                        linea,
+                    )
+                    nivel_bloque = self._calcular_balance_estructural(
+                        "\n".join(buffer_lineas)
+                    )
+                    if codigo is None:
+                        continue
+
                     if sandbox:
                         self._ejecutar_en_sandbox(codigo)
                     else:
@@ -427,13 +432,43 @@ class InteractiveCommand(BaseCommand):
 
         return 0
 
-    def _contar_aperturas_bloque(self, linea: str) -> int:
-        """Cuenta aperturas de bloque en una línea."""
-        return 1 if self._BLOQUE_APERTURA_RE.match(linea) else 0
+    def _tokenizar_para_balance(self, codigo: str) -> list[Any]:
+        """Tokeniza código para calcular balance estructural del bloque."""
+        if not codigo.strip():
+            return []
+        return Lexer(codigo).tokenizar()
 
-    def _contar_cierres_bloque(self, linea: str) -> int:
-        """Cuenta cierres de bloque mediante la palabra clave ``fin``."""
-        return len(self._BLOQUE_CIERRE_RE.findall(linea))
+    def _contar_aperturas_bloque(self, codigo: str) -> int:
+        """Cuenta aperturas de bloque ignorando cadenas y comentarios."""
+        tokens = self._tokenizar_para_balance(codigo)
+        return sum(1 for token in tokens if token.tipo in self._TOKENS_APERTURA_BLOQUE)
+
+    def _contar_cierres_bloque(self, codigo: str) -> int:
+        """Cuenta cierres de bloque mediante el token ``FIN``."""
+        tokens = self._tokenizar_para_balance(codigo)
+        return sum(1 for token in tokens if token.tipo == TipoToken.FIN)
+
+    def _calcular_balance_estructural(self, codigo: str) -> int:
+        """Calcula el balance estructural acumulado del buffer multilinea."""
+        if not codigo.strip():
+            return 0
+        try:
+            aperturas = self._contar_aperturas_bloque(codigo)
+            cierres = self._contar_cierres_bloque(codigo)
+        except UnclosedStringError:
+            return 1
+        return max(0, aperturas - cierres)
+
+    def _actualizar_buffer_y_obtener_codigo_listo(
+        self, buffer_lineas: list[str], linea: str
+    ) -> Optional[str]:
+        """Agrega línea al buffer y retorna código completo si el bloque cerró."""
+        buffer_lineas.append(linea)
+        codigo = "\n".join(buffer_lineas)
+        if self._calcular_balance_estructural(codigo) != 0:
+            return None
+        buffer_lineas.clear()
+        return codigo
 
     def _procesar_comando_especial(self, linea: str, validador: Optional[Any]) -> bool:
         """Procesa comandos especiales del REPL.
