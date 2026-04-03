@@ -232,3 +232,45 @@ def test_comparacion_con_ciclo_alias_lanza_error_controlado_y_no_recursionerror(
 
     with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
         inter.evaluar_expresion(expresion)
+
+
+def test_operacion_suma_materializa_identificador_y_alias() -> None:
+    inter = InterpretadorCobra()
+    inter.variables["a"] = NodoIdentificador("b")
+    inter.variables["b"] = NodoValor(7)
+
+    expresion = NodoOperacionBinaria(
+        NodoIdentificador("a"),
+        Token(TipoToken.SUMA, "+"),
+        NodoValor(3),
+    )
+
+    assert inter.evaluar_expresion(expresion) == 10
+
+
+def test_operacion_and_materializa_identificador_y_alias() -> None:
+    inter = InterpretadorCobra()
+    inter.variables["flag"] = NodoIdentificador("alias_flag")
+    inter.variables["alias_flag"] = NodoValor(True)
+
+    expresion = NodoOperacionBinaria(
+        NodoIdentificador("flag"),
+        Token(TipoToken.AND, "&&"),
+        NodoValor(True),
+    )
+
+    assert inter.evaluar_expresion(expresion) is True
+
+
+def test_operacion_or_materializa_identificador_y_alias() -> None:
+    inter = InterpretadorCobra()
+    inter.variables["flag"] = NodoIdentificador("alias_flag")
+    inter.variables["alias_flag"] = NodoValor(False)
+
+    expresion = NodoOperacionBinaria(
+        NodoIdentificador("flag"),
+        Token(TipoToken.OR, "||"),
+        NodoValor(True),
+    )
+
+    assert inter.evaluar_expresion(expresion) is True

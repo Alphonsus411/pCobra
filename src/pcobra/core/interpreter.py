@@ -657,6 +657,16 @@ class InterpretadorCobra:
                         f"nodo: {type(actual).__name__})"
                     )
 
+            elif origen == "operacion_binaria":
+                if isinstance(actual, NodoIdentificador):
+                    actual = self._resolver_identificador(actual.nombre, visitados)
+                    continue
+                if isinstance(actual, NodoAST):
+                    raise RuntimeError(
+                        "No se pudo materializar el operando de operación binaria: "
+                        f"nodo AST no resoluble ({type(actual).__name__})"
+                    )
+
             else:
                 expresiones_soportadas = (
                     NodoAsignacion,
@@ -1033,6 +1043,29 @@ class InterpretadorCobra:
 
             izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
             derecha = self.evaluar_expresion(expresion.derecha, visitados)
+
+            izquierda = self._materializar_valor(
+                izquierda,
+                visitados,
+                origen="operacion_binaria",
+                nombre_variable=(
+                    expresion.izquierda.nombre
+                    if isinstance(expresion.izquierda, NodoIdentificador)
+                    else None
+                ),
+                operando="izquierdo",
+            )
+            derecha = self._materializar_valor(
+                derecha,
+                visitados,
+                origen="operacion_binaria",
+                nombre_variable=(
+                    expresion.derecha.nombre
+                    if isinstance(expresion.derecha, NodoIdentificador)
+                    else None
+                ),
+                operando="derecho",
+            )
 
             if tipo == TipoToken.SUMA:
                 verificar_sumables(izquierda, derecha)
