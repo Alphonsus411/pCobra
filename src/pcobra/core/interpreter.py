@@ -660,12 +660,13 @@ class InterpretadorCobra:
             elif origen == "operacion_binaria":
                 if isinstance(actual, NodoIdentificador):
                     actual = self._resolver_identificador(actual.nombre, visitados)
-                    continue
                 if isinstance(actual, NodoAST):
                     raise RuntimeError(
                         "No se pudo materializar el operando de operación binaria: "
-                        f"nodo AST no resoluble ({type(actual).__name__})"
+                        f"nodo AST residual ({type(actual).__name__})"
                     )
+                if actual is not valor:
+                    continue
 
             else:
                 expresiones_soportadas = (
@@ -971,8 +972,6 @@ class InterpretadorCobra:
             # Resuelve asignaciones anidadas y devuelve su valor
             return self.ejecutar_asignacion(expresion, visitados)
         elif isinstance(expresion, NodoIdentificador):
-            # Contrato: toda resolución de identificadores pasa por
-            # `_resolver_identificador` para unificar ciclo/materialización.
             return self._resolver_identificador(expresion.nombre, visitados)
         elif isinstance(expresion, NodoInstancia):
             return self.ejecutar_instancia(expresion)
@@ -998,23 +997,11 @@ class InterpretadorCobra:
                 izquierda,
                 visitados,
                 origen="operacion_binaria",
-                nombre_variable=(
-                    expresion.izquierda.nombre
-                    if isinstance(expresion.izquierda, NodoIdentificador)
-                    else None
-                ),
-                operando="izquierdo",
             )
             derecha = self._materializar_valor(
                 derecha,
                 visitados,
                 origen="operacion_binaria",
-                nombre_variable=(
-                    expresion.derecha.nombre
-                    if isinstance(expresion.derecha, NodoIdentificador)
-                    else None
-                ),
-                operando="derecho",
             )
 
             if isinstance(izquierda, NodoAST):
