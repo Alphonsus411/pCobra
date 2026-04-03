@@ -662,11 +662,12 @@ class ClassicParser:
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
             raise ParserError("Se esperaba ':' después de la condición del 'si'")
-        else:
-            self.comer(TipoToken.DOSPUNTOS)
+        self.comer(TipoToken.DOSPUNTOS)
 
         bloque_si = self._parse_bloque_condicional(
-            [TipoToken.SINO, TipoToken.SINO_SI, TipoToken.FIN, TipoToken.EOF], "si"
+            [TipoToken.SINO, TipoToken.SINO_SI, TipoToken.FIN, TipoToken.EOF],
+            "si",
+            recuperar_errores=False,
         )
 
         bloque_sino: List[Any] = []
@@ -676,30 +677,32 @@ class ClassicParser:
             self.comer(TipoToken.SINO)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
                 raise ParserError("Se esperaba ':' después de 'sino'")
-            else:
-                self.comer(TipoToken.DOSPUNTOS)
+            self.comer(TipoToken.DOSPUNTOS)
             bloque_sino = self._parse_bloque_condicional(
-                [TipoToken.FIN, TipoToken.EOF], "sino"
+                [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
 
         if self.token_actual().tipo != TipoToken.FIN:
-            self.reportar_error("Se esperaba 'fin' para cerrar el bloque condicional")
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
-        else:
-            self.comer(TipoToken.FIN)
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+        self.comer(TipoToken.FIN)
 
         logger.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
         return NodoCondicional(condicion, bloque_si, bloque_sino)
 
     def _parse_bloque_condicional(
-        self, terminadores: List[TipoToken], nombre_bloque: str
+        self,
+        terminadores: List[TipoToken],
+        nombre_bloque: str,
+        *,
+        recuperar_errores: bool = True,
     ) -> List[Any]:
         bloque: List[Any] = []
         while self.token_actual().tipo not in terminadores:
             try:
                 bloque.append(self.declaracion())
             except ParserError as e:
+                if not recuperar_errores:
+                    raise
                 logger.error(f"Error en el bloque '{nombre_bloque}': {e}")
                 self.reportar_error(f"Error en el bloque '{nombre_bloque}': {e}")
                 if self.token_actual().tipo != TipoToken.EOF:
@@ -729,12 +732,12 @@ class ClassicParser:
 
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
             raise ParserError("Se esperaba ':' después de la condición del 'sino si'")
-        else:
-            self.comer(TipoToken.DOSPUNTOS)
+        self.comer(TipoToken.DOSPUNTOS)
 
         bloque_si = self._parse_bloque_condicional(
             [TipoToken.SINO, TipoToken.SINO_SI, TipoToken.FIN, TipoToken.EOF],
             "sino si",
+            recuperar_errores=False,
         )
 
         bloque_sino: List[Any] = []
@@ -744,10 +747,9 @@ class ClassicParser:
             self.comer(TipoToken.SINO)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
                 raise ParserError("Se esperaba ':' después de 'sino'")
-            else:
-                self.comer(TipoToken.DOSPUNTOS)
+            self.comer(TipoToken.DOSPUNTOS)
             bloque_sino = self._parse_bloque_condicional(
-                [TipoToken.FIN, TipoToken.EOF], "sino"
+                [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
 
         return NodoCondicional(condicion, bloque_si, bloque_sino)
