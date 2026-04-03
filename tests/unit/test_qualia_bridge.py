@@ -265,12 +265,76 @@ def test_qualia_optional_dependency_logs_info_once(tmp_path, monkeypatch, caplog
     module.qualia_status()
     module.qualia_status()
 
-    info_logs = [
+    disable_logs = [
         rec.message
         for rec in caplog.records
-        if rec.levelname == "INFO"
+        if rec.levelname in {"INFO", "DEBUG"}
         and "Qualia subsystem disabled: optional dependency not installed." in rec.message
     ]
     error_logs = [rec for rec in caplog.records if rec.levelname == "ERROR"]
-    assert len(info_logs) == 1
+    assert len(disable_logs) == 1
     assert not error_logs
+
+
+def test_qualia_status_reports_optional_dependency_missing(tmp_path, monkeypatch, caplog):
+    module, _ = _reload_qualia(tmp_path, monkeypatch)
+    monkeypatch.setattr(module.database, "is_sqliteplus_available", lambda: False)
+    monkeypatch.setattr(module, "QUALIA_AVAILABLE", None)
+    monkeypatch.setattr(module, "_DATABASE_AVAILABLE", True)
+    monkeypatch.setattr(module, "_OPTIONAL_DB_LOGGED", False)
+    monkeypatch.setattr(module, "_QUALIA_INSTANCE", None)
+    caplog.set_level("DEBUG")
+
+    status = module.qualia_status()
+
+    assert status["enabled"] is False
+    assert status["reason_code"] == "optional_dependency_missing"
+    assert not [rec for rec in caplog.records if rec.levelname == "ERROR"]
+
+
+def test_qualia_optional_loader_failure_does_not_log_error(tmp_path, monkeypatch, caplog):
+    module, _ = _reload_qualia(tmp_path, monkeypatch)
+    monkeypatch.setattr(module.database, "is_sqliteplus_available", lambda: True)
+    monkeypatch.setattr(
+        module.database,
+        "get_connection",
+        lambda: (_ for _ in ()).throw(FileNotFoundError("utils/sqliteplus_sync.py")),
+    )
+    monkeypatch.setattr(module, "QUALIA_AVAILABLE", None)
+    monkeypatch.setattr(module, "_DATABASE_AVAILABLE", True)
+    monkeypatch.setattr(module, "_OPTIONAL_DB_LOGGED", False)
+    monkeypatch.setattr(module, "_QUALIA_INSTANCE", None)
+    caplog.set_level("DEBUG")
+
+    status = module.qualia_status()
+
+    disable_logs = [
+        rec.message
+        for rec in caplog.records
+        if rec.levelname in {"INFO", "DEBUG"}
+        and rec.message == "Qualia subsystem disabled: optional dependency not installed."
+    ]
+    assert status["enabled"] is False
+    assert status["reason_code"] == "optional_dependency_missing"
+    assert len(disable_logs) == 1
+    assert not [rec for rec in caplog.records if rec.levelname == "ERROR"]
+
+
+def test_qualia_status_ok_when_dependency_is_available(tmp_path, monkeypatch, caplog):
+    module, _ = _reload_qualia(tmp_path, monkeypatch)
+    monkeypatch.setattr(module.database, "is_sqliteplus_available", lambda: True)
+    monkeypatch.setattr(module, "QUALIA_AVAILABLE", None)
+    monkeypatch.setattr(module, "_DATABASE_AVAILABLE", True)
+    monkeypatch.setattr(module, "_OPTIONAL_DB_LOGGED", False)
+    monkeypatch.setattr(module, "_QUALIA_INSTANCE", None)
+    caplog.set_level("DEBUG")
+
+    status = module.qualia_status()
+
+    assert status["enabled"] is True
+    assert status["reason_code"] == "ok"
+    assert not [
+        rec
+        for rec in caplog.records
+        if "Qualia subsystem disabled: optional dependency not installed." in rec.message
+    ]
