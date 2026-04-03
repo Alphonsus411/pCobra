@@ -415,15 +415,49 @@ class InterpretadorCobra:
         Evita seguir referencias encadenadas para prevenir bucles
         innecesarios y devuelve el valor almacenado directamente.
         """
+        return self._resolver_identificador(nombre, visitados)
+
+    def _asignacion_referencia_identificador(self, expresion, nombre):
+        """Detecta si una expresión contiene una referencia al identificador."""
+        if isinstance(expresion, NodoIdentificador):
+            return expresion.nombre == nombre
+        if isinstance(expresion, Token):
+            return False
+        for valor in getattr(expresion, "__dict__", {}).values():
+            if isinstance(valor, list):
+                for elem in valor:
+                    if self._asignacion_referencia_identificador(elem, nombre):
+                        return True
+            elif self._asignacion_referencia_identificador(valor, nombre):
+                return True
+        return False
+
+    def _validar_asignacion_autorreferente(self, nombre, valor):
+        """Valida que una variable no apunte a una asignación autorreferente."""
+        if not isinstance(valor, NodoAsignacion):
+            return
+        expresion = getattr(valor, "expresion", getattr(valor, "valor", None))
+        if self._asignacion_referencia_identificador(expresion, nombre):
+            raise RuntimeError(
+                f"Asignación circular inválida para variable '{nombre}'"
+            )
+
+    def _resolver_identificador(self, nombre, visitados=None):
+        """Resuelve un identificador usando únicamente la pila de contextos."""
         visitados = visitados or set()
         if nombre in visitados:
-            raise RuntimeError(f"Referencia circular detectada en '{nombre}'")
+            raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
         visitados.add(nombre)
         try:
             for contexto in reversed(self.contextos):
                 if nombre in contexto:
                     valor = contexto[nombre]
-                    valor_resuelto = self._materializar_valor(valor, visitados)
+                    self._validar_asignacion_autorreferente(nombre, valor)
+                    valor_resuelto = self._materializar_valor(
+                        valor,
+                        visitados,
+                        origen="resolucion_variable",
+                    )
                     if valor_resuelto is not valor:
                         contexto[nombre] = valor_resuelto
                     return valor_resuelto
@@ -486,7 +520,7 @@ class InterpretadorCobra:
             "metodos": [self._construir_funcion(m) for m in nodo.metodos],
         }
 
-    def _materializar_valor(self, valor, visitados=None):
+    def _materializar_valor(self, valor, visitados=None, origen="general"):
         """Convierte cualquier nodo de expresión en su valor inmediato.
 
         El resultado se limita a valores simples reutilizables para evitar
@@ -503,18 +537,36 @@ class InterpretadorCobra:
         }:
             return valor.valor
 
-        expresiones_soportadas = (
-            NodoAsignacion,
-            NodoIdentificador,
-            NodoInstancia,
-            NodoAtributo,
-            NodoHolobit,
-            NodoEsperar,
-            NodoOperacionBinaria,
-            NodoOperacionUnaria,
-            NodoLlamadaMetodo,
-            NodoLlamadaFuncion,
-        )
+        if (
+            origen == "resolucion_variable"
+            and isinstance(valor, NodoIdentificador)
+        ):
+            return self._resolver_identificador(valor.nombre, visitados)
+
+        if origen == "resolucion_variable":
+            expresiones_soportadas = (
+                NodoAtributo,
+                NodoInstancia,
+                NodoHolobit,
+                NodoEsperar,
+                NodoOperacionBinaria,
+                NodoOperacionUnaria,
+                NodoLlamadaMetodo,
+                NodoLlamadaFuncion,
+            )
+        else:
+            expresiones_soportadas = (
+                NodoAsignacion,
+                NodoIdentificador,
+                NodoInstancia,
+                NodoAtributo,
+                NodoHolobit,
+                NodoEsperar,
+                NodoOperacionBinaria,
+                NodoOperacionUnaria,
+                NodoLlamadaMetodo,
+                NodoLlamadaFuncion,
+            )
 
         if isinstance(valor, expresiones_soportadas):
             return self.evaluar_expresion(valor, visitados)
@@ -748,7 +800,7 @@ class InterpretadorCobra:
             # Resuelve asignaciones anidadas y devuelve su valor
             return self.ejecutar_asignacion(expresion, visitados)
         elif isinstance(expresion, NodoIdentificador):
-            return self.obtener_variable(expresion.nombre, visitados)
+            return self._resolver_identificador(expresion.nombre, visitados)
         elif isinstance(expresion, NodoInstancia):
             return self.ejecutar_instancia(expresion)
         elif isinstance(expresion, NodoAtributo):
