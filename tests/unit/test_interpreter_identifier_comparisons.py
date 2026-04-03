@@ -7,6 +7,7 @@ import pytest
 
 from cobra.core import TipoToken, Token
 from core.ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoCondicional,
     NodoIdentificador,
@@ -54,6 +55,27 @@ def _ejecutar_codigo_y_capturar_salida(codigo: str) -> str:
 def _ultima_linea_no_vacia(salida: str) -> str:
     lineas = [linea for linea in salida.strip().splitlines() if linea.strip()]
     return lineas[-1] if lineas else ""
+
+
+def _ejecutar_codigo_y_capturar_stdout_completo(codigo: str) -> str:
+    tokens = Lexer(codigo).tokenizar()
+    ast = Parser(tokens).parsear()
+    inter = InterpretadorCobra()
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    return out.getvalue()
 
 
 def test_comparacion_identificador_en_imprimir_sin_recursionerror() -> None:
@@ -324,3 +346,99 @@ def test_operacion_or_materializa_identificador_y_alias() -> None:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
     assert resultado is True
+
+
+def test_debug_traces_en_comparacion_identificador_simple() -> None:
+    salida = _ejecutar_codigo_y_capturar_stdout_completo(
+        """
+x = 10
+imprimir x == 10
+"""
+    )
+
+    assert "[AST BEFORE OPT]" in salida
+    assert "[AST AFTER OPT]" in salida
+    assert "[EVAL]" in salida
+    assert "[BIN-ENTER]" in salida
+    assert "[BIN-LEFT]" in salida
+    assert "[BIN-RIGHT]" in salida
+    assert "[BIN-RESULT]" in salida
+    assert _ultima_linea_no_vacia(salida) == "True"
+
+
+def test_debug_traces_en_comparacion_identificador_con_suma() -> None:
+    salida = _ejecutar_codigo_y_capturar_stdout_completo(
+        """
+x = 5
+imprimir x + 5 == 10
+"""
+    )
+
+    assert "[AST BEFORE OPT]" in salida
+    assert "[AST AFTER OPT]" in salida
+    assert "[EVAL]" in salida
+    assert "[BIN-ENTER]" in salida
+    assert "[BIN-LEFT]" in salida
+    assert "[BIN-RIGHT]" in salida
+    assert "[BIN-RESULT]" in salida
+    assert _ultima_linea_no_vacia(salida) == "True"
+
+
+def test_debug_traces_identificador_derecho_indefinido_nameerror_sin_recursionerror() -> None:
+    codigo = """
+x = 10
+imprimir x == y
+"""
+
+    try:
+        with pytest.raises(NameError, match=r"^Variable no declarada: y$"):
+            _ejecutar_codigo_y_capturar_stdout_completo(codigo)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+
+def test_ast_ciclico_en_evaluacion_lanza_error_controlado_sin_recursionerror() -> None:
+    inter = InterpretadorCobra()
+    ciclo = NodoOperacionBinaria(
+        NodoValor(1),
+        Token(TipoToken.SUMA, "+"),
+        NodoValor(2),
+    )
+    ciclo.derecha = ciclo
+
+    try:
+        with patch.object(
+            NodoOperacionBinaria,
+            "__repr__",
+            lambda self: "<NodoOperacionBinariaCiclico>",
+        ):
+            with pytest.raises(Exception, match=r"Recursive evaluation detected"):
+                inter.evaluar_expresion(ciclo)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+
+def test_binarias_con_identificadores_no_retorna_nodoast() -> None:
+    inter = InterpretadorCobra()
+    inter.variables["x"] = NodoValor(10)
+
+    expresiones = [
+        NodoOperacionBinaria(
+            NodoIdentificador("x"),
+            Token(TipoToken.IGUAL, "=="),
+            NodoValor(10),
+        ),
+        NodoOperacionBinaria(
+            NodoOperacionBinaria(
+                NodoIdentificador("x"),
+                Token(TipoToken.SUMA, "+"),
+                NodoValor(5),
+            ),
+            Token(TipoToken.IGUAL, "=="),
+            NodoValor(15),
+        ),
+    ]
+
+    for expr in expresiones:
+        resultado = inter.evaluar_expresion(expr)
+        assert not isinstance(resultado, NodoAST)
