@@ -791,6 +791,25 @@ class InterpretadorCobra:
         finally:
             visitados.discard(nombre)
 
+    @staticmethod
+    def _debug_resumen_ast_habilitado() -> bool:
+        """Activa una salida resumida del AST cuando el repr es grande."""
+        return os.getenv("PCOBRA_DEBUG_AST_RESUMEN", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    @staticmethod
+    def _resumir_ast(ast, max_chars: int = 2000) -> str:
+        """Devuelve un resumen del AST sin reemplazar la impresión completa."""
+        ast_repr = repr(ast)
+        if len(ast_repr) <= max_chars:
+            return ast_repr
+        restante = len(ast_repr) - max_chars
+        return f"{ast_repr[:max_chars]}... <recortado {restante} caracteres>"
+
     def ejecutar_ast(self, ast):
         # Pipeline explícito:
         # 1) parseo/entrada tipada válida
@@ -811,9 +830,22 @@ class InterpretadorCobra:
             _lim_cpu(cpu)
 
         self._asegurar_ast_tipado(ast, "pre_optimizacion")
-        ast = remove_dead_code(
-            inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
-        )
+        print("[AST BEFORE OPT]")
+        print(ast)
+        if self._debug_resumen_ast_habilitado():
+            print("[AST BEFORE OPT][SUMMARY]")
+            print(self._resumir_ast(ast))
+
+        ast = optimize_constants(ast)
+        ast = eliminate_common_subexpressions(ast)
+        ast = inline_functions(ast)
+        ast = remove_dead_code(ast)
+
+        print("[AST AFTER OPT]")
+        print(ast)
+        if self._debug_resumen_ast_habilitado():
+            print("[AST AFTER OPT][SUMMARY]")
+            print(self._resumir_ast(ast))
         self._asegurar_ast_tipado(ast, "post_optimizacion")
         # Genera y expone el IR interno correspondiente al AST
         self.ultimo_ir = self.generar_internal_ir(ast)
