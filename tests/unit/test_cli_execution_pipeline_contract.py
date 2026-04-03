@@ -55,6 +55,41 @@ def test_contrato_error_igual_entre_modo_archivo_y_interactivo():
     assert str(err_execute.value) == str(err_interactive.value)
 
 
+@pytest.mark.parametrize(
+    ("codigo_invalido", "caso"),
+    [
+        ("si verdadero:\nimprimir(1)\nfin", "condicional válido con ':'"),
+        ("si verdadero\nimprimir(1)\nfin", "condicional sin ':'"),
+        ("si verdadero:\nimprimir(1)", "condicional sin 'fin'"),
+    ],
+)
+def test_contrato_pipeline_error_y_mensaje_entre_no_interactivo_y_repl(
+    codigo_invalido, caso
+):
+    cmd_execute = ExecuteCommand()
+    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+
+    def _capturar_error_no_interactivo():
+        try:
+            cmd_execute._analizar_codigo(codigo_invalido)
+            return None
+        except Exception as exc:  # noqa: BLE001 - contrato explícito del test
+            return exc
+
+    def _capturar_error_repl():
+        try:
+            cmd_interactive.ejecutar_codigo(codigo_invalido)
+            return None
+        except Exception as exc:  # noqa: BLE001 - contrato explícito del test
+            return exc
+
+    err_execute = _capturar_error_no_interactivo()
+    err_repl = _capturar_error_repl()
+
+    assert type(err_execute) is type(err_repl), f"{caso}: tipo de error divergente"
+    assert str(err_execute) == str(err_repl), f"{caso}: mensaje de error divergente"
+
+
 
 def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
     inputs = ["si verdadero:", "imprimir(1)", "fin", "salir"]
