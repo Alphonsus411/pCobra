@@ -460,6 +460,12 @@ class InterpretadorCobra:
                         visitados,
                         origen="resolucion_variable",
                     )
+                    if isinstance(valor_resuelto, NodoAST):
+                        raise RuntimeError(
+                            "Resolución inválida de variable: "
+                            f"'{nombre}' quedó en nodo AST "
+                            f"({type(valor_resuelto).__name__})"
+                        )
                     if valor_resuelto is not valor:
                         contexto[nombre] = valor_resuelto
                     return valor_resuelto
@@ -582,6 +588,13 @@ class InterpretadorCobra:
                 actual = actual.valor
                 continue
 
+            if (
+                origen == "resolucion_variable"
+                and isinstance(actual, dict)
+                and actual.get("tipo") in {"funcion", "clase", "instancia"}
+            ):
+                return actual
+
             if isinstance(actual, contenedores):
                 actual = _normalizar_contenedor(actual)
                 self._verificar_valor_contexto(actual)
@@ -592,14 +605,10 @@ class InterpretadorCobra:
                     actual = self._resolver_identificador(actual.nombre, visitados)
                     continue
                 if isinstance(actual, NodoAST):
-                    try:
-                        actual = self.evaluar_expresion(actual, visitados)
-                        continue
-                    except ValueError as exc:
-                        raise RuntimeError(
-                            "No se pudo materializar un nodo AST durante la resolución "
-                            f"de variable ({type(actual).__name__}): {exc}"
-                        ) from exc
+                    raise RuntimeError(
+                        "No se pudo materializar un nodo AST durante la resolución "
+                        f"de variable ({type(actual).__name__})"
+                    )
 
             else:
                 expresiones_soportadas = (
