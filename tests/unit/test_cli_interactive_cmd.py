@@ -43,6 +43,7 @@ def _args():
         extra_validators=None,
         sandbox=False,
         sandbox_docker=None,
+        ignore_memory_limit=True,
     )
 
 
@@ -135,3 +136,36 @@ def test_interactive_history_append(tmp_path):
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())
     assert fake_path.exists()
+
+
+def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
+    inputs = ['si 1 == 1 :', 'imprimir "ok"', 'fin', 'salir']
+    cmd = InteractiveCommand(MagicMock())
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    mock_ejecutar.assert_called_once_with('si 1 == 1 :\nimprimir "ok"\nfin', None)
+
+
+def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
+    cmd = InteractiveCommand(MagicMock())
+    prompts = []
+    entradas = iter(['si 1 == 1 :', 'imprimir "ok"', 'fin', 'salir'])
+
+    def _prompt_side_effect(prompt_text):
+        prompts.append(prompt_text)
+        return next(entradas)
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=_prompt_side_effect), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+        cmd.run(_args())
+
+    assert prompts[:3] == ['cobra> ', '... ', '... ']
+    assert mock_ejecutar.call_count == 1

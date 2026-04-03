@@ -32,6 +32,20 @@ fin
         analizador.analizar(ast)
 
 
+def test_condicional_variable_no_declarada_con_dos_puntos_espaciado():
+    codigo = """
+si x == 10 :
+    pasar
+fin
+"""
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    analizador = AnalizadorSemantico()
+
+    with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
+        analizador.analizar(ast)
+
+
 def test_conflicto_duplicado_funcion():
     ast = [
         NodoFuncion("f", [], []),
