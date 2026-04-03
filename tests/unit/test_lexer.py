@@ -140,17 +140,41 @@ def test_lexer_sino_si_y_elseif_generan_token_unico():
     ]
 
 
-def test_lexer_alias_logicos_en_espanol():
+def test_lexer_identificador_y_no_se_confunde_con_and():
+    codigo = "var x = y"
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.VAR, "var"),
+        (TipoToken.IDENTIFICADOR, "x"),
+        (TipoToken.ASIGNAR, "="),
+        (TipoToken.IDENTIFICADOR, "y"),
+        (TipoToken.EOF, None),
+    ]
+
+
+def test_lexer_and_simbolico_se_mantiene():
+    codigo = "a && b"
+    tokens = Lexer(codigo).analizar_token()
+
+    assert [(t.tipo, t.valor) for t in tokens] == [
+        (TipoToken.IDENTIFICADOR, "a"),
+        (TipoToken.AND, "&&"),
+        (TipoToken.IDENTIFICADOR, "b"),
+        (TipoToken.EOF, None),
+    ]
+
+
+def test_lexer_alias_logicos_textuales_son_identificadores():
     codigo = "a y b o no c"
     tokens = Lexer(codigo).analizar_token()
 
     assert [(t.tipo, t.valor) for t in tokens] == [
         (TipoToken.IDENTIFICADOR, "a"),
-        (TipoToken.AND, "y"),
+        (TipoToken.IDENTIFICADOR, "y"),
         (TipoToken.IDENTIFICADOR, "b"),
-        (TipoToken.OR, "o"),
-        (TipoToken.NOT, "no"),
+        (TipoToken.IDENTIFICADOR, "o"),
+        (TipoToken.IDENTIFICADOR, "no"),
         (TipoToken.IDENTIFICADOR, "c"),
         (TipoToken.EOF, None),
     ]
-
