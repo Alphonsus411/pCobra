@@ -1008,9 +1008,16 @@ class InterpretadorCobra:
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo
+                print(f"[BIN-ENTER] id={expresion_id} op={tipo}")
 
                 izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
+                print(
+                    f"[BIN-LEFT] value={izquierda!r} type={type(izquierda).__name__}"
+                )
                 derecha = self.evaluar_expresion(expresion.derecha, visitados)
+                print(
+                    f"[BIN-RIGHT] value={derecha!r} type={type(derecha).__name__}"
+                )
 
                 izquierda = self._materializar_valor(
                     izquierda,
@@ -1050,42 +1057,94 @@ class InterpretadorCobra:
 
                 if tipo == TipoToken.MAYORQUE:
                     verificar_comparables(izquierda, derecha, ">")
-                    return _aplicar_comparacion(lambda i, d: i > d)
+                    result = _aplicar_comparacion(lambda i, d: i > d)
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.MENORQUE:
                     verificar_comparables(izquierda, derecha, "<")
-                    return _aplicar_comparacion(lambda i, d: i < d)
+                    result = _aplicar_comparacion(lambda i, d: i < d)
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.MAYORIGUAL:
                     verificar_comparables(izquierda, derecha, ">=")
-                    return _aplicar_comparacion(lambda i, d: i >= d)
+                    result = _aplicar_comparacion(lambda i, d: i >= d)
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.MENORIGUAL:
                     verificar_comparables(izquierda, derecha, "<=")
-                    return _aplicar_comparacion(lambda i, d: i <= d)
+                    result = _aplicar_comparacion(lambda i, d: i <= d)
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.IGUAL:
-                    return _aplicar_comparacion(lambda i, d: i == d)
+                    result = _aplicar_comparacion(lambda i, d: i == d)
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.DIFERENTE:
-                    return _aplicar_comparacion(lambda i, d: i != d)
+                    result = _aplicar_comparacion(lambda i, d: i != d)
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
 
                 if tipo == TipoToken.SUMA:
                     verificar_sumables(izquierda, derecha)
-                    return izquierda + derecha
+                    result = izquierda + derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.RESTA:
                     verificar_numeros(izquierda, derecha, "-")
-                    return izquierda - derecha
+                    result = izquierda - derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.MULT:
                     verificar_numeros(izquierda, derecha, "*")
-                    return izquierda * derecha
+                    result = izquierda * derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.DIV:
                     verificar_numeros(izquierda, derecha, "/")
-                    return izquierda / derecha
+                    result = izquierda / derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.MOD:
                     verificar_numeros(izquierda, derecha, "%")
-                    return izquierda % derecha
+                    result = izquierda % derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.AND:
                     verificar_booleanos(izquierda, derecha, "&&")
-                    return izquierda and derecha
+                    result = izquierda and derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 elif tipo == TipoToken.OR:
                     verificar_booleanos(izquierda, derecha, "||")
-                    return izquierda or derecha
+                    result = izquierda or derecha
+                    print(
+                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                    )
+                    return result
                 else:
                     raise ValueError(f"Operador no soportado: {tipo}")
             elif isinstance(expresion, NodoOperacionUnaria):
