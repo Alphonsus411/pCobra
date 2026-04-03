@@ -78,6 +78,11 @@ class InteractiveCommand(BaseCommand):
     MAX_LINE_LENGTH = 10000
     MEMORY_LIMIT_MB = 1024
     MAX_AST_DEPTH = 100
+    _BLOQUE_APERTURA_RE = re.compile(
+        r"^\s*(si|mientras|para|func|clase|try|intentar|switch)\b.*:\s*$",
+        re.IGNORECASE,
+    )
+    _BLOQUE_CIERRE_RE = re.compile(r"\bfin\b", re.IGNORECASE)
 
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
@@ -296,30 +301,51 @@ class InteractiveCommand(BaseCommand):
             )
 
         with self:  # Usar context manager para recursos
+            buffer_lineas: list[str] = []
+            nivel_bloque = 0
             while True:
                 try:
                     # Leer entrada
-                    linea = session.prompt("cobra> ").strip()
+                    prompt = "... " if nivel_bloque > 0 else "cobra> "
+                    linea = session.prompt(prompt).strip()
                     if not self.validar_entrada(linea):
                         continue
 
                     # Procesar comandos especiales
-                    if linea in ["salir", "salir()"]:
+                    if nivel_bloque == 0 and linea in ["salir", "salir()"]:
                         break
 
-                    if self._procesar_comando_especial(linea, validador):
+                    if nivel_bloque == 0 and self._procesar_comando_especial(
+                        linea, validador
+                    ):
                         continue
+
+                    buffer_lineas.append(linea)
+                    nivel_bloque += self._contar_aperturas_bloque(linea)
+                    nivel_bloque -= self._contar_cierres_bloque(linea)
+                    if nivel_bloque < 0:
+                        nivel_bloque = 0
+                    if nivel_bloque > 0:
+                        continue
+
+                    codigo = "\n".join(buffer_lineas)
+                    buffer_lineas.clear()
 
                     # Ejecutar código
                     if sandbox:
-                        self._ejecutar_en_sandbox(linea)
+                        self._ejecutar_en_sandbox(codigo)
                     elif sandbox_docker:
-                        self._ejecutar_en_docker(linea, sandbox_docker)
+                        self._ejecutar_en_docker(codigo, sandbox_docker)
                     else:
-                        ast = self.procesar_ast(linea, validador)
+                        ast = self.procesar_ast(codigo, validador)
                         self.interpretador.ejecutar_ast(ast)
 
                 except (KeyboardInterrupt, EOFError):
+                    if buffer_lineas:
+                        mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
+                        buffer_lineas.clear()
+                        nivel_bloque = 0
+                        continue
                     mostrar_info(_("Saliendo..."))
                     break
                 except (LexerError, ParserError) as err:
@@ -345,27 +371,48 @@ class InteractiveCommand(BaseCommand):
             return 1
 
         with self:
+            buffer_lineas: list[str] = []
+            nivel_bloque = 0
             while True:
                 try:
-                    linea = input("cobra> ").strip()
+                    prompt = "... " if nivel_bloque > 0 else "cobra> "
+                    linea = input(prompt).strip()
                 except (KeyboardInterrupt, EOFError):
+                    if buffer_lineas:
+                        mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
+                        buffer_lineas.clear()
+                        nivel_bloque = 0
+                        continue
                     mostrar_info(_("Saliendo..."))
                     break
 
                 if not self.validar_entrada(linea):
                     continue
 
-                if linea in ["salir", "salir()"]:
+                if nivel_bloque == 0 and linea in ["salir", "salir()"]:
                     break
 
-                if self._procesar_comando_especial(linea, validador):
+                if nivel_bloque == 0 and self._procesar_comando_especial(
+                    linea, validador
+                ):
                     continue
+
+                buffer_lineas.append(linea)
+                nivel_bloque += self._contar_aperturas_bloque(linea)
+                nivel_bloque -= self._contar_cierres_bloque(linea)
+                if nivel_bloque < 0:
+                    nivel_bloque = 0
+                if nivel_bloque > 0:
+                    continue
+
+                codigo = "\n".join(buffer_lineas)
+                buffer_lineas.clear()
 
                 try:
                     if sandbox:
-                        self._ejecutar_en_sandbox(linea)
+                        self._ejecutar_en_sandbox(codigo)
                     else:
-                        ast = self.procesar_ast(linea, validador)
+                        ast = self.procesar_ast(codigo, validador)
                         self.interpretador.ejecutar_ast(ast)
                 except (LexerError, ParserError) as err:
                     self._log_error(_("Error de sintaxis"), err)
@@ -375,6 +422,14 @@ class InteractiveCommand(BaseCommand):
                     self._log_error(_("Error general"), err, include_traceback=True)
 
         return 0
+
+    def _contar_aperturas_bloque(self, linea: str) -> int:
+        """Cuenta aperturas de bloque en una línea."""
+        return 1 if self._BLOQUE_APERTURA_RE.match(linea) else 0
+
+    def _contar_cierres_bloque(self, linea: str) -> int:
+        """Cuenta cierres de bloque mediante la palabra clave ``fin``."""
+        return len(self._BLOQUE_CIERRE_RE.findall(linea))
 
     def _procesar_comando_especial(self, linea: str, validador: Optional[Any]) -> bool:
         """Procesa comandos especiales del REPL.
