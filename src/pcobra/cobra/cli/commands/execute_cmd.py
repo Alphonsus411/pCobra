@@ -284,8 +284,7 @@ class ExecuteCommand(BaseCommand):
     ) -> int:
         """Ejecuta el código en un entorno sandbox."""
         try:
-            tokens = Lexer(codigo).tokenizar()
-            ast = Parser(tokens).parsear()
+            self._analizar_codigo(codigo)
         except (LexerError, ParserError) as e:
             self.logger.error("Error de análisis en sandbox", extra={"error": str(e)})
             mostrar_error(f"Error de análisis: {e}")
@@ -350,8 +349,7 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
         """Ejecuta el código normalmente con el intérprete."""
         try:
-            tokens = Lexer(codigo).tokenizar()
-            ast = Parser(tokens).parsear()
+            ast = self._analizar_codigo(codigo)
         except (LexerError, ParserError) as e:
             self.logger.error("Error de análisis", extra={"error": str(e)})
             mostrar_error(f"Error de análisis: {e}")
@@ -405,15 +403,28 @@ class ExecuteCommand(BaseCommand):
                 return 1
 
         try:
-            interpretador_cls(
+            self._ejecutar_ast(
+                ast,
                 safe_mode=seguro,
                 extra_validators=validadores_normalizados,
-            ).ejecutar_ast(ast)
+            )
             return 0
         except Exception as e:
             self.logger.error("Error de ejecución", extra={"error": str(e)})
             mostrar_error(f"Error ejecutando el script: {e}")
             return 1
+
+    def _analizar_codigo(self, codigo: str) -> Any:
+        """Pipeline canónico: Lexer(codigo).tokenizar() + Parser(tokens).parsear()."""
+
+        tokens = Lexer(codigo).tokenizar()
+        return Parser(tokens).parsear()
+
+    def _ejecutar_ast(self, ast: Any, **interpreter_kwargs: Any) -> None:
+        """Ejecuta un AST con el intérprete de Cobra."""
+
+        interpretador_cls = _obtener_interpretador_cls()
+        interpretador_cls(**interpreter_kwargs).ejecutar_ast(ast)
 
     @staticmethod
     def _formatear_codigo(archivo: str) -> bool:

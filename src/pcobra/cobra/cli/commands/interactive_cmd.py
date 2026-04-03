@@ -200,6 +200,12 @@ class InteractiveCommand(BaseCommand):
 
         return ast
 
+    def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
+        """Ejecuta un snippet completo con el pipeline canónico Lexer/Parser/AST."""
+
+        ast = self.procesar_ast(codigo, validador)
+        self.interpretador.ejecutar_ast(ast)
+
     def run(self, args: Any) -> int:
         """Ejecuta el REPL de Cobra.
 
@@ -337,8 +343,7 @@ class InteractiveCommand(BaseCommand):
                     elif sandbox_docker:
                         self._ejecutar_en_docker(codigo, sandbox_docker)
                     else:
-                        ast = self.procesar_ast(codigo, validador)
-                        self.interpretador.ejecutar_ast(ast)
+                        self.ejecutar_codigo(codigo, validador)
 
                 except (KeyboardInterrupt, EOFError):
                     if buffer_lineas:
@@ -412,8 +417,7 @@ class InteractiveCommand(BaseCommand):
                     if sandbox:
                         self._ejecutar_en_sandbox(codigo)
                     else:
-                        ast = self.procesar_ast(codigo, validador)
-                        self.interpretador.ejecutar_ast(ast)
+                        self.ejecutar_codigo(codigo, validador)
                 except (LexerError, ParserError) as err:
                     self._log_error(_("Error de sintaxis"), err)
                 except RuntimeError as err:
