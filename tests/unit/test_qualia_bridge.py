@@ -251,3 +251,26 @@ def test_migration_followed_by_persistence(tmp_path, monkeypatch):
     data = json.loads(payload)
     assert data["history"][0] == "legacy()"
     assert any("var nuevo = 1" in entry for entry in data["history"])
+
+
+def test_qualia_optional_dependency_logs_info_once(tmp_path, monkeypatch, caplog):
+    module, _ = _reload_qualia(tmp_path, monkeypatch)
+    monkeypatch.setattr(module.database, "is_sqliteplus_available", lambda: False)
+    monkeypatch.setattr(module, "QUALIA_AVAILABLE", None)
+    monkeypatch.setattr(module, "_DATABASE_AVAILABLE", True)
+    monkeypatch.setattr(module, "_OPTIONAL_DB_LOGGED", False)
+    monkeypatch.setattr(module, "_QUALIA_INSTANCE", None)
+    caplog.set_level("DEBUG")
+
+    module.qualia_status()
+    module.qualia_status()
+
+    info_logs = [
+        rec.message
+        for rec in caplog.records
+        if rec.levelname == "INFO"
+        and "Qualia subsystem disabled: optional dependency not installed." in rec.message
+    ]
+    error_logs = [rec for rec in caplog.records if rec.levelname == "ERROR"]
+    assert len(info_logs) == 1
+    assert not error_logs
