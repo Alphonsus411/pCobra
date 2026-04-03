@@ -440,9 +440,7 @@ class InterpretadorCobra:
             return
         expresion = getattr(valor, "expresion", getattr(valor, "valor", None))
         if self._asignacion_referencia_identificador(expresion, nombre):
-            raise RuntimeError(
-                f"Asignación circular inválida para variable '{nombre}'"
-            )
+            raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
 
     def _resolver_identificador(self, nombre, visitados=None):
         """Resuelve un identificador usando únicamente la pila de contextos."""
@@ -473,7 +471,7 @@ class InterpretadorCobra:
                     return valor_resuelto
             raise NameError(f"Variable no declarada: {nombre}")
         finally:
-            visitados.remove(nombre)
+            visitados.discard(nombre)
 
     def _verificar_valor_contexto(self, valor):
         """Valida que el contexto sólo guarde tipos simples o contenedores.
@@ -758,25 +756,29 @@ class InterpretadorCobra:
         """Rechaza autorreferencias directas o indirectas antes de persistir."""
         if not isinstance(nombre, str):
             return
-        if self._asignacion_referencia_identificador(valor_nodo, nombre):
-            raise RuntimeError(
-                f"Asignación circular inválida para variable '{nombre}'"
-            )
-        pila = [valor_nodo]
-        while pila:
-            actual = pila.pop()
-            if isinstance(actual, NodoIdentificador):
-                visitados_guard = set(visitados)
-                visitados_guard.add(nombre)
-                self._resolver_identificador(actual.nombre, visitados_guard)
-                continue
-            if isinstance(actual, Token):
-                continue
-            if isinstance(actual, list):
-                pila.extend(actual)
-                continue
-            if isinstance(actual, NodoAST):
-                pila.extend(getattr(actual, "__dict__", {}).values())
+        if nombre in visitados:
+            raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
+
+        visitados.add(nombre)
+        try:
+            if self._asignacion_referencia_identificador(valor_nodo, nombre):
+                raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
+
+            pila = [valor_nodo]
+            while pila:
+                actual = pila.pop()
+                if isinstance(actual, NodoIdentificador):
+                    self._resolver_identificador(actual.nombre, visitados)
+                    continue
+                if isinstance(actual, Token):
+                    continue
+                if isinstance(actual, list):
+                    pila.extend(actual)
+                    continue
+                if isinstance(actual, NodoAST):
+                    pila.extend(getattr(actual, "__dict__", {}).values())
+        finally:
+            visitados.discard(nombre)
 
     def ejecutar_ast(self, ast):
         # Pipeline explícito:
