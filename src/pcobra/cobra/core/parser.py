@@ -256,6 +256,22 @@ class ClassicParser:
 
         return token
 
+    def _exigir_dospuntos(self, contexto: str) -> None:
+        """Exige ``:`` en estructuras de bloque con error homogéneo."""
+        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
+            if contexto.startswith("el "):
+                detalle = f"después del {contexto[3:]}"
+            else:
+                detalle = f"después de {contexto}"
+            raise ParserError(f"Se esperaba ':' {detalle}")
+        self.comer(TipoToken.DOSPUNTOS)
+
+    def _exigir_fin(self, contexto: str) -> None:
+        """Exige ``fin`` en estructuras de bloque con error homogéneo."""
+        if self.token_actual().tipo != TipoToken.FIN:
+            raise ParserError(f"Se esperaba 'fin' para cerrar {contexto}")
+        self.comer(TipoToken.FIN)
+
     def _parsear_base(self):
         nodos = []
         while self.token_actual().tipo != TipoToken.EOF:
@@ -399,13 +415,7 @@ class ClassicParser:
             if self.token_actual().tipo != TipoToken.EOF:
                 self.avanzar()
 
-        # Verifica y consume el ':'
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            self.reportar_error("Se esperaba ':' después del iterable en 'para'")
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
-        else:
-            self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("el iterable en 'para'")
 
         # Parsea el cuerpo del bucle
         cuerpo = []
@@ -420,28 +430,15 @@ class ClassicParser:
             )
 
             posicion_inicial = self.posicion
-            try:
-                cuerpo.append(self.declaracion())
-            except ParserError as e:
-                logger.error(f"Error en el cuerpo del bucle 'para': {e}")
-                self.reportar_error(f"Error en el cuerpo del bucle 'para': {e}")
-                if self.token_actual().tipo != TipoToken.EOF:
-                    self.avanzar()  # Avanzar para evitar bloqueo
+            cuerpo.append(self.declaracion())
 
             if self.posicion == posicion_inicial:
-                self.reportar_error(
+                raise ParserError(
                     "La declaración dentro del bucle 'para' no consumió tokens"
                 )
-                if self.token_actual().tipo != TipoToken.EOF:
-                    self.avanzar()
 
         logger.debug(f"Token actual antes de 'fin': {self.token_actual()}")
-        if self.token_actual().tipo == TipoToken.FIN:
-            self.comer(TipoToken.FIN)
-        else:
-            self.reportar_error("Se esperaba 'fin' para cerrar el bucle 'para'")
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
+        self._exigir_fin("el bucle 'para'")
 
         logger.debug(
             f"Bucle 'para' parseado correctamente: variable={variable}, "
@@ -529,34 +526,13 @@ class ClassicParser:
         condicion = self.expresion()
         logger.debug(f"Condición del bucle mientras: {condicion}")
 
-        # Verificar ':' después de la condición
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            self.reportar_error(
-                "Se esperaba ':' después de la condición del bucle 'mientras'",
-            )
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
-        else:
-            self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("la condición del bucle 'mientras'")
 
         cuerpo = []
         while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
-            try:
-                cuerpo.append(self.declaracion())
-            except ParserError as e:
-                logger.error(f"Error en el cuerpo del bucle 'mientras': {e}")
-                self.reportar_error(f"Error en el cuerpo del bucle 'mientras': {e}")
-                if self.token_actual().tipo != TipoToken.EOF:
-                    self.avanzar()  # Avanza para evitar bloqueo
+            cuerpo.append(self.declaracion())
 
-        if self.token_actual().tipo != TipoToken.FIN:
-            self.reportar_error(
-                "Se esperaba 'fin' para cerrar el bucle 'mientras'",
-            )
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
-        else:
-            self.comer(TipoToken.FIN)
+        self._exigir_fin("el bucle 'mientras'")
 
         logger.debug(f"Cuerpo del bucle mientras: {cuerpo}")
         return NodoBucleMientras(condicion, self._bloque(cuerpo))
@@ -660,10 +636,7 @@ class ClassicParser:
         condicion = self.expresion()
         logger.debug(f"Condición del condicional: {condicion}")
 
-        # Verificar ':' después de la condición
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise ParserError("Se esperaba ':' después de la condición del 'si'")
-        self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("la condición del 'si'")
 
         bloque_si = self._parse_bloque_condicional(
             [TipoToken.SINO, TipoToken.SINO_SI, TipoToken.FIN, TipoToken.EOF],
@@ -676,16 +649,12 @@ class ClassicParser:
             bloque_sino.append(self._parse_sino_si())
         elif self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
-            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise ParserError("Se esperaba ':' después de 'sino'")
-            self.comer(TipoToken.DOSPUNTOS)
+            self._exigir_dospuntos("'sino'")
             bloque_sino = self._parse_bloque_condicional(
                 [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
 
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
-        self.comer(TipoToken.FIN)
+        self._exigir_fin("el bloque condicional")
 
         logger.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
         return NodoCondicional(
@@ -738,9 +707,7 @@ class ClassicParser:
         self.comer(TipoToken.SINO_SI)
         condicion = self.expresion()
 
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise ParserError("Se esperaba ':' después de la condición del 'sino si'")
-        self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("la condición del 'sino si'")
 
         bloque_si = self._parse_bloque_condicional(
             [TipoToken.SINO, TipoToken.SINO_SI, TipoToken.FIN, TipoToken.EOF],
@@ -753,9 +720,7 @@ class ClassicParser:
             bloque_sino.append(self._parse_sino_si())
         elif self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
-            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise ParserError("Se esperaba ':' después de 'sino'")
-            self.comer(TipoToken.DOSPUNTOS)
+            self._exigir_dospuntos("'sino'")
             bloque_sino = self._parse_bloque_condicional(
                 [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
@@ -824,10 +789,7 @@ class ClassicParser:
         parametros = self.lista_parametros()
         self.comer(TipoToken.RPAREN)
 
-        # Verifica y consume ':'
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise ParserError("Se esperaba ':' después de la declaración de la función")
-        self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("la declaración de la función")
 
         # Parsea el cuerpo de la función
         cuerpo = []
@@ -843,23 +805,16 @@ class ClassicParser:
                         "Bucle infinito detectado en declaracion_funcion"
                     )
 
-                try:
-                    if self.token_actual().tipo == TipoToken.RETORNO:
-                        self.comer(TipoToken.RETORNO)
-                        expresion = self.expresion()
-                        cuerpo.append(NodoRetorno(expresion))
-                    else:
-                        cuerpo.append(self.declaracion())
-                except ParserError as e:
-                    logger.error(f"Error en el cuerpo de la función '{nombre}': {e}")
-                    self.avanzar()
+                if self.token_actual().tipo == TipoToken.RETORNO:
+                    self.comer(TipoToken.RETORNO)
+                    expresion = self.expresion()
+                    cuerpo.append(NodoRetorno(expresion))
+                else:
+                    cuerpo.append(self.declaracion())
         finally:
             self._contexto_bloques.pop()
 
-        # Verifica y consume 'fin'
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise ParserError(f"Se esperaba 'fin' para cerrar la función '{nombre}'")
-        self.comer(TipoToken.FIN)
+        self._exigir_fin(f"la función '{nombre}'")
 
         logger.debug(f"Función '{nombre}' parseada con cuerpo: {cuerpo}")
         return NodoFuncion(
@@ -1068,9 +1023,7 @@ class ClassicParser:
             self.avanzar()
         else:
             raise ParserError("Se esperaba 'try' o 'intentar'")
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise ParserError("Se esperaba ':' después de 'try'")
-        self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("'try'")
 
         bloque_try = []
         while self.token_actual().tipo not in [
@@ -1088,9 +1041,7 @@ class ClassicParser:
             if self.token_actual().tipo == TipoToken.IDENTIFICADOR:
                 nombre_exc = self.token_actual().valor
                 self.comer(TipoToken.IDENTIFICADOR)
-            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise ParserError("Se esperaba ':' después de 'catch/capturar'")
-            self.comer(TipoToken.DOSPUNTOS)
+            self._exigir_dospuntos("'catch/capturar'")
             while self.token_actual().tipo not in [
                 TipoToken.FIN,
                 TipoToken.EOF,
@@ -1101,15 +1052,11 @@ class ClassicParser:
         bloque_finally = []
         if self.token_actual().tipo == TipoToken.FINALMENTE:
             self.comer(TipoToken.FINALMENTE)
-            if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                raise ParserError("Se esperaba ':' después de 'finalmente'")
-            self.comer(TipoToken.DOSPUNTOS)
+            self._exigir_dospuntos("'finalmente'")
             while self.token_actual().tipo not in [TipoToken.FIN, TipoToken.EOF]:
                 bloque_finally.append(self.declaracion())
 
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque try/catch")
-        self.comer(TipoToken.FIN)
+        self._exigir_fin("el bloque try/catch")
 
         return NodoTryCatch(
             self._bloque(bloque_try),
@@ -1259,9 +1206,7 @@ class ClassicParser:
                 "Procura utilizar 'with ... as' o 'con ... como' de forma consistente. "
                 f"Entrada: {expresion_entrada}"
             )
-        if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            raise ParserError("Se esperaba ':' después de 'con'/'with'")
-        self.comer(TipoToken.DOSPUNTOS)
+        self._exigir_dospuntos("'con/with'")
         cuerpo = []
         self._contexto_bloques.append("metodo")
         try:
@@ -1269,9 +1214,7 @@ class ClassicParser:
                 cuerpo.append(self.declaracion())
         finally:
             self._contexto_bloques.pop()
-        if self.token_actual().tipo != TipoToken.FIN:
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque 'con'")
-        self.comer(TipoToken.FIN)
+        self._exigir_fin("el bloque 'con'")
         return NodoWith(contexto, alias, self._bloque(cuerpo), asincronico)
 
     def declaracion_desde(self):

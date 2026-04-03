@@ -17,7 +17,7 @@ def test_error_en_declaracion_para():
         parser.parsear()
     mensaje = str(excinfo.value)
     assert "Se esperaba ':' después del iterable en 'para'" in mensaje
-    assert "Se esperaba 'fin' para cerrar el bucle 'para'" in mensaje
+    assert "Se esperaba 'fin' para cerrar el bucle 'para'" not in mensaje
 
 
 def test_error_en_declaracion_condicional():
@@ -39,6 +39,26 @@ def test_error_en_declaracion_condicional():
     mensaje = str(excinfo.value)
     assert "Se esperaba ':' después de la condición del 'si'" in mensaje
     assert "Se esperaba 'fin'" not in mensaje
+
+
+def test_error_en_declaracion_condicional_sin_fin():
+    tokens = [
+        Token(TipoToken.SI, "si"),
+        Token(TipoToken.IDENTIFICADOR, "x"),
+        Token(TipoToken.MAYORQUE, ">"),
+        Token(TipoToken.ENTERO, 0),
+        Token(TipoToken.DOSPUNTOS, ":"),
+        Token(TipoToken.VAR, "var"),
+        Token(TipoToken.IDENTIFICADOR, "resultado"),
+        Token(TipoToken.ASIGNAR, "="),
+        Token(TipoToken.ENTERO, 1),
+        Token(TipoToken.EOF, None),
+    ]
+    parser = Parser(tokens)
+    with pytest.raises(ParserError) as excinfo:
+        parser.parsear()
+    mensaje = str(excinfo.value)
+    assert "Se esperaba 'fin' para cerrar el bloque condicional" in mensaje
 
 
 def test_error_en_declaracion_mientras():
