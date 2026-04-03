@@ -427,7 +427,7 @@ class InterpretadorCobra:
                     if valor_resuelto is not valor:
                         contexto[nombre] = valor_resuelto
                     return valor_resuelto
-            return None
+            raise NameError(f"Variable no declarada: {nombre}")
         finally:
             visitados.remove(nombre)
 
@@ -640,9 +640,10 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
-            valor = self.evaluar_expresion(nodo.expresion)
-            if valor is None and isinstance(nodo.expresion, NodoIdentificador):
-                print(f"Variable '{nodo.expresion.nombre}' no definida")
+            try:
+                valor = self.evaluar_expresion(nodo.expresion)
+            except NameError as exc:
+                print(exc)
             else:
                 print(valor)
         elif isinstance(nodo, NodoImport):
@@ -876,9 +877,10 @@ class InterpretadorCobra:
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
-                    valor = self.obtener_variable(arg.valor)
-                    if valor is None:
-                        valor = f"Variable '{arg.valor}' no definida"
+                    try:
+                        valor = self.obtener_variable(arg.valor)
+                    except NameError as exc:
+                        valor = str(exc)
                 else:
                     valor = self.evaluar_expresion(arg)
                 print(valor)

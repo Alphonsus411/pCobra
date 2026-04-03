@@ -51,8 +51,8 @@ def test_interpretador_variable_no_definida():
 
     output = mock_stdout.getvalue().strip()
 
-    # Verifica que la salida sea la esperada para variable no definida
-    assert output == "Variable 'y' no definida"
+    # Verifica que la salida sea la esperada para variable no declarada
+    assert output == "Variable no declarada: y"
 
 
 def test_aislamiento_de_contexto_en_funciones():
@@ -111,7 +111,7 @@ def test_imprimir_identificador_no_definido():
     nodo = NodoImprimir(NodoIdentificador("y"))
     with patch("sys.stdout", new_callable=StringIO) as out:
         inter.ejecutar_nodo(nodo)
-    assert out.getvalue().strip() == "Variable 'y' no definida"
+    assert out.getvalue().strip() == "Variable no declarada: y"
 
 
 def test_asignacion_y_operacion_aritmetica():
