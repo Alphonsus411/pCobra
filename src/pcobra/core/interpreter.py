@@ -24,6 +24,7 @@ from .type_utils import (
 )
 from .ast_nodes import (
     NodoAsignacion,
+    NodoBloque,
     NodoCondicional,
     NodoBucleMientras,
     NodoFuncion,
@@ -923,8 +924,12 @@ class InterpretadorCobra:
 
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
-        bloque_si = getattr(nodo, "cuerpo_si", getattr(nodo, "bloque_si", []))
-        bloque_sino = getattr(nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", []))
+        bloque_si = getattr(
+            nodo, "cuerpo_si", getattr(nodo, "bloque_si", NodoBloque())
+        )
+        bloque_sino = getattr(
+            nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", NodoBloque())
+        )
         if self.evaluar_expresion(nodo.condicion):
             for instruccion in bloque_si:
                 resultado = self.ejecutar_nodo(instruccion)

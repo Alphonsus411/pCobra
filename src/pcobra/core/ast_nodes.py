@@ -102,10 +102,14 @@ class NodoCondicional(NodoAST):
 @dataclass
 class NodoGarantia(NodoAST):
     condicion: Any
-    bloque_continuacion: List[Any]
-    bloque_escape: List[Any]
+    bloque_continuacion: NodoBloque
+    bloque_escape: NodoBloque
 
     """Sentencia ``garantia`` con bloque normal y de escape."""
+
+    def __post_init__(self) -> None:
+        self.bloque_continuacion = _asegurar_bloque(self.bloque_continuacion)
+        self.bloque_escape = _asegurar_bloque(self.bloque_escape)
 
 
 @dataclass
@@ -627,12 +631,15 @@ class NodoImprimir(NodoAST):
 @dataclass
 class NodoMacro(NodoAST):
     nombre: str
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
 
     """Representa una macro que almacena un conjunto de nodos a expandir."""
 
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
+
     def __repr__(self):
-        return f"NodoMacro(nombre={self.nombre}, cuerpo={self.cuerpo})"
+        return f"NodoMacro(nombre={self.nombre}, cuerpo={list(self.cuerpo)})"
 
 
 @dataclass
@@ -649,14 +656,20 @@ class NodoGuard(NodoAST):
 @dataclass
 class NodoCase(NodoAST):
     valor: Any
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
+
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 
 @dataclass
 class NodoSwitch(NodoAST):
     expresion: Any
     casos: List[NodoCase]
-    por_defecto: List[Any] = field(default_factory=list)
+    por_defecto: NodoBloque = field(default_factory=NodoBloque)
+
+    def __post_init__(self) -> None:
+        self.por_defecto = _asegurar_bloque(self.por_defecto)
 
 
 __all__ = [

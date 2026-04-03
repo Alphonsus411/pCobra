@@ -8,6 +8,7 @@ from typing import List, Optional, Any, Set
 from pcobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
+    NodoBloque,
     NodoClase,
     NodoFuncion,
     NodoIdentificador,
@@ -119,7 +120,7 @@ class AnalizadorSemantico(NodeVisitor):
         if not isinstance(nombre, str):
             raise TypeError(f"El nombre debe ser string, no {type(nombre)}")
 
-    def _procesar_bloque_codigo(self, parametros: List[str], cuerpo: List[Any]) -> None:
+    def _procesar_bloque_codigo(self, parametros: List[str], cuerpo: NodoBloque) -> None:
         """Procesa un bloque de código (función o método).
         
         Args:
@@ -150,7 +151,7 @@ class AnalizadorSemantico(NodeVisitor):
                 return True
         return False
 
-    def _bloque_termina(self, bloque: List[Any]) -> bool:
+    def _bloque_termina(self, bloque: NodoBloque) -> bool:
         if not bloque:
             return False
         terminadores = (NodoRetorno, NodoThrow, NodoContinuar, NodoRomper)

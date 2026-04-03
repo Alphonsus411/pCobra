@@ -30,6 +30,22 @@ _ATRIBUTOS_BLOQUE = {
     "bloque_finally",
     "bloque_continuacion",
     "bloque_escape",
+    "por_defecto",
+}
+
+_MENSAJES_BLOQUE_ESPECIFICOS = {
+    ("NodoGarantia", "bloque_continuacion"): (
+        "NodoGarantia.bloque_continuacion debe ser NodoBloque, "
+        "no una lista"
+    ),
+    ("NodoGarantia", "bloque_escape"): (
+        "NodoGarantia.bloque_escape debe ser NodoBloque, no una lista"
+    ),
+    ("NodoMacro", "cuerpo"): "NodoMacro.cuerpo debe ser NodoBloque, no una lista",
+    ("NodoCase", "cuerpo"): "NodoCase.cuerpo debe ser NodoBloque, no una lista",
+    ("NodoSwitch", "por_defecto"): (
+        "NodoSwitch.por_defecto debe ser NodoBloque, no una lista"
+    ),
 }
 
 
@@ -64,6 +80,10 @@ def _validar_nodo(nodo: NodoAST, ruta_actual: str) -> None:
             continue
         if isinstance(valor, list):
             if campo.name in _ATRIBUTOS_BLOQUE:
+                clave_especifica = (type(nodo).__name__, campo.name)
+                mensaje_especifico = _MENSAJES_BLOQUE_ESPECIFICOS.get(clave_especifica)
+                if mensaje_especifico:
+                    raise ErrorEstructuraAST(f"{mensaje_especifico}: {ruta_campo}")
                 raise ErrorEstructuraAST(
                     f"Se encontró lista donde se esperaba NodoBloque: {ruta_campo}"
                 )

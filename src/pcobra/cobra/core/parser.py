@@ -613,7 +613,7 @@ class ClassicParser:
                 TipoToken.EOF,
             ]:
                 cuerpo.append(self.declaracion())
-            casos.append(NodoCase(valor_patron, cuerpo))
+            casos.append(NodoCase(valor_patron, self._bloque(cuerpo)))
 
         bloque_defecto = []
         if self.token_actual().tipo == TipoToken.SINO:
@@ -628,7 +628,7 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar el switch")
         self.comer(TipoToken.FIN)
 
-        return NodoSwitch(expresion, casos, bloque_defecto)
+        return NodoSwitch(expresion, casos, self._bloque(bloque_defecto))
 
     def declaracion_condicional(self):
         """Parsea un bloque condicional."""
@@ -686,7 +686,7 @@ class ClassicParser:
         """Normaliza una secuencia de sentencias en un nodo de bloque."""
         return NodoBloque(instrucciones)
 
-    def _bloque_termina(self, bloque: List[Any]) -> bool:
+    def _bloque_termina(self, bloque: NodoBloque) -> bool:
         if not bloque:
             return False
         terminadores = (NodoRetorno, NodoThrow, NodoContinuar, NodoRomper)
@@ -757,12 +757,17 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar la declaración 'garantia'")
         self.comer(TipoToken.FIN)
 
-        if not self._bloque_termina(bloque_escape):
+        bloque_escape_nodo = self._bloque(bloque_escape)
+        if not self._bloque_termina(bloque_escape_nodo):
             self.registrar_advertencia(
                 "El bloque 'sino' de 'garantia' debería terminar la ejecución con 'retorno', 'lanzar' o 'continuar'"
             )
 
-        return NodoGarantia(condicion, bloque_continuacion, bloque_escape)
+        return NodoGarantia(
+            condicion,
+            self._bloque(bloque_continuacion),
+            bloque_escape_nodo,
+        )
 
     def declaracion_funcion(self, asincronica: bool = False):
         """Parsea una declaración de función."""
@@ -1263,7 +1268,7 @@ class ClassicParser:
         self.comer(TipoToken.RBRACE)
         cuerpo_parser = ClassicParser(cuerpo_tokens + [Token(TipoToken.EOF, None)])
         cuerpo = cuerpo_parser.parsear()
-        return NodoMacro(nombre, cuerpo)
+        return NodoMacro(nombre, self._bloque(cuerpo))
 
     def _verificar_choque_metodos(
         self,
