@@ -18,6 +18,15 @@ from core.interpreter import InterpretadorCobra
 from core.lexer import Lexer
 from core.parser import Parser
 
+_EJECUTAR_ASIGNACION_ORIGINAL = InterpretadorCobra.ejecutar_asignacion
+
+
+def _ejecutar_asignacion_sin_retorno(
+    inter: InterpretadorCobra, nodo: NodoAsignacion, visitados: set[str] | None = None
+) -> None:
+    _EJECUTAR_ASIGNACION_ORIGINAL(inter, nodo, visitados)
+    return None
+
 
 def _ejecutar_codigo_y_capturar_salida(codigo: str) -> str:
     tokens = Lexer(codigo).tokenizar()
@@ -26,8 +35,14 @@ def _ejecutar_codigo_y_capturar_salida(codigo: str) -> str:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            for nodo in ast:
-                inter.ejecutar_nodo(nodo)
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
@@ -85,8 +100,14 @@ def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            for nodo in ast:
-                inter.ejecutar_nodo(nodo)
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
@@ -110,8 +131,14 @@ def test_ast_directo_condicional_identificador_sin_recursionerror() -> None:
 
     try:
         with patch("sys.stdout", new_callable=StringIO) as out:
-            for nodo in ast:
-                inter.ejecutar_nodo(nodo)
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
