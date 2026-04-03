@@ -149,9 +149,7 @@ def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursi
     )
 
     try:
-        with patch("sys.stdout", new_callable=StringIO) as out:
+        with pytest.raises(NameError, match=r"^Variable no declarada: y$"):
             inter.ejecutar_nodo(nodo)
     except RecursionError as exc:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
-
-    assert out.getvalue().strip() == "Variable no declarada: y"

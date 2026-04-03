@@ -796,12 +796,8 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
-            try:
-                valor = self.evaluar_expresion(nodo.expresion)
-            except NameError as exc:
-                print(exc)
-            else:
-                print(valor)
+            valor = self.evaluar_expresion(nodo.expresion)
+            print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
         elif isinstance(nodo, NodoUsar):
@@ -1158,12 +1154,8 @@ class InterpretadorCobra:
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
-                    try:
-                        valor = self.obtener_variable(arg.valor)
-                    except NameError as exc:
-                        valor = str(exc)
-                else:
-                    valor = self.evaluar_expresion(arg)
+                    arg = NodoIdentificador(arg.valor)
+                valor = self.evaluar_expresion(arg)
                 print(valor)
         else:
             funcion = self.obtener_variable(nodo.nombre)

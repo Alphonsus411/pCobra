@@ -45,14 +45,8 @@ def test_interpretador_variable_no_definida():
     # Intenta imprimir una variable no definida
     nodo_llamada = NodoLlamadaFuncion("imprimir", [Token(TipoToken.IDENTIFICADOR, "y")])
 
-    # Usamos un patch para capturar la salida de imprimir
-    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+    with pytest.raises(NameError, match=r"^Variable no declarada: y$"):
         interpretador.ejecutar_llamada_funcion(nodo_llamada)
-
-    output = mock_stdout.getvalue().strip()
-
-    # Verifica que la salida sea la esperada para variable no declarada
-    assert output == "Variable no declarada: y"
 
 
 def test_aislamiento_de_contexto_en_funciones():
@@ -109,9 +103,8 @@ def test_imprimir_identificador_existente():
 def test_imprimir_identificador_no_definido():
     inter = InterpretadorCobra()
     nodo = NodoImprimir(NodoIdentificador("y"))
-    with patch("sys.stdout", new_callable=StringIO) as out:
+    with pytest.raises(NameError, match=r"^Variable no declarada: y$"):
         inter.ejecutar_nodo(nodo)
-    assert out.getvalue().strip() == "Variable no declarada: y"
 
 
 def test_asignacion_y_operacion_aritmetica():
