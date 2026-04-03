@@ -1,5 +1,6 @@
 import pytest
 from core.ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -207,3 +208,88 @@ def test_eliminate_common_subexpressions_in_function():
     assert cuerpo[1].expresion.nombre == "_cse0"
     assert isinstance(cuerpo[2].expresion, NodoIdentificador)
     assert cuerpo[2].expresion.nombre == "_cse0"
+
+
+def _assert_ast_sin_ciclos(nodos):
+    activos = set()
+    visitados = set()
+
+    def _visitar(valor, ruta="raiz"):
+        if isinstance(valor, list):
+            for idx, item in enumerate(valor):
+                _visitar(item, f"{ruta}[{idx}]")
+            return
+
+        if not isinstance(valor, NodoAST):
+            return
+
+        nid = id(valor)
+        if nid in activos:
+            pytest.fail(f"Se detectó ciclo AST en {ruta}")
+        if nid in visitados:
+            return
+
+        activos.add(nid)
+        try:
+            for attr, child in vars(valor).items():
+                _visitar(child, f"{ruta}.{attr}")
+        finally:
+            activos.remove(nid)
+            visitados.add(nid)
+
+    _visitar(nodos)
+
+
+def test_inline_no_comparte_subarbol_entre_ramas_y_ast_sin_ciclos():
+    token_suma = Token(TipoToken.SUMA, "+")
+    argumento_compartido = NodoOperacionBinaria(
+        NodoValor(1),
+        token_suma,
+        NodoValor(2),
+    )
+
+    ast = [
+        NodoFuncion(
+            "dup",
+            ["a"],
+            [
+                NodoRetorno(
+                    NodoOperacionBinaria(
+                        NodoIdentificador("a"),
+                        token_suma,
+                        NodoIdentificador("a"),
+                    )
+                )
+            ],
+        ),
+        NodoAsignacion("x", NodoLlamadaFuncion("dup", [argumento_compartido])),
+    ]
+
+    optimizado = inline_functions(ast)
+    asignacion = optimizado[0]
+    assert isinstance(asignacion.expresion, NodoOperacionBinaria)
+    assert asignacion.expresion.izquierda is not asignacion.expresion.derecha
+
+    _assert_ast_sin_ciclos(optimizado)
+
+
+def test_cse_no_reutiliza_instancia_mutable_y_ast_sin_ciclos():
+    token_suma = Token(TipoToken.SUMA, "+")
+    compartida = NodoOperacionBinaria(
+        NodoIdentificador("a"),
+        token_suma,
+        NodoIdentificador("b"),
+    )
+    ast = [
+        NodoAsignacion("x", compartida),
+        NodoAsignacion("y", compartida),
+    ]
+
+    optimizado = eliminate_common_subexpressions(ast)
+
+    assert len(optimizado) == 3
+    temporal = optimizado[0]
+    assert isinstance(temporal.expresion, NodoOperacionBinaria)
+    assert temporal.expresion is not compartida
+
+    _assert_ast_sin_ciclos(optimizado)
