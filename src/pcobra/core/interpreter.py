@@ -883,6 +883,11 @@ class InterpretadorCobra:
         El parámetro ``visitados`` se utiliza internamente para propagar el
         seguimiento de variables visitadas y detectar referencias circulares
         durante la evaluación.
+
+        Contrato explícito de errores del evaluador:
+        - identificador ausente -> ``NameError('Variable no declarada: ...')``
+        - ciclo de referencias -> ``RuntimeError`` con mensaje de ciclo
+        - nunca ``RecursionError`` por comparación de nodos no resueltos
         """
         visitados = set() if visitados is None else visitados
         if isinstance(expresion, NodoValor):
@@ -1005,6 +1010,20 @@ class InterpretadorCobra:
         else:
             raise ValueError(f"Expresión no soportada: {expresion}")
 
+    def _evaluar_condicion_control(self, condicion):
+        """Evalúa una condición y exige que quede materializada.
+
+        Una condición no debe propagarse como ``NodoAST`` sin resolver para
+        evitar comparaciones ambiguas entre nodos y errores opacos aguas abajo.
+        """
+        condicion_resuelta = self.evaluar_expresion(condicion)
+        if isinstance(condicion_resuelta, NodoAST):
+            raise RuntimeError(
+                "Condición no materializada: "
+                f"se recibió nodo AST {type(condicion_resuelta).__name__}"
+            )
+        return condicion_resuelta
+
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
         bloque_si = getattr(
@@ -1013,7 +1032,7 @@ class InterpretadorCobra:
         bloque_sino = getattr(
             nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", NodoBloque())
         )
-        if self.evaluar_expresion(nodo.condicion):
+        if self._evaluar_condicion_control(nodo.condicion):
             for instruccion in bloque_si:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
@@ -1026,7 +1045,7 @@ class InterpretadorCobra:
 
     def ejecutar_mientras(self, nodo):
         """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
-        while self.evaluar_expresion(nodo.condicion):
+        while self._evaluar_condicion_control(nodo.condicion):
             for instruccion in nodo.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:

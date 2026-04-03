@@ -1,7 +1,13 @@
 import pytest
 
 from core.interpreter import InterpretadorCobra
-from core.ast_nodes import NodoAsignacion, NodoIdentificador, NodoValor
+from core.ast_nodes import (
+    NodoAsignacion,
+    NodoBloque,
+    NodoCondicional,
+    NodoIdentificador,
+    NodoValor,
+)
 
 
 def test_referencia_circular_variable():
@@ -47,3 +53,18 @@ def test_ejecutar_asignacion_rechaza_autorreferencia_indirecta():
     inter.variables["b"] = NodoIdentificador("a")
     with pytest.raises(RuntimeError, match=r"^Ciclo de variables detectado en 'a'$"):
         inter.ejecutar_asignacion(NodoAsignacion("a", NodoIdentificador("b")))
+
+
+def test_condicional_rechaza_nodo_ast_sin_materializar_en_condicion():
+    inter = InterpretadorCobra()
+    condicional = NodoCondicional(
+        condicion=NodoValor(NodoIdentificador("x")),
+        bloque_si=NodoBloque([]),
+        bloque_sino=NodoBloque([]),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"^Condición no materializada: se recibió nodo AST NodoIdentificador$",
+    ):
+        inter.ejecutar_condicional(condicional)
