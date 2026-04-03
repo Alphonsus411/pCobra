@@ -36,6 +36,35 @@ def test_condicional_sino_sin_fin():
         parse(codigo).parsear()
 
 
+def test_condicional_si_valido_con_dos_puntos_espaciado():
+    codigo = """
+si 1 == 1 :
+    imprimir "ok"
+fin
+"""
+    ast = parse(codigo).parsear()
+    assert ast, "Se esperaba AST no vacío para condicional válido"
+
+
+def test_condicional_si_sin_dos_puntos_lanza_parser_error():
+    codigo = """
+si 1 == 1
+    imprimir "ok"
+fin
+"""
+    with pytest.raises(ParserError, match="Se esperaba ':' después de la condición del 'si'"):
+        parse(codigo).parsear()
+
+
+def test_condicional_si_sin_fin_lanza_parser_error():
+    codigo = """
+si 1 == 1 :
+    imprimir "ok"
+"""
+    with pytest.raises(ParserError, match="Se esperaba 'fin' para cerrar el bloque condicional"):
+        parse(codigo).parsear()
+
+
 def test_macro_llaves_desbalanceadas():
     codigo = "macro m { var x = 1 }}"
     with pytest.raises(ParserError):
