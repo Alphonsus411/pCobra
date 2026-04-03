@@ -65,6 +65,17 @@ SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
 
 
+class _SessionHistoryFallback:
+    """Historial mínimo para dobles de sesión usados en pruebas."""
+
+    def __init__(self, path: str) -> None:
+        self._path = path
+
+    def append_string(self, value: str) -> None:
+        with open(self._path, "a", encoding="utf-8") as fh:
+            fh.write(f"{value}\n")
+
+
 class InteractiveCommand(BaseCommand):
     """Modo interactivo del lenguaje Cobra.
 
@@ -101,6 +112,16 @@ class InteractiveCommand(BaseCommand):
         self.interpretador = interpretador
         self._allow_insecure_fallback = False
         self.logger = logging.getLogger(__name__)
+        self._estado_repl = self._crear_estado_repl()
+
+    @staticmethod
+    def _crear_estado_repl() -> dict[str, Any]:
+        """Crea el estado de sesión del REPL."""
+        return {
+            "buffer_lineas": [],
+            "nivel_bloque": 0,
+            "lineas_blanco_consecutivas": 0,
+        }
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
         """Registra los argumentos del subcomando.
@@ -312,59 +333,21 @@ class InteractiveCommand(BaseCommand):
                 history=FileHistory(history_path),
                 output=DummyOutput(),
             )
+        if not hasattr(session, "history"):
+            # Compatibilidad con dobles de pruebas que no propagan ``history``.
+            session.history = _SessionHistoryFallback(history_path)  # type: ignore[attr-defined]
 
-        with self:  # Usar context manager para recursos
-            buffer_lineas: list[str] = []
-            nivel_bloque = 0
-            while True:
-                try:
-                    # Leer entrada
-                    prompt = "... " if nivel_bloque > 0 else "cobra> "
-                    linea = session.prompt(prompt).strip()
-                    if not self.validar_entrada(linea):
-                        continue
+        with self:
+            def _leer_prompt_toolkit(prompt: str) -> str:
+                return session.prompt(prompt)
 
-                    # Procesar comandos especiales
-                    if nivel_bloque == 0 and linea in ["salir", "salir()"]:
-                        break
-
-                    if nivel_bloque == 0 and self._procesar_comando_especial(
-                        linea, validador
-                    ):
-                        continue
-
-                    codigo = self._actualizar_buffer_y_obtener_codigo_listo(
-                        buffer_lineas,
-                        linea,
-                    )
-                    nivel_bloque = self._calcular_balance_estructural(
-                        "\n".join(buffer_lineas)
-                    )
-                    if codigo is None:
-                        continue
-
-                    # Ejecutar código
-                    if sandbox:
-                        self._ejecutar_en_sandbox(codigo)
-                    elif sandbox_docker:
-                        self._ejecutar_en_docker(codigo, sandbox_docker)
-                    else:
-                        self.ejecutar_codigo(codigo, validador)
-
-                except (KeyboardInterrupt, EOFError):
-                    if buffer_lineas:
-                        mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
-                        buffer_lineas.clear()
-                        nivel_bloque = 0
-                        continue
-                    mostrar_info(_("Saliendo..."))
-                    break
-                except (LexerError, ParserError) as err:
-                    self._log_error(_("Error de sintaxis"), err)
-                except RuntimeError as err:
-                    self._log_error(_("Error crítico"), err)
-                except Exception as err:
-                    self._log_error(_("Error general"), err, include_traceback=True)
+            self._run_repl_loop(
+                args=args,
+                validador=validador,
+                leer_linea=_leer_prompt_toolkit,
+                sandbox=sandbox,
+                sandbox_docker=sandbox_docker,
+            )
 
         return 0
 
@@ -382,55 +365,99 @@ class InteractiveCommand(BaseCommand):
             return 1
 
         with self:
-            buffer_lineas: list[str] = []
-            nivel_bloque = 0
-            while True:
-                try:
-                    prompt = "... " if nivel_bloque > 0 else "cobra> "
-                    linea = input(prompt).strip()
-                except (KeyboardInterrupt, EOFError):
-                    if buffer_lineas:
-                        mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
-                        buffer_lineas.clear()
-                        nivel_bloque = 0
-                        continue
-                    mostrar_info(_("Saliendo..."))
-                    break
-
-                if not self.validar_entrada(linea):
-                    continue
-
-                if nivel_bloque == 0 and linea in ["salir", "salir()"]:
-                    break
-
-                if nivel_bloque == 0 and self._procesar_comando_especial(
-                    linea, validador
-                ):
-                    continue
-
-                try:
-                    codigo = self._actualizar_buffer_y_obtener_codigo_listo(
-                        buffer_lineas,
-                        linea,
-                    )
-                    nivel_bloque = self._calcular_balance_estructural(
-                        "\n".join(buffer_lineas)
-                    )
-                    if codigo is None:
-                        continue
-
-                    if sandbox:
-                        self._ejecutar_en_sandbox(codigo)
-                    else:
-                        self.ejecutar_codigo(codigo, validador)
-                except (LexerError, ParserError) as err:
-                    self._log_error(_("Error de sintaxis"), err)
-                except RuntimeError as err:
-                    self._log_error(_("Error crítico"), err)
-                except Exception as err:  # pragma: no cover - fallos inesperados
-                    self._log_error(_("Error general"), err, include_traceback=True)
+            self._run_repl_loop(
+                args=args,
+                validador=validador,
+                leer_linea=input,
+                sandbox=sandbox,
+                sandbox_docker=None,
+            )
 
         return 0
+
+    def _run_repl_loop(
+        self,
+        args: Any,
+        validador: Optional[Any],
+        leer_linea: Any,
+        sandbox: bool,
+        sandbox_docker: Optional[str],
+    ) -> None:
+        """Bucle único de REPL para evitar divergencias entre implementaciones."""
+        estado = self._crear_estado_repl()
+        self._estado_repl = estado
+        while True:
+            try:
+                prompt = "... " if estado["nivel_bloque"] > 0 else "cobra> "
+                linea = leer_linea(prompt).strip()
+            except (KeyboardInterrupt, EOFError):
+                if estado["buffer_lineas"]:
+                    mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
+                    self._limpiar_estado_repl(estado)
+                    continue
+                mostrar_info(_("Saliendo..."))
+                break
+
+            if not linea:
+                self._manejar_linea_blanca(estado)
+                continue
+
+            if not self.validar_entrada(linea):
+                continue
+
+            if estado["nivel_bloque"] == 0 and linea in ["salir", "salir()"]:
+                break
+
+            if estado["nivel_bloque"] == 0 and self._procesar_comando_especial(
+                linea, validador
+            ):
+                continue
+
+            try:
+                codigo = self._actualizar_buffer_y_obtener_codigo_listo(
+                    estado["buffer_lineas"],
+                    linea,
+                )
+                if codigo is None:
+                    continue
+
+                if sandbox:
+                    self._ejecutar_en_sandbox(codigo)
+                elif sandbox_docker:
+                    self._ejecutar_en_docker(codigo, sandbox_docker)
+                else:
+                    self.ejecutar_codigo(codigo, validador)
+            except (LexerError, ParserError) as err:
+                self._log_error(_("Error de sintaxis"), err)
+            except RuntimeError as err:
+                self._log_error(_("Error crítico"), err)
+            except Exception as err:  # pragma: no cover - fallos inesperados
+                self._log_error(_("Error general"), err, include_traceback=True)
+
+    def _limpiar_estado_repl(self, estado: dict[str, Any]) -> None:
+        estado["buffer_lineas"].clear()
+        estado["nivel_bloque"] = 0
+        estado["lineas_blanco_consecutivas"] = 0
+
+    def _manejar_linea_blanca(self, estado: dict[str, Any]) -> None:
+        """Regla estable de líneas en blanco: se ignoran en todo contexto."""
+        if estado["nivel_bloque"] > 0:
+            estado["lineas_blanco_consecutivas"] += 1
+        else:
+            estado["lineas_blanco_consecutivas"] = 0
+
+    def _actualizar_nivel_bloque_por_linea(self, linea: str) -> int:
+        """Actualiza el contador de profundidad según la línea tokenizada."""
+        if not linea.strip():
+            return 0
+        tokens = self._tokenizar_para_balance(linea)
+        delta = 0
+        for token in tokens:
+            if token.tipo in self._TOKENS_APERTURA_BLOQUE:
+                delta += 1
+            elif token.tipo == TipoToken.FIN:
+                delta -= 1
+        return delta
 
     def _tokenizar_para_balance(self, codigo: str) -> list[Any]:
         """Tokeniza código para calcular balance estructural del bloque."""
@@ -463,10 +490,20 @@ class InteractiveCommand(BaseCommand):
         self, buffer_lineas: list[str], linea: str
     ) -> Optional[str]:
         """Agrega línea al buffer y retorna código completo si el bloque cerró."""
+        nivel_actual = int(self._estado_repl.get("nivel_bloque", 0))
+        delta = self._actualizar_nivel_bloque_por_linea(linea)
+        if nivel_actual == 0 and delta < 0:
+            raise ParserError("'fin' sin bloque abierto")
+
         buffer_lineas.append(linea)
-        codigo = "\n".join(buffer_lineas)
-        if self._calcular_balance_estructural(codigo) != 0:
+        nuevo_nivel = max(0, nivel_actual + delta)
+        self._estado_repl["nivel_bloque"] = nuevo_nivel
+        self._estado_repl["lineas_blanco_consecutivas"] = 0
+
+        if nuevo_nivel != 0:
             return None
+
+        codigo = "\n".join(buffer_lineas)
         buffer_lineas.clear()
         return codigo
 

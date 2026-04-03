@@ -172,3 +172,62 @@ def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
 
     assert prompts[:3] == ['cobra> ', '... ', '... ']
     assert mock_ejecutar.call_count == 1
+
+
+def test_interactive_rechaza_fin_sin_bloque_abierto():
+    cmd = InteractiveCommand(MagicMock())
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['fin', 'salir']), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error:
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    assert mock_ejecutar.call_count == 0
+    assert any("'fin' sin bloque abierto" in str(call.args[0]) for call in mock_error.call_args_list)
+
+
+def test_interactive_permite_bloque_vacio():
+    cmd = InteractiveCommand(MagicMock())
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', 'fin', 'salir']), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    assert mock_ejecutar.call_count == 1
+    assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nfin'
+
+
+def test_interactive_lineas_blancas_en_bloque_se_ignoran():
+    cmd = InteractiveCommand(MagicMock())
+    prompts = []
+    entradas = iter(['si 1 == 1 :', '   ', '', 'fin', 'salir'])
+
+    def _prompt_side_effect(prompt_text):
+        prompts.append(prompt_text)
+        return next(entradas)
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=_prompt_side_effect), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar:
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    assert prompts[:4] == ['cobra> ', '... ', '... ', '... ']
+    assert mock_ejecutar.call_count == 1
+    assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nfin'
+
+
+def test_repl_basico_comparte_validacion_fin_sin_bloque():
+    cmd = InteractiveCommand(MagicMock())
+    args = _args()
+    with patch('builtins.input', side_effect=['fin', 'salir']), \
+         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error, \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar:
+        ret = cmd._run_repl_basico(args, validador=None)
+
+    assert ret == 0
+    assert mock_ejecutar.call_count == 0
+    assert any("'fin' sin bloque abierto" in str(call.args[0]) for call in mock_error.call_args_list)
