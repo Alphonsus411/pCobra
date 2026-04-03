@@ -12,6 +12,15 @@ class ErrorEstructuraAST(ValueError):
     """Señala una estructura de AST inválida con su ruta de acceso."""
 
 
+CONTRATO_AST_MINIMO = (
+    "Contrato mínimo AST: la raíz debe ser list[NodoAST] y todas las sentencias "
+    "deben ser instancias de NodoAST. Los atributos de bloque "
+    "('cuerpo', 'bloque_si', 'bloque_sino', 'bloque_try', 'bloque_catch', "
+    "'bloque_finally', 'bloque_continuacion', 'bloque_escape') deben ser "
+    "NodoBloque; no se permiten listas anidadas de sentencias."
+)
+
+
 _ATRIBUTOS_BLOQUE = {
     "cuerpo",
     "bloque_si",
@@ -71,7 +80,14 @@ def _validar_nodo(nodo: NodoAST, ruta_actual: str) -> None:
 
 
 def validar_ast_estructural(ast: Any) -> None:
-    """Valida que el AST cumpla el contrato estructural de bloques y sentencias."""
+    """Valida que el AST cumpla el contrato estructural de bloques y sentencias.
+
+    Contrato mínimo en runtime:
+    - ``ast`` debe ser ``list[NodoAST]``.
+    - Cada sentencia debe ser ``NodoAST``.
+    - Los atributos de bloque deben usar ``NodoBloque``.
+    - No se permiten listas anidadas en sentencias.
+    """
     if not isinstance(ast, list):
         raise ErrorEstructuraAST(
             f"El AST raíz debe ser list[NodoAST], recibido: {type(ast).__name__}"

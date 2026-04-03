@@ -6,6 +6,7 @@ import os
 from typing import List, Optional, Any, Set
 
 from pcobra.core.ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoClase,
     NodoFuncion,
@@ -40,7 +41,12 @@ class AnalizadorSemantico(NodeVisitor):
         Args:
             ast: Lista de nodos del AST a analizar
         """
-        for nodo in ast:
+        for idx, nodo in enumerate(ast):
+            if not isinstance(nodo, NodoAST):
+                raise TypeError(
+                    f"Elemento raíz inválido en ast[{idx}]: se esperaba NodoAST, "
+                    f"se recibió {type(nodo).__name__}"
+                )
             nodo.aceptar(self)
 
     def _simbolos_importados(self, ruta: str) -> Set[tuple[str, str]]:
@@ -244,13 +250,33 @@ class AnalizadorSemantico(NodeVisitor):
 
     def generic_visit(self, node: Any) -> None:
         """Visita genérica para nodos sin visita específica."""
-        try:
-            for valor in getattr(node, "__dict__", {}).values():
-                if isinstance(valor, list):
-                    for elem in valor:
-                        if hasattr(elem, "aceptar"):
-                            elem.aceptar(self)
-                elif hasattr(valor, "aceptar"):
-                    valor.aceptar(self)
-        except AttributeError:
-            pass  # Ignorar atributos inválidos
+        if not isinstance(node, NodoAST):
+            raise TypeError(
+                f"Nodo inválido en generic_visit: se esperaba NodoAST, "
+                f"se recibió {type(node).__name__}"
+            )
+
+        for atributo, valor in getattr(node, "__dict__", {}).items():
+            if isinstance(valor, list):
+                for idx, elem in enumerate(valor):
+                    if isinstance(elem, NodoAST):
+                        elem.aceptar(self)
+                    elif hasattr(elem, "aceptar"):
+                        raise TypeError(
+                            "Estructura AST inválida: elemento no NodoAST con "
+                            f"'aceptar' en {type(node).__name__}.{atributo}[{idx}] "
+                            f"(tipo={type(elem).__name__})"
+                        )
+                    elif isinstance(elem, list):
+                        raise TypeError(
+                            "Estructura AST inválida: elemento ofensivo en "
+                            f"{type(node).__name__}.{atributo}[{idx}] "
+                            f"(tipo={type(elem).__name__})"
+                        )
+            elif isinstance(valor, NodoAST):
+                valor.aceptar(self)
+            elif hasattr(valor, "aceptar"):
+                raise TypeError(
+                    "Estructura AST inválida: atributo ofensivo con 'aceptar' en "
+                    f"{type(node).__name__}.{atributo} (tipo={type(valor).__name__})"
+                )
