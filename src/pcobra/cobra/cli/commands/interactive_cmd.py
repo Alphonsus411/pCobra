@@ -89,6 +89,14 @@ class InteractiveCommand(BaseCommand):
     MAX_LINE_LENGTH = 10000
     MEMORY_LIMIT_MB = 1024
     MAX_AST_DEPTH = 100
+    MAX_LINEAS_BLANCO_CONSECUTIVAS_EN_BLOQUE = 2
+    ERROR_FIN_SIN_BLOQUE = _("'fin' sin bloque abierto.")
+    ERROR_BLOQUE_VACIO = _(
+        "El bloque no puede cerrarse con 'fin' sin sentencias no vacías."
+    )
+    ERROR_EXCESO_LINEAS_BLANCO = _(
+        "Máximo de {maximo} líneas en blanco consecutivas dentro de un bloque."
+    )
     _TOKENS_APERTURA_BLOQUE = frozenset(
         {
             TipoToken.SI,
@@ -132,7 +140,14 @@ class InteractiveCommand(BaseCommand):
         Returns:
             Parser configurado para el subcomando
         """
-        parser = subparsers.add_parser(self.name, help=_("Inicia el modo interactivo"))
+        parser = subparsers.add_parser(
+            self.name,
+            help=_("Inicia el modo interactivo"),
+            description=_(
+                "REPL de Cobra. Dentro de bloques se permiten como máximo "
+                "{maximo} líneas en blanco consecutivas y se prohíben bloques vacíos."
+            ).format(maximo=self.MAX_LINEAS_BLANCO_CONSECUTIVAS_EN_BLOQUE),
+        )
         parser.add_argument(
             "--sandbox",
             action="store_true",
@@ -399,7 +414,10 @@ class InteractiveCommand(BaseCommand):
                 break
 
             if not linea:
-                self._manejar_linea_blanca(estado)
+                try:
+                    self._manejar_linea_blanca(estado)
+                except ParserError as err:
+                    self._log_error(_("Error de sintaxis"), err)
                 continue
 
             if not self.validar_entrada(linea):
@@ -440,11 +458,27 @@ class InteractiveCommand(BaseCommand):
         estado["lineas_blanco_consecutivas"] = 0
 
     def _manejar_linea_blanca(self, estado: dict[str, Any]) -> None:
-        """Regla estable de líneas en blanco: se ignoran en todo contexto."""
+        """Aplica política de líneas en blanco en sesión REPL."""
         if estado["nivel_bloque"] > 0:
             estado["lineas_blanco_consecutivas"] += 1
+            if (
+                estado["lineas_blanco_consecutivas"]
+                > self.MAX_LINEAS_BLANCO_CONSECUTIVAS_EN_BLOQUE
+            ):
+                raise ParserError(
+                    self.ERROR_EXCESO_LINEAS_BLANCO.format(
+                        maximo=self.MAX_LINEAS_BLANCO_CONSECUTIVAS_EN_BLOQUE
+                    )
+                )
         else:
             estado["lineas_blanco_consecutivas"] = 0
+
+    def _bloque_con_solo_lineas_vacias(self, buffer_lineas: list[str]) -> bool:
+        """Indica si el bloque actual no contiene sentencias no vacías."""
+        if len(buffer_lineas) < 2:
+            return True
+        lineas_intermedias = buffer_lineas[1:-1]
+        return all(not linea.strip() for linea in lineas_intermedias)
 
     def _actualizar_nivel_bloque_por_linea(self, linea: str) -> int:
         """Actualiza el contador de profundidad según la línea tokenizada."""
@@ -493,7 +527,7 @@ class InteractiveCommand(BaseCommand):
         nivel_actual = int(self._estado_repl.get("nivel_bloque", 0))
         delta = self._actualizar_nivel_bloque_por_linea(linea)
         if nivel_actual == 0 and delta < 0:
-            raise ParserError("'fin' sin bloque abierto")
+            raise ParserError(self.ERROR_FIN_SIN_BLOQUE)
 
         buffer_lineas.append(linea)
         nuevo_nivel = max(0, nivel_actual + delta)
@@ -502,6 +536,10 @@ class InteractiveCommand(BaseCommand):
 
         if nuevo_nivel != 0:
             return None
+
+        if linea.strip() == "fin" and self._bloque_con_solo_lineas_vacias(buffer_lineas):
+            buffer_lineas.clear()
+            raise ParserError(self.ERROR_BLOQUE_VACIO)
 
         codigo = "\n".join(buffer_lineas)
         buffer_lineas.clear()
