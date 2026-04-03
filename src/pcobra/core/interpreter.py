@@ -1031,12 +1031,12 @@ class InterpretadorCobra:
             self._eval_stack = set()
         expresion_id = id(expresion)
         print(
-            f"[EVAL] id={expresion_id} type={type(expresion).__name__} repr={repr(expresion)}"
+            f"[EVAL] id={expresion_id} tipo={type(expresion).__name__} repr={repr(expresion)}"
         )
         if expresion_id in self._eval_stack:
             print(
                 "[RECURSION DETECTED] "
-                f"id={expresion_id} type={type(expresion).__name__} repr={repr(expresion)}"
+                f"node id={expresion_id} repr={repr(expresion)}"
             )
             raise Exception("Recursive evaluation detected")
         self._eval_stack.add(expresion_id)
@@ -1079,15 +1079,17 @@ class InterpretadorCobra:
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo
-                print(f"[BIN-ENTER] id={expresion_id} op={tipo}")
+                print(
+                    f"[BIN-ENTER] id={expresion_id} op={expresion.operador} tipo={tipo} repr={repr(expresion)}"
+                )
 
                 izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
                 print(
-                    f"[BIN-LEFT] value={izquierda!r} type={type(izquierda).__name__}"
+                    f"[BIN-LEFT] id={id(izquierda)} tipo={type(izquierda).__name__} repr={izquierda!r}"
                 )
                 derecha = self.evaluar_expresion(expresion.derecha, visitados)
                 print(
-                    f"[BIN-RIGHT] value={derecha!r} type={type(derecha).__name__}"
+                    f"[BIN-RIGHT] id={id(derecha)} tipo={type(derecha).__name__} repr={derecha!r}"
                 )
 
                 izquierda = self._materializar_valor(
@@ -1130,40 +1132,40 @@ class InterpretadorCobra:
                     verificar_comparables(izquierda, derecha, ">")
                     result = _aplicar_comparacion(lambda i, d: i > d)
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MENORQUE:
                     verificar_comparables(izquierda, derecha, "<")
                     result = _aplicar_comparacion(lambda i, d: i < d)
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MAYORIGUAL:
                     verificar_comparables(izquierda, derecha, ">=")
                     result = _aplicar_comparacion(lambda i, d: i >= d)
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MENORIGUAL:
                     verificar_comparables(izquierda, derecha, "<=")
                     result = _aplicar_comparacion(lambda i, d: i <= d)
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.IGUAL:
                     result = _aplicar_comparacion(lambda i, d: i == d)
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.DIFERENTE:
                     result = _aplicar_comparacion(lambda i, d: i != d)
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
 
@@ -1171,49 +1173,49 @@ class InterpretadorCobra:
                     verificar_sumables(izquierda, derecha)
                     result = izquierda + derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.RESTA:
                     verificar_numeros(izquierda, derecha, "-")
                     result = izquierda - derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MULT:
                     verificar_numeros(izquierda, derecha, "*")
                     result = izquierda * derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.DIV:
                     verificar_numeros(izquierda, derecha, "/")
                     result = izquierda / derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MOD:
                     verificar_numeros(izquierda, derecha, "%")
                     result = izquierda % derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.AND:
                     verificar_booleanos(izquierda, derecha, "&&")
                     result = izquierda and derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.OR:
                     verificar_booleanos(izquierda, derecha, "||")
                     result = izquierda or derecha
                     print(
-                        f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
+                        f"[BIN-RESULT] id={id(result)} tipo={type(result).__name__} repr={result!r}"
                     )
                     return _retorno_critico(result, operador=tipo)
                 else:
