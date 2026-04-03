@@ -1,5 +1,6 @@
 import pytest
 
+from cobra.core import Lexer, Parser
 from cobra.semantico import AnalizadorSemantico
 from core.ast_nodes import (
     NodoIdentificador,
@@ -14,6 +15,20 @@ def test_variable_no_declarada():
     ast = [NodoIdentificador("x")]
     analizador = AnalizadorSemantico()
     with pytest.raises(NameError):
+        analizador.analizar(ast)
+
+
+def test_condicional_variable_no_declarada_lanza_nameerror_exacto():
+    codigo = """
+si x == 10:
+    pasar
+fin
+"""
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    analizador = AnalizadorSemantico()
+
+    with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
         analizador.analizar(ast)
 
 

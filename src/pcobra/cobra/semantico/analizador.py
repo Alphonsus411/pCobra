@@ -182,7 +182,11 @@ class AnalizadorSemantico(NodeVisitor):
 
     def visit_identificador(self, nodo: NodoIdentificador) -> None:
         """Visita un nodo identificador."""
-        if not self.current_scope.resolver(nodo.nombre):
+        if not isinstance(nodo.nombre, str) or not nodo.nombre:
+            raise NameError(f"Variable no declarada: {nodo.nombre!r}")
+
+        simbolo = self.current_scope.resolver(nodo.nombre)
+        if simbolo is None:
             raise NameError(f"Variable no declarada: {nodo.nombre}")
 
     def visit_funcion(self, nodo: NodoFuncion) -> None:
