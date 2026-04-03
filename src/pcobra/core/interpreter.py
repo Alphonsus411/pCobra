@@ -1078,6 +1078,12 @@ class InterpretadorCobra:
 
         Una condición no debe propagarse como ``NodoAST`` sin resolver para
         evitar comparaciones ambiguas entre nodos y errores opacos aguas abajo.
+
+        Contrato de control de flujo:
+        - la condición se evalúa usando ``evaluar_expresion``;
+        - si aparece un identificador indefinido, ``NameError`` se propaga;
+        - el resultado debe quedar materializado y ser estrictamente booleano
+          antes de ejecutar cualquier bloque ``si/sino`` o ``mientras``.
         """
         condicion_resuelta = self.evaluar_expresion(condicion)
         if isinstance(condicion_resuelta, NodoAST):
@@ -1085,10 +1091,17 @@ class InterpretadorCobra:
                 "Condición no materializada: "
                 f"se recibió nodo AST {type(condicion_resuelta).__name__}"
             )
+        if not isinstance(condicion_resuelta, bool):
+            raise TypeError(
+                "Condición de control inválida: se esperaba booleano materializado, "
+                f"se obtuvo {type(condicion_resuelta).__name__}"
+            )
         return condicion_resuelta
 
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
+        # Nota: no se captura ``NameError`` ni otras excepciones aquí para no
+        # ocultar la causa real del fallo en la evaluación de la condición.
         bloque_si = getattr(
             nodo, "cuerpo_si", getattr(nodo, "bloque_si", NodoBloque())
         )
