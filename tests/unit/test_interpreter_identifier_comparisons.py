@@ -59,11 +59,33 @@ imprimir x == 10
     assert salida == "True"
 
 
+def test_comparacion_identificador_con_suma_en_imprimir_sin_recursionerror() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida(
+        """
+x = 5
+imprimir x + 5 == 10
+"""
+    )
+    assert salida == "True"
+
+
 def test_comparacion_identificador_en_condicional_sin_recursionerror() -> None:
     salida = _ejecutar_codigo_y_capturar_salida(
         """
 x = 10
 si x == 10:
+    imprimir "ok"
+fin
+"""
+    )
+    assert salida == "ok"
+
+
+def test_comparacion_identificador_con_suma_en_condicional_sin_recursionerror() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida(
+        """
+x = 5
+si x + 5 == 10:
     imprimir "ok"
 fin
 """
@@ -92,6 +114,39 @@ def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
         NodoImprimir(
             NodoOperacionBinaria(
                 NodoIdentificador("x"),
+                Token(TipoToken.IGUAL, "=="),
+                NodoValor(10),
+            )
+        ),
+    ]
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    assert out.getvalue().strip() == "True"
+
+
+def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> None:
+    inter = InterpretadorCobra()
+    ast = [
+        NodoAsignacion("x", NodoValor(5)),
+        NodoImprimir(
+            NodoOperacionBinaria(
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoValor(5),
+                ),
                 Token(TipoToken.IGUAL, "=="),
                 NodoValor(10),
             )
