@@ -1,0 +1,50 @@
+"""Contrato de regresión para igualdad `==` en el parser clásico.
+
+Este test cubre explícitamente:
+- `ClassicParser.exp_equality`
+- `ClassicParser.exp_comparison`
+- `ClassicParser.declaracion_imprimir`
+- `ClassicParser.declaracion_condicional`
+"""
+
+from pcobra.core.ast_nodes import (
+    NodoCondicional,
+    NodoIdentificador,
+    NodoImprimir,
+    NodoOperacionBinaria,
+    NodoValor,
+)
+from pcobra.core.lexer import Lexer, TipoToken
+from pcobra.cobra.core.parser import ClassicParser
+
+
+def _parsear(codigo: str):
+    tokens = Lexer(codigo).analizar_token()
+    ast = ClassicParser(tokens).parsear()
+    return tokens, ast
+
+
+def _assert_igualdad_x_10(expresion):
+    """Valida el contrato AST de `x == 10` generado por exp_equality/exp_comparison."""
+    assert isinstance(expresion, NodoOperacionBinaria)
+    assert isinstance(expresion.izquierda, NodoIdentificador)
+    assert expresion.izquierda.nombre == "x"
+    assert expresion.operador.tipo == TipoToken.IGUAL
+    assert isinstance(expresion.derecha, NodoValor)
+    assert expresion.derecha.valor == 10
+
+
+def test_igualdad_en_imprimir_y_si_comparten_estructura_ast():
+    # Contexto 1: declaracion_imprimir -> expresion -> exp_equality/exp_comparison
+    tokens_imprimir, ast_imprimir = _parsear("imprimir(x == 10)")
+    assert any(t.tipo == TipoToken.IGUAL for t in tokens_imprimir)
+
+    nodo_imprimir = ast_imprimir[0]
+    assert isinstance(nodo_imprimir, NodoImprimir)
+    _assert_igualdad_x_10(nodo_imprimir.expresion)
+
+    # Contexto 2: declaracion_condicional -> condicion -> expresion -> exp_equality/exp_comparison
+    _, ast_si = _parsear("si x == 10:\n    imprimir(x)\nfin")
+    nodo_si = ast_si[0]
+    assert isinstance(nodo_si, NodoCondicional)
+    _assert_igualdad_x_10(nodo_si.condicion)
