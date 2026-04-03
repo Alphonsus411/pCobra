@@ -810,6 +810,36 @@ class InterpretadorCobra:
         restante = len(ast_repr) - max_chars
         return f"{ast_repr[:max_chars]}... <recortado {restante} caracteres>"
 
+    def _repr_corto(self, valor, max_chars: int = 160) -> str:
+        """Devuelve un ``repr`` compacto para mensajes de error."""
+        texto = repr(valor)
+        if len(texto) <= max_chars:
+            return texto
+        restante = len(texto) - max_chars
+        return f"{texto[:max_chars]}... <recortado {restante} caracteres>"
+
+    def _asegurar_resultado_no_ast(
+        self,
+        resultado,
+        *,
+        nodo_origen,
+        operador=None,
+    ):
+        """Garantiza que un resultado evaluado no propague nodos AST.
+
+        Contrato explícito: las salidas de ``evaluar_expresion`` deben ser
+        valores materializados y nunca instancias de ``NodoAST``.
+        """
+        if isinstance(resultado, NodoAST):
+            operador_txt = operador if operador is not None else "<sin_operador>"
+            raise RuntimeError(
+                "Resultado no materializado en evaluar_expresion: "
+                f"operador='{operador_txt}', "
+                f"nodo_origen={type(nodo_origen).__name__}, "
+                f"resultado={self._repr_corto(resultado)}"
+            )
+        return resultado
+
     def ejecutar_ast(self, ast):
         # Pipeline explícito:
         # 1) parseo/entrada tipada válida
@@ -993,7 +1023,8 @@ class InterpretadorCobra:
         - ciclo de referencias -> ``RuntimeError`` con mensaje de ciclo
         - para comparaciones, ambos operandos se evalúan/materializan por
           completo antes de aplicar el operador;
-        - nunca debe propagarse un ``NodoAST`` hacia capas superiores.
+        - nunca debe propagarse un ``NodoAST`` hacia capas superiores:
+          cualquier rama crítica debe devolver un valor materializado.
         """
         visitados = set() if visitados is None else visitados
         if not hasattr(self, "_eval_stack"):
@@ -1010,6 +1041,13 @@ class InterpretadorCobra:
             raise Exception("Recursive evaluation detected")
         self._eval_stack.add(expresion_id)
         try:
+            def _retorno_critico(resultado, *, operador=None):
+                return self._asegurar_resultado_no_ast(
+                    resultado,
+                    nodo_origen=expresion,
+                    operador=operador,
+                )
+
             if isinstance(expresion, NodoValor):
                 return expresion.valor  # Obtiene el valor directo si es un NodoValor
             elif isinstance(expresion, Token) and expresion.tipo in {
@@ -1023,7 +1061,8 @@ class InterpretadorCobra:
                 # Resuelve asignaciones anidadas y devuelve su valor
                 return self.ejecutar_asignacion(expresion, visitados)
             elif isinstance(expresion, NodoIdentificador):
-                return self._resolver_identificador(expresion.nombre, visitados)
+                resultado = self._resolver_identificador(expresion.nombre, visitados)
+                return _retorno_critico(resultado, operador="identificador")
             elif isinstance(expresion, NodoInstancia):
                 return self.ejecutar_instancia(expresion)
             elif isinstance(expresion, NodoAtributo):
@@ -1035,7 +1074,7 @@ class InterpretadorCobra:
                 valor_resuelto = self._materializar_valor(valor, visitados)
                 if valor_resuelto is not valor:
                     atributos[expresion.nombre] = valor_resuelto
-                return valor_resuelto
+                return _retorno_critico(valor_resuelto, operador="atributo")
             elif isinstance(expresion, NodoHolobit):
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoOperacionBinaria):
@@ -1062,16 +1101,16 @@ class InterpretadorCobra:
                     origen="operacion_binaria",
                 )
 
-                if isinstance(izquierda, NodoAST):
-                    raise RuntimeError(
-                        "Operando binario no materializado tras resolver: "
-                        f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
-                    )
-                if isinstance(derecha, NodoAST):
-                    raise RuntimeError(
-                        "Operando binario no materializado tras resolver: "
-                        f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
-                    )
+                self._asegurar_resultado_no_ast(
+                    izquierda,
+                    nodo_origen=expresion.izquierda,
+                    operador=f"{tipo}:izquierda",
+                )
+                self._asegurar_resultado_no_ast(
+                    derecha,
+                    nodo_origen=expresion.derecha,
+                    operador=f"{tipo}:derecha",
+                )
 
                 def _aplicar_comparacion(operador):
                     """Valida y aplica una comparación con operandos materializados."""
@@ -1093,40 +1132,40 @@ class InterpretadorCobra:
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MENORQUE:
                     verificar_comparables(izquierda, derecha, "<")
                     result = _aplicar_comparacion(lambda i, d: i < d)
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MAYORIGUAL:
                     verificar_comparables(izquierda, derecha, ">=")
                     result = _aplicar_comparacion(lambda i, d: i >= d)
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MENORIGUAL:
                     verificar_comparables(izquierda, derecha, "<=")
                     result = _aplicar_comparacion(lambda i, d: i <= d)
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.IGUAL:
                     result = _aplicar_comparacion(lambda i, d: i == d)
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.DIFERENTE:
                     result = _aplicar_comparacion(lambda i, d: i != d)
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
 
                 if tipo == TipoToken.SUMA:
                     verificar_sumables(izquierda, derecha)
@@ -1134,65 +1173,77 @@ class InterpretadorCobra:
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.RESTA:
                     verificar_numeros(izquierda, derecha, "-")
                     result = izquierda - derecha
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MULT:
                     verificar_numeros(izquierda, derecha, "*")
                     result = izquierda * derecha
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.DIV:
                     verificar_numeros(izquierda, derecha, "/")
                     result = izquierda / derecha
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.MOD:
                     verificar_numeros(izquierda, derecha, "%")
                     result = izquierda % derecha
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.AND:
                     verificar_booleanos(izquierda, derecha, "&&")
                     result = izquierda and derecha
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 elif tipo == TipoToken.OR:
                     verificar_booleanos(izquierda, derecha, "||")
                     result = izquierda or derecha
                     print(
                         f"[BIN-RESULT] result={result!r} type={type(result).__name__}"
                     )
-                    return result
+                    return _retorno_critico(result, operador=tipo)
                 else:
                     raise ValueError(f"Operador no soportado: {tipo}")
             elif isinstance(expresion, NodoOperacionUnaria):
                 valor = self.evaluar_expresion(expresion.operando, visitados)
+                valor = self._materializar_valor(valor, visitados)
+                self._asegurar_resultado_no_ast(
+                    valor,
+                    nodo_origen=expresion.operando,
+                    operador=f"{expresion.operador.tipo}:operando",
+                )
                 tipo = expresion.operador.tipo
                 if tipo == TipoToken.NOT:
                     verificar_booleano(valor, "!")
-                    return not valor
+                    return _retorno_critico(not valor, operador=tipo)
                 else:
                     raise ValueError(f"Operador unario no soportado: {tipo}")
             elif isinstance(expresion, NodoEsperar):
                 return self.evaluar_expresion(expresion.expresion, visitados)
             elif isinstance(expresion, NodoLlamadaMetodo):
-                return self.ejecutar_llamada_metodo(expresion)
+                return _retorno_critico(
+                    self.ejecutar_llamada_metodo(expresion),
+                    operador="llamada_metodo",
+                )
             elif isinstance(expresion, NodoLlamadaFuncion):
-                return self.ejecutar_llamada_funcion(expresion)
+                return _retorno_critico(
+                    self.ejecutar_llamada_funcion(expresion),
+                    operador="llamada_funcion",
+                )
             else:
                 raise ValueError(f"Expresión no soportada: {expresion}")
         finally:

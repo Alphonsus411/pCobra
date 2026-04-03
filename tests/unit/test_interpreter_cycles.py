@@ -6,8 +6,10 @@ from core.ast_nodes import (
     NodoBloque,
     NodoCondicional,
     NodoIdentificador,
+    NodoOperacionBinaria,
     NodoValor,
 )
+from cobra.core import TipoToken, Token
 
 
 def test_referencia_circular_variable():
@@ -113,3 +115,33 @@ def test_resolver_identificador_lanza_error_si_materializacion_devuelve_ast(monk
         match=r"^Resolución inválida de variable: 'a' quedó en nodo AST \(NodoIdentificador\)$",
     ):
         inter._resolver_identificador("a")
+
+
+def test_materializacion_completa_en_cadena_identificador_y_valor():
+    inter = InterpretadorCobra()
+    inter.variables["a"] = NodoIdentificador("b")
+    inter.variables["b"] = NodoValor(NodoIdentificador("c"))
+    inter.variables["c"] = NodoValor(42)
+
+    resultado = inter.evaluar_expresion(NodoIdentificador("a"))
+
+    assert resultado == 42
+    assert inter.variables["a"] == 42
+    assert inter.variables["b"] == 42
+    assert inter.variables["c"] == 42
+
+
+def test_binaria_materializa_operandos_encadenados_completamente():
+    inter = InterpretadorCobra()
+    inter.variables["izq"] = NodoValor(NodoIdentificador("a"))
+    inter.variables["a"] = NodoValor(8)
+    inter.variables["der"] = NodoValor(NodoIdentificador("b"))
+    inter.variables["b"] = NodoValor(5)
+
+    expresion = NodoOperacionBinaria(
+        NodoIdentificador("izq"),
+        Token(TipoToken.SUMA, "+"),
+        NodoIdentificador("der"),
+    )
+
+    assert inter.evaluar_expresion(expresion) == 13
