@@ -79,3 +79,37 @@ def test_condicional_rechaza_nodo_ast_sin_materializar_en_condicion():
         match=r"^Condición no materializada: se recibió nodo AST NodoIdentificador$",
     ):
         inter.ejecutar_condicional(condicional)
+
+
+def test_evaluar_identificador_delega_unicamente_en_resolver(monkeypatch):
+    inter = InterpretadorCobra()
+    llamadas = []
+
+    def _resolver_controlado(nombre, visitados=None):
+        llamadas.append((nombre, visitados))
+        return 123
+
+    monkeypatch.setattr(inter, "_resolver_identificador", _resolver_controlado)
+
+    resultado = inter.evaluar_expresion(NodoIdentificador("alias"))
+
+    assert resultado == 123
+    assert len(llamadas) == 1
+    assert llamadas[0][0] == "alias"
+
+
+def test_resolver_identificador_lanza_error_si_materializacion_devuelve_ast(monkeypatch):
+    inter = InterpretadorCobra()
+    inter.variables["a"] = NodoIdentificador("b")
+
+    monkeypatch.setattr(
+        inter,
+        "_materializar_valor",
+        lambda valor, visitados, origen="general", **kwargs: NodoIdentificador("x"),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"^Resolución inválida de variable: 'a' quedó en nodo AST \(NodoIdentificador\)$",
+    ):
+        inter._resolver_identificador("a")
