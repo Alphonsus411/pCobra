@@ -6,6 +6,7 @@ from typing import Any, List, Tuple
 import copy
 
 from ..ast_nodes import (
+    NodoAST,
     NodoFuncion,
     NodoRetorno,
     NodoLlamadaFuncion,
@@ -20,6 +21,7 @@ from ..ast_nodes import (
     NodoGlobal,
     NodoNoLocal,
     NodoIdentificador,
+    NodoBloque,
 )
 from ..visitor import NodeVisitor
 
@@ -29,6 +31,12 @@ class _FunctionInliner(NodeVisitor):
 
     def __init__(self):
         self.funciones: dict[str, Tuple[List[str], Any]] = {}
+
+    def _error_estructura(self, ruta: str, valor: Any):
+        raise RuntimeError(
+            f"Estructura AST inválida en optimización (inliner) en '{ruta}': "
+            f"{type(valor).__name__}"
+        )
 
     def _tiene_efectos_secundarios(self, nodo: Any) -> bool:
         """Determina si ``nodo`` produce efectos secundarios."""
@@ -49,22 +57,29 @@ class _FunctionInliner(NodeVisitor):
             ),
         ):
             return True
-        for attr, value in list(getattr(nodo, "__dict__", {}).items()):
+        for attr, value in vars(nodo).items():
             if isinstance(value, list):
                 if any(self._tiene_efectos_secundarios(v) for v in value):
                     return True
-            elif hasattr(value, "__dict__"):
+            elif isinstance(value, NodoBloque):
+                if any(
+                    self._tiene_efectos_secundarios(v) for v in value.instrucciones
+                ):
+                    return True
+            elif isinstance(value, NodoAST):
                 if self._tiene_efectos_secundarios(value):
                     return True
         return False
 
     def visit_funcion(self, nodo: NodoFuncion):
-        if len(nodo.cuerpo) == 1 and isinstance(nodo.cuerpo[0], NodoRetorno):
-            expresion = self.visit(nodo.cuerpo[0].expresion)
+        if len(nodo.cuerpo.instrucciones) == 1 and isinstance(
+            nodo.cuerpo.instrucciones[0], NodoRetorno
+        ):
+            expresion = self.visit(nodo.cuerpo.instrucciones[0].expresion)
             if not self._tiene_efectos_secundarios(expresion):
                 self.funciones[nodo.nombre] = (nodo.parametros, expresion)
                 return None
-        nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
+        nodo.cuerpo = NodoBloque([self.visit(n) for n in nodo.cuerpo.instrucciones])
         return nodo
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
@@ -76,29 +91,46 @@ class _FunctionInliner(NodeVisitor):
         return nodo
 
     def generic_visit(self, node: Any):
-        for attr, value in list(getattr(node, "__dict__", {}).items()):
+        if not isinstance(node, NodoAST):
+            self._error_estructura(type(node).__name__, node)
+        for attr, value in vars(node).items():
+            ruta = f"{node.__class__.__name__}.{attr}"
+            if isinstance(value, NodoBloque):
+                value.instrucciones = [
+                    self.visit(v) for v in value.instrucciones if v is not None
+                ]
+                continue
             if isinstance(value, list):
                 nuevos = []
-                for v in value:
-                    res = self.visit(v)
-                    if res is None:
-                        continue
-                    elif isinstance(res, list):
-                        nuevos.extend(res)
+                for idx, v in enumerate(value):
+                    if isinstance(v, NodoAST):
+                        res = self.visit(v)
+                        if res is None:
+                            continue
+                        if isinstance(res, list):
+                            nuevos.extend(res)
+                        else:
+                            nuevos.append(res)
+                    elif isinstance(v, list):
+                        self._error_estructura(f"{ruta}[{idx}]", v)
                     else:
-                        nuevos.append(res)
+                        nuevos.append(v)
                 setattr(node, attr, nuevos)
-            elif hasattr(value, "aceptar"):
+            elif isinstance(value, NodoAST):
                 setattr(node, attr, self.visit(value))
         return node
 
     def _reemplazar(self, node: Any, reemplazos: dict[str, Any]):
         if isinstance(node, NodoIdentificador) and node.nombre in reemplazos:
             return reemplazos[node.nombre]
-        for attr, value in list(getattr(node, "__dict__", {}).items()):
+        for attr, value in vars(node).items():
             if isinstance(value, list):
                 setattr(node, attr, [self._reemplazar(v, reemplazos) for v in value])
-            elif hasattr(value, "__dict__"):
+            elif isinstance(value, NodoBloque):
+                value.instrucciones = [
+                    self._reemplazar(v, reemplazos) for v in value.instrucciones
+                ]
+            elif isinstance(value, NodoAST):
                 setattr(node, attr, self._reemplazar(value, reemplazos))
         return node
 
