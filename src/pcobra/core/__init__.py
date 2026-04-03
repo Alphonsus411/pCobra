@@ -23,6 +23,7 @@ sys.modules["core"] = sys.modules[__name__]
 
 __all__ = [
     "NodoAST",
+    "NodoBloque",
     "NodoAsignacion",
     "NodoHolobit",
     "NodoCondicional",

@@ -6,6 +6,7 @@ from typing import Any, List
 
 from ..visitor import NodeVisitor
 from ..ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -13,6 +14,7 @@ from ..ast_nodes import (
     NodoValor,
     NodoFuncion,
     NodoMetodo,
+    NodoBloque,
 )
 
 
@@ -49,12 +51,25 @@ class _ExprCounter(NodeVisitor):
         self.visit(nodo.operando)
 
     def generic_visit(self, node: Any):
-        for attr, value in list(getattr(node, "__dict__", {}).items()):
+        if not isinstance(node, NodoAST):
+            raise RuntimeError(
+                f"Estructura AST inválida en optimización (common_subexpr) en "
+                f"'{type(node).__name__}'"
+            )
+        for attr, value in vars(node).items():
             if isinstance(value, list):
                 for v in value:
-                    if hasattr(v, "aceptar"):
+                    if isinstance(v, NodoAST):
                         self.visit(v)
-            elif hasattr(value, "aceptar"):
+                    elif isinstance(v, list):
+                        raise RuntimeError(
+                            "Estructura AST inválida en optimización "
+                            f"(common_subexpr) en '{node.__class__.__name__}.{attr}'"
+                        )
+            elif isinstance(value, NodoBloque):
+                for v in value.instrucciones:
+                    self.visit(v)
+            elif isinstance(value, NodoAST):
                 self.visit(value)
 
 
@@ -100,32 +115,39 @@ class _CommonSubexprEliminator(NodeVisitor):
     def visit_funcion(self, nodo: NodoFuncion):
         self.maps.append({})
         self.assigns.append([])
-        nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
+        nodo.cuerpo = NodoBloque([self.visit(n) for n in nodo.cuerpo.instrucciones])
         assigns = self.assigns.pop()
         self.maps.pop()
         if assigns:
-            nodo.cuerpo = assigns + nodo.cuerpo
+            nodo.cuerpo = NodoBloque(assigns + nodo.cuerpo.instrucciones)
         return nodo
 
     def visit_metodo(self, nodo: NodoMetodo):
         self.maps.append({})
         self.assigns.append([])
-        nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
+        nodo.cuerpo = NodoBloque([self.visit(n) for n in nodo.cuerpo.instrucciones])
         assigns = self.assigns.pop()
         self.maps.pop()
         if assigns:
-            nodo.cuerpo = assigns + nodo.cuerpo
+            nodo.cuerpo = NodoBloque(assigns + nodo.cuerpo.instrucciones)
         return nodo
 
     def generic_visit(self, node: Any):
-        for attr, value in list(getattr(node, "__dict__", {}).items()):
+        if not isinstance(node, NodoAST):
+            raise RuntimeError(
+                f"Estructura AST inválida en optimización (common_subexpr) en "
+                f"'{type(node).__name__}'"
+            )
+        for attr, value in vars(node).items():
             if isinstance(value, list):
                 setattr(
                     node,
                     attr,
-                    [self.visit(v) if hasattr(v, "aceptar") else v for v in value],
+                    [self.visit(v) if isinstance(v, NodoAST) else v for v in value],
                 )
-            elif hasattr(value, "aceptar"):
+            elif isinstance(value, NodoBloque):
+                value.instrucciones = [self.visit(v) for v in value.instrucciones]
+            elif isinstance(value, NodoAST):
                 setattr(node, attr, self.visit(value))
         return node
 

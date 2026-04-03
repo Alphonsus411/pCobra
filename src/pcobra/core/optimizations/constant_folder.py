@@ -7,6 +7,7 @@ from typing import Any, List
 
 from ..visitor import NodeVisitor
 from ..ast_nodes import (
+    NodoAST,
     NodoAsignacion,
     NodoOperacionBinaria,
     NodoOperacionUnaria,
@@ -16,11 +17,18 @@ from ..ast_nodes import (
     NodoFuncion,
     NodoMetodo,
     NodoRetorno,
+    NodoBloque,
 )
 from pcobra.core.lexer import TipoToken, Token
 
 
 class _ConstantFolder(NodeVisitor):
+    def _error_estructura(self, ruta: str, valor: Any):
+        raise RuntimeError(
+            f"Estructura AST inválida en optimización (constant_folder) en '{ruta}': "
+            f"{type(valor).__name__}"
+        )
+
     def visit_asignacion(self, nodo: NodoAsignacion):
         """Visita una asignación y actualiza su expresión.
 
@@ -63,28 +71,44 @@ class _ConstantFolder(NodeVisitor):
 
     def visit_condicional(self, nodo: NodoCondicional):
         nodo.condicion = self.visit(nodo.condicion)
-        nodo.bloque_si = [self.visit(n) for n in nodo.bloque_si]
-        nodo.bloque_sino = [self.visit(n) for n in nodo.bloque_sino]
+        nodo.bloque_si = NodoBloque([self.visit(n) for n in nodo.bloque_si.instrucciones])
+        nodo.bloque_sino = NodoBloque(
+            [self.visit(n) for n in nodo.bloque_sino.instrucciones]
+        )
         return nodo
 
     def visit_bucle_mientras(self, nodo: NodoBucleMientras):
         nodo.condicion = self.visit(nodo.condicion)
-        nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
+        nodo.cuerpo = NodoBloque([self.visit(n) for n in nodo.cuerpo.instrucciones])
         return nodo
 
     def visit_funcion(self, nodo: NodoFuncion):
-        nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
+        nodo.cuerpo = NodoBloque([self.visit(n) for n in nodo.cuerpo.instrucciones])
         return nodo
 
     def visit_metodo(self, nodo: NodoMetodo):
-        nodo.cuerpo = [self.visit(n) for n in nodo.cuerpo]
+        nodo.cuerpo = NodoBloque([self.visit(n) for n in nodo.cuerpo.instrucciones])
         return nodo
 
     def generic_visit(self, node: Any):
-        for attr, value in list(getattr(node, "__dict__", {}).items()):
+        if not isinstance(node, NodoAST):
+            self._error_estructura(type(node).__name__, node)
+        for attr, value in vars(node).items():
+            ruta = f"{node.__class__.__name__}.{attr}"
+            if isinstance(value, NodoBloque):
+                value.instrucciones = [self.visit(v) for v in value.instrucciones]
+                continue
             if isinstance(value, list):
-                setattr(node, attr, [self.visit(v) for v in value])
-            elif hasattr(value, "aceptar"):
+                nuevos = []
+                for idx, v in enumerate(value):
+                    if isinstance(v, NodoAST):
+                        nuevos.append(self.visit(v))
+                    elif isinstance(v, list):
+                        self._error_estructura(f"{ruta}[{idx}]", v)
+                    else:
+                        nuevos.append(v)
+                setattr(node, attr, nuevos)
+            elif isinstance(value, NodoAST):
                 setattr(node, attr, self.visit(value))
         return node
 

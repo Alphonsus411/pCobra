@@ -17,6 +17,36 @@ class NodoAST:
 
 
 @dataclass
+class NodoBloque(NodoAST):
+    """Representa un bloque homogéneo de sentencias del AST."""
+
+    instrucciones: List[NodoAST] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        self.instrucciones = list(self.instrucciones or [])
+
+    def __iter__(self):
+        return iter(self.instrucciones)
+
+    def __len__(self):
+        return len(self.instrucciones)
+
+    def __getitem__(self, index):
+        return self.instrucciones[index]
+
+    def append(self, instruccion: NodoAST) -> None:
+        self.instrucciones.append(instruccion)
+
+
+def _asegurar_bloque(valor: Any) -> NodoBloque:
+    if isinstance(valor, NodoBloque):
+        return valor
+    if isinstance(valor, list):
+        return NodoBloque(valor)
+    raise TypeError(f"Se esperaba NodoBloque o list, se recibió {type(valor).__name__}")
+
+
+@dataclass
 class NodoAsignacion(NodoAST):
     variable: Any
     expresion: Any
@@ -58,10 +88,14 @@ class NodoHolobit(NodoAST):
 @dataclass
 class NodoCondicional(NodoAST):
     condicion: Any
-    bloque_si: List[Any]
-    bloque_sino: List[Any] = field(default_factory=list)
+    bloque_si: NodoBloque
+    bloque_sino: NodoBloque = field(default_factory=NodoBloque)
 
     """Bloque ``si`` opcionalmente acompañado de un bloque ``sino``."""
+
+    def __post_init__(self) -> None:
+        self.bloque_si = _asegurar_bloque(self.bloque_si)
+        self.bloque_sino = _asegurar_bloque(self.bloque_sino)
 
 
 @dataclass
@@ -76,9 +110,12 @@ class NodoGarantia(NodoAST):
 @dataclass
 class NodoBucleMientras(NodoAST):
     condicion: Any
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
 
     """Representa un bucle ``mientras`` con su condición y cuerpo."""
+
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 
 @dataclass
@@ -178,13 +215,16 @@ class NodoDecorador(NodoAST):
 class NodoFuncion(NodoAST):
     nombre: str
     parametros: List[str]
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
     decoradores: List[Any] = field(default_factory=list)
     asincronica: bool = False
     type_params: List[str] = field(default_factory=list)
     nombre_original: Optional[str] = None
 
     """Declaración de una función definida por el usuario."""
+
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 @dataclass
 class NodoMetodoAbstracto(NodoAST):
@@ -224,12 +264,15 @@ class NodoEnum(NodoAST):
 class NodoMetodo(NodoAST):
     nombre: str
     parametros: List[str]
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
     asincronica: bool = False
     type_params: List[str] = field(default_factory=list)
     nombre_original: Optional[str] = None
 
     """Método perteneciente a una clase."""
+
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 
 @dataclass
@@ -462,8 +505,11 @@ class NodoLambda(NodoAST):
 class NodoWith(NodoAST):
     contexto: Any
     alias: str | None
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
     asincronico: bool = False
+
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
         return (
@@ -487,12 +533,17 @@ class NodoThrow(NodoAST):
 
 @dataclass
 class NodoTryCatch(NodoAST):
-    bloque_try: List[Any]
+    bloque_try: NodoBloque
     nombre_excepcion: Optional[str] = None
-    bloque_catch: List[Any] = field(default_factory=list)
-    bloque_finally: List[Any] = field(default_factory=list)
+    bloque_catch: NodoBloque = field(default_factory=NodoBloque)
+    bloque_finally: NodoBloque = field(default_factory=NodoBloque)
 
     """Bloque ``try`` con manejo opcional de excepciones."""
+
+    def __post_init__(self) -> None:
+        self.bloque_try = _asegurar_bloque(self.bloque_try)
+        self.bloque_catch = _asegurar_bloque(self.bloque_catch)
+        self.bloque_finally = _asegurar_bloque(self.bloque_finally)
 
 
 @dataclass
@@ -530,10 +581,13 @@ class NodoExport(NodoAST):
 class NodoPara(NodoAST):
     variable: Any
     iterable: Any
-    cuerpo: List[Any]
+    cuerpo: NodoBloque
     asincronico: bool = False
 
     """Bucle ``para`` que itera sobre un iterable."""
+
+    def __post_init__(self) -> None:
+        self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
         return (
@@ -616,6 +670,7 @@ class NodoSwitch(NodoAST):
 
 __all__ = [
     "NodoAST",
+    "NodoBloque",
     "NodoAsignacion",
     "NodoHolobit",
     "NodoCondicional",
@@ -674,10 +729,6 @@ __all__ = [
     "NodoCase",
     "NodoSwitch",
 ]
-
-
-class NodoBloque:
-    pass
 
 
 class NodoDeclaracion:

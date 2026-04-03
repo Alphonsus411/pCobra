@@ -76,6 +76,7 @@ from .import_utils import (
     ruta_import_permitida,
     cargar_ast_modulo,
 )
+from .utils import validar_ast_estructural, ErrorEstructuraAST
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 
@@ -636,6 +637,10 @@ class InterpretadorCobra:
     def ejecutar_ast(self, ast):
         # Reinicia el conjunto de nodos validados al comenzar una ejecución
         self._validados.clear()
+        try:
+            validar_ast_estructural(ast)
+        except ErrorEstructuraAST as exc:
+            raise RuntimeError(f"Estructura AST inválida al iniciar ejecución: {exc}") from exc
         total = self._contar_nodos(ast)
         max_nodos = limite_nodos()
         if total > max_nodos:
@@ -648,6 +653,10 @@ class InterpretadorCobra:
         if cpu:
             _lim_cpu(cpu)
 
+        try:
+            validar_ast_estructural(ast)
+        except ErrorEstructuraAST as exc:
+            raise RuntimeError(f"Estructura AST inválida antes de optimizaciones: {exc}") from exc
         ast = remove_dead_code(
             inline_functions(eliminate_common_subexpressions(optimize_constants(ast)))
         )

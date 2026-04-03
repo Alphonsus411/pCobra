@@ -66,6 +66,7 @@ from pcobra.core.ast_nodes import (
     NodoDiccionarioTipo,
     NodoListaComprehension,
     NodoDiccionarioComprehension,
+    NodoBloque,
 )
 
 from pcobra.core import NodoYield
@@ -446,7 +447,7 @@ class ClassicParser:
             f"Bucle 'para' parseado correctamente: variable={variable}, "
             f"iterable={iterable}, cuerpo={cuerpo}"
         )
-        return NodoPara(variable, iterable, cuerpo, asincronico)
+        return NodoPara(variable, iterable, self._bloque(cuerpo), asincronico)
 
     def llamada_funcion(self):
         """Parsea una llamada a función."""
@@ -558,7 +559,7 @@ class ClassicParser:
             self.comer(TipoToken.FIN)
 
         logger.debug(f"Cuerpo del bucle mientras: {cuerpo}")
-        return NodoBucleMientras(condicion, cuerpo)
+        return NodoBucleMientras(condicion, self._bloque(cuerpo))
 
     def declaracion_holobit(self):
         """Parsea la creación de un objeto ``holobit``.
@@ -687,7 +688,9 @@ class ClassicParser:
         self.comer(TipoToken.FIN)
 
         logger.debug(f"Bloque si: {bloque_si}, Bloque sino: {bloque_sino}")
-        return NodoCondicional(condicion, bloque_si, bloque_sino)
+        return NodoCondicional(
+            condicion, self._bloque(bloque_si), self._bloque(bloque_sino)
+        )
 
     def _parse_bloque_condicional(
         self,
@@ -708,6 +711,11 @@ class ClassicParser:
                 if self.token_actual().tipo != TipoToken.EOF:
                     self.avanzar()
         return bloque
+
+    @staticmethod
+    def _bloque(instrucciones: List[Any]) -> NodoBloque:
+        """Normaliza una secuencia de sentencias en un nodo de bloque."""
+        return NodoBloque(instrucciones)
 
     def _bloque_termina(self, bloque: List[Any]) -> bool:
         if not bloque:
@@ -752,7 +760,9 @@ class ClassicParser:
                 [TipoToken.FIN, TipoToken.EOF], "sino", recuperar_errores=False
             )
 
-        return NodoCondicional(condicion, bloque_si, bloque_sino)
+        return NodoCondicional(
+            condicion, self._bloque(bloque_si), self._bloque(bloque_sino)
+        )
 
     def declaracion_garantia(self):
         self.comer(TipoToken.GARANTIA)
@@ -855,7 +865,7 @@ class ClassicParser:
         return NodoFuncion(
             nombre,
             parametros,
-            cuerpo,
+            self._bloque(cuerpo),
             asincronica=asincronica,
             type_params=type_params,
             nombre_original=nombre_original,
@@ -1101,7 +1111,12 @@ class ClassicParser:
             raise ParserError("Se esperaba 'fin' para cerrar el bloque try/catch")
         self.comer(TipoToken.FIN)
 
-        return NodoTryCatch(bloque_try, nombre_exc, bloque_catch, bloque_finally)
+        return NodoTryCatch(
+            self._bloque(bloque_try),
+            nombre_exc,
+            self._bloque(bloque_catch),
+            self._bloque(bloque_finally),
+        )
 
     def declaracion_defer(self):
         """Parsea una sentencia ``defer``/``aplazar`` que difiere una acción."""
@@ -1257,7 +1272,7 @@ class ClassicParser:
         if self.token_actual().tipo != TipoToken.FIN:
             raise ParserError("Se esperaba 'fin' para cerrar el bloque 'con'")
         self.comer(TipoToken.FIN)
-        return NodoWith(contexto, alias, cuerpo, asincronico)
+        return NodoWith(contexto, alias, self._bloque(cuerpo), asincronico)
 
     def declaracion_desde(self):
         """Importa un símbolo específico desde un módulo."""
