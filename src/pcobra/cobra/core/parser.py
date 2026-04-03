@@ -661,9 +661,7 @@ class ClassicParser:
 
         # Verificar ':' después de la condición
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            self.reportar_error("Se esperaba ':' después de la condición del 'si'")
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
+            raise ParserError("Se esperaba ':' después de la condición del 'si'")
         else:
             self.comer(TipoToken.DOSPUNTOS)
 
@@ -677,9 +675,7 @@ class ClassicParser:
         elif self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                self.reportar_error("Se esperaba ':' después del 'sino'")
-                if self.token_actual().tipo != TipoToken.EOF:
-                    self.avanzar()
+                raise ParserError("Se esperaba ':' después de 'sino'")
             else:
                 self.comer(TipoToken.DOSPUNTOS)
             bloque_sino = self._parse_bloque_condicional(
@@ -732,9 +728,7 @@ class ClassicParser:
         condicion = self.expresion()
 
         if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-            self.reportar_error("Se esperaba ':' después de la condición del 'sino si'")
-            if self.token_actual().tipo != TipoToken.EOF:
-                self.avanzar()
+            raise ParserError("Se esperaba ':' después de la condición del 'sino si'")
         else:
             self.comer(TipoToken.DOSPUNTOS)
 
@@ -749,9 +743,7 @@ class ClassicParser:
         elif self.token_actual().tipo == TipoToken.SINO:
             self.comer(TipoToken.SINO)
             if self.token_actual().tipo != TipoToken.DOSPUNTOS:
-                self.reportar_error("Se esperaba ':' después del 'sino'")
-                if self.token_actual().tipo != TipoToken.EOF:
-                    self.avanzar()
+                raise ParserError("Se esperaba ':' después de 'sino'")
             else:
                 self.comer(TipoToken.DOSPUNTOS)
             bloque_sino = self._parse_bloque_condicional(
