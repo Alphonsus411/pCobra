@@ -1121,6 +1121,13 @@ class InterpretadorCobra:
                 if isinstance(valor, NodoValor):
                     valor = valor.valor
 
+                if isinstance(valor, NodoAST):
+                    raise RuntimeError(
+                        "Error semántico: identificador "
+                        f"'{expresion.nombre}' resolvió a un nodo AST "
+                        f"({type(valor).__name__}) en lugar de un valor materializado"
+                    )
+
                 print(f"[ID] value={valor!r} type={type(valor).__name__}")
 
                 if not isinstance(valor, (int, float, bool, str)):
