@@ -1565,6 +1565,15 @@ class ClassicParser:
     def termino(self):
         """Procesa términos como literales, identificadores y llamados a funciones."""
         token = self.token_actual()
+        if token.tipo == TipoToken.LPAREN:
+            self.comer(TipoToken.LPAREN)
+            expresion_agrupada = self.expresion()
+            if self.token_actual().tipo != TipoToken.RPAREN:
+                raise ParserError(
+                    "Se esperaba ')' para cerrar la expresión entre paréntesis"
+                )
+            self.comer(TipoToken.RPAREN)
+            return expresion_agrupada
         if token.tipo == TipoToken.ENTERO:
             self.comer(TipoToken.ENTERO)
             return NodoValor(token.valor)
