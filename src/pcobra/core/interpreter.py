@@ -420,18 +420,38 @@ class InterpretadorCobra:
         """
         return self._resolver_identificador(nombre, visitados)
 
-    def _asignacion_referencia_identificador(self, expresion, nombre):
+    def _asignacion_referencia_identificador(
+        self,
+        expresion,
+        nombre,
+        visitados_ids: set[int] | None = None,
+    ):
         """Detecta si una expresión contiene una referencia al identificador."""
+        if visitados_ids is None:
+            visitados_ids = set()
         if isinstance(expresion, NodoIdentificador):
             return expresion.nombre == nombre
         if isinstance(expresion, Token):
             return False
+        if hasattr(expresion, "__dict__"):
+            expresion_id = id(expresion)
+            if expresion_id in visitados_ids:
+                return False
+            visitados_ids.add(expresion_id)
         for valor in getattr(expresion, "__dict__", {}).values():
             if isinstance(valor, list):
                 for elem in valor:
-                    if self._asignacion_referencia_identificador(elem, nombre):
+                    if self._asignacion_referencia_identificador(
+                        elem,
+                        nombre,
+                        visitados_ids,
+                    ):
                         return True
-            elif self._asignacion_referencia_identificador(valor, nombre):
+            elif self._asignacion_referencia_identificador(
+                valor,
+                nombre,
+                visitados_ids,
+            ):
                 return True
         return False
 
