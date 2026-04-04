@@ -48,3 +48,11 @@ def test_igualdad_en_imprimir_y_si_comparten_estructura_ast():
     nodo_si = ast_si[0]
     assert isinstance(nodo_si, NodoCondicional)
     _assert_igualdad_x_10(nodo_si.condicion)
+
+
+def test_imprimir_con_agrupacion_permita_encadenar_binarias():
+    _, ast = _parsear("imprimir (x + 5) + 3 + 4")
+    nodo_imprimir = ast[0]
+    assert isinstance(nodo_imprimir, NodoImprimir)
+    assert isinstance(nodo_imprimir.expresion, NodoOperacionBinaria)
+    assert nodo_imprimir.expresion.operador.tipo == TipoToken.SUMA

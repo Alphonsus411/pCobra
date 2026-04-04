@@ -840,19 +840,7 @@ class ClassicParser:
     def declaracion_imprimir(self):
         """Parsea una declaración de impresión."""
         self.comer(TipoToken.IMPRIMIR)  # Consume el token 'imprimir'
-
-        # Si la siguiente parte comienza con paréntesis, se maneja como antes
-        if self.token_actual().tipo == TipoToken.LPAREN:
-            self.comer(TipoToken.LPAREN)
-            expresion = self.expresion()
-            if self.token_actual().tipo != TipoToken.RPAREN:
-                raise ParserError(
-                    "Se esperaba ')' al final de la instrucción 'imprimir'"
-                )
-            self.comer(TipoToken.RPAREN)
-        else:
-            # Sin paréntesis, se parsea la expresión directamente
-            expresion = self.expresion()
+        expresion = self.expresion()
 
         return NodoImprimir(expresion)
 
