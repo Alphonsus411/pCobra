@@ -837,7 +837,8 @@ class InterpretadorCobra:
                 "Resultado no materializado en evaluar_expresion: "
                 f"operador='{operador_txt}', "
                 f"nodo_origen={type(nodo_origen).__name__}, "
-                f"resultado={self._repr_corto(resultado)}"
+                f"resultado_tipo={type(resultado).__name__}, "
+                f"resultado_id={id(resultado)}"
             )
         return resultado
 
@@ -1089,10 +1090,12 @@ class InterpretadorCobra:
         visitados = set() if visitados is None else visitados
         expresion_id = id(expresion)
         print(
-            f"[EVAL] id={expresion_id} tipo={type(expresion).__name__} repr={repr(expresion)}"
+            f"[EVAL] tipo={type(expresion).__name__} id={expresion_id}"
         )
         if expresion_id in self._eval_stack:
-            print(f"[RECURSION DETECTED] {repr(expresion)}")
+            print(
+                f"[RECURSION DETECTED] tipo={type(expresion).__name__} id={expresion_id}"
+            )
             raise Exception("Recursive evaluation detected")
         self._eval_stack.add(expresion_id)
         try:
