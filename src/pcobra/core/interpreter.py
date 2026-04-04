@@ -956,6 +956,7 @@ class InterpretadorCobra:
         return build_internal_ir(ast)
 
     def ejecutar_nodo(self, nodo):
+        print(f"[EXEC] node_type={type(nodo).__name__} repr={object.__repr__(nodo)}")
         self._validar(nodo)
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
@@ -974,7 +975,12 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
+            print("[PRINT] entering NodoImprimir branch")
+            print(f"[PRINT] expr_type={type(nodo.expresion).__name__}")
+            print(f"[PRINT] expr_obj={object.__repr__(nodo.expresion)}")
+            print("[PRINT] about to call evaluar_expresion")
             valor = self.evaluar_expresion(nodo.expresion)
+            print(f"[PRINT] evaluated value={valor!r} type={type(valor).__name__}")
             print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
@@ -1154,6 +1160,12 @@ class InterpretadorCobra:
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo
+                print(
+                    "[BIN-ENTER] "
+                    f"id={id(expresion)} op={expresion.operador.valor} "
+                    f"left_type={type(expresion.izquierda).__name__} "
+                    f"right_type={type(expresion.derecha).__name__}"
+                )
                 print(f"[BIN] op={expresion.operador}")
 
                 left = self.evaluar_expresion(expresion.izquierda, visitados)

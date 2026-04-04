@@ -1,6 +1,7 @@
 """Definiciones de los nodos del árbol de sintaxis abstracta de Cobra."""
 
 from dataclasses import dataclass, field
+from reprlib import recursive_repr
 from typing import Any, List, Optional, TYPE_CHECKING
 import warnings
 
@@ -313,6 +314,7 @@ class NodoOperacionBinaria(NodoAST):
 
     """Operación que combina dos expresiones mediante un operador."""
 
+    @recursive_repr(fillvalue="...")
     def __repr__(self):
         return f"({self.izquierda} {self.operador.valor} {self.derecha})"
 
@@ -624,6 +626,7 @@ class NodoImprimir(NodoAST):
 
     """Impresión de una expresión en la salida estándar."""
 
+    @recursive_repr(fillvalue="...")
     def __repr__(self):
         return f"NodoImprimir(expresion={self.expresion})"
 
