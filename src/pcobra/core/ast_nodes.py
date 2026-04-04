@@ -1,7 +1,6 @@
 """Definiciones de los nodos del árbol de sintaxis abstracta de Cobra."""
 
 from dataclasses import dataclass, field
-from reprlib import recursive_repr
 from typing import Any, List, Optional, TYPE_CHECKING
 import warnings
 
@@ -314,9 +313,8 @@ class NodoOperacionBinaria(NodoAST):
 
     """Operación que combina dos expresiones mediante un operador."""
 
-    @recursive_repr(fillvalue="...")
     def __repr__(self):
-        return f"({self.izquierda} {self.operador.valor} {self.derecha})"
+        return f"<NodoOperacionBinaria id={id(self)}>"
 
 
 @dataclass
@@ -327,7 +325,7 @@ class NodoOperacionUnaria(NodoAST):
     """Operación aplicada a un único operando."""
 
     def __repr__(self):
-        return f"({self.operador.valor}{self.operando})"
+        return f"<NodoOperacionUnaria id={id(self)}>"
 
 
 @dataclass
@@ -379,7 +377,7 @@ class NodoLlamadaFuncion(NodoAST):
     """Invocación de una función existente."""
 
     def __repr__(self):
-        return f"NodoLlamadaFuncion(nombre={self.nombre}, argumentos={self.argumentos})"
+        return f"<NodoLlamadaFuncion id={id(self)} nombre={self.nombre!r}>"
 
 
 @dataclass
@@ -399,7 +397,7 @@ class NodoRetorno(NodoAST):
     """Valor devuelto por una función."""
 
     def __repr__(self):
-        return f"NodoRetorno(expresion={self.expresion})"
+        return f"<NodoRetorno id={id(self)}>"
 
 
 @dataclass
@@ -411,10 +409,7 @@ class NodoDefer(NodoAST):
     """Sentencia que difiere la ejecución de una expresión."""
 
     def __repr__(self):
-        return (
-            f"NodoDefer(expresion={self.expresion}, linea={self.linea}, "
-            f"columna={self.columna})"
-        )
+        return f"<NodoDefer id={id(self)}>"
 
 
 @dataclass
@@ -424,7 +419,7 @@ class NodoYield(NodoAST):
     """Expresión yield dentro de una función generadora."""
 
     def __repr__(self):
-        return f"NodoYield(expresion={self.expresion})"
+        return f"<NodoYield id={id(self)}>"
 
 
 @dataclass
@@ -434,7 +429,7 @@ class NodoEsperar(NodoAST):
     """Expresión await utilizada en funciones asíncronas."""
 
     def __repr__(self):
-        return f"NodoEsperar(expresion={self.expresion})"
+        return f"<NodoEsperar id={id(self)}>"
 
 
 @dataclass
@@ -509,13 +504,7 @@ class NodoWith(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
-        return (
-            "NodoWith("
-            f"contexto={self.contexto}, "
-            f"alias={self.alias}, "
-            f"cuerpo={self.cuerpo}, "
-            f"asincronico={self.asincronico})"
-        )
+        return f"<NodoWith id={id(self)} alias={self.alias!r} asincronico={self.asincronico}>"
 
 
 @dataclass
@@ -525,7 +514,7 @@ class NodoThrow(NodoAST):
     """Lanza una excepción durante la ejecución."""
 
     def __repr__(self):
-        return f"NodoThrow(expresion={self.expresion})"
+        return f"<NodoThrow id={id(self)}>"
 
 
 @dataclass
@@ -587,13 +576,7 @@ class NodoPara(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
-        return (
-            "NodoPara("
-            f"variable={self.variable}, "
-            f"iterable={self.iterable}, "
-            f"cuerpo={self.cuerpo}, "
-            f"asincronico={self.asincronico})"
-        )
+        return f"<NodoPara id={id(self)} asincronico={self.asincronico}>"
 
 
 @dataclass
@@ -626,9 +609,8 @@ class NodoImprimir(NodoAST):
 
     """Impresión de una expresión en la salida estándar."""
 
-    @recursive_repr(fillvalue="...")
     def __repr__(self):
-        return f"NodoImprimir(expresion={self.expresion})"
+        return f"<NodoImprimir id={id(self)}>"
 
 
 @dataclass
@@ -642,7 +624,7 @@ class NodoMacro(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
-        return f"NodoMacro(nombre={self.nombre}, cuerpo={list(self.cuerpo)})"
+        return f"<NodoMacro id={id(self)} nombre={self.nombre!r}>"
 
 
 @dataclass
