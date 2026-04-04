@@ -740,17 +740,31 @@ class InterpretadorCobra:
             nodo.aceptar(self._validador)
             self._validados.add(id(nodo))
 
-    def _contiene_yield(self, nodo):
+    def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
+        if visitados_ids is None:
+            visitados_ids = set()
         if isinstance(nodo, NodoYield):
             return True
         if isinstance(nodo, Token):
             return False
+        if not hasattr(nodo, "__dict__"):
+            return False
+
+        nodo_id = id(nodo)
+        if nodo_id in visitados_ids:
+            return False
+        visitados_ids.add(nodo_id)
+
         for valor in getattr(nodo, "__dict__", {}).values():
             if isinstance(valor, list):
                 for elem in valor:
-                    if hasattr(elem, "__dict__") and self._contiene_yield(elem):
+                    if hasattr(elem, "__dict__") and self._contiene_yield(
+                        elem, visitados_ids
+                    ):
                         return True
-            elif hasattr(valor, "__dict__") and self._contiene_yield(valor):
+            elif hasattr(valor, "__dict__") and self._contiene_yield(
+                valor, visitados_ids
+            ):
                 return True
         return False
 
