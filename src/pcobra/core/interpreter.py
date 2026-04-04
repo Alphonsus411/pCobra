@@ -1114,8 +1114,32 @@ class InterpretadorCobra:
                 # Resuelve asignaciones anidadas y devuelve su valor
                 return self.ejecutar_asignacion(expresion, visitados)
             elif isinstance(expresion, NodoIdentificador):
-                resultado = self._resolver_identificador(expresion.nombre, visitados)
-                return _retorno_critico(resultado, operador="identificador")
+                print(f"[ID] resolving {expresion.nombre}")
+                try:
+                    valor = self._resolver_identificador(expresion.nombre, visitados)
+                except NameError as exc:
+                    raise RuntimeError(
+                        f"Error semántico: identificador no definido '{expresion.nombre}'"
+                    ) from exc
+
+                if valor is None:
+                    raise RuntimeError(
+                        f"Error semántico: identificador no definido '{expresion.nombre}'"
+                    )
+
+                if isinstance(valor, NodoValor):
+                    valor = valor.valor
+
+                print(f"[ID] value={valor!r} type={type(valor).__name__}")
+
+                if not isinstance(valor, (int, float, bool, str)):
+                    raise RuntimeError(
+                        "Error semántico: identificador "
+                        f"'{expresion.nombre}' no resolvió a un valor primitivo "
+                        f"(se obtuvo {type(valor).__name__})"
+                    )
+
+                return _retorno_critico(valor, operador="identificador")
             elif isinstance(expresion, NodoInstancia):
                 return self.ejecutar_instancia(expresion)
             elif isinstance(expresion, NodoAtributo):
