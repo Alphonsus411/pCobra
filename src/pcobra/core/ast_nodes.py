@@ -8,16 +8,22 @@ if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
     from pcobra.core.lexer import Token, TipoToken
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoAST:
     """Clase base para todos los nodos del AST."""
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={id(self)}>"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
     def aceptar(self, visitante):
         """Acepta un visitante y delega la operación a éste."""
         return visitante.visit(self)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoBloque(NodoAST):
     """Representa un bloque homogéneo de sentencias del AST."""
 
@@ -47,7 +53,7 @@ def _asegurar_bloque(valor: Any) -> NodoBloque:
     raise TypeError(f"Se esperaba NodoBloque o list, se recibió {type(valor).__name__}")
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoAsignacion(NodoAST):
     variable: Any
     expresion: Any
@@ -71,7 +77,7 @@ class NodoAsignacion(NodoAST):
         self.valor = self.expresion
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoHolobit(NodoAST):
     nombre: Optional[str] = None
     valores: Optional[List[Any]] = None
@@ -86,7 +92,7 @@ class NodoHolobit(NodoAST):
             self.valores = []
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoCondicional(NodoAST):
     condicion: Any
     bloque_si: NodoBloque
@@ -99,7 +105,7 @@ class NodoCondicional(NodoAST):
         self.bloque_sino = _asegurar_bloque(self.bloque_sino)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoGarantia(NodoAST):
     condicion: Any
     bloque_continuacion: NodoBloque
@@ -112,7 +118,7 @@ class NodoGarantia(NodoAST):
         self.bloque_escape = _asegurar_bloque(self.bloque_escape)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoBucleMientras(NodoAST):
     condicion: Any
     cuerpo: NodoBloque
@@ -123,7 +129,7 @@ class NodoBucleMientras(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoFor(NodoAST):
     variable: Any
     iterable: Any
@@ -132,21 +138,21 @@ class NodoFor(NodoAST):
     """Estructura de control ``para`` que itera sobre un iterable."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoLista(NodoAST):
     elementos: List[Any]
 
     """Literal de lista de expresiones."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoDiccionario(NodoAST):
     elementos: Any
 
     """Literal de diccionario ``clave: valor``."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoListaComprehension(NodoAST):
     expresion: Any
     variable: str
@@ -156,7 +162,7 @@ class NodoListaComprehension(NodoAST):
     """Comprensión de listas ``[expresion para x en iterable si condicion]``."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoDiccionarioComprehension(NodoAST):
     clave: Any
     valor: Any
@@ -167,7 +173,7 @@ class NodoDiccionarioComprehension(NodoAST):
     """Comprensión de diccionarios ``{clave: valor para x en iterable si condicion}``."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoListaTipo(NodoAST):
     nombre: str
     tipo: str
@@ -176,7 +182,7 @@ class NodoListaTipo(NodoAST):
     """Declaración de una lista con tipo explícito."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoDiccionarioTipo(NodoAST):
     nombre: str
     tipo_clave: str
@@ -211,14 +217,14 @@ class NodoTipo(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoDecorador(NodoAST):
     expresion: Any
 
     """Representa una línea de decorador previa a una función."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoFuncion(NodoAST):
     nombre: str
     parametros: List[str]
@@ -233,7 +239,7 @@ class NodoFuncion(NodoAST):
     def __post_init__(self) -> None:
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
-@dataclass
+@dataclass(repr=False)
 class NodoMetodoAbstracto(NodoAST):
     nombre: str
     parametros: List[str] = field(default_factory=list)
@@ -241,7 +247,7 @@ class NodoMetodoAbstracto(NodoAST):
     """Firma de un método sin implementación."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoInterface(NodoAST):
     nombre: str
     metodos: List[NodoMetodoAbstracto] = field(default_factory=list)
@@ -249,7 +255,7 @@ class NodoInterface(NodoAST):
     """Declaración de una interfaz con métodos abstractos."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoClase(NodoAST):
     nombre: str
     metodos: List[Any]
@@ -259,7 +265,7 @@ class NodoClase(NodoAST):
     """Definición de una clase y sus métodos."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoEnum(NodoAST):
     nombre: str
     miembros: List[str]
@@ -267,7 +273,7 @@ class NodoEnum(NodoAST):
     """Declaración de un ``enum`` con sus miembros."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoMetodo(NodoAST):
     nombre: str
     parametros: List[str]
@@ -282,7 +288,7 @@ class NodoMetodo(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoInstancia(NodoAST):
     nombre_clase: str
     argumentos: List[Any] = field(default_factory=list)
@@ -290,7 +296,7 @@ class NodoInstancia(NodoAST):
     """Instanciación de una clase."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoAtributo(NodoAST):
     objeto: Any
     nombre: str
@@ -298,7 +304,7 @@ class NodoAtributo(NodoAST):
     """Acceso a un atributo de un objeto."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoLlamadaMetodo(NodoAST):
     objeto: Any
     nombre_metodo: str
@@ -330,7 +336,7 @@ class NodoOperacionUnaria(NodoAST):
         return f"<NodoOperacionUnaria id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoValor(NodoAST):
     valor: Any
 
@@ -477,28 +483,28 @@ class NodoPasar(NodoAST):
         return "NodoPasar()"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoAssert(NodoAST):
     condicion: Any
     mensaje: Any | None = None
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoDel(NodoAST):
     objetivo: Any
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoGlobal(NodoAST):
     nombres: List[str]
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoNoLocal(NodoAST):
     nombres: List[str]
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoLambda(NodoAST):
     parametros: List[str]
     cuerpo: Any
@@ -528,7 +534,7 @@ class NodoThrow(NodoAST):
         return f"<NodoThrow id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoTryCatch(NodoAST):
     bloque_try: NodoBloque
     nombre_excepcion: Optional[str] = None
@@ -543,21 +549,21 @@ class NodoTryCatch(NodoAST):
         self.bloque_finally = _asegurar_bloque(self.bloque_finally)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoImport(NodoAST):
     ruta: str
 
     """Importación de un módulo externo."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoUsar(NodoAST):
     modulo: str
 
     """Instrucción para usar un módulo especificado."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoImportDesde(NodoAST):
     modulo: str
     nombre: str
@@ -593,7 +599,7 @@ class NodoPara(NodoAST):
         return f"<NodoPara id={id(self)} asincronico={self.asincronico}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoProyectar(NodoAST):
     holobit: Any
     modo: Any
@@ -601,7 +607,7 @@ class NodoProyectar(NodoAST):
     """Proyección de un ``holobit`` en un modo específico."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoTransformar(NodoAST):
     holobit: Any
     operacion: Any
@@ -610,7 +616,7 @@ class NodoTransformar(NodoAST):
     """Transformación aplicada a un ``holobit``."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoGraficar(NodoAST):
     holobit: Any
 
@@ -641,18 +647,18 @@ class NodoMacro(NodoAST):
         return f"<NodoMacro id={id(self)} nombre={self.nombre!r}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoPattern(NodoAST):
     valor: Any
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoGuard(NodoAST):
     patron: NodoPattern
     condicion: Any
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoCase(NodoAST):
     valor: Any
     cuerpo: NodoBloque
@@ -661,7 +667,7 @@ class NodoCase(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoSwitch(NodoAST):
     expresion: Any
     casos: List[NodoCase]
