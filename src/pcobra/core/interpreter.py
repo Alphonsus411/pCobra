@@ -987,12 +987,7 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
-            print("[PRINT] entering NodoImprimir branch")
-            print(f"[PRINT] expr_type={type(nodo.expresion).__name__}")
-            print(f"[PRINT] expr_id={id(nodo.expresion)}")
-            print("[PRINT] about to call evaluar_expresion")
             valor = self.evaluar_expresion(nodo.expresion)
-            print(f"[PRINT] evaluated value={valor!r} type={type(valor).__name__}")
             print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)

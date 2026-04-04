@@ -205,8 +205,10 @@ class NodoTipo(NodoAST):
         self.genericos = list(self.genericos)
 
     def __repr__(self) -> str:
-        genericos = f", genericos={self.genericos!r}" if self.genericos else ""
-        return f"NodoTipo(nombre={self.nombre!r}{genericos})"
+        return f"<NodoTipo id={id(self)}>"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
 
 @dataclass
@@ -351,7 +353,10 @@ class NodoIdentificador(NodoAST):
         self.valor = self.nombre
 
     def __repr__(self):
-        return f"NodoIdentificador({self.nombre})"
+        return f"<NodoIdentificador id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
     def evaluar(self, contexto):
         warnings.warn(
@@ -387,7 +392,10 @@ class NodoHilo(NodoAST):
     """Ejecución de una llamada en un hilo separado."""
 
     def __repr__(self):
-        return f"NodoHilo(llamada={self.llamada})"
+        return f"<NodoHilo id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 @dataclass
@@ -439,7 +447,10 @@ class NodoOption(NodoAST):
     """Representa un valor opcional, equivalente a ``Some`` o ``None``."""
 
     def __repr__(self):
-        return "NodoOption(None)" if self.valor is None else f"NodoOption({self.valor})"
+        return f"<NodoOption id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 @dataclass
@@ -560,7 +571,10 @@ class NodoExport(NodoAST):
     """Indica que un identificador debe exportarse en el módulo generado."""
 
     def __repr__(self):
-        return f"NodoExport(nombre={self.nombre})"
+        return f"<NodoExport id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 @dataclass
