@@ -988,6 +988,7 @@ class InterpretadorCobra:
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
             valor = self.evaluar_expresion(nodo.expresion)
+            valor = self._materializar_valor(valor)
             print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
@@ -1143,7 +1144,11 @@ class InterpretadorCobra:
                         f"({type(valor).__name__}) en lugar de un valor materializado"
                     )
 
-                print(f"[ID] value={valor!r} type={type(valor).__name__}")
+                print(
+                    "[ID] "
+                    f"value_type={type(valor).__name__} value_id={id(valor)} "
+                    f"is_primitive={isinstance(valor, (int, float, bool, str))}"
+                )
 
                 if not isinstance(valor, (int, float, bool, str)):
                     raise RuntimeError(
@@ -1171,16 +1176,24 @@ class InterpretadorCobra:
                 tipo = expresion.operador.tipo
                 print(
                     "[BIN-ENTER] "
-                    f"id={id(expresion)} op={expresion.operador.valor} "
+                    f"id={id(expresion)} op={expresion.operador.valor} op_tipo={tipo} "
                     f"left_type={type(expresion.izquierda).__name__} "
                     f"right_type={type(expresion.derecha).__name__}"
                 )
-                print(f"[BIN] op={expresion.operador}")
+                print(f"[BIN] op_tipo={tipo} op_valor={expresion.operador.valor}")
 
                 left = self.evaluar_expresion(expresion.izquierda, visitados)
-                print(f"[BIN-LEFT] {left!r} type={type(left).__name__}")
+                print(
+                    "[BIN-LEFT] "
+                    f"type={type(left).__name__} id={id(left)} "
+                    f"is_primitive={isinstance(left, (int, float, bool, str))}"
+                )
                 right = self.evaluar_expresion(expresion.derecha, visitados)
-                print(f"[BIN-RIGHT] {right!r} type={type(right).__name__}")
+                print(
+                    "[BIN-RIGHT] "
+                    f"type={type(right).__name__} id={id(right)} "
+                    f"is_primitive={isinstance(right, (int, float, bool, str))}"
+                )
 
                 left = self._materializar_valor(
                     left,
@@ -1222,66 +1235,66 @@ class InterpretadorCobra:
                 if tipo == TipoToken.MAYORQUE:
                     verificar_comparables(left, right, ">")
                     result = left > right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MENORQUE:
                     verificar_comparables(left, right, "<")
                     result = left < right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MAYORIGUAL:
                     verificar_comparables(left, right, ">=")
                     result = left >= right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MENORIGUAL:
                     verificar_comparables(left, right, "<=")
                     result = left <= right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.IGUAL:
                     result = left == right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.DIFERENTE:
                     result = left != right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
 
                 if tipo == TipoToken.SUMA:
                     verificar_sumables(left, right)
                     result = left + right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.RESTA:
                     verificar_numeros(left, right, "-")
                     result = left - right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MULT:
                     verificar_numeros(left, right, "*")
                     result = left * right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.DIV:
                     verificar_numeros(left, right, "/")
                     result = left / right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MOD:
                     verificar_numeros(left, right, "%")
                     result = left % right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.AND:
                     verificar_booleanos(left, right, "&&")
                     result = left and right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.OR:
                     verificar_booleanos(left, right, "||")
                     result = left or right
-                    print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
+                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 else:
                     raise ValueError(f"Operador no soportado: {tipo}")
