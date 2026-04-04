@@ -418,6 +418,107 @@ def test_ast_ciclico_en_evaluacion_lanza_error_controlado_sin_recursionerror() -
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
 
+def test_ast_minimo_identificador_mas_valor_con_x_diez() -> None:
+    inter = InterpretadorCobra()
+    ast = [
+        NodoAsignacion("x", NodoValor(10)),
+        NodoImprimir(
+            NodoOperacionBinaria(
+                NodoIdentificador("x"),
+                Token(TipoToken.SUMA, "+"),
+                NodoValor(5),
+            )
+        ),
+    ]
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    lineas = [
+        linea.strip()
+        for linea in out.getvalue().splitlines()
+        if linea.strip() and not linea.strip().startswith("[")
+    ]
+    assert "15" in lineas
+
+
+def test_ast_minimo_identificador_igual_valor_con_x_diez() -> None:
+    inter = InterpretadorCobra()
+    ast = [
+        NodoAsignacion("x", NodoValor(10)),
+        NodoImprimir(
+            NodoOperacionBinaria(
+                NodoIdentificador("x"),
+                Token(TipoToken.IGUAL, "=="),
+                NodoValor(10),
+            )
+        ),
+    ]
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    lineas = [
+        linea.strip()
+        for linea in out.getvalue().splitlines()
+        if linea.strip() and not linea.strip().startswith("[")
+    ]
+    assert "True" in lineas
+
+
+def test_ast_control_no_regresion_print_cinco_mas_cinco() -> None:
+    inter = InterpretadorCobra()
+    ast = [
+        NodoImprimir(
+            NodoOperacionBinaria(
+                NodoValor(5),
+                Token(TipoToken.SUMA, "+"),
+                NodoValor(5),
+            )
+        )
+    ]
+
+    try:
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            with patch("core.qualia_bridge.register_execution", return_value=None), patch(
+                "pcobra.core.qualia_bridge.register_execution", return_value=None
+            ), patch.object(
+                InterpretadorCobra,
+                "ejecutar_asignacion",
+                new=_ejecutar_asignacion_sin_retorno,
+            ):
+                inter.ejecutar_ast(ast)
+    except RecursionError as exc:  # pragma: no cover - contrato explícito
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+    lineas = [
+        linea.strip()
+        for linea in out.getvalue().splitlines()
+        if linea.strip() and not linea.strip().startswith("[")
+    ]
+    assert "10" in lineas
+
+
 def test_binarias_con_identificadores_no_retorna_nodoast() -> None:
     inter = InterpretadorCobra()
     inter.variables["x"] = NodoValor(10)
