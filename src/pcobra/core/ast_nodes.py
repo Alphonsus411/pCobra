@@ -11,7 +11,12 @@ if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
 
 @dataclass(repr=False)
 class NodoAST:
-    """Clase base para todos los nodos del AST."""
+    """Clase base para todos los nodos del AST.
+
+    Contrato:
+    - ``__repr__`` y ``__str__`` deben ser no recursivos y sin evaluación.
+    - Toda ``property`` en nodos AST debe ser O(1), no recursiva y sin evaluación.
+    """
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={id(self)}>"
