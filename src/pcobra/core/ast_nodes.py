@@ -388,7 +388,7 @@ class NodoLlamadaFuncion(NodoAST):
     """Invocación de una función existente."""
 
     def __repr__(self):
-        return f"<NodoLlamadaFuncion id={id(self)} nombre={self.nombre!r}>"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
 @dataclass
@@ -521,7 +521,7 @@ class NodoWith(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
-        return f"<NodoWith id={id(self)} alias={self.alias!r} asincronico={self.asincronico}>"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
 @dataclass
@@ -596,7 +596,7 @@ class NodoPara(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
-        return f"<NodoPara id={id(self)} asincronico={self.asincronico}>"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
 @dataclass(repr=False)
@@ -644,7 +644,7 @@ class NodoMacro(NodoAST):
         self.cuerpo = _asegurar_bloque(self.cuerpo)
 
     def __repr__(self):
-        return f"<NodoMacro id={id(self)} nombre={self.nombre!r}>"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
 @dataclass(repr=False)
