@@ -110,6 +110,24 @@ imprimir x + 5 == 10
     assert salida == "False"
 
 
+
+
+def test_regresion_imprimir_suma_y_comparacion_sin_recursionerror() -> None:
+    salida = _ejecutar_codigo_y_capturar_stdout_completo(
+        """
+x = 5
+imprimir x + 5
+imprimir x == 10
+"""
+    )
+
+    lineas = [
+        linea.strip()
+        for linea in salida.splitlines()
+        if linea.strip() and not linea.lstrip().startswith("[")
+    ]
+    assert lineas[-2:] == ["10", "False"]
+
 def test_comparacion_identificador_en_condicional_sin_recursionerror() -> None:
     salida = _ejecutar_codigo_y_capturar_salida(
         """
