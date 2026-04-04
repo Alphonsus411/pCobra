@@ -1293,7 +1293,10 @@ class InterpretadorCobra:
             else:
                 raise ValueError(f"Expresión no soportada: {expresion}")
         finally:
-            self._eval_stack.remove(expresion_id)
+            # Siempre limpiar la traza de evaluación, incluso ante errores
+            # semánticos o excepciones en ramas internas, para evitar
+            # falsos positivos en evaluaciones posteriores.
+            self._eval_stack.discard(expresion_id)
 
     def _evaluar_condicion_control(self, condicion):
         """Evalúa una condición y exige que quede materializada.
