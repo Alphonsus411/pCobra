@@ -957,7 +957,7 @@ class InterpretadorCobra:
         return build_internal_ir(ast)
 
     def ejecutar_nodo(self, nodo):
-        print(f"[EXEC] node_type={type(nodo).__name__} repr={object.__repr__(nodo)}")
+        print(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
         self._validar(nodo)
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
@@ -978,7 +978,7 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoImprimir):
             print("[PRINT] entering NodoImprimir branch")
             print(f"[PRINT] expr_type={type(nodo.expresion).__name__}")
-            print(f"[PRINT] expr_obj={object.__repr__(nodo.expresion)}")
+            print(f"[PRINT] expr_id={id(nodo.expresion)}")
             print("[PRINT] about to call evaluar_expresion")
             valor = self.evaluar_expresion(nodo.expresion)
             print(f"[PRINT] evaluated value={valor!r} type={type(valor).__name__}")
