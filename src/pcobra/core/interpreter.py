@@ -1020,11 +1020,12 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
-            valor = self.evaluar_expresion(nodo.expresion)
+            expresion = nodo.expresion
+            valor = self.evaluar_expresion(expresion)
             valor = self._materializar_valor(valor)
             valor = self._asegurar_resultado_no_ast(
                 valor,
-                nodo_origen=nodo.expresion,
+                nodo_origen=expresion,
                 operador="imprimir",
             )
             print(valor)
