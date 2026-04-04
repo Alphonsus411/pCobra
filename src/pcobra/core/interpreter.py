@@ -398,6 +398,7 @@ class InterpretadorCobra:
         self.gestor_memoria = GestorMemoriaGenetico()
         self.estrategia = self.gestor_memoria.poblacion[0]
         self.op_memoria = 0
+        self._eval_stack = set()
         # Último IR generado a partir del AST ejecutado
         self.ultimo_ir: Optional[InternalIRModule] = None
 
@@ -1080,17 +1081,12 @@ class InterpretadorCobra:
           cualquier rama crítica debe devolver un valor materializado.
         """
         visitados = set() if visitados is None else visitados
-        if not hasattr(self, "_eval_stack"):
-            self._eval_stack = set()
         expresion_id = id(expresion)
         print(
             f"[EVAL] id={expresion_id} tipo={type(expresion).__name__} repr={repr(expresion)}"
         )
         if expresion_id in self._eval_stack:
-            print(
-                "[RECURSION DETECTED] "
-                f"node id={expresion_id} repr={repr(expresion)}"
-            )
+            print(f"[RECURSION DETECTED] {repr(expresion)}")
             raise Exception("Recursive evaluation detected")
         self._eval_stack.add(expresion_id)
         try:
@@ -1326,7 +1322,7 @@ class InterpretadorCobra:
             else:
                 raise ValueError(f"Expresión no soportada: {expresion}")
         finally:
-            self._eval_stack.discard(expresion_id)
+            self._eval_stack.remove(expresion_id)
 
     def _evaluar_condicion_control(self, condicion):
         """Evalúa una condición y exige que quede materializada.
