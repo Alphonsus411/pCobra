@@ -824,7 +824,13 @@ class InterpretadorCobra:
 
     def _repr_corto(self, valor, max_chars: int = 160) -> str:
         """Devuelve un ``repr`` compacto para mensajes de error."""
-        texto = repr(valor)
+        try:
+            texto = repr(valor)
+        except RecursionError:
+            return (
+                f"<repr_recursivo tipo={type(valor).__name__} "
+                f"id={id(valor)}>"
+            )
         if len(texto) <= max_chars:
             return texto
         restante = len(texto) - max_chars
