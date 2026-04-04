@@ -11,10 +11,12 @@ from core.ast_nodes import (
     NodoCondicional,
     NodoIdentificador,
     NodoImprimir,
+    NodoLlamadaFuncion,
     NodoOperacionBinaria,
     NodoValor,
 )
 from core.interpreter import InterpretadorCobra
+from core.semantic_validators.base import ValidadorBase
 
 
 def _ejecutar_codigo(codigo: str) -> InterpretadorCobra:
@@ -151,5 +153,27 @@ def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursi
     try:
         with pytest.raises(NameError, match=r"^Variable no declarada: y$"):
             inter.ejecutar_nodo(nodo)
+    except RecursionError as exc:
+        pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+
+class _ValidadorCiclicoControlado(ValidadorBase):
+    def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion) -> None:
+        self.generic_visit(nodo)
+        if nodo.nombre == "bloquear":
+            raise ValueError("error controlado de validación")
+
+
+def test_validador_base_en_ast_ciclico_no_lanza_recursion_error_y_propaga_error_controlado() -> None:
+    raiz = NodoLlamadaFuncion("raiz", [])
+    nodo_bloqueado = NodoLlamadaFuncion("bloquear", [])
+    raiz.argumentos.append(nodo_bloqueado)
+    nodo_bloqueado.argumentos.append(raiz)
+
+    validador = _ValidadorCiclicoControlado()
+
+    try:
+        with pytest.raises(ValueError, match=r"^error controlado de validación$"):
+            raiz.aceptar(validador)
     except RecursionError as exc:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
