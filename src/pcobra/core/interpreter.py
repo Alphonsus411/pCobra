@@ -943,19 +943,12 @@ class InterpretadorCobra:
             print("[AST AFTER OPT][SUMMARY]")
             print(self._resumir_ast(ast))
         self._asegurar_ast_tipado(ast, "post_optimizacion")
-        # Genera y expone el IR interno correspondiente al AST
-        self.ultimo_ir = self.generar_internal_ir(ast)
-        try:
-            from .qualia_bridge import register_execution  # optional subsystem
-        except (ImportError, ModuleNotFoundError):
-            register_execution = None
-        if register_execution:
-            register_execution(ast)
-        # Fase 2: análisis semántico estricto
-        self.analizador.analizar(ast)
-        # Fase 3: evaluación
-        for nodo in ast:
+        self.ultimo_ir = None
+        print("[RUN] antes de iterar AST")
+        for index, nodo in enumerate(ast):
+            print(f"[RUN] index={index} node_type={type(nodo).__name__} node_id={id(nodo)}")
             self._validar(nodo)
+            print("[RUN] antes de ejecutar_nodo")
             resultado = self.ejecutar_nodo(nodo)
             if resultado is not None:
                 return resultado
