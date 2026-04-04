@@ -982,6 +982,11 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoImprimir):
             valor = self.evaluar_expresion(nodo.expresion)
             valor = self._materializar_valor(valor)
+            valor = self._asegurar_resultado_no_ast(
+                valor,
+                nodo_origen=nodo.expresion,
+                operador="imprimir",
+            )
             print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
