@@ -1154,111 +1154,112 @@ class InterpretadorCobra:
                 tipo = expresion.operador.tipo
                 print(f"[BIN] op={expresion.operador}")
 
-                izquierda = self.evaluar_expresion(expresion.izquierda, visitados)
-                print(f"[BIN-LEFT] {izquierda!r} type={type(izquierda).__name__}")
-                derecha = self.evaluar_expresion(expresion.derecha, visitados)
-                print(f"[BIN-RIGHT] {derecha!r} type={type(derecha).__name__}")
+                left = self.evaluar_expresion(expresion.izquierda, visitados)
+                print(f"[BIN-LEFT] {left!r} type={type(left).__name__}")
+                right = self.evaluar_expresion(expresion.derecha, visitados)
+                print(f"[BIN-RIGHT] {right!r} type={type(right).__name__}")
 
-                izquierda = self._materializar_valor(
-                    izquierda,
+                left = self._materializar_valor(
+                    left,
                     visitados,
                     origen="operacion_binaria",
                 )
-                derecha = self._materializar_valor(
-                    derecha,
+                right = self._materializar_valor(
+                    right,
                     visitados,
                     origen="operacion_binaria",
                 )
 
                 self._asegurar_resultado_no_ast(
-                    izquierda,
+                    left,
                     nodo_origen=expresion.izquierda,
                     operador=f"{tipo}:izquierda",
                 )
                 self._asegurar_resultado_no_ast(
-                    derecha,
+                    right,
                     nodo_origen=expresion.derecha,
                     operador=f"{tipo}:derecha",
                 )
 
-                def _aplicar_comparacion(operador):
-                    """Valida y aplica una comparación con operandos materializados."""
-                    if isinstance(izquierda, NodoAST):
+                def _validar_operandos_primitivos():
+                    """Valida de forma defensiva que ambos operandos sean primitivos runtime."""
+                    if not isinstance(left, (int, float, bool, str)):
                         raise RuntimeError(
-                            "Operando de comparación no materializado: "
-                            f"lado izquierdo, operador {tipo}, nodo {type(izquierda).__name__}"
+                            "Error semántico: operando izquierdo no es un valor "
+                            f"primitivo runtime ({type(left).__name__})"
                         )
-                    if isinstance(derecha, NodoAST):
+                    if not isinstance(right, (int, float, bool, str)):
                         raise RuntimeError(
-                            "Operando de comparación no materializado: "
-                            f"lado derecho, operador {tipo}, nodo {type(derecha).__name__}"
+                            "Error semántico: operando derecho no es un valor "
+                            f"primitivo runtime ({type(right).__name__})"
                         )
-                    return operador(izquierda, derecha)
+
+                _validar_operandos_primitivos()
 
                 if tipo == TipoToken.MAYORQUE:
-                    verificar_comparables(izquierda, derecha, ">")
-                    result = _aplicar_comparacion(lambda i, d: i > d)
+                    verificar_comparables(left, right, ">")
+                    result = left > right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.MENORQUE:
-                    verificar_comparables(izquierda, derecha, "<")
-                    result = _aplicar_comparacion(lambda i, d: i < d)
+                    verificar_comparables(left, right, "<")
+                    result = left < right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.MAYORIGUAL:
-                    verificar_comparables(izquierda, derecha, ">=")
-                    result = _aplicar_comparacion(lambda i, d: i >= d)
+                    verificar_comparables(left, right, ">=")
+                    result = left >= right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.MENORIGUAL:
-                    verificar_comparables(izquierda, derecha, "<=")
-                    result = _aplicar_comparacion(lambda i, d: i <= d)
+                    verificar_comparables(left, right, "<=")
+                    result = left <= right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.IGUAL:
-                    result = _aplicar_comparacion(lambda i, d: i == d)
+                    result = left == right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.DIFERENTE:
-                    result = _aplicar_comparacion(lambda i, d: i != d)
+                    result = left != right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
 
                 if tipo == TipoToken.SUMA:
-                    verificar_sumables(izquierda, derecha)
-                    result = izquierda + derecha
+                    verificar_sumables(left, right)
+                    result = left + right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.RESTA:
-                    verificar_numeros(izquierda, derecha, "-")
-                    result = izquierda - derecha
+                    verificar_numeros(left, right, "-")
+                    result = left - right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.MULT:
-                    verificar_numeros(izquierda, derecha, "*")
-                    result = izquierda * derecha
+                    verificar_numeros(left, right, "*")
+                    result = left * right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.DIV:
-                    verificar_numeros(izquierda, derecha, "/")
-                    result = izquierda / derecha
+                    verificar_numeros(left, right, "/")
+                    result = left / right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.MOD:
-                    verificar_numeros(izquierda, derecha, "%")
-                    result = izquierda % derecha
+                    verificar_numeros(left, right, "%")
+                    result = left % right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.AND:
-                    verificar_booleanos(izquierda, derecha, "&&")
-                    result = izquierda and derecha
+                    verificar_booleanos(left, right, "&&")
+                    result = left and right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 elif tipo == TipoToken.OR:
-                    verificar_booleanos(izquierda, derecha, "||")
-                    result = izquierda or derecha
+                    verificar_booleanos(left, right, "||")
+                    result = left or right
                     print(f"[BIN-RESULT] {result!r} type={type(result).__name__}")
-                    return _retorno_critico(result, operador=tipo)
+                    return result
                 else:
                     raise ValueError(f"Operador no soportado: {tipo}")
             elif isinstance(expresion, NodoOperacionUnaria):
