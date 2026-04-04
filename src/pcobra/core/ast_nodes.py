@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, TYPE_CHECKING
+from collections.abc import Mapping
 import warnings
 
 if TYPE_CHECKING:  # pragma: no cover - solo para verificación estática
@@ -347,7 +348,12 @@ class NodoValor(NodoAST):
 class NodoIdentificador(NodoAST):
     nombre: str
 
-    """Uso de una variable o identificador."""
+    """Uso de una variable o identificador.
+
+    Nota:
+        La ruta oficial de evaluación es ``InterpretadorCobra.evaluar_expresion``.
+        ``evaluar`` se conserva únicamente por compatibilidad retroactiva.
+    """
 
     def __post_init__(self):
         from pcobra.core.lexer import Token
@@ -367,13 +373,19 @@ class NodoIdentificador(NodoAST):
     def evaluar(self, contexto):
         warnings.warn(
             "NodoIdentificador.evaluar está deprecado; use "
-            "InterpretadorCobra._resolver_identificador.",
+            "InterpretadorCobra.evaluar_expresion.",
             DeprecationWarning,
             stacklevel=2,
         )
         resolvedor = getattr(contexto, "_resolver_identificador", None)
         if callable(resolvedor):
             return resolvedor(self.nombre)
+
+        if not isinstance(contexto, Mapping):
+            raise TypeError(
+                "NodoIdentificador.evaluar requiere un contexto con "
+                "_resolver_identificador o un mapeo plano (Mapping)."
+            )
 
         if self.nombre not in contexto:
             raise NameError(f"Identificador no definido: '{self.nombre}'")
