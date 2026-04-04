@@ -804,12 +804,23 @@ class InterpretadorCobra:
 
     @staticmethod
     def _resumir_ast(ast, max_chars: int = 2000) -> str:
-        """Devuelve un resumen del AST sin reemplazar la impresión completa."""
-        ast_repr = repr(ast)
-        if len(ast_repr) <= max_chars:
-            return ast_repr
-        restante = len(ast_repr) - max_chars
-        return f"{ast_repr[:max_chars]}... <recortado {restante} caracteres>"
+        """Devuelve un resumen seguro del AST sin renderizar subnodos."""
+        if not isinstance(ast, list):
+            return f"ast_tipo={type(ast).__name__}"
+
+        tipos_raiz = [type(nodo).__name__ for nodo in ast[:10]]
+        restante = max(0, len(ast) - len(tipos_raiz))
+        resumen = (
+            f"ast_len={len(ast)} "
+            f"total_nodos={InterpretadorCobra._contar_nodos(ast)} "
+            f"tipos_raiz={tipos_raiz}"
+        )
+        if restante:
+            resumen += f" (+{restante} tipos raíz más)"
+        if len(resumen) <= max_chars:
+            return resumen
+        truncado = max_chars - len("... <resumen recortado>")
+        return f"{resumen[:max(0, truncado)]}... <resumen recortado>"
 
     def _repr_corto(self, valor, max_chars: int = 160) -> str:
         """Devuelve un ``repr`` compacto para mensajes de error."""
@@ -910,7 +921,7 @@ class InterpretadorCobra:
         self._asegurar_ast_tipado(ast, "pre_optimizacion")
         self._asegurar_ast_aciclico_por_identidad(ast, "pre_optimizacion")
         print("[AST BEFORE OPT]")
-        print(ast)
+        print(self._resumir_ast(ast))
         if self._debug_resumen_ast_habilitado():
             print("[AST BEFORE OPT][SUMMARY]")
             print(self._resumir_ast(ast))
@@ -927,7 +938,7 @@ class InterpretadorCobra:
         self._asegurar_ast_aciclico_por_identidad(ast, "post_remove_dead_code")
 
         print("[AST AFTER OPT]")
-        print(ast)
+        print(self._resumir_ast(ast))
         if self._debug_resumen_ast_habilitado():
             print("[AST AFTER OPT][SUMMARY]")
             print(self._resumir_ast(ast))
