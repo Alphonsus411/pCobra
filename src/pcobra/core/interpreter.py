@@ -1028,6 +1028,7 @@ class InterpretadorCobra:
                 nodo_origen=expresion,
                 operador="imprimir",
             )
+            # Mantener traza segura: nunca serializar `nodo` completo en esta rama.
             print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
