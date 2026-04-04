@@ -1020,6 +1020,8 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoLlamadaMetodo):
             return self.ejecutar_llamada_metodo(nodo)
         elif isinstance(nodo, NodoImprimir):
+            # Contrato: está prohibido serializar nodos completos (str/repr/f-string)
+            # antes de evaluar; en debug solo usar type(nodo).__name__ e id(nodo).
             expresion = nodo.expresion
             valor = self.evaluar_expresion(expresion)
             valor = self._materializar_valor(valor)
@@ -1028,7 +1030,6 @@ class InterpretadorCobra:
                 nodo_origen=expresion,
                 operador="imprimir",
             )
-            # Mantener traza segura: nunca serializar `nodo` completo en esta rama.
             print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
