@@ -1111,12 +1111,7 @@ class InterpretadorCobra:
                 return self.ejecutar_asignacion(expresion, visitados)
             elif isinstance(expresion, NodoIdentificador):
                 print(f"[ID] resolving {expresion.nombre}")
-                try:
-                    valor = self._resolver_identificador(expresion.nombre, visitados)
-                except NameError as exc:
-                    raise RuntimeError(
-                        f"Error semántico: identificador no definido '{expresion.nombre}'"
-                    ) from exc
+                valor = self._resolver_identificador(expresion.nombre, visitados)
 
                 if valor is None:
                     raise RuntimeError(
