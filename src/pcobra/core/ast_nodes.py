@@ -325,6 +325,9 @@ class NodoOperacionBinaria(NodoAST):
     def __repr__(self):
         return f"<NodoOperacionBinaria id={id(self)}>"
 
+    def __str__(self):
+        return self.__repr__()
+
 
 @dataclass
 class NodoOperacionUnaria(NodoAST):
@@ -335,6 +338,9 @@ class NodoOperacionUnaria(NodoAST):
 
     def __repr__(self):
         return f"<NodoOperacionUnaria id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 @dataclass(repr=False)
@@ -401,6 +407,9 @@ class NodoLlamadaFuncion(NodoAST):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 @dataclass
@@ -643,6 +652,9 @@ class NodoImprimir(NodoAST):
 
     def __repr__(self):
         return f"<NodoImprimir id={id(self)}>"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 @dataclass

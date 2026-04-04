@@ -12,7 +12,9 @@ from core.ast_nodes import (
     NodoCondicional,
     NodoIdentificador,
     NodoImprimir,
+    NodoLlamadaFuncion,
     NodoOperacionBinaria,
+    NodoOperacionUnaria,
     NodoValor,
 )
 from core.interpreter import InterpretadorCobra
@@ -543,3 +545,44 @@ def test_binarias_con_identificadores_no_retorna_nodoast() -> None:
     for expr in expresiones:
         resultado = inter.evaluar_expresion(expr)
         assert not isinstance(resultado, NodoAST)
+
+
+def test_repr_ast_contrato_corto_en_operacion_binaria_anidada() -> None:
+    class _NodoPeligroso:
+        def __repr__(self) -> str:  # pragma: no cover - debe no invocarse
+            raise AssertionError("No se debe invocar __repr__ de hijos")
+
+        def __str__(self) -> str:  # pragma: no cover - debe no invocarse
+            raise AssertionError("No se debe invocar __str__ de hijos")
+
+    token_suma = Token(TipoToken.SUMA, "+")
+    token_igual = Token(TipoToken.IGUAL, "==")
+    expresion_anidada = NodoOperacionBinaria(
+        NodoOperacionBinaria(_NodoPeligroso(), token_suma, NodoValor(1)),
+        token_igual,
+        NodoIdentificador("x"),
+    )
+
+    representacion = repr(expresion_anidada)
+    assert representacion.startswith("<NodoOperacionBinaria id=")
+    assert representacion.endswith(">")
+    assert "_NodoPeligroso" not in representacion
+    assert repr(expresion_anidada.izquierda).startswith("<NodoOperacionBinaria id=")
+
+
+def test_str_delega_a_repr_en_nodos_objetivo() -> None:
+    token_suma = Token(TipoToken.SUMA, "+")
+    nodo_binario = NodoOperacionBinaria(NodoValor(1), token_suma, NodoValor(2))
+    nodo_unario = NodoOperacionUnaria(token_suma, NodoValor(1))
+    nodo_identificador = NodoIdentificador("x")
+    nodo_imprimir = NodoImprimir(NodoValor(1))
+    nodo_llamada = NodoLlamadaFuncion("f", [])
+
+    for nodo in (
+        nodo_binario,
+        nodo_unario,
+        nodo_identificador,
+        nodo_imprimir,
+        nodo_llamada,
+    ):
+        assert str(nodo) == repr(nodo)
