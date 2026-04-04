@@ -193,7 +193,7 @@ class NodoDiccionarioTipo(NodoAST):
     """Declaración de un diccionario con tipos para clave y valor."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoTipo(NodoAST):
     """Representa una referencia a un tipo con soporte para genéricos."""
 
@@ -314,7 +314,7 @@ class NodoLlamadaMetodo(NodoAST):
     """Invocación de un método de un objeto."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoOperacionBinaria(NodoAST):
     izquierda: Any
     operador: 'Token'
@@ -329,7 +329,7 @@ class NodoOperacionBinaria(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoOperacionUnaria(NodoAST):
     operador: 'Token'
     operando: Any
@@ -350,7 +350,7 @@ class NodoValor(NodoAST):
     """Representa un valor literal ya evaluado."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoIdentificador(NodoAST):
     nombre: str
 
@@ -398,7 +398,7 @@ class NodoIdentificador(NodoAST):
         return contexto[self.nombre]
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoLlamadaFuncion(NodoAST):
     nombre: str
     argumentos: List[Any]
@@ -412,7 +412,7 @@ class NodoLlamadaFuncion(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoHilo(NodoAST):
     llamada: NodoLlamadaFuncion
 
@@ -425,7 +425,7 @@ class NodoHilo(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoRetorno(NodoAST):
     expresion: Any
 
@@ -435,7 +435,7 @@ class NodoRetorno(NodoAST):
         return f"<NodoRetorno id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoDefer(NodoAST):
     expresion: Any
     linea: Optional[int] = None
@@ -447,7 +447,7 @@ class NodoDefer(NodoAST):
         return f"<NodoDefer id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoYield(NodoAST):
     expresion: Any
 
@@ -457,7 +457,7 @@ class NodoYield(NodoAST):
         return f"<NodoYield id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoEsperar(NodoAST):
     expresion: Any
 
@@ -467,7 +467,7 @@ class NodoEsperar(NodoAST):
         return f"<NodoEsperar id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoOption(NodoAST):
     valor: Any | None = None
 
@@ -480,28 +480,28 @@ class NodoOption(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoRomper(NodoAST):
     """Sentencia para romper un bucle."""
 
     def __repr__(self):
-        return "NodoRomper()"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoContinuar(NodoAST):
     """Sentencia para continuar con la siguiente iteración de un bucle."""
 
     def __repr__(self):
-        return "NodoContinuar()"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoPasar(NodoAST):
     """Sentencia vacía que no realiza ninguna acción."""
 
     def __repr__(self):
-        return "NodoPasar()"
+        return f"<{self.__class__.__name__} id={id(self)}>"
 
 
 @dataclass(repr=False)
@@ -531,7 +531,7 @@ class NodoLambda(NodoAST):
     cuerpo: Any
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoWith(NodoAST):
     contexto: Any
     alias: str | None
@@ -545,7 +545,7 @@ class NodoWith(NodoAST):
         return f"<{self.__class__.__name__} id={id(self)}>"
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoThrow(NodoAST):
     expresion: Any
 
@@ -591,7 +591,7 @@ class NodoImportDesde(NodoAST):
     alias: str | None = None
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoExport(NodoAST):
     nombre: str
 
@@ -604,7 +604,7 @@ class NodoExport(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoPara(NodoAST):
     variable: Any
     iterable: Any
@@ -644,7 +644,7 @@ class NodoGraficar(NodoAST):
     """Visualización de un ``holobit``."""
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoImprimir(NodoAST):
     expresion: Any
 
@@ -657,7 +657,7 @@ class NodoImprimir(NodoAST):
         return self.__repr__()
 
 
-@dataclass
+@dataclass(repr=False)
 class NodoMacro(NodoAST):
     nombre: str
     cuerpo: NodoBloque
