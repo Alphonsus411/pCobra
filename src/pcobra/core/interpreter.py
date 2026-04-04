@@ -1312,7 +1312,9 @@ class InterpretadorCobra:
                     operador="llamada_funcion",
                 )
             else:
-                raise ValueError(f"Expresión no soportada: {expresion}")
+                raise ValueError(
+                    f"Expresión no soportada: tipo={type(expresion).__name__} id={id(expresion)}"
+                )
         finally:
             # Siempre limpiar la traza de evaluación, incluso ante errores
             # semánticos o excepciones en ramas internas, para evitar
