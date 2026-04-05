@@ -1030,11 +1030,10 @@ class InterpretadorCobra:
                 nodo_origen=expresion,
                 operador="imprimir",
             )
-            (
+            if isinstance(valor, bool):
                 print("verdadero" if valor else "falso")
-                if isinstance(valor, bool)
-                else print(valor)
-            )
+            else:
+                print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
         elif isinstance(nodo, NodoUsar):
