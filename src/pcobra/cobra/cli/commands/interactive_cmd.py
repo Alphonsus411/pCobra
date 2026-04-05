@@ -248,6 +248,8 @@ class InteractiveCommand(BaseCommand):
 
         ast = self.procesar_ast(codigo, validador)
         resultado = self.interpretador.ejecutar_ast(ast)
+        if resultado is not None:
+            print(resultado)
 
     def run(self, args: Any) -> int:
         """Ejecuta el REPL de Cobra.
