@@ -369,6 +369,7 @@ class ClassicParser:
                 # Permite iniciar declaraciones/expresiones con literales booleanos.
                 TipoToken.BOOLEANO,
                 TipoToken.LAMBDA,
+                TipoToken.LPAREN,
             ]:
                 siguiente = self.token_siguiente()
                 if siguiente and siguiente.tipo == TipoToken.LPAREN:
@@ -377,7 +378,8 @@ class ClassicParser:
                     return self.declaracion_asignacion()
                 return self.expresion()
 
-            raise ParserError(f"Token inesperado: {token.tipo}")
+            # Fallback: cualquier expresión válida puede ser una declaración en REPL.
+            return self.expresion()
 
         except Exception as e:
             logger.error(f"Error en la declaración: {e}")
