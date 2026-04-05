@@ -380,7 +380,9 @@ class ClassicParser:
                     return self.declaracion_asignacion()
                 return self.expresion()
 
-            # Fallback: cualquier expresión válida puede ser una declaración en REPL.
+            # Fallback: ante un token no reconocido como declaración estructural
+            # o fábrica registrada, se intenta parsear como expresión en lugar
+            # de lanzar un ParserError inmediato.
             return self.expresion()
 
         except Exception as e:
