@@ -365,6 +365,7 @@ class ClassicParser:
                 TipoToken.IDENTIFICADOR,
                 TipoToken.ENTERO,
                 TipoToken.FLOTANTE,
+                TipoToken.CADENA,
                 TipoToken.LAMBDA,
             ]:
                 siguiente = self.token_siguiente()
