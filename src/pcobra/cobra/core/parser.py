@@ -366,6 +366,7 @@ class ClassicParser:
                 TipoToken.ENTERO,
                 TipoToken.FLOTANTE,
                 TipoToken.CADENA,
+                # Permite iniciar declaraciones/expresiones con literales booleanos.
                 TipoToken.BOOLEANO,
                 TipoToken.LAMBDA,
             ]:
