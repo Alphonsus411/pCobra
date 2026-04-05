@@ -350,7 +350,7 @@ class ClassicParser:
 
             if token.tipo == TipoToken.IDENTIFICADOR:
                 sugerencia = sugerir_palabra_clave(token.valor)
-                if sugerencia:
+                if sugerencia and sugerencia != token.valor:
                     raise ParserError(f"Token inesperado. ¿Quiso decir '{sugerencia}'?")
 
             # Posibles expresiones o asignaciones/invocaciones

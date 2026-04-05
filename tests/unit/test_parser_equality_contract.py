@@ -223,3 +223,16 @@ def test_precedencia_cadena_completa_se_respeta_en_ast_binario():
     assert nodo_mult.izquierda.valor == "f"
     assert isinstance(nodo_mult.derecha, NodoValor)
     assert nodo_mult.derecha.valor == "g"
+
+
+def test_igualdad_booleanos_parsea_y_conserva_ast_binario_esperado():
+    """Regresión: `verdadero == falso` debe producir la misma estructura binaria esperada."""
+    tokens, ast = _parsear("verdadero == falso")
+    assert tokens[0].tipo == TipoToken.BOOLEANO
+    assert len(ast) == 1
+    assert isinstance(ast[0], NodoOperacionBinaria)
+    assert ast[0].operador.tipo == TipoToken.IGUAL
+    assert isinstance(ast[0].izquierda, NodoValor)
+    assert ast[0].izquierda.valor is True
+    assert isinstance(ast[0].derecha, NodoValor)
+    assert ast[0].derecha.valor is False
