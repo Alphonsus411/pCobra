@@ -58,6 +58,15 @@ def test_remove_condicional_constante():
     assert optimizado[0].valor.valor == 2
 
 
+def test_remove_condicional_literal_no_booleano_no_colapsa():
+    ast = [
+        NodoCondicional(NodoValor(1), [NodoAsignacion("x", NodoValor(1))], [NodoAsignacion("x", NodoValor(2))])
+    ]
+    optimizado = remove_dead_code(ast)
+    assert len(optimizado) == 1
+    assert isinstance(optimizado[0], NodoCondicional)
+
+
 def test_inline_functions_simple():
     ast = [
         NodoFuncion("uno", [], [NodoRetorno(NodoValor(1))]),
