@@ -7,6 +7,8 @@ Este test cubre explícitamente:
 - `ClassicParser.declaracion_condicional`
 """
 
+import pytest
+
 from pcobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
@@ -17,7 +19,7 @@ from pcobra.core.ast_nodes import (
     NodoValor,
 )
 from pcobra.core.lexer import Lexer, TipoToken
-from pcobra.cobra.core.parser import ClassicParser
+from pcobra.cobra.core.parser import ClassicParser, ParserError
 
 
 def _parsear(codigo: str):
@@ -70,32 +72,26 @@ def test_imprimir_con_agrupacion_permita_encadenar_binarias():
     assert nodo_imprimir.expresion.operador.tipo == TipoToken.SUMA
 
 
-def test_expresion_igualdad_cadenas_parsea_sin_excepcion_y_con_ast_esperado():
-    codigo = '"hola" == "hola"'
+@pytest.mark.parametrize(
+    ("codigo", "izquierda", "derecha"),
+    [
+        ('"hola" == "hola"', "hola", "hola"),
+        ('"hola" == "adios"', "hola", "adios"),
+    ],
+)
+def test_expresiones_igualdad_cadenas_parsean_sin_parser_error_y_con_ast_esperado(
+    codigo: str, izquierda: str, derecha: str
+):
     try:
         tokens, ast = _parsear(codigo)
-    except Exception as exc:  # pragma: no cover - ruta de regresión explícita
+    except ParserError as exc:  # pragma: no cover - no-regresión explícita
         raise AssertionError(
-            f"No debía fallar el parseo de igualdad de cadenas: {codigo}"
+            f"No debía lanzarse ParserError al parsear: {codigo}"
         ) from exc
 
     assert any(t.tipo == TipoToken.IGUAL for t in tokens)
     assert len(ast) == 1
-    _assert_igualdad_cadenas(ast[0], "hola", "hola")
-
-
-def test_expresion_desigualdad_cadenas_parsea_sin_excepcion_y_con_ast_esperado():
-    codigo = '"hola" == "adios"'
-    try:
-        tokens, ast = _parsear(codigo)
-    except Exception as exc:  # pragma: no cover - ruta de regresión explícita
-        raise AssertionError(
-            f"No debía fallar el parseo de igualdad de cadenas: {codigo}"
-        ) from exc
-
-    assert any(t.tipo == TipoToken.IGUAL for t in tokens)
-    assert len(ast) == 1
-    _assert_igualdad_cadenas(ast[0], "hola", "adios")
+    _assert_igualdad_cadenas(ast[0], izquierda, derecha)
 
 
 def test_ruta_previa_identificador_sigue_entregando_ast_igualdad_esperado():
