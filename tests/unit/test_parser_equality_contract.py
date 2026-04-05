@@ -176,3 +176,54 @@ def test_suma_cadenas_parsea_como_binaria_y_deja_semantica_al_evaluador():
     assert ast[0].izquierda.valor == "a"
     assert isinstance(ast[0].derecha, NodoValor)
     assert ast[0].derecha.valor == "b"
+
+
+def test_precedencia_cadena_completa_se_respeta_en_ast_binario():
+    """Verifica la cadena expresion->...->termino sin rutas especiales para `CADENA`."""
+    tokens, ast = _parsear('"a" || "b" && "c" == "d" < "e" + "f" * "g"')
+    assert tokens[0].tipo == TipoToken.CADENA
+    assert len(ast) == 1
+
+    # Nivel OR
+    nodo_or = ast[0]
+    assert isinstance(nodo_or, NodoOperacionBinaria)
+    assert nodo_or.operador.tipo == TipoToken.OR
+    assert isinstance(nodo_or.izquierda, NodoValor)
+    assert nodo_or.izquierda.valor == "a"
+
+    # Nivel AND
+    nodo_and = nodo_or.derecha
+    assert isinstance(nodo_and, NodoOperacionBinaria)
+    assert nodo_and.operador.tipo == TipoToken.AND
+    assert isinstance(nodo_and.izquierda, NodoValor)
+    assert nodo_and.izquierda.valor == "b"
+
+    # Nivel igualdad
+    nodo_eq = nodo_and.derecha
+    assert isinstance(nodo_eq, NodoOperacionBinaria)
+    assert nodo_eq.operador.tipo == TipoToken.IGUAL
+    assert isinstance(nodo_eq.izquierda, NodoValor)
+    assert nodo_eq.izquierda.valor == "c"
+
+    # Nivel comparación
+    nodo_cmp = nodo_eq.derecha
+    assert isinstance(nodo_cmp, NodoOperacionBinaria)
+    assert nodo_cmp.operador.tipo == TipoToken.MENORQUE
+    assert isinstance(nodo_cmp.izquierda, NodoValor)
+    assert nodo_cmp.izquierda.valor == "d"
+
+    # Nivel suma
+    nodo_suma = nodo_cmp.derecha
+    assert isinstance(nodo_suma, NodoOperacionBinaria)
+    assert nodo_suma.operador.tipo == TipoToken.SUMA
+    assert isinstance(nodo_suma.izquierda, NodoValor)
+    assert nodo_suma.izquierda.valor == "e"
+
+    # Nivel multiplicación
+    nodo_mult = nodo_suma.derecha
+    assert isinstance(nodo_mult, NodoOperacionBinaria)
+    assert nodo_mult.operador.tipo == TipoToken.MULT
+    assert isinstance(nodo_mult.izquierda, NodoValor)
+    assert nodo_mult.izquierda.valor == "f"
+    assert isinstance(nodo_mult.derecha, NodoValor)
+    assert nodo_mult.derecha.valor == "g"
