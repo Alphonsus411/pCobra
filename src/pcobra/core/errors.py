@@ -24,7 +24,10 @@ class UnclosedStringError(LexerError):
 class CondicionNoBooleanaError(Exception):
     """Error semántico cuando una condición de control no es booleana."""
 
-    pass
+    MENSAJE_POR_DEFECTO = "La condición debe ser booleana"
+
+    def __init__(self, mensaje: str = MENSAJE_POR_DEFECTO) -> None:
+        super().__init__(mensaje)
 
 
 __all__ = [

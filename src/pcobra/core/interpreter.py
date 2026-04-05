@@ -1402,7 +1402,7 @@ class InterpretadorCobra:
         # No se permite coerción implícita (bool(x)); la condición debe ser
         # un booleano real para evitar ambigüedad semántica en control de flujo.
         if not isinstance(condicion_resuelta, bool):
-            raise CondicionNoBooleanaError("La condición debe ser booleana")
+            raise CondicionNoBooleanaError()
         return condicion_resuelta
 
     def ejecutar_condicional(self, nodo):
