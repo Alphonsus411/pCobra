@@ -361,7 +361,7 @@ class ClassicParser:
                     valor = self.expresion()
                     return NodoAsignacion(atrib, valor)
                 return atrib
-            if token.tipo in [
+            tokens_inicio_expresion = (
                 TipoToken.IDENTIFICADOR,
                 TipoToken.ENTERO,
                 TipoToken.FLOTANTE,
@@ -369,8 +369,10 @@ class ClassicParser:
                 # Permite iniciar declaraciones/expresiones con literales booleanos.
                 TipoToken.BOOLEANO,
                 TipoToken.LAMBDA,
+                # Permite expresiones agrupadas desde el inicio de la declaración.
                 TipoToken.LPAREN,
-            ]:
+            )
+            if token.tipo in tokens_inicio_expresion:
                 siguiente = self.token_siguiente()
                 if siguiente and siguiente.tipo == TipoToken.LPAREN:
                     return self.llamada_funcion()
