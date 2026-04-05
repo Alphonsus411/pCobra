@@ -1,95 +1,130 @@
 {
   "proyecto": "pCobra",
-  "fase_actual": "debugging evaluador de expresiones",
-  "objetivo": "resolver recursion infinita en expresiones binarias con identificadores",
+  "tipo": "intérprete de lenguaje propio",
+  "estado_global": "estable y funcional con semántica coherente",
 
-  "estado_inicial": {
-    "componentes_estables": [
-      "lexer",
-      "parser",
-      "AST",
-      "REPL multilínea"
-    ],
-    "componente_problematico": "evaluador"
-  },
-
-  "sintomas": [
+  "fases": [
     {
-      "caso": "imprimir x",
-      "resultado": "correcto"
+      "fase": "debugging crítico",
+      "problema": "recursión infinita en expresiones binarias con identificadores",
+      "causa_raiz": "ejecución implícita previa al evaluador (probablemente __repr__, __eq__ o comparaciones estructurales)",
+      "solucion": [
+        "eliminación de representaciones recursivas",
+        "evitar comparación estructural automática (dataclass eq)",
+        "instrumentación del flujo de ejecución",
+        "aislamiento de ejecutar_nodo"
+      ],
+      "resultado": "flujo corregido: AST → RUN → EXEC → EVAL"
     },
     {
-      "caso": "imprimir 5 + 5",
-      "resultado": "correcto"
+      "fase": "validación del evaluador",
+      "pruebas": [
+        "expresiones literales",
+        "identificadores",
+        "expresiones binarias mixtas"
+      ],
+      "resultado": "evaluador completamente funcional"
     },
     {
-      "caso": "imprimir x + 5",
-      "resultado": "recursion infinita"
+      "fase": "soporte de paréntesis",
+      "problema": "parser no soportaba agrupación",
+      "primer_fix": "soporte de '(' expression ')'",
+      "segundo_problema": "no se integraba con operaciones binarias",
+      "solucion": "permitir que expresiones agrupadas participen en parsing binario",
+      "resultado": "paréntesis totalmente funcionales y encadenables"
     },
     {
-      "caso": "imprimir x == 10",
-      "resultado": "recursion infinita"
+      "fase": "validación de precedencia",
+      "pruebas": [
+        "2 + 3 * 4",
+        "(2 + 3) * 4",
+        "(x+5) + 3 + 4"
+      ],
+      "resultado": [
+        "precedencia correcta (* > +)",
+        "asociatividad izquierda correcta"
+      ]
+    },
+    {
+      "fase": "semántica de comparación",
+      "comportamiento": {
+        "int == int": "correcto",
+        "int == string": "False",
+        "string == string": "correcto"
+      },
+      "decision": "no coerción implícita"
+    },
+    {
+      "fase": "validación de tipos en operaciones",
+      "implementacion": "type_utils.verificar_sumables",
+      "comportamiento": {
+        "int + int": "válido",
+        "string + string": "válido",
+        "int + string": "error"
+      },
+      "resultado": "type checking dinámico consistente"
+    },
+    {
+      "fase": "validación final",
+      "pruebas": [
+        "\"hola\" + \"mundo\"",
+        "5 == \"5\"",
+        "\"5\" == \"5\""
+      ],
+      "resultado": [
+        "concatenación correcta",
+        "comparación sin coerción",
+        "semántica consistente"
+      ]
     }
   ],
 
-  "hallazgos_clave": [
-    "Las expresiones con solo literales funcionan correctamente",
-    "Las optimizaciones colapsan correctamente expresiones constantes",
-    "Las expresiones binarias con identificadores fallan siempre",
-    "El AST después de optimización es correcto y no presenta ciclos evidentes",
-    "El evaluador NO llega a ejecutar evaluar_expresion en los casos que fallan",
-    "El fallo ocurre antes de entrar en la evaluación de la expresión"
-  ],
-
-  "hipotesis_descartadas": [
-    "Error en parser",
-    "Error en lexer",
-    "Error en tabla de símbolos",
-    "Error directo en visit_identificador",
-    "Error en lógica básica de binaria"
-  ],
-
-  "hipotesis_actual": {
-    "descripcion": "La recursión ocurre antes de evaluar la expresión, probablemente en ejecutar_nodo o en representaciones (__repr__/__str__) de los nodos",
-    "posibles_causas": [
-      "Metodo __repr__ o __str__ recursivo en nodos AST",
-      "Acceso recursivo a propiedades de NodoOperacionBinaria",
-      "Loop en ejecutar_nodo al manejar NodoImprimir",
-      "Evaluación implícita o logging que dispara recursión"
-    ]
+  "arquitectura_actual": {
+    "frontend": {
+      "lexer": "estable",
+      "parser": "soporta precedencia y paréntesis"
+    },
+    "intermediate_representation": {
+      "AST": "correcto y sin ciclos"
+    },
+    "runtime": {
+      "evaluador": "estable",
+      "resolución_identificadores": "correcta"
+    },
+    "type_system": {
+      "tipo": "dinámico implícito",
+      "validación": "runtime",
+      "coerción": "no permitida"
+    }
   },
 
-  "evidencia_tecnica": [
-    "Logs muestran AST correcto antes de ejecución",
-    "No aparece el print inicial de evaluar_expresion en casos fallidos",
-    "El crash ocurre inmediatamente después de procesar NodoImprimir",
-    "El sistema entra en recursion sin pasar por evaluador instrumentado"
+  "propiedades_clave": [
+    "separación clara entre AST, evaluación y semántica",
+    "ausencia de recursión implícita",
+    "validación de tipos desacoplada",
+    "precedencia y asociatividad correctas",
+    "errores explícitos y controlados"
   ],
 
-  "estrategia_actual": {
-    "enfoque": "debugging estructural previo al evaluador",
-    "acciones": [
-      "Instrumentar ejecutar_nodo",
-      "Evitar uso de repr personalizado (usar object.__repr__)",
-      "Auditar __repr__ y __str__ en nodos AST",
-      "Detectar accesos recursivos en propiedades"
-    ]
+  "decisiones_de_diseño": {
+    "coercion_implicita": false,
+    "comparacion_entre_tipos": "permitida (retorna False)",
+    "operaciones_invalidas": "lanzan error",
+    "tipado": "dinámico con validación explícita"
   },
-
-  "aprendizajes": [
-    "Separar AST y valores runtime es crítico",
-    "Los bugs de intérpretes suelen ser estructurales, no superficiales",
-    "Las optimizaciones pueden ocultar o revelar bugs dependiendo del caso",
-    "La instrumentación es clave para localizar loops invisibles"
-  ],
 
   "estado_actual": {
-    "nivel_confianza_diagnostico": "alto",
-    "zona_del_bug": [
-      "ejecutar_nodo",
-      "NodoImprimir",
-      "__repr__/__str__ de AST"
-    ],
-    "siguiente_paso": "instrumentar ejecución previa a evaluar_expresion y localizar punto exacto de recursión"
-  }
+    "nivel": "intérprete funcional completo",
+    "estabilidad": "alta",
+    "confianza": "alta"
+  },
+
+  "siguientes_pasos_posibles": [
+    "formalizar sistema de tipos",
+    "centralizar reglas de tipos (matriz de operaciones)",
+    "añadir más operadores (*, /, - con validación)",
+    "mejorar errores semánticos",
+    "optimización de AST (constant folding avanzado)",
+    "evolucionar hacia Pratt parser o gramática formal"
+  ]
 }
