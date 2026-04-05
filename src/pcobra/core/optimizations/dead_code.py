@@ -35,13 +35,17 @@ class _DeadCodeRemover(NodeVisitor):
         nodo.bloque_sino = self._limpiar_bloque(
             NodoBloque([self.visit(n) for n in nodo.bloque_sino.instrucciones])
         )
-        if isinstance(nodo.condicion, NodoValor) and isinstance(nodo.condicion.valor, bool):
-            if nodo.condicion.valor is True:
-                return nodo.bloque_si.instrucciones
-            if nodo.condicion.valor is False:
-                return nodo.bloque_sino.instrucciones
+        es_literal_bool = isinstance(nodo.condicion, NodoValor) and isinstance(
+            nodo.condicion.valor, bool
+        )
+        if not es_literal_bool:
+            # No colapsar si la condición no es un literal booleano real.
+            return nodo
 
-        # No colapsar si la condicion no es un literal booleano.
+        if nodo.condicion.valor is True:
+            return nodo.bloque_si.instrucciones
+        if nodo.condicion.valor is False:
+            return nodo.bloque_sino.instrucciones
         return nodo
 
     def visit_bucle_mientras(self, nodo: NodoBucleMientras):
