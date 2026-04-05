@@ -1468,10 +1468,8 @@ class InterpretadorCobra:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
                     arg = NodoIdentificador(arg.valor)
                 valor = self.evaluar_expresion(arg)
-                if isinstance(valor, bool):
-                    print("verdadero" if valor else "falso")
-                else:
-                    print(valor)
+                valor = "verdadero" if valor is True else "falso" if valor is False else valor
+                print(valor)
         else:
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
