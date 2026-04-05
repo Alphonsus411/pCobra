@@ -40,6 +40,8 @@ class _DeadCodeRemover(NodeVisitor):
                 return nodo.bloque_si.instrucciones
             if nodo.condicion.valor is False:
                 return nodo.bloque_sino.instrucciones
+
+        # No colapsar si la condicion no es un literal booleano.
         return nodo
 
     def visit_bucle_mientras(self, nodo: NodoBucleMientras):
