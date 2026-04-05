@@ -1030,7 +1030,10 @@ class InterpretadorCobra:
                 nodo_origen=expresion,
                 operador="imprimir",
             )
-            print(valor)
+            if isinstance(valor, bool):
+                print("verdadero" if valor else "falso")
+            else:
+                print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
         elif isinstance(nodo, NodoUsar):
@@ -1464,7 +1467,10 @@ class InterpretadorCobra:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
                     arg = NodoIdentificador(arg.valor)
                 valor = self.evaluar_expresion(arg)
-                print(valor)
+                if isinstance(valor, bool):
+                    print("verdadero" if valor else "falso")
+                else:
+                    print(valor)
         else:
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
