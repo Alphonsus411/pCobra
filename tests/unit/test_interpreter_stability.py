@@ -8,6 +8,7 @@ import pytest
 from cobra.core import Lexer, Parser, TipoToken, Token
 from core.ast_nodes import (
     NodoAsignacion,
+    NodoBucleMientras,
     NodoCondicional,
     NodoIdentificador,
     NodoImprimir,
@@ -138,6 +139,24 @@ fin
         )
 
 
+def test_mientras_variable_numerica_lanza_error_semantico() -> None:
+    with pytest.raises(
+        CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
+    ):
+        _ejecutar_codigo(
+            """
+var x = 1
+mientras x:
+    pasar
+fin
+"""
+        )
+
+
+def test_clase_condicion_no_booleana_error_usa_mensaje_estable() -> None:
+    assert str(CondicionNoBooleanaError()) == "La condición debe ser booleana"
+
+
 def test_condicional_con_comparacion_mantiene_comportamiento_correcto() -> None:
     inter = _ejecutar_codigo(
         """
@@ -253,6 +272,17 @@ def test_ast_condicional_ejecuta_bloque_sin_recursionerror() -> None:
 
     lineas = _lineas_sin_trazas(out.getvalue())
     assert lineas[-1] == "ok"
+
+
+def test_ast_mientras_condicion_no_booleana_propaga_error_especifico() -> None:
+    inter = InterpretadorCobra()
+    ast = [NodoBucleMientras(NodoValor(1), [NodoImprimir(NodoValor("no"))])]
+
+    with pytest.raises(
+        CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
+    ):
+        for nodo in ast:
+            inter.ejecutar_nodo(nodo)
 
 
 def test_expresiones_booleanas_validas_siguen_funcionando_en_condicional() -> None:
