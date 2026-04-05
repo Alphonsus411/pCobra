@@ -260,3 +260,76 @@ def test_interactive_rechaza_exceso_lineas_blanco_consecutivas_en_bloque():
     assert ret == 0
     assert mock_ejecutar.call_count == 0
     assert any("Máximo de 2 líneas en blanco consecutivas" in str(call.args[0]) for call in mock_error.call_args_list)
+
+
+def test_ejecutar_codigo_imprime_booleano_verdadero():
+    interp = MagicMock()
+    interp.ejecutar_ast.return_value = True
+    cmd = InteractiveCommand(interp)
+
+    with patch.object(cmd, 'procesar_ast', return_value=['ast']), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo('codigo', validador=None)
+
+    assert mock_stdout.getvalue().strip() == 'verdadero'
+
+
+def test_ejecutar_codigo_imprime_booleano_falso():
+    interp = MagicMock()
+    interp.ejecutar_ast.return_value = False
+    cmd = InteractiveCommand(interp)
+
+    with patch.object(cmd, 'procesar_ast', return_value=['ast']), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo('codigo', validador=None)
+
+    assert mock_stdout.getvalue().strip() == 'falso'
+
+
+def test_ejecutar_codigo_imprime_valor_sin_transformacion():
+    cmd_num = InteractiveCommand(MagicMock())
+    cmd_num.interpretador.ejecutar_ast.return_value = 123
+    with patch.object(cmd_num, 'procesar_ast', return_value=['ast']), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout_num:
+        cmd_num.ejecutar_codigo('codigo')
+    assert mock_stdout_num.getvalue().strip() == '123'
+
+    cmd_txt = InteractiveCommand(MagicMock())
+    cmd_txt.interpretador.ejecutar_ast.return_value = 'hola'
+    with patch.object(cmd_txt, 'procesar_ast', return_value=['ast']), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout_txt:
+        cmd_txt.ejecutar_codigo('codigo')
+    assert mock_stdout_txt.getvalue().strip() == 'hola'
+
+
+def test_ejecutar_codigo_no_imprime_cuando_resultado_es_none():
+    interp = MagicMock()
+    interp.ejecutar_ast.return_value = None
+    cmd = InteractiveCommand(interp)
+
+    with patch.object(cmd, 'procesar_ast', return_value=['ast']), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo('codigo', validador=None)
+
+    assert mock_stdout.getvalue() == ''
+
+
+def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
+    cmd = InteractiveCommand(MagicMock())
+
+    with patch('cobra.cli.commands.interactive_cmd.Lexer') as mock_lexer, \
+         patch('cobra.cli.commands.interactive_cmd.Parser') as mock_parser, \
+         patch('cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox', return_value='ok') as mock_sandbox, \
+         patch('cobra.cli.commands.interactive_cmd.mostrar_info') as mock_info:
+        mock_lexer.return_value.tokenizar.return_value = ['TOK']
+        mock_parser.return_value.parsear.return_value = ['AST']
+
+        cmd._ejecutar_en_sandbox('imprimir(1)')
+
+    script_enviado = mock_sandbox.call_args.args[0]
+    assert '_resultado = _interp.ejecutar_ast(_ast)' in script_enviado
+    assert "if _resultado is not None:" in script_enviado
+    assert "if isinstance(_resultado, bool):" in script_enviado
+    assert "print('verdadero' if _resultado else 'falso')" in script_enviado
+    assert 'print(_resultado)' in script_enviado
+    mock_info.assert_called_once_with('ok')
