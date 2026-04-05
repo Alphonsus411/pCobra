@@ -1573,6 +1573,9 @@ class ClassicParser:
         elif token.tipo == TipoToken.CADENA:
             self.comer(TipoToken.CADENA)
             return NodoValor(token.valor)
+        elif token.tipo == TipoToken.BOOLEANO:
+            self.comer(TipoToken.BOOLEANO)
+            return NodoValor(token.valor)
         elif token.tipo == TipoToken.LAMBDA:
             self.comer(TipoToken.LAMBDA)
             parametros = []
