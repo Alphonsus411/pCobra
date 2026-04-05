@@ -19,6 +19,14 @@ from core.interpreter import InterpretadorCobra
 from core.semantic_validators.base import ValidadorBase
 
 
+def _lineas_sin_trazas(salida: str) -> list[str]:
+    return [
+        linea.strip()
+        for linea in salida.splitlines()
+        if linea.strip() and not linea.lstrip().startswith("[")
+    ]
+
+
 def _ejecutar_codigo(codigo: str) -> InterpretadorCobra:
     tokens = Lexer(codigo).tokenizar()
     ast = Parser(tokens).parsear()
@@ -112,7 +120,8 @@ def test_ast_imprimir_comparacion_booleana_sin_recursionerror() -> None:
     except RecursionError as exc:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert out.getvalue().strip() in {"True", "False"}
+    lineas = _lineas_sin_trazas(out.getvalue())
+    assert lineas[-1] in {"verdadero", "falso"}
 
 
 def test_ast_condicional_ejecuta_bloque_sin_recursionerror() -> None:
@@ -137,7 +146,8 @@ def test_ast_condicional_ejecuta_bloque_sin_recursionerror() -> None:
     except RecursionError as exc:
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert out.getvalue().strip() == "ok"
+    lineas = _lineas_sin_trazas(out.getvalue())
+    assert lineas[-1] == "ok"
 
 
 def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursionerror() -> None:

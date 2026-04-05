@@ -87,7 +87,7 @@ x = 10
 imprimir x == 10
 """
     )
-    assert salida == "True"
+    assert salida == "verdadero"
 
 
 def test_comparacion_identificador_con_suma_en_imprimir_sin_recursionerror() -> None:
@@ -97,7 +97,7 @@ x = 5
 imprimir x + 5 == 10
 """
     )
-    assert salida == "True"
+    assert salida == "verdadero"
 
 
 def test_comparacion_identificador_con_suma_en_imprimir_desde_x_diez() -> None:
@@ -107,7 +107,27 @@ x = 10
 imprimir x + 5 == 10
 """
     )
-    assert salida == "False"
+    assert salida == "falso"
+
+
+def test_igualdad_literal_5_igual_5_imprime_verdadero() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida("imprimir 5 == 5\n")
+    assert salida == "verdadero"
+
+
+def test_igualdad_literal_5_igual_6_imprime_falso() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida("imprimir 5 == 6\n")
+    assert salida == "falso"
+
+
+def test_imprimir_entero_literal_conserva_salida_previa() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida("imprimir 42\n")
+    assert salida == "42"
+
+
+def test_imprimir_cadena_literal_conserva_salida_previa() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida('imprimir "hola"\n')
+    assert salida == "hola"
 
 
 
@@ -126,7 +146,7 @@ imprimir x == 10
         for linea in salida.splitlines()
         if linea.strip() and not linea.lstrip().startswith("[")
     ]
-    assert lineas[-2:] == ["10", "False"]
+    assert lineas[-2:] == ["10", "falso"]
 
 def test_comparacion_identificador_en_condicional_sin_recursionerror() -> None:
     salida = _ejecutar_codigo_y_capturar_salida(
@@ -207,7 +227,7 @@ def test_ast_directo_comparacion_identificador_sin_recursionerror() -> None:
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert _ultima_linea_no_vacia(out.getvalue()) == "True"
+    assert _ultima_linea_no_vacia(out.getvalue()) == "verdadero"
 
 
 def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> None:
@@ -240,7 +260,7 @@ def test_ast_directo_comparacion_identificador_con_suma_sin_recursionerror() -> 
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
 
-    assert _ultima_linea_no_vacia(out.getvalue()) == "True"
+    assert _ultima_linea_no_vacia(out.getvalue()) == "verdadero"
 
 
 def test_ast_directo_condicional_identificador_sin_recursionerror() -> None:
@@ -383,7 +403,7 @@ imprimir x == 10
     assert "[BIN-LEFT]" in salida
     assert "[BIN-RIGHT]" in salida
     assert "[BIN-RESULT]" in salida
-    assert _ultima_linea_no_vacia(salida) == "True"
+    assert _ultima_linea_no_vacia(salida) == "verdadero"
 
 
 def test_debug_traces_en_comparacion_identificador_con_suma() -> None:
@@ -401,7 +421,7 @@ imprimir x + 5 == 10
     assert "[BIN-LEFT]" in salida
     assert "[BIN-RIGHT]" in salida
     assert "[BIN-RESULT]" in salida
-    assert _ultima_linea_no_vacia(salida) == "True"
+    assert _ultima_linea_no_vacia(salida) == "verdadero"
 
 
 def test_debug_traces_identificador_derecho_indefinido_nameerror_sin_recursionerror() -> None:
@@ -503,7 +523,7 @@ def test_ast_minimo_identificador_igual_valor_con_x_diez() -> None:
         for linea in out.getvalue().splitlines()
         if linea.strip() and not linea.strip().startswith("[")
     ]
-    assert "True" in lineas
+    assert "verdadero" in lineas
 
 
 def test_ast_control_no_regresion_print_cinco_mas_cinco() -> None:
