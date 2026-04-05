@@ -106,6 +106,19 @@ def test_ruta_previa_identificador_sigue_entregando_ast_igualdad_esperado():
     _assert_igualdad_x_10(ast[0])
 
 
+def test_ruta_previa_identificadores_en_igualdad_siguen_parseando_igual():
+    """No regresión: `x == y` debe seguir produciendo una binaria con dos identificadores."""
+    tokens, ast = _parsear("x == y")
+    assert tokens[0].tipo == TipoToken.IDENTIFICADOR
+    assert len(ast) == 1
+    assert isinstance(ast[0], NodoOperacionBinaria)
+    assert ast[0].operador.tipo == TipoToken.IGUAL
+    assert isinstance(ast[0].izquierda, NodoIdentificador)
+    assert ast[0].izquierda.nombre == "x"
+    assert isinstance(ast[0].derecha, NodoIdentificador)
+    assert ast[0].derecha.nombre == "y"
+
+
 def test_ruta_previa_entero_y_flotante_siguen_entregando_ast_binario_esperado():
     """Garantiza que `ENTERO` y `FLOTANTE` como inicio siguen parseando como expresión."""
     tokens_entero, ast_entero = _parsear("10 == 10")
@@ -150,3 +163,16 @@ def test_ruta_previa_identificador_asignacion_sigue_intacta():
     assert ast[0].identificador == "x"
     assert isinstance(ast[0].expresion, NodoValor)
     assert ast[0].expresion.valor == 1
+
+
+def test_suma_cadenas_parsea_como_binaria_y_deja_semantica_al_evaluador():
+    """Opcional útil: validar parseo/AST de suma de cadenas sin imponer semántica aquí."""
+    tokens, ast = _parsear('"a" + "b"')
+    assert any(t.tipo == TipoToken.SUMA for t in tokens)
+    assert len(ast) == 1
+    assert isinstance(ast[0], NodoOperacionBinaria)
+    assert ast[0].operador.tipo == TipoToken.SUMA
+    assert isinstance(ast[0].izquierda, NodoValor)
+    assert ast[0].izquierda.valor == "a"
+    assert isinstance(ast[0].derecha, NodoValor)
+    assert ast[0].derecha.valor == "b"
