@@ -186,6 +186,20 @@ def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
     assert mock_ejecutar.call_count == 1
 
 
+def test_interactive_multiline_bloque_con_multiples_sentencias_se_ejecuta_igual():
+    inputs = ['si 1 == 1 :', 'x = 1', 'imprimir(x)', 'fin', 'salir']
+    cmd = InteractiveCommand(MagicMock())
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    mock_ejecutar.assert_called_once_with('si 1 == 1 :\nx = 1\nimprimir(x)\nfin', None)
+
+
 def test_interactive_rechaza_fin_sin_bloque_abierto():
     cmd = InteractiveCommand(MagicMock())
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
@@ -234,6 +248,24 @@ def test_interactive_lineas_blancas_en_bloque_se_ignoran():
     assert prompts[:5] == ['cobra> ', '... ', '... ', '... ', '... ']
     assert mock_ejecutar.call_count == 1
     assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nimprimir "ok"\nfin'
+
+
+def test_interactive_comando_especial_no_interfiere_con_fin_y_lineas_blanco_en_bloque():
+    cmd = InteractiveCommand(MagicMock())
+    entradas = ['si 1 == 1 :', 'tokens', '', 'imprimir "ok"', 'fin', 'tokens', 'salir']
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=entradas), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
+         patch.object(cmd, '_procesar_comando_especial', wraps=cmd._procesar_comando_especial) as mock_comando, \
+         patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True), \
+         patch('cobra.cli.commands.interactive_cmd.mostrar_info'):
+        ret = cmd.run(_args())
+
+    assert ret == 0
+    mock_ejecutar.assert_called_once_with('si 1 == 1 :\ntokens\nimprimir "ok"\nfin', None)
+    lineas_comando_especial = [call.args[0] for call in mock_comando.call_args_list]
+    assert lineas_comando_especial.count('tokens') == 1
 
 
 def test_repl_basico_comparte_validacion_fin_sin_bloque():
@@ -312,6 +344,27 @@ def test_ejecutar_codigo_no_imprime_cuando_resultado_es_none():
         cmd.ejecutar_codigo('codigo', validador=None)
 
     assert mock_stdout.getvalue() == ''
+
+
+def test_ejecutar_codigo_traduce_booleano_solo_en_salida_no_en_semantica_interna():
+    class _InterpretadorDummy:
+        def __init__(self):
+            self.ultimo_resultado = None
+
+        def ejecutar_ast(self, ast):
+            self.ultimo_resultado = True
+            return self.ultimo_resultado
+
+    interp = _InterpretadorDummy()
+    cmd = InteractiveCommand(interp)
+
+    with patch.object(cmd, 'procesar_ast', return_value=['ast']), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo('codigo', validador=None)
+
+    assert mock_stdout.getvalue().strip() == 'verdadero'
+    assert interp.ultimo_resultado is True
+    assert isinstance(interp.ultimo_resultado, bool)
 
 
 def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
