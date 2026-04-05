@@ -1,4 +1,4 @@
-"""Excepciones comunes del analizador léxico de Cobra."""
+"""Excepciones comunes del núcleo de Cobra."""
 
 class LexerError(Exception):
     """Excepción base para errores del analizador léxico."""
@@ -21,4 +21,15 @@ class UnclosedStringError(LexerError):
     pass
 
 
-__all__ = ["LexerError", "InvalidTokenError", "UnclosedStringError"]
+class CondicionNoBooleanaError(Exception):
+    """Error semántico cuando una condición de control no es booleana."""
+
+    pass
+
+
+__all__ = [
+    "LexerError",
+    "InvalidTokenError",
+    "UnclosedStringError",
+    "CondicionNoBooleanaError",
+]

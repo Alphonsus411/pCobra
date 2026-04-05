@@ -13,8 +13,10 @@ from core.ast_nodes import (
     NodoImprimir,
     NodoLlamadaFuncion,
     NodoOperacionBinaria,
+    NodoOperacionUnaria,
     NodoValor,
 )
+from core.errors import CondicionNoBooleanaError
 from core.interpreter import InterpretadorCobra
 from core.semantic_validators.base import ValidadorBase
 
@@ -57,6 +59,33 @@ si y == 1:
 fin
 """
         )
+
+
+def test_condicional_con_tipo_no_booleano_lanza_error_semantico() -> None:
+    with pytest.raises(
+        CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
+    ):
+        _ejecutar_codigo(
+            """
+si 1:
+    pasar
+fin
+"""
+        )
+
+
+def test_condicional_false_no_ejecuta_bloque_si_y_ejecuta_sino() -> None:
+    inter = _ejecutar_codigo(
+        """
+var salida = 0
+si 1 == 2:
+    var salida = 1
+sino:
+    var salida = 2
+fin
+"""
+    )
+    assert inter.variables["salida"] == 2
 
 
 def test_condicionales_anidados_se_ejecutan_correctamente() -> None:
@@ -148,6 +177,36 @@ def test_ast_condicional_ejecuta_bloque_sin_recursionerror() -> None:
 
     lineas = _lineas_sin_trazas(out.getvalue())
     assert lineas[-1] == "ok"
+
+
+def test_expresiones_booleanas_validas_siguen_funcionando_en_condicional() -> None:
+    inter = InterpretadorCobra()
+    condicion_compuesta = NodoOperacionBinaria(
+        NodoOperacionBinaria(
+            NodoIdentificador("x"),
+            Token(TipoToken.IGUAL, "=="),
+            NodoValor(5),
+        ),
+        Token(TipoToken.AND, "y"),
+        NodoOperacionUnaria(
+            Token(TipoToken.NOT, "!"),
+            NodoOperacionBinaria(
+                NodoIdentificador("y"),
+                Token(TipoToken.IGUAL, "=="),
+                NodoValor(1),
+            ),
+        ),
+    )
+    ast = [
+        NodoAsignacion("x", NodoValor(5)),
+        NodoAsignacion("y", NodoValor(0)),
+        NodoCondicional(condicion_compuesta, [NodoAsignacion("ok", NodoValor(1))], []),
+    ]
+
+    for nodo in ast:
+        inter.ejecutar_nodo(nodo)
+
+    assert inter.variables["ok"] == 1
 
 
 def test_ast_comparacion_identificador_indefinido_controla_nameerror_sin_recursionerror() -> None:

@@ -78,6 +78,7 @@ from .import_utils import (
     cargar_ast_modulo,
 )
 from .utils import validar_ast_estructural, ErrorEstructuraAST
+from .errors import CondicionNoBooleanaError
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 
@@ -1399,10 +1400,7 @@ class InterpretadorCobra:
                 f"se recibió nodo AST {type(condicion_resuelta).__name__}"
             )
         if not isinstance(condicion_resuelta, bool):
-            raise TypeError(
-                "Condición de control inválida: se esperaba booleano materializado, "
-                f"se obtuvo {type(condicion_resuelta).__name__}"
-            )
+            raise CondicionNoBooleanaError("La condición debe ser booleana")
         return condicion_resuelta
 
     def ejecutar_condicional(self, nodo):
