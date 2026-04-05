@@ -98,17 +98,40 @@ def test_si_falso_no_ejecuta_bloque_y_no_imprime() -> None:
     assert lineas == []
 
 
-@pytest.mark.parametrize("condicion", ["5", '"hola"', "x"])
-def test_condicional_con_condicion_no_booleana_lanza_error_semantico(
-    condicion: str,
-) -> None:
+def test_si_numero_literal_lanza_error_semantico() -> None:
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
         _ejecutar_codigo(
-            f"""
+            """
+si 5:
+    pasar
+fin
+"""
+        )
+
+
+def test_si_cadena_literal_lanza_error_semantico() -> None:
+    with pytest.raises(
+        CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
+    ):
+        _ejecutar_codigo(
+            """
+si "hola":
+    pasar
+fin
+"""
+        )
+
+
+def test_si_variable_numerica_lanza_error_semantico() -> None:
+    with pytest.raises(
+        CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
+    ):
+        _ejecutar_codigo(
+            """
 var x = 5
-si {condicion}:
+si x:
     pasar
 fin
 """
