@@ -58,9 +58,24 @@ def test_remove_condicional_constante():
     assert optimizado[0].valor.valor == 2
 
 
-def test_remove_condicional_literal_no_booleano_no_colapsa():
+def test_remove_condicional_constante_true_colapsa_a_bloque_then():
     ast = [
-        NodoCondicional(NodoValor(1), [NodoAsignacion("x", NodoValor(1))], [NodoAsignacion("x", NodoValor(2))])
+        NodoCondicional(NodoValor(True), [NodoAsignacion("x", NodoValor(1))], [NodoAsignacion("x", NodoValor(2))])
+    ]
+    optimizado = remove_dead_code(ast)
+    assert len(optimizado) == 1
+    assert isinstance(optimizado[0], NodoAsignacion)
+    assert optimizado[0].valor.valor == 1
+
+
+@pytest.mark.parametrize("valor_no_booleano", [5, "hola"])
+def test_remove_condicional_literal_no_booleano_no_colapsa(valor_no_booleano):
+    ast = [
+        NodoCondicional(
+            NodoValor(valor_no_booleano),
+            [NodoAsignacion("x", NodoValor(1))],
+            [NodoAsignacion("x", NodoValor(2))],
+        )
     ]
     optimizado = remove_dead_code(ast)
     assert len(optimizado) == 1
