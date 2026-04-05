@@ -24,6 +24,16 @@ def _parsear(codigo: str):
     return tokens, ast
 
 
+def _assert_igualdad_cadenas(expresion, izquierda: str, derecha: str):
+    """Valida el contrato AST de igualdad entre dos literales cadena."""
+    assert isinstance(expresion, NodoOperacionBinaria)
+    assert expresion.operador.tipo == TipoToken.IGUAL
+    assert isinstance(expresion.izquierda, NodoValor)
+    assert expresion.izquierda.valor == izquierda
+    assert isinstance(expresion.derecha, NodoValor)
+    assert expresion.derecha.valor == derecha
+
+
 def _assert_igualdad_x_10(expresion):
     """Valida el contrato AST de `x == 10` generado por exp_equality/exp_comparison."""
     assert isinstance(expresion, NodoOperacionBinaria)
@@ -56,3 +66,31 @@ def test_imprimir_con_agrupacion_permita_encadenar_binarias():
     assert isinstance(nodo_imprimir, NodoImprimir)
     assert isinstance(nodo_imprimir.expresion, NodoOperacionBinaria)
     assert nodo_imprimir.expresion.operador.tipo == TipoToken.SUMA
+
+
+def test_expresion_igualdad_cadenas_parsea_sin_excepcion_y_con_ast_esperado():
+    codigo = '"hola" == "hola"'
+    try:
+        tokens, ast = _parsear(codigo)
+    except Exception as exc:  # pragma: no cover - ruta de regresión explícita
+        raise AssertionError(
+            f"No debía fallar el parseo de igualdad de cadenas: {codigo}"
+        ) from exc
+
+    assert any(t.tipo == TipoToken.IGUAL for t in tokens)
+    assert len(ast) == 1
+    _assert_igualdad_cadenas(ast[0], "hola", "hola")
+
+
+def test_expresion_desigualdad_cadenas_parsea_sin_excepcion_y_con_ast_esperado():
+    codigo = '"hola" == "adios"'
+    try:
+        tokens, ast = _parsear(codigo)
+    except Exception as exc:  # pragma: no cover - ruta de regresión explícita
+        raise AssertionError(
+            f"No debía fallar el parseo de igualdad de cadenas: {codigo}"
+        ) from exc
+
+    assert any(t.tipo == TipoToken.IGUAL for t in tokens)
+    assert len(ast) == 1
+    _assert_igualdad_cadenas(ast[0], "hola", "adios")
