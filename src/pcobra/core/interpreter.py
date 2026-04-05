@@ -1399,6 +1399,8 @@ class InterpretadorCobra:
                 "Condición no materializada: "
                 f"se recibió nodo AST {type(condicion_resuelta).__name__}"
             )
+        # No se permite coerción implícita (bool(x)); la condición debe ser
+        # un booleano real para evitar ambigüedad semántica en control de flujo.
         if not isinstance(condicion_resuelta, bool):
             raise CondicionNoBooleanaError("La condición debe ser booleana")
         return condicion_resuelta
@@ -1420,11 +1422,15 @@ class InterpretadorCobra:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
-        elif condicion is False and bloque_sino:
+        elif condicion is False:
+            if bloque_sino is None:
+                return None
             for instruccion in bloque_sino:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
+        else:  # pragma: no cover - inalcanzable si se respeta el contrato del helper
+            raise CondicionNoBooleanaError("La condición debe ser booleana")
 
     def ejecutar_mientras(self, nodo):
         """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
