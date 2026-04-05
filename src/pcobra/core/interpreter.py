@@ -1422,15 +1422,15 @@ class InterpretadorCobra:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
-        elif condicion is False:
-            if bloque_sino is None:
-                return None
-            for instruccion in bloque_sino:
-                resultado = self.ejecutar_nodo(instruccion)
-                if resultado is not None:
-                    return resultado
-        else:  # pragma: no cover - inalcanzable si se respeta el contrato del helper
-            raise CondicionNoBooleanaError("La condición debe ser booleana")
+            return None
+
+        # Única ruta restante válida: ``False``.
+        if bloque_sino is None:
+            return None
+        for instruccion in bloque_sino:
+            resultado = self.ejecutar_nodo(instruccion)
+            if resultado is not None:
+                return resultado
 
     def ejecutar_mientras(self, nodo):
         """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
