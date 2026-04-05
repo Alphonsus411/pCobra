@@ -12,6 +12,19 @@ o capturas de pantalla relevantes.
 Describe el alcance de los cambios y su impacto en el proyecto o en la cobertura de
 código.
 
+
+## Checklist corto (parseo de strings)
+
+- [ ] No hay `ParserError` para literales string en expresiones.
+- [ ] Comparaciones de strings (`==`, `!=`) generan AST válido.
+- [ ] No hay regresión en parseo de números e identificadores.
+- [ ] Sin cambios en lexer ni evaluador.
+- [ ] Sin refactor estructural del parser (solo ajuste localizado en rama primaria/literal y tests).
+
+**Rutas afectadas para revisión rápida**
+- `src/pcobra/cobra/core/parser.py`
+- `tests/unit/...`
+
 ## Checklist
 - [ ] El código compila y las pruebas pasan
 - [ ] He ejecutado `make lint` y `make typecheck`
