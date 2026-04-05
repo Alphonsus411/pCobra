@@ -76,7 +76,9 @@ def test_remove_dead_code_colapsa_condicional_literal_booleano(
 
 
 @pytest.mark.parametrize("valor_no_booleano", [5, "hola"])
-def test_remove_dead_code_no_colapsa_condicional_literal_no_booleano(valor_no_booleano):
+def test_remove_dead_code_no_colapsa_condicional_literal_no_booleano_strict_boolean_sin_truthiness(
+    valor_no_booleano,
+):
     ast = [
         NodoCondicional(
             NodoValor(valor_no_booleano),
