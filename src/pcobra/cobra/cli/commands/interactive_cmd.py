@@ -607,7 +607,12 @@ class InteractiveCommand(BaseCommand):
                 "_tokens = Lexer(_codigo).tokenizar()\n"
                 "_ast = Parser(_tokens).parsear()\n"
                 "_interp = InterpretadorCobra()\n"
-                "_interp.ejecutar_ast(_ast)\n"
+                "_resultado = _interp.ejecutar_ast(_ast)\n"
+                "if _resultado is not None:\n"
+                "    if isinstance(_resultado, bool):\n"
+                "        print('verdadero' if _resultado else 'falso')\n"
+                "    else:\n"
+                "        print(_resultado)\n"
             )
 
             salida = ejecutar_en_sandbox(
