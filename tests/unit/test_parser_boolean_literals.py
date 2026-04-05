@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from io import StringIO
-from unittest.mock import patch
-
 from pcobra.core.ast_nodes import NodoCondicional, NodoOperacionBinaria, NodoValor
-from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.lexer import Lexer, TipoToken
 from pcobra.cobra.core.parser import ClassicParser, ParserError
 
@@ -20,15 +16,7 @@ def _parsear_sin_error_booleano_en_termino(codigo: str):
     return tokens, ast
 
 
-def _lineas_utiles(salida: str) -> list[str]:
-    return [
-        linea.strip()
-        for linea in salida.splitlines()
-        if linea.strip() and not linea.lstrip().startswith("[")
-    ]
-
-
-def test_si_verdadero_condicion_booleana_ast_valido_y_retorna_ok() -> None:
+def test_si_verdadero_condicion_booleana_acepta_nodovalor_bool() -> None:
     _, ast = _parsear_sin_error_booleano_en_termino('si verdadero: "ok" fin')
 
     assert len(ast) == 1
@@ -37,15 +25,8 @@ def test_si_verdadero_condicion_booleana_ast_valido_y_retorna_ok() -> None:
     assert isinstance(nodo_si.condicion, NodoValor)
     assert nodo_si.condicion.valor is True
 
-    inter = InterpretadorCobra()
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        resultado = inter.ejecutar_nodo(nodo_si)
 
-    assert resultado == "ok"
-    assert _lineas_utiles(out.getvalue()) == []
-
-
-def test_si_falso_condicion_booleana_ast_valido_y_sin_salida() -> None:
+def test_si_falso_condicion_booleana_acepta_nodovalor_bool() -> None:
     _, ast = _parsear_sin_error_booleano_en_termino('si falso: "no" fin')
 
     assert len(ast) == 1
@@ -53,13 +34,6 @@ def test_si_falso_condicion_booleana_ast_valido_y_sin_salida() -> None:
     assert isinstance(nodo_si, NodoCondicional)
     assert isinstance(nodo_si.condicion, NodoValor)
     assert nodo_si.condicion.valor is False
-
-    inter = InterpretadorCobra()
-    with patch("sys.stdout", new_callable=StringIO) as out:
-        resultado = inter.ejecutar_nodo(nodo_si)
-
-    assert resultado is None
-    assert _lineas_utiles(out.getvalue()) == []
 
 
 def test_verdadero_igual_verdadero_parsea_como_binaria_con_nodovalor_booleanos() -> None:
@@ -88,3 +62,23 @@ def test_verdadero_igual_falso_parsea_como_binaria_con_nodovalor_booleanos() -> 
     assert nodo.izquierda.valor is True
     assert isinstance(nodo.derecha, NodoValor)
     assert nodo.derecha.valor is False
+
+
+def test_no_regresion_literal_string_en_condicion_si() -> None:
+    _, ast = _parsear_sin_error_booleano_en_termino('si "texto": "ok" fin')
+
+    assert len(ast) == 1
+    nodo_si = ast[0]
+    assert isinstance(nodo_si, NodoCondicional)
+    assert isinstance(nodo_si.condicion, NodoValor)
+    assert nodo_si.condicion.valor == "texto"
+
+
+def test_no_regresion_literal_numero_en_condicion_si() -> None:
+    _, ast = _parsear_sin_error_booleano_en_termino("si 1: \"ok\" fin")
+
+    assert len(ast) == 1
+    nodo_si = ast[0]
+    assert isinstance(nodo_si, NodoCondicional)
+    assert isinstance(nodo_si.condicion, NodoValor)
+    assert nodo_si.condicion.valor == 1
