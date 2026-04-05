@@ -247,7 +247,7 @@ class InteractiveCommand(BaseCommand):
         """Ejecuta un snippet completo con el pipeline canónico Lexer/Parser/AST."""
 
         ast = self.procesar_ast(codigo, validador)
-        self.interpretador.ejecutar_ast(ast)
+        resultado = self.interpretador.ejecutar_ast(ast)
 
     def run(self, args: Any) -> int:
         """Ejecuta el REPL de Cobra.
