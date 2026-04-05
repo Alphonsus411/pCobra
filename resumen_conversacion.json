@@ -1,130 +1,108 @@
 {
   "proyecto": "pCobra",
-  "tipo": "intérprete de lenguaje propio",
-  "estado_global": "estable y funcional con semántica coherente",
-
-  "fases": [
+  "estado_actual": "lenguaje funcional con semántica estricta en consolidación",
+  "hitos_principales": [
     {
-      "fase": "debugging crítico",
-      "problema": "recursión infinita en expresiones binarias con identificadores",
-      "causa_raiz": "ejecución implícita previa al evaluador (probablemente __repr__, __eq__ o comparaciones estructurales)",
-      "solucion": [
-        "eliminación de representaciones recursivas",
-        "evitar comparación estructural automática (dataclass eq)",
-        "instrumentación del flujo de ejecución",
-        "aislamiento de ejecutar_nodo"
-      ],
-      "resultado": "flujo corregido: AST → RUN → EXEC → EVAL"
+      "fase": "corrección REPL",
+      "problema": "no se imprimían resultados",
+      "solucion": "captura e impresión del valor retornado por ejecutar_nodo",
+      "resultado": "REPL funcional con salida visible"
     },
     {
-      "fase": "validación del evaluador",
+      "fase": "localización de booleanos",
+      "problema": "salida en inglés (True/False)",
+      "solucion": "formateo en capa de salida",
+      "resultado": "uso de 'verdadero' y 'falso'"
+    },
+    {
+      "fase": "soporte de strings en parser",
+      "problema": "TipoToken.CADENA no reconocido en expresiones",
+      "solucion": "integración en parseo de expresiones primarias",
+      "resultado": "strings completamente funcionales"
+    },
+    {
+      "fase": "control de flujo",
+      "implementacion": "estructura 'si ... : ... fin'",
+      "resultado": "bloques ejecutables con AST NodoCondicional"
+    },
+    {
+      "fase": "optimización",
+      "comportamiento": "constant folding en expresiones y condicionales constantes",
+      "resultado": "AST colapsado a NodoValor cuando es posible"
+    },
+    {
+      "fase": "ejecución dinámica",
       "pruebas": [
-        "expresiones literales",
-        "identificadores",
-        "expresiones binarias mixtas"
+        "uso de variables en condiciones",
+        "reasignación",
+        "dependencia entre variables"
       ],
-      "resultado": "evaluador completamente funcional"
+      "resultado": "runtime correcto con estado persistente"
     },
     {
-      "fase": "soporte de paréntesis",
-      "problema": "parser no soportaba agrupación",
-      "primer_fix": "soporte de '(' expression ')'",
-      "segundo_problema": "no se integraba con operaciones binarias",
-      "solucion": "permitir que expresiones agrupadas participen en parsing binario",
-      "resultado": "paréntesis totalmente funcionales y encadenables"
+      "fase": "validación semántica estricta",
+      "problema": "truthiness implícita (si 5, si \"hola\")",
+      "solucion": "validación explícita de booleanos en NodoCondicional",
+      "resultado": "error CondicionNoBooleanaError en casos inválidos"
     },
     {
-      "fase": "validación de precedencia",
-      "pruebas": [
-        "2 + 3 * 4",
-        "(2 + 3) * 4",
-        "(x+5) + 3 + 4"
-      ],
-      "resultado": [
-        "precedencia correcta (* > +)",
-        "asociatividad izquierda correcta"
-      ]
+      "fase": "ajuste del optimizador",
+      "problema": "optimización incorrecta de condiciones no booleanas",
+      "solucion": "limitar optimización a condiciones booleanas reales",
+      "resultado": "coherencia entre optimización y runtime"
     },
     {
-      "fase": "semántica de comparación",
-      "comportamiento": {
-        "int == int": "correcto",
-        "int == string": "False",
-        "string == string": "correcto"
-      },
-      "decision": "no coerción implícita"
-    },
-    {
-      "fase": "validación de tipos en operaciones",
-      "implementacion": "type_utils.verificar_sumables",
-      "comportamiento": {
-        "int + int": "válido",
-        "string + string": "válido",
-        "int + string": "error"
-      },
-      "resultado": "type checking dinámico consistente"
-    },
-    {
-      "fase": "validación final",
-      "pruebas": [
-        "\"hola\" + \"mundo\"",
-        "5 == \"5\"",
-        "\"5\" == \"5\""
-      ],
-      "resultado": [
-        "concatenación correcta",
-        "comparación sin coerción",
-        "semántica consistente"
-      ]
+      "fase": "soporte de booleanos en parser",
+      "problema": "TipoToken.BOOLEANO no reconocido",
+      "solucion": "integración en parseo de expresiones primarias",
+      "estado": "pendiente de validación final"
     }
   ],
-
-  "arquitectura_actual": {
-    "frontend": {
-      "lexer": "estable",
-      "parser": "soporta precedencia y paréntesis"
-    },
-    "intermediate_representation": {
-      "AST": "correcto y sin ciclos"
-    },
-    "runtime": {
-      "evaluador": "estable",
-      "resolución_identificadores": "correcta"
-    },
-    "type_system": {
-      "tipo": "dinámico implícito",
-      "validación": "runtime",
-      "coerción": "no permitida"
+  "arquitectura": {
+    "lexer": "estable, soporta números, strings y booleanos",
+    "parser": "soporta precedencia, paréntesis y bloques; alineándose con tipos",
+    "AST": "estructurado, sin ciclos, optimizable",
+    "runtime": "determinista con evaluación dinámica",
+    "optimizador": "constant folding seguro",
+    "REPL": "funcional con salida formateada",
+    "sistema_tipos": {
+      "tipo": "dinámico",
+      "coercion_implicita": false,
+      "validacion": "runtime estricta"
     }
   },
-
   "propiedades_clave": [
-    "separación clara entre AST, evaluación y semántica",
-    "ausencia de recursión implícita",
-    "validación de tipos desacoplada",
-    "precedencia y asociatividad correctas",
-    "errores explícitos y controlados"
+    "separación clara entre parsing, AST y ejecución",
+    "semántica explícita sin coerción implícita",
+    "control de flujo determinista",
+    "optimización segura dependiente del contexto",
+    "identidad lingüística (castellano)"
   ],
-
-  "decisiones_de_diseño": {
-    "coercion_implicita": false,
-    "comparacion_entre_tipos": "permitida (retorna False)",
-    "operaciones_invalidas": "lanzan error",
-    "tipado": "dinámico con validación explícita"
+  "problemas_resueltos": [
+    "recursión implícita en AST",
+    "falta de impresión en REPL",
+    "soporte incompleto de strings",
+    "truthiness implícita heredada de Python",
+    "optimización incorrecta de condicionales"
+  ],
+  "problemas_actuales": [
+    "alineación completa del parser con booleanos (TipoToken.BOOLEANO)",
+    "validación final de semántica estricta en todos los caminos"
+  ],
+  "estado_semantico": {
+    "condiciones": "solo booleanos permitidos",
+    "comparaciones": "sin coerción",
+    "errores": "explícitos y controlados"
   },
-
-  "estado_actual": {
-    "nivel": "intérprete funcional completo",
-    "estabilidad": "alta",
-    "confianza": "alta"
+  "nivel_madurez": {
+    "clasificacion": "lenguaje funcional serio",
+    "estado": "estable con refinamiento semántico activo"
   },
-
-  "siguientes_pasos_posibles": [
-    "formalizar sistema de tipos",
-    "centralizar reglas de tipos (matriz de operaciones)",
-    "añadir más operadores (*, /, - con validación)",
-    "mejorar errores semánticos",
-    "optimización de AST (constant folding avanzado)",
-    "evolucionar hacia Pratt parser o gramática formal"
+  "siguientes_pasos": [
+    "validación completa de booleanos en parser",
+    "pruebas de edge cases en bloques",
+    "definición de scope (bloques vs global)",
+    "extensión de operadores",
+    "formalización del sistema de tipos"
   ]
 }
