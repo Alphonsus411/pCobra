@@ -110,6 +110,31 @@ imprimir x + 5 == 10
     assert salida == "falso"
 
 
+def test_igualdad_literal_5_igual_5_imprime_verdadero() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida("imprimir 5 == 5\n")
+    assert salida == "verdadero"
+
+
+def test_igualdad_literal_5_igual_6_imprime_falso() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida("imprimir 5 == 6\n")
+    assert salida == "falso"
+
+
+def test_imprimir_tipos_no_booleanos_conserva_salida_previa() -> None:
+    salida = _ejecutar_codigo_y_capturar_stdout_completo(
+        """
+imprimir 42
+imprimir "hola"
+"""
+    )
+    lineas = [
+        linea.strip()
+        for linea in salida.splitlines()
+        if linea.strip() and not linea.lstrip().startswith("[")
+    ]
+    assert lineas[-2:] == ["42", "hola"]
+
+
 
 
 def test_regresion_imprimir_suma_y_comparacion_sin_recursionerror() -> None:
