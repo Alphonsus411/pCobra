@@ -1413,12 +1413,14 @@ class InterpretadorCobra:
         bloque_sino = getattr(
             nodo, "cuerpo_sino", getattr(nodo, "bloque_sino", NodoBloque())
         )
-        if self._evaluar_condicion_control(nodo.condicion):
+        condicion = self._evaluar_condicion_control(nodo.condicion)
+
+        if condicion is True:
             for instruccion in bloque_si:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
-        elif bloque_sino:
+        elif condicion is False and bloque_sino:
             for instruccion in bloque_sino:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
