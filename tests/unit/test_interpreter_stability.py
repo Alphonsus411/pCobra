@@ -99,7 +99,7 @@ def test_si_falso_no_ejecuta_bloque_y_no_imprime() -> None:
     assert lineas == []
 
 
-def test_si_numero_literal_lanza_error_semantico() -> None:
+def test_si_numero_literal_lanza_error_semantico_strict_boolean_sin_truthiness() -> None:
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
@@ -112,7 +112,7 @@ fin
         )
 
 
-def test_si_cadena_literal_lanza_error_semantico() -> None:
+def test_si_cadena_literal_lanza_error_semantico_strict_boolean_sin_truthiness() -> None:
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
@@ -125,7 +125,7 @@ fin
         )
 
 
-def test_si_variable_numerica_lanza_error_semantico() -> None:
+def test_si_variable_numerica_lanza_error_semantico_strict_boolean_sin_truthiness() -> None:
     with pytest.raises(
         CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
     ):
@@ -157,7 +157,7 @@ def test_clase_condicion_no_booleana_error_usa_mensaje_estable() -> None:
     assert str(CondicionNoBooleanaError()) == "La condición debe ser booleana"
 
 
-def test_condicional_con_comparacion_mantiene_comportamiento_correcto() -> None:
+def test_condicional_con_comparacion_mantiene_comportamiento_correcto_strict_boolean() -> None:
     inter = _ejecutar_codigo(
         """
 var x = 5
@@ -167,6 +167,18 @@ fin
 """
     )
     assert inter.variables["ok"] == 1
+
+
+def test_condicional_con_comparacion_no_ejecuta_bloque_cuando_no_corresponde() -> None:
+    inter = _ejecutar_codigo(
+        """
+var x = 4
+si x == 5:
+    var ok = 1
+fin
+"""
+    )
+    assert "ok" not in inter.variables
 
 
 def test_condicional_false_no_ejecuta_bloque_si_y_ejecuta_sino() -> None:
