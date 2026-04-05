@@ -1574,6 +1574,7 @@ class ClassicParser:
         elif token.tipo == TipoToken.CADENA:
             self.comer(TipoToken.CADENA)
             return NodoValor(token.valor)
+        # Mantiene el mismo patrón de literales primarios para booleanos.
         elif token.tipo == TipoToken.BOOLEANO:
             self.comer(TipoToken.BOOLEANO)
             return NodoValor(token.valor)
