@@ -8,9 +8,11 @@ Este test cubre explícitamente:
 """
 
 from pcobra.core.ast_nodes import (
+    NodoAsignacion,
     NodoCondicional,
     NodoIdentificador,
     NodoImprimir,
+    NodoLlamadaFuncion,
     NodoOperacionBinaria,
     NodoValor,
 )
@@ -94,3 +96,57 @@ def test_expresion_desigualdad_cadenas_parsea_sin_excepcion_y_con_ast_esperado()
     assert any(t.tipo == TipoToken.IGUAL for t in tokens)
     assert len(ast) == 1
     _assert_igualdad_cadenas(ast[0], "hola", "adios")
+
+
+def test_ruta_previa_identificador_sigue_entregando_ast_igualdad_esperado():
+    """Garantiza que `IDENTIFICADOR` como inicio mantiene la semántica previa."""
+    tokens, ast = _parsear("x == 10")
+    assert tokens[0].tipo == TipoToken.IDENTIFICADOR
+    assert len(ast) == 1
+    _assert_igualdad_x_10(ast[0])
+
+
+def test_ruta_previa_entero_y_flotante_siguen_entregando_ast_binario_esperado():
+    """Garantiza que `ENTERO` y `FLOTANTE` como inicio siguen parseando como expresión."""
+    tokens_entero, ast_entero = _parsear("10 == 10")
+    assert tokens_entero[0].tipo == TipoToken.ENTERO
+    assert len(ast_entero) == 1
+    assert isinstance(ast_entero[0], NodoOperacionBinaria)
+    assert ast_entero[0].operador.tipo == TipoToken.IGUAL
+    assert isinstance(ast_entero[0].izquierda, NodoValor)
+    assert ast_entero[0].izquierda.valor == 10
+    assert isinstance(ast_entero[0].derecha, NodoValor)
+    assert ast_entero[0].derecha.valor == 10
+
+    tokens_flotante, ast_flotante = _parsear("1.5 == 1.5")
+    assert tokens_flotante[0].tipo == TipoToken.FLOTANTE
+    assert len(ast_flotante) == 1
+    assert isinstance(ast_flotante[0], NodoOperacionBinaria)
+    assert ast_flotante[0].operador.tipo == TipoToken.IGUAL
+    assert isinstance(ast_flotante[0].izquierda, NodoValor)
+    assert ast_flotante[0].izquierda.valor == 1.5
+    assert isinstance(ast_flotante[0].derecha, NodoValor)
+    assert ast_flotante[0].derecha.valor == 1.5
+
+
+def test_ruta_previa_identificador_llamada_funcion_sigue_intacta():
+    """Confirma que `foo(1)` se sigue resolviendo como llamada de función."""
+    tokens, ast = _parsear("foo(1)")
+    assert tokens[0].tipo == TipoToken.IDENTIFICADOR
+    assert len(ast) == 1
+    assert isinstance(ast[0], NodoLlamadaFuncion)
+    assert ast[0].nombre == "foo"
+    assert len(ast[0].argumentos) == 1
+    assert isinstance(ast[0].argumentos[0], NodoValor)
+    assert ast[0].argumentos[0].valor == 1
+
+
+def test_ruta_previa_identificador_asignacion_sigue_intacta():
+    """Confirma que `x = 1` conserva la ruta de asignación previa."""
+    tokens, ast = _parsear("x = 1")
+    assert tokens[0].tipo == TipoToken.IDENTIFICADOR
+    assert len(ast) == 1
+    assert isinstance(ast[0], NodoAsignacion)
+    assert ast[0].identificador == "x"
+    assert isinstance(ast[0].expresion, NodoValor)
+    assert ast[0].expresion.valor == 1
