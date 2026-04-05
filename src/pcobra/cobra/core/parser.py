@@ -1563,6 +1563,7 @@ class ClassicParser:
                 )
             self.comer(TipoToken.RPAREN)
             return expresion_agrupada
+        # Literales primarios
         if token.tipo == TipoToken.ENTERO:
             self.comer(TipoToken.ENTERO)
             return NodoValor(token.valor)
