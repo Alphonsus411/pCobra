@@ -74,6 +74,59 @@ fin
         )
 
 
+def test_si_verdadero_ejecuta_bloque_y_emite_salida() -> None:
+    inter = InterpretadorCobra()
+    ast = [NodoCondicional(NodoValor(True), [NodoImprimir(NodoValor("ok"))], [])]
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        for nodo in ast:
+            inter.ejecutar_nodo(nodo)
+
+    lineas = _lineas_sin_trazas(out.getvalue())
+    assert lineas == ["ok"]
+
+
+def test_si_falso_no_ejecuta_bloque_y_no_imprime() -> None:
+    inter = InterpretadorCobra()
+    ast = [NodoCondicional(NodoValor(False), [NodoImprimir(NodoValor("no"))], [])]
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        for nodo in ast:
+            inter.ejecutar_nodo(nodo)
+
+    lineas = _lineas_sin_trazas(out.getvalue())
+    assert lineas == []
+
+
+@pytest.mark.parametrize("condicion", ["5", '"hola"', "x"])
+def test_condicional_con_condicion_no_booleana_lanza_error_semantico(
+    condicion: str,
+) -> None:
+    with pytest.raises(
+        CondicionNoBooleanaError, match=r"^La condición debe ser booleana$"
+    ):
+        _ejecutar_codigo(
+            f"""
+var x = 5
+si {condicion}:
+    pasar
+fin
+"""
+        )
+
+
+def test_condicional_con_comparacion_mantiene_comportamiento_correcto() -> None:
+    inter = _ejecutar_codigo(
+        """
+var x = 5
+si x == 5:
+    var ok = 1
+fin
+"""
+    )
+    assert inter.variables["ok"] == 1
+
+
 def test_condicional_false_no_ejecuta_bloque_si_y_ejecuta_sino() -> None:
     inter = _ejecutar_codigo(
         """
