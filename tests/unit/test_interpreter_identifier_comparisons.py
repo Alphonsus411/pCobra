@@ -120,19 +120,14 @@ def test_igualdad_literal_5_igual_6_imprime_falso() -> None:
     assert salida == "falso"
 
 
-def test_imprimir_tipos_no_booleanos_conserva_salida_previa() -> None:
-    salida = _ejecutar_codigo_y_capturar_stdout_completo(
-        """
-imprimir 42
-imprimir "hola"
-"""
-    )
-    lineas = [
-        linea.strip()
-        for linea in salida.splitlines()
-        if linea.strip() and not linea.lstrip().startswith("[")
-    ]
-    assert lineas[-2:] == ["42", "hola"]
+def test_imprimir_entero_literal_conserva_salida_previa() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida("imprimir 42\n")
+    assert salida == "42"
+
+
+def test_imprimir_cadena_literal_conserva_salida_previa() -> None:
+    salida = _ejecutar_codigo_y_capturar_salida('imprimir "hola"\n')
+    assert salida == "hola"
 
 
 
