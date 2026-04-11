@@ -19,4 +19,11 @@ def reconfigurar_consola_utf8() -> None:
             # Fail-safe: no bloquear el arranque del CLI por la consola.
             pass
 
+    try:
+        if os.name == "nt":
+            os.system("chcp 65001 > nul")
+    except Exception:
+        # Fail-safe: no bloquear el arranque del CLI por ajustes del OS.
+        pass
+
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
