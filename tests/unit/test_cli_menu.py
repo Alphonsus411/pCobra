@@ -158,6 +158,20 @@ def test_menu_no_tty_aborta_con_error(monkeypatch):
     assert main(["menu"]) == 1
 
 
+def test_menu_no_tty_no_intenta_leer_input_con_unicode_roto(monkeypatch):
+    _set_tty(monkeypatch, False)
+    called = {"input": False}
+
+    def fake_input(_prompt: str) -> str:
+        called["input"] = True
+        return "áéíóú 🚀\ud83d"
+
+    monkeypatch.setattr("builtins.input", fake_input)
+
+    assert main(["menu"]) == 1
+    assert called["input"] is False
+
+
 def test_menu_eof_inmediato_devuelve_cancelacion(monkeypatch):
     _set_tty(monkeypatch, True)
     monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(EOFError()))

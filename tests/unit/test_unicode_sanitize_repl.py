@@ -40,6 +40,19 @@ def test_sanitize_input_par_valido_se_conserva():
     assert sanitize_input(texto) == "🚀"
 
 
+def test_sanitize_input_mezcla_unicode_valido_y_surrogate_invalido():
+    texto = "áéíóú 🚀\ud83d"
+
+    saneado = sanitize_input(texto)
+
+    # Se preserva el Unicode válido visible y el surrogate roto se reemplaza.
+    assert saneado == "áéíóú 🚀�"
+    # No deben quedar surrogates aislados internamente.
+    assert all(not (0xD800 <= ord(ch) <= 0xDFFF) for ch in saneado)
+    # Debe poder codificarse a UTF-8 sin UnicodeEncodeError.
+    assert saneado.encode("utf-8") == "áéíóú 🚀�".encode("utf-8")
+
+
 def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
     cmd = InteractiveCommand(MagicMock())
     capturado = {"history": [], "validar": []}
