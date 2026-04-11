@@ -487,7 +487,8 @@ class InteractiveCommand(BaseCommand):
         while True:
             try:
                 prompt = "... " if estado["nivel_bloque"] > 0 else "cobra> "
-                linea = sanitize_input(leer_linea(prompt))
+                raw_linea = leer_linea(prompt)
+                linea = sanitize_input(raw_linea if isinstance(raw_linea, str) else str(raw_linea))
                 linea = linea.strip()
                 _debug_assert_boundary_text_sanitized(
                     linea,
@@ -508,6 +509,11 @@ class InteractiveCommand(BaseCommand):
                     self._log_error(_("Error de sintaxis"), err)
                 continue
 
+            linea = sanitize_input(linea)
+            _debug_assert_boundary_text_sanitized(
+                linea,
+                context="InteractiveCommand._run_repl_loop:pre-lexer-parser",
+            )
             if not self.validar_entrada(linea):
                 continue
 
@@ -526,6 +532,7 @@ class InteractiveCommand(BaseCommand):
                 )
                 if codigo is None:
                     continue
+                codigo = sanitize_input(codigo)
                 _debug_assert_boundary_text_sanitized(
                     codigo,
                     context="InteractiveCommand._run_repl_loop:pre-dispatch",
