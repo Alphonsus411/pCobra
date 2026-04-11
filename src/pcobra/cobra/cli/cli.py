@@ -799,7 +799,7 @@ class CliApplication:
                         "SQLITE_DB_KEY no requerida por comando '%s'.", command_name
                     )
                 self._enforce_runtime_safety_policy(args)
-                debug_activo = args.verbose > 0 or args.debug
+                debug_activo = bool(args.debug)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
                 if getattr(args, "legacy_imports", False):
