@@ -49,14 +49,19 @@ def _reconfigurar_consola_utf8() -> None:
 def configure_logging(debug: bool) -> None:
     """Configura logging de CLI con un único handler de consola."""
 
-    app_logger = logging.getLogger("pcobra")
-    app_logger.handlers.clear()
-    app_logger.setLevel(logging.DEBUG if debug else logging.WARNING)
-
+    level = logging.DEBUG if debug else logging.WARNING
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-    app_logger.addHandler(handler)
-    app_logger.propagate = False
+
+    root_logger = logging.getLogger()
+    root_logger.handlers.clear()
+    root_logger.setLevel(level)
+    root_logger.addHandler(handler)
+
+    app_logger = logging.getLogger("pcobra")
+    app_logger.handlers.clear()
+    app_logger.setLevel(level)
+    app_logger.propagate = True
 
 
 def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:

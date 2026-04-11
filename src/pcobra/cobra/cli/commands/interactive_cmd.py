@@ -136,15 +136,9 @@ class InteractiveCommand(BaseCommand):
         self.interpretador = interpretador
         self._allow_insecure_fallback = False
         self.logger = logging.getLogger(__name__)
-        if self.logger.handlers:
-            # Evita salida duplicada en consola del REPL cuando este logger ya
-            # tiene un handler propio.
-            self.logger.propagate = False
-        else:
-            # Sin handler local, dejamos que el root gestione el logging
-            # técnico pero evitando ruido innecesario por defecto.
-            self.logger.propagate = True
-            self.logger.setLevel(logging.INFO)
+        # El nivel y handler se controlan centralmente desde el entrypoint CLI.
+        self.logger.propagate = True
+        self.logger.setLevel(logging.NOTSET)
         self._estado_repl = self._crear_estado_repl()
         self._debug_mode = False
 
@@ -695,7 +689,7 @@ class InteractiveCommand(BaseCommand):
             exc_info=debug_enabled,
         )
 
-        print(f"Error: {mensaje_usuario}")
+        mostrar_error(mensaje_usuario, registrar_log=False)
         if debug_enabled:
             self.logger.debug(format_traceback(error))
 
