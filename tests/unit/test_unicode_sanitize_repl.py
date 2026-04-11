@@ -97,6 +97,8 @@ def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
     assert ret == 0
     assert capturado["history"] == ["�"]
     assert capturado["validar"][0] == "�"
+    assert all(not (0xD800 <= ord(ch) <= 0xDFFF) for ch in capturado["validar"][0])
+    assert capturado["validar"][0].encode("utf-8") == "�".encode("utf-8")
 
 
 def test_run_repl_loop_debug_detecta_surrogate_remanente_en_frontera():
@@ -162,6 +164,32 @@ def test_safe_file_history_append_string_objeto_custom_usa_str(tmp_path, monkeyp
     history.append_string(EntradaCustom())
 
     assert capturado == ["objeto-🚀-válido"]
+
+
+def test_safe_file_history_append_string_surrogate_aislado_no_lanza_unicode_encode_error(
+    tmp_path, monkeypatch
+):
+    if SafeFileHistory is None:
+        return
+
+    capturado: list[str] = []
+    monkeypatch.setattr(
+        SafeFileHistory.__mro__[1],
+        "append_string",
+        lambda _self, value: capturado.append(value),
+        raising=False,
+    )
+    history = SafeFileHistory(str(tmp_path / ".cobra_history"))
+
+    try:
+        history.append_string("\ud83d")
+    except UnicodeEncodeError as exc:  # pragma: no cover - condición de regresión explícita
+        assert False, f"No debía propagarse UnicodeEncodeError: {exc}"
+
+    payload = capturado[0]
+    assert payload == "�"
+    assert all(not (0xD800 <= ord(ch) <= 0xDFFF) for ch in payload)
+    assert payload.encode("utf-8") == "�".encode("utf-8")
 
 
 def test_safe_file_history_append_string_muy_larga_multilenguaje_surrogate(tmp_path, monkeypatch):
