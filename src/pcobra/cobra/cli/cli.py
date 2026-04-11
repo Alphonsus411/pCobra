@@ -857,7 +857,11 @@ class CliApplication:
                 return self.execute_command(args, debug_activo=debug_activo)
             except Exception as e:
                 logging.exception("Fatal error in application")
-                messages.mostrar_error(_("Fatal error: {}").format(str(e)))
+                mensaje_error = str(e).strip() or _("Ha ocurrido un error inesperado.")
+                messages.mostrar_error(
+                    _("Fatal error: {}").format(mensaje_error),
+                    registrar_log=False,
+                )
                 return 1
 
 
