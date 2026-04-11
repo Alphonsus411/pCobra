@@ -205,12 +205,12 @@ def test_interactive_rechaza_fin_sin_bloque_abierto():
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error:
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
         ret = cmd.run(_args())
 
     assert ret == 0
     assert mock_ejecutar.call_count == 0
-    assert any("'fin' sin bloque abierto." in str(call.args[0]) for call in mock_error.call_args_list)
+    assert "Error: 'fin' sin bloque abierto." in mock_stdout.getvalue()
 
 
 def test_interactive_rechaza_bloque_vacio():
@@ -218,16 +218,13 @@ def test_interactive_rechaza_bloque_vacio():
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error, \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
          patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         ret = cmd.run(_args())
 
     assert ret == 0
     assert mock_ejecutar.call_count == 0
-    assert any(
-        "no puede cerrarse con 'fin' sin sentencias no vacías" in str(call.args[0])
-        for call in mock_error.call_args_list
-    )
+    assert "Error: El bloque no puede cerrarse con 'fin' sin sentencias no vacías." in mock_stdout.getvalue()
 
 
 def test_interactive_lineas_blancas_en_bloque_se_ignoran():
@@ -272,13 +269,13 @@ def test_repl_basico_comparte_validacion_fin_sin_bloque():
     cmd = InteractiveCommand(MagicMock())
     args = _args()
     with patch('builtins.input', side_effect=['fin', 'salir']), \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error, \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar:
         ret = cmd._run_repl_basico(args, validador=None)
 
     assert ret == 0
     assert mock_ejecutar.call_count == 0
-    assert any("'fin' sin bloque abierto." in str(call.args[0]) for call in mock_error.call_args_list)
+    assert "Error: 'fin' sin bloque abierto." in mock_stdout.getvalue()
 
 
 def test_interactive_rechaza_exceso_lineas_blanco_consecutivas_en_bloque():
@@ -286,12 +283,12 @@ def test_interactive_rechaza_exceso_lineas_blanco_consecutivas_en_bloque():
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', '', '', '', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
-         patch('cobra.cli.commands.interactive_cmd.mostrar_error') as mock_error:
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
         ret = cmd.run(_args())
 
     assert ret == 0
     assert mock_ejecutar.call_count == 0
-    assert any("Máximo de 2 líneas en blanco consecutivas" in str(call.args[0]) for call in mock_error.call_args_list)
+    assert "Error: Máximo de 2 líneas en blanco consecutivas" in mock_stdout.getvalue()
 
 
 def test_ejecutar_codigo_imprime_booleano_verdadero():

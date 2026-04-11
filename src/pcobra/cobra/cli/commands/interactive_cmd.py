@@ -64,6 +64,18 @@ SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
 
 
+def format_user_error(exc: Exception) -> str:
+    """Normaliza mensajes de error para salida limpia en la CLI."""
+    msg = str(exc).strip()
+    prefijos_redundantes = ("Error general:", "Error:")
+    while msg.startswith(prefijos_redundantes):
+        for prefijo in prefijos_redundantes:
+            if msg.startswith(prefijo):
+                msg = msg[len(prefijo):].strip()
+                break
+    return " ".join(msg.split()) or _("Error desconocido")
+
+
 class _SessionHistoryFallback:
     """Historial mínimo para dobles de sesión usados en pruebas."""
 
@@ -656,16 +668,17 @@ class InteractiveCommand(BaseCommand):
             categoria: Categoría del error
             error: Excepción ocurrida
         """
-        mensaje_usuario = f"{categoria}: {error}"
+        mensaje_usuario = format_user_error(error)
 
         # Log técnico único (sin duplicar salida en consola del usuario).
         logging.debug(
-            "Error en REPL: %s",
+            "Error en REPL (%s): %s",
+            categoria,
             mensaje_usuario,
             exc_info=self._debug_mode,
         )
 
-        mostrar_error(mensaje_usuario, registrar_log=False)
+        print(f"Error: {mensaje_usuario}")
         if self._debug_mode:
             print(format_traceback(error))
 
