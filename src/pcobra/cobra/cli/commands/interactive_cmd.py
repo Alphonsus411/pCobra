@@ -66,14 +66,19 @@ SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
 
 def format_user_error(exc: Exception) -> str:
     """Normaliza mensajes de error para salida limpia en la CLI."""
-    msg = str(exc).strip()
-    prefijos_redundantes = ("Error general:", "Error:")
-    while msg.startswith(prefijos_redundantes):
-        for prefijo in prefijos_redundantes:
-            if msg.startswith(prefijo):
-                msg = msg[len(prefijo):].strip()
-                break
-    return " ".join(msg.split()) or _("Error desconocido")
+    msg = " ".join(str(exc).strip().split())
+    prefijos_redundantes = re.compile(
+        r"^(?:error\s+general|error)\s*[:：\-–—]?\s*",
+        re.IGNORECASE,
+    )
+
+    while msg:
+        limpio = prefijos_redundantes.sub("", msg, count=1)
+        if limpio == msg:
+            break
+        msg = " ".join(limpio.split())
+
+    return msg or _("Error desconocido")
 
 
 class _SessionHistoryFallback:
