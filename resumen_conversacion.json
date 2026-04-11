@@ -1,108 +1,108 @@
 {
   "proyecto": "pCobra",
-  "estado_actual": "lenguaje funcional con semántica estricta en consolidación",
-  "hitos_principales": [
+  "fase": "refinamiento de CLI y experiencia de usuario",
+  "objetivo_actual": "lograr una CLI limpia, consistente y portable (Windows incluido)",
+  "estado_global": {
+    "semantica": "estable y estricta",
+    "runtime": "determinista",
+    "optimizador": "correcto con constant folding",
+    "cli": "limpia y usable",
+    "logging": "controlado sin duplicaciones",
+    "encoding": "en correccion final (Windows)"
+  },
+  "problemas_detectados": [
     {
-      "fase": "corrección REPL",
-      "problema": "no se imprimían resultados",
-      "solucion": "captura e impresión del valor retornado por ejecutar_nodo",
-      "resultado": "REPL funcional con salida visible"
+      "id": "P1",
+      "descripcion": "duplicacion de errores en CLI",
+      "estado": "resuelto",
+      "causa": "multiples capas loggeando la misma excepcion"
     },
     {
-      "fase": "localización de booleanos",
-      "problema": "salida en inglés (True/False)",
-      "solucion": "formateo en capa de salida",
-      "resultado": "uso de 'verdadero' y 'falso'"
+      "id": "P2",
+      "descripcion": "formato redundante de error",
+      "estado": "resuelto",
+      "causa": "prefijos duplicados ('Error: Error general: ...')"
     },
     {
-      "fase": "soporte de strings en parser",
-      "problema": "TipoToken.CADENA no reconocido en expresiones",
-      "solucion": "integración en parseo de expresiones primarias",
-      "resultado": "strings completamente funcionales"
+      "id": "P3",
+      "descripcion": "ruido de debug en modo usuario",
+      "estado": "resuelto",
+      "causa": "uso de prints en lugar de logging controlado"
     },
     {
-      "fase": "control de flujo",
-      "implementacion": "estructura 'si ... : ... fin'",
-      "resultado": "bloques ejecutables con AST NodoCondicional"
+      "id": "P4",
+      "descripcion": "logs INFO visibles en REPL",
+      "estado": "resuelto",
+      "causa": "configuracion incorrecta de niveles de logging"
     },
     {
-      "fase": "optimización",
-      "comportamiento": "constant folding en expresiones y condicionales constantes",
-      "resultado": "AST colapsado a NodoValor cuando es posible"
-    },
-    {
-      "fase": "ejecución dinámica",
-      "pruebas": [
-        "uso de variables en condiciones",
-        "reasignación",
-        "dependencia entre variables"
-      ],
-      "resultado": "runtime correcto con estado persistente"
-    },
-    {
-      "fase": "validación semántica estricta",
-      "problema": "truthiness implícita (si 5, si \"hola\")",
-      "solucion": "validación explícita de booleanos en NodoCondicional",
-      "resultado": "error CondicionNoBooleanaError en casos inválidos"
-    },
-    {
-      "fase": "ajuste del optimizador",
-      "problema": "optimización incorrecta de condiciones no booleanas",
-      "solucion": "limitar optimización a condiciones booleanas reales",
-      "resultado": "coherencia entre optimización y runtime"
-    },
-    {
-      "fase": "soporte de booleanos en parser",
-      "problema": "TipoToken.BOOLEANO no reconocido",
-      "solucion": "integración en parseo de expresiones primarias",
-      "estado": "pendiente de validación final"
+      "id": "P5",
+      "descripcion": "encoding incorrecto en Windows (mojibake)",
+      "estado": "pendiente",
+      "causa": "desalineacion entre UTF-8 de Python y code page de consola Windows"
     }
   ],
-  "arquitectura": {
-    "lexer": "estable, soporta números, strings y booleanos",
-    "parser": "soporta precedencia, paréntesis y bloques; alineándose con tipos",
-    "AST": "estructurado, sin ciclos, optimizable",
-    "runtime": "determinista con evaluación dinámica",
-    "optimizador": "constant folding seguro",
-    "REPL": "funcional con salida formateada",
-    "sistema_tipos": {
-      "tipo": "dinámico",
-      "coercion_implicita": false,
-      "validacion": "runtime estricta"
+  "soluciones_aplicadas": [
+    {
+      "problema": "P1",
+      "accion": "centralizacion del manejo de errores en CLI",
+      "resultado": "error mostrado una sola vez"
+    },
+    {
+      "problema": "P2",
+      "accion": "limpieza de mensajes en capa CLI",
+      "resultado": "mensajes claros y sin redundancia"
+    },
+    {
+      "problema": "P3",
+      "accion": "migracion a logger.debug",
+      "resultado": "separacion entre modo usuario y debug"
+    },
+    {
+      "problema": "P4",
+      "accion": "ajuste de niveles de logging",
+      "resultado": "REPL limpio en modo normal"
     }
+  ],
+  "solucion_pendiente": {
+    "problema": "P5",
+    "acciones_propuestas": [
+      "sys.stdout.reconfigure(encoding='utf-8')",
+      "sys.stderr.reconfigure(encoding='utf-8')",
+      "os.environ['PYTHONIOENCODING'] = 'utf-8'",
+      "os.system('chcp 65001') en Windows"
+    ],
+    "descripcion": "alinear encoding de Python con la consola del sistema"
   },
-  "propiedades_clave": [
-    "separación clara entre parsing, AST y ejecución",
-    "semántica explícita sin coerción implícita",
-    "control de flujo determinista",
-    "optimización segura dependiente del contexto",
-    "identidad lingüística (castellano)"
+  "pruebas_realizadas": [
+    "errores semanticos (si 5, si 'hola')",
+    "repeticion de errores (no duplicacion)",
+    "flujo mixto (ejecucion + error)",
+    "casos validos sin ruido",
+    "validacion UTF-8 (fallando en Windows)"
   ],
-  "problemas_resueltos": [
-    "recursión implícita en AST",
-    "falta de impresión en REPL",
-    "soporte incompleto de strings",
-    "truthiness implícita heredada de Python",
-    "optimización incorrecta de condicionales"
+  "propiedades_validadas": [
+    "single_error_surface",
+    "semantica estricta sin truthiness",
+    "separacion debug/usuario",
+    "consistencia del REPL",
+    "optimizacion segura"
   ],
-  "problemas_actuales": [
-    "alineación completa del parser con booleanos (TipoToken.BOOLEANO)",
-    "validación final de semántica estricta en todos los caminos"
+  "restricciones_aplicadas": [
+    "no modificar Lexer",
+    "no modificar Parser",
+    "no modificar AST",
+    "no modificar Interpreter",
+    "solo cambios en CLI boundary"
   ],
-  "estado_semantico": {
-    "condiciones": "solo booleanos permitidos",
-    "comparaciones": "sin coerción",
-    "errores": "explícitos y controlados"
-  },
+  "siguiente_paso": [
+    "resolver encoding en Windows",
+    "validar salida UTF-8 correctamente",
+    "formalizar sistema de errores (codigos y categorias)",
+    "posible implementacion de modo --debug completo"
+  ],
   "nivel_madurez": {
-    "clasificacion": "lenguaje funcional serio",
-    "estado": "estable con refinamiento semántico activo"
-  },
-  "siguientes_pasos": [
-    "validación completa de booleanos en parser",
-    "pruebas de edge cases en bloques",
-    "definición de scope (bloques vs global)",
-    "extensión de operadores",
-    "formalización del sistema de tipos"
-  ]
+    "clasificacion": "lenguaje funcional serio con CLI usable",
+    "estado": "casi listo para uso real"
+  }
 }
