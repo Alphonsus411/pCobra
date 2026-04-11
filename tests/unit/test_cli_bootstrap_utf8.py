@@ -52,6 +52,14 @@ def test_bootstrap_no_rompe_si_stream_no_tiene_reconfigure(monkeypatch):
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
 
+def test_bootstrap_no_sobrescribe_pythonioencoding_existente(monkeypatch):
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+
+    reconfigurar_consola_utf8()
+
+    assert os.environ["PYTHONIOENCODING"] == "latin-1"
+
+
 def test_cli_subprocess_preserva_utf8_en_salida_acentuada():
     # Objetivo: cubrir mojibake típico de Windows (Ã©, Ã±, etc.)
     # en salida de consola sin tocar semántica del lenguaje.
