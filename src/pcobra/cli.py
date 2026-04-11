@@ -35,6 +35,17 @@ if _CANONICAL_CLI_PACKAGE_DIR.is_dir():
     __path__ = [str(_CANONICAL_CLI_PACKAGE_DIR)]
 
 
+def _reconfigurar_consola_utf8() -> None:
+    """Fuerza UTF-8 en stdout/stderr cuando el runtime lo soporta."""
+
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        # Compatibilidad con runtimes donde ``reconfigure`` no existe.
+        pass
+
+
 def configure_logging(debug: bool) -> None:
     """Configura logging de CLI con un único handler de consola."""
 
@@ -171,6 +182,7 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
+    _reconfigurar_consola_utf8()
     _bootstrap_dev_path_si_opt_in()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _normalizar_argumentos(argv_entrada)
