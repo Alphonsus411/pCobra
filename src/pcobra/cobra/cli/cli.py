@@ -57,6 +57,7 @@ from pcobra.cobra.cli.plugin import (
 )
 from pcobra.cobra.cli.utils import messages
 from pcobra.cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 from pcobra.cobra.cli.utils.autocomplete import (
     autocomplete_available,
     directories_completer,
@@ -556,7 +557,7 @@ class CliApplication:
 
     def _leer_input_seguro(self, prompt: str) -> Optional[str]:
         try:
-            return input(prompt)
+            return sanitize_input(input(prompt))
         except EOFError:
             messages.mostrar_info(_("Entrada finalizada (EOF). Cancelando menú interactivo."))
             return None
