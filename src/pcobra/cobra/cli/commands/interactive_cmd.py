@@ -692,7 +692,7 @@ class InteractiveCommand(BaseCommand):
 
         print(f"Error: {mensaje_usuario}")
         if debug_enabled:
-            print(format_traceback(error))
+            self.logger.debug(format_traceback(error))
 
     def __enter__(self) -> "InteractiveCommand":
         """Inicializa recursos del REPL.
