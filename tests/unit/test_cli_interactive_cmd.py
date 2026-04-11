@@ -34,7 +34,7 @@ sys.modules.setdefault("jsonschema", jsonschema_mod)
 import cobra.cli
 import cobra.cli.commands
 
-from cobra.cli.commands.interactive_cmd import InteractiveCommand
+from cobra.cli.commands.interactive_cmd import InteractiveCommand, format_user_error
 from core.interpreter import InterpretadorCobra
 
 
@@ -408,3 +408,22 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     assert "print('verdadero' if _resultado else 'falso')" in script_enviado
     assert 'print(_resultado)' in script_enviado
     mock_info.assert_called_once_with('ok')
+
+
+def test_format_user_error_limpia_prefijo_error_general():
+    mensaje = format_user_error(RuntimeError("Error general: La condición debe ser booleana"))
+    assert mensaje == "La condición debe ser booleana"
+
+
+def test_format_user_error_elimina_prefijos_redundantes_en_bucle():
+    mensaje = format_user_error(RuntimeError("Error: Error general: La condición debe ser booleana"))
+    assert mensaje == "La condición debe ser booleana"
+
+
+def test_log_error_imprime_mensaje_limpio_sin_categoria_tecnica():
+    cmd = InteractiveCommand(MagicMock())
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        cmd._log_error("Error de sintaxis", RuntimeError("Error: Error general: fallo"))
+
+    assert mock_stdout.getvalue().strip() == "Error: fallo"
