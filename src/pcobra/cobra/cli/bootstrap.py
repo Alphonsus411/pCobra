@@ -27,7 +27,7 @@ def reconfigurar_consola_utf8() -> None:
         pass
 
     try:
-        os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+        os.environ["PYTHONIOENCODING"] = "utf-8"
     except Exception:
         # Fail-safe: no bloquear el arranque del CLI por variables de entorno.
         pass
