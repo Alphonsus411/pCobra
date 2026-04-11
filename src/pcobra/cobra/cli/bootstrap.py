@@ -7,7 +7,7 @@ import sys
 
 
 def reconfigurar_consola_utf8() -> None:
-    """Fuerza UTF-8 en stdout/stderr cuando el runtime lo soporta."""
+    """Fuerza UTF-8 en la frontera Python↔OS sin romper el arranque."""
     for stream_name in ("stdout", "stderr"):
         stream = getattr(sys, stream_name, None)
         reconfigure = getattr(stream, "reconfigure", None)
