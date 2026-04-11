@@ -3,7 +3,10 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.cli.commands.interactive_cmd import (
+    InteractiveCommand,
+    SafeFileHistory,
+)
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
 
@@ -120,3 +123,66 @@ def test_run_repl_loop_debug_detecta_surrogate_remanente_en_frontera():
             assert False, "Se esperaba AssertionError por surrogate aislado remanente."
         except AssertionError as exc:
             assert "pre-validacion" in str(exc)
+
+
+def test_safe_file_history_append_string_none_se_coacciona_y_sanea(tmp_path, monkeypatch):
+    if SafeFileHistory is None:
+        return
+
+    capturado: list[str] = []
+    monkeypatch.setattr(
+        SafeFileHistory.__mro__[1],
+        "append_string",
+        lambda _self, value: capturado.append(value),
+        raising=False,
+    )
+    history = SafeFileHistory(str(tmp_path / ".cobra_history"))
+    history.append_string(None)
+
+    assert capturado == [""]
+
+
+def test_safe_file_history_append_string_objeto_custom_usa_str(tmp_path, monkeypatch):
+    if SafeFileHistory is None:
+        return
+
+    capturado: list[str] = []
+    monkeypatch.setattr(
+        SafeFileHistory.__mro__[1],
+        "append_string",
+        lambda _self, value: capturado.append(value),
+        raising=False,
+    )
+
+    class EntradaCustom:
+        def __str__(self) -> str:
+            return "objeto-🚀-válido"
+
+    history = SafeFileHistory(str(tmp_path / ".cobra_history"))
+    history.append_string(EntradaCustom())
+
+    assert capturado == ["objeto-🚀-válido"]
+
+
+def test_safe_file_history_append_string_muy_larga_multilenguaje_surrogate(tmp_path, monkeypatch):
+    if SafeFileHistory is None:
+        return
+
+    capturado: list[str] = []
+    monkeypatch.setattr(
+        SafeFileHistory.__mro__[1],
+        "append_string",
+        lambda _self, value: capturado.append(value),
+        raising=False,
+    )
+
+    segmento = "Español العربية हिंदी 日本語 🚀\ud83d"
+    entrada = segmento * 2000
+    esperado = sanitize_input(entrada)
+    history = SafeFileHistory(str(tmp_path / ".cobra_history"))
+    history.append_string(entrada)
+    payload = capturado[0]
+
+    assert payload == esperado
+    assert "�" in payload
+    assert all(not (0xD800 <= ord(ch) <= 0xDFFF) for ch in payload)
