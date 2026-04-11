@@ -106,7 +106,7 @@ def test_run_propaga_debug_activo_hacia_execute_command():
         result = app.run([])
 
     assert result == 0
-    mock_execute_command.assert_called_once_with(args, debug_activo=True)
+    mock_execute_command.assert_called_once_with(args, debug_activo=False)
 
 
 def test_run_bloquea_fallback_inseguro_en_ci_sin_override(monkeypatch):

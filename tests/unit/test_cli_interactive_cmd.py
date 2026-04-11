@@ -151,15 +151,14 @@ def test_interactive_help_refleja_politica_de_bloques_y_lineas_blancas():
     assert 'se prohíben bloques vacíos' in subparser.description
 
 
-def test_interactive_help_incluye_flag_debug():
+def test_interactive_help_no_define_flag_debug_local():
     cmd = InteractiveCommand(MagicMock())
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='command')
     subparser = cmd.register_subparser(subparsers)
 
     acciones = {action.dest: action for action in subparser._actions}
-    assert "debug" in acciones
-    assert acciones["debug"].help == "Muestra trazas internas de depuración"
+    assert "debug" not in acciones
 
 
 def test_interactive_persist_debug_enabled_en_estado_repl():

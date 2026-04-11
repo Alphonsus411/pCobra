@@ -139,6 +139,8 @@ class InteractiveCommand(BaseCommand):
         # El nivel y handlers se controlan centralmente desde el entrypoint CLI.
         self.logger.propagate = True
         self._estado_repl = self._crear_estado_repl()
+        # Estado local para tracebacks técnicos en REPL.
+        # Fuente canónica: flag global --debug parseado por la CLI principal.
         self._debug_mode = False
 
     @staticmethod
@@ -204,11 +206,6 @@ class InteractiveCommand(BaseCommand):
             "--ignore-memory-limit",
             action="store_true",
             help=_("Continúa aun si no se puede aplicar el límite de memoria"),
-        )
-        parser.add_argument(
-            "--debug",
-            action="store_true",
-            help=_("Muestra trazas internas de depuración"),
         )
         parser.set_defaults(cmd=self)
         return parser
