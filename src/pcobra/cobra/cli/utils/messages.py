@@ -78,7 +78,7 @@ def mostrar_logo() -> None:
     reset = ColorCode.RESET.value if config.use_color else ""
     print(f"{color}{COBRA_LOGO}{reset}")
 
-def _mostrar(msg: str, nivel: LogLevel = "info") -> None:
+def _mostrar(msg: str, nivel: LogLevel = "info", registrar_log: bool = True) -> None:
     """
     Imprime el mensaje con color y registra el log correspondiente.
 
@@ -112,9 +112,10 @@ def _mostrar(msg: str, nivel: LogLevel = "info") -> None:
         prefijo = f"{prefijos[nivel]}: " if nivel in prefijos else ""
         print(f"{color}{prefijo}{texto}{reset}")
         
-        # Registrar en el log
-        log_func = getattr(logging, nivel)
-        log_func(texto)
+        if registrar_log:
+            # Registrar en el log
+            log_func = getattr(logging, nivel)
+            log_func(texto)
     except KeyError:
         logging.error(_("Nivel de log inexistente: %s") % nivel)
     except AttributeError:
@@ -122,32 +123,32 @@ def _mostrar(msg: str, nivel: LogLevel = "info") -> None:
     except (TypeError, ValueError) as e:
         logging.error(_("Error al mostrar mensaje: %s") % e)
 
-def mostrar_info(msg: str) -> None:
+def mostrar_info(msg: str, registrar_log: bool = True) -> None:
     """
     Muestra un mensaje informativo en verde.
     
     Args:
         msg: Mensaje a mostrar
     """
-    _mostrar(msg, "info")
+    _mostrar(msg, "info", registrar_log=registrar_log)
 
-def mostrar_advertencia(msg: str) -> None:
+def mostrar_advertencia(msg: str, registrar_log: bool = True) -> None:
     """
     Muestra un mensaje de advertencia en amarillo.
     
     Args:
         msg: Mensaje a mostrar
     """
-    _mostrar(msg, "warning")
+    _mostrar(msg, "warning", registrar_log=registrar_log)
 
-def mostrar_error(msg: str) -> None:
+def mostrar_error(msg: str, registrar_log: bool = True) -> None:
     """
     Muestra un mensaje de error en rojo.
     
     Args:
         msg: Mensaje a mostrar
     """
-    _mostrar(msg, "error")
+    _mostrar(msg, "error", registrar_log=registrar_log)
 
 # Aliases para mantener compatibilidad con versiones anteriores
 info = mostrar_info
