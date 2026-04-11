@@ -102,10 +102,21 @@ class _SessionHistoryFallback:
     def __init__(self, path: str) -> None:
         self._path = path
 
-    def append_string(self, value: str) -> None:
-        value = sanitize_input(value)
+    def append_string(self, value: object) -> None:
+        if isinstance(value, str):
+            raw_value = value
+        elif value is None:
+            raw_value = ""
+        else:
+            raw_value = str(value)
+
+        sanitized = sanitize_input(raw_value)
+        _debug_assert_boundary_text_sanitized(
+            sanitized,
+            context="_SessionHistoryFallback.append_string",
+        )
         with open(self._path, "a", encoding="utf-8") as fh:
-            fh.write(f"{value}\n")
+            fh.write(f"{sanitized}\n")
 
 if FileHistory is not None:
     class SafeFileHistory(FileHistory):
