@@ -136,9 +136,8 @@ class InteractiveCommand(BaseCommand):
         self.interpretador = interpretador
         self._allow_insecure_fallback = False
         self.logger = logging.getLogger(__name__)
-        # El nivel y handler se controlan centralmente desde el entrypoint CLI.
+        # El nivel y handlers se controlan centralmente desde el entrypoint CLI.
         self.logger.propagate = True
-        self.logger.setLevel(logging.NOTSET)
         self._estado_repl = self._crear_estado_repl()
         self._debug_mode = False
 

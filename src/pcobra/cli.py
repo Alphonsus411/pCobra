@@ -47,20 +47,25 @@ def _reconfigurar_consola_utf8() -> None:
 
 
 def configure_logging(debug: bool) -> None:
-    """Configura logging de CLI con un único handler de consola."""
+    """Configura logging de CLI con un único handler efectivo de consola."""
 
     level = logging.DEBUG if debug else logging.WARNING
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
-    root_logger.handlers.clear()
+    for existing_handler in list(root_logger.handlers):
+        root_logger.removeHandler(existing_handler)
+        existing_handler.close()
     root_logger.setLevel(level)
     root_logger.addHandler(handler)
 
     app_logger = logging.getLogger("pcobra")
-    app_logger.handlers.clear()
-    app_logger.setLevel(level)
+    for existing_handler in list(app_logger.handlers):
+        app_logger.removeHandler(existing_handler)
+        existing_handler.close()
+    app_logger.setLevel(logging.NOTSET)
     app_logger.propagate = True
 
 
