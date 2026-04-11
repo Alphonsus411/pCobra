@@ -49,6 +49,7 @@ from pcobra.cobra.cli.utils.messages import (
     mostrar_error,
     mostrar_info,
 )
+from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
 from pcobra.cobra.cli.target_policies import (
@@ -88,8 +89,19 @@ class _SessionHistoryFallback:
         self._path = path
 
     def append_string(self, value: str) -> None:
+        value = sanitize_input(value)
         with open(self._path, "a", encoding="utf-8") as fh:
             fh.write(f"{value}\n")
+
+if FileHistory is not None:
+    class SafeFileHistory(FileHistory):
+        """Historial endurecido que sanitiza entradas antes de persistir."""
+
+        def append_string(self, value: str) -> None:
+            super().append_string(sanitize_input(value))
+
+else:
+    SafeFileHistory = None  # type: ignore[assignment]
 
 
 class InteractiveCommand(BaseCommand):
@@ -368,7 +380,7 @@ class InteractiveCommand(BaseCommand):
         try:
             session = PromptSession(
                 lexer=PygmentsLexer(CobraLexer),
-                history=FileHistory(history_path),
+                history=SafeFileHistory(history_path),
             )
         except NoConsoleScreenBufferError:
             mostrar_advertencia(
@@ -378,7 +390,7 @@ class InteractiveCommand(BaseCommand):
             )
             session = PromptSession(
                 lexer=PygmentsLexer(CobraLexer),
-                history=FileHistory(history_path),
+                history=SafeFileHistory(history_path),
                 output=DummyOutput(),
             )
         if not hasattr(session, "history"):
@@ -438,7 +450,8 @@ class InteractiveCommand(BaseCommand):
         while True:
             try:
                 prompt = "... " if estado["nivel_bloque"] > 0 else "cobra> "
-                linea = leer_linea(prompt).strip()
+                linea = sanitize_input(leer_linea(prompt))
+                linea = linea.strip()
             except (KeyboardInterrupt, EOFError):
                 if estado["buffer_lineas"]:
                     mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
