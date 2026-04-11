@@ -188,6 +188,10 @@ def main(argumentos: Optional[List[str]] = None) -> int:
     argv = _normalizar_argumentos(argv_entrada)
     debug = bool(argv and "--debug" in argv)
     configure_logging(debug=debug)
+    if debug:
+        os.environ["PCOBRA_DEBUG_TRACES"] = "1"
+    else:
+        os.environ.pop("PCOBRA_DEBUG_TRACES", None)
 
     flag_legacy_imports = argv is not None and "--legacy-imports" in argv
     env_legacy_imports = os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"

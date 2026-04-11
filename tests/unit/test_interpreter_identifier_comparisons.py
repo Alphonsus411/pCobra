@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from io import StringIO
 from unittest.mock import patch
 
@@ -389,12 +390,13 @@ def test_operacion_or_materializa_identificador_y_alias() -> None:
 
 
 def test_debug_traces_en_comparacion_identificador_simple() -> None:
-    salida = _ejecutar_codigo_y_capturar_stdout_completo(
-        """
+    with patch.dict("os.environ", {"PCOBRA_DEBUG_TRACES": "1"}):
+        salida = _ejecutar_codigo_y_capturar_stdout_completo(
+            """
 x = 10
 imprimir x == 10
 """
-    )
+        )
 
     assert "[AST BEFORE OPT]" in salida
     assert "[AST AFTER OPT]" in salida
@@ -407,12 +409,13 @@ imprimir x == 10
 
 
 def test_debug_traces_en_comparacion_identificador_con_suma() -> None:
-    salida = _ejecutar_codigo_y_capturar_stdout_completo(
-        """
+    with patch.dict("os.environ", {"PCOBRA_DEBUG_TRACES": "1"}):
+        salida = _ejecutar_codigo_y_capturar_stdout_completo(
+            """
 x = 5
 imprimir x + 5 == 10
 """
-    )
+        )
 
     assert "[AST BEFORE OPT]" in salida
     assert "[AST AFTER OPT]" in salida
@@ -435,6 +438,29 @@ imprimir x == y
             _ejecutar_codigo_y_capturar_stdout_completo(codigo)
     except RecursionError as exc:  # pragma: no cover - contrato explícito
         pytest.fail(f"No debía lanzar RecursionError: {exc}")
+
+
+def test_trazas_internas_aparecen_una_sola_vez_en_debug() -> None:
+    with patch.dict("os.environ", {"PCOBRA_DEBUG_TRACES": "1"}):
+        salida = _ejecutar_codigo_y_capturar_stdout_completo("imprimir 1 == 1\n")
+
+    assert salida.count("[AST BEFORE OPT]") == 1
+    assert salida.count("[RUN] antes de iterar AST") == 1
+    assert salida.count("[EXEC]") == 1
+    assert salida.count("[EVAL]") == 1
+
+
+def test_trazas_internas_no_aparecen_en_modo_normal() -> None:
+    with patch.dict(os.environ, {"PCOBRA_DEBUG_TRACES": ""}, clear=False):
+        salida = _ejecutar_codigo_y_capturar_stdout_completo(
+            "imprimir 'condición después'\n"
+        )
+
+    assert "[AST BEFORE OPT]" not in salida
+    assert "[RUN]" not in salida
+    assert "[EXEC]" not in salida
+    assert "[EVAL]" not in salida
+    assert "condici" in salida
 
 
 def test_ast_ciclico_en_evaluacion_lanza_error_controlado_sin_recursionerror() -> None:
