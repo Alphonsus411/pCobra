@@ -219,11 +219,11 @@ class CliApplication:
             handler.close()
         self._owned_logging_handlers.clear()
 
-    def initialize(self) -> None:
+    def initialize(self, debug_enabled: bool = False) -> None:
         if self.parser and self.command_registry and self.interpreter:
             return
         setup_gettext()
-        self._setup_logging()
+        self._setup_logging(debug_enabled=debug_enabled)
         self.interpreter = InterpretadorCobra()
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
@@ -290,19 +290,17 @@ class CliApplication:
             f"{COBRA_DEV_EPHEMERAL_CONFIRM_ENV}=1 y el flag --dev-ephemeral-key."
         )
 
-    def _setup_logging(self) -> None:
+    def _setup_logging(self, debug_enabled: bool = False) -> None:
         root_logger = logging.getLogger()
-        if root_logger.handlers:
-            return
-
-        handler = logging.StreamHandler()
-        if AppConfig.LOG_FORMATTER == "json":
-            handler.setFormatter(self._SecurityEventJsonFormatter())
-        else:
-            handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
-        root_logger.addHandler(handler)
-        root_logger.setLevel(LogLevel.INFO.value)
-        self._owned_logging_handlers.append(handler)
+        if not root_logger.handlers:
+            handler = logging.StreamHandler()
+            if AppConfig.LOG_FORMATTER == "json":
+                handler.setFormatter(self._SecurityEventJsonFormatter())
+            else:
+                handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
+            root_logger.addHandler(handler)
+            self._owned_logging_handlers.append(handler)
+        root_logger.setLevel(logging.DEBUG if debug_enabled else LogLevel.INFO.value)
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
         parser.add_argument(
@@ -829,7 +827,7 @@ class CliApplication:
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
-            self.initialize()
+            self.initialize(debug_enabled=False)
             debug_activo = False
             if argv is None:
                 argv = sys.argv[1:]
@@ -848,8 +846,7 @@ class CliApplication:
                     )
                 self._enforce_runtime_safety_policy(args)
                 debug_activo = args.verbose > 0 or args.debug
-                log_level = logging.DEBUG if debug_activo else logging.INFO
-                logging.getLogger().setLevel(log_level)
+                self._setup_logging(debug_enabled=debug_activo)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
                 if getattr(args, "legacy_imports", False):

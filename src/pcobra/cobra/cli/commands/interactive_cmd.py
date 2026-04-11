@@ -150,6 +150,7 @@ class InteractiveCommand(BaseCommand):
             "buffer_lineas": [],
             "nivel_bloque": 0,
             "lineas_blanco_consecutivas": 0,
+            "debug_enabled": False,
         }
 
     def register_subparser(self, subparsers: Any) -> CustomArgumentParser:
@@ -205,6 +206,11 @@ class InteractiveCommand(BaseCommand):
             "--ignore-memory-limit",
             action="store_true",
             help=_("Continúa aun si no se puede aplicar el límite de memoria"),
+        )
+        parser.add_argument(
+            "--debug",
+            action="store_true",
+            help=_("Muestra trazas internas de depuración"),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -267,8 +273,11 @@ class InteractiveCommand(BaseCommand):
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
         """Ejecuta un snippet completo con el pipeline canónico Lexer/Parser/AST."""
 
+        self.logger.debug("[RUN] Ejecutando snippet en REPL")
         ast = self.procesar_ast(codigo, validador)
+        self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         resultado = self.interpretador.ejecutar_ast(ast)
+        self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         if resultado is not None:
             if isinstance(resultado, bool):
                 print("verdadero" if resultado else "falso")
@@ -322,6 +331,7 @@ class InteractiveCommand(BaseCommand):
             return 1
 
         self._debug_mode = bool(getattr(args, "debug", False))
+        self._estado_repl["debug_enabled"] = self._debug_mode
 
         # Configurar modo seguro y validadores
         seguro = getattr(args, "seguro", True)
@@ -428,6 +438,7 @@ class InteractiveCommand(BaseCommand):
     ) -> None:
         """Bucle único de REPL para evitar divergencias entre implementaciones."""
         estado = self._crear_estado_repl()
+        estado["debug_enabled"] = self._debug_mode
         self._estado_repl = estado
         while True:
             try:
@@ -671,15 +682,16 @@ class InteractiveCommand(BaseCommand):
         mensaje_usuario = format_user_error(error)
 
         # Log técnico único (sin duplicar salida en consola del usuario).
+        debug_enabled = bool(self._estado_repl.get("debug_enabled", self._debug_mode))
         logging.debug(
             "Error en REPL (%s): %s",
             categoria,
             mensaje_usuario,
-            exc_info=self._debug_mode,
+            exc_info=debug_enabled,
         )
 
         print(f"Error: {mensaje_usuario}")
-        if self._debug_mode:
+        if debug_enabled:
             print(format_traceback(error))
 
     def __enter__(self) -> "InteractiveCommand":
@@ -688,7 +700,7 @@ class InteractiveCommand(BaseCommand):
         Returns:
             Self para uso en context manager
         """
-        self.logger.info(_("Iniciando REPL de Cobra"))
+        self.logger.debug(_("Iniciando REPL de Cobra"))
         return self
 
     def __exit__(
@@ -708,4 +720,4 @@ class InteractiveCommand(BaseCommand):
             self.logger.error(
                 _("Error al finalizar REPL: {exc_val}").format(exc_val=exc_val)
             )
-        self.logger.info(_("Finalizando REPL de Cobra"))
+        self.logger.debug(_("Finalizando REPL de Cobra"))
