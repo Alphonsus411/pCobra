@@ -2,7 +2,7 @@ import logging
 import types
 from unittest.mock import Mock, patch
 
-from cobra.cli.commands.interactive_cmd import InteractiveCommand
+from cobra.cli.commands.interactive_cmd import InteractiveCommand, format_user_error
 from cobra.cli.i18n import _
 from pcobra.core.errors import CondicionNoBooleanaError
 
@@ -82,27 +82,28 @@ def test_run_repl_loop_runtime_error_debug_si_imprime_traceback():
     mock_log_error.assert_called_once()
 
 
-def test_log_error_no_debug_solo_mostrar_error_sin_print():
+def test_format_user_error_elimina_prefijos_duplicados():
+    assert format_user_error(Exception("Error general: Error: fallo")) == "fallo"
+
+
+def test_log_error_no_debug_solo_imprime_error_limpio():
     cmd = InteractiveCommand(types.SimpleNamespace())
     cmd._debug_mode = False
-    mock_error = Mock()
     mock_print = Mock()
     globals_log_error = InteractiveCommand._log_error.__globals__
 
     with patch.dict(
         globals_log_error,
-        {"mostrar_error": mock_error, "print": mock_print},
+        {"print": mock_print},
     ):
-        cmd._log_error(_("Error general"), CondicionNoBooleanaError())
+        cmd._log_error(_("Error general"), Exception("Error general: Error: fallo"))
 
-    mock_error.assert_called_once()
-    mock_print.assert_not_called()
+    mock_print.assert_called_once_with("Error: fallo")
 
 
 def test_log_error_debug_muestra_traceback():
     cmd = InteractiveCommand(types.SimpleNamespace())
     cmd._debug_mode = True
-    mock_error = Mock()
     mock_print = Mock()
     globals_log_error = InteractiveCommand._log_error.__globals__
     mock_traceback = Mock(return_value="TRACEBACK")
@@ -110,13 +111,14 @@ def test_log_error_debug_muestra_traceback():
     with patch.dict(
         globals_log_error,
         {
-            "mostrar_error": mock_error,
             "print": mock_print,
             "format_traceback": mock_traceback,
         },
     ):
         cmd._log_error(_("Error general"), CondicionNoBooleanaError())
 
-    mock_error.assert_called_once()
     mock_traceback.assert_called_once()
-    mock_print.assert_called_once_with("TRACEBACK")
+    assert mock_print.call_count == 2
+    primer_mensaje = mock_print.call_args_list[0].args[0]
+    assert primer_mensaje.startswith("Error: ")
+    mock_print.assert_any_call("TRACEBACK")
