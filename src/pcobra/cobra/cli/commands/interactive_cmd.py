@@ -68,7 +68,7 @@ def format_user_error(exc: Exception) -> str:
     """Normaliza mensajes de error para salida limpia en la CLI."""
     msg = " ".join(str(exc).strip().split())
     prefijos_redundantes = re.compile(
-        r"^(?:error\s+general|error)\s*[:：\-–—]?\s*",
+        r"^(?:error\s+general|error\s+cr[ií]tico|error\s+de\s+sintaxis|error)\s*[:：\-–—]?\s*",
         re.IGNORECASE,
     )
 
@@ -674,7 +674,7 @@ class InteractiveCommand(BaseCommand):
         """Registra y muestra un error.
 
         Args:
-            categoria: Categoría del error
+            categoria: Categoría técnica usada solo para logging interno
             error: Excepción ocurrida
         """
         mensaje_usuario = format_user_error(error)

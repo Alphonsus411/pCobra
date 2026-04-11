@@ -420,6 +420,18 @@ def test_format_user_error_elimina_prefijos_redundantes_en_bucle():
     assert mensaje == "La condición debe ser booleana"
 
 
+def test_format_user_error_normaliza_prefijos_redundantes_adicionales():
+    assert (
+        format_user_error(RuntimeError("Error general: La condición debe ser booleana"))
+        == "La condición debe ser booleana"
+    )
+    assert (
+        format_user_error(RuntimeError("Error: Error general: La condición debe ser booleana"))
+        == "La condición debe ser booleana"
+    )
+    assert format_user_error(RuntimeError("Error crítico - Error: mensaje")) == "mensaje"
+
+
 def test_log_error_imprime_mensaje_limpio_sin_categoria_tecnica():
     cmd = InteractiveCommand(MagicMock())
 
