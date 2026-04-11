@@ -639,7 +639,8 @@ class CliApplication:
                     campo=campo,
                     valor=valor.strip(),
                     opciones=opciones_mostrables,
-                )
+                ),
+                registrar_log=False,
             )
             if restantes > 0:
                 messages.mostrar_info(
@@ -649,7 +650,8 @@ class CliApplication:
         messages.mostrar_error(
             _(
                 "Demasiados intentos inválidos para {campo}. Finalizando menú interactivo."
-            ).format(campo=campo)
+            ).format(campo=campo),
+            registrar_log=False,
         )
         return None, 1
 
@@ -659,6 +661,7 @@ class CliApplication:
         if not sys.stdin.isatty():
             messages.mostrar_error(
                 _("El menú interactivo requiere una terminal (TTY). Ejecuta un comando directo."),
+                registrar_log=False,
             )
             return 1
         modo = str(getattr(parsed_args, "modo", MODO_POR_DEFECTO)).strip().lower()
@@ -680,6 +683,7 @@ class CliApplication:
         if not acciones:
             messages.mostrar_error(
                 _("No hay acciones disponibles para --modo {}.").format(modo),
+                registrar_log=False,
             )
             return 1
 
@@ -714,7 +718,7 @@ class CliApplication:
                 return 0
             ejecutar_cmd = self.command_registry.commands.get("ejecutar")
             if not ejecutar_cmd:
-                messages.mostrar_error(_("Comando 'ejecutar' no disponible"))
+                messages.mostrar_error(_("Comando 'ejecutar' no disponible"), registrar_log=False)
                 return 1
             command_args = argparse.Namespace(
                 archivo=archivo.strip(),
@@ -756,7 +760,7 @@ class CliApplication:
             )
             compile_cmd = self.command_registry.commands.get("compilar")
             if not compile_cmd:
-                messages.mostrar_error(_("Comando 'compilar' no disponible"))
+                messages.mostrar_error(_("Comando 'compilar' no disponible"), registrar_log=False)
                 return 1
             return compile_cmd.run(command_args)
         else:
@@ -780,7 +784,7 @@ class CliApplication:
             archivo = archivo.strip()
             inv_cmd = self.command_registry.commands.get("transpilar-inverso")
             if not inv_cmd:
-                messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"))
+                messages.mostrar_error(_("Comando 'transpilar-inverso' no disponible"), registrar_log=False)
                 return 1
             command_args = argparse.Namespace(
                 archivo=archivo,
@@ -811,9 +815,10 @@ class CliApplication:
                 messages.mostrar_error(
                     _("CLI no inicializada completamente: parser no disponible. "
                       "Ejecute initialize() antes de execute_command()."),
+                    registrar_log=False,
                 )
                 return 1
-            messages.mostrar_error(_("Comando inválido. Use --help para ver opciones."))
+            messages.mostrar_error(_("Comando inválido. Use --help para ver opciones."), registrar_log=False)
             return 1
             
         try:
@@ -825,6 +830,7 @@ class CliApplication:
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
             self.initialize()
+            debug_activo = False
             if argv is None:
                 argv = sys.argv[1:]
                 if "PYTEST_CURRENT_TEST" in environ and not argv:
@@ -856,7 +862,10 @@ class CliApplication:
 
                 return self.execute_command(args, debug_activo=debug_activo)
             except Exception as e:
-                logging.exception("Fatal error in application")
+                if debug_activo:
+                    logging.exception("Fatal error in application")
+                else:
+                    logging.error("Fatal error in application: %s", str(e).strip() or repr(e))
                 mensaje_error = str(e).strip() or _("Ha ocurrido un error inesperado.")
                 messages.mostrar_error(
                     _("Fatal error: {}").format(mensaje_error),
