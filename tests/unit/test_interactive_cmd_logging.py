@@ -101,10 +101,12 @@ def test_log_error_no_debug_solo_imprime_error_limpio():
     mock_print.assert_called_once_with("Error: fallo")
 
 
-def test_log_error_debug_muestra_traceback():
+def test_log_error_debug_muestra_traceback_en_logger():
     cmd = InteractiveCommand(types.SimpleNamespace())
     cmd._debug_mode = True
+    cmd._estado_repl["debug_enabled"] = True
     mock_print = Mock()
+    mock_logger = Mock()
     globals_log_error = InteractiveCommand._log_error.__globals__
     mock_traceback = Mock(return_value="TRACEBACK")
 
@@ -115,10 +117,11 @@ def test_log_error_debug_muestra_traceback():
             "format_traceback": mock_traceback,
         },
     ):
+        cmd.logger = mock_logger
         cmd._log_error(_("Error general"), CondicionNoBooleanaError())
 
     mock_traceback.assert_called_once()
-    assert mock_print.call_count == 2
+    mock_print.assert_called_once()
     primer_mensaje = mock_print.call_args_list[0].args[0]
     assert primer_mensaje.startswith("Error: ")
-    mock_print.assert_any_call("TRACEBACK")
+    mock_logger.debug.assert_any_call("TRACEBACK")

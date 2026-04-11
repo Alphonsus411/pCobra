@@ -10,8 +10,8 @@ def test_handle_execution_error_normal_hides_traceback_and_keeps_logging_excepti
     exc = RuntimeError("boom")
 
     with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "cobra.cli.cli.logging.exception"
-    ) as mock_logging_exception, patch("cobra.cli.cli.print") as mock_print, patch(
+        "cobra.cli.cli.logging.error"
+    ) as mock_logging_error, patch("cobra.cli.cli.print") as mock_print, patch(
         "cobra.cli.cli.format_traceback", return_value="TRACEBACK"
     ) as mock_format_traceback:
         result = app._handle_execution_error(exc, "es", debug_activo=False)
@@ -19,7 +19,7 @@ def test_handle_execution_error_normal_hides_traceback_and_keeps_logging_excepti
     assert result == 1
     assert mock_error.call_count == 1
     assert mock_error.call_args[0][0] == "boom"
-    mock_logging_exception.assert_called_once_with("Error in execution")
+    mock_logging_error.assert_called_once_with("Error in execution: %s", "boom")
     mock_print.assert_not_called()
     mock_format_traceback.assert_not_called()
 
@@ -30,23 +30,25 @@ def test_handle_execution_error_no_duplica_salida_si_ya_fue_mostrada():
     setattr(exc, "error_ya_mostrado", True)
 
     with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-        "cobra.cli.cli.logging.exception"
-    ) as mock_logging_exception, patch("cobra.cli.cli.print") as mock_print:
+        "cobra.cli.cli.logging.error"
+    ) as mock_logging_error, patch("cobra.cli.cli.print") as mock_print:
         result = app._handle_execution_error(exc, "es", debug_activo=False)
 
     assert result == 1
     mock_error.assert_not_called()
-    mock_logging_exception.assert_called_once_with("Error in execution")
+    mock_logging_error.assert_called_once_with("Error in execution: %s", "boom")
     mock_print.assert_not_called()
 
 
-def test_handle_execution_error_debug_shows_traceback_and_keeps_logging_exception():
+def test_handle_execution_error_debug_envia_traceback_a_logger_debug():
     app = CliApplication()
     exc = RuntimeError("boom")
 
     with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
         "cobra.cli.cli.logging.exception"
-    ) as mock_logging_exception, patch("cobra.cli.cli.print") as mock_print, patch(
+    ) as mock_logging_exception, patch(
+        "cobra.cli.cli.logging.getLogger"
+    ) as mock_get_logger, patch(
         "cobra.cli.cli.format_traceback", return_value="TRACEBACK") as mock_format_traceback:
         result = app._handle_execution_error(exc, "es", debug_activo=True)
 
@@ -54,7 +56,7 @@ def test_handle_execution_error_debug_shows_traceback_and_keeps_logging_exceptio
     assert mock_error.call_count == 1
     mock_logging_exception.assert_called_once_with("Error in execution")
     mock_format_traceback.assert_called_once_with(exc, "es")
-    mock_print.assert_called_once_with("TRACEBACK")
+    mock_get_logger.return_value.debug.assert_called_once_with("TRACEBACK")
 
 
 def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
@@ -70,8 +72,8 @@ def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
 
     try:
         with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
-            "cobra.cli.cli.logging.exception"
-        ) as mock_logging_exception, patch("cobra.cli.cli.print") as mock_print:
+            "cobra.cli.cli.logging.error"
+        ) as mock_logging_error, patch("cobra.cli.cli.print") as mock_print:
             result = app._handle_execution_error(exc, "es", debug_activo=False)
     finally:
         for handler in list(root_logger.handlers):
@@ -80,8 +82,8 @@ def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
         root_logger.setLevel(original_level)
 
     assert result == 1
-    mock_error.assert_called_once_with("boom")
-    mock_logging_exception.assert_called_once_with("Error in execution")
+    mock_error.assert_called_once_with("boom", registrar_log=False)
+    mock_logging_error.assert_called_once_with("Error in execution: %s", "boom")
     mock_print.assert_not_called()
 
 
