@@ -35,6 +35,19 @@ if _CANONICAL_CLI_PACKAGE_DIR.is_dir():
     __path__ = [str(_CANONICAL_CLI_PACKAGE_DIR)]
 
 
+def configure_logging(debug: bool) -> None:
+    """Configura logging de CLI con un único handler de consola."""
+
+    app_logger = logging.getLogger("pcobra")
+    app_logger.handlers.clear()
+    app_logger.setLevel(logging.DEBUG if debug else logging.WARNING)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    app_logger.addHandler(handler)
+    app_logger.propagate = False
+
+
 def _activar_compatibilidad_legacy_si_corresponde(ruta_modulo: str) -> None:
     """Activa alias legacy mínimos solo para entrypoints heredados."""
 
@@ -161,6 +174,8 @@ def main(argumentos: Optional[List[str]] = None) -> int:
     _bootstrap_dev_path_si_opt_in()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _normalizar_argumentos(argv_entrada)
+    debug = bool(argv and "--debug" in argv)
+    configure_logging(debug=debug)
 
     flag_legacy_imports = argv is not None and "--legacy-imports" in argv
     env_legacy_imports = os.environ.get("PCOBRA_ENABLE_LEGACY_IMPORTS") == "1"

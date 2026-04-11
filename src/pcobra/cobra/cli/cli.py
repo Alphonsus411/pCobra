@@ -1,10 +1,8 @@
 import argparse
-import json
 import logging
 import os
 import secrets
 import sys
-from enum import Enum
 from os import environ
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any, ContextManager
@@ -82,13 +80,6 @@ class CliErrorYaMostrado(Exception):
     error_ya_mostrado = True
 
 
-class LogLevel(Enum):
-    DEBUG = logging.DEBUG
-    INFO = logging.INFO
-    WARNING = logging.WARNING
-    ERROR = logging.ERROR
-
-
 class AppConfig:
     # Cargar configuración desde archivo
     try:
@@ -98,8 +89,6 @@ class AppConfig:
         config_data: Dict[str, str] = {}
     DEFAULT_LANGUAGE = config_data.get("language", "es")
     DEFAULT_COMMAND = config_data.get("default_command", "interactive")
-    LOG_FORMAT = config_data.get("log_format", "%(asctime)s - %(levelname)s - %(message)s")
-    LOG_FORMATTER = str(config_data.get("log_formatter", "text")).strip().lower()
     PROGRAM_NAME = config_data.get("program_name", "cobra")
     BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = [
         InteractiveCommand, CompileCommand, ExecuteCommand, ModulesCommand,
@@ -185,22 +174,6 @@ class CliApplication:
         self.command_registry: Optional[CommandRegistry] = None
         self._subparsers: Optional[argparse._SubParsersAction] = None
         self._commands_registered = False
-        self._owned_logging_handlers: list[logging.Handler] = []
-
-    class _SecurityEventJsonFormatter(logging.Formatter):
-        """Formatter JSON opt-in para eventos de auditoría de seguridad."""
-
-        def format(self, record: logging.LogRecord) -> str:
-            payload = {
-                "timestamp": self.formatTime(record, self.datefmt),
-                "level": record.levelname,
-                "logger": record.name,
-                "msg": record.getMessage(),
-            }
-            for field in ("event", "command", "reason", "audit_id"):
-                if hasattr(record, field):
-                    payload[field] = getattr(record, field)
-            return json.dumps(payload, ensure_ascii=False)
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -212,18 +185,11 @@ class CliApplication:
     def cleanup(self) -> None:
         if self.interpreter and hasattr(self.interpreter, "cleanup"):
             self.interpreter.cleanup()
-        root_logger = logging.getLogger()
-        for handler in self._owned_logging_handlers:
-            if handler in root_logger.handlers:
-                root_logger.removeHandler(handler)
-            handler.close()
-        self._owned_logging_handlers.clear()
 
-    def initialize(self, debug_enabled: bool = False) -> None:
+    def initialize(self) -> None:
         if self.parser and self.command_registry and self.interpreter:
             return
         setup_gettext()
-        self._setup_logging(debug_enabled=debug_enabled)
         self.interpreter = InterpretadorCobra()
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
@@ -289,18 +255,6 @@ class CliApplication:
             f"explícitamente {COBRA_DEV_MODE_ENV}=1, "
             f"{COBRA_DEV_EPHEMERAL_CONFIRM_ENV}=1 y el flag --dev-ephemeral-key."
         )
-
-    def _setup_logging(self, debug_enabled: bool = False) -> None:
-        root_logger = logging.getLogger()
-        if not root_logger.handlers:
-            handler = logging.StreamHandler()
-            if AppConfig.LOG_FORMATTER == "json":
-                handler.setFormatter(self._SecurityEventJsonFormatter())
-            else:
-                handler.setFormatter(logging.Formatter(AppConfig.LOG_FORMAT))
-            root_logger.addHandler(handler)
-            self._owned_logging_handlers.append(handler)
-        root_logger.setLevel(logging.DEBUG if debug_enabled else LogLevel.INFO.value)
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
         parser.add_argument(
@@ -827,7 +781,7 @@ class CliApplication:
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
-            self.initialize(debug_enabled=False)
+            self.initialize()
             debug_activo = False
             if argv is None:
                 argv = sys.argv[1:]
@@ -846,7 +800,6 @@ class CliApplication:
                     )
                 self._enforce_runtime_safety_policy(args)
                 debug_activo = args.verbose > 0 or args.debug
-                self._setup_logging(debug_enabled=debug_activo)
                 setup_gettext(args.lang)
                 messages.disable_colors(args.no_color)
                 if getattr(args, "legacy_imports", False):
