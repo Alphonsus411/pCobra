@@ -1,8 +1,10 @@
 import logging
 import types
+from unittest.mock import Mock, patch
 
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
 from cobra.cli.i18n import _
+from pcobra.core.errors import CondicionNoBooleanaError
 
 
 def test_context_logging(caplog):
@@ -27,3 +29,94 @@ def test_log_error_emits_debug_once(caplog):
     assert _("Error de prueba") in record.message
     assert record.levelno == logging.DEBUG
 
+
+def test_run_repl_loop_runtime_error_no_debug_no_imprime_traceback():
+    dummy = types.SimpleNamespace()
+    cmd = InteractiveCommand(dummy)
+    cmd._debug_mode = False
+
+    entradas = iter(["imprimir(1)", "salir"])
+
+    def _leer_linea(_prompt):
+        return next(entradas)
+
+    with patch.object(
+        cmd,
+        "ejecutar_codigo",
+        side_effect=CondicionNoBooleanaError(),
+    ), patch.object(cmd, "_log_error") as mock_log_error:
+        cmd._run_repl_loop(
+            args=types.SimpleNamespace(),
+            validador=None,
+            leer_linea=_leer_linea,
+            sandbox=False,
+            sandbox_docker=None,
+        )
+
+    mock_log_error.assert_called_once()
+
+
+def test_run_repl_loop_runtime_error_debug_si_imprime_traceback():
+    dummy = types.SimpleNamespace()
+    cmd = InteractiveCommand(dummy)
+    cmd._debug_mode = True
+
+    entradas = iter(["imprimir(1)", "salir"])
+
+    def _leer_linea(_prompt):
+        return next(entradas)
+
+    with patch.object(
+        cmd,
+        "ejecutar_codigo",
+        side_effect=CondicionNoBooleanaError(),
+    ), patch.object(cmd, "_log_error") as mock_log_error:
+        cmd._run_repl_loop(
+            args=types.SimpleNamespace(),
+            validador=None,
+            leer_linea=_leer_linea,
+            sandbox=False,
+            sandbox_docker=None,
+        )
+
+    mock_log_error.assert_called_once()
+
+
+def test_log_error_no_debug_solo_mostrar_error_sin_print():
+    cmd = InteractiveCommand(types.SimpleNamespace())
+    cmd._debug_mode = False
+    mock_error = Mock()
+    mock_print = Mock()
+    globals_log_error = InteractiveCommand._log_error.__globals__
+
+    with patch.dict(
+        globals_log_error,
+        {"mostrar_error": mock_error, "print": mock_print},
+    ):
+        cmd._log_error(_("Error general"), CondicionNoBooleanaError())
+
+    mock_error.assert_called_once()
+    mock_print.assert_not_called()
+
+
+def test_log_error_debug_muestra_traceback():
+    cmd = InteractiveCommand(types.SimpleNamespace())
+    cmd._debug_mode = True
+    mock_error = Mock()
+    mock_print = Mock()
+    globals_log_error = InteractiveCommand._log_error.__globals__
+    mock_traceback = Mock(return_value="TRACEBACK")
+
+    with patch.dict(
+        globals_log_error,
+        {
+            "mostrar_error": mock_error,
+            "print": mock_print,
+            "format_traceback": mock_traceback,
+        },
+    ):
+        cmd._log_error(_("Error general"), CondicionNoBooleanaError())
+
+    mock_error.assert_called_once()
+    mock_traceback.assert_called_once()
+    mock_print.assert_called_once_with("TRACEBACK")

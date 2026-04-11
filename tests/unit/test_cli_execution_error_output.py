@@ -1,4 +1,5 @@
 import argparse
+import logging
 from unittest.mock import patch
 
 from cobra.cli.cli import CliApplication
@@ -54,6 +55,34 @@ def test_handle_execution_error_debug_shows_traceback_and_keeps_logging_exceptio
     mock_logging_exception.assert_called_once_with("Error in execution")
     mock_format_traceback.assert_called_once_with(exc, "es")
     mock_print.assert_called_once_with("TRACEBACK")
+
+
+def test_handle_execution_error_con_root_logger_configurado_no_duplica_salida():
+    app = CliApplication()
+    exc = RuntimeError("boom")
+
+    root_logger = logging.getLogger()
+    original_handlers = list(root_logger.handlers)
+    original_level = root_logger.level
+    root_logger.handlers = []
+    root_logger.setLevel(logging.DEBUG)
+    root_logger.addHandler(logging.StreamHandler())
+
+    try:
+        with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
+            "cobra.cli.cli.logging.exception"
+        ) as mock_logging_exception, patch("cobra.cli.cli.print") as mock_print:
+            result = app._handle_execution_error(exc, "es", debug_activo=False)
+    finally:
+        for handler in list(root_logger.handlers):
+            root_logger.removeHandler(handler)
+        root_logger.handlers = original_handlers
+        root_logger.setLevel(original_level)
+
+    assert result == 1
+    mock_error.assert_called_once_with("boom")
+    mock_logging_exception.assert_called_once_with("Error in execution")
+    mock_print.assert_not_called()
 
 
 def test_run_propaga_debug_activo_hacia_execute_command():
