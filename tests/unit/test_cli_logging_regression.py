@@ -61,3 +61,37 @@ def test_configure_logging_es_idempotente_y_no_duplica_emision():
 
     salida = buffer.getvalue()
     assert salida.count("mensaje único") == 1
+
+
+def test_configure_logging_no_duplica_debug_ni_error_en_consola():
+    configure_logging(debug=True)
+    configure_logging(debug=True)
+
+    root_logger = logging.getLogger()
+    assert len(root_logger.handlers) == 1
+
+    buffer = StringIO()
+    handler = root_logger.handlers[0]
+    original_stream = getattr(handler, "stream", None)
+    if hasattr(handler, "setStream"):
+        handler.setStream(buffer)
+
+    try:
+        logger = logging.getLogger("pcobra.test")
+        logger.debug("debug sin duplicación")
+        logger.error("error sin duplicación")
+    finally:
+        if original_stream is not None and hasattr(handler, "setStream"):
+            handler.setStream(original_stream)
+
+    salida = buffer.getvalue()
+    assert salida.count("debug sin duplicación") == 1
+    assert salida.count("error sin duplicación") == 1
+
+
+def test_configure_logging_pcobra_sin_handlers_locales_y_con_propagacion():
+    configure_logging(debug=False)
+    app_logger = logging.getLogger("pcobra")
+
+    assert app_logger.handlers == []
+    assert app_logger.propagate is True

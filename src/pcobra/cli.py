@@ -54,7 +54,14 @@ def _reconfigurar_consola_utf8() -> None:
 
 
 def configure_logging(debug: bool) -> None:
-    """Configura logging de CLI con un único handler efectivo de consola."""
+    """Configura logging de CLI con un único handler efectivo de consola.
+
+    Contrato de logging del proyecto:
+    - El *único* ``StreamHandler`` de consola vive en el logger raíz.
+    - Los módulos (incluido ``pcobra`` y sus submódulos) **no** deben adjuntar
+      handlers locales; sólo deben obtener su logger con ``getLogger(__name__)``
+      y propagar al root.
+    """
 
     level = logging.DEBUG if debug else logging.WARNING
     formatter = logging.Formatter("%(levelname)s: %(message)s")
@@ -69,9 +76,7 @@ def configure_logging(debug: bool) -> None:
     root_logger.addHandler(handler)
 
     app_logger = logging.getLogger("pcobra")
-    for existing_handler in list(app_logger.handlers):
-        app_logger.removeHandler(existing_handler)
-        existing_handler.close()
+    app_logger.handlers = []
     app_logger.setLevel(logging.NOTSET)
     app_logger.propagate = True
 
