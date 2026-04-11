@@ -37,13 +37,20 @@ if _CANONICAL_CLI_PACKAGE_DIR.is_dir():
 
 def _reconfigurar_consola_utf8() -> None:
     """Fuerza UTF-8 en stdout/stderr cuando el runtime lo soporta."""
+    # Mitigación para consolas Windows/legacy con codificación no-UTF8.
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        reconfigure = getattr(stream, "reconfigure", None)
+        if not callable(reconfigure):
+            continue
+        try:
+            reconfigure(encoding="utf-8")
+        except Exception:
+            # Fail-safe: no bloquear el arranque del CLI por la consola.
+            pass
 
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        # Compatibilidad con runtimes donde ``reconfigure`` no existe.
-        pass
+    # Solo define fallback de codificación si el usuario no la fijó explícitamente.
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 
 def configure_logging(debug: bool) -> None:
