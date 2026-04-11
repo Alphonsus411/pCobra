@@ -2,16 +2,15 @@ from __future__ import annotations
 
 
 def sanitize_input(text: str) -> str:
-    """Sanitiza texto Unicode preservando pares válidos y reparando surrogates inválidos.
+    """Sanitiza texto Unicode preservando secuencias válidas y reparando surrogates inválidos.
 
-    Esta función hace un round-trip por UTF-16 usando ``surrogatepass`` para
-    conservar secuencias Unicode válidas (por ejemplo, emoji correctos) y luego
-    decodifica con ``errors='replace'`` para convertir surrogates rotos en el
-    carácter de reemplazo ``U+FFFD``.
+    Realiza un round-trip UTF-16 con ``surrogatepass`` para mantener pares
+    sustitutos válidos (por ejemplo, emoji) y decodifica con ``errors='replace'``
+    para convertir surrogates aislados al carácter de reemplazo ``U+FFFD``.
 
     Ejemplos:
-        >>> sanitize_input("áéíóú 🚀")
-        'áéíóú 🚀'
+        >>> sanitize_input("Hola, こんにちは, مرحبا 🌍🚀")
+        'Hola, こんにちは, مرحبا 🌍🚀'
         >>> sanitize_input("\ud83d")
         '�'
     """
