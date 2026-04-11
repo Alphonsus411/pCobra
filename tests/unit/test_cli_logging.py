@@ -59,7 +59,7 @@ def test_cli_no_debug(caplog):
             ret = app.run([])
 
     assert ret == 0
-    assert logging.getLogger().getEffectiveLevel() == logging.INFO
+    assert logging.getLogger().getEffectiveLevel() == logging.WARNING
     assert not any(rec.levelno == logging.DEBUG for rec in caplog.records)
 
 

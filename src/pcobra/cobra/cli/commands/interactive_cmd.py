@@ -135,9 +135,9 @@ class InteractiveCommand(BaseCommand):
         super().__init__()
         self.interpretador = interpretador
         self._allow_insecure_fallback = False
+        # Contrato de logging: no agregar handlers por comando; la emisión se
+        # centraliza en root configurado desde ``pcobra.cli.configure_logging``.
         self.logger = logging.getLogger(__name__)
-        # El nivel y handlers se controlan centralmente desde el entrypoint CLI.
-        self.logger.propagate = True
         self._estado_repl = self._crear_estado_repl()
         # Estado local para tracebacks técnicos en REPL.
         # Fuente canónica: flag global --debug parseado por la CLI principal.
