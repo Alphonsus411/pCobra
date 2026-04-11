@@ -76,6 +76,12 @@ COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
 
 
+class CliErrorYaMostrado(Exception):
+    """Error de CLI cuya salida al usuario ya fue emitida por el comando."""
+
+    error_ya_mostrado = True
+
+
 class LogLevel(Enum):
     DEBUG = logging.DEBUG
     INFO = logging.INFO
@@ -581,14 +587,12 @@ class CliApplication:
         return self._normalizar_flags_sesion(parsed)
 
     def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
-        if isinstance(exc, ValueError):
-            messages.mostrar_error(_("Value error: {}").format(str(exc)))
-        elif isinstance(exc, FileNotFoundError):
-            messages.mostrar_error(str(exc))
-        else:
-            messages.mostrar_error(
-                _("An unexpected error occurred. Use --debug or -v to see the full traceback."),
-            )
+        error_ya_mostrado = isinstance(exc, CliErrorYaMostrado) or bool(
+            getattr(exc, "error_ya_mostrado", False)
+        )
+        if not error_ya_mostrado:
+            mensaje = str(exc).strip() or _("Ha ocurrido un error inesperado.")
+            messages.mostrar_error(mensaje)
 
         logging.exception("Error in execution")
         if debug_activo:
