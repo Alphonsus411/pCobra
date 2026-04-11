@@ -453,12 +453,17 @@ class InteractiveCommand(BaseCommand):
                     self._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
                     self.ejecutar_codigo(codigo, validador)
-            except (LexerError, ParserError) as err:
-                self._log_error(_("Error de sintaxis"), err)
-            except RuntimeError as err:
-                self._log_error(_("Error crítico"), err)
-            except Exception as err:  # pragma: no cover - fallos inesperados
-                self._log_error(_("Error general"), err, include_traceback=True)
+            except Exception as err:  # pragma: no cover - ruta unificada de errores
+                categoria, include_traceback = self._clasificar_error_repl(err)
+                self._log_error(categoria, err, include_traceback=include_traceback)
+
+    def _clasificar_error_repl(self, error: Exception) -> tuple[str, bool]:
+        """Clasifica errores del REPL para un reporte único en el loop principal."""
+        if isinstance(error, (LexerError, ParserError)):
+            return _("Error de sintaxis"), False
+        if isinstance(error, RuntimeError):
+            return _("Error crítico"), False
+        return _("Error general"), True
 
     def _limpiar_estado_repl(self, estado: dict[str, Any]) -> None:
         estado["buffer_lineas"].clear()
@@ -599,35 +604,30 @@ class InteractiveCommand(BaseCommand):
         Args:
             linea: Código a ejecutar
         """
-        try:
-            tokens = Lexer(linea).tokenizar()
-            Parser(tokens).parsear()
+        tokens = Lexer(linea).tokenizar()
+        Parser(tokens).parsear()
 
-            script = (
-                "from pcobra.cobra.core import Lexer, Parser\n"
-                "from pcobra.core.interpreter import InterpretadorCobra\n"
-                f"_codigo = {linea!r}\n"
-                "_tokens = Lexer(_codigo).tokenizar()\n"
-                "_ast = Parser(_tokens).parsear()\n"
-                "_interp = InterpretadorCobra()\n"
-                "_resultado = _interp.ejecutar_ast(_ast)\n"
-                "if _resultado is not None:\n"
-                "    if isinstance(_resultado, bool):\n"
-                "        print('verdadero' if _resultado else 'falso')\n"
-                "    else:\n"
-                "        print(_resultado)\n"
-            )
+        script = (
+            "from pcobra.cobra.core import Lexer, Parser\n"
+            "from pcobra.core.interpreter import InterpretadorCobra\n"
+            f"_codigo = {linea!r}\n"
+            "_tokens = Lexer(_codigo).tokenizar()\n"
+            "_ast = Parser(_tokens).parsear()\n"
+            "_interp = InterpretadorCobra()\n"
+            "_resultado = _interp.ejecutar_ast(_ast)\n"
+            "if _resultado is not None:\n"
+            "    if isinstance(_resultado, bool):\n"
+            "        print('verdadero' if _resultado else 'falso')\n"
+            "    else:\n"
+            "        print(_resultado)\n"
+        )
 
-            salida = ejecutar_en_sandbox(
-                script,
-                allow_insecure_fallback=self._allow_insecure_fallback,
-            )
-            if salida:
-                mostrar_info(str(salida))
-        except (LexerError, ParserError) as err:
-            self._log_error(_("Error de sintaxis"), err)
-        except Exception as err:
-            self._log_error(_("Error en sandbox"), err)
+        salida = ejecutar_en_sandbox(
+            script,
+            allow_insecure_fallback=self._allow_insecure_fallback,
+        )
+        if salida:
+            mostrar_info(str(salida))
 
     def _ejecutar_en_docker(self, linea: str, backend: str) -> None:
         """Ejecuta código en un contenedor Docker.
@@ -636,13 +636,10 @@ class InteractiveCommand(BaseCommand):
             linea: Código a ejecutar
             backend: Backend a utilizar
         """
-        try:
-            backend_runtime = resolve_docker_backend(backend)
-            salida = ejecutar_en_contenedor(linea, backend_runtime)
-            if salida:
-                mostrar_info(str(salida))
-        except Exception as err:
-            self._log_error(_("Error en contenedor Docker"), err)
+        backend_runtime = resolve_docker_backend(backend)
+        salida = ejecutar_en_contenedor(linea, backend_runtime)
+        if salida:
+            mostrar_info(str(salida))
 
     def _log_error(
         self, categoria: str, error: Exception, include_traceback: bool = False
