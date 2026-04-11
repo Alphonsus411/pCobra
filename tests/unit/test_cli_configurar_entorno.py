@@ -103,12 +103,12 @@ def test_reconfigurar_consola_utf8_fallback_no_rompe_sin_reconfigure(monkeypatch
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
 
-def test_reconfigurar_consola_utf8_no_sobrescribe_pythonioencoding(monkeypatch):
+def test_reconfigurar_consola_utf8_sobrescribe_pythonioencoding_a_utf8(monkeypatch):
     monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
 
     _reconfigurar_consola_utf8()
 
-    assert os.environ["PYTHONIOENCODING"] == "latin-1"
+    assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
 
 class _DummyStreamConReconfigure(_DummyStreamSinReconfigure):

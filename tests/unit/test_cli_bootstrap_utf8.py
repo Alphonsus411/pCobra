@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 from pcobra.cobra.cli.bootstrap import reconfigurar_consola_utf8
+import pcobra.cobra.cli.bootstrap as bootstrap_module
 
 
 class _DummyStreamConReconfigure:
@@ -58,6 +59,30 @@ def test_bootstrap_sobrescribe_pythonioencoding_existente_a_utf8(monkeypatch):
     reconfigurar_consola_utf8()
 
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_bootstrap_en_windows_ejecuta_chcp(monkeypatch):
+    llamadas: list[str] = []
+    monkeypatch.setattr(bootstrap_module.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        bootstrap_module.os, "system", lambda cmd: llamadas.append(cmd), raising=False
+    )
+
+    reconfigurar_consola_utf8()
+
+    assert llamadas == ["chcp 65001 > nul"]
+
+
+def test_bootstrap_fuera_de_windows_no_ejecuta_chcp(monkeypatch):
+    llamadas: list[str] = []
+    monkeypatch.setattr(bootstrap_module.os, "name", "posix", raising=False)
+    monkeypatch.setattr(
+        bootstrap_module.os, "system", lambda cmd: llamadas.append(cmd), raising=False
+    )
+
+    reconfigurar_consola_utf8()
+
+    assert llamadas == []
 
 
 def test_cli_subprocess_preserva_utf8_en_salida_acentuada():
