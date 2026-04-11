@@ -121,6 +121,7 @@ class InteractiveCommand(BaseCommand):
         self._allow_insecure_fallback = False
         self.logger = logging.getLogger(__name__)
         self._estado_repl = self._crear_estado_repl()
+        self._debug_mode = False
 
     @staticmethod
     def _crear_estado_repl() -> dict[str, Any]:
@@ -299,6 +300,8 @@ class InteractiveCommand(BaseCommand):
                 )
             )
             return 1
+
+        self._debug_mode = bool(getattr(args, "debug", False))
 
         # Configurar modo seguro y validadores
         seguro = getattr(args, "seguro", True)
@@ -651,11 +654,19 @@ class InteractiveCommand(BaseCommand):
             error: Excepción ocurrida
             include_traceback: Si se debe incluir la traza completa del error
         """
-        mensaje = f"{categoria}: {error}"
-        if include_traceback:
-            mensaje += f"\n{traceback.format_exc()}"
-        self.logger.error(mensaje)
-        mostrar_error(mensaje)
+        mensaje_usuario = f"{categoria}: {error}"
+
+        # Log técnico único (sin duplicar salida en consola del usuario).
+        self.logger.debug("Error en REPL: %s", mensaje_usuario, exc_info=True)
+
+        if self._debug_mode:
+            traza = traceback.format_exc()
+            if traza and traza.strip() != "NoneType: None":
+                mensaje_usuario = f"{mensaje_usuario}\n{traza}"
+            elif include_traceback:
+                mensaje_usuario = f"{mensaje_usuario}\n{traceback.format_stack()[-1]}"
+
+        mostrar_error(mensaje_usuario, registrar_log=False)
 
     def __enter__(self) -> "InteractiveCommand":
         """Inicializa recursos del REPL.
