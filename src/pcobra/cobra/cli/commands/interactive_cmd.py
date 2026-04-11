@@ -65,6 +65,20 @@ SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
 
 
+def _contains_isolated_surrogate(text: str) -> bool:
+    """Detecta si aún hay code points surrogate en la cadena."""
+    return any(0xD800 <= ord(ch) <= 0xDFFF for ch in text)
+
+
+def _debug_assert_boundary_text_sanitized(text: str, *, context: str) -> None:
+    """Aserción ligera de frontera para detectar surrogates aislados remanentes."""
+    if __debug__:
+        assert not _contains_isolated_surrogate(text), (
+            f"Entrada Unicode no saneada en frontera ({context}); "
+            "debe pasar por sanitize_input antes de validar/dispatch."
+        )
+
+
 def format_user_error(exc: Exception) -> str:
     """Normaliza mensajes de error para salida limpia en la CLI."""
     msg = " ".join(str(exc).strip().split())
@@ -98,7 +112,12 @@ if FileHistory is not None:
         """Historial endurecido que sanitiza entradas antes de persistir."""
 
         def append_string(self, value: str) -> None:
-            super().append_string(sanitize_input(value))
+            sanitized = sanitize_input(value)
+            _debug_assert_boundary_text_sanitized(
+                sanitized,
+                context="SafeFileHistory.append_string",
+            )
+            super().append_string(sanitized)
 
 else:
     SafeFileHistory = None  # type: ignore[assignment]
@@ -452,6 +471,10 @@ class InteractiveCommand(BaseCommand):
                 prompt = "... " if estado["nivel_bloque"] > 0 else "cobra> "
                 linea = sanitize_input(leer_linea(prompt))
                 linea = linea.strip()
+                _debug_assert_boundary_text_sanitized(
+                    linea,
+                    context="InteractiveCommand._run_repl_loop:pre-validacion",
+                )
             except (KeyboardInterrupt, EOFError):
                 if estado["buffer_lineas"]:
                     mostrar_error(_("Bloque incompleto; se limpiará la entrada actual."))
@@ -485,6 +508,10 @@ class InteractiveCommand(BaseCommand):
                 )
                 if codigo is None:
                     continue
+                _debug_assert_boundary_text_sanitized(
+                    codigo,
+                    context="InteractiveCommand._run_repl_loop:pre-dispatch",
+                )
 
                 if sandbox:
                     self._ejecutar_en_sandbox(codigo)

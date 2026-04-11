@@ -94,3 +94,29 @@ def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
     assert ret == 0
     assert capturado["history"] == ["�"]
     assert capturado["validar"][0] == "�"
+
+
+def test_run_repl_loop_debug_detecta_surrogate_remanente_en_frontera():
+    cmd = InteractiveCommand(MagicMock())
+    cmd._debug_mode = True
+    args = _args()
+    entradas = iter(["\ud83d"])
+
+    def _leer_linea(_prompt: str) -> str:
+        return next(entradas)
+
+    with patch(
+        "pcobra.cobra.cli.commands.interactive_cmd.sanitize_input",
+        side_effect=lambda value: value,
+    ):
+        try:
+            cmd._run_repl_loop(
+                args=args,
+                validador=None,
+                leer_linea=_leer_linea,
+                sandbox=False,
+                sandbox_docker=None,
+            )
+            assert False, "Se esperaba AssertionError por surrogate aislado remanente."
+        except AssertionError as exc:
+            assert "pre-validacion" in str(exc)
