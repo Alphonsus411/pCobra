@@ -1,16 +1,9 @@
 import os
 import subprocess
 import sys
+from unittest.mock import Mock
 
 from pcobra.cobra.cli.bootstrap import reconfigurar_consola_utf8
-
-
-class _DummyStreamConReconfigure:
-    def __init__(self):
-        self.calls: list[dict[str, str]] = []
-
-    def reconfigure(self, *, encoding: str) -> None:
-        self.calls.append({"encoding": encoding})
 
 
 class _DummyStreamSinReconfigure:
@@ -22,18 +15,51 @@ class _DummyStreamSinReconfigure:
         return len(text)
 
 
-def test_bootstrap_reconfigura_streams_utf8(monkeypatch):
-    out = _DummyStreamConReconfigure()
-    err = _DummyStreamConReconfigure()
+def test_bootstrap_reconfigura_streams_utf8_y_asigna_pythonioencoding(monkeypatch):
+    out = Mock()
+    out.reconfigure = Mock()
+    err = Mock()
+    err.reconfigure = Mock()
+
     monkeypatch.setattr(sys, "stdout", out)
     monkeypatch.setattr(sys, "stderr", err)
     monkeypatch.delenv("PYTHONIOENCODING", raising=False)
 
     reconfigurar_consola_utf8()
 
-    assert out.calls == [{"encoding": "utf-8"}]
-    assert err.calls == [{"encoding": "utf-8"}]
+    out.reconfigure.assert_called_once_with(encoding="utf-8")
+    err.reconfigure.assert_called_once_with(encoding="utf-8")
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_bootstrap_windows_invoca_chcp_65001(monkeypatch):
+    out = Mock()
+    out.reconfigure = Mock()
+    err = Mock()
+    err.reconfigure = Mock()
+    system = Mock(return_value=0)
+
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(sys, "stderr", err)
+    monkeypatch.setattr("pcobra.cobra.cli.bootstrap.os.name", "nt")
+    monkeypatch.setattr("pcobra.cobra.cli.bootstrap.os.system", system)
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+
+    reconfigurar_consola_utf8()
+
+    system.assert_called_once_with("chcp 65001 > nul")
+    assert os.environ["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_bootstrap_no_windows_no_invoca_chcp(monkeypatch):
+    system = Mock(return_value=0)
+
+    monkeypatch.setattr("pcobra.cobra.cli.bootstrap.os.name", "posix")
+    monkeypatch.setattr("pcobra.cobra.cli.bootstrap.os.system", system)
+
+    reconfigurar_consola_utf8()
+
+    system.assert_not_called()
 
 
 def test_bootstrap_no_rompe_si_stream_no_tiene_reconfigure(monkeypatch):
