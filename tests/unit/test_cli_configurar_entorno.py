@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import types
 
@@ -53,7 +54,7 @@ jsonschema_stub.ValidationError = _JsonSchemaValidationError
 jsonschema_stub.validate = lambda *args, **kwargs: None
 sys.modules.setdefault("jsonschema", jsonschema_stub)
 
-from pcobra.cli import configurar_entorno
+from pcobra.cli import _reconfigurar_consola_utf8, configurar_entorno
 
 
 def test_configurar_entorno_permiso_denegado(monkeypatch, caplog):
@@ -69,3 +70,39 @@ def test_configurar_entorno_permiso_denegado(monkeypatch, caplog):
     configurar_entorno()
 
     assert "No se pudo acceder al archivo .env" in caplog.text
+
+
+class _DummyStreamSinReconfigure:
+    def __init__(self):
+        self.buffer: list[str] = []
+
+    def write(self, text: str) -> int:
+        self.buffer.append(text)
+        return len(text)
+
+    def getvalue(self) -> str:
+        return "".join(self.buffer)
+
+
+def test_reconfigurar_consola_utf8_fallback_no_rompe_sin_reconfigure(monkeypatch):
+    out = _DummyStreamSinReconfigure()
+    err = _DummyStreamSinReconfigure()
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(sys, "stderr", err)
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+
+    _reconfigurar_consola_utf8()
+
+    out.write("Salida legible: áéíóú")
+    err.write("Error legible: ñ")
+    assert out.getvalue() == "Salida legible: áéíóú"
+    assert err.getvalue() == "Error legible: ñ"
+    assert os.environ["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_reconfigurar_consola_utf8_no_sobrescribe_pythonioencoding(monkeypatch):
+    monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
+
+    _reconfigurar_consola_utf8()
+
+    assert os.environ["PYTHONIOENCODING"] == "latin-1"
