@@ -91,7 +91,7 @@ def _mostrar(msg: str, nivel: LogLevel = "info", registrar_log: bool = True) -> 
         return
 
     try:
-        texto = _(msg)
+        texto = _(" ".join(str(msg).splitlines()).strip())
         
         # Determinar el color según el nivel
         color_map: Dict[LogLevel, ColorCode] = {
