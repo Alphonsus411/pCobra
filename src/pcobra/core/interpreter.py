@@ -108,6 +108,21 @@ class InterpretadorCobra:
     """Interpreta y ejecuta nodos del lenguaje Cobra."""
 
     @staticmethod
+    def _debug_trazas_habilitadas() -> bool:
+        """Indica si las trazas internas de depuración están activadas."""
+        return os.getenv("PCOBRA_DEBUG_TRACES", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    def _trace_debug(self, mensaje: str) -> None:
+        """Imprime trazas internas solo cuando el modo debug está activo."""
+        if self._debug_trazas_habilitadas():
+            print(mensaje)
+
+    @staticmethod
     def _registrar_auditoria_validador(
         ruta_real: str,
         resultado: str,
@@ -961,11 +976,11 @@ class InterpretadorCobra:
 
         self._asegurar_ast_tipado(ast, "pre_optimizacion")
         self._asegurar_ast_aciclico_por_identidad(ast, "pre_optimizacion")
-        print("[AST BEFORE OPT]")
-        print(self._resumir_ast(ast))
+        self._trace_debug("[AST BEFORE OPT]")
+        self._trace_debug(self._resumir_ast(ast))
         if self._debug_resumen_ast_habilitado():
-            print("[AST BEFORE OPT][SUMMARY]")
-            print(self._resumir_ast(ast))
+            self._trace_debug("[AST BEFORE OPT][SUMMARY]")
+            self._trace_debug(self._resumir_ast(ast))
 
         ast = optimize_constants(ast)
         self._asegurar_ast_aciclico_por_identidad(ast, "post_optimize_constants")
@@ -978,18 +993,20 @@ class InterpretadorCobra:
         ast = remove_dead_code(ast)
         self._asegurar_ast_aciclico_por_identidad(ast, "post_remove_dead_code")
 
-        print("[AST AFTER OPT]")
-        print(self._resumir_ast(ast))
+        self._trace_debug("[AST AFTER OPT]")
+        self._trace_debug(self._resumir_ast(ast))
         if self._debug_resumen_ast_habilitado():
-            print("[AST AFTER OPT][SUMMARY]")
-            print(self._resumir_ast(ast))
+            self._trace_debug("[AST AFTER OPT][SUMMARY]")
+            self._trace_debug(self._resumir_ast(ast))
         self._asegurar_ast_tipado(ast, "post_optimizacion")
         self.ultimo_ir = None
-        print("[RUN] antes de iterar AST")
+        self._trace_debug("[RUN] antes de iterar AST")
         for index, nodo in enumerate(ast):
-            print(f"[RUN] index={index} node_type={type(nodo).__name__} node_id={id(nodo)}")
+            self._trace_debug(
+                f"[RUN] index={index} node_type={type(nodo).__name__} node_id={id(nodo)}"
+            )
             self._validar(nodo)
-            print("[RUN] antes de ejecutar_nodo")
+            self._trace_debug("[RUN] antes de ejecutar_nodo")
             resultado = self.ejecutar_nodo(nodo)
             if resultado is not None:
                 return resultado
@@ -1002,7 +1019,7 @@ class InterpretadorCobra:
         return build_internal_ir(ast)
 
     def ejecutar_nodo(self, nodo):
-        print(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
+        self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
         self._validar(nodo)
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
@@ -1141,11 +1158,9 @@ class InterpretadorCobra:
         """
         visitados = set() if visitados is None else visitados
         expresion_id = id(expresion)
-        print(
-            f"[EVAL] tipo={type(expresion).__name__} id={expresion_id}"
-        )
+        self._trace_debug(f"[EVAL] tipo={type(expresion).__name__} id={expresion_id}")
         if expresion_id in self._eval_stack:
-            print(
+            self._trace_debug(
                 f"[RECURSION DETECTED] tipo={type(expresion).__name__} id={expresion_id}"
             )
             raise Exception("Recursive evaluation detected")
@@ -1171,7 +1186,7 @@ class InterpretadorCobra:
                 # Resuelve asignaciones anidadas y devuelve su valor
                 return self.ejecutar_asignacion(expresion, visitados)
             elif isinstance(expresion, NodoIdentificador):
-                print(f"[ID] resolving {expresion.nombre}")
+                self._trace_debug(f"[ID] resolving {expresion.nombre}")
                 valor = self._resolver_identificador(expresion.nombre, visitados)
 
                 if valor is None:
@@ -1189,7 +1204,7 @@ class InterpretadorCobra:
                         f"({type(valor).__name__}) en lugar de un valor materializado"
                     )
 
-                print(
+                self._trace_debug(
                     "[ID] "
                     f"value_type={type(valor).__name__} value_id={id(valor)} "
                     f"is_primitive={isinstance(valor, (int, float, bool, str))}"
@@ -1219,22 +1234,22 @@ class InterpretadorCobra:
                 return self.ejecutar_holobit(expresion)
             elif isinstance(expresion, NodoOperacionBinaria):
                 tipo = expresion.operador.tipo
-                print(
+                self._trace_debug(
                     "[BIN-ENTER] "
                     f"id={id(expresion)} op={expresion.operador.valor} op_tipo={tipo} "
                     f"left_type={type(expresion.izquierda).__name__} "
                     f"right_type={type(expresion.derecha).__name__}"
                 )
-                print(f"[BIN] op_tipo={tipo} op_valor={expresion.operador.valor}")
+                self._trace_debug(f"[BIN] op_tipo={tipo} op_valor={expresion.operador.valor}")
 
                 left = self.evaluar_expresion(expresion.izquierda, visitados)
-                print(
+                self._trace_debug(
                     "[BIN-LEFT] "
                     f"type={type(left).__name__} id={id(left)} "
                     f"is_primitive={isinstance(left, (int, float, bool, str))}"
                 )
                 right = self.evaluar_expresion(expresion.derecha, visitados)
-                print(
+                self._trace_debug(
                     "[BIN-RIGHT] "
                     f"type={type(right).__name__} id={id(right)} "
                     f"is_primitive={isinstance(right, (int, float, bool, str))}"
@@ -1280,66 +1295,66 @@ class InterpretadorCobra:
                 if tipo == TipoToken.MAYORQUE:
                     verificar_comparables(left, right, ">")
                     result = left > right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MENORQUE:
                     verificar_comparables(left, right, "<")
                     result = left < right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MAYORIGUAL:
                     verificar_comparables(left, right, ">=")
                     result = left >= right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MENORIGUAL:
                     verificar_comparables(left, right, "<=")
                     result = left <= right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.IGUAL:
                     result = left == right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.DIFERENTE:
                     result = left != right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
 
                 if tipo == TipoToken.SUMA:
                     verificar_sumables(left, right)
                     result = left + right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.RESTA:
                     verificar_numeros(left, right, "-")
                     result = left - right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MULT:
                     verificar_numeros(left, right, "*")
                     result = left * right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.DIV:
                     verificar_numeros(left, right, "/")
                     result = left / right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.MOD:
                     verificar_numeros(left, right, "%")
                     result = left % right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.AND:
                     verificar_booleanos(left, right, "&&")
                     result = left and right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 elif tipo == TipoToken.OR:
                     verificar_booleanos(left, right, "||")
                     result = left or right
-                    print(f"[BIN-RESULT] value={result} type={type(result).__name__}")
+                    self._trace_debug(f"[BIN-RESULT] value={result} type={type(result).__name__}")
                     return result
                 else:
                     raise ValueError(f"Operador no soportado: {tipo}")
