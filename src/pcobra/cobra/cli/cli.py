@@ -44,6 +44,7 @@ from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
 from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
+from pcobra.cobra.cli.bootstrap import reconfigurar_consola_utf8
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
     MODO_POR_DEFECTO,
@@ -826,6 +827,7 @@ class CliApplication:
 
 def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point for the CLI."""
+    reconfigurar_consola_utf8()
     application = CliApplication()
     return application.run(argv)
 
