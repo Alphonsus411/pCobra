@@ -590,13 +590,16 @@ class CliApplication:
         error_ya_mostrado = isinstance(exc, CliErrorYaMostrado) or bool(
             getattr(exc, "error_ya_mostrado", False)
         )
-        if not error_ya_mostrado:
-            mensaje = str(exc).strip() or _("Ha ocurrido un error inesperado.")
-            messages.mostrar_error(mensaje)
+        mensaje = str(exc).strip() or _("Ha ocurrido un error inesperado.")
 
-        logging.exception("Error in execution")
+        if not error_ya_mostrado:
+            messages.mostrar_error(mensaje, registrar_log=False)
+
         if debug_activo:
+            logging.exception("Error in execution")
             print(format_traceback(exc, language))
+        else:
+            logging.error("Error in execution: %s", mensaje)
         return 1
 
     def _leer_input_seguro(self, prompt: str) -> Optional[str]:
