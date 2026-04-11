@@ -111,8 +111,15 @@ if FileHistory is not None:
     class SafeFileHistory(FileHistory):
         """Historial endurecido que sanitiza entradas antes de persistir."""
 
-        def append_string(self, value: str) -> None:
-            sanitized = sanitize_input(value)
+        def append_string(self, value: object) -> None:
+            if isinstance(value, str):
+                raw_value = value
+            elif value is None:
+                raw_value = ""
+            else:
+                raw_value = str(value)
+
+            sanitized = sanitize_input(raw_value)
             _debug_assert_boundary_text_sanitized(
                 sanitized,
                 context="SafeFileHistory.append_string",
