@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import traceback
 from typing import Optional, Any
 from types import TracebackType
 
@@ -43,7 +42,7 @@ from pcobra.core.sandbox import (
 )
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.i18n import _, format_traceback
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import (
     mostrar_advertencia,
@@ -463,16 +462,16 @@ class InteractiveCommand(BaseCommand):
                 else:
                     self.ejecutar_codigo(codigo, validador)
             except Exception as err:  # pragma: no cover - ruta unificada de errores
-                categoria, include_traceback = self._clasificar_error_repl(err)
-                self._log_error(categoria, err, include_traceback=include_traceback)
+                categoria = self._clasificar_error_repl(err)
+                self._log_error(categoria, err)
 
-    def _clasificar_error_repl(self, error: Exception) -> tuple[str, bool]:
+    def _clasificar_error_repl(self, error: Exception) -> str:
         """Clasifica errores del REPL para un reporte único en el loop principal."""
         if isinstance(error, (LexerError, ParserError)):
-            return _("Error de sintaxis"), False
+            return _("Error de sintaxis")
         if isinstance(error, RuntimeError):
-            return _("Error crítico"), False
-        return _("Error general"), True
+            return _("Error crítico")
+        return _("Error general")
 
     def _limpiar_estado_repl(self, estado: dict[str, Any]) -> None:
         estado["buffer_lineas"].clear()
@@ -650,33 +649,25 @@ class InteractiveCommand(BaseCommand):
         if salida:
             mostrar_info(str(salida))
 
-    def _log_error(
-        self, categoria: str, error: Exception, include_traceback: bool = False
-    ) -> None:
+    def _log_error(self, categoria: str, error: Exception) -> None:
         """Registra y muestra un error.
 
         Args:
             categoria: Categoría del error
             error: Excepción ocurrida
-            include_traceback: Si se debe incluir la traza completa del error
         """
         mensaje_usuario = f"{categoria}: {error}"
 
         # Log técnico único (sin duplicar salida en consola del usuario).
-        self.logger.debug(
+        logging.debug(
             "Error en REPL: %s",
             mensaje_usuario,
             exc_info=self._debug_mode,
         )
 
-        if self._debug_mode:
-            traza = traceback.format_exc()
-            if traza and traza.strip() != "NoneType: None":
-                mensaje_usuario = f"{mensaje_usuario}\n{traza}"
-            elif include_traceback:
-                mensaje_usuario = f"{mensaje_usuario}\n{traceback.format_stack()[-1]}"
-
         mostrar_error(mensaje_usuario, registrar_log=False)
+        if self._debug_mode:
+            print(format_traceback(error))
 
     def __enter__(self) -> "InteractiveCommand":
         """Inicializa recursos del REPL.

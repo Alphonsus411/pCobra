@@ -17,10 +17,26 @@ def test_handle_execution_error_normal_hides_traceback_and_keeps_logging_excepti
 
     assert result == 1
     assert mock_error.call_count == 1
-    assert "--debug" in mock_error.call_args[0][0]
+    assert mock_error.call_args[0][0] == "boom"
     mock_logging_exception.assert_called_once_with("Error in execution")
     mock_print.assert_not_called()
     mock_format_traceback.assert_not_called()
+
+
+def test_handle_execution_error_no_duplica_salida_si_ya_fue_mostrada():
+    app = CliApplication()
+    exc = RuntimeError("boom")
+    setattr(exc, "error_ya_mostrado", True)
+
+    with patch("cobra.cli.cli.messages.mostrar_error") as mock_error, patch(
+        "cobra.cli.cli.logging.exception"
+    ) as mock_logging_exception, patch("cobra.cli.cli.print") as mock_print:
+        result = app._handle_execution_error(exc, "es", debug_activo=False)
+
+    assert result == 1
+    mock_error.assert_not_called()
+    mock_logging_exception.assert_called_once_with("Error in execution")
+    mock_print.assert_not_called()
 
 
 def test_handle_execution_error_debug_shows_traceback_and_keeps_logging_exception():
