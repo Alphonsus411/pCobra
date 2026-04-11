@@ -52,12 +52,12 @@ def test_bootstrap_no_rompe_si_stream_no_tiene_reconfigure(monkeypatch):
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
 
-def test_bootstrap_no_sobrescribe_pythonioencoding_existente(monkeypatch):
+def test_bootstrap_sobrescribe_pythonioencoding_existente_a_utf8(monkeypatch):
     monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
 
     reconfigurar_consola_utf8()
 
-    assert os.environ["PYTHONIOENCODING"] == "latin-1"
+    assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
 
 def test_cli_subprocess_preserva_utf8_en_salida_acentuada():
