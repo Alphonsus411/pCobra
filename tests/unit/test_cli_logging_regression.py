@@ -37,3 +37,27 @@ def test_con_debug_si_aparecen_trazas_internas():
     assert "[RUN] Ejecutando snippet en REPL" in salida
     assert "[EXEC] Ejecutando AST en intérprete" in salida
     assert "[EVAL] Resultado de evaluación" in salida
+
+
+def test_configure_logging_es_idempotente_y_no_duplica_emision():
+    configure_logging(debug=True)
+    configure_logging(debug=True)
+
+    root_logger = logging.getLogger()
+    assert len(root_logger.handlers) == 1
+
+    buffer = StringIO()
+    original_stream = None
+    handler = root_logger.handlers[0]
+    if hasattr(handler, "stream"):
+        original_stream = handler.stream
+        handler.setStream(buffer)
+
+    try:
+        logging.getLogger("pcobra.test").debug("mensaje único")
+    finally:
+        if original_stream is not None:
+            handler.setStream(original_stream)
+
+    salida = buffer.getvalue()
+    assert salida.count("mensaje único") == 1
