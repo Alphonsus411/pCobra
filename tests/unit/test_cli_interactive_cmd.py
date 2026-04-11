@@ -45,6 +45,7 @@ def _args():
         sandbox=False,
         sandbox_docker=None,
         ignore_memory_limit=True,
+        debug=False,
     )
 
 
@@ -148,6 +149,30 @@ def test_interactive_help_refleja_politica_de_bloques_y_lineas_blancas():
     assert subparser.description is not None
     assert 'como máximo 2 líneas en blanco consecutivas' in subparser.description
     assert 'se prohíben bloques vacíos' in subparser.description
+
+
+def test_interactive_help_incluye_flag_debug():
+    cmd = InteractiveCommand(MagicMock())
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='command')
+    subparser = cmd.register_subparser(subparsers)
+
+    acciones = {action.dest: action for action in subparser._actions}
+    assert "debug" in acciones
+    assert acciones["debug"].help == "Muestra trazas internas de depuración"
+
+
+def test_interactive_persist_debug_enabled_en_estado_repl():
+    cmd = InteractiveCommand(MagicMock())
+    args = _args()
+    args.debug = True
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['salir']):
+        ret = cmd.run(args)
+
+    assert ret == 0
+    assert cmd._estado_repl["debug_enabled"] is True
 
 
 def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
