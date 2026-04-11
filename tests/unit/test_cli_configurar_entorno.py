@@ -1,7 +1,9 @@
 import logging
 import os
+import subprocess
 import sys
 import types
+from pathlib import Path
 
 
 yaml_stub = types.ModuleType("yaml")
@@ -55,6 +57,7 @@ jsonschema_stub.validate = lambda *args, **kwargs: None
 sys.modules.setdefault("jsonschema", jsonschema_stub)
 
 from pcobra.cli import _reconfigurar_consola_utf8, configurar_entorno
+import pcobra.cli as cli
 
 
 def test_configurar_entorno_permiso_denegado(monkeypatch, caplog):
@@ -106,3 +109,67 @@ def test_reconfigurar_consola_utf8_no_sobrescribe_pythonioencoding(monkeypatch):
     _reconfigurar_consola_utf8()
 
     assert os.environ["PYTHONIOENCODING"] == "latin-1"
+
+
+class _DummyStreamConReconfigure(_DummyStreamSinReconfigure):
+    def __init__(self):
+        super().__init__()
+        self.calls: list[dict[str, str]] = []
+
+    def reconfigure(self, *, encoding: str):
+        self.calls.append({"encoding": encoding})
+
+
+def test_reconfigurar_consola_utf8_reconfigura_stdout_y_stderr(monkeypatch):
+    out = _DummyStreamConReconfigure()
+    err = _DummyStreamConReconfigure()
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(sys, "stderr", err)
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+
+    _reconfigurar_consola_utf8()
+
+    assert out.calls == [{"encoding": "utf-8"}]
+    assert err.calls == [{"encoding": "utf-8"}]
+    assert os.environ["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
+    orden: list[str] = []
+
+    monkeypatch.setattr(cli, "_reconfigurar_consola_utf8", lambda: orden.append("utf8"))
+    monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: orden.append("bootstrap"))
+    monkeypatch.setattr(cli, "configure_logging", lambda debug: orden.append("logging"))
+    monkeypatch.setattr(cli, "configurar_entorno", lambda: orden.append("entorno"))
+
+    class _DummyApp:
+        def run(self, _argv):
+            orden.append("cli")
+            return 0
+
+    monkeypatch.setattr("pcobra.cobra.cli.cli.CliApplication", _DummyApp)
+
+    assert cli.main(["comando-ficticio"]) == 0
+    assert orden[:3] == ["utf8", "bootstrap", "logging"]
+    assert "cli" in orden
+
+
+def test_smoke_cli_unicode_salida_bytes_utf8():
+    env = os.environ.copy()
+    env.pop("PYTHONIOENCODING", None)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from pcobra.cli import _reconfigurar_consola_utf8; "
+            "_reconfigurar_consola_utf8(); print('después')",
+        ],
+        env=env,
+        capture_output=True,
+        check=True,
+        cwd=str(Path(__file__).resolve().parents[2]),
+    )
+
+    assert result.stdout == "después\n".encode("utf-8")
+    assert result.stdout.decode("utf-8") == "después\n"
