@@ -10,7 +10,7 @@ from pcobra.core.errors import CondicionNoBooleanaError
 def test_context_logging(caplog):
     dummy = types.SimpleNamespace()
     cmd = InteractiveCommand(dummy)
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.DEBUG):
         with cmd:
             pass
     messages = [r.message for r in caplog.records]
@@ -89,23 +89,23 @@ def test_format_user_error_elimina_prefijos_duplicados():
 def test_log_error_no_debug_solo_imprime_error_limpio():
     cmd = InteractiveCommand(types.SimpleNamespace())
     cmd._debug_mode = False
-    mock_print = Mock()
+    mock_mostrar_error = Mock()
     globals_log_error = InteractiveCommand._log_error.__globals__
 
     with patch.dict(
         globals_log_error,
-        {"print": mock_print},
+        {"mostrar_error": mock_mostrar_error},
     ):
         cmd._log_error(_("Error general"), Exception("Error general: Error: fallo"))
 
-    mock_print.assert_called_once_with("Error: fallo")
+    mock_mostrar_error.assert_called_once_with("fallo", registrar_log=False)
 
 
 def test_log_error_debug_muestra_traceback_en_logger():
     cmd = InteractiveCommand(types.SimpleNamespace())
     cmd._debug_mode = True
     cmd._estado_repl["debug_enabled"] = True
-    mock_print = Mock()
+    mock_mostrar_error = Mock()
     mock_logger = Mock()
     globals_log_error = InteractiveCommand._log_error.__globals__
     mock_traceback = Mock(return_value="TRACEBACK")
@@ -113,7 +113,7 @@ def test_log_error_debug_muestra_traceback_en_logger():
     with patch.dict(
         globals_log_error,
         {
-            "print": mock_print,
+            "mostrar_error": mock_mostrar_error,
             "format_traceback": mock_traceback,
         },
     ):
@@ -121,7 +121,7 @@ def test_log_error_debug_muestra_traceback_en_logger():
         cmd._log_error(_("Error general"), CondicionNoBooleanaError())
 
     mock_traceback.assert_called_once()
-    mock_print.assert_called_once()
-    primer_mensaje = mock_print.call_args_list[0].args[0]
-    assert primer_mensaje.startswith("Error: ")
+    mock_mostrar_error.assert_called_once()
+    assert mock_mostrar_error.call_args.kwargs == {"registrar_log": False}
+    assert isinstance(mock_mostrar_error.call_args.args[0], str)
     mock_logger.debug.assert_any_call("TRACEBACK")
