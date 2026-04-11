@@ -555,9 +555,20 @@ class CliApplication:
             logging.error("Error in execution: %s", mensaje)
         return 1
 
+    @staticmethod
+    def _sanear_texto_entrada(value: object) -> str:
+        if isinstance(value, str):
+            return sanitize_input(value)
+        if value is None:
+            return ""
+        return sanitize_input(str(value))
+
+    def _sanear_argv(self, argv: List[str]) -> List[str]:
+        return [self._sanear_texto_entrada(token) for token in argv]
+
     def _leer_input_seguro(self, prompt: str) -> Optional[str]:
         try:
-            return sanitize_input(input(prompt))
+            return self._sanear_texto_entrada(input(prompt))
         except EOFError:
             messages.mostrar_info(_("Entrada finalizada (EOF). Cancelando menú interactivo."))
             return None
@@ -580,6 +591,7 @@ class CliApplication:
             if valor is None:
                 return None, 0
 
+            valor = self._sanear_texto_entrada(valor)
             valor_normalizado = valor.strip().lower()
             if valor_normalizado in opciones_normalizadas:
                 return valor_normalizado, 0
@@ -790,6 +802,7 @@ class CliApplication:
                     argv = []
 
             try:
+                argv = self._sanear_argv(argv)
                 args = self._parse_arguments(argv)
                 command = getattr(args, "cmd", None)
                 command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
