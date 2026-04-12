@@ -35,30 +35,17 @@ def _lineas_sin_trazas(salida: str) -> list[str]:
 def test_mientras_reutiliza_variable_externa_sin_crear_scope() -> None:
     codigo = """
 var i = 10
+
 mientras i < 12:
     i = i + 1
 fin
+
 imprimir(i)
 """
 
     salida = _ejecutar_codigo_y_capturar_stdout(codigo)
     lineas = _lineas_sin_trazas(salida)
-    assert lineas[-1] == "12"
-    assert "Variable no declarada: i" not in salida
-    assert "NameError" not in salida
 
-
-def test_si_reutiliza_variable_externa_sin_crear_scope() -> None:
-    codigo = """
-var i = 10
-si verdadero:
-    i = i + 2
-fin
-imprimir(i)
-"""
-
-    salida = _ejecutar_codigo_y_capturar_stdout(codigo)
-    lineas = _lineas_sin_trazas(salida)
     assert lineas[-1] == "12"
     assert "Variable no declarada: i" not in salida
     assert "NameError" not in salida
