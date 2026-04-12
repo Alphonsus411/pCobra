@@ -16,12 +16,18 @@ def validar_archivo_existente(ruta: str | Path) -> Path:
     Raises:
         FileNotFoundError: Si el archivo no existe.
     """
-    path = Path(ruta)
-    if not path.exists() or not path.is_file():
+    input_path = Path(ruta).expanduser()
+    absolute_path = Path.cwd() / input_path
+    resolved_path = absolute_path.resolve(strict=False)
+
+    if not resolved_path.exists() or not resolved_path.is_file():
         raise FileNotFoundError(
-            _("El archivo '{path}' no existe").format(path=path)
+            _(
+                "El archivo no existe o no es un archivo regular. "
+                "Ruta original: '{original}', ruta resuelta: '{resolved}'"
+            ).format(original=ruta, resolved=resolved_path)
         )
-    return path
+    return resolved_path
 
 
 ExtraValidatorsInput = Union[str, Path, Iterable[Union[str, Path]]]
