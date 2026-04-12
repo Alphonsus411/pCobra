@@ -3,8 +3,6 @@ from __future__ import annotations
 from io import StringIO
 from unittest.mock import patch
 
-import pytest
-
 from cobra.core import Lexer, Parser
 from core.interpreter import InterpretadorCobra
 
@@ -43,11 +41,7 @@ fin
 imprimir(i)
 """
 
-    try:
-        salida = _ejecutar_codigo_y_capturar_stdout(codigo)
-    except NameError as exc:  # pragma: no cover - regresión explícita
-        pytest.fail(f"No debía lanzar NameError: {exc}")
-
+    salida = _ejecutar_codigo_y_capturar_stdout(codigo)
     lineas = _lineas_sin_trazas(salida)
     assert lineas[-1] == "12"
     assert "NameError: Variable no declarada: i" not in salida
@@ -62,11 +56,7 @@ fin
 imprimir(i)
 """
 
-    try:
-        salida = _ejecutar_codigo_y_capturar_stdout(codigo)
-    except NameError as exc:  # pragma: no cover - regresión explícita
-        pytest.fail(f"No debía lanzar NameError: {exc}")
-
+    salida = _ejecutar_codigo_y_capturar_stdout(codigo)
     lineas = _lineas_sin_trazas(salida)
     assert lineas[-1] == "12"
     assert "NameError: Variable no declarada: i" not in salida
