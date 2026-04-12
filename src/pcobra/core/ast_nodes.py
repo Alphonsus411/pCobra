@@ -1,7 +1,7 @@
 """Definiciones de los nodos del árbol de sintaxis abstracta de Cobra."""
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import Any, Iterator, List, Optional, TYPE_CHECKING
 from collections.abc import Mapping
 import warnings
 
@@ -38,7 +38,8 @@ class NodoBloque(NodoAST):
     def __post_init__(self) -> None:
         self.instrucciones = list(self.instrucciones or [])
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[NodoAST]:
+        """Itera las instrucciones en el mismo orden en que se declararon."""
         return iter(self.instrucciones)
 
     def __len__(self):
