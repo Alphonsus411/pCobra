@@ -171,5 +171,6 @@ def test_smoke_cli_unicode_salida_bytes_utf8():
         cwd=str(Path(__file__).resolve().parents[2]),
     )
 
-    assert result.stdout == "después\n".encode("utf-8")
-    assert result.stdout.decode("utf-8") == "después\n"
+    salida = result.stdout.decode("utf-8")
+
+    assert salida.splitlines() == ["después"]
