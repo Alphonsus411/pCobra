@@ -11,7 +11,6 @@ from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
     normalizar_validadores_extra,
-    validar_archivo_existente,
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.cli.target_policies import (
@@ -166,28 +165,39 @@ class ExecuteCommand(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
-    def _validar_archivo(self, archivo: str) -> None:
+    def _validar_archivo(self, archivo: str) -> Path:
         """Valida que el archivo exista y no exceda el tamaño máximo permitido.
 
         Args:
             archivo: Ruta al archivo a validar
+
+        Returns:
+            Path: Ruta normalizada y resuelta del archivo.
 
         Raises:
             ValueError: Si el archivo no existe o excede el tamaño máximo
                 permitido. Los errores de archivo inexistente se convierten
                 en ValueError con un mensaje amigable para la CLI.
         """
-        try:
-            ruta = validar_archivo_existente(archivo)
-        except FileNotFoundError as exc:
+        input_path = Path(archivo).expanduser()
+        resolved_path = (Path.cwd() / input_path).resolve(strict=False)
+
+        if not resolved_path.exists():
             raise ValueError(
                 _(
                     "No se encontró el archivo '{path}'. "
                     "Verifica la ruta e inténtalo de nuevo."
                 ).format(path=archivo)
-            ) from exc
-        if ruta.stat().st_size > self.MAX_FILE_SIZE:
+            )
+        if not resolved_path.is_file():
+            raise ValueError(
+                _(
+                    "La ruta '{path}' no corresponde a un archivo válido."
+                ).format(path=archivo)
+            )
+        if resolved_path.stat().st_size > self.MAX_FILE_SIZE:
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.MAX_FILE_SIZE} bytes)")
+        return resolved_path
 
     def _limitar_recursos(self, funcion):
         """Configura límites de CPU y ejecuta una función."""
@@ -213,7 +223,8 @@ class ExecuteCommand(BaseCommand):
             return 1
 
         try:
-            self._validar_archivo(args.archivo)
+            archivo_original = args.archivo
+            archivo_resuelto = self._validar_archivo(archivo_original)
         except ValueError as e:
             mostrar_error(str(e), registrar_log=False)
             return 1
@@ -234,7 +245,7 @@ class ExecuteCommand(BaseCommand):
         allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
 
         try:
-            raiz_proyecto = _detectar_raiz_proyecto_desde_archivo(args.archivo)
+            raiz_proyecto = _detectar_raiz_proyecto_desde_archivo(str(archivo_resuelto))
             validar_dependencias(
                 "python",
                 module_map.get_toml_map(),
@@ -244,13 +255,13 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(f"Error de dependencias: {dep_err}", registrar_log=False)
             return 1
 
-        if formatear and not self._formatear_codigo(args.archivo):
+        if formatear and not self._formatear_codigo(str(archivo_resuelto)):
             return 1
 
         self.logger.setLevel(logging.DEBUG if depurar else logging.INFO)
 
         try:
-            with open(args.archivo, "r", encoding="utf-8") as f:
+            with open(archivo_resuelto, "r", encoding="utf-8") as f:
                 codigo = f.read()
         except (PermissionError, UnicodeDecodeError) as e:
             mostrar_error(f"Error al leer el archivo: {e}", registrar_log=False)
