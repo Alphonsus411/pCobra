@@ -62,3 +62,12 @@ def test_regresion_ejecutar_ast_no_revive_error_de_dict_en_listas() -> None:
 
     with pytest.raises(RuntimeError, match=r"^Estructura AST inválida en fase 'parseo':"):
         inter.ejecutar_ast([nodo])
+
+
+def test_nodo_bloque_preserva_orden_e_iteracion() -> None:
+    primero = NodoValor(1)
+    segundo = NodoValor(2)
+    bloque = NodoBloque([primero, segundo])
+
+    assert list(bloque) == [primero, segundo]
+    assert bloque.instrucciones == [primero, segundo]

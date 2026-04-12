@@ -529,6 +529,8 @@ class ClassicParser:
 
         self._exigir_dospuntos("la condición del bucle 'mientras'")
 
+        # El cuerpo de ``mientras`` siempre se parsea como bloque completo para
+        # evitar rutas antiguas de sentencia única.
         cuerpo = self._parse_bloque_condicional(
             [TipoToken.FIN, TipoToken.EOF],
             "mientras",
