@@ -386,7 +386,6 @@ class ClassicParser:
             return self.expresion()
 
         except Exception as e:
-            logger.error(f"Error en la declaración: {e}")
             raise
 
     def declaracion_para(self, asincronico: bool = False):
