@@ -432,14 +432,11 @@ class CompileCommand(BaseCommand):
             return 0
 
         except PrimitivaPeligrosaError as pe:
-            logging.error("Primitiva peligrosa: %s", pe)
             mostrar_error(str(pe))
             return 1
         except ParserError as se:
-            logging.error("Error de sintaxis durante la transpilación: %s", se)
             mostrar_error(f"Error durante la transpilación: {se}")
             return 1
         except Exception as e:
-            logging.error("Error general durante la transpilación: %s", e)
             mostrar_error(str(e))
             return 1
