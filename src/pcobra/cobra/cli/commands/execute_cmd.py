@@ -1,6 +1,5 @@
 import importlib
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,6 +10,7 @@ from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
     normalizar_validadores_extra,
+    validar_archivo_existente,
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.cli.target_policies import (
@@ -179,22 +179,16 @@ class ExecuteCommand(BaseCommand):
                 permitido. Los errores de archivo inexistente se convierten
                 en ValueError con un mensaje amigable para la CLI.
         """
-        input_path = Path(archivo).expanduser()
-        resolved_path = (Path.cwd() / input_path).resolve(strict=False)
-
-        if not resolved_path.exists():
+        try:
+            resolved_path = validar_archivo_existente(archivo)
+        except FileNotFoundError as error:
+            self.logger.debug("Validación de archivo falló: %s", error)
             raise ValueError(
                 _(
                     "No se encontró el archivo '{path}'. "
                     "Verifica la ruta e inténtalo de nuevo."
                 ).format(path=archivo)
-            )
-        if not resolved_path.is_file():
-            raise ValueError(
-                _(
-                    "La ruta '{path}' no corresponde a un archivo válido."
-                ).format(path=archivo)
-            )
+            ) from error
         if resolved_path.stat().st_size > self.MAX_FILE_SIZE:
             raise ValueError(f"El archivo excede el tamaño máximo permitido ({self.MAX_FILE_SIZE} bytes)")
         return resolved_path
