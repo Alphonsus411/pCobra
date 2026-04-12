@@ -16,14 +16,13 @@ def test_context_logging(caplog):
     assert _("Finalizando REPL de Cobra") in messages
 
 
-def test_log_error_emits_debug_once(caplog):
+def test_log_error_emits_error_once(caplog):
     dummy = types.SimpleNamespace()
     cmd = InteractiveCommand(dummy)
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.ERROR):
         cmd._log_error(_("Error de prueba"), RuntimeError("fallo"))
 
     record = caplog.records[-1]
     assert "Error en REPL" in record.message
     assert _("Error de prueba") in record.message
-    assert record.levelno == logging.DEBUG
-
+    assert record.levelno == logging.ERROR

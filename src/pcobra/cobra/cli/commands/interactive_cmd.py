@@ -656,8 +656,8 @@ class InteractiveCommand(BaseCommand):
         """
         mensaje_usuario = f"{categoria}: {error}"
 
-        # Log técnico único (sin duplicar salida en consola del usuario).
-        self.logger.debug("Error en REPL: %s", mensaje_usuario, exc_info=True)
+        # Log técnico único al nivel error (sin duplicar salida en consola del usuario).
+        self.logger.error("Error en REPL: %s", mensaje_usuario, exc_info=True)
 
         if self._debug_mode:
             traza = traceback.format_exc()
