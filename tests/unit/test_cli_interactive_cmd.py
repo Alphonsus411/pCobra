@@ -367,6 +367,16 @@ def test_ejecutar_codigo_no_imprime_cuando_resultado_es_none():
     assert mock_stdout.getvalue() == ''
 
 
+def test_es_nodo_control_sin_echo_repl_reconoce_alias_si_y_mientras_por_nombre():
+    cmd = InteractiveCommand(MagicMock())
+
+    NodoSi = type("NodoSi", (), {})
+    NodoMientras = type("NodoMientras", (), {})
+
+    assert cmd._es_nodo_control_sin_echo_repl(NodoSi()) is True
+    assert cmd._es_nodo_control_sin_echo_repl(NodoMientras()) is True
+
+
 def test_ejecutar_codigo_traduce_booleano_solo_en_salida_no_en_semantica_interna():
     class _InterpretadorDummy:
         def __init__(self):
