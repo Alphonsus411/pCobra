@@ -551,8 +551,6 @@ class CliApplication:
         if debug_activo:
             logging.exception("Error in execution")
             logging.getLogger(__name__).debug(format_traceback(exc, language))
-        else:
-            logging.error("Error in execution: %s", mensaje)
         return 1
 
     @staticmethod
@@ -828,8 +826,6 @@ class CliApplication:
             except Exception as e:
                 if debug_activo:
                     logging.exception("Fatal error in application")
-                else:
-                    logging.error("Fatal error in application: %s", str(e).strip() or repr(e))
                 mensaje_error = str(e).strip() or _("Ha ocurrido un error inesperado.")
                 messages.mostrar_error(
                     _("Fatal error: {}").format(mensaje_error),
