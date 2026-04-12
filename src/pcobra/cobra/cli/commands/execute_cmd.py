@@ -297,7 +297,6 @@ class ExecuteCommand(BaseCommand):
         try:
             self._analizar_codigo(codigo)
         except (LexerError, ParserError) as e:
-            self.logger.error("Error de análisis en sandbox", extra={"error": str(e)})
             mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
 
@@ -330,11 +329,9 @@ class ExecuteCommand(BaseCommand):
                 mostrar_info(str(salida))
             return 0
         except sandbox_module.SecurityError as e:
-            self.logger.error("Error de seguridad en sandbox", extra={"error": str(e)})
             mostrar_error(f"Error de seguridad en sandbox: {e}", registrar_log=False)
             return 1
         except RuntimeError as e:
-            self.logger.error("Error de ejecución en sandbox", extra={"error": str(e)})
             mensaje = f"Error de ejecución en sandbox: {e}"
             if "RestrictedPython" in str(e):
                 mensaje += (
@@ -353,7 +350,6 @@ class ExecuteCommand(BaseCommand):
                 mostrar_info(str(salida))
             return 0
         except RuntimeError as e:
-            self.logger.error("Error en contenedor Docker", extra={"error": str(e)})
             mostrar_error(f"Error ejecutando en contenedor Docker: {e}", registrar_log=False)
             return 1
 
@@ -362,7 +358,6 @@ class ExecuteCommand(BaseCommand):
         try:
             ast = self._analizar_codigo(codigo)
         except (LexerError, ParserError) as e:
-            self.logger.error("Error de análisis", extra={"error": str(e)})
             mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
 
@@ -405,11 +400,9 @@ class ExecuteCommand(BaseCommand):
                 for nodo in ast:
                     nodo.aceptar(validador)
             except (TypeError, ValueError) as e:
-                self.logger.error("Error cargando validadores extra", extra={"error": str(e)})
                 mostrar_error(str(e), registrar_log=False)
                 return 1
             except PrimitivaPeligrosaError as pe:
-                self.logger.error("Primitiva peligrosa detectada", extra={"error": str(pe)})
                 mostrar_error(str(pe), registrar_log=False)
                 return 1
 
@@ -421,7 +414,6 @@ class ExecuteCommand(BaseCommand):
             )
             return 0
         except Exception as e:
-            self.logger.error("Error de ejecución", extra={"error": str(e)})
             mostrar_error(f"Error ejecutando el script: {e}", registrar_log=False)
             return 1
 
