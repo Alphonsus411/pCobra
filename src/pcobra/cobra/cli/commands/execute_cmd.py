@@ -232,7 +232,10 @@ class ExecuteCommand(BaseCommand):
         try:
             extra_validators = normalizar_validadores_extra(raw_extra_validators)
         except TypeError:
-            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"), registrar_log=False)
+            mostrar_error(
+                _("Los validadores extra deben ser una ruta o lista de rutas"),
+                registrar_log=False,
+            )
             return 1
         sandbox = getattr(args, "sandbox", False)
         contenedor = getattr(args, "contenedor", None)
