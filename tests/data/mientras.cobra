@@ -1,0 +1,12 @@
+var i = 10
+imprimir("ANTES:")
+imprimir(i)
+
+mientras i < 12:
+    imprimir("DENTRO:")
+    imprimir(i)
+    i = i + 1
+fin
+
+imprimir("FINAL:")
+imprimir(i)
