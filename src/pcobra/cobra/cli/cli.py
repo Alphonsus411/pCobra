@@ -836,22 +836,8 @@ class CliApplication:
 
 def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point for the CLI."""
-    configure_encoding()
     application = CliApplication()
     return application.run(argv)
-
-
-def configure_encoding() -> None:
-    import os
-    import sys
-
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
-    os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
 if __name__ == "__main__":
