@@ -104,3 +104,29 @@ def test_import_bench_cmd_no_depende_de_scripts_py_path() -> None:
         "`pcobra.cobra`. "
         f"stderr={result.stderr!r}"
     )
+
+
+def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
+    """Contrato: startup de CLI debe preservar UTF-8 sin mojibake en salida."""
+
+    result = _run_python_isolated(
+        "import tempfile; "
+        "from pathlib import Path; "
+        "from pcobra.cli import main; "
+        "tmp = Path(tempfile.gettempdir()) / 'pcobra_utf8_test.co'; "
+        "tmp.write_text('imprimir(\"áéíóú ñ € 🚀\")\\n', encoding='utf-8'); "
+        "raise SystemExit(main(['ejecutar', str(tmp)]))"
+    )
+
+    assert result.returncode == 0, (
+        "La ejecución de `imprimir` con literal UTF-8 debe finalizar correctamente. "
+        f"stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
+    assert "áéíóú ñ € 🚀" in result.stdout, (
+        "La salida UTF-8 del CLI debe preservarse sin mojibake. "
+        f"stdout={result.stdout!r}"
+    )
+    assert "Ã¡" not in result.stdout and "â" not in result.stdout, (
+        "Se detectó posible mojibake en salida de CLI. "
+        f"stdout={result.stdout!r}"
+    )
