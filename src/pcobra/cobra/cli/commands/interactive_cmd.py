@@ -33,6 +33,7 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.transpilers import module_map
+from pcobra.core.ast_nodes import NodoBucleMientras, NodoCondicional, NodoPara, NodoSwitch, NodoTryCatch
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.resource_limits import limitar_memoria_mb
 from pcobra.core.sandbox import (
@@ -173,6 +174,13 @@ class InteractiveCommand(BaseCommand):
             TipoToken.INTENTAR,
             TipoToken.SWITCH,
         }
+    )
+    _NODOS_CONTROL_SIN_ECHO_REPL = (
+        NodoCondicional,
+        NodoBucleMientras,
+        NodoPara,
+        NodoTryCatch,
+        NodoSwitch,
     )
 
     def __init__(self, interpretador: InterpretadorCobra) -> None:
@@ -322,7 +330,12 @@ class InteractiveCommand(BaseCommand):
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         resultado = self.interpretador.ejecutar_ast(ast)
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
-        if resultado is not None:
+        debe_imprimir_resultado = (
+            resultado is not None
+            and len(ast) == 1
+            and not isinstance(ast[0], self._NODOS_CONTROL_SIN_ECHO_REPL)
+        )
+        if debe_imprimir_resultado:
             if isinstance(resultado, bool):
                 print("verdadero" if resultado else "falso")
             else:

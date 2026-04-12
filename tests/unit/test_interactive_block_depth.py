@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import StringIO
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -7,6 +8,7 @@ import pytest
 
 from cobra.cli.commands.interactive_cmd import InteractiveCommand
 from cobra.core import ParserError
+from core.interpreter import InterpretadorCobra
 
 
 def _args() -> SimpleNamespace:
@@ -119,3 +121,20 @@ def test_exceso_lineas_blanco_consecutivas_en_bloque_lanza_error() -> None:
         match=r"^Máximo de 2 líneas en blanco consecutivas dentro de un bloque\.$",
     ):
         cmd._manejar_linea_blanca(estado)
+
+
+def test_repl_no_imprime_resultados_intermedios_de_mientras() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+    codigo = "\n".join(
+        [
+            "mientras verdadero:",
+            "    7",
+            "    romper",
+            "fin",
+        ]
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo(codigo)
+
+    assert mock_stdout.getvalue() == ""
