@@ -44,7 +44,8 @@ imprimir(i)
     salida = _ejecutar_codigo_y_capturar_stdout(codigo)
     lineas = _lineas_sin_trazas(salida)
     assert lineas[-1] == "12"
-    assert "NameError: Variable no declarada: i" not in salida
+    assert "Variable no declarada: i" not in salida
+    assert "NameError" not in salida
 
 
 def test_si_reutiliza_variable_externa_sin_crear_scope() -> None:
@@ -59,4 +60,5 @@ imprimir(i)
     salida = _ejecutar_codigo_y_capturar_stdout(codigo)
     lineas = _lineas_sin_trazas(salida)
     assert lineas[-1] == "12"
-    assert "NameError: Variable no declarada: i" not in salida
+    assert "Variable no declarada: i" not in salida
+    assert "NameError" not in salida
