@@ -1449,11 +1449,14 @@ class InterpretadorCobra:
 
     def ejecutar_mientras(self, nodo):
         """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
+        # Importante: este bucle reutiliza el contexto actual (sin crear
+        # ámbitos nuevos) para que las asignaciones sean visibles fuera.
         while self._evaluar_condicion_control(nodo.condicion):
             for instruccion in nodo.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
                     return resultado
+        return None
 
     def ejecutar_try_catch(self, nodo):
         """Ejecuta un bloque ``try`` con manejo de excepciones Cobra."""
