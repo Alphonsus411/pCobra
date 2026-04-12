@@ -182,6 +182,15 @@ class InteractiveCommand(BaseCommand):
         NodoTryCatch,
         NodoSwitch,
     )
+    _NOMBRES_NODOS_CONTROL_SIN_ECHO_REPL = frozenset(
+        {
+            "NodoCondicional",
+            "NodoBucleMientras",
+            "NodoPara",
+            "NodoTryCatch",
+            "NodoSwitch",
+        }
+    )
 
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
@@ -333,13 +342,20 @@ class InteractiveCommand(BaseCommand):
         debe_imprimir_resultado = (
             resultado is not None
             and len(ast) == 1
-            and not isinstance(ast[0], self._NODOS_CONTROL_SIN_ECHO_REPL)
+            and not self._es_nodo_control_sin_echo_repl(ast[0])
         )
         if debe_imprimir_resultado:
             if isinstance(resultado, bool):
                 print("verdadero" if resultado else "falso")
             else:
                 print(resultado)
+
+    def _es_nodo_control_sin_echo_repl(self, nodo: Any) -> bool:
+        """Determina si un nodo de control debe omitir echo de resultado en REPL."""
+
+        return isinstance(nodo, self._NODOS_CONTROL_SIN_ECHO_REPL) or (
+            nodo.__class__.__name__ in self._NOMBRES_NODOS_CONTROL_SIN_ECHO_REPL
+        )
 
     def run(self, args: Any) -> int:
         """Ejecuta el REPL de Cobra.
