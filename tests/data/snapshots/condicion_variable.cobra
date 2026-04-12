@@ -1,0 +1,9 @@
+var i = 10
+
+imprimir(i)
+
+mientras i < 12:
+    i = i + 1
+fin
+
+imprimir(i)
