@@ -1,113 +1,107 @@
-{
+ {
   "proyecto": "pCobra",
-  "fase_actual": "refinamiento de CLI y experiencia de usuario",
-  "objetivo": "CLI robusta, consistente y portable (especialmente Windows)",
-  "areas_trabajadas": [
-    "resolucion de paths",
-    "encoding UTF-8",
-    "manejo de errores (duplicacion)"
-  ],
+  "fase": "validación semántica del lenguaje tras fix inicial de scope en loops",
+  "estado_global": {
+    "cli": "estable",
+    "encoding": "resuelto",
+    "errores": "coherentes (single error surface)",
+    "repl": "funcional",
+    "parser_basico": "operativo",
+    "interprete": "parcialmente correcto"
+  },
   "problemas_detectados": [
     {
-      "id": "CLI-PATH-1",
-      "descripcion": "la CLI no encuentra archivos existentes",
-      "causa_probable": "resolucion incorrecta de paths relativa al working directory",
-      "estado": "pendiente"
+      "id": "LOOP-SCOPE-1",
+      "descripcion": "variable no visible dentro de 'mientras' en modo script",
+      "estado": "persistente",
+      "impacto": "alto",
+      "detalle": "el entorno de ejecución dentro del loop no accede correctamente a variables externas"
     },
     {
-      "id": "CLI-ERR-1",
-      "descripcion": "duplicacion de errores en salida",
-      "ejemplo": [
-        "ERROR: Error en la declaración...",
-        "Error: Token inesperado..."
-      ],
-      "causa": "logging en capas internas + renderizado en CLI",
-      "estado": "en proceso de correccion"
+      "id": "LOOP-SCOPE-2",
+      "descripcion": "mutaciones dentro de 'mientras' no persisten fuera del loop en REPL",
+      "estado": "persistente",
+      "impacto": "alto",
+      "detalle": "asignaciones dentro del loop no afectan al entorno visible tras finalizar el bucle"
     },
     {
-      "id": "CLI-ENC-1",
-      "descripcion": "mojibake en REPL y CLI en Windows",
-      "ejemplo": "Ã¡Ã©Ã­Ã³Ãº Ã± â‚¬",
-      "causa": "desalineacion entre UTF-8 de Python y code page de consola",
-      "estado": "resuelto"
+      "id": "LOOP-EXEC-1",
+      "descripcion": "comportamiento inconsistente entre REPL y ejecución de scripts",
+      "estado": "persistente",
+      "impacto": "alto",
+      "detalle": "REPL no lanza error pero no persiste cambios; script sigue fallando con variable no declarada"
+    },
+    {
+      "id": "LANG-LIMIT-1",
+      "descripcion": "no soporte de '+='",
+      "estado": "confirmado",
+      "impacto": "bajo",
+      "detalle": "limitación de lenguaje, no bug"
+    },
+    {
+      "id": "LANG-LIMIT-2",
+      "descripcion": "funciones no aceptan múltiples argumentos",
+      "estado": "confirmado",
+      "impacto": "bajo",
+      "detalle": "limitación actual del parser"
     }
   ],
-  "soluciones_aplicadas": [
+  "hipotesis_actual": {
+    "principal": "problema en la propagación del entorno (scope) dentro de bloques 'mientras'",
+    "secundarias": [
+      "creación de entornos temporales en ejecución de bloques",
+      "uso de copias de entorno en lugar de referencias",
+      "diferencias entre ejecución REPL y script",
+      "helper de ejecución de bloques crea scope aislado"
+    ]
+  },
+  "fixes_aplicados": [
     {
-      "area": "encoding",
-      "accion": "configuracion global de UTF-8 en entrypoint CLI",
-      "detalle": [
-        "sys.stdout.reconfigure(encoding='utf-8')",
-        "sys.stderr.reconfigure(encoding='utf-8')",
-        "PYTHONIOENCODING=utf-8"
-      ],
-      "resultado": "REPL y CLI muestran correctamente caracteres UTF-8"
-    },
-    {
-      "area": "testing CLI",
-      "accion": "definicion de PoCs estructurados",
-      "tipos": [
-        "ejecucion de archivos",
-        "errores semanticos",
-        "errores de sintaxis",
-        "flujo mixto",
-        "encoding consola y redireccion"
-      ],
-      "resultado": "validacion sistematica del comportamiento"
-    },
-    {
-      "area": "debugging",
-      "accion": "aislamiento de problemas por capas",
-      "resultado": "separacion clara entre REPL, CLI y core"
+      "descripcion": "primer intento de corrección del scope en 'mientras'",
+      "resultado": "parcial",
+      "efecto": "eliminó error en REPL pero no resolvió persistencia ni comportamiento en script"
     }
   ],
-  "principios_arquitectonicos_reforzados": [
+  "fixes_pendientes": [
     {
-      "nombre": "single_error_surface",
-      "descripcion": "solo la CLI debe emitir errores al usuario",
-      "estado": "parcialmente cumplido"
+      "descripcion": "corregir propagación del entorno en loops",
+      "prioridad": "critica"
     },
     {
-      "nombre": "boundary_responsibility",
-      "descripcion": "los problemas de entorno (encoding, paths) se resuelven en la CLI",
-      "estado": "cumplido"
+      "descripcion": "unificar comportamiento entre REPL y script",
+      "prioridad": "critica"
     },
     {
-      "nombre": "core_purity",
-      "descripcion": "no modificar lexer, parser ni interpreter para problemas de infraestructura",
-      "estado": "cumplido"
+      "descripcion": "garantizar persistencia de asignaciones en bloques",
+      "prioridad": "critica"
     }
   ],
   "tests_realizados": {
-    "encoding": {
-      "repl": "ok",
-      "stdout": "ok",
-      "resultado": "UTF-8 completamente funcional"
+    "while_simple_repl": {
+      "resultado": "fallo",
+      "salida": "10",
+      "esperado": "12"
     },
-    "errores": {
-      "semanticos": "ok (sin duplicacion)",
-      "sintacticos": "fail (duplicacion detectada)"
+    "while_script": {
+      "resultado": "fallo",
+      "salida": "Variable no declarada: i"
     }
   },
-  "estado_actual": {
-    "encoding": "resuelto",
-    "repl": "estable",
-    "cli_general": "estable",
-    "duplicacion_errores": "pendiente (parser/capa interna)",
-    "resolucion_paths": "pendiente"
-  },
-  "siguientes_pasos": [
-    "eliminar logging/prints en capas internas (parser/validacion)",
-    "garantizar que solo la CLI renderiza errores",
-    "resolver estrategia robusta de path resolution",
-    "validar nuevamente todos los PoCs",
-    "opcional: sugerencias inteligentes de rutas"
+  "tests_pendientes": [
+    "acumulador (total + i)",
+    "consistencia REPL vs script",
+    "scope en funciones vs loops"
   ],
+  "estado_codex": {
+    "ultimo_prompt_generado": true,
+    "ultimo_prompt_aplicado": false,
+    "nota": "NO se ha ejecutado aún el último prompt de depuración para Codex"
+  },
   "nivel_madurez": {
-    "clasificacion": "CLI avanzada casi lista para produccion",
-    "bloqueadores_restantes": [
-      "duplicacion de errores",
-      "resolucion de paths"
+    "clasificacion": "lenguaje funcional con fallo crítico en modelo de ejecución",
+    "bloqueadores": [
+      "propagación de entorno en loops",
+      "inconsistencia entre modos de ejecución"
     ]
   }
 }
