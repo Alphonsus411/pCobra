@@ -681,7 +681,6 @@ class ClassicParser:
             except ParserError as e:
                 if not recuperar_errores:
                     raise
-                logger.error(f"Error en el bloque '{nombre_bloque}': {e}")
                 self.reportar_error(f"Error en el bloque '{nombre_bloque}': {e}")
                 if self.token_actual().tipo != TipoToken.EOF:
                     self.avanzar()
