@@ -1422,6 +1422,10 @@ class InterpretadorCobra:
 
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
+        # Regla semántica de scope:
+        # ``si/sino`` NO crea un entorno nuevo. Las instrucciones de cada rama
+        # se ejecutan sobre ``self.contextos[-1]`` (contexto activo), por lo que
+        # cualquier asignación queda visible al salir del condicional.
         # Nota: no se captura ``NameError`` ni otras excepciones aquí para no
         # ocultar la causa real del fallo en la evaluación de la condición.
         bloque_si = getattr(
@@ -1449,8 +1453,10 @@ class InterpretadorCobra:
 
     def ejecutar_mientras(self, nodo):
         """Ejecuta un bucle ``mientras`` hasta que la condición sea falsa."""
-        # Importante: este bucle reutiliza el contexto actual (self.variables)
-        # sin crear ámbitos nuevos, de modo que las asignaciones persisten.
+        # Regla semántica de scope:
+        # ``mientras`` NO abre un ámbito nuevo por iteración. El cuerpo del
+        # bucle reutiliza ``self.contextos[-1]`` en cada vuelta y, por tanto,
+        # las mutaciones del contexto persisten entre iteraciones y después.
         while self._evaluar_condicion_control(nodo.condicion):
             for instruccion in nodo.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
@@ -1513,6 +1519,8 @@ class InterpretadorCobra:
             )
 
             def preparar_contexto():
+                # Regla semántica opuesta al control de flujo: cada llamada de
+                # función sí encapsula su scope creando un nuevo contexto local.
                 contexto_base = funcion.get("contexto", {}).copy()
                 self._verificar_valor_contexto(contexto_base)
                 self.contextos.append(contexto_base)
@@ -1525,6 +1533,7 @@ class InterpretadorCobra:
                     self.variables[nombre_param] = valor
 
             def limpiar_contexto():
+                # Se restaura el scope anterior al finalizar la llamada.
                 memoria_local = self.mem_contextos.pop()
                 for idx, tam in memoria_local.values():
                     self.liberar_memoria(idx, tam)
