@@ -826,6 +826,9 @@ class CliApplication:
 
 def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point for the CLI."""
+    from .bootstrap import reconfigurar_consola_utf8
+
+    reconfigurar_consola_utf8()
     application = CliApplication()
     return application.run(argv)
 
