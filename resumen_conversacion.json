@@ -1,108 +1,113 @@
 {
   "proyecto": "pCobra",
-  "fase": "refinamiento de CLI y experiencia de usuario",
-  "objetivo_actual": "lograr una CLI limpia, consistente y portable (Windows incluido)",
-  "estado_global": {
-    "semantica": "estable y estricta",
-    "runtime": "determinista",
-    "optimizador": "correcto con constant folding",
-    "cli": "limpia y usable",
-    "logging": "controlado sin duplicaciones",
-    "encoding": "en correccion final (Windows)"
-  },
+  "fase_actual": "refinamiento de CLI y experiencia de usuario",
+  "objetivo": "CLI robusta, consistente y portable (especialmente Windows)",
+  "areas_trabajadas": [
+    "resolucion de paths",
+    "encoding UTF-8",
+    "manejo de errores (duplicacion)"
+  ],
   "problemas_detectados": [
     {
-      "id": "P1",
-      "descripcion": "duplicacion de errores en CLI",
-      "estado": "resuelto",
-      "causa": "multiples capas loggeando la misma excepcion"
+      "id": "CLI-PATH-1",
+      "descripcion": "la CLI no encuentra archivos existentes",
+      "causa_probable": "resolucion incorrecta de paths relativa al working directory",
+      "estado": "pendiente"
     },
     {
-      "id": "P2",
-      "descripcion": "formato redundante de error",
-      "estado": "resuelto",
-      "causa": "prefijos duplicados ('Error: Error general: ...')"
+      "id": "CLI-ERR-1",
+      "descripcion": "duplicacion de errores en salida",
+      "ejemplo": [
+        "ERROR: Error en la declaración...",
+        "Error: Token inesperado..."
+      ],
+      "causa": "logging en capas internas + renderizado en CLI",
+      "estado": "en proceso de correccion"
     },
     {
-      "id": "P3",
-      "descripcion": "ruido de debug en modo usuario",
-      "estado": "resuelto",
-      "causa": "uso de prints en lugar de logging controlado"
-    },
-    {
-      "id": "P4",
-      "descripcion": "logs INFO visibles en REPL",
-      "estado": "resuelto",
-      "causa": "configuracion incorrecta de niveles de logging"
-    },
-    {
-      "id": "P5",
-      "descripcion": "encoding incorrecto en Windows (mojibake)",
-      "estado": "pendiente",
-      "causa": "desalineacion entre UTF-8 de Python y code page de consola Windows"
+      "id": "CLI-ENC-1",
+      "descripcion": "mojibake en REPL y CLI en Windows",
+      "ejemplo": "Ã¡Ã©Ã­Ã³Ãº Ã± â‚¬",
+      "causa": "desalineacion entre UTF-8 de Python y code page de consola",
+      "estado": "resuelto"
     }
   ],
   "soluciones_aplicadas": [
     {
-      "problema": "P1",
-      "accion": "centralizacion del manejo de errores en CLI",
-      "resultado": "error mostrado una sola vez"
+      "area": "encoding",
+      "accion": "configuracion global de UTF-8 en entrypoint CLI",
+      "detalle": [
+        "sys.stdout.reconfigure(encoding='utf-8')",
+        "sys.stderr.reconfigure(encoding='utf-8')",
+        "PYTHONIOENCODING=utf-8"
+      ],
+      "resultado": "REPL y CLI muestran correctamente caracteres UTF-8"
     },
     {
-      "problema": "P2",
-      "accion": "limpieza de mensajes en capa CLI",
-      "resultado": "mensajes claros y sin redundancia"
+      "area": "testing CLI",
+      "accion": "definicion de PoCs estructurados",
+      "tipos": [
+        "ejecucion de archivos",
+        "errores semanticos",
+        "errores de sintaxis",
+        "flujo mixto",
+        "encoding consola y redireccion"
+      ],
+      "resultado": "validacion sistematica del comportamiento"
     },
     {
-      "problema": "P3",
-      "accion": "migracion a logger.debug",
-      "resultado": "separacion entre modo usuario y debug"
-    },
-    {
-      "problema": "P4",
-      "accion": "ajuste de niveles de logging",
-      "resultado": "REPL limpio en modo normal"
+      "area": "debugging",
+      "accion": "aislamiento de problemas por capas",
+      "resultado": "separacion clara entre REPL, CLI y core"
     }
   ],
-  "solucion_pendiente": {
-    "problema": "P5",
-    "acciones_propuestas": [
-      "sys.stdout.reconfigure(encoding='utf-8')",
-      "sys.stderr.reconfigure(encoding='utf-8')",
-      "os.environ['PYTHONIOENCODING'] = 'utf-8'",
-      "os.system('chcp 65001') en Windows"
-    ],
-    "descripcion": "alinear encoding de Python con la consola del sistema"
+  "principios_arquitectonicos_reforzados": [
+    {
+      "nombre": "single_error_surface",
+      "descripcion": "solo la CLI debe emitir errores al usuario",
+      "estado": "parcialmente cumplido"
+    },
+    {
+      "nombre": "boundary_responsibility",
+      "descripcion": "los problemas de entorno (encoding, paths) se resuelven en la CLI",
+      "estado": "cumplido"
+    },
+    {
+      "nombre": "core_purity",
+      "descripcion": "no modificar lexer, parser ni interpreter para problemas de infraestructura",
+      "estado": "cumplido"
+    }
+  ],
+  "tests_realizados": {
+    "encoding": {
+      "repl": "ok",
+      "stdout": "ok",
+      "resultado": "UTF-8 completamente funcional"
+    },
+    "errores": {
+      "semanticos": "ok (sin duplicacion)",
+      "sintacticos": "fail (duplicacion detectada)"
+    }
   },
-  "pruebas_realizadas": [
-    "errores semanticos (si 5, si 'hola')",
-    "repeticion de errores (no duplicacion)",
-    "flujo mixto (ejecucion + error)",
-    "casos validos sin ruido",
-    "validacion UTF-8 (fallando en Windows)"
-  ],
-  "propiedades_validadas": [
-    "single_error_surface",
-    "semantica estricta sin truthiness",
-    "separacion debug/usuario",
-    "consistencia del REPL",
-    "optimizacion segura"
-  ],
-  "restricciones_aplicadas": [
-    "no modificar Lexer",
-    "no modificar Parser",
-    "no modificar AST",
-    "no modificar Interpreter",
-    "solo cambios en CLI boundary"
-  ],
-  "siguiente_paso": [
-    "resolver encoding en Windows",
-    "validar salida UTF-8 correctamente",
-    "formalizar sistema de errores (codigos y categorias)",
-    "posible implementacion de modo --debug completo"
+  "estado_actual": {
+    "encoding": "resuelto",
+    "repl": "estable",
+    "cli_general": "estable",
+    "duplicacion_errores": "pendiente (parser/capa interna)",
+    "resolucion_paths": "pendiente"
+  },
+  "siguientes_pasos": [
+    "eliminar logging/prints en capas internas (parser/validacion)",
+    "garantizar que solo la CLI renderiza errores",
+    "resolver estrategia robusta de path resolution",
+    "validar nuevamente todos los PoCs",
+    "opcional: sugerencias inteligentes de rutas"
   ],
   "nivel_madurez": {
-    "clasificacion": "lenguaje funcional serio con CLI usable",
-    "estado": "casi listo para uso real"
+    "clasificacion": "CLI avanzada casi lista para produccion",
+    "bloqueadores_restantes": [
+      "duplicacion de errores",
+      "resolucion de paths"
+    ]
   }
 }
