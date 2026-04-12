@@ -186,6 +186,8 @@ class InteractiveCommand(BaseCommand):
         {
             "NodoCondicional",
             "NodoBucleMientras",
+            "NodoSi",
+            "NodoMientras",
             "NodoPara",
             "NodoTryCatch",
             "NodoSwitch",
