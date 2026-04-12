@@ -209,13 +209,13 @@ class ExecuteCommand(BaseCommand):
         try:
             validar_politica_modo(self.name, args, capability=self.capability)
         except ValueError as e:
-            mostrar_error(str(e))
+            mostrar_error(str(e), registrar_log=False)
             return 1
 
         try:
             self._validar_archivo(args.archivo)
         except ValueError as e:
-            mostrar_error(str(e))
+            mostrar_error(str(e), registrar_log=False)
             return 1
 
         debug = bool(getattr(args, "debug", False))
@@ -227,7 +227,7 @@ class ExecuteCommand(BaseCommand):
         try:
             extra_validators = normalizar_validadores_extra(raw_extra_validators)
         except TypeError:
-            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
+            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"), registrar_log=False)
             return 1
         sandbox = getattr(args, "sandbox", False)
         contenedor = getattr(args, "contenedor", None)
@@ -241,7 +241,7 @@ class ExecuteCommand(BaseCommand):
                 base_dir=raiz_proyecto,
             )
         except (ValueError, FileNotFoundError) as dep_err:
-            mostrar_error(f"Error de dependencias: {dep_err}")
+            mostrar_error(f"Error de dependencias: {dep_err}", registrar_log=False)
             return 1
 
         if formatear and not self._formatear_codigo(args.archivo):
@@ -253,7 +253,7 @@ class ExecuteCommand(BaseCommand):
             with open(args.archivo, "r", encoding="utf-8") as f:
                 codigo = f.read()
         except (PermissionError, UnicodeDecodeError) as e:
-            mostrar_error(f"Error al leer el archivo: {e}")
+            mostrar_error(f"Error al leer el archivo: {e}", registrar_log=False)
             return 1
 
         def ejecutar():
@@ -271,7 +271,7 @@ class ExecuteCommand(BaseCommand):
         try:
             return self._limitar_recursos(ejecutar)
         except TimeoutError as e:
-            mostrar_error(str(e))
+            mostrar_error(str(e), registrar_log=False)
             return 1
 
     def _ejecutar_en_sandbox(
@@ -287,7 +287,7 @@ class ExecuteCommand(BaseCommand):
             self._analizar_codigo(codigo)
         except (LexerError, ParserError) as e:
             self.logger.error("Error de análisis en sandbox", extra={"error": str(e)})
-            mostrar_error(f"Error de análisis: {e}")
+            mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
 
         extra_repr = "None"
@@ -320,7 +320,7 @@ class ExecuteCommand(BaseCommand):
             return 0
         except sandbox_module.SecurityError as e:
             self.logger.error("Error de seguridad en sandbox", extra={"error": str(e)})
-            mostrar_error(f"Error de seguridad en sandbox: {e}")
+            mostrar_error(f"Error de seguridad en sandbox: {e}", registrar_log=False)
             return 1
         except RuntimeError as e:
             self.logger.error("Error de ejecución en sandbox", extra={"error": str(e)})
@@ -330,7 +330,7 @@ class ExecuteCommand(BaseCommand):
                     "\nSugerencia: instala RestrictedPython para el modo seguro "
                     "(por ejemplo: pip install RestrictedPython)."
                 )
-            mostrar_error(mensaje)
+            mostrar_error(mensaje, registrar_log=False)
             return 1
 
     def _ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
@@ -343,7 +343,7 @@ class ExecuteCommand(BaseCommand):
             return 0
         except RuntimeError as e:
             self.logger.error("Error en contenedor Docker", extra={"error": str(e)})
-            mostrar_error(f"Error ejecutando en contenedor Docker: {e}")
+            mostrar_error(f"Error ejecutando en contenedor Docker: {e}", registrar_log=False)
             return 1
 
     def _ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
@@ -352,7 +352,7 @@ class ExecuteCommand(BaseCommand):
             ast = self._analizar_codigo(codigo)
         except (LexerError, ParserError) as e:
             self.logger.error("Error de análisis", extra={"error": str(e)})
-            mostrar_error(f"Error de análisis: {e}")
+            mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
 
         interpretador_cls = _obtener_interpretador_cls()
@@ -395,11 +395,11 @@ class ExecuteCommand(BaseCommand):
                     nodo.aceptar(validador)
             except (TypeError, ValueError) as e:
                 self.logger.error("Error cargando validadores extra", extra={"error": str(e)})
-                mostrar_error(str(e))
+                mostrar_error(str(e), registrar_log=False)
                 return 1
             except PrimitivaPeligrosaError as pe:
                 self.logger.error("Primitiva peligrosa detectada", extra={"error": str(pe)})
-                mostrar_error(str(pe))
+                mostrar_error(str(pe), registrar_log=False)
                 return 1
 
         try:
@@ -411,7 +411,7 @@ class ExecuteCommand(BaseCommand):
             return 0
         except Exception as e:
             self.logger.error("Error de ejecución", extra={"error": str(e)})
-            mostrar_error(f"Error ejecutando el script: {e}")
+            mostrar_error(f"Error ejecutando el script: {e}", registrar_log=False)
             return 1
 
     def _analizar_codigo(self, codigo: str) -> Any:
@@ -439,7 +439,7 @@ class ExecuteCommand(BaseCommand):
         try:
             import shutil
             if not shutil.which("black"):
-                mostrar_error(_("Herramienta 'black' no encontrada en el PATH"))
+                mostrar_error(_("Herramienta 'black' no encontrada en el PATH"), registrar_log=False)
                 return False
 
             import subprocess
@@ -451,9 +451,9 @@ class ExecuteCommand(BaseCommand):
                 text=True
             )
             if resultado.returncode != 0:
-                mostrar_error(f"Error al formatear: {resultado.stderr}")
+                mostrar_error(f"Error al formatear: {resultado.stderr}", registrar_log=False)
                 return False
             return True
         except Exception as e:
-            mostrar_error(f"Error inesperado al formatear: {e}")
+            mostrar_error(f"Error inesperado al formatear: {e}", registrar_log=False)
             return False
