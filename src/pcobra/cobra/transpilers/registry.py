@@ -5,54 +5,46 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Final
 
-from pcobra.cobra.transpilers.target_utils import (
-    require_exact_official_targets,
-    target_cli_choices,
-)
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.architecture.backend_policy import ALL_BACKENDS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
     "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
-    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
+    "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
     "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
     "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
     "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
+    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
     "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
 }
 
 
 def _validate_registry_contract() -> tuple[str, ...]:
-    """Valida que el registro declare exactamente los 8 targets oficiales."""
+    """Valida que el registro mantenga backends públicos e internos legacy."""
     configured_keys = tuple(TRANSPILER_CLASS_PATHS)
-    missing = tuple(target for target in OFFICIAL_TARGETS if target not in configured_keys)
-    extras = tuple(target for target in configured_keys if target not in OFFICIAL_TARGETS)
+    missing = tuple(target for target in ALL_BACKENDS if target not in configured_keys)
+    extras = tuple(target for target in configured_keys if target not in ALL_BACKENDS)
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene claves fuera de contrato y debe usar exactamente los 8 targets canónicos. "
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene claves fuera de contrato y debe usar exactamente los backends declarados en la política de arquitectura. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+            f"current={configured_keys}; expected={ALL_BACKENDS}"
         )
 
-    if len(configured_keys) != len(OFFICIAL_TARGETS):
+    if len(configured_keys) != len(ALL_BACKENDS):
         raise RuntimeError(
             "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene cardinalidad inválida. "
-            f"len(current)={len(configured_keys)}; len(expected)={len(OFFICIAL_TARGETS)}; "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+            f"len(current)={len(configured_keys)}; len(expected)={len(ALL_BACKENDS)}; "
+            f"current={configured_keys}; expected={ALL_BACKENDS}"
         )
 
-    if configured_keys != OFFICIAL_TARGETS:
+    if configured_keys != ALL_BACKENDS:
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe preservar el orden canónico. "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.ALL_BACKENDS. "
+            f"current={configured_keys}; expected={ALL_BACKENDS}"
         )
-
-    return require_exact_official_targets(
-        TRANSPILER_CLASS_PATHS,
-        context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
-    )
+    return configured_keys
 
 
 _ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = _validate_registry_contract()
@@ -73,8 +65,8 @@ def build_official_transpilers() -> dict[str, type]:
 
 
 def official_transpiler_targets() -> tuple[str, ...]:
-    """Devuelve los targets del registro canónico en el orden oficial."""
-    return target_cli_choices(_ORDERED_OFFICIAL_TARGETS)
+    """Devuelve los targets del registro canónico en el orden contractual."""
+    return _ORDERED_OFFICIAL_TARGETS
 
 
 def official_transpiler_module_filenames() -> tuple[str, ...]:

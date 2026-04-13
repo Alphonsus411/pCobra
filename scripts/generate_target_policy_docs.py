@@ -3,7 +3,7 @@
 
 Este script evita que README, docs y ejemplos mantengan listas manuales
 separadas de la fuente de verdad en:
-- ``src/pcobra/cobra/transpilers/targets.py``
+- ``src/pcobra/cobra/architecture/backend_policy.py``
 - ``src/pcobra/cobra/transpilers/registry.py``
 - ``src/pcobra/cobra/cli/target_policies.py``
 """
@@ -31,6 +31,7 @@ from pcobra.cobra.cli.target_policies import (  # noqa: E402
     render_public_policy_summary,
     render_reverse_scope_summary,
 )
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS  # noqa: E402
 from pcobra.cobra.transpilers.compatibility_matrix import (  # noqa: E402
     BACKEND_COMPATIBILITY,
 )
@@ -41,7 +42,7 @@ from pcobra.cobra.transpilers.target_utils import (  # noqa: E402
     format_target_sequence,
     official_target_rows,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS  # noqa: E402
+from pcobra.cobra.transpilers.targets import TIER1_TARGETS, TIER2_TARGETS  # noqa: E402
 
 GENERATED_DIR = ROOT / "docs" / "_generated"
 MARKER_START = "<!-- BEGIN GENERATED TARGET POLICY SUMMARY -->"
@@ -72,7 +73,7 @@ def _policy_summary_md() -> str:
 def _policy_summary_en_md() -> str:
     return "\n".join(
         [
-            "- **Official transpilation targets**: " + format_target_sequence(OFFICIAL_TARGETS, markup="markdown") + ".",
+            "- **Official transpilation targets**: " + format_target_sequence(PUBLIC_BACKENDS, markup="markdown") + ".",
             "- **Targets with official verifiable runtime**: " + format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup="markdown") + ".",
             "- **Targets with explicit executable CLI verification**: " + format_target_sequence(VERIFICATION_EXECUTABLE_TARGETS, markup="markdown") + ".",
             "- **Targets with best-effort runtime**: " + format_target_sequence(BEST_EFFORT_RUNTIME_TARGETS, markup="markdown") + ".",
@@ -204,7 +205,7 @@ def _runtime_capability_matrix_rst() -> str:
         "     - ``corelibs``/``standard_library`` oficiales en runtime",
         "     - Compatibilidad SDK completa",
     ]
-    for backend in OFFICIAL_TARGETS:
+    for backend in PUBLIC_BACKENDS:
         tier = BACKEND_COMPATIBILITY[backend]["tier"].replace("tier", "Tier ")
         lines.extend(
             [

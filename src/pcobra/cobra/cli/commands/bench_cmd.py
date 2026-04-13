@@ -25,11 +25,11 @@ from pathlib import Path
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.core.cobra_config import tiempo_max_transpilacion
 from pcobra.cobra.transpilers.target_utils import target_label
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.cobra.benchmarks.targets_policy import (
     BENCHMARK_BACKEND_METADATA,
     validate_backend_metadata,
@@ -205,7 +205,7 @@ class BenchCommand(BaseCommand):
             Lista con resultados del benchmark
         """
         results = []
-        backend_display = f"{target_label(backend)} ({backend})" if backend in OFFICIAL_TARGETS else backend
+        backend_display = f"{target_label(backend)} ({backend})" if backend in PUBLIC_BACKENDS else backend
         run_cmd = cfg["run"]
         src_file = Path(tmpdir) / f"program.{cfg['ext']}"
         

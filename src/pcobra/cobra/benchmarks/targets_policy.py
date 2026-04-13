@@ -1,7 +1,7 @@
 """Utilidades comunes de política de targets para benchmarks.
 
 La política oficial de targets se hereda de
-``src/pcobra/cobra/transpilers/targets.py`` y no debe redefinirse en scripts.
+``src/pcobra/cobra/architecture/backend_policy.py`` y no debe redefinirse en scripts.
 """
 
 from __future__ import annotations
@@ -13,14 +13,13 @@ except ModuleNotFoundError:
 from pathlib import Path
 from typing import Final, Mapping
 
+from pcobra.cobra.architecture.backend_policy import ALL_BACKENDS, PUBLIC_BACKENDS
 from pcobra.cobra.cli.target_policies import (
     BEST_EFFORT_RUNTIME_TARGETS,
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
 )
 from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_cli_choices
-from pcobra.cobra.transpilers.target_utils import require_exact_official_targets
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
 NO_RUNTIME_BENCHMARK_TARGETS: Final[tuple[str, ...]] = NO_RUNTIME_TARGETS
@@ -124,25 +123,38 @@ def validate_local_targets_policy(repo_root: Path) -> None:
     unsupported = []
     for target in raw_targets:
         canonical = normalize_target_name(str(target))
-        if canonical not in OFFICIAL_TARGETS:
+        if canonical not in PUBLIC_BACKENDS:
             unsupported.append(str(target))
     if unsupported:
         raise RuntimeError(
             "Config local inválida: backends no oficiales en [project].required_targets: "
-            f"{', '.join(unsupported)}. Oficiales: {', '.join(OFFICIAL_TARGETS)}"
+            f"{', '.join(unsupported)}. Oficiales: {', '.join(PUBLIC_BACKENDS)}"
         )
 
 
 
 def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -> None:
-    """Falla rápido si existe metadata para targets fuera de la whitelist oficial."""
-    require_exact_official_targets(backends, context=context)
+    """Falla rápido si falta metadata para backends conocidos o sobran claves."""
+    configured = tuple(backends.keys())
+    missing = tuple(target for target in ALL_BACKENDS if target not in configured)
+    extras = tuple(target for target in configured if target not in ALL_BACKENDS)
+    if missing or extras:
+        raise RuntimeError(
+            "Metadata de benchmarks fuera de contrato en {context}: missing={missing}; extras={extras}; "
+            "expected={expected}; current={current}".format(
+                context=context,
+                missing=missing or "∅",
+                extras=extras or "∅",
+                expected=ALL_BACKENDS,
+                current=configured,
+            )
+        )
 
 
 
 def benchmark_backends(backends: Mapping[str, object] | None = None) -> tuple[str, ...]:
-    """Devuelve backends benchmark en orden oficial filtrados por metadata disponible."""
-    available_targets = OFFICIAL_TARGETS if backends is None else tuple(backends.keys())
+    """Devuelve backends benchmark públicos en orden canónico."""
+    available_targets = PUBLIC_BACKENDS if backends is None else tuple(backends.keys())
     return target_cli_choices(available_targets)
 
 
@@ -158,7 +170,7 @@ def executable_benchmark_backends(
     Los targets `wasm` y `asm` permanecen fuera del benchmark ejecutable
     automatizado en esta capa.
     """
-    available_targets = OFFICIAL_TARGETS if backends is None else tuple(backends.keys())
+    available_targets = PUBLIC_BACKENDS if backends is None else tuple(backends.keys())
     allowed = list(OFFICIAL_RUNTIME_TARGETS)
     if include_experimental:
         allowed.extend(BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS)
