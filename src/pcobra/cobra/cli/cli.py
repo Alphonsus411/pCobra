@@ -43,6 +43,13 @@ from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
 from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
+from pcobra.cobra.cli.commands_v2 import (
+    BuildCommandV2,
+    LegacyCommandGroupV2,
+    ModCommandV2,
+    RunCommandV2,
+    TestCommandV2,
+)
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
@@ -102,6 +109,13 @@ class AppConfig:
         TranspilarInversoCommand, VerifyCommand,
         ValidarSintaxisCommand, QaValidarCommand, PluginsCommand, AgixCommand
     ]
+    V2_COMMAND_CLASSES: List[Type[BaseCommand]] = [
+        RunCommandV2,
+        BuildCommandV2,
+        TestCommandV2,
+        ModCommandV2,
+        LegacyCommandGroupV2,
+    ]
 
 
 class CommandRegistry:
@@ -121,9 +135,10 @@ class CommandRegistry:
             logging.error(f"Error creating command {command_class.__name__}: {e}")
             raise
 
-    def register_base_commands(self, subparsers: Any) -> Dict[str, BaseCommand]:
+    def register_base_commands(self, subparsers: Any, *, ui: str = "v1") -> Dict[str, BaseCommand]:
         base_commands = []
-        for cmd_class in AppConfig.BASE_COMMAND_CLASSES:
+        command_classes = AppConfig.V2_COMMAND_CLASSES if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
+        for cmd_class in command_classes:
             try:
                 base_commands.append(self.create_command(cmd_class))
             except Exception as e:
@@ -175,6 +190,7 @@ class CliApplication:
         self.command_registry: Optional[CommandRegistry] = None
         self._subparsers: Optional[argparse._SubParsersAction] = None
         self._commands_registered = False
+        self._selected_ui = "v1"
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -206,7 +222,10 @@ class CliApplication:
         if self._commands_registered:
             return
 
-        self.command_registry.register_base_commands(self._subparsers)
+        self.command_registry.register_base_commands(
+            self._subparsers,
+            ui=getattr(self, "_selected_ui", "v1"),
+        )
         menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
         menu_parser.set_defaults(cmd="menu")
         self._commands_registered = True
@@ -321,6 +340,12 @@ class CliApplication:
                 "Alias semántico de --modo cobra: sesión para solo programar/interpretar "
                 "Cobra sin rutas de codegen."
             ),
+        )
+        parser.add_argument(
+            "--ui",
+            choices=("v1", "v2"),
+            default="v1",
+            help=_("Selecciona la interfaz CLI: v1 (legacy) o v2 (opt-in)."),
         )
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
@@ -518,6 +543,7 @@ class CliApplication:
 
         preliminary_args, _ = self.parser.parse_known_args(argv)
         preliminary_args = self._normalizar_flags_sesion(preliminary_args)
+        self._selected_ui = str(getattr(preliminary_args, "ui", "v1")).strip().lower()
         configure_plugin_policy(
             safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
             allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
