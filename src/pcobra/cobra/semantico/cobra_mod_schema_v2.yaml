@@ -1,0 +1,43 @@
+type: object
+patternProperties:
+  '.*\.co$':
+    type: object
+    propertyNames:
+      enum:
+        - version
+        - python
+        - rust
+        - javascript
+    required:
+      - version
+    properties:
+      version:
+        type: string
+        pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+].*)?$'
+      python:
+        type: string
+      rust:
+        type: string
+      javascript:
+        type: string
+    additionalProperties: false
+properties:
+  lock:
+    type: object
+  metadata:
+    type: object
+    properties:
+      schema_version:
+        oneOf:
+          - type: integer
+          - type: string
+      mod_schema_version:
+        oneOf:
+          - type: integer
+          - type: string
+      version:
+        oneOf:
+          - type: integer
+          - type: string
+    additionalProperties: true
+additionalProperties: false
