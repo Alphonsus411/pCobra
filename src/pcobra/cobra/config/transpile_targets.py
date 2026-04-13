@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Final, Literal, TypedDict
 
+from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
+
 
 class TargetMetadata(TypedDict):
     """Metadatos mínimos por target oficial."""
@@ -17,18 +19,12 @@ class TargetMetadata(TypedDict):
 
 # Superficie pública oficial de backends de salida.
 ALLOWED_TARGETS: Final[tuple[str, ...]] = (
-    "python",
-    "javascript",
-    "rust",
+    *PUBLIC_BACKENDS,
 )
 
 # Targets conservados solo por compatibilidad interna/legacy.
 LEGACY_INTERNAL_TARGETS: Final[tuple[str, ...]] = (
-    "go",
-    "cpp",
-    "java",
-    "wasm",
-    "asm",
+    *INTERNAL_BACKENDS,
 )
 
 TARGETS_BY_TIER: Final[dict[str, tuple[str, ...]]] = {

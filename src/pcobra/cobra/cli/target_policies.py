@@ -5,6 +5,7 @@ from __future__ import annotations
 from argparse import ArgumentTypeError
 from typing import Literal
 
+from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     BEST_EFFORT_RUNTIME_BACKENDS,
@@ -25,9 +26,6 @@ from pcobra.cobra.transpilers.target_utils import (
     require_official_target_subset,
     target_cli_choices,
 )
-from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
-
 RenderMarkup = Literal["plain", "markdown", "rst"]
 
 
@@ -41,7 +39,7 @@ def accepted_target_aliases_examples_text() -> str:
 
 # Todos los destinos oficiales de generación/transpilación.
 OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
-    OFFICIAL_TARGETS,
+    PUBLIC_BACKENDS,
     context="pcobra.cobra.cli.target_policies.OFFICIAL_TRANSPILATION_TARGETS",
 )
 
@@ -206,7 +204,7 @@ def transpilation_only_targets_text() -> str:
 
 
 def legacy_internal_targets_text() -> str:
-    return ", ".join(LEGACY_INTERNAL_TARGETS)
+    return ", ".join(INTERNAL_BACKENDS)
 
 
 def build_cli_compile_examples(
@@ -247,7 +245,7 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
         (
             "legacy_internal_targets",
             "Targets legacy/internal (no públicos)",
-            LEGACY_INTERNAL_TARGETS,
+            INTERNAL_BACKENDS,
         ),
     )
 
@@ -505,7 +503,7 @@ def parse_target(value: str) -> str:
     if lowered in LEGACY_OR_AMBIGUOUS_TARGETS:
         raise ArgumentTypeError(legacy_or_ambiguous_target_error(value))
     canonical = normalize_target_name(raw)
-    if canonical not in OFFICIAL_TARGETS:
+    if canonical not in PUBLIC_BACKENDS:
         raise ArgumentTypeError(invalid_target_error(value))
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))

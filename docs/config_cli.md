@@ -136,11 +136,11 @@ asm = "build/modulo.asm"
 
 ### Reglas de validación
 
-- Solo se aceptan nombres canónicos contenidos en `OFFICIAL_TARGETS`:
-  `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
-- Los aliases legacy, abreviaturas históricas y traducciones antiguas de nombres de backend no son válidos; usa siempre los 8 identificadores canónicos oficiales.
+- Solo se aceptan nombres canónicos contenidos en `PUBLIC_BACKENDS`:
+  `python`, `javascript` y `rust`.
+- Los aliases legacy, abreviaturas históricas y traducciones antiguas de nombres de backend no son válidos; usa siempre los identificadores canónicos públicos.
 - Los mappings de módulos deben vivir dentro de `[modulos."..."]`; las estructuras en raíz ya no se resuelven.
-- `cobra.mod` sigue siendo el archivo validado por `modulos`/empaquetado, pero sus backends también deben respetar exclusivamente los 8 nombres oficiales.
+- `cobra.mod` sigue siendo el archivo validado por `modulos`/empaquetado, pero sus backends públicos deben respetar exclusivamente `PUBLIC_BACKENDS`.
 
 ### ¿Qué targets pueden omitirse intencionalmente?
 
@@ -153,16 +153,16 @@ asm = "build/modulo.asm"
 ## Política de targets oficial
 
 La CLI no debe mantener listas duplicadas de lenguajes soportados. La fuente de
-verdad para los targets oficiales es `src/pcobra/cobra/config/transpile_targets.py`
-a través de `TARGETS_BY_TIER`, `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS`. La
-documentación pública y los archivos de configuración deben usar únicamente los
-nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y
-`asm`.
+verdad para los targets públicos es
+`src/pcobra/cobra/architecture/backend_policy.py` a través de
+`PUBLIC_BACKENDS` (y `INTERNAL_BACKENDS` para legacy interno). La documentación
+pública y los archivos de configuración deben usar únicamente los nombres
+canónicos `python`, `javascript` y `rust`.
 
 En consecuencia:
 
 - `cobra compilar` debe derivar `TRANSPILERS` y `LANG_CHOICES` desde
-  `OFFICIAL_TARGETS` y un registro canónico compartido.
+  `PUBLIC_BACKENDS` y un registro canónico compartido.
 - Los scripts auxiliares, especialmente benchmarks y validaciones CI, deben
   reutilizar utilidades comunes basadas en esa misma política.
 - Cualquier nuevo backend oficial requiere actualizar primero esa fuente única y
