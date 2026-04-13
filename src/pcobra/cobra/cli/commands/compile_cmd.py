@@ -6,6 +6,7 @@ from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
 
+from pcobra.cobra.build.orchestrator import BuildOrchestrator
 from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
@@ -30,7 +31,7 @@ from pcobra.core.semantic_validators import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
-from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
@@ -44,6 +45,7 @@ MAX_LANGUAGES = 10
 
 TRANSPILERS = build_official_transpilers()
 _ENTRYPOINTS_LOADED = False
+ORCHESTRATOR = BuildOrchestrator()
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -365,9 +367,18 @@ class CompileCommand(BaseCommand):
                 return 1
 
         mod_info = module_map.get_toml_map()
+        preferred_backend = getattr(args, "backend", None) or getattr(args, "tipo", None)
+        if getattr(args, "backend", None):
+            mostrar_advertencia(
+                _("La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura.")
+            )
         try:
+            resolution = ORCHESTRATOR.resolve_backend(
+                source_file=archivo,
+                preferred_backend=preferred_backend,
+            )
             transpilador_objetivo = _validate_official_backend_or_raise(
-                getattr(args, "backend", None) or args.tipo,
+                resolution.backend,
                 context="CLI",
             )
         except ValueError as validation_err:

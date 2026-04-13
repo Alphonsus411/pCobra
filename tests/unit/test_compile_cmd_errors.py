@@ -83,3 +83,32 @@ def test_exceso_tipos(monkeypatch, tmp_path):
 
     assert rc == 1
     assert any("Demasiados lenguajes" in m for m in mensajes)
+
+
+@pytest.mark.timeout(5)
+def test_backend_legacy_muestra_warning_deprecacion(monkeypatch, tmp_path):
+    archivo = tmp_path / "code.co"
+    archivo.write_text("x = 1")
+    advertencias = []
+
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd._ensure_entrypoints_loaded_once", lambda: None)
+    monkeypatch.setattr(
+        "cobra.cli.commands.compile_cmd.ORCHESTRATOR.resolve_backend",
+        lambda **kwargs: SimpleNamespace(backend="python", reason="legacy"),
+    )
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.construir_cadena", lambda: SimpleNamespace())
+
+    class _DummyTranspiler:
+        def generate_code(self, _ast):
+            return "ok"
+
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.TRANSPILERS", {"python": _DummyTranspiler})
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_advertencia", lambda msg, registrar_log=True: advertencias.append(msg))
+
+    args = SimpleNamespace(archivo=str(archivo), tipo="python", backend="python", tipos=None, modo="mixto")
+    rc = CompileCommand().run(args)
+
+    assert rc == 0
+    assert any("--backend está deprecada" in msg for msg in advertencias)
