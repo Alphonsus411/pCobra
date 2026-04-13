@@ -166,3 +166,58 @@ def test_validador_rechaza_backend_fuera_de_los_8_oficiales(tmp_path, monkeypatc
 
     with pytest.raises(ValueError, match="Backends no canónicos"):
         validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_v2_por_version_restringe_backends_publicos(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    wasm = tmp_path / "m.wasm"
+    wasm.write_text("00")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "2.0.0", "python": str(py), "wasm": str(wasm)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python"]}},
+    )
+
+    with pytest.raises(ValueError, match="Backends no canónicos"):
+        validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_v2_por_metadata_restringe_backends_publicos(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    wasm = tmp_path / "m.wasm"
+    wasm.write_text("00")
+    mod = tmp_path / "m.co"
+    data = {
+        "metadata": {"schema_version": 2},
+        str(mod): {"version": "0.1.0", "python": str(py), "wasm": str(wasm)},
+    }
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python"]}},
+    )
+
+    with pytest.raises(ValueError, match="Backends no canónicos"):
+        validar_mod(str(tmp_path / "cobra.mod"))
+
+
+def test_validador_v1_emite_warning_migracion(tmp_path, monkeypatch, caplog):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python"]}},
+    )
+
+    validar_mod(str(tmp_path / "cobra.mod"))
+    assert "esquema v1 está deprecado" in caplog.text
