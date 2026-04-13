@@ -25,6 +25,7 @@ from pcobra.cobra.transpilers.target_utils import (
     require_official_target_subset,
     target_cli_choices,
 )
+from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 RenderMarkup = Literal["plain", "markdown", "rst"]
@@ -45,13 +46,19 @@ OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
 )
 
 # Targets oficiales con tooling oficial de ejecución en contenedor/sandbox Docker.
-OFFICIAL_RUNTIME_TARGETS = target_cli_choices(OFFICIAL_RUNTIME_BACKENDS)
+OFFICIAL_RUNTIME_TARGETS = target_cli_choices(
+    tuple(target for target in OFFICIAL_RUNTIME_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+)
 
 # Targets best-effort conservados fuera del contrato oficial de runtime.
-BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(BEST_EFFORT_RUNTIME_BACKENDS)
+BEST_EFFORT_RUNTIME_TARGETS = target_cli_choices(
+    tuple(target for target in BEST_EFFORT_RUNTIME_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+)
 
 # Targets oficiales que hoy son solo de generación y no prometen runtime.
-TRANSPILATION_ONLY_TARGETS = target_cli_choices(TRANSPILATION_ONLY_BACKENDS)
+TRANSPILATION_ONLY_TARGETS = target_cli_choices(
+    tuple(target for target in TRANSPILATION_ONLY_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+)
 
 # Targets sin runtime automatizado en la CLI/suite actual.
 NO_RUNTIME_TARGETS = TRANSPILATION_ONLY_TARGETS
@@ -76,7 +83,9 @@ OFFICIAL_STANDARD_LIBRARY_TARGETS = OFFICIAL_RUNTIME_TARGETS
 ADVANCED_HOLOBIT_RUNTIME_TARGETS = OFFICIAL_RUNTIME_TARGETS
 
 # Compatibilidad SDK completa: se deriva de la matriz contractual.
-SDK_COMPATIBLE_TARGETS = SDK_FULL_BACKENDS
+SDK_COMPATIBLE_TARGETS = target_cli_choices(
+    tuple(target for target in SDK_FULL_BACKENDS if target in OFFICIAL_TRANSPILATION_TARGETS)
+)
 
 require_official_target_subset(
     OFFICIAL_RUNTIME_TARGETS,
@@ -196,6 +205,10 @@ def transpilation_only_targets_text() -> str:
     return ", ".join(TRANSPILATION_ONLY_TARGETS)
 
 
+def legacy_internal_targets_text() -> str:
+    return ", ".join(LEGACY_INTERNAL_TARGETS)
+
+
 def build_cli_compile_examples(
     *,
     source_file: str = "programa.co",
@@ -230,6 +243,11 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
             "transpilation_only_targets",
             "Targets solo de transpilación",
             TRANSPILATION_ONLY_TARGETS,
+        ),
+        (
+            "legacy_internal_targets",
+            "Targets legacy/internal (no públicos)",
+            LEGACY_INTERNAL_TARGETS,
         ),
     )
 

@@ -15,20 +15,25 @@ class TargetMetadata(TypedDict):
     sdk_contract: Literal["full", "partial", "none"]
 
 
+# Superficie pública oficial de backends de salida.
 ALLOWED_TARGETS: Final[tuple[str, ...]] = (
     "python",
-    "rust",
     "javascript",
-    "wasm",
+    "rust",
+)
+
+# Targets conservados solo por compatibilidad interna/legacy.
+LEGACY_INTERNAL_TARGETS: Final[tuple[str, ...]] = (
     "go",
     "cpp",
     "java",
+    "wasm",
     "asm",
 )
 
 TARGETS_BY_TIER: Final[dict[str, tuple[str, ...]]] = {
-    "tier_1": ("python", "rust", "javascript", "wasm"),
-    "tier_2": ("go", "cpp", "java", "asm"),
+    "tier_1": ALLOWED_TARGETS,
+    "tier_2": (),
 }
 
 TARGET_METADATA: Final[dict[str, TargetMetadata]] = {
@@ -39,51 +44,16 @@ TARGET_METADATA: Final[dict[str, TargetMetadata]] = {
         "holobit_contract": "full",
         "sdk_contract": "full",
     },
-    "rust": {
+    "javascript": {
         "status": "supported",
         "release_priority": 2,
         "maintainer": None,
         "holobit_contract": "partial",
         "sdk_contract": "partial",
     },
-    "javascript": {
+    "rust": {
         "status": "supported",
         "release_priority": 3,
-        "maintainer": None,
-        "holobit_contract": "partial",
-        "sdk_contract": "partial",
-    },
-    "wasm": {
-        "status": "supported",
-        "release_priority": 4,
-        "maintainer": None,
-        "holobit_contract": "partial",
-        "sdk_contract": "partial",
-    },
-    "go": {
-        "status": "supported",
-        "release_priority": 5,
-        "maintainer": None,
-        "holobit_contract": "partial",
-        "sdk_contract": "partial",
-    },
-    "cpp": {
-        "status": "supported",
-        "release_priority": 6,
-        "maintainer": None,
-        "holobit_contract": "partial",
-        "sdk_contract": "partial",
-    },
-    "java": {
-        "status": "supported",
-        "release_priority": 7,
-        "maintainer": None,
-        "holobit_contract": "partial",
-        "sdk_contract": "partial",
-    },
-    "asm": {
-        "status": "supported",
-        "release_priority": 8,
         "maintainer": None,
         "holobit_contract": "partial",
         "sdk_contract": "partial",
@@ -105,7 +75,7 @@ def _validate_target_config() -> None:
     merged = tier_1 + tier_2
     if tuple(merged) != ALLOWED_TARGETS:
         raise RuntimeError(
-            "Los tiers deben concatenar exactamente los targets permitidos. "
+            "Los tiers deben concatenar exactamente los targets públicos permitidos. "
             f"tier_1={tier_1}; tier_2={tier_2}; allowed={ALLOWED_TARGETS}"
         )
 
@@ -122,8 +92,15 @@ def _validate_target_config() -> None:
         extras = tuple(sorted(metadata_keys - allowed))
         missing = tuple(sorted(allowed - metadata_keys))
         raise RuntimeError(
-            "TARGET_METADATA debe cubrir exactamente la lista permitida. "
+            "TARGET_METADATA debe cubrir exactamente la lista pública permitida. "
             f"missing={missing or '∅'}; extras={extras or '∅'}"
+        )
+
+    legacy_collisions = tuple(sorted(set(LEGACY_INTERNAL_TARGETS) & allowed))
+    if legacy_collisions:
+        raise RuntimeError(
+            "LEGACY_INTERNAL_TARGETS no puede solaparse con targets públicos. "
+            f"overlap={legacy_collisions}"
         )
 
     for target, meta in TARGET_METADATA.items():
@@ -143,7 +120,6 @@ def _validate_target_config() -> None:
             raise RuntimeError(
                 f"Target '{target}' debe declarar sdk_contract en none|partial|full"
             )
-
 
 
 _validate_target_config()

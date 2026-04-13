@@ -22,39 +22,40 @@ pCobra es un lenguaje de programación escrito en español y pensado para la cre
 Resumen normativo visible (generado desde la política canónica):
 
 <!-- BEGIN GENERATED TARGET POLICY SUMMARY -->
-- **Backends oficiales de salida**: 8 targets canónicos.
-- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
-- **Targets con runtime oficial verificable (full SDK solo en python)**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con verificación ejecutable explícita en CLI**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con runtime best-effort**: `go`, `java`.
-- **Targets con soporte oficial mantenido de `corelibs`/`standard_library` (partial fuera de python)**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `rust`, `javascript`, `cpp`.
+- **Backends oficiales de salida**: 3 targets canónicos.
+- **Targets oficiales de transpilación**: `python`, `javascript`, `rust`.
+- **Targets con runtime oficial verificable (full SDK solo en python)**: `python`, `javascript`, `rust`.
+- **Targets con verificación ejecutable explícita en CLI**: `python`, `javascript`, `rust`.
+- **Targets con runtime best-effort**: _ninguno en superficie pública_.
+- **Targets con soporte oficial mantenido de `corelibs`/`standard_library` (partial fuera de python)**: `python`, `javascript`, `rust`.
+- **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
-- **Targets solo de transpilación**: `wasm`, `asm`.
-- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`. Este alcance reverse de entrada está separado de los 8 targets oficiales de salida.
+- **Targets solo de transpilación**: _ninguno en superficie pública_.
+- **Targets legacy/internal (no públicos)**: `go`, `cpp`, `java`, `wasm`, `asm`.
+- **Orígenes de transpilación inversa**: `python`, `javascript`, `java`. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
 
-- **Tier 1**: `python`, `rust`, `javascript`, `wasm`.
-- **Tier 2**: `go`, `cpp`, `java`, `asm`.
+- **Tier 1**: `python`, `javascript`, `rust`.
+- **Tier 2**: _sin targets públicos_.
 <!-- END GENERATED TARGET POLICY SUMMARY -->
 
 Fuentes normativas: `src/pcobra/cobra/config/transpile_targets.py` para la lista canónica y los tiers, y `src/pcobra/cobra/cli/target_policies.py` para la separación entre transpilación, runtime oficial y verificación ejecutable.
 
 ### Política de targets oficial
 
-La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/config/transpile_targets.py`, con el registro canónico de backends en `src/pcobra/cobra/transpilers/registry.py`.
+La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `javascript` y `rust`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/config/transpile_targets.py`, con el registro canónico de backends en `src/pcobra/cobra/transpilers/registry.py`.
 
-Además, el proyecto separa explícitamente **targets oficiales de salida** de **targets con runtime oficial de ejecución**. Hoy la ejecución oficial verificable —en sandbox, contenedor o comando de verificación— cubre `python`, `javascript`, `cpp` y `rust`, tal y como reflejan `src/pcobra/cobra/cli/target_policies.py`, `src/pcobra/core/sandbox.py`, `src/pcobra/cobra/cli/commands/verify_cmd.py` y el objetivo `make docker`. En la misma categoría quedan el soporte oficial mantenido de `corelibs`/`standard_library` y el soporte Holobit mantenido por el proyecto en esos runtimes. Los targets `go` y `java` se conservan como **runtime best-effort**, mientras que `wasm` y `asm` son **targets solo de transpilación**. Ninguna de esas categorías debe interpretarse como runtime Docker/sandbox oficial equivalente, ni como soporte oficial de librerías en ejecución comparable al de `python`, `rust`, `javascript` o `cpp`.
+Además, el proyecto separa explícitamente **targets oficiales de salida** de **targets legacy/internal**. La ejecución oficial verificable —en sandbox, contenedor o comando de verificación— cubre `python`, `javascript` y `rust`. Los targets `go`, `cpp`, `java`, `wasm` y `asm` quedan fuera de la promesa pública y se conservan únicamente para compatibilidad interna o migración.
 
-La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript`, `rust`, `wasm`, `go`, `cpp`, `java` y `asm` se mantienen en `partial`. Eso significa que la **paridad SDK total** solo puede prometerse para `python`. `javascript`, `rust` y `cpp` sí cuentan con runtime oficial verificable y adaptadores mantenidos por el proyecto, pero siguen siendo `partial` en Holobit/SDK. `go` y `java` se mantienen como runtimes best-effort; `wasm` y `asm` como salidas oficiales solo de transpilación. Ninguna de esas categorías debe venderse como runtime oficial verificable ni como compatibilidad SDK equivalente.
+La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript` y `rust` se mantienen en `partial`. Eso significa que la **paridad SDK total** solo puede prometerse para `python`.
 
 ### Política de soporte por tiers (SLA y gobernanza)
 
 Definición operativa oficial:
 
-- **Tier 1** (`python`, `rust`, `javascript`, `wasm`): prioridad alta de corrección para regresiones de transpilación y coherencia documental.
-- **Tier 2** (`go`, `cpp`, `java`, `asm`): soporte contractual mantenido con prioridad secundaria frente a Tier 1.
+- **Tier 1** (`python`, `javascript`, `rust`): prioridad alta de corrección para regresiones de transpilación y coherencia documental.
+- **Tier 2** (sin targets públicos): reservado para uso interno/legacy fuera del contrato público.
 
 SLA de mantenimiento documental/técnico:
 
@@ -94,6 +95,13 @@ Sin estos prerrequisitos, pCobra puede conservar generación de código, pero no
 
 Guía de migración para consumidores de targets retirados: `docs/migracion_targets_retirados.md`.
 
+Migración desde targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) hacia backends oficiales:
+
+1. Sustituye en CLI y CI los usos de `--backend` legacy por `python`, `javascript` o `rust`.
+2. Prioriza `rust` cuando busques rendimiento/compilación nativa, `javascript` para entornos Node/web y `python` para máxima cobertura SDK.
+3. Ejecuta regresión funcional después del cambio para validar paridad en tu pipeline.
+4. Mantén los targets legacy solo como fallback interno temporal, sin exposición pública.
+
 ### Compatibilidad explícita por target (Holobit SDK + librerías)
 
 | Target | Tier | Holobit SDK | `holobit`/`proyectar`/`transformar`/`graficar` | `corelibs` | `standard_library` |
@@ -101,11 +109,8 @@ Guía de migración para consumidores de targets retirados: `docs/migracion_targ
 | `python` | Tier 1 | ✅ `full` (requiere `holobit-sdk`) | ✅ `full` | ✅ `full` | ✅ `full` |
 | `rust` | Tier 1 | 🟡 `partial` (sin dependencia de SDK Python) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
 | `javascript` | Tier 1 | 🟡 `partial` (sin dependencia de SDK Python) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
-| `wasm` | Tier 1 | 🟡 `partial` vía host (`pcobra:*`) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
-| `go` | Tier 2 | 🟡 `partial` best-effort | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
-| `cpp` | Tier 2 | 🟡 `partial` con adaptador mantenido | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
-| `java` | Tier 2 | 🟡 `partial` best-effort | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
-| `asm` | Tier 2 | 🟡 `partial` de inspección/diagnóstico | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
+
+Los targets `go`, `cpp`, `java`, `wasm` y `asm` permanecen disponibles solo como **legacy/internal** (sin contrato público).
 
 Fuente normativa de detalle: `docs/contrato_runtime_holobit.md` y `docs/matriz_transpiladores.md`.
 
@@ -202,7 +207,7 @@ La cadena de herramientas de Cobra separa el front-end de los generadores de có
 2. Ese AST se normaliza internamente para coordinar estructuras de control, módulos y tipos antes de la generación de código.
 3. Los transpiladores consumen esa IR para generar código en los distintos backends soportados.
 
-Esta organización actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ello, Cobra ofrece un generador para el target canónico `asm` que produce instrucciones simbólicas optimizadas para depuración y diagnóstico de rendimiento. En la documentación pública, la salida oficial sigue limitada a `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
+Esta organización actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ello, Cobra mantiene generadores adicionales para casos internos y legacy. En la documentación pública, la salida oficial queda limitada a `python`, `javascript` y `rust`.
 
 ## Instalación
 

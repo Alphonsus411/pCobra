@@ -20,6 +20,7 @@ from typing import Final
 
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
 from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix
+from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS
 
 CONTRACT_FEATURES: Final[tuple[str, ...]] = (
@@ -38,12 +39,12 @@ FEATURE_FULL_BACKENDS: Final[dict[str, tuple[str, ...]]] = {
     "proyectar": SDK_FULL_BACKENDS,
     "transformar": SDK_FULL_BACKENDS,
     "graficar": SDK_FULL_BACKENDS,
-    "corelibs": ("python", "rust", "go"),
-    "standard_library": ("python", "rust", "go"),
+    "corelibs": ("python", "rust"),
+    "standard_library": ("python", "rust"),
 }
-OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("python", "javascript", "cpp", "rust")
-BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("go", "java")
-TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ("wasm", "asm")
+OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("python", "javascript", "rust")
+BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ()
+TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ()
 SDK_PARTIAL_BACKENDS: Final[tuple[str, ...]] = tuple(
     backend for backend in OFFICIAL_TARGETS if backend not in SDK_FULL_BACKENDS
 )
@@ -637,10 +638,12 @@ def _validate_contract_shape(name: str, matrix: dict[str, dict[str, str]]) -> No
             f"{name} no define compatibilidad para backends oficiales: {missing_backends}"
         )
 
-    extra_backends = sorted(set(matrix) - set(OFFICIAL_TARGETS))
+    extra_backends = sorted(
+        set(matrix) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS)
+    )
     if extra_backends:
         raise RuntimeError(
-            f"{name} contiene backends no oficiales o sin registrar: {extra_backends}"
+            f"{name} contiene backends no oficiales, legacy o sin registrar: {extra_backends}"
         )
 
     for backend, contract in matrix.items():
@@ -760,7 +763,7 @@ def validate_backend_compatibility_contract() -> None:
         raise RuntimeError(
             f"BACKEND_COMPATIBILITY_NOTES no define backends oficiales: {missing_notes_backends}"
         )
-    extra_notes_backends = sorted(set(BACKEND_COMPATIBILITY_NOTES) - set(OFFICIAL_TARGETS))
+    extra_notes_backends = sorted(set(BACKEND_COMPATIBILITY_NOTES) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS))
     if extra_notes_backends:
         raise RuntimeError(
             f"BACKEND_COMPATIBILITY_NOTES contiene backends no oficiales: {extra_notes_backends}"
@@ -790,7 +793,7 @@ def validate_backend_compatibility_contract() -> None:
         raise RuntimeError(
             f"BACKEND_FEATURE_GAPS no define backends oficiales: {missing_gaps_backends}"
         )
-    extra_gaps_backends = sorted(set(BACKEND_FEATURE_GAPS) - set(OFFICIAL_TARGETS))
+    extra_gaps_backends = sorted(set(BACKEND_FEATURE_GAPS) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS))
     if extra_gaps_backends:
         raise RuntimeError(
             f"BACKEND_FEATURE_GAPS contiene backends no oficiales: {extra_gaps_backends}"
@@ -828,7 +831,7 @@ def validate_backend_compatibility_contract() -> None:
             f"{missing_capability_backends}"
         )
     extra_capability_backends = sorted(
-        set(BACKEND_HOLOBIT_SDK_CAPABILITIES) - set(OFFICIAL_TARGETS)
+        set(BACKEND_HOLOBIT_SDK_CAPABILITIES) - set(OFFICIAL_TARGETS) - set(LEGACY_INTERNAL_TARGETS)
     )
     if extra_capability_backends:
         raise RuntimeError(
