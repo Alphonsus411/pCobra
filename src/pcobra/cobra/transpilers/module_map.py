@@ -9,6 +9,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
+from pcobra.cobra.stdlib_contract import get_contract_manifests
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +42,14 @@ def _load_stdlib_contracts() -> dict[str, Dict[str, Any]]:
     if _stdlib_contract_cache is not None:
         return _stdlib_contract_cache
 
-    loaded: dict[str, Dict[str, Any]] = {}
+    loaded: dict[str, Dict[str, Any]] = get_contract_manifests()
     if not os.path.isdir(STDLIB_CONTRACTS_DIR):
         _stdlib_contract_cache = loaded
         return loaded
 
     for entry in sorted(os.listdir(STDLIB_CONTRACTS_DIR)):
+        if not entry.startswith("cobra."):
+            continue
         contract_path = os.path.join(STDLIB_CONTRACTS_DIR, entry)
         if not os.path.isfile(contract_path):
             continue
@@ -56,7 +59,7 @@ def _load_stdlib_contracts() -> dict[str, Dict[str, Any]]:
         except (OSError, tomllib.TOMLDecodeError):
             logger.warning('No se pudo cargar manifest contractual: %s', contract_path)
             continue
-        if isinstance(parsed, dict):
+        if isinstance(parsed, dict) and entry not in loaded:
             loaded[entry] = parsed
 
     _stdlib_contract_cache = loaded
