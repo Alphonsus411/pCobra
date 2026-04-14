@@ -45,7 +45,7 @@ def test_cli_ui_v2_help_muestra_legacy_solo_con_flag_interno(monkeypatch):
     registry = cli_reloaded.CommandRegistry()
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
-    commands = registry.register_base_commands(subparsers, ui="v2")
+    commands = registry.register_base_commands(subparsers, ui="v2", profile="development")
     assert "legacy" in commands
 
 
@@ -64,3 +64,27 @@ def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):
     subparsers = parser.add_subparsers(dest="command")
     commands = registry.register_base_commands(subparsers, ui="v2")
     assert "legacy" not in commands
+
+
+def test_cli_ui_v2_modo_desarrollo_expone_comandos_internos(monkeypatch):
+    monkeypatch.setenv("COBRA_ENABLE_LEGACY_CLI", "1")
+    monkeypatch.setenv("COBRA_DEV_MODE", "1")
+    for module_name in (
+        "cobra.cli.commands_v2",
+        "pcobra.cobra.cli.commands_v2",
+        "cobra.cli.cli",
+        "pcobra.cobra.cli.cli",
+    ):
+        sys.modules.pop(module_name, None)
+    import cobra.cli.cli as cli_reloaded
+
+    registry = cli_reloaded.CommandRegistry()
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+    commands = registry.register_base_commands(
+        subparsers,
+        ui="v2",
+        profile=cli_reloaded.resolve_command_profile(),
+    )
+
+    assert "legacy" in commands
