@@ -1,0 +1,55 @@
+# Guía de migración a la CLI unificada
+
+Esta guía ayuda a migrar desde comandos legacy y flujos dependientes de flags de backend hacia la superficie oficial de Cobra.
+
+## Objetivo
+
+Adoptar el modelo unificado:
+
+- `cobra run`
+- `cobra build`
+- `cobra test`
+- `cobra mod`
+
+Con backends públicos oficiales:
+
+- `python`
+- `javascript`
+- `rust`
+
+## Mapeo de comandos legacy
+
+| Legacy | Nuevo comando recomendado |
+|---|---|
+| `cobra archivo.co` | `cobra run archivo.co` |
+| `cobra compilar archivo.co --backend <target>` | `cobra build archivo.co --backend <target>` |
+| `cobra modulos listar` | `cobra mod list` |
+| `cobra modulos instalar ruta/al/modulo.co` | `cobra mod install ruta/al/modulo.co` |
+| `cobra modulos remover modulo.co` | `cobra mod remove modulo.co` |
+
+## Migración de flags `--backend`
+
+1. Identifica usos de backends no públicos en scripts/CI (`go`, `cpp`, `java`, `wasm`, `asm`).
+2. Sustituye por uno de los oficiales según necesidad:
+   - `python`: máxima cobertura SDK.
+   - `javascript`: integración Node/web.
+   - `rust`: compilación nativa y rendimiento.
+3. Estandariza pipelines para que `build` y validaciones usen exclusivamente `python`, `javascript` o `rust`.
+
+## Plan de migración recomendado (paso a paso)
+
+1. **Inventario**: lista comandos legacy usados en repositorio y CI.
+2. **Sustitución**: aplica mapeo a `run/build/test/mod`.
+3. **Backends**: elimina targets no públicos en flags `--backend`.
+4. **Validación**: ejecuta pruebas/regresión del proyecto.
+5. **Limpieza**: documenta fecha de retiro interno de aliases legacy.
+
+## Compatibilidad legacy (proyectos antiguos)
+
+Para evitar bloqueos en proyectos históricos:
+
+- Mantén temporalmente aliases legacy en scripts críticos.
+- Conserva solo el mínimo de rutas legacy mientras se completa la migración.
+- Define una fecha de corte para remover comandos/flags antiguos.
+
+La compatibilidad legacy debe tratarse como **transición controlada**, no como interfaz principal.
