@@ -45,11 +45,10 @@ FEATURE_FULL_BACKENDS: Final[dict[str, tuple[str, ...]]] = {
 OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("python", "javascript", "rust")
 BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ()
 TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ()
-SDK_PARTIAL_BACKENDS: Final[tuple[str, ...]] = tuple(
-    backend for backend in OFFICIAL_TARGETS if backend not in SDK_FULL_BACKENDS
-)
+_PUBLIC_BACKEND_KEYS: Final[tuple[str, ...]] = ("python", "javascript", "rust")
+_LEGACY_BACKEND_KEYS: Final[tuple[str, ...]] = ("go", "cpp", "java", "wasm", "asm")
 
-BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
+_BACKEND_COMPATIBILITY_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
         "tier": "tier1",
         "holobit": "full",
@@ -124,10 +123,27 @@ BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
     },
 }
 
+PUBLIC_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
+    backend: _BACKEND_COMPATIBILITY_MODEL[backend] for backend in _PUBLIC_BACKEND_KEYS
+}
+# internal-only: inventario legacy para compatibilidad interna/documentación técnica;
+# no exponer en superficies públicas (CLI/docs de usuarios).
+LEGACY_BACKEND_INVENTORY: Final[dict[str, dict[str, str]]] = {
+    backend: _BACKEND_COMPATIBILITY_MODEL[backend] for backend in _LEGACY_BACKEND_KEYS
+}
+# Alias temporal para no romper consumidores existentes.
+BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = PUBLIC_BACKEND_COMPATIBILITY
+
+SDK_PARTIAL_BACKENDS: Final[tuple[str, ...]] = tuple(
+    backend
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
+    if backend not in SDK_FULL_BACKENDS
+)
+
 
 # Piso contractual: nivel mínimo que cada backend debe mantener por feature.
 # Si BACKEND_COMPATIBILITY baja por debajo de este umbral, debe considerarse regresión.
-MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
+_MIN_REQUIRED_BACKEND_COMPATIBILITY_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
         "tier": "tier1",
         "holobit": "full",
@@ -200,6 +216,11 @@ MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
         "corelibs": "partial",
         "standard_library": "partial",
     },
+}
+
+MIN_REQUIRED_BACKEND_COMPATIBILITY: Final[dict[str, dict[str, str]]] = {
+    backend: _MIN_REQUIRED_BACKEND_COMPATIBILITY_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
 }
 
 COMPATIBILITY_LEVEL_ORDER: Final[dict[str, int]] = {"none": 0, "partial": 1, "full": 2}
@@ -222,7 +243,7 @@ LANGUAGE_EQUIVALENCE_PRIORITY_PHASES: Final[dict[str, tuple[str, ...]]] = {
 
 # Mapeo explícito feature -> nodos soportados por backend para la hoja de ruta
 # de equivalencia versionada (`data/language_equivalence.yml`).
-BACKEND_FEATURE_NODE_SUPPORT: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+_BACKEND_FEATURE_NODE_SUPPORT_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     "python": {
         "decoradores": ("visit_decorador", "visit_funcion"),
         "imports_corelibs": ("visit_usar", "visit_import", "visit_llamada_funcion"),
@@ -281,9 +302,14 @@ BACKEND_FEATURE_NODE_SUPPORT: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     },
 }
 
+BACKEND_FEATURE_NODE_SUPPORT: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    backend: _BACKEND_FEATURE_NODE_SUPPORT_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
+}
+
 # Matriz ejecutable (respaldada por tests) para nodos AST clave por backend.
 # Esta tabla se usa como piso contractual para el gate de CI de paridad.
-AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
+_AST_FEATURE_MINIMUM_CONTRACT_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
         "funciones": "full",
         "clases": "full",
@@ -358,6 +384,11 @@ AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
     },
 }
 
+AST_FEATURE_MINIMUM_CONTRACT: Final[dict[str, dict[str, str]]] = {
+    backend: _AST_FEATURE_MINIMUM_CONTRACT_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
+}
+
 # Baseline sincronizada con evidencia real de tests parametrizados.
 AST_FEATURE_EVIDENCE_BASELINE: Final[dict[str, dict[str, str]]] = AST_FEATURE_MINIMUM_CONTRACT
 
@@ -369,7 +400,7 @@ AST_FEATURE_EVIDENCE_SOURCE: Final[str] = (
 LIVE_RUNTIME_API_MATRIX: Final[dict[str, object]] = build_runtime_api_matrix()
 
 
-BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
+_BACKEND_COMPATIBILITY_NOTES_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
         "contract": "full",
         "evidence": "Compatibilidad con `corelibs`/`standard_library` significa imports Python explícitos (`from corelibs import *`, `from standard_library import *`) y símbolos mínimos invocables en el código generado (`longitud`, `mostrar`). Holobit usa hooks `cobra_*` canónicos; `cobra_holobit` crea `Holobit` real y las primitivas avanzadas fallan con `ModuleNotFoundError` mencionando `holobit_sdk` cuando el entorno incumple la dependencia obligatoria de Python `>=3.10`.",
@@ -404,7 +435,12 @@ BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
     },
 }
 
-BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+BACKEND_COMPATIBILITY_NOTES: Final[dict[str, dict[str, str]]] = {
+    backend: _BACKEND_COMPATIBILITY_NOTES_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
+}
+
+_BACKEND_FEATURE_GAPS_MODEL: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     "python": {
         "holobit": (),
         "proyectar": (),
@@ -471,6 +507,11 @@ BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     },
 }
 
+BACKEND_FEATURE_GAPS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    backend: _BACKEND_FEATURE_GAPS_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
+}
+
 HOLOBIT_SDK_CAPABILITIES: Final[tuple[str, ...]] = (
     "runtime",
     "serializacion",
@@ -492,7 +533,7 @@ CRITICAL_HOLOBIT_CAPABILITIES: Final[tuple[str, ...]] = (
 
 # Matriz operativa de capacidades Holobit por target oficial.
 # Se usa para documentación versionada y para gate de release sobre Tier 1.
-BACKEND_HOLOBIT_SDK_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
+_BACKEND_HOLOBIT_SDK_CAPABILITIES_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
         "runtime": "full",
         "serializacion": "full",
@@ -551,6 +592,11 @@ BACKEND_HOLOBIT_SDK_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
     },
 }
 
+BACKEND_HOLOBIT_SDK_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
+    backend: _BACKEND_HOLOBIT_SDK_CAPABILITIES_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
+}
+
 # Piso crítico: si Tier 1 baja de este mínimo, se bloquea el release.
 MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
     "python": {
@@ -571,7 +617,7 @@ MIN_REQUIRED_TIER1_HOLOBIT_CAPABILITIES: Final[dict[str, dict[str, str]]] = {
     },
 }
 
-HOLOBIT_CAPABILITY_FALLBACKS: Final[dict[str, dict[str, str]]] = {
+_HOLOBIT_CAPABILITY_FALLBACKS_MODEL: Final[dict[str, dict[str, str]]] = {
     "python": {
         "runtime": "Sin fallback automático: exige `holobit_sdk` y falla explícitamente con ModuleNotFoundError.",
         "serializacion": "Usar objetos `Holobit` del SDK como formato canónico de intercambio.",
@@ -628,6 +674,11 @@ HOLOBIT_CAPABILITY_FALLBACKS: Final[dict[str, dict[str, str]]] = {
         "modulos_nativos": "No soportado: solo puntos de llamada `CALL` externos.",
         "import_hooks": "Hooks `cobra_*` obligatorios como contratos de inspección.",
     },
+}
+
+HOLOBIT_CAPABILITY_FALLBACKS: Final[dict[str, dict[str, str]]] = {
+    backend: _HOLOBIT_CAPABILITY_FALLBACKS_MODEL[backend]
+    for backend in PUBLIC_BACKEND_COMPATIBILITY
 }
 
 
@@ -1028,6 +1079,8 @@ def get_backend_feature_gaps(backend: str) -> dict[str, tuple[str, ...]] | None:
 
 
 __all__ = [
+    "PUBLIC_BACKEND_COMPATIBILITY",
+    "LEGACY_BACKEND_INVENTORY",
     "BACKEND_COMPATIBILITY",
     "MIN_REQUIRED_BACKEND_COMPATIBILITY",
     "COMPATIBILITY_LEVEL_ORDER",
