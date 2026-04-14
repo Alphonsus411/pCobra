@@ -109,13 +109,9 @@ class AppConfig:
         TranspilarInversoCommand, VerifyCommand,
         ValidarSintaxisCommand, QaValidarCommand, PluginsCommand, AgixCommand
     ]
-    V2_COMMAND_CLASSES: List[Type[BaseCommand]] = [
-        RunCommandV2,
-        BuildCommandV2,
-        TestCommandV2,
-        ModCommandV2,
-        LegacyCommandGroupV2,
-    ]
+    V2_COMMAND_CLASSES: List[Type[BaseCommand]] = [RunCommandV2, BuildCommandV2, TestCommandV2, ModCommandV2]
+    if LegacyCommandGroupV2 is not None:
+        V2_COMMAND_CLASSES.append(LegacyCommandGroupV2)
 
 
 class CommandRegistry:

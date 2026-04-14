@@ -25,7 +25,7 @@ class RunCommandV2(BaseCommand):
         parser.add_argument(
             "--container",
             dest="container",
-            choices=("python", "javascript", "cpp", "rust"),
+            choices=("python", "javascript", "rust"),
             help=_("Run the code in a Docker container runtime"),
         )
         parser.set_defaults(cmd=self)
