@@ -28,6 +28,7 @@ from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
+from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
 from pcobra.core.cobra_config import tiempo_max_transpilacion
 from pcobra.cobra.transpilers.target_utils import target_label
 from pcobra.cobra.benchmarks.targets_policy import (
@@ -145,6 +146,12 @@ class BenchCommand(BaseCommand):
             "--binary",
             action="store_true",
             help=_("Compila a C, C++ y Rust y mide el binario"),
+        )
+        parser.add_argument(
+            "--perfil",
+            choices=("publico", "avanzado"),
+            default="publico",
+            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -280,6 +287,7 @@ class BenchCommand(BaseCommand):
             return 1
 
         try:
+            enforce_advanced_profile_policy(command=self.name, args=args)
             if args.binary:
                 # Nota: scripts/ es solo tooling de desarrollo; el contrato de import
                 # distribuible usa módulos bajo pcobra.*.

@@ -31,6 +31,10 @@ from pcobra.core.semantic_validators import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.deprecation_policy import (
+    enforce_target_deprecation_policy,
+    visible_public_targets,
+)
 from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
@@ -253,7 +257,9 @@ def _ensure_entrypoints_loaded_once() -> None:
     _ENTRYPOINTS_LOADED = True
 
 LANG_CHOICES = list(official_transpiler_targets())
-TARGETS_HELP = build_target_help_by_tier(tuple(LANG_CHOICES))
+TARGETS_HELP = build_target_help_by_tier(
+    tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
+)
 
 
 def parse_official_target_list(value: str) -> list[str]:
@@ -324,12 +330,17 @@ class CompileCommand(BaseCommand):
             "--backend",
             type=parse_target,
             choices=LANG_CHOICES,
-            help=_("Alias de --tipo ({targets}).").format(targets=TARGETS_HELP),
+            help=_("Alias deprecado de --tipo ({targets}).").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
             "--tipos",
             type=parse_official_target_list,
             help=_("Lista de lenguajes separados por comas ({targets}).").format(targets=TARGETS_HELP),
+        )
+        parser.add_argument(
+            "--legacy-targets",
+            action="store_true",
+            help=_("Habilita targets deprecados en modo legacy (compatibilidad interna)."),
         )
         parser.set_defaults(cmd=self)
         return parser
@@ -381,6 +392,11 @@ class CompileCommand(BaseCommand):
                 resolution.backend,
                 context="CLI",
             )
+            enforce_target_deprecation_policy(
+                command=self.name,
+                target=transpilador_objetivo,
+                args=args,
+            )
         except ValueError as validation_err:
             mostrar_error(str(validation_err))
             return 1
@@ -389,6 +405,11 @@ class CompileCommand(BaseCommand):
             if tipos_argument:
                 langs = list(tipos_argument)
                 for lang in langs:
+                    enforce_target_deprecation_policy(
+                        command=self.name,
+                        target=lang,
+                        args=args,
+                    )
                     validar_dependencias_con_alias(lang, mod_info)
             else:
                 validar_dependencias_con_alias(transpilador_objetivo, mod_info)

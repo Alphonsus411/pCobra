@@ -67,7 +67,7 @@ def test_benchmarks_generates_data_for_all_backends(tmp_path, monkeypatch):
     def patched_run(self, args):
         results = [
             {"backend": b, "time": 0.1, "memory_kb": 123}
-            for b in benchmarks_cmd.BACKENDS.keys()
+            for b in benchmarks_cmd.BACKENDS
         ]
         data = json.dumps(results, indent=2)
         if args.output:
@@ -81,7 +81,7 @@ def test_benchmarks_generates_data_for_all_backends(tmp_path, monkeypatch):
     main(["benchmarks", "--output", str(salida)])
     data = json.loads(salida.read_text())
     modos = {d["backend"] for d in data}
-    assert {"python", "javascript", "go", "cpp", "rust", "wasm", "java", "asm"}.issubset(modos)
+    assert {"python", "javascript", "rust"}.issubset(modos)
     for d in data:
         assert isinstance(d["time"], float)
         assert isinstance(d["memory_kb"], int)

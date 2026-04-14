@@ -2,12 +2,23 @@
 
 Este documento describe cómo migrar proyectos que dependían de targets eliminados del alcance público operativo.
 
-## Estado actual (canónico)
+## Estado actual (canónico + deprecaciones activas)
 
-Los únicos targets oficiales de salida son:
+Los targets canónicos de salida registrados son:
 
-- **Tier 1**: `python`, `rust`, `javascript`, `wasm`
-- **Tier 2**: `go`, `cpp`, `java`, `asm`
+- **Tier 1**: `python`, `rust`, `javascript`, `wasm` *(con `wasm` deprecado para superficie pública)*.
+- **Tier 2**: `go`, `cpp`, `java`, `asm` *(deprecados para superficie pública)*.
+
+### Deprecación pública (2 fases)
+
+Desde esta versión se deprecan en CLI pública los targets:
+
+- `wasm`, `go`, `cpp`, `java`, `asm`.
+
+Plan aplicado:
+
+1. **Fase 1 (actual por defecto)**: warning en CLI + telemetría de uso.
+2. **Fase 2**: ocultos del help público y disponibles solo en modo legacy (`--legacy-targets` o `COBRA_LEGACY_TARGETS_MODE=1`).
 
 Si tu flujo usa un target retirado, debes moverlo a uno de estos 8.
 
@@ -28,7 +39,7 @@ Elige el target según objetivo de tu pipeline:
 2. Revisa scripts de CI para usar solo:
    - `cobra compilar ... --tipo <target>`
    - `cobra compilar ... --tipos <lista_canónica>`
-3. Valida que los ejemplos y documentación no incluyan aliases ni targets retirados.
+3. Evita exponer en documentación pública los targets deprecados (`wasm`, `go`, `cpp`, `java`, `asm`) salvo notas de migración/legacy.
 
 ## Compatibilidad Holobit SDK y librerías tras migrar
 

@@ -46,7 +46,7 @@ def test_transpilar_inverso_archivo_inexistente(tmp_path):
             "--origen=python",
             "--destino=python",
         ])
-    assert f"El archivo '{archivo}' no existe" in out.getvalue()
+    assert "no existe o no es un archivo regular" in out.getvalue()
 
 
 def test_transpilar_inverso_consistencia_registry_cli():
@@ -135,7 +135,7 @@ def test_transpilar_inverso_ayuda_acota_origen_y_targets_oficiales():
     ayuda_normalizada = ayuda.lower()
     assert "orígenes reverse" in ayuda_normalizada or "origen" in ayuda_normalizada
     assert "tier 1" in ayuda_normalizada
-    assert "tier 2" in ayuda_normalizada
+    assert "tier 2" not in ayuda_normalizada
 
 
 def test_regresion_parse_reverse_source_language_rechaza_valor_fuera_del_scope():

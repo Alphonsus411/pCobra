@@ -33,9 +33,15 @@ from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.deprecation_policy import (
+    enforce_advanced_profile_policy,
+    enforce_target_deprecation_policy,
+    visible_public_targets,
+)
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.target_policies import parse_target
+from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
@@ -129,7 +135,9 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
 }
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
 DESTINO_CHOICES = list(official_transpiler_targets())
-TARGETS_HELP = build_target_help_by_tier(tuple(DESTINO_CHOICES))
+TARGETS_HELP = build_target_help_by_tier(
+    tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
+)
 REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
 
 
@@ -243,6 +251,17 @@ class TranspilarInversoCommand(BaseCommand):
             type=parse_target,
             choices=DESTINO_CHOICES,
         )
+        parser.add_argument(
+            "--legacy-targets",
+            action="store_true",
+            help=_("Habilita destinos deprecados en modo legacy (compatibilidad interna)."),
+        )
+        parser.add_argument(
+            "--perfil",
+            choices=("publico", "avanzado"),
+            default="avanzado",
+            help=_("Perfil del comando: 'avanzado' para rutas reverse/backend."),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -340,11 +359,17 @@ class TranspilarInversoCommand(BaseCommand):
         """
         try:
             validar_politica_modo(self.name, args, capability=self.capability)
+            enforce_advanced_profile_policy(command=self.name, args=args)
 
             origen = normalize_reverse_language(args.origen)
             destino = _validate_official_target_or_raise(
                 args.destino,
                 context="CLI transpilar-inverso",
+            )
+            enforce_target_deprecation_policy(
+                command=self.name,
+                target=destino,
+                args=args,
             )
 
             self._validar_origen_en_politica(origen)
