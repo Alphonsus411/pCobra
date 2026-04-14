@@ -4,6 +4,11 @@ from typing import Any
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.target_policies import (
+    VERIFICATION_EXECUTABLE_TARGETS,
+    VERIFICATION_EXECUTABLE_TARGETS_HELP,
+    parse_restricted_target_list,
+)
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 
 
@@ -16,6 +21,7 @@ class TestCommandV2(BaseCommand):
     def __init__(self) -> None:
         super().__init__()
         self._legacy = VerifyCommand()
+        self._default_langs = ",".join(VERIFICATION_EXECUTABLE_TARGETS)
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Validate project output across runtimes"))
@@ -23,16 +29,23 @@ class TestCommandV2(BaseCommand):
         parser.add_argument(
             "--langs",
             "-l",
-            required=True,
-            help=_("Comma-separated runtime languages to validate"),
+            default=self._default_langs,
+            type=lambda value: parse_restricted_target_list(
+                value, VERIFICATION_EXECUTABLE_TARGETS, "verificación ejecutable"
+            ),
+            help=_(
+                "Comma-separated runtime languages to validate. "
+                "Defaults to official verification runtimes: {runtime}."
+            ).format(runtime=VERIFICATION_EXECUTABLE_TARGETS_HELP),
         )
         parser.set_defaults(cmd=self)
         return parser
 
     def run(self, args: Any) -> int:
+        langs = getattr(args, "langs", self._default_langs)
         legacy_args = Namespace(
             archivo=args.file,
-            lenguajes=getattr(args, "langs", ""),
+            lenguajes=langs,
             modo=getattr(args, "modo", "mixto"),
         )
         return self._legacy.run(legacy_args)

@@ -94,3 +94,21 @@ def test_cobra_help_documenta_separacion_de_modos_en_snapshot():
     ]
     for expected_line in expected_lines:
         assert expected_line in normalized_stdout
+
+
+def test_cobra_help_snapshot_publico_no_expone_comandos_legacy():
+    cli_dir = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(cli_dir),
+        env=_env_without_sqlite_db_key(),
+    )
+    assert result.returncode == 0
+
+    expected_snapshot = (
+        Path(__file__).parent / "golden" / "cli_help_public_no_legacy.golden"
+    ).read_text(encoding="utf-8")
+    assert " ".join(result.stdout.split()) == " ".join(expected_snapshot.split())
+    assert "\n  legacy " not in result.stdout.lower()

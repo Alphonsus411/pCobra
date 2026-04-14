@@ -1,0 +1,51 @@
+usage: cobra [-h] [--version] [--ayuda] [--format] [--debug] [-v] [--no-safe]
+             [--allow-insecure-fallback] [--allow-insecure-non-interactive]
+             [--modo {cobra,transpilar,mixto}] [--solo-cobra] [--ui {v1,v2}]
+             [--lang lang] [--no-color] [--extra-validators extra_validators]
+             [--legacy-imports] [--dev-ephemeral-key] [--plugins-safe-mode]
+             [--plugins-unsafe-mode] [--plugins-allowlist plugins_allowlist]
+
+cli de cobra para ejecutar e interpretar scripts, transpilar código a otros
+lenguajes o usar ambos flujos según --modo (cobra, transpilar, mixto). modo
+cobra = solo programar/interpretar cobra sin codegen.
+
+options:
+  -h, --help            show this help message and exit
+  --version             show version information and exit
+  --ayuda               muestra esta ayuda y termina
+  --format, --formatear
+                        format file before processing
+  --debug               show debug messages
+  -v, --verbose         incrementa el nivel de detalle
+  --no-safe, --no-seguro
+                        run without safe mode
+  --allow-insecure-fallback
+                        permite explícitamente fallback inseguro de sandbox
+                        (solo para desarrollo controlado).
+  --allow-insecure-non-interactive
+                        permite fallback inseguro en ci/no interactivo.
+                        requiere --allow-insecure-fallback.
+  --modo {cobra,transpilar,mixto}
+                        define el alcance de la sesión: cobra (solo
+                        programar/interpretar cobra, sin codegen), transpilar
+                        (solo generar código), mixto (ejecutar y transpilar).
+  --solo-cobra          alias semántico de --modo cobra: sesión para solo
+                        programar/interpretar cobra sin rutas de codegen.
+  --ui {v1,v2}          selecciona la interfaz cli: v1 (legacy) o v2 (opt-in).
+  --lang lang           interface language code
+  --no-color            disable colored output
+  --extra-validators extra_validators
+                        path to custom validators module
+  --legacy-imports      habilita temporalmente imports legacy (cobra/core).
+                        migre a pcobra.*
+  --dev-ephemeral-key   confirma explícitamente (solo desarrollo local) el uso
+                        de una clave efímera para sqlite_db_key. requiere
+                        cobra_dev_mode=1 y cobra_dev_allow_ephemeral_key=1.
+  --plugins-safe-mode   activa modo seguro de plugins (bloquea no permitidos)
+  --plugins-unsafe-mode
+                        desactiva modo seguro de plugins (permite cualquier
+                        plugin)
+  --plugins-allowlist plugins_allowlist
+                        lista permitida de plugins separados por coma (ruta
+                        exacta, módulo o prefix:/sha256:hash). también vía
+                        cobra_plugins_allowlist.
