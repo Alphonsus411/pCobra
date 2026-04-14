@@ -1,0 +1,3 @@
+public_api = ["cobra.system.fs", "cobra.system.proc", "cobra.system.env"]
+backend_preferido = "rust"
+fallback_permitido = ["python"]

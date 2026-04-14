@@ -256,6 +256,75 @@ def _schema_for_module(datos: Dict[str, Any], modulo: str, info: Dict[str, Any])
     return SCHEMA_V1, OFFICIAL_TARGETS, DEFAULT_REQUIRED_TARGETS, "v1"
 
 
+
+
+def _validate_stdlib_contract_manifest(name: str, contract: Dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(contract, dict):
+        return [f"Manifest contractual inválido para {name}: contenido no es objeto TOML."]
+
+    public_api = contract.get("public_api")
+    if not isinstance(public_api, list) or not public_api or not all(isinstance(item, str) and item.strip() for item in public_api):
+        errors.append(
+            f"Manifest contractual inválido para {name}: public_api debe ser lista no vacía de strings."
+        )
+
+    preferred = contract.get("backend_preferido")
+    if not isinstance(preferred, str) or normalize_target_name(preferred) not in OFFICIAL_TARGETS:
+        errors.append(
+            f"Manifest contractual inválido para {name}: backend_preferido debe ser un backend canónico oficial."
+        )
+
+    fallback = contract.get("fallback_permitido")
+    if fallback is None:
+        fallback = []
+    if not isinstance(fallback, list):
+        errors.append(
+            f"Manifest contractual inválido para {name}: fallback_permitido debe ser una lista."
+        )
+        fallback = []
+
+    normalized_fallback: list[str] = []
+    for backend in fallback:
+        if not isinstance(backend, str):
+            errors.append(
+                f"Manifest contractual inválido para {name}: fallback_permitido contiene valor no string ({backend!r})."
+            )
+            continue
+        canonical = normalize_target_name(backend)
+        if canonical not in OFFICIAL_TARGETS:
+            errors.append(
+                f"Manifest contractual inválido para {name}: fallback_permitido contiene backend no oficial ({backend})."
+            )
+            continue
+        if canonical not in normalized_fallback:
+            normalized_fallback.append(canonical)
+
+    if isinstance(preferred, str):
+        preferred_normalized = normalize_target_name(preferred)
+        if preferred_normalized in normalized_fallback:
+            errors.append(
+                f"Manifest contractual inválido para {name}: fallback_permitido no puede incluir backend_preferido."
+            )
+
+    return errors
+
+
+def _validate_stdlib_contracts() -> list[str]:
+    contracts = module_map.get_stdlib_contracts()
+    if not contracts:
+        return []
+
+    errors: list[str] = []
+    for name, contract in contracts.items():
+        if not name.startswith("cobra."):
+            errors.append(
+                f"Manifest contractual inválido para {name}: el nombre debe empezar por 'cobra.'."
+            )
+            continue
+        errors.extend(_validate_stdlib_contract_manifest(name, contract))
+    return errors
+
 def validar_mod(path: str | None = None) -> None:
     """Valida el contenido de ``cobra.mod``.
 
@@ -359,6 +428,8 @@ def validar_mod(path: str | None = None) -> None:
                         errores.append(f"No existe el archivo {ruta} para {modulo}")
                 except OSError as e:
                     errores.append(f"Error al verificar archivo {ruta}: {e}")
+
+    errores.extend(_validate_stdlib_contracts())
 
     if errores:
         mensaje = "; ".join(errores)

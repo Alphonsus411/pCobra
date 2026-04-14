@@ -27,6 +27,81 @@ COBRA_TOML_PATH = os.environ.get(
 )
 
 _toml_cache = None
+
+STDLIB_CONTRACTS_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'stdlib_contract')
+)
+
+_stdlib_contract_cache: dict[str, Dict[str, Any]] | None = None
+
+
+def _load_stdlib_contracts() -> dict[str, Dict[str, Any]]:
+    """Carga manifiestos contractuales de ``stdlib_contract``."""
+    global _stdlib_contract_cache
+    if _stdlib_contract_cache is not None:
+        return _stdlib_contract_cache
+
+    loaded: dict[str, Dict[str, Any]] = {}
+    if not os.path.isdir(STDLIB_CONTRACTS_DIR):
+        _stdlib_contract_cache = loaded
+        return loaded
+
+    for entry in sorted(os.listdir(STDLIB_CONTRACTS_DIR)):
+        contract_path = os.path.join(STDLIB_CONTRACTS_DIR, entry)
+        if not os.path.isfile(contract_path):
+            continue
+        try:
+            with open(contract_path, 'rb') as handle:
+                parsed = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError):
+            logger.warning('No se pudo cargar manifest contractual: %s', contract_path)
+            continue
+        if isinstance(parsed, dict):
+            loaded[entry] = parsed
+
+    _stdlib_contract_cache = loaded
+    return loaded
+
+
+def get_stdlib_contracts() -> Dict[str, Dict[str, Any]]:
+    """Devuelve todos los manifiestos contractuales cargados."""
+    return dict(_load_stdlib_contracts())
+
+
+def get_stdlib_contract(module: str) -> Dict[str, Any]:
+    """Devuelve el manifiesto contractual declarado para ``module``."""
+    contracts = _load_stdlib_contracts()
+    contract = contracts.get(module)
+    if isinstance(contract, dict):
+        return contract
+    return {}
+
+
+def resolve_backend_for_module(module: str, backend: str) -> str:
+    """Resuelve backend efectivo por contrato sin exponer transpilers internos."""
+    canonical_backend = normalize_target_name(backend)
+    contract = get_stdlib_contract(module)
+    if not contract:
+        return canonical_backend
+
+    preferred_backend = contract.get('backend_preferido')
+    if not isinstance(preferred_backend, str):
+        return canonical_backend
+    preferred = normalize_target_name(preferred_backend)
+
+    fallback = contract.get('fallback_permitido', [])
+    if not isinstance(fallback, list):
+        fallback = []
+    allowed_fallbacks = {
+        normalize_target_name(item)
+        for item in fallback
+        if isinstance(item, str)
+    }
+
+    if canonical_backend == preferred or canonical_backend in allowed_fallbacks:
+        return canonical_backend
+    return preferred
+
 _RUNTIME_PATH_FORBIDDEN_SEGMENTS = (
     "core/nativos",
     "corelibs",
@@ -73,8 +148,8 @@ def get_mapped_path(module: str, backend: str) -> str:
     exclusivamente desde ``cobra.toml`` usando la estructura
     ``[modulos."<module>"]``. Si no hay mapeo válido, devuelve ``module``.
     """
-    canonical_backend = normalize_target_name(backend)
-    if backend != canonical_backend or canonical_backend not in OFFICIAL_TARGETS:
+    canonical_backend = resolve_backend_for_module(module, backend)
+    if canonical_backend not in OFFICIAL_TARGETS:
         return module
 
     mapa = get_toml_map()
