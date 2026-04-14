@@ -6,17 +6,14 @@ from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
 
-from pcobra.cobra.build.orchestrator import BuildOrchestrator
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     parse_target,
     parse_target_list,
 )
-from pcobra.cobra.transpilers.registry import (
-    build_official_transpilers,
-    official_transpiler_targets,
-)
+from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
     resolution_candidates,
@@ -47,9 +44,9 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
-TRANSPILERS = build_official_transpilers()
+TRANSPILERS = dict(backend_pipeline.TRANSPILERS)
 _ENTRYPOINTS_LOADED = False
-ORCHESTRATOR = BuildOrchestrator()
+ORCHESTRATOR = backend_pipeline.ORCHESTRATOR
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -73,6 +70,7 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
         context=context,
     )
     TRANSPILERS[canonical] = transpiler_cls
+    backend_pipeline.TRANSPILERS = TRANSPILERS
     return canonical
 
 
@@ -348,8 +346,10 @@ class CompileCommand(BaseCommand):
     def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
         """Ejecuta un transpilador específico."""
         lang, ast = parametros
+        backend_pipeline.TRANSPILERS = TRANSPILERS
+        code = backend_pipeline.transpile(ast, lang)
         transp = TRANSPILERS[lang]()
-        return lang, transp.__class__.__name__, transp.generate_code(ast)
+        return lang, transp.__class__.__name__, code
 
     def run(self, args):
         """Ejecuta la lógica del comando."""
@@ -384,9 +384,10 @@ class CompileCommand(BaseCommand):
                 _("La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura.")
             )
         try:
-            resolution = ORCHESTRATOR.resolve_backend(
-                source_file=archivo,
-                preferred_backend=preferred_backend,
+            backend_pipeline.TRANSPILERS = TRANSPILERS
+            resolution = backend_pipeline.resolve_backend(
+                archivo,
+                {"preferred_backend": preferred_backend},
             )
             transpilador_objetivo = _validate_official_backend_or_raise(
                 resolution.backend,
@@ -453,8 +454,9 @@ class CompileCommand(BaseCommand):
                 transpilador = transpilador_objetivo
                 if transpilador not in TRANSPILERS:
                     raise ValueError(_("Transpilador no soportado."))
+                backend_pipeline.TRANSPILERS = TRANSPILERS
+                resultado = backend_pipeline.transpile(ast, transpilador)
                 transp = TRANSPILERS[transpilador]()
-                resultado = transp.generate_code(ast)
                 mostrar_info(
                     _("Código generado ({name}):").format(
                         name=transp.__class__.__name__

@@ -2,7 +2,7 @@ from argparse import Namespace
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.build.orchestrator import BuildOrchestrator
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.autocomplete import files_completer
@@ -17,7 +17,6 @@ class BuildCommandV2(BaseCommand):
     def __init__(self) -> None:
         super().__init__()
         self._legacy = CompileCommand()
-        self._orchestrator = BuildOrchestrator()
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Build/transpile a Cobra file"))
@@ -26,7 +25,7 @@ class BuildCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
-        resolution = self._orchestrator.resolve_backend(source_file=args.file)
+        resolution = backend_pipeline.resolve_backend(args.file, {})
         legacy_args = Namespace(
             archivo=args.file,
             tipo=resolution.backend,

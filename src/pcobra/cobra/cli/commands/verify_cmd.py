@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 from argparse import ArgumentParser
 
-from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     OFFICIAL_TRANSPILATION_TARGETS_HELP,
@@ -166,24 +166,22 @@ class VerifyCommand(BaseCommand):
     def _compile_and_execute(
         self, 
         ast: Any, 
-        lang: str, 
-        transpiler: Any
+        lang: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """Compila y ejecuta el código en el lenguaje especificado.
         
         Args:
             ast: AST a compilar
             lang: Lenguaje objetivo
-            transpiler: Transpilador a utilizar
             
         Returns:
             Tupla con (salida, error)
         """
         try:
-            if lang not in TRANSPILERS:
+            if lang not in backend_pipeline.TRANSPILERS:
                 return None, _("Transpilador no encontrado para {}").format(lang)
-                
-            codigo_gen = transpiler.generate_code(ast)
+
+            codigo_gen = backend_pipeline.transpile(ast, lang)
             
             if lang == "python":
                 salida = ejecutar_en_sandbox(codigo_gen)
@@ -217,8 +215,7 @@ class VerifyCommand(BaseCommand):
         Returns:
             Tupla con (lenguaje, error si existe)
         """
-        transpiler = TRANSPILERS[lang]()
-        salida, error = self._compile_and_execute(ast, lang, transpiler)
+        salida, error = self._compile_and_execute(ast, lang)
         
         if error:
             return lang, error
