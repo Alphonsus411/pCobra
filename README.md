@@ -17,6 +17,12 @@ Versión 10.0.13
 
 [English version available here](docs/README.en.md)
 
+## Cobra como interfaz única
+
+Cobra consolida su experiencia de uso en una **única interfaz pública**: la CLI `cobra`. Todas las tareas de ejecución, build, pruebas y módulos se coordinan desde este frente común, mientras la orquestación interna y los adaptadores de backend permanecen encapsulados.
+
+La superficie pública oficial mantiene tres backends: **Python**, **JavaScript** y **Rust**.
+
 pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida derivada automáticamente de `src/pcobra/cobra/config/transpile_targets.py` + `src/pcobra/cobra/transpilers/registry.py`.
 
 Resumen normativo visible (generado desde la política canónica):
@@ -126,6 +132,8 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 
 - Descripción del Proyecto
 - Arquitectura del compilador
+- Ecosistema unificado Cobra
+- Migración a CLI unificada
 - Instalación
 - Cómo usar la CLI
 - Descargas
@@ -214,6 +222,14 @@ La cadena de herramientas de Cobra separa el front-end de los generadores de có
 
 Esta organización actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ello, Cobra mantiene generadores adicionales para casos internos y legacy. En la documentación pública, la salida oficial queda limitada a `python`, `javascript` y `rust`.
 
+## Ecosistema unificado Cobra
+
+Cobra expone una sola interfaz de entrada (`cobra`) y desacopla internamente la orquestación, los adapters y los runtimes de ejecución. Revisa el diagrama por capas en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
+
+## Migración a CLI unificada
+
+Para migrar desde comandos legacy y usos históricos de `--backend`, consulta [docs/migracion_cli_unificada.md](docs/migracion_cli_unificada.md).
+
 ## Instalación
 
 ```bash
@@ -266,31 +282,41 @@ Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantie
 
 ## Cómo usar la CLI
 
-Ejecuta un archivo de Cobra con:
+### CLI simplificada (interfaz oficial)
+
+La interfaz recomendada se organiza en cuatro comandos base:
+
+- `cobra run`: ejecutar programas Cobra.
+- `cobra build`: transpilación y artefactos por backend oficial.
+- `cobra test`: ejecución de pruebas del proyecto.
+- `cobra mod`: gestión de módulos y dependencias.
+
+Ejemplos rápidos:
 
 ```bash
-cobra archivo.co
+cobra run archivo.co
+cobra build hola.co --backend python
+cobra test
+cobra mod list
 ```
 
-Para listar las opciones disponibles ejecuta:
+Para listar todas las opciones disponibles:
 
 ```bash
 cobra --help
 ```
 
-El intérprete se ejecuta en modo seguro por defecto. Si deseas desactivarlo utiliza la opción `--no-seguro`:
+Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`.
 
-```bash
-cobra archivo.co --no-seguro
-```
+Más detalle técnico de capas y contratos internos en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
 
-### Ejemplo de transpilación
+### Guía de migración a la CLI unificada
 
-```bash
-cobra compilar hola.co --backend python
-```
+Si vienes de comandos legacy (`cobra compilar`, `cobra modulos`) o de flujos centrados en `--backend`, sigue la guía: [docs/migracion_cli_unificada.md](docs/migracion_cli_unificada.md).
 
-Esto generará `hola.py`. Para conocer otros destinos y opciones, consulta la [documentación detallada](docs/) o revisa [docs/frontend](docs/frontend).
+### Compatibilidad legacy
+
+Los proyectos antiguos pueden seguir funcionando con aliases legacy y con el modo de compatibilidad. Recomendamos mantenerlos solo como transición y migrar progresivamente a `run/build/test/mod`.
 
 ### Validar sintaxis (paso a paso)
 
