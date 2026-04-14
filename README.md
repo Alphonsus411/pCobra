@@ -95,10 +95,15 @@ Sin estos prerrequisitos, pCobra puede conservar generación de código, pero no
 
 Guía de migración para consumidores de targets retirados: `docs/migracion_targets_retirados.md`.
 
-Migración desde targets legacy (`go`, `cpp`, `java`, `wasm`, `asm`) hacia backends oficiales:
+Migración desde targets deprecados/legacy (`go`, `cpp`, `java`, `wasm`, `asm`) hacia backends oficiales:
 
 1. Sustituye en CLI y CI los usos de `--backend` legacy por `python`, `javascript` o `rust`.
 2. Prioriza `rust` cuando busques rendimiento/compilación nativa, `javascript` para entornos Node/web y `python` para máxima cobertura SDK.
+
+Deprecación progresiva en CLI (2 fases):
+
+- **Fase 1 (default):** warning + telemetría de uso cuando se usan `wasm`, `go`, `cpp`, `java` o `asm`.
+- **Fase 2:** esos targets quedan ocultos del help público y solo disponibles en modo legacy (`--legacy-targets` o `COBRA_LEGACY_TARGETS_MODE=1`).
 3. Ejecuta regresión funcional después del cambio para validar paridad en tu pipeline.
 4. Mantén los targets legacy solo como fallback interno temporal, sin exposición pública.
 

@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -93,6 +94,12 @@ class BenchTranspilersCommand(BaseCommand):
             action="store_true",
             help=_("Activa cProfile durante la generación de código"),
         )
+        parser.add_argument(
+            "--perfil",
+            choices=("publico", "avanzado"),
+            default="publico",
+            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -153,6 +160,7 @@ class BenchTranspilersCommand(BaseCommand):
             int: 0 si la ejecución fue exitosa, 1 en caso de error
         """
         try:
+            enforce_advanced_profile_policy(command=self.name, args=args)
             results: List[Dict[str, Any]] = []
             self._validate_benchmark_layout()
             programs = {s: self._ensure_program(s) for s in VALID_SIZES}

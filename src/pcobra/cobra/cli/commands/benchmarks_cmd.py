@@ -13,6 +13,10 @@ from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, b
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
+from pcobra.cobra.cli.deprecation_policy import (
+    enforce_advanced_profile_policy,
+    enforce_target_deprecation_policy,
+)
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -52,6 +56,17 @@ class BenchmarksCommand(BaseCommand):
             type=Path,
             help=_("Archivo donde guardar los resultados en formato JSON"),
         )
+        parser.add_argument(
+            "--perfil",
+            choices=("publico", "avanzado"),
+            default="publico",
+            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+        )
+        parser.add_argument(
+            "--legacy-targets",
+            action="store_true",
+            help=_("Habilita targets deprecados en modo legacy (compatibilidad interna)."),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -65,6 +80,7 @@ class BenchmarksCommand(BaseCommand):
             int: Código de salida (0 para éxito, otro valor para error)
         """
         try:
+            enforce_advanced_profile_policy(command=self.name, args=args)
             results: list[dict[str, Any]] = []
             iteraciones = max(1, getattr(args, "iteraciones", 1))
             backend_filtro = getattr(args, "backend", None)
@@ -82,6 +98,11 @@ class BenchmarksCommand(BaseCommand):
                         )
                     )
                     return 1
+                enforce_target_deprecation_policy(
+                    command=self.name,
+                    target=backend_filtro,
+                    args=args,
+                )
 
             bench_cmd = BenchCommand()
             for _iteration in range(iteraciones):

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -109,6 +110,12 @@ class BenchmarksV2Command(BaseCommand):
             metavar="N",
             help=_("Número de ejecuciones consecutivas por modo"),
         )
+        parser.add_argument(
+            "--perfil",
+            choices=("publico", "avanzado"),
+            default="publico",
+            help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
+        )
         parser.set_defaults(cmd=self)
         return parser
 
@@ -164,6 +171,7 @@ class BenchmarksV2Command(BaseCommand):
 
     def run(self, args: ArgumentParser) -> int:  # type: ignore[override]
         try:
+            enforce_advanced_profile_policy(command=self.name, args=args)
             runs = getattr(args, "runs", 1)
             resultados = list(self._ejecutar_modos(runs))
             payload = json.dumps(resultados, indent=2, ensure_ascii=False)
@@ -186,4 +194,3 @@ class BenchmarksV2Command(BaseCommand):
 
 # Alias retrocompatible
 Benchmarks2Command = BenchmarksV2Command
-

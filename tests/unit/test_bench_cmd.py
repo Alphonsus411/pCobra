@@ -47,6 +47,5 @@ def test_bench_binary_runs_script(tmp_path, monkeypatch):
 
     bc.BenchCommand().run(SimpleNamespace(profile=False, binary=True))
 
-    assert "binary_bench.py" in Path(called["cmd"][1]).name
+    assert any(part == "pcobra.cobra.benchmarks.binary_bench" for part in called["cmd"])
     assert Path("binary_bench.json").exists()
-

@@ -27,10 +27,10 @@ def test_compile_tipo_choices_usa_lang_choices_centrales():
 def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
     parser, _ = _build_parser()
 
-    args = parser.parse_args(["compilar", "input.co", "--tipo", "asm", "--tipos", "python,javascript,asm"])
+    args = parser.parse_args(["compilar", "input.co", "--tipo", "rust", "--tipos", "python,javascript,rust"])
 
-    assert args.tipo == "asm"
-    assert args.tipos == ["python", "javascript", "asm"]
+    assert args.tipo == "rust"
+    assert args.tipos == ["python", "javascript", "rust"]
 
 
 def test_compile_parser_backend_rechaza_alias_legacy_explicito():
@@ -55,8 +55,8 @@ def test_compile_help_refleja_solo_nombres_canonicos():
 
     normalized_help = " ".join(help_text.split())
 
-    assert "Tier 1: python, rust, javascript, wasm." in normalized_help
-    assert "Tier 2: go, cpp, java, asm." in normalized_help
+    assert "Tier 1: python, javascript, rust." in normalized_help
+    assert "Tier 2:" not in normalized_help
     assert "JavaScript (javascript)" not in help_text
     assert "Ensamblador (asm)" not in help_text
     for target in OFFICIAL_TARGETS:
