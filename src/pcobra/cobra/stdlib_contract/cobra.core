@@ -1,0 +1,3 @@
+public_api = ["cobra.core.lex", "cobra.core.parse", "cobra.core.ast"]
+backend_preferido = "python"
+fallback_permitido = ["rust", "javascript"]

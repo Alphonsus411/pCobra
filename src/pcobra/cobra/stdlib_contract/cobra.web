@@ -1,0 +1,3 @@
+public_api = ["cobra.web.http", "cobra.web.router", "cobra.web.sse"]
+backend_preferido = "javascript"
+fallback_permitido = ["python"]

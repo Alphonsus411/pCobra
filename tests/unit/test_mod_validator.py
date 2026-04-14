@@ -221,3 +221,29 @@ def test_validador_v1_emite_warning_migracion(tmp_path, monkeypatch, caplog):
 
     validar_mod(str(tmp_path / "cobra.mod"))
     assert "esquema v1 está deprecado" in caplog.text
+
+
+def test_validador_falla_si_manifest_stdlib_contract_invalido(tmp_path, monkeypatch):
+    py = tmp_path / "m.py"
+    py.write_text("x = 1")
+    mod = tmp_path / "m.co"
+    data = {str(mod): {"version": "0.1.0", "python": str(py)}}
+    _write_yaml(tmp_path / "cobra.mod", data)
+
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_toml_map",
+        lambda: {"project": {"required_targets": ["python"]}},
+    )
+    monkeypatch.setattr(
+        "cobra.semantico.mod_validator.module_map.get_stdlib_contracts",
+        lambda: {
+            "cobra.system": {
+                "public_api": ["cobra.system.fs"],
+                "backend_preferido": "python",
+                "fallback_permitido": ["fantasy"],
+            }
+        },
+    )
+
+    with pytest.raises(ValueError, match="fallback_permitido contiene backend no oficial"):
+        validar_mod(str(tmp_path / "cobra.mod"))
