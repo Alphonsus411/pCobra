@@ -56,6 +56,12 @@ from pcobra.cobra.cli.mode_policy import (
     MODO_POR_DEFECTO,
     validar_politica_modo,
 )
+from pcobra.cobra.cli.public_command_policy import (
+    PROFILE_DEVELOPMENT,
+    PROFILE_PUBLIC,
+    filter_commands_for_profile,
+    resolve_command_profile,
+)
 from pcobra.cobra.cli.plugin import (
     descubrir_plugins,
     configure_plugin_policy,
@@ -131,7 +137,13 @@ class CommandRegistry:
             logging.error(f"Error creating command {command_class.__name__}: {e}")
             raise
 
-    def register_base_commands(self, subparsers: Any, *, ui: str = "v1") -> Dict[str, BaseCommand]:
+    def register_base_commands(
+        self,
+        subparsers: Any,
+        *,
+        ui: str = "v1",
+        profile: str = PROFILE_PUBLIC,
+    ) -> Dict[str, BaseCommand]:
         base_commands = []
         command_classes = AppConfig.V2_COMMAND_CLASSES if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
         for cmd_class in command_classes:
@@ -143,6 +155,20 @@ class CommandRegistry:
 
         plugin_commands = descubrir_plugins()
         all_commands = base_commands + plugin_commands
+
+        if ui == "v2":
+            allowed_names = filter_commands_for_profile((cmd.name for cmd in all_commands), profile)
+            all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
+            if profile == PROFILE_PUBLIC:
+                logging.getLogger(__name__).debug(
+                    "Perfil público activo: comandos expuestos=%s",
+                    sorted(allowed_names),
+                )
+            elif profile == PROFILE_DEVELOPMENT:
+                logging.getLogger(__name__).debug(
+                    "Perfil desarrollo activo: comandos internos habilitados."
+                )
+
         self.commands = {cmd.name: cmd for cmd in all_commands}
 
         for command in all_commands:
@@ -218,9 +244,11 @@ class CliApplication:
         if self._commands_registered:
             return
 
+        command_profile = resolve_command_profile()
         self.command_registry.register_base_commands(
             self._subparsers,
             ui=getattr(self, "_selected_ui", "v1"),
+            profile=command_profile,
         )
         menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
         menu_parser.set_defaults(cmd="menu")
@@ -341,7 +369,11 @@ class CliApplication:
             "--ui",
             choices=("v1", "v2"),
             default="v1",
-            help=_("Selecciona la interfaz CLI: v1 (legacy) o v2 (opt-in)."),
+            help=_(
+                "Selecciona la interfaz CLI: v1 (legacy) o v2 (superficie pública run/build/test/mod). "
+                "Los comandos internos quedan disponibles solo en desarrollo explícito (COBRA_DEV_MODE=1 "
+                "o COBRA_CLI_COMMAND_PROFILE=development)."
+            ),
         )
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
