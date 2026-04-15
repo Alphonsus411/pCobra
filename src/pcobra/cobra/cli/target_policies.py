@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from argparse import ArgumentTypeError
+import warnings
 from typing import Literal
 
 from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
+from pcobra.cobra.architecture.legacy_backend_lifecycle import (
+    legacy_backend_warning_message,
+)
 from pcobra.cobra.cli.internal_compat.legacy_targets import (
     LEGACY_BACKENDS_FEATURE_FLAG,
     enabled_internal_legacy_targets,
@@ -520,6 +524,14 @@ def parse_target(value: str) -> str:
     canonical = normalize_target_name(raw)
     legacy_enabled = is_internal_legacy_targets_enabled()
     if canonical in enabled_internal_legacy_targets():
+        warnings.warn(
+            legacy_backend_warning_message(
+                target=canonical,
+                route=f"CLI.parse_target ({LEGACY_BACKENDS_FEATURE_FLAG}=1)",
+            ),
+            category=UserWarning,
+            stacklevel=2,
+        )
         return canonical
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         feature_flag_hint = (

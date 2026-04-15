@@ -10,6 +10,9 @@ from pcobra.cobra.architecture.backend_policy import (
     INTERNAL_BACKENDS,
     PUBLIC_BACKENDS,
 )
+from pcobra.cobra.architecture.legacy_backend_lifecycle import (
+    lifecycle_status_for_backend,
+)
 from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
@@ -30,6 +33,12 @@ PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     target: TRANSPILER_CLASS_PATHS[target] for target in INTERNAL_BACKENDS
+}
+INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS: Final[
+    dict[str, str]
+] = {
+    target: lifecycle_status_for_backend(target)
+    for target in INTERNAL_BACKENDS
 }
 
 
@@ -132,6 +141,18 @@ def ordered_internal_legacy_transpiler_paths() -> tuple[tuple[str, tuple[str, st
     """Devuelve el inventario legacy interno en orden contractual."""
     return tuple(
         (target, INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS[target])
+        for target in _ORDERED_INTERNAL_LEGACY_TARGETS
+    )
+
+
+def ordered_internal_legacy_transpiler_entries() -> tuple[tuple[str, tuple[str, str], str], ...]:
+    """Devuelve inventario interno legacy con etiqueta de estado lifecycle."""
+    return tuple(
+        (
+            target,
+            INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS[target],
+            INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS[target],
+        )
         for target in _ORDERED_INTERNAL_LEGACY_TARGETS
     )
 

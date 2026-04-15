@@ -139,6 +139,18 @@ Antes de fusionar cambios de política:
 - [x] Contrato de compatibilidad por backend validado (`python scripts/validate_runtime_contract.py`).
 - [x] Cualquier guardrail en fallo bloquea merge (jobs CI en estado failed).
 
+## Checklist de retiro seguro por backend interno
+
+> Fuente canónica: `src/pcobra/cobra/architecture/legacy_backend_lifecycle.py` (consumida por CLI y documentación).
+
+| Backend | Estado lifecycle | Target público recomendado | Checklist de retiro seguro |
+| --- | --- | --- | --- |
+| `go` | `active-migration` | `rust` | 1) Inventariar jobs/pipelines internos que todavía emiten `--tipo go`. 2) Migrar cada pipeline a `rust` con validación de salida funcional. 3) Eliminar banderas temporales (`COBRA_INTERNAL_LEGACY_TARGETS`) asociadas a esos flujos. |
+| `cpp` | `active-migration` | `rust` | 1) Congelar nuevas dependencias a backend `cpp`. 2) Migrar scripts de CI y fixtures a `rust`. 3) Borrar referencias en tooling interno cuando no queden consumidores activos. |
+| `java` | `active-migration` | `javascript` | 1) Reemplazar comandos internos `--tipo java` por `javascript`. 2) Confirmar paridad mínima de runtime (`corelibs`/`standard_library`) en los casos migrados. 3) Retirar snippets/doc interna que todavía instruyan `java`. |
+| `wasm` | `frozen` | `javascript` | 1) Mantener solo fixes críticos (sin features nuevas). 2) Documentar explícitamente dependencias host-managed restantes. 3) Definir fecha de congelamiento final y plan de salida a target público. |
+| `asm` | `removal-candidate` | `python` | 1) Confirmar que se usa solo en diagnóstico acotado. 2) Sustituir validaciones automáticas por alternativas en `python`. 3) Programar PR de retiro definitivo con limpieza de `to_asm.py`, `asm_nodes` y `asm.golden` cuando quede sin uso. |
+
 ## Registro de ejecución (2026-03-28)
 
 Este bloque deja trazabilidad explícita de la ejecución por fases solicitada para
