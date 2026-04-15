@@ -5,11 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build.orchestrator import BackendResolution, BuildOrchestrator
 from pcobra.cobra.transpilers.registry import build_official_transpilers
 from pcobra.core.ast_cache import obtener_ast
 
 ORCHESTRATOR = BuildOrchestrator()
+RUNTIME_MANAGER = RuntimeManager()
 TRANSPILERS: dict[str, type] = build_official_transpilers()
 
 
@@ -23,6 +25,29 @@ def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> Backend
         preferred_backend=preferred_backend,
         required_capabilities=required_capabilities,
     )
+
+
+def resolve_backend_runtime(
+    source: str,
+    hints: dict[str, Any] | None = None,
+) -> tuple[BackendResolution, dict[str, str]]:
+    """Resuelve backend y metadatos de bridge/runtime para el contrato de bindings."""
+    context = hints or {}
+    resolution = resolve_backend(source, context)
+    capabilities, bridge = RUNTIME_MANAGER.resolve_runtime(resolution.backend)
+    abi_version = RUNTIME_MANAGER.validate_abi_route(
+        resolution.backend,
+        abi_version=context.get("abi_version"),
+    )
+    runtime_context = {
+        "language": capabilities.language,
+        "route": capabilities.route.value,
+        "bridge": bridge.implementation,
+        "security_profile": bridge.security_profile,
+        "abi_contract": capabilities.abi_contract,
+        "abi_version": abi_version,
+    }
+    return resolution, runtime_context
 
 
 def transpile(ast: Any, backend: str) -> str:
@@ -49,12 +74,13 @@ def build(source: str, mode: dict[str, Any] | str | None = None) -> dict[str, An
         source_file = str(hints.get("source_file", "<memory>"))
         codigo = source
 
-    resolution = resolve_backend(source_file, hints)
+    resolution, runtime_context = resolve_backend_runtime(source_file, hints)
     ast = obtener_ast(codigo)
     code = transpile(ast, resolution.backend)
     return {
         "backend": resolution.backend,
         "reason": resolution.reason,
+        "runtime": runtime_context,
         "ast": ast,
         "code": code,
     }
@@ -65,5 +91,6 @@ __all__ = [
     "TRANSPILERS",
     "build",
     "resolve_backend",
+    "resolve_backend_runtime",
     "transpile",
 ]

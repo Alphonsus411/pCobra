@@ -13,7 +13,7 @@ from pcobra.cobra.cli.utils.validators import (
     validar_archivo_existente,
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
-from pcobra.cobra.bindings.contract import resolve_binding
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.target_policies import (
     DOCKER_EXECUTABLE_TARGETS,
     OFFICIAL_RUNTIME_TARGETS_HELP,
@@ -86,6 +86,7 @@ class _SandboxModuleProxy:
 
 
 sandbox_module = _SandboxModuleProxy()
+RUNTIME_MANAGER = RuntimeManager()
 
 
 def ejecutar_en_sandbox(*args: Any, **kwargs: Any) -> Any:
@@ -117,10 +118,10 @@ def _obtener_interpretador_cls():
     return getattr(sys.modules[__name__], "InterpretadorCobra", InterpretadorCobra)
 
 
-def _resolver_contrato_binding(target: str):
-    """Resuelve el contrato de bindings usado por runners CLI."""
+def _resolver_runtime_binding(target: str):
+    """Resuelve contrato + bridge de bindings usado por runners CLI."""
 
-    return resolve_binding(target)
+    return RUNTIME_MANAGER.resolve_runtime(target)
 
 
 class ExecuteCommand(BaseCommand):
@@ -250,7 +251,9 @@ class ExecuteCommand(BaseCommand):
 
         try:
             raiz_proyecto = _detectar_raiz_proyecto_desde_archivo(str(archivo_resuelto))
-            contrato_python = _resolver_contrato_binding("python")
+            contrato_python, _bridge_python = _resolver_runtime_binding("python")
+            RUNTIME_MANAGER.validate_security_route("python", sandbox=sandbox, containerized=False)
+            RUNTIME_MANAGER.validate_abi_route("python")
             validar_dependencias(
                 contrato_python.language,
                 module_map.get_toml_map(),
@@ -349,12 +352,16 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
         """Ejecuta el código en un contenedor Docker."""
         try:
-            contrato = _resolver_contrato_binding(contenedor)
+            contrato, bridge = _resolver_runtime_binding(contenedor)
+            RUNTIME_MANAGER.validate_security_route(contenedor, sandbox=False, containerized=True)
+            abi_version = RUNTIME_MANAGER.validate_abi_route(contenedor)
             self.logger.debug(
-                "Ruta de bindings para contenedor '%s': %s (%s)",
+                "Ruta de bindings para contenedor '%s': %s (%s) bridge=%s abi=%s",
                 contenedor,
                 contrato.route.value,
                 contrato.execution_boundary,
+                bridge.implementation,
+                abi_version,
             )
 
             backend_runtime = resolve_docker_backend(contenedor)
