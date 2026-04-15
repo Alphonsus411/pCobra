@@ -25,6 +25,7 @@ class BuildCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
+        debug = bool(getattr(args, "debug", False))
         resolution = backend_pipeline.resolve_backend(args.file, {})
         legacy_args = Namespace(
             archivo=args.file,
@@ -32,6 +33,6 @@ class BuildCommandV2(BaseCommand):
             backend=None,
             tipos=None,
             modo=getattr(args, "modo", "mixto"),
-            backend_reason=resolution.reason,
+            backend_reason=resolution.reason_for(debug=debug),
         )
         return self._legacy.run(legacy_args)

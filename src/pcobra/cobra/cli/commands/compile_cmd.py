@@ -352,8 +352,7 @@ class CompileCommand(BaseCommand):
         lang, ast = parametros
         backend_pipeline.TRANSPILERS = TRANSPILERS
         code = backend_pipeline.transpile(ast, lang)
-        transp = TRANSPILERS[lang]()
-        return lang, transp.__class__.__name__, code
+        return lang, code
 
     def run(self, args):
         """Ejecuta la lógica del comando."""
@@ -443,10 +442,9 @@ class CompileCommand(BaseCommand):
                 
                 try:
                     resultados = run_transpiler_pool(lenguajes, ast, self._ejecutar_transpilador)
-                    for lang, nombre, resultado in resultados:
+                    for lang, resultado in resultados:
                         mostrar_info(
-                            _("Código generado ({nombre}) para {lang}:").format(
-                                nombre=nombre,
+                            _("Código generado para {lang}:").format(
                                 lang=f"{target_label(lang)} ({lang})",
                             )
                         )
@@ -460,11 +458,8 @@ class CompileCommand(BaseCommand):
                     raise ValueError(_("Transpilador no soportado."))
                 backend_pipeline.TRANSPILERS = TRANSPILERS
                 resultado = backend_pipeline.transpile(ast, transpilador)
-                transp = TRANSPILERS[transpilador]()
                 mostrar_info(
-                    _("Código generado ({name}):").format(
-                        name=transp.__class__.__name__
-                    )
+                    _("Código generado:")
                 )
                 print(resultado)
             return 0

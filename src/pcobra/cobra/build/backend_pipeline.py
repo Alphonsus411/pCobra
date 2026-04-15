@@ -58,28 +58,33 @@ def transpile(ast: Any, backend: str) -> str:
     return transpiler.generate_code(ast)
 
 
-def build(source: str, mode: dict[str, Any] | str | None = None) -> dict[str, Any]:
-    """Pipeline completo: resolver backend, construir AST y transpilar código."""
-    hints: dict[str, Any]
-    if isinstance(mode, dict):
-        hints = dict(mode)
-    else:
-        hints = {"preferred_backend": mode} if mode else {}
+def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Pipeline completo: resolver backend, construir AST y transpilar código.
+
+    Contrato interno de invocación: ``build(source, hints)``.
+    """
+    context = dict(hints or {})
 
     source_path = Path(source)
     if source_path.exists() and source_path.is_file():
         source_file = str(source_path)
         codigo = source_path.read_text(encoding="utf-8")
     else:
-        source_file = str(hints.get("source_file", "<memory>"))
+        source_file = str(context.get("source_file", "<memory>"))
         codigo = source
 
-    resolution, runtime_context = resolve_backend_runtime(source_file, hints)
+    resolution, runtime_context = resolve_backend_runtime(source_file, context)
     ast = obtener_ast(codigo)
     code = transpile(ast, resolution.backend)
+    debug = bool(context.get("debug", False))
+    reason = (
+        resolution.reason_for(debug=debug)
+        if hasattr(resolution, "reason_for")
+        else (getattr(resolution, "reason", None) if debug else None)
+    )
     return {
         "backend": resolution.backend,
-        "reason": resolution.reason,
+        "reason": reason,
         "runtime": runtime_context,
         "ast": ast,
         "code": code,

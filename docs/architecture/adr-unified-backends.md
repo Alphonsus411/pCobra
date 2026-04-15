@@ -41,6 +41,15 @@ Durante esta fase se declara explícitamente que **lexer, parser, AST y transpil
 
 Cualquier ajuste en esas piezas debe mantenerse como cambio interno sin impacto en la API pública estable.
 
+#### Nota explícita sobre transpiladores internos
+
+Los módulos `pcobra.cobra.transpilers.transpiler.to_python`,
+`pcobra.cobra.transpilers.transpiler.to_js` y
+`pcobra.cobra.transpilers.transpiler.to_rust` son **detalles internos de implementación**.
+
+No forman parte de la API pública para usuarios finales ni para integraciones externas:
+la ruta pública soportada es el pipeline de build/orquestación (`run/build/test` + backend pipeline).
+
 ## Consecuencias
 
 ### Positivas
