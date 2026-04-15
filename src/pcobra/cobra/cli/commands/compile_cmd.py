@@ -32,6 +32,7 @@ from pcobra.cobra.cli.deprecation_policy import (
     enforce_target_deprecation_policy,
     visible_public_targets,
 )
+from pcobra.cobra.cli.internal_compat.legacy_targets import enabled_internal_legacy_targets
 from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
@@ -254,7 +255,6 @@ def _ensure_entrypoints_loaded_once() -> None:
     load_entrypoint_transpilers()
     _ENTRYPOINTS_LOADED = True
 
-LANG_CHOICES = list(official_transpiler_targets())
 TARGETS_HELP = build_target_help_by_tier(
     tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 )
@@ -311,6 +311,7 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
+        lang_choices = list(official_transpiler_targets()) + list(enabled_internal_legacy_targets())
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
@@ -320,14 +321,14 @@ class CompileCommand(BaseCommand):
         parser.add_argument(
             "--tipo",
             type=parse_target,
-            choices=LANG_CHOICES,
+            choices=lang_choices,
             default="python",
             help=_("Tipo de código generado ({targets}).").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
             "--backend",
             type=parse_target,
-            choices=LANG_CHOICES,
+            choices=lang_choices,
             help=_("Alias deprecado de --tipo ({targets}).").format(targets=TARGETS_HELP),
         )
         parser.add_argument(
@@ -338,7 +339,10 @@ class CompileCommand(BaseCommand):
         parser.add_argument(
             "--legacy-targets",
             action="store_true",
-            help=_("Habilita targets deprecados en modo legacy (compatibilidad interna)."),
+            help=_(
+                "Habilita ruta legacy interna para targets internal-only "
+                "(go/cpp/java/wasm/asm) durante la migración."
+            ),
         )
         parser.set_defaults(cmd=self)
         return parser

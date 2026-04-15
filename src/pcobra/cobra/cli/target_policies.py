@@ -6,6 +6,11 @@ from argparse import ArgumentTypeError
 from typing import Literal
 
 from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
+from pcobra.cobra.cli.internal_compat.legacy_targets import (
+    LEGACY_BACKENDS_FEATURE_FLAG,
+    enabled_internal_legacy_targets,
+    is_internal_legacy_targets_enabled,
+)
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     BEST_EFFORT_RUNTIME_BACKENDS,
@@ -214,7 +219,7 @@ def build_cli_compile_examples(
 ) -> tuple[str, ...]:
     """Construye ejemplos CLI canónicos sin listas hardcodeadas."""
     return tuple(
-        f"{command_prefix} {source_file} --backend {backend}"
+        f"{command_prefix} {source_file} --tipo {backend}"
         for backend in OFFICIAL_TRANSPILATION_TARGETS
     )
 
@@ -257,19 +262,23 @@ def render_public_policy_summary(*, markup: RenderMarkup = "plain") -> str:
         + str(len(OFFICIAL_TRANSPILATION_TARGETS))
         + " targets canónicos."
     ]
-    lines.extend(
-        f"- **{label}**: {format_target_sequence(targets, markup=markup)}."
-        for _, label, targets in iter_public_policy_items()
-    )
+    for policy_id, label, targets in iter_public_policy_items():
+        rendered = (
+            ", ".join(targets)
+            if policy_id == "legacy_internal_targets"
+            else format_target_sequence(targets, markup=markup)
+        )
+        lines.append(f"- **{label}**: {rendered}.")
     return "\n".join(lines)
 
 
 def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: RenderMarkup = "plain") -> str:
     """Renderiza la línea pública de orígenes reverse oficiales."""
     official_targets_count = len(OFFICIAL_TRANSPILATION_TARGETS)
+    reverse_rendered = ", ".join(reverse_scope)
     return (
         "- **Orígenes de transpilación inversa**: "
-        + format_target_sequence(reverse_scope, markup=markup)
+        + reverse_rendered
         + f". Este alcance reverse de entrada está separado de los {official_targets_count} targets oficiales de salida."
     )
 
@@ -495,7 +504,7 @@ def restricted_target_error(*, unsupported: list[str], capability: str, allowed_
 
 
 def parse_target(value: str) -> str:
-    """Valida target CLI aceptando solo nombres canónicos oficiales."""
+    """Valida target CLI público, con bypass interno temporal controlado por flag."""
     raw = value.strip()
     if not raw:
         raise ArgumentTypeError(invalid_target_error(value))
@@ -503,8 +512,16 @@ def parse_target(value: str) -> str:
     if lowered in LEGACY_OR_AMBIGUOUS_TARGETS:
         raise ArgumentTypeError(legacy_or_ambiguous_target_error(value))
     canonical = normalize_target_name(raw)
+    legacy_enabled = is_internal_legacy_targets_enabled()
+    if canonical in enabled_internal_legacy_targets():
+        return canonical
     if canonical not in PUBLIC_BACKENDS:
-        raise ArgumentTypeError(invalid_target_error(value))
+        feature_flag_hint = (
+            f" (compat interna temporal: export {LEGACY_BACKENDS_FEATURE_FLAG}=1)"
+            if canonical in INTERNAL_BACKENDS and not legacy_enabled
+            else ""
+        )
+        raise ArgumentTypeError(invalid_target_error(value) + feature_flag_hint)
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         raise ArgumentTypeError(invalid_target_error(value))
     return canonical

@@ -1,8 +1,8 @@
-- `OFFICIAL_RUNTIME_TARGETS`: `python`, `rust`, `javascript`, `cpp`
-- `VERIFICATION_EXECUTABLE_TARGETS`: `python`, `rust`, `javascript`, `cpp`
-- `BEST_EFFORT_RUNTIME_TARGETS`: `go`, `java`
-- `TRANSPILATION_ONLY_TARGETS`: `wasm`, `asm`
-- `NO_RUNTIME_TARGETS`: `wasm`, `asm`
-- `OFFICIAL_STANDARD_LIBRARY_TARGETS`: `python`, `rust`, `javascript`, `cpp`
-- `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: `python`, `rust`, `javascript`, `cpp`
+- `OFFICIAL_RUNTIME_TARGETS`: `python`, `javascript`, `rust`
+- `VERIFICATION_EXECUTABLE_TARGETS`: `python`, `javascript`, `rust`
+- `BEST_EFFORT_RUNTIME_TARGETS`: 
+- `TRANSPILATION_ONLY_TARGETS`: 
+- `NO_RUNTIME_TARGETS`: 
+- `OFFICIAL_STANDARD_LIBRARY_TARGETS`: `python`, `javascript`, `rust`
+- `ADVANCED_HOLOBIT_RUNTIME_TARGETS`: `python`, `javascript`, `rust`
 - `SDK_COMPATIBLE_TARGETS`: `python`
