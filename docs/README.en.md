@@ -11,7 +11,7 @@ Version 10.0.12
 - `corelibs.texto`, `corelibs.numero` and `standard_library.datos` expand the `es_*` validators, add helpers like `prefijo_comun`/`sufijo_comun`, `interpolar`, `envolver_modular`, and provide Parquet/Feather IO wrappers.
 - `corelibs.sistema.ejecutar` enforces explicit whitelists in Python and native bindings to keep command execution locked down by default.
 
-Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. This project includes a lexer, parser and transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`, allowing greater versatility when running and deploying Cobra code.
+Cobra is a programming language designed in Spanish, aimed at creating tools, simulations and analyses in fields such as biology, computing and astrophysics. The public CLI surface and official output targets are focused on `python`, `javascript`, and `rust`.
 
 Policy snapshot (generated from the canonical target policy):
 
@@ -110,7 +110,19 @@ Cobra's toolchain can use an **internal IR** to decouple the front-end from the 
 2. That AST is normalized and lowered into an internal intermediate representation that encodes control structures, modules and types.
 3. The transpilers consume that IR to generate code for each supported backend.
 
-This intermediate layer acts as a technical contract between the front-end and the code generators, enabling internal improvements without changing the original parser. Thanks to it Cobra ships an assembler generator that emits symbolic instructions focused on debugging and performance diagnostics. Any intermediate artifact should be treated as an **internal or experimental** pipeline artifact, while the public official output set remains limited to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`.
+This intermediate layer acts as a technical contract between the front-end and the code generators, enabling internal improvements without changing the original parser.
+
+Short architecture diagram:
+
+```text
+Cobra Front-end
+      ↓
+BackendPipeline
+      ↓
+bindings/runtime (python | javascript | rust)
+```
+
+Any intermediate artifact should be treated as an **internal or experimental** pipeline artifact, while the public official output set remains limited to `python`, `javascript`, and `rust`.
 
 ## Installation
 
@@ -184,7 +196,7 @@ cp .env.example .env
 
 ```bash
 echo "imprimir('Hola Cobra')" > hola.co
-cobra ejecutar hola.co
+cobra run hola.co
 ```
 
 ### PYTHONPATH and PyCharm
@@ -546,7 +558,7 @@ The statement `usar "paquete"` tries to import a Python module. If the package i
 
 ## Module mapping file
 
-Transpilers resolve imports from `cobra.toml` using the canonical `[modulos."..."]` table. Only the 8 official backend names are accepted: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, and `asm`. Legacy aliases and root-level mappings are rejected.
+Transpilers resolve imports from `cobra.toml` using the canonical `[modulos."..."]` table. Public documentation accepts only the official backend names `python`, `javascript`, and `rust`. Internal/legacy backend routes remain outside the public contract. Legacy aliases and root-level mappings are rejected.
 
 Example format:
 
@@ -560,7 +572,7 @@ If an entry is not found, the transpiler will load the file indicated in the `im
 
 ## Calling the transpiler
 
-The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the implementation of the transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`. Once the dependencies are installed you can call the transpiler from your own script like this:
+The folder [`src/pcobra/cobra/transpilers/transpiler`](../src/pcobra/cobra/transpilers/transpiler) contains the transpiler implementation used by the public backends `python`, `javascript`, and `rust` (plus internal compatibility routes). Once the dependencies are installed you can call the transpiler from your own script like this:
 
 ```python
 from cobra.transpilers.transpiler.to_python import TranspiladorPython
