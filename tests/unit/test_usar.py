@@ -148,3 +148,25 @@ def test_interpreter_usar_registra_modulo(monkeypatch):
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar('math'))
     assert interp.variables['math'] is mod
+
+
+def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
+    mock_mod = ModuleType('json')
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'json', 'json')
+
+    class FakeResolver:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def load_module(self, nombre, fallback_backend='python'):
+            assert nombre == 'json'
+            assert fallback_backend == 'python'
+            return object(), mock_mod
+
+    from pcobra.cobra.imports import resolver as imports_resolver
+
+    monkeypatch.setattr(imports_resolver, 'CobraImportResolver', FakeResolver)
+
+    mod = usar_loader.obtener_modulo('json')
+
+    assert mod is mock_mod

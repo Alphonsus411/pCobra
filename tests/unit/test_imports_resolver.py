@@ -5,21 +5,21 @@ from types import ModuleType
 import pytest
 
 from pcobra.cobra.imports.resolver import (
-    AmbiguousImportError,
     CobraImportResolver,
     HybridModuleSpec,
     ImportResolutionError,
 )
 
 
-def test_resuelve_modulo_local_antes_que_stdlib_y_bridge(tmp_path):
+def test_resuelve_stdlib_antes_que_modulo_proyecto(tmp_path):
     (tmp_path / "datos.co").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)
 
-    result = resolver.resolve("datos")
+    with pytest.warns(UserWarning, match="Colisión de import"):
+        result = resolver.resolve("datos")
 
-    assert result.source == "local"
-    assert result.resolved_name == "datos"
+    assert result.source == "stdlib"
+    assert result.resolved_name == "cobra.datos"
 
 
 def test_prefiere_namespace_explicito_cobra_datos():
@@ -31,8 +31,8 @@ def test_prefiere_namespace_explicito_cobra_datos():
     assert result.import_path == "pcobra.standard_library.datos"
 
 
-def test_ambiguedad_sin_namespace_es_determinista(tmp_path, monkeypatch):
-    resolver = CobraImportResolver(project_root=tmp_path)
+def test_colision_stdlib_vs_bridge_genera_warning(monkeypatch):
+    resolver = CobraImportResolver()
 
     import importlib.util
 
@@ -48,10 +48,10 @@ def test_ambiguedad_sin_namespace_es_determinista(tmp_path, monkeypatch):
 
     monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
 
-    with pytest.raises(AmbiguousImportError) as exc:
-        resolver.resolve("datos")
+    with pytest.warns(UserWarning, match="Colisión de import"):
+        result = resolver.resolve("datos")
 
-    assert "Import ambiguo" in str(exc.value)
+    assert result.source == "stdlib"
 
 
 def test_bridge_python_directo():
@@ -93,6 +93,15 @@ def test_modulo_hibrido_inyecta_adapter_backend(monkeypatch):
     assert module is fake_module
     assert getattr(module, "__cobra_backend__") == "javascript"
     assert getattr(module, "__cobra_backend_adapter__").__class__.__name__ == "JavaScriptAdapter"
+
+
+def test_resolver_adjunta_adapter_desde_resolucion():
+    resolver = CobraImportResolver()
+
+    result = resolver.resolve("json")
+
+    assert result.backend is not None
+    assert result.backend_adapter is not None
 
 
 def test_error_si_no_hay_candidato():
