@@ -1,96 +1,62 @@
-# ADR: Unificación de backends públicos en Cobra
+# ADR: Backends unificados y contrato externo estable
 
 - **Estado:** Aprobado
-- **Fecha:** 2026-04-13
+- **Fecha:** 2026-04-15
 - **Decisores:** Equipo Core de pCobra
-- **Relacionado con:** política de targets, CLI pública, documentación de onboarding
+- **Relacionado con:** `docs/architecture/unified-ecosystem.md`, `docs/targets_policy.md`
 
 ## Contexto
 
-La superficie pública de backends había crecido mezclando objetivos distintos:
+Se necesita formalizar una arquitectura única y explícita para distinguir con claridad:
 
-- targets oficialmente soportados para usuarios finales,
-- targets mantenidos por compatibilidad histórica,
-- y targets útiles para experimentación interna.
-
-Esa mezcla introducía ambigüedad en documentación, CLI y expectativas de soporte.
+1. la API pública estable que consume el usuario,
+2. los componentes internos de compilación/transpilación,
+3. y la política de exposición de backends.
 
 ## Decisión
 
-1. **Cobra es la única interfaz pública del proyecto** para compilación/transpilación y ejecución de flujos soportados.
-2. Los **únicos backends oficiales públicos** pasan a ser:
-   - `python`
-   - `javascript`
-   - `rust`
-3. Los targets `go`, `cpp`, `java`, `wasm` y `asm` se clasifican como **`legacy/internal`**:
-   - no son parte de la promesa pública,
-   - no deben promocionarse en documentación de usuario,
-   - pueden existir para migración, compatibilidad o uso interno.
+### 1) Arquitectura oficial en 5 capas
 
-## Impacto técnico (mapeo solicitado)
+La arquitectura unificada queda definida así:
 
-### 1) `src/pcobra/cobra/config/transpile_targets.py`
+```text
+1. CLI pública
+2. Orquestador
+3. Adapters
+4. Transpilers internos
+5. Bindings / Runtime
+```
 
-- `ALLOWED_TARGETS` se reduce a `python`, `javascript`, `rust`.
-- Se introduce `LEGACY_INTERNAL_TARGETS` con `go`, `cpp`, `java`, `wasm`, `asm`.
-- La validación canónica asegura:
-  - que el canon público y metadatos solo cubran los 3 backends oficiales,
-  - que no exista solape entre oficiales y `legacy/internal`.
+### 2) API pública estable (fase actual)
 
-### 2) `src/pcobra/cobra/cli/target_policies.py`
+Se consolida como superficie pública estable:
 
-- Las categorías públicas (`OFFICIAL_RUNTIME_TARGETS`, `BEST_EFFORT_RUNTIME_TARGETS`, `TRANSPILATION_ONLY_TARGETS`, `SDK_COMPATIBLE_TARGETS`) se filtran contra el canon oficial actual.
-- Se añade categoría visible de `legacy/internal` para trazabilidad (`LEGACY_INTERNAL_TARGETS`).
-- Resultado práctico:
-  - `OFFICIAL_TRANSPILATION_TARGETS`: `python`, `javascript`, `rust`.
-  - `BEST_EFFORT_RUNTIME_TARGETS` y `TRANSPILATION_ONLY_TARGETS` pueden quedar vacíos en superficie pública.
+- Comandos CLI: `run`, `build`, `test`, `mod`.
+- Backends oficiales: `python`, `javascript`, `rust`.
+- Módulos stdlib públicos: `cobra.core`, `cobra.datos`, `cobra.web`, `cobra.system`.
 
-### 3) `README.md`
+### 3) Contrato externo congelado para front-end de compilación
 
-- Se actualiza la narrativa para declarar explícitamente:
-  - Cobra como interfaz pública,
-  - solo 3 backends oficiales (`python`, `javascript`, `rust`),
-  - resto como `legacy/internal`.
-- Se incluye guía de migración de targets legacy hacia los 3 backends oficiales.
+Durante esta fase se declara explícitamente que **lexer, parser, AST y transpiladores internos no cambian de contrato externo**.
+
+Cualquier ajuste en esas piezas debe mantenerse como cambio interno sin impacto en la API pública estable.
 
 ## Consecuencias
 
 ### Positivas
 
-- Menor ambigüedad contractual para usuarios y contribuyentes.
-- Más foco en calidad y testing de los 3 backends oficiales.
-- Documentación pública más coherente con soporte real.
+- Menor ambigüedad entre contrato público e implementación interna.
+- Mejor consistencia entre documentación, CLI y políticas de backend.
+- Facilita gobernanza técnica de cambios sin romper la interfaz al usuario.
 
-### Negativas / trade-offs
+### Trade-offs
 
-- Consumidores que dependan de `go/cpp/java/wasm/asm` deben migrar su operación principal.
-- Requiere actualizar ejemplos antiguos y pipelines que asumían esos targets como públicos.
+- Restringe cambios rápidos de contrato en componentes internos del pipeline.
+- Obliga a canalizar cambios de API mediante ADR/política explícita.
 
-## Plan de migración desde targets legacy
+## Implementación documental
 
-Targets legacy afectados: `go`, `cpp`, `java`, `wasm`, `asm`.
+Esta decisión se refleja en:
 
-### Ruta recomendada
-
-1. **Inventario**
-   - Identificar comandos/pipelines que usen `--backend go|cpp|java|wasm|asm`.
-2. **Selección de backend oficial destino**
-   - Elegir `python`, `javascript` o `rust` según runtime y ecosistema requerido.
-3. **Actualización de CLI/configuración**
-   - Sustituir backend legacy por backend oficial en scripts, CI y documentación interna.
-4. **Verificación funcional**
-   - Ejecutar pruebas de regresión equivalentes con el backend oficial escogido.
-5. **Retirada progresiva**
-   - Mantener fallback legacy temporal solo para contingencias internas, sin exposición pública.
-
-### Recomendaciones de mapeo inicial
-
-- `go` ⟶ `rust` o `python`.
-- `cpp` ⟶ `rust`.
-- `java` ⟶ `javascript` o `python`.
-- `wasm` ⟶ `javascript` (si el objetivo principal es entorno web/runtime JS) o `rust`.
-- `asm` ⟶ `rust` (si se necesita control de bajo nivel dentro del conjunto oficial).
-
-## Estado de cumplimiento
-
-Este ADR queda implementado en configuración central, políticas CLI y README.
+- `docs/architecture/unified-ecosystem.md` (modelo de 5 capas).
+- `docs/targets_policy.md` (normativa única de público vs interno y API estable).
