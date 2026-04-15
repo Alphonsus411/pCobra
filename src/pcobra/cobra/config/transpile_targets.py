@@ -18,9 +18,7 @@ class TargetMetadata(TypedDict):
 
 
 # Superficie pública oficial de backends de salida.
-ALLOWED_TARGETS: Final[tuple[str, ...]] = (
-    *PUBLIC_BACKENDS,
-)
+ALLOWED_TARGETS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 
 # Targets conservados solo por compatibilidad interna/legacy.
 LEGACY_INTERNAL_TARGETS: Final[tuple[str, ...]] = (
@@ -59,6 +57,12 @@ TARGET_METADATA: Final[dict[str, TargetMetadata]] = {
 
 def _validate_target_config() -> None:
     allowed = set(ALLOWED_TARGETS)
+
+    if ALLOWED_TARGETS != PUBLIC_BACKENDS:
+        raise RuntimeError(
+            "ALLOWED_TARGETS debe ser exactamente PUBLIC_BACKENDS para rutas públicas. "
+            f"allowed={ALLOWED_TARGETS}; public={PUBLIC_BACKENDS}"
+        )
 
     if set(TARGETS_BY_TIER) != {"tier_1", "tier_2"}:
         raise RuntimeError(

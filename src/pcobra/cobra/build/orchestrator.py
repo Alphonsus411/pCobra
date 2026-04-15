@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS, target_metadata
 from pcobra.cobra.transpilers.module_map import get_toml_map
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
@@ -15,6 +16,18 @@ from pcobra.cobra.transpilers.target_utils import normalize_target_name
 class BackendResolution:
     backend: str
     reason: str
+
+
+def _ordered_public_priority(*preferred: str) -> tuple[str, ...]:
+    """Compone prioridad sin duplicar listas completas hardcodeadas."""
+    ordered: list[str] = []
+    for backend in preferred:
+        if backend in OFFICIAL_TARGETS and backend not in ordered:
+            ordered.append(backend)
+    for backend in OFFICIAL_TARGETS:
+        if backend not in ordered:
+            ordered.append(backend)
+    return tuple(ordered)
 
 
 class BuildOrchestrator:
@@ -30,11 +43,11 @@ class BuildOrchestrator:
     """
 
     _PROJECT_TYPE_PRIORITIES: dict[str, tuple[str, ...]] = {
-        "library": ("python", "rust", "javascript"),
-        "web": ("javascript", "python", "rust"),
-        "systems": ("rust", "python", "javascript"),
-        "embedded": ("rust", "python", "javascript"),
-        "application": ("python", "javascript", "rust"),
+        "library": _ordered_public_priority("python", "rust"),
+        "web": _ordered_public_priority("javascript", "python"),
+        "systems": _ordered_public_priority("rust", "python"),
+        "embedded": _ordered_public_priority("rust", "python"),
+        "application": _ordered_public_priority("python", "javascript"),
     }
 
     def __init__(self) -> None:
@@ -97,30 +110,36 @@ class BuildOrchestrator:
         if not isinstance(value, str) or not value.strip():
             return None
         canonical = normalize_target_name(value)
-        if canonical not in OFFICIAL_TARGETS:
+        if canonical not in PUBLIC_BACKENDS:
             raise ValueError(
-                f"Backend no permitido: {value}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
+                f"Backend no permitido: {value}. Permitidos: {', '.join(PUBLIC_BACKENDS)}"
             )
         return canonical
 
     def _validate_public_backend_routes_contract(self) -> None:
         """Asegura que las rutas públicas de selección no usen backends fuera del canon oficial."""
-        official = set(OFFICIAL_TARGETS)
+        if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
+            raise RuntimeError(
+                "BuildOrchestrator requiere OFFICIAL_TARGETS == PUBLIC_BACKENDS en rutas públicas. "
+                f"official={OFFICIAL_TARGETS}; public={PUBLIC_BACKENDS}"
+            )
+
+        official = set(PUBLIC_BACKENDS)
         covered: set[str] = set()
         for project_type, priorities in self._PROJECT_TYPE_PRIORITIES.items():
             invalid = tuple(target for target in priorities if target not in official)
             if invalid:
                 raise RuntimeError(
-                    "BuildOrchestrator._PROJECT_TYPE_PRIORITIES contiene backends fuera de OFFICIAL_TARGETS. "
-                    f"project_type={project_type}; invalid={invalid}; official={OFFICIAL_TARGETS}"
+                    "BuildOrchestrator._PROJECT_TYPE_PRIORITIES contiene backends fuera de PUBLIC_BACKENDS. "
+                    f"project_type={project_type}; invalid={invalid}; public={PUBLIC_BACKENDS}"
                 )
             covered.update(priorities)
 
-        missing = tuple(target for target in OFFICIAL_TARGETS if target not in covered)
+        missing = tuple(target for target in PUBLIC_BACKENDS if target not in covered)
         if missing:
             raise RuntimeError(
-                "BuildOrchestrator._PROJECT_TYPE_PRIORITIES debe cubrir todos los OFFICIAL_TARGETS. "
-                f"missing={missing}; official={OFFICIAL_TARGETS}"
+                "BuildOrchestrator._PROJECT_TYPE_PRIORITIES debe cubrir todos los PUBLIC_BACKENDS. "
+                f"missing={missing}; public={PUBLIC_BACKENDS}"
             )
 
     def _project_type(self, config: dict[str, Any]) -> str:
