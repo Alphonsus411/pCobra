@@ -21,6 +21,7 @@ from pcobra.cobra.cli.target_policies import (
     VERIFICATION_EXECUTABLE_TARGETS,
     validate_runtime_support_contract,
 )
+from pcobra.cobra.stdlib_contract.validator import validate_contracts
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     BACKEND_FEATURE_GAPS,
@@ -30,6 +31,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
 
 def main() -> int:
     validate_runtime_support_contract()
+    validate_contracts()
 
     for backend in OFFICIAL_RUNTIME_TARGETS:
         contract = BACKEND_COMPATIBILITY[backend]

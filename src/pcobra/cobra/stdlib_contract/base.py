@@ -1,9 +1,10 @@
 """Modelos base para describir el contrato de stdlib."""
 
 from dataclasses import dataclass
+from typing import Literal
 
 
-CoverageLevel = str  # full | partial
+CoverageLevel = Literal["full", "partial"]
 
 
 @dataclass(frozen=True)
@@ -18,9 +19,9 @@ class FunctionCoverage:
 class RuntimeMapping:
     """Mapeo del módulo contractual a implementaciones existentes."""
 
-    standard_library: str | None
-    corelibs: str | None
-    core_nativos: str | None
+    standard_library: tuple[str, ...]
+    corelibs: tuple[str, ...]
+    core_nativos: tuple[str, ...]
 
 
 @dataclass(frozen=True)

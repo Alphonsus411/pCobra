@@ -6,20 +6,25 @@ from pcobra.cobra.stdlib_contract.base import ContractDescriptor, FunctionCovera
 DATOS_CONTRACT = ContractDescriptor(
     module="cobra.datos",
     public_api=(
-        "cobra.datos.tabla",
-        "cobra.datos.csv",
-        "cobra.datos.json",
+        "cobra.datos.filtrar",
+        "cobra.datos.seleccionar_columnas",
+        "cobra.datos.a_listas",
+        "cobra.datos.de_listas",
     ),
     primary_backend="python",
     allowed_fallback=("javascript",),
     runtime_mapping=RuntimeMapping(
-        standard_library="src/pcobra/standard_library/datos.py",
-        corelibs="src/pcobra/corelibs/coleccion.py",
-        core_nativos="src/pcobra/core/nativos/datos.js",
+        standard_library=("src/pcobra/standard_library/datos.py",),
+        corelibs=("src/pcobra/corelibs/coleccion.py",),
+        core_nativos=("src/pcobra/core/nativos/datos.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.datos.tabla", {"python": "full", "javascript": "partial"}),
-        FunctionCoverage("cobra.datos.csv", {"python": "full", "javascript": "partial"}),
-        FunctionCoverage("cobra.datos.json", {"python": "full", "javascript": "full"}),
+        FunctionCoverage("cobra.datos.filtrar", {"python": "full", "javascript": "full"}),
+        FunctionCoverage(
+            "cobra.datos.seleccionar_columnas",
+            {"python": "full", "javascript": "full"},
+        ),
+        FunctionCoverage("cobra.datos.a_listas", {"python": "full", "javascript": "full"}),
+        FunctionCoverage("cobra.datos.de_listas", {"python": "full", "javascript": "full"}),
     ),
 )

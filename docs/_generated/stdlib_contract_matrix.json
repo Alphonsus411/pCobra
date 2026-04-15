@@ -1,0 +1,297 @@
+{
+  "modules": [
+    {
+      "module": "cobra.core",
+      "primary_backend": "python",
+      "allowed_fallback": [
+        "rust",
+        "javascript"
+      ],
+      "runtime_mapping": {
+        "standard_library": [
+          "src/pcobra/standard_library/numero.py"
+        ],
+        "corelibs": [
+          "src/pcobra/corelibs/numero.py"
+        ],
+        "core_nativos": [
+          "src/pcobra/core/nativos/numero.js"
+        ]
+      },
+      "public_api": [
+        "cobra.core.es_finito",
+        "cobra.core.es_infinito",
+        "cobra.core.copiar_signo",
+        "cobra.core.signo"
+      ],
+      "coverage": [
+        {
+          "function": "cobra.core.es_finito",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.es_finito",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.core.es_finito",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.es_infinito",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.es_infinito",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.core.es_infinito",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.copiar_signo",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.copiar_signo",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.core.copiar_signo",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.signo",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.core.signo",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.core.signo",
+          "backend": "javascript",
+          "level": "full"
+        }
+      ]
+    },
+    {
+      "module": "cobra.datos",
+      "primary_backend": "python",
+      "allowed_fallback": [
+        "javascript"
+      ],
+      "runtime_mapping": {
+        "standard_library": [
+          "src/pcobra/standard_library/datos.py"
+        ],
+        "corelibs": [
+          "src/pcobra/corelibs/coleccion.py"
+        ],
+        "core_nativos": [
+          "src/pcobra/core/nativos/datos.js"
+        ]
+      },
+      "public_api": [
+        "cobra.datos.filtrar",
+        "cobra.datos.seleccionar_columnas",
+        "cobra.datos.a_listas",
+        "cobra.datos.de_listas"
+      ],
+      "coverage": [
+        {
+          "function": "cobra.datos.filtrar",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.filtrar",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.seleccionar_columnas",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.seleccionar_columnas",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.a_listas",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.a_listas",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.de_listas",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.datos.de_listas",
+          "backend": "javascript",
+          "level": "full"
+        }
+      ]
+    },
+    {
+      "module": "cobra.web",
+      "primary_backend": "javascript",
+      "allowed_fallback": [
+        "python"
+      ],
+      "runtime_mapping": {
+        "standard_library": [],
+        "corelibs": [
+          "src/pcobra/corelibs/red.py"
+        ],
+        "core_nativos": [
+          "src/pcobra/core/nativos/red.js"
+        ]
+      },
+      "public_api": [
+        "cobra.web.obtener_url",
+        "cobra.web.enviar_post",
+        "cobra.web.descargar_archivo"
+      ],
+      "coverage": [
+        {
+          "function": "cobra.web.obtener_url",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.web.obtener_url",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.web.enviar_post",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.web.enviar_post",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.web.descargar_archivo",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.web.descargar_archivo",
+          "backend": "python",
+          "level": "full"
+        }
+      ]
+    },
+    {
+      "module": "cobra.system",
+      "primary_backend": "python",
+      "allowed_fallback": [
+        "rust",
+        "javascript"
+      ],
+      "runtime_mapping": {
+        "standard_library": [
+          "src/pcobra/standard_library/archivo.py"
+        ],
+        "corelibs": [
+          "src/pcobra/corelibs/sistema.py"
+        ],
+        "core_nativos": [
+          "src/pcobra/core/nativos/sistema.js"
+        ]
+      },
+      "public_api": [
+        "cobra.system.leer",
+        "cobra.system.escribir",
+        "cobra.system.ejecutar",
+        "cobra.system.obtener_env"
+      ],
+      "coverage": [
+        {
+          "function": "cobra.system.leer",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.system.leer",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.system.leer",
+          "backend": "javascript",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.system.escribir",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.system.escribir",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.system.escribir",
+          "backend": "javascript",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.system.ejecutar",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.system.ejecutar",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.system.ejecutar",
+          "backend": "javascript",
+          "level": "full"
+        },
+        {
+          "function": "cobra.system.obtener_env",
+          "backend": "python",
+          "level": "full"
+        },
+        {
+          "function": "cobra.system.obtener_env",
+          "backend": "rust",
+          "level": "partial"
+        },
+        {
+          "function": "cobra.system.obtener_env",
+          "backend": "javascript",
+          "level": "full"
+        }
+      ]
+    }
+  ]
+}

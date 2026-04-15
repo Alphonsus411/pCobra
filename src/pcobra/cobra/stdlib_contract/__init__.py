@@ -26,8 +26,35 @@ def get_contract_manifests() -> dict[str, dict[str, object]]:
     }
 
 
+def get_contract_matrix() -> dict[str, object]:
+    """Devuelve matriz única de stdlib para consumo CLI/docs."""
+    modules: list[dict[str, object]] = []
+    for contract in CONTRACTS:
+        mapping = contract.runtime_mapping
+        rows: list[dict[str, str]] = []
+        for fn in contract.coverage:
+            for backend, level in fn.backend_levels.items():
+                rows.append({"function": fn.function, "backend": backend, "level": level})
+        modules.append(
+            {
+                "module": contract.module,
+                "primary_backend": contract.primary_backend,
+                "allowed_fallback": list(contract.allowed_fallback),
+                "runtime_mapping": {
+                    "standard_library": list(mapping.standard_library),
+                    "corelibs": list(mapping.corelibs),
+                    "core_nativos": list(mapping.core_nativos),
+                },
+                "public_api": list(contract.public_api),
+                "coverage": rows,
+            }
+        )
+    return {"modules": modules}
+
+
 __all__ = [
     "CONTRACTS",
     "ContractDescriptor",
     "get_contract_manifests",
+    "get_contract_matrix",
 ]

@@ -6,20 +6,31 @@ from pcobra.cobra.stdlib_contract.base import ContractDescriptor, FunctionCovera
 SYSTEM_CONTRACT = ContractDescriptor(
     module="cobra.system",
     public_api=(
-        "cobra.system.fs",
-        "cobra.system.proc",
-        "cobra.system.env",
+        "cobra.system.leer",
+        "cobra.system.escribir",
+        "cobra.system.ejecutar",
+        "cobra.system.obtener_env",
     ),
-    primary_backend="rust",
-    allowed_fallback=("python",),
+    primary_backend="python",
+    allowed_fallback=("rust", "javascript"),
     runtime_mapping=RuntimeMapping(
-        standard_library="src/pcobra/standard_library/archivo.py",
-        corelibs="src/pcobra/corelibs/sistema.py",
-        core_nativos="src/pcobra/core/nativos/sistema.js",
+        standard_library=("src/pcobra/standard_library/archivo.py",),
+        corelibs=("src/pcobra/corelibs/sistema.py",),
+        core_nativos=("src/pcobra/core/nativos/sistema.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.system.fs", {"rust": "full", "python": "full"}),
-        FunctionCoverage("cobra.system.proc", {"rust": "full", "python": "partial"}),
-        FunctionCoverage("cobra.system.env", {"rust": "full", "python": "full"}),
+        FunctionCoverage("cobra.system.leer", {"python": "full", "rust": "partial", "javascript": "partial"}),
+        FunctionCoverage(
+            "cobra.system.escribir",
+            {"python": "full", "rust": "partial", "javascript": "partial"},
+        ),
+        FunctionCoverage(
+            "cobra.system.ejecutar",
+            {"python": "full", "rust": "partial", "javascript": "full"},
+        ),
+        FunctionCoverage(
+            "cobra.system.obtener_env",
+            {"python": "full", "rust": "partial", "javascript": "full"},
+        ),
     ),
 )

@@ -6,20 +6,23 @@ from pcobra.cobra.stdlib_contract.base import ContractDescriptor, FunctionCovera
 WEB_CONTRACT = ContractDescriptor(
     module="cobra.web",
     public_api=(
-        "cobra.web.http",
-        "cobra.web.router",
-        "cobra.web.sse",
+        "cobra.web.obtener_url",
+        "cobra.web.enviar_post",
+        "cobra.web.descargar_archivo",
     ),
     primary_backend="javascript",
     allowed_fallback=("python",),
     runtime_mapping=RuntimeMapping(
-        standard_library="src/pcobra/standard_library/interfaz.py",
-        corelibs="src/pcobra/corelibs/red.py",
-        core_nativos="src/pcobra/core/nativos/red.js",
+        standard_library=(),
+        corelibs=("src/pcobra/corelibs/red.py",),
+        core_nativos=("src/pcobra/core/nativos/red.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.web.http", {"javascript": "full", "python": "partial"}),
-        FunctionCoverage("cobra.web.router", {"javascript": "full", "python": "partial"}),
-        FunctionCoverage("cobra.web.sse", {"javascript": "full", "python": "partial"}),
+        FunctionCoverage("cobra.web.obtener_url", {"javascript": "full", "python": "full"}),
+        FunctionCoverage("cobra.web.enviar_post", {"javascript": "full", "python": "full"}),
+        FunctionCoverage(
+            "cobra.web.descargar_archivo",
+            {"javascript": "full", "python": "full"},
+        ),
     ),
 )
