@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 import sys
 
+
 # Intentamos cargar configuración dinámica desde cobra.toml
 try:
     import tomli
@@ -165,11 +166,22 @@ def obtener_modulo(nombre: str):
         raise PermissionError(f"Paquete '{nombre}' no está permitido.")
     spec = USAR_WHITELIST[nombre]
 
+    base = Path(__file__).resolve()
+    from pcobra.cobra.imports.resolver import CobraImportResolver, ImportResolutionError
+
+    resolver = CobraImportResolver(project_root=base.parents[3])
+    try:
+        _, module = resolver.load_module(nombre, fallback_backend="python")
+    except ImportResolutionError:
+        module = None
+    else:
+        if module is not None:
+            return module
+
     try:
         return importlib.import_module(nombre)
     except ModuleNotFoundError:
         # Buscar primero en corelibs
-        base = Path(__file__).resolve()
         for parent in base.parents:
             corelibs = parent / "corelibs"
             if corelibs.exists():

@@ -4,21 +4,22 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Mapping
 
 from pcobra.cobra.backends.resolver import resolve_backend
-from pcobra.cobra.transpilers.module_map import get_stdlib_contracts, resolve_backend_for_module
+from pcobra.cobra.transpilers.module_map import (
+    get_stdlib_contracts,
+    get_toml_map,
+    resolve_backend_for_module,
+)
 
 
 class ImportResolutionError(RuntimeError):
     """Error base al resolver imports Cobra."""
-
-
-class AmbiguousImportError(ImportResolutionError):
-    """Error determinista para imports ambiguos sin calificación de namespace."""
 
 
 @dataclass(frozen=True)
@@ -39,15 +40,11 @@ class ResolutionResult:
     resolved_name: str
     import_path: str | None = None
     backend: str | None = None
+    backend_adapter: object | None = None
 
 
+_SOURCE_ORDER: tuple[str, ...] = ("stdlib", "project", "python_bridge", "hybrid")
 
-_SOURCE_PRIORITY: dict[str, int] = {
-    "local": 1,
-    "stdlib": 2,
-    "python_bridge": 3,
-    "hybrid": 4,
-}
 
 class CobraImportResolver:
     """Resuelve imports con prioridad fija y conflictos explícitos."""
@@ -57,10 +54,13 @@ class CobraImportResolver:
         *,
         project_root: str | Path | None = None,
         hybrid_modules: Mapping[str, HybridModuleSpec | Mapping[str, Any]] | None = None,
+        default_backend: str = "python",
     ) -> None:
         self.project_root = Path(project_root).resolve() if project_root else None
         self.hybrid_modules = self._normalize_hybrid_modules(hybrid_modules or {})
+        self.default_backend = default_backend
         self.stdlib_modules = self._load_stdlib_modules()
+        self.project_modules = self._load_project_modules()
 
     @staticmethod
     def _normalize_hybrid_modules(
@@ -85,69 +85,102 @@ class CobraImportResolver:
         contracts = get_stdlib_contracts()
         return {name for name in contracts if name.startswith("cobra.")}
 
+    @staticmethod
+    def _load_project_modules() -> set[str]:
+        config = get_toml_map()
+        if not isinstance(config, dict):
+            return set()
+        modulos = config.get("modulos", {})
+        if not isinstance(modulos, dict):
+            return set()
+        return {name for name, value in modulos.items() if isinstance(name, str) and isinstance(value, dict)}
+
     def resolve(self, module_name: str) -> ResolutionResult:
         name = (module_name or "").strip()
         if not name:
             raise ImportResolutionError("Nombre de módulo vacío")
 
         candidates: list[ResolutionResult] = []
-
-        local_candidate = self._resolve_local_module(name)
-        if local_candidate is not None:
-            candidates.append(local_candidate)
-
-        stdlib_candidate = self._resolve_stdlib_module(name)
-        if stdlib_candidate is not None:
-            candidates.append(stdlib_candidate)
-
-        python_candidate = self._resolve_python_bridge(name)
-        if python_candidate is not None:
-            candidates.append(python_candidate)
-
-        hybrid_candidate = self._resolve_hybrid_module(name)
-        if hybrid_candidate is not None:
-            candidates.append(hybrid_candidate)
+        for source in _SOURCE_ORDER:
+            candidate = self._build_candidate(source, name)
+            if candidate is not None:
+                candidates.append(candidate)
 
         if not candidates:
             raise ImportResolutionError(f"No se encontró módulo para '{name}'")
 
-        sorted_candidates = sorted(candidates, key=lambda c: _SOURCE_PRIORITY[c.source])
-        top_priority = _SOURCE_PRIORITY[sorted_candidates[0].source]
-        top_candidates = [
-            candidate
-            for candidate in sorted_candidates
-            if _SOURCE_PRIORITY[candidate.source] == top_priority
-        ]
+        if "." not in name and len(candidates) > 1:
+            details = ", ".join(f"{c.source}:{c.resolved_name}" for c in candidates)
+            warnings.warn(
+                f"Colisión de import para '{name}'. Se aplica precedencia fija "
+                f"({_SOURCE_ORDER[0]} > {_SOURCE_ORDER[1]} > {_SOURCE_ORDER[2]} > {_SOURCE_ORDER[3]}). "
+                f"Seleccionado: {candidates[0].resolved_name}. Candidatos: {details}",
+                category=UserWarning,
+                stacklevel=2,
+            )
 
-        if "." not in name and len(sorted_candidates) > 1:
-            has_local = any(candidate.source == "local" for candidate in sorted_candidates)
-            if not has_local or len(top_candidates) > 1:
-                details = ", ".join(
-                    f"{c.source}:{c.resolved_name}" for c in sorted_candidates
-                )
-                raise AmbiguousImportError(
-                    f"Import ambiguo sin namespace para '{name}'. "
-                    f"Use un nombre calificado. Candidatos: {details}"
-                )
+        return self._attach_backend_adapter(candidates[0])
 
-        return sorted_candidates[0]
-
-    def load_module(self, module_name: str, fallback_backend: str = "python") -> tuple[ResolutionResult, ModuleType | None]:
-        """Carga módulo Python cuando aplique e inyecta adapter de backend."""
+    def load_module(
+        self,
+        module_name: str,
+        fallback_backend: str = "python",
+    ) -> tuple[ResolutionResult, ModuleType | None]:
+        """Carga módulo Python cuando aplique usando el resultado resuelto."""
 
         resolution = self.resolve(module_name)
         if resolution.import_path is None:
             return resolution, None
 
         module = importlib.import_module(resolution.import_path)
-        backend = resolution.backend or fallback_backend
-        backend = resolve_backend_for_module(resolution.resolved_name, backend)
-        adapter = resolve_backend(backend)
-        setattr(module, "__cobra_backend__", backend)
-        setattr(module, "__cobra_backend_adapter__", adapter)
+        if resolution.backend:
+            setattr(module, "__cobra_backend__", resolution.backend)
+        if resolution.backend_adapter is not None:
+            setattr(module, "__cobra_backend_adapter__", resolution.backend_adapter)
+        elif fallback_backend:
+            effective_backend = resolve_backend_for_module(
+                resolution.resolved_name,
+                fallback_backend,
+            )
+            adapter = resolve_backend(effective_backend)
+            setattr(module, "__cobra_backend__", effective_backend)
+            setattr(module, "__cobra_backend_adapter__", adapter)
         return resolution, module
 
-    def _resolve_local_module(self, name: str) -> ResolutionResult | None:
+    def _attach_backend_adapter(self, resolution: ResolutionResult) -> ResolutionResult:
+        base_backend = resolution.backend or self.default_backend
+        effective_backend = resolve_backend_for_module(resolution.resolved_name, base_backend)
+        adapter = resolve_backend(effective_backend)
+        return ResolutionResult(
+            request=resolution.request,
+            source=resolution.source,
+            resolved_name=resolution.resolved_name,
+            import_path=resolution.import_path,
+            backend=effective_backend,
+            backend_adapter=adapter,
+        )
+
+    def _build_candidate(self, source: str, name: str) -> ResolutionResult | None:
+        if source == "stdlib":
+            return self._resolve_stdlib_module(name)
+        if source == "project":
+            return self._resolve_project_module(name)
+        if source == "python_bridge":
+            return self._resolve_python_bridge(name)
+        if source == "hybrid":
+            return self._resolve_hybrid_module(name)
+        return None
+
+    def _resolve_project_module(self, name: str) -> ResolutionResult | None:
+        if name in self.project_modules:
+            return ResolutionResult(request=name, source="project", resolved_name=name)
+
+        file_candidate = self._resolve_local_file_module(name)
+        if file_candidate is not None:
+            return file_candidate
+        return None
+
+    def _resolve_local_file_module(self, name: str) -> ResolutionResult | None:
         if self.project_root is None:
             return None
 
@@ -162,7 +195,7 @@ class CobraImportResolver:
             if (self.project_root / pattern).exists():
                 return ResolutionResult(
                     request=name,
-                    source="local",
+                    source="project",
                     resolved_name=name,
                 )
         return None

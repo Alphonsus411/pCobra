@@ -1,7 +1,6 @@
 """Utilidades de resolución de imports para Cobra."""
 
 from pcobra.cobra.imports.resolver import (
-    AmbiguousImportError,
     CobraImportResolver,
     HybridModuleSpec,
     ImportResolutionError,
@@ -9,7 +8,6 @@ from pcobra.cobra.imports.resolver import (
 )
 
 __all__ = [
-    "AmbiguousImportError",
     "CobraImportResolver",
     "HybridModuleSpec",
     "ImportResolutionError",
