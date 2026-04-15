@@ -1,3 +1,3 @@
-public_api = ["cobra.datos.tabla", "cobra.datos.csv", "cobra.datos.json"]
+public_api = ["cobra.datos.filtrar", "cobra.datos.seleccionar_columnas", "cobra.datos.a_listas", "cobra.datos.de_listas"]
 backend_preferido = "python"
 fallback_permitido = ["javascript"]

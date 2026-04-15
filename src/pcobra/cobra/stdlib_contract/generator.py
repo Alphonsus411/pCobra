@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from pcobra.cobra.stdlib_contract import CONTRACTS
@@ -24,10 +25,49 @@ def render_manifest(contract: ContractDescriptor) -> str:
     )
 
 
+def build_contract_matrix() -> dict[str, object]:
+    """Construye matriz única de stdlib consumible por CLI/docs."""
+    matrix_modules: list[dict[str, object]] = []
+
+    for descriptor in CONTRACTS:
+        coverage_rows: list[dict[str, str]] = []
+        for coverage in descriptor.coverage:
+            for backend, level in coverage.backend_levels.items():
+                coverage_rows.append(
+                    {
+                        "function": coverage.function,
+                        "backend": backend,
+                        "level": level,
+                    }
+                )
+
+        mapping = descriptor.runtime_mapping
+        matrix_modules.append(
+            {
+                "module": descriptor.module,
+                "primary_backend": descriptor.primary_backend,
+                "allowed_fallback": list(descriptor.allowed_fallback),
+                "runtime_mapping": {
+                    "standard_library": list(mapping.standard_library),
+                    "corelibs": list(mapping.corelibs),
+                    "core_nativos": list(mapping.core_nativos),
+                },
+                "public_api": list(descriptor.public_api),
+                "coverage": coverage_rows,
+            }
+        )
+
+    return {"modules": matrix_modules}
+
+
+def _format_paths(paths: tuple[str, ...]) -> str:
+    return ", ".join(f"`{path}`" for path in paths) if paths else "-"
+
+
 def render_contract_markdown() -> str:
     """Construye documentación Markdown desde descriptores Python."""
     lines: list[str] = [
-        "# Contrato de stdlib Cobra (autogenerado)",
+        "# Matriz única de stdlib Cobra (autogenerado)",
         "",
         "Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.",
         "",
@@ -40,9 +80,9 @@ def render_contract_markdown() -> str:
                 "",
                 f"- **Backend primario:** `{descriptor.primary_backend}`",
                 f"- **Fallback permitido:** `{', '.join(descriptor.allowed_fallback) or 'ninguno'}`",
-                f"- **Mapeo `standard_library`:** `{mapping.standard_library or '-'}`",
-                f"- **Mapeo `corelibs`:** `{mapping.corelibs or '-'}`",
-                f"- **Mapeo `core/nativos`:** `{mapping.core_nativos or '-'}`",
+                f"- **Mapeo `standard_library`:** {_format_paths(mapping.standard_library)}",
+                f"- **Mapeo `corelibs`:** {_format_paths(mapping.corelibs)}",
+                f"- **Mapeo `core/nativos`:** {_format_paths(mapping.core_nativos)}",
                 "",
                 "### API pública",
                 "",
@@ -57,10 +97,28 @@ def render_contract_markdown() -> str:
     return "\n".join(lines)
 
 
-def sync_contract_artifacts(contract_dir: Path, docs_path: Path) -> None:
-    """Sincroniza manifiestos TOML y Markdown generado."""
+def sync_contract_artifacts(
+    contract_dir: Path,
+    docs_generated_md: Path,
+    docs_generated_json: Path,
+    docs_stdlib_md: Path,
+) -> None:
+    """Sincroniza manifiestos TOML y matriz única (Markdown + JSON)."""
     contract_dir.mkdir(parents=True, exist_ok=True)
     for descriptor in CONTRACTS:
         (contract_dir / descriptor.module).write_text(render_manifest(descriptor), encoding="utf-8")
-    docs_path.parent.mkdir(parents=True, exist_ok=True)
-    docs_path.write_text(render_contract_markdown(), encoding="utf-8")
+
+    markdown = render_contract_markdown()
+    matrix = build_contract_matrix()
+
+    docs_generated_md.parent.mkdir(parents=True, exist_ok=True)
+    docs_generated_md.write_text(markdown, encoding="utf-8")
+
+    docs_generated_json.parent.mkdir(parents=True, exist_ok=True)
+    docs_generated_json.write_text(
+        json.dumps(matrix, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    docs_stdlib_md.parent.mkdir(parents=True, exist_ok=True)
+    docs_stdlib_md.write_text(markdown, encoding="utf-8")

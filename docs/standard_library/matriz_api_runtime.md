@@ -22,7 +22,9 @@ Se generan:
 
 - `docs/_generated/runtime_api_matrix.json`
 - `docs/_generated/runtime_api_matrix.md`
-- `docs/_generated/stdlib_contract_matrix.md` (contrato de módulos `cobra.core|datos|web|system`)
+- `docs/_generated/stdlib_contract_matrix.md` (matriz única contractual de módulos `cobra.core|datos|web|system`)
+- `docs/_generated/stdlib_contract_matrix.json` (misma matriz en formato consumible por CLI/docs)
+- `docs/standard_library/matriz_stdlib_unificada.md` (vista publicada de referencia en docs)
 
 El JSON incluye tres bloques:
 
@@ -58,3 +60,5 @@ Este flujo actualiza:
 
 - `src/pcobra/cobra/stdlib_contract/cobra.*` (manifiestos consumidos por `module_map`)
 - `docs/_generated/stdlib_contract_matrix.md` (API pública + backend primario + fallback + cobertura `full/partial`)
+- `docs/_generated/stdlib_contract_matrix.json` (matriz estructurada para consumo de CLI/docs)
+- `docs/standard_library/matriz_stdlib_unificada.md` (publicación única para documentación funcional)
