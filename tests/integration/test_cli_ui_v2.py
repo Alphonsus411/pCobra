@@ -67,7 +67,7 @@ def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):
 
 
 def test_cli_ui_v2_modo_desarrollo_expone_comandos_internos(monkeypatch):
-    monkeypatch.setenv("COBRA_ENABLE_LEGACY_CLI", "1")
+    monkeypatch.delenv("COBRA_ENABLE_LEGACY_CLI", raising=False)
     monkeypatch.setenv("COBRA_DEV_MODE", "1")
     for module_name in (
         "cobra.cli.commands_v2",

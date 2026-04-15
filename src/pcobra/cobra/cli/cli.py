@@ -45,6 +45,7 @@ from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisComman
 from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
 from pcobra.cobra.cli.commands_v2 import (
     BuildCommandV2,
+    COBRA_ENABLE_LEGACY_CLI_ENV,
     LegacyCommandGroupV2,
     ModCommandV2,
     RunCommandV2,
@@ -141,11 +142,21 @@ class CommandRegistry:
         self,
         subparsers: Any,
         *,
-        ui: str = "v1",
+        ui: str = "v2",
         profile: str = PROFILE_PUBLIC,
     ) -> Dict[str, BaseCommand]:
         base_commands = []
         command_classes = AppConfig.V2_COMMAND_CLASSES if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
+        if ui == "v2" and profile == PROFILE_DEVELOPMENT and LegacyCommandGroupV2 is None:
+            try:
+                from pcobra.cobra.cli.commands_v2.legacy_cmd import LegacyCommandGroupV2 as _LegacyCommandGroupV2
+                command_classes = command_classes + [_LegacyCommandGroupV2]
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "No fue posible cargar grupo legacy para perfil development: %s",
+                    exc,
+                )
+
         for cmd_class in command_classes:
             try:
                 base_commands.append(self.create_command(cmd_class))
@@ -212,7 +223,7 @@ class CliApplication:
         self.command_registry: Optional[CommandRegistry] = None
         self._subparsers: Optional[argparse._SubParsersAction] = None
         self._commands_registered = False
-        self._selected_ui = "v1"
+        self._selected_ui = "v2"
 
     @contextmanager
     def resource_management(self) -> ContextManager[None]:
@@ -247,7 +258,7 @@ class CliApplication:
         command_profile = resolve_command_profile()
         self.command_registry.register_base_commands(
             self._subparsers,
-            ui=getattr(self, "_selected_ui", "v1"),
+            ui=getattr(self, "_selected_ui", "v2"),
             profile=command_profile,
         )
         menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
@@ -368,11 +379,13 @@ class CliApplication:
         parser.add_argument(
             "--ui",
             choices=("v1", "v2"),
-            default="v1",
+            default="v2",
             help=_(
-                "Selecciona la interfaz CLI: v1 (legacy) o v2 (superficie pública run/build/test/mod). "
-                "Los comandos internos quedan disponibles solo en desarrollo explícito (COBRA_DEV_MODE=1 "
-                "o COBRA_CLI_COMMAND_PROFILE=development)."
+                "Selecciona la interfaz CLI: v2 (recomendada para usuarios finales) o v1 (compatibilidad legacy). "
+                "En v2, la superficie pública es run/build/test/mod. "
+                "Los comandos internos quedan disponibles solo en perfil development "
+                "(COBRA_DEV_MODE=1 o COBRA_CLI_COMMAND_PROFILE=development) "
+                f"o con {COBRA_ENABLE_LEGACY_CLI_ENV}=1."
             ),
         )
         parser.add_argument("--lang",
@@ -571,7 +584,7 @@ class CliApplication:
 
         preliminary_args, _ = self.parser.parse_known_args(argv)
         preliminary_args = self._normalizar_flags_sesion(preliminary_args)
-        self._selected_ui = str(getattr(preliminary_args, "ui", "v1")).strip().lower()
+        self._selected_ui = str(getattr(preliminary_args, "ui", "v2")).strip().lower()
         configure_plugin_policy(
             safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
             allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
