@@ -6,7 +6,6 @@ from argparse import ArgumentTypeError
 from typing import Literal
 
 from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
-from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 from pcobra.cobra.cli.internal_compat.legacy_targets import (
     LEGACY_BACKENDS_FEATURE_FLAG,
     enabled_internal_legacy_targets,
@@ -45,7 +44,7 @@ def accepted_target_aliases_examples_text() -> str:
 
 # Todos los destinos oficiales de generación/transpilación.
 OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
-    OFFICIAL_TARGETS,
+    PUBLIC_BACKENDS,
     context="pcobra.cobra.cli.target_policies.OFFICIAL_TRANSPILATION_TARGETS",
 )
 
@@ -235,10 +234,6 @@ def transpilation_only_targets_text() -> str:
     return ", ".join(TRANSPILATION_ONLY_TARGETS)
 
 
-def legacy_internal_targets_text() -> str:
-    return ", ".join(INTERNAL_BACKENDS)
-
-
 def build_cli_compile_examples(
     *,
     source_file: str = "programa.co",
@@ -401,13 +396,6 @@ def validate_runtime_support_contract() -> None:
             raise RuntimeError(
                 f"{backend} figura como runtime oficial pero no garantiza hooks Holobit mínimos"
             )
-
-
-    if SDK_COMPATIBLE_TARGETS != ("python",):
-        raise RuntimeError(
-            "SDK_COMPATIBLE_TARGETS debe permanecer fijado a ('python',): "
-            f"sdk={SDK_COMPATIBLE_TARGETS}"
-        )
 
     matrix_sdk_targets = _sdk_full_targets_from_matrix()
     if SDK_COMPATIBLE_TARGETS != matrix_sdk_targets:

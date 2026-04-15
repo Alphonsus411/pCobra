@@ -25,7 +25,7 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 
 PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
-    target: TRANSPILER_CLASS_PATHS[target] for target in OFFICIAL_TARGETS
+    target: TRANSPILER_CLASS_PATHS[target] for target in PUBLIC_BACKENDS
 }
 
 INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
@@ -70,20 +70,20 @@ def _validate_public_registry_contract() -> tuple[str, ...]:
         )
 
     configured_keys = tuple(PUBLIC_TRANSPILER_CLASS_PATHS)
-    missing = tuple(target for target in OFFICIAL_TARGETS if target not in configured_keys)
-    extras = tuple(target for target in configured_keys if target not in OFFICIAL_TARGETS)
+    missing = tuple(target for target in PUBLIC_BACKENDS if target not in configured_keys)
+    extras = tuple(target for target in configured_keys if target not in PUBLIC_BACKENDS)
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe usar exactamente OFFICIAL_TARGETS. "
+            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe usar exactamente PUBLIC_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+            f"current={configured_keys}; expected={PUBLIC_BACKENDS}"
         )
 
-    if configured_keys != OFFICIAL_TARGETS:
+    if configured_keys != PUBLIC_BACKENDS:
         raise RuntimeError(
-            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe preservar el orden de config.transpile_targets.OFFICIAL_TARGETS. "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.PUBLIC_BACKENDS. "
+            f"current={configured_keys}; expected={PUBLIC_BACKENDS}"
         )
     return configured_keys
 
