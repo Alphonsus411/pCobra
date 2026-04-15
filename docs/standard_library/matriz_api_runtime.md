@@ -22,6 +22,7 @@ Se generan:
 
 - `docs/_generated/runtime_api_matrix.json`
 - `docs/_generated/runtime_api_matrix.md`
+- `docs/_generated/stdlib_contract_matrix.md` (contrato de módulos `cobra.core|datos|web|system`)
 
 El JSON incluye tres bloques:
 
@@ -37,3 +38,23 @@ Existe un test de contrato (`tests/unit/test_runtime_api_matrix_contract.py`) qu
 - que el mapa de paridad cubra todos los backends oficiales.
 
 Si se agrega API en Python sin actualizar el snapshot/mapa, el test falla.
+
+## Contrato de módulos stdlib (descriptores Python)
+
+El contrato público de módulos se define en `src/pcobra/cobra/stdlib_contract/` usando descriptores Python:
+
+- `core.py`
+- `datos.py`
+- `web.py`
+- `system.py`
+
+Para sincronizar manifiestos y documentación generada:
+
+```bash
+python scripts/generar_contrato_stdlib.py
+```
+
+Este flujo actualiza:
+
+- `src/pcobra/cobra/stdlib_contract/cobra.*` (manifiestos consumidos por `module_map`)
+- `docs/_generated/stdlib_contract_matrix.md` (API pública + backend primario + fallback + cobertura `full/partial`)
