@@ -37,6 +37,9 @@ class BuildOrchestrator:
         "application": ("python", "javascript", "rust"),
     }
 
+    def __init__(self) -> None:
+        self._validate_public_backend_routes_contract()
+
     def resolve_backend(
         self,
         *,
@@ -99,6 +102,26 @@ class BuildOrchestrator:
                 f"Backend no permitido: {value}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
             )
         return canonical
+
+    def _validate_public_backend_routes_contract(self) -> None:
+        """Asegura que las rutas públicas de selección no usen backends fuera del canon oficial."""
+        official = set(OFFICIAL_TARGETS)
+        covered: set[str] = set()
+        for project_type, priorities in self._PROJECT_TYPE_PRIORITIES.items():
+            invalid = tuple(target for target in priorities if target not in official)
+            if invalid:
+                raise RuntimeError(
+                    "BuildOrchestrator._PROJECT_TYPE_PRIORITIES contiene backends fuera de OFFICIAL_TARGETS. "
+                    f"project_type={project_type}; invalid={invalid}; official={OFFICIAL_TARGETS}"
+                )
+            covered.update(priorities)
+
+        missing = tuple(target for target in OFFICIAL_TARGETS if target not in covered)
+        if missing:
+            raise RuntimeError(
+                "BuildOrchestrator._PROJECT_TYPE_PRIORITIES debe cubrir todos los OFFICIAL_TARGETS. "
+                f"missing={missing}; official={OFFICIAL_TARGETS}"
+            )
 
     def _project_type(self, config: dict[str, Any]) -> str:
         project = config.get("project", {}) if isinstance(config, dict) else {}
