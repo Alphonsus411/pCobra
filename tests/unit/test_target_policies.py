@@ -37,3 +37,9 @@ def test_parse_target_list_rechaza_valores_fuera_del_set_canonico_en_cualquier_p
 
     with pytest.raises(ArgumentTypeError):
         parse_target_list("python,fantasy")
+
+
+def test_parse_target_emite_advertencia_consistente_en_backend_interno(monkeypatch):
+    monkeypatch.setenv("COBRA_INTERNAL_LEGACY_TARGETS", "1")
+    with pytest.warns(UserWarning, match=r"INTERNAL LEGACY BACKEND.*estado=active-migration"):
+        assert parse_target("go") == "go"
