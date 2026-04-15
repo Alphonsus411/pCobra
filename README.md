@@ -37,7 +37,6 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Targets legacy/internal (no públicos)**: go, cpp, java, wasm, asm.
 - **Orígenes de transpilación inversa**: python, javascript, java. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
@@ -51,8 +50,6 @@ Fuentes normativas: `src/pcobra/cobra/config/transpile_targets.py` para la lista
 ### Política de targets oficial
 
 La política oficial de targets exige que toda documentación pública, snippets de CLI, tablas y ejemplos utilicen exclusivamente los nombres canónicos `python`, `javascript` y `rust`. Los tiers oficiales se derivan de `TIER1_TARGETS`, `TIER2_TARGETS` y `OFFICIAL_TARGETS` definidos en `src/pcobra/cobra/config/transpile_targets.py`, con el registro canónico de backends en `src/pcobra/cobra/transpilers/registry.py`.
-
-Además, el proyecto separa explícitamente **targets oficiales de salida** de **targets legacy/internal**. La ejecución oficial verificable —en sandbox, contenedor o comando de verificación— cubre `python`, `javascript` y `rust`. Los targets `go`, `cpp`, `java`, `wasm` y `asm` quedan fuera de la promesa pública y se conservan únicamente para compatibilidad interna o migración.
 
 La compatibilidad mínima por backend no es uniforme: `src/pcobra/cobra/transpilers/compatibility_matrix.py` declara `python` como `full` para la matriz contractual actual, mientras `javascript` y `rust` se mantienen en `partial`. Eso significa que la **paridad SDK total** solo puede prometerse para `python`.
 
@@ -84,34 +81,13 @@ Cualquier cambio de tier requiere RFC, plan de migración y comunicación explí
 
 ### Prerrequisitos por backend de ejecución/runtime
 
-Además del estado `full/partial`, cada backend depende de toolchains o runtime externos que deben existir en el host:
+Cada backend oficial depende de toolchains o runtimes externos que deben existir en el host:
 
 - `python` (`full`): entorno Python `>=3.10` con dependencias del proyecto; `holobit_sdk` es obligatorio para el contrato Holobit completo.
 - `javascript` (`partial`): `node` y dependencias del runtime JavaScript del proyecto (`vm2`/`node-fetch` cuando aplique en el host).
 - `rust` (`partial`): toolchain Rust (`rustc`/`cargo`) para compilación/ejecución fuera de transpilación.
-- `cpp` (`partial`): compilador `cpp` (`gpp`/`clangpp`) y toolchain nativa del sistema.
-- `go` (`partial`, best-effort): toolchain Go instalada en el host.
-- `java` (`partial`, best-effort): JDK/JRE en el host.
-- `wasm` (`partial`, solo transpilación): host WASM con imports `pcobra:*` para `corelibs`, `standard_library` y Holobit; el módulo generado no embebe ese runtime.
-- `asm` (`partial`, solo transpilación): runtime/ensamblador externo administrado fuera de pCobra.
 
 Sin estos prerrequisitos, pCobra puede conservar generación de código, pero no promete ejecución equivalente al runtime oficial de Python.
-
-**Nota explícita de política:** **los backends retirados no forman parte del árbol operativo**.
-
-Guía de migración para consumidores de targets retirados: `docs/migracion_targets_retirados.md`.
-
-Migración desde targets deprecados/legacy (`go`, `cpp`, `java`, `wasm`, `asm`) hacia backends oficiales:
-
-1. Sustituye en CLI y CI los usos de `--backend` legacy por `python`, `javascript` o `rust`.
-2. Prioriza `rust` cuando busques rendimiento/compilación nativa, `javascript` para entornos Node/web y `python` para máxima cobertura SDK.
-
-Deprecación progresiva en CLI (2 fases):
-
-- **Fase 1 (default):** warning + telemetría de uso cuando se usan `wasm`, `go`, `cpp`, `java` o `asm`.
-- **Fase 2:** esos targets quedan ocultos del help público y solo disponibles en modo legacy (`--legacy-targets` o `COBRA_LEGACY_TARGETS_MODE=1`).
-3. Ejecuta regresión funcional después del cambio para validar paridad en tu pipeline.
-4. Mantén los targets legacy solo como fallback interno temporal, sin exposición pública.
 
 ### Compatibilidad explícita por target (Holobit SDK + librerías)
 
@@ -120,8 +96,6 @@ Deprecación progresiva en CLI (2 fases):
 | `python` | Tier 1 | ✅ `full` (requiere `holobit-sdk`) | ✅ `full` | ✅ `full` | ✅ `full` |
 | `rust` | Tier 1 | 🟡 `partial` (sin dependencia de SDK Python) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
 | `javascript` | Tier 1 | 🟡 `partial` (sin dependencia de SDK Python) | 🟡 `partial` | 🟡 `partial` | 🟡 `partial` |
-
-Los targets `go`, `cpp`, `java`, `wasm` y `asm` permanecen disponibles solo como **legacy/internal** (sin contrato público).
 
 Fuente normativa de detalle: `docs/contrato_runtime_holobit.md` y `docs/matriz_transpiladores.md`.
 
@@ -214,13 +188,23 @@ La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SP
 
 ## Arquitectura del compilador
 
-La cadena de herramientas de Cobra separa el front-end de los generadores de código mediante una arquitectura interna de compilación. Esa arquitectura es un detalle de implementación y no forma parte de la lista pública de backends oficiales. El flujo principal funciona de la siguiente manera:
+La cadena de herramientas de Cobra separa el front-end de los generadores de código mediante una arquitectura interna de compilación. Esa arquitectura es un detalle de implementación y no forma parte de la interfaz pública.
+
+Diagrama corto del flujo principal:
+
+```text
+Front-end Cobra
+      ↓
+BackendPipeline
+      ↓
+bindings/runtime (python | javascript | rust)
+```
 
 1. El front-end analiza el código fuente y construye el AST de Cobra.
-2. Ese AST se normaliza internamente para coordinar estructuras de control, módulos y tipos antes de la generación de código.
-3. Los transpiladores consumen esa IR para generar código en los distintos backends soportados.
+2. `BackendPipeline` normaliza internamente estructuras de control, módulos y tipos antes de la generación de código.
+3. Los adaptadores de backend conectan la salida transpilada con sus bindings/runtime oficiales.
 
-Esta organización actúa como contrato técnico entre el front-end y los generadores de código, permitiendo incorporar mejoras internas sin modificar el parser original. Gracias a ello, Cobra mantiene generadores adicionales para casos internos y legacy. En la documentación pública, la salida oficial queda limitada a `python`, `javascript` y `rust`.
+Esta organización actúa como contrato técnico entre la interfaz pública y la ejecución interna, permitiendo incorporar mejoras sin modificar el parser original.
 
 ## Ecosistema unificado Cobra
 
@@ -317,6 +301,24 @@ Si vienes de comandos legacy (`cobra compilar`, `cobra modulos`) o de flujos cen
 ### Compatibilidad legacy
 
 Los proyectos antiguos pueden seguir funcionando con aliases legacy y con el modo de compatibilidad. Recomendamos mantenerlos solo como transición y migrar progresivamente a `run/build/test/mod`.
+
+### Compatibilidad interna y migración
+
+Las rutas legacy/internal (`go`, `cpp`, `java`, `wasm`, `asm`) se mantienen fuera de la interfaz pública y solo como soporte transitorio para migración técnica.
+
+Guía de migración para consumidores de targets retirados: `docs/migracion_targets_retirados.md`.
+
+Migración recomendada desde targets legacy hacia backends oficiales:
+
+1. Sustituye en CLI y CI los usos de `--backend` legacy por `python`, `javascript` o `rust`.
+2. Prioriza `rust` cuando busques rendimiento/compilación nativa, `javascript` para entornos Node/web y `python` para máxima cobertura SDK.
+3. Ejecuta regresión funcional después del cambio para validar paridad en tu pipeline.
+4. Mantén los targets legacy solo como fallback interno temporal, sin exposición pública.
+
+Deprecación progresiva en CLI:
+
+- **Fase 1 (default):** warning + telemetría cuando se usan `wasm`, `go`, `cpp`, `java` o `asm`.
+- **Fase 2:** esos targets se ocultan del help público y solo quedan disponibles en modo legacy (`--legacy-targets` o `COBRA_LEGACY_TARGETS_MODE=1`).
 
 ### Validar sintaxis (paso a paso)
 
@@ -928,21 +930,21 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
 
 ```bash
 # Compilar un archivo a: python, rust, javascript, wasm, go, cpp, java o asm
-cobra compilar programa.co --backend python
+cobra build programa.co --backend python
 
 # Transpilar inverso de Python a JavaScript
 cobra transpilar-inverso script.py --origen=python --destino=javascript
 
 # Ejemplo de mensaje de error al compilar un archivo inexistente
-cobra compilar noexiste.co
+cobra build noexiste.co
 # Salida:
 # Error: El archivo 'noexiste.co' no existe
 
 
 # Gestionar módulos instalados
-cobra modulos listar
-cobra modulos instalar ruta/al/modulo.co
-cobra modulos remover modulo.co
+cobra mod list
+cobra mod install ruta/al/modulo.co
+cobra mod remove modulo.co
 # Crear e instalar paquetes Cobra
 cobra paquete crear src demo.cobra
 cobra paquete instalar demo.cobra
@@ -955,7 +957,7 @@ cobra profile programa.co --output salida.prof
 # O mostrar el perfil directamente en pantalla
 cobra profile programa.co
 # Compilar en varios backends en una sola llamada
-cobra compilar ejemplo.co --tipos=python,javascript
+cobra build ejemplo.co --targets python,javascript
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
@@ -963,14 +965,14 @@ cobra gui
 Si deseas desactivar los colores usa `--no-color`:
 
 ```bash
-cobra --no-color ejecutar programa.co
+cobra --no-color run programa.co
 ```
 
 Para aumentar el nivel de detalle de los mensajes añade `-v` o `--verbose`.
 Por defecto el nivel de registro es `INFO`; con `-v` o más se cambia a `DEBUG`:
 
 ```bash
-cobra -v ejecutar programa.co
+cobra -v run programa.co
 ```
 
 Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
@@ -1115,15 +1117,15 @@ la salida con los archivos `.out` correspondientes. Para probarlos
 manualmente:
 
 ```bash
-cobra ejecutar tests/data/hola.cobra
-cobra ejecutar tests/data/suma.co
+cobra run tests/data/hola.cobra
+cobra run tests/data/suma.co
 ```
 
 También puedes transpilar los ejemplos para ver el código Python generado:
 
 ```bash
-cobra compilar tests/data/hola.cobra --backend python
-cobra compilar tests/data/suma.co --backend python
+cobra build tests/data/hola.cobra --backend python
+cobra build tests/data/suma.co --backend python
 ```
 
 #### Regenerar snapshots de transpilación (`tests/data/expected_examples`)
@@ -1176,34 +1178,26 @@ de error.
 
 ### Comandos válidos por destino
 
-La siguiente lista se generó a partir de `LANG_CHOICES` en `src/pcobra/cobra/cli/commands/compile_cmd.py`
-(ordenada alfabéticamente) para mantener la documentación alineada con la CLI real:
+La interfaz pública mantiene únicamente tres destinos oficiales (`python`,
+`javascript`, `rust`) para `cobra build`:
 
 ````bash
-cobra compilar programa.co --backend asm
-cobra compilar programa.co --backend cpp
-cobra compilar programa.co --backend go
-cobra compilar programa.co --backend java
-cobra compilar programa.co --backend javascript
-cobra compilar programa.co --backend python
-cobra compilar programa.co --backend rust
-cobra compilar programa.co --backend wasm
+cobra build programa.co --backend python
+cobra build programa.co --backend javascript
+cobra build programa.co --backend rust
 ````
 
 ### Ejemplos de subcomandos
 
 ````bash
-cobra compilar programa.co --backend python
-cobra compilar programa.co --backend rust
-cobra compilar programa.co --backend javascript
-cobra compilar programa.co --backend wasm
-cobra compilar programa.co --backend go
-cobra compilar programa.co --backend cpp
-cobra compilar programa.co --backend java
-cobra compilar programa.co --backend asm
+cobra build programa.co --backend python
+cobra build programa.co --backend javascript
+cobra build programa.co --backend rust
+cobra test
+cobra mod list
 echo $?  # 0 al compilar sin problemas
 
-cobra ejecutar inexistente.co
+cobra run inexistente.co
 # El archivo 'inexistente.co' no existe
 echo $?  # 1
 ````
@@ -1223,7 +1217,7 @@ o pasando el argumento `--lang` al ejecutar `cobra`.
 
 ```bash
 COBRA_LANG=en cobra --ayuda
-cobra --lang en compilar archivo.co
+cobra --lang en build archivo.co
 ```
 
 Si deseas añadir otro idioma, crea una carpeta `docs/frontend/locale/<cod>/LC_MESSAGES`

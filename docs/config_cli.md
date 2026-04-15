@@ -13,8 +13,8 @@ El flag global `--modo` delimita qué tipo de acciones permite la sesión:
 Ejemplos concretos:
 
 ```bash
-cobra --modo cobra ejecutar programa.co
-cobra --modo transpilar compilar programa.co --tipo python
+cobra --modo cobra run programa.co
+cobra --modo transpilar build programa.co --backend python
 ```
 
 ## Ruta del archivo
@@ -47,7 +47,7 @@ campos estructurados para auditoría:
 En modo `text`, el `msg` incluye los campos en línea:
 
 ```text
-security_policy_warning event=insecure_fallback command=ejecutar reason=explicit_allow_insecure_fallback audit_id=SEC-RUNTIME-003
+security_policy_warning event=insecure_fallback command=run reason=explicit_allow_insecure_fallback audit_id=SEC-RUNTIME-003
 ```
 
 En modo `json` (`log_formatter = "json"` o `COBRA_LOG_FORMATTER=json`), el
@@ -55,7 +55,7 @@ handler escribe un objeto JSON por línea apto para pipelines CI/SIEM.
 
 ## Política de seguridad para `SQLITE_DB_KEY` en la CLI
 
-Para comandos que requieren base de datos (`cache`, `compilar`, `benchtranspilers`,
+Para comandos que requieren base de datos (`cache`, `build`, `benchtranspilers`,
 `qualia`, `interactive`), la CLI exige `SQLITE_DB_KEY`.
 
 - **Producción/CI recomendado:** exporta siempre una clave real (`SQLITE_DB_KEY`)
@@ -81,7 +81,7 @@ print(secrets.token_urlsafe(32))
 PY
 )"
 
-cobra compilar ejemplo.co --tipo python
+cobra build ejemplo.co --backend python
 ```
 
 #### Opción B (solo dev local): clave efímera por ejecución
@@ -89,7 +89,7 @@ cobra compilar ejemplo.co --tipo python
 ```bash
 COBRA_DEV_MODE=1 \
 COBRA_DEV_ALLOW_EPHEMERAL_KEY=1 \
-cobra --dev-ephemeral-key compilar ejemplo.co --tipo python
+cobra --dev-ephemeral-key build ejemplo.co --backend python
 ```
 
 > Nota: evita esta opción en CI/prod; está diseñada únicamente para sesiones
@@ -127,11 +127,6 @@ required_targets = ["python", "javascript"]
 python = "build/modulo.py"
 rust = "build/modulo.rs"
 javascript = "build/modulo.js"
-wasm = "build/modulo.wasm"
-go = "build/modulo.go"
-cpp = "build/modulo.cpp"
-java = "build/modulo.java"
-asm = "build/modulo.asm"
 ```
 
 ### Reglas de validación
@@ -145,10 +140,16 @@ asm = "build/modulo.asm"
 ### ¿Qué targets pueden omitirse intencionalmente?
 
 - Puedes omitir cualquier target **no incluido** en `required_targets`.
-- Si no declaras política, la validación asume por defecto el Tier 1 completo:
-  `python`, `rust`, `javascript` y `wasm`.
+- Si no declaras política, la validación asume por defecto el Tier 1 público completo: `python`, `javascript` y `rust`.
 - Para proyectos que solo distribuyen un subconjunto de backends, ajusta
   explícitamente `required_targets` para evitar errores de validación.
+
+## Terminología: interfaz pública vs backend interno
+
+- **Interfaz pública**: comandos y documentación para usuarios (`cobra run`, `cobra build`, `cobra test`, `cobra mod`) y backends oficiales `python`, `javascript`, `rust`.
+- **Backend interno**: rutas de compatibilidad o migración usadas por mantenedores, fuera del contrato público.
+
+Toda referencia en documentación de usuario debe priorizar la terminología de interfaz pública.
 
 ## Política de targets oficial
 
@@ -161,7 +162,7 @@ canónicos `python`, `javascript` y `rust`.
 
 En consecuencia:
 
-- `cobra compilar` debe derivar `TRANSPILERS` y `LANG_CHOICES` desde
+- `cobra build` debe derivar `TRANSPILERS` y `LANG_CHOICES` desde
   `PUBLIC_BACKENDS` y un registro canónico compartido.
 - Los scripts auxiliares, especialmente benchmarks y validaciones CI, deben
   reutilizar utilidades comunes basadas en esa misma política.

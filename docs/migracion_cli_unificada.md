@@ -17,6 +17,11 @@ Con backends públicos oficiales:
 - `javascript`
 - `rust`
 
+## Terminología unificada
+
+- **Interfaz pública**: comandos `cobra run/build/test/mod` y backends oficiales `python`, `javascript`, `rust`.
+- **Compatibilidad interna**: aliases legacy y backends internos usados solo para migración controlada.
+
 ## Mapeo de comandos legacy
 
 | Legacy | Nuevo comando recomendado |
@@ -44,7 +49,7 @@ Con backends públicos oficiales:
 4. **Validación**: ejecuta pruebas/regresión del proyecto.
 5. **Limpieza**: documenta fecha de retiro interno de aliases legacy.
 
-## Compatibilidad legacy (proyectos antiguos)
+## Compatibilidad interna/migración (proyectos antiguos)
 
 Para evitar bloqueos en proyectos históricos:
 
