@@ -49,6 +49,7 @@ La superficie pública estable para esta fase es:
 - CLI: `run`, `build`, `test`, `mod`.
 - Backends oficiales: `python`, `javascript`, `rust`.
 - Módulos stdlib públicos: `cobra.core`, `cobra.datos`, `cobra.web`, `cobra.system`.
+- Resolución de imports: ver contrato oficial en `docs/architecture/import-resolution-contract.md`.
 
 ## Estabilidad contractual en esta fase
 

@@ -55,10 +55,12 @@ class CobraImportResolver:
         project_root: str | Path | None = None,
         hybrid_modules: Mapping[str, HybridModuleSpec | Mapping[str, Any]] | None = None,
         default_backend: str = "python",
+        strict_ambiguous_imports: bool = False,
     ) -> None:
         self.project_root = Path(project_root).resolve() if project_root else None
         self.hybrid_modules = self._normalize_hybrid_modules(hybrid_modules or {})
         self.default_backend = default_backend
+        self.strict_ambiguous_imports = strict_ambiguous_imports
         self.stdlib_modules = self._load_stdlib_modules()
         self.project_modules = self._load_project_modules()
 
@@ -111,13 +113,16 @@ class CobraImportResolver:
 
         if "." not in name and len(candidates) > 1:
             details = ", ".join(f"{c.source}:{c.resolved_name}" for c in candidates)
-            warnings.warn(
+            message = (
                 f"Colisión de import para '{name}'. Se aplica precedencia fija "
                 f"({_SOURCE_ORDER[0]} > {_SOURCE_ORDER[1]} > {_SOURCE_ORDER[2]} > {_SOURCE_ORDER[3]}). "
-                f"Seleccionado: {candidates[0].resolved_name}. Candidatos: {details}",
-                category=UserWarning,
-                stacklevel=2,
+                f"Seleccionado: {candidates[0].resolved_name}. Candidatos: {details}. "
+                f"Recomendación: usa prefijo explícito ('cobra.{name}') para stdlib o namespace de proyecto "
+                f"(por ejemplo 'app.{name}')."
             )
+            if self.strict_ambiguous_imports:
+                raise ImportResolutionError(f"{message} Activa resolución explícita en strict mode.")
+            warnings.warn(message, category=UserWarning, stacklevel=2)
 
         return self._attach_backend_adapter(candidates[0])
 
@@ -145,7 +150,21 @@ class CobraImportResolver:
             adapter = resolve_backend(effective_backend)
             setattr(module, "__cobra_backend__", effective_backend)
             setattr(module, "__cobra_backend_adapter__", adapter)
+        self._attach_module_metadata(module, resolution)
         return resolution, module
+
+    @staticmethod
+    def _attach_module_metadata(module: ModuleType, resolution: ResolutionResult) -> None:
+        metadata = {
+            "request": resolution.request,
+            "source": resolution.source,
+            "resolved_name": resolution.resolved_name,
+            "backend": resolution.backend,
+            "import_path": resolution.import_path,
+        }
+        setattr(module, "__cobra_resolution_source__", resolution.source)
+        setattr(module, "__cobra_backend_injected__", resolution.backend)
+        setattr(module, "__cobra_resolution_metadata__", metadata)
 
     def _attach_backend_adapter(self, resolution: ResolutionResult) -> ResolutionResult:
         base_backend = resolution.backend or self.default_backend

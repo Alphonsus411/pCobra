@@ -54,6 +54,14 @@ def test_colision_stdlib_vs_bridge_genera_warning(monkeypatch):
     assert result.source == "stdlib"
 
 
+def test_colision_en_modo_estricto_falla(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(project_root=tmp_path, strict_ambiguous_imports=True)
+
+    with pytest.raises(ImportResolutionError, match="strict mode"):
+        resolver.resolve("datos")
+
+
 def test_bridge_python_directo():
     resolver = CobraImportResolver()
 
@@ -93,6 +101,15 @@ def test_modulo_hibrido_inyecta_adapter_backend(monkeypatch):
     assert module is fake_module
     assert getattr(module, "__cobra_backend__") == "javascript"
     assert getattr(module, "__cobra_backend_adapter__").__class__.__name__ == "JavaScriptAdapter"
+    assert getattr(module, "__cobra_resolution_source__") == "hybrid"
+    assert getattr(module, "__cobra_backend_injected__") == "javascript"
+    assert getattr(module, "__cobra_resolution_metadata__") == {
+        "request": "mi_hibrido",
+        "source": "hybrid",
+        "resolved_name": "mi_hibrido",
+        "backend": "javascript",
+        "import_path": "mi_hibrido_runtime",
+    }
 
 
 def test_resolver_adjunta_adapter_desde_resolucion():
