@@ -17,6 +17,10 @@ class BackendResolution:
     backend: str
     reason: str
 
+    def reason_for(self, *, debug: bool) -> str | None:
+        """Expone razón solo cuando el flujo se ejecuta en modo debug."""
+        return self.reason if debug else None
+
 
 def _ordered_public_priority(*preferred: str) -> tuple[str, ...]:
     """Compone prioridad sin duplicar listas completas hardcodeadas."""

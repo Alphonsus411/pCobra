@@ -1,6 +1,7 @@
 from argparse import Namespace
 from typing import Any
 
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _
@@ -42,10 +43,13 @@ class TestCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
+        debug = bool(getattr(args, "debug", False))
+        resolution = backend_pipeline.resolve_backend(args.file, {})
         langs = getattr(args, "langs", self._default_langs)
         legacy_args = Namespace(
             archivo=args.file,
             lenguajes=langs,
             modo=getattr(args, "modo", "mixto"),
+            backend_reason=resolution.reason_for(debug=debug),
         )
         return self._legacy.run(legacy_args)
