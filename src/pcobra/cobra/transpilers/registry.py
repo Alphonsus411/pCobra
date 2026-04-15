@@ -10,6 +10,7 @@ from pcobra.cobra.architecture.backend_policy import (
     INTERNAL_BACKENDS,
     PUBLIC_BACKENDS,
 )
+from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
@@ -24,7 +25,7 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 
 PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
-    target: TRANSPILER_CLASS_PATHS[target] for target in PUBLIC_BACKENDS
+    target: TRANSPILER_CLASS_PATHS[target] for target in OFFICIAL_TARGETS
 }
 
 INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
@@ -61,22 +62,28 @@ def _validate_complete_registry_contract() -> tuple[str, ...]:
 
 
 def _validate_public_registry_contract() -> tuple[str, ...]:
-    """Valida contrato estricto del registro público frente a PUBLIC_BACKENDS."""
+    """Valida contrato estricto del registro público frente a OFFICIAL_TARGETS/PUBLIC_BACKENDS."""
+    if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
+        raise RuntimeError(
+            "[CI CONTRACT] OFFICIAL_TARGETS debe ser equivalente a PUBLIC_BACKENDS para rutas públicas. "
+            f"official={OFFICIAL_TARGETS}; public={PUBLIC_BACKENDS}"
+        )
+
     configured_keys = tuple(PUBLIC_TRANSPILER_CLASS_PATHS)
-    missing = tuple(target for target in PUBLIC_BACKENDS if target not in configured_keys)
-    extras = tuple(target for target in configured_keys if target not in PUBLIC_BACKENDS)
+    missing = tuple(target for target in OFFICIAL_TARGETS if target not in configured_keys)
+    extras = tuple(target for target in configured_keys if target not in OFFICIAL_TARGETS)
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe usar exactamente PUBLIC_BACKENDS. "
+            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe usar exactamente OFFICIAL_TARGETS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
-            f"current={configured_keys}; expected={PUBLIC_BACKENDS}"
+            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
         )
 
-    if configured_keys != PUBLIC_BACKENDS:
+    if configured_keys != OFFICIAL_TARGETS:
         raise RuntimeError(
-            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.PUBLIC_BACKENDS. "
-            f"current={configured_keys}; expected={PUBLIC_BACKENDS}"
+            "[CI CONTRACT] PUBLIC_TRANSPILER_CLASS_PATHS debe preservar el orden de config.transpile_targets.OFFICIAL_TARGETS. "
+            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
         )
     return configured_keys
 
@@ -114,7 +121,7 @@ _ORDERED_INTERNAL_LEGACY_TARGETS: Final[tuple[str, ...]] = (
 
 
 def ordered_official_transpiler_paths() -> tuple[tuple[str, tuple[str, str]], ...]:
-    """Devuelve el registro público en el orden de ``PUBLIC_BACKENDS``."""
+    """Devuelve el registro público en el orden de ``OFFICIAL_TARGETS``."""
     return tuple(
         (target, PUBLIC_TRANSPILER_CLASS_PATHS[target])
         for target in _ORDERED_OFFICIAL_TARGETS

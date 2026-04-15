@@ -6,6 +6,7 @@ from argparse import ArgumentTypeError
 from typing import Literal
 
 from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
+from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 from pcobra.cobra.cli.internal_compat.legacy_targets import (
     LEGACY_BACKENDS_FEATURE_FLAG,
     enabled_internal_legacy_targets,
@@ -44,7 +45,7 @@ def accepted_target_aliases_examples_text() -> str:
 
 # Todos los destinos oficiales de generación/transpilación.
 OFFICIAL_TRANSPILATION_TARGETS = require_exact_official_targets(
-    PUBLIC_BACKENDS,
+    OFFICIAL_TARGETS,
     context="pcobra.cobra.cli.target_policies.OFFICIAL_TRANSPILATION_TARGETS",
 )
 
@@ -175,6 +176,32 @@ def _validate_runtime_categories_contract() -> None:
 
 _validate_runtime_categories_contract()
 
+
+def _validate_public_routes_contract() -> None:
+    """Bloquea inicialización si las rutas públicas se salen de PUBLIC_BACKENDS."""
+    if OFFICIAL_TRANSPILATION_TARGETS != PUBLIC_BACKENDS:
+        raise RuntimeError(
+            "OFFICIAL_TRANSPILATION_TARGETS debe ser exactamente PUBLIC_BACKENDS "
+            f"en rutas públicas. official={OFFICIAL_TRANSPILATION_TARGETS}; public={PUBLIC_BACKENDS}"
+        )
+
+    for route_name, route_targets in (
+        ("OFFICIAL_RUNTIME_TARGETS", OFFICIAL_RUNTIME_TARGETS),
+        ("BEST_EFFORT_RUNTIME_TARGETS", BEST_EFFORT_RUNTIME_TARGETS),
+        ("TRANSPILATION_ONLY_TARGETS", TRANSPILATION_ONLY_TARGETS),
+        ("SDK_COMPATIBLE_TARGETS", SDK_COMPATIBLE_TARGETS),
+    ):
+        out_of_contract = tuple(
+            target for target in route_targets if target not in PUBLIC_BACKENDS
+        )
+        if out_of_contract:
+            raise RuntimeError(
+                f"{route_name} contiene backends fuera de PUBLIC_BACKENDS: {out_of_contract}"
+            )
+
+
+_validate_public_routes_contract()
+
 OFFICIAL_TRANSPILATION_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_TRANSPILATION_TARGETS)
 OFFICIAL_RUNTIME_TARGETS_HELP = build_target_help_by_tier(OFFICIAL_RUNTIME_TARGETS)
 VERIFICATION_EXECUTABLE_TARGETS_HELP = build_target_help_by_tier(VERIFICATION_EXECUTABLE_TARGETS)
@@ -247,11 +274,6 @@ def iter_public_policy_items() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
             "Targets solo de transpilación",
             TRANSPILATION_ONLY_TARGETS,
         ),
-        (
-            "legacy_internal_targets",
-            "Targets legacy/internal (no públicos)",
-            INTERNAL_BACKENDS,
-        ),
     )
 
 
@@ -263,11 +285,7 @@ def render_public_policy_summary(*, markup: RenderMarkup = "plain") -> str:
         + " targets canónicos."
     ]
     for policy_id, label, targets in iter_public_policy_items():
-        rendered = (
-            ", ".join(targets)
-            if policy_id == "legacy_internal_targets"
-            else format_target_sequence(targets, markup=markup)
-        )
+        rendered = format_target_sequence(targets, markup=markup)
         lines.append(f"- **{label}**: {rendered}.")
     return "\n".join(lines)
 
@@ -515,15 +533,13 @@ def parse_target(value: str) -> str:
     legacy_enabled = is_internal_legacy_targets_enabled()
     if canonical in enabled_internal_legacy_targets():
         return canonical
-    if canonical not in PUBLIC_BACKENDS:
+    if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         feature_flag_hint = (
             f" (compat interna temporal: export {LEGACY_BACKENDS_FEATURE_FLAG}=1)"
             if canonical in INTERNAL_BACKENDS and not legacy_enabled
             else ""
         )
         raise ArgumentTypeError(invalid_target_error(value) + feature_flag_hint)
-    if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
-        raise ArgumentTypeError(invalid_target_error(value))
     return canonical
 
 
