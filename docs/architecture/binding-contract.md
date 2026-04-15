@@ -46,8 +46,32 @@ Este módulo expone:
 
 ## Consumo en runners
 
-- `execute_cmd.py` debe resolver contrato vía `resolve_binding(...)` para runtime Python y ejecución en contenedor.
-- Runners futuros deben consumir este contrato para decidir la ruta técnica sin duplicar reglas.
+- `execute_cmd.py` consume `RuntimeManager` para:
+  - resolver contrato + bridge,
+  - validar seguridad por ruta (`python_direct_import`, `javascript_runtime_bridge`, `rust_compiled_ffi`),
+  - validar ABI efectiva por backend.
+- `build/backend_pipeline.py` expone `resolve_backend_runtime(...)` y agrega `runtime` al resultado de `build(...)` para que los flujos de compilación tengan metadatos de compatibilidad.
+- Runners futuros deben consumir `RuntimeManager` para decidir la ruta técnica sin duplicar reglas.
+
+## Contrato de versionado ABI
+
+- **Versión de ABI actual:** `1.0`
+- **Regla de compatibilidad:** una ruta solo es compatible si su `abi_version` está en el conjunto soportado por esa ruta.
+- **Punto de validación:** `RuntimeManager.validate_abi_route(language, abi_version)`.
+
+### Tabla de compatibilidad ABI por backend
+
+| Backend | Ruta contractual | Contrato ABI/API | ABI soportadas |
+|---|---|---|---|
+| Python | `python_direct_import` | API pública Python + typing estable | `1.0` |
+| JavaScript | `javascript_runtime_bridge` | Mensajería/IPC versionada | `1.0` |
+| Rust | `rust_compiled_ffi` | ABI nativa estable/versionada | `1.0` |
+
+## Validaciones de seguridad por ruta
+
+- `python_direct_import`: ejecución en proceso local, no se considera ruta containerizada.
+- `javascript_runtime_bridge`: requiere runtime gestionado (sandbox o contenedor) para preservar aislamiento.
+- `rust_compiled_ffi`: frontera nativa FFI; no se ejecuta como sandbox Python directo.
 
 ## Regla de evolución
 

@@ -12,10 +12,24 @@ def test_ejecutar_en_contenedor_resuelve_contrato(monkeypatch):
         class _Contrato:
             route = type("R", (), {"value": "javascript_runtime_bridge"})()
             execution_boundary = "Aislado"
+            language = "javascript"
 
-        return _Contrato()
+        class _Bridge:
+            implementation = "javascript_controlled_runtime_bridge"
 
-    monkeypatch.setattr(execute_module, "_resolver_contrato_binding", _resolver)
+        return _Contrato(), _Bridge()
+
+    monkeypatch.setattr(execute_module, "_resolver_runtime_binding", _resolver)
+    monkeypatch.setattr(
+        execute_module.RUNTIME_MANAGER,
+        "validate_security_route",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        execute_module.RUNTIME_MANAGER,
+        "validate_abi_route",
+        lambda *_args, **_kwargs: "1.0",
+    )
     monkeypatch.setattr(execute_module, "resolve_docker_backend", lambda value: value)
     monkeypatch.setattr(execute_module, "ejecutar_en_contenedor", lambda _codigo, _backend: "ok")
 
