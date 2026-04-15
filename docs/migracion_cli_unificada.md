@@ -40,7 +40,7 @@ Con backends públicos oficiales:
 
 1. **Inventario**: lista comandos legacy usados en repositorio y CI.
 2. **Sustitución**: aplica mapeo a `run/build/test/mod`.
-3. **Backends**: elimina targets no públicos en flags `--backend`.
+3. **Backends**: elimina targets no públicos en flags `--backend` (`go`, `cpp`, `java`, `wasm`, `asm` son internal-only).
 4. **Validación**: ejecuta pruebas/regresión del proyecto.
 5. **Limpieza**: documenta fecha de retiro interno de aliases legacy.
 
@@ -50,6 +50,7 @@ Para evitar bloqueos en proyectos históricos:
 
 - Mantén temporalmente aliases legacy en scripts críticos.
 - Conserva solo el mínimo de rutas legacy mientras se completa la migración.
+- Si no hay alternativa inmediata, habilita temporalmente `COBRA_INTERNAL_LEGACY_TARGETS=1`.
 - Define una fecha de corte para remover comandos/flags antiguos.
 
 La compatibilidad legacy debe tratarse como **transición controlada**, no como interfaz principal.

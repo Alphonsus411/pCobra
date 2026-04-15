@@ -5,6 +5,7 @@ import pytest
 from pcobra.cobra.cli.commands.benchmarks_cmd import BACKENDS, BenchmarksCommand
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
@@ -37,29 +38,11 @@ def test_compile_parser_acepta_targets_canonicos_en_tipo_backend_y_tipos(target)
     assert args.tipos == ["python", target]
 
 
-@pytest.mark.parametrize(
-    ("flag", "value", "expected"),
-    (
-        ("--tipo", "c++", "cpp"),
-        ("--tipo", "ensamblador", "asm"),
-        ("--backend", "C++", "cpp"),
-        ("--backend", "Ensamblador", "asm"),
-    ),
-)
-def test_compile_parser_normaliza_aliases_permitidos(flag, value, expected):
+@pytest.mark.parametrize("raw", ("c++", "ensamblador", "C++", "Ensamblador"))
+def test_compile_parser_rechaza_aliases_legacy(raw):
     parser = _build_parser(CompileCommand())
-    args = parser.parse_args(["compilar", "archivo.co", flag, value])
-
-    assert getattr(args, flag.lstrip("-")) == expected
-
-
-@pytest.mark.parametrize("raw", ("python,c++", "python,Ensamblador"))
-def test_compile_parser_normaliza_aliases_en_tipos(raw):
-    parser = _build_parser(CompileCommand())
-    args = parser.parse_args(["compilar", "archivo.co", "--tipos", raw])
-
-    assert args.tipos[0] == "python"
-    assert args.tipos[1] in {"cpp", "asm"}
+    with pytest.raises(SystemExit):
+        parser.parse_args(["compilar", "archivo.co", "--tipo", raw])
 
 
 @pytest.mark.parametrize(
@@ -83,22 +66,18 @@ def test_benchmarks_run_acepta_backends_canonicos(target, monkeypatch):
     monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_info", lambda m: mensajes.append(m))
     rc = BenchmarksCommand().run(SimpleNamespace(backend=target, iteraciones=1, output=None))
     assert rc == 0
-    assert any(target in m for m in mensajes)
 
 
-@pytest.mark.parametrize(
-    ("raw_backend", "canonical"),
-    (("c++", "cpp"), ("ensamblador", "asm")),
-)
-def test_benchmarks_run_normaliza_aliases_permitidos(raw_backend, canonical, monkeypatch):
-    mensajes: list[str] = []
+@pytest.mark.parametrize("raw_backend", ("c++", "ensamblador"))
+def test_benchmarks_run_rechaza_aliases_legacy(raw_backend, monkeypatch):
+    errores: list[str] = []
     monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.Path.exists", lambda _self: False)
-    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_info", lambda m: mensajes.append(m))
+    monkeypatch.setattr("pcobra.cobra.cli.commands.benchmarks_cmd.mostrar_error", lambda m: errores.append(m))
 
     rc = BenchmarksCommand().run(SimpleNamespace(backend=raw_backend, iteraciones=1, output=None))
 
-    assert rc == 0
-    assert any(canonical in m for m in mensajes)
+    assert rc == 1
+    assert errores
 
 
 def test_benchmarks_run_rechaza_backend_no_oficial(monkeypatch):
@@ -112,25 +91,18 @@ def test_benchmarks_run_rechaza_backend_no_oficial(monkeypatch):
     assert errores
 
 
-@pytest.mark.parametrize("target", ("python", "rust", "javascript", "cpp"))
+@pytest.mark.parametrize("target", VERIFICATION_EXECUTABLE_TARGETS)
 def test_verify_parser_acepta_targets_canonicos_en_lenguajes(target):
     parser = _build_parser(VerifyCommand())
     args = parser.parse_args(["verificar", "archivo.co", "--lenguajes", target])
     assert args.lenguajes == [target]
 
 
-@pytest.mark.parametrize(
-    ("raw", "expected"),
-    (("python,c++", ["python", "cpp"]), ("python,ensamblador", None)),
-)
-def test_verify_parser_normaliza_aliases_y_aplica_restriccion_runtime(raw, expected):
+@pytest.mark.parametrize("raw", ("python,c++", "python,ensamblador"))
+def test_verify_parser_rechaza_aliases_legacy_y_aplica_restriccion_runtime(raw):
     parser = _build_parser(VerifyCommand())
-    if expected is None:
-        with pytest.raises(SystemExit):
-            parser.parse_args(["verificar", "archivo.co", "--lenguajes", raw])
-        return
-    args = parser.parse_args(["verificar", "archivo.co", "--lenguajes", raw])
-    assert args.lenguajes == expected
+    with pytest.raises(SystemExit):
+        parser.parse_args(["verificar", "archivo.co", "--lenguajes", raw])
 
 
 @pytest.mark.parametrize("raw", ("fantasy", "python,fantasy"))
@@ -142,3 +114,10 @@ def test_verify_parser_rechaza_lenguajes_no_oficiales(raw):
 
 def test_benchmarks_backends_alineado_al_set_canonico():
     assert BACKENDS == OFFICIAL_TARGETS
+
+
+def test_compile_parser_permite_internal_only_si_flag_temporal_esta_activa(monkeypatch):
+    monkeypatch.setenv("COBRA_INTERNAL_LEGACY_TARGETS", "1")
+    parser = _build_parser(CompileCommand())
+    args = parser.parse_args(["compilar", "archivo.co", "--tipo", "go"])
+    assert args.tipo == "go"

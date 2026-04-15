@@ -1,13 +1,7 @@
 ### Tier 1
 
 - `python`
-- `rust`
 - `javascript`
-- `wasm`
+- `rust`
 
 ### Tier 2
-
-- `go`
-- `cpp`
-- `java`
-- `asm`

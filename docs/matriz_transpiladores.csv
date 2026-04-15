@@ -1,9 +1,4 @@
 backend,label,tier,runtime_policy,holobit,proyectar,transformar,graficar,corelibs,standard_library
 python,Python,tier1,runtime oficial,full,full,full,full,full,full
-rust,Rust,tier1,runtime oficial,partial,partial,partial,partial,partial,partial
 javascript,JavaScript,tier1,runtime oficial,partial,partial,partial,partial,partial,partial
-wasm,WebAssembly,tier1,solo transpilación,partial,partial,partial,partial,partial,partial
-go,Go,tier2,best-effort,partial,partial,partial,partial,partial,partial
-cpp,cpp,tier2,runtime oficial,partial,partial,partial,partial,partial,partial
-java,Java,tier2,best-effort,partial,partial,partial,partial,partial,partial
-asm,asm,tier2,solo transpilación,partial,partial,partial,partial,partial,partial
+rust,Rust,tier1,runtime oficial,partial,partial,partial,partial,full,full

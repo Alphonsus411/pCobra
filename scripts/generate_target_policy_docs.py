@@ -81,7 +81,7 @@ def _policy_summary_en_md() -> str:
             "- **Targets with project-maintained Holobit adapter**: " + format_target_sequence(OFFICIAL_RUNTIME_TARGETS, markup="markdown") + ".",
             "- **Full SDK compatibility**: " + format_target_sequence(SDK_COMPATIBLE_TARGETS, markup="markdown") + ".",
             "- **Transpilation-only targets**: " + format_target_sequence(NO_RUNTIME_TARGETS, markup="markdown") + ".",
-            "- **Reverse transpilation input origins**: " + format_target_sequence(REVERSE_SCOPE_LANGUAGES, markup="markdown") + ".",
+            "- **Reverse transpilation input origins**: " + ", ".join(f"`{target}`" for target in REVERSE_SCOPE_LANGUAGES) + ".",
             "",
             "Official backend support tiers:",
             "",

@@ -33,7 +33,7 @@ Opciones principales:
 - ``archivo``: ruta del script ``.co``.
 - ``--tipo``: lenguaje de salida derivado de la política canónica de targets.
 - ``--backend``: alias de ``--tipo`` útil para integraciones automatizadas.
-  Admite los mismos lenguajes disponibles.
+  En documentación pública se recomienda ``--tipo``.
 - ``--tipos``: lista de lenguajes separados por comas para transpilación paralela.
 
 Ejemplo:
@@ -46,7 +46,7 @@ Otro ejemplo generando varios lenguajes a la vez:
 
 .. code-block:: bash
 
-   cobra compilar hola.co --tipos=python,javascript,cpp
+   cobra compilar hola.co --tipos=python,javascript,rust
 
 Política de targets oficial
 ---------------------------
@@ -57,19 +57,18 @@ La lista de nombres canónicos disponibles para ``cobra compilar`` y sus tiers s
 
 Lista oficial por tiers usada por la ayuda de CLI:
 
-- **Tier 1**: ``python``, ``rust``, ``javascript``, ``wasm``.
-- **Tier 2**: ``go``, ``cpp``, ``java``, ``asm``.
+- **Tier 1 (público)**: ``python``, ``rust``, ``javascript``.
+- **Tier 2**: sin targets públicos.
 
-La política pública separa de forma estricta **salida oficial** y **runtime
-oficial**. Generar código para ``go``, ``java``, ``wasm`` o ``asm`` no implica
-que esos targets tengan ejecución real oficial en la CLI ni soporte oficial de
-librerías equivalente a ``python``, ``rust``, ``javascript`` o ``cpp``.
+Los backends ``go``, ``cpp``, ``java``, ``wasm`` y ``asm`` quedan en estado
+**internal-only** para compatibilidad temporal controlada. No forman parte de
+la UX pública ni de ejemplos públicos.
 
 Resumen operativo de runtime en la CLI pública:
 
-- **Runtime oficial verificable**: ``python``, ``rust``, ``javascript`` y ``cpp``.
-- **Runtime best-effort no público**: ``go`` y ``java``.
-- **Solo transpilación (sin runtime oficial CLI)**: ``wasm`` y ``asm``.
+- **Runtime oficial verificable**: ``python``, ``rust``, ``javascript``.
+- **Runtime best-effort no público**: ninguno en superficie pública.
+- **Solo transpilación (sin runtime oficial CLI)**: ninguno en superficie pública.
 
 SLA de soporte documental/operativo:
 
@@ -77,6 +76,20 @@ SLA de soporte documental/operativo:
 - **Tier 2**: triage inicial de regresiones en <= 5 días hábiles.
 
 Para cambios de clasificación (promoción/degradación) se exige RFC + plan de migración.
+
+Compatibilidad temporal internal-only
+-------------------------------------
+
+Si un equipo aún depende de ``go/cpp/java/wasm/asm``, puede habilitar
+compatibilidad interna temporal con:
+
+.. code-block:: bash
+
+   export COBRA_INTERNAL_LEGACY_TARGETS=1
+
+Plan y fecha de retiro de esta UX legacy:
+
+- ``docs/compatibility/legacy_ux_retirement_plan.md``
 
 Migración desde targets retirados
 ---------------------------------
