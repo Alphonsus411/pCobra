@@ -27,3 +27,8 @@ tiempo_max_transpilacion_seg = 300
 # Validaciones opcionales para expresiones "coincidir"
 coincidir_exhaustivo = false
 patrones_inaccesibles = false
+
+[project.abi_by_backend]
+python = "1.0"
+javascript = "1.0"
+rust = "1.0"

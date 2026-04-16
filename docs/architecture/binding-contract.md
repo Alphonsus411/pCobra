@@ -33,11 +33,15 @@ Definir un contrato técnico único para evitar lógica ad-hoc en runners sobre 
 
 ## Módulo técnico
 
-Se establece como fuente de verdad:
+Se establece como fuente de verdad canónica:
+
+- `bindings/contract.py`
+
+Compatibilidad interna (`pcobra`) via re-export:
 
 - `src/pcobra/cobra/bindings/contract.py`
 
-Este módulo expone:
+El contrato expone:
 
 - `BindingRoute` (enum de rutas),
 - `BindingCapabilities` (tipo estructurado de capacidades),
@@ -48,8 +52,8 @@ Este módulo expone:
 
 - `execute_cmd.py` consume `RuntimeManager` para:
   - resolver contrato + bridge,
-  - validar seguridad por ruta (`python_direct_import`, `javascript_runtime_bridge`, `rust_compiled_ffi`),
-  - validar ABI efectiva por backend.
+  - validar seguridad por ruta y por comando (`run`/`test`),
+  - validar ABI efectiva por backend (incluye ABI negociada por proyecto).
 - `build/backend_pipeline.py` expone `resolve_backend_runtime(...)` y agrega `runtime` al resultado de `build(...)` para que los flujos de compilación tengan metadatos de compatibilidad.
 - Runners futuros deben consumir `RuntimeManager` para decidir la ruta técnica sin duplicar reglas.
 
@@ -58,6 +62,7 @@ Este módulo expone:
 - **Versión de ABI actual:** `1.0`
 - **Regla de compatibilidad:** una ruta solo es compatible si su `abi_version` está en el conjunto soportado por esa ruta.
 - **Punto de validación:** `RuntimeManager.validate_abi_route(language, abi_version)`.
+- **Negociación por proyecto:** si no se pasa `abi_version`, el manager intenta leerla de `cobra.toml` y `pcobra.toml` (`[project].abi_by_backend` o `[project].backend_abi`).
 
 ### Tabla de compatibilidad ABI por backend
 
@@ -73,10 +78,54 @@ Este módulo expone:
 - `javascript_runtime_bridge`: requiere runtime gestionado (sandbox o contenedor) para preservar aislamiento.
 - `rust_compiled_ffi`: frontera nativa FFI; no se ejecuta como sandbox Python directo.
 
+## Políticas por comando (`run`/`test`)
+
+- `run`: aplica reglas base por ruta.
+- `test`: endurece aislamiento:
+  - `python_direct_import`: exige `sandbox=true`.
+  - `javascript_runtime_bridge`: exige `containerized=true`.
+  - `rust_compiled_ffi`: exige `containerized=true`.
+
+## Ejemplos de interoperabilidad por backend
+
+### Python (`python_direct_import`)
+
+```python
+from bindings.contract import resolve_binding
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+
+cap = resolve_binding("python")
+abi = RuntimeManager().validate_abi_route("python")
+print(cap.route.value, abi)
+```
+
+### JavaScript (`javascript_runtime_bridge`)
+
+```python
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+
+manager = RuntimeManager()
+manager.validate_security_route(
+    "javascript",
+    sandbox=False,
+    containerized=True,
+    command="run",
+)
+```
+
+### Rust (`rust_compiled_ffi`)
+
+```python
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+
+manager = RuntimeManager()
+manager.validate_security_route("rust", sandbox=False, containerized=True, command="test")
+```
+
 ## Regla de evolución
 
 Si se añade un backend oficial nuevo:
 
-1. actualizar `contract.py`,
+1. actualizar `bindings/contract.py`,
 2. documentar la ruta en este documento,
 3. adoptar `resolve_binding(...)` en el runner correspondiente.
