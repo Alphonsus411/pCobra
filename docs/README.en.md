@@ -337,7 +337,7 @@ The project officially supports:
 # Main Features
 
 - Lexer and Parser: Implementation of a lexer to tokenize the source code and a parser to build an abstract syntax tree (AST).
-- Transpilers to `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` and `asm`: Cobra can convert code to these targets, facilitating integration with external applications.
+- Public transpilers to `python`, `rust`, and `javascript`: Cobra converts code to the officially supported public UX targets. Legacy transpilers remain internal-only for migration/regression workflows.
 - Support for advanced structures: declaration of variables, functions, classes, lists and dictionaries, as well as loops and conditionals.
 - Native modules with I/O functions, math utilities and data structures ready to use from Cobra.
 - Text helpers mirror Python's `textwrap`: `indentar_texto`, `desindentar_texto`, `envolver_texto` and `acortar_texto` expose consistent indentation, wrapping and shortening utilities from both the core libraries and the Spanish standard library.

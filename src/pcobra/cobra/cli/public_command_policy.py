@@ -11,6 +11,39 @@ INTERNAL_COMMANDS: tuple[str, ...] = (
     "debug",
     "devops",
 )
+LEGACY_PUBLIC_COMMANDS: tuple[str, ...] = (
+    "interactive",
+    "compilar",
+    "ejecutar",
+    "modulos",
+    "verificar",
+    "docs",
+    "plugins",
+    "init",
+    "crear",
+    "paquete",
+)
+LEGACY_INTERNAL_COMMANDS: tuple[str, ...] = (
+    "cache",
+    "contenedor",
+    "gui",
+    "jupyter",
+    "qualia",
+    "agix",
+)
+LEGACY_OBSOLETE_COMMANDS: tuple[str, ...] = (
+    "dependencias",
+    "empaquetar",
+    "bench",
+    "benchmarks",
+    "benchmarks2",
+    "benchtranspilers",
+    "benchthreads",
+    "profile",
+    "transpilar-inverso",
+    "validar-sintaxis",
+    "qa-validar",
+)
 
 PROFILE_PUBLIC = "public"
 PROFILE_DEVELOPMENT = "development"
@@ -49,12 +82,34 @@ def filter_commands_for_profile(command_names: Iterable[str], profile: str) -> s
     return names.intersection(allowed)
 
 
+def filter_legacy_commands_for_profile(command_names: Iterable[str], profile: str) -> set[str]:
+    """Filtra comandos de CLI legacy (v1) según perfil de exposición.
+
+    Perfil `public`: conserva únicamente `LEGACY_PUBLIC_COMMANDS`.
+    Perfil `development`: permite toda la superficie incluida la obsoleta para
+    migración interna y pruebas de regresión.
+    """
+
+    normalized_profile = str(profile).strip().lower() or PROFILE_PUBLIC
+    names = {name.strip().lower() for name in command_names}
+
+    if normalized_profile == PROFILE_DEVELOPMENT:
+        return names
+
+    allowed = set(LEGACY_PUBLIC_COMMANDS)
+    return names.intersection(allowed)
+
+
 __all__ = [
     "PUBLIC_COMMANDS",
     "INTERNAL_COMMANDS",
+    "LEGACY_PUBLIC_COMMANDS",
+    "LEGACY_INTERNAL_COMMANDS",
+    "LEGACY_OBSOLETE_COMMANDS",
     "PROFILE_PUBLIC",
     "PROFILE_DEVELOPMENT",
     "COMMAND_PROFILES",
     "resolve_command_profile",
     "filter_commands_for_profile",
+    "filter_legacy_commands_for_profile",
 ]

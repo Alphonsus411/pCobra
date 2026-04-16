@@ -138,7 +138,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
 - [Casos de uso reales](docs/casos_reales.md)
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
-- [Limitaciones del sandbox de `cpp`](docs/limitaciones_cpp_sandbox.md)
+- [Migración de targets retirados de la UX pública](docs/migracion_targets_retirados.md)
 - Notebooks de ejemplo y casos reales
 - Probar Cobra en línea
 - [Historial de cambios](CHANGELOG.md)
@@ -499,7 +499,7 @@ El proyecto soporta oficialmente:
 # Características Principales
 
 - Lexer y Parser: Implementación de un lexer para la tokenización del código fuente y un parser para la construcción de un árbol de sintaxis abstracta (AST).
-- Transpiladores a Python, JavaScript, `asm`, Rust, `cpp`, Go, Java y WebAssembly: Cobra puede convertir el código en estos targets oficiales, facilitando su integración con aplicaciones externas.
+- Transpiladores públicos a Python, JavaScript y Rust: Cobra puede convertir código a estos targets oficiales de UX pública.
 - Soporte de Estructuras Avanzadas: Permite la declaración de variables, funciones, clases, listas y diccionarios, así como el uso de bucles y condicionales.
 - Módulos nativos con funciones de E/S, utilidades matemáticas y estructuras de datos para usar directamente desde Cobra.
 - Instalación de paquetes en tiempo de ejecución mediante la instrucción `usar`.
@@ -552,7 +552,7 @@ cobra benchthreads --output threads.json
 El resultado contiene tres entradas (secuencial, cli_hilos y kernel_hilos) con
 los tiempos y uso de CPU.
 
-Para generar binarios en `cpp` y Rust y medir su rendimiento ejecuta:
+Para generar binarios de referencia (backend público Rust) y medir su rendimiento ejecuta:
 
 ```bash
 cobra bench --binary
@@ -762,7 +762,7 @@ para var i en rango(2) :
 '''
 ````
 
-Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. Para el target `asm` se generan instrucciones `PRINT`, `WHILE` y `FOR`. En Rust se produce código equivalente con `println!`, `while` y `for`. En `cpp` se obtienen construcciones con `std::cout`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript, `holobit(vec![...])` en Rust o `holobit({ ... })` en `cpp`. En Go se genera `fmt.Println` y en Java se usa `System.out.println`.
+Al generar código para Python, `imprimir` se convierte en `print`, `mientras` en `while` y `para` en `for`. En JavaScript estos elementos se transforman en `console.log`, `while` y `for...of` respectivamente. En Rust se produce código equivalente con `println!`, `while` y `for`. El tipo `holobit` se traduce a la llamada `holobit([...])` en Python, `new Holobit([...])` en JavaScript y `holobit(vec![...])` en Rust. Los detalles de backends legacy internos quedan en documentación de migración/histórico.
 
 ## Integración con holobit-sdk
 
@@ -837,7 +837,7 @@ editar `cobra.mod` y volver a ejecutar las pruebas.
 ## Invocar el transpilador
 
 La carpeta [`src/pcobra/cobra/transpilers/transpiler`](src/pcobra/cobra/transpilers/transpiler)
-contiene la implementación de los transpiladores a Python, JavaScript, `asm`, Rust, `cpp`, Go, Java y WebAssembly. Una vez
+contiene la implementación de los transpiladores públicos a Python, JavaScript y Rust (más rutas internas legacy para migración/regresión). Una vez
 instaladas las dependencias, puedes llamar al transpilador desde tu propio
 script de la siguiente manera:
 
@@ -929,7 +929,7 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
   ```
 
 ```bash
-# Compilar un archivo a: python, rust, javascript, wasm, go, cpp, java o asm
+# Compilar un archivo a: python, rust o javascript (UX pública)
 cobra build programa.co --backend python
 
 # Transpilar inverso de Python a JavaScript
@@ -1081,11 +1081,11 @@ PYTHONPATH=$PWD pytest tests --cov=pcobra --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
- Algunas pruebas generan código en distintos lenguajes (por ejemplo `cpp`, JavaScript o Go) y verifican que la sintaxis sea correcta. Para que estas pruebas se ejecuten con éxito es necesario contar con los compiladores o intérpretes correspondientes instalados en el sistema. En particular se requiere:
+ Algunas pruebas internas de migración/regresión generan código en targets legacy además de los públicos. Para ejecutar ese subconjunto en local debes disponer de toolchains extra. En particular se requiere:
 
 - Node.js
 - gcc y g++
-- Go (`golang-go`)
+- Go (`golang-go`) para pruebas internas legacy
 - Rust (`rustc`)
 - Java (`default-jdk`)
 
@@ -1523,13 +1523,10 @@ Para más información consulta el [CHANGELOG](CHANGELOG.md) y la [configuració
 - python
 - rust
 - javascript
-- wasm
-- go
-- cpp
-- java
-- asm
 
-Esta lista debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
+Los targets `go/cpp/java/wasm/asm` se mantienen únicamente para migración interna y pruebas de regresión. Su detalle vive en `docs/migracion_targets_retirados.md` y documentos de histórico/compatibilidad.
+
+Esta lista pública debe mantenerse sincronizada con la documentación en inglés. Consulta la [traducción al inglés](docs/README.en.md) para más detalles.
 
 Separación normativa resumida: consulta el bloque generado al inicio de este README y la fuente canónica en `docs/targets_policy.md`.
 

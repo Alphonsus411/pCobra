@@ -445,10 +445,8 @@ ofrecen las *promises* en navegadores modernos.
 
 Antes de usar la CLI, conviene distinguir tres categorías normativas:
 
-- **Targets oficiales de transpilación**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
-- **Targets con runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
-- **Targets con runtime best-effort**: `go`, `java`.
-- **Targets solo de transpilación**: `wasm`, `asm`.
+- **Targets públicos de transpilación**: `python`, `rust`, `javascript`.
+- **Targets legacy internos (migración/regresión)**: `wasm`, `go`, `cpp`, `java`, `asm`.
 - **Orígenes de transpilación inversa**: `python`, `javascript`, `java`.
 
 Las fuentes normativas visibles para evitar divergencias son `src/pcobra/cobra/transpilers/targets.py` y `src/pcobra/cobra/cli/target_policies.py`.
@@ -509,10 +507,10 @@ export async function revisar_servidor() {
 
 Convierte programas entre distintos lenguajes usando la CLI:
 
-- **De Cobra a `cpp` (target oficial de salida)**
+- **De Cobra a `rust` (target oficial de salida pública)**
 
   ```bash
-  cobra compilar hola.co --tipo cpp
+  cobra compilar hola.co --tipo rust
   ```
 
 - **De Python a JavaScript mediante reverse (`python` como origen de entrada y `javascript` como destino oficial)**
@@ -551,16 +549,11 @@ ejecuciones reutilicen la caché sin reprocesar el código.
 
 ### Transpiladores disponibles
 
-La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World" para cada generador, junto con un `README.md` que documenta los comandos para obtener cada salida y los resultados pre-generados. La lista canónica completa de targets oficiales de transpilación es: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`. Los orígenes reverse se documentan aparte y no cambian esta lista de salida.
+La carpeta [`examples/hello_world`](../examples/hello_world) incluye ejemplos de "Hello World". Para recorrido público usa `python`, `rust` y `javascript`; los targets legacy (`wasm/go/cpp/java/asm`) quedan para migración interna y pruebas de regresión.
 
-- **`asm`** – [hola.asm](../examples/hello_world/asm/hola.asm)
-- **`cpp`** – [hola.cpp](../examples/hello_world/cpp/hola.cpp)
-- **`go`** – [hola.go](../examples/hello_world/go/hola.go)
-- **`java`** – [Hola.java](../examples/hello_world/java/Hola.java)
 - **`javascript`** – [hola.js](../examples/hello_world/javascript/hola.js)
 - **`python`** – [hola.py](../examples/hello_world/python/hola.py)
 - **`rust`** – [hola.rs](../examples/hello_world/rust/hola.rs)
-- **`wasm`** – [hola.wat](../examples/hello_world/wasm/hola.wat)
 
 ### Características aún no soportadas
 
