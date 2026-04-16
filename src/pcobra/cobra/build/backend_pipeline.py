@@ -5,6 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.architecture.capabilities_contract import (
+    PUBLIC_BACKENDS,
+    assert_backend_allowed_for_scope,
+    binding_route_for_public_backend,
+)
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build.orchestrator import BackendResolution, BuildOrchestrator
 from pcobra.cobra.transpilers.registry import build_official_transpilers
@@ -15,15 +20,43 @@ RUNTIME_MANAGER = RuntimeManager()
 TRANSPILERS: dict[str, type] = build_official_transpilers()
 
 
+def _public_route_backend_matrix() -> dict[str, tuple[str, ...]]:
+    """Matriz explícita de rutas públicas que usan resolución de backend."""
+    return {
+        "build_pipeline.resolve_backend": PUBLIC_BACKENDS,
+        "build_pipeline.resolve_backend_runtime": PUBLIC_BACKENDS,
+        "build_pipeline.build": PUBLIC_BACKENDS,
+    }
+
+
+def _validate_public_route_startup_contract() -> None:
+    """Falla en arranque si una ruta pública deriva en backend fuera del contrato."""
+    for route_name, backends in _public_route_backend_matrix().items():
+        for backend in backends:
+            assert_backend_allowed_for_scope(backend=backend, scope="public")
+            binding_route_for_public_backend(backend)
+        out_of_contract = tuple(backend for backend in backends if backend not in PUBLIC_BACKENDS)
+        if out_of_contract:
+            raise RuntimeError(
+                "Ruta pública configurada con backend fuera de python/javascript/rust. "
+                f"route={route_name}; invalid={out_of_contract}; public={PUBLIC_BACKENDS}"
+            )
+
+
+_validate_public_route_startup_contract()
+
+
 def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
     """Resuelve backend canónico a partir de un source file y pistas opcionales."""
     context = hints or {}
     preferred_backend = context.get("preferred_backend")
     required_capabilities = tuple(context.get("required_capabilities", ()))
+    route_scope = "internal_migration" if context.get("internal_migration", False) else "public"
     return ORCHESTRATOR.resolve_backend(
         source_file=source,
         preferred_backend=preferred_backend,
         required_capabilities=required_capabilities,
+        route_scope=route_scope,
     )
 
 
