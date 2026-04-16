@@ -8,7 +8,9 @@ from typing import Final
 from pcobra.cobra.architecture.backend_policy import (
     ALL_BACKENDS,
     INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
     PUBLIC_BACKENDS,
+    assert_public_targets_contract,
 )
 from pcobra.cobra.architecture.legacy_backend_lifecycle import (
     lifecycle_status_for_backend,
@@ -72,11 +74,10 @@ def _validate_complete_registry_contract() -> tuple[str, ...]:
 
 def _validate_public_registry_contract() -> tuple[str, ...]:
     """Valida contrato estricto del registro público frente a OFFICIAL_TARGETS/PUBLIC_BACKENDS."""
-    if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
-        raise RuntimeError(
-            "[CI CONTRACT] OFFICIAL_TARGETS debe ser equivalente a PUBLIC_BACKENDS para rutas públicas. "
-            f"official={OFFICIAL_TARGETS}; public={PUBLIC_BACKENDS}"
-        )
+    assert_public_targets_contract(
+        OFFICIAL_TARGETS,
+        source="transpilers.registry.OFFICIAL_TARGETS",
+    )
 
     configured_keys = tuple(PUBLIC_TRANSPILER_CLASS_PATHS)
     missing = tuple(target for target in PUBLIC_BACKENDS if target not in configured_keys)
@@ -112,6 +113,18 @@ def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
             "[CI CONTRACT] INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS debe usar exactamente INTERNAL_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
             f"current={configured_keys}; expected={INTERNAL_BACKENDS}"
+        )
+
+
+    lifecycle_keys = set(INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW)
+    internal_keys = set(INTERNAL_BACKENDS)
+    if lifecycle_keys != internal_keys:
+        extras = tuple(sorted(lifecycle_keys - internal_keys))
+        missing = tuple(sorted(internal_keys - lifecycle_keys))
+        raise RuntimeError(
+            "[CI CONTRACT] INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW debe cubrir "
+            "exactamente INTERNAL_BACKENDS. "
+            f"missing={missing or '∅'}; extras={extras or '∅'}"
         )
 
     if configured_keys != INTERNAL_BACKENDS:
