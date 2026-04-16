@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Final, Literal, TypedDict
 
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
+from pcobra.cobra.architecture.backend_policy import (
+    INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
+    PUBLIC_BACKENDS,
+    assert_public_targets_contract,
+)
 
 
 class TargetMetadata(TypedDict):
@@ -58,11 +63,7 @@ TARGET_METADATA: Final[dict[str, TargetMetadata]] = {
 def _validate_target_config() -> None:
     allowed = set(ALLOWED_TARGETS)
 
-    if ALLOWED_TARGETS != PUBLIC_BACKENDS:
-        raise RuntimeError(
-            "ALLOWED_TARGETS debe ser exactamente PUBLIC_BACKENDS para rutas públicas. "
-            f"allowed={ALLOWED_TARGETS}; public={PUBLIC_BACKENDS}"
-        )
+    assert_public_targets_contract(ALLOWED_TARGETS, source="config.transpile_targets.ALLOWED_TARGETS")
 
     if set(TARGETS_BY_TIER) != {"tier_1", "tier_2"}:
         raise RuntimeError(
@@ -93,6 +94,17 @@ def _validate_target_config() -> None:
         missing = tuple(sorted(allowed - metadata_keys))
         raise RuntimeError(
             "TARGET_METADATA debe cubrir exactamente la lista pública permitida. "
+            f"missing={missing or '∅'}; extras={extras or '∅'}"
+        )
+
+
+    lifecycle_keys = set(INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW)
+    internal_keys = set(INTERNAL_BACKENDS)
+    if lifecycle_keys != internal_keys:
+        extras = tuple(sorted(lifecycle_keys - internal_keys))
+        missing = tuple(sorted(internal_keys - lifecycle_keys))
+        raise RuntimeError(
+            "INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW debe cubrir exactamente INTERNAL_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}"
         )
 
