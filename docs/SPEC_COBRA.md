@@ -1,7 +1,7 @@
 # Especificación del Lenguaje Cobra
 
 ## Introducción
-Cobra es un lenguaje de programación en español. Está orientado a la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. El proyecto incluye un lexer, un parser y transpiladores a múltiples lenguajes con nombres canónicos como `python`, `javascript`, `cpp`, `go` o `rust`.
+Cobra es un lenguaje de programación en español. Está orientado a la creación de herramientas, simulaciones y análisis en áreas como biología, computación y astrofísica. El proyecto incluye un lexer, un parser y transpiladores públicos para `python`, `javascript` y `rust`; los demás transpilers se conservan de forma interna para migración técnica y pruebas de regresión.
 
 Para visualizar de manera esquemática el proceso completo de compilación y la estructura general del AST, consulta los diagramas de `docs/flujo_compilacion.md` y `docs/diagrama_ast.md`.
 

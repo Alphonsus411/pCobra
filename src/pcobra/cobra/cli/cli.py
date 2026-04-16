@@ -61,6 +61,7 @@ from pcobra.cobra.cli.public_command_policy import (
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
     filter_commands_for_profile,
+    filter_legacy_commands_for_profile,
     resolve_command_profile,
 )
 from pcobra.cobra.cli.plugin import (
@@ -178,6 +179,18 @@ class CommandRegistry:
             elif profile == PROFILE_DEVELOPMENT:
                 logging.getLogger(__name__).debug(
                     "Perfil desarrollo activo: comandos internos habilitados."
+                )
+        else:
+            allowed_names = filter_legacy_commands_for_profile((cmd.name for cmd in all_commands), profile)
+            all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
+            if profile == PROFILE_PUBLIC:
+                logging.getLogger(__name__).debug(
+                    "Perfil público en CLI v1: comandos legacy visibles=%s",
+                    sorted(allowed_names),
+                )
+            elif profile == PROFILE_DEVELOPMENT:
+                logging.getLogger(__name__).debug(
+                    "Perfil desarrollo en CLI v1: comandos internos + obsoletos habilitados."
                 )
 
         self.commands = {cmd.name: cmd for cmd in all_commands}
