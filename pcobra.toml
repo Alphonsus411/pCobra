@@ -13,6 +13,13 @@
 # - Si tu proyecto quiere exigir también Tier 2, añádelo explícitamente aquí.
 required_targets = ["python", "rust", "javascript", "wasm"]
 
+
+# Negociación ABI por backend para bridges/runtime manager.
+[project.abi_by_backend]
+python = "1.0"
+javascript = "1.0"
+rust = "1.0"
+
 [modulos."modulo.co"]
 python = "modulo.py"
 rust = "modulo.rs"

@@ -1,9 +1,6 @@
-"""Compatibilidad del contrato de bindings dentro del namespace ``pcobra``.
+"""Superficie pública canónica del contrato de bindings."""
 
-Fuente canónica: ``bindings/contract.py``.
-"""
-
-from bindings.contract import (  # re-export canónico
+from bindings.contract import (
     BINDINGS_BY_LANGUAGE,
     BindingCapabilities,
     BindingRoute,
