@@ -29,14 +29,16 @@ CertUtil -hashfile cobra.exe SHA256
 Para ejecutar un archivo Cobra desde la línea de comandos:
 
 ```bash
-cobra archivo.co
+cobra run archivo.co
 ```
 
-También puedes transpilar el programa a otros lenguajes usando el subcomando `compilar` con la opción canónica `--tipo` (o `--backend`, si integras herramientas externas):
+Para generar artefactos usa el flujo unificado:
 
 ```bash
-cobra compilar archivo.co --tipo python
+cobra build archivo.co
 ```
+
+> Si migras desde `cobra archivo.co`, `cobra compilar` o flags de backend legacy, revisa [docs/migracion_cli_unificada.md](migracion_cli_unificada.md).
 
 ### Ejecución en GitHub Codespaces
 

@@ -16,7 +16,7 @@ imprimir "Porcentaje de GC:", conteo
 Ejecuta el script con:
 
 ```bash
-cobra ejecutar bioinfo.co
+cobra run bioinfo.co
 ```
 También puedes ejecutar el cuaderno `notebooks/casos_reales/bioinformatica.ipynb` para verlo paso a paso.
 
@@ -36,7 +36,7 @@ imprimir resultado
 Para ejecutar:
 
 ```bash
-cobra ejecutar ia.co
+cobra run ia.co
 ```
 También puedes ejecutar el cuaderno `notebooks/casos_reales/inteligencia_artificial.ipynb` para una versión interactiva.
 
@@ -77,7 +77,7 @@ matplotlib.guardar(figura, "salida.png")
 Ejecuta el programa así:
 
 ```bash
-cobra ejecutar analisis.co
+cobra run analisis.co
 ```
 Puedes revisar el cuaderno interactivo `notebooks/casos_reales/analisis_datos.ipynb` para seguirlo paso a paso.
 
@@ -94,12 +94,14 @@ def hola():
     regresar 'Hola desde Cobra'
 ```
 
-Compila y lanza el servidor con:
+Genera y lanza el servidor con flujo unificado:
 
 ```bash
-cobra compilar app_web.co --tipo python -o build/app_web.py
+cobra build app_web.co
 python build/app_web.py
 ```
+
+> Para forzar backend/ruta de salida en pipelines legacy, consulta `docs/migracion_cli_unificada.md`.
 
 ## Videojuego básico
 Un pequeño juego usando Pygame:
@@ -113,6 +115,6 @@ pantalla = pygame.nueva_pantalla(640, 480)
 Para ejecutarlo:
 
 ```bash
-cobra compilar juego.co --tipo python
+cobra build juego.co
 python juego.py
 ```

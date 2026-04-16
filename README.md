@@ -106,6 +106,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 
 - Descripción del Proyecto
 - Arquitectura del compilador
+- Architecture Overview
 - Ecosistema unificado Cobra
 - Migración a CLI unificada
 - Instalación
@@ -189,6 +190,10 @@ La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SP
 ## Arquitectura del compilador
 
 La cadena de herramientas de Cobra separa el front-end de los generadores de código mediante una arquitectura interna de compilación. Esa arquitectura es un detalle de implementación y no forma parte de la interfaz pública.
+
+## Architecture Overview
+
+Consulta el resumen corto en [docs/architecture/overview.md](docs/architecture/overview.md): describe selección automática de backend, resolución de imports híbridos y bindings por ruta sin exponer complejidad en el flujo principal `run/build/test/mod`.
 
 Diagrama corto del flujo principal:
 
@@ -275,14 +280,16 @@ La interfaz recomendada se organiza en cuatro comandos base:
 - `cobra test`: ejecución de pruebas del proyecto.
 - `cobra mod`: gestión de módulos y dependencias.
 
-Ejemplos rápidos:
+Ejemplos rápidos (flujo oficial):
 
 ```bash
 cobra run archivo.co
-cobra build hola.co --backend python
+cobra build hola.co
 cobra test
 cobra mod list
 ```
+
+> Nota: `cobra build` selecciona backend de forma automática en la ruta pública. Si necesitas forzar backend por compatibilidad, revisa la sección avanzada en `docs/config_cli.md` y la guía legacy en `docs/migracion_cli_unificada.md`.
 
 Para listar todas las opciones disponibles:
 
@@ -1124,8 +1131,8 @@ cobra run tests/data/suma.co
 También puedes transpilar los ejemplos para ver el código Python generado:
 
 ```bash
-cobra build tests/data/hola.cobra --backend python
-cobra build tests/data/suma.co --backend python
+cobra build tests/data/hola.cobra
+cobra build tests/data/suma.co
 ```
 
 #### Regenerar snapshots de transpilación (`tests/data/expected_examples`)
@@ -1179,20 +1186,13 @@ de error.
 ### Comandos válidos por destino
 
 La interfaz pública mantiene únicamente tres destinos oficiales (`python`,
-`javascript`, `rust`) para `cobra build`:
-
-````bash
-cobra build programa.co --backend python
-cobra build programa.co --backend javascript
-cobra build programa.co --backend rust
-````
+`javascript`, `rust`) para `cobra build`. En flujo estándar no necesitas fijarlo manualmente; úsalo solo en modo avanzado.
 
 ### Ejemplos de subcomandos
 
 ````bash
-cobra build programa.co --backend python
-cobra build programa.co --backend javascript
-cobra build programa.co --backend rust
+cobra run programa.co
+cobra build programa.co
 cobra test
 cobra mod list
 echo $?  # 0 al compilar sin problemas
