@@ -55,3 +55,20 @@ def test_backend_pipeline_build_expone_reason_solo_en_debug(monkeypatch):
     result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python", "debug": True})
 
     assert result["reason"] == "debug-reason"
+
+
+def test_backend_pipeline_resolve_backend_envia_scope_migracion(monkeypatch):
+    captured = {}
+
+    def _fake_resolve_backend(self, *, source_file, preferred_backend, required_capabilities, route_scope):
+        captured["route_scope"] = route_scope
+        return type("R", (), {"backend": "go", "reason": "migration"})()
+
+    monkeypatch.setattr(backend_pipeline, "ORCHESTRATOR", type("O", (), {"resolve_backend": _fake_resolve_backend})())
+
+    backend_pipeline.resolve_backend(
+        "demo.co",
+        {"preferred_backend": "go", "internal_migration": True},
+    )
+
+    assert captured["route_scope"] == "internal_migration"

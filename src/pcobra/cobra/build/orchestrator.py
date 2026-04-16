@@ -6,8 +6,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS, target_metadata
+from pcobra.cobra.architecture.capabilities_contract import (
+    PROJECT_TYPE_PUBLIC_POLICY,
+    PUBLIC_BACKENDS,
+    PUBLIC_FALLBACK_POLICY,
+    assert_backend_allowed_for_scope,
+    validate_capabilities_contract,
+)
+from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
+from pcobra.cobra.config.transpile_targets import target_metadata
 from pcobra.cobra.transpilers.module_map import get_toml_map
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
 
@@ -22,18 +29,6 @@ class BackendResolution:
         return self.reason if debug else None
 
 
-def _ordered_public_priority(*preferred: str) -> tuple[str, ...]:
-    """Compone prioridad sin duplicar listas completas hardcodeadas."""
-    ordered: list[str] = []
-    for backend in preferred:
-        if backend in OFFICIAL_TARGETS and backend not in ordered:
-            ordered.append(backend)
-    for backend in OFFICIAL_TARGETS:
-        if backend not in ordered:
-            ordered.append(backend)
-    return tuple(ordered)
-
-
 class BuildOrchestrator:
     """Selecciona backend objetivo con reglas unificadas.
 
@@ -46,13 +41,7 @@ class BuildOrchestrator:
     compatibilidad en ``cobra compilar --backend`` / ``--tipo``.
     """
 
-    _PROJECT_TYPE_PRIORITIES: dict[str, tuple[str, ...]] = {
-        "library": _ordered_public_priority("python", "rust"),
-        "web": _ordered_public_priority("javascript", "python"),
-        "systems": _ordered_public_priority("rust", "python"),
-        "embedded": _ordered_public_priority("rust", "python"),
-        "application": _ordered_public_priority("python", "javascript"),
-    }
+    _PROJECT_TYPE_PRIORITIES: dict[str, tuple[str, ...]] = dict(PROJECT_TYPE_PUBLIC_POLICY)
 
     def __init__(self) -> None:
         self._validate_public_backend_routes_contract()
@@ -63,16 +52,18 @@ class BuildOrchestrator:
         source_file: str,
         preferred_backend: str | None = None,
         required_capabilities: tuple[str, ...] = (),
+        route_scope: str = "public",
     ) -> BackendResolution:
         config = get_toml_map()
-        normalized_preferred = self._normalize_optional_target(preferred_backend)
+        normalized_preferred = self._normalize_optional_target(preferred_backend, route_scope=route_scope)
         project_type = self._project_type(config)
         module_meta = self._module_metadata(config, source_file)
 
         module_target = self._normalize_optional_target(
             module_meta.get("preferred_target")
             or module_meta.get("target")
-            or module_meta.get("backend")
+            or module_meta.get("backend"),
+            route_scope="public",
         )
 
         capabilities = self._collect_capabilities(
@@ -80,6 +71,12 @@ class BuildOrchestrator:
             module_meta=module_meta,
             requested=required_capabilities,
         )
+
+        if normalized_preferred is not None and normalized_preferred in INTERNAL_BACKENDS:
+            return BackendResolution(
+                backend=normalized_preferred,
+                reason="preferencia explícita en ruta de migración interna",
+            )
 
         if normalized_preferred is not None:
             return BackendResolution(
@@ -110,23 +107,16 @@ class BuildOrchestrator:
         ]
         return BackendResolution(backend=selected, reason="; ".join(reason_parts))
 
-    def _normalize_optional_target(self, value: Any) -> str | None:
+    def _normalize_optional_target(self, value: Any, *, route_scope: str) -> str | None:
         if not isinstance(value, str) or not value.strip():
             return None
         canonical = normalize_target_name(value)
-        if canonical not in PUBLIC_BACKENDS:
-            raise ValueError(
-                f"Backend no permitido: {value}. Permitidos: {', '.join(PUBLIC_BACKENDS)}"
-            )
+        assert_backend_allowed_for_scope(backend=canonical, scope=route_scope)
         return canonical
 
     def _validate_public_backend_routes_contract(self) -> None:
         """Asegura que las rutas públicas de selección no usen backends fuera del canon oficial."""
-        if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
-            raise RuntimeError(
-                "BuildOrchestrator requiere OFFICIAL_TARGETS == PUBLIC_BACKENDS en rutas públicas. "
-                f"official={OFFICIAL_TARGETS}; public={PUBLIC_BACKENDS}"
-            )
+        validate_capabilities_contract()
 
         official = set(PUBLIC_BACKENDS)
         covered: set[str] = set()
@@ -214,10 +204,7 @@ class BuildOrchestrator:
         return ordered
 
     def _default_priority(self) -> tuple[str, ...]:
-        weighted = sorted(
-            OFFICIAL_TARGETS,
-            key=lambda backend: target_metadata(backend)["release_priority"],
-        )
+        weighted = sorted(PUBLIC_FALLBACK_POLICY, key=lambda backend: target_metadata(backend)["release_priority"])
         return tuple(weighted)
 
     def _supports_capabilities(self, backend: str, capabilities: tuple[str, ...]) -> bool:
