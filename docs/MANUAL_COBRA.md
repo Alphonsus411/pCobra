@@ -453,13 +453,13 @@ Las fuentes normativas visibles para evitar divergencias son `src/pcobra/cobra/t
 
 Los orígenes reverse se mantienen en una categoría separada: describen lenguajes de **entrada** aceptados por `cobra transpilar-inverso`, no targets oficiales adicionales de salida.
 
-- Compila a cualquiera de los targets oficiales de transpilación con `cobra compilar archivo.co --tipo python`.
-- Ejecuta directamente con `cobra ejecutar archivo.co`.
+- Construye artefactos con `cobra build archivo.co`.
+- Ejecuta directamente con `cobra run archivo.co`.
 
 ### Ejemplo de transpilación a Python
 
 ```bash
-cobra compilar ejemplo.co --tipo python
+cobra build ejemplo.co
 ```
 
 Si prefieres usar las clases del proyecto, llama al módulo
@@ -510,7 +510,7 @@ Convierte programas entre distintos lenguajes usando la CLI:
 - **De Cobra a `rust` (target oficial de salida pública)**
 
   ```bash
-  cobra compilar hola.co --tipo rust
+  cobra build hola.co
   ```
 
 - **De Python a JavaScript mediante reverse (`python` como origen de entrada y `javascript` como destino oficial)**
@@ -565,7 +565,7 @@ El modo seguro se encuentra activado por defecto y evita operaciones peligrosas
 como `leer_archivo` o `hilo`. Para desactivarlo:
 
 ```bash
-cobra ejecutar programa.co --no-seguro
+cobra run programa.co --no-seguro
 ```
 
 ## 13. Próximos pasos
