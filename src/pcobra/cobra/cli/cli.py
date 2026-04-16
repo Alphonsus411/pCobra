@@ -17,7 +17,8 @@ from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
 from pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
 from pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
 from pcobra.cobra.cli.commands.cache_cmd import CacheCommand
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
+from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
 from pcobra.cobra.cli.commands.container_cmd import ContainerCommand
 from pcobra.cobra.cli.commands.crear_cmd import CrearCommand
 from pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
@@ -45,7 +46,6 @@ from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisComman
 from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
 from pcobra.cobra.cli.commands_v2 import (
     BuildCommandV2,
-    COBRA_ENABLE_LEGACY_CLI_ENV,
     LegacyCommandGroupV2,
     ModCommandV2,
     RunCommandV2,
@@ -88,6 +88,7 @@ COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
 COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
+LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
 
 
 class CliErrorYaMostrado(Exception):
@@ -148,15 +149,6 @@ class CommandRegistry:
     ) -> Dict[str, BaseCommand]:
         base_commands = []
         command_classes = AppConfig.V2_COMMAND_CLASSES if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
-        if ui == "v2" and profile == PROFILE_DEVELOPMENT and LegacyCommandGroupV2 is None:
-            try:
-                from pcobra.cobra.cli.commands_v2.legacy_cmd import LegacyCommandGroupV2 as _LegacyCommandGroupV2
-                command_classes = command_classes + [_LegacyCommandGroupV2]
-            except Exception as exc:
-                logging.getLogger(__name__).debug(
-                    "No fue posible cargar grupo legacy para perfil development: %s",
-                    exc,
-                )
 
         for cmd_class in command_classes:
             try:
@@ -397,8 +389,7 @@ class CliApplication:
                 "Selecciona la interfaz CLI: v2 (recomendada para usuarios finales) o v1 (compatibilidad legacy). "
                 "En v2, la superficie pública es run/build/test/mod. "
                 "Los comandos internos quedan disponibles solo en perfil development "
-                "(COBRA_DEV_MODE=1 o COBRA_CLI_COMMAND_PROFILE=development) "
-                f"o con {COBRA_ENABLE_LEGACY_CLI_ENV}=1."
+                "(COBRA_DEV_MODE=1 o COBRA_CLI_COMMAND_PROFILE=development)."
             ),
         )
         parser.add_argument("--lang",
