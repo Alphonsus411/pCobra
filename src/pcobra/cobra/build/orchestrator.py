@@ -204,8 +204,7 @@ class BuildOrchestrator:
         return ordered
 
     def _default_priority(self) -> tuple[str, ...]:
-        weighted = sorted(PUBLIC_FALLBACK_POLICY, key=lambda backend: target_metadata(backend)["release_priority"])
-        return tuple(weighted)
+        return tuple(PUBLIC_FALLBACK_POLICY)
 
     def _supports_capabilities(self, backend: str, capabilities: tuple[str, ...]) -> bool:
         if not capabilities:
