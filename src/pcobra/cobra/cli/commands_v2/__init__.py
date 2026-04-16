@@ -5,7 +5,7 @@ from pcobra.cobra.cli.commands_v2.mod_cmd import ModCommandV2
 from pcobra.cobra.cli.commands_v2.run_cmd import RunCommandV2
 from pcobra.cobra.cli.commands_v2.test_cmd import TestCommandV2
 
-COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_ENABLE_LEGACY_CLI"
+COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"
 
 
 def is_legacy_cli_enabled() -> bool:

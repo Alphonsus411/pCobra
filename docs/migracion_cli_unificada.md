@@ -22,15 +22,19 @@ Con backends públicos oficiales:
 - **Interfaz pública**: comandos `cobra run/build/test/mod` y backends oficiales `python`, `javascript`, `rust`.
 - **Compatibilidad interna**: aliases legacy y backends internos usados solo para migración controlada.
 
-## Mapeo de comandos legacy
+## Mapeo de comandos legacy (equivalencia viejo → nuevo)
 
-| Legacy | Nuevo comando recomendado |
+| Comando legacy (viejo) | Comando unificado (nuevo) |
 |---|---|
 | `cobra archivo.co` | `cobra run archivo.co` |
 | `cobra compilar archivo.co --backend <target>` | `cobra build archivo.co --backend <target>` |
+| `cobra ejecutar archivo.co` | `cobra run archivo.co` |
+| `cobra verificar archivo.co -l python,javascript,rust` | `cobra test archivo.co --langs python javascript rust` |
 | `cobra modulos listar` | `cobra mod list` |
 | `cobra modulos instalar ruta/al/modulo.co` | `cobra mod install ruta/al/modulo.co` |
 | `cobra modulos remover modulo.co` | `cobra mod remove modulo.co` |
+| `cobra modulos buscar nombre` | `cobra mod search nombre` |
+| `cobra modulos publicar ruta/al/modulo.co` | `cobra mod publish ruta/al/modulo.co` |
 
 ## Migración de flags `--backend`
 

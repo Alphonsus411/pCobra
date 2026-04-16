@@ -33,7 +33,7 @@ def test_cli_ui_v2_help_snapshot_publico_no_expone_legacy():
 
 
 def test_cli_ui_v2_help_muestra_legacy_solo_con_flag_interno(monkeypatch):
-    monkeypatch.setenv("COBRA_ENABLE_LEGACY_CLI", "1")
+    monkeypatch.setenv("COBRA_INTERNAL_ENABLE_LEGACY_CLI", "1")
     for module_name in (
         "cobra.cli.commands_v2",
         "pcobra.cobra.cli.commands_v2",
@@ -50,7 +50,7 @@ def test_cli_ui_v2_help_muestra_legacy_solo_con_flag_interno(monkeypatch):
 
 
 def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):
-    monkeypatch.delenv("COBRA_ENABLE_LEGACY_CLI", raising=False)
+    monkeypatch.delenv("COBRA_INTERNAL_ENABLE_LEGACY_CLI", raising=False)
     for module_name in (
         "cobra.cli.commands_v2",
         "pcobra.cobra.cli.commands_v2",
@@ -66,8 +66,8 @@ def test_cli_ui_v2_sin_flag_no_registra_legacy(monkeypatch):
     assert "legacy" not in commands
 
 
-def test_cli_ui_v2_modo_desarrollo_expone_comandos_internos(monkeypatch):
-    monkeypatch.delenv("COBRA_ENABLE_LEGACY_CLI", raising=False)
+def test_cli_ui_v2_modo_desarrollo_no_expone_legacy_sin_flag_interno(monkeypatch):
+    monkeypatch.delenv("COBRA_INTERNAL_ENABLE_LEGACY_CLI", raising=False)
     monkeypatch.setenv("COBRA_DEV_MODE", "1")
     for module_name in (
         "cobra.cli.commands_v2",
@@ -87,4 +87,4 @@ def test_cli_ui_v2_modo_desarrollo_expone_comandos_internos(monkeypatch):
         profile=cli_reloaded.resolve_command_profile(),
     )
 
-    assert "legacy" in commands
+    assert "legacy" not in commands
