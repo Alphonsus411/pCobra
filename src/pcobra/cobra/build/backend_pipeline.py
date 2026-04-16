@@ -7,6 +7,7 @@ from typing import Any
 
 from pcobra.cobra.architecture.capabilities_contract import (
     PUBLIC_BACKENDS,
+    PUBLIC_CAPABILITIES_CONTRACT,
     assert_backend_allowed_for_scope,
     binding_route_for_public_backend,
 )
@@ -22,10 +23,11 @@ TRANSPILERS: dict[str, type] = build_official_transpilers()
 
 def _public_route_backend_matrix() -> dict[str, tuple[str, ...]]:
     """Matriz explícita de rutas públicas que usan resolución de backend."""
+    contract_backends = tuple(PUBLIC_CAPABILITIES_CONTRACT)
     return {
-        "build_pipeline.resolve_backend": PUBLIC_BACKENDS,
-        "build_pipeline.resolve_backend_runtime": PUBLIC_BACKENDS,
-        "build_pipeline.build": PUBLIC_BACKENDS,
+        "build_pipeline.resolve_backend": contract_backends,
+        "build_pipeline.resolve_backend_runtime": contract_backends,
+        "build_pipeline.build": contract_backends,
     }
 
 

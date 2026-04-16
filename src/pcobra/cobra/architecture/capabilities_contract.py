@@ -11,8 +11,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final
 
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
+from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
 from pcobra.cobra.bindings.contract import BindingRoute
+
+
+PUBLIC_BACKENDS: Final[tuple[str, ...]] = (
+    "python",
+    "javascript",
+    "rust",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +128,7 @@ validate_capabilities_contract()
 
 __all__ = [
     "PROJECT_TYPE_PUBLIC_POLICY",
+    "PUBLIC_BACKENDS",
     "PUBLIC_CAPABILITIES_CONTRACT",
     "PUBLIC_FALLBACK_POLICY",
     "PublicBackendCapability",
