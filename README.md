@@ -111,6 +111,9 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Migración a CLI unificada
 - Instalación
 - Cómo usar la CLI
+- Cómo decide backend internamente
+- Librería estándar unificada (stdlib)
+- Contrato de imports
 - Descargas
 - Estructura del Proyecto
 - Herramientas y scripts soportados
@@ -140,6 +143,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - [Casos de uso reales](docs/casos_reales.md)
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
 - [Migración de targets retirados de la UX pública](docs/migracion_targets_retirados.md)
+- [Anexos legacy/internal](docs/anexos_legacy_internal/README.md)
 - Notebooks de ejemplo y casos reales
 - Probar Cobra en línea
 - [Historial de cambios](CHANGELOG.md)
@@ -274,7 +278,7 @@ Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantie
 
 ### CLI simplificada (interfaz oficial)
 
-La interfaz recomendada se organiza en cuatro comandos base:
+La interfaz recomendada se organiza en cuatro comandos base de cara al usuario:
 
 - `cobra run archivo.cobra`
 - `cobra build archivo.cobra`
@@ -290,7 +294,7 @@ cobra test archivo.cobra
 cobra mod list
 ```
 
-> Nota: `cobra build` selecciona backend automáticamente en la ruta pública. Los flags de backend/transpilador quedan fuera de la UX principal y se reservan para compatibilidad técnica.
+> Nota: la transpilación existe, pero queda **oculta** dentro de la implementación interna. En onboarding y uso diario, la experiencia pública es únicamente `run/build/test/mod`.
 
 Para listar todas las opciones disponibles:
 
@@ -302,24 +306,61 @@ Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`.
 
 Más detalle técnico de capas y contratos internos en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
 
-### Imports y stdlib (alineado a resolución determinista)
+### Cómo decide backend internamente
 
-La documentación pública usa resolución determinista de módulos y evita rutas ambiguas en ejemplos de usuario final.
+Sin pedir banderas legacy, la CLI aplica esta ruta interna:
 
-Orden de resolución (alto nivel): `stdlib > project > python_bridge > hybrid`.
+1. Lee el contexto del proyecto (configuración local y metadatos de módulo).
+2. Evalúa el tipo de operación (`run`, `build`, `test`) y requisitos de runtime.
+3. Selecciona un backend oficial compatible.
+4. Ejecuta la fase de compilación/transpilación como detalle interno de pipeline.
 
-Política por defecto ante colisiones ambiguas: `warn` (modo compatibilidad). En proyectos
-productivos se recomienda `namespace_required` y usar imports con namespace explícito
-(`cobra.datos`, `app.datos`, etc.).
+Contrato público: el usuario trabaja con comandos Cobra; la selección final de backend y la transpilación son decisiones internas del sistema.
 
-Namespaces canónicos de la librería estándar para ejemplos/documentación:
+### Librería estándar unificada (stdlib)
+
+Namespaces públicos recomendados:
 
 - `cobra.core`
 - `cobra.datos`
 - `cobra.web`
 - `cobra.system`
 
-Para transición, las rutas históricas (`corelibs.*`, `standard_library.*`) se mantienen como compatibilidad, pero no deben ser la opción principal en guías nuevas.
+Ejemplos de import:
+
+```cobra
+usar cobra.core
+usar cobra.datos
+usar cobra.web
+usar cobra.system
+```
+
+```python
+from cobra.core import signo
+from cobra.datos import filtrar
+from cobra.web import obtener_url
+from cobra.system import leer
+```
+
+Para transición, las rutas históricas (`corelibs.*`, `standard_library.*`) siguen disponibles como compatibilidad, pero no son la ruta recomendada para nuevo onboarding.
+
+### Contrato de imports (orden, conflictos y namespaces)
+
+La documentación pública usa resolución determinista de módulos y evita rutas ambiguas en ejemplos de usuario final.
+
+Orden de resolución (alto nivel): `stdlib > project > python_bridge > hybrid`.
+
+Política ante conflictos:
+
+- Comportamiento por defecto: `warn` (modo compatibilidad).
+- Recomendación para producción: `namespace_required`.
+- Regla práctica: si hay colisión de nombres, siempre usar namespace explícito (`cobra.datos`, `app.datos`, etc.).
+
+Namespaces recomendados:
+
+- Dominio Cobra: `cobra.*`
+- Dominio app/proyecto: `app.*`
+- Evitar imports “planos” en módulos grandes si existe riesgo de colisión.
 
 ### Guía de migración a la CLI unificada
 
@@ -334,29 +375,11 @@ Migración recomendada sin exponer transpilers ni flags de backend en la UX prin
 3. Reemplaza `cobra modulos <accion>` por `cobra mod <acción equivalente>`.
 4. Mantén banderas legacy (`--backend`, `--tipo`, `--tipos`) únicamente en scripts de compatibilidad temporal, no en tutoriales para usuario final.
 
-### Compatibilidad legacy (histórico)
+### Anexos legacy/internal (fuera de onboarding)
 
-> ⚠️ **Advertencia visible**: los aliases legacy y rutas históricas existen únicamente para migraciones controladas. No forman parte del flujo recomendado para usuario final.
+Para no contaminar el onboarding principal, toda la información histórica o interna se concentra en:
 
-Los proyectos antiguos pueden seguir funcionando con aliases de compatibilidad, pero la recomendación es migrar cuanto antes a `run/build/test/mod`.
-
-### Compatibilidad interna y migración
-
-Las rutas legacy/internal (`go`, `cpp`, `java`, `wasm`, `asm`) se mantienen fuera de la interfaz pública y solo como soporte transitorio para migración técnica.
-
-Guía de migración para consumidores de targets retirados: `docs/migracion_targets_retirados.md`.
-
-Migración recomendada desde targets legacy hacia backends oficiales:
-
-1. Sustituye en CLI y CI los usos de `--backend` legacy por `python`, `javascript` o `rust`.
-2. Prioriza `rust` cuando busques rendimiento/compilación nativa, `javascript` para entornos Node/web y `python` para máxima cobertura SDK.
-3. Ejecuta regresión funcional después del cambio para validar paridad en tu pipeline.
-4. Mantén los targets legacy solo como fallback interno temporal, sin exposición pública.
-
-Deprecación progresiva en CLI:
-
-- **Fase 1 (default):** warning + telemetría cuando se usan `wasm`, `go`, `cpp`, `java` o `asm`.
-- **Fase 2:** esos targets se ocultan del help público y solo quedan disponibles en modo legacy (`--legacy-targets` o `COBRA_LEGACY_TARGETS_MODE=1`).
+- [docs/anexos_legacy_internal/README.md](docs/anexos_legacy_internal/README.md)
 
 ### Validar sintaxis (paso a paso)
 
