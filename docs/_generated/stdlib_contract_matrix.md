@@ -2,6 +2,15 @@
 
 Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 
+## Tabla de garantías por módulo
+
+| Módulo | API pública | Backend primario | Fallback | Límites |
+|---|---|---|---|---|
+| `cobra.core` | 4 | `python` | `rust, javascript` | es_finito:rust, es_finito:javascript, es_infinito:rust, es_infinito:javascript, copiar_signo:rust, copiar_signo:javascript, signo:rust, signo:javascript |
+| `cobra.datos` | 4 | `python` | `javascript` | filtrar:javascript, seleccionar_columnas:javascript, a_listas:javascript, de_listas:javascript |
+| `cobra.web` | 3 | `javascript` | `python` | obtener_url:javascript, enviar_post:javascript, descargar_archivo:javascript |
+| `cobra.system` | 4 | `python+rust` | `rust, javascript` | leer:rust, leer:javascript, escribir:rust, escribir:javascript, ejecutar:rust, ejecutar:javascript, obtener_env:rust, obtener_env:javascript |
+
 ## `cobra.core`
 
 - **Backend primario:** `python`
@@ -23,16 +32,16 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 |---|---|---|
 | `cobra.core.es_finito` | `python` | `full` |
 | `cobra.core.es_finito` | `rust` | `partial` |
-| `cobra.core.es_finito` | `javascript` | `full` |
+| `cobra.core.es_finito` | `javascript` | `partial` |
 | `cobra.core.es_infinito` | `python` | `full` |
 | `cobra.core.es_infinito` | `rust` | `partial` |
-| `cobra.core.es_infinito` | `javascript` | `full` |
+| `cobra.core.es_infinito` | `javascript` | `partial` |
 | `cobra.core.copiar_signo` | `python` | `full` |
 | `cobra.core.copiar_signo` | `rust` | `partial` |
-| `cobra.core.copiar_signo` | `javascript` | `full` |
+| `cobra.core.copiar_signo` | `javascript` | `partial` |
 | `cobra.core.signo` | `python` | `full` |
 | `cobra.core.signo` | `rust` | `partial` |
-| `cobra.core.signo` | `javascript` | `full` |
+| `cobra.core.signo` | `javascript` | `partial` |
 
 ## `cobra.datos`
 
@@ -54,13 +63,13 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 | Función | Backend | Nivel |
 |---|---|---|
 | `cobra.datos.filtrar` | `python` | `full` |
-| `cobra.datos.filtrar` | `javascript` | `full` |
+| `cobra.datos.filtrar` | `javascript` | `partial` |
 | `cobra.datos.seleccionar_columnas` | `python` | `full` |
-| `cobra.datos.seleccionar_columnas` | `javascript` | `full` |
+| `cobra.datos.seleccionar_columnas` | `javascript` | `partial` |
 | `cobra.datos.a_listas` | `python` | `full` |
-| `cobra.datos.a_listas` | `javascript` | `full` |
+| `cobra.datos.a_listas` | `javascript` | `partial` |
 | `cobra.datos.de_listas` | `python` | `full` |
-| `cobra.datos.de_listas` | `javascript` | `full` |
+| `cobra.datos.de_listas` | `javascript` | `partial` |
 
 ## `cobra.web`
 
@@ -80,16 +89,16 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 
 | Función | Backend | Nivel |
 |---|---|---|
-| `cobra.web.obtener_url` | `javascript` | `full` |
+| `cobra.web.obtener_url` | `javascript` | `partial` |
 | `cobra.web.obtener_url` | `python` | `full` |
-| `cobra.web.enviar_post` | `javascript` | `full` |
+| `cobra.web.enviar_post` | `javascript` | `partial` |
 | `cobra.web.enviar_post` | `python` | `full` |
-| `cobra.web.descargar_archivo` | `javascript` | `full` |
+| `cobra.web.descargar_archivo` | `javascript` | `partial` |
 | `cobra.web.descargar_archivo` | `python` | `full` |
 
 ## `cobra.system`
 
-- **Backend primario:** `python`
+- **Backend primario:** `python+rust`
 - **Fallback permitido:** `rust, javascript`
 - **Mapeo `standard_library`:** `src/pcobra/standard_library/archivo.py`
 - **Mapeo `corelibs`:** `src/pcobra/corelibs/sistema.py`
@@ -114,7 +123,7 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 | `cobra.system.escribir` | `javascript` | `partial` |
 | `cobra.system.ejecutar` | `python` | `full` |
 | `cobra.system.ejecutar` | `rust` | `partial` |
-| `cobra.system.ejecutar` | `javascript` | `full` |
+| `cobra.system.ejecutar` | `javascript` | `partial` |
 | `cobra.system.obtener_env` | `python` | `full` |
 | `cobra.system.obtener_env` | `rust` | `partial` |
-| `cobra.system.obtener_env` | `javascript` | `full` |
+| `cobra.system.obtener_env` | `javascript` | `partial` |

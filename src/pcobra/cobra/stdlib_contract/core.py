@@ -21,19 +21,19 @@ CORE_CONTRACT = ContractDescriptor(
     coverage=(
         FunctionCoverage(
             "cobra.core.es_finito",
-            {"python": "full", "rust": "partial", "javascript": "full"},
+            {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
         FunctionCoverage(
             "cobra.core.es_infinito",
-            {"python": "full", "rust": "partial", "javascript": "full"},
+            {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
         FunctionCoverage(
             "cobra.core.copiar_signo",
-            {"python": "full", "rust": "partial", "javascript": "full"},
+            {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
         FunctionCoverage(
             "cobra.core.signo",
-            {"python": "full", "rust": "partial", "javascript": "full"},
+            {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
     ),
 )
