@@ -13,17 +13,13 @@ except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
 from pcobra.cobra.bindings.contract import (
+    ABI_POLICY_BY_ROUTE,
     BindingCapabilities,
     BindingRoute,
     resolve_binding,
 )
 
 DEFAULT_ABI_VERSION: Final[str] = "1.0"
-SUPPORTED_ABI_VERSIONS: Final[dict[BindingRoute, tuple[str, ...]]] = {
-    BindingRoute.PYTHON_DIRECT_IMPORT: ("1.0",),
-    BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: ("1.0",),
-    BindingRoute.RUST_COMPILED_FFI: ("1.0",),
-}
 
 SECURITY_POLICY_BY_COMMAND: Final[dict[str, dict[BindingRoute, dict[str, bool]]]] = {
     "run": {
@@ -57,28 +53,32 @@ class RuntimeManager:
             route=BindingRoute.PYTHON_DIRECT_IMPORT,
             implementation="python_direct_bridge",
             security_profile="same_process_safe_mode",
-            abi_version=DEFAULT_ABI_VERSION,
+            abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.PYTHON_DIRECT_IMPORT].current,
         ),
         BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: RuntimeBridgeDescriptor(
             route=BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE,
             implementation="javascript_controlled_runtime_bridge",
             security_profile="managed_runtime_isolation",
-            abi_version=DEFAULT_ABI_VERSION,
+            abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE].current,
         ),
         BindingRoute.RUST_COMPILED_FFI: RuntimeBridgeDescriptor(
             route=BindingRoute.RUST_COMPILED_FFI,
             implementation="rust_compiled_ffi_bridge",
             security_profile="native_ffi_boundary",
-            abi_version=DEFAULT_ABI_VERSION,
+            abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.RUST_COMPILED_FFI].current,
         ),
     }
 
     def resolve_runtime(self, language: str) -> tuple[BindingCapabilities, RuntimeBridgeDescriptor]:
-        """Resuelve contrato y bridge asociado para un lenguaje."""
+        """Resuelve contrato, negocia ABI y retorna bridge asociado."""
 
-        capabilities = resolve_binding(language)
-        bridge = self._BRIDGES[capabilities.route]
+        capabilities = self._resolve_capabilities(language)
+        bridge = self.select_bridge(capabilities)
+        self.negotiate_abi(capabilities)
         return capabilities, bridge
+
+    def _resolve_capabilities(self, language: str) -> BindingCapabilities:
+        return resolve_binding(language)
 
     def validate_security_route(
         self,
@@ -88,17 +88,17 @@ class RuntimeManager:
         containerized: bool = False,
         command: str = "run",
     ) -> None:
-        """Valida que la ruta elegida cumpla expectativas mínimas de seguridad."""
+        """Valida seguridad por ruta contractual y política del comando."""
 
         normalized_command = (command or "run").strip().lower()
         if normalized_command not in SECURITY_POLICY_BY_COMMAND:
             allowed = ", ".join(sorted(SECURITY_POLICY_BY_COMMAND))
             raise ValueError(f"Comando '{command}' no soportado en política de seguridad. Use: {allowed}.")
 
-        capabilities, _bridge = self.resolve_runtime(language)
+        capabilities = self._resolve_capabilities(language)
         route = capabilities.route
 
-        # Reglas base por tipo de ruta
+        # Validación base por ruta
         if route is BindingRoute.PYTHON_DIRECT_IMPORT and containerized:
             raise ValueError(
                 "La ruta python_direct_import no puede marcarse como containerizada. "
@@ -115,7 +115,7 @@ class RuntimeManager:
                 "en sandbox Python directo."
             )
 
-        # Reglas por comando (run/test)
+        # Validación por comando público
         command_policy = SECURITY_POLICY_BY_COMMAND[normalized_command][route]
         if command_policy["sandbox_required"] and not sandbox:
             raise ValueError(
@@ -126,19 +126,40 @@ class RuntimeManager:
                 f"La política '{normalized_command}' exige contenedor para la ruta {route.value}."
             )
 
-    def validate_abi_route(self, language: str, abi_version: str | None = None) -> str:
-        """Valida compatibilidad ABI de la ruta seleccionada."""
+    def negotiate_abi(self, capabilities: BindingCapabilities, abi_version: str | None = None) -> str:
+        """Negocia ABI por ruta usando matriz canónica y compatibilidad hacia atrás."""
 
-        capabilities, bridge = self.resolve_runtime(language)
-        negotiated_abi = abi_version or self._resolve_project_abi_for_backend(capabilities.language)
-        selected = (negotiated_abi or bridge.abi_version or DEFAULT_ABI_VERSION).strip()
-        supported = SUPPORTED_ABI_VERSIONS[capabilities.route]
-        if selected not in supported:
+        policy = ABI_POLICY_BY_ROUTE[capabilities.route]
+        project_selected = abi_version or self._resolve_project_abi_for_backend(capabilities.language)
+        selected = (project_selected or policy.current or DEFAULT_ABI_VERSION).strip()
+
+        if selected not in policy.supported:
             raise ValueError(
-                f"ABI '{selected}' no soportada para '{language}'. "
-                f"Versiones soportadas: {', '.join(supported)}."
+                f"ABI '{selected}' no soportada para '{capabilities.language}'. "
+                f"Versiones soportadas: {', '.join(policy.supported)}."
             )
-        return selected
+
+        if selected == policy.current:
+            return selected
+
+        if selected in policy.backwards_compatible_with:
+            return selected
+
+        raise ValueError(
+            f"ABI '{selected}' está soportada pero no es compatible hacia atrás "
+            f"con la versión actual '{policy.current}' para '{capabilities.language}'."
+        )
+
+    def validate_abi_route(self, language: str, abi_version: str | None = None) -> str:
+        """Wrapper público para mantener compatibilidad con llamadas existentes."""
+
+        capabilities = self._resolve_capabilities(language)
+        return self.negotiate_abi(capabilities, abi_version)
+
+    def select_bridge(self, capabilities: BindingCapabilities) -> RuntimeBridgeDescriptor:
+        """Selecciona la implementación de bridge para una ruta contractual."""
+
+        return self._BRIDGES[capabilities.route]
 
     def _resolve_project_abi_for_backend(self, backend: str) -> str | None:
         """Obtiene ABI negociada por backend desde cobra.toml/pcobra.toml."""
@@ -181,6 +202,10 @@ class RuntimeManager:
         except (OSError, tomllib.TOMLDecodeError):
             return {}
 
+
+SUPPORTED_ABI_VERSIONS: Final[dict[BindingRoute, tuple[str, ...]]] = {
+    route: policy.supported for route, policy in ABI_POLICY_BY_ROUTE.items()
+}
 
 __all__ = [
     "DEFAULT_ABI_VERSION",

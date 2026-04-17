@@ -4,7 +4,9 @@ from typing import Any
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 
 
@@ -17,6 +19,7 @@ class RunCommandV2(BaseCommand):
     def __init__(self) -> None:
         super().__init__()
         self._legacy = ExecuteCommand()
+        self._runtime_manager = RuntimeManager()
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Run a Cobra file"))
@@ -34,12 +37,27 @@ class RunCommandV2(BaseCommand):
 
     def run(self, args: Any) -> int:
         debug = bool(getattr(args, "debug", False))
+        sandbox = bool(getattr(args, "sandbox", False))
+        container = getattr(args, "container", None)
+        binding_language = container or "python"
+        try:
+            self._runtime_manager.validate_security_route(
+                binding_language,
+                sandbox=sandbox,
+                containerized=bool(container),
+                command="run",
+            )
+            self._runtime_manager.validate_abi_route(binding_language)
+        except ValueError as exc:
+            mostrar_error(str(exc), registrar_log=False)
+            return 1
+
         resolution = backend_pipeline.resolve_backend(args.file, {})
         legacy_args = Namespace(
             archivo=args.file,
             debug=bool(getattr(args, "debug", False)),
-            sandbox=bool(getattr(args, "sandbox", False)),
-            contenedor=getattr(args, "container", None),
+            sandbox=sandbox,
+            contenedor=container,
             formatear=bool(getattr(args, "formatear", False)),
             modo=getattr(args, "modo", "mixto"),
             backend_reason=resolution.reason_for(debug=debug),

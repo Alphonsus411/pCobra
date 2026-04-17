@@ -27,6 +27,26 @@ class BindingCapabilities:
     managed_runtime: bool
 
 
+@dataclass(frozen=True, slots=True)
+class AbiCompatibilityPolicy:
+    """Matriz ABI por ruta y política explícita de compatibilidad."""
+
+    current: str
+    supported: tuple[str, ...]
+    backwards_compatible_with: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RouteOperationalLimits:
+    """Límites operativos contractuales por ruta de binding."""
+
+    process_model: str
+    isolation_boundary: str
+    ffi_boundary: str
+    sandbox_support: str
+    container_support: str
+
+
 PYTHON_BINDING: Final[BindingCapabilities] = BindingCapabilities(
     route=BindingRoute.PYTHON_DIRECT_IMPORT,
     language="python",
@@ -60,6 +80,48 @@ BINDINGS_BY_LANGUAGE: Final[dict[str, BindingCapabilities]] = {
     "rust": RUST_BINDING,
 }
 
+ABI_POLICY_BY_ROUTE: Final[dict[BindingRoute, AbiCompatibilityPolicy]] = {
+    BindingRoute.PYTHON_DIRECT_IMPORT: AbiCompatibilityPolicy(
+        current="1.0",
+        supported=("1.0",),
+        backwards_compatible_with=("1.0",),
+    ),
+    BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: AbiCompatibilityPolicy(
+        current="1.1",
+        supported=("1.1", "1.0"),
+        backwards_compatible_with=("1.0",),
+    ),
+    BindingRoute.RUST_COMPILED_FFI: AbiCompatibilityPolicy(
+        current="2.0",
+        supported=("2.0", "1.1", "1.0"),
+        backwards_compatible_with=("1.1", "1.0"),
+    ),
+}
+
+ROUTE_OPERATIONAL_LIMITS: Final[dict[BindingRoute, RouteOperationalLimits]] = {
+    BindingRoute.PYTHON_DIRECT_IMPORT: RouteOperationalLimits(
+        process_model="Mismo proceso del runtime principal",
+        isolation_boundary="Sin aislamiento de proceso; depende de safe_mode/validadores",
+        ffi_boundary="No aplica (sin frontera FFI nativa)",
+        sandbox_support="Soportado en sandbox Python",
+        container_support="No soportado como ruta directa",
+    ),
+    BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: RouteOperationalLimits(
+        process_model="Proceso/VM de runtime JS gestionado",
+        isolation_boundary="Aislamiento obligatorio (sandbox JS o contenedor)",
+        ffi_boundary="No usa FFI nativa; IPC/mensajería versionada",
+        sandbox_support="Soportado en sandbox de runtime gestionado",
+        container_support="Soportado y recomendado para pruebas reproducibles",
+    ),
+    BindingRoute.RUST_COMPILED_FFI: RouteOperationalLimits(
+        process_model="Proceso principal + librería nativa cargada",
+        isolation_boundary="Frontera nativa por ABI/FFI",
+        ffi_boundary="Requiere ABI explícita y artefactos compilados",
+        sandbox_support="No soportado en sandbox Python",
+        container_support="Soportado para aislamiento operativo",
+    ),
+}
+
 
 def resolve_binding(language: str) -> BindingCapabilities:
     """Resuelve el contrato de bindings para un lenguaje canónico."""
@@ -75,9 +137,13 @@ def resolve_binding(language: str) -> BindingCapabilities:
 
 
 __all__ = [
+    "AbiCompatibilityPolicy",
     "BindingCapabilities",
     "BindingRoute",
     "BINDINGS_BY_LANGUAGE",
+    "ABI_POLICY_BY_ROUTE",
+    "ROUTE_OPERATIONAL_LIMITS",
+    "RouteOperationalLimits",
     "JAVASCRIPT_BINDING",
     "PYTHON_BINDING",
     "RUST_BINDING",

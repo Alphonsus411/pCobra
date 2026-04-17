@@ -28,7 +28,7 @@ def test_runtime_manager_valida_abi_por_ruta():
     assert manager.validate_abi_route("rust", abi_version="1.0") == "1.0"
 
     try:
-        manager.validate_abi_route("rust", abi_version="2.0")
+        manager.validate_abi_route("rust", abi_version="9.9")
     except ValueError as exc:
         assert "Versiones soportadas" in str(exc)
     else:  # pragma: no cover
@@ -68,3 +68,32 @@ rust = "2.0"
 
     # cobra.toml tiene prioridad y define una ABI soportada.
     assert manager.validate_abi_route("rust") == "1.0"
+
+
+def test_runtime_manager_negocia_abi_actual_por_defecto_javascript(monkeypatch, tmp_path: Path):
+    manager = RuntimeManager()
+    monkeypatch.setenv("COBRA_TOML", str(tmp_path / "missing-cobra.toml"))
+    monkeypatch.setenv("PCOBRA_CONFIG", str(tmp_path / "missing-pcobra.toml"))
+
+    assert manager.validate_abi_route("javascript") == "1.1"
+
+
+def test_runtime_manager_rechaza_abi_no_compatible_hacia_atras(monkeypatch, tmp_path: Path):
+    manager = RuntimeManager()
+    cobra_toml = tmp_path / "cobra.toml"
+    cobra_toml.write_text(
+        """
+[project.abi_by_backend]
+javascript = "1.2"
+""".strip()
+    )
+
+    monkeypatch.setenv("COBRA_TOML", str(cobra_toml))
+    monkeypatch.delenv("PCOBRA_CONFIG", raising=False)
+
+    try:
+        manager.validate_abi_route("javascript")
+    except ValueError as exc:
+        assert "Versiones soportadas" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("Se esperaba rechazo de ABI no soportada")
