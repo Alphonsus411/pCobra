@@ -42,19 +42,36 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
     called = {}
 
     monkeypatch.setattr(
-        "cobra.cli.commands_v2.build_cmd.backend_pipeline.resolve_backend",
+        "cobra.cli.commands_v2.build_cmd.backend_pipeline.build",
         lambda file, hints: called.setdefault(
-            "resolution",
-            type("R", (), {"backend": "python", "reason_for": lambda self, debug: None})(),
+            "build",
+            {
+                "backend": "python",
+                "reason": None,
+                "runtime": {"language": "python"},
+                "ast": [],
+                "code": "print('ok')",
+            },
         ),
     )
-    monkeypatch.setattr(command._legacy, "run", lambda _args: 0)
 
     status = command.run(
         argparse.Namespace(file="programa.co", modo="mixto", debug=False)
     )
     assert status == 0
-    assert "resolution" in called
+    assert "build" in called
+
+
+def test_build_v2_help_no_expone_flags_backend():
+    subparsers = _build_subparsers()
+    command = BuildCommandV2()
+    command.register_subparser(subparsers)
+    parser = subparsers.choices[command.name]
+    help_text = parser.format_help().lower()
+
+    assert "--tipo" not in help_text
+    assert "--backend" not in help_text
+    assert "--tipos" not in help_text
 
 
 def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
