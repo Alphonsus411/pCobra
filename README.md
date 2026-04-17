@@ -193,23 +193,23 @@ La cadena de herramientas de Cobra separa el front-end de los generadores de có
 
 ## Architecture Overview
 
-Consulta el resumen corto en [docs/architecture/overview.md](docs/architecture/overview.md): describe selección automática de backend, resolución de imports híbridos y bindings por ruta sin exponer complejidad en el flujo principal `run/build/test/mod`.
+Consulta el resumen corto en [docs/architecture/overview.md](docs/architecture/overview.md): describe la ruta oficial de ejecución sin exponer detalles internos en el flujo público `run/build/test/mod`.
 
 Diagrama corto del flujo principal:
 
 ```text
-Front-end Cobra
+Frontend Cobra
       ↓
 BackendPipeline
       ↓
-bindings/runtime (python | javascript | rust)
+Bindings (python/js/rust)
 ```
 
-1. El front-end analiza el código fuente y construye el AST de Cobra.
-2. `BackendPipeline` normaliza internamente estructuras de control, módulos y tipos antes de la generación de código.
-3. Los adaptadores de backend conectan la salida transpilada con sus bindings/runtime oficiales.
+1. `Frontend Cobra` analiza el código fuente y construye el AST.
+2. `BackendPipeline` resuelve backend y normaliza internamente la compilación.
+3. `Bindings` conecta la salida con los runtimes oficiales de Python, JavaScript y Rust.
 
-Esta organización actúa como contrato técnico entre la interfaz pública y la ejecución interna, permitiendo incorporar mejoras sin modificar el parser original.
+Esta organización actúa como contrato técnico entre la interfaz pública y la ejecución interna, permitiendo incorporar mejoras sin modificar la UX de usuario final.
 
 ## Ecosistema unificado Cobra
 
@@ -275,21 +275,21 @@ Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantie
 
 La interfaz recomendada se organiza en cuatro comandos base:
 
-- `cobra run`: ejecutar programas Cobra.
-- `cobra build`: transpilación y artefactos por backend oficial.
-- `cobra test`: ejecución de pruebas del proyecto.
-- `cobra mod`: gestión de módulos y dependencias.
+- `cobra run archivo.cobra`
+- `cobra build archivo.cobra`
+- `cobra test archivo.cobra`
+- `cobra mod ...`
 
 Ejemplos rápidos (flujo oficial):
 
 ```bash
-cobra run archivo.co
-cobra build hola.co
-cobra test
+cobra run archivo.cobra
+cobra build archivo.cobra
+cobra test archivo.cobra
 cobra mod list
 ```
 
-> Nota: `cobra build` selecciona backend de forma automática en la ruta pública. Si necesitas forzar backend por compatibilidad, revisa la sección avanzada en `docs/config_cli.md` y la guía legacy en `docs/migracion_cli_unificada.md`.
+> Nota: `cobra build` selecciona backend automáticamente en la ruta pública. Los flags de backend/transpilador quedan fuera de la UX principal y se reservan para compatibilidad técnica.
 
 Para listar todas las opciones disponibles:
 
@@ -301,13 +301,39 @@ Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`.
 
 Más detalle técnico de capas y contratos internos en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
 
+### Imports y stdlib (alineado a resolución determinista)
+
+La documentación pública usa resolución determinista de módulos y evita rutas ambiguas en ejemplos de usuario final.
+
+Orden de resolución (alto nivel): `stdlib > project > python_bridge > hybrid`.
+
+Namespaces canónicos de la librería estándar para ejemplos/documentación:
+
+- `cobra.core`
+- `cobra.datos`
+- `cobra.web`
+- `cobra.system`
+
+Para transición, las rutas históricas (`corelibs.*`, `standard_library.*`) se mantienen como compatibilidad, pero no deben ser la opción principal en guías nuevas.
+
 ### Guía de migración a la CLI unificada
 
 Si vienes de comandos legacy (`cobra compilar`, `cobra modulos`) o de flujos centrados en `--backend`, sigue la guía: [docs/migracion_cli_unificada.md](docs/migracion_cli_unificada.md).
 
-### Compatibilidad legacy
+### Guía de migración de usuario final
 
-Los proyectos antiguos pueden seguir funcionando con aliases legacy y con el modo de compatibilidad. Recomendamos mantenerlos solo como transición y migrar progresivamente a `run/build/test/mod`.
+Migración recomendada sin exponer transpilers ni flags de backend en la UX principal:
+
+1. Reemplaza `cobra ejecutar archivo.co` por `cobra run archivo.cobra`.
+2. Reemplaza `cobra compilar archivo.co --tipo ...` por `cobra build archivo.cobra` (backend automático).
+3. Reemplaza `cobra modulos <accion>` por `cobra mod <acción equivalente>`.
+4. Mantén banderas legacy (`--backend`, `--tipo`, `--tipos`) únicamente en scripts de compatibilidad temporal, no en tutoriales para usuario final.
+
+### Compatibilidad legacy (histórico)
+
+> ⚠️ **Advertencia visible**: los aliases legacy y rutas históricas existen únicamente para migraciones controladas. No forman parte del flujo recomendado para usuario final.
+
+Los proyectos antiguos pueden seguir funcionando con aliases de compatibilidad, pero la recomendación es migrar cuanto antes a `run/build/test/mod`.
 
 ### Compatibilidad interna y migración
 
