@@ -41,13 +41,12 @@ class RunCommandV2(BaseCommand):
         container = getattr(args, "container", None)
         binding_language = container or "python"
         try:
-            self._runtime_manager.validate_security_route(
+            self._runtime_manager.validate_command_runtime(
                 binding_language,
+                command="run",
                 sandbox=sandbox,
                 containerized=bool(container),
-                command="run",
             )
-            self._runtime_manager.validate_abi_route(binding_language)
         except ValueError as exc:
             mostrar_error(str(exc), registrar_log=False)
             return 1

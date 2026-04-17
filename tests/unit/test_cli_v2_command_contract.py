@@ -54,12 +54,20 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
             },
         ),
     )
+    monkeypatch.setattr(
+        command._runtime_manager,
+        "validate_command_runtime",
+        lambda language, **kwargs: called.setdefault("runtime", (language, kwargs))
+        or ("1.0", object(), object()),
+    )
 
     status = command.run(
         argparse.Namespace(file="programa.co", modo="mixto", debug=False)
     )
     assert status == 0
     assert "build" in called
+    assert called["runtime"][0] == "python"
+    assert called["runtime"][1]["command"] == "build"
 
 
 def test_build_v2_help_no_expone_flags_backend():
@@ -80,13 +88,9 @@ def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
 
     monkeypatch.setattr(
         command._runtime_manager,
-        "validate_security_route",
-        lambda language, **kwargs: called.setdefault("security", (language, kwargs)),
-    )
-    monkeypatch.setattr(
-        command._runtime_manager,
-        "validate_abi_route",
-        lambda language: called.setdefault("abi", language) or "1.0",
+        "validate_command_runtime",
+        lambda language, **kwargs: called.setdefault("runtime", (language, kwargs))
+        or ("1.0", object(), object()),
     )
     monkeypatch.setattr(
         "cobra.cli.commands_v2.run_cmd.backend_pipeline.resolve_backend",
@@ -99,10 +103,9 @@ def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
     )
 
     assert status == 0
-    assert called["security"][0] == "rust"
-    assert called["security"][1]["containerized"] is True
-    assert called["security"][1]["command"] == "run"
-    assert called["abi"] == "rust"
+    assert called["runtime"][0] == "rust"
+    assert called["runtime"][1]["containerized"] is True
+    assert called["runtime"][1]["command"] == "run"
 
 
 def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
@@ -111,10 +114,9 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
 
     monkeypatch.setattr(
         command._runtime_manager,
-        "validate_security_route",
-        lambda language, **kwargs: calls.append((language, kwargs)),
+        "validate_command_runtime",
+        lambda language, **kwargs: calls.append((language, kwargs)) or ("1.0", object(), object()),
     )
-    monkeypatch.setattr(command._runtime_manager, "validate_abi_route", lambda _language: "1.0")
     monkeypatch.setattr(
         "cobra.cli.commands_v2.test_cmd.backend_pipeline.resolve_backend",
         lambda _file, _hints: type("R", (), {"reason_for": lambda self, debug: "ok"})(),

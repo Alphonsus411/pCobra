@@ -32,6 +32,11 @@ SECURITY_POLICY_BY_COMMAND: Final[dict[str, dict[BindingRoute, dict[str, bool]]]
         BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {"sandbox_required": False, "container_required": True},
         BindingRoute.RUST_COMPILED_FFI: {"sandbox_required": False, "container_required": True},
     },
+    "build": {
+        BindingRoute.PYTHON_DIRECT_IMPORT: {"sandbox_required": False, "container_required": False},
+        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: {"sandbox_required": False, "container_required": False},
+        BindingRoute.RUST_COMPILED_FFI: {"sandbox_required": False, "container_required": False},
+    },
 }
 
 
@@ -47,6 +52,12 @@ class RuntimeBridgeDescriptor:
 
 class RuntimeManager:
     """Resuelve rutas de binding y centraliza validaciones de seguridad/ABI."""
+
+    _ROUTE_LABEL_BY_ROUTE: Final[dict[BindingRoute, str]] = {
+        BindingRoute.PYTHON_DIRECT_IMPORT: "Python direct import",
+        BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: "JavaScript runtime bridge",
+        BindingRoute.RUST_COMPILED_FFI: "Rust compiled FFI",
+    }
 
     _BRIDGES: Final[dict[BindingRoute, RuntimeBridgeDescriptor]] = {
         BindingRoute.PYTHON_DIRECT_IMPORT: RuntimeBridgeDescriptor(
@@ -100,19 +111,19 @@ class RuntimeManager:
 
         # Validación base por ruta
         if route is BindingRoute.PYTHON_DIRECT_IMPORT and containerized:
-            raise ValueError(
-                "La ruta python_direct_import no puede marcarse como containerizada. "
-                "Use bridge Python directo (mismo proceso) o ruta de runtime gestionado."
+            self._raise_route_error(
+                route,
+                "la ruta no puede marcarse como containerizada; use ejecución en mismo proceso",
             )
         if route is BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE and not (sandbox or containerized):
-            raise ValueError(
-                "La ruta javascript_runtime_bridge requiere runtime gestionado "
-                "(sandbox o contenedor) para mantener aislamiento."
+            self._raise_route_error(
+                route,
+                "la ruta requiere runtime gestionado (sandbox o contenedor) para mantener aislamiento",
             )
         if route is BindingRoute.RUST_COMPILED_FFI and sandbox:
-            raise ValueError(
-                "La ruta rust_compiled_ffi usa frontera nativa FFI y no se ejecuta "
-                "en sandbox Python directo."
+            self._raise_route_error(
+                route,
+                "la ruta usa frontera nativa FFI y no se ejecuta en sandbox Python directo",
             )
 
         # Validación por comando público
@@ -156,10 +167,35 @@ class RuntimeManager:
         capabilities = self._resolve_capabilities(language)
         return self.negotiate_abi(capabilities, abi_version)
 
+    def validate_command_runtime(
+        self,
+        language: str,
+        *,
+        command: str,
+        sandbox: bool = False,
+        containerized: bool = False,
+        abi_version: str | None = None,
+    ) -> tuple[str, BindingCapabilities, RuntimeBridgeDescriptor]:
+        """Valida de forma canónica seguridad+ABI para un comando público."""
+
+        capabilities, bridge = self.resolve_runtime(language)
+        self.validate_security_route(
+            language,
+            sandbox=sandbox,
+            containerized=containerized,
+            command=command,
+        )
+        negotiated_abi = self.negotiate_abi(capabilities, abi_version)
+        return negotiated_abi, capabilities, bridge
+
     def select_bridge(self, capabilities: BindingCapabilities) -> RuntimeBridgeDescriptor:
         """Selecciona la implementación de bridge para una ruta contractual."""
 
         return self._BRIDGES[capabilities.route]
+
+    def _raise_route_error(self, route: BindingRoute, detail: str) -> None:
+        route_label = self._ROUTE_LABEL_BY_ROUTE[route]
+        raise ValueError(f"[{route_label}] {detail}.")
 
     def _resolve_project_abi_for_backend(self, backend: str) -> str | None:
         """Obtiene ABI negociada por backend desde cobra.toml/pcobra.toml."""
