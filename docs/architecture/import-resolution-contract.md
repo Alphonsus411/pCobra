@@ -2,14 +2,17 @@
 
 Este documento define el contrato **oficial** y estable del resolvedor de imports de Cobra para eliminar ambigüedades operativas entre stdlib, módulos de proyecto, bridge Python e híbridos.
 
-## 1) Orden oficial de resolución (`_SOURCE_ORDER`)
+## 1) Orden oficial de resolución (API contractual)
 
-El orden vigente de precedencia es:
+El orden vigente de precedencia se congela como contrato público en
+`RESOLUTION_SOURCE_ORDER`:
 
 1. `stdlib`
 2. `project`
 3. `python_bridge`
 4. `hybrid`
+
+Este orden debe tratarse como **API contractual** (estable entre releases menores).
 
 En términos prácticos:
 
@@ -27,7 +30,7 @@ La política se configura por proyecto en `cobra.toml`:
 collision_policy = "warn" # warn | strict_error | namespace_required
 ```
 
-Si no se declara nada, el resolver usa `warn` por compatibilidad.
+Si no se declara nada, el resolver usa `warn` por compatibilidad (`DEFAULT_COLLISION_POLICY`).
 
 ### `warn` (modo por defecto)
 
@@ -106,6 +109,9 @@ backend = "javascript"
   - `import_path = "mi_hibrido_runtime"`
   - `backend = "javascript"` (si no hay override de contrato por módulo)
   - `precedence_reason = "unique_source:hybrid"`
+
+Estos 3 casos (`importar pandas`, `importar datos`/`importar cobra.datos`, e híbridos
+en `imports.hybrid_modules`) son rutas oficiales del contrato de resolución.
 
 ## 6) Ejemplos de conflictos y resolución explícita
 

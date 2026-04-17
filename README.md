@@ -308,6 +308,10 @@ La documentación pública usa resolución determinista de módulos y evita ruta
 
 Orden de resolución (alto nivel): `stdlib > project > python_bridge > hybrid`.
 
+Política por defecto ante colisiones ambiguas: `warn` (modo compatibilidad). En proyectos
+productivos se recomienda `namespace_required` y usar imports con namespace explícito
+(`cobra.datos`, `app.datos`, etc.).
+
 Namespaces canónicos de la librería estándar para ejemplos/documentación:
 
 - `cobra.core`
