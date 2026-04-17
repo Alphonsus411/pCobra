@@ -55,3 +55,60 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
     )
     assert status == 0
     assert "resolution" in called
+
+
+def test_run_v2_valida_seguridad_por_ruta_binding(monkeypatch):
+    command = RunCommandV2()
+    called = {}
+
+    monkeypatch.setattr(
+        command._runtime_manager,
+        "validate_security_route",
+        lambda language, **kwargs: called.setdefault("security", (language, kwargs)),
+    )
+    monkeypatch.setattr(
+        command._runtime_manager,
+        "validate_abi_route",
+        lambda language: called.setdefault("abi", language) or "1.0",
+    )
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.run_cmd.backend_pipeline.resolve_backend",
+        lambda _file, _hints: type("R", (), {"reason_for": lambda self, debug: "ok"})(),
+    )
+    monkeypatch.setattr(command._legacy, "run", lambda _args: 0)
+
+    status = command.run(
+        argparse.Namespace(file="programa.co", debug=False, sandbox=False, container="rust", modo="mixto")
+    )
+
+    assert status == 0
+    assert called["security"][0] == "rust"
+    assert called["security"][1]["containerized"] is True
+    assert called["security"][1]["command"] == "run"
+    assert called["abi"] == "rust"
+
+
+def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
+    command = TestCommandV2()
+    calls: list[tuple[str, dict]] = []
+
+    monkeypatch.setattr(
+        command._runtime_manager,
+        "validate_security_route",
+        lambda language, **kwargs: calls.append((language, kwargs)),
+    )
+    monkeypatch.setattr(command._runtime_manager, "validate_abi_route", lambda _language: "1.0")
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.test_cmd.backend_pipeline.resolve_backend",
+        lambda _file, _hints: type("R", (), {"reason_for": lambda self, debug: "ok"})(),
+    )
+    monkeypatch.setattr(command._legacy, "run", lambda _args: 0)
+
+    status = command.run(
+        argparse.Namespace(file="programa.co", debug=False, langs=["python", "javascript", "rust"], modo="mixto")
+    )
+
+    assert status == 0
+    assert calls[0][0] == "python" and calls[0][1]["sandbox"] is True
+    assert calls[1][0] == "javascript" and calls[1][1]["containerized"] is True
+    assert calls[2][0] == "rust" and calls[2][1]["containerized"] is True

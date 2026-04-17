@@ -4,7 +4,9 @@ from typing import Any
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error
 from pcobra.cobra.cli.target_policies import (
     VERIFICATION_EXECUTABLE_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS_HELP,
@@ -22,6 +24,7 @@ class TestCommandV2(BaseCommand):
     def __init__(self) -> None:
         super().__init__()
         self._legacy = VerifyCommand()
+        self._runtime_manager = RuntimeManager()
         self._default_langs = ",".join(VERIFICATION_EXECUTABLE_TARGETS)
 
     def register_subparser(self, subparsers: Any):
@@ -44,8 +47,29 @@ class TestCommandV2(BaseCommand):
 
     def run(self, args: Any) -> int:
         debug = bool(getattr(args, "debug", False))
+        raw_langs = getattr(args, "langs", self._default_langs)
+        if isinstance(raw_langs, str):
+            langs = parse_restricted_target_list(
+                raw_langs, VERIFICATION_EXECUTABLE_TARGETS, "verificación ejecutable"
+            )
+        else:
+            langs = list(raw_langs)
+        for lang in langs:
+            try:
+                sandbox = lang == "python"
+                containerized = lang in {"javascript", "rust"}
+                self._runtime_manager.validate_security_route(
+                    lang,
+                    sandbox=sandbox,
+                    containerized=containerized,
+                    command="test",
+                )
+                self._runtime_manager.validate_abi_route(lang)
+            except ValueError as exc:
+                mostrar_error(str(exc), registrar_log=False)
+                return 1
+
         resolution = backend_pipeline.resolve_backend(args.file, {})
-        langs = getattr(args, "langs", self._default_langs)
         legacy_args = Namespace(
             archivo=args.file,
             lenguajes=langs,
