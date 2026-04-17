@@ -9,8 +9,11 @@ from argparse import Namespace
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_advertencia
 
+# internal-only: estos targets existen únicamente para compatibilidad temporal
+# en rutas no públicas. No deben anunciarse como opción de usuario final.
 DEPRECATED_PUBLIC_TARGETS: tuple[str, ...] = ("wasm", "go", "cpp", "java", "asm")
 DEPRECATION_PHASE_ENV = "COBRA_TARGET_DEPRECATION_PHASE"
+# internal-only: habilita compatibilidad temporal para migración controlada.
 LEGACY_TARGETS_MODE_ENV = "COBRA_LEGACY_TARGETS_MODE"
 
 

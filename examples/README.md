@@ -4,18 +4,11 @@ Este directorio reúne distintos ejemplos de uso de Cobra y material relacionado
 
 ## Política canónica de targets en ejemplos públicos
 
-Toda la documentación y los ejemplos públicos de este directorio deben usar solo
-los 8 nombres canónicos de targets oficiales de transpilación:
-`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java` y `asm`.
-No deben publicarse aliases o variantes fuera de contrato; usa siempre el nombre
-canónico exacto definido por la política oficial.
+Para recorrido de usuario final, este directorio debe sugerir únicamente:
+`python`, `rust`, `javascript`.
 
-Además, conviene leerlos con esta distinción:
-
-- **Transpilación oficial**: `python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`.
-- **Runtime oficial**: `python`, `rust`, `javascript`, `cpp`.
-- **Runtime best-effort**: `go`, `java`.
-- **Solo transpilación sin runtime público**: `wasm`, `asm`.
+Los targets `go`, `cpp`, `java`, `wasm` y `asm` se mantienen como **internal-only**
+para migración/regresión técnica y no deben presentarse como opción pública de CLI.
 
 ## Subcarpetas
 
@@ -23,7 +16,7 @@ Además, conviene leerlos con esta distinción:
   ```bash
   cobra ejecutar examples/avanzados/<tema>/<archivo>.co
   ```
-- **hello_world/**: demostraciones "Hola Mundo" para los 8 targets oficiales (`python`, `rust`, `javascript`, `wasm`, `go`, `cpp`, `java`, `asm`).
+- **hello_world/**: demostraciones para targets públicos (`python`, `rust`, `javascript`) y artefactos legacy internal-only de referencia técnica.
 - **[hola_mundo](hola_mundo/)**: ejemplo mínimo para transpilar a Python.
   ```bash
   cobra compilar examples/hola_mundo/hola.co --backend python

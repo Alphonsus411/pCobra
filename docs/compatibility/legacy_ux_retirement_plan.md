@@ -10,8 +10,8 @@ Este plan aplica a los backends legacy mantenidos solo por compatibilidad intern
 
 ## Fecha de retiro comprometida
 
-- **Retiro de UX legacy:** **31 de julio de 2026**.
-- A partir de **1 de agosto de 2026**, la CLI pública no debe aceptar rutas legacy ni feature flags de bypass.
+- **Retiro total de compatibilidad legacy internal-only:** **30 de junio de 2027**.
+- A partir de **1 de julio de 2027**, la CLI pública no debe aceptar rutas legacy ni feature flags de bypass.
 
 ## Flag temporal para equipos dependientes
 
@@ -39,4 +39,6 @@ Este flag es transitorio y no debe usarse en documentación pública ni en nuevo
    - Verificar que no queden referencias legacy en docs públicas.
 5. **Cierre**
    - Congelar nuevos cambios funcionales sobre UX legacy.
-   - Confirmar readiness antes del 31/07/2026 y remover la ruta de compatibilidad.
+   - Confirmar readiness antes del 30/06/2027 y remover la ruta de compatibilidad.
+
+Checklist operativo por fases: `docs/compatibility/internal_only_backend_removal_checklist.md`.

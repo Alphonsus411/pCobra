@@ -35,6 +35,9 @@ INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW: Final[dict[str, str]] = {
     "asm": "Q3 2026",
 }
 
+# Fecha de corte global para retirar la compatibilidad legacy internal-only.
+INTERNAL_LEGACY_RETIREMENT_DATE: Final[str] = "2027-06-30"
+
 ALL_BACKENDS: Final[tuple[str, ...]] = PUBLIC_BACKENDS + INTERNAL_BACKENDS
 
 
