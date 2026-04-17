@@ -1,6 +1,6 @@
 usage: cobra [-h] [--version] [--ayuda] [--format] [--debug] [-v] [--no-safe]
              [--allow-insecure-fallback] [--allow-insecure-non-interactive]
-             [--modo {cobra,transpilar,mixto}] [--solo-cobra] [--ui {v1,v2}]
+             [--modo {cobra,transpilar,mixto}] [--solo-cobra]
              [--lang LANG] [--no-color] [--extra-validators EXTRA_VALIDATORS]
              [--legacy-imports] [--dev-ephemeral-key] [--plugins-safe-mode]
              [--plugins-unsafe-mode] [--plugins-allowlist PLUGINS_ALLOWLIST]
@@ -31,7 +31,6 @@ options:
                         (solo generar código), mixto (ejecutar y transpilar).
   --solo-cobra          Alias semántico de --modo cobra: sesión para solo
                         programar/interpretar Cobra sin rutas de codegen.
-  --ui {v1,v2}          Selecciona la interfaz CLI: v2 (recomendada para usuarios finales) o v1 (compatibilidad legacy). En v2, la superficie pública es run/build/test/mod. Los comandos internos quedan disponibles solo en perfil development (COBRA_DEV_MODE=1 o COBRA_CLI_COMMAND_PROFILE=development).
   --lang LANG           Interface language code
   --no-color            Disable colored output
   --extra-validators EXTRA_VALIDATORS

@@ -64,6 +64,7 @@ from pcobra.cobra.cli.mode_policy import (
     validar_politica_modo,
 )
 from pcobra.cobra.cli.public_command_policy import (
+    COMMAND_VISIBILITY_MATRIX_MARKDOWN,
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
     filter_commands_for_profile,
@@ -96,6 +97,12 @@ COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
 LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
+LEGACY_COMMAND_MIGRATION_MAP: dict[str, str] = {
+    "ejecutar": "run",
+    "compilar": "build",
+    "verificar": "test",
+    "modulos": "mod",
+}
 
 
 class CliErrorYaMostrado(Exception):
@@ -401,12 +408,7 @@ class CliApplication:
             "--ui",
             choices=("v1", "v2"),
             default="v2",
-            help=_(
-                "Selecciona la interfaz CLI: v2 (recomendada para usuarios finales) o v1 (compatibilidad interna). "
-                "En v2, la superficie pública es run/build/test/mod. "
-                "Los comandos internos quedan disponibles solo en perfil development "
-                "(COBRA_DEV_MODE=1 o COBRA_CLI_COMMAND_PROFILE=development)."
-            ),
+            help=argparse.SUPPRESS,
         )
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
@@ -634,8 +636,6 @@ class CliApplication:
             return
 
         blocked_routes: list[str] = []
-        if selected_ui == "v1":
-            blocked_routes.append("cli v1 (internal migration only)")
         if is_legacy_cli_enabled():
             blocked_routes.append(f"legacy command group ({COBRA_ENABLE_LEGACY_CLI_ENV}=1)")
         if is_internal_legacy_targets_enabled():
@@ -650,6 +650,58 @@ class CliApplication:
             "Use CLI v2 pública (run/build/test/mod) y enrute por "
             f"{USER_ROUTE_BACKEND_ENTRYPOINT}."
         )
+
+    @staticmethod
+    def _first_non_option_token_index(argv: list[str]) -> Optional[int]:
+        for index, token in enumerate(argv):
+            if token == "--":
+                return index + 1 if index + 1 < len(argv) else None
+            if not token.startswith("-"):
+                return index
+        return None
+
+    def _apply_public_cli_policy(self, argv: list[str]) -> list[str]:
+        """Fuerza UI v2 para usuarios y migra comandos legacy automáticamente."""
+        normalized = list(argv)
+        profile = resolve_command_profile()
+        if profile != PROFILE_PUBLIC:
+            return normalized
+
+        if self._resolve_selected_ui_from_argv(normalized) == "v1":
+            for index, token in enumerate(normalized):
+                if token == "--ui" and index + 1 < len(normalized):
+                    normalized[index + 1] = "v2"
+            messages.mostrar_advertencia(
+                _(
+                    "CLI v1 está reservada para desarrollo interno. "
+                    "Se aplicó migración automática a UI v2 pública."
+                )
+            )
+
+        command_idx = self._first_non_option_token_index(normalized)
+        if command_idx is None:
+            return normalized
+
+        command_token = normalized[command_idx].strip().lower()
+        migrated_to = LEGACY_COMMAND_MIGRATION_MAP.get(command_token)
+        if not migrated_to:
+            return normalized
+
+        normalized[command_idx] = migrated_to
+        messages.mostrar_advertencia(
+            _(
+                "Comando legacy '{legacy}' detectado fuera de entorno interno. "
+                "Migración automática aplicada: use '{current}'."
+            ).format(legacy=command_token, current=migrated_to)
+        )
+        logging.getLogger(__name__).warning(
+            "legacy_command_auto_migrated legacy=%s target=%s profile=%s matrix=%s",
+            command_token,
+            migrated_to,
+            profile,
+            COMMAND_VISIBILITY_MATRIX_MARKDOWN.replace("\n", " | "),
+        )
+        return normalized
 
     @staticmethod
     def _resolve_selected_ui_from_argv(argv: list[str]) -> str:
@@ -920,6 +972,7 @@ class CliApplication:
 
             try:
                 argv = self._sanear_argv(argv)
+                argv = self._apply_public_cli_policy(argv)
                 self._selected_ui = self._resolve_selected_ui_from_argv(argv)
                 self._enforce_public_startup_guard()
                 args = self._parse_arguments(argv)

@@ -44,6 +44,14 @@ LEGACY_OBSOLETE_COMMANDS: tuple[str, ...] = (
     "validar-sintaxis",
     "qa-validar",
 )
+COMMAND_VISIBILITY_MATRIX_MARKDOWN = """| Clase | Comandos |
+|---|---|
+| Públicos (UI v2) | run, build, test, mod |
+| Internos (UI v2 / development) | legacy, debug, devops |
+| Legacy públicos (UI v1) | interactive, compilar, ejecutar, modulos, verificar, docs, plugins, init, crear, paquete |
+| Legacy internos (UI v1) | cache, contenedor, gui, jupyter, qualia, agix |
+| Legacy obsoletos (UI v1) | dependencias, empaquetar, bench, benchmarks, benchmarks2, benchtranspilers, benchthreads, profile, transpilar-inverso, validar-sintaxis, qa-validar |
+|"""
 
 PROFILE_PUBLIC = "public"
 PROFILE_DEVELOPMENT = "development"
@@ -106,6 +114,7 @@ __all__ = [
     "LEGACY_PUBLIC_COMMANDS",
     "LEGACY_INTERNAL_COMMANDS",
     "LEGACY_OBSOLETE_COMMANDS",
+    "COMMAND_VISIBILITY_MATRIX_MARKDOWN",
     "PROFILE_PUBLIC",
     "PROFILE_DEVELOPMENT",
     "COMMAND_PROFILES",
