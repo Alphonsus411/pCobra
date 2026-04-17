@@ -22,6 +22,18 @@ Con backends públicos oficiales:
 - **Interfaz pública**: comandos `cobra run/build/test/mod` y backends oficiales `python`, `javascript`, `rust`.
 - **Compatibilidad interna**: aliases legacy y backends internos usados solo para migración controlada.
 
+## Matriz de comandos (públicos vs internos vs obsoletos)
+
+| Clase | Comandos |
+|---|---|
+| **Públicos (UI v2)** | `run`, `build`, `test`, `mod` |
+| **Internos (UI v2 / development)** | `legacy`, `debug`, `devops` |
+| **Legacy públicos (UI v1, migración)** | `interactive`, `compilar`, `ejecutar`, `modulos`, `verificar`, `docs`, `plugins`, `init`, `crear`, `paquete` |
+| **Legacy internos (UI v1)** | `cache`, `contenedor`, `gui`, `jupyter`, `qualia`, `agix` |
+| **Legacy obsoletos (UI v1)** | `dependencias`, `empaquetar`, `bench`, `benchmarks`, `benchmarks2`, `benchtranspilers`, `benchthreads`, `profile`, `transpilar-inverso`, `validar-sintaxis`, `qa-validar` |
+
+> Fuente de verdad de superficie pública: `PUBLIC_COMMANDS=("run","build","test","mod")`.
+
 ## Mapeo de comandos legacy (equivalencia viejo → nuevo)
 
 | Comando legacy (viejo) | Comando unificado (nuevo) |
