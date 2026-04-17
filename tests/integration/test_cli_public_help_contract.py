@@ -35,3 +35,24 @@ def test_cli_help_public_contract_snapshot():
     ).read_text(encoding="utf-8")
     assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.split())
     assert "\n  legacy " not in result.stdout.lower()
+
+
+def test_cli_help_public_contract_snapshot_no_expone_legacy_aun_con_ui_v1():
+    repo_root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--ui", "v1", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(repo_root),
+        env=_public_env(),
+    )
+    assert result.returncode == 0
+
+    expected_snapshot = (
+        Path(__file__).parent / "golden" / "cli_ui_v2_help_public.golden"
+    ).read_text(encoding="utf-8")
+    assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.split())
+    lower_help = result.stdout.lower()
+    assert "\n  legacy " not in lower_help
+    assert "\n  compilar " not in lower_help
+    assert "\n  ejecutar " not in lower_help

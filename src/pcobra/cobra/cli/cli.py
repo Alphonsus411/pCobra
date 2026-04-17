@@ -46,10 +46,12 @@ from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisComman
 from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
 from pcobra.cobra.cli.commands_v2 import (
     BuildCommandV2,
+    COBRA_ENABLE_LEGACY_CLI_ENV,
     LegacyCommandGroupV2,
     ModCommandV2,
     RunCommandV2,
     TestCommandV2,
+    is_legacy_cli_enabled,
 )
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.mode_policy import (
@@ -119,8 +121,6 @@ class AppConfig:
         ValidarSintaxisCommand, QaValidarCommand, PluginsCommand, AgixCommand
     ]
     V2_COMMAND_CLASSES: List[Type[BaseCommand]] = [RunCommandV2, BuildCommandV2, TestCommandV2, ModCommandV2]
-    if LegacyCommandGroupV2 is not None:
-        V2_COMMAND_CLASSES.append(LegacyCommandGroupV2)
 
 
 class CommandRegistry:
@@ -140,6 +140,16 @@ class CommandRegistry:
             logging.error(f"Error creating command {command_class.__name__}: {e}")
             raise
 
+    def _resolve_v2_command_classes(self) -> List[Type[BaseCommand]]:
+        classes = list(AppConfig.V2_COMMAND_CLASSES)
+        if LegacyCommandGroupV2 is not None and is_legacy_cli_enabled():
+            classes.append(LegacyCommandGroupV2)
+            logging.getLogger(__name__).debug(
+                "Compatibilidad legacy v2 habilitada por flag interno %s=1.",
+                COBRA_ENABLE_LEGACY_CLI_ENV,
+            )
+        return classes
+
     def register_base_commands(
         self,
         subparsers: Any,
@@ -148,7 +158,7 @@ class CommandRegistry:
         profile: str = PROFILE_PUBLIC,
     ) -> Dict[str, BaseCommand]:
         base_commands = []
-        command_classes = AppConfig.V2_COMMAND_CLASSES if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
+        command_classes = self._resolve_v2_command_classes() if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
 
         for cmd_class in command_classes:
             try:
@@ -261,9 +271,15 @@ class CliApplication:
             return
 
         command_profile = resolve_command_profile()
+        selected_ui = getattr(self, "_selected_ui", "v2")
+        if command_profile == PROFILE_PUBLIC and selected_ui == "v1":
+            logging.getLogger(__name__).debug(
+                "Perfil público activo: forzando UI v2 para evitar exposición de comandos legacy en --help.",
+            )
+            selected_ui = "v2"
         self.command_registry.register_base_commands(
             self._subparsers,
-            ui=getattr(self, "_selected_ui", "v2"),
+            ui=selected_ui,
             profile=command_profile,
         )
         menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
@@ -386,7 +402,7 @@ class CliApplication:
             choices=("v1", "v2"),
             default="v2",
             help=_(
-                "Selecciona la interfaz CLI: v2 (recomendada para usuarios finales) o v1 (compatibilidad legacy). "
+                "Selecciona la interfaz CLI: v2 (recomendada para usuarios finales) o v1 (compatibilidad interna). "
                 "En v2, la superficie pública es run/build/test/mod. "
                 "Los comandos internos quedan disponibles solo en perfil development "
                 "(COBRA_DEV_MODE=1 o COBRA_CLI_COMMAND_PROFILE=development)."
