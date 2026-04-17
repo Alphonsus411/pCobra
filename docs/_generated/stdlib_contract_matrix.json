@@ -38,7 +38,7 @@
         {
           "function": "cobra.core.es_finito",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.core.es_infinito",
@@ -53,7 +53,7 @@
         {
           "function": "cobra.core.es_infinito",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.core.copiar_signo",
@@ -68,7 +68,7 @@
         {
           "function": "cobra.core.copiar_signo",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.core.signo",
@@ -83,7 +83,7 @@
         {
           "function": "cobra.core.signo",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         }
       ]
     },
@@ -119,7 +119,7 @@
         {
           "function": "cobra.datos.filtrar",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.datos.seleccionar_columnas",
@@ -129,7 +129,7 @@
         {
           "function": "cobra.datos.seleccionar_columnas",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.datos.a_listas",
@@ -139,7 +139,7 @@
         {
           "function": "cobra.datos.a_listas",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.datos.de_listas",
@@ -149,7 +149,7 @@
         {
           "function": "cobra.datos.de_listas",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         }
       ]
     },
@@ -177,7 +177,7 @@
         {
           "function": "cobra.web.obtener_url",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.web.obtener_url",
@@ -187,7 +187,7 @@
         {
           "function": "cobra.web.enviar_post",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.web.enviar_post",
@@ -197,7 +197,7 @@
         {
           "function": "cobra.web.descargar_archivo",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.web.descargar_archivo",
@@ -208,7 +208,7 @@
     },
     {
       "module": "cobra.system",
-      "primary_backend": "python",
+      "primary_backend": "python+rust",
       "allowed_fallback": [
         "rust",
         "javascript"
@@ -274,7 +274,7 @@
         {
           "function": "cobra.system.ejecutar",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         },
         {
           "function": "cobra.system.obtener_env",
@@ -289,7 +289,7 @@
         {
           "function": "cobra.system.obtener_env",
           "backend": "javascript",
-          "level": "full"
+          "level": "partial"
         }
       ]
     }

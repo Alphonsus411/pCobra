@@ -18,11 +18,11 @@ WEB_CONTRACT = ContractDescriptor(
         core_nativos=("src/pcobra/core/nativos/red.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.web.obtener_url", {"javascript": "full", "python": "full"}),
-        FunctionCoverage("cobra.web.enviar_post", {"javascript": "full", "python": "full"}),
+        FunctionCoverage("cobra.web.obtener_url", {"javascript": "partial", "python": "full"}),
+        FunctionCoverage("cobra.web.enviar_post", {"javascript": "partial", "python": "full"}),
         FunctionCoverage(
             "cobra.web.descargar_archivo",
-            {"javascript": "full", "python": "full"},
+            {"javascript": "partial", "python": "full"},
         ),
     ),
 )

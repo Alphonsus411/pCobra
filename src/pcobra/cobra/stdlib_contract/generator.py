@@ -66,10 +66,39 @@ def _format_paths(paths: tuple[str, ...]) -> str:
 
 def render_contract_markdown() -> str:
     """Construye documentación Markdown desde descriptores Python."""
+    summary_rows = [
+        "| Módulo | API pública | Backend primario | Fallback | Límites |",
+        "|---|---|---|---|---|",
+    ]
+    for descriptor in CONTRACTS:
+        partial_rows = []
+        for coverage in descriptor.coverage:
+            for backend, level in coverage.backend_levels.items():
+                if level == "partial":
+                    partial_rows.append(f"{coverage.function.rsplit('.', 1)[-1]}:{backend}")
+        limits = ", ".join(partial_rows) if partial_rows else "-"
+        summary_rows.append(
+            "| "
+            + " | ".join(
+                (
+                    f"`{descriptor.module}`",
+                    str(len(descriptor.public_api)),
+                    f"`{descriptor.primary_backend}`",
+                    f"`{', '.join(descriptor.allowed_fallback) or 'ninguno'}`",
+                    limits,
+                )
+            )
+            + " |"
+        )
+
     lines: list[str] = [
         "# Matriz única de stdlib Cobra (autogenerado)",
         "",
         "Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.",
+        "",
+        "## Tabla de garantías por módulo",
+        "",
+        *summary_rows,
         "",
     ]
     for descriptor in CONTRACTS:

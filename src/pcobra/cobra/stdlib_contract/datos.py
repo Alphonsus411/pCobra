@@ -19,12 +19,12 @@ DATOS_CONTRACT = ContractDescriptor(
         core_nativos=("src/pcobra/core/nativos/datos.js",),
     ),
     coverage=(
-        FunctionCoverage("cobra.datos.filtrar", {"python": "full", "javascript": "full"}),
+        FunctionCoverage("cobra.datos.filtrar", {"python": "full", "javascript": "partial"}),
         FunctionCoverage(
             "cobra.datos.seleccionar_columnas",
-            {"python": "full", "javascript": "full"},
+            {"python": "full", "javascript": "partial"},
         ),
-        FunctionCoverage("cobra.datos.a_listas", {"python": "full", "javascript": "full"}),
-        FunctionCoverage("cobra.datos.de_listas", {"python": "full", "javascript": "full"}),
+        FunctionCoverage("cobra.datos.a_listas", {"python": "full", "javascript": "partial"}),
+        FunctionCoverage("cobra.datos.de_listas", {"python": "full", "javascript": "partial"}),
     ),
 )

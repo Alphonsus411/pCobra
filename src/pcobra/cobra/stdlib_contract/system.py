@@ -11,7 +11,7 @@ SYSTEM_CONTRACT = ContractDescriptor(
         "cobra.system.ejecutar",
         "cobra.system.obtener_env",
     ),
-    primary_backend="python",
+    primary_backend="python+rust",
     allowed_fallback=("rust", "javascript"),
     runtime_mapping=RuntimeMapping(
         standard_library=("src/pcobra/standard_library/archivo.py",),
@@ -26,11 +26,11 @@ SYSTEM_CONTRACT = ContractDescriptor(
         ),
         FunctionCoverage(
             "cobra.system.ejecutar",
-            {"python": "full", "rust": "partial", "javascript": "full"},
+            {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
         FunctionCoverage(
             "cobra.system.obtener_env",
-            {"python": "full", "rust": "partial", "javascript": "full"},
+            {"python": "full", "rust": "partial", "javascript": "partial"},
         ),
     ),
 )
