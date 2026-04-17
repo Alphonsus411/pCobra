@@ -214,6 +214,7 @@ Esta organización actúa como contrato técnico entre la interfaz pública y la
 ## Ecosistema unificado Cobra
 
 Cobra expone una sola interfaz de entrada (`cobra`) y desacopla internamente la orquestación, los adapters y los runtimes de ejecución. Revisa el diagrama por capas en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
+Para el plan de transición arquitectónica incremental, consulta [docs/architecture/cobra_unified_refactor_plan.md](docs/architecture/cobra_unified_refactor_plan.md).
 
 ## Migración a CLI unificada
 
