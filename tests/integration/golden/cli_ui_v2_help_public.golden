@@ -31,7 +31,12 @@ options:
                         (solo generar código), mixto (ejecutar y transpilar).
   --solo-cobra          alias semántico de --modo cobra: sesión para solo
                         programar/interpretar cobra sin rutas de codegen.
-  --ui {v1,v2}          selecciona la interfaz cli: v2 (recomendada para usuarios finales) o v1 (compatibilidad legacy). en v2, la superficie pública es run/build/test/mod. los comandos internos quedan disponibles solo en perfil development (cobra_dev_mode=1 o cobra_cli_command_profile=development).
+  --ui {v1,v2}          selecciona la interfaz cli: v2 (recomendada para
+                        usuarios finales) o v1 (compatibilidad interna). en
+                        v2, la superficie pública es run/build/test/mod. los
+                        comandos internos quedan disponibles solo en perfil
+                        development (cobra_dev_mode=1 o
+                        cobra_cli_command_profile=development).
   --lang lang           interface language code
   --no-color            disable colored output
   --extra-validators extra_validators

@@ -35,6 +35,10 @@ Con backends públicos oficiales:
 | `cobra modulos remover modulo.co` | `cobra mod remove modulo.co` |
 | `cobra modulos buscar nombre` | `cobra mod search nombre` |
 | `cobra modulos publicar ruta/al/modulo.co` | `cobra mod publish ruta/al/modulo.co` |
+| `cobra interactive archivo.co` | `cobra run archivo.co` |
+| `cobra init` | `cobra mod init` |
+| `cobra crear` | `cobra mod init` |
+| `cobra paquete` | `cobra mod publish` |
 
 ## Migración de flags `--backend`
 
