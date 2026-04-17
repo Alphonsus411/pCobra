@@ -137,6 +137,7 @@ Antes de fusionar cambios de política:
 - [x] Política de targets validada (`python scripts/ci/validate_targets.py`).
 - [x] Coherencia de docs públicas validada (`python scripts/validate_targets_policy.py`).
 - [x] Contrato de compatibilidad por backend validado (`python scripts/validate_runtime_contract.py`).
+- [x] Checklist CI activo de **no exposición pública de legacy targets** (help/superficies públicas).
 - [x] Cualquier guardrail en fallo bloquea merge (jobs CI en estado failed).
 
 ## Checklist de retiro seguro por backend interno
