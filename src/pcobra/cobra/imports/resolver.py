@@ -41,9 +41,13 @@ class ResolutionResult:
     import_path: str | None = None
     backend: str | None = None
     backend_adapter: object | None = None
+    precedence_reason: str | None = None
 
 
 _SOURCE_ORDER: tuple[str, ...] = ("stdlib", "project", "python_bridge", "hybrid")
+_SUPPORTED_COLLISION_POLICIES: frozenset[str] = frozenset(
+    {"warn", "strict_error", "namespace_required"}
+)
 
 
 class CobraImportResolver:
@@ -56,13 +60,68 @@ class CobraImportResolver:
         hybrid_modules: Mapping[str, HybridModuleSpec | Mapping[str, Any]] | None = None,
         default_backend: str = "python",
         strict_ambiguous_imports: bool = False,
+        collision_policy: str | None = None,
     ) -> None:
         self.project_root = Path(project_root).resolve() if project_root else None
-        self.hybrid_modules = self._normalize_hybrid_modules(hybrid_modules or {})
+        config = get_toml_map()
+        self.hybrid_modules = self._load_hybrid_modules(config, hybrid_modules)
         self.default_backend = default_backend
-        self.strict_ambiguous_imports = strict_ambiguous_imports
+        self.collision_policy = self._resolve_collision_policy(
+            config=config,
+            strict_ambiguous_imports=strict_ambiguous_imports,
+            explicit_policy=collision_policy,
+        )
         self.stdlib_modules = self._load_stdlib_modules()
         self.project_modules = self._load_project_modules()
+
+    def _load_hybrid_modules(
+        self,
+        config: Mapping[str, Any],
+        explicit_modules: Mapping[str, HybridModuleSpec | Mapping[str, Any]] | None,
+    ) -> dict[str, HybridModuleSpec]:
+        declared_in_config = self._hybrid_modules_from_config(config)
+        declared_explicit = self._normalize_hybrid_modules(explicit_modules or {})
+        declared_in_config.update(declared_explicit)
+        return declared_in_config
+
+    @staticmethod
+    def _hybrid_modules_from_config(config: Mapping[str, Any]) -> dict[str, HybridModuleSpec]:
+        imports_section = config.get("imports", {})
+        if not isinstance(imports_section, Mapping):
+            return {}
+        raw_hybrid = imports_section.get("hybrid_modules", {})
+        if not isinstance(raw_hybrid, Mapping):
+            return {}
+        return CobraImportResolver._normalize_hybrid_modules(raw_hybrid)
+
+    @staticmethod
+    def _resolve_collision_policy(
+        *,
+        config: Mapping[str, Any],
+        strict_ambiguous_imports: bool,
+        explicit_policy: str | None,
+    ) -> str:
+        if strict_ambiguous_imports:
+            return "strict_error"
+
+        configured_policy = CobraImportResolver._collision_policy_from_config(config)
+        chosen = explicit_policy or configured_policy or "warn"
+        if chosen not in _SUPPORTED_COLLISION_POLICIES:
+            raise ImportResolutionError(
+                "Política de colisiones inválida. "
+                "Usa 'warn', 'strict_error' o 'namespace_required'."
+            )
+        return chosen
+
+    @staticmethod
+    def _collision_policy_from_config(config: Mapping[str, Any]) -> str | None:
+        imports_section = config.get("imports", {})
+        if not isinstance(imports_section, Mapping):
+            return None
+        policy = imports_section.get("collision_policy")
+        if isinstance(policy, str):
+            return policy.strip()
+        return None
 
     @staticmethod
     def _normalize_hybrid_modules(
@@ -111,6 +170,12 @@ class CobraImportResolver:
         if not candidates:
             raise ImportResolutionError(f"No se encontró módulo para '{name}'")
 
+        precedence_reason = (
+            f"unique_source:{candidates[0].source}"
+            if len(candidates) == 1
+            else f"source_order:{' > '.join(_SOURCE_ORDER)}"
+        )
+
         if "." not in name and len(candidates) > 1:
             details = ", ".join(f"{c.source}:{c.resolved_name}" for c in candidates)
             message = (
@@ -120,11 +185,25 @@ class CobraImportResolver:
                 f"Recomendación: usa prefijo explícito ('cobra.{name}') para stdlib o namespace de proyecto "
                 f"(por ejemplo 'app.{name}')."
             )
-            if self.strict_ambiguous_imports:
-                raise ImportResolutionError(f"{message} Activa resolución explícita en strict mode.")
+            if self.collision_policy in {"strict_error", "namespace_required"}:
+                suffix = (
+                    " Modo namespace_required: debes importar con namespace explícito."
+                    if self.collision_policy == "namespace_required"
+                    else " Activa resolución explícita en strict mode."
+                )
+                raise ImportResolutionError(f"{message}{suffix}")
             warnings.warn(message, category=UserWarning, stacklevel=2)
 
-        return self._attach_backend_adapter(candidates[0])
+        selected = ResolutionResult(
+            request=candidates[0].request,
+            source=candidates[0].source,
+            resolved_name=candidates[0].resolved_name,
+            import_path=candidates[0].import_path,
+            backend=candidates[0].backend,
+            backend_adapter=candidates[0].backend_adapter,
+            precedence_reason=precedence_reason,
+        )
+        return self._attach_backend_adapter(selected)
 
     def load_module(
         self,
@@ -161,6 +240,7 @@ class CobraImportResolver:
             "resolved_name": resolution.resolved_name,
             "backend": resolution.backend,
             "import_path": resolution.import_path,
+            "precedence_reason": resolution.precedence_reason,
         }
         setattr(module, "__cobra_resolution_source__", resolution.source)
         setattr(module, "__cobra_backend_injected__", resolution.backend)
@@ -177,6 +257,7 @@ class CobraImportResolver:
             import_path=resolution.import_path,
             backend=effective_backend,
             backend_adapter=adapter,
+            precedence_reason=resolution.precedence_reason,
         )
 
     def _build_candidate(self, source: str, name: str) -> ResolutionResult | None:

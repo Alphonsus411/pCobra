@@ -144,6 +144,37 @@ javascript = "build/modulo.js"
 - Para proyectos que solo distribuyen un subconjunto de backends, ajusta
   explícitamente `required_targets` para evitar errores de validación.
 
+## Política de colisiones de imports en `cobra.toml`
+
+El resolvedor de imports (`CobraImportResolver`) mantiene **orden estable** de
+precedencia:
+
+1. `stdlib`
+2. `project`
+3. `python_bridge`
+4. `hybrid`
+
+La política de qué hacer ante colisiones de nombres sin namespace se configura
+por proyecto:
+
+```toml
+[imports]
+collision_policy = "warn" # warn | strict_error | namespace_required
+```
+
+- `warn`: mantiene comportamiento actual (warning + selección por precedencia).
+- `strict_error`: convierte la colisión en error.
+- `namespace_required`: exige imports explícitos con namespace cuando hay
+  colisión (`cobra.*`, `app.*`, etc.).
+
+También puedes declarar módulos híbridos:
+
+```toml
+[imports.hybrid_modules.mi_hibrido]
+import_path = "mi_hibrido_runtime"
+backend = "javascript"
+```
+
 ## Terminología: interfaz pública vs backend interno
 
 - **Interfaz pública**: comandos y documentación para usuarios (`cobra run`, `cobra build`, `cobra test`, `cobra mod`) y backends oficiales `python`, `javascript`, `rust`.

@@ -62,6 +62,26 @@ def test_colision_en_modo_estricto_falla(tmp_path):
         resolver.resolve("datos")
 
 
+def test_colision_en_namespace_required_falla(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(project_root=tmp_path, collision_policy="namespace_required")
+
+    with pytest.raises(ImportResolutionError, match="namespace_required"):
+        resolver.resolve("datos")
+
+
+def test_politica_colisiones_desde_config(monkeypatch, tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    monkeypatch.setattr(
+        "pcobra.cobra.imports.resolver.get_toml_map",
+        lambda: {"imports": {"collision_policy": "strict_error"}},
+    )
+    resolver = CobraImportResolver(project_root=tmp_path)
+
+    with pytest.raises(ImportResolutionError, match="strict mode"):
+        resolver.resolve("datos")
+
+
 def test_bridge_python_directo():
     resolver = CobraImportResolver()
 
@@ -109,7 +129,42 @@ def test_modulo_hibrido_inyecta_adapter_backend(monkeypatch):
         "resolved_name": "mi_hibrido",
         "backend": "javascript",
         "import_path": "mi_hibrido_runtime",
+        "precedence_reason": "unique_source:hybrid",
     }
+
+
+def test_modulo_hibrido_desde_config(monkeypatch):
+    fake_module = ModuleType("hibrido_config_runtime")
+
+    import importlib
+
+    original_import_module = importlib.import_module
+
+    def fake_import_module(name: str):
+        if name == "hibrido_config_runtime":
+            return fake_module
+        return original_import_module(name)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+    monkeypatch.setattr(
+        "pcobra.cobra.imports.resolver.get_toml_map",
+        lambda: {
+            "imports": {
+                "hybrid_modules": {
+                    "mod_hibrido": {
+                        "import_path": "hibrido_config_runtime",
+                        "backend": "python",
+                    }
+                }
+            }
+        },
+    )
+    resolver = CobraImportResolver()
+
+    resolution, module = resolver.load_module("mod_hibrido")
+
+    assert resolution.source == "hybrid"
+    assert module is fake_module
 
 
 def test_resolver_adjunta_adapter_desde_resolucion():
@@ -119,6 +174,17 @@ def test_resolver_adjunta_adapter_desde_resolucion():
 
     assert result.backend is not None
     assert result.backend_adapter is not None
+    assert result.precedence_reason == "unique_source:python_bridge"
+
+
+def test_motivo_precedencia_en_colision(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(project_root=tmp_path)
+
+    with pytest.warns(UserWarning, match="Colisión de import"):
+        result = resolver.resolve("datos")
+
+    assert result.precedence_reason == "source_order:stdlib > project > python_bridge > hybrid"
 
 
 def test_error_si_no_hay_candidato():
