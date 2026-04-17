@@ -38,9 +38,18 @@ def test_warning_message_usa_formato_unificado():
     msg = legacy_backend_warning_message(target="asm", route="CLI.parse_target")
     assert "ruta no pública" in msg
     assert "estado=removal-candidate" in msg
+    assert "fase=phase-1-hide-public-ux" in msg
+    assert "ventana=Q3 2026" in msg
     assert "destino público recomendado=python" in msg
 
 
 def test_iter_rows_respeta_orden_canonic():
     rows = iter_legacy_backend_lifecycle_rows()
     assert tuple(backend for backend, _ in rows) == INTERNAL_BACKENDS
+
+
+def test_iter_rows_expone_clasificacion_por_fase():
+    rows = dict(iter_legacy_backend_lifecycle_rows())
+    assert rows["asm"].phase == "phase-1-hide-public-ux"
+    assert rows["go"].phase == "phase-2-development-profile-only"
+    assert rows["wasm"].retirement_window == "Q2 2027"

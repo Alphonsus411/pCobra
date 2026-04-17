@@ -12,6 +12,11 @@ from typing import Final, Literal
 from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
 
 LegacyLifecycleStatus = Literal["active-migration", "frozen", "removal-candidate"]
+LegacyLifecyclePhase = Literal[
+    "phase-1-hide-public-ux",
+    "phase-2-development-profile-only",
+    "phase-3-remove-expired-code-and-tests",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +24,8 @@ class LegacyBackendLifecycle:
     """Describe el estado de retiro de un backend interno."""
 
     status: LegacyLifecycleStatus
+    phase: LegacyLifecyclePhase
+    retirement_window: str
     recommended_public_target: str
     owner_track: str
     notes: str
@@ -27,30 +34,40 @@ class LegacyBackendLifecycle:
 LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
     "go": LegacyBackendLifecycle(
         status="active-migration",
+        phase="phase-2-development-profile-only",
+        retirement_window="Q4 2026",
         recommended_public_target="rust",
         owner_track="runtime-migration",
         notes="Backend interno con uso residual en migración activa de pipelines.",
     ),
     "cpp": LegacyBackendLifecycle(
         status="active-migration",
+        phase="phase-2-development-profile-only",
+        retirement_window="Q4 2026",
         recommended_public_target="rust",
         owner_track="runtime-migration",
         notes="Se mantiene temporalmente por compatibilidad de integraciones históricas.",
     ),
     "java": LegacyBackendLifecycle(
         status="active-migration",
+        phase="phase-2-development-profile-only",
+        retirement_window="Q1 2027",
         recommended_public_target="javascript",
         owner_track="runtime-migration",
         notes="Uso interno controlado durante el retiro de rutas no públicas.",
     ),
     "wasm": LegacyBackendLifecycle(
         status="frozen",
+        phase="phase-2-development-profile-only",
+        retirement_window="Q2 2027",
         recommended_public_target="javascript",
         owner_track="maintenance-only",
         notes="Congelado: solo correcciones críticas sin expansión funcional.",
     ),
     "asm": LegacyBackendLifecycle(
         status="removal-candidate",
+        phase="phase-1-hide-public-ux",
+        retirement_window="Q3 2026",
         recommended_public_target="python",
         owner_track="decommission",
         notes="Candidato explícito a retiro; mantener únicamente para diagnóstico acotado.",
@@ -83,7 +100,8 @@ def legacy_backend_warning_message(*, target: str, route: str) -> str:
     metadata = LEGACY_BACKEND_LIFECYCLE[target]
     return (
         f"[INTERNAL LEGACY BACKEND] '{target}' usado vía ruta no pública ({route}). "
-        f"estado={metadata.status}; destino público recomendado={metadata.recommended_public_target}; "
+        f"estado={metadata.status}; fase={metadata.phase}; ventana={metadata.retirement_window}; "
+        f"destino público recomendado={metadata.recommended_public_target}; "
         "uso permitido solo para migración interna temporal."
     )
 

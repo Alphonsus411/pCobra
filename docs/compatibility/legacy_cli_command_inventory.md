@@ -43,3 +43,4 @@ Este inventario clasifica la superficie v1 de la CLI en tres categorías para la
 - En CLI v1 con perfil `public`, se desactivan comandos internos y obsoletos.
 - En CLI v1 con perfil `development`, se conservan para migración técnica y pruebas de regresión.
 - En CLI v2, la UX pública ya permanece limitada a `run`, `build`, `test`, `mod`.
+- Antes de borrado físico, los comandos obsoletos deben retirarse del help/documentación pública y validarse en CI.
