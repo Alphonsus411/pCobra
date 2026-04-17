@@ -69,3 +69,14 @@ Esta decisión se refleja en:
 
 - `docs/architecture/unified-ecosystem.md` (modelo de 5 capas).
 - `docs/targets_policy.md` (normativa única de público vs interno y API estable).
+
+## Gobernanza de ABI (breaking changes)
+
+Para sostener el contrato externo estable en la capa de bindings/runtime:
+
+1. Todo breaking change de ABI (por backend o ruta contractual) debe publicarse explícitamente en `CHANGELOG.md`.
+2. Además, debe documentarse en un ADR nuevo o enmienda de ADR con:
+   - versiones ABI afectadas,
+   - matriz de compatibilidad hacia atrás,
+   - plan de migración y ventana de deprecación.
+3. La CLI v2 (`run`, `test`, `build`) debe validar seguridad y ABI únicamente vía `RuntimeManager` para evitar rutas de ejecución paralelas no gobernadas.

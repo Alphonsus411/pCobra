@@ -1,5 +1,9 @@
 ## v10.0.13 - 2026-03-29
 - Fix: la CLI ya no depende de `scripts.benchmarks` en tiempo de ejecución.
+- RuntimeManager ahora centraliza la validación de seguridad+ABI para `run`, `test` y `build` en CLI v2 mediante `validate_command_runtime`, evitando atajos directos fuera del manager.
+- Se unificaron los mensajes de error por ruta contractual de bindings (`Python direct import`, `JavaScript runtime bridge`, `Rust compiled FFI`) con un prefijo canónico.
+- Nuevas pruebas de contrato ABI que validan `abi_by_backend` y `backend_abi` leyendo `cobra.toml`/`pcobra.toml`.
+- **Breaking changes de ABI (gobernanza):** cualquier cambio incompatible de ABI debe anunciarse explícitamente en changelog y registrarse con ADR dedicado antes de su liberación.
 
 ## v10.1.0 - 2025-08-24
 - Integración completa de Hololang como lenguaje intermedio oficial del compilador.

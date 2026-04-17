@@ -58,13 +58,12 @@ class TestCommandV2(BaseCommand):
             try:
                 sandbox = lang == "python"
                 containerized = lang in {"javascript", "rust"}
-                self._runtime_manager.validate_security_route(
+                self._runtime_manager.validate_command_runtime(
                     lang,
+                    command="test",
                     sandbox=sandbox,
                     containerized=containerized,
-                    command="test",
                 )
-                self._runtime_manager.validate_abi_route(lang)
             except ValueError as exc:
                 mostrar_error(str(exc), registrar_log=False)
                 return 1

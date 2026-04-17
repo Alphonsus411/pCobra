@@ -1,6 +1,7 @@
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -15,6 +16,7 @@ class BuildCommandV2(BaseCommand):
 
     def __init__(self) -> None:
         super().__init__()
+        self._runtime_manager = RuntimeManager()
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Build/transpile a Cobra file"))
@@ -41,6 +43,12 @@ class BuildCommandV2(BaseCommand):
                 _("Resolución de backend (debug): {reason}").format(reason=build_result["reason"]),
                 registrar_log=False,
             )
+        runtime_language = str(build_result.get("runtime", {}).get("language", "python"))
+        try:
+            self._runtime_manager.validate_command_runtime(runtime_language, command="build")
+        except ValueError as exc:
+            mostrar_error(str(exc), registrar_log=False)
+            return 1
         mostrar_info(_("Código generado:"), registrar_log=False)
         print(build_result["code"])
         return 0
