@@ -1,124 +1,87 @@
 CLI de Cobra
 ===========
 
-La herramienta ``cobra`` se maneja mediante subcomandos que facilitan
-la ejecución y transpilación de programas. A continuación se resumen
-las opciones más importantes y un ejemplo de uso para cada una.
+La CLI pública de Cobra se enfoca en un flujo estable para usuario final con
+cuatro comandos:
 
-Al iniciarse, la CLI muestra una cabecera con el logo de Cobra. Si se
-prefiere desactivar los colores puede usarse la opción ``--no-color``.
+- ``cobra run archivo.cobra``
+- ``cobra build archivo.cobra``
+- ``cobra test archivo.cobra``
+- ``cobra mod ...``
 
-Modos globales de la CLI (``--modo``)
--------------------------------------
+Estos comandos exponen la UX oficial. La selección de backend, adaptación de
+runtime y detalles de transpilación quedan encapsulados dentro de la
+arquitectura interna.
 
-La opción global ``--modo`` controla qué escenarios se habilitan en la sesión:
+Flujo público recomendado
+-------------------------
 
-- ``cobra``: solo ejecución/interpretación.
-- ``transpilar``: solo generación de código.
-- ``mixto``: ejecución + generación de código.
-
-Ejemplos:
-
-.. code-block:: bash
-
-   cobra --modo cobra ejecutar programa.co
-   cobra --modo transpilar compilar programa.co --tipo python
-
-Subcomando ``compilar``
-----------------------
-Transpila un archivo Cobra a otro lenguaje.
-
-Opciones principales:
-
-- ``archivo``: ruta del script ``.co``.
-- ``--tipo``: lenguaje de salida derivado de la política canónica de targets.
-- ``--backend``: alias de ``--tipo`` útil para integraciones automatizadas.
-  En documentación pública se recomienda ``--tipo``.
-- ``--tipos``: lista de lenguajes separados por comas para transpilación paralela.
-
-Ejemplo:
+Ejecutar un programa:
 
 .. code-block:: bash
 
-   cobra compilar hola.co --tipo python
+   cobra run archivo.cobra
 
-Otro ejemplo generando varios lenguajes a la vez:
-
-.. code-block:: bash
-
-   cobra compilar hola.co --tipos=python,javascript,rust
-
-Política de targets oficial
----------------------------
-
-La lista de nombres canónicos disponibles para ``cobra compilar`` y sus tiers se incluye automáticamente desde la política canónica:
-
-.. include:: ../_generated/target_policy_summary.rst
-
-Lista oficial por tiers usada por la ayuda de CLI:
-
-- **Tier 1 (público)**: ``python``, ``rust``, ``javascript``.
-- **Tier 2**: sin targets públicos.
-
-Los backends ``go``, ``cpp``, ``java``, ``wasm`` y ``asm`` quedan en estado
-**internal-only** para compatibilidad temporal controlada. No forman parte de
-la UX pública ni de ejemplos públicos.
-
-Resumen operativo de runtime en la CLI pública:
-
-- **Runtime oficial verificable**: ``python``, ``rust``, ``javascript``.
-- **Runtime best-effort no público**: ninguno en superficie pública.
-- **Solo transpilación (sin runtime oficial CLI)**: ninguno en superficie pública.
-
-SLA de soporte documental/operativo:
-
-- **Tier 1**: triage inicial de regresiones en <= 2 días hábiles.
-- **Tier 2**: triage inicial de regresiones en <= 5 días hábiles.
-
-Para cambios de clasificación (promoción/degradación) se exige RFC + plan de migración.
-
-Compatibilidad temporal internal-only
--------------------------------------
-
-Si un equipo aún depende de ``go/cpp/java/wasm/asm``, puede habilitar
-compatibilidad interna temporal con:
+Construir artefactos:
 
 .. code-block:: bash
 
-   export COBRA_INTERNAL_LEGACY_TARGETS=1
+   cobra build archivo.cobra
 
-Plan y fecha de retiro de esta UX legacy:
+Ejecutar pruebas del proyecto o de un archivo:
 
-- ``docs/compatibility/legacy_ux_retirement_plan.md``
+.. code-block:: bash
 
-Migración desde targets retirados
+   cobra test archivo.cobra
+
+Gestionar módulos:
+
+.. code-block:: bash
+
+   cobra mod list
+   cobra mod install paquete.cobra
+   cobra mod remove paquete.cobra
+
+Architecture overview (resumen corto)
+--------------------------------------
+
+Diagrama principal:
+
+.. code-block:: text
+
+   Frontend Cobra
+        ↓
+   BackendPipeline
+        ↓
+   Bindings (python/js/rust)
+
+- ``Frontend Cobra`` analiza el código y produce AST.
+- ``BackendPipeline`` resuelve backend y normaliza compilación interna.
+- ``Bindings`` conecta con runtime oficial en Python, JavaScript y Rust.
+
+Imports y biblioteca estándar (resolución determinista)
+-------------------------------------------------------
+
+La resolución de imports en la ruta pública es determinista y prioriza el
+espacio estándar antes de rutas híbridas ambiguas. Para documentación y ejemplos
+se usan los módulos canónicos:
+
+- ``cobra.core``
+- ``cobra.datos``
+- ``cobra.web``
+- ``cobra.system``
+
+Histórico y compatibilidad legacy
 ---------------------------------
 
-Si tu flujo histórico dependía de targets eliminados, migra a un target oficial según tu necesidad (runtime oficial, best-effort o solo transpilación) y revisa la guía de transición:
+.. warning::
+   Las opciones y comandos legacy que aparecen en esta sección se conservan
+   **solo para compatibilidad temporal**. No forman parte de la UX pública
+   recomendada. Para nuevos flujos usa únicamente ``run/build/test/mod``.
 
-- ``docs/migracion_targets_retirados.md``
-- ``docs/historico/migracion_targets_retirados_archivo.md`` (archivo histórico, fuera del flujo activo)
-
-Ejemplos de ``cobra compilar`` para cada backend oficial (generado):
-
-.. include:: ../_generated/cli_backend_examples.rst
-
-Subcomando ``ejecutar``
-----------------------
-Ejecuta directamente un script Cobra.
-
-Opciones principales:
-
-- ``archivo``: ruta del código ``.co``.
-- ``--formatear``: aplica ``black`` antes de procesar el archivo.
-- ``--depurar``: muestra información de depuración.
-- ``--no-seguro``: desactiva el :doc:`modo seguro <modo_seguro>`.
-
-Ejemplo:
-
-.. code-block:: bash
-
-   cobra ejecutar programa.co --no-seguro --depurar
+La política oficial de targets sigue limitándose a ``python``, ``javascript`` y
+``rust``. Targets legacy e indicadores internos deben usarse únicamente en
+migraciones controladas.
 
 Subcomando ``validar-sintaxis``
 -------------------------------
