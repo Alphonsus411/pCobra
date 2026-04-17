@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.architecture.capabilities_contract import (
+from pcobra.cobra.architecture.contracts import (
     PUBLIC_BACKENDS,
     PUBLIC_CAPABILITIES_CONTRACT,
     assert_backend_allowed_for_scope,

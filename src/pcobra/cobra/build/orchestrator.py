@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.architecture.capabilities_contract import (
+from pcobra.cobra.architecture.contracts import (
     PROJECT_TYPE_PUBLIC_POLICY,
     PUBLIC_BACKENDS,
     PUBLIC_FALLBACK_POLICY,
