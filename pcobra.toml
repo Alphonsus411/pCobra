@@ -3,15 +3,9 @@
 # Este archivo se genera o mantiene manualmente tras usar comandos como `cobra transpilar`.
 
 [project]
-# Targets soportados por la plataforma Cobra (oficiales):
-# - Tier 1: python, rust, javascript, wasm
-# - Tier 2: go, cpp, java, asm
-#
-# Targets requeridos por proyecto (política local de CI/build):
-# - Por defecto usamos Tier 1 completo para asegurar cobertura mínima oficial.
-# - Tier 2 puede declararse de forma opcional en `cobra.mod`/mapeos sin hacerlo obligatorio.
-# - Si tu proyecto quiere exigir también Tier 2, añádelo explícitamente aquí.
-required_targets = ["python", "rust", "javascript", "wasm"]
+# Targets públicos soportados por la plataforma Cobra:
+# - python, javascript, rust
+required_targets = ["python", "javascript", "rust"]
 
 
 # Negociación ABI por backend para bridges/runtime manager.
@@ -22,21 +16,11 @@ rust = "1.0"
 
 [modulos."modulo.co"]
 python = "modulo.py"
-rust = "modulo.rs"
 javascript = "modulo.js"
-wasm = "modulo.wasm"
-go = "modulo.go"
-cpp = "modulo.cpp"
-java = "modulo.java"
-asm = "modulo.asm"
+rust = "modulo.rs"
 
 # Puedes añadir más entradas como:
 # [modulos."ciencia/genetica.co"]
 # python = "ciencia/genetica.py"
-# rust = "ciencia/genetica.rs"
 # javascript = "ciencia/genetica.js"
-# wasm = "ciencia/genetica.wasm"
-# go = "ciencia/genetica.go"
-# cpp = "ciencia/genetica.cpp"
-# java = "ciencia/genetica.java"
-# asm = "ciencia/genetica.asm"
+# rust = "ciencia/genetica.rs"

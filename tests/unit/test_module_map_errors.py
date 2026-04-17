@@ -1,6 +1,8 @@
 import builtins
 import logging
 
+import pytest
+
 from cobra.transpilers import module_map
 
 
@@ -32,6 +34,32 @@ def test_get_toml_map_invalid_file_returns_empty_and_logs_error(tmp_path, monkey
 
     assert result == {}
     assert "Error al cargar cobra.toml" in caplog.text
+
+
+def test_get_toml_map_rechaza_required_targets_fuera_de_public_backends(tmp_path, monkeypatch):
+    module_map._toml_cache = None
+    bad_toml = tmp_path / "cobra.toml"
+    bad_toml.write_text(
+        "[project]\nrequired_targets = ['python', 'go']\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module_map, "COBRA_TOML_PATH", str(bad_toml))
+
+    with pytest.raises(ValueError, match="required_targets"):
+        module_map.get_toml_map()
+
+
+def test_get_toml_map_rechaza_targets_legacy_en_modulos(tmp_path, monkeypatch):
+    module_map._toml_cache = None
+    bad_toml = tmp_path / "cobra.toml"
+    bad_toml.write_text(
+        "[modulos]\n[modulos.'demo.co']\ngo = 'demo.go'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module_map, "COBRA_TOML_PATH", str(bad_toml))
+
+    with pytest.raises(ValueError, match="\\[modulos"):
+        module_map.get_toml_map()
 
 
 def test_get_mapped_path_returns_original_when_no_mapping(monkeypatch):
