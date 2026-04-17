@@ -1,6 +1,6 @@
 """Módulos de arquitectura interna de pCobra."""
 
-from pcobra.cobra.architecture.capabilities_contract import (
+from pcobra.cobra.architecture.contracts import (
     PROJECT_TYPE_PUBLIC_POLICY,
     PUBLIC_CAPABILITIES_CONTRACT,
     PUBLIC_FALLBACK_POLICY,
