@@ -112,11 +112,7 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
     ast = obtener_ast(codigo)
     code = transpile(ast, resolution.backend)
     debug = bool(context.get("debug", False))
-    reason = (
-        resolution.reason_for(debug=debug)
-        if hasattr(resolution, "reason_for")
-        else (getattr(resolution, "reason", None) if debug else None)
-    )
+    reason = resolution.reason_for(debug=debug)
     return {
         "backend": resolution.backend,
         "reason": reason,

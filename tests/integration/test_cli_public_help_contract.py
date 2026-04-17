@@ -36,6 +36,25 @@ def test_cli_help_public_contract_snapshot():
     ).read_text(encoding="utf-8")
     assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.split())
     assert "\n  legacy " not in result.stdout.lower()
+    assert "--backend" not in result.stdout.lower()
+    assert "--tipo" not in result.stdout.lower()
+    assert "--tipos" not in result.stdout.lower()
+
+
+def test_cli_build_help_public_contract_no_expone_flags_backend():
+    repo_root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "build", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(repo_root),
+        env=_public_env(),
+    )
+    assert result.returncode == 0
+    output = result.stdout.lower()
+    assert "--backend" not in output
+    assert "--tipo" not in output
+    assert "--tipos" not in output
 
 
 def test_cli_help_public_contract_bloquea_ui_v1_en_perfil_publico():

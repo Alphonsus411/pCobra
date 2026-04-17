@@ -1,10 +1,9 @@
-from argparse import Namespace
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.build import backend_pipeline
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 
 
@@ -16,7 +15,6 @@ class BuildCommandV2(BaseCommand):
 
     def __init__(self) -> None:
         super().__init__()
-        self._legacy = CompileCommand()
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Build/transpile a Cobra file"))
@@ -26,13 +24,23 @@ class BuildCommandV2(BaseCommand):
 
     def run(self, args: Any) -> int:
         debug = bool(getattr(args, "debug", False))
-        resolution = backend_pipeline.resolve_backend(args.file, {})
-        legacy_args = Namespace(
-            archivo=args.file,
-            tipo=resolution.backend,
-            backend=None,
-            tipos=None,
-            modo=getattr(args, "modo", "mixto"),
-            backend_reason=resolution.reason_for(debug=debug),
-        )
-        return self._legacy.run(legacy_args)
+        try:
+            build_result = backend_pipeline.build(
+                args.file,
+                {
+                    "debug": debug,
+                    "source_file": args.file,
+                },
+            )
+        except Exception as exc:
+            mostrar_error(str(exc), registrar_log=False)
+            return 1
+
+        if build_result.get("reason"):
+            mostrar_info(
+                _("Resolución de backend (debug): {reason}").format(reason=build_result["reason"]),
+                registrar_log=False,
+            )
+        mostrar_info(_("Código generado:"), registrar_log=False)
+        print(build_result["code"])
+        return 0

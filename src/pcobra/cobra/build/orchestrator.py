@@ -25,8 +25,10 @@ class BackendResolution:
     reason: str
 
     def reason_for(self, *, debug: bool) -> str | None:
-        """Expone razón solo cuando el flujo se ejecuta en modo debug."""
-        return self.reason if debug else None
+        """Expone telemetría de resolución únicamente en modo debug."""
+        if not debug:
+            return None
+        return f"[backend_resolution] backend={self.backend}; reason={self.reason}"
 
 
 class BuildOrchestrator:
