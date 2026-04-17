@@ -53,6 +53,10 @@ from pcobra.cobra.cli.commands_v2 import (
     TestCommandV2,
     is_legacy_cli_enabled,
 )
+from pcobra.cobra.cli.internal_compat.legacy_targets import (
+    LEGACY_BACKENDS_FEATURE_FLAG,
+    is_internal_legacy_targets_enabled,
+)
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
@@ -66,6 +70,7 @@ from pcobra.cobra.cli.public_command_policy import (
     filter_legacy_commands_for_profile,
     resolve_command_profile,
 )
+from pcobra.cobra.architecture.overview import USER_ROUTE_BACKEND_ENTRYPOINT
 from pcobra.cobra.cli.plugin import (
     descubrir_plugins,
     configure_plugin_policy,
@@ -272,11 +277,6 @@ class CliApplication:
 
         command_profile = resolve_command_profile()
         selected_ui = getattr(self, "_selected_ui", "v2")
-        if command_profile == PROFILE_PUBLIC and selected_ui == "v1":
-            logging.getLogger(__name__).debug(
-                "Perfil público activo: forzando UI v2 para evitar exposición de comandos legacy en --help.",
-            )
-            selected_ui = "v2"
         self.command_registry.register_base_commands(
             self._subparsers,
             ui=selected_ui,
@@ -626,6 +626,38 @@ class CliApplication:
         parsed = self.parser.parse_args(argv)
         return self._normalizar_flags_sesion(parsed)
 
+    def _enforce_public_startup_guard(self) -> None:
+        """Bloquea exposición accidental de rutas legacy en perfil público."""
+        command_profile = resolve_command_profile()
+        selected_ui = getattr(self, "_selected_ui", "v2")
+        if command_profile != PROFILE_PUBLIC:
+            return
+
+        blocked_routes: list[str] = []
+        if selected_ui == "v1":
+            blocked_routes.append("cli v1 (internal migration only)")
+        if is_legacy_cli_enabled():
+            blocked_routes.append(f"legacy command group ({COBRA_ENABLE_LEGACY_CLI_ENV}=1)")
+        if is_internal_legacy_targets_enabled():
+            blocked_routes.append(f"legacy targets ({LEGACY_BACKENDS_FEATURE_FLAG}=1)")
+
+        if not blocked_routes:
+            return
+
+        raise RuntimeError(
+            "Perfil público bloqueado por rutas legacy/internal migration only: "
+            f"{', '.join(blocked_routes)}. "
+            "Use CLI v2 pública (run/build/test/mod) y enrute por "
+            f"{USER_ROUTE_BACKEND_ENTRYPOINT}."
+        )
+
+    @staticmethod
+    def _resolve_selected_ui_from_argv(argv: list[str]) -> str:
+        for index, token in enumerate(argv):
+            if token == "--ui" and index + 1 < len(argv):
+                return argv[index + 1].strip().lower()
+        return "v2"
+
     def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
         error_ya_mostrado = isinstance(exc, CliErrorYaMostrado) or bool(
             getattr(exc, "error_ya_mostrado", False)
@@ -888,6 +920,8 @@ class CliApplication:
 
             try:
                 argv = self._sanear_argv(argv)
+                self._selected_ui = self._resolve_selected_ui_from_argv(argv)
+                self._enforce_public_startup_guard()
                 args = self._parse_arguments(argv)
                 command = getattr(args, "cmd", None)
                 command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")

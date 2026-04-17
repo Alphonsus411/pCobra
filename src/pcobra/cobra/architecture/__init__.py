@@ -14,6 +14,14 @@ from pcobra.cobra.architecture.unified_ecosystem import (
     STDLIB_BLUEPRINTS,
     build_refactor_workplan,
 )
+from pcobra.cobra.architecture.overview import (
+    INTERNAL_MIGRATION_ONLY_SURFACES,
+    PUBLIC_ARCHITECTURE_OVERVIEW,
+    PUBLIC_CLI_V2_COMMANDS,
+    PUBLIC_FLOW_DIAGRAM,
+    PUBLIC_LANGUAGE_BOUNDARY,
+    USER_ROUTE_BACKEND_ENTRYPOINT,
+)
 
 __all__ = [
     "PROJECT_TYPE_PUBLIC_POLICY",
@@ -26,4 +34,10 @@ __all__ = [
     "IMPORT_POLICY_BLUEPRINT",
     "BINDING_BLUEPRINTS",
     "build_refactor_workplan",
+    "PUBLIC_LANGUAGE_BOUNDARY",
+    "PUBLIC_CLI_V2_COMMANDS",
+    "USER_ROUTE_BACKEND_ENTRYPOINT",
+    "INTERNAL_MIGRATION_ONLY_SURFACES",
+    "PUBLIC_ARCHITECTURE_OVERVIEW",
+    "PUBLIC_FLOW_DIAGRAM",
 ]
