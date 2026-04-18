@@ -1,5 +1,11 @@
 # Contrato oficial de resolución de imports (`CobraImportResolver`)
 
+## Contrato unificado (aplica a toda esta guía)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 Este documento define el contrato **oficial** y estable del resolvedor de imports de Cobra para eliminar ambigüedades operativas entre stdlib, módulos de proyecto, bridge Python e híbridos.
 
 ## 1) Orden oficial de resolución (API contractual)

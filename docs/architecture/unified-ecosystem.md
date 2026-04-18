@@ -1,5 +1,11 @@
 # Índice del ecosistema unificado de Cobra
 
+## Contrato unificado (aplica a toda esta guía)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 Este documento define el **índice contractual** para evitar ambigüedad sobre qué módulos son fuente canónica y cuáles existen únicamente por compatibilidad.
 
 ## 1) Fuente canónica contractual única

@@ -19,9 +19,9 @@ Versión 10.0.13
 
 ## Cobra como interfaz única
 
-Cobra consolida su experiencia de uso en una **única interfaz pública**: la CLI `cobra`. Todas las tareas de ejecución, build, pruebas y módulos se coordinan desde este frente común, mientras la orquestación interna y los adaptadores de backend permanecen encapsulados.
+Cobra consolida su experiencia de uso en una **única interfaz pública**: la CLI `cobra`. Todas las tareas de ejecución, build, pruebas y módulos se coordinan desde este frente común.
 
-Ejemplos públicos mínimos:
+### Comandos oficiales (visibles y estables)
 
 ```bash
 cobra run archivo.cobra
@@ -30,9 +30,35 @@ cobra test archivo.cobra
 cobra mod list
 ```
 
-La superficie pública oficial mantiene tres backends: **Python**, **JavaScript** y **Rust**.
+> Contrato público: el lenguaje visible es **Cobra** y los comandos oficiales son `run`, `build`, `test` y `mod`.
 
-pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida derivada automáticamente de `src/pcobra/cobra/config/transpile_targets.py` + `src/pcobra/cobra/transpilers/registry.py`.
+### Contrato de backends internos oficiales
+
+La superficie oficial mantiene exactamente **3 backends internos**:
+
+- `python`
+- `javascript`
+- `rust`
+
+La selección de backend la realiza internamente el pipeline y **no** es un parámetro de configuración para usuario final.
+
+### Qué es interno y no público
+
+No forman parte del contrato público:
+
+- Transpiladores legacy (`go`, `cpp`, `java`, `wasm`, `asm`).
+- Compat shims y rutas de compatibilidad histórica.
+- Comandos y flujos de CLI v1 fuera del set `run/build/test/mod`.
+
+### Tabla de decisión de backend interno (no configurable por usuario final)
+
+| Contexto técnico detectado por el pipeline | Backend interno preferente | Override permitido |
+|---|---|---|
+| Ejecución estándar y paridad máxima de librerías | `python` | Solo hints internos controlados por Core |
+| Integración runtime web/bridge JS | `javascript` | Solo hints internos controlados por Core |
+| Integración nativa/FFI y ABI contractual | `rust` | Solo hints internos controlados por Core |
+
+pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica.
 
 Resumen normativo visible (generado desde la política canónica):
 

@@ -1,5 +1,11 @@
 # Checklist arquitectónica: Backend Pipeline
 
+## Contrato unificado (aplica a toda esta checklist)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 Usar esta checklist antes de mergear nuevas features que afecten compile/transpile/runtime.
 
 ## Flujo oficial (obligatorio)

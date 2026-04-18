@@ -1,5 +1,11 @@
 # Cobra unificado: diseño objetivo y refactor parcial seguro (A–I)
 
+## Contrato unificado (aplica a todo el plan)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 Este plan aterriza la transición de Cobra como **lenguaje único visible** con tres backends oficiales internos: `python`, `javascript`, `rust`, manteniendo intactos lexer/parser/AST/transpiladores existentes.
 
 ---
