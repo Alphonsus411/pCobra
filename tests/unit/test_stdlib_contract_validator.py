@@ -4,6 +4,7 @@ from pcobra.cobra.stdlib_contract import CONTRACTS, get_contract_matrix
 from pcobra.cobra.stdlib_contract.validator import (
     validate_contracts,
     validate_contracts_against_runtime_matrix,
+    validate_generated_stdlib_contract_matrix,
 )
 
 
@@ -13,6 +14,10 @@ def test_stdlib_contracts_validate() -> None:
 
 def test_stdlib_contracts_validate_against_runtime_matrix() -> None:
     validate_contracts_against_runtime_matrix()
+
+
+def test_stdlib_contracts_validate_against_generated_docs() -> None:
+    validate_generated_stdlib_contract_matrix()
 
 
 def test_stdlib_matrix_contains_all_contract_modules() -> None:

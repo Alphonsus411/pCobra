@@ -279,6 +279,16 @@ def test_resolver_adjunta_adapter_desde_resolucion():
     assert result.precedence_reason == "unique_source:python_bridge"
 
 
+def test_resolver_usa_contrato_publico_para_backend_stdlib():
+    resolver = CobraImportResolver()
+
+    result = resolver.resolve("cobra.web")
+
+    assert result.source == "stdlib"
+    assert result.backend == "javascript"
+    assert result.backend_adapter is not None
+
+
 def test_motivo_precedencia_en_colision(tmp_path):
     (tmp_path / "datos.co").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)

@@ -11,8 +11,8 @@ from types import ModuleType
 from typing import Any, Mapping
 
 from pcobra.cobra.backends.resolver import resolve_backend
+from pcobra.cobra.stdlib_contract import get_public_stdlib_module_contracts
 from pcobra.cobra.transpilers.module_map import (
-    get_stdlib_contracts,
     get_toml_map,
     resolve_backend_for_module,
 )
@@ -149,9 +149,9 @@ class CobraImportResolver:
         return normalized
 
     @staticmethod
-    def _load_stdlib_modules() -> set[str]:
-        contracts = get_stdlib_contracts()
-        return {name for name in contracts if name.startswith("cobra.")}
+    def _load_stdlib_modules() -> dict[str, dict[str, object]]:
+        contracts = get_public_stdlib_module_contracts()
+        return {name: metadata for name, metadata in contracts.items() if name.startswith("cobra.")}
 
     @staticmethod
     def _load_project_modules() -> set[str]:
@@ -312,22 +312,34 @@ class CobraImportResolver:
 
     def _resolve_stdlib_module(self, name: str) -> ResolutionResult | None:
         if name.startswith("cobra."):
-            if name in self.stdlib_modules:
+            metadata = self.stdlib_modules.get(name)
+            if metadata is not None:
                 return ResolutionResult(
                     request=name,
                     source="stdlib",
                     resolved_name=name,
                     import_path=self._cobra_stdlib_to_python(name),
+                    backend=(
+                        str(metadata["backend_preferido"])
+                        if isinstance(metadata.get("backend_preferido"), str)
+                        else None
+                    ),
                 )
             return None
 
         qualified = f"cobra.{name}"
-        if qualified in self.stdlib_modules:
+        metadata = self.stdlib_modules.get(qualified)
+        if metadata is not None:
             return ResolutionResult(
                 request=name,
                 source="stdlib",
                 resolved_name=qualified,
                 import_path=self._cobra_stdlib_to_python(qualified),
+                backend=(
+                    str(metadata["backend_preferido"])
+                    if isinstance(metadata.get("backend_preferido"), str)
+                    else None
+                ),
             )
         return None
 

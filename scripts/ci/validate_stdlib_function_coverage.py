@@ -14,12 +14,14 @@ if str(SRC_ROOT) not in sys.path:
 from pcobra.cobra.stdlib_contract.validator import (  # noqa: E402
     validate_contracts,
     validate_contracts_against_runtime_matrix,
+    validate_generated_stdlib_contract_matrix,
 )
 
 
 def main() -> int:
     validate_contracts()
     validate_contracts_against_runtime_matrix()
+    validate_generated_stdlib_contract_matrix()
     print("✅ Stdlib coverage by function valida contra runtime_api_matrix")
     return 0
 
