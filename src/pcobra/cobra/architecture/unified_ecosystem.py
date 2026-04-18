@@ -1,7 +1,9 @@
 """Plano arquitectónico para el ecosistema unificado de Cobra.
 
-Fuente canónica contractual única (junto con backend_policy/contracts) para
-blueprints de ejecución y retiro legacy del ecosistema.
+Blueprint operativo interno alineado con `backend_policy` y `contracts`.
+
+Las fuentes públicas de verdad para política/contrato de backends son
+exclusivamente `backend_policy.py` y `contracts.py`.
 
 Este módulo no altera el front-end del lenguaje ni los transpilers existentes.
 Su propósito es concentrar decisiones de arquitectura y un plan de ejecución
@@ -66,6 +68,8 @@ class RefactorTask:
     id: str
     area: str
     objective: str
+    owner: str
+    definition_of_done: tuple[str, ...]
     changes: tuple[str, ...]
     safe_checks: tuple[str, ...]
 
@@ -145,6 +149,11 @@ def build_refactor_workplan() -> tuple[RefactorTask, ...]:
             id="T1",
             area="core-alignment",
             objective="Alinear módulos core con el contrato de 3 backends oficiales.",
+            owner="core-architecture",
+            definition_of_done=(
+                "Rutas públicas usan backend_policy/contracts sin redefinir listas.",
+                "No hay imports de compatibilidad interna en rutas públicas.",
+            ),
             changes=(
                 "Reusar PUBLIC_BACKENDS como única fuente en rutas públicas.",
                 "Conservar INTERNAL_BACKENDS solo para compatibilidad temporal.",
@@ -158,6 +167,11 @@ def build_refactor_workplan() -> tuple[RefactorTask, ...]:
             id="T2",
             area="cli-simplification",
             objective="Consolidar UX en run/build/test/mod sin exposición de transpilers.",
+            owner="cli-platform",
+            definition_of_done=(
+                "Comandos v2 mantienen contrato público con 3 targets oficiales.",
+                "Flags de compatibilidad legacy quedan encapsuladas en internal_compat.",
+            ),
             changes=(
                 "Mantener comandos v2 como interfaz por defecto.",
                 "Encapsular decisiones de backend en build.backend_pipeline.",
@@ -171,6 +185,11 @@ def build_refactor_workplan() -> tuple[RefactorTask, ...]:
             id="T3",
             area="stdlib-contract",
             objective="Operar stdlib pública por contratos cobra.core/datos/web/system.",
+            owner="stdlib-core",
+            definition_of_done=(
+                "Paridad validada entre contrato público y módulos desplegados.",
+                "Sin divergencias en auditorías de stdlib contract validator.",
+            ),
             changes=(
                 "Mantener manifest único en pcobra.cobra.stdlib_contract.",
                 "Declarar backend primario + fallbacks por módulo.",
@@ -184,6 +203,11 @@ def build_refactor_workplan() -> tuple[RefactorTask, ...]:
             id="T4",
             area="imports-bindings",
             objective="Formalizar resolución de imports + bridges de runtime.",
+            owner="runtime-bindings",
+            definition_of_done=(
+                "Orden de resolución aplicado en resolver con pruebas verdes.",
+                "Adapters inyectados con metadata contractual verificable.",
+            ),
             changes=(
                 "Aplicar orden stdlib > proyecto > python_bridge > hybrid.",
                 "Inyectar adapters por módulo resuelto en tiempo de carga.",
@@ -197,6 +221,11 @@ def build_refactor_workplan() -> tuple[RefactorTask, ...]:
             id="T5",
             area="legacy-removal",
             objective="Retirar componentes legacy no oficiales de forma segura.",
+            owner="decommission-track",
+            definition_of_done=(
+                "Inventario legacy auditado y ventanas de retiro actualizadas.",
+                "Rutas retiradas eliminadas sin romper contrato público oficial.",
+            ),
             changes=(
                 "Marcar go/cpp/java/wasm/asm como candidatos de retiro.",
                 "Eliminar comandos y scripts de backends retirados después de auditoría.",

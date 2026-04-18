@@ -16,6 +16,7 @@ from pcobra.cobra.cli.internal_compat.legacy_targets import (
     enabled_internal_legacy_targets,
     is_internal_legacy_targets_enabled,
 )
+from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     BEST_EFFORT_RUNTIME_BACKENDS,
