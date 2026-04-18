@@ -63,6 +63,14 @@ Fixtures de regresión para `validar-sintaxis`:
 
 ## Dependencias y versionado
 
+- Usa `pyproject.toml` (`[project].version`) como **única fuente visible de
+  versión** para documentación pública.
+- Cada vez que cambie la versión, sincroniza cabeceras y tablas públicas en:
+  `docs/MANUAL_COBRA.md`, `docs/MANUAL_COBRA.rst`, `docs/README.en.md` y
+  `docs/guia_basica.md`.
+- Antes de abrir PR ejecuta `python scripts/ci/validate_public_docs_version.py`.
+  Esta validación falla si detecta versiones públicas múltiples o distintas de
+  `pyproject.toml`.
 - Mantén sincronizadas las versiones fijadas en `pyproject.toml`,
   `requirements.txt` y `requirements-dev.txt`. Cuando se actualice una
   dependencia, revisa los tres archivos y aplica el mismo número de versión.
