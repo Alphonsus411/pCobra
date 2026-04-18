@@ -169,10 +169,11 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Extensión para VS Code
 - [Comunidad](docs/comunidad.md)
 - Licencia
+- [Libro de Programación Cobra (de cero a avanzado)](docs/LIBRO_PROGRAMACION_COBRA.md)
 - [Manual de Cobra](docs/MANUAL_COBRA.md)
 - [Manual de Cobra en formato reStructuredText](docs/MANUAL_COBRA.rst)
 - [Manual de Cobra en PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
-- [Guía básica](docs/guia_basica.md)
+- [Guía básica (referencia histórica)](docs/guia_basica.md)
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
 - [Casos de uso reales](docs/casos_reales.md)
