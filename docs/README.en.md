@@ -4,7 +4,7 @@
 [![Tier 2 Nightly](https://github.com/Alphonsus411/pCobra/actions/workflows/test.yml/badge.svg?event=schedule)](https://github.com/Alphonsus411/pCobra/actions/workflows/test.yml)
 [![Stable release](https://img.shields.io/github/v/release/Alphonsus411/pCobra?label=stable)](https://github.com/Alphonsus411/pCobra/releases/latest)
 
-Version 10.0.12
+Version 10.0.13
 
 - The incremental AST/token cache now lives in **SQLitePlus**, with `SQLITE_DB_KEY`/`COBRA_DB_PATH` to define the encrypted database and a helper script to migrate previous JSON entries.
 - `corelibs.asincrono` ships `grupo_tareas` and `reintentar_async`, re-exported by the standard library to coordinate coroutines with structured concurrency and retries featuring exponential backoff and jitter.
@@ -162,7 +162,7 @@ If you prefer to automate the process, run:
 ./scripts/install.sh --dev      # install in editable mode
 ```
 
-3. Create a virtual environment and activate it:
+3. Create a virtual environment and activate it (Python 3.10 or higher):
 
 ```bash
 python -m venv .venv
@@ -183,8 +183,6 @@ source .venv/bin/activate  # Unix
 ```bash
 pip install -e .
 ```
-
-Optionally, you may run ``pip install -e .[dev]`` to include the development extras.
 
 6. Copy ``.env.example`` to ``.env`` and customize the paths or keys if necessary. These variables will be loaded automatically thanks to ``python-dotenv``:
 
@@ -219,7 +217,7 @@ PYTHONPATH=$PWD/src python -c "from src.core.main import main; main()"
 
 ### Installation with pipx
 
-[pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.9 or higher. To install Cobra with pipx run:
+[pipx](https://pypa.github.io/pipx/) is a tool to install and run Python applications in isolation and requires Python 3.10 or higher. To install Cobra with pipx run:
 
 ```bash
 pipx install pcobra
@@ -247,9 +245,9 @@ Precompiled executables for Cobra are published in the repository's [Releases](h
 
 | Version | Platform | Link |
 | --- | --- | --- |
-| 10.0.12 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-linux) |
-| 10.0.12 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra.exe) |
-| 10.0.12 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-macos) |
+| 10.0.13 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.13/cobra-linux) |
+| 10.0.13 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.13/cobra.exe) |
+| 10.0.13 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.13/cobra-macos) |
 
 To verify the integrity of the downloaded file, compute its SHA256 hash and compare it with the published value:
 

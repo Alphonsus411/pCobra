@@ -1,13 +1,13 @@
 # Manual del Lenguaje Cobra
 
-Versión 10.0.12
+Versión 10.0.13
 
 Este manual presenta en español los conceptos básicos para programar en Cobra. Se organiza en tareas que puedes seguir paso a paso.
 
 ## 1. Preparación del entorno
 
 1. Clona el repositorio y entra en el directorio `pCobra`.
-2. Crea y activa un entorno virtual de **Python 3.9 o superior**.
+2. Crea y activa un entorno virtual de **Python 3.10 o superior**.
 3. Instala las dependencias con `./scripts/install_dev.sh`.
    Este script instala tanto las dependencias de ejecución como las de desarrollo.
    Aseg\u00farate tambi\u00e9n de tener disponible la herramienta `cbindgen`:
@@ -20,7 +20,7 @@ Este manual presenta en español los conceptos básicos para programar en Cobra.
 
 ### Instalación con pipx
 
-Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herramienta que permite ejecutar aplicaciones de Python aisladas y requiere Python 3.9 o superior.
+Puedes instalar Cobra utilizando [pipx](https://pypa.github.io/pipx/), una herramienta que permite ejecutar aplicaciones de Python aisladas y requiere Python 3.10 o superior.
 
 ```bash
 pipx install pcobra

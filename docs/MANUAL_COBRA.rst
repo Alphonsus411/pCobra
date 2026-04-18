@@ -1,7 +1,7 @@
 Manual de Cobra
 ===============
 
-Versión 10.0.12
+Versión 10.0.13
 
 Este documento resume la sintaxis y los elementos fundamentales del lenguaje
 Cobra. Incluye ejemplos de uso idiomático, limitaciones de los backends y
@@ -14,12 +14,10 @@ Preparación del entorno
 ----------------------
 
 1. Clona el repositorio y entra en ``pCobra``.
-2. Crea y activa un entorno virtual de **Python 3.9 o superior**.
-3. Instala las dependencias con ``pip install -r requirements-dev.txt``.
+2. Crea y activa un entorno virtual de **Python 3.10 o superior**.
+3. Instala dependencias de ejecución y desarrollo con
+   ``./scripts/install_dev.sh``.
 4. Instala Cobra en modo editable con ``pip install -e .``.
-
-   También puedes ejecutar ``pip install -e .[dev]`` para incluir los extras de
-   desarrollo.
 
 Sintaxis básica
 ---------------

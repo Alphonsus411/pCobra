@@ -2,15 +2,28 @@
 
 Este documento presenta un recorrido introductorio por el lenguaje Cobra con veinte ejemplos sencillos.
 
+## Prerrequisitos e instalación recomendada
+
+- Python **3.10 o superior**.
+- Entorno virtual activo.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Unix
+# .\.venv\Scripts\activate  # Windows PowerShell
+./scripts/install_dev.sh
+pip install -e .
+```
+
 ## Descargas
 
 Puedes obtener binarios precompilados desde la sección de [Releases](https://github.com/Alphonsus411/pCobra/releases).
 
 | Versión | Plataforma | Enlace |
 | --- | --- | --- |
-| 10.0.12 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-linux) |
-| 10.0.12 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra.exe) |
-| 10.0.12 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.12/cobra-macos) |
+| 10.0.13 | Linux x86_64 | [cobra-linux](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.13/cobra-linux) |
+| 10.0.13 | Windows x86_64 | [cobra.exe](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.13/cobra.exe) |
+| 10.0.13 | macOS arm64 | [cobra-macos](https://github.com/Alphonsus411/pCobra/releases/download/v10.0.13/cobra-macos) |
 
 Para verificar la integridad del archivo descargado calcula su hash SHA256 y compáralo con el valor publicado:
 
