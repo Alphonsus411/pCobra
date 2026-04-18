@@ -1,6 +1,11 @@
 """Contrato del módulo público ``cobra.system``."""
 
-from pcobra.cobra.stdlib_contract.base import ContractDescriptor, FunctionCoverage, RuntimeMapping
+from pcobra.cobra.stdlib_contract.base import (
+    ContractDescriptor,
+    FunctionCoverage,
+    PublicApiExport,
+    RuntimeMapping,
+)
 
 
 SYSTEM_CONTRACT = ContractDescriptor(
@@ -10,6 +15,16 @@ SYSTEM_CONTRACT = ContractDescriptor(
         "cobra.system.escribir",
         "cobra.system.ejecutar",
         "cobra.system.obtener_env",
+    ),
+    public_exports=(
+        PublicApiExport("cobra.system.leer", "src/pcobra/standard_library/archivo.py", "leer"),
+        PublicApiExport("cobra.system.escribir", "src/pcobra/standard_library/archivo.py", "escribir"),
+        PublicApiExport("cobra.system.ejecutar", "src/pcobra/corelibs/sistema.py", "ejecutar"),
+        PublicApiExport(
+            "cobra.system.obtener_env",
+            "src/pcobra/corelibs/sistema.py",
+            "obtener_env",
+        ),
     ),
     primary_backend="python",
     allowed_fallback=("rust", "javascript"),

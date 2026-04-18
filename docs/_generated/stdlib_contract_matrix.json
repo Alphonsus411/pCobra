@@ -24,6 +24,28 @@
         "cobra.core.copiar_signo",
         "cobra.core.signo"
       ],
+      "public_exports": [
+        {
+          "alias": "cobra.core.es_finito",
+          "source_path": "src/pcobra/standard_library/numero.py",
+          "python_symbol": "es_finito"
+        },
+        {
+          "alias": "cobra.core.es_infinito",
+          "source_path": "src/pcobra/standard_library/numero.py",
+          "python_symbol": "es_infinito"
+        },
+        {
+          "alias": "cobra.core.copiar_signo",
+          "source_path": "src/pcobra/standard_library/numero.py",
+          "python_symbol": "copiar_signo"
+        },
+        {
+          "alias": "cobra.core.signo",
+          "source_path": "src/pcobra/standard_library/numero.py",
+          "python_symbol": "signo"
+        }
+      ],
       "coverage": [
         {
           "function": "cobra.core.es_finito",
@@ -110,6 +132,28 @@
         "cobra.datos.a_listas",
         "cobra.datos.de_listas"
       ],
+      "public_exports": [
+        {
+          "alias": "cobra.datos.filtrar",
+          "source_path": "src/pcobra/standard_library/datos.py",
+          "python_symbol": "filtrar"
+        },
+        {
+          "alias": "cobra.datos.seleccionar_columnas",
+          "source_path": "src/pcobra/standard_library/datos.py",
+          "python_symbol": "seleccionar_columnas"
+        },
+        {
+          "alias": "cobra.datos.a_listas",
+          "source_path": "src/pcobra/standard_library/datos.py",
+          "python_symbol": "a_listas"
+        },
+        {
+          "alias": "cobra.datos.de_listas",
+          "source_path": "src/pcobra/standard_library/datos.py",
+          "python_symbol": "de_listas"
+        }
+      ],
       "coverage": [
         {
           "function": "cobra.datos.filtrar",
@@ -173,6 +217,23 @@
         "cobra.web.enviar_post",
         "cobra.web.descargar_archivo"
       ],
+      "public_exports": [
+        {
+          "alias": "cobra.web.obtener_url",
+          "source_path": "src/pcobra/corelibs/red.py",
+          "python_symbol": "obtener_url"
+        },
+        {
+          "alias": "cobra.web.enviar_post",
+          "source_path": "src/pcobra/corelibs/red.py",
+          "python_symbol": "enviar_post"
+        },
+        {
+          "alias": "cobra.web.descargar_archivo",
+          "source_path": "src/pcobra/corelibs/red.py",
+          "python_symbol": "descargar_archivo"
+        }
+      ],
       "coverage": [
         {
           "function": "cobra.web.obtener_url",
@@ -229,6 +290,28 @@
         "cobra.system.escribir",
         "cobra.system.ejecutar",
         "cobra.system.obtener_env"
+      ],
+      "public_exports": [
+        {
+          "alias": "cobra.system.leer",
+          "source_path": "src/pcobra/standard_library/archivo.py",
+          "python_symbol": "leer"
+        },
+        {
+          "alias": "cobra.system.escribir",
+          "source_path": "src/pcobra/standard_library/archivo.py",
+          "python_symbol": "escribir"
+        },
+        {
+          "alias": "cobra.system.ejecutar",
+          "source_path": "src/pcobra/corelibs/sistema.py",
+          "python_symbol": "ejecutar"
+        },
+        {
+          "alias": "cobra.system.obtener_env",
+          "source_path": "src/pcobra/corelibs/sistema.py",
+          "python_symbol": "obtener_env"
+        }
       ],
       "coverage": [
         {

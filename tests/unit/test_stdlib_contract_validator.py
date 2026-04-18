@@ -31,9 +31,11 @@ def test_stdlib_matrix_contains_all_contract_modules() -> None:
 
     for module in modules:
         assert isinstance(module["public_api"], list)
+        assert isinstance(module["public_exports"], list)
         assert isinstance(module["coverage"], list)
         assert isinstance(module["runtime_mapping"], dict)
         coverage_rows = module["coverage"]
         assert coverage_rows
+        assert module["public_exports"]
         for row in coverage_rows:
             assert row["level"] in {"full", "partial"}

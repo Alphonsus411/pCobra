@@ -25,11 +25,21 @@ class RuntimeMapping:
 
 
 @dataclass(frozen=True)
+class PublicApiExport:
+    """Alias público Cobra y su enlace interno para validación."""
+
+    alias: str
+    source_path: str
+    python_symbol: str
+
+
+@dataclass(frozen=True)
 class ContractDescriptor:
     """Descriptor contractual completo por módulo."""
 
     module: str
     public_api: tuple[str, ...]
+    public_exports: tuple[PublicApiExport, ...]
     primary_backend: str
     allowed_fallback: tuple[str, ...]
     runtime_mapping: RuntimeMapping

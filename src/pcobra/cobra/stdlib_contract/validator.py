@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Final
 
 from pcobra.cobra.stdlib_contract import CONTRACTS, get_blueprint_contract_manifests
-from pcobra.cobra.stdlib_contract.base import ContractDescriptor
+from pcobra.cobra.stdlib_contract.base import ContractDescriptor, PublicApiExport
 from pcobra.cobra.stdlib_contract.generator import build_contract_matrix, render_contract_markdown
 
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[4]
@@ -82,26 +82,55 @@ def _validate_mapping_paths(contract: ContractDescriptor) -> None:
 
 
 def _validate_public_api(contract: ContractDescriptor) -> None:
-    available_symbols: set[str] = set()
-    for path in _iter_mapping_paths(contract):
-        available_symbols.update(_extract_symbols(path))
-
-    missing = []
-    for api in contract.public_api:
-        expected_symbol = api.rsplit(".", 1)[-1]
-        if expected_symbol not in available_symbols:
-            missing.append(api)
-
-    if missing:
-        raise ContractValidationError(
-            f"{contract.module}: API pública no encontrada en runtime mapping: {missing}"
-        )
-
     expected_prefix = f"{contract.module}."
     invalid_api = [api for api in contract.public_api if not api.startswith(expected_prefix)]
     if invalid_api:
         raise ContractValidationError(
             f"{contract.module}: API pública fuera del namespace del módulo: {invalid_api}"
+        )
+    if len(contract.public_exports) != len(contract.public_api):
+        raise ContractValidationError(
+            f"{contract.module}: cantidad de public_exports no coincide con public_api. "
+            f"public_api={len(contract.public_api)} public_exports={len(contract.public_exports)}"
+        )
+
+    allowed_paths = {
+        *contract.runtime_mapping.standard_library,
+        *contract.runtime_mapping.corelibs,
+    }
+    allowed_prefixes = ("src/pcobra/standard_library/", "src/pcobra/corelibs/")
+    export_by_alias: dict[str, PublicApiExport] = {}
+    for export in contract.public_exports:
+        if export.alias in export_by_alias:
+            raise ContractValidationError(
+                f"{contract.module}: alias público duplicado en public_exports: {export.alias}"
+            )
+        export_by_alias[export.alias] = export
+        if not export.alias.startswith(expected_prefix):
+            raise ContractValidationError(
+                f"{contract.module}: alias fuera del namespace del módulo: {export.alias}"
+            )
+        if export.source_path not in allowed_paths:
+            raise ContractValidationError(
+                f"{contract.module}: source_path fuera de runtime_mapping standard_library/corelibs: "
+                f"{export.source_path}"
+            )
+        if not export.source_path.startswith(allowed_prefixes):
+            raise ContractValidationError(
+                f"{contract.module}: source_path inválido para trazabilidad pública: {export.source_path}"
+            )
+
+        path = (REPO_ROOT / export.source_path).resolve()
+        symbols = _extract_symbols(path)
+        if export.python_symbol not in symbols:
+            raise ContractValidationError(
+                f"{contract.module}: símbolo `{export.python_symbol}` no encontrado en {export.source_path}"
+            )
+
+    missing_exports = [api for api in contract.public_api if api not in export_by_alias]
+    if missing_exports:
+        raise ContractValidationError(
+            f"{contract.module}: public_api sin entrada en public_exports: {missing_exports}"
         )
 
 

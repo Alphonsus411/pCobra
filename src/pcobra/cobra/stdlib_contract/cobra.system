@@ -1,3 +1,9 @@
 public_api = ["cobra.system.leer", "cobra.system.escribir", "cobra.system.ejecutar", "cobra.system.obtener_env"]
+public_exports = [
+  { alias = "cobra.system.leer", source_path = "src/pcobra/standard_library/archivo.py", python_symbol = "leer" },
+  { alias = "cobra.system.escribir", source_path = "src/pcobra/standard_library/archivo.py", python_symbol = "escribir" },
+  { alias = "cobra.system.ejecutar", source_path = "src/pcobra/corelibs/sistema.py", python_symbol = "ejecutar" },
+  { alias = "cobra.system.obtener_env", source_path = "src/pcobra/corelibs/sistema.py", python_symbol = "obtener_env" },
+]
 backend_preferido = "python"
 fallback_permitido = ["rust", "javascript"]

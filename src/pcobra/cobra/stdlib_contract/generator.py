@@ -18,6 +18,14 @@ def render_manifest(contract: ContractDescriptor) -> str:
     return "\n".join(
         (
             f"public_api = {_toml_array(contract.public_api)}",
+            "public_exports = [",
+            *(
+                "  { "
+                + f'alias = "{export.alias}", source_path = "{export.source_path}", python_symbol = "{export.python_symbol}"'
+                + " },"
+                for export in contract.public_exports
+            ),
+            "]",
             f'backend_preferido = "{contract.primary_backend}"',
             f"fallback_permitido = {_toml_array(contract.allowed_fallback)}",
             "",
@@ -53,6 +61,14 @@ def build_contract_matrix() -> dict[str, object]:
                     "core_nativos": list(mapping.core_nativos),
                 },
                 "public_api": list(descriptor.public_api),
+                "public_exports": [
+                    {
+                        "alias": export.alias,
+                        "source_path": export.source_path,
+                        "python_symbol": export.python_symbol,
+                    }
+                    for export in descriptor.public_exports
+                ],
                 "coverage": coverage_rows,
             }
         )
@@ -118,6 +134,17 @@ def render_contract_markdown() -> str:
             )
         )
         lines.extend(f"- `{api}`" for api in descriptor.public_api)
+        lines.extend(
+            (
+                "",
+                "### Exportaciones públicas (alias Cobra estables)",
+                "",
+                "| Alias Cobra | Módulo runtime trazable |",
+                "|---|---|",
+            )
+        )
+        for export in descriptor.public_exports:
+            lines.append(f"| `{export.alias}` | `{export.source_path}` |")
         lines.extend(("", "### Cobertura por función", "", "| Función | Backend | Nivel |", "|---|---|---|"))
         for coverage in descriptor.coverage:
             for backend, level in coverage.backend_levels.items():

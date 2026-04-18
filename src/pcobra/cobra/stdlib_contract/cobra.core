@@ -1,3 +1,9 @@
 public_api = ["cobra.core.es_finito", "cobra.core.es_infinito", "cobra.core.copiar_signo", "cobra.core.signo"]
+public_exports = [
+  { alias = "cobra.core.es_finito", source_path = "src/pcobra/standard_library/numero.py", python_symbol = "es_finito" },
+  { alias = "cobra.core.es_infinito", source_path = "src/pcobra/standard_library/numero.py", python_symbol = "es_infinito" },
+  { alias = "cobra.core.copiar_signo", source_path = "src/pcobra/standard_library/numero.py", python_symbol = "copiar_signo" },
+  { alias = "cobra.core.signo", source_path = "src/pcobra/standard_library/numero.py", python_symbol = "signo" },
+]
 backend_preferido = "python"
 fallback_permitido = ["rust", "javascript"]

@@ -1,6 +1,11 @@
 """Contrato del módulo público ``cobra.web``."""
 
-from pcobra.cobra.stdlib_contract.base import ContractDescriptor, FunctionCoverage, RuntimeMapping
+from pcobra.cobra.stdlib_contract.base import (
+    ContractDescriptor,
+    FunctionCoverage,
+    PublicApiExport,
+    RuntimeMapping,
+)
 
 
 WEB_CONTRACT = ContractDescriptor(
@@ -9,6 +14,15 @@ WEB_CONTRACT = ContractDescriptor(
         "cobra.web.obtener_url",
         "cobra.web.enviar_post",
         "cobra.web.descargar_archivo",
+    ),
+    public_exports=(
+        PublicApiExport("cobra.web.obtener_url", "src/pcobra/corelibs/red.py", "obtener_url"),
+        PublicApiExport("cobra.web.enviar_post", "src/pcobra/corelibs/red.py", "enviar_post"),
+        PublicApiExport(
+            "cobra.web.descargar_archivo",
+            "src/pcobra/corelibs/red.py",
+            "descargar_archivo",
+        ),
     ),
     primary_backend="javascript",
     allowed_fallback=("python",),
