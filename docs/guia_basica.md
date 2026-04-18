@@ -7,8 +7,8 @@
 ## ¿Qué leer según tu objetivo?
 
 - **Aprender Cobra de cero a avanzado**: [Libro de Programación con Cobra](LIBRO_PROGRAMACION_COBRA.md)
-- **Consultar sintaxis/contrato técnico**: [Manual de Cobra (referencia)](MANUAL_COBRA.md)
-- **Referencia en formato RST**: [MANUAL_COBRA.rst](MANUAL_COBRA.rst)
+- **Consultar sintaxis/contrato técnico (canónico)**: [Manual de Cobra (referencia)](MANUAL_COBRA.md)
+- **Referencia en formato RST (autogenerada)**: [MANUAL_COBRA.rst](MANUAL_COBRA.rst)
 
 ## Inicio en 5 minutos
 

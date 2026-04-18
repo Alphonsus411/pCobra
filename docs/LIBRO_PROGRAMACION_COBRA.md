@@ -6,7 +6,7 @@
 
 Este libro es la **guía pedagógica principal** para aprender Cobra de forma progresiva.
 Si buscas una vista breve, consulta el [Resumen rápido](guia_basica.md).
-Si necesitas detalle normativo y comportamiento de runtime, usa la [Referencia técnica](MANUAL_COBRA.md) y su [versión RST](MANUAL_COBRA.rst).
+Si necesitas detalle normativo y comportamiento de runtime, usa primero la [Referencia técnica canónica](MANUAL_COBRA.md) y, si lo prefieres, su [versión RST autogenerada](MANUAL_COBRA.rst).
 
 ## Índice
 

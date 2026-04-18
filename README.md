@@ -171,8 +171,8 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Licencia
 - **Ruta recomendada de documentación (sin ambigüedad):**
   - [Libro de Programación Cobra — **Principal** (inicio a avanzado)](docs/LIBRO_PROGRAMACION_COBRA.md)
-  - [Manual de Cobra (Markdown) — **Referencia técnica**](docs/MANUAL_COBRA.md)
-  - [Manual de Cobra (reStructuredText) — **Referencia técnica**](docs/MANUAL_COBRA.rst)
+  - [Manual de Cobra (Markdown) — **Referencia técnica canónica**](docs/MANUAL_COBRA.md)
+  - [Manual de Cobra (reStructuredText, autogenerado)](docs/MANUAL_COBRA.rst)
   - [Guía básica — **Histórico** (resumen rápido)](docs/guia_basica.md)
 - [Manual de Cobra en PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Especificación técnica](docs/especificacion_tecnica.md)
@@ -224,7 +224,7 @@ Puedes experimentar con Cobra directamente en tu navegador:
 ## Descripción del Proyecto
 
 Cobra está diseñado para facilitar la programación en español, permitiendo que los desarrolladores utilicen un lenguaje más accesible. A través de su lexer, parser y transpiladores, Cobra puede analizar, ejecutar y convertir código a otros lenguajes, brindando soporte para variables, funciones, estructuras de control y estructuras de datos como listas, diccionarios y clases.
-Para un tutorial paso a paso consulta el [Manual de Cobra](docs/MANUAL_COBRA.rst).
+Para la referencia técnica consulta el [Manual de Cobra canónico](docs/MANUAL_COBRA.md).
 La especificación completa del lenguaje se encuentra en [SPEC_COBRA.md](docs/SPEC_COBRA.md).
 
 ## Arquitectura del compilador
