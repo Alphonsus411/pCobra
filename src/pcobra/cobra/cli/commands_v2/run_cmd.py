@@ -1,4 +1,4 @@
-from argparse import Namespace
+from argparse import Namespace, SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
@@ -26,11 +26,12 @@ class RunCommandV2(BaseCommand):
         parser.add_argument("file", help=_("Path to Cobra file")).completer = files_completer()
         parser.add_argument("--debug", action="store_true", default=False, help=_("Show debug messages"))
         parser.add_argument("--sandbox", action="store_true", help=_("Execute code in sandbox"))
+        # Compatibilidad interna: evitar exponer backend/runtime en la UX pública.
         parser.add_argument(
             "--container",
             dest="container",
             choices=("python", "javascript", "rust"),
-            help=_("Run the code in a Docker container runtime"),
+            help=SUPPRESS,
         )
         parser.set_defaults(cmd=self)
         return parser

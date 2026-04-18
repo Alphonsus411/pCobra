@@ -1,4 +1,4 @@
-from argparse import Namespace
+from argparse import Namespace, SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
@@ -9,7 +9,6 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error
 from pcobra.cobra.cli.target_policies import (
     VERIFICATION_EXECUTABLE_TARGETS,
-    VERIFICATION_EXECUTABLE_TARGETS_HELP,
     parse_restricted_target_list,
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
@@ -30,6 +29,7 @@ class TestCommandV2(BaseCommand):
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Validate project output across runtimes"))
         parser.add_argument("file", help=_("Source Cobra file")).completer = files_completer()
+        # Compatibilidad interna: selección explícita de runtimes queda fuera de la UX pública.
         parser.add_argument(
             "--langs",
             "-l",
@@ -37,10 +37,7 @@ class TestCommandV2(BaseCommand):
             type=lambda value: parse_restricted_target_list(
                 value, VERIFICATION_EXECUTABLE_TARGETS, "verificación ejecutable"
             ),
-            help=_(
-                "Comma-separated runtime languages to validate. "
-                "Defaults to official verification runtimes: {runtime}."
-            ).format(runtime=VERIFICATION_EXECUTABLE_TARGETS_HELP),
+            help=SUPPRESS,
         )
         parser.set_defaults(cmd=self)
         return parser
