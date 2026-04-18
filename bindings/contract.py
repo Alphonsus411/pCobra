@@ -15,6 +15,15 @@ class BindingRoute(str, Enum):
     RUST_COMPILED_FFI = "rust_compiled_ffi"
 
 
+OFFICIAL_PUBLIC_LANGUAGES: Final[tuple[str, ...]] = ("python", "javascript", "rust")
+
+OFFICIAL_PUBLIC_ROUTE_MATRIX: Final[dict[str, BindingRoute]] = {
+    "python": BindingRoute.PYTHON_DIRECT_IMPORT,
+    "javascript": BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE,
+    "rust": BindingRoute.RUST_COMPILED_FFI,
+}
+
+
 @dataclass(frozen=True, slots=True)
 class BindingCapabilities:
     """Describe capacidades y restricciones contractuales por ruta."""
@@ -126,7 +135,7 @@ ROUTE_OPERATIONAL_LIMITS: Final[dict[BindingRoute, RouteOperationalLimits]] = {
 def resolve_binding(language: str) -> BindingCapabilities:
     """Resuelve el contrato de bindings para un lenguaje canónico."""
 
-    key = (language or "").strip().lower()
+    key = validate_public_language(language)
     try:
         return BINDINGS_BY_LANGUAGE[key]
     except KeyError as exc:
@@ -136,16 +145,47 @@ def resolve_binding(language: str) -> BindingCapabilities:
         ) from exc
 
 
+def validate_public_language(language: str) -> str:
+    """Valida temprano que el lenguaje pertenezca a la superficie pública oficial."""
+
+    key = (language or "").strip().lower()
+    if key in OFFICIAL_PUBLIC_LANGUAGES:
+        return key
+
+    raise ValueError(
+        "Lenguaje no permitido en rutas públicas de bindings: "
+        f"'{language}'. Lenguajes oficiales: {', '.join(OFFICIAL_PUBLIC_LANGUAGES)}."
+    )
+
+
+def route_matrix_markdown() -> str:
+    """Documenta la matriz oficial de rutas públicas de bindings."""
+
+    return "\n".join(
+        (
+            "| Lenguaje | Ruta oficial |", 
+            "| --- | --- |",
+            "| Python | direct import bridge |",
+            "| JavaScript | runtime bridge |",
+            "| Rust | compiled FFI |",
+        )
+    )
+
+
 __all__ = [
     "AbiCompatibilityPolicy",
     "BindingCapabilities",
     "BindingRoute",
     "BINDINGS_BY_LANGUAGE",
+    "OFFICIAL_PUBLIC_LANGUAGES",
+    "OFFICIAL_PUBLIC_ROUTE_MATRIX",
     "ABI_POLICY_BY_ROUTE",
     "ROUTE_OPERATIONAL_LIMITS",
     "RouteOperationalLimits",
     "JAVASCRIPT_BINDING",
     "PYTHON_BINDING",
     "RUST_BINDING",
+    "route_matrix_markdown",
+    "validate_public_language",
     "resolve_binding",
 ]
