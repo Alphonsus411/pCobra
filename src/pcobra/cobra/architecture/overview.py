@@ -17,6 +17,11 @@ PUBLIC_CLI_V2_COMMANDS: Final[tuple[str, ...]] = ("run", "build", "test", "mod")
 
 # Toda ruta de usuario termina resolviendo backend mediante esta fachada.
 USER_ROUTE_BACKEND_ENTRYPOINT: Final[str] = "pcobra.cobra.build.backend_pipeline"
+OFFICIAL_FLOW: Final[tuple[str, ...]] = (
+    "Frontend Cobra",
+    "BackendPipeline",
+    "Bindings",
+)
 
 # Superficies no públicas: mantener solo para transición interna controlada.
 INTERNAL_MIGRATION_ONLY_SURFACES: Final[dict[str, tuple[str, ...] | str]] = {
@@ -59,8 +64,7 @@ PUBLIC_ARCHITECTURE_OVERVIEW: Final[PublicArchitectureOverview] = (
 
 # Diagrama de flujo corto (sin cambios en AST).
 PUBLIC_FLOW_DIAGRAM: Final[str] = (
-    "Cobra source -> AST (sin cambios) -> backend_pipeline -> "
-    "transpiler interno -> runtime/binding"
+    "Frontend Cobra -> BackendPipeline -> Bindings"
 )
 
 
@@ -78,6 +82,10 @@ def validate_public_architecture_overview() -> None:
         raise RuntimeError(
             "Toda ruta de usuario debe pasar por pcobra.cobra.build.backend_pipeline."
         )
+    if OFFICIAL_FLOW != ("Frontend Cobra", "BackendPipeline", "Bindings"):
+        raise RuntimeError(
+            "El flujo oficial debe permanecer fijo: Frontend Cobra -> BackendPipeline -> Bindings."
+        )
 
 
 validate_public_architecture_overview()
@@ -87,6 +95,7 @@ __all__ = [
     "PUBLIC_LANGUAGE_BOUNDARY",
     "PUBLIC_CLI_V2_COMMANDS",
     "USER_ROUTE_BACKEND_ENTRYPOINT",
+    "OFFICIAL_FLOW",
     "INTERNAL_MIGRATION_ONLY_SURFACES",
     "PublicArchitectureOverview",
     "PUBLIC_ARCHITECTURE_OVERVIEW",

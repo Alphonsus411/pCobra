@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
@@ -84,7 +85,6 @@ class ValidarSintaxisCommand(BaseCommand):
 
     def _run_transpilers_syntax(self, targets: list[str], strict: bool) -> tuple[dict[str, TargetSummary], dict[str, list[str]], bool]:
         from pcobra.cobra.qa.syntax_validation import TRANSPILER_FIXTURES
-        from pcobra.cobra.transpilers.registry import build_official_transpilers
 
         fixtures = [fixture for fixture in TRANSPILER_FIXTURES if fixture.exists()]
         if not fixtures:
@@ -93,7 +93,7 @@ class ValidarSintaxisCommand(BaseCommand):
         report, _, has_failures = run_transpiler_syntax_validation(
             fixtures=fixtures,
             targets=targets,
-            transpilers=build_official_transpilers(),
+            transpilers=backend_pipeline.TRANSPILERS,
             strict=strict,
         )
         return report.targets, report.errors_by_target, has_failures
@@ -126,13 +126,11 @@ class ValidarSintaxisCommand(BaseCommand):
             if bool(getattr(args, "solo_cobra", False)):
                 profile = "solo-cobra"
 
-            from pcobra.cobra.transpilers.registry import build_official_transpilers
-
             execution = execute_syntax_validation(
                 profile=profile,
                 targets_raw=str(getattr(args, "targets", "")),
                 strict=strict,
-                transpilers=build_official_transpilers(),
+                transpilers=backend_pipeline.TRANSPILERS,
             )
             self._emit_report(
                 execution.report,
