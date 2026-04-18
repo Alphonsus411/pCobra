@@ -46,7 +46,7 @@ Resumen normativo visible (generado desde la política canónica):
 - **Targets con adaptador Holobit mantenido por el proyecto (partial fuera de python)**: `python`, `javascript`, `rust`.
 - **Compatibilidad SDK completa (solo python)**: `python`.
 - **Targets solo de transpilación**: .
-- **Orígenes de transpilación inversa**: python, javascript, java. Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
+- **Orígenes de transpilación inversa**: python, javascript, java (java se mantiene como **entrada histórica, no salida oficial**). Este alcance reverse de entrada está separado de los 3 targets oficiales de salida.
 
 Tiers oficiales de soporte de backends:
 
@@ -1042,7 +1042,7 @@ El subcomando `gui` abre el iddle integrado y requiere tener instalado Flet.
 `cobra transpilar-inverso` documenta una capacidad distinta de la transpilación de salida normal. Aquí conviene separar dos listas para evitar ambigüedades:
 
 - **Targets oficiales de salida**: consultar el resumen normativo generado al inicio de este README.
-- **Orígenes reverse de entrada**: `python`, `javascript`, `java`.
+- **Orígenes reverse de entrada**: `python`, `javascript`, `java` (**java** como *entrada histórica, no salida oficial*).
 
 Los nombres `python`, `javascript` y `java` aparecen en ambas listas, pero con papeles distintos: como `--origen` describen **entradas aceptadas** por la ruta reverse; como `--destino` vuelven a significar **targets oficiales de salida ya existentes**. La capacidad reverse no añade targets nuevos ni amplía la lista oficial de salida.
 
