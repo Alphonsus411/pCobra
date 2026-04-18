@@ -109,6 +109,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: python scripts/ci/validate_syntax_report_contract.py
+      - name: Lint public surfaces without direct transpiler imports
+        run: python scripts/ci/lint_public_no_direct_transpiler_imports.py
       - name: Validate runtime contract matrix
         if: runner.os != 'Windows'
         shell: bash

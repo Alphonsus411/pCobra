@@ -3,6 +3,8 @@
 Este módulo existe solo para compatibilidad técnica temporal.
 La API interna aprobada para resolver/transpilar está en
 ``pcobra.cobra.build.backend_pipeline``.
+
+Fecha objetivo de retiro del shim: 2026-09-30.
 """
 
 from __future__ import annotations
@@ -11,6 +13,8 @@ from typing import Any, Mapping
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.backends.base import BackendAdapter
+
+SHIM_RETIREMENT_TARGET = "2026-09-30"
 
 _BACKEND_ALIASES = {
     "python": "python",
