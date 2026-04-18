@@ -78,6 +78,46 @@ El contrato expone:
 - `javascript_runtime_bridge`: requiere runtime gestionado (sandbox o contenedor) para preservar aislamiento.
 - `rust_compiled_ffi`: frontera nativa FFI; no se ejecuta como sandbox Python directo.
 
+## Límites operativos por ruta (sandbox/container/ffi)
+
+| Ruta | sandbox | containerized | frontera FFI | Límites operativos |
+|---|---|---|---|---|
+| `python_direct_import` | Opcional en `run/build`, **obligatorio en `test`** | **No permitido** | No aplica | Ejecuta en el mismo proceso; `containerized=true` se rechaza por contrato. |
+| `javascript_runtime_bridge` | Permitido | Permitido (y **obligatorio en `test`**) | No aplica | Debe existir aislamiento gestionado (sandbox o contenedor). |
+| `rust_compiled_ffi` | **No permitido** | Permitido (y **obligatorio en `test`**) | **Obligatoria** | Depende de ABI nativa; sandbox Python directo no es válido. |
+
+### Ejemplos de fallo esperados por ruta
+
+#### Python (`python_direct_import`)
+
+```python
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+
+manager = RuntimeManager()
+manager.validate_security_route("python", command="run", containerized=True)
+# ValueError: [Python direct import] la ruta no puede marcarse como containerizada...
+```
+
+#### JavaScript (`javascript_runtime_bridge`)
+
+```python
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+
+manager = RuntimeManager()
+manager.validate_security_route("javascript", command="run", sandbox=False, containerized=False)
+# ValueError: [JavaScript runtime bridge] la ruta requiere runtime gestionado...
+```
+
+#### Rust (`rust_compiled_ffi`)
+
+```python
+from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+
+manager = RuntimeManager()
+manager.validate_security_route("rust", command="run", sandbox=True, containerized=False)
+# ValueError: [Rust compiled FFI] la ruta usa frontera nativa FFI y no se ejecuta en sandbox...
+```
+
 ## Políticas por comando (`run`/`test`)
 
 - `run`: aplica reglas base por ruta.

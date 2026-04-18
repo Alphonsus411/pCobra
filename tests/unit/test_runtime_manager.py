@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from pcobra.cobra.bindings.contract import BindingRoute
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 
@@ -73,11 +75,16 @@ def test_runtime_manager_validate_command_runtime_loguea_contexto_estructurado(c
             containerized=True,
         )
 
-    record = next(rec for rec in caplog.records if rec.message == "runtime.command.validation")
+    record = next(
+        rec for rec in caplog.records if rec.message == "runtime.command.validation.run"
+    )
     assert record.command == "run"
     assert record.route == "javascript_runtime_bridge"
     assert record.bridge == "javascript_controlled_runtime_bridge"
     assert record.abi_version == manager.validate_abi_route("javascript")
+    assert record.language == "javascript"
+    assert record.sandbox is False
+    assert record.containerized is True
 
 
 def test_runtime_manager_negocia_abi_desde_config(monkeypatch, tmp_path: Path):
@@ -178,3 +185,68 @@ def test_runtime_manager_rechaza_backend_no_oficial_en_ruta_publica():
         assert "Lenguaje no permitido en rutas públicas" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Se esperaba rechazo temprano para backend no oficial")
+
+
+@pytest.mark.parametrize(
+    ("language", "command", "sandbox", "containerized", "error"),
+    (
+        ("python", "test", False, False, "exige sandbox"),
+        ("python", "run", False, True, "no puede marcarse como containerizada"),
+        ("javascript", "run", False, False, "runtime gestionado"),
+        ("javascript", "test", True, False, "exige contenedor"),
+        ("rust", "run", True, False, "frontera nativa FFI"),
+        ("rust", "test", False, False, "exige contenedor"),
+    ),
+)
+def test_runtime_manager_rechaza_combinaciones_invalidas_por_backend_y_comando(
+    language: str,
+    command: str,
+    sandbox: bool,
+    containerized: bool,
+    error: str,
+):
+    manager = RuntimeManager()
+
+    with pytest.raises(ValueError, match=error):
+        manager.validate_security_route(
+            language,
+            command=command,
+            sandbox=sandbox,
+            containerized=containerized,
+        )
+
+
+@pytest.mark.parametrize(
+    ("command", "language", "sandbox", "containerized", "expected_event"),
+    (
+        ("run", "javascript", False, True, "runtime.command.validation.run"),
+        ("build", "rust", False, False, "runtime.command.validation.build"),
+        ("test", "python", True, False, "runtime.command.validation.test"),
+    ),
+)
+def test_runtime_manager_evento_uniforme_por_comando(
+    caplog,
+    command: str,
+    language: str,
+    sandbox: bool,
+    containerized: bool,
+    expected_event: str,
+):
+    manager = RuntimeManager()
+
+    with caplog.at_level("INFO", logger="pcobra.runtime"):
+        manager.validate_command_runtime(
+            language,
+            command=command,
+            sandbox=sandbox,
+            containerized=containerized,
+        )
+
+    record = next(rec for rec in caplog.records if rec.message == expected_event)
+    assert record.command == command
+    assert record.language == language
+    assert record.route
+    assert record.bridge
+    assert record.abi_version
+    assert record.sandbox is sandbox
+    assert record.containerized is containerized
