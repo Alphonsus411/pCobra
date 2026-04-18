@@ -20,7 +20,6 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    backends
    ../../docs/lenguajes_soportados
    ../../docs/lenguajes
-   sintaxis
    avances
    proximos_pasos
    optimizaciones
@@ -45,7 +44,6 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    cobra_lock
    cache
    instalacion_pypi
-   primeros_pasos
    como_contribuir
    ../../CONTRIBUTING
    entorno_desarrollo
@@ -58,7 +56,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
 Introducción
 --------------------
 
-Cobra fue creado con la idea de facilitar la programación en español y añadir soporte para trabajar con datos complejos como los holobits. En su documentación pública, la salida oficial del proyecto se resume en una sola narrativa: pCobra transpila a 8 backends oficiales agrupados por tiers, con una política separada de runtime, Holobit y SDK.
+Cobra fue creado con la idea de facilitar la programación en español y añadir soporte para trabajar con datos complejos como los holobits. En su documentación pública, la salida oficial del proyecto se resume en una sola narrativa: pCobra transpila a 3 targets oficiales (python, javascript y rust), con una política separada de runtime, Holobit y SDK.
 
 .. include:: ../_generated/target_policy_summary.rst
 
@@ -68,3 +66,14 @@ Repositorio de Ejemplos
 ----------------------
 
 Los proyectos de demostración se encuentran en `cobra-ejemplos <https://github.com/Alphonsus411/pCobra/tree/work/examples>`_.
+
+
+Contenido histórico
+-------------------
+
+Las guías ``primeros_pasos`` y ``sintaxis`` de esta sección se movieron a ``docs/historico/`` como material de referencia histórica/no operativa:
+
+- :doc:`../../docs/historico/primeros_pasos`
+- :doc:`../../docs/historico/sintaxis`
+
+Para el camino principal de aprendizaje usa el Libro y el Manual canónico enlazados en el README del repositorio.
