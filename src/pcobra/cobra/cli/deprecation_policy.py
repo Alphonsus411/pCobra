@@ -18,7 +18,7 @@ LEGACY_TARGETS_MODE_ENV = "COBRA_LEGACY_TARGETS_MODE"
 
 
 def current_deprecation_phase() -> int:
-    """Fase activa de deprecación (1 o 2)."""
+    """Fase activa de deprecación (1, 2 o 3)."""
     raw = (os.environ.get(DEPRECATION_PHASE_ENV, "1") or "1").strip()
     try:
         phase = int(raw)
@@ -26,8 +26,8 @@ def current_deprecation_phase() -> int:
         return 1
     if phase < 1:
         return 1
-    if phase > 2:
-        return 2
+    if phase > 3:
+        return 3
     return phase
 
 
@@ -39,10 +39,7 @@ def is_legacy_targets_mode(args: Namespace | object | None) -> bool:
 
 
 def visible_public_targets(targets: tuple[str, ...] | list[str]) -> tuple[str, ...]:
-    """Targets visibles en help público según fase."""
-    phase = current_deprecation_phase()
-    if phase < 2:
-        return tuple(targets)
+    """Targets visibles en help público (legacy siempre oculto desde Fase 1)."""
     return tuple(target for target in targets if target not in DEPRECATED_PUBLIC_TARGETS)
 
 
@@ -70,13 +67,13 @@ def enforce_target_deprecation_policy(*, command: str, target: str, args: Namesp
     if phase == 1:
         mostrar_advertencia(
             _(
-                "Target '{target}' deprecado (Fase 1): se mantiene por compatibilidad interna, "
-                "pero será ocultado del help público y quedará solo en modo legacy en Fase 2."
+                "Target '{target}' deprecado (Fase 1): oculto de CLI pública; "
+                "solo permitido por rutas internas de compatibilidad."
             ).format(target=canonical)
         )
         return
 
-    if not legacy_mode:
+    if phase == 2 and not legacy_mode:
         raise ValueError(
             _(
                 "Target '{target}' está en Fase 2 de deprecación y ya no forma parte del modo público. "
@@ -84,9 +81,18 @@ def enforce_target_deprecation_policy(*, command: str, target: str, args: Namesp
             ).format(target=canonical, env=LEGACY_TARGETS_MODE_ENV)
         )
 
-    mostrar_advertencia(
+    if phase == 2:
+        mostrar_advertencia(
+            _(
+                "Target '{target}' ejecutado en modo legacy (Fase 2). Esta ruta existe solo por compatibilidad interna."
+            ).format(target=canonical)
+        )
+        return
+
+    raise ValueError(
         _(
-            "Target '{target}' ejecutado en modo legacy (Fase 2). Esta ruta existe solo por compatibilidad interna."
+            "Target '{target}' retirado (Fase 3). "
+            "La compatibilidad legacy expiró y debe migrarse a target público soportado."
         ).format(target=canonical)
     )
 

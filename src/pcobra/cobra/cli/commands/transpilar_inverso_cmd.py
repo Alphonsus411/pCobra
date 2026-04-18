@@ -32,6 +32,7 @@ from pcobra.cobra.transpilers.reverse.policy import (
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.deprecation_policy import (
     enforce_advanced_profile_policy,
@@ -252,11 +253,7 @@ class TranspilarInversoCommand(BaseCommand):
             type=parse_target,
             choices=DESTINO_CHOICES,
         )
-        parser.add_argument(
-            "--legacy-targets",
-            action="store_true",
-            help=_("Habilita destinos deprecados en modo legacy (compatibilidad interna)."),
-        )
+        add_internal_legacy_targets_flag(parser)
         parser.add_argument(
             "--perfil",
             choices=("publico", "avanzado"),
