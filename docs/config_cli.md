@@ -14,7 +14,7 @@ Ejemplos concretos:
 
 ```bash
 cobra --modo cobra run programa.co
-cobra --modo transpilar build programa.co --backend python
+cobra --modo transpilar build programa.co
 ```
 
 ## Ruta del archivo
@@ -27,7 +27,7 @@ cobra --modo transpilar build programa.co --backend python
 | Clave            | Valor por defecto                                    | Descripción                                           |
 |------------------|------------------------------------------------------|-------------------------------------------------------|
 | `language`       | `es`                                                 | Idioma de la interfaz de la CLI.                      |
-| `default_command`| `interactive`                                       | Subcomando ejecutado si no se especifica otro.        |
+| `default_command`| `run`                                               | Subcomando ejecutado si no se especifica otro.        |
 | `log_format`     | `%(asctime)s - %(levelname)s - %(message)s`          | Formato para los mensajes de registro (*logging*).    |
 | `log_formatter`  | `text`                                                | Formato del handler raíz: `text` (default) o `json`.  |
 | `program_name`   | `cobra`                                              | Nombre con el que aparece la aplicación en la ayuda.  |
@@ -81,7 +81,7 @@ print(secrets.token_urlsafe(32))
 PY
 )"
 
-cobra build ejemplo.co --backend python
+cobra build ejemplo.co
 ```
 
 #### Opción B (solo dev local): clave efímera por ejecución
@@ -89,7 +89,7 @@ cobra build ejemplo.co --backend python
 ```bash
 COBRA_DEV_MODE=1 \
 COBRA_DEV_ALLOW_EPHEMERAL_KEY=1 \
-cobra --dev-ephemeral-key build ejemplo.co --backend python
+cobra --dev-ephemeral-key build ejemplo.co
 ```
 
 > Nota: evita esta opción en CI/prod; está diseñada únicamente para sesiones
@@ -100,7 +100,7 @@ cobra --dev-ephemeral-key build ejemplo.co --backend python
 ```toml
 # cobra-cli.toml
 language = "en"
-default_command = "compile"
+default_command = "run"
 log_format = "%(levelname)s: %(message)s"
 log_formatter = "json"
 program_name = "cobra"

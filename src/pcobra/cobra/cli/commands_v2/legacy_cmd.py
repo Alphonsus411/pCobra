@@ -7,6 +7,15 @@ from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils import messages
+
+
+LEGACY_GROUP_MIGRATION_HINTS: dict[str, str] = {
+    "ejecutar": "cobra run <archivo.co>",
+    "compilar": "cobra build <archivo.co>",
+    "verificar": "cobra test <archivo.co>",
+    "modulos": "cobra mod <list|install|remove|publish|search>",
+}
 
 
 class LegacyCommandGroupV2(BaseCommand):
@@ -57,6 +66,13 @@ class LegacyCommandGroupV2(BaseCommand):
 
     def run(self, args: Any) -> int:
         command = getattr(args, "legacy_command", None)
+        if command in LEGACY_GROUP_MIGRATION_HINTS:
+            messages.mostrar_advertencia(
+                _(
+                    "Comando legacy '{legacy}' en grupo 'legacy'. "
+                    "Migra a interfaz pública: {hint}."
+                ).format(legacy=command, hint=LEGACY_GROUP_MIGRATION_HINTS[command])
+            )
         if command == "ejecutar":
             return self._execute.run(
                 Namespace(
