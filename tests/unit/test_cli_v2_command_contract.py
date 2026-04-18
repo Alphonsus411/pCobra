@@ -5,6 +5,7 @@ import pytest
 from cobra.cli.commands_v2.run_cmd import RunCommandV2
 from cobra.cli.commands_v2.build_cmd import BuildCommandV2
 from cobra.cli.commands_v2.test_cmd import TestCommandV2
+from cobra.cli.commands_v2.legacy_cmd import LegacyCommandGroupV2
 from cobra.cli.cli import LEGACY_COMMAND_MIGRATION_MAP
 from cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 
@@ -209,3 +210,16 @@ def test_legacy_command_migration_map_cubre_comandos_legacy_principales():
     assert LEGACY_COMMAND_MIGRATION_MAP["verificar"]["target"] == "test"
     assert LEGACY_COMMAND_MIGRATION_MAP["modulos"]["target"] == "mod"
     assert LEGACY_COMMAND_MIGRATION_MAP["modulos"]["hint"].startswith("cobra mod ")
+
+
+def test_legacy_group_muestra_mensaje_corto_de_migracion(monkeypatch):
+    command = LegacyCommandGroupV2()
+    warnings: list[str] = []
+    monkeypatch.setattr("cobra.cli.commands_v2.legacy_cmd.messages.mostrar_advertencia", warnings.append)
+    monkeypatch.setattr(command._execute, "run", lambda _args: 0)
+
+    status = command.run(argparse.Namespace(legacy_command="ejecutar", archivo="app.co"))
+
+    assert status == 0
+    assert warnings
+    assert "cobra run <archivo.co>" in warnings[0]

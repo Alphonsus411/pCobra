@@ -131,7 +131,7 @@ class AppConfig:
         logging.error(f"Failed to load configuration: {e}")
         config_data: Dict[str, str] = {}
     DEFAULT_LANGUAGE = config_data.get("language", "es")
-    DEFAULT_COMMAND = config_data.get("default_command", "interactive")
+    DEFAULT_COMMAND = config_data.get("default_command", "run")
     PROGRAM_NAME = config_data.get("program_name", "cobra")
     BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = [
         InteractiveCommand, CompileCommand, ExecuteCommand, ModulesCommand,

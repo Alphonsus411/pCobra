@@ -11,17 +11,7 @@ INTERNAL_COMMANDS: tuple[str, ...] = (
     "debug",
     "devops",
 )
-LEGACY_PUBLIC_COMMANDS: tuple[str, ...] = (
-    "interactive",
-    "ejecutar",
-    "modulos",
-    "verificar",
-    "docs",
-    "plugins",
-    "init",
-    "crear",
-    "paquete",
-)
+LEGACY_PUBLIC_COMMANDS: tuple[str, ...] = ()
 LEGACY_INTERNAL_COMMANDS: tuple[str, ...] = (
     "compilar",
     "cache",
@@ -48,7 +38,7 @@ COMMAND_VISIBILITY_MATRIX_MARKDOWN = """| Clase | Comandos |
 |---|---|
 | Públicos (UI v2) | run, build, test, mod |
 | Internos (UI v2 / development) | legacy, debug, devops |
-| Legacy públicos (UI v1) | interactive, ejecutar, modulos, verificar, docs, plugins, init, crear, paquete |
+| Legacy públicos (UI v1) | *(ninguno; reservado a `development`)* |
 | Legacy internos (UI v1) | compilar, cache, contenedor, gui, jupyter, qualia, agix |
 | Legacy obsoletos (UI v1) | dependencias, empaquetar, bench, benchmarks, benchmarks2, benchtranspilers, benchthreads, profile, transpilar-inverso, validar-sintaxis, qa-validar |
 |"""
@@ -93,7 +83,7 @@ def filter_commands_for_profile(command_names: Iterable[str], profile: str) -> s
 def filter_legacy_commands_for_profile(command_names: Iterable[str], profile: str) -> set[str]:
     """Filtra comandos de CLI legacy (v1) según perfil de exposición.
 
-    Perfil `public`: conserva únicamente `LEGACY_PUBLIC_COMMANDS`.
+    Perfil `public`: bloquea todos los comandos legacy (UI v1).
     Perfil `development`: permite toda la superficie incluida la obsoleta para
     migración interna y pruebas de regresión.
     """
