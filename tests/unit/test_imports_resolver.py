@@ -32,7 +32,7 @@ def test_prefiere_namespace_explicito_cobra_datos():
 
 
 def test_colision_stdlib_vs_bridge_genera_warning(monkeypatch):
-    resolver = CobraImportResolver()
+    resolver = CobraImportResolver(collision_policy="warn")
 
     import importlib.util
 
@@ -191,7 +191,7 @@ def test_modulo_hibrido_inyecta_adapter_backend(monkeypatch):
     assert resolution.source == "hybrid"
     assert module is fake_module
     assert getattr(module, "__cobra_backend__") == "javascript"
-    assert getattr(module, "__cobra_backend_adapter__").__class__.__name__ == "JavaScriptAdapter"
+    assert getattr(module, "__cobra_backend_adapter__").__class__.__name__ == "PipelineBackendAdapter"
     assert getattr(module, "__cobra_resolution_source__") == "hybrid"
     assert getattr(module, "__cobra_backend_injected__") == "javascript"
     assert getattr(module, "__cobra_resolution_metadata__") == {
@@ -204,6 +204,7 @@ def test_modulo_hibrido_inyecta_adapter_backend(monkeypatch):
         "backend": "javascript",
         "import_path": "mi_hibrido_runtime",
         "precedence_reason": "unique_source:hybrid",
+        "conflict_candidates": [],
         "audit_debug": False,
     }
 
@@ -307,6 +308,20 @@ def test_modo_migracion_habilita_warn_desde_config(monkeypatch, tmp_path):
     assert resolver.collision_policy == "warn"
 
 
+def test_warn_desde_config_sin_migracion_hace_fallback_a_namespace_required(monkeypatch, tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    monkeypatch.setattr(
+        "pcobra.cobra.imports.resolver.get_toml_map",
+        lambda: {"imports": {"collision_policy": "warn"}},
+    )
+    resolver = CobraImportResolver(project_root=tmp_path)
+
+    with pytest.raises(ImportResolutionError, match="namespace_required"):
+        resolver.resolve("datos")
+
+    assert resolver.collision_policy == "namespace_required"
+
+
 def test_colision_short_import_namespace_required_incluye_recomendacion(tmp_path):
     (tmp_path / "datos.co").write_text("usar algo")
     resolver = CobraImportResolver(project_root=tmp_path)
@@ -318,6 +333,19 @@ def test_colision_short_import_namespace_required_incluye_recomendacion(tmp_path
     assert "cobra.datos" in message
     assert "app.datos" in message
     assert "importar datos" in message
+
+
+def test_colision_tipica_importar_datos_local_vs_cobra_datos_sugiere_ruta(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(project_root=tmp_path)
+
+    with pytest.raises(ImportResolutionError) as excinfo:
+        resolver.resolve("datos")
+
+    message = str(excinfo.value)
+    assert "importar datos" in message
+    assert "cobra.datos" in message
+    assert "app.datos" in message
 
 
 def test_import_namespaced_no_colision_con_modulo_local(tmp_path):
@@ -350,6 +378,19 @@ def test_motivo_precedencia_en_colision(tmp_path):
         result = resolver.resolve("datos")
 
     assert result.precedence_reason == "source_order:stdlib > project > python_bridge > hybrid"
+    assert result.conflict_candidates == ("project:datos",)
+
+
+def test_metadata_incluye_conflict_candidates_para_debug_interno(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(project_root=tmp_path, collision_policy="warn")
+
+    with pytest.warns(UserWarning, match="Colisión de import"):
+        _, module = resolver.load_module("datos")
+
+    assert module is not None
+    metadata = getattr(module, "__cobra_resolution_metadata__")
+    assert metadata["conflict_candidates"] == ["project:datos"]
 
 
 def test_error_si_no_hay_candidato():
@@ -396,4 +437,3 @@ def test_resolver_expone_estabilidad_de_orden_en_major():
         "hybrid",
     )
     assert CobraImportResolver.resolution_source_order_stability == "major"
-

@@ -58,6 +58,7 @@ class ResolutionResult:
     backend: str | None = None
     backend_adapter: object | None = None
     precedence_reason: str | None = None
+    conflict_candidates: tuple[str, ...] = ()
 
 
 API_CONTRACT_VERSION = "2026-04-import-resolution-v1"
@@ -134,10 +135,11 @@ class CobraImportResolver:
             return "strict_error"
 
         configured_policy = CobraImportResolver._collision_policy_from_config(config)
-        migration_policy = (
-            "warn" if CobraImportResolver._is_migration_mode_enabled(config) else None
-        )
+        migration_mode = CobraImportResolver._is_migration_mode_enabled(config)
+        migration_policy = "warn" if migration_mode else None
         chosen = explicit_policy or configured_policy or migration_policy or DEFAULT_COLLISION_POLICY
+        if chosen == "warn" and not migration_mode and explicit_policy is None:
+            chosen = DEFAULT_COLLISION_POLICY
         if chosen not in _SUPPORTED_COLLISION_POLICIES:
             raise ImportResolutionError(
                 "Política de colisiones inválida. "
@@ -277,6 +279,7 @@ class CobraImportResolver:
             backend=candidates[0].backend,
             backend_adapter=candidates[0].backend_adapter,
             precedence_reason=precedence_reason,
+            conflict_candidates=tuple(f"{c.source}:{c.resolved_name}" for c in candidates[1:]),
         )
         resolved = self._attach_backend_adapter(selected)
         self._emit_audit(resolved)
@@ -320,6 +323,7 @@ class CobraImportResolver:
             "backend": resolution.backend,
             "import_path": resolution.import_path,
             "precedence_reason": resolution.precedence_reason,
+            "conflict_candidates": list(resolution.conflict_candidates),
             "audit_debug": self.audit_debug,
         }
         setattr(module, "__cobra_resolution_source__", resolution.source)
@@ -339,6 +343,7 @@ class CobraImportResolver:
             backend=effective_backend,
             backend_adapter=adapter,
             precedence_reason=resolution.precedence_reason,
+            conflict_candidates=resolution.conflict_candidates,
         )
 
     def _build_candidate(self, source: str, name: str) -> ResolutionResult | None:
@@ -423,7 +428,11 @@ class CobraImportResolver:
     def _resolve_python_bridge(name: str) -> ResolutionResult | None:
         if name.startswith("cobra."):
             return None
-        if importlib.util.find_spec(name) is None:
+        try:
+            spec = importlib.util.find_spec(name)
+        except ModuleNotFoundError:
+            return None
+        if spec is None:
             return None
         return ResolutionResult(
             request=name,
