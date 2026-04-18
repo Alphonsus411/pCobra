@@ -62,3 +62,16 @@ Este flujo actualiza:
 - `docs/_generated/stdlib_contract_matrix.md` (API pública + backend primario + fallback + cobertura `full/partial`)
 - `docs/_generated/stdlib_contract_matrix.json` (matriz estructurada para consumo de CLI/docs)
 - `docs/standard_library/matriz_stdlib_unificada.md` (publicación única para documentación funcional)
+
+
+Auditoría CI de paridad por función (python/javascript/rust):
+
+```bash
+python scripts/ci/audit_stdlib_parity.py
+```
+
+Este flujo actualiza:
+
+- `docs/_generated/audit_stdlib_parity_report.md` (artefacto CI por función)
+- `docs/standard_library/paridad_stdlib_por_funcion.md` (tabla pública para usuarios)
+

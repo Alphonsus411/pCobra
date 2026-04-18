@@ -1,12 +1,7 @@
-# Auditoría CI: paridad stdlib por función
+# Paridad de stdlib pública por función
 
-Fuente única de API pública y cobertura:
-- `src/pcobra/cobra/stdlib_contract/core.py`
-- `src/pcobra/cobra/stdlib_contract/datos.py`
-- `src/pcobra/cobra/stdlib_contract/web.py`
-- `src/pcobra/cobra/stdlib_contract/system.py`
-
-## Cobertura por función (python/javascript/rust)
+Tabla publicada para usuarios finales. Se genera desde los contratos de
+`src/pcobra/cobra/stdlib_contract/{core,datos,web,system}.py`.
 
 | módulo | función | primario | python | javascript | rust | notas |
 |---|---|---|---|---|---|---|
