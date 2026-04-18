@@ -1,5 +1,11 @@
 # ADR: Cobra unifica la superficie pública en 3 backends
 
+## Contrato unificado (aplica a toda esta ADR)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 - **Estado:** Aprobado
 - **Fecha:** 2026-04-16
 - **Decisores:** Equipo Core de pCobra

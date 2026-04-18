@@ -1,5 +1,11 @@
 # Architecture Overview
 
+## Contrato unificado (aplica a toda esta sección)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 Este resumen documenta **cómo funciona internamente** la CLI unificada sin ampliar la superficie pública (`cobra run`, `cobra build`, `cobra test`, `cobra mod`).
 
 ## Flujo oficial inmutable
@@ -19,6 +25,16 @@ BackendPipeline
       ↓
 Bindings (python/js/rust)
 ```
+
+## Tabla de decisión de backend interno
+
+> Esta tabla es de contrato interno. No expone configuración al usuario final.
+
+| Señal técnica evaluada por el pipeline | Backend interno resultante | Ajuste permitido |
+|---|---|---|
+| Flujo estándar con prioridad de paridad de librerías | `python` | Hints internos controlados |
+| Integración orientada a bridge/runtime web | `javascript` | Hints internos controlados |
+| Requisito nativo/FFI con ABI contractual | `rust` | Hints internos controlados |
 
 ## 1) Frontend Cobra
 

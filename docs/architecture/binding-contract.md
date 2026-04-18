@@ -1,5 +1,11 @@
 # Contrato de bindings Cobra (Python / JavaScript / Rust)
 
+## Contrato unificado (aplica a toda esta guía)
+
+- Cobra es el **único lenguaje/interfaz pública**.
+- Solo existen **3 backends internos oficiales**: `python`, `javascript`, `rust`.
+- La decisión de backend es **interna** (no configurable por usuario final), salvo hints internos controlados.
+
 - **Estado:** Aprobado
 - **Fecha:** 2026-04-14
 - **Alcance:** CLI runners (`execute_cmd`) y futuros runners/runtime bridges
