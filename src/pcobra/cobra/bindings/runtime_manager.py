@@ -14,9 +14,12 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from pcobra.cobra.bindings.contract import (
     ABI_POLICY_BY_ROUTE,
+    BINDINGS_BY_LANGUAGE,
+    OFFICIAL_PUBLIC_ROUTE_MATRIX,
     BindingCapabilities,
     BindingRoute,
     resolve_binding,
+    validate_public_language,
 )
 
 DEFAULT_ABI_VERSION: Final[str] = "1.0"
@@ -48,6 +51,7 @@ class RuntimeBridgeDescriptor:
     implementation: str
     security_profile: str
     abi_version: str
+    internal_only: bool = True
 
 
 class RuntimeManager:
@@ -65,20 +69,26 @@ class RuntimeManager:
             implementation="python_direct_bridge",
             security_profile="same_process_safe_mode",
             abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.PYTHON_DIRECT_IMPORT].current,
+            internal_only=False,
         ),
         BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE: RuntimeBridgeDescriptor(
             route=BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE,
             implementation="javascript_controlled_runtime_bridge",
             security_profile="managed_runtime_isolation",
             abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE].current,
+            internal_only=False,
         ),
         BindingRoute.RUST_COMPILED_FFI: RuntimeBridgeDescriptor(
             route=BindingRoute.RUST_COMPILED_FFI,
             implementation="rust_compiled_ffi_bridge",
             security_profile="native_ffi_boundary",
             abi_version=ABI_POLICY_BY_ROUTE[BindingRoute.RUST_COMPILED_FFI].current,
+            internal_only=False,
         ),
     }
+
+    def __init__(self) -> None:
+        self._validate_public_contracts()
 
     def resolve_runtime(self, language: str) -> tuple[BindingCapabilities, RuntimeBridgeDescriptor]:
         """Resuelve contrato, negocia ABI y retorna bridge asociado."""
@@ -89,6 +99,7 @@ class RuntimeManager:
         return capabilities, bridge
 
     def _resolve_capabilities(self, language: str) -> BindingCapabilities:
+        validate_public_language(language)
         return resolve_binding(language)
 
     def validate_security_route(
@@ -192,6 +203,39 @@ class RuntimeManager:
         """Selecciona la implementación de bridge para una ruta contractual."""
 
         return self._BRIDGES[capabilities.route]
+
+    @classmethod
+    def _validate_public_contracts(cls) -> None:
+        expected_languages = set(OFFICIAL_PUBLIC_ROUTE_MATRIX)
+        binding_languages = set(BINDINGS_BY_LANGUAGE)
+        if binding_languages != expected_languages:
+            extras = sorted(binding_languages - expected_languages)
+            missing = sorted(expected_languages - binding_languages)
+            raise RuntimeError(
+                "Contrato de bindings públicos inválido. "
+                f"missing={missing or '∅'}; extras={extras or '∅'}"
+            )
+
+        for language, route in OFFICIAL_PUBLIC_ROUTE_MATRIX.items():
+            capabilities = BINDINGS_BY_LANGUAGE[language]
+            if capabilities.route is not route:
+                raise RuntimeError(
+                    "Matriz oficial inconsistente entre lenguaje y ruta. "
+                    f"language={language}; expected={route.value}; got={capabilities.route.value}"
+                )
+
+        for route, descriptor in cls._BRIDGES.items():
+            if route in OFFICIAL_PUBLIC_ROUTE_MATRIX.values():
+                if descriptor.internal_only:
+                    raise RuntimeError(
+                        f"Bridge oficial '{descriptor.implementation}' no puede ser internal_only."
+                    )
+                continue
+            if not descriptor.internal_only:
+                raise RuntimeError(
+                    "Bridge no oficial expuesto sin bandera internal_only. "
+                    f"route={route.value}; implementation={descriptor.implementation}"
+                )
 
     def _raise_route_error(self, route: BindingRoute, detail: str) -> None:
         route_label = self._ROUTE_LABEL_BY_ROUTE[route]

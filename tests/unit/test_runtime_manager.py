@@ -59,6 +59,7 @@ def test_runtime_manager_validate_command_runtime_retorna_abi_capabilities_y_bri
     assert abi == "2.0"
     assert capabilities.route is BindingRoute.RUST_COMPILED_FFI
     assert bridge.implementation == "rust_compiled_ffi_bridge"
+    assert bridge.internal_only is False
 
 
 def test_runtime_manager_negocia_abi_desde_config(monkeypatch, tmp_path: Path):
@@ -148,3 +149,14 @@ rust = "1.1"
 
     assert manager.validate_abi_route("javascript") == "1.0"
     assert manager.validate_abi_route("rust") == "1.1"
+
+
+def test_runtime_manager_rechaza_backend_no_oficial_en_ruta_publica():
+    manager = RuntimeManager()
+
+    try:
+        manager.resolve_runtime("go")
+    except ValueError as exc:
+        assert "Lenguaje no permitido en rutas públicas" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("Se esperaba rechazo temprano para backend no oficial")
