@@ -58,11 +58,12 @@ Public wording rule: keep **official output targets** separate from **reverse tr
 - VS Code extension
 - [Community](comunidad.md)
 - License
-- [Cobra Programming Book (Spanish, beginner to advanced)](LIBRO_PROGRAMACION_COBRA.md)
-- [Cobra Manual](MANUAL_COBRA.md)
-- [Cobra Manual in reStructuredText](MANUAL_COBRA.rst)
+- **Recommended docs path (no parallel ambiguity):**
+  - [Cobra Programming Book (Spanish) — **Primary** (beginner to advanced)](LIBRO_PROGRAMACION_COBRA.md)
+  - [Cobra Manual (Markdown) — **Technical Reference**](MANUAL_COBRA.md)
+  - [Cobra Manual (reStructuredText) — **Technical Reference**](MANUAL_COBRA.rst)
+  - [Basic guide — **Historical** (quick summary)](guia_basica.md)
 - [Cobra Manual in PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
-- [Basic guide (legacy reference)](guia_basica.md)
 - [Technical specification](especificacion_tecnica.md)
 - [Real use cases](casos_reales.md)
 - [Node sandbox limitations](limitaciones_node_sandbox.md)
