@@ -46,7 +46,7 @@ class ResolutionResult:
 
 API_CONTRACT_VERSION = "2026-04-import-resolution-v1"
 RESOLUTION_SOURCE_ORDER: tuple[str, ...] = ("stdlib", "project", "python_bridge", "hybrid")
-DEFAULT_COLLISION_POLICY = "warn"
+DEFAULT_COLLISION_POLICY = "namespace_required"
 # Backward-compatible alias (internal histórico).
 _SOURCE_ORDER: tuple[str, ...] = RESOLUTION_SOURCE_ORDER
 _SUPPORTED_COLLISION_POLICIES: frozenset[str] = frozenset(
@@ -112,7 +112,10 @@ class CobraImportResolver:
             return "strict_error"
 
         configured_policy = CobraImportResolver._collision_policy_from_config(config)
-        chosen = explicit_policy or configured_policy or DEFAULT_COLLISION_POLICY
+        migration_policy = (
+            "warn" if CobraImportResolver._is_migration_mode_enabled(config) else None
+        )
+        chosen = explicit_policy or configured_policy or migration_policy or DEFAULT_COLLISION_POLICY
         if chosen not in _SUPPORTED_COLLISION_POLICIES:
             raise ImportResolutionError(
                 "Política de colisiones inválida. "
@@ -129,6 +132,14 @@ class CobraImportResolver:
         if isinstance(policy, str):
             return policy.strip()
         return None
+
+    @staticmethod
+    def _is_migration_mode_enabled(config: Mapping[str, Any]) -> bool:
+        imports_section = config.get("imports", {})
+        if not isinstance(imports_section, Mapping):
+            return False
+        migration_mode = imports_section.get("migration_mode")
+        return migration_mode is True
 
     @staticmethod
     def _normalize_hybrid_modules(
@@ -190,8 +201,9 @@ class CobraImportResolver:
                 f"({RESOLUTION_SOURCE_ORDER[0]} > {RESOLUTION_SOURCE_ORDER[1]} > "
                 f"{RESOLUTION_SOURCE_ORDER[2]} > {RESOLUTION_SOURCE_ORDER[3]}). "
                 f"Seleccionado: {candidates[0].resolved_name}. Candidatos: {details}. "
-                f"Recomendación: usa prefijo explícito ('cobra.{name}') para stdlib o namespace de proyecto "
-                f"(por ejemplo 'app.{name}')."
+                f"Conflicto potencial: comando/import corto como 'importar {name}' puede colisionar "
+                f"con módulo local '{name}'. Recomendación explícita: usa 'cobra.{name}' para stdlib "
+                f"o 'app.{name}' para módulo de proyecto."
             )
             if self.collision_policy in {"strict_error", "namespace_required"}:
                 suffix = (
