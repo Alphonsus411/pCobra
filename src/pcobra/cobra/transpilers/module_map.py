@@ -7,6 +7,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.cobra.stdlib_contract import get_contract_manifests
@@ -127,6 +128,72 @@ def _is_runtime_path_forbidden(mapped_path: str) -> bool:
     return any(segment in canonical for segment in _RUNTIME_PATH_FORBIDDEN_SEGMENTS)
 
 
+
+
+def _validate_public_backend_policy(data: Dict[str, Any]) -> None:
+    """Valida que ``cobra.toml`` solo declare backends públicos en secciones de runtime."""
+    allowed = set(PUBLIC_BACKENDS)
+    allowed_text = ", ".join(PUBLIC_BACKENDS)
+
+    project_cfg = data.get("project")
+    if isinstance(project_cfg, dict):
+        raw_targets = project_cfg.get("required_targets")
+        if raw_targets is None:
+            raw_targets = project_cfg.get("targets_requeridos")
+
+        if raw_targets is not None:
+            if not isinstance(raw_targets, list):
+                raise ValueError(
+                    "Config local inválida: [project].required_targets debe ser una lista de strings. "
+                    f"Permitidos: {allowed_text}"
+                )
+            invalid_targets: list[str] = []
+            for raw_target in raw_targets:
+                if not isinstance(raw_target, str):
+                    invalid_targets.append(repr(raw_target))
+                    continue
+                canonical = normalize_target_name(raw_target)
+                if canonical not in allowed:
+                    invalid_targets.append(raw_target)
+
+            if invalid_targets:
+                raise ValueError(
+                    "Config local inválida: [project].required_targets contiene targets fuera de PUBLIC_BACKENDS: "
+                    f"{', '.join(invalid_targets)}. Permitidos: {allowed_text}"
+                )
+
+    modulos = data.get("modulos")
+    if not isinstance(modulos, dict):
+        return
+
+    invalid_by_module: dict[str, list[str]] = {}
+    for module_name, module_mapping in modulos.items():
+        if not isinstance(module_mapping, dict):
+            continue
+
+        invalid_keys: list[str] = []
+        for key in module_mapping:
+            if not isinstance(key, str):
+                invalid_keys.append(repr(key))
+                continue
+            canonical = normalize_target_name(key)
+            if canonical not in allowed:
+                invalid_keys.append(key)
+
+        if invalid_keys:
+            invalid_by_module[str(module_name)] = invalid_keys
+
+    if invalid_by_module:
+        rendered = "; ".join(
+            f"{module}: {', '.join(keys)}"
+            for module, keys in sorted(invalid_by_module.items())
+        )
+        raise ValueError(
+            "Config local inválida: [modulos.<nombre>] contiene targets fuera de PUBLIC_BACKENDS. "
+            f"Detalle: {rendered}. Permitidos: {allowed_text}"
+        )
+
+
 def get_toml_map() -> Dict[str, Any]:
     """Devuelve la configuración del archivo ``cobra.toml``."""
     global _toml_cache
@@ -137,6 +204,8 @@ def get_toml_map() -> Dict[str, Any]:
                     data = tomllib.load(f) or {}
             else:
                 data = {}
+            if isinstance(data, dict):
+                _validate_public_backend_policy(data)
             _toml_cache = data
         except (tomllib.TOMLDecodeError, OSError) as e:
             logger.error(f"Error al cargar cobra.toml: {e}")

@@ -1,8 +1,8 @@
+import pytest
 from cobra.transpilers import module_map
 
 
-def test_module_map_resuelve_target_tier2_en_cobra_toml(tmp_path, monkeypatch):
-    mod = "biblioteca.co"
+def test_module_map_rechaza_target_fuera_de_public_backends_en_cobra_toml(tmp_path, monkeypatch):
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
         "[modulos]\n"
@@ -15,7 +15,8 @@ def test_module_map_resuelve_target_tier2_en_cobra_toml(tmp_path, monkeypatch):
     module_map.COBRA_TOML_PATH = str(toml_file)
     module_map._toml_cache = None
 
-    assert module_map.get_mapped_path(mod, "go") == "biblioteca.go"
+    with pytest.raises(ValueError, match="PUBLIC_BACKENDS"):
+        module_map.get_toml_map()
 
 
 def test_module_map_ignora_cobra_mod_para_resolucion(tmp_path, monkeypatch):

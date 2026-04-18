@@ -73,7 +73,7 @@ def test_smoke_runtime_holobit_asm_expone_fallo_explicito_y_homogeneo(ast_holobi
     assert "la visualización requiere runtime externo" in code
 
 
-def test_module_map_resuelve_targets_solo_desde_cobra_toml(tmp_path, monkeypatch):
+def test_module_map_resuelve_targets_publicos_solo_desde_cobra_toml(tmp_path, monkeypatch):
     modulo = "biblioteca.co"
     toml_file = tmp_path / "cobra.toml"
     toml_file.write_text(
@@ -81,8 +81,7 @@ def test_module_map_resuelve_targets_solo_desde_cobra_toml(tmp_path, monkeypatch
         "[modulos.'biblioteca.co']\n"
         "python = 'biblioteca.py'\n"
         "javascript = 'biblioteca.js'\n"
-        "rust = 'biblioteca.rs'\n"
-        "go = 'biblioteca.go'\n",
+        "rust = 'biblioteca.rs'\n",
         encoding="utf-8",
     )
 
@@ -96,4 +95,23 @@ def test_module_map_resuelve_targets_solo_desde_cobra_toml(tmp_path, monkeypatch
     assert module_map.get_mapped_path(modulo, "python") == "biblioteca.py"
     assert module_map.get_mapped_path(modulo, "javascript") == "biblioteca.js"
     assert module_map.get_mapped_path(modulo, "rust") == "biblioteca.rs"
-    assert module_map.get_mapped_path(modulo, "go") == "biblioteca.go"
+
+
+def test_module_map_falla_si_toml_declara_target_no_publico(tmp_path, monkeypatch):
+    toml_file = tmp_path / "cobra.toml"
+    toml_file.write_text(
+        "[modulos]\n"
+        "[modulos.'biblioteca.co']\n"
+        "go = 'biblioteca.go'\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("COBRA_TOML", str(toml_file))
+
+    import pcobra.cobra.transpilers.module_map as module_map
+
+    module_map.COBRA_TOML_PATH = str(toml_file)
+    module_map._toml_cache = None
+
+    with pytest.raises(ValueError, match="PUBLIC_BACKENDS"):
+        module_map.get_toml_map()
