@@ -67,8 +67,8 @@ Módulos y paquetes
 ------------------
 
 Los módulos se importan con ``import``. Para agrupar varios módulos puede
-crearse un archivo ``cobra.pkg`` y usar ``cobra paquete crear`` para
-empaquetarlos.
+crearse un archivo ``cobra.pkg``. El flujo ``cobra paquete crear`` se conserva
+como comando legacy para empaquetados históricos.
 
 Macros y concurrencia
 ---------------------
@@ -436,8 +436,8 @@ con el mismo signo que el divisor incluso si se usan valores negativos.
 Transpilación y ejecución
 -------------------------
 
-El comando ``cobra compilar`` genera código para múltiples lenguajes. También
-puede ejecutarse un archivo directamente con ``cobra ejecutar``.
+La interfaz pública canónica usa ``cobra build`` para generar artefactos y
+``cobra run`` para ejecutar archivos Cobra.
 El subcomando ``cobra verificar`` (``cobra verify`` en la versión en inglés)
 permite comparar la salida de un programa transpilado a distintos lenguajes
 (actualmente Python y JavaScript) y avisa si alguna difiere.
@@ -445,6 +445,14 @@ Adicionalmente puedes convertir código escrito en otros lenguajes a Cobra y
 volver a transpilarlos con ``cobra transpilar-inverso``::
 
    cobra transpilar-inverso ejemplo.py --origen=python --destino=javascript
+
+Comandos legacy y migración
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Si encuentras referencias a ``cobra compilar``, ``cobra ejecutar`` o
+``cobra validar-sintaxis``, trátalas como rutas legacy. Para migrar al flujo
+estable ``run/build/test/mod`` revisa
+``docs/migracion_cli_unificada.md``.
 
 Caché incremental con SQLitePlus
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

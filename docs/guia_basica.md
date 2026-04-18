@@ -40,6 +40,13 @@ cobra build archivo.co
 
 > Si migras desde `cobra archivo.co`, `cobra compilar` o flags de backend legacy, revisa [docs/migracion_cli_unificada.md](migracion_cli_unificada.md).
 
+### Comandos legacy y migración
+
+Los comandos `cobra ejecutar`, `cobra compilar` y `cobra validar-sintaxis`
+deben considerarse legacy. Para la interfaz pública usa `cobra run`,
+`cobra build`, `cobra test` y `cobra mod`. Guía completa:
+[`docs/migracion_cli_unificada.md`](migracion_cli_unificada.md).
+
 ### Ejecución en GitHub Codespaces
 
 1. En la página del repositorio en GitHub pulsa **Code** y luego la pestaña **Codespaces**.
@@ -51,7 +58,7 @@ cobra build archivo.co
 
 1. Abre [Replit](https://replit.com/) e importa este repositorio desde GitHub.
 2. Al cargarse el entorno, se instalarán las dependencias indicadas en `requirements.txt` gracias al archivo `replit.nix`.
-3. El archivo `.replit` ya define el comando de ejecución `python -m cobra examples/replit/main.cobra`.
+3. El archivo `.replit` puede usar todavía el shim legacy `python -m cobra examples/replit/main.cobra`; para documentación pública prioriza `cobra run examples/replit/main.cobra`.
 4. Presiona **Run** para ejecutar el ejemplo inicial ubicado en `examples/replit/main.cobra`.
 
 ### Ejecución en Binder

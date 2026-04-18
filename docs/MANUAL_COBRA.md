@@ -255,9 +255,11 @@ imprimir(saludo)
 ## 7. Paquetes Cobra
 
 - Agrupa varios módulos en un archivo con manifest ``cobra.pkg``.
-- Crea un paquete con ``cobra paquete crear carpeta paquete.cobra``.
-- Instálalo posteriormente con ``cobra paquete instalar paquete.cobra``.
+- Legacy: ``cobra paquete crear carpeta paquete.cobra``.
+- Legacy: ``cobra paquete instalar paquete.cobra``.
 - Los archivos ``.cobra`` corresponden a paquetes completos, mientras que los scripts usan la extensión ``.co``.
+
+> Nota: los comandos `cobra paquete ...` se conservan como compatibilidad histórica y no forman parte de la interfaz pública canónica `run/build/test/mod`.
 
 ## 8. Macros
 
@@ -455,6 +457,13 @@ Los orígenes reverse se mantienen en una categoría separada: describen lenguaj
 
 - Construye artefactos con `cobra build archivo.co`.
 - Ejecuta directamente con `cobra run archivo.co`.
+
+### Comandos legacy y migración
+
+Si encuentras documentación antigua con `cobra ejecutar`, `cobra compilar`,
+`cobra validar-sintaxis` o `cobra paquete ...`, trátalos como comandos legacy.
+Para el flujo público actual usa `cobra run`, `cobra build`, `cobra test` y
+`cobra mod`, y consulta [`docs/migracion_cli_unificada.md`](migracion_cli_unificada.md).
 
 ### Ejemplo de transpilación a Python
 
