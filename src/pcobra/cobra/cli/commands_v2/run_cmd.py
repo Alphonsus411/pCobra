@@ -51,7 +51,7 @@ class RunCommandV2(BaseCommand):
             mostrar_error(str(exc), registrar_log=False)
             return 1
 
-        resolution = backend_pipeline.resolve_backend(args.file, {})
+        resolution, _runtime = backend_pipeline.resolve_backend_runtime(args.file, {})
         legacy_args = Namespace(
             archivo=args.file,
             debug=bool(getattr(args, "debug", False)),

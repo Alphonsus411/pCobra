@@ -44,6 +44,7 @@ from pcobra.cobra.cli.target_policies import parse_target
 from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
 from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
@@ -412,7 +413,7 @@ class TranspilarInversoCommand(BaseCommand):
                 destino,
             )
             ast = reverse_cls().load_file(args.archivo)
-            codigo = transp_cls().generate_code(ast)
+            codigo = backend_pipeline.transpile(ast, destino)
             report = _build_roundtrip_loss_report(
                 destino=destino,
                 ast_original=ast,

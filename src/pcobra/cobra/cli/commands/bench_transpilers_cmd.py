@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -170,9 +171,8 @@ class BenchTranspilersCommand(BaseCommand):
             with profile_context(profiler):
                 for size, code in programs.items():
                     ast = obtener_ast(code)
-                    for lang, cls in TRANSPILERS.items():
-                        transpiler = cls()
-                        elapsed = timeit(lambda: transpiler.generate_code(ast), number=1)
+                    for lang in TRANSPILERS:
+                        elapsed = timeit(lambda: backend_pipeline.transpile(ast, lang), number=1)
                         results.append({"size": size, "lang": lang, "time": elapsed})
 
             if profiler:

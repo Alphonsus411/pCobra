@@ -388,7 +388,7 @@ class CompileCommand(BaseCommand):
             )
         try:
             backend_pipeline.TRANSPILERS = TRANSPILERS
-            resolution = backend_pipeline.resolve_backend(
+            resolution, _runtime = backend_pipeline.resolve_backend_runtime(
                 archivo,
                 {"preferred_backend": preferred_backend},
             )
