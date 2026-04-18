@@ -42,6 +42,7 @@ Este flag es transitorio y no debe usarse en documentación pública ni en nuevo
    - Confirmar readiness antes del 30/06/2027 y remover la ruta de compatibilidad.
 
 Checklist operativo por fases: `docs/compatibility/internal_only_backend_removal_checklist.md`.
+Calendario y clasificación de dependencias por backend: `docs/compatibility/legacy_backend_retirement_calendar.md`.
 
 ## Inventario por fase (fuente canónica: `legacy_backend_lifecycle.py`)
 
