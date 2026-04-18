@@ -181,6 +181,9 @@ jobs:
       - name: Validate no duplicated public backend literals
         shell: bash
         run: python scripts/ci/validate_public_backend_literals.py
+      - name: Validate public import boundaries against internal_compat
+        shell: bash
+        run: python scripts/ci/check_public_import_boundaries.py
       - name: Lint legacy target aliases in tests/docs
         shell: bash
         run: python scripts/lint_legacy_aliases.py
@@ -468,6 +471,9 @@ jobs:
       - name: Validate no duplicated public backend literals
         shell: bash
         run: python scripts/ci/validate_public_backend_literals.py
+      - name: Validate public import boundaries against internal_compat
+        shell: bash
+        run: python scripts/ci/check_public_import_boundaries.py
       - name: Run Tier 2 backend suite
         shell: bash
         run: |

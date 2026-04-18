@@ -13,6 +13,8 @@ PUBLIC_SCOPES = (
     SRC_ROOT / "pcobra/cobra/architecture",
     SRC_ROOT / "pcobra/cobra/imports",
     SRC_ROOT / "pcobra/cobra/bindings",
+    SRC_ROOT / "pcobra/cobra/cli/commands",
+    SRC_ROOT / "pcobra/cobra/cli/commands_v2",
 )
 
 FORBIDDEN_IMPORT_PREFIXES = (
@@ -34,8 +36,9 @@ def _node_import_targets(node: ast.AST) -> list[str]:
 
 
 def _is_forbidden_import(target: str) -> bool:
-    return target.startswith(FORBIDDEN_IMPORT_PREFIXES) or any(
-        token in target for token in FORBIDDEN_IMPORT_CONTAINS
+    canonical = target or ""
+    return canonical.startswith(FORBIDDEN_IMPORT_PREFIXES) or any(
+        token in canonical for token in FORBIDDEN_IMPORT_CONTAINS
     )
 
 

@@ -7,7 +7,10 @@ from typing import Any
 from pathlib import Path
 
 from pcobra.cobra.transpilers.target_utils import target_label
-from pcobra.cobra.cli.target_policies import parse_target
+from pcobra.cobra.cli.target_policies import (
+    add_internal_legacy_targets_flag,
+    parse_target,
+)
 
 from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA, benchmark_backends, validate_backend_metadata
 
@@ -17,7 +20,6 @@ from pcobra.cobra.cli.deprecation_policy import (
     enforce_advanced_profile_policy,
     enforce_target_deprecation_policy,
 )
-from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info

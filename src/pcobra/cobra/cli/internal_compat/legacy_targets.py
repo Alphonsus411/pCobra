@@ -10,8 +10,10 @@ import os
 from datetime import date
 from typing import Final
 
-from pcobra.cobra.architecture.backend_policy import INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
+from pcobra.cobra.internal_compat.legacy_contracts import (
+    INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
+)
 
 LEGACY_BACKENDS_FEATURE_FLAG: Final[str] = "COBRA_INTERNAL_LEGACY_TARGETS"
 

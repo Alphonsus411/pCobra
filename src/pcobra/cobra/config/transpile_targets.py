@@ -5,10 +5,12 @@ from __future__ import annotations
 from typing import Final, Literal, TypedDict
 
 from pcobra.cobra.architecture.backend_policy import (
-    INTERNAL_BACKENDS,
-    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
     PUBLIC_BACKENDS,
     assert_public_targets_contract,
+)
+from pcobra.cobra.internal_compat.legacy_contracts import (
+    INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
 )
 
 

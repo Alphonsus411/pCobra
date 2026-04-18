@@ -9,6 +9,8 @@ from importlib.metadata import entry_points
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
+    add_internal_legacy_targets_flag,
+    enabled_internal_legacy_targets,
     parse_target,
     parse_target_list,
 )
@@ -26,8 +28,6 @@ from pcobra.cobra.cli.deprecation_policy import (
     enforce_target_deprecation_policy,
     visible_public_targets,
 )
-from pcobra.cobra.cli.internal_compat.legacy_targets import enabled_internal_legacy_targets
-from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer

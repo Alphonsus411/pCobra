@@ -32,7 +32,6 @@ from pcobra.cobra.transpilers.reverse.policy import (
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
 from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
-from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.deprecation_policy import (
     enforce_advanced_profile_policy,
@@ -41,8 +40,11 @@ from pcobra.cobra.cli.deprecation_policy import (
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.cobra.cli.target_policies import parse_target
-from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
+from pcobra.cobra.cli.target_policies import (
+    OFFICIAL_TRANSPILATION_TARGETS,
+    add_internal_legacy_targets_flag,
+    parse_target,
+)
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
