@@ -1,7 +1,12 @@
 # Libro de Programación con Cobra
 
-> Estado: **guía principal recomendada** para aprender Cobra de cero a avanzado.
-> Este libro consolida y moderniza la documentación práctica de sintaxis y uso del lenguaje.
+> **Estado del documento: Principal**
+>
+> Ruta pedagógica oficial de Cobra (de nivel inicial a avanzado).
+
+Este libro es la **guía pedagógica principal** para aprender Cobra de forma progresiva.
+Si buscas una vista breve, consulta el [Resumen rápido](guia_basica.md).
+Si necesitas detalle normativo y comportamiento de runtime, usa la [Referencia técnica](MANUAL_COBRA.md) y su [versión RST](MANUAL_COBRA.rst).
 
 ## Índice
 
