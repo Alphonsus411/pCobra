@@ -30,6 +30,9 @@ INTERNAL_BACKEND_API_CONTRACT: tuple[str, ...] = (
     "transpile",
 )
 
+# API mínima estable para capas superiores.
+STABLE_BACKEND_PIPELINE_API: tuple[str, ...] = INTERNAL_BACKEND_API_CONTRACT
+
 
 def _load_official_transpilers() -> dict[str, type]:
     """Helper interno: encapsula acceso al registro canónico."""
@@ -79,9 +82,13 @@ def _validate_internal_entrypoint_contract() -> None:
             "El contrato interno del backend pipeline debe ser "
             "resolve_backend_runtime/build/transpile."
         )
+    exported_api = tuple(__all__) if isinstance(__all__, list) else tuple(__all__)
+    if exported_api != STABLE_BACKEND_PIPELINE_API:
+        raise RuntimeError(
+            "La API exportada de backend_pipeline debe permanecer mínima y estable: "
+            "resolve_backend_runtime/build/transpile."
+        )
 
-
-_validate_internal_entrypoint_contract()
 
 
 def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
@@ -96,6 +103,14 @@ def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> Backen
         required_capabilities=required_capabilities,
         route_scope=route_scope,
     )
+
+
+def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
+    """Compat temporal: delega en la resolución interna del pipeline.
+
+    Nota: la API estable para capas superiores es ``resolve_backend_runtime``.
+    """
+    return _resolve_backend(source, hints)
 
 
 def resolve_backend_runtime(
@@ -150,7 +165,10 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
     ast = obtener_ast(codigo)
     code = transpile(ast, resolution.backend)
     debug = bool(context.get("debug", False))
-    reason = resolution.reason_for(debug=debug)
+    if hasattr(resolution, "reason_for"):
+        reason = resolution.reason_for(debug=debug)
+    else:
+        reason = getattr(resolution, "reason", None) if debug else None
     return {
         "backend": resolution.backend,
         "reason": reason,
@@ -160,12 +178,7 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
     }
 
 
-__all__ = [
-    "INTERNAL_BACKEND_ENTRYPOINT",
-    "INTERNAL_BACKEND_API_CONTRACT",
-    "ORCHESTRATOR",
-    "TRANSPILERS",
-    "build",
-    "resolve_backend_runtime",
-    "transpile",
-]
+__all__ = list(STABLE_BACKEND_PIPELINE_API)
+
+
+_validate_internal_entrypoint_contract()
