@@ -29,3 +29,22 @@ var conexiones = lista.mapear_aplanado(
 El resultado es siempre una lista nueva, por lo que los datos originales no se
 modifican. Al trabajar con generadores o rangos se consumen una única vez y se
 preservan los tipos de sus elementos.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.lista`)
+
+| Función |
+|---|
+| `cabeza` |
+| `chunk` |
+| `cola` |
+| `combinar` |
+| `descartar_mientras` |
+| `longitud` |
+| `mapear_aplanado` |
+| `mapear_seguro` |
+| `pares_consecutivos` |
+| `scanear` |
+| `tomar_mientras` |
+| `ventanas` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

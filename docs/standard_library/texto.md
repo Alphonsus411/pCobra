@@ -98,3 +98,61 @@ assert traducir("áéí", tabla) == "ae"
 ```
 
 Todas estas funciones respetan Unicode y aprovechan los normalizadores base disponibles en Cobra y en los lenguajes de destino.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.texto`)
+
+| Función |
+|---|
+| `a_camel` |
+| `a_snake` |
+| `acortar_texto` |
+| `centrar_texto` |
+| `codificar` |
+| `contar_subcadena` |
+| `decodificar` |
+| `desindentar_texto` |
+| `dividir_derecha` |
+| `dividir_lineas` |
+| `encontrar` |
+| `encontrar_derecha` |
+| `envolver_texto` |
+| `es_alfa_numerico` |
+| `es_alfabetico` |
+| `es_anagrama` |
+| `es_ascii` |
+| `es_decimal` |
+| `es_digito` |
+| `es_espacio` |
+| `es_identificador` |
+| `es_imprimible` |
+| `es_mayusculas` |
+| `es_minusculas` |
+| `es_numerico` |
+| `es_palindromo` |
+| `es_titulo` |
+| `expandir_tabulaciones` |
+| `formatear` |
+| `formatear_mapa` |
+| `indentar_texto` |
+| `indice` |
+| `indice_derecha` |
+| `intercambiar_mayusculas` |
+| `minusculas_casefold` |
+| `normalizar_espacios` |
+| `particionar` |
+| `particionar_derecha` |
+| `prefijo_comun` |
+| `quitar_acentos` |
+| `quitar_envoltura` |
+| `quitar_prefijo` |
+| `quitar_sufijo` |
+| `rellenar_ceros` |
+| `subcadena_antes` |
+| `subcadena_antes_ultima` |
+| `subcadena_despues` |
+| `subcadena_despues_ultima` |
+| `sufijo_comun` |
+| `tabla_traduccion` |
+| `traducir` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

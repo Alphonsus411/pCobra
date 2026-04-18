@@ -253,3 +253,19 @@ assert describir(5.0).startswith("Valor genérico")
 **Limitación real fuera de Python runtime:** `singledispatch` y su registro por
 tipos (`registrar`, `despachar`, `registros`) no tienen equivalencia exacta
 garantizada en todos los targets.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.decoradores`)
+
+| Función |
+|---|
+| `dataclase` |
+| `depreciado` |
+| `despachar_por_tipo` |
+| `memoizar` |
+| `orden_total` |
+| `reintentar` |
+| `reintentar_async` |
+| `sincronizar` |
+| `temporizar` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

@@ -37,3 +37,32 @@ imprimir(numero.distancia_euclidiana(punto_a, punto_b))  # 3.0
 Estas funciones siguen las mismas validaciones que sus equivalentes en
 `corelibs`, por lo que secuencias vacías o valores no numéricos producen errores
 explícitos tanto en Python como en los demás backends soportados.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.numero`)
+
+| Función |
+|---|
+| `coeficiente_variacion` |
+| `combinaciones` |
+| `copiar_signo` |
+| `cuartiles` |
+| `distancia_euclidiana` |
+| `envolver_modular` |
+| `es_finito` |
+| `es_infinito` |
+| `es_nan` |
+| `hipotenusa` |
+| `interpolar` |
+| `limitar` |
+| `media_armonica` |
+| `media_geometrica` |
+| `percentil` |
+| `permutaciones` |
+| `raiz_entera` |
+| `rango_intercuartil` |
+| `signo` |
+| `suma_precisa` |
+| `varianza` |
+| `varianza_muestral` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

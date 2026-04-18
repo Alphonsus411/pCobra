@@ -67,3 +67,14 @@ with rel(demo, {"valor": 5}, duracion=0.01):
 - Si el callable proporcionado en `cambios` devuelve un valor que no es `None` ni un callable, se lanza `TypeError` y los cambios se revierten.
 - Cuando el atributo original no existía, `rel` lo elimina durante la restauración.
 - El temporizador creado por `duracion` es un hilo en segundo plano; se cancela automáticamente al salir del bloque para evitar ejecuciones tardías.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.util`)
+
+| Función |
+|---|
+| `es_nulo` |
+| `es_vacio` |
+| `rel` |
+| `repetir` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->
