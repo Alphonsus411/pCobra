@@ -16,9 +16,12 @@ except ModuleNotFoundError:  # pragma: no cover
 from pcobra.cobra.bindings.contract import (
     ABI_POLICY_BY_ROUTE,
     BINDINGS_BY_LANGUAGE,
+    EVENT_VALIDATION_FIELDS,
     OFFICIAL_PUBLIC_ROUTE_MATRIX,
+    PUBLIC_RUNTIME_COMMANDS,
     BindingCapabilities,
     BindingRoute,
+    resolve_command_event,
     resolve_binding,
     validate_public_language,
 )
@@ -114,13 +117,12 @@ class RuntimeManager:
     ) -> None:
         """Valida seguridad por ruta contractual y política del comando."""
 
-        normalized_command = (command or "run").strip().lower()
-        if normalized_command not in SECURITY_POLICY_BY_COMMAND:
-            allowed = ", ".join(sorted(SECURITY_POLICY_BY_COMMAND))
-            raise ValueError(f"Comando '{command}' no soportado en política de seguridad. Use: {allowed}.")
+        normalized_command = self._normalize_command(command)
 
         capabilities = self._resolve_capabilities(language)
         route = capabilities.route
+        bridge = self.select_bridge(capabilities)
+        negotiated_abi = self.negotiate_abi(capabilities)
 
         # Validación base por ruta
         if route is BindingRoute.PYTHON_DIRECT_IMPORT and containerized:
@@ -149,6 +151,15 @@ class RuntimeManager:
             raise ValueError(
                 f"La política '{normalized_command}' exige contenedor para la ruta {route.value}."
             )
+        self._log_validation_event(
+            normalized_command,
+            capabilities=capabilities,
+            bridge=bridge,
+            abi_version=negotiated_abi,
+            sandbox=sandbox,
+            containerized=containerized,
+            stage="security",
+        )
 
     def negotiate_abi(self, capabilities: BindingCapabilities, abi_version: str | None = None) -> str:
         """Negocia ABI por ruta usando matriz canónica y compatibilidad hacia atrás."""
@@ -178,7 +189,17 @@ class RuntimeManager:
         """Wrapper público para mantener compatibilidad con llamadas existentes."""
 
         capabilities = self._resolve_capabilities(language)
-        return self.negotiate_abi(capabilities, abi_version)
+        negotiated_abi = self.negotiate_abi(capabilities, abi_version)
+        self._log_validation_event(
+            "run",
+            capabilities=capabilities,
+            bridge=self.select_bridge(capabilities),
+            abi_version=negotiated_abi,
+            sandbox=False,
+            containerized=False,
+            stage="abi",
+        )
+        return negotiated_abi
 
     def validate_command_runtime(
         self,
@@ -199,17 +220,14 @@ class RuntimeManager:
             command=command,
         )
         negotiated_abi = self.negotiate_abi(capabilities, abi_version)
-        self._runtime_logger.info(
-            "runtime.command.validation",
-            extra={
-                "command": (command or "").strip().lower(),
-                "language": capabilities.language,
-                "route": capabilities.route.value,
-                "bridge": bridge.implementation,
-                "abi_version": negotiated_abi,
-                "sandbox": sandbox,
-                "containerized": containerized,
-            },
+        self._log_validation_event(
+            self._normalize_command(command),
+            capabilities=capabilities,
+            bridge=bridge,
+            abi_version=negotiated_abi,
+            sandbox=sandbox,
+            containerized=containerized,
+            stage="command",
         )
         return negotiated_abi, capabilities, bridge
 
@@ -254,6 +272,42 @@ class RuntimeManager:
     def _raise_route_error(self, route: BindingRoute, detail: str) -> None:
         route_label = self._ROUTE_LABEL_BY_ROUTE[route]
         raise ValueError(f"[{route_label}] {detail}.")
+
+    def _normalize_command(self, command: str | None) -> str:
+        normalized_command = (command or "run").strip().lower()
+        if normalized_command not in PUBLIC_RUNTIME_COMMANDS:
+            allowed = ", ".join(PUBLIC_RUNTIME_COMMANDS)
+            raise ValueError(
+                f"Comando '{command}' no soportado en política de seguridad. Use: {allowed}."
+            )
+        return normalized_command
+
+    def _log_validation_event(
+        self,
+        command: str,
+        *,
+        capabilities: BindingCapabilities,
+        bridge: RuntimeBridgeDescriptor,
+        abi_version: str,
+        sandbox: bool,
+        containerized: bool,
+        stage: str,
+    ) -> None:
+        event_name = resolve_command_event(command)
+        payload = {
+            "command": command,
+            "stage": stage,
+            "language": capabilities.language,
+            "route": capabilities.route.value,
+            "bridge": bridge.implementation,
+            "abi_version": abi_version,
+            "sandbox": sandbox,
+            "containerized": containerized,
+        }
+        for field in EVENT_VALIDATION_FIELDS:
+            if field not in payload:
+                raise RuntimeError(f"Esquema de evento inválido: falta '{field}'.")
+        self._runtime_logger.info(event_name, extra=payload)
 
     def _resolve_project_abi_for_backend(self, backend: str) -> str | None:
         """Obtiene ABI negociada por backend desde cobra.toml/pcobra.toml."""

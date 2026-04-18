@@ -16,6 +16,15 @@ class BindingRoute(str, Enum):
 
 
 OFFICIAL_PUBLIC_LANGUAGES: Final[tuple[str, ...]] = ("python", "javascript", "rust")
+PUBLIC_RUNTIME_COMMANDS: Final[tuple[str, ...]] = ("run", "build", "test")
+EVENT_VALIDATION_FIELDS: Final[tuple[str, ...]] = (
+    "language",
+    "route",
+    "bridge",
+    "abi_version",
+    "sandbox",
+    "containerized",
+)
 
 OFFICIAL_PUBLIC_ROUTE_MATRIX: Final[dict[str, BindingRoute]] = {
     "python": BindingRoute.PYTHON_DIRECT_IMPORT,
@@ -131,6 +140,10 @@ ROUTE_OPERATIONAL_LIMITS: Final[dict[BindingRoute, RouteOperationalLimits]] = {
     ),
 }
 
+COMMAND_EVENT_SCHEMA: Final[dict[str, str]] = {
+    command: f"runtime.command.validation.{command}" for command in PUBLIC_RUNTIME_COMMANDS
+}
+
 
 def resolve_binding(language: str) -> BindingCapabilities:
     """Resuelve el contrato de bindings para un lenguaje canónico."""
@@ -172,20 +185,37 @@ def route_matrix_markdown() -> str:
     )
 
 
+def resolve_command_event(command: str) -> str:
+    """Resuelve el nombre de evento canónico por comando público."""
+
+    key = (command or "").strip().lower()
+    try:
+        return COMMAND_EVENT_SCHEMA[key]
+    except KeyError as exc:
+        raise ValueError(
+            "Comando no soportado para eventos contractuales: "
+            f"'{command}'. Comandos oficiales: {', '.join(PUBLIC_RUNTIME_COMMANDS)}."
+        ) from exc
+
+
 __all__ = [
     "AbiCompatibilityPolicy",
     "BindingCapabilities",
     "BindingRoute",
     "BINDINGS_BY_LANGUAGE",
     "OFFICIAL_PUBLIC_LANGUAGES",
+    "PUBLIC_RUNTIME_COMMANDS",
     "OFFICIAL_PUBLIC_ROUTE_MATRIX",
     "ABI_POLICY_BY_ROUTE",
+    "COMMAND_EVENT_SCHEMA",
+    "EVENT_VALIDATION_FIELDS",
     "ROUTE_OPERATIONAL_LIMITS",
     "RouteOperationalLimits",
     "JAVASCRIPT_BINDING",
     "PYTHON_BINDING",
     "RUST_BINDING",
     "route_matrix_markdown",
+    "resolve_command_event",
     "validate_public_language",
     "resolve_binding",
 ]
