@@ -1,5 +1,8 @@
 # Anexos legacy/internal
 
+> ⚠️ **NO PÚBLICO / NO ONBOARDING**: este directorio concentra material histórico y de compatibilidad interna.
+> No debe usarse como documentación principal para usuarios nuevos.
+
 Este directorio agrupa documentación histórica y notas internas para mantener limpio el onboarding del README principal.
 
 ## Contenido
