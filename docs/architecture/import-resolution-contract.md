@@ -12,14 +12,19 @@ El orden vigente de precedencia se congela como contrato público en
 3. `python_bridge`
 4. `hybrid`
 
-Este orden debe tratarse como **API contractual** (estable entre releases menores).
+Este orden debe tratarse como **API contractual** y solo puede cambiar en una versión mayor.
+
+En el runtime queda expuesto como:
+
+- `RESOLUTION_SOURCE_ORDER` (tupla contractual vigente)
+- `RESOLUTION_SOURCE_ORDER_STABILITY = "major"` (política de estabilidad)
 
 En términos prácticos:
 
 - Si `importar datos` coincide con `cobra.datos` y también existe un módulo local `datos`, se resuelve primero como stdlib (`cobra.datos`).
 - Cuando un nombre sin namespace coincide en múltiples orígenes, el resultado efectivo siempre sigue el orden anterior.
 
-## 2) Política explícita para imports ambiguos
+## 2) Política explícita para imports ambiguos y códigos de error estables
 
 Se considera ambiguo un import sin namespace (sin `.`) que tenga más de un candidato válido entre los orígenes del contrato.
 
@@ -30,12 +35,12 @@ La política se configura por proyecto en `cobra.toml`:
 collision_policy = "warn" # warn | strict_error | namespace_required
 ```
 
-Si no se declara nada, el resolver usa `warn` por compatibilidad (`DEFAULT_COLLISION_POLICY`).
+Si no se declara nada, el resolver usa `namespace_required` (`DEFAULT_COLLISION_POLICY`).
 
-### `warn` (modo por defecto)
+### `warn` (modo de migración/compatibilidad)
 
 - El resolver emite `UserWarning`.
-- Se selecciona automáticamente el candidato de mayor prioridad según `_SOURCE_ORDER`.
+- Se selecciona automáticamente el candidato de mayor prioridad según `RESOLUTION_SOURCE_ORDER`.
 
 ### `strict_error`
 
@@ -51,6 +56,18 @@ Si no se declara nada, el resolver usa `warn` por compatibilidad (`DEFAULT_COLLI
 
 > Compatibilidad: `strict_ambiguous_imports=True` sigue soportado y fuerza `strict_error`.
 
+### Códigos de error estables (`ImportResolutionError`)
+
+El resolver adjunta un código máquina estable en `ImportResolutionError.code`
+(y en el texto como prefijo `[CODIGO]`) para tooling/CI:
+
+- `IMP-COLLISION-001`: colisión de import sin namespace en `strict_error`/`namespace_required`.
+- `IMP-NOT-FOUND-001`: no existe candidato de resolución para el módulo solicitado.
+- `IMP-REQUEST-001`: request vacío.
+- `IMP-CONFIG-001`: `collision_policy` inválida en configuración.
+
+
+
 ## 3) Prefijos recomendados para evitar colisiones
 
 Recomendaciones normativas:
@@ -59,7 +76,7 @@ Recomendaciones normativas:
 - **Módulos de proyecto**: usar namespace de aplicación (por ejemplo `app.datos`, `mi_equipo.datos`) en lugar de nombres planos como `datos`.
 - **Bridge Python**: preferir nombres plenamente calificados cuando aplique (`json`, `datetime`, `paquete.submodulo`) y evitar nombres genéricos que colisionen con stdlib/proyecto.
 
-## 4) Metadata de observabilidad en módulos cargados
+## 4) Metadata de observabilidad en módulos cargados y auditoría opcional
 
 Cuando el resolvedor carga un módulo Python (`load_module`), inyecta metadata para diagnóstico:
 
@@ -72,6 +89,16 @@ Cuando el resolvedor carga un módulo Python (`load_module`), inyecta metadata p
   - `backend`
   - `import_path`
   - `precedence_reason` (motivo de precedencia: selección única o aplicación de orden estable)
+  - `audit_debug` (si la auditoría de debug está activa)
+
+Adicionalmente, se puede habilitar auditoría opcional:
+
+```toml
+[imports]
+audit_debug = true
+```
+
+Con `audit_debug=true`, cada resolución agrega un evento en `resolver.audit_events` y escribe log `DEBUG` con `request`, `source`, `resolved_name` y `precedence_reason`.
 
 Esta metadata habilita trazabilidad de resolución y debugging en runtime sin inspección adicional del resolvedor.
 
@@ -113,12 +140,29 @@ backend = "javascript"
 Estos 3 casos (`importar pandas`, `importar datos`/`importar cobra.datos`, e híbridos
 en `imports.hybrid_modules`) son rutas oficiales del contrato de resolución.
 
-## 6) Ejemplos de conflictos y resolución explícita
+## 6) Patrón recomendado de namespaces y migración de conflictos reales
 
-- Conflicto `datos` entre stdlib y proyecto:
-  - Implícito: `importar datos` (ambigüedad)
-  - Explícito recomendado:
-    - stdlib: `importar cobra.datos`
-    - proyecto: `importar app.datos`
-- Conflicto con bridge Python:
-  - Si existe paquete Python `datos`, usar nombre explícito de proyecto o stdlib para evitar depender de orden de precedencia.
+Patrón normativo recomendado:
+
+- **stdlib Cobra**: `cobra.*`
+- **módulos de app/proyecto**: `app.*` (o un namespace organizacional equivalente)
+
+Migraciones sugeridas (casos reales frecuentes):
+
+1. Conflicto `datos` (stdlib vs módulo local):
+   - Antes: `importar datos`
+   - Después (stdlib): `importar cobra.datos`
+   - Después (app): `importar app.datos`
+
+2. Conflicto `web` (stdlib `cobra.web` vs carpeta local `web/`):
+   - Antes: `importar web`
+   - Después (stdlib): `importar cobra.web`
+   - Después (app): `importar app.web`
+
+3. Conflicto con bridge Python (`json`):
+   - Si el proyecto crea `app/json.co`, evitar `importar json` en código nuevo.
+   - Preferir:
+     - bridge Python: `importar json` solo cuando no exista colisión local/stdlib
+     - app explícita: `importar app.json`
+
+Esta convención minimiza deuda de migración y evita depender de precedencia implícita en conflictos.

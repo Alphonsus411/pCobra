@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import logging
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,8 +18,25 @@ from pcobra.cobra.stdlib_contract import get_public_stdlib_module_contracts
 
 
 class ImportResolutionError(RuntimeError):
-    """Error base al resolver imports Cobra."""
+    """Error base al resolver imports Cobra con código estable para tooling."""
 
+    def __init__(self, message: str, *, code: str = "IMP-RESOLUTION-000") -> None:
+        self.code = code
+        self.message = message
+        super().__init__(f"[{code}] {message}")
+
+
+
+
+@dataclass(frozen=True)
+class ImportResolutionAuditEvent:
+    """Evento de auditoría de una resolución de import."""
+
+    request: str
+    source: str
+    resolved_name: str
+    precedence_reason: str | None
+    collision_policy: str
 
 @dataclass(frozen=True)
 class HybridModuleSpec:
@@ -45,6 +63,7 @@ class ResolutionResult:
 API_CONTRACT_VERSION = "2026-04-import-resolution-v1"
 RESOLUTION_SOURCE_ORDER: tuple[str, ...] = ("stdlib", "project", "python_bridge", "hybrid")
 DEFAULT_COLLISION_POLICY = "namespace_required"
+RESOLUTION_SOURCE_ORDER_STABILITY = "major"
 # Backward-compatible alias (internal histórico).
 _SOURCE_ORDER: tuple[str, ...] = RESOLUTION_SOURCE_ORDER
 _SUPPORTED_COLLISION_POLICIES: frozenset[str] = frozenset(
@@ -55,6 +74,7 @@ _SUPPORTED_COLLISION_POLICIES: frozenset[str] = frozenset(
 class CobraImportResolver:
     """Resuelve imports con prioridad fija y conflictos explícitos."""
     resolution_source_order = RESOLUTION_SOURCE_ORDER
+    resolution_source_order_stability = RESOLUTION_SOURCE_ORDER_STABILITY
     default_collision_policy = DEFAULT_COLLISION_POLICY
     api_contract_version = API_CONTRACT_VERSION
 
@@ -66,6 +86,7 @@ class CobraImportResolver:
         default_backend: str = "python",
         strict_ambiguous_imports: bool = False,
         collision_policy: str | None = None,
+        audit_debug: bool | None = None,
     ) -> None:
         self.project_root = Path(project_root).resolve() if project_root else None
         config = get_toml_map()
@@ -77,6 +98,8 @@ class CobraImportResolver:
             strict_ambiguous_imports=strict_ambiguous_imports,
             explicit_policy=collision_policy,
         )
+        self.audit_debug = self._resolve_audit_debug(config=config, explicit=audit_debug)
+        self.audit_events: list[ImportResolutionAuditEvent] = []
         self.stdlib_modules = self._load_stdlib_modules()
         self.project_modules = self._load_project_modules()
 
@@ -118,7 +141,8 @@ class CobraImportResolver:
         if chosen not in _SUPPORTED_COLLISION_POLICIES:
             raise ImportResolutionError(
                 "Política de colisiones inválida. "
-                "Usa 'warn', 'strict_error' o 'namespace_required'."
+                "Usa 'warn', 'strict_error' o 'namespace_required'.",
+                code="IMP-CONFIG-001",
             )
         return chosen
 
@@ -131,6 +155,35 @@ class CobraImportResolver:
         if isinstance(policy, str):
             return policy.strip()
         return None
+
+    @staticmethod
+    def _resolve_audit_debug(*, config: Mapping[str, Any], explicit: bool | None) -> bool:
+        if explicit is not None:
+            return explicit
+        imports_section = config.get("imports", {})
+        if not isinstance(imports_section, Mapping):
+            return False
+        return imports_section.get("audit_debug") is True
+
+    def _emit_audit(self, resolution: ResolutionResult) -> None:
+        if not self.audit_debug:
+            return
+        event = ImportResolutionAuditEvent(
+            request=resolution.request,
+            source=resolution.source,
+            resolved_name=resolution.resolved_name,
+            precedence_reason=resolution.precedence_reason,
+            collision_policy=self.collision_policy,
+        )
+        self.audit_events.append(event)
+        logging.getLogger(__name__).debug(
+            "IMPORT_AUDIT request=%s source=%s resolved_name=%s precedence_reason=%s collision_policy=%s",
+            event.request,
+            event.source,
+            event.resolved_name,
+            event.precedence_reason,
+            event.collision_policy,
+        )
 
     @staticmethod
     def _is_migration_mode_enabled(config: Mapping[str, Any]) -> bool:
@@ -176,7 +229,7 @@ class CobraImportResolver:
     def resolve(self, module_name: str) -> ResolutionResult:
         name = (module_name or "").strip()
         if not name:
-            raise ImportResolutionError("Nombre de módulo vacío")
+            raise ImportResolutionError("Nombre de módulo vacío", code="IMP-REQUEST-001")
 
         candidates: list[ResolutionResult] = []
         for source in RESOLUTION_SOURCE_ORDER:
@@ -185,7 +238,10 @@ class CobraImportResolver:
                 candidates.append(candidate)
 
         if not candidates:
-            raise ImportResolutionError(f"No se encontró módulo para '{name}'")
+            raise ImportResolutionError(
+                f"No se encontró módulo para '{name}'",
+                code="IMP-NOT-FOUND-001",
+            )
 
         precedence_reason = (
             f"unique_source:{candidates[0].source}"
@@ -210,7 +266,7 @@ class CobraImportResolver:
                     if self.collision_policy == "namespace_required"
                     else " Activa resolución explícita en strict mode."
                 )
-                raise ImportResolutionError(f"{message}{suffix}")
+                raise ImportResolutionError(f"{message}{suffix}", code="IMP-COLLISION-001")
             warnings.warn(message, category=UserWarning, stacklevel=2)
 
         selected = ResolutionResult(
@@ -222,7 +278,9 @@ class CobraImportResolver:
             backend_adapter=candidates[0].backend_adapter,
             precedence_reason=precedence_reason,
         )
-        return self._attach_backend_adapter(selected)
+        resolved = self._attach_backend_adapter(selected)
+        self._emit_audit(resolved)
+        return resolved
 
     def load_module(
         self,
@@ -262,6 +320,7 @@ class CobraImportResolver:
             "backend": resolution.backend,
             "import_path": resolution.import_path,
             "precedence_reason": resolution.precedence_reason,
+            "audit_debug": self.audit_debug,
         }
         setattr(module, "__cobra_resolution_source__", resolution.source)
         setattr(module, "__cobra_backend_injected__", resolution.backend)
