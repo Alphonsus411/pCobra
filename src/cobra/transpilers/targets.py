@@ -1,4 +1,4 @@
-"""Shim histórico de compatibilidad para ``cobra.transpilers.targets``.
+"""INTERNAL COMPATIBILITY ONLY. Shim histórico de compatibilidad para ``cobra.transpilers.targets``.
 
 Fuente canónica: :mod:`pcobra.cobra.transpilers.targets`.
 """

@@ -1,4 +1,4 @@
-"""Shim canónico de compatibilidad para ``python -m cobra.cli.cli``.
+"""INTERNAL COMPATIBILITY ONLY. Shim canónico de compatibilidad para ``python -m cobra.cli.cli``.
 
 Este archivo es la implementación de referencia del wrapper legacy
 ``cobra.cli.cli``. La variante en ``cobra/cli/cli.py`` actúa como proxy mínimo.

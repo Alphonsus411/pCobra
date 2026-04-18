@@ -1,5 +1,8 @@
 """Plano arquitectónico para el ecosistema unificado de Cobra.
 
+Fuente canónica contractual única (junto con backend_policy/contracts) para
+blueprints de ejecución y retiro legacy del ecosistema.
+
 Este módulo no altera el front-end del lenguaje ni los transpilers existentes.
 Su propósito es concentrar decisiones de arquitectura y un plan de ejecución
 seguro para migración incremental.

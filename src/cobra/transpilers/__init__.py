@@ -1,4 +1,4 @@
-"""Shims históricos para ``cobra.transpilers``.
+"""INTERNAL COMPATIBILITY ONLY. Shims históricos para ``cobra.transpilers``.
 
 Toda la lógica canónica vive en ``pcobra.cobra.transpilers``.
 """

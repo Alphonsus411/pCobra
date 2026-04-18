@@ -2,6 +2,7 @@ from argparse import Namespace, SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
@@ -30,7 +31,7 @@ class RunCommandV2(BaseCommand):
         parser.add_argument(
             "--container",
             dest="container",
-            choices=("python", "javascript", "rust"),
+            choices=PUBLIC_BACKENDS,
             help=SUPPRESS,
         )
         parser.set_defaults(cmd=self)

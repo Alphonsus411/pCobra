@@ -178,6 +178,9 @@ jobs:
       - name: Validate workflow target policy
         shell: bash
         run: python scripts/ci/validate_workflow_target_matrix.py
+      - name: Validate no duplicated public backend literals
+        shell: bash
+        run: python scripts/ci/validate_public_backend_literals.py
       - name: Lint legacy target aliases in tests/docs
         shell: bash
         run: python scripts/lint_legacy_aliases.py
@@ -462,6 +465,9 @@ jobs:
       - name: Validate workflow target policy
         shell: bash
         run: python scripts/ci/validate_workflow_target_matrix.py
+      - name: Validate no duplicated public backend literals
+        shell: bash
+        run: python scripts/ci/validate_public_backend_literals.py
       - name: Run Tier 2 backend suite
         shell: bash
         run: |

@@ -1,58 +1,43 @@
-# Ecosistema unificado de Cobra
+# Índice del ecosistema unificado de Cobra
 
-Este documento formaliza la arquitectura de alto nivel en **5 capas** para el ecosistema unificado de Cobra.
+Este documento define el **índice contractual** para evitar ambigüedad sobre qué módulos son fuente canónica y cuáles existen únicamente por compatibilidad.
 
-## Diagrama de 5 capas
+## 1) Fuente canónica contractual única
 
-```text
-+-------------------------------------------------------------------+
-| 1) CLI pública                                                    |
-|    cobra run | cobra build | cobra test | cobra mod               |
-+-------------------------------+-----------------------------------+
-                                |
-                                v
-+-------------------------------------------------------------------+
-| 2) Orquestador                                                     |
-|    - Resolución de comandos                                        |
-|    - Pipeline de compilación/transpilación                         |
-|    - Aplicación de políticas de backend                            |
-+-------------------------------+-----------------------------------+
-                                |
-                                v
-+-------------------------------------------------------------------+
-| 3) Adapters                                                        |
-|    - Adapter Python                                                |
-|    - Adapter JavaScript                                            |
-|    - Adapter Rust                                                  |
-+-------------------------------+-----------------------------------+
-                                |
-                                v
-+-------------------------------------------------------------------+
-| 4) Transpilers internos                                            |
-|    - Lexer / Parser / AST / IR                                     |
-|    - Transpiladores internos por backend                           |
-+-------------------------------+-----------------------------------+
-                                |
-                                v
-+-------------------------------------------------------------------+
-| 5) Bindings / Runtime                                              |
-|    - Python runtime                                                |
-|    - Node.js runtime                                               |
-|    - Rust toolchain                                                |
-+-------------------------------------------------------------------+
-```
+Los siguientes módulos son la única referencia autorizada para política pública de backends y arquitectura unificada:
 
-## Contrato público
+- `src/pcobra/cobra/architecture/backend_policy.py`
+- `src/pcobra/cobra/architecture/contracts.py`
+- `src/pcobra/cobra/architecture/unified_ecosystem.py`
 
-La superficie pública estable para esta fase es:
+> Regla: cualquier módulo fuera de esta lista debe **importar y reutilizar** estas definiciones, sin duplicar listas públicas de backends.
 
-- CLI: `run`, `build`, `test`, `mod`.
-- Backends oficiales: `python`, `javascript`, `rust`.
-- Módulos stdlib públicos: `cobra.core`, `cobra.datos`, `cobra.web`, `cobra.system`.
-- Resolución de imports: ver contrato oficial en `docs/architecture/import-resolution-contract.md`.
+## 2) Módulos contractuales (consumo público)
 
-## Estabilidad contractual en esta fase
+- `src/pcobra/cobra/architecture/backend_policy.py` (política pública/legacy)
+- `src/pcobra/cobra/architecture/contracts.py` (capabilities + fallback público)
+- `src/pcobra/cobra/architecture/unified_ecosystem.py` (blueprint y plan unificado)
+- `src/pcobra/cobra/build/backend_pipeline.py` (entrypoint de resolución para rutas de usuario)
+- `src/pcobra/cobra/bindings/*` (integración runtime/bindings)
 
-Se declara explícitamente que **lexer, parser, AST y transpiladores internos no cambian su contrato externo** durante esta fase.
+## 3) Módulos de compatibilidad (internal compatibility only)
 
-Eso implica que cualquier evolución en estos componentes se considera de implementación interna mientras no altere la API pública estable declarada.
+Estos módulos no forman parte de una API pública estable y se mantienen para backward compatibility:
+
+- `src/cobra/cli/__init__.py`
+- `src/cobra/cli/cli.py`
+- `src/cobra/cli/target_policies.py`
+- `src/cobra/transpilers/__init__.py`
+- `src/cobra/transpilers/targets.py`
+- `src/cobra/transpilers/registry.py`
+- `src/cobra/transpilers/compatibility_matrix.py`
+
+## 4) Guardrail CI asociado
+
+La validación `scripts/ci/validate_public_backend_literals.py` falla si detecta listas literales de backends públicos fuera de:
+
+- `src/pcobra/cobra/architecture/*`
+- `src/pcobra/cobra/build/backend_pipeline.py`
+- `src/pcobra/cobra/bindings/*`
+
+De esta forma se garantiza que la evolución del contrato público tenga una fuente de verdad única.
