@@ -17,6 +17,7 @@ from pcobra.cobra.cli.deprecation_policy import (
     enforce_advanced_profile_policy,
     enforce_target_deprecation_policy,
 )
+from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -62,11 +63,7 @@ class BenchmarksCommand(BaseCommand):
             default="publico",
             help=_("Perfil de exposición: use 'avanzado' para comparativas multi-backend."),
         )
-        parser.add_argument(
-            "--legacy-targets",
-            action="store_true",
-            help=_("Habilita targets deprecados en modo legacy (compatibilidad interna)."),
-        )
+        add_internal_legacy_targets_flag(parser)
         parser.set_defaults(cmd=self)
         return parser
 

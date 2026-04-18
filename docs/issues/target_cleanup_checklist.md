@@ -181,3 +181,29 @@ el cierre de limpieza de targets y del contrato Holobit/corelibs/standard_librar
 fuera de `python,rust,javascript,wasm,go,cpp,java,asm`; además el contrato
 Holobit/corelibs/standard_library queda documentado y probado por tiers mediante
 los validadores de política y runtime.
+
+## Plan de ejecución vigente (2026-04-18)
+
+### Fase 1 (inmediata) — ocultar legacy de CLI pública + documentación principal
+- [x] CLI pública no lista flags/comandos legacy en help por defecto.
+- [x] Targets legacy (`go/cpp/java/wasm/asm`) no aparecen en listados públicos.
+- [x] Documentación principal mantiene solo backends públicos; legacy queda en anexos.
+
+### Fase 2 (compatibilidad) — encapsular soporte en `internal_compat`
+- [x] Flags de compatibilidad legacy se registran exclusivamente desde `src/pcobra/cobra/cli/internal_compat/`.
+- [x] Activación de compatibilidad legacy queda condicionada por feature flags internas.
+- [x] Scripts/comandos de compatibilidad solo operan en rutas internas controladas.
+
+### Fase 3 (retiro) — eliminar transpilers legacy tras ventana contractual
+- [x] El runtime de compatibilidad verifica `INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW`.
+- [x] Targets con ventana vencida quedan fuera del set habilitable en `internal_compat`.
+- [ ] Eliminar físicamente `to_go.py`, `to_cpp.py`, `to_java.py`, `to_wasm.py`, `to_asm.py` y pruebas asociadas cuando venza la ventana por backend.
+
+## Checklist de impacto (obligatorio por cambio)
+
+| Área | Verificación | Estado |
+| --- | --- | --- |
+| CLI | Help público sin exposición legacy y flags legacy sólo bajo feature flag interna. | [x] |
+| Documentación | README/docs principales sin instrucción legacy; detalles históricos en anexos legacy/internal. | [x] |
+| Tests | Cobertura de políticas/guardrails actualizada para fases de deprecación y gating interno. | [x] |
+| Scripts CI | Validadores de política (`validate_targets.py` y afines) siguen bloqueando exposición pública de legacy. | [x] |
