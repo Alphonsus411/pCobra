@@ -26,6 +26,15 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 - `cobra.core.copiar_signo`
 - `cobra.core.signo`
 
+### Exportaciones públicas (alias Cobra estables)
+
+| Alias Cobra | Módulo runtime trazable |
+|---|---|
+| `cobra.core.es_finito` | `src/pcobra/standard_library/numero.py` |
+| `cobra.core.es_infinito` | `src/pcobra/standard_library/numero.py` |
+| `cobra.core.copiar_signo` | `src/pcobra/standard_library/numero.py` |
+| `cobra.core.signo` | `src/pcobra/standard_library/numero.py` |
+
 ### Cobertura por función
 
 | Función | Backend | Nivel |
@@ -58,6 +67,15 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 - `cobra.datos.a_listas`
 - `cobra.datos.de_listas`
 
+### Exportaciones públicas (alias Cobra estables)
+
+| Alias Cobra | Módulo runtime trazable |
+|---|---|
+| `cobra.datos.filtrar` | `src/pcobra/standard_library/datos.py` |
+| `cobra.datos.seleccionar_columnas` | `src/pcobra/standard_library/datos.py` |
+| `cobra.datos.a_listas` | `src/pcobra/standard_library/datos.py` |
+| `cobra.datos.de_listas` | `src/pcobra/standard_library/datos.py` |
+
 ### Cobertura por función
 
 | Función | Backend | Nivel |
@@ -85,6 +103,14 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 - `cobra.web.enviar_post`
 - `cobra.web.descargar_archivo`
 
+### Exportaciones públicas (alias Cobra estables)
+
+| Alias Cobra | Módulo runtime trazable |
+|---|---|
+| `cobra.web.obtener_url` | `src/pcobra/corelibs/red.py` |
+| `cobra.web.enviar_post` | `src/pcobra/corelibs/red.py` |
+| `cobra.web.descargar_archivo` | `src/pcobra/corelibs/red.py` |
+
 ### Cobertura por función
 
 | Función | Backend | Nivel |
@@ -110,6 +136,15 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 - `cobra.system.escribir`
 - `cobra.system.ejecutar`
 - `cobra.system.obtener_env`
+
+### Exportaciones públicas (alias Cobra estables)
+
+| Alias Cobra | Módulo runtime trazable |
+|---|---|
+| `cobra.system.leer` | `src/pcobra/standard_library/archivo.py` |
+| `cobra.system.escribir` | `src/pcobra/standard_library/archivo.py` |
+| `cobra.system.ejecutar` | `src/pcobra/corelibs/sistema.py` |
+| `cobra.system.obtener_env` | `src/pcobra/corelibs/sistema.py` |
 
 ### Cobertura por función
 

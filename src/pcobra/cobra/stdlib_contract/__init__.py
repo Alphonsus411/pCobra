@@ -115,6 +115,14 @@ def get_contract_manifests() -> dict[str, dict[str, object]]:
     return {
         contract.module: {
             "public_api": list(contract.public_api),
+            "public_exports": [
+                {
+                    "alias": export.alias,
+                    "source_path": export.source_path,
+                    "python_symbol": export.python_symbol,
+                }
+                for export in contract.public_exports
+            ],
             "backend_preferido": contract.primary_backend,
             "fallback_permitido": list(contract.allowed_fallback),
         }
@@ -142,6 +150,14 @@ def get_contract_matrix() -> dict[str, object]:
                     "core_nativos": list(mapping.core_nativos),
                 },
                 "public_api": list(contract.public_api),
+                "public_exports": [
+                    {
+                        "alias": export.alias,
+                        "source_path": export.source_path,
+                        "python_symbol": export.python_symbol,
+                    }
+                    for export in contract.public_exports
+                ],
                 "coverage": rows,
             }
         )

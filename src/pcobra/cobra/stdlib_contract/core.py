@@ -1,6 +1,11 @@
 """Contrato del módulo público ``cobra.core``."""
 
-from pcobra.cobra.stdlib_contract.base import ContractDescriptor, FunctionCoverage, RuntimeMapping
+from pcobra.cobra.stdlib_contract.base import (
+    ContractDescriptor,
+    FunctionCoverage,
+    PublicApiExport,
+    RuntimeMapping,
+)
 
 
 CORE_CONTRACT = ContractDescriptor(
@@ -10,6 +15,12 @@ CORE_CONTRACT = ContractDescriptor(
         "cobra.core.es_infinito",
         "cobra.core.copiar_signo",
         "cobra.core.signo",
+    ),
+    public_exports=(
+        PublicApiExport("cobra.core.es_finito", "src/pcobra/standard_library/numero.py", "es_finito"),
+        PublicApiExport("cobra.core.es_infinito", "src/pcobra/standard_library/numero.py", "es_infinito"),
+        PublicApiExport("cobra.core.copiar_signo", "src/pcobra/standard_library/numero.py", "copiar_signo"),
+        PublicApiExport("cobra.core.signo", "src/pcobra/standard_library/numero.py", "signo"),
     ),
     primary_backend="python",
     allowed_fallback=("rust", "javascript"),

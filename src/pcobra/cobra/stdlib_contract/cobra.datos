@@ -1,3 +1,9 @@
 public_api = ["cobra.datos.filtrar", "cobra.datos.seleccionar_columnas", "cobra.datos.a_listas", "cobra.datos.de_listas"]
+public_exports = [
+  { alias = "cobra.datos.filtrar", source_path = "src/pcobra/standard_library/datos.py", python_symbol = "filtrar" },
+  { alias = "cobra.datos.seleccionar_columnas", source_path = "src/pcobra/standard_library/datos.py", python_symbol = "seleccionar_columnas" },
+  { alias = "cobra.datos.a_listas", source_path = "src/pcobra/standard_library/datos.py", python_symbol = "a_listas" },
+  { alias = "cobra.datos.de_listas", source_path = "src/pcobra/standard_library/datos.py", python_symbol = "de_listas" },
+]
 backend_preferido = "python"
 fallback_permitido = ["javascript"]

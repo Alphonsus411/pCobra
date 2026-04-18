@@ -1,3 +1,8 @@
 public_api = ["cobra.web.obtener_url", "cobra.web.enviar_post", "cobra.web.descargar_archivo"]
+public_exports = [
+  { alias = "cobra.web.obtener_url", source_path = "src/pcobra/corelibs/red.py", python_symbol = "obtener_url" },
+  { alias = "cobra.web.enviar_post", source_path = "src/pcobra/corelibs/red.py", python_symbol = "enviar_post" },
+  { alias = "cobra.web.descargar_archivo", source_path = "src/pcobra/corelibs/red.py", python_symbol = "descargar_archivo" },
+]
 backend_preferido = "javascript"
 fallback_permitido = ["python"]
