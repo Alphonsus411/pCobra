@@ -118,12 +118,6 @@ def _obtener_interpretador_cls():
     return getattr(sys.modules[__name__], "InterpretadorCobra", InterpretadorCobra)
 
 
-def _resolver_runtime_binding(target: str):
-    """Resuelve contrato + bridge de bindings usado por runners CLI."""
-
-    return RUNTIME_MANAGER.resolve_runtime(target)
-
-
 class ExecuteCommand(BaseCommand):
     """Ejecuta un script Cobra desde un archivo."""
 
@@ -251,9 +245,12 @@ class ExecuteCommand(BaseCommand):
 
         try:
             raiz_proyecto = _detectar_raiz_proyecto_desde_archivo(str(archivo_resuelto))
-            contrato_python, _bridge_python = _resolver_runtime_binding("python")
-            RUNTIME_MANAGER.validate_security_route("python", sandbox=sandbox, containerized=False, command="run")
-            RUNTIME_MANAGER.validate_abi_route("python")
+            _abi_python, contrato_python, _bridge_python = RUNTIME_MANAGER.validate_command_runtime(
+                "python",
+                command="run",
+                sandbox=sandbox,
+                containerized=False,
+            )
             validar_dependencias(
                 contrato_python.language,
                 module_map.get_toml_map(),
@@ -352,9 +349,12 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_en_contenedor(self, codigo: str, contenedor: str) -> int:
         """Ejecuta el código en un contenedor Docker."""
         try:
-            contrato, bridge = _resolver_runtime_binding(contenedor)
-            RUNTIME_MANAGER.validate_security_route(contenedor, sandbox=False, containerized=True, command="run")
-            abi_version = RUNTIME_MANAGER.validate_abi_route(contenedor)
+            abi_version, contrato, bridge = RUNTIME_MANAGER.validate_command_runtime(
+                contenedor,
+                command="run",
+                sandbox=False,
+                containerized=True,
+            )
             self.logger.debug(
                 "Ruta de bindings para contenedor '%s': %s (%s) bridge=%s abi=%s",
                 contenedor,

@@ -62,6 +62,24 @@ def test_runtime_manager_validate_command_runtime_retorna_abi_capabilities_y_bri
     assert bridge.internal_only is False
 
 
+def test_runtime_manager_validate_command_runtime_loguea_contexto_estructurado(caplog):
+    manager = RuntimeManager()
+
+    with caplog.at_level("INFO", logger="pcobra.runtime"):
+        manager.validate_command_runtime(
+            "javascript",
+            command="run",
+            sandbox=False,
+            containerized=True,
+        )
+
+    record = next(rec for rec in caplog.records if rec.message == "runtime.command.validation")
+    assert record.command == "run"
+    assert record.route == "javascript_runtime_bridge"
+    assert record.bridge == "javascript_controlled_runtime_bridge"
+    assert record.abi_version == manager.validate_abi_route("javascript")
+
+
 def test_runtime_manager_negocia_abi_desde_config(monkeypatch, tmp_path: Path):
     manager = RuntimeManager()
     cobra_toml = tmp_path / "cobra.toml"

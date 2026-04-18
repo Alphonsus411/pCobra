@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
@@ -86,6 +87,7 @@ class RuntimeManager:
             internal_only=False,
         ),
     }
+    _runtime_logger = logging.getLogger("pcobra.runtime")
 
     def __init__(self) -> None:
         self._validate_public_contracts()
@@ -197,6 +199,18 @@ class RuntimeManager:
             command=command,
         )
         negotiated_abi = self.negotiate_abi(capabilities, abi_version)
+        self._runtime_logger.info(
+            "runtime.command.validation",
+            extra={
+                "command": (command or "").strip().lower(),
+                "language": capabilities.language,
+                "route": capabilities.route.value,
+                "bridge": bridge.implementation,
+                "abi_version": negotiated_abi,
+                "sandbox": sandbox,
+                "containerized": containerized,
+            },
+        )
         return negotiated_abi, capabilities, bridge
 
     def select_bridge(self, capabilities: BindingCapabilities) -> RuntimeBridgeDescriptor:
