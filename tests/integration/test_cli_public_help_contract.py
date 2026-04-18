@@ -35,6 +35,9 @@ def test_cli_help_public_contract_snapshot():
         Path(__file__).parent / "golden" / "cli_ui_v2_help_public.golden"
     ).read_text(encoding="utf-8")
     assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.split())
+    for command in ("run", "build", "test", "mod"):
+        assert f" {command} " in f" {result.stdout.lower()} "
+    assert "\n  menu " not in result.stdout.lower()
     assert "\n  legacy " not in result.stdout.lower()
     assert "--backend" not in result.stdout.lower()
     assert "--tipo" not in result.stdout.lower()
@@ -102,3 +105,4 @@ def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
     lower_output = result.stderr.lower() + result.stdout.lower()
     assert "comando legacy 'compilar'" in lower_output
     assert "migración automática aplicada: use 'build'" in lower_output
+    assert "sugerencia: cobra build <archivo.co>" in lower_output

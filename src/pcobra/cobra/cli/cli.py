@@ -97,11 +97,23 @@ COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
 LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
-LEGACY_COMMAND_MIGRATION_MAP: dict[str, str] = {
-    "ejecutar": "run",
-    "compilar": "build",
-    "verificar": "test",
-    "modulos": "mod",
+LEGACY_COMMAND_MIGRATION_MAP: dict[str, dict[str, str]] = {
+    "ejecutar": {
+        "target": "run",
+        "hint": "cobra run <archivo.co>",
+    },
+    "compilar": {
+        "target": "build",
+        "hint": "cobra build <archivo.co>",
+    },
+    "verificar": {
+        "target": "test",
+        "hint": "cobra test <archivo.co>",
+    },
+    "modulos": {
+        "target": "mod",
+        "hint": "cobra mod <list|install|remove|publish|search>",
+    },
 }
 
 
@@ -289,8 +301,10 @@ class CliApplication:
             ui=selected_ui,
             profile=command_profile,
         )
-        menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
-        menu_parser.set_defaults(cmd="menu")
+        command_profile = resolve_command_profile()
+        if command_profile != PROFILE_PUBLIC:
+            menu_parser = self._subparsers.add_parser("menu", help=_("Modo interactivo"))
+            menu_parser.set_defaults(cmd="menu")
         self._commands_registered = True
 
     def _normalizar_flags_sesion(self, args: argparse.Namespace) -> argparse.Namespace:
@@ -604,9 +618,17 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
 
+        self._selected_ui = self._resolve_selected_ui_from_argv(argv)
+        if any(token in {"-h", "--help", "--ayuda"} for token in argv):
+            configure_plugin_policy(safe_mode=True, allowlist="")
+            self._ensure_command_structure()
+            if autocomplete_available():
+                self._configure_autocomplete(self.parser)
+                enable_autocomplete(self.parser)
+            return self._normalizar_flags_sesion(self.parser.parse_args(argv))
+
         preliminary_args, _ = self.parser.parse_known_args(argv)
         preliminary_args = self._normalizar_flags_sesion(preliminary_args)
-        self._selected_ui = str(getattr(preliminary_args, "ui", "v2")).strip().lower()
         configure_plugin_policy(
             safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
             allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
@@ -683,16 +705,22 @@ class CliApplication:
             return normalized
 
         command_token = normalized[command_idx].strip().lower()
-        migrated_to = LEGACY_COMMAND_MIGRATION_MAP.get(command_token)
-        if not migrated_to:
+        migration = LEGACY_COMMAND_MIGRATION_MAP.get(command_token)
+        if not migration:
             return normalized
 
+        migrated_to = migration["target"]
         normalized[command_idx] = migrated_to
         messages.mostrar_advertencia(
             _(
                 "Comando legacy '{legacy}' detectado fuera de entorno interno. "
-                "Migración automática aplicada: use '{current}'."
-            ).format(legacy=command_token, current=migrated_to)
+                "Migración automática aplicada: use '{current}'. "
+                "Sugerencia: {hint}."
+            ).format(
+                legacy=command_token,
+                current=migrated_to,
+                hint=migration["hint"],
+            )
         )
         logging.getLogger(__name__).warning(
             "legacy_command_auto_migrated legacy=%s target=%s profile=%s matrix=%s",
