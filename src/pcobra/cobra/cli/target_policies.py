@@ -6,8 +6,9 @@ from argparse import ArgumentTypeError
 import warnings
 from typing import Literal
 
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS, PUBLIC_BACKENDS
-from pcobra.cobra.architecture.legacy_backend_lifecycle import (
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.cobra.internal_compat.legacy_contracts import (
+    INTERNAL_BACKENDS,
     legacy_backend_warning_message,
 )
 from pcobra.cobra.cli.internal_compat.legacy_targets import (

@@ -7,12 +7,12 @@ from typing import Final
 
 from pcobra.cobra.architecture.backend_policy import (
     ALL_BACKENDS,
-    INTERNAL_BACKENDS,
-    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
     PUBLIC_BACKENDS,
     assert_public_targets_contract,
 )
-from pcobra.cobra.architecture.legacy_backend_lifecycle import (
+from pcobra.cobra.internal_compat.legacy_contracts import (
+    INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
     lifecycle_status_for_backend,
 )
 from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
