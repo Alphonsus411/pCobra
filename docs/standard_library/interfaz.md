@@ -137,3 +137,28 @@ print(f"Se mostraron {len(tablas)} páginas")
 > instalada. En entornos sin Rich puedes sustituirlas o envolverlas en bloques
 > `try/except` según tus necesidades.
 ```
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.interfaz`)
+
+| Función |
+|---|
+| `barra_progreso` |
+| `estado_temporal` |
+| `grupo_consola` |
+| `imprimir_aviso` |
+| `iniciar_gui` |
+| `iniciar_gui_idle` |
+| `limpiar_consola` |
+| `mostrar_arbol` |
+| `mostrar_codigo` |
+| `mostrar_columnas` |
+| `mostrar_json` |
+| `mostrar_markdown` |
+| `mostrar_panel` |
+| `mostrar_tabla` |
+| `mostrar_tabla_paginada` |
+| `preguntar_confirmacion` |
+| `preguntar_opciones_multiple` |
+| `preguntar_password` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

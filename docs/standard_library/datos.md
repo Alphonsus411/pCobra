@@ -112,3 +112,42 @@ Las funciones de correlación y covarianza no requieren dependencias adicionales
 En el objetivo JavaScript se ofrece una implementación parcial que mantiene las transformaciones puramente estructurales (`seleccionar_columnas`, `filtrar`, `a_listas`, `de_listas`). Las funciones que dependen de `pandas` (`leer_csv`, `leer_json`, `describir`, `agrupar_y_resumir`) lanzan un error explicando la limitación para evitar resultados inconsistentes.
 
 > **Sugerencia:** si necesitas procesar archivos directamente en JavaScript, realiza la lectura con utilidades propias del entorno (por ejemplo `fetch` o `fs`) y entrega los datos a Cobra usando `de_listas` o listas de diccionarios.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.datos`)
+
+| Función |
+|---|
+| `a_listas` |
+| `agrupar_y_resumir` |
+| `calcular_percentiles` |
+| `combinar_tablas` |
+| `correlacion_pearson` |
+| `correlacion_spearman` |
+| `de_listas` |
+| `describir` |
+| `desplegar_tabla` |
+| `escribir_csv` |
+| `escribir_excel` |
+| `escribir_feather` |
+| `escribir_json` |
+| `escribir_parquet` |
+| `filtrar` |
+| `leer_csv` |
+| `leer_excel` |
+| `leer_feather` |
+| `leer_json` |
+| `leer_parquet` |
+| `matriz_covarianza` |
+| `mutar_columna` |
+| `ordenar_tabla` |
+| `pivotar_ancho` |
+| `pivotar_largo` |
+| `pivotar_tabla` |
+| `rellenar_nulos` |
+| `resumen_rapido` |
+| `seleccionar_columnas` |
+| `separar_columna` |
+| `tabla_cruzada` |
+| `unir_columnas` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

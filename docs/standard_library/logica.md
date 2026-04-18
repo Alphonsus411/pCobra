@@ -27,3 +27,35 @@ var primera_par = logica.coalesce(
 Si todos los valores incumplen el predicado, `coalesce` devuelve `None`. En
 cambio, si no se proporcionan argumentos, se emite un `ValueError` explícito
 para facilitar la depuración.
+
+<!-- BEGIN: AUTO-STDLIB-FUNCTIONS -->
+## API pública sincronizada (`standard_library.logica`)
+
+| Función |
+|---|
+| `alguna` |
+| `coalesce` |
+| `condicional` |
+| `conjuncion` |
+| `conteo_verdaderos` |
+| `diferencia_simetrica` |
+| `disyuncion` |
+| `entonces` |
+| `equivale` |
+| `es_falso` |
+| `es_verdadero` |
+| `exactamente_n` |
+| `implica` |
+| `mayoria` |
+| `nand` |
+| `negacion` |
+| `ninguna` |
+| `nor` |
+| `paridad` |
+| `si_no` |
+| `solo_uno` |
+| `tabla_verdad` |
+| `todas` |
+| `xor` |
+| `xor_multiple` |
+<!-- END: AUTO-STDLIB-FUNCTIONS -->

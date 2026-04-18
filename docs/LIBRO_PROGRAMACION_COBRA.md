@@ -75,6 +75,155 @@ altura = 1.68
 
 ## 3) Sintaxis base del lenguaje
 
+<!-- BEGIN: AUTO-SYNTAX-INDEX -->
+### Índice de sintaxis (autogenerado)
+
+#### Tokens léxicos
+
+- `CADENA`
+- `ENTERO`
+- `FLOTANTE`
+- `IDENTIFICADOR`
+
+#### Palabras reservadas (gramática + SPEC)
+
+- `!`
+- `&&`
+- `(`
+- `)`
+- `*`
+- `+`
+- `,`
+- `-`
+- `/`
+- `:`
+- `<`
+- `=`
+- `==`
+- `>`
+- `@`
+- `BOOLEANO`
+- `CADENA`
+- `ENTERO`
+- `FLOTANTE`
+- `[`
+- `]`
+- `_`
+- `afirmar`
+- `asincronico`
+- `atributo`
+- `capturar`
+- `case`
+- `catch`
+- `clase`
+- `como`
+- `con`
+- `continuar`
+- `desde`
+- `eliminar`
+- `elseif`
+- `enum`
+- `enumeracion`
+- `esperar`
+- `estructura`
+- `fin`
+- `finalmente`
+- `func`
+- `garantia`
+- `global`
+- `graficar`
+- `guard`
+- `hilo`
+- `holobit`
+- `import`
+- `imprimir`
+- `in`
+- `intentar`
+- `lambda`
+- `lanzar`
+- `macro`
+- `metodo`
+- `mientras`
+- `no`
+- `nolocal`
+- `o`
+- `para`
+- `pasar`
+- `proyectar`
+- `registro`
+- `retorno`
+- `romper`
+- `si`
+- `sino`
+- `sino si`
+- `switch`
+- `throw`
+- `transformar`
+- `try`
+- `usar`
+- `var`
+- `variable`
+- `y`
+- `yield`
+- `{`
+- `||`
+- `}`
+
+#### Estructuras
+
+- `funcion`
+- `funcion_asincronica`
+- `clase`
+- `condicional`
+- `bucle_mientras`
+- `bucle_para`
+- `switch`
+- `try_catch`
+- `with_stmt`
+- `macro`
+- `garantia`
+
+#### Expresiones
+
+- `coincidencia`
+- `valor (operador valor)*`
+
+**Valores permitidos en expresiones**
+- `"None"`
+- `"Some" "(" expr ")"`
+- `"esperar" valor`
+- `CADENA`
+- `ENTERO`
+- `FLOTANTE`
+- `IDENTIFICADOR`
+- `holobit`
+- `lambda`
+- `llamada`
+
+#### Sentencias
+
+- `asignacion`
+- `bucle_mientras`
+- `bucle_para`
+- `clase`
+- `condicional`
+- `expr`
+- `funcion`
+- `funcion_asincronica`
+- `garantia`
+- `hilo`
+- `importacion`
+- `impresion`
+- `llamada`
+- `macro`
+- `option`
+- `retorno`
+- `switch`
+- `try_catch`
+- `usar`
+- `with_stmt`
+<!-- END: AUTO-SYNTAX-INDEX -->
+
 ### 3.1 Asignación
 
 ```cobra
@@ -303,6 +452,41 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 
 ## 10) CLI de Cobra para desarrollo diario
 
+<!-- BEGIN: AUTO-CLI-TABLE -->
+### Tabla CLI actualizada (autogenerado)
+
+| Comando | Capacidad | Clase | Archivo |
+|---|---|---|---|
+| `agix` | `-` | `AgixCommand` | `src/pcobra/cobra/cli/commands/agix_cmd.py` |
+| `bench` | `-` | `BenchCommand` | `src/pcobra/cobra/cli/commands/bench_cmd.py` |
+| `benchmarks` | `-` | `BenchmarksCommand` | `src/pcobra/cobra/cli/commands/benchmarks_cmd.py` |
+| `benchmarks2` | `-` | `BenchmarksV2Command` | `src/pcobra/cobra/cli/commands/benchmarks2_cmd.py` |
+| `benchthreads` | `-` | `BenchThreadsCommand` | `src/pcobra/cobra/cli/commands/benchthreads_cmd.py` |
+| `benchtranspilers` | `-` | `BenchTranspilersCommand` | `src/pcobra/cobra/cli/commands/bench_transpilers_cmd.py` |
+| `build` | `codegen` | `BuildCommandV2` | `src/pcobra/cobra/cli/commands_v2/build_cmd.py` |
+| `compilar` | `codegen` | `CompileCommand` | `src/pcobra/cobra/cli/commands/compile_cmd.py` |
+| `contenedor` | `-` | `ContainerCommand` | `src/pcobra/cobra/cli/commands/container_cmd.py` |
+| `crear` | `-` | `CrearCommand` | `src/pcobra/cobra/cli/commands/crear_cmd.py` |
+| `dependencias` | `-` | `DependenciasCommand` | `src/pcobra/cobra/cli/commands/dependencias_cmd.py` |
+| `docs` | `-` | `DocsCommand` | `src/pcobra/cobra/cli/commands/docs_cmd.py` |
+| `ejecutar` | `execute` | `ExecuteCommand` | `src/pcobra/cobra/cli/commands/execute_cmd.py` |
+| `empaquetar` | `-` | `EmpaquetarCommand` | `src/pcobra/cobra/cli/commands/empaquetar_cmd.py` |
+| `gui` | `-` | `FletCommand` | `src/pcobra/cobra/cli/commands/flet_cmd.py` |
+| `init` | `-` | `InitCommand` | `src/pcobra/cobra/cli/commands/init_cmd.py` |
+| `interactive` | `-` | `InteractiveCommand` | `src/pcobra/cobra/cli/commands/interactive_cmd.py` |
+| `jupyter` | `-` | `JupyterCommand` | `src/pcobra/cobra/cli/commands/jupyter_cmd.py` |
+| `legacy` | `-` | `LegacyCommandGroupV2` | `src/pcobra/cobra/cli/commands_v2/legacy_cmd.py` |
+| `mod` | `-` | `ModCommandV2` | `src/pcobra/cobra/cli/commands_v2/mod_cmd.py` |
+| `modulos` | `-` | `ModulesCommand` | `src/pcobra/cobra/cli/commands/modules_cmd.py` |
+| `paquete` | `-` | `PaqueteCommand` | `src/pcobra/cobra/cli/commands/package_cmd.py` |
+| `qa-validar` | `codegen` | `QaValidarCommand` | `src/pcobra/cobra/cli/commands/qa_validar_cmd.py` |
+| `qualia` | `-` | `QualiaCommand` | `src/pcobra/cobra/cli/commands/qualia_cmd.py` |
+| `run` | `execute` | `RunCommandV2` | `src/pcobra/cobra/cli/commands_v2/run_cmd.py` |
+| `test` | `codegen` | `TestCommandV2` | `src/pcobra/cobra/cli/commands_v2/test_cmd.py` |
+| `validar-sintaxis` | `codegen` | `ValidarSintaxisCommand` | `src/pcobra/cobra/cli/commands/validar_sintaxis_cmd.py` |
+| `verificar` | `codegen` | `VerifyCommand` | `src/pcobra/cobra/cli/commands/verify_cmd.py` |
+<!-- END: AUTO-CLI-TABLE -->
+
 Flujo mínimo sugerido:
 
 ```bash
@@ -346,6 +530,33 @@ El ecosistema maneja targets canónicos para distintos niveles de soporte.
 ---
 
 ## 12) Biblioteca estándar (corelibs / standard library)
+
+<!-- BEGIN: AUTO-STDLIB-INDEX -->
+### Índice de módulos y funciones de `standard_library` (autogenerado)
+
+- **`archivo`** (4 funciones) → `docs/standard_library/archivo.md`
+  - API: `adjuntar`, `escribir`, `existe`, `leer`
+- **`asincrono`** (5 funciones) → `docs/standard_library/asincrono.md`
+  - API: `ejecutar_en_hilo`, `grupo_tareas`, `limitar_tiempo`, `proteger_tarea`, `reintentar_async`
+- **`datos`** (32 funciones) → `docs/standard_library/datos.md`
+  - API: `a_listas`, `agrupar_y_resumir`, `calcular_percentiles`, `combinar_tablas`, `correlacion_pearson`, `correlacion_spearman`, `de_listas`, `describir`, ...
+- **`decoradores`** (9 funciones) → `docs/standard_library/decoradores.md`
+  - API: `dataclase`, `depreciado`, `despachar_por_tipo`, `memoizar`, `orden_total`, `reintentar`, `reintentar_async`, `sincronizar`, ...
+- **`fecha`** (3 funciones) → `docs/standard_library/fecha.md`
+  - API: `formatear`, `hoy`, `sumar_dias`
+- **`interfaz`** (18 funciones) → `docs/standard_library/interfaz.md`
+  - API: `barra_progreso`, `estado_temporal`, `grupo_consola`, `imprimir_aviso`, `iniciar_gui`, `iniciar_gui_idle`, `limpiar_consola`, `mostrar_arbol`, ...
+- **`lista`** (12 funciones) → `docs/standard_library/lista.md`
+  - API: `cabeza`, `chunk`, `cola`, `combinar`, `descartar_mientras`, `longitud`, `mapear_aplanado`, `mapear_seguro`, ...
+- **`logica`** (25 funciones) → `docs/standard_library/logica.md`
+  - API: `alguna`, `coalesce`, `condicional`, `conjuncion`, `conteo_verdaderos`, `diferencia_simetrica`, `disyuncion`, `entonces`, ...
+- **`numero`** (22 funciones) → `docs/standard_library/numero.md`
+  - API: `coeficiente_variacion`, `combinaciones`, `copiar_signo`, `cuartiles`, `distancia_euclidiana`, `envolver_modular`, `es_finito`, `es_infinito`, ...
+- **`texto`** (51 funciones) → `docs/standard_library/texto.md`
+  - API: `a_camel`, `a_snake`, `acortar_texto`, `centrar_texto`, `codificar`, `contar_subcadena`, `decodificar`, `desindentar_texto`, ...
+- **`util`** (4 funciones) → `docs/standard_library/util.md`
+  - API: `es_nulo`, `es_vacio`, `rel`, `repetir`
+<!-- END: AUTO-STDLIB-INDEX -->
 
 Áreas típicas:
 
