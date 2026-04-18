@@ -3,6 +3,7 @@ from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.i18n import _
@@ -52,6 +53,7 @@ class TestCommandV2(BaseCommand):
         else:
             langs = list(raw_langs)
         for lang in langs:
+            assert_backend_allowed_for_scope(backend=lang, scope="public")
             try:
                 sandbox = lang == "python"
                 containerized = lang in {"javascript", "rust"}

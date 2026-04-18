@@ -11,6 +11,7 @@ from types import ModuleType
 from typing import Any, Mapping
 
 from pcobra.cobra.backends.resolver import resolve_backend
+from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.stdlib_contract import get_public_stdlib_module_contracts
 from pcobra.cobra.transpilers.module_map import (
     get_toml_map,
@@ -72,6 +73,7 @@ class CobraImportResolver:
         self.project_root = Path(project_root).resolve() if project_root else None
         config = get_toml_map()
         self.hybrid_modules = self._load_hybrid_modules(config, hybrid_modules)
+        assert_backend_allowed_for_scope(backend=default_backend, scope="public")
         self.default_backend = default_backend
         self.collision_policy = self._resolve_collision_policy(
             config=config,
@@ -271,6 +273,7 @@ class CobraImportResolver:
     def _attach_backend_adapter(self, resolution: ResolutionResult) -> ResolutionResult:
         base_backend = resolution.backend or self.default_backend
         effective_backend = resolve_backend_for_module(resolution.resolved_name, base_backend)
+        assert_backend_allowed_for_scope(backend=effective_backend, scope="public")
         adapter = resolve_backend(effective_backend)
         return ResolutionResult(
             request=resolution.request,

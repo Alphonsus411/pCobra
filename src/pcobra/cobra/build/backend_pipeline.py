@@ -74,6 +74,8 @@ def resolve_backend_runtime(
     """Resuelve backend y metadatos de bridge/runtime para el contrato de bindings."""
     context = hints or {}
     resolution = _resolve_backend(source, context)
+    if not context.get("internal_migration", False):
+        assert_backend_allowed_for_scope(backend=resolution.backend, scope="public")
     capabilities, bridge = RUNTIME_MANAGER.resolve_runtime(resolution.backend)
     abi_version = RUNTIME_MANAGER.validate_abi_route(
         resolution.backend,

@@ -1,6 +1,7 @@
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
@@ -44,6 +45,7 @@ class BuildCommandV2(BaseCommand):
                 registrar_log=False,
             )
         runtime_language = str(build_result.get("runtime", {}).get("language", "python"))
+        assert_backend_allowed_for_scope(backend=runtime_language, scope="public")
         try:
             self._runtime_manager.validate_command_runtime(runtime_language, command="build")
         except ValueError as exc:
