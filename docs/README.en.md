@@ -586,24 +586,14 @@ resultado = transpiler.generate_code(arbol)
 print(resultado)
 ```
 
-For other languages you can invoke the additional transpilers like this:
+For the public backend contract, keep examples focused on the official transpilers:
 
 ```python
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from cobra.transpilers.transpiler.to_go import TranspiladorGo
-from cobra.transpilers.transpiler.to_java import TranspiladorJava
-from cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
 codigo_js = TranspiladorJavaScript().generate_code(arbol)
 codigo_rust = TranspiladorRust().generate_code(arbol)
-codigo_cpp = TranspiladorCPP().generate_code(arbol)
-codigo_go = TranspiladorGo().generate_code(arbol)
-codigo_java = TranspiladorJava().generate_code(arbol)
-codigo_asm = TranspiladorASM().generate_code(arbol)
-codigo_wasm = TranspiladorWasm().generate_code(arbol)
 ```
 
 After obtaining the code with ``generate_code`` you can save it using ``save_file``:

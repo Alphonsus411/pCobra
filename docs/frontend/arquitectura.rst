@@ -15,18 +15,18 @@ Command (ver :ref:`patron_command`).
 Core
 ----
 Contiene el corazón del lenguaje: lexer, parser, intérprete y
-transpiladores a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``. Estos elementos trabajan en
-conjunto para analizar el código fuente y transformarlo en otras
-representaciones o ejecutarlo de forma directa.
+transpiladores oficiales a ``python``, ``rust`` y ``javascript``. Estos
+componentes trabajan en conjunto para analizar el código fuente y
+transformarlo en otras representaciones o ejecutarlo de forma directa.
 Las clases que componen el AST se definen en ``src.core.ast_nodes`` para facilitar su reutilización.
 El recorrido de estos nodos puede realizarse mediante la clase ``NodeVisitor``
 ubicada en ``src.core.visitor``, que despacha automáticamente al método
 ``visit_<Clase>`` correspondiente.
 Para mantener el código modular, la lógica específica de cada nodo del AST se
-almacena en paquetes independientes. Los transpiladores a ``python``, ``rust``, ``javascript``, ``wasm``, ``go``, ``cpp``, ``java`` y ``asm``
-importan estas funciones desde ``src.core.transpiler.python_nodes`` y
-``src.core.transpiler.js_nodes`` (o ``asm_nodes`` o ``rust_nodes``) respectivamente, delegando la operación de
-``visit_<nodo>`` a dichas funciones.
+almacena en paquetes independientes. Los transpiladores oficiales importan
+estas funciones desde ``src.core.transpiler.python_nodes``,
+``src.core.transpiler.js_nodes`` y ``src.core.transpiler.rust_nodes``,
+delegando la operación de ``visit_<nodo>`` a dichas funciones.
 
 Para una visión esquemática de la interacción entre lexer, parser y transpiladores consulta :doc:`../../docs/arquitectura_parser_transpiladores`.
 
@@ -62,7 +62,7 @@ optimizar el rendimiento y evitar fugas de memoria.
        CLI -> Lexer;
    Interprete -> Memoria;
    Interprete -> ModulosNativos;
-   Transpiladores -> {Python JavaScript Asm Rust Cpp Go Java Wasm};
+   Transpiladores -> {Python JavaScript Rust};
    }
  
 Interacción de los módulos

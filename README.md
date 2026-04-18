@@ -21,6 +21,15 @@ Versión 10.0.13
 
 Cobra consolida su experiencia de uso en una **única interfaz pública**: la CLI `cobra`. Todas las tareas de ejecución, build, pruebas y módulos se coordinan desde este frente común, mientras la orquestación interna y los adaptadores de backend permanecen encapsulados.
 
+Ejemplos públicos mínimos:
+
+```bash
+cobra run archivo.cobra
+cobra build archivo.cobra
+cobra test archivo.cobra
+cobra mod list
+```
+
 La superficie pública oficial mantiene tres backends: **Python**, **JavaScript** y **Rust**.
 
 pCobra es un lenguaje de programación escrito en español y pensado para la creación de herramientas, simulaciones y análisis en disciplinas como biología, computación y astrofísica. El proyecto integra un lexer, parser y un sistema de transpilación con una lista canónica de destinos de salida derivada automáticamente de `src/pcobra/cobra/config/transpile_targets.py` + `src/pcobra/cobra/transpilers/registry.py`.
@@ -364,16 +373,9 @@ Namespaces recomendados:
 
 ### Guía de migración a la CLI unificada
 
-Si vienes de comandos legacy (`cobra compilar`, `cobra modulos`) o de flujos centrados en `--backend`, sigue la guía: [docs/migracion_cli_unificada.md](docs/migracion_cli_unificada.md).
+La guía histórica de migración y compatibilidad se mantiene fuera del onboarding público, dentro de los anexos internos:
 
-### Guía de migración de usuario final
-
-Migración recomendada sin exponer transpilers ni flags de backend en la UX principal:
-
-1. Reemplaza `cobra ejecutar archivo.co` por `cobra run archivo.cobra`.
-2. Reemplaza `cobra compilar archivo.co --tipo ...` por `cobra build archivo.cobra` (backend automático).
-3. Reemplaza `cobra modulos <accion>` por `cobra mod <acción equivalente>`.
-4. Mantén banderas legacy (`--backend`, `--tipo`, `--tipos`) únicamente en scripts de compatibilidad temporal, no en tutoriales para usuario final.
+- [docs/anexos_legacy_internal/README.md](docs/anexos_legacy_internal/README.md)
 
 ### Anexos legacy/internal (fuera de onboarding)
 
@@ -914,24 +916,14 @@ resultado = transpiler.generate_code(arbol)
 print(resultado)
 ```
 
-Para otros lenguajes puedes invocar los nuevos transpiladores así:
+Para mantenerte en la interfaz pública, enfoca los ejemplos en los transpiladores oficiales:
 
 ```python
 from cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
 from cobra.transpilers.transpiler.to_rust import TranspiladorRust
-from cobra.transpilers.transpiler.to_cpp import TranspiladorCPP
-from cobra.transpilers.transpiler.to_go import TranspiladorGo
-from cobra.transpilers.transpiler.to_java import TranspiladorJava
-from cobra.transpilers.transpiler.to_asm import TranspiladorASM
-from cobra.transpilers.transpiler.to_wasm import TranspiladorWasm
 
 codigo_js = TranspiladorJavaScript().generate_code(arbol)
 codigo_rust = TranspiladorRust().generate_code(arbol)
-codigo_cpp = TranspiladorCPP().generate_code(arbol)
-codigo_go = TranspiladorGo().generate_code(arbol)
-codigo_java = TranspiladorJava().generate_code(arbol)
-codigo_asm = TranspiladorASM().generate_code(arbol)
-codigo_wasm = TranspiladorWasm().generate_code(arbol)
 ```
 
 Tras obtener el código con ``generate_code`` puedes guardarlo usando ``save_file``:
@@ -990,8 +982,8 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
   ```
 
 ```bash
-# Compilar un archivo a: python, rust o javascript (UX pública)
-cobra build programa.co --backend python
+# Compilar un archivo (backend automático dentro del set oficial)
+cobra build programa.co
 
 # Transpilar inverso de Python a JavaScript
 cobra transpilar-inverso script.py --origen=python --destino=javascript
@@ -1142,11 +1134,10 @@ PYTHONPATH=$PWD pytest tests --cov=pcobra --cov-report=term-missing \
   --cov-fail-under=95
 ````
 
- Algunas pruebas internas de migración/regresión generan código en targets legacy además de los públicos. Para ejecutar ese subconjunto en local debes disponer de toolchains extra. En particular se requiere:
+ Algunas pruebas internas de migración/regresión usan toolchains adicionales fuera del contrato público. Para ejecutar ese subconjunto en local debes disponer de toolchains extra. En particular se requiere:
 
 - Node.js
 - gcc y g++
-- Go (`golang-go`) para pruebas internas legacy
 - Rust (`rustc`)
 - Java (`default-jdk`)
 

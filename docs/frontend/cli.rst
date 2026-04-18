@@ -142,33 +142,13 @@ Ejemplo:
    Ruta al archivo Cobra: hola.co
    Lenguaje destino: python
 
-Subcomando ``modulos``
----------------------
-Gestiona módulos instalados.
+Subcomandos legacy/internal
+----------------------------
 
-Acciones disponibles:
-
-- ``listar`` muestra los módulos instalados.
-
-- ``instalar <ruta>`` copia un archivo ``.co`` al directorio de módulos.
-- ``remover <nombre>`` elimina un módulo instalado.
-
-Al instalar un módulo se valida la versión indicada en ``cobra.mod`` y se
-actualiza ``cobra.lock``. Este fichero almacena el nombre de cada módulo
-y su versión semver bajo la clave ``modules``.
-
-El formato del archivo es:
-
-.. code-block:: yaml
-
-   modules:
-     modulo.co: "1.0.0"
-
-Ejemplo:
-
-.. code-block:: bash
-
-   cobra modulos instalar extra/modulo.co
+.. warning::
+   Los comandos históricos y aliases de compatibilidad (v1/legacy) no forman
+   parte de la interfaz pública recomendada. Su documentación se mantiene en
+   ``docs/anexos_legacy_internal/`` y no debe usarse como onboarding.
 
 Subcomando ``dependencias``
 --------------------------
@@ -284,9 +264,7 @@ ejecutar o limpiar el código. Es una forma rápida de probar programas sin usar
 la terminal.
 
 Cuando uses ``--sandbox-docker``, la CLI solo ofrece runtimes Docker oficiales:
-``python``, ``javascript``, ``cpp`` y ``rust``. Los demás targets oficiales
-(``wasm``, ``go``, ``java``, ``asm``) siguen siendo destinos de transpilación y
-no deben leerse como equivalentes de ejecución real.
+``python``, ``javascript`` y ``rust``.
 
 Subcomando ``plugins``
 ---------------------
@@ -334,7 +312,7 @@ Compara el rendimiento de los backends con runner configurado en la suite y
 muestra un resumen en formato JSON. Opcionalmente puede guardarse en un
 archivo mediante ``--output``. Esto no implica paridad de ejecución para
 todos los targets oficiales de transpilación: la política pública de runtime
-solo cubre ``python``, ``javascript``, ``cpp`` y ``rust``.
+solo cubre ``python``, ``javascript`` y ``rust``.
 
 Ejemplo:
 
