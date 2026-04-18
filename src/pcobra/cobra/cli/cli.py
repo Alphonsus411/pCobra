@@ -96,6 +96,7 @@ COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
 COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
+COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
 LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
 LEGACY_COMMAND_MIGRATION_MAP: dict[str, dict[str, str]] = {
     "ejecutar": {
@@ -164,9 +165,13 @@ class CommandRegistry:
             logging.error(f"Error creating command {command_class.__name__}: {e}")
             raise
 
-    def _resolve_v2_command_classes(self) -> List[Type[BaseCommand]]:
+    def _resolve_v2_command_classes(self, profile: str) -> List[Type[BaseCommand]]:
         classes = list(AppConfig.V2_COMMAND_CLASSES)
-        if LegacyCommandGroupV2 is not None and is_legacy_cli_enabled():
+        if (
+            profile == PROFILE_DEVELOPMENT
+            and LegacyCommandGroupV2 is not None
+            and is_legacy_cli_enabled()
+        ):
             classes.append(LegacyCommandGroupV2)
             logging.getLogger(__name__).debug(
                 "Compatibilidad legacy v2 habilitada por flag interno %s=1.",
@@ -182,7 +187,11 @@ class CommandRegistry:
         profile: str = PROFILE_PUBLIC,
     ) -> Dict[str, BaseCommand]:
         base_commands = []
-        command_classes = self._resolve_v2_command_classes() if ui == "v2" else AppConfig.BASE_COMMAND_CLASSES
+        command_classes = (
+            self._resolve_v2_command_classes(profile)
+            if ui == "v2"
+            else AppConfig.BASE_COMMAND_CLASSES
+        )
 
         for cmd_class in command_classes:
             try:
@@ -322,6 +331,12 @@ class CliApplication:
     def _is_enabled_env_flag(self, env_name: str) -> bool:
         return environ.get(env_name, "").strip() == "1"
 
+    def _is_internal_v1_ui_enabled(self) -> bool:
+        return (
+            resolve_command_profile() == PROFILE_DEVELOPMENT
+            and self._is_enabled_env_flag(COBRA_INTERNAL_ENABLE_CLI_V1_ENV)
+        )
+
     def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
         command = getattr(args, "cmd", None)
         command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
@@ -418,12 +433,8 @@ class CliApplication:
                 "Cobra sin rutas de codegen."
             ),
         )
-        parser.add_argument(
-            "--ui",
-            choices=("v1", "v2"),
-            default="v2",
-            help=argparse.SUPPRESS,
-        )
+        ui_choices = ("v1", "v2") if self._is_internal_v1_ui_enabled() else ("v2",)
+        parser.add_argument("--ui", choices=ui_choices, default="v2", help=argparse.SUPPRESS)
         parser.add_argument("--lang",
                           default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
                           help=_("Interface language code"))
@@ -610,6 +621,13 @@ class CliApplication:
                 "según --modo (cobra, transpilar, mixto). "
                 "Modo cobra = solo programar/interpretar Cobra sin codegen."
             ),
+            epilog=_(
+                "Ejemplos públicos:\n"
+                "  cobra run <archivo.co>\n"
+                "  cobra build <archivo.co>\n"
+                "  cobra test <archivo.co>\n"
+                "  cobra mod <list|install|remove|publish|search>"
+            ),
         )
         self._configure_cli_options(parser)
         return parser
@@ -732,10 +750,24 @@ class CliApplication:
         return normalized
 
     @staticmethod
-    def _resolve_selected_ui_from_argv(argv: list[str]) -> str:
+    def _resolve_ui_token_from_argv(argv: list[str]) -> str:
         for index, token in enumerate(argv):
             if token == "--ui" and index + 1 < len(argv):
                 return argv[index + 1].strip().lower()
+        return "v2"
+
+    def _resolve_selected_ui_from_argv(self, argv: list[str]) -> str:
+        requested_ui = self._resolve_ui_token_from_argv(argv)
+        if requested_ui != "v1":
+            return "v2"
+        if self._is_internal_v1_ui_enabled():
+            return "v1"
+        messages.mostrar_advertencia(
+            _(
+                "UI v1 está deshabilitada para uso público. "
+                "Se mantiene UI v2 (cobra run/build/test/mod)."
+            )
+        )
         return "v2"
 
     def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
