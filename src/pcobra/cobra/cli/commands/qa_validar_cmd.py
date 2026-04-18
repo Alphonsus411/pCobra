@@ -9,7 +9,7 @@ from typing import Any
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidationResult, ValidarSintaxisCommand
 from pcobra.cobra.qa.syntax_validation import execute_syntax_validation
-from pcobra.cobra.transpilers.registry import build_official_transpilers
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
@@ -150,7 +150,7 @@ class QaValidarCommand(BaseCommand):
             profile=profile,
             targets_raw=str(getattr(args, "targets", "")),
             strict=strict,
-            transpilers=build_official_transpilers(),
+            transpilers=backend_pipeline.TRANSPILERS,
         )
 
         transpilers: dict[str, Any] = {

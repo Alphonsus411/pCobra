@@ -2,6 +2,14 @@
 
 Este resumen documenta **cómo funciona internamente** la CLI unificada sin ampliar la superficie pública (`cobra run`, `cobra build`, `cobra test`, `cobra mod`).
 
+## Flujo oficial inmutable
+
+La ruta oficial y estable de arquitectura es:
+
+```text
+Frontend Cobra -> BackendPipeline -> Bindings
+```
+
 ## Diagrama corto
 
 ```text
@@ -18,7 +26,9 @@ El frontend procesa el código fuente, valida sintaxis y construye el AST base q
 
 ## 2) BackendPipeline
 
-En la ruta pública, `cobra build` delega la elección del backend a `backend_pipeline.resolve_backend(...)`, evitando exponer flags de backend como paso principal para usuario final.
+En la ruta pública, `cobra build` delega la elección del backend a `backend_pipeline.resolve_backend_runtime(...)` y/o `backend_pipeline.build(...)`, evitando exponer flags de backend como paso principal para usuario final.
+
+`pcobra.cobra.build.backend_pipeline` se considera contrato interno inmutable para compile/transpile/runtime.
 
 ## 3) Bindings (python/js/rust)
 
@@ -39,3 +49,4 @@ La resolución de imports usa prioridad determinista (`stdlib > project > python
 - `src/pcobra/cobra/build/backend_pipeline.py`
 - `src/pcobra/cobra/imports/resolver.py`
 - `src/pcobra/cobra/transpilers/module_map.py`
+- `docs/architecture/backend-pipeline-checklist.md`

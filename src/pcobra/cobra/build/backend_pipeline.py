@@ -1,8 +1,9 @@
-"""Façade interna aprobada para resolución de runtime y transpilación.
+"""Façade interna oficial para compile/transpile/runtime.
 
-Contrato interno:
-- Usar únicamente ``resolve_backend_runtime``, ``build`` y ``transpile``.
-- No invocar transpiladores/adapters de forma directa desde CLI/imports/stdlib.
+Contrato inmutable para capas superiores (CLI/imports/stdlib):
+- El único punto de entrada interno aprobado es ``pcobra.cobra.build.backend_pipeline``.
+- La invocación debe hacerse solo vía ``resolve_backend_runtime``, ``build`` o ``transpile``.
+- Queda prohibido llamar transpiladores/adapters oficiales de forma directa.
 """
 
 from __future__ import annotations
@@ -22,6 +23,12 @@ from pcobra.core.ast_cache import obtener_ast
 
 ORCHESTRATOR = BuildOrchestrator()
 RUNTIME_MANAGER = RuntimeManager()
+INTERNAL_BACKEND_ENTRYPOINT = "pcobra.cobra.build.backend_pipeline"
+INTERNAL_BACKEND_API_CONTRACT: tuple[str, ...] = (
+    "resolve_backend_runtime",
+    "build",
+    "transpile",
+)
 
 
 def _load_official_transpilers() -> dict[str, type]:
@@ -59,6 +66,22 @@ def _validate_public_route_startup_contract() -> None:
 
 
 _validate_public_route_startup_contract()
+
+
+def _validate_internal_entrypoint_contract() -> None:
+    """Valida que el contrato interno de entrypoint permanezca inmutable."""
+    if INTERNAL_BACKEND_ENTRYPOINT != "pcobra.cobra.build.backend_pipeline":
+        raise RuntimeError(
+            "El entrypoint interno oficial debe ser pcobra.cobra.build.backend_pipeline."
+        )
+    if INTERNAL_BACKEND_API_CONTRACT != ("resolve_backend_runtime", "build", "transpile"):
+        raise RuntimeError(
+            "El contrato interno del backend pipeline debe ser "
+            "resolve_backend_runtime/build/transpile."
+        )
+
+
+_validate_internal_entrypoint_contract()
 
 
 def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
@@ -138,6 +161,8 @@ def build(source: str, hints: dict[str, Any] | None = None) -> dict[str, Any]:
 
 
 __all__ = [
+    "INTERNAL_BACKEND_ENTRYPOINT",
+    "INTERNAL_BACKEND_API_CONTRACT",
     "ORCHESTRATOR",
     "TRANSPILERS",
     "build",

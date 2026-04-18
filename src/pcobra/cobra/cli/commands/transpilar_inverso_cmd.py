@@ -43,7 +43,6 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.target_policies import parse_target
 from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
-from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
@@ -136,7 +135,7 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
     if language in reverse_module.REGISTERED_REVERSE_TRANSPILERS
 }
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
-DESTINO_CHOICES = list(official_transpiler_targets())
+DESTINO_CHOICES = sorted(backend_pipeline.TRANSPILERS.keys())
 TARGETS_HELP = build_target_help_by_tier(
     tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 )
