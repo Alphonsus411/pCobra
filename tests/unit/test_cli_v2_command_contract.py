@@ -5,6 +5,7 @@ import pytest
 from cobra.cli.commands_v2.run_cmd import RunCommandV2
 from cobra.cli.commands_v2.build_cmd import BuildCommandV2
 from cobra.cli.commands_v2.test_cmd import TestCommandV2
+from cobra.cli.cli import LEGACY_COMMAND_MIGRATION_MAP
 from cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 
 
@@ -131,3 +132,12 @@ def test_test_v2_valida_seguridad_por_ruta_binding(monkeypatch):
     assert calls[0][0] == "python" and calls[0][1]["sandbox"] is True
     assert calls[1][0] == "javascript" and calls[1][1]["containerized"] is True
     assert calls[2][0] == "rust" and calls[2][1]["containerized"] is True
+
+
+def test_legacy_command_migration_map_cubre_comandos_legacy_principales():
+    assert set(LEGACY_COMMAND_MIGRATION_MAP) == {"ejecutar", "compilar", "verificar", "modulos"}
+    assert LEGACY_COMMAND_MIGRATION_MAP["ejecutar"]["target"] == "run"
+    assert LEGACY_COMMAND_MIGRATION_MAP["compilar"]["target"] == "build"
+    assert LEGACY_COMMAND_MIGRATION_MAP["verificar"]["target"] == "test"
+    assert LEGACY_COMMAND_MIGRATION_MAP["modulos"]["target"] == "mod"
+    assert LEGACY_COMMAND_MIGRATION_MAP["modulos"]["hint"].startswith("cobra mod ")
