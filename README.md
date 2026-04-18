@@ -117,7 +117,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Arquitectura del compilador
 - Architecture Overview
 - Ecosistema unificado Cobra
-- Migración a CLI unificada
+- Anexos internos (NO PÚBLICO)
 - Instalación
 - Cómo usar la CLI
 - Cómo decide backend internamente
@@ -151,7 +151,6 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
 - [Casos de uso reales](docs/casos_reales.md)
 - [Limitaciones del sandbox de Node](docs/limitaciones_node_sandbox.md)
-- [Migración de targets retirados de la UX pública](docs/migracion_targets_retirados.md)
 - [Anexos legacy/internal](docs/anexos_legacy_internal/README.md)
 - Notebooks de ejemplo y casos reales
 - Probar Cobra en línea
@@ -230,9 +229,13 @@ Cobra expone una sola interfaz de entrada (`cobra`) y desacopla internamente la 
 Para el plan de transición arquitectónica incremental, consulta [docs/architecture/cobra_unified_refactor_plan.md](docs/architecture/cobra_unified_refactor_plan.md).
 Para una guía ejecutable por fases (A–I) con tareas paso a paso, consulta [docs/architecture/cobra_unified_architecture_execution_plan.md](docs/architecture/cobra_unified_architecture_execution_plan.md).
 
-## Migración a CLI unificada
+## Anexos internos (NO PÚBLICO)
 
-Para migrar desde comandos legacy y usos históricos de `--backend`, consulta [docs/migracion_cli_unificada.md](docs/migracion_cli_unificada.md).
+> ⚠️ **NO PÚBLICO / SOLO MANTENEDORES**: la documentación de migración, compatibilidad histórica y rutas legacy vive en anexos internos y queda fuera del onboarding principal.
+
+Si necesitas migrar scripts antiguos o revisar compatibilidad histórica, consulta:
+
+- [docs/anexos_legacy_internal/README.md](docs/anexos_legacy_internal/README.md)
 
 ## Instalación
 
