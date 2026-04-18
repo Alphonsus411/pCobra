@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
+from pcobra.cobra.architecture.backend_policy import (
+    INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
+)
 from pcobra.cobra.architecture.legacy_backend_lifecycle import (
     LEGACY_BACKEND_LIFECYCLE,
     iter_legacy_backend_lifecycle_rows,
@@ -16,6 +19,12 @@ from pcobra.cobra.transpilers.registry import (
 def test_lifecycle_metadata_cubre_todos_los_backends_internos():
     assert tuple(LEGACY_BACKEND_LIFECYCLE) == INTERNAL_BACKENDS
 
+
+
+
+def test_retirement_window_usa_calendario_oficial_de_compatibilidad():
+    for backend, metadata in LEGACY_BACKEND_LIFECYCLE.items():
+        assert metadata.retirement_window == INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW[backend]
 
 def test_registry_internal_legacy_expone_etiqueta_lifecycle_por_backend():
     assert tuple(INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS) == INTERNAL_BACKENDS

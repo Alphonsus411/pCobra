@@ -9,7 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final, Literal
 
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
+from pcobra.cobra.architecture.backend_policy import (
+    INTERNAL_BACKENDS,
+    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
+)
 
 LegacyLifecycleStatus = Literal["active-migration", "frozen", "removal-candidate"]
 LegacyLifecyclePhase = Literal[
@@ -35,7 +38,7 @@ LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
     "go": LegacyBackendLifecycle(
         status="active-migration",
         phase="phase-2-development-profile-only",
-        retirement_window="Q4 2026",
+        retirement_window=INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW["go"],
         recommended_public_target="rust",
         owner_track="runtime-migration",
         notes="Backend interno con uso residual en migración activa de pipelines.",
@@ -43,7 +46,7 @@ LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
     "cpp": LegacyBackendLifecycle(
         status="active-migration",
         phase="phase-2-development-profile-only",
-        retirement_window="Q4 2026",
+        retirement_window=INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW["cpp"],
         recommended_public_target="rust",
         owner_track="runtime-migration",
         notes="Se mantiene temporalmente por compatibilidad de integraciones históricas.",
@@ -51,7 +54,7 @@ LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
     "java": LegacyBackendLifecycle(
         status="active-migration",
         phase="phase-2-development-profile-only",
-        retirement_window="Q1 2027",
+        retirement_window=INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW["java"],
         recommended_public_target="javascript",
         owner_track="runtime-migration",
         notes="Uso interno controlado durante el retiro de rutas no públicas.",
@@ -59,7 +62,7 @@ LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
     "wasm": LegacyBackendLifecycle(
         status="frozen",
         phase="phase-2-development-profile-only",
-        retirement_window="Q2 2027",
+        retirement_window=INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW["wasm"],
         recommended_public_target="javascript",
         owner_track="maintenance-only",
         notes="Congelado: solo correcciones críticas sin expansión funcional.",
@@ -67,7 +70,7 @@ LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
     "asm": LegacyBackendLifecycle(
         status="removal-candidate",
         phase="phase-1-hide-public-ux",
-        retirement_window="Q3 2026",
+        retirement_window=INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW["asm"],
         recommended_public_target="python",
         owner_track="decommission",
         notes="Candidato explícito a retiro; mantener únicamente para diagnóstico acotado.",
@@ -84,6 +87,18 @@ def _validate_legacy_lifecycle_contract() -> None:
             "LEGACY_BACKEND_LIFECYCLE debe cubrir exactamente INTERNAL_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
             f"configured={configured}; expected={INTERNAL_BACKENDS}"
+        )
+
+    mismatched_windows = tuple(
+        backend
+        for backend, metadata in LEGACY_BACKEND_LIFECYCLE.items()
+        if metadata.retirement_window != INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW[backend]
+    )
+    if mismatched_windows:
+        raise RuntimeError(
+            "LEGACY_BACKEND_LIFECYCLE.retirement_window debe derivarse de "
+            "INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW. "
+            f"mismatched={mismatched_windows}"
         )
 
 
