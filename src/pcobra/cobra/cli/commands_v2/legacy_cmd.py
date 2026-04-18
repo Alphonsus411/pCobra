@@ -7,6 +7,7 @@ from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.public_command_policy import PROFILE_DEVELOPMENT, resolve_command_profile
 from pcobra.cobra.cli.utils import messages
 
 
@@ -70,9 +71,19 @@ class LegacyCommandGroupV2(BaseCommand):
             messages.mostrar_advertencia(
                 _(
                     "Comando legacy '{legacy}' en grupo 'legacy'. "
-                    "Migra a interfaz pública: {hint}."
+                    "Esta ruta es solo para perfil development y será retirada. "
+                    "Migra ahora a interfaz pública: {hint}."
                 ).format(legacy=command, hint=LEGACY_GROUP_MIGRATION_HINTS[command])
             )
+        if resolve_command_profile() != PROFILE_DEVELOPMENT:
+            messages.mostrar_error(
+                _(
+                    "El grupo 'legacy' está restringido a development. "
+                    "Use comandos públicos: cobra run/build/test/mod."
+                ),
+                registrar_log=False,
+            )
+            return 1
         if command == "ejecutar":
             return self._execute.run(
                 Namespace(

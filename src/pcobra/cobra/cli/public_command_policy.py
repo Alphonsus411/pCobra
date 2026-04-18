@@ -5,7 +5,13 @@ from __future__ import annotations
 from os import environ
 from typing import Iterable
 
-PUBLIC_COMMANDS: tuple[str, ...] = ("run", "build", "test", "mod")
+PUBLIC_COMMANDS_CONTRACT: tuple[str, ...] = ("run", "build", "test", "mod")
+PUBLIC_COMMANDS: tuple[str, ...] = PUBLIC_COMMANDS_CONTRACT
+if PUBLIC_COMMANDS != PUBLIC_COMMANDS_CONTRACT:
+    raise RuntimeError(
+        "Contrato público inválido: PUBLIC_COMMANDS debe mantenerse en "
+        "('run', 'build', 'test', 'mod')."
+    )
 INTERNAL_COMMANDS: tuple[str, ...] = (
     "legacy",
     "debug",
@@ -99,6 +105,7 @@ def filter_legacy_commands_for_profile(command_names: Iterable[str], profile: st
 
 
 __all__ = [
+    "PUBLIC_COMMANDS_CONTRACT",
     "PUBLIC_COMMANDS",
     "INTERNAL_COMMANDS",
     "LEGACY_PUBLIC_COMMANDS",
