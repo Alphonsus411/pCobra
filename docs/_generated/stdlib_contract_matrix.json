@@ -208,7 +208,7 @@
     },
     {
       "module": "cobra.system",
-      "primary_backend": "python+rust",
+      "primary_backend": "python",
       "allowed_fallback": [
         "rust",
         "javascript"

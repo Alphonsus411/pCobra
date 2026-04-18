@@ -9,7 +9,7 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 | `cobra.core` | 4 | `python` | `rust, javascript` | es_finito:rust, es_finito:javascript, es_infinito:rust, es_infinito:javascript, copiar_signo:rust, copiar_signo:javascript, signo:rust, signo:javascript |
 | `cobra.datos` | 4 | `python` | `javascript` | filtrar:javascript, seleccionar_columnas:javascript, a_listas:javascript, de_listas:javascript |
 | `cobra.web` | 3 | `javascript` | `python` | obtener_url:javascript, enviar_post:javascript, descargar_archivo:javascript |
-| `cobra.system` | 4 | `python+rust` | `rust, javascript` | leer:rust, leer:javascript, escribir:rust, escribir:javascript, ejecutar:rust, ejecutar:javascript, obtener_env:rust, obtener_env:javascript |
+| `cobra.system` | 4 | `python` | `rust, javascript` | leer:rust, leer:javascript, escribir:rust, escribir:javascript, ejecutar:rust, ejecutar:javascript, obtener_env:rust, obtener_env:javascript |
 
 ## `cobra.core`
 
@@ -98,7 +98,7 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 
 ## `cobra.system`
 
-- **Backend primario:** `python+rust`
+- **Backend primario:** `python`
 - **Fallback permitido:** `rust, javascript`
 - **Mapeo `standard_library`:** `src/pcobra/standard_library/archivo.py`
 - **Mapeo `corelibs`:** `src/pcobra/corelibs/sistema.py`

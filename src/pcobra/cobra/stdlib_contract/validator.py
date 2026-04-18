@@ -8,17 +8,24 @@ import re
 from pathlib import Path
 from typing import Final
 
-from pcobra.cobra.stdlib_contract import CONTRACTS
+from pcobra.cobra.stdlib_contract import CONTRACTS, get_blueprint_contract_manifests
 from pcobra.cobra.stdlib_contract.base import ContractDescriptor
+from pcobra.cobra.stdlib_contract.generator import build_contract_matrix, render_contract_markdown
 
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[4]
 VALID_LEVELS: Final[set[str]] = {"full", "partial"}
 RUNTIME_API_MATRIX_PATH: Final[Path] = REPO_ROOT / "docs" / "_generated" / "runtime_api_matrix.json"
+STDLIB_CONTRACT_MATRIX_JSON_PATH: Final[Path] = (
+    REPO_ROOT / "docs" / "_generated" / "stdlib_contract_matrix.json"
+)
+STDLIB_CONTRACT_MATRIX_MD_PATH: Final[Path] = (
+    REPO_ROOT / "docs" / "_generated" / "stdlib_contract_matrix.md"
+)
 PRIMARY_BACKEND_POLICY: Final[dict[str, tuple[str, ...]]] = {
     "cobra.core": ("python",),
     "cobra.datos": ("python",),
     "cobra.web": ("javascript",),
-    "cobra.system": ("python", "rust"),
+    "cobra.system": ("python",),
 }
 
 
@@ -198,6 +205,39 @@ def validate_contract_descriptor(contract: ContractDescriptor) -> None:
     _validate_primary_backend_policy(contract)
 
 
+def validate_contracts_against_blueprints() -> None:
+    """Valida consistencia del contrato stdlib con ``STDLIB_BLUEPRINTS``."""
+    contract_by_module = {contract.module: contract for contract in CONTRACTS}
+    blueprint_by_module = get_blueprint_contract_manifests()
+
+    contract_modules = set(contract_by_module)
+    blueprint_modules = set(blueprint_by_module)
+    if contract_modules != blueprint_modules:
+        raise ContractValidationError(
+            "Módulos públicos inconsistentes entre contrato y STDLIB_BLUEPRINTS. "
+            f"solo_contrato={sorted(contract_modules - blueprint_modules)} "
+            f"solo_blueprint={sorted(blueprint_modules - contract_modules)}"
+        )
+
+    for module in sorted(contract_modules):
+        contract = contract_by_module[module]
+        blueprint = blueprint_by_module[module]
+
+        primary_backend = blueprint.get("backend_preferido")
+        if contract.primary_backend != primary_backend:
+            raise ContractValidationError(
+                f"{module}: primary_backend inconsistente con STDLIB_BLUEPRINTS. "
+                f"contract={contract.primary_backend} blueprint={primary_backend}"
+            )
+
+        fallback_backends = tuple(blueprint.get("fallback_permitido", []))
+        if contract.allowed_fallback != fallback_backends:
+            raise ContractValidationError(
+                f"{module}: fallbacks inconsistentes con STDLIB_BLUEPRINTS. "
+                f"contract={contract.allowed_fallback} blueprint={fallback_backends}"
+            )
+
+
 def validate_contracts() -> None:
     """Valida todos los contratos de stdlib definidos en el proyecto."""
 
@@ -207,9 +247,37 @@ def validate_contracts() -> None:
             raise ContractValidationError(f"Módulo duplicado en contrato: {contract.module}")
         modules_seen.add(contract.module)
         validate_contract_descriptor(contract)
+    validate_contracts_against_blueprints()
 
 
 def validate_contracts_against_runtime_matrix() -> None:
     """Valida cobertura full/partial por función contra `runtime_api_matrix`."""
     for contract in CONTRACTS:
         validate_coverage_against_runtime_matrix(contract)
+
+
+def validate_generated_stdlib_contract_matrix() -> None:
+    """Valida consistencia entre contrato vivo y docs generadas de stdlib."""
+    expected_json = build_contract_matrix()
+    try:
+        rendered_json = json.loads(STDLIB_CONTRACT_MATRIX_JSON_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise ContractValidationError(
+            "No existe stdlib_contract_matrix.json generado en docs/_generated"
+        ) from exc
+    if rendered_json != expected_json:
+        raise ContractValidationError(
+            "docs/_generated/stdlib_contract_matrix.json está desactualizado respecto al contrato."
+        )
+
+    expected_md = render_contract_markdown().strip()
+    try:
+        rendered_md = STDLIB_CONTRACT_MATRIX_MD_PATH.read_text(encoding="utf-8").strip()
+    except FileNotFoundError as exc:
+        raise ContractValidationError(
+            "No existe stdlib_contract_matrix.md generado en docs/_generated"
+        ) from exc
+    if rendered_md != expected_md:
+        raise ContractValidationError(
+            "docs/_generated/stdlib_contract_matrix.md está desactualizado respecto al contrato."
+        )
