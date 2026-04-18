@@ -16,7 +16,6 @@ from pcobra.cobra.cli.target_policies import (
     build_runtime_capability_message,
     parse_restricted_target_list,
 )
-from pcobra.cobra.transpilers.target_utils import target_cli_choices
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
 from pcobra.core.interpreter import InterpretadorCobra
@@ -36,14 +35,18 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 VALID_EXTENSIONS = {".cobra", ".cbr", ".co"}
 
+
+def _target_cli_choices(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:
+    return tuple(values)
+
 class VerifyCommand(BaseCommand):
     """Verifica que la salida sea la misma en distintos lenguajes."""
 
     name = "verificar"
     capability = "codegen"
     requires_sqlite_key: bool = False
-    OFFICIAL_LANGUAGE_CHOICES = target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS)
-    SUPPORTED_LANGUAGES = target_cli_choices(VERIFICATION_EXECUTABLE_TARGETS)
+    OFFICIAL_LANGUAGE_CHOICES = _target_cli_choices(OFFICIAL_TRANSPILATION_TARGETS)
+    SUPPORTED_LANGUAGES = _target_cli_choices(VERIFICATION_EXECUTABLE_TARGETS)
     
     def __init__(self) -> None:
         """Inicializa el comando y el intérprete."""
@@ -178,9 +181,6 @@ class VerifyCommand(BaseCommand):
             Tupla con (salida, error)
         """
         try:
-            if lang not in backend_pipeline.TRANSPILERS:
-                return None, _("Transpilador no encontrado para {}").format(lang)
-
             codigo_gen = backend_pipeline.transpile(ast, lang)
             
             if lang == "python":
@@ -195,6 +195,8 @@ class VerifyCommand(BaseCommand):
             # Normalizar terminaciones de línea
             return salida.replace('\r\n', '\n'), None
             
+        except ValueError:
+            return None, _("Transpilador no encontrado para {}").format(lang)
         except Exception as e:
             self._logger.error("Error en %s: %s", lang, str(e))
             return None, str(e)

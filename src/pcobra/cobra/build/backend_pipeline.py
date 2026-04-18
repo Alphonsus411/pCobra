@@ -18,12 +18,20 @@ from pcobra.cobra.architecture.contracts import (
 )
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build.orchestrator import BackendResolution, BuildOrchestrator
-from pcobra.cobra.transpilers.registry import build_official_transpilers
 from pcobra.core.ast_cache import obtener_ast
 
 ORCHESTRATOR = BuildOrchestrator()
 RUNTIME_MANAGER = RuntimeManager()
-TRANSPILERS: dict[str, type] = build_official_transpilers()
+
+
+def _load_official_transpilers() -> dict[str, type]:
+    """Helper interno: encapsula acceso al registro canónico."""
+    from pcobra.cobra.transpilers.registry import build_official_transpilers
+
+    return build_official_transpilers()
+
+
+TRANSPILERS: dict[str, type] = _load_official_transpilers()
 
 
 def _public_route_backend_matrix() -> dict[str, tuple[str, ...]]:

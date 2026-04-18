@@ -12,11 +12,8 @@ from typing import Any, Mapping
 
 from pcobra.cobra.backends.resolver import resolve_backend
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
+from pcobra.cobra.imports._module_map_api import get_toml_map, resolve_backend_for_module
 from pcobra.cobra.stdlib_contract import get_public_stdlib_module_contracts
-from pcobra.cobra.transpilers.module_map import (
-    get_toml_map,
-    resolve_backend_for_module,
-)
 
 
 class ImportResolutionError(RuntimeError):
