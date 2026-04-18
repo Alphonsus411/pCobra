@@ -204,6 +204,7 @@ def test_modulo_hibrido_inyecta_adapter_backend(monkeypatch):
         "backend": "javascript",
         "import_path": "mi_hibrido_runtime",
         "precedence_reason": "unique_source:hybrid",
+        "audit_debug": False,
     }
 
 
@@ -253,6 +254,7 @@ def test_metadata_uniforme_en_ruta_stdlib():
     assert metadata["api_contract_version"] == "2026-04-import-resolution-v1"
     assert metadata["resolution_source_order"] == ["stdlib", "project", "python_bridge", "hybrid"]
     assert metadata["collision_policy"] == "namespace_required"
+    assert metadata["audit_debug"] is False
 
 
 def test_metadata_uniforme_en_ruta_python_bridge():
@@ -267,6 +269,7 @@ def test_metadata_uniforme_en_ruta_python_bridge():
     assert metadata["api_contract_version"] == "2026-04-import-resolution-v1"
     assert metadata["resolution_source_order"] == ["stdlib", "project", "python_bridge", "hybrid"]
     assert metadata["collision_policy"] == "namespace_required"
+    assert metadata["audit_debug"] is False
 
 
 def test_resolver_adjunta_adapter_desde_resolucion():
@@ -354,3 +357,43 @@ def test_error_si_no_hay_candidato():
 
     with pytest.raises(ImportResolutionError):
         resolver.resolve("__modulo_improbable_no_existente__")
+
+
+def test_error_colision_expone_codigo_estable(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(project_root=tmp_path)
+
+    with pytest.raises(ImportResolutionError) as excinfo:
+        resolver.resolve("datos")
+
+    assert excinfo.value.code == "IMP-COLLISION-001"
+    assert "[IMP-COLLISION-001]" in str(excinfo.value)
+
+
+def test_audit_debug_registra_resolucion_y_precedence_reason(tmp_path):
+    (tmp_path / "datos.co").write_text("usar algo")
+    resolver = CobraImportResolver(
+        project_root=tmp_path,
+        collision_policy="warn",
+        audit_debug=True,
+    )
+
+    with pytest.warns(UserWarning, match="Colisión de import"):
+        resolver.resolve("datos")
+
+    assert len(resolver.audit_events) == 1
+    event = resolver.audit_events[0]
+    assert event.request == "datos"
+    assert event.source == "stdlib"
+    assert event.precedence_reason == "source_order:stdlib > project > python_bridge > hybrid"
+
+
+def test_resolver_expone_estabilidad_de_orden_en_major():
+    assert CobraImportResolver.resolution_source_order == (
+        "stdlib",
+        "project",
+        "python_bridge",
+        "hybrid",
+    )
+    assert CobraImportResolver.resolution_source_order_stability == "major"
+
