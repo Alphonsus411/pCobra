@@ -1,4 +1,4 @@
-"""Shim histórico de compatibilidad para ``cobra.transpilers.registry``.
+"""INTERNAL COMPATIBILITY ONLY. Shim histórico de compatibilidad para ``cobra.transpilers.registry``.
 
 Fuente canónica: :mod:`pcobra.cobra.transpilers.registry`.
 """

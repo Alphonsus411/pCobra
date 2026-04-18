@@ -1,5 +1,8 @@
 """Contrato arquitectónico canónico para rutas públicas de backend.
 
+Fuente canónica contractual única (junto con backend_policy/unified_ecosystem)
+para la superficie pública de backends.
+
 Este módulo centraliza:
 1) backends públicos permitidos,
 2) rutas de binding por backend público,

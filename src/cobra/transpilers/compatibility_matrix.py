@@ -1,4 +1,4 @@
-"""Shim histórico para ``cobra.transpilers.compatibility_matrix``.
+"""INTERNAL COMPATIBILITY ONLY. Shim histórico para ``cobra.transpilers.compatibility_matrix``.
 
 Fuente canónica: :mod:`pcobra.cobra.transpilers.compatibility_matrix`.
 """

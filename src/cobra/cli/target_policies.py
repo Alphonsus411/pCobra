@@ -1,4 +1,4 @@
-"""Shim histórico de compatibilidad para ``cobra.cli.target_policies``.
+"""INTERNAL COMPATIBILITY ONLY. Shim histórico de compatibilidad para ``cobra.cli.target_policies``.
 
 Fuente canónica: :mod:`pcobra.cobra.cli.target_policies`.
 """

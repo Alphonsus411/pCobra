@@ -1,4 +1,7 @@
-"""Política normativa de backends (públicos vs internos)."""
+"""Política normativa de backends (públicos vs internos).
+
+Fuente canónica contractual única para política de backends públicos/legacy.
+"""
 
 from __future__ import annotations
 

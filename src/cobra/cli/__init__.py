@@ -1,4 +1,4 @@
-"""Shim histórico mínimo para :mod:`pcobra.cobra.cli`.
+"""INTERNAL COMPATIBILITY ONLY. Shim histórico mínimo para :mod:`pcobra.cobra.cli`.
 
 Ruta canónica runtime: ``src/pcobra/cobra/cli``.
 Este módulo sólo existe para compatibilidad hacia atrás.

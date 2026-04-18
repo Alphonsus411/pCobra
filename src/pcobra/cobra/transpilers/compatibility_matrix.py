@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import Final
 
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.runtime_api_matrix import build_runtime_api_matrix
 from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS
@@ -42,10 +43,10 @@ FEATURE_FULL_BACKENDS: Final[dict[str, tuple[str, ...]]] = {
     "corelibs": ("python", "rust"),
     "standard_library": ("python", "rust"),
 }
-OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ("python", "javascript", "rust")
+OFFICIAL_RUNTIME_BACKENDS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 BEST_EFFORT_RUNTIME_BACKENDS: Final[tuple[str, ...]] = ()
 TRANSPILATION_ONLY_BACKENDS: Final[tuple[str, ...]] = ()
-_PUBLIC_BACKEND_KEYS: Final[tuple[str, ...]] = ("python", "javascript", "rust")
+_PUBLIC_BACKEND_KEYS: Final[tuple[str, ...]] = PUBLIC_BACKENDS
 _LEGACY_BACKEND_KEYS: Final[tuple[str, ...]] = ("go", "cpp", "java", "wasm", "asm")
 
 _BACKEND_COMPATIBILITY_MODEL: Final[dict[str, dict[str, str]]] = {
