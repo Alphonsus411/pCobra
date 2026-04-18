@@ -7,18 +7,12 @@ from importlib import import_module
 from importlib.metadata import entry_points
 
 from pcobra.cobra.build import backend_pipeline
-from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     parse_target,
     parse_target_list,
 )
-from pcobra.cobra.transpilers.registry import official_transpiler_targets
-from pcobra.cobra.transpilers.target_utils import (
-    build_target_help_by_tier,
-    resolution_candidates,
-    target_label,
-)
+from pcobra.cobra.imports._module_map_api import get_toml_map
 from pcobra.core.ast_cache import obtener_ast
 from pcobra.core.sandbox import validar_dependencias
 from pcobra.core.semantic_validators import (
@@ -46,9 +40,8 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
-TRANSPILERS = dict(backend_pipeline.TRANSPILERS)
+_PLUGIN_TRANSPILERS: dict[str, type] = {}
 _ENTRYPOINTS_LOADED = False
-ORCHESTRATOR = backend_pipeline.ORCHESTRATOR
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -71,8 +64,7 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
         backend=canonical,
         context=context,
     )
-    TRANSPILERS[canonical] = transpiler_cls
-    backend_pipeline.TRANSPILERS = TRANSPILERS
+    _PLUGIN_TRANSPILERS[canonical] = transpiler_cls
     return canonical
 
 
@@ -212,7 +204,7 @@ def load_entrypoint_transpilers() -> tuple[int, int, int]:
                 raise ValueError(f"Nombre de módulo o clase inválido: {ep.value}")
                 continue
             cls = getattr(import_module(module_name), class_name)
-            if normalized_ep_name in TRANSPILERS:
+            if normalized_ep_name in _PLUGIN_TRANSPILERS:
                 logging.warning(
                     "Plugin de transpilador '%s' omitido: '%s' ya existe en el registro canónico",
                     ep.name,
@@ -256,9 +248,7 @@ def _ensure_entrypoints_loaded_once() -> None:
     load_entrypoint_transpilers()
     _ENTRYPOINTS_LOADED = True
 
-TARGETS_HELP = build_target_help_by_tier(
-    tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
-)
+TARGETS_HELP = ", ".join(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 
 
 def parse_official_target_list(value: str) -> list[str]:
@@ -279,15 +269,18 @@ def validate_file(filepath: str) -> bool:
 
 def validar_dependencias_con_alias(backend: str, mod_info: dict) -> None:
     """Valida dependencias usando únicamente el target canónico público."""
-    last_error = None
-    for candidate in resolution_candidates(backend):
-        try:
-            validar_dependencias(candidate, mod_info)
-            return
-        except (ValueError, FileNotFoundError) as exc:
-            last_error = exc
-    if last_error is not None:
-        raise last_error
+    validar_dependencias(backend, mod_info)
+
+
+def _target_label(target: str) -> str:
+    return target.replace("_", " ").capitalize()
+
+
+def _transpile_with_pipeline_or_plugin(ast, lang: str) -> str:
+    plugin_cls = _PLUGIN_TRANSPILERS.get(lang)
+    if plugin_cls is not None:
+        return plugin_cls().generate_code(ast)
+    return backend_pipeline.transpile(ast, lang)
 
 
 def run_transpiler_pool(languages: list, ast, executor) -> list:
@@ -312,7 +305,7 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        lang_choices = list(official_transpiler_targets()) + list(enabled_internal_legacy_targets())
+        lang_choices = list(OFFICIAL_TRANSPILATION_TARGETS) + list(enabled_internal_legacy_targets())
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
@@ -344,8 +337,7 @@ class CompileCommand(BaseCommand):
     def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
         """Ejecuta un transpilador específico."""
         lang, ast = parametros
-        backend_pipeline.TRANSPILERS = TRANSPILERS
-        code = backend_pipeline.transpile(ast, lang)
+        code = _transpile_with_pipeline_or_plugin(ast, lang)
         return lang, code
 
     def run(self, args):
@@ -374,14 +366,13 @@ class CompileCommand(BaseCommand):
                 mostrar_error(str(parse_error))
                 return 1
 
-        mod_info = module_map.get_toml_map()
+        mod_info = get_toml_map()
         preferred_backend = getattr(args, "backend", None) or getattr(args, "tipo", None)
         if getattr(args, "backend", None):
             mostrar_advertencia(
                 _("La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura.")
             )
         try:
-            backend_pipeline.TRANSPILERS = TRANSPILERS
             resolution, _runtime = backend_pipeline.resolve_backend_runtime(
                 archivo,
                 {"preferred_backend": preferred_backend},
@@ -431,15 +422,20 @@ class CompileCommand(BaseCommand):
                         _validate_official_backend_or_raise(lang, context="CLI --tipos")
                     except ValueError as validation_err:
                         raise ValueError(str(validation_err))
-                    if lang not in TRANSPILERS:
-                        raise ValueError(_("Transpilador no soportado."))
+                    try:
+                        backend_pipeline.resolve_backend_runtime(
+                            archivo,
+                            {"preferred_backend": lang},
+                        )
+                    except ValueError as validation_err:
+                        raise ValueError(str(validation_err))
                 
                 try:
                     resultados = run_transpiler_pool(lenguajes, ast, self._ejecutar_transpilador)
                     for lang, resultado in resultados:
                         mostrar_info(
                             _("Código generado para {lang}:").format(
-                                lang=f"{target_label(lang)} ({lang})",
+                                lang=f"{_target_label(lang)} ({lang})",
                             )
                         )
                         print(resultado)
@@ -448,10 +444,7 @@ class CompileCommand(BaseCommand):
                     return 1
             else:
                 transpilador = transpilador_objetivo
-                if transpilador not in TRANSPILERS:
-                    raise ValueError(_("Transpilador no soportado."))
-                backend_pipeline.TRANSPILERS = TRANSPILERS
-                resultado = backend_pipeline.transpile(ast, transpilador)
+                resultado = _transpile_with_pipeline_or_plugin(ast, transpilador)
                 mostrar_info(
                     _("Código generado:")
                 )
