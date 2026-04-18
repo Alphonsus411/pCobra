@@ -38,7 +38,7 @@ class BuildCommandV2(BaseCommand):
             mostrar_error(str(exc), registrar_log=False)
             return 1
 
-        if build_result.get("reason"):
+        if debug and build_result.get("reason"):
             mostrar_info(
                 _("Resolución de backend (debug): {reason}").format(reason=build_result["reason"]),
                 registrar_log=False,
@@ -49,6 +49,8 @@ class BuildCommandV2(BaseCommand):
         except ValueError as exc:
             mostrar_error(str(exc), registrar_log=False)
             return 1
-        mostrar_info(_("Código generado:"), registrar_log=False)
+        artifact_path = str(build_result.get("artifact_path") or "<stdout>")
+        mostrar_info(_("Artefacto Cobra generado."), registrar_log=False)
+        mostrar_info(_("Ruta de artefacto: {path}").format(path=artifact_path), registrar_log=False)
         print(build_result["code"])
         return 0

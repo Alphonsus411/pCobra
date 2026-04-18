@@ -71,6 +71,74 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
     assert called["runtime"][1]["command"] == "build"
 
 
+def test_build_v2_ux_salida_estable_sin_terminos_internos(monkeypatch):
+    command = BuildCommandV2()
+    messages: list[str] = []
+
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.build_cmd.backend_pipeline.build",
+        lambda *_args, **_kwargs: {
+            "backend": "python",
+            "reason": "[backend_resolution] backend=python; reason=contract",
+            "runtime": {"language": "python"},
+            "ast": [],
+            "code": "print('ok')",
+            "artifact_path": "/tmp/programa.py",
+        },
+    )
+    monkeypatch.setattr(
+        command._runtime_manager,
+        "validate_command_runtime",
+        lambda *_args, **_kwargs: ("1.0", object(), object()),
+    )
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.build_cmd.mostrar_info",
+        lambda message, **_kwargs: messages.append(message),
+    )
+
+    status = command.run(
+        argparse.Namespace(file="programa.co", modo="mixto", debug=False)
+    )
+
+    assert status == 0
+    assert "Artefacto Cobra generado." in messages
+    assert "Ruta de artefacto: /tmp/programa.py" in messages
+    assert all("backend_resolution" not in message for message in messages)
+    assert all("Transpilador" not in message for message in messages)
+
+
+def test_build_v2_muestra_reason_solo_en_debug(monkeypatch):
+    command = BuildCommandV2()
+    messages: list[str] = []
+
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.build_cmd.backend_pipeline.build",
+        lambda *_args, **_kwargs: {
+            "backend": "python",
+            "reason": "[backend_resolution] backend=python; reason=contract",
+            "runtime": {"language": "python"},
+            "ast": [],
+            "code": "print('ok')",
+        },
+    )
+    monkeypatch.setattr(
+        command._runtime_manager,
+        "validate_command_runtime",
+        lambda *_args, **_kwargs: ("1.0", object(), object()),
+    )
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.build_cmd.mostrar_info",
+        lambda message, **_kwargs: messages.append(message),
+    )
+
+    status = command.run(
+        argparse.Namespace(file="programa.co", modo="mixto", debug=True)
+    )
+
+    assert status == 0
+    assert any("Resolución de backend (debug):" in message for message in messages)
+
+
 def test_build_v2_help_no_expone_flags_backend():
     subparsers = _build_subparsers()
     command = BuildCommandV2()
