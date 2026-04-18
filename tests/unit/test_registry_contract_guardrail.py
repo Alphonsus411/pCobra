@@ -19,7 +19,7 @@ from pcobra.cobra.transpilers import registry
             {
                 key: value
                 for key, value in registry.TRANSPILER_CLASS_PATHS.items()
-                if key != "asm"
+                if key != "rust"
             },
             "claves fuera de contrato",
         ),
@@ -53,16 +53,16 @@ def test_validate_public_registry_contract_falla_con_clave_extra(monkeypatch):
 def test_validate_internal_legacy_registry_contract_falla_si_falta_backend(monkeypatch):
     monkeypatch.setattr(
         registry,
-        "INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS",
+        "INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS",
         {
             key: value
-            for key, value in registry.INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS.items()
+            for key, value in registry.INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS.items()
             if key != "asm"
         },
     )
 
     with pytest.raises(
         RuntimeError,
-        match="INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS",
+        match="INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS",
     ):
         registry._validate_internal_legacy_registry_contract()

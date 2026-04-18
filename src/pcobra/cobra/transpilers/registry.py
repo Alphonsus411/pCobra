@@ -21,6 +21,10 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
     "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
+}
+
+# Bloque dedicado de compatibilidad interna (no público).
+INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
     "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
     "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
@@ -28,14 +32,12 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
     "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
 }
 
+PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = TRANSPILER_CLASS_PATHS
 
-PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
-    target: TRANSPILER_CLASS_PATHS[target] for target in PUBLIC_BACKENDS
-}
-
-INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
-    target: TRANSPILER_CLASS_PATHS[target] for target in INTERNAL_BACKENDS
-}
+# Alias explícito para continuidad semántica en módulos/tests internos.
+INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = (
+    INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS
+)
 INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS: Final[
     dict[str, str]
 ] = {
@@ -46,27 +48,29 @@ INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS: Final[
 
 def _validate_complete_registry_contract() -> tuple[str, ...]:
     """Valida que el inventario completo preserve el contrato total de backends."""
-    configured_keys = tuple(TRANSPILER_CLASS_PATHS)
+    configured_keys = tuple(TRANSPILER_CLASS_PATHS) + tuple(
+        INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS
+    )
     missing = tuple(target for target in ALL_BACKENDS if target not in configured_keys)
     extras = tuple(target for target in configured_keys if target not in ALL_BACKENDS)
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene claves fuera de contrato y debe usar exactamente ALL_BACKENDS. "
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS + INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS tienen claves fuera de contrato y deben usar exactamente ALL_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
             f"current={configured_keys}; expected={ALL_BACKENDS}"
         )
 
     if len(configured_keys) != len(ALL_BACKENDS):
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene cardinalidad inválida. "
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS + INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS tienen cardinalidad inválida. "
             f"len(current)={len(configured_keys)}; len(expected)={len(ALL_BACKENDS)}; "
             f"current={configured_keys}; expected={ALL_BACKENDS}"
         )
 
     if configured_keys != ALL_BACKENDS:
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.ALL_BACKENDS. "
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS + INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS deben preservar el orden de backend_policy.ALL_BACKENDS. "
             f"current={configured_keys}; expected={ALL_BACKENDS}"
         )
     return configured_keys
@@ -100,7 +104,7 @@ def _validate_public_registry_contract() -> tuple[str, ...]:
 
 def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
     """Valida inventario separado para backends legacy internos."""
-    configured_keys = tuple(INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS)
+    configured_keys = tuple(INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS)
     missing = tuple(
         target for target in INTERNAL_BACKENDS if target not in configured_keys
     )
@@ -110,7 +114,7 @@ def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS debe usar exactamente INTERNAL_BACKENDS. "
+            "[CI CONTRACT] INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS debe usar exactamente INTERNAL_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
             f"current={configured_keys}; expected={INTERNAL_BACKENDS}"
         )
@@ -129,7 +133,7 @@ def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
 
     if configured_keys != INTERNAL_BACKENDS:
         raise RuntimeError(
-            "[CI CONTRACT] INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.INTERNAL_BACKENDS. "
+            "[CI CONTRACT] INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.INTERNAL_BACKENDS. "
             f"current={configured_keys}; expected={INTERNAL_BACKENDS}"
         )
     return configured_keys
