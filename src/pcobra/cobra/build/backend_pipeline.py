@@ -1,4 +1,9 @@
-"""Façade interna para resolución de backend y transpilación."""
+"""Façade interna aprobada para resolución de runtime y transpilación.
+
+Contrato interno:
+- Usar únicamente ``resolve_backend_runtime``, ``build`` y ``transpile``.
+- No invocar transpiladores/adapters de forma directa desde CLI/imports/stdlib.
+"""
 
 from __future__ import annotations
 
@@ -48,8 +53,8 @@ def _validate_public_route_startup_contract() -> None:
 _validate_public_route_startup_contract()
 
 
-def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
-    """Resuelve backend canónico a partir de un source file y pistas opcionales."""
+def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
+    """Resuelve backend canónico internamente a partir de source/hints."""
     context = hints or {}
     preferred_backend = context.get("preferred_backend")
     required_capabilities = tuple(context.get("required_capabilities", ()))
@@ -68,7 +73,7 @@ def resolve_backend_runtime(
 ) -> tuple[BackendResolution, dict[str, str]]:
     """Resuelve backend y metadatos de bridge/runtime para el contrato de bindings."""
     context = hints or {}
-    resolution = resolve_backend(source, context)
+    resolution = _resolve_backend(source, context)
     capabilities, bridge = RUNTIME_MANAGER.resolve_runtime(resolution.backend)
     abi_version = RUNTIME_MANAGER.validate_abi_route(
         resolution.backend,
@@ -126,7 +131,6 @@ __all__ = [
     "ORCHESTRATOR",
     "TRANSPILERS",
     "build",
-    "resolve_backend",
     "resolve_backend_runtime",
     "transpile",
 ]

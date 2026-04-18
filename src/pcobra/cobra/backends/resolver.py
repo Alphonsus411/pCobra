@@ -1,13 +1,16 @@
-"""Resolución y API interna única de compilación por backend."""
+"""Compat shim: resolución mínima de backend redirigida a backend_pipeline.
+
+Este módulo existe solo para compatibilidad técnica temporal.
+La API interna aprobada para resolver/transpilar está en
+``pcobra.cobra.build.backend_pipeline``.
+"""
 
 from __future__ import annotations
 
 from typing import Any, Mapping
 
+from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.backends.base import BackendAdapter
-from pcobra.cobra.backends.javascript_adapter import JavaScriptAdapter
-from pcobra.cobra.backends.python_adapter import PythonAdapter
-from pcobra.cobra.backends.rust_adapter import RustAdapter
 
 _BACKEND_ALIASES = {
     "python": "python",
@@ -19,15 +22,21 @@ _BACKEND_ALIASES = {
 }
 
 
+class PipelineBackendAdapter(BackendAdapter):
+    """Adapter mínimo que delega en la fachada interna del pipeline."""
+
+    def __init__(self, backend: str) -> None:
+        self.backend = backend
+
+    def compile(self, ast: Any, options: Mapping[str, Any] | None = None) -> str:
+        return backend_pipeline.transpile(ast, self.backend)
+
+
 def resolve_backend(artifact_kind: str) -> BackendAdapter:
-    """Retorna el adapter adecuado para el ``artifact_kind`` solicitado."""
+    """Retorna un adapter shim que delega en ``backend_pipeline.transpile``."""
     normalized = _BACKEND_ALIASES.get((artifact_kind or "").strip().lower())
-    if normalized == "python":
-        return PythonAdapter()
-    if normalized == "javascript":
-        return JavaScriptAdapter()
-    if normalized == "rust":
-        return RustAdapter()
+    if normalized in {"python", "javascript", "rust"}:
+        return PipelineBackendAdapter(normalized)
     raise ValueError(f"artifact_kind no soportado: {artifact_kind!r}")
 
 
@@ -36,12 +45,15 @@ def compile(
     artifact_kind: str,
     options: Mapping[str, Any] | None = None,
 ) -> str:
-    """API interna unificada de compilación.
+    """API de compatibilidad que redirige explícitamente al pipeline.
 
     Args:
         ast: AST de Cobra (o estructura normalizable por el transpiler).
         artifact_kind: Tipo de artefacto de salida (python/javascript/rust).
         options: Opciones internas del backend (reservado para evolución futura).
     """
-    adapter = resolve_backend(artifact_kind)
-    return adapter.compile(ast, options=options)
+    del options  # Reservado para mantener firma compat.
+    normalized = _BACKEND_ALIASES.get((artifact_kind or "").strip().lower())
+    if normalized is None:
+        raise ValueError(f"artifact_kind no soportado: {artifact_kind!r}")
+    return backend_pipeline.transpile(ast, normalized)
