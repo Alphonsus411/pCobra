@@ -14,17 +14,17 @@ class FletCommand(BaseCommand):
     name = "gui"
     requires_sqlite_key: bool = False
     _CRITICAL_GUI_MODULES = (
-        "pcobra.cobra.transpilers.registry",
-        "pcobra.cobra.core",
-        "pcobra.cobra.transpilers.target_utils",
-        "pcobra.cobra.transpilers.targets",
-        "pcobra.core.interpreter",
+        "pcobra.cobra.gui.deps",
     )
     _CRITICAL_GUI_SYMBOLS = {
-        "pcobra.cobra.core": ("Lexer", "Parser"),
-        "pcobra.core.interpreter": ("InterpretadorCobra",),
-        "pcobra.cobra.transpilers.registry": ("get_transpilers",),
-        "pcobra.cobra.transpilers.target_utils": ("target_cli_choices",),
+        "pcobra.cobra.gui.deps": (
+            "Lexer",
+            "Parser",
+            "InterpretadorCobra",
+            "get_transpilers",
+            "target_cli_choices",
+            "OFFICIAL_TARGETS",
+        ),
     }
 
     def __init__(self) -> None:

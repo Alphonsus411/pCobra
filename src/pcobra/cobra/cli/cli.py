@@ -25,7 +25,6 @@ from pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
 from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
 from pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-from pcobra.cobra.cli.commands.flet_cmd import FletCommand
 from pcobra.cobra.cli.commands.init_cmd import InitCommand
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
@@ -138,7 +137,7 @@ class AppConfig:
         InteractiveCommand, CompileCommand, ExecuteCommand, ModulesCommand,
         DependenciasCommand, DocsCommand, EmpaquetarCommand,
         PaqueteCommand, CrearCommand, InitCommand,
-        JupyterCommand, FletCommand, ContainerCommand,
+        JupyterCommand, ContainerCommand,
         BenchCommand, BenchmarksCommand, BenchmarksV2Command,
         BenchTranspilersCommand, BenchThreadsCommand,
         ProfileCommand, QualiaCommand, CacheCommand,
@@ -179,6 +178,14 @@ class CommandRegistry:
             )
         return classes
 
+    def _resolve_v1_command_classes(self) -> List[Type[BaseCommand]]:
+        """Carga comandos v1 y difiere imports GUI/opcionales hasta el registro."""
+        classes = list(AppConfig.BASE_COMMAND_CLASSES)
+        from pcobra.cobra.cli.commands.flet_cmd import FletCommand
+
+        classes.append(FletCommand)
+        return classes
+
     def register_base_commands(
         self,
         subparsers: Any,
@@ -190,7 +197,7 @@ class CommandRegistry:
         command_classes = (
             self._resolve_v2_command_classes(profile)
             if ui == "v2"
-            else AppConfig.BASE_COMMAND_CLASSES
+            else self._resolve_v1_command_classes()
         )
 
         for cmd_class in command_classes:
