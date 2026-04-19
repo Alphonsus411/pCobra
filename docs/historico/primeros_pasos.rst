@@ -3,66 +3,35 @@ Primeros pasos con Cobra (histórico)
 
 .. warning::
 
-   Documento histórico / no operativo. Para la guía vigente consulta el
-   `Libro de Programación Cobra <../LIBRO_PROGRAMACION_COBRA.md>`_ y el
-   `Manual de Cobra <../MANUAL_COBRA.md>`_.
+   Documento de archivo (no operativo). Esta guía refleja un flujo de adopción
+   usado en etapas tempranas del proyecto y no debe emplearse como referencia
+   práctica actual.
 
-Esta guía se conserva como referencia de versiones anteriores.
+Contexto histórico
+------------------
 
-Instalación
------------
+Este material corresponde al ciclo inicial de difusión de Cobra, cuando se
+priorizaban instrucciones rápidas de arranque local. Se conserva únicamente
+como registro histórico del proceso de onboarding de versiones anteriores.
 
-1. Clona el repositorio y entra al directorio:
+Ejemplo legacy
+--------------
 
-.. code-block:: bash
-
-   git clone https://github.com/Alphonsus411/pCobra.git
-   cd pCobra
-
-2. Crea un entorno virtual y actívalo:
-
-.. code-block:: bash
-
-   python -m venv .venv
-   source .venv/bin/activate  # Linux o macOS
-   .\\.venv\\Scripts\\activate  # Windows
-
-3. Instala las dependencias y la CLI:
-
-.. code-block:: bash
-
-   pip install -r requirements-dev.txt
-   pip install -e .
-
-   # También puedes usar ``pip install -e .[dev]`` para instalar los extras de desarrollo
-
-Uso básico
-----------
-
-Puedes ejecutar archivos ``.co`` directamente con la CLI.
-Por ejemplo, si tienes ``hola.co``:
+Se conserva un ejemplo mínimo de estilo antiguo, sin carácter normativo:
 
 .. code-block:: cobra
 
    imprimir("Hola, Cobra")
 
-Lo ejecutas con:
+Notas de archivo
+----------------
 
-.. code-block:: bash
+- Se retiraron comandos de instalación, ejecución y build para evitar
+  superposición con el flujo vigente.
+- Cualquier instrucción operativa debe consultarse en la documentación actual.
 
-   cobra run hola.co
+Ruta vigente
+------------
 
-Comandos públicos actuales de la CLI:
-
-.. code-block:: bash
-
-   cobra run hola.co
-   cobra build hola.co
-   cobra test hola.co
-   cobra mod list
-
-Para generar la documentación en HTML usa:
-
-.. code-block:: bash
-
-   make html
+- `Libro de Programación Cobra <../LIBRO_PROGRAMACION_COBRA.md>`_
+- `Manual de Cobra <../MANUAL_COBRA.md>`_
