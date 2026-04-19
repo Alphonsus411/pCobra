@@ -270,18 +270,18 @@ Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantie
 
 La interfaz recomendada se organiza en cuatro comandos base:
 
-- `cobra run`: ejecutar programas Cobra.
-- `cobra build`: transpilación y artefactos por backend oficial.
-- `cobra test`: ejecución de pruebas del proyecto.
-- `cobra mod`: gestión de módulos y dependencias.
+- `cobra --ui v2 run`: ejecutar programas Cobra.
+- `cobra --ui v2 build`: compilación unificada del archivo fuente (usa configuración por defecto).
+- `cobra --ui v2 test`: ejecución de pruebas del proyecto.
+- `cobra --ui v2 mod`: gestión de módulos y dependencias.
 
 Ejemplos rápidos:
 
 ```bash
-cobra run archivo.co
-cobra build hola.co --backend python
-cobra test
-cobra mod list
+cobra --ui v2 run archivo.co
+cobra --ui v2 build hola.co
+cobra --ui v2 test
+cobra --ui v2 mod list
 ```
 
 Para listar todas las opciones disponibles:
@@ -290,7 +290,7 @@ Para listar todas las opciones disponibles:
 cobra --help
 ```
 
-Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`.
+Backends oficiales públicos: `python`, `javascript`, `rust`. Si necesitas elegir backend explícitamente por flag, usa la ruta legacy `cobra compilar archivo.co --backend <target>`.
 
 Más detalle técnico de capas y contratos internos en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
 
@@ -930,7 +930,7 @@ terminal ejecuta uno de los siguientes comandos según tu *shell*:
 
 ```bash
 # Compilar un archivo a: python, rust, javascript, wasm, go, cpp, java o asm
-cobra build programa.co --backend python
+cobra compilar programa.co --backend python
 
 # Transpilar inverso de Python a JavaScript
 cobra transpilar-inverso script.py --origen=python --destino=javascript
@@ -956,8 +956,8 @@ cobra empaquetar --output dist
 cobra profile programa.co --output salida.prof
 # O mostrar el perfil directamente en pantalla
 cobra profile programa.co
-# Compilar en varios backends en una sola llamada
-cobra build ejemplo.co --targets python,javascript
+# Compilar con la CLI unificada (backend según configuración/política)
+cobra --ui v2 build ejemplo.co
 # Iniciar el iddle gráfico (requiere Flet)
 cobra gui
 ```
@@ -965,14 +965,14 @@ cobra gui
 Si deseas desactivar los colores usa `--no-color`:
 
 ```bash
-cobra --no-color run programa.co
+cobra --ui v2 --no-color run programa.co
 ```
 
 Para aumentar el nivel de detalle de los mensajes añade `-v` o `--verbose`.
 Por defecto el nivel de registro es `INFO`; con `-v` o más se cambia a `DEBUG`:
 
 ```bash
-cobra -v run programa.co
+cobra --ui v2 -v run programa.co
 ```
 
 Los archivos con extensión ``.cobra`` representan paquetes completos, mientras que los scripts individuales se guardan como ``.co``.
@@ -1117,15 +1117,15 @@ la salida con los archivos `.out` correspondientes. Para probarlos
 manualmente:
 
 ```bash
-cobra run tests/data/hola.cobra
-cobra run tests/data/suma.co
+cobra --ui v2 run tests/data/hola.cobra
+cobra --ui v2 run tests/data/suma.co
 ```
 
 También puedes transpilar los ejemplos para ver el código Python generado:
 
 ```bash
-cobra build tests/data/hola.cobra --backend python
-cobra build tests/data/suma.co --backend python
+cobra --ui v2 build tests/data/hola.cobra
+cobra --ui v2 build tests/data/suma.co
 ```
 
 #### Regenerar snapshots de transpilación (`tests/data/expected_examples`)
@@ -1182,22 +1182,22 @@ La interfaz pública mantiene únicamente tres destinos oficiales (`python`,
 `javascript`, `rust`) para `cobra build`:
 
 ````bash
-cobra build programa.co --backend python
-cobra build programa.co --backend javascript
-cobra build programa.co --backend rust
+cobra compilar programa.co --backend python
+cobra compilar programa.co --backend javascript
+cobra compilar programa.co --backend rust
 ````
 
 ### Ejemplos de subcomandos
 
 ````bash
-cobra build programa.co --backend python
-cobra build programa.co --backend javascript
-cobra build programa.co --backend rust
-cobra test
-cobra mod list
+cobra compilar programa.co --backend python
+cobra compilar programa.co --backend javascript
+cobra compilar programa.co --backend rust
+cobra --ui v2 test
+cobra --ui v2 mod list
 echo $?  # 0 al compilar sin problemas
 
-cobra run inexistente.co
+cobra --ui v2 run inexistente.co
 # El archivo 'inexistente.co' no existe
 echo $?  # 1
 ````
