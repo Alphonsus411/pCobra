@@ -115,7 +115,11 @@ class RuntimeManager:
                 route,
                 "la ruta no puede marcarse como containerizada; use ejecución en mismo proceso",
             )
-        if route is BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE and not (sandbox or containerized):
+        if (
+            route is BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE
+            and normalized_command != "build"
+            and not (sandbox or containerized)
+        ):
             self._raise_route_error(
                 route,
                 "la ruta requiere runtime gestionado (sandbox o contenedor) para mantener aislamiento",
