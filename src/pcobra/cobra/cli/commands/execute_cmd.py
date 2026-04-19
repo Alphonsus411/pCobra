@@ -24,11 +24,15 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.core import LexerError
 from pcobra.cobra.core import ParserError
-from pcobra.cobra.cli.execution_pipeline import analizar_codigo, ejecutar_ast
+from pcobra.cobra.cli.execution_pipeline import (
+    analizar_codigo,
+    construir_interprete,
+    ejecutar_codigo_canonico,
+    resolver_validadores_seguridad,
+)
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from pcobra.core.semantic_validators.base import ValidadorBase
 from pcobra.core.resource_limits import limitar_cpu_segundos
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
@@ -381,63 +385,35 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
         """Ejecuta el código normalmente con el intérprete."""
         try:
-            ast = self._analizar_codigo(codigo)
-        except (LexerError, ParserError) as e:
-            mostrar_error(f"Error de análisis: {e}", registrar_log=False)
-            return 1
-
-        interpretador_cls = _obtener_interpretador_cls()
-        validadores_normalizados = extra_validators
-
-        if seguro:
-            try:
-                if extra_validators is None:
-                    validadores_normalizados = None
-                elif isinstance(extra_validators, str):
-                    validadores_normalizados = interpretador_cls._cargar_validadores(extra_validators)
-                elif isinstance(extra_validators, list):
-                    if all(isinstance(ruta, str) for ruta in extra_validators):
-                        acumulado: list[Any] = []
-                        for ruta in extra_validators:
-                            try:
-                                acumulado.extend(interpretador_cls._cargar_validadores(ruta))
-                            except Exception as exc:
-                                raise ValueError(
-                                    _("No se pudieron cargar los validadores extra desde '{path}': {error}").format(
-                                        path=ruta,
-                                        error=exc,
-                                    )
-                                ) from exc
-                        validadores_normalizados = acumulado
-                    else:
-                        validadores_normalizados = extra_validators
-
-                if validadores_normalizados is not None:
-                    if not isinstance(validadores_normalizados, list) or not all(
-                        isinstance(validador, ValidadorBase)
-                        for validador in validadores_normalizados
-                    ):
-                        raise TypeError(
-                            _("Los validadores extra deben ser una lista de instancias de validadores")
-                        )
-
-                validador = construir_cadena(validadores_normalizados)
-                for nodo in ast:
-                    nodo.aceptar(validador)
-            except (TypeError, ValueError) as e:
-                mostrar_error(str(e), registrar_log=False)
-                return 1
-            except PrimitivaPeligrosaError as pe:
-                mostrar_error(str(pe), registrar_log=False)
-                return 1
-
-        try:
-            self._ejecutar_ast(
-                ast,
+            interpretador_cls = _obtener_interpretador_cls()
+            validadores_normalizados = resolver_validadores_seguridad(
+                extra_validators,
+                interpretador_cls=interpretador_cls,
+            )
+            interpreter = construir_interprete(
+                interpretador_cls=interpretador_cls,
                 safe_mode=seguro,
                 extra_validators=validadores_normalizados,
             )
+            ejecutar_codigo_canonico(
+                codigo,
+                interpretador=interpreter,
+                seguro=seguro,
+                extra_validators=validadores_normalizados,
+                interpretador_cls=interpretador_cls,
+                construir_cadena_fn=construir_cadena,
+                analizar_codigo_fn=analizar_codigo,
+            )
             return 0
+        except (LexerError, ParserError) as e:
+            mostrar_error(f"Error de análisis: {e}", registrar_log=False)
+            return 1
+        except (TypeError, ValueError) as e:
+            mostrar_error(str(e), registrar_log=False)
+            return 1
+        except PrimitivaPeligrosaError as pe:
+            mostrar_error(str(pe), registrar_log=False)
+            return 1
         except Exception as e:
             mostrar_error(f"Error ejecutando el script: {e}", registrar_log=False)
             return 1
@@ -446,10 +422,3 @@ class ExecuteCommand(BaseCommand):
         """Pipeline canónico: Lexer(codigo).tokenizar() + Parser(tokens).parsear()."""
 
         return analizar_codigo(codigo)
-
-    def _ejecutar_ast(self, ast: Any, **interpreter_kwargs: Any) -> None:
-        """Ejecuta un AST con el intérprete de Cobra."""
-
-        interpretador_cls = _obtener_interpretador_cls()
-        interpreter = interpretador_cls(**interpreter_kwargs)
-        ejecutar_ast(ast, interpreter)

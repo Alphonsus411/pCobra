@@ -32,7 +32,13 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 
 from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import Parser, ParserError
-from pcobra.cobra.cli.execution_pipeline import analizar_codigo, ejecutar_ast
+from pcobra.cobra.cli.execution_pipeline import (
+    analizar_codigo,
+    construir_interprete,
+    ejecutar_codigo_canonico,
+    resolver_validadores_seguridad,
+    validar_ast_seguro,
+)
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.ast_nodes import NodoBucleMientras, NodoCondicional, NodoPara, NodoSwitch, NodoTryCatch
 from pcobra.core.interpreter import InterpretadorCobra
@@ -42,11 +48,12 @@ from pcobra.core.sandbox import (
     ejecutar_en_sandbox,
     validar_dependencias,
 )
-from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _, format_traceback
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import (
+    color_disabled,
     mostrar_advertencia,
     mostrar_error,
     mostrar_info,
@@ -211,6 +218,8 @@ class InteractiveCommand(BaseCommand):
         # Estado local para tracebacks técnicos en REPL.
         # Fuente canónica: flag global --debug parseado por la CLI principal.
         self._debug_mode = False
+        self._seguro_repl = True
+        self._extra_validators_repl: Any = None
 
     @staticmethod
     def _crear_estado_repl() -> dict[str, Any]:
@@ -332,12 +341,21 @@ class InteractiveCommand(BaseCommand):
         return ast
 
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
-        """Ejecuta un snippet completo con el pipeline canónico Lexer/Parser/AST."""
+        """Ejecuta un snippet usando el pipeline canónico compartido con `run`."""
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
-        ast = self.procesar_ast(codigo, validador)
+        interpretador_cls = type(self.interpretador)
+        resultado_pipeline = ejecutar_codigo_canonico(
+            codigo,
+            interpretador=self.interpretador,
+            seguro=self._seguro_repl,
+            extra_validators=self._extra_validators_repl,
+            interpretador_cls=interpretador_cls,
+            analizar_codigo_fn=analizar_codigo,
+        )
+        ast = resultado_pipeline.ast
+        resultado = resultado_pipeline.resultado
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
-        resultado = ejecutar_ast(ast, self.interpretador)
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         debe_imprimir_resultado = (
             resultado is not None
@@ -414,13 +432,22 @@ class InteractiveCommand(BaseCommand):
         except TypeError:
             mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
             return 1
-        validador = None
-        if seguro:
-            validador = construir_cadena(
-                InterpretadorCobra._cargar_validadores(extra_validators)
-                if isinstance(extra_validators, str)
-                else extra_validators
+        self._seguro_repl = bool(seguro)
+        self._extra_validators_repl = extra_validators
+        try:
+            self._extra_validators_repl = resolver_validadores_seguridad(
+                self._extra_validators_repl,
+                interpretador_cls=InterpretadorCobra,
             )
+        except (TypeError, ValueError, PrimitivaPeligrosaError) as err:
+            mostrar_error(str(err))
+            return 1
+
+        self.interpretador = construir_interprete(
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=self._seguro_repl,
+            extra_validators=self._extra_validators_repl,
+        )
 
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
@@ -440,13 +467,13 @@ class InteractiveCommand(BaseCommand):
                     "'prompt_toolkit' no está disponible; se activará un REPL básico sin autocompletado."
                 )
             )
-            return self._run_repl_basico(args, validador)
+            return self._run_repl_basico(args, validador=None)
         history_path = os.path.expanduser("~/.cobra_history")
         os.makedirs(os.path.dirname(history_path), exist_ok=True)
         try:
             session = PromptSession(
                 lexer=PygmentsLexer(CobraLexer),
-                history=SafeFileHistory(history_path),
+                history=self._construir_historial(history_path),
             )
         except NoConsoleScreenBufferError:
             mostrar_advertencia(
@@ -456,7 +483,7 @@ class InteractiveCommand(BaseCommand):
             )
             session = PromptSession(
                 lexer=PygmentsLexer(CobraLexer),
-                history=SafeFileHistory(history_path),
+                history=self._construir_historial(history_path),
                 output=DummyOutput(),
             )
         if not hasattr(session, "history"):
@@ -469,7 +496,7 @@ class InteractiveCommand(BaseCommand):
 
             self._run_repl_loop(
                 args=args,
-                validador=validador,
+                validador=None,
                 leer_linea=_leer_prompt_toolkit,
                 sandbox=sandbox,
                 sandbox_docker=sandbox_docker,
@@ -477,7 +504,7 @@ class InteractiveCommand(BaseCommand):
 
         return 0
 
-    def _run_repl_basico(self, args: Any, validador: Optional[Any]) -> int:
+    def _run_repl_basico(self, args: Any, validador: Optional[Any] = None) -> int:
         """Ejecuta un bucle REPL simplificado sin ``prompt_toolkit``."""
 
         sandbox = getattr(args, "sandbox", False)
@@ -493,7 +520,7 @@ class InteractiveCommand(BaseCommand):
         with self:
             self._run_repl_loop(
                 args=args,
-                validador=validador,
+                validador=None,
                 leer_linea=input,
                 sandbox=sandbox,
                 sandbox_docker=None,
@@ -709,7 +736,12 @@ class InteractiveCommand(BaseCommand):
 
         if linea == "ast":
             try:
-                ast = self.procesar_ast(linea, validador)
+                ast = self.procesar_ast(linea, None)
+                if self._seguro_repl:
+                    validar_ast_seguro(
+                        ast,
+                        validadores_extra=self._extra_validators_repl,
+                    )
                 mostrar_info(_("AST generado:"))
                 mostrar_info(str(ast))
             except PrimitivaPeligrosaError as err:
@@ -724,8 +756,7 @@ class InteractiveCommand(BaseCommand):
         Args:
             linea: Código a ejecutar
         """
-        tokens = Lexer(linea).tokenizar()
-        Parser(tokens).parsear()
+        analizar_codigo(linea)
 
         script = (
             "from pcobra.cobra.core import Lexer, Parser\n"
@@ -779,7 +810,8 @@ class InteractiveCommand(BaseCommand):
             exc_info=debug_enabled,
         )
 
-        mostrar_error(mensaje_usuario, registrar_log=False)
+        with color_disabled():
+            mostrar_error(mensaje_usuario, registrar_log=False)
         if debug_enabled:
             self.logger.debug(format_traceback(error))
 
@@ -810,3 +842,7 @@ class InteractiveCommand(BaseCommand):
                 _("Error al finalizar REPL: {exc_val}").format(exc_val=exc_val)
             )
         self.logger.debug(_("Finalizando REPL de Cobra"))
+    def _construir_historial(self, history_path: str) -> Any:
+        if FileHistory is not None:
+            return FileHistory(history_path)
+        return _SessionHistoryFallback(history_path)
