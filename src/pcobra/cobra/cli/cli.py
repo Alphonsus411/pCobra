@@ -654,6 +654,8 @@ class CliApplication:
     @staticmethod
     def _resolve_selected_ui_from_argv(argv: list[str]) -> str:
         for index, token in enumerate(argv):
+            if token.startswith("--ui="):
+                return token.split("=", 1)[1].strip().lower()
             if token == "--ui" and index + 1 < len(argv):
                 return argv[index + 1].strip().lower()
         return "v2"
