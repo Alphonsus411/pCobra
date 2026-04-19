@@ -8,6 +8,13 @@ Cobra: Documentación del Lenguaje de Programación
 
 Cobra es un lenguaje de programación experimental completamente en español. Su objetivo es proporcionar un entorno amigable para la simulación, visualización y manipulación de datos complejos, como los holobits, además de facilitar la programación estándar en entornos modernos.
 
+¿Por dónde empezar?
+-------------------
+
+- :doc:`/LIBRO_PROGRAMACION_COBRA` como ruta principal de aprendizaje.
+- :doc:`/MANUAL_COBRA` como referencia técnica canónica.
+- :doc:`/guia_basica` y :doc:`/historico/README` como material secundario e histórico.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contenidos:
@@ -77,3 +84,4 @@ Las guías ``primeros_pasos`` y ``sintaxis`` de esta sección se movieron a ``do
 - :doc:`../historico/sintaxis`
 
 Para el camino principal de aprendizaje usa el Libro y el Manual canónico enlazados en el README del repositorio.
+Para evitar duplicidad de onboarding en esta sección frontend, se mantiene aquí solo esta referencia corta.

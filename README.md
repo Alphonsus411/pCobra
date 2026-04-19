@@ -139,6 +139,7 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 
 ## Tabla de Contenidos
 
+- [¿Por dónde empezar?](#por-dónde-empezar)
 - Descripción del Proyecto
 - Arquitectura del compilador
 - Architecture Overview
@@ -172,8 +173,8 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - **Ruta recomendada de documentación (sin ambigüedad):**
   - [Libro de Programación Cobra — **Principal** (inicio a avanzado)](docs/LIBRO_PROGRAMACION_COBRA.md)
   - [Manual de Cobra (Markdown) — **Referencia técnica canónica**](docs/MANUAL_COBRA.md)
-  - [Manual de Cobra (reStructuredText, autogenerado)](docs/MANUAL_COBRA.rst)
   - [Guía básica — **Histórico** (resumen rápido)](docs/guia_basica.md)
+  - [Contenido histórico complementario](docs/historico/README.md)
 - [Manual de Cobra en PDF](https://alphonsus411.github.io/pCobra/proyectocobra.pdf)
 - [Especificación técnica](docs/especificacion_tecnica.md)
 - [Blog del minilenguaje](docs/blog_minilenguaje.md)
@@ -183,6 +184,12 @@ El objetivo de pCobra es brindar a la comunidad hispanohablante una alternativa 
 - Notebooks de ejemplo y casos reales
 - Probar Cobra en línea
 - [Historial de cambios](CHANGELOG.md)
+
+## ¿Por dónde empezar?
+
+1. [Libro de Programación Cobra (ruta principal de aprendizaje)](docs/LIBRO_PROGRAMACION_COBRA.md).
+2. [Manual de Cobra (referencia técnica canónica)](docs/MANUAL_COBRA.md).
+3. [Guía básica (resumen histórico)](docs/guia_basica.md) y [documentación histórica](docs/historico/README.md) como apoyo secundario.
 
 ## Ejemplos
 

@@ -16,8 +16,14 @@ Este manual define, de forma compacta, los elementos técnicos del lenguaje y la
 - reglas de control de flujo y errores,
 - comportamiento esperado de la herramienta.
 
-Para aprendizaje paso a paso, usa el [Libro principal](LIBRO_PROGRAMACION_COBRA.md).
-Para un resumen breve, usa la [Guía básica](guia_basica.md).
+Para aprendizaje paso a paso, usa el [Libro principal](/docs/LIBRO_PROGRAMACION_COBRA.md).
+Para un resumen breve, usa la [Guía básica](/docs/guia_basica.md).
+
+## ¿Por dónde empezar?
+
+1. [Libro de Programación Cobra (ruta principal de aprendizaje)](/docs/LIBRO_PROGRAMACION_COBRA.md).
+2. Este documento, **MANUAL_COBRA**, como referencia técnica canónica.
+3. [Guía básica](/docs/guia_basica.md) y [contenido histórico](/docs/historico/README.md) como material secundario.
 
 ## 1) CLI pública y contrato
 
@@ -104,7 +110,9 @@ Otros targets/documentos legacy se consideran históricos o de migración intern
 
 ## 10) Referencias relacionadas
 
-- Ruta pedagógica principal: [LIBRO_PROGRAMACION_COBRA.md](LIBRO_PROGRAMACION_COBRA.md)
-- Resumen rápido (histórico): [guia_basica.md](guia_basica.md)
-- Especificación formal: [SPEC_COBRA.md](SPEC_COBRA.md)
-- Contratos técnicos de runtime: [contrato_runtime_holobit.md](contrato_runtime_holobit.md)
+- Ruta pedagógica principal: [Libro de Programación Cobra](/docs/LIBRO_PROGRAMACION_COBRA.md)
+- Referencia técnica canónica: [MANUAL_COBRA.md](/docs/MANUAL_COBRA.md)
+- Resumen rápido (histórico): [guia_basica.md](/docs/guia_basica.md)
+- Índice histórico secundario: [historico/README.md](/docs/historico/README.md)
+- Especificación formal: [SPEC_COBRA.md](/docs/SPEC_COBRA.md)
+- Contratos técnicos de runtime: [contrato_runtime_holobit.md](/docs/contrato_runtime_holobit.md)
