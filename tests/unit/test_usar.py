@@ -170,3 +170,23 @@ def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
     mod = usar_loader.obtener_modulo('json')
 
     assert mod is mock_mod
+
+
+def test_obtener_modulo_no_silencia_colisiones_de_import(monkeypatch):
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'json', 'json')
+
+    from pcobra.cobra.imports import resolver as imports_resolver
+
+    class FakeResolver:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def load_module(self, nombre, fallback_backend='python'):
+            raise imports_resolver.ImportCollisionError(
+                f"Colisión de import para '{nombre}' en namespace_required"
+            )
+
+    monkeypatch.setattr(imports_resolver, 'CobraImportResolver', FakeResolver)
+
+    with pytest.raises(imports_resolver.ImportCollisionError, match="namespace_required"):
+        usar_loader.obtener_modulo('json')

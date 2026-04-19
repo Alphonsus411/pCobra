@@ -167,12 +167,12 @@ def obtener_modulo(nombre: str):
     spec = USAR_WHITELIST[nombre]
 
     base = Path(__file__).resolve()
-    from pcobra.cobra.imports.resolver import CobraImportResolver, ImportResolutionError
+    from pcobra.cobra.imports.resolver import CobraImportResolver, ImportNotFoundError
 
     resolver = CobraImportResolver(project_root=base.parents[3])
     try:
         _, module = resolver.load_module(nombre, fallback_backend="python")
-    except ImportResolutionError:
+    except ImportNotFoundError:
         module = None
     else:
         if module is not None:

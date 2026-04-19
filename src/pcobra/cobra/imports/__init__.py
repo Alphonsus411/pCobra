@@ -3,6 +3,8 @@
 from pcobra.cobra.imports.resolver import (
     CobraImportResolver,
     HybridModuleSpec,
+    ImportCollisionError,
+    ImportNotFoundError,
     ImportResolutionError,
     ResolutionResult,
 )
@@ -10,6 +12,8 @@ from pcobra.cobra.imports.resolver import (
 __all__ = [
     "CobraImportResolver",
     "HybridModuleSpec",
+    "ImportCollisionError",
+    "ImportNotFoundError",
     "ImportResolutionError",
     "ResolutionResult",
 ]
