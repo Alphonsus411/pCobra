@@ -179,6 +179,11 @@ class BuildOrchestrator:
     def _supports_capabilities(self, backend: str, capabilities: tuple[str, ...]) -> bool:
         if not capabilities:
             return True
+        if backend not in OFFICIAL_TARGETS:
+            # Backends internos legacy no publican metadata oficial de capacidades.
+            # Evitamos consultar ``target_metadata`` para no disparar KeyError cuando
+            # llegan por metadata del módulo bajo la flag temporal de compatibilidad.
+            return True
 
         metadata = target_metadata(backend)
         for capability in capabilities:

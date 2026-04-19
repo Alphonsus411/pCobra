@@ -68,3 +68,22 @@ def test_build_orchestrator_rechaza_backend_internal_only_sin_flag(monkeypatch):
 
     assert "Backend no permitido" in error
     assert "go" not in error.split("Permitidos: ", 1)[-1]
+
+
+def test_build_orchestrator_backend_internal_desde_metadata_ignora_filtro_capacidades(monkeypatch):
+    monkeypatch.setattr(
+        "cobra.build.orchestrator.get_toml_map",
+        lambda: {
+            "project": {"required_capabilities": ["sdk_full"]},
+            "modulos": {
+                "demo.co": {
+                    "preferred_target": "go",
+                }
+            },
+        },
+    )
+    monkeypatch.setenv("COBRA_INTERNAL_LEGACY_TARGETS", "1")
+
+    resolution = BuildOrchestrator().resolve_backend(source_file="demo.co")
+
+    assert resolution.backend == "go"
