@@ -1,107 +1,103 @@
  {
   "proyecto": "pCobra",
-  "fase": "validación semántica del lenguaje tras fix inicial de scope en loops",
-  "estado_global": {
-    "cli": "estable",
-    "encoding": "resuelto",
-    "errores": "coherentes (single error surface)",
-    "repl": "funcional",
-    "parser_basico": "operativo",
-    "interprete": "parcialmente correcto"
+  "contexto_general": {
+    "tipo": "lenguaje de programación + CLI",
+    "arquitectura": "frontend (lexer/parser) + runtime + CLI",
+    "estado": "funcional pero con fallos críticos en runtime e imports"
   },
   "problemas_detectados": [
     {
-      "id": "LOOP-SCOPE-1",
-      "descripcion": "variable no visible dentro de 'mientras' en modo script",
-      "estado": "persistente",
-      "impacto": "alto",
-      "detalle": "el entorno de ejecución dentro del loop no accede correctamente a variables externas"
+      "id": "IMPORT-1",
+      "descripcion": "Import incorrecto 'from bindings.contract'",
+      "causa": "uso de import absoluto sin namespace",
+      "fix": "usar 'pcobra.cobra.bindings.*' o imports relativos"
     },
     {
-      "id": "LOOP-SCOPE-2",
-      "descripcion": "mutaciones dentro de 'mientras' no persisten fuera del loop en REPL",
-      "estado": "persistente",
-      "impacto": "alto",
-      "detalle": "asignaciones dentro del loop no afectan al entorno visible tras finalizar el bucle"
+      "id": "IMPORT-2",
+      "descripcion": "ImportError: TRANSPILERS no encontrado",
+      "causa": "símbolo eliminado o movido en compile_cmd",
+      "fix": "mover a módulo central registry y eliminar dependencia entre comandos"
     },
     {
-      "id": "LOOP-EXEC-1",
-      "descripcion": "comportamiento inconsistente entre REPL y ejecución de scripts",
-      "estado": "persistente",
-      "impacto": "alto",
-      "detalle": "REPL no lanza error pero no persiste cambios; script sigue fallando con variable no declarada"
+      "id": "ARCH-CLI-1",
+      "descripcion": "Acoplamiento entre comandos CLI",
+      "causa": "bench_transpilers_cmd depende de compile_cmd",
+      "fix": "desacoplar usando módulo central (transpilers.registry)"
     },
     {
-      "id": "LANG-LIMIT-1",
-      "descripcion": "no soporte de '+='",
-      "estado": "confirmado",
-      "impacto": "bajo",
-      "detalle": "limitación de lenguaje, no bug"
+      "id": "ARCH-IMPORT-1",
+      "descripcion": "Riesgo de imports circulares",
+      "causa": "dependencias cruzadas entre módulos CLI",
+      "fix": "extraer lógica compartida a módulos neutrales"
     },
     {
-      "id": "LANG-LIMIT-2",
-      "descripcion": "funciones no aceptan múltiples argumentos",
-      "estado": "confirmado",
-      "impacto": "bajo",
-      "detalle": "limitación actual del parser"
+      "id": "RUNTIME-1",
+      "descripcion": "Modelo de entorno (scope) incorrecto",
+      "impacto": "variables no visibles o no persistentes en loops",
+      "causa": "copias de entorno en lugar de referencias",
+      "fix": "implementar Environment con parent chaining"
+    },
+    {
+      "id": "RUNTIME-2",
+      "descripcion": "Inconsistencia REPL vs script",
+      "causa": "pipelines de ejecución diferentes",
+      "fix": "unificar ejecución bajo mismo intérprete y entorno"
     }
   ],
-  "hipotesis_actual": {
-    "principal": "problema en la propagación del entorno (scope) dentro de bloques 'mientras'",
-    "secundarias": [
-      "creación de entornos temporales en ejecución de bloques",
-      "uso de copias de entorno en lugar de referencias",
-      "diferencias entre ejecución REPL y script",
-      "helper de ejecución de bloques crea scope aislado"
+  "decisiones_arquitectonicas": [
+    {
+      "decision": "Frontend inmutable",
+      "detalle": "lexer y parser no se modifican"
+    },
+    {
+      "decision": "Separación de responsabilidades",
+      "detalle": "CLI commands no comparten estado directamente"
+    },
+    {
+      "decision": "Registry como fuente de verdad",
+      "detalle": "transpilers y datos compartidos centralizados"
+    },
+    {
+      "decision": "Modelo de entorno explícito",
+      "detalle": "Environment con referencia y encadenamiento"
+    }
+  ],
+  "solucion_propuesta": {
+    "imports": "normalización completa a namespace pcobra.cobra.*",
+    "cli": "desacoplar comandos y eliminar dependencias cruzadas",
+    "registry": "crear pcobra.cobra.transpilers.registry",
+    "runtime": "implementar Environment con get/set/define",
+    "loops": "no crear nuevos scopes en 'mientras'",
+    "ejecucion": "unificar REPL y script"
+  },
+  "prompt_codex": {
+    "objetivo": "refactorización controlada del sistema",
+    "restricciones": [
+      "no modificar lexer",
+      "no modificar parser",
+      "no cambiar gramática",
+      "no romper CLI pública"
+    ],
+    "tareas_clave": [
+      "fix imports",
+      "eliminar circular imports",
+      "desacoplar CLI",
+      "crear registry",
+      "implementar Environment",
+      "unificar ejecución"
     ]
   },
-  "fixes_aplicados": [
-    {
-      "descripcion": "primer intento de corrección del scope en 'mientras'",
-      "resultado": "parcial",
-      "efecto": "eliminó error en REPL pero no resolvió persistencia ni comportamiento en script"
-    }
+  "insights_clave": [
+    "los errores actuales son estructurales, no superficiales",
+    "el problema principal está en el modelo de ejecución",
+    "la CLI tenía acoplamientos ocultos",
+    "el sistema necesitaba un 'source of truth' (registry)",
+    "el bug de loops es consecuencia directa del mal diseño de entorno"
   ],
-  "fixes_pendientes": [
-    {
-      "descripcion": "corregir propagación del entorno en loops",
-      "prioridad": "critica"
-    },
-    {
-      "descripcion": "unificar comportamiento entre REPL y script",
-      "prioridad": "critica"
-    },
-    {
-      "descripcion": "garantizar persistencia de asignaciones en bloques",
-      "prioridad": "critica"
-    }
-  ],
-  "tests_realizados": {
-    "while_simple_repl": {
-      "resultado": "fallo",
-      "salida": "10",
-      "esperado": "12"
-    },
-    "while_script": {
-      "resultado": "fallo",
-      "salida": "Variable no declarada: i"
-    }
-  },
-  "tests_pendientes": [
-    "acumulador (total + i)",
-    "consistencia REPL vs script",
-    "scope en funciones vs loops"
-  ],
-  "estado_codex": {
-    "ultimo_prompt_generado": true,
-    "ultimo_prompt_aplicado": false,
-    "nota": "NO se ha ejecutado aún el último prompt de depuración para Codex"
-  },
-  "nivel_madurez": {
-    "clasificacion": "lenguaje funcional con fallo crítico en modelo de ejecución",
-    "bloqueadores": [
-      "propagación de entorno en loops",
-      "inconsistencia entre modos de ejecución"
-    ]
+  "estado_actual": {
+    "bloqueador_principal": "errores de import y contratos rotos",
+    "siguiente_paso": "aplicar refactor guiado con Codex",
+    "riesgo": "romper frontend si no se respetan restricciones",
+    "oportunidad": "consolidar arquitectura sólida de runtime"
   }
 }
