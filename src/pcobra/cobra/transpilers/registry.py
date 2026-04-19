@@ -5,6 +5,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Final
 
+from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
 from pcobra.cobra.transpilers.target_utils import (
     require_exact_official_targets,
     target_cli_choices,
@@ -24,33 +25,29 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 
 def _validate_registry_contract() -> tuple[str, ...]:
-    """Valida que el registro declare exactamente los 8 targets oficiales."""
+    """Valida que el registro cubra el canon oficial y solo admita legacy conocido."""
     configured_keys = tuple(TRANSPILER_CLASS_PATHS)
+    official_set = set(OFFICIAL_TARGETS)
+    legacy_set = set(LEGACY_INTERNAL_TARGETS)
+
     missing = tuple(target for target in OFFICIAL_TARGETS if target not in configured_keys)
-    extras = tuple(target for target in configured_keys if target not in OFFICIAL_TARGETS)
+    extras = tuple(
+        target
+        for target in configured_keys
+        if target not in official_set and target not in legacy_set
+    )
 
     if missing or extras:
         raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene claves fuera de contrato y debe usar exactamente los 8 targets canónicos. "
+            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe cubrir todos los targets oficiales y solo puede añadir targets legacy/internal conocidos. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
+            f"current={configured_keys}; official={OFFICIAL_TARGETS}; legacy={LEGACY_INTERNAL_TARGETS}"
         )
 
-    if len(configured_keys) != len(OFFICIAL_TARGETS):
-        raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS tiene cardinalidad inválida. "
-            f"len(current)={len(configured_keys)}; len(expected)={len(OFFICIAL_TARGETS)}; "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
-        )
-
-    if configured_keys != OFFICIAL_TARGETS:
-        raise RuntimeError(
-            "[CI CONTRACT] TRANSPILER_CLASS_PATHS debe preservar el orden canónico. "
-            f"current={configured_keys}; expected={OFFICIAL_TARGETS}"
-        )
+    official_keys_in_registry = tuple(target for target in configured_keys if target in official_set)
 
     return require_exact_official_targets(
-        TRANSPILER_CLASS_PATHS,
+        official_keys_in_registry,
         context="pcobra.cobra.transpilers.registry.TRANSPILER_CLASS_PATHS",
     )
 
