@@ -29,7 +29,15 @@ def _node_import_targets(node: ast.AST) -> list[str]:
     if isinstance(node, ast.Import):
         return [alias.name for alias in node.names]
     if isinstance(node, ast.ImportFrom):
-        return [node.module] if node.module else []
+        if not node.module:
+            return []
+
+        targets = [node.module]
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            targets.append(f"{node.module}.{alias.name}")
+        return targets
     return []
 
 
