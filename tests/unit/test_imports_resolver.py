@@ -157,6 +157,26 @@ def test_bridge_python_repropaga_module_not_found_inesperado(monkeypatch):
         resolver.resolve("pkg.sub")
 
 
+def test_bridge_python_modulo_intermedio_faltante_se_trata_como_no_encontrado(monkeypatch):
+    resolver = CobraImportResolver()
+
+    import importlib.util
+
+    original_find_spec = importlib.util.find_spec
+
+    def fake_find_spec(name: str):
+        if name == "json.foo.bar":
+            raise ModuleNotFoundError("No module named 'json.foo'", name="json.foo")
+        return original_find_spec(name)
+
+    monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
+
+    with pytest.raises(ImportResolutionError) as excinfo:
+        resolver.resolve("json.foo.bar")
+
+    assert excinfo.value.code == "IMP-NOT-FOUND-001"
+
+
 def test_ruta_oficial_importar_pandas_via_python_bridge(monkeypatch):
     resolver = CobraImportResolver()
 
