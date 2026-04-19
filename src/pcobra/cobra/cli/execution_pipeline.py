@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -18,6 +19,16 @@ class PipelineResult:
     ast: Any
     resultado: Any
     validadores_extra: Any
+
+
+@dataclass(frozen=True)
+class InterpreterSetup:
+    """Configuración derivada y componentes del intérprete para ejecución."""
+
+    interpretador_cls: Any
+    safe_mode: bool
+    validadores_extra: Any
+    interpretador: Any
 
 
 def analizar_codigo(codigo: str) -> Any:
@@ -93,6 +104,44 @@ def construir_interprete(
     return interpretador_cls(
         safe_mode=safe_mode,
         extra_validators=extra_validators,
+    )
+
+
+def resolver_interpretador_cls(
+    *,
+    module_name: str,
+    default_cls: Any,
+) -> Any:
+    """Obtiene la clase de intérprete desde globals del módulo (amigable a tests)."""
+
+    module = sys.modules.get(module_name)
+    if module is None:
+        return default_cls
+    return getattr(module, "InterpretadorCobra", default_cls)
+
+
+def preparar_interpretador(
+    *,
+    interpretador_cls: Any,
+    safe_mode: bool,
+    extra_validators: Any,
+) -> InterpreterSetup:
+    """Centraliza normalización de validadores, flags de seguridad e intérprete."""
+
+    validadores_normalizados = resolver_validadores_seguridad(
+        extra_validators,
+        interpretador_cls=interpretador_cls,
+    )
+    interpretador = construir_interprete(
+        interpretador_cls=interpretador_cls,
+        safe_mode=safe_mode,
+        extra_validators=validadores_normalizados,
+    )
+    return InterpreterSetup(
+        interpretador_cls=interpretador_cls,
+        safe_mode=bool(safe_mode),
+        validadores_extra=validadores_normalizados,
+        interpretador=interpretador,
     )
 
 

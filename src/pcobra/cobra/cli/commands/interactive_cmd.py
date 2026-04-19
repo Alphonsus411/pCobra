@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import sys
 from typing import Optional, Any
 from types import TracebackType
 
@@ -34,9 +35,9 @@ from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
-    construir_interprete,
     ejecutar_codigo_canonico,
-    resolver_validadores_seguridad,
+    preparar_interpretador,
+    resolver_interpretador_cls,
     validar_ast_seguro,
 )
 from pcobra.cobra.transpilers import module_map
@@ -72,6 +73,8 @@ from pcobra.cobra.cli.target_policies import (
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
+
+sys.modules.setdefault("cli.commands.interactive_cmd", sys.modules[__name__])
 
 
 def _contains_isolated_surrogate(text: str) -> bool:
@@ -344,7 +347,10 @@ class InteractiveCommand(BaseCommand):
         """Ejecuta un snippet usando el pipeline canónico compartido con `run`."""
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
-        interpretador_cls = type(self.interpretador)
+        interpretador_cls = resolver_interpretador_cls(
+            module_name=__name__,
+            default_cls=type(self.interpretador),
+        )
         resultado_pipeline = ejecutar_codigo_canonico(
             codigo,
             interpretador=self.interpretador,
@@ -435,19 +441,21 @@ class InteractiveCommand(BaseCommand):
         self._seguro_repl = bool(seguro)
         self._extra_validators_repl = extra_validators
         try:
-            self._extra_validators_repl = resolver_validadores_seguridad(
-                self._extra_validators_repl,
-                interpretador_cls=InterpretadorCobra,
+            interpreter_setup = preparar_interpretador(
+                interpretador_cls=resolver_interpretador_cls(
+                    module_name=__name__,
+                    default_cls=InterpretadorCobra,
+                ),
+                safe_mode=self._seguro_repl,
+                extra_validators=self._extra_validators_repl,
             )
         except (TypeError, ValueError, PrimitivaPeligrosaError) as err:
             mostrar_error(str(err))
             return 1
 
-        self.interpretador = construir_interprete(
-            interpretador_cls=InterpretadorCobra,
-            safe_mode=self._seguro_repl,
-            extra_validators=self._extra_validators_repl,
-        )
+        self._seguro_repl = interpreter_setup.safe_mode
+        self._extra_validators_repl = interpreter_setup.validadores_extra
+        self.interpretador = interpreter_setup.interpretador
 
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
