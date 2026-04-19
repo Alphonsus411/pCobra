@@ -189,6 +189,20 @@ class CommandRegistry:
                 logging.error(f"Failed to register subparser for {command.name}: {e}")
                 del self.commands[command.name]
 
+        if (
+            ui == "v2"
+            and self.default_command_name == "interactive"
+            and "interactive" not in self.commands
+            and self.interpreter is not None
+        ):
+            try:
+                self.commands["interactive"] = InteractiveCommand(self.interpreter)
+            except Exception as exc:
+                logging.getLogger(__name__).warning(
+                    "No fue posible preparar comando default interactivo en ui=v2: %s",
+                    exc,
+                )
+
         if self.default_command_name not in self.commands:
             fallback = "interactive" if "interactive" in self.commands else next(iter(self.commands), None)
             logging.warning(

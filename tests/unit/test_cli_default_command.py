@@ -28,6 +28,21 @@ def test_default_command_runs_interactive():
     assert result == 0
 
 
+
+
+def test_default_command_stays_interactive_when_ui_v2_is_default():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES", []))
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.DEFAULT_COMMAND", "interactive"))
+        mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
+        app = CliApplication()
+
+        result = app.run([])
+
+    assert result == 0
+    mock_run.assert_called_once()
+
 def test_unknown_command_shows_error_and_help():
     with ExitStack() as stack:
         _patch_cli_env(stack)
