@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.core.semantic_validators.base import ValidadorBase
 
 
@@ -14,8 +14,7 @@ class DummyNodo:
 
 
 def _preparar_parser_lexer(monkeypatch, execute_module):
-    monkeypatch.setattr(execute_module, "Lexer", lambda _codigo: SimpleNamespace(tokenizar=lambda: ["tok"]))
-    monkeypatch.setattr(execute_module, "Parser", lambda _tokens: SimpleNamespace(parsear=lambda: [DummyNodo()]))
+    monkeypatch.setattr(execute_module, "analizar_codigo", lambda _codigo: [DummyNodo()])
 
 
 def _preparar_construir_cadena(monkeypatch, execute_module):
@@ -23,7 +22,7 @@ def _preparar_construir_cadena(monkeypatch, execute_module):
 
 
 def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
-    import cobra.cli.commands.execute_cmd as execute_module
+    import pcobra.cobra.cli.commands.execute_cmd as execute_module
 
     _preparar_parser_lexer(monkeypatch, execute_module)
     _preparar_construir_cadena(monkeypatch, execute_module)
@@ -51,7 +50,7 @@ def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
 
 
 def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
-    import cobra.cli.commands.execute_cmd as execute_module
+    import pcobra.cobra.cli.commands.execute_cmd as execute_module
 
     _preparar_parser_lexer(monkeypatch, execute_module)
     _preparar_construir_cadena(monkeypatch, execute_module)
@@ -84,7 +83,7 @@ def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
 
 
 def test_ejecutar_normal_acepta_lista_vacia_y_none(monkeypatch):
-    import cobra.cli.commands.execute_cmd as execute_module
+    import pcobra.cobra.cli.commands.execute_cmd as execute_module
 
     _preparar_parser_lexer(monkeypatch, execute_module)
     _preparar_construir_cadena(monkeypatch, execute_module)
@@ -111,7 +110,7 @@ def test_ejecutar_normal_acepta_lista_vacia_y_none(monkeypatch):
 
 
 def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
-    import cobra.cli.commands.execute_cmd as execute_module
+    import pcobra.cobra.cli.commands.execute_cmd as execute_module
 
     _preparar_parser_lexer(monkeypatch, execute_module)
     _preparar_construir_cadena(monkeypatch, execute_module)
@@ -133,7 +132,7 @@ def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
             return [DummyValidator()]
 
     monkeypatch.setattr(execute_module, "_obtener_interpretador_cls", lambda: DummyInterp)
-    monkeypatch.setattr(execute_module, "mostrar_error", lambda msg: errores.append(msg))
+    monkeypatch.setattr(execute_module, "mostrar_error", lambda msg, **_kwargs: errores.append(msg))
 
     resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["buena.py", "mala.py"])
 

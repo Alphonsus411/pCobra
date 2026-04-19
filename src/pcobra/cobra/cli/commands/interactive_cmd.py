@@ -32,6 +32,7 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 
 from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import Parser, ParserError
+from pcobra.cobra.cli.execution_pipeline import analizar_codigo, ejecutar_ast
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.ast_nodes import NodoBucleMientras, NodoCondicional, NodoPara, NodoSwitch, NodoTryCatch
 from pcobra.core.interpreter import InterpretadorCobra
@@ -321,10 +322,7 @@ class InteractiveCommand(BaseCommand):
         if depth > self.MAX_AST_DEPTH:
             raise RuntimeError(_("Se excedió la profundidad máxima del AST"))
 
-        tokens = Lexer(linea).tokenizar()
-        self.logger.debug(_("Tokens generados: {tokens}").format(tokens=tokens))
-
-        ast = Parser(tokens).parsear()
+        ast = analizar_codigo(linea)
         self.logger.debug(_("AST generado: {ast}").format(ast=ast))
 
         if validador:
@@ -339,7 +337,7 @@ class InteractiveCommand(BaseCommand):
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
         ast = self.procesar_ast(codigo, validador)
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
-        resultado = self.interpretador.ejecutar_ast(ast)
+        resultado = ejecutar_ast(ast, self.interpretador)
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         debe_imprimir_resultado = (
             resultado is not None
