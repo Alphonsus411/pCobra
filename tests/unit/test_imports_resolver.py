@@ -22,8 +22,10 @@ def test_resuelve_modulo_local_antes_que_stdlib_y_bridge(tmp_path):
     assert result.resolved_name == "datos"
 
 
-def test_prefiere_namespace_explicito_cobra_datos():
-    resolver = CobraImportResolver()
+def test_prefiere_namespace_explicito_cobra_datos_aun_si_existe_local(tmp_path):
+    (tmp_path / "cobra").mkdir()
+    (tmp_path / "cobra" / "datos.co").write_text("usar local")
+    resolver = CobraImportResolver(project_root=tmp_path)
 
     result = resolver.resolve("cobra.datos")
 

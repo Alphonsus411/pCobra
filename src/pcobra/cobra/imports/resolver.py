@@ -150,6 +150,8 @@ class CobraImportResolver:
     def _resolve_local_module(self, name: str) -> ResolutionResult | None:
         if self.project_root is None:
             return None
+        if name.startswith("cobra."):
+            return None
 
         relative = Path(*name.split("."))
         local_patterns = (
