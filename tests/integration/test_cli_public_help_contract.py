@@ -75,6 +75,21 @@ def test_cli_help_public_contract_bloquea_ui_v1_en_perfil_publico():
     assert "migración automática a ui v2 pública" in lower_output
 
 
+def test_cli_help_public_contract_rechaza_ui_invalida():
+    repo_root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--help", "--ui", "foo"],
+        capture_output=True,
+        text=True,
+        cwd=str(repo_root),
+        env=_public_env(),
+    )
+    assert result.returncode == 2
+    lower_error = result.stderr.lower() + result.stdout.lower()
+    assert "invalid choice" in lower_error
+    assert "'foo'" in lower_error
+
+
 def test_cli_help_public_contract_bloquea_flags_legacy_en_arranque():
     repo_root = Path(__file__).resolve().parents[2]
     env = _public_env()

@@ -618,8 +618,14 @@ class CliApplication:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
 
-        self._selected_ui = self._resolve_selected_ui_from_argv(argv)
+        selected_ui = self._resolve_selected_ui_from_argv(argv)
+        self._selected_ui = selected_ui
         if any(token in {"-h", "--help", "--ayuda"} for token in argv):
+            if selected_ui not in {"v1", "v2"}:
+                self.parser.error(
+                    f"argument --ui: invalid choice: '{selected_ui}' "
+                    "(choose from 'v1', 'v2')"
+                )
             configure_plugin_policy(safe_mode=True, allowlist="")
             self._ensure_command_structure()
             if autocomplete_available():
