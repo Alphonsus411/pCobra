@@ -72,3 +72,29 @@ def test_backend_pipeline_resolve_backend_envia_scope_migracion(monkeypatch):
     )
 
     assert captured["route_scope"] == "internal_migration"
+
+
+def test_backend_pipeline_resolve_backend_runtime_fuerza_scope_publico(monkeypatch):
+    captured = {}
+
+    def _fake_resolve_backend(self, *, source_file, preferred_backend, required_capabilities, route_scope):
+        captured["route_scope"] = route_scope
+        return type("R", (), {"backend": "python", "reason": "public"})()
+
+    monkeypatch.setattr(backend_pipeline, "ORCHESTRATOR", type("O", (), {"resolve_backend": _fake_resolve_backend})())
+    monkeypatch.setattr(
+        backend_pipeline.RUNTIME_MANAGER,
+        "resolve_runtime",
+        lambda _backend: (
+            type("C", (), {"language": "python", "route": type("Route", (), {"value": "python_direct_import"})(), "abi_contract": "abi"})(),
+            type("B", (), {"implementation": "python_direct_bridge", "security_profile": "same_process_safe_mode"})(),
+        ),
+    )
+    monkeypatch.setattr(backend_pipeline.RUNTIME_MANAGER, "validate_abi_route", lambda _backend, abi_version=None: abi_version or "1.0")
+
+    backend_pipeline.resolve_backend_runtime(
+        "demo.co",
+        {"preferred_backend": "go", "internal_migration": True},
+    )
+
+    assert captured["route_scope"] == "public"

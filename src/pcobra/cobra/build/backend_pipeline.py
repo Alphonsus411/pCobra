@@ -46,17 +46,24 @@ def _validate_public_route_startup_contract() -> None:
 _validate_public_route_startup_contract()
 
 
-def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
+def resolve_backend(
+    source: str,
+    hints: dict[str, Any] | None = None,
+    *,
+    route_scope: str | None = None,
+) -> BackendResolution:
     """Resuelve backend canónico a partir de un source file y pistas opcionales."""
     context = hints or {}
     preferred_backend = context.get("preferred_backend")
     required_capabilities = tuple(context.get("required_capabilities", ()))
-    route_scope = "internal_migration" if context.get("internal_migration", False) else "public"
+    effective_route_scope = route_scope or (
+        "internal_migration" if context.get("internal_migration", False) else "public"
+    )
     return ORCHESTRATOR.resolve_backend(
         source_file=source,
         preferred_backend=preferred_backend,
         required_capabilities=required_capabilities,
-        route_scope=route_scope,
+        route_scope=effective_route_scope,
     )
 
 
@@ -66,7 +73,9 @@ def resolve_backend_runtime(
 ) -> tuple[BackendResolution, dict[str, str]]:
     """Resuelve backend y metadatos de bridge/runtime para el contrato de bindings."""
     context = hints or {}
-    resolution = resolve_backend(source, context)
+    # La resolución de runtime solo soporta backends públicos del contrato de bindings.
+    # Incluso en flujos de migración interna, esta ruta no debe seleccionar targets legacy.
+    resolution = resolve_backend(source, context, route_scope="public")
     capabilities, bridge = RUNTIME_MANAGER.resolve_runtime(resolution.backend)
     abi_version = RUNTIME_MANAGER.validate_abi_route(
         resolution.backend,
