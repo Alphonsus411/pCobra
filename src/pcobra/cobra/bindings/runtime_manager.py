@@ -72,11 +72,6 @@ class RuntimeManager:
         capabilities, _bridge = self.resolve_runtime(language)
         route = capabilities.route
 
-        if route is BindingRoute.PYTHON_DIRECT_IMPORT and containerized:
-            raise ValueError(
-                "La ruta python_direct_import no puede marcarse como containerizada. "
-                "Use bridge Python directo (mismo proceso) o ruta de runtime gestionado."
-            )
         if route is BindingRoute.JAVASCRIPT_RUNTIME_BRIDGE and not (sandbox or containerized):
             raise ValueError(
                 "La ruta javascript_runtime_bridge requiere runtime gestionado "

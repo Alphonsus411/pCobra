@@ -31,3 +31,9 @@ def test_runtime_manager_valida_abi_por_ruta():
         assert "Versiones soportadas" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Se esperaba error ABI por versión no soportada")
+
+
+def test_runtime_manager_permite_python_en_contenedor():
+    manager = RuntimeManager()
+
+    manager.validate_security_route("python", sandbox=False, containerized=True)
