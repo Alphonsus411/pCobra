@@ -5,8 +5,10 @@ import inspect
 from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
+from typing import Iterator, Mapping
 
 from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.build.backend_pipeline import TRANSPILERS as _OFFICIAL_TRANSPILERS
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     parse_target,
@@ -42,6 +44,32 @@ MAX_LANGUAGES = 10
 
 _PLUGIN_TRANSPILERS: dict[str, type] = {}
 _ENTRYPOINTS_LOADED = False
+
+
+class _TranspilerRegistryView(Mapping[str, type]):
+    """Vista pública compatible para consumidores legacy de ``compile_cmd.TRANSPILERS``."""
+
+    def __getitem__(self, backend: str) -> type:
+        if backend in _PLUGIN_TRANSPILERS:
+            return _PLUGIN_TRANSPILERS[backend]
+        return _OFFICIAL_TRANSPILERS[backend]
+
+    def __iter__(self) -> Iterator[str]:
+        seen: set[str] = set()
+        for backend in _OFFICIAL_TRANSPILERS:
+            seen.add(backend)
+            yield backend
+        for backend in _PLUGIN_TRANSPILERS:
+            if backend in seen:
+                continue
+            yield backend
+
+    def __len__(self) -> int:
+        return len(set(_OFFICIAL_TRANSPILERS) | set(_PLUGIN_TRANSPILERS))
+
+
+# Alias público estable para módulos que importan ``TRANSPILERS`` desde compile_cmd.
+TRANSPILERS: Mapping[str, type] = _TranspilerRegistryView()
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
