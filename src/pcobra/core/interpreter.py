@@ -1562,13 +1562,15 @@ class InterpretadorCobra:
                 return generador()
             else:
                 preparar_contexto()
-                resultado = None
-                for instruccion in funcion["cuerpo"]:
-                    resultado = self.ejecutar_nodo(instruccion)
-                    if resultado is not None:
-                        break
-                limpiar_contexto()
-                return resultado
+                try:
+                    resultado = None
+                    for instruccion in funcion["cuerpo"]:
+                        resultado = self.ejecutar_nodo(instruccion)
+                        if resultado is not None:
+                            break
+                    return resultado
+                finally:
+                    limpiar_contexto()
 
     def ejecutar_clase(self, nodo):
         """Registra una clase definida por el usuario."""

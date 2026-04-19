@@ -84,6 +84,26 @@ def test_preservacion_de_variables_globales():
     assert inter.variables["a"] == 5
 
 
+def test_regresion_llamada_funcion_no_yield_limpia_contexto_una_sola_vez():
+    """Evita doble limpieza de contexto y underflow de pilas internas."""
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("global_previa", NodoValor(99)))
+    contextos_iniciales = len(inter.contextos)
+    mem_contextos_iniciales = len(inter.mem_contextos)
+
+    funcion = NodoFuncion(
+        "sin_yield",
+        [],
+        [NodoAsignacion("local_tmp", NodoValor(1))],
+    )
+    inter.ejecutar_funcion(funcion)
+    inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("sin_yield", []))
+
+    assert inter.obtener_variable("global_previa") == 99
+    assert len(inter.contextos) == contextos_iniciales
+    assert len(inter.mem_contextos) == mem_contextos_iniciales
+
+
 def test_imprimir_cadena_literal():
     inter = InterpretadorCobra()
     nodo = NodoImprimir(NodoValor("Hola"))
