@@ -56,3 +56,18 @@ def test_cli_help_public_contract_snapshot_no_expone_legacy_aun_con_ui_v1():
     assert "\n  legacy " not in lower_help
     assert "\n  compilar " not in lower_help
     assert "\n  ejecutar " not in lower_help
+
+
+def test_cli_ui_v1_preserva_ruteo_comandos_legacy_publicos():
+    repo_root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--ui", "v1", "interactive", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(repo_root),
+        env=_public_env(),
+    )
+    assert result.returncode == 0
+    lower_help = result.stdout.lower()
+    assert "usage:" in lower_help
+    assert "interactive" in lower_help
