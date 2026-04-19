@@ -55,3 +55,57 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
     )
     assert status == 0
     assert "resolution" in called
+
+
+def test_run_v2_no_resuelve_backend_antes_de_delegar(monkeypatch):
+    command = RunCommandV2()
+
+    import cobra.cli.commands_v2.run_cmd as run_cmd_module
+
+    assert not hasattr(run_cmd_module, "backend_pipeline")
+
+    received = {}
+
+    def _legacy_run(args):
+        received["args"] = args
+        return 0
+
+    monkeypatch.setattr(command._legacy, "run", _legacy_run)
+
+    status = command.run(
+        argparse.Namespace(
+            file="programa.co",
+            debug=True,
+            sandbox=False,
+            container="python",
+            formatear=False,
+            modo="mixto",
+        )
+    )
+
+    assert status == 0
+    assert received["args"].archivo == "programa.co"
+    assert not hasattr(received["args"], "backend_reason")
+
+
+def test_test_v2_no_resuelve_backend_antes_de_delegar(monkeypatch):
+    command = TestCommandV2()
+
+    import cobra.cli.commands_v2.test_cmd as test_cmd_module
+
+    assert not hasattr(test_cmd_module, "backend_pipeline")
+
+    received = {}
+
+    def _legacy_run(args):
+        received["args"] = args
+        return 0
+
+    monkeypatch.setattr(command._legacy, "run", _legacy_run)
+
+    status = command.run(argparse.Namespace(file="programa.co", langs=["python"], modo="mixto"))
+
+    assert status == 0
+    assert received["args"].archivo == "programa.co"
+    assert received["args"].lenguajes == ["python"]
+    assert not hasattr(received["args"], "backend_reason")
