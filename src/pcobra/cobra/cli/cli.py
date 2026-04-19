@@ -836,6 +836,11 @@ class CliApplication:
 
 def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point for the CLI."""
+    # Reaplica bootstrap de encoding para invocaciones legacy que delegan
+    # directamente en este main (p. ej. ``python -m cobra.cli.cli``).
+    from pcobra.cli import configure_encoding
+
+    configure_encoding()
     application = CliApplication()
     return application.run(argv)
 
