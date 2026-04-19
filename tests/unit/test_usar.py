@@ -170,3 +170,24 @@ def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
     mod = usar_loader.obtener_modulo('json')
 
     assert mod is mock_mod
+
+
+def test_obtener_modulo_hace_fallback_si_resolver_lanza_module_not_found(monkeypatch):
+    mock_mod = ModuleType('json')
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'json', 'json')
+
+    class FakeResolver:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def load_module(self, *_args, **_kwargs):
+            raise ModuleNotFoundError("pcobra.standard_library.core")
+
+    from pcobra.cobra.imports import resolver as imports_resolver
+
+    monkeypatch.setattr(imports_resolver, 'CobraImportResolver', FakeResolver)
+    monkeypatch.setattr(usar_loader.importlib, 'import_module', lambda name: mock_mod)
+
+    mod = usar_loader.obtener_modulo('json')
+
+    assert mod is mock_mod

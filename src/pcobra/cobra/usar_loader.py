@@ -172,7 +172,7 @@ def obtener_modulo(nombre: str):
     resolver = CobraImportResolver(project_root=base.parents[3])
     try:
         _, module = resolver.load_module(nombre, fallback_backend="python")
-    except ImportResolutionError:
+    except (ImportResolutionError, ModuleNotFoundError):
         module = None
     else:
         if module is not None:
