@@ -11,7 +11,7 @@ SYSTEM_CONTRACT = ContractDescriptor(
         "cobra.system.ejecutar",
         "cobra.system.obtener_env",
     ),
-    primary_backend="python+rust",
+    primary_backend="python",
     allowed_fallback=("rust", "javascript"),
     runtime_mapping=RuntimeMapping(
         standard_library=("src/pcobra/standard_library/archivo.py",),

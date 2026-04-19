@@ -18,7 +18,7 @@ PRIMARY_BACKEND_POLICY: Final[dict[str, tuple[str, ...]]] = {
     "cobra.core": ("python",),
     "cobra.datos": ("python",),
     "cobra.web": ("javascript",),
-    "cobra.system": ("python", "rust"),
+    "cobra.system": ("python",),
 }
 
 
