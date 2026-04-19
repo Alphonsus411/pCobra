@@ -82,18 +82,18 @@ def _validate_public_api(contract: ContractDescriptor) -> None:
 def _validate_coverage(contract: ContractDescriptor) -> None:
     expected_backends = {contract.primary_backend, *contract.allowed_fallback}
     declared_functions = set(contract.public_api)
-
-    if len(contract.coverage) != len(contract.public_api):
-        raise ContractValidationError(
-            f"{contract.module}: cobertura incompleta. "
-            f"public_api={len(contract.public_api)} coverage={len(contract.coverage)}"
-        )
+    covered_functions: set[str] = set()
 
     for function_coverage in contract.coverage:
         if function_coverage.function not in declared_functions:
             raise ContractValidationError(
                 f"{contract.module}: cobertura para función no declarada: {function_coverage.function}"
             )
+        if function_coverage.function in covered_functions:
+            raise ContractValidationError(
+                f"{contract.module}: cobertura duplicada para función: {function_coverage.function}"
+            )
+        covered_functions.add(function_coverage.function)
 
         coverage_backends = set(function_coverage.backend_levels)
         if coverage_backends != expected_backends:
@@ -108,6 +108,13 @@ def _validate_coverage(contract: ContractDescriptor) -> None:
                     f"{contract.module}.{function_coverage.function}.{backend}: "
                     f"nivel inválido '{level}', use full|partial"
                 )
+
+    missing_functions = declared_functions - covered_functions
+    if missing_functions:
+        raise ContractValidationError(
+            f"{contract.module}: cobertura incompleta para funciones declaradas: "
+            f"{sorted(missing_functions)}"
+        )
 
 
 def validate_contract_descriptor(contract: ContractDescriptor) -> None:
