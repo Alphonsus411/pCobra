@@ -139,6 +139,24 @@ def test_bridge_python_directo():
     assert result.import_path == "json"
 
 
+def test_bridge_python_repropaga_module_not_found_inesperado(monkeypatch):
+    resolver = CobraImportResolver()
+
+    import importlib.util
+
+    original_find_spec = importlib.util.find_spec
+
+    def fake_find_spec(name: str):
+        if name == "pkg.sub":
+            raise ModuleNotFoundError("No module named 'missing_dep'", name="missing_dep")
+        return original_find_spec(name)
+
+    monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
+
+    with pytest.raises(ModuleNotFoundError, match="missing_dep"):
+        resolver.resolve("pkg.sub")
+
+
 def test_ruta_oficial_importar_pandas_via_python_bridge(monkeypatch):
     resolver = CobraImportResolver()
 
