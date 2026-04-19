@@ -21,8 +21,9 @@ from pcobra.cobra.cli.target_policies import (
     parse_runtime_target,
     resolve_docker_backend,
 )
-from pcobra.cobra.core import Lexer, LexerError
-from pcobra.cobra.core import Parser, ParserError
+from pcobra.cobra.core import LexerError
+from pcobra.cobra.core import ParserError
+from pcobra.cobra.cli.execution_pipeline import analizar_codigo, ejecutar_ast
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
@@ -443,14 +444,14 @@ class ExecuteCommand(BaseCommand):
     def _analizar_codigo(self, codigo: str) -> Any:
         """Pipeline canónico: Lexer(codigo).tokenizar() + Parser(tokens).parsear()."""
 
-        tokens = Lexer(codigo).tokenizar()
-        return Parser(tokens).parsear()
+        return analizar_codigo(codigo)
 
     def _ejecutar_ast(self, ast: Any, **interpreter_kwargs: Any) -> None:
         """Ejecuta un AST con el intérprete de Cobra."""
 
         interpretador_cls = _obtener_interpretador_cls()
-        interpretador_cls(**interpreter_kwargs).ejecutar_ast(ast)
+        interpreter = interpretador_cls(**interpreter_kwargs)
+        ejecutar_ast(ast, interpreter)
 
     @staticmethod
     def _formatear_codigo(archivo: str) -> bool:
