@@ -551,6 +551,8 @@ class CliApplication:
         if debug_activo:
             logging.exception("Error in execution")
             logging.getLogger(__name__).debug(format_traceback(exc, language))
+        else:
+            logging.error("Error in execution: %s", mensaje)
         return 1
 
     @staticmethod
