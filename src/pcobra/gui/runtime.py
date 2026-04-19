@@ -13,11 +13,7 @@ from typing import Any
 def require_gui_dependencies() -> dict[str, Any]:
     """Importa dependencias de núcleo/transpiladores de forma diferida."""
     try:
-        from pcobra.cobra.build import backend_pipeline
-        from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
-        from pcobra.cobra.transpilers.target_utils import target_cli_choices
-        from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
-        from pcobra.core.interpreter import InterpretadorCobra
+        from pcobra.cobra.gui import deps as gui_deps
     except (ImportError, ModuleNotFoundError) as exc:  # pragma: no cover - validado desde CLI
         missing_target, action = _parse_missing_target(exc)
         detail = str(exc) or repr(exc)
@@ -29,14 +25,14 @@ def require_gui_dependencies() -> dict[str, Any]:
         ) from exc
 
     return {
-        "Lexer": Lexer,
-        "LexerError": LexerError,
-        "Parser": Parser,
-        "ParserError": ParserError,
-        "target_cli_choices": target_cli_choices,
-        "OFFICIAL_TARGETS": OFFICIAL_TARGETS,
-        "InterpretadorCobra": InterpretadorCobra,
-        "TRANSPILERS": backend_pipeline.TRANSPILERS,
+        "Lexer": gui_deps.Lexer,
+        "LexerError": gui_deps.LexerError,
+        "Parser": gui_deps.Parser,
+        "ParserError": gui_deps.ParserError,
+        "target_cli_choices": gui_deps.target_cli_choices,
+        "OFFICIAL_TARGETS": gui_deps.OFFICIAL_TARGETS,
+        "InterpretadorCobra": gui_deps.InterpretadorCobra,
+        "TRANSPILERS": gui_deps.get_transpilers(),
     }
 
 
