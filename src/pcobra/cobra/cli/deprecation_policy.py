@@ -102,7 +102,7 @@ def enforce_advanced_profile_policy(*, command: str, args: Namespace | object | 
     )
     if phase < 2:
         if profile != "avanzado":
-            mostrar_advertencia(
+            logging.getLogger(__name__).warning(
                 _("El comando '{command}' expone capacidades avanzadas de backend; use --perfil avanzado.").format(
                     command=command
                 )
