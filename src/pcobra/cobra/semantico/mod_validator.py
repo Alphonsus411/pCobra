@@ -274,7 +274,7 @@ def validar_mod(path: str | None = None) -> None:
         target: set() for target in OFFICIAL_TARGETS
     }
     required_targets_v1 = _required_targets_from_policy(OFFICIAL_TARGETS, DEFAULT_REQUIRED_TARGETS)
-    required_targets_v2 = _required_targets_from_policy(PUBLIC_BACKENDS, DEFAULT_REQUIRED_TARGETS_V2)
+    required_targets_v2: tuple[str, ...] | None = None
     warned_v1 = False
 
     for modulo, info in datos.items():
@@ -326,7 +326,15 @@ def validar_mod(path: str | None = None) -> None:
             except (TypeError, ValueError):
                 errores.append(f"Formato de versión inválido para {modulo}")
 
-        required_targets = required_targets_v2 if schema_name == "v2" else required_targets_v1
+        if schema_name == "v2":
+            if required_targets_v2 is None:
+                required_targets_v2 = _required_targets_from_policy(
+                    PUBLIC_BACKENDS,
+                    DEFAULT_REQUIRED_TARGETS_V2,
+                )
+            required_targets = required_targets_v2
+        else:
+            required_targets = required_targets_v1
         missing_required = [
             target for target in required_targets if not info_normalized.get(target)
         ]
