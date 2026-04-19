@@ -46,6 +46,7 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
 from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.cli.transpiler_registry import cli_transpilers, cli_transpiler_targets
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
@@ -136,7 +137,8 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
     if language in reverse_module.REGISTERED_REVERSE_TRANSPILERS
 }
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
-DESTINO_CHOICES = sorted(backend_pipeline.TRANSPILERS.keys())
+TRANSPILERS = cli_transpilers()
+DESTINO_CHOICES = cli_transpiler_targets()
 TARGETS_HELP = build_target_help_by_tier(
     tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 )
@@ -327,7 +329,7 @@ class TranspilarInversoCommand(BaseCommand):
             raise UnsupportedLanguageError(
                 f"No hay parser reverse disponible para el lenguaje de origen '{origen}'"
             )
-        if destino not in backend_pipeline.TRANSPILERS:
+        if destino not in TRANSPILERS:
             raise UnsupportedLanguageError(
                 f"No hay transpilador oficial disponible para el lenguaje de destino '{destino}'"
             )
@@ -385,7 +387,7 @@ class TranspilarInversoCommand(BaseCommand):
 
             # Validar transpiladores
             reverse_cls = REVERSE_TRANSPILERS.get(origen)
-            transp_cls = backend_pipeline.TRANSPILERS.get(destino)
+            transp_cls = TRANSPILERS.get(destino)
 
             logger.debug(
                 f"Usando transpilador {reverse_cls.__name__} para origen {origen}"

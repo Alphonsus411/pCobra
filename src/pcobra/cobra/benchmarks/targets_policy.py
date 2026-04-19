@@ -19,6 +19,7 @@ from pcobra.cobra.cli.target_policies import (
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
 )
+from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_cli_choices
 
 BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
@@ -154,7 +155,10 @@ def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -
 
 def benchmark_backends(backends: Mapping[str, object] | None = None) -> tuple[str, ...]:
     """Devuelve backends benchmark públicos en orden canónico."""
-    available_targets = PUBLIC_BACKENDS if backends is None else tuple(backends.keys())
+    canonical = official_transpiler_targets()
+    available_targets = canonical if backends is None else tuple(
+        target for target in canonical if target in backends
+    )
     return target_cli_choices(available_targets)
 
 
@@ -170,7 +174,10 @@ def executable_benchmark_backends(
     Los targets `wasm` y `asm` permanecen fuera del benchmark ejecutable
     automatizado en esta capa.
     """
-    available_targets = PUBLIC_BACKENDS if backends is None else tuple(backends.keys())
+    canonical = official_transpiler_targets()
+    available_targets = canonical if backends is None else tuple(
+        target for target in canonical if target in backends
+    )
     allowed = list(OFFICIAL_RUNTIME_TARGETS)
     if include_experimental:
         allowed.extend(BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS)
