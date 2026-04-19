@@ -12,6 +12,7 @@ class BuildCommandV2(BaseCommand):
 
     name = "build"
     capability = "codegen"
+    requires_sqlite_key: bool = True
 
     def __init__(self) -> None:
         super().__init__()
@@ -29,10 +30,11 @@ class BuildCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
+        target = getattr(args, "target", None) or "python"
         legacy_args = Namespace(
             archivo=args.file,
-            tipo=getattr(args, "target", None),
-            backend=getattr(args, "target", None),
+            tipo=target,
+            backend=target,
             tipos=getattr(args, "targets", None),
             modo=getattr(args, "modo", "mixto"),
         )
