@@ -653,11 +653,31 @@ class CliApplication:
 
     @staticmethod
     def _first_non_option_token_index(argv: list[str]) -> Optional[int]:
-        for index, token in enumerate(argv):
+        options_with_value = {
+            "--modo",
+            "--ui",
+            "--lang",
+            "--extra-validators",
+            "--plugins-allowlist",
+        }
+
+        index = 0
+        while index < len(argv):
+            token = argv[index]
             if token == "--":
                 return index + 1 if index + 1 < len(argv) else None
+
             if not token.startswith("-"):
                 return index
+
+            if token.startswith("--"):
+                option_name = token.split("=", 1)[0]
+                if option_name in options_with_value and "=" not in token:
+                    index += 2
+                    continue
+
+            index += 1
+
         return None
 
     def _apply_public_cli_policy(self, argv: list[str]) -> list[str]:
