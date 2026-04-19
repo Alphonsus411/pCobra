@@ -20,7 +20,6 @@ if str(ROOT) not in sys.path:
 
 from pcobra.cobra.cli.commands.benchmarks_cmd import BACKENDS as BENCHMARKS_BACKENDS
 from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
-from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
 from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
@@ -35,6 +34,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
 )
 from pcobra.cobra.transpilers.registry import (
     TRANSPILER_CLASS_PATHS,
+    get_transpilers,
     official_transpiler_module_filenames,
     official_transpiler_registry_literal,
     official_transpiler_targets,
@@ -371,15 +371,11 @@ def validate_registry_tables() -> list[str]:
             "src/pcobra/cobra/transpilers/registry.py: official_transpiler_targets() no coincide con OFFICIAL_TARGETS -> "
             f"registry={official_transpiler_targets()}, official={expected}"
         )
-    if tuple(TRANSPILERS) != expected:
+    registry_transpilers = get_transpilers()
+    if tuple(registry_transpilers) != expected:
         errors.append(
-            "src/pcobra/cobra/cli/commands/compile_cmd.py: TRANSPILERS no coincide con OFFICIAL_TARGETS -> "
-            f"transpilers={tuple(TRANSPILERS)}, official={expected}"
-        )
-    if tuple(LANG_CHOICES) != expected:
-        errors.append(
-            "src/pcobra/cobra/cli/commands/compile_cmd.py: LANG_CHOICES no coincide con OFFICIAL_TARGETS -> "
-            f"choices={tuple(LANG_CHOICES)}, official={expected}"
+            "src/pcobra/cobra/transpilers/registry.py: get_transpilers() no coincide con OFFICIAL_TARGETS -> "
+            f"transpilers={tuple(registry_transpilers)}, official={expected}"
         )
     if tuple(BENCHMARKS_BACKENDS) != expected:
         errors.append(

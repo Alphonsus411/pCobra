@@ -4,7 +4,6 @@ import pytest
 
 from pcobra.cobra.cli.commands.bench_cmd import BACKENDS as BENCH_BACKENDS
 from pcobra.cobra.cli.commands.benchmarks_cmd import BACKENDS as BENCHMARKS_BACKENDS
-from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, TRANSPILERS
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import EXTENSIONES_POR_LENGUAJE
 from pcobra.cobra.cli.target_policies import (
     ADVANCED_HOLOBIT_RUNTIME_TARGETS,
@@ -24,6 +23,7 @@ from pcobra.cobra.transpilers.feature_inspector import (
 )
 from pcobra.cobra.transpilers.registry import (
     TRANSPILER_CLASS_PATHS,
+    get_transpilers,
     official_transpiler_targets,
 )
 import pcobra.cobra.transpilers.registry as transpiler_registry
@@ -71,7 +71,8 @@ EXPECTED_CANONICAL_TARGETS = (
 
 def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     oficiales = tuple(OFFICIAL_TARGETS)
-    particion = assert_official_targets_partition(transpilers=TRANSPILERS)
+    registry_transpilers = get_transpilers()
+    particion = assert_official_targets_partition(transpilers=registry_transpilers)
 
     assert len(oficiales) == 8
     assert len(set(oficiales)) == 8
@@ -85,8 +86,7 @@ def test_fuente_canonica_y_registros_comparten_los_8_backends_oficiales():
     assert oficiales == TIER1_TARGETS + TIER2_TARGETS
     assert tuple(official_transpiler_targets()) == oficiales
     assert tuple(TRANSPILER_CLASS_PATHS) == oficiales
-    assert tuple(TRANSPILERS) == oficiales
-    assert tuple(LANG_CHOICES) == oficiales
+    assert tuple(registry_transpilers) == oficiales
     assert tuple(BENCHMARKS_BACKENDS) == oficiales
     assert set(BENCH_BACKENDS).issubset(oficiales)
     assert set(STANDARD_IMPORTS).issubset(oficiales)
@@ -242,7 +242,7 @@ def test_registry_falla_explicito_si_aparece_novena_clave(monkeypatch):
     monkeypatch.setattr(transpiler_registry, "TRANSPILER_CLASS_PATHS", registry_with_extra)
 
     with pytest.raises(RuntimeError, match="claves fuera de contrato"):
-        transpiler_registry._validate_registry_contract()
+        transpiler_registry._validate_complete_registry_contract()
 
 
 def test_summary_publico_no_promociona_sdk_full_fuera_de_python():
