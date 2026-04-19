@@ -13,7 +13,7 @@ class DummyTranspiler:
 
 
 def test_register_transpiler_backend_rechaza_backend_no_oficial(monkeypatch):
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
 
     with pytest.raises(
         ValueError, match=r"Target no soportado: 'backend_no_soportado'"
@@ -24,12 +24,12 @@ def test_register_transpiler_backend_rechaza_backend_no_oficial(monkeypatch):
 
 
 def test_register_transpiler_backend_acepta_backend_canonico(monkeypatch):
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
 
     canonical = compile_cmd.register_transpiler_backend("javascript", DummyTranspiler, context="tests")
 
     assert canonical == "javascript"
-    assert compile_cmd.TRANSPILERS["javascript"] is DummyTranspiler
+    assert compile_cmd._PLUGIN_TRANSPILERS["javascript"] is DummyTranspiler
 
 
 def test_validate_entrypoint_backend_rechaza_backend_fuera_del_set_oficial():
@@ -46,7 +46,7 @@ def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeyp
         value="tests.unit.test_compile_backend_registration:DummyTranspiler",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -55,7 +55,7 @@ def test_load_entrypoint_transpilers_omite_backend_fuera_del_set_oficial(monkeyp
 
     compile_cmd.load_entrypoint_transpilers()
 
-    assert compile_cmd.TRANSPILERS == {}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {}
     assert "rechazado por política/contrato" in caplog.text
     assert "Target no soportado: 'fantasy'" in caplog.text
 
@@ -66,7 +66,7 @@ def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, capl
         value="tests.unit.test_compile_backend_registration:DummyTranspiler",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -75,7 +75,7 @@ def test_load_entrypoint_transpilers_rechaza_alias_no_canonico(monkeypatch, capl
 
     compile_cmd.load_entrypoint_transpilers()
 
-    assert compile_cmd.TRANSPILERS == {}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {}
     assert "rechazado por política/contrato" in caplog.text
     assert "c++" in caplog.text
 
@@ -87,7 +87,7 @@ def test_load_entrypoint_transpilers_rechaza_backends_legacy_o_ambiguos(monkeypa
         value="tests.unit.test_compile_backend_registration:DummyTranspiler",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -96,7 +96,7 @@ def test_load_entrypoint_transpilers_rechaza_backends_legacy_o_ambiguos(monkeypa
 
     compile_cmd.load_entrypoint_transpilers()
 
-    assert compile_cmd.TRANSPILERS == {}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {}
     assert "rechazado por política/contrato" in caplog.text
     assert "legacy/ambiguo" in caplog.text
 
@@ -107,7 +107,7 @@ def test_load_entrypoint_transpilers_registra_backend_canonico(monkeypatch):
         value="fake.module:DummyExternalTranspiler",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -121,7 +121,7 @@ def test_load_entrypoint_transpilers_registra_backend_canonico(monkeypatch):
 
     compile_cmd.load_entrypoint_transpilers()
 
-    assert compile_cmd.TRANSPILERS == {"python": DummyTranspiler}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {"python": DummyTranspiler}
 
 
 def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(monkeypatch, caplog):
@@ -130,7 +130,7 @@ def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(m
         value="fake.module:DummyExternalTranspiler",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {"python": object})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {"python": object})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -144,7 +144,7 @@ def test_load_entrypoint_transpilers_no_sobrescribe_backend_canonico_existente(m
 
     compile_cmd.load_entrypoint_transpilers()
 
-    assert compile_cmd.TRANSPILERS == {"python": object}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {"python": object}
     assert "ya existe en el registro canónico" in caplog.text
 
 
@@ -157,7 +157,7 @@ def test_load_entrypoint_transpilers_rechaza_clase_sin_generate_code(monkeypatch
         value="fake.module:InvalidNoGenerateCode",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -172,7 +172,7 @@ def test_load_entrypoint_transpilers_rechaza_clase_sin_generate_code(monkeypatch
     loaded, rejected, skipped = compile_cmd.load_entrypoint_transpilers()
 
     assert (loaded, rejected, skipped) == (0, 1, 0)
-    assert compile_cmd.TRANSPILERS == {}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {}
     assert "python" in caplog.text
     assert "no implementa el método callable 'generate_code'" in caplog.text
 
@@ -184,7 +184,7 @@ def test_load_entrypoint_transpilers_rechaza_objeto_que_no_es_clase(monkeypatch,
         value="fake.module:not_a_class",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -199,7 +199,7 @@ def test_load_entrypoint_transpilers_rechaza_objeto_que_no_es_clase(monkeypatch,
     loaded, rejected, skipped = compile_cmd.load_entrypoint_transpilers()
 
     assert (loaded, rejected, skipped) == (0, 1, 0)
-    assert compile_cmd.TRANSPILERS == {}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {}
     assert "python" in caplog.text
     assert "se esperaba una clase" in caplog.text
 
@@ -217,7 +217,7 @@ def test_load_entrypoint_transpilers_rechaza_constructor_con_argumentos_obligato
         value="fake.module:InvalidConstructorTranspiler",
         group="cobra.transpilers",
     )
-    monkeypatch.setattr(compile_cmd, "TRANSPILERS", {})
+    monkeypatch.setattr(compile_cmd, "_PLUGIN_TRANSPILERS", {})
     monkeypatch.setattr(
         compile_cmd,
         "_iter_transpiler_entry_points",
@@ -234,7 +234,7 @@ def test_load_entrypoint_transpilers_rechaza_constructor_con_argumentos_obligato
     loaded, rejected, skipped = compile_cmd.load_entrypoint_transpilers()
 
     assert (loaded, rejected, skipped) == (0, 1, 0)
-    assert compile_cmd.TRANSPILERS == {}
+    assert compile_cmd._PLUGIN_TRANSPILERS == {}
     assert "python" in caplog.text
     assert "constructor sin argumentos" in caplog.text
 

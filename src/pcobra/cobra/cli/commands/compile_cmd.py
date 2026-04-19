@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import inspect
 from argparse import ArgumentTypeError
+from types import MappingProxyType
 from importlib import import_module
 from importlib.metadata import entry_points
 
@@ -33,6 +34,10 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
 from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.transpilers.registry import (
+    get_transpilers,
+    official_transpiler_targets,
+)
 
 # Constantes de configuración
 MAX_PROCESSES = 4
@@ -42,6 +47,11 @@ MAX_LANGUAGES = 10
 
 _PLUGIN_TRANSPILERS: dict[str, type] = {}
 _ENTRYPOINTS_LOADED = False
+
+LANG_CHOICES = official_transpiler_targets()
+# DEPRECATED (retirar cuando no existan consumidores legacy de compile_cmd.TRANSPILERS):
+# shim de solo lectura que delega al registro canónico en transpilers.registry.
+TRANSPILERS = MappingProxyType(get_transpilers())
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -305,7 +315,7 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        lang_choices = list(OFFICIAL_TRANSPILATION_TARGETS) + list(enabled_internal_legacy_targets())
+        lang_choices = list(LANG_CHOICES) + list(enabled_internal_legacy_targets())
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
