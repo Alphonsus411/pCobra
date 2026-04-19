@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from pcobra.cobra.cli.internal_compat.legacy_targets import enabled_internal_legacy_targets
 from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS, target_metadata
 from pcobra.cobra.transpilers.module_map import get_toml_map
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
@@ -94,9 +95,10 @@ class BuildOrchestrator:
         if not isinstance(value, str) or not value.strip():
             return None
         canonical = normalize_target_name(value)
-        if canonical not in OFFICIAL_TARGETS:
+        allowed_targets = OFFICIAL_TARGETS + enabled_internal_legacy_targets()
+        if canonical not in allowed_targets:
             raise ValueError(
-                f"Backend no permitido: {value}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
+                f"Backend no permitido: {value}. Permitidos: {', '.join(allowed_targets)}"
             )
         return canonical
 
