@@ -1073,8 +1073,7 @@ class InterpretadorCobra:
                     f"se recibió: {type(nodo.objetivo).__name__}"
                 )
             nombre = nodo.objetivo.nombre
-            if nombre in self.variables:
-                del self.variables[nombre]
+            self.contextos[-1].values.pop(nombre, None)
         elif isinstance(nodo, NodoGlobal):
             pass  # sin efecto en este intérprete simplificado
         elif isinstance(nodo, NodoNoLocal):
@@ -1465,7 +1464,11 @@ class InterpretadorCobra:
                     return resultado
         except ExcepcionCobra as exc:
             if nodo.nombre_excepcion:
-                self.variables[nodo.nombre_excepcion] = exc.valor
+                contexto_actual = self.contextos[-1]
+                if contexto_actual.contains(nodo.nombre_excepcion):
+                    contexto_actual.set(nodo.nombre_excepcion, exc.valor)
+                else:
+                    contexto_actual.define(nodo.nombre_excepcion, exc.valor)
             for instruccion in nodo.bloque_catch:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
@@ -1480,7 +1483,7 @@ class InterpretadorCobra:
         """Registra una función definida por el usuario."""
         funcion = self._construir_funcion(nodo)
         self._verificar_valor_contexto(funcion)
-        self.variables[nodo.nombre] = funcion
+        self.contextos[-1].define(nodo.nombre, funcion)
 
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
@@ -1568,7 +1571,7 @@ class InterpretadorCobra:
             bases_resueltas.append(base)
         clase = self._construir_clase(nodo, bases_resueltas)
         self._verificar_valor_contexto(clase)
-        self.variables[nodo.nombre] = clase
+        self.contextos[-1].define(nodo.nombre, clase)
 
     def ejecutar_instancia(self, nodo):
         """Crea una instancia de la clase indicada."""
@@ -1661,7 +1664,7 @@ class InterpretadorCobra:
 
         try:
             modulo = obtener_modulo(nodo.modulo)
-            self.variables[nodo.modulo] = modulo
+            self.contextos[-1].define(nodo.modulo, modulo)
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise
