@@ -62,6 +62,28 @@ def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
     assert "build" in called
 
 
+
+
+def test_build_v2_aplica_politica_modo_antes_de_pipeline(monkeypatch):
+    command = BuildCommandV2()
+    called = {"build": False}
+
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.build_cmd.validar_politica_modo",
+        lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("blocked-by-mode")),
+    )
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.build_cmd.backend_pipeline.build",
+        lambda *_args, **_kwargs: called.__setitem__("build", True),
+    )
+
+    status = command.run(
+        argparse.Namespace(file="programa.co", modo="cobra", debug=False)
+    )
+
+    assert status == 1
+    assert called["build"] is False
+
 def test_build_v2_help_no_expone_flags_backend():
     subparsers = _build_subparsers()
     command = BuildCommandV2()
