@@ -295,9 +295,15 @@ def render_reverse_scope_summary(reverse_scope: tuple[str, ...], *, markup: Rend
     """Renderiza la línea pública de orígenes reverse oficiales."""
     official_targets_count = len(OFFICIAL_TRANSPILATION_TARGETS)
     reverse_rendered = ", ".join(reverse_scope)
+    java_historical_note = (
+        " (java se mantiene como **entrada histórica, no salida oficial**)"
+        if "java" in reverse_scope
+        else ""
+    )
     return (
         "- **Orígenes de transpilación inversa**: "
         + reverse_rendered
+        + java_historical_note
         + f". Este alcance reverse de entrada está separado de los {official_targets_count} targets oficiales de salida."
     )
 
