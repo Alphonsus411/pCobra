@@ -312,10 +312,10 @@ def _validate_stdlib_contract_manifest(name: str, contract: Dict[str, Any]) -> l
 
 def _validate_stdlib_contracts() -> list[str]:
     contracts = module_map.get_stdlib_contracts()
+    errors = module_map.get_stdlib_contract_load_errors()
     if not contracts:
-        return []
+        return errors
 
-    errors: list[str] = []
     for name, contract in contracts.items():
         if not name.startswith("cobra."):
             errors.append(

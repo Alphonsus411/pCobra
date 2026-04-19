@@ -33,17 +33,20 @@ STDLIB_CONTRACTS_DIR = os.path.abspath(
 )
 
 _stdlib_contract_cache: dict[str, Dict[str, Any]] | None = None
+_stdlib_contract_load_errors: list[str] | None = None
 
 
 def _load_stdlib_contracts() -> dict[str, Dict[str, Any]]:
     """Carga manifiestos contractuales de ``stdlib_contract``."""
-    global _stdlib_contract_cache
+    global _stdlib_contract_cache, _stdlib_contract_load_errors
     if _stdlib_contract_cache is not None:
         return _stdlib_contract_cache
 
     loaded: dict[str, Dict[str, Any]] = {}
+    errors: list[str] = []
     if not os.path.isdir(STDLIB_CONTRACTS_DIR):
         _stdlib_contract_cache = loaded
+        _stdlib_contract_load_errors = errors
         return loaded
 
     for entry in sorted(os.listdir(STDLIB_CONTRACTS_DIR)):
@@ -53,19 +56,38 @@ def _load_stdlib_contracts() -> dict[str, Dict[str, Any]]:
         try:
             with open(contract_path, 'rb') as handle:
                 parsed = tomllib.load(handle)
-        except (OSError, tomllib.TOMLDecodeError):
+        except OSError as exc:
             logger.warning('No se pudo cargar manifest contractual: %s', contract_path)
+            errors.append(
+                "No se pudo leer manifest contractual: "
+                f"{entry} ({exc.__class__.__name__}: {exc})"
+            )
+            continue
+        except tomllib.TOMLDecodeError as exc:
+            logger.warning('No se pudo parsear manifest contractual: %s', contract_path)
+            errors.append(
+                "Manifest contractual inválido (TOML malformado): "
+                f"{entry} ({exc})"
+            )
             continue
         if isinstance(parsed, dict):
             loaded[entry] = parsed
 
     _stdlib_contract_cache = loaded
+    _stdlib_contract_load_errors = errors
     return loaded
 
 
 def get_stdlib_contracts() -> Dict[str, Dict[str, Any]]:
     """Devuelve todos los manifiestos contractuales cargados."""
     return dict(_load_stdlib_contracts())
+
+
+def get_stdlib_contract_load_errors() -> list[str]:
+    """Devuelve errores de carga/parseo detectados en manifests stdlib."""
+    if _stdlib_contract_cache is None:
+        _load_stdlib_contracts()
+    return list(_stdlib_contract_load_errors or [])
 
 
 def get_stdlib_contract(module: str) -> Dict[str, Any]:
