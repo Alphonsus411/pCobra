@@ -8,7 +8,7 @@ Sintaxis de Cobra
 
    Consulta la ruta canónica vigente:
 
-   - `Libro de Programación Cobra <../../docs/LIBRO_PROGRAMACION_COBRA.md>`_
-   - `Manual de Cobra <../../docs/MANUAL_COBRA.md>`_
+   - `Libro de Programación Cobra <../LIBRO_PROGRAMACION_COBRA.md>`_
+   - `Manual de Cobra <../MANUAL_COBRA.md>`_
 
-Referencia histórica: :doc:`../../docs/historico/sintaxis`
+Referencia histórica: :doc:`../historico/sintaxis`
