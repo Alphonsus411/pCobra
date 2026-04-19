@@ -106,6 +106,7 @@ include = [
     "core*",
     "cli*",
     "lsp*",
+    "bindings*",
 ]
 exclude = [
     "*.tests",
