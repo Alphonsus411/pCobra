@@ -7,6 +7,7 @@ from typing import Any
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.services.format_service import format_code_with_black
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
     normalizar_validadores_extra,
@@ -261,7 +262,7 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(f"Error de dependencias: {dep_err}", registrar_log=False)
             return 1
 
-        if formatear and not self._formatear_codigo(str(archivo_resuelto)):
+        if formatear and not format_code_with_black(str(archivo_resuelto)):
             return 1
 
         self.logger.setLevel(logging.DEBUG if depurar else logging.INFO)
@@ -452,35 +453,3 @@ class ExecuteCommand(BaseCommand):
         interpretador_cls = _obtener_interpretador_cls()
         interpreter = interpretador_cls(**interpreter_kwargs)
         ejecutar_ast(ast, interpreter)
-
-    @staticmethod
-    def _formatear_codigo(archivo: str) -> bool:
-        """Formatea el código usando black.
-
-        Args:
-            archivo: Ruta al archivo a formatear
-
-        Returns:
-            bool: True si el formateo fue exitoso, False en caso contrario
-        """
-        try:
-            import shutil
-            if not shutil.which("black"):
-                mostrar_error(_("Herramienta 'black' no encontrada en el PATH"), registrar_log=False)
-                return False
-
-            import subprocess
-            resultado = subprocess.run(
-                ["black", archivo],
-                check=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            if resultado.returncode != 0:
-                mostrar_error(f"Error al formatear: {resultado.stderr}", registrar_log=False)
-                return False
-            return True
-        except Exception as e:
-            mostrar_error(f"Error inesperado al formatear: {e}", registrar_log=False)
-            return False
