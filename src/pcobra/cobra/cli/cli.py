@@ -707,7 +707,8 @@ class CliApplication:
         if profile != PROFILE_PUBLIC:
             return normalized
 
-        if self._resolve_selected_ui_from_argv(normalized) == "v1":
+        requested_ui = self._resolve_ui_token_from_argv(normalized)
+        if requested_ui == "v1" and not self._is_internal_v1_ui_enabled():
             for index, token in enumerate(normalized):
                 if token == "--ui" and index + 1 < len(normalized):
                     normalized[index + 1] = "v2"
