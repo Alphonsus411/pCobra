@@ -12,7 +12,7 @@ Si necesitas detalle normativo y comportamiento de runtime, usa primero la [Refe
 
 1. [Qué es Cobra y cómo pensar en su ecosistema](#1-qué-es-cobra-y-cómo-pensar-en-su-ecosistema)
 2. [Primeros pasos](#2-primeros-pasos)
-3. [Sintaxis base del lenguaje](#3-sintaxis-base-del-lenguaje)
+3. [Sintaxis base del lenguaje por dominios](#3-sintaxis-base-del-lenguaje-por-dominios)
 4. [Control de flujo](#4-control-de-flujo)
 5. [Funciones y reutilización](#5-funciones-y-reutilización)
 6. [Estructuras de datos](#6-estructuras-de-datos)
@@ -26,8 +26,9 @@ Si necesitas detalle normativo y comportamiento de runtime, usa primero la [Refe
 14. [Rendimiento, profiling y optimización](#14-rendimiento-profiling-y-optimización)
 15. [Seguridad y sandbox](#15-seguridad-y-sandbox)
 16. [Pruebas, calidad y mantenimiento](#16-pruebas-calidad-y-mantenimiento)
-17. [Roadmap de aprendizaje por niveles](#17-roadmap-de-aprendizaje-por-niveles)
+17. [De cero a avanzado en orden recomendado](#17-de-cero-a-avanzado-en-orden-recomendado)
 18. [Apéndice: checklist de publicación de un proyecto Cobra](#18-apéndice-checklist-de-publicación-de-un-proyecto-cobra)
+19. [Checklist editorial del libro](#19-checklist-editorial-del-libro)
 
 ---
 
@@ -73,7 +74,7 @@ altura = 1.68
 
 ---
 
-## 3) Sintaxis base del lenguaje
+## 3) Sintaxis base del lenguaje por dominios
 
 <!-- BEGIN: AUTO-SYNTAX-INDEX -->
 ### Índice de sintaxis (autogenerado)
@@ -224,41 +225,356 @@ altura = 1.68
 - `with_stmt`
 <!-- END: AUTO-SYNTAX-INDEX -->
 
-### 3.1 Asignación
+### Tablas rápidas: token/estructura → uso práctico
+
+| Token/estructura | Uso práctico |
+|---|---|
+| `IDENTIFICADOR` | Nombrar variables, funciones, clases y módulos. |
+| `CADENA`, `ENTERO`, `FLOTANTE`, `BOOLEANO` | Definir literales de datos comunes. |
+| `funcion`, `funcion_asincronica` | Encapsular lógica reutilizable, con o sin `esperar`. |
+| `condicional`, `bucle_mientras`, `bucle_para` | Controlar flujo según reglas o recorridos. |
+| `try_catch` | Capturar y manejar errores controlables. |
+| `clase` | Modelar estado + comportamiento orientado a objetos. |
+| `usar`, `importacion` | Reutilizar módulos/proyectos. |
+| `macro`, `garantia` | Metaprogramación y contratos/aseguramiento. |
+
+| Estructura | Uso práctico |
+|---|---|
+| Expresiones | Calcular valores (`a + b`, llamadas, lambdas, `esperar`). |
+| Sentencias | Ejecutar acciones con efecto (`imprimir`, `retorno`, asignaciones). |
+| Bloques | Agrupar instrucciones con el mismo alcance semántico. |
+
+### 3.1 Léxico
+
+**Definición corta:** conjunto de tokens válidos (identificadores, literales, operadores y reservadas).
+
+**Sintaxis formal simplificada:**
+
+```text
+IDENTIFICADOR := [a-zA-Z_][a-zA-Z0-9_]*
+LITERAL := CADENA | ENTERO | FLOTANTE | BOOLEANO
+TOKEN := IDENTIFICADOR | LITERAL | OPERADOR | RESERVADA
+```
+
+**Ejemplos:**
+
+```cobra
+usuario_id = 42
+mensaje = "Hola"
+activo = verdadero
+```
+
+```cobra
+precio = 19.99
+impuesto = 0.21
+```
+
+**Anti-ejemplo frecuente:** usar identificadores con espacios.
+
+```cobra
+# Incorrecto
+mi variable = 10
+```
+
+**Compatibilidad por backend:** estable en todos los backends; evita caracteres no ASCII en nombres si el target final es C/ASM.
+
+### 3.2 Expresiones
+
+**Definición corta:** combinaciones de valores y operadores que producen un resultado.
+
+**Sintaxis formal simplificada:**
+
+```text
+expr := valor (operador valor)*
+valor := LITERAL | IDENTIFICADOR | llamada | "(" expr ")"
+```
+
+**Ejemplos:**
+
+```cobra
+total = (subtotal + impuesto) * 1.05
+```
+
+```cobra
+permitido = edad >= 18 y activo
+```
+
+```cobra
+saludo = f"Hola {nombre}"
+```
+
+**Anti-ejemplo frecuente:** mezclar tipos incompatibles sin conversión explícita.
+
+```cobra
+# Incorrecto
+resultado = "10" + 5
+```
+
+**Compatibilidad por backend:** operadores aritméticos/lógicos son estables; interpolación `f"..."` puede traducirse distinto según target.
+
+### 3.3 Sentencias
+
+**Definición corta:** instrucciones ejecutables que modifican estado o controlan flujo.
+
+**Sintaxis formal simplificada:**
+
+```text
+sentencia := asignacion | impresion | retorno | condicional | bucle | llamada
+asignacion := IDENTIFICADOR "=" expr
+```
+
+**Ejemplos:**
 
 ```cobra
 x = 10
-x = x + 5
+imprimir(x)
 ```
-
-### 3.2 Operadores aritméticos
-
-- `+`, `-`, `*`, `/`, `%`, `**`
 
 ```cobra
-resultado = (8 + 2) * 3
-potencia = 2 ** 5
+retornar "ok"
 ```
 
-### 3.3 Operadores relacionales
+**Anti-ejemplo frecuente:** usar `retornar` fuera de función.
 
-- `==`, `!=`, `>`, `<`, `>=`, `<=`
+**Compatibilidad por backend:** sentencias base estables; `imprimir` puede mapear a stdout con formato diferente por plataforma.
 
-### 3.4 Operadores lógicos
+### 3.4 Funciones
 
-- `y`, `o`, `no`
+**Definición corta:** bloques parametrizables para reutilizar comportamiento.
+
+**Sintaxis formal simplificada:**
+
+```text
+funcion := "funcion" IDENTIFICADOR "(" [params] ")" ":" bloque
+params := IDENTIFICADOR ("," IDENTIFICADOR)*
+```
+
+**Ejemplos:**
 
 ```cobra
-si edad >= 18 y activo:
-    imprimir("Acceso permitido")
+funcion saludar(nombre):
+    retornar f"Hola, {nombre}"
 ```
-
-### 3.5 Interpolación y texto
 
 ```cobra
-mensaje = f"Usuario: {nombre}, edad: {edad}"
-imprimir(mensaje)
+funcion potencia(base, exponente = 2):
+    retornar base ** exponente
 ```
+
+```cobra
+funcion aplicar(valor, fn):
+    retornar fn(valor)
+```
+
+**Anti-ejemplo frecuente:** funciones largas con I/O y lógica de dominio mezcladas.
+
+**Compatibilidad por backend:** estable; closures/lambdas complejas pueden degradar rendimiento en backends embebidos.
+
+### 3.5 Clases
+
+**Definición corta:** mecanismo OO para agrupar atributos y métodos.
+
+**Sintaxis formal simplificada:**
+
+```text
+clase := "clase" IDENTIFICADOR ":" bloque
+metodo := "metodo" IDENTIFICADOR "(" [params] ")" ":" bloque
+```
+
+**Ejemplos:**
+
+```cobra
+clase Cuenta:
+    atributo saldo
+
+    metodo depositar(monto):
+        saldo = saldo + monto
+```
+
+```cobra
+clase Usuario:
+    metodo __init__(nombre):
+        self.nombre = nombre
+```
+
+**Anti-ejemplo frecuente:** exponer estado mutable sin invariantes.
+
+**Compatibilidad por backend:** clases básicas estables; herencia múltiple puede variar en calidad de transpiliación según backend.
+
+### 3.6 Módulos
+
+**Definición corta:** unidades de organización y reutilización de código.
+
+**Sintaxis formal simplificada:**
+
+```text
+importacion := "usar" IDENTIFICADOR
+```
+
+**Ejemplos:**
+
+```cobra
+usar texto
+usar numero
+```
+
+```cobra
+usar mi_modulo.utilidades
+```
+
+**Anti-ejemplo frecuente:** dependencia circular entre módulos hermanos.
+
+**Compatibilidad por backend:** estable en runtime principal; rutas de módulo deben ser simples para targets con empaquetado estricto.
+
+### 3.7 Errores
+
+**Definición corta:** estrategias para reportar y recuperar fallos en tiempo de ejecución.
+
+**Sintaxis formal simplificada:**
+
+```text
+try_catch := ("intentar"|"try") ":" bloque ("capturar"|"catch") IDENTIFICADOR ":" bloque
+lanzar := ("lanzar"|"throw") expr
+```
+
+**Ejemplos:**
+
+```cobra
+intentar:
+    dato = convertir_entero(entrada)
+capturar e:
+    imprimir("Entrada inválida")
+```
+
+```cobra
+funcion dividir(a, b):
+    si b == 0:
+        lanzar "División por cero"
+    retornar a / b
+```
+
+**Anti-ejemplo frecuente:** capturar error genérico y silenciarlo sin log/contexto.
+
+**Compatibilidad por backend:** modelos de excepción varían; en backends mínimos, priorizar validaciones explícitas.
+
+### 3.8 Concurrencia
+
+**Definición corta:** ejecución coordinada de tareas asíncronas o en hilos.
+
+**Sintaxis formal simplificada:**
+
+```text
+funcion_async := "asincronico" "funcion" IDENTIFICADOR "(" [params] ")" ":" bloque
+await_expr := "esperar" valor
+hilo_stmt := "hilo" IDENTIFICADOR
+```
+
+**Ejemplos:**
+
+```cobra
+asincronico funcion obtener_datos(url):
+    retornar esperar cliente.get(url)
+```
+
+```cobra
+asincronico funcion main():
+    respuesta = esperar obtener_datos("https://api")
+    imprimir(respuesta)
+```
+
+**Anti-ejemplo frecuente:** bloqueo síncrono dentro de función asincrónica.
+
+**Compatibilidad por backend:** soporte async completo en backend Python; en otros targets revisar disponibilidad de event loop.
+
+### 3.9 Decorators
+
+**Definición corta:** anotaciones (`@`) para extender funciones/clases sin modificar su cuerpo.
+
+**Sintaxis formal simplificada:**
+
+```text
+decorador := "@" IDENTIFICADOR ["(" [args] ")"]
+declaracion := decorador* funcion | decorador* clase
+```
+
+**Ejemplos:**
+
+```cobra
+@memoizar
+funcion fib(n):
+    si n < 2:
+        retornar n
+    retornar fib(n-1) + fib(n-2)
+```
+
+```cobra
+@reintentar(intentos = 3)
+funcion descargar(url):
+    retornar cliente.get(url)
+```
+
+**Anti-ejemplo frecuente:** encadenar decorators con efectos secundarios no documentados.
+
+**Compatibilidad por backend:** decorators dependen de capacidades de metaprogramación del target; validar en `build` por backend.
+
+### 3.10 Macros
+
+**Definición corta:** transformación de código antes o durante fases de compilación/transpilación.
+
+**Sintaxis formal simplificada:**
+
+```text
+macro := "macro" IDENTIFICADOR "(" [params] ")" ":" bloque
+```
+
+**Ejemplos:**
+
+```cobra
+macro traza(expr):
+    imprimir(f"TRACE => {expr}")
+```
+
+```cobra
+traza(usuario_id)
+```
+
+**Anti-ejemplo frecuente:** usar macros para lógica de negocio en vez de abstracciones normales.
+
+**Compatibilidad por backend:** comportamiento depende del pipeline de transpiler; mantener macros pequeñas y deterministas.
+
+### 3.11 Patrones avanzados
+
+**Definición corta:** combinaciones de constructos para resolver problemas complejos de forma mantenible.
+
+**Sintaxis formal simplificada:**
+
+```text
+patron := composicion_funcional | guard_clauses | pipelines_modulares | reintentos_controlados
+```
+
+**Ejemplos:**
+
+```cobra
+funcion crear_usuario(cmd):
+    si no cmd.email:
+        retornar error("email requerido")
+    retornar repositorio.guardar(cmd)
+```
+
+```cobra
+resultado = datos
+    .filtrar(funcion(x): retornar x.activo)
+    .mapear(funcion(x): retornar x.email)
+```
+
+```cobra
+asincronico funcion publicar_evento(e):
+    retornar esperar reintentar_async(funcion(): retornar bus.emitir(e), intentos = 3)
+```
+
+**Anti-ejemplo frecuente:** sobreingeniería (introducir patrón sin dolor real del dominio).
+
+**Compatibilidad por backend:** patrones son conceptuales; verificar disponibilidad de APIs (`asincrono`, `decoradores`) según target.
 
 ---
 
@@ -653,28 +969,40 @@ Checklist rápido:
 
 ---
 
-## 17) Roadmap de aprendizaje por niveles
+## 17) De cero a avanzado en orden recomendado
 
-### Nivel 1 — Fundamentos
+Ruta práctica (ejecuta cada bloque antes de pasar al siguiente):
 
-- variables, tipos, condicionales, bucles,
-- funciones simples,
-- listas y diccionarios,
-- ejecución local con CLI.
+### 17.1 Cero → base sintáctica
 
-### Nivel 2 — Intermedio
+1. `examples/tutorial_basico/hola_mundo.co`
+2. `examples/tutorial_basico/README.md`
+3. `examples/tutorial_basico/compile_manual.py`
 
-- módulos e imports,
-- manejo robusto de errores,
-- diseño por capas,
-- pruebas unitarias + integración.
+Objetivo: dominar ejecución mínima, literales, impresión y ciclo editar-ejecutar.
 
-### Nivel 3 — Avanzado
+### 17.2 Base → features del lenguaje
 
-- asincronía y concurrencia,
-- transpilación multi-target,
-- optimización guiada por métricas,
-- seguridad y sandbox en producción.
+1. `examples/features/feature_base/minimal.co`
+2. `examples/features/README.md`
+
+Objetivo: practicar estructuras canónicas que luego aparecen en proyectos reales.
+
+### 17.3 Features → avanzado por dominio
+
+1. `examples/avanzados/funciones/factorial_recursivo.co`
+2. `examples/avanzados/funciones/utilidades.co`
+3. `examples/avanzados/clases/persona.co`
+4. `examples/avanzados/clases/herencia_multiple.co`
+5. `examples/avanzados/control_flujo/README.md`
+
+Objetivo: integrar funciones, clases, reutilización y control de flujo no trivial.
+
+### 17.4 Cierre recomendado
+
+- Repetir la ruta ejecutando `cobra run` en cada ejemplo.
+- Documentar dudas por constructo (léxico/expresión/sentencia/función/etc.).
+- Revisar backend objetivo antes de transpilar (`cobra build`).
 
 ---
 
@@ -685,6 +1013,17 @@ Checklist rápido:
 - [ ] documentación de uso actualizada.
 - [ ] ejemplos ejecutables y verificados.
 - [ ] matriz de targets revisada para el release.
+
+
+## 19) Checklist editorial del libro
+
+Checklist obligatorio de cierre para futuras ediciones:
+
+- [ ] Cada constructo documentado tiene **ejemplo mínimo ejecutable**.
+- [ ] Cada constructo incluye **nota de alcance** (qué cubre y qué no cubre).
+- [ ] Cada subcapítulo de dominio incluye definición, sintaxis, ejemplos y anti-ejemplo.
+- [ ] Las notas de compatibilidad por backend están indicadas cuando aplica.
+- [ ] Los ejemplos referenciados en `examples/` existen y son trazables desde esta guía.
 
 ---
 
