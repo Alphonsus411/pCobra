@@ -430,8 +430,12 @@ class CobraImportResolver:
             return None
         try:
             spec = importlib.util.find_spec(name)
-        except ModuleNotFoundError:
-            return None
+        except ModuleNotFoundError as exc:
+            missing_module = exc.name
+            top_level_name = name.split(".", maxsplit=1)[0]
+            if missing_module in {name, top_level_name}:
+                return None
+            raise
         if spec is None:
             return None
         return ResolutionResult(
