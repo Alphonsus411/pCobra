@@ -66,8 +66,8 @@ def test_aislamiento_de_contexto_en_funciones():
     assert "z" not in inter.variables
 
 
-def test_preservacion_de_variables_globales():
-    """Verifica que las variables globales no se modifiquen dentro de una función."""
+def test_actualizacion_de_variables_globales_en_scope_capturado():
+    """Verifica que set actualiza la variable existente en el scope capturado."""
     inter = InterpretadorCobra()
 
     inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(5)))
@@ -81,7 +81,23 @@ def test_preservacion_de_variables_globales():
     inter.ejecutar_funcion(funcion)
     inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("modificar", []))
 
-    assert inter.variables["a"] == 5
+    assert inter.variables["a"] == 1
+
+
+def test_funcion_actualiza_scope_lexico_capturado():
+    """Una función definida en global muta su entorno léxico capturado."""
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(10)))
+
+    incrementar = NodoFuncion(
+        "incrementar",
+        [],
+        [NodoAsignacion("a", NodoValor(1))],
+    )
+    inter.ejecutar_funcion(incrementar)
+
+    inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("incrementar", []))
+    assert inter.obtener_variable("a") == 1
 
 
 def test_regresion_llamada_funcion_no_yield_limpia_contexto_una_sola_vez():

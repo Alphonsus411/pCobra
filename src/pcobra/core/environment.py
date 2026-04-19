@@ -26,12 +26,20 @@ class Environment:
         self.values[name] = value
         return value
 
+    def contains(self, name: str) -> bool:
+        """Indica si ``name`` existe en este entorno o en alguno ancestro."""
+        if name in self.values:
+            return True
+        if self.parent is not None:
+            return self.parent.contains(name)
+        return False
+
     def set(self, name: str, value: Any) -> Any:
         """Actualiza ``name`` en su scope más cercano; si no existe, lo define local."""
         if name in self.values:
             self.values[name] = value
             return value
-        if self.parent is not None:
+        if self.parent is not None and self.parent.contains(name):
             return self.parent.set(name, value)
         self.values[name] = value
         return value
