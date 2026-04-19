@@ -18,8 +18,8 @@ from pcobra.cobra.cli.target_policies import (
     NO_RUNTIME_TARGETS,
     OFFICIAL_RUNTIME_TARGETS,
 )
+from pcobra.cobra.config.transpile_targets import LEGACY_INTERNAL_TARGETS
 from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_cli_choices
-from pcobra.cobra.transpilers.target_utils import require_exact_official_targets
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 BEST_EFFORT_BENCHMARK_RUNTIME_TARGETS: Final[tuple[str, ...]] = BEST_EFFORT_RUNTIME_TARGETS
@@ -135,8 +135,18 @@ def validate_local_targets_policy(repo_root: Path) -> None:
 
 
 def validate_backend_metadata(backends: Mapping[str, object], *, context: str) -> None:
-    """Falla rápido si existe metadata para targets fuera de la whitelist oficial."""
-    require_exact_official_targets(backends, context=context)
+    """Falla rápido si existe metadata fuera del canon oficial+legacy conocido."""
+    normalized = tuple(normalize_target_name(target) for target in backends)
+    official_set = set(OFFICIAL_TARGETS)
+    allowed_set = official_set | set(LEGACY_INTERNAL_TARGETS)
+    extras = tuple(sorted(set(normalized) - allowed_set))
+    missing = tuple(target for target in OFFICIAL_TARGETS if target not in normalized)
+    if missing or extras:
+        raise RuntimeError(
+            "Metadata de backends desalineada con la política canónica. "
+            f"missing_official={missing or '∅'}; extras={extras or '∅'}; "
+            f"official={OFFICIAL_TARGETS}; legacy={LEGACY_INTERNAL_TARGETS}; context={context}"
+        )
 
 
 
