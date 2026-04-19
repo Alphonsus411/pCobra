@@ -14,7 +14,7 @@ class FletCommand(BaseCommand):
     name = "gui"
     requires_sqlite_key: bool = False
     _CRITICAL_GUI_MODULES = (
-        "pcobra.cobra.cli.commands.compile_cmd",
+        "pcobra.cobra.transpilers.registry",
         "pcobra.cobra.core",
         "pcobra.cobra.transpilers.target_utils",
         "pcobra.cobra.transpilers.targets",
@@ -23,7 +23,7 @@ class FletCommand(BaseCommand):
     _CRITICAL_GUI_SYMBOLS = {
         "pcobra.cobra.core": ("Lexer", "Parser"),
         "pcobra.core.interpreter": ("InterpretadorCobra",),
-        "pcobra.cobra.cli.commands.compile_cmd": ("TRANSPILERS",),
+        "pcobra.cobra.transpilers.registry": ("get_transpilers",),
         "pcobra.cobra.transpilers.target_utils": ("target_cli_choices",),
     }
 

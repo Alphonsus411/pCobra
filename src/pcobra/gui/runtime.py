@@ -13,7 +13,7 @@ from typing import Any
 def require_gui_dependencies() -> dict[str, Any]:
     """Importa dependencias de núcleo/transpiladores de forma diferida."""
     try:
-        from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
+        from pcobra.cobra.build import backend_pipeline
         from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
         from pcobra.cobra.transpilers.target_utils import target_cli_choices
         from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
@@ -36,7 +36,7 @@ def require_gui_dependencies() -> dict[str, Any]:
         "target_cli_choices": target_cli_choices,
         "OFFICIAL_TARGETS": OFFICIAL_TARGETS,
         "InterpretadorCobra": InterpretadorCobra,
-        "TRANSPILERS": TRANSPILERS,
+        "TRANSPILERS": backend_pipeline.TRANSPILERS,
     }
 
 

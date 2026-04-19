@@ -30,7 +30,6 @@ from pcobra.cobra.transpilers.reverse.policy import (
     parse_reverse_source_language,
 )
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
-from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.deprecation_policy import (
@@ -328,7 +327,7 @@ class TranspilarInversoCommand(BaseCommand):
             raise UnsupportedLanguageError(
                 f"No hay parser reverse disponible para el lenguaje de origen '{origen}'"
             )
-        if destino not in TRANSPILERS:
+        if destino not in backend_pipeline.TRANSPILERS:
             raise UnsupportedLanguageError(
                 f"No hay transpilador oficial disponible para el lenguaje de destino '{destino}'"
             )
@@ -386,7 +385,7 @@ class TranspilarInversoCommand(BaseCommand):
 
             # Validar transpiladores
             reverse_cls = REVERSE_TRANSPILERS.get(origen)
-            transp_cls = TRANSPILERS.get(destino)
+            transp_cls = backend_pipeline.TRANSPILERS.get(destino)
 
             logger.debug(
                 f"Usando transpilador {reverse_cls.__name__} para origen {origen}"

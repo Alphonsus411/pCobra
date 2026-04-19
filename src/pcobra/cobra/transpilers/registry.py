@@ -183,6 +183,11 @@ def build_official_transpilers() -> dict[str, type]:
     return registry
 
 
+def get_transpilers() -> dict[str, type]:
+    """API pública interna para obtener el registro oficial cargado."""
+    return build_official_transpilers()
+
+
 def build_internal_legacy_transpilers() -> dict[str, type]:
     """Carga las clases legacy internas para procesos de migración interna."""
     registry: dict[str, type] = {}
