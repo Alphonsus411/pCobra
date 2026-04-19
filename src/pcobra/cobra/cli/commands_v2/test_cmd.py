@@ -3,6 +3,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.target_policies import parse_restricted_target_list
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 
@@ -30,9 +31,17 @@ class TestCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
+        langs = getattr(args, "langs", "")
+        if isinstance(langs, str):
+            langs = parse_restricted_target_list(
+                langs,
+                self._legacy.SUPPORTED_LANGUAGES,
+                "verificación ejecutable",
+            )
+
         legacy_args = Namespace(
             archivo=args.file,
-            lenguajes=getattr(args, "langs", ""),
+            lenguajes=langs,
             modo=getattr(args, "modo", "mixto"),
         )
         return self._legacy.run(legacy_args)
