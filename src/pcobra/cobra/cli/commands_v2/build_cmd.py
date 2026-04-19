@@ -4,6 +4,7 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.cli.services.command_factory import CommandFactory
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.autocomplete import files_completer
@@ -17,6 +18,7 @@ class BuildCommandV2(BaseCommand):
 
     def __init__(self) -> None:
         super().__init__()
+        self._command_factory = CommandFactory()
         self._runtime_manager = RuntimeManager()
 
     def register_subparser(self, subparsers: Any):
