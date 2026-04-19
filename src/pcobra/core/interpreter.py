@@ -79,6 +79,7 @@ from .import_utils import (
 )
 from .utils import validar_ast_estructural, ErrorEstructuraAST
 from .errors import CondicionNoBooleanaError
+from .environment import Environment
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 
@@ -406,8 +407,8 @@ class InterpretadorCobra:
         self.analizador = AnalizadorSemantico()
         # Conjunto para evitar validar el mismo nodo varias veces
         self._validados = set()
-        # Pila de contextos para mantener variables locales en cada llamada
-        self.contextos = [{}]
+        # Pila de entornos para mantener variables locales en cada llamada
+        self.contextos = [Environment()]
         # Mapa paralelo para gestionar bloques de memoria por contexto
         self.mem_contextos = [{}]
         # Gestor genético de estrategias de memoria
@@ -420,13 +421,13 @@ class InterpretadorCobra:
 
     @property
     def variables(self):
-        """Devuelve el contexto actual de variables."""
-        return self.contextos[-1]
+        """Devuelve el mapeo local del entorno activo (compatibilidad)."""
+        return self.contextos[-1].values
 
     @variables.setter
     def variables(self, valor):
-        """Permite reemplazar el contexto actual."""
-        self.contextos[-1] = valor
+        """Permite reemplazar solo el mapeo local del entorno activo."""
+        self.contextos[-1].values = valor
 
     def obtener_variable(self, nombre, visitados=None):
         """Busca una variable en la pila de contextos.
@@ -480,33 +481,30 @@ class InterpretadorCobra:
             raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
 
     def _resolver_identificador(self, nombre, visitados=None):
-        """Resuelve un identificador usando únicamente la pila de contextos."""
+        """Resuelve un identificador usando el entorno léxico activo."""
         visitados = set() if visitados is None else visitados
         if nombre in visitados:
             raise RuntimeError(f"Ciclo de variables detectado en '{nombre}'")
         visitados.add(nombre)
         try:
-            for contexto in reversed(self.contextos):
-                if nombre in contexto:
-                    valor = contexto[nombre]
-                    self._validar_asignacion_autorreferente(nombre, valor)
-                    valor_resuelto = self._materializar_valor(
-                        valor,
-                        visitados,
-                        origen="resolucion_variable",
-                        nombre_variable=nombre,
-                    )
-                    if isinstance(valor_resuelto, NodoAST):
-                        raise RuntimeError(
-                            "Resolución inválida de variable: "
-                            f"'{nombre}' quedó en nodo AST "
-                            f"({type(valor_resuelto).__name__})"
-                        )
-                    # Persistimos siempre el valor ya materializado para
-                    # consolidar el contrato de contexto -> materialización.
-                    contexto[nombre] = valor_resuelto
-                    return valor_resuelto
-            raise NameError(f"Variable no declarada: {nombre}")
+            valor = self.contextos[-1].get(nombre)
+            self._validar_asignacion_autorreferente(nombre, valor)
+            valor_resuelto = self._materializar_valor(
+                valor,
+                visitados,
+                origen="resolucion_variable",
+                nombre_variable=nombre,
+            )
+            if isinstance(valor_resuelto, NodoAST):
+                raise RuntimeError(
+                    "Resolución inválida de variable: "
+                    f"'{nombre}' quedó en nodo AST "
+                    f"({type(valor_resuelto).__name__})"
+                )
+            # Persistimos siempre el valor ya materializado para consolidar
+            # el contrato de contexto -> materialización.
+            self.contextos[-1].set(nombre, valor_resuelto)
+            return valor_resuelto
         finally:
             visitados.discard(nombre)
 
@@ -554,7 +552,7 @@ class InterpretadorCobra:
             "nombre": nodo.nombre,
             "parametros": list(nodo.parametros),
             "cuerpo": list(nodo.cuerpo),
-            "contexto": self.contextos[-1].copy(),
+            "contexto": self.variables.copy(),
         }
 
     def _construir_clase(self, nodo, bases):
@@ -1084,7 +1082,7 @@ class InterpretadorCobra:
             pass
         elif isinstance(nodo, NodoWith):
             self.evaluar_expresion(nodo.contexto)
-            self.contextos.append({})
+            self.contextos.append(Environment(parent=self.contextos[-1]))
             try:
                 for instr in nodo.cuerpo:
                     resultado = self.ejecutar_nodo(instr)
@@ -1129,7 +1127,7 @@ class InterpretadorCobra:
         else:
             if getattr(nodo, "inferencia", False):
                 # Registro simple sin tipo explícito
-                self.variables[nombre] = valor
+                self.contextos[-1].define(nombre, valor)
             else:
                 # Si la variable ya tiene memoria reservada, se libera
                 mem_ctx = self.mem_contextos[-1]
@@ -1138,7 +1136,10 @@ class InterpretadorCobra:
                     self.liberar_memoria(idx, tam)
                 indice = self.solicitar_memoria(1)
                 mem_ctx[nombre] = (indice, 1)
-                self.variables[nombre] = valor
+                if nombre in self.variables:
+                    self.contextos[-1].set(nombre, valor)
+                else:
+                    self.contextos[-1].define(nombre, valor)
         return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
@@ -1460,6 +1461,8 @@ class InterpretadorCobra:
         while self._evaluar_condicion_control(nodo.condicion):
             for instruccion in nodo.cuerpo:
                 resultado = self.ejecutar_nodo(instruccion)
+                if isinstance(instruccion, NodoAsignacion):
+                    continue
                 if resultado is not None:
                     return resultado
         return None
@@ -1523,7 +1526,9 @@ class InterpretadorCobra:
                 # función sí encapsula su scope creando un nuevo contexto local.
                 contexto_base = funcion.get("contexto", {}).copy()
                 self._verificar_valor_contexto(contexto_base)
-                self.contextos.append(contexto_base)
+                self.contextos.append(
+                    Environment(values=contexto_base, parent=self.contextos[-1])
+                )
                 self.mem_contextos.append({})
                 for nombre_param, arg in zip(funcion["parametros"], nodo.argumentos):
                     valor = self.evaluar_expresion(arg)
@@ -1616,7 +1621,9 @@ class InterpretadorCobra:
         contexto_base = metodo.get("contexto", {}).copy()
         contexto_base.update(contexto)
         self._verificar_valor_contexto(contexto_base)
-        self.contextos.append(contexto_base)
+        self.contextos.append(
+            Environment(values=contexto_base, parent=self.contextos[-1])
+        )
         self.mem_contextos.append({})
         for nombre_param, arg in zip(metodo.get("parametros", [])[1:], nodo.argumentos):
             valor = self.evaluar_expresion(arg)
