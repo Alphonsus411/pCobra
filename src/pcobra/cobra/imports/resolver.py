@@ -22,6 +22,14 @@ class ImportResolutionError(RuntimeError):
     """Error base al resolver imports Cobra."""
 
 
+class ImportNotFoundError(ImportResolutionError):
+    """No se encontró un módulo resoluble para el nombre solicitado."""
+
+
+class ImportCollisionError(ImportResolutionError):
+    """El import es ambiguo y requiere namespace explícito o strict mode."""
+
+
 @dataclass(frozen=True)
 class HybridModuleSpec:
     """Declaración de módulo híbrido."""
@@ -186,7 +194,7 @@ class CobraImportResolver:
                 candidates.append(candidate)
 
         if not candidates:
-            raise ImportResolutionError(f"No se encontró módulo para '{name}'")
+            raise ImportNotFoundError(f"No se encontró módulo para '{name}'")
 
         precedence_reason = (
             f"unique_source:{candidates[0].source}"
@@ -211,7 +219,7 @@ class CobraImportResolver:
                     if self.collision_policy == "namespace_required"
                     else " Activa resolución explícita en strict mode."
                 )
-                raise ImportResolutionError(f"{message}{suffix}")
+                raise ImportCollisionError(f"{message}{suffix}")
             warnings.warn(message, category=UserWarning, stacklevel=2)
 
         selected = ResolutionResult(
