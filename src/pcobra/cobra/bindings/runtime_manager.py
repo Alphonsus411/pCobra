@@ -70,11 +70,10 @@ class RuntimeManager:
     }
 
     def resolve_runtime(self, language: str) -> tuple[BindingCapabilities, RuntimeBridgeDescriptor]:
-        """Resuelve contrato, negocia ABI y retorna bridge asociado."""
+        """Resuelve contrato y retorna bridge asociado sin negociar ABI implícitamente."""
 
         capabilities = self._resolve_capabilities(language)
         bridge = self.select_bridge(capabilities)
-        self.negotiate_abi(capabilities)
         return capabilities, bridge
 
     def _resolve_capabilities(self, language: str) -> BindingCapabilities:

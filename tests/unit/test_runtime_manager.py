@@ -97,3 +97,23 @@ javascript = "1.2"
         assert "Versiones soportadas" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Se esperaba rechazo de ABI no soportada")
+
+
+def test_runtime_manager_no_negocia_abi_en_resolve_runtime_permite_override(monkeypatch, tmp_path: Path):
+    manager = RuntimeManager()
+    cobra_toml = tmp_path / "cobra.toml"
+    cobra_toml.write_text(
+        """
+[project.abi_by_backend]
+rust = "9.9"
+""".strip()
+    )
+
+    monkeypatch.setenv("COBRA_TOML", str(cobra_toml))
+    monkeypatch.delenv("PCOBRA_CONFIG", raising=False)
+
+    capabilities, bridge = manager.resolve_runtime("rust")
+
+    assert capabilities.route is BindingRoute.RUST_COMPILED_FFI
+    assert bridge.route is BindingRoute.RUST_COMPILED_FFI
+    assert manager.validate_abi_route("rust", abi_version="1.0") == "1.0"
