@@ -284,7 +284,9 @@ Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantie
 
 ### CLI simplificada (interfaz oficial)
 
-La interfaz recomendada se organiza en cuatro comandos base:
+> **Importante:** la CLI usa `--ui v1` por defecto actualmente. Para usar la interfaz unificada (`run/build/test/mod`) debes activar explícitamente `--ui v2`.
+
+La interfaz recomendada (en modo `--ui v2`) se organiza en cuatro comandos base:
 
 - `cobra run`: ejecutar programas Cobra.
 - `cobra build`: transpilación y artefactos por backend oficial.
@@ -294,10 +296,10 @@ La interfaz recomendada se organiza en cuatro comandos base:
 Ejemplos rápidos:
 
 ```bash
-cobra run archivo.co
-cobra build hola.co --backend python
-cobra test
-cobra mod list
+cobra --ui v2 run archivo.co
+cobra --ui v2 build hola.co
+cobra --ui v2 test
+cobra --ui v2 mod list
 ```
 
 Para listar todas las opciones disponibles:
@@ -306,7 +308,7 @@ Para listar todas las opciones disponibles:
 cobra --help
 ```
 
-Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`.
+En `cobra --ui v2 build`, la selección de backend se resuelve internamente (sin flag `--backend`) sobre los backends públicos oficiales: `python`, `javascript`, `rust`.
 
 Más detalle técnico de capas y contratos internos en [docs/architecture/unified-ecosystem.md](docs/architecture/unified-ecosystem.md).
 
@@ -316,7 +318,7 @@ Si vienes de comandos legacy (`cobra compilar`, `cobra modulos`) o de flujos cen
 
 ### Compatibilidad legacy
 
-Los proyectos antiguos pueden seguir funcionando con aliases legacy y con el modo de compatibilidad. Recomendamos mantenerlos solo como transición y migrar progresivamente a `run/build/test/mod`.
+Los proyectos antiguos pueden seguir funcionando con aliases legacy y con el modo de compatibilidad. Recomendamos mantenerlos solo como transición y migrar progresivamente a `--ui v2` con `run/build/test/mod`.
 
 ### Validar sintaxis (paso a paso)
 
