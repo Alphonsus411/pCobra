@@ -259,7 +259,7 @@ class CliApplication:
         self.command_registry = CommandRegistry(self.interpreter)
         self.parser = self._build_argument_parser()
 
-    def _ensure_command_structure(self) -> None:
+    def _ensure_command_structure(self, *, force_public_ui_v2_for_help: bool = False) -> None:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
         if self._subparsers is None:
@@ -272,9 +272,13 @@ class CliApplication:
 
         command_profile = resolve_command_profile()
         selected_ui = getattr(self, "_selected_ui", "v2")
-        if command_profile == PROFILE_PUBLIC and selected_ui == "v1":
+        if (
+            force_public_ui_v2_for_help
+            and command_profile == PROFILE_PUBLIC
+            and selected_ui == "v1"
+        ):
             logging.getLogger(__name__).debug(
-                "Perfil público activo: forzando UI v2 para evitar exposición de comandos legacy en --help.",
+                "Perfil público activo: forzando UI v2 para ayuda raíz y evitar exposición de comandos legacy en --help.",
             )
             selected_ui = "v2"
         self.command_registry.register_base_commands(
@@ -598,6 +602,13 @@ class CliApplication:
         self._configure_cli_options(parser)
         return parser
 
+    @staticmethod
+    def _is_root_help_request(argv: List[str]) -> bool:
+        help_flags = {"-h", "--help", "--ayuda"}
+        if not any(token in help_flags for token in argv):
+            return False
+        return not any(token and not token.startswith("-") for token in argv)
+
     def _parse_arguments(self, argv: List[str]) -> argparse.Namespace:
         if not self.parser or not self.command_registry:
             raise RuntimeError("Application not properly initialized")
@@ -609,7 +620,9 @@ class CliApplication:
             safe_mode=getattr(preliminary_args, "plugins_safe_mode", True),
             allowlist=getattr(preliminary_args, "plugins_allowlist", ""),
         )
-        self._ensure_command_structure()
+        self._ensure_command_structure(
+            force_public_ui_v2_for_help=self._is_root_help_request(argv)
+        )
 
         default_command_name = self.command_registry.get_default_command_name()
         default_command = self.command_registry.commands.get(default_command_name)
