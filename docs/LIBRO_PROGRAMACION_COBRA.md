@@ -301,9 +301,9 @@ Cobra incluye módulos de soporte para flujos asíncronos y coordinación.
 Flujo mínimo sugerido:
 
 ```bash
-cobra validar-sintaxis src/app.cobra
-cobra ejecutar src/app.cobra
-cobra compilar src/app.cobra --tipo python
+cobra run src/app.cobra
+cobra test
+cobra build src/app.cobra --target python
 ```
 
 Comandos útiles adicionales (según el setup del proyecto):
@@ -457,7 +457,7 @@ Checklist rápido:
 
 ## 18) Apéndice: checklist de publicación de un proyecto Cobra
 
-- [ ] `cobra validar-sintaxis` en todo `src/`.
+- [ ] `cobra test` ejecutado en local/CI para validar el código de `src/`.
 - [ ] tests pasando en CI.
 - [ ] documentación de uso actualizada.
 - [ ] ejemplos ejecutables y verificados.
