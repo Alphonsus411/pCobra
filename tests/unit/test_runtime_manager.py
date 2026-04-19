@@ -23,6 +23,12 @@ def test_runtime_manager_valida_ruta_js_requiere_runtime_gestionado():
         raise AssertionError("Se esperaba error de seguridad para JS sin aislamiento")
 
 
+def test_runtime_manager_build_javascript_no_exige_runtime_gestionado():
+    manager = RuntimeManager()
+
+    manager.validate_security_route("javascript", sandbox=False, containerized=False, command="build")
+
+
 def test_runtime_manager_valida_abi_por_ruta():
     manager = RuntimeManager()
 
