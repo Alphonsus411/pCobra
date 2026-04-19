@@ -83,3 +83,18 @@ def test_cli_help_public_contract_muestra_warning_migracion_en_comando_legacy():
     lower_output = result.stderr.lower() + result.stdout.lower()
     assert "comando legacy 'compilar'" in lower_output
     assert "migración automática aplicada: use 'build'" in lower_output
+
+
+def test_cli_help_public_contract_migra_comando_legacy_tras_opcion_global_con_valor():
+    repo_root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-m", "cobra.cli.cli", "--lang", "es", "compilar", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(repo_root),
+        env=_public_env(),
+    )
+    assert result.returncode == 0
+    lower_output = result.stderr.lower() + result.stdout.lower()
+    assert "comando legacy 'compilar'" in lower_output
+    assert "migración automática aplicada: use 'build'" in lower_output
