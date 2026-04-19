@@ -14,12 +14,12 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
 
    caracteristicas
    arquitectura
-   ../../docs/estructura_ast
+   ../estructura_ast
    design_patterns
    cli
    backends
-   ../../docs/lenguajes_soportados
-   ../../docs/lenguajes
+   ../lenguajes_soportados
+   ../lenguajes
    avances
    proximos_pasos
    optimizaciones
@@ -31,10 +31,10 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    rfc_plugins
    ejemplos
    ejemplos_avanzados
-   ../../docs/casos_reales
+   ../casos_reales
    referencia
-   ../../docs/standard_library/util
-   ../../docs/standard_library/numero
+   ../standard_library/util
+   ../standard_library/numero
    validador
    modo_seguro
    empaquetar
@@ -50,7 +50,7 @@ Cobra es un lenguaje de programación experimental completamente en español. Su
    qualia
    jupyter
    recursos_adicionales
-   ../../docs/MANUAL_COBRA
+   ../MANUAL_COBRA
    api/modules
 
 Introducción
@@ -73,7 +73,7 @@ Contenido histórico
 
 Las guías ``primeros_pasos`` y ``sintaxis`` de esta sección se movieron a ``docs/historico/`` como material de referencia histórica/no operativa:
 
-- :doc:`../../docs/historico/primeros_pasos`
-- :doc:`../../docs/historico/sintaxis`
+- :doc:`../historico/primeros_pasos`
+- :doc:`../historico/sintaxis`
 
 Para el camino principal de aprendizaje usa el Libro y el Manual canónico enlazados en el README del repositorio.
