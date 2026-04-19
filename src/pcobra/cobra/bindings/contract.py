@@ -1,9 +1,6 @@
-"""Compatibilidad del contrato de bindings dentro del namespace ``pcobra``.
+"""Fachada de compatibilidad del contrato de bindings dentro del namespace ``pcobra``."""
 
-Fuente canónica: ``bindings/contract.py``.
-"""
-
-from bindings.contract import (  # re-export canónico
+from pcobra.cobra.bindings._contract_impl import (
     ABI_POLICY_BY_ROUTE,
     BINDINGS_BY_LANGUAGE,
     COMMAND_EVENT_SCHEMA,
@@ -18,10 +15,11 @@ from bindings.contract import (  # re-export canónico
     JAVASCRIPT_BINDING,
     PYTHON_BINDING,
     RUST_BINDING,
+    RouteOperationalLimits,
+    resolve_binding,
     resolve_command_event,
     route_matrix_markdown,
     validate_public_language,
-    resolve_binding,
 )
 
 __all__ = [
@@ -36,6 +34,7 @@ __all__ = [
     "PUBLIC_RUNTIME_COMMANDS",
     "ABI_POLICY_BY_ROUTE",
     "ROUTE_OPERATIONAL_LIMITS",
+    "RouteOperationalLimits",
     "PYTHON_BINDING",
     "JAVASCRIPT_BINDING",
     "RUST_BINDING",
