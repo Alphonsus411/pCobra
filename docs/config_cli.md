@@ -13,8 +13,8 @@ El flag global `--modo` delimita qué tipo de acciones permite la sesión:
 Ejemplos concretos:
 
 ```bash
-cobra --modo cobra run programa.co
-cobra --modo transpilar build programa.co --backend python
+cobra --modo cobra --ui v2 run programa.co
+cobra --modo transpilar compilar programa.co --backend python
 ```
 
 ## Ruta del archivo
@@ -81,7 +81,7 @@ print(secrets.token_urlsafe(32))
 PY
 )"
 
-cobra build ejemplo.co --backend python
+cobra --ui v2 build ejemplo.co
 ```
 
 #### Opción B (solo dev local): clave efímera por ejecución
@@ -89,7 +89,7 @@ cobra build ejemplo.co --backend python
 ```bash
 COBRA_DEV_MODE=1 \
 COBRA_DEV_ALLOW_EPHEMERAL_KEY=1 \
-cobra --dev-ephemeral-key build ejemplo.co --backend python
+cobra --dev-ephemeral-key --ui v2 build ejemplo.co
 ```
 
 > Nota: evita esta opción en CI/prod; está diseñada únicamente para sesiones
@@ -146,7 +146,7 @@ javascript = "build/modulo.js"
 
 ## Terminología: interfaz pública vs backend interno
 
-- **Interfaz pública**: comandos y documentación para usuarios (`cobra run`, `cobra build`, `cobra test`, `cobra mod`) y backends oficiales `python`, `javascript`, `rust`.
+- **Interfaz pública**: comandos y documentación para usuarios (`cobra --ui v2 run`, `cobra --ui v2 build`, `cobra --ui v2 test`, `cobra --ui v2 mod`) y backends oficiales `python`, `javascript`, `rust`.
 - **Backend interno**: rutas de compatibilidad o migración usadas por mantenedores, fuera del contrato público.
 
 Toda referencia en documentación de usuario debe priorizar la terminología de interfaz pública.
