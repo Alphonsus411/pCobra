@@ -67,6 +67,11 @@ def _resolve_backend(source: str, hints: dict[str, Any] | None = None) -> Backen
     )
 
 
+def resolve_backend(source: str, hints: dict[str, Any] | None = None) -> BackendResolution:
+    """Alias de compatibilidad para imports legacy de ``pcobra.cobra.build``."""
+    return _resolve_backend(source, hints)
+
+
 def resolve_backend_runtime(
     source: str,
     hints: dict[str, Any] | None = None,
@@ -131,6 +136,7 @@ __all__ = [
     "ORCHESTRATOR",
     "TRANSPILERS",
     "build",
+    "resolve_backend",
     "resolve_backend_runtime",
     "transpile",
 ]
