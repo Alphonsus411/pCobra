@@ -47,6 +47,12 @@ def configure_encoding() -> None:
     os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
+def _reconfigurar_consola_utf8() -> None:
+    """Alias retrocompatible para callers que importan el helper legacy."""
+
+    configure_encoding()
+
+
 def configure_logging(debug: bool) -> None:
     """Configura logging de CLI con un único handler efectivo de consola.
 
@@ -198,7 +204,7 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
 
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
-    configure_encoding()
+    _reconfigurar_consola_utf8()
     _bootstrap_dev_path_si_opt_in()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
     argv = _normalizar_argumentos(argv_entrada)
