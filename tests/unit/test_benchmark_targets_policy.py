@@ -7,9 +7,8 @@ from pcobra.cobra.benchmarks.targets_policy import (
 def test_executable_benchmark_backends_por_defecto_solo_runtime_oficial():
     assert executable_benchmark_backends(BENCHMARK_BACKEND_METADATA) == (
         "python",
-        "rust",
         "javascript",
-        "cpp",
+        "rust",
     )
 
 
@@ -19,9 +18,6 @@ def test_executable_benchmark_backends_best_effort_explicito_agrega_go_java_sin_
         include_experimental=True,
     ) == (
         "python",
-        "rust",
         "javascript",
-        "go",
-        "cpp",
-        "java",
+        "rust",
     )

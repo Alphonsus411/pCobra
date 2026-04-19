@@ -21,6 +21,7 @@ from pcobra.cobra.cli.deprecation_policy import (
 )
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.benchmark_service import run_benchmarks
+from pcobra.cobra.cli.services.benchmark_service import benchmark_backends_config
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
@@ -104,7 +105,7 @@ class BenchmarksCommand(BaseCommand):
                 )
 
             for _iteration in range(iteraciones):
-                data = run_benchmarks(BACKENDS)
+                data = run_benchmarks(benchmark_backends_config(set(BACKENDS)))
                 if backend_filtro:
                     data = [d for d in data if d.get("backend") == backend_filtro]
                 results.extend(data)

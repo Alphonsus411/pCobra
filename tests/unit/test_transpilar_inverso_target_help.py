@@ -30,7 +30,7 @@ def test_transpilar_inverso_help_refleja_solo_nombres_canonicos():
     _, reverse_parser = _build_parser()
     help_text = reverse_parser.format_help()
 
-    assert "Tier 1: python, rust, javascript, wasm." in help_text
-    assert "Tier 2: go, cpp, java, asm." in help_text
+    assert "Tier 1: python, javascript, rust." in help_text
+    assert "Tier 2:" not in help_text
     assert "JavaScript (javascript)" not in help_text
     assert "Ensamblador (asm)" not in help_text

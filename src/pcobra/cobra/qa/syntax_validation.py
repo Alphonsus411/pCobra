@@ -14,6 +14,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Callable
 
+from pcobra.cobra.transpilers.registry import official_transpiler_targets
 
 @dataclass
 class ValidationResult:
@@ -37,16 +38,7 @@ class SyntaxReport:
     errors_by_target: dict[str, list[str]] = field(default_factory=dict)
 
 
-SUPPORTED_VALIDATOR_TARGETS: tuple[str, ...] = (
-    "python",
-    "javascript",
-    "rust",
-    "go",
-    "cpp",
-    "java",
-    "wasm",
-    "asm",
-)
+SUPPORTED_VALIDATOR_TARGETS: tuple[str, ...] = official_transpiler_targets()
 SUPPORTED_VALIDATION_PROFILES: tuple[str, ...] = ("solo-cobra", "transpiladores", "completo")
 SYNTAX_REPORT_SCHEMA_VERSION = "1.0.0"
 # Tiempo máximo (en segundos) para herramientas externas de validación de sintaxis.
