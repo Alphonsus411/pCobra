@@ -46,26 +46,25 @@ class BuildOrchestrator:
     ) -> BackendResolution:
         config = get_toml_map()
         normalized_preferred = self._normalize_optional_target(preferred_backend)
-        project_type = self._project_type(config)
-        module_meta = self._module_metadata(config, source_file)
-
-        module_target = self._normalize_optional_target(
-            module_meta.get("preferred_target")
-            or module_meta.get("target")
-            or module_meta.get("backend")
-        )
-
-        capabilities = self._collect_capabilities(
-            config=config,
-            module_meta=module_meta,
-            requested=required_capabilities,
-        )
 
         if normalized_preferred is not None:
             return BackendResolution(
                 backend=normalized_preferred,
                 reason="preferencia explícita (legacy/CLI)",
             )
+
+        project_type = self._project_type(config)
+        module_meta = self._module_metadata(config, source_file)
+        module_target = self._normalize_optional_target(
+            module_meta.get("preferred_target")
+            or module_meta.get("target")
+            or module_meta.get("backend")
+        )
+        capabilities = self._collect_capabilities(
+            config=config,
+            module_meta=module_meta,
+            requested=required_capabilities,
+        )
 
         ordered_candidates = self._ordered_candidates(
             project_type=project_type,

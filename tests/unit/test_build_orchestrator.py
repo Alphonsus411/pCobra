@@ -43,3 +43,20 @@ def test_build_orchestrator_respeta_preferencia_legacy(monkeypatch):
 
     assert resolution.backend == "rust"
     assert "legacy" in resolution.reason
+
+
+def test_build_orchestrator_preferencia_legacy_evade_metadata_invalida(monkeypatch):
+    monkeypatch.setattr(
+        "cobra.build.orchestrator.get_toml_map",
+        lambda: {
+            "modulos": {
+                "demo.co": {
+                    "preferred_target": "backend-invalido",
+                }
+            }
+        },
+    )
+
+    resolution = BuildOrchestrator().resolve_backend(source_file="demo.co", preferred_backend="python")
+
+    assert resolution.backend == "python"
