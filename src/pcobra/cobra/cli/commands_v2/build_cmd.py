@@ -3,6 +3,7 @@ from typing import Any
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 
@@ -25,6 +26,7 @@ class BuildCommandV2(BaseCommand):
     def run(self, args: Any) -> int:
         debug = bool(getattr(args, "debug", False))
         try:
+            validar_politica_modo(self.name, args, capability=self.capability)
             build_result = backend_pipeline.build(
                 args.file,
                 {
