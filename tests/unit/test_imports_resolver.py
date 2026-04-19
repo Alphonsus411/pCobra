@@ -279,8 +279,18 @@ def test_resolver_adjunta_adapter_desde_resolucion():
     assert result.precedence_reason == "unique_source:python_bridge"
 
 
-def test_resolver_usa_contrato_publico_para_backend_stdlib():
+def test_resolver_respeta_default_backend_si_esta_permitido_en_stdlib():
     resolver = CobraImportResolver()
+
+    result = resolver.resolve("cobra.web")
+
+    assert result.source == "stdlib"
+    assert result.backend == "python"
+    assert result.backend_adapter is not None
+
+
+def test_resolver_fuerza_backend_preferido_stdlib_si_default_no_esta_permitido():
+    resolver = CobraImportResolver(default_backend="rust")
 
     result = resolver.resolve("cobra.web")
 

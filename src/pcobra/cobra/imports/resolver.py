@@ -319,11 +319,6 @@ class CobraImportResolver:
                     source="stdlib",
                     resolved_name=name,
                     import_path=self._cobra_stdlib_to_python(name),
-                    backend=(
-                        str(metadata["backend_preferido"])
-                        if isinstance(metadata.get("backend_preferido"), str)
-                        else None
-                    ),
                 )
             return None
 
@@ -335,11 +330,6 @@ class CobraImportResolver:
                 source="stdlib",
                 resolved_name=qualified,
                 import_path=self._cobra_stdlib_to_python(qualified),
-                backend=(
-                    str(metadata["backend_preferido"])
-                    if isinstance(metadata.get("backend_preferido"), str)
-                    else None
-                ),
             )
         return None
 
