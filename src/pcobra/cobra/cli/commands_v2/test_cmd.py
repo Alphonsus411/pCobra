@@ -4,8 +4,8 @@ from typing import Any
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
-from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+from pcobra.cobra.cli.services.command_factory import CommandFactory
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error
 from pcobra.cobra.cli.target_policies import (
@@ -23,7 +23,8 @@ class TestCommandV2(BaseCommand):
 
     def __init__(self) -> None:
         super().__init__()
-        self._legacy = VerifyCommand()
+        self._command_factory = CommandFactory()
+        self._legacy = self._command_factory.create("verificar")
         self._runtime_manager = RuntimeManager()
         self._default_langs = ",".join(VERIFICATION_EXECUTABLE_TARGETS)
 
