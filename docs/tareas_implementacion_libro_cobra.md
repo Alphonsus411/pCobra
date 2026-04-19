@@ -318,6 +318,134 @@ Implementar de forma incremental, verificable y mantenible la adopción del nuev
 
 ---
 
+
+## Backlog ejecutable (Sprint 1..N)
+
+> Convención de dependencia: `bloquea ->` ticket(s) que no pueden arrancar hasta cerrar el ticket actual. `desbloquea <-` ticket(s) previos que habilitan arrancar este ticket.
+
+### Sprint 1 · Fundaciones documentales (3 tickets)
+
+#### F0-T1 · Inventario documental base
+- **Prioridad:** P2
+- **Responsable sugerido:** Tech Writer + Maintainer Docs
+- **Duración objetivo:** 6 h
+- **Dependencias:** `bloquea -> F0-T2, F1-T1`
+- **Artefacto exacto esperado:** `docs/tareas_implementacion_libro_cobra.md` · sección `Matriz de trazabilidad tarea → archivo` actualizada con inventario base.
+- **Criterio de cierre verificable:** existe en el diff una lista/tabla de documentos con estado (`vigente`, `redundante`, `histórico`, `requiere actualización`) y referencia a cada archivo fuente.
+
+#### F0-T2 · Criterios de consolidación y obsolescencia
+- **Prioridad:** P2
+- **Responsable sugerido:** Maintainer Docs
+- **Duración objetivo:** 5 h
+- **Dependencias:** `desbloquea <- F0-T1` · `bloquea -> F2-T1`
+- **Artefacto exacto esperado:** `CONTRIBUTING.md` · sección `Política de documentación (consolidación/obsolescencia)`.
+- **Criterio de cierre verificable:** la sección incluye reglas explícitas para “redundante”, “histórico” y “eliminable”, y se referencia desde este plan.
+
+#### F1-T1 · Enlace principal en README (ES)
+- **Prioridad:** P2
+- **Responsable sugerido:** Maintainer Core
+- **Duración objetivo:** 3 h
+- **Dependencias:** `desbloquea <- F0-T1` · `bloquea -> F1-T2, F1-T3`
+- **Artefacto exacto esperado:** `README.md` · sección `Documentación` con `docs/LIBRO_PROGRAMACION_COBRA.md` como primer enlace.
+- **Criterio de cierre verificable:** el primer enlace de aprendizaje en README apunta al libro y los enlaces previos siguen accesibles como secundarios.
+
+### Sprint 2 · Entrada canónica y navegación (3 tickets)
+
+#### F1-T2 · Enlace principal en README en inglés
+- **Prioridad:** P2
+- **Responsable sugerido:** Maintainer Docs EN
+- **Duración objetivo:** 3 h
+- **Dependencias:** `desbloquea <- F1-T1` · `bloquea -> F1-T3`
+- **Artefacto exacto esperado:** `docs/README.en.md` · sección `Documentation` con nota de canon en español.
+- **Criterio de cierre verificable:** el README en inglés enlaza al libro canónico y aclara idioma/alcance en una nota visible de primera pantalla.
+
+#### F1-T3 · Mapa de navegación cruzada
+- **Prioridad:** P2
+- **Responsable sugerido:** Tech Writer
+- **Duración objetivo:** 8 h
+- **Dependencias:** `desbloquea <- F1-T1, F1-T2` · `bloquea -> F2-T1, F3-T1`
+- **Artefacto exacto esperado:** `docs/LIBRO_PROGRAMACION_COBRA.md` · sección `Rutas sugeridas`; `README.md` y `docs/MANUAL_COBRA.md` con enlaces cruzados.
+- **Criterio de cierre verificable:** existen rutas por perfil (rápido/CLI/stdlib/arquitectura) y no se detectan enlaces rotos en revisión manual.
+
+#### F2-T1 · Retiro/archivo de documentación duplicada
+- **Prioridad:** P1 (limpieza crítica: duplicación de manuales)
+- **Responsable sugerido:** Maintainer Docs + Reviewer de arquitectura
+- **Duración objetivo:** 8 h
+- **Dependencias:** `desbloquea <- F0-T2, F1-T3` · `bloquea -> F2-T2, F3-T3`
+- **Artefacto exacto esperado:** `docs/MANUAL_COBRA.md` (secciones duplicadas retiradas o marcadas), `docs/historico/` (si aplica), y enlaces entrantes corregidos en `README.md`/`docs/README.en.md`.
+- **Criterio de cierre verificable:** no quedan referencias activas a contenido retirado y cada movimiento/eliminación está trazado en el PR.
+
+### Sprint 3 · Limpieza histórica y QA técnico (3 tickets)
+
+#### F2-T2 · Etiquetado explícito de histórico/no operativo
+- **Prioridad:** P2
+- **Responsable sugerido:** Tech Writer
+- **Duración objetivo:** 4 h
+- **Dependencias:** `desbloquea <- F2-T1` · `bloquea -> F4-T1`
+- **Artefacto exacto esperado:** `docs/historico/*.md` y/o `docs/MANUAL_COBRA.md` · banner `No operativo` + enlace al canónico.
+- **Criterio de cierre verificable:** todo documento histórico contiene banner homogéneo y referencia explícita al recurso vigente.
+
+#### F3-T1 · Verificación de comandos del libro
+- **Prioridad:** P1 (limpieza crítica: contradicciones de CLI/targets)
+- **Responsable sugerido:** Maintainer CLI
+- **Duración objetivo:** 6 h
+- **Dependencias:** `desbloquea <- F1-T3` · `bloquea -> F3-T2, F4-T2`
+- **Artefacto exacto esperado:** `docs/LIBRO_PROGRAMACION_COBRA.md` · sección `Comandos verificados` (o equivalente) + ajustes en `README.md` si aplica.
+- **Criterio de cierre verificable:** cada comando crítico tiene estado `OK`/`ajuste` con evidencia de ejecución o nota de limitación reproducible.
+
+#### F3-T2 · Validación de snippets de sintaxis Cobra
+- **Prioridad:** P1 (limpieza crítica: contradicciones de CLI/targets)
+- **Responsable sugerido:** Maintainer Lenguaje
+- **Duración objetivo:** 8 h
+- **Dependencias:** `desbloquea <- F3-T1` · `bloquea -> F3-T3`
+- **Artefacto exacto esperado:** `docs/LIBRO_PROGRAMACION_COBRA.md` y `docs/MANUAL_COBRA.md` · sección `Snippets validados` con alcance por target/backend.
+- **Criterio de cierre verificable:** snippets críticos están validados o anotados con excepción explícita y razón técnica.
+
+### Sprint 4 · Cierre editorial y adopción continua (3 tickets)
+
+#### F3-T3 · Revisión editorial de terminología
+- **Prioridad:** P2
+- **Responsable sugerido:** Tech Writer + Reviewer bilingüe
+- **Duración objetivo:** 5 h
+- **Dependencias:** `desbloquea <- F2-T1, F3-T2` · `bloquea -> F4-T1`
+- **Artefacto exacto esperado:** `docs/LIBRO_PROGRAMACION_COBRA.md`, `docs/MANUAL_COBRA.md`, `README.md`, `docs/README.en.md` · glosario/terminología unificada.
+- **Criterio de cierre verificable:** términos clave (`target`, `backend`, `transpilador`, `runtime`, `sandbox`) aparecen con uso consistente en documentos de entrada.
+
+#### F4-T1 · Guía de mantenimiento del libro en CONTRIBUTING
+- **Prioridad:** P2
+- **Responsable sugerido:** Maintainer Proyecto
+- **Duración objetivo:** 4 h
+- **Dependencias:** `desbloquea <- F2-T2, F3-T3` · `bloquea -> F4-T2`
+- **Artefacto exacto esperado:** `CONTRIBUTING.md` · sección `Cómo actualizar el libro` + checklist documental.
+- **Criterio de cierre verificable:** PRs con impacto en lenguaje/CLI incluyen checklist documental visible y reutilizable.
+
+#### F4-T2 · Automatización de verificación de enlaces docs
+- **Prioridad:** P2
+- **Responsable sugerido:** DevEx/CI Maintainer
+- **Duración objetivo:** 7 h
+- **Dependencias:** `desbloquea <- F3-T1, F4-T1`
+- **Artefacto exacto esperado:** script de verificación en `scripts/` (o job CI existente) + referencia en `CONTRIBUTING.md`.
+- **Criterio de cierre verificable:** existe comando ejecutable local/CI para links markdown y su uso queda documentado.
+
+### Tabla de estado inicial para seguimiento continuo (PRs)
+
+| Ticket | Sprint | Prioridad | Estado inicial | Última actualización | Notas de seguimiento |
+|---|---|---|---|---|---|
+| F0-T1 | Sprint 1 | P2 | todo | - | - |
+| F0-T2 | Sprint 1 | P2 | todo | - | - |
+| F1-T1 | Sprint 1 | P2 | todo | - | - |
+| F1-T2 | Sprint 2 | P2 | todo | - | - |
+| F1-T3 | Sprint 2 | P2 | todo | - | - |
+| F2-T1 | Sprint 2 | P1 | todo | - | - |
+| F2-T2 | Sprint 3 | P2 | todo | - | - |
+| F3-T1 | Sprint 3 | P1 | todo | - | - |
+| F3-T2 | Sprint 3 | P1 | todo | - | - |
+| F3-T3 | Sprint 4 | P2 | todo | - | - |
+| F4-T1 | Sprint 4 | P2 | todo | - | - |
+| F4-T2 | Sprint 4 | P2 | todo | - | - |
+
+> Estados permitidos para actualización en PRs: `todo`, `doing`, `done`.
+
 ## Entregables
 
 1. `docs/LIBRO_PROGRAMACION_COBRA.md` como guía principal.
