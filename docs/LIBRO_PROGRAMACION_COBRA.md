@@ -302,8 +302,8 @@ Flujo mínimo sugerido:
 
 ```bash
 cobra run src/app.cobra
-cobra test
-cobra build src/app.cobra --target python
+cobra test src/app.cobra
+cobra build src/app.cobra
 ```
 
 Comandos útiles adicionales (según el setup del proyecto):
