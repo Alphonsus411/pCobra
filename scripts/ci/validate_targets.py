@@ -1101,7 +1101,7 @@ def validate_cli_public_surfaces_no_legacy_aliases() -> list[str]:
     for surface_name, help_text in help_surfaces.items():
         lowered = help_text.lower()
         for alias in forbidden_aliases:
-            if re.search(rf"(?<![\w.+/-]){re.escape(alias)}(?![\w.+/-])", lowered):
+            if _contains_token(lowered, alias):
                 errors.append(
                     f"cli:{surface_name}: ayuda pública contiene alias legacy '{alias}'"
                 )
@@ -1141,11 +1141,20 @@ def validate_ci_checklist_no_public_legacy_targets() -> list[str]:
             continue
         lowered = f"{result.stdout}\n{result.stderr}".lower()
         for target in INTERNAL_LEGACY_TARGETS:
-            if re.search(rf"(?<![\w.+/-]){re.escape(target)}(?![\w.+/-])", lowered):
+            if _contains_token(lowered, target):
                 errors.append(
                     f"ci-checklist:{surface_name}: exposición pública de target legacy '{target}'"
                 )
     return errors
+
+
+def _contains_token(text: str, token: str) -> bool:
+    token = token.lower()
+    token_chars = r"[\w.+-]"
+    return (
+        re.search(rf"(?<!{token_chars}){re.escape(token)}(?!{token_chars})", text)
+        is not None
+    )
 
 
 def _run_stage(name: str, errors: list[str]) -> int | None:
