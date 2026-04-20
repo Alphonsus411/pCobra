@@ -26,9 +26,9 @@ from pcobra.cobra.core import LexerError
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
-    construir_interprete,
     ejecutar_codigo_canonico,
-    resolver_validadores_seguridad,
+    preparar_interpretador,
+    resolver_interpretador_cls,
 )
 from pcobra.cobra.transpilers import module_map
 from pcobra.core.interpreter import InterpretadorCobra
@@ -116,12 +116,6 @@ def _detectar_raiz_proyecto_desde_archivo(archivo: str) -> str:
         if (ruta / "cobra.toml").exists() or (ruta / "cobra.mod").exists():
             return str(ruta)
     return str(Path(module_map.COBRA_TOML_PATH).resolve().parent)
-
-
-def _obtener_interpretador_cls():
-    """Obtiene la clase de intérprete respetando posibles mocks de pruebas."""
-
-    return getattr(sys.modules[__name__], "InterpretadorCobra", InterpretadorCobra)
 
 
 class ExecuteCommand(BaseCommand):
@@ -385,22 +379,20 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
         """Ejecuta el código normalmente con el intérprete."""
         try:
-            interpretador_cls = _obtener_interpretador_cls()
-            validadores_normalizados = resolver_validadores_seguridad(
-                extra_validators,
-                interpretador_cls=interpretador_cls,
-            )
-            interpreter = construir_interprete(
-                interpretador_cls=interpretador_cls,
+            interpreter_setup = preparar_interpretador(
+                interpretador_cls=resolver_interpretador_cls(
+                    module_name=__name__,
+                    default_cls=InterpretadorCobra,
+                ),
                 safe_mode=seguro,
-                extra_validators=validadores_normalizados,
+                extra_validators=extra_validators,
             )
             ejecutar_codigo_canonico(
                 codigo,
-                interpretador=interpreter,
-                seguro=seguro,
-                extra_validators=validadores_normalizados,
-                interpretador_cls=interpretador_cls,
+                interpretador=interpreter_setup.interpretador,
+                seguro=interpreter_setup.safe_mode,
+                extra_validators=interpreter_setup.validadores_extra,
+                interpretador_cls=interpreter_setup.interpretador_cls,
                 construir_cadena_fn=construir_cadena,
                 analizar_codigo_fn=analizar_codigo,
             )

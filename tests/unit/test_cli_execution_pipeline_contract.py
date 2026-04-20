@@ -135,3 +135,31 @@ def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
 
     assert ret == 0
     mock_ejecutar_codigo.assert_called_once_with("si verdadero:\nimprimir(1)\nfin", None)
+
+
+def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno():
+    cmd_execute = ExecuteCommand()
+    out_script, err_script = StringIO(), StringIO()
+    codigo_script = (
+        "var base = 0\n"
+        "mientras falso:\n"
+        "    pasar\n"
+        "fin\n"
+        "var acumulado = 42"
+    )
+    with redirect_stdout(out_script), redirect_stderr(err_script):
+        rc_script = cmd_execute._ejecutar_normal(codigo_script, seguro=False, extra_validators=None)
+
+    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    out_repl, err_repl = StringIO(), StringIO()
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        cmd_interactive.ejecutar_codigo(
+            "var base = 0\nmientras falso:\n    pasar\nfin"
+        )
+        cmd_interactive.ejecutar_codigo("var acumulado = 42")
+
+    assert rc_script == 0
+    assert out_script.getvalue() == ""
+    assert err_script.getvalue() == err_repl.getvalue() == ""
+    assert cmd_interactive.interpretador.contextos[-1].get("base") == 0
+    assert cmd_interactive.interpretador.contextos[-1].get("acumulado") == 42
