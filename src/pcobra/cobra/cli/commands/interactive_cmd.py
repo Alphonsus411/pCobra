@@ -36,8 +36,8 @@ from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
     construir_script_sandbox_canonico,
-    ejecutar_codigo_canonico,
-    preparar_interpretador,
+    ejecutar_pipeline_explicito,
+    PipelineInput,
     resolver_interpretador_cls,
     validar_ast_seguro,
 )
@@ -358,14 +358,19 @@ class InteractiveCommand(BaseCommand):
             module_name=__name__,
             default_cls=type(self.interpretador),
         )
-        resultado_pipeline = ejecutar_codigo_canonico(
-            codigo,
-            interpretador=self.interpretador,
-            seguro=self._seguro_repl,
-            extra_validators=self._extra_validators_repl,
-            interpretador_cls=interpretador_cls,
+        setup, resultado_pipeline = ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo=codigo,
+                interpretador_cls=interpretador_cls,
+                safe_mode=self._seguro_repl,
+                extra_validators=self._extra_validators_repl,
+                interpretador=self.interpretador,
+            ),
             analizar_codigo_fn=analizar_codigo,
         )
+        self.interpretador = setup.interpretador
+        self._seguro_repl = setup.safe_mode
+        self._extra_validators_repl = setup.validadores_extra
         ast = resultado_pipeline.ast
         resultado = resultado_pipeline.resultado
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
@@ -448,21 +453,26 @@ class InteractiveCommand(BaseCommand):
         self._seguro_repl = bool(seguro)
         self._extra_validators_repl = extra_validators
         try:
-            interpreter_setup = preparar_interpretador(
-                interpretador_cls=resolver_interpretador_cls(
+            interpretador_cls = resolver_interpretador_cls(
                     module_name=__name__,
                     default_cls=InterpretadorCobra,
+                )
+            setup, _pipeline_result = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo="",
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=self._seguro_repl,
+                    extra_validators=self._extra_validators_repl,
                 ),
-                safe_mode=self._seguro_repl,
-                extra_validators=self._extra_validators_repl,
+                analizar_codigo_fn=lambda _codigo: [],
             )
         except (TypeError, ValueError, PrimitivaPeligrosaError) as err:
             mostrar_error(str(err))
             return 1
 
-        self._seguro_repl = interpreter_setup.safe_mode
-        self._extra_validators_repl = interpreter_setup.validadores_extra
-        self.interpretador = interpreter_setup.interpretador
+        self._seguro_repl = setup.safe_mode
+        self._extra_validators_repl = setup.validadores_extra
+        self.interpretador = setup.interpretador
 
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)

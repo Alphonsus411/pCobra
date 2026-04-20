@@ -27,8 +27,8 @@ from pcobra.cobra.core import ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
     construir_script_sandbox_canonico,
-    ejecutar_codigo_canonico,
-    preparar_interpretador,
+    ejecutar_pipeline_explicito,
+    PipelineInput,
     resolver_interpretador_cls,
 )
 from pcobra.cobra.transpilers import module_map
@@ -375,20 +375,16 @@ class ExecuteCommand(BaseCommand):
     def _ejecutar_normal(self, codigo: str, seguro: bool, extra_validators: Any) -> int:
         """Ejecuta el código normalmente con el intérprete."""
         try:
-            interpreter_setup = preparar_interpretador(
-                interpretador_cls=resolver_interpretador_cls(
-                    module_name=__name__,
-                    default_cls=InterpretadorCobra,
+            ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo=codigo,
+                    interpretador_cls=resolver_interpretador_cls(
+                        module_name=__name__,
+                        default_cls=InterpretadorCobra,
+                    ),
+                    safe_mode=seguro,
+                    extra_validators=extra_validators,
                 ),
-                safe_mode=seguro,
-                extra_validators=extra_validators,
-            )
-            ejecutar_codigo_canonico(
-                codigo,
-                interpretador=interpreter_setup.interpretador,
-                seguro=interpreter_setup.safe_mode,
-                extra_validators=interpreter_setup.validadores_extra,
-                interpretador_cls=interpreter_setup.interpretador_cls,
                 construir_cadena_fn=construir_cadena,
                 analizar_codigo_fn=analizar_codigo,
             )
