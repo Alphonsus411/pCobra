@@ -8,11 +8,13 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 import pcobra  # noqa: F401
-from cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.transpilers.registry import get_transpilers
 from cobra.core import Lexer, Parser
 from tests.integration.test_transpile_semantics import obtener_salida_interprete
 from tests.utils.runtime import execute_transpiled_code
 from tests.utils.targets import OFFICIAL_RUNTIME_TARGETS, SUPPORTED_TARGETS
+
+TRANSPILERS = get_transpilers()
 
 
 @pytest.mark.parametrize("lang", SUPPORTED_TARGETS)

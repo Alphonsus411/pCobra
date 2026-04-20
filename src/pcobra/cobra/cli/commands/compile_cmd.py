@@ -2,8 +2,8 @@ import logging
 import multiprocessing
 import os
 import inspect
+import warnings
 from argparse import ArgumentTypeError
-from types import MappingProxyType
 from importlib import import_module
 from importlib.metadata import entry_points
 
@@ -49,10 +49,6 @@ _PLUGIN_TRANSPILERS: dict[str, type] = {}
 _ENTRYPOINTS_LOADED = False
 
 LANG_CHOICES = official_transpiler_targets()
-# DEPRECATED (retirar cuando no existan consumidores legacy de compile_cmd.TRANSPILERS):
-# shim de solo lectura que delega al registro canónico en transpilers.registry.
-TRANSPILERS = MappingProxyType(get_transpilers())
-
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
     """Registra un backend externo solo si usa nombre canónico oficial exacto."""
@@ -257,6 +253,20 @@ def _ensure_entrypoints_loaded_once() -> None:
 
     load_entrypoint_transpilers()
     _ENTRYPOINTS_LOADED = True
+
+
+
+def __getattr__(name: str):
+    """Compatibilidad legacy para compile_cmd.TRANSPILERS (deprecado)."""
+    if name == "TRANSPILERS":
+        warnings.warn(
+            "compile_cmd.TRANSPILERS está deprecado y será retirado el 2026-09-30. "
+            "Use pcobra.cobra.transpilers.registry.get_transpilers().",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return get_transpilers()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 TARGETS_HELP = ", ".join(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 
