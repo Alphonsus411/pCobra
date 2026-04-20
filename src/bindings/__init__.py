@@ -1,4 +1,7 @@
-"""Superficie pública canónica del contrato de bindings."""
+"""Shim legacy de ``bindings`` dentro de ``src``.
+
+Este módulo solo delega en :mod:`pcobra.cobra.bindings`.
+"""
 
 from .contract import (
     BINDINGS_BY_LANGUAGE,
