@@ -6,7 +6,7 @@ from pcobra.cobra.transpilers.common.utils import get_standard_imports
 from tests.integration.transpilers.backend_contracts import generate_code
 
 IMPORT_MARKERS = {
-    "python": ("from corelibs import *", "from standard_library import *"),
+    "python": ("import pcobra.corelibs as _pcobra_corelibs", "import pcobra.standard_library as _pcobra_standard_library"),
     "javascript": (
         "import * as io from './nativos/io.js';",
         "import * as texto from './nativos/texto.js';",

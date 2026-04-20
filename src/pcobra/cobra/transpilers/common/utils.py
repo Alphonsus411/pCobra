@@ -62,9 +62,11 @@ class BaseTranspiler(NodeVisitor, ABC):
 
 STANDARD_IMPORTS = {
     "python": (
-        "from core.nativos import *\n"
-        "from corelibs import *\n"
-        "from standard_library import *\n"
+        "from pcobra.core.nativos import *\n"
+        "import pcobra.corelibs as _pcobra_corelibs\n"
+        "import pcobra.standard_library as _pcobra_standard_library\n"
+        "globals().update({name: getattr(_pcobra_corelibs, name) for name in dir(_pcobra_corelibs) if not name.startswith('_')})\n"
+        "globals().update({name: getattr(_pcobra_standard_library, name) for name in dir(_pcobra_standard_library) if not name.startswith('_')})\n"
     ),
     "javascript": [
         "import * as io from './nativos/io.js';",
@@ -220,8 +222,8 @@ RUNTIME_HOOKS = {
 
 MINIMAL_RUNTIME_ROUTE_MARKERS = {
     "python": {
-        "corelibs": "from corelibs import *",
-        "standard_library": "from standard_library import *",
+        "corelibs": "import pcobra.corelibs as _pcobra_corelibs",
+        "standard_library": "import pcobra.standard_library as _pcobra_standard_library",
         "minimal_symbols": (),
     },
     "javascript": {

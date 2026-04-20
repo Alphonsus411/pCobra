@@ -36,12 +36,12 @@ FEATURE_NODES = {
 
 FULL_EXPECTATIONS = {
     "python": {
-        "holobit": ["from corelibs import *", "from standard_library import *", "hb = cobra_holobit([1, 2, 3])"],
+        "holobit": ["import pcobra.corelibs as _pcobra_corelibs", "import pcobra.standard_library as _pcobra_standard_library", "hb = cobra_holobit([1, 2, 3])"],
         "proyectar": ["def cobra_proyectar", "cobra_proyectar(hb, '2d')"],
         "transformar": ["def cobra_transformar", "cobra_transformar(hb, 'rotar', 90)"],
         "graficar": ["def cobra_graficar", "cobra_graficar(hb)"],
-        "corelibs": ["from corelibs import *", "longitud('cobra')"],
-        "standard_library": ["from standard_library import *", "mostrar('hola')"],
+        "corelibs": ["import pcobra.corelibs as _pcobra_corelibs", "longitud('cobra')"],
+        "standard_library": ["import pcobra.standard_library as _pcobra_standard_library", "mostrar('hola')"],
     },
 }
 
