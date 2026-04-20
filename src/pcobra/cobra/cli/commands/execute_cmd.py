@@ -26,14 +26,18 @@ from pcobra.cobra.core import LexerError
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
+    construir_script_sandbox_canonico,
     ejecutar_codigo_canonico,
     preparar_interpretador,
     resolver_interpretador_cls,
 )
 from pcobra.cobra.transpilers import module_map
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from pcobra.core.resource_limits import limitar_cpu_segundos
+from pcobra.cobra.core.runtime import (
+    InterpretadorCobra,
+    PrimitivaPeligrosaError,
+    construir_cadena,
+    limitar_cpu_segundos,
+)
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
 
@@ -305,18 +309,10 @@ class ExecuteCommand(BaseCommand):
             mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
 
-        extra_repr = "None"
-        if isinstance(extra_validators, (str, list)):
-            extra_repr = repr(extra_validators)
-
-        script = (
-            "from pcobra.cobra.core import Lexer, Parser\n"
-            "from pcobra.core.interpreter import InterpretadorCobra\n"
-            f"_codigo = {codigo!r}\n"
-            "_tokens = Lexer(_codigo).tokenizar()\n"
-            "_ast = Parser(_tokens).parsear()\n"
-            f"_interp = InterpretadorCobra(safe_mode={seguro!r}, extra_validators={extra_repr})\n"
-            "_interp.ejecutar_ast(_ast)\n"
+        script = construir_script_sandbox_canonico(
+            codigo,
+            safe_mode=seguro,
+            extra_validators=extra_validators,
         )
 
         try:

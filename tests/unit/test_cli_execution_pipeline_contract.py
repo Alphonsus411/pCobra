@@ -6,8 +6,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.execution_pipeline import preparar_interpretador
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
-from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
 def _args_interactive():
@@ -163,3 +164,38 @@ def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno():
     assert err_script.getvalue() == err_repl.getvalue() == ""
     assert cmd_interactive.interpretador.contextos[-1].get("base") == 0
     assert cmd_interactive.interpretador.contextos[-1].get("acumulado") == 42
+
+
+def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
+    codigo = (
+        "var base = 0\n"
+        "mientras falso:\n"
+        "    pasar\n"
+        "fin\n"
+        "var acumulado = 42\n"
+        "var ultimo = 42"
+    )
+    cmd_execute = ExecuteCommand()
+    estado_script = {}
+
+    def _capturar_setup(**kwargs):
+        setup = preparar_interpretador(**kwargs)
+        estado_script["interpreter"] = setup.interpretador
+        return setup
+
+    with patch(
+        "pcobra.cobra.cli.commands.execute_cmd.preparar_interpretador",
+        side_effect=_capturar_setup,
+    ):
+        assert cmd_execute._ejecutar_normal(codigo, seguro=False, extra_validators=None) == 0
+
+    contexto_script = estado_script["interpreter"].contextos[-1]
+
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    repl.ejecutar_codigo(codigo)
+    estado_repl = repl.interpretador.contextos[-1]
+
+    assert estado_repl.values == contexto_script.values
+    assert estado_repl.get("base") == 0

@@ -8,8 +8,7 @@ from typing import Any, Callable
 
 from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.cli.i18n import _
-from pcobra.core.semantic_validators import construir_cadena
-from pcobra.core.semantic_validators.base import ValidadorBase
+from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
 
 
 @dataclass(frozen=True)
@@ -29,6 +28,41 @@ class InterpreterSetup:
     safe_mode: bool
     validadores_extra: Any
     interpretador: Any
+
+
+def construir_script_sandbox_canonico(
+    codigo: str,
+    *,
+    safe_mode: bool | None = None,
+    extra_validators: Any = None,
+    imprimir_resultado: bool = False,
+) -> str:
+    """Genera un script sandbox con imports canónicos del runtime Cobra."""
+
+    extra_repr = repr(extra_validators if extra_validators is not None else None)
+    safe_mode_fragment = (
+        ""
+        if safe_mode is None
+        else f", safe_mode={safe_mode!r}, extra_validators={extra_repr}"
+    )
+    script = (
+        "from pcobra.cobra.core import Lexer, Parser\n"
+        "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
+        f"_codigo = {codigo!r}\n"
+        "_tokens = Lexer(_codigo).tokenizar()\n"
+        "_ast = Parser(_tokens).parsear()\n"
+        f"_interp = InterpretadorCobra({safe_mode_fragment.lstrip(', ')})\n"
+        "_resultado = _interp.ejecutar_ast(_ast)\n"
+    )
+    if imprimir_resultado:
+        script += (
+            "if _resultado is not None:\n"
+            "    if isinstance(_resultado, bool):\n"
+            "        print('verdadero' if _resultado else 'falso')\n"
+            "    else:\n"
+            "        print(_resultado)\n"
+        )
+    return script
 
 
 def analizar_codigo(codigo: str) -> Any:

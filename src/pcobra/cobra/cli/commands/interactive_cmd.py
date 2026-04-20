@@ -35,21 +35,28 @@ from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import Parser, ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
+    construir_script_sandbox_canonico,
     ejecutar_codigo_canonico,
     preparar_interpretador,
     resolver_interpretador_cls,
     validar_ast_seguro,
 )
 from pcobra.cobra.transpilers import module_map
-from pcobra.core.ast_nodes import NodoBucleMientras, NodoCondicional, NodoPara, NodoSwitch, NodoTryCatch
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.resource_limits import limitar_memoria_mb
-from pcobra.core.sandbox import (
+from pcobra.cobra.core import (
+    NodoBucleMientras,
+    NodoCondicional,
+    NodoPara,
+    NodoSwitch,
+    NodoTryCatch,
+)
+from pcobra.cobra.core.runtime import (
+    InterpretadorCobra,
     ejecutar_en_contenedor,
     ejecutar_en_sandbox,
+    limitar_memoria_mb,
+    PrimitivaPeligrosaError,
     validar_dependencias,
 )
-from pcobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _, format_traceback
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -766,19 +773,11 @@ class InteractiveCommand(BaseCommand):
         """
         analizar_codigo(linea)
 
-        script = (
-            "from pcobra.cobra.core import Lexer, Parser\n"
-            "from pcobra.core.interpreter import InterpretadorCobra\n"
-            f"_codigo = {linea!r}\n"
-            "_tokens = Lexer(_codigo).tokenizar()\n"
-            "_ast = Parser(_tokens).parsear()\n"
-            "_interp = InterpretadorCobra()\n"
-            "_resultado = _interp.ejecutar_ast(_ast)\n"
-            "if _resultado is not None:\n"
-            "    if isinstance(_resultado, bool):\n"
-            "        print('verdadero' if _resultado else 'falso')\n"
-            "    else:\n"
-            "        print(_resultado)\n"
+        script = construir_script_sandbox_canonico(
+            linea,
+            safe_mode=None,
+            extra_validators=None,
+            imprimir_resultado=True,
         )
 
         salida = ejecutar_en_sandbox(
