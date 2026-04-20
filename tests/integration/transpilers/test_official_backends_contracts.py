@@ -36,7 +36,7 @@ HOOK_EXPECTATIONS = {
 }
 
 IMPORT_EXPECTATIONS = {
-    "python": ("from corelibs import *", "from standard_library import *"),
+    "python": ("import pcobra.corelibs as _pcobra_corelibs", "import pcobra.standard_library as _pcobra_standard_library"),
     "javascript": ("import * as io from './nativos/io.js';", "import * as interfaz from './nativos/interfaz.js';"),
     "rust": ("use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {"),
     "wasm": (
