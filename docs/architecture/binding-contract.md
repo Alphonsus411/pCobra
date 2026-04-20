@@ -137,7 +137,7 @@ manager.validate_security_route("rust", command="run", sandbox=True, containeriz
 ### Python (`python_direct_import`)
 
 ```python
-from bindings.contract import resolve_binding
+from pcobra.cobra.bindings.contract import resolve_binding
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 
 cap = resolve_binding("python")
@@ -172,6 +172,6 @@ manager.validate_security_route("rust", sandbox=False, containerized=True, comma
 
 Si se añade un backend oficial nuevo:
 
-1. actualizar `bindings/contract.py`,
+1. actualizar `src/pcobra/cobra/bindings/contract.py`,
 2. documentar la ruta en este documento,
 3. adoptar `resolve_binding(...)` en el runner correspondiente.

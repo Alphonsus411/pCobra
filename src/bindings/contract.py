@@ -3,6 +3,10 @@
 Fuente de verdad: :mod:`pcobra.cobra.bindings.contract`.
 """
 
+from __future__ import annotations
+
+import warnings
+
 from pcobra.cobra.bindings.contract import (
     ABI_POLICY_BY_ROUTE,
     BINDINGS_BY_LANGUAGE,
@@ -23,6 +27,12 @@ from pcobra.cobra.bindings.contract import (
     resolve_command_event,
     route_matrix_markdown,
     validate_public_language,
+)
+
+warnings.warn(
+    "`bindings.contract` está deprecado; usa `pcobra.cobra.bindings.contract`.",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 __all__ = [

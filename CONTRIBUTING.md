@@ -32,6 +32,9 @@ Las tareas etiquetadas como `good first issue` están orientadas a la comunidad 
   `pyright src` (o `make typecheck`).
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
   [SPEC_COBRA.md](docs/SPEC_COBRA.md).
+- **Imports internos oficiales**: en `src/` usa `pcobra.cobra.*` o imports
+  relativos del propio paquete. Evita `from bindings...`; ese namespace se
+  mantiene únicamente como shim legacy deprecado.
 
 ## Nueva feature del lenguaje
 
