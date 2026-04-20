@@ -137,12 +137,16 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
     if language in reverse_module.REGISTERED_REVERSE_TRANSPILERS
 }
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
-TRANSPILERS = cli_transpilers()
 DESTINO_CHOICES = cli_transpiler_targets()
 TARGETS_HELP = build_target_help_by_tier(
     tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 )
 REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
+
+
+def _runtime_transpilers() -> Dict[str, Type]:
+    """Consulta en runtime el registro canónico para evitar snapshots a nivel módulo."""
+    return dict(cli_transpilers())
 
 
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
@@ -329,7 +333,8 @@ class TranspilarInversoCommand(BaseCommand):
             raise UnsupportedLanguageError(
                 f"No hay parser reverse disponible para el lenguaje de origen '{origen}'"
             )
-        if destino not in TRANSPILERS:
+        transpilers = _runtime_transpilers()
+        if destino not in transpilers:
             raise UnsupportedLanguageError(
                 f"No hay transpilador oficial disponible para el lenguaje de destino '{destino}'"
             )
@@ -387,7 +392,8 @@ class TranspilarInversoCommand(BaseCommand):
 
             # Validar transpiladores
             reverse_cls = REVERSE_TRANSPILERS.get(origen)
-            transp_cls = TRANSPILERS.get(destino)
+            transpilers = _runtime_transpilers()
+            transp_cls = transpilers.get(destino)
 
             logger.debug(
                 f"Usando transpilador {reverse_cls.__name__} para origen {origen}"

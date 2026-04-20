@@ -36,8 +36,6 @@ MEDIUM_SIZE = 100
 LARGE_SIZE = 1000
 VALID_SIZES = ['small', 'medium', 'large']
 PROFILE_OUTPUT = "bench_transpilers.prof"
-TRANSPILERS = cli_transpilers()
-
 @contextlib.contextmanager
 def profile_context(profiler: cProfile.Profile | None):
     """Context manager para el profiler.
@@ -169,7 +167,7 @@ class BenchTranspilersCommand(BaseCommand):
             profiler = cProfile.Profile() if getattr(args, "profile", False) else None
 
             with profile_context(profiler):
-                transpilers = TRANSPILERS
+                transpilers = cli_transpilers()
                 for size, code in programs.items():
                     ast = obtener_ast(code)
                     for lang in transpilers:

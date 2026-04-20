@@ -104,7 +104,7 @@ def test_backend_legacy_muestra_warning_deprecacion(monkeypatch, tmp_path):
         def generate_code(self, _ast):
             return "ok"
 
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.TRANSPILERS", {"python": _DummyTranspiler})
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd._transpile_with_pipeline_or_plugin", lambda ast, lang: "ok")
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_advertencia", lambda msg, registrar_log=True: advertencias.append(msg))
 
     args = SimpleNamespace(archivo=str(archivo), tipo="python", backend="python", tipos=None, modo="mixto")
