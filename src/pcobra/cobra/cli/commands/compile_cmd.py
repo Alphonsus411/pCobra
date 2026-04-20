@@ -2,7 +2,6 @@ import logging
 import multiprocessing
 import os
 import inspect
-import warnings
 from argparse import ArgumentTypeError
 from importlib import import_module
 from importlib.metadata import entry_points
@@ -25,6 +24,7 @@ from pcobra.core.semantic_validators import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.transpiler_registry import cli_transpiler_targets
 from pcobra.cobra.cli.deprecation_policy import (
     enforce_target_deprecation_policy,
     visible_public_targets,
@@ -34,10 +34,6 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
 from pcobra.core.cobra_config import tiempo_max_transpilacion
-from pcobra.cobra.transpilers.registry import (
-    get_transpilers,
-    official_transpiler_targets,
-)
 
 # Constantes de configuración
 MAX_PROCESSES = 4
@@ -48,7 +44,7 @@ MAX_LANGUAGES = 10
 _PLUGIN_TRANSPILERS: dict[str, type] = {}
 _ENTRYPOINTS_LOADED = False
 
-LANG_CHOICES = official_transpiler_targets()
+LANG_CHOICES = cli_transpiler_targets()
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
     """Registra un backend externo solo si usa nombre canónico oficial exacto."""
@@ -253,20 +249,6 @@ def _ensure_entrypoints_loaded_once() -> None:
 
     load_entrypoint_transpilers()
     _ENTRYPOINTS_LOADED = True
-
-
-
-def __getattr__(name: str):
-    """Compatibilidad legacy para compile_cmd.TRANSPILERS (deprecado)."""
-    if name == "TRANSPILERS":
-        warnings.warn(
-            "compile_cmd.TRANSPILERS está deprecado y será retirado el 2026-09-30. "
-            "Use pcobra.cobra.transpilers.registry.get_transpilers().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return get_transpilers()
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 TARGETS_HELP = ", ".join(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 
