@@ -21,6 +21,17 @@ class PipelineResult:
 
 
 @dataclass(frozen=True)
+class PipelineInput:
+    """Entrada explícita para ejecutar el pipeline canónico completo."""
+
+    codigo: str
+    interpretador_cls: Any
+    safe_mode: bool
+    extra_validators: Any = None
+    interpretador: Any | None = None
+
+
+@dataclass(frozen=True)
 class InterpreterSetup:
     """Configuración derivada y componentes del intérprete para ejecución."""
 
@@ -208,3 +219,46 @@ def ejecutar_codigo_canonico(
         resultado=resultado,
         validadores_extra=validadores_normalizados,
     )
+
+
+def ejecutar_pipeline_explicito(
+    pipeline_input: PipelineInput,
+    *,
+    construir_cadena_fn: Callable[[Any], Any] = construir_cadena,
+    analizar_codigo_fn: Callable[[str], Any] = analizar_codigo,
+) -> tuple[InterpreterSetup, PipelineResult]:
+    """API única y explícita para análisis, validación, preparación y ejecución.
+
+    Flujo:
+    1) Analizar ``codigo``.
+    2) Validar AST si ``safe_mode`` está activo.
+    3) Preparar intérprete (o reutilizar uno provisto para estado persistente).
+    4) Ejecutar AST.
+    """
+
+    setup = preparar_interpretador(
+        interpretador_cls=pipeline_input.interpretador_cls,
+        safe_mode=pipeline_input.safe_mode,
+        extra_validators=pipeline_input.extra_validators,
+    )
+    interpretador = (
+        pipeline_input.interpretador
+        if pipeline_input.interpretador is not None
+        else setup.interpretador
+    )
+    resultado = ejecutar_codigo_canonico(
+        pipeline_input.codigo,
+        interpretador=interpretador,
+        seguro=setup.safe_mode,
+        extra_validators=setup.validadores_extra,
+        interpretador_cls=setup.interpretador_cls,
+        construir_cadena_fn=construir_cadena_fn,
+        analizar_codigo_fn=analizar_codigo_fn,
+    )
+    setup_final = InterpreterSetup(
+        interpretador_cls=setup.interpretador_cls,
+        safe_mode=setup.safe_mode,
+        validadores_extra=setup.validadores_extra,
+        interpretador=interpretador,
+    )
+    return setup_final, resultado

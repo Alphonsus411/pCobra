@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-from pcobra.cobra.cli.execution_pipeline import preparar_interpretador
+from pcobra.cobra.cli.execution_pipeline import PipelineInput, ejecutar_pipeline_explicito
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
@@ -175,21 +175,15 @@ def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
         "var acumulado = 42\n"
         "var ultimo = 42"
     )
-    cmd_execute = ExecuteCommand()
-    estado_script = {}
-
-    def _capturar_setup(**kwargs):
-        setup = preparar_interpretador(**kwargs)
-        estado_script["interpreter"] = setup.interpretador
-        return setup
-
-    with patch(
-        "pcobra.cobra.cli.commands.execute_cmd.preparar_interpretador",
-        side_effect=_capturar_setup,
-    ):
-        assert cmd_execute._ejecutar_normal(codigo, seguro=False, extra_validators=None) == 0
-
-    contexto_script = estado_script["interpreter"].contextos[-1]
+    setup_script, _ = ejecutar_pipeline_explicito(
+        PipelineInput(
+            codigo=codigo,
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=False,
+            extra_validators=None,
+        )
+    )
+    contexto_script = setup_script.interpretador.contextos[-1]
 
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
