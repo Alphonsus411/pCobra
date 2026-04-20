@@ -27,7 +27,7 @@ else:
     _PYLSP_ERROR = None
     _fallback_start_io_lang_server = None  # type: ignore[assignment]
 
-from lsp import cobra_plugin
+from pcobra.lsp import cobra_plugin
 
 
 def _obtener_start_callable():
