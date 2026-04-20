@@ -1,9 +1,13 @@
-"""Fachada legacy del contrato de bindings.
+"""Fachada legacy del contrato de bindings (shim deprecado).
 
-Fuente canónica: ``pcobra.cobra.bindings._contract_impl``.
+Fuente canónica: ``pcobra.cobra.bindings.contract``.
 """
 
-from pcobra.cobra.bindings._contract_impl import (
+from __future__ import annotations
+
+import warnings
+
+from pcobra.cobra.bindings.contract import (
     ABI_POLICY_BY_ROUTE,
     BINDINGS_BY_LANGUAGE,
     COMMAND_EVENT_SCHEMA,
@@ -23,6 +27,12 @@ from pcobra.cobra.bindings._contract_impl import (
     resolve_command_event,
     route_matrix_markdown,
     validate_public_language,
+)
+
+warnings.warn(
+    "`bindings.contract` está deprecado; usa `pcobra.cobra.bindings.contract`.",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 __all__ = [

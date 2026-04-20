@@ -177,6 +177,8 @@ jobs:
         run: python scripts/ci/validate_syntax_report_contract.py
       - name: Lint public surfaces without direct transpiler imports
         run: python scripts/ci/lint_public_no_direct_transpiler_imports.py
+      - name: Lint legacy bindings imports in src
+        run: python scripts/ci/lint_no_legacy_bindings_imports.py
       - name: Validate runtime contract matrix
         shell: bash
         run: python scripts/validate_runtime_contract.py
