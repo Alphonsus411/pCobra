@@ -66,3 +66,4 @@ La resolución de imports usa prioridad determinista (`stdlib > project > python
 - `src/pcobra/cobra/imports/resolver.py`
 - `src/pcobra/cobra/transpilers/module_map.py`
 - `docs/architecture/backend-pipeline-checklist.md`
+- `docs/architecture/single_source_of_truth.md`

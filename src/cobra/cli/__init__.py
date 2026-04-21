@@ -1,15 +1,6 @@
-"""INTERNAL COMPATIBILITY ONLY. Shim histórico mínimo para :mod:`pcobra.cobra.cli`.
+"""INTERNAL COMPATIBILITY ONLY. Shim histórico mínimo para ``cobra.cli``.
 
 Ruta canónica runtime: ``src/pcobra/cobra/cli``.
-Este módulo sólo existe para compatibilidad hacia atrás.
 """
 
-from importlib import import_module
-import sys as _sys
-
-_target = import_module("pcobra.cobra.cli")
-_sys.modules.setdefault("pcobra.cobra.cli", _target)
-_sys.modules.setdefault(__name__, _target)
-__all__ = getattr(_target, "__all__", [])
-for _name in __all__:
-    globals()[_name] = getattr(_target, _name)
+from pcobra.cobra.cli import *  # noqa: F401,F403
