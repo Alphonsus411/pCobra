@@ -20,7 +20,7 @@ def test_interpretador_asignacion_y_llamada_funcion():
     interpretador = InterpretadorCobra()
 
     # Prueba de asignación
-    nodo_asignacion = NodoAsignacion("x", NodoValor(45))
+    nodo_asignacion = NodoAsignacion("x", NodoValor(45), declaracion=True)
     interpretador.ejecutar_nodo(nodo_asignacion)
 
     # Verifica que la variable x se haya almacenado correctamente
@@ -57,7 +57,7 @@ def test_aislamiento_de_contexto_en_funciones():
     funcion = NodoFuncion(
         "crear_local",
         [],
-        [NodoAsignacion("z", NodoValor(100))],
+        [NodoAsignacion("z", NodoValor(100), declaracion=True)],
     )
 
     inter.ejecutar_funcion(funcion)
@@ -70,7 +70,7 @@ def test_actualizacion_de_variables_globales_en_scope_capturado():
     """Verifica que set actualiza la variable existente en el scope capturado."""
     inter = InterpretadorCobra()
 
-    inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(5)))
+    inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(5), declaracion=True))
 
     funcion = NodoFuncion(
         "modificar",
@@ -87,7 +87,7 @@ def test_actualizacion_de_variables_globales_en_scope_capturado():
 def test_funcion_actualiza_scope_lexico_capturado():
     """Una función definida en global muta su entorno léxico capturado."""
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(10)))
+    inter.ejecutar_asignacion(NodoAsignacion("a", NodoValor(10), declaracion=True))
 
     incrementar = NodoFuncion(
         "incrementar",
@@ -103,14 +103,14 @@ def test_funcion_actualiza_scope_lexico_capturado():
 def test_regresion_llamada_funcion_no_yield_limpia_contexto_una_sola_vez():
     """Evita doble limpieza de contexto y underflow de pilas internas."""
     inter = InterpretadorCobra()
-    inter.ejecutar_asignacion(NodoAsignacion("global_previa", NodoValor(99)))
+    inter.ejecutar_asignacion(NodoAsignacion("global_previa", NodoValor(99), declaracion=True))
     contextos_iniciales = len(inter.contextos)
     mem_contextos_iniciales = len(inter.mem_contextos)
 
     funcion = NodoFuncion(
         "sin_yield",
         [],
-        [NodoAsignacion("local_tmp", NodoValor(1))],
+        [NodoAsignacion("local_tmp", NodoValor(1), declaracion=True)],
     )
     inter.ejecutar_funcion(funcion)
     inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("sin_yield", []))
@@ -130,7 +130,7 @@ def test_imprimir_cadena_literal():
 
 def test_imprimir_identificador_existente():
     inter = InterpretadorCobra()
-    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(3)))
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(3), declaracion=True))
     nodo = NodoImprimir(NodoIdentificador("x"))
     with patch("sys.stdout", new_callable=StringIO) as out:
         inter.ejecutar_nodo(nodo)
@@ -148,8 +148,8 @@ def test_asignacion_y_operacion_aritmetica():
     """Asignar variables y realizar una suma sin recursión infinita."""
     inter = InterpretadorCobra()
 
-    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(2)))
-    inter.ejecutar_nodo(NodoAsignacion("y", NodoValor(3)))
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(2), declaracion=True))
+    inter.ejecutar_nodo(NodoAsignacion("y", NodoValor(3), declaracion=True))
 
     suma_expr = NodoOperacionBinaria(
         NodoIdentificador("x"),
@@ -157,7 +157,7 @@ def test_asignacion_y_operacion_aritmetica():
         NodoIdentificador("y"),
     )
 
-    resultado = inter.ejecutar_nodo(NodoAsignacion("suma", suma_expr))
+    resultado = inter.ejecutar_nodo(NodoAsignacion("suma", suma_expr, declaracion=True))
     assert resultado == 5
     assert inter.variables["suma"] == 5
 
@@ -191,7 +191,7 @@ def test_operacion_con_valores_nodo():
 
 def test_del_elimina_variable_por_identificador():
     inter = InterpretadorCobra()
-    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(1)))
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(1), declaracion=True))
 
     inter.ejecutar_nodo(NodoDel(NodoIdentificador("x")))
 

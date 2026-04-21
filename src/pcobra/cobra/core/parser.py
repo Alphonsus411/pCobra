@@ -477,8 +477,10 @@ class ClassicParser:
         """
         variable_token = None
         inferencia = False
+        declaracion = False
         nombre_embedido = None
         if self.token_actual().tipo in (TipoToken.VAR, TipoToken.VARIABLE):
+            declaracion = True
             inferencia = self.token_actual().tipo == TipoToken.VARIABLE
             # Permite 'var x = 1' y un caso compacto donde el nombre está en el token
             siguiente = self.token_siguiente()
@@ -519,7 +521,12 @@ class ClassicParser:
             if isinstance(variable_token, NodoAtributo)
             else variable_token.valor
         )
-        return NodoAsignacion(nombre_asignacion, valor, inferencia)
+        return NodoAsignacion(
+            nombre_asignacion,
+            valor,
+            inferencia=inferencia,
+            declaracion=declaracion,
+        )
 
     def declaracion_mientras(self):
         """Parsea un bucle mientras."""
