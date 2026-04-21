@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Callable
+from typing import Callable, Type
 
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandCapability
 
@@ -69,6 +69,29 @@ class CommandFactory:
 
     @staticmethod
     def _create_from_spec(spec: CommandSpec) -> BaseCommand:
-        module = import_module(spec.module_path)
-        command_class: Callable[[], BaseCommand] = getattr(module, spec.class_name)
+        command_class = load_command_class(spec.module_path, spec.class_name)
         return command_class()
+
+
+@dataclass(frozen=True)
+class CommandClassRoute:
+    """Ruta declarativa para resolver clases de comandos CLI de forma lazy."""
+
+    module_path: str
+    class_name: str
+
+
+def load_command_class(module_path: str, class_name: str) -> Type[BaseCommand]:
+    """Carga una clase de comando bajo demanda y valida contrato BaseCommand."""
+    module = import_module(module_path)
+    command_class = getattr(module, class_name)
+    if not isinstance(command_class, type):
+        raise TypeError(
+            f"Contrato de comando inválido: {module_path}.{class_name} no es una clase."
+        )
+    if not issubclass(command_class, BaseCommand):
+        raise TypeError(
+            "Contrato de comando inválido: "
+            f"{module_path}.{class_name} debe heredar de BaseCommand."
+        )
+    return command_class
