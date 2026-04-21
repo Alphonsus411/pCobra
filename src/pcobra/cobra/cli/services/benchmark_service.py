@@ -25,6 +25,7 @@ else:
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.benchmarks.targets_policy import BENCHMARK_BACKEND_METADATA
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.transpilers.target_utils import target_label
 from pcobra.core.cobra_config import tiempo_max_transpilacion
@@ -136,4 +137,16 @@ def benchmark_backends_config(allowed_backends: set[str]) -> dict[str, dict[str,
         backend: BENCHMARK_BACKEND_METADATA[backend]
         for backend in allowed_backends
         if backend in BENCHMARK_BACKEND_METADATA
+    }
+
+
+def cli_runtime_benchmark_backends() -> dict[str, dict[str, Any]]:
+    """Backends de benchmark para CLI pública.
+
+    Centraliza el estado compartido para evitar constantes globales en comandos.
+    """
+    return {
+        target: BENCHMARK_BACKEND_METADATA[target]
+        for target in OFFICIAL_RUNTIME_TARGETS
+        if target in BENCHMARK_BACKEND_METADATA
     }

@@ -2,9 +2,11 @@
 """Lint interno para comandos CLI.
 
 Reglas:
-1) Prohíbe imports entre módulos de comandos CLI (excepto ``base.py``).
-2) Prohíbe constantes locales de backends/transpiladores en comandos
-   (la fuente canónica es ``pcobra.cobra.cli.transpiler_registry``).
+1) Prohíbe imports entre módulos de comandos CLI.
+2) Permite únicamente ``from ...commands.base import BaseCommand``
+   (salvo excepciones explícitas y justificadas).
+3) Prohíbe estado compartido local en módulos comando
+   (por ejemplo, ``TRANSPILERS = {...}`` y constantes similares).
 """
 
 from __future__ import annotations
@@ -13,16 +15,23 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-COMMAND_SCOPES = (
-    ROOT / "src/pcobra/cobra/cli/commands",
-    ROOT / "src/pcobra/cobra/cli/commands_v2",
-)
 FORBIDDEN_PREFIXES = (
     "pcobra.cobra.cli.commands",
-    "pcobra.cobra.cli.commands_v2",
     "cobra.cli.commands",
-    "cobra.cli.commands_v2",
 )
+ALLOWED_BASE_IMPORT_MODULES = {
+    "pcobra.cobra.cli.commands.base",
+    "cobra.cli.commands.base",
+}
+ALLOWED_BASE_IMPORT_NAMES = {"BaseCommand"}
+# Excepciones documentadas puntuales:
+# clave: ruta relativa al repo; valor: imports absolutos permitidos.
+ALLOWED_COMMAND_IMPORT_EXCEPTIONS: dict[str, set[str]] = {
+    # Necesita CommandError para mapear errores de validación al contrato del CLI.
+    "src/pcobra/cobra/cli/commands/transpilar_inverso_cmd.py": {
+        "pcobra.cobra.cli.commands.base",
+    },
+}
 FORBIDDEN_DIRECT_REGISTRY_IMPORTS = {
     "pcobra.cobra.transpilers.registry",
     "cobra.transpilers.registry",
@@ -53,6 +62,52 @@ def _is_forbidden_import_from(node: ast.ImportFrom) -> bool:
     return False
 
 
+def _resolve_relative_module(path: Path, module: str | None, level: int, root: Path) -> str | None:
+    if level <= 0:
+        return module
+    try:
+        rel = path.relative_to(root / "src")
+    except ValueError:
+        return None
+    package_parts = list(rel.with_suffix("").parts[:-1])
+    if level > len(package_parts) + 1:
+        return None
+    keep_parts = len(package_parts) - (level - 1)
+    base_parts = package_parts[:keep_parts]
+    if module:
+        base_parts.extend(module.split("."))
+    return ".".join(base_parts)
+
+
+def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, str]]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    violations: list[tuple[int, str]] = []
+    rel = path.relative_to(root)
+    allowed_exception_modules = ALLOWED_COMMAND_IMPORT_EXCEPTIONS.get(str(rel), set())
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if _is_forbidden_module_name(alias.name):
+                    violations.append((node.lineno, alias.name))
+        elif isinstance(node, ast.ImportFrom):
+            resolved_module = _resolve_relative_module(path, node.module, node.level, root)
+            if not resolved_module:
+                continue
+            if resolved_module in allowed_exception_modules:
+                continue
+            imported_names = {alias.name for alias in node.names}
+            if resolved_module in ALLOWED_BASE_IMPORT_MODULES:
+                if imported_names.issubset(ALLOWED_BASE_IMPORT_NAMES):
+                    continue
+                violations.append((node.lineno, resolved_module))
+                continue
+            if not _is_forbidden_module_name(resolved_module):
+                continue
+            violations.append((node.lineno, resolved_module))
+    return violations
+
+
 def _scan_file(path: Path) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
@@ -68,12 +123,12 @@ def _scan_file(path: Path) -> list[tuple[int, str]]:
     return violations
 
 
-def _scan_cross_cmd_pattern_imports(path: Path) -> list[tuple[int, str]]:
+def _scan_cross_cmd_pattern_imports(path: Path, root: Path) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
-            module = node.module or ""
+            module = _resolve_relative_module(path, node.module, node.level, root) or ""
             if not module.endswith("_cmd"):
                 continue
             for prefix in FORBIDDEN_PREFIXES:
@@ -147,25 +202,22 @@ def _scan_backend_constant_violations(path: Path) -> list[tuple[int, str]]:
 
 def find_violations(root: Path = ROOT) -> list[str]:
     failures: list[str] = []
-    scopes = (
-        root / "src/pcobra/cobra/cli/commands",
-        root / "src/pcobra/cobra/cli/commands_v2",
-    )
+    scopes = (root / "src/pcobra/cobra/cli/commands",)
     for scope in scopes:
         if not scope.exists():
             continue
         for path in sorted(scope.rglob("*.py")):
             rel = path.relative_to(root)
             if path.name != "__init__.py":
-                for line, target in _scan_file(path):
+                for line, target in _scan_restricted_command_imports(path, root):
                     failures.append(
                         f"{rel}:{line}: import entre comandos no permitido ({target}); "
-                        "extrae código a un servicio compartido o usa commands.base"
+                        "solo se permite `from ...commands.base import BaseCommand` (o excepción explícita)"
                     )
-                for line, target in _scan_cross_cmd_pattern_imports(path):
+                for line, target in _scan_cross_cmd_pattern_imports(path, root):
                     failures.append(
                         f"{rel}:{line}: patrón *_cmd no permitido ({target}); "
-                        "los comandos no deben importar otros *_cmd.py (solo commands.base)"
+                        "los comandos no deben importar otros *_cmd.py (solo BaseCommand desde commands.base)"
                     )
             for line, target in _scan_direct_registry_imports(path):
                 failures.append(
