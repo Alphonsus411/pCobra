@@ -95,3 +95,13 @@ def load_command_class(module_path: str, class_name: str) -> Type[BaseCommand]:
             f"{module_path}.{class_name} debe heredar de BaseCommand."
         )
     return command_class
+
+
+def build_command_from_route(
+    route: CommandClassRoute,
+    *,
+    command_builder: Callable[[Type[BaseCommand]], BaseCommand],
+) -> BaseCommand:
+    """Resuelve e instancia un comando desde una ruta declarativa."""
+    command_class = load_command_class(route.module_path, route.class_name)
+    return command_builder(command_class)

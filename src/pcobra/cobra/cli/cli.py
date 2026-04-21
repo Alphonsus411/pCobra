@@ -42,6 +42,7 @@ from pcobra.cobra.cli.utils import messages
 from pcobra.cobra.cli.utils import config as config_module
 from pcobra.cobra.cli.services.command_factory import (
     CommandClassRoute,
+    build_command_from_route,
     load_command_class,
 )
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
@@ -211,8 +212,20 @@ class CommandRegistry:
 
         for route in command_routes:
             try:
-                cmd_class = load_command_class(route.module_path, route.class_name)
-                base_commands.append(self.create_command(cmd_class))
+                base_commands.append(
+                    build_command_from_route(
+                        route,
+                        command_builder=self.create_command,
+                    )
+                )
+            except TypeError as e:
+                logging.error(
+                    "Contrato inválido en comando %s.%s: %s. "
+                    "Se omite el comando y la CLI continúa en modo degradado.",
+                    route.module_path,
+                    route.class_name,
+                    e,
+                )
             except Exception as e:
                 logging.error(
                     "Failed to load/create command %s.%s: %s",
