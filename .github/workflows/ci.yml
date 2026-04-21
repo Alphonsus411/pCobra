@@ -179,6 +179,9 @@ jobs:
         run: python scripts/ci/lint_public_no_direct_transpiler_imports.py
       - name: Lint legacy bindings imports in src
         run: python scripts/ci/lint_no_legacy_bindings_imports.py
+      - name: Gate de arquitectura de imports (ciclos y capas)
+        shell: bash
+        run: python scripts/ci/check_import_cycles.py
       - name: Validate runtime contract matrix
         shell: bash
         run: python scripts/validate_runtime_contract.py
