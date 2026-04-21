@@ -7,12 +7,14 @@ from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoAsignacion,
     NodoDel,
-    NodoValor,
-    NodoLlamadaFuncion,
     NodoFuncion,
-    NodoImprimir,
     NodoIdentificador,
+    NodoImprimir,
+    NodoLlamadaFuncion,
     NodoOperacionBinaria,
+    NodoRetorno,
+    NodoValor,
+    NodoWith,
 )
 def test_interpretador_asignacion_y_llamada_funcion():
 
@@ -204,3 +206,70 @@ def test_del_objetivo_no_identificador_lanza_typeerror():
 
     with pytest.raises(TypeError, match=r"^del requiere un identificador como objetivo"):
         inter.ejecutar_nodo(NodoDel(NodoValor(1)))
+
+
+def test_with_limpia_contexto_y_memoria_en_retorno_temprano():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(0), declaracion=True))
+    contextos_iniciales = len(inter.contextos)
+    mem_contextos_iniciales = len(inter.mem_contextos)
+
+    resultado = inter.ejecutar_nodo(
+        NodoWith(
+            NodoValor("ctx"),
+            None,
+            [
+                NodoAsignacion("x", NodoValor(7)),
+                NodoRetorno(NodoIdentificador("x")),
+            ],
+        )
+    )
+
+    assert resultado == 7
+    assert inter.obtener_variable("x") == 7
+    assert len(inter.contextos) == contextos_iniciales
+    assert len(inter.mem_contextos) == mem_contextos_iniciales
+
+
+def test_with_limpia_contexto_y_memoria_si_hay_excepcion():
+    inter = InterpretadorCobra()
+    contextos_iniciales = len(inter.contextos)
+    mem_contextos_iniciales = len(inter.mem_contextos)
+
+    with pytest.raises(NameError, match=r"^Variable no declarada: no_definida$"):
+        inter.ejecutar_nodo(
+            NodoWith(
+                NodoValor("ctx"),
+                None,
+                [NodoImprimir(NodoIdentificador("no_definida"))],
+            )
+        )
+
+    assert len(inter.contextos) == contextos_iniciales
+    assert len(inter.mem_contextos) == mem_contextos_iniciales
+
+
+def test_with_declara_local_y_no_contamina_scope_vecino():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("base", NodoValor(1), declaracion=True))
+
+    inter.ejecutar_nodo(
+        NodoWith(
+            NodoValor("ctx1"),
+            None,
+            [NodoAsignacion("solo_with", NodoValor(123), declaracion=True)],
+        )
+    )
+
+    assert inter.obtener_variable("base") == 1
+    with pytest.raises(NameError, match=r"^Variable no declarada: solo_with$"):
+        inter.obtener_variable("solo_with")
+
+    inter.ejecutar_nodo(
+        NodoWith(
+            NodoValor("ctx2"),
+            None,
+            [NodoAsignacion("base", NodoValor(3))],
+        )
+    )
+    assert inter.obtener_variable("base") == 3
