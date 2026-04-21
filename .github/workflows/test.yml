@@ -111,6 +111,8 @@ jobs:
         run: python scripts/ci/validate_syntax_report_contract.py
       - name: Lint public surfaces without direct transpiler imports
         run: python scripts/ci/lint_public_no_direct_transpiler_imports.py
+      - name: Lint legacy cobra tree is shim-only
+        run: python scripts/ci/lint_legacy_cobra_shims.py
       - name: Gate de arquitectura de imports (ciclos y capas)
         run: python scripts/ci/check_import_cycles.py
       - name: Validate runtime contract matrix
