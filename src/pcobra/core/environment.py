@@ -35,11 +35,10 @@ class Environment:
         return False
 
     def set(self, name: str, value: Any) -> Any:
-        """Actualiza ``name`` en su scope más cercano; si no existe, lo define local."""
+        """Actualiza ``name`` en su scope más cercano o falla si no existe."""
         if name in self.values:
             self.values[name] = value
             return value
         if self.parent is not None and self.parent.contains(name):
             return self.parent.set(name, value)
-        self.values[name] = value
-        return value
+        raise NameError(f"Variable no declarada: {name}")

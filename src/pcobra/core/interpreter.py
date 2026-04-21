@@ -1123,8 +1123,8 @@ class InterpretadorCobra:
             self._verificar_valor_contexto(valor)
             atributos[nombre.nombre] = valor
         else:
-            if getattr(nodo, "inferencia", False):
-                # Registro simple sin tipo explícito
+            if getattr(nodo, "inferencia", False) or getattr(nodo, "declaracion", False):
+                # Declaración local (explícita o por inferencia)
                 self.contextos[-1].define(nombre, valor)
             else:
                 # Si la variable ya tiene memoria reservada, se libera
