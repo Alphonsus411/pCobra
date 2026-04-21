@@ -1,4 +1,8 @@
-"""Pipeline compartido de análisis/ejecución para CLI Cobra."""
+"""Pipeline compartido de análisis/ejecución para CLI Cobra.
+
+Contrato arquitectónico relacionado:
+- docs/architecture/repl-script-parity-contract.md
+"""
 
 from __future__ import annotations
 
