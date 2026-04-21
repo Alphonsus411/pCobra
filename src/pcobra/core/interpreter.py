@@ -1081,12 +1081,16 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoWith):
             self.evaluar_expresion(nodo.contexto)
             self.contextos.append(Environment(parent=self.contextos[-1]))
+            self.mem_contextos.append({})
             try:
                 for instr in nodo.cuerpo:
                     resultado = self.ejecutar_nodo(instr)
                     if resultado is not None:
                         return resultado
             finally:
+                memoria_local = self.mem_contextos.pop()
+                for idx, tam in memoria_local.values():
+                    self.liberar_memoria(idx, tam)
                 self.contextos.pop()
         elif isinstance(nodo, NodoImportDesde):
             return self.ejecutar_import(NodoImport(nodo.modulo))
