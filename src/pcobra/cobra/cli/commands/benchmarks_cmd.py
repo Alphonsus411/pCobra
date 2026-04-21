@@ -82,6 +82,7 @@ class BenchmarksCommand(BaseCommand):
         try:
             enforce_advanced_profile_policy(command=self.name, args=args)
             results: list[dict[str, Any]] = []
+            available_backends = tuple(benchmark_backends(BENCHMARK_BACKEND_METADATA))
             iteraciones = max(1, getattr(args, "iteraciones", 1))
             backend_filtro = getattr(args, "backend", None)
             if backend_filtro:
@@ -90,11 +91,11 @@ class BenchmarksCommand(BaseCommand):
                 except ArgumentTypeError as parse_error:
                     mostrar_error(str(parse_error))
                     return 1
-                if backend_filtro not in BACKENDS:
+                if backend_filtro not in available_backends:
                     mostrar_error(
                         _("Backend no permitido: {backend}. Permitidos: {allowed}").format(
                             backend=getattr(args, "backend", backend_filtro),
-                            allowed=", ".join(BACKENDS),
+                            allowed=", ".join(available_backends),
                         )
                     )
                     return 1
@@ -105,7 +106,7 @@ class BenchmarksCommand(BaseCommand):
                 )
 
             for _iteration in range(iteraciones):
-                data = run_benchmarks(benchmark_backends_config(set(BACKENDS)))
+                data = run_benchmarks(benchmark_backends_config(set(available_backends)))
                 if backend_filtro:
                     data = [d for d in data if d.get("backend") == backend_filtro]
                 results.extend(data)
@@ -118,7 +119,7 @@ class BenchmarksCommand(BaseCommand):
                 for res in results:
                     backend = res.get("backend", "?")
                     backend_display = backend
-                    if backend in BACKENDS:
+                    if backend in available_backends:
                         backend_display = f"{target_label(backend)} ({backend})"
                     mostrar_info(
                         _("{backend}: tiempo {time}s, memoria {mem}KB").format(
@@ -141,4 +142,3 @@ validate_backend_metadata(
     BENCHMARK_BACKEND_METADATA,
     context="pcobra.cobra.cli.commands.benchmarks_cmd.BENCHMARK_BACKEND_METADATA",
 )
-BACKENDS = benchmark_backends(BENCHMARK_BACKEND_METADATA)

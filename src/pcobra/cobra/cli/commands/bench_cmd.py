@@ -7,8 +7,10 @@ from pathlib import Path
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
-from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
-from pcobra.cobra.cli.services.benchmark_service import run_benchmarks
+from pcobra.cobra.cli.services.benchmark_service import (
+    cli_runtime_benchmark_backends,
+    run_benchmarks,
+)
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
@@ -21,11 +23,6 @@ validate_backend_metadata(
     BENCHMARK_BACKEND_METADATA,
     context="pcobra.cobra.cli.commands.bench_cmd.BENCHMARK_BACKEND_METADATA",
 )
-BACKENDS = {
-    target: BENCHMARK_BACKEND_METADATA[target]
-    for target in OFFICIAL_RUNTIME_TARGETS
-    if target in BENCHMARK_BACKEND_METADATA
-}
 
 class BenchCommand(BaseCommand):
     """Ejecuta benchmarks y opcionalmente los perfila."""
@@ -67,7 +64,7 @@ class BenchCommand(BaseCommand):
         Returns:
             Lista de diccionarios con resultados de los benchmarks
         """
-        return run_benchmarks(BACKENDS)
+        return run_benchmarks(cli_runtime_benchmark_backends())
 
     def run(self, args: Any) -> int:
         """Ejecuta la lógica del comando.
