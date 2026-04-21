@@ -102,11 +102,6 @@ package-dir = {"" = "src"}
 where = ["src"]
 include = [
     "pcobra*",
-    "cobra*",
-    "core*",
-    "cli*",
-    "lsp*",
-    "bindings*",
 ]
 exclude = [
     "*.tests",
