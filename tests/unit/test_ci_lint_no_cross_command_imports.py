@@ -31,3 +31,29 @@ def test_permite_import_desde_base(tmp_path: Path) -> None:
     violations = find_violations(tmp_path)
 
     assert violations == []
+
+
+def test_detecta_import_directo_registry_en_comando(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.transpilers.registry import get_transpilers\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) == 1
+    assert "import directo no permitido" in violations[0]
+    assert "src/pcobra/cobra/cli/commands/a.py:1" in violations[0]
+
+
+def test_detecta_constante_transpilers_en_comando(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "TRANSPILERS = {'python': object()}\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) == 1
+    assert "constante local no permitida en comandos (TRANSPILERS)" in violations[0]
+    assert "src/pcobra/cobra/cli/commands/a.py:1" in violations[0]
