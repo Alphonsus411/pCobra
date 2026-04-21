@@ -1,5 +1,6 @@
 import importlib
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,14 @@ from pcobra.cobra.core.runtime import (
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
 
+LEGACY_SANDBOX_COMPAT_FLAG = "PCOBRA_ENABLE_LEGACY_CORE_SANDBOX"
+
+
+def _legacy_sandbox_compat_enabled() -> bool:
+    """Indica si la ruta legacy `core.sandbox` está habilitada explícitamente."""
+    raw = (os.environ.get(LEGACY_SANDBOX_COMPAT_FLAG, "") or "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
 
 def _importar_modulo_sandbox() -> Any:
     """Resuelve sandbox runtime priorizando namespace canónico."""
@@ -48,14 +57,31 @@ def _importar_modulo_sandbox() -> Any:
     try:
         module = importlib.import_module("pcobra.core.sandbox")
     except ModuleNotFoundError as canon_exc:  # pragma: no cover - fallback legacy
+        if not _legacy_sandbox_compat_enabled():
+            raise ImportError(
+                "No se pudo importar 'pcobra.core.sandbox'. "
+                "El fallback legacy 'core.sandbox' está deshabilitado por defecto. "
+                f"Para transición controlada habilite {LEGACY_SANDBOX_COMPAT_FLAG}=1."
+            ) from canon_exc
         try:
             module = importlib.import_module("core.sandbox")
         except ModuleNotFoundError:
             raise canon_exc
         _validar_modulo_sandbox_legacy(module)
         logging.getLogger(__name__).warning(
-            "Se usó compatibilidad legacy para resolver 'core.sandbox'. "
-            "Migre a 'pcobra.core.sandbox'."
+            "legacy_runtime_compat event=legacy_core_sandbox_fallback "
+            "canonical_module=pcobra.core.sandbox fallback_module=core.sandbox "
+            "flag=%s module_file=%s migration_target=pcobra.core.sandbox",
+            LEGACY_SANDBOX_COMPAT_FLAG,
+            getattr(module, "__file__", "<unknown>"),
+            extra={
+                "event": "legacy_core_sandbox_fallback",
+                "canonical_module": "pcobra.core.sandbox",
+                "fallback_module": "core.sandbox",
+                "compatibility_flag": LEGACY_SANDBOX_COMPAT_FLAG,
+                "module_file": getattr(module, "__file__", None),
+                "migration_target": "pcobra.core.sandbox",
+            },
         )
 
     required = (
