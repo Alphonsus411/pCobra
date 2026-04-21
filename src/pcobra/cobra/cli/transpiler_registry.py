@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 from types import MappingProxyType
 from typing import Mapping
 
-from pcobra.cobra.transpilers.registry import get_transpilers, official_transpiler_targets
+from pcobra.cobra.transpilers.registry import (
+    ensure_entrypoint_transpilers_loaded_once,
+    get_transpilers,
+    official_transpiler_targets,
+)
 
 
-@lru_cache(maxsize=1)
 def cli_transpilers() -> Mapping[str, type]:
-    """Devuelve un snapshot inmutable del registro canónico para capa CLI."""
-    return MappingProxyType(get_transpilers())
+    """Devuelve un snapshot inmutable del registro consolidado para capa CLI."""
+    ensure_entrypoint_transpilers_loaded_once()
+    return MappingProxyType(get_transpilers(include_plugins=True))
 
 
 def cli_transpiler_targets() -> tuple[str, ...]:
