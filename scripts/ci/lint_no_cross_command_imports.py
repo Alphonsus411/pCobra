@@ -19,7 +19,9 @@ COMMAND_SCOPES = (
 )
 FORBIDDEN_PREFIXES = (
     "pcobra.cobra.cli.commands",
+    "pcobra.cobra.cli.commands_v2",
     "cobra.cli.commands",
+    "cobra.cli.commands_v2",
 )
 FORBIDDEN_DIRECT_REGISTRY_IMPORTS = {
     "pcobra.cobra.transpilers.registry",
@@ -63,6 +65,30 @@ def _scan_file(path: Path) -> list[tuple[int, str]]:
             if _is_forbidden_import_from(node):
                 label = node.module or "<relative>"
                 violations.append((node.lineno, label))
+    return violations
+
+
+def _scan_cross_cmd_pattern_imports(path: Path) -> list[tuple[int, str]]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    violations: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if not module.endswith("_cmd"):
+                continue
+            for prefix in FORBIDDEN_PREFIXES:
+                if module.startswith(f"{prefix}."):
+                    violations.append((node.lineno, module))
+                    break
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                module = alias.name
+                if not module.endswith("_cmd"):
+                    continue
+                for prefix in FORBIDDEN_PREFIXES:
+                    if module.startswith(f"{prefix}."):
+                        violations.append((node.lineno, module))
+                        break
     return violations
 
 
@@ -130,11 +156,17 @@ def find_violations(root: Path = ROOT) -> list[str]:
             continue
         for path in sorted(scope.rglob("*.py")):
             rel = path.relative_to(root)
-            for line, target in _scan_file(path):
-                failures.append(
-                    f"{rel}:{line}: import entre comandos no permitido ({target}); "
-                    "extrae código a un servicio compartido o usa commands.base"
-                )
+            if path.name != "__init__.py":
+                for line, target in _scan_file(path):
+                    failures.append(
+                        f"{rel}:{line}: import entre comandos no permitido ({target}); "
+                        "extrae código a un servicio compartido o usa commands.base"
+                    )
+                for line, target in _scan_cross_cmd_pattern_imports(path):
+                    failures.append(
+                        f"{rel}:{line}: patrón *_cmd no permitido ({target}); "
+                        "los comandos no deben importar otros *_cmd.py (solo commands.base)"
+                    )
             for line, target in _scan_direct_registry_imports(path):
                 failures.append(
                     f"{rel}:{line}: import directo no permitido ({target}); "
