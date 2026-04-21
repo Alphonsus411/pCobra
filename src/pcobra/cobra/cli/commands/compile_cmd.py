@@ -20,8 +20,13 @@ from pcobra.core.semantic_validators import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
-from pcobra.cobra.cli.transpiler_registry import cli_transpiler_targets
-from pcobra.cobra.transpilers import registry as transpiler_registry
+from pcobra.cobra.cli.transpiler_registry import (
+    cli_ensure_entrypoint_transpilers_loaded_once,
+    cli_load_entrypoint_transpilers,
+    cli_plugin_transpilers,
+    cli_register_transpiler_backend,
+    cli_transpiler_targets,
+)
 from pcobra.cobra.cli.deprecation_policy import (
     enforce_target_deprecation_policy,
     visible_public_targets,
@@ -43,7 +48,7 @@ LANG_CHOICES = cli_transpiler_targets()
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
     """Compatibilidad: delega registro de plugins al registro consolidado."""
-    return transpiler_registry.register_transpiler_backend(
+    return cli_register_transpiler_backend(
         backend,
         transpiler_cls,
         context=context,
@@ -52,12 +57,12 @@ def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -
 
 def load_entrypoint_transpilers() -> tuple[int, int, int]:
     """Compatibilidad: delega carga de entry points al registro consolidado."""
-    return transpiler_registry.load_entrypoint_transpilers()
+    return cli_load_entrypoint_transpilers()
 
 
 def _ensure_entrypoints_loaded_once() -> None:
     """Compatibilidad: delega carga idempotente al registro consolidado."""
-    transpiler_registry.ensure_entrypoint_transpilers_loaded_once()
+    cli_ensure_entrypoint_transpilers_loaded_once()
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     """Validador único de backend oficial conectado a la matriz canónica."""
@@ -95,7 +100,7 @@ def _target_label(target: str) -> str:
 
 
 def _transpile_with_pipeline_or_plugin(ast, lang: str) -> str:
-    plugin_cls = transpiler_registry.plugin_transpilers().get(lang)
+    plugin_cls = cli_plugin_transpilers().get(lang)
     if plugin_cls is not None:
         return plugin_cls().generate_code(ast)
     return backend_pipeline.transpile(ast, lang)
