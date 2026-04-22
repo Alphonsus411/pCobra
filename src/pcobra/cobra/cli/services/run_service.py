@@ -14,6 +14,7 @@ from pcobra.cobra.cli.execution_pipeline import (
 )
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.services.contracts import RunRequest, normalize_run_request
 from pcobra.cobra.cli.services.format_service import format_code_with_black
 from pcobra.cobra.cli.target_policies import resolve_docker_backend
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
@@ -113,29 +114,30 @@ class RunService:
     max_file_size = 10 * 1024 * 1024
     execution_timeout = 30
 
-    def run(self, args: Any) -> int:
+    def run(self, request: RunRequest) -> int:
+        request = normalize_run_request(request)
         try:
-            validar_politica_modo("ejecutar", args, capability="execute")
+            validar_politica_modo("ejecutar", request, capability="execute")
         except ValueError as e:
             mostrar_error(str(e), registrar_log=False)
             return 1
 
         try:
-            archivo_resuelto = self.validar_archivo(args.archivo)
+            archivo_resuelto = self.validar_archivo(request.archivo)
         except ValueError as e:
             mostrar_error(str(e), registrar_log=False)
             return 1
 
-        depurar = bool(getattr(args, "debug", False)) or int(getattr(args, "verbose", 0) or 0) > 0
-        depurar = depurar or bool(getattr(args, "depurar", False))
-        formatear = bool(getattr(args, "formatear", False))
-        seguro = getattr(args, "seguro", True)
-        sandbox = getattr(args, "sandbox", False)
-        contenedor = getattr(args, "contenedor", None)
-        allow_insecure_fallback = bool(getattr(args, "allow_insecure_fallback", False))
+        depurar = bool(request.debug) or int(request.verbose or 0) > 0
+        depurar = depurar or bool(request.depurar)
+        formatear = bool(request.formatear)
+        seguro = request.seguro
+        sandbox = request.sandbox
+        contenedor = request.contenedor
+        allow_insecure_fallback = bool(request.allow_insecure_fallback)
 
         try:
-            extra_validators = normalizar_validadores_extra(getattr(args, "extra_validators", None))
+            extra_validators = normalizar_validadores_extra(request.extra_validators)
         except TypeError:
             mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"), registrar_log=False)
             return 1

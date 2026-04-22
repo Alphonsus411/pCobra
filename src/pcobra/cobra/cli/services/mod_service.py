@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from pcobra.cobra.cli.cobrahub_client import CobraHubClient
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.contracts import ModRequest, normalize_mod_request
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.semver import es_nueva_version, es_version_valida
 from pcobra.cobra.semantico import mod_validator
@@ -154,11 +155,14 @@ def obtener_version(ruta: str) -> Optional[str]:
 
 
 class ModService:
-    def run(self, args: Any) -> int:
-        accion = args.accion
-        if not accion:
-            mostrar_error(_("Debe especificar una acción"))
+    def run(self, request: ModRequest) -> int:
+        try:
+            request = normalize_mod_request(request)
+        except ValueError as err:
+            mostrar_error(str(err))
             return 1
+
+        accion = request.accion
 
         if yaml is None and accion in {"publicar", "buscar"}:
             mostrar_error(_("El comando de módulos requiere la dependencia opcional 'PyYAML' para la acción solicitada."))
@@ -166,10 +170,10 @@ class ModService:
 
         acciones = {
             "listar": listar_modulos,
-            "instalar": lambda: instalar_modulo(args.ruta),
-            "remover": lambda: remover_modulo(args.nombre),
-            "publicar": lambda: 0 if get_client().publicar_modulo(args.ruta) else 1,
-            "buscar": lambda: buscar_modulo(args.nombre),
+            "instalar": lambda: instalar_modulo(request.ruta),
+            "remover": lambda: remover_modulo(request.nombre),
+            "publicar": lambda: 0 if get_client().publicar_modulo(request.ruta) else 1,
+            "buscar": lambda: buscar_modulo(request.nombre),
         }
 
         try:

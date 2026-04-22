@@ -3,6 +3,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.services.command_factory import CommandFactory
+from pcobra.cobra.cli.services.contracts import ModRequest, RunRequest, TestRequest
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.public_command_policy import PROFILE_DEVELOPMENT, resolve_command_profile
 from pcobra.cobra.cli.utils import messages
@@ -84,7 +85,7 @@ class LegacyCommandGroupV2(BaseCommand):
             return 1
         if command == "ejecutar":
             return self._execute.run(
-                Namespace(
+                RunRequest(
                     archivo=args.archivo,
                     debug=getattr(args, "debug", False),
                     sandbox=getattr(args, "sandbox", False),
@@ -105,7 +106,7 @@ class LegacyCommandGroupV2(BaseCommand):
             )
         if command == "verificar":
             return self._verify.run(
-                Namespace(
+                TestRequest(
                     archivo=args.archivo,
                     lenguajes=getattr(args, "lenguajes", ""),
                     modo=getattr(args, "modo", "mixto"),
@@ -113,7 +114,7 @@ class LegacyCommandGroupV2(BaseCommand):
             )
         if command == "modulos":
             return self._modules.run(
-                Namespace(
+                ModRequest(
                     accion=getattr(args, "accion", None),
                     ruta=getattr(args, "ruta", None),
                     nombre=getattr(args, "nombre", None),

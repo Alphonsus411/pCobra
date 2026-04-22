@@ -10,6 +10,7 @@ from pcobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, eje
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.services.contracts import TestRequest, normalize_test_request
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     VERIFICATION_EXECUTABLE_TARGETS,
@@ -34,17 +35,15 @@ class TestService:
         self._interprete = InterpretadorCobra()
         self._logger = logging.getLogger(__name__)
 
-    def run(self, args: Any) -> int:
+    def run(self, request: TestRequest) -> int:
+        request = normalize_test_request(request)
         try:
-            validar_politica_modo("verificar", args, capability="codegen")
+            validar_politica_modo("verificar", request, capability="codegen")
 
-            if not args.archivo or not args.lenguajes:
-                raise ValueError(_("Se requieren archivo y lenguajes"))
-
-            lenguajes = list(args.lenguajes)
+            lenguajes = list(request.lenguajes)
             self.validate_languages(lenguajes)
 
-            codigo = self.read_source_file(args.archivo)
+            codigo = self.read_source_file(request.archivo)
             tokens = Lexer(codigo).tokenizar()
             ast = Parser(tokens).parsear()
 

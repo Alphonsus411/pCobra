@@ -1,7 +1,7 @@
-from argparse import Namespace
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.services.contracts import ModRequest
 from pcobra.cobra.cli.services.mod_service import ModService
 from pcobra.cobra.cli.i18n import _
 
@@ -45,9 +45,9 @@ class ModCommandV2(BaseCommand):
             "search": "buscar",
         }
         action = action_map.get(getattr(args, "action", ""), "")
-        legacy_args = Namespace(
+        request = ModRequest(
             accion=action,
             ruta=getattr(args, "path", None),
             nombre=getattr(args, "name", None),
         )
-        return self._service.run(legacy_args)
+        return self._service.run(request)

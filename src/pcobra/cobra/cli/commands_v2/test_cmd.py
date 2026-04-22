@@ -1,10 +1,11 @@
-from argparse import Namespace, SUPPRESS
+from argparse import SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
+from pcobra.cobra.cli.services.contracts import TestRequest
 from pcobra.cobra.cli.services.test_service import TestService
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error
@@ -68,10 +69,10 @@ class TestCommandV2(BaseCommand):
                 return 1
 
         resolution, _runtime = backend_pipeline.resolve_backend_runtime(args.file, {})
-        legacy_args = Namespace(
+        request = TestRequest(
             archivo=args.file,
             lenguajes=langs,
             modo=getattr(args, "modo", "mixto"),
             backend_reason=resolution.reason_for(debug=debug),
         )
-        return self._service.run(legacy_args)
+        return self._service.run(request)
