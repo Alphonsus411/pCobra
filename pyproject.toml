@@ -90,6 +90,9 @@ dev = [
 
 [tool.setuptools]
 include-package-data = true
+# Fuente canónica runtime/publicada: únicamente `src/pcobra`.
+# Los shims de raíz (`src/cobra`, `src/core`, `src/bindings` y análogos fuera de
+# `src/pcobra`) son compatibilidad interna del repositorio y NO contrato runtime.
 package-dir = {"" = "src"}
 
 [tool.setuptools.exclude-package-data]

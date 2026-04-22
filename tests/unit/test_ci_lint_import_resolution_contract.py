@@ -10,17 +10,23 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def test_detecta_import_legacy_bindings_y_cobra(tmp_path: Path) -> None:
+def test_detecta_imports_legacy_en_codigo_productivo(tmp_path: Path) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "foo.py",
-        "from bindings.contract import resolve_binding\nfrom cobra.cli import run\n",
+        "from bindings.contract import resolve_binding\nfrom cobra.cli import run\nimport core\n",
+    )
+    _write(
+        tmp_path / "src" / "legacy_pkg" / "bar.py",
+        "from core.interpreter import InterpretadorCobra\n",
     )
 
     violations = find_violations(tmp_path)
 
-    assert len(violations) == 2
+    assert len(violations) == 4
     assert any("from bindings.contract" in item for item in violations)
     assert any("from cobra.cli" in item for item in violations)
+    assert any("import legacy no permitido: core" in item for item in violations)
+    assert any("from core.interpreter" in item for item in violations)
 
 
 def test_permite_import_canonico_pcobra(tmp_path: Path) -> None:
@@ -36,8 +42,8 @@ def test_permite_import_canonico_pcobra(tmp_path: Path) -> None:
 
 def test_permite_modulo_marcado_como_compatibilidad(tmp_path: Path) -> None:
     _write(
-        tmp_path / "src" / "pcobra" / "cobra" / "legacy_bridge.py",
-        "# pcobra-compat: allow-legacy-imports\nfrom cobra.cli import run\nimport bindings\n",
+        tmp_path / "src" / "compat_shims" / "legacy_bridge.py",
+        "# pcobra-compat: allow-legacy-imports\nfrom cobra.cli import run\nimport bindings\nimport core\n",
     )
 
     violations = find_violations(tmp_path)
