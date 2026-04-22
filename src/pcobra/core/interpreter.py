@@ -429,6 +429,23 @@ class InterpretadorCobra:
         """Permite reemplazar solo el mapeo local del entorno activo."""
         self.contextos[-1].values = valor
 
+    def _indice_entorno_variable(self, nombre: str) -> int | None:
+        """Retorna el índice del primer entorno (de adentro hacia afuera) con ``nombre``."""
+        for indice in range(len(self.contextos) - 1, -1, -1):
+            if nombre in self.contextos[indice].values:
+                return indice
+        return None
+
+    def _liberar_memoria_variable_en_contexto(self, nombre: str, indice_contexto: int) -> None:
+        """Libera el bloque de memoria asociado a ``nombre`` en un contexto concreto."""
+        if indice_contexto < 0 or indice_contexto >= len(self.mem_contextos):
+            return
+        mem_ctx = self.mem_contextos[indice_contexto]
+        if nombre not in mem_ctx:
+            return
+        idx, tam = mem_ctx.pop(nombre)
+        self.liberar_memoria(idx, tam)
+
     def obtener_variable(self, nombre, visitados=None):
         """Busca una variable en la pila de contextos.
 
@@ -1073,7 +1090,10 @@ class InterpretadorCobra:
                     f"se recibió: {type(nodo.objetivo).__name__}"
                 )
             nombre = nodo.objetivo.nombre
-            self.contextos[-1].values.pop(nombre, None)
+            indice_contexto = self._indice_entorno_variable(nombre)
+            self.contextos[-1].delete(nombre)
+            if indice_contexto is not None:
+                self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
         elif isinstance(nodo, NodoGlobal):
             pass  # sin efecto en este intérprete simplificado
         elif isinstance(nodo, NodoNoLocal):
