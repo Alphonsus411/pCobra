@@ -73,3 +73,9 @@ def test_ensure_program_reads_and_writes_in_program_dir(tmp_path, monkeypatch):
 
     reloaded = cmd._ensure_program("small")
     assert reloaded == expected
+
+
+def test_bench_transpilers_importa_registro_cli_sin_depender_de_otros_comandos():
+    bt = importlib.import_module("pcobra.cobra.cli.commands.bench_transpilers_cmd")
+
+    assert bt.cli_transpilers.__module__ == "pcobra.cobra.cli.transpiler_registry"
