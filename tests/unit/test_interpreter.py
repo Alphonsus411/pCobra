@@ -3,6 +3,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from core.interpreter import InterpretadorCobra
+from core.environment import Environment
 from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoAsignacion,
@@ -199,6 +200,44 @@ def test_del_elimina_variable_por_identificador():
 
     assert "x" not in inter.variables
     assert 1 not in inter.variables
+
+
+def test_del_elimina_variable_en_scope_ancestro_y_lanza_nameerror_si_no_existe():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(1), declaracion=True))
+    inter.contextos.append(Environment(parent=inter.contextos[-1]))
+    inter.mem_contextos.append({})
+
+    try:
+        inter.ejecutar_nodo(NodoDel(NodoIdentificador("x")))
+        with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
+            inter.obtener_variable("x")
+        with pytest.raises(NameError, match=r"^Variable no declarada: no_existe$"):
+            inter.ejecutar_nodo(NodoDel(NodoIdentificador("no_existe")))
+    finally:
+        inter.mem_contextos.pop()
+        inter.contextos.pop()
+
+
+def test_del_libera_memoria_del_scope_ancestro():
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(1), declaracion=True))
+    inter.mem_contextos[0]["x"] = (11, 1)
+
+    liberaciones = []
+    inter.liberar_memoria = lambda idx, tam: liberaciones.append((idx, tam))
+
+    inter.contextos.append(Environment(parent=inter.contextos[-1]))
+    inter.mem_contextos.append({})
+
+    try:
+        inter.ejecutar_nodo(NodoDel(NodoIdentificador("x")))
+    finally:
+        inter.mem_contextos.pop()
+        inter.contextos.pop()
+
+    assert liberaciones == [(11, 1)]
+    assert "x" not in inter.mem_contextos[0]
 
 
 def test_del_objetivo_no_identificador_lanza_typeerror():

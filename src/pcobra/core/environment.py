@@ -42,3 +42,13 @@ class Environment:
         if self.parent is not None and self.parent.contains(name):
             return self.parent.set(name, value)
         raise NameError(f"Variable no declarada: {name}")
+
+    def delete(self, name: str) -> None:
+        """Elimina ``name`` en el primer scope donde exista."""
+        if name in self.values:
+            del self.values[name]
+            return
+        if self.parent is not None:
+            self.parent.delete(name)
+            return
+        raise NameError(f"Variable no declarada: {name}")
