@@ -3,7 +3,7 @@
 import logging
 import os
 import hashlib
-from typing import Optional
+from typing import Mapping, Optional
 
 from pcobra.core.lexer import (
     Token,
@@ -424,10 +424,25 @@ class InterpretadorCobra:
         """Devuelve el mapeo local del entorno activo (compatibilidad)."""
         return self.contextos[-1].values
 
-    @variables.setter
-    def variables(self, valor):
-        """Permite reemplazar solo el mapeo local del entorno activo."""
-        self.contextos[-1].values = valor
+    def reset_context_values(self, mapping: Mapping[str, object]) -> None:
+        """Reemplaza de forma controlada los valores del contexto activo.
+
+        Se copia explícitamente ``mapping`` para evitar aliasing accidental
+        de diccionarios externos y se valida cada entrada antes de aplicarla.
+        """
+        if not isinstance(mapping, Mapping):
+            raise TypeError("mapping debe implementar Mapping[str, object]")
+
+        nuevos_valores: dict[str, object] = {}
+        for clave, valor in mapping.items():
+            if not isinstance(clave, str):
+                raise TypeError("Las claves del contexto deben ser str")
+            self._verificar_valor_contexto(valor)
+            nuevos_valores[clave] = valor
+
+        contexto_activo = self.contextos[-1]
+        contexto_activo.values.clear()
+        contexto_activo.values.update(nuevos_valores)
 
     def _indice_entorno_variable(self, nombre: str) -> int | None:
         """Retorna el índice del primer entorno (de adentro hacia afuera) con ``nombre``."""

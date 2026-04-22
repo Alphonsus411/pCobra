@@ -234,3 +234,66 @@ def test_environment_scope_sin_copy_ni_clonado_dict_en_define_set() -> None:
 
     assert ".copy(" not in agregado
     assert "dict(" not in agregado
+
+
+def test_reset_context_values_reemplaza_scope_activo_sin_romper_parent() -> None:
+    inter = InterpretadorCobra()
+    global_env = inter.contextos[0]
+    global_env.define("g", 1)
+    inter.contextos.append(Environment(parent=global_env, values={"x": 10}))
+    inter.mem_contextos.append({})
+    try:
+        inter.reset_context_values({"x": 99, "y": 7})
+
+        assert inter.contextos[-1].values == {"x": 99, "y": 7}
+        assert global_env.values == {"g": 1}
+        assert inter.contextos[-1].parent is global_env
+    finally:
+        inter.mem_contextos.pop()
+        inter.contextos.pop()
+
+
+def test_contexto_repl_consistente_tras_multiples_ejecuciones() -> None:
+    inter = InterpretadorCobra()
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_nodo(NodoAsignacion("x", NodoValor(1), declaracion=True))
+        inter.ejecutar_nodo(
+            NodoAsignacion(
+                "x",
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoValor(4),
+                ),
+            )
+        )
+        inter.ejecutar_nodo(
+            NodoAsignacion(
+                "z",
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoValor(1),
+                ),
+                declaracion=True,
+            )
+        )
+
+    assert inter.obtener_variable("x") == 5
+    assert inter.obtener_variable("z") == 6
+    assert len(inter.contextos) == 1
+    assert len(inter.mem_contextos) == 1
+    assert inter.contextos[0].parent is None
+
+
+def test_interpreter_control_flow_sin_copy_ni_clonado_en_bloques_y_bucles() -> None:
+    codigo_mientras = inspect.getsource(InterpretadorCobra.ejecutar_mientras).lower()
+    codigo_condicional = inspect.getsource(InterpretadorCobra.ejecutar_condicional).lower()
+    agregado = f"{codigo_mientras}\n{codigo_condicional}"
+
+    assert "copy(" not in agregado
+    assert "deepcopy(" not in agregado
