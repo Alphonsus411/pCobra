@@ -52,3 +52,19 @@ python -m pytest -q \
 El workflow dedicado `runtime-stabilization-contract` corre en `pull_request` y `push` a `main`.
 
 Si cualquier test de esta batería falla, el job falla y el check de GitHub queda en rojo, bloqueando el merge cuando la rama protegida lo exige como required check.
+
+## Contrato técnico explícito: REPL y script comparten pipeline y entorno
+
+La ruta de script (`RunService.ejecutar_normal`) y la ruta REPL (`InteractiveCommand.ejecutar_codigo`) deben usar el mismo pipeline canónico de ejecución:
+
+- Resolución de clase de intérprete con `resolver_interpretador_cls`.
+- Ejecución del flujo `analizar + validar + ejecutar` con `ejecutar_pipeline_explicito`.
+- Normalización de validadores de seguridad desde el propio pipeline compartido.
+
+Además de la paridad de `stdout/stderr`, el contrato exige equivalencia de estado final del entorno observable (`interpretador.contextos[-1].values`) para confirmar que ambas rutas dejan el mismo contexto semántico tras ejecutar el mismo código.
+
+La batería contractual cubre explícitamente:
+
+- mutaciones dentro de `mientras`,
+- anidación `si` + `mientras`,
+- y errores semánticos/runtime con mismo tipo y mismo mensaje entre rutas.
