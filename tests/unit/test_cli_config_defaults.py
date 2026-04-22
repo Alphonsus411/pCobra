@@ -40,7 +40,7 @@ def stub_cli_dependencies() -> None:
         setattr(module, class_name, create_command(class_name))
         sys.modules[module_name] = module
 
-    sys.modules["cobra.cli.commands.compile_cmd"].LANG_CHOICES = []
+    sys.modules["cobra.cli.commands.compile_cmd"].get_lang_choices = lambda: ()
     sys.modules["cobra.cli.commands.transpilar_inverso_cmd"].ORIGIN_CHOICES = []
 
     core_mod = types.ModuleType("core.interpreter")
