@@ -2,6 +2,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.contracts import ModRequest
 from pcobra.cobra.cli.services.mod_service import (
     LOCK_FILE,
     LOCK_KEY,
@@ -47,4 +48,9 @@ class ModulesCommand(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
-        return self._service.run(args)
+        request = ModRequest(
+            accion=getattr(args, "accion", ""),
+            ruta=getattr(args, "ruta", None),
+            nombre=getattr(args, "nombre", None),
+        )
+        return self._service.run(request)

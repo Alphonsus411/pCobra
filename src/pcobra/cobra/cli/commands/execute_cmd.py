@@ -4,6 +4,7 @@ from typing import Any
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.contracts import RunRequest
 from pcobra.cobra.cli.services.run_service import (
     LEGACY_SANDBOX_COMPAT_FLAG,
     RunService,
@@ -18,8 +19,10 @@ from pcobra.cobra.cli.target_policies import (
     OFFICIAL_RUNTIME_TARGETS_HELP,
     build_runtime_capability_message,
     parse_runtime_target,
+    resolve_docker_backend,
 )
 from pcobra.cobra.cli.utils.autocomplete import files_completer
+from pcobra.cobra.cli.utils.messages import mostrar_error
 
 sys.modules.setdefault("cli.commands.execute_cmd", sys.modules[__name__])
 RUNTIME_MANAGER = RuntimeManager()
@@ -64,4 +67,17 @@ class ExecuteCommand(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
-        return self._service.run(args)
+        request = RunRequest(
+            archivo=args.archivo,
+            debug=bool(getattr(args, "debug", False)),
+            sandbox=bool(getattr(args, "sandbox", False)),
+            contenedor=getattr(args, "contenedor", None),
+            formatear=bool(getattr(args, "formatear", False)),
+            modo=getattr(args, "modo", "mixto"),
+            seguro=bool(getattr(args, "seguro", True)),
+            verbose=int(getattr(args, "verbose", 0) or 0),
+            depurar=bool(getattr(args, "depurar", False)),
+            extra_validators=getattr(args, "extra_validators", None),
+            allow_insecure_fallback=bool(getattr(args, "allow_insecure_fallback", False)),
+        )
+        return self._service.run(request)

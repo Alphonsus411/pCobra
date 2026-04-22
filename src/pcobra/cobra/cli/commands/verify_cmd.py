@@ -2,6 +2,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.contracts import TestRequest
 from pcobra.cobra.cli.services.test_service import TestService
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
@@ -12,6 +13,7 @@ from pcobra.cobra.cli.target_policies import (
     parse_restricted_target_list,
 )
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.messages import mostrar_error
 
 
 def _target_cli_choices(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:
@@ -59,4 +61,9 @@ class VerifyCommand(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
-        return self._service.run(args)
+        request = TestRequest(
+            archivo=args.archivo,
+            lenguajes=list(getattr(args, "lenguajes", []) or []),
+            modo=getattr(args, "modo", "mixto"),
+        )
+        return self._service.run(request)
