@@ -128,6 +128,29 @@ def _normalizar_salida_repl(salida: str) -> str:
         ("asignacion", "var persistente = 11"),
         ("condicional", "si verdadero:\n    var persistente = 12\nfin"),
         ("bucle", "mientras falso:\n    var temporal = 1\nfin"),
+        (
+            "anidacion_si_mientras_intentar",
+            (
+                "si verdadero:\n"
+                "    mientras falso:\n"
+                "        intentar:\n"
+                "            var temporal = 1\n"
+                "        capturar e:\n"
+                "            var temporal = 2\n"
+                "        fin\n"
+                "    fin\n"
+                "fin"
+            ),
+        ),
+        (
+            "define_local_en_funcion",
+            (
+                "func localiza():\n"
+                "    var persistente = 33\n"
+                "fin\n"
+                "localiza()"
+            ),
+        ),
         ("funcion", "func incrementar(v):\n    retorno v + 3\nfin\nvar persistente = incrementar(10)"),
         ("error_semantico", "persistente = persistente + 1"),
     ],
@@ -347,3 +370,4 @@ def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
 
     assert estado_repl.values == contexto_script.values
     assert estado_repl.get("base") == 0
+

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from io import StringIO
 from unittest.mock import patch
 
@@ -17,6 +18,7 @@ from core.ast_nodes import (
     NodoValor,
 )
 from core.interpreter import InterpretadorCobra
+from pcobra.core.environment import Environment
 
 
 def _ejecutar(nodos: list) -> InterpretadorCobra:
@@ -112,13 +114,19 @@ def test_shadowing_define_local_y_set_al_scope_mas_cercano() -> None:
                             ],
                         ),
                         NodoLlamadaFuncion("tocar_local", []),
+                        NodoRetorno(NodoIdentificador("x")),
                     ],
                 ),
-                NodoLlamadaFuncion("wrapper", []),
+                NodoAsignacion(
+                    "resultado_local",
+                    NodoLlamadaFuncion("wrapper", []),
+                    declaracion=True,
+                ),
             ]
         )
 
     assert inter.obtener_variable("x") == 100
+    assert inter.obtener_variable("resultado_local") == 1
 
 
 def test_closure_usa_environment_parent_en_llamadas() -> None:
@@ -189,3 +197,40 @@ def test_contrato_anticoopia_entorno_cierre_observa_mutaciones_posteriores() -> 
 def test_asignar_sin_declarar_falla_con_name_error() -> None:
     with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
         _ejecutar([NodoAsignacion("x", NodoValor(10))])
+
+
+def test_environment_set_no_copia_entorno_usa_referencias_vivas() -> None:
+    global_env = Environment(values={"x": 1})
+    hijo = Environment(parent=global_env)
+    nieto = Environment(parent=hijo)
+
+    hijo.set("x", 2)
+    assert global_env.values["x"] == 2
+
+    alias_values = global_env.values
+    nieto.set("x", 3)
+    assert global_env.values is alias_values
+    assert alias_values["x"] == 3
+    assert hijo.parent is global_env
+    assert nieto.parent is hijo
+
+
+def test_environment_set_prioriza_scope_mas_cercano_en_reasignacion_cruzada() -> None:
+    global_env = Environment(values={"x": 1})
+    intermedio = Environment(values={"x": 2}, parent=global_env)
+    interno = Environment(parent=intermedio)
+
+    interno.set("x", 9)
+
+    assert intermedio.values["x"] == 9
+    assert global_env.values["x"] == 1
+
+
+def test_environment_scope_sin_copy_ni_clonado_dict_en_define_set() -> None:
+    codigo_define = inspect.getsource(Environment.define)
+    codigo_set = inspect.getsource(Environment.set)
+    codigo_contains = inspect.getsource(Environment.contains)
+    agregado = f"{codigo_define}\n{codigo_set}\n{codigo_contains}".lower()
+
+    assert ".copy(" not in agregado
+    assert "dict(" not in agregado
