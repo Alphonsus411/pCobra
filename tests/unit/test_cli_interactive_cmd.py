@@ -400,6 +400,8 @@ def test_ejecutar_codigo_traduce_booleano_solo_en_salida_no_en_semantica_interna
 
 def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     cmd = InteractiveCommand(MagicMock())
+    cmd._seguro_repl = False
+    cmd._extra_validators_repl = ["validador.py"]
 
     with patch('cobra.cli.commands.interactive_cmd.Lexer') as mock_lexer, \
          patch('cobra.cli.commands.interactive_cmd.Parser') as mock_parser, \
@@ -408,15 +410,47 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
         mock_lexer.return_value.tokenizar.return_value = ['TOK']
         mock_parser.return_value.parsear.return_value = ['AST']
 
-        cmd._ejecutar_en_sandbox('imprimir(1)')
+        cmd._ejecutar_en_sandbox(
+            'imprimir(1)',
+            safe_mode=cmd._seguro_repl,
+            extra_validators=cmd._extra_validators_repl,
+        )
 
     script_enviado = mock_sandbox.call_args.args[0]
+    assert "safe_mode=False" in script_enviado
+    assert "extra_validators=['validador.py']" in script_enviado
     assert '_resultado = _interp.ejecutar_ast(_ast)' in script_enviado
     assert "if _resultado is not None:" in script_enviado
     assert "if isinstance(_resultado, bool):" in script_enviado
     assert "print('verdadero' if _resultado else 'falso')" in script_enviado
     assert 'print(_resultado)' in script_enviado
     mock_info.assert_called_once_with('ok')
+
+
+def test_run_repl_loop_pasa_estado_repl_a_ejecucion_sandbox():
+    cmd = InteractiveCommand(MagicMock())
+    cmd._seguro_repl = False
+    cmd._extra_validators_repl = ["extra.py"]
+
+    def _leer_linea_factory():
+        entradas = iter(["imprimir(1)", "salir"])
+        return lambda _prompt: next(entradas)
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch.object(cmd, "_ejecutar_en_sandbox") as mock_sandbox:
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=_leer_linea_factory(),
+            sandbox=True,
+            sandbox_docker=None,
+        )
+
+    mock_sandbox.assert_called_once_with(
+        "imprimir(1)",
+        safe_mode=False,
+        extra_validators=["extra.py"],
+    )
 
 
 def test_format_user_error_limpia_prefijo_error_general():
