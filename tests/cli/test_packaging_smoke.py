@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 @pytest.mark.integration
 def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
-    """Valida artefactos de packaging e invocación de `cobra --ayuda` en entorno aislado."""
+    """Valida artefactos de packaging y `pcobra.cli:main(['--help'])` en entorno limpio."""
 
     dist_dir = tmp_path / "dist"
     dist_dir.mkdir(parents=True, exist_ok=True)
@@ -48,11 +48,9 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     if os.name == "nt":
         venv_python = venv_dir / "Scripts" / "python.exe"
         venv_pip = venv_dir / "Scripts" / "pip.exe"
-        cobra_cmd = venv_dir / "Scripts" / "cobra.exe"
     else:
         venv_python = venv_dir / "bin" / "python"
         venv_pip = venv_dir / "bin" / "pip"
-        cobra_cmd = venv_dir / "bin" / "cobra"
 
     subprocess.run(
         [str(venv_pip), "install", "--no-deps", "--force-reinstall", str(wheels[0])],
@@ -62,18 +60,17 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     )
 
     smoke_script = (
-        "import subprocess, sys\n"
-        f"r = subprocess.run([{str(cobra_cmd)!r}, '--ayuda'], capture_output=True, text=True)\n"
-        "bad_tokens = ('ModuleNotFoundError', 'scripts.benchmarks')\n"
-        "stderr = r.stderr or ''\n"
-        "for token in bad_tokens:\n"
-        "    if token in stderr:\n"
-        "        raise SystemExit("
-        "f'Smoke packaging falló: token prohibido {token!r} en stderr={stderr!r}')\n"
-        "if r.returncode != 0:\n"
-        "    raise SystemExit("
-        "f'cobra --ayuda devolvió código {r.returncode}. stderr={stderr!r}')\n"
-        "print(r.stdout)\n"
+        "from pcobra.cli import main\n"
+        "import sys\n"
+        "antes = set(sys.modules)\n"
+        "code = main(['--help'])\n"
+        "despues = set(sys.modules)\n"
+        "if code != 0:\n"
+        "    raise SystemExit(f'pcobra.cli.main([\\'--help\\']) devolvió {code}')\n"
+        "prohibidos = {'cobra', 'core', 'bindings'}\n"
+        "cargados = sorted(name for name in (despues - antes) if name in prohibidos)\n"
+        "if cargados:\n"
+        "    raise SystemExit(f'Se cargaron paquetes raíz legacy en smoke limpio: {cargados!r}')\n"
     )
     run_help = subprocess.run(
         [str(venv_python), "-I", "-c", smoke_script],
@@ -84,6 +81,6 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     )
 
     assert run_help.returncode == 0, (
-        "El smoke test aislado de packaging debe ejecutar `cobra --ayuda` sin errores. "
+        "El smoke test aislado de packaging debe importar `pcobra.cli:main` y ejecutar --help sin depender de paquetes raíz. "
         f"stdout={run_help.stdout!r} stderr={run_help.stderr!r}"
     )
