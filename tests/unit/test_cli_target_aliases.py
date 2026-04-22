@@ -1,7 +1,7 @@
 import argparse
 import pytest
 
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, get_lang_choices
 from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
@@ -137,8 +137,8 @@ def test_compile_parser_no_expone_aliases_en_choices_publicos():
     tipo_action = next(action for action in compile_parser._actions if action.dest == "tipo")
     backend_action = next(action for action in compile_parser._actions if action.dest == "backend")
 
-    assert tuple(tipo_action.choices) == tuple(LANG_CHOICES)
-    assert tuple(backend_action.choices) == tuple(LANG_CHOICES)
+    assert tuple(tipo_action.choices) == tuple(get_lang_choices())
+    assert tuple(backend_action.choices) == tuple(get_lang_choices())
     for alias, _ in LEGACY_AMBIGUOUS_ALIASES:
         assert alias not in tipo_action.choices
         assert alias not in backend_action.choices
@@ -202,7 +202,7 @@ def test_error_legacy_publico_no_reintroduce_aliases_en_texto():
 
 def test_la_whitelist_publica_sigue_canonica():
     targets = official_transpiler_targets()
-    assert targets == tuple(LANG_CHOICES)
+    assert targets == tuple(get_lang_choices())
     assert targets == EXPECTED_CANONICAL_TARGETS
     assert len(targets) == 8
     assert len(set(targets)) == 8

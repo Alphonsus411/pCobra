@@ -7,6 +7,7 @@ from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     add_internal_legacy_targets_flag,
     enabled_internal_legacy_targets,
+    invalid_target_error,
     parse_target,
     parse_target_list,
 )
@@ -43,7 +44,11 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
-LANG_CHOICES = cli_transpiler_targets()
+
+def get_lang_choices() -> tuple[str, ...]:
+    """Obtiene targets canónicos para CLI de forma dinámica."""
+    cli_ensure_entrypoint_transpilers_loaded_once()
+    return cli_transpiler_targets()
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
@@ -128,7 +133,7 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        lang_choices = list(LANG_CHOICES) + list(enabled_internal_legacy_targets())
+        lang_choices = list(get_lang_choices()) + list(enabled_internal_legacy_targets())
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
@@ -180,6 +185,7 @@ class CompileCommand(BaseCommand):
             return 1
 
         _ensure_entrypoints_loaded_once()
+        current_lang_choices = set(get_lang_choices())
 
         tipos_argument = getattr(args, "tipos", None)
         if isinstance(tipos_argument, str):
@@ -191,6 +197,9 @@ class CompileCommand(BaseCommand):
 
         mod_info = get_toml_map()
         preferred_backend = getattr(args, "backend", None) or getattr(args, "tipo", None)
+        if preferred_backend and preferred_backend not in current_lang_choices:
+            mostrar_error(invalid_target_error(preferred_backend))
+            return 1
         if getattr(args, "backend", None):
             mostrar_advertencia(
                 _("La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura.")
@@ -217,6 +226,8 @@ class CompileCommand(BaseCommand):
             if tipos_argument:
                 langs = list(tipos_argument)
                 for lang in langs:
+                    if lang not in current_lang_choices:
+                        raise ValueError(invalid_target_error(lang))
                     enforce_target_deprecation_policy(
                         command=self.name,
                         target=lang,

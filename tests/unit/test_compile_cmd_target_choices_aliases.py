@@ -2,7 +2,7 @@ from argparse import _StoreAction
 
 import pytest
 
-from pcobra.cobra.cli.commands.compile_cmd import LANG_CHOICES, CompileCommand
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, get_lang_choices
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
@@ -21,7 +21,40 @@ def test_compile_tipo_choices_usa_lang_choices_centrales():
         a for a in compile_parser._actions if isinstance(a, _StoreAction) and a.dest == "tipo"
     )
 
-    assert tuple(action.choices) == tuple(LANG_CHOICES)
+    assert tuple(action.choices) == tuple(get_lang_choices())
+
+
+def test_get_lang_choices_es_dinamico_tras_carga_de_entrypoints(monkeypatch):
+    from pcobra.cobra.cli.commands import compile_cmd
+
+    calls = {"ensure": 0}
+
+    def _fake_ensure():
+        calls["ensure"] += 1
+
+    monkeypatch.setattr(compile_cmd, "cli_ensure_entrypoint_transpilers_loaded_once", _fake_ensure)
+    monkeypatch.setattr(
+        compile_cmd,
+        "cli_transpiler_targets",
+        lambda: ("python", "javascript", "rust", "wasm"),
+    )
+
+    assert get_lang_choices() == ("python", "javascript", "rust", "wasm")
+    assert calls["ensure"] == 1
+
+
+def test_compile_register_subparser_evalua_choices_en_tiempo_de_registro(monkeypatch):
+    from pcobra.cobra.cli.commands import compile_cmd
+
+    monkeypatch.setattr(compile_cmd, "get_lang_choices", lambda: ("python", "rust"))
+    monkeypatch.setattr(compile_cmd, "enabled_internal_legacy_targets", lambda: ())
+
+    _, compile_parser = _build_parser()
+    action = next(
+        a for a in compile_parser._actions if isinstance(a, _StoreAction) and a.dest == "tipo"
+    )
+
+    assert tuple(action.choices) == ("python", "rust")
 
 
 def test_compile_parser_normaliza_targets_canonicos_en_tipo_y_tipos():
