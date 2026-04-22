@@ -2,7 +2,7 @@ from argparse import Namespace
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.services.command_factory import CommandFactory
+from pcobra.cobra.cli.services.mod_service import ModService
 from pcobra.cobra.cli.i18n import _
 
 
@@ -13,8 +13,7 @@ class ModCommandV2(BaseCommand):
 
     def __init__(self) -> None:
         super().__init__()
-        self._command_factory = CommandFactory()
-        self._legacy = self._command_factory.create("modulos")
+        self._service = ModService()
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Manage Cobra modules"))
@@ -51,4 +50,4 @@ class ModCommandV2(BaseCommand):
             ruta=getattr(args, "path", None),
             nombre=getattr(args, "name", None),
         )
-        return self._legacy.run(legacy_args)
+        return self._service.run(legacy_args)
