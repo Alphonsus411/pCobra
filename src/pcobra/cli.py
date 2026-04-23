@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import ast
 from importlib import import_module
 from pathlib import Path
 from typing import Iterable, List, Optional
@@ -46,32 +45,6 @@ def configure_encoding() -> None:
     except Exception:
         pass
     os.environ["PYTHONIOENCODING"] = "utf-8"
-
-
-def _apply_cli_startup_unicode_patch() -> None:
-    """Aplica un parche de arranque para literales UTF-8 en sesiones CLI.
-
-    Este parche vive en startup del CLI para evitar modificar módulos del lenguaje.
-    Reemplaza temporalmente ``Lexer._procesar_cadena`` con una versión basada en
-    ``ast.literal_eval`` que respeta UTF-8 y secuencias de escape.
-    """
-
-    from pcobra.cobra.core.lexer import Lexer, UnclosedStringError
-
-    if getattr(Lexer, "_pcobra_cli_unicode_patch_applied", False):
-        return
-
-    def _procesar_cadena_cli(self, valor: str) -> str:
-        try:
-            parsed = ast.literal_eval(valor)
-        except (SyntaxError, ValueError, UnicodeError) as exc:
-            raise UnclosedStringError(
-                f"Cadena mal formada: {str(exc)}", self.linea, self.columna
-            )
-        return parsed if isinstance(parsed, str) else str(parsed)
-
-    Lexer._procesar_cadena = _procesar_cadena_cli  # type: ignore[method-assign]
-    Lexer._pcobra_cli_unicode_patch_applied = True  # type: ignore[attr-defined]
 
 
 def configure_logging(debug: bool) -> None:
@@ -223,13 +196,22 @@ def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List
     return normalizados
 
 
+def _preprocesar_argumentos_cli(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:
+    """Aplica saneamiento Unicode y normalización de alias a ``argumentos``."""
+    from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
+
+    normalizados = _normalizar_argumentos(argumentos)
+    if normalizados is None:
+        return None
+    return [sanitize_input(arg) for arg in normalizados]
+
+
 def main(argumentos: Optional[List[str]] = None) -> int:
     """Punto de entrada principal para la ejecución del CLI."""
     configure_encoding()
-    _apply_cli_startup_unicode_patch()
     _bootstrap_dev_path_si_opt_in()
     argv_entrada: Iterable[str] = argumentos if argumentos is not None else sys.argv[1:]
-    argv = _normalizar_argumentos(argv_entrada)
+    argv = _preprocesar_argumentos_cli(argv_entrada)
     debug = bool(argv and "--debug" in argv)
     configure_logging(debug=debug)
     if debug:

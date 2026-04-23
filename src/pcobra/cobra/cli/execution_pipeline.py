@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
 
 
@@ -62,8 +63,9 @@ def construir_script_sandbox_canonico(
     )
     script = (
         "from pcobra.cobra.core import Lexer, Parser\n"
+        "from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer\n"
         "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
-        f"_codigo = {codigo!r}\n"
+        f"_codigo = sanitize_source_for_tokenizer({codigo!r})\n"
         "_tokens = Lexer(_codigo).tokenizar()\n"
         "_ast = Parser(_tokens).parsear()\n"
         f"_interp = InterpretadorCobra({safe_mode_fragment.lstrip(', ')})\n"
@@ -83,7 +85,8 @@ def construir_script_sandbox_canonico(
 def analizar_codigo(codigo: str) -> Any:
     """Analiza código fuente con el pipeline canónico Lexer+Parser."""
 
-    tokens = Lexer(codigo).tokenizar()
+    codigo_saneado = sanitize_source_for_tokenizer(codigo)
+    tokens = Lexer(codigo_saneado).tokenizar()
     return Parser(tokens).parsear()
 
 
