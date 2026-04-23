@@ -516,13 +516,10 @@ class InteractiveCommand(BaseCommand):
             session.history = _SessionHistoryFallback(history_path)  # type: ignore[attr-defined]
 
         with self:
-            def _leer_prompt_toolkit(prompt: str) -> str:
-                return session.prompt(prompt)
-
             self._run_repl_loop(
                 args=args,
                 validador=None,
-                leer_linea=_leer_prompt_toolkit,
+                leer_linea=session.prompt,
                 sandbox=sandbox,
                 sandbox_docker=sandbox_docker,
             )
