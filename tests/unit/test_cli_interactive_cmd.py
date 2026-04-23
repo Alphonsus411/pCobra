@@ -410,11 +410,7 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
         mock_lexer.return_value.tokenizar.return_value = ['TOK']
         mock_parser.return_value.parsear.return_value = ['AST']
 
-        cmd._ejecutar_en_sandbox(
-            'imprimir(1)',
-            safe_mode=cmd._seguro_repl,
-            extra_validators=cmd._extra_validators_repl,
-        )
+        cmd._ejecutar_en_sandbox('imprimir(1)')
 
     script_enviado = mock_sandbox.call_args.args[0]
     assert "safe_mode=False" in script_enviado
@@ -448,8 +444,29 @@ def test_run_repl_loop_pasa_estado_repl_a_ejecucion_sandbox():
 
     mock_sandbox.assert_called_once_with(
         "imprimir(1)",
-        safe_mode=False,
-        extra_validators=["extra.py"],
+    )
+
+
+def test_ejecutar_en_sandbox_usa_estado_repl_y_contrato_de_run_service():
+    cmd = InteractiveCommand(MagicMock())
+    cmd._seguro_repl = True
+    cmd._extra_validators_repl = ["extra_repl.py"]
+
+    with patch("cobra.cli.commands.interactive_cmd.analizar_codigo") as mock_analizar, \
+         patch("cobra.cli.commands.interactive_cmd.construir_script_sandbox_canonico", return_value="SCRIPT") as mock_script, \
+         patch("cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox", return_value=None) as mock_ejecutar:
+        cmd._ejecutar_en_sandbox("imprimir(7)")
+
+    mock_analizar.assert_called_once_with("imprimir(7)")
+    mock_script.assert_called_once_with(
+        "imprimir(7)",
+        safe_mode=True,
+        extra_validators=["extra_repl.py"],
+        imprimir_resultado=True,
+    )
+    mock_ejecutar.assert_called_once_with(
+        "SCRIPT",
+        allow_insecure_fallback=False,
     )
 
 
@@ -482,3 +499,24 @@ def test_log_error_imprime_mensaje_limpio_sin_categoria_tecnica():
         cmd._log_error("Error de sintaxis", RuntimeError("Error: Error general: fallo"))
 
     assert mock_stdout.getvalue().strip() == "Error: fallo"
+
+
+def test_run_repl_loop_reporta_error_sandbox_una_sola_vez():
+    cmd = InteractiveCommand(MagicMock())
+
+    def _leer_linea_factory():
+        entradas = iter(["imprimir(1)", "salir"])
+        return lambda _prompt: next(entradas)
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch.object(cmd, "_ejecutar_en_sandbox", side_effect=RuntimeError("Error general: fallo controlado")), \
+         patch("cobra.cli.commands.interactive_cmd.mostrar_error") as mock_error:
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=_leer_linea_factory(),
+            sandbox=True,
+            sandbox_docker=None,
+        )
+
+    mock_error.assert_called_once_with("fallo controlado", registrar_log=False)

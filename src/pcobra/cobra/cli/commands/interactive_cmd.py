@@ -620,11 +620,7 @@ class InteractiveCommand(BaseCommand):
                 )
 
                 if sandbox:
-                    self._ejecutar_en_sandbox(
-                        codigo,
-                        safe_mode=self._seguro_repl,
-                        extra_validators=self._extra_validators_repl,
-                    )
+                    self._ejecutar_en_sandbox(codigo)
                 elif sandbox_docker:
                     self._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
@@ -782,23 +778,18 @@ class InteractiveCommand(BaseCommand):
     def _ejecutar_en_sandbox(
         self,
         linea: str,
-        *,
-        safe_mode: bool,
-        extra_validators: Any,
     ) -> None:
         """Ejecuta código en un sandbox.
 
         Args:
             linea: Código a ejecutar
-            safe_mode: Política de seguridad activa del REPL.
-            extra_validators: Validadores extra activos en la sesión REPL.
         """
         analizar_codigo(linea)
 
         script = construir_script_sandbox_canonico(
             linea,
-            safe_mode=safe_mode,
-            extra_validators=extra_validators,
+            safe_mode=self._seguro_repl,
+            extra_validators=self._extra_validators_repl,
             imprimir_resultado=True,
         )
 
