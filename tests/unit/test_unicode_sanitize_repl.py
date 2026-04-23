@@ -7,7 +7,10 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
     SafeFileHistory,
 )
-from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
+from pcobra.cobra.cli.utils.unicode_sanitize import (
+    sanitize_input,
+    sanitize_source_for_tokenizer,
+)
 
 
 def _args() -> SimpleNamespace:
@@ -54,6 +57,22 @@ def test_sanitize_input_mezcla_unicode_valido_y_surrogate_invalido():
     assert all(not (0xD800 <= ord(ch) <= 0xDFFF) for ch in saneado)
     # Debe poder codificarse a UTF-8 sin UnicodeEncodeError.
     assert saneado.encode("utf-8") == "áéíóú 🚀�".encode("utf-8")
+
+
+def test_sanitize_source_for_tokenizer_escapa_unicode_en_cadenas() -> None:
+    codigo = 'imprimir("áéíóú ñ € 🚀")'
+
+    saneado = sanitize_source_for_tokenizer(codigo)
+
+    assert saneado == 'imprimir("\\xe1\\xe9\\xed\\xf3\\xfa \\xf1 \\u20ac \\U0001f680")'
+
+
+def test_sanitize_source_for_tokenizer_no_muta_identificadores_unicode() -> None:
+    codigo = "var canción = 1"
+
+    saneado = sanitize_source_for_tokenizer(codigo)
+
+    assert saneado == codigo
 
 
 def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):

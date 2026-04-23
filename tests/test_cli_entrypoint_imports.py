@@ -130,3 +130,23 @@ def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
         "Se detectó posible mojibake en salida de CLI. "
         f"stdout={result.stdout!r}"
     )
+
+
+def test_cli_bootstrap_no_monkey_patchea_lexer() -> None:
+    """Contrato: bootstrap de CLI no debe mutar métodos de ``Lexer``."""
+
+    result = _run_python_isolated(
+        "from pcobra.cobra.core.lexer import Lexer; "
+        "before = Lexer._procesar_cadena; "
+        "from pcobra.cli import main; "
+        "rc = main(['--ayuda']); "
+        "after = Lexer._procesar_cadena; "
+        "assert rc == 0; "
+        "assert before is after, "
+        "'pcobra.cli bootstrap no debe monkey-patchear Lexer._procesar_cadena'; "
+    )
+
+    assert result.returncode == 0, (
+        "El bootstrap CLI debe preservar el método original del lexer. "
+        f"stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
