@@ -91,8 +91,11 @@ dev = [
 [tool.setuptools]
 include-package-data = true
 # Fuente canónica runtime/publicada: únicamente `src/pcobra`.
+# Política reforzada de imports internos: todo código bajo `src/pcobra/**` debe
+# importar vía `pcobra.cobra.*` (o import relativo dentro de `pcobra`).
 # Los shims de raíz (`src/cobra`, `src/core`, `src/bindings` y análogos fuera de
-# `src/pcobra`) son compatibilidad interna del repositorio y NO contrato runtime.
+# `src/pcobra`) son compatibilidad interna, están deprecados y NO son contrato
+# de distribución/publicación en PyPI.
 package-dir = {"" = "src"}
 
 [tool.setuptools.exclude-package-data]

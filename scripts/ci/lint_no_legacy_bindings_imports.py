@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bloquea imports legacy `bindings.*` dentro de `src/`."""
+"""Bloquea imports legacy `bindings.*` dentro de `src/pcobra/**`."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC_ROOT = ROOT / "src"
+SRC_ROOT = ROOT / "src" / "pcobra"
 FORBIDDEN_PREFIX = "bindings"
 
 
@@ -26,7 +26,7 @@ def _is_forbidden(target: str | None) -> bool:
 
 
 def find_violations(root: Path = ROOT) -> list[str]:
-    src_root = root / "src"
+    src_root = root / "src" / "pcobra"
     failures: list[str] = []
     for path in sorted(src_root.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -36,24 +36,24 @@ def find_violations(root: Path = ROOT) -> list[str]:
                     rel = path.relative_to(root)
                     failures.append(
                         f"{rel}:{node.lineno}: import no permitido a {target}; "
-                        "usa pcobra.cobra.bindings.*"
+                        "usa pcobra.cobra.* o imports relativos dentro de pcobra"
                     )
     return failures
 
 
 def main() -> int:
     if not SRC_ROOT.exists():
-        print("⚠️ Lint imports legacy bindings: src/ no existe, se omite.")
+        print("⚠️ Lint imports legacy bindings: src/pcobra/ no existe, se omite.")
         return 0
 
     failures = find_violations(ROOT)
     if failures:
-        print("❌ Lint imports legacy bindings en src/: FALLÓ")
+        print("❌ Lint imports legacy bindings en src/pcobra/: FALLÓ")
         for item in failures:
             print(f" - {item}")
         return 1
 
-    print("✅ Lint imports legacy bindings en src/: OK")
+    print("✅ Lint imports legacy bindings en src/pcobra/: OK")
     return 0
 
 

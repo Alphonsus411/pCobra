@@ -79,3 +79,5 @@ Para evitar bloqueos en proyectos históricos:
 - Define una fecha de corte para remover comandos/flags antiguos.
 
 La compatibilidad legacy debe tratarse como **transición controlada**, no como interfaz principal.
+
+> **Nota contractual:** aliases legacy (`cli`, `cobra`, `core`, `bindings`) se mantienen solo como shims de migración deprecados. No forman parte del contrato público de imports ni del artefacto publicado en PyPI.
