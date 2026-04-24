@@ -56,17 +56,28 @@ def test_permite_solo_basecommand_desde_base(tmp_path: Path) -> None:
     assert violations == []
 
 
-def test_rechaza_import_desde_base_que_no_es_basecommand(tmp_path: Path) -> None:
+def test_permite_cualquier_simbolo_desde_commands_base(tmp_path: Path) -> None:
     _write(
-        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "bad.py",
-        "from pcobra.cobra.cli.commands.base import _normalize_name\n",
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "ok.py",
+        "from pcobra.cobra.cli.commands.base import BaseCommand, CommandError\n",
     )
 
     violations = find_violations(tmp_path)
 
-    assert len(violations) == 1
-    assert "import entre comandos no permitido" in violations[0]
-    assert "src/pcobra/cobra/cli/commands/bad.py:1" in violations[0]
+    assert violations == []
+
+
+def test_rechaza_import_desde_otro_modulo_no_base(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "bad.py",
+        "from pcobra.cobra.cli.commands.helpers import helper\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) >= 1
+    assert any("import entre comandos no permitido" in item for item in violations)
+    assert any("src/pcobra/cobra/cli/commands/bad.py:1" in item for item in violations)
 
 
 def test_detecta_import_relativo_a_otro_comando(tmp_path: Path) -> None:
