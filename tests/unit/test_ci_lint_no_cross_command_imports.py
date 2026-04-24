@@ -82,15 +82,15 @@ def test_detecta_import_relativo_a_otro_comando(tmp_path: Path) -> None:
     assert any("src/pcobra/cobra/cli/commands/bad.py:1" in item for item in violations)
 
 
-def test_detecta_import_directo_registry_en_comando(tmp_path: Path) -> None:
+def test_detecta_acceso_compartido_transpilers_fuera_registry(tmp_path: Path) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
-        "from pcobra.cobra.transpilers.registry import get_transpilers\n",
+        "from pcobra.cobra.transpilers import module_map\n",
     )
 
     violations = find_violations(tmp_path)
 
-    assert "import directo no permitido" in violations[0]
+    assert "acceso compartido de transpiladores no permitido" in violations[0]
     assert "src/pcobra/cobra/cli/commands/a.py:1" in violations[0]
 
 

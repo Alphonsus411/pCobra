@@ -24,6 +24,7 @@ from pcobra.cobra.transpilers.registry import (
     plugin_transpilers,
     register_transpiler_backend,
 )
+from pcobra.cobra.transpilers.module_map import get_toml_map
 
 
 def cli_transpilers() -> Mapping[str, type]:
@@ -56,3 +57,8 @@ def cli_register_transpiler_backend(backend: str, transpiler_cls, *, context: st
 def cli_load_entrypoint_transpilers() -> tuple[int, int, int]:
     """Carga explícita de entrypoints, manteniendo contrato legacy de retorno."""
     return load_entrypoint_transpilers()
+
+
+def cli_toml_map() -> dict:
+    """Devuelve el mapa de configuración TOML para consumo compartido en CLI."""
+    return get_toml_map()
