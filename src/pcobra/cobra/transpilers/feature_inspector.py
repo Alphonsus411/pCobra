@@ -10,8 +10,8 @@ from pathlib import Path
 import re
 from typing import Dict, List
 
+from pcobra.cobra.transpilers.registry import official_transpiler_targets
 from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_label
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # Carpeta donde se encuentran los transpiladores individuales
 BASE_DIR = Path(__file__).resolve().parent / "transpiler"
@@ -28,10 +28,6 @@ def _resolve_transpiler_file(target: str) -> str:
     return _TRANSPILER_FILE_BY_TARGET.get(canonical, f"to_{canonical}.py")
 
 
-TRANSPILERS: Dict[str, str] = {
-    normalize_target_name(target): _resolve_transpiler_file(target) for target in OFFICIAL_TARGETS
-}
-
 # Patrones para detectar características registradas en los transpiladores
 # 1) Asignaciones como `TranspiladorX.visit_algo = ...`
 _ASSIGN_PATTERN = re.compile(r"visit_([a-zA-Z_]+)\s*=")
@@ -42,7 +38,9 @@ _DICT_PATTERN = re.compile(r"['\"]([a-zA-Z_]+)['\"]\s*:\s*visit_[a-zA-Z_]+")
 def extract_features() -> Dict[str, List[str]]:
     """Devuelve un mapeo de lenguaje a la lista de características soportadas."""
     features: Dict[str, List[str]] = {}
-    for canonical, transpiler_file in TRANSPILERS.items():
+    for canonical in official_transpiler_targets():
+        canonical = normalize_target_name(canonical)
+        transpiler_file = _resolve_transpiler_file(canonical)
         language = target_label(canonical)
         path = BASE_DIR / transpiler_file
         if not path.exists():
