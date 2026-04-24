@@ -1166,13 +1166,16 @@ class InterpretadorCobra:
                 # Declaración local (explícita o por inferencia)
                 self.contextos[-1].define(nombre, valor)
             else:
-                # Si la variable ya tiene memoria reservada, se libera
-                mem_ctx = self.mem_contextos[-1]
-                if nombre in mem_ctx:
-                    idx, tam = mem_ctx.pop(nombre)
-                    self.liberar_memoria(idx, tam)
+                # Mutación: resolver primero en qué entorno vive la variable.
+                # Si no existe todavía, ``set`` la creará en el scope actual.
+                indice_contexto = self._indice_entorno_variable(nombre)
+                if indice_contexto is None:
+                    indice_contexto = len(self.mem_contextos) - 1
+
+                # Liberar/reasignar en el contexto real (no forzar el actual).
+                self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
                 indice = self.solicitar_memoria(1)
-                mem_ctx[nombre] = (indice, 1)
+                self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                 self.contextos[-1].set(nombre, valor)
         return valor
 
