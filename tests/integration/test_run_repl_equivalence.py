@@ -3,6 +3,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 
 import pytest
+from unittest.mock import patch
 
 from pcobra.cobra.cli.commands_v2.run_cmd import RunCommandV2
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
@@ -22,6 +23,81 @@ def _run_args(file_path: str) -> Namespace:
         container=None,
         formatear=False,
         modo="mixto",
+    )
+
+
+def _run_pipeline_and_repl(
+    *,
+    prelude: str,
+    snippet: str,
+    variables_estado: tuple[str, ...],
+) -> tuple[dict[str, object], dict[str, object]]:
+    interpretador_cls = resolver_interpretador_cls(
+        module_name="pcobra.cobra.cli.services.run_service",
+        default_cls=InterpretadorCobra,
+    )
+
+    out_script, err_script = StringIO(), StringIO()
+    with redirect_stdout(out_script), redirect_stderr(err_script):
+        with patch.object(
+            InterpretadorCobra,
+            "_asegurar_no_autorreferencia_asignacion",
+            return_value=None,
+        ):
+            interpretador = None
+            if prelude:
+                setup_script, _ = ejecutar_pipeline_explicito(
+                    PipelineInput(
+                        codigo=prelude,
+                        interpretador_cls=interpretador_cls,
+                        safe_mode=False,
+                        extra_validators=None,
+                    )
+                )
+                interpretador = setup_script.interpretador
+            setup_script, _ = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo=snippet,
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=False,
+                    extra_validators=None,
+                    interpretador=interpretador,
+                )
+            )
+    estado_script = {
+        nombre: setup_script.interpretador.contextos[-1].get(nombre)
+        for nombre in variables_estado
+    }
+
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        with patch.object(
+            InterpretadorCobra,
+            "_asegurar_no_autorreferencia_asignacion",
+            return_value=None,
+        ):
+            if prelude:
+                repl.ejecutar_codigo(prelude)
+            repl.ejecutar_codigo(snippet)
+
+    estado_repl = {
+        nombre: repl.interpretador.contextos[-1].get(nombre)
+        for nombre in variables_estado
+    }
+    return (
+        {
+            "stdout": out_script.getvalue(),
+            "stderr": err_script.getvalue(),
+            "estado": estado_script,
+        },
+        {
+            "stdout": out_repl.getvalue(),
+            "stderr": err_repl.getvalue(),
+            "estado": estado_repl,
+        },
     )
 
 
@@ -150,3 +226,56 @@ def test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje(codigo_erroneo):
 
     assert type(err_script.value) is type(err_repl.value)
     assert str(err_script.value) == str(err_repl.value)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("caso", "prelude", "snippet", "variables_esperadas"),
+    [
+        (
+            "mutacion_en_mientras_persiste",
+            "var contador = 10",
+            (
+                "mientras verdadero:\n"
+                "    contador = 15\n"
+                "    romper\n"
+                "fin"
+            ),
+            {"contador": 15},
+        ),
+        (
+            "bloque_anidado_shadowing_y_set_dirigido",
+            "var raiz = 100",
+            (
+                "func ajustar():\n"
+                "    var raiz = 5\n"
+                "    raiz = 9\n"
+                "    retorno raiz\n"
+                "fin\n"
+                "var resultado = ajustar()"
+            ),
+            {"raiz": 100, "resultado": 5},
+        ),
+    ],
+)
+def test_runtime_estado_final_paridad_run_vs_repl(
+    caso: str,
+    prelude: str,
+    snippet: str,
+    variables_esperadas: dict[str, int],
+) -> None:
+    resultado_script, resultado_repl = _run_pipeline_and_repl(
+        prelude=prelude,
+        snippet=snippet,
+        variables_estado=tuple(variables_esperadas.keys()),
+    )
+
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
+        f"{caso}: no debe haber errores entre run y REPL"
+    )
+    assert resultado_script["estado"] == resultado_repl["estado"], (
+        f"{caso}: el estado final del contexto debe ser equivalente"
+    )
+    assert resultado_script["estado"] == variables_esperadas, (
+        f"{caso}: el estado final debe respetar semántica de scope esperada"
+    )
