@@ -10,7 +10,7 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def test_detecta_import_legacy_bindings_en_src(tmp_path: Path) -> None:
+def test_detecta_import_legacy_bindings_en_src_pcobra(tmp_path: Path) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "foo.py",
         "from bindings.contract import resolve_binding\n",

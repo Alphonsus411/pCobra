@@ -60,6 +60,8 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     )
 
     smoke_script = (
+        "import pcobra\n"
+        "import pcobra.cli\n"
         "from pcobra.cli import main\n"
         "import sys\n"
         "antes = set(sys.modules)\n"
@@ -81,6 +83,6 @@ def test_packaging_smoke_build_install_and_run_help(tmp_path: Path) -> None:
     )
 
     assert run_help.returncode == 0, (
-        "El smoke test aislado de packaging debe importar `pcobra.cli:main` y ejecutar --help sin depender de paquetes raíz. "
+        "El smoke test aislado de packaging debe validar `import pcobra; import pcobra.cli` y ejecutar --help sin depender de paquetes raíz. "
         f"stdout={run_help.stdout!r} stderr={run_help.stderr!r}"
     )
