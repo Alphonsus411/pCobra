@@ -36,6 +36,19 @@ Las tareas etiquetadas como `good first issue` están orientadas a la comunidad 
   relativos del propio paquete. Evita `from bindings...`; ese namespace se
   mantiene únicamente como shim legacy deprecado.
 
+### Política de transición de imports legacy (shims)
+
+- **Ruta canónica obligatoria para código productivo nuevo**: `src/pcobra/**`.
+- **Shims legacy permitidos solo por compatibilidad**:
+  - `src/cobra/**`
+  - `src/core/**`
+  - `src/bindings/**`
+- **Regla de mantenimiento**: cualquier shim debe incluir un comentario visible
+  `# pcobra-compat: allow-legacy-imports` y una nota explícita de deprecación.
+- **Objetivo de retiro de shims**: **30 de junio de 2027**. A partir de esa
+  fecha, los namespaces `cobra`, `core` y `bindings` deberán eliminarse como
+  imports públicos, salvo decisión explícita de mantenimiento registrada en ADR.
+
 ## Nueva feature del lenguaje
 
 Cuando añadas una nueva feature del lenguaje, usa este checklist mínimo:

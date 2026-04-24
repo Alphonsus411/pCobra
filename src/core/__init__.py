@@ -7,6 +7,7 @@ que ``import core.algo`` cargue los submódulos reales de ``pcobra.core``.
 
 Ruta canónica runtime: ``src/pcobra/core``.
 """
+# pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
 

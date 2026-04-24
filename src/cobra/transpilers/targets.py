@@ -2,6 +2,7 @@
 
 Fuente canónica: :mod:`pcobra.cobra.transpilers.targets`.
 """
+# pcobra-compat: allow-legacy-imports
 
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 

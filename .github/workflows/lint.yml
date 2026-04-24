@@ -26,6 +26,8 @@ jobs:
         run: python scripts/ci/lint_no_legacy_bindings_imports.py
       - name: Lint legacy cobra tree is shim-only
         run: python scripts/ci/lint_legacy_cobra_shims.py
+      - name: Lint canonical import resolution contract
+        run: python scripts/ci/lint_import_resolution_contract.py
       - name: Gate de arquitectura de imports (ciclos y capas)
         run: python scripts/ci/check_import_cycles.py
       - name: Validate runtime contract matrix

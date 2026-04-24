@@ -8,6 +8,7 @@ sin modificaciones.
 
 Ruta canónica runtime: ``src/pcobra/**``.
 """
+# pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
 
