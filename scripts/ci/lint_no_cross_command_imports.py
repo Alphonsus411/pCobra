@@ -26,15 +26,6 @@ ALLOWED_BASE_IMPORT_MODULES = {
     "pcobra.cobra.cli.commands.base",
     "cobra.cli.commands.base",
 }
-ALLOWED_BASE_IMPORT_NAMES = {"BaseCommand"}
-# Excepciones documentadas puntuales:
-# clave: ruta relativa al repo; valor: imports absolutos permitidos.
-ALLOWED_COMMAND_IMPORT_EXCEPTIONS: dict[str, set[str]] = {
-    # Necesita CommandError para mapear errores de validación al contrato del CLI.
-    "src/pcobra/cobra/cli/commands/transpilar_inverso_cmd.py": {
-        "pcobra.cobra.cli.commands.base",
-    },
-}
 ALLOWED_CLI_IMPORT_PREFIXES = (
     "pcobra.cobra.cli.commands.base",
     "pcobra.cobra.cli.services.",
@@ -123,8 +114,6 @@ def _build_import_graph(path: Path, root: Path) -> dict[str, set[str]]:
 def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
-    rel = path.relative_to(root)
-    allowed_exception_modules = ALLOWED_COMMAND_IMPORT_EXCEPTIONS.get(str(rel), set())
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -135,13 +124,7 @@ def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, 
             resolved_module = _resolve_relative_module(path, node.module, node.level, root)
             if not resolved_module:
                 continue
-            if resolved_module in allowed_exception_modules:
-                continue
-            imported_names = {alias.name for alias in node.names}
             if resolved_module in ALLOWED_BASE_IMPORT_MODULES:
-                if imported_names.issubset(ALLOWED_BASE_IMPORT_NAMES):
-                    continue
-                violations.append((node.lineno, resolved_module))
                 continue
             if not _is_forbidden_module_name(resolved_module):
                 continue
@@ -267,7 +250,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
                 for line, target in _scan_restricted_command_imports(path, root):
                     failures.append(
                         f"{rel}:{line}: import entre comandos no permitido ({target}); "
-                        "solo se permite `from ...commands.base import BaseCommand` (o excepción explícita)"
+                        "solo se permite importar desde `...commands.base`"
                     )
                 for source, edges in graph.items():
                     for target in sorted(edges):
