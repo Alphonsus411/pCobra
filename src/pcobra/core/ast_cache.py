@@ -13,6 +13,12 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import database
+from .token_contract import (
+    deserialize_token,
+    is_token_like,
+    serialize_token,
+    token_enum_classes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,32 +95,6 @@ _FRAGMENT_TOKENS_KEY = "fragment_tokens"
 _FRAGMENT_AST_KEY = "fragment_ast"
 
 
-def _is_token_like(obj: Any) -> bool:
-    try:
-        from pcobra.core.lexer import Token
-    except ModuleNotFoundError:  # pragma: no cover - entornos acotados
-        Token = None  # type: ignore
-
-    if Token is not None and isinstance(obj, Token):
-        return True
-
-    if obj.__class__.__name__ != "Token":
-        return False
-    return all(hasattr(obj, attr) for attr in ("tipo", "valor", "linea", "columna"))
-
-
-def _serialize_token(obj: Any) -> dict[str, Any]:
-    tipo = getattr(obj, "tipo", None)
-    tipo_valor = getattr(tipo, "value", tipo)
-    return {
-        "__token__": True,
-        "tipo": tipo_valor,
-        "valor": getattr(obj, "valor", None),
-        "linea": getattr(obj, "linea", None),
-        "columna": getattr(obj, "columna", None),
-    }
-
-
 def _get_node_classes() -> dict[str, type]:
     global _NODE_CLASSES
     if _NODE_CLASSES is None:
@@ -127,9 +107,7 @@ def _get_node_classes() -> dict[str, type]:
 def _get_enum_classes() -> dict[str, type]:
     global _ENUM_CLASSES
     if _ENUM_CLASSES is None:
-        from pcobra.core.lexer import TipoToken
-
-        _ENUM_CLASSES = {"TipoToken": TipoToken}
+        _ENUM_CLASSES = token_enum_classes()
     return _ENUM_CLASSES
 
 
@@ -139,8 +117,8 @@ def _serialize(obj: Any) -> Any:
         for f in fields(obj):
             data[f.name] = _serialize(getattr(obj, f.name))
         return data
-    if _is_token_like(obj):
-        return _serialize_token(obj)
+    if is_token_like(obj):
+        return serialize_token(obj)
     if isinstance(obj, Enum):
         return {"__enum__": obj.__class__.__name__, "value": obj.value}
     if isinstance(obj, list):
@@ -151,18 +129,11 @@ def _serialize(obj: Any) -> Any:
 
 
 def _deserialize(data: Any) -> Any:
-    from pcobra.core.lexer import Token, TipoToken
-
     if isinstance(data, list):
         return [_deserialize(i) for i in data]
     if isinstance(data, dict):
         if data.get("__token__"):
-            return Token(
-                TipoToken(data["tipo"]),
-                data.get("valor"),
-                data.get("linea"),
-                data.get("columna"),
-            )
+            return deserialize_token(data)
         if "__enum__" in data:
             enum_cls = _get_enum_classes()[data["__enum__"]]
             return enum_cls(data["value"])
@@ -345,9 +316,10 @@ def obtener_tokens(codigo: str):
     if tokens is not None:
         return tokens
 
-    from pcobra.core.lexer import Lexer
+    from importlib import import_module
 
-    tokens = Lexer(codigo).tokenizar()
+    lexer_cls = getattr(import_module("pcobra.cobra.core.lexer"), "Lexer")
+    tokens = lexer_cls(codigo).tokenizar()
     _store_fragment(hash_key, codigo, _FULL_TOKENS_KEY, tokens)
     return tokens
 
@@ -361,9 +333,10 @@ def obtener_ast(codigo: str):
         return ast
 
     tokens = obtener_tokens(codigo)
-    from pcobra.core.parser import Parser
+    from importlib import import_module
 
-    ast = Parser(tokens).parsear()
+    parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
+    ast = parser_cls(tokens).parsear()
     _store_ast(hash_key, codigo, ast)
     return ast
 
@@ -376,9 +349,10 @@ def obtener_tokens_fragmento(codigo: str):
     if tokens is not None:
         return tokens
 
-    from pcobra.core.lexer import Lexer
+    from importlib import import_module
 
-    tokens = Lexer(codigo).tokenizar()
+    lexer_cls = getattr(import_module("pcobra.cobra.core.lexer"), "Lexer")
+    tokens = lexer_cls(codigo).tokenizar()
     _store_fragment(hash_key, codigo, _FRAGMENT_TOKENS_KEY, tokens)
     return tokens
 
@@ -392,9 +366,10 @@ def obtener_ast_fragmento(codigo: str):
         return ast
 
     tokens = obtener_tokens_fragmento(codigo)
-    from pcobra.core.parser import Parser
+    from importlib import import_module
 
-    ast = Parser(tokens).parsear()
+    parser_cls = getattr(import_module("pcobra.cobra.core.parser"), "Parser")
+    ast = parser_cls(tokens).parsear()
     _store_fragment(hash_key, codigo, _FRAGMENT_AST_KEY, ast)
     return ast
 
