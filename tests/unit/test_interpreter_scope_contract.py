@@ -55,6 +55,82 @@ def test_reasignacion_en_mientras_persiste_fuera_del_loop() -> None:
     assert inter.obtener_variable("i") == 3
 
 
+def test_mientras_reasigna_memoria_en_entorno_real_y_persiste_fuera() -> None:
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("i", NodoValor(0), declaracion=True))
+    inter.mem_contextos[0]["i"] = (11, 1)
+
+    liberaciones: list[tuple[int, int]] = []
+    solicitudes = iter([22, 33])
+    inter.liberar_memoria = lambda idx, tam: liberaciones.append((idx, tam))
+    inter.solicitar_memoria = lambda tam: next(solicitudes)
+
+    condicion = NodoOperacionBinaria(
+        NodoIdentificador("i"),
+        Token(TipoToken.MENORQUE, "<"),
+        NodoValor(2),
+    )
+    incremento = NodoAsignacion(
+        "i",
+        NodoOperacionBinaria(
+            NodoIdentificador("i"),
+            Token(TipoToken.SUMA, "+"),
+            NodoValor(1),
+        ),
+    )
+
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_mientras(NodoBucleMientras(condicion, [incremento]))
+
+    assert inter.obtener_variable("i") == 2
+    assert liberaciones == [(11, 1), (22, 1)]
+    assert inter.mem_contextos[0]["i"] == (33, 1)
+
+
+
+def test_closure_mutacion_reasigna_en_padre_y_persiste_tras_salir() -> None:
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("base", NodoValor(10), declaracion=True))
+    inter.mem_contextos[0]["base"] = (100, 1)
+
+    liberaciones: list[tuple[int, int]] = []
+    inter.liberar_memoria = lambda idx, tam: liberaciones.append((idx, tam))
+    inter.solicitar_memoria = lambda tam: 200
+
+    closure = NodoFuncion(
+        "sumar_uno",
+        [],
+        [
+            NodoAsignacion(
+                "base",
+                NodoOperacionBinaria(
+                    NodoIdentificador("base"),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoValor(1),
+                ),
+            )
+        ],
+    )
+
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_funcion(closure)
+        inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("sumar_uno", []))
+
+    assert inter.obtener_variable("base") == 11
+    assert liberaciones == [(100, 1)]
+    assert inter.mem_contextos[0]["base"] == (200, 1)
+    assert len(inter.contextos) == 1
+    assert len(inter.mem_contextos) == 1
+
+
 def test_reasignacion_en_funcion_actualiza_scope_capturado_padre() -> None:
     with patch.object(
         InterpretadorCobra,
