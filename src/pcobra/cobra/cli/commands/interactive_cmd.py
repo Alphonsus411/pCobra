@@ -41,7 +41,6 @@ from pcobra.cobra.cli.execution_pipeline import (
     resolver_interpretador_cls,
     validar_ast_seguro,
 )
-from pcobra.cobra.transpilers import module_map
 from pcobra.cobra.core import (
     NodoBucleMientras,
     NodoCondicional,
@@ -77,6 +76,7 @@ from pcobra.cobra.cli.target_policies import (
     parse_runtime_target,
     resolve_docker_backend,
 )
+from pcobra.cobra.cli.transpiler_registry import cli_toml_map
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
@@ -430,7 +430,7 @@ class InteractiveCommand(BaseCommand):
                     return 1
 
             # Validar dependencias
-            validar_dependencias("python", module_map.get_toml_map())
+            validar_dependencias("python", cli_toml_map())
         except (ValueError, FileNotFoundError) as err:
             mostrar_error(
                 _("Error de dependencias durante la inicialización: {err}").format(

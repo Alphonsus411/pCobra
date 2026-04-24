@@ -2,11 +2,16 @@
 """Lint interno para comandos CLI.
 
 Reglas:
-1) Prohíbe imports entre módulos de comandos CLI.
-2) Permite únicamente ``from ...commands.base import BaseCommand``
-   (salvo excepciones explícitas y justificadas).
-3) Prohíbe estado compartido local en módulos comando
+1) Construye el grafo de imports Python bajo ``cli/commands``.
+2) Prohíbe edges ``commands.X -> commands.Y`` (salvo ``commands.base``).
+3) En imports internos de ``pcobra.cobra.cli.*`` permite solo:
+   ``commands.base``, ``services/*``, ``utils/*``, ``i18n``,
+   ``target_policies`` y registries dedicados.
+4) Prohíbe estado compartido local en módulos comando
    (por ejemplo, ``TRANSPILERS = {...}`` y constantes similares).
+5) Contrato de transpiladores: el acceso compartido debe pasar por
+   ``pcobra.cobra.cli.transpiler_registry`` o
+   ``pcobra.cobra.transpilers.registry``.
 """
 
 from __future__ import annotations
@@ -15,10 +20,8 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-FORBIDDEN_PREFIXES = (
-    "pcobra.cobra.cli.commands",
-    "cobra.cli.commands",
-)
+COMMANDS_PACKAGE_PREFIXES = ("pcobra.cobra.cli.commands", "cobra.cli.commands")
+CLI_PACKAGE_PREFIXES = ("pcobra.cobra.cli", "cobra.cli")
 ALLOWED_BASE_IMPORT_MODULES = {
     "pcobra.cobra.cli.commands.base",
     "cobra.cli.commands.base",
@@ -32,14 +35,41 @@ ALLOWED_COMMAND_IMPORT_EXCEPTIONS: dict[str, set[str]] = {
         "pcobra.cobra.cli.commands.base",
     },
 }
-FORBIDDEN_DIRECT_REGISTRY_IMPORTS = {
+ALLOWED_CLI_IMPORT_PREFIXES = (
+    "pcobra.cobra.cli.commands.base",
+    "pcobra.cobra.cli.services.",
+    "pcobra.cobra.cli.utils.",
+    "pcobra.cobra.cli.i18n",
+    "pcobra.cobra.cli.target_policies",
+    "cobra.cli.commands.base",
+    "cobra.cli.services.",
+    "cobra.cli.utils.",
+    "cobra.cli.i18n",
+    "cobra.cli.target_policies",
+)
+ALLOWED_CLI_REGISTRY_SUFFIX = "_registry"
+# Módulos de infraestructura existentes que siguen siendo válidos dentro del CLI
+# y que no forman parte de la regla principal de imports para commands.
+ALLOWED_CLI_INFRA_MODULES = {
+    "pcobra.cobra.cli.mode_policy",
+    "pcobra.cobra.cli.deprecation_policy",
+    "pcobra.cobra.cli.execution_pipeline",
+    "pcobra.cobra.cli.repl.cobra_lexer",
+}
+TRANSPILER_SHARED_ALLOWED_MODULES = {
+    "pcobra.cobra.cli.transpiler_registry",
     "pcobra.cobra.transpilers.registry",
+    "cobra.cli.transpiler_registry",
     "cobra.transpilers.registry",
+}
+FORBIDDEN_TRANSPILER_SHARED_MODULES = {
+    "pcobra.cobra.transpilers",
+    "pcobra.cobra.transpilers.module_map",
 }
 
 
 def _is_forbidden_module_name(module: str) -> bool:
-    for prefix in FORBIDDEN_PREFIXES:
+    for prefix in COMMANDS_PACKAGE_PREFIXES:
         if module == prefix:
             return True
         if module.startswith(f"{prefix}."):
@@ -47,18 +77,6 @@ def _is_forbidden_module_name(module: str) -> bool:
             if suffix == "base":
                 return False
             return True
-    return False
-
-
-def _is_forbidden_import_from(node: ast.ImportFrom) -> bool:
-    module = node.module or ""
-    if _is_forbidden_module_name(module):
-        return True
-
-    if module in FORBIDDEN_PREFIXES:
-        allowed_names = {"base"}
-        imported_names = {alias.name for alias in node.names}
-        return not imported_names.issubset(allowed_names)
     return False
 
 
@@ -77,6 +95,29 @@ def _resolve_relative_module(path: Path, module: str | None, level: int, root: P
     if module:
         base_parts.extend(module.split("."))
     return ".".join(base_parts)
+
+
+def _node_import_targets(path: Path, node: ast.AST, root: Path) -> list[str]:
+    targets: list[str] = []
+    if isinstance(node, ast.Import):
+        targets.extend(alias.name for alias in node.names)
+    elif isinstance(node, ast.ImportFrom):
+        module = _resolve_relative_module(path, node.module, node.level, root)
+        if module:
+            targets.append(module)
+    return targets
+
+
+def _build_import_graph(path: Path, root: Path) -> dict[str, set[str]]:
+    source_module = _resolve_relative_module(path, None, 0, root)
+    if not source_module:
+        return {}
+    graph: dict[str, set[str]] = {source_module: set()}
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in ast.walk(tree):
+        for target in _node_import_targets(path, node, root):
+            graph[source_module].add(target)
+    return graph
 
 
 def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, str]]:
@@ -108,21 +149,6 @@ def _scan_restricted_command_imports(path: Path, root: Path) -> list[tuple[int, 
     return violations
 
 
-def _scan_file(path: Path) -> list[tuple[int, str]]:
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    violations: list[tuple[int, str]] = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if _is_forbidden_module_name(alias.name):
-                    violations.append((node.lineno, alias.name))
-        elif isinstance(node, ast.ImportFrom):
-            if _is_forbidden_import_from(node):
-                label = node.module or "<relative>"
-                violations.append((node.lineno, label))
-    return violations
-
-
 def _scan_cross_cmd_pattern_imports(path: Path, root: Path) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
@@ -131,7 +157,7 @@ def _scan_cross_cmd_pattern_imports(path: Path, root: Path) -> list[tuple[int, s
             module = _resolve_relative_module(path, node.module, node.level, root) or ""
             if not module.endswith("_cmd"):
                 continue
-            for prefix in FORBIDDEN_PREFIXES:
+            for prefix in COMMANDS_PACKAGE_PREFIXES:
                 if module.startswith(f"{prefix}."):
                     violations.append((node.lineno, module))
                     break
@@ -140,25 +166,53 @@ def _scan_cross_cmd_pattern_imports(path: Path, root: Path) -> list[tuple[int, s
                 module = alias.name
                 if not module.endswith("_cmd"):
                     continue
-                for prefix in FORBIDDEN_PREFIXES:
+                for prefix in COMMANDS_PACKAGE_PREFIXES:
                     if module.startswith(f"{prefix}."):
                         violations.append((node.lineno, module))
                         break
     return violations
 
 
-def _scan_direct_registry_imports(path: Path) -> list[tuple[int, str]]:
+def _is_allowed_cli_registry_module(module: str) -> bool:
+    leaf = module.rsplit(".", 1)[-1]
+    return leaf.endswith(ALLOWED_CLI_REGISTRY_SUFFIX)
+
+
+def _is_allowed_cli_dependency(module: str) -> bool:
+    if module in ALLOWED_CLI_INFRA_MODULES:
+        return True
+    if _is_allowed_cli_registry_module(module):
+        return True
+    return any(module == prefix or module.startswith(prefix) for prefix in ALLOWED_CLI_IMPORT_PREFIXES)
+
+
+def _scan_cli_dependency_boundaries(path: Path, root: Path) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.name in FORBIDDEN_DIRECT_REGISTRY_IMPORTS:
-                    violations.append((node.lineno, alias.name))
-        elif isinstance(node, ast.ImportFrom):
-            module = node.module or ""
-            if module in FORBIDDEN_DIRECT_REGISTRY_IMPORTS:
+        for module in _node_import_targets(path, node, root):
+            if not module.startswith(CLI_PACKAGE_PREFIXES):
+                continue
+            if _is_allowed_cli_dependency(module):
+                continue
+            violations.append((node.lineno, module))
+    return violations
+
+
+def _scan_transpiler_shared_access(path: Path, root: Path) -> list[tuple[int, str]]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    violations: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        for module in _node_import_targets(path, node, root):
+            if module in FORBIDDEN_TRANSPILER_SHARED_MODULES:
                 violations.append((node.lineno, module))
+                continue
+            if module.startswith("pcobra.cobra.transpilers.") and module.endswith(".module_map"):
+                violations.append((node.lineno, module))
+                continue
+            if module.startswith("pcobra.cobra.transpilers.registry"):
+                if module in TRANSPILER_SHARED_ALLOWED_MODULES:
+                    continue
     return violations
 
 
@@ -208,21 +262,35 @@ def find_violations(root: Path = ROOT) -> list[str]:
             continue
         for path in sorted(scope.rglob("*.py")):
             rel = path.relative_to(root)
+            graph = _build_import_graph(path, root)
             if path.name != "__init__.py":
                 for line, target in _scan_restricted_command_imports(path, root):
                     failures.append(
                         f"{rel}:{line}: import entre comandos no permitido ({target}); "
                         "solo se permite `from ...commands.base import BaseCommand` (o excepción explícita)"
                     )
+                for source, edges in graph.items():
+                    for target in sorted(edges):
+                        if not _is_forbidden_module_name(target):
+                            continue
+                        failures.append(
+                            f"{rel}: edge no permitido en grafo de imports ({source} -> {target}); "
+                            "los comandos no deben depender de comandos concretos"
+                        )
                 for line, target in _scan_cross_cmd_pattern_imports(path, root):
                     failures.append(
                         f"{rel}:{line}: patrón *_cmd no permitido ({target}); "
                         "los comandos no deben importar otros *_cmd.py (solo BaseCommand desde commands.base)"
                     )
-            for line, target in _scan_direct_registry_imports(path):
+                for line, target in _scan_cli_dependency_boundaries(path, root):
+                    failures.append(
+                        f"{rel}:{line}: dependencia CLI no permitida ({target}); "
+                        "en commands solo se permite base/services/utils/i18n/target_policies/registries"
+                    )
+            for line, target in _scan_transpiler_shared_access(path, root):
                 failures.append(
-                    f"{rel}:{line}: import directo no permitido ({target}); "
-                    "usa pcobra.cobra.cli.transpiler_registry.cli_transpilers()/cli_transpiler_targets()"
+                    f"{rel}:{line}: acceso compartido de transpiladores no permitido ({target}); "
+                    "usa pcobra.cobra.cli.transpiler_registry o pcobra.cobra.transpilers.registry"
                 )
             for line, constant_name in _scan_backend_constant_violations(path):
                 failures.append(
@@ -235,12 +303,12 @@ def find_violations(root: Path = ROOT) -> list[str]:
 def main() -> int:
     failures = find_violations(ROOT)
     if failures:
-        print("❌ Lint de contratos en comandos (imports cruzados + constantes locales): FALLÓ")
+        print("❌ Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): FALLÓ")
         for item in failures:
             print(f" - {item}")
         return 1
 
-    print("✅ Lint de contratos en comandos (imports cruzados + constantes locales): OK")
+    print("✅ Lint de contratos en comandos (grafo imports + fronteras + contrato transpiladores): OK")
     return 0
 
 
