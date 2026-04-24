@@ -3,6 +3,7 @@
 Este archivo es la implementación de referencia del wrapper legacy
 ``cobra.cli.cli``. La variante en ``cobra/cli/cli.py`` actúa como proxy mínimo.
 """
+# pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
 

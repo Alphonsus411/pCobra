@@ -1,7 +1,8 @@
-"""Shim legacy para el contrato de bindings.
+"""Shim legacy deprecado para el contrato de bindings.
 
 Fuente de verdad: :mod:`pcobra.cobra.bindings.contract`.
 """
+# pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
 

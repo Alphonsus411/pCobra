@@ -2,6 +2,7 @@
 
 Este módulo delega en :mod:`pcobra.cobra.bindings` y está deprecado.
 """
+# pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
 

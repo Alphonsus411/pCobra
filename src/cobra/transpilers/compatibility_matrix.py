@@ -2,6 +2,7 @@
 
 Fuente canónica: :mod:`pcobra.cobra.transpilers.compatibility_matrix`.
 """
+# pcobra-compat: allow-legacy-imports
 
 from pcobra.cobra.transpilers.compatibility_matrix import (
     AST_FEATURE_EVIDENCE_BASELINE,
