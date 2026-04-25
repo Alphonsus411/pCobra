@@ -152,6 +152,70 @@ def test_mutacion_en_mientras_y_lectura_posterior_persisten_en_repl():
 
 
 @pytest.mark.integration
+def test_persistencia_basica_var_x_e_impresion_equivale_entre_run_y_repl():
+    resultado_script, resultado_repl = _run_pipeline_and_repl(
+        prelude="var x = 10",
+        snippet="imprimir(x)",
+        variables_estado=("x",),
+    )
+
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    assert resultado_script["stdout"].strip().endswith("10")
+    assert resultado_repl["stdout"].strip().endswith("10")
+    assert resultado_script["estado"] == resultado_repl["estado"] == {"x": 10}
+
+
+@pytest.mark.integration
+def test_repl_mantiene_estado_tras_error_intermedio():
+    interpretador_cls = resolver_interpretador_cls(
+        module_name="pcobra.cobra.cli.services.run_service",
+        default_cls=InterpretadorCobra,
+    )
+
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        setup_ok, _ = ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo="var x = 10",
+                interpretador_cls=interpretador_cls,
+                safe_mode=False,
+                extra_validators=None,
+            )
+        )
+        interpretador_persistente = setup_ok.interpretador
+
+        with pytest.raises(Exception):  # noqa: BLE001 - contrato integración
+            ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo="var y = 10 / 0",
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=False,
+                    extra_validators=None,
+                    interpretador=interpretador_persistente,
+                )
+            )
+
+        out_repl, err_repl = StringIO(), StringIO()
+        with redirect_stdout(out_repl), redirect_stderr(err_repl):
+            setup_final, _ = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo="imprimir(x)",
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=False,
+                    extra_validators=None,
+                    interpretador=interpretador_persistente,
+                )
+            )
+
+    assert err_repl.getvalue() == ""
+    assert out_repl.getvalue().strip().endswith("10")
+    assert setup_final.interpretador.contextos[-1].get("x") == 10
+
+
+@pytest.mark.integration
 def test_anidacion_condicional_bucle_equivale_en_salida_y_estado(tmp_path, monkeypatch):
     monkeypatch.setattr("pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_: None)
     codigo = (
