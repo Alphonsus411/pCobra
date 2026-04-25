@@ -104,6 +104,21 @@ class ReplCommandV2(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
+    def _ejecutar_en_modo_normal(self, codigo: str, interpretador_cls: type) -> None:
+        """Ejecuta una entrada REPL usando el pipeline CLI compartido."""
+        setup, _resultado_pipeline = ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo=codigo,
+                interpretador_cls=interpretador_cls,
+                safe_mode=self._seguro_repl,
+                extra_validators=self._extra_validators_repl,
+                interpretador=self._interpretador_persistente,
+            ),
+        )
+        self._interpretador_persistente = setup.interpretador
+        self._seguro_repl = setup.safe_mode
+        self._extra_validators_repl = setup.validadores_extra
+
     def run(self, args: Any) -> int:
         buffer: list[str] = []
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
@@ -171,18 +186,7 @@ class ReplCommandV2(BaseCommand):
                 elif sandbox_docker:
                     self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
-                    setup, _resultado_pipeline = ejecutar_pipeline_explicito(
-                        PipelineInput(
-                            codigo=codigo,
-                            interpretador_cls=interpretador_cls,
-                            safe_mode=self._seguro_repl,
-                            extra_validators=self._extra_validators_repl,
-                            interpretador=self._interpretador_persistente,
-                        ),
-                    )
-                    self._interpretador_persistente = setup.interpretador
-                    self._seguro_repl = setup.safe_mode
-                    self._extra_validators_repl = setup.validadores_extra
+                    self._ejecutar_en_modo_normal(codigo, interpretador_cls)
                 buffer.clear()
             except (PrimitivaPeligrosaError, RuntimeError) as err:
                 categoria = self._delegate._clasificar_error_repl(err)
