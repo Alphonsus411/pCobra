@@ -275,6 +275,19 @@ def test_asignar_sin_declarar_falla_con_name_error() -> None:
         _ejecutar([NodoAsignacion("x", NodoValor(10))])
 
 
+def test_declaracion_y_reasignacion_mantienen_contexto_y_memoria_sin_desfase() -> None:
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("x", NodoValor(1), declaracion=True))
+    assert "x" in inter.contextos[0].values
+    assert "x" in inter.mem_contextos[0]
+    inter.ejecutar_asignacion(NodoAsignacion("x", NodoValor(2)))
+
+    assert inter.contextos[0].values["x"] == 2
+    idx, tam = inter.mem_contextos[0]["x"]
+    assert isinstance(idx, int)
+    assert tam == 1
+
+
 def test_environment_set_no_copia_entorno_usa_referencias_vivas() -> None:
     global_env = Environment(values={"x": 1})
     hijo = Environment(parent=global_env)
