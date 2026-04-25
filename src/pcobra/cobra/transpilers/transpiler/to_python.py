@@ -1,6 +1,6 @@
 """Transpilador que convierte código Cobra en código Python."""
 
-from pcobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoCondicional,
     NodoGarantia,
@@ -51,9 +51,9 @@ from pcobra.core.ast_nodes import (
 )
 from pcobra.cobra.core import Parser
 from pcobra.cobra.core import TipoToken, Lexer
-from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
-from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.common.utils import (
     ast_requires_holobit_runtime,

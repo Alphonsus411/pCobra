@@ -12,9 +12,9 @@ from pcobra.cobra.cli.target_policies import (
     parse_target_list,
 )
 from pcobra.cobra.imports._module_map_api import get_toml_map
-from pcobra.core.ast_cache import obtener_ast
-from pcobra.core.sandbox import validar_dependencias
-from pcobra.core.semantic_validators import (
+from pcobra.cobra.core.ast_cache import obtener_ast
+from pcobra.cobra.core.sandbox import validar_dependencias
+from pcobra.cobra.core.semantic_validators import (
     PrimitivaPeligrosaError,
     construir_cadena,
 )
@@ -36,7 +36,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, 
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
-from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
 
 # Constantes de configuración
 MAX_PROCESSES = 4

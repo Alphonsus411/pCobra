@@ -14,7 +14,7 @@ from pcobra.cobra.core import Lexer, LexerError, Parser, ParserError
 from pcobra.cobra.transpilers.registry import get_transpilers
 from pcobra.cobra.transpilers.target_utils import target_cli_choices
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
-from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.interpreter import InterpretadorCobra
 
 __all__ = [
     "Lexer",

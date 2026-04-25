@@ -15,9 +15,9 @@ from typing import Optional, Any
 
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.sandbox import validar_dependencias
-from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.sandbox import validar_dependencias
+from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.services.format_service import format_code_with_black

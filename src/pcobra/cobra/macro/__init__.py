@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from pcobra.core.ast_nodes import NodoMacro, NodoLlamadaFuncion
+from pcobra.cobra.core.ast_nodes import NodoMacro, NodoLlamadaFuncion
 
 class MacroExpander:
     def __init__(self):

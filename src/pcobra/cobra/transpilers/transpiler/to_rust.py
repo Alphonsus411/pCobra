@@ -37,13 +37,13 @@ from pcobra.cobra.core.ast_nodes import (
     NodoGraficar,
 )
 from pcobra.cobra.core import TipoToken
-from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import (
     BaseTranspiler,
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.internal_ir_bridge import normalize_to_cobra_ast
 

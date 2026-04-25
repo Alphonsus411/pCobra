@@ -9,8 +9,8 @@ from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
 from pcobra.cobra.core import Lexer, Parser
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
+from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.sandbox import ejecutar_en_contenedor, ejecutar_en_sandbox, ejecutar_en_sandbox_js
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.qa.syntax_validation import SUPPORTED_VALIDATOR_TARGETS
 

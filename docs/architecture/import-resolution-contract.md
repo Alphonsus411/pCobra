@@ -183,3 +183,9 @@ Regla operativa obligatoria para código Python del runtime (`src/pcobra/**`):
 
 Este contrato se valida en CI mediante `scripts/ci/lint_import_resolution_contract.py` y su test guard en `tests/unit/test_ci_lint_import_resolution_contract_guard.py`.
 
+Regla adicional para el namespace interno `src/pcobra/cobra/**`:
+
+- Está prohibido importar `pcobra.core.*`, `core.*` o `cobra.*` desde módulos productivos bajo `src/pcobra/cobra/`.
+- Dentro de `src/pcobra/cobra/`, solo se permiten rutas canónicas `pcobra.cobra.*` o imports relativos locales coherentes.
+- La CI aplica esta garantía con `scripts/ci/lint_no_legacy_cobra_core_imports.py` y su guard test `tests/unit/test_ci_lint_no_legacy_cobra_core_imports_guard.py`.
+
