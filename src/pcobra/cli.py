@@ -198,7 +198,7 @@ def configurar_entorno() -> None:
         )
     else:
         try:
-            load_dotenv(dotenv_path=_ENV_FILE if _ENV_FILE.exists() else None)
+            load_dotenv(dotenv_path=_ENV_FILE)
         except OSError as exc:
             logger.error("No se pudo acceder al archivo .env: %s", exc)
             return
@@ -208,7 +208,8 @@ def configurar_entorno() -> None:
 
     if not (os.environ.get(SQLITE_DB_KEY_ENV) or "").strip():
         raise RuntimeError(
-            f"Falta {SQLITE_DB_KEY_ENV} en el entorno. Defínela en .env o en variables de entorno antes de ejecutar la CLI."
+            f"{SQLITE_DB_KEY_ENV} es obligatoria y está ausente o vacía. "
+            f"Define {SQLITE_DB_KEY_ENV}=<tu_clave> en .env o exporta la variable antes de ejecutar la CLI."
         )
 
     os.environ.setdefault("COBRA_DB_PATH", _DEFAULT_DB_PATH)
