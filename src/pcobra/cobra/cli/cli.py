@@ -1022,7 +1022,7 @@ class CliApplication:
         command = getattr(args, "cmd", None)
         if command == "menu":
             return self.run_menu(args)
-        if not command:
+        if command is None:
             if self.parser is not None:
                 self.parser.print_help()
                 return 1
@@ -1037,7 +1037,8 @@ class CliApplication:
             result = command.run(args)
             return 0 if result is None else result
         except Exception as exc:
-            return self._handle_execution_error(exc, args.lang, debug_activo)
+            language = str(getattr(args, "lang", AppConfig.DEFAULT_LANGUAGE))
+            return self._handle_execution_error(exc, language, debug_activo)
 
     def run(self, argv: Optional[List[str]] = None) -> int:
         with self.resource_management():
@@ -1063,9 +1064,9 @@ class CliApplication:
                         "SQLITE_DB_KEY no requerida por comando '%s'.", command_name
                     )
                 self._enforce_runtime_safety_policy(args)
-                debug_activo = bool(args.debug)
-                setup_gettext(args.lang)
-                messages.disable_colors(args.no_color)
+                debug_activo = bool(getattr(args, "debug", False))
+                setup_gettext(str(getattr(args, "lang", AppConfig.DEFAULT_LANGUAGE)))
+                messages.disable_colors(bool(getattr(args, "no_color", False)))
                 if getattr(args, "legacy_imports", False):
                     os.environ["PCOBRA_ENABLE_LEGACY_IMPORTS"] = "1"
                     messages.mostrar_info(
