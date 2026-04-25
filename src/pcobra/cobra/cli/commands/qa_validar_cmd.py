@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.transpiler_registry import cli_transpilers
+from pcobra.cobra.cli.transpiler_registry import (
+    cli_transpiler_targets_csv,
+    cli_transpilers,
+)
 from pcobra.cobra.qa.syntax_validation import execute_syntax_validation
 from pcobra.cobra.qa.syntax_validation import ValidationResult
 from pcobra.cobra.cli.i18n import _
@@ -62,7 +65,9 @@ class QaValidarCommand(BaseCommand):
         parser.add_argument(
             "--targets",
             default="",
-            help=_("Lista CSV de targets (python,javascript,rust,go,cpp,java,wasm,asm)"),
+            help=_("Lista CSV de targets ({targets})").format(
+                targets=cli_transpiler_targets_csv(),
+            ),
         )
         parser.add_argument(
             "--strict",

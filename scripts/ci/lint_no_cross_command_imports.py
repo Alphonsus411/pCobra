@@ -49,13 +49,17 @@ ALLOWED_CLI_INFRA_MODULES = {
 }
 TRANSPILER_SHARED_ALLOWED_MODULES = {
     "pcobra.cobra.cli.transpiler_registry",
-    "pcobra.cobra.transpilers.registry",
     "cobra.cli.transpiler_registry",
-    "cobra.transpilers.registry",
 }
 FORBIDDEN_TRANSPILER_SHARED_MODULES = {
     "pcobra.cobra.transpilers",
+    "pcobra.cobra.transpilers.registry",
+    "pcobra.cobra.transpilers.targets",
     "pcobra.cobra.transpilers.module_map",
+    "cobra.transpilers",
+    "cobra.transpilers.registry",
+    "cobra.transpilers.targets",
+    "cobra.transpilers.module_map",
 }
 
 
@@ -156,6 +160,28 @@ def _scan_cross_cmd_pattern_imports(path: Path, root: Path) -> list[tuple[int, s
     return violations
 
 
+def _scan_explicit_cross_command_from_imports(path: Path, root: Path) -> list[tuple[int, str]]:
+    """Detecta `from ...commands.<modulo> import ...` (excepto commands.base)."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    violations: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        module = _resolve_relative_module(path, node.module, node.level, root)
+        if not module:
+            continue
+        for prefix in COMMANDS_PACKAGE_PREFIXES:
+            prefix_dot = f"{prefix}."
+            if not module.startswith(prefix_dot):
+                continue
+            leaf = module[len(prefix_dot) :]
+            if leaf == "base":
+                break
+            violations.append((node.lineno, module))
+            break
+    return violations
+
+
 def _is_allowed_cli_registry_module(module: str) -> bool:
     leaf = module.rsplit(".", 1)[-1]
     return leaf.endswith(ALLOWED_CLI_REGISTRY_SUFFIX)
@@ -193,9 +219,18 @@ def _scan_transpiler_shared_access(path: Path, root: Path) -> list[tuple[int, st
             if module.startswith("pcobra.cobra.transpilers.") and module.endswith(".module_map"):
                 violations.append((node.lineno, module))
                 continue
+            if module.startswith("pcobra.cobra.transpilers.targets"):
+                violations.append((node.lineno, module))
+                continue
             if module.startswith("pcobra.cobra.transpilers.registry"):
-                if module in TRANSPILER_SHARED_ALLOWED_MODULES:
-                    continue
+                violations.append((node.lineno, module))
+                continue
+            if module.startswith("cobra.transpilers.targets"):
+                violations.append((node.lineno, module))
+                continue
+            if module.startswith("cobra.transpilers.registry"):
+                violations.append((node.lineno, module))
+                continue
     return violations
 
 
@@ -264,6 +299,11 @@ def find_violations(root: Path = ROOT) -> list[str]:
                     failures.append(
                         f"{rel}:{line}: patrón *_cmd no permitido ({target}); "
                         "los comandos no deben importar otros *_cmd.py (solo BaseCommand desde commands.base)"
+                    )
+                for line, target in _scan_explicit_cross_command_from_imports(path, root):
+                    failures.append(
+                        f"{rel}:{line}: import explícito from ...commands.<otro_comando> no permitido ({target}); "
+                        "los comandos CLI no deben depender de otros comandos (solo commands.base)"
                     )
                 for line, target in _scan_cli_dependency_boundaries(path, root):
                     failures.append(

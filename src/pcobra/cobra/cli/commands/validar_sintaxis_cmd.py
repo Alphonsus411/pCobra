@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.transpiler_registry import cli_transpilers
+from pcobra.cobra.cli.transpiler_registry import (
+    cli_transpiler_targets_csv,
+    cli_transpilers,
+)
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -56,7 +59,9 @@ class ValidarSintaxisCommand(BaseCommand):
         parser.add_argument(
             "--targets",
             default="",
-            help=_("Lista CSV de targets a validar (python,javascript,rust,go,cpp,java,wasm,asm)"),
+            help=_("Lista CSV de targets a validar ({targets})").format(
+                targets=cli_transpiler_targets_csv(),
+            ),
         )
         parser.add_argument(
             "--strict",
