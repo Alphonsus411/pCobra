@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import secrets
 import sys
 from os import environ
 from pathlib import Path
@@ -9,6 +8,16 @@ from typing import List, Dict, Optional, Type, Any, ContextManager
 from contextlib import contextmanager
 
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cli import (
+    COBRA_ALLOW_INSECURE_FALLBACK_ENV,
+    COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV,
+    COBRA_DEV_EPHEMERAL_CONFIRM_ENV,
+    COBRA_DEV_MODE_ENV,
+    COBRA_LANG_ENV,
+    SQLITE_DB_KEY_ENV,
+    ensure_sqlite_db_key_for_command,
+    env_flag_activado,
+)
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
@@ -56,11 +65,6 @@ from pcobra.cobra.cli.utils.autocomplete import (
 # Metadata injected at build time
 CLI_VERSION = environ.get("COBRA_CLI_VERSION", "dev")
 CLI_COMMIT = environ.get("COBRA_CLI_COMMIT", "unknown")
-SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
-COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
-COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
-COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
-COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
 COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
 COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"
 LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
@@ -349,7 +353,7 @@ class CliApplication:
         return False
 
     def _is_enabled_env_flag(self, env_name: str) -> bool:
-        return environ.get(env_name, "").strip() == "1"
+        return env_flag_activado(env_name)
 
     def _is_internal_v1_ui_enabled(self) -> bool:
         return (
@@ -360,32 +364,9 @@ class CliApplication:
     def _ensure_sqlite_db_key(self, args: argparse.Namespace) -> None:
         command = getattr(args, "cmd", None)
         command_name = command.name if isinstance(command, BaseCommand) else _("desconocido")
-        sqlite_db_key = (environ.get(SQLITE_DB_KEY_ENV) or "").strip()
-        if sqlite_db_key:
-            return
-
-        dev_mode_enabled = self._is_enabled_env_flag(COBRA_DEV_MODE_ENV)
-        dev_ephemeral_env_confirmation = self._is_enabled_env_flag(COBRA_DEV_EPHEMERAL_CONFIRM_ENV)
-        dev_ephemeral_cli_confirmation = bool(getattr(args, "dev_ephemeral_key", False))
-
-        if dev_mode_enabled and dev_ephemeral_env_confirmation and dev_ephemeral_cli_confirmation:
-            environ[SQLITE_DB_KEY_ENV] = secrets.token_urlsafe(32)
-            logging.getLogger(__name__).warning(
-                "Modo desarrollo confirmado para comando '%s' (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
-                command_name,
-                COBRA_DEV_MODE_ENV,
-                COBRA_DEV_EPHEMERAL_CONFIRM_ENV,
-                SQLITE_DB_KEY_ENV,
-            )
-            return
-
-        raise RuntimeError(
-            f"Falta la variable de entorno 'SQLITE_DB_KEY' (clave requerida por comando '{command_name}'). "
-            "Configúrala antes de iniciar la CLI (ejemplo: "
-            "export SQLITE_DB_KEY='clave-segura'). Para pruebas locales "
-            "controladas puedes habilitar una clave efímera solo si confirmas "
-            f"explícitamente {COBRA_DEV_MODE_ENV}=1, "
-            f"{COBRA_DEV_EPHEMERAL_CONFIRM_ENV}=1 y el flag --dev-ephemeral-key."
+        ensure_sqlite_db_key_for_command(
+            command_name=command_name,
+            dev_ephemeral_cli_confirmation=bool(getattr(args, "dev_ephemeral_key", False)),
         )
 
     def _configure_cli_options(self, parser: CustomArgumentParser) -> None:
@@ -456,7 +437,7 @@ class CliApplication:
         ui_choices = ("v1", "v2") if self._is_internal_v1_ui_enabled() else ("v2",)
         parser.add_argument("--ui", choices=ui_choices, default="v2", help=argparse.SUPPRESS)
         parser.add_argument("--lang",
-                          default=environ.get("COBRA_LANG", AppConfig.DEFAULT_LANGUAGE),
+                          default=environ.get(COBRA_LANG_ENV, AppConfig.DEFAULT_LANGUAGE),
                           help=_("Interface language code"))
         parser.add_argument("--no-color", action="store_true",
                           help=_("Disable colored output"))

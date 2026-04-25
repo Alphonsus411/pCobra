@@ -1,5 +1,6 @@
 import logging
 import os
+import secrets
 import shutil
 import sys
 from importlib import import_module
@@ -23,6 +24,12 @@ logger = logging.getLogger(__name__)
 _CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
 _CLI_BOOTSTRAP_PATH_ENV_ALIAS = "COBRA_CLI_BOOTSTRAP_PATH"
 _DEFAULT_DB_PATH = str(Path("~/.cobra/sqliteplus/core.db").expanduser())
+SQLITE_DB_KEY_ENV = "SQLITE_DB_KEY"
+COBRA_DEV_MODE_ENV = "COBRA_DEV_MODE"
+COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
+COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
+COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
+COBRA_LANG_ENV = "COBRA_LANG"
 _ENV_FILE = Path(".env")
 _ENV_EXAMPLE_FILE = Path(".env.example")
 _LEGACY_SHIM_ALIAS_CONTRACT = {
@@ -199,12 +206,55 @@ def configurar_entorno() -> None:
             logger.exception("Error inesperado al cargar variables de entorno")
             raise
 
-    if not (os.environ.get("SQLITE_DB_KEY") or "").strip():
+    if not (os.environ.get(SQLITE_DB_KEY_ENV) or "").strip():
         raise RuntimeError(
-            "Falta SQLITE_DB_KEY en el entorno. Defínela en .env o en variables de entorno antes de ejecutar la CLI."
+            f"Falta {SQLITE_DB_KEY_ENV} en el entorno. Defínela en .env o en variables de entorno antes de ejecutar la CLI."
         )
 
     os.environ.setdefault("COBRA_DB_PATH", _DEFAULT_DB_PATH)
+
+
+def env_flag_activado(nombre_variable: str) -> bool:
+    """Evalúa flags de entorno con contrato estricto ``== '1'``."""
+    return os.environ.get(nombre_variable, "").strip() == "1"
+
+
+def ensure_sqlite_db_key_for_command(
+    *,
+    command_name: str,
+    dev_ephemeral_cli_confirmation: bool,
+) -> None:
+    """Garantiza ``SQLITE_DB_KEY`` para comandos que la requieren.
+
+    La validación de entorno se centraliza aquí para mantener a la CLI canónica
+    enfocada en parseo/dispatch.
+    """
+    sqlite_db_key = (os.environ.get(SQLITE_DB_KEY_ENV) or "").strip()
+    if sqlite_db_key:
+        return
+
+    dev_mode_enabled = env_flag_activado(COBRA_DEV_MODE_ENV)
+    dev_ephemeral_env_confirmation = env_flag_activado(COBRA_DEV_EPHEMERAL_CONFIRM_ENV)
+
+    if dev_mode_enabled and dev_ephemeral_env_confirmation and dev_ephemeral_cli_confirmation:
+        os.environ[SQLITE_DB_KEY_ENV] = secrets.token_urlsafe(32)
+        logging.getLogger(__name__).warning(
+            "Modo desarrollo confirmado para comando '%s' (%s=1 + %s=1 + --dev-ephemeral-key): usando clave efímera local para %s.",
+            command_name,
+            COBRA_DEV_MODE_ENV,
+            COBRA_DEV_EPHEMERAL_CONFIRM_ENV,
+            SQLITE_DB_KEY_ENV,
+        )
+        return
+
+    raise RuntimeError(
+        f"Falta la variable de entorno '{SQLITE_DB_KEY_ENV}' (clave requerida por comando '{command_name}'). "
+        "Configúrala antes de iniciar la CLI (ejemplo: "
+        "export SQLITE_DB_KEY='clave-segura'). Para pruebas locales "
+        "controladas puedes habilitar una clave efímera solo si confirmas "
+        f"explícitamente {COBRA_DEV_MODE_ENV}=1, "
+        f"{COBRA_DEV_EPHEMERAL_CONFIRM_ENV}=1 y el flag --dev-ephemeral-key."
+    )
 
 
 def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:

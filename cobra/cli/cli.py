@@ -1,5 +1,6 @@
 """Proxy mínimo hacia el shim canónico de ``src/cobra/cli/cli.py``."""
 
+# pcobra-compat: allow-legacy-imports
 from __future__ import annotations
 
 import sys
