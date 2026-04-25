@@ -317,10 +317,10 @@ Consulta [docs/instalacion.md](docs/instalacion.md#instalacion-desde-repositorio
 Desde esta versión, `import pcobra` **ya no modifica** `PATH` automáticamente. Si necesitas que la CLI añada `scripts/bin` al `PATH` al iniciar (flujos locales del repositorio), actívalo explícitamente:
 
 ```bash
-PCOBRA_CLI_BOOTSTRAP_PATH=1 cobra --help
+COBRA_CLI_BOOTSTRAP_PATH=1 cobra --help
 ```
 
-Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantiene las importaciones de librería libres de efectos secundarios.
+Este comportamiento solo aplica al arranque de la CLI (`pcobra/cli.py`) y mantiene las importaciones de librería libres de efectos secundarios. La CLI acepta `COBRA_CLI_BOOTSTRAP_PATH` (recomendado) y `PCOBRA_CLI_BOOTSTRAP_PATH` (compatibilidad).
 
 ## Cómo usar la CLI
 
