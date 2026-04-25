@@ -20,7 +20,7 @@ def test_transpilador_inexistente(monkeypatch, tmp_path):
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.module_map.get_toml_map", lambda: {})
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {})
 
     args = SimpleNamespace(archivo=str(archivo), tipo="fantasia", backend=None, tipos=None)
     rc = CompileCommand().run(args)
@@ -41,7 +41,7 @@ def test_dependencia_faltante(monkeypatch, tmp_path):
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", fake_validar)
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.module_map.get_toml_map", lambda: {})
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {})
 
     args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=None)
     rc = CompileCommand().run(args)
@@ -75,7 +75,7 @@ def test_exceso_tipos(monkeypatch, tmp_path):
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.validar_dependencias", lambda *a, **k: None)
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.obtener_ast", lambda codigo: [])
     monkeypatch.setattr("cobra.cli.commands.compile_cmd.mostrar_error", lambda msg: mensajes.append(msg))
-    monkeypatch.setattr("cobra.cli.commands.compile_cmd.module_map.get_toml_map", lambda: {})
+    monkeypatch.setattr("cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {})
 
     many_langs = "python,javascript,cpp,go,java,asm,rust,wasm,python,javascript,rust"
     args = SimpleNamespace(archivo=str(archivo), tipo="python", backend=None, tipos=many_langs)

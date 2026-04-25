@@ -6,6 +6,9 @@ Reglas:
 2) Dentro de ``pcobra.cobra.cli`` prohíbe importar directamente
    ``pcobra.cobra.transpilers.registry`` (debe usarse la fachada
    ``pcobra.cobra.cli.transpiler_registry``).
+3) Dentro de ``pcobra.cobra.cli.commands`` prohíbe importar directamente el
+   mapa TOML desde módulos internos (debe usarse ``cli_toml_map`` de la
+   fachada ``pcobra.cobra.cli.transpiler_registry``).
 """
 
 from __future__ import annotations
@@ -31,6 +34,10 @@ FORBIDDEN_PARALLEL_CATALOG_NAMES = {
 
 CLI_FACADE_MODULE = "pcobra.cobra.cli.transpiler_registry"
 CANONICAL_REGISTRY_MODULE = "pcobra.cobra.transpilers.registry"
+CANONICAL_MODULE_MAP_MODULES = {
+    "pcobra.cobra.transpilers.module_map",
+    "pcobra.cobra.imports._module_map_api",
+}
 
 def _find_transpilers_literal_violations(root: Path) -> list[str]:
     violations: list[str] = []
@@ -133,11 +140,29 @@ def _find_cli_registry_facade_violations(root: Path) -> list[str]:
     return violations
 
 
+def _find_cli_module_map_facade_violations(root: Path) -> list[str]:
+    violations: list[str] = []
+    cli_commands_root = root / "src" / "pcobra" / "cobra" / "cli" / "commands"
+    if not cli_commands_root.exists():
+        return violations
+
+    for path in sorted(cli_commands_root.rglob("*.py")):
+        rel = path.relative_to(root)
+        for lineno, module in _iter_import_modules(path, root):
+            if module not in CANONICAL_MODULE_MAP_MODULES:
+                continue
+            violations.append(
+                f"{rel}:{lineno}: import directo de `{module}` no permitido en comandos CLI; use `{CLI_FACADE_MODULE}.cli_toml_map`"
+            )
+    return violations
+
+
 def find_violations(root: Path = ROOT) -> list[str]:
     return (
         _find_transpilers_literal_violations(root)
         + _find_parallel_catalog_name_violations(root)
         + _find_cli_registry_facade_violations(root)
+        + _find_cli_module_map_facade_violations(root)
     )
 
 
