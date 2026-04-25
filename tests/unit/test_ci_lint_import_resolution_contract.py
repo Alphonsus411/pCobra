@@ -42,8 +42,12 @@ def test_permite_import_canonico_pcobra(tmp_path: Path) -> None:
 
 def test_permite_modulo_marcado_como_compatibilidad(tmp_path: Path) -> None:
     _write(
-        tmp_path / "src" / "compat_shims" / "legacy_bridge.py",
-        "# pcobra-compat: allow-legacy-imports\nfrom cobra.cli import run\nimport bindings\nimport core\n",
+        tmp_path / "src" / "core" / "__init__.py",
+        (
+            '"""shim deprecado de compatibilidad."""\n'
+            "# pcobra-compat: allow-legacy-imports\n"
+            "import core\n"
+        ),
     )
 
     violations = find_violations(tmp_path)
