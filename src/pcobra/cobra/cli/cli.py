@@ -143,7 +143,6 @@ class CommandRegistry:
     def __init__(self, interpreter: Optional[InterpretadorCobra] = None) -> None:
         self.commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
-        self.default_command_name: Optional[str] = AppConfig.DEFAULT_COMMAND
 
     @staticmethod
     def _is_legacy_cli_enabled() -> bool:
@@ -273,13 +272,6 @@ class CommandRegistry:
                 del self.commands[command.name]
 
         return self.commands
-
-    def get_default_command(self) -> Optional[BaseCommand]:
-        return self.commands.get(self.default_command_name)
-
-    def get_default_command_name(self) -> Optional[str]:
-        return self.default_command_name
-
 
 class CliApplication:
     """Aplicación principal de CLI con inicialización idempotente por instancia.

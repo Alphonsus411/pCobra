@@ -13,7 +13,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 DEFAULTS = {
     "language": "es",
-    "default_command": "interactive",
+    "default_command": "run",
     "log_format": "%(asctime)s - %(levelname)s - %(message)s",
     "log_formatter": "text",
     "program_name": "cobra",

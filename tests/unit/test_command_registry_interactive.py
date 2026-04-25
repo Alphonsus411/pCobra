@@ -20,30 +20,31 @@ def test_register_base_commands_includes_interactive():
     assert commands['interactive'].__class__.__name__ == InteractiveCommand.__name__
 
 
-def test_get_default_command_returns_interactive():
+def test_command_registry_no_expone_default_command_operativo():
     registry = CommandRegistry(MagicMock())
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
     with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
-        registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
-    default_cmd = registry.get_default_command()
-    assert default_cmd.__class__.__name__ == InteractiveCommand.__name__
+        commands = registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
+    assert 'interactive' in commands
+    assert not hasattr(registry, "default_command_name")
+    assert not hasattr(registry, "get_default_command")
 
 
-def test_register_base_commands_uses_fallback_for_missing_default(monkeypatch, caplog):
+def test_register_base_commands_ignora_default_command_configurado(monkeypatch, caplog):
     monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'missing')
     registry = CommandRegistry(MagicMock())
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
     with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
         with caplog.at_level(logging.WARNING):
-            registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
+            commands = registry.register_base_commands(subparsers, ui="v1", profile=PROFILE_DEVELOPMENT)
     assert AppConfig.DEFAULT_COMMAND == 'missing'
-    assert registry.default_command_name == 'interactive'
-    assert "Default command 'missing' not found" in caplog.text
+    assert "interactive" in commands
+    assert "Default command 'missing' not found" not in caplog.text
 
 
-def test_command_registry_keeps_default_isolated_across_instances(monkeypatch):
+def test_command_registry_no_acopla_default_entre_instancias(monkeypatch):
     parser_one = argparse.ArgumentParser()
     parser_two = argparse.ArgumentParser()
     subparsers_one = parser_one.add_subparsers()
@@ -52,13 +53,15 @@ def test_command_registry_keeps_default_isolated_across_instances(monkeypatch):
     with patch('cobra.cli.cli.descubrir_plugins', return_value=[]):
         monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'interactive')
         first_registry = CommandRegistry(MagicMock())
-        first_registry.register_base_commands(subparsers_one, ui="v1", profile=PROFILE_DEVELOPMENT)
+        first_commands = first_registry.register_base_commands(subparsers_one, ui="v1", profile=PROFILE_DEVELOPMENT)
         monkeypatch.setattr(AppConfig, 'DEFAULT_COMMAND', 'missing')
         second_registry = CommandRegistry(MagicMock())
-        second_registry.register_base_commands(subparsers_two, ui="v1", profile=PROFILE_DEVELOPMENT)
+        second_commands = second_registry.register_base_commands(subparsers_two, ui="v1", profile=PROFILE_DEVELOPMENT)
 
-    assert first_registry.default_command_name == 'interactive'
-    assert second_registry.default_command_name == 'interactive'
+    assert "interactive" in first_commands
+    assert "interactive" in second_commands
+    assert not hasattr(first_registry, "default_command_name")
+    assert not hasattr(second_registry, "default_command_name")
     assert AppConfig.DEFAULT_COMMAND == 'missing'
 
 
