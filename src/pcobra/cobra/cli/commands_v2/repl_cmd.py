@@ -118,7 +118,7 @@ class ReplCommandV2(BaseCommand):
                 break
 
             linea = sanitize_input(linea)
-            if not linea:
+            if not linea.strip():
                 continue
 
             comando = linea.strip()
