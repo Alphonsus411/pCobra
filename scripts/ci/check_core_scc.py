@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CORE_DIR = ROOT / "src" / "pcobra" / "core"
 MODULE_PREFIX = "pcobra.core"
+ALLOWED_CORE_SCCS: tuple[frozenset[str], ...] = ()
+FORBIDDEN_CORE_SCCS: tuple[frozenset[str], ...] = ()
 
 
 def _iter_python_files() -> list[Path]:
@@ -114,16 +116,32 @@ def _scc_components(graph: dict[str, set[str]]) -> list[set[str]]:
     return components
 
 
+def classify_core_sccs(
+    cyclic_components: list[set[str]],
+) -> tuple[list[set[str]], list[set[str]], list[set[str]]]:
+    allowed_baseline = set(ALLOWED_CORE_SCCS)
+    forbidden_baseline = set(FORBIDDEN_CORE_SCCS)
+    allowed = [component for component in cyclic_components if frozenset(component) in allowed_baseline]
+    forbidden = [component for component in cyclic_components if frozenset(component) in forbidden_baseline]
+    unexpected = [
+        component
+        for component in cyclic_components
+        if frozenset(component) not in allowed_baseline and frozenset(component) not in forbidden_baseline
+    ]
+    return allowed, forbidden, unexpected
+
+
 def main() -> int:
     graph = build_graph()
     cyclic_components = sorted(
         [component for component in _scc_components(graph) if len(component) > 1],
         key=lambda item: sorted(item),
     )
+    _, forbidden, unexpected = classify_core_sccs(cyclic_components)
 
-    if cyclic_components:
+    if forbidden or unexpected:
         print("❌ Se detectaron ciclos de imports en src/pcobra/core (SCC > 1):")
-        for component in cyclic_components:
+        for component in [*forbidden, *unexpected]:
             for module in sorted(component):
                 rel = ROOT / "src" / Path(*module.split(".")).with_suffix(".py")
                 print(f"   - {module} ({rel.relative_to(ROOT)})")

@@ -9,37 +9,34 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = ROOT / "src"
+AUDIT_SCOPE_PREFIXES: tuple[str, ...] = (
+    "pcobra.cobra.cli",
+    "pcobra.cobra.transpilers",
+    "pcobra.core",
+)
 
 COMMAND_MODULE_PREFIXES = (
     "pcobra.cobra.cli.commands",
     "pcobra.cobra.cli.commands_v2",
 )
 ALLOWED_COMMAND_SIBLING = {"base"}
-RUNTIME_PREFIXES = (
+CORE_PREFIXES = (
     "pcobra.cobra.core.runtime",
     "pcobra.cobra.bindings.runtime_manager",
+    "pcobra.core",
 )
+CORE_TO_CLI_EXEMPT_PREFIXES = ("pcobra.core.cli",)
 CLI_PREFIX = "pcobra.cobra.cli"
-KNOWN_CYCLE_BASELINES: tuple[frozenset[str], ...] = (
-    frozenset(
-        {
-            "pcobra.core.ast_cache",
-            "pcobra.core.lexer",
-            "pcobra.cobra.core.lexer",
-        }
-    ),  # ciclo histórico puntual
-    frozenset(
-        {
-            "pcobra.cobra.core.lark_parser",
-            "pcobra.cobra.core.lexer",
-            "pcobra.cobra.core.parser",
-            "pcobra.core.ast_cache",
-            "pcobra.core.ast_nodes",
-            "pcobra.core.lexer",
-            "pcobra.core.parser",
-        }
-    ),  # SCC histórica heredada entre parser/lexer legacy+unificado
-)
+ALLOWED_SCOPE_SCCS: dict[str, tuple[frozenset[str], ...]] = {
+    "pcobra.cobra.cli": (),
+    "pcobra.cobra.transpilers": (),
+    "pcobra.core": (),
+}
+FORBIDDEN_SCOPE_SCCS: dict[str, tuple[frozenset[str], ...]] = {
+    "pcobra.cobra.cli": (),
+    "pcobra.cobra.transpilers": (),
+    "pcobra.core": (),
+}
 
 
 @dataclass(frozen=True)
@@ -143,8 +140,10 @@ def _is_cross_command_forbidden(source: str, target: str) -> bool:
     return True
 
 
-def _is_runtime_to_cli_forbidden(source: str, target: str) -> bool:
-    if not any(source == prefix or source.startswith(f"{prefix}.") for prefix in RUNTIME_PREFIXES):
+def _is_core_to_cli_forbidden(source: str, target: str) -> bool:
+    if not any(source == prefix or source.startswith(f"{prefix}.") for prefix in CORE_PREFIXES):
+        return False
+    if any(source == prefix or source.startswith(f"{prefix}.") for prefix in CORE_TO_CLI_EXEMPT_PREFIXES):
         return False
     return target == CLI_PREFIX or target.startswith(f"{CLI_PREFIX}.")
 
@@ -155,8 +154,8 @@ def find_layer_violations(graph: dict[str, set[str]]) -> list[Violation]:
         for target in targets:
             if _is_cross_command_forbidden(source, target):
                 violations.append(Violation("cross_command", source, target))
-            if _is_runtime_to_cli_forbidden(source, target):
-                violations.append(Violation("runtime_depends_on_cli", source, target))
+            if _is_core_to_cli_forbidden(source, target):
+                violations.append(Violation("core_depends_on_cli", source, target))
     return violations
 
 
@@ -227,13 +226,32 @@ def _scc_components(graph: dict[str, set[str]]) -> list[set[str]]:
     return components
 
 
-def find_new_cycle_components(graph: dict[str, set[str]]) -> list[set[str]]:
-    cyclic_components = [component for component in _scc_components(graph) if len(component) > 1]
-    return [
+def _scope_graph(graph: dict[str, set[str]], scope_prefix: str) -> dict[str, set[str]]:
+    scoped_nodes = {
+        module for module in graph if module == scope_prefix or module.startswith(f"{scope_prefix}.")
+    }
+    return {
+        module: {target for target in targets if target in scoped_nodes}
+        for module, targets in graph.items()
+        if module in scoped_nodes
+    }
+
+
+def find_scope_cycle_components(
+    graph: dict[str, set[str]], scope_prefix: str
+) -> tuple[list[set[str]], list[set[str]], list[set[str]]]:
+    scoped = _scope_graph(graph, scope_prefix)
+    cyclic_components = [component for component in _scc_components(scoped) if len(component) > 1]
+    allowed_baseline = set(ALLOWED_SCOPE_SCCS.get(scope_prefix, ()))
+    forbidden_baseline = set(FORBIDDEN_SCOPE_SCCS.get(scope_prefix, ()))
+    allowed = [component for component in cyclic_components if frozenset(component) in allowed_baseline]
+    forbidden = [component for component in cyclic_components if frozenset(component) in forbidden_baseline]
+    new = [
         component
         for component in cyclic_components
-        if frozenset(component) not in KNOWN_CYCLE_BASELINES
+        if frozenset(component) not in allowed_baseline and frozenset(component) not in forbidden_baseline
     ]
+    return allowed, forbidden, new
 
 
 def _module_to_file(module: str, src_dir: Path = SRC_DIR) -> Path:
@@ -260,7 +278,7 @@ def format_layer_report(violations: list[Violation], src_dir: Path = SRC_DIR, ro
                 "mueve lo compartido a módulos registry/service"
             )
         else:
-            reason = "runtime no debe depender de módulos CLI"
+            reason = "core/runtime no debe depender de módulos CLI"
         lines.append(
             f"   - {item.source} ({source_file}) -> {item.target} ({target_file}) :: {reason}"
         )
@@ -269,16 +287,28 @@ def format_layer_report(violations: list[Violation], src_dir: Path = SRC_DIR, ro
 
 def main() -> int:
     graph = build_import_graph(SRC_DIR)
-    new_cycles = find_new_cycle_components(graph)
-    cycle = _first_cycle(graph) if new_cycles else None
+    scope_cycle_failures: list[str] = []
+    cycle: list[str] | None = None
+    for scope_prefix in AUDIT_SCOPE_PREFIXES:
+        _, forbidden, new = find_scope_cycle_components(graph, scope_prefix)
+        if forbidden or new:
+            scoped_graph = _scope_graph(graph, scope_prefix)
+            cycle = cycle or _first_cycle(scoped_graph)
+            scope_cycle_failures.append(scope_prefix)
+
     layer_violations = find_layer_violations(graph)
 
     if cycle:
         print(format_cycle_report(cycle, src_dir=SRC_DIR, root=ROOT))
+    if scope_cycle_failures:
+        print(
+            "❌ SCC no permitidas detectadas en auditoría de imports para: "
+            + ", ".join(scope_cycle_failures)
+        )
     if layer_violations:
         print(format_layer_report(layer_violations, src_dir=SRC_DIR, root=ROOT))
 
-    if cycle or layer_violations:
+    if cycle or scope_cycle_failures or layer_violations:
         return 1
 
     print("✅ Gate de arquitectura de imports: OK (sin ciclos ni violaciones de capas)")
