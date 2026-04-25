@@ -19,21 +19,39 @@ from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.target_policies import parse_runtime_target
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
+_PATRONES_ERROR_BLOQUE_INCOMPLETO: tuple[tuple[str, str], ...] = (
+    (
+        "se esperaba 'fin' para cerrar",
+        "El parser llegó a EOF con un bloque de control sin cerrar con 'fin'.",
+    ),
+    (
+        "tipotoken.eof",
+        "El parser encontró EOF donde esperaba más tokens válidos para completar la sentencia.",
+    ),
+    (
+        "se esperaba ')' para cerrar",
+        "El parser detectó delimitador de paréntesis pendiente de cierre.",
+    ),
+    (
+        "se esperaba ')' al final",
+        "El parser detectó delimitador de paréntesis pendiente de cierre al finalizar la entrada.",
+    ),
+    (
+        "se esperaba ']' al final",
+        "El parser detectó delimitador de lista pendiente de cierre al finalizar la entrada.",
+    ),
+    (
+        "se esperaba '}' al final",
+        "El parser detectó delimitador de diccionario pendiente de cierre al finalizar la entrada.",
+    ),
+)
+
 
 class ReplCommandV2(BaseCommand):
     """Comando v2 público para iniciar el REPL de Cobra."""
 
     name = "repl"
     capability = "execute"
-    _MARCADORES_BLOQUE_INCOMPLETO = (
-        "se esperaba 'fin' para cerrar",
-        "tipotoken.eof",
-        "se esperaba ')' para cerrar",
-        "se esperaba ')' al final",
-        "se esperaba ']' al final",
-        "se esperaba '}' al final",
-    )
-
     def __init__(self) -> None:
         super().__init__()
         self._delegate = InteractiveCommand(InterpretadorCobra())
@@ -43,14 +61,16 @@ class ReplCommandV2(BaseCommand):
         self._extra_validators_repl: Any = None
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
-        """Detecta si la excepción corresponde a un bloque aún incompleto."""
+        """Detecta si la excepción corresponde a una entrada aún incompleta.
+
+        Se basa únicamente en `ParserError` y en mensajes canónicos emitidos por
+        el parser oficial.
+        """
 
         if not isinstance(exc, ParserError):
             return False
         mensaje = str(exc).strip().lower()
-        return any(
-            marcador in mensaje for marcador in self._MARCADORES_BLOQUE_INCOMPLETO
-        )
+        return any(patron in mensaje for patron, _razon in _PATRONES_ERROR_BLOQUE_INCOMPLETO)
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))

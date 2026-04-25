@@ -1,25 +1,30 @@
 import argparse
 
+import pytest
+
 from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_module
 from pcobra.cobra.core import ParserError
 
 ReplCommandV2 = repl_module.ReplCommandV2
 
-def test_es_error_de_bloque_incompleto_por_mensajes_parser():
-    command = ReplCommandV2()
 
-    assert command.es_error_de_bloque_incompleto(
-        ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
-    )
-    assert command.es_error_de_bloque_incompleto(
-        ParserError("Token inesperado en término: TipoToken.EOF")
-    )
-    assert command.es_error_de_bloque_incompleto(
-        ParserError("Se esperaba ']' al final de la lista")
-    )
-    assert not command.es_error_de_bloque_incompleto(
-        ParserError("Se encontró 'fin' inesperado")
-    )
+@pytest.mark.parametrize(
+    ("mensaje", "es_incompleto"),
+    [
+        ("Se esperaba 'fin' para cerrar el bloque condicional", True),
+        ("Token inesperado en término: TipoToken.EOF", True),
+        ("Se esperaba ']' al final de la lista", True),
+        ("Token inesperado: '('", False),
+        ("Se encontró 'fin' inesperado", False),
+    ],
+)
+def test_es_error_de_bloque_incompleto_por_mensajes_parser(mensaje, es_incompleto):
+    command = ReplCommandV2()
+    assert command.es_error_de_bloque_incompleto(ParserError(mensaje)) is es_incompleto
+
+
+def test_es_error_de_bloque_incompleto_rechaza_excepciones_que_no_son_parser():
+    command = ReplCommandV2()
     assert not command.es_error_de_bloque_incompleto(ValueError("no parser"))
 
 
@@ -224,6 +229,96 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
     assert status == 0
     assert parse_calls == ["algo_mal"]
     assert logged == ["Se encontró 'fin' inesperado"]
+
+
+@pytest.mark.parametrize(
+    ("entradas", "errores_por_codigo", "parse_esperado", "pipeline_esperado", "errores_esperados"),
+    [
+        (
+            ["si verdadero :", "fin", "exit"],
+            {
+                "si verdadero :": "Se esperaba 'fin' para cerrar el bloque condicional",
+            },
+            ["si verdadero :", "si verdadero :\nfin"],
+            ["si verdadero :\nfin"],
+            [],
+        ),
+        (
+            ["mientras verdadero :", "fin", "exit"],
+            {
+                "mientras verdadero :": "Se esperaba 'fin' para cerrar el bloque mientras",
+            },
+            ["mientras verdadero :", "mientras verdadero :\nfin"],
+            ["mientras verdadero :\nfin"],
+            [],
+        ),
+        (
+            ["si verdadero :", "imprimir(1", "var z = 9", "exit"],
+            {
+                "si verdadero :": "Se esperaba 'fin' para cerrar el bloque condicional",
+                "si verdadero :\nimprimir(1": "Token inesperado: '('",
+            },
+            ["si verdadero :", "si verdadero :\nimprimir(1", "var z = 9"],
+            ["var z = 9"],
+            ["Token inesperado: '('"],
+        ),
+    ],
+    ids=[
+        "incompleto_si_conserva_buffer",
+        "incompleto_mientras_conserva_buffer",
+        "error_real_limpia_buffer",
+    ],
+)
+def test_repl_v2_incompleto_vs_error_real_buffer(
+    monkeypatch,
+    entradas,
+    errores_por_codigo,
+    parse_esperado,
+    pipeline_esperado,
+    errores_esperados,
+):
+    command = ReplCommandV2()
+    entradas_iter = iter(entradas)
+    parse_calls: list[str] = []
+    pipeline_calls: list[str] = []
+    logged: list[str] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas_iter))
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo in errores_por_codigo:
+            raise ParserError(errores_por_codigo[codigo])
+        return []
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
+        or (_Setup(), None),
+    )
+    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls == parse_esperado
+    assert pipeline_calls == pipeline_esperado
+    assert logged == errores_esperados
 
 
 def test_repl_v2_linea_en_blanco_no_ejecuta_ni_resetea_estado_global(monkeypatch):
