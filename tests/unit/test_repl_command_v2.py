@@ -403,7 +403,7 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
     assert interpretadores_recibidos == [None, estado]
 
 
-def test_repl_v2_soporta_bloque_anidado_con_fin(monkeypatch):
+def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_estado(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(
         [
@@ -419,6 +419,7 @@ def test_repl_v2_soporta_bloque_anidado_con_fin(monkeypatch):
     )
     parse_calls: list[str] = []
     pipeline_calls: list[str] = []
+    interpretadores_recibidos: list[dict[str, int] | None] = []
     estado: dict[str, int] = {}
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
@@ -440,6 +441,7 @@ def test_repl_v2_soporta_bloque_anidado_con_fin(monkeypatch):
 
     def _fake_pipeline(pipeline_input, **_kwargs):
         pipeline_calls.append(pipeline_input.codigo)
+        interpretadores_recibidos.append(pipeline_input.interpretador)
         interpretador = pipeline_input.interpretador or estado
         if pipeline_input.codigo.startswith("mientras verdadero:"):
             interpretador["total"] = 5
@@ -462,7 +464,12 @@ def test_repl_v2_soporta_bloque_anidado_con_fin(monkeypatch):
     )
 
     assert status == 0
-    assert parse_calls[-2:] == [
+    assert parse_calls == [
+        "mientras verdadero:",
+        "mientras verdadero:\nsi verdadero:",
+        "mientras verdadero:\nsi verdadero:\nvar total = 5",
+        "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper",
+        "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin",
         "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
         "imprimir(total)",
     ]
@@ -470,3 +477,4 @@ def test_repl_v2_soporta_bloque_anidado_con_fin(monkeypatch):
         "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
         "imprimir(total)",
     ]
+    assert interpretadores_recibidos == [None, estado]
