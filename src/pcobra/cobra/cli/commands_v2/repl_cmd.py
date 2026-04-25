@@ -5,8 +5,10 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
     SANDBOX_DOCKER_CHOICES,
 )
+from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_info
+from pcobra.cobra.core import ParserError
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.cli.target_policies import parse_runtime_target
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
@@ -17,11 +19,29 @@ class ReplCommandV2(BaseCommand):
 
     name = "repl"
     capability = "execute"
+    _MARCADORES_BLOQUE_INCOMPLETO = (
+        "se esperaba 'fin' para cerrar",
+        "tipotoken.eof",
+        "se esperaba ')' para cerrar",
+        "se esperaba ')' al final",
+        "se esperaba ']' al final",
+        "se esperaba '}' al final",
+    )
 
     def __init__(self) -> None:
         super().__init__()
         self._delegate = InteractiveCommand(InterpretadorCobra())
         self._delegate.name = self.name
+
+    def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
+        """Detecta si la excepción corresponde a un bloque aún incompleto."""
+
+        if not isinstance(exc, ParserError):
+            return False
+        mensaje = str(exc).strip().lower()
+        return any(
+            marcador in mensaje for marcador in self._MARCADORES_BLOQUE_INCOMPLETO
+        )
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
@@ -91,19 +111,17 @@ class ReplCommandV2(BaseCommand):
                 mostrar_info(_("Saliendo..."))
                 break
 
+            buffer.append(linea)
+            codigo = "\n".join(buffer)
             try:
-                codigo = self._delegate._actualizar_buffer_y_obtener_codigo_listo(
-                    buffer,
-                    linea,
-                )
+                prevalidar_y_parsear_codigo(codigo)
             except Exception as err:
+                if self.es_error_de_bloque_incompleto(err):
+                    continue
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
                 buffer.clear()
                 self._delegate._estado_repl = self._delegate._crear_estado_repl()
-                continue
-
-            if codigo is None:
                 continue
 
             try:
@@ -113,6 +131,7 @@ class ReplCommandV2(BaseCommand):
                     self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
                     self._delegate.ejecutar_codigo(codigo)
+                buffer.clear()
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
