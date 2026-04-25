@@ -34,7 +34,7 @@ def test_cli_genera_clave_efimera_solo_con_triple_confirmacion(monkeypatch):
     app = CliApplication()
     args = type("Args", (), {"dev_ephemeral_key": True})()
 
-    with patch("cobra.cli.cli.secrets.token_urlsafe", return_value="ephemeral-key") as token_mock:
+    with patch("pcobra.cli.secrets.token_urlsafe", return_value="ephemeral-key") as token_mock:
         app._ensure_sqlite_db_key(args=args)
 
     assert token_mock.call_count == 1
