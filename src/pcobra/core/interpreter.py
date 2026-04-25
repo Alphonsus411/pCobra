@@ -5,7 +5,7 @@ import os
 import hashlib
 from typing import Mapping, Optional
 
-from pcobra.core.lexer import (
+from .lexer import (
     Token,
     TipoToken,
 )
@@ -61,7 +61,7 @@ from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from pcobra.core.semantico import AnalizadorSemantico
+from .semantico import AnalizadorSemantico
 from .cobra_config import (
     limite_nodos,
     limite_memoria_mb,
@@ -1709,7 +1709,7 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from pcobra.core.usar_loader import obtener_modulo
+        from .usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)
