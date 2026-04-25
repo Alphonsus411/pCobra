@@ -5,9 +5,9 @@ from typing import Any
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.cli.execution_pipeline import (
     PipelineInput,
-    analizar_codigo,
     construir_script_sandbox_canonico,
     ejecutar_pipeline_explicito,
+    prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
 )
 from pcobra.cobra.cli.i18n import _
@@ -156,7 +156,7 @@ class RunService:
         allow_insecure_fallback: bool = False,
     ) -> int:
         try:
-            analizar_codigo(codigo)
+            prevalidar_y_parsear_codigo(codigo)
         except (LexerError, ParserError) as e:
             mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
@@ -208,7 +208,7 @@ class RunService:
                     extra_validators=extra_validators,
                 ),
                 construir_cadena_fn=construir_cadena,
-                analizar_codigo_fn=analizar_codigo,
+                analizar_codigo_fn=prevalidar_y_parsear_codigo,
             )
             return 0
         except (LexerError, ParserError) as e:
