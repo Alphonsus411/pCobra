@@ -10,10 +10,13 @@ from cobra.core import Token, TipoToken
 from core.ast_nodes import (
     NodoAsignacion,
     NodoBucleMientras,
+    NodoCondicional,
+    NodoContinuar,
     NodoFuncion,
     NodoIdentificador,
     NodoLlamadaFuncion,
     NodoOperacionBinaria,
+    NodoRomper,
     NodoRetorno,
     NodoValor,
 )
@@ -90,6 +93,136 @@ def test_mientras_reasigna_memoria_en_entorno_real_y_persiste_fuera() -> None:
     assert liberaciones == [(11, 1), (22, 1)]
     assert inter.mem_contextos[0]["i"] == (33, 1)
 
+
+def test_variable_definida_fuera_y_mutada_en_mientras_persiste() -> None:
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("acumulado", NodoValor(0), declaracion=True))
+    inter.ejecutar_asignacion(NodoAsignacion("i", NodoValor(0), declaracion=True))
+
+    condicion = NodoOperacionBinaria(
+        NodoIdentificador("i"),
+        Token(TipoToken.MENORQUE, "<"),
+        NodoValor(3),
+    )
+    cuerpo = [
+        NodoAsignacion(
+            "acumulado",
+            NodoOperacionBinaria(
+                NodoIdentificador("acumulado"),
+                Token(TipoToken.SUMA, "+"),
+                NodoValor(2),
+            ),
+        ),
+        NodoAsignacion(
+            "i",
+            NodoOperacionBinaria(
+                NodoIdentificador("i"),
+                Token(TipoToken.SUMA, "+"),
+                NodoValor(1),
+            ),
+        ),
+    ]
+
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_mientras(NodoBucleMientras(condicion, cuerpo))
+
+    assert inter.obtener_variable("acumulado") == 6
+    assert inter.obtener_variable("i") == 3
+
+
+def test_variable_creada_en_mientras_se_lee_despues_del_bucle() -> None:
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("i", NodoValor(0), declaracion=True))
+
+    condicion = NodoOperacionBinaria(
+        NodoIdentificador("i"),
+        Token(TipoToken.MENORQUE, "<"),
+        NodoValor(2),
+    )
+    cuerpo = [
+        NodoAsignacion("ultima", NodoIdentificador("i"), declaracion=True),
+        NodoAsignacion(
+            "i",
+            NodoOperacionBinaria(
+                NodoIdentificador("i"),
+                Token(TipoToken.SUMA, "+"),
+                NodoValor(1),
+            ),
+        ),
+    ]
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_mientras(NodoBucleMientras(condicion, cuerpo))
+
+    assert inter.obtener_variable("ultima") == 1
+
+
+def test_mientras_respeta_romper_y_continuar_sin_perder_scope() -> None:
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("i", NodoValor(0), declaracion=True))
+    inter.ejecutar_asignacion(NodoAsignacion("suma", NodoValor(0), declaracion=True))
+
+    condicion = NodoOperacionBinaria(
+        NodoIdentificador("i"),
+        Token(TipoToken.MENORQUE, "<"),
+        NodoValor(6),
+    )
+    incremento = NodoAsignacion(
+        "i",
+        NodoOperacionBinaria(
+            NodoIdentificador("i"),
+            Token(TipoToken.SUMA, "+"),
+            NodoValor(1),
+        ),
+    )
+    continuar_si_i_es_dos = NodoCondicional(
+        NodoOperacionBinaria(
+            NodoIdentificador("i"),
+            Token(TipoToken.IGUAL, "=="),
+            NodoValor(2),
+        ),
+        [NodoContinuar()],
+        [],
+    )
+    romper_si_i_es_cuatro = NodoCondicional(
+        NodoOperacionBinaria(
+            NodoIdentificador("i"),
+            Token(TipoToken.IGUAL, "=="),
+            NodoValor(4),
+        ),
+        [NodoRomper()],
+        [],
+    )
+    acumular = NodoAsignacion(
+        "suma",
+        NodoOperacionBinaria(
+            NodoIdentificador("suma"),
+            Token(TipoToken.SUMA, "+"),
+            NodoIdentificador("i"),
+        ),
+    )
+
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_mientras(
+            NodoBucleMientras(
+                condicion,
+                [incremento, continuar_si_i_es_dos, romper_si_i_es_cuatro, acumular],
+            )
+        )
+
+    assert inter.obtener_variable("i") == 4
+    assert inter.obtener_variable("suma") == 4
 
 
 def test_closure_mutacion_reasigna_en_padre_y_persiste_tras_salir() -> None:

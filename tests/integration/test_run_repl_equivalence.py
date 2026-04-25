@@ -255,6 +255,21 @@ def test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje(codigo_erroneo):
             {"total": 4},
         ),
         (
+            "mientras_con_continuar_romper_y_variable_local_visible",
+            "var paso = falso",
+            (
+                "mientras verdadero:\n"
+                "    si paso:\n"
+                "        var ultimo = 2\n"
+                "        romper\n"
+                "    fin\n"
+                "    paso = verdadero\n"
+                "    continuar\n"
+                "fin"
+            ),
+            {"paso": True},
+        ),
+        (
             "bloque_anidado_shadowing_y_set_dirigido",
             "var raiz = 100",
             (

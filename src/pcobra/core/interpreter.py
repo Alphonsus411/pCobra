@@ -54,6 +54,8 @@ from .ast_nodes import (
     NodoWith,
     NodoImportDesde,
     NodoAST,
+    NodoRomper,
+    NodoContinuar,
 )
 from .memoria.gestor_memoria import GestorMemoriaGenetico
 from .internal_ir import InternalIRModule, build_internal_ir
@@ -103,6 +105,14 @@ class ExcepcionCobra(Exception):
     def __init__(self, valor):
         super().__init__(valor)
         self.valor = valor
+
+
+class _ControlRomper(Exception):
+    """Señal interna para cortar la ejecución del bucle actual."""
+
+
+class _ControlContinuar(Exception):
+    """Señal interna para avanzar a la siguiente iteración del bucle."""
 
 
 class InterpretadorCobra:
@@ -1135,6 +1145,10 @@ class InterpretadorCobra:
             return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
             return self.evaluar_expresion(nodo.expresion)
+        elif isinstance(nodo, NodoRomper):
+            raise _ControlRomper
+        elif isinstance(nodo, NodoContinuar):
+            raise _ControlContinuar
         elif isinstance(nodo, NodoEsperar):
             return self.evaluar_expresion(nodo.expresion)
         elif isinstance(nodo, NodoValor):
@@ -1494,12 +1508,17 @@ class InterpretadorCobra:
         # bucle reutiliza ``self.contextos[-1]`` en cada vuelta y, por tanto,
         # las mutaciones del contexto persisten entre iteraciones y después.
         while self._evaluar_condicion_control(nodo.condicion):
-            for instruccion in nodo.cuerpo:
-                resultado = self.ejecutar_nodo(instruccion)
-                if isinstance(instruccion, NodoAsignacion):
-                    continue
-                if resultado is not None:
-                    return resultado
+            try:
+                for instruccion in nodo.cuerpo:
+                    resultado = self.ejecutar_nodo(instruccion)
+                    if isinstance(instruccion, NodoAsignacion):
+                        continue
+                    if resultado is not None:
+                        return resultado
+            except _ControlContinuar:
+                continue
+            except _ControlRomper:
+                break
         return None
 
     def ejecutar_try_catch(self, nodo):
