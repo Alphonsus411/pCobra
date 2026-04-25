@@ -11,7 +11,6 @@ from pcobra.cobra.cli.target_policies import (
     parse_target,
     parse_target_list,
 )
-from pcobra.cobra.imports._module_map_api import get_toml_map
 from pcobra.cobra.core.ast_cache import obtener_ast
 from pcobra.cobra.core.sandbox import validar_dependencias
 from pcobra.cobra.core.semantic_validators import (
@@ -25,6 +24,7 @@ from pcobra.cobra.cli.transpiler_registry import (
     cli_load_entrypoint_transpilers,
     cli_plugin_transpilers,
     cli_register_transpiler_backend,
+    cli_toml_map,
     cli_transpilers,
     cli_transpiler_targets,
 )
@@ -194,7 +194,7 @@ class CompileCommand(BaseCommand):
                 mostrar_error(str(parse_error))
                 return 1
 
-        mod_info = get_toml_map()
+        mod_info = cli_toml_map()
         preferred_backend = getattr(args, "backend", None) or getattr(args, "tipo", None)
         if preferred_backend and preferred_backend not in current_lang_choices:
             mostrar_error(invalid_target_error(preferred_backend))
