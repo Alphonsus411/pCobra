@@ -5,6 +5,7 @@ from __future__ import annotations
 from os import environ
 from typing import Iterable
 
+# `repl` es comando público oficial en UI v2; no debe tratarse como alias legacy.
 PUBLIC_COMMANDS_CONTRACT: tuple[str, ...] = ("run", "build", "test", "mod", "repl")
 PUBLIC_COMMANDS: tuple[str, ...] = PUBLIC_COMMANDS_CONTRACT
 if PUBLIC_COMMANDS != PUBLIC_COMMANDS_CONTRACT:
