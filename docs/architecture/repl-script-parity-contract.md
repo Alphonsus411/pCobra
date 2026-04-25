@@ -58,8 +58,21 @@ Si cualquier test de esta batería falla, el job falla y el check de GitHub qued
 La ruta de script (`RunService.ejecutar_normal`) y la ruta REPL (`InteractiveCommand.ejecutar_codigo`) deben usar el mismo pipeline canónico de ejecución:
 
 - Resolución de clase de intérprete con `resolver_interpretador_cls`.
-- Ejecución del flujo `analizar + validar + ejecutar` con `ejecutar_pipeline_explicito`.
-- Normalización de validadores de seguridad desde el propio pipeline compartido.
+- Ejecución del flujo `analizar + validar + ejecutar` con la API de alto nivel `ejecutar_pipeline_explicito`.
+- Normalización de `safe_mode` y `extra_validators` **únicamente** desde el pipeline compartido (`normalizar_opciones_pipeline`).
+
+### Regla obligatoria para nuevas rutas de ejecución
+
+Toda nueva ruta de ejecución (por ejemplo: comando CLI adicional, modo batch, endpoint HTTP, integración GUI o adaptador de sandbox) **debe** pasar por `ejecutar_pipeline_explicito` como API canónica.
+
+No se permite reimplementar parcial o localmente pasos de:
+
+- análisis (`Lexer`/`Parser`),
+- validación de seguridad,
+- normalización de `safe_mode`/`extra_validators`,
+- ni preparación de intérprete persistente.
+
+Si una ruta no puede usar el pipeline canónico, debe existir una ADR aprobada y tests de paridad equivalentes antes de merge.
 
 Además de la paridad de `stdout/stderr`, el contrato exige equivalencia de estado final del entorno observable (`interpretador.contextos[-1].values`) para confirmar que ambas rutas dejan el mismo contexto semántico tras ejecutar el mismo código.
 

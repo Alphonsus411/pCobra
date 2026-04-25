@@ -13,6 +13,7 @@ from typing import Any, Callable
 from pcobra.cobra.core import Lexer, Parser
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer
+from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core.runtime import ValidadorBase, construir_cadena
 
 
@@ -44,6 +45,14 @@ class InterpreterSetup:
     safe_mode: bool
     validadores_extra: Any
     interpretador: Any
+
+
+@dataclass(frozen=True)
+class NormalizedPipelineOptions:
+    """Opciones de ejecución normalizadas para el pipeline canónico."""
+
+    safe_mode: bool
+    validadores_extra: Any
 
 
 def construir_script_sandbox_canonico(
@@ -179,21 +188,41 @@ def preparar_interpretador(
     extra_validators: Any,
 ) -> InterpreterSetup:
     """Centraliza normalización de validadores, flags de seguridad e intérprete."""
-
-    validadores_normalizados = resolver_validadores_seguridad(
-        extra_validators,
+    opciones = normalizar_opciones_pipeline(
+        safe_mode=safe_mode,
+        extra_validators=extra_validators,
         interpretador_cls=interpretador_cls,
     )
     interpretador = construir_interprete(
         interpretador_cls=interpretador_cls,
-        safe_mode=safe_mode,
-        extra_validators=validadores_normalizados,
+        safe_mode=opciones.safe_mode,
+        extra_validators=opciones.validadores_extra,
     )
     return InterpreterSetup(
         interpretador_cls=interpretador_cls,
-        safe_mode=bool(safe_mode),
-        validadores_extra=validadores_normalizados,
+        safe_mode=opciones.safe_mode,
+        validadores_extra=opciones.validadores_extra,
         interpretador=interpretador,
+    )
+
+
+def normalizar_opciones_pipeline(
+    *,
+    safe_mode: bool,
+    extra_validators: Any,
+    interpretador_cls: Any,
+) -> NormalizedPipelineOptions:
+    """Punto único para normalizar safe_mode y extra_validators del pipeline."""
+
+    safe_mode_normalizado = bool(safe_mode)
+    extra_validators_normalizados = normalizar_validadores_extra(extra_validators)
+    validadores_resueltos = resolver_validadores_seguridad(
+        extra_validators_normalizados,
+        interpretador_cls=interpretador_cls,
+    )
+    return NormalizedPipelineOptions(
+        safe_mode=safe_mode_normalizado,
+        validadores_extra=validadores_resueltos,
     )
 
 
@@ -203,28 +232,23 @@ def ejecutar_codigo_canonico(
     interpretador: Any,
     seguro: bool,
     extra_validators: Any,
-    interpretador_cls: Any,
     construir_cadena_fn: Callable[[Any], Any] = construir_cadena,
     analizar_codigo_fn: Callable[[str], Any] = analizar_codigo,
 ) -> PipelineResult:
     """Función canónica para analizar+validar+ejecutar código Cobra."""
 
     ast = analizar_codigo_fn(codigo)
-    validadores_normalizados = resolver_validadores_seguridad(
-        extra_validators,
-        interpretador_cls=interpretador_cls,
-    )
     if seguro:
         validar_ast_seguro(
             ast,
-            validadores_extra=validadores_normalizados,
+            validadores_extra=extra_validators,
             construir_cadena_fn=construir_cadena_fn,
         )
     resultado = ejecutar_ast(ast, interpretador)
     return PipelineResult(
         ast=ast,
         resultado=resultado,
-        validadores_extra=validadores_normalizados,
+        validadores_extra=extra_validators,
     )
 
 
@@ -258,7 +282,6 @@ def ejecutar_pipeline_explicito(
         interpretador=interpretador,
         seguro=setup.safe_mode,
         extra_validators=setup.validadores_extra,
-        interpretador_cls=setup.interpretador_cls,
         construir_cadena_fn=construir_cadena_fn,
         analizar_codigo_fn=analizar_codigo_fn,
     )

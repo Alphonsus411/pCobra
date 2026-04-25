@@ -66,7 +66,6 @@ from pcobra.cobra.cli.utils.messages import (
     mostrar_info,
 )
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
-from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
 from pcobra.cobra.cli.target_policies import (
     DOCKER_EXECUTABLE_TARGETS,
@@ -444,12 +443,7 @@ class InteractiveCommand(BaseCommand):
 
         # Configurar modo seguro y validadores
         seguro = getattr(args, "seguro", True)
-        raw_extra_validators = getattr(args, "extra_validators", None)
-        try:
-            extra_validators = normalizar_validadores_extra(raw_extra_validators)
-        except TypeError:
-            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"))
-            return 1
+        extra_validators = getattr(args, "extra_validators", None)
         self._seguro_repl = bool(seguro)
         self._extra_validators_repl = extra_validators
         try:
