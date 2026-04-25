@@ -99,3 +99,30 @@ imprimir(base)
     esperadas = ["contador", "2", "base", "15"]
     assert salida_ejecutar[-len(esperadas) :] == esperadas
     assert salida_interactive[-len(esperadas) :] == esperadas
+
+
+def test_mutacion_en_mientras_persiste_fuera_del_bucle() -> None:
+    codigo = """
+var total = 1
+mientras total < 4:
+    total = total + 1
+fin
+imprimir(total)
+"""
+    salida = _lineas_sin_trazas(_ejecutar_codigo_y_capturar_stdout(codigo))
+    assert salida[-1] == "4"
+
+
+def test_variable_externa_se_actualiza_en_scope_correcto_durante_mientras() -> None:
+    codigo = """
+var acumulado = 0
+func sumar_hasta_dos():
+    mientras acumulado < 2:
+        acumulado = acumulado + 1
+    fin
+fin
+sumar_hasta_dos()
+imprimir(acumulado)
+"""
+    salida = _lineas_sin_trazas(_ejecutar_codigo_y_capturar_stdout(codigo))
+    assert salida[-1] == "2"

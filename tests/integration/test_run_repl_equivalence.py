@@ -244,6 +244,17 @@ def test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje(codigo_erroneo):
             {"contador": 15},
         ),
         (
+            "mutacion_en_mientras_persiste_fuera_del_bucle",
+            "var total = 1",
+            (
+                "mientras verdadero:\n"
+                "    total = 4\n"
+                "    romper\n"
+                "fin"
+            ),
+            {"total": 4},
+        ),
+        (
             "bloque_anidado_shadowing_y_set_dirigido",
             "var raiz = 100",
             (
