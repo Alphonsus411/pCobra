@@ -13,7 +13,7 @@ from typing import Final
 
 
 PUBLIC_LANGUAGE_BOUNDARY: Final[str] = "cobra"
-PUBLIC_CLI_V2_COMMANDS: Final[tuple[str, ...]] = ("run", "build", "test", "mod")
+PUBLIC_CLI_V2_COMMANDS: Final[tuple[str, ...]] = ("run", "build", "test", "mod", "repl")
 
 # Toda ruta de usuario termina resolviendo backend mediante esta fachada.
 USER_ROUTE_BACKEND_ENTRYPOINT: Final[str] = "pcobra.cobra.build.backend_pipeline"
@@ -73,9 +73,9 @@ def validate_public_architecture_overview() -> None:
     if PUBLIC_LANGUAGE_BOUNDARY != "cobra":
         raise RuntimeError("La frontera pública de lenguaje debe ser únicamente 'cobra'.")
 
-    if PUBLIC_CLI_V2_COMMANDS != ("run", "build", "test", "mod"):
+    if PUBLIC_CLI_V2_COMMANDS != ("run", "build", "test", "mod", "repl"):
         raise RuntimeError(
-            "La CLI pública v2 debe exponer exactamente run/build/test/mod."
+            "La CLI pública v2 debe exponer exactamente run/build/test/mod/repl."
         )
 
     if USER_ROUTE_BACKEND_ENTRYPOINT != "pcobra.cobra.build.backend_pipeline":

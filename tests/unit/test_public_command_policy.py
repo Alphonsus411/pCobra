@@ -1,8 +1,23 @@
 from cobra.cli.public_command_policy import (
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
+    filter_commands_for_profile,
     filter_legacy_commands_for_profile,
 )
+
+
+def test_filter_commands_publico_permite_solo_superficie_v2_publica():
+    visibles = filter_commands_for_profile(
+        ("run", "build", "test", "mod", "repl", "legacy", "debug"),
+        PROFILE_PUBLIC,
+    )
+    assert visibles == {"run", "build", "test", "mod", "repl"}
+
+
+def test_filter_commands_development_permite_toda_superficie_v2():
+    comandos = ("run", "build", "test", "mod", "repl", "legacy", "debug")
+    visibles = filter_commands_for_profile(comandos, PROFILE_DEVELOPMENT)
+    assert visibles == set(comandos)
 
 
 def test_filter_legacy_commands_publico_bloquea_toda_superficie_v1():

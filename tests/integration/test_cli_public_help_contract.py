@@ -17,7 +17,7 @@ def _public_env() -> dict[str, str]:
 
 
 def test_cli_public_commands_contract_is_stable():
-    assert PUBLIC_COMMANDS == ("run", "build", "test", "mod")
+    assert PUBLIC_COMMANDS == ("run", "build", "test", "mod", "repl")
 
 
 def test_cli_help_public_contract_snapshot():
@@ -35,7 +35,7 @@ def test_cli_help_public_contract_snapshot():
         Path(__file__).parent / "golden" / "cli_ui_v2_help_public.golden"
     ).read_text(encoding="utf-8")
     assert " ".join(result.stdout.lower().split()) == " ".join(expected_snapshot.split())
-    for command in ("run", "build", "test", "mod"):
+    for command in ("run", "build", "test", "mod", "repl"):
         assert f" {command} " in f" {result.stdout.lower()} "
     assert "\n  menu " not in result.stdout.lower()
     assert "\n  legacy " not in result.stdout.lower()
