@@ -1458,6 +1458,8 @@ class InterpretadorCobra:
 
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
+        # Contrato explícito del runtime:
+        # "control-flow no abre scope; function-call sí abre scope".
         # Regla semántica de scope:
         # ``si/sino`` NO crea un entorno nuevo. Las instrucciones de cada rama
         # se ejecutan sobre ``self.contextos[-1]`` (contexto activo), por lo que

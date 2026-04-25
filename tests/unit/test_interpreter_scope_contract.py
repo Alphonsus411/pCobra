@@ -312,6 +312,18 @@ def test_environment_scope_sin_copy_ni_clonado_dict_en_define_set() -> None:
     assert "dict(" not in agregado
 
 
+def test_control_flow_si_sino_y_mientras_no_copian_entorno_ni_abren_scope() -> None:
+    codigo_condicional = inspect.getsource(InterpretadorCobra.ejecutar_condicional).lower()
+    codigo_mientras = inspect.getsource(InterpretadorCobra.ejecutar_mientras).lower()
+    agregado = f"{codigo_condicional}\n{codigo_mientras}"
+
+    assert ".copy(" not in agregado
+    assert "dict(self.contextos" not in agregado
+    assert "dict(env.values" not in agregado
+    assert "environment(" not in agregado
+    assert "self.contextos.append" not in agregado
+
+
 def test_reset_context_values_reemplaza_scope_activo_sin_romper_parent() -> None:
     inter = InterpretadorCobra()
     global_env = inter.contextos[0]
