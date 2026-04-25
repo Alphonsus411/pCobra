@@ -32,12 +32,13 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
     PROMPT_TOOLKIT_AVAILABLE = False
 
 from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
-from pcobra.cobra.core import Parser, ParserError
+from pcobra.cobra.core import ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     analizar_codigo,
     construir_script_sandbox_canonico,
     ejecutar_pipeline_explicito,
     PipelineInput,
+    prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
     validar_ast_seguro,
 )
@@ -340,7 +341,7 @@ class InteractiveCommand(BaseCommand):
         if depth > self.MAX_AST_DEPTH:
             raise RuntimeError(_("Se excedió la profundidad máxima del AST"))
 
-        ast = analizar_codigo(linea)
+        ast = prevalidar_y_parsear_codigo(linea)
         self.logger.debug(_("AST generado: {ast}").format(ast=ast))
 
         if validador:
@@ -775,7 +776,7 @@ class InteractiveCommand(BaseCommand):
         Args:
             linea: Código a ejecutar
         """
-        analizar_codigo(linea)
+        prevalidar_y_parsear_codigo(linea)
 
         script = construir_script_sandbox_canonico(
             linea,

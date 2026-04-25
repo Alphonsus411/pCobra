@@ -94,6 +94,14 @@ def construir_script_sandbox_canonico(
 def analizar_codigo(codigo: str) -> Any:
     """Analiza código fuente con el pipeline canónico Lexer+Parser."""
 
+    return prevalidar_y_parsear_codigo(codigo)
+
+
+def prevalidar_y_parsear_codigo(codigo: str) -> Any:
+    """Normaliza/sanea código y centraliza el parseo para script y REPL."""
+
+    if not isinstance(codigo, str):
+        raise TypeError(_("El código fuente debe ser una cadena de texto"))
     codigo_saneado = sanitize_source_for_tokenizer(codigo)
     tokens = Lexer(codigo_saneado).tokenizar()
     return Parser(tokens).parsear()

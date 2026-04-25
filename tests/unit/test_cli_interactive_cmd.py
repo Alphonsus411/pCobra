@@ -451,13 +451,19 @@ def test_ejecutar_en_sandbox_usa_estado_repl_y_contrato_de_run_service():
     cmd = InteractiveCommand(MagicMock())
     cmd._seguro_repl = True
     cmd._extra_validators_repl = ["extra_repl.py"]
-
-    with patch("cobra.cli.commands.interactive_cmd.analizar_codigo") as mock_analizar, \
-         patch("cobra.cli.commands.interactive_cmd.construir_script_sandbox_canonico", return_value="SCRIPT") as mock_script, \
-         patch("cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox", return_value=None) as mock_ejecutar:
+    with patch.dict(
+        cmd._ejecutar_en_sandbox.__globals__,
+        {
+            "prevalidar_y_parsear_codigo": MagicMock(),
+            "construir_script_sandbox_canonico": MagicMock(return_value="SCRIPT"),
+            "ejecutar_en_sandbox": MagicMock(return_value=None),
+        },
+    ) as patched_globals:
+        mock_prevalidar = patched_globals["prevalidar_y_parsear_codigo"]
+        mock_script = patched_globals["construir_script_sandbox_canonico"]
+        mock_ejecutar = patched_globals["ejecutar_en_sandbox"]
         cmd._ejecutar_en_sandbox("imprimir(7)")
-
-    mock_analizar.assert_called_once_with("imprimir(7)")
+    mock_prevalidar.assert_called_once_with("imprimir(7)")
     mock_script.assert_called_once_with(
         "imprimir(7)",
         safe_mode=True,
