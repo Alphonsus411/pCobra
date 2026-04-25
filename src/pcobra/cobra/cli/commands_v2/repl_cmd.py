@@ -118,6 +118,11 @@ class ReplCommandV2(BaseCommand):
         self._interpretador_persistente = setup.interpretador
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
+        if _resultado_pipeline is not None:
+            self._delegate._imprimir_resultado_repl(
+                _resultado_pipeline.ast,
+                _resultado_pipeline.resultado,
+            )
 
     def run(self, args: Any) -> int:
         buffer: list[str] = []

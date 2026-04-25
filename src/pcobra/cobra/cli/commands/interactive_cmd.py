@@ -375,6 +375,11 @@ class InteractiveCommand(BaseCommand):
         resultado = resultado_pipeline.resultado
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
+        self._imprimir_resultado_repl(ast, resultado)
+
+    def _imprimir_resultado_repl(self, ast: list[Any], resultado: Any) -> None:
+        """Imprime el resultado del REPL cuando aplica contrato de echo."""
+
         debe_imprimir_resultado = (
             resultado is not None
             and len(ast) == 1
