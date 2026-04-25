@@ -5,6 +5,7 @@ import pytest
 from cobra.cli.commands_v2.run_cmd import RunCommandV2
 from cobra.cli.commands_v2.build_cmd import BuildCommandV2
 from cobra.cli.commands_v2.test_cmd import TestCommandV2
+from cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from cobra.cli.commands_v2.legacy_cmd import LegacyCommandGroupV2
 from cobra.cli.cli import LEGACY_COMMAND_MIGRATION_MAP
 from cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
@@ -37,6 +38,20 @@ def test_test_v2_langs_es_opcional_y_usa_default_de_politica_oficial():
     parsed = parser.parse_args(["programa.co"])
 
     assert parsed.langs == list(VERIFICATION_EXECUTABLE_TARGETS)
+
+
+def test_repl_v2_parsea_comando_publico_y_flags_soportadas():
+    subparsers = _build_subparsers()
+    command = ReplCommandV2()
+    command.register_subparser(subparsers)
+
+    parser = subparsers.choices[command.name]
+    parsed = parser.parse_args(["--sandbox", "--sandbox-docker", "python", "--memory-limit", "256"])
+
+    assert parsed.cmd is command
+    assert parsed.sandbox is True
+    assert parsed.sandbox_docker == "python"
+    assert parsed.memory_limit == 256
 
 
 def test_build_v2_resuelve_backend_via_pipeline(monkeypatch):
