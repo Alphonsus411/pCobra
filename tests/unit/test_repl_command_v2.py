@@ -3,6 +3,7 @@ import argparse
 import pytest
 
 from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_module
+from pcobra.cobra.cli.commands import interactive_cmd as interactive_module
 from pcobra.cobra.core import ParserError
 
 ReplCommandV2 = repl_module.ReplCommandV2
@@ -573,3 +574,89 @@ def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_es
         "imprimir(total)",
     ]
     assert interpretadores_recibidos == [None, estado]
+
+
+@pytest.mark.parametrize(
+    ("entrada", "resultado", "ast", "salida_esperada"),
+    [
+        ("imprimir('hola')", None, [object()], ""),
+        ("1 + 1", 2, [object()], "2\n"),
+    ],
+    ids=["sentencia-imprimir-no-duplica", "expresion-simple-con-echo"],
+)
+def test_repl_v2_salida_homogenea_para_sentencia_y_expresion(
+    monkeypatch, capsys, entrada, resultado, ast, salida_esperada
+):
+    command = ReplCommandV2()
+    entradas = iter([entrada, "exit"])
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: ast)
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    class _Resultado:
+        def __init__(self):
+            self.ast = ast
+            self.resultado = resultado
+
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda *_args, **_kwargs: (_Setup(), _Resultado()),
+    )
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert capsys.readouterr().out == salida_esperada
+
+
+def test_repl_v2_no_hace_echo_automatico_para_estructuras_de_control(monkeypatch, capsys):
+    command = ReplCommandV2()
+    entradas = iter(["si verdadero:\nfin", "exit"])
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    class _Resultado:
+        def __init__(self):
+            self.ast = [interactive_module.NodoCondicional(True, [], [])]
+            self.resultado = "resultado-interno"
+
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda *_args, **_kwargs: (_Setup(), _Resultado()),
+    )
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert capsys.readouterr().out == ""
