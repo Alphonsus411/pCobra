@@ -40,3 +40,22 @@ def test_set_falla_si_variable_no_esta_declarada() -> None:
 
     with pytest.raises(NameError, match="Variable no declarada: faltante"):
         local_env.set("faltante", 1)
+
+
+def test_get_define_set_en_cadena_multinivel_actualiza_ancestro_mas_cercano() -> None:
+    raiz = Environment(values={"x": "raiz", "solo_raiz": 1})
+    medio = Environment(values={"x": "medio"}, parent=raiz)
+    hoja = Environment(parent=medio)
+
+    assert hoja.get("x") == "medio"
+    assert hoja.get("solo_raiz") == 1
+
+    hoja.define("x", "hoja")
+    hoja.set("x", "hoja_actualizada")
+    assert hoja.get("x") == "hoja_actualizada"
+    assert medio.get("x") == "medio"
+
+    hoja.set("solo_raiz", 9)
+    assert raiz.get("solo_raiz") == 9
+    assert "solo_raiz" not in hoja.values
+    assert "solo_raiz" not in medio.values
