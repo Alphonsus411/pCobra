@@ -56,14 +56,14 @@ jsonschema_stub.ValidationError = _JsonSchemaValidationError
 jsonschema_stub.validate = lambda *args, **kwargs: None
 sys.modules.setdefault("jsonschema", jsonschema_stub)
 
-from pcobra.cli import _reconfigurar_consola_utf8, configurar_entorno
+from pcobra.cli import configure_encoding, configurar_entorno
 import pcobra.cli as cli
 
 
 def test_configurar_entorno_permiso_denegado(monkeypatch, caplog):
     """Debe registrar un error y continuar cuando .env no se puede leer."""
 
-    def _raise_permission_error():
+    def _raise_permission_error(**_kwargs):
         raise PermissionError("sin permiso")
 
     monkeypatch.setattr("pcobra.cli.load_dotenv", _raise_permission_error)
@@ -87,14 +87,14 @@ class _DummyStreamSinReconfigure:
         return "".join(self.buffer)
 
 
-def test_reconfigurar_consola_utf8_fallback_no_rompe_sin_reconfigure(monkeypatch):
+def test_configure_encoding_fallback_no_rompe_sin_reconfigure(monkeypatch):
     out = _DummyStreamSinReconfigure()
     err = _DummyStreamSinReconfigure()
     monkeypatch.setattr(sys, "stdout", out)
     monkeypatch.setattr(sys, "stderr", err)
     monkeypatch.delenv("PYTHONIOENCODING", raising=False)
 
-    _reconfigurar_consola_utf8()
+    configure_encoding()
 
     out.write("Salida legible: áéíóú")
     err.write("Error legible: ñ")
@@ -103,10 +103,10 @@ def test_reconfigurar_consola_utf8_fallback_no_rompe_sin_reconfigure(monkeypatch
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
 
-def test_reconfigurar_consola_utf8_sobrescribe_pythonioencoding_a_utf8(monkeypatch):
+def test_configure_encoding_sobrescribe_pythonioencoding_a_utf8(monkeypatch):
     monkeypatch.setenv("PYTHONIOENCODING", "latin-1")
 
-    _reconfigurar_consola_utf8()
+    configure_encoding()
 
     assert os.environ["PYTHONIOENCODING"] == "utf-8"
 
@@ -120,14 +120,14 @@ class _DummyStreamConReconfigure(_DummyStreamSinReconfigure):
         self.calls.append({"encoding": encoding})
 
 
-def test_reconfigurar_consola_utf8_reconfigura_stdout_y_stderr(monkeypatch):
+def test_configure_encoding_reconfigura_stdout_y_stderr(monkeypatch):
     out = _DummyStreamConReconfigure()
     err = _DummyStreamConReconfigure()
     monkeypatch.setattr(sys, "stdout", out)
     monkeypatch.setattr(sys, "stderr", err)
     monkeypatch.delenv("PYTHONIOENCODING", raising=False)
 
-    _reconfigurar_consola_utf8()
+    configure_encoding()
 
     assert out.calls == [{"encoding": "utf-8"}]
     assert err.calls == [{"encoding": "utf-8"}]
@@ -137,7 +137,7 @@ def test_reconfigurar_consola_utf8_reconfigura_stdout_y_stderr(monkeypatch):
 def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
     orden: list[str] = []
 
-    monkeypatch.setattr(cli, "_reconfigurar_consola_utf8", lambda: orden.append("utf8"))
+    monkeypatch.setattr(cli, "configure_encoding", lambda: orden.append("utf8"))
     monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: orden.append("bootstrap"))
     monkeypatch.setattr(cli, "configure_logging", lambda debug: orden.append("logging"))
     monkeypatch.setattr(cli, "configurar_entorno", lambda: orden.append("entorno"))
@@ -162,8 +162,8 @@ def test_smoke_cli_unicode_salida_bytes_utf8():
         [
             sys.executable,
             "-c",
-            "from pcobra.cli import _reconfigurar_consola_utf8; "
-            "_reconfigurar_consola_utf8(); print('después')",
+            "from pcobra.cli import configure_encoding; "
+            "configure_encoding(); print('después')",
         ],
         env=env,
         capture_output=True,

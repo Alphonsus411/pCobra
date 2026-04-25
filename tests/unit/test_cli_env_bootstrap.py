@@ -29,6 +29,12 @@ def test_configurar_entorno_autocrea_env_desde_example(tmp_path, monkeypatch, ca
     assert env_file.exists()
     assert env_file.read_text(encoding="utf-8") == env_example.read_text(encoding="utf-8")
     assert "No se encontró .env; se creó automáticamente" in caplog.text
+    assert any(
+        record.levelname == "INFO"
+        and "No se encontró .env; se creó automáticamente" in record.getMessage()
+        for record in caplog.records
+    )
+    assert "WARNING: El archivo .env no se cargó" not in caplog.text
     assert "COBRA_DB_PATH" in cli.os.environ
 
 
