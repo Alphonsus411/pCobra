@@ -200,13 +200,20 @@ def configurar_entorno() -> None:
         try:
             load_dotenv(dotenv_path=_ENV_FILE)
         except OSError as exc:
-            logger.error("No se pudo acceder al archivo .env: %s", exc)
+            logger.error(
+                "No se pudo acceder al archivo .env: %s. Verifica permisos de lectura/escritura y la ruta del proyecto.",
+                exc,
+            )
             return
         except Exception:  # pragma: no cover - registro y propagación
             logger.exception("Error inesperado al cargar variables de entorno")
             raise
 
     if not (os.environ.get(SQLITE_DB_KEY_ENV) or "").strip():
+        logger.error(
+            "Falta %s en el entorno. Defínela en .env o expórtala antes de ejecutar la CLI.",
+            SQLITE_DB_KEY_ENV,
+        )
         raise RuntimeError(
             f"{SQLITE_DB_KEY_ENV} es obligatoria y está ausente o vacía. "
             f"Define {SQLITE_DB_KEY_ENV}=<tu_clave> en .env o exporta la variable antes de ejecutar la CLI."
