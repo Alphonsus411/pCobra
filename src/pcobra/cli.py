@@ -21,6 +21,7 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
 
 logger = logging.getLogger(__name__)
 _CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
+_CLI_BOOTSTRAP_PATH_ENV_ALIAS = "COBRA_CLI_BOOTSTRAP_PATH"
 _DEFAULT_DB_PATH = str(Path("~/.cobra/sqliteplus/core.db").expanduser())
 _ENV_FILE = Path(".env")
 _ENV_EXAMPLE_FILE = Path(".env.example")
@@ -126,17 +127,28 @@ def build_legacy_cli_shim_main(ruta_modulo_legacy: str):
     return modulo_main
 
 
+def _bootstrap_path_opt_in_value() -> str:
+    """Resuelve el valor opt-in para bootstrap PATH con alias de compatibilidad."""
+
+    valor_canonico = os.environ.get(_CLI_BOOTSTRAP_PATH_ENV)
+    if valor_canonico is not None:
+        return valor_canonico
+    return os.environ.get(_CLI_BOOTSTRAP_PATH_ENV_ALIAS, "")
+
+
 def _bootstrap_dev_path_si_opt_in() -> None:
     """Añade ``scripts/bin`` al PATH únicamente cuando se solicita explícitamente."""
 
-    if os.environ.get(_CLI_BOOTSTRAP_PATH_ENV) != "1":
+    if _bootstrap_path_opt_in_value() != "1":
         return
 
     repo_root = Path(__file__).resolve().parents[2]
     bin_path = repo_root / "scripts" / "bin"
     if not bin_path.is_dir():
         logger.debug(
-            "PCOBRA_CLI_BOOTSTRAP_PATH=1 pero %s no existe; se omite bootstrap PATH",
+            "%s=1/%s=1 pero %s no existe; se omite bootstrap PATH",
+            _CLI_BOOTSTRAP_PATH_ENV,
+            _CLI_BOOTSTRAP_PATH_ENV_ALIAS,
             bin_path,
         )
         return
@@ -256,7 +268,3 @@ def main(argumentos: Optional[List[str]] = None) -> int:
         return 1
     aplicacion = CliApplication()
     return aplicacion.run(argv)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
