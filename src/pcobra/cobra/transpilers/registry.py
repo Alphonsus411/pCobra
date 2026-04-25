@@ -372,8 +372,14 @@ def ensure_entrypoint_transpilers_loaded_once() -> None:
     _ENTRYPOINTS_LOADED = True
 
 
-def get_transpilers(*, include_plugins: bool = True) -> dict[str, type]:
+def get_transpilers(
+    *,
+    include_plugins: bool = True,
+    ensure_entrypoints_loaded: bool = True,
+) -> dict[str, type]:
     """Registro consolidado oficial (+ overlay de plugins si se habilita)."""
+    if include_plugins and ensure_entrypoints_loaded:
+        ensure_entrypoint_transpilers_loaded_once()
     registry = build_official_transpilers()
     if include_plugins:
         registry.update(_PLUGIN_TRANSPILERS)

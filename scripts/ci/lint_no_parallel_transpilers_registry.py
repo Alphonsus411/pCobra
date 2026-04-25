@@ -15,10 +15,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+CANONICAL_TRANSPILERS_REGISTRY = Path("src/pcobra/cobra/transpilers/registry.py")
 ALLOWED_TRANSPILERS_LITERAL_MODULES = {
-    Path("src/pcobra/cobra/transpilers/registry.py"),
+    CANONICAL_TRANSPILERS_REGISTRY,
     Path("tests/integration/transpilers/backend_contracts.py"),
     Path("tests/unit/test_transpiler_backend_regression.py"),
+}
+
+FORBIDDEN_PARALLEL_CATALOG_NAMES = {
+    "TRANSPILER_CLASS_PATHS",
+    "PUBLIC_TRANSPILER_CLASS_PATHS",
+    "INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS",
+    "INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS",
 }
 
 CLI_FACADE_MODULE = "pcobra.cobra.cli.transpiler_registry"
@@ -44,6 +52,33 @@ def _find_transpilers_literal_violations(root: Path) -> list[str]:
             if target_name == "TRANSPILERS" and isinstance(value, ast.Dict):
                 violations.append(
                     f"{rel}:{node.lineno}: patrón prohibido `TRANSPILERS = {{` fuera del registro canónico"
+                )
+    return violations
+
+
+def _find_parallel_catalog_name_violations(root: Path) -> list[str]:
+    violations: list[str] = []
+    for path in sorted(root.rglob("*.py")):
+        rel = path.relative_to(root)
+        if rel == CANONICAL_TRANSPILERS_REGISTRY:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            target_name: str | None = None
+            value: ast.AST | None = None
+            if isinstance(node, ast.Assign):
+                if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                    target_name = node.targets[0].id
+                    value = node.value
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                target_name = node.target.id
+                value = node.value
+            if (
+                target_name in FORBIDDEN_PARALLEL_CATALOG_NAMES
+                and isinstance(value, ast.Dict)
+            ):
+                violations.append(
+                    f"{rel}:{node.lineno}: catálogo paralelo prohibido `{target_name}` fuera de `{CANONICAL_TRANSPILERS_REGISTRY.as_posix()}`"
                 )
     return violations
 
@@ -99,7 +134,11 @@ def _find_cli_registry_facade_violations(root: Path) -> list[str]:
 
 
 def find_violations(root: Path = ROOT) -> list[str]:
-    return _find_transpilers_literal_violations(root) + _find_cli_registry_facade_violations(root)
+    return (
+        _find_transpilers_literal_violations(root)
+        + _find_parallel_catalog_name_violations(root)
+        + _find_cli_registry_facade_violations(root)
+    )
 
 
 def main() -> int:

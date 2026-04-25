@@ -56,3 +56,16 @@ def test_permite_fachada_cli_transpiler_registry(tmp_path: Path) -> None:
     violations = find_violations(tmp_path)
 
     assert violations == []
+
+
+def test_detecta_catalogo_paralelo_con_nombre_contractual(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "bad_catalog.py",
+        "TRANSPILER_CLASS_PATHS = {'python': ('m', 'C')}\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) == 1
+    assert "catálogo paralelo prohibido `TRANSPILER_CLASS_PATHS`" in violations[0]
+    assert "src/pcobra/cobra/cli/commands/bad_catalog.py:1" in violations[0]

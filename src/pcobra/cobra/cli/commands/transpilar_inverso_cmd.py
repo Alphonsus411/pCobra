@@ -137,7 +137,6 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
     if language in reverse_module.REGISTERED_REVERSE_TRANSPILERS
 }
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
-DESTINO_CHOICES = cli_transpiler_targets()
 TARGETS_HELP = build_target_help_by_tier(
     tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 )
@@ -149,6 +148,11 @@ def _runtime_transpilers() -> Dict[str, Type]:
     return dict(cli_transpilers())
 
 
+def _runtime_destino_choices() -> tuple[str, ...]:
+    """Consulta targets canónicos en runtime para evitar snapshots estáticos."""
+    return cli_transpiler_targets()
+
+
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
     """Valida que un target pertenezca a la whitelist oficial."""
     canonical = parse_target(target)
@@ -158,7 +162,7 @@ def _validate_official_target_or_raise(target: str, *, context: str) -> str:
             "'{target}'. Usa uno de: {allowed}".format(
                 context=context,
                 target=target,
-                allowed=", ".join(DESTINO_CHOICES),
+                allowed=", ".join(_runtime_destino_choices()),
             )
         )
     return canonical
@@ -257,7 +261,7 @@ class TranspilarInversoCommand(BaseCommand):
             ),
             required=True,
             type=parse_target,
-            choices=DESTINO_CHOICES,
+            choices=_runtime_destino_choices(),
         )
         add_internal_legacy_targets_flag(parser)
         parser.add_argument(

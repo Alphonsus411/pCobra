@@ -22,10 +22,10 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.transpiler_registry import (
-    cli_ensure_entrypoint_transpilers_loaded_once,
     cli_load_entrypoint_transpilers,
     cli_plugin_transpilers,
     cli_register_transpiler_backend,
+    cli_transpilers,
     cli_transpiler_targets,
 )
 from pcobra.cobra.cli.deprecation_policy import (
@@ -47,7 +47,6 @@ MAX_LANGUAGES = 10
 
 def get_lang_choices() -> tuple[str, ...]:
     """Obtiene targets canónicos para CLI de forma dinámica."""
-    cli_ensure_entrypoint_transpilers_loaded_once()
     return cli_transpiler_targets()
 
 
@@ -64,10 +63,6 @@ def load_entrypoint_transpilers() -> tuple[int, int, int]:
     """Compatibilidad: delega carga de entry points al registro consolidado."""
     return cli_load_entrypoint_transpilers()
 
-
-def _ensure_entrypoints_loaded_once() -> None:
-    """Compatibilidad: delega carga idempotente al registro consolidado."""
-    cli_ensure_entrypoint_transpilers_loaded_once()
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
     """Validador único de backend oficial conectado a la matriz canónica."""
@@ -104,8 +99,12 @@ def _target_label(target: str) -> str:
     return target.replace("_", " ").capitalize()
 
 
-def _transpile_with_pipeline_or_plugin(ast, lang: str) -> str:
-    plugin_cls = cli_plugin_transpilers().get(lang)
+def _transpile_with_pipeline_or_plugin(
+    ast,
+    lang: str,
+    plugin_snapshot: dict[str, type],
+) -> str:
+    plugin_cls = plugin_snapshot.get(lang)
     if plugin_cls is not None:
         return plugin_cls().generate_code(ast)
     return backend_pipeline.transpile(ast, lang)
@@ -165,7 +164,7 @@ class CompileCommand(BaseCommand):
     def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
         """Ejecuta un transpilador específico."""
         lang, ast = parametros
-        code = _transpile_with_pipeline_or_plugin(ast, lang)
+        code = _transpile_with_pipeline_or_plugin(ast, lang, dict(cli_plugin_transpilers()))
         return lang, code
 
     def run(self, args):
@@ -184,8 +183,8 @@ class CompileCommand(BaseCommand):
             mostrar_error(str(e))
             return 1
 
-        _ensure_entrypoints_loaded_once()
-        current_lang_choices = set(get_lang_choices())
+        transpilers_snapshot = dict(cli_transpilers())
+        current_lang_choices = set(transpilers_snapshot)
 
         tipos_argument = getattr(args, "tipos", None)
         if isinstance(tipos_argument, str):
@@ -278,7 +277,11 @@ class CompileCommand(BaseCommand):
                     return 1
             else:
                 transpilador = transpilador_objetivo
-                resultado = _transpile_with_pipeline_or_plugin(ast, transpilador)
+                resultado = _transpile_with_pipeline_or_plugin(
+                    ast,
+                    transpilador,
+                    dict(cli_plugin_transpilers()),
+                )
                 mostrar_info(
                     _("Código generado:")
                 )
