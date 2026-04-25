@@ -5,12 +5,12 @@ from __future__ import annotations
 from os import environ
 from typing import Iterable
 
-PUBLIC_COMMANDS_CONTRACT: tuple[str, ...] = ("run", "build", "test", "mod")
+PUBLIC_COMMANDS_CONTRACT: tuple[str, ...] = ("run", "build", "test", "mod", "repl")
 PUBLIC_COMMANDS: tuple[str, ...] = PUBLIC_COMMANDS_CONTRACT
 if PUBLIC_COMMANDS != PUBLIC_COMMANDS_CONTRACT:
     raise RuntimeError(
         "Contrato público inválido: PUBLIC_COMMANDS debe mantenerse en "
-        "('run', 'build', 'test', 'mod')."
+        "('run', 'build', 'test', 'mod', 'repl')."
     )
 INTERNAL_COMMANDS: tuple[str, ...] = (
     "legacy",
@@ -42,7 +42,7 @@ LEGACY_OBSOLETE_COMMANDS: tuple[str, ...] = (
 )
 COMMAND_VISIBILITY_MATRIX_MARKDOWN = """| Clase | Comandos |
 |---|---|
-| Públicos (UI v2) | run, build, test, mod |
+| Públicos (UI v2) | run, build, test, mod, repl |
 | Internos (UI v2 / development) | legacy, debug, devops |
 | Legacy públicos (UI v1) | *(ninguno; reservado a `development`)* |
 | Legacy internos (UI v1) | compilar, cache, contenedor, gui, jupyter, qualia, agix |

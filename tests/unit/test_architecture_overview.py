@@ -10,7 +10,7 @@ from pcobra.cobra.architecture.overview import (
 
 def test_overview_declara_frontera_publica_unica():
     assert PUBLIC_LANGUAGE_BOUNDARY == "cobra"
-    assert PUBLIC_CLI_V2_COMMANDS == ("run", "build", "test", "mod")
+    assert PUBLIC_CLI_V2_COMMANDS == ("run", "build", "test", "mod", "repl")
     assert USER_ROUTE_BACKEND_ENTRYPOINT == "pcobra.cobra.build.backend_pipeline"
 
 
