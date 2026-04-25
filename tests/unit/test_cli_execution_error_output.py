@@ -109,6 +109,23 @@ def test_run_propaga_debug_activo_hacia_execute_command():
     mock_execute_command.assert_called_once_with(args, debug_activo=False)
 
 
+def test_run_tolera_argumentos_opcionales_ausentes_fuera_de_comando():
+    app = CliApplication()
+    args = argparse.Namespace(cmd=None)
+
+    with patch.object(app, "initialize"), patch.object(app, "_parse_arguments", return_value=args), patch.object(
+        app, "execute_command", return_value=1
+    ) as mock_execute_command, patch("cobra.cli.cli.messages.mostrar_logo"), patch(
+        "cobra.cli.cli.messages.disable_colors"
+    ) as mock_disable_colors, patch("cobra.cli.cli.setup_gettext") as mock_setup_gettext:
+        result = app.run([])
+
+    assert result == 1
+    mock_execute_command.assert_called_once_with(args, debug_activo=False)
+    mock_setup_gettext.assert_called()
+    mock_disable_colors.assert_called_once_with(False)
+
+
 def test_run_bloquea_fallback_inseguro_en_ci_sin_override(monkeypatch):
     app = CliApplication()
     args = argparse.Namespace(
