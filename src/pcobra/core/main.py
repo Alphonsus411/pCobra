@@ -27,7 +27,10 @@ def _cargar_dotenv() -> None:
     try:
         cargado = load_dotenv()
     except OSError as exc:
-        logger.error("No se pudo acceder al archivo .env: %s", exc)
+        logger.error(
+            "No se pudo acceder al archivo .env: %s. Verifica permisos y que el archivo exista en el directorio actual.",
+            exc,
+        )
         return
     except Exception:  # pragma: no cover - registro defensivo
         logger.exception("Error inesperado al cargar el archivo .env")
