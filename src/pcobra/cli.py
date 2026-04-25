@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import sys
 from importlib import import_module
 from pathlib import Path
@@ -20,6 +21,9 @@ except ModuleNotFoundError:  # pragma: no cover - rama dependiente del entorno
 
 logger = logging.getLogger(__name__)
 _CLI_BOOTSTRAP_PATH_ENV = "PCOBRA_CLI_BOOTSTRAP_PATH"
+_DEFAULT_DB_PATH = str(Path("~/.cobra/sqliteplus/core.db").expanduser())
+_ENV_FILE = Path(".env")
+_ENV_EXAMPLE_FILE = Path(".env.example")
 _LEGACY_SHIM_ALIAS_CONTRACT = {
     # Siempre preservamos el módulo canónico para los wrappers legacy.
     "always": ("pcobra.cli",),
@@ -161,22 +165,34 @@ def __getattr__(name: str):
 
 
 def configurar_entorno() -> None:
-    """Carga variables de entorno desde un archivo .env si está presente."""
+    """Carga variables de entorno y valida precondiciones críticas del runtime."""
+    if not _ENV_FILE.exists() and _ENV_EXAMPLE_FILE.exists():
+        shutil.copyfile(_ENV_EXAMPLE_FILE, _ENV_FILE)
+        logger.info(
+            "No se encontró .env; se creó automáticamente desde %s",
+            _ENV_EXAMPLE_FILE,
+        )
+
     if load_dotenv is None:
         logger.debug(
             "python-dotenv no está instalado; se omite la carga automática del archivo .env"
         )
-        return
-    try:
-        cargado = load_dotenv()
-    except OSError as exc:
-        logger.error("No se pudo acceder al archivo .env: %s", exc)
-        return
-    except Exception:  # pragma: no cover - registro y propagación
-        logger.exception("Error inesperado al cargar variables de entorno")
-        raise
-    if not cargado:
-        logger.warning("El archivo .env no se cargó")
+    else:
+        try:
+            load_dotenv(dotenv_path=_ENV_FILE if _ENV_FILE.exists() else None)
+        except OSError as exc:
+            logger.error("No se pudo acceder al archivo .env: %s", exc)
+            return
+        except Exception:  # pragma: no cover - registro y propagación
+            logger.exception("Error inesperado al cargar variables de entorno")
+            raise
+
+    if not (os.environ.get("SQLITE_DB_KEY") or "").strip():
+        logger.error(
+            "Falta SQLITE_DB_KEY en el entorno. Defínela en .env o en variables de entorno antes de ejecutar la CLI."
+        )
+
+    os.environ.setdefault("COBRA_DB_PATH", _DEFAULT_DB_PATH)
 
 
 def _normalizar_argumentos(argumentos: Optional[Iterable[str]]) -> Optional[List[str]]:

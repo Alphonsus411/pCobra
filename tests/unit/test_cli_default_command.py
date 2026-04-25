@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, AppConfig, CommandRegistry
+from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, CommandRegistry
 
 
 def _patch_cli_env(stack: ExitStack) -> None:
@@ -18,15 +18,17 @@ def _patch_cli_env(stack: ExitStack) -> None:
     stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="development"))
 
 
-def test_default_command_runs_interactive():
+def test_no_command_prints_help_and_does_not_run_default():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
         mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
+        mock_help = stack.enter_context(patch.object(CustomArgumentParser, "print_help"))
         app = CliApplication()
         result = app.run([])
-    mock_run.assert_called_once()
-    assert result == 0
+    mock_run.assert_not_called()
+    mock_help.assert_called_once()
+    assert result == 1
 
 
 def test_unknown_command_shows_error_and_help():
@@ -43,25 +45,22 @@ def test_unknown_command_shows_error_and_help():
     mock_error.assert_called()
 
 
-def test_consecutive_initializations_keep_default_command_isolated():
+def test_parse_arguments_without_command_keeps_cmd_undefined():
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
-        stack.enter_context(patch("cobra.cli.cli.AppConfig.DEFAULT_COMMAND", "interactive"))
         first_app = CliApplication()
         first_app.initialize()
         first_args = first_app._parse_arguments([])
-        assert first_args.cmd.name == "interactive"
+        assert getattr(first_args, "cmd", None) is None
 
     with ExitStack() as stack:
         _patch_cli_env(stack)
         stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
-        stack.enter_context(patch("cobra.cli.cli.AppConfig.DEFAULT_COMMAND", "missing"))
         second_app = CliApplication()
         second_app.initialize()
         second_args = second_app._parse_arguments([])
-        assert second_args.cmd.name == "interactive"
-        assert AppConfig.DEFAULT_COMMAND == "missing"
+        assert getattr(second_args, "cmd", None) is None
 
 
 def test_parse_arguments_is_reentrant_on_same_instance():
@@ -81,8 +80,8 @@ def test_parse_arguments_is_reentrant_on_same_instance():
         first_args = app._parse_arguments([])
         second_args = app._parse_arguments([])
 
-    assert first_args.cmd.name == "interactive"
-    assert second_args.cmd.name == "interactive"
+    assert getattr(first_args, "cmd", None) is None
+    assert getattr(second_args, "cmd", None) is None
     assert register_spy.call_count == 1
     assert add_subparsers_spy.call_count == 1
 
@@ -105,9 +104,9 @@ def test_run_is_reentrant_on_same_instance_without_command_conflict():
         first_result = app.run([])
         second_result = app.run([])
 
-    assert first_result == 0
-    assert second_result == 0
-    assert mock_run.call_count == 2
+    assert first_result == 1
+    assert second_result == 1
+    assert mock_run.call_count == 0
     assert register_spy.call_count == 1
 
 

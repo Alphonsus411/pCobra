@@ -272,13 +272,6 @@ class CommandRegistry:
                 logging.error(f"Failed to register subparser for {command.name}: {e}")
                 del self.commands[command.name]
 
-        if self.default_command_name not in self.commands:
-            fallback = "interactive" if "interactive" in self.commands else next(iter(self.commands), None)
-            logging.warning(
-                "Default command '%s' not found. Falling back to '%s'", self.default_command_name, fallback
-            )
-            self.default_command_name = fallback
-
         return self.commands
 
     def get_default_command(self) -> Optional[BaseCommand]:
@@ -688,10 +681,6 @@ class CliApplication:
         )
         self._ensure_command_structure()
 
-        default_command_name = self.command_registry.get_default_command_name()
-        default_command = self.command_registry.commands.get(default_command_name)
-        if default_command:
-            self.parser.set_defaults(cmd=default_command)
         if autocomplete_available():
             self._configure_autocomplete(self.parser)
             enable_autocomplete(self.parser)
@@ -1057,20 +1046,18 @@ class CliApplication:
         if not self.command_registry:
             raise RuntimeError("Command registry not initialized")
             
-        command = getattr(args, "cmd", self.command_registry.get_default_command())
+        command = getattr(args, "cmd", None)
         if command == "menu":
             return self.run_menu(args)
         if not command:
             if self.parser is not None:
                 self.parser.print_help()
-            else:
-                messages.mostrar_error(
-                    _("CLI no inicializada completamente: parser no disponible. "
-                      "Ejecute initialize() antes de execute_command()."),
-                    registrar_log=False,
-                )
                 return 1
-            messages.mostrar_error(_("Comando inválido. Use --help para ver opciones."), registrar_log=False)
+            messages.mostrar_error(
+                _("CLI no inicializada completamente: parser no disponible. "
+                  "Ejecute initialize() antes de execute_command()."),
+                registrar_log=False,
+            )
             return 1
             
         try:
