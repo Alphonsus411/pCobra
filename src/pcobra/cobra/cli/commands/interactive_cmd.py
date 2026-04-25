@@ -776,12 +776,29 @@ class InteractiveCommand(BaseCommand):
         Args:
             linea: Código a ejecutar
         """
+        interpretador_cls = resolver_interpretador_cls(
+            module_name=__name__,
+            default_cls=type(self.interpretador),
+        )
+        setup, _ = ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo="",
+                interpretador_cls=interpretador_cls,
+                safe_mode=self._seguro_repl,
+                extra_validators=self._extra_validators_repl,
+                interpretador=self.interpretador,
+            ),
+            analizar_codigo_fn=lambda _codigo: [],
+        )
+        self.interpretador = setup.interpretador
+        self._seguro_repl = setup.safe_mode
+        self._extra_validators_repl = setup.validadores_extra
         prevalidar_y_parsear_codigo(linea)
 
         script = construir_script_sandbox_canonico(
             linea,
-            safe_mode=self._seguro_repl,
-            extra_validators=self._extra_validators_repl,
+            safe_mode=setup.safe_mode,
+            extra_validators=setup.validadores_extra,
             imprimir_resultado=True,
         )
 

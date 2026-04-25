@@ -12,7 +12,8 @@ from pcobra.cobra.cli.execution_pipeline import (
     ejecutar_pipeline_explicito,
     resolver_interpretador_cls,
 )
-from pcobra.cobra.core.runtime import InterpretadorCobra
+from pcobra.cobra.cli.services.run_service import RunService
+from pcobra.cobra.core.runtime import InterpretadorCobra, ValidadorBase
 
 
 def _run_args(file_path: str) -> Namespace:
@@ -230,6 +231,40 @@ def test_error_semantico_y_runtime_equivalen_en_tipo_y_mensaje(codigo_erroneo):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
+    "codigo_erroneo",
+    [
+        'imprimir("cadena sin cerrar)',
+        "si verdadero imprimir(1)",
+    ],
+)
+def test_error_sintactico_equivale_en_tipo_y_mensaje(codigo_erroneo):
+    interpretador_cls = resolver_interpretador_cls(
+        module_name="pcobra.cobra.cli.services.run_service",
+        default_cls=InterpretadorCobra,
+    )
+
+    with pytest.raises(Exception) as err_script:  # noqa: BLE001 - contrato integración
+        ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo=codigo_erroneo,
+                interpretador_cls=interpretador_cls,
+                safe_mode=False,
+                extra_validators=None,
+            )
+        )
+
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    with pytest.raises(Exception) as err_repl:  # noqa: BLE001 - contrato integración
+        repl.ejecutar_codigo(codigo_erroneo)
+
+    assert type(err_script.value) is type(err_repl.value)
+    assert str(err_script.value) == str(err_repl.value)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
     ("caso", "prelude", "snippet", "variables_esperadas"),
     [
         (
@@ -305,3 +340,57 @@ def test_runtime_estado_final_paridad_run_vs_repl(
     assert resultado_script["estado"] == variables_esperadas, (
         f"{caso}: el estado final debe respetar semántica de scope esperada"
     )
+
+
+@pytest.mark.integration
+def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypatch):
+    import pcobra.cobra.cli.services.run_service as run_service_module
+    import pcobra.cobra.cli.commands.interactive_cmd as interactive_module
+
+    class DummyInterp:
+        def __init__(self, safe_mode=True, extra_validators=None):
+            self.safe_mode = safe_mode
+            self.extra_validators = extra_validators
+            self.contextos = [{}]
+
+        def ejecutar_ast(self, _ast):
+            return None
+
+        @staticmethod
+        def _cargar_validadores(ruta):
+            class _DummyValidador(ValidadorBase):
+                pass
+
+            validador = _DummyValidador()
+            setattr(validador, "origen", ruta)
+            return [validador]
+
+    capturas: list[tuple[str, bool | None, object]] = []
+
+    def _capturar_script(codigo, *, safe_mode=None, extra_validators=None, imprimir_resultado=False):
+        capturas.append((codigo, safe_mode, extra_validators))
+        return "print('ok')"
+
+    monkeypatch.setattr(run_service_module, "InterpretadorCobra", DummyInterp)
+    monkeypatch.setattr(interactive_module, "InterpretadorCobra", DummyInterp)
+    monkeypatch.setattr(run_service_module, "construir_script_sandbox_canonico", _capturar_script)
+    monkeypatch.setattr(interactive_module, "construir_script_sandbox_canonico", _capturar_script)
+    monkeypatch.setattr(run_service_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(interactive_module, "ejecutar_en_sandbox", lambda *_args, **_kwargs: "")
+
+    servicio = RunService()
+    rc = servicio.ejecutar_en_sandbox(
+        "var valor = 1",
+        seguro=1,
+        extra_validators=["uno.py", "dos.py"],
+    )
+    repl = InteractiveCommand(DummyInterp())
+    repl._seguro_repl = 1
+    repl._extra_validators_repl = ["uno.py", "dos.py"]
+    repl._ejecutar_en_sandbox("var valor = 1")
+
+    assert rc == 0
+    assert len(capturas) == 2
+    assert capturas[0][1] is True and capturas[1][1] is True
+    assert [getattr(v, "origen", None) for v in capturas[0][2]] == ["uno.py", "dos.py"]
+    assert [getattr(v, "origen", None) for v in capturas[1][2]] == ["uno.py", "dos.py"]
