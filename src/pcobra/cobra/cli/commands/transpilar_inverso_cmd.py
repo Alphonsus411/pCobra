@@ -51,7 +51,6 @@ from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # Configuración del logging
 logger = logging.getLogger(__name__)
@@ -156,7 +155,7 @@ def _runtime_destino_choices() -> tuple[str, ...]:
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
     """Valida que un target pertenezca a la whitelist oficial."""
     canonical = parse_target(target)
-    if canonical not in OFFICIAL_TARGETS:
+    if canonical not in _runtime_destino_choices():
         raise UnsupportedLanguageError(
             "Lenguaje de destino fuera de Tier 1/Tier 2 en {context}: "
             "'{target}'. Usa uno de: {allowed}".format(

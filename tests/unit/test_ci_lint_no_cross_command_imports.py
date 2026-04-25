@@ -10,6 +10,22 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def test_contrato_repo_ningun_comando_depende_de_otro_comando() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    violations = find_violations(repo_root)
+    cross_command_violations = [
+        item
+        for item in violations
+        if (
+            "import entre comandos no permitido" in item
+            or "edge no permitido en grafo de imports" in item
+            or "patrón *_cmd no permitido" in item
+            or "import explícito from ...commands.<otro_comando> no permitido" in item
+        )
+    ]
+    assert cross_command_violations == []
+
+
 def test_detecta_import_entre_comandos(tmp_path: Path) -> None:
     _write(
         tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
@@ -90,6 +106,7 @@ def test_detecta_import_relativo_a_otro_comando(tmp_path: Path) -> None:
 
     assert any("import entre comandos no permitido" in item for item in violations)
     assert any("patrón *_cmd no permitido" in item for item in violations)
+    assert any("import explícito from ...commands.<otro_comando> no permitido" in item for item in violations)
     assert any("src/pcobra/cobra/cli/commands/bad.py:1" in item for item in violations)
 
 
@@ -101,8 +118,32 @@ def test_detecta_acceso_compartido_transpilers_fuera_registry(tmp_path: Path) ->
 
     violations = find_violations(tmp_path)
 
-    assert "acceso compartido de transpiladores no permitido" in violations[0]
-    assert "src/pcobra/cobra/cli/commands/a.py:1" in violations[0]
+    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any("src/pcobra/cobra/cli/commands/a.py:1" in item for item in violations)
+
+
+def test_detecta_acceso_directo_a_targets_en_transpilers(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any("pcobra.cobra.transpilers.targets" in item for item in violations)
+
+
+def test_detecta_acceso_directo_a_registry_en_transpilers(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.transpilers.registry import official_transpiler_targets\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any("pcobra.cobra.transpilers.registry" in item for item in violations)
 
 
 def test_detecta_constante_transpilers_en_comando(tmp_path: Path) -> None:

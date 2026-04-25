@@ -36,6 +36,11 @@ def cli_transpiler_targets() -> tuple[str, ...]:
     return official_transpiler_targets()
 
 
+def cli_transpiler_targets_csv() -> str:
+    """Devuelve targets públicos canónicos formateados como CSV para ayuda CLI."""
+    return ",".join(cli_transpiler_targets())
+
+
 def cli_ensure_entrypoint_transpilers_loaded_once() -> None:
     """Garantiza (idempotente) la carga de transpiladores registrados por entrypoints."""
     ensure_entrypoint_transpilers_loaded_once()
