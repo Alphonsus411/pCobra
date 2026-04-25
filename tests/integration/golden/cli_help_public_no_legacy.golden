@@ -1,13 +1,22 @@
 usage: cobra [-h] [--version] [--ayuda] [--format] [--debug] [-v] [--no-safe]
              [--allow-insecure-fallback] [--allow-insecure-non-interactive]
-             [--modo {cobra,transpilar,mixto}] [--solo-cobra]
-             [--lang LANG] [--no-color] [--extra-validators EXTRA_VALIDATORS]
+             [--modo {cobra,transpilar,mixto}] [--solo-cobra] [--lang LANG]
+             [--no-color] [--extra-validators EXTRA_VALIDATORS]
              [--legacy-imports] [--dev-ephemeral-key] [--plugins-safe-mode]
              [--plugins-unsafe-mode] [--plugins-allowlist PLUGINS_ALLOWLIST]
+             {run,build,test,mod,repl} ...
 
 CLI de Cobra para ejecutar e interpretar scripts, transpilar código a otros
 lenguajes o usar ambos flujos según --modo (cobra, transpilar, mixto). Modo
 cobra = solo programar/interpretar Cobra sin codegen.
+
+positional arguments:
+  {run,build,test,mod,repl}
+    run                 Run a Cobra file
+    build               Build/transpile a Cobra file
+    test                Validate project output across runtimes
+    mod                 Manage Cobra modules
+    repl                Start Cobra REPL
 
 options:
   -h, --help            show this help message and exit
@@ -48,3 +57,6 @@ options:
                         Lista permitida de plugins separados por coma (ruta
                         exacta, módulo o prefix:/sha256:hash). También vía
                         COBRA_PLUGINS_ALLOWLIST.
+
+Ejemplos públicos: cobra run <archivo.co> cobra build <archivo.co> cobra test
+<archivo.co> cobra mod <list|install|remove|publish|search>

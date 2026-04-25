@@ -16,7 +16,7 @@ positional arguments:
     build               build/transpile a cobra file
     test                validate project output across runtimes
     mod                 manage cobra modules
-    repl                inicia el modo interactivo
+    repl                start cobra repl
 
 options:
   -h, --help            show this help message and exit

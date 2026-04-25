@@ -247,13 +247,15 @@ def test_paridad_script_vs_repl_con_snippets_secuenciales_y_estado_final() -> No
     ]
     variables = ("acumulado",)
 
-    codigo_script = "\n".join(snippets)
-    resultado_script = _ejecutar_por_ruta_script(codigo_script, variables)
+    resultado_script = _ejecutar_snippets_secuenciales_script(
+        snippets, variables_estado=variables
+    )
     resultado_repl = _ejecutar_snippets_secuenciales_repl(
         snippets, variables_estado=variables
     )
 
     assert resultado_repl["error"] is None
+    assert resultado_script["error"] is None
     assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
     assert _normalizar_stdout_paridad(resultado_script["stdout"]) == _normalizar_stdout_paridad(
         resultado_repl["stdout"]
@@ -278,3 +280,32 @@ def test_paridad_script_vs_repl_con_error_en_snippet_secuencial() -> None:
     assert resultado_repl["error"] is not None
     assert type(resultado_script["error"]) is type(resultado_repl["error"])
     assert str(resultado_script["error"]) == str(resultado_repl["error"])
+
+
+@pytest.mark.integration
+def test_paridad_script_vs_repl_bloque_anidado_mientras_con_si_y_fin() -> None:
+    snippets = [
+        "var acumulado = 0",
+        (
+            "mientras verdadero:\n"
+            "    si acumulado == 0:\n"
+            "        imprimir(acumulado)\n"
+            "    fin\n"
+            "    romper\n"
+            "fin"
+        ),
+    ]
+    variables = ("acumulado",)
+
+    codigo_script = "\n".join(snippets)
+    resultado_script = _ejecutar_por_ruta_script(codigo_script, variables)
+    resultado_repl = _ejecutar_snippets_secuenciales_repl(
+        snippets, variables_estado=variables
+    )
+
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
+    assert resultado_repl["error"] is None
+    assert _normalizar_stdout_paridad(resultado_script["stdout"]) == _normalizar_stdout_paridad(
+        resultado_repl["stdout"]
+    )
+    assert resultado_script["estado"] == resultado_repl["estado"] == {"acumulado": 0}

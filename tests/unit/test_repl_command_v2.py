@@ -1,8 +1,9 @@
 import argparse
 
-from cobra.cli.commands_v2.repl_cmd import ReplCommandV2
+from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_module
 from pcobra.cobra.core import ParserError
 
+ReplCommandV2 = repl_module.ReplCommandV2
 
 def test_es_error_de_bloque_incompleto_por_mensajes_parser():
     command = ReplCommandV2()
@@ -36,7 +37,7 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
             raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
         return []
 
-    monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     class _Setup:
         def __init__(self, safe_mode, validadores_extra):
             self.interpretador = object()
@@ -47,7 +48,7 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
         executed.append(pipeline_input.codigo)
         return _Setup(pipeline_input.safe_mode, pipeline_input.extra_validators), None
 
-    monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
 
     status = command.run(
         argparse.Namespace(
@@ -67,6 +68,93 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
     assert executed == ["si verdadero:\nimprimir(1)\nfin"]
 
 
+def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["si verdadero:", "imprimir(1)", "fin", "exit"])
+    prompts: list[str] = []
+
+    def _fake_input(prompt: str) -> str:
+        prompts.append(prompt)
+        return next(entradas)
+
+    monkeypatch.setattr("builtins.input", _fake_input)
+
+    def _fake_parse(codigo: str):
+        if codigo != "si verdadero:\nimprimir(1)\nfin":
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+        return []
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    monkeypatch.setattr(
+        repl_module, "ejecutar_pipeline_explicito", lambda *_args, **_kwargs: (_Setup(), None)
+    )
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert prompts == [">>> ", "... ", "... ", ">>> "]
+
+
+def test_repl_v2_sale_por_salir_y_por_exit(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["salir"])
+    prompts_salir: list[str] = []
+
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda prompt: prompts_salir.append(prompt) or next(entradas),
+    )
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [])
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("no debe ejecutar")),
+    )
+
+    status_salir = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+    assert status_salir == 0
+    assert prompts_salir == [">>> "]
+
+    command = ReplCommandV2()
+    entradas_exit = iter(["exit"])
+    prompts_exit: list[str] = []
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda prompt: prompts_exit.append(prompt) or next(entradas_exit),
+    )
+    status_exit = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+    assert status_exit == 0
+    assert prompts_exit == [">>> "]
+
+
 def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["algo_mal", "exit"])
@@ -79,7 +167,7 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
         parse_calls.append(codigo)
         raise ParserError("Se encontró 'fin' inesperado")
 
-    monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
 
     status = command.run(
@@ -94,6 +182,53 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
     assert status == 0
     assert parse_calls == ["algo_mal"]
     assert logged == ["Se encontró 'fin' inesperado"]
+
+
+def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["si verdadero:", "imprimir(1", "var z = 9", "exit"])
+    parse_calls: list[str] = []
+    pipeline_calls: list[str] = []
+    logged: list[str] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo == "si verdadero:":
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+        if codigo == "si verdadero:\nimprimir(1":
+            raise ParserError("Token inesperado: '('")
+        return []
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
+        or (_Setup(), None),
+    )
+    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1", "var z = 9"]
+    assert pipeline_calls == ["var z = 9"]
+    assert logged == ["Token inesperado: '('"]
 
 
 def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
@@ -119,8 +254,8 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
             assert interpretador["x"] == 10
         return _Setup(interpretador), None
 
-    monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.ejecutar_pipeline_explicito", _fake_pipeline)
-    monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.prevalidar_y_parsear_codigo", lambda _codigo: [])
+    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [])
 
     status = command.run(
         argparse.Namespace(
@@ -135,3 +270,72 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
 
     assert status == 0
     assert interpretadores_recibidos == [None, estado]
+
+
+def test_repl_v2_soporta_bloque_anidado_con_fin(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(
+        [
+            "mientras verdadero:",
+            "si verdadero:",
+            "var total = 5",
+            "romper",
+            "fin",
+            "fin",
+            "imprimir(total)",
+            "exit",
+        ]
+    )
+    parse_calls: list[str] = []
+    pipeline_calls: list[str] = []
+    estado: dict[str, int] = {}
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo not in {
+            "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
+            "imprimir(total)",
+        }:
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+        return []
+
+    class _Setup:
+        def __init__(self, interpretador):
+            self.interpretador = interpretador
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    def _fake_pipeline(pipeline_input, **_kwargs):
+        pipeline_calls.append(pipeline_input.codigo)
+        interpretador = pipeline_input.interpretador or estado
+        if pipeline_input.codigo.startswith("mientras verdadero:"):
+            interpretador["total"] = 5
+        if pipeline_input.codigo == "imprimir(total)":
+            assert interpretador["total"] == 5
+        return _Setup(interpretador), None
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            seguro=False,
+            extra_validators=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls[-2:] == [
+        "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
+        "imprimir(total)",
+    ]
+    assert pipeline_calls == [
+        "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
+        "imprimir(total)",
+    ]
