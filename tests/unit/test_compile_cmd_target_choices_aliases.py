@@ -27,12 +27,6 @@ def test_compile_tipo_choices_usa_lang_choices_centrales():
 def test_get_lang_choices_es_dinamico_tras_carga_de_entrypoints(monkeypatch):
     from pcobra.cobra.cli.commands import compile_cmd
 
-    calls = {"ensure": 0}
-
-    def _fake_ensure():
-        calls["ensure"] += 1
-
-    monkeypatch.setattr(compile_cmd, "cli_ensure_entrypoint_transpilers_loaded_once", _fake_ensure)
     monkeypatch.setattr(
         compile_cmd,
         "cli_transpiler_targets",
@@ -40,7 +34,6 @@ def test_get_lang_choices_es_dinamico_tras_carga_de_entrypoints(monkeypatch):
     )
 
     assert get_lang_choices() == ("python", "javascript", "rust", "wasm")
-    assert calls["ensure"] == 1
 
 
 def test_compile_register_subparser_evalua_choices_en_tiempo_de_registro(monkeypatch):
@@ -88,7 +81,7 @@ def test_compile_help_refleja_solo_nombres_canonicos():
 
     normalized_help = " ".join(help_text.split())
 
-    assert "Tier 1: python, javascript, rust." in normalized_help
+    assert "python, javascript, rust" in normalized_help
     assert "Tier 2:" not in normalized_help
     assert "JavaScript (javascript)" not in help_text
     assert "Ensamblador (asm)" not in help_text

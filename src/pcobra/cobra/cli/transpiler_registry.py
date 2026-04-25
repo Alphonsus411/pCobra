@@ -13,7 +13,6 @@ Compatibilidad:
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Mapping
 
 from pcobra.cobra.transpilers.registry import (
@@ -29,8 +28,7 @@ from pcobra.cobra.transpilers.module_map import get_toml_map
 
 def cli_transpilers() -> Mapping[str, type]:
     """Devuelve un snapshot inmutable del registro consolidado para capa CLI."""
-    ensure_entrypoint_transpilers_loaded_once()
-    return MappingProxyType(get_transpilers(include_plugins=True))
+    return get_transpilers(include_plugins=True, ensure_entrypoints_loaded=True)
 
 
 def cli_transpiler_targets() -> tuple[str, ...]:
@@ -45,8 +43,7 @@ def cli_ensure_entrypoint_transpilers_loaded_once() -> None:
 
 def cli_plugin_transpilers() -> Mapping[str, type]:
     """Devuelve el mapping de transpiladores registrados por plugins."""
-    ensure_entrypoint_transpilers_loaded_once()
-    return MappingProxyType(plugin_transpilers())
+    return plugin_transpilers()
 
 
 def cli_register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
