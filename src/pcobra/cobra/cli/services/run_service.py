@@ -20,7 +20,7 @@ from pcobra.cobra.cli.services.contracts import RunRequest, normalize_run_reques
 from pcobra.cobra.cli.services.format_service import format_code_with_black
 from pcobra.cobra.cli.target_policies import resolve_docker_backend
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra, validar_archivo_existente
+from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.core import LexerError, ParserError
 from pcobra.cobra.core.runtime import (
     InterpretadorCobra,
@@ -92,11 +92,7 @@ class RunService:
         contenedor = request.contenedor
         allow_insecure_fallback = bool(request.allow_insecure_fallback)
 
-        try:
-            extra_validators = normalizar_validadores_extra(request.extra_validators)
-        except TypeError:
-            mostrar_error(_("Los validadores extra deben ser una ruta o lista de rutas"), registrar_log=False)
-            return 1
+        extra_validators = request.extra_validators
 
         try:
             raiz_proyecto = detectar_raiz_proyecto_desde_archivo(str(archivo_resuelto))
