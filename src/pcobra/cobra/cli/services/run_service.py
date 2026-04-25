@@ -1,6 +1,4 @@
-import importlib
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +11,10 @@ from pcobra.cobra.cli.execution_pipeline import (
     resolver_interpretador_cls,
 )
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.internal_compat.legacy_core_sandbox import (
+    LEGACY_SANDBOX_COMPAT_FLAG,
+    load_legacy_core_sandbox,
+)
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.services.contracts import RunRequest, normalize_run_request
 from pcobra.cobra.cli.services.format_service import format_code_with_black
@@ -28,63 +30,17 @@ from pcobra.cobra.core.runtime import (
 )
 from pcobra.cobra.transpilers import module_map
 
-LEGACY_SANDBOX_COMPAT_FLAG = "PCOBRA_ENABLE_LEGACY_CORE_SANDBOX"
+try:
+    from pcobra.core import sandbox as sandbox_module
+except ModuleNotFoundError as canon_exc:  # pragma: no cover
+    sandbox_module = load_legacy_core_sandbox(canonical_error=canon_exc)
+
 RUNTIME_MANAGER = RuntimeManager()
 
 
-class _SandboxModuleProxy:
-    def __getattr__(self, name: str) -> Any:
-        return getattr(_importar_modulo_sandbox(), name)
-
-
-def _legacy_sandbox_compat_enabled() -> bool:
-    raw = (os.environ.get(LEGACY_SANDBOX_COMPAT_FLAG, "") or "").strip().lower()
-    return raw in {"1", "true", "yes", "on"}
-
-
-def _validar_modulo_sandbox_legacy(module: Any) -> None:
-    module_file = getattr(module, "__file__", None)
-    if not module_file:
-        raise ImportError("El módulo legacy 'core.sandbox' no expone __file__")
-
-    resolved = Path(module_file).resolve().parts
-    expected_suffix = ("pcobra", "core", "sandbox.py")
-    if tuple(resolved[-len(expected_suffix) :]) != expected_suffix:
-        raise ImportError(
-            "El módulo legacy 'core.sandbox' no apunta al paquete esperado "
-            f"('pcobra.core.sandbox'). Ruta detectada: {module_file}"
-        )
-
-
 def _importar_modulo_sandbox() -> Any:
-    try:
-        module = importlib.import_module("pcobra.core.sandbox")
-    except ModuleNotFoundError as canon_exc:  # pragma: no cover
-        if not _legacy_sandbox_compat_enabled():
-            raise ImportError(
-                "No se pudo importar 'pcobra.core.sandbox'. "
-                "El fallback legacy 'core.sandbox' está deshabilitado por defecto. "
-                f"Para transición controlada habilite {LEGACY_SANDBOX_COMPAT_FLAG}=1."
-            ) from canon_exc
-        try:
-            module = importlib.import_module("core.sandbox")
-        except ModuleNotFoundError:
-            raise canon_exc
-        _validar_modulo_sandbox_legacy(module)
-
-    required = (
-        "ejecutar_en_sandbox",
-        "ejecutar_en_contenedor",
-        "SecurityError",
-        "validar_dependencias",
-    )
-    missing = [name for name in required if not hasattr(module, name)]
-    if missing:
-        raise ImportError(f"El módulo '{module.__name__}' no define: {', '.join(missing)}")
-    return module
-
-
-sandbox_module = _SandboxModuleProxy()
+    """Compatibilidad para tests/adaptadores legacy; evita import dinámico en run."""
+    return sandbox_module
 
 
 def ejecutar_en_sandbox(*args: Any, **kwargs: Any) -> Any:
