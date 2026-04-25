@@ -5,7 +5,12 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
     SANDBOX_DOCKER_CHOICES,
 )
-from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo
+from pcobra.cobra.cli.execution_pipeline import (
+    PipelineInput,
+    ejecutar_pipeline_explicito,
+    prevalidar_y_parsear_codigo,
+    resolver_interpretador_cls,
+)
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_info
 from pcobra.cobra.core import ParserError
@@ -32,6 +37,9 @@ class ReplCommandV2(BaseCommand):
         super().__init__()
         self._delegate = InteractiveCommand(InterpretadorCobra())
         self._delegate.name = self.name
+        self._interpretador_persistente: Any | None = None
+        self._seguro_repl: bool = True
+        self._extra_validators_repl: Any = None
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a un bloque aún incompleto."""
@@ -78,6 +86,12 @@ class ReplCommandV2(BaseCommand):
     def run(self, args: Any) -> int:
         buffer: list[str] = []
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
+        self._seguro_repl = bool(getattr(args, "seguro", True))
+        self._extra_validators_repl = getattr(args, "extra_validators", None)
+        interpretador_cls = resolver_interpretador_cls(
+            module_name=__name__,
+            default_cls=InterpretadorCobra,
+        )
 
         sandbox = bool(getattr(args, "sandbox", False))
         sandbox_docker = getattr(args, "sandbox_docker", None)
@@ -130,7 +144,18 @@ class ReplCommandV2(BaseCommand):
                 elif sandbox_docker:
                     self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
-                    self._delegate.ejecutar_codigo(codigo)
+                    setup, _resultado_pipeline = ejecutar_pipeline_explicito(
+                        PipelineInput(
+                            codigo=codigo,
+                            interpretador_cls=interpretador_cls,
+                            safe_mode=self._seguro_repl,
+                            extra_validators=self._extra_validators_repl,
+                            interpretador=self._interpretador_persistente,
+                        ),
+                    )
+                    self._interpretador_persistente = setup.interpretador
+                    self._seguro_repl = setup.safe_mode
+                    self._extra_validators_repl = setup.validadores_extra
                 buffer.clear()
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
