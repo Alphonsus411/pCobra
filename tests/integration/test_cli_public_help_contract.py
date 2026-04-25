@@ -20,6 +20,11 @@ def test_cli_public_commands_contract_is_stable():
     assert PUBLIC_COMMANDS == ("run", "build", "test", "mod", "repl")
 
 
+def test_cli_public_commands_contract_keeps_repl_as_official_command():
+    # `repl` debe permanecer en el contrato público oficial (no alias legacy).
+    assert "repl" in PUBLIC_COMMANDS
+
+
 def test_cli_help_public_contract_snapshot():
     repo_root = Path(__file__).resolve().parents[2]
     result = subprocess.run(
@@ -69,10 +74,11 @@ def test_cli_help_public_contract_bloquea_ui_v1_en_perfil_publico():
         cwd=str(repo_root),
         env=_public_env(),
     )
-    assert result.returncode == 0
+    assert result.returncode == 2
     lower_output = result.stderr.lower() + result.stdout.lower()
-    assert "cli v1 está reservada para desarrollo interno" in lower_output
-    assert "migración automática a ui v2 pública" in lower_output
+    assert "ui v1 está deshabilitada para uso público" in lower_output
+    assert "se mantiene ui v2 (cobra run/build/test/mod)" in lower_output
+    assert "argument --ui: invalid choice: 'v1' (choose from v2)" in lower_output
 
 
 def test_cli_help_public_contract_bloquea_flags_legacy_en_arranque():

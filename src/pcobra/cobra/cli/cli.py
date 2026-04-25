@@ -139,6 +139,7 @@ class AppConfig:
         CommandClassRoute("pcobra.cobra.cli.commands_v2.build_cmd", "BuildCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.test_cmd", "TestCommandV2"),
         CommandClassRoute("pcobra.cobra.cli.commands_v2.mod_cmd", "ModCommandV2"),
+        # `repl` forma parte del contrato público oficial de CLI v2 (no alias legacy).
         CommandClassRoute("pcobra.cobra.cli.commands_v2.repl_cmd", "ReplCommandV2"),
     ]
     V2_COMMAND_CLASSES: List[Type[BaseCommand]] = []
