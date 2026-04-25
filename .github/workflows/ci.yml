@@ -179,6 +179,8 @@ jobs:
         run: python scripts/ci/lint_public_no_direct_transpiler_imports.py
       - name: Lint legacy bindings imports in src
         run: python scripts/ci/lint_no_legacy_bindings_imports.py
+      - name: Lint no legacy cobra/core imports
+        run: python scripts/ci/lint_no_legacy_cobra_core_imports.py
       - name: Lint legacy cobra tree is shim-only
         run: python scripts/ci/lint_legacy_cobra_shims.py
       - name: Lint canonical import resolution contract

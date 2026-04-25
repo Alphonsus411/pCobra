@@ -12,7 +12,7 @@ from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.core.ast_cache import obtener_ast
+from pcobra.cobra.core.ast_cache import obtener_ast
 
 # Constantes del proyecto
 

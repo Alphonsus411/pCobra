@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import sys
 
-from pcobra.core import ast_nodes as _ast_nodes
-from pcobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
+from pcobra.cobra.core import ast_nodes as _ast_nodes
+from pcobra.cobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
 from .lexer import Lexer, TipoToken, Token
 
 # Reexportar los nodos del AST directamente desde ``pcobra.core``.
@@ -40,7 +40,7 @@ def __getattr__(name: str):
     evitar dependencias circulares y tiempos de carga innecesarios.
     """
     if name in {"Parser", "ParserError"}:
-        from pcobra.core import parser as _parser
+        from pcobra.cobra.core import parser as _parser
 
         globals().update({"Parser": _parser.Parser, "ParserError": _parser.ParserError})
         return globals()[name]

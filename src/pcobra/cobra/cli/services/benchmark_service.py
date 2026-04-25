@@ -28,7 +28,7 @@ from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.target_policies import OFFICIAL_RUNTIME_TARGETS
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.transpilers.target_utils import target_label
-from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 SUBPROCESS_TIMEOUT = tiempo_max_transpilacion()

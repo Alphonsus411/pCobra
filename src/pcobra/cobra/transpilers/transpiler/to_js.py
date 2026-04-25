@@ -3,7 +3,7 @@
 Los parámetros de tipo se omiten porque JavaScript no soporta genéricos de
 forma nativa, por lo que se recurre a tipos dinámicos."""
 
-from pcobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoHolobit,
     NodoLista,
     NodoDiccionario,
@@ -39,9 +39,9 @@ from pcobra.core.ast_nodes import (
     NodoDefer,
 )
 from pcobra.cobra.core import TipoToken
-from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import BaseTranspiler
-from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 from pcobra.cobra.transpilers.common.utils import (
     ast_requires_holobit_runtime,

@@ -6,7 +6,7 @@ from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.core import qualia_bridge
+from pcobra.cobra.core import qualia_bridge
 
 
 class QualiaCommand(BaseCommand):

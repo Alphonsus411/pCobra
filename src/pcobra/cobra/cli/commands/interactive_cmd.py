@@ -746,7 +746,7 @@ class InteractiveCommand(BaseCommand):
 
         if linea == "sugerencias":
             try:
-                from pcobra.core.qualia_bridge import (
+                from pcobra.cobra.core.qualia_bridge import (
                     get_suggestions,  # optional subsystem
                 )
             except (ImportError, ModuleNotFoundError):

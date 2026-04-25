@@ -7,7 +7,7 @@ import re
 from collections.abc import Sequence
 from typing import Any, Iterable, List
 
-from pcobra.core.internal_ir import (
+from pcobra.cobra.core.internal_ir import (
     InternalIRAssignment,
     InternalIRCall,
     InternalIRExpressionStatement,

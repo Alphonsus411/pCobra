@@ -5,14 +5,14 @@ import json
 import os
 from typing import Any, List
 
-from pcobra.core.lexer import TipoToken, Token
+from pcobra.cobra.core.lexer import TipoToken, Token
 from .utils import (
     PALABRAS_RESERVADAS,
     ALIAS_METODOS_ESPECIALES,
     sugerir_palabra_clave,
 )
 
-from pcobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,
     NodoHolobit,
     NodoCondicional,
@@ -69,7 +69,7 @@ from pcobra.core.ast_nodes import (
     NodoBloque,
 )
 
-from pcobra.core import NodoYield
+from pcobra.cobra.core import NodoYield
 
 
 logger = logging.getLogger(__name__)
@@ -283,7 +283,7 @@ class ClassicParser:
     def parsear(self, *, incremental: bool = False, profile: bool = False):
         """Parsea tokens con soporte de caché incremental y perfilado."""
         if incremental:
-            from pcobra.core.ast_cache import obtener_ast_fragmento
+            from pcobra.cobra.core.ast_cache import obtener_ast_fragmento
 
             codigo = "\n".join(
                 token.valor if token.valor is not None else ""

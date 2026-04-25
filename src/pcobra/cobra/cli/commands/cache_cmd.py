@@ -1,8 +1,8 @@
 from typing import Any
 import sqlite3
 
-from pcobra.core.ast_cache import limpiar_cache
-from pcobra.core.database import DatabaseDependencyError, DatabaseKeyError
+from pcobra.cobra.core.ast_cache import limpiar_cache
+from pcobra.cobra.core.database import DatabaseDependencyError, DatabaseKeyError
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _

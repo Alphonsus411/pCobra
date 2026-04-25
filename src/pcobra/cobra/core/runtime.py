@@ -7,16 +7,16 @@ canónico (``pcobra.cobra.*``) sin modificar la implementación base.
 
 from __future__ import annotations
 
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.resource_limits import limitar_cpu_segundos, limitar_memoria_mb
-from pcobra.core.sandbox import (
+from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.resource_limits import limitar_cpu_segundos, limitar_memoria_mb
+from pcobra.cobra.core.sandbox import (
     SecurityError,
     ejecutar_en_contenedor,
     ejecutar_en_sandbox,
     validar_dependencias,
 )
-from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
-from pcobra.core.semantic_validators.base import ValidadorBase
+from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.cobra.core.semantic_validators.base import ValidadorBase
 
 __all__ = [
     "InterpretadorCobra",

@@ -12,7 +12,7 @@ from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
-from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.internal_compat.legacy_targets import (
     LEGACY_BACKENDS_FEATURE_FLAG,
     is_internal_legacy_targets_enabled,

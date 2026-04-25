@@ -31,7 +31,7 @@ from pcobra.cobra.core.runtime import (
 from pcobra.cobra.transpilers import module_map
 
 try:
-    from pcobra.core import sandbox as sandbox_module
+    from pcobra.cobra.core import sandbox as sandbox_module
 except ModuleNotFoundError as canon_exc:  # pragma: no cover
     sandbox_module = load_legacy_core_sandbox(canonical_error=canon_exc)
 
