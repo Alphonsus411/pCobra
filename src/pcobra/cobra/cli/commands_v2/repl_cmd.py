@@ -6,8 +6,10 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     SANDBOX_DOCKER_CHOICES,
 )
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.utils.messages import mostrar_info
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.cli.target_policies import parse_runtime_target
+from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
 
 class ReplCommandV2(BaseCommand):
@@ -54,4 +56,66 @@ class ReplCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
-        return self._delegate.run(args)
+        buffer: list[str] = []
+        self._delegate._estado_repl = self._delegate._crear_estado_repl()
+
+        sandbox = bool(getattr(args, "sandbox", False))
+        sandbox_docker = getattr(args, "sandbox_docker", None)
+
+        while True:
+            try:
+                linea = input(">>> " if not buffer else "... ")
+            except KeyboardInterrupt:
+                if buffer:
+                    mostrar_info(_("Entrada multilinea cancelada."))
+                    buffer.clear()
+                    self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                    continue
+                mostrar_info(_("Interrupción recibida. Saliendo del REPL."))
+                break
+            except EOFError:
+                if buffer:
+                    mostrar_info(_("Entrada multilinea cancelada por fin de archivo."))
+                    buffer.clear()
+                    self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                    continue
+                mostrar_info(_("Fin de entrada. Saliendo del REPL."))
+                break
+
+            linea = sanitize_input(linea)
+            if not linea:
+                continue
+
+            comando = linea.strip()
+            if comando in {"salir", "exit"} and not buffer:
+                mostrar_info(_("Saliendo..."))
+                break
+
+            try:
+                codigo = self._delegate._actualizar_buffer_y_obtener_codigo_listo(
+                    buffer,
+                    linea,
+                )
+            except Exception as err:
+                categoria = self._delegate._clasificar_error_repl(err)
+                self._delegate._log_error(categoria, err)
+                buffer.clear()
+                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                continue
+
+            if codigo is None:
+                continue
+
+            try:
+                if sandbox:
+                    self._delegate._ejecutar_en_sandbox(codigo)
+                elif sandbox_docker:
+                    self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
+                else:
+                    self._delegate.ejecutar_codigo(codigo)
+            except Exception as err:
+                categoria = self._delegate._clasificar_error_repl(err)
+                self._delegate._log_error(categoria, err)
+                continue
+
+        return 0
