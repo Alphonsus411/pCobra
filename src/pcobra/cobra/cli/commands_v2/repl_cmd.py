@@ -13,8 +13,9 @@ from pcobra.cobra.cli.execution_pipeline import (
 )
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_info
-from pcobra.cobra.core import ParserError
+from pcobra.cobra.core import LexerError, ParserError
 from pcobra.cobra.core.runtime import InterpretadorCobra
+from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.target_policies import parse_runtime_target
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
@@ -129,9 +130,15 @@ class ReplCommandV2(BaseCommand):
             codigo = "\n".join(buffer)
             try:
                 prevalidar_y_parsear_codigo(codigo)
-            except Exception as err:
+            except (LexerError, ParserError) as err:
                 if self.es_error_de_bloque_incompleto(err):
                     continue
+                categoria = self._delegate._clasificar_error_repl(err)
+                self._delegate._log_error(categoria, err)
+                buffer.clear()
+                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                continue
+            except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
                 buffer.clear()
@@ -157,9 +164,17 @@ class ReplCommandV2(BaseCommand):
                     self._seguro_repl = setup.safe_mode
                     self._extra_validators_repl = setup.validadores_extra
                 buffer.clear()
+            except (PrimitivaPeligrosaError, RuntimeError) as err:
+                categoria = self._delegate._clasificar_error_repl(err)
+                self._delegate._log_error(categoria, err)
+                buffer.clear()
+                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
+                buffer.clear()
+                self._delegate._estado_repl = self._delegate._crear_estado_repl()
                 continue
 
         return 0
