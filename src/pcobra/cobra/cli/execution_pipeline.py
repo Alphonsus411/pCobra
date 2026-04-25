@@ -71,12 +71,9 @@ def construir_script_sandbox_canonico(
         else f", safe_mode={safe_mode!r}, extra_validators={extra_repr}"
     )
     script = (
-        "from pcobra.cobra.core import Lexer, Parser\n"
-        "from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_source_for_tokenizer\n"
+        "from pcobra.cobra.cli.execution_pipeline import prevalidar_y_parsear_codigo\n"
         "from pcobra.cobra.core.runtime import InterpretadorCobra\n"
-        f"_codigo = sanitize_source_for_tokenizer({codigo!r})\n"
-        "_tokens = Lexer(_codigo).tokenizar()\n"
-        "_ast = Parser(_tokens).parsear()\n"
+        f"_ast = prevalidar_y_parsear_codigo({codigo!r})\n"
         f"_interp = InterpretadorCobra({safe_mode_fragment.lstrip(', ')})\n"
         "_resultado = _interp.ejecutar_ast(_ast)\n"
     )

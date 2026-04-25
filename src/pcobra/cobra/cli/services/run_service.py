@@ -156,12 +156,32 @@ class RunService:
         allow_insecure_fallback: bool = False,
     ) -> int:
         try:
+            interpretador_cls = resolver_interpretador_cls(
+                module_name=__name__,
+                default_cls=InterpretadorCobra,
+            )
+            setup, _ = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo="",
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=seguro,
+                    extra_validators=extra_validators,
+                ),
+                analizar_codigo_fn=lambda _codigo: [],
+            )
             prevalidar_y_parsear_codigo(codigo)
         except (LexerError, ParserError) as e:
             mostrar_error(f"Error de análisis: {e}", registrar_log=False)
             return 1
+        except (TypeError, ValueError, PrimitivaPeligrosaError) as e:
+            mostrar_error(str(e), registrar_log=False)
+            return 1
 
-        script = construir_script_sandbox_canonico(codigo, safe_mode=seguro, extra_validators=extra_validators)
+        script = construir_script_sandbox_canonico(
+            codigo,
+            safe_mode=setup.safe_mode,
+            extra_validators=setup.validadores_extra,
+        )
 
         try:
             salida = ejecutar_en_sandbox(script, allow_insecure_fallback=allow_insecure_fallback)
