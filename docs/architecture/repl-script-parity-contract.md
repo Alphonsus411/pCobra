@@ -68,3 +68,17 @@ La batería contractual cubre explícitamente:
 - mutaciones dentro de `mientras`,
 - anidación `si` + `mientras`,
 - y errores semánticos/runtime con mismo tipo y mismo mensaje entre rutas.
+
+## Requisito explícito de paridad (suite CLI)
+
+Además de la batería histórica, se establece como requisito contractual una suite dedicada en `tests/cli/test_repl_script_parity_contract.py` con estas garantías mínimas:
+
+1. **Paridad por dos rutas de ejecución**:
+   - ruta script: ejecución mediante pipeline de script con resolución de intérprete equivalente a `RunService`;
+   - ruta REPL: `InteractiveCommand.ejecutar_codigo`.
+2. **Caso positivo obligatorio** con `mientras`, asignaciones y retorno observable (resultado de función almacenado en variable), validando igualdad de:
+   - `stdout`/`stderr`;
+   - estado final de variables relevantes en `InterpretadorCobra`.
+3. **Caso negativo obligatorio** con identificador no declarado, validando mismo **tipo** y **mensaje** de error en ambos modos.
+
+Este requisito protege la equivalencia semántica entre ejecución por archivo y sesión interactiva para escenarios de control de flujo, mutación de estado y fallos semánticos básicos.
