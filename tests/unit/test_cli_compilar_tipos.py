@@ -1,16 +1,15 @@
 from io import StringIO
+import importlib
 from unittest.mock import patch
 
 import pytest
-
-from pcobra.cobra.cli import transpiler_registry
-
 
 @pytest.mark.timeout(5)
 def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
     """Ejecuta ``cobra compilar`` con ``--tipos`` sin errores de tipo."""
 
     from pcobra.cobra.cli import cli as cli_module
+    from pcobra.cobra.cli import transpiler_registry
     from pcobra.cobra.cli.commands import compile_cmd as compile_module
 
     # Evita dependencias externas de localización y banner interactivo.
@@ -47,18 +46,15 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
         def generate_code(self, _ast):
             return "js"
 
+    monkeypatch.setattr(transpiler_registry, "cli_transpilers", lambda: {"python": FakePython, "javascript": FakeJS})
+    monkeypatch.setattr(transpiler_registry, "cli_transpiler_targets", lambda: ("python", "javascript"))
     monkeypatch.setattr(
         transpiler_registry,
-        "cli_transpilers",
+        "cli_plugin_transpilers",
         lambda: {"python": FakePython, "javascript": FakeJS},
     )
-    monkeypatch.setattr(
-        transpiler_registry,
-        "cli_transpiler_targets",
-        lambda: ("python", "javascript"),
-    )
-    monkeypatch.setattr(compile_module, "cli_transpiler_targets", lambda: ("python", "javascript"))
-    monkeypatch.setattr(compile_module, "cli_plugin_transpilers", lambda: {"python": FakePython, "javascript": FakeJS})
+    monkeypatch.setattr(transpiler_registry, "cli_ensure_entrypoint_transpilers_loaded_once", lambda: None)
+    compile_module = importlib.reload(compile_module)
 
     class DummyPool:
         def __init__(self, processes=None):
