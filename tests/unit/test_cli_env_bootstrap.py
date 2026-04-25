@@ -38,13 +38,25 @@ def test_configurar_entorno_autocrea_env_desde_example(tmp_path, monkeypatch, ca
     assert "COBRA_DB_PATH" in cli.os.environ
 
 
-def test_configurar_entorno_registra_error_si_falta_sqlite_db_key(tmp_path, monkeypatch, caplog):
+def test_configurar_entorno_falla_si_falta_sqlite_db_key(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("SQLITE_DB_KEY", raising=False)
 
     monkeypatch.setattr(cli, "load_dotenv", lambda **_kwargs: False)
 
-    caplog.set_level("ERROR", logger="pcobra.cli")
+    try:
+        cli.configurar_entorno()
+        raise AssertionError("Se esperaba RuntimeError cuando falta SQLITE_DB_KEY")
+    except RuntimeError as exc:
+        assert "Falta SQLITE_DB_KEY" in str(exc)
+
+
+def test_configurar_entorno_setea_db_path_por_default_con_sqlite_db_key(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("SQLITE_DB_KEY", "clave-segura")
+    monkeypatch.delenv("COBRA_DB_PATH", raising=False)
+    monkeypatch.setattr(cli, "load_dotenv", lambda **_kwargs: True)
+
     cli.configurar_entorno()
 
-    assert "Falta SQLITE_DB_KEY" in caplog.text
+    assert cli.os.environ["COBRA_DB_PATH"] == cli._DEFAULT_DB_PATH
