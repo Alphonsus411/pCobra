@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, CommandRegistry
+from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, main
 
 
 def _patch_cli_env(stack: ExitStack) -> None:
@@ -26,6 +26,21 @@ def test_no_command_prints_help_and_does_not_run_default():
         mock_help = stack.enter_context(patch.object(CustomArgumentParser, "print_help"))
         app = CliApplication()
         result = app.run([])
+    mock_run.assert_not_called()
+    mock_help.assert_called_once()
+    assert result == 1
+
+
+def test_main_without_args_prints_help_and_returns_one():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
+        stack.enter_context(patch("cobra.cli.cli.configure_encoding"))
+        mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
+        mock_help = stack.enter_context(patch.object(CustomArgumentParser, "print_help"))
+
+        result = main([])
+
     mock_run.assert_not_called()
     mock_help.assert_called_once()
     assert result == 1
@@ -92,12 +107,13 @@ def test_run_is_reentrant_on_same_instance_without_command_conflict():
         stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
         mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
         app = CliApplication()
+        app.initialize()
 
         register_spy = stack.enter_context(
-            patch(
-                "cobra.cli.cli.CommandRegistry.register_base_commands",
-                autospec=True,
-                wraps=CommandRegistry.register_base_commands,
+            patch.object(
+                app.command_registry,
+                "register_base_commands",
+                wraps=app.command_registry.register_base_commands,
             )
         )
 

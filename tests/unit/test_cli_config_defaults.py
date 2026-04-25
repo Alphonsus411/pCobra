@@ -72,7 +72,7 @@ def test_cli_starts_with_defaults_when_config_absent(tmp_path, monkeypatch):
     cli_mod = importlib.import_module("cobra.cli.cli")
 
     assert cli_mod.AppConfig.DEFAULT_LANGUAGE == "es"
-    assert cli_mod.AppConfig.DEFAULT_COMMAND == "interactive"
+    assert cli_mod.AppConfig.DEFAULT_COMMAND == "run"
 
 
 def test_cli_uses_defaults_when_config_load_fails(monkeypatch, caplog):
@@ -92,4 +92,4 @@ def test_cli_uses_defaults_when_config_load_fails(monkeypatch, caplog):
     assert "boom" in caplog.text
     assert cli_mod.AppConfig.config_data == {}
     assert cli_mod.AppConfig.DEFAULT_LANGUAGE == "es"
-    assert cli_mod.AppConfig.DEFAULT_COMMAND == "interactive"
+    assert cli_mod.AppConfig.DEFAULT_COMMAND == "run"
