@@ -22,7 +22,7 @@ else:
 
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
-from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.interpreter import InterpretadorCobra
 
 try:  # pragma: no cover - dependencia opcional
     from jupyter_kernel import CobraKernel
@@ -31,7 +31,7 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin ipykernel
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
 
 # Constantes de configuración
 PROCESS_TIMEOUT = tiempo_max_transpilacion()

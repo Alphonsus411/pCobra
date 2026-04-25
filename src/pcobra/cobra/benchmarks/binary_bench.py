@@ -22,7 +22,7 @@ from pcobra.cobra.benchmarks.targets_policy import (
     executable_benchmark_backends,
     validate_backend_metadata,
 )
-from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
 
 try:
     import resource

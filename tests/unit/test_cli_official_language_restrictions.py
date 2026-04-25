@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, LANG_CHOICES
+from pcobra.cobra.cli.commands.compile_cmd import CompileCommand, get_lang_choices
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands.transpilar_inverso_cmd import TranspilarInversoCommand
 from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
@@ -99,7 +99,7 @@ def test_verify_rechaza_lenguajes_fuera_del_runtime_soportado(language):
 def test_set_oficial_documentado_en_tests_deriva_del_registro_canonico():
     assert OFFICIAL_TARGETS == EXPECTED_CANONICAL_TARGETS
     assert OFFICIAL_TARGETS == official_transpiler_targets()
-    assert tuple(LANG_CHOICES) == official_transpiler_targets()
+    assert tuple(get_lang_choices()) == official_transpiler_targets()
 
 
 def test_interactive_rechaza_targets_solo_transpilacion_en_parseo():
@@ -127,7 +127,7 @@ def test_compile_choices_siguen_alineados_con_targets_oficiales():
     backend_action = next(action for action in compilar_parser._actions if action.dest == "backend")
     tipo_action = next(action for action in compilar_parser._actions if action.dest == "tipo")
 
-    assert tuple(LANG_CHOICES) == EXPECTED_CANONICAL_TARGETS
+    assert tuple(get_lang_choices()) == EXPECTED_CANONICAL_TARGETS
     assert tuple(backend_action.choices) == EXPECTED_CANONICAL_TARGETS
     assert tuple(tipo_action.choices) == EXPECTED_CANONICAL_TARGETS
 

@@ -9,7 +9,7 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.core.internal_ir import (
+from pcobra.cobra.core.internal_ir import (
     InternalIRAssignment,
     InternalIRCall,
     InternalIRExpressionStatement,
@@ -25,7 +25,7 @@ from pcobra.core.internal_ir import (
     InternalIRWhile,
     build_internal_ir,
 )
-from pcobra.core.optimizations import (
+from pcobra.cobra.core.optimizations import (
     eliminate_common_subexpressions,
     inline_functions,
     optimize_constants,

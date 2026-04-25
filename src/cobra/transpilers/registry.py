@@ -2,6 +2,7 @@
 
 Fuente canónica: :mod:`pcobra.cobra.transpilers.registry`.
 """
+# pcobra-compat: allow-legacy-imports
 
 from pcobra.cobra.transpilers.registry import (
     TRANSPILER_CLASS_PATHS,

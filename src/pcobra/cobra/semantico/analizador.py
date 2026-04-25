@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import List, Optional, Any, Set
 
-from pcobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoAST,
     NodoAsignacion,
     NodoBloque,
@@ -21,9 +21,9 @@ from pcobra.core.ast_nodes import (
     NodoCondicional,
     NodoImport,
 )
-from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.semantico.tabla import Ambito
-from pcobra.core.import_utils import obtener_simbolos_modulo
+from pcobra.cobra.core.import_utils import obtener_simbolos_modulo
 
 
 class AnalizadorSemantico(NodeVisitor):

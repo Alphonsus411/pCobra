@@ -42,7 +42,7 @@ def test_ejecutar_normal_carga_validadores_desde_una_ruta(monkeypatch):
             assert ruta == "ruta_unica.py"
             return cargado
 
-    monkeypatch.setattr(execute_module, "_obtener_interpretador_cls", lambda: DummyInterp)
+    monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
 
     resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, "ruta_unica.py")
 
@@ -73,7 +73,7 @@ def test_ejecutar_normal_carga_y_acumula_multiples_rutas(monkeypatch):
             rutas_cargadas.append(ruta)
             return [v1] if ruta == "uno.py" else [v2]
 
-    monkeypatch.setattr(execute_module, "_obtener_interpretador_cls", lambda: DummyInterp)
+    monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
 
     resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["uno.py", "dos.py"])
 
@@ -101,7 +101,7 @@ def test_ejecutar_normal_acepta_lista_vacia_y_none(monkeypatch):
         def _cargar_validadores(_ruta):
             raise AssertionError("No debería cargar rutas para None o lista vacía")
 
-    monkeypatch.setattr(execute_module, "_obtener_interpretador_cls", lambda: DummyInterp)
+    monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
 
     cmd = ExecuteCommand()
     assert cmd._ejecutar_normal("imprimir(1)", True, []) == 0
@@ -131,7 +131,7 @@ def test_ejecutar_normal_muestra_error_claro_si_falla_una_ruta(monkeypatch):
                 raise FileNotFoundError("archivo inexistente")
             return [DummyValidator()]
 
-    monkeypatch.setattr(execute_module, "_obtener_interpretador_cls", lambda: DummyInterp)
+    monkeypatch.setattr(execute_module, "InterpretadorCobra", DummyInterp)
     monkeypatch.setattr(execute_module, "mostrar_error", lambda msg, **_kwargs: errores.append(msg))
 
     resultado = ExecuteCommand()._ejecutar_normal("imprimir(1)", True, ["buena.py", "mala.py"])

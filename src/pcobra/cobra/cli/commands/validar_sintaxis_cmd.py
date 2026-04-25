@@ -4,8 +4,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.commands.base import BaseCommand
+from pcobra.cobra.cli.transpiler_registry import (
+    cli_transpiler_targets_csv,
+    cli_transpilers,
+)
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -56,7 +59,9 @@ class ValidarSintaxisCommand(BaseCommand):
         parser.add_argument(
             "--targets",
             default="",
-            help=_("Lista CSV de targets a validar (python,javascript,rust,go,cpp,java,wasm,asm)"),
+            help=_("Lista CSV de targets a validar ({targets})").format(
+                targets=cli_transpiler_targets_csv(),
+            ),
         )
         parser.add_argument(
             "--strict",
@@ -93,7 +98,7 @@ class ValidarSintaxisCommand(BaseCommand):
         report, _, has_failures = run_transpiler_syntax_validation(
             fixtures=fixtures,
             targets=targets,
-            transpilers=backend_pipeline.TRANSPILERS,
+            transpilers=cli_transpilers(),
             strict=strict,
         )
         return report.targets, report.errors_by_target, has_failures
@@ -130,7 +135,7 @@ class ValidarSintaxisCommand(BaseCommand):
                 profile=profile,
                 targets_raw=str(getattr(args, "targets", "")),
                 strict=strict,
-                transpilers=backend_pipeline.TRANSPILERS,
+                transpilers=cli_transpilers(),
             )
             self._emit_report(
                 execution.report,

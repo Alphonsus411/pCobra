@@ -11,48 +11,8 @@ from contextlib import contextmanager
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.commands.bench_cmd import BenchCommand
-from pcobra.cobra.cli.commands.bench_transpilers_cmd import BenchTranspilersCommand
-from pcobra.cobra.cli.commands.benchmarks_cmd import BenchmarksCommand
-from pcobra.cobra.cli.commands.benchmarks2_cmd import BenchmarksV2Command
-from pcobra.cobra.cli.commands.benchthreads_cmd import BenchThreadsCommand
-from pcobra.cobra.cli.commands.cache_cmd import CacheCommand
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
 from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
-from pcobra.cobra.cli.commands.container_cmd import ContainerCommand
-from pcobra.cobra.cli.commands.crear_cmd import CrearCommand
-from pcobra.cobra.cli.commands.dependencias_cmd import DependenciasCommand
-from pcobra.cobra.cli.commands.docs_cmd import DocsCommand
-from pcobra.cobra.cli.commands.empaquetar_cmd import EmpaquetarCommand
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-from pcobra.cobra.cli.commands.flet_cmd import FletCommand
-from pcobra.cobra.cli.commands.init_cmd import InitCommand
-from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
-from pcobra.cobra.cli.commands.agix_cmd import AgixCommand
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.cobra.cli.commands.jupyter_cmd import JupyterCommand
-from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
-from pcobra.cobra.cli.commands.package_cmd import PaqueteCommand
-from pcobra.cobra.cli.commands.plugins_cmd import PluginsCommand
-from pcobra.cobra.cli.commands.profile_cmd import ProfileCommand
-from pcobra.cobra.cli.commands.qualia_cmd import QualiaCommand
-from pcobra.cobra.cli.commands.transpilar_inverso_cmd import (
-    TranspilarInversoCommand,
-    ORIGIN_CHOICES,
-    DESTINO_CHOICES as REVERSE_DESTINO_CHOICES,
-)
-from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
-from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidarSintaxisCommand
-from pcobra.cobra.cli.commands.qa_validar_cmd import QaValidarCommand
-from pcobra.cobra.cli.commands_v2 import (
-    BuildCommandV2,
-    COBRA_ENABLE_LEGACY_CLI_ENV,
-    LegacyCommandGroupV2,
-    ModCommandV2,
-    RunCommandV2,
-    TestCommandV2,
-    is_legacy_cli_enabled,
-)
+from pcobra.cobra.core.interpreter import InterpretadorCobra
 from pcobra.cobra.cli.internal_compat.legacy_targets import (
     LEGACY_BACKENDS_FEATURE_FLAG,
     is_internal_legacy_targets_enabled,
@@ -80,6 +40,11 @@ from pcobra.cobra.cli.plugin import (
 )
 from pcobra.cobra.cli.utils import messages
 from pcobra.cobra.cli.utils import config as config_module
+from pcobra.cobra.cli.services.command_factory import (
+    CommandClassRoute,
+    build_command_from_route,
+    load_command_class,
+)
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 from pcobra.cobra.cli.utils.autocomplete import (
     autocomplete_available,
@@ -97,6 +62,7 @@ COBRA_DEV_EPHEMERAL_CONFIRM_ENV = "COBRA_DEV_ALLOW_EPHEMERAL_KEY"
 COBRA_ALLOW_INSECURE_FALLBACK_ENV = "COBRA_ALLOW_INSECURE_FALLBACK"
 COBRA_ALLOW_INSECURE_NON_INTERACTIVE_ENV = "COBRA_ALLOW_INSECURE_NON_INTERACTIVE"
 COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
+COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"
 LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
 LEGACY_COMMAND_MIGRATION_MAP: dict[str, dict[str, str]] = {
     "ejecutar": {
@@ -134,18 +100,43 @@ class AppConfig:
     DEFAULT_LANGUAGE = config_data.get("language", "es")
     DEFAULT_COMMAND = config_data.get("default_command", "run")
     PROGRAM_NAME = config_data.get("program_name", "cobra")
-    BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = [
-        InteractiveCommand, CompileCommand, ExecuteCommand, ModulesCommand,
-        DependenciasCommand, DocsCommand, EmpaquetarCommand,
-        PaqueteCommand, CrearCommand, InitCommand,
-        JupyterCommand, FletCommand, ContainerCommand,
-        BenchCommand, BenchmarksCommand, BenchmarksV2Command,
-        BenchTranspilersCommand, BenchThreadsCommand,
-        ProfileCommand, QualiaCommand, CacheCommand,
-        TranspilarInversoCommand, VerifyCommand,
-        ValidarSintaxisCommand, QaValidarCommand, PluginsCommand, AgixCommand
+    BASE_COMMAND_ROUTES: List[CommandClassRoute] = [
+        CommandClassRoute("pcobra.cobra.cli.commands.interactive_cmd", "InteractiveCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.compile_cmd", "CompileCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.execute_cmd", "ExecuteCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.modules_cmd", "ModulesCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.dependencias_cmd", "DependenciasCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.docs_cmd", "DocsCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.empaquetar_cmd", "EmpaquetarCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.package_cmd", "PaqueteCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.crear_cmd", "CrearCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.init_cmd", "InitCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.jupyter_cmd", "JupyterCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.container_cmd", "ContainerCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.bench_cmd", "BenchCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.benchmarks_cmd", "BenchmarksCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.benchmarks2_cmd", "BenchmarksV2Command"),
+        CommandClassRoute("pcobra.cobra.cli.commands.bench_transpilers_cmd", "BenchTranspilersCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.benchthreads_cmd", "BenchThreadsCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.profile_cmd", "ProfileCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.qualia_cmd", "QualiaCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.cache_cmd", "CacheCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.transpilar_inverso_cmd", "TranspilarInversoCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.verify_cmd", "VerifyCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.validar_sintaxis_cmd", "ValidarSintaxisCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.qa_validar_cmd", "QaValidarCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.plugins_cmd", "PluginsCommand"),
+        CommandClassRoute("pcobra.cobra.cli.commands.agix_cmd", "AgixCommand"),
     ]
-    V2_COMMAND_CLASSES: List[Type[BaseCommand]] = [RunCommandV2, BuildCommandV2, TestCommandV2, ModCommandV2]
+    # Compatibilidad para pruebas/consumidores legacy que parchean clases directas.
+    BASE_COMMAND_CLASSES: List[Type[BaseCommand]] = []
+    V2_COMMAND_ROUTES: List[CommandClassRoute] = [
+        CommandClassRoute("pcobra.cobra.cli.commands_v2.run_cmd", "RunCommandV2"),
+        CommandClassRoute("pcobra.cobra.cli.commands_v2.build_cmd", "BuildCommandV2"),
+        CommandClassRoute("pcobra.cobra.cli.commands_v2.test_cmd", "TestCommandV2"),
+        CommandClassRoute("pcobra.cobra.cli.commands_v2.mod_cmd", "ModCommandV2"),
+    ]
+    V2_COMMAND_CLASSES: List[Type[BaseCommand]] = []
 
 
 class CommandRegistry:
@@ -153,6 +144,10 @@ class CommandRegistry:
         self.commands: Dict[str, BaseCommand] = {}
         self.interpreter = interpreter
         self.default_command_name: Optional[str] = AppConfig.DEFAULT_COMMAND
+
+    @staticmethod
+    def _is_legacy_cli_enabled() -> bool:
+        return environ.get(COBRA_ENABLE_LEGACY_CLI_ENV, "").strip() == "1"
 
     def create_command(self, command_class: Type[BaseCommand]) -> BaseCommand:
         try:
@@ -165,19 +160,33 @@ class CommandRegistry:
             logging.error(f"Error creating command {command_class.__name__}: {e}")
             raise
 
-    def _resolve_v2_command_classes(self, profile: str) -> List[Type[BaseCommand]]:
-        classes = list(AppConfig.V2_COMMAND_CLASSES)
-        if (
-            profile == PROFILE_DEVELOPMENT
-            and LegacyCommandGroupV2 is not None
-            and is_legacy_cli_enabled()
-        ):
-            classes.append(LegacyCommandGroupV2)
+    def _resolve_v2_command_routes(self, profile: str) -> List[CommandClassRoute]:
+        if AppConfig.V2_COMMAND_CLASSES:
+            routes = [
+                CommandClassRoute(cls.__module__, cls.__name__)
+                for cls in AppConfig.V2_COMMAND_CLASSES
+            ]
+        else:
+            routes = list(AppConfig.V2_COMMAND_ROUTES)
+        if profile == PROFILE_DEVELOPMENT and self._is_legacy_cli_enabled():
+            routes.append(CommandClassRoute("pcobra.cobra.cli.commands_v2.legacy_cmd", "LegacyCommandGroupV2"))
             logging.getLogger(__name__).debug(
                 "Compatibilidad legacy v2 habilitada por flag interno %s=1.",
                 COBRA_ENABLE_LEGACY_CLI_ENV,
             )
-        return classes
+        return routes
+
+    def _resolve_v1_command_routes(self) -> List[CommandClassRoute]:
+        """Carga comandos v1 y difiere imports GUI/opcionales hasta el registro."""
+        if AppConfig.BASE_COMMAND_CLASSES:
+            routes = [
+                CommandClassRoute(cls.__module__, cls.__name__)
+                for cls in AppConfig.BASE_COMMAND_CLASSES
+            ]
+        else:
+            routes = list(AppConfig.BASE_COMMAND_ROUTES)
+            routes.append(CommandClassRoute("pcobra.cobra.cli.commands.flet_cmd", "FletCommand"))
+        return routes
 
     def register_base_commands(
         self,
@@ -187,23 +196,49 @@ class CommandRegistry:
         profile: str = PROFILE_PUBLIC,
     ) -> Dict[str, BaseCommand]:
         base_commands = []
-        command_classes = (
-            self._resolve_v2_command_classes(profile)
-            if ui == "v2"
-            else AppConfig.BASE_COMMAND_CLASSES
-        )
+        ui_effective = ui
+        if ui == "v2" and AppConfig.BASE_COMMAND_CLASSES:
+            logging.getLogger(__name__).debug(
+                "Compatibilidad tests/legacy: BASE_COMMAND_CLASSES detectado, usando rutas v1."
+            )
+            command_routes = self._resolve_v1_command_routes()
+            ui_effective = "v1"
+        else:
+            command_routes = (
+                self._resolve_v2_command_routes(profile)
+                if ui == "v2"
+                else self._resolve_v1_command_routes()
+            )
 
-        for cmd_class in command_classes:
+        for route in command_routes:
             try:
-                base_commands.append(self.create_command(cmd_class))
+                base_commands.append(
+                    build_command_from_route(
+                        route,
+                        command_builder=self.create_command,
+                    )
+                )
+            except TypeError as e:
+                logging.error(
+                    "Contrato inválido en comando %s.%s: %s. "
+                    "Se omite el comando y la CLI continúa en modo degradado.",
+                    route.module_path,
+                    route.class_name,
+                    e,
+                )
             except Exception as e:
-                logging.error(f"Failed to create command {cmd_class.__name__}: {e}")
+                logging.error(
+                    "Failed to load/create command %s.%s: %s",
+                    route.module_path,
+                    route.class_name,
+                    e,
+                )
                 continue
 
         plugin_commands = descubrir_plugins()
         all_commands = base_commands + plugin_commands
 
-        if ui == "v2":
+        if ui_effective == "v2":
             allowed_names = filter_commands_for_profile((cmd.name for cmd in all_commands), profile)
             all_commands = [cmd for cmd in all_commands if cmd.name in allowed_names]
             if profile == PROFILE_PUBLIC:
@@ -676,7 +711,7 @@ class CliApplication:
             return
 
         blocked_routes: list[str] = []
-        if is_legacy_cli_enabled():
+        if self.command_registry and self.command_registry._is_legacy_cli_enabled():
             blocked_routes.append(f"legacy command group ({COBRA_ENABLE_LEGACY_CLI_ENV}=1)")
         if is_internal_legacy_targets_enabled():
             blocked_routes.append(f"legacy targets ({LEGACY_BACKENDS_FEATURE_FLAG}=1)")
@@ -769,6 +804,22 @@ class CliApplication:
             )
         )
         return "v2"
+
+    @staticmethod
+    def _resolve_reverse_transpile_choices() -> tuple[tuple[str, ...], tuple[str, ...]]:
+        try:
+            module = __import__(
+                "pcobra.cobra.cli.commands.transpilar_inverso_cmd",
+                fromlist=["ORIGIN_CHOICES", "DESTINO_CHOICES"],
+            )
+            origin_choices = tuple(getattr(module, "ORIGIN_CHOICES", ()))
+            destino_choices = tuple(getattr(module, "DESTINO_CHOICES", ()))
+            return origin_choices, destino_choices
+        except Exception as exc:
+            logging.getLogger(__name__).error(
+                "No se pudieron resolver opciones de transpilar inverso: %s", exc
+            )
+            return tuple(), tuple()
 
     def _handle_execution_error(self, exc: Exception, language: str, debug_activo: bool = False) -> int:
         error_ya_mostrado = isinstance(exc, CliErrorYaMostrado) or bool(
@@ -926,8 +977,15 @@ class CliApplication:
 
         print(_("Lenguajes destino disponibles:"))
         print(", ".join(LANG_CHOICES))
+        origin_choices, reverse_destino_choices = self._resolve_reverse_transpile_choices()
+        if not origin_choices or not reverse_destino_choices:
+            messages.mostrar_error(
+                _("Comando 'transpilar-inverso' no disponible: contrato de opciones inválido."),
+                registrar_log=False,
+            )
+            return 1
         print(_("Lenguajes de origen disponibles:"))
-        print(", ".join(ORIGIN_CHOICES))
+        print(", ".join(origin_choices))
 
         transpilar_desde_cobra = self._leer_input_seguro(_("¿Transpilar desde Cobra a otro lenguaje? (s/n): "))
         if transpilar_desde_cobra is None:
@@ -963,14 +1021,14 @@ class CliApplication:
                 return 0
             origen, exit_code = self._leer_opcion_validada(
                 _("Lenguaje origen: "),
-                ORIGIN_CHOICES,
+                origin_choices,
                 "origen",
             )
             if origen is None:
                 return exit_code
             destino, exit_code = self._leer_opcion_validada(
                 _("Lenguaje destino: "),
-                tuple(REVERSE_DESTINO_CHOICES),
+                reverse_destino_choices,
                 "destino",
             )
             if destino is None:
@@ -1073,6 +1131,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     configure_encoding()
     application = CliApplication()
     return application.run(argv)
+
+
+def __getattr__(name: str):
+    """Compatibilidad legacy para tests/consumidores que importan clases desde este módulo."""
+    if name == "InteractiveCommand":
+        return load_command_class(
+            "pcobra.cobra.cli.commands.interactive_cmd",
+            "InteractiveCommand",
+        )
+    raise AttributeError(name)
 
 
 def configure_encoding() -> None:

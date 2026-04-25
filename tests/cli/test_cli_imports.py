@@ -52,6 +52,21 @@ def test_import_canonical_cli_application_no_module_not_found_scripts() -> None:
     assert "scripts" not in result.stderr.lower()
 
 
+def test_import_cli_application_no_precarga_modulos_de_comandos() -> None:
+    result = _run_python_isolated(
+        "import sys; "
+        "from pcobra.cobra.cli.cli import CliApplication; "
+        "mods=[m for m in sys.modules if m.startswith('pcobra.cobra.cli.commands.') and m.endswith('_cmd')]; "
+        "print(len(mods))"
+    )
+
+    assert result.returncode == 0, (
+        "Importar CliApplication no debe precargar módulos de comandos concretos. "
+        f"stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
+    assert int(result.stdout.strip().splitlines()[-1]) == 0
+
+
 def test_cli_application_prepare_parser_carga_comandos_sin_imports_rotos() -> None:
     result = _run_python_isolated(
         "from pcobra.cobra.cli.cli import CliApplication; "

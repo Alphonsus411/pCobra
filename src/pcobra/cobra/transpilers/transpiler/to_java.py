@@ -29,7 +29,7 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
 from pcobra.cobra.transpilers.transpiler.java_nodes.asignacion import (

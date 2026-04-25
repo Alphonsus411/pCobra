@@ -1,20 +1,22 @@
 from io import StringIO
+import importlib
 from unittest.mock import patch
 
 import pytest
-
 
 @pytest.mark.timeout(5)
 def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
     """Ejecuta ``cobra compilar`` con ``--tipos`` sin errores de tipo."""
 
     from pcobra.cobra.cli import cli as cli_module
+    from pcobra.cobra.cli import transpiler_registry
     from pcobra.cobra.cli.commands import compile_cmd as compile_module
 
     # Evita dependencias externas de localización y banner interactivo.
     monkeypatch.setattr(cli_module, "setup_gettext", lambda lang=None: (lambda s: s))
     monkeypatch.setattr(cli_module.messages, "mostrar_logo", lambda: None)
     monkeypatch.setattr(cli_module.messages, "disable_colors", lambda *args, **kwargs: None)
+    monkeypatch.setattr(cli_module, "resolve_command_profile", lambda: "development")
 
     monkeypatch.setattr(cli_module.AppConfig, "BASE_COMMAND_CLASSES", [compile_module.CompileCommand])
 
@@ -44,7 +46,15 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
         def generate_code(self, _ast):
             return "js"
 
-    monkeypatch.setattr(compile_module, "TRANSPILERS", {"python": FakePython, "javascript": FakeJS})
+    monkeypatch.setattr(transpiler_registry, "cli_transpilers", lambda: {"python": FakePython, "javascript": FakeJS})
+    monkeypatch.setattr(transpiler_registry, "cli_transpiler_targets", lambda: ("python", "javascript"))
+    monkeypatch.setattr(
+        transpiler_registry,
+        "cli_plugin_transpilers",
+        lambda: {"python": FakePython, "javascript": FakeJS},
+    )
+    monkeypatch.setattr(transpiler_registry, "cli_ensure_entrypoint_transpilers_loaded_once", lambda: None)
+    compile_module = importlib.reload(compile_module)
 
     class DummyPool:
         def __init__(self, processes=None):
@@ -76,5 +86,7 @@ def test_cli_compilar_con_tipos(tmp_path, monkeypatch):
 
     assert exit_code == 0
     salida = out.getvalue()
-    assert "Código generado (FakePython) para Python (python):" in salida
-    assert "Código generado (FakeJS) para JavaScript (javascript):" in salida
+    assert "Código generado para Python (python):" in salida
+    assert "Código generado para Javascript (javascript):" in salida
+    assert "py" in salida
+    assert "js" in salida

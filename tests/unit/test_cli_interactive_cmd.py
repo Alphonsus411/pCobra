@@ -400,6 +400,8 @@ def test_ejecutar_codigo_traduce_booleano_solo_en_salida_no_en_semantica_interna
 
 def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     cmd = InteractiveCommand(MagicMock())
+    cmd._seguro_repl = False
+    cmd._extra_validators_repl = ["validador.py"]
 
     with patch('cobra.cli.commands.interactive_cmd.Lexer') as mock_lexer, \
          patch('cobra.cli.commands.interactive_cmd.Parser') as mock_parser, \
@@ -411,12 +413,67 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
         cmd._ejecutar_en_sandbox('imprimir(1)')
 
     script_enviado = mock_sandbox.call_args.args[0]
+    assert "safe_mode=False" in script_enviado
+    assert "extra_validators=['validador.py']" in script_enviado
     assert '_resultado = _interp.ejecutar_ast(_ast)' in script_enviado
     assert "if _resultado is not None:" in script_enviado
     assert "if isinstance(_resultado, bool):" in script_enviado
     assert "print('verdadero' if _resultado else 'falso')" in script_enviado
     assert 'print(_resultado)' in script_enviado
     mock_info.assert_called_once_with('ok')
+
+
+def test_run_repl_loop_pasa_estado_repl_a_ejecucion_sandbox():
+    cmd = InteractiveCommand(MagicMock())
+    cmd._seguro_repl = False
+    cmd._extra_validators_repl = ["extra.py"]
+
+    def _leer_linea_factory():
+        entradas = iter(["imprimir(1)", "salir"])
+        return lambda _prompt: next(entradas)
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch.object(cmd, "_ejecutar_en_sandbox") as mock_sandbox:
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=_leer_linea_factory(),
+            sandbox=True,
+            sandbox_docker=None,
+        )
+
+    mock_sandbox.assert_called_once_with(
+        "imprimir(1)",
+    )
+
+
+def test_ejecutar_en_sandbox_usa_estado_repl_y_contrato_de_run_service():
+    cmd = InteractiveCommand(MagicMock())
+    cmd._seguro_repl = True
+    cmd._extra_validators_repl = ["extra_repl.py"]
+    with patch.dict(
+        cmd._ejecutar_en_sandbox.__globals__,
+        {
+            "prevalidar_y_parsear_codigo": MagicMock(),
+            "construir_script_sandbox_canonico": MagicMock(return_value="SCRIPT"),
+            "ejecutar_en_sandbox": MagicMock(return_value=None),
+        },
+    ) as patched_globals:
+        mock_prevalidar = patched_globals["prevalidar_y_parsear_codigo"]
+        mock_script = patched_globals["construir_script_sandbox_canonico"]
+        mock_ejecutar = patched_globals["ejecutar_en_sandbox"]
+        cmd._ejecutar_en_sandbox("imprimir(7)")
+    mock_prevalidar.assert_called_once_with("imprimir(7)")
+    mock_script.assert_called_once_with(
+        "imprimir(7)",
+        safe_mode=True,
+        extra_validators=["extra_repl.py"],
+        imprimir_resultado=True,
+    )
+    mock_ejecutar.assert_called_once_with(
+        "SCRIPT",
+        allow_insecure_fallback=False,
+    )
 
 
 def test_format_user_error_limpia_prefijo_error_general():
@@ -448,3 +505,24 @@ def test_log_error_imprime_mensaje_limpio_sin_categoria_tecnica():
         cmd._log_error("Error de sintaxis", RuntimeError("Error: Error general: fallo"))
 
     assert mock_stdout.getvalue().strip() == "Error: fallo"
+
+
+def test_run_repl_loop_reporta_error_sandbox_una_sola_vez():
+    cmd = InteractiveCommand(MagicMock())
+
+    def _leer_linea_factory():
+        entradas = iter(["imprimir(1)", "salir"])
+        return lambda _prompt: next(entradas)
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch.object(cmd, "_ejecutar_en_sandbox", side_effect=RuntimeError("Error general: fallo controlado")), \
+         patch("cobra.cli.commands.interactive_cmd.mostrar_error") as mock_error:
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=_leer_linea_factory(),
+            sandbox=True,
+            sandbox_docker=None,
+        )
+
+    mock_error.assert_called_once_with("fallo controlado", registrar_log=False)

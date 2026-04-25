@@ -410,6 +410,12 @@ Namespaces recomendados:
 - Dominio app/proyecto: `app.*`
 - Evitar imports “planos” en módulos grandes si existe riesgo de colisión.
 
+Ruta oficial para imports internos del proyecto (código Python de `src/`):
+
+- Usar siempre `pcobra.cobra.*` (ejemplo: `pcobra.cobra.bindings.contract`).
+- No usar `bindings.*` en código interno nuevo; `bindings` queda solo como shim legacy deprecado.
+- Si estás dentro del mismo paquete, también se permiten imports relativos explícitos (`from .modulo import ...`).
+
 ### Guía de migración a la CLI unificada
 
 La guía histórica de migración y compatibilidad se mantiene fuera del onboarding público, dentro de los anexos internos:

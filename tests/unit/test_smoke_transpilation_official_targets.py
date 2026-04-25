@@ -32,7 +32,7 @@ def ast_holobit_runtime():
 @pytest.mark.parametrize(
     "transpilador, fragmentos",
     [
-        (TranspiladorPython, ["from corelibs import *", "from standard_library import *", "def cobra_holobit(", "def cobra_proyectar(", "def cobra_transformar(", "def cobra_graficar("]),
+        (TranspiladorPython, ["import pcobra.corelibs as _pcobra_corelibs", "import pcobra.standard_library as _pcobra_standard_library", "def cobra_holobit(", "def cobra_proyectar(", "def cobra_transformar(", "def cobra_graficar("]),
         (TranspiladorJavaScript, ["import * as io from './nativos/io.js';", "import * as interfaz from './nativos/interfaz.js';", "function cobra_holobit(valores)", "function cobra_proyectar(hb, modo)", "function cobra_transformar(hb, op", "function cobra_graficar(hb)"]),
         (TranspiladorRust, ["use crate::corelibs::*;", "use crate::standard_library::*;", "fn longitud<T: ToString>(valor: T) -> usize {", "fn cobra_holobit(", "fn cobra_proyectar(", "fn cobra_transformar(", "fn cobra_graficar("]),
         (TranspiladorWasm, ["(func $cobra_holobit", "(func $cobra_proyectar", "(func $cobra_transformar", "(func $cobra_graficar", "host-managed"]),

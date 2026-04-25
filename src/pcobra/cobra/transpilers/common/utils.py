@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import re
 from typing import List, Tuple, Union
 
-from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.compatibility_matrix import CONTRACT_FEATURES
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
@@ -62,9 +62,11 @@ class BaseTranspiler(NodeVisitor, ABC):
 
 STANDARD_IMPORTS = {
     "python": (
-        "from core.nativos import *\n"
-        "from corelibs import *\n"
-        "from standard_library import *\n"
+        "from pcobra.cobra.core.nativos import *\n"
+        "import pcobra.corelibs as _pcobra_corelibs\n"
+        "import pcobra.standard_library as _pcobra_standard_library\n"
+        "globals().update({name: getattr(_pcobra_corelibs, name) for name in dir(_pcobra_corelibs) if not name.startswith('_')})\n"
+        "globals().update({name: getattr(_pcobra_standard_library, name) for name in dir(_pcobra_standard_library) if not name.startswith('_')})\n"
     ),
     "javascript": [
         "import * as io from './nativos/io.js';",
@@ -168,7 +170,7 @@ RUNTIME_HOOKS = {
         "    )",
         "",
         "def _cobra_import_holobit_runtime():",
-        "    from pcobra.core.holobits import Holobit, proyectar, transformar, graficar",
+        "    from pcobra.cobra.core.holobits import Holobit, proyectar, transformar, graficar",
         "    return Holobit, proyectar, transformar, graficar",
         "",
         "def cobra_holobit(valores):",
@@ -220,8 +222,8 @@ RUNTIME_HOOKS = {
 
 MINIMAL_RUNTIME_ROUTE_MARKERS = {
     "python": {
-        "corelibs": "from corelibs import *",
-        "standard_library": "from standard_library import *",
+        "corelibs": "import pcobra.corelibs as _pcobra_corelibs",
+        "standard_library": "import pcobra.standard_library as _pcobra_standard_library",
         "minimal_symbols": (),
     },
     "javascript": {

@@ -32,6 +32,22 @@ Las tareas etiquetadas como `good first issue` están orientadas a la comunidad 
   `pyright src` (o `make typecheck`).
 - Cualquier cambio en el lenguaje debe seguir lo descrito en
   [SPEC_COBRA.md](docs/SPEC_COBRA.md).
+- **Imports internos oficiales**: en `src/` usa `pcobra.cobra.*` o imports
+  relativos del propio paquete. Evita `from bindings...`; ese namespace se
+  mantiene únicamente como shim legacy deprecado.
+
+### Política de transición de imports legacy (shims)
+
+- **Ruta canónica obligatoria para código productivo nuevo**: `src/pcobra/**`.
+- **Shims legacy permitidos solo por compatibilidad**:
+  - `src/cobra/**`
+  - `src/core/**`
+  - `src/bindings/**`
+- **Regla de mantenimiento**: cualquier shim debe incluir un comentario visible
+  `# pcobra-compat: allow-legacy-imports` y una nota explícita de deprecación.
+- **Objetivo de retiro de shims**: **30 de junio de 2027**. A partir de esa
+  fecha, los namespaces `cobra`, `core` y `bindings` deberán eliminarse como
+  imports públicos, salvo decisión explícita de mantenimiento registrada en ADR.
 
 ## Nueva feature del lenguaje
 

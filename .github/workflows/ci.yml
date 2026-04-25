@@ -177,6 +177,22 @@ jobs:
         run: python scripts/ci/validate_syntax_report_contract.py
       - name: Lint public surfaces without direct transpiler imports
         run: python scripts/ci/lint_public_no_direct_transpiler_imports.py
+      - name: Lint legacy bindings imports in src
+        run: python scripts/ci/lint_no_legacy_bindings_imports.py
+      - name: Lint no legacy cobra/core imports
+        run: python scripts/ci/lint_no_legacy_cobra_core_imports.py
+      - name: Lint legacy cobra tree is shim-only
+        run: python scripts/ci/lint_legacy_cobra_shims.py
+      - name: Lint canonical import resolution contract
+        run: python scripts/ci/lint_import_resolution_contract.py
+      - name: Lint no cross command imports in CLI commands
+        run: python scripts/ci/lint_no_cross_command_imports.py
+      - name: Gate de arquitectura de imports (ciclos y capas)
+        shell: bash
+        run: python scripts/ci/check_import_cycles.py
+      - name: Gate de SCC en pcobra.core
+        shell: bash
+        run: python scripts/ci/check_core_scc.py
       - name: Validate runtime contract matrix
         shell: bash
         run: python scripts/validate_runtime_contract.py

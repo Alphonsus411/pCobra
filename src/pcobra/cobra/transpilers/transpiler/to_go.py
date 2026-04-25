@@ -2,7 +2,7 @@
 
 import re
 
-from pcobra.core.ast_nodes import (
+from pcobra.cobra.core.ast_nodes import (
     NodoDecorador,
     NodoImport,
     NodoUsar,
@@ -31,7 +31,7 @@ from pcobra.cobra.transpilers.common.utils import (
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
+from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
 from pcobra.cobra.transpilers.transpiler.go_nodes.asignacion import (

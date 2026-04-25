@@ -7,13 +7,12 @@ from timeit import timeit
 from typing import Any, Dict, List
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
-from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.cli.transpiler_registry import cli_transpilers
 from pcobra.cobra.cli.deprecation_policy import enforce_advanced_profile_policy
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
-from pcobra.core.ast_cache import obtener_ast
+from pcobra.cobra.core.ast_cache import obtener_ast
 
 # Constantes del proyecto
 
@@ -37,7 +36,6 @@ MEDIUM_SIZE = 100
 LARGE_SIZE = 1000
 VALID_SIZES = ['small', 'medium', 'large']
 PROFILE_OUTPUT = "bench_transpilers.prof"
-
 @contextlib.contextmanager
 def profile_context(profiler: cProfile.Profile | None):
     """Context manager para el profiler.
@@ -169,10 +167,11 @@ class BenchTranspilersCommand(BaseCommand):
             profiler = cProfile.Profile() if getattr(args, "profile", False) else None
 
             with profile_context(profiler):
+                transpilers = cli_transpilers()
                 for size, code in programs.items():
                     ast = obtener_ast(code)
-                    for lang in TRANSPILERS:
-                        elapsed = timeit(lambda: backend_pipeline.transpile(ast, lang), number=1)
+                    for lang in transpilers:
+                        elapsed = timeit(lambda: transpilers[lang]().generate_code(ast), number=1)
                         results.append({"size": size, "lang": lang, "time": elapsed})
 
             if profiler:

@@ -1,29 +1,33 @@
-import logging
 import multiprocessing
 import os
-import inspect
 from argparse import ArgumentTypeError
-from importlib import import_module
-from importlib.metadata import entry_points
 
 from pcobra.cobra.build import backend_pipeline
 from pcobra.cobra.cli.target_policies import (
     OFFICIAL_TRANSPILATION_TARGETS,
     add_internal_legacy_targets_flag,
     enabled_internal_legacy_targets,
+    invalid_target_error,
     parse_target,
     parse_target_list,
 )
-from pcobra.cobra.imports._module_map_api import get_toml_map
-from pcobra.core.ast_cache import obtener_ast
-from pcobra.core.sandbox import validar_dependencias
-from pcobra.core.semantic_validators import (
+from pcobra.cobra.core.ast_cache import obtener_ast
+from pcobra.cobra.core.sandbox import validar_dependencias
+from pcobra.cobra.core.semantic_validators import (
     PrimitivaPeligrosaError,
     construir_cadena,
 )
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
+from pcobra.cobra.cli.transpiler_registry import (
+    cli_load_entrypoint_transpilers,
+    cli_plugin_transpilers,
+    cli_register_transpiler_backend,
+    cli_toml_map,
+    cli_transpilers,
+    cli_transpiler_targets,
+)
 from pcobra.cobra.cli.deprecation_policy import (
     enforce_target_deprecation_policy,
     visible_public_targets,
@@ -32,7 +36,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, 
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.cli.utils.autocomplete import files_completer
 from pcobra.cobra.core import ParserError
-from pcobra.core.cobra_config import tiempo_max_transpilacion
+from pcobra.cobra.core.cobra_config import tiempo_max_transpilacion
 
 # Constantes de configuración
 MAX_PROCESSES = 4
@@ -40,112 +44,24 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 PROCESS_TIMEOUT = tiempo_max_transpilacion()
 MAX_LANGUAGES = 10
 
-_PLUGIN_TRANSPILERS: dict[str, type] = {}
-_ENTRYPOINTS_LOADED = False
+
+def get_lang_choices() -> tuple[str, ...]:
+    """Obtiene targets canónicos para CLI de forma dinámica."""
+    return cli_transpiler_targets()
 
 
 def register_transpiler_backend(backend: str, transpiler_cls, *, context: str) -> str:
-    """Registra un backend externo solo si usa nombre canónico oficial exacto."""
-    canonical = _validate_official_backend_or_raise(backend, context=context)
-    raw_normalized = backend.strip().lower()
-    if raw_normalized not in OFFICIAL_TRANSPILATION_TARGETS:
-        raise ValueError(
-            _(
-                "Backend no permitido en {context}: {backend}. "
-                "Los plugins/transpiladores externos solo pueden registrar targets oficiales canónicos: {supported}"
-            ).format(
-                context=context,
-                backend=backend,
-                supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
-            )
-        )
-    _validate_transpiler_class_or_raise(
+    """Compatibilidad: delega registro de plugins al registro consolidado."""
+    return cli_register_transpiler_backend(
+        backend,
         transpiler_cls,
-        backend=canonical,
         context=context,
     )
-    _PLUGIN_TRANSPILERS[canonical] = transpiler_cls
-    return canonical
 
 
-def _validate_transpiler_class_or_raise(transpiler_cls, *, backend: str, context: str) -> None:
-    """Valida el contrato mínimo de un transpilador externo antes de registrarlo."""
-    if not isinstance(transpiler_cls, type):
-        raise ValueError(
-            _(
-                "Contrato inválido para backend '{backend}' en {context}: "
-                "se esperaba una clase, recibido {type_name}."
-            ).format(
-                backend=backend,
-                context=context,
-                type_name=type(transpiler_cls).__name__,
-            )
-        )
-
-    if not callable(transpiler_cls):
-        raise ValueError(
-            _(
-                "Contrato inválido para backend '{backend}' en {context}: "
-                "la clase '{class_name}' no es callable."
-            ).format(
-                backend=backend,
-                context=context,
-                class_name=transpiler_cls.__name__,
-            )
-        )
-
-    generate_code = getattr(transpiler_cls, "generate_code", None)
-    if not callable(generate_code):
-        raise ValueError(
-            _(
-                "Contrato inválido para backend '{backend}' en {context}: "
-                "la clase '{class_name}' no implementa el método callable 'generate_code'."
-            ).format(
-                backend=backend,
-                context=context,
-                class_name=transpiler_cls.__name__,
-            )
-        )
-
-    try:
-        signature = inspect.signature(transpiler_cls)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(
-            _(
-                "Contrato inválido para backend '{backend}' en {context}: "
-                "no se pudo inspeccionar la firma de '{class_name}': {cause}"
-            ).format(
-                backend=backend,
-                context=context,
-                class_name=transpiler_cls.__name__,
-                cause=exc,
-            )
-        ) from exc
-
-    required_params = [
-        p.name
-        for p in signature.parameters.values()
-        if p.default is inspect.Signature.empty
-        and p.kind
-        in (
-            inspect.Parameter.POSITIONAL_ONLY,
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            inspect.Parameter.KEYWORD_ONLY,
-        )
-    ]
-    if required_params:
-        raise ValueError(
-            _(
-                "Contrato inválido para backend '{backend}' en {context}: "
-                "la clase '{class_name}' requiere argumentos de inicialización "
-                "({params}). El protocolo soportado por plugins exige constructor sin argumentos."
-            ).format(
-                backend=backend,
-                context=context,
-                class_name=transpiler_cls.__name__,
-                params=", ".join(required_params),
-            )
-        )
+def load_entrypoint_transpilers() -> tuple[int, int, int]:
+    """Compatibilidad: delega carga de entry points al registro consolidado."""
+    return cli_load_entrypoint_transpilers()
 
 
 def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
@@ -154,99 +70,6 @@ def _validate_official_backend_or_raise(backend: str, *, context: str) -> str:
         return parse_target(backend)
     except ArgumentTypeError as exc:
         raise ValueError(str(exc)) from exc
-
-
-def _validate_entrypoint_backend_or_raise(backend: str, *, context: str) -> str:
-    """Acepta únicamente nombres canónicos oficiales en entry points."""
-    normalized = _validate_official_backend_or_raise(backend, context=context)
-    raw_normalized = backend.strip().lower()
-    if raw_normalized != normalized:
-        raise ValueError(
-            _(
-                "Backend no permitido en {context}: {backend}. "
-                "Los entry points solo pueden usar nombres canónicos oficiales: {supported}"
-            ).format(
-                context=context,
-                backend=backend,
-                supported=", ".join(OFFICIAL_TRANSPILATION_TARGETS),
-            )
-        )
-    return normalized
-
-
-def _iter_transpiler_entry_points():
-    try:
-        return entry_points(group="cobra.transpilers")
-    except TypeError:  # Compatibilidad con versiones antiguas
-        return entry_points().get("cobra.transpilers", [])
-
-
-
-def load_entrypoint_transpilers() -> tuple[int, int, int]:
-    """Carga entry points de transpiladores sin permitir aliases o targets no oficiales."""
-    loaded = 0
-    rejected = 0
-    skipped_existing = 0
-    entrypoint_items = list(_iter_transpiler_entry_points())
-    logging.info(
-        "Iniciando carga de plugins de transpiladores por entry points: total=%d",
-        len(entrypoint_items),
-    )
-
-    for ep in entrypoint_items:
-        try:
-            normalized_ep_name = _validate_entrypoint_backend_or_raise(
-                ep.name,
-                context="plugins(entry_points)",
-            )
-            module_name, class_name = ep.value.split(":", 1)
-            if not all(c.isalnum() or c in "._" for c in module_name + class_name):
-                raise ValueError(f"Nombre de módulo o clase inválido: {ep.value}")
-                continue
-            cls = getattr(import_module(module_name), class_name)
-            if normalized_ep_name in _PLUGIN_TRANSPILERS:
-                logging.warning(
-                    "Plugin de transpilador '%s' omitido: '%s' ya existe en el registro canónico",
-                    ep.name,
-                    normalized_ep_name,
-                )
-                skipped_existing += 1
-                continue
-            register_transpiler_backend(normalized_ep_name, cls, context="plugins(entry_points)")
-            loaded += 1
-        except ValueError as exc:
-            rejected += 1
-            logging.error(
-                "Plugin de transpilador '%s' rechazado por política/contrato: %s",
-                ep.name,
-                exc,
-            )
-        except Exception as exc:
-            rejected += 1
-            logging.error("Error cargando transpilador '%s': %s", ep.name, exc)
-
-    logging.info(
-        (
-            "Carga de plugins de transpiladores finalizada: "
-            "total=%d cargados=%d rechazados=%d omitidos=%d"
-        ),
-        len(entrypoint_items),
-        loaded,
-        rejected,
-        skipped_existing,
-    )
-    return loaded, rejected, skipped_existing
-
-
-def _ensure_entrypoints_loaded_once() -> None:
-    """Asegura la carga idempotente de entry points de transpiladores."""
-    global _ENTRYPOINTS_LOADED
-    if _ENTRYPOINTS_LOADED:
-        logging.debug("Carga de plugins por entry points omitida: ya fue ejecutada.")
-        return
-
-    load_entrypoint_transpilers()
-    _ENTRYPOINTS_LOADED = True
 
 TARGETS_HELP = ", ".join(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 
@@ -276,8 +99,12 @@ def _target_label(target: str) -> str:
     return target.replace("_", " ").capitalize()
 
 
-def _transpile_with_pipeline_or_plugin(ast, lang: str) -> str:
-    plugin_cls = _PLUGIN_TRANSPILERS.get(lang)
+def _transpile_with_pipeline_or_plugin(
+    ast,
+    lang: str,
+    plugin_snapshot: dict[str, type],
+) -> str:
+    plugin_cls = plugin_snapshot.get(lang)
     if plugin_cls is not None:
         return plugin_cls().generate_code(ast)
     return backend_pipeline.transpile(ast, lang)
@@ -305,7 +132,7 @@ class CompileCommand(BaseCommand):
 
     def register_subparser(self, subparsers):
         """Registra los argumentos del subcomando."""
-        lang_choices = list(OFFICIAL_TRANSPILATION_TARGETS) + list(enabled_internal_legacy_targets())
+        lang_choices = list(get_lang_choices()) + list(enabled_internal_legacy_targets())
         parser = subparsers.add_parser(
             self.name,
             help=_("Transpila un archivo"),
@@ -337,7 +164,7 @@ class CompileCommand(BaseCommand):
     def _ejecutar_transpilador(self, parametros: tuple) -> tuple:
         """Ejecuta un transpilador específico."""
         lang, ast = parametros
-        code = _transpile_with_pipeline_or_plugin(ast, lang)
+        code = _transpile_with_pipeline_or_plugin(ast, lang, dict(cli_plugin_transpilers()))
         return lang, code
 
     def run(self, args):
@@ -356,7 +183,8 @@ class CompileCommand(BaseCommand):
             mostrar_error(str(e))
             return 1
 
-        _ensure_entrypoints_loaded_once()
+        transpilers_snapshot = dict(cli_transpilers())
+        current_lang_choices = set(transpilers_snapshot)
 
         tipos_argument = getattr(args, "tipos", None)
         if isinstance(tipos_argument, str):
@@ -366,8 +194,11 @@ class CompileCommand(BaseCommand):
                 mostrar_error(str(parse_error))
                 return 1
 
-        mod_info = get_toml_map()
+        mod_info = cli_toml_map()
         preferred_backend = getattr(args, "backend", None) or getattr(args, "tipo", None)
+        if preferred_backend and preferred_backend not in current_lang_choices:
+            mostrar_error(invalid_target_error(preferred_backend))
+            return 1
         if getattr(args, "backend", None):
             mostrar_advertencia(
                 _("La opción --backend está deprecada en 'compilar'; use --tipo. Se eliminará en una versión futura.")
@@ -394,6 +225,8 @@ class CompileCommand(BaseCommand):
             if tipos_argument:
                 langs = list(tipos_argument)
                 for lang in langs:
+                    if lang not in current_lang_choices:
+                        raise ValueError(invalid_target_error(lang))
                     enforce_target_deprecation_policy(
                         command=self.name,
                         target=lang,
@@ -444,7 +277,11 @@ class CompileCommand(BaseCommand):
                     return 1
             else:
                 transpilador = transpilador_objetivo
-                resultado = _transpile_with_pipeline_or_plugin(ast, transpilador)
+                resultado = _transpile_with_pipeline_or_plugin(
+                    ast,
+                    transpilador,
+                    dict(cli_plugin_transpilers()),
+                )
                 mostrar_info(
                     _("Código generado:")
                 )

@@ -1,18 +1,30 @@
 """Shim histórico para importaciones absolutas del paquete ``core``.
 
-Este módulo delega todas las referencias a :mod:`pcobra.core` para que el
-código legado que utilice ``import core`` continúe funcionando sin necesidad de
-ajustes adicionales. Se replica la ruta de búsqueda del paquete original para
-que ``import core.algo`` cargue los submódulos reales de ``pcobra.core``.
+Alcance explícito de compatibilidad:
+- **Permitido únicamente** para consumidores legacy externos al código
+  productivo de ``src/pcobra/**``.
+- Código nuevo debe usar imports canónicos ``pcobra.core.*``.
+- Este módulo existe sólo como puente temporal y está deprecado.
 
-Ruta canónica runtime: ``src/pcobra/core``.
+Implementación:
+- delega todas las referencias a :mod:`pcobra.core`;
+- replica ``__path__`` para que ``import core.algo`` siga resolviendo los
+  submódulos reales de ``pcobra.core``.
 """
+# pcobra-compat: allow-legacy-imports
 
 from __future__ import annotations
 
 from importlib import import_module
 import sys
 from types import ModuleType
+import warnings
+
+warnings.warn(
+    "`core` está deprecado; usa `pcobra.core`.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 _target_name = "pcobra.core"
 _target: ModuleType = import_module(_target_name)

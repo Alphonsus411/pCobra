@@ -29,7 +29,7 @@ except ModuleNotFoundError:  # pragma: no cover - dependencia opcional
 from pcobra.standard_library import __all__ as STD_FUNCS
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.services.format_service import format_code_with_black
 
 # Palabras reservadas más comunes de Cobra
 KEYWORDS = [
@@ -187,7 +187,8 @@ def pylsp_format_document(config, workspace, document):
     """Formatea el archivo actual utilizando el formateador de Cobra."""
     path = document.path
     try:
-        ExecuteCommand._formatear_codigo(path)
+        if not format_code_with_black(path):
+            raise RuntimeError(f"Fallo de formateo con black para el documento {path}")
         with open(path, "r", encoding="utf-8") as fh:
             formatted = fh.read()
     except Exception as exc:

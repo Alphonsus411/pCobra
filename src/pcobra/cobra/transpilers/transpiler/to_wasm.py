@@ -19,13 +19,13 @@ from pcobra.cobra.core.ast_nodes import (
     NodoTryCatch,
 )
 from pcobra.cobra.core import TipoToken
-from pcobra.core.visitor import NodeVisitor
+from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.common.utils import (
     BaseTranspiler,
     get_runtime_hooks,
     get_standard_imports,
 )
-from pcobra.core.optimizations import optimize_constants, remove_dead_code
+from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code
 from pcobra.cobra.macro import expandir_macros
 
 

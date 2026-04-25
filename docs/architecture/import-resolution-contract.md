@@ -172,3 +172,20 @@ Migraciones sugeridas (casos reales frecuentes):
      - app explícita: `importar app.json`
 
 Esta convención minimiza deuda de migración y evita depender de precedencia implícita en conflictos.
+
+## 7) Contrato de imports en runtime productivo (sin aliases legacy)
+
+Regla operativa obligatoria para código Python del runtime (`src/pcobra/**`):
+
+- El runtime productivo debe importar siempre desde rutas canónicas `pcobra.cobra.*`.
+- No se permite depender de aliases legacy como `bindings.*`, `import bindings` o `from cobra.*` en módulos productivos.
+- Las únicas excepciones válidas son módulos dedicados de compatibilidad explícitamente marcados para migración (por ejemplo, capas `internal_compat` o archivos con marcador de compatibilidad).
+
+Este contrato se valida en CI mediante `scripts/ci/lint_import_resolution_contract.py` y su test guard en `tests/unit/test_ci_lint_import_resolution_contract_guard.py`.
+
+Regla adicional para el namespace interno `src/pcobra/cobra/**`:
+
+- Está prohibido importar `pcobra.core.*`, `core.*` o `cobra.*` desde módulos productivos bajo `src/pcobra/cobra/`.
+- Dentro de `src/pcobra/cobra/`, solo se permiten rutas canónicas `pcobra.cobra.*` o imports relativos locales coherentes.
+- La CI aplica esta garantía con `scripts/ci/lint_no_legacy_cobra_core_imports.py` y su guard test `tests/unit/test_ci_lint_no_legacy_cobra_core_imports_guard.py`.
+

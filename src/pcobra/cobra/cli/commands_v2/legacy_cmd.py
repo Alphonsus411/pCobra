@@ -2,10 +2,8 @@ from argparse import Namespace
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.commands.compile_cmd import CompileCommand
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
-from pcobra.cobra.cli.commands.modules_cmd import ModulesCommand
-from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.cli.services.command_factory import CommandFactory
+from pcobra.cobra.cli.services.contracts import ModRequest, RunRequest, TestRequest
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.public_command_policy import PROFILE_DEVELOPMENT, resolve_command_profile
 from pcobra.cobra.cli.utils import messages
@@ -26,10 +24,11 @@ class LegacyCommandGroupV2(BaseCommand):
 
     def __init__(self) -> None:
         super().__init__()
-        self._execute = ExecuteCommand()
-        self._compile = CompileCommand()
-        self._verify = VerifyCommand()
-        self._modules = ModulesCommand()
+        self._command_factory = CommandFactory()
+        self._execute = self._command_factory.create("ejecutar")
+        self._compile = self._command_factory.create("compilar")
+        self._verify = self._command_factory.create("verificar")
+        self._modules = self._command_factory.create("modulos")
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Legacy compatibility command group"))
@@ -86,7 +85,7 @@ class LegacyCommandGroupV2(BaseCommand):
             return 1
         if command == "ejecutar":
             return self._execute.run(
-                Namespace(
+                RunRequest(
                     archivo=args.archivo,
                     debug=getattr(args, "debug", False),
                     sandbox=getattr(args, "sandbox", False),
@@ -107,7 +106,7 @@ class LegacyCommandGroupV2(BaseCommand):
             )
         if command == "verificar":
             return self._verify.run(
-                Namespace(
+                TestRequest(
                     archivo=args.archivo,
                     lenguajes=getattr(args, "lenguajes", ""),
                     modo=getattr(args, "modo", "mixto"),
@@ -115,7 +114,7 @@ class LegacyCommandGroupV2(BaseCommand):
             )
         if command == "modulos":
             return self._modules.run(
-                Namespace(
+                ModRequest(
                     accion=getattr(args, "accion", None),
                     ruta=getattr(args, "ruta", None),
                     nombre=getattr(args, "nombre", None),

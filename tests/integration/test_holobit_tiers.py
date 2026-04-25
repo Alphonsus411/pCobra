@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.transpilers.registry import get_transpilers
 from cobra.core import Lexer, Parser
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
@@ -16,6 +16,8 @@ from pcobra.cobra.transpilers.compatibility_matrix import (
 )
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from tests.utils.targets import assert_official_targets_partition, official_targets_for_tier
+
+TRANSPILERS = get_transpilers()
 
 HOLOBIT_CASES = {
     "holobit": "var h = holobit([1.0, 2.0, 3.0])\n",

@@ -3,9 +3,9 @@
 import logging
 import os
 import hashlib
-from typing import Optional
+from typing import Mapping, Optional
 
-from pcobra.core.lexer import (
+from .lexer import (
     Token,
     TipoToken,
 )
@@ -54,6 +54,8 @@ from .ast_nodes import (
     NodoWith,
     NodoImportDesde,
     NodoAST,
+    NodoRomper,
+    NodoContinuar,
 )
 from .memoria.gestor_memoria import GestorMemoriaGenetico
 from .internal_ir import InternalIRModule, build_internal_ir
@@ -61,7 +63,7 @@ from .semantic_validators import (
     construir_cadena,
     PrimitivaPeligrosaError,
 )
-from pcobra.core.semantico import AnalizadorSemantico
+from .semantico import AnalizadorSemantico
 from .cobra_config import (
     limite_nodos,
     limite_memoria_mb,
@@ -103,6 +105,14 @@ class ExcepcionCobra(Exception):
     def __init__(self, valor):
         super().__init__(valor)
         self.valor = valor
+
+
+class _ControlRomper(Exception):
+    """Señal interna para cortar la ejecución del bucle actual."""
+
+
+class _ControlContinuar(Exception):
+    """Señal interna para avanzar a la siguiente iteración del bucle."""
 
 
 class InterpretadorCobra:
@@ -424,10 +434,42 @@ class InterpretadorCobra:
         """Devuelve el mapeo local del entorno activo (compatibilidad)."""
         return self.contextos[-1].values
 
-    @variables.setter
-    def variables(self, valor):
-        """Permite reemplazar solo el mapeo local del entorno activo."""
-        self.contextos[-1].values = valor
+    def reset_context_values(self, mapping: Mapping[str, object]) -> None:
+        """Reemplaza de forma controlada los valores del contexto activo.
+
+        Se copia explícitamente ``mapping`` para evitar aliasing accidental
+        de diccionarios externos y se valida cada entrada antes de aplicarla.
+        """
+        if not isinstance(mapping, Mapping):
+            raise TypeError("mapping debe implementar Mapping[str, object]")
+
+        nuevos_valores: dict[str, object] = {}
+        for clave, valor in mapping.items():
+            if not isinstance(clave, str):
+                raise TypeError("Las claves del contexto deben ser str")
+            self._verificar_valor_contexto(valor)
+            nuevos_valores[clave] = valor
+
+        contexto_activo = self.contextos[-1]
+        contexto_activo.values.clear()
+        contexto_activo.values.update(nuevos_valores)
+
+    def _indice_entorno_variable(self, nombre: str) -> int | None:
+        """Retorna el índice del primer entorno (de adentro hacia afuera) con ``nombre``."""
+        for indice in range(len(self.contextos) - 1, -1, -1):
+            if nombre in self.contextos[indice].values:
+                return indice
+        return None
+
+    def _liberar_memoria_variable_en_contexto(self, nombre: str, indice_contexto: int) -> None:
+        """Libera el bloque de memoria asociado a ``nombre`` en un contexto concreto."""
+        if indice_contexto < 0 or indice_contexto >= len(self.mem_contextos):
+            return
+        mem_ctx = self.mem_contextos[indice_contexto]
+        if nombre not in mem_ctx:
+            return
+        idx, tam = mem_ctx.pop(nombre)
+        self.liberar_memoria(idx, tam)
 
     def obtener_variable(self, nombre, visitados=None):
         """Busca una variable en la pila de contextos.
@@ -552,7 +594,7 @@ class InterpretadorCobra:
             "nombre": nodo.nombre,
             "parametros": list(nodo.parametros),
             "cuerpo": list(nodo.cuerpo),
-            "contexto": self.variables.copy(),
+            "entorno": self.contextos[-1],
         }
 
     def _construir_clase(self, nodo, bases):
@@ -583,7 +625,7 @@ class InterpretadorCobra:
           contexto con valores ya materializados.
         """
         visitados = set() if visitados is None else visitados
-        primitivos = (int, float, bool, str, type(None))
+        primitivos = (int, float, bool, str, type(None), Environment)
         contenedores = (list, tuple, dict, set)
 
         def _normalizar_contenedor(contenedor):
@@ -660,10 +702,9 @@ class InterpretadorCobra:
                 actual = actual.valor
                 continue
 
-            if (
-                origen == "resolucion_variable"
-                and isinstance(actual, dict)
-                and actual.get("tipo") in {"funcion", "clase", "instancia"}
+            if isinstance(actual, dict) and (
+                actual.get("tipo") in {"funcion", "clase", "instancia"}
+                or "__clase__" in actual
             ):
                 return actual
 
@@ -1074,8 +1115,10 @@ class InterpretadorCobra:
                     f"se recibió: {type(nodo.objetivo).__name__}"
                 )
             nombre = nodo.objetivo.nombre
-            if nombre in self.variables:
-                del self.variables[nombre]
+            indice_contexto = self._indice_entorno_variable(nombre)
+            self.contextos[-1].delete(nombre)
+            if indice_contexto is not None:
+                self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
         elif isinstance(nodo, NodoGlobal):
             pass  # sin efecto en este intérprete simplificado
         elif isinstance(nodo, NodoNoLocal):
@@ -1083,12 +1126,16 @@ class InterpretadorCobra:
         elif isinstance(nodo, NodoWith):
             self.evaluar_expresion(nodo.contexto)
             self.contextos.append(Environment(parent=self.contextos[-1]))
+            self.mem_contextos.append({})
             try:
                 for instr in nodo.cuerpo:
                     resultado = self.ejecutar_nodo(instr)
                     if resultado is not None:
                         return resultado
             finally:
+                memoria_local = self.mem_contextos.pop()
+                for idx, tam in memoria_local.values():
+                    self.liberar_memoria(idx, tam)
                 self.contextos.pop()
         elif isinstance(nodo, NodoImportDesde):
             return self.ejecutar_import(NodoImport(nodo.modulo))
@@ -1098,6 +1145,10 @@ class InterpretadorCobra:
             return self.ejecutar_hilo(nodo)
         elif isinstance(nodo, NodoRetorno):
             return self.evaluar_expresion(nodo.expresion)
+        elif isinstance(nodo, NodoRomper):
+            raise _ControlRomper
+        elif isinstance(nodo, NodoContinuar):
+            raise _ControlContinuar
         elif isinstance(nodo, NodoEsperar):
             return self.evaluar_expresion(nodo.expresion)
         elif isinstance(nodo, NodoValor):
@@ -1125,21 +1176,24 @@ class InterpretadorCobra:
             self._verificar_valor_contexto(valor)
             atributos[nombre.nombre] = valor
         else:
-            if getattr(nodo, "inferencia", False):
-                # Registro simple sin tipo explícito
+            if getattr(nodo, "inferencia", False) or getattr(nodo, "declaracion", False):
+                # Declaración local (explícita o por inferencia)
+                indice_contexto = len(self.mem_contextos) - 1
+                self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                indice = self.solicitar_memoria(1)
+                self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                 self.contextos[-1].define(nombre, valor)
             else:
-                # Si la variable ya tiene memoria reservada, se libera
-                mem_ctx = self.mem_contextos[-1]
-                if nombre in mem_ctx:
-                    idx, tam = mem_ctx.pop(nombre)
-                    self.liberar_memoria(idx, tam)
-                indice = self.solicitar_memoria(1)
-                mem_ctx[nombre] = (indice, 1)
-                if nombre in self.variables:
-                    self.contextos[-1].set(nombre, valor)
+                indice_contexto = self._indice_entorno_variable(nombre)
+                if indice_contexto is None:
+                    raise NameError(f"Variable no declarada: {nombre}")
                 else:
-                    self.contextos[-1].define(nombre, valor)
+                    # Mutación sobre una variable existente: ``set`` solo
+                    # actualiza en el scope donde ya está declarada.
+                    self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                    indice = self.solicitar_memoria(1)
+                    self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                    self.contextos[-1].set(nombre, valor)
         return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
@@ -1208,15 +1262,8 @@ class InterpretadorCobra:
                 self._trace_debug(
                     "[ID] "
                     f"value_type={type(valor).__name__} value_id={id(valor)} "
-                    f"is_primitive={isinstance(valor, (int, float, bool, str))}"
+                    f"is_runtime_value={not isinstance(valor, NodoAST)}"
                 )
-
-                if not isinstance(valor, (int, float, bool, str)):
-                    raise RuntimeError(
-                        "Error semántico: identificador "
-                        f"'{expresion.nombre}' no resolvió a un valor primitivo "
-                        f"(se obtuvo {type(valor).__name__})"
-                    )
 
                 return _retorno_critico(valor, operador="identificador")
             elif isinstance(expresion, NodoInstancia):
@@ -1423,6 +1470,8 @@ class InterpretadorCobra:
 
     def ejecutar_condicional(self, nodo):
         """Ejecuta un bloque condicional."""
+        # Contrato explícito del runtime:
+        # "control-flow no abre scope; function-call sí abre scope".
         # Regla semántica de scope:
         # ``si/sino`` NO crea un entorno nuevo. Las instrucciones de cada rama
         # se ejecutan sobre ``self.contextos[-1]`` (contexto activo), por lo que
@@ -1459,12 +1508,17 @@ class InterpretadorCobra:
         # bucle reutiliza ``self.contextos[-1]`` en cada vuelta y, por tanto,
         # las mutaciones del contexto persisten entre iteraciones y después.
         while self._evaluar_condicion_control(nodo.condicion):
-            for instruccion in nodo.cuerpo:
-                resultado = self.ejecutar_nodo(instruccion)
-                if isinstance(instruccion, NodoAsignacion):
-                    continue
-                if resultado is not None:
-                    return resultado
+            try:
+                for instruccion in nodo.cuerpo:
+                    resultado = self.ejecutar_nodo(instruccion)
+                    if isinstance(instruccion, NodoAsignacion):
+                        continue
+                    if resultado is not None:
+                        return resultado
+            except _ControlContinuar:
+                continue
+            except _ControlRomper:
+                break
         return None
 
     def ejecutar_try_catch(self, nodo):
@@ -1476,7 +1530,11 @@ class InterpretadorCobra:
                     return resultado
         except ExcepcionCobra as exc:
             if nodo.nombre_excepcion:
-                self.variables[nodo.nombre_excepcion] = exc.valor
+                contexto_actual = self.contextos[-1]
+                if contexto_actual.contains(nodo.nombre_excepcion):
+                    contexto_actual.set(nodo.nombre_excepcion, exc.valor)
+                else:
+                    contexto_actual.define(nodo.nombre_excepcion, exc.valor)
             for instruccion in nodo.bloque_catch:
                 resultado = self.ejecutar_nodo(instruccion)
                 if resultado is not None:
@@ -1491,7 +1549,7 @@ class InterpretadorCobra:
         """Registra una función definida por el usuario."""
         funcion = self._construir_funcion(nodo)
         self._verificar_valor_contexto(funcion)
-        self.variables[nodo.nombre] = funcion
+        self.contextos[-1].define(nodo.nombre, funcion)
 
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
@@ -1524,18 +1582,15 @@ class InterpretadorCobra:
             def preparar_contexto():
                 # Regla semántica opuesta al control de flujo: cada llamada de
                 # función sí encapsula su scope creando un nuevo contexto local.
-                contexto_base = funcion.get("contexto", {}).copy()
-                self._verificar_valor_contexto(contexto_base)
-                self.contextos.append(
-                    Environment(values=contexto_base, parent=self.contextos[-1])
-                )
+                entorno_capturado = funcion.get("entorno", self.contextos[-1])
+                self.contextos.append(Environment(parent=entorno_capturado))
                 self.mem_contextos.append({})
                 for nombre_param, arg in zip(funcion["parametros"], nodo.argumentos):
                     valor = self.evaluar_expresion(arg)
                     self._verificar_valor_contexto(valor)
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[-1][nombre_param] = (indice, 1)
-                    self.variables[nombre_param] = valor
+                    self.contextos[-1].define(nombre_param, valor)
 
             def limpiar_contexto():
                 # Se restaura el scope anterior al finalizar la llamada.
@@ -1582,7 +1637,7 @@ class InterpretadorCobra:
             bases_resueltas.append(base)
         clase = self._construir_clase(nodo, bases_resueltas)
         self._verificar_valor_contexto(clase)
-        self.variables[nodo.nombre] = clase
+        self.contextos[-1].define(nodo.nombre, clase)
 
     def ejecutar_instancia(self, nodo):
         """Crea una instancia de la clase indicada."""
@@ -1619,29 +1674,27 @@ class InterpretadorCobra:
         if metodo is None:
             raise ValueError(f"Método '{nodo.nombre_metodo}' no encontrado")
 
-        contexto = {"self": objeto}
-        contexto_base = metodo.get("contexto", {}).copy()
-        contexto_base.update(contexto)
-        self._verificar_valor_contexto(contexto_base)
-        self.contextos.append(
-            Environment(values=contexto_base, parent=self.contextos[-1])
-        )
+        entorno_capturado = metodo.get("entorno", self.contextos[-1])
+        self.contextos.append(Environment(parent=entorno_capturado))
         self.mem_contextos.append({})
+        self.contextos[-1].define("self", objeto)
         for nombre_param, arg in zip(metodo.get("parametros", [])[1:], nodo.argumentos):
             valor = self.evaluar_expresion(arg)
             self._verificar_valor_contexto(valor)
-            self.variables[nombre_param] = valor
+            self.contextos[-1].define(nombre_param, valor)
 
-        resultado = None
-        for instruccion in metodo.get("cuerpo", []):
-            resultado = self.ejecutar_nodo(instruccion)
-            if resultado is not None:
-                break
-        memoria_local = self.mem_contextos.pop()
-        for idx, tam in memoria_local.values():
-            self.liberar_memoria(idx, tam)
-        self.contextos.pop()
-        return resultado
+        try:
+            resultado = None
+            for instruccion in metodo.get("cuerpo", []):
+                resultado = self.ejecutar_nodo(instruccion)
+                if resultado is not None:
+                    break
+            return resultado
+        finally:
+            memoria_local = self.mem_contextos.pop()
+            for idx, tam in memoria_local.values():
+                self.liberar_memoria(idx, tam)
+            self.contextos.pop()
 
     def ejecutar_import(self, nodo):
         """Carga y ejecuta un módulo especificado en la declaración import."""
@@ -1673,11 +1726,11 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
-        from pcobra.core.usar_loader import obtener_modulo
+        from .usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)
-            self.variables[nodo.modulo] = modulo
+            self.contextos[-1].define(nodo.modulo, modulo)
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise

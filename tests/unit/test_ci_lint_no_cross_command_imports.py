@@ -1,0 +1,171 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from scripts.ci.lint_no_cross_command_imports import find_violations
+
+
+def _write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def test_contrato_repo_ningun_comando_depende_de_otro_comando() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    violations = find_violations(repo_root)
+    cross_command_violations = [
+        item
+        for item in violations
+        if (
+            "import entre comandos no permitido" in item
+            or "edge no permitido en grafo de imports" in item
+            or "patrón *_cmd no permitido" in item
+            or "import explícito from ...commands.<otro_comando> no permitido" in item
+        )
+    ]
+    assert cross_command_violations == []
+
+
+def test_detecta_import_entre_comandos(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.cli.commands.compile_cmd import CompileCommand\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("import entre comandos no permitido" in item for item in violations)
+    assert any("patrón *_cmd no permitido" in item for item in violations)
+    assert any("src/pcobra/cobra/cli/commands/a.py:1" in item for item in violations)
+
+
+def test_no_aplica_regla_en_commands_v2(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands_v2" / "run_cmd.py",
+        "from pcobra.cobra.cli.commands_v2.build_cmd import BuildCommandV2\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert violations == []
+
+
+def test_permite_import_desde_base(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands_v2" / "ok.py",
+        "from pcobra.cobra.cli.commands.base import BaseCommand\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert violations == []
+
+
+def test_permite_solo_basecommand_desde_base(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "ok.py",
+        "from pcobra.cobra.cli.commands.base import BaseCommand\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert violations == []
+
+
+def test_permite_cualquier_simbolo_desde_commands_base(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "ok.py",
+        "from pcobra.cobra.cli.commands.base import BaseCommand, CommandError\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert violations == []
+
+
+def test_rechaza_import_desde_otro_modulo_no_base(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "bad.py",
+        "from pcobra.cobra.cli.commands.helpers import helper\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) >= 1
+    assert any("import entre comandos no permitido" in item for item in violations)
+    assert any("src/pcobra/cobra/cli/commands/bad.py:1" in item for item in violations)
+
+
+def test_detecta_import_relativo_a_otro_comando(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "bad.py",
+        "from .compile_cmd import CompileCommand\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("import entre comandos no permitido" in item for item in violations)
+    assert any("patrón *_cmd no permitido" in item for item in violations)
+    assert any("import explícito from ...commands.<otro_comando> no permitido" in item for item in violations)
+    assert any("src/pcobra/cobra/cli/commands/bad.py:1" in item for item in violations)
+
+
+def test_detecta_acceso_compartido_transpilers_fuera_registry(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.transpilers import module_map\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any("src/pcobra/cobra/cli/commands/a.py:1" in item for item in violations)
+
+
+def test_detecta_acceso_directo_a_targets_en_transpilers(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any("pcobra.cobra.transpilers.targets" in item for item in violations)
+
+
+def test_detecta_acceso_directo_a_registry_en_transpilers(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from pcobra.cobra.transpilers.registry import official_transpiler_targets\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert any("acceso compartido de transpiladores no permitido" in item for item in violations)
+    assert any("pcobra.cobra.transpilers.registry" in item for item in violations)
+
+
+def test_detecta_constante_transpilers_en_comando(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "TRANSPILERS = {'python': object()}\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) == 1
+    assert "constante local no permitida en comandos (TRANSPILERS)" in violations[0]
+    assert "src/pcobra/cobra/cli/commands/a.py:1" in violations[0]
+
+
+def test_detecta_constante_backends_en_comando(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "BACKENDS = {'python': object()}\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert len(violations) == 1
+    assert "constante local no permitida en comandos (BACKENDS)" in violations[0]

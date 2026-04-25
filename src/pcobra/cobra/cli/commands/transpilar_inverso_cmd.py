@@ -30,7 +30,6 @@ from pcobra.cobra.transpilers.reverse.policy import (
     parse_reverse_source_language,
 )
 from pcobra.cobra.cli.commands.base import BaseCommand, CommandError
-from pcobra.cobra.cli.commands.compile_cmd import TRANSPILERS
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.cli.deprecation_policy import (
@@ -47,11 +46,11 @@ from pcobra.cobra.cli.target_policies import (
 )
 from pcobra.cobra.transpilers.import_helper import get_standard_imports
 from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.cli.transpiler_registry import cli_transpilers, cli_transpiler_targets
 from pcobra.cobra.cli.utils.validators import validar_archivo_existente
 from pcobra.cobra.transpilers.target_utils import (
     build_target_help_by_tier,
 )
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 # Configuración del logging
 logger = logging.getLogger(__name__)
@@ -137,23 +136,32 @@ REVERSE_TRANSPILERS: Dict[str, Type] = {
     if language in reverse_module.REGISTERED_REVERSE_TRANSPILERS
 }
 ORIGIN_CHOICES = tuple(reverse_module.REVERSE_SCOPE_LANGUAGES)
-DESTINO_CHOICES = sorted(backend_pipeline.TRANSPILERS.keys())
 TARGETS_HELP = build_target_help_by_tier(
     tuple(visible_public_targets(OFFICIAL_TRANSPILATION_TARGETS))
 )
 REVERSE_ORIGINS_HELP = ", ".join(ORIGIN_CHOICES)
 
 
+def _runtime_transpilers() -> Dict[str, Type]:
+    """Consulta en runtime el registro canónico para evitar snapshots a nivel módulo."""
+    return dict(cli_transpilers())
+
+
+def _runtime_destino_choices() -> tuple[str, ...]:
+    """Consulta targets canónicos en runtime para evitar snapshots estáticos."""
+    return cli_transpiler_targets()
+
+
 def _validate_official_target_or_raise(target: str, *, context: str) -> str:
     """Valida que un target pertenezca a la whitelist oficial."""
     canonical = parse_target(target)
-    if canonical not in OFFICIAL_TARGETS:
+    if canonical not in _runtime_destino_choices():
         raise UnsupportedLanguageError(
             "Lenguaje de destino fuera de Tier 1/Tier 2 en {context}: "
             "'{target}'. Usa uno de: {allowed}".format(
                 context=context,
                 target=target,
-                allowed=", ".join(DESTINO_CHOICES),
+                allowed=", ".join(_runtime_destino_choices()),
             )
         )
     return canonical
@@ -252,7 +260,7 @@ class TranspilarInversoCommand(BaseCommand):
             ),
             required=True,
             type=parse_target,
-            choices=DESTINO_CHOICES,
+            choices=_runtime_destino_choices(),
         )
         add_internal_legacy_targets_flag(parser)
         parser.add_argument(
@@ -328,7 +336,8 @@ class TranspilarInversoCommand(BaseCommand):
             raise UnsupportedLanguageError(
                 f"No hay parser reverse disponible para el lenguaje de origen '{origen}'"
             )
-        if destino not in TRANSPILERS:
+        transpilers = _runtime_transpilers()
+        if destino not in transpilers:
             raise UnsupportedLanguageError(
                 f"No hay transpilador oficial disponible para el lenguaje de destino '{destino}'"
             )
@@ -386,7 +395,8 @@ class TranspilarInversoCommand(BaseCommand):
 
             # Validar transpiladores
             reverse_cls = REVERSE_TRANSPILERS.get(origen)
-            transp_cls = TRANSPILERS.get(destino)
+            transpilers = _runtime_transpilers()
+            transp_cls = transpilers.get(destino)
 
             logger.debug(
                 f"Usando transpilador {reverse_cls.__name__} para origen {origen}"

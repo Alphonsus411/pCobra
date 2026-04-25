@@ -1,13 +1,362 @@
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
+from pathlib import Path
+from argparse import Namespace
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
+from pcobra.cobra.cli.execution_pipeline import (
+    PipelineInput,
+    analizar_codigo,
+    ejecutar_pipeline_explicito,
+    prevalidar_y_parsear_codigo,
+    resolver_interpretador_cls,
+)
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
-from pcobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.runtime import InterpretadorCobra
+
+
+def _args_execute(archivo: str) -> Namespace:
+    return Namespace(
+        archivo=archivo,
+        debug=False,
+        verbose=0,
+        depurar=False,
+        sandbox=False,
+        contenedor=None,
+        formatear=False,
+        modo="mixto",
+        seguro=False,
+        extra_validators=None,
+        allow_insecure_fallback=False,
+    )
+
+
+def _clasificar_error_execute(stderr: str) -> str | None:
+    if "Error de análisis:" in stderr:
+        return "analisis"
+    if "Error ejecutando el script:" in stderr:
+        return "semantico"
+    if stderr.strip():
+        return "otro"
+    return None
+
+
+def _clasificar_error_repl(exc: Exception | None) -> str | None:
+    if exc is None:
+        return None
+    nombre = exc.__class__.__name__
+    if nombre in {"LexerError", "ParserError"}:
+        return "analisis"
+    return "semantico"
+
+
+def _run_execute_via_script(
+    *,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    prelude: str,
+    snippet: str,
+    variable_persistente: str,
+) -> dict[str, object]:
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.execute_cmd.validar_dependencias", lambda *_args, **_kwargs: None
+    )
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.services.run_service.limitar_cpu_segundos", lambda *_args, **_kwargs: None
+    )
+    codigo = "\n".join(
+        [linea for linea in [prelude, snippet, f"var __probe = {variable_persistente}"] if linea]
+    )
+    archivo = tmp_path / "matriz_paridad.co"
+    archivo.write_text(codigo, encoding="utf-8")
+    out, err = StringIO(), StringIO()
+    with redirect_stdout(out), redirect_stderr(err):
+        rc = ExecuteCommand().run(_args_execute(str(archivo)))
+    salida = out.getvalue()
+    errores = err.getvalue()
+    return {
+        "rc": rc,
+        "stdout": salida,
+        "stderr": errores,
+        "error_kind": _clasificar_error_execute(f"{salida}\n{errores}"),
+    }
+
+
+def _run_script_pipeline(
+    *,
+    prelude: str,
+    snippet: str,
+    variable_persistente: str,
+) -> dict[str, object]:
+    out, err = StringIO(), StringIO()
+    exc: Exception | None = None
+    setup = None
+    interpretador = None
+    with redirect_stdout(out), redirect_stderr(err):
+        try:
+            interpretador_cls = resolver_interpretador_cls(
+                module_name="pcobra.cobra.cli.services.run_service",
+                default_cls=InterpretadorCobra,
+            )
+            if prelude:
+                setup, _ = ejecutar_pipeline_explicito(
+                    PipelineInput(
+                        codigo=prelude,
+                        interpretador_cls=interpretador_cls,
+                        safe_mode=False,
+                        extra_validators=None,
+                    )
+                )
+                interpretador = setup.interpretador
+            setup, _ = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo=snippet,
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=False,
+                    extra_validators=None,
+                    interpretador=interpretador,
+                )
+            )
+        except Exception as captured:  # noqa: BLE001 - contrato explícito entre rutas
+            exc = captured
+    contexto = setup.interpretador.contextos[-1].values if setup is not None else None
+    persistente = (
+        setup.interpretador.contextos[-1].get(variable_persistente)
+        if setup is not None
+        else None
+    )
+    return {
+        "stdout": out.getvalue(),
+        "stderr": err.getvalue(),
+        "error_kind": _clasificar_error_repl(exc),
+        "persistente": persistente,
+        "contexto_values": contexto,
+        "exc": exc,
+    }
+
+
+def _run_script_pipeline_secuencial(
+    *,
+    snippets: list[str],
+    variables_estado: tuple[str, ...],
+) -> dict[str, object]:
+    out, err = StringIO(), StringIO()
+    exc: Exception | None = None
+    interpretador = None
+    with redirect_stdout(out), redirect_stderr(err):
+        try:
+            interpretador_cls = resolver_interpretador_cls(
+                module_name="pcobra.cobra.cli.services.run_service",
+                default_cls=InterpretadorCobra,
+            )
+            for snippet in snippets:
+                setup, _ = ejecutar_pipeline_explicito(
+                    PipelineInput(
+                        codigo=snippet,
+                        interpretador_cls=interpretador_cls,
+                        safe_mode=False,
+                        extra_validators=None,
+                        interpretador=interpretador,
+                    ),
+                    analizar_codigo_fn=prevalidar_y_parsear_codigo,
+                )
+                interpretador = setup.interpretador
+        except Exception as captured:  # noqa: BLE001 - contrato explícito entre rutas
+            exc = captured
+
+    estado: dict[str, object | None] = {}
+    if interpretador is not None:
+        for variable in variables_estado:
+            estado[variable] = interpretador.contextos[-1].get(variable)
+    return {
+        "stdout": out.getvalue(),
+        "stderr": err.getvalue(),
+        "estado": estado,
+        "exc": exc,
+    }
+
+
+def _run_repl_secuencial(
+    *,
+    snippets: list[str],
+    variables_estado: tuple[str, ...],
+) -> dict[str, object]:
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out, err = StringIO(), StringIO()
+    exc: Exception | None = None
+    with redirect_stdout(out), redirect_stderr(err):
+        try:
+            for snippet in snippets:
+                repl.ejecutar_codigo(snippet)
+        except Exception as captured:  # noqa: BLE001 - contrato explícito entre rutas
+            exc = captured
+    estado = {
+        variable: repl.interpretador.contextos[-1].get(variable)
+        for variable in variables_estado
+    }
+    return {
+        "stdout": out.getvalue(),
+        "stderr": err.getvalue(),
+        "estado": estado,
+        "exc": exc,
+    }
+
+
+def _run_repl(
+    *,
+    prelude: str,
+    snippet: str,
+    variable_persistente: str,
+) -> dict[str, object]:
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out, err = StringIO(), StringIO()
+    exc: Exception | None = None
+    with redirect_stdout(out), redirect_stderr(err):
+        try:
+            if prelude:
+                repl.ejecutar_codigo(prelude)
+            repl.ejecutar_codigo(snippet)
+        except Exception as captured:  # noqa: BLE001 - contrato explícito entre rutas
+            exc = captured
+    persistente = None
+    try:
+        persistente = repl.interpretador.contextos[-1].get(variable_persistente)
+    except Exception:  # noqa: BLE001 - el contrato compara estado observable entre rutas
+        persistente = None
+    return {
+        "stdout": out.getvalue(),
+        "stderr": err.getvalue(),
+        "error_kind": _clasificar_error_repl(exc),
+        "persistente": persistente,
+        "contexto_values": repl.interpretador.contextos[-1].values,
+        "exc": exc,
+    }
+
+
+def _ultima_linea(salida: str) -> str:
+    lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
+    return lineas[-1] if lineas else ""
+
+
+def _normalizar_salida_repl(salida: str) -> str:
+    lineas = [linea.strip() for linea in salida.splitlines() if linea.strip()]
+    filtradas = [linea for linea in lineas if not linea.isdigit()]
+    return "\n".join(filtradas)
+
+
+def _snapshot_context_values(values: dict[str, object] | None) -> dict[str, str] | None:
+    if values is None:
+        return None
+    estables: dict[str, str] = {}
+    for clave, valor in values.items():
+        if isinstance(valor, (str, int, float, bool, type(None))):
+            estables[clave] = repr(valor)
+    return estables
+
+
+@pytest.mark.parametrize(
+    ("caso", "snippet"),
+    [
+        ("asignacion", "var persistente = 11"),
+        ("condicional", "si verdadero:\n    var persistente = 12\nfin"),
+        (
+            "bucle_mutacion",
+            (
+                "mientras verdadero:\n"
+                "    persistente = persistente + 5\n"
+                "    romper\n"
+                "fin"
+            ),
+        ),
+        ("bucle", "mientras falso:\n    var temporal = 1\nfin"),
+        (
+            "anidacion_si_mientras_intentar",
+            (
+                "si verdadero:\n"
+                "    mientras falso:\n"
+                "        intentar:\n"
+                "            var temporal = 1\n"
+                "        capturar e:\n"
+                "            var temporal = 2\n"
+                "        fin\n"
+                "    fin\n"
+                "fin"
+            ),
+        ),
+        (
+            "define_local_en_funcion",
+            (
+                "func localiza():\n"
+                "    var persistente = 33\n"
+                "fin\n"
+                "localiza()"
+            ),
+        ),
+        ("funcion", "func incrementar(v):\n    retorno v + 3\nfin\nvar persistente = incrementar(10)"),
+        ("error_semantico", "persistente = persistente + 1"),
+    ],
+)
+def test_matriz_minima_paridad_execute_script_vs_repl(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caso: str, snippet: str
+) -> None:
+    prelude = "var persistente = 10"
+    variable_persistente = "persistente"
+    resultado_execute = _run_execute_via_script(
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        prelude=prelude,
+        snippet=snippet,
+        variable_persistente=variable_persistente,
+    )
+    resultado_repl = _run_repl(
+        prelude=prelude,
+        snippet=snippet,
+        variable_persistente=variable_persistente,
+    )
+    resultado_script_pipeline = _run_script_pipeline(
+        prelude=prelude,
+        snippet=snippet,
+        variable_persistente=variable_persistente,
+    )
+
+    assert resultado_execute["error_kind"] == resultado_repl["error_kind"], (
+        f"{caso}: tipo de error divergente entre rutas"
+    )
+    assert resultado_script_pipeline["error_kind"] == resultado_repl["error_kind"], (
+        f"{caso}: el pipeline explícito debe reflejar el mismo error que REPL"
+    )
+    if resultado_repl["error_kind"] is None:
+        assert _normalizar_salida_repl(str(resultado_repl["stdout"])) == str(
+            resultado_execute["stdout"]
+        ).strip(), f"{caso}: salida distinta entre ExecuteCommand (script) y REPL"
+        assert resultado_execute["rc"] == 0, f"{caso}: ExecuteCommand debe finalizar en éxito"
+        assert resultado_repl["persistente"] is not None, (
+            f"{caso}: la variable persistente debe permanecer accesible en REPL"
+        )
+        assert _snapshot_context_values(resultado_script_pipeline["contexto_values"]) == _snapshot_context_values(
+            resultado_repl["contexto_values"]
+        ), (
+            f"{caso}: el estado final del entorno debe ser idéntico entre pipeline script y REPL"
+        )
+        assert resultado_script_pipeline["persistente"] == resultado_repl["persistente"], (
+            f"{caso}: valor persistente divergente entre rutas"
+        )
+    else:
+        assert resultado_execute["rc"] == 1, f"{caso}: ExecuteCommand debe reportar fallo"
+        assert type(resultado_script_pipeline["exc"]) is type(resultado_repl["exc"]), (
+            f"{caso}: tipo de excepción divergente entre pipeline script y REPL"
+        )
+        assert str(resultado_script_pipeline["exc"]) == str(resultado_repl["exc"]), (
+            f"{caso}: mensaje de excepción divergente entre pipeline script y REPL"
+        )
 
 
 def _args_interactive():
@@ -23,11 +372,11 @@ def _args_interactive():
 
 
 def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo():
-    codigo = "x = 5\nimprimir(x)"
+    codigo = "var x = 5\nimprimir(x)"
 
     cmd_execute = ExecuteCommand()
     with patch("sys.stdout", new_callable=StringIO) as out_file:
-        result_file = cmd_execute._ejecutar_normal(codigo, seguro=False, extra_validators=None)
+        result_file = cmd_execute._service.ejecutar_normal(codigo, seguro=False, extra_validators=None)
 
     cmd_interactive = InteractiveCommand(InterpretadorCobra())
     with patch("sys.stdout", new_callable=StringIO) as out_repl:
@@ -42,15 +391,15 @@ def test_contrato_resultado_igual_entre_modo_archivo_y_interactivo():
     [
         (
             "mientras multilinea",
-            "x = 0\nmientras falso:\n    imprimir(99)\nfin\nimprimir(x)",
+            "var x = 0\nmientras falso:\n    imprimir(99)\nfin\nimprimir(x)",
         ),
         (
             "si_sino multilinea",
-            "x = 2\nsi x < 1:\n    imprimir('menor')\nsino:\n    imprimir('mayor')\nfin",
+            "var x = 2\nsi x < 1:\n    imprimir('menor')\nsino:\n    imprimir('mayor')\nfin",
         ),
         (
             "funcion con mutacion",
-            "func incrementar(v):\n    retorno v + 1\nfin\nx = 1\nx = incrementar(x)\nimprimir(x)",
+            "func incrementar(v):\n    retorno v + 1\nfin\nvar x = 1\nvar x = incrementar(x)\nimprimir(x)",
         ),
     ],
 )
@@ -58,7 +407,7 @@ def test_contrato_salida_y_error_iguales_entre_execute_e_interactive(caso, codig
     cmd_execute = ExecuteCommand()
     out_execute, err_execute = StringIO(), StringIO()
     with redirect_stdout(out_execute), redirect_stderr(err_execute):
-        rc_execute = cmd_execute._ejecutar_normal(codigo, seguro=False, extra_validators=None)
+        rc_execute = cmd_execute._service.ejecutar_normal(codigo, seguro=False, extra_validators=None)
 
     cmd_interactive = InteractiveCommand(InterpretadorCobra())
     out_repl, err_repl = StringIO(), StringIO()
@@ -77,7 +426,7 @@ def test_contrato_error_igual_entre_modo_archivo_y_interactivo():
     cmd_interactive = InteractiveCommand(InterpretadorCobra())
 
     with pytest.raises(Exception) as err_execute:
-        cmd_execute._analizar_codigo(codigo_invalido)
+        analizar_codigo(codigo_invalido)
 
     with pytest.raises(Exception) as err_interactive:
         cmd_interactive.procesar_ast(codigo_invalido)
@@ -102,7 +451,7 @@ def test_contrato_pipeline_error_y_mensaje_entre_no_interactivo_y_repl(
 
     def _capturar_error_no_interactivo():
         try:
-            cmd_execute._analizar_codigo(codigo_invalido)
+            analizar_codigo(codigo_invalido)
             return None
         except Exception as exc:  # noqa: BLE001 - contrato explícito del test
             return exc
@@ -135,3 +484,158 @@ def test_repl_ejecuta_bloque_completo_sin_parseo_parcial_por_linea():
 
     assert ret == 0
     mock_ejecutar_codigo.assert_called_once_with("si verdadero:\nimprimir(1)\nfin", None)
+
+
+def test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno():
+    cmd_execute = ExecuteCommand()
+    out_script, err_script = StringIO(), StringIO()
+    codigo_script = (
+        "var base = 0\n"
+        "mientras falso:\n"
+        "    pasar\n"
+        "fin\n"
+        "var acumulado = 42"
+    )
+    with redirect_stdout(out_script), redirect_stderr(err_script):
+        rc_script = cmd_execute._service.ejecutar_normal(codigo_script, seguro=False, extra_validators=None)
+
+    cmd_interactive = InteractiveCommand(InterpretadorCobra())
+    out_repl, err_repl = StringIO(), StringIO()
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        cmd_interactive.ejecutar_codigo(
+            "var base = 0\nmientras falso:\n    pasar\nfin"
+        )
+        cmd_interactive.ejecutar_codigo("var acumulado = 42")
+
+    assert rc_script == 0
+    assert out_script.getvalue() == ""
+    assert err_script.getvalue() == err_repl.getvalue() == ""
+    assert cmd_interactive.interpretador.contextos[-1].get("base") == 0
+    assert cmd_interactive.interpretador.contextos[-1].get("acumulado") == 42
+
+
+def test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones():
+    codigo = (
+        "var base = 0\n"
+        "mientras falso:\n"
+        "    pasar\n"
+        "fin\n"
+        "var acumulado = 42\n"
+        "var ultimo = 42"
+    )
+    setup_script, _ = ejecutar_pipeline_explicito(
+        PipelineInput(
+            codigo=codigo,
+            interpretador_cls=InterpretadorCobra,
+            safe_mode=False,
+            extra_validators=None,
+        )
+    )
+    contexto_script = setup_script.interpretador.contextos[-1]
+
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    repl.ejecutar_codigo(codigo)
+    estado_repl = repl.interpretador.contextos[-1]
+
+    assert estado_repl.values == contexto_script.values
+    assert estado_repl.get("base") == 0
+
+
+@pytest.mark.parametrize(
+    ("caso", "codigo_erroneo"),
+    [
+        ("semantico", "variable_inexistente = 99"),
+        ("runtime", "var z = 5 / 0"),
+    ],
+)
+def test_contrato_error_semantico_runtime_mismo_tipo_y_mensaje(caso, codigo_erroneo):
+    interpretador_cls = resolver_interpretador_cls(
+        module_name="pcobra.cobra.cli.services.run_service",
+        default_cls=InterpretadorCobra,
+    )
+
+    with pytest.raises(Exception) as err_script:  # noqa: BLE001 - contrato explícito
+        ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo=codigo_erroneo,
+                interpretador_cls=interpretador_cls,
+                safe_mode=False,
+                extra_validators=None,
+            )
+        )
+
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    with pytest.raises(Exception) as err_repl:  # noqa: BLE001 - contrato explícito
+        repl.ejecutar_codigo(codigo_erroneo)
+
+    assert type(err_script.value) is type(err_repl.value), (
+        f"{caso}: tipo de error divergente entre script y REPL"
+    )
+    assert str(err_script.value) == str(err_repl.value), (
+        f"{caso}: mensaje de error divergente entre script y REPL"
+    )
+
+
+@pytest.mark.parametrize(
+    ("caso", "snippets", "variables_estado"),
+    [
+        (
+            "paridad_mientras",
+            [
+                "var i = 0",
+                "mientras i < 3:\n    i = i + 1\nfin",
+                "imprimir(i)",
+            ],
+            ("i",),
+        ),
+        (
+            "paridad_asignacion_acumulativa",
+            [
+                "var acumulado = 1",
+                "acumulado = acumulado + 4",
+                "acumulado = acumulado + 5",
+                "imprimir(acumulado)",
+            ],
+            ("acumulado",),
+        ),
+        (
+            "paridad_visibilidad_variables",
+            [
+                "var base = 10",
+                "si verdadero:\n    base = base + 1\nfin",
+                "var visible = base",
+                "imprimir(visible)",
+            ],
+            ("base", "visible"),
+        ),
+    ],
+)
+def test_paridad_explicita_repl_vs_script_en_casos_clave(
+    caso: str,
+    snippets: list[str],
+    variables_estado: tuple[str, ...],
+) -> None:
+    resultado_script = _run_script_pipeline_secuencial(
+        snippets=snippets,
+        variables_estado=variables_estado,
+    )
+    resultado_repl = _run_repl_secuencial(
+        snippets=snippets,
+        variables_estado=variables_estado,
+    )
+
+    assert resultado_script["exc"] is None, f"{caso}: script no debe fallar"
+    assert resultado_repl["exc"] is None, f"{caso}: REPL no debe fallar"
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == "", (
+        f"{caso}: no se esperan errores en stderr"
+    )
+    assert _normalizar_salida_repl(str(resultado_script["stdout"])) == _normalizar_salida_repl(
+        str(resultado_repl["stdout"])
+    ), f"{caso}: stdout divergente entre rutas"
+    assert resultado_script["estado"] == resultado_repl["estado"], (
+        f"{caso}: estado final de variables divergente entre rutas"
+    )

@@ -17,7 +17,7 @@ def test_bench_transpilers_generates_results(tmp_path, monkeypatch):
     bt_pcobra = importlib.import_module("pcobra.cobra.cli.commands.bench_transpilers_cmd")
 
     for module in (bt, bt_pcobra):
-        monkeypatch.setattr(module, "TRANSPILERS", {"dummy": DummyTranspiler})
+        monkeypatch.setattr(module, "cli_transpilers", lambda: {"dummy": DummyTranspiler})
         monkeypatch.setattr(module, "timeit", lambda func, number=1: 0.01)
         monkeypatch.setattr(module, "obtener_ast", lambda _code: object())
         monkeypatch.setattr(module, "PROGRAM_DIR", tmp_path)
@@ -41,7 +41,7 @@ def test_bench_transpilers_profile_creates_file(tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)
     for module in (bt, bt_pcobra):
-        monkeypatch.setattr(module, "TRANSPILERS", {"dummy": DummyTranspiler})
+        monkeypatch.setattr(module, "cli_transpilers", lambda: {"dummy": DummyTranspiler})
         monkeypatch.setattr(module, "timeit", lambda func, number=1: 0.01)
         monkeypatch.setattr(module, "obtener_ast", lambda _code: object())
         monkeypatch.setattr(module, "PROGRAM_DIR", tmp_path)
@@ -73,3 +73,9 @@ def test_ensure_program_reads_and_writes_in_program_dir(tmp_path, monkeypatch):
 
     reloaded = cmd._ensure_program("small")
     assert reloaded == expected
+
+
+def test_bench_transpilers_importa_registro_cli_sin_depender_de_otros_comandos():
+    bt = importlib.import_module("pcobra.cobra.cli.commands.bench_transpilers_cmd")
+
+    assert bt.cli_transpilers.__module__ == "pcobra.cobra.cli.transpiler_registry"

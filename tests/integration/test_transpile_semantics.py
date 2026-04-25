@@ -18,9 +18,11 @@ import pcobra  # noqa: F401
 from core.interpreter import InterpretadorCobra
 from cobra.core import Lexer
 from cobra.core import Parser
-from cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.transpilers.registry import get_transpilers
 from tests.utils.runtime import execute_transpiled_code
 from tests.utils.targets import BEST_EFFORT_INTERNAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+
+TRANSPILERS = get_transpilers()
 
 
 def obtener_salida_interprete(archivo: Path) -> str:

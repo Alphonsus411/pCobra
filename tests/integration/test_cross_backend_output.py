@@ -24,10 +24,12 @@ for nombre in dir(core_ast_nodes):
             setattr(cobra_core, nombre, obj)
 from cobra.core import Lexer
 from cobra.core import Parser
-from cobra.cli.commands.compile_cmd import TRANSPILERS
+from pcobra.cobra.transpilers.registry import get_transpilers
 
 from tests.utils.runtime import execute_transpiled_code
 from tests.utils.targets import BEST_EFFORT_INTERNAL_RUNTIME_TARGETS, OFFICIAL_RUNTIME_TARGETS
+
+TRANSPILERS = get_transpilers()
 
 
 def _collect_output_differences(tmp_path, archivo, esperados, *, langs, allow_experimental=False):

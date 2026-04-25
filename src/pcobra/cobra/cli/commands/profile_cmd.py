@@ -15,19 +15,19 @@ from typing import Optional, Any
 
 from pcobra.cobra.core import Lexer
 from pcobra.cobra.core import Parser
-from pcobra.cobra.transpilers import module_map
-from pcobra.core.interpreter import InterpretadorCobra
-from pcobra.core.sandbox import validar_dependencias
-from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
+from pcobra.cobra.core.interpreter import InterpretadorCobra
+from pcobra.cobra.core.sandbox import validar_dependencias
+from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.commands.execute_cmd import ExecuteCommand
 from pcobra.cobra.cli.i18n import _
+from pcobra.cobra.cli.services.format_service import format_code_with_black
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.cli.utils.validators import (
     normalizar_validadores_extra,
     validar_archivo_existente,
 )
+from pcobra.cobra.cli.transpiler_registry import cli_toml_map
 
 
 class ProfileCommand(BaseCommand):
@@ -109,13 +109,13 @@ class ProfileCommand(BaseCommand):
             return 1
 
         try:
-            validar_dependencias("python", module_map.get_toml_map())
+            validar_dependencias("python", cli_toml_map())
         except (ValueError, FileNotFoundError) as dep_err:
             mostrar_error(f"Error de dependencias: {dep_err}")
             return 1
 
-        if formatear:
-            ExecuteCommand._formatear_codigo(archivo)  # type: ignore[attr-defined]
+        if formatear and not format_code_with_black(archivo):
+            return 1
 
         self.logger.setLevel(logging.DEBUG if depurar else logging.ERROR)
 

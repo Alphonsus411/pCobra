@@ -10,7 +10,7 @@ import re
 from enum import Enum
 from typing import Dict, List, Optional, Pattern, Tuple, Union, cast
 
-from pcobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
+from pcobra.cobra.core.errors import InvalidTokenError, LexerError, UnclosedStringError
 
 logger = logging.getLogger(__name__)
 
@@ -518,7 +518,7 @@ class Lexer:
         Returns:
             Lista de tokens
         """
-        from pcobra.core.ast_cache import obtener_tokens_fragmento
+        from pcobra.cobra.core.ast_cache import obtener_tokens_fragmento
 
         self.tokens = []
         for linea in self.codigo_fuente.splitlines(keepends=True):

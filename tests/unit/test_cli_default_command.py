@@ -15,6 +15,7 @@ def _patch_cli_env(stack: ExitStack) -> None:
     stack.enter_context(patch("cobra.cli.cli.messages.disable_colors"))
     stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
     stack.enter_context(patch("cobra.cli.cli.descubrir_plugins", return_value=[]))
+    stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="development"))
 
 
 def test_default_command_runs_interactive():

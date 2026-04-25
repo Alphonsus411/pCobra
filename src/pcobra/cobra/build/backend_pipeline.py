@@ -19,7 +19,7 @@ from pcobra.cobra.architecture.contracts import (
 )
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
 from pcobra.cobra.build.orchestrator import BackendResolution, BuildOrchestrator
-from pcobra.core.ast_cache import obtener_ast
+from pcobra.cobra.core.ast_cache import obtener_ast
 
 ORCHESTRATOR = BuildOrchestrator()
 RUNTIME_MANAGER = RuntimeManager()

@@ -24,7 +24,7 @@ class _DummyValidator(ValidadorBase):
             "python",
             [
                 "Código generado (TranspiladorPython):",
-                "from core.nativos import *",
+                "from pcobra.core.nativos import *",
                 "x = 5",
             ],
         ),

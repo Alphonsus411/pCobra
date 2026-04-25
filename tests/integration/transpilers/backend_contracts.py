@@ -65,8 +65,8 @@ FEATURE_NODES = {
 STRICT_FULL_EXPECTATIONS: dict[str, dict[str, tuple[str, ...]]] = {
     "python": {
         "holobit": (
-            "from corelibs import *",
-            "from standard_library import *",
+            "import pcobra.corelibs as _pcobra_corelibs",
+            "import pcobra.standard_library as _pcobra_standard_library",
             "hb = cobra_holobit([1, 2, 3])",
         ),
         "proyectar": ("def cobra_proyectar", "cobra_proyectar(hb, '2d')"),

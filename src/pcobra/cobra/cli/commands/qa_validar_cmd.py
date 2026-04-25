@@ -7,13 +7,19 @@ from pathlib import Path
 from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
-from pcobra.cobra.cli.commands.validar_sintaxis_cmd import ValidationResult, ValidarSintaxisCommand
+from pcobra.cobra.cli.transpiler_registry import (
+    cli_transpiler_targets_csv,
+    cli_transpilers,
+)
 from pcobra.cobra.qa.syntax_validation import execute_syntax_validation
-from pcobra.cobra.build import backend_pipeline
-from pcobra.cobra.cli.commands.verify_cmd import VerifyCommand
+from pcobra.cobra.qa.syntax_validation import ValidationResult
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.mode_policy import validar_politica_modo
-from pcobra.cobra.cli.target_policies import VERIFICATION_EXECUTABLE_TARGETS
+from pcobra.cobra.cli.services.verification_service import (
+    execute_runtime_verification,
+    parse_verification_targets,
+    resolve_executable_targets,
+)
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 from pcobra.cobra.transpilers.compatibility_matrix import build_feature_gap_report
@@ -59,7 +65,9 @@ class QaValidarCommand(BaseCommand):
         parser.add_argument(
             "--targets",
             default="",
-            help=_("Lista CSV de targets (python,javascript,rust,go,cpp,java,wasm,asm)"),
+            help=_("Lista CSV de targets ({targets})").format(
+                targets=cli_transpiler_targets_csv(),
+            ),
         )
         parser.add_argument(
             "--strict",
@@ -150,7 +158,7 @@ class QaValidarCommand(BaseCommand):
             profile=profile,
             targets_raw=str(getattr(args, "targets", "")),
             strict=strict,
-            transpilers=backend_pipeline.TRANSPILERS,
+            transpilers=cli_transpilers(),
         )
 
         transpilers: dict[str, Any] = {
@@ -187,9 +195,8 @@ class QaValidarCommand(BaseCommand):
         if not getattr(args, "archivo", None):
             raise ValueError(_("El argumento 'archivo' es obligatorio para scope runtime/all"))
 
-        syntax_command = ValidarSintaxisCommand()
-        requested_targets = syntax_command._parse_targets(str(getattr(args, "targets", "")))
-        executable_targets = [t for t in requested_targets if t in VERIFICATION_EXECUTABLE_TARGETS]
+        requested_targets = parse_verification_targets(str(getattr(args, "targets", "")))
+        executable_targets = resolve_executable_targets(requested_targets)
 
         if not executable_targets:
             message = "no hay targets con runtime ejecutable en --targets"
@@ -210,7 +217,10 @@ class QaValidarCommand(BaseCommand):
             archivo=getattr(args, "archivo"),
             lenguajes=executable_targets,
         )
-        rc = VerifyCommand().run(verify_args)
+        rc = execute_runtime_verification(
+            archivo=verify_args.archivo,
+            lenguajes=list(verify_args.lenguajes),
+        )
         has_failures = rc != 0
         message = "equivalencia runtime verificada" if rc == 0 else "falló equivalencia runtime"
 

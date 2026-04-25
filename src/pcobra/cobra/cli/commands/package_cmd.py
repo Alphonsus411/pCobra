@@ -4,7 +4,6 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import List, Any
 
-from pcobra.cobra.cli.commands import modules_cmd
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
@@ -14,6 +13,7 @@ from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 MAX_ZIP_SIZE = 1024 * 1024 * 50  # 50MB
 MAX_FILES = 100
 ALLOWED_EXTENSIONS = {".co"}
+MODULES_PATH = Path.home() / ".cobra" / "modules"
 
 class PaqueteCommand(BaseCommand):
     """Crea e instala paquetes Cobra."""
@@ -164,7 +164,7 @@ class PaqueteCommand(BaseCommand):
                 return 1
 
             PaqueteCommand._validar_zip(pkg)
-            modules_dir = Path(modules_cmd.MODULES_PATH).resolve()
+            modules_dir = Path(MODULES_PATH).resolve()
             modules_dir.mkdir(parents=True, exist_ok=True)
 
             with zipfile.ZipFile(pkg) as zf:
@@ -193,7 +193,7 @@ class PaqueteCommand(BaseCommand):
                         out.write(src.read())
 
             mostrar_info(
-                _("Paquete instalado en {dest}").format(dest=modules_cmd.MODULES_PATH)
+                _("Paquete instalado en {dest}").format(dest=MODULES_PATH)
             )
             return 0
 

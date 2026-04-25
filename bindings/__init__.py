@@ -1,6 +1,10 @@
-"""Superficie pública canónica del contrato de bindings."""
+"""Superficie pública canónica del contrato de bindings (shim deprecado)."""
 
-from bindings.contract import (
+from __future__ import annotations
+
+import warnings
+
+from .contract import (
     BINDINGS_BY_LANGUAGE,
     BindingCapabilities,
     BindingRoute,
@@ -8,6 +12,12 @@ from bindings.contract import (
     PYTHON_BINDING,
     RUST_BINDING,
     resolve_binding,
+)
+
+warnings.warn(
+    "`bindings` está deprecado; usa `pcobra.cobra.bindings` para imports internos.",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 __all__ = [

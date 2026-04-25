@@ -54,7 +54,7 @@ def test_transpile_time(tmp_path, monkeypatch):
     """Verifica que la transpilación de múltiples archivos se realiza rápidamente."""
     # Evita cargas de dependencias externas en la transpilación
     monkeypatch.setattr(
-        "cobra.cli.commands.compile_cmd.module_map.get_toml_map", lambda: {}
+        "cobra.cli.commands.compile_cmd.cli_toml_map", lambda: {}
     )
 
     num_archivos = 5

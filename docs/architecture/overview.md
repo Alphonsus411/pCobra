@@ -46,6 +46,23 @@ En la ruta pública, `cobra build` delega la elección del backend a `backend_pi
 
 `pcobra.cobra.build.backend_pipeline` se considera contrato interno inmutable para compile/transpile/runtime.
 
+## 2.1) Contrato de datos compartidos para CLI de comandos
+
+Para evitar divergencias entre comandos (`commands/` y `commands_v2/`), se define un
+contrato explícito de **únicos puntos autorizados** para catálogo de transpiladores:
+
+- `pcobra.cobra.transpilers.registry` → fuente canónica de inventario interno.
+- `pcobra.cobra.cli.transpiler_registry` → fachada obligatoria para consumo desde CLI.
+
+Reglas operativas:
+
+1. Los comandos CLI no deben declarar constantes locales tipo `TRANSPILERS`, `BACKENDS`,
+   `LANG_CHOICES` o `LANGUAGES`.
+2. Los comandos CLI no deben importar otros módulos `*_cmd.py` (solo se permite
+   compartir base común vía `commands.base`).
+3. Si un comando necesita targets/transpiladores, debe usar exclusivamente
+   `cli_transpilers()` y/o `cli_transpiler_targets()`.
+
 ## 3) Bindings (python/js/rust)
 
 Tras resolver backend, el pipeline valida capacidades/runtime y produce contexto de bridge (`route`, `bridge`, `abi_contract`, `abi_version`). Así la unión con runtime nativo queda encapsulada por contrato de ruta.
@@ -66,3 +83,4 @@ La resolución de imports usa prioridad determinista (`stdlib > project > python
 - `src/pcobra/cobra/imports/resolver.py`
 - `src/pcobra/cobra/transpilers/module_map.py`
 - `docs/architecture/backend-pipeline-checklist.md`
+- `docs/architecture/single_source_of_truth.md`
