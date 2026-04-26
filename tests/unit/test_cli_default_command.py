@@ -269,6 +269,9 @@ def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
     assert result == 1
     stdout = capsys.readouterr().out
     assert "no se indicó ningún comando" in stdout.lower()
+    assert "ejemplos públicos" not in stdout.lower()
+    assert "positional arguments" not in stdout.lower()
+    assert "comandos disponibles" not in stdout.lower()
     assert "run" not in stdout.lower()
     assert "repl" not in stdout.lower()
     assert "--sandbox" not in stdout
@@ -319,3 +322,22 @@ def test_public_help_no_expone_aliases_legacy_en_superficie_visible(capsys):
     assert "repl" in stdout
     legacy_as_command = re.compile(r"^\s+(ejecutar|compilar|verificar|modulos)\b", re.MULTILINE)
     assert legacy_as_command.search(stdout) is None
+
+
+def test_build_argument_parser_preserva_epilogo_publico_minimo():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        app = CliApplication()
+        app.initialize()
+
+    assert app.parser is not None
+    epilog = app.parser.epilog
+    assert epilog is not None
+    for ejemplo in (
+        "cobra run <archivo.co>",
+        "cobra build <archivo.co>",
+        "cobra test <archivo.co>",
+        "cobra mod <list|install|remove|publish|search>",
+        "cobra repl",
+    ):
+        assert ejemplo in epilog
