@@ -82,7 +82,14 @@ class ReplCommandV2(BaseCommand):
         return None
 
     def _es_entrada_incompleta_por_metadata(self, err: ParserError) -> bool:
-        """Clasifica entrada incompleta priorizando metadatos del ``ParserError``."""
+        """Determina incompleto **solo** con metadatos del ``ParserError``.
+
+        El criterio es único y auditable: la entrada se considera incompleta
+        únicamente cuando ``prevalidar_y_parsear_codigo`` emite un ``ParserError``
+        que reporta EOF inesperado y, además, al menos un token de cierre
+        pendiente en ``esperado`` (por ejemplo ``FIN``, ``RPAREN``,
+        ``RBRACKET`` o ``RBRACE``).
+        """
         token_actual = self._extraer_token_desde_error(err)
         tipo_token_actual = self._normalizar_tipo_token(
             getattr(token_actual, "tipo", None)
@@ -108,27 +115,19 @@ class ReplCommandV2(BaseCommand):
             return False
 
         eof_por_flag = bool(
-            getattr(err, "eof", False)
+            getattr(err, "unexpected_eof", False)
+            or getattr(err, "eof", False)
             or getattr(err, "es_eof", False)
-            or getattr(err, "unexpected_eof", False)
-            or getattr(err, "is_eof", False)
-            or getattr(err, "at_eof", False)
-            or getattr(err, "en_eof", False)
         )
         eof_por_token = tipo_token_actual == TipoToken.EOF
-        posicion_eof = bool(
-            getattr(err, "posicion_eof", False)
-            or getattr(err, "position_eof", False)
-            or getattr(err, "eof_position", False)
-            or getattr(err, "at_end_of_input", False)
-        )
-
-        return eof_por_flag or eof_por_token or posicion_eof
+        return eof_por_flag or eof_por_token
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.
 
-        Prioriza metadatos de ``ParserError`` (tipo/token/estado EOF).
+        La decisión sale exclusivamente del ``ParserError`` emitido por
+        ``prevalidar_y_parsear_codigo``: EOF inesperado + cierres pendientes
+        en tokens esperados.
         """
 
         if not isinstance(exc, ParserError):
