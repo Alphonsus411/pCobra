@@ -447,3 +447,33 @@ def test_repl_v2_no_altera_semantica_en_statements_var_imprimir_y_si_fin() -> No
 
     assert resultado["stderr"] == ""
     assert lineas == ["10", "20"]
+
+
+@pytest.mark.integration
+def test_repl_incremental_var_var_imprimir_sin_regresion_cse_y_estado_final() -> None:
+    snippets = [
+        "var x = 5",
+        "var y = x * 2",
+        "imprimir(y)",
+    ]
+    resultado = _ejecutar_snippets_secuenciales_repl(
+        snippets,
+        variables_estado=("x", "y"),
+    )
+
+    evidencia = "\n".join(
+        fragmento
+        for fragmento in (
+            str(resultado["stdout"]),
+            str(resultado["stderr"]),
+            str(resultado["error"]) if resultado["error"] is not None else "",
+        )
+        if fragmento
+    )
+
+    assert resultado["error"] is None
+    assert "Variable no declarada: _cse0" not in evidencia
+    assert "Variable no declarada: _cse" not in evidencia
+    assert resultado["stderr"] == ""
+    assert str(resultado["stdout"]).strip().endswith("10")
+    assert resultado["estado"] == {"x": 5, "y": 10}

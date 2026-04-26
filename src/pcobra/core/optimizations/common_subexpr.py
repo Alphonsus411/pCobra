@@ -51,6 +51,11 @@ class _ExprCounter(NodeVisitor):
         self.counts[key] = self.counts.get(key, 0) + 1
         self.visit(nodo.operando)
 
+    def visit_asignacion(self, nodo: NodoAsignacion):
+        # ``NodoAsignacion`` expone alias ``expresion`` y ``valor`` al mismo nodo;
+        # contar ambos duplica subexpresiones y genera CSE espurio.
+        self.visit(nodo.expresion)
+
     def generic_visit(self, node: Any):
         if not isinstance(node, NodoAST):
             raise RuntimeError(
@@ -93,7 +98,11 @@ class _CommonSubexprEliminator(NodeVisitor):
             nombre = f"_cse{len(cur)}"
             cur[key] = nombre
             self._current_assigns().append(
-                NodoAsignacion(nombre, copy.deepcopy(expr))
+                NodoAsignacion(
+                    nombre,
+                    copy.deepcopy(expr),
+                    declaracion=True,
+                )
             )
         return NodoIdentificador(cur[key])
 
@@ -113,6 +122,12 @@ class _CommonSubexprEliminator(NodeVisitor):
         key = _expr_key(nodo)
         if self.counts.get(key, 0) > 1:
             return self._replace(key, NodoOperacionUnaria(nodo.operador, nodo.operando))
+        return nodo
+
+    def visit_asignacion(self, nodo: NodoAsignacion):
+        nodo.expresion = self.visit(nodo.expresion)
+        # Mantener alias de compatibilidad alineados.
+        nodo.valor = nodo.expresion
         return nodo
 
     def visit_funcion(self, nodo: NodoFuncion):
