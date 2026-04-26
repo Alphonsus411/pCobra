@@ -63,6 +63,59 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
     assert runtime_alternativo_calls == []
 
 
+def test_repl_v2_ejecutar_modo_normal_delega_parseo_al_delegate(monkeypatch):
+    command = repl_module.ReplCommandV2()
+    called: dict[str, object] = {}
+
+    def _fake_delegate(codigo: str, prevalidar_fn):
+        called["codigo"] = codigo
+        called["prevalidar_fn"] = prevalidar_fn
+
+    monkeypatch.setattr(
+        command._delegate,
+        "parsear_y_ejecutar_codigo_repl",
+        _fake_delegate,
+    )
+
+    command._ejecutar_en_modo_normal("imprimir(1)", object)
+
+    assert called == {
+        "codigo": "imprimir(1)",
+        "prevalidar_fn": repl_module.prevalidar_y_parsear_codigo,
+    }
+
+
+def test_repl_v2_sandbox_docker_no_usa_camino_normal(monkeypatch):
+    command = repl_module.ReplCommandV2()
+    entradas = iter(["imprimir(1)", "exit"])
+    prevalidaciones: list[str] = []
+    docker_calls: list[tuple[str, str]] = []
+    normal_calls: list[str] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda codigo: prevalidaciones.append(codigo))
+    monkeypatch.setattr(
+        command._delegate,
+        "_ejecutar_en_docker",
+        lambda codigo, backend: docker_calls.append((codigo, backend)),
+    )
+    monkeypatch.setattr(
+        command,
+        "_ejecutar_en_modo_normal",
+        lambda codigo, _interpretador_cls: normal_calls.append(codigo),
+    )
+
+    args = _args_repl()
+    args.sandbox_docker = "python"
+
+    status = command.run(args)
+
+    assert status == 0
+    assert prevalidaciones == ["imprimir(1)"]
+    assert docker_calls == [("imprimir(1)", "python")]
+    assert normal_calls == []
+
+
 def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
     command = repl_module.ReplCommandV2()
     command._interpretador_persistente = {}
