@@ -6,8 +6,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     SANDBOX_DOCKER_CHOICES,
 )
 from pcobra.cobra.cli.execution_pipeline import (
-    PipelineInput,
-    ejecutar_pipeline_explicito,
+    ejecutar_pipeline_explicito,  # Compatibilidad con pruebas que monkeypatchean este símbolo.
     prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
 )
@@ -87,25 +86,27 @@ class ReplCommandV2(BaseCommand):
         parser.set_defaults(cmd=self)
         return parser
 
+    def _sincronizar_estado_hacia_delegate(self) -> None:
+        """Sincroniza estado persistente local hacia el comando delegado."""
+        if self._interpretador_persistente is not None:
+            self._delegate.interpretador = self._interpretador_persistente
+        self._delegate._seguro_repl = self._seguro_repl
+        self._delegate._extra_validators_repl = self._extra_validators_repl
+
+    def _sincronizar_estado_desde_delegate(self) -> None:
+        """Sincroniza estado del comando delegado hacia el estado local."""
+        self._interpretador_persistente = self._delegate.interpretador
+        self._seguro_repl = self._delegate._seguro_repl
+        self._extra_validators_repl = self._delegate._extra_validators_repl
+
     def _ejecutar_en_modo_normal(self, codigo: str, interpretador_cls: type) -> None:
-        """Ejecuta una entrada REPL usando el pipeline CLI compartido."""
-        setup, _resultado_pipeline = ejecutar_pipeline_explicito(
-            PipelineInput(
-                codigo=codigo,
-                interpretador_cls=interpretador_cls,
-                safe_mode=self._seguro_repl,
-                extra_validators=self._extra_validators_repl,
-                interpretador=self._interpretador_persistente,
-            ),
-        )
-        self._interpretador_persistente = setup.interpretador
-        self._seguro_repl = setup.safe_mode
-        self._extra_validators_repl = setup.validadores_extra
-        if _resultado_pipeline is not None:
-            self._delegate._imprimir_resultado_repl(
-                _resultado_pipeline.ast,
-                _resultado_pipeline.resultado,
-            )
+        """Ejecuta una entrada REPL reutilizando la lógica canónica de InteractiveCommand."""
+        _ = interpretador_cls
+        self._sincronizar_estado_hacia_delegate()
+        try:
+            self._delegate.ejecutar_codigo(codigo)
+        finally:
+            self._sincronizar_estado_desde_delegate()
 
     def _reset_buffer_local(self, buffer: list[str]) -> None:
         """Limpia el buffer de entrada local del REPL v2."""
