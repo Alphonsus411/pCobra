@@ -439,10 +439,10 @@ class InteractiveCommand(BaseCommand):
         if not self._es_expresion_top_level_elegible(ast):
             return False
 
-        nodo = ast[0]
-        nombre_nodo_ast = nodo.__class__.__name__
-        match_nodo = re.search(r"(Nodo[A-Za-z0-9_]+)", mensaje_error)
-        if match_nodo and match_nodo.group(1) != nombre_nodo_ast:
+        if not self._es_consistente_nodo_error_vs_ast(
+            mensaje_error=mensaje_error,
+            ast=ast,
+        ):
             return False
 
         return True
@@ -457,7 +457,11 @@ class InteractiveCommand(BaseCommand):
         if len(ast) != 1:
             return False
 
-        nombre_nodo = ast[0].__class__.__name__
+        nodo = ast[0]
+        nombre_nodo = nodo.__class__.__name__
+        if not nombre_nodo.startswith("Nodo"):
+            return False
+
         nodos_no_expresion = frozenset(
             {
                 "NodoAsignacion",
@@ -503,6 +507,26 @@ class InteractiveCommand(BaseCommand):
             return True
 
         return nombre_nodo.startswith("Nodo")
+
+    def _es_consistente_nodo_error_vs_ast(
+        self,
+        *,
+        mensaje_error: str,
+        ast: list[Any],
+        validar_consistencia: bool = True,
+    ) -> bool:
+        """Verifica consistencia opcional entre nodo reportado en error y AST real."""
+        if not validar_consistencia:
+            return True
+        if len(ast) != 1:
+            return False
+
+        match_nodo = re.search(r"(Nodo[A-Za-z0-9_]+)", mensaje_error)
+        if not match_nodo:
+            return True
+
+        nombre_nodo_ast = ast[0].__class__.__name__
+        return match_nodo.group(1) == nombre_nodo_ast
 
     def _imprimir_resultado_repl(self, ast: list[Any], resultado: Any) -> None:
         """Imprime el resultado del REPL cuando aplica contrato de echo."""
