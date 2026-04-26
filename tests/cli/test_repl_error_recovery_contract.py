@@ -13,11 +13,11 @@ def test_repl_bloque_incompleto_con_fin_anidado_sigue_acumulando(monkeypatch):
     cmd = InteractiveCommand(MagicMock())
     entradas = iter(
         [
-            "si 1 == 1 :",
-            "si 2 == 2 :",
-            "imprimir(\"interno\")",
+            "si verdadero:",
+            "si verdadero:",
+            "    imprimir(\"interno\")",
             "fin",
-            "imprimir(\"externo\")",
+            "    imprimir(\"externo\")",
             "fin",
             "salir",
         ]
@@ -40,10 +40,10 @@ def test_repl_bloque_incompleto_con_fin_anidado_sigue_acumulando(monkeypatch):
     )
 
     ejecutar_spy.assert_called_once_with(
-        'si 1 == 1 :\nsi 2 == 2 :\nimprimir("interno")\nfin\nimprimir("externo")\nfin',
+        'si verdadero:\nsi verdadero:\n    imprimir("interno")\nfin\n    imprimir("externo")\nfin',
         None,
     )
-    assert prompts[:6] == ["cobra> ", "... ", "... ", "... ", "... ", "... "]
+    assert prompts[:6] == [">>> ", "... ", "... ", "... ", "... ", "... "]
 
 
 @pytest.mark.integration
@@ -71,7 +71,7 @@ def test_repl_error_sintactico_por_cierre_extra_reporta_y_acepta_nuevas_entradas
         sandbox_docker=None,
     )
 
-    assert any("'fin' sin bloque abierto" in msg for msg in errores)
+    assert any("'fin'" in msg and "inesperado" in msg for msg in errores)
     ejecutar_spy.assert_called_once_with('imprimir("ok")', None)
     assert cmd._estado_repl["buffer_lineas"] == []
     assert cmd._estado_repl["nivel_bloque"] == 0

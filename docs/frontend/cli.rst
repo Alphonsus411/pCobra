@@ -131,6 +131,19 @@ Ejemplo:
 
    cobra repl
 
+Prompts del REPL (contrato UX):
+
+.. code-block:: text
+
+   >>> var x = 1
+   >>> si x == 1:
+   ...     imprimir("ok")
+   ... fin
+   ok
+
+El prompt inicial es ``>>> `` y el prompt de continuación es ``... `` cuando
+existe un bloque/buffer pendiente de cierre o ejecución.
+
 Subcomando ``menu``
 -------------------
 Muestra un asistente en consola para guiar la transpilación entre lenguajes.

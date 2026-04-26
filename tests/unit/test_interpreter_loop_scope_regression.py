@@ -32,7 +32,10 @@ def _lineas_sin_trazas(salida: str) -> list[str]:
             continue
         if linea.startswith("["):
             continue
-        if linea.startswith("cobra> "):
+        if linea.startswith(">>> "):
+            linea = linea[len(">>> ") :].strip()
+        elif linea.startswith("cobra> "):
+            # Compatibilidad defensiva para trazas legacy.
             linea = linea[len("cobra> ") :].strip()
         if linea.startswith("... "):
             linea = linea[len("... ") :].strip()

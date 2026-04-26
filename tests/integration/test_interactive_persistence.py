@@ -27,12 +27,12 @@ def _spawn(args="interactive", extra_env=None):
 @pytest.mark.integration
 def test_interactive_persistence():
     child = _spawn()
-    child.expect("cobra> ")
-    child.sendline("x = 42")
-    child.expect("cobra> ")
+    child.expect(">>> ")
+    child.sendline("var x = 42")
+    child.expect(">>> ")
     child.sendline("imprimir(x)")
     child.expect("42")
-    child.expect("cobra> ")
+    child.expect(">>> ")
     child.sendline("salir")
     child.expect(pexpect.EOF)
     child.wait()
