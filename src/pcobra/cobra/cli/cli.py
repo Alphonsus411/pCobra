@@ -36,6 +36,7 @@ from pcobra.cobra.cli.public_command_policy import (
     COMMAND_VISIBILITY_MATRIX_MARKDOWN,
     PROFILE_DEVELOPMENT,
     PROFILE_PUBLIC,
+    PUBLIC_COMMANDS_CONTRACT,
     filter_commands_for_profile,
     filter_legacy_commands_for_profile,
     resolve_command_profile,
@@ -69,6 +70,10 @@ COBRA_INTERNAL_ENABLE_CLI_V1_ENV = "COBRA_INTERNAL_ENABLE_CLI_V1"
 COBRA_ENABLE_LEGACY_CLI_ENV = "COBRA_INTERNAL_ENABLE_LEGACY_CLI"
 LANG_CHOICES = tuple(OFFICIAL_TRANSPILATION_TARGETS)
 LEGACY_COMMAND_MIGRATION_MAP: dict[str, dict[str, str]] = {
+    "interactive": {
+        "target": "repl",
+        "hint": "cobra repl",
+    },
     "ejecutar": {
         "target": "run",
         "hint": "cobra run <archivo.co>",
@@ -723,6 +728,9 @@ class CliApplication:
             return normalized
 
         command_token = normalized[command_idx].strip().lower()
+        if command_token in PUBLIC_COMMANDS_CONTRACT:
+            return normalized
+
         migration = LEGACY_COMMAND_MIGRATION_MAP.get(command_token)
         if not migration:
             return normalized
@@ -733,7 +741,8 @@ class CliApplication:
             _(
                 "Comando legacy '{legacy}' detectado fuera de entorno interno. "
                 "Migración automática aplicada: use '{current}'. "
-                "Sugerencia: {hint}."
+                "Sugerencia: {hint}. "
+                "Flujo interactivo oficial: cobra repl."
             ).format(
                 legacy=command_token,
                 current=migrated_to,

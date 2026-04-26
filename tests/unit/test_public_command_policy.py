@@ -9,7 +9,7 @@ from cobra.cli.public_command_policy import (
 
 def test_filter_commands_publico_permite_solo_superficie_v2_publica():
     visibles = filter_commands_for_profile(
-        ("run", "build", "test", "mod", "repl", "legacy", "debug"),
+        ("run", "build", "test", "mod", "repl", "interactive", "legacy", "debug"),
         PROFILE_PUBLIC,
     )
     assert visibles == {"run", "build", "test", "mod", "repl"}
