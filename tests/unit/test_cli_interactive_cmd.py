@@ -101,7 +101,7 @@ def test_interactive_eof_error():
 
 
 def test_interactive_session_persistence():
-    inputs = ['x = 5', 'imprimir(x)', 'salir']
+    inputs = ['var x = 5', 'imprimir(x)', 'salir']
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
@@ -176,7 +176,7 @@ def test_interactive_persist_debug_enabled_en_estado_repl():
 
 
 def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
-    inputs = ['si 1 == 1 :', 'imprimir "ok"', 'fin', 'salir']
+    inputs = ['si verdadero:', 'imprimir "ok"', 'fin', 'salir']
     cmd = InteractiveCommand(MagicMock())
 
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
@@ -188,14 +188,14 @@ def test_interactive_multiline_si_ejecuta_al_cerrar_bloque():
     assert ret == 0
     assert mock_ejecutar.call_count == 1
     codigo_ejecutado, args_ejecutar = mock_ejecutar.call_args[0]
-    assert codigo_ejecutado == 'si 1 == 1 :\nimprimir "ok"\nfin'
+    assert codigo_ejecutado == 'si verdadero:\nimprimir "ok"\nfin'
     assert args_ejecutar is None
 
 
 def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
     cmd = InteractiveCommand(MagicMock())
     prompts = []
-    entradas = iter(['si 1 == 1 :', 'imprimir "ok"', 'fin', 'salir'])
+    entradas = iter(['si verdadero:', 'imprimir "ok"', 'fin', 'salir'])
 
     def _prompt_side_effect(prompt_text):
         prompts.append(prompt_text)
@@ -207,12 +207,12 @@ def test_interactive_multiline_si_usa_prompt_secundario_y_no_parsea_antes():
          patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
         cmd.run(_args())
 
-    assert prompts[:3] == ['cobra> ', '... ', '... ']
+    assert prompts[:3] == ['>>> ', '... ', '... ']
     assert mock_ejecutar.call_count == 1
 
 
 def test_interactive_multiline_bloque_con_multiples_sentencias_se_ejecuta_igual():
-    inputs = ['si 1 == 1 :', 'x = 1', 'imprimir(x)', 'fin', 'salir']
+    inputs = ['si verdadero:', 'var x = 1', 'imprimir(x)', 'fin', 'salir']
     cmd = InteractiveCommand(MagicMock())
 
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
@@ -222,7 +222,7 @@ def test_interactive_multiline_bloque_con_multiples_sentencias_se_ejecuta_igual(
         ret = cmd.run(_args())
 
     assert ret == 0
-    mock_ejecutar.assert_called_once_with('si 1 == 1 :\nx = 1\nimprimir(x)\nfin', None)
+    mock_ejecutar.assert_called_once_with('si verdadero:\nvar x = 1\nimprimir(x)\nfin', None)
 
 
 def test_interactive_rechaza_fin_sin_bloque_abierto():
@@ -241,7 +241,7 @@ def test_interactive_rechaza_fin_sin_bloque_abierto():
 def test_interactive_rechaza_bloque_vacio():
     cmd = InteractiveCommand(MagicMock())
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
-         patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', 'fin', 'salir']), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['si verdadero:', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout, \
          patch('cobra.cli.commands.interactive_cmd.InteractiveCommand.validar_entrada', return_value=True):
@@ -255,7 +255,7 @@ def test_interactive_rechaza_bloque_vacio():
 def test_interactive_lineas_blancas_en_bloque_se_ignoran():
     cmd = InteractiveCommand(MagicMock())
     prompts = []
-    entradas = iter(['si 1 == 1 :', '   ', '', 'imprimir "ok"', 'fin', 'salir'])
+    entradas = iter(['si verdadero:', '   ', '', 'imprimir "ok"', 'fin', 'salir'])
 
     def _prompt_side_effect(prompt_text):
         prompts.append(prompt_text)
@@ -267,14 +267,14 @@ def test_interactive_lineas_blancas_en_bloque_se_ignoran():
         ret = cmd.run(_args())
 
     assert ret == 0
-    assert prompts[:5] == ['cobra> ', '... ', '... ', '... ', '... ']
+    assert prompts[:5] == ['>>> ', '... ', '... ', '... ', '... ']
     assert mock_ejecutar.call_count == 1
-    assert mock_ejecutar.call_args[0][0] == 'si 1 == 1 :\nimprimir "ok"\nfin'
+    assert mock_ejecutar.call_args[0][0] == 'si verdadero:\nimprimir "ok"\nfin'
 
 
 def test_interactive_comando_especial_no_interfiere_con_fin_y_lineas_blanco_en_bloque():
     cmd = InteractiveCommand(MagicMock())
-    entradas = ['si 1 == 1 :', 'tokens', '', 'imprimir "ok"', 'fin', 'tokens', 'salir']
+    entradas = ['si verdadero:', 'tokens', '', 'imprimir "ok"', 'fin', 'tokens', 'salir']
 
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=entradas), \
@@ -285,7 +285,7 @@ def test_interactive_comando_especial_no_interfiere_con_fin_y_lineas_blanco_en_b
         ret = cmd.run(_args())
 
     assert ret == 0
-    mock_ejecutar.assert_called_once_with('si 1 == 1 :\ntokens\nimprimir "ok"\nfin', None)
+    mock_ejecutar.assert_called_once_with('si verdadero:\ntokens\nimprimir "ok"\nfin', None)
     lineas_comando_especial = [call.args[0] for call in mock_comando.call_args_list]
     assert lineas_comando_especial.count('tokens') == 1
 
@@ -306,7 +306,7 @@ def test_repl_basico_comparte_validacion_fin_sin_bloque():
 def test_interactive_rechaza_exceso_lineas_blanco_consecutivas_en_bloque():
     cmd = InteractiveCommand(MagicMock())
     with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
-         patch('prompt_toolkit.PromptSession.prompt', side_effect=['si 1 == 1 :', '', '', '', 'fin', 'salir']), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=['si verdadero:', '', '', '', 'fin', 'salir']), \
          patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar, \
          patch('sys.stdout', new_callable=StringIO) as mock_stdout:
         ret = cmd.run(_args())
