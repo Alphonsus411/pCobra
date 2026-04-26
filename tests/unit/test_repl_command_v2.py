@@ -32,14 +32,14 @@ def _parser_error_con_metadata(
 @pytest.mark.parametrize(
     ("mensaje", "es_incompleto"),
     [
-        ("Se esperaba 'fin' para cerrar el bloque condicional", True),
-        ("Token inesperado en término: TipoToken.EOF", True),
-        ("Se esperaba ']' al final de la lista", True),
+        ("Se esperaba 'fin' para cerrar el bloque condicional", False),
+        ("Token inesperado en término: TipoToken.EOF", False),
+        ("Se esperaba ']' al final de la lista", False),
         ("Token inesperado: '('", False),
         ("Se encontró 'fin' inesperado", False),
     ],
 )
-def test_es_error_de_bloque_incompleto_por_mensajes_parser(mensaje, es_incompleto):
+def test_es_error_de_bloque_incompleto_no_depende_de_mensajes_parser(mensaje, es_incompleto):
     command = ReplCommandV2()
     assert command.es_error_de_bloque_incompleto(ParserError(mensaje)) is es_incompleto
 
@@ -130,7 +130,12 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo != "si verdadero:\nimprimir(1)\nfin":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         return []
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
@@ -177,7 +182,12 @@ def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
 
     def _fake_parse(codigo: str):
         if codigo != "si verdadero:\nimprimir(1)\nfin":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         return []
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
@@ -262,7 +272,12 @@ def test_repl_v2_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo != "si verdadero:\nexit\nfin":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         return []
 
     class _Setup:
@@ -328,7 +343,12 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
         (
             ["si verdadero :", "fin", "exit"],
             {
-                "si verdadero :": "Se esperaba 'fin' para cerrar el bloque condicional",
+                "si verdadero :": _parser_error_con_metadata(
+                    "Se esperaba 'fin' para cerrar el bloque condicional",
+                    esperado=[TipoToken.FIN],
+                    token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                    eof=True,
+                ),
             },
             ["si verdadero :", "si verdadero :\nfin"],
             ["si verdadero :\nfin"],
@@ -337,7 +357,12 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
         (
             ["mientras verdadero :", "fin", "exit"],
             {
-                "mientras verdadero :": "Se esperaba 'fin' para cerrar el bloque mientras",
+                "mientras verdadero :": _parser_error_con_metadata(
+                    "Se esperaba 'fin' para cerrar el bloque mientras",
+                    esperado=[TipoToken.FIN],
+                    token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                    eof=True,
+                ),
             },
             ["mientras verdadero :", "mientras verdadero :\nfin"],
             ["mientras verdadero :\nfin"],
@@ -346,7 +371,12 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
         (
             ["si verdadero :", "imprimir(1", "var z = 9", "exit"],
             {
-                "si verdadero :": "Se esperaba 'fin' para cerrar el bloque condicional",
+                "si verdadero :": _parser_error_con_metadata(
+                    "Se esperaba 'fin' para cerrar el bloque condicional",
+                    esperado=[TipoToken.FIN],
+                    token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                    eof=True,
+                ),
                 "si verdadero :\nimprimir(1": "Token inesperado: '('",
             },
             ["si verdadero :", "si verdadero :\nimprimir(1", "var z = 9"],
@@ -379,7 +409,10 @@ def test_repl_v2_incompleto_vs_error_real_buffer(
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo in errores_por_codigo:
-            raise ParserError(errores_por_codigo[codigo])
+            err = errores_por_codigo[codigo]
+            if isinstance(err, ParserError):
+                raise err
+            raise ParserError(err)
         return []
 
     class _Setup:
@@ -469,7 +502,12 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo == "si verdadero:":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         if codigo == "si verdadero:\nimprimir(1":
             raise ParserError("Token inesperado: '('")
         return []
@@ -514,7 +552,12 @@ def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
 
     def _fake_parse(codigo: str):
         if codigo == "si verdadero:":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         return []
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
@@ -616,7 +659,12 @@ def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_es
             "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
             "imprimir(total)",
         }:
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         return []
 
     class _Setup:
@@ -806,7 +854,12 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo != "si verdadero:\nimprimir(1)\nfin":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
         return []
 
     class _Setup:

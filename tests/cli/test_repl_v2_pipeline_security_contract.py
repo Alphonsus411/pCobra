@@ -3,8 +3,15 @@ from __future__ import annotations
 import argparse
 
 from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_module
-from pcobra.cobra.core import ParserError
+from pcobra.cobra.core import ParserError, TipoToken
 
+
+def _parser_error_incompleto(esperado):
+    err = ParserError("entrada incompleta")
+    err.esperado = [esperado]
+    err.token_actual = type("Tok", (), {"tipo": TipoToken.EOF})()
+    err.eof = True
+    return err
 
 
 def _args_repl() -> argparse.Namespace:
@@ -102,7 +109,7 @@ def test_repl_v2_bloque_anidado_real_mientras_si_fin_fin_acumula_hasta_completar
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo != bloque_completo:
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque")
+            raise _parser_error_incompleto(TipoToken.FIN)
         return [object()]
 
     class _Setup:
@@ -142,7 +149,7 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_repl_sigue(monkeypatch):
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo == "si verdadero:":
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_incompleto(TipoToken.FIN)
         if codigo == "si verdadero:\nimprimir(1":
             raise ParserError("Token inesperado: '('")
         return [object()]
@@ -181,7 +188,7 @@ def test_repl_v2_bloque_incompleto_no_ejecuta_ni_limpia_hasta_completar(monkeypa
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         if codigo != bloque_completo:
-            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+            raise _parser_error_incompleto(TipoToken.FIN)
         return [object()]
 
     class _Setup:

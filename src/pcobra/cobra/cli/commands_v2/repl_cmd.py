@@ -19,33 +19,6 @@ from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.target_policies import parse_runtime_target
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
-_PATRONES_ERROR_BLOQUE_INCOMPLETO: tuple[tuple[str, str], ...] = (
-    (
-        "se esperaba 'fin' para cerrar",
-        "El parser llegó a EOF con un bloque de control sin cerrar con 'fin'.",
-    ),
-    (
-        "tipotoken.eof",
-        "El parser encontró EOF donde esperaba más tokens válidos para completar la sentencia.",
-    ),
-    (
-        "se esperaba ')' para cerrar",
-        "El parser detectó delimitador de paréntesis pendiente de cierre.",
-    ),
-    (
-        "se esperaba ')' al final",
-        "El parser detectó delimitador de paréntesis pendiente de cierre al finalizar la entrada.",
-    ),
-    (
-        "se esperaba ']' al final",
-        "El parser detectó delimitador de lista pendiente de cierre al finalizar la entrada.",
-    ),
-    (
-        "se esperaba '}' al final",
-        "El parser detectó delimitador de diccionario pendiente de cierre al finalizar la entrada.",
-    ),
-)
-
 _TOKENS_CIERRE_INCOMPLETO = {
     TipoToken.FIN,
     TipoToken.RPAREN,
@@ -85,9 +58,27 @@ class ReplCommandV2(BaseCommand):
 
     def _extraer_token_desde_error(self, err: ParserError) -> Any | None:
         """Obtiene el token actual desde metadatos del ``ParserError`` si existe."""
-        for attr in ("token_actual", "token", "current_token", "actual_token"):
+        for attr in (
+            "token_actual",
+            "token",
+            "current_token",
+            "actual_token",
+            "last_token",
+            "ultimo_token",
+        ):
             if hasattr(err, attr):
-                return getattr(err, attr)
+                token = getattr(err, attr)
+                if token is not None:
+                    return token
+        for attr in ("estado", "state", "parser_state"):
+            if hasattr(err, attr):
+                estado = getattr(err, attr)
+                if estado is None:
+                    continue
+                for token_attr in ("token_actual", "token", "current_token"):
+                    token = getattr(estado, token_attr, None)
+                    if token is not None:
+                        return token
         return None
 
     def _es_entrada_incompleta_por_metadata(self, err: ParserError) -> bool:
@@ -112,41 +103,37 @@ class ReplCommandV2(BaseCommand):
         tipos_esperados = {self._normalizar_tipo_token(item) for item in esperados}
         tipos_esperados.discard(None)
 
-        eof_explicito = bool(
+        cierre_esperado = bool(tipos_esperados & _TOKENS_CIERRE_INCOMPLETO)
+        if not cierre_esperado:
+            return False
+
+        eof_por_flag = bool(
             getattr(err, "eof", False)
             or getattr(err, "es_eof", False)
             or getattr(err, "unexpected_eof", False)
             or getattr(err, "is_eof", False)
-            or tipo_token_actual == TipoToken.EOF
+            or getattr(err, "at_eof", False)
+            or getattr(err, "en_eof", False)
+        )
+        eof_por_token = tipo_token_actual == TipoToken.EOF
+        posicion_eof = bool(
+            getattr(err, "posicion_eof", False)
+            or getattr(err, "position_eof", False)
+            or getattr(err, "eof_position", False)
+            or getattr(err, "at_end_of_input", False)
         )
 
-        if eof_explicito and bool(tipos_esperados & _TOKENS_CIERRE_INCOMPLETO):
-            return True
-
-        posicion = (
-            getattr(err, "posicion", None)
-            or getattr(err, "position", None)
-            or getattr(err, "indice", None)
-            or getattr(err, "index", None)
-        )
-        if eof_explicito and tipos_esperados and posicion is not None:
-            return True
-
-        return False
+        return eof_por_flag or eof_por_token or posicion_eof
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.
 
-        Prioriza metadatos de ``ParserError`` (tipo/token/posición) y usa
-        matching textual como *fallback* controlado para compatibilidad.
+        Prioriza metadatos de ``ParserError`` (tipo/token/estado EOF).
         """
 
         if not isinstance(exc, ParserError):
             return False
-        if self._es_entrada_incompleta_por_metadata(exc):
-            return True
-        mensaje = str(exc).strip().lower()
-        return any(patron in mensaje for patron, _razon in _PATRONES_ERROR_BLOQUE_INCOMPLETO)
+        return self._es_entrada_incompleta_por_metadata(exc)
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
