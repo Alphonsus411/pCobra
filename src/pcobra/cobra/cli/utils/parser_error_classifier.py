@@ -143,16 +143,6 @@ def _es_entrada_incompleta_por_mensaje(err: ParserError) -> bool:
     if "sin bloque" in mensaje:
         return False
 
-    indicadores_eof = (
-        "fin de entrada",
-        "final de entrada",
-        "unexpected eof",
-        "unexpected end of input",
-        "eof",
-    )
-    if not any(indicador in mensaje for indicador in indicadores_eof):
-        return False
-
     indicadores_cierre = (
         "se esperaba 'fin'",
         'se esperaba "fin"',
