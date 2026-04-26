@@ -35,6 +35,7 @@ import cobra.cli
 import cobra.cli.commands
 
 from cobra.cli.commands.interactive_cmd import InteractiveCommand, format_user_error
+from cobra.core import ParserError, LexerError
 from core.interpreter import InterpretadorCobra
 
 
@@ -526,3 +527,48 @@ def test_run_repl_loop_reporta_error_sandbox_una_sola_vez():
         )
 
     mock_error.assert_called_once_with("fallo controlado", registrar_log=False)
+
+
+def test_es_error_de_bloque_incompleto_usa_fallback_textual_si_falta_metadata():
+    cmd = InteractiveCommand(MagicMock())
+    err = ParserError("Unexpected EOF: se esperaba 'fin' para cerrar el bloque")
+    assert cmd._es_error_de_bloque_incompleto(err) is True
+
+
+def test_es_error_de_bloque_incompleto_no_aplica_fallback_a_lexer_ni_runtime():
+    cmd = InteractiveCommand(MagicMock())
+    assert cmd._es_error_de_bloque_incompleto(
+        LexerError("Unexpected EOF: se esperaba 'fin'", 1, 1)
+    ) is False
+    assert cmd._es_error_de_bloque_incompleto(RuntimeError("Unexpected EOF: se esperaba 'fin'")) is False
+
+
+def test_run_repl_loop_continue_mantiene_buffer_en_error_incompleto_por_fallback():
+    cmd = InteractiveCommand(MagicMock())
+    entradas = iter(["si verdadero:", "imprimir(1)", "fin", "salir"])
+    parse_calls: list[str] = []
+    ejecutados: list[str] = []
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo != "si verdadero:\nimprimir(1)\nfin":
+            raise ParserError("Unexpected EOF: se esperaba 'fin' para cerrar el bloque")
+        return []
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch("cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo", side_effect=_fake_parse), \
+         patch.object(cmd, "ejecutar_codigo", side_effect=lambda codigo, _validador: ejecutados.append(codigo)):
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=lambda _prompt: next(entradas),
+            sandbox=False,
+            sandbox_docker=None,
+        )
+
+    assert parse_calls == [
+        "si verdadero:",
+        "si verdadero:\nimprimir(1)",
+        "si verdadero:\nimprimir(1)\nfin",
+    ]
+    assert ejecutados == ["si verdadero:\nimprimir(1)\nfin"]
