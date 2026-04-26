@@ -30,6 +30,7 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
     entradas = iter(["var x = 1", "exit"])
     parse_calls: list[str] = []
     pipeline_calls: list[tuple[str, bool]] = []
+    runtime_alternativo_calls: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
 
@@ -52,12 +53,23 @@ def test_repl_v2_contrato_llama_prevalidacion_y_pipeline_compartido(monkeypatch)
         )
         or (_Setup(), None),
     )
+    monkeypatch.setattr(
+        command._delegate,
+        "_ejecutar_en_sandbox",
+        lambda _codigo: runtime_alternativo_calls.append("sandbox"),
+    )
+    monkeypatch.setattr(
+        command._delegate,
+        "_ejecutar_en_docker",
+        lambda _codigo, _backend: runtime_alternativo_calls.append("docker"),
+    )
 
     status = command.run(_args_repl())
 
     assert status == 0
     assert parse_calls == ["var x = 1"]
     assert pipeline_calls == [("var x = 1", True)]
+    assert runtime_alternativo_calls == []
 
 
 def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
@@ -143,6 +155,7 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_repl_sigue(monkeypatch):
     entradas = iter(["si verdadero:", "imprimir(1", "var ok = 1", "exit"])
     parse_calls: list[str] = []
     pipeline_calls: list[str] = []
+    errores_reportados: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
 
@@ -162,6 +175,11 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_repl_sigue(monkeypatch):
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
+        command._delegate,
+        "_log_error",
+        lambda _categoria, err: errores_reportados.append(str(err)),
+    )
+    monkeypatch.setattr(
         repl_module,
         "ejecutar_pipeline_explicito",
         lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
@@ -173,6 +191,7 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_repl_sigue(monkeypatch):
     assert status == 0
     assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1", "var ok = 1"]
     assert pipeline_calls == ["var ok = 1"]
+    assert errores_reportados == ["Token inesperado: '('"]
 
 
 def test_repl_v2_bloque_incompleto_no_ejecuta_ni_limpia_hasta_completar(monkeypatch):
