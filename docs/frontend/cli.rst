@@ -2,12 +2,13 @@ CLI de Cobra
 ===========
 
 La CLI pública de Cobra se enfoca en un flujo estable para usuario final con
-cuatro comandos:
+cinco comandos:
 
 - ``cobra run archivo.cobra``
 - ``cobra build archivo.cobra``
 - ``cobra test archivo.cobra``
 - ``cobra mod ...``
+- ``cobra repl``
 
 Estos comandos exponen la UX oficial. La selección de backend, adaptación de
 runtime y detalles de transpilación quedan encapsulados dentro de la
@@ -117,14 +118,14 @@ Ejemplos por perfil:
 
 Subcomando ``interactive``
 -------------------------
-Abre el intérprete interactivo. Es el modo por defecto si no se
-especifica un subcomando.
+El subcomando ``interactive`` se mantiene solo como alias legacy de
+migración. El flujo interactivo oficial en la CLI pública es ``cobra repl``.
 
 Ejemplo:
 
 .. code-block:: bash
 
-   cobra
+   cobra repl
 
 Subcomando ``menu``
 -------------------

@@ -28,9 +28,10 @@ cobra run archivo.cobra
 cobra build archivo.cobra
 cobra test archivo.cobra
 cobra mod list
+cobra repl
 ```
 
-> Contrato público: el lenguaje visible es **Cobra** y los comandos oficiales son `run`, `build`, `test` y `mod`.
+> Contrato público: el lenguaje visible es **Cobra** y los comandos oficiales son `run`, `build`, `test`, `mod` y `repl` (flujo interactivo oficial).
 
 ### Contrato de backends internos oficiales
 
