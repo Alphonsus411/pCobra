@@ -78,7 +78,7 @@ class LegacyCommandGroupV2(BaseCommand):
             messages.mostrar_error(
                 _(
                     "El grupo 'legacy' está restringido a development. "
-                    "Use comandos públicos: cobra run/build/test/mod."
+                    "Use comandos públicos: cobra run/build/test/mod/repl."
                 ),
                 registrar_log=False,
             )
