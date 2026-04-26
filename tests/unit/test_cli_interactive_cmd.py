@@ -572,3 +572,82 @@ def test_run_repl_loop_continue_mantiene_buffer_en_error_incompleto_por_fallback
         "si verdadero:\nimprimir(1)\nfin",
     ]
     assert ejecutados == ["si verdadero:\nimprimir(1)\nfin"]
+
+
+def test_run_repl_loop_bloque_si_parsea_buffer_completo_y_ejecuta_al_cerrar():
+    cmd = InteractiveCommand(MagicMock())
+    entradas = iter(["si x > 5:", "imprimir(x)", "fin", "salir"])
+    prompts: list[str] = []
+    parse_calls: list[str] = []
+    ejecutados: list[str] = []
+
+    def _leer_linea(prompt: str) -> str:
+        prompts.append(prompt)
+        return next(entradas)
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo != "si x > 5:\nimprimir(x)\nfin":
+            raise ParserError("Unexpected EOF: se esperaba 'fin' para cerrar el bloque")
+        return []
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch("cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo", side_effect=_fake_parse), \
+         patch.object(cmd, "ejecutar_codigo", side_effect=lambda codigo, _validador: ejecutados.append(codigo)), \
+         patch.object(cmd, "_log_error") as mock_log_error:
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=_leer_linea,
+            sandbox=False,
+            sandbox_docker=None,
+        )
+
+    assert prompts[:4] == [">>> ", "... ", "... ", ">>> "]
+    assert parse_calls == [
+        "si x > 5:",
+        "si x > 5:\nimprimir(x)",
+        "si x > 5:\nimprimir(x)\nfin",
+    ]
+    assert ejecutados == ["si x > 5:\nimprimir(x)\nfin"]
+    mock_log_error.assert_not_called()
+    assert cmd._estado_repl["buffer_lineas"] == []
+
+
+def test_run_repl_loop_error_sintactico_real_limpia_buffer_y_permite_recuperacion():
+    cmd = InteractiveCommand(MagicMock())
+    entradas = iter(["si x > 5:", "imprimir(x", "imprimir(99)", "salir"])
+    parse_calls: list[str] = []
+    ejecutados: list[str] = []
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo == "si x > 5:\nimprimir(x":
+            raise ParserError("Error de sintaxis: falta ')' en llamada a imprimir")
+        if codigo == "si x > 5:":
+            raise ParserError("Unexpected EOF: se esperaba 'fin' para cerrar el bloque")
+        return []
+
+    with patch.object(cmd, "validar_entrada", return_value=True), \
+         patch("cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo", side_effect=_fake_parse), \
+         patch.object(cmd, "ejecutar_codigo", side_effect=lambda codigo, _validador: ejecutados.append(codigo)), \
+         patch.object(cmd, "_log_error") as mock_log_error:
+        cmd._run_repl_loop(
+            args=_args(),
+            validador=None,
+            leer_linea=lambda _prompt: next(entradas),
+            sandbox=False,
+            sandbox_docker=None,
+        )
+
+    assert parse_calls == [
+        "si x > 5:",
+        "si x > 5:\nimprimir(x",
+        "imprimir(99)",
+    ]
+    mock_log_error.assert_called_once()
+    categoria_error, err = mock_log_error.call_args.args
+    assert categoria_error == "Error de sintaxis"
+    assert "falta ')'" in str(err)
+    assert ejecutados == ["imprimir(99)"]
+    assert cmd._estado_repl["buffer_lineas"] == []
