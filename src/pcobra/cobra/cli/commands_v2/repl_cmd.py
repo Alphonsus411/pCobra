@@ -13,6 +13,7 @@ from pcobra.cobra.cli.execution_pipeline import (
 )
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.parser_error_classifier import (
+    _extraer_token_desde_error as extraer_token_desde_error_parser,
     es_parser_error_de_bloque_incompleto,
 )
 from pcobra.cobra.cli.utils.messages import mostrar_info
@@ -38,6 +39,12 @@ class ReplCommandV2(BaseCommand):
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Delega la clasificación de entrada incompleta al clasificador central."""
         return es_parser_error_de_bloque_incompleto(exc)
+
+    def _extraer_token_desde_error(self, err: Exception) -> Any | None:
+        """Compatibilidad con pruebas históricas de extracción de token."""
+        if not isinstance(err, ParserError):
+            return None
+        return extraer_token_desde_error_parser(err)
 
     def _manejar_error_prevalidacion(self, err: Exception, buffer: list[str]) -> None:
         """Procesa errores de prevalidación delegando la clasificación central."""
@@ -184,10 +191,14 @@ class ReplCommandV2(BaseCommand):
             except (PrimitivaPeligrosaError, RuntimeError) as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
 
         return 0
