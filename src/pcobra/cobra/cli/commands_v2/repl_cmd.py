@@ -33,7 +33,8 @@ class ReplCommandV2(BaseCommand):
         super().__init__()
         self._delegate = InteractiveCommand(InterpretadorCobra())
         self._delegate.name = self.name
-        self._interpretador_persistente: Any | None = None
+        # Mantener una única instancia viva para todo el ciclo de la sesión.
+        self._interpretador_persistente: Any | None = self._delegate.interpretador
         self._seguro_repl: bool = True
         self._extra_validators_repl: Any = None
 
@@ -89,6 +90,8 @@ class ReplCommandV2(BaseCommand):
 
     def _sincronizar_estado_hacia_delegate(self) -> None:
         """Sincroniza estado persistente local hacia el comando delegado."""
+        # En modo normal siempre se reinyecta la misma referencia persistente
+        # para evitar re-instanciación accidental entre snippets.
         if self._interpretador_persistente is not None:
             self._delegate.interpretador = self._interpretador_persistente
         self._delegate._seguro_repl = self._seguro_repl
@@ -96,7 +99,8 @@ class ReplCommandV2(BaseCommand):
 
     def _sincronizar_estado_desde_delegate(self) -> None:
         """Sincroniza estado del comando delegado hacia el estado local."""
-        self._interpretador_persistente = self._delegate.interpretador
+        if self._delegate.interpretador is not None:
+            self._interpretador_persistente = self._delegate.interpretador
         self._seguro_repl = self._delegate._seguro_repl
         self._extra_validators_repl = self._delegate._extra_validators_repl
 
@@ -126,7 +130,11 @@ class ReplCommandV2(BaseCommand):
         buffer.clear()
 
     def _reset_estado_delegate(self) -> None:
-        """Restablece el estado base del REPL delegado."""
+        """Restablece el estado base del REPL delegado.
+
+        Solo limpia metadatos de captura/buffer del REPL y no toca el runtime
+        (`interpretador`) para preservar contexto de variables.
+        """
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
 
     def run(self, args: Any) -> int:
