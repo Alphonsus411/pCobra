@@ -388,7 +388,7 @@ class InteractiveCommand(BaseCommand):
                 resultado = self.interpretador.ejecutar_ast(ast)
             except Exception as err_fallback:
                 if self._debe_intentar_fallback_expresion_top_level(
-                    codigo_fallback, err_fallback
+                    codigo, err_fallback
                 ):
                     raise err_original
                 raise
