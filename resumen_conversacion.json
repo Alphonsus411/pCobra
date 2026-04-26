@@ -1,72 +1,97 @@
- {
+{
   "proyecto": "Cobra REPL",
-  "objetivo": "Implementar un REPL funcional, estructural y alineado con la arquitectura de Cobra sin modificar lexer ni parser",
-  "estado_inicial": {
-    "repl": "Ejecutaba línea por línea",
-    "problema_principal": "No soportaba bloques (si ... fin)",
-    "limitaciones": [
-      "Ejecución inmediata sin buffer",
-      "Errores en bloques incompletos",
-      "No diferenciación entre error real e incompletitud"
-    ]
+  "fase_actual": "Depuración avanzada de ejecución en runtime",
+  "objetivo_global": "Construir un REPL interactivo, estructural y coherente con la arquitectura de Cobra sin modificar lexer ni parser",
+  "arquitectura_base": {
+    "pipeline": "AST → BackendPipeline → Bindings → Runtime",
+    "naturaleza": "Orientado a compilación/ejecución batch",
+    "problema_detectado": "Uso indebido del pipeline en contexto REPL interactivo"
   },
-  "mejoras_implementadas": {
-    "buffer": "Acumulación de input multilinea",
-    "parser_como_oraculo": true,
-    "deteccion_bloques": "Basada en errores del parser (ej: 'Se esperaba fin')",
-    "modo_multilinea": ">>> y ...",
-    "entorno_persistente": true
+  "fase_1_repl": {
+    "estado_inicial": {
+      "tipo": "REPL lineal",
+      "problemas": [
+        "Ejecución línea a línea",
+        "No soporta bloques",
+        "Errores en estructuras incompletas"
+      ]
+    },
+    "mejoras": [
+      "Implementación de buffer multilinea",
+      "Uso del parser como oráculo",
+      "Detección de bloques incompletos",
+      "Modo interactivo con '>>> / ...'",
+      "Persistencia de entorno"
+    ],
+    "resultado": "REPL estructural funcional"
   },
-  "validaciones_realizadas": {
-    "bloques_basicos": "OK",
+  "fase_2_repl_expresivo": {
+    "problema": "Expresiones top-level no soportadas",
+    "error": "NodoOperacionBinaria no soportado",
+    "solucion": "Fallback en REPL (envolver en imprimir)",
+    "resultado": {
+      "expresiones_simples": "OK",
+      "expresiones_complejas": "OK",
+      "errores_semanticos": "Correctamente preservados"
+    }
+  },
+  "fase_3_validacion_comportamiento": {
+    "bloques": "OK",
     "anidamiento": "OK",
     "errores_vs_incompleto": "OK",
     "persistencia_entorno": "OK",
-    "reset_tras_error": "OK"
+    "expresiones_en_bloques": {
+      "comportamiento": "No soportadas como statements",
+      "decision": "Mantener lenguaje estricto (requiere imprimir)"
+    }
   },
-  "problema_detectado_final": {
-    "descripcion": "El runtime no soporta expresiones como nodo raíz del AST",
-    "ejemplo": "x + 10 lanza error NodoOperacionBinaria",
-    "causa": "El runtime solo ejecuta statements, no evalúa expresiones top-level"
+  "problema_critico_detectado": {
+    "error": "Variable no declarada: _cse0",
+    "contexto": [
+      "Asignaciones con expresiones",
+      "Ejecución dentro y fuera de bloques"
+    ],
+    "ejemplo": "var y = x * 2",
+    "causa_raiz": {
+      "tipo": "Fuga de abstracción del pipeline",
+      "detalle": "Variables temporales (_cseX) generadas por el pipeline no existen en el entorno del REPL"
+    }
   },
-  "comportamiento_actual": {
-    "imprimir_expresion": "Funciona",
-    "expresion_directa": "Falla",
-    "errores_semanticos": "Correctos (ej: variable no declarada)"
-  },
-  "decision_de_diseno": {
-    "tipo_repl": "REPL expresivo",
-    "justificacion": "Facilita PoC y exploración interactiva",
-    "no_modificar": [
-      "lexer",
-      "parser",
-      "gramatica"
-    ]
+  "diagnostico_final": {
+    "descripcion": "El REPL está usando un pipeline de compilación en lugar de un modo interpretativo",
+    "problema_clave": "BackendPipeline introduce IR/temporales incompatibles con ejecución incremental",
+    "impacto": "Inconsistencia del entorno y errores en evaluación"
   },
   "solucion_definida": {
-    "enfoque": "Fallback en REPL",
+    "enfoque": "Bypass del BackendPipeline en REPL",
     "estrategia": [
-      "Intentar ejecutar AST normalmente",
-      "Si falla por nodo de expresión",
-      "Reinterpretar como expresion envuelta en imprimir(...)",
-      "Reejecutar usando el mismo pipeline"
+      "Ejecutar AST directamente",
+      "Evitar generación de temporales (_cse)",
+      "Usar entorno persistente compartido",
+      "Reutilizar lógica interna de evaluación existente"
     ],
-    "alternativa_futura": "Añadir evaluate_expression en runtime"
+    "restricciones": [
+      "No modificar lexer",
+      "No modificar parser",
+      "No modificar pipeline",
+      "No cambiar semántica del lenguaje"
+    ]
   },
   "estado_actual": {
     "repl_estructural": true,
-    "repl_expresivo": "Pendiente de implementar",
-    "arquitectura": "Consistente y alineada"
+    "repl_expresivo": true,
+    "runtime_interpretativo": "Pendiente de ajuste",
+    "bug_activo": "_cse0 en asignaciones"
   },
   "insights_clave": [
-    "El REPL no debe implementar lógica de parsing",
-    "El parser es la fuente de verdad",
-    "El runtime define la semántica",
-    "El REPL puede extender UX sin modificar el lenguaje",
-    "Separar ejecución de statements vs evaluación de expresiones es clave"
+    "El REPL debe comportarse como intérprete, no como compilador",
+    "El pipeline batch no es adecuado para ejecución incremental",
+    "Las variables temporales (_cse) son artefactos internos que no deben exponerse",
+    "Separar modos de ejecución (batch vs interactivo) es crítico en diseño de lenguajes",
+    "El REPL puede extender UX sin modificar semántica del lenguaje"
   ],
   "siguiente_paso": {
-    "accion": "Implementar evaluación de expresiones top-level en REPL",
-    "impacto": "Convertir Cobra en un lenguaje interactivo completo"
+    "accion": "Modificar el REPL para ejecutar AST directamente sin pasar por BackendPipeline",
+    "resultado_esperado": "Eliminación del error _cse0 y evaluación correcta de expresiones y asignaciones"
   }
 }
