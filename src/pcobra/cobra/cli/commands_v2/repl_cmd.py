@@ -240,6 +240,14 @@ class ReplCommandV2(BaseCommand):
                 _resultado_pipeline.resultado,
             )
 
+    def _reset_buffer_local(self, buffer: list[str]) -> None:
+        """Limpia el buffer de entrada local del REPL v2."""
+        buffer.clear()
+
+    def _reset_estado_delegate(self) -> None:
+        """Restablece el estado base del REPL delegado."""
+        self._delegate._estado_repl = self._delegate._crear_estado_repl()
+
     def run(self, args: Any) -> int:
         buffer: list[str] = []
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
@@ -259,16 +267,16 @@ class ReplCommandV2(BaseCommand):
             except KeyboardInterrupt:
                 if buffer:
                     mostrar_info(_("Entrada multilinea cancelada."))
-                    buffer.clear()
-                    self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                    self._reset_buffer_local(buffer)
+                    self._reset_estado_delegate()
                     continue
                 mostrar_info(_("Interrupción recibida. Saliendo del REPL."))
                 break
             except EOFError:
                 if buffer:
                     mostrar_info(_("Entrada multilinea cancelada por fin de archivo."))
-                    buffer.clear()
-                    self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                    self._reset_buffer_local(buffer)
+                    self._reset_estado_delegate()
                     continue
                 mostrar_info(_("Fin de entrada. Saliendo del REPL."))
                 break
@@ -281,8 +289,8 @@ class ReplCommandV2(BaseCommand):
             if comando in {"salir", "exit"}:
                 if buffer:
                     mostrar_info(_("Entrada multilinea cancelada. Saliendo del REPL."))
-                    buffer.clear()
-                    self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                    self._reset_buffer_local(buffer)
+                    self._reset_estado_delegate()
                 else:
                     mostrar_info(_("Saliendo..."))
                 break
@@ -296,14 +304,14 @@ class ReplCommandV2(BaseCommand):
                     continue
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                buffer.clear()
-                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                buffer.clear()
-                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
 
             try:
@@ -313,18 +321,19 @@ class ReplCommandV2(BaseCommand):
                     self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
                     self._ejecutar_en_modo_normal(codigo, interpretador_cls)
-                buffer.clear()
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
             except (PrimitivaPeligrosaError, RuntimeError) as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                buffer.clear()
-                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                buffer.clear()
-                self._delegate._estado_repl = self._delegate._crear_estado_repl()
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
 
         return 0
