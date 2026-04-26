@@ -119,6 +119,97 @@ def test_es_error_de_bloque_incompleto_prioriza_metadata(err, es_incompleto):
     assert command.es_error_de_bloque_incompleto(err) is es_incompleto
 
 
+@pytest.mark.parametrize(
+    ("atributos", "es_incompleto"),
+    [
+        (
+            {
+                "expected_tokens": [TipoToken.FIN],
+                "token_type": TipoToken.EOF,
+                "unexpected_eof": True,
+            },
+            True,
+        ),
+        (
+            {
+                "expected_types": [TipoToken.RPAREN],
+                "current_token_type": TipoToken.EOF,
+            },
+            True,
+        ),
+        (
+            {
+                "expected_terminals": [TipoToken.RBRACKET],
+                "actual_token_type": TipoToken.EOF,
+                "is_eof": True,
+            },
+            True,
+        ),
+        (
+            {
+                "esperados": [TipoToken.RBRACE],
+                "last_token_type": TipoToken.EOF,
+                "is_unexpected_eof": True,
+            },
+            True,
+        ),
+        (
+            {
+                "expected": [TipoToken.FIN],
+                "token_type": TipoToken.EOF,
+                "unexpected_eof": False,
+            },
+            True,
+        ),
+        (
+            {
+                "expected": [TipoToken.FIN],
+                "unexpected_eof": True,
+            },
+            True,
+        ),
+        (
+            {
+                "expected": [TipoToken.FIN],
+            },
+            False,
+        ),
+        (
+            {
+                "expected": [TipoToken.IDENTIFICADOR],
+                "current_token_type": TipoToken.EOF,
+                "unexpected_eof": True,
+            },
+            False,
+        ),
+    ],
+)
+def test_es_error_de_bloque_incompleto_con_metadata_parcial(atributos, es_incompleto):
+    command = ReplCommandV2()
+    err = ParserError("metadata parcial")
+    for nombre, valor in atributos.items():
+        setattr(err, nombre, valor)
+    assert command.es_error_de_bloque_incompleto(err) is es_incompleto
+
+
+def test_extrae_token_desde_state_con_alias_de_parser_real():
+    command = ReplCommandV2()
+    err = ParserError("metadata state")
+    err.state = type("State", (), {"actual_token": type("Tok", (), {"tipo": TipoToken.EOF})()})()
+    token = command._extraer_token_desde_error(err)
+    assert token is not None
+    assert token.tipo == TipoToken.EOF
+
+
+def test_extrae_token_desde_unexpected_token_si_no_hay_token_actual():
+    command = ReplCommandV2()
+    err = ParserError("metadata unexpected token")
+    err.unexpected_token = type("Tok", (), {"tipo": TipoToken.EOF})()
+    token = command._extraer_token_desde_error(err)
+    assert token is not None
+    assert token.tipo == TipoToken.EOF
+
+
 def test_incompleto_bloque_simple_por_eof_inesperado_y_fin_pendiente():
     command = ReplCommandV2()
     err = _parser_error_con_metadata(
