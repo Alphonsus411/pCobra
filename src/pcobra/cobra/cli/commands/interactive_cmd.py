@@ -564,7 +564,7 @@ class InteractiveCommand(BaseCommand):
         self._estado_repl = estado
         while True:
             try:
-                prompt = "... " if estado["nivel_bloque"] > 0 else "cobra> "
+                prompt = "... " if estado["buffer_lineas"] else ">>> "
                 raw_linea = leer_linea(prompt)
                 linea = sanitize_input(raw_linea if isinstance(raw_linea, str) else str(raw_linea))
                 linea = linea.strip()
@@ -595,21 +595,35 @@ class InteractiveCommand(BaseCommand):
             if not self.validar_entrada(linea):
                 continue
 
-            if estado["nivel_bloque"] == 0 and linea in ["salir", "salir()"]:
+            if not estado["buffer_lineas"] and linea in ["salir", "salir()"]:
                 break
 
-            if estado["nivel_bloque"] == 0 and self._procesar_comando_especial(
+            if not estado["buffer_lineas"] and self._procesar_comando_especial(
                 linea, validador
             ):
                 continue
 
             try:
-                codigo = self._actualizar_buffer_y_obtener_codigo_listo(
-                    estado["buffer_lineas"],
-                    linea,
-                )
-                if codigo is None:
+                estado["buffer_lineas"].append(linea)
+                codigo = "\n".join(estado["buffer_lineas"])
+                prevalidar_y_parsear_codigo(codigo)
+                estado["lineas_blanco_consecutivas"] = 0
+            except (LexerError, ParserError) as err:
+                if self._es_error_de_bloque_incompleto(err):
                     continue
+                estado["buffer_lineas"].clear()
+                estado["lineas_blanco_consecutivas"] = 0
+                categoria = self._clasificar_error_repl(err)
+                self._log_error(categoria, err)
+                continue
+            except Exception as err:  # pragma: no cover - ruta unificada de errores
+                estado["buffer_lineas"].clear()
+                estado["lineas_blanco_consecutivas"] = 0
+                categoria = self._clasificar_error_repl(err)
+                self._log_error(categoria, err)
+                continue
+
+            try:
                 codigo = sanitize_input(codigo)
                 _debug_assert_boundary_text_sanitized(
                     codigo,
@@ -622,7 +636,9 @@ class InteractiveCommand(BaseCommand):
                     self._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
                     self.ejecutar_codigo(codigo, validador)
+                estado["buffer_lineas"].clear()
             except Exception as err:  # pragma: no cover - ruta unificada de errores
+                estado["buffer_lineas"].clear()
                 categoria = self._clasificar_error_repl(err)
                 self._log_error(categoria, err)
 
@@ -641,7 +657,7 @@ class InteractiveCommand(BaseCommand):
 
     def _manejar_linea_blanca(self, estado: dict[str, Any]) -> None:
         """Aplica política de líneas en blanco en sesión REPL."""
-        if estado["nivel_bloque"] > 0:
+        if estado["buffer_lineas"]:
             estado["lineas_blanco_consecutivas"] += 1
             if (
                 estado["lineas_blanco_consecutivas"]
@@ -654,6 +670,67 @@ class InteractiveCommand(BaseCommand):
                 )
         else:
             estado["lineas_blanco_consecutivas"] = 0
+
+    def _normalizar_tipo_token(self, valor: Any) -> Optional[TipoToken]:
+        """Normaliza posibles representaciones de token a ``TipoToken``."""
+        if isinstance(valor, TipoToken):
+            return valor
+        if valor is None:
+            return None
+        nombre = str(valor).strip()
+        if not nombre:
+            return None
+        if "." in nombre:
+            nombre = nombre.split(".")[-1]
+        try:
+            return TipoToken[nombre]
+        except KeyError:
+            return None
+
+    def _es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
+        """Determina si el parser reportó una entrada todavía incompleta."""
+        if not isinstance(exc, ParserError):
+            return False
+
+        token_actual = (
+            getattr(exc, "token_actual", None)
+            or getattr(exc, "token", None)
+            or getattr(exc, "current_token", None)
+        )
+        tipo_token_actual = self._normalizar_tipo_token(
+            getattr(token_actual, "tipo", None)
+            or getattr(exc, "tipo_token_actual", None)
+            or getattr(exc, "current_token_type", None)
+        )
+        esperado_raw = (
+            getattr(exc, "esperado", None)
+            or getattr(exc, "expected", None)
+            or getattr(exc, "tokens_esperados", None)
+            or getattr(exc, "expected_tokens", None)
+        )
+        esperados = (
+            esperado_raw
+            if isinstance(esperado_raw, (list, tuple, set))
+            else [esperado_raw]
+        )
+        tipos_esperados = {self._normalizar_tipo_token(item) for item in esperados}
+        tipos_esperados.discard(None)
+        tokens_cierre = {
+            TipoToken.FIN,
+            TipoToken.RPAREN,
+            TipoToken.RBRACKET,
+            TipoToken.RBRACE,
+        }
+        if not (tipos_esperados & tokens_cierre):
+            return False
+
+        eof_por_flag = bool(
+            getattr(exc, "unexpected_eof", False)
+            or getattr(exc, "eof", False)
+            or getattr(exc, "es_eof", False)
+            or getattr(exc, "is_eof", False)
+        )
+        return eof_por_flag or tipo_token_actual == TipoToken.EOF
 
     def _bloque_con_solo_lineas_vacias(self, buffer_lineas: list[str]) -> bool:
         """Indica si el bloque actual no contiene sentencias no vacías."""
