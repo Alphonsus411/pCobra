@@ -24,6 +24,10 @@ from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
 class ReplCommandV2(BaseCommand):
     """Comando v2 público para iniciar el REPL de Cobra."""
+    # Nota técnica:
+    # La semántica del camino normal (parseo + ejecución + fallback de
+    # expresiones top-level) se define en InteractiveCommand.
+    # ReplCommandV2 coordina IO/estado y delega ese contrato.
 
     name = "repl"
     capability = "execute"
@@ -49,8 +53,7 @@ class ReplCommandV2(BaseCommand):
         """Procesa errores de prevalidación delegando la clasificación central."""
         if self.es_error_de_bloque_incompleto(err):
             return
-        categoria = self._delegate._clasificar_error_repl(err)
-        self._delegate._log_error(categoria, err)
+        self._registrar_error_repl(err)
         self._reset_buffer_local(buffer)
         self._reset_estado_delegate()
 
@@ -104,9 +107,17 @@ class ReplCommandV2(BaseCommand):
         _ = interpretador_cls
         self._sincronizar_estado_hacia_delegate()
         try:
-            self._delegate.ejecutar_codigo(codigo)
+            self._delegate.parsear_y_ejecutar_codigo_repl(
+                codigo,
+                prevalidar_fn=prevalidar_y_parsear_codigo,
+            )
         finally:
             self._sincronizar_estado_desde_delegate()
+
+    def _registrar_error_repl(self, err: Exception) -> None:
+        """Centraliza clasificación + visualización de errores REPL."""
+        categoria = self._delegate._clasificar_error_repl(err)
+        self._delegate._log_error(categoria, err)
 
     def _reset_buffer_local(self, buffer: list[str]) -> None:
         """Limpia el buffer de entrada local del REPL v2."""
@@ -165,20 +176,19 @@ class ReplCommandV2(BaseCommand):
 
             buffer.append(linea)
             codigo = "\n".join(buffer)
-            try:
-                prevalidar_y_parsear_codigo(codigo)
-            except (LexerError, ParserError) as err:
-                if self.es_error_de_bloque_incompleto(err):
+            if sandbox or sandbox_docker:
+                try:
+                    prevalidar_y_parsear_codigo(codigo)
+                except (LexerError, ParserError) as err:
+                    if self.es_error_de_bloque_incompleto(err):
+                        continue
+                    self._registrar_error_repl(err)
+                    self._reset_buffer_local(buffer)
+                    self._reset_estado_delegate()
                     continue
-                categoria = self._delegate._clasificar_error_repl(err)
-                self._delegate._log_error(categoria, err)
-                self._reset_buffer_local(buffer)
-                self._reset_estado_delegate()
-                continue
-            except Exception as err:
-                categoria = self._delegate._clasificar_error_repl(err)
-                self._delegate._log_error(categoria, err)
-                continue
+                except Exception as err:
+                    self._registrar_error_repl(err)
+                    continue
 
             try:
                 if sandbox:
@@ -189,15 +199,20 @@ class ReplCommandV2(BaseCommand):
                     self._ejecutar_en_modo_normal(codigo, interpretador_cls)
                 self._reset_buffer_local(buffer)
                 self._reset_estado_delegate()
+            except (LexerError, ParserError) as err:
+                if self.es_error_de_bloque_incompleto(err):
+                    continue
+                self._registrar_error_repl(err)
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
+                continue
             except (PrimitivaPeligrosaError, RuntimeError) as err:
-                categoria = self._delegate._clasificar_error_repl(err)
-                self._delegate._log_error(categoria, err)
+                self._registrar_error_repl(err)
                 self._reset_buffer_local(buffer)
                 self._reset_estado_delegate()
                 continue
             except Exception as err:
-                categoria = self._delegate._clasificar_error_repl(err)
-                self._delegate._log_error(categoria, err)
+                self._registrar_error_repl(err)
                 self._reset_buffer_local(buffer)
                 self._reset_estado_delegate()
                 continue

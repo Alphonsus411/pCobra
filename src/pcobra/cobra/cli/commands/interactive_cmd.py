@@ -398,6 +398,27 @@ class InteractiveCommand(BaseCommand):
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
 
+    def parsear_y_ejecutar_codigo_repl(
+        self,
+        codigo: str,
+        validador: Optional[Any] = None,
+        *,
+        prevalidar_fn: Any = prevalidar_y_parsear_codigo,
+    ) -> None:
+        """Valida sintaxis y ejecuta código REPL en el camino normal.
+
+        Este helper concentra el camino canónico parseo+ejecución para
+        implementaciones de REPL que delegan en ``InteractiveCommand``.
+        La ejecución reutiliza ``ejecutar_codigo``, incluyendo su fallback
+        para expresiones top-level.
+        """
+
+        prevalidar_fn(codigo)
+        if validador is None:
+            self.ejecutar_codigo(codigo)
+            return
+        self.ejecutar_codigo(codigo, validador)
+
     def _debe_intentar_fallback_expresion_top_level(
         self, codigo: str, err_original: Exception
     ) -> bool:
