@@ -368,6 +368,85 @@ def test_ejecutar_codigo_no_imprime_cuando_resultado_es_none():
     assert mock_stdout.getvalue() == ''
 
 
+def test_ejecutar_codigo_intenta_fallback_para_expresion_top_level_no_soportada():
+    cmd = InteractiveCommand(MagicMock())
+    setup = SimpleNamespace(
+        interpretador=cmd.interpretador,
+        safe_mode=cmd._seguro_repl,
+        validadores_extra=cmd._extra_validators_repl,
+    )
+    NodoOperacionBinaria = type("NodoOperacionBinaria", (), {})
+    ast_expr = [NodoOperacionBinaria()]
+    resultado = SimpleNamespace(ast=ast_expr, resultado=None)
+    llamadas = []
+
+    def _pipeline_fake(pipeline_input, analizar_codigo_fn):
+        llamadas.append(pipeline_input.codigo)
+        if pipeline_input.codigo == "1 + 2":
+            raise ValueError("Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoOperacionBinaria'>")
+        if pipeline_input.codigo == "imprimir(1 + 2)":
+            return setup, resultado
+        raise AssertionError(f"Código inesperado: {pipeline_input.codigo}")
+
+    with patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=ast_expr,
+    ), patch(
+        "cobra.cli.commands.interactive_cmd.ejecutar_pipeline_explicito",
+        side_effect=_pipeline_fake,
+    ):
+        cmd.ejecutar_codigo("1 + 2")
+
+    assert llamadas == ["1 + 2", "imprimir(1 + 2)"]
+
+
+def test_ejecutar_codigo_relanza_error_original_si_fallback_falla():
+    cmd = InteractiveCommand(MagicMock())
+    NodoOperacionBinaria = type("NodoOperacionBinaria", (), {})
+    ast_expr = [NodoOperacionBinaria()]
+
+    def _pipeline_fake(pipeline_input, analizar_codigo_fn):
+        if pipeline_input.codigo == "1 + 2":
+            raise ValueError("Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoOperacionBinaria'>")
+        raise RuntimeError("falló fallback")
+
+    with patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=ast_expr,
+    ), patch(
+        "cobra.cli.commands.interactive_cmd.ejecutar_pipeline_explicito",
+        side_effect=_pipeline_fake,
+    ):
+        try:
+            cmd.ejecutar_codigo("1 + 2")
+            assert False, "Se esperaba excepción"
+        except ValueError as err:
+            assert "Nodo no soportado" in str(err)
+
+
+def test_ejecutar_codigo_no_intenta_fallback_si_no_es_expresion_top_level():
+    cmd = InteractiveCommand(MagicMock())
+    NodoAsignacion = type("NodoAsignacion", (), {})
+    ast_stmt = [NodoAsignacion()]
+
+    with patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=ast_stmt,
+    ), patch(
+        "cobra.cli.commands.interactive_cmd.ejecutar_pipeline_explicito",
+        side_effect=ValueError(
+            "Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoAsignacion'>"
+        ),
+    ) as mock_pipeline:
+        try:
+            cmd.ejecutar_codigo("var x = 1")
+            assert False, "Se esperaba excepción"
+        except ValueError as err:
+            assert "Nodo no soportado" in str(err)
+
+    assert mock_pipeline.call_count == 1
+
+
 def test_es_nodo_control_sin_echo_repl_reconoce_alias_si_y_mientras_por_nombre():
     cmd = InteractiveCommand(MagicMock())
 

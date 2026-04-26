@@ -361,16 +361,37 @@ class InteractiveCommand(BaseCommand):
             module_name=__name__,
             default_cls=type(self.interpretador),
         )
-        setup, resultado_pipeline = ejecutar_pipeline_explicito(
-            PipelineInput(
-                codigo=codigo,
-                interpretador_cls=interpretador_cls,
-                safe_mode=self._seguro_repl,
-                extra_validators=self._extra_validators_repl,
-                interpretador=self.interpretador,
-            ),
-            analizar_codigo_fn=analizar_codigo,
-        )
+        try:
+            setup, resultado_pipeline = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo=codigo,
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=self._seguro_repl,
+                    extra_validators=self._extra_validators_repl,
+                    interpretador=self.interpretador,
+                ),
+                analizar_codigo_fn=analizar_codigo,
+            )
+        except Exception as err_original:
+            if not self._debe_intentar_fallback_expresion_top_level(
+                codigo, err_original
+            ):
+                raise
+
+            codigo_fallback = f"imprimir({codigo.strip()})"
+            try:
+                setup, resultado_pipeline = ejecutar_pipeline_explicito(
+                    PipelineInput(
+                        codigo=codigo_fallback,
+                        interpretador_cls=interpretador_cls,
+                        safe_mode=self._seguro_repl,
+                        extra_validators=self._extra_validators_repl,
+                        interpretador=self.interpretador,
+                    ),
+                    analizar_codigo_fn=analizar_codigo,
+                )
+            except Exception:
+                raise err_original
         self.interpretador = setup.interpretador
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
@@ -379,6 +400,54 @@ class InteractiveCommand(BaseCommand):
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
+
+    def _debe_intentar_fallback_expresion_top_level(
+        self, codigo: str, err_original: Exception
+    ) -> bool:
+        """Determina si aplica fallback a ``imprimir(...)`` para expresiones top-level."""
+
+        mensaje_error = str(err_original)
+        if "Nodo no soportado" not in mensaje_error or "Nodo" not in mensaje_error:
+            return False
+
+        ast = prevalidar_y_parsear_codigo(codigo)
+        if len(ast) != 1:
+            return False
+
+        nodo = ast[0]
+        nombre_nodo_ast = nodo.__class__.__name__
+        match_nodo = re.search(r"(Nodo[A-Za-z0-9_]+)", mensaje_error)
+        if match_nodo and match_nodo.group(1) != nombre_nodo_ast:
+            return False
+
+        nodos_no_expresion = (
+            "NodoAsignacion",
+            "NodoImprimir",
+            "NodoCondicional",
+            "NodoBucleMientras",
+            "NodoMientras",
+            "NodoPara",
+            "NodoFor",
+            "NodoFuncion",
+            "NodoClase",
+            "NodoRetorno",
+            "NodoImport",
+            "NodoUsar",
+            "NodoTryCatch",
+            "NodoThrow",
+            "NodoAssert",
+            "NodoDel",
+            "NodoGlobal",
+            "NodoNoLocal",
+            "NodoWith",
+            "NodoHolobit",
+            "NodoHilo",
+            "NodoRomper",
+            "NodoContinuar",
+            "NodoEsperar",
+            "NodoSwitch",
+        )
+        return nombre_nodo_ast not in nodos_no_expresion
 
     def _imprimir_resultado_repl(self, ast: list[Any], resultado: Any) -> None:
         """Imprime el resultado del REPL cuando aplica contrato de echo."""
