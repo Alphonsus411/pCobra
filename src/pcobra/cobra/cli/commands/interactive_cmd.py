@@ -373,6 +373,9 @@ class InteractiveCommand(BaseCommand):
         """Ejecuta un snippet en el intérprete persistente del REPL."""
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
+        # Contrato REPL (normal): no usar ``ejecutar_pipeline_explicito`` aquí.
+        # Este camino ejecuta snippets interactivos normales sobre el intérprete
+        # persistente para preservar la semántica incremental del lenguaje.
         try:
             ast, resultado = self._ejecutar_ast_en_repl(codigo, validador)
         except Exception as err_original:
@@ -415,6 +418,8 @@ class InteractiveCommand(BaseCommand):
         """
 
         prevalidar_fn(codigo)
+        # Contrato REPL (normal): este helper delega en ``ejecutar_codigo`` y,
+        # por diseño, no debe introducir pipeline explícito para snippets.
         if validador is None:
             self.ejecutar_codigo(codigo)
             return
@@ -758,6 +763,8 @@ class InteractiveCommand(BaseCommand):
                 elif sandbox_docker:
                     self._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
+                    # Contrato de dispatch: en la rama no-sandbox/no-docker se
+                    # mantiene ejecución directa en REPL (sin pipeline explícito).
                     self.ejecutar_codigo(codigo, validador)
                 estado["buffer_lineas"].clear()
             except Exception as err:  # pragma: no cover - ruta unificada de errores
@@ -928,6 +935,9 @@ class InteractiveCommand(BaseCommand):
             module_name=__name__,
             default_cls=type(self.interpretador),
         )
+        # Contrato sandbox/setup: ``ejecutar_pipeline_explicito`` se usa aquí
+        # únicamente para normalizar configuración de intérprete/opciones antes
+        # de construir el script sandbox; no para ejecutar snippets normales.
         setup, _ = ejecutar_pipeline_explicito(
             PipelineInput(
                 codigo="",
