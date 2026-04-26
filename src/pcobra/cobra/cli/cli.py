@@ -1039,7 +1039,7 @@ class CliApplication:
                 messages.mostrar_info(
                     _(
                         "No se indicó ningún comando. "
-                        "Usa --help para ver la ayuda disponible."
+                        "Prueba 'cobra --help' para ver los comandos públicos."
                     )
                 )
                 return 1
