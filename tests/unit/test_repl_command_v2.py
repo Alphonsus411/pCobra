@@ -339,6 +339,59 @@ def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
     assert prompts == [">>> ", "... ", "... ", ">>> "]
 
 
+def test_repl_v2_bloque_si_x_mayor_que_5_no_ejecuta_hasta_fin_y_prompts(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["si x > 5:", "imprimir(x)", "fin", "exit"])
+    parse_calls: list[str] = []
+    pipeline_calls: list[str] = []
+    prompts: list[str] = []
+
+    def _fake_input(prompt: str) -> str:
+        prompts.append(prompt)
+        return next(entradas)
+
+    monkeypatch.setattr("builtins.input", _fake_input)
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo != "si x > 5:\nimprimir(x)\nfin":
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
+        return []
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
+        or (_Setup(), None),
+    )
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(x)", "si x > 5:\nimprimir(x)\nfin"]
+    assert pipeline_calls == ["si x > 5:\nimprimir(x)\nfin"]
+    assert prompts == [">>> ", "... ", "... ", ">>> "]
+
+
 def test_repl_v2_sale_por_salir_y_por_exit(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["salir"])
@@ -664,6 +717,100 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
     assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1", "var z = 9"]
     assert pipeline_calls == ["var z = 9"]
     assert logged == ["Token inesperado: '('"]
+
+
+def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["si x > 5:", "imprimir(", "var y = 7", "exit"])
+    parse_calls: list[str] = []
+    pipeline_calls: list[str] = []
+    logged: list[str] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo == "si x > 5:":
+            raise _parser_error_con_metadata(
+                "Se esperaba 'fin' para cerrar el bloque condicional",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+            )
+        if codigo == "si x > 5:\nimprimir(":
+            raise ParserError("Token inesperado en término: TipoToken.EOF")
+        return []
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
+        or (_Setup(), None),
+    )
+    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(", "var y = 7"]
+    assert pipeline_calls == ["var y = 7"]
+    assert logged == ["Token inesperado en término: TipoToken.EOF"]
+
+
+def test_repl_v2_fallback_mensaje_se_esperaba_fin_sin_metadata_completa(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["si x > 5:", "imprimir(x)", "fin", "exit"])
+    parse_calls: list[str] = []
+    pipeline_calls: list[str] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+
+    def _fake_parse(codigo: str):
+        parse_calls.append(codigo)
+        if codigo != "si x > 5:\nimprimir(x)\nfin":
+            raise ParserError("Se esperaba 'fin' para cerrar bloque al final de entrada")
+        return []
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = False
+            self.validadores_extra = None
+
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
+    monkeypatch.setattr(
+        repl_module,
+        "ejecutar_pipeline_explicito",
+        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
+        or (_Setup(), None),
+    )
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(x)", "si x > 5:\nimprimir(x)\nfin"]
+    assert pipeline_calls == ["si x > 5:\nimprimir(x)\nfin"]
 
 
 def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
