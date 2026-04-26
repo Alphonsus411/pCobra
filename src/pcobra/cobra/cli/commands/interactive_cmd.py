@@ -691,28 +691,48 @@ class InteractiveCommand(BaseCommand):
         """Determina si el parser reportó una entrada todavía incompleta."""
         if not isinstance(exc, ParserError):
             return False
+        metadata_resultado = self._es_error_de_bloque_incompleto_por_metadata(exc)
+        if metadata_resultado is not None:
+            return metadata_resultado
+        return self._es_error_de_bloque_incompleto_por_mensaje(exc)
+
+    def _es_error_de_bloque_incompleto_por_metadata(
+        self, err: ParserError
+    ) -> Optional[bool]:
+        """Evalúa incompletitud con metadata del parser.
+
+        Retorna ``None`` cuando no hay metadata suficiente para decidir.
+        """
 
         token_actual = (
-            getattr(exc, "token_actual", None)
-            or getattr(exc, "token", None)
-            or getattr(exc, "current_token", None)
+            getattr(err, "token_actual", None)
+            or getattr(err, "token", None)
+            or getattr(err, "actual_token", None)
+            or getattr(err, "current_token", None)
         )
         tipo_token_actual = self._normalizar_tipo_token(
             getattr(token_actual, "tipo", None)
-            or getattr(exc, "tipo_token_actual", None)
-            or getattr(exc, "current_token_type", None)
+            or getattr(err, "tipo_token_actual", None)
+            or getattr(err, "current_token_type", None)
+            or getattr(err, "actual_token_type", None)
+            or getattr(err, "token_type", None)
+            or getattr(err, "last_token_type", None)
         )
         esperado_raw = (
-            getattr(exc, "esperado", None)
-            or getattr(exc, "expected", None)
-            or getattr(exc, "tokens_esperados", None)
-            or getattr(exc, "expected_tokens", None)
+            getattr(err, "esperado", None)
+            or getattr(err, "expected", None)
+            or getattr(err, "tokens_esperados", None)
+            or getattr(err, "expected_tokens", None)
+            or getattr(err, "expected_types", None)
+            or getattr(err, "expected_terminals", None)
+            or getattr(err, "esperados", None)
         )
-        esperados = (
-            esperado_raw
-            if isinstance(esperado_raw, (list, tuple, set))
-            else [esperado_raw]
-        )
+        if esperado_raw is None:
+            esperados = []
+        elif isinstance(esperado_raw, (list, tuple, set)):
+            esperados = list(esperado_raw)
+        else:
+            esperados = [esperado_raw]
         tipos_esperados = {self._normalizar_tipo_token(item) for item in esperados}
         tipos_esperados.discard(None)
         tokens_cierre = {
@@ -721,16 +741,52 @@ class InteractiveCommand(BaseCommand):
             TipoToken.RBRACKET,
             TipoToken.RBRACE,
         }
-        if not (tipos_esperados & tokens_cierre):
+        if tipos_esperados and not (tipos_esperados & tokens_cierre):
             return False
 
         eof_por_flag = bool(
-            getattr(exc, "unexpected_eof", False)
-            or getattr(exc, "eof", False)
-            or getattr(exc, "es_eof", False)
-            or getattr(exc, "is_eof", False)
+            getattr(err, "unexpected_eof", False)
+            or getattr(err, "eof", False)
+            or getattr(err, "es_eof", False)
+            or getattr(err, "is_eof", False)
+            or getattr(err, "is_unexpected_eof", False)
+            or getattr(err, "unexpected_end_of_input", False)
         )
-        return eof_por_flag or tipo_token_actual == TipoToken.EOF
+        eof_por_token = tipo_token_actual == TipoToken.EOF
+        if tipos_esperados:
+            return eof_por_flag or eof_por_token
+        if tipo_token_actual is None and not eof_por_flag:
+            return None
+        if eof_por_flag or eof_por_token:
+            return None
+        return False
+
+    def _es_error_de_bloque_incompleto_por_mensaje(self, err: ParserError) -> bool:
+        """Fallback textual para detectar bloque incompleto sin metadata útil."""
+        mensaje = str(err or "").strip().lower()
+        if not mensaje:
+            return False
+        if "sin bloque" in mensaje:
+            return False
+
+        indicadores_eof = (
+            "fin de entrada",
+            "final de entrada",
+            "unexpected eof",
+            "unexpected end of input",
+            "eof",
+        )
+        if not any(indicador in mensaje for indicador in indicadores_eof):
+            return False
+
+        indicadores_cierre = (
+            "se esperaba 'fin'",
+            'se esperaba "fin"',
+            "se esperaba fin",
+            "se esperaba cierre",
+            "cierre pendiente",
+        )
+        return any(indicador in mensaje for indicador in indicadores_cierre)
 
     def _bloque_con_solo_lineas_vacias(self, buffer_lineas: list[str]) -> bool:
         """Indica si el bloque actual no contiene sentencias no vacías."""
