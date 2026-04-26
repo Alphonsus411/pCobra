@@ -354,24 +354,20 @@ class InteractiveCommand(BaseCommand):
         return ast
 
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
-        """Ejecuta un snippet usando el pipeline canónico compartido con `run`."""
+        """Ejecuta un snippet en el intérprete persistente del REPL."""
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
-        interpretador_cls = resolver_interpretador_cls(
-            module_name=__name__,
-            default_cls=type(self.interpretador),
-        )
         try:
-            setup, resultado_pipeline = ejecutar_pipeline_explicito(
-                PipelineInput(
-                    codigo=codigo,
-                    interpretador_cls=interpretador_cls,
-                    safe_mode=self._seguro_repl,
-                    extra_validators=self._extra_validators_repl,
-                    interpretador=self.interpretador,
-                ),
-                analizar_codigo_fn=analizar_codigo,
-            )
+            ast = prevalidar_y_parsear_codigo(codigo)
+            if self._seguro_repl:
+                validar_ast_seguro(
+                    ast,
+                    validadores_extra=self._extra_validators_repl,
+                )
+            if validador:
+                for nodo in ast:
+                    nodo.aceptar(validador)
+            resultado = self.interpretador.ejecutar_ast(ast)
         except Exception as err_original:
             if not self._debe_intentar_fallback_expresion_top_level(
                 codigo, err_original
@@ -380,27 +376,22 @@ class InteractiveCommand(BaseCommand):
 
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
-                setup, resultado_pipeline = ejecutar_pipeline_explicito(
-                    PipelineInput(
-                        codigo=codigo_fallback,
-                        interpretador_cls=interpretador_cls,
-                        safe_mode=self._seguro_repl,
-                        extra_validators=self._extra_validators_repl,
-                        interpretador=self.interpretador,
-                    ),
-                    analizar_codigo_fn=analizar_codigo,
-                )
+                ast = prevalidar_y_parsear_codigo(codigo_fallback)
+                if self._seguro_repl:
+                    validar_ast_seguro(
+                        ast,
+                        validadores_extra=self._extra_validators_repl,
+                    )
+                if validador:
+                    for nodo in ast:
+                        nodo.aceptar(validador)
+                resultado = self.interpretador.ejecutar_ast(ast)
             except Exception as err_fallback:
                 if self._debe_intentar_fallback_expresion_top_level(
                     codigo_fallback, err_fallback
                 ):
                     raise err_original
                 raise
-        self.interpretador = setup.interpretador
-        self._seguro_repl = setup.safe_mode
-        self._extra_validators_repl = setup.validadores_extra
-        ast = resultado_pipeline.ast
-        resultado = resultado_pipeline.resultado
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
