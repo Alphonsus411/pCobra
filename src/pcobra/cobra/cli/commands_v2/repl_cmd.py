@@ -65,6 +65,7 @@ class ReplCommandV2(BaseCommand):
             "actual_token",
             "last_token",
             "ultimo_token",
+            "unexpected_token",
         ):
             if hasattr(err, attr):
                 token = getattr(err, attr)
@@ -75,7 +76,15 @@ class ReplCommandV2(BaseCommand):
                 estado = getattr(err, attr)
                 if estado is None:
                     continue
-                for token_attr in ("token_actual", "token", "current_token"):
+                for token_attr in (
+                    "token_actual",
+                    "token",
+                    "current_token",
+                    "actual_token",
+                    "last_token",
+                    "ultimo_token",
+                    "unexpected_token",
+                ):
                     token = getattr(estado, token_attr, None)
                     if token is not None:
                         return token
@@ -96,13 +105,19 @@ class ReplCommandV2(BaseCommand):
             if token_actual is not None
             else getattr(err, "tipo_token_actual", None)
             or getattr(err, "current_token_type", None)
+            or getattr(err, "token_type", None)
+            or getattr(err, "actual_token_type", None)
+            or getattr(err, "last_token_type", None)
         )
 
         esperado_raw = (
             getattr(err, "esperado", None)
             or getattr(err, "expected", None)
+            or getattr(err, "esperados", None)
             or getattr(err, "tokens_esperados", None)
             or getattr(err, "expected_tokens", None)
+            or getattr(err, "expected_types", None)
+            or getattr(err, "expected_terminals", None)
             or getattr(err, "token_esperado", None)
             or getattr(err, "expected_token", None)
         )
@@ -118,6 +133,9 @@ class ReplCommandV2(BaseCommand):
             getattr(err, "unexpected_eof", False)
             or getattr(err, "eof", False)
             or getattr(err, "es_eof", False)
+            or getattr(err, "is_eof", False)
+            or getattr(err, "is_unexpected_eof", False)
+            or getattr(err, "unexpected_end_of_input", False)
         )
         eof_por_token = tipo_token_actual == TipoToken.EOF
         return eof_por_flag or eof_por_token
