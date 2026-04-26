@@ -339,7 +339,7 @@ def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
     assert prompts == [">>> ", "... ", "... ", ">>> "]
 
 
-def test_repl_v2_bloque_si_x_mayor_que_5_no_ejecuta_hasta_fin_y_prompts(monkeypatch):
+def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secundario(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["si x > 5:", "imprimir(x)", "fin", "exit"])
     parse_calls: list[str] = []
@@ -438,9 +438,10 @@ def test_repl_v2_sale_por_salir_y_por_exit(monkeypatch):
     assert prompts_exit == [">>> "]
 
 
-def test_repl_v2_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
+@pytest.mark.parametrize("comando_salida", ["exit", "salir"])
+def test_repl_v2_salida_cancela_bloque_pendiente_de_forma_explicita(monkeypatch, comando_salida):
     command = ReplCommandV2()
-    entradas = iter(["si verdadero:", "exit", "fin", "exit"])
+    entradas = iter(["si verdadero:", comando_salida, "fin", "exit"])
     parse_calls: list[str] = []
     pipeline_calls: list[str] = []
 
@@ -448,14 +449,12 @@ def test_repl_v2_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
 
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
-        if codigo != "si verdadero:\nexit\nfin":
-            raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
-                esperado=[TipoToken.FIN],
-                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
-                eof=True,
-            )
-        return []
+        raise _parser_error_con_metadata(
+            "Se esperaba 'fin' para cerrar el bloque condicional",
+            esperado=[TipoToken.FIN],
+            token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+            eof=True,
+        )
 
     class _Setup:
         def __init__(self):
