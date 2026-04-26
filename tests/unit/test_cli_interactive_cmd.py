@@ -400,15 +400,21 @@ def test_ejecutar_codigo_intenta_fallback_para_expresion_top_level_no_soportada(
     assert llamadas == ["1 + 2", "imprimir(1 + 2)"]
 
 
-def test_ejecutar_codigo_relanza_error_original_si_fallback_falla():
+def test_ejecutar_codigo_prioriza_error_original_cuando_fallback_tambien_falla():
     cmd = InteractiveCommand(MagicMock())
     NodoOperacionBinaria = type("NodoOperacionBinaria", (), {})
     ast_expr = [NodoOperacionBinaria()]
+    llamadas = []
+    error_original = "Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoOperacionBinaria'>"
+    error_fallback = "falló fallback al envolver en imprimir(...)"
 
     def _pipeline_fake(pipeline_input, analizar_codigo_fn):
+        llamadas.append(pipeline_input.codigo)
         if pipeline_input.codigo == "1 + 2":
-            raise ValueError("Nodo no soportado: <class 'pcobra.core.ast_nodes.NodoOperacionBinaria'>")
-        raise RuntimeError("falló fallback")
+            raise ValueError(error_original)
+        if pipeline_input.codigo == "imprimir(1 + 2)":
+            raise RuntimeError(error_fallback)
+        raise AssertionError(f"Código inesperado: {pipeline_input.codigo}")
 
     with patch(
         "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
@@ -421,7 +427,10 @@ def test_ejecutar_codigo_relanza_error_original_si_fallback_falla():
             cmd.ejecutar_codigo("1 + 2")
             assert False, "Se esperaba excepción"
         except ValueError as err:
-            assert "Nodo no soportado" in str(err)
+            assert str(err) == error_original
+            assert error_fallback not in str(err)
+
+    assert llamadas == ["1 + 2", "imprimir(1 + 2)"]
 
 
 def test_ejecutar_codigo_no_intenta_fallback_si_no_es_expresion_top_level():
