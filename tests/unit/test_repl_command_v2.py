@@ -263,17 +263,11 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
         return []
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
-    class _Setup:
-        def __init__(self, safe_mode, validadores_extra):
-            self.interpretador = object()
-            self.safe_mode = safe_mode
-            self.validadores_extra = validadores_extra
-
-    def _fake_pipeline(pipeline_input, **_kwargs):
-        executed.append(pipeline_input.codigo)
-        return _Setup(pipeline_input.safe_mode, pipeline_input.extra_validators), None
-
-    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: executed.append(codigo),
+    )
 
     status = command.run(
         argparse.Namespace(
@@ -316,15 +310,7 @@ def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
-    monkeypatch.setattr(
-        repl_module, "ejecutar_pipeline_explicito", lambda *_args, **_kwargs: (_Setup(), None)
-    )
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", lambda _codigo: None)
 
     status = command.run(
         argparse.Namespace(
@@ -343,7 +329,7 @@ def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secu
     command = ReplCommandV2()
     entradas = iter(["si x > 5:", "imprimir(x)", "fin", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     prompts: list[str] = []
 
     def _fake_input(prompt: str) -> str:
@@ -363,18 +349,11 @@ def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secu
             )
         return []
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
 
     status = command.run(
@@ -388,7 +367,7 @@ def test_repl_v2_bloque_si_x_mayor_que_5_acumula_hasta_fin_y_muestra_prompt_secu
 
     assert status == 0
     assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(x)", "si x > 5:\nimprimir(x)\nfin"]
-    assert pipeline_calls == ["si x > 5:\nimprimir(x)\nfin"]
+    assert delegate_calls == ["si x > 5:\nimprimir(x)\nfin"]
     assert prompts == [">>> ", "... ", "... ", ">>> "]
 
 
@@ -403,9 +382,11 @@ def test_repl_v2_sale_por_salir_y_por_exit(monkeypatch):
     )
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [])
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("no debe ejecutar")),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("no debe ejecutar")
+        ),
     )
 
     status_salir = command.run(
@@ -443,7 +424,7 @@ def test_repl_v2_salida_cancela_bloque_pendiente_de_forma_explicita(monkeypatch,
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", comando_salida, "fin", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
 
@@ -456,18 +437,11 @@ def test_repl_v2_salida_cancela_bloque_pendiente_de_forma_explicita(monkeypatch,
             eof=True,
         )
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
 
     status = command.run(
@@ -481,7 +455,7 @@ def test_repl_v2_salida_cancela_bloque_pendiente_de_forma_explicita(monkeypatch,
 
     assert status == 0
     assert parse_calls == ["si verdadero:"]
-    assert pipeline_calls == []
+    assert delegate_calls == []
 
 
 def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
@@ -577,7 +551,7 @@ def test_repl_v2_incompleto_vs_error_real_buffer(
     command = ReplCommandV2()
     entradas_iter = iter(entradas)
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     logged: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas_iter))
@@ -591,18 +565,11 @@ def test_repl_v2_incompleto_vs_error_real_buffer(
             raise ParserError(err)
         return []
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
     monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
 
@@ -617,7 +584,7 @@ def test_repl_v2_incompleto_vs_error_real_buffer(
 
     assert status == 0
     assert parse_calls == parse_esperado
-    assert pipeline_calls == pipeline_esperado
+    assert delegate_calls == pipeline_esperado
     assert logged == errores_esperados
 
 
@@ -625,32 +592,28 @@ def test_repl_v2_linea_en_blanco_no_ejecuta_ni_resetea_estado_global(monkeypatch
     command = ReplCommandV2()
     entradas = iter(["var x = 1", "   ", "imprimir(x)", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     estado: dict[str, int] = {}
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
-
-    class _Setup:
-        def __init__(self, interpretador):
-            self.interpretador = interpretador
-            self.safe_mode = False
-            self.validadores_extra = None
 
     def _fake_parse(codigo: str):
         parse_calls.append(codigo)
         return []
 
-    def _fake_pipeline(pipeline_input, **_kwargs):
-        pipeline_calls.append(pipeline_input.codigo)
-        interpretador = pipeline_input.interpretador or estado
-        if pipeline_input.codigo == "var x = 1":
+    command._interpretador_persistente = {}
+
+    def _fake_delegate(codigo: str):
+        delegate_calls.append(codigo)
+        interpretador = command._delegate.interpretador or estado
+        if codigo == "var x = 1":
             interpretador["x"] = 1
-        if pipeline_input.codigo == "imprimir(x)":
+        if codigo == "imprimir(x)":
             assert interpretador["x"] == 1
-        return _Setup(interpretador), None
+        command._delegate.interpretador = interpretador
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
-    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
 
     status = command.run(
         argparse.Namespace(
@@ -663,14 +626,14 @@ def test_repl_v2_linea_en_blanco_no_ejecuta_ni_resetea_estado_global(monkeypatch
 
     assert status == 0
     assert parse_calls == ["var x = 1", "imprimir(x)"]
-    assert pipeline_calls == ["var x = 1", "imprimir(x)"]
+    assert delegate_calls == ["var x = 1", "imprimir(x)"]
 
 
 def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", "imprimir(1", "var z = 9", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     logged: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
@@ -688,18 +651,11 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
             raise ParserError("Token inesperado: '('")
         return []
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
     monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
 
@@ -714,7 +670,7 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
 
     assert status == 0
     assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1", "var z = 9"]
-    assert pipeline_calls == ["var z = 9"]
+    assert delegate_calls == ["var z = 9"]
     assert logged == ["Token inesperado: '('"]
 
 
@@ -722,7 +678,7 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(mon
     command = ReplCommandV2()
     entradas = iter(["si x > 5:", "imprimir(", "var y = 7", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     logged: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
@@ -740,18 +696,11 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(mon
             raise ParserError("Token inesperado en término: TipoToken.EOF")
         return []
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
     monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
 
@@ -766,7 +715,7 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_permite_entrada_nueva(mon
 
     assert status == 0
     assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(", "var y = 7"]
-    assert pipeline_calls == ["var y = 7"]
+    assert delegate_calls == ["var y = 7"]
     assert logged == ["Token inesperado en término: TipoToken.EOF"]
 
 
@@ -774,7 +723,7 @@ def test_repl_v2_fallback_mensaje_se_esperaba_fin_sin_metadata_completa(monkeypa
     command = ReplCommandV2()
     entradas = iter(["si x > 5:", "imprimir(x)", "fin", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
 
@@ -784,18 +733,11 @@ def test_repl_v2_fallback_mensaje_se_esperaba_fin_sin_metadata_completa(monkeypa
             raise ParserError("Se esperaba 'fin' para cerrar bloque al final de entrada")
         return []
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
 
     status = command.run(
@@ -809,13 +751,13 @@ def test_repl_v2_fallback_mensaje_se_esperaba_fin_sin_metadata_completa(monkeypa
 
     assert status == 0
     assert parse_calls == ["si x > 5:", "si x > 5:\nimprimir(x)", "si x > 5:\nimprimir(x)\nfin"]
-    assert pipeline_calls == ["si x > 5:\nimprimir(x)\nfin"]
+    assert delegate_calls == ["si x > 5:\nimprimir(x)\nfin"]
 
 
 def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", "fin", "var z = 9", "exit"])
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     logged: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
@@ -832,19 +774,12 @@ def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
-    def _fake_pipeline(pipeline_input, **_kwargs):
-        pipeline_calls.append(pipeline_input.codigo)
-        if pipeline_input.codigo == "si verdadero:\nfin":
+    def _fake_delegate(codigo: str):
+        delegate_calls.append(codigo)
+        if codigo == "si verdadero:\nfin":
             raise RuntimeError("falló ejecución")
-        return _Setup(), None
 
-    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
     monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
 
     status = command.run(
@@ -857,7 +792,7 @@ def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
     )
 
     assert status == 0
-    assert pipeline_calls == ["si verdadero:\nfin", "var z = 9"]
+    assert delegate_calls == ["si verdadero:\nfin", "var z = 9"]
     assert logged == ["falló ejecución"]
 
 
@@ -869,22 +804,18 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
 
-    class _Setup:
-        def __init__(self, interpretador):
-            self.interpretador = interpretador
-            self.safe_mode = False
-            self.validadores_extra = None
+    command._interpretador_persistente = {}
 
-    def _fake_pipeline(pipeline_input, **_kwargs):
-        interpretadores_recibidos.append(pipeline_input.interpretador)
-        interpretador = pipeline_input.interpretador or estado
-        if pipeline_input.codigo.strip() == "var x = 10":
+    def _fake_delegate(codigo: str):
+        interpretadores_recibidos.append(command._delegate.interpretador)
+        interpretador = command._delegate.interpretador or estado
+        if codigo.strip() == "var x = 10":
             interpretador["x"] = 10
-        if pipeline_input.codigo.strip() == "imprimir(x)":
+        if codigo.strip() == "imprimir(x)":
             assert interpretador["x"] == 10
-        return _Setup(interpretador), None
+        command._delegate.interpretador = interpretador
 
-    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [])
 
     status = command.run(
@@ -899,7 +830,7 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
     )
 
     assert status == 0
-    assert interpretadores_recibidos == [None, estado]
+    assert interpretadores_recibidos == [{}, estado]
 
 
 def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_estado(monkeypatch):
@@ -917,7 +848,7 @@ def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_es
         ]
     )
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
     interpretadores_recibidos: list[dict[str, int] | None] = []
     estado: dict[str, int] = {}
 
@@ -937,24 +868,20 @@ def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_es
             )
         return []
 
-    class _Setup:
-        def __init__(self, interpretador):
-            self.interpretador = interpretador
-            self.safe_mode = False
-            self.validadores_extra = None
+    command._interpretador_persistente = {}
 
-    def _fake_pipeline(pipeline_input, **_kwargs):
-        pipeline_calls.append(pipeline_input.codigo)
-        interpretadores_recibidos.append(pipeline_input.interpretador)
-        interpretador = pipeline_input.interpretador or estado
-        if pipeline_input.codigo.startswith("mientras verdadero:"):
+    def _fake_delegate(codigo: str):
+        delegate_calls.append(codigo)
+        interpretadores_recibidos.append(command._delegate.interpretador)
+        interpretador = command._delegate.interpretador or estado
+        if codigo.startswith("mientras verdadero:"):
             interpretador["total"] = 5
-        if pipeline_input.codigo == "imprimir(total)":
+        if codigo == "imprimir(total)":
             assert interpretador["total"] == 5
-        return _Setup(interpretador), None
+        command._delegate.interpretador = interpretador
 
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
-    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
 
     status = command.run(
         argparse.Namespace(
@@ -977,11 +904,11 @@ def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_es
         "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
         "imprimir(total)",
     ]
-    assert pipeline_calls == [
+    assert delegate_calls == [
         "mientras verdadero:\nsi verdadero:\nvar total = 5\nromper\nfin\nfin",
         "imprimir(total)",
     ]
-    assert interpretadores_recibidos == [None, estado]
+    assert interpretadores_recibidos == [{}, estado]
 
 
 @pytest.mark.parametrize(
@@ -1002,22 +929,10 @@ def test_repl_v2_salida_homogenea_para_sentencia_y_expresion(
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: ast)
     monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
+    def _fake_delegate(_codigo: str):
+        command._delegate._imprimir_resultado_repl(ast, resultado)
 
-    class _Resultado:
-        def __init__(self):
-            self.ast = ast
-            self.resultado = resultado
-
-    monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda *_args, **_kwargs: (_Setup(), _Resultado()),
-    )
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
 
     status = command.run(
         argparse.Namespace(
@@ -1040,21 +955,13 @@ def test_repl_v2_no_hace_echo_automatico_para_estructuras_de_control(monkeypatch
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
     monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = object()
-            self.safe_mode = False
-            self.validadores_extra = None
-
-    class _Resultado:
-        def __init__(self):
-            self.ast = [interactive_module.NodoCondicional(True, [], [])]
-            self.resultado = "resultado-interno"
-
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda *_args, **_kwargs: (_Setup(), _Resultado()),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda _codigo: command._delegate._imprimir_resultado_repl(
+            [interactive_module.NodoCondicional(True, [], [])],
+            "resultado-interno",
+        ),
     )
 
     status = command.run(
@@ -1072,32 +979,24 @@ def test_repl_v2_no_hace_echo_automatico_para_estructuras_de_control(monkeypatch
 
 def test_repl_v2_var_e_imprimir_persisten_estado_y_muestran_valor(monkeypatch, capsys):
     command = ReplCommandV2()
+    command._interpretador_persistente = {}
     entradas = iter(["var x = 10", "imprimir(x)", "exit"])
     estado: dict[str, int] = {}
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
 
-    class _Setup:
-        def __init__(self, interpretador):
-            self.interpretador = interpretador
-            self.safe_mode = False
-            self.validadores_extra = None
-
-    class _Resultado:
-        def __init__(self, ast, resultado):
-            self.ast = ast
-            self.resultado = resultado
-
-    def _fake_pipeline(pipeline_input, **_kwargs):
-        interpretador = pipeline_input.interpretador or estado
-        if pipeline_input.codigo == "var x = 10":
+    def _fake_delegate(codigo: str):
+        interpretador = command._delegate.interpretador or estado
+        if codigo == "var x = 10":
             interpretador["x"] = 10
-            return _Setup(interpretador), _Resultado([object()], None)
-        assert pipeline_input.codigo == "imprimir(x)"
-        return _Setup(interpretador), _Resultado([object()], interpretador["x"])
+            command._delegate.interpretador = interpretador
+            return
+        assert codigo == "imprimir(x)"
+        print(interpretador["x"])
+        command._delegate.interpretador = interpretador
 
-    monkeypatch.setattr(repl_module, "ejecutar_pipeline_explicito", _fake_pipeline)
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
     monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
 
     status = command.run(
@@ -1117,7 +1016,7 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", "imprimir(1)", "fin", "exit"])
     parse_calls: list[str] = []
-    pipeline_calls: list[str] = []
+    delegate_calls: list[str] = []
 
     monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
 
@@ -1132,18 +1031,11 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
             )
         return []
 
-    class _Setup:
-        def __init__(self):
-            self.interpretador = {}
-            self.safe_mode = False
-            self.validadores_extra = None
-
     monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", _fake_parse)
     monkeypatch.setattr(
-        repl_module,
-        "ejecutar_pipeline_explicito",
-        lambda pipeline_input, **_kwargs: pipeline_calls.append(pipeline_input.codigo)
-        or (_Setup(), None),
+        command._delegate,
+        "ejecutar_codigo",
+        lambda codigo: delegate_calls.append(codigo),
     )
 
     status = command.run(
@@ -1161,4 +1053,4 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
         "si verdadero:\nimprimir(1)",
         "si verdadero:\nimprimir(1)\nfin",
     ]
-    assert pipeline_calls == ["si verdadero:\nimprimir(1)\nfin"]
+    assert delegate_calls == ["si verdadero:\nimprimir(1)\nfin"]
