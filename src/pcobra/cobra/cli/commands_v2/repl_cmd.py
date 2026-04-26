@@ -36,13 +36,17 @@ class ReplCommandV2(BaseCommand):
         self._extra_validators_repl: Any = None
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
-        """Detecta si la excepción corresponde a una entrada aún incompleta.
-
-        Orden de decisión: metadata primero y fallback textual después.
-        La fuente de verdad sigue siendo el parser existente; no se
-        reimplementa la gramática en este comando.
-        """
+        """Delega la clasificación de entrada incompleta al clasificador central."""
         return es_parser_error_de_bloque_incompleto(exc)
+
+    def _manejar_error_prevalidacion(self, err: Exception, buffer: list[str]) -> None:
+        """Procesa errores de prevalidación delegando la clasificación central."""
+        if self.es_error_de_bloque_incompleto(err):
+            return
+        categoria = self._delegate._clasificar_error_repl(err)
+        self._delegate._log_error(categoria, err)
+        self._reset_buffer_local(buffer)
+        self._reset_estado_delegate()
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
@@ -156,12 +160,7 @@ class ReplCommandV2(BaseCommand):
             try:
                 prevalidar_y_parsear_codigo(codigo)
             except (LexerError, ParserError) as err:
-                if self.es_error_de_bloque_incompleto(err):
-                    continue
-                categoria = self._delegate._clasificar_error_repl(err)
-                self._delegate._log_error(categoria, err)
-                self._reset_buffer_local(buffer)
-                self._reset_estado_delegate()
+                self._manejar_error_prevalidacion(err, buffer)
                 continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
