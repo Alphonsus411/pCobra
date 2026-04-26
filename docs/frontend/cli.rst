@@ -121,6 +121,10 @@ Subcomando ``interactive``
 El subcomando ``interactive`` se mantiene solo como alias legacy de
 migración. El flujo interactivo oficial en la CLI pública es ``cobra repl``.
 
+Para el contrato de paridad entre ejecución por archivo y REPL (misma sintaxis,
+misma gramática y misma ruta canónica de pipeline), consulta:
+``docs/architecture/repl-script-parity-contract.md``.
+
 Ejemplo:
 
 .. code-block:: bash

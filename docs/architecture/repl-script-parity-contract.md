@@ -60,6 +60,41 @@ La ruta de script (`RunService.ejecutar_normal`) y la ruta REPL (`InteractiveCom
 - Resolución de clase de intérprete con `resolver_interpretador_cls`.
 - Ejecución del flujo `analizar + validar + ejecutar` con la API de alto nivel `ejecutar_pipeline_explicito`.
 - Normalización de `safe_mode` y `extra_validators` **únicamente** desde el pipeline compartido (`normalizar_opciones_pipeline`).
+- Entrada REPL encauzada por `src/pcobra/cobra/cli/commands_v2/repl_cmd.py` y pipeline compartido en `src/pcobra/cobra/cli/execution_pipeline.py`.
+- Entrada script encauzada por servicios CLI que reutilizan el mismo pipeline canónico definido en `src/pcobra/cobra/cli/execution_pipeline.py`.
+
+### Principio explícito de paridad sintáctica y gramatical
+
+**REPL no cambia sintaxis ni gramática; solo cambia el origen de entrada.**
+
+Esto implica que:
+
+- El mismo lexer/parser debe procesar código idéntico sin bifurcaciones por modo de ejecución.
+- Las reglas de bloque con `fin` y las validaciones semánticas son equivalentes entre archivo y sesión interactiva.
+- Cualquier diferencia permitida entre modos se limita al origen del texto (archivo vs entrada de usuario), no al lenguaje aceptado.
+
+### Ejemplos mínimos del contrato (anidación y persistencia)
+
+Ejemplo 1: bloque anidado con `fin` (debe comportarse igual en script y REPL)
+
+```cobra
+var x = 1
+si x == 1
+    mientras x < 3
+        imprimir(x)
+        x = x + 1
+    fin
+fin
+```
+
+Ejemplo 2: persistencia de estado entre entradas REPL (equivalente al estado final en script)
+
+```cobra
+var x = 10
+imprimir(x)
+```
+
+En REPL, tras declarar `var x = 10`, una entrada posterior con `imprimir(x)` debe resolver el mismo valor persistido en entorno que en ejecución continua por archivo.
 
 ### Regla obligatoria para nuevas rutas de ejecución
 
