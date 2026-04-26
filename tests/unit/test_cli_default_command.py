@@ -5,6 +5,32 @@ from unittest.mock import patch
 import pytest
 
 from cobra.cli.cli import CliApplication, InteractiveCommand, CustomArgumentParser, main
+from pcobra.cobra.cli.commands.base import BaseCommand
+
+
+class _DummyRunCommand(BaseCommand):
+    name = "run"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Ejecuta script Cobra")
+        parser.set_defaults(cmd=self)
+        return parser
+
+    def run(self, _args):
+        return 0
+
+
+class _DummyReplCommand(BaseCommand):
+    name = "repl"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Inicia REPL público")
+        parser.add_argument("--sandbox", action="store_true", help="Sandbox REPL")
+        parser.set_defaults(cmd=self)
+        return parser
+
+    def run(self, _args):
+        return 0
 
 
 def _patch_cli_env(stack: ExitStack) -> None:
@@ -140,3 +166,34 @@ def test_execute_command_without_parser_returns_controlled_error():
     assert result == 1
     mock_error.assert_called_once()
     assert "parser no disponible" in mock_error.call_args.args[0].lower()
+
+
+def test_help_principal_lista_repl_como_comando_publico(capsys):
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(
+            patch("cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES", [_DummyRunCommand, _DummyReplCommand])
+        )
+        stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="public"))
+        app = CliApplication()
+        with pytest.raises(SystemExit) as excinfo:
+            app.run(["--help"])
+    assert excinfo.value.code == 0
+    stdout = capsys.readouterr().out
+    assert "repl" in stdout
+    assert "run" in stdout
+
+
+def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(
+            patch("cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES", [_DummyRunCommand, _DummyReplCommand])
+        )
+        stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="public"))
+        app = CliApplication()
+        result = app.run([])
+    assert result == 1
+    stdout = capsys.readouterr().out
+    assert "repl" in stdout
+    assert "--sandbox" not in stdout
