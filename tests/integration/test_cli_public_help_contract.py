@@ -1,8 +1,10 @@
+import argparse
 import os
 import subprocess
 import sys
 from pathlib import Path
 
+import cobra.cli.cli as cli_module
 from pcobra.cobra.cli.public_command_policy import PUBLIC_COMMANDS
 
 
@@ -23,6 +25,22 @@ def test_cli_public_commands_contract_is_stable():
 def test_cli_public_commands_contract_keeps_repl_as_official_command():
     # `repl` debe permanecer en el contrato público oficial (no alias legacy).
     assert "repl" in PUBLIC_COMMANDS
+
+
+def test_cli_ui_v2_registra_repl_oficial_y_no_alias_interactive_legacy():
+    registry = cli_module.CommandRegistry()
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+
+    commands = registry.register_base_commands(
+        subparsers,
+        ui="v2",
+        profile="public",
+    )
+
+    assert "repl" in commands
+    assert commands["repl"].__class__.__name__ == "ReplCommandV2"
+    assert "interactive" not in commands
 
 
 def test_cli_help_public_contract_snapshot():

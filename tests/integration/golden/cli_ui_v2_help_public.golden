@@ -59,4 +59,4 @@ options:
                         cobra_plugins_allowlist.
 
 ejemplos públicos: cobra run <archivo.co> cobra build <archivo.co> cobra test
-<archivo.co> cobra mod <list|install|remove|publish|search>
+<archivo.co> cobra mod <list|install|remove|publish|search> cobra repl
