@@ -34,6 +34,42 @@ class _DummyReplCommand(BaseCommand):
         return 0
 
 
+class _DummyBuildCommand(BaseCommand):
+    name = "build"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Compila script Cobra")
+        parser.set_defaults(cmd=self)
+        return parser
+
+    def run(self, _args):
+        return 0
+
+
+class _DummyTestCommand(BaseCommand):
+    name = "test"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Valida script Cobra")
+        parser.set_defaults(cmd=self)
+        return parser
+
+    def run(self, _args):
+        return 0
+
+
+class _DummyModCommand(BaseCommand):
+    name = "mod"
+
+    def register_subparser(self, subparsers):
+        parser = subparsers.add_parser(self.name, help="Gestiona módulos")
+        parser.set_defaults(cmd=self)
+        return parser
+
+    def run(self, _args):
+        return 0
+
+
 def _patch_cli_env(stack: ExitStack) -> None:
     stack.enter_context(patch("cobra.cli.cli.setup_gettext"))
     stack.enter_context(patch("cobra.cli.cli.InterpretadorCobra"))
@@ -186,6 +222,41 @@ def test_help_principal_lista_repl_como_comando_publico(capsys):
     assert "run" in stdout
 
 
+def test_help_sigue_ruta_de_ayuda_y_lista_comandos_publicos(capsys):
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(
+            patch(
+                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                [
+                    _DummyRunCommand,
+                    _DummyBuildCommand,
+                    _DummyTestCommand,
+                    _DummyModCommand,
+                    _DummyReplCommand,
+                ],
+            )
+        )
+        stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="public"))
+        parse_known_spy = stack.enter_context(
+            patch.object(CliApplication, "_parse_arguments", autospec=True, wraps=CliApplication._parse_arguments)
+        )
+        mock_logo = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
+        mock_execute = stack.enter_context(patch.object(CliApplication, "execute_command", autospec=True))
+        app = CliApplication()
+        with pytest.raises(SystemExit) as excinfo:
+            app.run(["--help"])
+
+    assert excinfo.value.code == 0
+    assert parse_known_spy.call_count == 1
+    mock_logo.assert_not_called()
+    mock_execute.assert_not_called()
+
+    stdout = capsys.readouterr().out.lower()
+    for command in ("run", "build", "test", "mod", "repl"):
+        assert command in stdout
+
+
 def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
     with ExitStack() as stack:
         _patch_cli_env(stack)
@@ -201,6 +272,34 @@ def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
     assert "run" not in stdout.lower()
     assert "repl" not in stdout.lower()
     assert "--sandbox" not in stdout
+
+
+def test_cobra_sin_args_no_muestra_logo_ni_ejecuta_comandos():
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(
+            patch(
+                "cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES",
+                [
+                    _DummyRunCommand,
+                    _DummyBuildCommand,
+                    _DummyTestCommand,
+                    _DummyModCommand,
+                    _DummyReplCommand,
+                ],
+            )
+        )
+        stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="public"))
+        mock_logo = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_logo"))
+        mock_execute = stack.enter_context(
+            patch.object(CliApplication, "execute_command", autospec=True, wraps=CliApplication.execute_command)
+        )
+        app = CliApplication()
+        result = app.run([])
+
+    assert result == 1
+    mock_logo.assert_not_called()
+    assert mock_execute.call_count == 1
 
 
 def test_public_help_no_expone_aliases_legacy_en_superficie_visible(capsys):
