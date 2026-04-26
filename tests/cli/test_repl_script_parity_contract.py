@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from types import SimpleNamespace
+import re
 
 import pytest
 from unittest.mock import patch
@@ -217,6 +218,16 @@ def _ejecutar_repl_v2_con_entradas(entradas: list[str]) -> dict[str, object]:
     }
 
 
+def _lineas_stdout_repl_v2(resultado: dict[str, object]) -> list[str]:
+    salida = str(resultado["stdout"])
+    salida_sin_ansi = re.sub(r"\x1b\[[0-9;]*m", "", salida)
+    return [
+        linea.strip()
+        for linea in salida_sin_ansi.splitlines()
+        if linea.strip() and "Saliendo..." not in linea
+    ]
+
+
 @pytest.mark.integration
 def test_paridad_script_vs_repl_mientras_asignaciones_y_retorno_observable() -> None:
     codigo = (
@@ -340,21 +351,21 @@ def test_repl_v2_preserva_estado_entre_entradas_sin_recrear_interpretador() -> N
     interpretadores_entrada: list[object | None] = []
     interpretador_persistente = object()
 
-    def _spy_pipeline(pipeline_input: PipelineInput):
-        interpretadores_entrada.append(pipeline_input.interpretador)
-        return (
-            SimpleNamespace(
-                interpretador=interpretador_persistente,
-                safe_mode=False,
-                validadores_extra=None,
-            ),
-            None,
-        )
+    def _spy_parsear_y_ejecutar_codigo_repl(self, codigo: str, prevalidar_fn):
+        prevalidar_fn(codigo)
+        interpretadores_entrada.append(self.interpretador)
+        self.interpretador = interpretador_persistente
 
-    with patch.object(repl_v2_module, "ejecutar_pipeline_explicito", _spy_pipeline):
+    with patch.object(
+        InteractiveCommand,
+        "parsear_y_ejecutar_codigo_repl",
+        _spy_parsear_y_ejecutar_codigo_repl,
+    ):
         _ = _ejecutar_repl_v2_con_entradas(entradas)
 
-    assert interpretadores_entrada == [None, interpretador_persistente]
+    assert len(interpretadores_entrada) == 2
+    assert interpretadores_entrada[0] is not None
+    assert interpretadores_entrada[1] is interpretador_persistente
 
 
 @pytest.mark.integration
@@ -370,9 +381,6 @@ def test_repl_v2_detecta_bloque_anidado_completo_solo_por_parser() -> None:
     codigos_parseados: list[str] = []
     codigos_ejecutados: list[str] = []
 
-    interpretadores_entrada: list[object | None] = []
-    interpretador_persistente = object()
-
     def _spy_parse(codigo: str):
         codigos_parseados.append(codigo)
         if codigo != "\n".join(entradas):
@@ -383,26 +391,21 @@ def test_repl_v2_detecta_bloque_anidado_completo_solo_por_parser() -> None:
             raise err
         return [object()]
 
-    def _spy_pipeline(pipeline_input: PipelineInput):
-        interpretadores_entrada.append(pipeline_input.interpretador)
-        codigos_ejecutados.append(pipeline_input.codigo)
-        return (
-            SimpleNamespace(
-                interpretador=interpretador_persistente,
-                safe_mode=False,
-                validadores_extra=None,
-            ),
-            None,
-        )
+    def _spy_parsear_y_ejecutar_codigo_repl(_self, codigo: str, prevalidar_fn):
+        prevalidar_fn(codigo)
+        codigos_ejecutados.append(codigo)
 
     with patch.object(repl_v2_module, "prevalidar_y_parsear_codigo", _spy_parse):
-        with patch.object(repl_v2_module, "ejecutar_pipeline_explicito", _spy_pipeline):
+        with patch.object(
+            InteractiveCommand,
+            "parsear_y_ejecutar_codigo_repl",
+            _spy_parsear_y_ejecutar_codigo_repl,
+        ):
             resultado = _ejecutar_repl_v2_con_entradas(entradas)
 
     assert resultado["stderr"] == ""
     assert codigos_parseados[-1] == "\n".join(entradas)
     assert codigos_ejecutados == ["\n".join(entradas)]
-    assert interpretadores_entrada == [None]
 
 
 @pytest.mark.integration
@@ -411,24 +414,23 @@ def test_repl_v2_echo_expresiones_y_estado_persistente_en_entradas_secuenciales(
         "var x = 5",
         "x + 10",
         "x * 2",
-        "salir",
     ])
 
-    lineas = [linea.strip() for linea in str(resultado["stdout"]).splitlines() if linea.strip()]
+    lineas = _lineas_stdout_repl_v2(resultado)
 
     assert resultado["stderr"] == ""
-    assert lineas[:3] == ["5", "15", "10"]
+    assert lineas[:2] == ["15", "10"]
 
 
 @pytest.mark.integration
 def test_repl_v2_reporta_error_real_en_expresion_con_variable_no_declarada() -> None:
     resultado = _ejecutar_repl_v2_con_entradas([
         "x + 10",
-        "salir",
     ])
 
     assert resultado["stderr"] == ""
     assert "Variable no declarada: x" in str(resultado["stdout"])
+    assert "nodo no soportado" not in str(resultado["stdout"]).lower()
 
 
 @pytest.mark.integration
@@ -439,10 +441,9 @@ def test_repl_v2_no_altera_semantica_en_statements_var_imprimir_y_si_fin() -> No
         "    imprimir(10)",
         "fin",
         "imprimir(20)",
-        "salir",
     ])
 
-    lineas = [linea.strip() for linea in str(resultado["stdout"]).splitlines() if linea.strip()]
+    lineas = _lineas_stdout_repl_v2(resultado)
 
     assert resultado["stderr"] == ""
-    assert lineas[:3] == ["verdadero", "10", "20"]
+    assert lineas == ["10", "20"]
