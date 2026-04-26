@@ -119,6 +119,39 @@ def test_es_error_de_bloque_incompleto_prioriza_metadata(err, es_incompleto):
     assert command.es_error_de_bloque_incompleto(err) is es_incompleto
 
 
+def test_incompleto_bloque_simple_por_eof_inesperado_y_fin_pendiente():
+    command = ReplCommandV2()
+    err = _parser_error_con_metadata(
+        "bloque sin cierre",
+        esperado=[TipoToken.FIN],
+        token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+        eof=True,
+    )
+    assert command.es_error_de_bloque_incompleto(err) is True
+
+
+def test_incompleto_bloque_anidado_por_eof_inesperado_y_cierres_pendientes():
+    command = ReplCommandV2()
+    err = _parser_error_con_metadata(
+        "bloque anidado sin cierres",
+        esperado=[TipoToken.RPAREN, TipoToken.FIN],
+        token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+        eof=True,
+    )
+    assert command.es_error_de_bloque_incompleto(err) is True
+
+
+def test_error_sintactico_real_no_se_clasifica_como_incompleto():
+    command = ReplCommandV2()
+    err = _parser_error_con_metadata(
+        "token inesperado real",
+        esperado=[TipoToken.IDENTIFICADOR],
+        token_actual=type("Tok", (), {"tipo": TipoToken.SI})(),
+        eof=False,
+    )
+    assert command.es_error_de_bloque_incompleto(err) is False
+
+
 def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", "imprimir(1)", "fin", "exit"])
