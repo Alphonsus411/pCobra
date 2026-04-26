@@ -411,7 +411,7 @@ class InteractiveCommand(BaseCommand):
             return False
 
         ast = prevalidar_y_parsear_codigo(codigo)
-        if len(ast) != 1:
+        if not self._es_expresion_top_level_elegible(ast):
             return False
 
         nodo = ast[0]
@@ -420,34 +420,64 @@ class InteractiveCommand(BaseCommand):
         if match_nodo and match_nodo.group(1) != nombre_nodo_ast:
             return False
 
-        nodos_no_expresion = (
-            "NodoAsignacion",
-            "NodoImprimir",
-            "NodoCondicional",
-            "NodoBucleMientras",
-            "NodoMientras",
-            "NodoPara",
-            "NodoFor",
-            "NodoFuncion",
-            "NodoClase",
-            "NodoRetorno",
-            "NodoImport",
-            "NodoUsar",
-            "NodoTryCatch",
-            "NodoThrow",
-            "NodoAssert",
-            "NodoDel",
-            "NodoGlobal",
-            "NodoNoLocal",
-            "NodoWith",
-            "NodoHolobit",
-            "NodoHilo",
-            "NodoRomper",
-            "NodoContinuar",
-            "NodoEsperar",
-            "NodoSwitch",
+        return True
+
+    def _es_expresion_top_level_elegible(self, ast: list[Any]) -> bool:
+        """Valida fallback de echo en REPL sin alterar semántica de statements normales.
+
+        Este helper existe para que `imprimir(...)` solo se inyecte cuando el AST
+        represente una expresión top-level elegible, evitando transformar
+        sentencias de control/declaración.
+        """
+        if len(ast) != 1:
+            return False
+
+        nombre_nodo = ast[0].__class__.__name__
+        nodos_no_expresion = frozenset(
+            {
+                "NodoAsignacion",
+                "NodoImprimir",
+                "NodoCondicional",
+                "NodoBucleMientras",
+                "NodoMientras",
+                "NodoPara",
+                "NodoFor",
+                "NodoFuncion",
+                "NodoClase",
+                "NodoRetorno",
+                "NodoImport",
+                "NodoUsar",
+                "NodoTryCatch",
+                "NodoThrow",
+                "NodoAssert",
+                "NodoDel",
+                "NodoGlobal",
+                "NodoNoLocal",
+                "NodoWith",
+                "NodoHolobit",
+                "NodoHilo",
+                "NodoRomper",
+                "NodoContinuar",
+                "NodoEsperar",
+                "NodoSwitch",
+            }
         )
-        return nombre_nodo_ast not in nodos_no_expresion
+        if nombre_nodo in nodos_no_expresion:
+            return False
+
+        nodos_expresion_permitidos = frozenset(
+            {
+                "NodoOperacionBinaria",
+                "NodoOperacionUnaria",
+                "NodoLlamadaFuncion",
+                "NodoIdentificador",
+                "NodoValor",
+            }
+        )
+        if nombre_nodo in nodos_expresion_permitidos:
+            return True
+
+        return nombre_nodo.startswith("Nodo")
 
     def _imprimir_resultado_repl(self, ast: list[Any], resultado: Any) -> None:
         """Imprime el resultado del REPL cuando aplica contrato de echo."""
