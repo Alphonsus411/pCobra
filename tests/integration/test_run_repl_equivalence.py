@@ -166,6 +166,59 @@ def test_persistencia_basica_var_x_e_impresion_equivale_entre_run_y_repl():
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    ("expresion", "salida_esperada"),
+    [
+        ("x + 10", "15"),
+        ("x * 2", "10"),
+    ],
+)
+def test_repl_evalua_expresiones_con_estado_persistente(expresion: str, salida_esperada: str):
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo("var x = 5")
+        repl.ejecutar_codigo(expresion)
+
+    assert err_repl.getvalue() == ""
+    assert out_repl.getvalue().strip().endswith(salida_esperada)
+
+
+@pytest.mark.integration
+def test_repl_no_suprime_error_real_en_expresion_con_variable_no_declarada():
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        with pytest.raises(NameError, match=r"^Variable no declarada: x$"):
+            repl.ejecutar_codigo("x + 10")
+
+    assert out_repl.getvalue() == ""
+    assert err_repl.getvalue() == ""
+
+
+@pytest.mark.integration
+def test_repl_statement_normal_imprimir_no_duplica_salida():
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo("var x = 5")
+        repl.ejecutar_codigo("imprimir(x)")
+
+    lineas_salida = [linea for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    assert err_repl.getvalue() == ""
+    assert lineas_salida == ["5"]
+
+
+@pytest.mark.integration
 def test_repl_mantiene_estado_tras_error_intermedio():
     interpretador_cls = resolver_interpretador_cls(
         module_name="pcobra.cobra.cli.services.run_service",
