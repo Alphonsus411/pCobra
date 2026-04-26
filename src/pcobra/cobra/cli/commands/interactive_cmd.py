@@ -34,7 +34,6 @@ except ModuleNotFoundError:  # pragma: no cover - entornos sin prompt_toolkit
 from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.cli.execution_pipeline import (
-    analizar_codigo,
     construir_script_sandbox_canonico,
     ejecutar_pipeline_explicito,
     PipelineInput,
@@ -353,21 +352,29 @@ class InteractiveCommand(BaseCommand):
 
         return ast
 
+    def _ejecutar_ast_en_repl(
+        self, codigo: str, validador: Optional[Any] = None
+    ) -> tuple[list[Any], Any]:
+        """Flujo canónico del REPL: parsear AST, validar opcionalmente y ejecutar."""
+
+        ast = prevalidar_y_parsear_codigo(codigo)
+        if self._seguro_repl:
+            validar_ast_seguro(
+                ast,
+                validadores_extra=self._extra_validators_repl,
+            )
+        if validador:
+            for nodo in ast:
+                nodo.aceptar(validador)
+        resultado = self.interpretador.ejecutar_ast(ast)
+        return ast, resultado
+
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
         """Ejecuta un snippet en el intérprete persistente del REPL."""
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
         try:
-            ast = prevalidar_y_parsear_codigo(codigo)
-            if self._seguro_repl:
-                validar_ast_seguro(
-                    ast,
-                    validadores_extra=self._extra_validators_repl,
-                )
-            if validador:
-                for nodo in ast:
-                    nodo.aceptar(validador)
-            resultado = self.interpretador.ejecutar_ast(ast)
+            ast, resultado = self._ejecutar_ast_en_repl(codigo, validador)
         except Exception as err_original:
             if not self._debe_intentar_fallback_expresion_top_level(
                 codigo, err_original
@@ -376,16 +383,7 @@ class InteractiveCommand(BaseCommand):
 
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
-                ast = prevalidar_y_parsear_codigo(codigo_fallback)
-                if self._seguro_repl:
-                    validar_ast_seguro(
-                        ast,
-                        validadores_extra=self._extra_validators_repl,
-                    )
-                if validador:
-                    for nodo in ast:
-                        nodo.aceptar(validador)
-                resultado = self.interpretador.ejecutar_ast(ast)
+                ast, resultado = self._ejecutar_ast_en_repl(codigo_fallback, validador)
             except Exception as err_fallback:
                 if self._debe_intentar_fallback_expresion_top_level(
                     codigo, err_fallback
@@ -590,32 +588,9 @@ class InteractiveCommand(BaseCommand):
         self._debug_mode = bool(getattr(args, "debug", False))
         self._estado_repl["debug_enabled"] = self._debug_mode
 
-        # Configurar modo seguro y validadores
-        seguro = getattr(args, "seguro", True)
-        extra_validators = getattr(args, "extra_validators", None)
-        self._seguro_repl = bool(seguro)
-        self._extra_validators_repl = extra_validators
-        try:
-            interpretador_cls = resolver_interpretador_cls(
-                    module_name=__name__,
-                    default_cls=InterpretadorCobra,
-                )
-            setup, _pipeline_result = ejecutar_pipeline_explicito(
-                PipelineInput(
-                    codigo="",
-                    interpretador_cls=interpretador_cls,
-                    safe_mode=self._seguro_repl,
-                    extra_validators=self._extra_validators_repl,
-                ),
-                analizar_codigo_fn=lambda _codigo: [],
-            )
-        except (TypeError, ValueError, PrimitivaPeligrosaError) as err:
-            mostrar_error(str(err))
-            return 1
-
-        self._seguro_repl = setup.safe_mode
-        self._extra_validators_repl = setup.validadores_extra
-        self.interpretador = setup.interpretador
+        # Configurar modo seguro y validadores para el flujo AST canónico del REPL.
+        self._seguro_repl = bool(getattr(args, "seguro", True))
+        self._extra_validators_repl = getattr(args, "extra_validators", None)
 
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
