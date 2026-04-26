@@ -1029,8 +1029,8 @@ class CliApplication:
             if self.parser is not None:
                 messages.mostrar_info(
                     _(
-                        "Comandos principales: run, build, test, mod, repl. "
-                        "Usa --help para ver la ayuda completa."
+                        "No se indicó ningún comando. "
+                        "Usa --help para ver la ayuda disponible."
                     )
                 )
                 return 1

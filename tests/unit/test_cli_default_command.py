@@ -1,5 +1,6 @@
 import argparse
 from contextlib import ExitStack
+import re
 from unittest.mock import patch
 
 import pytest
@@ -54,7 +55,7 @@ def test_no_command_prints_help_and_does_not_run_default():
         result = app.run([])
     mock_run.assert_not_called()
     mock_info.assert_called_once()
-    assert "comandos principales" in mock_info.call_args.args[0].lower()
+    assert "no se indicó ningún comando" in mock_info.call_args.args[0].lower()
     assert result == 1
 
 
@@ -196,6 +197,26 @@ def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
         result = app.run([])
     assert result == 1
     stdout = capsys.readouterr().out
-    assert "comandos principales" in stdout.lower()
-    assert "repl" in stdout.lower()
+    assert "no se indicó ningún comando" in stdout.lower()
+    assert "run" not in stdout.lower()
+    assert "repl" not in stdout.lower()
     assert "--sandbox" not in stdout
+
+
+def test_public_help_no_expone_aliases_legacy_en_superficie_visible(capsys):
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(
+            patch("cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES", [_DummyRunCommand, _DummyReplCommand])
+        )
+        stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="public"))
+        app = CliApplication()
+        with pytest.raises(SystemExit) as excinfo:
+            app.run(["--help"])
+
+    assert excinfo.value.code == 0
+    stdout = capsys.readouterr().out.lower()
+    assert "run" in stdout
+    assert "repl" in stdout
+    legacy_as_command = re.compile(r"^\s+(ejecutar|compilar|verificar|modulos)\b", re.MULTILINE)
+    assert legacy_as_command.search(stdout) is None
