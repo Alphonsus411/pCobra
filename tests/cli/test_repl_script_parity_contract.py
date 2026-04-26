@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
+from types import SimpleNamespace
 
 import pytest
 from unittest.mock import patch
 
+from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_v2_module
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.execution_pipeline import (
     PipelineInput,
     ejecutar_pipeline_explicito,
     resolver_interpretador_cls,
 )
+from pcobra.cobra.core import ParserError, TipoToken
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
@@ -194,6 +197,26 @@ def _ejecutar_snippets_secuenciales_repl(
     }
 
 
+def _ejecutar_repl_v2_con_entradas(entradas: list[str]) -> dict[str, object]:
+    repl = repl_v2_module.ReplCommandV2()
+    args = SimpleNamespace(seguro=False, extra_validators=None, sandbox=False, sandbox_docker=None)
+    out_repl, err_repl = StringIO(), StringIO()
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        with patch.object(
+            InterpretadorCobra,
+            "_asegurar_no_autorreferencia_asignacion",
+            return_value=None,
+        ):
+            with patch("builtins.input", side_effect=entradas + ["salir"]):
+                repl.run(args)
+
+    return {
+        "stdout": out_repl.getvalue(),
+        "stderr": err_repl.getvalue(),
+        "interpretador": repl._interpretador_persistente,
+    }
+
+
 @pytest.mark.integration
 def test_paridad_script_vs_repl_mientras_asignaciones_y_retorno_observable() -> None:
     codigo = (
@@ -309,3 +332,74 @@ def test_paridad_script_vs_repl_bloque_anidado_mientras_con_si_y_fin() -> None:
         resultado_repl["stdout"]
     )
     assert resultado_script["estado"] == resultado_repl["estado"] == {"acumulado": 0}
+
+
+@pytest.mark.integration
+def test_repl_v2_preserva_estado_entre_entradas_sin_recrear_interpretador() -> None:
+    entradas = ["var base = 41", "imprimir(base)"]
+    interpretadores_entrada: list[object | None] = []
+    interpretador_persistente = object()
+
+    def _spy_pipeline(pipeline_input: PipelineInput):
+        interpretadores_entrada.append(pipeline_input.interpretador)
+        return (
+            SimpleNamespace(
+                interpretador=interpretador_persistente,
+                safe_mode=False,
+                validadores_extra=None,
+            ),
+            None,
+        )
+
+    with patch.object(repl_v2_module, "ejecutar_pipeline_explicito", _spy_pipeline):
+        _ = _ejecutar_repl_v2_con_entradas(entradas)
+
+    assert interpretadores_entrada == [None, interpretador_persistente]
+
+
+@pytest.mark.integration
+def test_repl_v2_detecta_bloque_anidado_completo_solo_por_parser() -> None:
+    entradas = [
+        "mientras verdadero:",
+        "    si verdadero:",
+        "        imprimir(7)",
+        "    fin",
+        "    romper",
+        "fin",
+    ]
+    codigos_parseados: list[str] = []
+    codigos_ejecutados: list[str] = []
+
+    interpretadores_entrada: list[object | None] = []
+    interpretador_persistente = object()
+
+    def _spy_parse(codigo: str):
+        codigos_parseados.append(codigo)
+        if codigo != "\n".join(entradas):
+            err = ParserError("incompleto")
+            err.esperado = [TipoToken.FIN]
+            err.unexpected_eof = True
+            err.tipo_token_actual = TipoToken.EOF
+            raise err
+        return [object()]
+
+    def _spy_pipeline(pipeline_input: PipelineInput):
+        interpretadores_entrada.append(pipeline_input.interpretador)
+        codigos_ejecutados.append(pipeline_input.codigo)
+        return (
+            SimpleNamespace(
+                interpretador=interpretador_persistente,
+                safe_mode=False,
+                validadores_extra=None,
+            ),
+            None,
+        )
+
+    with patch.object(repl_v2_module, "prevalidar_y_parsear_codigo", _spy_parse):
+        with patch.object(repl_v2_module, "ejecutar_pipeline_explicito", _spy_pipeline):
+            resultado = _ejecutar_repl_v2_con_entradas(entradas)
+
+    assert resultado["stderr"] == ""
+    assert codigos_parseados[-1] == "\n".join(entradas)
+    assert codigos_ejecutados == ["\n".join(entradas)]
+    assert interpretadores_entrada == [None]
