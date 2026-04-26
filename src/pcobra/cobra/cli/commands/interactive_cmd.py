@@ -379,16 +379,23 @@ class InteractiveCommand(BaseCommand):
                 raise
 
             codigo_fallback = f"imprimir({codigo.strip()})"
-            setup, resultado_pipeline = ejecutar_pipeline_explicito(
-                PipelineInput(
-                    codigo=codigo_fallback,
-                    interpretador_cls=interpretador_cls,
-                    safe_mode=self._seguro_repl,
-                    extra_validators=self._extra_validators_repl,
-                    interpretador=self.interpretador,
-                ),
-                analizar_codigo_fn=analizar_codigo,
-            )
+            try:
+                setup, resultado_pipeline = ejecutar_pipeline_explicito(
+                    PipelineInput(
+                        codigo=codigo_fallback,
+                        interpretador_cls=interpretador_cls,
+                        safe_mode=self._seguro_repl,
+                        extra_validators=self._extra_validators_repl,
+                        interpretador=self.interpretador,
+                    ),
+                    analizar_codigo_fn=analizar_codigo,
+                )
+            except Exception as err_fallback:
+                if self._debe_intentar_fallback_expresion_top_level(
+                    codigo_fallback, err_fallback
+                ):
+                    raise err_original
+                raise
         self.interpretador = setup.interpretador
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
@@ -503,6 +510,7 @@ class InteractiveCommand(BaseCommand):
         debe_imprimir_resultado = (
             resultado is not None
             and len(ast) == 1
+            and ast[0].__class__.__name__ not in {"NodoImprimir", "NodoAsignacion"}
             and not self._es_nodo_control_sin_echo_repl(ast[0])
         )
         if debe_imprimir_resultado:
