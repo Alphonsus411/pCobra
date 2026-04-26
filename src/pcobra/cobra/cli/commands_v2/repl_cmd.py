@@ -6,9 +6,7 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     SANDBOX_DOCKER_CHOICES,
 )
 from pcobra.cobra.cli.execution_pipeline import (
-    ejecutar_pipeline_explicito,  # Compatibilidad con pruebas que monkeypatchean este símbolo.
     prevalidar_y_parsear_codigo,
-    resolver_interpretador_cls,
 )
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.parser_error_classifier import (
@@ -102,9 +100,13 @@ class ReplCommandV2(BaseCommand):
         self._seguro_repl = self._delegate._seguro_repl
         self._extra_validators_repl = self._delegate._extra_validators_repl
 
-    def _ejecutar_en_modo_normal(self, codigo: str, interpretador_cls: type) -> None:
+    def _ejecutar_en_modo_normal(
+        self,
+        codigo: str,
+        interpretador_cls: type | None = None,
+    ) -> None:
         """Ejecuta una entrada REPL reutilizando la lógica canónica de InteractiveCommand."""
-        _ = interpretador_cls
+        _ = interpretador_cls  # Compatibilidad con contratos de pruebas existentes.
         self._sincronizar_estado_hacia_delegate()
         try:
             self._delegate.parsear_y_ejecutar_codigo_repl(
@@ -132,11 +134,6 @@ class ReplCommandV2(BaseCommand):
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
         self._seguro_repl = bool(getattr(args, "seguro", True))
         self._extra_validators_repl = getattr(args, "extra_validators", None)
-        interpretador_cls = resolver_interpretador_cls(
-            module_name=__name__,
-            default_cls=InterpretadorCobra,
-        )
-
         sandbox = bool(getattr(args, "sandbox", False))
         sandbox_docker = getattr(args, "sandbox_docker", None)
 
@@ -196,7 +193,7 @@ class ReplCommandV2(BaseCommand):
                 elif sandbox_docker:
                     self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
-                    self._ejecutar_en_modo_normal(codigo, interpretador_cls)
+                    self._ejecutar_en_modo_normal(codigo)
                 self._reset_buffer_local(buffer)
                 self._reset_estado_delegate()
             except (LexerError, ParserError) as err:
