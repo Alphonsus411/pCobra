@@ -629,7 +629,8 @@ class CliApplication:
                 "  cobra run <archivo.co>\n"
                 "  cobra build <archivo.co>\n"
                 "  cobra test <archivo.co>\n"
-                "  cobra mod <list|install|remove|publish|search>"
+                "  cobra mod <list|install|remove|publish|search>\n"
+                "  cobra repl"
             ),
         )
         self._configure_cli_options(parser)
