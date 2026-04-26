@@ -13,7 +13,7 @@ from pcobra.cobra.cli.execution_pipeline import (
 )
 from pcobra.cobra.cli.i18n import _
 from pcobra.cobra.cli.utils.messages import mostrar_info
-from pcobra.cobra.core import LexerError, ParserError
+from pcobra.cobra.core import LexerError, ParserError, TipoToken
 from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.core.semantic_validators import PrimitivaPeligrosaError
 from pcobra.cobra.cli.target_policies import parse_runtime_target
@@ -46,6 +46,13 @@ _PATRONES_ERROR_BLOQUE_INCOMPLETO: tuple[tuple[str, str], ...] = (
     ),
 )
 
+_TOKENS_CIERRE_INCOMPLETO = {
+    TipoToken.FIN,
+    TipoToken.RPAREN,
+    TipoToken.RBRACKET,
+    TipoToken.RBRACE,
+}
+
 
 class ReplCommandV2(BaseCommand):
     """Comando v2 público para iniciar el REPL de Cobra."""
@@ -60,15 +67,84 @@ class ReplCommandV2(BaseCommand):
         self._seguro_repl: bool = True
         self._extra_validators_repl: Any = None
 
+    def _normalizar_tipo_token(self, valor: Any) -> TipoToken | None:
+        """Normaliza posibles representaciones de token a ``TipoToken``."""
+        if isinstance(valor, TipoToken):
+            return valor
+        if valor is None:
+            return None
+        nombre = str(valor).strip()
+        if not nombre:
+            return None
+        if "." in nombre:
+            nombre = nombre.split(".")[-1]
+        try:
+            return TipoToken[nombre]
+        except KeyError:
+            return None
+
+    def _extraer_token_desde_error(self, err: ParserError) -> Any | None:
+        """Obtiene el token actual desde metadatos del ``ParserError`` si existe."""
+        for attr in ("token_actual", "token", "current_token", "actual_token"):
+            if hasattr(err, attr):
+                return getattr(err, attr)
+        return None
+
+    def _es_entrada_incompleta_por_metadata(self, err: ParserError) -> bool:
+        """Clasifica entrada incompleta priorizando metadatos del ``ParserError``."""
+        token_actual = self._extraer_token_desde_error(err)
+        tipo_token_actual = self._normalizar_tipo_token(
+            getattr(token_actual, "tipo", None)
+            if token_actual is not None
+            else getattr(err, "tipo_token_actual", None)
+            or getattr(err, "current_token_type", None)
+        )
+
+        esperado_raw = (
+            getattr(err, "esperado", None)
+            or getattr(err, "expected", None)
+            or getattr(err, "tokens_esperados", None)
+            or getattr(err, "expected_tokens", None)
+            or getattr(err, "token_esperado", None)
+            or getattr(err, "expected_token", None)
+        )
+        esperados = esperado_raw if isinstance(esperado_raw, (list, tuple, set)) else [esperado_raw]
+        tipos_esperados = {self._normalizar_tipo_token(item) for item in esperados}
+        tipos_esperados.discard(None)
+
+        eof_explicito = bool(
+            getattr(err, "eof", False)
+            or getattr(err, "es_eof", False)
+            or getattr(err, "unexpected_eof", False)
+            or getattr(err, "is_eof", False)
+            or tipo_token_actual == TipoToken.EOF
+        )
+
+        if eof_explicito and bool(tipos_esperados & _TOKENS_CIERRE_INCOMPLETO):
+            return True
+
+        posicion = (
+            getattr(err, "posicion", None)
+            or getattr(err, "position", None)
+            or getattr(err, "indice", None)
+            or getattr(err, "index", None)
+        )
+        if eof_explicito and tipos_esperados and posicion is not None:
+            return True
+
+        return False
+
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.
 
-        Se basa únicamente en `ParserError` y en mensajes canónicos emitidos por
-        el parser oficial.
+        Prioriza metadatos de ``ParserError`` (tipo/token/posición) y usa
+        matching textual como *fallback* controlado para compatibilidad.
         """
 
         if not isinstance(exc, ParserError):
             return False
+        if self._es_entrada_incompleta_por_metadata(exc):
+            return True
         mensaje = str(exc).strip().lower()
         return any(patron in mensaje for patron, _razon in _PATRONES_ERROR_BLOQUE_INCOMPLETO)
 

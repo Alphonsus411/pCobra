@@ -4,9 +4,29 @@ import pytest
 
 from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_module
 from pcobra.cobra.cli.commands import interactive_cmd as interactive_module
-from pcobra.cobra.core import ParserError
+from pcobra.cobra.core import ParserError, TipoToken
 
 ReplCommandV2 = repl_module.ReplCommandV2
+
+
+def _parser_error_con_metadata(
+    mensaje: str,
+    *,
+    esperado=None,
+    token_actual=None,
+    eof: bool | None = None,
+    posicion: int | None = None,
+):
+    err = ParserError(mensaje)
+    if esperado is not None:
+        err.esperado = esperado
+    if token_actual is not None:
+        err.token_actual = token_actual
+    if eof is not None:
+        err.eof = eof
+    if posicion is not None:
+        err.posicion = posicion
+    return err
 
 
 @pytest.mark.parametrize(
@@ -27,6 +47,76 @@ def test_es_error_de_bloque_incompleto_por_mensajes_parser(mensaje, es_incomplet
 def test_es_error_de_bloque_incompleto_rechaza_excepciones_que_no_son_parser():
     command = ReplCommandV2()
     assert not command.es_error_de_bloque_incompleto(ValueError("no parser"))
+
+
+@pytest.mark.parametrize(
+    ("err", "es_incompleto"),
+    [
+        (
+            _parser_error_con_metadata(
+                "bloque sin cierre",
+                esperado=[TipoToken.FIN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+                posicion=15,
+            ),
+            True,
+        ),
+        (
+            _parser_error_con_metadata(
+                "paren sin cierre",
+                esperado=[TipoToken.RPAREN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+                posicion=8,
+            ),
+            True,
+        ),
+        (
+            _parser_error_con_metadata(
+                "lista sin cierre",
+                esperado=[TipoToken.RBRACKET],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+                posicion=3,
+            ),
+            True,
+        ),
+        (
+            _parser_error_con_metadata(
+                "dict sin cierre",
+                esperado=[TipoToken.RBRACE],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+                posicion=21,
+            ),
+            True,
+        ),
+        (
+            _parser_error_con_metadata(
+                "EOF prematuro",
+                esperado=[TipoToken.RPAREN],
+                token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
+                eof=True,
+                posicion=1,
+            ),
+            True,
+        ),
+        (
+            _parser_error_con_metadata(
+                "error real",
+                esperado=[TipoToken.IDENTIFICADOR],
+                token_actual=type("Tok", (), {"tipo": TipoToken.SI})(),
+                eof=False,
+                posicion=4,
+            ),
+            False,
+        ),
+    ],
+)
+def test_es_error_de_bloque_incompleto_prioriza_metadata(err, es_incompleto):
+    command = ReplCommandV2()
+    assert command.es_error_de_bloque_incompleto(err) is es_incompleto
 
 
 def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
