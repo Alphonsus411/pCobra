@@ -143,14 +143,50 @@ class ReplCommandV2(BaseCommand):
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.
 
-        La decisión sale exclusivamente del ``ParserError`` emitido por
-        ``prevalidar_y_parsear_codigo``: EOF inesperado + cierres pendientes
-        en tokens esperados.
+        Orden de decisión:
+
+        1. **Metadata primero**: usa ``_es_entrada_incompleta_por_metadata``.
+        2. **Mensaje después** (fallback): solo cuando no hay metadata suficiente
+           en un ``ParserError`` y el texto sugiere cierre pendiente.
+
+        Este fallback no aplica a ``LexerError`` ni a errores de runtime.
         """
 
         if not isinstance(exc, ParserError):
             return False
-        return self._es_entrada_incompleta_por_metadata(exc)
+        if self._es_entrada_incompleta_por_metadata(exc):
+            return True
+        return self._es_entrada_incompleta_por_mensaje(exc)
+
+    def _es_entrada_incompleta_por_mensaje(self, err: ParserError) -> bool:
+        """Fallback textual para detectar bloque incompleto sin metadata útil."""
+        mensaje = str(err or "").strip().lower()
+        if not mensaje:
+            return False
+
+        # Evitar falsos positivos en errores explícitos de estructura inválida.
+        if "sin bloque" in mensaje:
+            return False
+
+        # Debe parecer un error de final/cierre pendiente.
+        indicadores_eof = (
+            "fin de entrada",
+            "final de entrada",
+            "unexpected eof",
+            "unexpected end of input",
+            "eof",
+        )
+        if not any(indicador in mensaje for indicador in indicadores_eof):
+            return False
+
+        indicadores_cierre = (
+            "se esperaba 'fin'",
+            'se esperaba "fin"',
+            "se esperaba fin",
+            "se esperaba cierre",
+            "cierre pendiente",
+        )
+        return any(indicador in mensaje for indicador in indicadores_cierre)
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
