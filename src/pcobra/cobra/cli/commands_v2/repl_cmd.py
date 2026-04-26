@@ -160,7 +160,12 @@ class ReplCommandV2(BaseCommand):
             try:
                 prevalidar_y_parsear_codigo(codigo)
             except (LexerError, ParserError) as err:
-                self._manejar_error_prevalidacion(err, buffer)
+                if self.es_error_de_bloque_incompleto(err):
+                    continue
+                categoria = self._delegate._clasificar_error_repl(err)
+                self._delegate._log_error(categoria, err)
+                self._reset_buffer_local(buffer)
+                self._reset_estado_delegate()
                 continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)

@@ -32,14 +32,14 @@ def _parser_error_con_metadata(
 @pytest.mark.parametrize(
     ("mensaje", "es_incompleto"),
     [
-        ("Se esperaba 'fin' para cerrar el bloque condicional", False),
+        ("Se esperaba 'fin' para cerrar el bloque condicional", True),
         ("Token inesperado en término: TipoToken.EOF", False),
         ("Se esperaba ']' al final de la lista", False),
         ("Token inesperado: '('", False),
         ("Se encontró 'fin' inesperado", False),
     ],
 )
-def test_es_error_de_bloque_incompleto_no_depende_de_mensajes_parser(mensaje, es_incompleto):
+def test_es_error_de_bloque_incompleto_fallback_textual_cubre_variantes_parser(mensaje, es_incompleto):
     command = ReplCommandV2()
     assert command.es_error_de_bloque_incompleto(ParserError(mensaje)) is es_incompleto
 
