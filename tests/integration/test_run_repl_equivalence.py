@@ -160,8 +160,23 @@ def test_persistencia_basica_var_x_e_impresion_equivale_entre_run_y_repl():
     )
 
     assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
-    assert resultado_script["stdout"].strip().endswith("10")
-    assert resultado_repl["stdout"].strip().endswith("10")
+    assert resultado_script["estado"] == resultado_repl["estado"] == {"x": 10}
+
+
+@pytest.mark.integration
+def test_bloque_si_comparte_estado_posterior_equivale_entre_run_y_repl():
+    resultado_script, resultado_repl = _run_pipeline_and_repl(
+        prelude="var x = 5",
+        snippet=(
+            "si verdadero:\n"
+            "    x = x * 2\n"
+            "fin\n"
+            "imprimir(x)"
+        ),
+        variables_estado=("x",),
+    )
+
+    assert resultado_script["stderr"] == resultado_repl["stderr"] == ""
     assert resultado_script["estado"] == resultado_repl["estado"] == {"x": 10}
 
 
@@ -185,6 +200,25 @@ def test_repl_evalua_expresiones_con_estado_persistente(expresion: str, salida_e
 
     assert err_repl.getvalue() == ""
     assert out_repl.getvalue().strip().endswith(salida_esperada)
+
+
+@pytest.mark.integration
+def test_repl_fallback_expresion_sin_duplicar_salida_y_nameerror_real_preservado():
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo("var x = 5")
+        repl.ejecutar_codigo("x + 10")
+
+    lineas = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    assert err_repl.getvalue() == ""
+    assert lineas == ["15"]
+
+    with pytest.raises(NameError, match=r"^Variable no declarada: no_definida$"):
+        repl.ejecutar_codigo("no_definida + 1")
 
 
 @pytest.mark.integration
@@ -266,6 +300,25 @@ def test_repl_mantiene_estado_tras_error_intermedio():
     assert err_repl.getvalue() == ""
     assert out_repl.getvalue().strip().endswith("10")
     assert setup_final.interpretador.contextos[-1].get("x") == 10
+
+
+@pytest.mark.integration
+def test_repl_persistencia_entre_entradas_tras_error_intermedio_real() -> None:
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo("var x = 5")
+        with pytest.raises(ZeroDivisionError):
+            repl.ejecutar_codigo("var y = 10 / 0")
+        repl.ejecutar_codigo("imprimir(x)")
+
+    lineas = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
+    assert err_repl.getvalue() == ""
+    assert lineas == ["5"]
+    assert repl.interpretador.contextos[-1].get("x") == 5
 
 
 @pytest.mark.integration

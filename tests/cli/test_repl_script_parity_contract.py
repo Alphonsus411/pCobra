@@ -477,3 +477,68 @@ def test_repl_incremental_var_var_imprimir_sin_regresion_cse_y_estado_final() ->
     assert resultado["stderr"] == ""
     assert str(resultado["stdout"]).strip().endswith("10")
     assert resultado["estado"] == {"x": 5, "y": 10}
+
+
+@pytest.mark.integration
+def test_repl_incremental_con_bloque_si_comparte_estado_y_sin_regresion_cse() -> None:
+    snippets = [
+        "var x = 5",
+        "si verdadero:\n"
+        "    x = x * 2\n"
+        "fin",
+        "imprimir(x)",
+    ]
+    resultado = _ejecutar_snippets_secuenciales_repl(
+        snippets,
+        variables_estado=("x",),
+    )
+
+    evidencia = "\n".join(
+        fragmento
+        for fragmento in (
+            str(resultado["stdout"]),
+            str(resultado["stderr"]),
+            str(resultado["error"]) if resultado["error"] is not None else "",
+        )
+        if fragmento
+    )
+
+    assert resultado["error"] is None
+    assert "Variable no declarada: _cse0" not in evidencia
+    assert "Variable no declarada: _cse" not in evidencia
+    assert resultado["stderr"] == ""
+    assert str(resultado["stdout"]).strip().endswith("10")
+    assert resultado["estado"] == {"x": 10}
+
+
+@pytest.mark.integration
+def test_repl_v2_conserva_variables_tras_error_intermedio_real() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "var x = 5",
+        "var y = 10 / 0",
+        "imprimir(x)",
+    ])
+
+    lineas = _lineas_stdout_repl_v2(resultado)
+    evidencia = "\n".join(lineas)
+
+    assert resultado["stderr"] == ""
+    assert "division" in evidencia.lower() or "zero" in evidencia.lower()
+    assert lineas[-1] == "5"
+
+
+@pytest.mark.integration
+def test_repl_v2_fallback_expresion_sin_duplicar_y_nameerror_real() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "var x = 5",
+        "x + 10",
+        "x + 10",
+        "no_definida + 1",
+    ])
+
+    lineas = _lineas_stdout_repl_v2(resultado)
+    lineas_15 = [linea for linea in lineas if linea == "15"]
+
+    assert resultado["stderr"] == ""
+    assert len(lineas_15) == 2
+    assert "Variable no declarada: no_definida" in "\n".join(lineas)
