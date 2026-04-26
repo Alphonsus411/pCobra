@@ -403,3 +403,46 @@ def test_repl_v2_detecta_bloque_anidado_completo_solo_por_parser() -> None:
     assert codigos_parseados[-1] == "\n".join(entradas)
     assert codigos_ejecutados == ["\n".join(entradas)]
     assert interpretadores_entrada == [None]
+
+
+@pytest.mark.integration
+def test_repl_v2_echo_expresiones_y_estado_persistente_en_entradas_secuenciales() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "var x = 5",
+        "x + 10",
+        "x * 2",
+        "salir",
+    ])
+
+    lineas = [linea.strip() for linea in str(resultado["stdout"]).splitlines() if linea.strip()]
+
+    assert resultado["stderr"] == ""
+    assert lineas[:3] == ["5", "15", "10"]
+
+
+@pytest.mark.integration
+def test_repl_v2_reporta_error_real_en_expresion_con_variable_no_declarada() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "x + 10",
+        "salir",
+    ])
+
+    assert resultado["stderr"] == ""
+    assert "Variable no declarada: x" in str(resultado["stdout"])
+
+
+@pytest.mark.integration
+def test_repl_v2_no_altera_semantica_en_statements_var_imprimir_y_si_fin() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "var bandera = verdadero",
+        "si bandera:",
+        "    imprimir(10)",
+        "fin",
+        "imprimir(20)",
+        "salir",
+    ])
+
+    lineas = [linea.strip() for linea in str(resultado["stdout"]).splitlines() if linea.strip()]
+
+    assert resultado["stderr"] == ""
+    assert lineas[:3] == ["verdadero", "10", "20"]

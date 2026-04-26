@@ -379,19 +379,16 @@ class InteractiveCommand(BaseCommand):
                 raise
 
             codigo_fallback = f"imprimir({codigo.strip()})"
-            try:
-                setup, resultado_pipeline = ejecutar_pipeline_explicito(
-                    PipelineInput(
-                        codigo=codigo_fallback,
-                        interpretador_cls=interpretador_cls,
-                        safe_mode=self._seguro_repl,
-                        extra_validators=self._extra_validators_repl,
-                        interpretador=self.interpretador,
-                    ),
-                    analizar_codigo_fn=analizar_codigo,
-                )
-            except Exception:
-                raise err_original
+            setup, resultado_pipeline = ejecutar_pipeline_explicito(
+                PipelineInput(
+                    codigo=codigo_fallback,
+                    interpretador_cls=interpretador_cls,
+                    safe_mode=self._seguro_repl,
+                    extra_validators=self._extra_validators_repl,
+                    interpretador=self.interpretador,
+                ),
+                analizar_codigo_fn=analizar_codigo,
+            )
         self.interpretador = setup.interpretador
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
