@@ -407,6 +407,11 @@ class InteractiveCommand(BaseCommand):
         implementaciones de REPL que delegan en ``InteractiveCommand``.
         La ejecución reutiliza ``ejecutar_codigo``, incluyendo su fallback
         para expresiones top-level.
+
+        Nota técnica:
+        REPL implica evaluación incremental sobre un intérprete persistente
+        (``self.interpretador``). No es una compilación/lote "batch" por
+        entrada; cada snippet se evalúa con el contexto acumulado.
         """
 
         prevalidar_fn(codigo)

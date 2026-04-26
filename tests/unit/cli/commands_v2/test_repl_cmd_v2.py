@@ -218,6 +218,15 @@ def test_repl_v2_error_sintactico_real_limpia_buffer_y_repl_sigue(monkeypatch):
     assert errores_reportados == ["Token inesperado: '('"]
 
 
+def test_repl_v2_reset_estado_delegate_no_reinicia_interpretador():
+    command = repl_module.ReplCommandV2()
+    interpretador_inicial = command._delegate.interpretador
+
+    command._reset_estado_delegate()
+
+    assert command._delegate.interpretador is interpretador_inicial
+
+
 def test_repl_v2_bloque_incompleto_no_ejecuta_ni_limpia_hasta_completar(monkeypatch):
     command = repl_module.ReplCommandV2()
     entradas = iter(["si verdadero:", "imprimir(1)", "fin", "exit"])
