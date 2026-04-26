@@ -66,6 +66,9 @@ from pcobra.cobra.cli.utils.messages import (
     mostrar_error,
     mostrar_info,
 )
+from pcobra.cobra.cli.utils.parser_error_classifier import (
+    es_parser_error_de_bloque_incompleto,
+)
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 from pcobra.cobra.cli.repl.cobra_lexer import CobraLexer
 from pcobra.cobra.cli.target_policies import (
@@ -671,122 +674,9 @@ class InteractiveCommand(BaseCommand):
         else:
             estado["lineas_blanco_consecutivas"] = 0
 
-    def _normalizar_tipo_token(self, valor: Any) -> Optional[TipoToken]:
-        """Normaliza posibles representaciones de token a ``TipoToken``."""
-        if isinstance(valor, TipoToken):
-            return valor
-        if valor is None:
-            return None
-        nombre = str(valor).strip()
-        if not nombre:
-            return None
-        if "." in nombre:
-            nombre = nombre.split(".")[-1]
-        try:
-            return TipoToken[nombre]
-        except KeyError:
-            return None
-
     def _es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Determina si el parser reportó una entrada todavía incompleta."""
-        if not isinstance(exc, ParserError):
-            return False
-        metadata_resultado = self._es_error_de_bloque_incompleto_por_metadata(exc)
-        if metadata_resultado is not None:
-            return metadata_resultado
-        return self._es_error_de_bloque_incompleto_por_mensaje(exc)
-
-    def _es_error_de_bloque_incompleto_por_metadata(
-        self, err: ParserError
-    ) -> Optional[bool]:
-        """Evalúa incompletitud con metadata del parser.
-
-        Retorna ``None`` cuando no hay metadata suficiente para decidir.
-        """
-
-        token_actual = (
-            getattr(err, "token_actual", None)
-            or getattr(err, "token", None)
-            or getattr(err, "actual_token", None)
-            or getattr(err, "current_token", None)
-        )
-        tipo_token_actual = self._normalizar_tipo_token(
-            getattr(token_actual, "tipo", None)
-            or getattr(err, "tipo_token_actual", None)
-            or getattr(err, "current_token_type", None)
-            or getattr(err, "actual_token_type", None)
-            or getattr(err, "token_type", None)
-            or getattr(err, "last_token_type", None)
-        )
-        esperado_raw = (
-            getattr(err, "esperado", None)
-            or getattr(err, "expected", None)
-            or getattr(err, "tokens_esperados", None)
-            or getattr(err, "expected_tokens", None)
-            or getattr(err, "expected_types", None)
-            or getattr(err, "expected_terminals", None)
-            or getattr(err, "esperados", None)
-        )
-        if esperado_raw is None:
-            esperados = []
-        elif isinstance(esperado_raw, (list, tuple, set)):
-            esperados = list(esperado_raw)
-        else:
-            esperados = [esperado_raw]
-        tipos_esperados = {self._normalizar_tipo_token(item) for item in esperados}
-        tipos_esperados.discard(None)
-        tokens_cierre = {
-            TipoToken.FIN,
-            TipoToken.RPAREN,
-            TipoToken.RBRACKET,
-            TipoToken.RBRACE,
-        }
-        if tipos_esperados and not (tipos_esperados & tokens_cierre):
-            return False
-
-        eof_por_flag = bool(
-            getattr(err, "unexpected_eof", False)
-            or getattr(err, "eof", False)
-            or getattr(err, "es_eof", False)
-            or getattr(err, "is_eof", False)
-            or getattr(err, "is_unexpected_eof", False)
-            or getattr(err, "unexpected_end_of_input", False)
-        )
-        eof_por_token = tipo_token_actual == TipoToken.EOF
-        if tipos_esperados:
-            return eof_por_flag or eof_por_token
-        if tipo_token_actual is None and not eof_por_flag:
-            return None
-        if eof_por_flag or eof_por_token:
-            return None
-        return False
-
-    def _es_error_de_bloque_incompleto_por_mensaje(self, err: ParserError) -> bool:
-        """Fallback textual para detectar bloque incompleto sin metadata útil."""
-        mensaje = str(err or "").strip().lower()
-        if not mensaje:
-            return False
-        if "sin bloque" in mensaje:
-            return False
-
-        indicadores_eof = (
-            "fin de entrada",
-            "final de entrada",
-            "unexpected eof",
-            "unexpected end of input",
-            "eof",
-        )
-        if not any(indicador in mensaje for indicador in indicadores_eof):
-            return False
-
-        indicadores_cierre = (
-            "se esperaba 'fin'",
-            'se esperaba "fin"',
-            "se esperaba fin",
-            "se esperaba cierre",
-            "cierre pendiente",
-        )
-        return any(indicador in mensaje for indicador in indicadores_cierre)
+        return es_parser_error_de_bloque_incompleto(exc)
 
     def _bloque_con_solo_lineas_vacias(self, buffer_lineas: list[str]) -> bool:
         """Indica si el bloque actual no contiene sentencias no vacías."""
