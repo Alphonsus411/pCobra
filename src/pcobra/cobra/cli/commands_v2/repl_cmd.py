@@ -166,8 +166,6 @@ class ReplCommandV2(BaseCommand):
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                self._reset_buffer_local(buffer)
-                self._reset_estado_delegate()
                 continue
 
             try:
@@ -182,14 +180,10 @@ class ReplCommandV2(BaseCommand):
             except (PrimitivaPeligrosaError, RuntimeError) as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                self._reset_buffer_local(buffer)
-                self._reset_estado_delegate()
                 continue
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
-                self._reset_buffer_local(buffer)
-                self._reset_estado_delegate()
                 continue
 
         return 0
