@@ -687,7 +687,7 @@ class CliApplication:
         raise RuntimeError(
             "Perfil público bloqueado por rutas legacy/internal migration only: "
             f"{', '.join(blocked_routes)}. "
-            "Use CLI v2 pública (run/build/test/mod) y enrute por "
+            "Use CLI v2 pública (run/build/test/mod/repl) y enrute por "
             f"{USER_ROUTE_BACKEND_ENTRYPOINT}."
         )
 
@@ -765,7 +765,7 @@ class CliApplication:
         messages.mostrar_advertencia(
             _(
                 "UI v1 está deshabilitada para uso público. "
-                "Se mantiene UI v2 (cobra run/build/test/mod)."
+                "Se mantiene UI v2 (cobra run/build/test/mod/repl)."
             )
         )
         return "v2"

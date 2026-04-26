@@ -95,7 +95,7 @@ def test_cli_help_public_contract_bloquea_ui_v1_en_perfil_publico():
     assert result.returncode == 2
     lower_output = result.stderr.lower() + result.stdout.lower()
     assert "ui v1 está deshabilitada para uso público" in lower_output
-    assert "se mantiene ui v2 (cobra run/build/test/mod)" in lower_output
+    assert "se mantiene ui v2 (cobra run/build/test/mod/repl)" in lower_output
     assert "argument --ui: invalid choice: 'v1' (choose from v2)" in lower_output
 
 
