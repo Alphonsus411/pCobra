@@ -1054,3 +1054,31 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
         "si verdadero:\nimprimir(1)\nfin",
     ]
     assert delegate_calls == ["si verdadero:\nimprimir(1)\nfin"]
+
+
+def test_regresion_paridad_interactive_vs_repl_v2_para_expresion_top_level(monkeypatch, capsys):
+    repl_interactivo = interactive_module.InteractiveCommand(repl_module.InterpretadorCobra())
+    repl_interactivo.ejecutar_codigo("var x = 5")
+    repl_interactivo.ejecutar_codigo("x + 10")
+    salida_interactive = capsys.readouterr().out
+
+    command = ReplCommandV2()
+    entradas = iter(["var x = 5", "x + 10", "exit"])
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+            seguro=True,
+            extra_validators=None,
+        )
+    )
+
+    assert status == 0
+    salida_repl_v2 = capsys.readouterr().out
+    assert salida_repl_v2 == salida_interactive
+    assert salida_repl_v2.endswith("15\n")
