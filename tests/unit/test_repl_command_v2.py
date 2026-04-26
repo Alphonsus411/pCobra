@@ -251,7 +251,7 @@ def test_repl_v2_sale_por_salir_y_por_exit(monkeypatch):
     assert prompts_exit == [">>> "]
 
 
-def test_repl_v2_no_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
+def test_repl_v2_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
     command = ReplCommandV2()
     entradas = iter(["si verdadero:", "exit", "fin", "exit"])
     parse_calls: list[str] = []
@@ -289,8 +289,8 @@ def test_repl_v2_no_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
     )
 
     assert status == 0
-    assert parse_calls == ["si verdadero:", "si verdadero:\nexit", "si verdadero:\nexit\nfin"]
-    assert pipeline_calls == ["si verdadero:\nexit\nfin"]
+    assert parse_calls == ["si verdadero:"]
+    assert pipeline_calls == []
 
 
 def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
