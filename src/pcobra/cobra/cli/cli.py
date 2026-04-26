@@ -1027,7 +1027,12 @@ class CliApplication:
             return self.run_menu(args)
         if command is None:
             if self.parser is not None:
-                self.parser.print_help()
+                messages.mostrar_info(
+                    _(
+                        "Comandos principales: run, build, test, mod, repl. "
+                        "Usa --help para ver la ayuda completa."
+                    )
+                )
                 return 1
             messages.mostrar_error(
                 _("CLI no inicializada completamente: parser no disponible. "
@@ -1076,7 +1081,8 @@ class CliApplication:
                         "Compatibilidad legacy habilitada para esta ejecución. "
                         "Actualiza tus imports a `pcobra.*` antes de fase 3."
                     )
-                messages.mostrar_logo()
+                if command is not None:
+                    messages.mostrar_logo()
 
                 return self.execute_command(args, debug_activo=debug_activo)
             except Exception as e:

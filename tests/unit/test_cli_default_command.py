@@ -49,11 +49,12 @@ def test_no_command_prints_help_and_does_not_run_default():
         _patch_cli_env(stack)
         stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
         mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
-        mock_help = stack.enter_context(patch.object(CustomArgumentParser, "print_help"))
+        mock_info = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_info"))
         app = CliApplication()
         result = app.run([])
     mock_run.assert_not_called()
-    mock_help.assert_called_once()
+    mock_info.assert_called_once()
+    assert "comandos principales" in mock_info.call_args.args[0].lower()
     assert result == 1
 
 
@@ -63,12 +64,12 @@ def test_main_without_args_prints_help_and_returns_one():
         stack.enter_context(patch("cobra.cli.cli.AppConfig.BASE_COMMAND_CLASSES", [InteractiveCommand]))
         stack.enter_context(patch("cobra.cli.cli.configure_encoding"))
         mock_run = stack.enter_context(patch("cobra.cli.cli.InteractiveCommand.run", return_value=0))
-        mock_help = stack.enter_context(patch.object(CustomArgumentParser, "print_help"))
+        mock_info = stack.enter_context(patch("cobra.cli.cli.messages.mostrar_info"))
 
         result = main([])
 
     mock_run.assert_not_called()
-    mock_help.assert_called_once()
+    mock_info.assert_called_once()
     assert result == 1
 
 
@@ -195,5 +196,6 @@ def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
         result = app.run([])
     assert result == 1
     stdout = capsys.readouterr().out
-    assert "repl" in stdout
+    assert "comandos principales" in stdout.lower()
+    assert "repl" in stdout.lower()
     assert "--sandbox" not in stdout
