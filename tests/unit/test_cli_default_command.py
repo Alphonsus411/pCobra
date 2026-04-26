@@ -92,6 +92,7 @@ def test_no_command_prints_help_and_does_not_run_default():
     mock_run.assert_not_called()
     mock_info.assert_called_once()
     assert "no se indicó ningún comando" in mock_info.call_args.args[0].lower()
+    assert "cobra --help" in mock_info.call_args.args[0].lower()
     assert result == 1
 
 
@@ -269,12 +270,37 @@ def test_cli_sin_argumentos_no_imprime_ayuda_detallada_de_subcomandos(capsys):
     assert result == 1
     stdout = capsys.readouterr().out
     assert "no se indicó ningún comando" in stdout.lower()
+    assert "cobra --help" in stdout.lower()
     assert "ejemplos públicos" not in stdout.lower()
     assert "positional arguments" not in stdout.lower()
     assert "comandos disponibles" not in stdout.lower()
     assert "run" not in stdout.lower()
     assert "repl" not in stdout.lower()
     assert "--sandbox" not in stdout
+
+
+def test_cli_help_y_sin_argumentos_cubren_flujos_principales(capsys):
+    with ExitStack() as stack:
+        _patch_cli_env(stack)
+        stack.enter_context(
+            patch("cobra.cli.cli.AppConfig.V2_COMMAND_CLASSES", [_DummyRunCommand, _DummyReplCommand])
+        )
+        stack.enter_context(patch("cobra.cli.cli.resolve_command_profile", return_value="public"))
+        app = CliApplication()
+
+        with pytest.raises(SystemExit) as help_exit:
+            app.run(["--help"])
+        assert help_exit.value.code == 0
+        help_stdout = capsys.readouterr().out.lower()
+        assert "run" in help_stdout
+        assert "repl" in help_stdout
+
+        rc = app.run([])
+        assert rc == 1
+        no_args_stdout = capsys.readouterr().out.lower()
+        assert "no se indicó ningún comando" in no_args_stdout
+        assert "cobra --help" in no_args_stdout
+        assert "--sandbox" not in no_args_stdout
 
 
 def test_cobra_sin_args_no_muestra_logo_ni_ejecuta_comandos():
