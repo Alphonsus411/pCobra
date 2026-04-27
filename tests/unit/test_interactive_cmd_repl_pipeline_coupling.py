@@ -1,0 +1,63 @@
+"""Regresiones de acoplamiento para REPL interactivo.
+
+Nota changelog interno: se corrige la ejecución interactiva para que la ruta
+normal no dependa de temporales internos del backend.
+"""
+
+from types import ModuleType
+import sys
+
+# Dependencias opcionales simuladas para aislar estas pruebas unitarias.
+fake_rp = ModuleType("RestrictedPython")
+fake_rp.compile_restricted = lambda *a, **k: None
+fake_rp.safe_builtins = {}
+sys.modules.setdefault("RestrictedPython", fake_rp)
+
+_eval_mod = ModuleType("Eval")
+_eval_mod.default_guarded_getitem = lambda seq, key: seq[key]
+sys.modules.setdefault("RestrictedPython.Eval", _eval_mod)
+
+_guards_mod = ModuleType("Guards")
+_guards_mod.guarded_iter_unpack_sequence = lambda *a, **k: iter([])
+_guards_mod.guarded_unpack_sequence = lambda *a, **k: []
+sys.modules.setdefault("RestrictedPython.Guards", _guards_mod)
+
+_pc_mod = ModuleType("PrintCollector")
+_pc_mod.PrintCollector = list
+sys.modules.setdefault("RestrictedPython.PrintCollector", _pc_mod)
+
+from unittest.mock import patch
+
+from cobra.cli.commands.interactive_cmd import InteractiveCommand
+from core.interpreter import InterpretadorCobra
+
+
+def test_parsear_y_ejecutar_repl_normal_no_usa_pipeline_explicito() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+
+    with patch(
+        "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
+        side_effect=AssertionError("No debe usarse pipeline explícito en ruta normal"),
+    ):
+        cmd.parsear_y_ejecutar_codigo_repl("var x = 1")
+        cmd.parsear_y_ejecutar_codigo_repl("x")
+
+
+def test_repl_sandbox_setup_si_usa_pipeline_explicito() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+
+    setup_stub = ModuleType("setup")
+    setup_stub.interpretador = cmd.interpretador
+    setup_stub.safe_mode = False
+    setup_stub.validadores_extra = None
+
+    with patch(
+        "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
+        return_value=(setup_stub, None),
+    ) as pipeline_mock, patch(
+        "cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
+        return_value="",
+    ):
+        cmd._ejecutar_en_sandbox("var x = 1")
+
+    pipeline_mock.assert_called_once()

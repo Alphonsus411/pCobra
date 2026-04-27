@@ -35,8 +35,6 @@ from pcobra.cobra.core import Lexer, LexerError, TipoToken, UnclosedStringError
 from pcobra.cobra.core import ParserError
 from pcobra.cobra.cli.execution_pipeline import (
     construir_script_sandbox_canonico,
-    ejecutar_pipeline_explicito,
-    PipelineInput,
     prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
     validar_ast_seguro,
@@ -774,6 +772,7 @@ class InteractiveCommand(BaseCommand):
                 else:
                     # Contrato de dispatch: en la rama no-sandbox/no-docker se
                     # mantiene ejecución directa en REPL (sin pipeline explícito).
+                    # ruta normal = AST directo con entorno persistente
                     self.ejecutar_codigo(codigo, validador)
                 estado["buffer_lineas"].clear()
             except Exception as err:  # pragma: no cover - ruta unificada de errores
@@ -944,6 +943,11 @@ class InteractiveCommand(BaseCommand):
             module_name=__name__,
             default_cls=type(self.interpretador),
         )
+        from pcobra.cobra.cli.execution_pipeline import (
+            ejecutar_pipeline_explicito,
+            PipelineInput,
+        )
+
         # Contrato sandbox/setup: ``ejecutar_pipeline_explicito`` se usa aquí
         # únicamente para normalizar configuración de intérprete/opciones antes
         # de construir el script sandbox; no para ejecutar snippets normales.
