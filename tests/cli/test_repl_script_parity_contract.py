@@ -542,3 +542,36 @@ def test_repl_v2_fallback_expresion_sin_duplicar_y_nameerror_real() -> None:
     assert resultado["stderr"] == ""
     assert len(lineas_15) == 2
     assert "Variable no declarada: no_definida" in "\n".join(lineas)
+
+
+@pytest.mark.integration
+def test_repl_v2_regresion_var_21_y_expresion_usa_misma_sesion() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "var x = 21",
+        "x * 2",
+    ])
+
+    lineas = _lineas_stdout_repl_v2(resultado)
+    interpretador = resultado["interpretador"]
+
+    assert resultado["stderr"] == ""
+    assert lineas[-1] == "42"
+    assert _valor_en_contextos(interpretador, "x") == 21
+
+
+@pytest.mark.integration
+def test_repl_v2_regresion_bloque_si_muta_variable_y_persiste_fuera() -> None:
+    resultado = _ejecutar_repl_v2_con_entradas([
+        "var x = 21",
+        "si verdadero:",
+        "    x = x * 2",
+        "fin",
+        "x",
+    ])
+
+    lineas = _lineas_stdout_repl_v2(resultado)
+    interpretador = resultado["interpretador"]
+
+    assert resultado["stderr"] == ""
+    assert lineas[-1] == "42"
+    assert _valor_en_contextos(interpretador, "x") == 42
