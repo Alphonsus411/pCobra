@@ -368,13 +368,18 @@ class InteractiveCommand(BaseCommand):
                 nodo.aceptar(validador)
         resultado = None
         for nodo in ast:
-            resultado = self.interpretador.ejecutar_nodo(nodo)
-            if resultado is not None:
-                break
+            resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
+            if resultado is None and resultado_nodo is not None:
+                resultado = resultado_nodo
         return ast, resultado
 
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
-        """Ejecuta un snippet en el intérprete persistente del REPL."""
+        """Ejecuta un snippet en modo REPL incremental.
+
+        Este método mantiene la semántica de intérprete interactivo: cada
+        entrada se evalúa sobre ``self.interpretador`` (estado acumulado), no
+        como una compilación por lotes/batch aislada.
+        """
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
         # Contrato REPL (normal): no usar ``ejecutar_pipeline_explicito`` aquí.
