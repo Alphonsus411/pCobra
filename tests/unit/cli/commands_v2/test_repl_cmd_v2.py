@@ -255,3 +255,20 @@ def test_repl_v2_bloque_incompleto_no_ejecuta_ni_limpia_hasta_completar(monkeypa
     assert status == 0
     assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1)", bloque_completo]
     assert ejecucion_calls == [bloque_completo]
+
+
+def test_repl_v2_regresion_sesion_interactiva_var_var_imprimir_sin_error_cse0(monkeypatch, capsys):
+    command = repl_module.ReplCommandV2()
+    entradas = iter(["var x = 5", "var y = x * 2", "imprimir(y)", "exit"])
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    status = command.run(_args_repl())
+    salida = capsys.readouterr()
+    evidencia = f"{salida.out}\n{salida.err}"
+
+    assert status == 0
+    assert "Variable no declarada: _cse0" not in evidencia
+    assert salida.err == ""
+    assert salida.out.strip().endswith("10")
