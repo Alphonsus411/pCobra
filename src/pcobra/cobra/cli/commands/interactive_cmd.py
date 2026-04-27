@@ -425,8 +425,10 @@ class InteractiveCommand(BaseCommand):
         """
 
         prevalidar_fn(codigo)
-        # Contrato REPL (normal): este helper delega en ``ejecutar_codigo`` y,
-        # por diseño, no debe introducir pipeline explícito para snippets.
+        # Contrato de dispatch:
+        # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
+        # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
+        # introducir pipeline explícito para snippets normales.
         if validador is None:
             self.ejecutar_codigo(codigo)
             return
@@ -770,9 +772,9 @@ class InteractiveCommand(BaseCommand):
                 elif sandbox_docker:
                     self._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
-                    # Contrato de dispatch: en la rama no-sandbox/no-docker se
-                    # mantiene ejecución directa en REPL (sin pipeline explícito).
-                    # ruta normal = AST directo con entorno persistente
+                    # Contrato de dispatch:
+                    # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
+                    # Rama normal: AST directo con entorno persistente.
                     self.ejecutar_codigo(codigo, validador)
                 estado["buffer_lineas"].clear()
             except Exception as err:  # pragma: no cover - ruta unificada de errores
