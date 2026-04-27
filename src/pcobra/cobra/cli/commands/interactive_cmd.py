@@ -355,6 +355,10 @@ class InteractiveCommand(BaseCommand):
     ) -> tuple[list[Any], Any]:
         """Flujo canónico del REPL: parsear AST, validar opcionalmente y ejecutar."""
 
+        # Nota técnica REPL:
+        # ``_cse*`` son temporales internos generados por el pipeline de
+        # optimización (batch/sandbox). En REPL incremental NO deben aparecer:
+        # cada entrada debe ejecutarse nodo a nodo sobre el entorno persistente.
         ast = prevalidar_y_parsear_codigo(codigo)
         if self._seguro_repl:
             validar_ast_seguro(
