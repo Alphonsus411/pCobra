@@ -253,6 +253,33 @@ def test_repl_statement_normal_imprimir_no_duplica_salida():
 
 
 @pytest.mark.integration
+def test_repl_incremental_var_var_imprimir_preserva_estado_y_sin_cse0() -> None:
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with redirect_stdout(out_repl), redirect_stderr(err_repl):
+        repl.ejecutar_codigo("var x = 5")
+        repl.ejecutar_codigo("var y = x * 2")
+        repl.ejecutar_codigo("imprimir(y)")
+
+    evidencia = "\n".join(
+        fragmento
+        for fragmento in (
+            out_repl.getvalue(),
+            err_repl.getvalue(),
+        )
+        if fragmento
+    )
+
+    assert err_repl.getvalue() == ""
+    assert "10" in out_repl.getvalue()
+    assert repl.interpretador.contextos[-1].get("y") == 10
+    assert "_cse0" not in evidencia
+
+
+@pytest.mark.integration
 def test_repl_mantiene_estado_tras_error_intermedio():
     interpretador_cls = resolver_interpretador_cls(
         module_name="pcobra.cobra.cli.services.run_service",
