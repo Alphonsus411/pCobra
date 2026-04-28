@@ -138,3 +138,28 @@ def test_repl_no_imprime_resultados_intermedios_de_mientras() -> None:
         cmd.ejecutar_codigo(codigo)
 
     assert mock_stdout.getvalue() == ""
+
+
+def test_repl_no_filtra_temporales_cse_en_asignaciones_incrementales() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo("var x = 10")
+        cmd.ejecutar_codigo("var y = x * 2")
+        cmd.ejecutar_codigo("y")
+
+    assert "_cse0" not in mock_stdout.getvalue()
+    assert cmd.interpretador.contextos[-1].get("y") == 20
+
+
+def test_repl_reutiliza_entorno_tras_bloque_si_fin_en_sesion_incremental() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+    bloque = "\n".join(["si verdadero:", "    var y = x * 2", "fin"])
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        cmd.ejecutar_codigo("var x = 10")
+        cmd.ejecutar_codigo(bloque)
+        cmd.ejecutar_codigo("y")
+
+    assert "_cse0" not in mock_stdout.getvalue()
+    assert cmd.interpretador.contextos[-1].get("y") == 20
