@@ -370,11 +370,10 @@ class InteractiveCommand(BaseCommand):
                 ast,
                 validadores_extra=self._extra_validators_repl,
             )
-        if validador:
-            for nodo in ast:
-                nodo.aceptar(validador)
         resultado = None
         for nodo in ast:
+            if validador:
+                nodo.aceptar(validador)
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
             if resultado is None and resultado_nodo is not None:
                 resultado = resultado_nodo
@@ -434,7 +433,8 @@ class InteractiveCommand(BaseCommand):
         entrada; cada snippet se evalúa con el contexto acumulado.
         """
 
-        prevalidar_fn(codigo)
+        _ = prevalidar_fn  # Compatibilidad con firmas históricas en pruebas.
+        prevalidar_y_parsear_codigo(codigo)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
         # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
