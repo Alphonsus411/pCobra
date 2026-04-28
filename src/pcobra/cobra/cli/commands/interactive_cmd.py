@@ -353,12 +353,17 @@ class InteractiveCommand(BaseCommand):
     def _ejecutar_ast_en_repl(
         self, codigo: str, validador: Optional[Any] = None
     ) -> tuple[list[Any], Any]:
-        """Flujo canónico del REPL: parsear AST, validar opcionalmente y ejecutar."""
+        """Flujo canónico del REPL incremental.
 
-        # Nota técnica REPL:
-        # ``_cse*`` son temporales internos generados por el pipeline de
-        # optimización (batch/sandbox). En REPL incremental NO deben aparecer:
-        # cada entrada debe ejecutarse nodo a nodo sobre el entorno persistente.
+        Contrato interno para snippets interactivos:
+        1) construir AST con ``prevalidar_y_parsear_codigo``;
+        2) iterar ``for nodo in ast``;
+        3) ejecutar cada nodo con ``self.interpretador.ejecutar_nodo(nodo)``.
+
+        Este camino evita explícitamente cualquier pipeline batch para conservar
+        semántica incremental (estado persistente del intérprete entre entradas).
+        """
+
         ast = prevalidar_y_parsear_codigo(codigo)
         if self._seguro_repl:
             validar_ast_seguro(
