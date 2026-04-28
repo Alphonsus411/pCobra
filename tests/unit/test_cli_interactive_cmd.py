@@ -112,6 +112,24 @@ def test_interactive_session_persistence():
     assert salida[-1] == '5'
 
 
+def test_interactive_session_persistence_reutiliza_misma_instancia_en_toda_la_sesion():
+    inputs = ['var x = 10', 'var y = x * 2', 'imprimir(y)', 'salir']
+    cmd = InteractiveCommand(InterpretadorCobra())
+    interpretador_sesion = cmd.interpretador
+
+    with patch('cobra.cli.commands.interactive_cmd.validar_dependencias'), \
+         patch('prompt_toolkit.PromptSession.prompt', side_effect=inputs), \
+         patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+        ret = cmd.run(_args())
+
+    salida = mock_stdout.getvalue()
+    assert ret == 0
+    assert cmd.interpretador is interpretador_sesion
+    assert cmd._interpretador_sesion is interpretador_sesion
+    assert '20' in salida
+    assert 'Variable no declarada: _cse0' not in salida
+
+
 def test_interactive_history_setup(tmp_path):
     cmd = InteractiveCommand(MagicMock())
     fake_path = tmp_path / '.cobra_history'
@@ -519,6 +537,19 @@ def test_ejecutar_ast_en_repl_ejecuta_nodo_a_nodo_y_no_batch_ejecutar_ast():
     assert ast == ast_dummy
     assert interp.nodos_ejecutados == ["n1", "n2"]
     assert resultado == 20
+
+
+def test_parsear_y_ejecutar_codigo_repl_restaurar_interpretador_de_sesion():
+    cmd = InteractiveCommand(MagicMock(name="interp_sesion"))
+    cmd._interpretador_sesion = cmd.interpretador
+    cmd.interpretador = MagicMock(name="interp_temporal")
+
+    with patch('cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo'), \
+         patch.object(cmd, 'ejecutar_codigo') as mock_ejecutar:
+        cmd.parsear_y_ejecutar_codigo_repl("imprimir(1)")
+
+    assert cmd.interpretador is cmd._interpretador_sesion
+    mock_ejecutar.assert_called_once_with("imprimir(1)")
 
 
 def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
