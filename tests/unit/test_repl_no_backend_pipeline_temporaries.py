@@ -1,4 +1,5 @@
 from io import StringIO
+import re
 from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 import sys
@@ -65,7 +66,7 @@ def test_repl_incremental_var_var_evalua_resultado_sin_error_temporal_cse() -> N
     assert ret == 0
     assert "20" in evidencia
     assert "Variable no declarada: _cse0" not in evidencia
-    assert "Variable no declarada: _cse" not in evidencia
+    assert re.search(r"Variable no declarada:\s*_cse\d*", evidencia) is None
 
 
 def test_repl_incremental_con_bloque_si_comparte_entorno_sin_error_temporal_cse() -> None:
@@ -89,4 +90,5 @@ def test_repl_incremental_con_bloque_si_comparte_entorno_sin_error_temporal_cse(
 
     assert ret == 0
     assert "20" in evidencia
-    assert "Variable no declarada: _cse" not in evidencia
+    assert "Variable no declarada: _cse0" not in evidencia
+    assert re.search(r"Variable no declarada:\s*_cse\d*", evidencia) is None
