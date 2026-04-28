@@ -322,3 +322,50 @@ def test_repl_v2_regresion_sesion_interactiva_var_var_imprimir_sin_error_cse0(mo
     assert "Variable no declarada: _cse0" not in evidencia
     assert salida.err == ""
     assert salida.out.strip().endswith("10")
+
+
+def test_repl_v2_regresion_sesion_interactiva_var_var_evaluar_identificador_sin_temporales_cse(
+    monkeypatch, capsys
+):
+    command = repl_module.ReplCommandV2()
+    entradas = iter(["var x = 10", "var y = x * 2", "y", "exit"])
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    status = command.run(_args_repl())
+    salida = capsys.readouterr()
+    evidencia = f"{salida.out}\n{salida.err}"
+
+    assert status == 0
+    assert "Variable no declarada: _cse0" not in evidencia
+    assert "_cse" not in evidencia
+    assert salida.err == ""
+    assert salida.out.strip().endswith("20")
+
+
+def test_repl_v2_regresion_bloque_si_fin_comparte_entorno_sin_temporales_cse(monkeypatch, capsys):
+    command = repl_module.ReplCommandV2()
+    entradas = iter(
+        [
+            "var x = 10",
+            "si verdadero:",
+            "var y = x * 2",
+            "fin",
+            "y",
+            "exit",
+        ]
+    )
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    status = command.run(_args_repl())
+    salida = capsys.readouterr()
+    evidencia = f"{salida.out}\n{salida.err}"
+
+    assert status == 0
+    assert "Variable no declarada: _cse0" not in evidencia
+    assert "_cse" not in evidencia
+    assert salida.err == ""
+    assert salida.out.strip().endswith("20")
