@@ -389,6 +389,7 @@ class InteractiveCommand(BaseCommand):
         """
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
+        # REPL = intérprete incremental (estado acumulado en self.interpretador).
         # Contrato REPL (normal): no usar ``ejecutar_pipeline_explicito`` aquí.
         # Este camino ejecuta snippets interactivos normales sobre el intérprete
         # persistente para preservar la semántica incremental del lenguaje.
@@ -438,6 +439,8 @@ class InteractiveCommand(BaseCommand):
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
         # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
         # introducir pipeline explícito para snippets normales.
+        # Invariante antirregresión: conservar este método como "thin wrapper"
+        # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
         if validador is None:
             self.ejecutar_codigo(codigo)
             return
@@ -959,6 +962,7 @@ class InteractiveCommand(BaseCommand):
             PipelineInput,
         )
 
+        # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
         # Contrato sandbox/setup: ``ejecutar_pipeline_explicito`` se usa aquí
         # únicamente para normalizar configuración de intérprete/opciones antes
         # de construir el script sandbox; no para ejecutar snippets normales.
