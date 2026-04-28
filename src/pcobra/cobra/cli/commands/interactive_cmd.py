@@ -230,6 +230,7 @@ class InteractiveCommand(BaseCommand):
         self._debug_mode = False
         self._seguro_repl = True
         self._extra_validators_repl: Any = None
+        self._interpretador_sesion: Optional[InterpretadorCobra] = None
 
     @staticmethod
     def _crear_estado_repl() -> dict[str, Any]:
@@ -388,6 +389,7 @@ class InteractiveCommand(BaseCommand):
         """
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
+        self._sincronizar_interpretador_sesion()
         # REPL = intérprete incremental (estado acumulado en self.interpretador).
         # Contrato REPL (normal): no usar ``ejecutar_pipeline_explicito`` aquí.
         # Este camino ejecuta snippets interactivos normales sobre el intérprete
@@ -434,6 +436,7 @@ class InteractiveCommand(BaseCommand):
         """
 
         _ = prevalidar_fn  # Compatibilidad con firmas históricas en pruebas.
+        self._sincronizar_interpretador_sesion()
         prevalidar_y_parsear_codigo(codigo)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
@@ -711,6 +714,7 @@ class InteractiveCommand(BaseCommand):
         estado = self._crear_estado_repl()
         estado["debug_enabled"] = self._debug_mode
         self._estado_repl = estado
+        self._interpretador_sesion = self.interpretador
         while True:
             try:
                 prompt = "... " if estado["buffer_lineas"] else ">>> "
@@ -793,6 +797,15 @@ class InteractiveCommand(BaseCommand):
                 estado["buffer_lineas"].clear()
                 categoria = self._clasificar_error_repl(err)
                 self._log_error(categoria, err)
+
+    def _sincronizar_interpretador_sesion(self) -> None:
+        """Garantiza que el REPL use la misma instancia de intérprete por sesión."""
+
+        if self._interpretador_sesion is None:
+            self._interpretador_sesion = self.interpretador
+            return
+        if self.interpretador is not self._interpretador_sesion:
+            self.interpretador = self._interpretador_sesion
 
     def _clasificar_error_repl(self, error: Exception) -> str:
         """Clasifica errores del REPL para un reporte único en el loop principal."""
