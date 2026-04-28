@@ -979,14 +979,15 @@ class InteractiveCommand(BaseCommand):
         # Contrato sandbox/setup: ``ejecutar_pipeline_explicito`` se usa aquí
         # únicamente para normalizar configuración de intérprete/opciones antes
         # de construir el script sandbox; no para ejecutar snippets normales.
+        setup_input = PipelineInput(
+            codigo="",
+            interpretador_cls=interpretador_cls,
+            safe_mode=self._seguro_repl,
+            extra_validators=self._extra_validators_repl,
+            interpretador=self.interpretador,
+        )
         setup, _ = ejecutar_pipeline_explicito(
-            PipelineInput(
-                codigo="",
-                interpretador_cls=interpretador_cls,
-                safe_mode=self._seguro_repl,
-                extra_validators=self._extra_validators_repl,
-                interpretador=self.interpretador,
-            ),
+            setup_input,
             analizar_codigo_fn=lambda _codigo: [],
         )
         self.interpretador = setup.interpretador

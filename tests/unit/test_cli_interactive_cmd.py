@@ -552,6 +552,26 @@ def test_parsear_y_ejecutar_codigo_repl_restaurar_interpretador_de_sesion():
     mock_ejecutar.assert_called_once_with("imprimir(1)")
 
 
+def test_parsear_y_ejecutar_codigo_repl_no_invoca_pipeline_explicito_en_ruta_normal():
+    cmd = InteractiveCommand(MagicMock())
+
+    with patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=[],
+    ) as mock_prevalidar, patch.object(
+        cmd,
+        "ejecutar_codigo",
+    ) as mock_ejecutar, patch(
+        "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
+        side_effect=AssertionError("ruta normal no debe invocar pipeline explícito"),
+    ) as mock_pipeline:
+        cmd.parsear_y_ejecutar_codigo_repl("imprimir(1)")
+
+    mock_prevalidar.assert_called_once_with("imprimir(1)")
+    mock_ejecutar.assert_called_once_with("imprimir(1)")
+    assert mock_pipeline.call_count == 0
+
+
 def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     cmd = InteractiveCommand(MagicMock())
     cmd._seguro_repl = False
@@ -575,6 +595,52 @@ def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     assert "print('verdadero' if _resultado else 'falso')" in script_enviado
     assert 'print(_resultado)' in script_enviado
     mock_info.assert_called_once_with('ok')
+
+
+def test_ejecutar_en_sandbox_invoca_pipeline_explicito_solo_para_setup():
+    cmd = InteractiveCommand(MagicMock(name="interp_original"))
+    cmd._seguro_repl = False
+    cmd._extra_validators_repl = ["extra_repl.py"]
+    setup = SimpleNamespace(
+        interpretador=MagicMock(name="interp_setup"),
+        safe_mode=True,
+        validadores_extra=["normalizado.py"],
+    )
+
+    with patch(
+        "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
+        return_value=(setup, SimpleNamespace()),
+    ) as mock_pipeline, patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=[],
+    ) as mock_prevalidar, patch(
+        "cobra.cli.commands.interactive_cmd.construir_script_sandbox_canonico",
+        return_value="SCRIPT",
+    ) as mock_script, patch(
+        "cobra.cli.commands.interactive_cmd.ejecutar_en_sandbox",
+        return_value=None,
+    ) as mock_sandbox:
+        cmd._ejecutar_en_sandbox("imprimir(7)")
+
+    pipeline_input = mock_pipeline.call_args.args[0]
+    assert pipeline_input.codigo == ""
+    assert pipeline_input.safe_mode is False
+    assert pipeline_input.extra_validators == ["extra_repl.py"]
+    assert pipeline_input.interpretador is not None
+    mock_prevalidar.assert_called_once_with("imprimir(7)")
+    mock_script.assert_called_once_with(
+        "imprimir(7)",
+        safe_mode=True,
+        extra_validators=["normalizado.py"],
+        imprimir_resultado=True,
+    )
+    mock_sandbox.assert_called_once_with(
+        "SCRIPT",
+        allow_insecure_fallback=False,
+    )
+    assert cmd.interpretador is setup.interpretador
+    assert cmd._seguro_repl is True
+    assert cmd._extra_validators_repl == ["normalizado.py"]
 
 
 def test_run_repl_loop_pasa_estado_repl_a_ejecucion_sandbox():
