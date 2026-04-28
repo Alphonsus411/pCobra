@@ -64,6 +64,7 @@ def test_repl_incremental_var_var_evalua_resultado_sin_error_temporal_cse() -> N
 
     assert ret == 0
     assert "20" in evidencia
+    assert "Variable no declarada: _cse0" not in evidencia
     assert "Variable no declarada: _cse" not in evidencia
 
 

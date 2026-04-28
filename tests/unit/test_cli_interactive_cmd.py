@@ -487,6 +487,40 @@ def test_ejecutar_codigo_traduce_booleano_solo_en_salida_no_en_semantica_interna
     assert isinstance(interp.ultimo_resultado, bool)
 
 
+def test_ejecutar_ast_en_repl_ejecuta_nodo_a_nodo_y_no_batch_ejecutar_ast():
+    class _NodoDummy:
+        def __init__(self, nombre):
+            self.nombre = nombre
+
+        def aceptar(self, _validador):
+            return None
+
+    class _InterpretadorDummy:
+        def __init__(self):
+            self.nodos_ejecutados = []
+
+        def ejecutar_ast(self, _ast):
+            raise AssertionError("REPL normal no debe usar ejecutar_ast batch")
+
+        def ejecutar_nodo(self, nodo):
+            self.nodos_ejecutados.append(nodo.nombre)
+            return None if nodo.nombre == "n1" else 20
+
+    interp = _InterpretadorDummy()
+    cmd = InteractiveCommand(interp)
+    ast_dummy = [_NodoDummy("n1"), _NodoDummy("n2")]
+
+    with patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=ast_dummy,
+    ):
+        ast, resultado = cmd._ejecutar_ast_en_repl("var y = x * 2")
+
+    assert ast == ast_dummy
+    assert interp.nodos_ejecutados == ["n1", "n2"]
+    assert resultado == 20
+
+
 def test_ejecutar_en_sandbox_arma_script_con_captura_y_booleanos():
     cmd = InteractiveCommand(MagicMock())
     cmd._seguro_repl = False
