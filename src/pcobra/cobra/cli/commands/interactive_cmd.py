@@ -356,16 +356,14 @@ class InteractiveCommand(BaseCommand):
     ) -> tuple[list[Any], Any]:
         """Flujo canónico del REPL incremental.
 
-        Contrato interno para snippets interactivos:
-        1) construir AST con ``prevalidar_y_parsear_codigo``;
-        2) iterar ``for nodo in ast``;
-        3) ejecutar cada nodo con ``self.interpretador.ejecutar_nodo(nodo)``.
-
-        Este camino evita explícitamente cualquier pipeline batch para conservar
-        semántica incremental (estado persistente del intérprete entre entradas).
+        Contrato: REPL incremental = intérprete; no batch pipeline.
+        Patrón explícito del flujo normal:
+        1) ``ast = prevalidar_y_parsear_codigo(codigo)``;
+        2) ``for nodo in ast: self.interpretador.ejecutar_nodo(nodo)``.
         """
 
         ast = prevalidar_y_parsear_codigo(codigo)
+        # Contrato: REPL incremental = intérprete; no batch pipeline.
         if self._seguro_repl:
             validar_ast_seguro(
                 ast,
@@ -383,9 +381,9 @@ class InteractiveCommand(BaseCommand):
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
         """Ejecuta un snippet en modo REPL incremental.
 
-        Este método mantiene la semántica de intérprete interactivo: cada
-        entrada se evalúa sobre ``self.interpretador`` (estado acumulado), no
-        como una compilación por lotes/batch aislada.
+        Contrato: REPL incremental = intérprete; no batch pipeline.
+        Cada entrada se evalúa sobre ``self.interpretador`` (estado acumulado),
+        no como una compilación por lotes/batch aislada.
         """
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
@@ -422,31 +420,22 @@ class InteractiveCommand(BaseCommand):
         *,
         prevalidar_fn: Any = prevalidar_y_parsear_codigo,
     ) -> None:
-        """Valida sintaxis y ejecuta código REPL en el camino normal.
+        """Valida sintaxis y delega la ejecución REPL al intérprete.
 
-        Este helper concentra el camino canónico parseo+ejecución para
-        implementaciones de REPL que delegan en ``InteractiveCommand``.
-        La ejecución reutiliza ``ejecutar_codigo``, incluyendo su fallback
-        para expresiones top-level.
-
-        Nota técnica:
-        REPL implica evaluación incremental sobre un intérprete persistente
-        (``self.interpretador``). No es una compilación/lote "batch" por
-        entrada; cada snippet se evalúa con el contexto acumulado.
+        Contrato: REPL incremental = intérprete; no batch pipeline.
+        Este helper del flujo normal solo debe hacer:
+        1) prevalidación/parseo;
+        2) delegación a ``ejecutar_codigo``.
         """
 
-        _ = prevalidar_fn  # Compatibilidad con firmas históricas en pruebas.
         self._sincronizar_interpretador_sesion()
-        prevalidar_y_parsear_codigo(codigo)
+        prevalidar_fn(codigo)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
         # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
         # introducir pipeline explícito para snippets normales.
         # Invariante antirregresión: conservar este método como "thin wrapper"
         # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
-        if validador is None:
-            self.ejecutar_codigo(codigo)
-            return
         self.ejecutar_codigo(codigo, validador)
 
     def _debe_intentar_fallback_expresion_top_level(
