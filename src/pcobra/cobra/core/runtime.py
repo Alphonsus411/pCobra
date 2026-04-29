@@ -7,14 +7,10 @@ canónico (``pcobra.cobra.*``) sin modificar la implementación base.
 
 from __future__ import annotations
 
+from typing import Any
+
 from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.resource_limits import limitar_cpu_segundos, limitar_memoria_mb
-from pcobra.core.sandbox import (
-    SecurityError,
-    ejecutar_en_contenedor,
-    ejecutar_en_sandbox,
-    validar_dependencias,
-)
 from pcobra.core.semantic_validators import PrimitivaPeligrosaError, construir_cadena
 from pcobra.core.semantic_validators.base import ValidadorBase
 
@@ -30,3 +26,18 @@ __all__ = [
     "limitar_memoria_mb",
     "validar_dependencias",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Resuelve símbolos de sandbox de forma perezosa para preservar fallback legacy."""
+
+    if name in {
+        "SecurityError",
+        "ejecutar_en_contenedor",
+        "ejecutar_en_sandbox",
+        "validar_dependencias",
+    }:
+        from pcobra.core import sandbox as _sandbox
+
+        return getattr(_sandbox, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
