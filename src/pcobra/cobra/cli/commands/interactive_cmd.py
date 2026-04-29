@@ -360,6 +360,12 @@ class InteractiveCommand(BaseCommand):
         Patrón explícito del flujo normal:
         1) ``ast = prevalidar_y_parsear_codigo(codigo)``;
         2) ``for nodo in ast: self.interpretador.ejecutar_nodo(nodo)``.
+
+        Nota de mantenimiento:
+        Los nombres temporales ``_cse*`` pertenecen a optimizaciones internas
+        de pipelines batch/backend y no deben filtrarse al flujo normal del REPL.
+        Aquí se evalúan nodos AST ya parseados directamente sobre el entorno
+        actual del intérprete de sesión.
         """
 
         ast = prevalidar_y_parsear_codigo(codigo)
@@ -374,8 +380,9 @@ class InteractiveCommand(BaseCommand):
             if validador:
                 nodo.aceptar(validador)
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
-            if resultado is None and resultado_nodo is not None:
-                resultado = resultado_nodo
+            # El resultado observable del REPL debe ser el valor realmente
+            # evaluado por el último nodo ejecutado en el entorno actual.
+            resultado = resultado_nodo
         return ast, resultado
 
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
