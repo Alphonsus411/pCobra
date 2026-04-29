@@ -960,6 +960,31 @@ class InteractiveCommand(BaseCommand):
 
         return False
 
+    def _ejecutar_pipeline_explicito_solo_setup_sandbox(self, interpretador_cls: type[Any]) -> Any:
+        """Inicializa setup de sandbox con pipeline explícito (uso restringido).
+
+        Contrato: este helper existe para aislar el único uso permitido de
+        ``ejecutar_pipeline_explicito`` dentro del REPL: preparación de
+        sandbox/setup. No debe reutilizarse para el flujo normal incremental.
+        """
+        from pcobra.cobra.cli.execution_pipeline import (
+            ejecutar_pipeline_explicito,
+            PipelineInput,
+        )
+
+        setup_input = PipelineInput(
+            codigo="",
+            interpretador_cls=interpretador_cls,
+            safe_mode=self._seguro_repl,
+            extra_validators=self._extra_validators_repl,
+            interpretador=self.interpretador,
+        )
+        setup, _ = ejecutar_pipeline_explicito(
+            setup_input,
+            analizar_codigo_fn=lambda _codigo: [],
+        )
+        return setup
+
     def _ejecutar_en_sandbox(
         self,
         linea: str,
@@ -973,26 +998,10 @@ class InteractiveCommand(BaseCommand):
             module_name=__name__,
             default_cls=type(self.interpretador),
         )
-        from pcobra.cobra.cli.execution_pipeline import (
-            ejecutar_pipeline_explicito,
-            PipelineInput,
-        )
-
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
-        # Contrato sandbox/setup: ``ejecutar_pipeline_explicito`` se usa aquí
-        # únicamente para normalizar configuración de intérprete/opciones antes
-        # de construir el script sandbox; no para ejecutar snippets normales.
-        setup_input = PipelineInput(
-            codigo="",
-            interpretador_cls=interpretador_cls,
-            safe_mode=self._seguro_repl,
-            extra_validators=self._extra_validators_repl,
-            interpretador=self.interpretador,
-        )
-        setup, _ = ejecutar_pipeline_explicito(
-            setup_input,
-            analizar_codigo_fn=lambda _codigo: [],
-        )
+        # Contrato sandbox/setup: llamada encapsulada para evitar reutilización
+        # accidental en flujo normal del REPL incremental.
+        setup = self._ejecutar_pipeline_explicito_solo_setup_sandbox(interpretador_cls)
         self.interpretador = setup.interpretador
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
