@@ -41,7 +41,41 @@ def _is_forbidden_import_from(node: ast.ImportFrom) -> bool:
     return False
 
 
-def _scan_file(path: Path) -> list[tuple[int, str]]:
+def _module_path_from_file(path: Path, root: Path) -> str | None:
+    src_root = root / "src"
+    try:
+        rel = path.relative_to(src_root)
+    except ValueError:
+        return None
+
+    parts = list(rel.parts)
+    if not parts or parts[-1] == "__init__.py":
+        parts = parts[:-1]
+    elif parts[-1].endswith(".py"):
+        parts[-1] = parts[-1][:-3]
+    return ".".join(parts)
+
+
+def _resolve_import_from_module(node: ast.ImportFrom, path: Path, root: Path) -> str:
+    module = node.module or ""
+    if node.level == 0:
+        return module
+
+    current_module = _module_path_from_file(path, root)
+    if not current_module:
+        return module
+
+    package_parts = current_module.split(".")[:-1]
+    if node.level > len(package_parts):
+        return module
+
+    base_parts = package_parts[: len(package_parts) - node.level + 1]
+    if module:
+        base_parts.extend(module.split("."))
+    return ".".join(base_parts)
+
+
+def _scan_file(path: Path, root: Path) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     violations: list[tuple[int, str]] = []
     for node in ast.walk(tree):
@@ -52,6 +86,12 @@ def _scan_file(path: Path) -> list[tuple[int, str]]:
         elif isinstance(node, ast.ImportFrom):
             if _is_forbidden_import_from(node):
                 label = node.module or "<relative>"
+                violations.append((node.lineno, label))
+                continue
+
+            resolved_module = _resolve_import_from_module(node, path, root)
+            if _is_forbidden_module_name(resolved_module):
+                label = resolved_module or node.module or "<relative>"
                 violations.append((node.lineno, label))
     return violations
 
@@ -67,7 +107,7 @@ def find_violations(root: Path = ROOT) -> list[str]:
             continue
         for path in sorted(scope.rglob("*.py")):
             rel = path.relative_to(root)
-            for line, target in _scan_file(path):
+            for line, target in _scan_file(path, root):
                 failures.append(
                     f"{rel}:{line}: import entre comandos no permitido ({target}); "
                     "extrae código a un servicio compartido o usa commands.base"
