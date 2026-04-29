@@ -79,8 +79,13 @@ def _extract_imported_modules(tree: ast.AST, current_module: str) -> set[str]:
         elif isinstance(node, ast.ImportFrom):
             if node.level:
                 resolved = _resolve_relative_module(current_module, node.level, node.module)
-                if resolved:
-                    imports.add(resolved)
+                if not resolved:
+                    continue
+                for alias in node.names:
+                    if alias.name == "*":
+                        imports.add(resolved)
+                    else:
+                        imports.add(f"{resolved}.{alias.name}")
                 continue
             if node.module:
                 imports.add(node.module)
