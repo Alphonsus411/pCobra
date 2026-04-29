@@ -352,7 +352,7 @@ class InteractiveCommand(BaseCommand):
         return ast
 
     def _ejecutar_ast_en_repl(
-        self, codigo: str, validador: Optional[Any] = None
+        self, ast: list[Any], validador: Optional[Any] = None
     ) -> tuple[list[Any], Any]:
         """Flujo canónico del REPL incremental.
 
@@ -368,7 +368,6 @@ class InteractiveCommand(BaseCommand):
         actual del intérprete de sesión.
         """
 
-        ast = prevalidar_y_parsear_codigo(codigo)
         # Contrato: REPL incremental = intérprete; no batch pipeline.
         if self._seguro_repl:
             validar_ast_seguro(
@@ -385,7 +384,13 @@ class InteractiveCommand(BaseCommand):
             resultado = resultado_nodo
         return ast, resultado
 
-    def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
+    def ejecutar_codigo(
+        self,
+        codigo: str,
+        validador: Optional[Any] = None,
+        *,
+        ast_preparseado: Optional[list[Any]] = None,
+    ) -> None:
         """Ejecuta un snippet en modo REPL incremental.
 
         Contrato: REPL incremental = intérprete; no batch pipeline.
@@ -400,7 +405,8 @@ class InteractiveCommand(BaseCommand):
         # Este camino ejecuta snippets interactivos normales sobre el intérprete
         # persistente para preservar la semántica incremental del lenguaje.
         try:
-            ast, resultado = self._ejecutar_ast_en_repl(codigo, validador)
+            ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
+            ast, resultado = self._ejecutar_ast_en_repl(ast, validador)
         except Exception as err_original:
             if not self._debe_intentar_fallback_expresion_top_level(
                 codigo, err_original
@@ -409,7 +415,8 @@ class InteractiveCommand(BaseCommand):
 
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
-                ast, resultado = self._ejecutar_ast_en_repl(codigo_fallback, validador)
+                ast_fallback = prevalidar_y_parsear_codigo(codigo_fallback)
+                ast, resultado = self._ejecutar_ast_en_repl(ast_fallback, validador)
             except Exception as err_fallback:
                 if self._debe_intentar_fallback_expresion_top_level(
                     codigo, err_fallback
@@ -436,14 +443,14 @@ class InteractiveCommand(BaseCommand):
         """
 
         self._sincronizar_interpretador_sesion()
-        prevalidar_fn(codigo)
+        ast = prevalidar_fn(codigo)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
         # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
         # introducir pipeline explícito para snippets normales.
         # Invariante antirregresión: conservar este método como "thin wrapper"
         # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
-        self.ejecutar_codigo(codigo, validador)
+        self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
 
     def _debe_intentar_fallback_expresion_top_level(
         self, codigo: str, err_original: Exception
@@ -787,7 +794,7 @@ class InteractiveCommand(BaseCommand):
                     # Contrato de dispatch:
                     # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
                     # Rama normal: AST directo con entorno persistente.
-                    self.ejecutar_codigo(codigo, validador)
+                    self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
                 estado["buffer_lineas"].clear()
             except Exception as err:  # pragma: no cover - ruta unificada de errores
                 estado["buffer_lineas"].clear()
