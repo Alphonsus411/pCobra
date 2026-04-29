@@ -90,8 +90,8 @@ class ReplCommandV2(BaseCommand):
 
     def _sincronizar_estado_hacia_delegate(self) -> None:
         """Sincroniza estado persistente local hacia el comando delegado."""
-        # En modo normal siempre se reinyecta la misma referencia persistente
-        # para evitar re-instanciación accidental entre snippets.
+        # En modo normal siempre se reinyecta la MISMA referencia persistente
+        # para evitar re-instanciación accidental entre snippets del REPL.
         if self._interpretador_persistente is not None:
             self._delegate.interpretador = self._interpretador_persistente
         self._delegate._seguro_repl = self._seguro_repl
@@ -99,8 +99,12 @@ class ReplCommandV2(BaseCommand):
 
     def _sincronizar_estado_desde_delegate(self) -> None:
         """Sincroniza estado del comando delegado hacia el estado local."""
-        if self._delegate.interpretador is not None:
+        # El delegado no debe introducir una referencia nueva de interpretador:
+        # si ocurre por error, se restaura la referencia persistente actual.
+        if self._interpretador_persistente is None:
             self._interpretador_persistente = self._delegate.interpretador
+        elif self._delegate.interpretador is not self._interpretador_persistente:
+            self._delegate.interpretador = self._interpretador_persistente
         self._seguro_repl = self._delegate._seguro_repl
         self._extra_validators_repl = self._delegate._extra_validators_repl
 
@@ -126,7 +130,11 @@ class ReplCommandV2(BaseCommand):
         self._delegate._log_error(categoria, err)
 
     def _reset_buffer_local(self, buffer: list[str]) -> None:
-        """Limpia el buffer de entrada local del REPL v2."""
+        """Limpia el buffer de entrada local del REPL v2.
+
+        Importante: limpiar buffer solo descarta texto pendiente de entrada,
+        no reinicia el entorno de variables del interpretador persistente.
+        """
         buffer.clear()
 
     def _reset_estado_delegate(self) -> None:
