@@ -202,6 +202,7 @@ def test_eliminate_common_subexpressions_global():
     assert len(optimizado) == 3
     temp = optimizado[0]
     assert temp.identificador == "_cse0"
+    assert temp.declaracion is True
     assert isinstance(optimizado[1].expresion, NodoIdentificador)
     assert optimizado[1].expresion.nombre == "_cse0"
     assert isinstance(optimizado[2].expresion, NodoIdentificador)
@@ -226,6 +227,7 @@ def test_eliminate_common_subexpressions_in_function():
     optimizado = eliminate_common_subexpressions([func])
     cuerpo = optimizado[0].cuerpo
     assert cuerpo[0].identificador == "_cse0"
+    assert cuerpo[0].declaracion is True
     assert isinstance(cuerpo[1].expresion, NodoIdentificador)
     assert cuerpo[1].expresion.nombre == "_cse0"
     assert isinstance(cuerpo[2].expresion, NodoIdentificador)
