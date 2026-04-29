@@ -93,7 +93,7 @@ class _CommonSubexprEliminator(NodeVisitor):
             nombre = f"_cse{len(cur)}"
             cur[key] = nombre
             self._current_assigns().append(
-                NodoAsignacion(nombre, copy.deepcopy(expr))
+                NodoAsignacion(nombre, copy.deepcopy(expr), declaracion=True)
             )
         return NodoIdentificador(cur[key])
 
