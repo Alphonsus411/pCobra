@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
+import subprocess
 
 try:
     from pylsp import hookimpl, lsp  # type: ignore[import-not-found]
@@ -29,7 +31,6 @@ except ModuleNotFoundError:  # pragma: no cover - dependencia opcional
 from pcobra.standard_library import __all__ as STD_FUNCS
 from pcobra.cobra.core import Lexer, LexerError
 from pcobra.cobra.core import Parser, ParserError
-from pcobra.cobra.cli.services.format_service import format_code_with_black
 
 # Palabras reservadas más comunes de Cobra
 KEYWORDS = [
@@ -57,6 +58,24 @@ KEYWORDS = [
 
 # Funciones incluidas en la biblioteca estándar
 BUILTINS = list(STD_FUNCS) + ["imprimir"]
+
+
+def _format_code_for_lsp(path: str) -> None:
+    """Ejecuta ``black`` sin emitir salida por stdout para preservar el protocolo LSP."""
+    if not shutil.which("black"):
+        raise RuntimeError("Herramienta 'black' no encontrada en el PATH")
+
+    result = subprocess.run(
+        ["black", path],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        raise RuntimeError(stderr or f"black finalizó con código {result.returncode}")
+
 
 
 def lint_lines(lines: list[str]):
@@ -187,8 +206,7 @@ def pylsp_format_document(config, workspace, document):
     """Formatea el archivo actual utilizando el formateador de Cobra."""
     path = document.path
     try:
-        if not format_code_with_black(path):
-            raise RuntimeError(f"Fallo de formateo con black para el documento {path}")
+        _format_code_for_lsp(path)
         with open(path, "r", encoding="utf-8") as fh:
             formatted = fh.read()
     except Exception as exc:

@@ -19,11 +19,10 @@ def test_pylsp_format_document_devuelve_edits_si_formatea(monkeypatch, tmp_path)
     archivo.write_text("imprimir(1)\n", encoding="utf-8")
     documento = _DummyDocument(path=archivo, source=archivo.read_text(encoding="utf-8"))
 
-    def _fake_format(path: str) -> bool:
+    def _fake_format(path: str) -> None:
         Path(path).write_text("imprimir(1)\n", encoding="utf-8")
-        return True
 
-    monkeypatch.setattr(cobra_plugin, "format_code_with_black", _fake_format)
+    monkeypatch.setattr(cobra_plugin, "_format_code_for_lsp", _fake_format)
 
     edits = cobra_plugin.pylsp_format_document(None, None, documento)
 
@@ -37,9 +36,12 @@ def test_pylsp_format_document_lanza_runtimeerror_si_falla_formateo(monkeypatch,
     archivo.write_text("imprimir(1)\n", encoding="utf-8")
     documento = _DummyDocument(path=archivo, source=archivo.read_text(encoding="utf-8"))
 
-    monkeypatch.setattr(cobra_plugin, "format_code_with_black", lambda _path: False)
+    def _fail_format(_path: str) -> None:
+        raise RuntimeError("black missing")
 
-    with pytest.raises(RuntimeError, match="Fallo de formateo con black"):
+    monkeypatch.setattr(cobra_plugin, "_format_code_for_lsp", _fail_format)
+
+    with pytest.raises(RuntimeError, match="No se pudo formatear el documento"):
         cobra_plugin.pylsp_format_document(None, None, documento)
 
 
