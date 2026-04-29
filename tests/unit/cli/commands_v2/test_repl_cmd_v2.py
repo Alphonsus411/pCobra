@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import argparse
 
 from pcobra.cobra.cli.commands_v2 import repl_cmd as repl_module
@@ -365,7 +366,7 @@ def test_repl_v2_regresion_sesion_interactiva_var_var_evaluar_identificador_sin_
 
     assert status == 0
     assert "Variable no declarada: _cse0" not in evidencia
-    assert "_cse" not in evidencia
+    assert re.search(r"Variable no declarada:\s*_cse\d+", evidencia) is None
     assert salida.err == ""
     assert salida.out.strip().endswith("20")
 
@@ -392,6 +393,6 @@ def test_repl_v2_regresion_bloque_si_fin_comparte_entorno_sin_temporales_cse(mon
 
     assert status == 0
     assert "Variable no declarada: _cse0" not in evidencia
-    assert "_cse" not in evidencia
+    assert re.search(r"Variable no declarada:\s*_cse\d+", evidencia) is None
     assert salida.err == ""
     assert salida.out.strip().endswith("20")

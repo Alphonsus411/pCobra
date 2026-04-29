@@ -5,6 +5,7 @@ normal no dependa de temporales internos del backend.
 """
 
 from types import ModuleType
+import re
 import sys
 
 # Dependencias opcionales simuladas para aislar estas pruebas unitarias.
@@ -94,3 +95,4 @@ def test_run_repl_normal_incremental_no_invoca_pipeline_batch_y_comparte_entorno
     assert ret == 0
     assert "20" in evidencia
     assert "Variable no declarada: _cse0" not in evidencia
+    assert re.search(r"Variable no declarada:\s*_cse\d+", evidencia) is None
