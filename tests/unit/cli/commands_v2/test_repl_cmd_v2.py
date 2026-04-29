@@ -240,14 +240,14 @@ def test_repl_v2_sincronizacion_hacia_y_desde_delegate_conserva_interpretador():
     assert command._delegate._seguro_repl is False
     assert command._delegate._extra_validators_repl == ("v1",)
 
-    nuevo_interpretador = object()
-    command._delegate.interpretador = nuevo_interpretador
+    command._delegate.interpretador = object()
     command._delegate._seguro_repl = True
     command._delegate._extra_validators_repl = ("v2",)
 
     command._sincronizar_estado_desde_delegate()
 
-    assert command._interpretador_persistente is nuevo_interpretador
+    assert command._interpretador_persistente is interpretador_persistente
+    assert command._delegate.interpretador is interpretador_persistente
     assert command._seguro_repl is True
     assert command._extra_validators_repl == ("v2",)
 
@@ -274,6 +274,32 @@ def test_repl_v2_ejecutar_modo_normal_reutiliza_interpretador_persistente(monkey
     command._ejecutar_en_modo_normal("imprimir(2)")
 
     assert observaciones == [interpretador_persistente, interpretador_persistente]
+    assert command._interpretador_persistente is interpretador_persistente
+
+
+def test_repl_v2_bloque_multilinea_y_sentencias_subsiguientes_comparten_runtime(monkeypatch):
+    command = repl_module.ReplCommandV2()
+    interpretador_persistente = object()
+    command._interpretador_persistente = interpretador_persistente
+    observaciones: list[tuple[str, object]] = []
+
+    def _fake_parsear_y_ejecutar(codigo: str, prevalidar_fn):
+        assert prevalidar_fn is repl_module.prevalidar_y_parsear_codigo
+        observaciones.append((codigo, command._delegate.interpretador))
+
+    monkeypatch.setattr(
+        command._delegate,
+        "parsear_y_ejecutar_codigo_repl",
+        _fake_parsear_y_ejecutar,
+    )
+
+    command._ejecutar_en_modo_normal("si verdadero:\nimprimir(1)\nfin")
+    command._ejecutar_en_modo_normal("imprimir(2)")
+
+    assert observaciones == [
+        ("si verdadero:\nimprimir(1)\nfin", interpretador_persistente),
+        ("imprimir(2)", interpretador_persistente),
+    ]
     assert command._interpretador_persistente is interpretador_persistente
 
 
