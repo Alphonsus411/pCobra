@@ -36,10 +36,24 @@ def sanitize_source_for_tokenizer(text: str) -> str:
     out: list[str] = []
     quote: str | None = None
     escaped = False
+    in_line_comment = False
 
-    for ch in source:
+    for idx, ch in enumerate(source):
+        nxt = source[idx + 1] if idx + 1 < len(source) else ""
+
+        if in_line_comment:
+            out.append(ch)
+            if ch == "\n":
+                in_line_comment = False
+            continue
+
         if quote is None:
             out.append(ch)
+
+            if ch == "#" or (ch == "/" and nxt == "/"):
+                in_line_comment = True
+                continue
+
             if ch in {"'", '"'}:
                 quote = ch
                 escaped = False
