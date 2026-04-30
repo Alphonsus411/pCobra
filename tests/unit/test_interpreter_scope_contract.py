@@ -373,3 +373,31 @@ def test_interpreter_control_flow_sin_copy_ni_clonado_en_bloques_y_bucles() -> N
 
     assert "copy(" not in agregado
     assert "deepcopy(" not in agregado
+
+def test_closure_escapado_no_corrompe_memoria_global_homonima() -> None:
+    inter = InterpretadorCobra()
+
+    global_env = inter.contextos[0]
+    global_env.define("x", 999)
+    inter.mem_contextos[0]["x"] = (10, 1)
+
+    capturado = Environment(values={"x": 1}, parent=None)
+    closure_local = Environment(parent=capturado)
+
+    inter.contextos.append(closure_local)
+    inter.mem_contextos.append({})
+
+    liberaciones: list[tuple[int, int]] = []
+    inter.liberar_memoria = lambda idx, tam: liberaciones.append((idx, tam))
+
+    with patch.object(
+        InterpretadorCobra,
+        "_asegurar_no_autorreferencia_asignacion",
+        return_value=None,
+    ):
+        inter.ejecutar_asignacion(NodoAsignacion("x", NodoValor(2)))
+
+    assert capturado.get("x") == 2
+    assert global_env.get("x") == 999
+    assert inter.mem_contextos[0]["x"] == (10, 1)
+    assert liberaciones == []

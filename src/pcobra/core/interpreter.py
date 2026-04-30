@@ -444,10 +444,21 @@ class InterpretadorCobra:
         contexto_activo.values.clear()
         contexto_activo.values.update(nuevos_valores)
 
-    def _indice_entorno_variable(self, nombre: str) -> int | None:
-        """Retorna el índice del primer entorno (de adentro hacia afuera) con ``nombre``."""
+    def _entorno_variable_desde_actual(self, nombre: str) -> Environment | None:
+        """Resuelve el entorno real que posee ``nombre`` siguiendo la cadena parent."""
+        entorno = self.contextos[-1] if self.contextos else None
+        while entorno is not None:
+            if nombre in entorno.values:
+                return entorno
+            entorno = entorno.parent
+        return None
+
+    def _indice_entorno(self, entorno_objetivo: Environment | None) -> int | None:
+        """Devuelve el índice de ``entorno_objetivo`` en ``self.contextos`` por identidad."""
+        if entorno_objetivo is None:
+            return None
         for indice in range(len(self.contextos) - 1, -1, -1):
-            if nombre in self.contextos[indice].values:
+            if self.contextos[indice] is entorno_objetivo:
                 return indice
         return None
 
@@ -1166,16 +1177,16 @@ class InterpretadorCobra:
                 # Declaración local (explícita o por inferencia)
                 self.contextos[-1].define(nombre, valor)
             else:
-                # Mutación: resolver primero en qué entorno vive la variable.
-                # Si no existe todavía, ``set`` la creará en el scope actual.
-                indice_contexto = self._indice_entorno_variable(nombre)
-                if indice_contexto is None:
-                    indice_contexto = len(self.mem_contextos) - 1
+                # Mutación: resolver primero el entorno real que posee la variable.
+                entorno_objetivo = self._entorno_variable_desde_actual(nombre)
+                indice_contexto = self._indice_entorno(entorno_objetivo)
 
-                # Liberar/reasignar en el contexto real (no forzar el actual).
-                self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
-                indice = self.solicitar_memoria(1)
-                self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                # Solo registrar memoria si el entorno vive en la pila activa.
+                if indice_contexto is not None:
+                    self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                    indice = self.solicitar_memoria(1)
+                    self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+
                 self.contextos[-1].set(nombre, valor)
         return valor
 
