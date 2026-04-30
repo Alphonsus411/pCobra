@@ -82,3 +82,15 @@ def test_permite_import_base_entre_comandos(tmp_path: Path) -> None:
     violations = find_layer_violations(graph)
 
     assert not violations
+
+
+def test_resuelve_importfrom_relativo_con_nombres(tmp_path: Path) -> None:
+    src = tmp_path / "src"
+    _write(src / "pkg" / "a.py", "from . import b\nfrom .subpkg import c\n")
+    _write(src / "pkg" / "b.py", "VALUE = 1\n")
+    _write(src / "pkg" / "subpkg" / "c.py", "VALUE = 2\n")
+
+    graph = build_import_graph(src)
+
+    assert "pkg.b" in graph["pkg.a"]
+    assert "pkg.subpkg.c" in graph["pkg.a"]
