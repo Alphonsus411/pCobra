@@ -185,7 +185,7 @@ class CompileCommand(BaseCommand):
             return 1
 
         _ensure_entrypoints_loaded_once()
-        current_lang_choices = set(get_lang_choices())
+        current_lang_choices = set(get_lang_choices()) | set(enabled_internal_legacy_targets())
 
         tipos_argument = getattr(args, "tipos", None)
         if isinstance(tipos_argument, str):
