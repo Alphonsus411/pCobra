@@ -1,6 +1,7 @@
 import importlib
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -96,6 +97,16 @@ def ejecutar_en_contenedor(*args: Any, **kwargs: Any) -> Any:
 
 def validar_dependencias(*args: Any, **kwargs: Any) -> Any:
     return sandbox_module.validar_dependencias(*args, **kwargs)
+
+
+def _resolver_hook_sandbox_legacy() -> Any:
+    legacy_module = sys.modules.get("pcobra.cobra.cli.commands.execute_cmd")
+    if legacy_module is None:
+        return ejecutar_en_sandbox
+    legacy_hook = getattr(legacy_module, "ejecutar_en_sandbox", None)
+    if callable(legacy_hook):
+        return legacy_hook
+    return ejecutar_en_sandbox
 
 
 def detectar_raiz_proyecto_desde_archivo(archivo: str) -> str:
@@ -210,7 +221,8 @@ class RunService:
         script = construir_script_sandbox_canonico(codigo, safe_mode=seguro, extra_validators=extra_validators)
 
         try:
-            salida = ejecutar_en_sandbox(script, allow_insecure_fallback=allow_insecure_fallback)
+            sandbox_executor = _resolver_hook_sandbox_legacy()
+            salida = sandbox_executor(script, allow_insecure_fallback=allow_insecure_fallback)
             if salida:
                 mostrar_info(str(salida))
             return 0
