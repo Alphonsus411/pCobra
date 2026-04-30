@@ -431,6 +431,7 @@ def test_run_repl_loop_pasa_estado_repl_a_ejecucion_sandbox():
     cmd = InteractiveCommand(MagicMock())
     cmd._seguro_repl = False
     cmd._extra_validators_repl = ["extra.py"]
+    cmd._extra_validators_repl_script = ["extra.py"]
 
     def _leer_linea_factory():
         entradas = iter(["imprimir(1)", "salir"])

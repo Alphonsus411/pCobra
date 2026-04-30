@@ -230,6 +230,7 @@ class InteractiveCommand(BaseCommand):
         self._debug_mode = False
         self._seguro_repl = True
         self._extra_validators_repl: Any = None
+        self._extra_validators_repl_script: Any = None
 
     @staticmethod
     def _crear_estado_repl() -> dict[str, Any]:
@@ -452,6 +453,7 @@ class InteractiveCommand(BaseCommand):
             return 1
         self._seguro_repl = bool(seguro)
         self._extra_validators_repl = extra_validators
+        self._extra_validators_repl_script = extra_validators
         try:
             interpretador_cls = resolver_interpretador_cls(
                     module_name=__name__,
@@ -623,7 +625,7 @@ class InteractiveCommand(BaseCommand):
                     self._ejecutar_en_sandbox(
                         codigo,
                         safe_mode=self._seguro_repl,
-                        extra_validators=self._extra_validators_repl,
+                        extra_validators=self._extra_validators_repl_script,
                     )
                 elif sandbox_docker:
                     self._ejecutar_en_docker(codigo, sandbox_docker)
