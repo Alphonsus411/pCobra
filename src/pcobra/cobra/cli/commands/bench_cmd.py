@@ -23,6 +23,7 @@ validate_backend_metadata(
     BENCHMARK_BACKEND_METADATA,
     context="pcobra.cobra.cli.commands.bench_cmd.BENCHMARK_BACKEND_METADATA",
 )
+BACKENDS = tuple(cli_runtime_benchmark_backends())
 
 class BenchCommand(BaseCommand):
     """Ejecuta benchmarks y opcionalmente los perfila."""

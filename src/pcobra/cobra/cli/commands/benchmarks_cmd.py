@@ -25,6 +25,7 @@ from pcobra.cobra.cli.services.benchmark_service import benchmark_backends_confi
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
 from pcobra.cobra.cli.utils.messages import mostrar_error, mostrar_info
 
+BACKENDS = tuple(benchmark_backends(BENCHMARK_BACKEND_METADATA))
 
 class BenchmarksCommand(BaseCommand):
     """Comando para ejecutar benchmarks."""
