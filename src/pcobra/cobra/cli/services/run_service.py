@@ -115,8 +115,8 @@ class RunService:
     execution_timeout = 30
 
     def run(self, request: RunRequest) -> int:
-        request = normalize_run_request(request)
         try:
+            request = normalize_run_request(request)
             validar_politica_modo("ejecutar", request, capability="execute")
         except ValueError as e:
             mostrar_error(str(e), registrar_log=False)
