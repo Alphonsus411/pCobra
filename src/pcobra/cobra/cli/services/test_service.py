@@ -36,8 +36,8 @@ class TestService:
         self._logger = logging.getLogger(__name__)
 
     def run(self, request: TestRequest) -> int:
-        request = normalize_test_request(request)
         try:
+            request = normalize_test_request(request)
             validar_politica_modo("verificar", request, capability="codegen")
 
             lenguajes = list(request.lenguajes)
