@@ -75,6 +75,14 @@ def test_sanitize_source_for_tokenizer_no_muta_identificadores_unicode() -> None
     assert saneado == codigo
 
 
+def test_sanitize_source_for_tokenizer_ignora_comillas_dentro_de_comentario() -> None:
+    codigo = '# comentario con comilla "\nimprimir("á")'
+
+    saneado = sanitize_source_for_tokenizer(codigo)
+
+    assert saneado == '# comentario con comilla "\nimprimir("\\xe1")'
+
+
 def test_interactive_command_sanitiza_surrogate_invalido_y_no_crashea(tmp_path):
     cmd = InteractiveCommand(MagicMock())
     capturado = {"history": [], "validar": []}
