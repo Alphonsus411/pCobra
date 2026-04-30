@@ -429,16 +429,25 @@ class InterpretadorCobra:
         """Permite reemplazar solo el mapeo local del entorno activo."""
         self.contextos[-1].values = valor
 
-    def _indice_entorno_variable(self, nombre: str) -> int | None:
-        """Retorna el índice del primer entorno (de adentro hacia afuera) con ``nombre``."""
+    def _entorno_variable(self, nombre: str) -> Environment | None:
+        """Retorna el entorno léxico donde ``nombre`` existe, partiendo del activo."""
+        entorno = self.contextos[-1]
+        while entorno is not None:
+            if nombre in entorno.values:
+                return entorno
+            entorno = entorno.parent
+        return None
+
+    def _indice_contexto_por_entorno(self, entorno_objetivo: Environment) -> int | None:
+        """Retorna el índice de ``self.contextos`` asociado a ``entorno_objetivo``."""
         for indice in range(len(self.contextos) - 1, -1, -1):
-            if nombre in self.contextos[indice].values:
+            if self.contextos[indice] is entorno_objetivo:
                 return indice
         return None
 
-    def _liberar_memoria_variable_en_contexto(self, nombre: str, indice_contexto: int) -> None:
+    def _liberar_memoria_variable_en_contexto(self, nombre: str, indice_contexto: int | None) -> None:
         """Libera el bloque de memoria asociado a ``nombre`` en un contexto concreto."""
-        if indice_contexto < 0 or indice_contexto >= len(self.mem_contextos):
+        if indice_contexto is None or indice_contexto < 0 or indice_contexto >= len(self.mem_contextos):
             return
         mem_ctx = self.mem_contextos[indice_contexto]
         if nombre not in mem_ctx:
@@ -1090,10 +1099,12 @@ class InterpretadorCobra:
                     f"se recibió: {type(nodo.objetivo).__name__}"
                 )
             nombre = nodo.objetivo.nombre
-            indice_contexto = self._indice_entorno_variable(nombre)
-            self.contextos[-1].delete(nombre)
-            if indice_contexto is not None:
-                self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+            entorno_variable = self._entorno_variable(nombre)
+            if entorno_variable is None:
+                raise NameError(f"Variable no declarada: {nombre}")
+            indice_contexto = self._indice_contexto_por_entorno(entorno_variable)
+            del entorno_variable.values[nombre]
+            self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
         elif isinstance(nodo, NodoGlobal):
             pass  # sin efecto en este intérprete simplificado
         elif isinstance(nodo, NodoNoLocal):
