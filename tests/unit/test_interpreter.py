@@ -240,6 +240,30 @@ def test_del_libera_memoria_del_scope_ancestro():
     assert "x" not in inter.mem_contextos[0]
 
 
+def test_del_no_libera_memoria_de_contexto_no_relacionado_si_entorno_capturado_no_esta_en_pila():
+    inter = InterpretadorCobra()
+    entorno_global = inter.contextos[0]
+    entorno_capturado = Environment(parent=entorno_global)
+    entorno_capturado.define("x", 99)
+
+    inter.contextos.append(Environment(parent=entorno_capturado))
+    inter.mem_contextos.append({})
+    inter.mem_contextos[0]["x"] = (22, 1)
+
+    liberaciones = []
+    inter.liberar_memoria = lambda idx, tam: liberaciones.append((idx, tam))
+
+    try:
+        inter.ejecutar_nodo(NodoDel(NodoIdentificador("x")))
+    finally:
+        inter.mem_contextos.pop()
+        inter.contextos.pop()
+
+    assert not entorno_capturado.contains("x")
+    assert liberaciones == []
+    assert inter.mem_contextos[0]["x"] == (22, 1)
+
+
 def test_del_objetivo_no_identificador_lanza_typeerror():
     inter = InterpretadorCobra()
 
