@@ -116,7 +116,7 @@ def test_interactive_history_setup(tmp_path):
     fake_path = tmp_path / '.cobra_history'
     with patch('cobra.cli.commands.interactive_cmd.os.path.expanduser', return_value=str(fake_path)) as mock_expanduser, \
          patch('cobra.cli.commands.interactive_cmd.os.makedirs') as mock_makedirs, \
-         patch('cobra.cli.commands.interactive_cmd.FileHistory') as mock_history, \
+         patch('cobra.cli.commands.interactive_cmd.SafeFileHistory') as mock_history, \
          patch('prompt_toolkit.PromptSession.prompt', side_effect=['salir']), \
          patch('cobra.cli.commands.interactive_cmd.validar_dependencias'):
         cmd.run(_args())

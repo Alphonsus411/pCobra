@@ -843,6 +843,8 @@ class InteractiveCommand(BaseCommand):
             )
         self.logger.debug(_("Finalizando REPL de Cobra"))
     def _construir_historial(self, history_path: str) -> Any:
+        if SafeFileHistory is not None:
+            return SafeFileHistory(history_path)
         if FileHistory is not None:
             return FileHistory(history_path)
         return _SessionHistoryFallback(history_path)
