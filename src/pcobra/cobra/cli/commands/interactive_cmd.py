@@ -369,8 +369,9 @@ class InteractiveCommand(BaseCommand):
         resultado = None
         for nodo in ast:
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
-            if resultado is None and resultado_nodo is not None:
+            if resultado_nodo is not None:
                 resultado = resultado_nodo
+                break
         return ast, resultado
 
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
