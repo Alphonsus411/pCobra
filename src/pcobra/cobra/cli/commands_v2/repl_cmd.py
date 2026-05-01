@@ -58,6 +58,16 @@ class ReplCommandV2(BaseCommand):
 
     def _extraer_token_desde_error(self, err: ParserError) -> Any | None:
         """Obtiene el token actual desde metadatos del ``ParserError`` si existe."""
+        def _token_con_tipo_normalizable(token: Any) -> Any | None:
+            if token is None:
+                return None
+            tipo_normalizado = self._normalizar_tipo_token(
+                getattr(token, "tipo", None)
+                or getattr(token, "type", None)
+                or getattr(token, "token_type", None),
+            )
+            return token if tipo_normalizado is not None else None
+
         for attr in (
             "token_actual",
             "token",
@@ -65,12 +75,15 @@ class ReplCommandV2(BaseCommand):
             "actual_token",
             "last_token",
             "ultimo_token",
-            "unexpected_token",
         ):
             if hasattr(err, attr):
                 token = getattr(err, attr)
                 if token is not None:
                     return token
+        if hasattr(err, "unexpected_token"):
+            token = _token_con_tipo_normalizable(getattr(err, "unexpected_token"))
+            if token is not None:
+                return token
         for attr in ("estado", "state", "parser_state"):
             if hasattr(err, attr):
                 estado = getattr(err, attr)
@@ -83,11 +96,13 @@ class ReplCommandV2(BaseCommand):
                     "actual_token",
                     "last_token",
                     "ultimo_token",
-                    "unexpected_token",
                 ):
                     token = getattr(estado, token_attr, None)
                     if token is not None:
                         return token
+                token = _token_con_tipo_normalizable(getattr(estado, "unexpected_token", None))
+                if token is not None:
+                    return token
         return None
 
     def _es_entrada_incompleta_por_metadata(self, err: ParserError) -> bool:
@@ -101,7 +116,11 @@ class ReplCommandV2(BaseCommand):
         """
         token_actual = self._extraer_token_desde_error(err)
         tipo_token_actual = self._normalizar_tipo_token(
-            getattr(token_actual, "tipo", None)
+            (
+                getattr(token_actual, "tipo", None)
+                or getattr(token_actual, "type", None)
+                or getattr(token_actual, "token_type", None)
+            )
             if token_actual is not None
             else getattr(err, "tipo_token_actual", None)
             or getattr(err, "current_token_type", None)
