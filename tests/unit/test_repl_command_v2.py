@@ -210,6 +210,25 @@ def test_extrae_token_desde_unexpected_token_si_no_hay_token_actual():
     assert token.tipo == TipoToken.EOF
 
 
+def test_no_prioriza_unexpected_token_sin_tipo_y_usa_fallback_de_error():
+    command = ReplCommandV2()
+    err = ParserError("metadata inesperada sin tipo")
+    err.expected = [TipoToken.FIN]
+    err.unexpected_token = object()
+    err.current_token_type = TipoToken.EOF
+    err.unexpected_eof = True
+    assert command.es_error_de_bloque_incompleto(err) is True
+
+
+def test_extrae_unexpected_token_con_alias_type():
+    command = ReplCommandV2()
+    err = ParserError("metadata unexpected token type")
+    err.unexpected_token = type("Tok", (), {"type": TipoToken.EOF})()
+    token = command._extraer_token_desde_error(err)
+    assert token is not None
+    assert token.type == TipoToken.EOF
+
+
 def test_incompleto_bloque_simple_por_eof_inesperado_y_fin_pendiente():
     command = ReplCommandV2()
     err = _parser_error_con_metadata(
