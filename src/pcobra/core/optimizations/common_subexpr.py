@@ -104,6 +104,9 @@ class _CommonSubexprEliminator(NodeVisitor):
                     declaracion=True,
                 )
             )
+            # Señal interna: evitar que el REPL trate la temporal como
+            # resultado observable de la entrada.
+            setattr(self._current_assigns()[-1], "temporal_cse", True)
         return NodoIdentificador(cur[key])
 
     # Visit methods --------------------------------------------------------
