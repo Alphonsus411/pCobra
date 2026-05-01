@@ -226,22 +226,26 @@ def _scc_components(graph: dict[str, set[str]]) -> list[set[str]]:
     return components
 
 
-def _scope_graph(graph: dict[str, set[str]], scope_prefix: str) -> dict[str, set[str]]:
-    scoped_nodes = {
+def _scope_nodes(graph: dict[str, set[str]], scope_prefix: str) -> set[str]:
+    return {
         module for module in graph if module == scope_prefix or module.startswith(f"{scope_prefix}.")
     }
-    return {
-        module: {target for target in targets if target in scoped_nodes}
-        for module, targets in graph.items()
-        if module in scoped_nodes
-    }
+
+
+def _scope_graph(graph: dict[str, set[str]], scope_prefix: str) -> dict[str, set[str]]:
+    scoped_nodes = _scope_nodes(graph, scope_prefix)
+    return {module: set(targets) for module, targets in graph.items() if module in scoped_nodes}
 
 
 def find_scope_cycle_components(
     graph: dict[str, set[str]], scope_prefix: str
 ) -> tuple[list[set[str]], list[set[str]], list[set[str]]]:
-    scoped = _scope_graph(graph, scope_prefix)
-    cyclic_components = [component for component in _scc_components(scoped) if len(component) > 1]
+    scoped_nodes = _scope_nodes(graph, scope_prefix)
+    cyclic_components = [
+        component
+        for component in _scc_components(graph)
+        if len(component) > 1 and component & scoped_nodes
+    ]
     allowed_baseline = set(ALLOWED_SCOPE_SCCS.get(scope_prefix, ()))
     forbidden_baseline = set(FORBIDDEN_SCOPE_SCCS.get(scope_prefix, ()))
     allowed = [component for component in cyclic_components if frozenset(component) in allowed_baseline]
