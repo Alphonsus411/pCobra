@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import sys
+import warnings
 from typing import Optional, Any
 from types import TracebackType
 
@@ -345,11 +346,50 @@ class InteractiveCommand(BaseCommand):
         ast = prevalidar_y_parsear_codigo(linea)
         self.logger.debug(_("AST generado: {ast}").format(ast=ast))
 
-        if validador:
+        self._recorrer_validacion_ast(ast, validador, silencioso=True)
+
+        return ast
+
+
+    def _recorrer_validacion_ast(
+        self,
+        ast: list[Any],
+        validador: Optional[Any],
+        *,
+        silencioso: bool = False,
+    ) -> None:
+        """Recorre el AST con el validador opcional.
+
+        En fase de análisis del REPL se fuerza modo silencioso para evitar
+        duplicidad de warnings/logs antes de la fase de ejecución.
+        """
+        if not validador:
+            return
+
+        def _visitar() -> None:
             for nodo in ast:
                 nodo.aceptar(validador)
 
-        return ast
+        if not silencioso:
+            _visitar()
+            return
+
+        verbose_prev = getattr(validador, "verbose", None)
+        if verbose_prev is not None:
+            try:
+                setattr(validador, "verbose", False)
+            except Exception:
+                verbose_prev = None
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            _visitar()
+
+        if verbose_prev is not None:
+            try:
+                setattr(validador, "verbose", verbose_prev)
+            except Exception:
+                pass
 
     def _ejecutar_ast_en_repl(
         self, ast: list[Any], validador: Optional[Any] = None
@@ -375,9 +415,9 @@ class InteractiveCommand(BaseCommand):
                 validadores_extra=self._extra_validators_repl,
             )
         resultado = None
+        self._recorrer_validacion_ast(ast, validador, silencioso=False)
+
         for nodo in ast:
-            if validador:
-                nodo.aceptar(validador)
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
             # El resultado observable del REPL debe ser el valor realmente
             # evaluado por el último nodo ejecutado en el entorno actual.
@@ -716,6 +756,7 @@ class InteractiveCommand(BaseCommand):
         """Bucle único de REPL para evitar divergencias entre implementaciones."""
         estado = self._crear_estado_repl()
         estado["debug_enabled"] = self._debug_mode
+        estado["fase"] = "analisis"
         self._estado_repl = estado
         self._interpretador_sesion = self.interpretador
         while True:
@@ -762,7 +803,8 @@ class InteractiveCommand(BaseCommand):
             try:
                 estado["buffer_lineas"].append(linea)
                 codigo = "\n".join(estado["buffer_lineas"])
-                prevalidar_y_parsear_codigo(codigo)
+                estado["fase"] = "analisis"
+                ast = self.procesar_ast(codigo, validador)
                 estado["lineas_blanco_consecutivas"] = 0
             except (LexerError, ParserError) as err:
                 if self._es_error_de_bloque_incompleto(err):
@@ -791,13 +833,16 @@ class InteractiveCommand(BaseCommand):
                 elif sandbox_docker:
                     self._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
+                    estado["fase"] = "ejecucion"
                     # Contrato de dispatch:
                     # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
                     # Rama normal: AST directo con entorno persistente.
                     self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
                 estado["buffer_lineas"].clear()
+                estado["fase"] = "analisis"
             except Exception as err:  # pragma: no cover - ruta unificada de errores
                 estado["buffer_lineas"].clear()
+                estado["fase"] = "analisis"
                 categoria = self._clasificar_error_repl(err)
                 self._log_error(categoria, err)
 
