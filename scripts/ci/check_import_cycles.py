@@ -31,14 +31,9 @@ KNOWN_CYCLE_BASELINES: tuple[frozenset[str], ...] = (
     frozenset(
         {
             "pcobra.cobra.core.lark_parser",
-            "pcobra.cobra.core.lexer",
             "pcobra.cobra.core.parser",
-            "pcobra.core.ast_cache",
-            "pcobra.core.ast_nodes",
-            "pcobra.core.lexer",
-            "pcobra.core.parser",
         }
-    ),  # SCC histórica heredada entre parser/lexer legacy+unificado
+    ),  # ciclo legado acotado entre parser y lark_parser
 )
 
 
