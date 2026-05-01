@@ -135,6 +135,8 @@ class ReplCommandV2(BaseCommand):
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
                 self._delegate._log_error(categoria, err)
+                buffer.clear()
+                self._delegate._estado_repl = self._delegate._crear_estado_repl()
                 continue
 
         return 0
