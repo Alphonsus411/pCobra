@@ -32,10 +32,10 @@ def _parser_error_con_metadata(
 @pytest.mark.parametrize(
     ("mensaje", "es_incompleto"),
     [
-        ("Se esperaba 'fin' para cerrar el bloque condicional", True),
-        ("Token inesperado en término: TipoToken.EOF", True),
-        ("Se esperaba ']' al final de la lista", True),
-        ("Token inesperado: '('", False),
+        ("Se esperaba 'fin' al final de la entrada", True),
+        ("Se esperaba ')' al final de la entrada (EOF)", True),
+        ("Se esperaba ']' al final de la entrada", True),
+        ("Se esperaba ')' al final de 'proyectar'", False),
         ("Se encontró 'fin' inesperado", False),
     ],
 )
@@ -131,7 +131,7 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
         parse_calls.append(codigo)
         if codigo != "si verdadero:\nimprimir(1)\nfin":
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,
@@ -183,7 +183,7 @@ def test_repl_v2_prompts_primario_y_secundario_en_bloque(monkeypatch):
     def _fake_parse(codigo: str):
         if codigo != "si verdadero:\nimprimir(1)\nfin":
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,
@@ -273,7 +273,7 @@ def test_repl_v2_sale_con_exit_si_hay_bloque_pendiente(monkeypatch):
         parse_calls.append(codigo)
         if codigo != "si verdadero:\nexit\nfin":
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,
@@ -344,7 +344,7 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
             ["si verdadero :", "fin", "exit"],
             {
                 "si verdadero :": _parser_error_con_metadata(
-                    "Se esperaba 'fin' para cerrar el bloque condicional",
+                    "Se esperaba 'fin' al final de la entrada",
                     esperado=[TipoToken.FIN],
                     token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                     eof=True,
@@ -372,16 +372,16 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
             ["si verdadero :", "imprimir(1", "var z = 9", "exit"],
             {
                 "si verdadero :": _parser_error_con_metadata(
-                    "Se esperaba 'fin' para cerrar el bloque condicional",
+                    "Se esperaba 'fin' al final de la entrada",
                     esperado=[TipoToken.FIN],
                     token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                     eof=True,
                 ),
-                "si verdadero :\nimprimir(1": "Token inesperado: '('",
+                "si verdadero :\nimprimir(1": "Se esperaba ')' al final de 'proyectar'",
             },
             ["si verdadero :", "si verdadero :\nimprimir(1", "var z = 9"],
             ["var z = 9"],
-            ["Token inesperado: '('"],
+            ["Se esperaba ')' al final de 'proyectar'"],
         ),
     ],
     ids=[
@@ -503,13 +503,13 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
         parse_calls.append(codigo)
         if codigo == "si verdadero:":
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,
             )
         if codigo == "si verdadero:\nimprimir(1":
-            raise ParserError("Token inesperado: '('")
+            raise ParserError("Se esperaba ')' al final de 'proyectar'")
         return []
 
     class _Setup:
@@ -539,7 +539,7 @@ def test_repl_v2_error_sintaxis_real_limpia_buffer_y_continua(monkeypatch):
     assert status == 0
     assert parse_calls == ["si verdadero:", "si verdadero:\nimprimir(1", "var z = 9"]
     assert pipeline_calls == ["var z = 9"]
-    assert logged == ["Token inesperado: '('"]
+    assert logged == ["Se esperaba ')' al final de 'proyectar'"]
 
 
 def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
@@ -553,7 +553,7 @@ def test_repl_v2_error_ejecucion_limpia_buffer_actual_y_continua(monkeypatch):
     def _fake_parse(codigo: str):
         if codigo == "si verdadero:":
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,
@@ -660,7 +660,7 @@ def test_repl_v2_anidamiento_real_no_ejecuta_hasta_cierre_completo_y_persiste_es
             "imprimir(total)",
         }:
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,
@@ -855,7 +855,7 @@ def test_repl_v2_bloque_incompleto_acumula_buffer_y_sesion_sigue_activa(monkeypa
         parse_calls.append(codigo)
         if codigo != "si verdadero:\nimprimir(1)\nfin":
             raise _parser_error_con_metadata(
-                "Se esperaba 'fin' para cerrar el bloque condicional",
+                "Se esperaba 'fin' al final de la entrada",
                 esperado=[TipoToken.FIN],
                 token_actual=type("Tok", (), {"tipo": TipoToken.EOF})(),
                 eof=True,

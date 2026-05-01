@@ -146,12 +146,20 @@ class ReplCommandV2(BaseCommand):
             "]",
             "}",
         )
-        menciona_eof = "eof" in mensaje or "fin de archivo" in mensaje
+        pistas_eof = (
+            "eof",
+            "fin de archivo",
+            "fin de entrada",
+            "al final de la entrada",
+            "end of input",
+        )
 
-        return (
-            any(pista in mensaje for pista in pistas_cierre)
-            and any(pista in mensaje for pista in pistas_objetivo)
-        ) or menciona_eof
+        menciona_cierre = any(pista in mensaje for pista in pistas_cierre) and any(
+            pista in mensaje for pista in pistas_objetivo
+        )
+        menciona_eof = any(pista in mensaje for pista in pistas_eof)
+
+        return menciona_cierre and menciona_eof
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.
