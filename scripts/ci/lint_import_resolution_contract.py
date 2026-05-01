@@ -100,6 +100,10 @@ def find_violations(root: Path = ROOT) -> list[str]:
                         )
                 continue
 
+            if has_compat_marker:
+                # Módulos de compatibilidad explícita fuera de rutas shim permanecen exentos.
+                continue
+
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             visitor = LegacyImportVisitor()
             visitor.visit(tree)
