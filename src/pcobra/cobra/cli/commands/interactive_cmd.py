@@ -409,7 +409,11 @@ class InteractiveCommand(BaseCommand):
         self._recorrer_validacion_ast(ast, validador, silencioso=False)
 
     def _ejecutar_ast_en_repl(
-        self, ast: list[Any], validador: Optional[Any] = None
+        self,
+        ast: list[Any],
+        validador: Optional[Any] = None,
+        *,
+        validar_no_silencioso: bool = True,
     ) -> tuple[list[Any], Any]:
         """Flujo canónico del REPL incremental.
 
@@ -441,7 +445,8 @@ class InteractiveCommand(BaseCommand):
                 validadores_extra=self._extra_validators_repl,
             )
         resultado = None
-        self._validar_ast_para_ejecucion(ast, validador)
+        if validar_no_silencioso:
+            self._validar_ast_para_ejecucion(ast, validador)
 
         for nodo in ast:
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
@@ -472,7 +477,13 @@ class InteractiveCommand(BaseCommand):
         # persistente para preservar la semántica incremental del lenguaje.
         try:
             ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
-            ast, resultado = self._ejecutar_ast_en_repl(ast, validador)
+            validacion_no_silenciosa_realizada = False
+            ast, resultado = self._ejecutar_ast_en_repl(
+                ast,
+                validador,
+                validar_no_silencioso=True,
+            )
+            validacion_no_silenciosa_realizada = True
         except Exception as err_original:
             if not self._debe_intentar_fallback_expresion_top_level(
                 codigo, err_original
@@ -482,7 +493,11 @@ class InteractiveCommand(BaseCommand):
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
                 ast_fallback = prevalidar_y_parsear_codigo(codigo_fallback)
-                ast, resultado = self._ejecutar_ast_en_repl(ast_fallback, validador)
+                ast, resultado = self._ejecutar_ast_en_repl(
+                    ast_fallback,
+                    validador,
+                    validar_no_silencioso=not validacion_no_silenciosa_realizada,
+                )
             except Exception as err_fallback:
                 if self._debe_intentar_fallback_expresion_top_level(
                     codigo, err_fallback
