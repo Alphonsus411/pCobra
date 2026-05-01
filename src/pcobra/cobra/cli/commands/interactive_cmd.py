@@ -533,6 +533,12 @@ class InteractiveCommand(BaseCommand):
         Este helper del flujo normal solo debe hacer:
         1) prevalidación/parseo;
         2) delegación a ``ejecutar_codigo``.
+
+        Nota técnica (doble pasada REPL):
+        - Pasada 1 (análisis): parseo + ``_validar_ast_para_analisis`` sin
+          side effects observables.
+        - Pasada 2 (ejecución): ``_validar_ast_para_ejecucion`` + evaluación
+          real nodo a nodo en ``self.interpretador``.
         """
 
         self._sincronizar_interpretador_sesion()
