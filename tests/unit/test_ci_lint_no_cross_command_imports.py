@@ -43,3 +43,14 @@ def test_detecta_import_relativo_entre_comandos(tmp_path: Path) -> None:
 
     assert len(violations) == 1
     assert "pcobra.cobra.cli.commands.compile_cmd" in violations[0]
+
+
+def test_permite_import_relativo_base(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "src" / "pcobra" / "cobra" / "cli" / "commands" / "a.py",
+        "from . import base\n",
+    )
+
+    violations = find_violations(tmp_path)
+
+    assert violations == []
