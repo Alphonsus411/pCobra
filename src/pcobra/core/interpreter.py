@@ -1172,7 +1172,16 @@ class InterpretadorCobra:
             else:
                 indice_contexto = self._indice_entorno_variable(nombre)
                 if indice_contexto is None:
-                    raise NameError(f"Variable no declarada: {nombre}")
+                    # Compatibilidad hacia atrás: preservar la creación
+                    # implícita en la primera asignación global para
+                    # flujos legacy que construyen NodoAsignacion directo.
+                    indice_contexto = len(self.mem_contextos) - 1
+                    if indice_contexto != 0:
+                        raise NameError(f"Variable no declarada: {nombre}")
+                    self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                    indice = self.solicitar_memoria(1)
+                    self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                    self.contextos[-1].define(nombre, valor)
                 else:
                     # Mutación sobre una variable existente: ``set`` solo
                     # actualiza en el scope donde ya está declarada.
