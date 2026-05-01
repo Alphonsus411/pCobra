@@ -6,8 +6,8 @@ from pcobra.cobra.cli.commands.interactive_cmd import (
     SANDBOX_DOCKER_CHOICES,
 )
 from pcobra.cobra.cli.i18n import _
-from pcobra.cobra.cli.utils.messages import mostrar_info
-from pcobra.cobra.core.runtime import InterpretadorCobra
+from pcobra.cobra.cli.utils.messages import mostrar_advertencia, mostrar_error, mostrar_info
+from pcobra.cobra.core.runtime import InterpretadorCobra, limitar_memoria_mb
 from pcobra.cobra.cli.target_policies import parse_runtime_target
 from pcobra.cobra.cli.utils.unicode_sanitize import sanitize_input
 
@@ -56,6 +56,30 @@ class ReplCommandV2(BaseCommand):
         return parser
 
     def run(self, args: Any) -> int:
+        memory_limit = getattr(args, "memory_limit", self._delegate.MEMORY_LIMIT_MB)
+        ignore_memory_limit = getattr(args, "ignore_memory_limit", False)
+
+        if memory_limit <= 0:
+            mostrar_error(_("El límite de memoria debe ser positivo"))
+            return 1
+
+        try:
+            limitar_memoria_mb(memory_limit)
+        except NotImplementedError as err:
+            mostrar_advertencia(
+                _("No se pudo aplicar el límite de memoria: {err}").format(err=err)
+            )
+        except RuntimeError as err:
+            if ignore_memory_limit:
+                mostrar_advertencia(
+                    _("No se pudo aplicar el límite de memoria: {err}").format(err=err)
+                )
+            else:
+                mostrar_error(
+                    _("Error al establecer límite de memoria: {err}").format(err=err)
+                )
+                return 1
+
         buffer: list[str] = []
         self._delegate._estado_repl = self._delegate._crear_estado_repl()
 
