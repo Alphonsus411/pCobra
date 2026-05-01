@@ -29,15 +29,14 @@ def _is_forbidden_module_name(module: str) -> bool:
     return False
 
 
-def _is_forbidden_import_from(node: ast.ImportFrom) -> bool:
-    module = node.module or ""
+def _is_forbidden_import_from_module(module: str, imported_names: set[str]) -> bool:
+    if module in FORBIDDEN_PREFIXES:
+        allowed_names = {"base"}
+        return not imported_names.issubset(allowed_names)
+
     if _is_forbidden_module_name(module):
         return True
 
-    if module in FORBIDDEN_PREFIXES:
-        allowed_names = {"base"}
-        imported_names = {alias.name for alias in node.names}
-        return not imported_names.issubset(allowed_names)
     return False
 
 
@@ -84,13 +83,15 @@ def _scan_file(path: Path, root: Path) -> list[tuple[int, str]]:
                 if _is_forbidden_module_name(alias.name):
                     violations.append((node.lineno, alias.name))
         elif isinstance(node, ast.ImportFrom):
-            if _is_forbidden_import_from(node):
+            imported_names = {alias.name for alias in node.names}
+            module = node.module or ""
+            if _is_forbidden_import_from_module(module, imported_names):
                 label = node.module or "<relative>"
                 violations.append((node.lineno, label))
                 continue
 
             resolved_module = _resolve_import_from_module(node, path, root)
-            if _is_forbidden_module_name(resolved_module):
+            if _is_forbidden_import_from_module(resolved_module, imported_names):
                 label = resolved_module or node.module or "<relative>"
                 violations.append((node.lineno, label))
     return violations
