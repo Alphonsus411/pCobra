@@ -40,6 +40,7 @@ from pcobra.cobra.cli.execution_pipeline import (
     PipelineInput,
     prevalidar_y_parsear_codigo,
     resolver_interpretador_cls,
+    resolver_validadores_seguridad,
     validar_ast_seguro,
 )
 from pcobra.cobra.core import (
@@ -60,6 +61,7 @@ from pcobra.cobra.core.runtime import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.i18n import _, format_traceback
 from pcobra.cobra.cli.utils.argument_parser import CustomArgumentParser
+from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.cli.utils.messages import (
     color_disabled,
     mostrar_advertencia,
@@ -353,6 +355,20 @@ class InteractiveCommand(BaseCommand):
 
         return ast
 
+
+    def _obtener_validadores_extra_para_ast_seguro(self) -> Any:
+        """Resuelve rutas de validadores extra al formato exigido por validar_ast_seguro."""
+
+        normalizados = normalizar_validadores_extra(self._extra_validators_repl)
+        interpretador_cls = resolver_interpretador_cls(
+            module_name=__name__,
+            default_cls=type(self.interpretador),
+        )
+        return resolver_validadores_seguridad(
+            normalizados,
+            interpretador_cls=interpretador_cls,
+        )
+
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
         """Ejecuta un snippet en el intérprete persistente del REPL."""
 
@@ -362,7 +378,7 @@ class InteractiveCommand(BaseCommand):
             if self._seguro_repl:
                 validar_ast_seguro(
                     ast,
-                    validadores_extra=self._extra_validators_repl,
+                    validadores_extra=self._obtener_validadores_extra_para_ast_seguro(),
                 )
             if validador:
                 for nodo in ast:
@@ -380,7 +396,7 @@ class InteractiveCommand(BaseCommand):
                 if self._seguro_repl:
                     validar_ast_seguro(
                         ast,
-                        validadores_extra=self._extra_validators_repl,
+                        validadores_extra=self._obtener_validadores_extra_para_ast_seguro(),
                     )
                 if validador:
                     for nodo in ast:
@@ -925,7 +941,7 @@ class InteractiveCommand(BaseCommand):
                 if self._seguro_repl:
                     validar_ast_seguro(
                         ast,
-                        validadores_extra=self._extra_validators_repl,
+                        validadores_extra=self._obtener_validadores_extra_para_ast_seguro(),
                     )
                 mostrar_info(_("AST generado:"))
                 mostrar_info(str(ast))
