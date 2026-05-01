@@ -609,7 +609,7 @@ class InteractiveCommand(BaseCommand):
                 prevalidar_y_parsear_codigo(codigo)
                 estado["lineas_blanco_consecutivas"] = 0
             except (LexerError, ParserError) as err:
-                if self._es_error_de_bloque_incompleto(err):
+                if self._es_error_de_bloque_incompleto(err, codigo):
                     continue
                 estado["buffer_lineas"].clear()
                 estado["lineas_blanco_consecutivas"] = 0
@@ -687,7 +687,7 @@ class InteractiveCommand(BaseCommand):
         except KeyError:
             return None
 
-    def _es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
+    def _es_error_de_bloque_incompleto(self, exc: Exception, codigo: str = "") -> bool:
         """Determina si el parser reportó una entrada todavía incompleta."""
         if not isinstance(exc, ParserError):
             return False
@@ -722,13 +722,17 @@ class InteractiveCommand(BaseCommand):
             TipoToken.RBRACE,
         }
         if not (tipos_esperados & tokens_cierre):
-            return False
+            # El parser clásico no siempre publica metadata de tokens esperados.
+            # En ese caso, usamos el balance estructural del buffer como fallback.
+            return bool(codigo and self._calcular_balance_estructural(codigo) > 0)
 
         eof_por_flag = bool(
             getattr(exc, "unexpected_eof", False)
             or getattr(exc, "eof", False)
             or getattr(exc, "es_eof", False)
             or getattr(exc, "is_eof", False)
+            or getattr(exc, "is_unexpected_eof", False)
+            or getattr(exc, "unexpected_end_of_input", False)
         )
         return eof_por_flag or tipo_token_actual == TipoToken.EOF
 
