@@ -346,7 +346,7 @@ class InteractiveCommand(BaseCommand):
         ast = prevalidar_y_parsear_codigo(linea)
         self.logger.debug(_("AST generado: {ast}").format(ast=ast))
 
-        self._recorrer_validacion_ast(ast, validador, silencioso=True)
+        self._validar_ast_para_analisis(ast, validador)
 
         return ast
 
@@ -356,13 +356,9 @@ class InteractiveCommand(BaseCommand):
         ast: list[Any],
         validador: Optional[Any],
         *,
-        silencioso: bool = False,
+        silencioso: bool,
     ) -> None:
-        """Recorre el AST con el validador opcional.
-
-        En fase de análisis del REPL se fuerza modo silencioso para evitar
-        duplicidad de warnings/logs antes de la fase de ejecución.
-        """
+        """Recorre el AST con el validador opcional y política explícita de efectos."""
         if not validador:
             return
 
@@ -371,11 +367,6 @@ class InteractiveCommand(BaseCommand):
                 nodo.aceptar(validador)
 
         if not silencioso:
-            if hasattr(validador, "emitir_side_effects"):
-                try:
-                    setattr(validador, "emitir_side_effects", True)
-                except Exception:
-                    pass
             _visitar()
             return
 
@@ -409,6 +400,14 @@ class InteractiveCommand(BaseCommand):
             except Exception:
                 pass
 
+    def _validar_ast_para_analisis(self, ast: list[Any], validador: Optional[Any]) -> None:
+        """Valida AST para análisis estático sin side effects observables."""
+        self._recorrer_validacion_ast(ast, validador, silencioso=True)
+
+    def _validar_ast_para_ejecucion(self, ast: list[Any], validador: Optional[Any]) -> None:
+        """Valida AST para ejecución con side effects de auditoría habilitados."""
+        self._recorrer_validacion_ast(ast, validador, silencioso=False)
+
     def _ejecutar_ast_en_repl(
         self, ast: list[Any], validador: Optional[Any] = None
     ) -> tuple[list[Any], Any]:
@@ -417,7 +416,16 @@ class InteractiveCommand(BaseCommand):
         Contrato: REPL incremental = intérprete; no batch pipeline.
         Patrón explícito del flujo normal:
         1) ``ast = prevalidar_y_parsear_codigo(codigo)``;
-        2) ``for nodo in ast: self.interpretador.ejecutar_nodo(nodo)``.
+        2) validación de seguridad/validadores de ejecución (fase de ejecución);
+        3) ``for nodo in ast: self.interpretador.ejecutar_nodo(nodo)``.
+
+        Invariantes de fase (antirregresión):
+        - La fase de análisis usa ``_validar_ast_para_analisis`` (silenciosa,
+          sin side effects observables de auditoría).
+        - La fase de ejecución usa ``_validar_ast_para_ejecucion`` (con side
+          effects de auditoría cuando aplica).
+        - Para un mismo propósito de logging/auditoría, no mezclar ambas fases
+          sobre el mismo AST en una única corrida de ejecución.
 
         Nota de mantenimiento:
         Los nombres temporales ``_cse*`` pertenecen a optimizaciones internas
@@ -433,7 +441,7 @@ class InteractiveCommand(BaseCommand):
                 validadores_extra=self._extra_validators_repl,
             )
         resultado = None
-        self._recorrer_validacion_ast(ast, validador, silencioso=False)
+        self._validar_ast_para_ejecucion(ast, validador)
 
         for nodo in ast:
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
