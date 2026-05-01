@@ -2,6 +2,7 @@ from typing import Any
 
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
+from pcobra.cobra.cli.mode_policy import validar_politica_modo
 from pcobra.cobra.core.runtime import InterpretadorCobra
 
 
@@ -20,4 +21,5 @@ class ReplCommandV2(BaseCommand):
         return self._delegate.register_subparser(subparsers)
 
     def run(self, args: Any) -> int:
+        validar_politica_modo(self.name, args, capability=self.capability)
         return self._delegate.run(args)
