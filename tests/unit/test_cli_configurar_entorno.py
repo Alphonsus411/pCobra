@@ -155,21 +155,6 @@ def test_main_reconfigura_consola_antes_de_logging_y_cli(monkeypatch):
     assert "cli" in orden
 
 
-def test_main_devuelve_exit_code_1_si_falla_configuracion_entorno(monkeypatch, caplog):
-    monkeypatch.setattr(cli, "configure_encoding", lambda: None)
-    monkeypatch.setattr(cli, "_bootstrap_dev_path_si_opt_in", lambda: None)
-    monkeypatch.setattr(cli, "configure_logging", lambda debug: None)
-    monkeypatch.setattr(
-        cli,
-        "configurar_entorno",
-        lambda: (_ for _ in ()).throw(RuntimeError("Falta SQLITE_DB_KEY en el entorno")),
-    )
-
-    caplog.set_level(logging.ERROR, logger="pcobra.cli")
-    assert cli.main(["comando-ficticio"]) == 1
-    assert "Falta SQLITE_DB_KEY en el entorno" in caplog.text
-
-
 def test_smoke_cli_unicode_salida_bytes_utf8():
     env = os.environ.copy()
     env.pop("PYTHONIOENCODING", None)

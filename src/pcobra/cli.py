@@ -187,11 +187,6 @@ def configurar_entorno() -> None:
             logger.exception("Error inesperado al cargar variables de entorno")
             raise
 
-    if not (os.environ.get("SQLITE_DB_KEY") or "").strip():
-        raise RuntimeError(
-            "Falta SQLITE_DB_KEY en el entorno. Defínela en .env o en variables de entorno antes de ejecutar la CLI."
-        )
-
     os.environ.setdefault("COBRA_DB_PATH", _DEFAULT_DB_PATH)
 
 
@@ -247,13 +242,7 @@ def main(argumentos: Optional[List[str]] = None) -> int:
 
     from .cobra.cli.cli import CliApplication
 
-    try:
-        configurar_entorno()
-    except RuntimeError as exc:
-        if debug:
-            raise
-        logger.error("%s", exc)
-        return 1
+    configurar_entorno()
     aplicacion = CliApplication()
     return aplicacion.run(argv)
 
