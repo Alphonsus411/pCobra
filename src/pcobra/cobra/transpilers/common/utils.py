@@ -62,7 +62,7 @@ class BaseTranspiler(NodeVisitor, ABC):
 
 STANDARD_IMPORTS = {
     "python": (
-        "from pcobra.cobra.core.nativos import *\n"
+        "from pcobra.core.nativos import *\n"
         "import pcobra.corelibs as _pcobra_corelibs\n"
         "import pcobra.standard_library as _pcobra_standard_library\n"
         "globals().update({name: getattr(_pcobra_corelibs, name) for name in dir(_pcobra_corelibs) if not name.startswith('_')})\n"
