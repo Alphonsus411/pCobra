@@ -215,7 +215,12 @@ def normalizar_opciones_pipeline(
     """Punto único para normalizar safe_mode y extra_validators del pipeline."""
 
     safe_mode_normalizado = bool(safe_mode)
-    extra_validators_normalizados = normalizar_validadores_extra(extra_validators)
+    extra_validators_normalizados = extra_validators
+    if not (
+        isinstance(extra_validators, list)
+        and all(isinstance(validador, ValidadorBase) for validador in extra_validators)
+    ):
+        extra_validators_normalizados = normalizar_validadores_extra(extra_validators)
     validadores_resueltos = resolver_validadores_seguridad(
         extra_validators_normalizados,
         interpretador_cls=interpretador_cls,
