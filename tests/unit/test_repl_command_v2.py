@@ -84,3 +84,38 @@ def test_repl_v2_limpia_buffer_ante_error_real(monkeypatch):
     assert status == 0
     assert parse_calls == ["algo_mal"]
     assert logged == ["Se encontró 'fin' inesperado"]
+
+
+def test_repl_v2_limpia_buffer_si_falla_ejecucion(monkeypatch):
+    command = ReplCommandV2()
+    entradas = iter(["imprimir(1)", "exit"])
+    parse_calls: list[str] = []
+    executed: list[str] = []
+    logged: list[str] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.repl_cmd.prevalidar_y_parsear_codigo",
+        lambda codigo: parse_calls.append(codigo),
+    )
+
+    def _fake_execute(codigo: str):
+        executed.append(codigo)
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_execute)
+    monkeypatch.setattr(command._delegate, "_log_error", lambda _cat, err: logged.append(str(err)))
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    assert status == 0
+    assert parse_calls == ["imprimir(1)"]
+    assert executed == ["imprimir(1)"]
+    assert logged == ["boom"]
