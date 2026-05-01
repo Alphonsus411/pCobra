@@ -660,7 +660,6 @@ class InteractiveCommand(BaseCommand):
                 interpretador_cls=interpretador_cls,
                 safe_mode=self._seguro_repl,
                 extra_validators=self._extra_validators_repl,
-                interpretador=self.interpretador,
             ),
             analizar_codigo_fn=lambda _codigo: [],
         )
