@@ -412,6 +412,9 @@ class InterpretadorCobra:
             extra = self._cargar_validadores(extra)
 
         self.safe_mode = safe_mode
+        # Fase interna del intérprete; por defecto en ejecución para preservar
+        # el comportamiento actual fuera del REPL.
+        self.mode = "execution"
         self._validador = construir_cadena(extra) if safe_mode else None
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
@@ -428,6 +431,10 @@ class InterpretadorCobra:
         self._eval_stack = set()
         # Último IR generado a partir del AST ejecutado
         self.ultimo_ir: Optional[InternalIRModule] = None
+
+    def in_execution(self) -> bool:
+        """Indica si el intérprete se encuentra en fase de ejecución."""
+        return self.mode == "execution"
 
     @property
     def variables(self):
