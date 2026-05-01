@@ -14,7 +14,13 @@ from ..ast_nodes import (
 class ValidadorAuditoria(ValidadorBase):
     """Validador que registra las primitivas utilizadas."""
 
+    def __init__(self, emitir_side_effects: bool = True) -> None:
+        super().__init__()
+        self.emitir_side_effects = emitir_side_effects
+
     def _log(self, mensaje: str) -> None:
+        if not self.emitir_side_effects:
+            return
         logging.warning(mensaje)
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):

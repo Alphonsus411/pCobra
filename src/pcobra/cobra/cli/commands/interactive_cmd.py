@@ -371,6 +371,11 @@ class InteractiveCommand(BaseCommand):
                 nodo.aceptar(validador)
 
         if not silencioso:
+            if hasattr(validador, "emitir_side_effects"):
+                try:
+                    setattr(validador, "emitir_side_effects", True)
+                except Exception:
+                    pass
             _visitar()
             return
 
@@ -381,6 +386,13 @@ class InteractiveCommand(BaseCommand):
             except Exception:
                 verbose_prev = None
 
+        emitir_prev = getattr(validador, "emitir_side_effects", None)
+        if emitir_prev is not None:
+            try:
+                setattr(validador, "emitir_side_effects", False)
+            except Exception:
+                emitir_prev = None
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             _visitar()
@@ -388,6 +400,12 @@ class InteractiveCommand(BaseCommand):
         if verbose_prev is not None:
             try:
                 setattr(validador, "verbose", verbose_prev)
+            except Exception:
+                pass
+
+        if emitir_prev is not None:
+            try:
+                setattr(validador, "emitir_side_effects", emitir_prev)
             except Exception:
                 pass
 
