@@ -430,10 +430,10 @@ class InteractiveCommand(BaseCommand):
         Invariantes de fase (antirregresión):
         - La fase de análisis usa ``_validar_ast_para_analisis`` (silenciosa,
           sin side effects observables de auditoría).
-        - La fase de ejecución usa ``_validar_ast_para_ejecucion`` (con side
-          effects de auditoría cuando aplica).
-        - Para un mismo propósito de logging/auditoría, no mezclar ambas fases
-          sobre el mismo AST en una única corrida de ejecución.
+        - La fase de ejecución delega la validación con side effects en
+          ``InterpretadorCobra.ejecutar_nodo``.
+        - Para un mismo propósito de logging/auditoría, no duplicar validación
+          con side effects sobre el mismo AST en una única corrida de ejecución.
 
         Nota de mantenimiento:
         Los nombres temporales ``_cse*`` pertenecen a optimizaciones internas
@@ -449,7 +449,8 @@ class InteractiveCommand(BaseCommand):
                 validadores_extra=self._extra_validators_repl,
             )
         resultado = None
-        self._validar_ast_para_ejecucion(ast, validador)
+        # Evitamos validar dos veces en ejecución para no duplicar side effects
+        # de auditoría: ``ejecutar_nodo`` ya aplica la validación con emisión.
 
         for nodo in ast:
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
@@ -533,8 +534,8 @@ class InteractiveCommand(BaseCommand):
         Nota técnica (doble pasada REPL):
         - Pasada 1 (análisis): parseo + ``_validar_ast_para_analisis`` sin
           side effects observables.
-        - Pasada 2 (ejecución): ``_validar_ast_para_ejecucion`` + evaluación
-          real nodo a nodo en ``self.interpretador``.
+        - Pasada 2 (ejecución): validación con side effects desde
+          ``InterpretadorCobra.ejecutar_nodo`` + evaluación real nodo a nodo.
         """
 
         self._sincronizar_interpretador_sesion()
