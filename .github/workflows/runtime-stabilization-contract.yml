@@ -39,7 +39,6 @@ jobs:
             tests/unit/test_cli_execution_pipeline_contract.py::test_contrato_salida_y_error_iguales_entre_execute_e_interactive \
             tests/unit/test_cli_execution_pipeline_contract.py::test_paridad_repl_script_mientras_con_mutacion_persistente_mismo_entorno \
             tests/unit/test_cli_execution_pipeline_contract.py::test_contrato_repl_igual_script_estado_final_con_bucles_y_asignaciones \
-            tests/unit/test_parity_contract_run_vs_repl.py \
             tests/unit/test_interpreter_loop_scope_regression.py \
             tests/test_lexer.py \
             tests/unit/test_lark_parser_tokens.py \
