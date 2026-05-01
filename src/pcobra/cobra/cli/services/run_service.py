@@ -100,12 +100,17 @@ def validar_dependencias(*args: Any, **kwargs: Any) -> Any:
 
 
 def _resolver_hook_sandbox_legacy() -> Any:
-    legacy_module = sys.modules.get("pcobra.cobra.cli.commands.execute_cmd")
-    if legacy_module is None:
-        return ejecutar_en_sandbox
-    legacy_hook = getattr(legacy_module, "ejecutar_en_sandbox", None)
-    if callable(legacy_hook):
-        return legacy_hook
+    legacy_aliases = (
+        "pcobra.cobra.cli.commands.execute_cmd",
+        "cobra.cli.commands.execute_cmd",
+    )
+    for module_name in legacy_aliases:
+        legacy_module = sys.modules.get(module_name)
+        if legacy_module is None:
+            continue
+        legacy_hook = getattr(legacy_module, "ejecutar_en_sandbox", None)
+        if callable(legacy_hook):
+            return legacy_hook
     return ejecutar_en_sandbox
 
 
