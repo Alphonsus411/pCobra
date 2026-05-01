@@ -477,6 +477,11 @@ class InteractiveCommand(BaseCommand):
         # persistente para preservar la semántica incremental del lenguaje.
         try:
             ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
+            # Si no viene AST preparseado, esta fase sigue siendo de análisis
+            # (sin emisión); la ejecución con emisión se habilita únicamente
+            # dentro de ``_ejecutar_ast_en_repl``.
+            if ast_preparseado is None:
+                self._validar_ast_para_analisis(ast, validador)
             validacion_no_silenciosa_realizada = False
             ast, resultado = self._ejecutar_ast_en_repl(
                 ast,
@@ -486,7 +491,7 @@ class InteractiveCommand(BaseCommand):
             validacion_no_silenciosa_realizada = True
         except Exception as err_original:
             if not self._debe_intentar_fallback_expresion_top_level(
-                codigo, err_original
+                codigo, err_original, validador
             ):
                 raise
 
@@ -500,7 +505,7 @@ class InteractiveCommand(BaseCommand):
                 )
             except Exception as err_fallback:
                 if self._debe_intentar_fallback_expresion_top_level(
-                    codigo, err_fallback
+                    codigo, err_fallback, validador
                 ):
                     raise err_original
                 raise
@@ -525,6 +530,9 @@ class InteractiveCommand(BaseCommand):
 
         self._sincronizar_interpretador_sesion()
         ast = prevalidar_fn(codigo)
+        # Contrato de prevalidación/parseo en REPL: esta fase es solo de
+        # análisis y no debe emitir side effects de auditoría.
+        self._validar_ast_para_analisis(ast, validador)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
         # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
@@ -534,7 +542,10 @@ class InteractiveCommand(BaseCommand):
         self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
 
     def _debe_intentar_fallback_expresion_top_level(
-        self, codigo: str, err_original: Exception
+        self,
+        codigo: str,
+        err_original: Exception,
+        validador: Optional[Any] = None,
     ) -> bool:
         """Determina si aplica fallback a ``imprimir(...)`` para expresiones top-level."""
 
@@ -543,6 +554,9 @@ class InteractiveCommand(BaseCommand):
             return False
 
         ast = prevalidar_y_parsear_codigo(codigo)
+        # Ruta de análisis para decidir fallback: validar en modo silencioso
+        # para evitar auditoría ruidosa antes de la ejecución real del AST.
+        self._validar_ast_para_analisis(ast, validador)
         if not self._es_expresion_top_level_elegible(ast):
             return False
 
