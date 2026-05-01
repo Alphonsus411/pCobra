@@ -870,3 +870,28 @@ def test_run_repl_loop_error_sintactico_real_limpia_buffer_y_permite_recuperacio
     assert "falta ')'" in str(err)
     assert ejecutados == ["imprimir(99)"]
     assert cmd._estado_repl["buffer_lineas"] == []
+
+def test_ejecutar_codigo_restaurar_modo_previo_tras_ejecucion_repl():
+    class _NodoDummy:
+        def aceptar(self, _validador):
+            return None
+
+    class _InterpDummy:
+        def __init__(self):
+            self.mode = "analysis"
+
+        def ejecutar_nodo(self, _nodo):
+            return 7
+
+    interp = _InterpDummy()
+    cmd = InteractiveCommand(interp)
+    ast_dummy = [_NodoDummy()]
+
+    with patch(
+        "cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        return_value=ast_dummy,
+    ), patch.object(cmd, "_imprimir_resultado_repl"):
+        cmd.ejecutar_codigo("1 + 6")
+
+    assert cmd.mode == "analysis"
+    assert interp.mode == "analysis"
