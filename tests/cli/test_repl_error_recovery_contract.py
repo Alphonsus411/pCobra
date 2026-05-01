@@ -108,3 +108,37 @@ def test_repl_error_runtime_no_cierra_sesion_y_permite_recuperacion(monkeypatch)
     assert any("fallo de runtime controlado" in msg for msg in errores)
     assert cmd._estado_repl["nivel_bloque"] == 0
     assert cmd._estado_repl["buffer_lineas"] == []
+
+
+@pytest.mark.integration
+def test_repl_parser_error_clasico_sin_metadata_conserva_buffer(monkeypatch):
+    cmd = InteractiveCommand(MagicMock())
+    entradas = iter(["si 1 == 1 :", 'imprimir("ok")', "fin", "salir"])
+
+    def _leer_linea(_prompt: str) -> str:
+        return next(entradas)
+
+    ejecutar_spy = MagicMock()
+    monkeypatch.setattr(cmd, "ejecutar_codigo", ejecutar_spy)
+
+    def _prevalidar(codigo: str):
+        if codigo.startswith("si 1 == 1 :") and not codigo.rstrip().endswith("fin"):
+            from pcobra.cobra.core import ParserError
+
+            raise ParserError("Se esperaba 'fin' para cerrar el bloque condicional")
+        return None
+
+    monkeypatch.setattr(
+        "pcobra.cobra.cli.commands.interactive_cmd.prevalidar_y_parsear_codigo",
+        _prevalidar,
+    )
+
+    cmd._run_repl_loop(
+        args=SimpleNamespace(),
+        validador=None,
+        leer_linea=_leer_linea,
+        sandbox=False,
+        sandbox_docker=None,
+    )
+
+    ejecutar_spy.assert_called_once_with('si 1 == 1 :\nimprimir("ok")\nfin', None)
