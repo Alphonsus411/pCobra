@@ -366,7 +366,11 @@ class InteractiveCommand(BaseCommand):
         if validador:
             for nodo in ast:
                 nodo.aceptar(validador)
-        resultado = self.interpretador.ejecutar_ast(ast)
+        ejecutor_repl_cls = getattr(type(self.interpretador), "ejecutar_ast_repl", None)
+        if callable(ejecutor_repl_cls):
+            resultado = self.interpretador.ejecutar_ast_repl(ast)
+        else:
+            resultado = self.interpretador.ejecutar_ast(ast)
         return ast, resultado
 
     def ejecutar_codigo(self, codigo: str, validador: Optional[Any] = None) -> None:
