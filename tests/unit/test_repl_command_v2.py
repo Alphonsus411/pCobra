@@ -171,6 +171,15 @@ def test_es_error_de_bloque_incompleto_prioriza_metadata(err, es_incompleto):
         (
             {
                 "expected": [TipoToken.FIN],
+                "token_actual": object(),
+                "token_type": TipoToken.EOF,
+                "unexpected_eof": True,
+            },
+            True,
+        ),
+        (
+            {
+                "expected": [TipoToken.FIN],
             },
             False,
         ),
