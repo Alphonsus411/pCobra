@@ -409,12 +409,15 @@ class InteractiveCommand(BaseCommand):
         """Valida AST para ejecución con side effects de auditoría habilitados."""
         self._recorrer_validacion_ast(ast, validador, silencioso=False)
 
+    def _fijar_modo_repl(self, modo: str) -> None:
+        """Sincroniza el modo REPL local con el modo del intérprete."""
+        self.mode = modo
+        self.interpretador.mode = modo
+
     def _ejecutar_ast_en_repl(
         self,
         ast: list[Any],
         validador: Optional[Any] = None,
-        *,
-        validar_no_silencioso: bool = True,
     ) -> tuple[list[Any], Any]:
         """Flujo canónico del REPL incremental.
 
@@ -446,8 +449,7 @@ class InteractiveCommand(BaseCommand):
                 validadores_extra=self._extra_validators_repl,
             )
         resultado = None
-        if validar_no_silencioso:
-            self._validar_ast_para_ejecucion(ast, validador)
+        self._validar_ast_para_ejecucion(ast, validador)
 
         for nodo in ast:
             resultado_nodo = self.interpretador.ejecutar_nodo(nodo)
@@ -477,51 +479,39 @@ class InteractiveCommand(BaseCommand):
         # Este camino ejecuta snippets interactivos normales sobre el intérprete
         # persistente para preservar la semántica incremental del lenguaje.
         modo_previo = self.mode
-        validacion_no_silenciosa_realizada = False
         try:
             ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
             # Si no viene AST preparseado, esta fase sigue siendo de análisis
             # (sin emisión); la ejecución con emisión se habilita únicamente
             # dentro de ``_ejecutar_ast_en_repl``.
             if ast_preparseado is None:
-                self.mode = "analysis"
-                self.interpretador.mode = self.mode
+                self._fijar_modo_repl("analysis")
                 self._validar_ast_para_analisis(ast, validador)
-            self.mode = "execution"
-            self.interpretador.mode = self.mode
+            self._fijar_modo_repl("execution")
             ast, resultado = self._ejecutar_ast_en_repl(
                 ast,
                 validador,
-                validar_no_silencioso=True,
             )
-            validacion_no_silenciosa_realizada = True
         except Exception as err_original:
-            if not self._debe_intentar_fallback_expresion_top_level(
-                codigo, err_original, validador
-            ):
+            if not self._debe_intentar_fallback_expresion_top_level(codigo, err_original):
                 raise
 
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
                 ast_fallback = prevalidar_y_parsear_codigo(codigo_fallback)
-                self.mode = "execution"
-                self.interpretador.mode = self.mode
+                self._fijar_modo_repl("execution")
                 ast, resultado = self._ejecutar_ast_en_repl(
                     ast_fallback,
                     validador,
-                    validar_no_silencioso=not validacion_no_silenciosa_realizada,
                 )
             except Exception as err_fallback:
-                if self._debe_intentar_fallback_expresion_top_level(
-                    codigo, err_fallback, validador
-                ):
+                if self._debe_intentar_fallback_expresion_top_level(codigo, err_fallback):
                     raise err_original
                 raise
         finally:
             # Restaurar modo previo evita contaminar evaluaciones siguientes del REPL
             # y mantiene aislada la transición análisis -> ejecución de este snippet.
-            self.mode = modo_previo
-            self.interpretador.mode = self.mode
+            self._fijar_modo_repl(modo_previo)
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
@@ -551,8 +541,7 @@ class InteractiveCommand(BaseCommand):
         ast = prevalidar_fn(codigo)
         # Contrato de prevalidación/parseo en REPL: esta fase es solo de
         # análisis y no debe emitir side effects de auditoría.
-        self.mode = "analysis"
-        self.interpretador.mode = self.mode
+        self._fijar_modo_repl("analysis")
         self._validar_ast_para_analisis(ast, validador)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
@@ -577,6 +566,7 @@ class InteractiveCommand(BaseCommand):
         ast = prevalidar_y_parsear_codigo(codigo)
         # Ruta de análisis para decidir fallback: validar en modo silencioso
         # para evitar auditoría ruidosa antes de la ejecución real del AST.
+        self._fijar_modo_repl("analysis")
         self._validar_ast_para_analisis(ast, validador)
         if not self._es_expresion_top_level_elegible(ast):
             return False
