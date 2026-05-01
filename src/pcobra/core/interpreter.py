@@ -1575,13 +1575,15 @@ class InterpretadorCobra:
         else:
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
-                print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
+                if self.in_execution():
+                    print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
                 return None
 
             if len(funcion["parametros"]) != len(nodo.argumentos):
-                print(
-                    f"Error: se esperaban {len(funcion['parametros'])} argumentos"
-                )
+                if self.in_execution():
+                    print(
+                        f"Error: se esperaban {len(funcion['parametros'])} argumentos"
+                    )
                 return None
 
             contiene_yield = any(
