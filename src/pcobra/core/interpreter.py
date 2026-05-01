@@ -1116,7 +1116,8 @@ class InterpretadorCobra:
                     f"se recibió: {type(nodo.objetivo).__name__}"
                 )
             nombre = nodo.objetivo.nombre
-            indice_contexto = self._indice_entorno_variable(nombre)
+            entorno_variable = self._entorno_variable_desde_actual(nombre)
+            indice_contexto = self._indice_entorno(entorno_variable)
             self.contextos[-1].delete(nombre)
             if indice_contexto is not None:
                 self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
