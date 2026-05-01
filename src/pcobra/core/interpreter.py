@@ -130,7 +130,7 @@ class InterpretadorCobra:
 
     def _trace_debug(self, mensaje: str) -> None:
         """Imprime trazas internas solo cuando el modo debug está activo."""
-        if self._debug_trazas_habilitadas():
+        if self.in_execution() and self._debug_trazas_habilitadas():
             print(mensaje)
 
     @staticmethod
@@ -1094,10 +1094,11 @@ class InterpretadorCobra:
                 nodo_origen=expresion,
                 operador="imprimir",
             )
-            if isinstance(valor, bool):
-                print("verdadero" if valor else "falso")
-            else:
-                print(valor)
+            if self.in_execution():
+                if isinstance(valor, bool):
+                    print("verdadero" if valor else "falso")
+                else:
+                    print(valor)
         elif isinstance(nodo, NodoImport):
             return self.ejecutar_import(nodo)
         elif isinstance(nodo, NodoUsar):
@@ -1569,7 +1570,8 @@ class InterpretadorCobra:
                     valor = "verdadero"
                 elif valor is False:
                     valor = "falso"
-                print(valor)
+                if self.in_execution():
+                    print(valor)
         else:
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
@@ -1744,7 +1746,8 @@ class InterpretadorCobra:
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""
-        print(f"Simulando holobit: {nodo.nombre}")
+        if self.in_execution():
+            print(f"Simulando holobit: {nodo.nombre}")
         valores = []
         for v in nodo.valores:
             if isinstance(v, NodoValor):
