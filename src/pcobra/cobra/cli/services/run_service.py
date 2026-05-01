@@ -180,7 +180,7 @@ class RunService:
         script = construir_script_sandbox_canonico(
             codigo,
             safe_mode=setup.safe_mode,
-            extra_validators=setup.validadores_extra,
+            extra_validators=extra_validators,
         )
 
         try:

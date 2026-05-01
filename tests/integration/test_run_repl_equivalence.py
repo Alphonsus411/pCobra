@@ -392,5 +392,5 @@ def test_sandbox_normaliza_safe_mode_y_validadores_igual_en_run_y_repl(monkeypat
     assert rc == 0
     assert len(capturas) == 2
     assert capturas[0][1] is True and capturas[1][1] is True
-    assert [getattr(v, "origen", None) for v in capturas[0][2]] == ["uno.py", "dos.py"]
-    assert [getattr(v, "origen", None) for v in capturas[1][2]] == ["uno.py", "dos.py"]
+    assert capturas[0][2] == ["uno.py", "dos.py"]
+    assert capturas[1][2] == ["uno.py", "dos.py"]

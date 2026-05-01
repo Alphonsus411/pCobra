@@ -780,6 +780,7 @@ class InteractiveCommand(BaseCommand):
             module_name=__name__,
             default_cls=type(self.interpretador),
         )
+        extra_validators_script = self._extra_validators_repl
         setup, _ = ejecutar_pipeline_explicito(
             PipelineInput(
                 codigo="",
@@ -798,7 +799,7 @@ class InteractiveCommand(BaseCommand):
         script = construir_script_sandbox_canonico(
             linea,
             safe_mode=setup.safe_mode,
-            extra_validators=setup.validadores_extra,
+            extra_validators=extra_validators_script,
             imprimir_resultado=True,
         )
 
