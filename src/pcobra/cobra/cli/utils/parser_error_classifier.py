@@ -80,10 +80,11 @@ def _es_entrada_incompleta_por_metadata(err: ParserError) -> bool | None:
     """
 
     token_actual = _extraer_token_desde_error(err)
-    tipo_token_actual = _normalizar_tipo_token(
-        getattr(token_actual, "tipo", None)
-        if token_actual is not None
-        else getattr(err, "tipo_token_actual", None)
+    tipo_token_desde_token = _normalizar_tipo_token(
+        getattr(token_actual, "tipo", None) if token_actual is not None else None
+    )
+    tipo_token_actual = tipo_token_desde_token or _normalizar_tipo_token(
+        getattr(err, "tipo_token_actual", None)
         or getattr(err, "current_token_type", None)
         or getattr(err, "actual_token_type", None)
         or getattr(err, "token_type", None)
