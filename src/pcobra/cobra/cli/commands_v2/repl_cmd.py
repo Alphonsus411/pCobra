@@ -159,7 +159,11 @@ class ReplCommandV2(BaseCommand):
         )
         menciona_eof = any(pista in mensaje for pista in pistas_eof)
 
-        return menciona_cierre and menciona_eof
+        menciona_bloque = any(pista in mensaje for pista in ("bloque", "condicional", "bucle"))
+
+        # Compatibilidad legacy: en REPL priorizamos señales de EOF y aceptamos
+        # mensajes de cierre de bloque sin metadata estructurada.
+        return menciona_eof or (menciona_cierre and menciona_bloque)
 
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.

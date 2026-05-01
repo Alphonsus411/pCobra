@@ -35,6 +35,8 @@ def _parser_error_con_metadata(
         ("Se esperaba 'fin' al final de la entrada", True),
         ("Se esperaba ')' al final de la entrada (EOF)", True),
         ("Se esperaba ']' al final de la entrada", True),
+        ("Token inesperado en término: TipoToken.EOF", True),
+        ("Se esperaba 'fin' para cerrar el bloque condicional", True),
         ("Se esperaba ')' al final de 'proyectar'", False),
         ("Se encontró 'fin' inesperado", False),
     ],
