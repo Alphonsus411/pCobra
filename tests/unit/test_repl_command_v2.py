@@ -43,9 +43,14 @@ def test_repl_v2_mantiene_buffer_hasta_parseo_valido(monkeypatch):
             self.safe_mode = safe_mode
             self.validadores_extra = validadores_extra
 
+    class _Resultado:
+        def __init__(self):
+            self.ast = []
+            self.resultado = None
+
     def _fake_pipeline(pipeline_input, **_kwargs):
         executed.append(pipeline_input.codigo)
-        return _Setup(pipeline_input.safe_mode, pipeline_input.extra_validators), None
+        return _Setup(pipeline_input.safe_mode, pipeline_input.extra_validators), _Resultado()
 
     monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.ejecutar_pipeline_explicito", _fake_pipeline)
 
@@ -110,6 +115,11 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
             self.safe_mode = False
             self.validadores_extra = None
 
+    class _Resultado:
+        def __init__(self):
+            self.ast = []
+            self.resultado = None
+
     def _fake_pipeline(pipeline_input, **_kwargs):
         interpretadores_recibidos.append(pipeline_input.interpretador)
         interpretador = pipeline_input.interpretador or estado
@@ -117,7 +127,7 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
             interpretador["x"] = 10
         if pipeline_input.codigo.strip() == "imprimir(x)":
             assert interpretador["x"] == 10
-        return _Setup(interpretador), None
+        return _Setup(interpretador), _Resultado()
 
     monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.ejecutar_pipeline_explicito", _fake_pipeline)
     monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.prevalidar_y_parsear_codigo", lambda _codigo: [])
@@ -135,3 +145,41 @@ def test_repl_v2_persiste_interpretador_entre_bloques(monkeypatch):
 
     assert status == 0
     assert interpretadores_recibidos == [None, estado]
+
+
+def test_repl_v2_imprime_resultado_de_expresion(monkeypatch, capsys):
+    command = ReplCommandV2()
+    entradas = iter(["1+2", "exit"])
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+
+    class _Setup:
+        def __init__(self):
+            self.interpretador = object()
+            self.safe_mode = True
+            self.validadores_extra = None
+
+    class _Resultado:
+        def __init__(self):
+            self.ast = [object()]
+            self.resultado = 3
+
+    monkeypatch.setattr(command._delegate, "_es_nodo_control_sin_echo_repl", lambda _nodo: False)
+    monkeypatch.setattr("cobra.cli.commands_v2.repl_cmd.prevalidar_y_parsear_codigo", lambda _codigo: [object()])
+    monkeypatch.setattr(
+        "cobra.cli.commands_v2.repl_cmd.ejecutar_pipeline_explicito",
+        lambda *_args, **_kwargs: (_Setup(), _Resultado()),
+    )
+
+    status = command.run(
+        argparse.Namespace(
+            sandbox=False,
+            sandbox_docker=None,
+            memory_limit=128,
+            ignore_memory_limit=False,
+        )
+    )
+
+    salida = capsys.readouterr().out
+    assert status == 0
+    assert "3" in salida

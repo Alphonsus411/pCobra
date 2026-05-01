@@ -144,7 +144,7 @@ class ReplCommandV2(BaseCommand):
                 elif sandbox_docker:
                     self._delegate._ejecutar_en_docker(codigo, sandbox_docker)
                 else:
-                    setup, _resultado_pipeline = ejecutar_pipeline_explicito(
+                    setup, resultado_pipeline = ejecutar_pipeline_explicito(
                         PipelineInput(
                             codigo=codigo,
                             interpretador_cls=interpretador_cls,
@@ -156,6 +156,18 @@ class ReplCommandV2(BaseCommand):
                     self._interpretador_persistente = setup.interpretador
                     self._seguro_repl = setup.safe_mode
                     self._extra_validators_repl = setup.validadores_extra
+                    ast = resultado_pipeline.ast
+                    resultado = resultado_pipeline.resultado
+                    debe_imprimir_resultado = (
+                        resultado is not None
+                        and len(ast) == 1
+                        and not self._delegate._es_nodo_control_sin_echo_repl(ast[0])
+                    )
+                    if debe_imprimir_resultado:
+                        if isinstance(resultado, bool):
+                            print("verdadero" if resultado else "falso")
+                        else:
+                            print(resultado)
                 buffer.clear()
             except Exception as err:
                 categoria = self._delegate._clasificar_error_repl(err)
