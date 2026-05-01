@@ -1194,6 +1194,10 @@ class InterpretadorCobra:
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].set(nombre, valor)
+        if getattr(nodo, "temporal_cse", False):
+            # Las temporales introducidas por optimización no deben cortar la
+            # ejecución secuencial de un snippet REPL.
+            return None
         return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
