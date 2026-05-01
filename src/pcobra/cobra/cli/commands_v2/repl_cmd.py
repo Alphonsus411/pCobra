@@ -125,6 +125,34 @@ class ReplCommandV2(BaseCommand):
 
         return eof_por_flag or eof_por_token or posicion_eof
 
+    def _es_entrada_incompleta_por_texto(self, err: ParserError) -> bool:
+        """Fallback textual para `ParserError` legacy sin metadata estructurada."""
+        mensaje = str(err).lower()
+        if not mensaje:
+            return False
+
+        pistas_cierre = (
+            "se esperaba",
+            "expected",
+            "falt",
+            "missing",
+        )
+        pistas_objetivo = (
+            "fin",
+            "rparen",
+            "rbracket",
+            "rbrace",
+            ")",
+            "]",
+            "}",
+        )
+        menciona_eof = "eof" in mensaje or "fin de archivo" in mensaje
+
+        return (
+            any(pista in mensaje for pista in pistas_cierre)
+            and any(pista in mensaje for pista in pistas_objetivo)
+        ) or menciona_eof
+
     def es_error_de_bloque_incompleto(self, exc: Exception) -> bool:
         """Detecta si la excepción corresponde a una entrada aún incompleta.
 
@@ -133,7 +161,7 @@ class ReplCommandV2(BaseCommand):
 
         if not isinstance(exc, ParserError):
             return False
-        return self._es_entrada_incompleta_por_metadata(exc)
+        return self._es_entrada_incompleta_por_metadata(exc) or self._es_entrada_incompleta_por_texto(exc)
 
     def register_subparser(self, subparsers: Any):
         parser = subparsers.add_parser(self.name, help=_("Start Cobra REPL"))
