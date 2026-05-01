@@ -994,7 +994,7 @@ class InterpretadorCobra:
                 if hijo_id not in visitados_globales:
                     pila.append((hijo, False))
 
-    def ejecutar_ast(self, ast):
+    def _ejecutar_ast(self, ast, *, optimizar: bool = True):
         # Pipeline explícito:
         # 1) parseo/entrada tipada válida
         # 2) análisis semántico
@@ -1021,23 +1021,24 @@ class InterpretadorCobra:
             self._trace_debug("[AST BEFORE OPT][SUMMARY]")
             self._trace_debug(self._resumir_ast(ast))
 
-        ast = optimize_constants(ast)
-        self._asegurar_ast_aciclico_por_identidad(ast, "post_optimize_constants")
-        ast = eliminate_common_subexpressions(ast)
-        self._asegurar_ast_aciclico_por_identidad(
-            ast, "post_eliminate_common_subexpressions"
-        )
-        ast = inline_functions(ast)
-        self._asegurar_ast_aciclico_por_identidad(ast, "post_inline_functions")
-        ast = remove_dead_code(ast)
-        self._asegurar_ast_aciclico_por_identidad(ast, "post_remove_dead_code")
+        if optimizar:
+            ast = optimize_constants(ast)
+            self._asegurar_ast_aciclico_por_identidad(ast, "post_optimize_constants")
+            ast = eliminate_common_subexpressions(ast)
+            self._asegurar_ast_aciclico_por_identidad(
+                ast, "post_eliminate_common_subexpressions"
+            )
+            ast = inline_functions(ast)
+            self._asegurar_ast_aciclico_por_identidad(ast, "post_inline_functions")
+            ast = remove_dead_code(ast)
+            self._asegurar_ast_aciclico_por_identidad(ast, "post_remove_dead_code")
 
-        self._trace_debug("[AST AFTER OPT]")
-        self._trace_debug(self._resumir_ast(ast))
-        if self._debug_resumen_ast_habilitado():
-            self._trace_debug("[AST AFTER OPT][SUMMARY]")
+            self._trace_debug("[AST AFTER OPT]")
             self._trace_debug(self._resumir_ast(ast))
-        self._asegurar_ast_tipado(ast, "post_optimizacion")
+            if self._debug_resumen_ast_habilitado():
+                self._trace_debug("[AST AFTER OPT][SUMMARY]")
+                self._trace_debug(self._resumir_ast(ast))
+            self._asegurar_ast_tipado(ast, "post_optimizacion")
         self.ultimo_ir = None
         self._trace_debug("[RUN] antes de iterar AST")
         for index, nodo in enumerate(ast):
@@ -1050,6 +1051,14 @@ class InterpretadorCobra:
             if resultado is not None:
                 return resultado
         return None
+
+    def ejecutar_ast(self, ast):
+        return self._ejecutar_ast(ast, optimizar=True)
+
+    def ejecutar_ast_repl(self, ast):
+        """Ejecuta un snippet REPL conservando declaraciones top-level."""
+
+        return self._ejecutar_ast(ast, optimizar=False)
 
     # -- Generación de IR ----------------------------------------------------
     def generar_internal_ir(self, ast) -> InternalIRModule:
