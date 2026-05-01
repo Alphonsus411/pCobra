@@ -9,6 +9,9 @@ import pytest
 
 pexpect = pytest.importorskip("pexpect")
 
+if sys.platform == "win32" or not hasattr(pexpect, "spawn"):
+    pytest.skip("pexpect REPL integration tests require non-Windows pexpect.spawn", allow_module_level=True)
+
 
 @pytest.fixture()
 def cli_env() -> dict[str, str]:
