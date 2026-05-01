@@ -1183,12 +1183,21 @@ class InterpretadorCobra:
                     self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                     self.contextos[-1].define(nombre, valor)
                 else:
-                    # Mutación sobre una variable existente: ``set`` solo
-                    # actualiza en el scope donde ya está declarada.
-                    self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
-                    indice = self.solicitar_memoria(1)
-                    self.mem_contextos[indice_contexto][nombre] = (indice, 1)
-                    self.contextos[-1].set(nombre, valor)
+                    indice_actual = len(self.mem_contextos) - 1
+                    if indice_contexto == indice_actual:
+                        # Mutación local: se mantiene en el scope actual.
+                        self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                        indice = self.solicitar_memoria(1)
+                        self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                        self.contextos[indice_contexto].set(nombre, valor)
+                    else:
+                        # Aislamiento de scope para asignación desnuda en
+                        # contextos anidados (funciones/hilos): se crea una
+                        # variable local y no se muta el entorno externo.
+                        self._liberar_memoria_variable_en_contexto(nombre, indice_actual)
+                        indice = self.solicitar_memoria(1)
+                        self.mem_contextos[indice_actual][nombre] = (indice, 1)
+                        self.contextos[indice_actual].define(nombre, valor)
         return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
