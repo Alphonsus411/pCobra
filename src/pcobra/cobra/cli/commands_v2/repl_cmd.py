@@ -88,8 +88,7 @@ class ReplCommandV2(BaseCommand):
 
     def _sincronizar_estado_hacia_delegate(self) -> None:
         """Sincroniza estado persistente local hacia el comando delegado."""
-        if self._interpretador_persistente is not None:
-            self._delegate.interpretador = self._interpretador_persistente
+        self._delegate.interpretador = self._interpretador_persistente
         self._delegate._seguro_repl = self._seguro_repl
         self._delegate._extra_validators_repl = self._extra_validators_repl
 

@@ -93,6 +93,29 @@ def test_repl_v2_persistencia_estado_var_x_e_imprimir_x(monkeypatch, capsys):
     assert capsys.readouterr().out == "10\n"
 
 
+def test_repl_v2_primer_ejecutar_sync_interpretador_none_en_modo_no_seguro(monkeypatch):
+    command = repl_module.ReplCommandV2()
+    entradas = iter(["var x = 1", "exit"])
+    interpretadores_recibidos: list[object | None] = []
+    seguros_recibidos: list[bool] = []
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(entradas))
+    monkeypatch.setattr(repl_module, "prevalidar_y_parsear_codigo", lambda _codigo: [object()])
+    monkeypatch.setattr(repl_module, "mostrar_info", lambda *_args, **_kwargs: None)
+
+    def _fake_delegate(_codigo: str):
+        interpretadores_recibidos.append(command._delegate.interpretador)
+        seguros_recibidos.append(command._delegate._seguro_repl)
+
+    monkeypatch.setattr(command._delegate, "ejecutar_codigo", _fake_delegate)
+
+    status = command.run(argparse.Namespace(**{**vars(_args_repl()), "seguro": False}))
+
+    assert status == 0
+    assert interpretadores_recibidos == [None]
+    assert seguros_recibidos == [False]
+
+
 def test_repl_v2_bloque_anidado_real_mientras_si_fin_fin_acumula_hasta_completar(monkeypatch):
     command = repl_module.ReplCommandV2()
     entradas = iter(["mientras verdadero:", "si verdadero:", "fin", "fin", "exit"])
