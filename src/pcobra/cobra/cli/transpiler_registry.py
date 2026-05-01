@@ -43,6 +43,7 @@ def cli_ensure_entrypoint_transpilers_loaded_once() -> None:
 
 def cli_plugin_transpilers() -> Mapping[str, type]:
     """Devuelve el mapping de transpiladores registrados por plugins."""
+    ensure_entrypoint_transpilers_loaded_once()
     return plugin_transpilers()
 
 
