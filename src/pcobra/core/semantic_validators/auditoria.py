@@ -12,13 +12,19 @@ from ..ast_nodes import (
 
 
 class ValidadorAuditoria(ValidadorBase):
-    """Validador que registra las primitivas utilizadas."""
+    """Validador que registra las primitivas utilizadas.
+
+    Modos de uso:
+    - análisis semántico: ``emitir_side_effects=False`` (sin efectos secundarios)
+    - ejecución/auditoría activa: ``emitir_side_effects=True`` (emite logs)
+    """
 
     def __init__(self, emitir_side_effects: bool = True) -> None:
         super().__init__()
         self.emitir_side_effects = emitir_side_effects
 
     def _log(self, mensaje: str) -> None:
+        # Fuente de verdad centralizada para side effects de auditoría.
         if not self.emitir_side_effects:
             return
         logging.warning(mensaje)
