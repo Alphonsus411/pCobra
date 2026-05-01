@@ -481,8 +481,10 @@ class InteractiveCommand(BaseCommand):
             # (sin emisión); la ejecución con emisión se habilita únicamente
             # dentro de ``_ejecutar_ast_en_repl``.
             if ast_preparseado is None:
+                self.interpretador.mode = "analysis"
                 self._validar_ast_para_analisis(ast, validador)
             validacion_no_silenciosa_realizada = False
+            self.interpretador.mode = "execution"
             ast, resultado = self._ejecutar_ast_en_repl(
                 ast,
                 validador,
@@ -498,6 +500,7 @@ class InteractiveCommand(BaseCommand):
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
                 ast_fallback = prevalidar_y_parsear_codigo(codigo_fallback)
+                self.interpretador.mode = "execution"
                 ast, resultado = self._ejecutar_ast_en_repl(
                     ast_fallback,
                     validador,
@@ -509,6 +512,10 @@ class InteractiveCommand(BaseCommand):
                 ):
                     raise err_original
                 raise
+        finally:
+            # REPL reutiliza la misma instancia de intérprete por sesión;
+            # restablecemos ejecución para no contaminar la siguiente entrada.
+            self.interpretador.mode = "execution"
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
@@ -532,6 +539,7 @@ class InteractiveCommand(BaseCommand):
         ast = prevalidar_fn(codigo)
         # Contrato de prevalidación/parseo en REPL: esta fase es solo de
         # análisis y no debe emitir side effects de auditoría.
+        self.interpretador.mode = "analysis"
         self._validar_ast_para_analisis(ast, validador)
         # Contrato de dispatch:
         # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
