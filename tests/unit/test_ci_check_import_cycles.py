@@ -35,6 +35,21 @@ def test_detecta_ciclo_en_grafo(tmp_path: Path) -> None:
     assert "pcobra.cobra.cli.c" in report
 
 
+
+
+def test_detecta_scc_que_cruza_scopes_auditados(tmp_path: Path) -> None:
+    src = tmp_path / "src"
+    _write(src / "pcobra" / "cobra" / "cli" / "a.py", "import pcobra.cobra.transpilers.b\n")
+    _write(src / "pcobra" / "cobra" / "transpilers" / "b.py", "import pcobra.cobra.cli.a\n")
+
+    graph = build_import_graph(src)
+    _, _, cli_cycles = find_scope_cycle_components(graph, "pcobra.cobra.cli")
+    _, _, transpiler_cycles = find_scope_cycle_components(graph, "pcobra.cobra.transpilers")
+
+    expected = {"pcobra.cobra.cli.a", "pcobra.cobra.transpilers.b"}
+    assert any(component == expected for component in cli_cycles)
+    assert any(component == expected for component in transpiler_cycles)
+
 def test_detecta_violaciones_de_capas(tmp_path: Path) -> None:
     src = tmp_path / "src"
     _write(
