@@ -762,7 +762,7 @@ class InteractiveCommand(BaseCommand):
             try:
                 estado["buffer_lineas"].append(linea)
                 codigo = "\n".join(estado["buffer_lineas"])
-                prevalidar_y_parsear_codigo(codigo)
+                ast = prevalidar_y_parsear_codigo(codigo)
                 estado["lineas_blanco_consecutivas"] = 0
             except (LexerError, ParserError) as err:
                 if self._es_error_de_bloque_incompleto(err):
