@@ -41,6 +41,7 @@ from pcobra.cobra.cli.execution_pipeline import (
     resolver_interpretador_cls,
     validar_ast_seguro,
 )
+from pcobra.cobra.cli.utils.validators import normalizar_validadores_extra
 from pcobra.cobra.core import (
     NodoBucleMientras,
     NodoCondicional,
@@ -590,7 +591,10 @@ class InteractiveCommand(BaseCommand):
 
         # Configurar modo seguro y validadores para el flujo AST canónico del REPL.
         self._seguro_repl = bool(getattr(args, "seguro", True))
-        self._extra_validators_repl = getattr(args, "extra_validators", None)
+        self._extra_validators_repl = normalizar_validadores_extra(
+            getattr(args, "extra_validators", None)
+        )
+        self._configurar_runtime_repl()
 
         # Obtener modos de ejecución
         sandbox = getattr(args, "sandbox", False)
@@ -643,6 +647,26 @@ class InteractiveCommand(BaseCommand):
             )
 
         return 0
+
+    def _configurar_runtime_repl(self) -> None:
+        """Sincroniza intérprete y validadores efectivos para el REPL."""
+        interpretador_cls = resolver_interpretador_cls(
+            module_name=__name__,
+            default_cls=type(self.interpretador),
+        )
+        setup, _ = ejecutar_pipeline_explicito(
+            PipelineInput(
+                codigo="",
+                interpretador_cls=interpretador_cls,
+                safe_mode=self._seguro_repl,
+                extra_validators=self._extra_validators_repl,
+                interpretador=self.interpretador,
+            ),
+            analizar_codigo_fn=lambda _codigo: [],
+        )
+        self.interpretador = setup.interpretador
+        self._seguro_repl = setup.safe_mode
+        self._extra_validators_repl = setup.validadores_extra
 
     def _run_repl_basico(self, args: Any, validador: Optional[Any] = None) -> int:
         """Ejecuta un bucle REPL simplificado sin ``prompt_toolkit``."""
