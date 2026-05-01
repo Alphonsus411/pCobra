@@ -50,6 +50,7 @@ from pcobra.cobra.core import (
     NodoSwitch,
     NodoTryCatch,
 )
+from pcobra.core.semantic_validators.base import ValidadorBase
 from pcobra.cobra.core.runtime import (
     InterpretadorCobra,
     ejecutar_en_contenedor,
@@ -359,7 +360,13 @@ class InteractiveCommand(BaseCommand):
     def _obtener_validadores_extra_para_ast_seguro(self) -> Any:
         """Resuelve rutas de validadores extra al formato exigido por validar_ast_seguro."""
 
-        normalizados = normalizar_validadores_extra(self._extra_validators_repl)
+        extra_validators = self._extra_validators_repl
+        if isinstance(extra_validators, list) and extra_validators and all(
+            isinstance(validador, ValidadorBase) for validador in extra_validators
+        ):
+            normalizados = extra_validators
+        else:
+            normalizados = normalizar_validadores_extra(extra_validators)
         interpretador_cls = resolver_interpretador_cls(
             module_name=__name__,
             default_cls=type(self.interpretador),
