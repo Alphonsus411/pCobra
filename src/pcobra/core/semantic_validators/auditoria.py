@@ -29,8 +29,13 @@ class ValidadorAuditoria(ValidadorBase):
             return
         logging.warning(mensaje)
 
+    def in_execution(self) -> bool:
+        """Indica si la auditoría debe emitir side effects en fase de ejecución."""
+        return self.emitir_side_effects
+
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        self._log(f"Llamada a funcion: {nodo.nombre}")
+        if self.in_execution():
+            self._log(f"Llamada a funcion: {nodo.nombre}")
         self.generic_visit(nodo)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
