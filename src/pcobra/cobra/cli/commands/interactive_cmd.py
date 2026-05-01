@@ -428,10 +428,10 @@ class InteractiveCommand(BaseCommand):
         3) ``for nodo in ast: self.interpretador.ejecutar_nodo(nodo)``.
 
         Invariantes de fase (antirregresión):
-        - La fase de análisis usa ``_validar_ast_para_analisis`` (silenciosa,
-          sin side effects observables de auditoría).
-        - La fase de ejecución delega la validación con side effects en
-          ``InterpretadorCobra.ejecutar_nodo``.
+        - Regla operativa: **Análisis: silencioso** (sin side effects
+          observables de auditoría).
+        - Regla operativa: **Ejecución: un único recorrido con side effects**,
+          delegado en ``InterpretadorCobra.ejecutar_nodo``.
         - Para un mismo propósito de logging/auditoría, no duplicar validación
           con side effects sobre el mismo AST en una única corrida de ejecución.
 
@@ -471,6 +471,12 @@ class InteractiveCommand(BaseCommand):
         Contrato: REPL incremental = intérprete; no batch pipeline.
         Cada entrada se evalúa sobre ``self.interpretador`` (estado acumulado),
         no como una compilación por lotes/batch aislada.
+
+        Regla operativa explícita del REPL:
+        - **Análisis: silencioso** (parseo/prevalidación sin side effects
+          observables de auditoría).
+        - **Ejecución: un único recorrido con side effects** sobre el AST,
+          para preservar semántica y evitar duplicar eventos de auditoría.
         """
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")

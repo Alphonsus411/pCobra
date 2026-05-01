@@ -254,6 +254,34 @@ def test_repl_statement_normal_imprimir_no_duplica_salida():
 
 
 @pytest.mark.integration
+def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto(caplog):
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with caplog.at_level("WARNING"):
+        with redirect_stdout(out_repl), redirect_stderr(err_repl):
+            repl.ejecutar_codigo(
+                "func duplicar(n):\n"
+                "    retorno n * 2\n"
+                "fin"
+            )
+            repl.ejecutar_codigo("duplicar(21)")
+
+    warnings_llamada = [
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage() == "Llamada a funcion: duplicar"
+    ]
+    lineas_salida = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
+
+    assert err_repl.getvalue() == ""
+    assert warnings_llamada == ["Llamada a funcion: duplicar"]
+    assert lineas_salida[-1] == "42"
+
+
+@pytest.mark.integration
 def test_repl_incremental_var_var_imprimir_y_nameerror_sin_temporales_internas() -> None:
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
