@@ -1191,13 +1191,22 @@ class InterpretadorCobra:
                         self.mem_contextos[indice_contexto][nombre] = (indice, 1)
                         self.contextos[indice_contexto].set(nombre, valor)
                     else:
-                        # Aislamiento de scope para asignación desnuda en
-                        # contextos anidados (funciones/hilos): se crea una
-                        # variable local y no se muta el entorno externo.
-                        self._liberar_memoria_variable_en_contexto(nombre, indice_actual)
-                        indice = self.solicitar_memoria(1)
-                        self.mem_contextos[indice_actual][nombre] = (indice, 1)
-                        self.contextos[indice_actual].define(nombre, valor)
+                        if indice_contexto == 0:
+                            # Compatibilidad con el aislamiento de scope:
+                            # dentro de scopes anidados, una asignación desnuda
+                            # no debe mutar el binding global existente.
+                            self._liberar_memoria_variable_en_contexto(nombre, indice_actual)
+                            indice = self.solicitar_memoria(1)
+                            self.mem_contextos[indice_actual][nombre] = (indice, 1)
+                            self.contextos[indice_actual].define(nombre, valor)
+                        else:
+                            # Si la variable existe en un scope léxico externo
+                            # no global, la reasignación debe mutar ese binding
+                            # capturado para preservar semántica de cierres.
+                            self._liberar_memoria_variable_en_contexto(nombre, indice_contexto)
+                            indice = self.solicitar_memoria(1)
+                            self.mem_contextos[indice_contexto][nombre] = (indice, 1)
+                            self.contextos[indice_contexto].set(nombre, valor)
         return valor
 
     def evaluar_expresion(self, expresion, visitados=None):
