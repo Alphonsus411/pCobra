@@ -1802,7 +1802,15 @@ class InterpretadorCobra:
                 self._set_mode(modo_prev)
 
     def ejecutar_usar(self, nodo):
-        """Importa callables públicos de un módulo Python al contexto actual."""
+        """Importa callables públicos al contexto actual usando la política de ``usar``.
+
+        En modo REPL estricto (cuando existe ``_repl_usar_alias_map``), solo se
+        permiten módulos oficiales de Cobra cargados desde ``corelibs`` o
+        ``standard_library``. No hay fallback a módulos Python externos ni
+        instalación automática de paquetes.
+        """
+        from pathlib import Path
+
         from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
         try:
@@ -1825,6 +1833,31 @@ class InterpretadorCobra:
                     nombre_modulo,
                     permitir_instalacion=not es_repl_estricto,
                 )
+
+            if es_repl_estricto and modulo_canonico is not None:
+                modulo_file = getattr(modulo, "__file__", None)
+                if not modulo_file:
+                    raise PermissionError(
+                        "REPL estricto: módulo externo no soportado; no se pudo validar origen oficial"
+                    )
+
+                ruta_modulo = Path(modulo_file).resolve()
+                base = Path(__file__).resolve()
+                rutas_oficiales = []
+                for parent in base.parents:
+                    for carpeta in ("corelibs", "standard_library"):
+                        candidato = parent / carpeta
+                        if candidato.exists():
+                            rutas_oficiales.append(candidato.resolve())
+
+                es_oficial = any(
+                    ruta_modulo == ruta_base or ruta_base in ruta_modulo.parents
+                    for ruta_base in rutas_oficiales
+                )
+                if not es_oficial:
+                    raise PermissionError(
+                        "REPL estricto: módulo externo no soportado; use solo módulos oficiales de Cobra"
+                    )
 
             exportables = getattr(modulo, "__all__", None)
             if exportables is None:
