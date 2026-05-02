@@ -412,8 +412,8 @@ class InterpretadorCobra:
             extra = self._cargar_validadores(extra)
 
         self.safe_mode = safe_mode
-        # Fase interna del intérprete; por defecto en ejecución para preservar
-        # el comportamiento actual fuera del REPL.
+        # Regla de fases: analysis = sin efectos, execution = con efectos.
+        # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"
         self._validador = (
             construir_cadena(extra, emitir_side_effects=False) if safe_mode else None
@@ -1085,6 +1085,9 @@ class InterpretadorCobra:
 
     def ejecutar_nodo(self, nodo):
         self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
+        if self.mode == "analysis":
+            # En análisis no se ejecutan nodos: evita prints, mutaciones y efectos observables.
+            return None
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):
