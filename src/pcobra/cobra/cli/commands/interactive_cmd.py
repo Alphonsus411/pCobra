@@ -403,6 +403,14 @@ class InteractiveCommand(BaseCommand):
 
     def _validar_ast_para_analisis(self, ast: list[Any], validador: Optional[Any]) -> None:
         """Valida AST para análisis estático sin side effects observables."""
+        # Guarda de consistencia: en fase efectiva de ejecución no se debe
+        # disparar esta validación para evitar doble emisión de auditoría
+        # sobre un mismo nodo ya ejecutado.
+        if self.mode == "execution" or getattr(self.interpretador, "mode", None) == "execution":
+            self.logger.debug(
+                "[GUARD] Se omite validación de análisis porque el modo efectivo es execution."
+            )
+            return
         self._recorrer_validacion_ast(ast, validador, silencioso=True)
 
     def _validar_ast_para_ejecucion(self, ast: list[Any], validador: Optional[Any]) -> None:
@@ -476,7 +484,8 @@ class InteractiveCommand(BaseCommand):
         - **Análisis: silencioso** (parseo/prevalidación sin side effects
           observables de auditoría).
         - **Ejecución: un único recorrido con side effects** sobre el AST,
-          para preservar semántica y evitar duplicar eventos de auditoría.
+          para preservar semántica y evitar duplicar eventos de auditoría
+          (single-emission per executed call).
         """
 
         self.logger.debug("[RUN] Ejecutando snippet en REPL")
