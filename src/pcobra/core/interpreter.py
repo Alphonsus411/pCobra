@@ -1886,6 +1886,11 @@ class InterpretadorCobra:
             simbolos_a_inyectar = _resolver_exportables_callables(
                 modulo, modulo_oficial=es_modulo_oficial_cobra
             )
+            if not simbolos_a_inyectar and not es_modulo_oficial_cobra:
+                raise ImportError(
+                    "módulo externo no exportable para usar"
+                )
+
             contexto_actual = self.contextos[-1]
 
             # Fase A: validar colisiones de forma completa antes de definir.

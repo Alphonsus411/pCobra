@@ -243,6 +243,25 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
     assert "disponible" not in interp.variables
 
 
+
+
+def test_usar_modulo_externo_sin_exportables_falla_sin_estado_parcial(monkeypatch):
+    modulo = ModuleType("numpy")
+    interp = InterpretadorCobra()
+    interp.contextos[-1].define("sentinela", 42)
+    estado_inicial = dict(interp.variables)
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        lambda _nombre, **_kwargs: modulo,
+    )
+
+    with pytest.raises(ImportError, match="módulo externo no exportable para usar"):
+        interp.ejecutar_nodo(NodoUsar("numpy"))
+
+    assert interp.variables == estado_inicial
+
 def test_repl_usar_numpy_falla_sin_estado_parcial():
     interp = InterpretadorCobra()
     interp.contextos[-1].define("sentinela", 42)
