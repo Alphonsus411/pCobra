@@ -1606,6 +1606,8 @@ class InterpretadorCobra:
                 if self.in_execution():
                     print(valor)
         else:
+            if self.in_execution():
+                print(f"WARNING: Llamada a funcion: {nodo.nombre}")
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
                 if self.in_execution():
