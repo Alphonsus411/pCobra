@@ -818,6 +818,13 @@ class InterpretadorCobra:
             nodo.aceptar(self._validador)
             self._validados.add(id(nodo))
 
+    def _auditar_en_ejecucion(self, nodo) -> None:
+        """Ejecuta la auditoría funcional únicamente durante la fase de ejecución."""
+        if not self.in_execution() or not self.safe_mode or self._validador is None:
+            return
+        # En ejecución permitimos side effects de auditoría visibles al usuario.
+        nodo.aceptar(self._validador)
+
     def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
         if visitados_ids is None:
             visitados_ids = set()
@@ -1090,6 +1097,7 @@ class InterpretadorCobra:
         if self.mode == "analysis":
             # En análisis no se ejecutan nodos: evita prints, mutaciones y efectos observables.
             return None
+        self._auditar_en_ejecucion(nodo)
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):
