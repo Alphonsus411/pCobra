@@ -1815,11 +1815,16 @@ class InterpretadorCobra:
                     )
                 nombre_modulo = modulo_resuelto
 
-            modulo = obtener_modulo(nombre_modulo)
+            es_repl_estricto = self._repl_usar_alias_map is not None
+            modulo = obtener_modulo(
+                nombre_modulo,
+                permitir_instalacion=not es_repl_estricto,
+            )
             exportables = getattr(modulo, "__all__", None)
             if exportables is None:
                 exportables = dir(modulo)
 
+            simbolos_a_inyectar = []
             contexto_actual = self.contextos[-1]
             for nombre in exportables:
                 if not isinstance(nombre, str) or nombre.startswith("_"):
@@ -1837,7 +1842,9 @@ class InterpretadorCobra:
                         "No se puede usar el módulo "
                         f"'{nodo.modulo}': el símbolo '{nombre}' ya existe en el contexto actual"
                     )
+                simbolos_a_inyectar.append((nombre, simbolo))
 
+            for nombre, simbolo in simbolos_a_inyectar:
                 contexto_actual.define(nombre, simbolo)
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")

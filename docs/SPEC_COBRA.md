@@ -226,3 +226,15 @@ var registros = datos.leer_csv('datos/ventas.csv')
 datos.escribir_csv(registros, 'salida/ventas.csv', separador=';')
 datos.escribir_json(registros, 'salida/ventas.jsonl', lineas=True, aniadir=True)
 ```
+
+
+### Contrato de `usar` en REPL (estricto)
+
+En REPL, `usar` aplica una política **estricta** y distinta del runtime general:
+
+- Solo se aceptan módulos oficiales Cobra definidos en el mapa canónico `REPL_COBRA_MODULE_MAP` (por ejemplo `numero`, `texto`, `logica`, etc.).
+- Si el módulo solicitado no está en ese mapa, se aborta antes de cualquier import externo o instalación con `PermissionError("módulos externos no soportados en REPL")`.
+- En REPL no se permite fallback de instalación con `pip` bajo ninguna condición.
+- La inyección de símbolos es atómica: si falla la validación/carga, no queda estado parcial en el contexto interactivo.
+
+Fuera del REPL, el runtime general mantiene su política de whitelist y sus mecanismos de resolución/instalación configurables.
