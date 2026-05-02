@@ -426,7 +426,10 @@ class InteractiveCommand(BaseCommand):
         if modo not in self._allowed_modes:
             raise ValueError(f"Modo REPL inválido: {modo}")
         self.mode = modo
-        self.interpretador.mode = modo
+        if hasattr(self.interpretador, "_set_mode"):
+            self.interpretador._set_mode(modo)
+        else:
+            self.interpretador.mode = modo
 
     def _ejecutar_ast_en_repl(
         self,
