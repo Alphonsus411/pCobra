@@ -85,7 +85,7 @@ fin
 
 def test_repl_warning_llamada_funcion_anidada_orden_cardinalidad_y_resultado() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
-    _capturar_repl(cmd, """
+    salida_def, logs_def = _capturar_repl(cmd, """
 func doble(x):
     retorno x + x
 fin
@@ -93,12 +93,20 @@ func triple(x):
     retorno doble(x) + x
 fin
 """)
+    assert salida_def == ""
+    assert logs_def == []
+
     salida_stdout, salida_logging = _capturar_repl(cmd, "triple(3)")
 
-    warnings = [ln for ln in salida_stdout.splitlines() if ln.startswith("WARNING: Llamada a funcion:")]
-    assert warnings.count("WARNING: Llamada a funcion: triple") == 1
-    assert warnings.count("WARNING: Llamada a funcion: doble") == 1
-    assert warnings.index("WARNING: Llamada a funcion: triple") < warnings.index("WARNING: Llamada a funcion: doble")
+    warnings = [
+        ln
+        for ln in salida_stdout.splitlines()
+        if ln.startswith("WARNING: Llamada a funcion:")
+    ]
+    assert warnings == [
+        "WARNING: Llamada a funcion: triple",
+        "WARNING: Llamada a funcion: doble",
+    ]
     assert "9" in salida_stdout
     assert not any("WARNING: Llamada a funcion: triple" in ln for ln in salida_logging)
     assert not any("WARNING: Llamada a funcion: doble" in ln for ln in salida_logging)
