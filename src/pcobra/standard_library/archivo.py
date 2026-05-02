@@ -69,3 +69,5 @@ def existe(ruta: PathLike) -> bool:
         return False
     return ruta_segura.is_file()
 
+
+__all__ = ["leer", "escribir", "adjuntar", "existe"]
