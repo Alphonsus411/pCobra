@@ -1,4 +1,8 @@
-"""Operaciones lógicas simples."""
+"""Operaciones lógicas simples.
+
+Contrato de exportación: ``usar`` en REPL consume ``__all__`` como lista
+de API pública invocable de este módulo.
+"""
 
 from __future__ import annotations
 
