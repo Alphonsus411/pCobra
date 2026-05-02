@@ -312,3 +312,79 @@ def test_with_declara_local_y_no_contamina_scope_vecino():
         )
     )
     assert inter.obtener_variable("base") == 3
+
+
+def test_ejecutar_funcion_solo_registra_en_entorno_sin_recorrer_cuerpo():
+    """Regresión: definir funciones no ejecuta ni recorre su cuerpo."""
+    inter = InterpretadorCobra()
+
+    doble = NodoFuncion(
+        "doble",
+        ["x"],
+        [NodoRetorno(NodoIdentificador("x"))],
+    )
+    triple = NodoFuncion(
+        "triple",
+        ["x"],
+        [
+            NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))
+        ],
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        inter.ejecutar_nodo(doble)
+        inter.ejecutar_nodo(triple)
+
+    assert out.getvalue() == ""
+def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(monkeypatch):
+    inter = InterpretadorCobra()
+    warnings_emitidos = []
+
+    original = inter.ejecutar_llamada_funcion
+
+    def _spy(nodo):
+        warnings_emitidos.append(nodo.nombre)
+        return original(nodo)
+
+    monkeypatch.setattr(inter, "ejecutar_llamada_funcion", _spy)
+
+    funcion = NodoFuncion("test", ["x"], [NodoRetorno(NodoIdentificador("x"))])
+    llamada = NodoLlamadaFuncion("test", [NodoValor(1)])
+
+    inter.ejecutar_nodo(funcion)
+    inter.ejecutar_nodo(llamada)
+
+    assert warnings_emitidos == ["test"]
+
+
+def test_validacion_llamada_anidada_emite_un_warning_por_funcion(monkeypatch):
+    inter = InterpretadorCobra()
+    warnings_emitidos = []
+
+    original = inter.ejecutar_llamada_funcion
+
+    def _spy(nodo):
+        warnings_emitidos.append(nodo.nombre)
+        return original(nodo)
+
+    monkeypatch.setattr(inter, "ejecutar_llamada_funcion", _spy)
+
+    doble = NodoFuncion(
+        "doble",
+        ["x"],
+        [NodoRetorno(NodoIdentificador("x"))],
+    )
+    triple = NodoFuncion(
+        "triple",
+        ["x"],
+        [
+            NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))
+        ],
+    )
+
+    inter.ejecutar_nodo(doble)
+    inter.ejecutar_nodo(triple)
+    inter.ejecutar_nodo(NodoLlamadaFuncion("triple", [NodoValor(3)]))
+
+    assert warnings_emitidos.count("triple") == 1
+    assert warnings_emitidos.count("doble") == 1

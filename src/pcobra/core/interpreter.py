@@ -1572,7 +1572,16 @@ class InterpretadorCobra:
                     return resultado
 
     def ejecutar_funcion(self, nodo):
-        """Registra una función definida por el usuario."""
+        """Registra una función definida por el usuario sin ejecutarla.
+
+        Contrato de ejecución:
+        - Solo construye el descriptor de función y lo guarda con ``define`` en
+          el entorno actual.
+        - No evalúa parámetros por defecto dinámicos (si existieran) durante la
+          definición.
+        - No ejecuta ni recorre ``nodo.cuerpo`` en esta fase; el cuerpo se
+          procesa únicamente al invocar la función.
+        """
         funcion = self._construir_funcion(nodo)
         self._verificar_valor_contexto(funcion)
         self.contextos[-1].define(nodo.nombre, funcion)
