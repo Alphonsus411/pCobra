@@ -615,7 +615,7 @@ class InterpretadorCobra:
             "nombre": nodo.nombre,
             "parametros": list(nodo.parametros),
             "cuerpo": list(nodo.cuerpo),
-            "entorno": self.contextos[-1],
+            "scope_lexico": self.contextos[-1],
         }
 
     def _construir_clase(self, nodo, bases):
@@ -1607,8 +1607,6 @@ class InterpretadorCobra:
                 if emitir_salida_llamada:
                     print(valor)
         else:
-            if emitir_salida_llamada:
-                print(f"WARNING: Llamada a funcion: {nodo.nombre}")
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
                 if emitir_salida_llamada:
@@ -1637,7 +1635,9 @@ class InterpretadorCobra:
 
                 # Regla semántica opuesta al control de flujo: cada llamada de
                 # función sí encapsula su scope creando un nuevo contexto local.
-                entorno_capturado = funcion.get("entorno", self.contextos[-1])
+                entorno_capturado = funcion.get(
+                    "scope_lexico", funcion.get("entorno", self.contextos[-1])
+                )
                 self.contextos.append(Environment(parent=entorno_capturado))
                 self.mem_contextos.append({})
                 for nombre_param, valor in zip(funcion["parametros"], argumentos_resueltos):
