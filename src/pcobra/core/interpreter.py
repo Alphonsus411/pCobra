@@ -1076,7 +1076,7 @@ class InterpretadorCobra:
                 if resultado is not None:
                     return resultado
             finally:
-                self.mode = modo_prev
+                self._set_mode(modo_prev)
         return None
 
     # -- Generación de IR ----------------------------------------------------
@@ -1777,7 +1777,7 @@ class InterpretadorCobra:
                 self._set_mode("execution")
                 self.ejecutar_nodo(subnodo)
             finally:
-                self.mode = modo_prev
+                self._set_mode(modo_prev)
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""

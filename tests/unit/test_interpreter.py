@@ -11,6 +11,7 @@ from core.ast_nodes import (
     NodoFuncion,
     NodoIdentificador,
     NodoImprimir,
+    NodoImport,
     NodoLlamadaFuncion,
     NodoOperacionBinaria,
     NodoRetorno,
@@ -566,3 +567,78 @@ def test_retorno_corta_flujo_y_no_reingresa_al_body():
     inter.ejecutar_nodo(corta)
     assert inter.ejecutar_nodo(NodoLlamadaFuncion("corta", [])) == 7
     assert inter.obtener_variable("contador") == 0
+
+
+def test_mode_se_restaura_en_ejecutar_ast_si_falla_validacion(monkeypatch):
+    """Evita phase leak: tras error en _validar no debe quedar analysis ni warnings duplicados."""
+    inter = InterpretadorCobra()
+    modo_inicial = inter.mode
+
+    def _falla_validacion(_nodo):
+        raise RuntimeError("fallo validacion")
+
+    monkeypatch.setattr(inter, "_validar", _falla_validacion)
+
+    with pytest.raises(RuntimeError, match="fallo validacion"):
+        inter.ejecutar_ast([NodoValor(1)])
+
+    assert inter.mode == modo_inicial
+    assert inter._validador.emitir_side_effects is True
+
+
+def test_mode_se_restaura_en_ejecutar_ast_si_falla_ejecucion(monkeypatch):
+    """Evita phase leak: si ejecutar_nodo falla, el modo vuelve y no deja side effects en análisis."""
+    inter = InterpretadorCobra()
+    modo_inicial = inter.mode
+
+    monkeypatch.setattr(inter, "_validar", lambda _nodo: None)
+
+    def _falla_ejecucion(_nodo):
+        raise ValueError("fallo ejecucion")
+
+    monkeypatch.setattr(inter, "ejecutar_nodo", _falla_ejecucion)
+
+    with pytest.raises(ValueError, match="fallo ejecucion"):
+        inter.ejecutar_ast([NodoValor(2)])
+
+    assert inter.mode == modo_inicial
+    assert inter._validador.emitir_side_effects is True
+
+
+def test_mode_se_restaura_en_import_si_falla_validacion(monkeypatch):
+    """Previene WARNING duplicados por phase leak al romperse la validación de import."""
+    inter = InterpretadorCobra()
+    modo_inicial = inter.mode
+
+    monkeypatch.setattr("core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(1)])
+
+    def _falla_validacion(_nodo):
+        raise RuntimeError("validacion import")
+
+    monkeypatch.setattr(inter, "_validar", _falla_validacion)
+
+    with pytest.raises(RuntimeError, match="validacion import"):
+        inter.ejecutar_import(NodoImport("modulo.cobra"))
+
+    assert inter.mode == modo_inicial
+    assert inter._validador.emitir_side_effects is True
+
+
+def test_mode_se_restaura_en_import_si_falla_ejecucion(monkeypatch):
+    """Previene WARNING duplicados por phase leak si import falla al ejecutar_nodo."""
+    inter = InterpretadorCobra()
+    modo_inicial = inter.mode
+
+    monkeypatch.setattr("core.interpreter.cargar_ast_modulo", lambda *a, **k: [NodoValor(3)])
+    monkeypatch.setattr(inter, "_validar", lambda _nodo: None)
+
+    def _falla_ejecucion(_nodo):
+        raise LookupError("ejecucion import")
+
+    monkeypatch.setattr(inter, "ejecutar_nodo", _falla_ejecucion)
+
+    with pytest.raises(LookupError, match="ejecucion import"):
+        inter.ejecutar_import(NodoImport("modulo.cobra"))
+
+    assert inter.mode == modo_inicial
+    assert inter._validador.emitir_side_effects is True
