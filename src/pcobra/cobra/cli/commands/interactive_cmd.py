@@ -213,6 +213,20 @@ class InteractiveCommand(BaseCommand):
         }
     )
 
+    _USAR_ALIAS_REPL = {
+        "archivo": "archivo",
+        "asincrono": "asincrono",
+        "datos": "datos",
+        "decoradores": "decoradores",
+        "fecha": "fecha",
+        "interfaz": "interfaz",
+        "lista": "lista",
+        "logica": "logica",
+        "numero": "numero",
+        "texto": "texto",
+        "util": "util",
+    }
+
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
 
@@ -237,6 +251,11 @@ class InteractiveCommand(BaseCommand):
         # - execution: evaluación real con efectos controlados del lenguaje.
         self._allowed_modes = frozenset({"analysis", "execution"})
         self.mode = "analysis"
+        self._configurar_restriccion_usar_repl()
+
+    def _configurar_restriccion_usar_repl(self) -> None:
+        if hasattr(self.interpretador, "configurar_restriccion_usar_repl"):
+            self.interpretador.configurar_restriccion_usar_repl(self._USAR_ALIAS_REPL)
 
     @staticmethod
     def _crear_estado_repl() -> dict[str, Any]:
@@ -946,9 +965,11 @@ class InteractiveCommand(BaseCommand):
 
         if self._interpretador_sesion is None:
             self._interpretador_sesion = self.interpretador
+            self._configurar_restriccion_usar_repl()
             return
         if self.interpretador is not self._interpretador_sesion:
             self.interpretador = self._interpretador_sesion
+            self._configurar_restriccion_usar_repl()
 
     def _clasificar_error_repl(self, error: Exception) -> str:
         """Clasifica errores del REPL para un reporte único en el loop principal."""
@@ -1143,6 +1164,7 @@ class InteractiveCommand(BaseCommand):
         # accidental en flujo normal del REPL incremental.
         setup = self._ejecutar_pipeline_explicito_solo_setup_sandbox(interpretador_cls)
         self.interpretador = setup.interpretador
+        self._configurar_restriccion_usar_repl()
         self._seguro_repl = setup.safe_mode
         self._extra_validators_repl = setup.validadores_extra
         prevalidar_y_parsear_codigo(linea)

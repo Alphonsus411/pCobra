@@ -433,6 +433,15 @@ class InterpretadorCobra:
         self._eval_stack = set()
         # Último IR generado a partir del AST ejecutado
         self.ultimo_ir: Optional[InternalIRModule] = None
+        # Restricción opcional para `usar` en REPL/evaluador incremental.
+        self._repl_usar_alias_map: dict[str, str] | None = None
+
+    def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
+        """Configura whitelist explícita de módulos `usar` para flujo REPL.
+
+        Cuando ``alias_map`` es ``None``, no se aplica restricción adicional.
+        """
+        self._repl_usar_alias_map = alias_map.copy() if alias_map is not None else None
 
     def in_execution(self) -> bool:
         """Indica si el intérprete se encuentra en fase de ejecución."""
@@ -1797,7 +1806,16 @@ class InterpretadorCobra:
         from .usar_loader import obtener_modulo
 
         try:
-            modulo = obtener_modulo(nodo.modulo)
+            nombre_modulo = nodo.modulo
+            if self._repl_usar_alias_map is not None:
+                modulo_resuelto = self._repl_usar_alias_map.get(nombre_modulo)
+                if modulo_resuelto is None:
+                    raise PermissionError(
+                        "módulos externos no soportados en REPL"
+                    )
+                nombre_modulo = modulo_resuelto
+
+            modulo = obtener_modulo(nombre_modulo)
             exportables = getattr(modulo, "__all__", None)
             if exportables is None:
                 exportables = dir(modulo)
