@@ -69,6 +69,7 @@ from .cobra_config import (
     limite_memoria_mb,
     limite_cpu_segundos,
 )
+from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
@@ -1816,22 +1817,19 @@ class InterpretadorCobra:
         try:
             nombre_modulo = nodo.modulo
             es_repl_estricto = self._repl_usar_alias_map is not None
-            modulo_canonico = None
+            mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
+            modulo_canonico = mapa_repl.get(nombre_modulo)
 
-            if es_repl_estricto:
-                modulo_canonico = self._repl_usar_alias_map.get(nombre_modulo)
-                if modulo_canonico is None:
+            if modulo_canonico is not None:
+                modulo = obtener_modulo_cobra_oficial(modulo_canonico)
+            else:
+                if es_repl_estricto:
                     raise PermissionError(
                         "módulos externos no soportados en REPL"
                     )
-                nombre_modulo = modulo_canonico
-
-            if es_repl_estricto and modulo_canonico is not None:
-                modulo = obtener_modulo_cobra_oficial(nombre_modulo)
-            else:
                 modulo = obtener_modulo(
                     nombre_modulo,
-                    permitir_instalacion=not es_repl_estricto,
+                    permitir_instalacion=True,
                 )
 
             if es_repl_estricto and modulo_canonico is not None:
