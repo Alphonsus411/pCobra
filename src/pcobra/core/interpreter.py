@@ -1805,6 +1805,13 @@ class InterpretadorCobra:
     def ejecutar_usar(self, nodo):
         """Importa callables públicos al contexto actual usando la política de ``usar``.
 
+        Nota de compatibilidad obligatoria:
+
+        - En pCobra se acepta la forma ``usar "numero"`` por compatibilidad del
+          parser, pero esta entrada SIEMPRE se normaliza y ejecuta con la
+          semántica oficial del libro: ``usar numero`` (modelo plano sin
+          namespace de módulo).
+
         Matriz de comportamiento:
 
         - REPL estricto (``_repl_usar_alias_map`` definido):
