@@ -39,22 +39,27 @@ class ValidadorAuditoria(ValidadorBase):
         self.generic_visit(nodo)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
-        self._log(f"Llamada a metodo: {nodo.nombre_metodo}")
+        if self.in_execution():
+            self._log(f"Llamada a metodo: {nodo.nombre_metodo}")
         self.generic_visit(nodo)
 
     def visit_hilo(self, nodo: NodoHilo):
-        self._log(f"Ejecucion de hilo: {nodo.llamada.nombre}")
+        if self.in_execution():
+            self._log(f"Ejecucion de hilo: {nodo.llamada.nombre}")
         nodo.llamada.aceptar(self)
         self.delegar(nodo)
 
     def visit_import(self, nodo: NodoImport):
-        self._log(f"Import de modulo: {nodo.ruta}")
+        if self.in_execution():
+            self._log(f"Import de modulo: {nodo.ruta}")
         self.generic_visit(nodo)
 
     def visit_usar(self, nodo: NodoUsar):
-        self._log(f"Usar modulo: {nodo.modulo}")
+        if self.in_execution():
+            self._log(f"Usar modulo: {nodo.modulo}")
         self.generic_visit(nodo)
 
     def visit_import_desde(self, nodo: NodoImportDesde):
-        self._log(f"Importar desde: {nodo.modulo}")
+        if self.in_execution():
+            self._log(f"Importar desde: {nodo.modulo}")
         self.generic_visit(nodo)

@@ -138,7 +138,8 @@ class ProfileCommand(BaseCommand):
                 validador = construir_cadena(
                     InterpretadorCobra._cargar_validadores(extra_validators)
                     if isinstance(extra_validators, str)
-                    else extra_validators
+                    else extra_validators,
+                    emitir_side_effects=False,
                 )
                 for nodo in ast:
                     nodo.aceptar(validador)
