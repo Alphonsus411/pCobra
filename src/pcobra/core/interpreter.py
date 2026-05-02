@@ -1825,7 +1825,10 @@ class InterpretadorCobra:
                 if not isinstance(nombre, str) or nombre.startswith("_"):
                     continue
 
-                simbolo = getattr(modulo, nombre, None)
+                if not hasattr(modulo, nombre):
+                    continue
+
+                simbolo = getattr(modulo, nombre)
                 if not callable(simbolo):
                     continue
 

@@ -1,5 +1,8 @@
 """Funciones de texto de alto nivel basadas en ``pcobra.corelibs.texto``.
 
+Contrato de exportación: ``usar`` en REPL consume ``__all__`` como lista
+de API pública invocable de este módulo.
+
 Ejemplo rápido::
 
     import standard_library.texto as texto
