@@ -336,6 +336,36 @@ def test_ejecutar_funcion_solo_registra_en_entorno_sin_recorrer_cuerpo():
         inter.ejecutar_nodo(triple)
 
     assert out.getvalue() == ""
+
+
+def test_definir_funcion_retorna_none_y_no_evalua_cuerpo_en_definicion():
+    inter = InterpretadorCobra()
+
+    funcion = NodoFuncion(
+        "f",
+        ["x"],
+        [
+            NodoRetorno(
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    TipoToken.SUMA,
+                    NodoValor(1),
+                )
+            )
+        ],
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as out:
+        resultado = inter.ejecutar_nodo(funcion)
+
+    assert resultado is None
+    assert out.getvalue() == ""
+    registro = inter.obtener_variable("f")
+    assert isinstance(registro, dict)
+    assert registro.get("tipo") == "funcion"
+    assert registro.get("nombre") == "f"
+    assert registro.get("parametros") == ["x"]
+    assert registro.get("cuerpo") == funcion.cuerpo.instrucciones
 def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(monkeypatch):
     inter = InterpretadorCobra()
     warnings_emitidos = []
