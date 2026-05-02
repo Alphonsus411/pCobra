@@ -1,97 +1,137 @@
 {
-  "proyecto": "Cobra REPL",
-  "fase_actual": "Depuración avanzada de ejecución en runtime",
-  "objetivo_global": "Construir un REPL interactivo, estructural y coherente con la arquitectura de Cobra sin modificar lexer ni parser",
-  "arquitectura_base": {
-    "pipeline": "AST → BackendPipeline → Bindings → Runtime",
-    "naturaleza": "Orientado a compilación/ejecución batch",
-    "problema_detectado": "Uso indebido del pipeline en contexto REPL interactivo"
-  },
-  "fase_1_repl": {
-    "estado_inicial": {
-      "tipo": "REPL lineal",
-      "problemas": [
-        "Ejecución línea a línea",
-        "No soporta bloques",
-        "Errores en estructuras incompletas"
-      ]
-    },
-    "mejoras": [
-      "Implementación de buffer multilinea",
-      "Uso del parser como oráculo",
-      "Detección de bloques incompletos",
-      "Modo interactivo con '>>> / ...'",
-      "Persistencia de entorno"
-    ],
-    "resultado": "REPL estructural funcional"
-  },
-  "fase_2_repl_expresivo": {
-    "problema": "Expresiones top-level no soportadas",
-    "error": "NodoOperacionBinaria no soportado",
-    "solucion": "Fallback en REPL (envolver en imprimir)",
-    "resultado": {
-      "expresiones_simples": "OK",
-      "expresiones_complejas": "OK",
-      "errores_semanticos": "Correctamente preservados"
-    }
-  },
-  "fase_3_validacion_comportamiento": {
-    "bloques": "OK",
-    "anidamiento": "OK",
-    "errores_vs_incompleto": "OK",
-    "persistencia_entorno": "OK",
-    "expresiones_en_bloques": {
-      "comportamiento": "No soportadas como statements",
-      "decision": "Mantener lenguaje estricto (requiere imprimir)"
-    }
-  },
-  "problema_critico_detectado": {
-    "error": "Variable no declarada: _cse0",
-    "contexto": [
-      "Asignaciones con expresiones",
-      "Ejecución dentro y fuera de bloques"
-    ],
-    "ejemplo": "var y = x * 2",
-    "causa_raiz": {
-      "tipo": "Fuga de abstracción del pipeline",
-      "detalle": "Variables temporales (_cseX) generadas por el pipeline no existen en el entorno del REPL"
-    }
-  },
-  "diagnostico_final": {
-    "descripcion": "El REPL está usando un pipeline de compilación en lugar de un modo interpretativo",
-    "problema_clave": "BackendPipeline introduce IR/temporales incompatibles con ejecución incremental",
-    "impacto": "Inconsistencia del entorno y errores en evaluación"
-  },
-  "solucion_definida": {
-    "enfoque": "Bypass del BackendPipeline en REPL",
-    "estrategia": [
-      "Ejecutar AST directamente",
-      "Evitar generación de temporales (_cse)",
-      "Usar entorno persistente compartido",
-      "Reutilizar lógica interna de evaluación existente"
-    ],
+  "contexto_general": {
+    "lenguaje": "Cobra",
+    "tipo": "lenguaje de programación en español",
+    "modo_trabajo": "REPL con ejecución directa de AST",
     "restricciones": [
-      "No modificar lexer",
-      "No modificar parser",
-      "No modificar pipeline",
-      "No cambiar semántica del lenguaje"
+      "No modificar Lexer",
+      "No modificar Parser",
+      "Respetar sintaxis oficial del lenguaje"
+    ]
+  },
+  "fase_1_repl_basico": {
+    "estado": "correcto",
+    "features_validadas": [
+      "expresiones",
+      "variables",
+      "asignaciones",
+      "control de flujo",
+      "funciones"
+    ],
+    "problema_detectado": "duplicación de warnings en llamadas a funciones",
+    "solucion": "separación entre fase de análisis y ejecución"
+  },
+  "fase_2_funciones": {
+    "problema_detectado": "ejecución del cuerpo de funciones en definición",
+    "impacto": [
+      "warnings en definición",
+      "errores de scope (variable x no definida)"
+    ],
+    "solucion": "no evaluar el cuerpo en visit_funcion, solo almacenar AST",
+    "resultado": "semántica de funciones corregida"
+  },
+  "fase_3_validacion_semantica": {
+    "tests": [
+      "funciones simples",
+      "funciones anidadas",
+      "efectos (imprimir)",
+      "scope",
+      "condiciones"
+    ],
+    "resultado": "modelo de ejecución correcto y estable"
+  },
+  "fase_4_exploracion_runtime": {
+    "objetivo": "evaluar integración con runtime real",
+    "tests": [
+      "hilo",
+      "usar",
+      "sandbox",
+      "módulos externos"
+    ]
+  },
+  "fase_5_sistema_usar": {
+    "observaciones": [
+      "usar requiere string (\"modulo\")",
+      "no acepta sintaxis oficial (usar numero)",
+      "módulos se validan pero no se exponen",
+      "no existe operador '.' en el lenguaje"
+    ],
+    "problemas_detectados": [
+      "inconsistencia con documentación",
+      "módulos no utilizables tras import",
+      "modelo de imports incompleto",
+      "doble sistema (Cobra vs Python bindings)"
+    ]
+  },
+  "fase_6_seguridad": {
+    "estado": "correcto",
+    "caracteristicas": [
+      "whitelist de módulos",
+      "bloqueo de os, sys, random",
+      "sin introspección (type, dir)",
+      "sandbox activo"
+    ]
+  },
+  "fase_7_diagnostico_clave": {
+    "conclusion": "usar no está integrado correctamente en el REPL",
+    "causa": [
+      "loader funciona",
+      "pero no hay binding al entorno",
+      "ni acceso estructurado"
+    ],
+    "estado": "feature parcialmente implementada"
+  },
+  "decision_arquitectonica": {
+    "opciones": [
+      "A: Cobra puro (recomendado)",
+      "B: lenguaje híbrido con bindings Python"
+    ],
+    "decision_recomendada": "A",
+    "justificacion": [
+      "consistencia semántica",
+      "alineación con documentación",
+      "menor complejidad",
+      "base sólida para evolución"
+    ]
+  },
+  "solucion_propuesta": {
+    "estrategia": "modificar evaluator, no parser",
+    "accion_clave": "inyectar funciones del módulo en entorno",
+    "flujo": [
+      "usar \"numero\"",
+      "resolver módulo Cobra",
+      "extraer funciones públicas",
+      "inyectarlas en entorno REPL"
+    ],
+    "manejo_modulos_externos": [
+      "rechazarlos explícitamente",
+      "o soportarlos completamente (no parcial)"
+    ]
+  },
+  "prompt_codex": {
+    "objetivo": "arreglar usar sin tocar lexer/parser",
+    "restricciones_clave": [
+      "no cambiar sintaxis",
+      "no inventar comportamiento",
+      "seguir estrictamente el libro",
+      "no asumir semántica Python"
+    ],
+    "resultado_esperado": [
+      "usar \"numero\" → funciones disponibles",
+      "consistencia con documentación",
+      "sin comportamiento parcial"
     ]
   },
   "estado_actual": {
-    "repl_estructural": true,
-    "repl_expresivo": true,
-    "runtime_interpretativo": "Pendiente de ajuste",
-    "bug_activo": "_cse0 en asignaciones"
+    "repl": "estable y semánticamente correcto",
+    "funciones": "correctas",
+    "seguridad": "correcta",
+    "usar": "incompleto",
+    "alineacion_con_lenguaje": "parcial"
   },
-  "insights_clave": [
-    "El REPL debe comportarse como intérprete, no como compilador",
-    "El pipeline batch no es adecuado para ejecución incremental",
-    "Las variables temporales (_cse) son artefactos internos que no deben exponerse",
-    "Separar modos de ejecución (batch vs interactivo) es crítico en diseño de lenguajes",
-    "El REPL puede extender UX sin modificar semántica del lenguaje"
-  ],
-  "siguiente_paso": {
-    "accion": "Modificar el REPL para ejecutar AST directamente sin pasar por BackendPipeline",
-    "resultado_esperado": "Eliminación del error _cse0 y evaluación correcta de expresiones y asignaciones"
+  "insight_final": {
+    "clave": "no es un bug, es una frontera de diseño",
+    "mensaje": "el REPL debe reflejar Cobra, no reinterpretarlo",
+    "siguiente_paso": "implementar correctamente el modelo de módulos según especificación"
   }
 }
