@@ -1803,26 +1803,32 @@ class InterpretadorCobra:
 
     def ejecutar_usar(self, nodo):
         """Importa callables públicos de un módulo Python al contexto actual."""
-        from .usar_loader import obtener_modulo
+        from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
         try:
             nombre_modulo = nodo.modulo
-            if self._repl_usar_alias_map is not None:
-                modulo_resuelto = self._repl_usar_alias_map.get(nombre_modulo)
-                if modulo_resuelto is None:
+            es_repl_estricto = self._repl_usar_alias_map is not None
+            modulo_canonico = None
+
+            if es_repl_estricto:
+                modulo_canonico = self._repl_usar_alias_map.get(nombre_modulo)
+                if modulo_canonico is None:
                     raise PermissionError(
                         "módulos externos no soportados en REPL"
                     )
-                nombre_modulo = modulo_resuelto
+                nombre_modulo = modulo_canonico
 
-            es_repl_estricto = self._repl_usar_alias_map is not None
-            modulo = obtener_modulo(
-                nombre_modulo,
-                permitir_instalacion=not es_repl_estricto,
-            )
+            if es_repl_estricto and modulo_canonico is not None:
+                modulo = obtener_modulo_cobra_oficial(nombre_modulo)
+            else:
+                modulo = obtener_modulo(
+                    nombre_modulo,
+                    permitir_instalacion=not es_repl_estricto,
+                )
+
             exportables = getattr(modulo, "__all__", None)
             if exportables is None:
-                if es_repl_estricto and nombre_modulo in self._repl_usar_alias_map:
+                if es_repl_estricto and modulo_canonico is not None:
                     raise ImportError(
                         f"El módulo oficial '{nodo.modulo}' debe definir __all__ explícito"
                     )

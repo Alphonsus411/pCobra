@@ -150,6 +150,51 @@ def cargar_lista_blanca():
 cargar_lista_blanca()
 
 
+def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
+    """Carga un módulo Python desde un directorio local dado."""
+
+    mod_path = directorio / f"{nombre}.py"
+    pkg_path = directorio / nombre / "__init__.py"
+    if not (mod_path.exists() or pkg_path.exists()):
+        return None
+
+    ruta = mod_path if mod_path.exists() else pkg_path
+    mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
+    if mod_spec is None or mod_spec.loader is None:
+        raise ImportError(f"No se pudo crear spec para el módulo '{nombre}'")
+    modulo = importlib.util.module_from_spec(mod_spec)
+    sys.modules[nombre] = modulo
+    mod_spec.loader.exec_module(modulo)
+    return modulo
+
+
+def obtener_modulo_cobra_oficial(nombre: str):
+    """Carga módulos oficiales de Cobra solo desde ``corelibs`` o ``standard_library``."""
+
+    nombre = _validar_nombre(nombre)
+    base = Path(__file__).resolve()
+
+    for parent in base.parents:
+        corelibs = parent / "corelibs"
+        if corelibs.exists():
+            modulo = _cargar_modulo_local_desde_directorio(nombre, corelibs)
+            if modulo is not None:
+                return modulo
+            break
+
+    for parent in base.parents:
+        stdlib = parent / "standard_library"
+        if stdlib.exists():
+            modulo = _cargar_modulo_local_desde_directorio(nombre, stdlib)
+            if modulo is not None:
+                return modulo
+            break
+
+    raise ModuleNotFoundError(
+        f"Módulo oficial Cobra '{nombre}' no encontrado en corelibs/standard_library"
+    )
+
+
 def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
     """Importa y devuelve un módulo.
 
@@ -182,35 +227,10 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
     try:
         return importlib.import_module(nombre)
     except ModuleNotFoundError:
-        # Buscar primero en corelibs
-        for parent in base.parents:
-            corelibs = parent / "corelibs"
-            if corelibs.exists():
-                mod_path = corelibs / f"{nombre}.py"
-                pkg_path = corelibs / nombre / "__init__.py"
-                if mod_path.exists() or pkg_path.exists():
-                    ruta = mod_path if mod_path.exists() else pkg_path
-                    mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
-                    modulo = importlib.util.module_from_spec(mod_spec)
-                    sys.modules[nombre] = modulo
-                    mod_spec.loader.exec_module(modulo)
-                    return modulo
-                break
-
-        # Buscar también en standard_library
-        for parent in base.parents:
-            stdlib = parent / "standard_library"
-            if stdlib.exists():
-                mod_path = stdlib / f"{nombre}.py"
-                pkg_path = stdlib / nombre / "__init__.py"
-                if mod_path.exists() or pkg_path.exists():
-                    ruta = mod_path if mod_path.exists() else pkg_path
-                    mod_spec = importlib.util.spec_from_file_location(nombre, ruta)
-                    modulo = importlib.util.module_from_spec(mod_spec)
-                    sys.modules[nombre] = modulo
-                    mod_spec.loader.exec_module(modulo)
-                    return modulo
-                break
+        try:
+            return obtener_modulo_cobra_oficial(nombre)
+        except ModuleNotFoundError:
+            pass
 
         # Si no se encontró, verificar si la instalación está permitida
         if not permitir_instalacion or not os.environ.get(USAR_INSTALL_ENV):
