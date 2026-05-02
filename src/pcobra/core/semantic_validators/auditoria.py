@@ -36,8 +36,8 @@ class ValidadorAuditoria(ValidadorBase):
         return self.emitir_side_effects and self.mode == "execution"
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        if self.in_execution():
-            self._log(f"Llamada a funcion: {nodo.nombre}")
+        if self.mode == "execution":
+            print(f"WARNING: Llamada a funcion: {nodo.nombre}")
         self.generic_visit(nodo)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
