@@ -366,6 +366,53 @@ def test_definir_funcion_retorna_none_y_no_evalua_cuerpo_en_definicion():
     assert registro.get("nombre") == "f"
     assert registro.get("parametros") == ["x"]
     assert registro.get("cuerpo") == funcion.cuerpo.instrucciones
+
+
+def test_definicion_triple_no_emite_warning_ni_error_variable_x(monkeypatch):
+    inter = InterpretadorCobra()
+    warnings_emitidos = []
+
+    original = inter.ejecutar_llamada_funcion
+
+    def _spy(nodo):
+        warnings_emitidos.append(nodo.nombre)
+        return original(nodo)
+
+    monkeypatch.setattr(inter, "ejecutar_llamada_funcion", _spy)
+
+    doble = NodoFuncion(
+        "doble",
+        ["x"],
+        [
+            NodoRetorno(
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    Token(TipoToken.MULT, "*"),
+                    NodoValor(2),
+                )
+            )
+        ],
+    )
+    triple = NodoFuncion(
+        "triple",
+        ["x"],
+        [
+            NodoRetorno(
+                NodoOperacionBinaria(
+                    NodoLlamadaFuncion("doble", [NodoIdentificador("x")]),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoIdentificador("x"),
+                )
+            )
+        ],
+    )
+
+    inter.ejecutar_nodo(doble)
+    inter.ejecutar_nodo(triple)
+
+    assert warnings_emitidos == []
+
+
 def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(monkeypatch):
     inter = InterpretadorCobra()
     warnings_emitidos = []
@@ -387,7 +434,7 @@ def test_validacion_llamada_funcion_no_duplica_warning_en_invocacion_simple(monk
     assert warnings_emitidos == ["test"]
 
 
-def test_validacion_llamada_anidada_emite_un_warning_por_funcion(monkeypatch):
+def test_triple_tres_emite_warning_de_triple_y_doble_y_devuelve_nueve(monkeypatch):
     inter = InterpretadorCobra()
     warnings_emitidos = []
 
@@ -402,22 +449,37 @@ def test_validacion_llamada_anidada_emite_un_warning_por_funcion(monkeypatch):
     doble = NodoFuncion(
         "doble",
         ["x"],
-        [NodoRetorno(NodoIdentificador("x"))],
+        [
+            NodoRetorno(
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    Token(TipoToken.MULT, "*"),
+                    NodoValor(2),
+                )
+            )
+        ],
     )
     triple = NodoFuncion(
         "triple",
         ["x"],
         [
-            NodoRetorno(NodoLlamadaFuncion("doble", [NodoValor(3)]))
+            NodoRetorno(
+                NodoOperacionBinaria(
+                    NodoLlamadaFuncion("doble", [NodoIdentificador("x")]),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoIdentificador("x"),
+                )
+            )
         ],
     )
 
     inter.ejecutar_nodo(doble)
     inter.ejecutar_nodo(triple)
-    inter.ejecutar_nodo(NodoLlamadaFuncion("triple", [NodoValor(3)]))
+    resultado = inter.ejecutar_nodo(NodoLlamadaFuncion("triple", [NodoValor(3)]))
 
     assert warnings_emitidos.count("triple") == 1
     assert warnings_emitidos.count("doble") == 1
+    assert resultado == 9
 
 
 def test_llamada_funcion_ejecuta_cuerpo_una_sola_vez_por_invocacion(monkeypatch):

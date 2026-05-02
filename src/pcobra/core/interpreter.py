@@ -1624,14 +1624,20 @@ class InterpretadorCobra:
             )
 
             def preparar_contexto():
+                # Los argumentos se evalúan en el contexto llamador antes de
+                # abrir el nuevo scope local de la función.
+                argumentos_resueltos = []
+                for arg in nodo.argumentos:
+                    valor = self.evaluar_expresion(arg)
+                    self._verificar_valor_contexto(valor)
+                    argumentos_resueltos.append(valor)
+
                 # Regla semántica opuesta al control de flujo: cada llamada de
                 # función sí encapsula su scope creando un nuevo contexto local.
                 entorno_capturado = funcion.get("entorno", self.contextos[-1])
                 self.contextos.append(Environment(parent=entorno_capturado))
                 self.mem_contextos.append({})
-                for nombre_param, arg in zip(funcion["parametros"], nodo.argumentos):
-                    valor = self.evaluar_expresion(arg)
-                    self._verificar_valor_contexto(valor)
+                for nombre_param, valor in zip(funcion["parametros"], argumentos_resueltos):
                     indice = self.solicitar_memoria(1)
                     self.mem_contextos[-1][nombre_param] = (indice, 1)
                     self.contextos[-1].define(nombre_param, valor)
