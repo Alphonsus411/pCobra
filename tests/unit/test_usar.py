@@ -19,6 +19,7 @@ import pytest
 from core.interpreter import InterpretadorCobra
 from core.errors import InvalidTokenError
 from core.ast_nodes import NodoUsar
+from core.environment import Environment
 from cobra.core import Lexer, Parser
 from cobra import usar_loader
 from core import usar_loader as core_usar_loader
@@ -267,6 +268,30 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
 
     assert interp.obtener_variable("colisiona") is not None
     assert "disponible" not in interp.variables
+
+
+def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    contexto_padre = interp.contextos[-1]
+    contexto_hijo = Environment(parent=contexto_padre)
+    # Contrato: no sobrescribir en toda la cadena léxica.
+    contexto_padre.define("es_finito", lambda _valor: "ocupado")
+    interp.contextos.append(contexto_hijo)
+    interp.mem_contextos.append({})
+
+    with pytest.raises(NameError, match=r"símbolo 'es_finito' ya existe"):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert contexto_padre.get("es_finito")("x") == "ocupado"
+    assert "es_finito" not in contexto_hijo.values
+    assert "a_decimal" not in contexto_hijo.values
+    assert "es_entero" not in contexto_hijo.values
+
+    interp.mem_contextos.pop()
+    interp.contextos.pop()
 
 
 
