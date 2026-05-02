@@ -17,15 +17,29 @@ sys.modules.setdefault('tree_sitter_languages', ts_mod)
 import pytest
 
 from core.interpreter import InterpretadorCobra
+from core.errors import InvalidTokenError
 from core.ast_nodes import NodoUsar
+from cobra.core import Lexer, Parser
 from cobra import usar_loader
+from core import usar_loader as core_usar_loader
 
 
 def test_obtener_modulo_instala_si_no_existe(monkeypatch):
     mock_mod = ModuleType('demo')
     monkeypatch.setitem(usar_loader.USAR_WHITELIST, 'demo', 'demo')
     monkeypatch.setenv('COBRA_USAR_INSTALL', '1')
-    with patch.object(usar_loader.importlib, 'import_module', side_effect=[ModuleNotFoundError(), mock_mod]) as mock_import, \
+    real_import = usar_loader.importlib.import_module
+    def _side_effect(name, *args, **kwargs):
+        if name.startswith('pcobra.'):
+            return real_import(name, *args, **kwargs)
+        if name == 'demo':
+            _side_effect.calls += 1
+            if _side_effect.calls == 1:
+                raise ModuleNotFoundError()
+            return mock_mod
+        return real_import(name, *args, **kwargs)
+    _side_effect.calls = 0
+    with patch.object(usar_loader.importlib, 'import_module', side_effect=_side_effect) as mock_import, \
          patch.object(usar_loader.subprocess, 'run') as mock_run:
         mock_run.return_value.returncode = 0
         mod = usar_loader.obtener_modulo('demo')
@@ -140,14 +154,11 @@ def test_cargar_lista_blanca_sin_cobra_toml_mantiene_hardcoded(monkeypatch, tmp_
 @pytest.mark.timeout(5)
 def test_interpreter_usar_registra_modulo(monkeypatch):
     mod = ModuleType('math')
-    def fake(name):
-        return mod
-    monkeypatch.setattr(usar_loader, 'obtener_modulo', fake)
-    import sys
-    sys.modules['cobra.usar_loader'] = usar_loader
+    mod.sumar = lambda a, b: a + b
+    monkeypatch.setattr(core_usar_loader, 'obtener_modulo', lambda _name: mod)
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar('math'))
-    assert interp.variables['math'] is mod
+    assert interp.obtener_variable('sumar')(1, 2) == 3
 
 
 def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
@@ -170,3 +181,58 @@ def test_obtener_modulo_delega_en_nuevo_resolver(monkeypatch):
     mod = usar_loader.obtener_modulo('json')
 
     assert mod is mock_mod
+
+
+def _ejecutar_codigo(codigo: str, interp: InterpretadorCobra | None = None) -> InterpretadorCobra:
+    tokens = Lexer(codigo).analizar_token()
+    ast = Parser(tokens).parsear()
+    interprete = interp or InterpretadorCobra()
+    interprete.ejecutar_ast(ast)
+    return interprete
+
+
+def test_repl_usar_numero_expone_es_finito_sin_variable_no_declarada(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_numero)
+    interp = _ejecutar_codigo('usar "numero"\nes_finito(10)')
+
+    assert "es_finito" in interp.variables
+
+
+def test_repl_usar_texto_expone_a_snake(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_texto)
+    interp = _ejecutar_codigo('usar "texto"\na_snake("HolaMundo")')
+
+    assert "a_snake" in interp.variables
+
+
+def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_texto)
+    interp = InterpretadorCobra()
+    interp.contextos[-1].define("a_snake", lambda x: x)
+
+    with pytest.raises(NameError, match=r"símbolo 'a_snake' ya existe"):
+        interp.ejecutar_nodo(NodoUsar('texto'))
+
+
+def test_repl_usar_numpy_falla_sin_estado_parcial():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
+    with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
+        _ejecutar_codigo('usar "numpy"', interp)
+
+    assert "numpy" not in interp.variables
+
+
+def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_numero)
+    with pytest.raises(InvalidTokenError, match=r"Token no reconocido: '\.'"):
+        _ejecutar_codigo('usar "numero"\nnumero.es_finito(10)')
