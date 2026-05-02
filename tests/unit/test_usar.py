@@ -295,7 +295,28 @@ def test_repl_usar_colision_en_ancestro_no_inyecta_exportables(monkeypatch):
 
 
 
+def test_repl_usar_texto_colision_en_ancestro_es_atomico(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
 
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    interp = InterpretadorCobra()
+    contexto_padre = interp.contextos[-1]
+    contexto_hijo = Environment(parent=contexto_padre)
+    # Contrato: no sobrescribir en toda la cadena léxica.
+    contexto_padre.define("a_snake", lambda _valor: "ocupado")
+    interp.contextos.append(contexto_hijo)
+    interp.mem_contextos.append({})
+
+    with pytest.raises(NameError, match=r"símbolo 'a_snake' ya existe"):
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    assert contexto_padre.get("a_snake")("Hola") == "ocupado"
+    assert "a_snake" not in contexto_hijo.values
+    assert "a_kebab" not in contexto_hijo.values
+    assert "capitalizar" not in contexto_hijo.values
+
+    interp.mem_contextos.pop()
+    interp.contextos.pop()
 
 
 def test_usar_modulo_externo_no_estricto_inyecta_exportables_completos(monkeypatch):
