@@ -244,7 +244,7 @@ class CompileCommand(BaseCommand):
                 codigo = f.read()
 
             ast = obtener_ast(codigo)
-            validador = construir_cadena()
+            validador = construir_cadena(emitir_side_effects=False)
             for nodo in ast:
                 nodo.aceptar(validador)
 

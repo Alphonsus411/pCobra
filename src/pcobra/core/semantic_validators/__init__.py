@@ -18,10 +18,10 @@ from ..cobra_config import auditoria_activa
 
 # Instancia por defecto reutilizable de la cadena de validación
 _CADENA_DEFECTO = None
-_CACHE_INFO: tuple[FunctionType, bool] | None = None
+_CACHE_INFO: tuple[FunctionType, bool, bool] | None = None
 
 
-def construir_cadena(extra_validators=None):
+def construir_cadena(extra_validators=None, *, emitir_side_effects: bool = False):
     """Devuelve la cadena de validadores por defecto.
 
     Si no se proporcionan validadores extra, la cadena se crea una única vez y
@@ -34,12 +34,12 @@ def construir_cadena(extra_validators=None):
     if (
         extra_validators is None
         and _CADENA_DEFECTO is not None
-        and _CACHE_INFO == (ValidadorPrimitivaPeligrosa.__init__, auditoria)
+        and _CACHE_INFO == (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
     ):
         return _CADENA_DEFECTO
 
     if auditoria:
-        primero = ValidadorAuditoria()
+        primero = ValidadorAuditoria(emitir_side_effects=emitir_side_effects)
         actual = primero.set_siguiente(ValidadorPrimitivaPeligrosa())
     else:
         primero = ValidadorPrimitivaPeligrosa()
@@ -54,7 +54,7 @@ def construir_cadena(extra_validators=None):
 
     if extra_validators is None:
         _CADENA_DEFECTO = primero
-        _CACHE_INFO = (ValidadorPrimitivaPeligrosa.__init__, auditoria)
+        _CACHE_INFO = (ValidadorPrimitivaPeligrosa.__init__, auditoria, emitir_side_effects)
 
     return primero
 

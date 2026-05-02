@@ -415,7 +415,9 @@ class InterpretadorCobra:
         # Fase interna del intérprete; por defecto en ejecución para preservar
         # el comportamiento actual fuera del REPL.
         self.mode = "execution"
-        self._validador = construir_cadena(extra) if safe_mode else None
+        self._validador = (
+            construir_cadena(extra, emitir_side_effects=False) if safe_mode else None
+        )
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
         # Conjunto para evitar validar el mismo nodo varias veces
@@ -442,6 +444,8 @@ class InterpretadorCobra:
             raise ValueError(f"Modo inválido: {mode}")
         previo = self.mode
         self.mode = mode
+        if self._validador is not None and hasattr(self._validador, "emitir_side_effects"):
+            self._validador.emitir_side_effects = mode == "execution"
         return previo
 
     @property
