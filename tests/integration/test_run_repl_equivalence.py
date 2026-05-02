@@ -288,7 +288,7 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
                 "func triple(n):\n"
                 "    retorno doble(n) + n\n"
                 "fin\n"
-                "triple(2)"
+                "triple(3)"
             )
         warnings_llamada_anidada = list(warning_mock.call_args_list)
 
@@ -301,7 +301,7 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
         call("Llamada a funcion: triple"),
         call("Llamada a funcion: doble"),
     ]
-    assert lineas_salida[-2:] == ["2", "6"]
+    assert lineas_salida[-2:] == ["2", "9"]
 
 
 
