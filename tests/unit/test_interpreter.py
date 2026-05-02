@@ -103,6 +103,51 @@ def test_funcion_actualiza_scope_lexico_capturado():
     assert inter.obtener_variable("a") == 1
 
 
+def test_definicion_funcion_no_ejecuta_cuerpo_ni_evalua_parametros(monkeypatch):
+    """Regresión: definir una función no debe ejecutar su cuerpo."""
+    inter = InterpretadorCobra()
+    inter.ejecutar_asignacion(NodoAsignacion("contador", NodoValor(0), declaracion=True))
+
+    llamadas = []
+    evaluaciones_x = []
+
+    original_evaluar = inter.evaluar_expresion
+
+    def spy_llamada(nodo):
+        llamadas.append(nodo.nombre)
+        return None
+
+    def spy_evaluar(expr):
+        if isinstance(expr, NodoIdentificador) and expr.nombre == "x":
+            evaluaciones_x.append("x")
+        return original_evaluar(expr)
+
+    monkeypatch.setattr(inter, "ejecutar_llamada_funcion", spy_llamada)
+    monkeypatch.setattr(inter, "evaluar_expresion", spy_evaluar)
+
+    funcion = NodoFuncion(
+        "combinar",
+        ["x"],
+        [
+            NodoLlamadaFuncion("doble", [NodoIdentificador("x")]),
+            NodoRetorno(
+                NodoOperacionBinaria(
+                    NodoIdentificador("x"),
+                    Token(TipoToken.SUMA, "+"),
+                    NodoValor(1),
+                )
+            ),
+            NodoAsignacion("contador", NodoValor(99)),
+        ],
+    )
+
+    inter.ejecutar_funcion(funcion)
+
+    assert llamadas == []
+    assert evaluaciones_x == []
+    assert inter.obtener_variable("contador") == 0
+
+
 def test_regresion_llamada_funcion_no_yield_limpia_contexto_una_sola_vez():
     """Evita doble limpieza de contexto y underflow de pilas internas."""
     inter = InterpretadorCobra()
