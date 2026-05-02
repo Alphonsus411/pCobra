@@ -102,3 +102,23 @@ fin
     assert "9" in salida_stdout
     assert not any("WARNING: Llamada a funcion: triple" in ln for ln in salida_logging)
     assert not any("WARNING: Llamada a funcion: doble" in ln for ln in salida_logging)
+
+
+def test_regresion_repl_fase_analisis_y_ejecucion_para_func_test() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+
+    salida_def, logs_def = _capturar_repl(
+        cmd,
+        """
+func test(x):
+    retorno x
+fin
+""",
+    )
+    assert salida_def == ""
+    assert logs_def == []
+
+    salida_call, _ = _capturar_repl(cmd, "test(1)")
+    lineas = salida_call.splitlines()
+    assert lineas.count("WARNING: Llamada a funcion: test") == 1
+    assert lineas[-1] == "1"
