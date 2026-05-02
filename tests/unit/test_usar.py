@@ -239,6 +239,7 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
     with pytest.raises(NameError, match=r"símbolo 'colisiona' ya existe"):
         interp.ejecutar_nodo(NodoUsar("mi_modulo"))
 
+    assert interp.obtener_variable("colisiona") is not None
     assert "disponible" not in interp.variables
 
 
@@ -253,6 +254,48 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
 
     assert interp.variables == estado_inicial
     assert "numpy" not in interp.variables
+
+
+def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
+    modulo_oficial = ModuleType("numero")
+    modulo_oficial.es_finito = lambda valor: True
+    monkeypatch.setitem(usar_loader.USAR_WHITELIST, "numero", "numero")
+
+    llamadas = {"oficial": 0, "importlib": 0}
+
+    def _resolver_fallido(*_args, **_kwargs):
+        from pcobra.cobra.imports.resolver import ImportResolutionError
+
+        raise ImportResolutionError("sin backend")
+
+    class FakeResolver:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        load_module = _resolver_fallido
+
+    def _import_module_controlado(nombre, *args, **kwargs):
+        if nombre == "numero":
+            llamadas["importlib"] += 1
+            raise ModuleNotFoundError(nombre)
+        return importlib_import_real(nombre, *args, **kwargs)
+
+    def _oficial_controlado(nombre):
+        llamadas["oficial"] += 1
+        assert nombre == "numero"
+        return modulo_oficial
+
+    importlib_import_real = usar_loader.importlib.import_module
+    from pcobra.cobra.imports import resolver as imports_resolver
+
+    monkeypatch.setattr(imports_resolver, "CobraImportResolver", FakeResolver)
+    monkeypatch.setattr(usar_loader.importlib, "import_module", _import_module_controlado)
+    monkeypatch.setattr(usar_loader, "obtener_modulo_cobra_oficial", _oficial_controlado)
+
+    modulo = usar_loader.obtener_modulo("numero")
+
+    assert modulo is modulo_oficial
+    assert llamadas == {"oficial": 1, "importlib": 1}
 
 
 def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
