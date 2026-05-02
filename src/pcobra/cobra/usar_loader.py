@@ -150,7 +150,7 @@ def cargar_lista_blanca():
 cargar_lista_blanca()
 
 
-def obtener_modulo(nombre: str):
+def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
     """Importa y devuelve un módulo.
 
     Si el paquete no está instalado se intentará ejecutar ``pip install``
@@ -158,6 +158,7 @@ def obtener_modulo(nombre: str):
     De lo contrario se lanza :class:`RuntimeError`.
     """
     nombre = _validar_nombre(nombre)
+    # Política runtime general: whitelist + resolver + import local/stdlib + pip opcional.
     if not USAR_WHITELIST:
         raise PermissionError(
             "La lista blanca de paquetes está vacía. No se puede usar 'usar'."
@@ -212,7 +213,7 @@ def obtener_modulo(nombre: str):
                 break
 
         # Si no se encontró, verificar si la instalación está permitida
-        if not os.environ.get(USAR_INSTALL_ENV):
+        if not permitir_instalacion or not os.environ.get(USAR_INSTALL_ENV):
             raise RuntimeError(
                 "Instalación automática no permitida. "
                 f"Define {USAR_INSTALL_ENV}=1 para habilitarla."

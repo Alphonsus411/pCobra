@@ -78,6 +78,7 @@ from pcobra.cobra.cli.target_policies import (
     resolve_docker_backend,
 )
 from pcobra.cobra.cli.transpiler_registry import cli_toml_map
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 DOCKER_RUNTIME_TARGETS = tuple(DOCKER_RUNTIME_BY_TARGET.values())
 SANDBOX_DOCKER_CHOICES = DOCKER_EXECUTABLE_TARGETS
 SANDBOX_DOCKER_HELP = OFFICIAL_RUNTIME_TARGETS_HELP
@@ -213,19 +214,7 @@ class InteractiveCommand(BaseCommand):
         }
     )
 
-    _USAR_ALIAS_REPL = {
-        "archivo": "archivo",
-        "asincrono": "asincrono",
-        "datos": "datos",
-        "decoradores": "decoradores",
-        "fecha": "fecha",
-        "interfaz": "interfaz",
-        "lista": "lista",
-        "logica": "logica",
-        "numero": "numero",
-        "texto": "texto",
-        "util": "util",
-    }
+    _USAR_ALIAS_REPL = REPL_COBRA_MODULE_MAP
 
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
