@@ -1826,6 +1826,8 @@ class InterpretadorCobra:
 
             simbolos_a_inyectar = []
             contexto_actual = self.contextos[-1]
+
+            # Fase A: recolectar y validar todos los símbolos exportables.
             for nombre in exportables:
                 if not isinstance(nombre, str) or nombre.startswith("_"):
                     continue
@@ -1837,13 +1839,17 @@ class InterpretadorCobra:
                 if not callable(simbolo):
                     continue
 
+                simbolos_a_inyectar.append((nombre, simbolo))
+
+            # Fase B: validar colisiones de forma completa antes de definir.
+            for nombre, _simbolo in simbolos_a_inyectar:
                 if contexto_actual.contains(nombre):
                     raise NameError(
                         "No se puede usar el módulo "
                         f"'{nodo.modulo}': el símbolo '{nombre}' ya existe en el contexto actual"
                     )
-                simbolos_a_inyectar.append((nombre, simbolo))
 
+            # Definir en bloque solo si toda la validación anterior fue exitosa.
             for nombre, simbolo in simbolos_a_inyectar:
                 contexto_actual.define(nombre, simbolo)
         except Exception as exc:
