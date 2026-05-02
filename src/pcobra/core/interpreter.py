@@ -1793,12 +1793,31 @@ class InterpretadorCobra:
                 self._set_mode(modo_prev)
 
     def ejecutar_usar(self, nodo):
-        """Importa un módulo de Python instalándolo si es necesario."""
+        """Importa callables públicos de un módulo Python al contexto actual."""
         from .usar_loader import obtener_modulo
 
         try:
             modulo = obtener_modulo(nodo.modulo)
-            self.contextos[-1].define(nodo.modulo, modulo)
+            exportables = getattr(modulo, "__all__", None)
+            if exportables is None:
+                exportables = dir(modulo)
+
+            contexto_actual = self.contextos[-1]
+            for nombre in exportables:
+                if not isinstance(nombre, str) or nombre.startswith("_"):
+                    continue
+
+                simbolo = getattr(modulo, nombre, None)
+                if not callable(simbolo):
+                    continue
+
+                if contexto_actual.contains(nombre):
+                    raise NameError(
+                        "No se puede usar el módulo "
+                        f"'{nodo.modulo}': el símbolo '{nombre}' ya existe en el contexto actual"
+                    )
+
+                contexto_actual.define(nombre, simbolo)
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise
