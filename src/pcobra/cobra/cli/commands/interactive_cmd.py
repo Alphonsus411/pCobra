@@ -232,6 +232,10 @@ class InteractiveCommand(BaseCommand):
         self._seguro_repl = True
         self._extra_validators_repl: Any = None
         self._interpretador_sesion: Optional[InterpretadorCobra] = None
+        # Fases controladas del REPL:
+        # - analysis: parseo/prevalidación silenciosa sin efectos visibles.
+        # - execution: evaluación real con efectos controlados del lenguaje.
+        self._allowed_modes = frozenset({"analysis", "execution"})
         self.mode = "analysis"
 
     @staticmethod
@@ -419,6 +423,8 @@ class InteractiveCommand(BaseCommand):
 
     def _fijar_modo_repl(self, modo: str) -> None:
         """Sincroniza el modo REPL local con el modo del intérprete."""
+        if modo not in self._allowed_modes:
+            raise ValueError(f"Modo REPL inválido: {modo}")
         self.mode = modo
         self.interpretador.mode = modo
 
