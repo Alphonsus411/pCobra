@@ -304,6 +304,31 @@ def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
     assert lineas_salida[-2:] == ["2", "9"]
 
 
+@pytest.mark.integration
+def test_repl_definir_funcion_triple_no_produce_salida_en_definicion() -> None:
+    repl = InteractiveCommand(InterpretadorCobra())
+    repl._seguro_repl = False
+    repl._extra_validators_repl = None
+    out_repl, err_repl = StringIO(), StringIO()
+
+    with patch("logging.warning") as warning_mock:
+        with redirect_stdout(out_repl), redirect_stderr(err_repl):
+            repl.ejecutar_codigo(
+                "func doble(x):\n"
+                "    retorno x * 2\n"
+                "fin"
+            )
+            repl.ejecutar_codigo(
+                "func triple(x):\n"
+                "    retorno doble(x) + x\n"
+                "fin"
+            )
+
+    assert err_repl.getvalue() == ""
+    assert out_repl.getvalue() == ""
+    assert warning_mock.call_args_list == []
+
+
 
 @pytest.mark.integration
 def test_repl_incremental_var_var_imprimir_y_nameerror_sin_temporales_internas() -> None:
