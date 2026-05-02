@@ -903,26 +903,53 @@ imprimir(saludo)
 
 Al ejecutar `programa.co`, se procesará primero `modulo.co` y luego se imprimirá `Hola desde módulo`.
 
-## Instrucción `usar` para dependencias dinámicas
+## Instrucción `usar`: separación REPL vs runtime general
 
-La sentencia `usar "paquete"` intenta importar un módulo de Python. Si el
-paquete no está disponible, Cobra ejecutará `pip install paquete` para
-instalarlo y luego lo cargará en tiempo de ejecución. Cuando la entrada de la
-lista blanca incluye hashes (`--hash=`) se añade automáticamente la bandera
-`--require-hashes` para que `pip` verifique el contenido; de lo contrario se
-omite. El módulo queda registrado en el entorno bajo el mismo nombre para su
-uso posterior.
-Para restringir qué dependencias pueden instalarse se emplea la variable
-`USAR_WHITELIST` definida en `src/pcobra/cobra/usar_loader.py`. Basta con
-añadir o quitar nombres de paquetes en dicho conjunto para modificar la lista
-autorizada. Si la lista se deja vacía la función `obtener_modulo` lanzará
-`PermissionError`, por lo que es necesario poblarla antes de permitir
-instalaciones dinámicas.
+La semántica de `usar` depende del contexto de ejecución:
 
-Para habilitar la instalación automática define la variable de entorno
-`COBRA_USAR_INSTALL=1`. Cuando esta variable no esté establecida,
-`obtener_modulo()` rechazará instalar dependencias y lanzará un
-`RuntimeError` si el paquete no se encuentra.
+### REPL (modo interactivo)
+
+En REPL, `usar` es **estricto**:
+
+- Solo acepta módulos oficiales definidos en `REPL_COBRA_MODULE_MAP`.
+- **No** existe fallback de instalación con `pip`.
+- Si pides un módulo externo (por ejemplo `numpy`), se rechaza con error y sin
+  dejar estado parcial.
+- Los símbolos se inyectan de forma directa (sin namespace de objeto).
+
+Ejemplos canónicos en REPL:
+
+```cobra
+usar "numero"
+imprimir(es_finito(10))
+
+usar "texto"
+imprimir(a_snake("HolaMundo"))
+```
+
+Ejemplo de rechazo explícito en REPL:
+
+```cobra
+usar "numpy"   # rechazado: módulo externo no soportado en REPL
+```
+
+> Nota: en Cobra REPL no hay dot-access para estos módulos inyectados.
+> `numero.es_finito(10)` **no** está permitido; usa `es_finito(10)`.
+
+### Runtime fuera de REPL
+
+Fuera del REPL se aplica la política general de resolución de dependencias
+(whitelist y reglas de entorno/configuración del loader).
+
+La sentencia `usar "paquete"` intenta importar un módulo de Python y, según la
+configuración activa, puede habilitar instalación dinámica. Para restringir qué
+dependencias pueden instalarse se emplea la variable `USAR_WHITELIST` definida
+en `src/pcobra/cobra/usar_loader.py`.
+
+Si la política habilita instalación automática (por ejemplo con
+`COBRA_USAR_INSTALL=1`), el runtime podrá invocar `pip` cuando el paquete no
+esté disponible. Si no está habilitada, `obtener_modulo()` rechazará la
+instalación y lanzará error.
 
 ## Archivo de mapeo de módulos
 

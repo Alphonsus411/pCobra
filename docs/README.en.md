@@ -559,9 +559,45 @@ imprimir(saludo)
 
 When running `programa.co`, `modulo.co` is processed first and then `Hola desde módulo` is printed.
 
-## `usar` statement for dynamic dependencies
+## `usar` statement: REPL vs general runtime
 
-The statement `usar "paquete"` tries to import a Python module. If the package is not available, Cobra will run `pip install paquete` to install it and then load it at runtime. The module is registered in the environment under the same name for later use. To restrict which dependencies can be installed use the variable `USAR_WHITELIST` defined in `src/pcobra/cobra/usar_loader.py`.
+`usar` has different semantics depending on execution context:
+
+### REPL (interactive mode)
+
+In REPL, `usar` is **strict**:
+
+- Only official Cobra modules listed in `REPL_COBRA_MODULE_MAP` are allowed.
+- There is **no** `pip` installation fallback.
+- External modules (for example `numpy`) are rejected with no partial state left in session context.
+- Symbols are injected directly (not as object namespace access).
+
+Canonical REPL examples:
+
+```cobra
+usar "numero"
+imprimir(es_finito(10))
+
+usar "texto"
+imprimir(a_snake("HolaMundo"))
+```
+
+Explicit REPL rejection example:
+
+```cobra
+usar "numpy"   # rejected: external modules are not supported in REPL
+```
+
+> Note: there is no dot-access for these injected symbols in Cobra REPL.
+> `numero.es_finito(10)` is **not** allowed; use `es_finito(10)`.
+
+### Runtime outside REPL
+
+Outside REPL, Cobra applies the general dependency policy (whitelist + resolver/loader configuration).
+
+The statement `usar "paquete"` attempts a Python import and then follows runtime policy. To restrict allowed dynamic dependencies use `USAR_WHITELIST` in `src/pcobra/cobra/usar_loader.py`.
+
+If auto-install is enabled by policy/configuration (for example `COBRA_USAR_INSTALL=1`), the runtime may invoke `pip` when the package is missing. If not enabled, `obtener_modulo()` rejects installation and raises an error.
 
 ## Module mapping file
 
