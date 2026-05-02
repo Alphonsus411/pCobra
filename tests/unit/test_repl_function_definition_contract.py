@@ -112,6 +112,28 @@ fin
     assert not any("WARNING: Llamada a funcion: doble" in ln for ln in salida_logging)
 
 
+def test_no_regresion_llamadas_anidadas_triple_warning_unico_por_funcion() -> None:
+    cmd = InteractiveCommand(InterpretadorCobra())
+    salida_def, _ = _capturar_repl(
+        cmd,
+        """
+func doble(x):
+    retorno x + x
+fin
+func triple(x):
+    retorno doble(x) + x
+fin
+""",
+    )
+    assert salida_def == ""
+
+    salida_stdout, _ = _capturar_repl(cmd, "triple(3)")
+    lineas = salida_stdout.splitlines()
+    assert lineas.count("WARNING: Llamada a funcion: triple") == 1
+    assert lineas.count("WARNING: Llamada a funcion: doble") == 1
+    assert lineas[-1] == "9"
+
+
 def test_regresion_repl_fase_analisis_y_ejecucion_para_func_test() -> None:
     cmd = InteractiveCommand(InterpretadorCobra())
 

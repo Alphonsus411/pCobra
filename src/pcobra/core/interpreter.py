@@ -1594,6 +1594,7 @@ class InterpretadorCobra:
 
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
+        emitir_salida_llamada = self.in_execution()
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
@@ -1603,19 +1604,19 @@ class InterpretadorCobra:
                     valor = "verdadero"
                 elif valor is False:
                     valor = "falso"
-                if self.in_execution():
+                if emitir_salida_llamada:
                     print(valor)
         else:
-            if self.in_execution():
+            if emitir_salida_llamada:
                 print(f"WARNING: Llamada a funcion: {nodo.nombre}")
             funcion = self.obtener_variable(nodo.nombre)
             if not isinstance(funcion, dict) or funcion.get("tipo") != "funcion":
-                if self.in_execution():
+                if emitir_salida_llamada:
                     print(f"Funci\u00f3n '{nodo.nombre}' no implementada")
                 return None
 
             if len(funcion["parametros"]) != len(nodo.argumentos):
-                if self.in_execution():
+                if emitir_salida_llamada:
                     print(
                         f"Error: se esperaban {len(funcion['parametros'])} argumentos"
                     )
