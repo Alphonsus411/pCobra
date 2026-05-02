@@ -22,16 +22,18 @@ class ValidadorAuditoria(ValidadorBase):
     def __init__(self, emitir_side_effects: bool = True) -> None:
         super().__init__()
         self.emitir_side_effects = emitir_side_effects
+        # Fase explícita para alinear los side effects con el intérprete.
+        self.mode = "execution" if emitir_side_effects else "analysis"
 
     def _log(self, mensaje: str) -> None:
         # Fuente de verdad centralizada para side effects de auditoría.
-        if not self.emitir_side_effects:
+        if not self.in_execution():
             return
         logging.warning(mensaje)
 
     def in_execution(self) -> bool:
         """Indica si la auditoría debe emitir side effects en fase de ejecución."""
-        return self.emitir_side_effects
+        return self.emitir_side_effects and self.mode == "execution"
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
         if self.in_execution():
