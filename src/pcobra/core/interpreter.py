@@ -1814,13 +1814,36 @@ class InterpretadorCobra:
 
         from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
+        def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool):
+            """Resuelve exportables con una política única para ``usar``."""
+            exportables = getattr(modulo_obj, "__all__", None)
+            if exportables is None:
+                if modulo_oficial:
+                    raise ImportError(
+                        f"El módulo oficial '{nodo.modulo}' debe definir __all__ explícito"
+                    )
+                return []
+
+            simbolos = []
+            for nombre in exportables:
+                if not isinstance(nombre, str) or nombre.startswith("_"):
+                    continue
+                if not hasattr(modulo_obj, nombre):
+                    continue
+                simbolo = getattr(modulo_obj, nombre)
+                if not callable(simbolo):
+                    continue
+                simbolos.append((nombre, simbolo))
+            return simbolos
+
         try:
             nombre_modulo = nodo.modulo
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
             modulo_canonico = mapa_repl.get(nombre_modulo)
+            es_modulo_oficial_cobra = modulo_canonico is not None
 
-            if modulo_canonico is not None:
+            if es_modulo_oficial_cobra:
                 modulo = obtener_modulo_cobra_oficial(modulo_canonico)
             else:
                 if es_repl_estricto:
@@ -1832,7 +1855,7 @@ class InterpretadorCobra:
                     permitir_instalacion=True,
                 )
 
-            if es_repl_estricto and modulo_canonico is not None:
+            if es_repl_estricto and es_modulo_oficial_cobra:
                 modulo_file = getattr(modulo, "__file__", None)
                 if not modulo_file:
                     raise PermissionError(
@@ -1857,32 +1880,15 @@ class InterpretadorCobra:
                         "REPL estricto: módulo externo no soportado; use solo módulos oficiales de Cobra"
                     )
 
-            exportables = getattr(modulo, "__all__", None)
-            if exportables is None:
-                if es_repl_estricto and modulo_canonico is not None:
-                    raise ImportError(
-                        f"El módulo oficial '{nodo.modulo}' debe definir __all__ explícito"
-                    )
-                exportables = dir(modulo)
-
-            simbolos_a_inyectar = []
+            # ``usar`` solo importa API pública explícita del módulo Cobra:
+            # prioriza __all__, filtra privados/no-callables y evita fugas de
+            # símbolos internos o reexportados de forma implícita.
+            simbolos_a_inyectar = _resolver_exportables_callables(
+                modulo, modulo_oficial=es_modulo_oficial_cobra
+            )
             contexto_actual = self.contextos[-1]
 
-            # Fase A: recolectar y validar todos los símbolos exportables.
-            for nombre in exportables:
-                if not isinstance(nombre, str) or nombre.startswith("_"):
-                    continue
-
-                if not hasattr(modulo, nombre):
-                    continue
-
-                simbolo = getattr(modulo, nombre)
-                if not callable(simbolo):
-                    continue
-
-                simbolos_a_inyectar.append((nombre, simbolo))
-
-            # Fase B: validar colisiones de forma completa antes de definir.
+            # Fase A: validar colisiones de forma completa antes de definir.
             for nombre, _simbolo in simbolos_a_inyectar:
                 if contexto_actual.contains(nombre):
                     raise NameError(
@@ -1890,7 +1896,7 @@ class InterpretadorCobra:
                         f"'{nodo.modulo}': el símbolo '{nombre}' ya existe en el contexto actual"
                     )
 
-            # Definir en bloque solo si toda la validación anterior fue exitosa.
+            # Fase B (atómica): definir solo si toda la validación anterior fue exitosa.
             for nombre, simbolo in simbolos_a_inyectar:
                 contexto_actual.define(nombre, simbolo)
         except Exception as exc:
