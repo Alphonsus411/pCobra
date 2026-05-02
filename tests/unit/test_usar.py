@@ -346,6 +346,42 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
     assert "numpy" not in interp.variables
 
 
+@pytest.mark.parametrize(
+    "escenario",
+    [
+        "alias_no_permitido",
+        "modulo_sin___file__",
+        "ruta_no_oficial",
+    ],
+)
+def test_repl_usar_rechazo_externo_emite_mensaje_canonico(monkeypatch, escenario):
+    modulo = ModuleType("numero")
+    modulo.__all__ = ["es_finito"]
+    modulo.es_finito = lambda valor: True
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
+    if escenario == "alias_no_permitido":
+        with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
+            interp.ejecutar_nodo(NodoUsar("numpy"))
+        return
+
+    if escenario == "modulo_sin___file__":
+        monkeypatch.delattr(modulo, "__file__", raising=False)
+    else:
+        modulo.__file__ = "/tmp/externo/numero.py"
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo_cobra_oficial",
+        lambda _nombre: modulo,
+    )
+
+    with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+
 def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
     modulo_oficial = ModuleType("numero")
     modulo_oficial.es_finito = lambda valor: True

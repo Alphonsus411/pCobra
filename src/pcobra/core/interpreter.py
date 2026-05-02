@@ -1875,9 +1875,7 @@ class InterpretadorCobra:
             if es_repl_estricto and es_modulo_oficial_cobra:
                 modulo_file = getattr(modulo, "__file__", None)
                 if not modulo_file:
-                    raise PermissionError(
-                        "REPL estricto: módulo externo no soportado; no se pudo validar origen oficial"
-                    )
+                    raise PermissionError("módulos externos no soportados en REPL")
 
                 ruta_modulo = Path(modulo_file).resolve()
                 base = Path(__file__).resolve()
@@ -1893,9 +1891,7 @@ class InterpretadorCobra:
                     for ruta_base in rutas_oficiales
                 )
                 if not es_oficial:
-                    raise PermissionError(
-                        "REPL estricto: módulo externo no soportado; use solo módulos oficiales de Cobra"
-                    )
+                    raise PermissionError("módulos externos no soportados en REPL")
 
             # ``usar`` solo importa API pública explícita del módulo Cobra:
             # prioriza __all__, filtra privados/no-callables y evita fugas de
