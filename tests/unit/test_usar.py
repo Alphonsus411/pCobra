@@ -155,7 +155,7 @@ def test_cargar_lista_blanca_sin_cobra_toml_mantiene_hardcoded(monkeypatch, tmp_
 def test_interpreter_usar_registra_modulo(monkeypatch):
     mod = ModuleType('math')
     mod.sumar = lambda a, b: a + b
-    monkeypatch.setattr(core_usar_loader, 'obtener_modulo', lambda _name: mod)
+    monkeypatch.setattr(core_usar_loader, 'obtener_modulo', lambda _name, **_kwargs: mod)
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar('math'))
     assert interp.obtener_variable('sumar')(1, 2) == 3
@@ -191,28 +191,30 @@ def _ejecutar_codigo(codigo: str, interp: InterpretadorCobra | None = None) -> I
     return interprete
 
 
-def test_repl_usar_numero_expone_es_finito_sin_variable_no_declarada(monkeypatch):
+def test_repl_usar_numero_permite_es_finito_sin_prefijo(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_numero)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
     interp = _ejecutar_codigo('usar "numero"\nes_finito(10)')
 
     assert "es_finito" in interp.variables
+    assert interp.obtener_variable("es_finito")(10) is True
 
 
-def test_repl_usar_texto_expone_a_snake(monkeypatch):
+def test_repl_usar_texto_permite_a_snake_sin_prefijo(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_texto)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
     interp = _ejecutar_codigo('usar "texto"\na_snake("HolaMundo")')
 
     assert "a_snake" in interp.variables
+    assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
 
 
 def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_texto)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
     interp = InterpretadorCobra()
     interp.contextos[-1].define("a_snake", lambda x: x)
 
@@ -242,17 +244,20 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
 
 def test_repl_usar_numpy_falla_sin_estado_parcial():
     interp = InterpretadorCobra()
+    interp.contextos[-1].define("sentinela", 42)
+    estado_inicial = dict(interp.variables)
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
     with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
         _ejecutar_codigo('usar "numpy"', interp)
 
+    assert interp.variables == estado_inicial
     assert "numpy" not in interp.variables
 
 
 def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre: modulo_numero)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
     with pytest.raises(InvalidTokenError, match=r"Token no reconocido: '\.'"):
         _ejecutar_codigo('usar "numero"\nnumero.es_finito(10)')
