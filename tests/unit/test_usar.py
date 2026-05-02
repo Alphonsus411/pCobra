@@ -220,6 +220,26 @@ def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
         interp.ejecutar_nodo(NodoUsar('texto'))
 
 
+def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
+    modulo = ModuleType("mi_modulo")
+    modulo.colisiona = lambda x: x
+    modulo.disponible = lambda x: x
+    modulo.__all__ = ["colisiona", "disponible"]
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        lambda _nombre, **_kwargs: modulo,
+    )
+    interp = InterpretadorCobra()
+    interp.contextos[-1].define("colisiona", lambda x: x)
+
+    with pytest.raises(NameError, match=r"símbolo 'colisiona' ya existe"):
+        interp.ejecutar_nodo(NodoUsar("mi_modulo"))
+
+    assert "disponible" not in interp.variables
+
+
 def test_repl_usar_numpy_falla_sin_estado_parcial():
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
