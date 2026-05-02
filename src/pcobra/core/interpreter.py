@@ -416,7 +416,7 @@ class InterpretadorCobra:
         # Por defecto iniciamos en ejecución para preservar compatibilidad fuera del REPL.
         self.mode = "execution"
         self._validador = (
-            construir_cadena(extra, emitir_side_effects=False) if safe_mode else None
+            construir_cadena(extra, emitir_side_effects=True) if safe_mode else None
         )
         # Analizador semántico persistente para mantener contexto entre ejecuciones
         self.analizador = AnalizadorSemantico()
@@ -446,6 +446,8 @@ class InterpretadorCobra:
         self.mode = mode
         if self._validador is not None and hasattr(self._validador, "emitir_side_effects"):
             self._validador.emitir_side_effects = mode == "execution"
+            if hasattr(self._validador, "mode"):
+                self._validador.mode = mode
         return previo
 
     @property
