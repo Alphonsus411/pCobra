@@ -4,7 +4,7 @@ from io import StringIO
 import re
 
 import pytest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from pcobra.cobra.cli.commands_v2.run_cmd import RunCommandV2
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
@@ -254,31 +254,55 @@ def test_repl_statement_normal_imprimir_no_duplica_salida():
 
 
 @pytest.mark.integration
-def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto(caplog):
+def test_repl_llamada_funcion_auditoria_una_sola_vez_y_retorno_correcto():
     repl = InteractiveCommand(InterpretadorCobra())
     repl._seguro_repl = False
     repl._extra_validators_repl = None
     out_repl, err_repl = StringIO(), StringIO()
 
-    with caplog.at_level("WARNING"):
+    with patch("logging.warning") as warning_mock:
         with redirect_stdout(out_repl), redirect_stderr(err_repl):
             repl.ejecutar_codigo(
-                "func duplicar(n):\n"
-                "    retorno n * 2\n"
+                "func solo_definicion(n):\n"
+                "    retorno n\n"
                 "fin"
             )
-            repl.ejecutar_codigo("duplicar(21)")
+        warnings_definicion = list(warning_mock.call_args_list)
 
-    warnings_llamada = [
-        record.getMessage()
-        for record in caplog.records
-        if record.getMessage() == "Llamada a funcion: duplicar"
-    ]
+        warning_mock.reset_mock()
+        with redirect_stdout(out_repl), redirect_stderr(err_repl):
+            repl.ejecutar_codigo(
+                "func test(n):\n"
+                "    retorno n * 2\n"
+                "fin\n"
+                "test(1)"
+            )
+        warnings_llamada_simple = list(warning_mock.call_args_list)
+
+        warning_mock.reset_mock()
+        with redirect_stdout(out_repl), redirect_stderr(err_repl):
+            repl.ejecutar_codigo(
+                "func doble(n):\n"
+                "    retorno n * 2\n"
+                "fin\n"
+                "func triple(n):\n"
+                "    retorno doble(n) + n\n"
+                "fin\n"
+                "triple(2)"
+            )
+        warnings_llamada_anidada = list(warning_mock.call_args_list)
+
     lineas_salida = [linea.strip() for linea in out_repl.getvalue().splitlines() if linea.strip()]
 
     assert err_repl.getvalue() == ""
-    assert warnings_llamada == ["Llamada a funcion: duplicar"]
-    assert lineas_salida[-1] == "42"
+    assert warnings_definicion == []
+    assert warnings_llamada_simple == [call("Llamada a funcion: test")]
+    assert warnings_llamada_anidada == [
+        call("Llamada a funcion: triple"),
+        call("Llamada a funcion: doble"),
+    ]
+    assert lineas_salida[-2:] == ["2", "6"]
+
 
 
 @pytest.mark.integration
