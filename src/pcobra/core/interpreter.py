@@ -436,6 +436,14 @@ class InterpretadorCobra:
         """Indica si el intérprete se encuentra en fase de ejecución."""
         return self.mode == "execution"
 
+    def _set_mode(self, mode: str) -> str:
+        """Actualiza la fase del intérprete y retorna el modo previo."""
+        if mode not in {"analysis", "execution"}:
+            raise ValueError(f"Modo inválido: {mode}")
+        previo = self.mode
+        self.mode = mode
+        return previo
+
     @property
     def variables(self):
         """Devuelve el mapeo local del entorno activo (compatibilidad)."""
@@ -797,7 +805,9 @@ class InterpretadorCobra:
 
     # -- Utilidades ---------------------------------------------------------
     def _validar(self, nodo):
-        """Valida un nodo si el modo seguro está activo."""
+        """Valida un nodo en fase de análisis si el modo seguro está activo."""
+        if self.mode != "analysis":
+            return
         if self.safe_mode and id(nodo) not in self._validados:
             nodo.aceptar(self._validador)
             self._validados.add(id(nodo))
@@ -1051,11 +1061,16 @@ class InterpretadorCobra:
             self._trace_debug(
                 f"[RUN] index={index} node_type={type(nodo).__name__} node_id={id(nodo)}"
             )
-            self._validar(nodo)
-            self._trace_debug("[RUN] antes de ejecutar_nodo")
-            resultado = self.ejecutar_nodo(nodo)
-            if resultado is not None:
-                return resultado
+            modo_prev = self._set_mode("analysis")
+            try:
+                self._validar(nodo)
+                self._set_mode("execution")
+                self._trace_debug("[RUN] antes de ejecutar_nodo")
+                resultado = self.ejecutar_nodo(nodo)
+                if resultado is not None:
+                    return resultado
+            finally:
+                self.mode = modo_prev
         return None
 
     # -- Generación de IR ----------------------------------------------------
@@ -1066,7 +1081,6 @@ class InterpretadorCobra:
 
     def ejecutar_nodo(self, nodo):
         self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
-        self._validar(nodo)
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
         elif isinstance(nodo, NodoCondicional):
@@ -1732,8 +1746,13 @@ class InterpretadorCobra:
         if total > max_nodos:
             raise RuntimeError(f"El AST excede el límite de {max_nodos} nodos")
         for subnodo in ast:
-            self._validar(subnodo)
-            self.ejecutar_nodo(subnodo)
+            modo_prev = self._set_mode("analysis")
+            try:
+                self._validar(subnodo)
+                self._set_mode("execution")
+                self.ejecutar_nodo(subnodo)
+            finally:
+                self.mode = modo_prev
 
     def ejecutar_usar(self, nodo):
         """Importa un módulo de Python instalándolo si es necesario."""
