@@ -563,18 +563,22 @@ class InteractiveCommand(BaseCommand):
         """
 
         self._sincronizar_interpretador_sesion()
-        ast = prevalidar_fn(codigo)
-        # Contrato de prevalidación/parseo en REPL: esta fase es solo de
-        # análisis y no debe emitir side effects de auditoría.
-        self._fijar_modo_repl("analysis")
-        self._validar_ast_para_analisis(ast, validador)
-        # Contrato de dispatch:
-        # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
-        # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
-        # introducir pipeline explícito para snippets normales.
-        # Invariante antirregresión: conservar este método como "thin wrapper"
-        # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
-        self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
+        modo_previo = self.mode
+        try:
+            # Contrato de prevalidación/parseo en REPL: esta fase es solo de
+            # análisis y no debe emitir side effects de auditoría.
+            self._fijar_modo_repl("analysis")
+            ast = prevalidar_fn(codigo)
+            self._validar_ast_para_analisis(ast, validador)
+            # Contrato de dispatch:
+            # REPL = intérprete incremental; pipeline explícito solo para sandbox/setup.
+            # Este helper delega en ``ejecutar_codigo`` y, por diseño, no debe
+            # introducir pipeline explícito para snippets normales.
+            # Invariante antirregresión: conservar este método como "thin wrapper"
+            # (prevalidar + delegar a ejecutar_codigo) sin rutas batch adicionales.
+            self.ejecutar_codigo(codigo, validador, ast_preparseado=ast)
+        finally:
+            self._fijar_modo_repl(modo_previo)
 
     def _debe_intentar_fallback_expresion_top_level(
         self,
