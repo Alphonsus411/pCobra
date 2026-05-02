@@ -191,6 +191,32 @@ def _ejecutar_codigo(codigo: str, interp: InterpretadorCobra | None = None) -> I
     return interprete
 
 
+
+
+def test_repl_usar_numero_inyecta_funciones_globales(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert "es_finito" in interp.variables
+    assert interp.obtener_variable("es_finito")(10) is True
+
+
+def test_repl_usar_texto_inyecta_funciones_globales(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
+    interp.ejecutar_nodo(NodoUsar("texto"))
+
+    assert "a_snake" in interp.variables
+    assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
 def test_repl_usar_numero_permite_es_finito_sin_prefijo(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
@@ -244,6 +270,26 @@ def test_repl_usar_colision_no_inyecta_ningun_simbolo(monkeypatch):
 
 
 
+
+
+
+def test_usar_modulo_externo_no_estricto_inyecta_exportables_completos(monkeypatch):
+    modulo = ModuleType("numpy")
+    modulo.sumar = lambda a, b: a + b
+    modulo.restar = lambda a, b: a - b
+    modulo.__all__ = ["sumar", "restar"]
+
+    monkeypatch.setattr(
+        core_usar_loader,
+        "obtener_modulo",
+        lambda _nombre, **_kwargs: modulo,
+    )
+    interp = InterpretadorCobra()
+
+    interp.ejecutar_nodo(NodoUsar("numpy"))
+
+    assert interp.obtener_variable("sumar")(2, 3) == 5
+    assert interp.obtener_variable("restar")(8, 2) == 6
 
 def test_usar_modulo_externo_sin_exportables_falla_sin_estado_parcial(monkeypatch):
     modulo = ModuleType("numpy")

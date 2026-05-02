@@ -1805,10 +1805,21 @@ class InterpretadorCobra:
     def ejecutar_usar(self, nodo):
         """Importa callables públicos al contexto actual usando la política de ``usar``.
 
-        En modo REPL estricto (cuando existe ``_repl_usar_alias_map``), solo se
-        permiten módulos oficiales de Cobra cargados desde ``corelibs`` o
-        ``standard_library``. No hay fallback a módulos Python externos ni
-        instalación automática de paquetes.
+        Matriz de comportamiento:
+
+        - REPL estricto (``_repl_usar_alias_map`` definido):
+          - Se permiten únicamente módulos oficiales (``numero``, ``texto``,
+            ``logica``, etc.) mapeados en el alias map activo.
+          - El módulo debe resolverse desde rutas oficiales de Cobra
+            (``corelibs``/``standard_library``).
+          - Cualquier módulo externo se rechaza con ``PermissionError``.
+
+        - Fuera de REPL estricto:
+          - Módulos oficiales: se cargan como oficiales y deben exponer
+            ``__all__`` explícito.
+          - Módulos externos: se permiten solo si pueden exportarse de forma
+            completa según la política de ``usar`` (API pública explícita por
+            ``__all__`` y símbolos callables). Si no cumplen, se rechazan.
         """
         from pathlib import Path
 
@@ -1836,8 +1847,8 @@ class InterpretadorCobra:
                 simbolos.append((nombre, simbolo))
             return simbolos
 
-        try:
-            nombre_modulo = nodo.modulo
+        def _resolver_carga_modulo_usar(nombre_modulo: str):
+            """Aplica una única ruta de decisión para módulos de ``usar``."""
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
             modulo_canonico = mapa_repl.get(nombre_modulo)
@@ -1845,15 +1856,21 @@ class InterpretadorCobra:
 
             if es_modulo_oficial_cobra:
                 modulo = obtener_modulo_cobra_oficial(modulo_canonico)
+            elif es_repl_estricto:
+                raise PermissionError("módulos externos no soportados en REPL")
             else:
-                if es_repl_estricto:
-                    raise PermissionError(
-                        "módulos externos no soportados en REPL"
-                    )
                 modulo = obtener_modulo(
                     nombre_modulo,
                     permitir_instalacion=True,
                 )
+
+            return modulo, es_repl_estricto, es_modulo_oficial_cobra
+
+        try:
+            nombre_modulo = nodo.modulo
+            modulo, es_repl_estricto, es_modulo_oficial_cobra = _resolver_carga_modulo_usar(
+                nombre_modulo
+            )
 
             if es_repl_estricto and es_modulo_oficial_cobra:
                 modulo_file = getattr(modulo, "__file__", None)
