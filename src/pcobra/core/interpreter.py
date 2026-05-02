@@ -1822,6 +1822,10 @@ class InterpretadorCobra:
             )
             exportables = getattr(modulo, "__all__", None)
             if exportables is None:
+                if es_repl_estricto and nombre_modulo in self._repl_usar_alias_map:
+                    raise ImportError(
+                        f"El módulo oficial '{nodo.modulo}' debe definir __all__ explícito"
+                    )
                 exportables = dir(modulo)
 
             simbolos_a_inyectar = []

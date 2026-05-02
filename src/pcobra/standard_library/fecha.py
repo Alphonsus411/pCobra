@@ -19,3 +19,5 @@ def sumar_dias(fecha: datetime, dias: int) -> datetime:
     """Devuelve una nueva fecha tras sumar ``dias`` a ``fecha``."""
     return fecha + timedelta(days=dias)
 
+
+__all__ = ["hoy", "formatear", "sumar_dias"]

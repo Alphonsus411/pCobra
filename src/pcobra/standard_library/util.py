@@ -150,3 +150,5 @@ def rel(
         if aplicar:
             restaurar()
 
+
+__all__ = ["es_nulo", "es_vacio", "repetir", "rel"]
