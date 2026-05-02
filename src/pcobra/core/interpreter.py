@@ -1585,6 +1585,7 @@ class InterpretadorCobra:
         funcion = self._construir_funcion(nodo)
         self._verificar_valor_contexto(funcion)
         self.contextos[-1].define(nodo.nombre, funcion)
+        return None
 
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
