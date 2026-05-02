@@ -41,32 +41,26 @@ class ValidadorAuditoria(ValidadorBase):
         Mantener toda emisión a través de ``_log`` para conservar una sola ruta de salida
         y evitar regresiones en futuros refactors.
         """
-        if self.in_execution():
-            self._log(f"Llamada a funcion: {nodo.nombre}")
+        self._log(f"Llamada a funcion: {nodo.nombre}")
         self.generic_visit(nodo)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):
-        if self.in_execution():
-            self._log(f"Llamada a metodo: {nodo.nombre_metodo}")
+        self._log(f"Llamada a metodo: {nodo.nombre_metodo}")
         self.generic_visit(nodo)
 
     def visit_hilo(self, nodo: NodoHilo):
-        if self.in_execution():
-            self._log(f"Ejecucion de hilo: {nodo.llamada.nombre}")
+        self._log(f"Ejecucion de hilo: {nodo.llamada.nombre}")
         nodo.llamada.aceptar(self)
         self.delegar(nodo)
 
     def visit_import(self, nodo: NodoImport):
-        if self.in_execution():
-            self._log(f"Import de modulo: {nodo.ruta}")
+        self._log(f"Import de modulo: {nodo.ruta}")
         self.generic_visit(nodo)
 
     def visit_usar(self, nodo: NodoUsar):
-        if self.in_execution():
-            self._log(f"Usar modulo: {nodo.modulo}")
+        self._log(f"Usar modulo: {nodo.modulo}")
         self.generic_visit(nodo)
 
     def visit_import_desde(self, nodo: NodoImportDesde):
-        if self.in_execution():
-            self._log(f"Importar desde: {nodo.modulo}")
+        self._log(f"Importar desde: {nodo.modulo}")
         self.generic_visit(nodo)

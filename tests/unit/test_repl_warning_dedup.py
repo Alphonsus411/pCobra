@@ -56,8 +56,8 @@ fin
 """
         )
 
-    with patch("sys.stdout", new_callable=StringIO) as out:
+    with patch("sys.stdout", new_callable=StringIO), patch("logging.warning") as warning_mock:
         cmd.ejecutar_codigo("test(1)")
 
-    lineas = out.getvalue().splitlines()
-    assert lineas.count("WARNING: Llamada a funcion: test") == 1
+    assert warning_mock.call_count == 1
+    assert warning_mock.call_args_list[0].args == ("Llamada a funcion: test",)
