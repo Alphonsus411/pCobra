@@ -36,12 +36,11 @@ class ValidadorAuditoria(ValidadorBase):
         return self.emitir_side_effects and self.mode == "execution"
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
-        """Contrato: este visitor nunca debe emitir side effects fuera de ejecución.
+        """La advertencia visible de llamada de función vive en el intérprete.
 
-        Mantener toda emisión a través de ``_log`` para conservar una sola ruta de salida
-        y evitar regresiones en futuros refactors.
+        Aquí solo se recorre el árbol para no duplicar emisiones (validador +
+        intérprete) ante el mismo evento de usuario.
         """
-        self._log(f"Llamada a funcion: {nodo.nombre}")
         self.generic_visit(nodo)
 
     def visit_llamada_metodo(self, nodo: NodoLlamadaMetodo):

@@ -1603,6 +1603,8 @@ class InterpretadorCobra:
     def ejecutar_llamada_funcion(self, nodo):
         """Ejecuta la invocación de una función, interna o del usuario."""
         emitir_salida_llamada = self.in_execution()
+        if emitir_salida_llamada:
+            print(f"WARNING: Llamada a funcion: {nodo.nombre}")
         if nodo.nombre == "imprimir":
             for arg in nodo.argumentos:
                 if isinstance(arg, Token) and arg.tipo == TipoToken.IDENTIFICADOR:
