@@ -236,5 +236,6 @@ En REPL, `usar` aplica una política **estricta** y distinta del runtime general
 - Si el módulo solicitado no está en ese mapa, se aborta antes de cualquier import externo o instalación con `PermissionError("módulos externos no soportados en REPL")`.
 - En REPL no se permite fallback de instalación con `pip` bajo ninguna condición.
 - La inyección de símbolos es atómica: si falla la validación/carga, no queda estado parcial en el contexto interactivo.
+- Pruebas de contrato asociadas: `tests/unit/test_usar.py` valida `usar "numero"` + `es_finito(10)` sin prefijo, `usar "texto"` + `a_snake("HolaMundo")` sin prefijo, rechazo de `usar "numpy"` sin estado parcial y bloqueo de acceso por punto (`numero.es_finito(10)`).
 
 Fuera del REPL, el runtime general mantiene su política de whitelist y sus mecanismos de resolución/instalación configurables.
