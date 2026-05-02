@@ -418,3 +418,44 @@ def test_validacion_llamada_anidada_emite_un_warning_por_funcion(monkeypatch):
 
     assert warnings_emitidos.count("triple") == 1
     assert warnings_emitidos.count("doble") == 1
+
+
+def test_llamada_funcion_ejecuta_cuerpo_una_sola_vez_por_invocacion(monkeypatch):
+    """Garantiza que cada invocación recorre el body exactamente una vez."""
+    inter = InterpretadorCobra()
+    ejecuciones_retorno = []
+
+    identidad = NodoFuncion("identidad", ["x"], [NodoRetorno(NodoIdentificador("x"))])
+    inter.ejecutar_nodo(identidad)
+
+    original = inter.ejecutar_nodo
+
+    def _spy(nodo):
+        if isinstance(nodo, NodoRetorno):
+            ejecuciones_retorno.append(id(nodo))
+        return original(nodo)
+
+    monkeypatch.setattr(inter, "ejecutar_nodo", _spy)
+
+    assert inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(10)])) == 10
+    assert inter.ejecutar_llamada_funcion(NodoLlamadaFuncion("identidad", [NodoValor(20)])) == 20
+    assert len(ejecuciones_retorno) == 2
+
+
+def test_retorno_corta_flujo_y_no_reingresa_al_body():
+    """Tras retorno temprano no debe ejecutarse ninguna instrucción posterior."""
+    inter = InterpretadorCobra()
+    inter.ejecutar_nodo(NodoAsignacion("contador", NodoValor(0), declaracion=True))
+
+    corta = NodoFuncion(
+        "corta",
+        [],
+        [
+            NodoRetorno(NodoValor(7)),
+            NodoAsignacion("contador", NodoValor(99)),
+        ],
+    )
+
+    inter.ejecutar_nodo(corta)
+    assert inter.ejecutar_nodo(NodoLlamadaFuncion("corta", [])) == 7
+    assert inter.obtener_variable("contador") == 0
