@@ -5,13 +5,14 @@ No re-exporta clases ni símbolos internos de `pcobra.core.holobits` ni de
 `holobit_sdk`.
 """
 
-from __future__ import annotations
-
 import json
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-from pcobra.core.holobits.holobit import Holobit as _Holobit
+from pcobra.core.holobits.graficar import graficar as _sdk_graficar
+from pcobra.core.holobits.holobit import Holobit as _SDKHolobit
+from pcobra.core.holobits.proyeccion import proyectar as _sdk_proyectar
+from pcobra.core.holobits.transformacion import transformar as _sdk_transformar
 
 
 def _es_numero(valor: Any) -> bool:
@@ -29,18 +30,18 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
     return salida
 
 
-def _a_estructura_cobra(hb: _Holobit) -> dict[str, Any]:
-    return {"__cobra_tipo__": "holobit", "valores": [float(v) for v in hb.valores]}
+def _a_estructura_cobra(hb: _SDKHolobit) -> dict[str, Any]:
+    return {"tipo": "holobit", "valores": [float(v) for v in hb.valores]}
 
 
-def _desde_estructura_cobra(hb: dict[str, Any]) -> _Holobit:
-    if not isinstance(hb, dict) or hb.get("__cobra_tipo__") != "holobit":
+def _desde_estructura_cobra(hb: dict[str, Any]) -> _SDKHolobit:
+    if not isinstance(hb, dict) or hb.get("tipo") != "holobit":
         raise TypeError("Se esperaba una estructura Cobra de holobit")
-    return _Holobit(_normalizar_valores(hb.get("valores", [])))
+    return _SDKHolobit(_normalizar_valores(hb.get("valores", [])))
 
 
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
-    return _a_estructura_cobra(_Holobit(_normalizar_valores(valores)))
+    return _a_estructura_cobra(_SDKHolobit(_normalizar_valores(valores)))
 
 
 def validar_holobit(hb: Any) -> bool:
@@ -63,45 +64,17 @@ def deserializar_holobit(payload: str) -> dict[str, Any]:
 
 
 def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
-    interno = _desde_estructura_cobra(hb)
-    modo_normalizado = str(modo).strip().lower()
-    valores = list(interno.valores)
-    if modo_normalizado in {"1d", "linea"}:
-        salida = valores[:1]
-    elif modo_normalizado in {"2d", "plano"}:
-        salida = (valores + [0.0, 0.0])[:2]
-    elif modo_normalizado in {"3d", "espacio"}:
-        salida = (valores + [0.0, 0.0, 0.0])[:3]
-    elif modo_normalizado == "vector":
-        salida = valores
-    else:
-        raise ValueError(f"Modo de proyección no soportado: {modo}")
+    salida = _sdk_proyectar(_desde_estructura_cobra(hb), modo)
     return crear_holobit(salida)
 
 
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
-    interno = _desde_estructura_cobra(hb)
-    if operacion == "rotar" and len(parametros) >= 2:
-        eje = str(parametros[0]).lower()
-        angulo = float(parametros[1])
-        factor = angulo / 360.0
-        nuevos = list(interno.valores)
-        if nuevos:
-            if eje == "x":
-                nuevos[0] += factor
-            elif eje == "y" and len(nuevos) > 1:
-                nuevos[1] += factor
-            elif eje == "z" and len(nuevos) > 2:
-                nuevos[2] += factor
-        interno = _Holobit(nuevos)
-    else:
-        raise ValueError(f"Operación no soportada: {operacion}")
-    return _a_estructura_cobra(interno)
+    salida = _sdk_transformar(_desde_estructura_cobra(hb), operacion, *parametros)
+    return _a_estructura_cobra(salida)
 
 
 def graficar(hb: dict[str, Any]) -> str:
-    interno = _desde_estructura_cobra(hb)
-    return f"Holobit({interno.valores})"
+    return _sdk_graficar(_desde_estructura_cobra(hb))
 
 
 def combinar(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
@@ -129,3 +102,5 @@ __all__ = [
     "combinar",
     "medir",
 ]
+
+del Any, Iterable, Sequence
