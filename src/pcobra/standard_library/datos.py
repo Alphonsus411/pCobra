@@ -18,9 +18,10 @@ import math
 import statistics
 from collections import Counter, defaultdict
 from contextlib import suppress
+from functools import reduce as _reduce
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence
+from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence, Sized
 
 from pcobra._stubs.compat import import_optional_module
 
@@ -60,8 +61,12 @@ __all__ = [
     "rellenar_nulos",
     "desplegar_tabla",
     "pivotar_tabla",
-    "a_listas",
-    "de_listas",
+    "agregar",
+    "mapear",
+    "reducir",
+    "claves",
+    "valores",
+    "longitud",
 ]
 
 
@@ -524,6 +529,46 @@ def de_listas(columnas: Mapping[str, Sequence[Any]]) -> Tabla:
         {clave: columnas[clave][indice] for clave in claves}
         for indice in range(longitud)
     ]
+
+
+def agregar(tabla: Iterable[Registro], fila: Registro) -> Tabla:
+    """Agrega ``fila`` a ``tabla`` devolviendo una nueva tabla materializada."""
+
+    base = _materializar_tabla(tabla)
+    base.append(dict(fila))
+    return base
+
+
+def mapear(tabla: Iterable[Registro], transformacion: Callable[[Registro], Registro]) -> Tabla:
+    """Aplica ``transformacion`` por fila devolviendo una nueva tabla."""
+
+    return [dict(transformacion(dict(fila))) for fila in _materializar_tabla(tabla)]
+
+
+def reducir(
+    tabla: Iterable[Registro], funcion: Callable[[Any, Registro], Any], inicial: Any
+) -> Any:
+    """Reduce filas acumulando con ``funcion`` desde ``inicial``."""
+
+    return _reduce(lambda acumulado, fila: funcion(acumulado, dict(fila)), _materializar_tabla(tabla), inicial)
+
+
+def claves(registro: Mapping[str, Any]) -> list[str]:
+    """Devuelve las claves de ``registro``."""
+
+    return list(registro.keys())
+
+
+def valores(registro: Mapping[str, Any]) -> list[Any]:
+    """Devuelve los valores de ``registro``."""
+
+    return list(registro.values())
+
+
+def longitud(valor: Sized | Sequence[Any] | Mapping[str, Any]) -> int:
+    """Devuelve la longitud de una estructura compatible con ``len``."""
+
+    return len(valor)
 
 
 def seleccionar_columnas(tabla: Iterable[Registro], columnas: Sequence[str]) -> Tabla:

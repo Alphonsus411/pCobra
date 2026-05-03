@@ -43,7 +43,8 @@ from pcobra.corelibs import (
     acortar_texto as _acortar_texto,
     invertir,
     intercambiar_mayusculas as _intercambiar_mayusculas,
-    minusculas,
+    minusculas as _minusculas,
+    mayusculas as _mayusculas,
     minusculas_casefold as _minusculas_casefold,
     normalizar_unicode,
     expandir_tabulaciones as _expandir_tabulaciones,
@@ -121,6 +122,8 @@ __all__ = [
     "contar_subcadena",
     "centrar_texto",
     "rellenar_ceros",
+    "minusculas",
+    "mayusculas",
     "minusculas_casefold",
     "intercambiar_mayusculas",
     "expandir_tabulaciones",
@@ -765,6 +768,18 @@ def rellenar_ceros(texto: str, ancho: int) -> str:
     """Completa ``texto`` con ceros a la izquierda preservando signos."""
 
     return _rellenar_ceros(texto, ancho)
+
+
+def minusculas(texto: str) -> str:
+    """Convierte ``texto`` a minúsculas."""
+
+    return _minusculas(texto)
+
+
+def mayusculas(texto: str) -> str:
+    """Convierte ``texto`` a mayúsculas."""
+
+    return _mayusculas(texto)
 
 
 def minusculas_casefold(texto: str) -> str:
