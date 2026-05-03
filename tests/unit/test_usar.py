@@ -545,3 +545,23 @@ def test_repl_usar_modulo_oficial_con_all_mixto_filtra_callables_publicos(monkey
     assert "_privada" not in interp.variables
     assert "NO_CALLABLE" not in interp.variables
     assert "faltante" not in interp.variables
+
+def test_repl_usar_modulo_oficial_sin_all_no_inyecta_callables_importados(monkeypatch):
+    modulo = ModuleType("numero")
+
+    def local(valor):
+        return valor
+
+    externa = len
+    modulo.local = local
+    modulo.externa = externa
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "logica": "logica"})
+    _ejecutar_codigo('usar "numero"', interp)
+
+    assert "local" in interp.variables
+    assert "externa" not in interp.variables
