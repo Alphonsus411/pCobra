@@ -108,7 +108,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     executor(cmd, 'usar "numero"')
     estado_pre_numpy = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(PermissionError, match=r"módulos externos no soportados en REPL"):
         executor(cmd, 'usar "numpy"')
 
     assert "numpy" not in interp.variables
@@ -181,7 +181,7 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(PermissionError, match=r"módulos externos no soportados en REPL"):
         executor(cmd, 'usar "requests"')
 
     assert estado_pre == interp.contextos[-1].values
