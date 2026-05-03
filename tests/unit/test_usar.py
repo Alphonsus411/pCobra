@@ -320,94 +320,25 @@ def test_repl_usar_texto_colision_en_ancestro_es_atomico(monkeypatch):
     interp.contextos.pop()
 
 
-def test_usar_modulo_externo_no_estricto_inyecta_exportables_completos(monkeypatch):
-    modulo = ModuleType("numpy")
-    modulo.sumar = lambda a, b: a + b
-    modulo.restar = lambda a, b: a - b
-    modulo.__all__ = ["sumar", "restar"]
-
-    monkeypatch.setattr(
-        core_usar_loader,
-        "obtener_modulo",
-        lambda _nombre, **_kwargs: modulo,
-    )
+@pytest.mark.parametrize("nombre", ["numpy", "node-fetch", "serde", "holobit_sdk"])
+def test_usar_modulos_externos_rechazados_en_runtime_general(nombre):
     interp = InterpretadorCobra()
 
-    interp.ejecutar_nodo(NodoUsar("numpy"))
+    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+        interp.ejecutar_nodo(NodoUsar(nombre))
 
-    assert interp.obtener_variable("sumar")(2, 3) == 5
-    assert interp.obtener_variable("restar")(8, 2) == 6
 
-def test_usar_modulo_externo_sin_exportables_falla_sin_estado_parcial(monkeypatch):
-    modulo = ModuleType("numpy")
+def test_usar_modulo_externo_rechazado_sin_estado_parcial():
     interp = InterpretadorCobra()
     interp.contextos[-1].define("sentinela", 42)
     estado_inicial = dict(interp.variables)
 
-    monkeypatch.setattr(
-        core_usar_loader,
-        "obtener_modulo",
-        lambda _nombre, **_kwargs: modulo,
-    )
-
-    with pytest.raises(ImportError, match="módulo externo no exportable para usar"):
-        interp.ejecutar_nodo(NodoUsar("numpy"))
+    with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra"):
+        _ejecutar_codigo('usar "numpy"', interp)
 
     assert interp.variables == estado_inicial
 
 
-
-def test_usar_modulo_externo_con_all_vacio_falla_atomico(monkeypatch):
-    modulo = ModuleType("externo_vacio")
-    modulo.__all__ = []
-
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo)
-
-    interp = InterpretadorCobra()
-    interp.contextos[-1].define("sentinela", 42)
-    estado_inicial = dict(interp.variables)
-
-    with pytest.raises(ImportError, match="módulo externo no exportable para usar"):
-        _ejecutar_codigo('usar "externo_vacio"', interp)
-
-    assert interp.variables == estado_inicial
-
-
-def test_usar_modulo_externo_all_mixto_inyecta_solo_callables_publicos(monkeypatch):
-    modulo = ModuleType("externo_mixto")
-    modulo.publica = lambda x: x
-    modulo._privada = lambda x: x
-    modulo.no_callable = 123
-    modulo.__all__ = ["publica", "_privada", "no_callable"]
-
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo)
-
-    interp = InterpretadorCobra()
-    _ejecutar_codigo('usar "externo_mixto"', interp)
-
-    assert "publica" in interp.variables
-    assert callable(interp.obtener_variable("publica"))
-    assert "_privada" not in interp.variables
-    assert "no_callable" not in interp.variables
-
-
-def test_usar_modulo_externo_all_mixto_colision_es_atomico(monkeypatch):
-    modulo = ModuleType("externo_colision")
-    modulo.colisiona = lambda x: x
-    modulo.disponible = lambda x: x
-    modulo.__all__ = ["colisiona", "disponible"]
-
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo)
-
-    interp = InterpretadorCobra()
-    interp.contextos[-1].define("colisiona", lambda x: f"ocupado:{x}")
-    estado_inicial = dict(interp.variables)
-
-    with pytest.raises(NameError, match=r"símbolo 'colisiona' ya existe"):
-        _ejecutar_codigo('usar "externo_colision"', interp)
-
-    assert interp.variables == estado_inicial
-    assert "disponible" not in interp.variables
 def test_repl_usar_numpy_falla_sin_estado_parcial():
     interp = InterpretadorCobra()
     interp.contextos[-1].define("sentinela", 42)
