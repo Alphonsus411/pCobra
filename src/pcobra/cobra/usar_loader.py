@@ -175,17 +175,17 @@ def obtener_modulo_cobra_oficial(nombre: str):
     base = Path(__file__).resolve()
 
     for parent in base.parents:
-        corelibs = parent / "corelibs"
-        if corelibs.exists():
-            modulo = _cargar_modulo_local_desde_directorio(nombre, corelibs)
+        stdlib = parent / "standard_library"
+        if stdlib.exists():
+            modulo = _cargar_modulo_local_desde_directorio(nombre, stdlib)
             if modulo is not None:
                 return modulo
             break
 
     for parent in base.parents:
-        stdlib = parent / "standard_library"
-        if stdlib.exists():
-            modulo = _cargar_modulo_local_desde_directorio(nombre, stdlib)
+        corelibs = parent / "corelibs"
+        if corelibs.exists():
+            modulo = _cargar_modulo_local_desde_directorio(nombre, corelibs)
             if modulo is not None:
                 return modulo
             break
