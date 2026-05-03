@@ -3,6 +3,7 @@
 import logging
 import os
 import hashlib
+from dataclasses import dataclass
 from typing import Mapping, Optional
 
 from .lexer import (
@@ -88,6 +89,25 @@ MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
     "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 )
+_NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
+    {"self", "append", "map", "filter", "unwrap", "expect"}
+)
+_DUNDERS_BLOQUEADOS = frozenset(
+    {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
+)
+_NOMBRES_BACKEND_INTERNOS = frozenset(
+    {"sys", "os", "importlib", "pcobra", "cobra", "core"}
+)
+
+
+@dataclass(frozen=True)
+class _ResultadoSaneamientoSimbolo:
+    nombre: str
+    simbolo: object
+    rechazado: bool
+    codigo: str | None = None
+    mensaje: str | None = None
+    warning: bool = False
 
 
 def _ruta_import_permitida(ruta: str) -> bool:
@@ -1834,6 +1854,7 @@ class InterpretadorCobra:
             ``__all__`` y símbolos callables). Si no cumplen, se rechazan.
         """
         from pathlib import Path
+        from types import ModuleType
 
         from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
@@ -1862,10 +1883,29 @@ class InterpretadorCobra:
                     continue
                 simbolo = getattr(modulo_obj, nombre)
                 if not callable(simbolo):
+                    if modulo_oficial and nombre.isupper():
+                        simbolos.append((nombre, simbolo))
                     continue
                 vistos.add(nombre)
                 simbolos.append((nombre, simbolo))
             return simbolos
+
+        def _sanear_simbolo_para_usar(nombre: str, simbolo: object) -> _ResultadoSaneamientoSimbolo:
+            if nombre.startswith("_"):
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "private_prefix", "símbolos que inicien con '_' no son exportables")
+            if "__" in nombre or nombre in _DUNDERS_BLOQUEADOS:
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "dunder_name", "dunders Python no se permiten en usar")
+            if nombre in _NOMBRES_BACKEND_INTERNOS:
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "backend_internal_name", "nombre interno del backend bloqueado")
+            if isinstance(simbolo, ModuleType):
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "backend_module_object", "objetos módulo/paquete no son exportables")
+            if nombre in _NOMBRES_PUBLICOS_EQUIVALENTE_COBRA:
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "cobra_public_equivalent", "nombre público reservado por equivalente Cobra")
+            if not callable(simbolo) and not nombre.isupper():
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "non_callable_not_public_constant", "solo se permiten no-callables para constantes públicas explícitas")
+            if not callable(simbolo):
+                return _ResultadoSaneamientoSimbolo(nombre, simbolo, False, "public_constant", "constante pública explícita permitida", warning=True)
+            return _ResultadoSaneamientoSimbolo(nombre, simbolo, False)
 
         def _resolver_carga_modulo_usar(nombre_modulo: str):
             """Aplica una única ruta de decisión para módulos de ``usar``."""
@@ -1924,17 +1964,42 @@ class InterpretadorCobra:
 
             contexto_actual = self.contextos[-1]
 
+            reporte_rechazos: list[dict[str, str]] = []
+            reporte_warnings: list[dict[str, str]] = []
+            simbolos_saneados: list[tuple[str, object]] = []
+            for nombre, simbolo in simbolos_a_inyectar:
+                resultado = _sanear_simbolo_para_usar(nombre, simbolo)
+                if resultado.rechazado:
+                    reporte_rechazos.append(
+                        {"symbol": nombre, "code": resultado.codigo or "rejected", "message": resultado.mensaje or "símbolo rechazado"}
+                    )
+                    self._trace_debug(f"[USAR_SANITIZE][REJECT] {nombre}: {resultado.codigo}")
+                    continue
+                if resultado.warning:
+                    reporte_warnings.append(
+                        {"symbol": nombre, "code": resultado.codigo or "warning", "message": resultado.mensaje or "warning"}
+                    )
+                    self._trace_debug(f"[USAR_SANITIZE][WARN] {nombre}: {resultado.codigo}")
+                simbolos_saneados.append((nombre, simbolo))
+
+            if reporte_rechazos:
+                raise ImportError(
+                    f"rechazos de saneamiento en usar '{nodo.modulo}': {reporte_rechazos}"
+                )
+
             # Fase A: validar colisiones de forma completa antes de definir.
-            for nombre, _simbolo in simbolos_a_inyectar:
+            for nombre, _simbolo in simbolos_saneados:
                 if contexto_actual.contains(nombre):
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': el símbolo '{nombre}' ya existe en el contexto actual"
+                        f"'{nodo.modulo}': colisión estructurada={{'symbol': '{nombre}', 'code': 'symbol_collision', 'message': 'símbolo ya existe en contexto actual'}}"
                     )
 
             # Fase B (atómica): definir solo si toda la validación anterior fue exitosa.
-            for nombre, simbolo in simbolos_a_inyectar:
+            for nombre, simbolo in simbolos_saneados:
                 contexto_actual.define(nombre, simbolo)
+            if reporte_warnings:
+                self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise
