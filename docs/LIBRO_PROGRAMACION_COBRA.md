@@ -405,21 +405,41 @@ clase Usuario:
 
 **Definición corta:** unidades de organización y reutilización de código.
 
+**Contrato vigente de `usar` (sin cambiar lexer/parser):**
+
+- **Sintaxis implementada actual (restricción del parser):** `usar "numero"` (siempre con cadena).
+- **Semántica objetivo oficial:** importación plana de funciones del módulo Cobra cargado, por ejemplo `es_finito(...)` **sin prefijo**.
+
 **Sintaxis formal simplificada:**
 
 ```text
-importacion := "usar" IDENTIFICADOR
+usar_stmt := "usar" CADENA  # sintaxis implementada actualmente por parser
 ```
 
 **Ejemplos:**
 
 ```cobra
-usar texto
-usar numero
+usar "texto"
+usar "numero"
 ```
 
 ```cobra
-usar mi_modulo.utilidades
+usar "mi_modulo.utilidades"
+```
+
+Ejemplo canónico de adaptación (actual):
+
+```cobra
+# entrada (válida por parser actual)
+usar "numero"
+# uso plano esperado
+imprimir(es_finito(10))
+```
+
+Ejemplo de rechazo de módulo externo en REPL:
+
+```cobra
+usar "numpy"  # módulos externos no soportados en REPL
 ```
 
 **Anti-ejemplo frecuente:** dependencia circular entre módulos hermanos.
@@ -701,8 +721,8 @@ pares = numeros.filtrar(funcion(x): retornar x % 2 == 0)
 ### 7.1 Importar módulos
 
 ```cobra
-usar texto
-usar numero
+usar "texto"
+usar "numero"
 ```
 
 ### 7.2 Estructura recomendada

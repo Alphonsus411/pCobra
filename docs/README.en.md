@@ -567,6 +567,8 @@ When running `programa.co`, `modulo.co` is processed first and then `Hola desde 
 
 In REPL, `usar` is **strict**:
 
+- **Current implemented syntax (parser restriction; do not change lexer/parser):** `usar "numero"` (string form).
+- **Official target semantics:** flat symbol import from the loaded Cobra module (`es_finito(...)` without prefix).
 - Only official Cobra modules listed in `REPL_COBRA_MODULE_MAP` are allowed.
 - There is **no** `pip` installation fallback.
 - External modules (for example `numpy`) are rejected with no partial state left in session context.
@@ -585,7 +587,8 @@ imprimir(a_snake("HolaMundo"))
 Explicit REPL rejection example:
 
 ```cobra
-usar "numpy"   # rejected: external modules are not supported in REPL
+usar "numpy"
+# external modules are not supported in REPL
 ```
 
 > Note: there is no dot-access for these injected symbols in Cobra REPL.
