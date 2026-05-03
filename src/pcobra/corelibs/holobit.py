@@ -11,7 +11,7 @@ import json
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-from pcobra.core.holobits.holobit import Holobit
+from pcobra.core.holobits.holobit import Holobit as _Holobit
 
 
 def _es_numero(valor: Any) -> bool:
@@ -29,18 +29,18 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
     return salida
 
 
-def _a_estructura_cobra(hb: Holobit) -> dict[str, Any]:
+def _a_estructura_cobra(hb: _Holobit) -> dict[str, Any]:
     return {"__cobra_tipo__": "holobit", "valores": [float(v) for v in hb.valores]}
 
 
-def _desde_estructura_cobra(hb: dict[str, Any]) -> Holobit:
+def _desde_estructura_cobra(hb: dict[str, Any]) -> _Holobit:
     if not isinstance(hb, dict) or hb.get("__cobra_tipo__") != "holobit":
         raise TypeError("Se esperaba una estructura Cobra de holobit")
-    return Holobit(_normalizar_valores(hb.get("valores", [])))
+    return _Holobit(_normalizar_valores(hb.get("valores", [])))
 
 
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
-    return _a_estructura_cobra(Holobit(_normalizar_valores(valores)))
+    return _a_estructura_cobra(_Holobit(_normalizar_valores(valores)))
 
 
 def validar_holobit(hb: Any) -> bool:
@@ -93,7 +93,7 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
                 nuevos[1] += factor
             elif eje == "z" and len(nuevos) > 2:
                 nuevos[2] += factor
-        interno = Holobit(nuevos)
+        interno = _Holobit(nuevos)
     else:
         raise ValueError(f"Operación no soportada: {operacion}")
     return _a_estructura_cobra(interno)
@@ -116,30 +116,6 @@ def medir(hb: dict[str, Any]) -> dict[str, float | int]:
     magnitud = sum(v * v for v in valores) ** 0.5
     return {"dimension": len(valores), "magnitud": float(magnitud)}
 
-
-def crear(valores: Iterable[Any]) -> dict[str, Any]:
-    return crear_holobit(valores)
-
-
-def validar(hb: Any) -> bool:
-    return validar_holobit(hb)
-
-
-def serializar(hb: dict[str, Any]) -> str:
-    return serializar_holobit(hb)
-
-
-def deserializar(payload: str) -> dict[str, Any]:
-    return deserializar_holobit(payload)
-
-
-def escalar(hb: dict[str, Any], factor: float) -> dict[str, Any]:
-    """Multiplica cada componente del holobit por ``factor``."""
-
-    interno = _desde_estructura_cobra(hb)
-    if not _es_numero(factor):
-        raise TypeError("factor debe ser numérico")
-    return crear_holobit([valor * float(factor) for valor in interno.valores])
 
 
 __all__ = [
