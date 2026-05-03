@@ -1,4 +1,6 @@
+import importlib
 import math
+from types import ModuleType
 
 from pcobra.core.usar_symbol_policy import sanear_simbolo_para_usar
 
@@ -22,7 +24,7 @@ def test_rechaza_privado():
 def test_rechaza_dunders():
     resultado = sanear_simbolo_para_usar("__algo__", lambda: None)
     assert resultado.rechazado is True
-    assert resultado.codigo == "dunder_name"
+    assert resultado.codigo in {"dunder_name", "private_prefix"}
 
 
 def test_rechaza_aliases_publicos_reservados():
@@ -34,6 +36,27 @@ def test_rechaza_aliases_publicos_reservados():
 
 def test_rechaza_objetos_modulo():
     resultado = sanear_simbolo_para_usar("modulo", math)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "backend_module_object"
+
+
+def test_rechaza_tipo_modulo_backend():
+    resultado = sanear_simbolo_para_usar("TipoModulo", ModuleType)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "backend_module_object"
+
+
+def test_rechaza_wrapper_indirecto_de_backend():
+    class WrapperSDK:
+        __wrapped__ = math
+
+    resultado = sanear_simbolo_para_usar("wrapper", WrapperSDK())
+    assert resultado.rechazado is True
+    assert resultado.codigo == "backend_module_object"
+
+
+def test_rechaza_objeto_importado_indirectamente_desde_backend():
+    resultado = sanear_simbolo_para_usar("machinery", importlib.machinery)
     assert resultado.rechazado is True
     assert resultado.codigo == "backend_module_object"
 

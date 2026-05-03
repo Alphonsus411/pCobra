@@ -201,3 +201,29 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     assert detalle["code"] == "symbol_collision"
     assert detalle["message"] == "símbolo ya existe en contexto actual"
     assert detalle["symbol"] == "filtrar"
+    assert detalle["module"] == "datos"
+    assert detalle["phase"] == "preflight"
+
+
+def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
+    mod = ModuleType("externo")
+    mod.__all__ = ["OK", "self", "SDK"]
+    mod.OK = lambda: "ok"
+    mod.self = lambda: "reservado"
+    mod.SDK = ModuleType("sdk")
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda *_args, **_kwargs: mod)
+
+    interp = InterpretadorCobra()
+    estado_pre = dict(interp.contextos[-1].values)
+
+    class _NodoUsar:
+        modulo = "mod_ext"
+
+    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar") as excinfo:
+        interp.ejecutar_usar(_NodoUsar())
+
+    mensaje = str(excinfo.value)
+    assert "self" in mensaje
+    assert "OK" not in interp.contextos[-1].values
+    assert interp.contextos[-1].values == estado_pre
