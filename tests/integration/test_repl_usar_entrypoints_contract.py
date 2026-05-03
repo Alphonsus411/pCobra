@@ -383,10 +383,10 @@ def test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos():
     spec.loader.exec_module(holobit_corelib)
 
     assert set(holobit_corelib.__all__) == {
-        "crear",
-        "validar",
-        "serializar",
-        "deserializar",
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
         "proyectar",
         "transformar",
         "graficar",
@@ -399,3 +399,4 @@ def test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos():
     assert not hasattr(holobit_corelib, "__all__") or "Holobit" not in holobit_corelib.__all__
     assert "holobit_sdk" not in holobit_corelib.__all__
     assert "_to_sdk_holobit" not in holobit_corelib.__all__
+    assert all("__" not in simbolo for simbolo in holobit_corelib.__all__)
