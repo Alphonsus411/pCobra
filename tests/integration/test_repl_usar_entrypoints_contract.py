@@ -64,11 +64,14 @@ def test_repl_contract_usar_aliases_y_restriccion_numpy(factory, executor, get_i
     executor(cmd, 'usar "texto"')
     executor(cmd, 'a_snake("HolaMundo")')
     assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
+    estado_pre_numpy = dict(interp.contextos[-1].values)
 
     with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
         executor(cmd, 'usar "numpy"')
 
     assert "numpy" not in interp.variables
+    assert "numpy" not in interp.contextos[-1].values
+    assert estado_pre_numpy == interp.contextos[-1].values
 
     with pytest.raises(Exception, match=r"Token no reconocido: '\.'"):
         executor(cmd, "numero.es_finito(10)")

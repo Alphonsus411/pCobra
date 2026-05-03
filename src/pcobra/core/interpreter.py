@@ -1885,13 +1885,11 @@ class InterpretadorCobra:
                     raise PermissionError("módulos externos no soportados en REPL")
 
                 ruta_modulo = Path(modulo_file).resolve()
-                base = Path(__file__).resolve()
-                rutas_oficiales = []
-                for parent in base.parents:
-                    for carpeta in ("corelibs", "standard_library"):
-                        candidato = parent / carpeta
-                        if candidato.exists():
-                            rutas_oficiales.append(candidato.resolve())
+                raiz_pcobra = Path(__file__).resolve().parents[1]
+                rutas_oficiales = [
+                    (raiz_pcobra / "corelibs").resolve(),
+                    (raiz_pcobra / "standard_library").resolve(),
+                ]
 
                 es_oficial = any(
                     ruta_modulo == ruta_base or ruta_base in ruta_modulo.parents
