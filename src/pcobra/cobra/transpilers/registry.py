@@ -14,11 +14,6 @@ from pcobra.cobra.architecture.backend_policy import (
     PUBLIC_BACKENDS,
     assert_public_targets_contract,
 )
-from pcobra.cobra.internal_compat.legacy_contracts import (
-    INTERNAL_BACKENDS,
-    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
-    lifecycle_status_for_backend,
-)
 from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
@@ -39,15 +34,24 @@ INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = TRANSPILER_CLASS_PATHS
 
 # Alias explícito para continuidad semántica en módulos/tests internos.
+def _internal_compat_legacy_contracts():
+    """Carga diferida de contratos legacy internos (no públicos)."""
+    from pcobra.cobra.internal_compat.legacy_contracts import (
+        INTERNAL_BACKENDS,
+        INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
+        lifecycle_status_for_backend,
+    )
+
+    return {
+        "INTERNAL_BACKENDS": INTERNAL_BACKENDS,
+        "INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW": INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
+        "lifecycle_status_for_backend": lifecycle_status_for_backend,
+    }
+
+
 INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = (
     INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS
 )
-INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS: Final[
-    dict[str, str]
-] = {
-    target: lifecycle_status_for_backend(target)
-    for target in INTERNAL_BACKENDS
-}
 
 
 def _validate_complete_registry_contract() -> tuple[str, ...]:
@@ -108,24 +112,27 @@ def _validate_public_registry_contract() -> tuple[str, ...]:
 
 def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
     """Valida inventario separado para backends legacy internos."""
+    contracts = _internal_compat_legacy_contracts()
+    internal_backends = contracts["INTERNAL_BACKENDS"]
+    internal_retirement_window = contracts["INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW"]
+
     configured_keys = tuple(INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS)
     missing = tuple(
-        target for target in INTERNAL_BACKENDS if target not in configured_keys
+        target for target in internal_backends if target not in configured_keys
     )
     extras = tuple(
-        target for target in configured_keys if target not in INTERNAL_BACKENDS
+        target for target in configured_keys if target not in internal_backends
     )
 
     if missing or extras:
         raise RuntimeError(
             "[CI CONTRACT] INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS debe usar exactamente INTERNAL_BACKENDS. "
             f"missing={missing or '∅'}; extras={extras or '∅'}; "
-            f"current={configured_keys}; expected={INTERNAL_BACKENDS}"
+            f"current={configured_keys}; expected={internal_backends}"
         )
 
-
-    lifecycle_keys = set(INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW)
-    internal_keys = set(INTERNAL_BACKENDS)
+    lifecycle_keys = set(internal_retirement_window)
+    internal_keys = set(internal_backends)
     if lifecycle_keys != internal_keys:
         extras = tuple(sorted(lifecycle_keys - internal_keys))
         missing = tuple(sorted(internal_keys - lifecycle_keys))
@@ -135,10 +142,10 @@ def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
             f"missing={missing or '∅'}; extras={extras or '∅'}"
         )
 
-    if configured_keys != INTERNAL_BACKENDS:
+    if configured_keys != internal_backends:
         raise RuntimeError(
             "[CI CONTRACT] INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS debe preservar el orden de backend_policy.INTERNAL_BACKENDS. "
-            f"current={configured_keys}; expected={INTERNAL_BACKENDS}"
+            f"current={configured_keys}; expected={internal_backends}"
         )
     return configured_keys
 
@@ -171,11 +178,13 @@ def ordered_internal_legacy_transpiler_paths() -> tuple[tuple[str, tuple[str, st
 
 def ordered_internal_legacy_transpiler_entries() -> tuple[tuple[str, tuple[str, str], str], ...]:
     """Devuelve inventario interno legacy con etiqueta de estado lifecycle."""
+    contracts = _internal_compat_legacy_contracts()
+    lifecycle_status_for_backend = contracts["lifecycle_status_for_backend"]
     return tuple(
         (
             target,
             INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS[target],
-            INTERNAL_LEGACY_TRANSPILER_LIFECYCLE_STATUS[target],
+            lifecycle_status_for_backend(target),
         )
         for target in _ORDERED_INTERNAL_LEGACY_TARGETS
     )
