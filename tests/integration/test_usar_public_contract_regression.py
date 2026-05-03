@@ -211,10 +211,12 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod.OK = lambda: "ok"
     mod.self = lambda: "reservado"
     mod.SDK = ModuleType("sdk")
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda *_args, **_kwargs: mod)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
 
     interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"mod_ext": "mod_ext"})
     estado_pre = dict(interp.contextos[-1].values)
 
     class _NodoUsar:

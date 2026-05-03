@@ -641,7 +641,8 @@ jobs:
         run: |
           pytest tests/integration/test_holobit_tiers.py \
             tests/integration/transpilers/test_official_backends_contracts.py \
-            tests/integration/transpilers/test_library_compatibility_matrix.py
+            tests/integration/transpilers/test_library_compatibility_matrix.py \
+            tests/integration/test_usar_public_contract_regression.py
       - name: Validate technical library compatibility matrix
         shell: bash
         run: python scripts/ci/validate_library_compatibility_matrix.py
