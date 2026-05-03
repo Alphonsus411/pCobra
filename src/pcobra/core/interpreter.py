@@ -1979,6 +1979,15 @@ class InterpretadorCobra:
             ]
             if conflictos:
                 conflicto = conflictos[0]
+                detalle = {
+                    "module": nodo.modulo,
+                    "symbol": conflicto,
+                    "conflicts": conflictos,
+                    "code": "symbol_collision",
+                    "message": "símbolo ya existe en contexto actual",
+                    "policy": self._usar_collision_policy,
+                    "phase": "preflight",
+                }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
                     diagnostico = (
                         "[USAR_COLLISION][WARN_ALIAS_REQUIRED] "
@@ -1988,21 +1997,24 @@ class InterpretadorCobra:
                     self._trace_debug(diagnostico)
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': conflicto={conflictos}. "
+                        f"'{nodo.modulo}': conflicto={detalle}. "
                         "Requiere alias explícito según la convención del runtime (usar importar ... como ...)."
                     )
                 raise NameError(
                     "No se puede usar el módulo "
-                    f"'{nodo.modulo}': colisión estructurada={{'symbol': '{conflicto}', 'code': 'symbol_collision', 'message': 'símbolo ya existe en contexto actual'}}"
+                    f"'{nodo.modulo}': colisión estructurada={detalle}"
                 )
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
             for nombre, simbolo in simbolos_saneados:
                 if contexto_actual.contains(nombre):
                     detalle = {
+                        "module": nodo.modulo,
                         "symbol": nombre,
                         "code": "symbol_collision_runtime_recheck",
                         "message": "símbolo ya existe en contexto actual",
+                        "policy": self._usar_collision_policy,
+                        "phase": "runtime_recheck",
                     }
                     self._trace_debug(
                         "[USAR_COLLISION][ERROR] "

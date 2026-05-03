@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from types import ModuleType
+from typing import Any
 
 NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
     {
@@ -22,6 +23,35 @@ DUNDERS_BLOQUEADOS = frozenset(
 NOMBRES_BACKEND_INTERNOS = frozenset(
     {"sys", "os", "importlib", "pcobra", "cobra", "core"}
 )
+PREFIJOS_MODULOS_BACKEND_INTERNOS = (
+    "sys",
+    "os",
+    "importlib",
+    "pcobra",
+    "cobra",
+)
+
+
+def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
+    """Detecta objetos backend (módulos, tipos módulo, wrappers SDK/indirectos)."""
+    if isinstance(simbolo, ModuleType):
+        return True
+    if isinstance(simbolo, type) and issubclass(simbolo, ModuleType):
+        return True
+
+    modulo_origen = getattr(simbolo, "__module__", "")
+    if isinstance(modulo_origen, str) and modulo_origen.startswith(PREFIJOS_MODULOS_BACKEND_INTERNOS):
+        return True
+
+    referencia_envuelta = getattr(simbolo, "__wrapped__", None)
+    if referencia_envuelta is not None and isinstance(referencia_envuelta, ModuleType):
+        return True
+
+    destino_sdk = getattr(simbolo, "_sdk", None)
+    if isinstance(destino_sdk, ModuleType):
+        return True
+
+    return False
 
 
 @dataclass(frozen=True)
@@ -64,12 +94,12 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             "dunders Python conocidos no se permiten en usar",
         )
 
-    if isinstance(simbolo, ModuleType):
+    if _es_objeto_backend_no_exportable(simbolo):
         return _rechazar(
             nombre,
             simbolo,
             "backend_module_object",
-            "objetos módulo/paquete no son exportables",
+            "objetos módulo/backend (incluye wrappers SDK e indirectos) no son exportables",
         )
 
     if nombre in NOMBRES_BACKEND_INTERNOS:
