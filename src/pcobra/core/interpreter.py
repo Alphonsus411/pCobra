@@ -89,6 +89,9 @@ MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
     "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 )
+USAR_COLLISION_STRICT_ERROR = "strict_error"
+USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
+_USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
 _NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
     {"self", "append", "map", "filter", "unwrap", "expect"}
 )
@@ -459,6 +462,7 @@ class InterpretadorCobra:
         self.ultimo_ir: Optional[InternalIRModule] = None
         # Restricción opcional para `usar` en REPL/evaluador incremental.
         self._repl_usar_alias_map: dict[str, str] | None = None
+        self._usar_collision_policy = USAR_COLLISION_STRICT_ERROR
 
     def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
         """Configura whitelist explícita de módulos `usar` para flujo REPL.
@@ -466,6 +470,12 @@ class InterpretadorCobra:
         Cuando ``alias_map`` es ``None``, no se aplica restricción adicional.
         """
         self._repl_usar_alias_map = alias_map.copy() if alias_map is not None else None
+
+    def configurar_politica_colision_usar(self, policy: str) -> None:
+        """Configura la política de colisión para ``usar`` en runtime."""
+        if policy not in _USAR_COLLISION_POLICIES:
+            raise ValueError(f"Política de colisión inválida: {policy}")
+        self._usar_collision_policy = policy
 
     def in_execution(self) -> bool:
         """Indica si el intérprete se encuentra en fase de ejecución."""
@@ -1987,15 +1997,28 @@ class InterpretadorCobra:
                     f"rechazos de saneamiento en usar '{nodo.modulo}': {reporte_rechazos}"
                 )
 
-            # Fase A: validar colisiones de forma completa antes de definir.
-            for nombre, _simbolo in simbolos_saneados:
-                if contexto_actual.contains(nombre):
+            # Fase A: detectar colisiones de forma completa antes de definir.
+            conflictos = [
+                nombre for nombre, _simbolo in simbolos_saneados if contexto_actual.contains(nombre)
+            ]
+            if conflictos:
+                conflicto = conflictos[0]
+                if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
+                    self._trace_debug(
+                        "[USAR_COLLISION][WARN] "
+                        f"módulo={nodo.modulo} conflictos={conflictos} policy={self._usar_collision_policy}"
+                    )
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': colisión estructurada={{'symbol': '{nombre}', 'code': 'symbol_collision', 'message': 'símbolo ya existe en contexto actual'}}"
+                        f"'{nodo.modulo}': conflicto={conflictos}. "
+                        "Requiere alias explícito según la convención del runtime (usar importar ... como ...)."
                     )
+                raise NameError(
+                    "No se puede usar el módulo "
+                    f"'{nodo.modulo}': colisión estructurada={{'symbol': '{conflicto}', 'code': 'symbol_collision', 'message': 'símbolo ya existe en contexto actual'}}"
+                )
 
-            # Fase B (atómica): definir solo si toda la validación anterior fue exitosa.
+            # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
             for nombre, simbolo in simbolos_saneados:
                 contexto_actual.define(nombre, simbolo)
             if reporte_warnings:

@@ -585,3 +585,44 @@ def test_repl_usar_modulo_oficial_con_all_mixto_filtra_callables_publicos(monkey
     assert "_privada" not in interp.variables
     assert "NO_CALLABLE" not in interp.variables
     assert "faltante" not in interp.variables
+
+def test_repl_usar_colision_policy_warn_alias_required_no_overwrite(monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake", "a_camel"]
+    modulo.a_snake = lambda texto: texto
+    modulo.a_camel = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.configurar_politica_colision_usar("warn_alias_required")
+    interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
+
+    with pytest.raises(NameError, match=r"Requiere alias explícito"):
+        _ejecutar_codigo('usar "texto"', interp)
+
+    assert interp.contextos[-1].get("a_snake")("x") == "ocupado"
+    assert "a_camel" not in interp.contextos[-1].values
+
+
+def test_repl_usar_colision_multiple_sin_inyeccion_parcial(monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake", "a_camel", "quitar_prefijo"]
+    modulo.a_snake = lambda texto: texto
+    modulo.a_camel = lambda texto: texto
+    modulo.quitar_prefijo = lambda texto, prefijo: texto.removeprefix(prefijo)
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
+    interp.contextos[-1].define("a_camel", lambda _texto: "ocupado")
+
+    with pytest.raises(NameError, match=r"symbol_collision"):
+        _ejecutar_codigo('usar "texto"', interp)
+
+    assert "quitar_prefijo" not in interp.contextos[-1].values
