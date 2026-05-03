@@ -660,3 +660,10 @@ async def recolectar_resultados(
         raise
     finally:
         await asyncio.gather(*tareas, return_exceptions=True)
+
+
+
+async def dormir_async(segundos: float) -> None:
+    """Suspende la corrutina actual durante ``segundos``."""
+
+    await asyncio.sleep(segundos)

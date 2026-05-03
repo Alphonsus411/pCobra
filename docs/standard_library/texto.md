@@ -156,3 +156,5 @@ Todas estas funciones respetan Unicode y aprovechan los normalizadores base disp
 | `tabla_traduccion` |
 | `traducir` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
+
+- `lineas_no_vacias(texto)` devuelve solo líneas con contenido útil tras `strip`.

@@ -340,3 +340,10 @@ async def ejecutar_comando_async(
         return await ejecutar_async(comando, permitidos=permitidos, timeout=timeout)
     except Exception as exc:
         raise _error_sistema("ejecutar_comando_async", exc) from None
+
+
+
+def directorio_actual() -> str:
+    """Devuelve la ruta del directorio de trabajo actual."""
+
+    return os.getcwd()

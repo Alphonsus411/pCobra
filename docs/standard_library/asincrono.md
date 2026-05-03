@@ -13,3 +13,5 @@ Documentación sincronizada automáticamente desde `src/pcobra/standard_library/
 | `proteger_tarea` |
 | `reintentar_async` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
+
+- `dormir_async(segundos)` expone pausa cooperativa equivalente a `await sleep`.

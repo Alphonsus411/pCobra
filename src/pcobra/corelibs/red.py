@@ -276,3 +276,16 @@ async def obtener_url_texto(url: str, permitir_redirecciones: bool = False) -> s
         return await obtener_url_async(url, permitir_redirecciones=permitir_redirecciones)
     except Exception as exc:
         raise _error_red("obtener_url_texto", exc) from None
+
+
+
+def obtener_json(url: str, permitir_redirecciones: bool = False) -> dict[str, Any] | list[Any]:
+    """Obtiene una URL HTTPS y la interpreta como JSON."""
+
+    import json
+
+    cuerpo = obtener_url(url, permitir_redirecciones=permitir_redirecciones)
+    datos = json.loads(cuerpo)
+    if not isinstance(datos, (dict, list)):
+        raise TypeError("La respuesta JSON debe ser un objeto o una lista")
+    return datos

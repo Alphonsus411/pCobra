@@ -1033,3 +1033,10 @@ def es_digito(texto: str) -> bool:
     """Reproduce :meth:`str.isdigit` de Python aceptando dígitos Unicode."""
 
     return texto.isdigit()
+
+
+
+def lineas_no_vacias(texto: str) -> list[str]:
+    """Devuelve líneas no vacías tras recortar espacios extremos."""
+
+    return [linea.strip() for linea in texto.splitlines() if linea.strip()]

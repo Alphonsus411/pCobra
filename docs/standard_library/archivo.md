@@ -12,3 +12,8 @@ Documentación sincronizada automáticamente desde `src/pcobra/standard_library/
 | `existe` |
 | `leer` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
+
+
+## Nuevas utilidades
+- `anexar(ruta, datos)`: agrega texto al final de un archivo seguro.
+- `leer_lineas(ruta, mantener_saltos=False)`: lee el archivo y separa por líneas.

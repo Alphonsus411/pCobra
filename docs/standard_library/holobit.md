@@ -44,3 +44,5 @@ var r = transformar(d, "rotar", "z", 90)
 var p = proyectar(r, "2D")
 imprimir(p)
 ```
+
+- `escalar(hb, factor)` multiplica cada componente del holobit por un factor numérico.
