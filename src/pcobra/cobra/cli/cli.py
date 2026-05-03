@@ -22,11 +22,19 @@ from pcobra.cli import (
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS
 from pcobra.cobra.core.interpreter import InterpretadorCobra
-from pcobra.cobra.cli.internal_compat.legacy_targets import (
-    LEGACY_BACKENDS_FEATURE_FLAG,
-    is_internal_legacy_targets_enabled,
-)
 from pcobra.cobra.cli.i18n import _, format_traceback, setup_gettext
+
+
+def _internal_legacy_targets_runtime_flags() -> tuple[str, bool]:
+    """Carga diferida de flags legacy internas para evitar imports eager en startup."""
+
+    from pcobra.cobra.cli.internal_compat.legacy_targets import (
+        LEGACY_BACKENDS_FEATURE_FLAG,
+        is_internal_legacy_targets_enabled,
+    )
+
+    return LEGACY_BACKENDS_FEATURE_FLAG, is_internal_legacy_targets_enabled()
+
 from pcobra.cobra.cli.mode_policy import (
     CLI_MODOS_PERMITIDOS,
     MODO_POR_DEFECTO,
@@ -683,8 +691,9 @@ class CliApplication:
         blocked_routes: list[str] = []
         if self.command_registry and self.command_registry._is_legacy_cli_enabled():
             blocked_routes.append(f"legacy command group ({COBRA_ENABLE_LEGACY_CLI_ENV}=1)")
-        if is_internal_legacy_targets_enabled():
-            blocked_routes.append(f"legacy targets ({LEGACY_BACKENDS_FEATURE_FLAG}=1)")
+        legacy_flag_name, legacy_enabled = _internal_legacy_targets_runtime_flags()
+        if legacy_enabled:
+            blocked_routes.append(f"legacy targets ({legacy_flag_name}=1)")
 
         if not blocked_routes:
             return
