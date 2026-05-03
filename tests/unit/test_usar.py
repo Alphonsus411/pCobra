@@ -501,6 +501,43 @@ def test_obtener_modulo_alias_cobra_usa_origen_oficial(monkeypatch):
     assert llamadas == {"oficial": 1, "importlib": 1}
 
 
+def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_numero_es_finito(monkeypatch):
+    """Semántica oficial plana del libro con parser legacy `usar "..."`: numero exporta es_finito."""
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = _ejecutar_codigo('usar \"numero\"\nimprimir(es_finito(10))')
+
+    assert "es_finito" in interp.variables
+    assert interp.obtener_variable("es_finito")(10) is True
+
+
+def test_repl_semantica_oficial_plana_libro_parser_legacy_usar_texto_a_snake(monkeypatch):
+    """Semántica oficial plana del libro con parser legacy `usar "..."`: texto exporta a_snake."""
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    interp = _ejecutar_codigo('usar \"texto\"\nimprimir(a_snake(\"HolaMundo\"))')
+
+    assert "a_snake" in interp.variables
+    assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
+
+
+def test_repl_semantica_oficial_plana_libro_parser_legacy_colision_es_atomica(monkeypatch):
+    """Semántica oficial plana del libro con parser legacy `usar "..."`: colisión sin inyección parcial."""
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.contextos[-1].define("es_finito", lambda _x: "ocupado")
+
+    with pytest.raises(NameError, match=r"símbolo 'es_finito' ya existe"):
+        _ejecutar_codigo('usar "numero"', interp)
+
+    assert interp.contextos[-1].get("es_finito")("x") == "ocupado"
+    assert "es_infinito" not in interp.contextos[-1].values
+
+
 def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
