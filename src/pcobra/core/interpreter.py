@@ -1982,6 +1982,12 @@ class InterpretadorCobra:
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
             for nombre, simbolo in simbolos_saneados:
+                if contexto_actual.contains(nombre):
+                    self._trace_debug(
+                        "[USAR_COLLISION][WARN] "
+                        f"módulo={nodo.modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
+                    )
+                    continue
                 contexto_actual.define(nombre, simbolo)
             if reporte_warnings:
                 self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
