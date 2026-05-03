@@ -34,56 +34,68 @@ class ResultadoSaneamientoSimboloUsar:
     warning: bool = False
 
 
+def _rechazar(nombre: str, simbolo: object, codigo: str, mensaje: str) -> ResultadoSaneamientoSimboloUsar:
+    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, True, codigo, mensaje)
+
+
 def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamientoSimboloUsar:
     """Aplica la política de exportación de símbolos para ``usar``."""
-    if isinstance(simbolo, ModuleType):
-        return ResultadoSaneamientoSimboloUsar(
-            nombre,
-            simbolo,
-            True,
-            "backend_module_object",
-            "objetos módulo/paquete no son exportables",
-        )
-    if "__" in nombre or nombre in DUNDERS_BLOQUEADOS:
-        return ResultadoSaneamientoSimboloUsar(
-            nombre,
-            simbolo,
-            True,
-            "dunder_name",
-            "dunders Python no se permiten en usar",
-        )
     if nombre.startswith("_"):
-        return ResultadoSaneamientoSimboloUsar(
+        return _rechazar(
             nombre,
             simbolo,
-            True,
             "private_prefix",
             "símbolos que inicien con '_' no son exportables",
         )
-    if nombre in NOMBRES_BACKEND_INTERNOS:
-        return ResultadoSaneamientoSimboloUsar(
+
+    if "__" in nombre:
+        return _rechazar(
             nombre,
             simbolo,
-            True,
+            "dunder_pattern",
+            "nombres con '__' no se permiten en usar",
+        )
+
+    if nombre in DUNDERS_BLOQUEADOS:
+        return _rechazar(
+            nombre,
+            simbolo,
+            "dunder_name",
+            "dunders Python conocidos no se permiten en usar",
+        )
+
+    if isinstance(simbolo, ModuleType):
+        return _rechazar(
+            nombre,
+            simbolo,
+            "backend_module_object",
+            "objetos módulo/paquete no son exportables",
+        )
+
+    if nombre in NOMBRES_BACKEND_INTERNOS:
+        return _rechazar(
+            nombre,
+            simbolo,
             "backend_internal_name",
             "nombre interno del backend bloqueado",
         )
+
     if nombre in NOMBRES_PUBLICOS_EQUIVALENTE_COBRA:
-        return ResultadoSaneamientoSimboloUsar(
+        return _rechazar(
             nombre,
             simbolo,
-            True,
             "cobra_public_equivalent",
             "nombre público reservado por equivalente Cobra",
         )
+
     if not callable(simbolo) and not nombre.isupper():
-        return ResultadoSaneamientoSimboloUsar(
+        return _rechazar(
             nombre,
             simbolo,
-            True,
             "non_callable_not_public_constant",
             "solo se permiten no-callables para constantes públicas explícitas",
         )
+
     if not callable(simbolo):
         return ResultadoSaneamientoSimboloUsar(
             nombre,
@@ -93,4 +105,5 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             "constante pública explícita permitida",
             warning=True,
         )
-    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, False)
+
+    return ResultadoSaneamientoSimboloUsar(nombre, simbolo, False, "ok", "símbolo exportable")
