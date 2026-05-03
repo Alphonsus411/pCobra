@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import ModuleType
 
 import pytest
@@ -11,11 +12,14 @@ from pcobra.cobra.core.runtime import InterpretadorCobra
 from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
 def _modulo_numero_stub() -> ModuleType:
     mod = ModuleType("numero")
     mod.__all__ = ["es_finito"]
     mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    mod.__file__ = str(REPO_ROOT / "src/pcobra/corelibs/numero.py")
     return mod
 
 
@@ -23,7 +27,7 @@ def _modulo_texto_stub() -> ModuleType:
     mod = ModuleType("texto")
     mod.__all__ = ["a_snake"]
     mod.a_snake = lambda texto: "hola_mundo" if texto == "HolaMundo" else str(texto)
-    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+    mod.__file__ = str(REPO_ROOT / "src/pcobra/corelibs/texto.py")
     return mod
 
 
