@@ -504,3 +504,44 @@ def test_repl_no_habilita_acceso_por_punto_para_usar_numero(monkeypatch):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
     with pytest.raises(InvalidTokenError, match=r"Token no reconocido: '\.'"):
         _ejecutar_codigo('usar "numero"\nnumero.es_finito(10)')
+
+
+def test_repl_usar_modulo_oficial_sin_all_inyecta_callables_publicos(monkeypatch):
+    modulo = ModuleType("numero")
+    modulo.es_finito = lambda valor: valor == valor
+    modulo.a_decimal = lambda valor: float(valor)
+    modulo._interna = lambda valor: valor
+    modulo.CONSTANTE = 7
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "logica": "logica"})
+    _ejecutar_codigo('usar "numero"\nes_finito(10)', interp)
+
+    assert "es_finito" in interp.variables
+    assert "a_decimal" in interp.variables
+    assert "_interna" not in interp.variables
+    assert "CONSTANTE" not in interp.variables
+
+
+def test_repl_usar_modulo_oficial_con_all_mixto_filtra_callables_publicos(monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake", "_privada", "NO_CALLABLE", "faltante"]
+    modulo.a_snake = lambda texto: "hola_mundo" if texto == "HolaMundo" else str(texto)
+    modulo._privada = lambda texto: texto
+    modulo.NO_CALLABLE = "valor"
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "logica": "logica"})
+    _ejecutar_codigo('usar "texto"\na_snake("HolaMundo")', interp)
+
+    assert "a_snake" in interp.variables
+    assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
+    assert "_privada" not in interp.variables
+    assert "NO_CALLABLE" not in interp.variables
+    assert "faltante" not in interp.variables

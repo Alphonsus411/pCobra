@@ -1823,8 +1823,9 @@ class InterpretadorCobra:
             ``PermissionError: módulos externos no soportados en REPL``.
 
         - Fuera de REPL estricto:
-          - Módulos oficiales: se cargan como oficiales y deben exponer
-            ``__all__`` explícito.
+          - Módulos oficiales: exportan callables públicos (no privados).
+            ``__all__`` se usa como filtro preferente si existe, pero su
+            ausencia no bloquea la carga de módulos oficiales.
           - Módulos externos: se permiten solo si pueden exportarse de forma
             completa según la política de ``usar`` (API pública explícita por
             ``__all__`` y símbolos callables). Si no cumplen, se rechazan.
@@ -1834,24 +1835,32 @@ class InterpretadorCobra:
         from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
         def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool):
-            """Resuelve exportables con una política única para ``usar``."""
+            """Resuelve exportables callables según política de ``usar``."""
             exportables = getattr(modulo_obj, "__all__", None)
+
             if exportables is None:
                 if modulo_oficial:
-                    raise ImportError(
-                        f"El módulo oficial '{nodo.modulo}' debe definir __all__ explícito"
-                    )
-                return []
+                    candidatos = [
+                        nombre
+                        for nombre in dir(modulo_obj)
+                        if isinstance(nombre, str) and not nombre.startswith("_")
+                    ]
+                else:
+                    return []
+            else:
+                candidatos = exportables
 
             simbolos = []
-            for nombre in exportables:
-                if not isinstance(nombre, str) or nombre.startswith("_"):
+            vistos = set()
+            for nombre in candidatos:
+                if not isinstance(nombre, str) or nombre.startswith("_") or nombre in vistos:
                     continue
                 if not hasattr(modulo_obj, nombre):
                     continue
                 simbolo = getattr(modulo_obj, nombre)
                 if not callable(simbolo):
                     continue
+                vistos.add(nombre)
                 simbolos.append((nombre, simbolo))
             return simbolos
 
