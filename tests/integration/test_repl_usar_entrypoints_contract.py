@@ -41,15 +41,12 @@ def test_entrypoints_repl_configuran_restriccion_estricta(factory):
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
     ],
 )
-def test_repl_contract_usar_aliases_y_restriccion_numpy(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numero_sin_prefijo(factory, executor, get_interp, monkeypatch):
     mod_numero = _modulo_numero_stub()
-    mod_texto = _modulo_texto_stub()
 
     def _resolver_modulo(nombre: str, **_kwargs):
         if nombre == "numero":
             return mod_numero
-        if nombre == "texto":
-            return mod_texto
         raise ModuleNotFoundError(nombre)
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
@@ -59,11 +56,56 @@ def test_repl_contract_usar_aliases_y_restriccion_numpy(factory, executor, get_i
 
     executor(cmd, 'usar "numero"')
     executor(cmd, "es_finito(10)")
+
     assert interp.obtener_variable("es_finito")(10) is True
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_texto_sin_prefijo(factory, executor, get_interp, monkeypatch):
+    mod_texto = _modulo_texto_stub()
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "texto":
+            return mod_texto
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    cmd = factory()
+    interp = get_interp(cmd)
 
     executor(cmd, 'usar "texto"')
     executor(cmd, 'a_snake("HolaMundo")')
+
     assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restringido_atomico(factory, executor, get_interp, monkeypatch):
+    mod_numero = _modulo_numero_stub()
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "numero":
+            return mod_numero
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    cmd = factory()
+    interp = get_interp(cmd)
+    executor(cmd, 'usar "numero"')
     estado_pre_numpy = dict(interp.contextos[-1].values)
 
     with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
@@ -75,6 +117,7 @@ def test_repl_contract_usar_aliases_y_restriccion_numpy(factory, executor, get_i
 
     with pytest.raises(Exception, match=r"Token no reconocido: '\.'"):
         executor(cmd, "numero.es_finito(10)")
+
 
 
 def _modulo_numero_multi_export_stub() -> ModuleType:
@@ -93,7 +136,7 @@ def _modulo_numero_multi_export_stub() -> ModuleType:
         (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
     ],
 )
-def test_repl_contract_colision_usar_numero_falla_sin_estado_parcial(factory, executor, get_interp, monkeypatch):
+def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_sobrescribe_usuario(factory, executor, get_interp, monkeypatch):
     mod_numero = _modulo_numero_multi_export_stub()
     mod_texto = _modulo_texto_stub()
 
