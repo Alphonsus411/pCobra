@@ -47,3 +47,9 @@ Cualquier cambio que amplíe o reduzca la API pública estable (comandos, backen
 1. actualización de esta política,
 2. actualización de ADR de arquitectura aplicable,
 3. comunicación explícita en notas de versión.
+
+## Contrato de arranque (startup)
+
+- En rutas de arranque públicas (`import pcobra`, `cobra repl`, `cobra run`, `cobra test`) **solo** se pueden inicializar por defecto los backends `python`, `javascript`, `rust`.
+- Los backends legacy (`go`, `cpp`, `java`, `wasm`, `asm`) quedan restringidos a rutas lazy/opt-in de compatibilidad interna.
+- Cualquier regresión de carga eager de backends legacy en arranque debe fallar por guardas de test/CI.

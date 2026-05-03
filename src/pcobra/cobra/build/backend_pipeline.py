@@ -41,7 +41,15 @@ def _load_official_transpilers() -> dict[str, type]:
     return build_official_transpilers()
 
 
-TRANSPILERS: dict[str, type] = _load_official_transpilers()
+_TRANSPILERS_CACHE: dict[str, type] | None = None
+
+
+def _official_transpilers() -> dict[str, type]:
+    """Carga diferida + memoizada de transpiladores oficiales (sin eager loading en import)."""
+    global _TRANSPILERS_CACHE
+    if _TRANSPILERS_CACHE is None:
+        _TRANSPILERS_CACHE = _load_official_transpilers()
+    return _TRANSPILERS_CACHE
 
 
 def _public_route_backend_matrix() -> dict[str, tuple[str, ...]]:
@@ -140,9 +148,10 @@ def resolve_backend_runtime(
 
 def transpile(ast: Any, backend: str) -> str:
     """Transpila un AST al backend indicado usando el registro oficial."""
-    if backend not in TRANSPILERS:
+    transpilers = _official_transpilers()
+    if backend not in transpilers:
         raise ValueError(f"Transpilador no soportado: {backend}")
-    transpiler = TRANSPILERS[backend]()
+    transpiler = transpilers[backend]()
     return transpiler.generate_code(ast)
 
 
