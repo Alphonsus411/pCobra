@@ -123,6 +123,23 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
 
 
 
+
+
+def _modulo_tiempo_stub() -> ModuleType:
+    mod = ModuleType("tiempo")
+    mod.__all__ = ["ahora"]
+    mod.ahora = lambda: "2026-05-03T00:00:00"
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/tiempo.py"
+    return mod
+
+
+def _modulo_datos_stub() -> ModuleType:
+    mod = ModuleType("datos")
+    mod.__all__ = ["longitud"]
+    mod.longitud = lambda valores: len(valores)
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/datos.py"
+    return mod
+
 def _modulo_numero_multi_export_stub() -> ModuleType:
     mod = ModuleType("numero")
     mod.__all__ = ["es_finito", "es_par"]
@@ -210,3 +227,33 @@ def test_usar_externo_whitelist_sin_all_falla_claro_y_atomico(monkeypatch):
 
     assert estado_pre == interp.contextos[-1].values
     assert "externo_sin_all" not in interp.contextos[-1].values
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_contract_resuelve_usar_datos_y_tiempo(factory, executor, get_interp, monkeypatch):
+    mod_datos = _modulo_datos_stub()
+    mod_tiempo = _modulo_tiempo_stub()
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "datos":
+            return mod_datos
+        if nombre == "tiempo":
+            return mod_tiempo
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    cmd = factory()
+    interp = get_interp(cmd)
+
+    executor(cmd, 'usar "datos"')
+    executor(cmd, 'usar "tiempo"')
+
+    assert interp.obtener_variable("longitud")([1, 2, 3]) == 3
+    assert interp.obtener_variable("ahora")() == "2026-05-03T00:00:00"
