@@ -1838,14 +1838,13 @@ class InterpretadorCobra:
           - Módulos oficiales: exportan callables públicos (no privados).
             ``__all__`` se usa como filtro preferente si existe, pero su
             ausencia no bloquea la carga de módulos oficiales.
-          - Módulos externos: se permiten solo si pueden exportarse de forma
-            completa según la política de ``usar`` (API pública explícita por
-            ``__all__`` y símbolos callables). Si no cumplen, se rechazan.
+          - Módulos externos: se rechazan siempre; ``usar`` solo acepta alias
+            canónicos del catálogo oficial Cobra.
         """
         from pathlib import Path
         from types import ModuleType
 
-        from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
+        from .usar_loader import obtener_modulo_cobra_oficial
 
         def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
             """Resuelve exportables callables según política de ``usar``."""
@@ -1864,14 +1863,11 @@ class InterpretadorCobra:
                 ]
 
             if exportables is None:
-                if modulo_oficial:
-                    candidatos = [
-                        nombre
-                        for nombre in dir(modulo_obj)
-                        if isinstance(nombre, str) and not nombre.startswith("_")
-                    ]
-                else:
-                    return []
+                candidatos = [
+                    nombre
+                    for nombre in dir(modulo_obj)
+                    if isinstance(nombre, str) and not nombre.startswith("_")
+                ]
             else:
                 candidatos = exportables
 
@@ -1898,15 +1894,10 @@ class InterpretadorCobra:
             modulo_canonico = mapa_repl.get(nombre_modulo)
             es_modulo_oficial_cobra = modulo_canonico is not None
 
-            if es_modulo_oficial_cobra:
-                modulo = obtener_modulo_cobra_oficial(modulo_canonico)
-            elif es_repl_estricto:
+            if not es_modulo_oficial_cobra:
                 raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
-            else:
-                modulo = obtener_modulo(
-                    nombre_modulo,
-                    permitir_instalacion=True,
-                )
+
+            modulo = obtener_modulo_cobra_oficial(modulo_canonico)
 
             return modulo, es_repl_estricto, es_modulo_oficial_cobra
 
@@ -1941,10 +1932,6 @@ class InterpretadorCobra:
             simbolos_a_inyectar = _resolver_exportables_callables(
                 modulo, modulo_oficial=es_modulo_oficial_cobra, nombre_modulo=nombre_modulo
             )
-            if not simbolos_a_inyectar and not es_modulo_oficial_cobra:
-                raise ImportError(
-                    "módulo externo no exportable para usar: requiere __all__ con callables públicos"
-                )
 
             contexto_actual = self.contextos[-1]
 
