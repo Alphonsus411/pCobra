@@ -17,37 +17,18 @@ IMPORT_MARKERS = {
         "use crate::standard_library::*;",
         "fn longitud<T: ToString>(valor: T) -> usize {",
     ),
-    "go": ('"pcobra/corelibs"', '"pcobra/standard_library"'),
-    "cpp": ("#include <pcobra/corelibs.hpp>", "#include <pcobra/standard_library.hpp>"),
-    "java": ("import pcobra.corelibs.*;", "import pcobra.standard_library.*;"),
-    "wasm": (
-        ";; backend wasm: adaptadores host-managed de corelibs y standard_library",
-        '(import "pcobra:corelibs" "longitud"',
-        '(import "pcobra:standard_library" "mostrar"',
-    ),
-    "asm": ("; backend asm: imports de runtime administrados externamente",),
 }
 
 CALL_SITE_MARKERS = {
     "python": {"corelibs": "longitud('cobra')", "standard_library": "mostrar('hola')"},
     "javascript": {"corelibs": "longitud('cobra');", "standard_library": "mostrar('hola');"},
     "rust": {"corelibs": 'longitud("cobra");', "standard_library": 'mostrar("hola");'},
-    "go": {"corelibs": 'longitud("cobra")', "standard_library": 'mostrar("hola")'},
-    "cpp": {"corelibs": 'longitud("cobra");', "standard_library": 'mostrar("hola");'},
-    "java": {"corelibs": 'longitud("cobra")', "standard_library": 'mostrar("hola")'},
-    "wasm": {"corelibs": "(call $longitud (i32.const 0))", "standard_library": "(call $mostrar (i32.const 0))"},
-    "asm": {"corelibs": "CALL longitud 'cobra'", "standard_library": "CALL mostrar 'hola'"},
 }
 
 HOLOBIT_CALL_SITE_MARKERS = {
     "python": "hb = cobra_holobit([1, 2, 3])",
     "javascript": "let hb = cobra_holobit([1, 2, 3]);",
     "rust": "let hb = cobra_holobit(vec![1, 2, 3]);",
-    "go": "hb := cobra_holobit([]float64{1, 2, 3})",
-    "cpp": "auto hb = cobra_holobit({ 1, 2, 3 });",
-    "java": "Object hb = cobra_holobit(new double[]{1, 2, 3});",
-    "wasm": "(drop (call $cobra_holobit (i32.const 1)))",
-    "asm": "HOLOBIT hb [1, 2, 3]",
 }
 
 

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+
 from pcobra.cobra.architecture.backend_policy import (
     INTERNAL_BACKENDS,
     INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
 )
 from pcobra.cobra.architecture.legacy_backend_lifecycle import (
     LEGACY_BACKEND_LIFECYCLE,
+    LEGACY_BACKENDS_FEATURE_FLAG,
+    get_legacy_backend_lifecycle,
+    is_legacy_backend_lifecycle_enabled,
     iter_legacy_backend_lifecycle_rows,
     legacy_backend_warning_message,
 )
@@ -15,6 +19,15 @@ from pcobra.cobra.transpilers.registry import (
     ordered_internal_legacy_transpiler_entries,
 )
 
+
+
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _enable_legacy_opt_in_for_lifecycle_tests(monkeypatch):
+    monkeypatch.setenv(LEGACY_BACKENDS_FEATURE_FLAG, "1")
 
 def test_lifecycle_metadata_cubre_todos_los_backends_internos():
     assert tuple(LEGACY_BACKEND_LIFECYCLE) == INTERNAL_BACKENDS
@@ -62,3 +75,22 @@ def test_iter_rows_expone_clasificacion_por_fase():
     assert rows["asm"].phase == "phase-1-hide-public-ux"
     assert rows["go"].phase == "phase-2-development-profile-only"
     assert rows["wasm"].retirement_window == "Q2 2027"
+
+
+def test_legacy_lifecycle_requiere_opt_in_por_defecto(monkeypatch):
+    monkeypatch.delenv(LEGACY_BACKENDS_FEATURE_FLAG, raising=False)
+    assert not is_legacy_backend_lifecycle_enabled()
+    try:
+        get_legacy_backend_lifecycle()
+    except RuntimeError as exc:
+        assert LEGACY_BACKENDS_FEATURE_FLAG in str(exc)
+    else:
+        raise AssertionError("Se esperaba RuntimeError sin feature flag")
+
+
+def test_legacy_lifecycle_permite_opt_in(monkeypatch):
+    monkeypatch.setenv(LEGACY_BACKENDS_FEATURE_FLAG, "1")
+    assert is_legacy_backend_lifecycle_enabled()
+    lifecycle = get_legacy_backend_lifecycle()
+    assert tuple(lifecycle) == INTERNAL_BACKENDS
+
