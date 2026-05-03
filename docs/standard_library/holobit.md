@@ -45,4 +45,8 @@ var p = proyectar(r, "2D")
 imprimir(p)
 ```
 
-- `escalar(hb, factor)` multiplica cada componente del holobit por un factor numérico.
+
+## Notas de fachada
+
+- La integración por `usar "holobit"` sanea símbolos y solo inyecta los nombres listados en `__all__`.
+- Alias históricos (`crear`, `validar`, etc.) pueden existir internamente por compatibilidad, pero no forman parte del contrato público mínimo.

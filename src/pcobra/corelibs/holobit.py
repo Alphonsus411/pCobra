@@ -12,7 +12,6 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 
 from pcobra.core.holobits.holobit import Holobit
-from pcobra.core.holobits.graficar import _to_sdk_holobit
 
 
 def _es_numero(valor: Any) -> bool:
@@ -64,10 +63,20 @@ def deserializar_holobit(payload: str) -> dict[str, Any]:
 
 
 def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
-    _ = modo
     interno = _desde_estructura_cobra(hb)
-    _to_sdk_holobit(interno)
-    return _a_estructura_cobra(interno)
+    modo_normalizado = str(modo).strip().lower()
+    valores = list(interno.valores)
+    if modo_normalizado in {"1d", "linea"}:
+        salida = valores[:1]
+    elif modo_normalizado in {"2d", "plano"}:
+        salida = (valores + [0.0, 0.0])[:2]
+    elif modo_normalizado in {"3d", "espacio"}:
+        salida = (valores + [0.0, 0.0, 0.0])[:3]
+    elif modo_normalizado == "vector":
+        salida = valores
+    else:
+        raise ValueError(f"Modo de proyección no soportado: {modo}")
+    return crear_holobit(salida)
 
 
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
@@ -134,14 +143,13 @@ def escalar(hb: dict[str, Any], factor: float) -> dict[str, Any]:
 
 
 __all__ = [
-    "crear",
-    "validar",
-    "serializar",
-    "deserializar",
+    "crear_holobit",
+    "validar_holobit",
+    "serializar_holobit",
+    "deserializar_holobit",
     "proyectar",
     "transformar",
     "graficar",
     "combinar",
     "medir",
-    "escalar",
 ]
