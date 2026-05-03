@@ -1080,6 +1080,15 @@ class InterpretadorCobra:
         return build_internal_ir(ast)
 
     def ejecutar_nodo(self, nodo):
+        if self.safe_mode and id(nodo) not in self._validados:
+            modo_prev = self.mode
+            if modo_prev != "analysis":
+                self.mode = "analysis"
+            try:
+                self._validar(nodo)
+            finally:
+                self.mode = modo_prev
+
         self._trace_debug(f"[EXEC] node_type={type(nodo).__name__} node_id={id(nodo)}")
         if isinstance(nodo, NodoAsignacion):
             return self.ejecutar_asignacion(nodo)
