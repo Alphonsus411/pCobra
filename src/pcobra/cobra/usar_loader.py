@@ -150,7 +150,7 @@ def cargar_lista_blanca():
 cargar_lista_blanca()
 
 
-def obtener_modulo(nombre: str):
+def obtener_modulo(nombre: str, *, validar_whitelist: bool = True):
     """Importa y devuelve un módulo.
 
     Si el paquete no está instalado se intentará ejecutar ``pip install``
@@ -158,13 +158,15 @@ def obtener_modulo(nombre: str):
     De lo contrario se lanza :class:`RuntimeError`.
     """
     nombre = _validar_nombre(nombre)
-    if not USAR_WHITELIST:
-        raise PermissionError(
-            "La lista blanca de paquetes está vacía. No se puede usar 'usar'."
-        )
-    if nombre not in USAR_WHITELIST:
-        raise PermissionError(f"Paquete '{nombre}' no está permitido.")
-    spec = USAR_WHITELIST[nombre]
+    spec = nombre
+    if validar_whitelist:
+        if not USAR_WHITELIST:
+            raise PermissionError(
+                "La lista blanca de paquetes está vacía. No se puede usar 'usar'."
+            )
+        if nombre not in USAR_WHITELIST:
+            raise PermissionError(f"Paquete '{nombre}' no está permitido.")
+        spec = USAR_WHITELIST[nombre]
 
     base = Path(__file__).resolve()
     from pcobra.cobra.imports.resolver import CobraImportResolver, ImportResolutionError

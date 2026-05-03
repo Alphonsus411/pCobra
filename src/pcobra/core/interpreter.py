@@ -1815,7 +1815,11 @@ class InterpretadorCobra:
                     )
                 nombre_modulo = modulo_resuelto
 
-            modulo = obtener_modulo(nombre_modulo)
+            validar_whitelist = self._repl_usar_alias_map is None
+            modulo = obtener_modulo(
+                nombre_modulo,
+                validar_whitelist=validar_whitelist,
+            )
             exportables = getattr(modulo, "__all__", None)
             if exportables is None:
                 exportables = dir(modulo)
