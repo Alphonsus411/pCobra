@@ -905,39 +905,42 @@ Al ejecutar `programa.co`, se procesará primero `modulo.co` y luego se imprimir
 
 ## Instrucción `usar`: separación REPL vs runtime general
 
-La semántica de `usar` depende del contexto de ejecución:
+La semántica de `usar` depende del contexto de ejecución.
 
-### REPL (modo interactivo)
+### Contrato de `usar` en REPL
 
-En REPL, `usar` es **estricto**:
+En REPL incremental, `usar` aplica una política **estricta** y explícita:
 
-- **Sintaxis implementada actual (restricción del parser, sin cambiar lexer/parser):** `usar "numero"` (siempre con cadena).
-- **Semántica objetivo oficial:** importación plana de funciones del módulo Cobra (`es_finito(...)` sin prefijo).
-- Solo acepta módulos oficiales definidos en `REPL_COBRA_MODULE_MAP`.
-- **No** existe fallback de instalación con `pip`.
-- Si pides un módulo externo (por ejemplo `numpy`), se rechaza con error y sin
-  dejar estado parcial.
-- Los símbolos se inyectan de forma directa (sin namespace de objeto).
+- **Entrada aceptada por el parser actual:** `usar "numero"` (compatibilidad sintáctica vigente).
+- **Semántica aplicada:** modelo oficial plano del libro (`usar numero`), sin acceso por prefijo de módulo (`numero.funcion(...)`).
+- **Inyección de símbolos:** solo se inyectan símbolos públicos **callables** exportados por `__all__`.
+- **Filtrado:** se ignoran símbolos privados (`_...`) y cualquier símbolo no callable.
+- **Módulos externos en REPL estricto:** deben fallar con error claro: `módulos externos no soportados en REPL`.
+- Solo se aceptan módulos oficiales definidos en `REPL_COBRA_MODULE_MAP` y no hay fallback de instalación con `pip`.
 
-Ejemplos canónicos en REPL:
+Ejemplos de comportamiento esperado en REPL:
 
 ```cobra
 usar "numero"
-imprimir(es_finito(10))
+imprimir(es_finito(10))  # ✅
 
 usar "texto"
-imprimir(a_snake("HolaMundo"))
-```
+imprimir(a_snake("HolaMundo"))  # ✅
 
-Ejemplo de rechazo explícito en REPL:
-
-```cobra
 usar "numpy"
-# módulos externos no soportados en REPL
+imprimir(sqrt(4))  # ❌ módulos externos no soportados en REPL
 ```
 
-> Nota: en Cobra REPL no hay dot-access para estos módulos inyectados.
+> Nota: en Cobra REPL no hay dot-access para estos símbolos inyectados.
 > `numero.es_finito(10)` **no** está permitido; usa `es_finito(10)`.
+
+Rutas clave de implementación para mantenimiento:
+
+- `src/pcobra/core/interpreter.py` (`ejecutar_usar`).
+- `src/pcobra/cobra/usar_policy.py`.
+- `src/pcobra/standard_library/numero.py`.
+- `src/pcobra/standard_library/texto.py`.
+- `src/pcobra/standard_library/logica.py`.
 
 ### Runtime fuera de REPL
 
