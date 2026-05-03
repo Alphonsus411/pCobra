@@ -2,7 +2,26 @@
 
 Fecha de actualización: 2026-05-03.
 
-## 1) Fuente runtime de resolución de `usar "modulo"`
+## 1) Lista canónica permitida para `usar` (contrato público)
+
+La lista **canónica y permitida** para `usar` en REPL estricto se define en `REPL_COBRA_MODULE_MAP`.
+Cualquier módulo fuera de esta lista se rechaza como import externo no soportado.
+
+Módulos permitidos:
+
+- `archivo`
+- `asincrono`
+- `datos`
+- `decoradores`
+- `fecha`
+- `interfaz`
+- `lista`
+- `logica`
+- `numero`
+- `texto`
+- `util`
+
+## 2) Fuente runtime de resolución de `usar "modulo"`
 
 La resolución en runtime de `usar` ocurre en dos capas:
 
@@ -18,7 +37,61 @@ La resolución en runtime de `usar` ocurre en dos capas:
 3. **Mapa de alias públicos Cobra (REPL estricto)**:
    - `src/pcobra/cobra/usar_policy.py` define `REPL_COBRA_MODULE_MAP`.
 
-## 2) Matriz por módulo objetivo
+## 3) Tabla de nombres canónicos (español) y equivalencias internas no expuestas
+
+> Política: la **API pública** de `usar` se expresa con nombres canónicos en español.
+> Las rutas internas de implementación (Python/JS/Rust/Holobit SDK) son detalles de sustrato y **no son API pública**.
+
+| Nombre canónico público (`usar`) | Equivalencia interna actual (no expuesta) | Observación |
+|---|---|---|
+| `archivo` | `standard_library/archivo.py` | Exporta `__all__` público.
+| `asincrono` | `standard_library/asincrono.py` | Exporta `__all__` público.
+| `datos` | `standard_library/datos.py` | Exporta `__all__` público.
+| `decoradores` | `standard_library/decoradores.py` | Exporta `__all__` público.
+| `fecha` | `standard_library/fecha.py` | Exporta `__all__` público.
+| `interfaz` | `standard_library/interfaz.py` | Exporta `__all__` público.
+| `lista` | `standard_library/lista.py` | Exporta `__all__` público.
+| `logica` | `standard_library/logica.py` | Exporta `__all__` público.
+| `numero` | `standard_library/numero.py` | Exporta `__all__` público.
+| `texto` | `standard_library/texto.py` | Exporta `__all__` público.
+| `util` | `standard_library/util.py` | Exporta `__all__` público.
+
+### No API pública (solo sustrato interno)
+
+- Backends internos: Python, JavaScript y Rust.
+- Runtime/SDK interno de Holobit (incluyendo `holobit_sdk` interno por backend).
+- Módulos de compatibilidad legacy y rutas de transpilers internos.
+
+Nada de lo anterior debe consumirse como contrato estable desde programas de usuario Cobra; el único contrato de `usar` en REPL estricto es la lista canónica anterior.
+
+## 4) Seguridad de exportaciones y rechazo de imports directos a backend
+
+Para seguridad y estabilidad contractual:
+
+1. **Exportaciones controladas**:
+   - El módulo cargado por `usar` debe exponer `__all__` y símbolos públicos invocables.
+   - Si un módulo externo no define `__all__` adecuado, se rechaza con error explícito.
+
+2. **Rechazo de imports directos backend en REPL estricto**:
+   - `usar "numpy"`, `usar "requests"` y análogos externos son rechazados.
+   - No se permite acceder por namespace tipo `numero.es_finito(...)`; `usar` inyecta símbolos planos.
+
+3. **Carga atómica**:
+   - Ante error de importación/exportación, el contexto de variables no debe contaminarse con símbolos parciales.
+
+## 5) Verificación de consistencia (docs, tests, runtime real)
+
+Estado verificado en esta actualización:
+
+- **Docs**: este inventario alinea el contrato público con la lista canónica de `REPL_COBRA_MODULE_MAP`.
+- **Runtime**: la política efectiva de aliases en REPL estricto depende de `src/pcobra/cobra/usar_policy.py` y la ejecución en `InterpretadorCobra.ejecutar_usar`.
+- **Tests de contrato**: `tests/integration/test_repl_usar_entrypoints_contract.py` cubre:
+  - aceptación de módulos canónicos (`numero`, `texto`),
+  - rechazo de externos (`numpy`, `requests`),
+  - exigencia de `__all__` para exportabilidad,
+  - inmutabilidad/atomicidad del contexto si falla `usar`.
+
+## 6) Matriz por módulo objetivo
 
 Módulos objetivo tomados del mapa oficial `REPL_COBRA_MODULE_MAP`:
 `archivo`, `asincrono`, `datos`, `decoradores`, `fecha`, `interfaz`, `lista`, `logica`, `numero`, `texto`, `util`.
@@ -41,37 +114,3 @@ Módulos objetivo tomados del mapa oficial `REPL_COBRA_MODULE_MAP`:
 | `numero` | `standard_library/numero.py` | `es_finito`, `es_infinito`, `es_nan`, `copiar_signo`, `signo`, `limitar`, `hipotenusa`, `distancia_euclidiana`, `raiz_entera`, `combinaciones`, `permutaciones`, `suma_precisa`, `interpolar`, `envolver_modular`, `varianza`, `varianza_muestral`, `media_geometrica`, `media_armonica`, `percentil`, `cuartiles`, `rango_intercuartil`, `coeficiente_variacion` | parcial |
 | `texto` | `standard_library/texto.py` | `quitar_acentos`, `normalizar_espacios`, `es_palindromo`, `es_anagrama`, `codificar`, `decodificar`, `es_alfabetico`, `es_alfa_numerico`, `es_decimal`, `es_numerico`, `es_identificador`, `es_imprimible`, `es_ascii`, `es_mayusculas`, `es_minusculas`, `es_titulo`, `es_digito`, `es_espacio`, `quitar_prefijo`, `quitar_sufijo`, `a_snake`, `a_camel`, `quitar_envoltura`, `prefijo_comun`, `sufijo_comun`, `dividir_lineas`, `dividir_derecha`, `encontrar`, `encontrar_derecha`, `subcadena_antes`, `subcadena_despues`, `subcadena_antes_ultima`, `subcadena_despues_ultima`, `indice`, `indice_derecha`, `contar_subcadena`, `centrar_texto`, `rellenar_ceros`, `minusculas_casefold`, `intercambiar_mayusculas`, `expandir_tabulaciones`, `particionar`, `particionar_derecha`, `indentar_texto`, `desindentar_texto`, `envolver_texto`, `acortar_texto`, `formatear`, `formatear_mapa`, `tabla_traduccion`, `traducir` | parcial |
 | `util` | `standard_library/util.py` | `es_nulo`, `es_vacio`, `repetir`, `rel` | parcial |
-
-## 3) Funciones con nombres no canónicos y propuesta de alias público
-
-Se marcan como **no canónicas** las que están en inglés, demasiado técnicas del backend o abreviadas de forma opaca para API pública Cobra.
-
-| Módulo | Nombre actual | Motivo | Alias público propuesto |
-|---|---|---|---|
-| `asincrono` | `reintentar_async` | sufijo inglés `_async` | `reintentar_asincrono` |
-| `datos` | `leer_csv` / `escribir_csv` | sigla técnica inglesa | `leer_valores_separados_por_comas` / `escribir_valores_separados_por_comas` |
-| `datos` | `leer_json` / `escribir_json` | sigla de formato | `leer_datos_json` / `escribir_datos_json` |
-| `datos` | `leer_excel` / `escribir_excel` | marca/formato externo | `leer_hoja_calculo` / `escribir_hoja_calculo` |
-| `datos` | `leer_parquet` / `escribir_parquet` | formato técnico | `leer_tabla_columnar`* / `escribir_tabla_columnar`* |
-| `datos` | `leer_feather` / `escribir_feather` | formato técnico | `leer_tabla_ligera` / `escribir_tabla_ligera` |
-| `datos` | `pivotar_ancho` / `pivotar_largo` | calco técnico | `pivotar_a_formato_ancho` / `pivotar_a_formato_largo` |
-| `decoradores` | `reintentar_async` | sufijo inglés `_async` | `reintentar_asincrono` |
-| `interfaz` | `mostrar_markdown` | término inglés | `mostrar_marcado` |
-| `interfaz` | `mostrar_json` | sigla técnica | `mostrar_datos_json` |
-| `interfaz` | `iniciar_gui` / `iniciar_gui_idle` | sigla inglesa GUI | `iniciar_interfaz_grafica` / `iniciar_interfaz_grafica_idle` |
-| `lista` | `chunk` | inglés | `trocear` |
-| `lista` | `scanear` | traducción no estándar de “scan” funcional | `acumular_parcial` |
-| `logica` | `coalesce` | inglés de SQL/backend | `primer_no_nulo` |
-| `logica` | `xor` / `nand` / `nor` | siglas lógicas crudas | `o_exclusivo` / `no_y` / `no_o` |
-| `texto` | `a_snake` / `a_camel` | convenciones en inglés | `a_snake_case` / `a_camel_case` |
-| `texto` | `minusculas_casefold` | tecnicismo Python | `minusculas_compatibles_unicode` |
-| `numero` | `es_nan` | sigla inglesa | `es_no_numero` |
-| `util` | `rel` | abreviatura opaca | `ruta_relativa` |
-
-\* Nota: se sugiere corregir la ortografía a `columnar` en caso de adoptar alias relacionados.
-
-## 4) Observaciones para siguientes tareas
-
-- El mapa de módulos de REPL estricto (`REPL_COBRA_MODULE_MAP`) no incluye actualmente: `tiempo`, `coleccion`, `red`, `sistema`, `seguridad` (presentes en `corelibs`).
-- Para una migración segura de nombres, conviene introducir alias compatibles en cada módulo y deprecar gradualmente nombres antiguos.
-- Este inventario debe tratarse como línea base para evaluar cobertura de API pública de `usar`.
