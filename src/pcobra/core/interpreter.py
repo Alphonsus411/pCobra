@@ -1892,7 +1892,7 @@ class InterpretadorCobra:
             return simbolos
 
         def _resolver_carga_modulo_usar(nombre_modulo: str):
-            """Aplica una única ruta de decisión para módulos de ``usar``."""
+            """Aplica una única ruta de decisión para módulos de ``usar`` usando ``obtener_modulo`` permitido."""
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
             modulo_canonico = mapa_repl.get(nombre_modulo)
@@ -1967,8 +1967,10 @@ class InterpretadorCobra:
                 simbolos_saneados.append((nombre, simbolo))
 
             if reporte_rechazos:
+                simbolos_rechazados = [item["symbol"] for item in reporte_rechazos]
                 raise ImportError(
-                    f"rechazos de saneamiento en usar '{nodo.modulo}': {reporte_rechazos}"
+                    "rechazos de saneamiento en usar "
+                    f"'{nodo.modulo}' para símbolos {simbolos_rechazados}: {reporte_rechazos}"
                 )
 
             # Fase A: detectar colisiones de forma completa antes de definir.
@@ -1978,10 +1980,12 @@ class InterpretadorCobra:
             if conflictos:
                 conflicto = conflictos[0]
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    self._trace_debug(
-                        "[USAR_COLLISION][WARN] "
+                    diagnostico = (
+                        "[USAR_COLLISION][WARN_ALIAS_REQUIRED] "
                         f"módulo={nodo.modulo} conflictos={conflictos} policy={self._usar_collision_policy}"
                     )
+                    logging.warning(diagnostico)
+                    self._trace_debug(diagnostico)
                     raise NameError(
                         "No se puede usar el módulo "
                         f"'{nodo.modulo}': conflicto={conflictos}. "
@@ -1995,11 +1999,19 @@ class InterpretadorCobra:
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
             for nombre, simbolo in simbolos_saneados:
                 if contexto_actual.contains(nombre):
+                    detalle = {
+                        "symbol": nombre,
+                        "code": "symbol_collision_runtime_recheck",
+                        "message": "símbolo ya existe en contexto actual",
+                    }
                     self._trace_debug(
-                        "[USAR_COLLISION][WARN] "
+                        "[USAR_COLLISION][ERROR] "
                         f"módulo={nodo.modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
                     )
-                    continue
+                    raise NameError(
+                        "No se puede usar el módulo "
+                        f"'{nodo.modulo}': colisión estructurada={detalle}"
+                    )
                 contexto_actual.define(nombre, simbolo)
             if reporte_warnings:
                 self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
