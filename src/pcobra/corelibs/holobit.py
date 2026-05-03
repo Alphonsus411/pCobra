@@ -124,6 +124,15 @@ def deserializar(payload: str) -> dict[str, Any]:
     return deserializar_holobit(payload)
 
 
+def escalar(hb: dict[str, Any], factor: float) -> dict[str, Any]:
+    """Multiplica cada componente del holobit por ``factor``."""
+
+    interno = _desde_estructura_cobra(hb)
+    if not _es_numero(factor):
+        raise TypeError("factor debe ser numérico")
+    return crear_holobit([valor * float(factor) for valor in interno.valores])
+
+
 __all__ = [
     "crear",
     "validar",
@@ -134,4 +143,5 @@ __all__ = [
     "graficar",
     "combinar",
     "medir",
+    "escalar",
 ]

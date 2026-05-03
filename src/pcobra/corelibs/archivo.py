@@ -92,3 +92,19 @@ def eliminar(ruta: PathLike) -> None:
         # Compatibilidad con versiones de Python anteriores a 3.8.
         if ruta_segura.exists():
             ruta_segura.unlink()
+
+
+
+def anexar(ruta: PathLike, datos: str) -> None:
+    """Agrega ``datos`` al final del archivo respetando el sandbox de rutas."""
+
+    ruta_segura = _resolver_ruta(ruta)
+    with ruta_segura.open("a", encoding="utf-8") as f:
+        f.write(datos)
+
+
+def leer_lineas(ruta: PathLike, *, mantener_saltos: bool = False) -> list[str]:
+    """Lee un archivo y devuelve sus líneas."""
+
+    contenido = leer(ruta)
+    return contenido.splitlines(keepends=mantener_saltos)

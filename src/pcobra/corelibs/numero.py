@@ -802,3 +802,11 @@ def coeficiente_variacion(valores, *, muestral: bool = False) -> float:
     else:
         dispersion = pstdev(datos)
     return dispersion / abs(media)
+
+
+
+def aleatorio_entero(minimo: int, maximo: int, semilla: int | None = None) -> int:
+    """Devuelve un entero aleatorio inclusivo entre ``minimo`` y ``maximo``."""
+
+    generador = random.Random(semilla) if semilla is not None else random
+    return generador.randint(minimo, maximo)

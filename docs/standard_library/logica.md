@@ -59,3 +59,5 @@ para facilitar la depuración.
 | `xor` |
 | `xor_multiple` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
+
+- `si_condicional(condicion, cuando_verdadero, cuando_falso)` ofrece el ternario explícito en español.

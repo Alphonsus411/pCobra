@@ -489,4 +489,12 @@ __all__ = [
     "exactamente_n",
     "tabla_verdad",
     "diferencia_simetrica",
+    "si_condicional",
 ]
+
+
+
+def si_condicional(condicion: bool, cuando_verdadero: T, cuando_falso: T) -> T:
+    """Retorna ``cuando_verdadero`` o ``cuando_falso`` según ``condicion``."""
+
+    return cuando_verdadero if _asegurar_booleano(condicion, "condicion") else cuando_falso

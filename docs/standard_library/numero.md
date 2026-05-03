@@ -66,3 +66,5 @@ explícitos tanto en Python como en los demás backends soportados.
 | `varianza` |
 | `varianza_muestral` |
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
+
+- `aleatorio_entero(minimo, maximo, semilla=None)` genera enteros inclusivos estilo `randint` con nombre Cobra.
