@@ -11,8 +11,6 @@ from typing import Any
 
 from pcobra.core.holobits.graficar import graficar as _sdk_graficar
 from pcobra.core.holobits.holobit import Holobit as _SDKHolobit
-from pcobra.core.holobits.proyeccion import proyectar as _sdk_proyectar
-from pcobra.core.holobits.transformacion import transformar as _sdk_transformar
 
 
 def _es_numero(valor: Any) -> bool:
@@ -64,13 +62,35 @@ def deserializar_holobit(payload: str) -> dict[str, Any]:
 
 
 def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
-    salida = _sdk_proyectar(_desde_estructura_cobra(hb), modo)
-    return crear_holobit(salida)
+    interno = _desde_estructura_cobra(hb)
+    valores = list(interno.valores)
+    modo_norm = str(modo).strip().lower()
+    if modo_norm == "2d":
+        return crear_holobit(valores[:2])
+    if modo_norm == "3d":
+        return crear_holobit(valores[:3])
+    raise ValueError("Modo de proyección no soportado")
 
 
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
-    salida = _sdk_transformar(_desde_estructura_cobra(hb), operacion, *parametros)
-    return _a_estructura_cobra(salida)
+    valores = list(_desde_estructura_cobra(hb).valores)
+    op = str(operacion).strip().lower()
+    if op == "rotar":
+        if len(parametros) < 2:
+            raise ValueError("rotar requiere eje y ángulo")
+        eje = str(parametros[0]).strip().lower()
+        angulo = float(parametros[1])
+        if eje != "z" or len(valores) < 2:
+            return crear_holobit(valores)
+        import math
+
+        rad = math.radians(angulo)
+        x, y = valores[0], valores[1]
+        valores[0] = x * math.cos(rad) - y * math.sin(rad)
+        valores[1] = x * math.sin(rad) + y * math.cos(rad)
+        return crear_holobit(valores)
+
+    raise ValueError(f"Operacion no soportada: {operacion}")
 
 
 def graficar(hb: dict[str, Any]) -> str:

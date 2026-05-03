@@ -146,7 +146,7 @@ def test_usar_holobit_expone_solo_api_cobra_facing(monkeypatch):
     interp.ejecutar_usar(_NodoUsar())
 
     simbolos = set(mod_holobit.__all__)
-    assert simbolos == {"crear", "validar", "serializar", "deserializar", "proyectar", "transformar", "graficar", "combinar", "medir"}
+    assert simbolos == {"crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir"}
     assert "holobit_sdk" not in interp.contextos[-1].values
     assert "_to_sdk_holobit" not in interp.contextos[-1].values
 
