@@ -14,6 +14,7 @@ WEB_CONTRACT = ContractDescriptor(
         "cobra.web.obtener_url",
         "cobra.web.enviar_post",
         "cobra.web.descargar_archivo",
+        "cobra.web.obtener_url_texto",
     ),
     public_exports=(
         PublicApiExport("cobra.web.obtener_url", "src/pcobra/corelibs/red.py", "obtener_url"),
@@ -23,6 +24,7 @@ WEB_CONTRACT = ContractDescriptor(
             "src/pcobra/corelibs/red.py",
             "descargar_archivo",
         ),
+        PublicApiExport("cobra.web.obtener_url_texto", "src/pcobra/corelibs/red.py", "obtener_url_texto"),
     ),
     primary_backend="javascript",
     allowed_fallback=("python",),
@@ -38,5 +40,6 @@ WEB_CONTRACT = ContractDescriptor(
             "cobra.web.descargar_archivo",
             {"javascript": "partial", "python": "full"},
         ),
+        FunctionCoverage("cobra.web.obtener_url_texto", {"javascript": "partial", "python": "full"}),
     ),
 )
