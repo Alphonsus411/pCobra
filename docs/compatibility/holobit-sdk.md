@@ -15,7 +15,7 @@ Fuente única de verdad técnica (código):
 
 - **Python (`full`)**
   - Wrapper directo hacia `pcobra.core.holobits` y dependencia obligatoria de `holobit_sdk` para operaciones avanzadas.
-  - Hooks de runtime: `cobra_holobit`, `cobra_proyectar`, `cobra_transformar`, `cobra_graficar`.
+  - Hooks de runtime consumen la fachada `pcobra.corelibs.holobit` (`crear_holobit`, `proyectar`, `transformar`, `graficar`) y no internals de `pcobra.core.holobits`.
 - **JavaScript (`partial`)**
   - Adaptador runtime propio del proyecto (`CobraHolobit` implícito JS) con errores explícitos de contrato parcial.
 - **Rust (`partial`)**

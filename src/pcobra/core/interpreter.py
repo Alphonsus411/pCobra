@@ -1847,9 +1847,21 @@ class InterpretadorCobra:
 
         from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
-        def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool):
+        def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
             """Resuelve exportables callables según política de ``usar``."""
             exportables = getattr(modulo_obj, "__all__", None)
+            if modulo_oficial and nombre_modulo == "holobit":
+                exportables = [
+                    "crear_holobit",
+                    "validar_holobit",
+                    "serializar_holobit",
+                    "deserializar_holobit",
+                    "proyectar",
+                    "transformar",
+                    "graficar",
+                    "combinar",
+                    "medir",
+                ]
 
             if exportables is None:
                 if modulo_oficial:
@@ -1927,7 +1939,7 @@ class InterpretadorCobra:
             # prioriza __all__, filtra privados/no-callables y evita fugas de
             # símbolos internos o reexportados de forma implícita.
             simbolos_a_inyectar = _resolver_exportables_callables(
-                modulo, modulo_oficial=es_modulo_oficial_cobra
+                modulo, modulo_oficial=es_modulo_oficial_cobra, nombre_modulo=nombre_modulo
             )
             if not simbolos_a_inyectar and not es_modulo_oficial_cobra:
                 raise ImportError(
