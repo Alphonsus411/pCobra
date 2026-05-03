@@ -239,14 +239,21 @@ async def enviar_post_async(
     return resultado
 
 
+def _error_red(operacion: str, exc: Exception) -> RuntimeError:
+    return RuntimeError(f"Error de red en '{operacion}': {exc}")
+
+
 async def descargar_archivo(
     url: str,
     destino: str | os.PathLike[str],
     *,
     permitir_redirecciones: bool = False,
     crear_padres: bool = True,
-) -> Path:
-    """Descarga una URL ``https://`` a ``destino`` respetando la lista blanca."""
+) -> str:
+    """Descarga una URL ``https://`` a ``destino`` respetando la lista blanca.
+
+    Devuelve la ruta final como ``str`` para evitar fugas de tipos backend.
+    """
 
     ruta = Path(destino)
     if crear_padres:
@@ -255,9 +262,17 @@ async def descargar_archivo(
         resultado = await _realizar_peticion_async(
             "GET", url, permitir_redirecciones=permitir_redirecciones, destino=ruta
         )
-    except Exception:
+    except Exception as exc:
         if ruta.exists():
             ruta.unlink()
-        raise
+        raise _error_red("descargar_archivo", exc) from None
     assert isinstance(resultado, Path)
-    return resultado
+    return str(resultado)
+
+
+async def obtener_url_texto(url: str, permitir_redirecciones: bool = False) -> str:
+    """Alias estable en español para obtener contenido web asíncrono."""
+    try:
+        return await obtener_url_async(url, permitir_redirecciones=permitir_redirecciones)
+    except Exception as exc:
+        raise _error_red("obtener_url_texto", exc) from None
