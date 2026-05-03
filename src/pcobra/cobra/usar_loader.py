@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 # Allowlist canónica de módulos Cobra habilitados para `usar`.
-USAR_COBRA_ALLOWLIST: set[str] = {
+USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
     "numero",
     "texto",
     "datos",
@@ -16,7 +16,9 @@ USAR_COBRA_ALLOWLIST: set[str] = {
     "tiempo",
     "red",
     "holobit",
-}
+)
+
+USAR_COBRA_ALLOWLIST: frozenset[str] = frozenset(USAR_COBRA_PUBLIC_MODULES)
 
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.
 _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")

@@ -18,6 +18,9 @@ ALLOWED_FILES = {
 }
 PUBLIC_BACKENDS = ("python", "javascript", "rust")
 
+# Nota: el contrato de `usar` se valida contra su fuente canónica en
+# `scripts/validate_runtime_contract.py` usando `USAR_COBRA_PUBLIC_MODULES`.
+
 
 def _is_allowed_module(rel_path: Path) -> bool:
     if rel_path in ALLOWED_FILES:
