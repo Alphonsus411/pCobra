@@ -7,16 +7,6 @@ import warnings
 from typing import Literal
 
 from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
-from pcobra.cobra.internal_compat.legacy_contracts import (
-    INTERNAL_BACKENDS,
-    legacy_backend_warning_message,
-)
-from pcobra.cobra.cli.internal_compat.legacy_targets import (
-    LEGACY_BACKENDS_FEATURE_FLAG,
-    enabled_internal_legacy_targets,
-    is_internal_legacy_targets_enabled,
-)
-from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
 from pcobra.cobra.transpilers.compatibility_matrix import (
     BACKEND_COMPATIBILITY,
     BEST_EFFORT_RUNTIME_BACKENDS,
@@ -38,6 +28,28 @@ from pcobra.cobra.transpilers.target_utils import (
     target_cli_choices,
 )
 RenderMarkup = Literal["plain", "markdown", "rst"]
+
+def _internal_compat_bindings():
+    """Carga diferida de compatibilidad legacy solo cuando se necesita parseo legacy."""
+    from pcobra.cobra.cli.internal_compat.legacy_flags import add_internal_legacy_targets_flag
+    from pcobra.cobra.cli.internal_compat.legacy_targets import (
+        LEGACY_BACKENDS_FEATURE_FLAG,
+        enabled_internal_legacy_targets,
+        is_internal_legacy_targets_enabled,
+    )
+    from pcobra.cobra.internal_compat.legacy_contracts import (
+        INTERNAL_BACKENDS,
+        legacy_backend_warning_message,
+    )
+
+    return {
+        "add_internal_legacy_targets_flag": add_internal_legacy_targets_flag,
+        "LEGACY_BACKENDS_FEATURE_FLAG": LEGACY_BACKENDS_FEATURE_FLAG,
+        "enabled_internal_legacy_targets": enabled_internal_legacy_targets,
+        "is_internal_legacy_targets_enabled": is_internal_legacy_targets_enabled,
+        "INTERNAL_BACKENDS": INTERNAL_BACKENDS,
+        "legacy_backend_warning_message": legacy_backend_warning_message,
+    }
 
 
 ACCEPTED_TARGET_ALIASES: tuple[tuple[str, str], ...] = ()
@@ -515,6 +527,17 @@ def restricted_target_error(*, unsupported: list[str], capability: str, allowed_
     )
 
 
+def add_internal_legacy_target_flag(parser) -> None:
+    """Expone flag legacy interna sin import eager en rutas públicas."""
+    compat = _internal_compat_bindings()
+    compat["add_internal_legacy_targets_flag"](parser)
+
+
+def add_internal_legacy_targets_flag(parser) -> None:
+    """Alias histórico para mantener compatibilidad de imports."""
+    add_internal_legacy_target_flag(parser)
+
+
 def parse_target(value: str) -> str:
     """Valida target CLI público, con bypass interno temporal controlado por flag."""
     raw = value.strip()
@@ -524,12 +547,13 @@ def parse_target(value: str) -> str:
     if lowered in LEGACY_OR_AMBIGUOUS_TARGETS:
         raise ArgumentTypeError(legacy_or_ambiguous_target_error(value))
     canonical = normalize_target_name(raw)
-    legacy_enabled = is_internal_legacy_targets_enabled()
-    if canonical in enabled_internal_legacy_targets():
+    compat = _internal_compat_bindings()
+    legacy_enabled = compat["is_internal_legacy_targets_enabled"]()
+    if canonical in compat["enabled_internal_legacy_targets"]():
         warnings.warn(
-            legacy_backend_warning_message(
+            compat["legacy_backend_warning_message"](
                 target=canonical,
-                route=f"CLI.parse_target ({LEGACY_BACKENDS_FEATURE_FLAG}=1)",
+                route=f"CLI.parse_target ({compat['LEGACY_BACKENDS_FEATURE_FLAG']}=1)",
             ),
             category=UserWarning,
             stacklevel=2,
@@ -537,8 +561,8 @@ def parse_target(value: str) -> str:
         return canonical
     if canonical not in OFFICIAL_TRANSPILATION_TARGETS:
         feature_flag_hint = (
-            f" (compat interna temporal: export {LEGACY_BACKENDS_FEATURE_FLAG}=1)"
-            if canonical in INTERNAL_BACKENDS and not legacy_enabled
+            f" (compat interna temporal: export {compat['LEGACY_BACKENDS_FEATURE_FLAG']}=1)"
+            if canonical in compat["INTERNAL_BACKENDS"] and not legacy_enabled
             else ""
         )
         raise ArgumentTypeError(invalid_target_error(value) + feature_flag_hint)

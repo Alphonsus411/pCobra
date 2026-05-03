@@ -1,9 +1,16 @@
-public_api = ["cobra.system.leer", "cobra.system.escribir", "cobra.system.ejecutar", "cobra.system.obtener_env"]
+public_api = ["cobra.system.leer", "cobra.system.escribir", "cobra.system.adjuntar", "cobra.system.existe", "cobra.system.ejecutar", "cobra.system.ejecutar_comando_async", "cobra.system.obtener_env", "cobra.system.listar_dir", "cobra.system.ahora", "cobra.system.formatear", "cobra.system.dormir"]
 public_exports = [
   { alias = "cobra.system.leer", source_path = "src/pcobra/standard_library/archivo.py", python_symbol = "leer" },
   { alias = "cobra.system.escribir", source_path = "src/pcobra/standard_library/archivo.py", python_symbol = "escribir" },
+  { alias = "cobra.system.adjuntar", source_path = "src/pcobra/standard_library/archivo.py", python_symbol = "adjuntar" },
+  { alias = "cobra.system.existe", source_path = "src/pcobra/standard_library/archivo.py", python_symbol = "existe" },
   { alias = "cobra.system.ejecutar", source_path = "src/pcobra/corelibs/sistema.py", python_symbol = "ejecutar" },
+  { alias = "cobra.system.ejecutar_comando_async", source_path = "src/pcobra/corelibs/sistema.py", python_symbol = "ejecutar_comando_async" },
   { alias = "cobra.system.obtener_env", source_path = "src/pcobra/corelibs/sistema.py", python_symbol = "obtener_env" },
+  { alias = "cobra.system.listar_dir", source_path = "src/pcobra/corelibs/sistema.py", python_symbol = "listar_dir" },
+  { alias = "cobra.system.ahora", source_path = "src/pcobra/corelibs/tiempo.py", python_symbol = "ahora" },
+  { alias = "cobra.system.formatear", source_path = "src/pcobra/corelibs/tiempo.py", python_symbol = "formatear" },
+  { alias = "cobra.system.dormir", source_path = "src/pcobra/corelibs/tiempo.py", python_symbol = "dormir" },
 ]
 backend_preferido = "python"
 fallback_permitido = ["rust", "javascript"]

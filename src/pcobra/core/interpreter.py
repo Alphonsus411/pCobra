@@ -70,6 +70,7 @@ from .cobra_config import (
     limite_cpu_segundos,
 )
 from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP
+from .usar_symbol_policy import sanear_simbolo_para_usar
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
@@ -88,8 +89,9 @@ MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
     "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 )
-
-
+USAR_COLLISION_STRICT_ERROR = "strict_error"
+USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
+_USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
 def _ruta_import_permitida(ruta: str) -> bool:
     """Indica si una ruta está autorizada para importarse."""
 
@@ -439,6 +441,7 @@ class InterpretadorCobra:
         self.ultimo_ir: Optional[InternalIRModule] = None
         # Restricción opcional para `usar` en REPL/evaluador incremental.
         self._repl_usar_alias_map: dict[str, str] | None = None
+        self._usar_collision_policy = USAR_COLLISION_STRICT_ERROR
 
     def configurar_restriccion_usar_repl(self, alias_map: dict[str, str] | None) -> None:
         """Configura whitelist explícita de módulos `usar` para flujo REPL.
@@ -446,6 +449,12 @@ class InterpretadorCobra:
         Cuando ``alias_map`` es ``None``, no se aplica restricción adicional.
         """
         self._repl_usar_alias_map = alias_map.copy() if alias_map is not None else None
+
+    def configurar_politica_colision_usar(self, policy: str) -> None:
+        """Configura la política de colisión para ``usar`` en runtime."""
+        if policy not in _USAR_COLLISION_POLICIES:
+            raise ValueError(f"Política de colisión inválida: {policy}")
+        self._usar_collision_policy = policy
 
     def in_execution(self) -> bool:
         """Indica si el intérprete se encuentra en fase de ejecución."""
@@ -1834,12 +1843,25 @@ class InterpretadorCobra:
             ``__all__`` y símbolos callables). Si no cumplen, se rechazan.
         """
         from pathlib import Path
+        from types import ModuleType
 
         from .usar_loader import obtener_modulo, obtener_modulo_cobra_oficial
 
-        def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool):
+        def _resolver_exportables_callables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
             """Resuelve exportables callables según política de ``usar``."""
             exportables = getattr(modulo_obj, "__all__", None)
+            if modulo_oficial and nombre_modulo == "holobit":
+                exportables = [
+                    "crear_holobit",
+                    "validar_holobit",
+                    "serializar_holobit",
+                    "deserializar_holobit",
+                    "proyectar",
+                    "transformar",
+                    "graficar",
+                    "combinar",
+                    "medir",
+                ]
 
             if exportables is None:
                 if modulo_oficial:
@@ -1862,13 +1884,15 @@ class InterpretadorCobra:
                     continue
                 simbolo = getattr(modulo_obj, nombre)
                 if not callable(simbolo):
+                    if modulo_oficial and nombre.isupper():
+                        simbolos.append((nombre, simbolo))
                     continue
                 vistos.add(nombre)
                 simbolos.append((nombre, simbolo))
             return simbolos
 
         def _resolver_carga_modulo_usar(nombre_modulo: str):
-            """Aplica una única ruta de decisión para módulos de ``usar``."""
+            """Aplica una única ruta de decisión para módulos de ``usar`` usando ``obtener_modulo`` permitido."""
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
             modulo_canonico = mapa_repl.get(nombre_modulo)
@@ -1915,7 +1939,7 @@ class InterpretadorCobra:
             # prioriza __all__, filtra privados/no-callables y evita fugas de
             # símbolos internos o reexportados de forma implícita.
             simbolos_a_inyectar = _resolver_exportables_callables(
-                modulo, modulo_oficial=es_modulo_oficial_cobra
+                modulo, modulo_oficial=es_modulo_oficial_cobra, nombre_modulo=nombre_modulo
             )
             if not simbolos_a_inyectar and not es_modulo_oficial_cobra:
                 raise ImportError(
@@ -1924,17 +1948,73 @@ class InterpretadorCobra:
 
             contexto_actual = self.contextos[-1]
 
-            # Fase A: validar colisiones de forma completa antes de definir.
-            for nombre, _simbolo in simbolos_a_inyectar:
-                if contexto_actual.contains(nombre):
+            reporte_rechazos: list[dict[str, str]] = []
+            reporte_warnings: list[dict[str, str]] = []
+            simbolos_saneados: list[tuple[str, object]] = []
+            for nombre, simbolo in simbolos_a_inyectar:
+                resultado = sanear_simbolo_para_usar(nombre, simbolo)
+                if resultado.rechazado:
+                    reporte_rechazos.append(
+                        {"symbol": nombre, "code": resultado.codigo or "rejected", "message": resultado.mensaje or "símbolo rechazado"}
+                    )
+                    self._trace_debug(f"[USAR_SANITIZE][REJECT] {nombre}: {resultado.codigo}")
+                    continue
+                if resultado.warning:
+                    reporte_warnings.append(
+                        {"symbol": nombre, "code": resultado.codigo or "warning", "message": resultado.mensaje or "warning"}
+                    )
+                    self._trace_debug(f"[USAR_SANITIZE][WARN] {nombre}: {resultado.codigo}")
+                simbolos_saneados.append((nombre, simbolo))
+
+            if reporte_rechazos:
+                simbolos_rechazados = [item["symbol"] for item in reporte_rechazos]
+                raise ImportError(
+                    "rechazos de saneamiento en usar "
+                    f"'{nodo.modulo}' para símbolos {simbolos_rechazados}: {reporte_rechazos}"
+                )
+
+            # Fase A: detectar colisiones de forma completa antes de definir.
+            conflictos = [
+                nombre for nombre, _simbolo in simbolos_saneados if contexto_actual.contains(nombre)
+            ]
+            if conflictos:
+                conflicto = conflictos[0]
+                if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
+                    diagnostico = (
+                        "[USAR_COLLISION][WARN_ALIAS_REQUIRED] "
+                        f"módulo={nodo.modulo} conflictos={conflictos} policy={self._usar_collision_policy}"
+                    )
+                    logging.warning(diagnostico)
+                    self._trace_debug(diagnostico)
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': el símbolo '{nombre}' ya existe en el contexto actual"
+                        f"'{nodo.modulo}': conflicto={conflictos}. "
+                        "Requiere alias explícito según la convención del runtime (usar importar ... como ...)."
                     )
+                raise NameError(
+                    "No se puede usar el módulo "
+                    f"'{nodo.modulo}': colisión estructurada={{'symbol': '{conflicto}', 'code': 'symbol_collision', 'message': 'símbolo ya existe en contexto actual'}}"
+                )
 
-            # Fase B (atómica): definir solo si toda la validación anterior fue exitosa.
-            for nombre, simbolo in simbolos_a_inyectar:
+            # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
+            for nombre, simbolo in simbolos_saneados:
+                if contexto_actual.contains(nombre):
+                    detalle = {
+                        "symbol": nombre,
+                        "code": "symbol_collision_runtime_recheck",
+                        "message": "símbolo ya existe en contexto actual",
+                    }
+                    self._trace_debug(
+                        "[USAR_COLLISION][ERROR] "
+                        f"módulo={nodo.modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
+                    )
+                    raise NameError(
+                        "No se puede usar el módulo "
+                        f"'{nodo.modulo}': colisión estructurada={detalle}"
+                    )
                 contexto_actual.define(nombre, simbolo)
+            if reporte_warnings:
+                self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise

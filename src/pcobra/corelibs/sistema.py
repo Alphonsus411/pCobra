@@ -324,3 +324,37 @@ def obtener_env(nombre: str) -> str | None:
 def listar_dir(ruta: str) -> list[str]:
     """Lista los archivos de un directorio."""
     return os.listdir(ruta)
+
+
+def _error_sistema(operacion: str, exc: Exception) -> RuntimeError:
+    return RuntimeError(f"Error del sistema en '{operacion}': {exc}")
+
+
+async def ejecutar_comando_async(
+    comando: list[str],
+    permitidos: Iterable[str] | None = None,
+    timeout: int | float | None = None,
+) -> str:
+    """Contrato estable en español para ejecutar comandos asíncronos."""
+    try:
+        return await ejecutar_async(comando, permitidos=permitidos, timeout=timeout)
+    except Exception as exc:
+        raise _error_sistema("ejecutar_comando_async", exc) from None
+
+
+
+def directorio_actual() -> str:
+    """Devuelve la ruta del directorio de trabajo actual."""
+
+    return os.getcwd()
+
+__all__ = [
+    "obtener_os",
+    "ejecutar",
+    "ejecutar_async",
+    "ejecutar_stream",
+    "obtener_env",
+    "listar_dir",
+    "ejecutar_comando_async",
+    "directorio_actual",
+]

@@ -20,7 +20,7 @@ __all__ = [
     "negacion",
     "entonces",
     "si_no",
-    "coalesce",
+    "coalescer",
     "condicional",
     "xor",
     "nand",
@@ -91,10 +91,16 @@ def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
     return _logica.si_no(valor, resultado)
 
 
-def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
+def _coalesce_interno(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
     """Devuelve el primer valor que cumpla el predicado, como ``COALESCE`` en SQL."""
 
     return _logica.coalesce(*valores, predicado=predicado)
+
+
+def coalescer(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
+    """Alias canónico en español para ``coalesce``."""
+
+    return _coalesce_interno(*valores, predicado=predicado)
 
 
 def condicional(
@@ -211,4 +217,3 @@ def diferencia_simetrica(*colecciones: Iterable[bool]) -> tuple[bool, ...]:
     """Combina colecciones booleanas mediante diferencia simétrica elemento a elemento."""
 
     return _logica.diferencia_simetrica(*colecciones)
-

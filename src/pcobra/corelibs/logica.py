@@ -151,6 +151,12 @@ def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | N
     return None
 
 
+def coalescer(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
+    """Alias canónico en español para :func:`coalesce`."""
+
+    return coalesce(*valores, predicado=predicado)
+
+
 def condicional(
     *casos: tuple[bool | Callable[[], bool], T | Callable[[], T]],
     por_defecto: T | Callable[[], T] | None = None,
@@ -472,7 +478,7 @@ __all__ = [
     "entonces",
     "si_no",
     "condicional",
-    "coalesce",
+    "coalescer",
     "todas",
     "alguna",
     "ninguna",
@@ -483,4 +489,12 @@ __all__ = [
     "exactamente_n",
     "tabla_verdad",
     "diferencia_simetrica",
+    "si_condicional",
 ]
+
+
+
+def si_condicional(condicion: bool, cuando_verdadero: T, cuando_falso: T) -> T:
+    """Retorna ``cuando_verdadero`` o ``cuando_falso`` según ``condicion``."""
+
+    return cuando_verdadero if _asegurar_booleano(condicion, "condicion") else cuando_falso
