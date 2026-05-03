@@ -415,7 +415,7 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
     simbolos_iniciales = set(interp.contextos[-1].values.keys())
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(PermissionError, match=r"módulos externos no soportados en REPL"):
         _ejecutar_codigo('usar "numpy"', interp)
 
     assert interp.variables == estado_inicial
@@ -440,7 +440,7 @@ def test_repl_usar_rechazo_externo_emite_mensaje_canonico(monkeypatch, escenario
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
     if escenario == "alias_no_permitido":
-        with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+        with pytest.raises(PermissionError, match=r"módulos externos no soportados en REPL"):
             interp.ejecutar_nodo(NodoUsar("numpy"))
         return
 
@@ -455,7 +455,7 @@ def test_repl_usar_rechazo_externo_emite_mensaje_canonico(monkeypatch, escenario
         lambda _nombre: modulo,
     )
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+    with pytest.raises(PermissionError, match=r"módulos externos no soportados en REPL"):
         interp.ejecutar_nodo(NodoUsar("numero"))
 
 

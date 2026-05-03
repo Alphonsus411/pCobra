@@ -86,7 +86,7 @@ from .environment import Environment
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
-    "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
+    "módulos externos no soportados en REPL"
 )
 
 
@@ -1823,7 +1823,7 @@ class InterpretadorCobra:
           - El módulo debe resolverse desde rutas oficiales de Cobra
             (``corelibs``/``standard_library``).
           - Cualquier módulo externo se rechaza explícitamente con
-            ``PermissionError: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)``.
+            ``PermissionError: módulos externos no soportados en REPL``.
 
         - Fuera de REPL estricto:
           - Módulos oficiales: exportan callables públicos (no privados).
