@@ -72,3 +72,43 @@ def test_repl_contract_usar_aliases_y_restriccion_numpy(factory, executor, get_i
 
     with pytest.raises(Exception, match=r"Token no reconocido: '\.'"):
         executor(cmd, "numero.es_finito(10)")
+
+
+def _modulo_numero_multi_export_stub() -> ModuleType:
+    mod = ModuleType("numero")
+    mod.__all__ = ["es_finito", "es_par"]
+    mod.es_finito = lambda valor: valor == valor and valor not in (float("inf"), float("-inf"))
+    mod.es_par = lambda valor: isinstance(valor, int) and valor % 2 == 0
+    mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/numero.py"
+    return mod
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_contract_colision_usar_numero_falla_sin_estado_parcial(factory, executor, get_interp, monkeypatch):
+    mod_numero = _modulo_numero_multi_export_stub()
+    mod_texto = _modulo_texto_stub()
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "numero":
+            return mod_numero
+        if nombre == "texto":
+            return mod_texto
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    cmd = factory()
+    interp = get_interp(cmd)
+    interp.contextos[-1].define("es_finito", lambda _valor: "ocupado")
+
+    with pytest.raises(NameError, match=r"No se puede usar el módulo 'numero': el símbolo 'es_finito' ya existe"):
+        executor(cmd, 'usar "numero"')
+
+    assert interp.obtener_variable("es_finito")("x") == "ocupado"
+    assert "es_par" not in interp.contextos[-1].values
