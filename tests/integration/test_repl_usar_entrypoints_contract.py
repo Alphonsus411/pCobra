@@ -108,7 +108,7 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     executor(cmd, 'usar "numero"')
     estado_pre_numpy = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
+    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
         executor(cmd, 'usar "numpy"')
 
     assert "numpy" not in interp.variables
@@ -158,3 +158,52 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_colision_no_s
 
     assert interp.obtener_variable("es_finito")("x") == "ocupado"
     assert "es_par" not in interp.contextos[-1].values
+
+
+@pytest.mark.parametrize(
+    ("factory", "executor", "get_interp"),
+    [
+        (lambda: InteractiveCommand(InterpretadorCobra()), lambda cmd, code: cmd.ejecutar_codigo(code), lambda cmd: cmd.interpretador),
+        (ReplCommandV2, lambda cmd, code: cmd._ejecutar_en_modo_normal(code), lambda cmd: cmd._delegate.interpretador),
+    ],
+)
+def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp, monkeypatch):
+    mod_numero = _modulo_numero_stub()
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == "numero":
+            return mod_numero
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    cmd = factory()
+    interp = get_interp(cmd)
+    estado_pre = dict(interp.contextos[-1].values)
+
+    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+        executor(cmd, 'usar "requests"')
+
+    assert estado_pre == interp.contextos[-1].values
+    assert "requests" not in interp.contextos[-1].values
+
+
+def test_usar_externo_whitelist_sin_all_falla_claro_y_atomico(monkeypatch):
+    mod_externo = ModuleType("externo_sin_all")
+    mod_externo.__file__ = "/tmp/externo_sin_all.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda *_args, **_kwargs: mod_externo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(None)
+
+    class _NodoUsar:
+        modulo = "externo_sin_all"
+
+    estado_pre = dict(interp.contextos[-1].values)
+
+    with pytest.raises(ImportError, match="módulo externo no exportable para usar: requiere __all__ con callables públicos"):
+        interp.ejecutar_usar(_NodoUsar())
+
+    assert estado_pre == interp.contextos[-1].values
+    assert "externo_sin_all" not in interp.contextos[-1].values

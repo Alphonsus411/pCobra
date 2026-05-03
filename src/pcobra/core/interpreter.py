@@ -1819,7 +1819,9 @@ class InterpretadorCobra:
             ``logica``, etc.) mapeados en el alias map activo.
           - El módulo debe resolverse desde rutas oficiales de Cobra
             (``corelibs``/``standard_library``).
-          - Cualquier módulo externo se rechaza con ``PermissionError``.
+          - Cualquier módulo externo se rechaza explícitamente con
+            ``PermissionError: módulo externo no permitido en REPL estricto
+            (solo alias oficiales Cobra)``.
 
         - Fuera de REPL estricto:
           - Módulos oficiales: se cargan como oficiales y deben exponer
@@ -1864,7 +1866,7 @@ class InterpretadorCobra:
             if es_modulo_oficial_cobra:
                 modulo = obtener_modulo_cobra_oficial(modulo_canonico)
             elif es_repl_estricto:
-                raise PermissionError("módulos externos no soportados en REPL")
+                raise PermissionError("módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)")
             else:
                 modulo = obtener_modulo(
                     nombre_modulo,
@@ -1882,7 +1884,7 @@ class InterpretadorCobra:
             if es_repl_estricto and es_modulo_oficial_cobra:
                 modulo_file = getattr(modulo, "__file__", None)
                 if not modulo_file:
-                    raise PermissionError("módulos externos no soportados en REPL")
+                    raise PermissionError("módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)")
 
                 ruta_modulo = Path(modulo_file).resolve()
                 raiz_pcobra = Path(__file__).resolve().parents[1]
@@ -1896,7 +1898,7 @@ class InterpretadorCobra:
                     for ruta_base in rutas_oficiales
                 )
                 if not es_oficial:
-                    raise PermissionError("módulos externos no soportados en REPL")
+                    raise PermissionError("módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)")
 
             # ``usar`` solo importa API pública explícita del módulo Cobra:
             # prioriza __all__, filtra privados/no-callables y evita fugas de
@@ -1906,7 +1908,7 @@ class InterpretadorCobra:
             )
             if not simbolos_a_inyectar and not es_modulo_oficial_cobra:
                 raise ImportError(
-                    "módulo externo no exportable para usar"
+                    "módulo externo no exportable para usar: requiere __all__ con callables públicos"
                 )
 
             contexto_actual = self.contextos[-1]
