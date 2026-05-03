@@ -23,7 +23,7 @@ def test_backend_pipeline_build_expone_contexto_runtime(monkeypatch):
         ),
     )
     monkeypatch.setattr(backend_pipeline, "obtener_ast", lambda _codigo: ["ast"])
-    monkeypatch.setattr(backend_pipeline, "TRANSPILERS", {"python": _DummyTranspiler})
+    monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
 
     result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python"})
 
@@ -50,7 +50,7 @@ def test_backend_pipeline_build_expone_reason_solo_en_debug(monkeypatch):
         ),
     )
     monkeypatch.setattr(backend_pipeline, "obtener_ast", lambda _codigo: ["ast"])
-    monkeypatch.setattr(backend_pipeline, "TRANSPILERS", {"python": _DummyTranspiler})
+    monkeypatch.setattr(backend_pipeline, "_official_transpilers", lambda: {"python": _DummyTranspiler})
 
     result = backend_pipeline.build("imprimir(1)", hints={"preferred_backend": "python", "debug": True})
 
