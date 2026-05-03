@@ -91,7 +91,7 @@ def si_no(valor: bool, resultado: T | Callable[[], T]) -> T | None:
     return _logica.si_no(valor, resultado)
 
 
-def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
+def _coalesce_interno(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
     """Devuelve el primer valor que cumpla el predicado, como ``COALESCE`` en SQL."""
 
     return _logica.coalesce(*valores, predicado=predicado)
@@ -100,7 +100,7 @@ def coalesce(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | N
 def coalescer(*valores: T, predicado: Callable[[T], bool] | None = None) -> T | None:
     """Alias canónico en español para ``coalesce``."""
 
-    return coalesce(*valores, predicado=predicado)
+    return _coalesce_interno(*valores, predicado=predicado)
 
 
 def condicional(
