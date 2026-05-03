@@ -1840,11 +1840,17 @@ class InterpretadorCobra:
 
             if exportables is None:
                 if modulo_oficial:
-                    candidatos = [
-                        nombre
-                        for nombre in dir(modulo_obj)
-                        if isinstance(nombre, str) and not nombre.startswith("_")
-                    ]
+                    nombre_modulo = getattr(modulo_obj, "__name__", None)
+                    candidatos = []
+                    for nombre, simbolo in vars(modulo_obj).items():
+                        if not isinstance(nombre, str) or nombre.startswith("_"):
+                            continue
+                        if not callable(simbolo):
+                            continue
+                        modulo_simbolo = getattr(simbolo, "__module__", None)
+                        if modulo_simbolo is not None and modulo_simbolo != nombre_modulo:
+                            continue
+                        candidatos.append(nombre)
                 else:
                     return []
             else:
