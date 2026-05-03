@@ -911,6 +911,8 @@ La semántica de `usar` depende del contexto de ejecución:
 
 En REPL, `usar` es **estricto**:
 
+- **Sintaxis implementada actual (restricción del parser, sin cambiar lexer/parser):** `usar "numero"` (siempre con cadena).
+- **Semántica objetivo oficial:** importación plana de funciones del módulo Cobra (`es_finito(...)` sin prefijo).
 - Solo acepta módulos oficiales definidos en `REPL_COBRA_MODULE_MAP`.
 - **No** existe fallback de instalación con `pip`.
 - Si pides un módulo externo (por ejemplo `numpy`), se rechaza con error y sin
@@ -930,7 +932,8 @@ imprimir(a_snake("HolaMundo"))
 Ejemplo de rechazo explícito en REPL:
 
 ```cobra
-usar "numpy"   # rechazado: módulo externo no soportado en REPL
+usar "numpy"
+# módulos externos no soportados en REPL
 ```
 
 > Nota: en Cobra REPL no hay dot-access para estos módulos inyectados.
