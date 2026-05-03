@@ -43,4 +43,5 @@ jobs:
             tests/unit/test_interpreter_loop_scope_regression.py \
             tests/test_lexer.py \
             tests/unit/test_lark_parser_tokens.py \
-            tests/unit/test_parser_error_reporting.py
+            tests/unit/test_parser_error_reporting.py \
+            tests/integration/test_usar_public_contract_regression.py

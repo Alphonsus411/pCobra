@@ -177,7 +177,8 @@ jobs:
         shell: bash
         run: |
           pytest tests/integration/transpilers/test_official_backends_tier1.py \
-            tests/integration/transpilers/test_official_backends_contracts.py
+            tests/integration/transpilers/test_official_backends_contracts.py \
+            tests/integration/test_usar_public_contract_regression.py
 
           paths=()
           if [ -d tests ]; then
@@ -198,7 +199,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_contracts.py
+          pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_contracts.py \
+            tests/integration/test_usar_public_contract_regression.py
 
           $paths = @()
           if (Test-Path tests) {
@@ -292,4 +294,5 @@ jobs:
         shell: bash
         run: |
           pytest tests/integration/test_holobit_tiers.py \
-            tests/integration/transpilers/test_official_backends_contracts.py
+            tests/integration/transpilers/test_official_backends_contracts.py \
+            tests/integration/test_usar_public_contract_regression.py
