@@ -7,6 +7,7 @@ CLI y documentación compartan el mismo inventario.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from typing import Final, Literal
 
 from pcobra.cobra.architecture.backend_policy import (
@@ -34,7 +35,16 @@ class LegacyBackendLifecycle:
     notes: str
 
 
-LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
+LEGACY_BACKENDS_FEATURE_FLAG: Final[str] = "PCOBRA_ENABLE_INTERNAL_LEGACY_BACKENDS"
+
+
+def is_legacy_backend_lifecycle_enabled() -> bool:
+    """Compat internal-only: habilita acceso al inventario legacy bajo opt-in explícito."""
+    value = os.environ.get(LEGACY_BACKENDS_FEATURE_FLAG, "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+_LEGACY_BACKEND_LIFECYCLE_DATA: Final[dict[str, LegacyBackendLifecycle]] = {
     "go": LegacyBackendLifecycle(
         status="active-migration",
         phase="phase-2-development-profile-only",
@@ -79,7 +89,7 @@ LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = {
 
 
 def _validate_legacy_lifecycle_contract() -> None:
-    configured = tuple(LEGACY_BACKEND_LIFECYCLE)
+    configured = tuple(_LEGACY_BACKEND_LIFECYCLE_DATA)
     missing = tuple(target for target in INTERNAL_BACKENDS if target not in configured)
     extras = tuple(target for target in configured if target not in INTERNAL_BACKENDS)
     if missing or extras:
@@ -91,7 +101,7 @@ def _validate_legacy_lifecycle_contract() -> None:
 
     mismatched_windows = tuple(
         backend
-        for backend, metadata in LEGACY_BACKEND_LIFECYCLE.items()
+        for backend, metadata in _LEGACY_BACKEND_LIFECYCLE_DATA.items()
         if metadata.retirement_window != INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW[backend]
     )
     if mismatched_windows:
@@ -105,14 +115,24 @@ def _validate_legacy_lifecycle_contract() -> None:
 _validate_legacy_lifecycle_contract()
 
 
+def get_legacy_backend_lifecycle(*, require_opt_in: bool = True) -> dict[str, LegacyBackendLifecycle]:
+    """Devuelve inventario legacy; por defecto exige feature-flag de compatibilidad."""
+    if require_opt_in and not is_legacy_backend_lifecycle_enabled():
+        raise RuntimeError(
+            "Legacy backend lifecycle deshabilitado por defecto. "
+            f"Habilite {LEGACY_BACKENDS_FEATURE_FLAG}=1 para rutas de compatibilidad interna."
+        )
+    return _LEGACY_BACKEND_LIFECYCLE_DATA
+
+
 def lifecycle_status_for_backend(target: str) -> LegacyLifecycleStatus:
     """Devuelve el estado de retiro para un backend interno."""
-    return LEGACY_BACKEND_LIFECYCLE[target].status
+    return get_legacy_backend_lifecycle(require_opt_in=False)[target].status
 
 
 def legacy_backend_warning_message(*, target: str, route: str) -> str:
     """Mensaje único para advertencias de uso por rutas no públicas."""
-    metadata = LEGACY_BACKEND_LIFECYCLE[target]
+    metadata = get_legacy_backend_lifecycle()[target]
     return (
         f"[INTERNAL LEGACY BACKEND] '{target}' usado vía ruta no pública ({route}). "
         f"estado={metadata.status}; fase={metadata.phase}; ventana={metadata.retirement_window}; "
@@ -123,4 +143,8 @@ def legacy_backend_warning_message(*, target: str, route: str) -> str:
 
 def iter_legacy_backend_lifecycle_rows() -> tuple[tuple[str, LegacyBackendLifecycle], ...]:
     """Filas ordenadas para consumo en CLI/docs."""
-    return tuple((backend, LEGACY_BACKEND_LIFECYCLE[backend]) for backend in INTERNAL_BACKENDS)
+    lifecycle = get_legacy_backend_lifecycle()
+    return tuple((backend, lifecycle[backend]) for backend in INTERNAL_BACKENDS)
+
+
+LEGACY_BACKEND_LIFECYCLE: Final[dict[str, LegacyBackendLifecycle]] = _LEGACY_BACKEND_LIFECYCLE_DATA
