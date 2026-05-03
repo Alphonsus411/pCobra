@@ -243,6 +243,12 @@ class InteractiveCommand(BaseCommand):
         self._configurar_restriccion_usar_repl()
 
     def _configurar_restriccion_usar_repl(self) -> None:
+        """Activa la política estricta de ``usar`` en REPL.
+
+        Política visible al usuario:
+        - Solo se permiten alias oficiales de ``REPL_COBRA_MODULE_MAP``.
+        - Cualquier módulo externo debe fallar con mensaje estable y explícito.
+        """
         if hasattr(self.interpretador, "configurar_restriccion_usar_repl"):
             self.interpretador.configurar_restriccion_usar_repl(self._USAR_ALIAS_REPL)
 
