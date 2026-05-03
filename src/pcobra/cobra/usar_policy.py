@@ -13,5 +13,6 @@ REPL_COBRA_MODULE_MAP: dict[str, str] = {
     "logica": "logica",
     "numero": "numero",
     "texto": "texto",
+    "tiempo": "tiempo",
     "util": "util",
 }
