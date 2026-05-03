@@ -108,11 +108,27 @@ def medir(hb: dict[str, Any]) -> dict[str, float | int]:
     return {"dimension": len(valores), "magnitud": float(magnitud)}
 
 
+def crear(valores: Iterable[Any]) -> dict[str, Any]:
+    return crear_holobit(valores)
+
+
+def validar(hb: Any) -> bool:
+    return validar_holobit(hb)
+
+
+def serializar(hb: dict[str, Any]) -> str:
+    return serializar_holobit(hb)
+
+
+def deserializar(payload: str) -> dict[str, Any]:
+    return deserializar_holobit(payload)
+
+
 __all__ = [
-    "crear_holobit",
-    "validar_holobit",
-    "serializar_holobit",
-    "deserializar_holobit",
+    "crear",
+    "validar",
+    "serializar",
+    "deserializar",
     "proyectar",
     "transformar",
     "graficar",
