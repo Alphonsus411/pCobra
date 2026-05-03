@@ -107,13 +107,16 @@ def test_repl_contract_sintaxis_usar_compat_parser_semantica_plana_numpy_restrin
     interp = get_interp(cmd)
     executor(cmd, 'usar "numero"')
     estado_pre_numpy = dict(interp.contextos[-1].values)
+    simbolos_pre = set(interp.contextos[-1].values.keys())
 
     with pytest.raises(PermissionError, match=r"módulos externos no soportados en REPL"):
         executor(cmd, 'usar "numpy"')
 
+    # Contrato de Cobra: `usar` es plano (sin `.`), no se expone namespace tipo `numero.*`.
     assert "numpy" not in interp.variables
     assert "numpy" not in interp.contextos[-1].values
     assert estado_pre_numpy == interp.contextos[-1].values
+    assert simbolos_pre == set(interp.contextos[-1].values.keys())
 
     with pytest.raises(Exception, match=r"Token no reconocido: '\.'"):
         executor(cmd, "numero.es_finito(10)")

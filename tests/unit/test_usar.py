@@ -156,6 +156,7 @@ def test_cargar_lista_blanca_sin_cobra_toml_mantiene_hardcoded(monkeypatch, tmp_
 def test_interpreter_usar_registra_modulo(monkeypatch):
     mod = ModuleType('math')
     mod.sumar = lambda a, b: a + b
+    mod.__all__ = ['sumar']
     monkeypatch.setattr(core_usar_loader, 'obtener_modulo', lambda _name, **_kwargs: mod)
     interp = InterpretadorCobra()
     interp.ejecutar_nodo(NodoUsar('math'))
@@ -411,12 +412,14 @@ def test_repl_usar_numpy_falla_sin_estado_parcial():
     interp = InterpretadorCobra()
     interp.contextos[-1].define("sentinela", 42)
     estado_inicial = dict(interp.variables)
+    simbolos_iniciales = set(interp.contextos[-1].values.keys())
     interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
 
     with pytest.raises(PermissionError, match="módulos externos no soportados en REPL"):
         _ejecutar_codigo('usar "numpy"', interp)
 
     assert interp.variables == estado_inicial
+    assert simbolos_iniciales == set(interp.contextos[-1].values.keys())
     assert "numpy" not in interp.variables
 
 
