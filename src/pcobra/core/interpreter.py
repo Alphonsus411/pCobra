@@ -85,6 +85,9 @@ from .errors import CondicionNoBooleanaError
 from .environment import Environment
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
+REPL_USAR_EXTERNAL_MODULE_ERROR = (
+    "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
+)
 
 
 def _ruta_import_permitida(ruta: str) -> bool:
@@ -1820,7 +1823,7 @@ class InterpretadorCobra:
           - El módulo debe resolverse desde rutas oficiales de Cobra
             (``corelibs``/``standard_library``).
           - Cualquier módulo externo se rechaza explícitamente con
-            ``PermissionError: módulos externos no soportados en REPL``.
+            ``PermissionError: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)``.
 
         - Fuera de REPL estricto:
           - Módulos oficiales: exportan callables públicos (no privados).
@@ -1874,7 +1877,7 @@ class InterpretadorCobra:
             if es_modulo_oficial_cobra:
                 modulo = obtener_modulo_cobra_oficial(modulo_canonico)
             elif es_repl_estricto:
-                raise PermissionError("módulos externos no soportados en REPL")
+                raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
             else:
                 modulo = obtener_modulo(
                     nombre_modulo,
@@ -1892,7 +1895,7 @@ class InterpretadorCobra:
             if es_repl_estricto and es_modulo_oficial_cobra:
                 modulo_file = getattr(modulo, "__file__", None)
                 if not modulo_file:
-                    raise PermissionError("módulos externos no soportados en REPL")
+                    raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
 
                 ruta_modulo = Path(modulo_file).resolve()
                 raiz_pcobra = Path(__file__).resolve().parents[1]
@@ -1906,7 +1909,7 @@ class InterpretadorCobra:
                     for ruta_base in rutas_oficiales
                 )
                 if not es_oficial:
-                    raise PermissionError("módulos externos no soportados en REPL")
+                    raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
 
             # ``usar`` solo importa API pública explícita del módulo Cobra:
             # prioriza __all__, filtra privados/no-callables y evita fugas de
