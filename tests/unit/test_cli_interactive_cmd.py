@@ -1,5 +1,5 @@
 from types import SimpleNamespace, ModuleType
-from unittest.mock import patch, MagicMock
+from unittest.mock import ANY, MagicMock, patch
 from io import StringIO
 import argparse
 import sys
@@ -549,7 +549,7 @@ def test_parsear_y_ejecutar_codigo_repl_restaurar_interpretador_de_sesion():
         cmd.parsear_y_ejecutar_codigo_repl("imprimir(1)")
 
     assert cmd.interpretador is cmd._interpretador_sesion
-    mock_ejecutar.assert_called_once_with("imprimir(1)")
+    mock_ejecutar.assert_called_once_with("imprimir(1)", None, ast_preparseado=ANY)
 
 
 def test_parsear_y_ejecutar_codigo_repl_no_invoca_pipeline_explicito_en_ruta_normal():
@@ -565,10 +565,10 @@ def test_parsear_y_ejecutar_codigo_repl_no_invoca_pipeline_explicito_en_ruta_nor
         "pcobra.cobra.cli.execution_pipeline.ejecutar_pipeline_explicito",
         side_effect=AssertionError("ruta normal no debe invocar pipeline explícito"),
     ) as mock_pipeline:
-        cmd.parsear_y_ejecutar_codigo_repl("imprimir(1)")
+        cmd.parsear_y_ejecutar_codigo_repl("imprimir(1)", prevalidar_fn=mock_prevalidar)
 
     mock_prevalidar.assert_called_once_with("imprimir(1)")
-    mock_ejecutar.assert_called_once_with("imprimir(1)")
+    mock_ejecutar.assert_called_once_with("imprimir(1)", None, ast_preparseado=ANY)
     assert mock_pipeline.call_count == 0
 
 

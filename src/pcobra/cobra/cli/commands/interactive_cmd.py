@@ -477,6 +477,7 @@ class InteractiveCommand(BaseCommand):
         # Este camino ejecuta snippets interactivos normales sobre el intérprete
         # persistente para preservar la semántica incremental del lenguaje.
         modo_previo = self.mode
+        modo_interpretador_previo = self.interpretador.mode
         validacion_no_silenciosa_realizada = False
         try:
             ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
@@ -521,7 +522,7 @@ class InteractiveCommand(BaseCommand):
             # Restaurar modo previo evita contaminar evaluaciones siguientes del REPL
             # y mantiene aislada la transición análisis -> ejecución de este snippet.
             self.mode = modo_previo
-            self.interpretador.mode = self.mode
+            self.interpretador.mode = modo_interpretador_previo
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
