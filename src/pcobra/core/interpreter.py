@@ -3,7 +3,6 @@
 import logging
 import os
 import hashlib
-from dataclasses import dataclass
 from typing import Mapping, Optional
 
 from .lexer import (
@@ -71,6 +70,7 @@ from .cobra_config import (
     limite_cpu_segundos,
 )
 from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP
+from .usar_symbol_policy import sanear_simbolo_para_usar
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
@@ -92,27 +92,6 @@ REPL_USAR_EXTERNAL_MODULE_ERROR = (
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
-_NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
-    {"self", "append", "map", "filter", "unwrap", "expect"}
-)
-_DUNDERS_BLOQUEADOS = frozenset(
-    {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
-)
-_NOMBRES_BACKEND_INTERNOS = frozenset(
-    {"sys", "os", "importlib", "pcobra", "cobra", "core"}
-)
-
-
-@dataclass(frozen=True)
-class _ResultadoSaneamientoSimbolo:
-    nombre: str
-    simbolo: object
-    rechazado: bool
-    codigo: str | None = None
-    mensaje: str | None = None
-    warning: bool = False
-
-
 def _ruta_import_permitida(ruta: str) -> bool:
     """Indica si una ruta está autorizada para importarse."""
 
@@ -1900,23 +1879,6 @@ class InterpretadorCobra:
                 simbolos.append((nombre, simbolo))
             return simbolos
 
-        def _sanear_simbolo_para_usar(nombre: str, simbolo: object) -> _ResultadoSaneamientoSimbolo:
-            if nombre.startswith("_"):
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "private_prefix", "símbolos que inicien con '_' no son exportables")
-            if "__" in nombre or nombre in _DUNDERS_BLOQUEADOS:
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "dunder_name", "dunders Python no se permiten en usar")
-            if nombre in _NOMBRES_BACKEND_INTERNOS:
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "backend_internal_name", "nombre interno del backend bloqueado")
-            if isinstance(simbolo, ModuleType):
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "backend_module_object", "objetos módulo/paquete no son exportables")
-            if nombre in _NOMBRES_PUBLICOS_EQUIVALENTE_COBRA:
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "cobra_public_equivalent", "nombre público reservado por equivalente Cobra")
-            if not callable(simbolo) and not nombre.isupper():
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, True, "non_callable_not_public_constant", "solo se permiten no-callables para constantes públicas explícitas")
-            if not callable(simbolo):
-                return _ResultadoSaneamientoSimbolo(nombre, simbolo, False, "public_constant", "constante pública explícita permitida", warning=True)
-            return _ResultadoSaneamientoSimbolo(nombre, simbolo, False)
-
         def _resolver_carga_modulo_usar(nombre_modulo: str):
             """Aplica una única ruta de decisión para módulos de ``usar``."""
             es_repl_estricto = self._repl_usar_alias_map is not None
@@ -1978,7 +1940,7 @@ class InterpretadorCobra:
             reporte_warnings: list[dict[str, str]] = []
             simbolos_saneados: list[tuple[str, object]] = []
             for nombre, simbolo in simbolos_a_inyectar:
-                resultado = _sanear_simbolo_para_usar(nombre, simbolo)
+                resultado = sanear_simbolo_para_usar(nombre, simbolo)
                 if resultado.rechazado:
                     reporte_rechazos.append(
                         {"symbol": nombre, "code": resultado.codigo or "rejected", "message": resultado.mensaje or "símbolo rechazado"}
