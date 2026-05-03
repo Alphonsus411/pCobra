@@ -2,17 +2,8 @@
 
 from __future__ import annotations
 
+from pcobra.cobra.usar_loader import USAR_COBRA_PUBLIC_MODULES
+
 REPL_COBRA_MODULE_MAP: dict[str, str] = {
-    "archivo": "archivo",
-    "asincrono": "asincrono",
-    "datos": "datos",
-    "decoradores": "decoradores",
-    "fecha": "fecha",
-    "interfaz": "interfaz",
-    "lista": "lista",
-    "logica": "logica",
-    "numero": "numero",
-    "texto": "texto",
-    "tiempo": "tiempo",
-    "util": "util",
+    modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES
 }
