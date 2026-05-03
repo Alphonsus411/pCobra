@@ -20,6 +20,14 @@ USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
 
 USAR_COBRA_ALLOWLIST: frozenset[str] = frozenset(USAR_COBRA_PUBLIC_MODULES)
 
+# Módulos no canónicos conocidos que deben rechazarse de forma explícita.
+_USAR_NON_CANONICAL_MODULES: frozenset[str] = frozenset({
+    "numpy",
+    "node-fetch",
+    "serde",
+    "holobit_sdk",
+})
+
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.
 _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -112,6 +120,13 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
 
     _ = permitir_instalacion  # compat: ya no se usa instalación dinámica para `usar`.
     nombre = _validar_nombre(nombre)
+
+    if nombre in _USAR_NON_CANONICAL_MODULES:
+        raise PermissionError(
+            f"Importación no permitida en 'usar': '{nombre}'. "
+            "Es un módulo no canónico y no forma parte de la API pública. "
+            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+        )
 
     if nombre not in USAR_COBRA_ALLOWLIST:
         raise PermissionError(
