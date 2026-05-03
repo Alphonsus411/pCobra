@@ -1,137 +1,166 @@
 {
   "contexto_general": {
-    "lenguaje": "Cobra",
-    "tipo": "lenguaje de programación en español",
-    "modo_trabajo": "REPL con ejecución directa de AST",
+    "objetivo": "Consolidar Cobra como lenguaje autónomo, coherente y sin contaminación semántica externa",
     "restricciones": [
       "No modificar Lexer",
       "No modificar Parser",
-      "Respetar sintaxis oficial del lenguaje"
+      "No cambiar sintaxis pública",
+      "Respetar arquitectura existente",
+      "Mantener CLI y contratos actuales"
     ]
   },
-  "fase_1_repl_basico": {
-    "estado": "correcto",
-    "features_validadas": [
-      "expresiones",
-      "variables",
-      "asignaciones",
-      "control de flujo",
-      "funciones"
-    ],
-    "problema_detectado": "duplicación de warnings en llamadas a funciones",
-    "solucion": "separación entre fase de análisis y ejecución"
+  "problemas_detectados": {
+    "lenguaje": {
+      "mezcla_idiomas": [
+        "try/catch/throw vs intentar/capturar/lanzar",
+        "lambda, yield, global, import en inglés"
+      ],
+      "duplicidad_keywords": [
+        "retorno vs retornar",
+        "func vs funcion",
+        "sino_si vs sino si vs elseif"
+      ],
+      "sintaxis_fantasma": [
+        "f-strings",
+        "self",
+        "__init__",
+        "lambda híbrido"
+      ]
+    },
+    "semantica": {
+      "fugas_python": [
+        "__dunder__",
+        "self",
+        "append, lower, keys"
+      ],
+      "fugas_javascript": [
+        "map/filter chaining",
+        "estilo Array API"
+      ],
+      "fugas_rust": [
+        "Some/None",
+        "unwrap/expect"
+      ]
+    },
+    "modulos": {
+      "usar_incompleto": true,
+      "sin_binding": true,
+      "ambiguedad_namespace": [
+        "uso plano vs uso con punto"
+      ],
+      "sistema_dual": [
+        "usar \"texto\"",
+        "usar cobra.core"
+      ]
+    },
+    "objetos": {
+      "modelo_no_definido": true,
+      "dependencia_python": [
+        "self",
+        "__init__"
+      ],
+      "operador_punto_no_especificado": true
+    },
+    "stdlib": {
+      "inconsistencia_nombres": true,
+      "mezcla_paradigmas": true,
+      "namespaces_inconsistentes": true
+    },
+    "backends": {
+      "exceso_targets": [
+        "go",
+        "cpp",
+        "wasm",
+        "asm",
+        "java"
+      ],
+      "peso_core": true,
+      "carga_innecesaria": true
+    }
   },
-  "fase_2_funciones": {
-    "problema_detectado": "ejecución del cuerpo de funciones en definición",
-    "impacto": [
-      "warnings en definición",
-      "errores de scope (variable x no definida)"
-    ],
-    "solucion": "no evaluar el cuerpo en visit_funcion, solo almacenar AST",
-    "resultado": "semántica de funciones corregida"
+  "insight_clave": {
+    "problema_raiz": "Frontera semántica no cerrada",
+    "consecuencia": "Contaminación desde Python, JavaScript y Rust",
+    "objetivo": "Cobra como interfaz única, backends como implementación invisible"
   },
-  "fase_3_validacion_semantica": {
-    "tests": [
-      "funciones simples",
-      "funciones anidadas",
-      "efectos (imprimir)",
-      "scope",
-      "condiciones"
-    ],
-    "resultado": "modelo de ejecución correcto y estable"
+  "decisiones_arquitectonicas": {
+    "modelo_modulos": {
+      "usar": "solo módulos Cobra",
+      "externos": "prohibidos directamente",
+      "estrategia": "wrappers Cobra sobre backends"
+    },
+    "modelo_api": {
+      "estilo": "funcional puro",
+      "sin_operador_punto_para_modulos": true
+    },
+    "modelo_lenguaje": {
+      "idioma": "100% español",
+      "sin_dunder": true,
+      "sin_keywords_ingles": true
+    },
+    "modelo_backends": {
+      "oficiales": ["python", "javascript", "rust"],
+      "legacy": "eliminados o aislados",
+      "carga": "lazy loading"
+    }
   },
-  "fase_4_exploracion_runtime": {
-    "objetivo": "evaluar integración con runtime real",
-    "tests": [
-      "hilo",
-      "usar",
-      "sandbox",
-      "módulos externos"
+  "modulos_core": {
+    "existentes": [
+      "numero",
+      "texto",
+      "datos",
+      "asincrono",
+      "sistema"
+    ],
+    "a_completar": [
+      "logica",
+      "archivo",
+      "tiempo",
+      "red",
+      "holobit"
     ]
   },
-  "fase_5_sistema_usar": {
-    "observaciones": [
-      "usar requiere string (\"modulo\")",
-      "no acepta sintaxis oficial (usar numero)",
-      "módulos se validan pero no se exponen",
-      "no existe operador '.' en el lenguaje"
+  "holobit": {
+    "rol": "motor interno de bajo nivel",
+    "exposicion": "solo vía módulo Cobra",
+    "api_publica": [
+      "crear_holobit",
+      "transformar",
+      "proyectar",
+      "graficar"
     ],
-    "problemas_detectados": [
-      "inconsistencia con documentación",
-      "módulos no utilizables tras import",
-      "modelo de imports incompleto",
-      "doble sistema (Cobra vs Python bindings)"
-    ]
+    "restriccion": "no exponer SDK directamente"
   },
-  "fase_6_seguridad": {
-    "estado": "correcto",
-    "caracteristicas": [
-      "whitelist de módulos",
-      "bloqueo de os, sys, random",
-      "sin introspección (type, dir)",
-      "sandbox activo"
-    ]
-  },
-  "fase_7_diagnostico_clave": {
-    "conclusion": "usar no está integrado correctamente en el REPL",
-    "causa": [
-      "loader funciona",
-      "pero no hay binding al entorno",
-      "ni acceso estructurado"
-    ],
-    "estado": "feature parcialmente implementada"
-  },
-  "decision_arquitectonica": {
-    "opciones": [
-      "A: Cobra puro (recomendado)",
-      "B: lenguaje híbrido con bindings Python"
-    ],
-    "decision_recomendada": "A",
-    "justificacion": [
-      "consistencia semántica",
-      "alineación con documentación",
-      "menor complejidad",
-      "base sólida para evolución"
-    ]
-  },
-  "solucion_propuesta": {
-    "estrategia": "modificar evaluator, no parser",
-    "accion_clave": "inyectar funciones del módulo en entorno",
-    "flujo": [
-      "usar \"numero\"",
+  "usar": {
+    "flujo_correcto": [
       "resolver módulo Cobra",
-      "extraer funciones públicas",
-      "inyectarlas en entorno REPL"
-    ],
-    "manejo_modulos_externos": [
-      "rechazarlos explícitamente",
-      "o soportarlos completamente (no parcial)"
+      "validar",
+      "extraer símbolos públicos",
+      "sanitizar",
+      "inyectar en entorno",
+      "gestionar conflictos"
     ]
   },
-  "prompt_codex": {
-    "objetivo": "arreglar usar sin tocar lexer/parser",
-    "restricciones_clave": [
-      "no cambiar sintaxis",
-      "no inventar comportamiento",
-      "seguir estrictamente el libro",
-      "no asumir semántica Python"
-    ],
-    "resultado_esperado": [
-      "usar \"numero\" → funciones disponibles",
-      "consistencia con documentación",
-      "sin comportamiento parcial"
+  "sanitizacion": {
+    "rechazar": [
+      "nombres con __",
+      "símbolos privados",
+      "objetos backend",
+      "nombres en inglés no canónicos"
     ]
   },
-  "estado_actual": {
-    "repl": "estable y semánticamente correcto",
-    "funciones": "correctas",
-    "seguridad": "correcta",
-    "usar": "incompleto",
-    "alineacion_con_lenguaje": "parcial"
+  "limpieza_backends": {
+    "acciones": [
+      "restringir registry a 3 backends",
+      "lazy loading",
+      "aislar legacy",
+      "reducir peso runtime"
+    ]
   },
-  "insight_final": {
-    "clave": "no es un bug, es una frontera de diseño",
-    "mensaje": "el REPL debe reflejar Cobra, no reinterpretarlo",
-    "siguiente_paso": "implementar correctamente el modelo de módulos según especificación"
+  "objetivo_final": {
+    "lenguaje": "coherente, autónomo, en español",
+    "arquitectura": "limpia, modular, desacoplada",
+    "usuario": "interfaz simple, potente, sin fugas internas",
+    "estado": "cerrar Cobra v1 como lenguaje sólido"
   }
 }
