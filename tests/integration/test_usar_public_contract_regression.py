@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ast import literal_eval
 from types import ModuleType
 
 import pytest
@@ -17,6 +18,13 @@ from tests.integration.test_repl_usar_entrypoints_contract import (
     _modulo_numero_stub,
     _modulo_texto_stub,
 )
+
+
+def _extraer_error_estructurado_desde_colision(mensaje: str) -> dict[str, str]:
+    prefijo = "colisión estructurada="
+    assert prefijo in mensaje
+    payload = mensaje.split(prefijo, 1)[1].strip()
+    return literal_eval(payload)
 
 
 @pytest.mark.parametrize(
@@ -105,9 +113,10 @@ def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
     interp = get_interp(cmd)
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto") as excinfo:
         executor(cmd, 'usar "numpy"')
 
+    assert str(excinfo.value) == "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
     assert interp.contextos[-1].values == estado_pre
 
 
@@ -188,4 +197,7 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
 
     mensaje = str(excinfo.value)
     assert "colisión estructurada" in mensaje
-    assert "symbol_collision" in mensaje
+    detalle = _extraer_error_estructurado_desde_colision(mensaje)
+    assert detalle["code"] == "symbol_collision"
+    assert detalle["message"] == "símbolo ya existe en contexto actual"
+    assert detalle["symbol"] == "filtrar"
