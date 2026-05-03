@@ -354,6 +354,59 @@ def test_usar_modulo_externo_sin_exportables_falla_sin_estado_parcial(monkeypatc
 
     assert interp.variables == estado_inicial
 
+
+
+def test_usar_modulo_externo_con_all_vacio_falla_atomico(monkeypatch):
+    modulo = ModuleType("externo_vacio")
+    modulo.__all__ = []
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo)
+
+    interp = InterpretadorCobra()
+    interp.contextos[-1].define("sentinela", 42)
+    estado_inicial = dict(interp.variables)
+
+    with pytest.raises(ImportError, match="módulo externo no exportable para usar"):
+        _ejecutar_codigo('usar "externo_vacio"', interp)
+
+    assert interp.variables == estado_inicial
+
+
+def test_usar_modulo_externo_all_mixto_inyecta_solo_callables_publicos(monkeypatch):
+    modulo = ModuleType("externo_mixto")
+    modulo.publica = lambda x: x
+    modulo._privada = lambda x: x
+    modulo.no_callable = 123
+    modulo.__all__ = ["publica", "_privada", "no_callable"]
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo)
+
+    interp = InterpretadorCobra()
+    _ejecutar_codigo('usar "externo_mixto"', interp)
+
+    assert "publica" in interp.variables
+    assert callable(interp.obtener_variable("publica"))
+    assert "_privada" not in interp.variables
+    assert "no_callable" not in interp.variables
+
+
+def test_usar_modulo_externo_all_mixto_colision_es_atomico(monkeypatch):
+    modulo = ModuleType("externo_colision")
+    modulo.colisiona = lambda x: x
+    modulo.disponible = lambda x: x
+    modulo.__all__ = ["colisiona", "disponible"]
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo)
+
+    interp = InterpretadorCobra()
+    interp.contextos[-1].define("colisiona", lambda x: f"ocupado:{x}")
+    estado_inicial = dict(interp.variables)
+
+    with pytest.raises(NameError, match=r"símbolo 'colisiona' ya existe"):
+        _ejecutar_codigo('usar "externo_colision"', interp)
+
+    assert interp.variables == estado_inicial
+    assert "disponible" not in interp.variables
 def test_repl_usar_numpy_falla_sin_estado_parcial():
     interp = InterpretadorCobra()
     interp.contextos[-1].define("sentinela", 42)
