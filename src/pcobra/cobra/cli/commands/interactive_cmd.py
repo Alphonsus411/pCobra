@@ -478,12 +478,12 @@ class InteractiveCommand(BaseCommand):
         try:
             ast = ast_preparseado if ast_preparseado is not None else prevalidar_y_parsear_codigo(codigo)
             validacion_no_silenciosa_realizada = False
-            ast, resultado = self._ejecutar_ast_en_repl(
+            validacion_no_silenciosa_realizada = True
+            ast, resultado = self._ejecutar_ast_en_repl_con_politica_validacion(
                 ast,
                 validador,
                 validar_no_silencioso=True,
             )
-            validacion_no_silenciosa_realizada = True
         except Exception as err_original:
             if not self._debe_intentar_fallback_expresion_top_level(
                 codigo, err_original
@@ -493,7 +493,7 @@ class InteractiveCommand(BaseCommand):
             codigo_fallback = f"imprimir({codigo.strip()})"
             try:
                 ast_fallback = prevalidar_y_parsear_codigo(codigo_fallback)
-                ast, resultado = self._ejecutar_ast_en_repl(
+                ast, resultado = self._ejecutar_ast_en_repl_con_politica_validacion(
                     ast_fallback,
                     validador,
                     validar_no_silencioso=not validacion_no_silenciosa_realizada,
@@ -507,6 +507,30 @@ class InteractiveCommand(BaseCommand):
         self.logger.debug("[EXEC] Ejecutando AST en intérprete")
         self.logger.debug("[EVAL] Resultado de evaluación: %r", resultado)
         self._imprimir_resultado_repl(ast, resultado)
+
+    def _ejecutar_ast_en_repl_con_politica_validacion(
+        self,
+        ast: list[Any],
+        validador: Optional[Any],
+        *,
+        validar_no_silencioso: bool,
+    ) -> tuple[list[Any], Any]:
+        """Invoca `_ejecutar_ast_en_repl` preservando compatibilidad hacia atrás.
+
+        Algunos tests/extensiones pueden sobreescribir `_ejecutar_ast_en_repl`
+        con la firma histórica de dos argumentos `(ast, validador)`.
+        """
+
+        try:
+            return self._ejecutar_ast_en_repl(
+                ast,
+                validador,
+                validar_no_silencioso=validar_no_silencioso,
+            )
+        except TypeError as err:
+            if "unexpected keyword argument 'validar_no_silencioso'" not in str(err):
+                raise
+            return self._ejecutar_ast_en_repl(ast, validador)
 
     def parsear_y_ejecutar_codigo_repl(
         self,
