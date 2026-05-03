@@ -4,7 +4,17 @@ from dataclasses import dataclass
 from types import ModuleType
 
 NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
-    {"self", "append", "map", "filter", "unwrap", "expect"}
+    {
+        "self",
+        "append",
+        "map",
+        "filter",
+        "unwrap",
+        "expect",
+        "keys",
+        "values",
+        "len",
+    }
 )
 DUNDERS_BLOQUEADOS = frozenset(
     {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
@@ -26,13 +36,13 @@ class ResultadoSaneamientoSimboloUsar:
 
 def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamientoSimboloUsar:
     """Aplica la política de exportación de símbolos para ``usar``."""
-    if nombre.startswith("_"):
+    if isinstance(simbolo, ModuleType):
         return ResultadoSaneamientoSimboloUsar(
             nombre,
             simbolo,
             True,
-            "private_prefix",
-            "símbolos que inicien con '_' no son exportables",
+            "backend_module_object",
+            "objetos módulo/paquete no son exportables",
         )
     if "__" in nombre or nombre in DUNDERS_BLOQUEADOS:
         return ResultadoSaneamientoSimboloUsar(
@@ -42,6 +52,14 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             "dunder_name",
             "dunders Python no se permiten en usar",
         )
+    if nombre.startswith("_"):
+        return ResultadoSaneamientoSimboloUsar(
+            nombre,
+            simbolo,
+            True,
+            "private_prefix",
+            "símbolos que inicien con '_' no son exportables",
+        )
     if nombre in NOMBRES_BACKEND_INTERNOS:
         return ResultadoSaneamientoSimboloUsar(
             nombre,
@@ -49,14 +67,6 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             True,
             "backend_internal_name",
             "nombre interno del backend bloqueado",
-        )
-    if isinstance(simbolo, ModuleType):
-        return ResultadoSaneamientoSimboloUsar(
-            nombre,
-            simbolo,
-            True,
-            "backend_module_object",
-            "objetos módulo/paquete no son exportables",
         )
     if nombre in NOMBRES_PUBLICOS_EQUIVALENTE_COBRA:
         return ResultadoSaneamientoSimboloUsar(
