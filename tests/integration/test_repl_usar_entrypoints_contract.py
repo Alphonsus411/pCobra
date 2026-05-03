@@ -160,10 +160,10 @@ def _assert_contrato_simbolos_saneados(simbolos: set[str]) -> None:
 def _modulo_holobit_publico_stub() -> ModuleType:
     mod = ModuleType("holobit")
     mod.__all__ = [
-        "crear",
-        "validar",
-        "serializar",
-        "deserializar",
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
         "proyectar",
         "transformar",
         "graficar",
@@ -315,10 +315,10 @@ def test_repl_contract_seguridad_usar_holobit_restringe_internals_y_saneamiento(
         assert simbolo in interp.contextos[-1].values
 
     _assert_contrato_simbolos_saneados(simbolos_holobit)
-    assert simbolos_holobit == {"crear", "validar", "serializar", "deserializar", "proyectar", "transformar", "graficar", "combinar", "medir"}
+    assert simbolos_holobit == {"crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir"}
 
     assert "Holobit" not in interp.contextos[-1].values
-    assert "crear_holobit" not in interp.contextos[-1].values
+    assert "crear_holobit" in interp.contextos[-1].values
     assert "_to_sdk_holobit" not in interp.contextos[-1].values
     assert "holobit_sdk" not in interp.contextos[-1].values
 
