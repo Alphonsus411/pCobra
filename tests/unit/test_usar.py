@@ -626,3 +626,101 @@ def test_repl_usar_colision_multiple_sin_inyeccion_parcial(monkeypatch):
         _ejecutar_codigo('usar "texto"', interp)
 
     assert "quitar_prefijo" not in interp.contextos[-1].values
+
+
+def test_usar_numero_exporta_solo_nombres_espanoles(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert "es_finito" in interp.variables
+    assert "isfinite" not in interp.variables
+
+
+def test_usar_texto_exporta_solo_nombres_espanoles(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_texto)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.ejecutar_nodo(NodoUsar("texto"))
+
+    assert "a_snake" in interp.variables
+    assert "to_snake_case" not in interp.variables
+
+
+def test_usar_datos_incluye_filtrar_mapear_reducir(monkeypatch):
+    import pcobra.standard_library.datos as modulo_datos
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+    interp.ejecutar_nodo(NodoUsar("datos"))
+
+    for simbolo in ("filtrar", "mapear", "reducir"):
+        assert simbolo in interp.variables
+
+
+def test_usar_numpy_rechazado_en_superficie_publica():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto", "datos": "datos"})
+
+    with pytest.raises(PermissionError, match=r"solo alias oficiales Cobra"):
+        interp.ejecutar_nodo(NodoUsar("numpy"))
+
+
+def test_internals_holobit_sdk_no_importables_por_usar_loader():
+    for nombre in ("holobit_sdk", "holobit_sdk.core", "holobit_sdk.visualization"):
+        with pytest.raises(ValueError):
+            usar_loader.obtener_modulo(nombre)
+
+
+def test_usar_holobit_expone_solo_api_publica(monkeypatch):
+    import pcobra.corelibs.holobit as modulo_holobit
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_holobit)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
+    interp.ejecutar_nodo(NodoUsar("holobit"))
+
+    assert "holobit" in interp.variables
+    assert "proyectar" in interp.variables
+    assert "_require_holobit_sdk" not in interp.variables
+
+
+def test_simbolos_exportados_por_usar_no_contienen_doble_guion_bajo(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero"})
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert all("__" not in simbolo for simbolo in interp.variables)
+
+
+def test_usar_no_exporta_simbolos_bloqueados(monkeypatch):
+    import pcobra.standard_library.datos as modulo_datos
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_datos)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"datos": "datos"})
+    interp.ejecutar_nodo(NodoUsar("datos"))
+
+    for simbolo in ("self", "append", "map", "filter", "unwrap", "expect"):
+        assert simbolo not in interp.variables
+
+
+def test_backends_legados_no_cargan_en_startup_normal():
+    for nombre in ("go", "cpp", "java", "wasm", "asm"):
+        with pytest.raises(PermissionError):
+            usar_loader.obtener_modulo(nombre)
+
+
+def test_politica_publica_backend_es_python_javascript_rust():
+    from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
