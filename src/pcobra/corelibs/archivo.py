@@ -108,3 +108,12 @@ def leer_lineas(ruta: PathLike, *, mantener_saltos: bool = False) -> list[str]:
 
     contenido = leer(ruta)
     return contenido.splitlines(keepends=mantener_saltos)
+
+__all__ = [
+    "leer",
+    "escribir",
+    "existe",
+    "eliminar",
+    "anexar",
+    "leer_lineas",
+]

@@ -347,3 +347,14 @@ def directorio_actual() -> str:
     """Devuelve la ruta del directorio de trabajo actual."""
 
     return os.getcwd()
+
+__all__ = [
+    "obtener_os",
+    "ejecutar",
+    "ejecutar_async",
+    "ejecutar_stream",
+    "obtener_env",
+    "listar_dir",
+    "ejecutar_comando_async",
+    "directorio_actual",
+]

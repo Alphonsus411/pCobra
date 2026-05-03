@@ -289,3 +289,13 @@ def obtener_json(url: str, permitir_redirecciones: bool = False) -> dict[str, An
     if not isinstance(datos, (dict, list)):
         raise TypeError("La respuesta JSON debe ser un objeto o una lista")
     return datos
+
+__all__ = [
+    "obtener_url",
+    "enviar_post",
+    "obtener_url_async",
+    "enviar_post_async",
+    "descargar_archivo",
+    "obtener_url_texto",
+    "obtener_json",
+]
