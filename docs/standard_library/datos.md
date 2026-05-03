@@ -109,7 +109,7 @@ Las funciones de correlación y covarianza no requieren dependencias adicionales
 
 ## Backend JavaScript
 
-En el objetivo JavaScript se ofrece una implementación parcial que mantiene las transformaciones puramente estructurales (`seleccionar_columnas`, `filtrar`, `a_listas`, `de_listas`). Las funciones que dependen de `pandas` (`leer_csv`, `leer_json`, `describir`, `agrupar_y_resumir`) lanzan un error explicando la limitación para evitar resultados inconsistentes.
+En el objetivo JavaScript se ofrece una implementación parcial que mantiene las transformaciones puramente estructurales (`seleccionar_columnas`, `filtrar`, `mapear`, `reducir`, `a_listas`, `de_listas`). Las funciones que dependen de `pandas` (`leer_csv`, `leer_json`, `describir`, `agrupar_y_resumir`) lanzan un error explicando la limitación para evitar resultados inconsistentes.
 
 > **Sugerencia:** si necesitas procesar archivos directamente en JavaScript, realiza la lectura con utilidades propias del entorno (por ejemplo `fetch` o `fs`) y entrega los datos a Cobra usando `de_listas` o listas de diccionarios.
 
@@ -119,6 +119,10 @@ En el objetivo JavaScript se ofrece una implementación parcial que mantiene las
 | Función |
 |---|
 | `a_listas` |
+| `agregar` |
+| `claves` |
+| `valores` |
+| `longitud` |
 | `agrupar_y_resumir` |
 | `calcular_percentiles` |
 | `combinar_tablas` |
@@ -133,6 +137,8 @@ En el objetivo JavaScript se ofrece una implementación parcial que mantiene las
 | `escribir_json` |
 | `escribir_parquet` |
 | `filtrar` |
+| `mapear` |
+| `reducir` |
 | `leer_csv` |
 | `leer_excel` |
 | `leer_feather` |

@@ -37,6 +37,8 @@ DATOS_EXPORTS = [
     "de_listas",
     "describir",
     "filtrar",
+    "mapear",
+    "reducir",
     "desplegar_tabla",
     "matriz_covarianza",
     "mutar_columna",
@@ -256,6 +258,8 @@ __all__: list[str] = [
     "resumen_rapido",
     "seleccionar_columnas",
     "filtrar",
+    "mapear",
+    "reducir",
     "mutar_columna",
     "separar_columna",
     "unir_columnas",
@@ -316,6 +320,8 @@ calcular_percentiles: Callable[..., dict[str, dict[str, Any]]]
 resumen_rapido: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]]], list[dict[str, Any]]]
 seleccionar_columnas: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Sequence[str]], list[dict[str, Any]]]
 filtrar: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], Callable[[dict[str, Any]], bool]], list[dict[str, Any]]]
+mapear: Callable[[Iterable[Any], Callable[[Any], Any]], list[Any]]
+reducir: Callable[[Iterable[Any], Callable[[Any, Any], Any], Any], Any]
 mutar_columna: Callable[[Iterable[dict[str, Any]] | Mapping[str, Sequence[Any]], str, Callable[[dict[str, Any]], Any]], list[dict[str, Any]]]
 pivotar_ancho: Callable[..., list[dict[str, Any]]]
 pivotar_largo: Callable[..., list[dict[str, Any]]]
