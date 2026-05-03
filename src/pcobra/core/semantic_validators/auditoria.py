@@ -2,6 +2,7 @@ import logging
 
 from .base import ValidadorBase
 from ..ast_nodes import (
+    NodoAST,
     NodoLlamadaFuncion,
     NodoLlamadaMetodo,
     NodoHilo,
@@ -34,6 +35,20 @@ class ValidadorAuditoria(ValidadorBase):
     def in_execution(self) -> bool:
         """Indica si la auditoría debe emitir side effects en fase de ejecución."""
         return self.emitir_side_effects and self.mode == "execution"
+
+
+    def auditar_operacion(self, nodo: NodoAST) -> None:
+        """Audita solo la operación concreta ejecutada, sin recorrer subárboles."""
+        if isinstance(nodo, NodoLlamadaFuncion):
+            self._log(f"Llamada a funcion: {nodo.nombre}")
+        elif isinstance(nodo, NodoLlamadaMetodo):
+            self._log(f"Llamada a metodo: {nodo.nombre_metodo}")
+        elif isinstance(nodo, NodoImport):
+            self._log(f"Import de modulo: {nodo.ruta}")
+        elif isinstance(nodo, NodoUsar):
+            self._log(f"Usar modulo: {nodo.modulo}")
+        elif isinstance(nodo, NodoImportDesde):
+            self._log(f"Importar desde: {nodo.modulo}")
 
     def visit_llamada_funcion(self, nodo: NodoLlamadaFuncion):
         """Contrato: este visitor nunca debe emitir side effects fuera de ejecución.

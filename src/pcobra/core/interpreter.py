@@ -822,8 +822,9 @@ class InterpretadorCobra:
         """Ejecuta la auditoría funcional únicamente durante la fase de ejecución."""
         if not self.in_execution() or not self.safe_mode or self._validador is None:
             return
-        # En ejecución permitimos side effects de auditoría visibles al usuario.
-        nodo.aceptar(self._validador)
+        # En ejecución auditamos solo la operación concreta para evitar
+        # recorrer ramas de control de flujo que no se ejecutaron.
+        self._validador.auditar_operacion(nodo)
 
     def _contiene_yield(self, nodo, visitados_ids: set[int] | None = None):
         if visitados_ids is None:
