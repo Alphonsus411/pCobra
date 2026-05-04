@@ -1997,22 +1997,32 @@ class InterpretadorCobra:
                 )
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
-            for nombre, simbolo in simbolos_saneados:
-                if contexto_actual.contains(nombre):
-                    detalle = {
-                        "symbol": nombre,
-                        "code": "symbol_collision_runtime_recheck",
-                        "message": "símbolo ya existe en contexto actual",
-                    }
-                    self._trace_debug(
-                        "[USAR_COLLISION][ERROR] "
-                        f"módulo={nodo.modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
-                    )
-                    raise NameError(
-                        "No se puede usar el módulo "
-                        f"'{nodo.modulo}': colisión estructurada={detalle}"
-                    )
-                contexto_actual.define(nombre, simbolo)
+            simbolos_inyectados: list[tuple[str, object]] = []
+            try:
+                for nombre, simbolo in simbolos_saneados:
+                    if contexto_actual.contains(nombre):
+                        detalle = {
+                            "symbol": nombre,
+                            "code": "symbol_collision_runtime_recheck",
+                            "message": "símbolo ya existe en contexto actual",
+                        }
+                        self._trace_debug(
+                            "[USAR_COLLISION][ERROR] "
+                            f"módulo={nodo.modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
+                        )
+                        raise NameError(
+                            "No se puede usar el módulo "
+                            f"'{nodo.modulo}': colisión estructurada={detalle}"
+                        )
+                    contexto_actual.define(nombre, simbolo)
+                    simbolos_inyectados.append((nombre, simbolo))
+            except Exception:
+                # Rollback defensivo: evita estado parcial si falla durante Fase B.
+                for nombre, simbolo in reversed(simbolos_inyectados):
+                    valor_actual = contexto_actual.values.get(nombre)
+                    if valor_actual is simbolo:
+                        del contexto_actual.values[nombre]
+                raise
             if reporte_warnings:
                 self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
         except Exception as exc:
