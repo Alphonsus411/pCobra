@@ -64,10 +64,18 @@ def deserializar_holobit(payload: str) -> dict[str, Any]:
 
 
 def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
-    _ = modo
     interno = _desde_estructura_cobra(hb)
+    modo_normalizado = str(modo).strip().lower()
     _to_sdk_holobit(interno)
-    return _a_estructura_cobra(interno)
+
+    if modo_normalizado == "3d":
+        proyectado = list(interno.valores)
+    elif modo_normalizado == "2d":
+        proyectado = list(interno.valores[:2])
+    else:
+        raise ValueError(f"Modo de proyección no soportado: {modo}")
+
+    return crear_holobit(proyectado)
 
 
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
