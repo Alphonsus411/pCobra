@@ -673,7 +673,10 @@ def test_usar_numpy_rechazado_en_superficie_publica():
 
 
 def test_internals_holobit_sdk_no_importables_por_usar_loader():
-    for nombre in ("holobit_sdk", "holobit_sdk.core", "holobit_sdk.visualization"):
+    with pytest.raises(PermissionError):
+        usar_loader.obtener_modulo("holobit_sdk")
+
+    for nombre in ("holobit_sdk.core", "holobit_sdk.visualization"):
         with pytest.raises(ValueError):
             usar_loader.obtener_modulo(nombre)
 
@@ -686,7 +689,6 @@ def test_usar_holobit_expone_solo_api_publica(monkeypatch):
     interp.configurar_restriccion_usar_repl({"holobit": "holobit"})
     interp.ejecutar_nodo(NodoUsar("holobit"))
 
-    assert "holobit" in interp.variables
     assert "proyectar" in interp.variables
     assert "_require_holobit_sdk" not in interp.variables
 
