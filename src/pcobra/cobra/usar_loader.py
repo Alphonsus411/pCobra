@@ -15,7 +15,6 @@ USAR_COBRA_ALLOWLIST: set[str] = {
     "archivo",
     "tiempo",
     "red",
-    "holobit",
 }
 
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.

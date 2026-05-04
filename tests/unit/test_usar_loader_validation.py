@@ -28,5 +28,4 @@ def test_allowlist_canonica_contiene_modulos_esperados():
         "archivo",
         "tiempo",
         "red",
-        "holobit",
     }
