@@ -61,6 +61,8 @@ __all__ = [
     "rellenar_nulos",
     "desplegar_tabla",
     "pivotar_tabla",
+    "a_listas",
+    "de_listas",
     "agregar",
     "mapear",
     "reducir",
