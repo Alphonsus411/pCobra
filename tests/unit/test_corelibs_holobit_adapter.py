@@ -41,3 +41,16 @@ def test_holobit_adapter_combinar_medir_y_transformar():
 def test_policy_rechaza_holobit_sdk_en_usar():
     with pytest.raises(PermissionError):
         usar_loader.obtener_modulo("holobit_sdk")
+
+
+def test_holobit_adapter_proyectar_respeta_modo_y_valida_errores():
+    hb = holobit.crear_holobit([1, 2, 3])
+
+    p2d = holobit.proyectar(hb, "2D")
+    assert p2d["valores"] == [1.0, 2.0]
+
+    p3d = holobit.proyectar(hb, "3D")
+    assert p3d["valores"] == [1.0, 2.0, 3.0]
+
+    with pytest.raises(ValueError):
+        holobit.proyectar(hb, "modo_invalido")
