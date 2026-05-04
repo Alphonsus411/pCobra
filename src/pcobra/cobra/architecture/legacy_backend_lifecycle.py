@@ -132,7 +132,10 @@ def lifecycle_status_for_backend(target: str) -> LegacyLifecycleStatus:
 
 def legacy_backend_warning_message(*, target: str, route: str) -> str:
     """Mensaje único para advertencias de uso por rutas no públicas."""
-    metadata = get_legacy_backend_lifecycle()[target]
+    # Esta ruta se invoca tras pasar el gate de compatibilidad de CLI
+    # (COBRA_INTERNAL_LEGACY_TARGETS), por lo que no debe exigir un segundo
+    # opt-in diferente para poder construir la advertencia.
+    metadata = get_legacy_backend_lifecycle(require_opt_in=False)[target]
     return (
         f"[INTERNAL LEGACY BACKEND] '{target}' usado vía ruta no pública ({route}). "
         f"estado={metadata.status}; fase={metadata.phase}; ventana={metadata.retirement_window}; "
