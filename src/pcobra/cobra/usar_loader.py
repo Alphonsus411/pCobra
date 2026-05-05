@@ -44,9 +44,21 @@ _INTERNAL_HINTS = (
 )
 
 
+def _rechazar_modulo_no_canonico(nombre: str) -> None:
+    """Rechaza módulos backend/no-canónicos con error explícito para `usar`."""
+
+    nombre_normalizado = (nombre or "").strip().lower()
+    if nombre_normalizado in _USAR_NON_CANONICAL_MODULES:
+        raise PermissionError(
+            f"Importación no permitida en 'usar': '{nombre}'. "
+            "Es un módulo backend/no canónico y no forma parte de la API pública. "
+            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+        )
+
 def _validar_nombre(nombre: str) -> str:
     """Valida que el nombre sea seguro para resolución runtime de `usar`."""
 
+    _rechazar_modulo_no_canonico(nombre)
     nombre = nombre.strip()
     if not nombre:
         raise ValueError("Nombre de módulo vacío en 'usar'.")
@@ -120,13 +132,6 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
 
     _ = permitir_instalacion  # compat: ya no se usa instalación dinámica para `usar`.
     nombre = _validar_nombre(nombre)
-
-    if nombre in _USAR_NON_CANONICAL_MODULES:
-        raise PermissionError(
-            f"Importación no permitida en 'usar': '{nombre}'. "
-            "Es un módulo no canónico y no forma parte de la API pública. "
-            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
-        )
 
     if nombre not in USAR_COBRA_ALLOWLIST:
         raise PermissionError(
