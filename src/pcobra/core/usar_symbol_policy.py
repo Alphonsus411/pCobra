@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from types import ModuleType
 from typing import Any
 
-NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
+NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(
     {
         "self",
         "append",
@@ -19,6 +19,15 @@ NOMBRES_PUBLICOS_EQUIVALENTE_COBRA = frozenset(
 )
 DUNDERS_BLOQUEADOS = frozenset(
     {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
+)
+NOMBRES_CONSTANTES_PUBLICAS_CANONICAS = frozenset(
+    {
+        "PI",
+        "E",
+        "TAU",
+        "INF",
+        "NAN",
+    }
 )
 NOMBRES_BACKEND_INTERNOS = frozenset(
     {"sys", "os", "importlib", "pcobra", "cobra", "core"}
@@ -110,20 +119,20 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             "nombre interno del backend bloqueado",
         )
 
-    if nombre in NOMBRES_PUBLICOS_EQUIVALENTE_COBRA:
+    if nombre in NOMBRES_PROHIBIDOS_EXPLICITOS:
         return _rechazar(
             nombre,
             simbolo,
-            "cobra_public_equivalent",
-            "nombre público reservado por equivalente Cobra",
+            "explicit_forbidden_name",
+            "nombre prohibido por política explícita de usar",
         )
 
-    if not callable(simbolo) and not nombre.isupper():
+    if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
         return _rechazar(
             nombre,
             simbolo,
-            "non_callable_not_public_constant",
-            "solo se permiten no-callables para constantes públicas explícitas",
+            "non_callable_not_canonical_public_constant",
+            "solo se permiten no-callables para constantes públicas canónicas",
         )
 
     if not callable(simbolo):
