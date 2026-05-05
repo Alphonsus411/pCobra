@@ -4,8 +4,10 @@ from pathlib import Path
 
 from pcobra.cobra.usar_loader import USAR_COBRA_PUBLIC_MODULES, obtener_modulo_cobra_oficial
 from pcobra.cobra.usar_policy import (
+    CANONICAL_MODULE_SURFACE_CONTRACTS,
     REPL_COBRA_MODULE_INTERNAL_PATH_MAP,
     REPL_COBRA_MODULE_MAP,
+    validar_paridad_superficie_publica_modulos_canonicos,
 )
 
 
@@ -29,3 +31,11 @@ def test_modulos_oficiales_se_resuelven_a_rutas_internas() -> None:
             f"obtuvo {modulo_path}"
         )
 
+
+def test_contrato_superficie_publica_cubre_modulos_canonicos() -> None:
+    canonicos = tuple(USAR_COBRA_PUBLIC_MODULES)
+    assert set(CANONICAL_MODULE_SURFACE_CONTRACTS) == set(canonicos)
+
+
+def test_validacion_paridad_superficie_publica_ejecutable() -> None:
+    validar_paridad_superficie_publica_modulos_canonicos()

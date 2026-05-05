@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+from dataclasses import dataclass
 from pathlib import Path
 
 from pcobra.cobra.usar_loader import USAR_COBRA_PUBLIC_MODULES
@@ -62,3 +64,114 @@ def validar_contrato_modulos_canonicos_usar() -> None:
 
 
 validar_contrato_modulos_canonicos_usar()
+
+
+@dataclass(frozen=True)
+class CanonicalModuleSurfaceContract:
+    required_functions: tuple[str, ...]
+    allowed_aliases: dict[str, str]
+    forbidden_symbols: tuple[str, ...]
+
+
+CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = {
+    "numero": CanonicalModuleSurfaceContract(
+        required_functions=("absoluto", "redondear", "es_par", "aleatorio"),
+        allowed_aliases={},
+        forbidden_symbols=("math", "random"),
+    ),
+    "texto": CanonicalModuleSurfaceContract(
+        required_functions=("mayusculas", "minusculas", "dividir", "reemplazar"),
+        allowed_aliases={},
+        forbidden_symbols=("codecs", "re"),
+    ),
+    "datos": CanonicalModuleSurfaceContract(
+        required_functions=("filtrar", "mapear", "agregar", "longitud"),
+        allowed_aliases={},
+        forbidden_symbols=("itertools",),
+    ),
+    "logica": CanonicalModuleSurfaceContract(
+        required_functions=("conjuncion", "disyuncion", "negacion", "condicional"),
+        allowed_aliases={"si_condicional": "condicional"},
+        forbidden_symbols=("inspect", "product"),
+    ),
+    "asincrono": CanonicalModuleSurfaceContract(
+        required_functions=("proteger_tarea", "limitar_tiempo", "recolectar", "grupo_tareas"),
+        allowed_aliases={},
+        forbidden_symbols=("asyncio",),
+    ),
+    "sistema": CanonicalModuleSurfaceContract(
+        required_functions=("obtener_os", "ejecutar", "obtener_env", "listar_dir"),
+        allowed_aliases={"ejecutar_comando_async": "ejecutar_async"},
+        forbidden_symbols=("subprocess", "os"),
+    ),
+    "archivo": CanonicalModuleSurfaceContract(
+        required_functions=("leer", "escribir", "existe", "eliminar"),
+        allowed_aliases={},
+        forbidden_symbols=("Path",),
+    ),
+    "tiempo": CanonicalModuleSurfaceContract(
+        required_functions=("ahora", "formatear", "dormir", "epoch"),
+        allowed_aliases={},
+        forbidden_symbols=("time", "datetime"),
+    ),
+    "red": CanonicalModuleSurfaceContract(
+        required_functions=("obtener_url", "enviar_post", "obtener_url_async", "obtener_json"),
+        allowed_aliases={"obtener_url_texto": "obtener_url"},
+        forbidden_symbols=("requests", "httpx"),
+    ),
+    "holobit": CanonicalModuleSurfaceContract(
+        required_functions=("crear_holobit", "validar_holobit", "transformar", "graficar"),
+        allowed_aliases={},
+        forbidden_symbols=("_SDKHolobit",),
+    ),
+}
+
+
+def validar_paridad_superficie_publica_modulos_canonicos() -> None:
+    """Valida que corelibs y standard_library respeten el contrato central."""
+
+    canonicos = tuple(USAR_COBRA_PUBLIC_MODULES)
+    if set(CANONICAL_MODULE_SURFACE_CONTRACTS) != set(canonicos):
+        raise RuntimeError("[STARTUP CONTRACT] Contratos de superficie incompletos o con módulos extra")
+
+    for module_name in canonicos:
+        contract = CANONICAL_MODULE_SURFACE_CONTRACTS[module_name]
+        from pcobra.cobra.usar_loader import obtener_modulo_cobra_oficial
+
+        module = obtener_modulo_cobra_oficial(module_name)
+        exports = tuple(getattr(module, "__all__", ()))
+        if not exports:
+            raise RuntimeError(f"[STARTUP CONTRACT] {module_name} debe declarar __all__")
+
+        missing_required = [name for name in contract.required_functions if name not in exports]
+        if missing_required:
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} no exporta funciones requeridas: {missing_required}"
+            )
+
+        missing_aliases = [
+            alias for alias, target in contract.allowed_aliases.items() if alias not in exports or target not in exports
+        ]
+        if missing_aliases:
+            raise RuntimeError(f"[STARTUP CONTRACT] {module_name} aliases inválidos: {missing_aliases}")
+
+        leaked_forbidden = [name for name in contract.forbidden_symbols if name in exports]
+        if leaked_forbidden:
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} exporta símbolos prohibidos: {leaked_forbidden}"
+            )
+
+        stdlib_path = Path(__file__).resolve().parents[1] / "standard_library" / f"{module_name}.py"
+        if stdlib_path.exists():
+            std_mod = importlib.import_module(f"pcobra.standard_library.{module_name}")
+            std_exports = tuple(getattr(std_mod, "__all__", ()))
+            if std_exports:
+                combined_exports = set(exports) | set(std_exports)
+                missing_required_combined = [
+                    name for name in contract.required_functions if name not in combined_exports
+                ]
+                if missing_required_combined:
+                    raise RuntimeError(
+                        f"[STARTUP CONTRACT] Paridad incompleta en {module_name}: "
+                        f"faltan funciones requeridas {missing_required_combined}"
+                    )
