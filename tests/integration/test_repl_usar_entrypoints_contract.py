@@ -238,27 +238,6 @@ def test_repl_rechazo_externo_no_inyecta_simbolos(factory, executor, get_interp,
     assert "requests" not in interp.contextos[-1].values
 
 
-def test_usar_externo_whitelist_sin_all_falla_claro_y_atomico(monkeypatch):
-    mod_externo = ModuleType("externo_sin_all")
-    mod_externo.__file__ = "/tmp/externo_sin_all.py"
-
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda *_args, **_kwargs: mod_externo)
-
-    interp = InterpretadorCobra()
-    interp.configurar_restriccion_usar_repl(None)
-
-    class _NodoUsar:
-        modulo = "externo_sin_all"
-
-    estado_pre = dict(interp.contextos[-1].values)
-
-    with pytest.raises(ImportError, match="módulo externo no exportable para usar: requiere __all__ con callables públicos"):
-        interp.ejecutar_usar(_NodoUsar())
-
-    assert estado_pre == interp.contextos[-1].values
-    assert "externo_sin_all" not in interp.contextos[-1].values
-
-
 @pytest.mark.parametrize(
     ("factory", "executor", "get_interp"),
     [
@@ -400,3 +379,62 @@ def test_holobit_corelib_exporta_solo_simbolos_canonicos_publicos():
     assert "holobit_sdk" not in holobit_corelib.__all__
     assert "_to_sdk_holobit" not in holobit_corelib.__all__
     assert all("__" not in simbolo for simbolo in holobit_corelib.__all__)
+
+
+@pytest.mark.parametrize("modulo", sorted(REPL_COBRA_MODULE_MAP.keys()))
+def test_repl_contract_pipeline_completo_por_modulo_canonico(monkeypatch, modulo):
+    mod = ModuleType(modulo)
+    if modulo == "holobit":
+        mod.__all__ = [
+            "crear_holobit",
+            "validar_holobit",
+            "serializar_holobit",
+            "deserializar_holobit",
+            "proyectar",
+            "transformar",
+            "graficar",
+            "combinar",
+            "medir",
+        ]
+        for nombre in mod.__all__:
+            setattr(mod, nombre, lambda *args, _mod=modulo, **kwargs: {"modulo": _mod, "args": args, "kwargs": kwargs})
+        expected_symbol = "crear_holobit"
+    else:
+        mod.__all__ = ["api_publica"]
+        mod.api_publica = lambda *args, **kwargs: {"modulo": modulo, "args": args, "kwargs": kwargs}
+        expected_symbol = "api_publica"
+    mod.__file__ = f"/workspace/pCobra/src/pcobra/corelibs/{modulo}.py"
+
+    def _resolver_modulo(nombre: str, **_kwargs):
+        if nombre == modulo:
+            return mod
+        raise ModuleNotFoundError(nombre)
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: _resolver_modulo(nombre))
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+
+    nodo_usar = type("_NodoUsar", (), {"modulo": modulo})()
+
+    interp.ejecutar_usar(nodo_usar)
+    assert expected_symbol in interp.contextos[-1].values
+    assert interp.contextos[-1].values[expected_symbol]()["modulo"] == modulo
+
+
+def test_repl_contract_colision_warn_alias_required_estructurada(monkeypatch):
+    mod_numero = _modulo_numero_multi_export_stub()
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_numero)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+    interp.configurar_politica_colision_usar("warn_alias_required")
+    interp.contextos[-1].define("es_finito", lambda _valor: "ocupado")
+
+    class _NodoUsar:
+        modulo = "numero"
+
+    with pytest.raises(NameError, match=r"colisión estructurada=.*policy"):
+        interp.ejecutar_usar(_NodoUsar())
+

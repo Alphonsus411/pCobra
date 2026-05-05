@@ -1884,7 +1884,7 @@ class InterpretadorCobra:
             return simbolos
 
         def _resolver_carga_modulo_usar(nombre_modulo: str):
-            """Aplica una única ruta de decisión para módulos de ``usar`` usando ``obtener_modulo`` permitido."""
+            """Resuelve solo módulos canónicos Cobra; ``usar`` nunca hace import dinámico externo."""
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
             modulo_canonico = mapa_repl.get(nombre_modulo)
@@ -1972,17 +1972,30 @@ class InterpretadorCobra:
                     "phase": "preflight",
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    diagnostico = (
-                        "[USAR_COLLISION][WARN_ALIAS_REQUIRED] "
-                        f"módulo={nodo.modulo} conflictos={conflictos} policy={self._usar_collision_policy}"
-                    )
-                    logging.warning(diagnostico)
-                    self._trace_debug(diagnostico)
+                    evento_colision = {
+                        "evento": "usar_collision",
+                        "severity": "warning",
+                        "module": nodo.modulo,
+                        "conflicts": conflictos,
+                        "policy": self._usar_collision_policy,
+                        "detail": detalle,
+                    }
+                    logging.warning("USAR collision event: %s", evento_colision)
+                    self._trace_debug(f"[USAR_COLLISION][WARN] {evento_colision}")
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': conflicto={detalle}. "
+                        f"'{nodo.modulo}': colisión estructurada={detalle}. "
                         "Requiere alias explícito según la convención del runtime (usar importar ... como ...)."
                     )
+                evento_colision = {
+                    "evento": "usar_collision",
+                    "severity": "error",
+                    "module": nodo.modulo,
+                    "conflicts": conflictos,
+                    "policy": self._usar_collision_policy,
+                    "detail": detalle,
+                }
+                logging.error("USAR collision event: %s", evento_colision)
                 raise NameError(
                     "No se puede usar el módulo "
                     f"'{nodo.modulo}': colisión estructurada={detalle}"
