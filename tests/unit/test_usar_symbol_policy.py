@@ -10,9 +10,10 @@ def _callable_dummy():
 
 
 def test_rechaza_nombres_prohibidos_backend():
-    resultado = sanear_simbolo_para_usar("sys", lambda: None)
-    assert resultado.rechazado is True
-    assert resultado.codigo == "backend_internal_name"
+    for nombre in ("sys", "os", "importlib", "pcobra", "cobra", "core"):
+        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+        assert resultado.rechazado is True
+        assert resultado.codigo == "backend_internal_name"
 
 
 def test_rechaza_privado():
@@ -24,14 +25,20 @@ def test_rechaza_privado():
 def test_rechaza_dunders():
     resultado = sanear_simbolo_para_usar("__algo__", lambda: None)
     assert resultado.rechazado is True
-    assert resultado.codigo in {"dunder_name", "private_prefix"}
+    assert resultado.codigo in {"dunder_pattern", "private_prefix"}
+
+
+def test_rechaza_dunders_python_conocidos():
+    resultado = sanear_simbolo_para_usar("__name__", lambda: None)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "private_prefix"
 
 
 def test_rechaza_aliases_publicos_reservados():
     for nombre in ("append", "map", "filter", "unwrap", "expect", "self", "keys", "values", "len"):
         resultado = sanear_simbolo_para_usar(nombre, _callable_dummy)
         assert resultado.rechazado is True
-        assert resultado.codigo == "cobra_public_equivalent"
+        assert resultado.codigo == "explicit_forbidden_name"
 
 
 def test_rechaza_objetos_modulo():
@@ -71,4 +78,10 @@ def test_permite_constante_publica_explicita_como_warning():
 def test_rechaza_constante_no_mayuscula():
     resultado = sanear_simbolo_para_usar("pi", 3.14)
     assert resultado.rechazado is True
-    assert resultado.codigo == "non_callable_not_public_constant"
+    assert resultado.codigo == "non_callable_not_canonical_public_constant"
+
+
+def test_rechaza_constante_mayuscula_no_canonica():
+    resultado = sanear_simbolo_para_usar("MAX_SIZE", 128)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "non_callable_not_canonical_public_constant"

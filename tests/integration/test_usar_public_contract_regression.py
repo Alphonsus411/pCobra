@@ -207,10 +207,14 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
 
 def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod = ModuleType("externo")
-    mod.__all__ = ["OK", "self", "SDK"]
+    mod.__all__ = ["OK", "self", "append", "map", "SDK", "MAX_SIZE", "__danger__"]
     mod.OK = lambda: "ok"
     mod.self = lambda: "reservado"
+    mod.append = lambda *_args: "append"
+    mod.map = lambda *_args: "map"
     mod.SDK = ModuleType("sdk")
+    mod.MAX_SIZE = 1024
+    mod.__danger__ = lambda: "boom"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
@@ -227,5 +231,9 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
 
     mensaje = str(excinfo.value)
     assert "self" in mensaje
+    assert "append" in mensaje
+    assert "map" in mensaje
+    assert "SDK" in mensaje
+    assert "MAX_SIZE" in mensaje
     assert "OK" not in interp.contextos[-1].values
     assert interp.contextos[-1].values == estado_pre
