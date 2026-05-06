@@ -14,7 +14,8 @@ __all__ = [
     "obtener_env",
     "listar_dir",
     "directorio_actual",
-]
+
+    "ejecutar_comando_async",]
 
 
 def obtener_os() -> str:
@@ -44,3 +45,9 @@ def listar_dir(ruta: str = ".") -> list[str]:
 
 def directorio_actual() -> str:
     return _sistema.directorio_actual()
+
+
+def ejecutar_comando_async(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.sistema.ejecutar_comando_async``."""
+
+    return _sistema.ejecutar_comando_async(*args, **kwargs)
