@@ -55,8 +55,8 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
             f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
         )
 
-def _validar_nombre(nombre: str) -> str:
-    """Valida que el nombre sea seguro para resolución runtime de `usar`."""
+def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -> str:
+    """Valida nombre de `usar` y opcionalmente exige allowlist canónica."""
 
     _rechazar_modulo_no_canonico(nombre)
     nombre = nombre.strip()
@@ -78,6 +78,12 @@ def _validar_nombre(nombre: str) -> str:
                 f"Nombre de módulo '{nombre}' parece una ruta interna o de backend; "
                 "usa únicamente módulos Cobra canónicos."
             )
+
+    if require_allowlist and nombre not in USAR_COBRA_ALLOWLIST:
+        raise PermissionError(
+            f"Importación no permitida en 'usar': '{nombre}'. "
+            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+        )
 
     return nombre
 
@@ -103,7 +109,7 @@ def _cargar_modulo_local_desde_directorio(nombre: str, directorio: Path):
 def obtener_modulo_cobra_oficial(nombre: str):
     """Carga módulos oficiales de Cobra solo desde ``corelibs`` o ``standard_library``."""
 
-    nombre = _validar_nombre(nombre)
+    nombre = validar_nombre_modulo_usar(nombre, require_allowlist=True)
     base = Path(__file__).resolve()
 
     for parent in base.parents:
@@ -131,13 +137,7 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
     """Resuelve módulos de `usar` solo contra la allowlist canónica de Cobra."""
 
     _ = permitir_instalacion  # compat: ya no se usa instalación dinámica para `usar`.
-    nombre = _validar_nombre(nombre)
-
-    if nombre not in USAR_COBRA_ALLOWLIST:
-        raise PermissionError(
-            f"Importación no permitida en 'usar': '{nombre}'. "
-            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
-        )
+    nombre = validar_nombre_modulo_usar(nombre, require_allowlist=True)
 
     try:
         return obtener_modulo_cobra_oficial(nombre)
