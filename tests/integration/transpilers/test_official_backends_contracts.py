@@ -54,6 +54,13 @@ RUNTIME_ADAPTER_MARKERS = {
     ),
 }
 
+
+
+def test_public_backend_policy_exact_set_is_enforced() -> None:
+    """Política pública exacta: solo python/javascript/rust."""
+
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+
 def _generate(language: str, nodes: list[object]) -> str:
     module_name, class_name = TRANSPILERS[language]
     transpiler = getattr(importlib.import_module(module_name), class_name)()

@@ -150,3 +150,29 @@ def test_cli_bootstrap_no_monkey_patchea_lexer() -> None:
         "El bootstrap CLI debe preservar el método original del lexer. "
         f"stdout={result.stdout!r} stderr={result.stderr!r}"
     )
+
+
+@pytest.mark.parametrize("command,argv", [("repl", ["repl", "-h"]), ("run", ["run", "-h"]), ("test", ["test", "-h"])])
+def test_cli_public_commands_do_not_import_legacy_transpilers_on_startup(command: str, argv: list[str]) -> None:
+    """`repl`/`ejecutar`/`test` no deben cargar módulos legacy en import/startup."""
+
+    result = _run_python_isolated(
+        f"from pcobra.cli import main; rc = main({argv!r}); "
+        "import sys; "
+        "legacy_markers = ("
+        "'pcobra.cobra.transpilers.transpiler.to_go',"
+        "'pcobra.cobra.transpilers.transpiler.to_cpp',"
+        "'pcobra.cobra.transpilers.transpiler.to_java',"
+        "'pcobra.cobra.transpilers.transpiler.to_wasm',"
+        "'pcobra.cobra.transpilers.transpiler.to_asm',"
+        "'pcobra.cobra.internal_compat.legacy_contracts',"
+        "); "
+        "loaded = sorted(name for name in sys.modules if name in legacy_markers); "
+        "assert rc == 0; "
+        "assert not loaded, f'Startup cargó módulos legacy: {loaded}'; ",
+    )
+
+    assert result.returncode == 0, (
+        "Las rutas públicas no deben cargar transpilers legacy en startup. "
+        f"command={command!r} stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
