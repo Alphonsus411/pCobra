@@ -178,7 +178,8 @@ jobs:
         run: |
           pytest tests/integration/transpilers/test_official_backends_tier1.py \
             tests/integration/transpilers/test_official_backends_contracts.py \
-            tests/integration/test_usar_public_contract_regression.py
+            tests/integration/test_usar_public_contract_regression.py \
+            tests/integration/test_usar_core_contract_full.py
 
           paths=()
           if [ -d tests ]; then
@@ -200,7 +201,8 @@ jobs:
         shell: pwsh
         run: |
           pytest tests/integration/transpilers/test_official_backends_tier1.py tests/integration/transpilers/test_official_backends_contracts.py \
-            tests/integration/test_usar_public_contract_regression.py
+            tests/integration/test_usar_public_contract_regression.py \
+            tests/integration/test_usar_core_contract_full.py
 
           $paths = @()
           if (Test-Path tests) {
@@ -295,4 +297,5 @@ jobs:
         run: |
           pytest tests/integration/test_holobit_tiers.py \
             tests/integration/transpilers/test_official_backends_contracts.py \
-            tests/integration/test_usar_public_contract_regression.py
+            tests/integration/test_usar_public_contract_regression.py \
+            tests/integration/test_usar_core_contract_full.py
