@@ -48,6 +48,31 @@ def test_holobit_adapter_combinar_medir_y_transformar():
     assert t["tipo"] == "holobit"
 
 
+def test_holobit_adapter_normaliza_tipos_cobra_facing():
+    hb = holobit.crear_holobit((1, 2.5, 3))
+
+    proyectado = holobit.proyectar(hb, "2d")
+    transformado = holobit.transformar(hb, "rotar", "z", 90)
+    combinado = holobit.combinar(hb, holobit.crear_holobit([4]))
+    metricas = holobit.medir(hb)
+
+    assert isinstance(hb, dict)
+    assert isinstance(proyectado, dict)
+    assert isinstance(transformado, dict)
+    assert isinstance(combinado, dict)
+    assert isinstance(metricas, dict)
+    assert hb["tipo"] == "holobit"
+    assert all(isinstance(v, float) for v in hb["valores"])
+    assert isinstance(metricas["dimension"], int)
+    assert isinstance(metricas["magnitud"], float)
+
+
+@pytest.mark.parametrize("valor_invalido", [True, False])
+def test_crear_holobit_rechaza_booleanos(valor_invalido):
+    with pytest.raises(TypeError):
+        holobit.crear_holobit([valor_invalido, 1])
+
+
 def test_policy_rechaza_holobit_sdk_en_usar():
     with pytest.raises(PermissionError):
         usar_loader.obtener_modulo("holobit_sdk")

@@ -80,6 +80,23 @@ def test_usar_holobit_expone_solo_api_cobra_sin_internals_sdk() -> None:
     assert all("__" not in nombre for nombre in simbolos)
 
 
+def test_stdlib_holobit_exporta_exactamente_api_permitida() -> None:
+    from pcobra.standard_library import holobit as stdlib_holobit
+
+    assert set(stdlib_holobit.__all__) == {
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    }
+    assert all(callable(getattr(stdlib_holobit, nombre)) for nombre in stdlib_holobit.__all__)
+
+
 def test_internals_holobit_sdk_no_importables_directo_desde_usar_loader() -> None:
     with pytest.raises(PermissionError) as excinfo:
         usar_loader.obtener_modulo("holobit_sdk")
