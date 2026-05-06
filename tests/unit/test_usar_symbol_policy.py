@@ -38,11 +38,23 @@ def test_rechaza_dunders_python_conocidos():
     assert resultado.codigo == "private_prefix"
 
 
-def test_rechaza_aliases_publicos_reservados():
-    for nombre in ("append", "map", "filter", "unwrap", "expect", "self", "keys", "values", "len"):
+def test_rechaza_aliases_publicos_reservados_con_nombre_recomendado():
+    esperados = {
+        "append": "agregar",
+        "map": "mapear",
+        "filter": "filtrar",
+        "unwrap": "obtener_o_error",
+        "expect": "obtener_o_error",
+        "self": "instancia",
+        "keys": "claves",
+        "values": "valores",
+        "len": "longitud",
+    }
+    for nombre, recomendado in esperados.items():
         resultado = sanear_simbolo_para_usar(nombre, _callable_dummy)
         assert resultado.rechazado is True
         assert resultado.codigo == "explicit_forbidden_name"
+        assert recomendado in (resultado.mensaje or "")
 
 
 def test_rechaza_objetos_modulo():
@@ -129,3 +141,10 @@ def test_usar_modulo_totalmente_invalido_falla(monkeypatch):
     interp = InterpretadorCobra(safe_mode=False)
     with pytest.raises(ImportError, match="no quedaron símbolos exportables"):
         interp.ejecutar_usar(NodoUsar("numero"))
+
+
+def test_rechaza_nombres_con_dunder_en_cualquier_posicion():
+    for nombre in ("mi__simbolo", "__x", "x__", "normal__otro"):
+        resultado = sanear_simbolo_para_usar(nombre, _callable_dummy)
+        assert resultado.rechazado is True
+        assert resultado.codigo in {"dunder_pattern", "private_prefix"}

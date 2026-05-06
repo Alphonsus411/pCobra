@@ -4,19 +4,19 @@ from dataclasses import dataclass
 from types import ModuleType
 from typing import Any
 
-NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(
-    {
-        "self",
-        "append",
-        "map",
-        "filter",
-        "unwrap",
-        "expect",
-        "keys",
-        "values",
-        "len",
-    }
-)
+EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS = {
+    "self": "instancia",
+    "append": "agregar",
+    "map": "mapear",
+    "filter": "filtrar",
+    "unwrap": "obtener_o_error",
+    "expect": "obtener_o_error",
+    "keys": "claves",
+    "values": "valores",
+    "len": "longitud",
+}
+
+NOMBRES_PROHIBIDOS_EXPLICITOS = frozenset(EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS)
 DUNDERS_BLOQUEADOS = frozenset(
     {"__builtins__", "__loader__", "__package__", "__spec__", "__name__"}
 )
@@ -77,6 +77,16 @@ def _rechazar(nombre: str, simbolo: object, codigo: str, mensaje: str) -> Result
     return ResultadoSaneamientoSimboloUsar(nombre, simbolo, True, codigo, mensaje)
 
 
+def _mensaje_nombre_prohibido(nombre: str) -> str:
+    recomendado = EQUIVALENCIAS_PROHIBIDAS_A_CANONICAS.get(nombre)
+    if recomendado:
+        return (
+            f"nombre '{nombre}' no permitido por política de usar. "
+            f"Usa el nombre Cobra canónico '{recomendado}'."
+        )
+    return "nombre prohibido por política explícita de usar"
+
+
 def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamientoSimboloUsar:
     """Aplica la política de exportación de símbolos para ``usar``."""
     if nombre.startswith("_"):
@@ -124,7 +134,7 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             nombre,
             simbolo,
             "explicit_forbidden_name",
-            "nombre prohibido por política explícita de usar",
+            _mensaje_nombre_prohibido(nombre),
         )
 
     if not callable(simbolo) and nombre not in NOMBRES_CONSTANTES_PUBLICAS_CANONICAS:
@@ -132,7 +142,7 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             nombre,
             simbolo,
             "non_callable_not_canonical_public_constant",
-            "solo se permiten no-callables para constantes públicas canónicas",
+            "solo se permiten no-callables para constantes públicas explícitas y canónicas",
         )
 
     if not callable(simbolo):
