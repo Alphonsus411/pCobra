@@ -4,21 +4,7 @@ import re
 from pathlib import Path
 import sys
 
-# Allowlist canónica de módulos Cobra habilitados para `usar`.
-USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
-    "numero",
-    "texto",
-    "datos",
-    "logica",
-    "asincrono",
-    "sistema",
-    "archivo",
-    "tiempo",
-    "red",
-    "holobit",
-)
-
-USAR_COBRA_ALLOWLIST: frozenset[str] = frozenset(USAR_COBRA_PUBLIC_MODULES)
+from pcobra.cobra.usar_policy import USAR_COBRA_ALLOWLIST, USAR_COBRA_PUBLIC_MODULES
 
 # Módulos no canónicos conocidos que deben rechazarse de forma explícita.
 _USAR_NON_CANONICAL_MODULES: frozenset[str] = frozenset({

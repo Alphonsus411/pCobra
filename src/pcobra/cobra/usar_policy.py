@@ -6,7 +6,20 @@ import importlib
 from dataclasses import dataclass
 from pathlib import Path
 
-from pcobra.cobra.usar_loader import USAR_COBRA_PUBLIC_MODULES
+# Fuente única de verdad de módulos canónicos permitidos por `usar`.
+USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
+    "numero",
+    "texto",
+    "datos",
+    "logica",
+    "asincrono",
+    "sistema",
+    "archivo",
+    "tiempo",
+    "red",
+    "holobit",
+)
+USAR_COBRA_ALLOWLIST: frozenset[str] = frozenset(USAR_COBRA_PUBLIC_MODULES)
 
 REPL_COBRA_MODULE_MAP: dict[str, str] = {modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES}
 
@@ -124,6 +137,21 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         allowed_aliases={},
         forbidden_symbols=("_SDKHolobit",),
     ),
+}
+
+# Excepciones de exportación pública por módulo para runtime `usar`.
+USAR_RUNTIME_EXPORT_OVERRIDES: dict[str, tuple[str, ...]] = {
+    "holobit": (
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    )
 }
 
 
