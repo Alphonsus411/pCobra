@@ -108,8 +108,16 @@ def test_no_aparecen_simbolos_prohibidos_en_exports():
 def test_runtime_startup_no_carga_legacy_backends():
     result = _run_python_isolated(
         "import pcobra; import sys; "
-        "legacy = ('pcobra.cobra.transpilers.transpiler.to_go','pcobra.cobra.transpilers.transpiler.to_cpp','pcobra.cobra.transpilers.transpiler.to_java','pcobra.cobra.transpilers.transpiler.to_wasm','pcobra.cobra.transpilers.transpiler.to_asm'); "
-        "assert not any(name in sys.modules for name in legacy), 'startup cargó backends legacy';"
+        "legacy = ("
+        "'pcobra.cobra.transpilers.transpiler.to_go',"
+        "'pcobra.cobra.transpilers.transpiler.to_cpp',"
+        "'pcobra.cobra.transpilers.transpiler.to_java',"
+        "'pcobra.cobra.transpilers.transpiler.to_wasm',"
+        "'pcobra.cobra.transpilers.transpiler.to_asm',"
+        "'pcobra.cobra.internal_compat.legacy_contracts',"
+        "'pcobra.cobra.cli.internal_compat.legacy_targets',"
+        "); "
+        "assert not any(name in sys.modules for name in legacy), 'startup cargó módulos legacy';"
     )
     assert result.returncode == 0, result.stderr
 
