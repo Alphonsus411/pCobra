@@ -69,7 +69,7 @@ from .cobra_config import (
     limite_memoria_mb,
     limite_cpu_segundos,
 )
-from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP
+from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_OVERRIDES
 from .usar_symbol_policy import sanear_simbolo_para_usar
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
@@ -1849,18 +1849,8 @@ class InterpretadorCobra:
         def _resolver_exportables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
             """Resuelve exportables candidatos según política de ``usar``."""
             exportables = getattr(modulo_obj, "__all__", None)
-            if modulo_oficial and nombre_modulo == "holobit":
-                exportables = [
-                    "crear_holobit",
-                    "validar_holobit",
-                    "serializar_holobit",
-                    "deserializar_holobit",
-                    "proyectar",
-                    "transformar",
-                    "graficar",
-                    "combinar",
-                    "medir",
-                ]
+            if modulo_oficial:
+                exportables = USAR_RUNTIME_EXPORT_OVERRIDES.get(nombre_modulo, exportables)
 
             if exportables is None:
                 candidatos = [
