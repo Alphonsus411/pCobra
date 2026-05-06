@@ -237,3 +237,37 @@ def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     assert "MAX_SIZE" in mensaje
     assert "OK" not in interp.contextos[-1].values
     assert interp.contextos[-1].values == estado_pre
+
+
+def test_usar_holobit_inyecta_solo_all_y_nombres_en_espanol(monkeypatch):
+    mod_holobit = _modulo_holobit_publico_stub()
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
+
+    class _NodoUsar:
+        modulo = "holobit"
+
+    interp.ejecutar_usar(_NodoUsar())
+    simbolos = set(interp.contextos[-1].values.keys())
+
+    assert set(mod_holobit.__all__).issubset(simbolos)
+    assert "Holobit" not in simbolos
+    assert "holobit_sdk" not in simbolos
+    assert "_to_sdk_holobit" not in simbolos
+    assert all("_" in nombre or nombre.islower() for nombre in mod_holobit.__all__)
+
+
+def test_holobit_corelib_deserializacion_invalida_regresion():
+    import importlib.util
+    from pathlib import Path
+
+    ruta = Path("src/pcobra/corelibs/holobit.py").resolve()
+    spec = importlib.util.spec_from_file_location("_holobit_corelib_regression", ruta)
+    holobit = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(holobit)
+
+    with pytest.raises((TypeError, ValueError, KeyError)):
+        holobit.deserializar_holobit('{"tipo":"holobit","valores":[1],"extra":true}')

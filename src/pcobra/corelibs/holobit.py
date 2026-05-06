@@ -32,13 +32,28 @@ def _a_estructura_cobra(hb: _SDKHolobit) -> dict[str, Any]:
     return {"tipo": "holobit", "valores": [float(v) for v in hb.valores]}
 
 
+def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
+    if not isinstance(hb, dict):
+        raise TypeError("El holobit debe ser un objeto tipo dict")
+    claves = set(hb.keys())
+    if claves != {"tipo", "valores"}:
+        raise TypeError("Las claves permitidas del holobit son exactamente: tipo, valores")
+    if hb["tipo"] != "holobit":
+        raise TypeError("La clave 'tipo' debe ser la cadena 'holobit'")
+    valores = hb["valores"]
+    if not isinstance(valores, Sequence) or isinstance(valores, (str, bytes)):
+        raise TypeError("La clave 'valores' debe ser una lista o secuencia numérica")
+    return hb
+
+
 def _desde_estructura_cobra(hb: dict[str, Any]) -> _SDKHolobit:
-    if not isinstance(hb, dict) or hb.get("tipo") != "holobit":
-        raise TypeError("Se esperaba una estructura Cobra de holobit")
-    return _SDKHolobit(_normalizar_valores(hb.get("valores", [])))
+    estructura = _validar_estructura_holobit(hb)
+    return _SDKHolobit(_normalizar_valores(estructura["valores"]))
 
 
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
+    if valores is None:
+        raise TypeError("'valores' no puede ser None")
     return _a_estructura_cobra(_SDKHolobit(_normalizar_valores(valores)))
 
 
@@ -51,20 +66,23 @@ def validar_holobit(hb: Any) -> bool:
 
 
 def serializar_holobit(hb: dict[str, Any]) -> str:
-    return json.dumps(_desde_estructura_cobra(hb).valores)
+    return json.dumps(_a_estructura_cobra(_desde_estructura_cobra(hb)), ensure_ascii=False)
 
 
 def deserializar_holobit(payload: str) -> dict[str, Any]:
+    if not isinstance(payload, str):
+        raise TypeError("El payload de holobit debe ser texto JSON")
     datos = json.loads(payload)
-    if not isinstance(datos, Sequence) or isinstance(datos, (str, bytes)):
-        raise TypeError("El payload de holobit debe representar una lista")
-    return crear_holobit(datos)
+    _validar_estructura_holobit(datos)
+    return crear_holobit(datos["valores"])
 
 
 def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
+    if not isinstance(modo, str):
+        raise TypeError("'modo' debe ser texto")
     interno = _desde_estructura_cobra(hb)
     valores = list(interno.valores)
-    modo_norm = str(modo).strip().lower()
+    modo_norm = modo.strip().lower()
     if modo_norm == "2d":
         return crear_holobit(valores[:2])
     if modo_norm == "3d":
@@ -73,12 +91,16 @@ def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
 
 
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
+    if not isinstance(operacion, str):
+        raise TypeError("'operacion' debe ser texto")
     valores = list(_desde_estructura_cobra(hb).valores)
-    op = str(operacion).strip().lower()
+    op = operacion.strip().lower()
     if op == "rotar":
         if len(parametros) < 2:
             raise ValueError("rotar requiere eje y ángulo")
         eje = str(parametros[0]).strip().lower()
+        if not _es_numero(parametros[1]):
+            raise TypeError("El ángulo de rotación debe ser numérico")
         angulo = float(parametros[1])
         if eje != "z" or len(valores) < 2:
             return crear_holobit(valores)
@@ -94,7 +116,10 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
 
 
 def graficar(hb: dict[str, Any]) -> str:
-    return _sdk_graficar(_desde_estructura_cobra(hb))
+    vista = _sdk_graficar(_desde_estructura_cobra(hb))
+    if not isinstance(vista, str):
+        raise TypeError("La salida de graficar debe ser texto")
+    return vista
 
 
 def combinar(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
@@ -107,8 +132,10 @@ def medir(hb: dict[str, Any]) -> dict[str, float | int]:
     interno = _desde_estructura_cobra(hb)
     valores = interno.valores
     magnitud = sum(v * v for v in valores) ** 0.5
-    return {"dimension": len(valores), "magnitud": float(magnitud)}
-
+    salida = {"dimension": len(valores), "magnitud": float(magnitud)}
+    if not isinstance(salida["dimension"], int) or not _es_numero(salida["magnitud"]):
+        raise TypeError("Salida inválida de medir")
+    return salida
 
 
 __all__ = [
@@ -123,4 +150,3 @@ __all__ = [
     "medir",
 ]
 
-del Any, Iterable, Sequence

@@ -32,6 +32,27 @@ contrato** Holobit multi-backend. Son helpers adicionales del runtime Python
 aparecer en la matriz contractual pública al mismo nivel que
 `proyectar`/`transformar`/`graficar`.
 
+## Contrato público serializable para `usar "holobit"`
+
+La fachada pública `pcobra.corelibs.holobit` (consumida por `usar "holobit"`) acepta y retorna **solo** una estructura serializable JSON con este esquema:
+
+- Tipo raíz: `object`/`dict`.
+- Claves permitidas (exactas): `tipo`, `valores`.
+- `tipo`: cadena exacta `"holobit"`.
+- `valores`: secuencia/lista de números (`int`/`float`, no `bool`).
+- No se permiten claves adicionales ni objetos/clases SDK en el contrato público.
+
+Ejemplo válido:
+
+```json
+{"tipo":"holobit","valores":[1.0,2.0,3.0]}
+```
+
+Serialización pública:
+
+- `serializar_holobit(hb)` produce JSON del objeto completo del contrato público.
+- `deserializar_holobit(payload)` exige ese mismo contrato y rechaza payloads legacy (por ejemplo arrays sueltos o claves extra).
+
 ## Semántica mínima
 
 ### Política oficial cuando falta `holobit_sdk`
