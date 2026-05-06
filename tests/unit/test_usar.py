@@ -655,3 +655,49 @@ def test_politica_publica_backend_es_python_javascript_rust():
     from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+
+
+def test_repl_usar_emite_evento_telemetria_saneamiento_rechazado(monkeypatch, caplog):
+    modulo = ModuleType("mod_ext")
+    modulo.__all__ = ["ok", "backend"]
+    modulo.ok = lambda valor: valor
+    modulo.backend = ModuleType("backend_obj")
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"mod_ext": "mod_ext"})
+
+    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar"):
+        interp.ejecutar_nodo(NodoUsar("mod_ext"))
+
+    assert "usar_sanitize_reject" in caplog.text
+    assert "simbolos_rechazados" in caplog.text
+
+
+def test_repl_usar_emite_evento_telemetria_colision_warn(monkeypatch, caplog):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["a_snake", "a_camel"]
+    modulo.a_snake = lambda texto: texto
+    modulo.a_camel = lambda texto: texto
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+    interp.configurar_politica_colision_usar("warn_alias_required")
+    interp.contextos[-1].define("a_snake", lambda _texto: "ocupado")
+
+    with pytest.raises(NameError, match=r"Requiere alias explícito"):
+        interp.ejecutar_nodo(NodoUsar("texto"))
+
+    assert "usar_collision" in caplog.text
+    assert "warn_alias_required" in caplog.text
+
+
+@pytest.mark.parametrize("nombre", ["numpy", "node-fetch", "serde", "holobit_sdk"])
+def test_usar_loader_rechaza_numpy_y_equivalentes_prohibidos(nombre):
+    with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar'"):
+        usar_loader.obtener_modulo(nombre)
