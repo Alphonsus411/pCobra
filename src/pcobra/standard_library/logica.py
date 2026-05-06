@@ -38,7 +38,9 @@ __all__ = [
     "exactamente_n",
     "tabla_verdad",
     "diferencia_simetrica",
-]
+
+    "coalesce",
+    "si_condicional",]
 
 
 def es_verdadero(valor: bool) -> bool:
@@ -217,3 +219,15 @@ def diferencia_simetrica(*colecciones: Iterable[bool]) -> tuple[bool, ...]:
     """Combina colecciones booleanas mediante diferencia simétrica elemento a elemento."""
 
     return _logica.diferencia_simetrica(*colecciones)
+
+
+def coalesce(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.logica.coalesce``."""
+
+    return _logica.coalesce(*args, **kwargs)
+
+
+def si_condicional(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.logica.si_condicional``."""
+
+    return _logica.si_condicional(*args, **kwargs)

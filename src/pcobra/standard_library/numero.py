@@ -35,7 +35,35 @@ __all__ = [
     "cuartiles",
     "rango_intercuartil",
     "coeficiente_variacion",
-]
+
+    "absoluto",
+    "redondear",
+    "piso",
+    "techo",
+    "mcd",
+    "mcm",
+    "es_cercano",
+    "producto",
+    "entero_a_base",
+    "entero_desde_base",
+    "longitud_bits",
+    "contar_bits",
+    "rotar_bits_izquierda",
+    "rotar_bits_derecha",
+    "entero_a_bytes",
+    "entero_desde_bytes",
+    "raiz",
+    "potencia",
+    "clamp",
+    "aleatorio",
+    "mediana",
+    "moda",
+    "desviacion_estandar",
+    "es_par",
+    "es_primo",
+    "factorial",
+    "promedio",
+    "aleatorio_entero",]
 
 
 def es_finito(valor: RealLike) -> bool:
@@ -174,3 +202,171 @@ def coeficiente_variacion(
     """Calcula el coeficiente de variación de ``valores``."""
 
     return _numero.coeficiente_variacion(valores, muestral=muestral)
+
+
+def absoluto(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.absoluto``."""
+
+    return _numero.absoluto(*args, **kwargs)
+
+
+def redondear(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.redondear``."""
+
+    return _numero.redondear(*args, **kwargs)
+
+
+def piso(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.piso``."""
+
+    return _numero.piso(*args, **kwargs)
+
+
+def techo(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.techo``."""
+
+    return _numero.techo(*args, **kwargs)
+
+
+def mcd(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.mcd``."""
+
+    return _numero.mcd(*args, **kwargs)
+
+
+def mcm(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.mcm``."""
+
+    return _numero.mcm(*args, **kwargs)
+
+
+def es_cercano(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.es_cercano``."""
+
+    return _numero.es_cercano(*args, **kwargs)
+
+
+def producto(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.producto``."""
+
+    return _numero.producto(*args, **kwargs)
+
+
+def entero_a_base(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.entero_a_base``."""
+
+    return _numero.entero_a_base(*args, **kwargs)
+
+
+def entero_desde_base(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.entero_desde_base``."""
+
+    return _numero.entero_desde_base(*args, **kwargs)
+
+
+def longitud_bits(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.longitud_bits``."""
+
+    return _numero.longitud_bits(*args, **kwargs)
+
+
+def contar_bits(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.contar_bits``."""
+
+    return _numero.contar_bits(*args, **kwargs)
+
+
+def rotar_bits_izquierda(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.rotar_bits_izquierda``."""
+
+    return _numero.rotar_bits_izquierda(*args, **kwargs)
+
+
+def rotar_bits_derecha(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.rotar_bits_derecha``."""
+
+    return _numero.rotar_bits_derecha(*args, **kwargs)
+
+
+def entero_a_bytes(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.entero_a_bytes``."""
+
+    return _numero.entero_a_bytes(*args, **kwargs)
+
+
+def entero_desde_bytes(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.entero_desde_bytes``."""
+
+    return _numero.entero_desde_bytes(*args, **kwargs)
+
+
+def raiz(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.raiz``."""
+
+    return _numero.raiz(*args, **kwargs)
+
+
+def potencia(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.potencia``."""
+
+    return _numero.potencia(*args, **kwargs)
+
+
+def clamp(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.clamp``."""
+
+    return _numero.clamp(*args, **kwargs)
+
+
+def aleatorio(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.aleatorio``."""
+
+    return _numero.aleatorio(*args, **kwargs)
+
+
+def mediana(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.mediana``."""
+
+    return _numero.mediana(*args, **kwargs)
+
+
+def moda(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.moda``."""
+
+    return _numero.moda(*args, **kwargs)
+
+
+def desviacion_estandar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.desviacion_estandar``."""
+
+    return _numero.desviacion_estandar(*args, **kwargs)
+
+
+def es_par(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.es_par``."""
+
+    return _numero.es_par(*args, **kwargs)
+
+
+def es_primo(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.es_primo``."""
+
+    return _numero.es_primo(*args, **kwargs)
+
+
+def factorial(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.factorial``."""
+
+    return _numero.factorial(*args, **kwargs)
+
+
+def promedio(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.promedio``."""
+
+    return _numero.promedio(*args, **kwargs)
+
+
+def aleatorio_entero(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.aleatorio_entero``."""
+
+    return _numero.aleatorio_entero(*args, **kwargs)

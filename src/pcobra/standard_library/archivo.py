@@ -1,6 +1,7 @@
 """Funciones básicas para manipular archivos de texto."""
 
 from __future__ import annotations
+from pcobra.corelibs import archivo as _archivo
 
 import os
 from pathlib import Path
@@ -70,4 +71,25 @@ def existe(ruta: PathLike) -> bool:
     return ruta_segura.is_file()
 
 
-__all__ = ["leer", "escribir", "adjuntar", "existe"]
+__all__ = ["leer", "escribir", "adjuntar", "existe"
+    "eliminar",
+    "anexar",
+    "leer_lineas",]
+
+
+def eliminar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.archivo.eliminar``."""
+
+    return _archivo.eliminar(*args, **kwargs)
+
+
+def anexar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.archivo.anexar``."""
+
+    return _archivo.anexar(*args, **kwargs)
+
+
+def leer_lineas(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.archivo.leer_lineas``."""
+
+    return _archivo.leer_lineas(*args, **kwargs)

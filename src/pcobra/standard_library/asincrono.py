@@ -1,6 +1,7 @@
 """Herramientas asincrónicas expuestas en la biblioteca estándar."""
 
 from __future__ import annotations
+from pcobra.corelibs import asincrono as _asincrono
 
 from contextlib import asynccontextmanager
 from typing import (
@@ -30,7 +31,16 @@ __all__ = [
     "proteger_tarea",
     "ejecutar_en_hilo",
     "reintentar_async",
-]
+
+    "recolectar",
+    "carrera",
+    "primero_exitoso",
+    "esperar_timeout",
+    "crear_tarea",
+    "iterar_completadas",
+    "mapear_concurrencia",
+    "recolectar_resultados",
+    "dormir_async",]
 
 
 def grupo_tareas() -> AsyncContextManager[Any]:
@@ -112,3 +122,57 @@ async def reintentar_async(
         max_retardo=max_retardo,
         jitter=jitter,
     )
+
+
+def recolectar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.recolectar``."""
+
+    return _asincrono.recolectar(*args, **kwargs)
+
+
+def carrera(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.carrera``."""
+
+    return _asincrono.carrera(*args, **kwargs)
+
+
+def primero_exitoso(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.primero_exitoso``."""
+
+    return _asincrono.primero_exitoso(*args, **kwargs)
+
+
+def esperar_timeout(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.esperar_timeout``."""
+
+    return _asincrono.esperar_timeout(*args, **kwargs)
+
+
+def crear_tarea(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.crear_tarea``."""
+
+    return _asincrono.crear_tarea(*args, **kwargs)
+
+
+def iterar_completadas(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.iterar_completadas``."""
+
+    return _asincrono.iterar_completadas(*args, **kwargs)
+
+
+def mapear_concurrencia(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.mapear_concurrencia``."""
+
+    return _asincrono.mapear_concurrencia(*args, **kwargs)
+
+
+def recolectar_resultados(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.recolectar_resultados``."""
+
+    return _asincrono.recolectar_resultados(*args, **kwargs)
+
+
+def dormir_async(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.asincrono.dormir_async``."""
+
+    return _asincrono.dormir_async(*args, **kwargs)

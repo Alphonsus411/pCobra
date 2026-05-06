@@ -10,7 +10,22 @@ Ejemplo rápido::
     texto.quitar_prefijo("🧪Prueba", "🧪")  # -> "Prueba"
     texto.centrar_texto("cobra", 10, "-")    # -> "---cobra--"
     texto.dividir_lineas("uno\r\ndos\n", conservar_delimitadores=True)
-    # -> ["uno\r\n", "dos\n"]
+    # -> ["uno\r\n", "dos\n"
+    "capitalizar",
+    "titulo",
+    "invertir",
+    "concatenar",
+    "quitar_espacios",
+    "dividir",
+    "unir",
+    "reemplazar",
+    "empieza_con",
+    "termina_con",
+    "incluye",
+    "rellenar_izquierda",
+    "rellenar_derecha",
+    "normalizar_unicode",
+    "lineas_no_vacias",]
     texto.subcadena_despues("ruta/archivo.txt", "/")  # -> "archivo.txt"
 """
 
@@ -822,3 +837,93 @@ def traducir(texto: str, tabla: Mapping[int, str | None]) -> str:
     """Aplica la tabla producida por ``tabla_traduccion`` sobre ``texto``."""
 
     return _traducir_texto(texto, tabla)
+
+
+def capitalizar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.capitalizar``."""
+
+    return _texto.capitalizar(*args, **kwargs)
+
+
+def titulo(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.titulo``."""
+
+    return _texto.titulo(*args, **kwargs)
+
+
+def invertir(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.invertir``."""
+
+    return _texto.invertir(*args, **kwargs)
+
+
+def concatenar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.concatenar``."""
+
+    return _texto.concatenar(*args, **kwargs)
+
+
+def quitar_espacios(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.quitar_espacios``."""
+
+    return _texto.quitar_espacios(*args, **kwargs)
+
+
+def dividir(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.dividir``."""
+
+    return _texto.dividir(*args, **kwargs)
+
+
+def unir(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.unir``."""
+
+    return _texto.unir(*args, **kwargs)
+
+
+def reemplazar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.reemplazar``."""
+
+    return _texto.reemplazar(*args, **kwargs)
+
+
+def empieza_con(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.empieza_con``."""
+
+    return _texto.empieza_con(*args, **kwargs)
+
+
+def termina_con(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.termina_con``."""
+
+    return _texto.termina_con(*args, **kwargs)
+
+
+def incluye(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.incluye``."""
+
+    return _texto.incluye(*args, **kwargs)
+
+
+def rellenar_izquierda(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.rellenar_izquierda``."""
+
+    return _texto.rellenar_izquierda(*args, **kwargs)
+
+
+def rellenar_derecha(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.rellenar_derecha``."""
+
+    return _texto.rellenar_derecha(*args, **kwargs)
+
+
+def normalizar_unicode(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.normalizar_unicode``."""
+
+    return _texto.normalizar_unicode(*args, **kwargs)
+
+
+def lineas_no_vacias(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.texto.lineas_no_vacias``."""
+
+    return _texto.lineas_no_vacias(*args, **kwargs)
