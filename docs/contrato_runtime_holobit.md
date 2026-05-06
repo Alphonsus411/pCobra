@@ -53,6 +53,23 @@ Serialización pública:
 - `serializar_holobit(hb)` produce JSON del objeto completo del contrato público.
 - `deserializar_holobit(payload)` exige ese mismo contrato y rechaza payloads legacy (por ejemplo arrays sueltos o claves extra).
 
+
+## Frontera estricta de exportación
+
+Para `usar "holobit"` (fachadas `pcobra.corelibs.holobit`, `pcobra.standard_library.holobit` y superficie de `pcobra.core.holobits`) la API pública permitida es **solo**:
+
+- `crear_holobit`
+- `validar_holobit`
+- `serializar_holobit`
+- `deserializar_holobit`
+- `proyectar`
+- `transformar`
+- `graficar`
+- `combinar`
+- `medir`
+
+No se deben exportar `holobit_sdk`, la clase interna `Holobit` ni helpers privados.
+
 ## Semántica mínima
 
 ### Política oficial cuando falta `holobit_sdk`

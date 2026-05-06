@@ -1,22 +1,23 @@
-"""API pública del runtime Python para objetos ``Holobit``.
+"""Superficie pública saneada para Holobit en runtime Python."""
 
-El contrato Holobit transversal multi-backend incluye únicamente
-``holobit``, ``proyectar``, ``transformar`` y ``graficar``. Los helpers
-``escalar`` y ``mover`` se exportan aquí como capacidades adicionales del
-runtime Python y no deben leerse como parte de la matriz contractual
-multi-backend.
-"""
-
-from .holobit import Holobit
-from .graficar import graficar
-from .proyeccion import proyectar
-from .transformacion import transformar, escalar, mover
+from importlib import import_module
+from typing import Any
 
 __all__ = [
-    "Holobit",
-    "graficar",
+    "crear_holobit",
+    "validar_holobit",
+    "serializar_holobit",
+    "deserializar_holobit",
     "proyectar",
     "transformar",
-    "escalar",
-    "mover",
+    "graficar",
+    "combinar",
+    "medir",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name not in __all__:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    modulo = import_module("pcobra.corelibs.holobit")
+    return getattr(modulo, name)
