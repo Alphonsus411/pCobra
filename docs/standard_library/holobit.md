@@ -1,3 +1,19 @@
+# `standard_library.holobit`
+
+## Checklist funcional (holobit)
+
+- [x] Exportaciones canónicas en español via `__all__` únicamente.
+- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
+- [x] Sin alias en inglés expuestos por wildcard export.
+- [x] Ejemplo de uso con `usar "holobit"`.
+
+### Ejemplo Cobra
+
+```cobra
+usar "holobit"
+# invoca funciones públicas del módulo
+```
+
 # Módulo `holobit` (contrato público)
 
 El módulo `holobit` disponible vía `usar "holobit"` expone **solo** estas funciones públicas:

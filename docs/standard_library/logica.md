@@ -1,3 +1,19 @@
+# `standard_library.logica`
+
+## Checklist funcional (logica)
+
+- [x] Exportaciones canónicas en español via `__all__` únicamente.
+- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
+- [x] Sin alias en inglés expuestos por wildcard export.
+- [x] Ejemplo de uso con `usar "logica"`.
+
+### Ejemplo Cobra
+
+```cobra
+usar "logica"
+# invoca funciones públicas del módulo
+```
+
 El módulo `standard_library.logica` reexpone las utilidades booleanas de
 `pcobra.corelibs.logica` para que puedan usarse directamente desde programas de
 alto nivel. Todas las funciones validan sus argumentos y mantienen la misma
