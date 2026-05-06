@@ -86,6 +86,38 @@ def test_import_comandos_run_repl_test_no_precarga_transpiladores_legacy():
     assert result.returncode == 0, result.stderr
 
 
+
+def _run_cli_parse_isolated(subcommand: str) -> subprocess.CompletedProcess[str]:
+    argv = [subcommand]
+    if subcommand in {"run", "test"}:
+        argv.append("dummy.co")
+    code = (
+        "from pcobra.cobra.cli.cli import CliApplication; "
+        "app = CliApplication(); "
+        "app.initialize(); "
+        "app._ensure_command_structure(); "
+        f"argv = {argv!r}; "
+        "app.parser.parse_args(argv); "
+        + _legacy_assertion_snippet()
+    )
+    return _run_python_isolated(code)
+
+
+def test_cobra_repl_no_precarga_transpiladores_legacy():
+    result = _run_cli_parse_isolated('repl')
+    assert result.returncode == 0, result.stderr
+
+
+def test_cobra_run_no_precarga_transpiladores_legacy():
+    result = _run_cli_parse_isolated('run')
+    assert result.returncode == 0, result.stderr
+
+
+def test_cobra_test_no_precarga_transpiladores_legacy():
+    result = _run_cli_parse_isolated('test')
+    assert result.returncode == 0, result.stderr
+
+
 def test_public_backends_permancen_exactamente_tres():
     policy = importlib.import_module("pcobra.cobra.architecture.backend_policy")
     contracts = importlib.import_module("pcobra.cobra.architecture.contracts")
