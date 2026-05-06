@@ -2,6 +2,10 @@ import importlib
 import math
 from types import ModuleType
 
+import pytest
+
+from pcobra.core.ast_nodes import NodoUsar
+from pcobra.core.interpreter import InterpretadorCobra
 from pcobra.core.usar_symbol_policy import sanear_simbolo_para_usar
 
 
@@ -85,3 +89,43 @@ def test_rechaza_constante_mayuscula_no_canonica():
     resultado = sanear_simbolo_para_usar("MAX_SIZE", 128)
     assert resultado.rechazado is True
     assert resultado.codigo == "non_callable_not_canonical_public_constant"
+
+
+def test_usar_modulo_mixto_importa_solo_simbolos_validos(monkeypatch):
+    modulo = ModuleType("fake_numero")
+    modulo.__all__ = ["es_finito", "_interno", "MAX_SIZE", "PI"]
+    modulo.es_finito = _callable_dummy
+    modulo._interno = _callable_dummy
+    modulo.MAX_SIZE = 128
+    modulo.PI = 3.14
+    modulo.__file__ = __file__
+
+    monkeypatch.setattr(
+        "pcobra.core.usar_loader.obtener_modulo_cobra_oficial",
+        lambda _canonico: modulo,
+    )
+
+    interp = InterpretadorCobra(safe_mode=False)
+    interp.ejecutar_usar(NodoUsar("numero"))
+
+    assert interp.variables["es_finito"] is _callable_dummy
+    assert interp.variables["PI"] == 3.14
+    assert "_interno" not in interp.variables
+    assert "MAX_SIZE" not in interp.variables
+
+
+def test_usar_modulo_totalmente_invalido_falla(monkeypatch):
+    modulo = ModuleType("fake_numero_invalido")
+    modulo.__all__ = ["_interno", "MAX_SIZE"]
+    modulo._interno = _callable_dummy
+    modulo.MAX_SIZE = 128
+    modulo.__file__ = __file__
+
+    monkeypatch.setattr(
+        "pcobra.core.usar_loader.obtener_modulo_cobra_oficial",
+        lambda _canonico: modulo,
+    )
+
+    interp = InterpretadorCobra(safe_mode=False)
+    with pytest.raises(ImportError, match="no quedaron símbolos exportables"):
+        interp.ejecutar_usar(NodoUsar("numero"))

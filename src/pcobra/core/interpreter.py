@@ -1950,10 +1950,20 @@ class InterpretadorCobra:
                 simbolos_saneados.append((nombre, simbolo))
 
             if reporte_rechazos:
-                simbolos_rechazados = [item["symbol"] for item in reporte_rechazos]
+                evento_rechazos = {
+                    "evento": "usar_sanitize_reject",
+                    "severity": "warning",
+                    "module": nodo.modulo,
+                    "rejections": reporte_rechazos,
+                }
+                logging.warning("USAR sanitize reject event: %s", evento_rechazos)
+                self._trace_debug(f"[USAR_SANITIZE][REJECTS] {evento_rechazos}")
+
+            if not simbolos_saneados:
                 raise ImportError(
                     "rechazos de saneamiento en usar "
-                    f"'{nodo.modulo}' para símbolos {simbolos_rechazados}: {reporte_rechazos}"
+                    f"'{nodo.modulo}': no quedaron símbolos exportables tras saneamiento. "
+                    f"rechazos={reporte_rechazos}"
                 )
 
             # Fase A: detectar colisiones de forma completa antes de definir.
@@ -2022,6 +2032,13 @@ class InterpretadorCobra:
                     )
                 contexto_actual.define(nombre, simbolo)
             if reporte_warnings:
+                evento_warnings = {
+                    "evento": "usar_sanitize_warning",
+                    "severity": "warning",
+                    "module": nodo.modulo,
+                    "warnings": reporte_warnings,
+                }
+                logging.warning("USAR sanitize warning event: %s", evento_warnings)
                 self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
