@@ -1,5 +1,21 @@
 # `standard_library.numero`
 
+## Checklist funcional (numero)
+
+- [x] Exportaciones canónicas en español via `__all__` únicamente.
+- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
+- [x] Sin alias en inglés expuestos por wildcard export.
+- [x] Ejemplo de uso con `usar "numero"`.
+
+### Ejemplo Cobra
+
+```cobra
+usar "numero"
+# invoca funciones públicas del módulo
+```
+
+# `standard_library.numero`
+
 El módulo `standard_library.numero` expone los mismos atajos que
 `pcobra.corelibs.numero`, pero empaquetados para usarse directamente desde
 programas escritos en Cobra o en Python transpilar. Además de las utilidades

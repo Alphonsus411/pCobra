@@ -1,3 +1,19 @@
+# `standard_library.datos`
+
+## Checklist funcional (datos)
+
+- [x] Exportaciones canónicas en español via `__all__` únicamente.
+- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
+- [x] Sin alias en inglés expuestos por wildcard export.
+- [x] Ejemplo de uso con `usar "datos"`.
+
+### Ejemplo Cobra
+
+```cobra
+usar "datos"
+# invoca funciones públicas del módulo
+```
+
 # standard_library.datos
 
 El módulo `standard_library.datos` encapsula operaciones comunes sobre datos tabulares usando `pandas` y `numpy`. Todas las funciones devuelven estructuras simples (`list` de `dict` o `dict` de listas) para que puedan consumirse fácilmente desde Cobra o por librerías externas.

@@ -1,3 +1,19 @@
+# `standard_library.texto`
+
+## Checklist funcional (texto)
+
+- [x] Exportaciones canónicas en español via `__all__` únicamente.
+- [x] Semántica alineada al runtime de Cobra (validaciones y tipos de retorno).
+- [x] Sin alias en inglés expuestos por wildcard export.
+- [x] Ejemplo de uso con `usar "texto"`.
+
+### Ejemplo Cobra
+
+```cobra
+usar "texto"
+# invoca funciones públicas del módulo
+```
+
 # Utilidades de texto de la biblioteca estándar
 
 La biblioteca `standard_library.texto` se apoya en `pcobra.corelibs.texto` para ofrecer funciones de alto nivel centradas en limpieza y comparación de cadenas.
