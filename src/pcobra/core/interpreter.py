@@ -1844,7 +1844,7 @@ class InterpretadorCobra:
         from pathlib import Path
         from types import ModuleType
 
-        from .usar_loader import obtener_modulo_cobra_oficial
+        from .usar_loader import obtener_modulo
 
         def _resolver_exportables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
             """Resuelve exportables candidatos según política de ``usar``."""
@@ -1893,7 +1893,7 @@ class InterpretadorCobra:
             if not es_modulo_oficial_cobra:
                 raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
 
-            modulo = obtener_modulo_cobra_oficial(modulo_canonico)
+            modulo = obtener_modulo(modulo_canonico)
 
             return modulo, es_repl_estricto, es_modulo_oficial_cobra
 
