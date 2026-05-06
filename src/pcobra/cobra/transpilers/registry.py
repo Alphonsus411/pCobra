@@ -152,10 +152,17 @@ def _validate_internal_legacy_registry_contract() -> tuple[str, ...]:
 
 _ORDERED_ALL_TARGETS: Final[tuple[str, ...]] = _validate_complete_registry_contract()
 _ORDERED_OFFICIAL_TARGETS: Final[tuple[str, ...]] = _validate_public_registry_contract()
-_ORDERED_INTERNAL_LEGACY_TARGETS: Final[tuple[str, ...]] = (
-    _validate_internal_legacy_registry_contract()
-)
+_ORDERED_INTERNAL_LEGACY_TARGETS_CACHE: tuple[str, ...] | None = None
 _OFFICIAL_TARGETS_SET: Final[frozenset[str]] = frozenset(_ORDERED_OFFICIAL_TARGETS)
+
+
+def _ordered_internal_legacy_targets() -> tuple[str, ...]:
+    """Resuelve y cachea el orden de backends legacy internos de forma lazy."""
+    global _ORDERED_INTERNAL_LEGACY_TARGETS_CACHE
+    if _ORDERED_INTERNAL_LEGACY_TARGETS_CACHE is None:
+        _ORDERED_INTERNAL_LEGACY_TARGETS_CACHE = _validate_internal_legacy_registry_contract()
+    return _ORDERED_INTERNAL_LEGACY_TARGETS_CACHE
+
 _PLUGIN_TRANSPILERS: dict[str, type] = {}
 _ENTRYPOINTS_LOADED = False
 
@@ -172,7 +179,7 @@ def ordered_internal_legacy_transpiler_paths() -> tuple[tuple[str, tuple[str, st
     """Devuelve el inventario legacy interno en orden contractual."""
     return tuple(
         (target, INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS[target])
-        for target in _ORDERED_INTERNAL_LEGACY_TARGETS
+        for target in _ordered_internal_legacy_targets()
     )
 
 
@@ -186,7 +193,7 @@ def ordered_internal_legacy_transpiler_entries() -> tuple[tuple[str, tuple[str, 
             INTERNAL_LEGACY_TRANSPILER_CLASS_PATHS[target],
             lifecycle_status_for_backend(target),
         )
-        for target in _ORDERED_INTERNAL_LEGACY_TARGETS
+        for target in _ordered_internal_legacy_targets()
     )
 
 
