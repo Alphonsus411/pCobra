@@ -34,10 +34,10 @@ El módulo `holobit` disponible vía `usar "holobit"` expone **solo** estas func
 - La estructura de intercambio es serializable y Cobra-compatible:
 
 ```json
-{"__cobra_tipo__": "holobit", "valores": [1.0, 2.0, 3.0]}
+{"tipo":"holobit","valores":[1.0,2.0,3.0]}
 ```
 
-- Si `holobit_sdk` está instalado, el adaptador puede usarlo internamente para validar compatibilidad, sin exponer sus símbolos.
+- El módulo no expone `holobit_sdk`, clases internas ni helpers privados; cualquier acceso directo a esos símbolos se considera fuga y debe fallar en pruebas.
 - `usar "holobit_sdk"` está prohibido por política de `usar`.
 
 ## Ejemplos Cobra
