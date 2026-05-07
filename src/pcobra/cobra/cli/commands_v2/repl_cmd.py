@@ -1,5 +1,6 @@
 from typing import Any
 
+from pcobra.cobra.architecture.backend_policy import assert_public_command_uses_only_public_backends
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.cli.commands.interactive_cmd import (
     InteractiveCommand,
@@ -152,6 +153,8 @@ class ReplCommandV2(BaseCommand):
         self._extra_validators_repl = getattr(args, "extra_validators", None)
         sandbox = bool(getattr(args, "sandbox", False))
         sandbox_docker = getattr(args, "sandbox_docker", None)
+        if sandbox_docker:
+            assert_public_command_uses_only_public_backends(command="repl", targets=(sandbox_docker,))
 
         while True:
             try:

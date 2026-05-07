@@ -10,10 +10,10 @@ from types import MappingProxyType
 from typing import Final
 
 from pcobra.cobra.architecture.backend_policy import (
-    ALL_BACKENDS,
     PUBLIC_BACKENDS,
     assert_public_targets_contract,
 )
+from pcobra.cobra.architecture.legacy_backend_lifecycle import ALL_BACKENDS
 from pcobra.cobra.config.transpile_targets import OFFICIAL_TARGETS
 
 TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {

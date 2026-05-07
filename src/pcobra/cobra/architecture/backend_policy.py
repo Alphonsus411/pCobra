@@ -20,31 +20,6 @@ PUBLIC_BACKENDS: Final[tuple[str, ...]] = (
 # Criterio de salida: toda API pública o doc de usuario solo puede listar 3 targets.
 PUBLIC_TARGET_LISTING_LIMIT: Final[int] = 3
 
-# Backends legacy mantenidos exclusivamente para compatibilidad interna.
-# Importante: no deben cargarse durante startup de rutas públicas
-# (`import pcobra`, `cobra repl`, `cobra run`, `cobra test`) salvo opt-in explícito.
-INTERNAL_BACKENDS: Final[tuple[str, ...]] = (
-    "go",
-    "cpp",
-    "java",
-    "wasm",
-    "asm",
-)
-
-# Ventana de retiro contractual para compatibilidad interna no pública.
-INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW: Final[dict[str, str]] = {
-    "go": "Q4 2026",
-    "cpp": "Q4 2026",
-    "java": "Q1 2027",
-    "wasm": "Q2 2027",
-    "asm": "Q3 2026",
-}
-
-# Fecha de corte global para retirar la compatibilidad legacy internal-only.
-INTERNAL_LEGACY_RETIREMENT_DATE: Final[str] = "2027-06-30"
-
-ALL_BACKENDS: Final[tuple[str, ...]] = PUBLIC_BACKENDS + INTERNAL_BACKENDS
-
 
 def assert_public_targets_contract(targets: tuple[str, ...], *, source: str) -> None:
     """Valida que una superficie pública cumpla el contrato oficial de 3 targets."""
@@ -58,4 +33,14 @@ def assert_public_targets_contract(targets: tuple[str, ...], *, source: str) -> 
         raise RuntimeError(
             "[PUBLIC CONTRACT] La superficie pública debe usar exactamente PUBLIC_BACKENDS. "
             f"source={source}; current={targets}; expected={PUBLIC_BACKENDS}"
+        )
+
+
+def assert_public_command_uses_only_public_backends(*, command: str, targets: tuple[str, ...]) -> None:
+    """Falla si un comando público consume cualquier backend fuera de PUBLIC_BACKENDS."""
+    legacy_targets = tuple(target for target in targets if target not in PUBLIC_BACKENDS)
+    if legacy_targets:
+        raise RuntimeError(
+            "[PUBLIC CONTRACT] Comando público fuera de contrato: "
+            f"command={command}; legacy={legacy_targets}; allowed={PUBLIC_BACKENDS}"
         )

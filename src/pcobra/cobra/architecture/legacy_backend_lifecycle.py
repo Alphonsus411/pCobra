@@ -10,12 +10,33 @@ from dataclasses import dataclass
 import os
 from typing import Final, Literal
 
-from pcobra.cobra.architecture.backend_policy import (
-    INTERNAL_BACKENDS,
-    INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW,
-)
 
 LegacyLifecycleStatus = Literal["active-migration", "frozen", "removal-candidate"]
+
+INTERNAL_BACKENDS: Final[tuple[str, ...]] = (
+    "go",
+    "cpp",
+    "java",
+    "wasm",
+    "asm",
+)
+
+INTERNAL_COMPATIBILITY_RETIREMENT_WINDOW: Final[dict[str, str]] = {
+    "go": "Q4 2026",
+    "cpp": "Q4 2026",
+    "java": "Q1 2027",
+    "wasm": "Q2 2027",
+    "asm": "Q3 2026",
+}
+
+INTERNAL_LEGACY_RETIREMENT_DATE: Final[str] = "2027-06-30"
+ALL_BACKENDS: Final[tuple[str, ...]] = (
+    "python",
+    "javascript",
+    "rust",
+    *INTERNAL_BACKENDS,
+)
+
 LegacyLifecyclePhase = Literal[
     "phase-1-hide-public-ux",
     "phase-2-development-profile-only",

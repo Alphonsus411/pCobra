@@ -13,7 +13,8 @@ except ModuleNotFoundError:
 from pathlib import Path
 from typing import Final, Mapping
 
-from pcobra.cobra.architecture.backend_policy import ALL_BACKENDS, PUBLIC_BACKENDS
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.cobra.architecture.legacy_backend_lifecycle import ALL_BACKENDS
 from pcobra.cobra.cli.target_policies import (
     BEST_EFFORT_RUNTIME_TARGETS,
     NO_RUNTIME_TARGETS,

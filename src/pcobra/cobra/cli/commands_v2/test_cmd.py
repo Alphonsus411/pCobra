@@ -2,6 +2,7 @@ from argparse import SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
+from pcobra.cobra.architecture.backend_policy import assert_public_command_uses_only_public_backends
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
@@ -53,6 +54,7 @@ class TestCommandV2(BaseCommand):
             )
         else:
             langs = list(raw_langs)
+        assert_public_command_uses_only_public_backends(command="test", targets=tuple(langs))
         for lang in langs:
             assert_backend_allowed_for_scope(backend=lang, scope="public")
             try:

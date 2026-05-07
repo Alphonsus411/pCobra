@@ -2,7 +2,10 @@ from argparse import SUPPRESS
 from typing import Any
 
 from pcobra.cobra.build import backend_pipeline
-from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+from pcobra.cobra.architecture.backend_policy import (
+    PUBLIC_BACKENDS,
+    assert_public_command_uses_only_public_backends,
+)
 from pcobra.cobra.architecture.contracts import assert_backend_allowed_for_scope
 from pcobra.cobra.cli.commands.base import BaseCommand
 from pcobra.cobra.bindings.runtime_manager import RuntimeManager
@@ -44,6 +47,7 @@ class RunCommandV2(BaseCommand):
         sandbox = bool(getattr(args, "sandbox", False))
         container = getattr(args, "container", None)
         binding_language = container or "python"
+        assert_public_command_uses_only_public_backends(command="run", targets=(binding_language,))
         assert_backend_allowed_for_scope(backend=binding_language, scope="public")
         try:
             self._runtime_manager.validate_command_runtime(
