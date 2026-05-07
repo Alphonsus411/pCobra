@@ -89,7 +89,7 @@ def _modulo_datos_publico_stub() -> ModuleType:
 def test_usar_datos_incluye_filtrar_mapear_reducir(factory, executor, get_interp, monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_datos)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
 
     cmd = factory()
     interp = get_interp(cmd)
@@ -124,7 +124,7 @@ def test_holobit_sdk_internals_no_son_importables(monkeypatch):
     mod_holobit = _modulo_holobit_publico_stub()
     alias_map = {**REPL_COBRA_MODULE_MAP, "holobit": "holobit"}
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
     cmd = InteractiveCommand(InterpretadorCobra())
     cmd.interpretador.configurar_restriccion_usar_repl(alias_map)
@@ -183,7 +183,7 @@ def test_politica_publica_backends_exacta_python_javascript_rust():
 def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatch):
     mod_datos = _modulo_datos_publico_stub()
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod_datos)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
 
     interp = InterpretadorCobra()
     interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
@@ -271,3 +271,37 @@ def test_holobit_corelib_deserializacion_invalida_regresion():
 
     with pytest.raises((TypeError, ValueError, KeyError)):
         holobit.deserializar_holobit('{"tipo":"holobit","valores":[1],"extra":true}')
+
+
+def test_binding_usar_sin_dependencia_lexer_parser_para_datos(monkeypatch):
+    mod_datos = _modulo_datos_publico_stub()
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+
+    class _NodoUsar:
+        modulo = "datos"
+
+    interp.ejecutar_usar(_NodoUsar())
+
+    simbolos = set(interp.contextos[-1].values.keys())
+    assert {"filtrar", "mapear", "reducir"}.issubset(simbolos)
+
+
+def test_binding_usar_holobit_no_expone_internals_directos(monkeypatch):
+    mod_holobit = _modulo_holobit_publico_stub()
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: mod_holobit if nombre == "holobit" else (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({**REPL_COBRA_MODULE_MAP, "holobit": "holobit"})
+
+    class _NodoUsar:
+        modulo = "holobit"
+
+    interp.ejecutar_usar(_NodoUsar())
+
+    simbolos = set(interp.contextos[-1].values.keys())
+    assert "holobit_sdk" not in simbolos
+    assert "_to_sdk_holobit" not in simbolos
+    assert all("__" not in nombre for nombre in simbolos)

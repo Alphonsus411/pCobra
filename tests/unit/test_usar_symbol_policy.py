@@ -56,3 +56,12 @@ def test_saneamiento_centralizado_aplica_todas_las_reglas():
     assert [nombre for nombre, _ in permitidos] == ["PI", "publica"]
     assert {r.nombre for r in rechazos} == {"_interno", "append"}
     assert [w.nombre for w in warnings] == ["PI"]
+
+
+
+def test_rechaza_todos_los_alias_ingleses_prohibidos():
+    prohibidos = ("self", "append", "map", "filter", "unwrap", "expect")
+    for nombre in prohibidos:
+        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+        assert resultado.rechazado is True
+        assert resultado.codigo == "explicit_forbidden_name"
