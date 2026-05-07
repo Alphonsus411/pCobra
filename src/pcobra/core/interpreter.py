@@ -70,7 +70,7 @@ from .cobra_config import (
     limite_cpu_segundos,
 )
 from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_OVERRIDES
-from .usar_symbol_policy import sanear_simbolo_para_usar
+from .usar_symbol_policy import sanear_exportables_para_usar
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
@@ -1864,7 +1864,7 @@ class InterpretadorCobra:
             simbolos = []
             vistos = set()
             for nombre in candidatos:
-                if not isinstance(nombre, str) or nombre.startswith("_") or nombre in vistos:
+                if not isinstance(nombre, str) or nombre in vistos:
                     continue
                 if not hasattr(modulo_obj, nombre):
                     continue
@@ -1921,23 +1921,33 @@ class InterpretadorCobra:
 
             contexto_actual = self.contextos[-1]
 
-            reporte_rechazos: list[dict[str, str]] = []
-            reporte_warnings: list[dict[str, str]] = []
-            simbolos_saneados: list[tuple[str, object]] = []
-            for nombre, simbolo in simbolos_a_inyectar:
-                resultado = sanear_simbolo_para_usar(nombre, simbolo)
-                if resultado.rechazado:
-                    reporte_rechazos.append(
-                        {"symbol": nombre, "code": resultado.codigo or "rejected", "message": resultado.mensaje or "símbolo rechazado"}
-                    )
-                    self._trace_debug(f"[USAR_SANITIZE][REJECT] {nombre}: {resultado.codigo}")
-                    continue
-                if resultado.warning:
-                    reporte_warnings.append(
-                        {"symbol": nombre, "code": resultado.codigo or "warning", "message": resultado.mensaje or "warning"}
-                    )
-                    self._trace_debug(f"[USAR_SANITIZE][WARN] {nombre}: {resultado.codigo}")
-                simbolos_saneados.append((nombre, simbolo))
+            simbolos_saneados, rechazos_saneamiento, warnings_saneamiento = sanear_exportables_para_usar(
+                simbolos_a_inyectar
+            )
+            reporte_rechazos: list[dict[str, str]] = [
+                {
+                    "symbol": resultado.nombre,
+                    "code": resultado.codigo or "rejected",
+                    "message": resultado.mensaje or "símbolo rechazado",
+                }
+                for resultado in rechazos_saneamiento
+            ]
+            reporte_warnings: list[dict[str, str]] = [
+                {
+                    "symbol": resultado.nombre,
+                    "code": resultado.codigo or "warning",
+                    "message": resultado.mensaje or "warning",
+                }
+                for resultado in warnings_saneamiento
+            ]
+            for resultado in rechazos_saneamiento:
+                self._trace_debug(
+                    f"[USAR_SANITIZE][REJECT] {resultado.nombre}: {resultado.codigo} - {resultado.mensaje}"
+                )
+            for resultado in warnings_saneamiento:
+                self._trace_debug(
+                    f"[USAR_SANITIZE][WARN] {resultado.nombre}: {resultado.codigo} - {resultado.mensaje}"
+                )
 
             if reporte_rechazos:
                 evento_rechazos = {
@@ -1945,6 +1955,7 @@ class InterpretadorCobra:
                     "severity": "warning",
                     "module": nodo.modulo,
                     "rejections": reporte_rechazos,
+                    "simbolos_rechazados": reporte_rechazos,
                 }
                 logging.warning("USAR sanitize reject event: %s", evento_rechazos)
                 self._trace_debug(f"[USAR_SANITIZE][REJECTS] {evento_rechazos}")
