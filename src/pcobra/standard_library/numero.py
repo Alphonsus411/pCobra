@@ -35,35 +35,7 @@ __all__ = [
     "cuartiles",
     "rango_intercuartil",
     "coeficiente_variacion",
-
-    "absoluto",
-    "redondear",
-    "piso",
-    "techo",
-    "mcd",
-    "mcm",
-    "es_cercano",
-    "producto",
-    "entero_a_base",
-    "entero_desde_base",
-    "longitud_bits",
-    "contar_bits",
-    "rotar_bits_izquierda",
-    "rotar_bits_derecha",
-    "entero_a_bytes",
-    "entero_desde_bytes",
-    "raiz",
-    "potencia",
-    "clamp",
-    "aleatorio",
-    "mediana",
-    "moda",
-    "desviacion_estandar",
-    "es_par",
-    "es_primo",
-    "factorial",
-    "promedio",
-    "aleatorio_entero",]
+]
 
 
 def es_finito(valor: RealLike) -> bool:

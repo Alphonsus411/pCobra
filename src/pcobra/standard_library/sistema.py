@@ -14,8 +14,7 @@ __all__ = [
     "obtener_env",
     "listar_dir",
     "directorio_actual",
-
-    "ejecutar_comando_async",]
+]
 
 
 def obtener_os() -> str:
