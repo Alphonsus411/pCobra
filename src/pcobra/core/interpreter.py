@@ -74,7 +74,6 @@ from ..cobra.usar_policy import (
     USAR_COBRA_FACING_MODULE_FLAGS,
     USAR_RUNTIME_EXPORT_OVERRIDES,
 )
-from .usar_symbol_policy import sanear_exportables_para_usar
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
     limitar_cpu_segundos as _lim_cpu,
@@ -1848,7 +1847,7 @@ class InterpretadorCobra:
         from pathlib import Path
         from types import ModuleType
 
-        from .usar_loader import obtener_modulo
+        from .usar_loader import obtener_modulo, sanitizar_exports_publicos
 
         def _resolver_exportables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
             """Resuelve exportables candidatos según política de ``usar``."""
@@ -1929,51 +1928,28 @@ class InterpretadorCobra:
             )
 
             contexto_actual = self.contextos[-1]
+            modulo_proxy = type("_UsarExportsProxy", (), {})()
+            for nombre, simbolo in simbolos_a_inyectar:
+                setattr(modulo_proxy, nombre, simbolo)
+            setattr(modulo_proxy, "__all__", [nombre for nombre, _ in simbolos_a_inyectar])
 
-            simbolos_saneados, rechazos_saneamiento, warnings_saneamiento = sanear_exportables_para_usar(
-                simbolos_a_inyectar
-            )
-            reporte_rechazos: list[dict[str, str]] = [
-                {
-                    "symbol": resultado.nombre,
-                    "code": resultado.codigo or "rejected",
-                    "message": resultado.mensaje or "símbolo rechazado",
-                }
-                for resultado in rechazos_saneamiento
-            ]
-            reporte_warnings: list[dict[str, str]] = [
-                {
-                    "symbol": resultado.nombre,
-                    "code": resultado.codigo or "warning",
-                    "message": resultado.mensaje or "warning",
-                }
-                for resultado in warnings_saneamiento
-            ]
-            for resultado in rechazos_saneamiento:
-                self._trace_debug(
-                    f"[USAR_SANITIZE][REJECT] {resultado.nombre}: {resultado.codigo} - {resultado.mensaje}"
-                )
-            for resultado in warnings_saneamiento:
-                self._trace_debug(
-                    f"[USAR_SANITIZE][WARN] {resultado.nombre}: {resultado.codigo} - {resultado.mensaje}"
-                )
-
-            if reporte_rechazos:
-                evento_rechazos = {
-                    "evento": "usar_sanitize_reject",
+            mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo_proxy, nodo.modulo)
+            simbolos_saneados = list(mapa_limpio.items())
+            if conflictos_saneamiento:
+                evento_conflictos = {
+                    "evento": "usar_sanitize_conflicts",
                     "severity": "warning",
                     "module": nodo.modulo,
-                    "rejections": reporte_rechazos,
-                    "simbolos_rechazados": reporte_rechazos,
+                    "conflicts": conflictos_saneamiento,
                 }
-                logging.warning("USAR sanitize reject event: %s", evento_rechazos)
-                self._trace_debug(f"[USAR_SANITIZE][REJECTS] {evento_rechazos}")
+                logging.warning("USAR sanitize conflicts event: %s", evento_conflictos)
+                self._trace_debug(f"[USAR_SANITIZE][CONFLICTS] {evento_conflictos}")
 
             if not simbolos_saneados:
                 raise ImportError(
                     "rechazos de saneamiento en usar "
                     f"'{nodo.modulo}': no quedaron símbolos exportables tras saneamiento. "
-                    f"rechazos={reporte_rechazos}"
+                    f"conflictos={conflictos_saneamiento}"
                 )
 
             # Fase A: detectar colisiones de forma completa antes de definir.
@@ -2041,15 +2017,6 @@ class InterpretadorCobra:
                         f"'{nodo.modulo}': colisión estructurada={detalle}"
                     )
                 contexto_actual.define(nombre, simbolo)
-            if reporte_warnings:
-                evento_warnings = {
-                    "evento": "usar_sanitize_warning",
-                    "severity": "warning",
-                    "module": nodo.modulo,
-                    "warnings": reporte_warnings,
-                }
-                logging.warning("USAR sanitize warning event: %s", evento_warnings)
-                self._trace_debug(f"[USAR_SANITIZE][WARNINGS] {reporte_warnings}")
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise
