@@ -38,9 +38,7 @@ __all__ = [
     "exactamente_n",
     "tabla_verdad",
     "diferencia_simetrica",
-
-    "coalesce",
-    "si_condicional",]
+]
 
 
 def es_verdadero(valor: bool) -> bool:

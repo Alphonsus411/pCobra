@@ -16,8 +16,7 @@ __all__ = [
     "enviar_post_async",
     "descargar_archivo",
     "obtener_json",
-
-    "obtener_url_texto",]
+]
 
 
 def obtener_url(*args, **kwargs):

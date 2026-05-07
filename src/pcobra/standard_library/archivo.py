@@ -71,10 +71,7 @@ def existe(ruta: PathLike) -> bool:
     return ruta_segura.is_file()
 
 
-__all__ = ["leer", "escribir", "adjuntar", "existe"
-    "eliminar",
-    "anexar",
-    "leer_lineas",]
+__all__ = ["leer", "escribir", "adjuntar", "existe"]
 
 
 def eliminar(*args, **kwargs):
