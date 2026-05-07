@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import importlib
 
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
+import pytest
+
+from pcobra.cobra.usar_loader import validar_nombre_modulo_usar
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS
 
 
 def test_repl_alias_map_contiene_modulos_base_numero_texto_datos():
@@ -26,3 +29,14 @@ def test_import_pcobra_no_hace_eager_load_de_backends_legacy():
 
     for nombre in legacy:
         assert nombre not in sys.modules
+
+
+def test_rechaza_imports_directos_backend_en_usar():
+    for modulo in ("numpy", "node-fetch", "serde", "holobit_sdk"):
+        with pytest.raises(PermissionError):
+            validar_nombre_modulo_usar(modulo)
+
+
+def test_flags_cobra_facing_cubren_modulos_repl():
+    assert tuple(USAR_COBRA_FACING_MODULE_FLAGS.keys()) == tuple(REPL_COBRA_MODULE_MAP.keys())
+    assert all(USAR_COBRA_FACING_MODULE_FLAGS.values())

@@ -22,6 +22,9 @@ USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
 USAR_COBRA_ALLOWLIST: frozenset[str] = frozenset(USAR_COBRA_PUBLIC_MODULES)
 
 REPL_COBRA_MODULE_MAP: dict[str, str] = {modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES}
+USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
+    modulo: True for modulo in USAR_COBRA_PUBLIC_MODULES
+}
 
 # Fuente única de verdad: alias canónico `usar` -> ruta interna oficial.
 REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = {
@@ -51,6 +54,16 @@ def validar_contrato_modulos_canonicos_usar() -> None:
         raise RuntimeError(
             "[STARTUP CONTRACT] REPL_COBRA_MODULE_MAP debe resolver cada alias "
             "canónico a su módulo Cobra-facing oficial."
+        )
+    if tuple(USAR_COBRA_FACING_MODULE_FLAGS.keys()) != canonicos:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] USAR_COBRA_FACING_MODULE_FLAGS debe declarar "
+            "todos los módulos canónicos y en el orden oficial."
+        )
+    if not all(USAR_COBRA_FACING_MODULE_FLAGS.values()):
+        raise RuntimeError(
+            "[STARTUP CONTRACT] Todos los módulos canónicos de `usar` deben "
+            "estar marcados como Cobra-facing."
         )
 
     faltantes = [m for m in canonicos if m not in REPL_COBRA_MODULE_INTERNAL_PATH_MAP]
