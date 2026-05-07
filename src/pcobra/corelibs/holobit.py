@@ -13,6 +13,16 @@ from pcobra.core.holobits.graficar import graficar as _sdk_graficar
 from pcobra.core.holobits.holobit import Holobit as _SDKHolobit
 
 
+class ErrorHolobit(ValueError):
+    """Error de dominio Cobra para operaciones de Holobit."""
+
+
+def _error_dominio(mensaje: str, *, causa: Exception | None = None) -> ErrorHolobit:
+    if causa is None:
+        return ErrorHolobit(mensaje)
+    return ErrorHolobit(mensaje)
+
+
 def _es_numero(valor: Any) -> bool:
     return isinstance(valor, (int, float)) and not isinstance(valor, bool)
 
@@ -48,7 +58,10 @@ def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
 
 def _desde_estructura_cobra(hb: dict[str, Any]) -> _SDKHolobit:
     estructura = _validar_estructura_holobit(hb)
-    return _SDKHolobit(_normalizar_valores(estructura["valores"]))
+    try:
+        return _SDKHolobit(_normalizar_valores(estructura["valores"]))
+    except Exception as exc:  # pragma: no cover - defensivo frente al SDK
+        raise _error_dominio("No se pudo adaptar el holobit al runtime de Cobra", causa=exc) from None
 
 
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
@@ -72,7 +85,10 @@ def serializar_holobit(hb: dict[str, Any]) -> str:
 def deserializar_holobit(payload: str) -> dict[str, Any]:
     if not isinstance(payload, str):
         raise TypeError("El payload de holobit debe ser texto JSON")
-    datos = json.loads(payload)
+    try:
+        datos = json.loads(payload)
+    except json.JSONDecodeError:
+        raise _error_dominio("El payload de holobit no es JSON válido") from None
     _validar_estructura_holobit(datos)
     return crear_holobit(datos["valores"])
 
@@ -116,7 +132,10 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
 
 
 def graficar(hb: dict[str, Any]) -> str:
-    vista = _sdk_graficar(_desde_estructura_cobra(hb))
+    try:
+        vista = _sdk_graficar(_desde_estructura_cobra(hb))
+    except Exception as exc:  # pragma: no cover - defensivo frente al SDK
+        raise _error_dominio("No se pudo graficar el holobit en el runtime de Cobra", causa=exc) from None
     if not isinstance(vista, str):
         raise TypeError("La salida de graficar debe ser texto")
     return vista
