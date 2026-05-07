@@ -287,3 +287,26 @@ def pares_consecutivos(lista: Iterable[T] | Sequence[T]) -> List[Tuple[T, T]]:
 
     elementos = _asegurar_iterable(lista)
     return list(zip(elementos, elementos[1:]))
+
+
+__all__ = [
+    "ordenar",
+    "maximo",
+    "minimo",
+    "sin_duplicados",
+    "mapear",
+    "mapear_aplanado",
+    "filtrar",
+    "reducir",
+    "encontrar",
+    "aplanar",
+    "agrupar_por",
+    "particionar",
+    "mezclar",
+    "zip_listas",
+    "tomar",
+    "tomar_mientras",
+    "descartar_mientras",
+    "scanear",
+    "pares_consecutivos",
+]
