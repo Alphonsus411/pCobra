@@ -31,3 +31,7 @@ def test_import_policy_resolution_order() -> None:
         "python_bridge",
         "hybrid",
     )
+
+
+def test_public_backends_contract_is_exact() -> None:
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
