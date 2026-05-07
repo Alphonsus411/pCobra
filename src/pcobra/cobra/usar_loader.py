@@ -3,8 +3,10 @@ import importlib.util
 import re
 from pathlib import Path
 import sys
+from typing import Any
 
 from pcobra.cobra.usar_policy import USAR_COBRA_ALLOWLIST, USAR_COBRA_PUBLIC_MODULES
+from pcobra.core.usar_symbol_policy import sanear_exportables_para_usar
 
 # Módulos no canónicos conocidos que deben rechazarse de forma explícita.
 _USAR_NON_CANONICAL_MODULES: frozenset[str] = frozenset({
@@ -131,3 +133,72 @@ def obtener_modulo(nombre: str, *, permitir_instalacion: bool = True):
         raise ImportError(
             f"No se pudo resolver el módulo Cobra permitido '{nombre}' en runtime."
         ) from exc
+
+
+def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[str, Any], list[dict[str, str]]]:
+    """Filtra exports públicos válidos para ``usar`` y reporta conflictos/rechazos.
+
+    Devuelve un mapa limpio ``nombre -> símbolo`` y una lista estructurada de
+    conflictos para que el caller pueda advertir y evitar sobreescrituras
+    silenciosas.
+    """
+
+    exportables = getattr(modulo, "__all__", None)
+    if exportables is None:
+        candidatos = [
+            nombre for nombre in dir(modulo) if isinstance(nombre, str) and not nombre.startswith("_")
+        ]
+    else:
+        candidatos = exportables
+
+    simbolos_brutos: list[tuple[str, object]] = []
+    conflictos: list[dict[str, str]] = []
+    vistos: set[str] = set()
+    for nombre in candidatos:
+        if not isinstance(nombre, str):
+            conflictos.append(
+                {
+                    "module": alias_modulo,
+                    "symbol": repr(nombre),
+                    "code": "invalid_export_name_type",
+                    "message": "nombre de export no es string",
+                }
+            )
+            continue
+        if nombre in vistos:
+            conflictos.append(
+                {
+                    "module": alias_modulo,
+                    "symbol": nombre,
+                    "code": "duplicate_export_name",
+                    "message": "nombre exportado repetido en __all__/candidatos",
+                }
+            )
+            continue
+        if not hasattr(modulo, nombre):
+            conflictos.append(
+                {
+                    "module": alias_modulo,
+                    "symbol": nombre,
+                    "code": "missing_export_attr",
+                    "message": "el nombre exportado no existe en el módulo",
+                }
+            )
+            continue
+        vistos.add(nombre)
+        simbolos_brutos.append((nombre, getattr(modulo, nombre)))
+
+    simbolos_saneados, rechazos, warnings = sanear_exportables_para_usar(simbolos_brutos)
+    mapa_limpio = {nombre: simbolo for nombre, simbolo in simbolos_saneados}
+
+    for resultado in [*rechazos, *warnings]:
+        conflictos.append(
+            {
+                "module": alias_modulo,
+                "symbol": resultado.nombre,
+                "code": resultado.codigo or ("warning" if resultado.warning else "rejected"),
+                "message": resultado.mensaje or ("warning de saneamiento" if resultado.warning else "símbolo rechazado"),
+            }
+        )
+
+    return mapa_limpio, conflictos
