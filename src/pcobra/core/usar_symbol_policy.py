@@ -156,3 +156,22 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
         )
 
     return ResultadoSaneamientoSimboloUsar(nombre, simbolo, False, "ok", "símbolo exportable")
+
+
+def sanear_exportables_para_usar(
+    simbolos: list[tuple[str, object]],
+) -> tuple[list[tuple[str, object]], list[ResultadoSaneamientoSimboloUsar], list[ResultadoSaneamientoSimboloUsar]]:
+    """Sanea una lista de símbolos candidatos para ``usar`` de forma uniforme."""
+
+    permitidos: list[tuple[str, object]] = []
+    rechazos: list[ResultadoSaneamientoSimboloUsar] = []
+    warnings: list[ResultadoSaneamientoSimboloUsar] = []
+    for nombre, simbolo in simbolos:
+        resultado = sanear_simbolo_para_usar(nombre, simbolo)
+        if resultado.rechazado:
+            rechazos.append(resultado)
+            continue
+        if resultado.warning:
+            warnings.append(resultado)
+        permitidos.append((nombre, simbolo))
+    return permitidos, rechazos, warnings
