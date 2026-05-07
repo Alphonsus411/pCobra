@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validaciones CI estrictas para el contrato final de 8 backends."""
+"""Validaciones CI estrictas para el contrato canónico de 3 backends."""
 
 from __future__ import annotations
 
@@ -353,7 +353,7 @@ def validate_registry_tables() -> list[str]:
     expected = FINAL_OFFICIAL_TARGETS
     if tuple(OFFICIAL_TARGETS) != expected:
         errors.append(
-            "src/pcobra/cobra/transpilers/targets.py: OFFICIAL_TARGETS no coincide con el contrato final de 8 backends -> "
+            "src/pcobra/cobra/transpilers/targets.py: OFFICIAL_TARGETS no coincide con el contrato canónico de 3 backends -> "
             f"official={tuple(OFFICIAL_TARGETS)}, expected={expected}"
         )
     if tuple(TIER1_TARGETS + TIER2_TARGETS) != expected:
@@ -384,7 +384,7 @@ def validate_registry_tables() -> list[str]:
         )
     if official_transpiler_registry_literal() != EXPECTED_TRANSPILER_REGISTRY:
         errors.append(
-            "src/pcobra/cobra/transpilers/registry.py: el registro oficial no coincide exactamente con los 8 backends esperados -> "
+            "src/pcobra/cobra/transpilers/registry.py: el registro oficial no coincide exactamente con los 3 backends canónicos esperados -> "
             f"registry={official_transpiler_registry_literal()}, expected={EXPECTED_TRANSPILER_REGISTRY}"
         )
     return errors
@@ -584,7 +584,7 @@ def validate_targeted_artifact_roots(
         )
     for extra in sorted(found_forward_paths - expected_forward_paths):
         errors.append(
-            f"{extra}: módulo to_*.py extra fuera de política (posible backend 9 o alias interno expuesto)"
+            f"{extra}: módulo to_*.py extra fuera de política (target retirado o alias interno expuesto)"
         )
 
     found_forward = {path.name for path in TRANSPILER_DIR.glob("to_*.py")}
@@ -632,7 +632,7 @@ def validate_targeted_artifact_roots(
         errors.append(f"{missing}: falta golden file oficial para un backend canónico")
     for extra in sorted(found_golden_paths - expected_golden_paths):
         errors.append(
-            f"{extra}: golden file extra fuera de política (posible backend 9 no controlado)"
+            f"{extra}: golden file extra fuera de política (target retirado/no canónico detectado)"
         )
 
     found_golden = {path.name for path in GOLDEN_DIR.glob("*.golden")}
@@ -910,7 +910,7 @@ def validate_python_policy_literals(
         )
     if tuple(policy["official_targets"]) != expected:
         errors.append(
-            "scripts/targets_policy_common.py: read_target_policy()['official_targets'] no coincide con los 8 oficiales -> "
+            "scripts/targets_policy_common.py: read_target_policy()['official_targets'] no coincide con los 3 oficiales canónicos -> "
             f"policy={tuple(policy['official_targets'])}, expected={expected}"
         )
     if tuple(policy["tier1_targets"]) + tuple(policy["tier2_targets"]) != expected:

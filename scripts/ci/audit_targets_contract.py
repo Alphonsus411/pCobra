@@ -27,11 +27,6 @@ EXPECTED_CANONICAL_TARGETS: tuple[str, ...] = (
     "python",
     "rust",
     "javascript",
-    "wasm",
-    "go",
-    "cpp",
-    "java",
-    "asm",
 )
 
 FORBIDDEN_TERMS: tuple[tuple[re.Pattern[str], str], ...] = (

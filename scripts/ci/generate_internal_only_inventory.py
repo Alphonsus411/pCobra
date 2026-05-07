@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera inventario de referencias a backends internal-only fuera de rutas internas.
+"""Genera inventario histórico/diagnóstico de referencias legacy fuera de rutas internas.
 
 Estrategia:
 1) Búsqueda por path (rutas/documentos públicos vigilados).
@@ -30,7 +30,7 @@ TEXT_EXTENSIONS = {
     ".sh",
 }
 
-# Rutas con scope interno/histórico permitido para conservar compatibilidad temporal.
+# Rutas con scope histórico/diagnóstico permitido (sin soporte vigente).
 INTERNAL_ALLOWED_PREFIXES = (
     "src/pcobra/cobra/cli/internal_compat/",
     "docs/compatibility/",
@@ -101,7 +101,7 @@ def _render(findings: list[Finding]) -> str:
     sample = sorted(findings, key=lambda item: (item.rel_path, item.line_number))[:80]
 
     lines = [
-        "# Inventario de referencias internal-only (go/cpp/java/wasm/asm)",
+        "# Inventario histórico de referencias legacy (go/cpp/java/wasm/asm)",
         "",
         "Este reporte se genera con `scripts/ci/generate_internal_only_inventory.py`.",
         "",
@@ -145,7 +145,7 @@ def _render(findings: list[Finding]) -> str:
             "",
             "## Nota de uso",
             "",
-            "Este inventario es de diagnóstico. La eliminación se ejecuta por fases según `docs/compatibility/internal_only_backend_removal_checklist.md`.",
+            "Este inventario es exclusivamente histórico/diagnóstico. No implica soporte vigente para estos targets retirados.",
             "",
         ]
     )
