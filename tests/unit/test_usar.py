@@ -701,3 +701,26 @@ def test_repl_usar_emite_evento_telemetria_colision_warn(monkeypatch, caplog):
 def test_usar_loader_rechaza_numpy_y_equivalentes_prohibidos(nombre):
     with pytest.raises(PermissionError, match=r"Importación no permitida en 'usar'"):
         usar_loader.obtener_modulo(nombre)
+
+
+def test_usar_rechaza_modulo_no_canonico_en_repl_estricto():
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"num": "numero"})
+
+    with pytest.raises(PermissionError, match=r"usar_error\[modulo_no_canonico\]"):
+        interp.ejecutar_nodo(NodoUsar("numero"))
+
+
+def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
+    modulo = ModuleType("texto")
+    modulo.__all__ = ["NO_CALLABLE"]
+    modulo.NO_CALLABLE = "valor"
+    modulo.__file__ = "/workspace/pCobra/src/pcobra/corelibs/texto.py"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: modulo)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    with pytest.raises(ImportError, match=r"usar_error\[export_invalido\]"):
+        interp.ejecutar_nodo(NodoUsar("texto"))

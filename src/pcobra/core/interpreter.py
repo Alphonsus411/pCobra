@@ -90,8 +90,13 @@ from .environment import Environment
 
 MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
-    "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
+    "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 )
+USAR_NON_CANONICAL_MODULE_ERROR = (
+    "usar_error[modulo_no_canonico]: el módulo solicitado no es canónico; use el alias oficial Cobra"
+)
+USAR_INVALID_EXPORT_ERROR = "usar_error[export_invalido]"
+USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
@@ -1884,6 +1889,8 @@ class InterpretadorCobra:
             es_modulo_oficial_cobra = modulo_canonico is not None
 
             if not es_modulo_oficial_cobra:
+                if nombre_modulo in mapa_repl.values():
+                    raise PermissionError(USAR_NON_CANONICAL_MODULE_ERROR)
                 raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
             if not USAR_COBRA_FACING_MODULE_FLAGS.get(modulo_canonico, False):
                 raise PermissionError(
@@ -1947,7 +1954,7 @@ class InterpretadorCobra:
 
             if not simbolos_saneados:
                 raise ImportError(
-                    "rechazos de saneamiento en usar "
+                    f"{USAR_INVALID_EXPORT_ERROR}: rechazos de saneamiento en usar "
                     f"'{nodo.modulo}': no quedaron símbolos exportables tras saneamiento. "
                     f"conflictos={conflictos_saneamiento}"
                 )
@@ -1980,7 +1987,7 @@ class InterpretadorCobra:
                     self._trace_debug(f"[USAR_COLLISION][WARN] {evento_colision}")
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': colisión estructurada={detalle}. "
+                        f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}. "
                         "Requiere alias explícito según la convención del runtime (usar importar ... como ...)."
                     )
                 evento_colision = {
@@ -1994,7 +2001,7 @@ class InterpretadorCobra:
                 logging.error("USAR collision event: %s", evento_colision)
                 raise NameError(
                     "No se puede usar el módulo "
-                    f"'{nodo.modulo}': colisión estructurada={detalle}"
+                    f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                 )
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
@@ -2014,7 +2021,7 @@ class InterpretadorCobra:
                     )
                     raise NameError(
                         "No se puede usar el módulo "
-                        f"'{nodo.modulo}': colisión estructurada={detalle}"
+                        f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
                     )
                 contexto_actual.define(nombre, simbolo)
         except Exception as exc:
