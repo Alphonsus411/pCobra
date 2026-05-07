@@ -21,6 +21,8 @@ PUBLIC_BACKENDS: Final[tuple[str, ...]] = (
 PUBLIC_TARGET_LISTING_LIMIT: Final[int] = 3
 
 # Backends legacy mantenidos exclusivamente para compatibilidad interna.
+# Importante: no deben cargarse durante startup de rutas públicas
+# (`import pcobra`, `cobra repl`, `cobra run`, `cobra test`) salvo opt-in explícito.
 INTERNAL_BACKENDS: Final[tuple[str, ...]] = (
     "go",
     "cpp",

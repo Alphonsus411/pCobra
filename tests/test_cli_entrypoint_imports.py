@@ -106,6 +106,32 @@ def test_import_bench_cmd_no_depende_de_scripts_py_path() -> None:
     )
 
 
+
+
+def test_import_pcobra_no_carga_backends_legacy_en_startup() -> None:
+    """`import pcobra` no debe cargar transpilers/backends legacy por defecto."""
+
+    result = _run_python_isolated(
+        "import pcobra; "
+        "import sys; "
+        "legacy_markers = ("
+        "'pcobra.cobra.transpilers.transpiler.to_go',"
+        "'pcobra.cobra.transpilers.transpiler.to_cpp',"
+        "'pcobra.cobra.transpilers.transpiler.to_java',"
+        "'pcobra.cobra.transpilers.transpiler.to_wasm',"
+        "'pcobra.cobra.transpilers.transpiler.to_asm',"
+        "'pcobra.cobra.cli.internal_compat.legacy_targets',"
+        "'pcobra.cobra.internal_compat.legacy_contracts',"
+        "); "
+        "loaded = sorted(name for name in sys.modules if name in legacy_markers); "
+        "assert not loaded, f'import pcobra cargó módulos legacy: {loaded}'; "
+    )
+
+    assert result.returncode == 0, (
+        "`import pcobra` no debe activar rutas legacy en startup por defecto. "
+        f"stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
+
 def test_cli_startup_preserva_utf8_en_literal_imprimir() -> None:
     """Contrato: startup de CLI debe preservar UTF-8 sin mojibake en salida."""
 
