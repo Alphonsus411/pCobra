@@ -31,6 +31,7 @@ __all__ = [
     "proteger_tarea",
     "ejecutar_en_hilo",
     "reintentar_async",
+    "recolectar",
 ]
 
 

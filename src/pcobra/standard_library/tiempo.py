@@ -1,6 +1,6 @@
 """Fachada temporal en español para `usar \"tiempo\"`."""
 
-from pcobra.corelibs.tiempo import ahora, formatear, dormir, epoch, desde_epoch
+from pcobra.corelibs import tiempo as _tiempo
 
 __all__ = ["ahora", "formatear", "dormir", "epoch", "desde_epoch"]
 
