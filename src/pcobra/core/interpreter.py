@@ -69,7 +69,11 @@ from .cobra_config import (
     limite_memoria_mb,
     limite_cpu_segundos,
 )
-from ..cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_RUNTIME_EXPORT_OVERRIDES
+from ..cobra.usar_policy import (
+    REPL_COBRA_MODULE_MAP,
+    USAR_COBRA_FACING_MODULE_FLAGS,
+    USAR_RUNTIME_EXPORT_OVERRIDES,
+)
 from .usar_symbol_policy import sanear_exportables_para_usar
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
@@ -1882,6 +1886,11 @@ class InterpretadorCobra:
 
             if not es_modulo_oficial_cobra:
                 raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
+            if not USAR_COBRA_FACING_MODULE_FLAGS.get(modulo_canonico, False):
+                raise PermissionError(
+                    "Módulo no permitido en 'usar': "
+                    f"'{nombre_modulo}' no está marcado como Cobra-facing."
+                )
 
             modulo = obtener_modulo(modulo_canonico)
 
