@@ -104,6 +104,7 @@ def test_no_aparecen_simbolos_prohibidos_en_exports():
     simbolos = set(_modulo_holobit_publico_stub().__all__)
     prohibidos = {"self", "append", "map", "filter", "unwrap", "expect"}
     assert simbolos.isdisjoint(prohibidos)
+    assert all("__" not in simbolo for simbolo in simbolos)
 
 
 def test_runtime_startup_no_carga_legacy_backends():
