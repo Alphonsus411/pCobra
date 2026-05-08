@@ -17,6 +17,22 @@ _SIN_VALOR = object()
 
 _PATRON_TRANSICION_CASO = re.compile(r"(?<=[^\W_])(?=[^\W_])", re.UNICODE)
 _PATRON_SEPARADORES = re.compile(r"[\W_]+", re.UNICODE)
+EQUIVALENCIAS_SEMANTICAS_TEXTO: dict[str, str] = {
+    "upper": "mayusculas",
+    "lower": "minusculas",
+    "capitalize": "capitalizar",
+    "title": "titulo",
+    "swapcase": "intercambiar_mayusculas",
+    "strip": "recortar",
+    "lstrip": "recortar_izquierda",
+    "rstrip": "recortar_derecha",
+    "split": "dividir",
+    "join": "unir",
+    "replace": "reemplazar",
+    "startswith": "empieza_con",
+    "endswith": "termina_con",
+    "zfill": "rellenar_ceros",
+}
 
 
 def _insertar_espacio_transicion(match: re.Match[str]) -> str:

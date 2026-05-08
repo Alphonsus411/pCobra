@@ -5,6 +5,14 @@ from pathlib import Path
 from typing import Union
 
 PathLike = Union[str, os.PathLike[str]]
+EQUIVALENCIAS_SEMANTICAS_ARCHIVO: dict[str, str] = {
+    "open(...).read": "leer",
+    "open(...).write": "escribir",
+    "os.path.exists": "existe",
+    "os.remove": "eliminar",
+    "open(..., 'a')": "anexar",
+    "readlines": "leer_lineas",
+}
 
 
 def _resolver_ruta(ruta: PathLike) -> Path:

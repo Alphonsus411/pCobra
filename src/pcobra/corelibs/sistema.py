@@ -17,6 +17,14 @@ WHITELIST_ENV = "COBRA_EJECUTAR_PERMITIDOS"
 # tiempo de ejecución.
 _lista_env = os.getenv(WHITELIST_ENV)
 PERMITIDOS_FIJOS = tuple(_lista_env.split(os.pathsep)) if _lista_env else ()
+EQUIVALENCIAS_SEMANTICAS_SISTEMA: dict[str, str] = {
+    "getcwd": "directorio_actual",
+    "getenv": "obtener_entorno",
+    "setenv": "definir_entorno",
+    "platform.system": "nombre_sistema",
+    "platform.machine": "arquitectura",
+    "subprocess.run": "ejecutar",
+}
 
 
 def _normalizar_rutas(rutas: Iterable[str]) -> set[str]:

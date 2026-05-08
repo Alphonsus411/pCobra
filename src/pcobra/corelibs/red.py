@@ -23,6 +23,13 @@ if TYPE_CHECKING:  # pragma: no cover - solo para chequeo de tipos
 
 _MAX_RESP_SIZE = 1024 * 1024
 _MAX_REDIRECTS = 5
+EQUIVALENCIAS_SEMANTICAS_RED: dict[str, str] = {
+    "requests.get": "obtener_url",
+    "requests.post": "enviar_post",
+    "httpx.AsyncClient.get": "obtener_url_async",
+    "httpx.AsyncClient.post": "enviar_post_async",
+    "download": "descargar_archivo",
+}
 
 
 def _require_httpx() -> "_httpx":

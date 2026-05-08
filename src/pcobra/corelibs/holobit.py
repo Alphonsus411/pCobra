@@ -12,6 +12,16 @@ from typing import Any
 from pcobra.core.holobits.graficar import graficar as _runtime_graficar
 from pcobra.core.holobits.holobit import Holobit as _RuntimeHolobit
 
+EQUIVALENCIAS_SEMANTICAS_HOLOBIT: dict[str, str] = {
+    "new Holobit": "crear_holobit",
+    "validate": "validar_holobit",
+    "serialize": "serializar_holobit",
+    "deserialize": "deserializar_holobit",
+    "project": "proyectar",
+    "transform": "transformar",
+    "render": "graficar",
+}
+
 # Alias interno para compatibilidad de pruebas de dominio (no exportado).
 _SDKHolobit = _RuntimeHolobit
 

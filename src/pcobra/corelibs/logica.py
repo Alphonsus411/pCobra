@@ -7,6 +7,14 @@ from itertools import product
 from typing import Callable, Iterable, TypeVar
 
 T = TypeVar("T")
+EQUIVALENCIAS_SEMANTICAS_LOGICA: dict[str, str] = {
+    "all": "todos",
+    "any": "alguno",
+    "not": "negacion",
+    "and": "conjuncion",
+    "or": "disyuncion",
+    "if_then": "entonces",
+}
 
 
 def _evaluar_resultado(resultado: T | Callable[[], T]) -> T:

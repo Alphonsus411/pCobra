@@ -19,6 +19,14 @@ from typing import (
 )
 
 T = TypeVar("T")
+EQUIVALENCIAS_SEMANTICAS_ASINCRONO: dict[str, str] = {
+    "gather": "recolectar",
+    "wait_for": "esperar_con_timeout",
+    "sleep": "dormir_async",
+    "as_completed": "iterar_completadas",
+    "shield": "proteger_tarea",
+    "to_thread": "ejecutar_en_hilo",
+}
 
 try:  # pragma: no cover - Python >= 3.11 lo define de forma nativa
     ExceptionGroup

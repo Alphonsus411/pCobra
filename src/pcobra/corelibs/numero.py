@@ -19,6 +19,22 @@ from statistics import (
 )
 
 _ALFABETO_DEFECTO = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+EQUIVALENCIAS_SEMANTICAS_NUMERO: dict[str, str] = {
+    "abs": "absoluto",
+    "round": "redondear",
+    "floor": "piso",
+    "ceil": "techo",
+    "gcd": "mcd",
+    "lcm": "mcm",
+    "isclose": "es_cercano",
+    "hypot": "hipotenusa",
+    "dist": "distancia_euclidiana",
+    "isfinite": "es_finito",
+    "isinf": "es_infinito",
+    "isnan": "es_nan",
+    "copysign": "copiar_signo",
+    "prod": "producto",
+}
 
 
 def absoluto(valor):
