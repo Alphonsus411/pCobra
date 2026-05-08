@@ -35,6 +35,21 @@ __all__ = [
     "cuartiles",
     "rango_intercuartil",
     "coeficiente_variacion",
+    "absoluto",
+    "redondear",
+    "piso",
+    "techo",
+    "mcd",
+    "mcm",
+    "es_cercano",
+    "raiz",
+    "potencia",
+    "mediana",
+    "moda",
+    "es_par",
+    "es_primo",
+    "factorial",
+    "promedio",
 ]
 
 
@@ -342,3 +357,51 @@ def aleatorio_entero(*args, **kwargs):
     """Delega en ``pcobra.corelibs.numero.aleatorio_entero``."""
 
     return _numero.aleatorio_entero(*args, **kwargs)
+
+
+def raiz(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.raiz``."""
+
+    return _numero.raiz(*args, **kwargs)
+
+
+def potencia(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.potencia``."""
+
+    return _numero.potencia(*args, **kwargs)
+
+
+def mediana(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.mediana``."""
+
+    return _numero.mediana(*args, **kwargs)
+
+
+def moda(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.moda``."""
+
+    return _numero.moda(*args, **kwargs)
+
+
+def es_par(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.es_par``."""
+
+    return _numero.es_par(*args, **kwargs)
+
+
+def es_primo(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.es_primo``."""
+
+    return _numero.es_primo(*args, **kwargs)
+
+
+def factorial(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.factorial``."""
+
+    return _numero.factorial(*args, **kwargs)
+
+
+def promedio(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.promedio``."""
+
+    return _numero.promedio(*args, **kwargs)

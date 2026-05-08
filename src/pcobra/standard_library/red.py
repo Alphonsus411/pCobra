@@ -1,13 +1,6 @@
 """Fachada de red segura con API canónica en español."""
 
-from pcobra.corelibs.red import (
-    obtener_url,
-    enviar_post,
-    obtener_url_async,
-    enviar_post_async,
-    descargar_archivo,
-    obtener_json,
-)
+from pcobra.corelibs import red as _red
 
 __all__ = [
     "obtener_url",
@@ -16,6 +9,7 @@ __all__ = [
     "enviar_post_async",
     "descargar_archivo",
     "obtener_json",
+    "obtener_url_texto",
 ]
 
 
