@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.cli import AppConfig, CommandRegistry
 
 
@@ -40,3 +41,7 @@ def test_public_v2_subcommands_match_contract_exactly() -> None:
     )
 
     assert set(commands) == EXPECTED_PUBLIC_V2_COMMANDS
+
+
+def test_cli_public_backend_policy_is_exact() -> None:
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
