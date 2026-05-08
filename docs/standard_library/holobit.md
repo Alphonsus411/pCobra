@@ -31,13 +31,16 @@ El módulo `holobit` disponible vía `usar "holobit"` expone **solo** estas func
 ## Reglas del contrato
 
 - No se exportan clases ni namespaces internos de Python.
+- El orden de `__all__` es contractual y estable para `usar`:
+  `crear_holobit`, `validar_holobit`, `serializar_holobit`, `deserializar_holobit`,
+  `proyectar`, `transformar`, `graficar`, `combinar`, `medir`.
 - La estructura de intercambio es serializable y Cobra-compatible:
 
 ```json
 {"tipo":"holobit","valores":[1.0,2.0,3.0]}
 ```
 
-- El módulo no expone `holobit_sdk`, clases internas ni helpers privados; cualquier acceso directo a esos símbolos se considera fuga y debe fallar en pruebas.
+- El módulo no expone clases internas, helpers privados ni nombres de backend; cualquier acceso directo a esos símbolos se considera fuga y debe fallar en pruebas.
 - `usar "holobit_sdk"` está prohibido por política de `usar`.
 
 ## Ejemplos Cobra
