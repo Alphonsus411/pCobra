@@ -72,7 +72,6 @@ from .cobra_config import (
 from ..cobra.usar_policy import (
     REPL_COBRA_MODULE_MAP,
     USAR_COBRA_FACING_MODULE_FLAGS,
-    USAR_RUNTIME_EXPORT_OVERRIDES,
 )
 from .resource_limits import (
     limitar_memoria_mb as _lim_mem,
@@ -1850,36 +1849,7 @@ class InterpretadorCobra:
             canónicos del catálogo oficial Cobra.
         """
         from pathlib import Path
-        from types import ModuleType
-
         from .usar_loader import obtener_modulo, sanitizar_exports_publicos
-
-        def _resolver_exportables(modulo_obj, *, modulo_oficial: bool, nombre_modulo: str):
-            """Resuelve exportables candidatos según política de ``usar``."""
-            exportables = getattr(modulo_obj, "__all__", None)
-            if modulo_oficial:
-                exportables = USAR_RUNTIME_EXPORT_OVERRIDES.get(nombre_modulo, exportables)
-
-            if exportables is None:
-                candidatos = [
-                    nombre
-                    for nombre in dir(modulo_obj)
-                    if isinstance(nombre, str) and not nombre.startswith("_")
-                ]
-            else:
-                candidatos = exportables
-
-            simbolos = []
-            vistos = set()
-            for nombre in candidatos:
-                if not isinstance(nombre, str) or nombre in vistos:
-                    continue
-                if not hasattr(modulo_obj, nombre):
-                    continue
-                simbolo = getattr(modulo_obj, nombre)
-                vistos.add(nombre)
-                simbolos.append((nombre, simbolo))
-            return simbolos
 
         def _resolver_carga_modulo_usar(nombre_modulo: str):
             """Resuelve solo módulos canónicos Cobra; ``usar`` nunca hace import dinámico externo."""
@@ -1927,20 +1897,8 @@ class InterpretadorCobra:
                 if not es_oficial:
                     raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
 
-            # ``usar`` solo importa API pública explícita del módulo Cobra:
-            # prioriza __all__, filtra privados/no-callables y evita fugas de
-            # símbolos internos o reexportados de forma implícita.
-            simbolos_a_inyectar = _resolver_exportables(
-                modulo, modulo_oficial=es_modulo_oficial_cobra, nombre_modulo=nombre_modulo
-            )
-
             contexto_actual = self.contextos[-1]
-            modulo_proxy = type("_UsarExportsProxy", (), {})()
-            for nombre, simbolo in simbolos_a_inyectar:
-                setattr(modulo_proxy, nombre, simbolo)
-            setattr(modulo_proxy, "__all__", [nombre for nombre, _ in simbolos_a_inyectar])
-
-            mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo_proxy, nodo.modulo)
+            mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo, nombre_modulo)
             simbolos_saneados = list(mapa_limpio.items())
             if conflictos_saneamiento:
                 evento_conflictos = {

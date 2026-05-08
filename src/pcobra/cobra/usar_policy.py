@@ -20,6 +20,16 @@ USAR_COBRA_PUBLIC_MODULES: tuple[str, ...] = (
     "holobit",
 )
 USAR_COBRA_ALLOWLIST: frozenset[str] = frozenset(USAR_COBRA_PUBLIC_MODULES)
+USAR_BACKEND_BLOCKLIST: frozenset[str] = frozenset(
+    {
+        "numpy",
+        "node-fetch",
+        "serde",
+        "holobit_sdk",
+        "pandas",
+        "torch",
+    }
+)
 
 REPL_COBRA_MODULE_MAP: dict[str, str] = {modulo: modulo for modulo in USAR_COBRA_PUBLIC_MODULES}
 USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {

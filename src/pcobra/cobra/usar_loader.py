@@ -5,16 +5,13 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from pcobra.cobra.usar_policy import USAR_COBRA_ALLOWLIST, USAR_COBRA_PUBLIC_MODULES
+from pcobra.cobra.usar_policy import (
+    USAR_BACKEND_BLOCKLIST,
+    USAR_COBRA_ALLOWLIST,
+    USAR_COBRA_PUBLIC_MODULES,
+    USAR_RUNTIME_EXPORT_OVERRIDES,
+)
 from pcobra.core.usar_symbol_policy import sanear_exportables_para_usar
-
-# Módulos no canónicos conocidos que deben rechazarse de forma explícita.
-_USAR_NON_CANONICAL_MODULES: frozenset[str] = frozenset({
-    "numpy",
-    "node-fetch",
-    "serde",
-    "holobit_sdk",
-})
 
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.
 _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -36,7 +33,7 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
     """Rechaza módulos backend/no-canónicos con error explícito para `usar`."""
 
     nombre_normalizado = (nombre or "").strip().lower()
-    if nombre_normalizado in _USAR_NON_CANONICAL_MODULES:
+    if nombre_normalizado in USAR_BACKEND_BLOCKLIST:
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "
@@ -145,14 +142,20 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
 
     exportables = getattr(modulo, "__all__", None)
     if exportables is None:
-        candidatos = [
-            nombre for nombre in dir(modulo) if isinstance(nombre, str) and not nombre.startswith("_")
+        candidatos = list(USAR_RUNTIME_EXPORT_OVERRIDES.get(alias_modulo, ()))
+        conflictos = [
+            {
+                "module": alias_modulo,
+                "symbol": "__all__",
+                "code": "missing___all__",
+                "message": "módulo sin __all__; se aplica whitelist explícita por política",
+            }
         ]
     else:
         candidatos = exportables
+        conflictos = []
 
     simbolos_brutos: list[tuple[str, object]] = []
-    conflictos: list[dict[str, str]] = []
     vistos: set[str] = set()
     for nombre in candidatos:
         if not isinstance(nombre, str):
