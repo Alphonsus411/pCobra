@@ -862,3 +862,16 @@ __all__ = [
     "rango_intercuartil",
     "coeficiente_variacion",
 ]
+
+
+PUBLIC_API_NUMERO: tuple[str, ...] = tuple(__all__)
+
+
+def _validar_superficie_publica_numero() -> None:
+    if tuple(__all__) != PUBLIC_API_NUMERO:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] numero.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+_validar_superficie_publica_numero()

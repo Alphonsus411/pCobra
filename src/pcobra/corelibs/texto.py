@@ -1107,3 +1107,16 @@ __all__ = [
     "es_digito",
     "lineas_no_vacias",
 ]
+
+
+PUBLIC_API_TEXTO: tuple[str, ...] = tuple(__all__)
+
+
+def _validar_superficie_publica_texto() -> None:
+    if tuple(__all__) != PUBLIC_API_TEXTO:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] texto.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+_validar_superficie_publica_texto()

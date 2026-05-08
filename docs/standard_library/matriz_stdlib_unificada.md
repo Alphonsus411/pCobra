@@ -24,16 +24,17 @@ Este documento usa `__all__` como fuente pública para cada módulo.
 - `src/pcobra/corelibs/holobit.py`: (dinámico)
 - `src/pcobra/standard_library/holobit.py`: crear_holobit, validar_holobit, serializar_holobit, deserializar_holobit, proyectar, transformar, graficar, combinar, medir
 
-## Matriz propuesta de funciones nuevas (nombres Cobra en español)
-| Módulo | Funciones nuevas propuestas |
-|---|---|
-| `numero` | sumatoria, producto, truncar, dividir_entera, resto |
-| `texto` | recortar, repetir, centrar, separar_lineas, unir_con |
-| `datos` | tomar, omitir, invertir_tabla, valores_unicos, contar_por |
-| `logica` | si_todos, si_alguno, negar_todos, igual_todos, evaluar_reglas |
-| `asincrono` | carrera, esperar_primera, tiempo_limite, canal_simple, mapa_async |
-| `sistema` | obtener_usuario, existe_comando, variables_entorno, ruta_home, crear_proceso |
-| `archivo` | copiar, mover, renombrar, crear_carpeta, listar_archivos |
-| `tiempo` | sumar_segundos, diferencia_segundos, inicio_dia, fin_dia, zona_horaria |
-| `red` | enviar_put, enviar_delete, descargar_json, validar_url, construir_query |
-| `holobit` | normalizar, escalar, distancia, promedio_holobit, fusionar |
+## Tabla canónica permitida (Cobra-facing) y equivalencia semántica
+
+| Módulo | Funciones canónicas permitidas | Equivalente semántico |
+|---|---|---|
+| `numero` | `absoluto`, `redondear`, `piso`, `techo`, `mcd`, `mcm`, `es_cercano`, `hipotenusa`, `distancia_euclidiana`, `es_finito`, `es_infinito`, `es_nan`, `copiar_signo`, `signo`, `producto`, `entero_a_base`, `entero_desde_base`, `longitud_bits`, `contar_bits`, `rotar_bits_izquierda`, `rotar_bits_derecha`, `entero_a_bytes`, `entero_desde_bytes`, `raiz`, `raiz_entera`, `potencia`, `limitar`, `interpolar`, `envolver_modular`, `aleatorio`, `aleatorio_entero`, `mediana`, `moda`, `desviacion_estandar`, `es_par`, `es_primo`, `factorial`, `promedio`, `combinaciones`, `permutaciones`, `suma_precisa`, `varianza`, `varianza_muestral`, `media_geometrica`, `media_armonica`, `percentil`, `cuartiles`, `rango_intercuartil`, `coeficiente_variacion` | Funciones matemáticas y estadísticas de Python (`math`, `random`, `statistics`) con contrato Cobra en español. |
+| `texto` | API de `src/pcobra/corelibs/texto.py` exportada en `__all__` (p.ej. `minusculas`, `mayusculas`, `dividir`, `reemplazar`, `a_snake`, `a_camel`, validadores `es_*`). | Transformaciones y validaciones sobre `str` Unicode (métodos nativos de `str`, `re`, `unicodedata`, `textwrap`). |
+| `datos` | `leer_csv`, `leer_json`, `escribir_csv`, `escribir_json`, `leer_excel`, `escribir_excel`, `leer_parquet`, `escribir_parquet`, `leer_feather`, `escribir_feather`, `describir`, `correlacion_pearson`, `correlacion_spearman`, `matriz_covarianza`, `calcular_percentiles`, `resumen_rapido`, `seleccionar_columnas`, `filtrar`, `mutar_columna`, `separar_columna`, `unir_columnas`, `agrupar_y_resumir`, `tabla_cruzada`, `pivotar_ancho`, `pivotar_largo`, `ordenar_tabla`, `combinar_tablas`, `rellenar_nulos`, `desplegar_tabla`, `pivotar_tabla`, `agregar`, `mapear`, `reducir`, `claves`, `valores`, `longitud`. | Operaciones tabulares/colecciones compatibles con backend de `standard_library.datos` sin exponer detalles internos. |
+| `logica` | API de `src/pcobra/corelibs/logica.py` exportada en `__all__` (p.ej. `conjuncion`, `disyuncion`, `negacion`, `xor`, `implica`, `coalescer`, `tabla_verdad`). | Álgebra booleana y utilidades de control con validación estricta de booleanos. |
+| `asincrono` | `proteger_tarea`, `limitar_tiempo`, `ejecutar_en_hilo`, `recolectar`, `carrera`, `primero_exitoso`, `esperar_timeout`, `reintentar_async`, `grupo_tareas`, `crear_tarea`, `iterar_completadas`, `mapear_concurrencia`, `recolectar_resultados`, `dormir_async`. | Primitivas de concurrencia basadas en `asyncio` con nombres Cobra. |
+| `sistema` | `obtener_os`, `ejecutar`, `ejecutar_async`, `ejecutar_stream`, `obtener_env`, `listar_dir`, `ejecutar_comando_async`, `directorio_actual`. | Abstracciones seguras de `os` + subprocesos para automatización del entorno. |
+| `archivo` | `leer`, `escribir`, `adjuntar`, `anexar`, `existe`, `eliminar`, `leer_lineas`. | Operaciones de E/S de texto con sandbox de rutas (`COBRA_IO_BASE_DIR`). |
+| `tiempo` | `ahora`, `formatear`, `dormir`, `epoch`, `desde_epoch`. | Adaptadores sobre `datetime`/`time` y `standard_library.fecha`. |
+| `red` | `obtener_url`, `enviar_post`, `obtener_url_async`, `enviar_post_async`, `descargar_archivo`, `obtener_url_texto`, `obtener_json`. | Cliente HTTP(S) seguro (lista blanca de hosts, límites de tamaño y redirecciones). |
+| `holobit` | `crear_holobit`, `validar_holobit`, `serializar_holobit`, `deserializar_holobit`, `proyectar`, `transformar`, `graficar`, `combinar`, `medir`. | Adaptador Cobra sobre runtime Holobit sin fuga de clases internas. |
