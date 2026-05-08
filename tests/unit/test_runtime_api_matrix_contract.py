@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.transpilers.runtime_api_matrix import (
     build_runtime_api_matrix,
     validate_runtime_api_parity_snapshot,
@@ -27,3 +28,7 @@ def test_runtime_api_matrix_has_all_official_backends_and_python_full() -> None:
     for backend in OFFICIAL_TARGETS:
         assert isinstance(available[backend]["global"], list)
         assert isinstance(missing[backend]["global"], list)
+
+
+def test_runtime_public_backend_policy_is_exact() -> None:
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")

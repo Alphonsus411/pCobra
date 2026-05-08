@@ -13,7 +13,7 @@ from pcobra.cobra.architecture.contracts import (
     assert_backend_allowed_for_scope,
     validate_capabilities_contract,
 )
-from pcobra.cobra.architecture.backend_policy import INTERNAL_BACKENDS
+from pcobra.cobra.internal_compat.legacy_contracts import INTERNAL_BACKENDS
 from pcobra.cobra.config.transpile_targets import target_metadata
 from pcobra.cobra.transpilers.module_map import get_toml_map
 from pcobra.cobra.transpilers.target_utils import normalize_target_name

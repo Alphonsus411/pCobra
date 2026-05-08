@@ -16,7 +16,7 @@ from pcobra.cobra.transpilers.compatibility_matrix import BACKEND_COMPATIBILITY
 from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS, TIER1_TARGETS, TIER2_TARGETS
 
 TierName = Literal["tier1", "tier2"]
-EXPECTED_CANONICAL_TARGETS = ("python", "rust", "javascript", "wasm", "go", "cpp", "java", "asm")
+EXPECTED_CANONICAL_TARGETS = ("python", "javascript", "rust")
 
 SUPPORTED_TARGETS = OFFICIAL_TARGETS
 OFFICIAL_TRANSPILATION_TARGETS_IN_TESTS = OFFICIAL_TRANSPILATION_TARGETS
@@ -84,7 +84,7 @@ def assert_official_targets_partition(
     compatibility_matrix: dict[str, dict[str, str]] = BACKEND_COMPATIBILITY,
     transpilers: Iterable[str] | None = None,
 ) -> dict[TierName, tuple[str, ...]]:
-    """Valida que los 8 backends oficiales queden particionados exactamente por tiers."""
+    """Valida que los backends públicos oficiales queden particionados exactamente por tiers."""
     partition = {
         tier: assert_tier_targets_match_policy(
             tier,

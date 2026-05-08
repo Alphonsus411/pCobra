@@ -33,6 +33,6 @@ if tuple(TARGETS_BY_TIER) != ("tier_1", "tier_2"):
 
 if OFFICIAL_TARGETS != EXPECTED_CANONICAL_TARGETS:
     raise RuntimeError(
-        "OFFICIAL_TARGETS debe mantener exactamente los 8 nombres canónicos en orden. "
+        "OFFICIAL_TARGETS debe mantener exactamente los nombres públicos canónicos en orden. "
         + _canonical_diff_report(current=OFFICIAL_TARGETS)
     )
