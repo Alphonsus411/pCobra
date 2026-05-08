@@ -1,8 +1,7 @@
 """Adaptador público de Holobit para `usar "holobit"`.
 
 Este módulo expone únicamente funciones serializables y compatibles con Cobra.
-No re-exporta clases ni símbolos internos de `pcobra.core.holobits` ni de
-`holobit_sdk`.
+No re-exporta clases ni símbolos internos del runtime de Holobit.
 """
 
 import json
@@ -10,7 +9,7 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 
 from pcobra.core.holobits.graficar import graficar as _sdk_graficar
-from pcobra.core.holobits.holobit import Holobit as _SDKHolobit
+from pcobra.core.holobits.holobit import Holobit as _RuntimeHolobit
 
 
 class ErrorHolobit(ValueError):
@@ -38,7 +37,7 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
     return salida
 
 
-def _a_estructura_cobra(hb: _SDKHolobit) -> dict[str, Any]:
+def _a_estructura_cobra(hb: Any) -> dict[str, Any]:
     return {"tipo": "holobit", "valores": [float(v) for v in hb.valores]}
 
 
@@ -56,10 +55,10 @@ def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
     return hb
 
 
-def _desde_estructura_cobra(hb: dict[str, Any]) -> _SDKHolobit:
+def _desde_estructura_cobra(hb: dict[str, Any]) -> Any:
     estructura = _validar_estructura_holobit(hb)
     try:
-        return _SDKHolobit(_normalizar_valores(estructura["valores"]))
+        return _RuntimeHolobit(_normalizar_valores(estructura["valores"]))
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
         raise _error_dominio("No se pudo adaptar el holobit al runtime de Cobra", causa=exc) from None
 
@@ -67,7 +66,7 @@ def _desde_estructura_cobra(hb: dict[str, Any]) -> _SDKHolobit:
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
     if valores is None:
         raise TypeError("'valores' no puede ser None")
-    return _a_estructura_cobra(_SDKHolobit(_normalizar_valores(valores)))
+    return _a_estructura_cobra(_RuntimeHolobit(_normalizar_valores(valores)))
 
 
 def validar_holobit(hb: Any) -> bool:
@@ -157,7 +156,7 @@ def medir(hb: dict[str, Any]) -> dict[str, float | int]:
     return salida
 
 
-__all__ = [
+PUBLIC_API_HOLOBIT: tuple[str, ...] = (
     "crear_holobit",
     "validar_holobit",
     "serializar_holobit",
@@ -167,5 +166,19 @@ __all__ = [
     "graficar",
     "combinar",
     "medir",
-]
+)
+
+
+def _validar_superficie_publica_holobit() -> None:
+    exportados = tuple(__all__)
+    if exportados != PUBLIC_API_HOLOBIT:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] holobit.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+__all__ = list(PUBLIC_API_HOLOBIT)
+
+
+_validar_superficie_publica_holobit()
 
