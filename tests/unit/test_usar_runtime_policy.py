@@ -124,6 +124,29 @@ def test_usar_runtime_holobit_no_expone_objetos_sdk_internos(monkeypatch):
         assert interno not in interp.variables
 
 
+def test_usar_holobit_regresion_no_expone_simbolos_internos_por_introspeccion(monkeypatch):
+    import pcobra.corelibs.holobit as modulo_holobit
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_holobit)
+    interp = _interp_con_alias({"holobit": "holobit"})
+    interp.ejecutar_nodo(NodoUsar("holobit"))
+
+    namespace = set(interp.variables)
+    assert set(modulo_holobit.__all__) == {
+        "crear_holobit",
+        "validar_holobit",
+        "serializar_holobit",
+        "deserializar_holobit",
+        "proyectar",
+        "transformar",
+        "graficar",
+        "combinar",
+        "medir",
+    }
+    for interno in ("_SDKHolobit", "_AdaptadorInternoHolobit", "EQUIVALENCIAS_SEMANTICAS_HOLOBIT"):
+        assert interno not in namespace
+
+
 def test_usar_runtime_allowlist_y_flags_mantienen_contrato_estricto():
     canonicos = tuple(REPL_COBRA_MODULE_MAP.keys())
     assert tuple(REPL_COBRA_MODULE_MAP.values()) == canonicos
