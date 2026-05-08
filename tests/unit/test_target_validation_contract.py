@@ -5,8 +5,9 @@ from unittest.mock import patch
 import pytest
 
 from cobra.cli.cli import main
-from pcobra.cobra.cli.target_policies import parse_target
+from pcobra.cobra.cli.target_policies import OFFICIAL_TRANSPILATION_TARGETS, parse_target
 from pcobra.cobra.semantico import mod_validator
+from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 
 
 def test_api_parse_target_valido_canonico() -> None:
@@ -23,7 +24,9 @@ def test_api_parse_target_invalido_muestra_lista_exacta_con_tiers() -> None:
         parse_target("fantasy")
     mensaje = str(exc.value)
     assert "python=tier1" in mensaje
-    assert "asm=tier2" in mensaje
+    assert "javascript=tier1" in mensaje
+    assert "rust=tier1" in mensaje
+    assert "asm=tier2" not in mensaje
 
 
 def test_cli_compilar_target_invalido_muestra_lista_exacta_con_tiers(tmp_path) -> None:
@@ -36,7 +39,9 @@ def test_cli_compilar_target_invalido_muestra_lista_exacta_con_tiers(tmp_path) -
     assert exc.value.code == 2
     salida = out.getvalue()
     assert "python=tier1" in salida
-    assert "asm=tier2" in salida
+    assert "javascript=tier1" in salida
+    assert "rust=tier1" in salida
+    assert "asm=tier2" not in salida
 
 
 def test_mod_validator_rechaza_required_targets_fuera_de_lista(monkeypatch) -> None:
@@ -50,4 +55,14 @@ def test_mod_validator_rechaza_required_targets_fuera_de_lista(monkeypatch) -> N
     mensaje = str(exc.value)
     assert "target no permitido" in mensaje
     assert "python=tier1" in mensaje
-    assert "asm=tier2" in mensaje
+    assert "javascript=tier1" in mensaje
+    assert "rust=tier1" in mensaje
+    assert "asm=tier2" not in mensaje
+
+
+def test_startup_targets_contract_exige_solo_tres_targets_publicos() -> None:
+    assert OFFICIAL_TARGETS == ("python", "javascript", "rust")
+
+
+def test_cli_targets_contract_exige_solo_tres_targets_publicos() -> None:
+    assert OFFICIAL_TRANSPILATION_TARGETS == ("python", "javascript", "rust")

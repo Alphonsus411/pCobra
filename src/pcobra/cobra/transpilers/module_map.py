@@ -14,6 +14,13 @@ from pcobra.cobra.stdlib_contract import get_contract_manifests
 
 logger = logging.getLogger(__name__)
 
+
+if OFFICIAL_TARGETS != PUBLIC_BACKENDS:
+    raise RuntimeError(
+        "OFFICIAL_TARGETS y PUBLIC_BACKENDS deben coincidir en module_map para evitar rutas legacy. "
+        f"official={OFFICIAL_TARGETS}; public={PUBLIC_BACKENDS}"
+    )
+
 MODULE_MAP_PATH = os.environ.get(
     'COBRA_MODULE_MAP',
     os.path.abspath(
