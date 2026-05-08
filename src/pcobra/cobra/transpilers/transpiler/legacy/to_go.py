@@ -1,4 +1,9 @@
+from pcobra.cobra.transpilers.transpiler.legacy import assert_legacy_transpilers_enabled
+
+assert_legacy_transpilers_enabled()
+
 """Transpilador sencillo de Cobra a Go."""
+
 
 import re
 
@@ -34,38 +39,38 @@ from pcobra.cobra.transpilers.common.utils import (
 from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
-from pcobra.cobra.transpilers.transpiler.go_nodes.asignacion import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.asignacion import (
     visit_asignacion as _visit_asignacion,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.funcion import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.funcion import (
     visit_funcion as _visit_funcion,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.llamada_funcion import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.llamada_funcion import (
     visit_llamada_funcion as _visit_llamada_funcion,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.imprimir import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.imprimir import (
     visit_imprimir as _visit_imprimir,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.condicional import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.condicional import (
     visit_condicional as _visit_condicional,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.bucle_mientras import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.bucle_mientras import (
     visit_bucle_mientras as _visit_bucle_mientras,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.for_ import visit_for as _visit_for
-from pcobra.cobra.transpilers.transpiler.go_nodes.clase import visit_clase as _visit_clase
-from pcobra.cobra.transpilers.transpiler.go_nodes.metodo import visit_metodo as _visit_metodo
-from pcobra.cobra.transpilers.transpiler.go_nodes.retorno import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.for_ import visit_for as _visit_for
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.clase import visit_clase as _visit_clase
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.metodo import visit_metodo as _visit_metodo
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.retorno import (
     visit_retorno as _visit_retorno,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.romper import visit_romper as _visit_romper
-from pcobra.cobra.transpilers.transpiler.go_nodes.continuar import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.romper import visit_romper as _visit_romper
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.continuar import (
     visit_continuar as _visit_continuar,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.llamada_metodo import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.llamada_metodo import (
     visit_llamada_metodo as _visit_llamada_metodo,
 )
-from pcobra.cobra.transpilers.transpiler.go_nodes.instancia import (
+from pcobra.cobra.transpilers.transpiler.legacy.go_nodes.instancia import (
     visit_instancia as _visit_instancia,
 )
 

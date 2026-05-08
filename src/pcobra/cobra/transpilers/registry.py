@@ -24,11 +24,11 @@ TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
 
 # Bloque dedicado de compatibilidad interna (no público).
 INTERNAL_COMPAT_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = {
-    "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
-    "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
-    "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
-    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
-    "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
+    "go": ("pcobra.cobra.transpilers.transpiler.legacy.to_go", "TranspiladorGo"),
+    "cpp": ("pcobra.cobra.transpilers.transpiler.legacy.to_cpp", "TranspiladorCPP"),
+    "java": ("pcobra.cobra.transpilers.transpiler.legacy.to_java", "TranspiladorJava"),
+    "wasm": ("pcobra.cobra.transpilers.transpiler.legacy.to_wasm", "TranspiladorWasm"),
+    "asm": ("pcobra.cobra.transpilers.transpiler.legacy.to_asm", "TranspiladorASM"),
 }
 
 PUBLIC_TRANSPILER_CLASS_PATHS: Final[dict[str, tuple[str, str]]] = TRANSPILER_CLASS_PATHS

@@ -91,6 +91,12 @@ def get_stdlib_contract(module: str) -> Dict[str, Any]:
 def resolve_backend_for_module(module: str, backend: str) -> str:
     """Resuelve backend efectivo por contrato sin exponer transpilers internos."""
     canonical_backend = normalize_target_name(backend)
+    if canonical_backend not in OFFICIAL_TARGETS:
+        raise ValueError(
+            "CONTRACT_ERROR: backend no oficial en resolve_backend_for_module: "
+            f"{backend!r}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
+        )
+
     contract = get_stdlib_contract(module)
     if not contract:
         return canonical_backend
@@ -109,9 +115,27 @@ def resolve_backend_for_module(module: str, backend: str) -> str:
         if isinstance(item, str)
     }
 
+    if preferred not in OFFICIAL_TARGETS:
+        raise ValueError(
+            "CONTRACT_ERROR: backend_preferido no oficial en contrato de módulo "
+            f"{module!r}: {preferred!r}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
+        )
+
+    invalid_fallbacks = sorted(item for item in allowed_fallbacks if item not in OFFICIAL_TARGETS)
+    if invalid_fallbacks:
+        raise ValueError(
+            "CONTRACT_ERROR: fallback_permitido contiene backends no oficiales en módulo "
+            f"{module!r}: {', '.join(invalid_fallbacks)}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
+        )
+
     if canonical_backend == preferred or canonical_backend in allowed_fallbacks:
         return canonical_backend
-    return preferred
+
+    raise ValueError(
+        "CONTRACT_ERROR: backend no permitido por contrato de módulo "
+        f"{module!r} para target {canonical_backend!r}; preferido={preferred!r}; "
+        f"fallback_permitido={sorted(allowed_fallbacks)!r}"
+    )
 
 _RUNTIME_PATH_FORBIDDEN_SEGMENTS = (
     "core/nativos",
@@ -229,7 +253,10 @@ def get_mapped_path(module: str, backend: str) -> str:
     """
     canonical_backend = resolve_backend_for_module(module, backend)
     if canonical_backend not in OFFICIAL_TARGETS:
-        return module
+        raise ValueError(
+            "CONTRACT_ERROR: backend no oficial en get_mapped_path: "
+            f"{backend!r}. Permitidos: {', '.join(OFFICIAL_TARGETS)}"
+        )
 
     mapa = get_toml_map()
     if not isinstance(mapa, dict):

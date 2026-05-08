@@ -1,7 +1,12 @@
+from pcobra.cobra.transpilers.transpiler.legacy import assert_legacy_transpilers_enabled
+
+assert_legacy_transpilers_enabled()
+
 """Transpilador que genera código C++ a partir de Cobra.
 
 Los parámetros de tipo de Cobra se traducen a plantillas ``template`` propias
 de C++."""
+
 
 from pcobra.cobra.core.ast_nodes import (
     NodoLista,
@@ -44,23 +49,23 @@ from pcobra.cobra.transpilers.common.utils import (
 from pcobra.cobra.core.optimizations import optimize_constants, remove_dead_code, inline_functions
 from pcobra.cobra.macro import expandir_macros
 
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.asignacion import visit_asignacion as _visit_asignacion
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.condicional import visit_condicional as _visit_condicional
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.garantia import visit_garantia as _visit_garantia
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.funcion import visit_funcion as _visit_funcion
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.holobit import visit_holobit as _visit_holobit
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.clase import visit_clase as _visit_clase
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.metodo import visit_metodo as _visit_metodo
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.yield_ import visit_yield as _visit_yield
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.romper import visit_romper as _visit_romper
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.continuar import visit_continuar as _visit_continuar
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.pasar import visit_pasar as _visit_pasar
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.switch import visit_switch as _visit_switch
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.option import visit_option as _visit_option
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.pattern import visit_pattern as _visit_pattern
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.retorno import (
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.asignacion import visit_asignacion as _visit_asignacion
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.condicional import visit_condicional as _visit_condicional
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.garantia import visit_garantia as _visit_garantia
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.bucle_mientras import visit_bucle_mientras as _visit_bucle_mientras
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.funcion import visit_funcion as _visit_funcion
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.llamada_funcion import visit_llamada_funcion as _visit_llamada_funcion
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.holobit import visit_holobit as _visit_holobit
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.clase import visit_clase as _visit_clase
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.metodo import visit_metodo as _visit_metodo
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.yield_ import visit_yield as _visit_yield
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.romper import visit_romper as _visit_romper
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.continuar import visit_continuar as _visit_continuar
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.pasar import visit_pasar as _visit_pasar
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.switch import visit_switch as _visit_switch
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.option import visit_option as _visit_option
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.pattern import visit_pattern as _visit_pattern
+from pcobra.cobra.transpilers.transpiler.legacy.cpp_nodes.retorno import (
     visit_retorno as _visit_retorno,
 )
 

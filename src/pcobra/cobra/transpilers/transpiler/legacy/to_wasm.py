@@ -1,4 +1,9 @@
+from pcobra.cobra.transpilers.transpiler.legacy import assert_legacy_transpilers_enabled
+
+assert_legacy_transpilers_enabled()
+
 """Transpilador muy básico que genera código WebAssembly en formato WAT."""
+
 
 from pcobra.cobra.core.ast_nodes import (
     NodoAsignacion,

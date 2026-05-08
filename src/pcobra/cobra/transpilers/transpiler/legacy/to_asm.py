@@ -1,6 +1,12 @@
 """Transpilador que genera un ensamblador simbólico desde el IR interno."""
 
+
 from __future__ import annotations
+
+from pcobra.cobra.transpilers.transpiler.legacy import assert_legacy_transpilers_enabled
+
+assert_legacy_transpilers_enabled()
+
 
 
 from pcobra.cobra.transpilers.common.utils import (
