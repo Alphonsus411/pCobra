@@ -12,6 +12,14 @@ from datetime import datetime
 from pcobra.standard_library.fecha import formatear as _formatear_fecha
 from pcobra.standard_library.fecha import hoy as _hoy
 
+EQUIVALENCIAS_SEMANTICAS_TIEMPO: dict[str, str] = {
+    "datetime.now": "ahora",
+    "strftime": "formatear",
+    "sleep": "dormir",
+    "timestamp": "epoch",
+    "fromtimestamp": "desde_epoch",
+}
+
 PUBLIC_API_TIEMPO: tuple[str, ...] = (
     "ahora",
     "formatear",

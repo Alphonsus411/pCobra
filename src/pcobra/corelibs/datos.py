@@ -7,6 +7,17 @@ una whitelist explícita de símbolos Cobra.
 
 from pcobra.standard_library import datos as _datos
 
+EQUIVALENCIAS_SEMANTICAS_DATOS: dict[str, str] = {
+    "keys": "claves",
+    "values": "valores",
+    "len": "longitud",
+    "map": "mapear",
+    "filter": "filtrar",
+    "reduce": "reducir",
+    "merge": "combinar_tablas",
+    "pivot": "pivotar_tabla",
+}
+
 leer_csv = _datos.leer_csv
 leer_json = _datos.leer_json
 escribir_csv = _datos.escribir_csv
