@@ -59,12 +59,13 @@ def test_usar_datos_expone_filtrar_mapear_reducir(monkeypatch):
     assert {"filtrar", "mapear", "reducir"}.issubset(simbolos)
 
 
-def test_rechazo_usar_numpy(monkeypatch):
+@pytest.mark.parametrize("nombre", ["numpy", "np", "node-fetch", "serde", "holobit_sdk"] )
+def test_rechazo_usar_modulos_externos_y_no_canonicos(monkeypatch, nombre):
     monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda nombre: (_ for _ in ()).throw(ModuleNotFoundError(nombre)))
 
     cmd = InteractiveCommand(InterpretadorCobra())
     with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto"):
-        cmd.ejecutar_codigo('usar "numpy"')
+        cmd.ejecutar_codigo(f'usar "{nombre}"')
 
 
 def test_rechazo_internals_holobit_sdk(monkeypatch):
@@ -121,6 +122,12 @@ def test_runtime_startup_no_carga_legacy_backends():
     )
     assert result.returncode == 0, result.stderr
 
+
+
+
+def test_usar_policy_publica_exacta_modulos_canonicos():
+    assert tuple(REPL_COBRA_MODULE_MAP.keys()) == ("numero", "texto", "datos")
+    assert tuple(REPL_COBRA_MODULE_MAP.values()) == ("numero", "texto", "datos")
 
 def test_public_backends_contrato_exacto_en_backend_policy():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
