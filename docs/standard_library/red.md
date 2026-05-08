@@ -18,3 +18,12 @@ usar "red"
 
 Utilidades seguras de red HTTPS con lista blanca de hosts (`COBRA_HOST_WHITELIST`).
 Incluye `obtener_url`, `enviar_post`, variantes async, `descargar_archivo` y `obtener_json`.
+
+
+## Uso rápido
+
+```cobra
+usar "red"
+```
+
+Nombres públicos en español (fuente: `__all__`).

@@ -84,3 +84,12 @@ explícitos tanto en Python como en los demás backends soportados.
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 
 - `aleatorio_entero(minimo, maximo, semilla=None)` genera enteros inclusivos estilo `randint` con nombre Cobra.
+
+
+## Uso rápido
+
+```cobra
+usar "numero"
+```
+
+Nombres públicos en español (fuente: `__all__`).

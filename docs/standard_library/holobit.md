@@ -66,3 +66,12 @@ imprimir(p)
 
 - La integración por `usar "holobit"` sanea símbolos y solo inyecta los nombres listados en `__all__`.
 - Alias históricos (`crear`, `validar`, etc.) pueden existir internamente por compatibilidad, pero no forman parte del contrato público mínimo.
+
+
+## Uso rápido
+
+```cobra
+usar "holobit"
+```
+
+Nombres públicos en español (fuente: `__all__`).

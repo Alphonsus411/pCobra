@@ -31,3 +31,12 @@ Documentación sincronizada automáticamente desde `src/pcobra/standard_library/
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 
 - `dormir_async(segundos)` expone pausa cooperativa equivalente a `await sleep`.
+
+
+## Uso rápido
+
+```cobra
+usar "asincrono"
+```
+
+Nombres públicos en español (fuente: `__all__`).

@@ -67,6 +67,8 @@ __all__ = [
     "claves",
     "valores",
     "longitud",
+    "invertir_tabla",
+    "tomar",
 ]
 
 
@@ -1199,3 +1201,19 @@ def resumen_rapido(datos: Iterable[Registro]) -> list[dict[str, Any]]:
             registro["min"] = str(min(no_nulos))
         resumen.append(registro)
     return resumen
+
+
+def invertir_tabla(tabla: Iterable[Registro]) -> Tabla:
+    """Devuelve una copia de ``tabla`` en orden inverso."""
+
+    materializada = _materializar_tabla(tabla)
+    return list(reversed(materializada))
+
+
+def tomar(tabla: Iterable[Registro], cantidad: int) -> Tabla:
+    """Retorna las primeras ``cantidad`` filas de ``tabla``."""
+
+    if cantidad < 0:
+        raise ValueError("cantidad debe ser >= 0")
+    materializada = _materializar_tabla(tabla)
+    return materializada[:cantidad]

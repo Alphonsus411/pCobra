@@ -174,3 +174,12 @@ Todas estas funciones respetan Unicode y aprovechan los normalizadores base disp
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 
 - `lineas_no_vacias(texto)` devuelve solo líneas con contenido útil tras `strip`.
+
+
+## Uso rápido
+
+```cobra
+usar "texto"
+```
+
+Nombres públicos en español (fuente: `__all__`).
