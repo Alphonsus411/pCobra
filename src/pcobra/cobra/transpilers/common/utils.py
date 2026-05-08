@@ -10,7 +10,6 @@ from pcobra.cobra.core.visitor import NodeVisitor
 from pcobra.cobra.transpilers.compatibility_matrix import CONTRACT_FEATURES
 from pcobra.cobra.transpilers.module_map import get_mapped_path
 from pcobra.cobra.transpilers.target_utils import normalize_target_name
-from pcobra.cobra.transpilers.targets import OFFICIAL_TARGETS
 from pcobra.cobra.transpilers.transpiler.js_nodes.runtime_holobit import (
     build_holobit_runtime_lines as build_javascript_holobit_runtime_lines,
     build_standard_runtime_lines as build_javascript_standard_runtime_lines,
@@ -18,22 +17,6 @@ from pcobra.cobra.transpilers.transpiler.js_nodes.runtime_holobit import (
 from pcobra.cobra.transpilers.transpiler.rust_nodes.runtime_holobit import (
     build_holobit_runtime_lines as build_rust_holobit_runtime_lines,
     build_standard_runtime_lines as build_rust_standard_runtime_lines,
-)
-from pcobra.cobra.transpilers.transpiler.go_nodes.runtime_holobit import (
-    build_holobit_runtime_lines as build_go_holobit_runtime_lines,
-)
-from pcobra.cobra.transpilers.transpiler.cpp_nodes.runtime_holobit import (
-    build_holobit_runtime_lines as build_cpp_holobit_runtime_lines,
-)
-from pcobra.cobra.transpilers.transpiler.java_nodes.runtime_holobit import (
-    build_holobit_runtime_lines as build_java_holobit_runtime_lines,
-)
-from pcobra.cobra.transpilers.transpiler.asm_nodes.runtime_holobit import (
-    build_holobit_runtime_lines as build_asm_holobit_runtime_lines,
-)
-from pcobra.cobra.transpilers.transpiler.wasm_runtime import (
-    build_holobit_runtime_lines as build_wasm_holobit_runtime_lines,
-    build_standard_runtime_lines as build_wasm_standard_runtime_lines,
 )
 
 HOLOBIT_RUNTIME_NODE_TYPES = (
@@ -83,19 +66,6 @@ STANDARD_IMPORTS = {
         *build_javascript_standard_runtime_lines(),
     ],
     "rust": build_rust_standard_runtime_lines(),
-    "go": ['_ "pcobra/corelibs"', '_ "pcobra/standard_library"'],
-    "cpp": [
-        "#include <pcobra/corelibs.hpp>",
-        "#include <pcobra/standard_library.hpp>",
-    ],
-    "java": [
-        "import pcobra.corelibs.*;",
-        "import pcobra.standard_library.*;",
-    ],
-    "wasm": build_wasm_standard_runtime_lines(),
-    "asm": [
-        "; backend asm: imports de runtime administrados externamente",
-    ],
 }
 
 HOOK_SIGNATURE_MARKERS = {
@@ -117,36 +87,6 @@ HOOK_SIGNATURE_MARKERS = {
         "transformar": "fn cobra_transformar(",
         "graficar": "fn cobra_graficar(",
     },
-    "go": {
-        "holobit": "func cobra_holobit(",
-        "proyectar": "func cobra_proyectar(",
-        "transformar": "func cobra_transformar(",
-        "graficar": "func cobra_graficar(",
-    },
-    "cpp": {
-        "holobit": "inline CobraHolobit cobra_holobit(",
-        "proyectar": "inline std::vector<double> cobra_proyectar(",
-        "transformar": "inline CobraHolobit cobra_transformar(",
-        "graficar": "inline std::string cobra_graficar(",
-    },
-    "java": {
-        "holobit": "private static CobraHolobit cobra_holobit(",
-        "proyectar": "private static double[] cobra_proyectar(",
-        "transformar": "private static CobraHolobit cobra_transformar(",
-        "graficar": "private static String cobra_graficar(",
-    },
-    "wasm": {
-        "holobit": "(func $cobra_holobit",
-        "proyectar": "(func $cobra_proyectar",
-        "transformar": "(func $cobra_transformar",
-        "graficar": "(func $cobra_graficar",
-    },
-    "asm": {
-        "holobit": "cobra_holobit:",
-        "proyectar": "cobra_proyectar:",
-        "transformar": "cobra_transformar:",
-        "graficar": "cobra_graficar:",
-    },
 }
 
 
@@ -154,11 +94,6 @@ RUNTIME_ERROR_MESSAGE = {
     "python": "Runtime Holobit Python: '{feature}' requiere 'holobit_sdk', dependencia obligatoria de pcobra en Python >=3.10.",
     "javascript": "Runtime Holobit JavaScript: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
     "rust": "Runtime Holobit Rust: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
-    "go": "Runtime Holobit Go: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
-    "cpp": "Runtime Holobit C++: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
-    "java": "Runtime Holobit Java: feature={feature}; contrato partial; backend sin holobit_sdk; el adaptador oficial no equivale a la semántica completa de Python.",
-    "wasm": "Runtime Holobit WASM: feature={feature}; contrato partial; backend host-managed sin holobit_sdk dentro del módulo generado.",
-    "asm": "Runtime Holobit ASM: feature={feature}; contrato partial; backend de inspección/diagnóstico sin holobit_sdk ni runtime embebido.",
 }
 
 
@@ -212,11 +147,6 @@ RUNTIME_HOOKS = {
     ],
     "javascript": build_javascript_holobit_runtime_lines(),
     "rust": build_rust_holobit_runtime_lines(),
-    "go": build_go_holobit_runtime_lines(),
-    "cpp": build_cpp_holobit_runtime_lines(),
-    "java": build_java_holobit_runtime_lines(),
-    "wasm": build_wasm_holobit_runtime_lines(),
-    "asm": build_asm_holobit_runtime_lines(),
 }
 
 
@@ -239,39 +169,17 @@ MINIMAL_RUNTIME_ROUTE_MARKERS = {
         "standard_library": "use crate::standard_library::*;",
         "minimal_symbols": ("fn longitud<T: ToString>(valor: T) -> usize {", "fn mostrar<T: Display>(valor: T) {"),
     },
-    "wasm": {
-        "corelibs": '(import "pcobra:corelibs" "longitud"',
-        "standard_library": '(import "pcobra:standard_library" "mostrar"',
-        "minimal_symbols": ("(func $longitud", "(func $mostrar"),
-    },
-    "go": {
-        "corelibs": '"pcobra/corelibs"',
-        "standard_library": '"pcobra/standard_library"',
-        "minimal_symbols": ("func longitud(valor any) int {", "func mostrar(valores ...any) any {"),
-    },
-    "cpp": {
-        "corelibs": "#include <pcobra/corelibs.hpp>",
-        "standard_library": "#include <pcobra/standard_library.hpp>",
-        "minimal_symbols": ("inline std::size_t longitud(const T& valor) {", "inline T mostrar(const T& valor) {"),
-    },
-    "java": {
-        "corelibs": "import pcobra.corelibs.*;",
-        "standard_library": "import pcobra.standard_library.*;",
-        "minimal_symbols": ("private static int longitud(Object valor) {", "private static Object mostrar(Object... valores) {"),
-    },
-    "asm": {
-        "corelibs": "; backend asm: imports de runtime administrados externamente",
-        "standard_library": "runtime externo",
-        "minimal_symbols": ("cobra_proyectar:", "TRAP"),
-    },
 }
 
 
+ACTIVE_RUNTIME_BACKENDS = ("python", "javascript", "rust")
+
+
 def validate_runtime_contracts() -> None:
-    """Valida imports/hooks de runtime para todos los backends oficiales."""
+    """Valida imports/hooks de runtime para los 3 backends oficiales: python, javascript, rust."""
     holobit_features = CONTRACT_FEATURES[:4]
     advanced_features = CONTRACT_FEATURES[1:4]
-    for target in OFFICIAL_TARGETS:
+    for target in ACTIVE_RUNTIME_BACKENDS:
         if target not in STANDARD_IMPORTS:
             raise RuntimeError(
                 f"STANDARD_IMPORTS no define entradas para target '{target}'"
@@ -321,7 +229,7 @@ def validate_runtime_contracts() -> None:
                     )
                 continue
 
-        if target in {"javascript", "rust", "go", "cpp", "java"}:
+        if target in {"javascript", "rust"}:
             required_markers = (
                 "contrato partial",
                 "holobit_sdk",
@@ -332,35 +240,6 @@ def validate_runtime_contracts() -> None:
                     raise RuntimeError(
                         f"RUNTIME_HOOKS['{target}'] no contiene la nota contractual explícita requerida: {marker}"
                     )
-
-        if target == "wasm":
-            required_markers = (
-                "contrato partial",
-                "host-managed",
-                "holobit_sdk",
-            )
-            for marker in required_markers:
-                if marker not in hook_blob:
-                    raise RuntimeError(
-                        f"RUNTIME_HOOKS['{target}'] no contiene la nota contractual explícita requerida: {marker}"
-                    )
-
-        if target == "asm":
-            required_markers = (
-                "contrato partial",
-                "inspección/diagnóstico",
-                "holobit_sdk",
-            )
-            for marker in required_markers:
-                if marker not in hook_blob:
-                    raise RuntimeError(
-                        f"RUNTIME_HOOKS['{target}'] no contiene la nota contractual explícita requerida: {marker}"
-                    )
-
-        if target == "asm" and "backend de inspección/diagnóstico" not in hook_blob:
-            raise RuntimeError(
-                "RUNTIME_HOOKS['asm'] debe declararse explícitamente como backend de inspección/diagnóstico"
-            )
 
         forbidden_markers = ("cobra_escalar", "cobra_mover")
         for forbidden_marker in forbidden_markers:
@@ -392,8 +271,8 @@ def validate_runtime_contracts() -> None:
 
 
 def validate_minimal_runtime_routes() -> None:
-    """Valida rutas mínimas `corelibs`/`standard_library` por backend oficial."""
-    for target in OFFICIAL_TARGETS:
+    """Valida rutas mínimas `corelibs`/`standard_library` para python, javascript y rust."""
+    for target in ACTIVE_RUNTIME_BACKENDS:
         if target not in MINIMAL_RUNTIME_ROUTE_MARKERS:
             raise RuntimeError(
                 f"MINIMAL_RUNTIME_ROUTE_MARKERS no define reglas para target '{target}'"
