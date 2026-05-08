@@ -12,6 +12,9 @@ from typing import Any
 from pcobra.core.holobits.graficar import graficar as _runtime_graficar
 from pcobra.core.holobits.holobit import Holobit as _RuntimeHolobit
 
+# Alias interno para compatibilidad de pruebas de dominio (no exportado).
+_SDKHolobit = _RuntimeHolobit
+
 
 class ErrorHolobit(ValueError):
     """Error de dominio Cobra para operaciones de Holobit."""
@@ -28,7 +31,7 @@ class _AdaptadorInternoHolobit:
 
     @staticmethod
     def crear_desde_valores(valores: list[float]) -> Any:
-        return _RuntimeHolobit(valores)
+        return _SDKHolobit(valores)
 
     @staticmethod
     def obtener_valores(hb: Any) -> list[float]:
