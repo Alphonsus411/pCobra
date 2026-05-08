@@ -77,6 +77,27 @@ Fixtures de regresión para `validar-sintaxis`:
 - Cada feature nueva debe añadir `examples/features/<feature_id>/minimal.co`.
 - `validar-sintaxis` usa automáticamente esos fixtures para smoke de regresión.
 
+
+## Alcance de extensiones de módulos/core runtime
+
+Para contribuciones enfocadas en extensión de módulos o runtime (`src/pcobra/cobra/**`),
+**no se deben introducir cambios sintácticos** (lexer/parser) salvo que el issue/ADR
+especifique explícitamente una evolución del lenguaje.
+
+Rutas canónicas de sintaxis (protegidas por gate):
+
+- `src/pcobra/cobra/core/lexer.py`
+- `src/pcobra/cobra/core/parser.py`
+
+Gate recomendado en CI/local:
+
+```bash
+python scripts/ci/gate_no_parser_lexer_changes.py --base <sha_base> --head <sha_head>
+```
+
+Si este gate falla, el cambio queda fuera del alcance “runtime/core modules only” y
+debe moverse a una tarea de evolución sintáctica.
+
 ## Dependencias y versionado
 
 - Usa `pyproject.toml` (`[project].version`) como **única fuente visible de
