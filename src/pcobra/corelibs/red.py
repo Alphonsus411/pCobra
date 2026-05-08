@@ -290,7 +290,7 @@ def obtener_json(url: str, permitir_redirecciones: bool = False) -> dict[str, An
         raise TypeError("La respuesta JSON debe ser un objeto o una lista")
     return datos
 
-__all__ = [
+PUBLIC_API_RED: tuple[str, ...] = (
     "obtener_url",
     "enviar_post",
     "obtener_url_async",
@@ -298,4 +298,17 @@ __all__ = [
     "descargar_archivo",
     "obtener_url_texto",
     "obtener_json",
-]
+)
+
+
+def _validar_superficie_publica_red() -> None:
+    if tuple(__all__) != PUBLIC_API_RED:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] red.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+__all__ = list(PUBLIC_API_RED)
+
+
+_validar_superficie_publica_red()

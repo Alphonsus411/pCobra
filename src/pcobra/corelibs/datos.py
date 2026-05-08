@@ -44,7 +44,7 @@ claves = _datos.claves
 valores = _datos.valores
 longitud = _datos.longitud
 
-__all__ = [
+PUBLIC_API_DATOS: tuple[str, ...] = (
     "leer_csv",
     "leer_json",
     "escribir_csv",
@@ -81,4 +81,17 @@ __all__ = [
     "claves",
     "valores",
     "longitud",
-]
+)
+
+
+def _validar_superficie_publica_datos() -> None:
+    if tuple(__all__) != PUBLIC_API_DATOS:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] datos.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+__all__ = list(PUBLIC_API_DATOS)
+
+
+_validar_superficie_publica_datos()

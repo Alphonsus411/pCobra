@@ -71,7 +71,15 @@ def existe(ruta: PathLike) -> bool:
     return ruta_segura.is_file()
 
 
-__all__ = ["leer", "escribir", "adjuntar", "existe"]
+PUBLIC_API_ARCHIVO: tuple[str, ...] = (
+    "leer",
+    "escribir",
+    "adjuntar",
+    "anexar",
+    "existe",
+    "eliminar",
+    "leer_lineas",
+)
 
 
 def eliminar(*args, **kwargs):
@@ -90,3 +98,16 @@ def leer_lineas(*args, **kwargs):
     """Delega en ``pcobra.corelibs.archivo.leer_lineas``."""
 
     return _archivo.leer_lineas(*args, **kwargs)
+
+
+def _validar_superficie_publica_archivo() -> None:
+    if tuple(__all__) != PUBLIC_API_ARCHIVO:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] standard_library.archivo.__all__ debe exponer solo APIs Cobra-facing."
+        )
+
+
+__all__ = list(PUBLIC_API_ARCHIVO)
+
+
+_validar_superficie_publica_archivo()

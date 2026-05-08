@@ -117,3 +117,15 @@ __all__ = [
     "anexar",
     "leer_lineas",
 ]
+
+PUBLIC_API_ARCHIVO: tuple[str, ...] = tuple(__all__)
+
+
+def _validar_superficie_publica_archivo() -> None:
+    if tuple(__all__) != PUBLIC_API_ARCHIVO:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] archivo.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+_validar_superficie_publica_archivo()

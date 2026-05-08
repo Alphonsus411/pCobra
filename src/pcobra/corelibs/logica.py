@@ -498,3 +498,16 @@ def si_condicional(condicion: bool, cuando_verdadero: T, cuando_falso: T) -> T:
     """Retorna ``cuando_verdadero`` o ``cuando_falso`` según ``condicion``."""
 
     return cuando_verdadero if _asegurar_booleano(condicion, "condicion") else cuando_falso
+
+
+PUBLIC_API_LOGICA: tuple[str, ...] = tuple(__all__)
+
+
+def _validar_superficie_publica_logica() -> None:
+    if tuple(__all__) != PUBLIC_API_LOGICA:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] logica.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+_validar_superficie_publica_logica()

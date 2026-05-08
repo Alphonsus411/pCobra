@@ -12,7 +12,13 @@ from datetime import datetime
 from pcobra.standard_library.fecha import formatear as _formatear_fecha
 from pcobra.standard_library.fecha import hoy as _hoy
 
-__all__ = ["ahora", "formatear", "dormir", "epoch", "desde_epoch"]
+PUBLIC_API_TIEMPO: tuple[str, ...] = (
+    "ahora",
+    "formatear",
+    "dormir",
+    "epoch",
+    "desde_epoch",
+)
 
 
 def ahora() -> datetime:
@@ -44,3 +50,16 @@ def desde_epoch(segundos: float) -> datetime:
     """Convierte segundos Unix a ``datetime`` local."""
 
     return datetime.fromtimestamp(segundos)
+
+
+def _validar_superficie_publica_tiempo() -> None:
+    if tuple(__all__) != PUBLIC_API_TIEMPO:
+        raise RuntimeError(
+            "[STARTUP CONTRACT] tiempo.__all__ debe exponer únicamente la API pública canónica de Cobra."
+        )
+
+
+__all__ = list(PUBLIC_API_TIEMPO)
+
+
+_validar_superficie_publica_tiempo()
