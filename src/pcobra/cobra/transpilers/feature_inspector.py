@@ -16,16 +16,9 @@ from pcobra.cobra.transpilers.target_utils import normalize_target_name, target_
 # Carpeta donde se encuentran los transpiladores individuales
 BASE_DIR = Path(__file__).resolve().parent / "transpiler"
 
-_TRANSPILER_FILE_BY_TARGET = {
-    "javascript": "to_js.py",
-    "cpp": "to_cpp.py",
-    "asm": "to_asm.py",
-}
-
-
 def _resolve_transpiler_file(target: str) -> str:
     canonical = normalize_target_name(target)
-    return _TRANSPILER_FILE_BY_TARGET.get(canonical, f"to_{canonical}.py")
+    return f"to_{canonical}.py"
 
 
 # Patrones para detectar características registradas en los transpiladores
