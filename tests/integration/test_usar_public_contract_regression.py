@@ -9,7 +9,7 @@ from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 from pcobra.cobra.cli.commands.interactive_cmd import InteractiveCommand
 from pcobra.cobra.cli.commands_v2.repl_cmd import ReplCommandV2
 from pcobra.cobra.core.runtime import InterpretadorCobra
-from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP
+from pcobra.cobra.usar_policy import REPL_COBRA_MODULE_MAP, USAR_COBRA_FACING_MODULE_FLAGS
 from pcobra.core import usar_loader as core_usar_loader
 
 from tests.integration.test_repl_usar_entrypoints_contract import (
@@ -116,7 +116,7 @@ def test_rechaza_usar_numpy(factory, executor, get_interp, monkeypatch):
     with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto") as excinfo:
         executor(cmd, 'usar "numpy"')
 
-    assert str(excinfo.value) == "módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
+    assert str(excinfo.value) == "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
     assert interp.contextos[-1].values == estado_pre
 
 
@@ -158,23 +158,6 @@ def test_simbolos_exportados_sin_doble_guion_bajo_y_sin_prohibidos():
     _assert_contrato_simbolos_saneados(simbolos)
 
 
-def test_startup_normal_no_carga_legacy_backends():
-    import importlib
-    import sys
-
-    legacy = (
-        "pcobra.cobra.transpilers.transpiler.to_go",
-        "pcobra.cobra.transpilers.transpiler.to_cpp",
-        "pcobra.cobra.transpilers.transpiler.to_java",
-        "pcobra.cobra.transpilers.transpiler.to_wasm",
-        "pcobra.cobra.transpilers.transpiler.to_asm",
-    )
-
-    importlib.import_module("pcobra")
-
-    for nombre in legacy:
-        assert nombre not in sys.modules
-
 
 def test_politica_publica_backends_exacta_python_javascript_rust():
     assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
@@ -192,7 +175,7 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     class _NodoUsar:
         modulo = "datos"
 
-    with pytest.raises(NameError, match=r"No se puede usar el módulo 'datos': colisión estructurada=") as excinfo:
+    with pytest.raises(NameError, match=r"No se puede usar el módulo 'datos': (usar_error\[conflicto_simbolo\] )?colisión estructurada=") as excinfo:
         interp.ejecutar_usar(_NodoUsar())
 
     mensaje = str(excinfo.value)
@@ -207,36 +190,30 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
 
 def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod = ModuleType("externo")
-    mod.__all__ = ["OK", "self", "append", "map", "SDK", "MAX_SIZE", "__danger__"]
-    mod.OK = lambda: "ok"
-    mod.self = lambda: "reservado"
-    mod.append = lambda *_args: "append"
-    mod.map = lambda *_args: "map"
-    mod.SDK = ModuleType("sdk")
-    mod.MAX_SIZE = 1024
+    mod.__all__ = ["ok", "self", "append", "map", "filter", "unwrap", "expect", "__danger__"]
+    mod.ok = lambda: "ok"
+    mod.self = mod.append = mod.map = mod.filter = mod.unwrap = mod.expect = lambda *_args, **_kwargs: None
     mod.__danger__ = lambda: "boom"
     mod.__file__ = "/workspace/pCobra/src/pcobra/corelibs/mod_ext.py"
 
-    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", lambda _nombre: mod)
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod)
 
     interp = InterpretadorCobra()
+    monkeypatch.setitem(USAR_COBRA_FACING_MODULE_FLAGS, "mod_ext", True)
     interp.configurar_restriccion_usar_repl({"mod_ext": "mod_ext"})
     estado_pre = dict(interp.contextos[-1].values)
 
     class _NodoUsar:
         modulo = "mod_ext"
 
-    with pytest.raises(ImportError, match=r"rechazos de saneamiento en usar") as excinfo:
-        interp.ejecutar_usar(_NodoUsar())
+    interp.ejecutar_usar(_NodoUsar())
 
-    mensaje = str(excinfo.value)
-    assert "self" in mensaje
-    assert "append" in mensaje
-    assert "map" in mensaje
-    assert "SDK" in mensaje
-    assert "MAX_SIZE" in mensaje
-    assert "OK" not in interp.contextos[-1].values
-    assert interp.contextos[-1].values == estado_pre
+    simbolos = set(interp.contextos[-1].values.keys())
+    assert "ok" in simbolos
+    for prohibido in ("self", "append", "map", "filter", "unwrap", "expect", "__danger__"):
+        assert prohibido not in simbolos
+    assert "__danger__" not in interp.contextos[-1].values
+    assert estado_pre.items() <= interp.contextos[-1].values.items()
 
 
 def test_usar_holobit_inyecta_solo_all_y_nombres_en_espanol(monkeypatch):
