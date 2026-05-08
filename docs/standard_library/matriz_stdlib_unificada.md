@@ -1,164 +1,39 @@
-# Matriz única de stdlib Cobra (autogenerado)
+# Matriz unificada de stdlib (inventario + propuestas)
 
-Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
+Este documento usa `__all__` como fuente pública para cada módulo.
 
-## Tabla de garantías por módulo
+## Inventario actual por módulo
+- `src/pcobra/corelibs/numero.py`: absoluto, redondear, piso, techo, mcd, mcm, es_cercano, hipotenusa, distancia_euclidiana, es_finito, es_infinito, es_nan, copiar_signo, signo, producto, entero_a_base, entero_desde_base, longitud_bits, contar_bits, rotar_bits_izquierda, rotar_bits_derecha, entero_a_bytes, entero_desde_bytes, raiz, raiz_entera, potencia, limitar, interpolar, envolver_modular, aleatorio, aleatorio_entero, mediana, moda, desviacion_estandar, es_par, es_primo, factorial, promedio, combinaciones, permutaciones, suma_precisa, varianza, varianza_muestral, media_geometrica, media_armonica, percentil, cuartiles, rango_intercuartil, coeficiente_variacion
+- `src/pcobra/standard_library/numero.py`: es_finito, es_infinito, es_nan, copiar_signo, signo, limitar, hipotenusa, distancia_euclidiana, raiz_entera, combinaciones, permutaciones, suma_precisa, interpolar, envolver_modular, varianza, varianza_muestral, media_geometrica, media_armonica, percentil, cuartiles, rango_intercuartil, coeficiente_variacion, absoluto, redondear, piso, techo, mcd, mcm, es_cercano, raiz, potencia, mediana, moda, es_par, es_primo, factorial, promedio, sumatoria, producto
+- `src/pcobra/corelibs/texto.py`: mayusculas, minusculas, capitalizar, titulo, intercambiar_mayusculas, invertir, concatenar, codificar, decodificar, quitar_espacios, dividir, dividir_derecha, encontrar, encontrar_derecha, indice, indice_derecha, subcadena_antes, subcadena_despues, subcadena_antes_ultima, subcadena_despues_ultima, unir, formatear, formatear_mapa, tabla_traduccion, traducir, reemplazar, empieza_con, termina_con, incluye, quitar_prefijo, quitar_sufijo, a_snake, a_camel, quitar_envoltura, prefijo_comun, sufijo_comun, rellenar_izquierda, particionar, particionar_derecha, rellenar_derecha, normalizar_unicode, dividir_lineas, expandir_tabulaciones, contar_subcadena, indentar_texto, desindentar_texto, envolver_texto, acortar_texto, centrar_texto, rellenar_ceros, minusculas_casefold, es_alfabetico, es_alfa_numerico, es_decimal, es_numerico, es_identificador, es_imprimible, es_ascii, es_mayusculas, es_minusculas, es_espacio, es_titulo, es_digito, lineas_no_vacias
+- `src/pcobra/standard_library/texto.py`: quitar_acentos, normalizar_espacios, es_palindromo, es_anagrama, codificar, decodificar, es_alfabetico, es_alfa_numerico, es_decimal, es_numerico, es_identificador, es_imprimible, es_ascii, es_mayusculas, es_minusculas, es_titulo, es_digito, es_espacio, quitar_prefijo, quitar_sufijo, a_snake, a_camel, quitar_envoltura, prefijo_comun, sufijo_comun, dividir_lineas, dividir_derecha, encontrar, encontrar_derecha, subcadena_antes, subcadena_despues, subcadena_antes_ultima, subcadena_despues_ultima, indice, indice_derecha, contar_subcadena, centrar_texto, rellenar_ceros, minusculas, mayusculas, minusculas_casefold, intercambiar_mayusculas, expandir_tabulaciones, particionar, particionar_derecha, indentar_texto, desindentar_texto, envolver_texto, acortar_texto, formatear, formatear_mapa, tabla_traduccion, traducir, recortar, repetir
+- `src/pcobra/corelibs/datos.py`: leer_csv, leer_json, escribir_csv, escribir_json, leer_excel, escribir_excel, leer_parquet, escribir_parquet, leer_feather, escribir_feather, describir, correlacion_pearson, correlacion_spearman, matriz_covarianza, calcular_percentiles, resumen_rapido, seleccionar_columnas, filtrar, mutar_columna, separar_columna, unir_columnas, agrupar_y_resumir, tabla_cruzada, pivotar_ancho, pivotar_largo, ordenar_tabla, combinar_tablas, rellenar_nulos, desplegar_tabla, pivotar_tabla, agregar, mapear, reducir, claves, valores, longitud
+- `src/pcobra/standard_library/datos.py`: leer_csv, leer_json, escribir_csv, escribir_json, leer_excel, escribir_excel, leer_parquet, escribir_parquet, leer_feather, escribir_feather, describir, correlacion_pearson, correlacion_spearman, matriz_covarianza, calcular_percentiles, resumen_rapido, seleccionar_columnas, filtrar, mutar_columna, separar_columna, unir_columnas, agrupar_y_resumir, tabla_cruzada, pivotar_ancho, pivotar_largo, ordenar_tabla, combinar_tablas, rellenar_nulos, desplegar_tabla, pivotar_tabla, agregar, mapear, reducir, claves, valores, longitud, invertir_tabla, tomar
+- `src/pcobra/corelibs/logica.py`: es_verdadero, es_falso, conjuncion, disyuncion, negacion, xor, nand, nor, implica, equivale, xor_multiple, entonces, si_no, condicional, coalescer, todas, alguna, ninguna, solo_uno, conteo_verdaderos, paridad, mayoria, exactamente_n, tabla_verdad, diferencia_simetrica, si_condicional
+- `src/pcobra/standard_library/logica.py`: es_verdadero, es_falso, conjuncion, disyuncion, negacion, entonces, si_no, coalescer, condicional, xor, nand, nor, implica, equivale, xor_multiple, todas, alguna, ninguna, solo_uno, conteo_verdaderos, paridad, mayoria, exactamente_n, tabla_verdad, diferencia_simetrica
+- `src/pcobra/corelibs/asincrono.py`: proteger_tarea, limitar_tiempo, ejecutar_en_hilo, recolectar, carrera, primero_exitoso, esperar_timeout, reintentar_async, grupo_tareas, crear_tarea, iterar_completadas, mapear_concurrencia, recolectar_resultados, dormir_async
+- `src/pcobra/standard_library/asincrono.py`: grupo_tareas, limitar_tiempo, proteger_tarea, ejecutar_en_hilo, reintentar_async, recolectar
+- `src/pcobra/corelibs/sistema.py`: obtener_os, ejecutar, ejecutar_async, ejecutar_stream, obtener_env, listar_dir, ejecutar_comando_async, directorio_actual
+- `src/pcobra/standard_library/sistema.py`: obtener_os, ejecutar, ejecutar_async, ejecutar_stream, obtener_env, listar_dir, directorio_actual
+- `src/pcobra/corelibs/archivo.py`: leer, escribir, existe, eliminar, anexar, leer_lineas
+- `src/pcobra/standard_library/archivo.py`: leer, escribir, adjuntar, existe
+- `src/pcobra/corelibs/tiempo.py`: ahora, formatear, dormir, epoch, desde_epoch
+- `src/pcobra/standard_library/tiempo.py`: ahora, formatear, dormir, epoch, desde_epoch
+- `src/pcobra/corelibs/red.py`: obtener_url, enviar_post, obtener_url_async, enviar_post_async, descargar_archivo, obtener_url_texto, obtener_json
+- `src/pcobra/standard_library/red.py`: obtener_url, enviar_post, obtener_url_async, enviar_post_async, descargar_archivo, obtener_json, obtener_url_texto
+- `src/pcobra/corelibs/holobit.py`: (dinámico)
+- `src/pcobra/standard_library/holobit.py`: crear_holobit, validar_holobit, serializar_holobit, deserializar_holobit, proyectar, transformar, graficar, combinar, medir
 
-| Módulo | API pública | Backend primario | Fallback | Límites |
-|---|---|---|---|---|
-| `cobra.core` | 4 | `python` | `rust, javascript` | es_finito:rust, es_finito:javascript, es_infinito:rust, es_infinito:javascript, copiar_signo:rust, copiar_signo:javascript, signo:rust, signo:javascript |
-| `cobra.datos` | 4 | `python` | `javascript` | filtrar:javascript, seleccionar_columnas:javascript, a_listas:javascript, de_listas:javascript |
-| `cobra.web` | 3 | `javascript` | `python` | obtener_url:javascript, enviar_post:javascript, descargar_archivo:javascript |
-| `cobra.system` | 4 | `python` | `rust, javascript` | leer:rust, leer:javascript, escribir:rust, escribir:javascript, ejecutar:rust, ejecutar:javascript, obtener_env:rust, obtener_env:javascript |
-
-## `cobra.core`
-
-- **Backend primario:** `python`
-- **Fallback permitido:** `rust, javascript`
-- **Mapeo `standard_library`:** `src/pcobra/standard_library/numero.py`
-- **Mapeo `corelibs`:** `src/pcobra/corelibs/numero.py`
-- **Mapeo `core/nativos`:** `src/pcobra/core/nativos/numero.js`
-
-### API pública
-
-- `cobra.core.es_finito`
-- `cobra.core.es_infinito`
-- `cobra.core.copiar_signo`
-- `cobra.core.signo`
-
-### Exportaciones públicas (alias Cobra estables)
-
-| Alias Cobra | Módulo runtime trazable |
+## Matriz propuesta de funciones nuevas (nombres Cobra en español)
+| Módulo | Funciones nuevas propuestas |
 |---|---|
-| `cobra.core.es_finito` | `src/pcobra/standard_library/numero.py` |
-| `cobra.core.es_infinito` | `src/pcobra/standard_library/numero.py` |
-| `cobra.core.copiar_signo` | `src/pcobra/standard_library/numero.py` |
-| `cobra.core.signo` | `src/pcobra/standard_library/numero.py` |
-
-### Cobertura por función
-
-| Función | Backend | Nivel |
-|---|---|---|
-| `cobra.core.es_finito` | `python` | `full` |
-| `cobra.core.es_finito` | `rust` | `partial` |
-| `cobra.core.es_finito` | `javascript` | `partial` |
-| `cobra.core.es_infinito` | `python` | `full` |
-| `cobra.core.es_infinito` | `rust` | `partial` |
-| `cobra.core.es_infinito` | `javascript` | `partial` |
-| `cobra.core.copiar_signo` | `python` | `full` |
-| `cobra.core.copiar_signo` | `rust` | `partial` |
-| `cobra.core.copiar_signo` | `javascript` | `partial` |
-| `cobra.core.signo` | `python` | `full` |
-| `cobra.core.signo` | `rust` | `partial` |
-| `cobra.core.signo` | `javascript` | `partial` |
-
-## `cobra.datos`
-
-- **Backend primario:** `python`
-- **Fallback permitido:** `javascript`
-- **Mapeo `standard_library`:** `src/pcobra/standard_library/datos.py`
-- **Mapeo `corelibs`:** `src/pcobra/corelibs/coleccion.py`
-- **Mapeo `core/nativos`:** `src/pcobra/core/nativos/datos.js`
-
-### API pública
-
-- `cobra.datos.filtrar`
-- `cobra.datos.seleccionar_columnas`
-- `cobra.datos.a_listas`
-- `cobra.datos.de_listas`
-
-### Exportaciones públicas (alias Cobra estables)
-
-| Alias Cobra | Módulo runtime trazable |
-|---|---|
-| `cobra.datos.filtrar` | `src/pcobra/standard_library/datos.py` |
-| `cobra.datos.seleccionar_columnas` | `src/pcobra/standard_library/datos.py` |
-| `cobra.datos.a_listas` | `src/pcobra/standard_library/datos.py` |
-| `cobra.datos.de_listas` | `src/pcobra/standard_library/datos.py` |
-
-### Cobertura por función
-
-| Función | Backend | Nivel |
-|---|---|---|
-| `cobra.datos.filtrar` | `python` | `full` |
-| `cobra.datos.filtrar` | `javascript` | `partial` |
-| `cobra.datos.seleccionar_columnas` | `python` | `full` |
-| `cobra.datos.seleccionar_columnas` | `javascript` | `partial` |
-| `cobra.datos.a_listas` | `python` | `full` |
-| `cobra.datos.a_listas` | `javascript` | `partial` |
-| `cobra.datos.de_listas` | `python` | `full` |
-| `cobra.datos.de_listas` | `javascript` | `partial` |
-
-## `cobra.web`
-
-- **Backend primario:** `javascript`
-- **Fallback permitido:** `python`
-- **Mapeo `standard_library`:** -
-- **Mapeo `corelibs`:** `src/pcobra/corelibs/red.py`
-- **Mapeo `core/nativos`:** `src/pcobra/core/nativos/red.js`
-
-### API pública
-
-- `cobra.web.obtener_url`
-- `cobra.web.enviar_post`
-- `cobra.web.descargar_archivo`
-
-### Exportaciones públicas (alias Cobra estables)
-
-| Alias Cobra | Módulo runtime trazable |
-|---|---|
-| `cobra.web.obtener_url` | `src/pcobra/corelibs/red.py` |
-| `cobra.web.enviar_post` | `src/pcobra/corelibs/red.py` |
-| `cobra.web.descargar_archivo` | `src/pcobra/corelibs/red.py` |
-
-### Cobertura por función
-
-| Función | Backend | Nivel |
-|---|---|---|
-| `cobra.web.obtener_url` | `javascript` | `partial` |
-| `cobra.web.obtener_url` | `python` | `full` |
-| `cobra.web.enviar_post` | `javascript` | `partial` |
-| `cobra.web.enviar_post` | `python` | `full` |
-| `cobra.web.descargar_archivo` | `javascript` | `partial` |
-| `cobra.web.descargar_archivo` | `python` | `full` |
-
-## `cobra.system`
-
-- **Backend primario:** `python`
-- **Fallback permitido:** `rust, javascript`
-- **Mapeo `standard_library`:** `src/pcobra/standard_library/archivo.py`
-- **Mapeo `corelibs`:** `src/pcobra/corelibs/sistema.py`
-- **Mapeo `core/nativos`:** `src/pcobra/core/nativos/sistema.js`
-
-### API pública
-
-- `cobra.system.leer`
-- `cobra.system.escribir`
-- `cobra.system.ejecutar`
-- `cobra.system.obtener_env`
-
-### Exportaciones públicas (alias Cobra estables)
-
-| Alias Cobra | Módulo runtime trazable |
-|---|---|
-| `cobra.system.leer` | `src/pcobra/standard_library/archivo.py` |
-| `cobra.system.escribir` | `src/pcobra/standard_library/archivo.py` |
-| `cobra.system.ejecutar` | `src/pcobra/corelibs/sistema.py` |
-| `cobra.system.obtener_env` | `src/pcobra/corelibs/sistema.py` |
-
-### Cobertura por función
-
-| Función | Backend | Nivel |
-|---|---|---|
-| `cobra.system.leer` | `python` | `full` |
-| `cobra.system.leer` | `rust` | `partial` |
-| `cobra.system.leer` | `javascript` | `partial` |
-| `cobra.system.escribir` | `python` | `full` |
-| `cobra.system.escribir` | `rust` | `partial` |
-| `cobra.system.escribir` | `javascript` | `partial` |
-| `cobra.system.ejecutar` | `python` | `full` |
-| `cobra.system.ejecutar` | `rust` | `partial` |
-| `cobra.system.ejecutar` | `javascript` | `partial` |
-| `cobra.system.obtener_env` | `python` | `full` |
-| `cobra.system.obtener_env` | `rust` | `partial` |
-| `cobra.system.obtener_env` | `javascript` | `partial` |
+| `numero` | sumatoria, producto, truncar, dividir_entera, resto |
+| `texto` | recortar, repetir, centrar, separar_lineas, unir_con |
+| `datos` | tomar, omitir, invertir_tabla, valores_unicos, contar_por |
+| `logica` | si_todos, si_alguno, negar_todos, igual_todos, evaluar_reglas |
+| `asincrono` | carrera, esperar_primera, tiempo_limite, canal_simple, mapa_async |
+| `sistema` | obtener_usuario, existe_comando, variables_entorno, ruta_home, crear_proceso |
+| `archivo` | copiar, mover, renombrar, crear_carpeta, listar_archivos |
+| `tiempo` | sumar_segundos, diferencia_segundos, inicio_dia, fin_dia, zona_horaria |
+| `red` | enviar_put, enviar_delete, descargar_json, validar_url, construir_query |
+| `holobit` | normalizar, escalar, distancia, promedio_holobit, fusionar |

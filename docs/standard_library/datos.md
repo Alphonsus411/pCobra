@@ -176,3 +176,12 @@ En el objetivo JavaScript se ofrece una implementación parcial que mantiene las
 
 
 El módulo `datos` sigue funcionando como fachada canónica sobre `standard_library.datos`; no introduce backend paralelo y reexporta su API existente.
+
+
+## Uso rápido
+
+```cobra
+usar "datos"
+```
+
+Nombres públicos en español (fuente: `__all__`).

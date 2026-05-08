@@ -23,3 +23,12 @@ Funciones de sistema seguras:
 - `obtener_env`
 - `listar_dir`
 - `directorio_actual`
+
+
+## Uso rápido
+
+```cobra
+usar "sistema"
+```
+
+Nombres públicos en español (fuente: `__all__`).

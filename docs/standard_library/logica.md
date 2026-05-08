@@ -77,3 +77,12 @@ para facilitar la depuración.
 <!-- END: AUTO-STDLIB-FUNCTIONS -->
 
 - `si_condicional(condicion, cuando_verdadero, cuando_falso)` ofrece el ternario explícito en español.
+
+
+## Uso rápido
+
+```cobra
+usar "logica"
+```
+
+Nombres públicos en español (fuente: `__all__`).

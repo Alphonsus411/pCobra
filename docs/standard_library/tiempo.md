@@ -22,3 +22,12 @@ API temporal en español:
 - `dormir(segundos)`
 - `epoch(fecha=None)`
 - `desde_epoch(segundos)`
+
+
+## Uso rápido
+
+```cobra
+usar "tiempo"
+```
+
+Nombres públicos en español (fuente: `__all__`).

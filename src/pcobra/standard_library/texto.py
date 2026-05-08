@@ -152,6 +152,8 @@ __all__ = [
     "formatear_mapa",
     "tabla_traduccion",
     "traducir",
+    "recortar",
+    "repetir",
 ]
 
 
@@ -927,3 +929,17 @@ def lineas_no_vacias(*args, **kwargs):
     """Delega en ``pcobra.corelibs.texto.lineas_no_vacias``."""
 
     return _texto.lineas_no_vacias(*args, **kwargs)
+
+
+def recortar(texto: str) -> str:
+    """Elimina espacios en blanco al inicio y al final de ``texto``."""
+
+    return quitar_espacios(texto)
+
+
+def repetir(texto: str, veces: int) -> str:
+    """Repite ``texto`` ``veces`` veces de forma segura."""
+
+    if veces < 0:
+        raise ValueError("veces debe ser >= 0")
+    return texto * veces

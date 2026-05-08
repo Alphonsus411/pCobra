@@ -50,6 +50,8 @@ __all__ = [
     "es_primo",
     "factorial",
     "promedio",
+    "sumatoria",
+    "producto",
 ]
 
 
@@ -405,3 +407,18 @@ def promedio(*args, **kwargs):
     """Delega en ``pcobra.corelibs.numero.promedio``."""
 
     return _numero.promedio(*args, **kwargs)
+
+
+def sumatoria(valores):
+    """Suma todos los elementos numéricos de ``valores``."""
+
+    return suma_precisa(valores)
+
+
+def producto(valores):
+    """Multiplica los elementos numéricos de ``valores`` al estilo ``math.prod``."""
+
+    acumulado = 1
+    for valor in valores:
+        acumulado *= float(valor)
+    return acumulado
