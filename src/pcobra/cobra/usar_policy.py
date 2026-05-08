@@ -146,9 +146,19 @@ CANONICAL_MODULE_SURFACE_CONTRACTS: dict[str, CanonicalModuleSurfaceContract] = 
         forbidden_symbols=("requests", "httpx"),
     ),
     "holobit": CanonicalModuleSurfaceContract(
-        required_functions=("crear_holobit", "validar_holobit", "transformar", "graficar"),
+        required_functions=(
+            "crear_holobit",
+            "validar_holobit",
+            "serializar_holobit",
+            "deserializar_holobit",
+            "proyectar",
+            "transformar",
+            "graficar",
+            "combinar",
+            "medir",
+        ),
         allowed_aliases={},
-        forbidden_symbols=("_SDKHolobit",),
+        forbidden_symbols=("_SDKHolobit", "Holobit", "holobit_sdk"),
     ),
 }
 

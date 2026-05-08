@@ -5,10 +5,11 @@ No re-exporta clases ni símbolos internos del runtime de Holobit.
 """
 
 import json
+import math
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-from pcobra.core.holobits.graficar import graficar as _sdk_graficar
+from pcobra.core.holobits.graficar import graficar as _runtime_graficar
 from pcobra.core.holobits.holobit import Holobit as _RuntimeHolobit
 
 
@@ -20,6 +21,22 @@ def _error_dominio(mensaje: str, *, causa: Exception | None = None) -> ErrorHolo
     if causa is None:
         return ErrorHolobit(mensaje)
     return ErrorHolobit(mensaje)
+
+
+class _AdaptadorInternoHolobit:
+    """Encapsula acceso al runtime interno de Holobit sin exponer backend."""
+
+    @staticmethod
+    def crear_desde_valores(valores: list[float]) -> Any:
+        return _RuntimeHolobit(valores)
+
+    @staticmethod
+    def obtener_valores(hb: Any) -> list[float]:
+        return [float(v) for v in hb.valores]
+
+    @staticmethod
+    def graficar(hb: Any) -> str:
+        return _runtime_graficar(hb)
 
 
 def _es_numero(valor: Any) -> bool:
@@ -38,7 +55,7 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
 
 
 def _a_estructura_cobra(hb: Any) -> dict[str, Any]:
-    return {"tipo": "holobit", "valores": [float(v) for v in hb.valores]}
+    return {"tipo": "holobit", "valores": _AdaptadorInternoHolobit.obtener_valores(hb)}
 
 
 def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
@@ -58,7 +75,7 @@ def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
 def _desde_estructura_cobra(hb: dict[str, Any]) -> Any:
     estructura = _validar_estructura_holobit(hb)
     try:
-        return _RuntimeHolobit(_normalizar_valores(estructura["valores"]))
+        return _AdaptadorInternoHolobit.crear_desde_valores(_normalizar_valores(estructura["valores"]))
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
         raise _error_dominio("No se pudo adaptar el holobit al runtime de Cobra", causa=exc) from None
 
@@ -66,7 +83,7 @@ def _desde_estructura_cobra(hb: dict[str, Any]) -> Any:
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
     if valores is None:
         raise TypeError("'valores' no puede ser None")
-    return _a_estructura_cobra(_RuntimeHolobit(_normalizar_valores(valores)))
+    return _a_estructura_cobra(_AdaptadorInternoHolobit.crear_desde_valores(_normalizar_valores(valores)))
 
 
 def validar_holobit(hb: Any) -> bool:
@@ -119,8 +136,6 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
         angulo = float(parametros[1])
         if eje != "z" or len(valores) < 2:
             return crear_holobit(valores)
-        import math
-
         rad = math.radians(angulo)
         x, y = valores[0], valores[1]
         valores[0] = x * math.cos(rad) - y * math.sin(rad)
@@ -132,7 +147,7 @@ def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[st
 
 def graficar(hb: dict[str, Any]) -> str:
     try:
-        vista = _sdk_graficar(_desde_estructura_cobra(hb))
+        vista = _AdaptadorInternoHolobit.graficar(_desde_estructura_cobra(hb))
     except Exception as exc:  # pragma: no cover - defensivo frente al SDK
         raise _error_dominio("No se pudo graficar el holobit en el runtime de Cobra", causa=exc) from None
     if not isinstance(vista, str):
@@ -181,4 +196,3 @@ __all__ = list(PUBLIC_API_HOLOBIT)
 
 
 _validar_superficie_publica_holobit()
-
