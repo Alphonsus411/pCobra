@@ -240,6 +240,12 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         if not exports:
             raise RuntimeError(f"[STARTUP CONTRACT] {module_name} debe declarar __all__")
 
+        expected_exports = USAR_RUNTIME_EXPORT_OVERRIDES.get(module_name)
+        if expected_exports is not None and tuple(exports) != tuple(expected_exports):
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} debe exportar exactamente {expected_exports} y en ese orden"
+            )
+
         missing_required = [name for name in contract.required_functions if name not in exports]
         if missing_required:
             raise RuntimeError(
@@ -256,6 +262,22 @@ def validar_paridad_superficie_publica_modulos_canonicos() -> None:
         if leaked_forbidden:
             raise RuntimeError(
                 f"[STARTUP CONTRACT] {module_name} exporta símbolos prohibidos: {leaked_forbidden}"
+            )
+
+        leaked_internal = [
+            name
+            for name in exports
+            if name.startswith("_") or "sdk" in name.lower() or "internal" in name.lower()
+        ]
+        if leaked_internal:
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} filtra símbolos internos en __all__: {leaked_internal}"
+            )
+
+        leaked_class_like = [name for name in exports if isinstance(name, str) and name[:1].isupper()]
+        if leaked_class_like:
+            raise RuntimeError(
+                f"[STARTUP CONTRACT] {module_name} no debe exportar clases en __all__: {leaked_class_like}"
             )
 
         stdlib_path = Path(__file__).resolve().parents[1] / "standard_library" / f"{module_name}.py"
