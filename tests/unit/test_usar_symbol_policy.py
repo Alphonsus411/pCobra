@@ -4,9 +4,11 @@ from pcobra.core.usar_symbol_policy import sanear_exportables_para_usar, sanear_
 
 
 def test_rechaza_nombres_prohibidos_explicitos():
-    for nombre in ("self", "append", "map"):
+    for nombre in ("self", "append", "map", "filter", "unwrap", "expect"):
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
+        assert resultado.codigo == "explicit_forbidden_name"
+        assert "Usa el nombre Cobra canónico" in (resultado.mensaje or "")
 
 
 def test_rechaza_doble_guion_bajo_y_modulo_backend():
@@ -28,7 +30,7 @@ def test_reglas_de_saneamiento_por_caso_especifico():
 
     r_dunder_python = sanear_simbolo_para_usar("__name__", lambda: None)
     assert r_dunder_python.rechazado is True
-    assert r_dunder_python.codigo == "private_prefix"
+    assert r_dunder_python.codigo == "dunder_name"
 
     r_objeto_backend = sanear_simbolo_para_usar("backend", ModuleType("backend"))
     assert r_objeto_backend.rechazado is True
@@ -56,6 +58,24 @@ def test_saneamiento_centralizado_aplica_todas_las_reglas():
     assert [nombre for nombre, _ in permitidos] == ["PI", "publica"]
     assert {r.nombre for r in rechazos} == {"_interno", "append"}
     assert [w.nombre for w in warnings] == ["PI"]
+
+
+def test_acepta_equivalentes_canonicos_en_espanol():
+    for nombre in ("agregar", "mapear", "filtrar", "obtener_o_error", "esperar_valor"):
+        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+        assert resultado.rechazado is False
+        assert resultado.codigo == "ok"
+
+
+def test_rechaza_no_callable_que_no_es_constante_publica_canonica():
+    resultado = sanear_simbolo_para_usar("valor_interno", 123)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "non_callable_not_canonical_public_constant"
+
+    resultado_ok = sanear_simbolo_para_usar("PI", 3.14159)
+    assert resultado_ok.rechazado is False
+    assert resultado_ok.warning is True
+    assert resultado_ok.codigo == "public_constant"
 
 
 

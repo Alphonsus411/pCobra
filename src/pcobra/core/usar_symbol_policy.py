@@ -89,6 +89,14 @@ def _mensaje_nombre_prohibido(nombre: str) -> str:
 
 def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamientoSimboloUsar:
     """Aplica la política de exportación de símbolos para ``usar``."""
+    if nombre in DUNDERS_BLOQUEADOS:
+        return _rechazar(
+            nombre,
+            simbolo,
+            "dunder_name",
+            "dunders Python conocidos no se permiten en usar",
+        )
+
     if nombre.startswith("_"):
         return _rechazar(
             nombre,
@@ -103,14 +111,6 @@ def sanear_simbolo_para_usar(nombre: str, simbolo: object) -> ResultadoSaneamien
             simbolo,
             "dunder_pattern",
             "nombres con '__' no se permiten en usar",
-        )
-
-    if nombre in DUNDERS_BLOQUEADOS:
-        return _rechazar(
-            nombre,
-            simbolo,
-            "dunder_name",
-            "dunders Python conocidos no se permiten en usar",
         )
 
     if _es_objeto_backend_no_exportable(simbolo):
