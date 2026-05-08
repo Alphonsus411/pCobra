@@ -37,31 +37,17 @@ LEGACY_OR_AMBIGUOUS_TARGETS: Final[tuple[str, ...]] = (
 
 # Recomendación canónica por cada nombre retirado.
 RETIRED_TARGET_REPLACEMENTS: Final[dict[str, str]] = {
-    "assembly": "asm",
     "js": "javascript",
-    "c": "cpp",
-    "cxx": "cpp",
-    "cpp11": "cpp",
-    "cpp17": "cpp",
-    "asm64": "asm",
-    "assembler": "asm",
     "node": "javascript",
     "nodejs": "javascript",
     "py": "python",
     "python3": "python",
-    "golang": "go",
-    "jvm": "java",
 }
 
 TARGET_FRIENDLY_LABELS: Final[dict[str, str]] = {
     "python": "Python",
     "rust": "Rust",
     "javascript": "JavaScript",
-    "wasm": "WebAssembly",
-    "go": "Go",
-    "cpp": "cpp",
-    "java": "Java",
-    "asm": "asm",
 }
 
 
