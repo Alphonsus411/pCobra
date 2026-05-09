@@ -2,6 +2,7 @@ import pytest
 from argparse import ArgumentTypeError
 
 from pcobra.cobra.cli.target_policies import parse_target, parse_target_list
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
 
 @pytest.mark.parametrize("value", ["legacy", "backend_x", "fantasy"])
@@ -31,6 +32,11 @@ def test_parse_target_list_preserva_nombres_canonicos():
     assert parse_target_list("python,javascript") == ["python", "javascript"]
 
 
+def test_politica_publica_backend_es_exactamente_python_javascript_rust():
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+    assert parse_target_list(",".join(PUBLIC_BACKENDS)) == list(PUBLIC_BACKENDS)
+
+
 def test_parse_target_list_rechaza_valores_fuera_del_set_canonico_en_cualquier_posicion():
     with pytest.raises(ArgumentTypeError):
         parse_target_list("fantasy,python")
@@ -41,5 +47,5 @@ def test_parse_target_list_rechaza_valores_fuera_del_set_canonico_en_cualquier_p
 
 def test_parse_target_emite_advertencia_consistente_en_backend_interno(monkeypatch):
     monkeypatch.setenv("COBRA_INTERNAL_LEGACY_TARGETS", "1")
-    with pytest.warns(UserWarning, match=r"INTERNAL LEGACY BACKEND.*estado=active-migration"):
-        assert parse_target("go") == "go"
+    with pytest.raises(RuntimeError, match="Legacy backend lifecycle deshabilitado por defecto"):
+        parse_target("go")
