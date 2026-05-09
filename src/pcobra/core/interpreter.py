@@ -111,6 +111,13 @@ USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
 USAR_COLLISION_STRICT_ERROR = "strict_error"
 USAR_COLLISION_WARN_ALIAS_REQUIRED = "warn_alias_required"
 _USAR_COLLISION_POLICIES = frozenset({USAR_COLLISION_STRICT_ERROR, USAR_COLLISION_WARN_ALIAS_REQUIRED})
+
+
+def _runtime_debug_enabled() -> bool:
+    """Habilita diagnóstico puntual de runtime vía entorno."""
+    return os.getenv("PCOBRA_DEBUG_RUNTIME", "").strip() == "1"
+
+
 def _ruta_import_permitida(ruta: str) -> bool:
     """Indica si una ruta está autorizada para importarse."""
 
@@ -1932,6 +1939,12 @@ class InterpretadorCobra:
 
             mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo, nombre_modulo)
             simbolos_saneados = list(mapa_limpio.items())
+            if _runtime_debug_enabled():
+                logging.info(
+                    "[PCOBRA_DEBUG_RUNTIME] usar=%s simbolos_inyectados=%s",
+                    nodo.modulo,
+                    sorted(mapa_limpio.keys()),
+                )
             if conflictos_saneamiento:
                 evento_conflictos = {
                     "evento": "usar_sanitize_conflicts",

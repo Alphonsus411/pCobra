@@ -216,6 +216,22 @@ class InteractiveCommand(BaseCommand):
 
     _USAR_ALIAS_REPL = REPL_COBRA_MODULE_MAP
 
+    @staticmethod
+    def _runtime_debug_enabled() -> bool:
+        return os.getenv("PCOBRA_DEBUG_RUNTIME", "").strip() == "1"
+
+    def _log_runtime_diagnostics(self) -> None:
+        if not self._runtime_debug_enabled():
+            return
+        runtime_file = inspect.getfile(self.interpretador.__class__)
+        evaluador_llamadas = getattr(self.interpretador, "ejecutar_llamada_funcion", None)
+        evaluador_clase = type(evaluador_llamadas.__self__).__name__ if evaluador_llamadas else "desconocido"
+        self.logger.info(
+            "[PCOBRA_DEBUG_RUNTIME] interpreter_file=%s call_evaluator_class=%s",
+            runtime_file,
+            evaluador_clase,
+        )
+
     def __init__(self, interpretador: InterpretadorCobra) -> None:
         """Inicializa el comando interactivo.
 
@@ -241,6 +257,7 @@ class InteractiveCommand(BaseCommand):
         self._allowed_modes = frozenset({"analysis", "execution"})
         self.mode = "analysis"
         self._configurar_restriccion_usar_repl()
+        self._log_runtime_diagnostics()
 
     def _configurar_restriccion_usar_repl(self) -> None:
         """Activa la política estricta de ``usar`` en REPL.
