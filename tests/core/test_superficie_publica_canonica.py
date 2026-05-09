@@ -99,3 +99,20 @@ def test_aliases_controlados_por_contrato(modulo: str, aliases: dict[str, str]):
 def test_override_runtime_sin_simbolos_prohibidos(modulo: str, exportes: tuple[str, ...]):
     assert all("__" not in nombre for nombre in exportes)
     assert PROHIBIDOS.isdisjoint(exportes)
+
+
+def test_texto_override_runtime_expuesto_por_modulo_mapeado() -> None:
+    ruta_relativa = REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"]
+    ruta_modulo = RAIZ_REPO / ruta_relativa
+
+    publicos = set(_nombres_publicos(ruta_modulo))
+    exportes_runtime_texto = set(USAR_RUNTIME_EXPORT_OVERRIDES["texto"])
+
+    faltantes = sorted(exportes_runtime_texto - publicos)
+    assert not faltantes, (
+        "El módulo mapeado para 'texto' debe exponer todos los símbolos de "
+        f"USAR_RUNTIME_EXPORT_OVERRIDES['texto']; faltan: {faltantes}"
+    )
+
+    for nombre in ("recortar", "repetir", "quitar_acentos", "prefijo_comun", "sufijo_comun"):
+        assert nombre in publicos, f"texto debe exportar obligatoriamente {nombre}"
