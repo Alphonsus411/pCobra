@@ -71,6 +71,8 @@ from .cobra_config import (
 )
 from ..cobra.usar_policy import (
     REPL_COBRA_MODULE_MAP,
+    USAR_COBRA_ALLOWLIST,
+    USAR_COBRA_PUBLIC_MODULES,
     USAR_COBRA_FACING_MODULE_FLAGS,
 )
 from .resource_limits import (
@@ -91,8 +93,17 @@ MODULES_PATH = _DEFAULT_MODULES_PATH
 REPL_USAR_EXTERNAL_MODULE_ERROR = (
     "usar_error[modulo_no_permitido]: módulo externo no permitido en REPL estricto (solo alias oficiales Cobra)"
 )
+USAR_DIRECT_BACKEND_IMPORT_ERROR = (
+    "usar_error[backend_import_directo]: import directo de backend no permitido en usar"
+)
 USAR_NON_CANONICAL_MODULE_ERROR = (
     "usar_error[modulo_no_canonico]: el módulo solicitado no es canónico; use el alias oficial Cobra"
+)
+USAR_NON_PUBLIC_MODULE_ERROR = (
+    "usar_error[modulo_fuera_catalogo_publico]: el módulo solicitado está fuera de USAR_COBRA_PUBLIC_MODULES"
+)
+USAR_NON_FACING_MODULE_ERROR = (
+    "usar_error[modulo_no_cobra_facing]: el módulo solicitado no está marcado como Cobra-facing"
 )
 USAR_INVALID_EXPORT_ERROR = "usar_error[export_invalido]"
 USAR_SYMBOL_CONFLICT_ERROR = "usar_error[conflicto_simbolo]"
@@ -1852,25 +1863,34 @@ class InterpretadorCobra:
         from .usar_loader import obtener_modulo, sanitizar_exports_publicos
 
         def _resolver_carga_modulo_usar(nombre_modulo: str):
-            """Resuelve solo módulos canónicos Cobra; ``usar`` nunca hace import dinámico externo."""
+            """Resuelve módulos `usar` únicamente desde el catálogo canónico Cobra."""
             es_repl_estricto = self._repl_usar_alias_map is not None
             mapa_repl = self._repl_usar_alias_map or REPL_COBRA_MODULE_MAP
-            modulo_canonico = mapa_repl.get(nombre_modulo)
-            es_modulo_oficial_cobra = modulo_canonico is not None
 
-            if not es_modulo_oficial_cobra:
+            if nombre_modulo not in USAR_COBRA_ALLOWLIST:
+                # Trazabilidad explícita para intentos de importar módulos de backend directamente.
                 if nombre_modulo in mapa_repl.values():
                     raise PermissionError(USAR_NON_CANONICAL_MODULE_ERROR)
-                raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
+                if "." in nombre_modulo or nombre_modulo.startswith("pcobra"):
+                    raise PermissionError(USAR_DIRECT_BACKEND_IMPORT_ERROR)
+                raise PermissionError(USAR_NON_PUBLIC_MODULE_ERROR)
+
+            if nombre_modulo not in USAR_COBRA_PUBLIC_MODULES:
+                raise PermissionError(USAR_NON_PUBLIC_MODULE_ERROR)
+
+            modulo_canonico = mapa_repl.get(nombre_modulo)
+            if modulo_canonico is None:
+                raise PermissionError(USAR_NON_CANONICAL_MODULE_ERROR)
+
+            if modulo_canonico not in USAR_COBRA_ALLOWLIST:
+                raise PermissionError(USAR_NON_PUBLIC_MODULE_ERROR)
+
             if not USAR_COBRA_FACING_MODULE_FLAGS.get(modulo_canonico, False):
-                raise PermissionError(
-                    "Módulo no permitido en 'usar': "
-                    f"'{nombre_modulo}' no está marcado como Cobra-facing."
-                )
+                raise PermissionError(f"{USAR_NON_FACING_MODULE_ERROR}: '{nombre_modulo}'")
 
             modulo = obtener_modulo(modulo_canonico)
 
-            return modulo, es_repl_estricto, es_modulo_oficial_cobra
+            return modulo, es_repl_estricto, True
 
         try:
             nombre_modulo = nodo.modulo
