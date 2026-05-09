@@ -1,4 +1,12 @@
-"""Registro canónico de transpiladores oficiales."""
+"""Registro canónico de backends/transpiladores.
+
+Activos oficiales (política pública y startup normal): ``python``,
+``javascript`` y ``rust``.
+
+Backends legacy opcionales: viven en ``legacy_registry`` y se cargan solo
+bajo rutas internas explícitas de compatibilidad (import lazy, nunca eager en
+el path público por defecto).
+"""
 
 from __future__ import annotations
 
@@ -60,7 +68,7 @@ _OFFICIAL_TARGETS_SET: Final[frozenset[str]] = frozenset(_ORDERED_OFFICIAL_TARGE
 
 
 def _legacy_registry_module():
-    """Import diferido del inventario legacy interno fuera del startup path principal."""
+    """Import diferido del inventario legacy interno (ruta opcional/no pública)."""
     return import_module("pcobra.cobra.transpilers.legacy_registry")
 
 
