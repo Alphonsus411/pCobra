@@ -9,7 +9,6 @@ from typing import Any
 from pcobra.cobra.usar_policy import (
     CANONICAL_MODULE_SURFACE_CONTRACTS,
     USAR_BACKEND_BLOCKLIST,
-    USAR_COBRA_ALLOWLIST,
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
 )
@@ -72,7 +71,7 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "
-            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+            f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
         )
 
     if any(
@@ -82,16 +81,26 @@ def _rechazar_modulo_no_canonico(nombre: str) -> None:
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "
-            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+            f"Módulos permitidos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
         )
 
 def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -> str:
-    """Valida nombre de `usar` y opcionalmente exige allowlist canónica."""
+    """Valida nombre de `usar` y opcionalmente exige contrato canónico exacto."""
 
-    _rechazar_modulo_no_canonico(nombre)
-    nombre = normalizar_nombre_usar(nombre)
-    if not nombre:
+    if not isinstance(nombre, str):
+        raise ValueError("Nombre de módulo inválido en 'usar': se esperaba string.")
+
+    nombre_raw = nombre.strip()
+    if not nombre_raw:
         raise ValueError("Nombre de módulo vacío en 'usar'.")
+
+    if any(sep in nombre_raw for sep in ('/', '\\')) or '..' in nombre_raw:
+        raise ValueError(
+            f"Nombre de módulo inválido en 'usar': '{nombre_raw}' parece ruta/traversal."
+        )
+
+    _rechazar_modulo_no_canonico(nombre_raw)
+    nombre = normalizar_nombre_usar(nombre_raw)
 
     if not _VALID_NAME_RE.fullmatch(nombre):
         raise ValueError(
@@ -109,10 +118,10 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
                 "usa únicamente módulos Cobra canónicos."
             )
 
-    if require_allowlist and nombre not in USAR_COBRA_ALLOWLIST:
+    if require_allowlist and nombre not in USAR_COBRA_PUBLIC_MODULES:
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
-            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+            f"Solo se aceptan nombres canónicos exactos: {', '.join(USAR_COBRA_PUBLIC_MODULES)}."
         )
 
     return nombre
