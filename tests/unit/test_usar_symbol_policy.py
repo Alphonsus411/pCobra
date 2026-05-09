@@ -1,6 +1,10 @@
 from types import ModuleType
 
-from pcobra.core.usar_symbol_policy import sanear_exportables_para_usar, sanear_simbolo_para_usar
+from pcobra.core.usar_symbol_policy import (
+    PoliticaSaneamientoUsar,
+    sanear_exportables_para_usar,
+    sanear_simbolo_para_usar,
+)
 
 
 def test_rechaza_nombres_prohibidos_explicitos():
@@ -56,7 +60,7 @@ def test_saneamiento_centralizado_aplica_todas_las_reglas():
     permitidos, rechazos, warnings = sanear_exportables_para_usar(simbolos)
 
     assert [nombre for nombre, _ in permitidos] == ["PI", "publica"]
-    assert {r.nombre for r in rechazos} == {"_interno", "append"}
+    assert {r.nombre for r in rechazos.rechazos_duros} == {"_interno", "append"}
     assert [w.nombre for w in warnings] == ["PI"]
 
 
@@ -77,11 +81,71 @@ def test_rechaza_no_callable_que_no_es_constante_publica_canonica():
     assert resultado_ok.warning is True
     assert resultado_ok.codigo == "public_constant"
 
-
-
 def test_rechaza_todos_los_alias_ingleses_prohibidos():
     prohibidos = ("self", "append", "map", "filter", "unwrap", "expect")
     for nombre in prohibidos:
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
         assert resultado.codigo == "explicit_forbidden_name"
+
+
+def test_modo_estricto_cobra_facing_rechaza_nombres_no_canonicos():
+    politica = PoliticaSaneamientoUsar(validar_nombre_canonico_espanol_en_cobra_facing=True)
+
+    resultado = sanear_simbolo_para_usar(
+        "procesar",
+        lambda: None,
+        politica=politica,
+        modulo_cobra_facing=True,
+    )
+
+    assert resultado.rechazado is True
+    assert resultado.codigo == "non_canonical_spanish_name"
+
+
+def test_modo_estricto_cobra_facing_permite_nombres_canonicos():
+    politica = PoliticaSaneamientoUsar(validar_nombre_canonico_espanol_en_cobra_facing=True)
+
+    resultado = sanear_simbolo_para_usar(
+        "procesar_datos",
+        lambda: None,
+        politica=politica,
+        modulo_cobra_facing=True,
+    )
+
+    assert resultado.rechazado is False
+    assert resultado.codigo == "ok"
+
+
+def test_constantes_publicas_canonicas_explicitas_se_permiten():
+    for nombre in ("PI", "E", "TAU", "INF", "NAN"):
+        resultado = sanear_simbolo_para_usar(nombre, 1.0)
+        assert resultado.rechazado is False
+        assert resultado.codigo == "public_constant"
+        assert resultado.warning is True
+
+
+def test_rechazo_estricto_alias_backend_hacia_cobra():
+    prohibidos = ("self", "append", "map", "filter", "unwrap", "expect", "keys", "values", "len", "lower", "upper")
+    for nombre in prohibidos:
+        resultado = sanear_simbolo_para_usar(nombre, lambda: None)
+        assert resultado.rechazado is True
+        assert resultado.codigo == "explicit_forbidden_name"
+
+
+def test_objetos_envueltos_sdk_y_wrapped_se_bloquean_siempre():
+    modulo_sdk = ModuleType("modulo_sdk")
+
+    class WrapperConWrapped:
+        __wrapped__ = modulo_sdk
+
+    class WrapperConSdk:
+        _sdk = modulo_sdk
+
+    r_wrapped = sanear_simbolo_para_usar("wrapper", WrapperConWrapped())
+    r_sdk = sanear_simbolo_para_usar("wrapper_sdk", WrapperConSdk())
+
+    assert r_wrapped.rechazado is True
+    assert r_wrapped.codigo == "backend_module_object"
+    assert r_sdk.rechazado is True
+    assert r_sdk.codigo == "backend_module_object"
