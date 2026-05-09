@@ -51,6 +51,12 @@ PREFIJOS_MODULOS_BACKEND_INTERNOS = (
 
 @dataclass(frozen=True)
 class PoliticaSaneamientoUsar:
+    """Configuración de saneamiento para ``usar``.
+
+    En módulos Cobra-facing puede habilitarse validación estricta para
+    rechazar cualquier nombre no canónico (en vez de permitirlo con warning).
+    """
+
     validar_nombre_canonico_espanol_en_cobra_facing: bool = False
 
 
@@ -145,14 +151,12 @@ def sanear_simbolo_para_usar(
         return _rechazar(nombre, simbolo, "non_callable_not_canonical_public_constant", "solo se permiten no-callables para constantes públicas explícitas y canónicas", metadata)
 
     if politica_efectiva.validar_nombre_canonico_espanol_en_cobra_facing and modulo_cobra_facing and not _parece_nombre_canonico_espanol(nombre):
-        return ResultadoSaneamientoSimboloUsar(
+        return _rechazar(
             nombre,
             simbolo,
-            False,
             "non_canonical_spanish_name",
-            "símbolo permitido por compatibilidad, pero no cumple nombre canónico español para módulo Cobra-facing",
-            warning=True,
-            metadata=metadata,
+            "modo estricto Cobra-facing: nombres no canónicos no se exportan",
+            metadata,
         )
 
     if not callable(simbolo):
