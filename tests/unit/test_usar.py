@@ -789,6 +789,33 @@ def test_usar_rechaza_modulo_no_canonico_en_repl_estricto():
         interp.ejecutar_nodo(NodoUsar("numero"))
 
 
+
+
+def test_repl_usar_texto_simbolo_fuera_de_overrides_no_disponible(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    with pytest.raises(NameError, match=r"capitalizar"):
+        _ejecutar_codigo('usar "texto"\ncapitalizar("hola")', interp)
+
+
+def test_usar_texto_mantiene_filtro_outside_public_api_para_capitalizar():
+    import pcobra.corelibs.texto as modulo_texto
+
+    _, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
+    conflicto_capitalizar = next(
+        (c for c in conflictos if c.get("symbol") == "capitalizar"),
+        None,
+    )
+
+    assert conflicto_capitalizar is not None
+    assert conflicto_capitalizar["code"] == "outside_public_api"
+
+
 def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
     modulo = ModuleType("texto")
     modulo.__all__ = ["NO_CALLABLE"]
