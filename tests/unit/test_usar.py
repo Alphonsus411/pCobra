@@ -803,8 +803,8 @@ def test_repl_usar_texto_simbolo_fuera_de_overrides_no_disponible(monkeypatch):
         _ejecutar_codigo('usar "texto"\ncapitalizar("hola")', interp)
 
 
-def test_usar_texto_mantiene_filtro_outside_public_api_para_capitalizar():
-    import pcobra.corelibs.texto as modulo_texto
+def test_usar_texto_mantiene_filtro_outside_public_api_para_capitalizar(monkeypatch):
+    modulo_texto = core_usar_loader.obtener_modulo_cobra_oficial("texto")
 
     _, conflictos = core_usar_loader.sanitizar_exports_publicos(modulo_texto, "texto")
     conflicto_capitalizar = next(
@@ -814,6 +814,16 @@ def test_usar_texto_mantiene_filtro_outside_public_api_para_capitalizar():
 
     assert conflicto_capitalizar is not None
     assert conflicto_capitalizar["code"] == "outside_public_api"
+    assert conflicto_capitalizar["symbol"] == "capitalizar"
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"texto": "texto"})
+
+    with pytest.raises(NameError, match=r"capitalizar"):
+        _ejecutar_codigo('usar "texto"\ncapitalizar("hola")', interp)
+
+    assert "capitalizar" not in interp.variables
 
 
 def test_usar_error_export_invalido_es_diferenciado(monkeypatch):
