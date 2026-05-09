@@ -157,6 +157,55 @@ def test_backends_legacy_no_se_cargan_en_startup_normal() -> None:
     assert not (legacy & set(sys.modules))
 
 
+
+
+def test_superficie_usar_no_expone_aliases_ni_internals_prohibidos() -> None:
+    modulos = ("numero", "texto", "datos")
+    prohibidos_exactos = {"self", "append", "map", "filter", "unwrap", "expect"}
+
+    for nombre_modulo in modulos:
+        modulo = usar_loader.obtener_modulo(nombre_modulo)
+        simbolos = _simbolos_publicos(modulo)
+
+        for simbolo in simbolos:
+            assert "__" not in simbolo, f"{nombre_modulo} exporta símbolo dunder: {simbolo}"
+            assert simbolo not in prohibidos_exactos, (
+                f"{nombre_modulo} exporta símbolo no permitido: {simbolo}"
+            )
+
+
+def test_arranque_normal_import_pcobra_no_precarga_legacy() -> None:
+    import importlib
+    import sys
+
+    importlib.import_module("pcobra")
+
+    legacy = {
+        "pcobra.cobra.transpilers.transpiler.to_go",
+        "pcobra.cobra.transpilers.transpiler.to_cpp",
+        "pcobra.cobra.transpilers.transpiler.to_java",
+        "pcobra.cobra.transpilers.transpiler.to_wasm",
+        "pcobra.cobra.transpilers.transpiler.to_asm",
+    }
+    assert not (legacy & set(sys.modules))
+
+
+def test_contrato_publico_backends_y_configuracion_publica_sin_extras() -> None:
+    import re
+    from pathlib import Path
+
+    from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+
+    assert PUBLIC_BACKENDS == ("python", "javascript", "rust")
+
+    contenido_pcobra_toml = Path("pcobra.toml").read_text(encoding="utf-8")
+    requeridos = re.search(r'required_targets\s*=\s*\[(.*?)\]', contenido_pcobra_toml, re.DOTALL)
+    assert requeridos is not None
+    assert requeridos.group(1).replace('"', "").replace(" ", "") == "python,javascript,rust"
+
+    contenido_readme = Path("README.md").read_text(encoding="utf-8")
+    assert "Backends oficiales públicos para `cobra build`: `python`, `javascript`, `rust`." in contenido_readme
+
 def test_politica_publica_permanece_exactamente_python_javascript_rust() -> None:
     from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
 
