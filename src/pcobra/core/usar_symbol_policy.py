@@ -1,6 +1,7 @@
 """Política de saneamiento de símbolos para la instrucción ``usar``."""
 
 from dataclasses import dataclass, field
+import os
 from types import ModuleType
 from typing import Any
 
@@ -116,7 +117,18 @@ def _mensaje_nombre_prohibido(nombre: str) -> str:
 
 
 def _parece_nombre_canonico_espanol(nombre: str) -> bool:
-    return nombre.isidentifier() and nombre.lower() == nombre and "_" in nombre
+    return nombre.isidentifier() and nombre.lower() == nombre
+
+
+def depuracion_saneamiento_usar_habilitada() -> bool:
+    """Indica si la depuración opcional de saneamiento de `usar` está activa."""
+    return os.getenv("PCOBRA_USAR_DEBUG_SANITIZE", "").strip().lower() in {
+        "1",
+        "true",
+        "si",
+        "yes",
+        "on",
+    }
 
 
 def sanear_simbolo_para_usar(

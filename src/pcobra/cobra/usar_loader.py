@@ -1,17 +1,22 @@
 import importlib
 import importlib.util
+import logging
 import re
 from pathlib import Path
 import sys
 from typing import Any
 
 from pcobra.cobra.usar_policy import (
+    CANONICAL_MODULE_SURFACE_CONTRACTS,
     USAR_BACKEND_BLOCKLIST,
     USAR_COBRA_ALLOWLIST,
     USAR_COBRA_PUBLIC_MODULES,
     USAR_RUNTIME_EXPORT_OVERRIDES,
 )
-from pcobra.core.usar_symbol_policy import sanear_exportables_para_usar
+from pcobra.core.usar_symbol_policy import (
+    depuracion_saneamiento_usar_habilitada,
+    sanear_exportables_para_usar,
+)
 
 # Regex estricta para mantener la sintaxis `usar "modulo"` acotada a identificadores simples.
 _VALID_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -180,6 +185,12 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
     silenciosas.
     """
 
+    contrato = CANONICAL_MODULE_SURFACE_CONTRACTS.get(alias_modulo)
+    api_publica_modulo = set(USAR_RUNTIME_EXPORT_OVERRIDES.get(alias_modulo, ()))
+    if contrato is not None:
+        api_publica_modulo.update(contrato.required_functions)
+        api_publica_modulo.update(contrato.allowed_aliases)
+
     exportables = getattr(modulo, "__all__", None)
     if exportables is None:
         candidatos = list(USAR_RUNTIME_EXPORT_OVERRIDES.get(alias_modulo, ()))
@@ -197,6 +208,7 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
 
     simbolos_brutos: list[tuple[str, object]] = []
     vistos: set[str] = set()
+    depuracion_habilitada = depuracion_saneamiento_usar_habilitada()
     for nombre in candidatos:
         if not isinstance(nombre, str):
             conflictos.append(
@@ -228,6 +240,25 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
                 }
             )
             continue
+        if api_publica_modulo and nombre not in api_publica_modulo:
+            conflictos.append(
+                {
+                    "module": alias_modulo,
+                    "symbol": nombre,
+                    "code": "outside_public_api",
+                    "message": "símbolo descartado por no pertenecer a la API pública canónica",
+                }
+            )
+            if depuracion_habilitada:
+                logging.debug(
+                    "USAR_SANITIZE_DEBUG %s",
+                    {
+                        "module": alias_modulo,
+                        "symbol": nombre,
+                        "reason": "outside_public_api",
+                    },
+                )
+            continue
         vistos.add(nombre)
         simbolos_brutos.append((nombre, getattr(modulo, nombre)))
 
@@ -247,5 +278,14 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
                 "source_module": resultado.metadata.get("modulo_origen"),
             }
         )
+        if depuracion_habilitada:
+            logging.debug(
+                "USAR_SANITIZE_DEBUG %s",
+                {
+                    "module": alias_modulo,
+                    "symbol": resultado.nombre,
+                    "reason": resultado.codigo,
+                },
+            )
 
     return mapa_limpio, conflictos
