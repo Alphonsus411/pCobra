@@ -18,7 +18,7 @@ import pytest
 
 from core.interpreter import InterpretadorCobra
 from core.errors import InvalidTokenError
-from core.ast_nodes import NodoUsar
+from core.ast_nodes import NodoLlamadaFuncion, NodoUsar, NodoValor
 from core.environment import Environment
 from cobra.core import Lexer, Parser
 from cobra import usar_loader
@@ -238,6 +238,30 @@ def test_repl_usar_texto_permite_a_snake_sin_prefijo(monkeypatch):
     assert "a_snake" in interp.variables
     assert interp.obtener_variable("a_snake")("HolaMundo") == "hola_mundo"
 
+
+
+
+def test_repl_usar_numero_ejecuta_callable_runtime_es_finito(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = _ejecutar_codigo('usar "numero"
+es_finito(10)')
+
+    llamada = NodoLlamadaFuncion("es_finito", [NodoValor(10)])
+    assert interp.ejecutar_llamada_funcion(llamada) is True
+
+
+def test_repl_usar_numero_ejecuta_callable_runtime_es_nan(monkeypatch):
+    import math
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+    interp = _ejecutar_codigo('usar "numero"
+es_nan(10)')
+
+    llamada = NodoLlamadaFuncion("es_nan", [NodoValor(math.nan)])
+    assert interp.ejecutar_llamada_funcion(llamada) is True
 
 def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
