@@ -245,8 +245,7 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_finito(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
-    interp = _ejecutar_codigo('usar "numero"
-es_finito(10)')
+    interp = _ejecutar_codigo('usar \"numero\"\nes_finito(10)')
 
     llamada = NodoLlamadaFuncion("es_finito", [NodoValor(10)])
     assert interp.ejecutar_llamada_funcion(llamada) is True
@@ -257,8 +256,7 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_nan(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
-    interp = _ejecutar_codigo('usar "numero"
-es_nan(10)')
+    interp = _ejecutar_codigo('usar \"numero\"\nes_nan(10)')
 
     llamada = NodoLlamadaFuncion("es_nan", [NodoValor(math.nan)])
     assert interp.ejecutar_llamada_funcion(llamada) is True
@@ -518,6 +516,38 @@ def test_repl_usar_modulo_oficial_sin_all_inyecta_callables_publicos(monkeypatch
     assert "es_finito" in interp.variables
     assert "a_decimal" in interp.variables
     assert "_interna" not in interp.variables
+
+
+def test_repl_usar_numero_callables_policy_funcion_usuario_e_imprimir(monkeypatch, capsys):
+    import math
+    import pcobra.corelibs.numero as modulo_numero
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda nombre, **_kwargs: modulo_numero)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl({"numero": "numero", "texto": "texto"})
+
+    _ejecutar_codigo('usar "numero"', interp)
+    assert interp.obtener_variable("es_finito")(10) is True
+    assert interp.obtener_variable("es_nan")(math.nan) is True
+
+    with pytest.raises(NameError, match=r"desviacion_estandar"):
+        _ejecutar_codigo("desviacion_estandar([1, 2, 3])", interp)
+
+    with pytest.raises(PermissionError, match=r"módulo externo no permitido en REPL estricto \(solo alias oficiales Cobra\)"):
+        _ejecutar_codigo('usar "numpy"', interp)
+
+    funcion_usuario = {
+        "tipo": "funcion",
+        "params": ["x"],
+        "body": ["retornar x + 1"],
+    }
+    interp.contextos[-1].define("incrementar", funcion_usuario)
+    llamada_usuario = NodoLlamadaFuncion("incrementar", [NodoValor(41)])
+    assert interp.ejecutar_llamada_funcion(llamada_usuario) == 42
+
+    _ejecutar_codigo("imprimir(verdadero)\nimprimir(falso)", interp)
+    assert capsys.readouterr().out.strip().splitlines()[-2:] == ["verdadero", "falso"]
     assert "CONSTANTE" not in interp.variables
 
 
