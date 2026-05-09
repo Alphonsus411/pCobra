@@ -36,6 +36,14 @@ def _error_dominio(mensaje: str, *, causa: Exception | None = None) -> ErrorHolo
     return ErrorHolobit(mensaje)
 
 
+def _traducir_error_interno(operacion: str, exc: Exception) -> ErrorHolobit:
+    """Traduce errores internos/SDK a errores Cobra legibles sin fuga de internals."""
+    _ = exc
+    return _error_dominio(
+        f"No se pudo ejecutar la operación '{operacion}' de holobit en runtime Cobra"
+    )
+
+
 class _AdaptadorInternoHolobit:
     """Encapsula acceso al runtime interno de Holobit sin exponer backend."""
 
@@ -96,7 +104,13 @@ def _desde_estructura_cobra(hb: dict[str, Any]) -> Any:
 def crear_holobit(valores: Iterable[Any]) -> dict[str, Any]:
     if valores is None:
         raise TypeError("'valores' no puede ser None")
-    return _a_estructura_cobra(_AdaptadorInternoHolobit.crear_desde_valores(_normalizar_valores(valores)))
+    try:
+        interno = _AdaptadorInternoHolobit.crear_desde_valores(_normalizar_valores(valores))
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
+        raise _traducir_error_interno("crear", exc) from None
+    return _a_estructura_cobra(interno)
 
 
 def validar_holobit(hb: Any) -> bool:
@@ -108,7 +122,12 @@ def validar_holobit(hb: Any) -> bool:
 
 
 def serializar_holobit(hb: dict[str, Any]) -> str:
-    return json.dumps(_a_estructura_cobra(_desde_estructura_cobra(hb)), ensure_ascii=False)
+    try:
+        return json.dumps(_a_estructura_cobra(_desde_estructura_cobra(hb)), ensure_ascii=False)
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
+        raise _traducir_error_interno("serializar", exc) from None
 
 
 def deserializar_holobit(payload: str) -> dict[str, Any]:
@@ -125,7 +144,12 @@ def deserializar_holobit(payload: str) -> dict[str, Any]:
 def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
     if not isinstance(modo, str):
         raise TypeError("'modo' debe ser texto")
-    interno = _desde_estructura_cobra(hb)
+    try:
+        interno = _desde_estructura_cobra(hb)
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
+        raise _traducir_error_interno("proyectar", exc) from None
     valores = list(interno.valores)
     modo_norm = modo.strip().lower()
     if modo_norm == "2d":
@@ -138,7 +162,12 @@ def proyectar(hb: dict[str, Any], modo: str) -> dict[str, Any]:
 def transformar(hb: dict[str, Any], operacion: str, *parametros: Any) -> dict[str, Any]:
     if not isinstance(operacion, str):
         raise TypeError("'operacion' debe ser texto")
-    valores = list(_desde_estructura_cobra(hb).valores)
+    try:
+        valores = list(_desde_estructura_cobra(hb).valores)
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
+        raise _traducir_error_interno("transformar", exc) from None
     op = operacion.strip().lower()
     if op == "rotar":
         if len(parametros) < 2:
@@ -169,13 +198,23 @@ def graficar(hb: dict[str, Any]) -> str:
 
 
 def combinar(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
-    ha = _desde_estructura_cobra(a)
-    hb = _desde_estructura_cobra(b)
+    try:
+        ha = _desde_estructura_cobra(a)
+        hb = _desde_estructura_cobra(b)
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
+        raise _traducir_error_interno("combinar", exc) from None
     return crear_holobit([*ha.valores, *hb.valores])
 
 
 def medir(hb: dict[str, Any]) -> dict[str, float | int]:
-    interno = _desde_estructura_cobra(hb)
+    try:
+        interno = _desde_estructura_cobra(hb)
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:  # pragma: no cover - defensivo frente al runtime interno
+        raise _traducir_error_interno("medir", exc) from None
     valores = interno.valores
     magnitud = sum(v * v for v in valores) ** 0.5
     salida = {"dimension": len(valores), "magnitud": float(magnitud)}

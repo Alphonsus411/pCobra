@@ -39,7 +39,14 @@ NOMBRES_CONSTANTES_PUBLICAS_CANONICAS = frozenset({"PI", "E", "TAU", "INF", "NAN
 NOMBRES_BACKEND_INTERNOS = frozenset(
     {"sys", "os", "importlib", "pcobra", "cobra", "core"}
 )
-PREFIJOS_MODULOS_BACKEND_INTERNOS = ("sys", "os", "importlib", "pcobra", "cobra")
+PREFIJOS_MODULOS_BACKEND_INTERNOS = (
+    "sys",
+    "os",
+    "importlib",
+    "pcobra",
+    "cobra",
+    "holobit_sdk",
+)
 
 
 @dataclass(frozen=True)
