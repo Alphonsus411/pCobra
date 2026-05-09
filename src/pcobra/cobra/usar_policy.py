@@ -40,7 +40,7 @@ USAR_COBRA_FACING_MODULE_FLAGS: dict[str, bool] = {
 REPL_COBRA_MODULE_INTERNAL_PATH_MAP: dict[str, str] = {
     modulo: f"src/pcobra/corelibs/{modulo}.py" for modulo in USAR_COBRA_PUBLIC_MODULES
 }
-# `texto` debe apuntar al módulo que cubre completo USAR_RUNTIME_EXPORT_OVERRIDES["texto"] para evitar regresiones.
+# Regresión: `texto` debe resolver al módulo que implementa todo USAR_RUNTIME_EXPORT_OVERRIDES["texto"].
 REPL_COBRA_MODULE_INTERNAL_PATH_MAP["texto"] = "src/pcobra/standard_library/texto.py"
 
 
