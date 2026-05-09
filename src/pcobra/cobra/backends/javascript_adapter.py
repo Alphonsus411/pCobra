@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from pcobra.cobra.backends.base import BackendAdapter
-from pcobra.cobra.transpilers.transpiler.to_js import TranspiladorJavaScript
+from pcobra.cobra.transpilers.transpiler.to_javascript import TranspiladorJavaScript
 
 
 class JavaScriptAdapter(BackendAdapter):

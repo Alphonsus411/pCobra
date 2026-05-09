@@ -1,4 +1,4 @@
-"""Contratos de regresión para los 8 backends oficiales por tier."""
+"""Contratos de regresión para backends oficiales y legacy opcionales."""
 
 from __future__ import annotations
 
@@ -36,16 +36,21 @@ CORE_RUNTIME_FEATURES: Final[tuple[str, ...]] = (
     "standard_library",
 )
 
-TRANSPILERS: dict[str, tuple[str, str]] = {
+OFFICIAL_TRANSPILERS: dict[str, tuple[str, str]] = {
     "python": ("pcobra.cobra.transpilers.transpiler.to_python", "TranspiladorPython"),
-    "javascript": ("pcobra.cobra.transpilers.transpiler.to_js", "TranspiladorJavaScript"),
+    "javascript": ("pcobra.cobra.transpilers.transpiler.to_javascript", "TranspiladorJavaScript"),
     "rust": ("pcobra.cobra.transpilers.transpiler.to_rust", "TranspiladorRust"),
-    "wasm": ("pcobra.cobra.transpilers.transpiler.to_wasm", "TranspiladorWasm"),
-    "go": ("pcobra.cobra.transpilers.transpiler.to_go", "TranspiladorGo"),
-    "cpp": ("pcobra.cobra.transpilers.transpiler.to_cpp", "TranspiladorCPP"),
-    "java": ("pcobra.cobra.transpilers.transpiler.to_java", "TranspiladorJava"),
-    "asm": ("pcobra.cobra.transpilers.transpiler.to_asm", "TranspiladorASM"),
 }
+
+LEGACY_OPTIONAL_TRANSPILERS: dict[str, tuple[str, str]] = {
+    "wasm": ("pcobra.cobra.transpilers.transpiler.legacy.to_wasm", "TranspiladorWasm"),
+    "go": ("pcobra.cobra.transpilers.transpiler.legacy.to_go", "TranspiladorGo"),
+    "cpp": ("pcobra.cobra.transpilers.transpiler.legacy.to_cpp", "TranspiladorCPP"),
+    "java": ("pcobra.cobra.transpilers.transpiler.legacy.to_java", "TranspiladorJava"),
+    "asm": ("pcobra.cobra.transpilers.transpiler.legacy.to_asm", "TranspiladorASM"),
+}
+
+TRANSPILERS: dict[str, tuple[str, str]] = dict(OFFICIAL_TRANSPILERS)
 
 FEATURE_NODES = {
     "holobit": lambda: [NodoHolobit("hb", [1, 2, 3])],

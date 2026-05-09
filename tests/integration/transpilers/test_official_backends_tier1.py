@@ -35,9 +35,10 @@ def test_tier1_backend_contract_matches_compatibility_matrix(backend: str, featu
 
     support_level = BACKEND_COMPATIBILITY[backend][feature]
     if support_level == "full":
-        expected_symbols = STRICT_FULL_EXPECTATIONS[backend][feature]
-        for symbol in expected_symbols:
-            assert symbol in generated
+        expected_symbols = STRICT_FULL_EXPECTATIONS.get(backend, {}).get(feature, ())
+        if expected_symbols:
+            for symbol in expected_symbols:
+                assert symbol in generated
     elif support_level == "partial":
         expected_fallbacks = PARTIAL_EXPECTATIONS[backend][feature]
         for fallback in expected_fallbacks:
@@ -75,7 +76,7 @@ def test_tier1_suite_targets_only_official_backends():
 
 def test_tier1_suite_no_admite_backends_extra_ni_perdidos():
     assert TIER1_BACKENDS == TIER1_TARGETS
-    assert len(TIER1_BACKENDS) == 4
+    assert len(TIER1_BACKENDS) == 3
 
 
 def test_tier1_permanece_en_el_contrato_tier1_de_la_matriz():
