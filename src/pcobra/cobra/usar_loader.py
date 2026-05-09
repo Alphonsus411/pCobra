@@ -24,16 +24,47 @@ _INTERNAL_HINTS = (
     "corelibs",
     "standard_library",
     "backend",
+    "sdk",
+    "holobit_sdk",
     "bindings",
+    "runtime",
+    "transpilers",
     "transpiler",
 )
+
+_BACKEND_PREFIXES = (
+    "backend",
+    "pcobra",
+    "cobra",
+    "core",
+    "corelibs",
+    "runtime",
+)
+
+
+def normalizar_nombre_usar(nombre: str) -> str:
+    """Normaliza nombre de módulo para validaciones canónicas de `usar`."""
+
+    return (nombre or "").strip().lower().replace("-", "_")
 
 
 def _rechazar_modulo_no_canonico(nombre: str) -> None:
     """Rechaza módulos backend/no-canónicos con error explícito para `usar`."""
 
-    nombre_normalizado = (nombre or "").strip().lower()
-    if nombre_normalizado in USAR_BACKEND_BLOCKLIST:
+    nombre_normalizado = normalizar_nombre_usar(nombre)
+    blocklist_normalizada = {normalizar_nombre_usar(item) for item in USAR_BACKEND_BLOCKLIST}
+
+    if nombre_normalizado in blocklist_normalizada:
+        raise PermissionError(
+            f"Importación no permitida en 'usar': '{nombre}'. "
+            "Es un módulo backend/no canónico y no forma parte de la API pública. "
+            f"Módulos permitidos: {', '.join(sorted(USAR_COBRA_ALLOWLIST))}."
+        )
+
+    if any(
+        nombre_normalizado == prefijo or nombre_normalizado.startswith(f"{prefijo}_")
+        for prefijo in _BACKEND_PREFIXES
+    ):
         raise PermissionError(
             f"Importación no permitida en 'usar': '{nombre}'. "
             "Es un módulo backend/no canónico y no forma parte de la API pública. "
@@ -44,7 +75,7 @@ def validar_nombre_modulo_usar(nombre: str, *, require_allowlist: bool = True) -
     """Valida nombre de `usar` y opcionalmente exige allowlist canónica."""
 
     _rechazar_modulo_no_canonico(nombre)
-    nombre = nombre.strip()
+    nombre = normalizar_nombre_usar(nombre)
     if not nombre:
         raise ValueError("Nombre de módulo vacío en 'usar'.")
 
