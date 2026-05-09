@@ -46,3 +46,13 @@ def test_runtime_rust_ejecucion(request, codigo_cobra_fixture):
 
     assert "1" in salida
 
+
+
+def test_runtime_rust_holobit_public_ops_contract():
+    from pcobra.cobra.transpilers.common.utils import get_runtime_hooks
+    hooks = "\n".join(get_runtime_hooks("rust"))
+    assert "cobra_holobit" in hooks
+    assert "cobra_proyectar" in hooks
+    assert "cobra_transformar" in hooks
+    assert "cobra_graficar" in hooks
+    assert "partial" in hooks.lower() or "holobit_sdk" in hooks

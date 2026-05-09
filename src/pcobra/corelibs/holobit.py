@@ -62,6 +62,27 @@ class _AdaptadorInternoHolobit:
         return _runtime_graficar(hb)
 
 
+
+
+def _es_json_primitivo(valor: Any) -> bool:
+    return valor is None or isinstance(valor, (str, int, float, bool))
+
+
+def _garantizar_json_estable(valor: Any) -> None:
+    if _es_json_primitivo(valor):
+        return
+    if isinstance(valor, list):
+        for item in valor:
+            _garantizar_json_estable(item)
+        return
+    if isinstance(valor, dict):
+        for clave, contenido in valor.items():
+            if not isinstance(clave, str):
+                raise TypeError("Las claves públicas de holobit deben ser texto JSON")
+            _garantizar_json_estable(contenido)
+        return
+    raise TypeError("La API pública de holobit solo permite estructuras JSON estables")
+
 def _es_numero(valor: Any) -> bool:
     return isinstance(valor, (int, float)) and not isinstance(valor, bool)
 
@@ -78,7 +99,9 @@ def _normalizar_valores(valores: Iterable[Any]) -> list[float]:
 
 
 def _a_estructura_cobra(hb: Any) -> dict[str, Any]:
-    return {"tipo": "holobit", "valores": _AdaptadorInternoHolobit.obtener_valores(hb)}
+    estructura = {"tipo": "holobit", "valores": _AdaptadorInternoHolobit.obtener_valores(hb)}
+    _garantizar_json_estable(estructura)
+    return estructura
 
 
 def _rechazar_simbolos_sdk_en_estructura(valor: Any) -> None:
@@ -97,6 +120,7 @@ def _rechazar_simbolos_sdk_en_estructura(valor: Any) -> None:
 
 
 def _validar_estructura_holobit(hb: Any) -> dict[str, Any]:
+    _garantizar_json_estable(hb)
     _rechazar_simbolos_sdk_en_estructura(hb)
     if not isinstance(hb, dict):
         raise TypeError("El holobit debe ser un objeto tipo dict")
@@ -240,6 +264,7 @@ def medir(hb: dict[str, Any]) -> dict[str, float | int]:
     salida = {"dimension": len(valores), "magnitud": float(magnitud)}
     if not isinstance(salida["dimension"], int) or not _es_numero(salida["magnitud"]):
         raise TypeError("Salida inválida de medir")
+    _garantizar_json_estable(salida)
     return salida
 
 

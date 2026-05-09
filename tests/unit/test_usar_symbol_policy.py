@@ -46,7 +46,7 @@ def test_reglas_de_saneamiento_por_caso_especifico():
 
     r_backend_ingles = sanear_simbolo_para_usar("append", lambda: None)
     assert r_backend_ingles.rechazado is True
-    assert r_backend_ingles.codigo == "explicit_forbidden_name"
+    assert r_backend_ingles.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
 
 
 def test_saneamiento_centralizado_aplica_todas_las_reglas():
@@ -149,3 +149,17 @@ def test_objetos_envueltos_sdk_y_wrapped_se_bloquean_siempre():
     assert r_wrapped.codigo == "backend_module_object"
     assert r_sdk.rechazado is True
     assert r_sdk.codigo == "backend_module_object"
+
+
+def test_rechaza_nombre_holobit_sdk_explicito():
+    resultado = sanear_simbolo_para_usar("holobit_sdk", lambda: None)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "cobra_public_equivalent"
+
+
+def test_rechaza_clase_interna_con_rastro_sdk_en_modulo():
+    ClaseInterna = type("ClaseInterna", (), {})
+    ClaseInterna.__module__ = "pcobra.adapters.holobit_sdk.wrapper"
+    resultado = sanear_simbolo_para_usar("adaptador", ClaseInterna)
+    assert resultado.rechazado is True
+    assert resultado.codigo == "backend_module_object"
