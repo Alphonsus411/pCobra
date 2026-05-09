@@ -60,3 +60,9 @@ def test_no_fuga_en_corelibs_por_getattr():
     for symbol in ("holobit_sdk", "Holobit"):
         with pytest.raises(AttributeError):
             getattr(mod, symbol)
+
+
+def test_corelibs_no_exporta_clases_internas_de_adaptador():
+    mod = _load_corelib_module()
+    for symbol in ("_AdaptadorInternoHolobit", "_SDKHolobit", "ErrorHolobit"):
+        assert symbol not in set(mod.__all__)

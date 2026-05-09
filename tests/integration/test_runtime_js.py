@@ -45,3 +45,13 @@ def test_runtime_js_ejecucion(request, codigo_cobra_fixture):
     salida = run_code("javascript", codigo_js)
 
     assert "1" in salida
+
+
+def test_runtime_javascript_holobit_public_ops_contract():
+    from pcobra.cobra.transpilers.common.utils import get_runtime_hooks
+    hooks = "\n".join(get_runtime_hooks("javascript"))
+    assert "cobra_holobit" in hooks
+    assert "cobra_proyectar" in hooks
+    assert "cobra_transformar" in hooks
+    assert "cobra_graficar" in hooks
+    assert "partial" in hooks.lower() or "holobit_sdk" in hooks

@@ -51,6 +51,7 @@ PREFIJOS_MODULOS_BACKEND_INTERNOS = (
     "pcobra",
     "cobra",
     "holobit_sdk",
+    "wrapped",
 )
 
 
@@ -82,6 +83,11 @@ class ClasificacionSaneamientoUsar:
     warnings_transicion: list[ResultadoSaneamientoSimboloUsar]
 
 
+def _contiene_rastro_sdk_en_texto(texto: str) -> bool:
+    normalizado = texto.strip().lower()
+    return "holobit_sdk" in normalizado or "sdk" in normalizado or "wrapped" in normalizado
+
+
 def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
     """Detecta objetos backend (módulos, tipos módulo, wrappers SDK/indirectos)."""
     if isinstance(simbolo, ModuleType):
@@ -90,10 +96,13 @@ def _es_objeto_backend_no_exportable(simbolo: Any) -> bool:
         return True
 
     modulo_origen = getattr(simbolo, "__module__", "")
-    if isinstance(modulo_origen, str) and modulo_origen.startswith(PREFIJOS_MODULOS_BACKEND_INTERNOS):
-        return True
+    if isinstance(modulo_origen, str):
+        if modulo_origen.startswith(PREFIJOS_MODULOS_BACKEND_INTERNOS) or _contiene_rastro_sdk_en_texto(modulo_origen):
+            return True
 
     referencia_envuelta = getattr(simbolo, "__wrapped__", None)
+    if referencia_envuelta is not None and _contiene_rastro_sdk_en_texto(type(referencia_envuelta).__module__):
+        return True
     if referencia_envuelta is not None and isinstance(referencia_envuelta, ModuleType):
         return True
 
@@ -119,7 +128,7 @@ def _mensaje_nombre_prohibido(nombre: str) -> str:
 
 
 def _parece_nombre_canonico_espanol(nombre: str) -> bool:
-    return nombre.isidentifier() and nombre.lower() == nombre
+    return nombre.isidentifier() and nombre.lower() == nombre and "_" in nombre
 
 
 def depuracion_saneamiento_usar_habilitada() -> bool:
@@ -144,6 +153,9 @@ def sanear_simbolo_para_usar(
     """Aplica la política de exportación de símbolos para ``usar``."""
     politica_efectiva = politica or PoliticaSaneamientoUsar()
     metadata = {"modulo_origen": modulo_origen, "modulo_cobra_facing": modulo_cobra_facing}
+
+    if nombre == "holobit_sdk":
+        return _rechazar(nombre, simbolo, "cobra_public_equivalent", _mensaje_nombre_prohibido(nombre), metadata)
 
     if nombre in DUNDERS_BLOQUEADOS:
         return _rechazar(nombre, simbolo, "dunder_name", "dunders Python conocidos no se permiten en usar", metadata)
