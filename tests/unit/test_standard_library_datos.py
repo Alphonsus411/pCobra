@@ -7,6 +7,7 @@ import pytest
 
 import pcobra.standard_library.datos as datos_mod
 from pcobra.standard_library.datos import (
+    agregar,
     agrupar_y_resumir,
     a_listas,
     calcular_percentiles,
@@ -15,6 +16,9 @@ from pcobra.standard_library.datos import (
     combinar_tablas,
     de_listas,
     describir,
+    claves,
+    longitud,
+    mapear,
     desplegar_tabla,
     escribir_csv,
     escribir_excel,
@@ -23,6 +27,7 @@ from pcobra.standard_library.datos import (
     escribir_parquet,
     filtrar,
     matriz_covarianza,
+    reducir,
     mutar_columna,
     separar_columna,
     leer_csv,
@@ -37,6 +42,7 @@ from pcobra.standard_library.datos import (
     tabla_cruzada,
     rellenar_nulos,
     resumen_rapido,
+    valores,
     unir_columnas,
     seleccionar_columnas,
 )
@@ -113,6 +119,48 @@ def tabla_estadistica() -> list[dict[str, object | None]]:
         },
     ]
 
+
+
+
+def test_funciones_coleccion_basicas_y_bordes():
+    tabla = _tabla_base()
+    assert agregar(tabla, {"categoria": "C", "valor": 1, "etiqueta": "qux"})[-1]["categoria"] == "C"
+    assert mapear(tabla, lambda fila: {**fila, "valor": int(fila["valor"]) * 2})[0]["valor"] == 20
+    assert filtrar(tabla, lambda fila: int(fila["valor"]) > 5) == [
+        {"categoria": "A", "valor": 10, "etiqueta": "foo"}
+    ]
+    assert claves(tabla[0]) == ["categoria", "valor", "etiqueta"]
+    assert valores(tabla[0]) == ["A", 10, "foo"]
+    assert longitud(tabla) == 3
+
+
+def test_reducir_con_y_sin_acumulador_inicial():
+    tabla = _tabla_base()
+    total = reducir(tabla, lambda acc, fila: acc + int(fila["valor"]), 0)
+    assert total == 18
+
+    combinado = reducir(tabla, lambda acc, fila: {"valor": int(acc["valor"]) + int(fila["valor"])})
+    assert combinado == {"valor": 18}
+
+
+def test_reducir_vacia_sin_inicial_falla():
+    with pytest.raises(TypeError):
+        reducir([], lambda acc, fila: acc)
+
+
+def test_validaciones_tipos_funciones_coleccion():
+    with pytest.raises(TypeError):
+        agregar(_tabla_base(), 123)
+    with pytest.raises(TypeError):
+        mapear(_tabla_base(), "no callable")
+    with pytest.raises(TypeError):
+        reducir(_tabla_base(), "no callable", 0)
+    with pytest.raises(TypeError):
+        claves([1, 2, 3])
+    with pytest.raises(TypeError):
+        valores([1, 2, 3])
+    with pytest.raises(TypeError):
+        longitud(10)
 
 def test_a_listas_y_de_listas_bidireccional():
     tabla = _tabla_base()

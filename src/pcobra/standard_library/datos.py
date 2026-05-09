@@ -18,7 +18,6 @@ import math
 import statistics
 from collections import Counter, defaultdict
 from contextlib import suppress
-from functools import reduce as _reduce
 from itertools import groupby
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Sequence, Sized
@@ -29,6 +28,7 @@ np = import_optional_module("numpy", safe_stub=True)
 
 Registro = dict[str, Any]
 Tabla = list[Registro]
+_MISSING = object()
 
 __all__ = [
     "leer_csv",
@@ -536,6 +536,8 @@ def de_listas(columnas: Mapping[str, Sequence[Any]]) -> Tabla:
 def agregar(tabla: Iterable[Registro], fila: Registro) -> Tabla:
     """Agrega ``fila`` a ``tabla`` devolviendo una nueva tabla materializada."""
 
+    if not isinstance(fila, Mapping):
+        raise TypeError("fila debe ser un mapeo (dict u objeto similar)")
     base = _materializar_tabla(tabla)
     base.append(dict(fila))
     return base
@@ -544,33 +546,58 @@ def agregar(tabla: Iterable[Registro], fila: Registro) -> Tabla:
 def mapear(tabla: Iterable[Registro], transformacion: Callable[[Registro], Registro]) -> Tabla:
     """Aplica ``transformacion`` por fila devolviendo una nueva tabla."""
 
+    if not callable(transformacion):
+        raise TypeError("transformacion debe ser callable")
     return [dict(transformacion(dict(fila))) for fila in _materializar_tabla(tabla)]
 
 
 def reducir(
-    tabla: Iterable[Registro], funcion: Callable[[Any, Registro], Any], inicial: Any
+    tabla: Iterable[Registro],
+    funcion: Callable[[Any, Registro], Any],
+    inicial: Any = _MISSING,
 ) -> Any:
-    """Reduce filas acumulando con ``funcion`` desde ``inicial``."""
+    """Reduce filas acumulando con ``funcion`` y acumulador inicial opcional."""
 
-    return _reduce(lambda acumulado, fila: funcion(acumulado, dict(fila)), _materializar_tabla(tabla), inicial)
+    if not callable(funcion):
+        raise TypeError("funcion debe ser callable")
+    filas = _materializar_tabla(tabla)
+    if inicial is _MISSING:
+        if not filas:
+            raise TypeError("reducir() requiere un acumulador inicial para tabla vacía")
+        acumulado = dict(filas[0])
+        inicio = 1
+    else:
+        acumulado = inicial
+        inicio = 0
+
+    for fila in filas[inicio:]:
+        acumulado = funcion(acumulado, dict(fila))
+    return acumulado
 
 
 def claves(registro: Mapping[str, Any]) -> list[str]:
     """Devuelve las claves de ``registro``."""
 
+    if not isinstance(registro, Mapping):
+        raise TypeError("registro debe ser un mapeo")
     return list(registro.keys())
 
 
 def valores(registro: Mapping[str, Any]) -> list[Any]:
     """Devuelve los valores de ``registro``."""
 
+    if not isinstance(registro, Mapping):
+        raise TypeError("registro debe ser un mapeo")
     return list(registro.values())
 
 
 def longitud(valor: Sized | Sequence[Any] | Mapping[str, Any]) -> int:
     """Devuelve la longitud de una estructura compatible con ``len``."""
 
-    return len(valor)
+    try:
+        return len(valor)
+    except TypeError as exc:
+        raise TypeError("valor no soporta longitud") from exc
 
 
 def seleccionar_columnas(tabla: Iterable[Registro], columnas: Sequence[str]) -> Tabla:
