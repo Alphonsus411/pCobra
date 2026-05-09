@@ -34,6 +34,9 @@ EQUIVALENCIAS_SEMANTICAS_NUMERO: dict[str, str] = {
     "isnan": "es_nan",
     "copysign": "copiar_signo",
     "prod": "producto",
+    "trunc": "truncar",
+    "min": "minimo",
+    "max": "maximo",
 }
 
 
@@ -64,6 +67,34 @@ def techo(valor):
     """Equivalente a ``math.ceil``."""
 
     return math.ceil(valor)
+
+
+def truncar(valor):
+    """Trunca ``valor`` hacia cero como :func:`math.trunc`."""
+
+    return math.trunc(valor)
+
+
+def minimo(*valores):
+    """Retorna el menor valor recibido.
+
+    Se exige al menos un argumento para alinear mensajes con el runtime Cobra.
+    """
+
+    if not valores:
+        raise TypeError("minimo requiere al menos un argumento")
+    return min(valores)
+
+
+def maximo(*valores):
+    """Retorna el mayor valor recibido.
+
+    Se exige al menos un argumento para alinear mensajes con el runtime Cobra.
+    """
+
+    if not valores:
+        raise TypeError("maximo requiere al menos un argumento")
+    return max(valores)
 
 
 def mcd(*valores: int) -> int:

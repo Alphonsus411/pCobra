@@ -39,6 +39,9 @@ __all__ = [
     "redondear",
     "piso",
     "techo",
+    "truncar",
+    "minimo",
+    "maximo",
     "mcd",
     "mcm",
     "es_cercano",
@@ -215,6 +218,24 @@ def techo(*args, **kwargs):
     """Delega en ``pcobra.corelibs.numero.techo``."""
 
     return _numero.techo(*args, **kwargs)
+
+
+def truncar(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.truncar``."""
+
+    return _numero.truncar(*args, **kwargs)
+
+
+def minimo(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.minimo``."""
+
+    return _numero.minimo(*args, **kwargs)
+
+
+def maximo(*args, **kwargs):
+    """Delega en ``pcobra.corelibs.numero.maximo``."""
+
+    return _numero.maximo(*args, **kwargs)
 
 
 def mcd(*args, **kwargs):
