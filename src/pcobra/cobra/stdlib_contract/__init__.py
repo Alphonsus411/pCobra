@@ -4,6 +4,7 @@ import ast
 from pathlib import Path
 
 from pcobra.cobra.stdlib_contract.base import ContractDescriptor
+from pcobra.cobra.stdlib_contract.capability_matrix import MODULE_CAPABILITY_MATRIX
 from pcobra.cobra.stdlib_contract.core import CORE_CONTRACT
 from pcobra.cobra.stdlib_contract.datos import DATOS_CONTRACT
 from pcobra.cobra.stdlib_contract.system import SYSTEM_CONTRACT
@@ -166,6 +167,7 @@ def get_contract_matrix() -> dict[str, object]:
 
 __all__ = [
     "CONTRACTS",
+    "MODULE_CAPABILITY_MATRIX",
     "ContractDescriptor",
     "get_blueprint_contract_manifests",
     "get_contract_manifests",
