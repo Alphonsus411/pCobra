@@ -46,6 +46,7 @@ def test_usar_numero_solo_simbolos_espanoles(factory, executor, get_interp, monk
     simbolos = set(interp.contextos[-1].values.keys())
     assert "es_finito" in simbolos
     assert "isfinite" not in simbolos
+    assert interp.contextos[-1].get("es_finito")(3.14) is True
 
 
 @pytest.mark.parametrize(
@@ -67,6 +68,7 @@ def test_usar_texto_solo_simbolos_espanoles(factory, executor, get_interp, monke
     simbolos = set(interp.contextos[-1].values.keys())
     assert "a_snake" in simbolos
     assert "snake_case" not in simbolos
+    assert interp.contextos[-1].get("a_snake")("Hola Mundo") == "hola_mundo"
 
 
 def _modulo_datos_publico_stub() -> ModuleType:
@@ -95,8 +97,14 @@ def test_usar_datos_incluye_filtrar_mapear_reducir(factory, executor, get_interp
     interp = get_interp(cmd)
     executor(cmd, 'usar "datos"')
 
+    valores = [1, 2, 3]
     for simbolo in ("filtrar", "mapear", "reducir"):
         assert simbolo in interp.contextos[-1].values
+        assert callable(interp.contextos[-1].get(simbolo))
+
+    assert interp.contextos[-1].get("filtrar")(valores) == valores
+    assert interp.contextos[-1].get("mapear")(valores) == valores
+    assert interp.contextos[-1].get("reducir")(valores) == 1
 
 
 @pytest.mark.parametrize(
@@ -145,10 +153,15 @@ def test_usar_holobit_expone_solo_api_cobra_facing(monkeypatch):
 
     interp.ejecutar_usar(_NodoUsar())
 
-    simbolos = set(mod_holobit.__all__)
+    simbolos = {
+        simbolo
+        for simbolo in ("crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir")
+        if simbolo in interp.contextos[-1].values
+    }
     assert simbolos == {"crear_holobit", "validar_holobit", "serializar_holobit", "deserializar_holobit", "proyectar", "transformar", "graficar", "combinar", "medir"}
     assert "holobit_sdk" not in interp.contextos[-1].values
     assert "_to_sdk_holobit" not in interp.contextos[-1].values
+    assert callable(interp.contextos[-1].get("crear_holobit"))
 
 
 def test_simbolos_exportados_sin_doble_guion_bajo_y_sin_prohibidos():
@@ -210,6 +223,7 @@ def test_conflictos_emiten_warning_estructurado_por_simbolo(monkeypatch, caplog)
     assert any("'symbol': 'mapear'" in mensaje for mensaje in mensajes)
     assert interp.contextos[-1].get("filtrar")() == "ocupado"
     assert interp.contextos[-1].get("mapear")() == "ocupado"
+    assert "reducir" not in interp.contextos[-1].values
 
 
 def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
