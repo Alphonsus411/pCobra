@@ -75,7 +75,6 @@ PUBLIC_API_ARCHIVO: tuple[str, ...] = (
     "leer",
     "escribir",
     "adjuntar",
-    "anexar",
     "existe",
     "eliminar",
     "leer_lineas",
