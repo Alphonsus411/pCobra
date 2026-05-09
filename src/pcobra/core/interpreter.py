@@ -1918,7 +1918,6 @@ class InterpretadorCobra:
                 if not es_oficial:
                     raise PermissionError(REPL_USAR_EXTERNAL_MODULE_ERROR)
 
-            contexto_actual = self.contextos[-1]
             mapa_limpio, conflictos_saneamiento = sanitizar_exports_publicos(modulo, nombre_modulo)
             simbolos_saneados = list(mapa_limpio.items())
             if conflictos_saneamiento:
@@ -1939,9 +1938,9 @@ class InterpretadorCobra:
                 )
 
             # Fase A: detectar colisiones de forma completa antes de definir.
-            conflictos = [
-                nombre for nombre, _simbolo in simbolos_saneados if contexto_actual.contains(nombre)
-            ]
+            conflictos = self._detectar_conflictos_usar_en_contexto(
+                simbolos_saneados, nodo.modulo
+            )
             if conflictos:
                 for simbolo_conflictivo in conflictos:
                     detalle_por_simbolo = {
@@ -2001,28 +2000,55 @@ class InterpretadorCobra:
                 )
 
             # Fase B: inyectar de forma atómica y sin sobreescritura silenciosa.
-            for nombre, simbolo in simbolos_saneados:
-                if contexto_actual.contains(nombre):
-                    detalle = {
-                        "module": nodo.modulo,
-                        "symbol": nombre,
-                        "code": "symbol_collision_runtime_recheck",
-                        "message": "símbolo ya existe en contexto actual",
-                        "policy": self._usar_collision_policy,
-                        "phase": "runtime_recheck",
-                    }
-                    self._trace_debug(
-                        "[USAR_COLLISION][ERROR] "
-                        f"módulo={nodo.modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
-                    )
-                    raise NameError(
-                        "No se puede usar el módulo "
-                        f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
-                    )
-                contexto_actual.define(nombre, simbolo)
+            self._inyectar_simbolos_usar_en_contexto(
+                simbolos_saneados,
+                modulo=nodo.modulo,
+            )
         except Exception as exc:
             logging.exception(f"Error al usar el módulo '{nodo.modulo}': {exc}")
             raise
+
+    def _detectar_conflictos_usar_en_contexto(
+        self, simbolos_saneados: list[tuple[str, object]], modulo: str
+    ) -> list[str]:
+        """Devuelve los símbolos que ya existen en el contexto activo."""
+        contexto_actual = self.contextos[-1]
+        conflictos = [nombre for nombre, _ in simbolos_saneados if contexto_actual.contains(nombre)]
+        if conflictos:
+            self._trace_debug(
+                "[USAR_COLLISION][PREFLIGHT] "
+                f"módulo={modulo} conflictos={','.join(conflictos)}"
+            )
+        return conflictos
+
+    def _inyectar_simbolos_usar_en_contexto(
+        self,
+        simbolos_saneados: list[tuple[str, object]],
+        *,
+        modulo: str,
+        permitir_sobrescritura: bool = False,
+    ) -> None:
+        """Inyecta símbolos saneados en el entorno activo centralizando el binding."""
+        contexto_actual = self.contextos[-1]
+        for nombre, simbolo in simbolos_saneados:
+            if contexto_actual.contains(nombre) and not permitir_sobrescritura:
+                detalle = {
+                    "module": modulo,
+                    "symbol": nombre,
+                    "code": "symbol_collision_runtime_recheck",
+                    "message": "símbolo ya existe en contexto actual",
+                    "policy": self._usar_collision_policy,
+                    "phase": "runtime_recheck",
+                }
+                self._trace_debug(
+                    "[USAR_COLLISION][ERROR] "
+                    f"módulo={modulo} símbolo={nombre} code=symbol_collision_runtime_recheck"
+                )
+                raise NameError(
+                    "No se puede usar el módulo "
+                    f"'{modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}"
+                )
+            contexto_actual.define(nombre, simbolo)
 
     def ejecutar_holobit(self, nodo):
         """Simula la ejecución de un holobit y devuelve sus valores."""

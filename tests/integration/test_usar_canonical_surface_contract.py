@@ -46,6 +46,14 @@ def _crear_datos() -> ModuleType:
     )
 
 
+def _crear_holobit() -> ModuleType:
+    return _modulo_stub(
+        "holobit",
+        {"crear_holobit": lambda nombre: {"nombre": nombre}},
+        "/workspace/pCobra/src/pcobra/corelibs/holobit.py",
+    )
+
+
 def _crear_comando(factory):
     cmd = factory()
     if isinstance(cmd, InteractiveCommand):
@@ -107,10 +115,32 @@ def test_casos_4_a_7_rechaza_modulos_no_permitidos(modulo_externo, factory, monk
 
 def test_caso_8_no_exponer_simbolos_privados_ni_bloqueados_en_corelibs_publicas():
     bloqueados = {"self", "append", "map", "filter", "unwrap", "expect"}
-    for modulo in (_crear_numero(), _crear_texto(), _crear_datos()):
+    for modulo in (_crear_numero(), _crear_texto(), _crear_datos(), core_usar_loader.obtener_modulo_cobra_oficial("holobit")):
         for simbolo in modulo.__all__:
             assert "__" not in simbolo
             assert simbolo not in bloqueados
+
+
+@pytest.mark.parametrize("modulo", ["numero", "texto", "datos", "holobit"])
+@pytest.mark.parametrize("factory", [lambda: InteractiveCommand(InterpretadorCobra()), ReplCommandV2])
+def test_usar_modulos_canonicos_solo_exponen_superficie_espanol(modulo, factory, monkeypatch):
+    stubs = {
+        "numero": _crear_numero(),
+        "texto": _crear_texto(),
+        "datos": _crear_datos(),
+        "holobit": _crear_holobit(),
+    }
+    resolver = lambda nombre, **_kwargs: stubs[nombre] if nombre in stubs else (_ for _ in ()).throw(ModuleNotFoundError(nombre))
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo_cobra_oficial", resolver)
+
+    _cmd, ejecutar, interp = _crear_comando(factory)
+    ejecutar(f'usar "{modulo}"')
+    estado = interp.contextos[-1].values
+    bloqueados = {"self", "append", "map", "filter", "unwrap", "expect"}
+    assert estado, "el entorno no debe quedar vacío tras usar módulo canónico"
+    for simbolo in estado:
+        assert "__" not in simbolo
+        assert simbolo not in bloqueados
 
 
 def test_caso_9_startup_runtime_y_cli_no_cargan_backends_legacy():
