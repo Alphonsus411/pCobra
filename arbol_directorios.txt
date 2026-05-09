@@ -1,0 +1,1764 @@
+.
+├── .codecov.yml
+├── .coveragerc
+├── .devcontainer
+│   ├── Dockerfile
+│   └── devcontainer.json
+├── .env
+├── .env.example
+├── .gitattributes
+├── .github
+│   ├── ISSUE_TEMPLATE
+│   │   ├── bug_report.md
+│   │   ├── doc_improvement.md
+│   │   └── feature_request.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── actions
+│   │   └── install
+│   │       └── action.yml
+│   ├── codeql
+│   │   ├── codeql-config.yml
+│   │   └── custom
+│   │       ├── ast-no-type-validation.ql
+│   │       ├── codeql-config.yml
+│   │       ├── missing-codegen-exception.ql
+│   │       ├── qlpack.yml
+│   │       └── unsafe-eval-exec.ql
+│   ├── dependabot.yml
+│   ├── labeler.yml
+│   └── workflows
+│       ├── build-binaries.yml
+│       ├── build-exe.yml
+│       ├── change-proposal.yml
+│       ├── ci.yml
+│       ├── codeql.yml
+│       ├── dependency-update.yml
+│       ├── docker.yml
+│       ├── lint.yml
+│       ├── pages.yml
+│       ├── pr-labeler.yml
+│       ├── release-binaries.yml
+│       ├── release.yml
+│       ├── runtime-stabilization-contract.yml
+│       ├── test.yml
+│       └── validate-workflows.yml
+├── .gitignore
+├── .idea
+│   ├── .gitignore
+│   ├── inspectionProfiles
+│   │   └── profiles_settings.xml
+│   ├── misc.xml
+│   ├── modules.xml
+│   ├── pCobra.iml
+│   ├── vcs.xml
+│   └── workspace.xml
+├── .pytest_cache
+│   ├── .gitignore
+│   ├── CACHEDIR.TAG
+│   ├── README.md
+│   └── v
+│       └── cache
+│           └── nodeids
+├── .readthedocs.yaml
+├── .replit
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── LICENSE
+├── MANIFEST.in
+├── Makefile
+├── README.md
+├── arbol_directorios.txt
+├── binder
+│   ├── postBuild
+│   └── requirements.txt
+├── bindings
+│   ├── __init__.py
+│   └── contract.py
+├── clean.ps1
+├── cobra
+│   ├── __init__.py
+│   └── cli
+│       ├── __init__.py
+│       └── cli.py
+├── cobra-cli.spec
+├── cobra.lock
+├── cobra.mod
+├── cobra.toml
+├── conftest.py
+├── core
+│   └── __init__.py
+├── corelibs
+│   └── __init__.py
+├── data
+│   ├── language_equivalence.yml
+│   ├── language_equivalence_backlog.md
+│   ├── language_equivalence_baseline.yml
+│   └── language_equivalence_downgrades.yml
+├── docker
+│   ├── Dockerfile
+│   ├── backends
+│   │   ├── cpp.Dockerfile
+│   │   ├── javascript.Dockerfile
+│   │   ├── python.Dockerfile
+│   │   └── rust.Dockerfile
+│   └── scripts
+│       ├── build.sh
+│       ├── compile_cpp.sh
+│       └── compile_rust.sh
+├── docs
+│   ├── ADR
+│   │   ├── 000-nuevas_features.md
+│   │   └── 001-backend-pipeline-facade.md
+│   ├── LIBRO_PROGRAMACION_COBRA.md
+│   ├── MANUAL_COBRA.md
+│   ├── MANUAL_COBRA.rst
+│   ├── README.en.md
+│   ├── ROADMAP.md
+│   ├── SPEC_COBRA.md
+│   ├── _generated
+│   │   ├── audit_stdlib_parity_report.md
+│   │   ├── cli_backend_examples.rst
+│   │   ├── official_targets_table.rst
+│   │   ├── reverse_scope_table.rst
+│   │   ├── runtime_api_matrix.json
+│   │   ├── runtime_api_matrix.md
+│   │   ├── runtime_capability_matrix.rst
+│   │   ├── stdlib_contract_matrix.json
+│   │   ├── stdlib_contract_matrix.md
+│   │   ├── target_policy_runtime_split.md
+│   │   ├── target_policy_status_table.md
+│   │   ├── target_policy_summary.md
+│   │   ├── target_policy_summary.rst
+│   │   └── target_policy_tiers.md
+│   ├── anexos_legacy_internal
+│   │   └── README.md
+│   ├── architecture
+│   │   ├── adr-unified-3-backends.md
+│   │   ├── adr-unified-backends.md
+│   │   ├── backend-pipeline-checklist.md
+│   │   ├── backends_oficiales_vs_legacy.md
+│   │   ├── binding-contract.md
+│   │   ├── cli-decoupling.md
+│   │   ├── cli_input_output_contracts.md
+│   │   ├── cobra_unified_architecture_execution_plan.md
+│   │   ├── cobra_unified_refactor_plan.md
+│   │   ├── execution-canonical-route.md
+│   │   ├── import-resolution-contract.md
+│   │   ├── overview.md
+│   │   ├── repl-script-parity-contract.md
+│   │   ├── single_source_of_truth.md
+│   │   └── unified-ecosystem.md
+│   ├── arquitectura_parser_transpiladores.md
+│   ├── bindings_runtime_contract.md
+│   ├── blog_minilenguaje.md
+│   ├── cache_incremental.md
+│   ├── casos_reales.md
+│   ├── cheatsheet.tex
+│   ├── compatibility
+│   │   ├── holobit-sdk.md
+│   │   ├── holobit_target_deprecation_faq.md
+│   │   ├── internal_only_backend_removal_checklist.md
+│   │   ├── internal_only_refs_inventory.md
+│   │   ├── legacy_assets_inventory.md
+│   │   ├── legacy_backend_retirement_calendar.md
+│   │   ├── legacy_cli_command_inventory.md
+│   │   ├── legacy_ux_retirement_plan.md
+│   │   ├── reporte_cumplimiento_2026-05-07.md
+│   │   └── runtime_shim_audit_2026-04-21.md
+│   ├── comunidad.md
+│   ├── conf.py
+│   ├── config_cli.md
+│   ├── contrato_runtime_holobit.md
+│   ├── coverage.md
+│   ├── diagrama_ast.md
+│   ├── especificacion_tecnica.md
+│   ├── estructura_ast.md
+│   ├── experimental
+│   │   └── README.md
+│   ├── flujo_compilacion.md
+│   ├── frontend
+│   │   ├── _autosummary
+│   │   │   ├── tests.hello.rst
+│   │   │   ├── tests.make_all_bytes.rst
+│   │   │   ├── tests.rst
+│   │   │   └── tests.tree_cmp.rst
+│   │   ├── _static
+│   │   │   └── interfaz_tabla.svg
+│   │   ├── api
+│   │   │   ├── modules.rst
+│   │   │   ├── src.cli.commands.rst
+│   │   │   ├── src.cli.rst
+│   │   │   ├── src.core.holobits.rst
+│   │   │   ├── src.core.memoria.rst
+│   │   │   ├── src.core.nativos.archivo.rst
+│   │   │   ├── src.core.nativos.coleccion.rst
+│   │   │   ├── src.core.nativos.numero.rst
+│   │   │   ├── src.core.nativos.red.rst
+│   │   │   ├── src.core.nativos.rst
+│   │   │   ├── src.core.nativos.seguridad.rst
+│   │   │   ├── src.core.nativos.sistema.rst
+│   │   │   ├── src.core.nativos.texto.rst
+│   │   │   ├── src.core.nativos.tiempo.rst
+│   │   │   ├── src.core.rst
+│   │   │   ├── src.core.semantic_validators.rst
+│   │   │   ├── src.core.transpiler.js_nodes.rst
+│   │   │   ├── src.core.transpiler.python_nodes.rst
+│   │   │   ├── src.core.transpiler.rst
+│   │   │   ├── src.rst
+│   │   │   └── src.tests.rst
+│   │   ├── arquitectura.rst
+│   │   ├── avances.rst
+│   │   ├── backends.rst
+│   │   ├── benchmarking.rst
+│   │   ├── cache.rst
+│   │   ├── caracteristicas.rst
+│   │   ├── cli.rst
+│   │   ├── cobra_lock.rst
+│   │   ├── cobrahub.rst
+│   │   ├── como_contribuir.rst
+│   │   ├── conf.py
+│   │   ├── contenedores.rst
+│   │   ├── design_patterns.rst
+│   │   ├── ejemplos.rst
+│   │   ├── ejemplos_avanzados.rst
+│   │   ├── empaquetar.rst
+│   │   ├── entorno_desarrollo.rst
+│   │   ├── galeria
+│   │   │   └── README.rst
+│   │   ├── index.rst
+│   │   ├── instalacion_pypi.rst
+│   │   ├── jupyter.rst
+│   │   ├── locale
+│   │   │   ├── en
+│   │   │   │   └── LC_MESSAGES
+│   │   │   │       └── .gitkeep
+│   │   │   └── es
+│   │   │       └── LC_MESSAGES
+│   │   │           └── .gitkeep
+│   │   ├── modo_seguro.rst
+│   │   ├── modulos_nativos.rst
+│   │   ├── optimizaciones.rst
+│   │   ├── paquetes.rst
+│   │   ├── plugin_dev.rst
+│   │   ├── plugin_sdk.rst
+│   │   ├── plugins.rst
+│   │   ├── primeros_pasos.rst
+│   │   ├── proximos_pasos.rst
+│   │   ├── qualia.rst
+│   │   ├── recursos_adicionales.rst
+│   │   ├── referencia.rst
+│   │   ├── rfc_plugins.rst
+│   │   ├── sintaxis.rst
+│   │   ├── transpilers_tier_plan.md
+│   │   ├── uml
+│   │   │   ├── arquitectura_general.puml
+│   │   │   ├── class_diagram.gv
+│   │   │   └── flow_diagram.gv
+│   │   └── validador.rst
+│   ├── genericos.md
+│   ├── gramatica.ebnf
+│   ├── guia_basica.md
+│   ├── historico
+│   │   ├── ROADMAP_v0_v1.md
+│   │   ├── migracion_targets_retirados_archivo.md
+│   │   ├── primeros_pasos.rst
+│   │   ├── sintaxis.rst
+│   │   └── targets_mantenimiento.md
+│   ├── instalacion.md
+│   ├── interfaces.md
+│   ├── inventario_usar_modulos.md
+│   ├── issues
+│   │   ├── 01_consolidar_dependencias.md
+│   │   ├── 02_executables_distribucion.md
+│   │   ├── 03_optimizar_modo_seguro.md
+│   │   ├── 04_ejemplos_avanzados.md
+│   │   ├── 05_sistema_plugins.md
+│   │   ├── 06_soporte_jupyter.md
+│   │   ├── 07_opt_ast.md
+│   │   ├── 08_pruebas_concurrencia.md
+│   │   ├── 09_cache_ast_checksum.md
+│   │   ├── 10_transpilacion_paralela.md
+│   │   ├── 11_soporte_condicionales_bucles_go_java.md
+│   │   ├── 12_tipos_nuevos.md
+│   │   ├── 13_sintaxis_azucarada.md
+│   │   ├── 14_plan_validacion_sintaxis.md
+│   │   ├── backend_inventory_2026-03-28.md
+│   │   ├── repl_manual_verification_2026-04-05.md
+│   │   ├── target_cleanup_checklist.md
+│   │   └── windows_unicode_manual_checklist.md
+│   ├── language_equivalence_matrix.md
+│   ├── lenguajes.rst
+│   ├── lenguajes_soportados.rst
+│   ├── library_compatibility_matrix.md
+│   ├── limitaciones_cpp_sandbox.md
+│   ├── limitaciones_node_sandbox.md
+│   ├── matriz_transpiladores.csv
+│   ├── matriz_transpiladores.md
+│   ├── migracion_cli_unificada.md
+│   ├── migracion_targets_retirados.md
+│   ├── notebooks
+│   │   └── separar_unir_columnas.ipynb
+│   ├── plan_regresion_fases.md
+│   ├── proposals
+│   │   ├── librerias_candidatas.md
+│   │   ├── plan_nuevas_funcionalidades.md
+│   │   ├── recorte_targets_oficiales_tareas.md
+│   │   ├── sintaxis_azucarada.md
+│   │   ├── sqliteplus_migration_tasks.md
+│   │   └── tipos_nuevos.md
+│   ├── release.md
+│   ├── requirements.txt
+│   ├── revision_modulos_python_base.md
+│   ├── roadmap_fase2_tareas.txt
+│   ├── sandbox_python_seguridad.md
+│   ├── standard_library
+│   │   ├── archivo.md
+│   │   ├── asincrono.md
+│   │   ├── auditoria_corelibs_stdlib_2026-05-07.md
+│   │   ├── datos.md
+│   │   ├── decoradores.md
+│   │   ├── fecha.md
+│   │   ├── holobit.md
+│   │   ├── interfaz.md
+│   │   ├── lista.md
+│   │   ├── logica.md
+│   │   ├── matriz_api_runtime.md
+│   │   ├── matriz_capacidades_objetivo.md
+│   │   ├── matriz_modulos_corelibs_stdlib.md
+│   │   ├── matriz_stdlib_unificada.md
+│   │   ├── numero.md
+│   │   ├── paridad_stdlib_por_funcion.md
+│   │   ├── red.md
+│   │   ├── sistema.md
+│   │   ├── texto.md
+│   │   ├── tiempo.md
+│   │   └── util.md
+│   ├── tareas_implementacion_libro_cobra.md
+│   ├── tareas_validacion_sintaxis.md
+│   ├── targets_policy.md
+│   └── templates
+│       └── feature_rollout_checklist.md
+├── examples
+│   ├── README.md
+│   ├── avanzados
+│   │   ├── README.md
+│   │   ├── clases
+│   │   │   ├── README.md
+│   │   │   ├── estudiante.co
+│   │   │   ├── herencia_multiple.co
+│   │   │   ├── main.co
+│   │   │   └── persona.co
+│   │   ├── control_flujo
+│   │   │   └── README.md
+│   │   └── funciones
+│   │       ├── README.md
+│   │       ├── factorial_recursivo.co
+│   │       └── utilidades.co
+│   ├── casos_reales
+│   │   ├── analisis_datos
+│   │   │   ├── README.md
+│   │   │   └── estadisticas.co
+│   │   ├── bioinformatica
+│   │   │   ├── README.md
+│   │   │   └── ejemplo_gc.co
+│   │   └── inteligencia_artificial
+│   │       ├── README.md
+│   │       └── modelo_ia.co
+│   ├── clase_metodo_atributo.co
+│   ├── features
+│   │   ├── README.md
+│   │   └── feature_base
+│   │       └── minimal.co
+│   ├── funciones_principales.co
+│   ├── hello_world
+│   │   ├── README.md
+│   │   ├── asm
+│   │   │   └── hola.asm
+│   │   ├── asm.asm
+│   │   ├── asm.co
+│   │   ├── cpp
+│   │   │   └── hola.cpp
+│   │   ├── cpp.co
+│   │   ├── cpp.cpp
+│   │   ├── go
+│   │   │   └── hola.go
+│   │   ├── go.co
+│   │   ├── go.go
+│   │   ├── java
+│   │   │   └── Hola.java
+│   │   ├── java.co
+│   │   ├── java.java
+│   │   ├── javascript
+│   │   │   └── hola.js
+│   │   ├── javascript.co
+│   │   ├── javascript.js
+│   │   ├── python
+│   │   │   └── hola.py
+│   │   ├── python.co
+│   │   ├── python.py
+│   │   ├── rust
+│   │   │   └── hola.rs
+│   │   ├── rust.co
+│   │   ├── rust.rs
+│   │   ├── wasm
+│   │   │   └── hola.wat
+│   │   ├── wasm.co
+│   │   └── wasm.wat
+│   ├── hola_mundo
+│   │   ├── README.md
+│   │   ├── hola.co
+│   │   └── suma.co
+│   ├── main.cobra
+│   ├── main.py
+│   ├── patrones.co
+│   ├── plugins
+│   │   ├── README.md
+│   │   ├── hora_plugin.py
+│   │   ├── md2cobra_plugin.py
+│   │   ├── saludo_plugin.py
+│   │   ├── setup.py
+│   │   └── transpiler_demo.py
+│   ├── rel_example.py
+│   ├── replit
+│   │   └── main.cobra
+│   ├── smoke_assign.co
+│   └── tutorial_basico
+│       ├── README.md
+│       ├── compile_manual.py
+│       ├── hola_mundo.co
+│       ├── hola_mundo.out
+│       └── hola_mundo.py
+├── experiments
+│   ├── README.md
+│   └── llvm_backend.py
+├── extensions
+│   └── vscode
+│       ├── README.md
+│       ├── extension.js
+│       ├── language-configuration.json
+│       ├── package-lock.json
+│       ├── package.json
+│       ├── snippets
+│       │   └── cobra.json
+│       └── syntaxes
+│           └── cobra.tmLanguage.json
+├── gitleaks.toml
+├── notebooks
+│   ├── benchmarks_resultados.ipynb
+│   ├── casos_reales
+│   │   ├── analisis_datos.ipynb
+│   │   ├── bioinformatica.ipynb
+│   │   └── inteligencia_artificial.ipynb
+│   ├── ejemplo_basico.ipynb
+│   ├── ide_demo.ipynb
+│   └── playground.ipynb
+├── pcobra
+│   └── __init__.py
+├── pcobra.toml
+├── pyproject.toml
+├── replit.nix
+├── requirements-dev.txt
+├── requirements.txt
+├── resumen_conversacion.json
+├── scripts
+│   ├── audit_retired_targets.py
+│   ├── benchmarks
+│   │   ├── binary_bench.py
+│   │   ├── compare_backends.py
+│   │   ├── compare_releases.py
+│   │   ├── programs
+│   │   │   ├── clase.co
+│   │   │   ├── factorial.co
+│   │   │   ├── large.co
+│   │   │   ├── medium.co
+│   │   │   ├── small.co
+│   │   │   └── smoke_assign.co
+│   │   ├── run_benchmarks.py
+│   │   └── targets_policy.py
+│   ├── bin
+│   │   └── cobra
+│   ├── build_cli.ps1
+│   ├── build_cli.sh
+│   ├── bump_version.py
+│   ├── check.py
+│   ├── check_changelog.py
+│   ├── check_requirements_drift.sh
+│   ├── ci
+│   │   ├── audit_backend_pipeline_entrypoint.py
+│   │   ├── audit_feature_rollout.py
+│   │   ├── audit_stdlib_parity.py
+│   │   ├── audit_targets_contract.py
+│   │   ├── check_core_scc.py
+│   │   ├── check_import_cycles.py
+│   │   ├── check_manual_ref_generated.py
+│   │   ├── check_no_scripts_imports.py
+│   │   ├── check_public_import_boundaries.py
+│   │   ├── ensure_generated_targets_docs_clean.py
+│   │   ├── gate_no_parser_lexer_changes.py
+│   │   ├── generate_internal_only_inventory.py
+│   │   ├── generate_language_equivalence_backlog.py
+│   │   ├── lint_control_flow_no_scope_copy.py
+│   │   ├── lint_import_resolution_contract.py
+│   │   ├── lint_legacy_cobra_shims.py
+│   │   ├── lint_no_cross_command_imports.py
+│   │   ├── lint_no_legacy_bindings_imports.py
+│   │   ├── lint_no_legacy_cobra_core_imports.py
+│   │   ├── lint_no_parallel_transpilers_registry.py
+│   │   ├── lint_public_commands_internal_backends.py
+│   │   ├── lint_public_no_direct_transpiler_imports.py
+│   │   ├── validate_language_equivalence_matrix.py
+│   │   ├── validate_library_compatibility_matrix.py
+│   │   ├── validate_public_backend_literals.py
+│   │   ├── validate_public_docs_version.py
+│   │   ├── validate_stdlib_function_coverage.py
+│   │   ├── validate_syntax_report_contract.py
+│   │   ├── validate_targets.py
+│   │   └── validate_workflow_target_matrix.py
+│   ├── generar_contrato_stdlib.py
+│   ├── generar_manual_ref.py
+│   ├── generar_matriz_api_runtime.py
+│   ├── generar_matriz_transpiladores.py
+│   ├── generar_pdoc.py
+│   ├── generate_target_policy_docs.py
+│   ├── grammar_coverage.py
+│   ├── hello_clang.py
+│   ├── install.sh
+│   ├── install_dev.sh
+│   ├── lint_legacy_aliases.py
+│   ├── lint_policy_drift.py
+│   ├── migrar_cache_sqliteplus.py
+│   ├── publicar_blog.sh
+│   ├── run.sh
+│   ├── run_mutation.py
+│   ├── smoke_syntax.py
+│   ├── smoke_transpilers_syntax.py
+│   ├── sync_libro_programacion.py
+│   ├── sync_readme_version.py
+│   ├── sync_requirements.sh
+│   ├── targets_policy_common.py
+│   ├── test.sh
+│   ├── test_pyinstaller.sh
+│   ├── validate_runtime_contract.py
+│   └── validate_targets_policy.py
+├── sitecustomize.py
+├── src
+│   ├── bindings
+│   │   ├── __init__.py
+│   │   └── contract.py
+│   ├── cli
+│   │   ├── __init__.py
+│   │   └── cli.py
+│   ├── cobra
+│   │   ├── __init__.py
+│   │   ├── cli
+│   │   │   ├── __init__.py
+│   │   │   ├── cli.py
+│   │   │   └── target_policies.py
+│   │   └── transpilers
+│   │       ├── __init__.py
+│   │       ├── compatibility_matrix.py
+│   │       ├── registry.py
+│   │       └── targets.py
+│   ├── core
+│   │   └── __init__.py
+│   ├── lsp
+│   │   └── __init__.py
+│   ├── numpy
+│   ├── pcobra
+│   │   ├── __init__.py
+│   │   ├── __main__.py
+│   │   ├── _stubs
+│   │   │   ├── __init__.py
+│   │   │   ├── compat.py
+│   │   │   ├── numpy
+│   │   │   │   └── __init__.py
+│   │   │   ├── pandas
+│   │   │   │   └── __init__.py
+│   │   │   ├── pexpect
+│   │   │   │   └── __init__.py
+│   │   │   └── rich
+│   │   │       ├── __init__.py
+│   │   │       ├── columns.py
+│   │   │       ├── console.py
+│   │   │       ├── json.py
+│   │   │       ├── markdown.py
+│   │   │       ├── padding.py
+│   │   │       ├── panel.py
+│   │   │       ├── pretty.py
+│   │   │       ├── progress.py
+│   │   │       ├── prompt.py
+│   │   │       ├── status.py
+│   │   │       ├── syntax.py
+│   │   │       ├── table.py
+│   │   │       └── tree.py
+│   │   ├── cli.py
+│   │   ├── cobra
+│   │   │   ├── __init__.py
+│   │   │   ├── architecture
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── backend_policy.py
+│   │   │   │   ├── capabilities_contract.py
+│   │   │   │   ├── contracts.py
+│   │   │   │   ├── legacy_backend_lifecycle.py
+│   │   │   │   ├── overview.py
+│   │   │   │   └── unified_ecosystem.py
+│   │   │   ├── backends
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py
+│   │   │   │   ├── javascript_adapter.py
+│   │   │   │   ├── python_adapter.py
+│   │   │   │   ├── resolver.py
+│   │   │   │   └── rust_adapter.py
+│   │   │   ├── benchmarks
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── binary_bench.py
+│   │   │   │   └── targets_policy.py
+│   │   │   ├── bindings
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── _contract_impl.py
+│   │   │   │   ├── contract.py
+│   │   │   │   └── runtime_manager.py
+│   │   │   ├── cli
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── bootstrap.py
+│   │   │   │   ├── cli.py
+│   │   │   │   ├── cobrahub_client.py
+│   │   │   │   ├── commands
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── agix_cmd.py
+│   │   │   │   │   ├── base.py
+│   │   │   │   │   ├── bench_cmd.py
+│   │   │   │   │   ├── bench_transpilers_cmd.py
+│   │   │   │   │   ├── benchmarks2_cmd.py
+│   │   │   │   │   ├── benchmarks_cmd.py
+│   │   │   │   │   ├── benchthreads_cmd.py
+│   │   │   │   │   ├── cache_cmd.py
+│   │   │   │   │   ├── compile_cmd.py
+│   │   │   │   │   ├── container_cmd.py
+│   │   │   │   │   ├── crear_cmd.py
+│   │   │   │   │   ├── dependencias_cmd.py
+│   │   │   │   │   ├── docs_cmd.py
+│   │   │   │   │   ├── empaquetar_cmd.py
+│   │   │   │   │   ├── execute_cmd.py
+│   │   │   │   │   ├── flet_cmd.py
+│   │   │   │   │   ├── init_cmd.py
+│   │   │   │   │   ├── interactive_cmd.py
+│   │   │   │   │   ├── jupyter_cmd.py
+│   │   │   │   │   ├── modules_cmd.py
+│   │   │   │   │   ├── package_cmd.py
+│   │   │   │   │   ├── plugins_cmd.py
+│   │   │   │   │   ├── profile_cmd.py
+│   │   │   │   │   ├── qa_validar_cmd.py
+│   │   │   │   │   ├── qualia_cmd.py
+│   │   │   │   │   ├── transpilar_inverso_cmd.py
+│   │   │   │   │   ├── validar_sintaxis_cmd.py
+│   │   │   │   │   └── verify_cmd.py
+│   │   │   │   ├── commands_v2
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── build_cmd.py
+│   │   │   │   │   ├── legacy_cmd.py
+│   │   │   │   │   ├── mod_cmd.py
+│   │   │   │   │   ├── repl_cmd.py
+│   │   │   │   │   ├── run_cmd.py
+│   │   │   │   │   └── test_cmd.py
+│   │   │   │   ├── deprecation_policy.py
+│   │   │   │   ├── execution_pipeline.py
+│   │   │   │   ├── i18n.py
+│   │   │   │   ├── internal_compat
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── legacy_core_sandbox.py
+│   │   │   │   │   ├── legacy_flags.py
+│   │   │   │   │   └── legacy_targets.py
+│   │   │   │   ├── mode_policy.py
+│   │   │   │   ├── modules
+│   │   │   │   ├── plugin.py
+│   │   │   │   ├── plugin_interface.py
+│   │   │   │   ├── plugin_loader.py
+│   │   │   │   ├── plugin_registry.py
+│   │   │   │   ├── public_command_policy.py
+│   │   │   │   ├── repl
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── cobra_lexer.py
+│   │   │   │   ├── services
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── benchmark_service.py
+│   │   │   │   │   ├── build_service.py
+│   │   │   │   │   ├── command_factory.py
+│   │   │   │   │   ├── contracts.py
+│   │   │   │   │   ├── format_service.py
+│   │   │   │   │   ├── mod_service.py
+│   │   │   │   │   ├── run_service.py
+│   │   │   │   │   ├── test_service.py
+│   │   │   │   │   └── verification_service.py
+│   │   │   │   ├── target_policies.py
+│   │   │   │   ├── transpiler_registry.py
+│   │   │   │   └── utils
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── argument_parser.py
+│   │   │   │       ├── autocomplete.py
+│   │   │   │       ├── config.py
+│   │   │   │       ├── messages.py
+│   │   │   │       ├── parser_error_classifier.py
+│   │   │   │       ├── semver.py
+│   │   │   │       ├── unicode_sanitize.py
+│   │   │   │       └── validators.py
+│   │   │   ├── config
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── transpile_targets.py
+│   │   │   ├── core
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── ast_cache.py
+│   │   │   │   ├── ast_nodes.py
+│   │   │   │   ├── cobra_config.py
+│   │   │   │   ├── database.py
+│   │   │   │   ├── errors.py
+│   │   │   │   ├── import_utils.py
+│   │   │   │   ├── internal_ir.py
+│   │   │   │   ├── interpreter.py
+│   │   │   │   ├── lark_parser.py
+│   │   │   │   ├── lexer.py
+│   │   │   │   ├── optimizations
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── parser.py
+│   │   │   │   ├── qualia_bridge.py
+│   │   │   │   ├── resource_limits.py
+│   │   │   │   ├── runtime.py
+│   │   │   │   ├── sandbox.py
+│   │   │   │   ├── semantic_validators
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── base.py
+│   │   │   │   ├── utils.py
+│   │   │   │   └── visitor.py
+│   │   │   ├── experimental
+│   │   │   │   └── __init__.py
+│   │   │   ├── gui
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── deps.py
+│   │   │   ├── imports
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── _module_map_api.py
+│   │   │   │   └── resolver.py
+│   │   │   ├── internal_compat
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── legacy_contracts.py
+│   │   │   ├── macro
+│   │   │   │   └── __init__.py
+│   │   │   ├── qa
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── syntax_validation.py
+│   │   │   ├── reverse
+│   │   │   │   └── __init__.py
+│   │   │   ├── semantico
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── analizador.py
+│   │   │   │   ├── cobra_mod_schema.yaml
+│   │   │   │   ├── cobra_mod_schema_v2.yaml
+│   │   │   │   ├── mod_validator.py
+│   │   │   │   └── tabla.py
+│   │   │   ├── stdlib_contract
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py
+│   │   │   │   ├── capability_matrix.py
+│   │   │   │   ├── cobra.core
+│   │   │   │   ├── cobra.datos
+│   │   │   │   ├── cobra.system
+│   │   │   │   ├── cobra.web
+│   │   │   │   ├── core.py
+│   │   │   │   ├── datos.py
+│   │   │   │   ├── generator.py
+│   │   │   │   ├── system.py
+│   │   │   │   ├── validator.py
+│   │   │   │   └── web.py
+│   │   │   ├── transpilers
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py
+│   │   │   │   ├── common
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── utils.py
+│   │   │   │   ├── compatibility_matrix.py
+│   │   │   │   ├── feature_inspector.py
+│   │   │   │   ├── import_helper.py
+│   │   │   │   ├── internal_ir_bridge.py
+│   │   │   │   ├── legacy
+│   │   │   │   │   └── runtime_legacy_tables.py
+│   │   │   │   ├── legacy_registry.py
+│   │   │   │   ├── library_compatibility.py
+│   │   │   │   ├── module_map.py
+│   │   │   │   ├── registry.py
+│   │   │   │   ├── reverse
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── base.py
+│   │   │   │   │   ├── from_java.py
+│   │   │   │   │   ├── from_js.py
+│   │   │   │   │   ├── from_python.py
+│   │   │   │   │   ├── policy.py
+│   │   │   │   │   └── tree_sitter_base.py
+│   │   │   │   ├── runtime_api_matrix.py
+│   │   │   │   ├── runtime_api_parity_snapshot.json
+│   │   │   │   ├── semantica.py
+│   │   │   │   ├── target_utils.py
+│   │   │   │   ├── targets.py
+│   │   │   │   └── transpiler
+│   │   │   │       ├── __init__.py
+│   │   │   │       ├── asm_nodes
+│   │   │   │       ├── cobol_nodes
+│   │   │   │       ├── cpp_nodes
+│   │   │   │       ├── fortran_nodes
+│   │   │   │       ├── go_nodes
+│   │   │   │       ├── hololang_nodes
+│   │   │   │       ├── java_nodes
+│   │   │   │       ├── js_nodes
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── asignacion.py
+│   │   │   │       │   ├── atributo.py
+│   │   │   │       │   ├── bucle_mientras.py
+│   │   │   │       │   ├── clase.py
+│   │   │   │       │   ├── condicional.py
+│   │   │   │       │   ├── continuar.py
+│   │   │   │       │   ├── decorador.py
+│   │   │   │       │   ├── defer.py
+│   │   │   │       │   ├── diccionario.py
+│   │   │   │       │   ├── elemento.py
+│   │   │   │       │   ├── enum.py
+│   │   │   │       │   ├── esperar.py
+│   │   │   │       │   ├── exportar.py
+│   │   │   │       │   ├── for_.py
+│   │   │   │       │   ├── funcion.py
+│   │   │   │       │   ├── garantia.py
+│   │   │   │       │   ├── graficar.py
+│   │   │   │       │   ├── hilo.py
+│   │   │   │       │   ├── holobit.py
+│   │   │   │       │   ├── identificador.py
+│   │   │   │       │   ├── importar.py
+│   │   │   │       │   ├── imprimir.py
+│   │   │   │       │   ├── instancia.py
+│   │   │   │       │   ├── lista.py
+│   │   │   │       │   ├── llamada_funcion.py
+│   │   │   │       │   ├── llamada_metodo.py
+│   │   │   │       │   ├── metodo.py
+│   │   │   │       │   ├── operacion_binaria.py
+│   │   │   │       │   ├── operacion_unaria.py
+│   │   │   │       │   ├── option.py
+│   │   │   │       │   ├── para.py
+│   │   │   │       │   ├── pasar.py
+│   │   │   │       │   ├── pattern.py
+│   │   │   │       │   ├── proyectar.py
+│   │   │   │       │   ├── retorno.py
+│   │   │   │       │   ├── romper.py
+│   │   │   │       │   ├── runtime_holobit.py
+│   │   │   │       │   ├── switch.py
+│   │   │   │       │   ├── throw.py
+│   │   │   │       │   ├── transformar.py
+│   │   │   │       │   ├── try_catch.py
+│   │   │   │       │   ├── valor.py
+│   │   │   │       │   └── yield_.py
+│   │   │   │       ├── latex_nodes
+│   │   │   │       ├── legacy
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── asm_nodes
+│   │   │   │       │   │   ├── __init__.py
+│   │   │   │       │   │   └── runtime_holobit.py
+│   │   │   │       │   ├── cpp_nodes
+│   │   │   │       │   │   ├── __init__.py
+│   │   │   │       │   │   ├── asignacion.py
+│   │   │   │       │   │   ├── bucle_mientras.py
+│   │   │   │       │   │   ├── clase.py
+│   │   │   │       │   │   ├── condicional.py
+│   │   │   │       │   │   ├── continuar.py
+│   │   │   │       │   │   ├── funcion.py
+│   │   │   │       │   │   ├── garantia.py
+│   │   │   │       │   │   ├── holobit.py
+│   │   │   │       │   │   ├── llamada_funcion.py
+│   │   │   │       │   │   ├── metodo.py
+│   │   │   │       │   │   ├── option.py
+│   │   │   │       │   │   ├── pasar.py
+│   │   │   │       │   │   ├── pattern.py
+│   │   │   │       │   │   ├── retorno.py
+│   │   │   │       │   │   ├── romper.py
+│   │   │   │       │   │   ├── runtime_holobit.py
+│   │   │   │       │   │   ├── switch.py
+│   │   │   │       │   │   └── yield_.py
+│   │   │   │       │   ├── go_nodes
+│   │   │   │       │   │   ├── __init__.py
+│   │   │   │       │   │   ├── asignacion.py
+│   │   │   │       │   │   ├── bucle_mientras.py
+│   │   │   │       │   │   ├── clase.py
+│   │   │   │       │   │   ├── condicional.py
+│   │   │   │       │   │   ├── continuar.py
+│   │   │   │       │   │   ├── for_.py
+│   │   │   │       │   │   ├── funcion.py
+│   │   │   │       │   │   ├── imprimir.py
+│   │   │   │       │   │   ├── instancia.py
+│   │   │   │       │   │   ├── llamada_funcion.py
+│   │   │   │       │   │   ├── llamada_metodo.py
+│   │   │   │       │   │   ├── metodo.py
+│   │   │   │       │   │   ├── retorno.py
+│   │   │   │       │   │   ├── romper.py
+│   │   │   │       │   │   └── runtime_holobit.py
+│   │   │   │       │   ├── java_nodes
+│   │   │   │       │   │   ├── __init__.py
+│   │   │   │       │   │   ├── asignacion.py
+│   │   │   │       │   │   ├── bucle_mientras.py
+│   │   │   │       │   │   ├── clase.py
+│   │   │   │       │   │   ├── condicional.py
+│   │   │   │       │   │   ├── continuar.py
+│   │   │   │       │   │   ├── for_.py
+│   │   │   │       │   │   ├── funcion.py
+│   │   │   │       │   │   ├── imprimir.py
+│   │   │   │       │   │   ├── instancia.py
+│   │   │   │       │   │   ├── llamada_funcion.py
+│   │   │   │       │   │   ├── llamada_metodo.py
+│   │   │   │       │   │   ├── metodo.py
+│   │   │   │       │   │   ├── retorno.py
+│   │   │   │       │   │   ├── romper.py
+│   │   │   │       │   │   └── runtime_holobit.py
+│   │   │   │       │   ├── to_asm.py
+│   │   │   │       │   ├── to_cpp.py
+│   │   │   │       │   ├── to_go.py
+│   │   │   │       │   ├── to_java.py
+│   │   │   │       │   └── to_wasm.py
+│   │   │   │       ├── matlab_nodes
+│   │   │   │       ├── pascal_nodes
+│   │   │   │       ├── python_nodes
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── asignacion.py
+│   │   │   │       │   ├── atributo.py
+│   │   │   │       │   ├── bucle_mientras.py
+│   │   │   │       │   ├── clase.py
+│   │   │   │       │   ├── condicional.py
+│   │   │   │       │   ├── continuar.py
+│   │   │   │       │   ├── decorador.py
+│   │   │   │       │   ├── defer.py
+│   │   │   │       │   ├── diccionario.py
+│   │   │   │       │   ├── enum.py
+│   │   │   │       │   ├── esperar.py
+│   │   │   │       │   ├── for_.py
+│   │   │   │       │   ├── funcion.py
+│   │   │   │       │   ├── garantia.py
+│   │   │   │       │   ├── graficar.py
+│   │   │   │       │   ├── hilo.py
+│   │   │   │       │   ├── holobit.py
+│   │   │   │       │   ├── identificador.py
+│   │   │   │       │   ├── importar.py
+│   │   │   │       │   ├── imprimir.py
+│   │   │   │       │   ├── instancia.py
+│   │   │   │       │   ├── lista.py
+│   │   │   │       │   ├── llamada_funcion.py
+│   │   │   │       │   ├── llamada_metodo.py
+│   │   │   │       │   ├── metodo.py
+│   │   │   │       │   ├── operacion_binaria.py
+│   │   │   │       │   ├── operacion_unaria.py
+│   │   │   │       │   ├── option.py
+│   │   │   │       │   ├── para.py
+│   │   │   │       │   ├── pasar.py
+│   │   │   │       │   ├── proyectar.py
+│   │   │   │       │   ├── retorno.py
+│   │   │   │       │   ├── romper.py
+│   │   │   │       │   ├── switch.py
+│   │   │   │       │   ├── throw.py
+│   │   │   │       │   ├── transformar.py
+│   │   │   │       │   ├── try_catch.py
+│   │   │   │       │   ├── usar.py
+│   │   │   │       │   ├── valor.py
+│   │   │   │       │   └── yield_.py
+│   │   │   │       ├── rust_nodes
+│   │   │   │       │   ├── __init__.py
+│   │   │   │       │   ├── asignacion.py
+│   │   │   │       │   ├── bucle_mientras.py
+│   │   │   │       │   ├── clase.py
+│   │   │   │       │   ├── condicional.py
+│   │   │   │       │   ├── continuar.py
+│   │   │   │       │   ├── defer.py
+│   │   │   │       │   ├── funcion.py
+│   │   │   │       │   ├── holobit.py
+│   │   │   │       │   ├── llamada_funcion.py
+│   │   │   │       │   ├── metodo.py
+│   │   │   │       │   ├── option.py
+│   │   │   │       │   ├── pasar.py
+│   │   │   │       │   ├── retorno.py
+│   │   │   │       │   ├── romper.py
+│   │   │   │       │   ├── runtime_holobit.py
+│   │   │   │       │   ├── switch.py
+│   │   │   │       │   ├── throw.py
+│   │   │   │       │   ├── try_catch.py
+│   │   │   │       │   └── yield_.py
+│   │   │   │       ├── to_javascript.py
+│   │   │   │       ├── to_js.py
+│   │   │   │       ├── to_python.py
+│   │   │   │       ├── to_rust.py
+│   │   │   │       └── wasm_runtime.py
+│   │   │   ├── usar_loader.py
+│   │   │   └── usar_policy.py
+│   │   ├── compiler
+│   │   │   └── __init__.py
+│   │   ├── contrato_capacidades_corelibs.py
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   ├── ast_cache.py
+│   │   │   ├── ast_nodes.py
+│   │   │   ├── cli
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── i18n.py
+│   │   │   ├── cobra_config.py
+│   │   │   ├── ctypes_bridge.py
+│   │   │   ├── database.py
+│   │   │   ├── environment.py
+│   │   │   ├── errors.py
+│   │   │   ├── holobits
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── graficar.py
+│   │   │   │   ├── holobit.py
+│   │   │   │   ├── proyeccion.py
+│   │   │   │   └── transformacion.py
+│   │   │   ├── import_utils.py
+│   │   │   ├── internal_ir.py
+│   │   │   ├── interpreter.py
+│   │   │   ├── lexer.py
+│   │   │   ├── main.py
+│   │   │   ├── memoria
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── estrategia_memoria.py
+│   │   │   │   └── gestor_memoria.py
+│   │   │   ├── nativos
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── archivo.js
+│   │   │   │   ├── coleccion.js
+│   │   │   │   ├── datos.js
+│   │   │   │   ├── estructuras.js
+│   │   │   │   ├── estructuras.py
+│   │   │   │   ├── interfaz.js
+│   │   │   │   ├── io.js
+│   │   │   │   ├── io.py
+│   │   │   │   ├── logica.js
+│   │   │   │   ├── matematicas.js
+│   │   │   │   ├── matematicas.py
+│   │   │   │   ├── numero.js
+│   │   │   │   ├── red.js
+│   │   │   │   ├── seguridad.js
+│   │   │   │   ├── sistema.js
+│   │   │   │   ├── texto.js
+│   │   │   │   └── tiempo.js
+│   │   │   ├── optimizations
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── common_subexpr.py
+│   │   │   │   ├── constant_folder.py
+│   │   │   │   ├── dead_code.py
+│   │   │   │   └── inliner.py
+│   │   │   ├── parser.py
+│   │   │   ├── pcobra_config.py
+│   │   │   ├── performance.py
+│   │   │   ├── pybind_bridge.py
+│   │   │   ├── qualia_bridge.py
+│   │   │   ├── qualia_knowledge.py
+│   │   │   ├── resource_limits.py
+│   │   │   ├── rust_bridge.py
+│   │   │   ├── sandbox.py
+│   │   │   ├── semantic_validator.py
+│   │   │   ├── semantic_validators
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── auditoria.py
+│   │   │   │   ├── base.py
+│   │   │   │   ├── fs_access.py
+│   │   │   │   ├── import_seguro.py
+│   │   │   │   ├── primitiva_peligrosa.py
+│   │   │   │   └── reflexion_segura.py
+│   │   │   ├── semantico
+│   │   │   │   └── __init__.py
+│   │   │   ├── token_contract.py
+│   │   │   ├── type_utils.py
+│   │   │   ├── usar_loader.py
+│   │   │   ├── usar_symbol_policy.py
+│   │   │   ├── utils.py
+│   │   │   └── visitor.py
+│   │   ├── corelibs
+│   │   │   ├── __init__.py
+│   │   │   ├── archivo.py
+│   │   │   ├── asincrono.py
+│   │   │   ├── coleccion.py
+│   │   │   ├── datos.py
+│   │   │   ├── holobit.py
+│   │   │   ├── logica.py
+│   │   │   ├── numero.py
+│   │   │   ├── red.py
+│   │   │   ├── seguridad.py
+│   │   │   ├── sistema.py
+│   │   │   ├── texto.py
+│   │   │   └── tiempo.py
+│   │   ├── gui
+│   │   │   ├── __init__.py
+│   │   │   ├── app.py
+│   │   │   ├── idle.py
+│   │   │   └── runtime.py
+│   │   ├── ia
+│   │   │   ├── __init__.py
+│   │   │   └── analizador_agix.py
+│   │   ├── jupyter_kernel
+│   │   │   └── __init__.py
+│   │   ├── lsp
+│   │   │   ├── __init__.py
+│   │   │   ├── cobra_plugin.py
+│   │   │   └── server.py
+│   │   └── standard_library
+│   │       ├── __init__.py
+│   │       ├── archivo.py
+│   │       ├── asincrono.py
+│   │       ├── datos.py
+│   │       ├── decoradores.py
+│   │       ├── fecha.py
+│   │       ├── holobit.py
+│   │       ├── interfaz.py
+│   │       ├── lista.py
+│   │       ├── logica.py
+│   │       ├── numero.py
+│   │       ├── red.py
+│   │       ├── sistema.py
+│   │       ├── texto.py
+│   │       ├── tiempo.py
+│   │       └── util.py
+│   └── pcobra.egg-info
+│       ├── PKG-INFO
+│       ├── SOURCES.txt
+│       ├── dependency_links.txt
+│       ├── entry_points.txt
+│       ├── requires.txt
+│       └── top_level.txt
+├── standard_library
+│   └── __init__.py
+└── tests
+    ├── __init__.py
+    ├── cli
+    │   ├── test_bench_imports.py
+    │   ├── test_cli_imports.py
+    │   ├── test_packaging_smoke.py
+    │   ├── test_public_v2_commands_contract.py
+    │   ├── test_repl_error_recovery_contract.py
+    │   ├── test_repl_script_parity_contract.py
+    │   └── test_runtime_imports_contract.py
+    ├── conftest.py
+    ├── core
+    │   ├── __init__.py
+    │   ├── test_database.py
+    │   ├── test_import_utils.py
+    │   ├── test_resource_limits.py
+    │   └── test_superficie_publica_canonica.py
+    ├── data
+    │   ├── async_await.co
+    │   ├── async_await.out
+    │   ├── condicional_sino_si.cobra
+    │   ├── ejemplo.co
+    │   ├── ejemplo.out
+    │   ├── expected_examples
+    │   │   ├── async_await.py
+    │   │   ├── avanzados
+    │   │   │   ├── clases
+    │   │   │   │   ├── estudiante.txt
+    │   │   │   │   ├── main.txt
+    │   │   │   │   └── persona.txt
+    │   │   │   └── funciones
+    │   │   │       ├── factorial_recursivo.txt
+    │   │   │       └── utilidades.txt
+    │   │   ├── clase_metodo_atributo.txt
+    │   │   ├── ejemplo.py
+    │   │   ├── extra
+    │   │   │   ├── async_await.txt
+    │   │   │   └── suma_matrices.txt
+    │   │   ├── factorial_recursivo.py
+    │   │   ├── funciones_principales.txt
+    │   │   ├── hello_world
+    │   │   │   └── cobra
+    │   │   │       └── hola.txt
+    │   │   ├── hola.py
+    │   │   ├── suma.py
+    │   │   ├── suma_matrices.py
+    │   │   └── tutorial_basico
+    │   │       └── hola_mundo.txt
+    │   ├── factorial_recursivo.co
+    │   ├── factorial_recursivo.out
+    │   ├── hola.cobra
+    │   ├── hola.out
+    │   ├── mientras.cobra
+    │   ├── roundtrip_snapshots
+    │   │   ├── javascript_intermediate.js.snap
+    │   │   └── python_intermediate.py.snap
+    │   ├── snapshots
+    │   ├── suma.cobra
+    │   ├── suma.out
+    │   ├── suma_matrices.co
+    │   ├── suma_matrices.out
+    │   ├── transpiler_outputs.csv
+    │   └── usar_exports_snapshot.json
+    ├── fake_plugins.py
+    ├── fixtures
+    │   └── decoradores
+    │       ├── dataclase.cobra
+    │       ├── depreciado.cobra
+    │       ├── despachar_por_tipo.cobra
+    │       ├── memoizar.cobra
+    │       ├── orden_total.cobra
+    │       ├── reintentar.cobra
+    │       ├── reintentar_async.cobra
+    │       ├── sincronizar.cobra
+    │       └── temporizar.cobra
+    ├── fuzz
+    │   ├── __init__.py
+    │   └── test_fuzz_parser.py
+    ├── integration
+    │   ├── __init__.py
+    │   ├── conftest.py
+    │   ├── empty.toml
+    │   ├── golden
+    │   │   ├── cli_help_modos.golden
+    │   │   ├── cli_help_public_no_legacy.golden
+    │   │   ├── cli_help_targets_by_tier.golden
+    │   │   ├── cli_ui_v2_help_public.golden
+    │   │   ├── corelibs_standard_library_tier1.golden
+    │   │   └── corelibs_standard_library_tier2.golden
+    │   ├── reverse
+    │   │   ├── __init__.py
+    │   │   ├── test_from_java.py
+    │   │   └── test_from_js.py
+    │   ├── test_agix_reasoner.py
+    │   ├── test_cli.py
+    │   ├── test_cli_ayuda.py
+    │   ├── test_cli_debug_flag_traces.py
+    │   ├── test_cli_import.py
+    │   ├── test_cli_integration.py
+    │   ├── test_cli_public_help_contract.py
+    │   ├── test_cli_qa_validar_feature_gap_report.py
+    │   ├── test_cli_ui_v2.py
+    │   ├── test_cli_validar_sintaxis.py
+    │   ├── test_cross_backend_output.py
+    │   ├── test_docs_command.py
+    │   ├── test_docs_generation.py
+    │   ├── test_end_to_end.py
+    │   ├── test_entrypoint_usar_export_policy_parity.py
+    │   ├── test_execute_container.py
+    │   ├── test_golden_corelibs_standard_library_tiers.py
+    │   ├── test_holobit_tiers.py
+    │   ├── test_interactive_persistence.py
+    │   ├── test_interpreter_loop_mutation_persistence.py
+    │   ├── test_interpreter_string_equality.py
+    │   ├── test_kernel_transpiler.py
+    │   ├── test_notebooks_execution.py
+    │   ├── test_pyinstaller_script.py
+    │   ├── test_repl_usar_entrypoints_contract.py
+    │   ├── test_reverse_transpile_chain.py
+    │   ├── test_run_repl_equivalence.py
+    │   ├── test_runtime_go.py
+    │   ├── test_runtime_js.py
+    │   ├── test_runtime_python.py
+    │   ├── test_runtime_rust.py
+    │   ├── test_standard_library_async.py
+    │   ├── test_transpilador_syntax.py
+    │   ├── test_transpiladores.py
+    │   ├── test_transpile_semantics.py
+    │   ├── test_transpilers_generation.py
+    │   ├── test_usar_canonical_surface_contract.py
+    │   ├── test_usar_core_contract_full.py
+    │   ├── test_usar_export_sanitation.py
+    │   ├── test_usar_legacy_compatibility.py
+    │   ├── test_usar_public_contract_regression.py
+    │   ├── test_usar_runtime_contract.py
+    │   ├── transpilers
+    │   │   ├── backend_contracts.py
+    │   │   ├── golden
+    │   │   │   ├── javascript.golden
+    │   │   │   ├── python.golden
+    │   │   │   └── rust.golden
+    │   │   ├── golden_hooks
+    │   │   │   ├── javascript.hooks.golden
+    │   │   │   ├── python.hooks.golden
+    │   │   │   └── rust.hooks.golden
+    │   │   ├── golden_language_equivalence
+    │   │   │   ├── asm.async.golden
+    │   │   │   ├── asm.decoradores.golden
+    │   │   │   ├── asm.imports_corelibs.golden
+    │   │   │   ├── asm.manejo_errores.golden
+    │   │   │   ├── cpp.async.golden
+    │   │   │   ├── cpp.decoradores.golden
+    │   │   │   ├── cpp.imports_corelibs.golden
+    │   │   │   ├── cpp.manejo_errores.golden
+    │   │   │   ├── go.async.golden
+    │   │   │   ├── go.decoradores.golden
+    │   │   │   ├── go.imports_corelibs.golden
+    │   │   │   ├── go.manejo_errores.golden
+    │   │   │   ├── java.async.golden
+    │   │   │   ├── java.decoradores.golden
+    │   │   │   ├── java.imports_corelibs.golden
+    │   │   │   ├── java.manejo_errores.golden
+    │   │   │   ├── javascript.async.golden
+    │   │   │   ├── javascript.decoradores.golden
+    │   │   │   ├── javascript.imports_corelibs.golden
+    │   │   │   ├── javascript.manejo_errores.golden
+    │   │   │   ├── python.async.golden
+    │   │   │   ├── python.decoradores.golden
+    │   │   │   ├── python.imports_corelibs.golden
+    │   │   │   ├── python.manejo_errores.golden
+    │   │   │   ├── rust.async.golden
+    │   │   │   ├── rust.decoradores.golden
+    │   │   │   ├── rust.imports_corelibs.golden
+    │   │   │   ├── rust.manejo_errores.golden
+    │   │   │   ├── wasm.async.golden
+    │   │   │   ├── wasm.decoradores.golden
+    │   │   │   ├── wasm.imports_corelibs.golden
+    │   │   │   └── wasm.manejo_errores.golden
+    │   │   ├── golden_phase1
+    │   │   │   ├── go.async.golden
+    │   │   │   ├── go.decoradores.golden
+    │   │   │   ├── go.imports_corelibs.golden
+    │   │   │   ├── rust.async.golden
+    │   │   │   ├── rust.decoradores.golden
+    │   │   │   └── rust.imports_corelibs.golden
+    │   │   ├── test_backend_contract_canonical_fixtures.py
+    │   │   ├── test_backend_runtime_imports_minimal.py
+    │   │   ├── test_decoradores_contract.py
+    │   │   ├── test_holobit_hooks_golden.py
+    │   │   ├── test_language_equivalence_contract.py
+    │   │   ├── test_language_equivalence_feature_contracts.py
+    │   │   ├── test_library_compatibility_matrix.py
+    │   │   ├── test_official_backends_contracts.py
+    │   │   ├── test_official_backends_tier1.py
+    │   │   └── test_official_backends_tier2.py
+    │   └── usercustomize.py
+    ├── performance
+    │   ├── __init__.py
+    │   └── test_transpile_time.py
+    ├── snapshots
+    │   └── public_api_por_modulo.json
+    ├── test_backend_startup_policy.py
+    ├── test_cli.py
+    ├── test_cli_entrypoint_imports.py
+    ├── test_ejemplos_io.py
+    ├── test_interactive_cmd_no_console.py
+    ├── test_legacy_import_aliases.py
+    ├── test_lexer.py
+    ├── test_lexer_indices.py
+    ├── test_parser.py
+    ├── test_transpilers.py
+    ├── test_unified_ecosystem_plan.py
+    ├── test_usar_public_exports_snapshot.py
+    ├── test_workflows_yaml.py
+    ├── unit
+    │   ├── __init__.py
+    │   ├── cli
+    │   │   ├── commands
+    │   │   │   └── test_validar_sintaxis_cmd.py
+    │   │   └── commands_v2
+    │   │       └── test_repl_cmd_v2.py
+    │   ├── lexer_test_casos_edge.py
+    │   ├── parser_error_handling.py
+    │   ├── parser_recursion_types.py
+    │   ├── parser_test_constructs.py
+    │   ├── qa
+    │   │   └── test_syntax_validation.py
+    │   ├── standard_library
+    │   │   ├── test_api_canonica_por_modulo.py
+    │   │   ├── test_contrato_modulos_cobra.py
+    │   │   └── test_decoradores.py
+    │   ├── suite_cli.py
+    │   ├── suite_core.py
+    │   ├── suite_transpiladores.py
+    │   ├── test_analizador_agix.py
+    │   ├── test_api_publica_logica_es.py
+    │   ├── test_architecture_overview.py
+    │   ├── test_archivo.py
+    │   ├── test_ast_cache.py
+    │   ├── test_ast_cache_security.py
+    │   ├── test_ast_contract.py
+    │   ├── test_ast_limit.py
+    │   ├── test_ast_nodes_property_contract.py
+    │   ├── test_ast_nodes_tipo.py
+    │   ├── test_ast_repr_policy.py
+    │   ├── test_async.py
+    │   ├── test_audit_retired_targets.py
+    │   ├── test_auditoria_validator.py
+    │   ├── test_backend_bootstrap_contract.py
+    │   ├── test_backend_pipeline_runtime_manager.py
+    │   ├── test_backend_public_contract.py
+    │   ├── test_bench_cmd.py
+    │   ├── test_bench_transpilers_cmd.py
+    │   ├── test_benchmark_execution.py
+    │   ├── test_benchmark_targets_policy.py
+    │   ├── test_benchmarks2_cmd.py
+    │   ├── test_benchmarks_cmd.py
+    │   ├── test_benchthreads_cmd.py
+    │   ├── test_big_data_extra.py
+    │   ├── test_binding_contract_canonical.py
+    │   ├── test_bindings_contract.py
+    │   ├── test_bindings_import_smoke.py
+    │   ├── test_build_orchestrator.py
+    │   ├── test_ci_audit_feature_rollout.py
+    │   ├── test_ci_audit_stdlib_parity.py
+    │   ├── test_ci_audit_targets_contract.py
+    │   ├── test_ci_check_core_scc.py
+    │   ├── test_ci_check_import_cycles.py
+    │   ├── test_ci_check_import_cycles_guard.py
+    │   ├── test_ci_check_public_import_boundaries.py
+    │   ├── test_ci_lint_control_flow_no_scope_copy.py
+    │   ├── test_ci_lint_import_resolution_contract.py
+    │   ├── test_ci_lint_import_resolution_contract_guard.py
+    │   ├── test_ci_lint_legacy_cobra_shims_guard.py
+    │   ├── test_ci_lint_no_cross_command_imports.py
+    │   ├── test_ci_lint_no_cross_command_imports_guard.py
+    │   ├── test_ci_lint_no_legacy_bindings_imports.py
+    │   ├── test_ci_lint_no_legacy_bindings_imports_guard.py
+    │   ├── test_ci_lint_no_legacy_cobra_core_imports.py
+    │   ├── test_ci_lint_no_legacy_cobra_core_imports_guard.py
+    │   ├── test_ci_lint_no_parallel_transpilers_registry.py
+    │   ├── test_ci_lint_public_commands_internal_backends.py
+    │   ├── test_ci_lint_public_no_direct_transpiler_imports.py
+    │   ├── test_ci_validate_public_backend_literals.py
+    │   ├── test_cli.py
+    │   ├── test_cli2.py
+    │   ├── test_cli_agix.py
+    │   ├── test_cli_agix_missing_dep.py
+    │   ├── test_cli_agix_missing_file.py
+    │   ├── test_cli_autocomplete_list.py
+    │   ├── test_cli_bootstrap_env_alias.py
+    │   ├── test_cli_bootstrap_utf8.py
+    │   ├── test_cli_cache_cmd.py
+    │   ├── test_cli_cobrahub.py
+    │   ├── test_cli_commands_extra.py
+    │   ├── test_cli_commands_no_local_transpilers_constant_contract.py
+    │   ├── test_cli_compilar_tipos.py
+    │   ├── test_cli_compile_parallel.py
+    │   ├── test_cli_config.py
+    │   ├── test_cli_config_defaults.py
+    │   ├── test_cli_configurar_entorno.py
+    │   ├── test_cli_container.py
+    │   ├── test_cli_db_key_gating.py
+    │   ├── test_cli_default_command.py
+    │   ├── test_cli_dependencias.py
+    │   ├── test_cli_docs.py
+    │   ├── test_cli_double_dash.py
+    │   ├── test_cli_empaquetar.py
+    │   ├── test_cli_entrypoint_subprocess.py
+    │   ├── test_cli_env_bootstrap.py
+    │   ├── test_cli_error_messages.py
+    │   ├── test_cli_execute_debug_verbose.py
+    │   ├── test_cli_execute_missing_file.py
+    │   ├── test_cli_execute_timeout.py
+    │   ├── test_cli_execution_error_output.py
+    │   ├── test_cli_execution_pipeline_contract.py
+    │   ├── test_cli_exit_codes.py
+    │   ├── test_cli_format_flag.py
+    │   ├── test_cli_gui.py
+    │   ├── test_cli_gui_without_flet.py
+    │   ├── test_cli_import_collisions.py
+    │   ├── test_cli_imports_alias.py
+    │   ├── test_cli_init.py
+    │   ├── test_cli_input_unicode_non_tty.py
+    │   ├── test_cli_interactive_cmd.py
+    │   ├── test_cli_jupyter.py
+    │   ├── test_cli_legacy_wrapper_exitcode.py
+    │   ├── test_cli_logging.py
+    │   ├── test_cli_logging_regression.py
+    │   ├── test_cli_menu.py
+    │   ├── test_cli_mode_policy.py
+    │   ├── test_cli_module_alias_simple.py
+    │   ├── test_cli_official_language_restrictions.py
+    │   ├── test_cli_paquete.py
+    │   ├── test_cli_paquete_symlink.py
+    │   ├── test_cli_plugins.py
+    │   ├── test_cli_plugins_cmd.py
+    │   ├── test_cli_profile.py
+    │   ├── test_cli_qa_validar_cmd.py
+    │   ├── test_cli_qualia_cmd.py
+    │   ├── test_cli_run_examples.py
+    │   ├── test_cli_sandbox_docker.py
+    │   ├── test_cli_sandbox_mode.py
+    │   ├── test_cli_secure_validators.py
+    │   ├── test_cli_service_contracts.py
+    │   ├── test_cli_shim_contract.py
+    │   ├── test_cli_sqlite_db_key.py
+    │   ├── test_cli_startup_import_contract.py
+    │   ├── test_cli_target_aliases.py
+    │   ├── test_cli_target_option_validations.py
+    │   ├── test_cli_target_runtime_ux.py
+    │   ├── test_cli_transpilar_inverso_cmd.py
+    │   ├── test_cli_transpiler_registry_contract.py
+    │   ├── test_cli_v2_command_contract.py
+    │   ├── test_cli_validar_sintaxis_cmd.py
+    │   ├── test_cli_validar_sintaxis_report_schema.py
+    │   ├── test_cli_wrapper_consistency.py
+    │   ├── test_cobra_config_concurrent.py
+    │   ├── test_cobra_module_map.py
+    │   ├── test_cobrahub_close.py
+    │   ├── test_cobrahub_retry.py
+    │   ├── test_codeql_eval_exec.py
+    │   ├── test_codeql_triggers.py
+    │   ├── test_command_factory.py
+    │   ├── test_command_registry_interactive.py
+    │   ├── test_compatibility_matrix_public_contract.py
+    │   ├── test_compilar_extension_cleanup.py
+    │   ├── test_compile_backend_registration.py
+    │   ├── test_compile_cmd_errors.py
+    │   ├── test_compile_cmd_target_choices_aliases.py
+    │   ├── test_compile_stress.py
+    │   ├── test_contrato_capacidades_corelibs.py
+    │   ├── test_core_main.py
+    │   ├── test_corelibs.py
+    │   ├── test_corelibs_async.py
+    │   ├── test_corelibs_holobit_adapter.py
+    │   ├── test_corelibs_numero_estadistica.py
+    │   ├── test_corelibs_sistema.py
+    │   ├── test_corelibs_surface_exports.py
+    │   ├── test_ctypes_bridge.py
+    │   ├── test_custom_argument_parser.py
+    │   ├── test_custom_validators.py
+    │   ├── test_database.py
+    │   ├── test_dead_code_integration.py
+    │   ├── test_dead_helpers_cleanup.py
+    │   ├── test_decoradores_yield.py
+    │   ├── test_descubrir_plugins_invalid.py
+    │   ├── test_enum.py
+    │   ├── test_env_example_contract.py
+    │   ├── test_environment.py
+    │   ├── test_error_handling.py
+    │   ├── test_execute_cmd_binding_contract.py
+    │   ├── test_execute_cmd_extra_validators_normalization.py
+    │   ├── test_feature_gap_report.py
+    │   ├── test_fecha.py
+    │   ├── test_fs_access_validator.py
+    │   ├── test_gate_no_parser_lexer_changes.py
+    │   ├── test_generadores.py
+    │   ├── test_gestor_memoria.py
+    │   ├── test_gestor_memoria2.py
+    │   ├── test_gui_app.py
+    │   ├── test_gui_idle.py
+    │   ├── test_gui_menu.py
+    │   ├── test_gui_runtime.py
+    │   ├── test_gui_target_choices.py
+    │   ├── test_hilos.py
+    │   ├── test_holobit_backend_contract_matrix.py
+    │   ├── test_holobit_corelib_domain_errors.py
+    │   ├── test_holobit_generation.py
+    │   ├── test_holobit_no_fuga_exports.py
+    │   ├── test_holobit_runtime_backends.py
+    │   ├── test_holobit_sdk_compatibility_report.py
+    │   ├── test_holobit_sdk_fallback_contract.py
+    │   ├── test_holobit_sdk_integration.py
+    │   ├── test_holobit_transformacion_extra.py
+    │   ├── test_import.py
+    │   ├── test_import_path_security.py
+    │   ├── test_import_seguro_validator.py
+    │   ├── test_imports_alias_clase.py
+    │   ├── test_imports_resolver.py
+    │   ├── test_inlining_transpilers.py
+    │   ├── test_instalar_modulo_destino_symlink.py
+    │   ├── test_integracion_transpiladores.py
+    │   ├── test_interactive_block_depth.py
+    │   ├── test_interactive_cmd_logging.py
+    │   ├── test_interactive_cmd_repl_pipeline_coupling.py
+    │   ├── test_interactive_cmd_repl_state_persistence.py
+    │   ├── test_interactive_cmd_sandbox_docker_targets.py
+    │   ├── test_interface.py
+    │   ├── test_interpreter.py
+    │   ├── test_interpreter_atributo.py
+    │   ├── test_interpreter_concurrency.py
+    │   ├── test_interpreter_cycles.py
+    │   ├── test_interpreter_herencia.py
+    │   ├── test_interpreter_hilo.py
+    │   ├── test_interpreter_identifier_comparisons.py
+    │   ├── test_interpreter_inferencia.py
+    │   ├── test_interpreter_inheritance.py
+    │   ├── test_interpreter_loop_scope_regression.py
+    │   ├── test_interpreter_memoria.py
+    │   ├── test_interpreter_no_node_stringify.py
+    │   ├── test_interpreter_objects.py
+    │   ├── test_interpreter_scope_contract.py
+    │   ├── test_interpreter_stability.py
+    │   ├── test_kernel_python_error.py
+    │   ├── test_kernel_python_timeout.py
+    │   ├── test_lark_parser_missing_grammar.py
+    │   ├── test_lark_parser_tokens.py
+    │   ├── test_legacy_backend_lifecycle.py
+    │   ├── test_legacy_import_deprecation.py
+    │   ├── test_legacy_import_shims_contract.py
+    │   ├── test_lexer.py
+    │   ├── test_lexer2.py
+    │   ├── test_lexer_additional_cases.py
+    │   ├── test_lexer_basics.py
+    │   ├── test_lexer_edge_unicode.py
+    │   ├── test_lexer_errors.py
+    │   ├── test_lexer_errors_extra.py
+    │   ├── test_lexer_keywords_vs_identifiers.py
+    │   ├── test_lexer_metodo_atributo.py
+    │   ├── test_lexer_token_index.py
+    │   ├── test_lint_policy_drift.py
+    │   ├── test_lista.py
+    │   ├── test_logica.py
+    │   ├── test_lsp_cobra_plugin.py
+    │   ├── test_lsp_server.py
+    │   ├── test_macros.py
+    │   ├── test_md2cobra_plugin.py
+    │   ├── test_metodo_atributo.py
+    │   ├── test_mod_validator.py
+    │   ├── test_module_map.py
+    │   ├── test_module_map_errors.py
+    │   ├── test_module_map_no_coverage.py
+    │   ├── test_nativos_io.py
+    │   ├── test_node_visitor.py
+    │   ├── test_nodo_macro.py
+    │   ├── test_nuevos_tokens.py
+    │   ├── test_official_targets_consistency.py
+    │   ├── test_operadores.py
+    │   ├── test_optimizations.py
+    │   ├── test_option_pattern_roundtrip.py
+    │   ├── test_option_statement.py
+    │   ├── test_parity_contract_run_vs_repl.py
+    │   ├── test_parser.py
+    │   ├── test_parser2.py
+    │   ├── test_parser3.py
+    │   ├── test_parser4.py
+    │   ├── test_parser5.py
+    │   ├── test_parser_ast.py
+    │   ├── test_parser_block_contract.py
+    │   ├── test_parser_boolean_literals.py
+    │   ├── test_parser_clase.py
+    │   ├── test_parser_condicional_anidado.py
+    │   ├── test_parser_consistencia_ast.py
+    │   ├── test_parser_decorador.py
+    │   ├── test_parser_del_global.py
+    │   ├── test_parser_equality_contract.py
+    │   ├── test_parser_error_reporting.py
+    │   ├── test_parser_errors_extra.py
+    │   ├── test_parser_factories.py
+    │   ├── test_parser_generics.py
+    │   ├── test_parser_holobit.py
+    │   ├── test_parser_inferencia.py
+    │   ├── test_parser_nuevos.py
+    │   ├── test_parser_para_long_loop.py
+    │   ├── test_parser_sugerencias.py
+    │   ├── test_parser_switch.py
+    │   ├── test_pasar.py
+    │   ├── test_pcobra_config.py
+    │   ├── test_pcobra_import_path_side_effects.py
+    │   ├── test_pcobra_module_map.py
+    │   ├── test_performance.py
+    │   ├── test_pexpect_stub.py
+    │   ├── test_plugin_loader.py
+    │   ├── test_plugin_registry.py
+    │   ├── test_public_command_policy.py
+    │   ├── test_public_commands_internal_backends_lint_guard.py
+    │   ├── test_public_commands_no_direct_transpilers_contract.py
+    │   ├── test_public_commands_transpiler_import_contract.py
+    │   ├── test_public_docs_scope.py
+    │   ├── test_public_import_boundaries_guard.py
+    │   ├── test_pybind_bridge_invalid_loader.py
+    │   ├── test_pybind_bridge_paths.py
+    │   ├── test_qualia_bridge.py
+    │   ├── test_qualia_cmd.py
+    │   ├── test_red.py
+    │   ├── test_reflexion_validator.py
+    │   ├── test_registry_contract_guardrail.py
+    │   ├── test_rel.py
+    │   ├── test_repl_cli_integration_pexpect.py
+    │   ├── test_repl_command_v2.py
+    │   ├── test_repl_function_definition_contract.py
+    │   ├── test_repl_no_backend_pipeline_temporaries.py
+    │   ├── test_repl_official_stdlib_exports_policy.py
+    │   ├── test_repl_warning_dedup.py
+    │   ├── test_reserved_identifiers.py
+    │   ├── test_resource_limits.py
+    │   ├── test_restricted_exec.py
+    │   ├── test_retornos.py
+    │   ├── test_reverse_ast.py
+    │   ├── test_reverse_scope_docs_consistency.py
+    │   ├── test_reverse_supported_sources.py
+    │   ├── test_reverse_transpilers_registry.py
+    │   ├── test_romper_continuar.py
+    │   ├── test_roundtrip_transpilation.py
+    │   ├── test_run_transpiler_pool.py
+    │   ├── test_runtime_api_matrix_contract.py
+    │   ├── test_runtime_import_contract_no_pcobra_core_refs.py
+    │   ├── test_runtime_import_resolution.py
+    │   ├── test_runtime_manager.py
+    │   ├── test_rust_bridge.py
+    │   ├── test_safe_mode.py
+    │   ├── test_safe_mode_imports.py
+    │   ├── test_sandbox.py
+    │   ├── test_sandbox_allowlist.py
+    │   ├── test_sandbox_commonpath.py
+    │   ├── test_sandbox_js.py
+    │   ├── test_sandbox_js_platform.py
+    │   ├── test_sandbox_namespace_entrypoint_contract.py
+    │   ├── test_sandbox_restrictions.py
+    │   ├── test_security_sandbox.py
+    │   ├── test_semantic_validator.py
+    │   ├── test_semantico.py
+    │   ├── test_smoke_transpilation_official_targets.py
+    │   ├── test_standard_library_async.py
+    │   ├── test_standard_library_datos.py
+    │   ├── test_standard_library_decoradores.py
+    │   ├── test_standard_library_interfaz.py
+    │   ├── test_standard_library_logica.py
+    │   ├── test_standard_library_numero.py
+    │   ├── test_standard_library_public_decorators_contract.py
+    │   ├── test_standard_library_texto.py
+    │   ├── test_startup_no_legacy_eager_loading.py
+    │   ├── test_stdlib_contract_descriptor.py
+    │   ├── test_stdlib_contract_validator.py
+    │   ├── test_syntax_validation_feature_fixtures.py
+    │   ├── test_target_execution_policy.py
+    │   ├── test_target_policies.py
+    │   ├── test_target_validation_contract.py
+    │   ├── test_targets_docs_generated_blocks_snapshot.py
+    │   ├── test_tipos_colecciones.py
+    │   ├── test_to_asm.py
+    │   ├── test_to_cpp.py
+    │   ├── test_to_go.py
+    │   ├── test_to_java.py
+    │   ├── test_to_js.py
+    │   ├── test_to_js2.py
+    │   ├── test_to_js3.py
+    │   ├── test_to_js4.py
+    │   ├── test_to_js_holobit_runtime_snapshot.py
+    │   ├── test_to_js_objects.py
+    │   ├── test_to_python.py
+    │   ├── test_to_python2.py
+    │   ├── test_to_python3.py
+    │   ├── test_to_python4.py
+    │   ├── test_to_python_extras.py
+    │   ├── test_to_python_nuevos.py
+    │   ├── test_to_python_objects.py
+    │   ├── test_to_rust.py
+    │   ├── test_to_wasm.py
+    │   ├── test_token_cache.py
+    │   ├── test_transpiladores_incompletos.py
+    │   ├── test_transpilar_inverso_target_help.py
+    │   ├── test_transpile_python.py
+    │   ├── test_transpile_rust_go.py
+    │   ├── test_transpiler_backend_regression.py
+    │   ├── test_transpiler_feature_parity.py
+    │   ├── test_transpiler_runtime_hook_mapping.py
+    │   ├── test_transpilers_import_no_tree_sitter.py
+    │   ├── test_try_catch.py
+    │   ├── test_type_checks.py
+    │   ├── test_unicode_comments.py
+    │   ├── test_unicode_identifiers.py
+    │   ├── test_unicode_identifiers_extra.py
+    │   ├── test_unicode_sanitize_repl.py
+    │   ├── test_usar.py
+    │   ├── test_usar_core_all_exports.py
+    │   ├── test_usar_loader_public_api_contract.py
+    │   ├── test_usar_loader_site_packages.py
+    │   ├── test_usar_loader_stdlib.py
+    │   ├── test_usar_loader_validation.py
+    │   ├── test_usar_policy_contract.py
+    │   ├── test_usar_public_contract.py
+    │   ├── test_usar_runtime_policy.py
+    │   ├── test_usar_symbol_policy.py
+    │   ├── test_util.py
+    │   ├── test_validar_dependencias.py
+    │   ├── test_validate_file.py
+    │   ├── test_validate_targets_policy_script.py
+    │   ├── test_validator_optimization.py
+    │   ├── test_verify_cmd.py
+    │   └── test_wasm_transpiler.py
+    └── utils
+        ├── __init__.py
+        ├── runtime.py
+        └── targets.py
+
+200 directories, 1562 files
