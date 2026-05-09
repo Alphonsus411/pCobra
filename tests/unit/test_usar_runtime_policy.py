@@ -96,6 +96,33 @@ def test_usar_runtime_no_exporta_simbolos_bloqueados(monkeypatch):
         assert prohibido not in interp.variables
 
 
+def test_usar_runtime_numero_filtra_simbolo_fuera_de_api_publica_y_no_lo_inyecta(monkeypatch):
+    import pcobra.corelibs.numero as modulo_numero
+
+    mapa_limpio, _conflictos = usar_loader.sanitizar_exports_publicos(modulo_numero, "numero")
+    assert "desviacion_estandar" not in mapa_limpio
+
+    simbolos_inyectados: list[str] = []
+    inyeccion_real = InterpretadorCobra._inyectar_simbolos_usar_en_contexto
+
+    def _inyectar_con_espia(self, simbolos_saneados, *, modulo, permitir_sobrescritura=False):
+        simbolos_inyectados.extend(nombre for nombre, _ in simbolos_saneados)
+        return inyeccion_real(
+            self,
+            simbolos_saneados,
+            modulo=modulo,
+            permitir_sobrescritura=permitir_sobrescritura,
+        )
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
+    monkeypatch.setattr(InterpretadorCobra, "_inyectar_simbolos_usar_en_contexto", _inyectar_con_espia)
+
+    interp = _interp_con_alias({"numero": "numero"})
+    interp.ejecutar_nodo(NodoUsar("numero"))
+
+    assert "desviacion_estandar" not in simbolos_inyectados
+
+
 def test_usar_runtime_colision_warn_diagnostico_y_sin_overwrite(monkeypatch, caplog):
     modulo = ModuleType("texto")
     modulo.__all__ = ["a_snake", "a_camel"]
