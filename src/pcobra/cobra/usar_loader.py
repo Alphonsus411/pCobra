@@ -288,4 +288,17 @@ def sanitizar_exports_publicos(modulo: object, alias_modulo: str) -> tuple[dict[
                 },
             )
 
+    metricas_rechazo_por_codigo: dict[str, int] = {}
+    for conflicto in conflictos:
+        codigo = str(conflicto.get("code") or "unknown")
+        metricas_rechazo_por_codigo[codigo] = metricas_rechazo_por_codigo.get(codigo, 0) + 1
+    if metricas_rechazo_por_codigo:
+        logging.info(
+            "USAR_SANITIZE_REJECTION_METRICS %s",
+            {
+                "module": alias_modulo,
+                "rejection_metrics_by_code": metricas_rechazo_por_codigo,
+            },
+        )
+
     return mapa_limpio, conflictos
