@@ -272,6 +272,19 @@ def test_repl_usar_numero_ejecuta_callable_runtime_es_nan_con_entero(monkeypatch
     llamada = NodoLlamadaFuncion("es_nan", [NodoValor(10)])
     assert interp.ejecutar_llamada_funcion(llamada) is False
 
+
+
+def test_repl_usar_texto_ejecuta_callables_runtime_basicos(monkeypatch):
+    import pcobra.corelibs.texto as modulo_texto
+
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: modulo_texto)
+    interp = _ejecutar_codigo('usar "texto"\nrecortar("  cobra  ")')
+
+    assert interp.obtener_variable("recortar")("  cobra  ") == "cobra"
+    assert interp.obtener_variable("repetir")("ja", 3) == "jajaja"
+    assert interp.obtener_variable("quitar_acentos")("canción") == "cancion"
+    assert interp.obtener_variable("prefijo_comun")("cobra", "cobre") == "cobr"
+    assert interp.obtener_variable("sufijo_comun")("programacion", "nacion") == "acion"
 def test_repl_usar_detecta_colision_de_simbolo_existente(monkeypatch):
     import pcobra.corelibs.texto as modulo_texto
 
