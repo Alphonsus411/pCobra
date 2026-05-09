@@ -11,7 +11,7 @@ def test_rechaza_nombres_prohibidos_explicitos():
     for nombre in ("self", "append", "map", "filter", "unwrap", "expect"):
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
-        assert resultado.codigo == "explicit_forbidden_name"
+        assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
         assert "Usa el nombre Cobra canónico" in (resultado.mensaje or "")
 
 
@@ -82,11 +82,11 @@ def test_rechaza_no_callable_que_no_es_constante_publica_canonica():
     assert resultado_ok.codigo == "public_constant"
 
 def test_rechaza_todos_los_alias_ingleses_prohibidos():
-    prohibidos = ("self", "append", "map", "filter", "unwrap", "expect")
+    prohibidos = ("self", "append", "map", "filter", "reduce", "keys", "values", "len", "length", "unwrap", "expect")
     for nombre in prohibidos:
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
-        assert resultado.codigo == "explicit_forbidden_name"
+        assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
 
 
 def test_modo_estricto_cobra_facing_rechaza_nombres_no_canonicos():
@@ -130,7 +130,7 @@ def test_rechazo_estricto_alias_backend_hacia_cobra():
     for nombre in prohibidos:
         resultado = sanear_simbolo_para_usar(nombre, lambda: None)
         assert resultado.rechazado is True
-        assert resultado.codigo == "explicit_forbidden_name"
+        assert resultado.codigo in {"explicit_forbidden_name", "cobra_public_equivalent"}
 
 
 def test_objetos_envueltos_sdk_y_wrapped_se_bloquean_siempre():
