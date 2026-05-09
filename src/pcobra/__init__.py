@@ -8,6 +8,10 @@ import sys as _sys
 import warnings as _warnings
 from typing import Dict, Tuple
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS, assert_public_targets_contract
+
+assert_public_targets_contract(tuple(PUBLIC_BACKENDS), source="import pcobra")
+
 logger = logging.getLogger(__name__)
 
 _LEGACY_IMPORT_PHASE_ENV = "PCOBRA_LEGACY_IMPORT_PHASE"
