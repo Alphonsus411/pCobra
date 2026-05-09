@@ -16,6 +16,7 @@ from typing import Any, TypeVar, overload
 
 import unicodedata
 
+from pcobra.corelibs import texto as _texto
 from pcobra.corelibs.texto import (
     encontrar as _encontrar_texto,
     encontrar_derecha as _encontrar_derecha_texto,
@@ -73,6 +74,8 @@ from pcobra.corelibs import (
     es_titulo as _es_titulo,
     es_digito as _es_digito,
     es_espacio as _es_espacio,
+    incluye as _incluye,
+    reemplazar as _reemplazar,
 )
 
 _T = TypeVar("_T")
@@ -133,6 +136,11 @@ __all__ = [
     "tabla_traduccion",
     "traducir",
     "recortar",
+    "reemplazar",
+    "separar",
+    "unir",
+    "contiene",
+    "longitud",
     "repetir",
 ]
 
@@ -915,6 +923,30 @@ def recortar(texto: str) -> str:
     """Elimina espacios en blanco al inicio y al final de ``texto``."""
 
     return quitar_espacios(texto)
+
+
+def reemplazar(texto: str, antiguo: str, nuevo: str, maximo: int = -1) -> str:
+    """Reemplaza ocurrencias de ``antiguo`` por ``nuevo`` en ``texto``."""
+
+    return _reemplazar(texto, antiguo, nuevo, maximo)
+
+
+def separar(texto: str, separador: str | None = None, maximo: int | None = None) -> list[str]:
+    """Separa ``texto`` respetando la semántica vigente de ``dividir``."""
+
+    return dividir(texto, separador, maximo)
+
+
+def contiene(texto: str, subcadena: str) -> bool:
+    """Devuelve ``True`` si ``subcadena`` aparece en ``texto``."""
+
+    return _incluye(texto, subcadena)
+
+
+def longitud(texto: str) -> int:
+    """Devuelve la longitud de ``texto``."""
+
+    return len(texto)
 
 
 def repetir(texto: str, veces: int) -> str:
