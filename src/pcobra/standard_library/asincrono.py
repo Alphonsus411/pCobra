@@ -32,6 +32,14 @@ __all__ = [
     "ejecutar_en_hilo",
     "reintentar_async",
     "recolectar",
+    "carrera",
+    "primero_exitoso",
+    "esperar_timeout",
+    "crear_tarea",
+    "iterar_completadas",
+    "mapear_concurrencia",
+    "recolectar_resultados",
+    "dormir_async",
 ]
 
 
@@ -123,48 +131,56 @@ def recolectar(*args, **kwargs):
 
 
 def carrera(*args, **kwargs):
+    """Ejecuta corrutinas en paralelo y retorna el primer resultado disponible."""
     """Delega en ``pcobra.corelibs.asincrono.carrera``."""
 
     return _asincrono.carrera(*args, **kwargs)
 
 
 def primero_exitoso(*args, **kwargs):
+    """Resuelve con la primera corrutina exitosa y agrupa errores si todas fallan."""
     """Delega en ``pcobra.corelibs.asincrono.primero_exitoso``."""
 
     return _asincrono.primero_exitoso(*args, **kwargs)
 
 
 def esperar_timeout(*args, **kwargs):
+    """Espera una corrutina con tiempo máximo permitido."""
     """Delega en ``pcobra.corelibs.asincrono.esperar_timeout``."""
 
     return _asincrono.esperar_timeout(*args, **kwargs)
 
 
 def crear_tarea(*args, **kwargs):
+    """Crea y programa una tarea asíncrona en el event loop activo."""
     """Delega en ``pcobra.corelibs.asincrono.crear_tarea``."""
 
     return _asincrono.crear_tarea(*args, **kwargs)
 
 
 def iterar_completadas(*args, **kwargs):
+    """Itera tareas en el orden en que van terminando."""
     """Delega en ``pcobra.corelibs.asincrono.iterar_completadas``."""
 
     return _asincrono.iterar_completadas(*args, **kwargs)
 
 
 def mapear_concurrencia(*args, **kwargs):
+    """Aplica una función asíncrona sobre una colección controlando concurrencia."""
     """Delega en ``pcobra.corelibs.asincrono.mapear_concurrencia``."""
 
     return _asincrono.mapear_concurrencia(*args, **kwargs)
 
 
 def recolectar_resultados(*args, **kwargs):
+    """Recolecta resultados con estrategia configurable de errores."""
     """Delega en ``pcobra.corelibs.asincrono.recolectar_resultados``."""
 
     return _asincrono.recolectar_resultados(*args, **kwargs)
 
 
 def dormir_async(*args, **kwargs):
+    """Suspende la corrutina actual durante un intervalo."""
     """Delega en ``pcobra.corelibs.asincrono.dormir_async``."""
 
     return _asincrono.dormir_async(*args, **kwargs)
