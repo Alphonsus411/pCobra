@@ -85,6 +85,29 @@ def test_internals_no_se_exportan_en_public_api():
 
 
 @pytest.mark.parametrize(
+    "estructura_invalida",
+    [
+        {"tipo": "holobit"},
+        {"valores": [1, 2, 3]},
+        {"tipo": "holobit", "valores": [1, 2], "legacy": True},
+        {"tipo": "holobit_sdk", "valores": [1, 2]},
+        {"tipo": "holobit", "valores": [1, "Holobit"]},
+    ],
+)
+def test_validar_holobit_rechaza_payloads_fuera_del_contrato_serializable(estructura_invalida):
+    assert holobit.validar_holobit(estructura_invalida) is False
+
+
+def test_serializar_holobit_rechaza_objeto_sdk_o_clase_interna():
+    class LegacyHolobit:
+        tipo = "holobit"
+        valores = [1, 2, 3]
+
+    with pytest.raises(TypeError):
+        holobit.serializar_holobit(LegacyHolobit())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
     "payload",
     [
         "[1,2,3]",
