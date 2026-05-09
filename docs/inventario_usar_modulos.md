@@ -43,3 +43,17 @@ No son API pública de `usar`:
 - aliases legacy fuera del set canónico.
 
 El contrato estable para usuario final es únicamente la lista canónica Cobra-facing indicada arriba.
+
+## 5) Contrato canónico de exports públicos por módulo
+
+Para evitar exposición accidental de internals, el contrato de exportación pública de módulos canónicos de `usar` se define y verifica en tres capas:
+
+1. **Contrato por módulo**: cada módulo canónico en `src/pcobra/corelibs/` y su espejo en `src/pcobra/standard_library/` declara `__all__` explícito.
+2. **Snapshot canónico**: `tests/data/usar_exports_snapshot.json` fija (por módulo) el set exacto y orden contractual de exports públicos.
+3. **Pruebas anti-deriva**: `tests/test_usar_public_exports_snapshot.py` falla cuando:
+   - aparece un símbolo interno (prefijo `_`),
+   - aparece un símbolo runtime prohibido por contrato,
+   - falta cualquier símbolo contractual obligatorio (funciones requeridas o aliases permitidos),
+   - cambia el snapshot (set u orden).
+
+Con esto, cualquier deriva en la superficie pública de `usar` queda bloqueada en CI.
