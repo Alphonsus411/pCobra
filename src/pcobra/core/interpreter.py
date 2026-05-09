@@ -1922,6 +1922,26 @@ class InterpretadorCobra:
                 nombre for nombre, _simbolo in simbolos_saneados if contexto_actual.contains(nombre)
             ]
             if conflictos:
+                for simbolo_conflictivo in conflictos:
+                    detalle_por_simbolo = {
+                        "module": nodo.modulo,
+                        "symbol": simbolo_conflictivo,
+                        "conflicts": conflictos,
+                        "code": "symbol_collision",
+                        "message": "símbolo ya existe en contexto actual",
+                        "policy": self._usar_collision_policy,
+                        "phase": "preflight",
+                    }
+                    evento_colision = {
+                        "evento": "usar_collision_symbol",
+                        "severity": "warning",
+                        "module": nodo.modulo,
+                        "policy": self._usar_collision_policy,
+                        "detail": detalle_por_simbolo,
+                    }
+                    logging.warning("USAR collision symbol event: %s", evento_colision)
+                    self._trace_debug(f"[USAR_COLLISION][SYMBOL] {evento_colision}")
+
                 conflicto = conflictos[0]
                 detalle = {
                     "module": nodo.modulo,
@@ -1933,16 +1953,6 @@ class InterpretadorCobra:
                     "phase": "preflight",
                 }
                 if self._usar_collision_policy == USAR_COLLISION_WARN_ALIAS_REQUIRED:
-                    evento_colision = {
-                        "evento": "usar_collision",
-                        "severity": "warning",
-                        "module": nodo.modulo,
-                        "conflicts": conflictos,
-                        "policy": self._usar_collision_policy,
-                        "detail": detalle,
-                    }
-                    logging.warning("USAR collision event: %s", evento_colision)
-                    self._trace_debug(f"[USAR_COLLISION][WARN] {evento_colision}")
                     raise NameError(
                         "No se puede usar el módulo "
                         f"'{nodo.modulo}': {USAR_SYMBOL_CONFLICT_ERROR} colisión estructurada={detalle}. "

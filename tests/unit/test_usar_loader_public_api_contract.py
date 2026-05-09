@@ -106,6 +106,19 @@ def test_internals_holobit_sdk_no_importables_directo_desde_usar_loader() -> Non
     assert "holobit_sdk" in mensaje
 
 
+@pytest.mark.parametrize("nombre", ["numpy", "holobit_sdk"])
+def test_blocklist_se_aplica_antes_de_cualquier_import_dinamico(monkeypatch, nombre: str) -> None:
+    def _import_dinamico_no_permitido(*_args, **_kwargs):
+        raise AssertionError("No debe intentarse import dinámico para módulos bloqueados en `usar`.")
+
+    monkeypatch.setattr(usar_loader.importlib.util, "spec_from_file_location", _import_dinamico_no_permitido)
+
+    with pytest.raises(PermissionError) as excinfo:
+        usar_loader.obtener_modulo(nombre)
+
+    assert "Importación no permitida" in str(excinfo.value)
+
+
 @pytest.mark.parametrize("simbolo", sorted(PROHIBIDOS))
 def test_politica_de_simbolos_prohibidos_devuelve_codigo_y_mensaje(simbolo: str) -> None:
     resultado = sanear_simbolo_para_usar(simbolo, lambda: None)

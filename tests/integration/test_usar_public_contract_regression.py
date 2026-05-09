@@ -188,6 +188,30 @@ def test_conflicto_no_overwrite_silencioso_reporta_error_estructurado(monkeypatc
     assert detalle["phase"] == "preflight"
 
 
+def test_conflictos_emiten_warning_estructurado_por_simbolo(monkeypatch, caplog):
+    mod_datos = _modulo_datos_publico_stub()
+    monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _nombre, **_kwargs: mod_datos)
+
+    interp = InterpretadorCobra()
+    interp.configurar_restriccion_usar_repl(REPL_COBRA_MODULE_MAP)
+    interp.contextos[-1].define("filtrar", lambda *_args, **_kwargs: "ocupado")
+    interp.contextos[-1].define("mapear", lambda *_args, **_kwargs: "ocupado")
+
+    class _NodoUsar:
+        modulo = "datos"
+
+    caplog.set_level("WARNING")
+    with pytest.raises(NameError):
+        interp.ejecutar_usar(_NodoUsar())
+
+    mensajes = [registro.getMessage() for registro in caplog.records if "USAR collision symbol event" in registro.getMessage()]
+    assert len(mensajes) >= 2
+    assert any("'symbol': 'filtrar'" in mensaje for mensaje in mensajes)
+    assert any("'symbol': 'mapear'" in mensaje for mensaje in mensajes)
+    assert interp.contextos[-1].get("filtrar")() == "ocupado"
+    assert interp.contextos[-1].get("mapear")() == "ocupado"
+
+
 def test_usar_no_inyecta_simbolos_prohibidos_ni_objetos_backend(monkeypatch):
     mod = ModuleType("externo")
     mod.__all__ = ["ok", "self", "append", "map", "filter", "unwrap", "expect", "__danger__"]
