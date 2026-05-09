@@ -8,8 +8,8 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 |---|---|---|---|---|
 | `cobra.core` | 4 | `python` | `rust, javascript` | es_finito:rust, es_finito:javascript, es_infinito:rust, es_infinito:javascript, copiar_signo:rust, copiar_signo:javascript, signo:rust, signo:javascript |
 | `cobra.datos` | 4 | `python` | `javascript` | filtrar:javascript, seleccionar_columnas:javascript, a_listas:javascript, de_listas:javascript |
-| `cobra.web` | 3 | `javascript` | `python` | obtener_url:javascript, enviar_post:javascript, descargar_archivo:javascript |
-| `cobra.system` | 4 | `python` | `rust, javascript` | leer:rust, leer:javascript, escribir:rust, escribir:javascript, ejecutar:rust, ejecutar:javascript, obtener_env:rust, obtener_env:javascript |
+| `cobra.web` | 4 | `javascript` | `python` | obtener_url:javascript, enviar_post:javascript, descargar_archivo:javascript, obtener_url_texto:javascript |
+| `cobra.system` | 11 | `python` | `rust, javascript` | leer:rust, leer:javascript, escribir:rust, escribir:javascript, adjuntar:rust, adjuntar:javascript, existe:rust, existe:javascript, ejecutar:rust, ejecutar:javascript, ejecutar_comando_async:rust, ejecutar_comando_async:javascript, obtener_env:rust, obtener_env:javascript, listar_dir:rust, listar_dir:javascript, ahora:rust, ahora:javascript, formatear:rust, formatear:javascript, dormir:rust, dormir:javascript |
 
 ## `cobra.core`
 
@@ -102,6 +102,7 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 - `cobra.web.obtener_url`
 - `cobra.web.enviar_post`
 - `cobra.web.descargar_archivo`
+- `cobra.web.obtener_url_texto`
 
 ### Exportaciones públicas (alias Cobra estables)
 
@@ -110,6 +111,7 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 | `cobra.web.obtener_url` | `src/pcobra/corelibs/red.py` |
 | `cobra.web.enviar_post` | `src/pcobra/corelibs/red.py` |
 | `cobra.web.descargar_archivo` | `src/pcobra/corelibs/red.py` |
+| `cobra.web.obtener_url_texto` | `src/pcobra/corelibs/red.py` |
 
 ### Cobertura por función
 
@@ -121,21 +123,30 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 | `cobra.web.enviar_post` | `python` | `full` |
 | `cobra.web.descargar_archivo` | `javascript` | `partial` |
 | `cobra.web.descargar_archivo` | `python` | `full` |
+| `cobra.web.obtener_url_texto` | `javascript` | `partial` |
+| `cobra.web.obtener_url_texto` | `python` | `full` |
 
 ## `cobra.system`
 
 - **Backend primario:** `python`
 - **Fallback permitido:** `rust, javascript`
 - **Mapeo `standard_library`:** `src/pcobra/standard_library/archivo.py`
-- **Mapeo `corelibs`:** `src/pcobra/corelibs/sistema.py`
+- **Mapeo `corelibs`:** `src/pcobra/corelibs/sistema.py`, `src/pcobra/corelibs/tiempo.py`
 - **Mapeo `core/nativos`:** `src/pcobra/core/nativos/sistema.js`
 
 ### API pública
 
 - `cobra.system.leer`
 - `cobra.system.escribir`
+- `cobra.system.adjuntar`
+- `cobra.system.existe`
 - `cobra.system.ejecutar`
+- `cobra.system.ejecutar_comando_async`
 - `cobra.system.obtener_env`
+- `cobra.system.listar_dir`
+- `cobra.system.ahora`
+- `cobra.system.formatear`
+- `cobra.system.dormir`
 
 ### Exportaciones públicas (alias Cobra estables)
 
@@ -143,8 +154,15 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 |---|---|
 | `cobra.system.leer` | `src/pcobra/standard_library/archivo.py` |
 | `cobra.system.escribir` | `src/pcobra/standard_library/archivo.py` |
+| `cobra.system.adjuntar` | `src/pcobra/standard_library/archivo.py` |
+| `cobra.system.existe` | `src/pcobra/standard_library/archivo.py` |
 | `cobra.system.ejecutar` | `src/pcobra/corelibs/sistema.py` |
+| `cobra.system.ejecutar_comando_async` | `src/pcobra/corelibs/sistema.py` |
 | `cobra.system.obtener_env` | `src/pcobra/corelibs/sistema.py` |
+| `cobra.system.listar_dir` | `src/pcobra/corelibs/sistema.py` |
+| `cobra.system.ahora` | `src/pcobra/corelibs/tiempo.py` |
+| `cobra.system.formatear` | `src/pcobra/corelibs/tiempo.py` |
+| `cobra.system.dormir` | `src/pcobra/corelibs/tiempo.py` |
 
 ### Cobertura por función
 
@@ -156,9 +174,30 @@ Este documento se genera desde `src/pcobra/cobra/stdlib_contract/*.py`.
 | `cobra.system.escribir` | `python` | `full` |
 | `cobra.system.escribir` | `rust` | `partial` |
 | `cobra.system.escribir` | `javascript` | `partial` |
+| `cobra.system.adjuntar` | `python` | `full` |
+| `cobra.system.adjuntar` | `rust` | `partial` |
+| `cobra.system.adjuntar` | `javascript` | `partial` |
+| `cobra.system.existe` | `python` | `full` |
+| `cobra.system.existe` | `rust` | `partial` |
+| `cobra.system.existe` | `javascript` | `partial` |
 | `cobra.system.ejecutar` | `python` | `full` |
 | `cobra.system.ejecutar` | `rust` | `partial` |
 | `cobra.system.ejecutar` | `javascript` | `partial` |
+| `cobra.system.ejecutar_comando_async` | `python` | `full` |
+| `cobra.system.ejecutar_comando_async` | `rust` | `partial` |
+| `cobra.system.ejecutar_comando_async` | `javascript` | `partial` |
 | `cobra.system.obtener_env` | `python` | `full` |
 | `cobra.system.obtener_env` | `rust` | `partial` |
 | `cobra.system.obtener_env` | `javascript` | `partial` |
+| `cobra.system.listar_dir` | `python` | `full` |
+| `cobra.system.listar_dir` | `rust` | `partial` |
+| `cobra.system.listar_dir` | `javascript` | `partial` |
+| `cobra.system.ahora` | `python` | `full` |
+| `cobra.system.ahora` | `rust` | `partial` |
+| `cobra.system.ahora` | `javascript` | `partial` |
+| `cobra.system.formatear` | `python` | `full` |
+| `cobra.system.formatear` | `rust` | `partial` |
+| `cobra.system.formatear` | `javascript` | `partial` |
+| `cobra.system.dormir` | `python` | `full` |
+| `cobra.system.dormir` | `rust` | `partial` |
+| `cobra.system.dormir` | `javascript` | `partial` |

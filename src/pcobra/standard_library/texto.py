@@ -1,32 +1,12 @@
 """Funciones de texto de alto nivel basadas en ``pcobra.corelibs.texto``.
 
 Contrato de exportación: ``usar`` en REPL consume ``__all__`` como lista
-de API pública invocable de este módulo.
+pública invocable de este módulo.
 
 Ejemplo rápido::
 
     import standard_library.texto as texto
-
     texto.quitar_prefijo("🧪Prueba", "🧪")  # -> "Prueba"
-    texto.centrar_texto("cobra", 10, "-")    # -> "---cobra--"
-    texto.dividir_lineas("uno\r\ndos\n", conservar_delimitadores=True)
-    # -> ["uno\r\n", "dos\n"
-    "capitalizar",
-    "titulo",
-    "invertir",
-    "concatenar",
-    "quitar_espacios",
-    "dividir",
-    "unir",
-    "reemplazar",
-    "empieza_con",
-    "termina_con",
-    "incluye",
-    "rellenar_izquierda",
-    "rellenar_derecha",
-    "normalizar_unicode",
-    "lineas_no_vacias",]
-    texto.subcadena_despues("ruta/archivo.txt", "/")  # -> "archivo.txt"
 """
 
 from __future__ import annotations
