@@ -19,7 +19,7 @@ def _interp_con_alias(alias_map: dict[str, str]) -> InterpretadorCobra:
     return interp
 
 
-def test_usar_runtime_numero_expone_solo_api_espanola(monkeypatch):
+def test_no_regresion_ajuste_texto_usar_runtime_numero_expone_solo_api_espanola(monkeypatch):
     import pcobra.corelibs.numero as modulo_numero
 
     monkeypatch.setattr(core_usar_loader, "obtener_modulo", lambda _n, **_k: modulo_numero)
@@ -27,6 +27,7 @@ def test_usar_runtime_numero_expone_solo_api_espanola(monkeypatch):
     interp.ejecutar_nodo(NodoUsar("numero"))
 
     assert "es_finito" in interp.variables
+    assert "es_par" in interp.variables
     assert "isfinite" not in interp.variables
 
 

@@ -87,9 +87,10 @@ def test_rechaza_numpy_en_repl_estricto_sin_inyeccion(monkeypatch):
     interp.configurar_restriccion_usar_repl({"numero": "numero"})
     estado_pre = dict(interp.contextos[-1].values)
 
-    with pytest.raises(PermissionError, match="modulo_fuera_catalogo_publico|módulo externo no permitido en REPL estricto"):
+    with pytest.raises(PermissionError, match="modulo_fuera_catalogo_publico|módulo externo no permitido en REPL estricto") as exc:
         interp.ejecutar_usar(_nodo("numpy"))
 
+    assert "usar_error[modulo_fuera_catalogo_publico]" in str(exc.value)
     assert estado_pre == interp.contextos[-1].values
 
 
