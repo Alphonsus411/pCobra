@@ -78,23 +78,24 @@ PUBLIC_API_ARCHIVO: tuple[str, ...] = (
     "existe",
     "eliminar",
     "leer_lineas",
+    "anexar",
 )
 
 
 def eliminar(*args, **kwargs):
-    """Delega en ``pcobra.corelibs.archivo.eliminar``."""
+    """Elimina un archivo respetando el sandbox de rutas permitido."""
 
     return _archivo.eliminar(*args, **kwargs)
 
 
 def anexar(*args, **kwargs):
-    """Delega en ``pcobra.corelibs.archivo.anexar``."""
+    """Alias histórico para agregar contenido al final de un archivo."""
 
     return _archivo.anexar(*args, **kwargs)
 
 
 def leer_lineas(*args, **kwargs):
-    """Delega en ``pcobra.corelibs.archivo.leer_lineas``."""
+    """Lee un archivo y devuelve sus líneas como lista de texto."""
 
     return _archivo.leer_lineas(*args, **kwargs)
 
