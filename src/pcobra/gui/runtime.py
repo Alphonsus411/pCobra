@@ -8,6 +8,8 @@ from contextlib import redirect_stderr, redirect_stdout
 from functools import lru_cache
 from typing import Any
 
+from pcobra.cobra.architecture.backend_policy import PUBLIC_BACKENDS
+
 
 @lru_cache(maxsize=1)
 def require_gui_dependencies() -> dict[str, Any]:
@@ -140,8 +142,14 @@ def formatear_error(
 
 
 def gui_target_choices() -> tuple[str, ...]:
-    """Devuelve targets canónicos visibles en GUI preservando el orden oficial."""
+    """Devuelve targets públicos canónicos visibles en GUI preservando el orden oficial."""
     deps = require_gui_dependencies()
+    official_targets = tuple(deps["OFFICIAL_TARGETS"])
+    if official_targets != PUBLIC_BACKENDS:
+        raise RuntimeError(
+            "Contrato público inválido en GUI: OFFICIAL_TARGETS debe coincidir con PUBLIC_BACKENDS. "
+            f"official={official_targets}; public={PUBLIC_BACKENDS}"
+        )
     return deps["target_cli_choices"](
-        set(deps["OFFICIAL_TARGETS"]) & set(deps["TRANSPILERS"])
+        set(PUBLIC_BACKENDS) & set(deps["TRANSPILERS"])
     )
