@@ -37,17 +37,40 @@ def test_runtime_startup_policy_does_not_import_legacy_transpilers(module_name: 
 
 
 @pytest.mark.parity_contract
+@pytest.mark.parametrize("module_name", LEGACY_TRANSPILER_MODULES)
+def test_normal_boot_paths_do_not_import_legacy_transpilers(module_name: str) -> None:
+    before = set(sys.modules)
+
+    # Rutas normales de arranque: import raíz y bootstrap CLI.
+    importlib.import_module("pcobra")
+    importlib.import_module("pcobra.cobra.cli.bootstrap")
+
+    after = set(sys.modules)
+    loaded_during_boot = after - before
+
+    assert module_name not in after, f"{module_name} no debe quedar cargado tras boot normal"
+    assert module_name not in loaded_during_boot, (
+        f"{module_name} fue cargado durante boot normal, violando política pública"
+    )
+
+
+@pytest.mark.parity_contract
 def test_public_targets_contract_is_exact_in_config_and_architecture() -> None:
     config_targets = importlib.import_module(
         "pcobra.cobra.config.transpile_targets"
     ).OFFICIAL_TARGETS
+    public_config_targets = importlib.import_module(
+        "pcobra.cobra.config.transpile_targets"
+    ).ALLOWED_TARGETS
     policy_targets = importlib.import_module(
         "pcobra.cobra.architecture.backend_policy"
     ).PUBLIC_BACKENDS
 
     assert config_targets == EXPECTED_PUBLIC_TARGETS
+    assert public_config_targets == EXPECTED_PUBLIC_TARGETS
     assert policy_targets == EXPECTED_PUBLIC_TARGETS
     assert config_targets == policy_targets
+    assert public_config_targets == policy_targets
 
 
 @pytest.mark.parity_contract

@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Final
 
+from pcobra.cobra.architecture.legacy_backend_lifecycle import INTERNAL_BACKENDS
+
 # Cobra es la única interfaz pública soportada para usuarios e integraciones.
 PUBLIC_INTERFACE_NAME: Final[str] = "cobra"
 
