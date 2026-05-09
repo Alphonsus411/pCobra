@@ -1674,7 +1674,14 @@ class InterpretadorCobra:
                     self._verificar_valor_contexto(valor)
                     argumentos_resueltos.append(valor)
 
-                resultado = funcion(*argumentos_resueltos)
+                try:
+                    resultado = funcion(*argumentos_resueltos)
+                except Exception:
+                    logging.exception(
+                        "Error en callable '%s' durante ejecutar_llamada_funcion",
+                        nodo.nombre,
+                    )
+                    raise
                 self._verificar_valor_contexto(resultado)
                 return resultado
 
